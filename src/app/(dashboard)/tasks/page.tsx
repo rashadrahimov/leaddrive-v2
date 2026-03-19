@@ -27,6 +27,7 @@ type ViewMode = "list" | "kanban"
 
 const statusLabels: Record<string, string> = {
   pending: "К выполнению",
+  todo: "К выполнению",
   in_progress: "В работе",
   completed: "Выполнено",
   cancelled: "Отменено",
@@ -120,7 +121,7 @@ export default function TasksPage() {
   }, [session])
 
   async function toggleComplete(task: Task) {
-    const newStatus = task.status === "completed" ? "pending" : "completed"
+    const newStatus = task.status === "completed" ? "todo" : "completed"
     try {
       await fetch(`/api/v1/tasks/${task.id}`, {
         method: "PATCH",
@@ -159,9 +160,10 @@ export default function TasksPage() {
     fetchTasks()
   }
 
-  // Filter
+  // Filter — "todo" and "pending" are treated the same
   const filtered = tasks.filter(t => {
     if (activeFilter === "all") return true
+    if (activeFilter === "pending") return t.status === "pending" || t.status === "todo"
     return t.status === activeFilter
   }).sort((a, b) => {
     switch (sortBy) {
@@ -184,7 +186,8 @@ export default function TasksPage() {
 
   const statusCounts: Record<string, number> = {}
   for (const t of tasks) {
-    statusCounts[t.status] = (statusCounts[t.status] || 0) + 1
+    const key = t.status === "todo" ? "pending" : t.status
+    statusCounts[key] = (statusCounts[key] || 0) + 1
   }
 
   const columns = [
@@ -248,7 +251,7 @@ export default function TasksPage() {
       sortable: true,
       render: (item: any) => (
         <Badge variant={item.status === "completed" ? "secondary" : item.status === "in_progress" ? "default" : item.status === "cancelled" ? "destructive" : "outline"}>
-          {statusLabels[item.status] || item.status}
+          {statusLabels[item.status] || "К выполнению"}
         </Badge>
       ),
     },
@@ -366,10 +369,10 @@ export default function TasksPage() {
             <div key={status} className="min-w-[280px] flex-shrink-0">
               <div className="mb-3 flex items-center gap-2">
                 <span className="text-sm font-semibold">{statusLabels[status]}</span>
-                <span className="rounded-full bg-muted px-2 py-0.5 text-xs">{filtered.filter(t => t.status === status).length}</span>
+                <span className="rounded-full bg-muted px-2 py-0.5 text-xs">{filtered.filter(t => status === "pending" ? (t.status === "pending" || t.status === "todo") : t.status === status).length}</span>
               </div>
               <div className="space-y-2 min-h-[200px] rounded-lg border-2 border-dashed border-transparent p-2 hover:border-muted-foreground/20">
-                {filtered.filter(t => t.status === status).map(task => (
+                {filtered.filter(t => status === "pending" ? (t.status === "pending" || t.status === "todo") : t.status === status).map(task => (
                   <div key={task.id} className="rounded-lg border bg-card p-3 shadow-sm">
                     <div className="flex items-center gap-2 mb-1">
                       <button

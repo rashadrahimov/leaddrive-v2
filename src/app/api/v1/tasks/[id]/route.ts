@@ -6,7 +6,7 @@ import { getOrgId } from "@/lib/api-auth"
 const updateTaskSchema = z.object({
   title: z.string().min(1).max(300).optional(),
   description: z.string().max(5000).optional(),
-  status: z.enum(["pending", "in_progress", "completed", "cancelled"]).optional(),
+  status: z.enum(["pending", "todo", "in_progress", "completed", "cancelled"]).optional(),
   priority: z.enum(["low", "medium", "high", "urgent"]).optional(),
   dueDate: z.string().nullable().optional(),
   assignedTo: z.string().nullable().optional(),
