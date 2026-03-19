@@ -95,6 +95,10 @@ export async function POST(
         to: contact.email,
         subject: campaign.subject || campaign.name,
         html: rendered,
+        organizationId: orgId,
+        campaignId: campaign.id,
+        templateId: campaign.templateId || undefined,
+        contactId: contact.id,
       })
       if (result.success) sentCount++
     }

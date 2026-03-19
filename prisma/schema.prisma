@@ -787,6 +787,29 @@ model ChannelMessage {
   @@map("channel_messages")
 }
 
+model EmailLog {
+  id             String   @id @default(cuid())
+  organizationId String
+  direction      String   @default("outbound") // outbound, inbound
+  fromEmail      String
+  toEmail        String
+  subject        String?
+  body           String?
+  status         String   @default("sent") // pending, sent, delivered, failed, bounced
+  errorMessage   String?
+  campaignId     String?
+  templateId     String?
+  contactId      String?
+  sentBy         String?
+  messageId      String?
+  createdAt      DateTime @default(now())
+
+  @@index([organizationId])
+  @@index([organizationId, status])
+  @@index([organizationId, contactId])
+  @@map("email_logs")
+}
+
 model WorkflowRule {
   id             String   @id @default(cuid())
   organizationId String
