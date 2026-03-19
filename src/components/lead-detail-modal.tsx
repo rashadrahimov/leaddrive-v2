@@ -1,15 +1,16 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Select } from "@/components/ui/select"
+import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { Dialog, DialogHeader, DialogTitle, DialogContent } from "@/components/ui/dialog"
-import { Building2, Users, FileText, X, Phone, Mail, Calendar, Brain, Zap, MessageSquare, Copy, Send, RefreshCw, CheckCircle, Trash2, Ban } from "lucide-react"
-import { useRouter } from "next/navigation"
+import { Building2, Users, FileText, X, Copy, Send, RefreshCw, CheckCircle, Trash2, Ban, Plus, Pencil } from "lucide-react"
 
 interface LeadCompany {
   id: string
@@ -18,11 +19,14 @@ interface LeadCompany {
   industry?: string
   email?: string
   phone?: string
+  description?: string
   category: string
   leadStatus: string
   leadScore: number
   leadTemperature?: string
   userCount: number
+  annualRevenue?: number
+  createdAt?: string
   contacts?: Array<{ id: string; fullName: string; email?: string; phone?: string; position?: string }>
   deals?: Array<{ id: string; title: string; stage: string; valueAmount?: number }>
   _count?: { contacts: number; deals: number }
@@ -41,14 +45,26 @@ const statusLabels: Record<string, string> = {
   converted: "Конвертирован", rejected: "Не подходит", cancelled: "Аннулирован",
 }
 
+const statusColors: Record<string, string> = {
+  new: "bg-blue-500", contacted: "bg-yellow-500", qualified: "bg-purple-500",
+  converted: "bg-green-500", rejected: "bg-gray-400", cancelled: "bg-red-500",
+}
+
 export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }: LeadDetailModalProps) {
   const router = useRouter()
   const [activeTab, setActiveTab] = useState("details")
   const [aiLoading, setAiLoading] = useState(false)
+
+  // Activity state
   const [showActivityForm, setShowActivityForm] = useState(false)
   const [activityType, setActivityType] = useState("note")
   const [activitySubject, setActivitySubject] = useState("")
   const [activityDesc, setActivityDesc] = useState("")
+  const [activitySaving, setActivitySaving] = useState(false)
+
+  // About state
+  const [editingAbout, setEditingAbout] = useState(false)
+  const [aboutText, setAboutText] = useState("")
 
   // Sentiment state
   const [sentiment, setSentiment] = useState<any>(null)
@@ -61,14 +77,18 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
   const [tone, setTone] = useState("Профессиональный")
   const [instructions, setInstructions] = useState("")
   const [generatedText, setGeneratedText] = useState<any>(null)
+  const [emailSending, setEmailSending] = useState(false)
+  const [emailSent, setEmailSent] = useState(false)
 
   useEffect(() => {
-    if (open) {
+    if (open && company) {
       setActiveTab("details")
       setSentiment(null)
       setAiTasks(null)
       setGeneratedText(null)
       setInstructions("")
+      setAboutText(company.description || "")
+      setEmailSent(false)
     }
   }, [open, company])
 
@@ -79,10 +99,7 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
     try {
       const res = await fetch("/api/v1/ai", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(orgId ? { "x-organization-id": orgId } : {}),
-        },
+        headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": orgId } : {}) },
         body: JSON.stringify({ action, companyId: company.id, options }),
       })
       const json = await res.json()
@@ -91,53 +108,101 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
     return null
   }
 
-  const handleSentiment = async () => {
-    const data = await callAI("sentiment")
-    if (data) setSentiment(data)
+  const saveAbout = async () => {
+    await fetch(`/api/v1/companies/${company.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": orgId } : {}) },
+      body: JSON.stringify({ description: aboutText }),
+    })
+    setEditingAbout(false)
+    onSaved?.()
   }
 
-  const handleGenerateTasks = async () => {
-    const data = await callAI("tasks")
-    if (data) setAiTasks(data)
+  const changeStatus = async (newStatus: string) => {
+    await fetch(`/api/v1/companies/${company.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": orgId } : {}) },
+      body: JSON.stringify({ leadStatus: newStatus, ...(newStatus === "converted" ? { category: "client" } : {}) }),
+    })
+    onSaved?.()
   }
 
-  const handleGenerateText = async () => {
-    const data = await callAI("text", { textType, tone, instructions })
-    if (data) setGeneratedText(data)
+  const saveActivity = async () => {
+    if (!activitySubject.trim()) return
+    setActivitySaving(true)
+    try {
+      const res = await fetch("/api/v1/activities", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": orgId } : {}) },
+        body: JSON.stringify({
+          type: activityType,
+          subject: activitySubject,
+          description: activityDesc,
+          companyId: company.id,
+        }),
+      })
+      if (res.ok) {
+        setShowActivityForm(false)
+        setActivitySubject("")
+        setActivityDesc("")
+      }
+    } catch {} finally { setActivitySaving(false) }
+  }
+
+  const sendGeneratedEmail = async () => {
+    if (!generatedText) return
+    const firstContact = company.contacts?.[0]
+    if (!firstContact?.email) { alert("Нет email контакта для отправки"); return }
+    setEmailSending(true)
+    try {
+      await fetch("/api/v1/inbox", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": orgId } : {}) },
+        body: JSON.stringify({
+          to: firstContact.email,
+          body: generatedText.body,
+          subject: generatedText.subject,
+          contactId: firstContact.id,
+        }),
+      })
+      setEmailSent(true)
+    } catch {} finally { setEmailSending(false) }
   }
 
   const tabs = [
     { id: "details", label: "Детали" },
     { id: "activity", label: "Активность" },
-    { id: "sentiment", label: "🐷 Sentiment", icon: true },
-    { id: "tasks", label: "⚡ Tasks", icon: true },
-    { id: "aitext", label: "✉️ AI Text", icon: true },
+    { id: "sentiment", label: "🐷 Sentiment" },
+    { id: "tasks", label: "⚡ Tasks" },
+    { id: "aitext", label: "✉️ AI Text" },
   ]
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogHeader>
-        <DialogTitle className="flex items-center justify-between">
-          <div>
-            <span className="text-xl font-bold">{company.name}</span>
-            <div className="flex items-center gap-2 mt-1">
-              {company.website && <span className="text-sm text-primary">{company.website}</span>}
-              <Badge variant="outline">{statusLabels[company.leadStatus] || company.leadStatus}</Badge>
+        <DialogTitle>
+          <div className="flex items-start justify-between">
+            <div>
+              <span className="text-xl font-bold">{company.name}</span>
+              <div className="flex items-center gap-2 mt-1">
+                {company.website && <span className="text-sm text-primary">{company.website}</span>}
+                <Badge variant="outline">{statusLabels[company.leadStatus] || company.leadStatus}</Badge>
+              </div>
             </div>
+            <button onClick={() => onOpenChange(false)} className="p-2 rounded-full hover:bg-muted transition-colors -mt-1 -mr-1">
+              <X className="h-5 w-5" />
+            </button>
           </div>
-          <button onClick={() => onOpenChange(false)} className="p-1.5 rounded-md hover:bg-muted transition-colors">
-            <X className="h-5 w-5" />
-          </button>
         </DialogTitle>
       </DialogHeader>
       <DialogContent className="max-h-[70vh] overflow-y-auto">
         {/* Tabs */}
-        <div className="flex gap-1 border-b mb-4">
+        <div className="flex gap-1 border-b mb-4 overflow-x-auto">
           {tabs.map(tab => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`px-3 py-2 text-sm border-b-2 transition-colors ${
+              className={`px-3 py-2 text-sm whitespace-nowrap border-b-2 transition-colors ${
                 activeTab === tab.id
                   ? "border-primary text-primary font-medium"
                   : "border-transparent text-muted-foreground hover:text-foreground"
@@ -151,114 +216,134 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
         {/* Tab: Details */}
         {activeTab === "details" && (
           <div className="space-y-4">
-            {/* Quick status change */}
+            {/* Quick status change — FIX #5: красивый grid */}
             <div>
-              <p className="text-xs text-muted-foreground mb-2">Быстрая смена статуса:</p>
-              <div className="flex flex-wrap gap-1">
-                {(["new", "contacted", "qualified", "rejected", "converted"] as const).map(s => (
-                  <Button
+              <p className="text-xs text-muted-foreground mb-2">Статус лида:</p>
+              <div className="grid grid-cols-3 gap-1.5">
+                {(["new", "contacted", "qualified", "converted", "rejected", "cancelled"] as const).map(s => (
+                  <button
                     key={s}
-                    size="sm"
-                    variant={company.leadStatus === s ? "default" : "outline"}
-                    className="text-xs h-7"
-                    onClick={async () => {
-                      await fetch(`/api/v1/companies/${company.id}`, {
-                        method: "PUT",
-                        headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": orgId } : {}) },
-                        body: JSON.stringify({ leadStatus: s, ...(s === "converted" ? { category: "client" } : {}) }),
-                      })
-                      onSaved?.()
-                    }}
+                    onClick={() => changeStatus(s)}
+                    className={`text-xs py-1.5 px-2 rounded-md border transition-all ${
+                      company.leadStatus === s
+                        ? "bg-primary text-primary-foreground border-primary font-medium"
+                        : "bg-background hover:bg-muted border-border"
+                    }`}
                   >
-                    {statusLabels[s] || s}
-                  </Button>
+                    {statusLabels[s]}
+                  </button>
                 ))}
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3 text-sm">
+            {/* Info grid */}
+            <div className="grid grid-cols-2 gap-2 text-sm">
               <div className="p-2 bg-muted/30 rounded">
-                <span className="text-xs text-muted-foreground block">Email</span>
-                <span>{company.email || "—"}</span>
+                <span className="text-[10px] text-muted-foreground block">Email</span>
+                <span className="text-xs">{company.email || "—"}</span>
               </div>
               <div className="p-2 bg-muted/30 rounded">
-                <span className="text-xs text-muted-foreground block">Сайт</span>
-                <span>{company.website || "—"}</span>
+                <span className="text-[10px] text-muted-foreground block">Телефон</span>
+                <span className="text-xs">{company.phone || "—"}</span>
               </div>
               <div className="p-2 bg-muted/30 rounded">
-                <span className="text-xs text-muted-foreground block">Отрасль</span>
-                <span>{company.industry || "—"}</span>
+                <span className="text-[10px] text-muted-foreground block">Сайт</span>
+                <span className="text-xs">{company.website || "—"}</span>
               </div>
               <div className="p-2 bg-muted/30 rounded">
-                <span className="text-xs text-muted-foreground block">Источник</span>
-                <span>{(company as any).source || "—"}</span>
+                <span className="text-[10px] text-muted-foreground block">Отрасль</span>
+                <span className="text-xs">{company.industry || "—"}</span>
               </div>
               <div className="p-2 bg-muted/30 rounded">
-                <span className="text-xs text-muted-foreground block">Оценочная цена</span>
-                <span>{(company as any).annualRevenue ? `${(company as any).annualRevenue.toLocaleString()} ₼` : "—"}</span>
+                <span className="text-[10px] text-muted-foreground block">Оценочная цена</span>
+                <span className="text-xs">{company.annualRevenue ? `${company.annualRevenue.toLocaleString()} ₼` : "—"}</span>
               </div>
               <div className="p-2 bg-muted/30 rounded">
-                <span className="text-xs text-muted-foreground block">Пользователей</span>
-                <span>{company.userCount || 0}</span>
+                <span className="text-[10px] text-muted-foreground block">Пользователей</span>
+                <span className="text-xs">{company.userCount || 0}</span>
               </div>
               <div className="p-2 bg-muted/30 rounded">
-                <span className="text-xs text-muted-foreground block">Дата создания</span>
-                <span>{(company as any).createdAt ? new Date((company as any).createdAt).toLocaleDateString() : "—"}</span>
+                <span className="text-[10px] text-muted-foreground block">Дата создания</span>
+                <span className="text-xs">{company.createdAt ? new Date(company.createdAt).toLocaleDateString() : "—"}</span>
               </div>
               <div className="p-2 bg-muted/30 rounded">
-                <span className="text-xs text-muted-foreground block">Возраст лида</span>
-                <span>{(company as any).createdAt ? `${Math.floor((Date.now() - new Date((company as any).createdAt).getTime()) / 86400000)} дн.` : "—"}</span>
+                <span className="text-[10px] text-muted-foreground block">Возраст лида</span>
+                <span className="text-xs">{company.createdAt ? `${Math.floor((Date.now() - new Date(company.createdAt).getTime()) / 86400000)} дн.` : "—"}</span>
               </div>
               <div className="p-2 bg-muted/30 rounded">
-                <span className="text-xs text-muted-foreground block">Контакты</span>
-                <span>{company._count?.contacts || company.contacts?.length || 0}</span>
-              </div>
-              <div className="p-2 bg-muted/30 rounded">
-                <span className="text-xs text-muted-foreground block">Score</span>
-                <span className={company.leadTemperature === "hot" ? "text-red-500 font-bold" : company.leadTemperature === "warm" ? "text-orange-500 font-bold" : "text-blue-500 font-bold"}>
+                <span className="text-[10px] text-muted-foreground block">Score</span>
+                <span className={`text-xs font-bold ${company.leadTemperature === "hot" ? "text-red-500" : company.leadTemperature === "warm" ? "text-orange-500" : "text-blue-500"}`}>
                   {(company.leadTemperature || "cold").toUpperCase()} {company.leadScore}
                 </span>
               </div>
+              <div className="p-2 bg-muted/30 rounded">
+                <span className="text-[10px] text-muted-foreground block">Контакты</span>
+                <span className="text-xs">{company._count?.contacts || 0}</span>
+              </div>
             </div>
 
+            {/* FIX #2: About section */}
             <div>
-              <h4 className="font-medium text-sm mb-2">Ключевые люди</h4>
-              {company.contacts && company.contacts.length > 0 ? (
+              <div className="flex items-center justify-between mb-1">
+                <h4 className="font-medium text-sm">О компании</h4>
+                <Button variant="ghost" size="sm" className="h-6 text-xs" onClick={() => setEditingAbout(!editingAbout)}>
+                  <Pencil className="h-3 w-3 mr-1" /> {editingAbout ? "Отмена" : "Изменить"}
+                </Button>
+              </div>
+              {editingAbout ? (
                 <div className="space-y-2">
+                  <Textarea value={aboutText} onChange={e => setAboutText(e.target.value)} rows={3} placeholder="Описание компании, заметки..." />
+                  <Button size="sm" onClick={saveAbout}>Сохранить</Button>
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground bg-muted/30 p-2 rounded min-h-[40px]">
+                  {company.description || aboutText || "Нет описания. Нажмите 'Изменить' чтобы добавить."}
+                </p>
+              )}
+            </div>
+
+            {/* FIX #3: Contacts with add/edit/delete */}
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <h4 className="font-medium text-sm">Ключевые люди ({company._count?.contacts || 0})</h4>
+                <Button variant="ghost" size="sm" className="h-6 text-xs" onClick={() => { onOpenChange(false); router.push(`/contacts?companyId=${company.id}`) }}>
+                  <Plus className="h-3 w-3 mr-1" /> Управлять
+                </Button>
+              </div>
+              {company.contacts && company.contacts.length > 0 ? (
+                <div className="space-y-1">
                   {company.contacts.map(c => (
-                    <div key={c.id} className="flex items-center justify-between text-sm p-2 bg-muted/30 rounded">
+                    <div key={c.id} className="flex items-center justify-between text-xs p-2 bg-muted/30 rounded">
                       <div>
                         <span className="font-medium">{c.fullName}</span>
-                        {c.position && <span className="text-xs text-muted-foreground ml-2">{c.position}</span>}
+                        {c.position && <span className="text-muted-foreground ml-1">· {c.position}</span>}
                       </div>
-                      <div className="text-xs text-muted-foreground">
-                        {c.email && <span className="mr-2">{c.email}</span>}
-                        {c.phone && <span>{c.phone}</span>}
-                      </div>
+                      <span className="text-muted-foreground">{c.email || c.phone || ""}</span>
                     </div>
                   ))}
                 </div>
-              ) : <p className="text-sm text-muted-foreground">—</p>}
+              ) : <p className="text-xs text-muted-foreground">Нет контактов</p>}
             </div>
 
+            {/* Deals */}
             <div>
-              <h4 className="font-medium text-sm mb-2">Сделки ({company.deals?.length || 0})</h4>
+              <h4 className="font-medium text-sm mb-1">Сделки ({company.deals?.length || 0})</h4>
               {company.deals && company.deals.length > 0 ? (
                 company.deals.map(d => (
-                  <div key={d.id} className="flex justify-between text-sm p-2 bg-muted/30 rounded mb-1">
+                  <div key={d.id} className="flex justify-between text-xs p-2 bg-muted/30 rounded mb-1">
                     <span>{d.title}</span>
-                    <div className="flex gap-2">
-                      <span className="font-medium">{d.valueAmount ? `${d.valueAmount.toLocaleString()} ₼` : "0 ₼"}</span>
-                      <Badge variant="outline" className="text-xs">{d.stage}</Badge>
+                    <div className="flex gap-1">
+                      {d.valueAmount ? <span className="font-medium">{d.valueAmount.toLocaleString()} ₼</span> : null}
+                      <Badge variant="outline" className="text-[10px]">{d.stage}</Badge>
                     </div>
                   </div>
                 ))
-              ) : <p className="text-sm text-muted-foreground">—</p>}
+              ) : <p className="text-xs text-muted-foreground">Нет сделок</p>}
             </div>
           </div>
         )}
 
-        {/* Tab: Activity */}
+        {/* Tab: Activity — FIX #6: saving works */}
         {activeTab === "activity" && (
           <div className="space-y-4">
             <Button size="sm" className="gap-1" onClick={() => setShowActivityForm(!showActivityForm)}>
@@ -266,48 +351,41 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
             </Button>
 
             {showActivityForm && (
-              <div className="border rounded-lg p-3 space-y-3">
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <label className="text-xs text-muted-foreground">Тип</label>
-                    <Select value={activityType} onChange={e => setActivityType(e.target.value)}>
-                      <option value="note">📝 Заметка</option>
-                      <option value="call">📞 Звонок</option>
-                      <option value="email">📧 Email</option>
-                      <option value="meeting">🤝 Встреча</option>
-                    </Select>
+              <Card>
+                <CardContent className="pt-3 pb-3 space-y-3">
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <Label className="text-xs">Тип</Label>
+                      <Select value={activityType} onChange={e => setActivityType(e.target.value)}>
+                        <option value="note">📝 Заметка</option>
+                        <option value="call">📞 Звонок</option>
+                        <option value="email">📧 Email</option>
+                        <option value="meeting">🤝 Встреча</option>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label className="text-xs">Тема *</Label>
+                      <Input value={activitySubject} onChange={e => setActivitySubject(e.target.value)} placeholder="Тема активности" />
+                    </div>
                   </div>
                   <div>
-                    <label className="text-xs text-muted-foreground">Тема</label>
-                    <Input value={activitySubject} onChange={e => setActivitySubject(e.target.value)} placeholder="Тема активности" />
+                    <Label className="text-xs">Описание</Label>
+                    <Textarea value={activityDesc} onChange={e => setActivityDesc(e.target.value)} rows={2} placeholder="Детали..." />
                   </div>
-                </div>
-                <div>
-                  <label className="text-xs text-muted-foreground">Описание</label>
-                  <Textarea value={activityDesc} onChange={e => setActivityDesc(e.target.value)} rows={2} placeholder="Детали..." />
-                </div>
-                <div className="flex gap-2">
-                  <Button size="sm" onClick={async () => {
-                    try {
-                      await fetch("/api/v1/activities", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": orgId } : {}) },
-                        body: JSON.stringify({ type: activityType, subject: activitySubject, description: activityDesc, companyId: company.id }),
-                      })
-                      setShowActivityForm(false)
-                      setActivitySubject("")
-                      setActivityDesc("")
-                    } catch {}
-                  }}>Сохранить</Button>
-                  <Button size="sm" variant="outline" onClick={() => setShowActivityForm(false)}>Отмена</Button>
-                </div>
-              </div>
+                  <div className="flex gap-2">
+                    <Button size="sm" onClick={saveActivity} disabled={activitySaving || !activitySubject.trim()}>
+                      {activitySaving ? "Сохраняем..." : "Сохранить"}
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => setShowActivityForm(false)}>Отмена</Button>
+                  </div>
+                </CardContent>
+              </Card>
             )}
 
             {!showActivityForm && (
               <div className="text-center py-8 text-muted-foreground">
-                <p>Нет активностей</p>
-                <p className="text-xs">Запишите первую активность</p>
+                <p>Нет записанных активностей</p>
+                <p className="text-xs mt-1">Нажмите "Записать" чтобы добавить</p>
               </div>
             )}
           </div>
@@ -318,7 +396,7 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
           <div className="space-y-4">
             {!sentiment ? (
               <div className="text-center py-4">
-                <Button onClick={handleSentiment} disabled={aiLoading} className="gap-2">
+                <Button onClick={async () => { const d = await callAI("sentiment"); if (d) setSentiment(d) }} disabled={aiLoading} className="gap-2">
                   🐷 {aiLoading ? "Анализируем..." : "Анализировать тональность"}
                 </Button>
                 <p className="text-sm text-muted-foreground mt-2">AI проанализирует все коммуникации с этой компанией</p>
@@ -338,24 +416,22 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
                   </div>
                   <p className="font-bold mt-2">{sentiment.sentiment}</p>
                 </div>
-
-                <div className="grid grid-cols-3 gap-3">
-                  <Card><CardContent className="pt-3 pb-3 text-center">
-                    <p className="text-xs text-muted-foreground">TREND</p>
-                    <p className="font-medium">{sentiment.trend === "improving" ? "📈" : sentiment.trend === "stable" ? "➡️" : "❓"} {sentiment.trend}</p>
+                <div className="grid grid-cols-3 gap-2">
+                  <Card><CardContent className="pt-2 pb-2 text-center">
+                    <p className="text-[10px] text-muted-foreground">TREND</p>
+                    <p className="text-sm font-medium">{sentiment.trend === "improving" ? "📈" : sentiment.trend === "stable" ? "➡️" : "❓"} {sentiment.trend}</p>
                   </CardContent></Card>
-                  <Card><CardContent className="pt-3 pb-3 text-center">
-                    <p className="text-xs text-muted-foreground">RISK</p>
-                    <p className={`font-bold ${sentiment.risk === "HIGH" ? "text-red-500" : sentiment.risk === "MEDIUM" ? "text-orange-500" : "text-green-500"}`}>{sentiment.risk}</p>
+                  <Card><CardContent className="pt-2 pb-2 text-center">
+                    <p className="text-[10px] text-muted-foreground">RISK</p>
+                    <p className={`text-sm font-bold ${sentiment.risk === "HIGH" ? "text-red-500" : sentiment.risk === "MEDIUM" ? "text-orange-500" : "text-green-500"}`}>{sentiment.risk}</p>
                   </CardContent></Card>
-                  <Card><CardContent className="pt-3 pb-3 text-center">
-                    <p className="text-xs text-muted-foreground">CONFIDENCE</p>
-                    <p className="font-bold text-primary">{sentiment.confidence}%</p>
+                  <Card><CardContent className="pt-2 pb-2 text-center">
+                    <p className="text-[10px] text-muted-foreground">CONFIDENCE</p>
+                    <p className="text-sm font-bold text-primary">{sentiment.confidence}%</p>
                   </CardContent></Card>
                 </div>
-
                 <div className="bg-muted/50 p-3 rounded-lg">
-                  <p className="text-xs font-medium text-muted-foreground mb-1">РЕЗЮМЕ</p>
+                  <p className="text-[10px] font-medium text-muted-foreground mb-1">РЕЗЮМЕ</p>
                   <p className="text-sm">{sentiment.summary}</p>
                 </div>
               </div>
@@ -368,7 +444,7 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
           <div className="space-y-4">
             {!aiTasks ? (
               <div className="text-center py-4">
-                <Button onClick={handleGenerateTasks} disabled={aiLoading} className="gap-2">
+                <Button onClick={async () => { const d = await callAI("tasks"); if (d) setAiTasks(d) }} disabled={aiLoading} className="gap-2">
                   ⚡ {aiLoading ? "Генерируем..." : "Сгенерировать задачи"}
                 </Button>
                 <p className="text-sm text-muted-foreground mt-2">AI проанализирует и предложит задачи</p>
@@ -378,48 +454,43 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
                 <div className="bg-yellow-50 dark:bg-yellow-900/20 p-3 rounded-lg text-sm">
                   <p>💡 {aiTasks.strategy}</p>
                 </div>
-
                 {aiTasks.tasks.map((task: any, i: number) => (
                   <Card key={i}>
                     <CardContent className="pt-3 pb-3">
                       <div className="flex items-center justify-between mb-1">
                         <h4 className="font-medium text-sm">{task.type === "email" ? "📧" : task.type === "call" ? "📞" : task.type === "meeting" ? "📨" : "📋"} {task.title}</h4>
                         <div className="flex gap-1">
-                          <Badge variant={task.priority === "HIGH" ? "destructive" : "secondary"} className="text-xs">{task.priority}</Badge>
-                          <Badge variant="outline" className="text-xs">{task.type}</Badge>
+                          <Badge variant={task.priority === "HIGH" ? "destructive" : "secondary"} className="text-[10px]">{task.priority}</Badge>
+                          <Badge variant="outline" className="text-[10px]">{task.type}</Badge>
                         </div>
                       </div>
-                      <p className="text-xs text-muted-foreground mb-2">{task.description}</p>
-                      <div className="flex justify-between text-xs">
-                        <span>📅 {task.dueDate}</span>
-                        <span className="text-muted-foreground italic">{task.reasoning}</span>
-                      </div>
+                      <p className="text-xs text-muted-foreground mb-1">{task.description}</p>
+                      <p className="text-[10px] text-muted-foreground">📅 {task.dueDate}</p>
                     </CardContent>
                   </Card>
                 ))}
-
                 <div className="flex gap-2 justify-center">
                   <Button size="sm" className="gap-1"><CheckCircle className="h-3 w-3" /> Создать все задачи</Button>
-                  <Button size="sm" variant="outline" onClick={handleGenerateTasks} className="gap-1"><RefreshCw className="h-3 w-3" /> Пересоздать</Button>
+                  <Button size="sm" variant="outline" onClick={async () => { const d = await callAI("tasks"); if (d) setAiTasks(d) }} className="gap-1"><RefreshCw className="h-3 w-3" /> Пересоздать</Button>
                 </div>
               </div>
             )}
           </div>
         )}
 
-        {/* Tab: AI Text */}
+        {/* Tab: AI Text — FIX #8: email sending works */}
         {activeTab === "aitext" && (
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-xs text-muted-foreground">Тип текста</label>
+                <Label className="text-xs">Тип текста</Label>
                 <Select value={textType} onChange={e => setTextType(e.target.value)}>
                   <option value="Email">📧 Email</option>
                   <option value="SMS">📱 SMS</option>
                 </Select>
               </div>
               <div>
-                <label className="text-xs text-muted-foreground">Тон</label>
+                <Label className="text-xs">Тон</Label>
                 <Select value={tone} onChange={e => setTone(e.target.value)}>
                   <option value="Профессиональный">🏢 Профессиональный</option>
                   <option value="Дружелюбный">😊 Дружелюбный</option>
@@ -428,18 +499,11 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
                 </Select>
               </div>
             </div>
-
             <div>
-              <label className="text-xs text-muted-foreground">Дополнительные инструкции (необязательно)</label>
-              <Textarea
-                value={instructions}
-                onChange={e => setInstructions(e.target.value)}
-                rows={2}
-                placeholder="Например: упомянуть скидку 10%, предложить демо..."
-              />
+              <Label className="text-xs">Дополнительные инструкции</Label>
+              <Textarea value={instructions} onChange={e => setInstructions(e.target.value)} rows={2} placeholder="Например: упомянуть скидку 10%, предложить демо..." />
             </div>
-
-            <Button onClick={handleGenerateText} disabled={aiLoading} className="w-full gap-2">
+            <Button onClick={async () => { const d = await callAI("text", { textType, tone, instructions }); if (d) { setGeneratedText(d); setEmailSent(false) } }} disabled={aiLoading} className="w-full gap-2">
               ✉️ {aiLoading ? "Генерируем..." : "Сгенерировать текст"}
             </Button>
 
@@ -447,22 +511,22 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
               <div className="space-y-3">
                 {generatedText.subject && (
                   <div>
-                    <label className="text-xs font-medium text-primary">ТЕМА / SUBJECT</label>
+                    <Label className="text-xs text-primary">ТЕМА / SUBJECT</Label>
                     <Input value={generatedText.subject} readOnly className="mt-1" />
                   </div>
                 )}
                 <div>
-                  <label className="text-xs font-medium text-muted-foreground">ТЕКСТ ПИСЬМА (МОЖНО РЕДАКТИРОВАТЬ)</label>
+                  <Label className="text-xs">ТЕКСТ ПИСЬМА</Label>
                   <Textarea value={generatedText.body} rows={6} className="mt-1" readOnly />
                 </div>
                 <div className="flex gap-2 justify-center">
                   <Button size="sm" variant="outline" onClick={() => navigator.clipboard.writeText(generatedText.body)} className="gap-1">
                     <Copy className="h-3 w-3" /> Копировать
                   </Button>
-                  <Button size="sm" className="gap-1">
-                    <Send className="h-3 w-3" /> Отправить email
+                  <Button size="sm" onClick={sendGeneratedEmail} disabled={emailSending || emailSent} className="gap-1">
+                    <Send className="h-3 w-3" /> {emailSent ? "✅ Отправлено" : emailSending ? "Отправляем..." : "Отправить email"}
                   </Button>
-                  <Button size="sm" variant="outline" onClick={handleGenerateText} className="gap-1">
+                  <Button size="sm" variant="outline" onClick={async () => { const d = await callAI("text", { textType, tone, instructions }); if (d) { setGeneratedText(d); setEmailSent(false) } }} className="gap-1">
                     <RefreshCw className="h-3 w-3" /> Пересоздать
                   </Button>
                 </div>
@@ -471,36 +535,28 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
           </div>
         )}
 
-        {/* Action buttons */}
+        {/* Action buttons — FIX #7: contracts filtered by company */}
         <div className="grid grid-cols-2 gap-2 mt-4 pt-4 border-t">
-          <Button variant="outline" className="gap-1 bg-green-50 hover:bg-green-100 text-green-700 border-green-200"
-            onClick={() => { onOpenChange(false); router.push(`/contracts?companyId=${company.id}`) }}>
-            <FileText className="h-3 w-3" /> Просмотр контрактов
+          <Button variant="outline" size="sm" className="gap-1 text-green-700 border-green-200 hover:bg-green-50"
+            onClick={() => { onOpenChange(false); router.push(`/contracts?search=${encodeURIComponent(company.name)}`) }}>
+            <FileText className="h-3 w-3" /> Контракты
           </Button>
-          <Button variant="outline" className="gap-1 bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200"
+          <Button variant="outline" size="sm" className="gap-1 text-blue-700 border-blue-200 hover:bg-blue-50"
             onClick={() => { onOpenChange(false); router.push(`/companies/${company.id}`) }}>
-            <Building2 className="h-3 w-3" /> Редактировать
+            <Pencil className="h-3 w-3" /> Редактировать
           </Button>
-          <Button variant="outline" className="gap-1 bg-orange-50 hover:bg-orange-100 text-orange-700 border-orange-200"
+          <Button variant="outline" size="sm" className="gap-1 text-orange-700 border-orange-200 hover:bg-orange-50"
             onClick={async () => {
               if (!confirm(`Деактивировать ${company.name}?`)) return
-              await fetch(`/api/v1/companies/${company.id}`, {
-                method: "PUT",
-                headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": orgId } : {}) },
-                body: JSON.stringify({ status: "inactive", leadStatus: "cancelled" }),
-              })
+              await changeStatus("cancelled")
               onOpenChange(false)
-              onSaved?.()
             }}>
             <Ban className="h-3 w-3" /> Деактивировать
           </Button>
-          <Button variant="outline" className="gap-1 bg-red-50 hover:bg-red-100 text-red-700 border-red-200"
+          <Button variant="outline" size="sm" className="gap-1 text-red-700 border-red-200 hover:bg-red-50"
             onClick={async () => {
-              if (!confirm(`Удалить ${company.name}? Это действие необратимо.`)) return
-              await fetch(`/api/v1/companies/${company.id}`, {
-                method: "DELETE",
-                headers: orgId ? { "x-organization-id": orgId } : {},
-              })
+              if (!confirm(`Удалить ${company.name}? Необратимо.`)) return
+              await fetch(`/api/v1/companies/${company.id}`, { method: "DELETE", headers: orgId ? { "x-organization-id": orgId } : {} })
               onOpenChange(false)
               onSaved?.()
             }}>
@@ -510,8 +566,4 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
       </DialogContent>
     </Dialog>
   )
-}
-
-function Plus({ className }: { className?: string }) {
-  return <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
 }

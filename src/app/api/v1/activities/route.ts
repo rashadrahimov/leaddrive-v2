@@ -1,0 +1,64 @@
+import { NextRequest, NextResponse } from "next/server"
+import { z } from "zod"
+import { prisma } from "@/lib/prisma"
+import { getOrgId } from "@/lib/api-auth"
+
+const createActivitySchema = z.object({
+  type: z.string().min(1),
+  subject: z.string().min(1).max(500),
+  description: z.string().optional(),
+  contactId: z.string().optional(),
+  companyId: z.string().optional(),
+})
+
+export async function GET(req: NextRequest) {
+  const orgId = await getOrgId(req)
+  if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+
+  const { searchParams } = new URL(req.url)
+  const companyId = searchParams.get("companyId")
+  const contactId = searchParams.get("contactId")
+
+  try {
+    const where = {
+      organizationId: orgId,
+      ...(companyId ? { companyId } : {}),
+      ...(contactId ? { contactId } : {}),
+    }
+
+    const activities = await prisma.activity.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      take: 50,
+      include: {
+        contact: { select: { fullName: true } },
+        company: { select: { name: true } },
+      },
+    })
+
+    return NextResponse.json({ success: true, data: { activities } })
+  } catch {
+    return NextResponse.json({ success: true, data: { activities: [] } })
+  }
+}
+
+export async function POST(req: NextRequest) {
+  const orgId = await getOrgId(req)
+  if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+
+  const body = await req.json()
+  const parsed = createActivitySchema.safeParse(body)
+  if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 })
+
+  try {
+    const activity = await prisma.activity.create({
+      data: {
+        organizationId: orgId,
+        ...parsed.data,
+      },
+    })
+    return NextResponse.json({ success: true, data: activity }, { status: 201 })
+  } catch (e) {
+    return NextResponse.json({ error: String(e) }, { status: 500 })
+  }
+}
