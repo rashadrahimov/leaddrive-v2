@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { DataTable } from "@/components/data-table"
 import { StatCard } from "@/components/stat-card"
+import { Select } from "@/components/ui/select"
 import { Users, Plus, Mail, Phone, Pencil, Trash2 } from "lucide-react"
 import { ContactForm } from "@/components/contact-form"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
@@ -33,6 +34,7 @@ export default function ContactsPage() {
   const [editData, setEditData] = useState<Record<string, any> | undefined>()
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [deleteItem, setDeleteItem] = useState<Contact | null>(null)
+  const [sortBy, setSortBy] = useState("name_asc")
   const orgId = session?.user?.organizationId
 
   const fetchContacts = async () => {
@@ -168,9 +170,28 @@ export default function ContactsPage() {
         <StatCard title="With Phone" value={contacts.filter(c => c.phone).length} icon={<Phone className="h-4 w-4" />} />
       </div>
 
+      <div className="flex justify-end">
+        <Select value={sortBy} onChange={e => setSortBy(e.target.value)} className="w-[200px]">
+          <option value="name_asc">Имя А → Я</option>
+          <option value="name_desc">Имя Я → А</option>
+          <option value="company">Компания</option>
+          <option value="email">С email</option>
+          <option value="active">Активные первые</option>
+        </Select>
+      </div>
+
       <DataTable
         columns={columns}
-        data={contacts}
+        data={[...contacts].sort((a, b) => {
+          switch (sortBy) {
+            case "name_asc": return a.fullName.localeCompare(b.fullName)
+            case "name_desc": return b.fullName.localeCompare(a.fullName)
+            case "company": return (a.company?.name || "zzz").localeCompare(b.company?.name || "zzz")
+            case "email": return (a.email ? 0 : 1) - (b.email ? 0 : 1)
+            case "active": return (a.isActive ? 0 : 1) - (b.isActive ? 0 : 1)
+            default: return 0
+          }
+        })}
         searchPlaceholder="Search contacts..."
         searchKey="fullName"
         onRowClick={(item) => router.push(`/contacts/${item.id}`)}
