@@ -80,6 +80,9 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
   const [emailSending, setEmailSending] = useState(false)
   const [emailSent, setEmailSent] = useState(false)
 
+  // Full company data loaded from API
+  const [fullData, setFullData] = useState<any>(null)
+
   useEffect(() => {
     if (open && company) {
       setActiveTab("details")
@@ -89,6 +92,16 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
       setInstructions("")
       setAboutText(company.description || "")
       setEmailSent(false)
+      setFullData(null)
+      // Load full company data with contacts and deals
+      fetch(`/api/v1/companies/${company.id}`, {
+        headers: orgId ? { "x-organization-id": orgId } : {},
+      }).then(r => r.json()).then(json => {
+        if (json.success && json.data) {
+          setFullData(json.data)
+          if (json.data.description) setAboutText(json.data.description)
+        }
+      }).catch(() => {})
     }
   }, [open, company])
 
@@ -151,7 +164,7 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
 
   const sendGeneratedEmail = async () => {
     if (!generatedText) return
-    const firstContact = company.contacts?.[0]
+    const firstContact = (fullData?.contacts || company.contacts)?.[0]
     if (!firstContact?.email) { alert("Нет email контакта для отправки"); return }
     setEmailSending(true)
     try {
@@ -310,9 +323,9 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
                   <Plus className="h-3 w-3 mr-1" /> Управлять
                 </Button>
               </div>
-              {company.contacts && company.contacts.length > 0 ? (
+              {(fullData?.contacts || company.contacts) && (fullData?.contacts || company.contacts).length > 0 ? (
                 <div className="space-y-1">
-                  {company.contacts.map(c => (
+                  {(fullData?.contacts || company.contacts).map(c => (
                     <div key={c.id} className="flex items-center justify-between text-xs p-2 bg-muted/30 rounded">
                       <div>
                         <span className="font-medium">{c.fullName}</span>
@@ -327,9 +340,9 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
 
             {/* Deals */}
             <div>
-              <h4 className="font-medium text-sm mb-1">Сделки ({company.deals?.length || 0})</h4>
-              {company.deals && company.deals.length > 0 ? (
-                company.deals.map(d => (
+              <h4 className="font-medium text-sm mb-1">Сделки ({(fullData?.deals || company.deals)?.length || 0})</h4>
+              {(fullData?.deals || company.deals) && (fullData?.deals || company.deals).length > 0 ? (
+                (fullData?.deals || company.deals).map(d => (
                   <div key={d.id} className="flex justify-between text-xs p-2 bg-muted/30 rounded mb-1">
                     <span>{d.title}</span>
                     <div className="flex gap-1">
