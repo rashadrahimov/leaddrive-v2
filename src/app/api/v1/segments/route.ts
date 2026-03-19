@@ -5,6 +5,7 @@ import { getOrgId } from "@/lib/api-auth"
 
 const createSegmentSchema = z.object({
   name: z.string().min(1).max(255),
+  description: z.string().optional(),
   conditions: z.any().optional(),
   contactCount: z.number().optional(),
   isDynamic: z.boolean().optional(),

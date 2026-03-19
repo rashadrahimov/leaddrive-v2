@@ -603,6 +603,7 @@ model ContactSegment {
   id             String   @id @default(cuid())
   organizationId String
   name           String
+  description    String?
   conditions     Json     @default("{}")
   contactCount   Int      @default(0)
   isDynamic      Boolean  @default(true)
