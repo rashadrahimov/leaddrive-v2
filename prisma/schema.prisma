@@ -139,6 +139,7 @@ model Company {
   contacts       Contact[]
   deals          Deal[]
   activities     Activity[]
+  contracts      Contract[]
 
   @@index([organizationId])
   @@map("companies")
@@ -247,6 +248,7 @@ model Contract {
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   contractNumber String
   companyId      String?
+  company        Company?  @relation(fields: [companyId], references: [id])
   title          String
   type           String   @default("service_agreement")
   status         String   @default("draft")
