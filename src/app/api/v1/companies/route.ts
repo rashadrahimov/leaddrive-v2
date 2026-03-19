@@ -41,8 +41,6 @@ export async function GET(req: NextRequest) {
         orderBy: { name: "asc" },
         include: {
           _count: { select: { contacts: true, deals: true } },
-          contacts: { take: 5, select: { id: true, fullName: true, email: true, phone: true, position: true } },
-          deals: { take: 5, select: { id: true, title: true, stage: true, valueAmount: true } },
         },
       }),
       prisma.company.count({ where }),
@@ -52,7 +50,8 @@ export async function GET(req: NextRequest) {
       success: true,
       data: { companies, total, page, limit, search },
     })
-  } catch {
+  } catch (e) {
+    console.error("Companies API error:", e)
     return NextResponse.json({
       success: true,
       data: { companies: [], total: 0, page, limit, search },
