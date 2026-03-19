@@ -414,9 +414,9 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
             <div>
               <h4 className="font-medium text-sm mb-1">Сделки ({(fullData?.deals || company.deals)?.length || 0})</h4>
               {(fullData?.deals || company.deals) && (fullData?.deals || company.deals).length > 0 ? (
-                (fullData?.deals || company.deals).map(d => (
+                (fullData?.deals || company.deals).map((d: any) => (
                   <div key={d.id} className="flex justify-between text-xs p-2 bg-muted/30 rounded mb-1">
-                    <span>{d.title}</span>
+                    <span>{d.name || d.title}</span>
                     <div className="flex gap-1">
                       {d.valueAmount ? <span className="font-medium">{d.valueAmount.toLocaleString()} ₼</span> : null}
                       <Badge variant="outline" className="text-[10px]">{d.stage}</Badge>
@@ -424,6 +424,27 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
                   </div>
                 ))
               ) : <p className="text-xs text-muted-foreground">Нет сделок</p>}
+            </div>
+
+            {/* Contracts */}
+            <div>
+              <h4 className="font-medium text-sm mb-1">Контракты ({fullData?.contracts?.length || 0})</h4>
+              {fullData?.contracts && fullData.contracts.length > 0 ? (
+                fullData.contracts.map((c: any) => (
+                  <div key={c.id} className="flex justify-between items-center text-xs p-2 bg-muted/30 rounded mb-1">
+                    <div className="min-w-0 flex-1">
+                      <span className="font-medium">{c.contractNumber}</span>
+                      <span className="text-muted-foreground ml-1.5">{c.title}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 flex-shrink-0 ml-2">
+                      {c.valueAmount ? <span className="font-medium">{c.valueAmount.toLocaleString()} {c.currency || "AZN"}</span> : null}
+                      <Badge variant={c.status === "active" ? "default" : c.status === "expired" ? "destructive" : "secondary"} className="text-[10px]">
+                        {c.status}
+                      </Badge>
+                    </div>
+                  </div>
+                ))
+              ) : <p className="text-xs text-muted-foreground">Нет контрактов</p>}
             </div>
           </div>
         )}

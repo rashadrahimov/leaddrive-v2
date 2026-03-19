@@ -2,20 +2,22 @@
 
 import { useEffect, useState } from "react"
 import { useSession } from "next-auth/react"
-import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { DataTable } from "@/components/data-table"
+import { Card, CardContent } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
 import { StatCard } from "@/components/stat-card"
-import { Building2, Plus, Users, Pencil, Trash2 } from "lucide-react"
 import { CompanyForm } from "@/components/company-form"
+import { LeadDetailModal } from "@/components/lead-detail-modal"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
+import { Building2, Plus, Search, Users, FileText, TrendingUp } from "lucide-react"
 
 interface Company {
   id: string
   name: string
   industry: string | null
   status: string
+  category: string
   city: string | null
   country: string | null
   website: string | null
@@ -23,136 +25,77 @@ interface Company {
   phone: string | null
   address: string | null
   description: string | null
-  _count: { contacts: number; deals: number }
+  leadStatus: string
+  leadScore: number
+  leadTemperature?: string
+  userCount: number
+  annualRevenue?: number
+  _count: { contacts: number; deals: number; contracts: number }
 }
 
-const statusColors: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
-  active: "default",
-  prospect: "secondary",
-  inactive: "destructive",
+const statusLabels: Record<string, string> = {
+  active: "Активная",
+  prospect: "Проспект",
+  inactive: "Неактивная",
+}
+
+const statusColors: Record<string, string> = {
+  active: "bg-green-100 text-green-700",
+  prospect: "bg-blue-100 text-blue-700",
+  inactive: "bg-gray-100 text-gray-500",
 }
 
 export default function CompaniesPage() {
-  const router = useRouter()
   const { data: session } = useSession()
   const [companies, setCompanies] = useState<Company[]>([])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
   const [formOpen, setFormOpen] = useState(false)
   const [editData, setEditData] = useState<Record<string, any> | undefined>()
-  const [deleteOpen, setDeleteOpen] = useState(false)
-  const [deleteItem, setDeleteItem] = useState<Company | null>(null)
+  const [activeFilter, setActiveFilter] = useState<string>("all")
+  const [search, setSearch] = useState("")
+  const [selectedCompany, setSelectedCompany] = useState<Company | null>(null)
   const orgId = session?.user?.organizationId
 
   const fetchCompanies = async () => {
     try {
-      const res = await fetch("/api/v1/companies?limit=500", {
+      const res = await fetch("/api/v1/companies?category=all&limit=500", {
         headers: orgId ? { "x-organization-id": String(orgId) } : {},
       })
-        const json = await res.json()
-        if (json.success) {
-          setCompanies(json.data.companies)
-          setTotal(json.data.total)
-        }
+      const json = await res.json()
+      if (json.success) {
+        setCompanies(json.data.companies)
+        setTotal(json.data.total)
+      }
     } catch {} finally { setLoading(false) }
   }
 
   useEffect(() => { fetchCompanies() }, [session])
 
-  function handleEdit(item: Company) {
-    setEditData({ id: item.id, name: item.name, industry: item.industry, website: item.website, phone: item.phone, email: item.email, address: item.address, city: item.city, country: item.country, status: item.status, description: item.description })
-    setFormOpen(true)
+  const filtered = companies.filter(c => {
+    if (activeFilter !== "all" && c.status !== activeFilter) return false
+    if (search && !c.name.toLowerCase().includes(search.toLowerCase())) return false
+    return true
+  })
+
+  const statusCounts: Record<string, number> = {}
+  for (const c of companies) {
+    statusCounts[c.status] = (statusCounts[c.status] || 0) + 1
   }
 
-  function handleAdd() {
-    setEditData(undefined)
-    setFormOpen(true)
-  }
-
-  function handleDelete(item: Company) {
-    setDeleteItem(item)
-    setDeleteOpen(true)
-  }
-
-  async function confirmDelete() {
-    if (!deleteItem) return
-    const res = await fetch(`/api/v1/companies/${deleteItem.id}`, {
-      method: "DELETE",
-      headers: orgId ? { "x-organization-id": String(orgId) } : {},
-    })
-    if (!res.ok) throw new Error((await res.json()).error || "Failed to delete")
-    fetchCompanies()
-  }
-
-  const activeCount = companies.filter((c) => c.status === "active").length
-  const prospectCount = companies.filter((c) => c.status === "prospect").length
+  const activeCount = statusCounts["active"] || 0
   const totalContacts = companies.reduce((s, c) => s + (c._count?.contacts || 0), 0)
-
-  const columns = [
-    {
-      key: "name",
-      label: "Company",
-      sortable: true,
-      render: (item: any) => (
-        <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary font-semibold text-sm">
-            {item.name.charAt(0)}
-          </div>
-          <div>
-            <div className="font-medium">{item.name}</div>
-            <div className="text-xs text-muted-foreground">{item.industry || "—"}</div>
-          </div>
-        </div>
-      ),
-    },
-    { key: "city", label: "City", sortable: true, render: (item: any) => item.city || "—" },
-    {
-      key: "contactCount",
-      label: "Contacts",
-      sortable: true,
-      render: (item: any) => (
-        <div className="flex items-center gap-1">
-          <Users className="h-3 w-3 text-muted-foreground" />
-          {item._count?.contacts || 0}
-        </div>
-      ),
-    },
-    {
-      key: "status",
-      label: "Status",
-      sortable: true,
-      render: (item: any) => (
-        <Badge variant={statusColors[item.status] || "outline"}>
-          {item.status}
-        </Badge>
-      ),
-    },
-    {
-      key: "actions",
-      label: "",
-      className: "w-20",
-      render: (item: any) => (
-        <div className="flex items-center gap-1" onClick={(e: React.MouseEvent) => e.stopPropagation()}>
-          <button onClick={() => handleEdit(item)} className="p-1.5 rounded hover:bg-muted" title="Edit">
-            <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
-          </button>
-          <button onClick={() => handleDelete(item)} className="p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-900/20" title="Delete">
-            <Trash2 className="h-3.5 w-3.5 text-muted-foreground hover:text-red-500" />
-          </button>
-        </div>
-      ),
-    },
-  ]
+  const totalContracts = companies.reduce((s, c) => s + (c._count?.contracts || 0), 0)
 
   if (loading) {
     return (
       <div className="space-y-6">
-        <h1 className="text-2xl font-bold tracking-tight">Companies</h1>
+        <h1 className="text-2xl font-bold tracking-tight">Компании</h1>
         <div className="animate-pulse space-y-4">
           <div className="grid gap-4 md:grid-cols-4">
-            {[1, 2, 3, 4].map((i) => <div key={i} className="h-24 bg-muted rounded-lg" />)}
+            {[1, 2, 3, 4].map(i => <div key={i} className="h-24 bg-muted rounded-lg" />)}
           </div>
-          <div className="h-96 bg-muted rounded-lg" />
+          <div className="grid gap-4 md:grid-cols-3">{[1, 2, 3, 4, 5, 6].map(i => <div key={i} className="h-40 bg-muted rounded-lg" />)}</div>
         </div>
       </div>
     )
@@ -162,32 +105,119 @@ export default function CompaniesPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Companies</h1>
-          <p className="text-sm text-muted-foreground">Manage your client companies</p>
+          <h1 className="text-2xl font-bold tracking-tight">Компании ({filtered.length})</h1>
+          <p className="text-sm text-muted-foreground">Управление клиентскими компаниями</p>
         </div>
-        <Button onClick={handleAdd}>
-          <Plus className="h-4 w-4" />
-          Add Company
+        <Button onClick={() => { setEditData(undefined); setFormOpen(true) }}>
+          <Plus className="h-4 w-4 mr-1" /> Добавить
         </Button>
       </div>
 
       <div className="grid gap-4 md:grid-cols-4">
-        <StatCard title="Total" value={total} icon={<Building2 className="h-4 w-4" />} />
-        <StatCard title="Active" value={activeCount} trend="up" description="Active clients" />
-        <StatCard title="Prospects" value={prospectCount} />
-        <StatCard title="Contacts" value={totalContacts} icon={<Users className="h-4 w-4" />} />
+        <StatCard title="Всего" value={total} icon={<Building2 className="h-4 w-4" />} />
+        <StatCard title="Активные" value={activeCount} trend="up" />
+        <StatCard title="Контактов" value={totalContacts} icon={<Users className="h-4 w-4" />} />
+        <StatCard title="Контрактов" value={totalContracts} icon={<FileText className="h-4 w-4" />} />
       </div>
 
-      <DataTable
-        columns={columns}
-        data={companies}
-        searchPlaceholder="Search companies..."
-        searchKey="name"
-        onRowClick={(item) => router.push(`/companies/${item.id}`)}
-      />
+      {/* Status filter tabs */}
+      <div className="flex flex-wrap gap-2">
+        <Button
+          variant={activeFilter === "all" ? "default" : "outline"}
+          size="sm"
+          onClick={() => setActiveFilter("all")}
+        >
+          Все ({total})
+        </Button>
+        {Object.entries(statusLabels).map(([key, label]) => (
+          <Button
+            key={key}
+            variant={activeFilter === key ? "default" : "outline"}
+            size="sm"
+            onClick={() => setActiveFilter(key)}
+          >
+            {label} ({statusCounts[key] || 0})
+          </Button>
+        ))}
+      </div>
+
+      {/* Search */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          placeholder="Поиск компаний..."
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          className="pl-9"
+        />
+      </div>
+
+      {/* Company cards grid */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {filtered.length === 0 ? (
+          <div className="col-span-3 text-center py-12 text-muted-foreground">
+            Нет компаний с выбранным фильтром
+          </div>
+        ) : (
+          filtered.map(company => (
+            <Card key={company.id} className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => setSelectedCompany(company)}>
+              <CardContent className="pt-4 pb-4">
+                <div className="flex items-start justify-between mb-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary font-semibold text-sm flex-shrink-0">
+                      {company.name.charAt(0)}
+                    </div>
+                    <h3 className="font-bold text-sm truncate">{company.name}</h3>
+                  </div>
+                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium flex-shrink-0 ${statusColors[company.status] || "bg-gray-100"}`}>
+                    {statusLabels[company.status] || company.status}
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-2 text-xs text-muted-foreground mb-3">
+                  {company.industry && <span>{company.industry}</span>}
+                  {company.industry && company.city && <span>·</span>}
+                  {company.city && <span>{company.city}</span>}
+                  {!company.industry && !company.city && <span>{company.website || "—"}</span>}
+                </div>
+
+                <div className="flex justify-between text-xs text-muted-foreground mb-2">
+                  <span className="flex items-center gap-1">
+                    <Users className="h-3 w-3" /> {company._count?.contacts || 0} контактов
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <TrendingUp className="h-3 w-3" /> {company._count?.deals || 0} сделок
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <FileText className="h-3 w-3" /> {company._count?.contracts || 0} контрактов
+                  </span>
+                </div>
+
+                {company.leadTemperature && (
+                  <div className="flex items-center gap-2">
+                    <span className={`text-xs font-bold ${company.leadTemperature === "hot" ? "text-red-500" : company.leadTemperature === "warm" ? "text-orange-500" : "text-blue-500"}`}>
+                      {company.leadTemperature.toUpperCase()}
+                    </span>
+                    <span className="text-xs bg-muted px-1.5 py-0.5 rounded font-medium">
+                      {company.leadScore}
+                    </span>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          ))
+        )}
+      </div>
 
       <CompanyForm open={formOpen} onOpenChange={setFormOpen} onSaved={fetchCompanies} initialData={editData} orgId={orgId} />
-      <DeleteConfirmDialog open={deleteOpen} onOpenChange={setDeleteOpen} onConfirm={confirmDelete} title="Delete Company" itemName={deleteItem?.name} />
+
+      <LeadDetailModal
+        open={!!selectedCompany}
+        onOpenChange={(open) => { if (!open) setSelectedCompany(null) }}
+        company={selectedCompany}
+        orgId={orgId}
+        onSaved={fetchCompanies}
+      />
     </div>
   )
 }

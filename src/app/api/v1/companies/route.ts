@@ -40,7 +40,7 @@ export async function GET(req: NextRequest) {
         take: limit,
         orderBy: { name: "asc" },
         include: {
-          _count: { select: { contacts: true, deals: true } },
+          _count: { select: { contacts: true, deals: true, contracts: true } },
         },
       }),
       prisma.company.count({ where }),

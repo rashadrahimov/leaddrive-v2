@@ -36,6 +36,7 @@ export async function GET(
       include: {
         contacts: { orderBy: { fullName: "asc" } },
         deals: { orderBy: { createdAt: "desc" } },
+        contracts: { orderBy: { createdAt: "desc" } },
         activities: { orderBy: { createdAt: "desc" }, take: 20 },
       },
     })
