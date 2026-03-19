@@ -558,6 +558,7 @@ model Campaign {
   id             String    @id @default(cuid())
   organizationId String
   name           String
+  description    String?
   type           String    @default("email")
   status         String    @default("draft")
   subject        String?

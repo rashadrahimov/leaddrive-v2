@@ -5,8 +5,9 @@ import { getOrgId } from "@/lib/api-auth"
 
 const createCampaignSchema = z.object({
   name: z.string().min(1).max(255),
+  description: z.string().optional(),
   type: z.enum(["email", "sms"]).optional(),
-  status: z.enum(["draft", "scheduled", "sent"]).optional(),
+  status: z.enum(["draft", "scheduled", "sending", "sent", "cancelled"]).optional(),
   subject: z.string().optional(),
   templateId: z.string().optional(),
   scheduledAt: z.string().optional(),

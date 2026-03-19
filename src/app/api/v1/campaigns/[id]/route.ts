@@ -5,6 +5,7 @@ import { getOrgId } from "@/lib/api-auth"
 
 const updateCampaignSchema = z.object({
   name: z.string().optional(),
+  description: z.string().optional(),
   type: z.enum(["email", "sms"]).optional(),
   status: z.string().optional(),
   subject: z.string().optional(),

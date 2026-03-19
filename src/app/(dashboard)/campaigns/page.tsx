@@ -2,27 +2,53 @@
 
 import { useEffect, useState } from "react"
 import { useSession } from "next-auth/react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { DataTable } from "@/components/data-table"
+import { Badge } from "@/components/ui/badge"
 import { StatCard } from "@/components/stat-card"
 import { CampaignForm } from "@/components/campaign-form"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
-import { Plus, Mail, TrendingUp, Pencil, Trash2 } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import { Plus, Mail, Users, Send, Pencil, Trash2, Search } from "lucide-react"
+import { cn } from "@/lib/utils"
 
 interface Campaign {
   id: string
   name: string
-  status: "draft" | "scheduled" | "sent"
+  description?: string
+  status: string
   type: string
   subject?: string
   totalRecipients: number
+  totalSent: number
   totalOpened: number
   totalClicked: number
   budget?: number
   templateId?: string
+  segmentId?: string
   scheduledAt?: string
+  sentAt?: string
+  createdAt: string
+}
+
+const statusLabels: Record<string, string> = {
+  draft: "Черновик",
+  scheduled: "Запланирована",
+  sending: "Отправляется",
+  sent: "Отправлена",
+  cancelled: "Отменена",
+}
+
+const statusColors: Record<string, string> = {
+  draft: "text-gray-500",
+  scheduled: "text-amber-500",
+  sending: "text-blue-500",
+  sent: "text-green-600",
+  cancelled: "text-red-500",
+}
+
+const typeIcons: Record<string, string> = {
+  email: "📧",
+  sms: "📱",
 }
 
 export default function CampaignsPage() {
@@ -34,6 +60,7 @@ export default function CampaignsPage() {
   const [editData, setEditData] = useState<Campaign | undefined>()
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [deleteName, setDeleteName] = useState("")
+  const [search, setSearch] = useState("")
   const orgId = session?.user?.organizationId
 
   const fetchCampaigns = async () => {
@@ -53,88 +80,46 @@ export default function CampaignsPage() {
 
   const handleDelete = async () => {
     if (!deleteId) return
-    const res = await fetch(`/api/v1/campaigns/${deleteId}`, {
+    await fetch(`/api/v1/campaigns/${deleteId}`, {
       method: "DELETE",
       headers: orgId ? { "x-organization-id": String(orgId) } : {},
     })
-    if (!res.ok) throw new Error("Failed to delete")
     fetchCampaigns()
   }
 
-  const calculateOpenRate = (campaign: Campaign) => {
-    if (campaign.totalRecipients === 0) return "—"
-    return `${Math.round((campaign.totalOpened / campaign.totalRecipients) * 100)}%`
+  const handleSend = async (campaign: Campaign) => {
+    if (!confirm(`Отправить кампанию "${campaign.name}"? Это действие нельзя отменить.`)) return
+    try {
+      const res = await fetch(`/api/v1/campaigns/${campaign.id}/send`, {
+        method: "POST",
+        headers: orgId ? { "x-organization-id": String(orgId) } : {},
+      })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error || "Ошибка отправки")
+      alert(`Отправлено ${json.data.sent} из ${json.data.total} получателям`)
+      fetchCampaigns()
+    } catch (err: any) {
+      alert(`Ошибка: ${err.message}`)
+    }
   }
 
-  const calculateClickRate = (campaign: Campaign) => {
-    if (campaign.totalRecipients === 0) return "—"
-    return `${Math.round((campaign.totalClicked / campaign.totalRecipients) * 100)}%`
+  // Status counts
+  const statusCounts: Record<string, number> = { draft: 0, scheduled: 0, sending: 0, sent: 0, cancelled: 0 }
+  for (const c of campaigns) {
+    if (statusCounts[c.status] !== undefined) statusCounts[c.status]++
   }
 
-  const columns = [
-    {
-      key: "name", label: "Campaign", sortable: true,
-      render: (item: any) => (
-        <div>
-          <div className="font-medium">{item.name}</div>
-          <div className="text-xs text-muted-foreground">{item.totalRecipients.toLocaleString()} recipients</div>
-        </div>
-      ),
-    },
-    {
-      key: "type", label: "Type", sortable: true,
-      render: (item: any) => <Badge variant="outline">{item.type.toUpperCase()}</Badge>,
-    },
-    {
-      key: "status", label: "Status", sortable: true,
-      render: (item: any) => {
-        const variants: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
-          sent: "default", scheduled: "secondary", draft: "outline",
-        }
-        return <Badge variant={variants[item.status]}>{item.status}</Badge>
-      },
-    },
-    {
-      key: "openRate", label: "Open Rate", sortable: true,
-      render: (item: any) => <span className="text-sm">{calculateOpenRate(item)}</span>,
-    },
-    {
-      key: "clickRate", label: "Click Rate", sortable: true,
-      render: (item: any) => <span className="text-sm">{calculateClickRate(item)}</span>,
-    },
-    {
-      key: "actions", label: "", sortable: false,
-      render: (item: any) => (
-        <div className="flex gap-1">
-          <Button variant="ghost" size="sm" onClick={() => { setEditData(item); setShowForm(true) }}>
-            <Pencil className="h-3.5 w-3.5" />
-          </Button>
-          <Button variant="ghost" size="sm" onClick={() => { setDeleteId(item.id); setDeleteName(item.name) }}>
-            <Trash2 className="h-3.5 w-3.5 text-destructive" />
-          </Button>
-        </div>
-      ),
-    },
-  ]
-
-  const avgOpenRate = campaigns.length > 0
-    ? Math.round(campaigns.reduce((s, c) => s + (c.totalRecipients > 0 ? (c.totalOpened / c.totalRecipients) * 100 : 0), 0) / campaigns.length)
-    : 0
-
-  const avgClickRate = campaigns.length > 0
-    ? Math.round(campaigns.reduce((s, c) => s + (c.totalRecipients > 0 ? (c.totalClicked / c.totalRecipients) * 100 : 0), 0) / campaigns.length)
-    : 0
-
-  const totalRecipients = campaigns.reduce((s, c) => s + c.totalRecipients, 0)
+  // Filter by search
+  const filtered = campaigns.filter(c =>
+    !search || c.name.toLowerCase().includes(search.toLowerCase()) || (c.description || "").toLowerCase().includes(search.toLowerCase())
+  )
 
   if (loading) {
     return (
       <div className="space-y-6">
-        <h1 className="text-2xl font-bold tracking-tight">Campaigns</h1>
+        <h1 className="text-2xl font-bold tracking-tight">Кампании</h1>
         <div className="animate-pulse space-y-4">
-          <div className="grid gap-4 md:grid-cols-4">
-            {[1, 2, 3, 4].map((i) => <div key={i} className="h-24 bg-muted rounded-lg" />)}
-          </div>
+          <div className="grid gap-4 md:grid-cols-5">{[1, 2, 3, 4, 5].map(i => <div key={i} className="h-24 bg-muted rounded-lg" />)}</div>
           <div className="h-96 bg-muted rounded-lg" />
         </div>
       </div>
@@ -145,43 +130,108 @@ export default function CampaignsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Campaigns</h1>
-          <p className="text-muted-foreground">Manage email and SMS campaigns</p>
+          <h1 className="text-2xl font-bold tracking-tight">Кампании</h1>
+          <p className="text-sm text-muted-foreground">Создавайте и отправляйте массовые email/SMS рассылки контактам и лидам</p>
         </div>
-        <Button className="gap-2" onClick={() => { setEditData(undefined); setShowForm(true) }}>
-          <Plus className="h-4 w-4" /> Create Campaign
+        <Button onClick={() => { setEditData(undefined); setShowForm(true) }}>
+          <Plus className="h-4 w-4 mr-1" /> Новая кампания
         </Button>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <StatCard title="Total Campaigns" value={total} icon={<Mail className="h-4 w-4" />} />
-        <StatCard title="Recipients" value={totalRecipients.toLocaleString()} description="Unique contacts" />
-        <StatCard title="Avg Open Rate" value={`${avgOpenRate}%`} icon={<TrendingUp className="h-4 w-4" />} trend="up" />
-        <StatCard title="Avg Click Rate" value={`${avgClickRate}%`} description="Performance metric" />
+      {/* Stats — 5 status cards like v1 */}
+      <div className="grid gap-4 md:grid-cols-5">
+        <StatCard title="Черновик" value={statusCounts.draft} />
+        <StatCard title="Запланирована" value={statusCounts.scheduled} />
+        <StatCard title="Отправляется" value={statusCounts.sending} />
+        <StatCard title="Отправлена" value={statusCounts.sent} />
+        <StatCard title="Отменена" value={statusCounts.cancelled} />
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>All Campaigns</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <DataTable columns={columns} data={campaigns} searchPlaceholder="Search campaigns..." searchKey="name" pageSize={10} />
-        </CardContent>
-      </Card>
+      {/* Search */}
+      <div className="relative max-w-md">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder="Поиск кампаний..."
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          className="pl-9"
+        />
+      </div>
+
+      {/* Campaign cards */}
+      <div className="space-y-3">
+        {filtered.length === 0 ? (
+          <div className="text-center py-12 text-muted-foreground">
+            {campaigns.length === 0 ? "Нет кампаний. Создайте первую!" : "Ничего не найдено"}
+          </div>
+        ) : (
+          filtered.map(campaign => (
+            <div
+              key={campaign.id}
+              className="border rounded-lg p-4 hover:shadow-sm transition-shadow cursor-pointer bg-card"
+              onClick={() => { setEditData(campaign); setShowForm(true) }}
+            >
+              <div className="flex items-start justify-between">
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold text-base">{campaign.name}</h3>
+                  {campaign.description && (
+                    <p className="text-sm text-muted-foreground mt-0.5 line-clamp-2">{campaign.description}</p>
+                  )}
+                  <div className="flex items-center gap-3 mt-2 text-sm">
+                    <span className={cn("font-medium", statusColors[campaign.status] || "text-gray-500")}>
+                      {statusLabels[campaign.status] || campaign.status}
+                    </span>
+                    <span className="text-muted-foreground flex items-center gap-1">
+                      {typeIcons[campaign.type] || "📧"} {campaign.type === "sms" ? "SMS" : "Email"}
+                    </span>
+                    <span className="text-muted-foreground flex items-center gap-1">
+                      <Users className="h-3.5 w-3.5" /> {campaign.totalRecipients}
+                    </span>
+                    {campaign.totalSent > 0 && (
+                      <span className="text-muted-foreground flex items-center gap-1">
+                        <Send className="h-3.5 w-3.5" /> {campaign.totalSent}
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <div className="text-right shrink-0 ml-4">
+                  {campaign.status === "sent" ? (
+                    <div>
+                      <div className="text-lg font-bold text-green-600">{campaign.totalSent}/{campaign.totalRecipients}</div>
+                      <div className="text-xs text-muted-foreground">Отправлено</div>
+                    </div>
+                  ) : campaign.budget ? (
+                    <div>
+                      <div className="text-lg font-bold">{campaign.budget.toLocaleString()}</div>
+                      <div className="text-xs text-muted-foreground">Бюджет</div>
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
 
       <CampaignForm
         open={showForm}
         onOpenChange={(open) => { setShowForm(open); if (!open) setEditData(undefined) }}
         onSaved={fetchCampaigns}
-        initialData={editData ? { ...editData, totalRecipients: String(editData.totalRecipients || ""), budget: String(editData.budget || "") } : undefined}
+        initialData={editData ? {
+          ...editData,
+          totalRecipients: String(editData.totalRecipients || ""),
+          budget: String(editData.budget || ""),
+        } : undefined}
         orgId={orgId}
+        onSend={editData ? () => handleSend(editData) : undefined}
+        onDelete={editData ? () => { setDeleteId(editData.id); setDeleteName(editData.name); setShowForm(false) } : undefined}
       />
 
       <DeleteConfirmDialog
         open={!!deleteId}
         onOpenChange={(open) => { if (!open) setDeleteId(null) }}
         onConfirm={handleDelete}
-        title="Delete Campaign"
+        title="Удалить кампанию"
         itemName={deleteName}
       />
     </div>
