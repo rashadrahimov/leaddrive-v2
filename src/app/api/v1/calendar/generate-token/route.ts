@@ -5,12 +5,20 @@ import crypto from "crypto"
 
 export async function POST(req: NextRequest) {
   const session = await auth()
-  if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  const email = session?.user?.email
+  const orgId = session?.user?.organizationId || req.headers.get("x-organization-id")
+  if (!email || !orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+
+  const user = await prisma.user.findFirst({
+    where: { email, organizationId: orgId },
+    select: { id: true },
+  })
+  if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 })
 
   const token = crypto.randomBytes(32).toString("base64url")
 
   await prisma.user.update({
-    where: { id: session.user.id },
+    where: { id: user.id },
     data: { calendarToken: token },
   })
 

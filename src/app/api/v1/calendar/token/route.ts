@@ -4,10 +4,12 @@ import { auth } from "@/lib/auth"
 
 export async function GET(req: NextRequest) {
   const session = await auth()
-  if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  const email = session?.user?.email
+  const orgId = session?.user?.organizationId || req.headers.get("x-organization-id")
+  if (!email || !orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
-  const user = await prisma.user.findUnique({
-    where: { id: session.user.id },
+  const user = await prisma.user.findFirst({
+    where: { email, organizationId: orgId },
     select: { calendarToken: true },
   })
 
