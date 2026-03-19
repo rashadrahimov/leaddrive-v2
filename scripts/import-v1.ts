@@ -155,6 +155,8 @@ async function main() {
   const v1Companies = loadJson("companies.json")
   let companyCount = 0
   for (const c of v1Companies) {
+    // Skip partners — not needed in v2
+    if (c.category === "partner") continue
     try {
       const company = await prisma.company.create({
         data: {

@@ -30,7 +30,7 @@ export async function GET(req: NextRequest) {
     const where = {
       organizationId: orgId,
       ...(search ? { name: { contains: search, mode: "insensitive" as const } } : {}),
-      ...(category && category !== "all" ? { category } : { category: { in: ["client", "partner"] } }),
+      ...(category && category !== "all" ? { category } : { category: { not: "partner" } }),
     }
 
     const [companies, total] = await Promise.all([
