@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { DataTable } from "@/components/data-table"
 import { StatCard } from "@/components/stat-card"
+import { LeadForm } from "@/components/lead-form"
 import { UserPlus, Plus, Target, TrendingUp } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -48,24 +49,26 @@ export default function LeadsPage() {
   const { data: session } = useSession()
   const [leads, setLeads] = useState<Lead[]>([])
   const [loading, setLoading] = useState(true)
+  const [formOpen, setFormOpen] = useState(false)
+  const orgId = (session?.user as any)?.organizationId
+
+  async function fetchLeads() {
+    try {
+      const res = await fetch("/api/v1/leads?limit=200", {
+        headers: orgId ? { "x-organization-id": orgId } : {},
+      })
+      const json = await res.json()
+      if (json.success) {
+        setLeads(json.data.leads)
+      }
+    } catch {
+      // keep empty
+    } finally {
+      setLoading(false)
+    }
+  }
 
   useEffect(() => {
-    async function fetchLeads() {
-      try {
-        const orgId = (session?.user as any)?.organizationId
-        const res = await fetch("/api/v1/leads?limit=200", {
-          headers: orgId ? { "x-organization-id": orgId } : {},
-        })
-        const json = await res.json()
-        if (json.success) {
-          setLeads(json.data.leads)
-        }
-      } catch {
-        // keep empty
-      } finally {
-        setLoading(false)
-      }
-    }
     fetchLeads()
   }, [session])
 
@@ -139,7 +142,7 @@ export default function LeadsPage() {
           <h1 className="text-2xl font-bold tracking-tight">Leads</h1>
           <p className="text-sm text-muted-foreground">Track and score your leads</p>
         </div>
-        <Button>
+        <Button onClick={() => setFormOpen(true)}>
           <Plus className="h-4 w-4" />
           New Lead
         </Button>
@@ -159,6 +162,8 @@ export default function LeadsPage() {
         searchKey="contactName"
         onRowClick={(item) => router.push(`/leads/${item.id}`)}
       />
+
+      <LeadForm open={formOpen} onOpenChange={setFormOpen} onSaved={fetchLeads} orgId={orgId} />
     </div>
   )
 }

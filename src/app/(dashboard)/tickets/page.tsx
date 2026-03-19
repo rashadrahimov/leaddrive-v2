@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { DataTable } from "@/components/data-table"
 import { StatCard } from "@/components/stat-card"
+import { TicketForm } from "@/components/ticket-form"
 import { Ticket, Plus, Clock, AlertTriangle, CheckCircle } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -45,24 +46,26 @@ export default function TicketsPage() {
   const [tickets, setTickets] = useState<TicketData[]>([])
   const [view, setView] = useState<ViewMode>("list")
   const [loading, setLoading] = useState(true)
+  const [formOpen, setFormOpen] = useState(false)
+  const orgId = (session?.user as any)?.organizationId
+
+  async function fetchTickets() {
+    try {
+      const res = await fetch("/api/v1/tickets?limit=200", {
+        headers: orgId ? { "x-organization-id": orgId } : {},
+      })
+      const json = await res.json()
+      if (json.success) {
+        setTickets(json.data.tickets)
+      }
+    } catch {
+      // keep empty
+    } finally {
+      setLoading(false)
+    }
+  }
 
   useEffect(() => {
-    async function fetchTickets() {
-      try {
-        const orgId = (session?.user as any)?.organizationId
-        const res = await fetch("/api/v1/tickets?limit=200", {
-          headers: orgId ? { "x-organization-id": orgId } : {},
-        })
-        const json = await res.json()
-        if (json.success) {
-          setTickets(json.data.tickets)
-        }
-      } catch {
-        // keep empty
-      } finally {
-        setLoading(false)
-      }
-    }
     fetchTickets()
   }, [session])
 
@@ -131,7 +134,7 @@ export default function TicketsPage() {
             <button onClick={() => setView("list")} className={cn("px-3 py-1.5 text-sm", view === "list" ? "bg-primary text-primary-foreground" : "hover:bg-muted")}>List</button>
             <button onClick={() => setView("kanban")} className={cn("px-3 py-1.5 text-sm", view === "kanban" ? "bg-primary text-primary-foreground" : "hover:bg-muted")}>Kanban</button>
           </div>
-          <Button><Plus className="h-4 w-4" /> New Ticket</Button>
+          <Button onClick={() => setFormOpen(true)}><Plus className="h-4 w-4" /> New Ticket</Button>
         </div>
       </div>
 
@@ -176,6 +179,8 @@ export default function TicketsPage() {
           ))}
         </div>
       )}
+
+      <TicketForm open={formOpen} onOpenChange={setFormOpen} onSaved={fetchTickets} orgId={orgId} />
     </div>
   )
 }

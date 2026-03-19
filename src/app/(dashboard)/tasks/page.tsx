@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { DataTable } from "@/components/data-table"
 import { StatCard } from "@/components/stat-card"
+import { TaskForm } from "@/components/task-form"
 import { CheckSquare, Plus, Clock, AlertTriangle } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -43,24 +44,26 @@ export default function TasksPage() {
   const [tasks, setTasks] = useState<Task[]>([])
   const [view, setView] = useState<ViewMode>("list")
   const [loading, setLoading] = useState(true)
+  const [formOpen, setFormOpen] = useState(false)
+  const orgId = (session?.user as any)?.organizationId
+
+  async function fetchTasks() {
+    try {
+      const res = await fetch("/api/v1/tasks?limit=200", {
+        headers: orgId ? { "x-organization-id": orgId } : {},
+      })
+      const json = await res.json()
+      if (json.success) {
+        setTasks(json.data.tasks)
+      }
+    } catch {
+      // keep empty
+    } finally {
+      setLoading(false)
+    }
+  }
 
   useEffect(() => {
-    async function fetchTasks() {
-      try {
-        const orgId = (session?.user as any)?.organizationId
-        const res = await fetch("/api/v1/tasks?limit=200", {
-          headers: orgId ? { "x-organization-id": orgId } : {},
-        })
-        const json = await res.json()
-        if (json.success) {
-          setTasks(json.data.tasks)
-        }
-      } catch {
-        // keep empty
-      } finally {
-        setLoading(false)
-      }
-    }
     fetchTasks()
   }, [session])
 
@@ -153,7 +156,7 @@ export default function TasksPage() {
               Kanban
             </button>
           </div>
-          <Button>
+          <Button onClick={() => setFormOpen(true)}>
             <Plus className="h-4 w-4" />
             New Task
           </Button>
@@ -199,6 +202,8 @@ export default function TasksPage() {
           ))}
         </div>
       )}
+
+      <TaskForm open={formOpen} onOpenChange={setFormOpen} onSaved={fetchTasks} orgId={orgId} />
     </div>
   )
 }

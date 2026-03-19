@@ -1,5 +1,7 @@
 "use client"
 
+import { useEffect, useState } from "react"
+import { useSession } from "next-auth/react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { StatCard } from "@/components/stat-card"
@@ -7,37 +9,71 @@ import { Button } from "@/components/ui/button"
 import { DataTable } from "@/components/data-table"
 import { Zap, TrendingUp, Clock } from "lucide-react"
 
-const AGENT_STATUS = [
-  { id: "1", name: "Lead Scorer", status: "active", requests: 4521, avgLatency: 245, uptime: "99.9%" },
-  { id: "2", name: "Email Composer", status: "active", requests: 3892, avgLatency: 312, uptime: "99.8%" },
-  { id: "3", name: "Meeting Scheduler", status: "inactive", requests: 1245, avgLatency: 521, uptime: "98.5%" },
-  { id: "4", name: "Deal Analyzer", status: "active", requests: 2156, avgLatency: 198, uptime: "99.9%" },
-]
+interface AgentConfig {
+  id: string
+  configName: string
+  model: string
+  isActive: boolean
+  version: number
+  notes: string | null
+}
 
-const RECENT_SESSIONS = [
-  { id: "1", agent: "Lead Scorer", user: "Rashad", input: "Score lead: Zeytunpharma", duration: "0.24s", status: "completed" },
-  { id: "2", agent: "Email Composer", user: "Afsana", input: "Write follow-up email", duration: "1.32s", status: "completed" },
-  { id: "3", agent: "Deal Analyzer", user: "Azar", input: "Analyze GTL deal", duration: "0.45s", status: "completed" },
-  { id: "4", agent: "Lead Scorer", user: "Admin", input: "Batch score contacts", duration: "2.15s", status: "completed" },
-]
+interface ChatSession {
+  id: string
+  messagesCount: number
+  status: string
+  createdAt: string
+  companyId: string | null
+}
 
 export default function AICommandCenterPage() {
-  const columns = [
-    { key: "agent", label: "Agent", sortable: true },
-    { key: "user", label: "User", sortable: true },
-    { key: "input", label: "Task", sortable: false },
+  const { data: session } = useSession()
+  const [agents, setAgents] = useState<AgentConfig[]>([])
+  const [sessions, setSessions] = useState<ChatSession[]>([])
+  const [loading, setLoading] = useState(true)
+  const orgId = (session?.user as any)?.organizationId
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const headers = orgId ? { "x-organization-id": orgId } : {}
+        const [agentsRes, sessionsRes] = await Promise.all([
+          fetch("/api/v1/ai-configs", { headers }).then(r => r.json()).catch(() => ({ success: false })),
+          fetch("/api/v1/ai-sessions", { headers }).then(r => r.json()).catch(() => ({ success: false })),
+        ])
+        if (agentsRes.success) setAgents(agentsRes.data?.configs || [])
+        if (sessionsRes.success) setSessions(sessionsRes.data?.sessions || [])
+      } catch {} finally { setLoading(false) }
+    }
+    fetchData()
+  }, [session])
+
+  const activeAgents = agents.filter(a => a.isActive).length
+  const totalMessages = sessions.reduce((s, sess) => s + sess.messagesCount, 0)
+
+  const sessionColumns = [
+    { key: "id", label: "Session", render: (item: ChatSession) => item.id.slice(0, 8) + "..." },
+    { key: "messagesCount", label: "Messages", sortable: true },
     {
-      key: "status",
-      label: "Status",
-      sortable: true,
-      render: (item: typeof RECENT_SESSIONS[0]) => (
-        <Badge variant="outline" className="bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400">
-          {item.status}
-        </Badge>
+      key: "status", label: "Status", sortable: true,
+      render: (item: ChatSession) => (
+        <Badge variant={item.status === "active" ? "default" : "secondary"}>{item.status}</Badge>
       ),
     },
-    { key: "duration", label: "Duration", sortable: true },
+    {
+      key: "createdAt", label: "Created", sortable: true,
+      render: (item: ChatSession) => new Date(item.createdAt).toLocaleDateString(),
+    },
   ]
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <h1 className="text-2xl font-bold tracking-tight">AI Command Center</h1>
+        <div className="animate-pulse"><div className="h-96 bg-muted rounded-lg" /></div>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
@@ -47,41 +83,34 @@ export default function AICommandCenterPage() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <StatCard title="Total Requests" value={12814} icon={<Zap className="h-4 w-4" />} trend="up" description="+2,341 this month" />
-        <StatCard title="Avg Latency" value="269ms" icon={<Clock className="h-4 w-4" />} description="2% faster" />
-        <StatCard title="Uptime" value="99.8%" icon={<TrendingUp className="h-4 w-4" />} trend="up" />
-        <StatCard title="Active Agents" value={3} description="of 4" />
+        <StatCard title="AI Agents" value={agents.length} icon={<Zap className="h-4 w-4" />} description={`${activeAgents} active`} />
+        <StatCard title="Chat Sessions" value={sessions.length} icon={<Clock className="h-4 w-4" />} />
+        <StatCard title="Total Messages" value={totalMessages} icon={<TrendingUp className="h-4 w-4" />} />
+        <StatCard title="Active Agents" value={activeAgents} description={`of ${agents.length}`} />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
         <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle>Agent Status</CardTitle>
-          </CardHeader>
+          <CardHeader><CardTitle>Agent Configurations</CardTitle></CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {AGENT_STATUS.map((agent) => (
+              {agents.length > 0 ? agents.map((agent) => (
                 <div key={agent.id} className="flex items-center justify-between p-3 rounded-lg border">
                   <div>
-                    <div className="font-medium">{agent.name}</div>
-                    <div className="text-xs text-muted-foreground">{agent.requests.toLocaleString()} requests</div>
+                    <div className="font-medium">{agent.configName}</div>
+                    <div className="text-xs text-muted-foreground">{agent.model} · v{agent.version}</div>
                   </div>
-                  <div className="text-right">
-                    <Badge variant={agent.status === "active" ? "default" : "secondary"}>
-                      {agent.status}
-                    </Badge>
-                    <div className="text-xs text-muted-foreground mt-1">{agent.avgLatency}ms latency</div>
-                  </div>
+                  <Badge variant={agent.isActive ? "default" : "secondary"}>
+                    {agent.isActive ? "active" : "inactive"}
+                  </Badge>
                 </div>
-              ))}
+              )) : <div className="text-sm text-muted-foreground">No AI agents configured</div>}
             </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Quick Actions</CardTitle>
-          </CardHeader>
+          <CardHeader><CardTitle className="text-base">Quick Actions</CardTitle></CardHeader>
           <CardContent className="space-y-2">
             <Button className="w-full" variant="outline">Configure Agents</Button>
             <Button className="w-full" variant="outline">View Logs</Button>
@@ -92,17 +121,11 @@ export default function AICommandCenterPage() {
       </div>
 
       <Card>
-        <CardHeader>
-          <CardTitle>Recent Sessions</CardTitle>
-        </CardHeader>
+        <CardHeader><CardTitle>Chat Sessions</CardTitle></CardHeader>
         <CardContent>
-          <DataTable
-            columns={columns}
-            data={RECENT_SESSIONS}
-            searchPlaceholder="Search by agent, user, or task..."
-            searchKey="agent"
-            pageSize={10}
-          />
+          {sessions.length > 0 ? (
+            <DataTable columns={sessionColumns} data={sessions} searchPlaceholder="Search sessions..." searchKey="id" pageSize={10} />
+          ) : <div className="text-sm text-muted-foreground p-4">No chat sessions yet</div>}
         </CardContent>
       </Card>
     </div>
