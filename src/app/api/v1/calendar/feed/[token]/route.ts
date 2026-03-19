@@ -31,11 +31,6 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ toke
     where: {
       organizationId: user.organizationId,
       dueDate: { not: null },
-      OR: [
-        { assignedTo: user.name },
-        { assignedTo: user.email },
-        { createdBy: user.id },
-      ],
     },
     orderBy: { dueDate: "asc" },
   })
