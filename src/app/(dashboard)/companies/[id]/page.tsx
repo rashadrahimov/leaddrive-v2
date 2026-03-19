@@ -35,7 +35,7 @@ export default function CompanyDetailPage() {
   const [company, setCompany] = useState<CompanyDetail | null>(null)
   const [loading, setLoading] = useState(true)
   const [editOpen, setEditOpen] = useState(false)
-  const orgId = (session?.user as any)?.organizationId
+  const orgId = session?.user?.organizationId
 
   const fetchCompany = async () => {
     try {

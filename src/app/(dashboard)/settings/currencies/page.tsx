@@ -1,92 +1,140 @@
-'use client';
+"use client"
 
-import { useEffect, useState } from 'react';
-import { useSession } from 'next-auth/react';
-import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { DollarSign } from 'lucide-react';
+import { useEffect, useState } from "react"
+import { useSession } from "next-auth/react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { DataTable } from "@/components/data-table"
+import { CurrencyForm } from "@/components/currency-form"
+import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
+import { Plus, Pencil, Trash2 } from "lucide-react"
 
 interface Currency {
-  id: string;
-  code: string;
-  name: string;
-  symbol: string;
-  exchangeRate: number;
-  isBase: boolean;
-  isActive: boolean;
+  id: string
+  code: string
+  name: string
+  symbol: string
+  exchangeRate: number
+  isBase: boolean
+  isActive: boolean
 }
 
 export default function CurrenciesPage() {
-  const { data: session } = useSession();
-  const [currencies, setCurrencies] = useState<Currency[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: session } = useSession()
+  const [currencies, setCurrencies] = useState<Currency[]>([])
+  const [loading, setLoading] = useState(true)
+  const [showForm, setShowForm] = useState(false)
+  const [editData, setEditData] = useState<Currency | undefined>()
+  const [deleteId, setDeleteId] = useState<string | null>(null)
+  const [deleteName, setDeleteName] = useState("")
+  const orgId = session?.user?.organizationId
 
-  useEffect(() => {
-    if (!session?.user?.email) return;
-
-    const fetchCurrencies = async () => {
-      try {
-        const response = await fetch('/api/v1/currencies');
-        if (response.ok) {
-          const result = await response.json();
-          setCurrencies(result.data || []);
-        }
-      } catch (error) {
-        console.error('Failed to fetch currencies:', error);
-      } finally {
-        setLoading(false);
+  const fetchCurrencies = async () => {
+    try {
+      const res = await fetch("/api/v1/currencies", {
+        headers: orgId ? { "x-organization-id": String(orgId) } : {},
+      })
+      if (res.ok) {
+        const result = await res.json()
+        setCurrencies(result.data || [])
       }
-    };
-
-    fetchCurrencies();
-  }, [session]);
-
-  if (loading) {
-    return (
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold">Currencies</h1>
-          <p className="text-muted-foreground mt-2">Manage currencies and exchange rates</p>
-        </div>
-        <p className="text-muted-foreground">Loading...</p>
-      </div>
-    );
+    } catch {} finally { setLoading(false) }
   }
+
+  useEffect(() => { fetchCurrencies() }, [session])
+
+  const handleDelete = async () => {
+    if (!deleteId) return
+    const res = await fetch(`/api/v1/currencies/${deleteId}`, {
+      method: "DELETE",
+      headers: orgId ? { "x-organization-id": String(orgId) } : {},
+    })
+    if (!res.ok) throw new Error("Failed to delete")
+    fetchCurrencies()
+  }
+
+  const columns = [
+    {
+      key: "code", label: "Code", sortable: true,
+      render: (item: any) => (
+        <div className="font-medium flex items-center gap-2">
+          {item.code}
+          {item.isBase && <Badge variant="default" className="text-xs">Base</Badge>}
+        </div>
+      ),
+    },
+    {
+      key: "name", label: "Name", sortable: true,
+      render: (item: any) => <div>{item.name}</div>,
+    },
+    {
+      key: "symbol", label: "Symbol", sortable: true,
+      render: (item: any) => <Badge variant="outline">{item.symbol}</Badge>,
+    },
+    {
+      key: "exchangeRate", label: "Exchange Rate", sortable: true,
+      render: (item: any) => <div className="font-mono text-sm">{item.exchangeRate}</div>,
+    },
+    {
+      key: "isActive", label: "Status", sortable: true,
+      render: (item: any) => <Badge variant={item.isActive ? "default" : "secondary"}>{item.isActive ? "Active" : "Inactive"}</Badge>,
+    },
+    {
+      key: "edit", label: "", sortable: false,
+      render: (item: any) => (
+        <div className="flex gap-1">
+          <Button variant="ghost" size="sm" onClick={() => { setEditData(item); setShowForm(true) }}>
+            <Pencil className="h-3.5 w-3.5" />
+          </Button>
+          <Button variant="ghost" size="sm" onClick={() => { setDeleteId(item.id); setDeleteName(item.code) }}>
+            <Trash2 className="h-3.5 w-3.5 text-destructive" />
+          </Button>
+        </div>
+      ),
+    },
+  ]
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Currencies</h1>
-        <p className="text-muted-foreground mt-2">Manage currencies and exchange rates</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Currencies</h1>
+          <p className="text-muted-foreground">Manage currencies and exchange rates</p>
+        </div>
+        <Button className="gap-2" onClick={() => { setEditData(undefined); setShowForm(true) }}>
+          <Plus className="h-4 w-4" /> Add Currency
+        </Button>
       </div>
 
-      <div className="space-y-3">
-        {currencies.map((curr) => (
-          <Card key={curr.id} className="p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="bg-primary/10 p-2 rounded">
-                  <DollarSign className="w-5 h-5 text-primary" />
-                </div>
-                <div>
-                  <div className="font-semibold flex items-center gap-2">
-                    {curr.code}
-                    {curr.isBase && (
-                      <Badge variant="default" className="text-xs">
-                        Base
-                      </Badge>
-                    )}
-                  </div>
-                  <p className="text-sm text-muted-foreground">{curr.name}</p>
-                </div>
-              </div>
-              <div className="text-right">
-                <p className="font-semibold">Rate: {curr.exchangeRate}</p>
-              </div>
-            </div>
-          </Card>
-        ))}
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>All Currencies</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <p className="text-muted-foreground">Loading...</p>
+          ) : (
+            <DataTable columns={columns} data={currencies} searchPlaceholder="Search currencies..." searchKey="code" pageSize={10} />
+          )}
+        </CardContent>
+      </Card>
+
+      <CurrencyForm
+        open={showForm}
+        onOpenChange={(open) => { setShowForm(open); if (!open) setEditData(undefined) }}
+        onSaved={fetchCurrencies}
+        initialData={editData}
+        orgId={orgId}
+      />
+
+      <DeleteConfirmDialog
+        open={!!deleteId}
+        onOpenChange={(open) => { if (!open) setDeleteId(null) }}
+        onConfirm={handleDelete}
+        title="Delete Currency"
+        itemName={deleteName}
+      />
     </div>
-  );
+  )
 }

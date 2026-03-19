@@ -7,16 +7,22 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { DataTable } from "@/components/data-table"
 import { StatCard } from "@/components/stat-card"
-import { Plus, Mail, TrendingUp } from "lucide-react"
+import { CampaignForm } from "@/components/campaign-form"
+import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
+import { Plus, Mail, TrendingUp, Pencil, Trash2 } from "lucide-react"
 
 interface Campaign {
   id: string
   name: string
   status: "draft" | "scheduled" | "sent"
   type: string
+  subject?: string
   totalRecipients: number
   totalOpened: number
   totalClicked: number
+  budget?: number
+  templateId?: string
+  scheduledAt?: string
 }
 
 export default function CampaignsPage() {
@@ -24,7 +30,11 @@ export default function CampaignsPage() {
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
-  const orgId = (session?.user as any)?.organizationId
+  const [showForm, setShowForm] = useState(false)
+  const [editData, setEditData] = useState<Campaign | undefined>()
+  const [deleteId, setDeleteId] = useState<string | null>(null)
+  const [deleteName, setDeleteName] = useState("")
+  const orgId = session?.user?.organizationId
 
   const fetchCampaigns = async () => {
     try {
@@ -40,6 +50,17 @@ export default function CampaignsPage() {
   }
 
   useEffect(() => { fetchCampaigns() }, [session])
+
+  const handleDelete = async () => {
+    if (!deleteId) return
+    const res = await fetch(`/api/v1/campaigns/${deleteId}`, {
+      method: "DELETE",
+      headers: orgId ? { "x-organization-id": String(orgId) } : {},
+    })
+    if (!res.ok) throw new Error("Failed to delete")
+    fetchCampaigns()
+  }
+
   const calculateOpenRate = (campaign: Campaign) => {
     if (campaign.totalRecipients === 0) return "—"
     return `${Math.round((campaign.totalOpened / campaign.totalRecipients) * 100)}%`
@@ -52,9 +73,7 @@ export default function CampaignsPage() {
 
   const columns = [
     {
-      key: "name",
-      label: "Campaign",
-      sortable: true,
+      key: "name", label: "Campaign", sortable: true,
       render: (item: any) => (
         <div>
           <div className="font-medium">{item.name}</div>
@@ -63,37 +82,38 @@ export default function CampaignsPage() {
       ),
     },
     {
-      key: "type",
-      label: "Type",
-      sortable: true,
-      render: (item: any) => (
-        <Badge variant="outline">{item.type.toUpperCase()}</Badge>
-      ),
+      key: "type", label: "Type", sortable: true,
+      render: (item: any) => <Badge variant="outline">{item.type.toUpperCase()}</Badge>,
     },
     {
-      key: "status",
-      label: "Status",
-      sortable: true,
+      key: "status", label: "Status", sortable: true,
       render: (item: any) => {
         const variants: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
-          sent: "default",
-          scheduled: "secondary",
-          draft: "outline",
+          sent: "default", scheduled: "secondary", draft: "outline",
         }
         return <Badge variant={variants[item.status]}>{item.status}</Badge>
       },
     },
     {
-      key: "openRate",
-      label: "Open Rate",
-      sortable: true,
+      key: "openRate", label: "Open Rate", sortable: true,
       render: (item: any) => <span className="text-sm">{calculateOpenRate(item)}</span>,
     },
     {
-      key: "clickRate",
-      label: "Click Rate",
-      sortable: true,
+      key: "clickRate", label: "Click Rate", sortable: true,
       render: (item: any) => <span className="text-sm">{calculateClickRate(item)}</span>,
+    },
+    {
+      key: "actions", label: "", sortable: false,
+      render: (item: any) => (
+        <div className="flex gap-1">
+          <Button variant="ghost" size="sm" onClick={() => { setEditData(item); setShowForm(true) }}>
+            <Pencil className="h-3.5 w-3.5" />
+          </Button>
+          <Button variant="ghost" size="sm" onClick={() => { setDeleteId(item.id); setDeleteName(item.name) }}>
+            <Trash2 className="h-3.5 w-3.5 text-destructive" />
+          </Button>
+        </div>
+      ),
     },
   ]
 
@@ -128,9 +148,8 @@ export default function CampaignsPage() {
           <h1 className="text-2xl font-bold tracking-tight">Campaigns</h1>
           <p className="text-muted-foreground">Manage email and SMS campaigns</p>
         </div>
-        <Button className="gap-2">
-          <Plus className="h-4 w-4" />
-          Create Campaign
+        <Button className="gap-2" onClick={() => { setEditData(undefined); setShowForm(true) }}>
+          <Plus className="h-4 w-4" /> Create Campaign
         </Button>
       </div>
 
@@ -146,15 +165,25 @@ export default function CampaignsPage() {
           <CardTitle>All Campaigns</CardTitle>
         </CardHeader>
         <CardContent>
-          <DataTable
-            columns={columns}
-            data={campaigns}
-            searchPlaceholder="Search campaigns..."
-            searchKey="name"
-            pageSize={10}
-          />
+          <DataTable columns={columns} data={campaigns} searchPlaceholder="Search campaigns..." searchKey="name" pageSize={10} />
         </CardContent>
       </Card>
+
+      <CampaignForm
+        open={showForm}
+        onOpenChange={(open) => { setShowForm(open); if (!open) setEditData(undefined) }}
+        onSaved={fetchCampaigns}
+        initialData={editData ? { ...editData, totalRecipients: String(editData.totalRecipients || ""), budget: String(editData.budget || "") } : undefined}
+        orgId={orgId}
+      />
+
+      <DeleteConfirmDialog
+        open={!!deleteId}
+        onOpenChange={(open) => { if (!open) setDeleteId(null) }}
+        onConfirm={handleDelete}
+        title="Delete Campaign"
+        itemName={deleteName}
+      />
     </div>
   )
 }

@@ -35,7 +35,7 @@ interface ClientWithServices {
 
 export default function PricingPage() {
   const { data: session } = useSession()
-  const orgId = (session?.user as any)?.organizationId
+  const orgId = session?.user?.organizationId
   const [search, setSearch] = useState("")
   const [loading, setLoading] = useState(true)
   const [editingClient, setEditingClient] = useState<string | null>(null)

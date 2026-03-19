@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -27,6 +27,19 @@ export function TicketForm({ open, onOpenChange, onSaved, initialData, orgId }: 
   })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState("")
+
+  useEffect(() => {
+    if (open) {
+      setForm({
+        subject: initialData?.subject || "",
+        description: initialData?.description || "",
+        priority: initialData?.priority || "medium",
+        category: initialData?.category || "general",
+        status: initialData?.status || "new",
+      })
+      setError("")
+    }
+  }, [open, initialData])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

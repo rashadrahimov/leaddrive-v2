@@ -42,7 +42,7 @@ export default function CompaniesPage() {
   const [editData, setEditData] = useState<Record<string, any> | undefined>()
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [deleteItem, setDeleteItem] = useState<Company | null>(null)
-  const orgId = (session?.user as any)?.organizationId
+  const orgId = session?.user?.organizationId
 
   const fetchCompanies = async () => {
     try {

@@ -2,16 +2,19 @@
 
 import { useEffect, useState } from "react"
 import { useSession } from "next-auth/react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { StatCard } from "@/components/stat-card"
-import { BookOpen, Plus, Search, Eye, Pencil, Calendar, Tag } from "lucide-react"
+import { KbArticleForm } from "@/components/kb-article-form"
+import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
+import { BookOpen, Plus, Search, Eye, Pencil, Trash2, Calendar } from "lucide-react"
 
 interface KbArticle {
   id: string
   title: string
+  content?: string
   categoryId?: string
   status: "published" | "draft"
   viewCount: number
@@ -27,7 +30,11 @@ export default function KnowledgeBasePage() {
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
   const [filterStatus, setFilterStatus] = useState<string>("all")
-  const orgId = (session?.user as any)?.organizationId
+  const [showForm, setShowForm] = useState(false)
+  const [editData, setEditData] = useState<KbArticle | undefined>()
+  const [deleteId, setDeleteId] = useState<string | null>(null)
+  const [deleteName, setDeleteName] = useState("")
+  const orgId = session?.user?.organizationId
 
   const fetchArticles = async () => {
     try {
@@ -43,6 +50,16 @@ export default function KnowledgeBasePage() {
   }
 
   useEffect(() => { fetchArticles() }, [session])
+
+  const handleDelete = async () => {
+    if (!deleteId) return
+    const res = await fetch(`/api/v1/kb/${deleteId}`, {
+      method: "DELETE",
+      headers: orgId ? { "x-organization-id": String(orgId) } : {},
+    })
+    if (!res.ok) throw new Error("Failed to delete")
+    fetchArticles()
+  }
 
   const filtered = articles.filter(a => {
     if (filterStatus !== "all" && a.status !== filterStatus) return false
@@ -76,7 +93,7 @@ export default function KnowledgeBasePage() {
           </h1>
           <p className="text-sm text-muted-foreground">Manage help articles for your team and clients</p>
         </div>
-        <Button><Plus className="h-4 w-4 mr-1" /> New Article</Button>
+        <Button onClick={() => { setEditData(undefined); setShowForm(true) }}><Plus className="h-4 w-4 mr-1" /> New Article</Button>
       </div>
 
       <div className="grid gap-4 md:grid-cols-4">
@@ -111,7 +128,7 @@ export default function KnowledgeBasePage() {
           </Card>
         ) : (
           filtered.map(article => (
-            <Card key={article.id} className="hover:bg-muted/30 transition-colors cursor-pointer">
+            <Card key={article.id} className="hover:bg-muted/30 transition-colors">
               <CardContent className="pt-4 pb-4">
                 <div className="flex items-start justify-between">
                   <div className="flex-1 min-w-0">
@@ -131,15 +148,36 @@ export default function KnowledgeBasePage() {
                       ))}
                     </div>
                   </div>
-                  <Button variant="ghost" size="sm" className="ml-4">
-                    <Pencil className="h-3.5 w-3.5" />
-                  </Button>
+                  <div className="flex gap-1 ml-4">
+                    <Button variant="ghost" size="sm" onClick={() => { setEditData(article); setShowForm(true) }}>
+                      <Pencil className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button variant="ghost" size="sm" onClick={() => { setDeleteId(article.id); setDeleteName(article.title) }}>
+                      <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                    </Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>
           ))
         )}
       </div>
+
+      <KbArticleForm
+        open={showForm}
+        onOpenChange={(open) => { setShowForm(open); if (!open) setEditData(undefined) }}
+        onSaved={fetchArticles}
+        initialData={editData ? { ...editData, tags: editData.tags.join(", ") } : undefined}
+        orgId={orgId}
+      />
+
+      <DeleteConfirmDialog
+        open={!!deleteId}
+        onOpenChange={(open) => { if (!open) setDeleteId(null) }}
+        onConfirm={handleDelete}
+        title="Delete Article"
+        itemName={deleteName}
+      />
     </div>
   )
 }

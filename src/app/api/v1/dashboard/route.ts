@@ -8,7 +8,7 @@ export async function GET(req: NextRequest) {
 
   if (!orgId) {
     const session = await auth()
-    orgId = (session?.user as any)?.organizationId || null
+    orgId = session?.user?.organizationId || null
   }
 
   if (!orgId) {

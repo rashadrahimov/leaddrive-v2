@@ -46,7 +46,7 @@ export default function ProfitabilityPage() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const orgId = (session?.user as any)?.organizationId
+        const orgId = session?.user?.organizationId
         const res = await fetch("/api/v1/cost-model", {
           headers: orgId ? { "x-organization-id": String(orgId) } : {},
         })

@@ -4,91 +4,70 @@ import { useEffect, useState } from "react"
 import { useSession } from "next-auth/react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Download, TrendingUp, DollarSign, BarChart3, CheckSquare, Clock } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
+import { StatCard } from "@/components/stat-card"
+import { Download, TrendingUp, DollarSign, BarChart3, CheckSquare, Clock, Users, Building2, Target } from "lucide-react"
 
-interface Report {
-  id: string
-  title: string
-  description: string
-  icon: string
-  value: string
-  period: string
+interface ReportData {
+  overview: {
+    companies: number
+    contacts: number
+    deals: number
+    leads: number
+    tasks: number
+    tickets: number
+    totalRevenue: number
+    openTickets: number
+    overdueTasks: number
+  }
+  revenue: {
+    totalRevenue: number
+    wonDealsCount: number
+    avgDealSize: number
+  }
+  pipeline: {
+    stages: { stage: string; count: number; value: number }[]
+    totalPipelineValue: number
+  }
+  tasks: {
+    total: number
+    byStatus: { status: string; count: number }[]
+    completionRate: number
+    overdue: number
+  }
+  tickets: {
+    total: number
+    byStatus: { status: string; count: number }[]
+    resolutionRate: number
+    open: number
+  }
+  leads: {
+    total: number
+    byStatus: { status: string; count: number }[]
+    conversionRate: number
+  }
 }
 
 export default function ReportsPage() {
   const { data: session } = useSession()
+  const [data, setData] = useState<ReportData | null>(null)
   const [loading, setLoading] = useState(true)
-  const orgId = (session?.user as any)?.organizationId
+  const orgId = session?.user?.organizationId
 
   useEffect(() => {
-    // Simulate loading reports - in future, fetch from /api/v1/dashboard
-    setLoading(false)
+    async function fetchReports() {
+      try {
+        const res = await fetch("/api/v1/reports", {
+          headers: orgId ? { "x-organization-id": String(orgId) } : {},
+        })
+        const json = await res.json()
+        if (json.success) setData(json.data)
+      } catch {} finally { setLoading(false) }
+    }
+    fetchReports()
   }, [session])
 
-  // Default report structure
-  const REPORTS: Report[] = [
-    {
-      id: "1",
-      title: "Revenue Report",
-      description: "Total revenue, MRR, growth trends",
-      icon: "dollar",
-      value: "$0",
-      period: "This Month",
-    },
-    {
-      id: "2",
-      title: "Client Profitability",
-      description: "Revenue by client, margins",
-      icon: "trending",
-      value: "$0",
-      period: "Average",
-    },
-    {
-      id: "3",
-      title: "Deal Pipeline",
-      description: "Pipeline by stage, conversion rates",
-      icon: "bar",
-      value: "$0",
-      period: "Potential",
-    },
-    {
-      id: "4",
-      title: "Task Summary",
-      description: "Completed, overdue, upcoming",
-      icon: "check",
-      value: "0",
-      period: "This Quarter",
-    },
-    {
-      id: "5",
-      title: "Ticket SLA",
-      description: "Resolution time, SLA compliance",
-      icon: "clock",
-      value: "0%",
-      period: "On-Time",
-    },
-    {
-      id: "6",
-      title: "Team Performance",
-      description: "Activity, deals closed, revenue",
-      icon: "trending",
-      value: "0",
-      period: "Deals Closed",
-    },
-  ]
-
-  const getIcon = (iconName: string) => {
-    const icons: Record<string, React.ReactNode> = {
-      dollar: <DollarSign className="h-5 w-5 text-primary" />,
-      trending: <TrendingUp className="h-5 w-5 text-primary" />,
-      bar: <BarChart3 className="h-5 w-5 text-primary" />,
-      check: <CheckSquare className="h-5 w-5 text-primary" />,
-      clock: <Clock className="h-5 w-5 text-primary" />,
-    }
-    return icons[iconName] || <TrendingUp className="h-5 w-5 text-primary" />
-  }
-
-  if (loading) {
+  if (loading || !data) {
     return (
       <div className="space-y-6">
         <h1 className="text-2xl font-bold tracking-tight">Reports</h1>
@@ -108,35 +87,173 @@ export default function ReportsPage() {
           <h1 className="text-2xl font-bold tracking-tight">Reports</h1>
           <p className="text-muted-foreground">Business intelligence and insights</p>
         </div>
-        <Button variant="outline" className="gap-2">
-          <Download className="h-4 w-4" />
-          Export All
-        </Button>
       </div>
 
+      {/* Overview Stats */}
+      <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-6">
+        <StatCard title="Companies" value={data.overview.companies} icon={<Building2 className="h-4 w-4" />} />
+        <StatCard title="Contacts" value={data.overview.contacts} icon={<Users className="h-4 w-4" />} />
+        <StatCard title="Deals" value={data.overview.deals} icon={<DollarSign className="h-4 w-4" />} />
+        <StatCard title="Leads" value={data.overview.leads} icon={<Target className="h-4 w-4" />} />
+        <StatCard title="Tasks" value={data.overview.tasks} icon={<CheckSquare className="h-4 w-4" />} />
+        <StatCard title="Tickets" value={data.overview.tickets} icon={<Clock className="h-4 w-4" />} />
+      </div>
+
+      {/* Report Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {REPORTS.map((report) => (
-          <Card key={report.id} className="hover:shadow-lg transition-shadow">
-            <CardHeader className="pb-3">
-              <div className="flex items-start justify-between">
-                <div>
-                  <CardTitle className="text-base">{report.title}</CardTitle>
-                  <p className="text-xs text-muted-foreground mt-1">{report.description}</p>
-                </div>
-                {getIcon(report.icon)}
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
+        {/* Revenue Report */}
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex items-start justify-between">
               <div>
-                <div className="text-2xl font-bold">{report.value}</div>
-                <div className="text-xs text-muted-foreground">{report.period}</div>
+                <CardTitle className="text-base">Revenue Report</CardTitle>
+                <p className="text-xs text-muted-foreground mt-1">Won deals revenue</p>
               </div>
-              <Button className="w-full" variant="outline" size="sm">
-                Generate Report
-              </Button>
-            </CardContent>
-          </Card>
-        ))}
+              <DollarSign className="h-5 w-5 text-primary" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{data.revenue.totalRevenue.toLocaleString()} ₼</div>
+            <div className="text-xs text-muted-foreground">{data.revenue.wonDealsCount} won deals</div>
+            <div className="text-xs text-muted-foreground mt-1">Avg deal size: {data.revenue.avgDealSize.toLocaleString()} ₼</div>
+          </CardContent>
+        </Card>
+
+        {/* Pipeline Report */}
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex items-start justify-between">
+              <div>
+                <CardTitle className="text-base">Deal Pipeline</CardTitle>
+                <p className="text-xs text-muted-foreground mt-1">Pipeline by stage</p>
+              </div>
+              <BarChart3 className="h-5 w-5 text-primary" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{data.pipeline.totalPipelineValue.toLocaleString()} ₼</div>
+            <div className="space-y-1 mt-2">
+              {data.pipeline.stages.map(s => (
+                <div key={s.stage} className="flex justify-between text-xs">
+                  <span>{s.stage}</span>
+                  <span className="font-medium">{s.count} deals · {s.value.toLocaleString()} ₼</span>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Tasks Report */}
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex items-start justify-between">
+              <div>
+                <CardTitle className="text-base">Task Summary</CardTitle>
+                <p className="text-xs text-muted-foreground mt-1">Completion and overdue</p>
+              </div>
+              <CheckSquare className="h-5 w-5 text-primary" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{data.tasks.completionRate}%</div>
+            <div className="text-xs text-muted-foreground">Completion rate</div>
+            <div className="space-y-1 mt-2">
+              {data.tasks.byStatus.map(t => (
+                <div key={t.status} className="flex justify-between text-xs">
+                  <span className="capitalize">{t.status.replace(/_/g, " ")}</span>
+                  <span className="font-medium">{t.count}</span>
+                </div>
+              ))}
+              <div className="flex justify-between text-xs text-red-500">
+                <span>Overdue</span>
+                <span className="font-medium">{data.tasks.overdue}</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Tickets Report */}
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex items-start justify-between">
+              <div>
+                <CardTitle className="text-base">Ticket SLA</CardTitle>
+                <p className="text-xs text-muted-foreground mt-1">Resolution and open tickets</p>
+              </div>
+              <Clock className="h-5 w-5 text-primary" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{data.tickets.resolutionRate}%</div>
+            <div className="text-xs text-muted-foreground">Resolution rate</div>
+            <div className="space-y-1 mt-2">
+              {data.tickets.byStatus.map(t => (
+                <div key={t.status} className="flex justify-between text-xs">
+                  <span className="capitalize">{t.status.replace(/_/g, " ")}</span>
+                  <span className="font-medium">{t.count}</span>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Leads Report */}
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex items-start justify-between">
+              <div>
+                <CardTitle className="text-base">Lead Conversion</CardTitle>
+                <p className="text-xs text-muted-foreground mt-1">Leads by status</p>
+              </div>
+              <Target className="h-5 w-5 text-primary" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{data.leads.conversionRate}%</div>
+            <div className="text-xs text-muted-foreground">Conversion rate</div>
+            <div className="space-y-1 mt-2">
+              {data.leads.byStatus.map(l => (
+                <div key={l.status} className="flex justify-between text-xs">
+                  <span className="capitalize">{l.status}</span>
+                  <span className="font-medium">{l.count}</span>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Team Report */}
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex items-start justify-between">
+              <div>
+                <CardTitle className="text-base">Team Performance</CardTitle>
+                <p className="text-xs text-muted-foreground mt-1">Activity overview</p>
+              </div>
+              <TrendingUp className="h-5 w-5 text-primary" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span>Active Deals</span>
+                <span className="font-bold">{data.overview.deals}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span>Open Tickets</span>
+                <span className="font-bold">{data.overview.openTickets}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span>Overdue Tasks</span>
+                <span className="font-bold text-red-500">{data.overview.overdueTasks}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span>Revenue</span>
+                <span className="font-bold text-green-600">{data.overview.totalRevenue.toLocaleString()} ₼</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   )

@@ -74,10 +74,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token.role = (user as Record<string, unknown>).role as string
-        token.organizationId = (user as Record<string, unknown>).organizationId as string
-        token.organizationName = (user as Record<string, unknown>).organizationName as string
-        token.plan = (user as Record<string, unknown>).plan as string
+        token.role = user.role
+        token.organizationId = user.organizationId
+        token.organizationName = user.organizationName
+        token.plan = user.plan
       }
       return token
     },

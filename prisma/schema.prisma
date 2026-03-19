@@ -735,6 +735,26 @@ model ChannelConfig {
   @@map("channel_configs")
 }
 
+model ChannelMessage {
+  id              String   @id @default(cuid())
+  organizationId  String
+  channelConfigId String?
+  direction       String   // inbound, outbound
+  contactId       String?
+  from            String
+  to              String
+  subject         String?
+  body            String
+  status          String   @default("delivered") // pending, delivered, failed, read
+  externalId      String?
+  metadata        Json     @default("{}")
+  createdAt       DateTime @default(now())
+
+  @@index([organizationId])
+  @@index([organizationId, contactId])
+  @@map("channel_messages")
+}
+
 model WorkflowRule {
   id             String   @id @default(cuid())
   organizationId String

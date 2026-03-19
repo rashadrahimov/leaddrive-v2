@@ -2,8 +2,9 @@
 
 import { useTheme } from "next-themes"
 import { Button } from "@/components/ui/button"
-import { Sun, Moon, Bell, Search, LogOut } from "lucide-react"
+import { Sun, Moon, Search, LogOut } from "lucide-react"
 import { signOut } from "next-auth/react"
+import { NotificationBell } from "@/components/notification-bell"
 
 interface HeaderProps {
   orgName?: string
@@ -24,9 +25,7 @@ export function Header({ orgName = "Organization", userName = "User" }: HeaderPr
           <Search className="h-4 w-4" />
         </Button>
 
-        <Button variant="ghost" size="icon" title="Notifications">
-          <Bell className="h-4 w-4" />
-        </Button>
+        <NotificationBell />
 
         <Button
           variant="ghost"

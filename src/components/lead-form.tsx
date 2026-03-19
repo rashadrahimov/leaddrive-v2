@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -31,6 +31,23 @@ export function LeadForm({ open, onOpenChange, onSaved, initialData, orgId }: Le
   })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState("")
+
+  useEffect(() => {
+    if (open) {
+      setForm({
+        contactName: initialData?.contactName || "",
+        companyName: initialData?.companyName || "",
+        email: initialData?.email || "",
+        phone: initialData?.phone || "",
+        source: initialData?.source || "",
+        status: initialData?.status || "new",
+        priority: initialData?.priority || "medium",
+        estimatedValue: String(initialData?.estimatedValue || ""),
+        notes: initialData?.notes || "",
+      })
+      setError("")
+    }
+  }, [open, initialData])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

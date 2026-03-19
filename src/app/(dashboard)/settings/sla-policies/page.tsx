@@ -3,10 +3,12 @@
 import { useEffect, useState } from "react"
 import { useSession } from "next-auth/react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Input } from "@/components/ui/input"
-import { Plus, Pencil, Trash2, Clock, AlertTriangle } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { DataTable } from "@/components/data-table"
+import { SlaPolicyForm } from "@/components/sla-policy-form"
+import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
+import { Plus, Pencil, Trash2, Clock } from "lucide-react"
 
 interface SlaPolicy {
   id: string
@@ -35,40 +37,75 @@ export default function SlaPoliciesPage() {
   const { data: session } = useSession()
   const [policies, setPolicies] = useState<SlaPolicy[]>([])
   const [loading, setLoading] = useState(true)
+  const [showForm, setShowForm] = useState(false)
+  const [editData, setEditData] = useState<SlaPolicy | undefined>()
+  const [deleteId, setDeleteId] = useState<string | null>(null)
+  const [deleteName, setDeleteName] = useState("")
+  const orgId = session?.user?.organizationId
 
-  useEffect(() => {
-    if (!session?.user?.email) return
-
-    const fetchPolicies = async () => {
-      try {
-        const response = await fetch("/api/v1/sla-policies")
-        if (response.ok) {
-          const result = await response.json()
-          setPolicies(result.data || [])
-        }
-      } catch (error) {
-        console.error("Failed to fetch SLA policies:", error)
-      } finally {
-        setLoading(false)
+  const fetchPolicies = async () => {
+    try {
+      const res = await fetch("/api/v1/sla-policies", {
+        headers: orgId ? { "x-organization-id": String(orgId) } : {},
+      })
+      if (res.ok) {
+        const result = await res.json()
+        setPolicies(result.data || [])
       }
-    }
-
-    fetchPolicies()
-  }, [session])
-
-  if (loading) {
-    return (
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-            <Clock className="h-6 w-6" /> SLA Policies
-          </h1>
-          <p className="text-sm text-muted-foreground">Define response and resolution time targets for each priority level</p>
-        </div>
-        <p className="text-muted-foreground">Loading...</p>
-      </div>
-    )
+    } catch {} finally { setLoading(false) }
   }
+
+  useEffect(() => { fetchPolicies() }, [session])
+
+  const handleDelete = async () => {
+    if (!deleteId) return
+    const res = await fetch(`/api/v1/sla-policies/${deleteId}`, {
+      method: "DELETE",
+      headers: orgId ? { "x-organization-id": String(orgId) } : {},
+    })
+    if (!res.ok) throw new Error("Failed to delete")
+    fetchPolicies()
+  }
+
+  const columns = [
+    {
+      key: "name", label: "Policy Name", sortable: true,
+      render: (item: any) => <div className="font-medium">{item.name}</div>,
+    },
+    {
+      key: "priority", label: "Priority", sortable: true,
+      render: (item: any) => <Badge className={PRIORITY_COLORS[item.priority]}>{item.priority}</Badge>,
+    },
+    {
+      key: "firstResponseHours", label: "1st Response", sortable: true,
+      render: (item: any) => <div className="font-mono text-sm">{formatHours(item.firstResponseHours)}</div>,
+    },
+    {
+      key: "resolutionHours", label: "Resolution", sortable: true,
+      render: (item: any) => <div className="font-mono text-sm">{formatHours(item.resolutionHours)}</div>,
+    },
+    {
+      key: "businessHoursOnly", label: "Business Hours", sortable: true,
+      render: (item: any) => <span className="text-sm">{item.businessHoursOnly ? "Yes" : "No"}</span>,
+    },
+    {
+      key: "isActive", label: "Status", sortable: true,
+      render: (item: any) => <Badge variant={item.isActive ? "default" : "secondary"}>{item.isActive ? "Active" : "Inactive"}</Badge>,
+    },
+    {
+      key: "edit", label: "", sortable: false,
+      render: (item: any) => (
+        <div className="flex gap-1">
+          <Button variant="ghost" size="sm" onClick={() => { setEditData(item); setShowForm(true) }}>
+            <Pencil className="h-3.5 w-3.5" />
+          </Button>
+          <Button variant="ghost" size="sm" onClick={() => { setDeleteId(item.id); setDeleteName(item.name) }}>
+            <Trash2 className="h-3.5 w-3.5 text-destructive" />
+          </Button>
+        </div>
+      ),
+    },
+  ]
 
   return (
     <div className="space-y-6">
@@ -79,62 +116,39 @@ export default function SlaPoliciesPage() {
           </h1>
           <p className="text-sm text-muted-foreground">Define response and resolution time targets for each priority level</p>
         </div>
-        <Button><Plus className="h-4 w-4 mr-1" /> Add Policy</Button>
+        <Button className="gap-2" onClick={() => { setEditData(undefined); setShowForm(true) }}>
+          <Plus className="h-4 w-4" /> Add Policy
+        </Button>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-4">
-        {policies.map(p => (
-          <Card key={p.id}>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm text-muted-foreground">
-                {p.name} — 1st Response
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-2xl font-bold">{formatHours(p.firstResponseHours)}</p>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>All SLA Policies</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <p className="text-muted-foreground">Loading...</p>
+          ) : (
+            <DataTable columns={columns} data={policies} searchPlaceholder="Search policies..." searchKey="name" pageSize={10} />
+          )}
+        </CardContent>
+      </Card>
 
-      <div className="space-y-4">
-        {policies.map(policy => (
-          <Card key={policy.id}>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <div className="flex items-center gap-3">
-                <Badge className={PRIORITY_COLORS[policy.priority]}>{policy.priority}</Badge>
-                <div>
-                  <CardTitle className="text-base">{policy.name}</CardTitle>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <Badge variant={policy.isActive ? "default" : "secondary"}>
-                  {policy.isActive ? "Active" : "Inactive"}
-                </Badge>
-                <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
-                  <Pencil className="h-3.5 w-3.5" />
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-3 gap-4 text-sm">
-                <div className="p-2 rounded bg-muted/50">
-                  <p className="text-muted-foreground">First Response</p>
-                  <p className="font-mono font-medium">{formatHours(policy.firstResponseHours)}</p>
-                </div>
-                <div className="p-2 rounded bg-muted/50">
-                  <p className="text-muted-foreground">Resolution</p>
-                  <p className="font-mono font-medium">{formatHours(policy.resolutionHours)}</p>
-                </div>
-                <div className="p-2 rounded bg-muted/50">
-                  <p className="text-muted-foreground">Business Hours Only</p>
-                  <p className="font-medium">{policy.businessHoursOnly ? "Yes" : "No"}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      <SlaPolicyForm
+        open={showForm}
+        onOpenChange={(open) => { setShowForm(open); if (!open) setEditData(undefined) }}
+        onSaved={fetchPolicies}
+        initialData={editData}
+        orgId={orgId}
+      />
+
+      <DeleteConfirmDialog
+        open={!!deleteId}
+        onOpenChange={(open) => { if (!open) setDeleteId(null) }}
+        onConfirm={handleDelete}
+        title="Delete SLA Policy"
+        itemName={deleteName}
+      />
     </div>
   )
 }

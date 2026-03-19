@@ -7,7 +7,9 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { DataTable } from "@/components/data-table"
 import { StatCard } from "@/components/stat-card"
-import { Plus, Zap, Users, CheckCircle } from "lucide-react"
+import { JourneyForm } from "@/components/journey-form"
+import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
+import { Plus, Zap, Users, CheckCircle, Pencil, Trash2 } from "lucide-react"
 
 interface JourneyStep {
   id: string
@@ -18,6 +20,7 @@ interface JourneyStep {
 interface Journey {
   id: string
   name: string
+  description?: string
   status: string
   triggerType: string
   entryCount: number
@@ -30,7 +33,11 @@ export default function JourneysPage() {
   const { data: session } = useSession()
   const [journeys, setJourneys] = useState<Journey[]>([])
   const [loading, setLoading] = useState(true)
-  const orgId = (session?.user as any)?.organizationId
+  const [showForm, setShowForm] = useState(false)
+  const [editData, setEditData] = useState<Journey | undefined>()
+  const [deleteId, setDeleteId] = useState<string | null>(null)
+  const [deleteName, setDeleteName] = useState("")
+  const orgId = session?.user?.organizationId
 
   const fetchJourneys = async () => {
     try {
@@ -41,14 +48,20 @@ export default function JourneysPage() {
       if (json.success) {
         setJourneys(json.data.journeys)
       }
-    } catch {} finally {
-      setLoading(false)
-    }
+    } catch {} finally { setLoading(false) }
   }
 
-  useEffect(() => {
+  useEffect(() => { fetchJourneys() }, [session])
+
+  const handleDelete = async () => {
+    if (!deleteId) return
+    const res = await fetch(`/api/v1/journeys/${deleteId}`, {
+      method: "DELETE",
+      headers: orgId ? { "x-organization-id": String(orgId) } : {},
+    })
+    if (!res.ok) throw new Error("Failed to delete")
     fetchJourneys()
-  }, [session])
+  }
 
   const activeCount = journeys.filter((j) => j.status === "active").length
   const totalEntries = journeys.reduce((sum, j) => sum + j.entryCount, 0)
@@ -57,9 +70,7 @@ export default function JourneysPage() {
 
   const columns = [
     {
-      key: "name",
-      label: "Journey Name",
-      sortable: true,
+      key: "name", label: "Journey Name", sortable: true,
       render: (item: any) => (
         <div>
           <div className="font-medium">{item.name}</div>
@@ -68,14 +79,10 @@ export default function JourneysPage() {
       ),
     },
     {
-      key: "status",
-      label: "Status",
-      sortable: true,
+      key: "status", label: "Status", sortable: true,
       render: (item: any) => {
         const variants: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
-          active: "default",
-          paused: "secondary",
-          draft: "outline",
+          active: "default", paused: "secondary", draft: "outline",
         }
         return <Badge variant={variants[item.status] || "outline"}>{item.status}</Badge>
       },
@@ -83,6 +90,19 @@ export default function JourneysPage() {
     { key: "entryCount", label: "Total Entries", sortable: true },
     { key: "activeCount", label: "Active", sortable: true },
     { key: "completedCount", label: "Completed", sortable: true },
+    {
+      key: "actions", label: "", sortable: false,
+      render: (item: any) => (
+        <div className="flex gap-1">
+          <Button variant="ghost" size="sm" onClick={() => { setEditData(item); setShowForm(true) }}>
+            <Pencil className="h-3.5 w-3.5" />
+          </Button>
+          <Button variant="ghost" size="sm" onClick={() => { setDeleteId(item.id); setDeleteName(item.name) }}>
+            <Trash2 className="h-3.5 w-3.5 text-destructive" />
+          </Button>
+        </div>
+      ),
+    },
   ]
 
   if (loading) {
@@ -106,9 +126,8 @@ export default function JourneysPage() {
           <h1 className="text-2xl font-bold tracking-tight">Customer Journeys</h1>
           <p className="text-muted-foreground">Automate customer engagement workflows</p>
         </div>
-        <Button className="gap-2">
-          <Plus className="h-4 w-4" />
-          Create Journey
+        <Button className="gap-2" onClick={() => { setEditData(undefined); setShowForm(true) }}>
+          <Plus className="h-4 w-4" /> Create Journey
         </Button>
       </div>
 
@@ -124,15 +143,25 @@ export default function JourneysPage() {
           <CardTitle>Journeys</CardTitle>
         </CardHeader>
         <CardContent>
-          <DataTable
-            columns={columns}
-            data={journeys}
-            searchPlaceholder="Search journeys..."
-            searchKey="name"
-            pageSize={10}
-          />
+          <DataTable columns={columns} data={journeys} searchPlaceholder="Search journeys..." searchKey="name" pageSize={10} />
         </CardContent>
       </Card>
+
+      <JourneyForm
+        open={showForm}
+        onOpenChange={(open) => { setShowForm(open); if (!open) setEditData(undefined) }}
+        onSaved={fetchJourneys}
+        initialData={editData}
+        orgId={orgId}
+      />
+
+      <DeleteConfirmDialog
+        open={!!deleteId}
+        onOpenChange={(open) => { if (!open) setDeleteId(null) }}
+        onConfirm={handleDelete}
+        title="Delete Journey"
+        itemName={deleteName}
+      />
     </div>
   )
 }

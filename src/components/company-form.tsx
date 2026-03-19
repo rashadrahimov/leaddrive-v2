@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -45,6 +45,24 @@ export function CompanyForm({ open, onOpenChange, onSaved, initialData, orgId }:
   })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState("")
+
+  useEffect(() => {
+    if (open) {
+      setForm({
+        name: initialData?.name || "",
+        industry: initialData?.industry || "",
+        website: initialData?.website || "",
+        phone: initialData?.phone || "",
+        email: initialData?.email || "",
+        address: initialData?.address || "",
+        city: initialData?.city || "",
+        country: initialData?.country || "",
+        status: initialData?.status || "prospect",
+        description: initialData?.description || "",
+      })
+      setError("")
+    }
+  }, [open, initialData])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

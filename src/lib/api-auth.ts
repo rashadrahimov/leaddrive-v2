@@ -14,7 +14,7 @@ export async function getOrgId(req: NextRequest): Promise<string | null> {
   // Fall back to session
   try {
     const session = await auth()
-    return (session?.user as any)?.organizationId || null
+    return session?.user?.organizationId || null
   } catch {
     return null
   }

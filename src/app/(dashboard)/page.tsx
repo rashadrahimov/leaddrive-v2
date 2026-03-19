@@ -63,7 +63,7 @@ export default function DashboardPage() {
   useEffect(() => {
     async function fetchDashboard() {
       try {
-        const orgId = (session?.user as any)?.organizationId
+        const orgId = session?.user?.organizationId
         const res = await fetch("/api/v1/dashboard", {
           headers: orgId ? { "x-organization-id": String(orgId) } : {},
         })

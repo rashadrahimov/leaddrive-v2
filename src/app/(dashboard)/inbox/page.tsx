@@ -6,49 +6,82 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Search, Send, Archive, Trash2 } from "lucide-react"
+import { Search, Send, MessageSquare } from "lucide-react"
 
-interface Message {
+interface ChannelMessage {
   id: string
-  contact: string
-  subject: string
-  preview: string
-  unread: number
-  date: string
+  direction: string
+  from: string
+  to: string
+  subject?: string
+  body: string
+  status: string
+  createdAt: string
+}
+
+interface Conversation {
+  contactId: string | null
+  contactName: string
+  lastMessage: string
+  lastMessageAt: string
+  unreadCount: number
+  messages: ChannelMessage[]
 }
 
 export default function InboxPage() {
   const { data: session } = useSession()
-  const [messages, setMessages] = useState<Message[]>([])
+  const [conversations, setConversations] = useState<Conversation[]>([])
   const [loading, setLoading] = useState(true)
-  const [selected, setSelected] = useState<string | null>(null)
+  const [selected, setSelected] = useState<number | null>(null)
   const [search, setSearch] = useState("")
-  const orgId = (session?.user as any)?.organizationId
+  const [replyText, setReplyText] = useState("")
+  const [sending, setSending] = useState(false)
+  const orgId = session?.user?.organizationId
 
-  useEffect(() => {
-    const fetchMessages = async () => {
-      try {
-        const res = await fetch("/api/v1/inbox", {
-          headers: orgId ? { "x-organization-id": String(orgId) } : {},
-        })
-        const json = await res.json()
-        if (json.success) {
-          setMessages(json.data.messages)
-        }
-      } catch {} finally {
-        setLoading(false)
+  const fetchInbox = async () => {
+    try {
+      const res = await fetch("/api/v1/inbox", {
+        headers: orgId ? { "x-organization-id": String(orgId) } : {},
+      })
+      const json = await res.json()
+      if (json.success) {
+        setConversations(json.data.conversations || [])
       }
-    }
+    } catch {} finally { setLoading(false) }
+  }
 
-    fetchMessages()
-  }, [session])
+  useEffect(() => { fetchInbox() }, [session])
 
-  const filtered = messages.filter(m =>
-    m.contact.toLowerCase().includes(search.toLowerCase()) ||
-    m.subject.toLowerCase().includes(search.toLowerCase())
+  const handleSendReply = async () => {
+    if (!replyText.trim() || selected === null) return
+    const convo = filtered[selected]
+    if (!convo) return
+
+    setSending(true)
+    try {
+      await fetch("/api/v1/inbox", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(orgId ? { "x-organization-id": String(orgId) } : {}),
+        },
+        body: JSON.stringify({
+          to: convo.contactName,
+          body: replyText,
+          contactId: convo.contactId,
+        }),
+      })
+      setReplyText("")
+      fetchInbox()
+    } catch {} finally { setSending(false) }
+  }
+
+  const filtered = conversations.filter(c =>
+    c.contactName.toLowerCase().includes(search.toLowerCase()) ||
+    c.lastMessage.toLowerCase().includes(search.toLowerCase())
   )
 
-  const selectedConvo = messages.find(m => m.id === selected)
+  const selectedConvo = selected !== null ? filtered[selected] : null
 
   if (loading) {
     return (
@@ -81,28 +114,33 @@ export default function InboxPage() {
 
         <div className="flex-1 overflow-y-auto space-y-2 border rounded-lg p-2">
           {filtered.length > 0 ? (
-            filtered.map((message) => (
+            filtered.map((convo, idx) => (
               <div
-                key={message.id}
-                onClick={() => setSelected(message.id)}
+                key={idx}
+                onClick={() => setSelected(idx)}
                 className={`p-3 rounded-lg cursor-pointer transition-colors ${
-                  selected === message.id
+                  selected === idx
                     ? "bg-primary text-primary-foreground"
                     : "hover:bg-muted"
                 }`}
               >
                 <div className="flex items-center justify-between mb-1">
-                  <div className="font-medium text-sm">{message.contact}</div>
-                  {message.unread > 0 && (
-                    <Badge variant="secondary" className="text-xs">{message.unread}</Badge>
+                  <div className="font-medium text-sm">{convo.contactName}</div>
+                  {convo.unreadCount > 0 && (
+                    <Badge variant="secondary" className="text-xs">{convo.unreadCount}</Badge>
                   )}
                 </div>
-                <div className="text-xs text-muted-foreground line-clamp-1">{message.subject}</div>
-                <div className="text-xs text-muted-foreground mt-1">{message.date}</div>
+                <div className="text-xs text-muted-foreground line-clamp-1">{convo.lastMessage}</div>
+                <div className="text-xs text-muted-foreground mt-1">
+                  {new Date(convo.lastMessageAt).toLocaleDateString()}
+                </div>
               </div>
             ))
           ) : (
-            <div className="p-4 text-center text-muted-foreground text-sm">No messages</div>
+            <div className="p-4 text-center text-muted-foreground text-sm">
+              <MessageSquare className="h-8 w-8 mx-auto mb-2 opacity-50" />
+              No conversations yet
+            </div>
           )}
         </div>
       </div>
@@ -111,36 +149,37 @@ export default function InboxPage() {
         {selectedConvo ? (
           <Card className="h-full flex flex-col">
             <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle>{selectedConvo.contact}</CardTitle>
-                  <p className="text-sm text-muted-foreground">{selectedConvo.subject}</p>
-                </div>
-                <div className="flex gap-1">
-                  <Button variant="ghost" size="icon">
-                    <Archive className="h-4 w-4" />
-                  </Button>
-                  <Button variant="ghost" size="icon">
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
+              <CardTitle>{selectedConvo.contactName}</CardTitle>
+              <p className="text-sm text-muted-foreground">{selectedConvo.messages.length} messages</p>
             </CardHeader>
             <CardContent className="flex-1 flex flex-col">
-              <div className="flex-1 overflow-y-auto space-y-4 mb-4 p-4 bg-muted/30 rounded-lg">
-                <div className="bg-background p-3 rounded-lg max-w-xs">
-                  <p className="text-sm">{selectedConvo.preview}</p>
-                  <p className="text-xs text-muted-foreground mt-2">Earlier today</p>
-                </div>
-                <div className="bg-primary text-primary-foreground p-3 rounded-lg max-w-xs ml-auto">
-                  <p className="text-sm">Thanks for reaching out! How can I help?</p>
-                  <p className="text-xs opacity-70 mt-2">Today</p>
-                </div>
+              <div className="flex-1 overflow-y-auto space-y-3 mb-4 p-4 bg-muted/30 rounded-lg">
+                {selectedConvo.messages.slice().reverse().map((msg) => (
+                  <div
+                    key={msg.id}
+                    className={`p-3 rounded-lg max-w-[70%] ${
+                      msg.direction === "inbound"
+                        ? "bg-background"
+                        : "bg-primary text-primary-foreground ml-auto"
+                    }`}
+                  >
+                    <p className="text-sm">{msg.body}</p>
+                    <p className={`text-xs mt-1 ${msg.direction === "inbound" ? "text-muted-foreground" : "opacity-70"}`}>
+                      {new Date(msg.createdAt).toLocaleString()}
+                    </p>
+                  </div>
+                ))}
               </div>
 
               <div className="flex gap-2">
-                <Input placeholder="Type your message..." className="flex-1" />
-                <Button size="icon">
+                <Input
+                  placeholder="Type your message..."
+                  value={replyText}
+                  onChange={(e) => setReplyText(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleSendReply()}
+                  className="flex-1"
+                />
+                <Button size="icon" onClick={handleSendReply} disabled={sending || !replyText.trim()}>
                   <Send className="h-4 w-4" />
                 </Button>
               </div>
@@ -149,9 +188,10 @@ export default function InboxPage() {
         ) : (
           <Card className="h-full flex items-center justify-center">
             <div className="text-center">
+              <MessageSquare className="h-12 w-12 mx-auto mb-3 text-muted-foreground/30" />
               <p className="text-muted-foreground">
-                {messages.length === 0
-                  ? "No messages yet"
+                {conversations.length === 0
+                  ? "No messages yet. Messages from channels will appear here."
                   : "Select a conversation to continue"}
               </p>
             </div>

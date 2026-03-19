@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -27,6 +27,19 @@ export function TaskForm({ open, onOpenChange, onSaved, initialData, orgId }: Ta
   })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState("")
+
+  useEffect(() => {
+    if (open) {
+      setForm({
+        title: initialData?.title || "",
+        description: initialData?.description || "",
+        priority: initialData?.priority || "medium",
+        status: initialData?.status || "pending",
+        dueDate: initialData?.dueDate?.slice?.(0, 10) || initialData?.dueDate || "",
+      })
+      setError("")
+    }
+  }, [open, initialData])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

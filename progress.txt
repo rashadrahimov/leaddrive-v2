@@ -1,0 +1,62 @@
+=== Progress Log Started: Thu Mar 19 17:13:55 +04 2026 ===
+Project: LeadDrive CRM v2 Feature Parity
+Architecture: Next.js 16 App Router + Prisma + PostgreSQL + shadcn/ui
+Pattern: Dialog modal forms (company-form.tsx), API [id] routes (companies/[id]/route.ts)
+Key: All entities use organizationId for multi-tenant, getOrgId() for auth
+Prisma models: 41 models in schema.prisma
+Form pattern: useState + fetch POST/PUT + onSaved callback + initialData for edit
+API [id] pattern: async params Promise<{id:string}>, updateMany for org-scoped updates, deleteMany for safe delete
+
+
+=== Phase 1 COMPLETED: Thu Mar 19 17:23:10 +04 2026 ===
+Created 6 form components: contract-form, offer-form, kb-article-form, campaign-form, segment-form, journey-form
+Created 6 API [id] routes: contracts, offers, kb, campaigns, segments, journeys
+Added POST to segments and journeys APIs (were GET-only)
+Rewrote 6 pages with form integration + edit/delete actions
+Build: PASSED
+
+
+=== ALL 8 PHASES COMPLETED: Thu Mar 19 17:45:58 +04 2026 ===
+
+Phase 1 (DONE): 6 CRUD forms + 6 API [id] routes + 6 pages wired
+- ContractForm, OfferForm, KbArticleForm, CampaignForm, SegmentForm, JourneyForm
+- Added POST to segments and journeys APIs
+- All pages have edit/delete buttons with confirmation
+
+Phase 2 (DONE): Email Templates + AI Config
+- Email Templates: API (GET/POST), [id] route (GET/PUT/DELETE), form, settings page
+- AI Config: form, [id] route, POST added to configs API, page updated with New Agent/Edit/Delete
+
+Phase 3 (DONE): Lead Conversion + Reports
+- Lead conversion API: POST /leads/{id}/convert creates Contact + Company + Deal in transaction
+- LeadConvertDialog component, wired to leads page with green arrow icon
+- Reports page: real data from /api/v1/reports with 6 report cards
+
+Phase 4 (DONE): Notifications
+- API: GET (list + unread count), PATCH (mark read)
+- NotificationBell component with dropdown, polling every 30s
+- createNotification() helper in src/lib/notifications.ts
+- Integrated into header (replaced static Bell icon)
+
+Phase 5 (DONE): Inbox + Email
+- ChannelMessage model added to Prisma schema
+- Inbox API rewritten: real ChannelMessage queries, threaded conversations
+- Inbox page: conversation list, message thread, reply functionality
+- Campaign send endpoint: POST /campaigns/{id}/send
+- renderTemplate() added to email.ts
+
+Phase 6 (DONE): Workflow Engine
+- src/lib/workflow-engine.ts: executeWorkflows(), condition evaluation, 4 action types (notify, create_task, update_field, auto_assign)
+- Workflow form + [id] route
+- Settings/workflows page wired with CRUD
+
+Phase 7 (DONE): Settings forms
+- 4 settings CRUD: Currencies, Custom Fields, Channels, SLA Policies
+- Each has: form component, [id] API route, page with DataTable + edit/delete
+
+Phase 8 (DONE): Detail pages
+- contracts/[id], offers/[id], knowledge-base/[id], campaigns/[id]
+
+Total files created: ~50+ new files
+Build: PASSES
+

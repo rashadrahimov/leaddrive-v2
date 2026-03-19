@@ -1,0 +1,26 @@
+{
+  "tasks": [
+    {"id": "1a", "description": "ContractForm + API [id] + wire contracts page", "priority": 1, "dependencies": [], "status": "done"},
+    {"id": "1b", "description": "OfferForm + API [id] + wire offers page", "priority": 2, "dependencies": [], "status": "done"},
+    {"id": "1c", "description": "KbArticleForm + API [id] + wire knowledge-base page", "priority": 3, "dependencies": [], "status": "done"},
+    {"id": "1d", "description": "CampaignForm + API [id] + wire campaigns page", "priority": 4, "dependencies": [], "status": "done"},
+    {"id": "1e", "description": "SegmentForm + API [id] + wire segments page", "priority": 5, "dependencies": [], "status": "done"},
+    {"id": "1f", "description": "JourneyForm + API [id] + wire journeys page", "priority": 6, "dependencies": [], "status": "done"},
+    {"id": "2a", "description": "Email Templates API + UI + form", "priority": 7, "dependencies": [], "status": "done"},
+    {"id": "2b", "description": "AI Config management form + API [id]", "priority": 8, "dependencies": [], "status": "done"},
+    {"id": "3a", "description": "Lead Conversion (lead -> contact + company + deal)", "priority": 9, "dependencies": [], "status": "done"},
+    {"id": "3b", "description": "Reports page with real data from Prisma", "priority": 10, "dependencies": [], "status": "done"},
+    {"id": "4a", "description": "Notifications API + bell UI + createNotification helper", "priority": 11, "dependencies": [], "status": "done"},
+    {"id": "4b", "description": "Notification triggers in CRUD API routes", "priority": 12, "dependencies": ["4a"], "status": "done"},
+    {"id": "5a", "description": "ChannelMessage Prisma model + migration", "priority": 13, "dependencies": [], "status": "done"},
+    {"id": "5b", "description": "Inbox rewrite with real ChannelMessage data", "priority": 14, "dependencies": ["5a"], "status": "done"},
+    {"id": "5c", "description": "Email sending service + campaign send endpoint", "priority": 15, "dependencies": ["2a", "5a"], "status": "done"},
+    {"id": "6a", "description": "Workflow execution engine", "priority": 16, "dependencies": ["4a"], "status": "done"},
+    {"id": "6b", "description": "Workflow form + API [id]", "priority": 17, "dependencies": [], "status": "done"},
+    {"id": "7a", "description": "Settings CRUD forms (Currencies, Custom Fields, Channels, SLA)", "priority": 18, "dependencies": [], "status": "done"},
+    {"id": "7b", "description": "Customer Portal (auth, tickets, KB, AI chat)", "priority": 19, "dependencies": ["1c", "5a"], "status": "blocked"},
+    {"id": "8a", "description": "Detail pages (contracts, offers, KB, campaigns)", "priority": 20, "dependencies": ["1a", "1b", "1c", "1d"], "status": "done"},
+    {"id": "8b", "description": "Dashboard layout customization", "priority": 21, "dependencies": [], "status": "blocked"},
+    {"id": "8c", "description": "Final polish (Web-to-Lead, Lead Rules, Billing)", "priority": 22, "dependencies": [], "status": "blocked"}
+  ]
+}

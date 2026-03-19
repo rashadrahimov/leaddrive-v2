@@ -8,7 +8,8 @@ import { Badge } from "@/components/ui/badge"
 import { DataTable } from "@/components/data-table"
 import { StatCard } from "@/components/stat-card"
 import { LeadForm } from "@/components/lead-form"
-import { UserPlus, Plus, Target, TrendingUp, Pencil, Trash2 } from "lucide-react"
+import { LeadConvertDialog } from "@/components/lead-convert-dialog"
+import { UserPlus, Plus, Target, TrendingUp, Pencil, Trash2, ArrowRight } from "lucide-react"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
 import { cn } from "@/lib/utils"
 
@@ -54,7 +55,8 @@ export default function LeadsPage() {
   const [editData, setEditData] = useState<Record<string, any> | undefined>()
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [deleteItem, setDeleteItem] = useState<Lead | null>(null)
-  const orgId = (session?.user as any)?.organizationId
+  const [convertLead, setConvertLead] = useState<Lead | null>(null)
+  const orgId = session?.user?.organizationId
 
   async function fetchLeads() {
     try {
@@ -150,6 +152,11 @@ export default function LeadsPage() {
       className: "w-20",
       render: (item: any) => (
         <div className="flex items-center gap-1" onClick={(e: React.MouseEvent) => e.stopPropagation()}>
+          {item.status !== "converted" && (
+            <button onClick={() => setConvertLead(item)} className="p-1.5 rounded hover:bg-green-50 dark:hover:bg-green-900/20" title="Convert to Deal">
+              <ArrowRight className="h-3.5 w-3.5 text-green-600" />
+            </button>
+          )}
           <button onClick={() => handleEdit(item)} className="p-1.5 rounded hover:bg-muted" title="Edit">
             <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
           </button>
@@ -209,6 +216,15 @@ export default function LeadsPage() {
 
       <LeadForm open={formOpen} onOpenChange={setFormOpen} onSaved={fetchLeads} initialData={editData} orgId={orgId} />
       <DeleteConfirmDialog open={deleteOpen} onOpenChange={setDeleteOpen} onConfirm={confirmDelete} title="Delete Lead" itemName={deleteItem?.contactName} />
+      {convertLead && (
+        <LeadConvertDialog
+          open={!!convertLead}
+          onOpenChange={(open) => { if (!open) setConvertLead(null) }}
+          onConverted={fetchLeads}
+          lead={convertLead}
+          orgId={orgId}
+        />
+      )}
     </div>
   )
 }

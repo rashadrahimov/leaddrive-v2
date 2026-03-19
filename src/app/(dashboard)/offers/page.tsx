@@ -5,7 +5,9 @@ import { useSession } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { DataTable } from "@/components/data-table"
-import { FileSpreadsheet, Plus } from "lucide-react"
+import { OfferForm } from "@/components/offer-form"
+import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
+import { FileSpreadsheet, Plus, Pencil, Trash2 } from "lucide-react"
 
 interface Offer {
   id: string
@@ -16,6 +18,7 @@ interface Offer {
   totalAmount?: number
   currency: string
   validUntil?: string
+  notes?: string
 }
 
 const statusColors: Record<string, "default" | "secondary" | "destructive" | "outline"> = { draft: "secondary", sent: "default", accepted: "outline", rejected: "destructive" }
@@ -25,7 +28,11 @@ export default function OffersPage() {
   const [offers, setOffers] = useState<Offer[]>([])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
-  const orgId = (session?.user as any)?.organizationId
+  const [showForm, setShowForm] = useState(false)
+  const [editData, setEditData] = useState<Offer | undefined>()
+  const [deleteId, setDeleteId] = useState<string | null>(null)
+  const [deleteName, setDeleteName] = useState("")
+  const orgId = session?.user?.organizationId
 
   const fetchOffers = async () => {
     try {
@@ -42,6 +49,16 @@ export default function OffersPage() {
 
   useEffect(() => { fetchOffers() }, [session])
 
+  const handleDelete = async () => {
+    if (!deleteId) return
+    const res = await fetch(`/api/v1/offers/${deleteId}`, {
+      method: "DELETE",
+      headers: orgId ? { "x-organization-id": String(orgId) } : {},
+    })
+    if (!res.ok) throw new Error("Failed to delete")
+    fetchOffers()
+  }
+
   const columns = [
     { key: "offerNumber", label: "Number", sortable: true },
     { key: "title", label: "Title", sortable: true },
@@ -56,6 +73,19 @@ export default function OffersPage() {
     {
       key: "validUntil", label: "Valid Until", sortable: true,
       render: (item: any) => item.validUntil ? new Date(item.validUntil).toLocaleDateString() : "—",
+    },
+    {
+      key: "actions", label: "", sortable: false,
+      render: (item: any) => (
+        <div className="flex gap-1">
+          <Button variant="ghost" size="sm" onClick={() => { setEditData(item); setShowForm(true) }}>
+            <Pencil className="h-3.5 w-3.5" />
+          </Button>
+          <Button variant="ghost" size="sm" onClick={() => { setDeleteId(item.id); setDeleteName(item.title) }}>
+            <Trash2 className="h-3.5 w-3.5 text-destructive" />
+          </Button>
+        </div>
+      ),
     },
   ]
 
@@ -75,9 +105,25 @@ export default function OffersPage() {
           <h1 className="text-2xl font-bold tracking-tight">Offers</h1>
           <p className="text-sm text-muted-foreground">Create and track proposals</p>
         </div>
-        <Button><Plus className="h-4 w-4" /> New Offer</Button>
+        <Button onClick={() => { setEditData(undefined); setShowForm(true) }}><Plus className="h-4 w-4 mr-1" /> New Offer</Button>
       </div>
       <DataTable columns={columns} data={offers} searchPlaceholder="Search offers..." searchKey="title" />
+
+      <OfferForm
+        open={showForm}
+        onOpenChange={(open) => { setShowForm(open); if (!open) setEditData(undefined) }}
+        onSaved={fetchOffers}
+        initialData={editData}
+        orgId={orgId}
+      />
+
+      <DeleteConfirmDialog
+        open={!!deleteId}
+        onOpenChange={(open) => { if (!open) setDeleteId(null) }}
+        onConfirm={handleDelete}
+        title="Delete Offer"
+        itemName={deleteName}
+      />
     </div>
   )
 }

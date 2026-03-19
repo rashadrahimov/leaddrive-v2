@@ -35,3 +35,11 @@ export async function sendEmail({
 
   return { success: true, messageId: info.messageId }
 }
+
+export function renderTemplate(htmlBody: string, variables: Record<string, string>): string {
+  let rendered = htmlBody
+  for (const [key, value] of Object.entries(variables)) {
+    rendered = rendered.replace(new RegExp(`\\{\\{${key}\\}\\}`, "g"), value)
+  }
+  return rendered
+}

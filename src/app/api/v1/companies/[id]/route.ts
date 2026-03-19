@@ -35,8 +35,8 @@ export async function GET(
     })
     if (!company) return NextResponse.json({ error: "Not found" }, { status: 404 })
     return NextResponse.json({ success: true, data: company })
-  } catch {
-    return NextResponse.json({ success: true, data: { id } })
+  } catch (e) {
+    return NextResponse.json({ success: false, error: String(e) }, { status: 500 })
   }
 }
 

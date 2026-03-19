@@ -57,7 +57,7 @@ export default function ContactDetailPage() {
   const [contact, setContact] = useState<Contact | null>(null)
   const [loading, setLoading] = useState(true)
   const id = params.id as string
-  const orgId = (session?.user as any)?.organizationId
+  const orgId = session?.user?.organizationId
 
   useEffect(() => {
     const fetchContact = async () => {

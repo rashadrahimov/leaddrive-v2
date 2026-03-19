@@ -30,6 +30,20 @@ export function ContactForm({ open, onOpenChange, onSaved, initialData, orgId }:
   const [error, setError] = useState("")
 
   useEffect(() => {
+    if (open) {
+      setForm({
+        fullName: initialData?.fullName || "",
+        email: initialData?.email || "",
+        phone: initialData?.phone || "",
+        position: initialData?.position || "",
+        companyId: initialData?.companyId || "",
+        source: initialData?.source || "",
+      })
+      setError("")
+    }
+  }, [open, initialData])
+
+  useEffect(() => {
     if (open && orgId) {
       fetch("/api/v1/companies?limit=500", {
         headers: { "x-organization-id": orgId },
