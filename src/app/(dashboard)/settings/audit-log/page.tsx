@@ -1,33 +1,73 @@
 "use client"
 
+import { useEffect, useState } from "react"
+import { useSession } from "next-auth/react"
 import { Badge } from "@/components/ui/badge"
 import { DataTable } from "@/components/data-table"
 import { Shield } from "lucide-react"
 
-const MOCK_LOGS = [
-  { id: "1", action: "create", entityType: "company", entityName: "Zeytun Pharma", user: "Rashad", createdAt: "2026-03-18 10:30" },
-  { id: "2", action: "update", entityType: "deal", entityName: "GT-OFF-2026-005", user: "Admin", createdAt: "2026-03-17 15:20" },
-  { id: "3", action: "delete", entityType: "lead", entityName: "Test Lead", user: "Admin", createdAt: "2026-03-16 09:10" },
-  { id: "4", action: "login", entityType: "user", entityName: "rashadrahimov", user: "System", createdAt: "2026-03-16 08:00" },
-  { id: "5", action: "export", entityType: "report", entityName: "Monthly report", user: "Admin", createdAt: "2026-03-15 18:00" },
-]
+interface AuditLog {
+  id: string
+  action: string
+  entityType: string
+  entityName: string | null
+  userId: string | null
+  createdAt: string
+}
 
 const actionColors: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
-  create: "default", update: "secondary", delete: "destructive", login: "outline", export: "outline",
+  create: "default",
+  update: "secondary",
+  delete: "destructive",
+  login: "outline",
+  export: "outline",
 }
 
 export default function AuditLogPage() {
+  const { data: session } = useSession()
+  const [logs, setLogs] = useState<AuditLog[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    if (!session?.user?.email) return
+
+    const fetchLogs = async () => {
+      try {
+        const response = await fetch("/api/v1/audit-log")
+        if (response.ok) {
+          const result = await response.json()
+          const formattedLogs = (result.data.logs || []).map((log: any) => ({
+            ...log,
+            createdAt: new Date(log.createdAt).toLocaleString(),
+          }))
+          setLogs(formattedLogs)
+        }
+      } catch (error) {
+        console.error("Failed to fetch audit logs:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchLogs()
+  }, [session])
+
   const columns = [
     { key: "createdAt", label: "Date", sortable: true },
     {
       key: "action",
       label: "Action",
       sortable: true,
-      render: (item: typeof MOCK_LOGS[0]) => <Badge variant={actionColors[item.action]}>{item.action}</Badge>,
+      render: (item: AuditLog) => <Badge variant={actionColors[item.action] || "outline"}>{item.action}</Badge>,
     },
     { key: "entityType", label: "Entity", sortable: true },
     { key: "entityName", label: "Name", sortable: true },
-    { key: "user", label: "User", sortable: true },
+    {
+      key: "userId",
+      label: "User",
+      sortable: true,
+      render: (item: AuditLog) => <span>{item.userId || "System"}</span>,
+    },
   ]
 
   return (
@@ -38,7 +78,11 @@ export default function AuditLogPage() {
         </h1>
         <p className="text-sm text-muted-foreground">All system actions and changes</p>
       </div>
-      <DataTable columns={columns} data={MOCK_LOGS} searchPlaceholder="Search logs..." searchKey="entityName" />
+      {loading ? (
+        <p className="text-muted-foreground">Loading...</p>
+      ) : (
+        <DataTable columns={columns} data={logs} searchPlaceholder="Search logs..." searchKey="entityName" />
+      )}
     </div>
   )
 }

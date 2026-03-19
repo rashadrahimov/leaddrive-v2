@@ -1,5 +1,7 @@
 "use client"
 
+import { useEffect, useState } from "react"
+import { useSession } from "next-auth/react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -7,24 +9,56 @@ import { DataTable } from "@/components/data-table"
 import { StatCard } from "@/components/stat-card"
 import { Plus, Mail, TrendingUp } from "lucide-react"
 
-const CAMPAIGNS = [
-  { id: "1", name: "Spring Promotion", status: "sent", type: "email", recipients: 2540, opens: 1205, clicks: 342, openRate: "47%", clickRate: "13.5%" },
-  { id: "2", name: "Product Launch", status: "scheduled", type: "email", recipients: 3200, opens: 0, clicks: 0, openRate: "—", clickRate: "—" },
-  { id: "3", name: "Flash Sale", status: "draft", type: "sms", recipients: 0, opens: 0, clicks: 0, openRate: "—", clickRate: "—" },
-  { id: "4", name: "Re-engagement Series", status: "sent", type: "email", recipients: 1850, opens: 445, clicks: 98, openRate: "24%", clickRate: "5.3%" },
-  { id: "5", name: "VIP Exclusive Offer", status: "sent", type: "email", recipients: 450, opens: 390, clicks: 156, openRate: "86%", clickRate: "34.6%" },
-]
+interface Campaign {
+  id: string
+  name: string
+  status: "draft" | "scheduled" | "sent"
+  type: string
+  totalRecipients: number
+  totalOpened: number
+  totalClicked: number
+}
 
 export default function CampaignsPage() {
+  const { data: session } = useSession()
+  const [campaigns, setCampaigns] = useState<Campaign[]>([])
+  const [total, setTotal] = useState(0)
+  const [loading, setLoading] = useState(true)
+  const orgId = (session?.user as any)?.organizationId
+
+  const fetchCampaigns = async () => {
+    try {
+      const res = await fetch("/api/v1/campaigns?limit=500", {
+        headers: orgId ? { "x-organization-id": orgId } : {},
+      })
+      const json = await res.json()
+      if (json.success) {
+        setCampaigns(json.data.campaigns)
+        setTotal(json.data.total)
+      }
+    } catch {} finally { setLoading(false) }
+  }
+
+  useEffect(() => { fetchCampaigns() }, [session])
+  const calculateOpenRate = (campaign: Campaign) => {
+    if (campaign.totalRecipients === 0) return "—"
+    return `${Math.round((campaign.totalOpened / campaign.totalRecipients) * 100)}%`
+  }
+
+  const calculateClickRate = (campaign: Campaign) => {
+    if (campaign.totalRecipients === 0) return "—"
+    return `${Math.round((campaign.totalClicked / campaign.totalRecipients) * 100)}%`
+  }
+
   const columns = [
     {
       key: "name",
       label: "Campaign",
       sortable: true,
-      render: (item: typeof CAMPAIGNS[0]) => (
+      render: (item: Campaign) => (
         <div>
           <div className="font-medium">{item.name}</div>
-          <div className="text-xs text-muted-foreground">{item.recipients.toLocaleString()} recipients</div>
+          <div className="text-xs text-muted-foreground">{item.totalRecipients.toLocaleString()} recipients</div>
         </div>
       ),
     },
@@ -32,7 +66,7 @@ export default function CampaignsPage() {
       key: "type",
       label: "Type",
       sortable: true,
-      render: (item: typeof CAMPAIGNS[0]) => (
+      render: (item: Campaign) => (
         <Badge variant="outline">{item.type.toUpperCase()}</Badge>
       ),
     },
@@ -40,7 +74,7 @@ export default function CampaignsPage() {
       key: "status",
       label: "Status",
       sortable: true,
-      render: (item: typeof CAMPAIGNS[0]) => {
+      render: (item: Campaign) => {
         const variants: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
           sent: "default",
           scheduled: "secondary",
@@ -53,15 +87,39 @@ export default function CampaignsPage() {
       key: "openRate",
       label: "Open Rate",
       sortable: true,
-      render: (item: typeof CAMPAIGNS[0]) => <span className="text-sm">{item.openRate}</span>,
+      render: (item: Campaign) => <span className="text-sm">{calculateOpenRate(item)}</span>,
     },
     {
       key: "clickRate",
       label: "Click Rate",
       sortable: true,
-      render: (item: typeof CAMPAIGNS[0]) => <span className="text-sm">{item.clickRate}</span>,
+      render: (item: Campaign) => <span className="text-sm">{calculateClickRate(item)}</span>,
     },
   ]
+
+  const avgOpenRate = campaigns.length > 0
+    ? Math.round(campaigns.reduce((s, c) => s + (c.totalRecipients > 0 ? (c.totalOpened / c.totalRecipients) * 100 : 0), 0) / campaigns.length)
+    : 0
+
+  const avgClickRate = campaigns.length > 0
+    ? Math.round(campaigns.reduce((s, c) => s + (c.totalRecipients > 0 ? (c.totalClicked / c.totalRecipients) * 100 : 0), 0) / campaigns.length)
+    : 0
+
+  const totalRecipients = campaigns.reduce((s, c) => s + c.totalRecipients, 0)
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <h1 className="text-2xl font-bold tracking-tight">Campaigns</h1>
+        <div className="animate-pulse space-y-4">
+          <div className="grid gap-4 md:grid-cols-4">
+            {[1, 2, 3, 4].map((i) => <div key={i} className="h-24 bg-muted rounded-lg" />)}
+          </div>
+          <div className="h-96 bg-muted rounded-lg" />
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
@@ -77,10 +135,10 @@ export default function CampaignsPage() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <StatCard title="Total Campaigns" value={5} icon={<Mail className="h-4 w-4" />} />
-        <StatCard title="Recipients" value={8040} description="Unique contacts" />
-        <StatCard title="Avg Open Rate" value="56%." icon={<TrendingUp className="h-4 w-4" />} trend="up" />
-        <StatCard title="Avg Click Rate" value="13.5%" description="+2% vs last month" />
+        <StatCard title="Total Campaigns" value={total} icon={<Mail className="h-4 w-4" />} />
+        <StatCard title="Recipients" value={totalRecipients.toLocaleString()} description="Unique contacts" />
+        <StatCard title="Avg Open Rate" value={`${avgOpenRate}%`} icon={<TrendingUp className="h-4 w-4" />} trend="up" />
+        <StatCard title="Avg Click Rate" value={`${avgClickRate}%`} description="Performance metric" />
       </div>
 
       <Card>
@@ -90,7 +148,7 @@ export default function CampaignsPage() {
         <CardContent>
           <DataTable
             columns={columns}
-            data={CAMPAIGNS}
+            data={campaigns}
             searchPlaceholder="Search campaigns..."
             searchKey="name"
             pageSize={10}

@@ -1,60 +1,92 @@
 "use client"
 
+import { useEffect, useState } from "react"
+import { useSession } from "next-auth/react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { DataTable } from "@/components/data-table"
 import { Plus } from "lucide-react"
 
-const WORKFLOWS = [
-  { id: "1", name: "Auto-assign Leads", entity: "Lead", trigger: "Created", actions: 3, enabled: true },
-  { id: "2", name: "Deal Stage Update", entity: "Deal", trigger: "Updated", actions: 2, enabled: true },
-  { id: "3", name: "Ticket Escalation", entity: "Ticket", trigger: "High Priority", actions: 4, enabled: true },
-  { id: "4", name: "Contact Birthday", entity: "Contact", trigger: "Date Field Match", actions: 1, enabled: false },
-  { id: "5", name: "Contract Renewal Alert", entity: "Contract", trigger: "Date Field Match", actions: 2, enabled: true },
-]
+interface WorkflowAction {
+  id: string;
+  actionType: string;
+}
+
+interface Workflow {
+  id: string;
+  name: string;
+  entityType: string;
+  triggerEvent: string;
+  isActive: boolean;
+  actions: WorkflowAction[];
+}
 
 export default function WorkflowsPage() {
+  const { data: session } = useSession()
+  const [workflows, setWorkflows] = useState<Workflow[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    if (!session?.user?.email) return
+
+    const fetchWorkflows = async () => {
+      try {
+        const response = await fetch("/api/v1/workflows")
+        if (response.ok) {
+          const result = await response.json()
+          setWorkflows(result.data || [])
+        }
+      } catch (error) {
+        console.error("Failed to fetch workflows:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchWorkflows()
+  }, [session])
+
   const columns = [
     {
       key: "name",
       label: "Workflow Name",
       sortable: true,
-      render: (item: typeof WORKFLOWS[0]) => (
+      render: (item: Workflow) => (
         <div className="font-medium">{item.name}</div>
       ),
     },
     {
-      key: "entity",
+      key: "entityType",
       label: "Entity Type",
       sortable: true,
-      render: (item: typeof WORKFLOWS[0]) => (
-        <Badge variant="outline">{item.entity}</Badge>
+      render: (item: Workflow) => (
+        <Badge variant="outline">{item.entityType}</Badge>
       ),
     },
     {
-      key: "trigger",
+      key: "triggerEvent",
       label: "Trigger",
       sortable: true,
-      render: (item: typeof WORKFLOWS[0]) => (
-        <Badge variant="secondary">{item.trigger}</Badge>
+      render: (item: Workflow) => (
+        <Badge variant="secondary">{item.triggerEvent}</Badge>
       ),
     },
     {
       key: "actions",
       label: "Actions",
       sortable: true,
-      render: (item: typeof WORKFLOWS[0]) => (
-        <div className="text-sm">{item.actions} action{item.actions !== 1 ? "s" : ""}</div>
+      render: (item: Workflow) => (
+        <div className="text-sm">{item.actions.length} action{item.actions.length !== 1 ? "s" : ""}</div>
       ),
     },
     {
-      key: "enabled",
+      key: "isActive",
       label: "Status",
       sortable: true,
-      render: (item: typeof WORKFLOWS[0]) => (
-        <Badge variant={item.enabled ? "default" : "secondary"}>
-          {item.enabled ? "Active" : "Inactive"}
+      render: (item: Workflow) => (
+        <Badge variant={item.isActive ? "default" : "secondary"}>
+          {item.isActive ? "Active" : "Inactive"}
         </Badge>
       ),
     },
@@ -78,13 +110,17 @@ export default function WorkflowsPage() {
           <CardTitle>Active Workflows</CardTitle>
         </CardHeader>
         <CardContent>
-          <DataTable
-            columns={columns}
-            data={WORKFLOWS}
-            searchPlaceholder="Search workflows..."
-            searchKey="name"
-            pageSize={10}
-          />
+          {loading ? (
+            <p className="text-muted-foreground">Loading...</p>
+          ) : (
+            <DataTable
+              columns={columns}
+              data={workflows}
+              searchPlaceholder="Search workflows..."
+              searchKey="name"
+              pageSize={10}
+            />
+          )}
         </CardContent>
       </Card>
     </div>

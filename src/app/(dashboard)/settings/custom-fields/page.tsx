@@ -1,19 +1,45 @@
 'use client';
 
+import { useEffect, useState } from 'react';
+import { useSession } from 'next-auth/react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Trash2 } from 'lucide-react';
-import { useState } from 'react';
 
-const fields = [
-  { id: 1, name: 'Industry', entity: 'Contact', type: 'select' },
-  { id: 2, name: 'Company Size', entity: 'Contact', type: 'text' },
-  { id: 3, name: 'Deal Value', entity: 'Deal', type: 'number' },
-];
+interface CustomField {
+  id: string;
+  entityType: string;
+  fieldLabel: string;
+  fieldType: string;
+}
 
 export default function CustomFieldsPage() {
+  const { data: session } = useSession();
+  const [fields, setFields] = useState<CustomField[]>([]);
   const [selectedEntity, setSelectedEntity] = useState('contact');
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!session?.user?.email) return;
+
+    const fetchFields = async () => {
+      try {
+        const response = await fetch(`/api/v1/custom-fields?entityType=${selectedEntity}`);
+        if (response.ok) {
+          const result = await response.json();
+          setFields(result.data || []);
+        }
+      } catch (error) {
+        console.error('Failed to fetch custom fields:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    setLoading(true);
+    fetchFields();
+  }, [session, selectedEntity]);
 
   return (
     <div className="space-y-6">
@@ -42,22 +68,30 @@ export default function CustomFieldsPage() {
           </div>
         </div>
 
-        <div className="space-y-3">
-          {fields.map((field) => (
-            <div key={field.id} className="flex items-center justify-between p-3 border rounded-lg">
-              <div>
-                <p className="font-medium">{field.name}</p>
-                <p className="text-sm text-muted-foreground">{field.entity}</p>
-              </div>
-              <div className="flex items-center gap-3">
-                <Badge variant="secondary">{field.type}</Badge>
-                <Button variant="ghost" size="icon">
-                  <Trash2 className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
-          ))}
-        </div>
+        {loading ? (
+          <p className="text-muted-foreground">Loading...</p>
+        ) : (
+          <div className="space-y-3">
+            {fields.length === 0 ? (
+              <p className="text-muted-foreground">No custom fields for this entity</p>
+            ) : (
+              fields.map((field) => (
+                <div key={field.id} className="flex items-center justify-between p-3 border rounded-lg">
+                  <div>
+                    <p className="font-medium">{field.fieldLabel}</p>
+                    <p className="text-sm text-muted-foreground">{field.entityType}</p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Badge variant="secondary">{field.fieldType}</Badge>
+                    <Button variant="ghost" size="icon">
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        )}
       </Card>
     </div>
   );

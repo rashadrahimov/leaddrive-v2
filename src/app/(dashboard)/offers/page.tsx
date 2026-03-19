@@ -1,33 +1,72 @@
 "use client"
 
+import { useEffect, useState } from "react"
+import { useSession } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { DataTable } from "@/components/data-table"
 import { FileSpreadsheet, Plus } from "lucide-react"
 
-const MOCK_OFFERS = [
-  { id: "1", offerNumber: "GT-OFF-2026-005", title: "IT Services Package — Zeytun", company: "Zeytun Pharma", status: "sent", totalAmount: 16284, validUntil: "2026-04-15" },
-  { id: "2", offerNumber: "GT-OFF-2026-004", title: "InfoSec Audit", company: "Delta Telecom", status: "draft", totalAmount: 8500, validUntil: "2026-03-30" },
-  { id: "3", offerNumber: "GT-OFF-2026-003", title: "Cloud Migration", company: "Tabia", status: "accepted", totalAmount: 22000, validUntil: "2026-03-20" },
-]
+interface Offer {
+  id: string
+  offerNumber: string
+  title: string
+  companyId?: string
+  status: "draft" | "sent" | "accepted" | "rejected"
+  totalAmount?: number
+  currency: string
+  validUntil?: string
+}
 
 const statusColors: Record<string, "default" | "secondary" | "destructive" | "outline"> = { draft: "secondary", sent: "default", accepted: "outline", rejected: "destructive" }
 
 export default function OffersPage() {
+  const { data: session } = useSession()
+  const [offers, setOffers] = useState<Offer[]>([])
+  const [total, setTotal] = useState(0)
+  const [loading, setLoading] = useState(true)
+  const orgId = (session?.user as any)?.organizationId
+
+  const fetchOffers = async () => {
+    try {
+      const res = await fetch("/api/v1/offers?limit=500", {
+        headers: orgId ? { "x-organization-id": orgId } : {},
+      })
+      const json = await res.json()
+      if (json.success) {
+        setOffers(json.data.offers)
+        setTotal(json.data.total)
+      }
+    } catch {} finally { setLoading(false) }
+  }
+
+  useEffect(() => { fetchOffers() }, [session])
+
   const columns = [
     { key: "offerNumber", label: "Number", sortable: true },
     { key: "title", label: "Title", sortable: true },
-    { key: "company", label: "Company", sortable: true },
     {
       key: "totalAmount", label: "Amount", sortable: true,
-      render: (item: typeof MOCK_OFFERS[0]) => <span className="font-medium">{item.totalAmount.toLocaleString()} ₼</span>,
+      render: (item: Offer) => <span className="font-medium">{item.totalAmount ? item.totalAmount.toLocaleString() : "—"} {item.currency}</span>,
     },
     {
       key: "status", label: "Status", sortable: true,
-      render: (item: typeof MOCK_OFFERS[0]) => <Badge variant={statusColors[item.status]}>{item.status}</Badge>,
+      render: (item: Offer) => <Badge variant={statusColors[item.status]}>{item.status}</Badge>,
     },
-    { key: "validUntil", label: "Valid Until", sortable: true },
+    {
+      key: "validUntil", label: "Valid Until", sortable: true,
+      render: (item: Offer) => item.validUntil ? new Date(item.validUntil).toLocaleDateString() : "—",
+    },
   ]
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <h1 className="text-2xl font-bold tracking-tight">Offers</h1>
+        <div className="animate-pulse h-96 bg-muted rounded-lg" />
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
@@ -38,7 +77,7 @@ export default function OffersPage() {
         </div>
         <Button><Plus className="h-4 w-4" /> New Offer</Button>
       </div>
-      <DataTable columns={columns} data={MOCK_OFFERS} searchPlaceholder="Search offers..." searchKey="title" />
+      <DataTable columns={columns} data={offers} searchPlaceholder="Search offers..." searchKey="title" />
     </div>
   )
 }
