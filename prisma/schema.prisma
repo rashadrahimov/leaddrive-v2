@@ -589,6 +589,8 @@ model EmailTemplate {
   textBody       String?
   variables      String[] @default([])
   category       String   @default("general")
+  language       String   @default("ru")
+  isActive       Boolean  @default(true)
   createdBy      String?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt

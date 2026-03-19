@@ -31,7 +31,7 @@ const navItems: NavItem[] = [
   { module: "contracts", href: "/contracts", icon: FileText, label: "Contracts", group: "CRM" },
   { module: "campaigns", href: "/campaigns", icon: Mail, label: "Campaigns", group: "Marketing" },
   { module: "campaigns", href: "/segments", icon: Filter, label: "Segments", group: "Marketing" },
-  { module: "campaigns", href: "/settings/email-templates", icon: Send, label: "Email Templates", group: "Marketing" },
+  { module: "campaigns", href: "/email-templates", icon: Send, label: "Email Templates", group: "Marketing" },
   { module: "campaigns", href: "/email-log", icon: FileText, label: "Email Log", group: "Marketing" },
   { module: "campaigns", href: "/campaign-roi", icon: TrendingUp, label: "Campaign ROI", group: "Marketing" },
   { module: "leads", href: "/lead-scoring", icon: Target, label: "AI Scoring", group: "Marketing" },

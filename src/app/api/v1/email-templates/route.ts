@@ -11,6 +11,7 @@ const createTemplateSchema = z.object({
   category: z.string().optional(),
   variables: z.string().optional(),
   language: z.string().optional(),
+  isActive: z.boolean().optional(),
 })
 
 export async function GET(req: NextRequest) {
