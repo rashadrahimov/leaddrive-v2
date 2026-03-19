@@ -16,7 +16,6 @@ export async function POST(
       where: { id, organizationId: orgId },
     })
     if (!campaign) return NextResponse.json({ error: "Campaign not found" }, { status: 404 })
-    if (campaign.status === "sent") return NextResponse.json({ error: "Campaign already sent" }, { status: 400 })
 
     // Load template if specified
     let htmlBody = `<p>${campaign.subject || campaign.name}</p>`
