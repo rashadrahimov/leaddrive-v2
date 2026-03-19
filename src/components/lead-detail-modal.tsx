@@ -315,27 +315,59 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
               )}
             </div>
 
-            {/* FIX #3: Contacts with add/edit/delete */}
+            {/* Contacts with add/edit/delete */}
             <div>
-              <div className="flex items-center justify-between mb-1">
-                <h4 className="font-medium text-sm">Ключевые люди ({company._count?.contacts || 0})</h4>
-                <Button variant="ghost" size="sm" className="h-6 text-xs" onClick={() => { onOpenChange(false); router.push(`/companies/${company.id}`) }}>
-                  <Plus className="h-3 w-3 mr-1" /> Управлять
-                </Button>
+              <div className="flex items-center justify-between mb-2">
+                <h4 className="font-medium text-sm">Ключевые люди ({fullData?.contacts?.length || company._count?.contacts || 0})</h4>
+                <div className="flex gap-1">
+                  <Button variant="outline" size="sm" className="h-6 text-xs gap-1" onClick={() => { onOpenChange(false); router.push(`/contacts?new=1&companyId=${company.id}`) }}>
+                    <Plus className="h-3 w-3" /> Добавить
+                  </Button>
+                  <Button variant="ghost" size="sm" className="h-6 text-xs" onClick={() => { onOpenChange(false); router.push(`/companies/${company.id}`) }}>
+                    Все →
+                  </Button>
+                </div>
               </div>
               {(fullData?.contacts || company.contacts) && (fullData?.contacts || company.contacts).length > 0 ? (
-                <div className="space-y-1">
-                  {(fullData?.contacts || company.contacts).map(c => (
-                    <div key={c.id} className="flex items-center justify-between text-xs p-2 bg-muted/30 rounded">
-                      <div>
-                        <span className="font-medium">{c.fullName}</span>
-                        {c.position && <span className="text-muted-foreground ml-1">· {c.position}</span>}
+                <div className="space-y-1.5">
+                  {(fullData?.contacts || company.contacts).slice(0, 5).map((c: any) => (
+                    <div key={c.id} className="flex items-center justify-between p-2 bg-muted/30 rounded border border-transparent hover:border-border transition-colors">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5">
+                          <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-bold text-primary flex-shrink-0">
+                            {c.fullName?.charAt(0) || "?"}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-xs font-medium truncate">{c.fullName}</p>
+                            <p className="text-[10px] text-muted-foreground truncate">{c.position || ""} {c.email ? `· ${c.email}` : ""}</p>
+                          </div>
+                        </div>
                       </div>
-                      <span className="text-muted-foreground">{c.email || c.phone || ""}</span>
+                      <div className="flex gap-0.5 ml-2 flex-shrink-0">
+                        <button onClick={() => { onOpenChange(false); router.push(`/contacts/${c.id}`) }} className="p-1 rounded hover:bg-muted" title="Изменить">
+                          <Pencil className="h-3 w-3 text-muted-foreground" />
+                        </button>
+                        <button onClick={async () => {
+                          if (!confirm(`Удалить контакт ${c.fullName}?`)) return
+                          await fetch(`/api/v1/contacts/${c.id}`, { method: "DELETE", headers: orgId ? { "x-organization-id": orgId } : {} })
+                          // Reload full data
+                          const res = await fetch(`/api/v1/companies/${company.id}`, { headers: orgId ? { "x-organization-id": orgId } : {} })
+                          const json = await res.json()
+                          if (json.success) setFullData(json.data)
+                          onSaved?.()
+                        }} className="p-1 rounded hover:bg-red-50" title="Удалить">
+                          <Trash2 className="h-3 w-3 text-muted-foreground hover:text-red-500" />
+                        </button>
+                      </div>
                     </div>
                   ))}
+                  {(fullData?.contacts || company.contacts).length > 5 && (
+                    <p className="text-[10px] text-center text-muted-foreground">
+                      + ещё {(fullData?.contacts || company.contacts).length - 5} контактов
+                    </p>
+                  )}
                 </div>
-              ) : <p className="text-xs text-muted-foreground">Нет контактов</p>}
+              ) : <p className="text-xs text-muted-foreground">Нет контактов. Нажмите "Добавить" чтобы создать.</p>}
             </div>
 
             {/* Deals */}
