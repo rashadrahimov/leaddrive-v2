@@ -112,7 +112,7 @@ export function DealDetailSheet({ deal, open, onOpenChange, onEdit, onDelete }: 
                   <p className="font-medium">{deal.value.toLocaleString()} ₼</p>
                 </div>
               </div>
-              <Button variant="outline" size="sm" className="w-full">
+              <Button variant="outline" size="sm" className="w-full" onClick={onEdit}>
                 <Pencil className="h-4 w-4 mr-1" /> Edit Deal
               </Button>
             </TabsContent>
