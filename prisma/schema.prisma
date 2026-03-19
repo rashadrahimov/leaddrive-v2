@@ -564,6 +564,9 @@ model Campaign {
   subject        String?
   templateId     String?
   segmentId      String?
+  recipientMode  String    @default("all")
+  recipientIds   Json      @default("[]")
+  recipientSource String?
   scheduledAt    DateTime?
   sentAt         DateTime?
   totalRecipients Int      @default(0)

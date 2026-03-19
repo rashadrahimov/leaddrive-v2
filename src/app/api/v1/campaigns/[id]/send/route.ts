@@ -27,18 +27,60 @@ export async function POST(
       if (template) htmlBody = template.htmlBody
     }
 
-    // Load contacts from segment or all contacts
-    let contacts: { email: string | null; fullName: string }[]
-    if (campaign.segmentId) {
-      // For now, load all contacts (segment filtering can be added later)
+    // Load contacts based on recipientMode
+    const mode = campaign.recipientMode || "all"
+    let contacts: { id: string; email: string | null; fullName: string }[]
+
+    if (mode === "manual") {
+      // Only selected contacts by IDs
+      const ids = Array.isArray(campaign.recipientIds) ? campaign.recipientIds as string[] : []
+      if (ids.length === 0) {
+        return NextResponse.json({ error: "Не выбраны получатели" }, { status: 400 })
+      }
       contacts = await prisma.contact.findMany({
-        where: { organizationId: orgId, email: { not: null } },
-        select: { email: true, fullName: true },
+        where: { organizationId: orgId, id: { in: ids }, email: { not: null } },
+        select: { id: true, email: true, fullName: true },
+      })
+    } else if (mode === "segment" && campaign.segmentId) {
+      // Contacts matching segment conditions
+      const segment = await prisma.contactSegment.findFirst({
+        where: { id: campaign.segmentId, organizationId: orgId },
+      })
+      if (segment && segment.conditions && typeof segment.conditions === "object") {
+        const cond = segment.conditions as any
+        const where: any = { organizationId: orgId, email: { not: null } }
+        const AND: any[] = []
+        if (cond.company) AND.push({ company: { name: { contains: cond.company, mode: "insensitive" } } })
+        if (cond.source) AND.push({ source: cond.source })
+        if (cond.role) AND.push({ position: { contains: cond.role, mode: "insensitive" } })
+        if (cond.name) AND.push({ fullName: { contains: cond.name, mode: "insensitive" } })
+        if (cond.createdAfter) AND.push({ createdAt: { gte: new Date(cond.createdAfter) } })
+        if (cond.createdBefore) AND.push({ createdAt: { lte: new Date(cond.createdBefore) } })
+        if (cond.hasEmail) AND.push({ email: { not: null, not: "" } })
+        if (cond.hasPhone) AND.push({ phone: { not: null, not: "" } })
+        if (AND.length > 0) where.AND = AND
+        contacts = await prisma.contact.findMany({
+          where,
+          select: { id: true, email: true, fullName: true },
+        })
+      } else {
+        // Segment not found or no conditions — fall back to all
+        contacts = await prisma.contact.findMany({
+          where: { organizationId: orgId, email: { not: null } },
+          select: { id: true, email: true, fullName: true },
+        })
+      }
+    } else if (mode === "source" && campaign.recipientSource) {
+      // Contacts from specific source
+      contacts = await prisma.contact.findMany({
+        where: { organizationId: orgId, email: { not: null }, source: campaign.recipientSource },
+        select: { id: true, email: true, fullName: true },
       })
     } else {
+      // "all" — all contacts with email
       contacts = await prisma.contact.findMany({
         where: { organizationId: orgId, email: { not: null } },
-        select: { email: true, fullName: true },
+        select: { id: true, email: true, fullName: true },
       })
     }
 

@@ -25,6 +25,9 @@ interface Campaign {
   budget?: number
   templateId?: string
   segmentId?: string
+  recipientMode?: string
+  recipientIds?: string[]
+  recipientSource?: string
   scheduledAt?: string
   sentAt?: string
   createdAt: string

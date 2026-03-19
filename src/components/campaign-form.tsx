@@ -45,7 +45,7 @@ interface CampaignFormProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   onSaved: () => void
-  initialData?: Partial<CampaignFormData> & { id?: string; sentAt?: string; totalSent?: number; totalOpened?: number; totalClicked?: number }
+  initialData?: Partial<CampaignFormData> & { id?: string; sentAt?: string; totalSent?: number; totalOpened?: number; totalClicked?: number; recipientMode?: string; recipientIds?: string[]; recipientSource?: string }
   orgId?: string
   onSend?: () => void
   onDelete?: () => void
@@ -140,17 +140,18 @@ export function CampaignForm({ open, onOpenChange, onSaved, initialData, orgId, 
         budget: String(initialData?.budget ?? ""),
       })
       setError("")
-      setSelectedContacts(new Set())
       setContactSearch("")
-      setSelectedSource("")
       setRecipientModeChanged(false)
-      if (initialData?.segmentId) {
-        setRecipientMode("segment")
-        setSelectedSegmentId(initialData.segmentId)
-      } else {
-        setRecipientMode("all")
-        setSelectedSegmentId("")
-      }
+      // Restore recipient mode from saved campaign
+      const savedMode = (initialData?.recipientMode as RecipientMode) || (initialData?.segmentId ? "segment" : "all")
+      setRecipientMode(savedMode)
+      setSelectedSegmentId(initialData?.segmentId || "")
+      setSelectedSource(initialData?.recipientSource || "")
+      setSelectedContacts(
+        savedMode === "manual" && Array.isArray(initialData?.recipientIds)
+          ? new Set(initialData!.recipientIds as string[])
+          : new Set()
+      )
     }
   }, [open, initialData])
 
@@ -172,6 +173,9 @@ export function CampaignForm({ open, onOpenChange, onSaved, initialData, orgId, 
         subject: form.subject || undefined,
         templateId: form.templateId || undefined,
         segmentId: recipientMode === "segment" ? selectedSegmentId || undefined : undefined,
+        recipientMode,
+        recipientIds: recipientMode === "manual" ? Array.from(selectedContacts) : [],
+        recipientSource: recipientMode === "source" ? selectedSource || undefined : undefined,
         scheduledAt: form.scheduledAt ? new Date(form.scheduledAt).toISOString() : undefined,
         totalRecipients: finalRecipients,
         budget: form.budget ? Number(form.budget) : undefined,
