@@ -28,32 +28,36 @@ interface KanbanBoardProps {
 
 export function KanbanBoard({ stages, deals, onDealClick }: KanbanBoardProps) {
   return (
-    <div className="flex gap-4 overflow-x-auto pb-4">
+    <div className="grid grid-cols-6 gap-2 w-full">
       {stages.map((stage) => {
         const stageDeals = deals.filter((d) => d.stage === stage.name)
         const total = stageDeals.reduce((s, d) => s + d.valueAmount, 0)
 
         return (
-          <div key={stage.name} className="min-w-[280px] flex-shrink-0">
-            <div className="mb-3 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="h-2 w-2 rounded-full" style={{ backgroundColor: stage.color }} />
-                <span className="text-sm font-semibold">{stage.displayName}</span>
-                <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+          <div key={stage.name} className="min-w-0">
+            {/* Stage header */}
+            <div className="mb-2 px-1">
+              <div className="flex items-center gap-1.5">
+                <div className="h-2.5 w-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: stage.color }} />
+                <span className="text-xs font-semibold truncate">{stage.displayName}</span>
+                <span className="rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground flex-shrink-0">
                   {stageDeals.length}
                 </span>
               </div>
               {total > 0 && (
-                <span className="text-xs text-muted-foreground">
+                <p className="text-[10px] text-muted-foreground mt-0.5 pl-4">
                   {total.toLocaleString()} ₼
-                </span>
+                </p>
               )}
             </div>
 
+            {/* Stage column */}
             <div
               className={cn(
-                "min-h-[200px] space-y-2 rounded-lg border-2 border-dashed p-2 transition-colors",
-                "border-transparent hover:border-muted-foreground/20"
+                "min-h-[200px] space-y-2 rounded-lg border-2 border-dashed p-1.5 transition-colors",
+                "border-transparent hover:border-muted-foreground/20",
+                stage.name === "WON" && "bg-green-50/50 dark:bg-green-900/10",
+                stage.name === "LOST" && "bg-red-50/50 dark:bg-red-900/10",
               )}
             >
               {stageDeals.map((deal) => (
@@ -65,7 +69,7 @@ export function KanbanBoard({ stages, deals, onDealClick }: KanbanBoardProps) {
               ))}
 
               {stageDeals.length === 0 && (
-                <div className="flex h-[100px] items-center justify-center text-xs text-muted-foreground">
+                <div className="flex h-[80px] items-center justify-center text-[10px] text-muted-foreground">
                   No deals
                 </div>
               )}
