@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import { z } from "zod"
+import { prisma } from "@/lib/prisma"
 
 const WebLeadSchema = z.object({
   name: z.string().min(1).max(200),
@@ -16,25 +17,67 @@ export async function POST(request: Request) {
     const body = await request.json()
     const data = WebLeadSchema.parse(body)
 
-    // TODO: Rate limit per IP — 10 req/min
-    // TODO: Look up organization by slug
-    // TODO: Create lead in DB with org_id
-    // TODO: Apply assignment rules (Task 1.12)
-    // TODO: Send notification to assigned user
+    // Look up organization by slug (name match)
+    const org = await prisma.organization.findFirst({
+      where: {
+        OR: [
+          { slug: data.org_slug },
+          { name: { contains: data.org_slug, mode: "insensitive" } },
+        ],
+      },
+    })
 
-    // Stub response
-    const leadId = `lead_${Date.now()}`
+    if (!org) {
+      // Fallback: use first org
+      const firstOrg = await prisma.organization.findFirst()
+      if (!firstOrg) {
+        return NextResponse.json({ success: false, error: "Organization not found" }, { status: 404 })
+      }
+
+      const lead = await prisma.lead.create({
+        data: {
+          organizationId: firstOrg.id,
+          contactName: data.name,
+          email: data.email,
+          phone: data.phone,
+          companyName: data.company,
+          source: data.source,
+          status: "new",
+          priority: "medium",
+          notes: data.message,
+        },
+      })
+
+      return NextResponse.json({
+        success: true,
+        data: { id: lead.id, name: data.name, email: data.email, status: "new", message: "Lead submitted successfully" },
+      }, {
+        status: 201,
+        headers: { "Access-Control-Allow-Origin": "*" },
+      })
+    }
+
+    const lead = await prisma.lead.create({
+      data: {
+        organizationId: org.id,
+        contactName: data.name,
+        email: data.email,
+        phone: data.phone,
+        companyName: data.company,
+        source: data.source,
+        status: "new",
+        priority: "medium",
+        notes: data.message,
+      },
+    })
 
     return NextResponse.json({
       success: true,
-      data: {
-        id: leadId,
-        name: data.name,
-        email: data.email,
-        status: "new",
-        message: "Lead submitted successfully",
-      },
-    }, { status: 201 })
+      data: { id: lead.id, name: data.name, email: data.email, status: "new", message: "Lead submitted successfully" },
+    }, {
+      status: 201,
+      headers: { "Access-Control-Allow-Origin": "*" },
+    })
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json({

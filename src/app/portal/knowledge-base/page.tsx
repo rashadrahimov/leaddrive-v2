@@ -1,90 +1,125 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Card, CardContent } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { Search, BookOpen, Eye, ChevronRight } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Search, BookOpen, Eye, ArrowLeft } from "lucide-react"
 
-const CATEGORIES = [
-  { name: "Getting Started", count: 3, icon: "🚀" },
-  { name: "VPN & Network", count: 5, icon: "🌐" },
-  { name: "Email & Calendar", count: 4, icon: "📧" },
-  { name: "Security", count: 6, icon: "🔒" },
-  { name: "Hardware", count: 3, icon: "💻" },
-  { name: "Software", count: 8, icon: "📦" },
-]
+interface KbArticle {
+  id: string
+  title: string
+  content: string
+  tags: string[]
+  viewCount: number
+  updatedAt: string
+}
 
-const POPULAR_ARTICLES = [
-  { id: "1", title: "Employee Onboarding: IT Setup Checklist", views: 1205, category: "Getting Started" },
-  { id: "2", title: "Configuring Outlook for Corporate Email", views: 823, category: "Email & Calendar" },
-  { id: "3", title: "Setting Up Two-Factor Authentication (2FA)", views: 567, category: "Security" },
-  { id: "4", title: "How to Reset Your VPN Connection After Password Change", views: 342, category: "VPN & Network" },
-  { id: "5", title: "Requesting New Hardware: Laptop & Monitor Process", views: 189, category: "Hardware" },
-]
-
-export default function PortalKBPage() {
+export default function PortalKnowledgeBasePage() {
+  const [articles, setArticles] = useState<KbArticle[]>([])
+  const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
+  const [selectedArticle, setSelectedArticle] = useState<KbArticle | null>(null)
 
-  const filtered = search
-    ? POPULAR_ARTICLES.filter(a => a.title.toLowerCase().includes(search.toLowerCase()))
-    : POPULAR_ARTICLES
+  const fetchArticles = async () => {
+    try {
+      const res = await fetch("/api/v1/public/portal-kb")
+      const json = await res.json()
+      if (json.success) setArticles(json.data.articles || [])
+    } catch {} finally { setLoading(false) }
+  }
+
+  const viewArticle = async (article: KbArticle) => {
+    try {
+      const res = await fetch(`/api/v1/public/portal-kb?id=${article.id}`)
+      const json = await res.json()
+      if (json.success) setSelectedArticle(json.data.article)
+    } catch {
+      setSelectedArticle(article)
+    }
+  }
+
+  useEffect(() => { fetchArticles() }, [])
+
+  const filtered = articles.filter(a =>
+    a.title.toLowerCase().includes(search.toLowerCase()) ||
+    a.tags.some(t => t.toLowerCase().includes(search.toLowerCase()))
+  )
+
+  if (loading) {
+    return (
+      <div className="space-y-4">
+        <h1 className="text-2xl font-bold flex items-center gap-2"><BookOpen className="h-6 w-6" /> Knowledge Base</h1>
+        <div className="animate-pulse space-y-3">
+          {[1, 2, 3].map(i => <div key={i} className="h-20 bg-muted rounded-lg" />)}
+        </div>
+      </div>
+    )
+  }
+
+  if (selectedArticle) {
+    return (
+      <div className="space-y-4">
+        <Button variant="ghost" onClick={() => setSelectedArticle(null)} className="gap-1">
+          <ArrowLeft className="h-4 w-4" /> Back to articles
+        </Button>
+        <Card>
+          <CardContent className="pt-6">
+            <h1 className="text-2xl font-bold mb-2">{selectedArticle.title}</h1>
+            <div className="flex items-center gap-3 text-sm text-muted-foreground mb-4">
+              <span className="flex items-center gap-1"><Eye className="h-3 w-3" /> {selectedArticle.viewCount} views</span>
+              <span>{new Date(selectedArticle.updatedAt).toLocaleDateString()}</span>
+            </div>
+            <div className="flex gap-1 mb-4">
+              {selectedArticle.tags.map(tag => (
+                <Badge key={tag} variant="outline" className="text-xs">{tag}</Badge>
+              ))}
+            </div>
+            <div className="prose prose-sm max-w-none dark:prose-invert" dangerouslySetInnerHTML={{ __html: selectedArticle.content }} />
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
-      <div className="text-center space-y-3">
-        <h1 className="text-3xl font-bold tracking-tight flex items-center justify-center gap-2">
-          <BookOpen className="h-8 w-8" /> Help Center
-        </h1>
-        <p className="text-muted-foreground">Find answers to common questions and troubleshooting guides</p>
-        <div className="relative max-w-lg mx-auto">
-          <Search className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
-          <Input
-            placeholder="Search for articles..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            className="pl-10 h-12 text-base"
-          />
-        </div>
+      <div>
+        <h1 className="text-2xl font-bold flex items-center gap-2"><BookOpen className="h-6 w-6" /> Knowledge Base</h1>
+        <p className="text-muted-foreground text-sm mt-1">Find answers and help articles</p>
       </div>
 
-      {!search && (
-        <div className="grid gap-3 md:grid-cols-3">
-          {CATEGORIES.map(cat => (
-            <Card key={cat.name} className="hover:bg-muted/30 transition-colors cursor-pointer">
-              <CardContent className="pt-4 pb-4 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <span className="text-2xl">{cat.icon}</span>
-                  <div>
-                    <p className="font-medium">{cat.name}</p>
-                    <p className="text-xs text-muted-foreground">{cat.count} articles</p>
-                  </div>
-                </div>
-                <ChevronRight className="h-4 w-4 text-muted-foreground" />
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Input placeholder="Search articles..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
+      </div>
 
-      <div>
-        <h2 className="text-lg font-semibold mb-3">{search ? "Search Results" : "Popular Articles"}</h2>
-        <div className="space-y-2">
-          {filtered.map(article => (
-            <Card key={article.id} className="hover:bg-muted/30 transition-colors cursor-pointer">
-              <CardContent className="pt-3 pb-3 flex items-center justify-between">
-                <div>
-                  <p className="font-medium">{article.title}</p>
-                  <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
-                    <Badge variant="outline" className="text-[10px]">{article.category}</Badge>
-                    <span className="flex items-center gap-1"><Eye className="h-3 w-3" /> {article.views} views</span>
+      <div className="space-y-3">
+        {filtered.length === 0 ? (
+          <Card>
+            <CardContent className="py-8 text-center text-muted-foreground">
+              No articles found
+            </CardContent>
+          </Card>
+        ) : (
+          filtered.map(article => (
+            <Card key={article.id} className="hover:bg-muted/30 transition-colors cursor-pointer" onClick={() => viewArticle(article)}>
+              <CardContent className="py-4">
+                <h3 className="font-medium">{article.title}</h3>
+                <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{article.content.replace(/<[^>]*>/g, "")}</p>
+                <div className="flex items-center gap-3 mt-2">
+                  <span className="text-xs text-muted-foreground flex items-center gap-1"><Eye className="h-3 w-3" /> {article.viewCount}</span>
+                  <div className="flex gap-1">
+                    {article.tags.slice(0, 3).map(tag => (
+                      <Badge key={tag} variant="outline" className="text-[10px]">{tag}</Badge>
+                    ))}
                   </div>
                 </div>
-                <ChevronRight className="h-4 w-4 text-muted-foreground" />
               </CardContent>
             </Card>
-          ))}
-        </div>
+          ))
+        )}
       </div>
     </div>
   )
