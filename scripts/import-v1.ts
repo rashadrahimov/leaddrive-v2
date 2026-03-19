@@ -168,7 +168,7 @@ async function main() {
           city: toStr(c.city),
           country: toStr(c.country),
           status: c.category === "inactive" ? "inactive" : c.category === "prospect" ? "prospect" : "active",
-          category: String(c.category || "client"),
+          category: String(c.category || "prospect"),
           employeeCount: c.employee_count ? toInt(c.employee_count) : null,
           userCount: toInt(c.user_count),
           costCode: toStr(c.cost_code),
