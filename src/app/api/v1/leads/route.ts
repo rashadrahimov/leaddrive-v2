@@ -24,10 +24,13 @@ export async function GET(req: NextRequest) {
   const page = parseInt(searchParams.get("page") || "1")
   const limit = parseInt(searchParams.get("limit") || "50")
 
+  const status = searchParams.get("status")
+
   try {
     const where = {
       organizationId: orgId,
       ...(search ? { contactName: { contains: search, mode: "insensitive" as const } } : {}),
+      ...(status ? { status } : { status: { not: "converted" } }),
     }
 
     const [leads, total] = await Promise.all([

@@ -26,7 +26,7 @@ export async function GET(req: NextRequest) {
       recentActivities,
       myTasks,
     ] = await Promise.all([
-      prisma.company.count({ where: { organizationId: orgId } }),
+      prisma.company.count({ where: { organizationId: orgId, category: "client" } }),
       prisma.contact.count({ where: { organizationId: orgId } }),
       prisma.deal.count({ where: { organizationId: orgId, stage: { notIn: ["WON", "LOST"] } } }),
       prisma.deal.aggregate({ where: { organizationId: orgId, stage: { notIn: ["LOST"] } }, _sum: { valueAmount: true } }),

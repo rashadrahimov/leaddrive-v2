@@ -24,11 +24,13 @@ export async function GET(req: NextRequest) {
   const search = searchParams.get("search") || ""
   const page = parseInt(searchParams.get("page") || "1")
   const limit = parseInt(searchParams.get("limit") || "50")
+  const category = searchParams.get("category") // client, partner, prospect, all
 
   try {
     const where = {
       organizationId: orgId,
       ...(search ? { name: { contains: search, mode: "insensitive" as const } } : {}),
+      ...(category && category !== "all" ? { category } : { category: { in: ["client", "partner"] } }),
     }
 
     const [companies, total] = await Promise.all([

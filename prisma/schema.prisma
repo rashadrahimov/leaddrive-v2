@@ -127,6 +127,7 @@ model Company {
   annualRevenue  Float?
   description    String?
   status         String   @default("active") // active, inactive, prospect
+  category       String   @default("client") // client, partner, prospect, inactive
   userCount      Int      @default(0)
   costCode       String?
   createdAt      DateTime @default(now())
