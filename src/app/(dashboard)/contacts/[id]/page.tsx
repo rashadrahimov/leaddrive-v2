@@ -103,7 +103,7 @@ export default function ContactDetailPage() {
     )
   }
 
-  const initials = contact.fullName.split(" ").map(n => n[0]).join("").slice(0, 2)
+  const initials = contact.fullName.split(" ").map((n: string) => n[0]).join("").slice(0, 2)
 
   return (
     <div className="space-y-6">

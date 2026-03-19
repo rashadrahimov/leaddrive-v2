@@ -124,7 +124,7 @@ export default function CompanyDetailPage() {
                   <div key={contact.id} className="flex items-center justify-between rounded-lg border p-3 cursor-pointer hover:bg-muted/50" onClick={() => router.push(`/contacts/${contact.id}`)}>
                     <div className="flex items-center gap-3">
                       <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary text-sm font-semibold">
-                        {contact.fullName.split(" ").map(n => n[0]).join("").slice(0, 2)}
+                        {contact.fullName.split(" ").map((n: string) => n[0]).join("").slice(0, 2)}
                       </div>
                       <div>
                         <div className="font-medium text-sm">{contact.fullName}</div>

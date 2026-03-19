@@ -53,7 +53,7 @@ export default function ContactsPage() {
       render: (item: any) => (
         <div className="flex items-center gap-3">
           <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold text-sm">
-            {item.fullName.split(" ").map(n => n[0]).join("").slice(0, 2)}
+            {item.fullName.split(" ").map((n: string) => n[0]).join("").slice(0, 2)}
           </div>
           <div>
             <div className="font-medium">{item.fullName}</div>
