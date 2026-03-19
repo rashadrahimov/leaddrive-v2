@@ -2,11 +2,13 @@
 
 import { useEffect, useState } from "react"
 import { useSession } from "next-auth/react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { StatCard } from "@/components/stat-card"
+import { CompanyForm } from "@/components/company-form"
 import { UserPlus, Plus, Search, Building2, Users, FileText, TrendingUp } from "lucide-react"
 
 interface LeadCompany {
@@ -49,11 +51,13 @@ const tempColors: Record<string, string> = {
 }
 
 export default function LeadsPage() {
+  const router = useRouter()
   const { data: session } = useSession()
   const [companies, setCompanies] = useState<LeadCompany[]>([])
   const [loading, setLoading] = useState(true)
   const [activeFilter, setActiveFilter] = useState<string>("all")
   const [search, setSearch] = useState("")
+  const [showForm, setShowForm] = useState(false)
   const orgId = session?.user?.organizationId
 
   const fetchCompanies = async () => {
@@ -102,7 +106,7 @@ export default function LeadsPage() {
         </div>
         <div className="flex gap-2">
           <Button variant="outline">+ Создать группу</Button>
-          <Button><Plus className="h-4 w-4 mr-1" /> Новый лид</Button>
+          <Button onClick={() => setShowForm(true)}><Plus className="h-4 w-4 mr-1" /> Новый лид</Button>
         </div>
       </div>
 
@@ -146,7 +150,7 @@ export default function LeadsPage() {
           </div>
         ) : (
           filtered.map(company => (
-            <Card key={company.id} className="hover:shadow-md transition-shadow cursor-pointer">
+            <Card key={company.id} className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => router.push(`/companies/${company.id}`)}>
               <CardContent className="pt-4 pb-4">
                 <div className="flex items-start justify-between mb-2">
                   <h3 className="font-bold text-sm uppercase">{company.name}</h3>
@@ -184,6 +188,13 @@ export default function LeadsPage() {
           ))
         )}
       </div>
+
+      <CompanyForm
+        open={showForm}
+        onOpenChange={setShowForm}
+        onSaved={fetchCompanies}
+        orgId={orgId}
+      />
     </div>
   )
 }
