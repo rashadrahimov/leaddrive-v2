@@ -124,10 +124,10 @@ export default function ContactDetailPage() {
                   <>
                     <span>at</span>
                     <button
-                      onClick={() => router.push(`/companies/${contact.company.id}`)}
+                      onClick={() => router.push(`/companies/${contact.company!.id}`)}
                       className="text-primary hover:underline"
                     >
-                      {contact.company.name}
+                      {contact.company!.name}
                     </button>
                   </>
                 )}
