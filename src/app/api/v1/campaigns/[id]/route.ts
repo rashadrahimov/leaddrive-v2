@@ -10,6 +10,7 @@ const updateCampaignSchema = z.object({
   status: z.string().optional(),
   subject: z.string().optional(),
   templateId: z.string().optional(),
+  segmentId: z.string().optional(),
   scheduledAt: z.string().optional(),
   totalRecipients: z.number().optional(),
   budget: z.number().optional(),
