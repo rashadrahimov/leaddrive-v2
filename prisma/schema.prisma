@@ -262,8 +262,26 @@ model Contract {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
+  files          ContractFile[]
+
   @@index([organizationId])
   @@map("contracts")
+}
+
+model ContractFile {
+  id             String   @id @default(cuid())
+  organizationId String
+  contractId     String
+  contract       Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  fileName       String
+  originalName   String
+  fileSize       Int
+  mimeType       String
+  uploadedBy     String?
+  createdAt      DateTime @default(now())
+
+  @@index([contractId])
+  @@map("contract_files")
 }
 
 model Offer {

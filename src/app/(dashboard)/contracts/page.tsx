@@ -9,7 +9,7 @@ import { StatCard } from "@/components/stat-card"
 import { ContractForm } from "@/components/contract-form"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
 import { Select } from "@/components/ui/select"
-import { FileText, Plus, Pencil, Trash2, AlertTriangle, Clock, TrendingUp, Building2, History, X } from "lucide-react"
+import { FileText, Plus, Pencil, Trash2, AlertTriangle, Clock, TrendingUp, Building2, History, X, Upload, Download, File, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface AuditEntry {
@@ -19,6 +19,15 @@ interface AuditEntry {
   newValue: any
   createdAt: string
   userId?: string
+}
+
+interface ContractFile {
+  id: string
+  fileName: string
+  originalName: string
+  fileSize: number
+  mimeType: string
+  createdAt: string
 }
 
 interface Contract {
@@ -105,6 +114,8 @@ export default function ContractsPage() {
   const [sortBy, setSortBy] = useState("date_desc")
   const [detailContract, setDetailContract] = useState<Contract | null>(null)
   const [detailLoading, setDetailLoading] = useState(false)
+  const [detailFiles, setDetailFiles] = useState<ContractFile[]>([])
+  const [uploading, setUploading] = useState(false)
   const orgId = session?.user?.organizationId
 
   const fetchContracts = async () => {
@@ -125,13 +136,61 @@ export default function ContractsPage() {
   async function openDetail(contract: Contract) {
     setDetailContract(contract)
     setDetailLoading(true)
+    setDetailFiles([])
     try {
-      const res = await fetch(`/api/v1/contracts/${contract.id}`, {
+      const [contractRes, filesRes] = await Promise.all([
+        fetch(`/api/v1/contracts/${contract.id}`, {
+          headers: orgId ? { "x-organization-id": String(orgId) } : {},
+        }),
+        fetch(`/api/v1/contracts/${contract.id}/files`, {
+          headers: orgId ? { "x-organization-id": String(orgId) } : {},
+        }),
+      ])
+      const contractJson = await contractRes.json()
+      if (contractJson.success) setDetailContract(contractJson.data)
+      const filesJson = await filesRes.json()
+      if (filesJson.success) setDetailFiles(filesJson.data)
+    } catch {} finally { setDetailLoading(false) }
+  }
+
+  async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file || !detailContract) return
+    setUploading(true)
+    try {
+      const formData = new FormData()
+      formData.append("file", file)
+      const res = await fetch(`/api/v1/contracts/${detailContract.id}/files`, {
+        method: "POST",
         headers: orgId ? { "x-organization-id": String(orgId) } : {},
+        body: formData,
       })
       const json = await res.json()
-      if (json.success) setDetailContract(json.data)
-    } catch {} finally { setDetailLoading(false) }
+      if (!res.ok) throw new Error(json.error || "Upload failed")
+      setDetailFiles(prev => [json.data, ...prev])
+    } catch (err: any) {
+      alert(err.message)
+    } finally {
+      setUploading(false)
+      e.target.value = ""
+    }
+  }
+
+  async function handleFileDelete(fileId: string) {
+    if (!detailContract || !confirm("Удалить файл?")) return
+    try {
+      await fetch(`/api/v1/contracts/${detailContract.id}/files/${fileId}`, {
+        method: "DELETE",
+        headers: orgId ? { "x-organization-id": String(orgId) } : {},
+      })
+      setDetailFiles(prev => prev.filter(f => f.id !== fileId))
+    } catch {}
+  }
+
+  function formatFileSize(bytes: number): string {
+    if (bytes < 1024) return bytes + " Б"
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " КБ"
+    return (bytes / (1024 * 1024)).toFixed(1) + " МБ"
   }
 
   const handleDelete = async () => {
@@ -439,6 +498,55 @@ export default function ContractsPage() {
                     </div>
                   ) : (
                     <p className="text-sm text-muted-foreground">Нет истории изменений</p>
+                  )}
+                </div>
+
+                {/* Files */}
+                <div className="border-t pt-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="text-sm font-semibold flex items-center gap-1.5">
+                      <File className="h-4 w-4" /> Файлы ({detailFiles.length})
+                    </h4>
+                    <label className={cn(
+                      "inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded-md cursor-pointer transition-colors",
+                      "bg-primary text-primary-foreground hover:bg-primary/90",
+                      uploading && "opacity-50 pointer-events-none"
+                    )}>
+                      {uploading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3" />}
+                      {uploading ? "Загрузка..." : "Загрузить"}
+                      <input type="file" className="hidden" onChange={handleFileUpload} disabled={uploading}
+                        accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg,.webp,.txt,.csv" />
+                    </label>
+                  </div>
+                  {detailFiles.length > 0 ? (
+                    <div className="space-y-2">
+                      {detailFiles.map(f => (
+                        <div key={f.id} className="flex items-center gap-2 bg-muted/50 rounded-lg p-2.5 text-sm group">
+                          <File className="h-4 w-4 text-muted-foreground shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <div className="font-medium truncate">{f.originalName}</div>
+                            <div className="text-xs text-muted-foreground">{formatFileSize(f.fileSize)} · {formatDate(f.createdAt)}</div>
+                          </div>
+                          <a
+                            href={`/uploads/contracts/${f.fileName}`}
+                            download={f.originalName}
+                            className="p-1 hover:bg-background rounded opacity-0 group-hover:opacity-100 transition-opacity"
+                            title="Скачать"
+                          >
+                            <Download className="h-3.5 w-3.5 text-muted-foreground" />
+                          </a>
+                          <button
+                            onClick={() => handleFileDelete(f.id)}
+                            className="p-1 hover:bg-red-50 dark:hover:bg-red-900/20 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+                            title="Удалить"
+                          >
+                            <Trash2 className="h-3.5 w-3.5 text-red-400" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">Нет прикреплённых файлов</p>
                   )}
                 </div>
 
