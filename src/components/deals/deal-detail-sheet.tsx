@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
-import { DollarSign, Building, User, Calendar, ArrowRight, MessageSquare, Pencil } from "lucide-react"
+import { DollarSign, Building, User, Calendar, ArrowRight, MessageSquare, Pencil, Trash2 } from "lucide-react"
 
 interface DealDetail {
   id: string
@@ -31,6 +31,8 @@ interface DealDetailSheetProps {
   deal: DealDetail | null
   open: boolean
   onOpenChange: (open: boolean) => void
+  onEdit?: () => void
+  onDelete?: () => void
 }
 
 const STAGE_COLORS: Record<string, string> = {
@@ -42,7 +44,7 @@ const STAGE_COLORS: Record<string, string> = {
   "Lost": "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300",
 }
 
-export function DealDetailSheet({ deal, open, onOpenChange }: DealDetailSheetProps) {
+export function DealDetailSheet({ deal, open, onOpenChange, onEdit, onDelete }: DealDetailSheetProps) {
   if (!deal) return null
 
   return (
@@ -51,7 +53,10 @@ export function DealDetailSheet({ deal, open, onOpenChange }: DealDetailSheetPro
         <SheetHeader className="pb-4 border-b">
           <div className="flex items-center justify-between pr-8">
             <Badge className={STAGE_COLORS[deal.stage] || ""}>{deal.stage}</Badge>
-            <span className="text-sm text-muted-foreground">{deal.probability}% probability</span>
+            <div className="flex items-center gap-2">
+              {onEdit && <Button variant="outline" size="sm" onClick={onEdit}><Pencil className="h-3.5 w-3.5 mr-1" />Edit</Button>}
+              {onDelete && <Button variant="outline" size="sm" className="text-red-500 hover:text-red-600" onClick={onDelete}><Trash2 className="h-3.5 w-3.5 mr-1" />Delete</Button>}
+            </div>
           </div>
           <SheetTitle className="text-xl">{deal.name}</SheetTitle>
           <SheetDescription className="flex items-center gap-4 text-sm">

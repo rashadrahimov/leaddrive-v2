@@ -6,8 +6,9 @@ import { Button } from "@/components/ui/button"
 import { StatCard } from "@/components/stat-card"
 import { KanbanBoard } from "@/components/deals/kanban-board"
 import { DealDetailSheet } from "@/components/deals/deal-detail-sheet"
-import { Handshake, Plus, TrendingUp, TrendingDown } from "lucide-react"
+import { Handshake, Plus, TrendingUp, TrendingDown, Pencil, Trash2 } from "lucide-react"
 import { DealForm } from "@/components/deal-form"
+import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
 
 const STAGES = [
   { name: "LEAD", displayName: "Lead", color: "#6366f1" },
@@ -44,6 +45,9 @@ export default function DealsPage() {
   const [selectedDealId, setSelectedDealId] = useState<string | null>(null)
   const [sheetOpen, setSheetOpen] = useState(false)
   const [formOpen, setFormOpen] = useState(false)
+  const [editData, setEditData] = useState<Record<string, any> | undefined>()
+  const [deleteOpen, setDeleteOpen] = useState(false)
+  const [deleteItem, setDeleteItem] = useState<Deal | null>(null)
   const orgId = (session?.user as any)?.organizationId
 
   const fetchDeals = async () => {
@@ -76,6 +80,31 @@ export default function DealsPage() {
   const handleDealClick = (deal: { id: string }) => {
     setSelectedDealId(deal.id)
     setSheetOpen(true)
+  }
+
+  function handleEditDeal(deal: Deal) {
+    setEditData({ id: deal.id, name: deal.name, companyId: deal.company?.id, stage: deal.stage, valueAmount: deal.valueAmount, currency: deal.currency, probability: deal.probability, expectedClose: deal.expectedClose, notes: deal.notes })
+    setFormOpen(true)
+  }
+
+  function handleAdd() {
+    setEditData(undefined)
+    setFormOpen(true)
+  }
+
+  function handleDeleteDeal(deal: Deal) {
+    setDeleteItem(deal)
+    setDeleteOpen(true)
+  }
+
+  async function confirmDelete() {
+    if (!deleteItem) return
+    const res = await fetch(`/api/v1/deals/${deleteItem.id}`, {
+      method: "DELETE",
+      headers: orgId ? { "x-organization-id": String(orgId) } : {},
+    })
+    if (!res.ok) throw new Error((await res.json()).error || "Failed to delete")
+    fetchDeals()
   }
 
   const selectedDeal = selectedDealId ? deals.find(d => d.id === selectedDealId) : null
@@ -115,7 +144,7 @@ export default function DealsPage() {
           <h1 className="text-2xl font-bold tracking-tight">Deals Pipeline</h1>
           <p className="text-sm text-muted-foreground">{deals.length} deals total</p>
         </div>
-        <Button onClick={() => setFormOpen(true)}><Plus className="h-4 w-4" /> New Deal</Button>
+        <Button onClick={handleAdd}><Plus className="h-4 w-4" /> New Deal</Button>
       </div>
 
       <div className="grid gap-4 md:grid-cols-4">
@@ -127,8 +156,15 @@ export default function DealsPage() {
 
       <KanbanBoard stages={STAGES} deals={kanbanDeals} onDealClick={handleDealClick} />
 
-      <DealDetailSheet deal={dealForSheet} open={sheetOpen} onOpenChange={setSheetOpen} />
-      <DealForm open={formOpen} onOpenChange={setFormOpen} onSaved={fetchDeals} orgId={orgId} />
+      <DealDetailSheet
+        deal={dealForSheet}
+        open={sheetOpen}
+        onOpenChange={setSheetOpen}
+        onEdit={() => { if (selectedDeal) { setSheetOpen(false); handleEditDeal(selectedDeal) } }}
+        onDelete={() => { if (selectedDeal) { setSheetOpen(false); handleDeleteDeal(selectedDeal) } }}
+      />
+      <DealForm open={formOpen} onOpenChange={setFormOpen} onSaved={fetchDeals} initialData={editData} orgId={orgId} />
+      <DeleteConfirmDialog open={deleteOpen} onOpenChange={setDeleteOpen} onConfirm={confirmDelete} title="Delete Deal" itemName={deleteItem?.name} />
     </div>
   )
 }

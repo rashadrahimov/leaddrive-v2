@@ -7,8 +7,9 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { DataTable } from "@/components/data-table"
 import { StatCard } from "@/components/stat-card"
-import { Building2, Plus, Users } from "lucide-react"
+import { Building2, Plus, Users, Pencil, Trash2 } from "lucide-react"
 import { CompanyForm } from "@/components/company-form"
+import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
 
 interface Company {
   id: string
@@ -20,6 +21,8 @@ interface Company {
   website: string | null
   email: string | null
   phone: string | null
+  address: string | null
+  description: string | null
   _count: { contacts: number; deals: number }
 }
 
@@ -36,6 +39,9 @@ export default function CompaniesPage() {
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
   const [formOpen, setFormOpen] = useState(false)
+  const [editData, setEditData] = useState<Record<string, any> | undefined>()
+  const [deleteOpen, setDeleteOpen] = useState(false)
+  const [deleteItem, setDeleteItem] = useState<Company | null>(null)
   const orgId = (session?.user as any)?.organizationId
 
   const fetchCompanies = async () => {
@@ -52,6 +58,31 @@ export default function CompaniesPage() {
   }
 
   useEffect(() => { fetchCompanies() }, [session])
+
+  function handleEdit(item: Company) {
+    setEditData({ id: item.id, name: item.name, industry: item.industry, website: item.website, phone: item.phone, email: item.email, address: item.address, city: item.city, country: item.country, status: item.status, description: item.description })
+    setFormOpen(true)
+  }
+
+  function handleAdd() {
+    setEditData(undefined)
+    setFormOpen(true)
+  }
+
+  function handleDelete(item: Company) {
+    setDeleteItem(item)
+    setDeleteOpen(true)
+  }
+
+  async function confirmDelete() {
+    if (!deleteItem) return
+    const res = await fetch(`/api/v1/companies/${deleteItem.id}`, {
+      method: "DELETE",
+      headers: orgId ? { "x-organization-id": String(orgId) } : {},
+    })
+    if (!res.ok) throw new Error((await res.json()).error || "Failed to delete")
+    fetchCompanies()
+  }
 
   const activeCount = companies.filter((c) => c.status === "active").length
   const prospectCount = companies.filter((c) => c.status === "prospect").length
@@ -96,6 +127,21 @@ export default function CompaniesPage() {
         </Badge>
       ),
     },
+    {
+      key: "actions",
+      label: "",
+      className: "w-20",
+      render: (item: any) => (
+        <div className="flex items-center gap-1" onClick={(e: React.MouseEvent) => e.stopPropagation()}>
+          <button onClick={() => handleEdit(item)} className="p-1.5 rounded hover:bg-muted" title="Edit">
+            <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
+          </button>
+          <button onClick={() => handleDelete(item)} className="p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-900/20" title="Delete">
+            <Trash2 className="h-3.5 w-3.5 text-muted-foreground hover:text-red-500" />
+          </button>
+        </div>
+      ),
+    },
   ]
 
   if (loading) {
@@ -119,7 +165,7 @@ export default function CompaniesPage() {
           <h1 className="text-2xl font-bold tracking-tight">Companies</h1>
           <p className="text-sm text-muted-foreground">Manage your client companies</p>
         </div>
-        <Button onClick={() => setFormOpen(true)}>
+        <Button onClick={handleAdd}>
           <Plus className="h-4 w-4" />
           Add Company
         </Button>
@@ -140,12 +186,8 @@ export default function CompaniesPage() {
         onRowClick={(item) => router.push(`/companies/${item.id}`)}
       />
 
-      <CompanyForm
-        open={formOpen}
-        onOpenChange={setFormOpen}
-        onSaved={fetchCompanies}
-        orgId={orgId}
-      />
+      <CompanyForm open={formOpen} onOpenChange={setFormOpen} onSaved={fetchCompanies} initialData={editData} orgId={orgId} />
+      <DeleteConfirmDialog open={deleteOpen} onOpenChange={setDeleteOpen} onConfirm={confirmDelete} title="Delete Company" itemName={deleteItem?.name} />
     </div>
   )
 }

@@ -10,14 +10,26 @@ export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("")
   const [sent, setSent] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState("")
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
-    // TODO: Implement password reset API
-    await new Promise((r) => setTimeout(r, 1000))
-    setSent(true)
-    setLoading(false)
+    setError("")
+    try {
+      const res = await fetch("/api/v1/auth/forgot-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error || "Failed to send reset link")
+      setSent(true)
+    } catch (err: any) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
   }
 
   if (sent) {
@@ -46,6 +58,7 @@ export default function ForgotPasswordPage() {
       </CardHeader>
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
+          {error && <div className="text-sm text-red-500 bg-red-50 dark:bg-red-900/20 p-2 rounded">{error}</div>}
           <div className="space-y-2">
             <label htmlFor="email" className="text-sm font-medium">Email</label>
             <Input id="email" type="email" placeholder="you@company.com" value={email} onChange={(e) => setEmail(e.target.value)} required />

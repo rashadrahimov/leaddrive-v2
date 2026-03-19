@@ -8,7 +8,8 @@ import { Badge } from "@/components/ui/badge"
 import { DataTable } from "@/components/data-table"
 import { StatCard } from "@/components/stat-card"
 import { LeadForm } from "@/components/lead-form"
-import { UserPlus, Plus, Target, TrendingUp } from "lucide-react"
+import { UserPlus, Plus, Target, TrendingUp, Pencil, Trash2 } from "lucide-react"
+import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
 import { cn } from "@/lib/utils"
 
 interface Lead {
@@ -50,6 +51,9 @@ export default function LeadsPage() {
   const [leads, setLeads] = useState<Lead[]>([])
   const [loading, setLoading] = useState(true)
   const [formOpen, setFormOpen] = useState(false)
+  const [editData, setEditData] = useState<Record<string, any> | undefined>()
+  const [deleteOpen, setDeleteOpen] = useState(false)
+  const [deleteItem, setDeleteItem] = useState<Lead | null>(null)
   const orgId = (session?.user as any)?.organizationId
 
   async function fetchLeads() {
@@ -71,6 +75,31 @@ export default function LeadsPage() {
   useEffect(() => {
     fetchLeads()
   }, [session])
+
+  function handleEdit(item: Lead) {
+    setEditData(item)
+    setFormOpen(true)
+  }
+
+  function handleAdd() {
+    setEditData(undefined)
+    setFormOpen(true)
+  }
+
+  function handleDelete(item: Lead) {
+    setDeleteItem(item)
+    setDeleteOpen(true)
+  }
+
+  async function confirmDelete() {
+    if (!deleteItem) return
+    const res = await fetch(`/api/v1/leads/${deleteItem.id}`, {
+      method: "DELETE",
+      headers: orgId ? { "x-organization-id": String(orgId) } : {},
+    })
+    if (!res.ok) throw new Error((await res.json()).error || "Failed to delete")
+    fetchLeads()
+  }
 
   const columns = [
     {
@@ -115,6 +144,21 @@ export default function LeadsPage() {
         <Badge variant="outline">{item.status}</Badge>
       ),
     },
+    {
+      key: "actions",
+      label: "",
+      className: "w-20",
+      render: (item: any) => (
+        <div className="flex items-center gap-1" onClick={(e: React.MouseEvent) => e.stopPropagation()}>
+          <button onClick={() => handleEdit(item)} className="p-1.5 rounded hover:bg-muted" title="Edit">
+            <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
+          </button>
+          <button onClick={() => handleDelete(item)} className="p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-900/20" title="Delete">
+            <Trash2 className="h-3.5 w-3.5 text-muted-foreground hover:text-red-500" />
+          </button>
+        </div>
+      ),
+    },
   ]
 
   const avgScore = leads.length > 0 ? Math.round(leads.reduce((s, l) => s + l.score, 0) / leads.length) : 0
@@ -142,7 +186,7 @@ export default function LeadsPage() {
           <h1 className="text-2xl font-bold tracking-tight">Leads</h1>
           <p className="text-sm text-muted-foreground">Track and score your leads</p>
         </div>
-        <Button onClick={() => setFormOpen(true)}>
+        <Button onClick={handleAdd}>
           <Plus className="h-4 w-4" />
           New Lead
         </Button>
@@ -163,7 +207,8 @@ export default function LeadsPage() {
         onRowClick={(item) => router.push(`/leads/${item.id}`)}
       />
 
-      <LeadForm open={formOpen} onOpenChange={setFormOpen} onSaved={fetchLeads} orgId={orgId} />
+      <LeadForm open={formOpen} onOpenChange={setFormOpen} onSaved={fetchLeads} initialData={editData} orgId={orgId} />
+      <DeleteConfirmDialog open={deleteOpen} onOpenChange={setDeleteOpen} onConfirm={confirmDelete} title="Delete Lead" itemName={deleteItem?.contactName} />
     </div>
   )
 }

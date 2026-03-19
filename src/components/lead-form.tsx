@@ -12,13 +12,22 @@ interface LeadFormProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   onSaved: () => void
+  initialData?: Record<string, any>
   orgId?: string
 }
 
-export function LeadForm({ open, onOpenChange, onSaved, orgId }: LeadFormProps) {
+export function LeadForm({ open, onOpenChange, onSaved, initialData, orgId }: LeadFormProps) {
+  const isEdit = !!initialData?.id
   const [form, setForm] = useState({
-    contactName: "", companyName: "", email: "", phone: "",
-    source: "", status: "new", priority: "medium", estimatedValue: "", notes: "",
+    contactName: initialData?.contactName || "",
+    companyName: initialData?.companyName || "",
+    email: initialData?.email || "",
+    phone: initialData?.phone || "",
+    source: initialData?.source || "",
+    status: initialData?.status || "new",
+    priority: initialData?.priority || "medium",
+    estimatedValue: String(initialData?.estimatedValue || ""),
+    notes: initialData?.notes || "",
   })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState("")
@@ -28,15 +37,15 @@ export function LeadForm({ open, onOpenChange, onSaved, orgId }: LeadFormProps) 
     setSaving(true)
     setError("")
     try {
-      const res = await fetch("/api/v1/leads", {
-        method: "POST",
+      const url = isEdit ? `/api/v1/leads/${initialData!.id}` : "/api/v1/leads"
+      const res = await fetch(url, {
+        method: isEdit ? "PUT" : "POST",
         headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": orgId } : {}) },
         body: JSON.stringify({ ...form, estimatedValue: parseFloat(form.estimatedValue) || undefined }),
       })
       if (!res.ok) throw new Error((await res.json()).error || "Failed")
       onSaved()
       onOpenChange(false)
-      setForm({ contactName: "", companyName: "", email: "", phone: "", source: "", status: "new", priority: "medium", estimatedValue: "", notes: "" })
     } catch (err: any) { setError(err.message) } finally { setSaving(false) }
   }
 
@@ -44,7 +53,7 @@ export function LeadForm({ open, onOpenChange, onSaved, orgId }: LeadFormProps) 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogHeader><DialogTitle>New Lead</DialogTitle></DialogHeader>
+      <DialogHeader><DialogTitle>{isEdit ? "Edit Lead" : "New Lead"}</DialogTitle></DialogHeader>
       <form onSubmit={handleSubmit}>
         <DialogContent>
           {error && <div className="text-sm text-red-500 bg-red-50 dark:bg-red-900/20 p-2 rounded mb-3">{error}</div>}
@@ -62,12 +71,15 @@ export function LeadForm({ open, onOpenChange, onSaved, orgId }: LeadFormProps) 
               <div><Label>Priority</Label><Select value={form.priority} onChange={e => u("priority", e.target.value)}><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option></Select></div>
               <div><Label>Est. Value</Label><Input type="number" value={form.estimatedValue} onChange={e => u("estimatedValue", e.target.value)} placeholder="0" /></div>
             </div>
+            {isEdit && (
+              <div><Label>Status</Label><Select value={form.status} onChange={e => u("status", e.target.value)}><option value="new">New</option><option value="contacted">Contacted</option><option value="qualified">Qualified</option><option value="converted">Converted</option><option value="lost">Lost</option></Select></div>
+            )}
             <div><Label>Notes</Label><Textarea value={form.notes} onChange={e => u("notes", e.target.value)} rows={2} /></div>
           </div>
         </DialogContent>
         <DialogFooter>
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button type="submit" disabled={saving}>{saving ? "Saving..." : "Create Lead"}</Button>
+          <Button type="submit" disabled={saving}>{saving ? "Saving..." : isEdit ? "Update" : "Create Lead"}</Button>
         </DialogFooter>
       </form>
     </Dialog>

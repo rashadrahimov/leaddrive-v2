@@ -7,7 +7,8 @@ import { Badge } from "@/components/ui/badge"
 import { DataTable } from "@/components/data-table"
 import { StatCard } from "@/components/stat-card"
 import { TaskForm } from "@/components/task-form"
-import { CheckSquare, Plus, Clock, AlertTriangle } from "lucide-react"
+import { CheckSquare, Plus, Clock, AlertTriangle, Pencil, Trash2 } from "lucide-react"
+import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
 import { cn } from "@/lib/utils"
 
 interface Task {
@@ -45,6 +46,9 @@ export default function TasksPage() {
   const [view, setView] = useState<ViewMode>("list")
   const [loading, setLoading] = useState(true)
   const [formOpen, setFormOpen] = useState(false)
+  const [editData, setEditData] = useState<Record<string, any> | undefined>()
+  const [deleteOpen, setDeleteOpen] = useState(false)
+  const [deleteItem, setDeleteItem] = useState<Task | null>(null)
   const orgId = (session?.user as any)?.organizationId
 
   async function fetchTasks() {
@@ -66,6 +70,31 @@ export default function TasksPage() {
   useEffect(() => {
     fetchTasks()
   }, [session])
+
+  function handleEdit(item: Task) {
+    setEditData(item)
+    setFormOpen(true)
+  }
+
+  function handleAdd() {
+    setEditData(undefined)
+    setFormOpen(true)
+  }
+
+  function handleDelete(item: Task) {
+    setDeleteItem(item)
+    setDeleteOpen(true)
+  }
+
+  async function confirmDelete() {
+    if (!deleteItem) return
+    const res = await fetch(`/api/v1/tasks/${deleteItem.id}`, {
+      method: "DELETE",
+      headers: orgId ? { "x-organization-id": String(orgId) } : {},
+    })
+    if (!res.ok) throw new Error((await res.json()).error || "Failed to delete")
+    fetchTasks()
+  }
 
   const columns = [
     {
@@ -114,6 +143,21 @@ export default function TasksPage() {
         <Badge variant={statusColors[item.status]}>{statusLabels[item.status]}</Badge>
       ),
     },
+    {
+      key: "actions",
+      label: "",
+      className: "w-20",
+      render: (item: any) => (
+        <div className="flex items-center gap-1">
+          <button onClick={() => handleEdit(item)} className="p-1.5 rounded hover:bg-muted" title="Edit">
+            <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
+          </button>
+          <button onClick={() => handleDelete(item)} className="p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-900/20" title="Delete">
+            <Trash2 className="h-3.5 w-3.5 text-muted-foreground hover:text-red-500" />
+          </button>
+        </div>
+      ),
+    },
   ]
 
   const overdue = tasks.filter(t => isOverdue(t.dueDate) && t.status !== "completed").length
@@ -156,7 +200,7 @@ export default function TasksPage() {
               Kanban
             </button>
           </div>
-          <Button onClick={() => setFormOpen(true)}>
+          <Button onClick={handleAdd}>
             <Plus className="h-4 w-4" />
             New Task
           </Button>
@@ -203,7 +247,8 @@ export default function TasksPage() {
         </div>
       )}
 
-      <TaskForm open={formOpen} onOpenChange={setFormOpen} onSaved={fetchTasks} orgId={orgId} />
+      <TaskForm open={formOpen} onOpenChange={setFormOpen} onSaved={fetchTasks} initialData={editData} orgId={orgId} />
+      <DeleteConfirmDialog open={deleteOpen} onOpenChange={setDeleteOpen} onConfirm={confirmDelete} title="Delete Task" itemName={deleteItem?.title} />
     </div>
   )
 }

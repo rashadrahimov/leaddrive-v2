@@ -7,8 +7,9 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { DataTable } from "@/components/data-table"
 import { StatCard } from "@/components/stat-card"
-import { Users, Plus, Mail, Phone } from "lucide-react"
+import { Users, Plus, Mail, Phone, Pencil, Trash2 } from "lucide-react"
 import { ContactForm } from "@/components/contact-form"
+import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
 
 interface Contact {
   id: string
@@ -16,6 +17,8 @@ interface Contact {
   email: string | null
   phone: string | null
   position: string | null
+  source: string | null
+  companyId: string | null
   isActive: boolean
   company: { id: string; name: string } | null
 }
@@ -27,6 +30,9 @@ export default function ContactsPage() {
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
   const [formOpen, setFormOpen] = useState(false)
+  const [editData, setEditData] = useState<Record<string, any> | undefined>()
+  const [deleteOpen, setDeleteOpen] = useState(false)
+  const [deleteItem, setDeleteItem] = useState<Contact | null>(null)
   const orgId = (session?.user as any)?.organizationId
 
   const fetchContacts = async () => {
@@ -42,8 +48,32 @@ export default function ContactsPage() {
       } catch {} finally { setLoading(false) }
   }
 
-  useEffect(() => { fetchContacts()
-  }, [session])
+  useEffect(() => { fetchContacts() }, [session])
+
+  function handleEdit(item: Contact) {
+    setEditData({ id: item.id, fullName: item.fullName, email: item.email, phone: item.phone, position: item.position, companyId: item.companyId, source: item.source })
+    setFormOpen(true)
+  }
+
+  function handleAdd() {
+    setEditData(undefined)
+    setFormOpen(true)
+  }
+
+  function handleDelete(item: Contact) {
+    setDeleteItem(item)
+    setDeleteOpen(true)
+  }
+
+  async function confirmDelete() {
+    if (!deleteItem) return
+    const res = await fetch(`/api/v1/contacts/${deleteItem.id}`, {
+      method: "DELETE",
+      headers: orgId ? { "x-organization-id": String(orgId) } : {},
+    })
+    if (!res.ok) throw new Error((await res.json()).error || "Failed to delete")
+    fetchContacts()
+  }
 
   const columns = [
     {
@@ -95,6 +125,21 @@ export default function ContactsPage() {
         </Badge>
       ),
     },
+    {
+      key: "actions",
+      label: "",
+      className: "w-20",
+      render: (item: any) => (
+        <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+          <button onClick={() => handleEdit(item)} className="p-1.5 rounded hover:bg-muted" title="Edit">
+            <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
+          </button>
+          <button onClick={() => handleDelete(item)} className="p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-900/20" title="Delete">
+            <Trash2 className="h-3.5 w-3.5 text-muted-foreground hover:text-red-500" />
+          </button>
+        </div>
+      ),
+    },
   ]
 
   if (loading) {
@@ -113,7 +158,7 @@ export default function ContactsPage() {
           <h1 className="text-2xl font-bold tracking-tight">Contacts</h1>
           <p className="text-sm text-muted-foreground">Manage your contact database</p>
         </div>
-        <Button onClick={() => setFormOpen(true)}><Plus className="h-4 w-4" /> Add Contact</Button>
+        <Button onClick={handleAdd}><Plus className="h-4 w-4" /> Add Contact</Button>
       </div>
 
       <div className="grid gap-4 md:grid-cols-4">
@@ -131,7 +176,8 @@ export default function ContactsPage() {
         onRowClick={(item) => router.push(`/contacts/${item.id}`)}
       />
 
-      <ContactForm open={formOpen} onOpenChange={setFormOpen} onSaved={fetchContacts} orgId={orgId} />
+      <ContactForm open={formOpen} onOpenChange={setFormOpen} onSaved={fetchContacts} initialData={editData} orgId={orgId} />
+      <DeleteConfirmDialog open={deleteOpen} onOpenChange={setDeleteOpen} onConfirm={confirmDelete} title="Delete Contact" itemName={deleteItem?.fullName} />
     </div>
   )
 }

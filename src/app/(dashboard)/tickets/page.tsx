@@ -8,7 +8,8 @@ import { Badge } from "@/components/ui/badge"
 import { DataTable } from "@/components/data-table"
 import { StatCard } from "@/components/stat-card"
 import { TicketForm } from "@/components/ticket-form"
-import { Ticket, Plus, Clock, AlertTriangle, CheckCircle } from "lucide-react"
+import { Ticket, Plus, Clock, AlertTriangle, CheckCircle, Pencil, Trash2 } from "lucide-react"
+import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
 import { cn } from "@/lib/utils"
 
 interface TicketData {
@@ -47,6 +48,9 @@ export default function TicketsPage() {
   const [view, setView] = useState<ViewMode>("list")
   const [loading, setLoading] = useState(true)
   const [formOpen, setFormOpen] = useState(false)
+  const [editData, setEditData] = useState<Record<string, any> | undefined>()
+  const [deleteOpen, setDeleteOpen] = useState(false)
+  const [deleteItem, setDeleteItem] = useState<TicketData | null>(null)
   const orgId = (session?.user as any)?.organizationId
 
   async function fetchTickets() {
@@ -68,6 +72,31 @@ export default function TicketsPage() {
   useEffect(() => {
     fetchTickets()
   }, [session])
+
+  function handleEdit(item: TicketData) {
+    setEditData(item)
+    setFormOpen(true)
+  }
+
+  function handleAdd() {
+    setEditData(undefined)
+    setFormOpen(true)
+  }
+
+  function handleDelete(item: TicketData) {
+    setDeleteItem(item)
+    setDeleteOpen(true)
+  }
+
+  async function confirmDelete() {
+    if (!deleteItem) return
+    const res = await fetch(`/api/v1/tickets/${deleteItem.id}`, {
+      method: "DELETE",
+      headers: orgId ? { "x-organization-id": String(orgId) } : {},
+    })
+    if (!res.ok) throw new Error((await res.json()).error || "Failed to delete")
+    fetchTickets()
+  }
 
   const columns = [
     {
@@ -102,6 +131,21 @@ export default function TicketsPage() {
       },
     },
     { key: "assignedTo", label: "Assigned", sortable: true },
+    {
+      key: "actions",
+      label: "",
+      className: "w-20",
+      render: (item: any) => (
+        <div className="flex items-center gap-1" onClick={(e: React.MouseEvent) => e.stopPropagation()}>
+          <button onClick={() => handleEdit(item)} className="p-1.5 rounded hover:bg-muted" title="Edit">
+            <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
+          </button>
+          <button onClick={() => handleDelete(item)} className="p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-900/20" title="Delete">
+            <Trash2 className="h-3.5 w-3.5 text-muted-foreground hover:text-red-500" />
+          </button>
+        </div>
+      ),
+    },
   ]
 
   const openCount = tickets.filter(t => ["new", "in_progress", "waiting"].includes(t.status)).length
@@ -134,7 +178,7 @@ export default function TicketsPage() {
             <button onClick={() => setView("list")} className={cn("px-3 py-1.5 text-sm", view === "list" ? "bg-primary text-primary-foreground" : "hover:bg-muted")}>List</button>
             <button onClick={() => setView("kanban")} className={cn("px-3 py-1.5 text-sm", view === "kanban" ? "bg-primary text-primary-foreground" : "hover:bg-muted")}>Kanban</button>
           </div>
-          <Button onClick={() => setFormOpen(true)}><Plus className="h-4 w-4" /> New Ticket</Button>
+          <Button onClick={handleAdd}><Plus className="h-4 w-4" /> New Ticket</Button>
         </div>
       </div>
 
@@ -180,7 +224,8 @@ export default function TicketsPage() {
         </div>
       )}
 
-      <TicketForm open={formOpen} onOpenChange={setFormOpen} onSaved={fetchTickets} orgId={orgId} />
+      <TicketForm open={formOpen} onOpenChange={setFormOpen} onSaved={fetchTickets} initialData={editData} orgId={orgId} />
+      <DeleteConfirmDialog open={deleteOpen} onOpenChange={setDeleteOpen} onConfirm={confirmDelete} title="Delete Ticket" itemName={deleteItem?.subject} />
     </div>
   )
 }

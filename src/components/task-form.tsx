@@ -12,12 +12,18 @@ interface TaskFormProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   onSaved: () => void
+  initialData?: Record<string, any>
   orgId?: string
 }
 
-export function TaskForm({ open, onOpenChange, onSaved, orgId }: TaskFormProps) {
+export function TaskForm({ open, onOpenChange, onSaved, initialData, orgId }: TaskFormProps) {
+  const isEdit = !!initialData?.id
   const [form, setForm] = useState({
-    title: "", description: "", priority: "medium", status: "pending", dueDate: "",
+    title: initialData?.title || "",
+    description: initialData?.description || "",
+    priority: initialData?.priority || "medium",
+    status: initialData?.status || "pending",
+    dueDate: initialData?.dueDate?.slice?.(0, 10) || initialData?.dueDate || "",
   })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState("")
@@ -27,15 +33,15 @@ export function TaskForm({ open, onOpenChange, onSaved, orgId }: TaskFormProps) 
     setSaving(true)
     setError("")
     try {
-      const res = await fetch("/api/v1/tasks", {
-        method: "POST",
+      const url = isEdit ? `/api/v1/tasks/${initialData!.id}` : "/api/v1/tasks"
+      const res = await fetch(url, {
+        method: isEdit ? "PUT" : "POST",
         headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": orgId } : {}) },
         body: JSON.stringify({ ...form, dueDate: form.dueDate || undefined }),
       })
       if (!res.ok) throw new Error((await res.json()).error || "Failed")
       onSaved()
       onOpenChange(false)
-      setForm({ title: "", description: "", priority: "medium", status: "pending", dueDate: "" })
     } catch (err: any) { setError(err.message) } finally { setSaving(false) }
   }
 
@@ -43,7 +49,7 @@ export function TaskForm({ open, onOpenChange, onSaved, orgId }: TaskFormProps) 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogHeader><DialogTitle>New Task</DialogTitle></DialogHeader>
+      <DialogHeader><DialogTitle>{isEdit ? "Edit Task" : "New Task"}</DialogTitle></DialogHeader>
       <form onSubmit={handleSubmit}>
         <DialogContent>
           {error && <div className="text-sm text-red-500 bg-red-50 dark:bg-red-900/20 p-2 rounded mb-3">{error}</div>}
@@ -53,12 +59,15 @@ export function TaskForm({ open, onOpenChange, onSaved, orgId }: TaskFormProps) 
               <div><Label>Priority</Label><Select value={form.priority} onChange={e => u("priority", e.target.value)}><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option></Select></div>
               <div><Label>Due Date</Label><Input type="date" value={form.dueDate} onChange={e => u("dueDate", e.target.value)} /></div>
             </div>
+            {isEdit && (
+              <div><Label>Status</Label><Select value={form.status} onChange={e => u("status", e.target.value)}><option value="pending">Pending</option><option value="in_progress">In Progress</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option></Select></div>
+            )}
             <div><Label>Description</Label><Textarea value={form.description} onChange={e => u("description", e.target.value)} rows={3} /></div>
           </div>
         </DialogContent>
         <DialogFooter>
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button type="submit" disabled={saving}>{saving ? "Saving..." : "Create Task"}</Button>
+          <Button type="submit" disabled={saving}>{saving ? "Saving..." : isEdit ? "Update" : "Create Task"}</Button>
         </DialogFooter>
       </form>
     </Dialog>
