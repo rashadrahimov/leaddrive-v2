@@ -273,9 +273,22 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
                 <span className="text-[10px] text-muted-foreground block">Оценочная цена</span>
                 <span className="text-xs">{company.annualRevenue ? `${company.annualRevenue.toLocaleString()} ₼` : "—"}</span>
               </div>
-              <div className="p-2 bg-muted/30 rounded">
-                <span className="text-[10px] text-muted-foreground block">Пользователей</span>
-                <span className="text-xs">{company.userCount || 0}</span>
+              <div className="p-2 bg-muted/30 rounded group cursor-pointer" onClick={() => {
+                const val = prompt("Количество пользователей:", String(fullData?.userCount || company.userCount || 0))
+                if (val === null) return
+                const num = parseInt(val)
+                if (isNaN(num)) return
+                fetch(`/api/v1/companies/${company.id}`, {
+                  method: "PUT",
+                  headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": orgId } : {}) },
+                  body: JSON.stringify({ userCount: num }),
+                }).then(() => {
+                  if (fullData) setFullData({ ...fullData, userCount: num })
+                  onSaved?.()
+                })
+              }}>
+                <span className="text-[10px] text-muted-foreground block">Пользователей <Pencil className="h-2 w-2 inline opacity-0 group-hover:opacity-100" /></span>
+                <span className="text-xs">{fullData?.userCount ?? company.userCount ?? 0}</span>
               </div>
               <div className="p-2 bg-muted/30 rounded">
                 <span className="text-[10px] text-muted-foreground block">Дата создания</span>
