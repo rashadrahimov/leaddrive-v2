@@ -142,7 +142,7 @@ export default function DashboardPage() {
                   <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                   <XAxis dataKey="month" className="text-xs" />
                   <YAxis className="text-xs" />
-                  <Tooltip formatter={(value: number) => [`${formatCurrency(value)}`, "Revenue"]} />
+                  <Tooltip formatter={(value: any) => [`${formatCurrency(Number(value))}`, "Revenue"]} />
                   <Bar dataKey="revenue" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
