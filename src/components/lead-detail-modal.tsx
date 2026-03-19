@@ -123,23 +123,33 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
     return null
   }
 
-  const saveAbout = async () => {
+  // Universal field update + reload
+  const updateField = async (fields: Record<string, any>) => {
     await fetch(`/api/v1/companies/${company.id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": orgId } : {}) },
-      body: JSON.stringify({ description: aboutText }),
+      body: JSON.stringify(fields),
     })
-    setEditingAbout(false)
+    // Reload full data
+    const res = await fetch(`/api/v1/companies/${company.id}`, { headers: orgId ? { "x-organization-id": orgId } : {} })
+    const json = await res.json()
+    if (json.success && json.data) setFullData(json.data)
     onSaved?.()
   }
 
+  const saveAbout = async () => {
+    await updateField({ description: aboutText })
+    setEditingAbout(false)
+  }
+
   const changeStatus = async (newStatus: string) => {
-    await fetch(`/api/v1/companies/${company.id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": orgId } : {}) },
-      body: JSON.stringify({ leadStatus: newStatus, ...(newStatus === "converted" ? { category: "client" } : {}) }),
-    })
-    onSaved?.()
+    await updateField({ leadStatus: newStatus, ...(newStatus === "converted" ? { category: "client" } : {}) })
+  }
+
+  const editField = (label: string, field: string, currentValue: any, isNumber = false) => {
+    const val = prompt(`${label}:`, String(currentValue || ""))
+    if (val === null) return
+    updateField({ [field]: isNumber ? (parseInt(val) || 0) : val })
   }
 
   const saveActivity = async () => {
@@ -231,7 +241,7 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
         {/* Tab: Details */}
         {activeTab === "details" && (
           <div className="space-y-4">
-            {/* Quick status change — FIX #5: красивый grid */}
+            {/* Quick status change */}
             <div>
               <p className="text-xs text-muted-foreground mb-2">Статус лида:</p>
               <div className="grid grid-cols-3 gap-1.5">
@@ -240,7 +250,7 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
                     key={s}
                     onClick={() => changeStatus(s)}
                     className={`text-xs py-1.5 px-2 rounded-md border transition-all ${
-                      company.leadStatus === s
+                      (fullData?.leadStatus || company.leadStatus) === s
                         ? "bg-primary text-primary-foreground border-primary font-medium"
                         : "bg-background hover:bg-muted border-border"
                     }`}
@@ -251,62 +261,49 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
               </div>
             </div>
 
-            {/* Info grid */}
+            {/* Info grid — all fields clickable to edit */}
             <div className="grid grid-cols-2 gap-2 text-sm">
-              <div className="p-2 bg-muted/30 rounded">
-                <span className="text-[10px] text-muted-foreground block">Email</span>
-                <span className="text-xs">{company.email || "—"}</span>
+              <div className="p-2 bg-muted/30 rounded cursor-pointer hover:bg-muted/50 group" onClick={() => editField("Email", "email", fullData?.email || company.email)}>
+                <span className="text-[10px] text-muted-foreground block">Email <Pencil className="h-2 w-2 inline opacity-0 group-hover:opacity-100" /></span>
+                <span className="text-xs">{fullData?.email || company.email || "—"}</span>
               </div>
-              <div className="p-2 bg-muted/30 rounded">
-                <span className="text-[10px] text-muted-foreground block">Телефон</span>
-                <span className="text-xs">{company.phone || "—"}</span>
+              <div className="p-2 bg-muted/30 rounded cursor-pointer hover:bg-muted/50 group" onClick={() => editField("Телефон", "phone", fullData?.phone || company.phone)}>
+                <span className="text-[10px] text-muted-foreground block">Телефон <Pencil className="h-2 w-2 inline opacity-0 group-hover:opacity-100" /></span>
+                <span className="text-xs">{fullData?.phone || company.phone || "—"}</span>
               </div>
-              <div className="p-2 bg-muted/30 rounded">
-                <span className="text-[10px] text-muted-foreground block">Сайт</span>
-                <span className="text-xs">{company.website || "—"}</span>
+              <div className="p-2 bg-muted/30 rounded cursor-pointer hover:bg-muted/50 group" onClick={() => editField("Сайт", "website", fullData?.website || company.website)}>
+                <span className="text-[10px] text-muted-foreground block">Сайт <Pencil className="h-2 w-2 inline opacity-0 group-hover:opacity-100" /></span>
+                <span className="text-xs">{fullData?.website || company.website || "—"}</span>
               </div>
-              <div className="p-2 bg-muted/30 rounded">
-                <span className="text-[10px] text-muted-foreground block">Отрасль</span>
-                <span className="text-xs">{company.industry || "—"}</span>
+              <div className="p-2 bg-muted/30 rounded cursor-pointer hover:bg-muted/50 group" onClick={() => editField("Отрасль", "industry", fullData?.industry || company.industry)}>
+                <span className="text-[10px] text-muted-foreground block">Отрасль <Pencil className="h-2 w-2 inline opacity-0 group-hover:opacity-100" /></span>
+                <span className="text-xs">{fullData?.industry || company.industry || "—"}</span>
               </div>
-              <div className="p-2 bg-muted/30 rounded">
-                <span className="text-[10px] text-muted-foreground block">Оценочная цена</span>
-                <span className="text-xs">{company.annualRevenue ? `${company.annualRevenue.toLocaleString()} ₼` : "—"}</span>
+              <div className="p-2 bg-muted/30 rounded cursor-pointer hover:bg-muted/50 group" onClick={() => editField("Оценочная цена (₼)", "annualRevenue", fullData?.annualRevenue || company.annualRevenue, true)}>
+                <span className="text-[10px] text-muted-foreground block">Оценочная цена <Pencil className="h-2 w-2 inline opacity-0 group-hover:opacity-100" /></span>
+                <span className="text-xs">{(fullData?.annualRevenue || company.annualRevenue) ? `${(fullData?.annualRevenue || company.annualRevenue).toLocaleString()} ₼` : "—"}</span>
               </div>
-              <div className="p-2 bg-muted/30 rounded group cursor-pointer" onClick={() => {
-                const val = prompt("Количество пользователей:", String(fullData?.userCount || company.userCount || 0))
-                if (val === null) return
-                const num = parseInt(val)
-                if (isNaN(num)) return
-                fetch(`/api/v1/companies/${company.id}`, {
-                  method: "PUT",
-                  headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": orgId } : {}) },
-                  body: JSON.stringify({ userCount: num }),
-                }).then(() => {
-                  if (fullData) setFullData({ ...fullData, userCount: num })
-                  onSaved?.()
-                })
-              }}>
+              <div className="p-2 bg-muted/30 rounded cursor-pointer hover:bg-muted/50 group" onClick={() => editField("Пользователей", "userCount", fullData?.userCount ?? company.userCount, true)}>
                 <span className="text-[10px] text-muted-foreground block">Пользователей <Pencil className="h-2 w-2 inline opacity-0 group-hover:opacity-100" /></span>
                 <span className="text-xs">{fullData?.userCount ?? company.userCount ?? 0}</span>
               </div>
               <div className="p-2 bg-muted/30 rounded">
                 <span className="text-[10px] text-muted-foreground block">Дата создания</span>
-                <span className="text-xs">{company.createdAt ? new Date(company.createdAt).toLocaleDateString() : "—"}</span>
+                <span className="text-xs">{(fullData?.createdAt || company.createdAt) ? new Date(fullData?.createdAt || company.createdAt).toLocaleDateString() : "—"}</span>
               </div>
               <div className="p-2 bg-muted/30 rounded">
                 <span className="text-[10px] text-muted-foreground block">Возраст лида</span>
-                <span className="text-xs">{company.createdAt ? `${Math.floor((Date.now() - new Date(company.createdAt).getTime()) / 86400000)} дн.` : "—"}</span>
+                <span className="text-xs">{(fullData?.createdAt || company.createdAt) ? `${Math.floor((Date.now() - new Date(fullData?.createdAt || company.createdAt).getTime()) / 86400000)} дн.` : "—"}</span>
               </div>
-              <div className="p-2 bg-muted/30 rounded">
-                <span className="text-[10px] text-muted-foreground block">Score</span>
-                <span className={`text-xs font-bold ${company.leadTemperature === "hot" ? "text-red-500" : company.leadTemperature === "warm" ? "text-orange-500" : "text-blue-500"}`}>
-                  {(company.leadTemperature || "cold").toUpperCase()} {company.leadScore}
+              <div className="p-2 bg-muted/30 rounded cursor-pointer hover:bg-muted/50 group" onClick={() => editField("Score", "leadScore", fullData?.leadScore ?? company.leadScore, true)}>
+                <span className="text-[10px] text-muted-foreground block">Score <Pencil className="h-2 w-2 inline opacity-0 group-hover:opacity-100" /></span>
+                <span className={`text-xs font-bold ${(fullData?.leadTemperature || company.leadTemperature) === "hot" ? "text-red-500" : (fullData?.leadTemperature || company.leadTemperature) === "warm" ? "text-orange-500" : "text-blue-500"}`}>
+                  {((fullData?.leadTemperature || company.leadTemperature) || "cold").toUpperCase()} {fullData?.leadScore ?? company.leadScore}
                 </span>
               </div>
               <div className="p-2 bg-muted/30 rounded">
                 <span className="text-[10px] text-muted-foreground block">Контакты</span>
-                <span className="text-xs">{company._count?.contacts || 0}</span>
+                <span className="text-xs">{fullData?.contacts?.length || company._count?.contacts || 0}</span>
               </div>
             </div>
 
