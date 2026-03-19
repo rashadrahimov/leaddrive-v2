@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select } from "@/components/ui/select"
 import { Dialog, DialogHeader, DialogTitle, DialogContent, DialogFooter } from "@/components/ui/dialog"
-import { Trash2, Eye, Code, Bold, Italic, Underline, List, ListOrdered, Link } from "lucide-react"
+import { Trash2, Eye, Code, Bold, Italic, Underline, List, ListOrdered, Link, X, Undo, Redo, AlignLeft, AlignCenter, AlignRight, Image } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface EmailTemplateFormData {
@@ -164,20 +164,29 @@ export function EmailTemplateForm({ open, onOpenChange, onSaved, initialData, or
       <DialogHeader>
         <div className="flex items-center justify-between">
           <DialogTitle>{isEdit ? "Редактировать шаблон" : "Новый шаблон"}</DialogTitle>
-          {isEdit && (
+          <div className="flex items-center gap-2">
+            {isEdit && (
+              <button
+                type="button"
+                className={cn(
+                  "text-xs px-3 py-1 rounded-full border transition-colors",
+                  form.isActive
+                    ? "bg-green-50 text-green-700 border-green-300 dark:bg-green-900/20 dark:text-green-400"
+                    : "bg-gray-50 text-gray-500 border-gray-300 dark:bg-gray-800 dark:text-gray-400"
+                )}
+                onClick={() => update("isActive", !form.isActive)}
+              >
+                {form.isActive ? "Активен" : "Неактивен"}
+              </button>
+            )}
             <button
               type="button"
-              className={cn(
-                "text-xs px-3 py-1 rounded-full border transition-colors",
-                form.isActive
-                  ? "bg-green-50 text-green-700 border-green-300 dark:bg-green-900/20 dark:text-green-400"
-                  : "bg-gray-50 text-gray-500 border-gray-300 dark:bg-gray-800 dark:text-gray-400"
-              )}
-              onClick={() => update("isActive", !form.isActive)}
+              onClick={() => onOpenChange(false)}
+              className="p-1 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
             >
-              {form.isActive ? "Активен" : "Неактивен"}
+              <X className="h-5 w-5" />
             </button>
-          )}
+          </div>
         </div>
       </DialogHeader>
       <form onSubmit={handleSubmit}>
@@ -216,9 +225,9 @@ export function EmailTemplateForm({ open, onOpenChange, onSaved, initialData, or
 
             {/* Body editor */}
             <div>
-              <Label className="text-xs uppercase text-muted-foreground">Тело письма (HTML)</Label>
+              <Label className="text-xs uppercase text-muted-foreground">Содержание письма</Label>
               <p className="text-xs text-muted-foreground mb-2">
-                💡 Нажмите на цветные кнопки под панелью чтобы вставить динамические поля
+                Редактируйте текст как в Word. Синие кнопки ниже вставят персональные данные клиента.
               </p>
 
               {/* Tabs: Editor / Preview */}
@@ -252,22 +261,22 @@ export function EmailTemplateForm({ open, onOpenChange, onSaved, initialData, or
               {activeTab === "editor" ? (
                 <div className="border rounded-b-lg">
                   {/* Toolbar */}
-                  <div className="flex items-center gap-1 p-2 border-b bg-muted/30 flex-wrap">
-                    <button type="button" onClick={() => execCommand("bold")} className="p-1.5 rounded hover:bg-muted" title="Жирный">
-                      <Bold className="h-4 w-4" />
+                  <div className="flex items-center gap-0.5 p-2 border-b bg-muted/30 flex-wrap">
+                    <button type="button" onClick={() => execCommand("undo")} className="p-1.5 rounded hover:bg-muted" title="Отменить (Ctrl+Z)">
+                      <Undo className="h-4 w-4" />
                     </button>
-                    <button type="button" onClick={() => execCommand("italic")} className="p-1.5 rounded hover:bg-muted" title="Курсив">
-                      <Italic className="h-4 w-4" />
-                    </button>
-                    <button type="button" onClick={() => execCommand("underline")} className="p-1.5 rounded hover:bg-muted" title="Подчёркнутый">
-                      <Underline className="h-4 w-4" />
+                    <button type="button" onClick={() => execCommand("redo")} className="p-1.5 rounded hover:bg-muted" title="Повторить (Ctrl+Y)">
+                      <Redo className="h-4 w-4" />
                     </button>
                     <span className="w-px h-5 bg-border mx-1" />
-                    <button type="button" onClick={() => execCommand("insertUnorderedList")} className="p-1.5 rounded hover:bg-muted" title="Список">
-                      <List className="h-4 w-4" />
+                    <button type="button" onClick={() => execCommand("bold")} className="p-1.5 rounded hover:bg-muted font-bold" title="Жирный (Ctrl+B)">
+                      <Bold className="h-4 w-4" />
                     </button>
-                    <button type="button" onClick={() => execCommand("insertOrderedList")} className="p-1.5 rounded hover:bg-muted" title="Нумерованный список">
-                      <ListOrdered className="h-4 w-4" />
+                    <button type="button" onClick={() => execCommand("italic")} className="p-1.5 rounded hover:bg-muted" title="Курсив (Ctrl+I)">
+                      <Italic className="h-4 w-4" />
+                    </button>
+                    <button type="button" onClick={() => execCommand("underline")} className="p-1.5 rounded hover:bg-muted" title="Подчёркнутый (Ctrl+U)">
+                      <Underline className="h-4 w-4" />
                     </button>
                     <span className="w-px h-5 bg-border mx-1" />
                     <select
@@ -275,33 +284,51 @@ export function EmailTemplateForm({ open, onOpenChange, onSaved, initialData, or
                       onChange={e => { if (e.target.value) execCommand("fontSize", e.target.value); e.target.value = "" }}
                       defaultValue=""
                     >
-                      <option value="" disabled>Разм</option>
+                      <option value="" disabled>Размер</option>
                       <option value="1">Мелкий</option>
                       <option value="3">Обычный</option>
                       <option value="5">Крупный</option>
-                      <option value="7">Огромный</option>
+                      <option value="7">Заголовок</option>
                     </select>
                     <input
                       type="color"
                       className="w-7 h-7 rounded border cursor-pointer"
-                      title="Цвет"
+                      title="Цвет текста"
+                      defaultValue="#000000"
                       onChange={e => execCommand("foreColor", e.target.value)}
                     />
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const url = prompt("URL ссылки:")
-                        if (url) execCommand("createLink", url)
-                      }}
-                      className="p-1.5 rounded hover:bg-muted"
-                      title="Ссылка"
-                    >
-                      <Link className="h-4 w-4" />
+                    <span className="w-px h-5 bg-border mx-1" />
+                    <button type="button" onClick={() => execCommand("justifyLeft")} className="p-1.5 rounded hover:bg-muted" title="По левому краю">
+                      <AlignLeft className="h-4 w-4" />
+                    </button>
+                    <button type="button" onClick={() => execCommand("justifyCenter")} className="p-1.5 rounded hover:bg-muted" title="По центру">
+                      <AlignCenter className="h-4 w-4" />
+                    </button>
+                    <button type="button" onClick={() => execCommand("justifyRight")} className="p-1.5 rounded hover:bg-muted" title="По правому краю">
+                      <AlignRight className="h-4 w-4" />
+                    </button>
+                    <span className="w-px h-5 bg-border mx-1" />
+                    <button type="button" onClick={() => execCommand("insertUnorderedList")} className="p-1.5 rounded hover:bg-muted" title="Маркированный список">
+                      <List className="h-4 w-4" />
+                    </button>
+                    <button type="button" onClick={() => execCommand("insertOrderedList")} className="p-1.5 rounded hover:bg-muted" title="Нумерованный список">
+                      <ListOrdered className="h-4 w-4" />
                     </button>
                     <button
                       type="button"
                       onClick={() => {
-                        // Toggle raw HTML editing
+                        const url = prompt("Вставьте ссылку (URL):")
+                        if (url) execCommand("createLink", url)
+                      }}
+                      className="p-1.5 rounded hover:bg-muted"
+                      title="Вставить ссылку"
+                    >
+                      <Link className="h-4 w-4" />
+                    </button>
+                    <span className="w-px h-5 bg-border mx-1" />
+                    <button
+                      type="button"
+                      onClick={() => {
                         const current = editorRef.current
                         if (current) {
                           const isShowingCode = current.getAttribute("data-raw") === "true"
@@ -316,22 +343,23 @@ export function EmailTemplateForm({ open, onOpenChange, onSaved, initialData, or
                           }
                         }
                       }}
-                      className="p-1.5 rounded hover:bg-muted"
-                      title="HTML код"
+                      className="p-1.5 rounded hover:bg-muted text-muted-foreground"
+                      title="Показать HTML код (для опытных)"
                     >
-                      <Code className="h-4 w-4" />
+                      <Code className="h-3.5 w-3.5" />
                     </button>
                   </div>
 
                   {/* Variable insert buttons */}
-                  <div className="flex flex-wrap gap-1.5 p-2 border-b bg-muted/10">
-                    <span className="text-xs text-muted-foreground font-medium self-center mr-1">ВСТАВИТЬ:</span>
+                  <div className="flex flex-wrap gap-1.5 p-2 border-b bg-blue-50/50 dark:bg-blue-950/20">
+                    <span className="text-xs text-blue-600 dark:text-blue-400 font-medium self-center mr-1">Данные клиента:</span>
                     {variableButtons.map(v => (
                       <button
                         key={v.variable}
                         type="button"
                         onClick={() => insertVariable(v.variable)}
-                        className="text-xs px-2 py-1 rounded-full bg-blue-50 text-blue-700 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-300 border border-blue-200 dark:border-blue-800 transition-colors"
+                        className="text-xs px-2.5 py-1 rounded-full bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900/40 dark:text-blue-300 border border-blue-200 dark:border-blue-700 transition-colors font-medium"
+                        title={`Вставит {{${v.variable}}} — заменится на реальные данные при отправке`}
                       >
                         {v.icon} {v.label}
                       </button>
@@ -339,14 +367,23 @@ export function EmailTemplateForm({ open, onOpenChange, onSaved, initialData, or
                   </div>
 
                   {/* ContentEditable area */}
-                  <div
-                    ref={editorRef}
-                    contentEditable
-                    className="min-h-[200px] max-h-[300px] overflow-y-auto p-3 focus:outline-none text-sm"
-                    onInput={syncEditorContent}
-                    onBlur={syncEditorContent}
-                    suppressContentEditableWarning
-                  />
+                  <div className="relative">
+                    <div
+                      ref={editorRef}
+                      contentEditable
+                      className="min-h-[200px] max-h-[300px] overflow-y-auto p-4 focus:outline-none text-sm leading-relaxed"
+                      onInput={syncEditorContent}
+                      onBlur={syncEditorContent}
+                      suppressContentEditableWarning
+                      data-placeholder="Начните писать текст письма здесь...&#10;&#10;Используйте синие кнопки выше чтобы вставить имя клиента, email и другие данные."
+                    />
+                    {!form.htmlBody && (
+                      <div className="absolute top-4 left-4 text-sm text-muted-foreground/50 pointer-events-none leading-relaxed">
+                        Начните писать текст письма здесь...<br /><br />
+                        Используйте синие кнопки выше чтобы вставить имя клиента, email и другие данные.
+                      </div>
+                    )}
+                  </div>
                 </div>
               ) : (
                 /* Preview tab */
