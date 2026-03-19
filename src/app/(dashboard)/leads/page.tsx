@@ -9,6 +9,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { StatCard } from "@/components/stat-card"
 import { CompanyForm } from "@/components/company-form"
+import { LeadDetailModal } from "@/components/lead-detail-modal"
 import { UserPlus, Plus, Search, Building2, Users, FileText, TrendingUp } from "lucide-react"
 
 interface LeadCompany {
@@ -58,6 +59,7 @@ export default function LeadsPage() {
   const [activeFilter, setActiveFilter] = useState<string>("all")
   const [search, setSearch] = useState("")
   const [showForm, setShowForm] = useState(false)
+  const [selectedCompany, setSelectedCompany] = useState<LeadCompany | null>(null)
   const orgId = session?.user?.organizationId
 
   const fetchCompanies = async () => {
@@ -150,7 +152,7 @@ export default function LeadsPage() {
           </div>
         ) : (
           filtered.map(company => (
-            <Card key={company.id} className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => router.push(`/companies/${company.id}`)}>
+            <Card key={company.id} className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => setSelectedCompany(company)}>
               <CardContent className="pt-4 pb-4">
                 <div className="flex items-start justify-between mb-2">
                   <h3 className="font-bold text-sm uppercase">{company.name}</h3>
@@ -193,6 +195,13 @@ export default function LeadsPage() {
         open={showForm}
         onOpenChange={setShowForm}
         onSaved={fetchCompanies}
+        orgId={orgId}
+      />
+
+      <LeadDetailModal
+        open={!!selectedCompany}
+        onOpenChange={(open) => { if (!open) setSelectedCompany(null) }}
+        company={selectedCompany}
         orgId={orgId}
       />
     </div>
