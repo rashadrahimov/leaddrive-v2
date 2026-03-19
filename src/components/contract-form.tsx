@@ -21,6 +21,11 @@ interface ContractFormData {
   notes: string
 }
 
+interface Company {
+  id: string
+  name: string
+}
+
 interface ContractFormProps {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -32,30 +37,43 @@ interface ContractFormProps {
 export function ContractForm({ open, onOpenChange, onSaved, initialData, orgId }: ContractFormProps) {
   const isEdit = !!initialData?.id
   const [form, setForm] = useState<ContractFormData>({
-    contractNumber: initialData?.contractNumber || "",
-    title: initialData?.title || "",
-    companyId: initialData?.companyId || "",
-    type: initialData?.type || "service_agreement",
-    status: initialData?.status || "draft",
-    startDate: initialData?.startDate || "",
-    endDate: initialData?.endDate || "",
-    valueAmount: initialData?.valueAmount || "",
-    currency: initialData?.currency || "AZN",
-    notes: initialData?.notes || "",
+    contractNumber: "",
+    title: "",
+    companyId: "",
+    type: "service_agreement",
+    status: "draft",
+    startDate: "",
+    endDate: "",
+    valueAmount: "",
+    currency: "AZN",
+    notes: "",
   })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState("")
+  const [companies, setCompanies] = useState<Company[]>([])
+
+  useEffect(() => {
+    if (open && orgId) {
+      fetch("/api/v1/companies?limit=500&category=all", {
+        headers: { "x-organization-id": String(orgId) },
+      }).then(r => r.json()).then(j => {
+        if (j.success) setCompanies(j.data.companies || [])
+      }).catch(() => {})
+    }
+  }, [open, orgId])
 
   useEffect(() => {
     if (open) {
+      const sd = initialData?.startDate ? new Date(initialData.startDate).toISOString().split("T")[0] : ""
+      const ed = initialData?.endDate ? new Date(initialData.endDate).toISOString().split("T")[0] : ""
       setForm({
         contractNumber: initialData?.contractNumber || "",
         title: initialData?.title || "",
         companyId: initialData?.companyId || "",
         type: initialData?.type || "service_agreement",
         status: initialData?.status || "draft",
-        startDate: initialData?.startDate || "",
-        endDate: initialData?.endDate || "",
+        startDate: sd,
+        endDate: ed,
         valueAmount: initialData?.valueAmount || "",
         currency: initialData?.currency || "AZN",
         notes: initialData?.notes || "",
@@ -79,7 +97,8 @@ export function ContractForm({ open, onOpenChange, onSaved, initialData, orgId }
         },
         body: JSON.stringify({
           ...form,
-          valueAmount: form.valueAmount ? parseFloat(form.valueAmount) : undefined,
+          valueAmount: form.valueAmount ? parseFloat(String(form.valueAmount)) : undefined,
+          companyId: form.companyId || undefined,
         }),
       })
       const json = await res.json()
@@ -98,7 +117,7 @@ export function ContractForm({ open, onOpenChange, onSaved, initialData, orgId }
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogHeader>
-        <DialogTitle>{isEdit ? "Edit Contract" : "Add Contract"}</DialogTitle>
+        <DialogTitle>{isEdit ? "Редактировать контракт" : "Новый контракт"}</DialogTitle>
       </DialogHeader>
       <form onSubmit={handleSubmit}>
         <DialogContent>
@@ -106,66 +125,82 @@ export function ContractForm({ open, onOpenChange, onSaved, initialData, orgId }
           <div className="grid gap-4">
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label htmlFor="contractNumber">Contract Number</Label>
-                <Input id="contractNumber" value={form.contractNumber} onChange={(e) => update("contractNumber", e.target.value)} />
+                <Label htmlFor="contractNumber">Номер контракта</Label>
+                <Input id="contractNumber" value={form.contractNumber} onChange={(e) => update("contractNumber", e.target.value)} required />
               </div>
               <div>
-                <Label htmlFor="title">Title *</Label>
+                <Label htmlFor="title">Название *</Label>
                 <Input id="title" value={form.title} onChange={(e) => update("title", e.target.value)} required />
               </div>
             </div>
             <div>
-              <Label htmlFor="companyId">Company ID</Label>
-              <Input id="companyId" value={form.companyId} onChange={(e) => update("companyId", e.target.value)} placeholder="Company UUID" />
+              <Label htmlFor="companyId">Компания</Label>
+              <Select value={form.companyId} onChange={(e) => update("companyId", e.target.value)}>
+                <option value="">— Не выбрана —</option>
+                {companies.map(c => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
+              </Select>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label htmlFor="type">Type</Label>
+                <Label htmlFor="type">Тип</Label>
                 <Select value={form.type} onChange={(e) => update("type", e.target.value)}>
-                  <option value="service_agreement">Service Agreement</option>
+                  <option value="service_agreement">Договор услуг</option>
                   <option value="nda">NDA</option>
-                  <option value="maintenance">Maintenance</option>
-                  <option value="license">License</option>
+                  <option value="maintenance">Обслуживание</option>
+                  <option value="license">Лицензия</option>
+                  <option value="sla">SLA</option>
+                  <option value="other">Другое</option>
                 </Select>
               </div>
               <div>
-                <Label htmlFor="status">Status</Label>
+                <Label htmlFor="status">Статус</Label>
                 <Select value={form.status} onChange={(e) => update("status", e.target.value)}>
-                  <option value="draft">Draft</option>
-                  <option value="active">Active</option>
-                  <option value="expired">Expired</option>
+                  <option value="draft">Черновик</option>
+                  <option value="sent">Отправлен</option>
+                  <option value="signed">Подписан</option>
+                  <option value="active">Активный</option>
+                  <option value="expiring">Истекает</option>
+                  <option value="expired">Истёк</option>
+                  <option value="renewed">Продлён</option>
                 </Select>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label htmlFor="startDate">Start Date</Label>
+                <Label htmlFor="startDate">Дата начала</Label>
                 <Input id="startDate" type="date" value={form.startDate} onChange={(e) => update("startDate", e.target.value)} />
               </div>
               <div>
-                <Label htmlFor="endDate">End Date</Label>
+                <Label htmlFor="endDate">Дата окончания</Label>
                 <Input id="endDate" type="date" value={form.endDate} onChange={(e) => update("endDate", e.target.value)} />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label htmlFor="valueAmount">Value Amount</Label>
+                <Label htmlFor="valueAmount">Сумма</Label>
                 <Input id="valueAmount" type="number" step="0.01" value={form.valueAmount} onChange={(e) => update("valueAmount", e.target.value)} />
               </div>
               <div>
-                <Label htmlFor="currency">Currency</Label>
-                <Input id="currency" value={form.currency} onChange={(e) => update("currency", e.target.value)} />
+                <Label htmlFor="currency">Валюта</Label>
+                <Select value={form.currency} onChange={(e) => update("currency", e.target.value)}>
+                  <option value="AZN">AZN (₼)</option>
+                  <option value="USD">USD ($)</option>
+                  <option value="EUR">EUR (€)</option>
+                  <option value="RUB">RUB (₽)</option>
+                </Select>
               </div>
             </div>
             <div>
-              <Label htmlFor="notes">Notes</Label>
+              <Label htmlFor="notes">Примечания</Label>
               <Textarea id="notes" value={form.notes} onChange={(e) => update("notes", e.target.value)} rows={3} />
             </div>
           </div>
         </DialogContent>
         <DialogFooter>
-          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button type="submit" disabled={saving}>{saving ? "Saving..." : isEdit ? "Update" : "Create"}</Button>
+          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Отмена</Button>
+          <Button type="submit" disabled={saving}>{saving ? "Сохранение..." : isEdit ? "Обновить" : "Создать"}</Button>
         </DialogFooter>
       </form>
     </Dialog>

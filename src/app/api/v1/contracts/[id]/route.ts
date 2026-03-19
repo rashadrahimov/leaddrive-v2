@@ -8,7 +8,7 @@ const updateContractSchema = z.object({
   title: z.string().optional(),
   companyId: z.string().optional(),
   type: z.string().optional(),
-  status: z.enum(["draft", "active", "expired"]).optional(),
+  status: z.enum(["draft", "sent", "signed", "active", "expiring", "expired", "renewed"]).optional(),
   startDate: z.string().optional(),
   endDate: z.string().optional(),
   valueAmount: z.number().optional(),

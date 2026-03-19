@@ -8,7 +8,7 @@ const createContractSchema = z.object({
   title: z.string().min(1).max(255),
   companyId: z.string().optional(),
   type: z.string().optional(),
-  status: z.enum(["draft", "active", "expired"]).optional(),
+  status: z.enum(["draft", "sent", "signed", "active", "expiring", "expired", "renewed"]).optional(),
   startDate: z.string().optional(),
   endDate: z.string().optional(),
   valueAmount: z.number().optional(),
@@ -39,6 +39,7 @@ export async function GET(req: NextRequest) {
         skip: (page - 1) * limit,
         take: limit,
         orderBy: { createdAt: "desc" },
+        include: { company: { select: { id: true, name: true } } },
       }),
       prisma.contract.count({ where }),
     ])
