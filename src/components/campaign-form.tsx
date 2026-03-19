@@ -81,7 +81,8 @@ const statusColors: Record<string, string> = {
 
 export function CampaignForm({ open, onOpenChange, onSaved, initialData, orgId, onSend, onDelete }: CampaignFormProps) {
   const isEdit = !!initialData?.id
-  const isSent = initialData?.status === "sent"
+  const [editingSent, setEditingSent] = useState(false)
+  const isSent = initialData?.status === "sent" && !editingSent
   const [form, setForm] = useState<CampaignFormData>({
     name: "", description: "", type: "email", status: "draft",
     subject: "", templateId: "", segmentId: "", scheduledAt: "",
@@ -142,6 +143,7 @@ export function CampaignForm({ open, onOpenChange, onSaved, initialData, orgId, 
       setError("")
       setContactSearch("")
       setRecipientModeChanged(false)
+      setEditingSent(false)
       // Restore recipient mode from saved campaign
       const savedMode = (initialData?.recipientMode as RecipientMode) || (initialData?.segmentId ? "segment" : "all")
       setRecipientMode(savedMode)
@@ -325,7 +327,21 @@ export function CampaignForm({ open, onOpenChange, onSaved, initialData, orgId, 
           </div>
         </DialogContent>
         <DialogFooter>
-          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Закрыть</Button>
+          <div className="flex items-center gap-2 w-full">
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Закрыть</Button>
+            <div className="flex-1" />
+            <Button type="button" variant="outline" onClick={() => {
+              setEditingSent(true)
+              setForm(f => ({ ...f, status: "draft" }))
+            }}>
+              Редактировать
+            </Button>
+            {onSend && (
+              <Button type="button" className="bg-emerald-600 hover:bg-emerald-700 text-white gap-1" onClick={onSend}>
+                <Send className="h-3.5 w-3.5" /> Повторить отправку
+              </Button>
+            )}
+          </div>
         </DialogFooter>
       </Dialog>
     )
