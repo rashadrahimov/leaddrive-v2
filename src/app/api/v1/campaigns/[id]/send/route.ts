@@ -83,14 +83,6 @@ export async function POST(
       })
     }
 
-    // Check SMTP configuration before attempting to send
-    if (!process.env.SMTP_USER) {
-      return NextResponse.json({
-        error: "SMTP не настроен. Добавьте SMTP_USER и SMTP_PASS в переменные окружения на сервере.",
-        smtpMissing: true,
-      }, { status: 400 })
-    }
-
     let sentCount = 0
     const errors: string[] = []
     for (const contact of contacts) {

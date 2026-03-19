@@ -1,18 +1,67 @@
 import nodemailer from "nodemailer"
 import { prisma } from "@/lib/prisma"
 
-function getTransporter() {
+interface SmtpConfig {
+  smtpHost: string
+  smtpPort: number
+  smtpUser: string
+  smtpPass: string
+  smtpTls: boolean
+  fromEmail: string
+  fromName: string
+}
+
+async function getSmtpConfig(organizationId?: string): Promise<SmtpConfig | null> {
+  // First try DB settings for the organization
+  if (organizationId) {
+    const org = await prisma.organization.findUnique({
+      where: { id: organizationId },
+      select: { settings: true, name: true },
+    })
+    const settings = (org?.settings as any) || {}
+    const smtp = settings.smtp
+    if (smtp?.smtpHost && smtp?.smtpUser && smtp?.smtpPass) {
+      return {
+        smtpHost: smtp.smtpHost,
+        smtpPort: smtp.smtpPort || 587,
+        smtpUser: smtp.smtpUser,
+        smtpPass: smtp.smtpPass,
+        smtpTls: smtp.smtpTls !== false,
+        fromEmail: smtp.fromEmail || smtp.smtpUser,
+        fromName: smtp.fromName || org?.name || "LeadDrive CRM",
+      }
+    }
+  }
+
+  // Fallback to env vars
+  if (process.env.SMTP_USER) {
+    return {
+      smtpHost: process.env.SMTP_HOST || "smtp.gmail.com",
+      smtpPort: Number(process.env.SMTP_PORT || 587),
+      smtpUser: process.env.SMTP_USER,
+      smtpPass: process.env.SMTP_PASS || "",
+      smtpTls: true,
+      fromEmail: process.env.SMTP_FROM || process.env.SMTP_USER,
+      fromName: "LeadDrive CRM",
+    }
+  }
+
+  return null
+}
+
+function createTransporter(config: SmtpConfig) {
   return nodemailer.createTransport({
-    host: process.env.SMTP_HOST || "smtp.gmail.com",
-    port: Number(process.env.SMTP_PORT || 587),
-    secure: false,
+    host: config.smtpHost,
+    port: config.smtpPort,
+    secure: config.smtpPort === 465,
     auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS,
+      user: config.smtpUser,
+      pass: config.smtpPass,
     },
-    connectionTimeout: 5000,
-    greetingTimeout: 5000,
-    socketTimeout: 10000,
+    tls: config.smtpTls ? { rejectUnauthorized: false } : undefined,
+    connectionTimeout: 10000,
+    greetingTimeout: 10000,
+    socketTimeout: 15000,
   })
 }
 
@@ -35,13 +84,13 @@ export async function sendEmail({
   contactId?: string
   sentBy?: string
 }) {
-  const fromEmail = process.env.SMTP_FROM || process.env.SMTP_USER || "noreply@leaddrivecrm.org"
+  const config = await getSmtpConfig(organizationId)
+  const fromEmail = config?.fromEmail || "noreply@leaddrivecrm.org"
 
-  // If SMTP is not configured, log to console (dev mode)
-  if (!process.env.SMTP_USER) {
-    console.log(`[EMAIL] To: ${to} | Subject: ${subject}`)
+  // If SMTP is not configured, log and return error
+  if (!config) {
+    console.log(`[EMAIL] SMTP not configured | To: ${to} | Subject: ${subject}`)
 
-    // Still log to DB if orgId available
     if (organizationId) {
       await prisma.emailLog.create({
         data: {
@@ -61,12 +110,15 @@ export async function sendEmail({
       }).catch(() => {})
     }
 
-    return { success: false, dev: true, error: "SMTP not configured" }
+    return { success: false, error: "SMTP not configured" }
   }
 
   try {
-    const info = await getTransporter().sendMail({
-      from: fromEmail,
+    const transporter = createTransporter(config)
+    const fromStr = config.fromName ? `"${config.fromName}" <${config.fromEmail}>` : config.fromEmail
+
+    const info = await transporter.sendMail({
+      from: fromStr,
       to,
       subject,
       html,
@@ -78,7 +130,7 @@ export async function sendEmail({
         data: {
           organizationId,
           direction: "outbound",
-          fromEmail,
+          fromEmail: config.fromEmail,
           toEmail: to,
           subject,
           body: html,
@@ -100,7 +152,7 @@ export async function sendEmail({
         data: {
           organizationId,
           direction: "outbound",
-          fromEmail,
+          fromEmail: config.fromEmail,
           toEmail: to,
           subject,
           body: html,
