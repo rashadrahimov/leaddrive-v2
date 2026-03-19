@@ -80,14 +80,22 @@ export function EmailTemplateForm({ open, onOpenChange, onSaved, initialData, or
     }
   }, [open, initialData])
 
-  // Sync contentEditable with form state
+  // Sync contentEditable with form state when switching to editor or opening
+  const [editorInitialized, setEditorInitialized] = useState(false)
   useEffect(() => {
-    if (editorRef.current && activeTab === "editor") {
-      if (editorRef.current.innerHTML !== form.htmlBody) {
-        editorRef.current.innerHTML = form.htmlBody
-      }
+    if (open && activeTab === "editor" && editorRef.current && form.htmlBody && !editorInitialized) {
+      editorRef.current.innerHTML = form.htmlBody
+      setEditorInitialized(true)
     }
-  }, [activeTab, open])
+    if (!open) setEditorInitialized(false)
+  }, [activeTab, open, form.htmlBody, editorInitialized])
+
+  // Re-initialize editor when switching back from preview
+  useEffect(() => {
+    if (activeTab === "editor" && editorRef.current && form.htmlBody) {
+      editorRef.current.innerHTML = form.htmlBody
+    }
+  }, [activeTab])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
