@@ -65,6 +65,7 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
   // About state
   const [editingAbout, setEditingAbout] = useState(false)
   const [aboutText, setAboutText] = useState("")
+  const [showAllContacts, setShowAllContacts] = useState(false)
 
   // Sentiment state
   const [sentiment, setSentiment] = useState<any>(null)
@@ -93,6 +94,7 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
       setAboutText(company.description || "")
       setEmailSent(false)
       setFullData(null)
+      setShowAllContacts(false)
       // Load full company data with contacts and deals
       fetch(`/api/v1/companies/${company.id}`, {
         headers: orgId ? { "x-organization-id": orgId } : {},
@@ -330,7 +332,7 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
               </div>
               {(fullData?.contacts || company.contacts) && (fullData?.contacts || company.contacts).length > 0 ? (
                 <div className="space-y-1.5">
-                  {(fullData?.contacts || company.contacts).slice(0, 5).map((c: any) => (
+                  {(showAllContacts ? (fullData?.contacts || company.contacts) : (fullData?.contacts || company.contacts).slice(0, 5)).map((c: any) => (
                     <div key={c.id} className="flex items-center justify-between p-2 bg-muted/30 rounded border border-transparent hover:border-border transition-colors">
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-1.5">
@@ -361,10 +363,21 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
                       </div>
                     </div>
                   ))}
-                  {(fullData?.contacts || company.contacts).length > 5 && (
-                    <p className="text-[10px] text-center text-muted-foreground">
-                      + ещё {(fullData?.contacts || company.contacts).length - 5} контактов
-                    </p>
+                  {(fullData?.contacts || company.contacts).length > 5 && !showAllContacts && (
+                    <button
+                      onClick={() => setShowAllContacts(true)}
+                      className="w-full text-xs text-center text-primary hover:underline py-1"
+                    >
+                      + ещё {(fullData?.contacts || company.contacts).length - 5} контактов — показать все
+                    </button>
+                  )}
+                  {showAllContacts && (fullData?.contacts || company.contacts).length > 5 && (
+                    <button
+                      onClick={() => setShowAllContacts(false)}
+                      className="w-full text-xs text-center text-muted-foreground hover:underline py-1"
+                    >
+                      Свернуть
+                    </button>
                   )}
                 </div>
               ) : <p className="text-xs text-muted-foreground">Нет контактов. Нажмите "Добавить" чтобы создать.</p>}
