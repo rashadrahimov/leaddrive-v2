@@ -17,8 +17,8 @@ export default auth((req) => {
     return NextResponse.next()
   }
 
-  // Allow public API (web-to-lead)
-  if (pathname.startsWith("/api/v1/public/")) {
+  // Allow public API (web-to-lead, calendar feed)
+  if (pathname.startsWith("/api/v1/public/") || pathname.startsWith("/api/v1/calendar/feed/")) {
     return NextResponse.next()
   }
 
