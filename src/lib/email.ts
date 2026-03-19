@@ -1,15 +1,20 @@
 import nodemailer from "nodemailer"
 import { prisma } from "@/lib/prisma"
 
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || "smtp.gmail.com",
-  port: Number(process.env.SMTP_PORT || 587),
-  secure: false,
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-  },
-})
+function getTransporter() {
+  return nodemailer.createTransport({
+    host: process.env.SMTP_HOST || "smtp.gmail.com",
+    port: Number(process.env.SMTP_PORT || 587),
+    secure: false,
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS,
+    },
+    connectionTimeout: 5000,
+    greetingTimeout: 5000,
+    socketTimeout: 10000,
+  })
+}
 
 export async function sendEmail({
   to,
@@ -60,7 +65,7 @@ export async function sendEmail({
   }
 
   try {
-    const info = await transporter.sendMail({
+    const info = await getTransporter().sendMail({
       from: fromEmail,
       to,
       subject,
