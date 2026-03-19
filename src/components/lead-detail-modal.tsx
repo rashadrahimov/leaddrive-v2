@@ -151,11 +151,74 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
         {/* Tab: Details */}
         {activeTab === "details" && (
           <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div><span className="text-muted-foreground">Отрасль:</span> {company.industry || "—"}</div>
-              <div><span className="text-muted-foreground">Сайт:</span> {company.website || "—"}</div>
-              <div><span className="text-muted-foreground">Контакты:</span> {company._count?.contacts || company.contacts?.length || 0}</div>
-              <div><span className="text-muted-foreground">Последняя активность:</span> —</div>
+            {/* Quick status change */}
+            <div>
+              <p className="text-xs text-muted-foreground mb-2">Быстрая смена статуса:</p>
+              <div className="flex flex-wrap gap-1">
+                {(["new", "contacted", "qualified", "rejected", "converted"] as const).map(s => (
+                  <Button
+                    key={s}
+                    size="sm"
+                    variant={company.leadStatus === s ? "default" : "outline"}
+                    className="text-xs h-7"
+                    onClick={async () => {
+                      await fetch(`/api/v1/companies/${company.id}`, {
+                        method: "PUT",
+                        headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": orgId } : {}) },
+                        body: JSON.stringify({ leadStatus: s, ...(s === "converted" ? { category: "client" } : {}) }),
+                      })
+                      onSaved?.()
+                    }}
+                  >
+                    {statusLabels[s] || s}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 text-sm">
+              <div className="p-2 bg-muted/30 rounded">
+                <span className="text-xs text-muted-foreground block">Email</span>
+                <span>{company.email || "—"}</span>
+              </div>
+              <div className="p-2 bg-muted/30 rounded">
+                <span className="text-xs text-muted-foreground block">Сайт</span>
+                <span>{company.website || "—"}</span>
+              </div>
+              <div className="p-2 bg-muted/30 rounded">
+                <span className="text-xs text-muted-foreground block">Отрасль</span>
+                <span>{company.industry || "—"}</span>
+              </div>
+              <div className="p-2 bg-muted/30 rounded">
+                <span className="text-xs text-muted-foreground block">Источник</span>
+                <span>{(company as any).source || "—"}</span>
+              </div>
+              <div className="p-2 bg-muted/30 rounded">
+                <span className="text-xs text-muted-foreground block">Оценочная цена</span>
+                <span>{(company as any).annualRevenue ? `${(company as any).annualRevenue.toLocaleString()} ₼` : "—"}</span>
+              </div>
+              <div className="p-2 bg-muted/30 rounded">
+                <span className="text-xs text-muted-foreground block">Пользователей</span>
+                <span>{company.userCount || 0}</span>
+              </div>
+              <div className="p-2 bg-muted/30 rounded">
+                <span className="text-xs text-muted-foreground block">Дата создания</span>
+                <span>{(company as any).createdAt ? new Date((company as any).createdAt).toLocaleDateString() : "—"}</span>
+              </div>
+              <div className="p-2 bg-muted/30 rounded">
+                <span className="text-xs text-muted-foreground block">Возраст лида</span>
+                <span>{(company as any).createdAt ? `${Math.floor((Date.now() - new Date((company as any).createdAt).getTime()) / 86400000)} дн.` : "—"}</span>
+              </div>
+              <div className="p-2 bg-muted/30 rounded">
+                <span className="text-xs text-muted-foreground block">Контакты</span>
+                <span>{company._count?.contacts || company.contacts?.length || 0}</span>
+              </div>
+              <div className="p-2 bg-muted/30 rounded">
+                <span className="text-xs text-muted-foreground block">Score</span>
+                <span className={company.leadTemperature === "hot" ? "text-red-500 font-bold" : company.leadTemperature === "warm" ? "text-orange-500 font-bold" : "text-blue-500 font-bold"}>
+                  {(company.leadTemperature || "cold").toUpperCase()} {company.leadScore}
+                </span>
+              </div>
             </div>
 
             <div>
@@ -164,8 +227,14 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
                 <div className="space-y-2">
                   {company.contacts.map(c => (
                     <div key={c.id} className="flex items-center justify-between text-sm p-2 bg-muted/30 rounded">
-                      <span className="font-medium">{c.fullName}</span>
-                      <span className="text-muted-foreground">{c.position || c.email || ""}</span>
+                      <div>
+                        <span className="font-medium">{c.fullName}</span>
+                        {c.position && <span className="text-xs text-muted-foreground ml-2">{c.position}</span>}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {c.email && <span className="mr-2">{c.email}</span>}
+                        {c.phone && <span>{c.phone}</span>}
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -173,11 +242,15 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
             </div>
 
             <div>
-              <h4 className="font-medium text-sm mb-2">Контракты ({company._count?.deals || 0})</h4>
+              <h4 className="font-medium text-sm mb-2">Сделки ({company.deals?.length || 0})</h4>
               {company.deals && company.deals.length > 0 ? (
                 company.deals.map(d => (
-                  <div key={d.id} className="text-sm p-2 bg-muted/30 rounded mb-1">
-                    {d.title} — <Badge variant="outline" className="text-xs">{d.stage}</Badge>
+                  <div key={d.id} className="flex justify-between text-sm p-2 bg-muted/30 rounded mb-1">
+                    <span>{d.title}</span>
+                    <div className="flex gap-2">
+                      <span className="font-medium">{d.valueAmount ? `${d.valueAmount.toLocaleString()} ₼` : "0 ₼"}</span>
+                      <Badge variant="outline" className="text-xs">{d.stage}</Badge>
+                    </div>
                   </div>
                 ))
               ) : <p className="text-sm text-muted-foreground">—</p>}

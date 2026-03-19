@@ -39,8 +39,11 @@ export async function GET(req: NextRequest) {
         skip: (page - 1) * limit,
         take: limit,
         orderBy: { name: "asc" },
-        include: { _count: { select: { contacts: true, deals: true } } },
-        // Note: contracts count added via separate query if needed
+        include: {
+          _count: { select: { contacts: true, deals: true } },
+          contacts: { take: 5, select: { id: true, fullName: true, email: true, phone: true, position: true } },
+          deals: { take: 5, select: { id: true, title: true, stage: true, valueAmount: true } },
+        },
       }),
       prisma.company.count({ where }),
     ])
