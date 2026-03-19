@@ -1,30 +1,68 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useSession } from "next-auth/react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Search, Send, Archive, Trash2 } from "lucide-react"
 
-const CONVERSATIONS = [
-  { id: "1", contact: "Kamran Hasanov", subject: "Question about pricing", preview: "Hi, I'd like to know more...", unread: 2, date: "Today" },
-  { id: "2", contact: "Tarlan Mammadli", subject: "Meeting confirmation", preview: "Can we move the meeting to...", unread: 0, date: "Yesterday" },
-  { id: "3", contact: "Rashad Rahimov", subject: "Integration help", preview: "I'm having trouble with the API...", unread: 3, date: "Mar 18" },
-  { id: "4", contact: "Farid Gulalizade", subject: "Demo feedback", preview: "Great demo! I have a few questions...", unread: 1, date: "Mar 17" },
-  { id: "5", contact: "Jahan Pashayev", subject: "Contract review", preview: "Can you review the attached...", unread: 0, date: "Mar 16" },
-]
+interface Message {
+  id: string
+  contact: string
+  subject: string
+  preview: string
+  unread: number
+  date: string
+}
 
 export default function InboxPage() {
+  const { data: session } = useSession()
+  const [messages, setMessages] = useState<Message[]>([])
+  const [loading, setLoading] = useState(true)
   const [selected, setSelected] = useState<string | null>(null)
   const [search, setSearch] = useState("")
+  const orgId = (session?.user as any)?.organizationId
 
-  const filtered = CONVERSATIONS.filter(c =>
-    c.contact.toLowerCase().includes(search.toLowerCase()) ||
-    c.subject.toLowerCase().includes(search.toLowerCase())
+  useEffect(() => {
+    const fetchMessages = async () => {
+      try {
+        const res = await fetch("/api/v1/inbox", {
+          headers: orgId ? { "x-organization-id": orgId } : {},
+        })
+        const json = await res.json()
+        if (json.success) {
+          setMessages(json.data.messages)
+        }
+      } catch {} finally {
+        setLoading(false)
+      }
+    }
+
+    fetchMessages()
+  }, [session])
+
+  const filtered = messages.filter(m =>
+    m.contact.toLowerCase().includes(search.toLowerCase()) ||
+    m.subject.toLowerCase().includes(search.toLowerCase())
   )
 
-  const selectedConvo = CONVERSATIONS.find(c => c.id === selected)
+  const selectedConvo = messages.find(m => m.id === selected)
+
+  if (loading) {
+    return (
+      <div className="h-[calc(100vh-200px)] flex gap-6">
+        <div className="w-80 animate-pulse">
+          <div className="h-10 bg-muted rounded-lg mb-4" />
+          <div className="space-y-2">
+            {[1, 2, 3].map((i) => <div key={i} className="h-16 bg-muted rounded-lg" />)}
+          </div>
+        </div>
+        <div className="flex-1 bg-muted rounded-lg animate-pulse" />
+      </div>
+    )
+  }
 
   return (
     <div className="h-[calc(100vh-200px)] flex gap-6">
@@ -42,26 +80,30 @@ export default function InboxPage() {
         </div>
 
         <div className="flex-1 overflow-y-auto space-y-2 border rounded-lg p-2">
-          {filtered.map((conversation) => (
-            <div
-              key={conversation.id}
-              onClick={() => setSelected(conversation.id)}
-              className={`p-3 rounded-lg cursor-pointer transition-colors ${
-                selected === conversation.id
-                  ? "bg-primary text-primary-foreground"
-                  : "hover:bg-muted"
-              }`}
-            >
-              <div className="flex items-center justify-between mb-1">
-                <div className="font-medium text-sm">{conversation.contact}</div>
-                {conversation.unread > 0 && (
-                  <Badge variant="secondary" className="text-xs">{conversation.unread}</Badge>
-                )}
+          {filtered.length > 0 ? (
+            filtered.map((message) => (
+              <div
+                key={message.id}
+                onClick={() => setSelected(message.id)}
+                className={`p-3 rounded-lg cursor-pointer transition-colors ${
+                  selected === message.id
+                    ? "bg-primary text-primary-foreground"
+                    : "hover:bg-muted"
+                }`}
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <div className="font-medium text-sm">{message.contact}</div>
+                  {message.unread > 0 && (
+                    <Badge variant="secondary" className="text-xs">{message.unread}</Badge>
+                  )}
+                </div>
+                <div className="text-xs text-muted-foreground line-clamp-1">{message.subject}</div>
+                <div className="text-xs text-muted-foreground mt-1">{message.date}</div>
               </div>
-              <div className="text-xs text-muted-foreground line-clamp-1">{conversation.subject}</div>
-              <div className="text-xs text-muted-foreground mt-1">{conversation.date}</div>
-            </div>
-          ))}
+            ))
+          ) : (
+            <div className="p-4 text-center text-muted-foreground text-sm">No messages</div>
+          )}
         </div>
       </div>
 
@@ -107,7 +149,11 @@ export default function InboxPage() {
         ) : (
           <Card className="h-full flex items-center justify-center">
             <div className="text-center">
-              <p className="text-muted-foreground">Select a conversation to continue</p>
+              <p className="text-muted-foreground">
+                {messages.length === 0
+                  ? "No messages yet"
+                  : "Select a conversation to continue"}
+              </p>
             </div>
           </Card>
         )}

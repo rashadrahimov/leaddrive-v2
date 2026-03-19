@@ -1,35 +1,49 @@
 "use client"
 
-import { useRouter } from "next/navigation"
+import { useRouter, useParams } from "next/navigation"
+import { useEffect, useState } from "react"
+import { useSession } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ArrowLeft, Mail, Phone, Building2, Pencil, Calendar, MessageSquare } from "lucide-react"
 
-const MOCK_CONTACT = {
-  id: "1",
-  fullName: "Rashad Rahimov",
-  email: "rashad.rahimov@zeytunpharma.az",
-  phone: "+994512060838",
-  position: "IT Manager",
-  department: "IT",
-  company: { id: "1", name: "Zeytun Pharma" },
-  source: "referral",
-  tags: ["vip", "decision-maker"],
-  isActive: true,
-  lastContactAt: "2026-03-16",
-  activities: [
-    { id: "1", type: "email", subject: "Proposal sent", date: "2026-03-16", description: "Sent updated pricing proposal" },
-    { id: "2", type: "call", subject: "Follow-up call", date: "2026-03-14", description: "Discussed implementation timeline" },
-    { id: "3", type: "meeting", subject: "Initial meeting at GT office", date: "2026-03-10", description: "Product demo and requirements gathering" },
-  ],
-  deals: [
-    { id: "2", name: "GT-OFF-2026-005 — ZEYTUN", stage: "PROPOSAL", valueAmount: 16284 },
-  ],
-  tasks: [
-    { id: "1", title: "Send contract draft", status: "pending", dueDate: "2026-03-22" },
-  ],
+interface Activity {
+  id: string
+  type: string
+  subject?: string
+  description?: string
+  createdAt: string
+}
+
+interface Deal {
+  id: string
+  name: string
+  stage: string
+  valueAmount: number
+}
+
+interface Task {
+  id: string
+  title: string
+  status: string
+  dueDate?: string
+}
+
+interface Contact {
+  id: string
+  fullName: string
+  email?: string
+  phone?: string
+  position?: string
+  department?: string
+  source?: string
+  tags: string[]
+  isActive: boolean
+  lastContactAt?: string
+  company?: { id: string; name: string }
+  activities?: Activity[]
 }
 
 const activityIcons: Record<string, string> = {
@@ -38,7 +52,56 @@ const activityIcons: Record<string, string> = {
 
 export default function ContactDetailPage() {
   const router = useRouter()
-  const contact = MOCK_CONTACT
+  const params = useParams()
+  const { data: session } = useSession()
+  const [contact, setContact] = useState<Contact | null>(null)
+  const [loading, setLoading] = useState(true)
+  const id = params.id as string
+  const orgId = (session?.user as any)?.organizationId
+
+  useEffect(() => {
+    const fetchContact = async () => {
+      try {
+        const res = await fetch(`/api/v1/contacts/${id}`, {
+          headers: orgId ? { "x-organization-id": orgId } : {},
+        })
+        const json = await res.json()
+        if (json.success) {
+          setContact(json.data)
+        }
+      } catch {} finally {
+        setLoading(false)
+      }
+    }
+
+    if (id && session) {
+      fetchContact()
+    }
+  }, [id, session])
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="h-32 bg-muted rounded-lg animate-pulse" />
+        <div className="h-96 bg-muted rounded-lg animate-pulse" />
+      </div>
+    )
+  }
+
+  if (!contact) {
+    return (
+      <div className="space-y-6">
+        <Button variant="ghost" size="icon" onClick={() => router.push("/contacts")}>
+          <ArrowLeft className="h-4 w-4" />
+        </Button>
+        <Card>
+          <CardContent className="pt-6">
+            <p className="text-muted-foreground text-center">Contact not found</p>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
 
   const initials = contact.fullName.split(" ").map(n => n[0]).join("").slice(0, 2)
 
@@ -106,9 +169,7 @@ export default function ContactDetailPage() {
 
       <Tabs defaultValue="activities">
         <TabsList>
-          <TabsTrigger value="activities">Activities ({contact.activities.length})</TabsTrigger>
-          <TabsTrigger value="deals">Deals ({contact.deals.length})</TabsTrigger>
-          <TabsTrigger value="tasks">Tasks ({contact.tasks.length})</TabsTrigger>
+          <TabsTrigger value="activities">Activities ({contact.activities?.length || 0})</TabsTrigger>
           <TabsTrigger value="info">Info</TabsTrigger>
         </TabsList>
 
@@ -122,56 +183,30 @@ export default function ContactDetailPage() {
               </Button>
             </CardHeader>
             <CardContent>
-              <div className="relative space-y-4 pl-6 before:absolute before:left-[11px] before:top-2 before:h-[calc(100%-16px)] before:w-px before:bg-border">
-                {contact.activities.map((activity) => (
-                  <div key={activity.id} className="relative">
-                    <div className="absolute -left-6 flex h-6 w-6 items-center justify-center rounded-full bg-background border text-xs">
-                      {activityIcons[activity.type] || "📌"}
-                    </div>
-                    <div className="rounded-lg border p-3">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium">{activity.subject}</span>
-                        <span className="text-xs text-muted-foreground">{activity.date}</span>
+              {contact.activities && contact.activities.length > 0 ? (
+                <div className="relative space-y-4 pl-6 before:absolute before:left-[11px] before:top-2 before:h-[calc(100%-16px)] before:w-px before:bg-border">
+                  {contact.activities.map((activity) => (
+                    <div key={activity.id} className="relative">
+                      <div className="absolute -left-6 flex h-6 w-6 items-center justify-center rounded-full bg-background border text-xs">
+                        {activityIcons[activity.type] || "📌"}
                       </div>
-                      {activity.description && (
-                        <p className="mt-1 text-xs text-muted-foreground">{activity.description}</p>
-                      )}
+                      <div className="rounded-lg border p-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium">{activity.subject || "Activity"}</span>
+                          <span className="text-xs text-muted-foreground">
+                            {activity.createdAt ? new Date(activity.createdAt).toLocaleDateString() : "—"}
+                          </span>
+                        </div>
+                        {activity.description && (
+                          <p className="mt-1 text-xs text-muted-foreground">{activity.description}</p>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="deals">
-          <Card>
-            <CardContent className="pt-6">
-              {contact.deals.map((deal) => (
-                <div key={deal.id} className="flex items-center justify-between rounded-lg border p-3">
-                  <div>
-                    <div className="font-medium text-sm">{deal.name}</div>
-                    <Badge variant="outline" className="mt-1">{deal.stage}</Badge>
-                  </div>
-                  <span className="font-semibold text-primary">{deal.valueAmount.toLocaleString()} ₼</span>
+                  ))}
                 </div>
-              ))}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="tasks">
-          <Card>
-            <CardContent className="pt-6">
-              {contact.tasks.map((task) => (
-                <div key={task.id} className="flex items-center justify-between rounded-lg border p-3">
-                  <span className="text-sm">{task.title}</span>
-                  <div className="flex items-center gap-2">
-                    <Badge variant={task.status === "completed" ? "secondary" : "outline"}>{task.status}</Badge>
-                    <span className="text-xs text-muted-foreground">{task.dueDate}</span>
-                  </div>
-                </div>
-              ))}
+              ) : (
+                <p className="text-sm text-muted-foreground text-center py-6">No activities yet</p>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -180,10 +215,22 @@ export default function ContactDetailPage() {
           <Card>
             <CardContent className="space-y-3 pt-6 text-sm">
               <div className="grid grid-cols-2 gap-4">
-                <div><span className="text-muted-foreground">Source:</span> <span className="ml-2 font-medium">{contact.source}</span></div>
-                <div><span className="text-muted-foreground">Department:</span> <span className="ml-2 font-medium">{contact.department}</span></div>
-                <div><span className="text-muted-foreground">Status:</span> <Badge className="ml-2">{contact.isActive ? "Active" : "Inactive"}</Badge></div>
-                <div><span className="text-muted-foreground">Company:</span> <span className="ml-2 font-medium">{contact.company?.name}</span></div>
+                <div>
+                  <span className="text-muted-foreground">Source:</span>
+                  <span className="ml-2 font-medium">{contact.source || "—"}</span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Department:</span>
+                  <span className="ml-2 font-medium">{contact.department || "—"}</span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Status:</span>
+                  <Badge className="ml-2">{contact.isActive ? "Active" : "Inactive"}</Badge>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Company:</span>
+                  <span className="ml-2 font-medium">{contact.company?.name || "—"}</span>
+                </div>
               </div>
             </CardContent>
           </Card>

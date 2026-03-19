@@ -1,26 +1,51 @@
 "use client"
 
+import { useEffect, useState } from "react"
+import { useSession } from "next-auth/react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { DataTable } from "@/components/data-table"
 import { Plus, Users } from "lucide-react"
 
-const SEGMENTS = [
-  { id: "1", name: "High-Value Customers", contactCount: 245, conditions: "Deal Value > $50k", dynamic: true },
-  { id: "2", name: "Recent Signups", contactCount: 1203, conditions: "Created Date within 30 days", dynamic: true },
-  { id: "3", name: "Inactive (90 days)", contactCount: 567, conditions: "No activity in 90 days", dynamic: true },
-  { id: "4", name: "Enterprise Accounts", contactCount: 89, conditions: "Company Size > 500, Industry = Tech", dynamic: true },
-  { id: "5", name: "Churn Risk", contactCount: 132, conditions: "Support Tickets > 5, NPS <= 5", dynamic: true },
-]
+interface Segment {
+  id: string
+  name: string
+  contactCount: number
+  isDynamic: boolean
+  conditions?: Record<string, unknown>
+}
 
 export default function SegmentsPage() {
+  const { data: session } = useSession()
+  const [segments, setSegments] = useState<Segment[]>([])
+  const [loading, setLoading] = useState(true)
+  const orgId = (session?.user as any)?.organizationId
+
+  const fetchSegments = async () => {
+    try {
+      const res = await fetch("/api/v1/segments?limit=500", {
+        headers: orgId ? { "x-organization-id": orgId } : {},
+      })
+      const json = await res.json()
+      if (json.success) {
+        setSegments(json.data.segments)
+      }
+    } catch {} finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchSegments()
+  }, [session])
+
   const columns = [
     {
       key: "name",
       label: "Segment Name",
       sortable: true,
-      render: (item: typeof SEGMENTS[0]) => (
+      render: (item: Segment) => (
         <div className="font-medium">{item.name}</div>
       ),
     },
@@ -28,7 +53,7 @@ export default function SegmentsPage() {
       key: "contactCount",
       label: "Contacts",
       sortable: true,
-      render: (item: typeof SEGMENTS[0]) => (
+      render: (item: Segment) => (
         <div className="flex items-center gap-1">
           <Users className="h-4 w-4 text-muted-foreground" />
           <span>{item.contactCount.toLocaleString()}</span>
@@ -39,21 +64,36 @@ export default function SegmentsPage() {
       key: "conditions",
       label: "Conditions",
       sortable: false,
-      render: (item: typeof SEGMENTS[0]) => (
-        <div className="text-sm text-muted-foreground max-w-xs truncate">{item.conditions}</div>
+      render: (item: Segment) => (
+        <div className="text-sm text-muted-foreground max-w-xs truncate">
+          {item.conditions && typeof item.conditions === "object"
+            ? JSON.stringify(item.conditions).slice(0, 50) + "..."
+            : "—"}
+        </div>
       ),
     },
     {
-      key: "dynamic",
+      key: "isDynamic",
       label: "Type",
       sortable: true,
-      render: (item: typeof SEGMENTS[0]) => (
+      render: (item: Segment) => (
         <Badge variant="outline" className="bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400">
-          Dynamic
+          {item.isDynamic ? "Dynamic" : "Static"}
         </Badge>
       ),
     },
   ]
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <h1 className="text-2xl font-bold tracking-tight">Segments</h1>
+        <div className="animate-pulse space-y-4">
+          <div className="h-96 bg-muted rounded-lg" />
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
@@ -75,7 +115,7 @@ export default function SegmentsPage() {
         <CardContent>
           <DataTable
             columns={columns}
-            data={SEGMENTS}
+            data={segments}
             searchPlaceholder="Search segments..."
             searchKey="name"
             pageSize={10}
