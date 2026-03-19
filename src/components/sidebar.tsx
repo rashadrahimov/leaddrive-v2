@@ -8,7 +8,8 @@ import {
   LayoutDashboard, Building2, Users, Handshake, UserPlus,
   CheckSquare, FileText, FileSpreadsheet, Calculator, Brain,
   Ticket, BookOpen, BarChart3, Mail, MessageSquare, Zap,
-  Settings, ChevronLeft, DollarSign,
+  Settings, ChevronLeft, DollarSign, Target, Send,
+  TrendingUp, Filter, Workflow, Server,
 } from "lucide-react"
 import { useState } from "react"
 
@@ -29,7 +30,13 @@ const navItems: NavItem[] = [
   { module: "tasks", href: "/tasks", icon: CheckSquare, label: "Tasks", group: "CRM" },
   { module: "contracts", href: "/contracts", icon: FileText, label: "Contracts", group: "CRM" },
   { module: "campaigns", href: "/campaigns", icon: Mail, label: "Campaigns", group: "Marketing" },
-  { module: "omnichannel", href: "/inbox", icon: MessageSquare, label: "Inbox", group: "Marketing" },
+  { module: "campaigns", href: "/segments", icon: Filter, label: "Segments", group: "Marketing" },
+  { module: "campaigns", href: "/settings/email-templates", icon: Send, label: "Email Templates", group: "Marketing" },
+  { module: "campaigns", href: "/email-log", icon: FileText, label: "Email Log", group: "Marketing" },
+  { module: "campaigns", href: "/campaign-roi", icon: TrendingUp, label: "Campaign ROI", group: "Marketing" },
+  { module: "leads", href: "/lead-scoring", icon: Target, label: "AI Scoring", group: "Marketing" },
+  { module: "leads", href: "/journeys", icon: Workflow, label: "Journeys", group: "Marketing" },
+  { module: "omnichannel", href: "/inbox", icon: MessageSquare, label: "Inbox", group: "Communication" },
   { module: "tickets", href: "/tickets", icon: Ticket, label: "Tickets", group: "Support" },
   { module: "knowledge-base", href: "/knowledge-base", icon: BookOpen, label: "Knowledge Base", group: "Support" },
   { module: "profitability", href: "/profitability", icon: Calculator, label: "Profitability", group: "Analytics" },
@@ -37,6 +44,7 @@ const navItems: NavItem[] = [
   { module: "reports", href: "/reports", icon: BarChart3, label: "Reports", group: "Analytics" },
   { module: "ai", href: "/ai-command-center", icon: Brain, label: "AI Center", group: "Analytics" },
   { module: "workflows", href: "/settings/workflows", icon: Zap, label: "Workflows", group: "Settings" },
+  { module: "core", href: "/settings/smtp-settings", icon: Server, label: "SMTP", group: "Settings" },
   { module: "core", href: "/settings", icon: Settings, label: "Settings", group: "Settings" },
 ]
 

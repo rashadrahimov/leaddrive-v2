@@ -128,6 +128,9 @@ model Company {
   description    String?
   status         String   @default("active") // active, inactive, prospect
   category       String   @default("client") // client, partner, prospect, inactive
+  leadStatus     String   @default("converted") // new, contacted, qualified, converted, rejected, cancelled
+  leadScore      Int      @default(0)
+  leadTemperature String? // cold, warm, hot
   userCount      Int      @default(0)
   costCode       String?
   createdAt      DateTime @default(now())
