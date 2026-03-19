@@ -41,7 +41,7 @@ export default function CompaniesPage() {
   const fetchCompanies = async () => {
     try {
       const res = await fetch("/api/v1/companies?limit=500", {
-        headers: orgId ? { "x-organization-id": orgId } : {},
+        headers: orgId ? { "x-organization-id": String(orgId) } : {},
       })
         const json = await res.json()
         if (json.success) {

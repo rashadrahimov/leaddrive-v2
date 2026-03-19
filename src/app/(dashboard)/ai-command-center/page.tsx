@@ -36,10 +36,10 @@ export default function AICommandCenterPage() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const headers = orgId ? { "x-organization-id": orgId } : {}
+        const hdrs: Record<string, string> = orgId ? { "x-organization-id": String(orgId) } : {}
         const [agentsRes, sessionsRes] = await Promise.all([
-          fetch("/api/v1/ai-configs", { headers }).then(r => r.json()).catch(() => ({ success: false })),
-          fetch("/api/v1/ai-sessions", { headers }).then(r => r.json()).catch(() => ({ success: false })),
+          fetch("/api/v1/ai-configs", { headers: hdrs }).then(r => r.json()).catch(() => ({ success: false })),
+          fetch("/api/v1/ai-sessions", { headers: hdrs }).then(r => r.json()).catch(() => ({ success: false })),
         ])
         if (agentsRes.success) setAgents(agentsRes.data?.configs || [])
         if (sessionsRes.success) setSessions(sessionsRes.data?.sessions || [])

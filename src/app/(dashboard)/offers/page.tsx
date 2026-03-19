@@ -30,7 +30,7 @@ export default function OffersPage() {
   const fetchOffers = async () => {
     try {
       const res = await fetch("/api/v1/offers?limit=500", {
-        headers: orgId ? { "x-organization-id": orgId } : {},
+        headers: orgId ? { "x-organization-id": String(orgId) } : {},
       })
       const json = await res.json()
       if (json.success) {

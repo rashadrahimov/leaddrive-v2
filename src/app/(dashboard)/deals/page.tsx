@@ -49,7 +49,7 @@ export default function DealsPage() {
   const fetchDeals = async () => {
     try {
       const res = await fetch("/api/v1/deals?limit=200", {
-        headers: orgId ? { "x-organization-id": orgId } : {},
+        headers: orgId ? { "x-organization-id": String(orgId) } : {},
       })
       const json = await res.json()
       if (json.success) setDeals(json.data.deals)

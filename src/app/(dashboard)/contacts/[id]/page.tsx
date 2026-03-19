@@ -63,7 +63,7 @@ export default function ContactDetailPage() {
     const fetchContact = async () => {
       try {
         const res = await fetch(`/api/v1/contacts/${id}`, {
-          headers: orgId ? { "x-organization-id": orgId } : {},
+          headers: orgId ? { "x-organization-id": String(orgId) } : {},
         })
         const json = await res.json()
         if (json.success) {

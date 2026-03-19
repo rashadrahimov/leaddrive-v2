@@ -50,7 +50,7 @@ export default function TasksPage() {
   async function fetchTasks() {
     try {
       const res = await fetch("/api/v1/tasks?limit=200", {
-        headers: orgId ? { "x-organization-id": orgId } : {},
+        headers: orgId ? { "x-organization-id": String(orgId) } : {},
       })
       const json = await res.json()
       if (json.success) {

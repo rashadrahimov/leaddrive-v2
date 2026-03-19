@@ -52,7 +52,7 @@ export default function TicketsPage() {
   async function fetchTickets() {
     try {
       const res = await fetch("/api/v1/tickets?limit=200", {
-        headers: orgId ? { "x-organization-id": orgId } : {},
+        headers: orgId ? { "x-organization-id": String(orgId) } : {},
       })
       const json = await res.json()
       if (json.success) {

@@ -35,7 +35,7 @@ export default function JourneysPage() {
   const fetchJourneys = async () => {
     try {
       const res = await fetch("/api/v1/journeys?limit=500", {
-        headers: orgId ? { "x-organization-id": orgId } : {},
+        headers: orgId ? { "x-organization-id": String(orgId) } : {},
       })
       const json = await res.json()
       if (json.success) {
