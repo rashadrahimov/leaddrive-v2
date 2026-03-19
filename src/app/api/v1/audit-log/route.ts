@@ -9,8 +9,8 @@ const createAuditLogSchema = z.object({
   entityType: z.string().min(1),
   entityId: z.string().optional(),
   entityName: z.string().optional(),
-  oldValue: z.record(z.any()).optional(),
-  newValue: z.record(z.any()).optional(),
+  oldValue: z.record(z.string(), z.any()).optional(),
+  newValue: z.record(z.string(), z.any()).optional(),
   ipAddress: z.string().optional(),
   userAgent: z.string().optional(),
 })

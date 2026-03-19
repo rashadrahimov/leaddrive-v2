@@ -7,7 +7,7 @@ const createWorkflowSchema = z.object({
   name: z.string().min(1).max(200),
   entityType: z.string().min(1),
   triggerEvent: z.string().min(1),
-  conditions: z.record(z.any()).optional().default({}),
+  conditions: z.record(z.string(), z.any()).optional().default({}),
   isActive: z.boolean().optional().default(true),
 })
 
