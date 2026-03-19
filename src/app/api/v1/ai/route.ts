@@ -44,9 +44,14 @@ export async function POST(req: NextRequest) {
 
         let summary = ""
         if (!hasActivities) {
-          summary = `Недостаточно данных для анализа взаимодействия с контактом ${contactNames || "неизвестен"} из ${company.name}. Рекомендуется установить контакт и начать сбор информации о взаимодействиях.`
+          summary = `Недостаточно данных для анализа взаимодействия с контактом ${contactNames || "неизвестен"} из ${company.name}. Рекомендуется установить контакт и начать сбор информации о взаимодействиях. Текущий статус компании: ${company.leadStatus === "converted" ? "конвертирован (клиент)" : company.leadStatus === "new" ? "новый лид" : company.leadStatus}. ${company.userCount > 0 ? `В компании ${company.userCount} пользователей.` : ""} ${company.industry ? `Отрасль: ${company.industry}.` : ""}`
         } else {
-          summary = `Анализ ${company.activities.length} взаимодействий с ${company.name} показывает ${sentiment.toLowerCase()} тональность. ${contactNames ? `Основные контакты: ${contactNames}.` : ""} ${dealInfo ? `Активные сделки: ${dealInfo}.` : "Нет активных сделок."}`
+          const activityTypes = company.activities.map(a => a.type)
+          const hasEmails = activityTypes.includes("email")
+          const hasCalls = activityTypes.includes("call")
+          const hasMeetings = activityTypes.includes("meeting")
+          const channels = [hasEmails ? "email" : "", hasCalls ? "звонки" : "", hasMeetings ? "встречи" : ""].filter(Boolean).join(", ")
+          summary = `Анализ ${company.activities.length} взаимодействий с ${company.name} показывает ${sentiment.toLowerCase()} тональность. ${channels ? `Использованные каналы: ${channels}.` : ""} ${contactNames ? `Основные контакты: ${contactNames}.` : ""} ${dealInfo ? `Активные сделки: ${dealInfo}.` : "Нет активных сделок."} ${risk === "HIGH" ? "⚠️ Рекомендуется усилить коммуникацию для снижения риска потери клиента." : risk === "MEDIUM" ? "Рекомендуется поддерживать текущий уровень взаимодействия." : "Отношения развиваются позитивно."}`
         }
 
         return NextResponse.json({

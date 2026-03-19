@@ -203,6 +203,7 @@ export default function LeadsPage() {
         onOpenChange={(open) => { if (!open) setSelectedCompany(null) }}
         company={selectedCompany}
         orgId={orgId}
+        onSaved={fetchCompanies}
       />
     </div>
   )

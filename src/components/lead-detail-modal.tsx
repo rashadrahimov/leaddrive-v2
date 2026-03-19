@@ -8,7 +8,8 @@ import { Select } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { Dialog, DialogHeader, DialogTitle, DialogContent } from "@/components/ui/dialog"
-import { Building2, Users, FileText, X, Phone, Mail, Calendar, Brain, Zap, MessageSquare, Copy, Send, RefreshCw, CheckCircle } from "lucide-react"
+import { Building2, Users, FileText, X, Phone, Mail, Calendar, Brain, Zap, MessageSquare, Copy, Send, RefreshCw, CheckCircle, Trash2, Ban } from "lucide-react"
+import { useRouter } from "next/navigation"
 
 interface LeadCompany {
   id: string
@@ -32,6 +33,7 @@ interface LeadDetailModalProps {
   onOpenChange: (open: boolean) => void
   company: LeadCompany | null
   orgId?: string
+  onSaved?: () => void
 }
 
 const statusLabels: Record<string, string> = {
@@ -39,9 +41,14 @@ const statusLabels: Record<string, string> = {
   converted: "Конвертирован", rejected: "Не подходит", cancelled: "Аннулирован",
 }
 
-export function LeadDetailModal({ open, onOpenChange, company, orgId }: LeadDetailModalProps) {
+export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }: LeadDetailModalProps) {
+  const router = useRouter()
   const [activeTab, setActiveTab] = useState("details")
   const [aiLoading, setAiLoading] = useState(false)
+  const [showActivityForm, setShowActivityForm] = useState(false)
+  const [activityType, setActivityType] = useState("note")
+  const [activitySubject, setActivitySubject] = useState("")
+  const [activityDesc, setActivityDesc] = useState("")
 
   // Sentiment state
   const [sentiment, setSentiment] = useState<any>(null)
@@ -118,6 +125,9 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId }: LeadDeta
               <Badge variant="outline">{statusLabels[company.leadStatus] || company.leadStatus}</Badge>
             </div>
           </div>
+          <button onClick={() => onOpenChange(false)} className="p-1.5 rounded-md hover:bg-muted transition-colors">
+            <X className="h-5 w-5" />
+          </button>
         </DialogTitle>
       </DialogHeader>
       <DialogContent className="max-h-[70vh] overflow-y-auto">
@@ -178,11 +188,55 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId }: LeadDeta
         {/* Tab: Activity */}
         {activeTab === "activity" && (
           <div className="space-y-4">
-            <Button size="sm" className="gap-1"><Plus className="h-3 w-3" /> Записать</Button>
-            <div className="text-center py-8 text-muted-foreground">
-              <p>Нет активностей</p>
-              <p className="text-xs">Запишите первую активность</p>
-            </div>
+            <Button size="sm" className="gap-1" onClick={() => setShowActivityForm(!showActivityForm)}>
+              <Plus className="h-3 w-3" /> Записать
+            </Button>
+
+            {showActivityForm && (
+              <div className="border rounded-lg p-3 space-y-3">
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="text-xs text-muted-foreground">Тип</label>
+                    <Select value={activityType} onChange={e => setActivityType(e.target.value)}>
+                      <option value="note">📝 Заметка</option>
+                      <option value="call">📞 Звонок</option>
+                      <option value="email">📧 Email</option>
+                      <option value="meeting">🤝 Встреча</option>
+                    </Select>
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted-foreground">Тема</label>
+                    <Input value={activitySubject} onChange={e => setActivitySubject(e.target.value)} placeholder="Тема активности" />
+                  </div>
+                </div>
+                <div>
+                  <label className="text-xs text-muted-foreground">Описание</label>
+                  <Textarea value={activityDesc} onChange={e => setActivityDesc(e.target.value)} rows={2} placeholder="Детали..." />
+                </div>
+                <div className="flex gap-2">
+                  <Button size="sm" onClick={async () => {
+                    try {
+                      await fetch("/api/v1/activities", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": orgId } : {}) },
+                        body: JSON.stringify({ type: activityType, subject: activitySubject, description: activityDesc, companyId: company.id }),
+                      })
+                      setShowActivityForm(false)
+                      setActivitySubject("")
+                      setActivityDesc("")
+                    } catch {}
+                  }}>Сохранить</Button>
+                  <Button size="sm" variant="outline" onClick={() => setShowActivityForm(false)}>Отмена</Button>
+                </div>
+              </div>
+            )}
+
+            {!showActivityForm && (
+              <div className="text-center py-8 text-muted-foreground">
+                <p>Нет активностей</p>
+                <p className="text-xs">Запишите первую активность</p>
+              </div>
+            )}
           </div>
         )}
 
@@ -346,17 +400,38 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId }: LeadDeta
 
         {/* Action buttons */}
         <div className="grid grid-cols-2 gap-2 mt-4 pt-4 border-t">
-          <Button variant="outline" className="gap-1 bg-green-50 hover:bg-green-100 text-green-700 border-green-200">
+          <Button variant="outline" className="gap-1 bg-green-50 hover:bg-green-100 text-green-700 border-green-200"
+            onClick={() => { onOpenChange(false); router.push(`/contracts?companyId=${company.id}`) }}>
             <FileText className="h-3 w-3" /> Просмотр контрактов
           </Button>
-          <Button variant="outline" className="gap-1 bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200">
+          <Button variant="outline" className="gap-1 bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200"
+            onClick={() => { onOpenChange(false); router.push(`/companies/${company.id}`) }}>
             <Building2 className="h-3 w-3" /> Редактировать
           </Button>
-          <Button variant="outline" className="gap-1 bg-orange-50 hover:bg-orange-100 text-orange-700 border-orange-200">
-            <X className="h-3 w-3" /> Деактивировать
+          <Button variant="outline" className="gap-1 bg-orange-50 hover:bg-orange-100 text-orange-700 border-orange-200"
+            onClick={async () => {
+              if (!confirm(`Деактивировать ${company.name}?`)) return
+              await fetch(`/api/v1/companies/${company.id}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": orgId } : {}) },
+                body: JSON.stringify({ status: "inactive", leadStatus: "cancelled" }),
+              })
+              onOpenChange(false)
+              onSaved?.()
+            }}>
+            <Ban className="h-3 w-3" /> Деактивировать
           </Button>
-          <Button variant="outline" className="gap-1 bg-red-50 hover:bg-red-100 text-red-700 border-red-200">
-            <X className="h-3 w-3" /> Удалить
+          <Button variant="outline" className="gap-1 bg-red-50 hover:bg-red-100 text-red-700 border-red-200"
+            onClick={async () => {
+              if (!confirm(`Удалить ${company.name}? Это действие необратимо.`)) return
+              await fetch(`/api/v1/companies/${company.id}`, {
+                method: "DELETE",
+                headers: orgId ? { "x-organization-id": orgId } : {},
+              })
+              onOpenChange(false)
+              onSaved?.()
+            }}>
+            <Trash2 className="h-3 w-3" /> Удалить
           </Button>
         </div>
       </DialogContent>
