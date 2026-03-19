@@ -86,6 +86,7 @@ export function CampaignForm({ open, onOpenChange, onSaved, initialData, orgId, 
   const [selectedContacts, setSelectedContacts] = useState<Set<string>>(new Set())
   const [contactSearch, setContactSearch] = useState("")
   const [recipientMode, setRecipientMode] = useState<RecipientMode>("all")
+  const [recipientModeChanged, setRecipientModeChanged] = useState(false)
   const [selectedSource, setSelectedSource] = useState("")
   const [selectedSegmentId, setSelectedSegmentId] = useState("")
 
@@ -131,6 +132,7 @@ export function CampaignForm({ open, onOpenChange, onSaved, initialData, orgId, 
       setSelectedContacts(new Set())
       setContactSearch("")
       setSelectedSource("")
+      setRecipientModeChanged(false)
       // If editing a campaign with a segmentId, default to segment mode
       if (initialData?.segmentId) {
         setRecipientMode("segment")
@@ -153,6 +155,10 @@ export function CampaignForm({ open, onOpenChange, onSaved, initialData, orgId, 
 
     try {
       const url = isEdit ? `/api/v1/campaigns/${initialData!.id}` : "/api/v1/campaigns"
+      // Use saved totalRecipients if editing and mode wasn't changed
+      const finalRecipients = (isEdit && !recipientModeChanged)
+        ? (Number(form.totalRecipients) || recipientCount)
+        : recipientCount
       const payload = {
         name: form.name,
         description: form.description || undefined,
@@ -162,7 +168,7 @@ export function CampaignForm({ open, onOpenChange, onSaved, initialData, orgId, 
         templateId: form.templateId || undefined,
         segmentId: recipientMode === "segment" ? selectedSegmentId || undefined : undefined,
         scheduledAt: form.scheduledAt ? new Date(form.scheduledAt).toISOString() : undefined,
-        totalRecipients: recipientCount,
+        totalRecipients: finalRecipients,
         budget: form.budget ? Number(form.budget) : undefined,
       }
       const res = await fetch(url, {
@@ -216,6 +222,10 @@ export function CampaignForm({ open, onOpenChange, onSaved, initialData, orgId, 
 
   // Compute recipient count based on mode
   const recipientCount = useMemo(() => {
+    // When editing and user hasn't changed mode, show saved value
+    if (isEdit && !recipientModeChanged && Number(form.totalRecipients) > 0) {
+      return Number(form.totalRecipients)
+    }
     switch (recipientMode) {
       case "all": return contacts.length
       case "segment": {
@@ -226,7 +236,7 @@ export function CampaignForm({ open, onOpenChange, onSaved, initialData, orgId, 
       case "manual": return selectedContacts.size
       default: return 0
     }
-  }, [recipientMode, contacts, segments, selectedSegmentId, sourceFilteredContacts, selectedContacts])
+  }, [recipientMode, contacts, segments, selectedSegmentId, sourceFilteredContacts, selectedContacts, isEdit, recipientModeChanged, form.totalRecipients])
 
   // Unique sources from contacts
   const availableSources = useMemo(() => {
@@ -339,7 +349,7 @@ export function CampaignForm({ open, onOpenChange, onSaved, initialData, orgId, 
                   <div className="flex flex-wrap gap-2">
                     <button
                       type="button"
-                      onClick={() => { setRecipientMode("all"); setSelectedContacts(new Set()) }}
+                      onClick={() => { setRecipientMode("all"); setSelectedContacts(new Set()); setRecipientModeChanged(true) }}
                       className={cn(
                         "text-xs px-3 py-1.5 rounded-full border transition-colors flex items-center gap-1",
                         recipientMode === "all"
@@ -351,7 +361,7 @@ export function CampaignForm({ open, onOpenChange, onSaved, initialData, orgId, 
                     </button>
                     <button
                       type="button"
-                      onClick={() => { setRecipientMode("segment"); setSelectedContacts(new Set()) }}
+                      onClick={() => { setRecipientMode("segment"); setSelectedContacts(new Set()); setRecipientModeChanged(true) }}
                       className={cn(
                         "text-xs px-3 py-1.5 rounded-full border transition-colors flex items-center gap-1",
                         recipientMode === "segment"
@@ -363,7 +373,7 @@ export function CampaignForm({ open, onOpenChange, onSaved, initialData, orgId, 
                     </button>
                     <button
                       type="button"
-                      onClick={() => { setRecipientMode("source"); setSelectedContacts(new Set()); setSelectedSource("") }}
+                      onClick={() => { setRecipientMode("source"); setSelectedContacts(new Set()); setSelectedSource(""); setRecipientModeChanged(true) }}
                       className={cn(
                         "text-xs px-3 py-1.5 rounded-full border transition-colors flex items-center gap-1",
                         recipientMode === "source"
@@ -375,7 +385,7 @@ export function CampaignForm({ open, onOpenChange, onSaved, initialData, orgId, 
                     </button>
                     <button
                       type="button"
-                      onClick={() => { setRecipientMode("manual"); setSelectedContacts(new Set()) }}
+                      onClick={() => { setRecipientMode("manual"); setSelectedContacts(new Set()); setRecipientModeChanged(true) }}
                       className={cn(
                         "text-xs px-3 py-1.5 rounded-full border transition-colors flex items-center gap-1",
                         recipientMode === "manual"

@@ -219,8 +219,10 @@ export default function CampaignsPage() {
         onSaved={fetchCampaigns}
         initialData={editData ? {
           ...editData,
-          totalRecipients: String(editData.totalRecipients || ""),
-          budget: String(editData.budget || ""),
+          templateId: editData.templateId || "",
+          segmentId: editData.segmentId || "",
+          totalRecipients: String(editData.totalRecipients ?? 0),
+          budget: String(editData.budget ?? 0),
         } : undefined}
         orgId={orgId}
         onSend={editData ? () => handleSend(editData) : undefined}
