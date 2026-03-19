@@ -31,16 +31,18 @@ export default auth((req) => {
 
   // Inject organization context into headers for server components
   const headers = new Headers(req.headers)
-  const token = req.auth as unknown as Record<string, unknown> | null
-  if (token?.organizationId) {
-    headers.set("x-organization-id", String(token.organizationId))
+  const session = req.auth as any
+  const orgId = session?.user?.organizationId
+  const role = session?.user?.role
+  if (orgId) {
+    headers.set("x-organization-id", String(orgId))
   }
-  if (token?.role) {
-    headers.set("x-user-role", String(token.role))
+  if (role) {
+    headers.set("x-user-role", String(role))
   }
 
   // Admin-only routes
-  if (pathname.startsWith("/settings") && token?.role !== "admin") {
+  if (pathname.startsWith("/settings") && role !== "admin") {
     return NextResponse.redirect(new URL("/", req.url))
   }
 
