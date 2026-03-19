@@ -152,6 +152,19 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
     updateField({ [field]: isNumber ? (parseInt(val) || 0) : val })
   }
 
+  // Activities list
+  const [activities, setActivities] = useState<any[]>([])
+
+  const loadActivities = async () => {
+    try {
+      const res = await fetch(`/api/v1/activities?companyId=${company.id}`, {
+        headers: orgId ? { "x-organization-id": orgId } : {},
+      })
+      const json = await res.json()
+      if (json.success) setActivities(json.data.activities || [])
+    } catch {}
+  }
+
   const saveActivity = async () => {
     if (!activitySubject.trim()) return
     setActivitySaving(true)
@@ -166,12 +179,18 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
           companyId: company.id,
         }),
       })
-      if (res.ok) {
+      const json = await res.json()
+      if (res.ok && json.success) {
         setShowActivityForm(false)
         setActivitySubject("")
         setActivityDesc("")
+        loadActivities()
+      } else {
+        alert("Ошибка сохранения: " + (json.error || "Неизвестная ошибка"))
       }
-    } catch {} finally { setActivitySaving(false) }
+    } catch (e) {
+      alert("Ошибка: " + e)
+    } finally { setActivitySaving(false) }
   }
 
   const sendGeneratedEmail = async () => {
@@ -226,7 +245,7 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
           {tabs.map(tab => (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => { setActiveTab(tab.id); if (tab.id === "activity" && !activities.length) loadActivities() }}
               className={`px-3 py-2 text-sm whitespace-nowrap border-b-2 transition-colors ${
                 activeTab === tab.id
                   ? "border-primary text-primary font-medium"
@@ -411,10 +430,10 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
           </div>
         )}
 
-        {/* Tab: Activity — FIX #6: saving works */}
+        {/* Tab: Activity */}
         {activeTab === "activity" && (
           <div className="space-y-4">
-            <Button size="sm" className="gap-1" onClick={() => setShowActivityForm(!showActivityForm)}>
+            <Button size="sm" className="gap-1" onClick={() => { setShowActivityForm(!showActivityForm); if (!activities.length) loadActivities() }}>
               <Plus className="h-3 w-3" /> Записать
             </Button>
 
@@ -450,12 +469,27 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
               </Card>
             )}
 
-            {!showActivityForm && (
-              <div className="text-center py-8 text-muted-foreground">
-                <p>Нет записанных активностей</p>
-                <p className="text-xs mt-1">Нажмите "Записать" чтобы добавить</p>
+            {/* Activities list */}
+            {activities.length > 0 ? (
+              <div className="space-y-2">
+                {activities.map((a: any) => (
+                  <div key={a.id} className="flex items-start gap-2 p-2 bg-muted/30 rounded text-xs">
+                    <span>{a.type === "call" ? "📞" : a.type === "email" ? "📧" : a.type === "meeting" ? "🤝" : "📝"}</span>
+                    <div className="flex-1">
+                      <p className="font-medium">{a.subject}</p>
+                      {a.description && <p className="text-muted-foreground">{a.description}</p>}
+                      <p className="text-[10px] text-muted-foreground mt-0.5">{new Date(a.createdAt).toLocaleString()}</p>
+                    </div>
+                  </div>
+                ))}
               </div>
-            )}
+            ) : !showActivityForm ? (
+              <div className="text-center py-6 text-muted-foreground">
+                <p className="text-sm">Нет записанных активностей</p>
+                <p className="text-xs mt-1">Нажмите "Записать" чтобы добавить</p>
+                <Button size="sm" variant="link" className="mt-2" onClick={loadActivities}>Обновить</Button>
+              </div>
+            ) : null}
           </div>
         )}
 
