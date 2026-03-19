@@ -9,8 +9,17 @@ import { StatCard } from "@/components/stat-card"
 import { ContractForm } from "@/components/contract-form"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
 import { Select } from "@/components/ui/select"
-import { FileText, Plus, Pencil, Trash2, AlertTriangle, Clock, TrendingUp, Building2 } from "lucide-react"
+import { FileText, Plus, Pencil, Trash2, AlertTriangle, Clock, TrendingUp, Building2, History, X } from "lucide-react"
 import { cn } from "@/lib/utils"
+
+interface AuditEntry {
+  id: string
+  action: string
+  oldValue: any
+  newValue: any
+  createdAt: string
+  userId?: string
+}
 
 interface Contract {
   id: string
@@ -27,6 +36,7 @@ interface Contract {
   notes?: string
   createdAt: string
   updatedAt: string
+  history?: AuditEntry[]
 }
 
 const statusLabels: Record<string, string> = {
@@ -58,6 +68,19 @@ const typeLabels: Record<string, string> = {
   other: "Другое",
 }
 
+const fieldLabels: Record<string, string> = {
+  contractNumber: "Номер",
+  title: "Название",
+  companyId: "Компания",
+  type: "Тип",
+  status: "Статус",
+  startDate: "Дата начала",
+  endDate: "Дата окончания",
+  valueAmount: "Сумма",
+  currency: "Валюта",
+  notes: "Примечания",
+}
+
 function formatDate(dateStr?: string): string {
   if (!dateStr) return "—"
   return new Date(dateStr).toLocaleDateString("ru-RU", { day: "2-digit", month: "short", year: "numeric" })
@@ -80,6 +103,8 @@ export default function ContractsPage() {
   const [deleteName, setDeleteName] = useState("")
   const [activeFilter, setActiveFilter] = useState("all")
   const [sortBy, setSortBy] = useState("date_desc")
+  const [detailContract, setDetailContract] = useState<Contract | null>(null)
+  const [detailLoading, setDetailLoading] = useState(false)
   const orgId = session?.user?.organizationId
 
   const fetchContracts = async () => {
@@ -96,6 +121,18 @@ export default function ContractsPage() {
   }
 
   useEffect(() => { fetchContracts() }, [session])
+
+  async function openDetail(contract: Contract) {
+    setDetailContract(contract)
+    setDetailLoading(true)
+    try {
+      const res = await fetch(`/api/v1/contracts/${contract.id}`, {
+        headers: orgId ? { "x-organization-id": String(orgId) } : {},
+      })
+      const json = await res.json()
+      if (json.success) setDetailContract(json.data)
+    } catch {} finally { setDetailLoading(false) }
+  }
 
   const handleDelete = async () => {
     if (!deleteId) return
@@ -302,7 +339,7 @@ export default function ContractsPage() {
         </Select>
       </div>
 
-      <DataTable columns={columns} data={filtered} searchPlaceholder="Поиск контрактов..." searchKey="title" />
+      <DataTable columns={columns} data={filtered} searchPlaceholder="Поиск контрактов..." searchKey="title" onRowClick={openDetail} />
 
       <ContractForm
         open={showForm}
@@ -319,6 +356,105 @@ export default function ContractsPage() {
         title="Удалить контракт"
         itemName={deleteName}
       />
+
+      {/* Detail Panel */}
+      {detailContract && (
+        <div className="fixed inset-0 z-50 flex justify-end bg-black/30" onClick={() => setDetailContract(null)}>
+          <div className="w-full max-w-lg bg-background shadow-xl h-full overflow-y-auto" onClick={e => e.stopPropagation()}>
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-bold">Контракт #{detailContract.contractNumber}</h2>
+                <button onClick={() => setDetailContract(null)} className="p-1 hover:bg-muted rounded"><X className="h-5 w-5" /></button>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <h3 className="text-xl font-semibold">{detailContract.title}</h3>
+                  {detailContract.company && (
+                    <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
+                      <Building2 className="h-3.5 w-3.5" /> {detailContract.company.name}
+                    </p>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div className="bg-muted/50 rounded-lg p-3">
+                    <div className="text-muted-foreground text-xs">Статус</div>
+                    <span className={cn("text-xs px-2 py-0.5 rounded-full font-medium mt-1 inline-block", statusColors[detailContract.status])}>
+                      {statusLabels[detailContract.status] || detailContract.status}
+                    </span>
+                  </div>
+                  <div className="bg-muted/50 rounded-lg p-3">
+                    <div className="text-muted-foreground text-xs">Тип</div>
+                    <div className="font-medium mt-1">{typeLabels[detailContract.type || ""] || detailContract.type || "—"}</div>
+                  </div>
+                  <div className="bg-muted/50 rounded-lg p-3">
+                    <div className="text-muted-foreground text-xs">Сумма</div>
+                    <div className="font-bold mt-1">{detailContract.valueAmount ? `${detailContract.valueAmount.toLocaleString()} ${detailContract.currency}` : "—"}</div>
+                  </div>
+                  <div className="bg-muted/50 rounded-lg p-3">
+                    <div className="text-muted-foreground text-xs">Срок</div>
+                    <div className="font-medium mt-1">{formatDate(detailContract.startDate)} — {formatDate(detailContract.endDate)}</div>
+                  </div>
+                </div>
+
+                {detailContract.notes && (
+                  <div className="bg-muted/50 rounded-lg p-3 text-sm">
+                    <div className="text-muted-foreground text-xs mb-1">Примечания</div>
+                    <div>{detailContract.notes}</div>
+                  </div>
+                )}
+
+                {/* History */}
+                <div className="border-t pt-4">
+                  <h4 className="text-sm font-semibold flex items-center gap-1.5 mb-3">
+                    <History className="h-4 w-4" /> История изменений
+                  </h4>
+                  {detailLoading ? (
+                    <div className="text-sm text-muted-foreground animate-pulse">Загрузка...</div>
+                  ) : detailContract.history && detailContract.history.length > 0 ? (
+                    <div className="space-y-3">
+                      {detailContract.history.map((entry: AuditEntry) => (
+                        <div key={entry.id} className="border-l-2 border-primary/20 pl-3 text-sm">
+                          <div className="flex items-center justify-between">
+                            <span className="font-medium">
+                              {entry.action === "update" ? "Изменение" : entry.action === "delete" ? "Удаление" : entry.action === "create" ? "Создание" : entry.action}
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                              {new Date(entry.createdAt).toLocaleString("ru-RU", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
+                            </span>
+                          </div>
+                          {entry.action === "update" && entry.oldValue && typeof entry.oldValue === "object" && (
+                            <div className="mt-1 space-y-0.5">
+                              {Object.entries(entry.oldValue as Record<string, { old: any; new: any }>).map(([field, val]) => (
+                                <div key={field} className="text-xs text-muted-foreground">
+                                  <span className="font-medium text-foreground">{fieldLabels[field] || field}:</span>{" "}
+                                  <span className="line-through text-red-400">{val.old || "—"}</span> → <span className="text-green-600">{val.new || "—"}</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">Нет истории изменений</p>
+                  )}
+                </div>
+
+                <div className="flex gap-2 pt-2">
+                  <Button variant="outline" className="flex-1" onClick={() => { setEditData(detailContract); setShowForm(true); setDetailContract(null) }}>
+                    <Pencil className="h-4 w-4 mr-1" /> Редактировать
+                  </Button>
+                  <Button variant="destructive" className="flex-1" onClick={() => { setDeleteId(detailContract.id); setDeleteName(detailContract.title); setDetailContract(null) }}>
+                    <Trash2 className="h-4 w-4 mr-1" /> Удалить
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

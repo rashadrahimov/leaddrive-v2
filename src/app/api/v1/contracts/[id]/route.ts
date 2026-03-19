@@ -27,9 +27,18 @@ export async function GET(
   try {
     const contract = await prisma.contract.findFirst({
       where: { id, organizationId: orgId },
+      include: { company: { select: { id: true, name: true } } },
     })
     if (!contract) return NextResponse.json({ error: "Not found" }, { status: 404 })
-    return NextResponse.json({ success: true, data: contract })
+
+    // Fetch history from audit log
+    const history = await prisma.auditLog.findMany({
+      where: { organizationId: orgId, entityType: "contract", entityId: id },
+      orderBy: { createdAt: "desc" },
+      take: 50,
+    })
+
+    return NextResponse.json({ success: true, data: { ...contract, history } })
   } catch {
     return NextResponse.json({ error: "Not found" }, { status: 404 })
   }
@@ -47,6 +56,10 @@ export async function PUT(
   if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 })
 
   try {
+    // Get old values for audit
+    const oldContract = await prisma.contract.findFirst({ where: { id, organizationId: orgId } })
+    if (!oldContract) return NextResponse.json({ error: "Not found" }, { status: 404 })
+
     const result = await prisma.contract.updateMany({
       where: { id, organizationId: orgId },
       data: {
@@ -56,7 +69,41 @@ export async function PUT(
       },
     })
     if (result.count === 0) return NextResponse.json({ error: "Not found" }, { status: 404 })
+
     const updated = await prisma.contract.findFirst({ where: { id, organizationId: orgId } })
+
+    // Log changes to audit
+    const changes: Record<string, { old: any; new: any }> = {}
+    const fields = ["contractNumber", "title", "companyId", "type", "status", "valueAmount", "currency", "notes"] as const
+    for (const f of fields) {
+      const oldVal = (oldContract as any)[f]
+      const newVal = (updated as any)[f]
+      if (String(oldVal ?? "") !== String(newVal ?? "")) {
+        changes[f] = { old: oldVal, new: newVal }
+      }
+    }
+    // Check dates separately
+    const oldStart = oldContract.startDate?.toISOString().split("T")[0] || ""
+    const newStart = updated?.startDate?.toISOString().split("T")[0] || ""
+    if (oldStart !== newStart) changes.startDate = { old: oldStart, new: newStart }
+    const oldEnd = oldContract.endDate?.toISOString().split("T")[0] || ""
+    const newEnd = updated?.endDate?.toISOString().split("T")[0] || ""
+    if (oldEnd !== newEnd) changes.endDate = { old: oldEnd, new: newEnd }
+
+    if (Object.keys(changes).length > 0) {
+      await prisma.auditLog.create({
+        data: {
+          organizationId: orgId,
+          action: "update",
+          entityType: "contract",
+          entityId: id,
+          entityName: updated?.title || oldContract.title,
+          oldValue: changes,
+          newValue: parsed.data,
+        },
+      }).catch(() => {}) // non-critical
+    }
+
     return NextResponse.json({ success: true, data: updated })
   } catch (e) {
     return NextResponse.json({ error: String(e) }, { status: 500 })
@@ -72,8 +119,24 @@ export async function DELETE(
   const { id } = await params
 
   try {
+    const contract = await prisma.contract.findFirst({ where: { id, organizationId: orgId } })
     const result = await prisma.contract.deleteMany({ where: { id, organizationId: orgId } })
     if (result.count === 0) return NextResponse.json({ error: "Not found" }, { status: 404 })
+
+    // Log deletion
+    if (contract) {
+      await prisma.auditLog.create({
+        data: {
+          organizationId: orgId,
+          action: "delete",
+          entityType: "contract",
+          entityId: id,
+          entityName: contract.title,
+          oldValue: contract as any,
+        },
+      }).catch(() => {})
+    }
+
     return NextResponse.json({ success: true, data: { deleted: id } })
   } catch (e) {
     return NextResponse.json({ error: String(e) }, { status: 500 })
