@@ -83,7 +83,16 @@ export async function POST(
       })
     }
 
+    // Check SMTP configuration before attempting to send
+    if (!process.env.SMTP_USER) {
+      return NextResponse.json({
+        error: "SMTP не настроен. Добавьте SMTP_USER и SMTP_PASS в переменные окружения на сервере.",
+        smtpMissing: true,
+      }, { status: 400 })
+    }
+
     let sentCount = 0
+    const errors: string[] = []
     for (const contact of contacts) {
       if (!contact.email) continue
       const rendered = renderTemplate(htmlBody, {
@@ -99,23 +108,27 @@ export async function POST(
         templateId: campaign.templateId || undefined,
         contactId: contact.id,
       })
-      if (result.success) sentCount++
+      if (result.success) {
+        sentCount++
+      } else if (errors.length < 3) {
+        errors.push(`${contact.email}: ${result.error}`)
+      }
     }
 
     // Update campaign stats
     await prisma.campaign.update({
       where: { id },
       data: {
-        status: "sent",
-        sentAt: new Date(),
+        status: sentCount > 0 ? "sent" : "draft",
+        sentAt: sentCount > 0 ? new Date() : undefined,
         totalSent: sentCount,
         totalRecipients: contacts.length,
       },
     })
 
     return NextResponse.json({
-      success: true,
-      data: { sent: sentCount, total: contacts.length },
+      success: sentCount > 0,
+      data: { sent: sentCount, total: contacts.length, errors },
     })
   } catch (e) {
     return NextResponse.json({ error: String(e) }, { status: 500 })

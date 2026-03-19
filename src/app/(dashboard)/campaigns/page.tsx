@@ -91,15 +91,28 @@ export default function CampaignsPage() {
   }
 
   const handleSend = async (campaign: Campaign) => {
-    if (!confirm(`Отправить кампанию "${campaign.name}"? Это действие нельзя отменить.`)) return
+    if (!confirm(`Отправить кампанию "${campaign.name}"?\n\nПолучателей: ${campaign.totalRecipients}`)) return
     try {
       const res = await fetch(`/api/v1/campaigns/${campaign.id}/send`, {
         method: "POST",
         headers: orgId ? { "x-organization-id": String(orgId) } : {},
       })
       const json = await res.json()
-      if (!res.ok) throw new Error(json.error || "Ошибка отправки")
-      alert(`Отправлено ${json.data.sent} из ${json.data.total} получателям`)
+      if (!res.ok) {
+        if (json.smtpMissing) {
+          alert("⚠️ SMTP не настроен!\n\nДля отправки email нужно настроить переменные окружения:\n• SMTP_HOST\n• SMTP_USER\n• SMTP_PASS\n\nОбратитесь к администратору.")
+        } else {
+          alert(`Ошибка: ${json.error || "Ошибка отправки"}`)
+        }
+        return
+      }
+      if (json.data.sent === 0) {
+        alert(`⚠️ Ни одно письмо не отправлено (0 из ${json.data.total}).\n\nВозможно SMTP настроен неправильно.`)
+      } else {
+        alert(`✅ Отправлено ${json.data.sent} из ${json.data.total} получателям`)
+      }
+      setShowForm(false)
+      setEditData(undefined)
       fetchCampaigns()
     } catch (err: any) {
       alert(`Ошибка: ${err.message}`)
