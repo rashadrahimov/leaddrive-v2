@@ -31,7 +31,7 @@ export async function GET(req: NextRequest) {
         where,
         skip: (page - 1) * limit,
         take: limit,
-        include: { steps: true },
+        include: { steps: { orderBy: { stepOrder: "asc" } } },
         orderBy: { createdAt: "desc" },
       }),
       prisma.journey.count({ where }),

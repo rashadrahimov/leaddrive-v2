@@ -895,3 +895,4 @@ model DashboardLayout {
   @@index([organizationId, userId])
   @@map("dashboard_layouts")
 }
+

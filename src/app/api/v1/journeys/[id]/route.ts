@@ -3,12 +3,19 @@ import { z } from "zod"
 import { prisma } from "@/lib/prisma"
 import { getOrgId } from "@/lib/api-auth"
 
+const stepSchema = z.object({
+  stepType: z.string(),
+  stepOrder: z.number().int(),
+  config: z.any().default({}),
+})
+
 const updateJourneySchema = z.object({
   name: z.string().optional(),
   description: z.string().optional(),
   status: z.enum(["draft", "active", "paused", "completed"]).optional(),
   triggerType: z.string().optional(),
   triggerConditions: z.any().optional(),
+  steps: z.array(stepSchema).optional(),
 })
 
 export async function GET(
@@ -43,11 +50,30 @@ export async function PUT(
   if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 })
 
   try {
+    const { steps, ...journeyData } = parsed.data
     const result = await prisma.journey.updateMany({
       where: { id, organizationId: orgId },
-      data: parsed.data,
+      data: journeyData,
     })
     if (result.count === 0) return NextResponse.json({ error: "Not found" }, { status: 404 })
+
+    // Update steps if provided
+    if (steps !== undefined) {
+      // Delete existing steps
+      await prisma.journeyStep.deleteMany({ where: { journeyId: id } })
+      // Create new steps
+      if (steps.length > 0) {
+        await prisma.journeyStep.createMany({
+          data: steps.map(s => ({
+            journeyId: id,
+            stepType: s.stepType,
+            stepOrder: s.stepOrder,
+            config: s.config || {},
+          })),
+        })
+      }
+    }
+
     const updated = await prisma.journey.findFirst({
       where: { id, organizationId: orgId },
       include: { steps: { orderBy: { stepOrder: "asc" } } },
