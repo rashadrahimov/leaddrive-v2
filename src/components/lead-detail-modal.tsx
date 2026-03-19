@@ -80,6 +80,7 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
   const [generatedText, setGeneratedText] = useState<any>(null)
   const [emailSending, setEmailSending] = useState(false)
   const [emailSent, setEmailSent] = useState(false)
+  const [activities, setActivities] = useState<any[]>([])
 
   // Full company data loaded from API
   const [fullData, setFullData] = useState<any>(null)
@@ -151,9 +152,6 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
     if (val === null) return
     updateField({ [field]: isNumber ? (parseInt(val) || 0) : val })
   }
-
-  // Activities list
-  const [activities, setActivities] = useState<any[]>([])
 
   const loadActivities = async () => {
     try {
