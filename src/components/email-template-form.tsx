@@ -83,8 +83,8 @@ export function EmailTemplateForm({ open, onOpenChange, onSaved, initialData, or
   // Sync contentEditable with form state when switching to editor or opening
   const [editorInitialized, setEditorInitialized] = useState(false)
   useEffect(() => {
-    if (open && activeTab === "editor" && editorRef.current && form.htmlBody && !editorInitialized) {
-      editorRef.current.innerHTML = form.htmlBody
+    if (open && activeTab === "editor" && editorRef.current && !editorInitialized) {
+      editorRef.current.innerHTML = form.htmlBody || ""
       setEditorInitialized(true)
     }
     if (!open) setEditorInitialized(false)
@@ -92,8 +92,8 @@ export function EmailTemplateForm({ open, onOpenChange, onSaved, initialData, or
 
   // Re-initialize editor when switching back from preview
   useEffect(() => {
-    if (activeTab === "editor" && editorRef.current && form.htmlBody) {
-      editorRef.current.innerHTML = form.htmlBody
+    if (activeTab === "editor" && editorRef.current) {
+      editorRef.current.innerHTML = form.htmlBody || ""
     }
   }, [activeTab])
 
