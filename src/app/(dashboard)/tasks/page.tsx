@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { useSession } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -8,7 +8,7 @@ import { DataTable } from "@/components/data-table"
 import { StatCard } from "@/components/stat-card"
 import { TaskForm } from "@/components/task-form"
 import { Select } from "@/components/ui/select"
-import { CheckSquare, Plus, Clock, AlertTriangle, Pencil, Trash2, CalendarDays, ListChecks } from "lucide-react"
+import { CheckSquare, Plus, Clock, AlertTriangle, Pencil, Trash2, CalendarDays, ListChecks, ChevronLeft, ChevronRight, Link2, Copy, Check, ExternalLink, Columns3 } from "lucide-react"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
 import { cn } from "@/lib/utils"
 
@@ -23,7 +23,7 @@ interface Task {
   completedAt: string | null
 }
 
-type ViewMode = "list" | "kanban"
+type ViewMode = "list" | "kanban" | "calendar"
 
 const statusLabels: Record<string, string> = {
   pending: "К выполнению",
@@ -58,6 +58,13 @@ const categoryIcons: Record<string, string> = {
   ticket: "🎫",
 }
 
+const monthNames = [
+  "Январь", "Февраль", "Март", "Апрель", "Май", "Июнь",
+  "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"
+]
+
+const dayNames = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"]
+
 function isOverdue(dueDate: string): boolean {
   if (!dueDate) return false
   return new Date(dueDate) < new Date()
@@ -76,6 +83,11 @@ function isToday(dateStr: string): boolean {
   return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate()
 }
 
+function isTodayDate(year: number, month: number, day: number): boolean {
+  const now = new Date()
+  return now.getFullYear() === year && now.getMonth() === month && now.getDate() === day
+}
+
 function isThisWeek(dateStr: string): boolean {
   if (!dateStr) return false
   const d = new Date(dateStr)
@@ -88,6 +100,245 @@ function isThisWeek(dateStr: string): boolean {
   return d >= startOfWeek && d < endOfWeek
 }
 
+// ─── Calendar Integration Modal ─────────────────────────────────
+function CalendarIntegrationModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const [token, setToken] = useState<string | null>(null)
+  const [feedUrl, setFeedUrl] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [copied, setCopied] = useState(false)
+
+  useEffect(() => {
+    if (open) {
+      fetch("/api/v1/calendar/token").then(r => r.json()).then(j => {
+        if (j.success) {
+          setToken(j.data.token)
+          setFeedUrl(j.data.feedUrl)
+        }
+      }).catch(() => {})
+    }
+  }, [open])
+
+  async function generateToken() {
+    setLoading(true)
+    try {
+      const res = await fetch("/api/v1/calendar/generate-token", { method: "POST" })
+      const json = await res.json()
+      if (json.success) {
+        setToken(json.data.token)
+        setFeedUrl(json.data.feedUrl)
+      }
+    } catch {} finally { setLoading(false) }
+  }
+
+  async function copyUrl() {
+    if (!feedUrl) return
+    try {
+      await navigator.clipboard.writeText(feedUrl)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch {}
+  }
+
+  if (!open) return null
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={onClose}>
+      <div className="bg-background rounded-lg shadow-xl w-full max-w-lg mx-4 p-6" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-bold flex items-center gap-2">
+            <Link2 className="h-5 w-5" /> Подключить календарь
+          </h2>
+          <button onClick={onClose} className="text-muted-foreground hover:text-foreground text-xl">&times;</button>
+        </div>
+
+        <p className="text-sm text-muted-foreground mb-4">
+          Подпишитесь на ваши задачи в Google Calendar, Apple Calendar или Outlook через ICS-ссылку.
+        </p>
+
+        {feedUrl ? (
+          <>
+            <div className="mb-4">
+              <label className="text-sm font-medium mb-1 block">Ваша ссылка на календарь:</label>
+              <div className="flex gap-2">
+                <input
+                  readOnly
+                  value={feedUrl}
+                  className="flex-1 text-xs bg-muted px-3 py-2 rounded-md border font-mono truncate"
+                />
+                <Button size="sm" variant="outline" onClick={copyUrl}>
+                  {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+                </Button>
+              </div>
+            </div>
+
+            <div className="space-y-3 mb-4">
+              <h3 className="text-sm font-semibold">Инструкции:</h3>
+              <div className="space-y-2 text-sm text-muted-foreground">
+                <div className="flex gap-2">
+                  <span className="font-medium text-foreground min-w-[120px]">Apple Calendar:</span>
+                  <span>Файл → Новая подписка на календарь → вставьте ссылку</span>
+                </div>
+                <div className="flex gap-2">
+                  <span className="font-medium text-foreground min-w-[120px]">Google Calendar:</span>
+                  <span>Другие календари (+) → По URL → вставьте ссылку</span>
+                </div>
+                <div className="flex gap-2">
+                  <span className="font-medium text-foreground min-w-[120px]">Outlook:</span>
+                  <span>Добавить календарь → Из Интернета → вставьте ссылку</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex gap-2">
+              <a
+                href={feedUrl.replace("https://", "webcal://").replace("http://", "webcal://")}
+                className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
+              >
+                <ExternalLink className="h-3.5 w-3.5" /> Открыть в календаре
+              </a>
+              <span className="text-muted-foreground">·</span>
+              <button onClick={generateToken} disabled={loading} className="text-sm text-muted-foreground hover:text-foreground">
+                Сгенерировать новую ссылку
+              </button>
+            </div>
+
+            <div className="mt-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-md text-xs text-yellow-700 dark:text-yellow-300">
+              Эта ссылка даёт доступ к вашим задачам. Не делитесь ей с посторонними.
+            </div>
+          </>
+        ) : (
+          <div className="text-center py-6">
+            <p className="text-sm text-muted-foreground mb-4">У вас пока нет ссылки на календарь</p>
+            <Button onClick={generateToken} disabled={loading}>
+              {loading ? "Генерация..." : "Сгенерировать ссылку"}
+            </Button>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ─── Calendar Grid Component ────────────────────────────────────
+function TaskCalendar({ tasks, orgId }: { tasks: Task[]; orgId?: string }) {
+  const now = new Date()
+  const [calMonth, setCalMonth] = useState(now.getMonth())
+  const [calYear, setCalYear] = useState(now.getFullYear())
+  const [calTasks, setCalTasks] = useState<Task[]>([])
+
+  const fetchCalendar = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/v1/tasks/calendar?month=${calMonth + 1}&year=${calYear}`, {
+        headers: orgId ? { "x-organization-id": String(orgId) } : {},
+      })
+      const json = await res.json()
+      if (json.success) setCalTasks(json.data.tasks)
+    } catch {}
+  }, [calMonth, calYear, orgId])
+
+  useEffect(() => { fetchCalendar() }, [fetchCalendar])
+
+  function prevMonth() {
+    if (calMonth === 0) { setCalMonth(11); setCalYear(y => y - 1) }
+    else setCalMonth(m => m - 1)
+  }
+
+  function nextMonth() {
+    if (calMonth === 11) { setCalMonth(0); setCalYear(y => y + 1) }
+    else setCalMonth(m => m + 1)
+  }
+
+  // Group tasks by day
+  const tasksByDay: Record<number, Task[]> = {}
+  for (const t of calTasks) {
+    if (!t.dueDate) continue
+    const d = new Date(t.dueDate)
+    const day = d.getDate()
+    if (!tasksByDay[day]) tasksByDay[day] = []
+    tasksByDay[day].push(t)
+  }
+
+  // Build calendar grid
+  const firstDay = new Date(calYear, calMonth, 1)
+  let startDow = firstDay.getDay() - 1 // Monday = 0
+  if (startDow < 0) startDow = 6
+  const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate()
+
+  const cells: (number | null)[] = []
+  for (let i = 0; i < startDow; i++) cells.push(null)
+  for (let d = 1; d <= daysInMonth; d++) cells.push(d)
+  while (cells.length % 7 !== 0) cells.push(null)
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-4">
+        <Button variant="outline" size="sm" onClick={prevMonth}>
+          <ChevronLeft className="h-4 w-4" />
+        </Button>
+        <h3 className="font-semibold text-lg">
+          {monthNames[calMonth]} {calYear}
+        </h3>
+        <Button variant="outline" size="sm" onClick={nextMonth}>
+          <ChevronRight className="h-4 w-4" />
+        </Button>
+      </div>
+
+      <div className="grid grid-cols-7 gap-px bg-muted rounded-lg overflow-hidden border">
+        {dayNames.map(d => (
+          <div key={d} className="bg-muted py-2 text-center text-xs font-semibold text-muted-foreground">
+            {d}
+          </div>
+        ))}
+        {cells.map((day, i) => (
+          <div
+            key={i}
+            className={cn(
+              "bg-background min-h-[100px] p-1.5",
+              day === null && "bg-muted/30",
+              day && isTodayDate(calYear, calMonth, day) && "ring-2 ring-inset ring-primary/50 bg-primary/5"
+            )}
+          >
+            {day && (
+              <>
+                <div className={cn(
+                  "text-xs font-medium mb-1",
+                  isTodayDate(calYear, calMonth, day) && "text-primary font-bold"
+                )}>
+                  {day}
+                </div>
+                <div className="space-y-0.5">
+                  {(tasksByDay[day] || []).slice(0, 3).map(task => (
+                    <div
+                      key={task.id}
+                      className={cn(
+                        "text-[10px] leading-tight px-1 py-0.5 rounded truncate cursor-default",
+                        task.status === "completed"
+                          ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                          : task.priority === "high" || task.priority === "urgent"
+                            ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                            : "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                      )}
+                      title={`${task.title} — ${priorityLabels[task.priority] || task.priority}`}
+                    >
+                      {categoryIcons[task.relatedType || ""] || ""} {task.title}
+                    </div>
+                  ))}
+                  {(tasksByDay[day] || []).length > 3 && (
+                    <div className="text-[10px] text-muted-foreground text-center">
+                      +{(tasksByDay[day] || []).length - 3}
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// ─── Main Page ──────────────────────────────────────────────────
 export default function TasksPage() {
   const { data: session } = useSession()
   const [tasks, setTasks] = useState<Task[]>([])
@@ -99,6 +350,7 @@ export default function TasksPage() {
   const [deleteItem, setDeleteItem] = useState<Task | null>(null)
   const [activeFilter, setActiveFilter] = useState<string>("all")
   const [sortBy, setSortBy] = useState("date_asc")
+  const [calModalOpen, setCalModalOpen] = useState(false)
   const orgId = session?.user?.organizationId
 
   async function fetchTasks() {
@@ -305,9 +557,18 @@ export default function TasksPage() {
               onClick={() => setView("kanban")}
               className={cn("px-3 py-1.5 text-sm flex items-center gap-1", view === "kanban" ? "bg-primary text-primary-foreground" : "hover:bg-muted")}
             >
-              <CalendarDays className="h-3.5 w-3.5" /> Канбан
+              <Columns3 className="h-3.5 w-3.5" /> Канбан
+            </button>
+            <button
+              onClick={() => setView("calendar")}
+              className={cn("px-3 py-1.5 text-sm flex items-center gap-1", view === "calendar" ? "bg-primary text-primary-foreground" : "hover:bg-muted")}
+            >
+              <CalendarDays className="h-3.5 w-3.5" /> Календарь
             </button>
           </div>
+          <Button variant="outline" onClick={() => setCalModalOpen(true)}>
+            <Link2 className="h-4 w-4 mr-1" /> Подключить календарь
+          </Button>
           <Button onClick={handleAdd}>
             <Plus className="h-4 w-4 mr-1" /> Новая задача
           </Button>
@@ -344,15 +605,17 @@ export default function TasksPage() {
         ))}
       </div>
 
-      {/* Sort */}
-      <div className="flex justify-end">
-        <Select value={sortBy} onChange={e => setSortBy(e.target.value)} className="w-[200px]">
-          <option value="date_asc">Срок ↑</option>
-          <option value="date_desc">Срок ↓</option>
-          <option value="priority">Приоритет</option>
-          <option value="name">Имя А → Я</option>
-        </Select>
-      </div>
+      {/* Sort (not shown in calendar view) */}
+      {view !== "calendar" && (
+        <div className="flex justify-end">
+          <Select value={sortBy} onChange={e => setSortBy(e.target.value)} className="w-[200px]">
+            <option value="date_asc">Срок ↑</option>
+            <option value="date_desc">Срок ↓</option>
+            <option value="priority">Приоритет</option>
+            <option value="name">Имя А → Я</option>
+          </Select>
+        </div>
+      )}
 
       {view === "list" && (
         <DataTable
@@ -405,8 +668,13 @@ export default function TasksPage() {
         </div>
       )}
 
+      {view === "calendar" && (
+        <TaskCalendar tasks={tasks} orgId={orgId ? String(orgId) : undefined} />
+      )}
+
       <TaskForm open={formOpen} onOpenChange={setFormOpen} onSaved={fetchTasks} initialData={editData} orgId={orgId} />
       <DeleteConfirmDialog open={deleteOpen} onOpenChange={setDeleteOpen} onConfirm={confirmDelete} title="Удалить задачу" itemName={deleteItem?.title} />
+      <CalendarIntegrationModal open={calModalOpen} onClose={() => setCalModalOpen(false)} />
     </div>
   )
 }

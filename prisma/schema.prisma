@@ -58,6 +58,7 @@ model User {
   totpSecret     String?
   totpEnabled    Boolean   @default(false)
   backupCodes    Json      @default("[]")
+  calendarToken  String?   @unique
   resetToken     String?
   resetTokenExp  DateTime?
   lastLogin      DateTime?
