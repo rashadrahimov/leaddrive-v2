@@ -1,0 +1,820 @@
+// LeadDrive CRM v2.0 — Prisma Schema
+// Multi-tenant: ALL models (except Organization) have organizationId
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ═══════════════════════════════════════════════════
+// ORGANIZATION & AUTH
+// ═══════════════════════════════════════════════════
+
+model Organization {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  plan        String   @default("starter") // starter, professional, enterprise
+  addons      String[] @default([])
+  modules     Json     @default("{}")
+  logo        String?
+  settings    Json     @default("{}")
+  maxUsers    Int      @default(3)
+  maxContacts Int      @default(500)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  users       User[]
+  companies   Company[]
+  contacts    Contact[]
+  deals       Deal[]
+  leads       Lead[]
+  tasks       Task[]
+  contracts   Contract[]
+  offers      Offer[]
+  activities  Activity[]
+  webhooks    Webhook[]
+  auditLogs   AuditLog[]
+
+  @@map("organizations")
+}
+
+model User {
+  id             String    @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  email          String
+  name           String
+  passwordHash   String
+  role           String    @default("viewer") // admin, manager, viewer
+  avatar         String?
+  phone          String?
+  department     String?
+  totpSecret     String?
+  totpEnabled    Boolean   @default(false)
+  backupCodes    Json      @default("[]")
+  lastLogin      DateTime?
+  loginCount     Int       @default(0)
+  isActive       Boolean   @default(true)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@unique([organizationId, email])
+  @@map("users")
+}
+
+// ═══════════════════════════════════════════════════
+// WEBHOOKS & AUDIT
+// ═══════════════════════════════════════════════════
+
+model Webhook {
+  id             String   @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  url            String
+  events         String[] // ["deal.created", "ticket.resolved"]
+  secret         String
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+
+  @@map("webhooks")
+}
+
+model AuditLog {
+  id             String   @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  userId         String?
+  action         String   // create, update, delete, login, export
+  entityType     String   // company, contact, deal, etc.
+  entityId       String?
+  entityName     String?
+  oldValue       Json?
+  newValue       Json?
+  ipAddress      String?
+  userAgent      String?
+  createdAt      DateTime @default(now())
+
+  @@index([organizationId, entityType])
+  @@index([organizationId, createdAt])
+  @@map("audit_logs")
+}
+
+// ═══════════════════════════════════════════════════
+// CRM CORE
+// ═══════════════════════════════════════════════════
+
+model Company {
+  id             String   @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  name           String
+  industry       String?
+  website        String?
+  phone          String?
+  email          String?
+  address        String?
+  city           String?
+  country        String?
+  employeeCount  Int?
+  annualRevenue  Float?
+  description    String?
+  status         String   @default("active") // active, inactive, prospect
+  userCount      Int      @default(0)
+  costCode       String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  contacts       Contact[]
+  deals          Deal[]
+  activities     Activity[]
+
+  @@index([organizationId])
+  @@map("companies")
+}
+
+model Contact {
+  id             String   @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  companyId      String?
+  company        Company? @relation(fields: [companyId], references: [id])
+  fullName       String
+  email          String?
+  phone          String?
+  position       String?
+  department     String?
+  avatar         String?
+  source         String?  // website, referral, cold_call, etc.
+  tags           String[] @default([])
+  isActive       Boolean  @default(true)
+  lastContactAt  DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  activities     Activity[]
+
+  @@index([organizationId])
+  @@index([organizationId, companyId])
+  @@map("contacts")
+}
+
+model Deal {
+  id             String   @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  companyId      String?
+  company        Company? @relation(fields: [companyId], references: [id])
+  name           String
+  stage          String   @default("LEAD")
+  valueAmount    Float    @default(0)
+  currency       String   @default("AZN")
+  probability    Int      @default(0)
+  expectedClose  DateTime?
+  assignedTo     String?
+  lostReason     String?
+  notes          String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([organizationId])
+  @@index([organizationId, stage])
+  @@map("deals")
+}
+
+model Lead {
+  id             String   @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  contactName    String
+  companyName    String?
+  email          String?
+  phone          String?
+  source         String?
+  status         String   @default("new") // new, contacted, qualified, converted, lost
+  priority       String   @default("medium")
+  score          Int      @default(0)
+  scoreDetails   Json     @default("{}")
+  assignedTo     String?
+  estimatedValue Float?
+  notes          String?
+  convertedAt    DateTime?
+  lastScoredAt   DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([organizationId])
+  @@index([organizationId, status])
+  @@map("leads")
+}
+
+model Task {
+  id             String    @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  title          String
+  description    String?
+  status         String    @default("pending") // pending, in_progress, completed, cancelled
+  priority       String    @default("medium")
+  dueDate        DateTime?
+  assignedTo     String?
+  relatedType    String?   // deal, contact, company, lead, ticket
+  relatedId      String?
+  completedAt    DateTime?
+  createdBy      String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([organizationId])
+  @@index([organizationId, assignedTo])
+  @@map("tasks")
+}
+
+model Contract {
+  id             String   @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  contractNumber String
+  companyId      String?
+  title          String
+  type           String   @default("service_agreement")
+  status         String   @default("draft")
+  startDate      DateTime?
+  endDate        DateTime?
+  valueAmount    Float?
+  currency       String   @default("AZN")
+  notes          String?
+  createdBy      String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([organizationId])
+  @@map("contracts")
+}
+
+model Offer {
+  id             String   @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  offerNumber    String
+  companyId      String?
+  title          String
+  status         String   @default("draft")
+  totalAmount    Float?
+  currency       String   @default("AZN")
+  validUntil     DateTime?
+  notes          String?
+  createdBy      String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([organizationId])
+  @@map("offers")
+}
+
+model Activity {
+  id             String   @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  type           String   // call, email, meeting, note, task
+  subject        String?
+  description    String?
+  contactId      String?
+  contact        Contact? @relation(fields: [contactId], references: [id])
+  companyId      String?
+  company        Company? @relation(fields: [companyId], references: [id])
+  relatedType    String?
+  relatedId      String?
+  createdBy      String?
+  scheduledAt    DateTime?
+  completedAt    DateTime?
+  createdAt      DateTime @default(now())
+
+  @@index([organizationId])
+  @@index([organizationId, contactId])
+  @@map("activities")
+}
+
+// ═══════════════════════════════════════════════════
+// PIPELINE STAGES (customizable per org)
+// ═══════════════════════════════════════════════════
+
+model PipelineStage {
+  id             String   @id @default(cuid())
+  organizationId String
+  name           String
+  displayName    String
+  color          String   @default("#6366f1")
+  probability    Int      @default(0)
+  sortOrder      Int      @default(0)
+  isWon          Boolean  @default(false)
+  isLost         Boolean  @default(false)
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+
+  @@index([organizationId])
+  @@map("pipeline_stages")
+}
+
+// ═══════════════════════════════════════════════════
+// COST MODEL & PROFITABILITY
+// ═══════════════════════════════════════════════════
+
+model OverheadCost {
+  id             String   @id @default(cuid())
+  organizationId String
+  category       String
+  label          String
+  amount         Float    @default(0)
+  isAnnual       Boolean  @default(false)
+  hasVat         Boolean  @default(false)
+  isAdmin        Boolean  @default(true)
+  targetService  String?  // infosec, permanent_it, cloud, erp, helpdesk, pm, grc
+  sortOrder      Int      @default(0)
+  notes          String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([organizationId])
+  @@map("overhead_costs")
+}
+
+model CostEmployee {
+  id             String   @id @default(cuid())
+  organizationId String
+  department     String   // IT, InfoSec, ERP, PM, HelpDesk, GRC, BackOffice
+  position       String
+  count          Int      @default(1)
+  netSalary      Float    @default(0)
+  grossSalary    Float    @default(0)
+  superGross     Float    @default(0)
+  inOverhead     Boolean  @default(false)
+  notes          String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([organizationId])
+  @@map("cost_employees")
+}
+
+model PricingParameters {
+  id                String   @id @default(cuid())
+  organizationId    String   @unique
+  totalUsers        Int      @default(0)
+  totalEmployees    Int      @default(137)
+  technicalStaff    Int      @default(107)
+  backOfficeStaff   Int      @default(30)
+  monthlyWorkHours  Int      @default(160)
+  vatRate           Float    @default(0.18)
+  employerTaxRate   Float    @default(0.175)
+  riskRate          Float    @default(0.05)
+  miscExpenseRate   Float    @default(0.01)
+  fixedOverheadRatio Float   @default(0.25)
+  updatedAt         DateTime @updatedAt
+  updatedBy         String?
+
+  @@map("pricing_parameters")
+}
+
+model ClientService {
+  id             String   @id @default(cuid())
+  organizationId String
+  companyId      String
+  serviceType    String   // permanent_it, infosec, erp, grc, projects, helpdesk, cloud
+  monthlyRevenue Float    @default(0)
+  isActive       Boolean  @default(true)
+  notes          String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([organizationId, companyId, serviceType])
+  @@index([organizationId])
+  @@map("client_services")
+}
+
+model CostModelSnapshot {
+  id                String   @id @default(cuid())
+  organizationId    String
+  snapshotMonth     String   // "2026-03"
+  totalCost         Float    @default(0)
+  totalRevenue      Float    @default(0)
+  margin            Float    @default(0)
+  marginPct         Float    @default(0)
+  overheadTotal     Float    @default(0)
+  employeeCost      Float    @default(0)
+  profitableClients Int      @default(0)
+  lossClients       Int      @default(0)
+  dataJson          Json     @default("{}")
+  createdAt         DateTime @default(now())
+
+  @@unique([organizationId, snapshotMonth])
+  @@index([organizationId])
+  @@map("cost_model_snapshots")
+}
+
+model CostModelLog {
+  id             String   @id @default(cuid())
+  organizationId String
+  tableName      String
+  recordId       String?
+  action         String   // insert, update, delete
+  oldValue       Json?
+  newValue       Json?
+  changedBy      String?
+  createdAt      DateTime @default(now())
+
+  @@index([organizationId])
+  @@map("cost_model_logs")
+}
+
+// ═══════════════════════════════════════════════════
+// SERVICE & SUPPORT
+// ═══════════════════════════════════════════════════
+
+model Ticket {
+  id             String    @id @default(cuid())
+  organizationId String
+  ticketNumber   String
+  subject        String
+  description    String?
+  priority       String    @default("medium")
+  status         String    @default("new")
+  category       String    @default("general")
+  contactId      String?
+  companyId      String?
+  assignedTo     String?
+  createdBy      String?
+  slaDueAt       DateTime?
+  firstResponseAt DateTime?
+  resolvedAt     DateTime?
+  closedAt       DateTime?
+  satisfactionRating Int?
+  satisfactionComment String?
+  tags           String[]  @default([])
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  comments       TicketComment[]
+
+  @@unique([organizationId, ticketNumber])
+  @@index([organizationId, status])
+  @@index([organizationId, assignedTo])
+  @@map("tickets")
+}
+
+model TicketComment {
+  id             String   @id @default(cuid())
+  ticketId       String
+  ticket         Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  userId         String?
+  comment        String
+  isInternal     Boolean  @default(false)
+  createdAt      DateTime @default(now())
+
+  @@map("ticket_comments")
+}
+
+model SlaPolicy {
+  id                 String   @id @default(cuid())
+  organizationId     String
+  name               String
+  priority           String
+  firstResponseHours Int
+  resolutionHours    Int
+  businessHoursOnly  Boolean  @default(true)
+  isActive           Boolean  @default(true)
+  createdAt          DateTime @default(now())
+
+  @@index([organizationId])
+  @@map("sla_policies")
+}
+
+model KbArticle {
+  id             String   @id @default(cuid())
+  organizationId String
+  title          String
+  content        String?
+  categoryId     String?
+  status         String   @default("draft")
+  authorId       String?
+  viewCount      Int      @default(0)
+  helpfulCount   Int      @default(0)
+  tags           String[] @default([])
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([organizationId])
+  @@map("kb_articles")
+}
+
+model KbCategory {
+  id             String   @id @default(cuid())
+  organizationId String
+  name           String
+  parentId       String?
+  sortOrder      Int      @default(0)
+
+  @@index([organizationId])
+  @@map("kb_categories")
+}
+
+// ═══════════════════════════════════════════════════
+// MARKETING & CAMPAIGNS
+// ═══════════════════════════════════════════════════
+
+model Campaign {
+  id             String    @id @default(cuid())
+  organizationId String
+  name           String
+  type           String    @default("email")
+  status         String    @default("draft")
+  subject        String?
+  templateId     String?
+  segmentId      String?
+  scheduledAt    DateTime?
+  sentAt         DateTime?
+  totalRecipients Int      @default(0)
+  totalSent      Int       @default(0)
+  totalOpened    Int       @default(0)
+  totalClicked   Int       @default(0)
+  budget         Float     @default(0)
+  actualCost     Float     @default(0)
+  createdBy      String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([organizationId])
+  @@map("campaigns")
+}
+
+model EmailTemplate {
+  id             String   @id @default(cuid())
+  organizationId String
+  name           String
+  subject        String?
+  htmlBody       String?
+  textBody       String?
+  variables      String[] @default([])
+  category       String   @default("general")
+  createdBy      String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([organizationId])
+  @@map("email_templates")
+}
+
+model ContactSegment {
+  id             String   @id @default(cuid())
+  organizationId String
+  name           String
+  conditions     Json     @default("{}")
+  contactCount   Int      @default(0)
+  isDynamic      Boolean  @default(true)
+  createdBy      String?
+  createdAt      DateTime @default(now())
+
+  @@index([organizationId])
+  @@map("contact_segments")
+}
+
+// ═══════════════════════════════════════════════════
+// JOURNEY BUILDER
+// ═══════════════════════════════════════════════════
+
+model Journey {
+  id             String   @id @default(cuid())
+  organizationId String
+  name           String
+  description    String?
+  status         String   @default("draft")
+  triggerType    String
+  triggerConditions Json?
+  entryCount     Int      @default(0)
+  activeCount    Int      @default(0)
+  completedCount Int      @default(0)
+  conversionCount Int     @default(0)
+  createdBy      String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  steps          JourneyStep[]
+
+  @@index([organizationId])
+  @@map("journeys")
+}
+
+model JourneyStep {
+  id             String   @id @default(cuid())
+  journeyId      String
+  journey        Journey  @relation(fields: [journeyId], references: [id], onDelete: Cascade)
+  stepOrder      Int
+  stepType       String
+  config         Json?
+  yesNextStep    Int?
+  noNextStep     Int?
+  statsEntered   Int      @default(0)
+  statsCompleted Int      @default(0)
+  createdAt      DateTime @default(now())
+
+  @@map("journey_steps")
+}
+
+model JourneyEnrollment {
+  id             String    @id @default(cuid())
+  organizationId String
+  journeyId      String
+  contactId      String?
+  leadId         String?
+  currentStepId  String?
+  status         String    @default("active")
+  nextActionAt   DateTime?
+  enrolledAt     DateTime  @default(now())
+  completedAt    DateTime?
+
+  @@index([organizationId])
+  @@map("journey_enrollments")
+}
+
+// ═══════════════════════════════════════════════════
+// NOTIFICATIONS
+// ═══════════════════════════════════════════════════
+
+model Notification {
+  id             String   @id @default(cuid())
+  organizationId String
+  userId         String
+  type           String
+  title          String
+  message        String?
+  entityType     String?
+  entityId       String?
+  isRead         Boolean  @default(false)
+  createdAt      DateTime @default(now())
+
+  @@index([organizationId, userId])
+  @@map("notifications")
+}
+
+// ═══════════════════════════════════════════════════
+// AI & PLATFORM
+// ═══════════════════════════════════════════════════
+
+model AiAgentConfig {
+  id             String   @id @default(cuid())
+  organizationId String
+  configName     String
+  model          String   @default("claude-haiku-4-5-20251001")
+  maxTokens      Int      @default(1024)
+  temperature    Float    @default(1.0)
+  systemPrompt   String?
+  toolsEnabled   String[] @default([])
+  kbEnabled      Boolean  @default(true)
+  kbMaxArticles  Int      @default(3)
+  isActive       Boolean  @default(false)
+  version        Int      @default(1)
+  notes          String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([organizationId])
+  @@map("ai_agent_configs")
+}
+
+model AiChatSession {
+  id             String   @id @default(cuid())
+  organizationId String
+  portalUserId   String?
+  companyId      String?
+  messagesCount  Int      @default(0)
+  status         String   @default("active")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  messages       AiChatMessage[]
+
+  @@index([organizationId])
+  @@map("ai_chat_sessions")
+}
+
+model AiChatMessage {
+  id             String   @id @default(cuid())
+  sessionId      String
+  session        AiChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  role           String   // user, assistant, system
+  content        String
+  toolCalls      Json?
+  tokenCount     Int?
+  createdAt      DateTime @default(now())
+
+  @@map("ai_chat_messages")
+}
+
+model ChannelConfig {
+  id             String   @id @default(cuid())
+  organizationId String
+  channelType    String   // telegram, whatsapp, email, sms
+  configName     String
+  botToken       String?
+  webhookUrl     String?
+  apiKey         String?
+  phoneNumber    String?
+  isActive       Boolean  @default(true)
+  createdBy      String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([organizationId])
+  @@map("channel_configs")
+}
+
+model WorkflowRule {
+  id             String   @id @default(cuid())
+  organizationId String
+  name           String
+  entityType     String
+  triggerEvent   String
+  conditions     Json     @default("{}")
+  isActive       Boolean  @default(true)
+  createdBy      String?
+  createdAt      DateTime @default(now())
+
+  actions        WorkflowAction[]
+
+  @@index([organizationId])
+  @@map("workflow_rules")
+}
+
+model WorkflowAction {
+  id             String   @id @default(cuid())
+  ruleId         String
+  rule           WorkflowRule @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+  actionType     String
+  actionConfig   Json     @default("{}")
+  actionOrder    Int      @default(0)
+
+  @@map("workflow_actions")
+}
+
+model CustomField {
+  id             String   @id @default(cuid())
+  organizationId String
+  entityType     String
+  fieldName      String
+  fieldLabel     String
+  fieldType      String
+  options        String[] @default([])
+  isRequired     Boolean  @default(false)
+  defaultValue   String?
+  sortOrder      Int      @default(0)
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+
+  @@unique([organizationId, entityType, fieldName])
+  @@index([organizationId])
+  @@map("custom_fields")
+}
+
+model CustomFieldValue {
+  id             String   @id @default(cuid())
+  organizationId String
+  fieldId        String
+  entityId       String
+  value          String?
+
+  @@unique([fieldId, entityId])
+  @@map("custom_field_values")
+}
+
+model Currency {
+  id             String   @id @default(cuid())
+  organizationId String
+  code           String
+  name           String
+  symbol         String
+  exchangeRate   Float    @default(1.0)
+  isBase         Boolean  @default(false)
+  isActive       Boolean  @default(true)
+  updatedAt      DateTime @updatedAt
+
+  @@unique([organizationId, code])
+  @@map("currencies")
+}
+
+model DashboardLayout {
+  id             String   @id @default(cuid())
+  organizationId String
+  userId         String
+  name           String   @default("Default")
+  layout         Json     @default("[]")
+  isDefault      Boolean  @default(false)
+  createdAt      DateTime @default(now())
+
+  @@index([organizationId, userId])
+  @@map("dashboard_layouts")
+}

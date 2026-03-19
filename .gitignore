@@ -1,0 +1,33 @@
+# dependencies
+node_modules/
+/.pnp
+.pnp.*
+
+# next.js
+.next/
+.next-old/
+/out/
+/build
+
+# env
+.env
+.env.local
+.env.production
+
+# misc
+.DS_Store
+*.pem
+*.tsbuildinfo
+next-env.d.ts
+.vercel
+
+# debug
+npm-debug.log*
+
+# IDE
+.idea/
+.vscode/
+
+# OS
+.fuse_hidden*
+Thumbs.db

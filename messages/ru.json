@@ -1,0 +1,50 @@
+{
+  "nav": {
+    "dashboard": "Панель",
+    "companies": "Компании",
+    "contacts": "Контакты",
+    "deals": "Сделки",
+    "leads": "Лиды",
+    "tasks": "Задачи",
+    "contracts": "Контракты",
+    "campaigns": "Кампании",
+    "inbox": "Входящие",
+    "tickets": "Тикеты",
+    "knowledgeBase": "База знаний",
+    "profitability": "Рентабельность",
+    "reports": "Отчёты",
+    "aiCenter": "AI Центр",
+    "workflows": "Автоматизация",
+    "settings": "Настройки"
+  },
+  "auth": {
+    "signIn": "Войти",
+    "signOut": "Выйти",
+    "email": "Email",
+    "password": "Пароль",
+    "forgotPassword": "Забыли пароль?",
+    "createAccount": "Создать аккаунт",
+    "register": "Регистрация",
+    "companyName": "Название компании",
+    "yourName": "Ваше имя"
+  },
+  "common": {
+    "save": "Сохранить",
+    "cancel": "Отмена",
+    "delete": "Удалить",
+    "edit": "Редактировать",
+    "create": "Создать",
+    "search": "Поиск",
+    "filter": "Фильтр",
+    "export": "Экспорт",
+    "loading": "Загрузка...",
+    "noData": "Данные не найдены"
+  },
+  "dashboard": {
+    "title": "Панель",
+    "companies": "Компании",
+    "contacts": "Контакты",
+    "activeDeals": "Активные сделки",
+    "openTickets": "Открытые тикеты"
+  }
+}

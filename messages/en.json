@@ -1,0 +1,50 @@
+{
+  "nav": {
+    "dashboard": "Dashboard",
+    "companies": "Companies",
+    "contacts": "Contacts",
+    "deals": "Deals",
+    "leads": "Leads",
+    "tasks": "Tasks",
+    "contracts": "Contracts",
+    "campaigns": "Campaigns",
+    "inbox": "Inbox",
+    "tickets": "Tickets",
+    "knowledgeBase": "Knowledge Base",
+    "profitability": "Profitability",
+    "reports": "Reports",
+    "aiCenter": "AI Center",
+    "workflows": "Workflows",
+    "settings": "Settings"
+  },
+  "auth": {
+    "signIn": "Sign in",
+    "signOut": "Sign out",
+    "email": "Email",
+    "password": "Password",
+    "forgotPassword": "Forgot password?",
+    "createAccount": "Create account",
+    "register": "Register",
+    "companyName": "Company Name",
+    "yourName": "Your Name"
+  },
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "search": "Search",
+    "filter": "Filter",
+    "export": "Export",
+    "loading": "Loading...",
+    "noData": "No data found"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "companies": "Companies",
+    "contacts": "Contacts",
+    "activeDeals": "Active Deals",
+    "openTickets": "Open Tickets"
+  }
+}

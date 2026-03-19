@@ -1,0 +1,50 @@
+{
+  "nav": {
+    "dashboard": "Panel",
+    "companies": "Şirkətlər",
+    "contacts": "Əlaqələr",
+    "deals": "Sövdələşmələr",
+    "leads": "Lidlər",
+    "tasks": "Tapşırıqlar",
+    "contracts": "Müqavilələr",
+    "campaigns": "Kampaniyalar",
+    "inbox": "Gələnlər",
+    "tickets": "Müraciətlər",
+    "knowledgeBase": "Bilik bazası",
+    "profitability": "Rentabellik",
+    "reports": "Hesabatlar",
+    "aiCenter": "AI Mərkəz",
+    "workflows": "Avtomatlaşdırma",
+    "settings": "Parametrlər"
+  },
+  "auth": {
+    "signIn": "Daxil ol",
+    "signOut": "Çıxış",
+    "email": "Email",
+    "password": "Şifrə",
+    "forgotPassword": "Şifrəni unutdunuz?",
+    "createAccount": "Hesab yarat",
+    "register": "Qeydiyyat",
+    "companyName": "Şirkət adı",
+    "yourName": "Adınız"
+  },
+  "common": {
+    "save": "Saxla",
+    "cancel": "Ləğv et",
+    "delete": "Sil",
+    "edit": "Redaktə et",
+    "create": "Yarat",
+    "search": "Axtar",
+    "filter": "Filtr",
+    "export": "İxrac",
+    "loading": "Yüklənir...",
+    "noData": "Məlumat tapılmadı"
+  },
+  "dashboard": {
+    "title": "Panel",
+    "companies": "Şirkətlər",
+    "contacts": "Əlaqələr",
+    "activeDeals": "Aktiv sövdələşmələr",
+    "openTickets": "Açıq müraciətlər"
+  }
+}
