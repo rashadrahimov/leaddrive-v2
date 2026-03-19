@@ -45,7 +45,7 @@ export default function SegmentsPage() {
       key: "name",
       label: "Segment Name",
       sortable: true,
-      render: (item: Segment) => (
+      render: (item: any) => (
         <div className="font-medium">{item.name}</div>
       ),
     },
@@ -53,7 +53,7 @@ export default function SegmentsPage() {
       key: "contactCount",
       label: "Contacts",
       sortable: true,
-      render: (item: Segment) => (
+      render: (item: any) => (
         <div className="flex items-center gap-1">
           <Users className="h-4 w-4 text-muted-foreground" />
           <span>{item.contactCount.toLocaleString()}</span>
@@ -64,7 +64,7 @@ export default function SegmentsPage() {
       key: "conditions",
       label: "Conditions",
       sortable: false,
-      render: (item: Segment) => (
+      render: (item: any) => (
         <div className="text-sm text-muted-foreground max-w-xs truncate">
           {item.conditions && typeof item.conditions === "object"
             ? JSON.stringify(item.conditions).slice(0, 50) + "..."
@@ -76,7 +76,7 @@ export default function SegmentsPage() {
       key: "isDynamic",
       label: "Type",
       sortable: true,
-      render: (item: Segment) => (
+      render: (item: any) => (
         <Badge variant="outline" className="bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400">
           {item.isDynamic ? "Dynamic" : "Static"}
         </Badge>

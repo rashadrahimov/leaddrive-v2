@@ -47,15 +47,15 @@ export default function OffersPage() {
     { key: "title", label: "Title", sortable: true },
     {
       key: "totalAmount", label: "Amount", sortable: true,
-      render: (item: Offer) => <span className="font-medium">{item.totalAmount ? item.totalAmount.toLocaleString() : "—"} {item.currency}</span>,
+      render: (item: any) => <span className="font-medium">{item.totalAmount ? item.totalAmount.toLocaleString() : "—"} {item.currency}</span>,
     },
     {
       key: "status", label: "Status", sortable: true,
-      render: (item: Offer) => <Badge variant={statusColors[item.status]}>{item.status}</Badge>,
+      render: (item: any) => <Badge variant={statusColors[item.status]}>{item.status}</Badge>,
     },
     {
       key: "validUntil", label: "Valid Until", sortable: true,
-      render: (item: Offer) => item.validUntil ? new Date(item.validUntil).toLocaleDateString() : "—",
+      render: (item: any) => item.validUntil ? new Date(item.validUntil).toLocaleDateString() : "—",
     },
   ]
 

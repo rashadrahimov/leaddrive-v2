@@ -49,15 +49,15 @@ export default function ContractsPage() {
     { key: "title", label: "Title", sortable: true },
     {
       key: "valueAmount", label: "Value", sortable: true,
-      render: (item: Contract) => <span className="font-medium">{item.valueAmount ? item.valueAmount.toLocaleString() : "—"} {item.currency}</span>,
+      render: (item: any) => <span className="font-medium">{item.valueAmount ? item.valueAmount.toLocaleString() : "—"} {item.currency}</span>,
     },
     {
       key: "status", label: "Status", sortable: true,
-      render: (item: Contract) => <Badge variant={statusColors[item.status]}>{item.status}</Badge>,
+      render: (item: any) => <Badge variant={statusColors[item.status]}>{item.status}</Badge>,
     },
     {
       key: "endDate", label: "Expires", sortable: true,
-      render: (item: Contract) => item.endDate ? new Date(item.endDate).toLocaleDateString() : "—",
+      render: (item: any) => item.endDate ? new Date(item.endDate).toLocaleDateString() : "—",
     },
   ]
 

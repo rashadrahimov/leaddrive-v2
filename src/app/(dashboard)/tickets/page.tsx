@@ -72,12 +72,12 @@ export default function TicketsPage() {
   const columns = [
     {
       key: "ticketNumber", label: "#", sortable: true,
-      render: (item: TicketData) => <span className="font-mono text-xs">{item.ticketNumber}</span>,
+      render: (item: any) => <span className="font-mono text-xs">{item.ticketNumber}</span>,
     },
     { key: "subject", label: "Subject", sortable: true },
     {
       key: "priority", label: "Priority", sortable: true,
-      render: (item: TicketData) => (
+      render: (item: any) => (
         <span className={cn("px-2 py-0.5 rounded-full text-xs font-medium", priorityColors[item.priority])}>
           {item.priority}
         </span>
@@ -86,11 +86,11 @@ export default function TicketsPage() {
     { key: "company", label: "Company", sortable: true },
     {
       key: "status", label: "Status", sortable: true,
-      render: (item: TicketData) => <Badge variant="outline">{statusLabels[item.status]}</Badge>,
+      render: (item: any) => <Badge variant="outline">{statusLabels[item.status]}</Badge>,
     },
     {
       key: "slaDueAt", label: "SLA", sortable: true,
-      render: (item: TicketData) => {
+      render: (item: any) => {
         const breached = isSlaBreached(item.slaDueAt) && !["resolved", "closed"].includes(item.status)
         return (
           <div className={cn("flex items-center gap-1 text-xs", breached && "text-red-500 font-medium")}>

@@ -60,7 +60,7 @@ export default function JourneysPage() {
       key: "name",
       label: "Journey Name",
       sortable: true,
-      render: (item: Journey) => (
+      render: (item: any) => (
         <div>
           <div className="font-medium">{item.name}</div>
           <div className="text-xs text-muted-foreground">{item.triggerType}</div>
@@ -71,7 +71,7 @@ export default function JourneysPage() {
       key: "status",
       label: "Status",
       sortable: true,
-      render: (item: Journey) => {
+      render: (item: any) => {
         const variants: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
           active: "default",
           paused: "secondary",

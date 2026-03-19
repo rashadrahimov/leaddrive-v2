@@ -55,7 +55,7 @@ export default function CampaignsPage() {
       key: "name",
       label: "Campaign",
       sortable: true,
-      render: (item: Campaign) => (
+      render: (item: any) => (
         <div>
           <div className="font-medium">{item.name}</div>
           <div className="text-xs text-muted-foreground">{item.totalRecipients.toLocaleString()} recipients</div>
@@ -66,7 +66,7 @@ export default function CampaignsPage() {
       key: "type",
       label: "Type",
       sortable: true,
-      render: (item: Campaign) => (
+      render: (item: any) => (
         <Badge variant="outline">{item.type.toUpperCase()}</Badge>
       ),
     },
@@ -74,7 +74,7 @@ export default function CampaignsPage() {
       key: "status",
       label: "Status",
       sortable: true,
-      render: (item: Campaign) => {
+      render: (item: any) => {
         const variants: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
           sent: "default",
           scheduled: "secondary",
@@ -87,13 +87,13 @@ export default function CampaignsPage() {
       key: "openRate",
       label: "Open Rate",
       sortable: true,
-      render: (item: Campaign) => <span className="text-sm">{calculateOpenRate(item)}</span>,
+      render: (item: any) => <span className="text-sm">{calculateOpenRate(item)}</span>,
     },
     {
       key: "clickRate",
       label: "Click Rate",
       sortable: true,
-      render: (item: Campaign) => <span className="text-sm">{calculateClickRate(item)}</span>,
+      render: (item: any) => <span className="text-sm">{calculateClickRate(item)}</span>,
     },
   ]
 

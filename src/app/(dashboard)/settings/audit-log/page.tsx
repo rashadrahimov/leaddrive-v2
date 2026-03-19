@@ -58,7 +58,7 @@ export default function AuditLogPage() {
       key: "action",
       label: "Action",
       sortable: true,
-      render: (item: AuditLog) => <Badge variant={actionColors[item.action] || "outline"}>{item.action}</Badge>,
+      render: (item: any) => <Badge variant={actionColors[item.action] || "outline"}>{item.action}</Badge>,
     },
     { key: "entityType", label: "Entity", sortable: true },
     { key: "entityName", label: "Name", sortable: true },
@@ -66,7 +66,7 @@ export default function AuditLogPage() {
       key: "userId",
       label: "User",
       sortable: true,
-      render: (item: AuditLog) => <span>{item.userId || "System"}</span>,
+      render: (item: any) => <span>{item.userId || "System"}</span>,
     },
   ]
 

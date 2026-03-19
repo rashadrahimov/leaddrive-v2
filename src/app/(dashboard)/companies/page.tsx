@@ -62,7 +62,7 @@ export default function CompaniesPage() {
       key: "name",
       label: "Company",
       sortable: true,
-      render: (item: Company) => (
+      render: (item: any) => (
         <div className="flex items-center gap-3">
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary font-semibold text-sm">
             {item.name.charAt(0)}
@@ -74,12 +74,12 @@ export default function CompaniesPage() {
         </div>
       ),
     },
-    { key: "city", label: "City", sortable: true, render: (item: Company) => item.city || "—" },
+    { key: "city", label: "City", sortable: true, render: (item: any) => item.city || "—" },
     {
       key: "contactCount",
       label: "Contacts",
       sortable: true,
-      render: (item: Company) => (
+      render: (item: any) => (
         <div className="flex items-center gap-1">
           <Users className="h-3 w-3 text-muted-foreground" />
           {item._count?.contacts || 0}
@@ -90,7 +90,7 @@ export default function CompaniesPage() {
       key: "status",
       label: "Status",
       sortable: true,
-      render: (item: Company) => (
+      render: (item: any) => (
         <Badge variant={statusColors[item.status] || "outline"}>
           {item.status}
         </Badge>

@@ -50,7 +50,7 @@ export default function ContactsPage() {
       key: "fullName",
       label: "Name",
       sortable: true,
-      render: (item: Contact) => (
+      render: (item: any) => (
         <div className="flex items-center gap-3">
           <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold text-sm">
             {item.fullName.split(" ").map(n => n[0]).join("").slice(0, 2)}
@@ -66,12 +66,12 @@ export default function ContactsPage() {
       key: "company",
       label: "Company",
       sortable: true,
-      render: (item: Contact) => item.company?.name || <span className="text-muted-foreground">—</span>,
+      render: (item: any) => item.company?.name || <span className="text-muted-foreground">—</span>,
     },
     {
       key: "email",
       label: "Email",
-      render: (item: Contact) => item.email ? (
+      render: (item: any) => item.email ? (
         <div className="flex items-center gap-1 text-muted-foreground">
           <Mail className="h-3 w-3" /> {item.email}
         </div>
@@ -80,7 +80,7 @@ export default function ContactsPage() {
     {
       key: "phone",
       label: "Phone",
-      render: (item: Contact) => item.phone ? (
+      render: (item: any) => item.phone ? (
         <div className="flex items-center gap-1 text-muted-foreground">
           <Phone className="h-3 w-3" /> {item.phone}
         </div>
@@ -89,7 +89,7 @@ export default function ContactsPage() {
     {
       key: "isActive",
       label: "Status",
-      render: (item: Contact) => (
+      render: (item: any) => (
         <Badge variant={item.isActive ? "default" : "secondary"}>
           {item.isActive ? "Active" : "Inactive"}
         </Badge>

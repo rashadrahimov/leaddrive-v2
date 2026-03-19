@@ -72,7 +72,7 @@ export default function TasksPage() {
       key: "title",
       label: "Task",
       sortable: true,
-      render: (item: Task) => (
+      render: (item: any) => (
         <div className="flex items-center gap-2">
           <div className={cn(
             "h-4 w-4 rounded border-2 flex items-center justify-center",
@@ -88,7 +88,7 @@ export default function TasksPage() {
       key: "priority",
       label: "Priority",
       sortable: true,
-      render: (item: Task) => (
+      render: (item: any) => (
         <Badge variant={item.priority === "high" ? "destructive" : item.priority === "medium" ? "default" : "secondary"}>
           {item.priority}
         </Badge>
@@ -98,7 +98,7 @@ export default function TasksPage() {
       key: "dueDate",
       label: "Due Date",
       sortable: true,
-      render: (item: Task) => (
+      render: (item: any) => (
         <div className={cn("flex items-center gap-1 text-sm", isOverdue(item.dueDate) && item.status !== "completed" && "text-red-500 font-medium")}>
           {isOverdue(item.dueDate) && item.status !== "completed" && <AlertTriangle className="h-3 w-3" />}
           {item.dueDate || "—"}
@@ -110,7 +110,7 @@ export default function TasksPage() {
       key: "status",
       label: "Status",
       sortable: true,
-      render: (item: Task) => (
+      render: (item: any) => (
         <Badge variant={statusColors[item.status]}>{statusLabels[item.status]}</Badge>
       ),
     },

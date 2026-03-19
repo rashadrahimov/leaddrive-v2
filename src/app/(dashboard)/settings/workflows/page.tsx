@@ -52,7 +52,7 @@ export default function WorkflowsPage() {
       key: "name",
       label: "Workflow Name",
       sortable: true,
-      render: (item: Workflow) => (
+      render: (item: any) => (
         <div className="font-medium">{item.name}</div>
       ),
     },
@@ -60,7 +60,7 @@ export default function WorkflowsPage() {
       key: "entityType",
       label: "Entity Type",
       sortable: true,
-      render: (item: Workflow) => (
+      render: (item: any) => (
         <Badge variant="outline">{item.entityType}</Badge>
       ),
     },
@@ -68,7 +68,7 @@ export default function WorkflowsPage() {
       key: "triggerEvent",
       label: "Trigger",
       sortable: true,
-      render: (item: Workflow) => (
+      render: (item: any) => (
         <Badge variant="secondary">{item.triggerEvent}</Badge>
       ),
     },
@@ -76,7 +76,7 @@ export default function WorkflowsPage() {
       key: "actions",
       label: "Actions",
       sortable: true,
-      render: (item: Workflow) => (
+      render: (item: any) => (
         <div className="text-sm">{item.actions.length} action{item.actions.length !== 1 ? "s" : ""}</div>
       ),
     },
@@ -84,7 +84,7 @@ export default function WorkflowsPage() {
       key: "isActive",
       label: "Status",
       sortable: true,
-      render: (item: Workflow) => (
+      render: (item: any) => (
         <Badge variant={item.isActive ? "default" : "secondary"}>
           {item.isActive ? "Active" : "Inactive"}
         </Badge>

@@ -77,7 +77,7 @@ export default function LeadsPage() {
       key: "contactName",
       label: "Lead",
       sortable: true,
-      render: (item: Lead) => (
+      render: (item: any) => (
         <div>
           <div className="font-medium">{item.contactName}</div>
           <div className="text-xs text-muted-foreground">{item.companyName || "—"}</div>
@@ -88,14 +88,14 @@ export default function LeadsPage() {
       key: "score",
       label: "Score",
       sortable: true,
-      render: (item: Lead) => <ScoreBadge score={item.score} />,
+      render: (item: any) => <ScoreBadge score={item.score} />,
     },
     { key: "source", label: "Source", sortable: true },
     {
       key: "priority",
       label: "Priority",
       sortable: true,
-      render: (item: Lead) => (
+      render: (item: any) => (
         <Badge variant={priorityColors[item.priority] || "default"}>{item.priority}</Badge>
       ),
     },
@@ -103,7 +103,7 @@ export default function LeadsPage() {
       key: "estimatedValue",
       label: "Est. Value",
       sortable: true,
-      render: (item: Lead) => (
+      render: (item: any) => (
         <span className="font-medium">{item.estimatedValue?.toLocaleString()} ₼</span>
       ),
     },
@@ -111,7 +111,7 @@ export default function LeadsPage() {
       key: "status",
       label: "Status",
       sortable: true,
-      render: (item: Lead) => (
+      render: (item: any) => (
         <Badge variant="outline">{item.status}</Badge>
       ),
     },
