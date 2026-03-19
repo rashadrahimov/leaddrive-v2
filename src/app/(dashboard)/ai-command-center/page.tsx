@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import React, { useEffect, useState } from "react"
 import { useSession } from "next-auth/react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -51,18 +51,18 @@ export default function AICommandCenterPage() {
   const activeAgents = agents.filter(a => a.isActive).length
   const totalMessages = sessions.reduce((s, sess) => s + sess.messagesCount, 0)
 
-  const sessionColumns = [
-    { key: "id", label: "Session", render: (item: ChatSession) => item.id.slice(0, 8) + "..." },
+  const sessionColumns: Array<{ key: string; label: string; sortable?: boolean; render?: (item: ChatSession) => React.ReactNode }> = [
+    { key: "id", label: "Session", render: (item) => <span>{item.id.slice(0, 8)}...</span> },
     { key: "messagesCount", label: "Messages", sortable: true },
     {
       key: "status", label: "Status", sortable: true,
-      render: (item: ChatSession) => (
+      render: (item) => (
         <Badge variant={item.status === "active" ? "default" : "secondary"}>{item.status}</Badge>
       ),
     },
     {
       key: "createdAt", label: "Created", sortable: true,
-      render: (item: ChatSession) => new Date(item.createdAt).toLocaleDateString(),
+      render: (item) => <span>{new Date(item.createdAt).toLocaleDateString()}</span>,
     },
   ]
 
