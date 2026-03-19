@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input"
 import { StatCard } from "@/components/stat-card"
 import { CompanyForm } from "@/components/company-form"
 import { LeadDetailModal } from "@/components/lead-detail-modal"
+import { Select } from "@/components/ui/select"
 import { UserPlus, Plus, Search, Building2, Users, FileText, TrendingUp } from "lucide-react"
 
 interface LeadCompany {
@@ -58,6 +59,7 @@ export default function LeadsPage() {
   const [loading, setLoading] = useState(true)
   const [activeFilter, setActiveFilter] = useState<string>("all")
   const [search, setSearch] = useState("")
+  const [sortBy, setSortBy] = useState("name_asc")
   const [showForm, setShowForm] = useState(false)
   const [selectedCompany, setSelectedCompany] = useState<LeadCompany | null>(null)
   const orgId = session?.user?.organizationId
@@ -80,6 +82,16 @@ export default function LeadsPage() {
     if (activeFilter !== "all" && c.leadStatus !== activeFilter) return false
     if (search && !c.name.toLowerCase().includes(search.toLowerCase())) return false
     return true
+  }).sort((a, b) => {
+    switch (sortBy) {
+      case "name_asc": return a.name.localeCompare(b.name)
+      case "name_desc": return b.name.localeCompare(a.name)
+      case "hot_cold": { const order = { hot: 0, warm: 1, cold: 2 }; return (order[(a.leadTemperature || "cold") as keyof typeof order] ?? 2) - (order[(b.leadTemperature || "cold") as keyof typeof order] ?? 2) }
+      case "cold_hot": { const order = { cold: 0, warm: 1, hot: 2 }; return (order[(a.leadTemperature || "cold") as keyof typeof order] ?? 0) - (order[(b.leadTemperature || "cold") as keyof typeof order] ?? 0) }
+      case "score": return (b.leadScore || 0) - (a.leadScore || 0)
+      case "contacts": return (b._count?.contacts || 0) - (a._count?.contacts || 0)
+      default: return 0
+    }
   })
 
   const statusCounts: Record<string, number> = {}
@@ -133,15 +145,25 @@ export default function LeadsPage() {
         ))}
       </div>
 
-      {/* Search */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          placeholder="Поиск компаний..."
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          className="pl-9"
-        />
+      {/* Search + Sort */}
+      <div className="flex gap-2">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder="Поиск компаний..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+        <Select value={sortBy} onChange={e => setSortBy(e.target.value)} className="w-[180px]">
+          <option value="name_asc">Имя А → Я</option>
+          <option value="name_desc">Имя Я → А</option>
+          <option value="hot_cold">Hot → Cold</option>
+          <option value="cold_hot">Cold → Hot</option>
+          <option value="score">Score ↓</option>
+          <option value="contacts">Контакты ↓</option>
+        </Select>
       </div>
 
       {/* Company cards grid */}
