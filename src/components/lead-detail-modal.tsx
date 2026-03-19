@@ -306,7 +306,7 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
             <div>
               <div className="flex items-center justify-between mb-1">
                 <h4 className="font-medium text-sm">Ключевые люди ({company._count?.contacts || 0})</h4>
-                <Button variant="ghost" size="sm" className="h-6 text-xs" onClick={() => { onOpenChange(false); router.push(`/contacts?companyId=${company.id}`) }}>
+                <Button variant="ghost" size="sm" className="h-6 text-xs" onClick={() => { onOpenChange(false); router.push(`/companies/${company.id}`) }}>
                   <Plus className="h-3 w-3 mr-1" /> Управлять
                 </Button>
               </div>
