@@ -6,14 +6,20 @@ import { getOrgId } from "@/lib/api-auth"
 const updateCompanySchema = z.object({
   name: z.string().min(1).max(200).optional(),
   industry: z.string().max(100).optional(),
-  website: z.string().url().optional().or(z.literal("")),
+  website: z.string().max(500).optional(),
   phone: z.string().max(50).optional(),
-  email: z.string().email().optional().or(z.literal("")),
+  email: z.string().max(200).optional(),
   address: z.string().max(500).optional(),
   city: z.string().max(100).optional(),
   country: z.string().max(100).optional(),
   description: z.string().max(5000).optional(),
   status: z.enum(["active", "inactive", "prospect"]).optional(),
+  category: z.string().optional(),
+  leadStatus: z.string().optional(),
+  leadScore: z.number().optional(),
+  leadTemperature: z.string().optional(),
+  userCount: z.number().optional(),
+  annualRevenue: z.number().optional(),
 })
 
 export async function GET(
