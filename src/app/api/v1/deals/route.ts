@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { prisma } from "@/lib/prisma"
+import { getOrgId } from "@/lib/api-auth"
 
 const createDealSchema = z.object({
   name: z.string().min(1).max(200),
@@ -15,7 +16,7 @@ const createDealSchema = z.object({
 })
 
 export async function GET(req: NextRequest) {
-  const orgId = req.headers.get("x-organization-id")
+  const orgId = await getOrgId(req)
   if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
   const { searchParams } = new URL(req.url)
@@ -47,7 +48,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const orgId = req.headers.get("x-organization-id")
+  const orgId = await getOrgId(req)
   if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
   const body = await req.json()

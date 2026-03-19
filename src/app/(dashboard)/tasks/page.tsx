@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
+import { useSession } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { DataTable } from "@/components/data-table"
@@ -8,13 +9,14 @@ import { StatCard } from "@/components/stat-card"
 import { CheckSquare, Plus, Clock, AlertTriangle } from "lucide-react"
 import { cn } from "@/lib/utils"
 
-const MOCK_TASKS = [
-  { id: "1", title: "Очистить историю коммуникаций", status: "pending", priority: "high", dueDate: "2026-03-16", assignedTo: "Admin" },
-  { id: "2", title: "Провести телефонный звонок", status: "pending", priority: "medium", dueDate: "2026-03-20", assignedTo: "Admin" },
-  { id: "3", title: "CRM prezentasiya", status: "completed", priority: "medium", dueDate: "2026-03-25", assignedTo: "Afsana" },
-  { id: "4", title: "Встреча в офисе GT LLC", status: "in_progress", priority: "high", dueDate: "2026-03-18", assignedTo: "Rashad" },
-  { id: "5", title: "Подготовить контракт Zeytun", status: "pending", priority: "high", dueDate: "2026-03-22", assignedTo: "Admin" },
-]
+interface Task {
+  id: string
+  title: string
+  status: string
+  priority: string
+  dueDate: string
+  assignedTo: string
+}
 
 type ViewMode = "list" | "kanban"
 
@@ -37,14 +39,37 @@ function isOverdue(dueDate: string): boolean {
 }
 
 export default function TasksPage() {
+  const { data: session } = useSession()
+  const [tasks, setTasks] = useState<Task[]>([])
   const [view, setView] = useState<ViewMode>("list")
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function fetchTasks() {
+      try {
+        const orgId = (session?.user as any)?.organizationId
+        const res = await fetch("/api/v1/tasks?limit=200", {
+          headers: orgId ? { "x-organization-id": orgId } : {},
+        })
+        const json = await res.json()
+        if (json.success) {
+          setTasks(json.data.tasks)
+        }
+      } catch {
+        // keep empty
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchTasks()
+  }, [session])
 
   const columns = [
     {
       key: "title",
       label: "Task",
       sortable: true,
-      render: (item: typeof MOCK_TASKS[0]) => (
+      render: (item: Task) => (
         <div className="flex items-center gap-2">
           <div className={cn(
             "h-4 w-4 rounded border-2 flex items-center justify-center",
@@ -60,7 +85,7 @@ export default function TasksPage() {
       key: "priority",
       label: "Priority",
       sortable: true,
-      render: (item: typeof MOCK_TASKS[0]) => (
+      render: (item: Task) => (
         <Badge variant={item.priority === "high" ? "destructive" : item.priority === "medium" ? "default" : "secondary"}>
           {item.priority}
         </Badge>
@@ -70,7 +95,7 @@ export default function TasksPage() {
       key: "dueDate",
       label: "Due Date",
       sortable: true,
-      render: (item: typeof MOCK_TASKS[0]) => (
+      render: (item: Task) => (
         <div className={cn("flex items-center gap-1 text-sm", isOverdue(item.dueDate) && item.status !== "completed" && "text-red-500 font-medium")}>
           {isOverdue(item.dueDate) && item.status !== "completed" && <AlertTriangle className="h-3 w-3" />}
           {item.dueDate || "—"}
@@ -82,14 +107,29 @@ export default function TasksPage() {
       key: "status",
       label: "Status",
       sortable: true,
-      render: (item: typeof MOCK_TASKS[0]) => (
+      render: (item: Task) => (
         <Badge variant={statusColors[item.status]}>{statusLabels[item.status]}</Badge>
       ),
     },
   ]
 
-  const overdue = MOCK_TASKS.filter(t => isOverdue(t.dueDate) && t.status !== "completed").length
-  const completed = MOCK_TASKS.filter(t => t.status === "completed").length
+  const overdue = tasks.filter(t => isOverdue(t.dueDate) && t.status !== "completed").length
+  const completed = tasks.filter(t => t.status === "completed").length
+  const completionPercentage = tasks.length > 0 ? Math.round(completed / tasks.length * 100) : 0
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <h1 className="text-2xl font-bold tracking-tight">Tasks</h1>
+        <div className="animate-pulse space-y-4">
+          <div className="grid gap-4 md:grid-cols-4">
+            {[1, 2, 3, 4].map((i) => <div key={i} className="h-24 bg-muted rounded-lg" />)}
+          </div>
+          <div className="h-96 bg-muted rounded-lg" />
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
@@ -121,16 +161,16 @@ export default function TasksPage() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-4">
-        <StatCard title="Total" value={MOCK_TASKS.length} icon={<CheckSquare className="h-4 w-4" />} />
-        <StatCard title="Completed" value={completed} trend="up" description={`${Math.round(completed / MOCK_TASKS.length * 100)}%`} />
+        <StatCard title="Total" value={tasks.length} icon={<CheckSquare className="h-4 w-4" />} />
+        <StatCard title="Completed" value={completed} trend="up" description={`${completionPercentage}%`} />
         <StatCard title="Overdue" value={overdue} icon={<AlertTriangle className="h-4 w-4" />} trend={overdue > 0 ? "down" : "neutral"} />
-        <StatCard title="In Progress" value={MOCK_TASKS.filter(t => t.status === "in_progress").length} icon={<Clock className="h-4 w-4" />} />
+        <StatCard title="In Progress" value={tasks.filter(t => t.status === "in_progress").length} icon={<Clock className="h-4 w-4" />} />
       </div>
 
       {view === "list" && (
         <DataTable
           columns={columns}
-          data={MOCK_TASKS}
+          data={tasks}
           searchPlaceholder="Search tasks..."
           searchKey="title"
         />
@@ -142,10 +182,10 @@ export default function TasksPage() {
             <div key={status} className="min-w-[280px] flex-shrink-0">
               <div className="mb-3 flex items-center gap-2">
                 <span className="text-sm font-semibold">{statusLabels[status]}</span>
-                <span className="rounded-full bg-muted px-2 py-0.5 text-xs">{MOCK_TASKS.filter(t => t.status === status).length}</span>
+                <span className="rounded-full bg-muted px-2 py-0.5 text-xs">{tasks.filter(t => t.status === status).length}</span>
               </div>
               <div className="space-y-2 min-h-[200px] rounded-lg border-2 border-dashed border-transparent p-2 hover:border-muted-foreground/20">
-                {MOCK_TASKS.filter(t => t.status === status).map(task => (
+                {tasks.filter(t => t.status === status).map(task => (
                   <div key={task.id} className="rounded-lg border bg-card p-3 shadow-sm">
                     <div className="text-sm font-medium mb-1">{task.title}</div>
                     <div className="flex items-center justify-between text-xs text-muted-foreground">

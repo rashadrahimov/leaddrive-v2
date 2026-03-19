@@ -1,5 +1,7 @@
 "use client"
 
+import { useEffect, useState } from "react"
+import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -8,13 +10,17 @@ import { StatCard } from "@/components/stat-card"
 import { UserPlus, Plus, Target, TrendingUp } from "lucide-react"
 import { cn } from "@/lib/utils"
 
-const MOCK_LEADS = [
-  { id: "1", contactName: "Kamran Hasanov", companyName: "Delta Telecom", email: "k.hasanov@deltatelecom.az", source: "referral", status: "new", priority: "high", score: 85, estimatedValue: 25000 },
-  { id: "2", contactName: "Tarlan Mammadli", companyName: "Azmade", email: "tarlan@azmade.az", source: "website", status: "qualified", priority: "medium", score: 62, estimatedValue: 15000 },
-  { id: "3", contactName: "Rashad Rahimov", companyName: "Zeytunpharma", email: "rashad@zeytunpharma.az", source: "referral", status: "new", priority: "high", score: 78, estimatedValue: 20000 },
-  { id: "4", contactName: "Farid Gulalizade", companyName: "Tabia", email: "farid@tabia.az", source: "cold_call", status: "contacted", priority: "low", score: 35, estimatedValue: 5000 },
-  { id: "5", contactName: "Jahan Pashayev", companyName: "Mars Overseas", email: "jahan@mars.az", source: "website", status: "lost", priority: "medium", score: 12, estimatedValue: 8000 },
-]
+interface Lead {
+  id: string
+  contactName: string
+  companyName: string
+  email: string
+  source: string
+  status: string
+  priority: string
+  score: number
+  estimatedValue: number
+}
 
 function ScoreBadge({ score }: { score: number }) {
   let grade: string, color: string
@@ -39,13 +45,36 @@ const priorityColors: Record<string, "default" | "secondary" | "destructive"> = 
 
 export default function LeadsPage() {
   const router = useRouter()
+  const { data: session } = useSession()
+  const [leads, setLeads] = useState<Lead[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function fetchLeads() {
+      try {
+        const orgId = (session?.user as any)?.organizationId
+        const res = await fetch("/api/v1/leads?limit=200", {
+          headers: orgId ? { "x-organization-id": orgId } : {},
+        })
+        const json = await res.json()
+        if (json.success) {
+          setLeads(json.data.leads)
+        }
+      } catch {
+        // keep empty
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchLeads()
+  }, [session])
 
   const columns = [
     {
       key: "contactName",
       label: "Lead",
       sortable: true,
-      render: (item: typeof MOCK_LEADS[0]) => (
+      render: (item: Lead) => (
         <div>
           <div className="font-medium">{item.contactName}</div>
           <div className="text-xs text-muted-foreground">{item.companyName || "—"}</div>
@@ -56,14 +85,14 @@ export default function LeadsPage() {
       key: "score",
       label: "Score",
       sortable: true,
-      render: (item: typeof MOCK_LEADS[0]) => <ScoreBadge score={item.score} />,
+      render: (item: Lead) => <ScoreBadge score={item.score} />,
     },
     { key: "source", label: "Source", sortable: true },
     {
       key: "priority",
       label: "Priority",
       sortable: true,
-      render: (item: typeof MOCK_LEADS[0]) => (
+      render: (item: Lead) => (
         <Badge variant={priorityColors[item.priority] || "default"}>{item.priority}</Badge>
       ),
     },
@@ -71,7 +100,7 @@ export default function LeadsPage() {
       key: "estimatedValue",
       label: "Est. Value",
       sortable: true,
-      render: (item: typeof MOCK_LEADS[0]) => (
+      render: (item: Lead) => (
         <span className="font-medium">{item.estimatedValue?.toLocaleString()} ₼</span>
       ),
     },
@@ -79,14 +108,29 @@ export default function LeadsPage() {
       key: "status",
       label: "Status",
       sortable: true,
-      render: (item: typeof MOCK_LEADS[0]) => (
+      render: (item: Lead) => (
         <Badge variant="outline">{item.status}</Badge>
       ),
     },
   ]
 
-  const avgScore = Math.round(MOCK_LEADS.reduce((s, l) => s + l.score, 0) / MOCK_LEADS.length)
-  const totalValue = MOCK_LEADS.reduce((s, l) => s + (l.estimatedValue || 0), 0)
+  const avgScore = leads.length > 0 ? Math.round(leads.reduce((s, l) => s + l.score, 0) / leads.length) : 0
+  const totalValue = leads.reduce((s, l) => s + (l.estimatedValue || 0), 0)
+  const hotLeads = leads.filter(l => l.score >= 70).length
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <h1 className="text-2xl font-bold tracking-tight">Leads</h1>
+        <div className="animate-pulse space-y-4">
+          <div className="grid gap-4 md:grid-cols-4">
+            {[1, 2, 3, 4].map((i) => <div key={i} className="h-24 bg-muted rounded-lg" />)}
+          </div>
+          <div className="h-96 bg-muted rounded-lg" />
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
@@ -102,15 +146,15 @@ export default function LeadsPage() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-4">
-        <StatCard title="Total Leads" value={MOCK_LEADS.length} icon={<UserPlus className="h-4 w-4" />} />
+        <StatCard title="Total Leads" value={leads.length} icon={<UserPlus className="h-4 w-4" />} />
         <StatCard title="Avg Score" value={avgScore} icon={<Target className="h-4 w-4" />} description={avgScore >= 60 ? "Good pipeline" : "Needs nurturing"} trend={avgScore >= 60 ? "up" : "down"} />
         <StatCard title="Pipeline Value" value={`${totalValue.toLocaleString()} ₼`} icon={<TrendingUp className="h-4 w-4" />} />
-        <StatCard title="Hot Leads" value={MOCK_LEADS.filter(l => l.score >= 70).length} description="Score 70+" trend="up" />
+        <StatCard title="Hot Leads" value={hotLeads} description="Score 70+" trend="up" />
       </div>
 
       <DataTable
         columns={columns}
-        data={MOCK_LEADS}
+        data={leads}
         searchPlaceholder="Search leads..."
         searchKey="contactName"
         onRowClick={(item) => router.push(`/leads/${item.id}`)}

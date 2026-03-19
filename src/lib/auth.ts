@@ -1,6 +1,8 @@
 import NextAuth from "next-auth"
 import Credentials from "next-auth/providers/credentials"
 import { z } from "zod"
+import { prisma } from "./prisma"
+import bcrypt from "bcryptjs"
 
 const loginSchema = z.object({
   email: z.string().email(),
@@ -19,29 +21,49 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         const parsed = loginSchema.safeParse(credentials)
         if (!parsed.success) return null
 
-        // TODO: Replace with actual DB lookup after Prisma generate
-        // const user = await prisma.user.findFirst({
-        //   where: { email: parsed.data.email, isActive: true },
-        //   include: { organization: true }
-        // })
-        // if (!user) return null
-        // const valid = await bcrypt.compare(parsed.data.password, user.passwordHash)
-        // if (!valid) return null
+        try {
+          // Real DB lookup
+          const user = await prisma.user.findFirst({
+            where: { email: parsed.data.email, isActive: true },
+            include: { organization: true },
+          })
 
-        // Stub for development
-        if (parsed.data.email === "admin@leaddrive.com" && parsed.data.password === "admin123") {
+          if (!user) return null
+
+          // Verify password
+          const valid = await bcrypt.compare(parsed.data.password, user.passwordHash)
+          if (!valid) return null
+
+          // Update last login
+          await prisma.user.update({
+            where: { id: user.id },
+            data: { lastLogin: new Date(), loginCount: { increment: 1 } },
+          }).catch(() => {}) // Non-critical
+
           return {
-            id: "dev-user-1",
-            email: "admin@leaddrive.com",
-            name: "Admin",
-            role: "admin",
-            organizationId: "dev-org-1",
-            organizationName: "Dev Organization",
-            plan: "enterprise",
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            role: user.role,
+            organizationId: user.organizationId,
+            organizationName: user.organization.name,
+            plan: user.organization.plan,
           }
+        } catch {
+          // Fallback to dev stub if DB not connected
+          if (parsed.data.email === "admin@leaddrive.com" && parsed.data.password === "admin123") {
+            return {
+              id: "dev-user-1",
+              email: "admin@leaddrive.com",
+              name: "Admin",
+              role: "admin",
+              organizationId: "dev-org-1",
+              organizationName: "Dev Organization",
+              plan: "enterprise",
+            }
+          }
+          return null
         }
-
-        return null
       },
     }),
   ],

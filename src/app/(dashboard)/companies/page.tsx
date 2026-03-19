@@ -1,20 +1,27 @@
 "use client"
 
+import { useEffect, useState } from "react"
+import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { DataTable } from "@/components/data-table"
 import { StatCard } from "@/components/stat-card"
-import { Building2, Plus, Globe, Users } from "lucide-react"
+import { Building2, Plus, Users } from "lucide-react"
+import { CompanyForm } from "@/components/company-form"
 
-// TODO: Replace with real API call after Prisma generate
-const MOCK_COMPANIES = [
-  { id: "1", name: "Zeytun Pharma", industry: "Pharma", status: "active", contactCount: 3, city: "Baku" },
-  { id: "2", name: "Delta Telecom", industry: "Telecom", status: "active", contactCount: 5, city: "Baku" },
-  { id: "3", name: "Azmade", industry: "IT", status: "active", contactCount: 8, city: "Baku" },
-  { id: "4", name: "Tabia", industry: "IT", status: "prospect", contactCount: 2, city: "Baku" },
-  { id: "5", name: "Novex", industry: "Retail", status: "inactive", contactCount: 0, city: "Ganja" },
-]
+interface Company {
+  id: string
+  name: string
+  industry: string | null
+  status: string
+  city: string | null
+  country: string | null
+  website: string | null
+  email: string | null
+  phone: string | null
+  _count: { contacts: number; deals: number }
+}
 
 const statusColors: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
   active: "default",
@@ -24,13 +31,38 @@ const statusColors: Record<string, "default" | "secondary" | "destructive" | "ou
 
 export default function CompaniesPage() {
   const router = useRouter()
+  const { data: session } = useSession()
+  const [companies, setCompanies] = useState<Company[]>([])
+  const [total, setTotal] = useState(0)
+  const [loading, setLoading] = useState(true)
+  const [formOpen, setFormOpen] = useState(false)
+  const orgId = (session?.user as any)?.organizationId
+
+  const fetchCompanies = async () => {
+    try {
+      const res = await fetch("/api/v1/companies?limit=500", {
+        headers: orgId ? { "x-organization-id": orgId } : {},
+      })
+        const json = await res.json()
+        if (json.success) {
+          setCompanies(json.data.companies)
+          setTotal(json.data.total)
+        }
+    } catch {} finally { setLoading(false) }
+  }
+
+  useEffect(() => { fetchCompanies() }, [session])
+
+  const activeCount = companies.filter((c) => c.status === "active").length
+  const prospectCount = companies.filter((c) => c.status === "prospect").length
+  const totalContacts = companies.reduce((s, c) => s + (c._count?.contacts || 0), 0)
 
   const columns = [
     {
       key: "name",
       label: "Company",
       sortable: true,
-      render: (item: typeof MOCK_COMPANIES[0]) => (
+      render: (item: Company) => (
         <div className="flex items-center gap-3">
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary font-semibold text-sm">
             {item.name.charAt(0)}
@@ -42,15 +74,15 @@ export default function CompaniesPage() {
         </div>
       ),
     },
-    { key: "city", label: "City", sortable: true },
+    { key: "city", label: "City", sortable: true, render: (item: Company) => item.city || "—" },
     {
       key: "contactCount",
       label: "Contacts",
       sortable: true,
-      render: (item: typeof MOCK_COMPANIES[0]) => (
+      render: (item: Company) => (
         <div className="flex items-center gap-1">
           <Users className="h-3 w-3 text-muted-foreground" />
-          {item.contactCount}
+          {item._count?.contacts || 0}
         </div>
       ),
     },
@@ -58,13 +90,27 @@ export default function CompaniesPage() {
       key: "status",
       label: "Status",
       sortable: true,
-      render: (item: typeof MOCK_COMPANIES[0]) => (
+      render: (item: Company) => (
         <Badge variant={statusColors[item.status] || "outline"}>
           {item.status}
         </Badge>
       ),
     },
   ]
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <h1 className="text-2xl font-bold tracking-tight">Companies</h1>
+        <div className="animate-pulse space-y-4">
+          <div className="grid gap-4 md:grid-cols-4">
+            {[1, 2, 3, 4].map((i) => <div key={i} className="h-24 bg-muted rounded-lg" />)}
+          </div>
+          <div className="h-96 bg-muted rounded-lg" />
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
@@ -73,25 +119,32 @@ export default function CompaniesPage() {
           <h1 className="text-2xl font-bold tracking-tight">Companies</h1>
           <p className="text-sm text-muted-foreground">Manage your client companies</p>
         </div>
-        <Button>
+        <Button onClick={() => setFormOpen(true)}>
           <Plus className="h-4 w-4" />
           Add Company
         </Button>
       </div>
 
       <div className="grid gap-4 md:grid-cols-4">
-        <StatCard title="Total" value={MOCK_COMPANIES.length} icon={<Building2 className="h-4 w-4" />} />
-        <StatCard title="Active" value={MOCK_COMPANIES.filter(c => c.status === "active").length} trend="up" description="Active clients" />
-        <StatCard title="Prospects" value={MOCK_COMPANIES.filter(c => c.status === "prospect").length} />
-        <StatCard title="Contacts" value={MOCK_COMPANIES.reduce((s, c) => s + c.contactCount, 0)} icon={<Users className="h-4 w-4" />} />
+        <StatCard title="Total" value={total} icon={<Building2 className="h-4 w-4" />} />
+        <StatCard title="Active" value={activeCount} trend="up" description="Active clients" />
+        <StatCard title="Prospects" value={prospectCount} />
+        <StatCard title="Contacts" value={totalContacts} icon={<Users className="h-4 w-4" />} />
       </div>
 
       <DataTable
         columns={columns}
-        data={MOCK_COMPANIES}
+        data={companies}
         searchPlaceholder="Search companies..."
         searchKey="name"
         onRowClick={(item) => router.push(`/companies/${item.id}`)}
+      />
+
+      <CompanyForm
+        open={formOpen}
+        onOpenChange={setFormOpen}
+        onSaved={fetchCompanies}
+        orgId={orgId}
       />
     </div>
   )

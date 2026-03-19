@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server"
 import { callCompute } from "@/lib/compute"
+import { getOrgId } from "@/lib/api-auth"
 
 export async function GET(req: NextRequest) {
-  const orgId = req.headers.get("x-organization-id")
+  const orgId = await getOrgId(req)
   if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
   try {
