@@ -12,7 +12,11 @@ import { StatCard } from "@/components/stat-card"
 import { JourneyForm } from "@/components/journey-form"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
 import { Dialog, DialogHeader, DialogTitle, DialogContent, DialogFooter } from "@/components/ui/dialog"
-import { Plus, Workflow, Users, CheckCircle, Target, Play, Pause, Pencil, Trash2, Eye, X, Mail, Clock, GitBranch, MessageSquare, Bell, FileText } from "lucide-react"
+import {
+  Plus, Workflow, Users, CheckCircle, Target, Play, Pause, Pencil, Trash2, Eye,
+  X, Mail, Clock, GitBranch, MessageSquare, Bell, FileText, UserPlus, Send,
+  Loader2, Smartphone, Heart, Settings,
+} from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface JourneyStep {
@@ -20,6 +24,8 @@ interface JourneyStep {
   stepOrder: number
   stepType: string
   config: any
+  statsEntered: number
+  statsCompleted: number
 }
 
 interface Journey {
@@ -38,8 +44,10 @@ const statusLabels: Record<string, string> = {
   draft: "Черновик", active: "Активный", paused: "Приостановлен", completed: "Завершён",
 }
 const statusColors: Record<string, string> = {
-  draft: "bg-gray-100 text-gray-600", active: "bg-green-100 text-green-700",
-  paused: "bg-yellow-100 text-yellow-700", completed: "bg-blue-100 text-blue-700",
+  draft: "bg-gray-100 text-gray-600 border-gray-200",
+  active: "bg-green-100 text-green-700 border-green-200",
+  paused: "bg-yellow-100 text-yellow-700 border-yellow-200",
+  completed: "bg-blue-100 text-blue-700 border-blue-200",
 }
 const triggerLabels: Record<string, string> = {
   lead_created: "Новый лид", contact_created: "Новый контакт",
@@ -47,14 +55,48 @@ const triggerLabels: Record<string, string> = {
 }
 
 const stepTypes = [
-  { value: "email", label: "Email", icon: Mail, color: "bg-blue-500" },
-  { value: "wait", label: "Ожидание", icon: Clock, color: "bg-yellow-500" },
-  { value: "condition", label: "Условие", icon: GitBranch, color: "bg-red-500" },
-  { value: "sms", label: "SMS", icon: MessageSquare, color: "bg-purple-500" },
-  { value: "task", label: "Задача", icon: FileText, color: "bg-teal-500" },
-  { value: "notification", label: "Уведомление", icon: Bell, color: "bg-orange-500" },
-  { value: "whatsapp", label: "WhatsApp", icon: MessageSquare, color: "bg-green-500" },
-  { value: "update_field", label: "Обн. поле", icon: Pencil, color: "bg-pink-500" },
+  { value: "send_email", label: "Email", icon: Mail, color: "bg-blue-500", borderColor: "border-blue-200 bg-blue-50/50 dark:bg-blue-900/10" },
+  { value: "sms", label: "SMS", icon: Smartphone, color: "bg-gray-700", borderColor: "border-gray-200 bg-gray-50/50 dark:bg-gray-900/10" },
+  { value: "wait", label: "Ожидание", icon: Clock, color: "bg-yellow-500", borderColor: "border-yellow-200 bg-yellow-50/50 dark:bg-yellow-900/10" },
+  { value: "condition", label: "Условие", icon: GitBranch, color: "bg-pink-500", borderColor: "border-pink-200 bg-pink-50/50 dark:bg-pink-900/10" },
+  { value: "create_task", label: "Задача", icon: FileText, color: "bg-teal-500", borderColor: "border-teal-200 bg-teal-50/50 dark:bg-teal-900/10" },
+  { value: "send_telegram", label: "Telegram", icon: Send, color: "bg-sky-500", borderColor: "border-sky-200 bg-sky-50/50 dark:bg-sky-900/10" },
+  { value: "send_whatsapp", label: "WhatsApp", icon: Heart, color: "bg-green-500", borderColor: "border-green-200 bg-green-50/50 dark:bg-green-900/10" },
+  { value: "update_field", label: "Обн. поле", icon: Settings, color: "bg-purple-500", borderColor: "border-purple-200 bg-purple-50/50 dark:bg-purple-900/10" },
+]
+
+function getStepInfo(type: string) {
+  return stepTypes.find(st => st.value === type) || stepTypes[0]
+}
+
+function getStepSummary(step: { stepType: string; config: any }): string {
+  const c = step.config || {}
+  switch (step.stepType) {
+    case "send_email": return c.subject ? `Тема: ${c.subject}` : "Тема: (без темы)"
+    case "wait": return `Ждать: ${c.days || 1} дн.`
+    case "condition": return c.field && c.operator && c.value ? `${c.field} ${c.operator} ${c.value}` : "? ? ?"
+    case "create_task": return c.title || "Новая задача"
+    case "send_telegram": return c.message ? c.message.slice(0, 40) : "Telegram сообщение"
+    case "send_whatsapp": return c.message ? c.message.slice(0, 40) : "WhatsApp сообщение"
+    case "sms": return c.message ? c.message.slice(0, 40) : "SMS сообщение"
+    case "update_field": return c.field ? `${c.field} = ${c.value || "..."}` : "Обновить поле"
+    default: return ""
+  }
+}
+
+// Condition fields for dropdown
+const conditionFields = [
+  { value: "lead_status", label: "Статус лида" },
+  { value: "source", label: "Источник" },
+  { value: "company_name", label: "Компания" },
+  { value: "email", label: "Email" },
+  { value: "phone", label: "Телефон" },
+]
+const conditionOperators = [
+  { value: "equals", label: "Равно" },
+  { value: "not_equals", label: "Не равно" },
+  { value: "contains", label: "Содержит" },
+  { value: "not_empty", label: "Не пусто" },
 ]
 
 export default function JourneysPage() {
@@ -68,6 +110,12 @@ export default function JourneysPage() {
   const [stepsJourney, setStepsJourney] = useState<Journey | null>(null)
   const [steps, setSteps] = useState<{ stepType: string; config: any }[]>([])
   const [savingSteps, setSavingSteps] = useState(false)
+  const [addStepOpen, setAddStepOpen] = useState(false)
+  const [newStepType, setNewStepType] = useState("send_email")
+  const [newStepConfig, setNewStepConfig] = useState<any>({})
+  const [enrollOpen, setEnrollOpen] = useState<Journey | null>(null)
+  const [enrollLeadId, setEnrollLeadId] = useState("")
+  const [enrolling, setEnrolling] = useState(false)
   const orgId = session?.user?.organizationId
 
   const fetchJourneys = async () => {
@@ -91,24 +139,40 @@ export default function JourneysPage() {
     fetchJourneys()
   }
 
+  const toggleStatus = async (journey: Journey) => {
+    const newStatus = journey.status === "active" ? "paused" : "active"
+    await fetch(`/api/v1/journeys/${journey.id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        ...(orgId ? { "x-organization-id": String(orgId) } : {}),
+      },
+      body: JSON.stringify({ name: journey.name, status: newStatus }),
+    })
+    fetchJourneys()
+  }
+
   function openSteps(journey: Journey) {
     setStepsJourney(journey)
     const existingSteps = (journey.steps || [])
       .sort((a, b) => a.stepOrder - b.stepOrder)
       .map(s => ({ stepType: s.stepType, config: s.config || {} }))
-    setSteps(existingSteps.length > 0 ? existingSteps : [])
+    setSteps(existingSteps)
   }
 
-  function addStep() {
-    setSteps(prev => [...prev, { stepType: "email", config: {} }])
+  function openAddStep() {
+    setNewStepType("send_email")
+    setNewStepConfig({})
+    setAddStepOpen(true)
+  }
+
+  function confirmAddStep() {
+    setSteps(prev => [...prev, { stepType: newStepType, config: { ...newStepConfig } }])
+    setAddStepOpen(false)
   }
 
   function removeStep(index: number) {
     setSteps(prev => prev.filter((_, i) => i !== index))
-  }
-
-  function updateStepType(index: number, type: string) {
-    setSteps(prev => prev.map((s, i) => i === index ? { ...s, stepType: type } : s))
   }
 
   async function saveSteps() {
@@ -131,6 +195,24 @@ export default function JourneysPage() {
     } catch {} finally { setSavingSteps(false) }
   }
 
+  async function handleEnroll() {
+    if (!enrollOpen || !enrollLeadId.trim()) return
+    setEnrolling(true)
+    try {
+      await fetch("/api/v1/journeys/enroll", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(orgId ? { "x-organization-id": String(orgId) } : {}),
+        },
+        body: JSON.stringify({ journeyId: enrollOpen.id, leadId: enrollLeadId.trim() }),
+      })
+      setEnrollOpen(null)
+      setEnrollLeadId("")
+      fetchJourneys()
+    } catch {} finally { setEnrolling(false) }
+  }
+
   const totalJourneys = journeys.length
   const activeCount = journeys.filter(j => j.status === "active").length
   const totalEntries = journeys.reduce((s, j) => s + j.entryCount, 0)
@@ -142,75 +224,99 @@ export default function JourneysPage() {
     return (
       <div className="space-y-6">
         <h1 className="text-2xl font-bold tracking-tight">Цепочки лидов</h1>
-        <div className="animate-pulse"><div className="h-96 bg-muted rounded-lg" /></div>
+        <div className="animate-pulse space-y-4">
+          <div className="grid grid-cols-4 gap-4">{[1, 2, 3, 4].map(i => <div key={i} className="h-24 bg-muted rounded-lg" />)}</div>
+          <div className="space-y-3">{[1, 2].map(i => <div key={i} className="h-32 bg-muted rounded-lg" />)}</div>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-primary/10 rounded-lg">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
             <Workflow className="h-6 w-6 text-primary" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">Цепочки лидов</h1>
-            <p className="text-sm text-muted-foreground">Автоматизируйте коммуникацию с клиентами в автоматическом потоке</p>
-          </div>
+            Цепочки лидов
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Автоматизируйте коммуникацию с клиентами: письма, задержки, условия в визуальном потоке
+          </p>
         </div>
-        <Button onClick={() => { setEditData(undefined); setShowForm(true) }} className="gap-2">
+        <Button onClick={() => { setEditData(undefined); setShowForm(true) }} className="gap-1.5">
           <Plus className="h-4 w-4" /> Создать путь
         </Button>
       </div>
 
-      {/* Stats — like v1 */}
+      {/* Stats */}
       <div className="grid gap-4 md:grid-cols-4">
         <StatCard title="Путей" value={totalJourneys} icon={<Workflow className="h-4 w-4" />} />
-        <StatCard title="Активных" value={activeCount} />
+        <StatCard title="Активных" value={activeCount} icon={<CheckCircle className="h-4 w-4" />} />
         <StatCard title="Участников" value={totalEntries} icon={<Users className="h-4 w-4" />} />
         <StatCard title="Конверсия" value={`${conversionRate}%`} icon={<Target className="h-4 w-4" />} />
       </div>
 
-      {/* Journey cards — like v1 */}
+      {/* Journey cards */}
       <div className="space-y-3">
         {journeys.length === 0 ? (
-          <div className="text-center py-12 text-muted-foreground">
-            Нет цепочек. Создайте первую!
+          <div className="rounded-lg border-2 border-dashed bg-muted/20 py-16 text-center">
+            <Workflow className="h-8 w-8 text-muted-foreground mx-auto mb-3" />
+            <p className="text-muted-foreground font-medium">Нет цепочек</p>
+            <p className="text-sm text-muted-foreground mt-1">Создайте первый путь для автоматизации</p>
+            <Button className="mt-4 gap-1.5" onClick={() => { setEditData(undefined); setShowForm(true) }}>
+              <Plus className="h-4 w-4" /> Создать путь
+            </Button>
           </div>
         ) : journeys.map(journey => (
-          <div key={journey.id} className="border rounded-lg p-4 bg-card">
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <div className="flex items-center gap-2">
-                  <span className={cn("text-xs px-2 py-0.5 rounded-full font-medium", statusColors[journey.status])}>
+          <div key={journey.id} className="border rounded-lg bg-card hover:shadow-md transition-shadow">
+            <div className="p-4 flex items-start justify-between gap-4">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className={cn("text-xs px-2.5 py-0.5 rounded-full font-medium border", statusColors[journey.status])}>
                     {statusLabels[journey.status] || journey.status}
                   </span>
-                  <h3 className="font-semibold">{journey.name}</h3>
+                  <h3 className="font-semibold truncate">{journey.name}</h3>
                 </div>
                 {journey.description && (
-                  <p className="text-sm text-muted-foreground mt-1">{journey.description}</p>
+                  <p className="text-sm text-muted-foreground mb-2 line-clamp-1">{journey.description}</p>
                 )}
-                <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
+                <div className="flex items-center gap-4 text-xs text-muted-foreground">
                   <span className="flex items-center gap-1">
-                    <Target className="h-3 w-3" /> {triggerLabels[journey.triggerType] || journey.triggerType}
+                    <Target className="h-3 w-3 text-orange-500" /> {triggerLabels[journey.triggerType] || journey.triggerType}
                   </span>
-                  <span>Вошли: {journey.entryCount}</span>
+                  <span className="flex items-center gap-1">
+                    <UserPlus className="h-3 w-3" /> Вошли: {journey.entryCount}
+                  </span>
                   <span>Активных: {journey.activeCount}</span>
                   <span className="flex items-center gap-1">
-                    <CheckCircle className="h-3 w-3" /> Завершили: {journey.completedCount}
+                    <CheckCircle className="h-3 w-3 text-green-500" /> Завершили: {journey.completedCount}
                   </span>
                 </div>
               </div>
-              <div className="flex items-center gap-1.5 shrink-0 ml-3">
-                <Button size="sm" variant="outline" className="gap-1 text-xs" onClick={() => openSteps(journey)}>
+              <div className="flex items-center gap-1.5 shrink-0">
+                <Button size="sm" variant="outline" className="gap-1 text-xs h-8" onClick={() => openSteps(journey)}>
                   <Eye className="h-3 w-3" /> Шаги
                 </Button>
-                <Button size="sm" variant="outline" className="gap-1 text-xs" onClick={() => { setEditData(journey); setShowForm(true) }}>
-                  <Pencil className="h-3 w-3" />
+                <Button size="sm" variant="outline" className="gap-1 text-xs h-8" onClick={() => { setEnrollOpen(journey); setEnrollLeadId("") }}>
+                  <UserPlus className="h-3 w-3" /> Записать лида
                 </Button>
-                <Button size="sm" variant="ghost" className="text-red-500 hover:text-red-700" onClick={() => { setDeleteId(journey.id); setDeleteName(journey.name) }}>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className={cn("gap-1 text-xs h-8", journey.status === "active" ? "text-yellow-600" : "text-green-600")}
+                  onClick={() => toggleStatus(journey)}
+                >
+                  {journey.status === "active" ? <Pause className="h-3 w-3" /> : <Play className="h-3 w-3" />}
+                  {journey.status === "active" ? "Пауза" : "Запустить"}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-8 w-8 p-0 text-muted-foreground hover:text-red-500"
+                  onClick={() => { setDeleteId(journey.id); setDeleteName(journey.name) }}
+                >
                   <Trash2 className="h-3.5 w-3.5" />
                 </Button>
               </div>
@@ -219,7 +325,7 @@ export default function JourneysPage() {
         ))}
       </div>
 
-      {/* Steps modal */}
+      {/* ===== STEPS MODAL ===== */}
       {stepsJourney && (
         <Dialog open={!!stepsJourney} onOpenChange={open => { if (!open) setStepsJourney(null) }}>
           <DialogHeader>
@@ -230,70 +336,89 @@ export default function JourneysPage() {
                   Статус: {statusLabels[stepsJourney.status]} · Триггер: {triggerLabels[stepsJourney.triggerType]}
                 </p>
               </div>
-              <button onClick={() => setStepsJourney(null)} className="p-1 rounded hover:bg-muted">
-                <X className="h-5 w-5 text-muted-foreground" />
-              </button>
+              <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="gap-1 text-xs h-7"
+                  onClick={() => { setEnrollOpen(stepsJourney); setEnrollLeadId("") }}
+                >
+                  <UserPlus className="h-3 w-3" /> Записать лида
+                </Button>
+                <button onClick={() => setStepsJourney(null)} className="p-1 rounded hover:bg-muted">
+                  <X className="h-5 w-5 text-muted-foreground" />
+                </button>
+              </div>
             </div>
           </DialogHeader>
           <DialogContent className="max-h-[65vh] overflow-y-auto">
-            {/* Trigger */}
-            <div className="flex items-center gap-3 mb-2">
-              <div className="flex items-center justify-center w-8 h-8 rounded-full bg-purple-500 text-white shrink-0">
+            {/* Trigger node */}
+            <div className="flex items-center gap-3 mb-1">
+              <div className="flex items-center justify-center w-9 h-9 rounded-full bg-purple-500 text-white shrink-0">
                 <Target className="h-4 w-4" />
               </div>
-              <div className="flex-1 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg px-4 py-2.5">
-                <span className="font-medium text-sm">Триггер: {triggerLabels[stepsJourney.triggerType]}</span>
+              <div className="flex-1 bg-purple-100 dark:bg-purple-900/30 border border-purple-300 dark:border-purple-700 rounded-lg px-4 py-3">
+                <span className="font-semibold text-sm text-purple-800 dark:text-purple-200">
+                  Триггер: {triggerLabels[stepsJourney.triggerType]}
+                </span>
               </div>
             </div>
 
-            {/* Steps */}
+            {/* Steps flow */}
             {steps.map((step, index) => {
-              const stepInfo = stepTypes.find(st => st.value === step.stepType) || stepTypes[0]
-              const Icon = stepInfo.icon
+              const info = getStepInfo(step.stepType)
+              const Icon = info.icon
+              const summary = getStepSummary(step)
               return (
-                <div key={index} className="relative">
+                <div key={index}>
                   {/* Connector line */}
-                  <div className="absolute left-4 -top-1 w-0.5 h-4 bg-primary/30" />
-                  <div className="flex items-center gap-3 my-1">
-                    <div className={cn("flex items-center justify-center w-8 h-8 rounded-full text-white shrink-0", stepInfo.color)}>
+                  <div className="ml-[17px] h-5 w-0.5 bg-primary/20" />
+                  {/* Step node */}
+                  <div className="flex items-start gap-3">
+                    <div className={cn("flex items-center justify-center w-9 h-9 rounded-full text-white shrink-0 mt-1", info.color)}>
                       <Icon className="h-4 w-4" />
                     </div>
-                    <div className="flex-1 border rounded-lg px-4 py-2.5 bg-card">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium text-sm">{index + 1}. {stepInfo.label}</span>
-                          <Select
-                            value={step.stepType}
-                            onChange={e => updateStepType(index, e.target.value)}
-                            className="h-7 text-xs w-32"
+                    <div className={cn("flex-1 border rounded-lg px-4 py-3", info.borderColor)}>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="font-semibold text-sm">{index + 1}. {info.label}</span>
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={() => {
+                              setNewStepType(step.stepType)
+                              setNewStepConfig({ ...step.config })
+                              // Replace: remove old, open edit
+                              removeStep(index)
+                              setAddStepOpen(true)
+                            }}
+                            className="p-1 rounded hover:bg-muted text-muted-foreground"
+                            title="Редактировать"
                           >
-                            {stepTypes.map(st => (
-                              <option key={st.value} value={st.value}>{st.label}</option>
-                            ))}
-                          </Select>
+                            <Pencil className="h-3 w-3" />
+                          </button>
+                          <button onClick={() => removeStep(index)} className="p-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20 text-muted-foreground hover:text-red-500">
+                            <Trash2 className="h-3 w-3" />
+                          </button>
                         </div>
-                        <button onClick={() => removeStep(index)} className="p-1 rounded hover:bg-red-50 text-muted-foreground hover:text-red-500">
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
                       </div>
-                      <div className="text-xs text-muted-foreground mt-1">
-                        Вошли: 0 · Прошли: 0
-                      </div>
+                      {summary && <p className="text-xs text-muted-foreground">{summary}</p>}
+                      <p className="text-[11px] text-muted-foreground mt-1">
+                        Вошли: {(step as any).statsEntered || 0} · Прошли: {(step as any).statsCompleted || 0}
+                      </p>
                     </div>
                   </div>
                 </div>
               )
             })}
 
-            {/* Add step button */}
-            <div className="relative">
-              {steps.length > 0 && <div className="absolute left-4 -top-1 w-0.5 h-4 bg-primary/30" />}
-              <div className="flex items-center gap-3 mt-1">
-                <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/20 text-primary shrink-0">
+            {/* Add step */}
+            <div>
+              <div className="ml-[17px] h-5 w-0.5 bg-primary/10" />
+              <div className="flex items-center gap-3">
+                <div className="flex items-center justify-center w-9 h-9 rounded-full bg-primary/10 text-primary shrink-0">
                   <Plus className="h-4 w-4" />
                 </div>
                 <button
-                  onClick={addStep}
+                  onClick={openAddStep}
                   className="flex-1 border-2 border-dashed rounded-lg px-4 py-3 text-sm text-muted-foreground hover:border-primary hover:text-primary transition-colors text-center"
                 >
                   + Добавить шаг
@@ -303,12 +428,237 @@ export default function JourneysPage() {
           </DialogContent>
           <DialogFooter>
             <Button variant="outline" onClick={() => setStepsJourney(null)}>Закрыть</Button>
-            <Button onClick={saveSteps} disabled={savingSteps}>
+            <Button onClick={saveSteps} disabled={savingSteps} className="gap-1.5">
+              {savingSteps ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
               {savingSteps ? "Сохранение..." : "Сохранить шаги"}
             </Button>
           </DialogFooter>
         </Dialog>
       )}
+
+      {/* ===== ADD STEP DIALOG ===== */}
+      <Dialog open={addStepOpen} onOpenChange={setAddStepOpen}>
+        <DialogHeader>
+          <DialogTitle>Добавить шаг #{steps.length + 1}</DialogTitle>
+        </DialogHeader>
+        <DialogContent>
+          {/* Step type grid */}
+          <div className="grid grid-cols-4 gap-2 mb-4">
+            {stepTypes.map(st => {
+              const Icon = st.icon
+              const selected = newStepType === st.value
+              return (
+                <button
+                  key={st.value}
+                  onClick={() => { setNewStepType(st.value); setNewStepConfig({}) }}
+                  className={cn(
+                    "flex flex-col items-center gap-1.5 p-3 rounded-lg border-2 text-xs font-medium transition-all",
+                    selected
+                      ? "border-primary bg-primary/5 text-primary"
+                      : "border-transparent bg-muted/50 text-muted-foreground hover:border-border hover:text-foreground"
+                  )}
+                >
+                  <Icon className="h-5 w-5" />
+                  {st.label}
+                </button>
+              )
+            })}
+          </div>
+
+          {/* Step config per type */}
+          <div className="space-y-3">
+            {newStepType === "send_email" && (
+              <>
+                <div>
+                  <Label className="text-xs text-muted-foreground">Тема письма</Label>
+                  <Input
+                    value={newStepConfig.subject || ""}
+                    onChange={e => setNewStepConfig((c: any) => ({ ...c, subject: e.target.value }))}
+                    placeholder="Добро пожаловать в LeadDrive CRM!"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground">
+                    Текст письма · Переменные: {"{{contact_name}}"}, {"{{company_name}}"}
+                  </Label>
+                  <Textarea
+                    value={newStepConfig.body || ""}
+                    onChange={e => setNewStepConfig((c: any) => ({ ...c, body: e.target.value }))}
+                    placeholder={"Здравствуйте, {{contact_name}}! Мы рады приветствовать вас..."}
+                    rows={4}
+                  />
+                </div>
+              </>
+            )}
+
+            {newStepType === "sms" && (
+              <div>
+                <Label className="text-xs text-muted-foreground">Текст SMS</Label>
+                <Textarea
+                  value={newStepConfig.message || ""}
+                  onChange={e => setNewStepConfig((c: any) => ({ ...c, message: e.target.value }))}
+                  placeholder="Здравствуйте! Ваша заявка получена..."
+                  rows={3}
+                />
+              </div>
+            )}
+
+            {newStepType === "wait" && (
+              <div>
+                <Label className="text-xs text-muted-foreground">Длительность ожидания</Label>
+                <div className="flex gap-2">
+                  <Input
+                    type="number"
+                    min={1}
+                    value={newStepConfig.days || 1}
+                    onChange={e => setNewStepConfig((c: any) => ({ ...c, days: parseInt(e.target.value) || 1 }))}
+                    className="w-24"
+                  />
+                  <Select
+                    value={newStepConfig.unit || "days"}
+                    onChange={e => setNewStepConfig((c: any) => ({ ...c, unit: e.target.value }))}
+                    className="flex-1"
+                  >
+                    <option value="hours">Часов</option>
+                    <option value="days">Дней</option>
+                    <option value="weeks">Недель</option>
+                  </Select>
+                </div>
+              </div>
+            )}
+
+            {newStepType === "condition" && (
+              <>
+                <div>
+                  <Label className="text-xs text-muted-foreground">Поле для проверки</Label>
+                  <Select
+                    value={newStepConfig.field || "lead_status"}
+                    onChange={e => setNewStepConfig((c: any) => ({ ...c, field: e.target.value }))}
+                  >
+                    {conditionFields.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
+                  </Select>
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground">Оператор</Label>
+                  <Select
+                    value={newStepConfig.operator || "equals"}
+                    onChange={e => setNewStepConfig((c: any) => ({ ...c, operator: e.target.value }))}
+                  >
+                    {conditionOperators.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                  </Select>
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground">Значение</Label>
+                  <Input
+                    value={newStepConfig.value || ""}
+                    onChange={e => setNewStepConfig((c: any) => ({ ...c, value: e.target.value }))}
+                    placeholder="new / referral / high"
+                  />
+                </div>
+              </>
+            )}
+
+            {newStepType === "create_task" && (
+              <>
+                <div>
+                  <Label className="text-xs text-muted-foreground">Название задачи</Label>
+                  <Input
+                    value={newStepConfig.title || ""}
+                    onChange={e => setNewStepConfig((c: any) => ({ ...c, title: e.target.value }))}
+                    placeholder="Позвонить клиенту"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground">Описание</Label>
+                  <Textarea
+                    value={newStepConfig.description || ""}
+                    onChange={e => setNewStepConfig((c: any) => ({ ...c, description: e.target.value }))}
+                    placeholder="Подробности задачи..."
+                    rows={2}
+                  />
+                </div>
+              </>
+            )}
+
+            {newStepType === "send_telegram" && (
+              <div>
+                <Label className="text-xs text-muted-foreground">Сообщение Telegram</Label>
+                <Textarea
+                  value={newStepConfig.message || ""}
+                  onChange={e => setNewStepConfig((c: any) => ({ ...c, message: e.target.value }))}
+                  placeholder={"Здравствуйте, {{contact_name}}!"}
+                  rows={3}
+                />
+              </div>
+            )}
+
+            {newStepType === "send_whatsapp" && (
+              <div>
+                <Label className="text-xs text-muted-foreground">Сообщение WhatsApp</Label>
+                <Textarea
+                  value={newStepConfig.message || ""}
+                  onChange={e => setNewStepConfig((c: any) => ({ ...c, message: e.target.value }))}
+                  placeholder={"Здравствуйте, {{contact_name}}!"}
+                  rows={3}
+                />
+              </div>
+            )}
+
+            {newStepType === "update_field" && (
+              <>
+                <div>
+                  <Label className="text-xs text-muted-foreground">Поле</Label>
+                  <Select
+                    value={newStepConfig.field || "lead_status"}
+                    onChange={e => setNewStepConfig((c: any) => ({ ...c, field: e.target.value }))}
+                  >
+                    {conditionFields.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
+                  </Select>
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground">Новое значение</Label>
+                  <Input
+                    value={newStepConfig.value || ""}
+                    onChange={e => setNewStepConfig((c: any) => ({ ...c, value: e.target.value }))}
+                    placeholder="qualified"
+                  />
+                </div>
+              </>
+            )}
+          </div>
+        </DialogContent>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setAddStepOpen(false)}>Отмена</Button>
+          <Button onClick={confirmAddStep}>Добавить</Button>
+        </DialogFooter>
+      </Dialog>
+
+      {/* ===== ENROLL LEAD DIALOG ===== */}
+      <Dialog open={!!enrollOpen} onOpenChange={open => { if (!open) setEnrollOpen(null) }}>
+        <DialogHeader>
+          <DialogTitle>Записать лида в цепочку</DialogTitle>
+        </DialogHeader>
+        <DialogContent>
+          <p className="text-sm text-muted-foreground mb-3">
+            Цепочка: <strong>{enrollOpen?.name}</strong>
+          </p>
+          <div>
+            <Label className="text-xs text-muted-foreground">ID лида или контакта</Label>
+            <Input
+              value={enrollLeadId}
+              onChange={e => setEnrollLeadId(e.target.value)}
+              placeholder="Введите ID лида..."
+            />
+          </div>
+        </DialogContent>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setEnrollOpen(null)}>Отмена</Button>
+          <Button onClick={handleEnroll} disabled={enrolling || !enrollLeadId.trim()} className="gap-1.5">
+            {enrolling ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserPlus className="h-4 w-4" />}
+            Записать
+          </Button>
+        </DialogFooter>
+      </Dialog>
 
       <JourneyForm
         open={showForm}
