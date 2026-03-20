@@ -50,17 +50,24 @@ export default function PortalChatPage() {
         body: JSON.stringify({ message: userMsg, sessionId }),
       })
       const json = await res.json()
-      if (json.success) {
+      if (json.success && json.data?.reply) {
         if (json.data.sessionId) setSessionId(json.data.sessionId)
         const reply = json.data.reply
         setMessages(prev => [...prev, {
           id: reply.id || (Date.now() + 1).toString(),
           role: "assistant",
-          content: reply.content || reply,
+          content: typeof reply === "string" ? reply : (reply.content || "..."),
           createdAt: reply.createdAt || new Date().toISOString(),
           suggestTicket: json.data.suggestTicket || false,
           escalated: json.data.escalated || false,
           escalationTicketId: json.data.escalationTicketId || null,
+        }])
+      } else {
+        setMessages(prev => [...prev, {
+          id: (Date.now() + 1).toString(),
+          role: "assistant",
+          content: json.error || "Something went wrong. Please try again.",
+          createdAt: new Date().toISOString(),
         }])
       }
     } catch {
