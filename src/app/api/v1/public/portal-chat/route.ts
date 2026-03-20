@@ -188,7 +188,7 @@ export async function POST(req: NextRequest) {
 
   if (process.env.ANTHROPIC_API_KEY) {
     const startTime = Date.now()
-    let usedModel = "claude-sonnet-4-6"
+    let usedModel = "claude-haiku-4-5-20251001"
     let usage: { input_tokens: number; output_tokens: number } | undefined
 
     try {
@@ -201,7 +201,7 @@ export async function POST(req: NextRequest) {
       const guardrailPrompts = await getGuardrails(user.organizationId)
 
       // Determine model and parameters from config or defaults
-      const model = agentConfig?.model || "claude-sonnet-4-6"
+      const model = agentConfig?.model || "claude-haiku-4-5-20251001"
       const maxTokens = agentConfig?.maxTokens || 2048
       const temperature = agentConfig?.temperature ?? 0.7
       const kbMaxArticles = agentConfig?.kbMaxArticles || 5
