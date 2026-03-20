@@ -380,42 +380,46 @@ export function LeadItemModal({ open, onOpenChange, lead, orgId, onSaved, onConv
             {activeTab === "details" && (
               <div className="space-y-6">
                 {/* Status & Priority row */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <p className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wider">Статус лида</p>
-                    <div className="flex flex-wrap gap-1.5">
-                      {(["new", "contacted", "qualified", "converted", "lost"] as const).map(s => (
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <div className="flex-1">
+                    <p className="text-[10px] font-medium text-muted-foreground mb-1.5 uppercase tracking-wider">Статус</p>
+                    <div className="inline-flex rounded-lg border overflow-hidden">
+                      {(["new", "contacted", "qualified", "converted", "lost"] as const).map((s, i, arr) => (
                         <button
                           key={s}
                           onClick={() => changeStatus(s)}
                           disabled={saving}
                           className={cn(
-                            "text-xs py-1.5 px-3 rounded-md border transition-all",
+                            "flex items-center gap-1.5 text-xs py-2 px-3 transition-all border-r last:border-r-0",
                             currentLead.status === s
-                              ? "bg-primary text-primary-foreground border-primary font-medium shadow-sm"
-                              : "bg-background hover:bg-muted border-border"
+                              ? "bg-primary/10 text-primary font-semibold"
+                              : "bg-background hover:bg-muted/50 text-muted-foreground hover:text-foreground"
                           )}
                         >
+                          <span className={cn("w-2 h-2 rounded-full shrink-0", statusColors[s])} />
                           {statusLabels[s]}
                         </button>
                       ))}
                     </div>
                   </div>
-                  <div>
-                    <p className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wider">Приоритет</p>
-                    <div className="flex gap-1.5">
+                  <div className="shrink-0">
+                    <p className="text-[10px] font-medium text-muted-foreground mb-1.5 uppercase tracking-wider">Приоритет</p>
+                    <div className="inline-flex rounded-lg border overflow-hidden">
                       {(["low", "medium", "high"] as const).map(p => (
                         <button
                           key={p}
                           onClick={() => changePriority(p)}
                           disabled={saving}
                           className={cn(
-                            "text-xs py-1.5 px-4 rounded-md border transition-all",
+                            "flex items-center gap-1.5 text-xs py-2 px-4 transition-all border-r last:border-r-0",
                             currentLead.priority === p
-                              ? "bg-primary text-primary-foreground border-primary font-medium shadow-sm"
-                              : "bg-background hover:bg-muted border-border"
+                              ? "bg-primary/10 text-primary font-semibold"
+                              : "bg-background hover:bg-muted/50 text-muted-foreground hover:text-foreground"
                           )}
                         >
+                          <span className={cn("w-2 h-2 rounded-full shrink-0",
+                            p === "low" ? "bg-gray-400" : p === "medium" ? "bg-yellow-500" : "bg-red-500"
+                          )} />
                           {priorityLabels[p]}
                         </button>
                       ))}
