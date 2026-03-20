@@ -44,17 +44,16 @@ export default function AILeadScoringPage() {
   const [scoringId, setScoringId] = useState<string | null>(null)
 
   const fetchLeads = async () => {
-    if (!orgId) return
     try {
       const res = await fetch("/api/v1/lead-scoring", {
-        headers: { "x-organization-id": String(orgId) },
+        headers: orgId ? { "x-organization-id": String(orgId) } : {},
       })
       const json = await res.json()
       if (json.success) setLeads(json.data.leads)
     } catch {} finally { setLoading(false) }
   }
 
-  useEffect(() => { fetchLeads() }, [orgId])
+  useEffect(() => { fetchLeads() }, [session])
 
   async function scoreAll() {
     setScoring(true)
