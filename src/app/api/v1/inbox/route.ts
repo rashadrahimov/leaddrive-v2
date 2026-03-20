@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { prisma } from "@/lib/prisma"
 import { getOrgId } from "@/lib/api-auth"
+import { sendEmail } from "@/lib/email"
 
 export async function GET(req: NextRequest) {
   const orgId = await getOrgId(req)
@@ -67,15 +68,33 @@ export async function POST(req: NextRequest) {
   if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 })
 
   try {
+    // Send actual email via SMTP if subject is present (email message)
+    let emailResult: any = null
+    if (parsed.data.subject && parsed.data.to.includes("@")) {
+      emailResult = await sendEmail({
+        to: parsed.data.to,
+        subject: parsed.data.subject,
+        html: parsed.data.body.replace(/\n/g, "<br>"),
+        organizationId: orgId,
+        contactId: parsed.data.contactId,
+      })
+    }
+
+    // Save to channel messages
     const message = await prisma.channelMessage.create({
       data: {
         organizationId: orgId,
         direction: "outbound",
         from: "system",
         ...parsed.data,
-        status: "delivered",
+        status: emailResult?.success ? "delivered" : emailResult ? "failed" : "delivered",
       },
     })
+
+    if (emailResult && !emailResult.success) {
+      return NextResponse.json({ success: false, error: emailResult.error || "Email send failed" }, { status: 500 })
+    }
+
     return NextResponse.json({ success: true, data: message }, { status: 201 })
   } catch (e) {
     return NextResponse.json({ error: String(e) }, { status: 500 })

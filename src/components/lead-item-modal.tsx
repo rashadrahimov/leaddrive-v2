@@ -254,11 +254,13 @@ export function LeadItemModal({ open, onOpenChange, lead, orgId, onSaved, onConv
   }
 
   // Send generated email
+  const [emailError, setEmailError] = useState("")
   const sendGeneratedEmail = async () => {
     if (!generatedText || !currentLead.email) return
     setEmailSending(true)
+    setEmailError("")
     try {
-      await fetch("/api/v1/inbox", {
+      const res = await fetch("/api/v1/inbox", {
         method: "POST",
         headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": String(orgId) } : {}) },
         body: JSON.stringify({
@@ -267,8 +269,15 @@ export function LeadItemModal({ open, onOpenChange, lead, orgId, onSaved, onConv
           subject: generatedText.subject,
         }),
       })
-      setEmailSent(true)
-    } catch {} finally { setEmailSending(false) }
+      const json = await res.json()
+      if (json.success) {
+        setEmailSent(true)
+      } else {
+        setEmailError(json.error || "Ошибка отправки")
+      }
+    } catch {
+      setEmailError("Ошибка сети")
+    } finally { setEmailSending(false) }
   }
 
   const grade = getGrade(currentLead.score)
@@ -846,10 +855,13 @@ export function LeadItemModal({ open, onOpenChange, lead, orgId, onSaved, onConv
                           <Send className="h-3 w-3" /> {emailSent ? "Отправлено" : emailSending ? "Отправляем..." : "Отправить email"}
                         </Button>
                       )}
-                      <Button size="sm" variant="outline" onClick={async () => { const d = await callAI("text", { textType, tone, instructions }); if (d) { setGeneratedText(d); setEmailSent(false) } }} className="gap-1">
+                      <Button size="sm" variant="outline" onClick={async () => { const d = await callAI("text", { textType, tone, instructions }); if (d) { setGeneratedText(d); setEmailSent(false); setEmailError("") } }} className="gap-1">
                         <RefreshCw className="h-3 w-3" /> Пересоздать
                       </Button>
                     </div>
+                    {emailError && (
+                      <p className="text-sm text-red-600 bg-red-50 dark:bg-red-900/20 p-2 rounded">{emailError}</p>
+                    )}
                   </div>
                 )}
               </div>
