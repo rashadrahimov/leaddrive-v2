@@ -115,8 +115,8 @@ export async function GET(req: NextRequest) {
 const sendMessageSchema = z.object({
   to: z.string().min(1),
   body: z.string().min(1),
-  subject: z.string().optional(),
-  contactId: z.string().optional(),
+  subject: z.string().nullable().optional(),
+  contactId: z.string().nullable().optional(),
   channel: z.enum(["email", "telegram", "sms", "whatsapp"]).default("email"),
 })
 
