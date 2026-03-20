@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react"
 import { useRouter, usePathname } from "next/navigation"
 import Link from "next/link"
-import { Ticket, BookOpen, MessageSquare, LogOut } from "lucide-react"
+import { Ticket, BookOpen, LogOut } from "lucide-react"
+import { PortalChatWidget } from "@/components/portal-chat-widget"
 
 interface PortalUser {
   contactId: string
@@ -53,9 +54,6 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
               <Link href="/portal/knowledge-base" className={`flex items-center gap-1.5 transition-colors ${pathname === "/portal/knowledge-base" ? "text-foreground font-medium" : "text-muted-foreground hover:text-foreground"}`}>
                 <BookOpen className="h-4 w-4" /> Knowledge Base
               </Link>
-              <Link href="/portal/chat" className={`flex items-center gap-1.5 transition-colors ${pathname === "/portal/chat" ? "text-foreground font-medium" : "text-muted-foreground hover:text-foreground"}`}>
-                <MessageSquare className="h-4 w-4" /> Chat
-              </Link>
             </nav>
           </div>
           <div className="flex items-center gap-3">
@@ -70,6 +68,7 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
       <main className="max-w-5xl mx-auto px-4 py-6">
         {children}
       </main>
+      {user && <PortalChatWidget userName={user.fullName} />}
     </div>
   )
 }
