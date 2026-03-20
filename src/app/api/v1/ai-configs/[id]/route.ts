@@ -9,12 +9,22 @@ const updateConfigSchema = z.object({
   maxTokens: z.number().optional(),
   temperature: z.number().optional(),
   systemPrompt: z.string().optional(),
-  toolsEnabled: z.string().optional(),
+  toolsEnabled: z.union([z.string(), z.array(z.string())]).optional(),
   kbEnabled: z.boolean().optional(),
   kbMaxArticles: z.number().optional(),
   isActive: z.boolean().optional(),
   notes: z.string().optional(),
 })
+
+function normalizeToolsEnabled(data: any): any {
+  if (typeof data.toolsEnabled === "string") {
+    data.toolsEnabled = data.toolsEnabled
+      .split(",")
+      .map((s: string) => s.trim())
+      .filter(Boolean)
+  }
+  return data
+}
 
 export async function GET(
   req: NextRequest,
@@ -49,7 +59,7 @@ export async function PUT(
   try {
     const result = await prisma.aiAgentConfig.updateMany({
       where: { id, organizationId: orgId },
-      data: parsed.data,
+      data: normalizeToolsEnabled({ ...parsed.data }),
     })
     if (result.count === 0) return NextResponse.json({ error: "Not found" }, { status: 404 })
     const updated = await prisma.aiAgentConfig.findFirst({ where: { id, organizationId: orgId } })
