@@ -90,9 +90,9 @@ export function PortalChatWidget({ userName }: PortalChatWidgetProps) {
     <>
       {/* Chat popup */}
       {open && (
-        <div className="fixed bottom-20 right-5 w-[380px] h-[520px] bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 flex flex-col z-50 overflow-hidden">
+        <div className="fixed bottom-20 right-5 w-[380px] h-[520px] bg-white rounded-2xl shadow-2xl border border-gray-200 flex flex-col z-50 overflow-hidden">
           {/* Header */}
-          <div className="bg-gradient-to-r from-indigo-600 to-blue-600 px-4 py-3 flex items-center gap-3">
+          <div className="bg-gradient-to-r from-indigo-600 to-blue-500 px-4 py-3 flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
               <Bot className="h-5 w-5 text-white" />
             </div>
@@ -106,19 +106,19 @@ export function PortalChatWidget({ userName }: PortalChatWidgetProps) {
           </div>
 
           {/* Messages */}
-          <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50 dark:bg-gray-800/50">
+          <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50">
             {/* Welcome message */}
             {messages.length === 0 && (
               <div className="flex gap-2.5">
-                <div className="w-7 h-7 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <Bot className="h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400" />
+                <div className="w-7 h-7 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <Bot className="h-3.5 w-3.5 text-indigo-600" />
                 </div>
                 <div>
-                  <div className="bg-white dark:bg-gray-800 rounded-lg rounded-tl-none p-3 shadow-sm border border-gray-100 dark:border-gray-700">
-                    <p className="text-sm">
+                  <div className="bg-white rounded-lg rounded-tl-none p-3 shadow-sm border border-gray-100">
+                    <p className="text-sm text-gray-800">
                       Salam, <strong>{userName}</strong>! Mən LeadDrive AI Assistant-am.
                     </p>
-                    <p className="text-sm mt-1">Nədə kömək edə bilərəm?</p>
+                    <p className="text-sm text-gray-800 mt-1">Nədə kömək edə bilərəm?</p>
                   </div>
                   <p className="text-[10px] text-gray-400 mt-1">{formatTime(new Date().toISOString())}</p>
                 </div>
@@ -128,17 +128,17 @@ export function PortalChatWidget({ userName }: PortalChatWidgetProps) {
             {messages.map(msg => (
               <div key={msg.id} className={`flex gap-2.5 ${msg.role === "user" ? "justify-end" : ""}`}>
                 {msg.role === "assistant" && (
-                  <div className="w-7 h-7 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <Bot className="h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400" />
+                  <div className="w-7 h-7 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <Bot className="h-3.5 w-3.5 text-indigo-600" />
                   </div>
                 )}
                 <div className={msg.role === "user" ? "max-w-[75%]" : "max-w-[80%]"}>
                   <div className={`rounded-lg p-3 shadow-sm ${
                     msg.role === "user"
-                      ? "bg-indigo-600 text-white rounded-tr-none"
-                      : "bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-tl-none"
+                      ? "bg-blue-500 text-white rounded-tr-none"
+                      : "bg-white border border-gray-100 rounded-tl-none"
                   }`}>
-                    <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+                    <p className={`text-sm whitespace-pre-wrap ${msg.role === "assistant" ? "text-gray-800" : ""}`}>{msg.content}</p>
                   </div>
                   <p className={`text-[10px] mt-1 ${msg.role === "user" ? "text-right" : ""} text-gray-400`}>
                     {formatTime(msg.createdAt)}
@@ -153,8 +153,8 @@ export function PortalChatWidget({ userName }: PortalChatWidgetProps) {
                   )}
                 </div>
                 {msg.role === "user" && (
-                  <div className="w-7 h-7 rounded-full bg-indigo-200 dark:bg-indigo-800 flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <User className="h-3.5 w-3.5 text-indigo-700 dark:text-indigo-300" />
+                  <div className="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <User className="h-3.5 w-3.5 text-blue-600" />
                   </div>
                 )}
               </div>
@@ -163,13 +163,13 @@ export function PortalChatWidget({ userName }: PortalChatWidgetProps) {
             {/* Typing indicator */}
             {sending && (
               <div className="flex gap-2.5">
-                <div className="w-7 h-7 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center flex-shrink-0">
-                  <Bot className="h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400" />
+                <div className="w-7 h-7 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">
+                  <Bot className="h-3.5 w-3.5 text-indigo-600" />
                 </div>
-                <div className="bg-white dark:bg-gray-800 rounded-lg rounded-tl-none p-3 shadow-sm border border-gray-100 dark:border-gray-700">
+                <div className="bg-white rounded-lg rounded-tl-none p-3 shadow-sm border border-gray-100">
                   <div className="flex items-center gap-1.5">
                     <Loader2 className="h-3.5 w-3.5 text-indigo-500 animate-spin" />
-                    <span className="text-xs text-gray-400">Düşünür...</span>
+                    <span className="text-xs text-gray-500">Düşünür...</span>
                   </div>
                 </div>
               </div>
@@ -178,22 +178,22 @@ export function PortalChatWidget({ userName }: PortalChatWidgetProps) {
 
           {/* Quick action buttons */}
           {messages.length === 0 && (
-            <div className="px-4 py-2 border-t border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-900 flex gap-2 overflow-x-auto">
+            <div className="px-4 py-2 border-t border-gray-100 bg-white flex gap-2 overflow-x-auto">
               <button
                 onClick={() => handleSend("Tiketlərimi göstər")}
-                className="flex items-center gap-1 text-xs border border-gray-200 dark:border-gray-600 rounded-full px-3 py-1.5 hover:bg-gray-50 dark:hover:bg-gray-800 whitespace-nowrap transition-colors"
+                className="flex items-center gap-1 text-xs text-gray-600 border border-gray-200 rounded-full px-3 py-1.5 hover:bg-gray-50 whitespace-nowrap transition-colors"
               >
                 <Ticket className="h-3 w-3" /> Tiketlərim
               </button>
               <button
                 onClick={() => handleSend("Yeni tiket yaratmaq istəyirəm")}
-                className="flex items-center gap-1 text-xs border border-gray-200 dark:border-gray-600 rounded-full px-3 py-1.5 hover:bg-gray-50 dark:hover:bg-gray-800 whitespace-nowrap transition-colors"
+                className="flex items-center gap-1 text-xs text-gray-600 border border-gray-200 rounded-full px-3 py-1.5 hover:bg-gray-50 whitespace-nowrap transition-colors"
               >
                 <TicketPlus className="h-3 w-3" /> Yeni tiket
               </button>
               <button
                 onClick={() => handleSend("Müqavilələrimi göstər")}
-                className="flex items-center gap-1 text-xs border border-gray-200 dark:border-gray-600 rounded-full px-3 py-1.5 hover:bg-gray-50 dark:hover:bg-gray-800 whitespace-nowrap transition-colors"
+                className="flex items-center gap-1 text-xs text-gray-600 border border-gray-200 rounded-full px-3 py-1.5 hover:bg-gray-50 whitespace-nowrap transition-colors"
               >
                 <FileText className="h-3 w-3" /> Müqavilələr
               </button>
@@ -201,7 +201,7 @@ export function PortalChatWidget({ userName }: PortalChatWidgetProps) {
           )}
 
           {/* Input */}
-          <div className="p-3 border-t border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-900">
+          <div className="p-3 border-t border-gray-100 bg-white">
             <div className="flex gap-2 items-center">
               <input
                 ref={inputRef}
@@ -210,12 +210,12 @@ export function PortalChatWidget({ userName }: PortalChatWidgetProps) {
                 onKeyDown={e => e.key === "Enter" && handleSend()}
                 placeholder="Mesajınızı yazın..."
                 disabled={sending}
-                className="flex-1 text-sm rounded-full border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 px-4 py-2.5 outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400 disabled:opacity-50 transition-colors"
+                className="flex-1 text-sm text-gray-800 rounded-full border border-gray-200 bg-gray-50 px-4 py-2.5 outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400 disabled:opacity-50 transition-colors placeholder:text-gray-400"
               />
               <button
                 onClick={() => handleSend()}
                 disabled={sending || !input.trim()}
-                className="w-9 h-9 rounded-full bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 flex items-center justify-center transition-colors"
+                className="w-9 h-9 rounded-full bg-blue-500 hover:bg-blue-600 disabled:opacity-40 flex items-center justify-center transition-colors"
               >
                 <Send className="h-4 w-4 text-white" />
               </button>
@@ -227,7 +227,7 @@ export function PortalChatWidget({ userName }: PortalChatWidgetProps) {
       {/* Toggle button */}
       <button
         onClick={() => setOpen(!open)}
-        className="fixed bottom-5 right-5 w-14 h-14 rounded-full bg-indigo-600 hover:bg-indigo-700 shadow-lg flex items-center justify-center z-50 transition-all hover:scale-105"
+        className="fixed bottom-5 right-5 w-14 h-14 rounded-full bg-blue-500 hover:bg-blue-600 shadow-lg flex items-center justify-center z-50 transition-all hover:scale-105"
       >
         {open ? (
           <X className="h-6 w-6 text-white" />
