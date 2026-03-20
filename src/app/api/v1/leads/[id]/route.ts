@@ -5,16 +5,16 @@ import { getOrgId } from "@/lib/api-auth"
 
 const updateLeadSchema = z.object({
   contactName: z.string().min(1).max(255).optional(),
-  companyName: z.string().optional(),
-  email: z.string().email().optional().or(z.literal("")),
-  phone: z.string().optional(),
-  source: z.string().optional(),
+  companyName: z.string().nullable().optional(),
+  email: z.string().email().optional().or(z.literal("")).nullable(),
+  phone: z.string().nullable().optional(),
+  source: z.string().nullable().optional(),
   status: z.string().optional(),
   priority: z.string().optional(),
   score: z.number().optional(),
-  assignedTo: z.string().optional(),
-  estimatedValue: z.number().optional(),
-  notes: z.string().optional(),
+  assignedTo: z.string().nullable().optional(),
+  estimatedValue: z.number().nullable().optional(),
+  notes: z.string().nullable().optional(),
 })
 
 export async function GET(
