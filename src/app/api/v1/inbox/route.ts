@@ -3,6 +3,7 @@ import { z } from "zod"
 import { prisma } from "@/lib/prisma"
 import { getOrgId } from "@/lib/api-auth"
 import { sendEmail } from "@/lib/email"
+import { sendWhatsAppMessage } from "@/lib/whatsapp"
 
 export async function GET(req: NextRequest) {
   const orgId = await getOrgId(req)
@@ -57,6 +58,7 @@ const sendMessageSchema = z.object({
   subject: z.string().optional(),
   contactId: z.string().optional(),
   channelConfigId: z.string().optional(),
+  channel: z.enum(["email", "whatsapp", "sms", "telegram"]).optional(),
 })
 
 export async function POST(req: NextRequest) {
@@ -67,11 +69,31 @@ export async function POST(req: NextRequest) {
   const parsed = sendMessageSchema.safeParse(body)
   if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 })
 
+  const channel = parsed.data.channel || (parsed.data.to.includes("@") ? "email" : "whatsapp")
+
   try {
-    // Send actual email via SMTP if subject is present (email message)
-    let emailResult: any = null
-    if (parsed.data.subject && parsed.data.to.includes("@")) {
-      emailResult = await sendEmail({
+    let sendResult: any = null
+
+    if (channel === "whatsapp") {
+      // Send via WhatsApp API
+      console.log(`[Inbox WhatsApp] Sending to: ${parsed.data.to}, Message: ${parsed.data.body.slice(0, 50)}`)
+      sendResult = await sendWhatsAppMessage({
+        to: parsed.data.to,
+        message: parsed.data.body,
+        organizationId: orgId,
+        contactId: parsed.data.contactId,
+      })
+      console.log(`[Inbox WhatsApp] Result:`, JSON.stringify(sendResult))
+
+      // WhatsApp already saves to channelMessage, just return
+      if (!sendResult.success) {
+        return NextResponse.json({ success: false, error: sendResult.error }, { status: 400 })
+      }
+      return NextResponse.json({ success: true, data: { messageId: sendResult.messageId } }, { status: 201 })
+
+    } else if (channel === "email" && parsed.data.subject && parsed.data.to.includes("@")) {
+      // Send via SMTP
+      sendResult = await sendEmail({
         to: parsed.data.to,
         subject: parsed.data.subject,
         html: parsed.data.body.replace(/\n/g, "<br>"),
@@ -80,19 +102,23 @@ export async function POST(req: NextRequest) {
       })
     }
 
-    // Save to channel messages
+    // Save to channel messages (for email/sms/telegram - whatsapp saves its own)
     const message = await prisma.channelMessage.create({
       data: {
         organizationId: orgId,
         direction: "outbound",
         from: "system",
-        ...parsed.data,
-        status: emailResult?.success ? "delivered" : emailResult ? "failed" : "delivered",
+        to: parsed.data.to,
+        body: parsed.data.body,
+        subject: parsed.data.subject,
+        contactId: parsed.data.contactId,
+        status: sendResult?.success ? "delivered" : sendResult ? "failed" : "delivered",
+        metadata: { channel },
       },
     })
 
-    if (emailResult && !emailResult.success) {
-      return NextResponse.json({ success: false, error: emailResult.error || "Email send failed" }, { status: 500 })
+    if (sendResult && !sendResult.success) {
+      return NextResponse.json({ success: false, error: sendResult.error || "Send failed" }, { status: 500 })
     }
 
     return NextResponse.json({ success: true, data: message }, { status: 201 })

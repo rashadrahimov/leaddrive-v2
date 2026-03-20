@@ -35,6 +35,7 @@ export default function InboxPage() {
   const [selected, setSelected] = useState<number | null>(null)
   const [search, setSearch] = useState("")
   const [replyText, setReplyText] = useState("")
+  const [replyChannel, setReplyChannel] = useState<string>("whatsapp")
   const [sending, setSending] = useState(false)
   const orgId = session?.user?.organizationId
 
@@ -69,6 +70,7 @@ export default function InboxPage() {
           to: convo.contactName,
           body: replyText,
           contactId: convo.contactId,
+          channel: replyChannel,
         }),
       })
       setReplyText("")
@@ -172,8 +174,18 @@ export default function InboxPage() {
               </div>
 
               <div className="flex gap-2">
+                <select
+                  value={replyChannel}
+                  onChange={(e) => setReplyChannel(e.target.value)}
+                  className="h-10 px-3 rounded-md border border-input bg-background text-sm"
+                >
+                  <option value="whatsapp">WhatsApp</option>
+                  <option value="email">Email</option>
+                  <option value="sms">SMS</option>
+                  <option value="telegram">Telegram</option>
+                </select>
                 <Input
-                  placeholder="Type your message..."
+                  placeholder="Написать сообщение..."
                   value={replyText}
                   onChange={(e) => setReplyText(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleSendReply()}
