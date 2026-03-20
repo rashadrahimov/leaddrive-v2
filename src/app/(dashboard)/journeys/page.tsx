@@ -330,6 +330,9 @@ export default function JourneysPage() {
                 <Button size="sm" variant="outline" className="gap-1 text-xs h-8" onClick={() => openSteps(journey)}>
                   <Eye className="h-3 w-3" /> Шаги
                 </Button>
+                <Button size="sm" variant="outline" className="gap-1 text-xs h-8" onClick={() => { setEditData(journey); setShowForm(true) }}>
+                  <Pencil className="h-3 w-3" /> Редактировать
+                </Button>
                 <Button size="sm" variant="outline" className="gap-1 text-xs h-8" onClick={() => { setEnrollOpen(journey); setSelectedLead(null); setLeadSearch("") }}>
                   <UserPlus className="h-3 w-3" /> Записать лида
                 </Button>
