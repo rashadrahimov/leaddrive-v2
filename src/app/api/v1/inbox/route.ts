@@ -33,6 +33,7 @@ export async function GET(req: NextRequest) {
           contactName: msg.direction === "inbound" ? msg.from : msg.to,
           contactEmail: null,
           contactPhone: null,
+          telegramChatId: null,
           lastMessage: msg.body?.slice(0, 100) || "",
           lastMessageAt: msg.createdAt,
           lastChannel: msg.channelType || "email",
@@ -45,6 +46,11 @@ export async function GET(req: NextRequest) {
       threads[key].messages.push(msg)
       threads[key].messageCount++
       if (msg.channelType) threads[key].channels.add(msg.channelType)
+      // Extract telegram chatId from metadata
+      if (msg.channelType === "telegram" && !threads[key].telegramChatId) {
+        const meta = msg.metadata as any
+        if (meta?.chatId) threads[key].telegramChatId = meta.chatId
+      }
       if (msg.direction === "inbound" && msg.status !== "read") {
         threads[key].unreadCount++
       }
@@ -153,7 +159,8 @@ export async function POST(req: NextRequest) {
           return NextResponse.json({ error: "Telegram бот не настроен" }, { status: 400 })
         }
         const tgSettings = (tgChannel.settings as any) || {}
-        const chatId = to || tgSettings.chatId
+        // Use `to` only if it looks like a numeric chatId, otherwise fallback to settings
+        const chatId = /^-?\d+$/.test(to) ? to : (tgSettings.chatId || to)
         if (!chatId) {
           return NextResponse.json({ error: "Не указан Chat ID" }, { status: 400 })
         }

@@ -34,6 +34,7 @@ interface Conversation {
   contactName: string
   contactEmail: string | null
   contactPhone: string | null
+  telegramChatId: string | null
   lastMessage: string
   lastMessageAt: string
   lastChannel: string
@@ -140,7 +141,9 @@ export default function InboxPage() {
       ? (convo.contactEmail || convo.contactName)
       : replyChannel === "sms"
         ? (convo.contactPhone || convo.contactName)
-        : convo.contactName
+        : replyChannel === "telegram"
+          ? (convo.telegramChatId || convo.contactName)
+          : convo.contactName
 
     setSending(true)
     try {
