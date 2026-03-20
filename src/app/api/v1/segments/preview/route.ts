@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { getOrgId } from "@/lib/api-auth"
+import { buildContactWhere } from "@/lib/segment-conditions"
 
 export async function POST(req: NextRequest) {
   const orgId = await getOrgId(req)
@@ -10,43 +11,7 @@ export async function POST(req: NextRequest) {
   const conditions = body.conditions || {}
 
   try {
-    const where: any = { organizationId: orgId }
-    const AND: any[] = []
-
-    if (conditions.company && conditions.company.trim()) {
-      AND.push({ company: { name: { contains: conditions.company, mode: "insensitive" } } })
-    }
-    if (conditions.source && conditions.source !== "") {
-      AND.push({ source: conditions.source })
-    }
-    if (conditions.role && conditions.role.trim()) {
-      AND.push({ position: { contains: conditions.role, mode: "insensitive" } })
-    }
-    if (conditions.tag && conditions.tag.trim()) {
-      AND.push({ tags: { has: conditions.tag } })
-    }
-    if (conditions.createdAfter) {
-      AND.push({ createdAt: { gte: new Date(conditions.createdAfter) } })
-    }
-    if (conditions.createdBefore) {
-      AND.push({ createdAt: { lte: new Date(conditions.createdBefore) } })
-    }
-    if (conditions.name && conditions.name.trim()) {
-      AND.push({ fullName: { contains: conditions.name, mode: "insensitive" } })
-    }
-    if (conditions.hasEmail) {
-      AND.push({ email: { not: null } })
-      AND.push({ NOT: { email: "" } })
-    }
-    if (conditions.hasPhone) {
-      AND.push({ phone: { not: null } })
-      AND.push({ NOT: { phone: "" } })
-    }
-
-    if (AND.length > 0) {
-      where.AND = AND
-    }
-
+    const where = buildContactWhere(orgId, conditions)
     const count = await prisma.contact.count({ where })
     return NextResponse.json({ success: true, data: { count } })
   } catch (e) {

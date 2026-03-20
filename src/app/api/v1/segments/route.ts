@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { prisma } from "@/lib/prisma"
 import { getOrgId } from "@/lib/api-auth"
+import { buildContactWhere } from "@/lib/segment-conditions"
 
 const createSegmentSchema = z.object({
   name: z.string().min(1).max(255),
@@ -36,9 +37,32 @@ export async function GET(req: NextRequest) {
       prisma.contactSegment.count({ where }),
     ])
 
+    // Recalculate contactCount for dynamic segments
+    const updated = await Promise.all(
+      segments.map(async (seg) => {
+        if (!seg.isDynamic) return seg
+
+        const conditions = (seg.conditions && typeof seg.conditions === "object")
+          ? seg.conditions as Record<string, any>
+          : {}
+        const contactWhere = buildContactWhere(orgId, conditions)
+        const count = await prisma.contact.count({ where: contactWhere })
+
+        // Update stored count if it changed (fire-and-forget)
+        if (count !== seg.contactCount) {
+          prisma.contactSegment.update({
+            where: { id: seg.id },
+            data: { contactCount: count },
+          }).catch(() => {})
+        }
+
+        return { ...seg, contactCount: count }
+      })
+    )
+
     return NextResponse.json({
       success: true,
-      data: { segments, total, page, limit, search },
+      data: { segments: updated, total, page, limit, search },
     })
   } catch {
     return NextResponse.json({
