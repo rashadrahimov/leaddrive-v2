@@ -88,7 +88,6 @@ export default function ContactsPage() {
     fetchContacts()
   }
 
-<<<<<<< HEAD
   async function confirmBulkDelete() {
     if (selected.size === 0) return
     setBulkDeleting(true)
