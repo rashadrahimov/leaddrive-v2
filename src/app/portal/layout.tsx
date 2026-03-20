@@ -18,8 +18,8 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
   const [user, setUser] = useState<PortalUser | null>(null)
 
   useEffect(() => {
-    // Skip auth check on login page
-    if (pathname === "/portal/login") return
+    // Skip auth check on login/register pages
+    if (pathname === "/portal/login" || pathname === "/portal/register") return
 
     const stored = localStorage.getItem("portal-user")
     if (stored) {
@@ -29,14 +29,14 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
     }
   }, [pathname])
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     localStorage.removeItem("portal-user")
-    document.cookie = "portal-token=; path=/; max-age=0"
+    try { await fetch("/api/v1/public/portal-auth", { method: "DELETE" }) } catch {}
     router.push("/portal/login")
   }
 
-  // Don't show header on login page
-  if (pathname === "/portal/login") {
+  // Don't show header on login/register pages
+  if (pathname === "/portal/login" || pathname === "/portal/register") {
     return <>{children}</>
   }
 

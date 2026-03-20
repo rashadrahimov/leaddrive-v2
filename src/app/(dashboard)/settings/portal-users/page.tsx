@@ -1,0 +1,249 @@
+"use client"
+
+import { useEffect, useState } from "react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Badge } from "@/components/ui/badge"
+import { StatCard } from "@/components/stat-card"
+import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
+import { Users, UserCheck, UserX, Clock, Search, Shield, ShieldOff, KeyRound, CheckCircle } from "lucide-react"
+
+interface PortalContact {
+  id: string
+  fullName: string
+  email: string | null
+  phone: string | null
+  companyName: string | null
+  isActive: boolean
+  portalAccessEnabled: boolean
+  hasPassword: boolean
+  portalLastLoginAt: string | null
+}
+
+interface Stats {
+  totalWithEmail: number
+  enabled: number
+  registered: number
+  recentLogins: number
+}
+
+type FilterType = "all" | "enabled" | "registered" | "pending" | "disabled"
+
+export default function PortalUsersPage() {
+  const [contacts, setContacts] = useState<PortalContact[]>([])
+  const [stats, setStats] = useState<Stats>({ totalWithEmail: 0, enabled: 0, registered: 0, recentLogins: 0 })
+  const [loading, setLoading] = useState(true)
+  const [filter, setFilter] = useState<FilterType>("all")
+  const [search, setSearch] = useState("")
+  const [selected, setSelected] = useState<Set<string>>(new Set())
+  const [resetDialog, setResetDialog] = useState<PortalContact | null>(null)
+
+  const fetchData = async () => {
+    const params = new URLSearchParams()
+    if (filter !== "all") params.set("filter", filter)
+    if (search) params.set("search", search)
+    try {
+      const res = await fetch(`/api/v1/portal-users?${params}`)
+      const json = await res.json()
+      if (json.success) {
+        setContacts(json.data.contacts)
+        setStats(json.data.stats)
+      }
+    } catch {} finally { setLoading(false) }
+  }
+
+  useEffect(() => { fetchData() }, [filter, search])
+
+  const handleToggleAccess = async (contact: PortalContact) => {
+    await fetch("/api/v1/portal-users", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ contactId: contact.id, portalAccessEnabled: !contact.portalAccessEnabled }),
+    })
+    fetchData()
+  }
+
+  const handleResetPassword = async () => {
+    if (!resetDialog) return
+    await fetch("/api/v1/portal-users", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ contactId: resetDialog.id, resetPassword: true }),
+    })
+    setResetDialog(null)
+    fetchData()
+  }
+
+  const handleBulkEnable = async () => {
+    if (selected.size === 0) return
+    await fetch("/api/v1/portal-users", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ contactIds: Array.from(selected), action: "enable" }),
+    })
+    setSelected(new Set())
+    fetchData()
+  }
+
+  const handleBulkDisable = async () => {
+    if (selected.size === 0) return
+    await fetch("/api/v1/portal-users", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ contactIds: Array.from(selected), action: "disable" }),
+    })
+    setSelected(new Set())
+    fetchData()
+  }
+
+  const toggleSelect = (id: string) => {
+    const next = new Set(selected)
+    if (next.has(id)) next.delete(id); else next.add(id)
+    setSelected(next)
+  }
+
+  const toggleAll = () => {
+    if (selected.size === contacts.length) setSelected(new Set())
+    else setSelected(new Set(contacts.map(c => c.id)))
+  }
+
+  const formatDate = (d: string | null) => {
+    if (!d) return "—"
+    return new Date(d).toLocaleString("ru-RU", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })
+  }
+
+  const getStatusBadge = (c: PortalContact) => {
+    if (!c.portalAccessEnabled) return <Badge variant="outline" className="text-xs">Отключён</Badge>
+    if (c.hasPassword) return <Badge className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 text-xs">Активен</Badge>
+    return <Badge className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400 text-xs">Ожидает регистрации</Badge>
+  }
+
+  const filters: { key: FilterType; label: string }[] = [
+    { key: "all", label: "Все" },
+    { key: "enabled", label: "Доступ включён" },
+    { key: "registered", label: "Зарегистрированы" },
+    { key: "pending", label: "Ожидают регистрации" },
+    { key: "disabled", label: "Отключены" },
+  ]
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <h1 className="text-2xl font-bold tracking-tight">Пользователи портала</h1>
+        <div className="animate-pulse space-y-4">
+          <div className="grid gap-4 md:grid-cols-4">{[1,2,3,4].map(i => <div key={i} className="h-24 bg-muted rounded-lg" />)}</div>
+          <div className="h-96 bg-muted rounded-lg" />
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight">Пользователи портала</h1>
+        <p className="text-sm text-muted-foreground">Управление доступом клиентов к порталу самообслуживания</p>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-4">
+        <StatCard title="Контактов с email" value={stats.totalWithEmail} icon={<Users className="h-4 w-4" />} />
+        <StatCard title="Доступ включён" value={stats.enabled} icon={<Shield className="h-4 w-4" />} />
+        <StatCard title="Зарегистрированы" value={stats.registered} icon={<UserCheck className="h-4 w-4" />} />
+        <StatCard title="Входы за 7 дней" value={stats.recentLogins} icon={<Clock className="h-4 w-4" />} />
+      </div>
+
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <div className="flex items-center gap-2 flex-wrap">
+              {filters.map(f => (
+                <Button key={f.key} variant={filter === f.key ? "default" : "outline"} size="sm" onClick={() => setFilter(f.key)}>
+                  {f.label}
+                </Button>
+              ))}
+            </div>
+            <div className="relative w-64">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input placeholder="Поиск по имени или email..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {selected.size > 0 && (
+            <div className="flex items-center gap-2 mb-4 p-2 bg-muted/50 rounded-lg">
+              <span className="text-sm text-muted-foreground">Выбрано: {selected.size}</span>
+              <Button size="sm" variant="outline" onClick={handleBulkEnable}><Shield className="h-3.5 w-3.5 mr-1" /> Включить доступ</Button>
+              <Button size="sm" variant="outline" onClick={handleBulkDisable}><ShieldOff className="h-3.5 w-3.5 mr-1" /> Отключить</Button>
+            </div>
+          )}
+
+          {contacts.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              {search ? "Не найдено контактов по запросу" : "Нет контактов с email в организации"}
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b">
+                    <th className="p-2 w-8"><input type="checkbox" checked={selected.size === contacts.length && contacts.length > 0} onChange={toggleAll} /></th>
+                    <th className="p-2 text-left font-medium">Имя</th>
+                    <th className="p-2 text-left font-medium">Email</th>
+                    <th className="p-2 text-left font-medium">Компания</th>
+                    <th className="p-2 text-left font-medium">Статус портала</th>
+                    <th className="p-2 text-left font-medium">Последний вход</th>
+                    <th className="p-2 text-right font-medium">Действия</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {contacts.map(c => (
+                    <tr key={c.id} className="border-b hover:bg-muted/30">
+                      <td className="p-2"><input type="checkbox" checked={selected.has(c.id)} onChange={() => toggleSelect(c.id)} /></td>
+                      <td className="p-2 font-medium">{c.fullName}</td>
+                      <td className="p-2 text-muted-foreground">{c.email || "—"}</td>
+                      <td className="p-2 text-muted-foreground">{c.companyName || "—"}</td>
+                      <td className="p-2">{getStatusBadge(c)}</td>
+                      <td className="p-2 text-muted-foreground text-xs">{formatDate(c.portalLastLoginAt)}</td>
+                      <td className="p-2">
+                        <div className="flex items-center gap-1 justify-end">
+                          <button
+                            onClick={() => handleToggleAccess(c)}
+                            className="p-1.5 rounded hover:bg-muted"
+                            title={c.portalAccessEnabled ? "Отключить доступ" : "Включить доступ"}
+                          >
+                            {c.portalAccessEnabled
+                              ? <ShieldOff className="h-3.5 w-3.5 text-red-500" />
+                              : <Shield className="h-3.5 w-3.5 text-green-500" />
+                            }
+                          </button>
+                          {c.hasPassword && (
+                            <button
+                              onClick={() => setResetDialog(c)}
+                              className="p-1.5 rounded hover:bg-muted"
+                              title="Сбросить пароль"
+                            >
+                              <KeyRound className="h-3.5 w-3.5 text-orange-500" />
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <DeleteConfirmDialog
+        open={!!resetDialog}
+        onOpenChange={() => setResetDialog(null)}
+        onConfirm={handleResetPassword}
+        title="Сбросить пароль"
+        itemName={resetDialog?.fullName}
+      />
+    </div>
+  )
+}

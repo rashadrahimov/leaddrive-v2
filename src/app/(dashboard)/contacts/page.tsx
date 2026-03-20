@@ -22,6 +22,8 @@ interface Contact {
   source: string | null
   companyId: string | null
   isActive: boolean
+  portalAccessEnabled: boolean
+  portalPasswordHash: string | null
   company: { id: string; name: string } | null
 }
 
@@ -268,6 +270,7 @@ export default function ContactsPage() {
               <th className="px-4 py-3 text-left font-medium text-muted-foreground">Email</th>
               <th className="px-4 py-3 text-left font-medium text-muted-foreground">Телефон</th>
               <th className="px-4 py-3 text-left font-medium text-muted-foreground">Статус</th>
+              <th className="px-4 py-3 text-left font-medium text-muted-foreground">Портал</th>
               <th className="px-4 py-3 w-20"></th>
             </tr>
           </thead>
@@ -320,6 +323,15 @@ export default function ContactsPage() {
                   <Badge variant={item.isActive ? "default" : "secondary"}>
                     {item.isActive ? "Активный" : "Неактивный"}
                   </Badge>
+                </td>
+                <td className="px-4 py-3">
+                  {item.portalAccessEnabled ? (
+                    item.portalPasswordHash ? (
+                      <Badge className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 text-xs">Portal</Badge>
+                    ) : (
+                      <Badge className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400 text-xs">Pending</Badge>
+                    )
+                  ) : null}
                 </td>
                 <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
                   <div className="flex items-center gap-1">

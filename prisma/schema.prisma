@@ -165,6 +165,11 @@ model Contact {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
+  // Portal access
+  portalPasswordHash  String?
+  portalAccessEnabled Boolean  @default(false)
+  portalLastLoginAt   DateTime?
+
   activities     Activity[]
 
   @@index([organizationId])

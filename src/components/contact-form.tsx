@@ -24,6 +24,7 @@ export function ContactForm({ open, onOpenChange, onSaved, initialData, orgId }:
     position: initialData?.position || "",
     companyId: initialData?.companyId || "",
     source: initialData?.source || "",
+    portalAccessEnabled: initialData?.portalAccessEnabled || false,
   })
   const [companies, setCompanies] = useState<Array<{ id: string; name: string }>>([])
   const [saving, setSaving] = useState(false)
@@ -38,6 +39,7 @@ export function ContactForm({ open, onOpenChange, onSaved, initialData, orgId }:
         position: initialData?.position || "",
         companyId: initialData?.companyId || "",
         source: initialData?.source || "",
+        portalAccessEnabled: initialData?.portalAccessEnabled || false,
       })
       setError("")
     }
@@ -110,6 +112,18 @@ export function ContactForm({ open, onOpenChange, onSaved, initialData, orgId }:
                 <option value="">No company</option>
                 {companies.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
               </Select>
+            </div>
+            <div className="flex items-center gap-2 pt-2 border-t">
+              <input
+                type="checkbox"
+                id="portalAccess"
+                checked={form.portalAccessEnabled}
+                onChange={e => setForm(f => ({ ...f, portalAccessEnabled: e.target.checked }))}
+                className="h-4 w-4 rounded border-gray-300"
+              />
+              <Label htmlFor="portalAccess" className="text-sm font-normal cursor-pointer">
+                Доступ к клиентскому порталу
+              </Label>
             </div>
           </div>
         </DialogContent>

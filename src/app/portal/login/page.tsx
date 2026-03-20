@@ -2,13 +2,17 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Eye, EyeOff } from "lucide-react"
 
 export default function PortalLoginPage() {
   const router = useRouter()
   const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
 
@@ -21,12 +25,11 @@ export default function PortalLoginPage() {
       const res = await fetch("/api/v1/public/portal-auth", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, password }),
       })
       const json = await res.json()
       if (!res.ok) throw new Error(json.error || "Login failed")
 
-      // Store user info in localStorage for client-side access
       localStorage.setItem("portal-user", JSON.stringify(json.data))
       router.push("/portal/tickets")
     } catch (err: any) {
@@ -41,7 +44,7 @@ export default function PortalLoginPage() {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl">Client Portal</CardTitle>
-          <p className="text-sm text-muted-foreground">Sign in with your contact email to view tickets and support</p>
+          <p className="text-sm text-muted-foreground">Войдите чтобы управлять тикетами и получить поддержку</p>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleLogin} className="space-y-4">
@@ -50,13 +53,33 @@ export default function PortalLoginPage() {
               <label className="text-sm font-medium">Email</label>
               <Input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="your@company.com" className="mt-1" required />
             </div>
+            <div>
+              <label className="text-sm font-medium">Пароль</label>
+              <div className="relative mt-1">
+                <Input
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  required
+                />
+                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+            </div>
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Signing in..." : "Sign In"}
+              {loading ? "Вход..." : "Войти"}
             </Button>
           </form>
-          <p className="text-xs text-center text-muted-foreground mt-4">
-            Contact your IT administrator if you need portal access
-          </p>
+          <div className="mt-4 text-center space-y-2">
+            <Link href="/portal/register" className="text-sm text-primary hover:underline">
+              Нет аккаунта? Зарегистрироваться
+            </Link>
+            <p className="text-xs text-muted-foreground">
+              Обратитесь к администратору для активации доступа к порталу
+            </p>
+          </div>
         </CardContent>
       </Card>
     </div>
