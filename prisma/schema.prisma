@@ -777,6 +777,7 @@ model ChannelMessage {
   organizationId  String
   channelConfigId String?
   direction       String   // inbound, outbound
+  channelType     String?  // email, telegram, sms, whatsapp
   contactId       String?
   from            String
   to              String

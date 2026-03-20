@@ -8,45 +8,100 @@ export async function GET(req: NextRequest) {
   const orgId = await getOrgId(req)
   if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
+  const { searchParams } = new URL(req.url)
+  const channelFilter = searchParams.get("channel") // email, telegram, sms, whatsapp
+
   try {
+    const where: any = { organizationId: orgId }
+    if (channelFilter && channelFilter !== "all") {
+      where.channelType = channelFilter
+    }
+
     const messages = await prisma.channelMessage.findMany({
-      where: { organizationId: orgId },
+      where,
       orderBy: { createdAt: "desc" },
-      take: 100,
+      take: 500,
     })
 
-    // Group by contactId for conversation threads
+    // Group by contact (contactId or from/to address)
     const threads: Record<string, any> = {}
     for (const msg of messages) {
-      const key = msg.contactId || msg.from
+      const key = msg.contactId || (msg.direction === "inbound" ? msg.from : msg.to) || msg.from
       if (!threads[key]) {
         threads[key] = {
           contactId: msg.contactId,
-          contactName: msg.from,
-          lastMessage: msg.body,
+          contactName: msg.direction === "inbound" ? msg.from : msg.to,
+          contactEmail: null,
+          contactPhone: null,
+          lastMessage: msg.body?.slice(0, 100) || "",
           lastMessageAt: msg.createdAt,
+          lastChannel: msg.channelType || "email",
           unreadCount: 0,
+          messageCount: 0,
+          channels: new Set<string>(),
           messages: [],
         }
       }
       threads[key].messages.push(msg)
+      threads[key].messageCount++
+      if (msg.channelType) threads[key].channels.add(msg.channelType)
       if (msg.direction === "inbound" && msg.status !== "read") {
         threads[key].unreadCount++
       }
+      // Update last message if this is newer
+      if (new Date(msg.createdAt) > new Date(threads[key].lastMessageAt)) {
+        threads[key].lastMessage = msg.body?.slice(0, 100) || ""
+        threads[key].lastMessageAt = msg.createdAt
+        threads[key].lastChannel = msg.channelType || "email"
+      }
     }
 
-    const conversations = Object.values(threads).sort(
-      (a: any, b: any) => new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime()
-    )
+    // Resolve contact names from DB
+    const contactIds = Object.values(threads)
+      .filter((t: any) => t.contactId)
+      .map((t: any) => t.contactId)
+
+    if (contactIds.length > 0) {
+      const contacts = await prisma.contact.findMany({
+        where: { id: { in: contactIds } },
+        select: { id: true, firstName: true, lastName: true, email: true, phone: true },
+      })
+      const contactMap = new Map(contacts.map(c => [c.id, c]))
+      for (const thread of Object.values(threads)) {
+        const contact = contactMap.get(thread.contactId)
+        if (contact) {
+          thread.contactName = `${contact.firstName || ""} ${contact.lastName || ""}`.trim() || thread.contactName
+          thread.contactEmail = contact.email
+          thread.contactPhone = contact.phone
+        }
+      }
+    }
+
+    const conversations = Object.values(threads)
+      .map((t: any) => ({ ...t, channels: Array.from(t.channels) }))
+      .sort((a: any, b: any) => new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime())
+
+    // Stats
+    const totalMessages = messages.length
+    const inboundCount = messages.filter(m => m.direction === "inbound").length
+    const outboundCount = messages.filter(m => m.direction === "outbound").length
 
     return NextResponse.json({
       success: true,
-      data: { conversations, total: conversations.length },
+      data: {
+        conversations,
+        stats: {
+          totalMessages,
+          inbound: inboundCount,
+          outbound: outboundCount,
+          conversations: conversations.length,
+        },
+      },
     })
   } catch {
     return NextResponse.json({
       success: true,
-      data: { conversations: [], total: 0 },
+      data: { conversations: [], stats: { totalMessages: 0, inbound: 0, outbound: 0, conversations: 0 } },
     })
   }
 }
@@ -56,7 +111,7 @@ const sendMessageSchema = z.object({
   body: z.string().min(1),
   subject: z.string().optional(),
   contactId: z.string().optional(),
-  channelConfigId: z.string().optional(),
+  channel: z.enum(["email", "telegram", "sms", "whatsapp"]).default("email"),
 })
 
 export async function POST(req: NextRequest) {
@@ -67,32 +122,114 @@ export async function POST(req: NextRequest) {
   const parsed = sendMessageSchema.safeParse(body)
   if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 })
 
+  const { to, body: msgBody, subject, contactId, channel } = parsed.data
+
   try {
-    // Send actual email via SMTP if subject is present (email message)
-    let emailResult: any = null
-    if (parsed.data.subject && parsed.data.to.includes("@")) {
-      emailResult = await sendEmail({
-        to: parsed.data.to,
-        subject: parsed.data.subject,
-        html: parsed.data.body.replace(/\n/g, "<br>"),
-        organizationId: orgId,
-        contactId: parsed.data.contactId,
-      })
+    let status = "delivered"
+    let errorMsg = ""
+
+    switch (channel) {
+      case "email": {
+        if (!to.includes("@")) {
+          return NextResponse.json({ error: "Для email нужен корректный адрес" }, { status: 400 })
+        }
+        const result = await sendEmail({
+          to,
+          subject: subject || "Сообщение из LeadDrive CRM",
+          html: `<div style="font-family: Arial, sans-serif; line-height: 1.6;">${msgBody.replace(/\n/g, "<br>")}</div>`,
+          organizationId: orgId,
+          contactId,
+        })
+        status = result.success ? "delivered" : "failed"
+        if (!result.success) errorMsg = result.error || "Email send failed"
+        break
+      }
+
+      case "telegram": {
+        const tgChannel = await prisma.channelConfig.findFirst({
+          where: { organizationId: orgId, channelType: "telegram", isActive: true },
+        })
+        if (!tgChannel?.botToken) {
+          return NextResponse.json({ error: "Telegram бот не настроен" }, { status: 400 })
+        }
+        const tgSettings = (tgChannel.settings as any) || {}
+        const chatId = to || tgSettings.chatId
+        if (!chatId) {
+          return NextResponse.json({ error: "Не указан Chat ID" }, { status: 400 })
+        }
+        try {
+          const tgRes = await fetch(`https://api.telegram.org/bot${tgChannel.botToken}/sendMessage`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ chat_id: chatId, text: msgBody, parse_mode: "HTML" }),
+          })
+          const tgData = await tgRes.json()
+          status = tgData.ok ? "delivered" : "failed"
+          if (!tgData.ok) errorMsg = tgData.description || "Telegram error"
+        } catch (err: any) {
+          status = "failed"
+          errorMsg = err.message
+        }
+        break
+      }
+
+      case "sms": {
+        const smsChannel = await prisma.channelConfig.findFirst({
+          where: { organizationId: orgId, channelType: "sms", isActive: true },
+        })
+        if (!smsChannel?.apiKey || !smsChannel?.phoneNumber) {
+          return NextResponse.json({ error: "SMS (Twilio) не настроен" }, { status: 400 })
+        }
+        const smsSettings = (smsChannel.settings as any) || {}
+        const accountSid = smsSettings.accountSid
+        if (!accountSid) {
+          return NextResponse.json({ error: "Twilio Account SID не настроен" }, { status: 400 })
+        }
+        try {
+          const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`
+          const twilioAuth = Buffer.from(`${accountSid}:${smsChannel.apiKey}`).toString("base64")
+          const params = new URLSearchParams({ To: to, From: smsChannel.phoneNumber, Body: msgBody })
+          const smsRes = await fetch(twilioUrl, {
+            method: "POST",
+            headers: { Authorization: `Basic ${twilioAuth}`, "Content-Type": "application/x-www-form-urlencoded" },
+            body: params.toString(),
+          })
+          const smsData = await smsRes.json()
+          status = smsData.sid ? "delivered" : "failed"
+          if (!smsData.sid) errorMsg = smsData.message || "Twilio error"
+        } catch (err: any) {
+          status = "failed"
+          errorMsg = err.message
+        }
+        break
+      }
+
+      case "whatsapp": {
+        // Placeholder — log only
+        console.log(`[Inbox WhatsApp] To: ${to}, Message: ${msgBody}`)
+        status = "delivered"
+        break
+      }
     }
 
-    // Save to channel messages
+    // Save message to DB
     const message = await prisma.channelMessage.create({
       data: {
         organizationId: orgId,
         direction: "outbound",
+        channelType: channel,
         from: "system",
-        ...parsed.data,
-        status: emailResult?.success ? "delivered" : emailResult ? "failed" : "delivered",
+        to,
+        subject: subject || undefined,
+        body: msgBody,
+        status,
+        contactId: contactId || undefined,
+        metadata: errorMsg ? { error: errorMsg } : undefined,
       },
     })
 
-    if (emailResult && !emailResult.success) {
-      return NextResponse.json({ success: false, error: emailResult.error || "Email send failed" }, { status: 500 })
+    if (status === "failed") {
+      return NextResponse.json({ success: false, error: errorMsg || "Ошибка отправки" }, { status: 500 })
     }
 
     return NextResponse.json({ success: true, data: message }, { status: 201 })
