@@ -108,6 +108,12 @@ export default function InboxPage() {
   const [composeSubject, setComposeSubject] = useState("")
   const [composeChannel, setComposeChannel] = useState("email")
   const [composeSending, setComposeSending] = useState(false)
+  const [composeContactId, setComposeContactId] = useState("")
+
+  // Contacts for compose picker
+  interface ContactOption { id: string; fullName: string; email: string | null; phone: string | null }
+  const [contacts, setContacts] = useState<ContactOption[]>([])
+  const [contactsLoaded, setContactsLoaded] = useState(false)
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
@@ -126,6 +132,27 @@ export default function InboxPage() {
   }
 
   useEffect(() => { fetchInbox() }, [session, channelFilter])
+
+  // Fetch contacts for compose picker
+  useEffect(() => {
+    if (showCompose && !contactsLoaded) {
+      fetch("/api/v1/contacts?limit=500", {
+        headers: orgId ? { "x-organization-id": String(orgId) } : {},
+      })
+        .then(r => r.json())
+        .then(json => {
+          const list = (json.data || json.contacts || []).map((c: any) => ({
+            id: c.id,
+            fullName: c.fullName || c.name || "—",
+            email: c.email || null,
+            phone: c.phone || null,
+          }))
+          setContacts(list)
+          setContactsLoaded(true)
+        })
+        .catch(() => {})
+    }
+  }, [showCompose])
 
   // Auto-poll every 5 seconds for new messages
   useEffect(() => {
@@ -196,6 +223,7 @@ export default function InboxPage() {
           body: composeBody,
           subject: composeSubject || undefined,
           channel: composeChannel,
+          contactId: composeContactId || undefined,
         }),
       })
       const json = await res.json()
@@ -204,6 +232,7 @@ export default function InboxPage() {
         setComposeTo("")
         setComposeBody("")
         setComposeSubject("")
+        setComposeContactId("")
         fetchInbox()
       }
     } catch {} finally { setComposeSending(false) }
@@ -571,10 +600,49 @@ export default function InboxPage() {
         <DialogContent>
           <div className="space-y-4">
             <div>
+              <Label className="text-sm font-medium">Контакт</Label>
+              <Select
+                value={composeContactId}
+                onChange={e => {
+                  const cid = e.target.value
+                  setComposeContactId(cid)
+                  const c = contacts.find(x => x.id === cid)
+                  if (c) {
+                    // Auto-fill `to` based on channel
+                    if (composeChannel === "email" && c.email) setComposeTo(c.email)
+                    else if (composeChannel === "sms" && c.phone) setComposeTo(c.phone)
+                    else if (c.email) setComposeTo(c.email)
+                    else if (c.phone) setComposeTo(c.phone)
+                    else setComposeTo("")
+                  }
+                }}
+                className="mt-1.5"
+              >
+                <option value="">— Выберите контакт —</option>
+                {contacts.map(c => (
+                  <option key={c.id} value={c.id}>
+                    {c.fullName}{c.email ? ` · ${c.email}` : ""}{c.phone ? ` · ${c.phone}` : ""}
+                  </option>
+                ))}
+              </Select>
+            </div>
+            <div>
               <Label className="text-sm font-medium">Канал</Label>
               <Select
                 value={composeChannel}
-                onChange={e => setComposeChannel(e.target.value)}
+                onChange={e => {
+                  const ch = e.target.value
+                  setComposeChannel(ch)
+                  // Re-fill `to` from selected contact
+                  const c = contacts.find(x => x.id === composeContactId)
+                  if (c) {
+                    if (ch === "email" && c.email) setComposeTo(c.email)
+                    else if (ch === "sms" && c.phone) setComposeTo(c.phone)
+                    else if (ch === "telegram" && c.phone) setComposeTo(c.phone)
+                    else if (c.email) setComposeTo(c.email)
+                    else setComposeTo(composeTo)
+                  }
+                }}
                 className="mt-1.5"
               >
                 <option value="email">Email</option>
@@ -585,12 +653,12 @@ export default function InboxPage() {
             </div>
             <div>
               <Label className="text-sm font-medium">
-                {composeChannel === "email" ? "Email адрес" : composeChannel === "sms" ? "Телефон" : "Chat ID / Адрес"}
+                {composeChannel === "email" ? "Email адрес" : composeChannel === "sms" ? "Телефон" : composeChannel === "telegram" ? "Chat ID / Телефон" : "Адрес"}
               </Label>
               <Input
                 value={composeTo}
                 onChange={e => setComposeTo(e.target.value)}
-                placeholder={composeChannel === "email" ? "user@example.com" : composeChannel === "sms" ? "+994..." : "Chat ID"}
+                placeholder={composeChannel === "email" ? "user@example.com" : composeChannel === "sms" ? "+994..." : "Chat ID или телефон"}
                 className="mt-1.5"
               />
             </div>
