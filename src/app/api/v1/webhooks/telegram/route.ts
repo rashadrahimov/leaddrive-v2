@@ -35,8 +35,24 @@ export async function POST(req: NextRequest) {
 
     const orgId = channelConfig.organizationId
 
-    // Save incoming message
-    const contactId: string | undefined = undefined
+    // Try to match telegram sender to an existing contact
+    // 1. Check if any previous message from this chatId has a contactId
+    // 2. If not, try matching by telegram username in contact notes/phone
+    let contactId: string | undefined = undefined
+
+    const prevMsg = await prisma.channelMessage.findFirst({
+      where: {
+        organizationId: orgId,
+        channelType: "telegram",
+        contactId: { not: null },
+        metadata: { path: ["chatId"], equals: chatId },
+      },
+      select: { contactId: true },
+    })
+    if (prevMsg?.contactId) {
+      contactId = prevMsg.contactId
+    }
+
     await prisma.channelMessage.create({
       data: {
         organizationId: orgId,

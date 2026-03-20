@@ -17,47 +17,122 @@ export async function GET(req: NextRequest) {
       where.channelType = channelFilter
     }
 
+    // 1. Fetch all messages
     const messages = await prisma.channelMessage.findMany({
       where,
       orderBy: { createdAt: "desc" },
       take: 500,
     })
 
-    // Group by contact — use contactId first, then try to unify by telegram chatId
-    const threads: Record<string, any> = {}
-    // Map telegram chatId → thread key for merging
-    const chatIdToKey: Record<string, string> = {}
+    // 2. Fetch all org contacts to build lookup maps
+    const allContacts = await prisma.contact.findMany({
+      where: { organizationId: orgId },
+      select: { id: true, fullName: true, email: true, phone: true },
+    })
 
+    // Build lookup maps: email→contactId, phone→contactId
+    const emailToContact: Record<string, typeof allContacts[0]> = {}
+    const phoneToContact: Record<string, typeof allContacts[0]> = {}
+    const contactById: Record<string, typeof allContacts[0]> = {}
+    for (const c of allContacts) {
+      contactById[c.id] = c
+      if (c.email) emailToContact[c.email.toLowerCase()] = c
+      if (c.phone) {
+        // Normalize phone: strip spaces, dashes
+        const normalized = c.phone.replace(/[\s\-()]/g, "")
+        phoneToContact[normalized] = c
+        phoneToContact[c.phone] = c
+      }
+    }
+
+    // 3. Build telegram chatId → contactId map from existing messages with contactId
+    const chatIdToContact: Record<string, string> = {}
     for (const msg of messages) {
+      if (msg.contactId && msg.channelType === "telegram") {
+        const meta = msg.metadata as any
+        const chatId = meta?.chatId as string | undefined
+        if (chatId && !chatIdToContact[chatId]) {
+          chatIdToContact[chatId] = msg.contactId
+        }
+      }
+    }
+
+    // 4. Resolve each message to a grouping key (contactId preferred)
+    function resolveKey(msg: typeof messages[0]): string {
       const meta = msg.metadata as any
       const tgChatId = meta?.chatId as string | undefined
 
-      // Determine grouping key
-      let key = msg.contactId || ""
-      if (!key) {
-        // For telegram messages, group by chatId
-        if (msg.channelType === "telegram" && tgChatId) {
-          key = chatIdToKey[tgChatId] || `tg_${tgChatId}`
-        } else if (msg.channelType === "telegram") {
-          // Outbound telegram without metadata chatId — try to match by `to` field
-          const toVal = msg.direction === "outbound" ? msg.to : msg.from
-          // Check if `to` is a chatId (numeric)
-          if (/^-?\d+$/.test(toVal)) {
-            key = chatIdToKey[toVal] || `tg_${toVal}`
-          } else {
-            key = toVal
-          }
-        } else {
-          key = (msg.direction === "inbound" ? msg.from : msg.to) || msg.from
+      // If message already has contactId, use it
+      if (msg.contactId) return `contact_${msg.contactId}`
+
+      // Try to match by email
+      if (msg.channelType === "email" || !msg.channelType) {
+        const addr = msg.direction === "inbound" ? msg.from : msg.to
+        if (addr) {
+          const contact = emailToContact[addr.toLowerCase()]
+          if (contact) return `contact_${contact.id}`
         }
       }
 
+      // Try to match by phone (SMS)
+      if (msg.channelType === "sms") {
+        const phone = msg.direction === "inbound" ? msg.from : msg.to
+        if (phone) {
+          const normalized = phone.replace(/[\s\-()]/g, "")
+          const contact = phoneToContact[normalized] || phoneToContact[phone]
+          if (contact) return `contact_${contact.id}`
+        }
+      }
+
+      // Try to match by telegram chatId
+      if (msg.channelType === "telegram") {
+        if (tgChatId && chatIdToContact[tgChatId]) {
+          return `contact_${chatIdToContact[tgChatId]}`
+        }
+        // Also check numeric `to` for outbound
+        if (msg.direction === "outbound" && /^-?\d+$/.test(msg.to)) {
+          if (chatIdToContact[msg.to]) return `contact_${chatIdToContact[msg.to]}`
+        }
+        // No contact match — group by chatId
+        if (tgChatId) return `tg_${tgChatId}`
+        if (/^-?\d+$/.test(msg.to)) return `tg_${msg.to}`
+      }
+
+      // Fallback: group by address
+      const addr = msg.direction === "inbound" ? msg.from : msg.to
+      return `addr_${addr || msg.from || "unknown"}`
+    }
+
+    // 5. Group messages into threads
+    const threads: Record<string, any> = {}
+
+    for (const msg of messages) {
+      const key = resolveKey(msg)
+      const meta = msg.metadata as any
+      const tgChatId = meta?.chatId as string | undefined
+
       if (!threads[key]) {
+        // Resolve contact info from key
+        let contactId: string | null = null
+        let contactName = msg.direction === "inbound" ? msg.from : msg.to
+        let contactEmail: string | null = null
+        let contactPhone: string | null = null
+
+        if (key.startsWith("contact_")) {
+          contactId = key.replace("contact_", "")
+          const c = contactById[contactId]
+          if (c) {
+            contactName = c.fullName || contactName
+            contactEmail = c.email
+            contactPhone = c.phone
+          }
+        }
+
         threads[key] = {
-          contactId: msg.contactId,
-          contactName: msg.direction === "inbound" ? msg.from : msg.to,
-          contactEmail: null,
-          contactPhone: null,
+          contactId,
+          contactName,
+          contactEmail,
+          contactPhone,
           telegramChatId: tgChatId || null,
           lastMessage: msg.body?.slice(0, 100) || "",
           lastMessageAt: msg.createdAt,
@@ -67,15 +142,6 @@ export async function GET(req: NextRequest) {
           channels: new Set<string>(),
           messages: [],
         }
-      }
-
-      // Register chatId → key mapping for future messages
-      if (tgChatId && !chatIdToKey[tgChatId]) {
-        chatIdToKey[tgChatId] = key
-      }
-      // Also map numeric `to` for outbound
-      if (msg.channelType === "telegram" && msg.direction === "outbound" && /^-?\d+$/.test(msg.to)) {
-        if (!chatIdToKey[msg.to]) chatIdToKey[msg.to] = key
       }
 
       threads[key].messages.push(msg)
@@ -96,27 +162,6 @@ export async function GET(req: NextRequest) {
         threads[key].lastMessage = msg.body?.slice(0, 100) || ""
         threads[key].lastMessageAt = msg.createdAt
         threads[key].lastChannel = msg.channelType || "email"
-      }
-    }
-
-    // Resolve contact names from DB
-    const contactIds = Object.values(threads)
-      .filter((t: any) => t.contactId)
-      .map((t: any) => t.contactId)
-
-    if (contactIds.length > 0) {
-      const contacts = await prisma.contact.findMany({
-        where: { id: { in: contactIds } },
-        select: { id: true, fullName: true, email: true, phone: true },
-      })
-      const contactMap = new Map(contacts.map(c => [c.id, c]))
-      for (const thread of Object.values(threads)) {
-        const contact = contactMap.get(thread.contactId)
-        if (contact) {
-          thread.contactName = contact.fullName || thread.contactName
-          thread.contactEmail = contact.email
-          thread.contactPhone = contact.phone
-        }
       }
     }
 
@@ -165,7 +210,37 @@ export async function POST(req: NextRequest) {
   const parsed = sendMessageSchema.safeParse(body)
   if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 })
 
-  const { to, body: msgBody, subject, contactId, channel } = parsed.data
+  const { to, body: msgBody, subject, contactId: rawContactId, channel } = parsed.data
+
+  // Auto-resolve contactId if not provided
+  let contactId = rawContactId || undefined
+  if (!contactId) {
+    let contact = null
+    if (channel === "email" && to.includes("@")) {
+      contact = await prisma.contact.findFirst({
+        where: { organizationId: orgId, email: { equals: to, mode: "insensitive" } },
+        select: { id: true },
+      })
+    } else if (channel === "sms" && to) {
+      contact = await prisma.contact.findFirst({
+        where: { organizationId: orgId, phone: to },
+        select: { id: true },
+      })
+    } else if (channel === "telegram" && /^-?\d+$/.test(to)) {
+      // Find a previous message with this chatId that has a contactId
+      const prev = await prisma.channelMessage.findFirst({
+        where: {
+          organizationId: orgId,
+          channelType: "telegram",
+          contactId: { not: null },
+          metadata: { path: ["chatId"], equals: to },
+        },
+        select: { contactId: true },
+      })
+      if (prev?.contactId) contactId = prev.contactId
+    }
+    if (contact) contactId = contact.id
+  }
 
   try {
     let status = "delivered"
