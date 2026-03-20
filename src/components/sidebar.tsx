@@ -9,7 +9,7 @@ import {
   CheckSquare, FileText, FileSpreadsheet, Calculator, Brain,
   Ticket, BookOpen, BarChart3, Mail, MessageSquare, Zap,
   Settings, ChevronLeft, DollarSign, Target, Send,
-  TrendingUp, Filter, Workflow, Server,
+  TrendingUp, Filter, Workflow, Server, Bell,
 } from "lucide-react"
 import { useState } from "react"
 
@@ -43,6 +43,7 @@ const navItems: NavItem[] = [
   { module: "profitability", href: "/pricing", icon: DollarSign, label: "Pricing", group: "Analytics" },
   { module: "reports", href: "/reports", icon: BarChart3, label: "Reports", group: "Analytics" },
   { module: "ai", href: "/ai-command-center", icon: Brain, label: "AI Center", group: "Analytics" },
+  { module: "core", href: "/notifications", icon: Bell, label: "Notifications", group: "CRM" },
   { module: "workflows", href: "/settings/workflows", icon: Zap, label: "Workflows", group: "Settings" },
   { module: "core", href: "/settings/smtp-settings", icon: Server, label: "SMTP", group: "Settings" },
   { module: "core", href: "/settings", icon: Settings, label: "Settings", group: "Settings" },

@@ -88,6 +88,7 @@ export default function ContactsPage() {
     fetchContacts()
   }
 
+<<<<<<< HEAD
   async function confirmBulkDelete() {
     if (selected.size === 0) return
     setBulkDeleting(true)
@@ -188,13 +189,13 @@ export default function ContactsPage() {
           <h1 className="text-2xl font-bold tracking-tight">Контакты</h1>
           <p className="text-sm text-muted-foreground">Управление базой контактов</p>
         </div>
-        <Button onClick={handleAdd}><Plus className="h-4 w-4" /> Добавить контакт</Button>
+        <Button onClick={handleAdd}><Plus className="h-4 w-4 mr-1" /> Добавить контакт</Button>
       </div>
 
       <div className="grid gap-4 md:grid-cols-4">
         <StatCard title="Всего" value={total} icon={<Users className="h-4 w-4" />} />
-        <StatCard title="Активные" value={contacts.filter(c => c.isActive).length} />
-        <StatCard title="С Email" value={contacts.filter(c => c.email).length} icon={<Mail className="h-4 w-4" />} />
+        <StatCard title="Активные" value={contacts.filter(c => c.isActive).length} trend="up" />
+        <StatCard title="С email" value={contacts.filter(c => c.email).length} icon={<Mail className="h-4 w-4" />} />
         <StatCard title="С телефоном" value={contacts.filter(c => c.phone).length} icon={<Phone className="h-4 w-4" />} />
       </div>
 

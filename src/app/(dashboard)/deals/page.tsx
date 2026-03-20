@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { StatCard } from "@/components/stat-card"
 import { KanbanBoard } from "@/components/deals/kanban-board"
 import { DealDetailSheet } from "@/components/deals/deal-detail-sheet"
+import { Select } from "@/components/ui/select"
 import { Handshake, Plus, TrendingUp, TrendingDown, Pencil, Trash2 } from "lucide-react"
 import { DealForm } from "@/components/deal-form"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
@@ -48,6 +49,7 @@ export default function DealsPage() {
   const [editData, setEditData] = useState<Record<string, any> | undefined>()
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [deleteItem, setDeleteItem] = useState<Deal | null>(null)
+  const [sortBy, setSortBy] = useState("newest")
   const orgId = session?.user?.organizationId
 
   const fetchDeals = async () => {
@@ -62,7 +64,18 @@ export default function DealsPage() {
 
   useEffect(() => { fetchDeals() }, [session])
 
-  const kanbanDeals = deals.map(d => ({
+  const sortedDeals = [...deals].sort((a, b) => {
+    switch (sortBy) {
+      case "newest": return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      case "oldest": return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+      case "value_desc": return b.valueAmount - a.valueAmount
+      case "value_asc": return a.valueAmount - b.valueAmount
+      case "name": return a.name.localeCompare(b.name)
+      default: return 0
+    }
+  })
+
+  const kanbanDeals = sortedDeals.map(d => ({
     id: d.id,
     name: d.name,
     company: d.company?.name || "",
@@ -144,7 +157,16 @@ export default function DealsPage() {
           <h1 className="text-2xl font-bold tracking-tight">Deals Pipeline</h1>
           <p className="text-sm text-muted-foreground">{deals.length} deals total</p>
         </div>
-        <Button onClick={handleAdd}><Plus className="h-4 w-4" /> New Deal</Button>
+        <div className="flex gap-2">
+          <Select value={sortBy} onChange={e => setSortBy(e.target.value)} className="w-[180px]">
+            <option value="newest">Новые первые</option>
+            <option value="oldest">Старые первые</option>
+            <option value="value_desc">Сумма ↓</option>
+            <option value="value_asc">Сумма ↑</option>
+            <option value="name">Имя А → Я</option>
+          </Select>
+          <Button onClick={handleAdd}><Plus className="h-4 w-4 mr-1" /> Новая сделка</Button>
+        </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-4">

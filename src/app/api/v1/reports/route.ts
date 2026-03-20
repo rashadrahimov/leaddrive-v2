@@ -80,6 +80,44 @@ export async function GET(req: NextRequest) {
     const closedTickets = ticketsByStatus.find(t => t.status === "closed")?._count || 0
     const ticketResolutionRate = tickets > 0 ? Math.round(((resolvedTickets + closedTickets) / tickets) * 100) : 0
 
+    // Top 10 companies by revenue (from contracts)
+    const topCompanies = await prisma.company.findMany({
+      where: { organizationId: orgId },
+      select: {
+        id: true,
+        name: true,
+        contracts: {
+          select: { monthlyValue: true },
+        },
+      },
+      take: 100,
+    })
+
+    const topCompaniesByRevenue = topCompanies
+      .map(c => ({
+        name: c.name,
+        revenue: c.contracts.reduce((s, ct) => s + (ct.monthlyValue || 0), 0),
+      }))
+      .filter(c => c.revenue > 0)
+      .sort((a, b) => b.revenue - a.revenue)
+      .slice(0, 10)
+
+    // Lead funnel — companies by leadStatus
+    const leadFunnel = await prisma.company.groupBy({
+      by: ["leadStatus"],
+      where: { organizationId: orgId },
+      _count: true,
+    })
+
+    // Financial overview from contracts
+    const contractsData = await prisma.contract.findMany({
+      where: { organizationId: orgId },
+      select: { monthlyValue: true, status: true },
+    })
+    const totalContractRevenue = contractsData
+      .filter(c => c.status === "active")
+      .reduce((s, c) => s + (c.monthlyValue || 0), 0)
+
     return NextResponse.json({
       success: true,
       data: {
@@ -123,6 +161,14 @@ export async function GET(req: NextRequest) {
           total: leads,
           byStatus: leadsByStatus.map(l => ({ status: l.status, count: l._count })),
           conversionRate: leads > 0 ? Math.round((leadsByStatus.find(l => l.status === "converted")?._count || 0) / leads * 100) : 0,
+        },
+        topCompanies: topCompaniesByRevenue,
+        leadFunnel: leadFunnel.map(f => ({ status: f.leadStatus, count: f._count })),
+        financial: {
+          monthlyRevenue: totalContractRevenue,
+          wonDealsRevenue: totalRevenue,
+          totalContracts: contractsData.length,
+          activeContracts: contractsData.filter(c => c.status === "active").length,
         },
       },
     })
