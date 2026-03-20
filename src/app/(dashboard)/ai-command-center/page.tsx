@@ -26,7 +26,7 @@ interface AgentConfig {
   maxTokens?: number
   temperature?: number
   systemPrompt?: string
-  toolsEnabled?: string
+  toolsEnabled?: string[]
   kbEnabled?: boolean
   kbMaxArticles?: number
   isActive: boolean
@@ -355,10 +355,10 @@ export default function AICommandCenterPage() {
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      {agent.toolsEnabled && (
+                      {agent.toolsEnabled && agent.toolsEnabled.length > 0 && (
                         <div className="flex gap-1">
-                          {agent.toolsEnabled.split(",").slice(0, 3).map(t => (
-                            <Badge key={t} variant="outline" className="text-[10px]">{t.trim()}</Badge>
+                          {agent.toolsEnabled.slice(0, 3).map(t => (
+                            <Badge key={t} variant="outline" className="text-[10px]">{t}</Badge>
                           ))}
                         </div>
                       )}
@@ -551,12 +551,12 @@ export default function AICommandCenterPage() {
                         <div className="font-medium">{agent.kbEnabled ? `Вкл (${agent.kbMaxArticles || 5} статей)` : "Выкл"}</div>
                       </div>
                     </div>
-                    {agent.toolsEnabled && (
+                    {agent.toolsEnabled && agent.toolsEnabled.length > 0 && (
                       <div>
                         <span className="text-muted-foreground text-xs">Инструменты</span>
                         <div className="flex flex-wrap gap-1 mt-1">
-                          {agent.toolsEnabled.split(",").map(t => (
-                            <Badge key={t} variant="outline" className="text-xs">{t.trim()}</Badge>
+                          {agent.toolsEnabled.map(t => (
+                            <Badge key={t} variant="outline" className="text-xs">{t}</Badge>
                           ))}
                         </div>
                       </div>
