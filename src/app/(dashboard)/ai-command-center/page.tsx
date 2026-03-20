@@ -4,7 +4,6 @@ import { useEffect, useState } from "react"
 import { useSession } from "next-auth/react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { StatCard } from "@/components/stat-card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { DataTable } from "@/components/data-table"
@@ -16,7 +15,7 @@ import {
   MessageSquare, ShieldCheck, Timer, DollarSign,
   Activity, AlertTriangle, Gauge, Star, BrainCircuit,
   Settings2, PlusCircle, Bell, ScrollText, Shield,
-  X, Bot, User, ChevronRight, Eye, EyeOff, CheckCircle,
+  X, Bot, User, Eye, CheckCircle, Sparkles, Power,
 } from "lucide-react"
 
 interface AgentConfig {
@@ -105,7 +104,37 @@ interface Guardrail {
   createdAt: string
 }
 
-type TabId = "dashboard" | "constructor" | "alerts" | "logs"
+type TabId = "dashboard" | "constructor"
+
+function getModelLabel(model: string): { name: string; speed: string; color: string } {
+  if (model.includes("opus")) return { name: "Claude Opus 4.6", speed: "Мощный", color: "text-purple-600" }
+  if (model.includes("sonnet")) return { name: "Claude Sonnet 4.6", speed: "Сбалансированный", color: "text-blue-600" }
+  return { name: "Claude Haiku 4.5", speed: "Быстрый", color: "text-emerald-600" }
+}
+
+const TOOL_COLORS: Record<string, string> = {
+  get_tickets: "bg-blue-50 text-blue-700 border-blue-200",
+  create_ticket: "bg-green-50 text-green-700 border-green-200",
+  escalate: "bg-red-50 text-red-700 border-red-200",
+  escalate_to_human: "bg-red-50 text-red-700 border-red-200",
+  contracts: "bg-purple-50 text-purple-700 border-purple-200",
+  documents: "bg-amber-50 text-amber-700 border-amber-200",
+}
+
+function getToolColor(tool: string): string {
+  const key = Object.keys(TOOL_COLORS).find(k => tool.toLowerCase().includes(k))
+  return key ? TOOL_COLORS[key] : "bg-gray-50 text-gray-700 border-gray-200"
+}
+
+function timeAgo(dateStr: string): string {
+  const diff = Date.now() - new Date(dateStr).getTime()
+  const mins = Math.floor(diff / 60000)
+  if (mins < 60) return `${mins}m ago`
+  const hrs = Math.floor(mins / 60)
+  if (hrs < 24) return `${hrs}h ago`
+  const days = Math.floor(hrs / 24)
+  return `${days}d ago`
+}
 
 export default function AICommandCenterPage() {
   const { data: session } = useSession()
@@ -128,20 +157,6 @@ export default function AICommandCenterPage() {
   const [sessionLoading, setSessionLoading] = useState(false)
 
   // Constructor state
-  const [newRule, setNewRule] = useState("")
-  const [rules, setRules] = useState<string[]>([
-    "Всегда отвечать на языке клиента",
-    "При неуверенности — эскалировать оператору",
-    "Не раскрывать внутреннюю информацию компании",
-  ])
-  const [kbTopics, setKbTopics] = useState<string[]>([
-    "Услуги компании",
-    "Ценообразование",
-    "Техническая поддержка",
-  ])
-  const [newTopic, setNewTopic] = useState("")
-
-  // Guardrail form
   const [newGuardrailName, setNewGuardrailName] = useState("")
   const [newGuardrailDesc, setNewGuardrailDesc] = useState("")
   const [newGuardrailPrompt, setNewGuardrailPrompt] = useState("")
@@ -180,9 +195,15 @@ export default function AICommandCenterPage() {
 
   const handleDelete = async () => {
     if (!deleteId) return
-    await fetch(`/api/v1/ai-configs/${deleteId}`, {
-      method: "DELETE",
-      headers: hdrs(),
+    await fetch(`/api/v1/ai-configs/${deleteId}`, { method: "DELETE", headers: hdrs() })
+    fetchData()
+  }
+
+  const handleActivate = async (id: string) => {
+    await fetch(`/api/v1/ai-configs/${id}`, {
+      method: "PUT",
+      headers: { ...hdrs(), "Content-Type": "application/json" },
+      body: JSON.stringify({ isActive: true }),
     })
     fetchData()
   }
@@ -203,9 +224,7 @@ export default function AICommandCenterPage() {
     try {
       const res = await fetch(`/api/v1/ai-sessions/${id}`, { headers: hdrs() })
       const json = await res.json()
-      if (json.success) {
-        setSessionMessages(json.data.session.messages || [])
-      }
+      if (json.success) setSessionMessages(json.data.session.messages || [])
     } catch {} finally { setSessionLoading(false) }
   }
 
@@ -230,10 +249,7 @@ export default function AICommandCenterPage() {
   }
 
   const handleDeleteGuardrail = async (id: string) => {
-    await fetch(`/api/v1/ai-guardrails?id=${id}`, {
-      method: "DELETE",
-      headers: hdrs(),
-    })
+    await fetch(`/api/v1/ai-guardrails?id=${id}`, { method: "DELETE", headers: hdrs() })
     setGuardrails(prev => prev.filter(g => g.id !== id))
   }
 
@@ -271,506 +287,537 @@ export default function AICommandCenterPage() {
     )
   }
 
+  const deflectionRate = stats?.deflectionRate || 0
+
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">AI Command Center</h1>
-          <div className="flex items-center gap-2 mt-1">
-            <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
-            <span className="text-sm text-muted-foreground">Агент онлайн</span>
+        <div className="flex items-center gap-4">
+          <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg">
+            <BrainCircuit className="h-7 w-7 text-white" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">AI Command Center</h1>
+            <p className="text-sm text-muted-foreground">AI Агент: производительность и аналитика</p>
           </div>
         </div>
-        <Button onClick={() => { setEditData(undefined); setShowForm(true) }}>
-          <Plus className="h-4 w-4 mr-1" /> Новый агент
-        </Button>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-green-50 border border-green-200">
+            <div className="h-2.5 w-2.5 rounded-full bg-green-500 animate-pulse" />
+            <span className="text-sm font-medium text-green-700">Агент онлайн</span>
+          </div>
+        </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-1 border-b">
-        {([
-          { id: "dashboard" as TabId, label: "Дашборд", icon: <Activity className="h-3.5 w-3.5" /> },
-          { id: "constructor" as TabId, label: "Конструктор", icon: <Settings2 className="h-3.5 w-3.5" /> },
-          { id: "alerts" as TabId, label: "Алерты", icon: <Bell className="h-3.5 w-3.5" />, badge: unreadAlerts },
-          { id: "logs" as TabId, label: "Логи", icon: <ScrollText className="h-3.5 w-3.5" /> },
-        ]).map(tab => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className={cn(
-              "px-4 py-2 text-sm font-medium border-b-2 transition-colors flex items-center gap-1.5",
-              activeTab === tab.id
-                ? "border-primary text-primary"
-                : "border-transparent text-muted-foreground hover:text-foreground"
-            )}
-          >
-            {tab.icon}
-            {tab.label}
-            {tab.badge ? (
-              <span className="ml-1 bg-red-500 text-white text-[10px] rounded-full px-1.5 py-0.5 leading-none">
-                {tab.badge}
-              </span>
-            ) : null}
-          </button>
-        ))}
+      {/* Tabs — large, v1-style */}
+      <div className="grid grid-cols-2 gap-0 rounded-xl overflow-hidden border">
+        <button
+          onClick={() => setActiveTab("dashboard")}
+          className={cn(
+            "py-3.5 text-sm font-semibold transition-all flex items-center justify-center gap-2",
+            activeTab === "dashboard"
+              ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-inner"
+              : "bg-white hover:bg-gray-50 text-gray-600"
+          )}
+        >
+          <Activity className="h-4 w-4" /> Дашборд
+        </button>
+        <button
+          onClick={() => setActiveTab("constructor")}
+          className={cn(
+            "py-3.5 text-sm font-semibold transition-all flex items-center justify-center gap-2",
+            activeTab === "constructor"
+              ? "bg-gradient-to-r from-violet-500 to-purple-600 text-white shadow-inner"
+              : "bg-white hover:bg-gray-50 text-gray-600"
+          )}
+        >
+          <Settings2 className="h-4 w-4" /> Конструктор агента
+        </button>
       </div>
 
       {/* ═══ DASHBOARD TAB ═══ */}
       {activeTab === "dashboard" && (
         <>
-          {/* 10 Metrics Grid */}
-          <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-5">
-            <StatCard title="Всего сессий" value={stats?.totalSessions || 0} icon={<MessageSquare className="h-4 w-4" />} description={`${stats?.activeSessions || 0} активных`} />
-            <StatCard title="Дефлекция" value={`${stats?.deflectionRate || 0}%`} icon={<ShieldCheck className="h-4 w-4" />} description="Решено без оператора" trend={stats && stats.deflectionRate > 50 ? "up" : "neutral"} />
-            <StatCard title="CSAT" value={stats?.csat ? `${stats.csat}/5` : "—"} icon={<Star className="h-4 w-4" />} description="Удовлетворённость" />
-            <StatCard title="FCR" value={`${stats?.fcrRate || 0}%`} icon={<Zap className="h-4 w-4" />} description="Решено с 1 контакта" />
-            <StatCard title="Ср. время решения" value={stats?.avgResolutionTime ? `${stats.avgResolutionTime} мин` : "—"} icon={<Timer className="h-4 w-4" />} />
-            <StatCard title="Всего сообщений" value={stats?.totalMessages || 0} icon={<Activity className="h-4 w-4" />} description={`ср. ${stats?.avgMessagesPerSession || 0}/сессию`} />
-            <StatCard title="Эскалации" value={stats?.escalations || 0} icon={<AlertTriangle className="h-4 w-4" />} trend={stats && stats.escalations > 5 ? "down" : "neutral"} />
-            <StatCard title="Ср. задержка" value={stats?.avgLatency ? `${stats.avgLatency}с` : "—"} icon={<Clock className="h-4 w-4" />} />
-            <StatCard title="Общая стоимость" value={`$${stats?.totalCost?.toFixed(3) || "0.000"}`} icon={<DollarSign className="h-4 w-4" />} description={`${stats?.totalTokens?.toLocaleString() || 0} токенов`} />
-            <StatCard title="Оценка качества" value={stats?.qualityScore ? `${stats.qualityScore}/10` : "—"} icon={<Gauge className="h-4 w-4" />} />
+          {/* KPI Row 1 — 4 cards with colorful icons */}
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            {/* Sessions */}
+            <div className="rounded-xl border bg-white p-5 shadow-sm">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Всего сессий</p>
+                  <p className="text-3xl font-bold mt-1">{stats?.totalSessions || 0}</p>
+                  <p className="text-xs text-blue-600 mt-1">Сегодня: {stats?.activeSessions || 0}</p>
+                </div>
+                <div className="h-12 w-12 rounded-xl bg-blue-50 flex items-center justify-center">
+                  <MessageSquare className="h-6 w-6 text-blue-500" />
+                </div>
+              </div>
+            </div>
+
+            {/* Deflection */}
+            <div className="rounded-xl border bg-white p-5 shadow-sm">
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Дефлекция</p>
+                  <p className={cn("text-3xl font-bold mt-1", deflectionRate > 50 ? "text-green-600" : deflectionRate > 20 ? "text-amber-500" : "text-gray-900")}>
+                    {deflectionRate.toFixed(1)}%
+                  </p>
+                  <div className="mt-2 h-2 bg-gray-100 rounded-full overflow-hidden">
+                    <div
+                      className={cn("h-full rounded-full transition-all", deflectionRate > 50 ? "bg-amber-400" : "bg-blue-400")}
+                      style={{ width: `${Math.min(deflectionRate, 100)}%` }}
+                    />
+                  </div>
+                </div>
+                <div className="h-12 w-12 rounded-xl bg-emerald-50 flex items-center justify-center ml-3">
+                  <ShieldCheck className="h-6 w-6 text-emerald-500" />
+                </div>
+              </div>
+            </div>
+
+            {/* CSAT */}
+            <div className="rounded-xl border bg-white p-5 shadow-sm">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">CSAT</p>
+                  <p className="text-3xl font-bold mt-1">
+                    {stats?.csat ? <>{stats.csat}<span className="text-lg text-gray-400">/5</span></> : "—"}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">Ср. удовлетворенность</p>
+                </div>
+                <div className="h-12 w-12 rounded-xl bg-yellow-50 flex items-center justify-center">
+                  <Star className="h-6 w-6 text-yellow-500" />
+                </div>
+              </div>
+            </div>
+
+            {/* FCR */}
+            <div className="rounded-xl border bg-white p-5 shadow-sm">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">FCR</p>
+                  <p className={cn("text-3xl font-bold mt-1", (stats?.fcrRate || 0) > 0 ? "text-green-600" : "")}>
+                    {stats?.fcrRate || 0}%
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">Решено с первого раза</p>
+                </div>
+                <div className="h-12 w-12 rounded-xl bg-pink-50 flex items-center justify-center">
+                  <Zap className="h-6 w-6 text-pink-500" />
+                </div>
+              </div>
+            </div>
           </div>
 
-          {/* Agent Configs */}
-          <Card>
-            <CardHeader><CardTitle className="text-base">Конфигурации агентов</CardTitle></CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {agents.length > 0 ? agents.map((agent) => (
-                  <div key={agent.id} className="flex items-center justify-between p-3 rounded-lg border">
-                    <div className="flex items-center gap-3">
-                      <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                        <BrainCircuit className="h-4 w-4 text-primary" />
-                      </div>
-                      <div>
-                        <div className="font-medium text-sm">{agent.configName}</div>
-                        <div className="text-xs text-muted-foreground flex items-center gap-2">
-                          <span>{agent.model}</span>
-                          <span>·</span>
-                          <span>v{agent.version}</span>
-                          {agent.maxTokens && <><span>·</span><span>{agent.maxTokens} tok</span></>}
-                          {agent.temperature != null && <><span>·</span><span>temp {agent.temperature}</span></>}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {agent.toolsEnabled && agent.toolsEnabled.length > 0 && (
-                        <div className="flex gap-1">
-                          {agent.toolsEnabled.slice(0, 3).map(t => (
-                            <Badge key={t} variant="outline" className="text-[10px]">{t}</Badge>
-                          ))}
-                        </div>
-                      )}
-                      <Badge variant={agent.kbEnabled ? "default" : "secondary"} className="text-[10px]">
-                        KB {agent.kbEnabled ? "вкл" : "выкл"}
-                      </Badge>
-                      <Badge variant={agent.isActive ? "default" : "secondary"}>
-                        {agent.isActive ? "Активен" : "Неактивен"}
-                      </Badge>
-                      <Button variant="ghost" size="sm" onClick={() => { setEditData(agent); setShowForm(true) }}>
-                        <Pencil className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button variant="ghost" size="sm" onClick={() => { setDeleteId(agent.id); setDeleteName(agent.configName) }}>
-                        <Trash2 className="h-3.5 w-3.5 text-destructive" />
-                      </Button>
-                    </div>
-                  </div>
-                )) : (
-                  <div className="text-sm text-muted-foreground text-center py-6">Нет настроенных AI агентов</div>
+          {/* KPI Row 2 — 3x2 with round icons */}
+          <div className="grid gap-4 md:grid-cols-3">
+            {/* Avg resolution time */}
+            <div className="rounded-xl border bg-white p-5 shadow-sm flex items-center gap-4">
+              <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+                <Timer className="h-5 w-5 text-blue-600" />
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Ср. время решения</p>
+                <p className="text-2xl font-bold">{stats?.avgResolutionTime || 0} <span className="text-sm font-normal text-gray-400">мин</span></p>
+              </div>
+            </div>
+
+            {/* Total messages */}
+            <div className="rounded-xl border bg-white p-5 shadow-sm flex items-center gap-4">
+              <div className="h-12 w-12 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">
+                <Activity className="h-5 w-5 text-indigo-600" />
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Всего сообщений</p>
+                <p className="text-2xl font-bold">{stats?.totalMessages || 0} <span className="text-sm font-normal text-gray-400">ср. {stats?.avgMessagesPerSession || 0}/сессия</span></p>
+              </div>
+            </div>
+
+            {/* Escalations */}
+            <div className="rounded-xl border bg-white p-5 shadow-sm flex items-center gap-4">
+              <div className="h-12 w-12 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
+                <AlertTriangle className="h-5 w-5 text-red-500" />
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Эскалации</p>
+                <p className="text-2xl font-bold">{stats?.escalations || 0} <span className="text-sm font-normal text-gray-400">к агентам</span></p>
+              </div>
+            </div>
+
+            {/* Avg latency */}
+            <div className="rounded-xl border bg-white p-5 shadow-sm flex items-center gap-4">
+              <div className="h-12 w-12 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
+                <Clock className="h-5 w-5 text-amber-600" />
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Ср. задержка</p>
+                <p className="text-2xl font-bold">{stats?.avgLatency || 0}<span className="text-sm font-normal text-gray-400">s</span></p>
+              </div>
+            </div>
+
+            {/* Total cost */}
+            <div className="rounded-xl border bg-white p-5 shadow-sm flex items-center gap-4">
+              <div className="h-12 w-12 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+                <DollarSign className="h-5 w-5 text-green-600" />
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Общая стоимость</p>
+                <p className="text-2xl font-bold text-green-600">${stats?.totalCost?.toFixed(3) || "0.000"}</p>
+              </div>
+            </div>
+
+            {/* Quality */}
+            <div className="rounded-xl border bg-white p-5 shadow-sm flex items-center gap-4">
+              <div className="h-12 w-12 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0">
+                <Gauge className="h-5 w-5 text-purple-600" />
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Оценка качества</p>
+                <p className="text-2xl font-bold">{stats?.qualityScore || 0}<span className="text-sm font-normal text-gray-400">/10</span></p>
+              </div>
+            </div>
+          </div>
+
+          {/* Alerts Section */}
+          <div className="rounded-xl border bg-white shadow-sm">
+            <div className="flex items-center justify-between p-5 border-b">
+              <div className="flex items-center gap-2">
+                <Bell className="h-5 w-5 text-red-500" />
+                <h3 className="font-semibold">Алерты</h3>
+                {unreadAlerts > 0 && (
+                  <span className="bg-red-500 text-white text-xs rounded-full px-2 py-0.5 font-medium">{unreadAlerts}</span>
                 )}
               </div>
-            </CardContent>
-          </Card>
+              {unreadAlerts > 0 && (
+                <Button variant="outline" size="sm" className="text-red-600 border-red-200 hover:bg-red-50" onClick={handleMarkAllRead}>
+                  Прочитать все
+                </Button>
+              )}
+            </div>
+            <div className="divide-y max-h-[400px] overflow-y-auto">
+              {alerts.length > 0 ? alerts.map(alert => (
+                <div key={alert.id} className={cn("flex items-center gap-4 p-4", !alert.isRead && "bg-amber-50/50")}>
+                  <div className={cn(
+                    "h-10 w-10 rounded-full flex items-center justify-center flex-shrink-0",
+                    alert.type === "token_spike" ? "bg-amber-100" : alert.type === "high_latency" ? "bg-amber-100" : "bg-red-100"
+                  )}>
+                    <AlertTriangle className={cn("h-5 w-5", alert.severity === "critical" ? "text-red-500" : "text-amber-500")} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-sm">
+                      {alert.type === "token_spike" ? "Token Spike" : alert.type === "high_latency" ? "High Latency" : alert.type}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-0.5">{alert.message}</p>
+                  </div>
+                  <div className="text-right flex-shrink-0">
+                    <p className="text-xs text-gray-400">{timeAgo(alert.createdAt)}</p>
+                    {alert.sessionId && (
+                      <button onClick={() => handleViewSession(alert.sessionId!)} className="text-xs text-blue-500 hover:underline mt-0.5 flex items-center gap-1">
+                        <Eye className="h-3 w-3" /> Trace
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )) : (
+                <div className="p-8 text-center text-gray-400 text-sm">Нет алертов</div>
+              )}
+            </div>
+          </div>
 
-          {/* Sessions with detail view */}
-          <Card>
-            <CardHeader><CardTitle className="text-base">Сессии чата</CardTitle></CardHeader>
-            <CardContent>
+          {/* Sessions Table */}
+          <div className="rounded-xl border bg-white shadow-sm">
+            <div className="p-5 border-b">
+              <h3 className="font-semibold flex items-center gap-2">
+                <ScrollText className="h-5 w-5 text-blue-500" /> Сессии за 7 дней
+              </h3>
+            </div>
+            <div className="p-4">
               {sessions.length > 0 ? (
                 <DataTable columns={sessionColumns} data={sessions} searchPlaceholder="Поиск сессий..." searchKey="id" pageSize={10} />
-              ) : <div className="text-sm text-muted-foreground p-4 text-center">Нет сессий</div>}
-            </CardContent>
-          </Card>
+              ) : <div className="text-sm text-gray-400 p-4 text-center">Нет сессий</div>}
+            </div>
+          </div>
+
+          {/* Logs Section */}
+          <div className="rounded-xl border bg-white shadow-sm">
+            <div className="p-5 border-b">
+              <h3 className="font-semibold flex items-center gap-2">
+                <ScrollText className="h-5 w-5 text-indigo-500" /> Логи взаимодействий
+                <span className="text-xs text-gray-400 font-normal">({logsTotal} записей)</span>
+              </h3>
+            </div>
+            <div className="divide-y max-h-[500px] overflow-y-auto">
+              {logs.length > 0 ? logs.map(log => (
+                <div key={log.id} className="p-4 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {log.model && <Badge variant="outline" className="text-[10px] font-mono">{log.model}</Badge>}
+                      {log.latencyMs != null && (
+                        <span className={cn(
+                          "text-xs font-mono font-medium",
+                          log.latencyMs > 10000 ? "text-red-500" : log.latencyMs > 5000 ? "text-amber-500" : "text-green-600"
+                        )}>
+                          {(log.latencyMs / 1000).toFixed(1)}s
+                        </span>
+                      )}
+                      {log.costUsd != null && <span className="text-xs text-gray-500">${log.costUsd.toFixed(4)}</span>}
+                      {log.promptTokens != null && <span className="text-xs text-gray-500">{log.promptTokens}+{log.completionTokens} tok</span>}
+                    </div>
+                    <span className="text-xs text-gray-400">{new Date(log.createdAt).toLocaleString("ru-RU")}</span>
+                  </div>
+                  <div className="grid gap-3 md:grid-cols-2">
+                    <div>
+                      <span className="text-[10px] text-gray-400 block mb-0.5">Запрос</span>
+                      <p className="text-xs bg-blue-50 p-2.5 rounded-lg">{log.userMessage.slice(0, 200)}</p>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-gray-400 block mb-0.5">Ответ</span>
+                      <p className="text-xs bg-gray-50 p-2.5 rounded-lg">{log.aiResponse.slice(0, 200)}</p>
+                    </div>
+                  </div>
+                </div>
+              )) : (
+                <div className="p-8 text-center text-gray-400 text-sm">Нет логов</div>
+              )}
+            </div>
+          </div>
         </>
       )}
 
       {/* ═══ CONSTRUCTOR TAB ═══ */}
       {activeTab === "constructor" && (
         <>
-          <div className="grid gap-6 lg:grid-cols-2">
-            {/* Rules & Restrictions */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base flex items-center gap-2">
-                  <Settings2 className="h-4 w-4" /> Правила и ограничения
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2 mb-4">
-                  {rules.map((rule, i) => (
-                    <div key={i} className="flex items-center justify-between p-2 rounded border text-sm">
-                      <span>{rule}</span>
-                      <button onClick={() => setRules(rules.filter((_, j) => j !== i))} className="text-muted-foreground hover:text-destructive">
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-                <div className="flex gap-2">
-                  <Input
-                    placeholder="Новое правило..."
-                    value={newRule}
-                    onChange={e => setNewRule(e.target.value)}
-                    onKeyDown={e => { if (e.key === "Enter" && newRule.trim()) { setRules([...rules, newRule.trim()]); setNewRule("") } }}
-                  />
-                  <Button size="sm" variant="outline" onClick={() => { if (newRule.trim()) { setRules([...rules, newRule.trim()]); setNewRule("") } }}>
-                    <PlusCircle className="h-4 w-4" />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* KB Topics */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base flex items-center gap-2">
-                  <BrainCircuit className="h-4 w-4" /> Темы базы знаний
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2 mb-4">
-                  {kbTopics.map((topic, i) => (
-                    <div key={i} className="flex items-center justify-between p-2 rounded border text-sm">
-                      <span>{topic}</span>
-                      <button onClick={() => setKbTopics(kbTopics.filter((_, j) => j !== i))} className="text-muted-foreground hover:text-destructive">
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-                <div className="flex gap-2">
-                  <Input
-                    placeholder="Новая тема..."
-                    value={newTopic}
-                    onChange={e => setNewTopic(e.target.value)}
-                    onKeyDown={e => { if (e.key === "Enter" && newTopic.trim()) { setKbTopics([...kbTopics, newTopic.trim()]); setNewTopic("") } }}
-                  />
-                  <Button size="sm" variant="outline" onClick={() => { if (newTopic.trim()) { setKbTopics([...kbTopics, newTopic.trim()]); setNewTopic("") } }}>
-                    <PlusCircle className="h-4 w-4" />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Guardrails */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base flex items-center gap-2">
-                <Shield className="h-4 w-4" /> Гарантии безопасности (Guardrails)
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3 mb-4">
-                {guardrails.length > 0 ? guardrails.map(g => (
-                  <div key={g.id} className="p-3 rounded-lg border space-y-1">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium text-sm">{g.ruleName}</span>
-                        <Badge variant="outline" className="text-[10px]">{g.ruleType}</Badge>
-                        <Badge variant={g.isActive ? "default" : "secondary"} className="text-[10px]">
-                          {g.isActive ? "Активен" : "Выкл"}
-                        </Badge>
-                      </div>
-                      <Button variant="ghost" size="sm" onClick={() => handleDeleteGuardrail(g.id)}>
-                        <Trash2 className="h-3.5 w-3.5 text-destructive" />
-                      </Button>
-                    </div>
-                    {g.description && <p className="text-xs text-muted-foreground">{g.description}</p>}
-                    {g.promptInjection && (
-                      <p className="text-xs text-muted-foreground bg-muted p-2 rounded font-mono">{g.promptInjection}</p>
-                    )}
-                  </div>
-                )) : (
-                  <div className="text-sm text-muted-foreground text-center py-4">Нет guardrails</div>
-                )}
-              </div>
-
-              <div className="border-t pt-4 space-y-3">
-                <h4 className="text-sm font-medium">Добавить guardrail</h4>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <Input placeholder="Название правила" value={newGuardrailName} onChange={e => setNewGuardrailName(e.target.value)} />
-                  <Input placeholder="Описание (необязательно)" value={newGuardrailDesc} onChange={e => setNewGuardrailDesc(e.target.value)} />
-                </div>
-                <Input placeholder="Промпт-инъекция (текст для системного промпта)" value={newGuardrailPrompt} onChange={e => setNewGuardrailPrompt(e.target.value)} />
-                <Button size="sm" onClick={handleAddGuardrail} disabled={!newGuardrailName.trim()}>
-                  <PlusCircle className="h-4 w-4 mr-1" /> Добавить
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Agent configs list (constructor mode) */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-base">Конфигурации агентов</CardTitle>
-                <Button size="sm" onClick={() => { setEditData(undefined); setShowForm(true) }}>
-                  <Plus className="h-4 w-4 mr-1" /> Создать
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {agents.map(agent => (
-                  <div key={agent.id} className="p-4 rounded-lg border space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <BrainCircuit className="h-5 w-5 text-primary" />
-                        <div>
-                          <div className="font-semibold">{agent.configName}</div>
-                          <div className="text-xs text-muted-foreground">{agent.model} · v{agent.version}</div>
-                        </div>
-                      </div>
-                      <Badge variant={agent.isActive ? "default" : "secondary"}>
-                        {agent.isActive ? "Активен" : "Неактивен"}
-                      </Badge>
-                    </div>
-                    <div className="grid grid-cols-3 gap-4 text-sm">
-                      <div>
-                        <span className="text-muted-foreground text-xs">Макс. токены</span>
-                        <div className="font-medium">{agent.maxTokens || "—"}</div>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground text-xs">Temperature</span>
-                        <div className="font-medium">{agent.temperature ?? "—"}</div>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground text-xs">KB</span>
-                        <div className="font-medium">{agent.kbEnabled ? `Вкл (${agent.kbMaxArticles || 5} статей)` : "Выкл"}</div>
-                      </div>
-                    </div>
-                    {agent.toolsEnabled && agent.toolsEnabled.length > 0 && (
-                      <div>
-                        <span className="text-muted-foreground text-xs">Инструменты</span>
-                        <div className="flex flex-wrap gap-1 mt-1">
-                          {agent.toolsEnabled.map(t => (
-                            <Badge key={t} variant="outline" className="text-xs">{t}</Badge>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                    <div className="flex gap-2">
-                      <Button size="sm" variant="outline" onClick={() => { setEditData(agent); setShowForm(true) }}>
-                        <Pencil className="h-3.5 w-3.5 mr-1" /> Редактировать
-                      </Button>
-                      <Button size="sm" variant="outline" onClick={() => { setDeleteId(agent.id); setDeleteName(agent.configName) }}>
-                        <Trash2 className="h-3.5 w-3.5 mr-1 text-destructive" /> Удалить
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-                {agents.length === 0 && (
-                  <div className="text-center py-8 text-muted-foreground text-sm">
-                    Нет агентов. Создайте первого агента для начала работы.
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </>
-      )}
-
-      {/* ═══ ALERTS TAB ═══ */}
-      {activeTab === "alerts" && (
-        <Card>
-          <CardHeader>
+          {/* Agent Config Cards — v1 style */}
+          <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-base flex items-center gap-2">
-                <Bell className="h-4 w-4" /> Алерты и уведомления
-                {unreadAlerts > 0 && (
-                  <span className="bg-red-500 text-white text-[10px] rounded-full px-1.5 py-0.5">{unreadAlerts}</span>
-                )}
-              </CardTitle>
-              {unreadAlerts > 0 && (
-                <Button variant="outline" size="sm" onClick={handleMarkAllRead}>
-                  <CheckCircle className="h-3.5 w-3.5 mr-1" /> Отметить все прочитанными
-                </Button>
+              <div>
+                <h3 className="text-lg font-semibold flex items-center gap-2">
+                  <Settings2 className="h-5 w-5 text-indigo-500" /> Конфигурации агента
+                </h3>
+                <p className="text-sm text-gray-500">Настройте модель, инструменты и поведение AI-агента</p>
+              </div>
+              <Button onClick={() => { setEditData(undefined); setShowForm(true) }} className="bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 shadow-md">
+                <Sparkles className="h-4 w-4 mr-2" /> Новая конфигурация
+              </Button>
+            </div>
+
+            <div className="grid gap-4 lg:grid-cols-2">
+              {agents.map(agent => {
+                const ml = getModelLabel(agent.model)
+                const tools = agent.toolsEnabled || []
+                return (
+                  <div key={agent.id} className="rounded-xl border bg-white p-6 shadow-sm space-y-4">
+                    {/* Header */}
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className={cn(
+                          "h-12 w-12 rounded-xl flex items-center justify-center",
+                          agent.isActive ? "bg-gradient-to-br from-blue-500 to-indigo-600" : "bg-gray-200"
+                        )}>
+                          {agent.isActive
+                            ? <BrainCircuit className="h-6 w-6 text-white" />
+                            : <Zap className="h-6 w-6 text-gray-400" />
+                          }
+                        </div>
+                        <div>
+                          <h4 className="font-bold text-lg">{agent.configName}</h4>
+                          <p className="text-sm">
+                            <span className="text-gray-500">{ml.name}</span>
+                            <span className="mx-1.5">·</span>
+                            <span className={ml.color}>{ml.speed}</span>
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline" className="text-xs">v{agent.version}</Badge>
+                        {agent.isActive && (
+                          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-50 border border-green-200">
+                            <div className="h-2 w-2 rounded-full bg-green-500" />
+                            <span className="text-xs font-medium text-green-700">АКТИВЕН</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Metrics chips */}
+                    <div className="flex flex-wrap gap-2">
+                      <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-orange-50 border border-orange-200 text-sm">
+                        <span className="text-orange-500">🔥</span>
+                        <span className="text-gray-700">Max {agent.maxTokens || 2048} токенов</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-50 border border-blue-200 text-sm">
+                        <Settings2 className="h-3.5 w-3.5 text-blue-500" />
+                        <span className="text-gray-700">{tools.length}/5 инструментов</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-sm">
+                        <span>📚</span>
+                        <span className="text-gray-700">KB: {agent.kbEnabled ? "вкл" : "выкл"}</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-purple-50 border border-purple-200 text-sm">
+                        <span>🌡️</span>
+                        <span className="text-gray-700">{agent.temperature ?? 0.7}</span>
+                      </div>
+                    </div>
+
+                    {/* Tools as colored chips */}
+                    {tools.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5">
+                        {tools.map(t => (
+                          <span key={t} className={cn("inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border text-xs font-medium", getToolColor(t))}>
+                            📄 {t.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase())}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Action buttons */}
+                    <div className="flex gap-2 pt-1">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-amber-600 border-amber-200 hover:bg-amber-50"
+                        onClick={() => { setEditData(agent); setShowForm(true) }}
+                      >
+                        <Pencil className="h-3.5 w-3.5 mr-1.5" /> Редактировать
+                      </Button>
+                      {!agent.isActive && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-green-600 border-green-200 hover:bg-green-50"
+                          onClick={() => handleActivate(agent.id)}
+                        >
+                          <Power className="h-3.5 w-3.5 mr-1.5" /> Активировать
+                        </Button>
+                      )}
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-red-500 border-red-200 hover:bg-red-50"
+                        onClick={() => { setDeleteId(agent.id); setDeleteName(agent.configName) }}
+                      >
+                        <Trash2 className="h-3.5 w-3.5 mr-1.5" /> Удалить
+                      </Button>
+                    </div>
+                  </div>
+                )
+              })}
+              {agents.length === 0 && (
+                <div className="col-span-2 text-center py-12 text-gray-400 rounded-xl border bg-white">
+                  <BrainCircuit className="h-12 w-12 mx-auto mb-3 opacity-30" />
+                  <p className="font-medium">Нет агентов</p>
+                  <p className="text-sm mt-1">Создайте первого агента для начала работы</p>
+                </div>
               )}
             </div>
-          </CardHeader>
-          <CardContent>
-            {alerts.length > 0 ? (
-              <div className="space-y-2">
-                {alerts.map(alert => (
-                  <div
-                    key={alert.id}
-                    className={cn(
-                      "flex items-start gap-3 p-3 rounded-lg border transition-colors",
-                      !alert.isRead && "bg-yellow-50 border-yellow-200 dark:bg-yellow-900/10 dark:border-yellow-800"
-                    )}
-                  >
-                    <div className={cn(
-                      "mt-0.5 h-8 w-8 rounded-full flex items-center justify-center flex-shrink-0",
-                      alert.severity === "critical" ? "bg-red-100 text-red-600" :
-                      alert.severity === "warning" ? "bg-amber-100 text-amber-600" :
-                      "bg-blue-100 text-blue-600"
-                    )}>
-                      <AlertTriangle className="h-4 w-4" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <Badge variant={
-                          alert.type === "token_spike" ? "destructive" :
-                          alert.type === "high_latency" ? "default" :
-                          "secondary"
-                        } className="text-[10px]">
-                          {alert.type === "token_spike" ? "Всплеск токенов" :
-                           alert.type === "high_latency" ? "Высокая задержка" :
-                           alert.type === "error" ? "Ошибка" : alert.type}
-                        </Badge>
-                        <Badge variant="outline" className="text-[10px]">{alert.severity}</Badge>
-                        {!alert.isRead && <span className="h-2 w-2 bg-blue-500 rounded-full" />}
-                      </div>
-                      <p className="text-sm mt-1">{alert.message}</p>
-                      <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
-                        <span>{new Date(alert.createdAt).toLocaleString("ru-RU")}</span>
-                        {alert.sessionId && <span>Сессия: {alert.sessionId.slice(0, 8)}...</span>}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-10 text-muted-foreground">
-                <Bell className="h-10 w-10 mx-auto mb-3 opacity-30" />
-                <p className="text-sm">Нет алертов</p>
-                <p className="text-xs mt-1">Алерты появляются при аномалиях: всплески токенов, высокая задержка, ошибки</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
+          </div>
 
-      {/* ═══ LOGS TAB ═══ */}
-      {activeTab === "logs" && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2">
-              <ScrollText className="h-4 w-4" /> Логи взаимодействий
-              <span className="text-xs text-muted-foreground font-normal">({logsTotal} записей)</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {logs.length > 0 ? (
-              <div className="space-y-3">
-                {logs.map(log => (
-                  <div key={log.id} className="p-3 rounded-lg border space-y-2">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        {log.model && <Badge variant="outline" className="text-[10px]">{log.model}</Badge>}
-                        {log.isCopilot && <Badge variant="secondary" className="text-[10px]">Copilot</Badge>}
-                        {log.latencyMs != null && (
-                          <span className={cn(
-                            "text-[10px] font-mono",
-                            log.latencyMs > 10000 ? "text-red-500" : log.latencyMs > 5000 ? "text-amber-500" : "text-green-500"
-                          )}>
-                            {(log.latencyMs / 1000).toFixed(1)}s
-                          </span>
-                        )}
-                        {log.costUsd != null && (
-                          <span className="text-[10px] text-muted-foreground">${log.costUsd.toFixed(4)}</span>
-                        )}
-                        {log.promptTokens != null && log.completionTokens != null && (
-                          <span className="text-[10px] text-muted-foreground">
-                            {log.promptTokens}+{log.completionTokens} tok
-                          </span>
-                        )}
-                      </div>
-                      <span className="text-xs text-muted-foreground">
-                        {new Date(log.createdAt).toLocaleString("ru-RU")}
-                      </span>
-                    </div>
-                    <div className="grid gap-2 md:grid-cols-2">
-                      <div>
-                        <span className="text-[10px] text-muted-foreground block mb-0.5">Запрос</span>
-                        <p className="text-xs bg-blue-50 p-2 rounded max-h-20 overflow-y-auto">{log.userMessage.slice(0, 200)}{log.userMessage.length > 200 ? "..." : ""}</p>
-                      </div>
-                      <div>
-                        <span className="text-[10px] text-muted-foreground block mb-0.5">Ответ</span>
-                        <p className="text-xs bg-gray-50 p-2 rounded max-h-20 overflow-y-auto">{log.aiResponse.slice(0, 200)}{log.aiResponse.length > 200 ? "..." : ""}</p>
-                      </div>
-                    </div>
-                    {log.toolsCalled.length > 0 && (
-                      <div className="flex items-center gap-1">
-                        <span className="text-[10px] text-muted-foreground">Tools:</span>
-                        {log.toolsCalled.map(t => <Badge key={t} variant="outline" className="text-[10px]">{t}</Badge>)}
-                      </div>
-                    )}
+          {/* Guardrails — Rules & Restrictions */}
+          <div className="rounded-xl border bg-white shadow-sm">
+            <div className="flex items-center justify-between p-5 border-b">
+              <div>
+                <h3 className="font-semibold flex items-center gap-2">
+                  <span className="text-red-500">🛡️</span> Правила и ограничения
+                </h3>
+                <p className="text-sm text-gray-500">Что агенту запрещено делать</p>
+              </div>
+              <Button size="sm" className="bg-gradient-to-r from-red-500 to-rose-500 hover:from-red-600 hover:to-rose-600 shadow-sm" onClick={() => document.getElementById("guardrail-form")?.scrollIntoView({ behavior: "smooth" })}>
+                <Plus className="h-4 w-4 mr-1" /> Новое правило
+              </Button>
+            </div>
+            <div className="divide-y">
+              {guardrails.length > 0 ? guardrails.map(g => (
+                <div key={g.id} className="flex items-center gap-4 p-4">
+                  <div className="h-10 w-10 rounded-full bg-red-50 flex items-center justify-center flex-shrink-0">
+                    <Shield className="h-5 w-5 text-red-400" />
                   </div>
-                ))}
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-sm">{g.ruleName}</p>
+                    {g.description && <p className="text-xs text-gray-500 mt-0.5">{g.description}</p>}
+                  </div>
+                  <Button variant="ghost" size="sm" onClick={() => handleDeleteGuardrail(g.id)} className="text-gray-400 hover:text-red-500">
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              )) : (
+                <div className="p-6 text-center text-gray-400 text-sm">Нет правил</div>
+              )}
+            </div>
+            {/* Add guardrail form */}
+            <div id="guardrail-form" className="p-5 border-t bg-gray-50/50 space-y-3">
+              <h4 className="text-sm font-medium text-gray-600">Добавить правило</h4>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <Input placeholder="Название правила" value={newGuardrailName} onChange={e => setNewGuardrailName(e.target.value)} className="bg-white" />
+                <Input placeholder="Описание (необязательно)" value={newGuardrailDesc} onChange={e => setNewGuardrailDesc(e.target.value)} className="bg-white" />
               </div>
-            ) : (
-              <div className="text-center py-10 text-muted-foreground">
-                <ScrollText className="h-10 w-10 mx-auto mb-3 opacity-30" />
-                <p className="text-sm">Нет логов взаимодействий</p>
-                <p className="text-xs mt-1">Логи записываются при каждом вызове AI агента</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+              <Input placeholder="Промпт-инъекция для системного промпта" value={newGuardrailPrompt} onChange={e => setNewGuardrailPrompt(e.target.value)} className="bg-white" />
+              <Button size="sm" onClick={handleAddGuardrail} disabled={!newGuardrailName.trim()} className="bg-gradient-to-r from-blue-500 to-blue-600">
+                <PlusCircle className="h-4 w-4 mr-1" /> Добавить
+              </Button>
+            </div>
+          </div>
+
+          {/* AI Config Generator */}
+          <div className="rounded-xl bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 border border-purple-200 p-8 text-center space-y-4">
+            <Sparkles className="h-8 w-8 mx-auto text-purple-400" />
+            <h3 className="font-bold text-lg">Создать конфигурацию по описанию</h3>
+            <p className="text-sm text-gray-500">Опишите роль агента обычным текстом, и AI создаст конфигурацию автоматически</p>
+            <div className="flex gap-3 max-w-xl mx-auto">
+              <Input placeholder="Например: агент техподдержки, быстрые ответы, без сложных вопросов..." className="bg-white" />
+              <Button className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 shadow-md flex-shrink-0">
+                <Sparkles className="h-4 w-4 mr-1" /> Создать
+              </Button>
+            </div>
+          </div>
+        </>
       )}
 
       {/* ═══ SESSION DETAIL MODAL ═══ */}
       {selectedSession && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setSelectedSession(null)}>
-          <div className="bg-background rounded-lg shadow-xl w-full max-w-2xl max-h-[80vh] flex flex-col" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between p-4 border-b">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[80vh] flex flex-col" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between p-5 border-b">
               <div>
-                <h3 className="font-semibold">Сессия {selectedSession.slice(0, 12)}...</h3>
-                <p className="text-xs text-muted-foreground">{sessionMessages.length} сообщений</p>
+                <h3 className="font-bold text-lg">Сессия {selectedSession.slice(0, 12)}...</h3>
+                <p className="text-xs text-gray-500">{sessionMessages.length} сообщений</p>
               </div>
               <Button variant="ghost" size="sm" onClick={() => setSelectedSession(null)}>
-                <X className="h-4 w-4" />
+                <X className="h-5 w-5" />
               </Button>
             </div>
-            <div className="flex-1 overflow-y-auto p-4 space-y-3">
+            <div className="flex-1 overflow-y-auto p-5 space-y-3">
               {sessionLoading ? (
-                <div className="text-center py-10 text-muted-foreground text-sm">Загрузка...</div>
+                <div className="text-center py-10 text-gray-400 text-sm">Загрузка...</div>
               ) : sessionMessages.length > 0 ? (
                 sessionMessages.map(msg => (
-                  <div key={msg.id} className={cn("flex gap-2.5", msg.role === "user" ? "justify-end" : "")}>
+                  <div key={msg.id} className={cn("flex gap-3", msg.role === "user" ? "justify-end" : "")}>
                     {msg.role !== "user" && (
-                      <div className="w-7 h-7 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <Bot className="h-3.5 w-3.5 text-indigo-600" />
+                      <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <Bot className="h-4 w-4 text-indigo-600" />
                       </div>
                     )}
                     <div className={msg.role === "user" ? "max-w-[75%]" : "max-w-[80%]"}>
                       <div className={cn(
-                        "rounded-lg p-3 text-sm",
+                        "rounded-2xl p-3.5 text-sm",
                         msg.role === "user"
-                          ? "bg-blue-500 text-white rounded-tr-none"
-                          : "bg-muted rounded-tl-none"
+                          ? "bg-blue-500 text-white rounded-tr-md"
+                          : "bg-gray-100 rounded-tl-md"
                       )}>
                         <p className="whitespace-pre-wrap">{msg.content}</p>
                       </div>
-                      <div className="flex items-center gap-2 mt-1">
-                        <span className={cn("text-[10px] text-muted-foreground", msg.role === "user" && "text-right w-full")}>
-                          {new Date(msg.createdAt).toLocaleTimeString("ru-RU")}
-                        </span>
-                        {msg.tokenCount && <span className="text-[10px] text-muted-foreground">{msg.tokenCount} tok</span>}
-                      </div>
+                      <span className={cn("text-[10px] text-gray-400 mt-1 block", msg.role === "user" && "text-right")}>
+                        {new Date(msg.createdAt).toLocaleTimeString("ru-RU")}
+                      </span>
                     </div>
                     {msg.role === "user" && (
-                      <div className="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <User className="h-3.5 w-3.5 text-blue-600" />
+                      <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <User className="h-4 w-4 text-blue-600" />
                       </div>
                     )}
                   </div>
                 ))
               ) : (
-                <div className="text-center py-10 text-muted-foreground text-sm">Нет сообщений</div>
+                <div className="text-center py-10 text-gray-400 text-sm">Нет сообщений</div>
               )}
             </div>
           </div>
