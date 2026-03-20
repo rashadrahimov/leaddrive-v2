@@ -11,7 +11,7 @@ import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
 import { LeadItemModal } from "@/components/lead-item-modal"
 import {
   UserPlus, Plus, Search, Pencil, Trash2, ArrowRight,
-  Brain, Sparkles, Phone, Mail, Building2,
+  Brain, Phone, Mail, Building2,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -222,7 +222,6 @@ export default function LeadsPage() {
               <th className="px-4 py-3 text-left font-medium text-muted-foreground">Компания</th>
               <th className="px-4 py-3 text-left font-medium text-muted-foreground">Контакты</th>
               <th className="px-3 py-3 text-left font-medium text-muted-foreground">Конверсия</th>
-              <th className="px-3 py-3 text-left font-medium text-muted-foreground max-w-[180px]">AI Прогноз</th>
               <th className="px-3 py-3 text-left font-medium text-muted-foreground">Источник</th>
               <th className="px-3 py-3 text-left font-medium text-muted-foreground">Статус</th>
               <th className="px-4 py-3 text-left font-medium text-muted-foreground">Действия</th>
@@ -230,12 +229,11 @@ export default function LeadsPage() {
           </thead>
           <tbody>
             {filtered.length === 0 ? (
-              <tr><td colSpan={9} className="px-4 py-12 text-center text-muted-foreground">
+              <tr><td colSpan={8} className="px-4 py-12 text-center text-muted-foreground">
                 {search ? "Ничего не найдено" : "Нет лидов. Создайте первый!"}
               </td></tr>
             ) : filtered.map(lead => {
               const grade = getGrade(lead.score)
-              const reasoning = (lead.scoreDetails as any)?.reasoning
               return (
                 <tr key={lead.id} className="border-b hover:bg-muted/30 cursor-pointer" onClick={() => setSelectedLead(lead)}>
                   <td className="px-4 py-3">
@@ -283,16 +281,6 @@ export default function LeadsPage() {
                         </span>
                       )
                     })()}
-                  </td>
-                  <td className="px-3 py-3 text-xs text-muted-foreground max-w-[180px]">
-                    {reasoning ? (
-                      <span className="flex items-start gap-1">
-                        <Sparkles className="h-3 w-3 text-purple-500 shrink-0 mt-0.5" />
-                        <span className="line-clamp-2">{reasoning}</span>
-                      </span>
-                    ) : (
-                      lead.lastScoredAt ? "Rule-based" : "—"
-                    )}
                   </td>
                   <td className="px-3 py-3 text-muted-foreground text-xs">
                     {lead.source ? sourceLabels[lead.source] || lead.source : "—"}
