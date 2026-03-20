@@ -105,6 +105,7 @@ export function LeadItemModal({ open, onOpenChange, lead, orgId, onSaved, onConv
   const [generatedText, setGeneratedText] = useState<any>(null)
   const [emailSending, setEmailSending] = useState(false)
   const [emailSent, setEmailSent] = useState(false)
+  const [emailError, setEmailError] = useState("")
 
   useEffect(() => {
     if (open && lead) {
@@ -254,7 +255,6 @@ export function LeadItemModal({ open, onOpenChange, lead, orgId, onSaved, onConv
   }
 
   // Send generated email
-  const [emailError, setEmailError] = useState("")
   const sendGeneratedEmail = async () => {
     if (!generatedText || !currentLead.email) return
     setEmailSending(true)
