@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Select } from "@/components/ui/select"
-import { Plus, Search } from "lucide-react"
+import { Plus, Search, ChevronRight } from "lucide-react"
+import { useRouter } from "next/navigation"
 
 interface Ticket {
   id: string
@@ -26,6 +27,7 @@ const statusColors: Record<string, "default" | "secondary" | "destructive" | "ou
 
 export default function PortalTicketsPage() {
   const [tickets, setTickets] = useState<Ticket[]>([])
+  const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [search, setSearch] = useState("")
@@ -39,11 +41,17 @@ export default function PortalTicketsPage() {
     try {
       const res = await fetch("/api/v1/public/portal-tickets")
       const json = await res.json()
-      if (json.success) setTickets(json.data.tickets || [])
+      if (json.success) setTickets(json.data.tickets || json.data || [])
     } catch {} finally { setLoading(false) }
   }
 
   useEffect(() => { fetchTickets() }, [])
+
+  // Poll for updates every 20 seconds
+  useEffect(() => {
+    const interval = setInterval(fetchTickets, 20000)
+    return () => clearInterval(interval)
+  }, [])
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -139,7 +147,7 @@ export default function PortalTicketsPage() {
           </Card>
         ) : (
           filtered.map(ticket => (
-            <Card key={ticket.id} className="hover:bg-muted/30 transition-colors">
+            <Card key={ticket.id} className="hover:bg-muted/30 transition-colors cursor-pointer" onClick={() => router.push(`/portal/tickets/${ticket.id}`)}>
               <CardContent className="py-4">
                 <div className="flex items-center justify-between">
                   <div>
@@ -153,6 +161,7 @@ export default function PortalTicketsPage() {
                       {ticket.category ? ` · ${ticket.category}` : ""}
                     </p>
                   </div>
+                  <ChevronRight className="h-5 w-5 text-muted-foreground" />
                 </div>
               </CardContent>
             </Card>

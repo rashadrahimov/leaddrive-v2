@@ -10,6 +10,7 @@ const createTicketSchema = z.object({
   category: z.enum(["general", "technical", "billing", "feature_request"]).optional(),
   contactId: z.string().optional(),
   companyId: z.string().optional(),
+  assignedTo: z.string().optional(),
 })
 
 export async function GET(req: NextRequest) {
@@ -27,7 +28,7 @@ export async function GET(req: NextRequest) {
       ...(status ? { status } : {}),
     }
 
-    const [tickets, total] = await Promise.all([
+    const [rawTickets, total] = await Promise.all([
       prisma.ticket.findMany({
         where,
         skip: (page - 1) * limit,
@@ -37,8 +38,31 @@ export async function GET(req: NextRequest) {
       prisma.ticket.count({ where }),
     ])
 
+    // Resolve company names and assignee names
+    const companyIds = [...new Set(rawTickets.map(t => t.companyId).filter(Boolean))] as string[]
+    const userIds = [...new Set(rawTickets.map(t => t.assignedTo).filter(Boolean))] as string[]
+
+    const [companies, users] = await Promise.all([
+      companyIds.length > 0
+        ? prisma.company.findMany({ where: { id: { in: companyIds } }, select: { id: true, name: true } })
+        : Promise.resolve([]),
+      userIds.length > 0
+        ? prisma.user.findMany({ where: { id: { in: userIds } }, select: { id: true, name: true, email: true } })
+        : Promise.resolve([]),
+    ])
+
+    const companyMap = Object.fromEntries(companies.map(c => [c.id, c.name]))
+    const userMap = Object.fromEntries(users.map(u => [u.id, u.name || u.email]))
+
+    const tickets = rawTickets.map(t => ({
+      ...t,
+      companyName: t.companyId ? companyMap[t.companyId] || null : null,
+      assigneeName: t.assignedTo ? userMap[t.assignedTo] || null : null,
+    }))
+
     return NextResponse.json({ success: true, data: { tickets, total, page, limit } })
-  } catch {
+  } catch (e) {
+    console.error("Tickets GET error:", e)
     return NextResponse.json({ success: true, data: { tickets: [], total: 0, page, limit } })
   }
 }
@@ -54,16 +78,28 @@ export async function POST(req: NextRequest) {
     // Auto-generate ticket number
     const ticketNumber = `TK-${String(Date.now()).slice(-4).padStart(4, "0")}`
 
+    // Calculate SLA due date from SLA policy
+    const priority = parsed.data.priority || "medium"
+    let slaDueAt: Date | undefined
+    const slaPolicy = await prisma.slaPolicy.findFirst({
+      where: { organizationId: orgId, priority, isActive: true },
+    })
+    if (slaPolicy) {
+      slaDueAt = new Date(Date.now() + slaPolicy.resolutionHours * 3600000)
+    }
+
     const ticket = await prisma.ticket.create({
       data: {
         organizationId: orgId,
         ticketNumber,
         subject: parsed.data.subject,
         description: parsed.data.description,
-        priority: parsed.data.priority || "medium",
+        priority,
         category: parsed.data.category || "general",
         contactId: parsed.data.contactId,
         companyId: parsed.data.companyId,
+        assignedTo: parsed.data.assignedTo,
+        ...(slaDueAt ? { slaDueAt } : {}),
       },
     })
     return NextResponse.json({ success: true, data: ticket }, { status: 201 })

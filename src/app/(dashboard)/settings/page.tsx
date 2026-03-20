@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { ChevronRight, CreditCard, Users, Radio, Zap, Layers, Globe, Lock, FileText } from "lucide-react"
+import { ChevronRight, CreditCard, Users, Radio, Zap, Layers, Globe, Lock, FileText, Clock } from "lucide-react"
 
 const SETTINGS_SECTIONS = [
   {
@@ -41,6 +41,12 @@ const SETTINGS_SECTIONS = [
     title: "Currencies",
     description: "Manage supported currencies",
     href: "/settings/currencies",
+  },
+  {
+    icon: Clock,
+    title: "SLA Policies",
+    description: "Response and resolution time targets",
+    href: "/settings/sla-policies",
   },
   {
     icon: Lock,

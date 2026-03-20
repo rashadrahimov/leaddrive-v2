@@ -37,7 +37,8 @@ const statusLabels: Record<string, string> = {
   new: "New", in_progress: "In Progress", waiting: "Waiting", resolved: "Resolved", closed: "Closed",
 }
 
-function isSlaBreached(slaDueAt: string): boolean {
+function isSlaBreached(slaDueAt: string | null): boolean {
+  if (!slaDueAt) return false
   return new Date(slaDueAt) < new Date()
 }
 
@@ -71,6 +72,12 @@ export default function TicketsPage() {
 
   useEffect(() => {
     fetchTickets()
+  }, [session])
+
+  // Poll for new tickets every 20 seconds
+  useEffect(() => {
+    const interval = setInterval(fetchTickets, 20000)
+    return () => clearInterval(interval)
   }, [session])
 
   function handleEdit(item: TicketData) {
@@ -112,7 +119,7 @@ export default function TicketsPage() {
         </span>
       ),
     },
-    { key: "company", label: "Company", sortable: true },
+    { key: "companyName", label: "Company", sortable: true, render: (item: any) => <span>{item.companyName || "—"}</span> },
     {
       key: "status", label: "Status", sortable: true,
       render: (item: any) => <Badge variant="outline">{statusLabels[item.status]}</Badge>,
@@ -120,17 +127,18 @@ export default function TicketsPage() {
     {
       key: "slaDueAt", label: "SLA", sortable: true,
       render: (item: any) => {
+        if (!item.slaDueAt) return <span className="text-xs text-muted-foreground">—</span>
         const breached = isSlaBreached(item.slaDueAt) && !["resolved", "closed"].includes(item.status)
         return (
           <div className={cn("flex items-center gap-1 text-xs", breached && "text-red-500 font-medium")}>
             {breached && <AlertTriangle className="h-3 w-3" />}
             <Clock className="h-3 w-3" />
-            {new Date(item.slaDueAt).toLocaleDateString()}
+            {new Date(item.slaDueAt).toLocaleDateString("ru-RU")}
           </div>
         )
       },
     },
-    { key: "assignedTo", label: "Assigned", sortable: true },
+    { key: "assigneeName", label: "Assigned", sortable: true, render: (item: any) => <span>{item.assigneeName || "—"}</span> },
     {
       key: "actions",
       label: "",
@@ -215,7 +223,7 @@ export default function TicketsPage() {
                       <span className={cn("px-1.5 py-0.5 rounded text-[10px] font-medium", priorityColors[ticket.priority])}>{ticket.priority}</span>
                     </div>
                     <div className="text-sm font-medium mb-1">{ticket.subject}</div>
-                    <div className="text-xs text-muted-foreground">{ticket.company}</div>
+                    <div className="text-xs text-muted-foreground">{(ticket as any).companyName || "—"}</div>
                   </div>
                 ))}
               </div>

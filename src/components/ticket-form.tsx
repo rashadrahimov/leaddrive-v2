@@ -16,6 +16,11 @@ interface TicketFormProps {
   orgId?: string
 }
 
+interface OptionItem {
+  id: string
+  label: string
+}
+
 export function TicketForm({ open, onOpenChange, onSaved, initialData, orgId }: TicketFormProps) {
   const isEdit = !!initialData?.id
   const [form, setForm] = useState({
@@ -24,9 +29,15 @@ export function TicketForm({ open, onOpenChange, onSaved, initialData, orgId }: 
     priority: initialData?.priority || "medium",
     category: initialData?.category || "general",
     status: initialData?.status || "new",
+    contactId: initialData?.contactId || "",
+    companyId: initialData?.companyId || "",
+    assignedTo: initialData?.assignedTo || "",
   })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState("")
+  const [companies, setCompanies] = useState<OptionItem[]>([])
+  const [contacts, setContacts] = useState<OptionItem[]>([])
+  const [users, setUsers] = useState<OptionItem[]>([])
 
   useEffect(() => {
     if (open) {
@@ -36,10 +47,40 @@ export function TicketForm({ open, onOpenChange, onSaved, initialData, orgId }: 
         priority: initialData?.priority || "medium",
         category: initialData?.category || "general",
         status: initialData?.status || "new",
+        contactId: initialData?.contactId || "",
+        companyId: initialData?.companyId || "",
+        assignedTo: initialData?.assignedTo || "",
       })
       setError("")
+      loadOptions()
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, initialData])
+
+  const loadOptions = async () => {
+    const headers: Record<string, string> = { "Content-Type": "application/json" }
+    if (orgId) headers["x-organization-id"] = orgId
+
+    try {
+      const [companiesRes, contactsRes, usersRes] = await Promise.all([
+        fetch("/api/v1/companies?limit=200", { headers }).then(r => r.json()).catch(() => ({ data: { companies: [] } })),
+        fetch("/api/v1/contacts?limit=200", { headers }).then(r => r.json()).catch(() => ({ data: { contacts: [] } })),
+        fetch("/api/v1/users", { headers }).then(r => r.json()).catch(() => ({ data: [] })),
+      ])
+
+      setCompanies(
+        (companiesRes.data?.companies || companiesRes.data || []).map((c: any) => ({ id: c.id, label: c.name }))
+      )
+      setContacts(
+        (contactsRes.data?.contacts || contactsRes.data || []).map((c: any) => ({ id: c.id, label: c.fullName || c.email }))
+      )
+      setUsers(
+        (usersRes.data || []).map((u: any) => ({ id: u.id, label: u.name || u.fullName || u.email }))
+      )
+    } catch {
+      // Ignore — dropdowns will just be empty
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -47,10 +88,21 @@ export function TicketForm({ open, onOpenChange, onSaved, initialData, orgId }: 
     setError("")
     try {
       const url = isEdit ? `/api/v1/tickets/${initialData!.id}` : "/api/v1/tickets"
+      const payload: Record<string, any> = {
+        subject: form.subject,
+        description: form.description,
+        priority: form.priority,
+        category: form.category,
+      }
+      if (isEdit) payload.status = form.status
+      if (form.contactId) payload.contactId = form.contactId
+      if (form.companyId) payload.companyId = form.companyId
+      if (form.assignedTo) payload.assignedTo = form.assignedTo
+
       const res = await fetch(url, {
         method: isEdit ? "PUT" : "POST",
         headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": orgId } : {}) },
-        body: JSON.stringify(form),
+        body: JSON.stringify(payload),
       })
       if (!res.ok) throw new Error((await res.json()).error || "Failed")
       onSaved()
@@ -75,6 +127,29 @@ export function TicketForm({ open, onOpenChange, onSaved, initialData, orgId }: 
             {isEdit && (
               <div><Label>Status</Label><Select value={form.status} onChange={e => u("status", e.target.value)}><option value="new">New</option><option value="in_progress">In Progress</option><option value="waiting">Waiting</option><option value="resolved">Resolved</option><option value="closed">Closed</option></Select></div>
             )}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>Company</Label>
+                <Select value={form.companyId} onChange={e => u("companyId", e.target.value)}>
+                  <option value="">— None —</option>
+                  {companies.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
+                </Select>
+              </div>
+              <div>
+                <Label>Contact</Label>
+                <Select value={form.contactId} onChange={e => u("contactId", e.target.value)}>
+                  <option value="">— None —</option>
+                  {contacts.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
+                </Select>
+              </div>
+            </div>
+            <div>
+              <Label>Assigned To</Label>
+              <Select value={form.assignedTo} onChange={e => u("assignedTo", e.target.value)}>
+                <option value="">— Unassigned —</option>
+                {users.map(u => <option key={u.id} value={u.id}>{u.label}</option>)}
+              </Select>
+            </div>
             <div><Label>Description</Label><Textarea value={form.description} onChange={e => u("description", e.target.value)} rows={4} /></div>
           </div>
         </DialogContent>

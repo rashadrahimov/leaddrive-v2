@@ -34,8 +34,12 @@ export default auth((req) => {
   const session = req.auth as any
   const orgId = session?.user?.organizationId
   const role = session?.user?.role
+  const userId = session?.user?.id
   if (orgId) {
     headers.set("x-organization-id", String(orgId))
+  }
+  if (userId) {
+    headers.set("x-user-id", String(userId))
   }
   if (role) {
     headers.set("x-user-role", String(role))
