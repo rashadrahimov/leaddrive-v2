@@ -10,7 +10,8 @@ import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { Dialog, DialogHeader, DialogTitle, DialogContent } from "@/components/ui/dialog"
-import { Building2, Users, FileText, X, Copy, Send, RefreshCw, CheckCircle, Trash2, Ban, Plus, Pencil } from "lucide-react"
+import { Building2, Users, FileText, X, Copy, Send, RefreshCw, CheckCircle, Trash2, Ban, Plus, Pencil, Brain, Sparkles, Target } from "lucide-react"
+import { cn } from "@/lib/utils"
 
 interface LeadCompany {
   id: string
@@ -50,6 +51,14 @@ const statusColors: Record<string, string> = {
   converted: "bg-green-500", rejected: "bg-gray-400", cancelled: "bg-red-500",
 }
 
+function getGrade(score: number): { letter: string; color: string } {
+  if (score >= 80) return { letter: "A", color: "bg-green-500 text-white" }
+  if (score >= 60) return { letter: "B", color: "bg-blue-500 text-white" }
+  if (score >= 40) return { letter: "C", color: "bg-yellow-500 text-white" }
+  if (score >= 20) return { letter: "D", color: "bg-orange-500 text-white" }
+  return { letter: "F", color: "bg-red-500 text-white" }
+}
+
 export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }: LeadDetailModalProps) {
   const router = useRouter()
   const [activeTab, setActiveTab] = useState("details")
@@ -80,6 +89,8 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
   const [generatedText, setGeneratedText] = useState<any>(null)
   const [emailSending, setEmailSending] = useState(false)
   const [emailSent, setEmailSent] = useState(false)
+  const [emailError, setEmailError] = useState("")
+  const [scoring, setScoring] = useState(false)
   const [activities, setActivities] = useState<any[]>([])
 
   // Full company data loaded from API
@@ -94,6 +105,7 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
       setInstructions("")
       setAboutText(company.description || "")
       setEmailSent(false)
+      setEmailError("")
       setFullData(null)
       setShowAllContacts(false)
       // Load full company data with contacts and deals
@@ -196,8 +208,9 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
     const firstContact = (fullData?.contacts || company.contacts)?.[0]
     if (!firstContact?.email) { alert("Нет email контакта для отправки"); return }
     setEmailSending(true)
+    setEmailError("")
     try {
-      await fetch("/api/v1/inbox", {
+      const res = await fetch("/api/v1/inbox", {
         method: "POST",
         headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": orgId } : {}) },
         body: JSON.stringify({
@@ -207,9 +220,19 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
           contactId: firstContact.id,
         }),
       })
-      setEmailSent(true)
-    } catch {} finally { setEmailSending(false) }
+      const json = await res.json()
+      if (json.success) {
+        setEmailSent(true)
+      } else {
+        setEmailError(json.error || "Ошибка отправки")
+      }
+    } catch { setEmailError("Ошибка сети") } finally { setEmailSending(false) }
   }
+
+  const currentScore = fullData?.leadScore ?? company.leadScore ?? 0
+  const temp = fullData?.leadTemperature || company.leadTemperature || "cold"
+  const grade = getGrade(currentScore)
+  const convProb = Math.round(currentScore * 0.85)
 
   const tabs = [
     { id: "details", label: "Детали" },
@@ -217,6 +240,7 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
     { id: "sentiment", label: "🐷 Sentiment" },
     { id: "tasks", label: "⚡ Tasks" },
     { id: "aitext", label: "✉️ AI Text" },
+    { id: "ai", label: "AI Скоринг" },
   ]
 
   return (
@@ -651,8 +675,87 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
                     <RefreshCw className="h-3 w-3" /> Пересоздать
                   </Button>
                 </div>
+                {emailError && (
+                  <p className="text-sm text-red-500 text-center">{emailError}</p>
+                )}
               </div>
             )}
+          </div>
+        )}
+
+        {/* Tab: AI Scoring */}
+        {activeTab === "ai" && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h4 className="font-medium text-sm flex items-center gap-1.5">
+                <Brain className="h-4 w-4 text-purple-500" /> AI Скоринг
+              </h4>
+              <Button size="sm" variant="outline" className="gap-1 text-xs" onClick={async () => {
+                setScoring(true)
+                try {
+                  const d = await callAI("sentiment")
+                  if (d) {
+                    await updateField({ leadScore: d.score })
+                  }
+                } catch {} finally { setScoring(false) }
+              }} disabled={scoring}>
+                {scoring ? "Анализ..." : "Пересчитать с AI"}
+              </Button>
+            </div>
+
+            {/* Score display */}
+            <div className="flex items-center gap-6 justify-center py-4">
+              <div className="text-center">
+                <span className={cn("inline-flex items-center justify-center w-16 h-16 rounded-full text-2xl font-bold shadow-sm", grade.color)}>
+                  {grade.letter}
+                </span>
+                <p className="text-sm font-bold mt-2">{currentScore}/100</p>
+                <p className="text-[10px] text-muted-foreground">Score</p>
+              </div>
+              <div className="text-center">
+                <div className={cn("text-2xl font-bold", temp === "hot" ? "text-red-500" : temp === "warm" ? "text-orange-500" : "text-blue-500")}>
+                  {(temp || "cold").toUpperCase()}
+                </div>
+                <p className="text-[10px] text-muted-foreground mt-1">Температура</p>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-primary">{convProb}%</div>
+                <p className="text-[10px] text-muted-foreground mt-1">Конверсия</p>
+              </div>
+            </div>
+
+            {/* Score bar */}
+            <div className="p-3 bg-muted/30 rounded-lg">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-xs text-muted-foreground">AI Score</span>
+                <span className="text-xs font-bold">{currentScore}/100</span>
+              </div>
+              <div className="h-2 bg-muted rounded-full overflow-hidden">
+                <div
+                  className={cn("h-full rounded-full transition-all", currentScore >= 80 ? "bg-green-500" : currentScore >= 60 ? "bg-blue-500" : currentScore >= 40 ? "bg-yellow-500" : "bg-red-500")}
+                  style={{ width: `${currentScore}%` }}
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-3 gap-3 text-center">
+              <Card><CardContent className="pt-4 pb-4">
+                <div className={cn("text-3xl font-bold", grade.color.replace("bg-", "text-").replace(" text-white", ""))}>
+                  {grade.letter}
+                </div>
+                <div className="text-xs text-muted-foreground mt-1">Грейд</div>
+              </CardContent></Card>
+              <Card><CardContent className="pt-4 pb-4">
+                <div className="text-3xl font-bold text-primary">{currentScore}</div>
+                <div className="text-xs text-muted-foreground mt-1">Балл</div>
+              </CardContent></Card>
+              <Card><CardContent className="pt-4 pb-4">
+                <div className={cn("text-3xl font-bold", convProb >= 50 ? "text-green-600" : convProb >= 30 ? "text-yellow-600" : "text-red-500")}>
+                  {convProb}%
+                </div>
+                <div className="text-xs text-muted-foreground mt-1">Вероятность</div>
+              </CardContent></Card>
+            </div>
           </div>
         )}
 
