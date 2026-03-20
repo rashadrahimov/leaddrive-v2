@@ -221,10 +221,10 @@ export default function LeadsPage() {
               <th className="px-4 py-3 text-left font-medium text-muted-foreground">Лид</th>
               <th className="px-4 py-3 text-left font-medium text-muted-foreground">Компания</th>
               <th className="px-4 py-3 text-left font-medium text-muted-foreground">Контакты</th>
+              <th className="px-4 py-3 text-left font-medium text-muted-foreground min-w-[180px]">AI Прогноз</th>
               <th className="px-4 py-3 text-left font-medium text-muted-foreground">Источник</th>
               <th className="px-4 py-3 text-left font-medium text-muted-foreground">Статус</th>
               <th className="px-4 py-3 text-left font-medium text-muted-foreground">Приоритет</th>
-              <th className="px-4 py-3 text-left font-medium text-muted-foreground min-w-[180px]">AI Прогноз</th>
               <th className="px-4 py-3 text-left font-medium text-muted-foreground">Действия</th>
             </tr>
           </thead>
@@ -274,6 +274,16 @@ export default function LeadsPage() {
                       {!lead.email && !lead.phone && <span className="text-muted-foreground">—</span>}
                     </div>
                   </td>
+                  <td className="px-4 py-3 text-xs text-muted-foreground max-w-[200px]">
+                    {reasoning ? (
+                      <span className="flex items-start gap-1">
+                        <Sparkles className="h-3 w-3 text-purple-500 shrink-0 mt-0.5" />
+                        <span className="line-clamp-3">{reasoning}</span>
+                      </span>
+                    ) : (
+                      lead.lastScoredAt ? "Rule-based" : "—"
+                    )}
+                  </td>
                   <td className="px-4 py-3 text-muted-foreground">
                     {lead.source ? sourceLabels[lead.source] || lead.source : "—"}
                   </td>
@@ -286,16 +296,6 @@ export default function LeadsPage() {
                     <span className={cn("text-xs font-medium", priorityColors[lead.priority] || "text-gray-500")}>
                       {priorityLabels[lead.priority] || lead.priority}
                     </span>
-                  </td>
-                  <td className="px-4 py-3 text-xs text-muted-foreground max-w-[200px]">
-                    {reasoning ? (
-                      <span className="flex items-start gap-1">
-                        <Sparkles className="h-3 w-3 text-purple-500 shrink-0 mt-0.5" />
-                        <span className="line-clamp-3">{reasoning}</span>
-                      </span>
-                    ) : (
-                      lead.lastScoredAt ? "Rule-based" : "—"
-                    )}
                   </td>
                   <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
                     <div className="flex items-center gap-1">
