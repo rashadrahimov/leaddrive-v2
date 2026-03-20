@@ -3,35 +3,43 @@ import { prisma } from "@/lib/prisma"
 import { createPortalToken } from "@/lib/portal-auth"
 import bcrypt from "bcryptjs"
 
-// POST /api/v1/public/portal-auth — login with email + password
+// POST /api/v1/public/portal-auth/register — register portal account
 export async function POST(req: NextRequest) {
-  const { email, password } = await req.json()
+  const { email, password, confirmPassword } = await req.json()
+
   if (!email) return NextResponse.json({ error: "Email обязателен" }, { status: 400 })
-  if (!password) return NextResponse.json({ error: "Пароль обязателен" }, { status: 400 })
+  if (!password || password.length < 6) {
+    return NextResponse.json({ error: "Пароль должен быть не менее 6 символов" }, { status: 400 })
+  }
+  if (password !== confirmPassword) {
+    return NextResponse.json({ error: "Пароли не совпадают" }, { status: 400 })
+  }
 
   const contact = await prisma.contact.findFirst({
     where: { email },
     include: { company: true },
   })
-  if (!contact) return NextResponse.json({ error: "Контакт не найден" }, { status: 404 })
+
+  if (!contact) {
+    return NextResponse.json({ error: "Контакт с таким email не найден. Обратитесь к администратору." }, { status: 404 })
+  }
 
   if (!contact.portalAccessEnabled) {
-    return NextResponse.json({ error: "Доступ к порталу не активирован. Обратитесь к администратору." }, { status: 403 })
+    return NextResponse.json({ error: "Доступ к порталу не активирован для вашего аккаунта. Обратитесь к администратору." }, { status: 403 })
   }
 
-  if (!contact.portalPasswordHash) {
-    return NextResponse.json({ error: "Аккаунт не зарегистрирован. Пройдите регистрацию." }, { status: 403 })
+  if (contact.portalPasswordHash) {
+    return NextResponse.json({ error: "Аккаунт уже зарегистрирован. Войдите через страницу входа." }, { status: 409 })
   }
 
-  const valid = await bcrypt.compare(password, contact.portalPasswordHash)
-  if (!valid) {
-    return NextResponse.json({ error: "Неверный пароль" }, { status: 401 })
-  }
+  const hash = await bcrypt.hash(password, 12)
 
-  // Update last login
   await prisma.contact.update({
     where: { id: contact.id },
-    data: { portalLastLoginAt: new Date() },
+    data: {
+      portalPasswordHash: hash,
+      portalLastLoginAt: new Date(),
+    },
   })
 
   // Audit log
@@ -39,15 +47,16 @@ export async function POST(req: NextRequest) {
     await prisma.auditLog.create({
       data: {
         organizationId: contact.organizationId,
-        action: "portal_login",
+        action: "portal_register",
         entityType: "contact",
         entityId: contact.id,
         entityName: contact.fullName,
         details: { ip: req.headers.get("x-forwarded-for") || "unknown" },
       },
     })
-  } catch { /* audit log is non-critical */ }
+  } catch { /* non-critical */ }
 
+  // Auto-login after registration
   const portalUser = {
     contactId: contact.id,
     organizationId: contact.organizationId,
@@ -68,12 +77,5 @@ export async function POST(req: NextRequest) {
     },
   })
   res.cookies.set("portal-token", token, { httpOnly: true, path: "/", maxAge: 86400 * 7, sameSite: "lax" })
-  return res
-}
-
-// DELETE /api/v1/public/portal-auth — logout
-export async function DELETE() {
-  const res = NextResponse.json({ success: true })
-  res.cookies.set("portal-token", "", { httpOnly: true, path: "/", maxAge: 0 })
   return res
 }

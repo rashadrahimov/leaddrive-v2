@@ -1,4 +1,5 @@
 import { cookies } from "next/headers"
+import { SignJWT, jwtVerify } from "jose"
 
 export interface PortalUser {
   contactId: string
@@ -8,12 +9,29 @@ export interface PortalUser {
   email: string
 }
 
+const SECRET = new TextEncoder().encode(process.env.NEXTAUTH_SECRET || "portal-secret")
+
+export async function createPortalToken(user: PortalUser): Promise<string> {
+  return new SignJWT({ ...user })
+    .setProtectedHeader({ alg: "HS256" })
+    .setExpirationTime("7d")
+    .setIssuedAt()
+    .sign(SECRET)
+}
+
 export async function getPortalUser(): Promise<PortalUser | null> {
   const cookieStore = await cookies()
   const token = cookieStore.get("portal-token")?.value
   if (!token) return null
   try {
-    return JSON.parse(Buffer.from(token, "base64").toString("utf-8"))
+    const { payload } = await jwtVerify(token, SECRET)
+    return {
+      contactId: payload.contactId as string,
+      organizationId: payload.organizationId as string,
+      companyId: (payload.companyId as string) || null,
+      fullName: payload.fullName as string,
+      email: payload.email as string,
+    }
   } catch {
     return null
   }
