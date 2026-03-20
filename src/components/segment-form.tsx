@@ -1,13 +1,15 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select } from "@/components/ui/select"
+import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogHeader, DialogTitle, DialogContent, DialogFooter } from "@/components/ui/dialog"
-import { X, Eye, Building2, LinkIcon, UserCircle, Tag, Calendar, Type, Mail, Phone } from "lucide-react"
+import { X, Eye, Building2, LinkIcon, UserCircle, Tag, Calendar, Type, Mail, Phone, Zap, Archive, Loader2, Users, Check } from "lucide-react"
+import { cn } from "@/lib/utils"
 
 interface SegmentConditions {
   company: string
@@ -95,6 +97,20 @@ export function SegmentForm({ open, onOpenChange, onSaved, initialData, orgId }:
     setPreviewCount(null)
   }
 
+  const activeConditionsCount = useMemo(() => {
+    let count = 0
+    if (conditions.company.trim()) count++
+    if (conditions.source) count++
+    if (conditions.role.trim()) count++
+    if (conditions.tag.trim()) count++
+    if (conditions.createdAfter) count++
+    if (conditions.createdBefore) count++
+    if (conditions.name.trim()) count++
+    if (conditions.hasEmail) count++
+    if (conditions.hasPhone) count++
+    return count
+  }, [conditions])
+
   const getCleanConditions = () => {
     const clean: any = {}
     if (conditions.company.trim()) clean.company = conditions.company.trim()
@@ -162,222 +178,322 @@ export function SegmentForm({ open, onOpenChange, onSaved, initialData, orgId }:
     }
   }
 
+  const clearCondition = (key: keyof SegmentConditions) => {
+    if (typeof conditions[key] === "boolean") {
+      updateCond(key, false)
+    } else {
+      updateCond(key, "")
+    }
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogHeader>
         <div className="flex items-center justify-between">
-          <DialogTitle>{isEdit ? "Редактировать сегмент" : "Новый сегмент"}</DialogTitle>
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/30">
+              <Users className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+            </div>
+            <div>
+              <DialogTitle>{isEdit ? "Редактировать сегмент" : "Новый сегмент"}</DialogTitle>
+              <p className="text-sm text-muted-foreground mt-0.5">Настройте фильтры для группировки контактов</p>
+            </div>
+          </div>
           <button
             type="button"
             onClick={() => onOpenChange(false)}
-            className="p-1 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+            className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
           >
             <X className="h-5 w-5" />
           </button>
         </div>
-        <p className="text-sm text-muted-foreground">Задайте условия фильтрации контактов</p>
       </DialogHeader>
       <form onSubmit={handleSubmit}>
         <DialogContent className="max-h-[70vh] overflow-y-auto">
-          {error && <div className="text-sm text-red-500 bg-red-50 dark:bg-red-900/20 p-2 rounded mb-3">{error}</div>}
-          <div className="grid gap-4">
-            {/* Name */}
-            <div>
-              <Label className="text-xs uppercase text-muted-foreground">Название *</Label>
+          {error && <div className="text-sm text-red-500 bg-red-50 dark:bg-red-900/20 p-3 rounded-lg mb-4">{error}</div>}
+
+          <div className="space-y-5">
+            {/* Basic info */}
+            <div className="space-y-3">
               <Input
                 value={name}
                 onChange={e => setName(e.target.value)}
-                placeholder='напр. «VIP клиенты» или «IT лиды»'
+                placeholder="Название сегмента *"
+                className="text-base font-medium h-11"
                 required
               />
-            </div>
-
-            {/* Description */}
-            <div>
-              <Label className="text-xs uppercase text-muted-foreground">Описание</Label>
               <Textarea
                 value={description}
                 onChange={e => setDescription(e.target.value)}
-                placeholder="Необязательное описание для чего нужен этот сегмент"
+                placeholder="Описание (необязательно)"
                 rows={2}
+                className="resize-none"
               />
             </div>
 
-            {/* Type toggle */}
-            <div className="flex items-center gap-3">
-              <input
-                id="isDynamic"
-                type="checkbox"
-                checked={isDynamic}
-                onChange={e => setIsDynamic(e.target.checked)}
-                className="h-4 w-4 rounded border-gray-300"
-              />
-              <Label htmlFor="isDynamic" className="text-sm">
-                Динамический сегмент
-                <span className="text-xs text-muted-foreground ml-1">(автоматически обновляется)</span>
-              </Label>
+            {/* Type toggle — styled as pill switcher */}
+            <div className="flex items-center gap-2 p-1 bg-muted rounded-lg w-fit">
+              <button
+                type="button"
+                onClick={() => setIsDynamic(true)}
+                className={cn(
+                  "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all",
+                  isDynamic
+                    ? "bg-background shadow-sm text-green-700 dark:text-green-400"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <Zap className="h-3.5 w-3.5" />
+                Динамический
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsDynamic(false)}
+                className={cn(
+                  "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all",
+                  !isDynamic
+                    ? "bg-background shadow-sm text-foreground"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <Archive className="h-3.5 w-3.5" />
+                Статический
+              </button>
             </div>
 
-            {/* Conditions builder */}
-            <div className="rounded-lg bg-purple-50/50 dark:bg-purple-950/20 border border-purple-200/50 dark:border-purple-800/30">
-              <div className="px-4 py-3 border-b border-purple-200/50 dark:border-purple-800/30">
-                <h3 className="font-semibold text-sm flex items-center gap-2">
-                  <span className="p-1 bg-purple-100 dark:bg-purple-900/30 rounded">
-                    <svg className="h-4 w-4 text-purple-600 dark:text-purple-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/></svg>
-                  </span>
-                  Условия
+            {/* Conditions */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-semibold flex items-center gap-2">
+                  Фильтры
+                  {activeConditionsCount > 0 && (
+                    <Badge variant="default" className="h-5 min-w-[20px] justify-center text-[11px] px-1.5">
+                      {activeConditionsCount}
+                    </Badge>
+                  )}
                 </h3>
-                <p className="text-xs text-muted-foreground mt-0.5">Все условия объединяются логикой И</p>
+                {activeConditionsCount > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setConditions(emptyConditions)}
+                    className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    Сбросить все
+                  </button>
+                )}
               </div>
-              <div className="p-4 grid gap-4">
+
+              {/* Active conditions chips */}
+              {activeConditionsCount > 0 && (
+                <div className="flex flex-wrap gap-1.5">
+                  {conditions.company.trim() && (
+                    <ConditionChip label={`Компания: ${conditions.company}`} onRemove={() => clearCondition("company")} />
+                  )}
+                  {conditions.source && (
+                    <ConditionChip label={`Источник: ${sourceOptions.find(o => o.value === conditions.source)?.label}`} onRemove={() => clearCondition("source")} />
+                  )}
+                  {conditions.role.trim() && (
+                    <ConditionChip label={`Роль: ${conditions.role}`} onRemove={() => clearCondition("role")} />
+                  )}
+                  {conditions.tag.trim() && (
+                    <ConditionChip label={`Тег: ${conditions.tag}`} onRemove={() => clearCondition("tag")} />
+                  )}
+                  {conditions.name.trim() && (
+                    <ConditionChip label={`Имя: ${conditions.name}`} onRemove={() => clearCondition("name")} />
+                  )}
+                  {conditions.createdAfter && (
+                    <ConditionChip label={`После: ${conditions.createdAfter}`} onRemove={() => clearCondition("createdAfter")} />
+                  )}
+                  {conditions.createdBefore && (
+                    <ConditionChip label={`До: ${conditions.createdBefore}`} onRemove={() => clearCondition("createdBefore")} />
+                  )}
+                  {conditions.hasEmail && (
+                    <ConditionChip label="Есть Email" onRemove={() => clearCondition("hasEmail")} />
+                  )}
+                  {conditions.hasPhone && (
+                    <ConditionChip label="Есть Телефон" onRemove={() => clearCondition("hasPhone")} />
+                  )}
+                </div>
+              )}
+
+              {/* Filter grid */}
+              <div className="rounded-lg border bg-muted/30 p-4 space-y-4">
                 {/* Row 1: Company + Source */}
                 <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <Label className="text-xs text-muted-foreground flex items-center gap-1">
-                      <Building2 className="h-3 w-3" /> Компания
-                    </Label>
+                  <FilterField icon={Building2} label="Компания">
                     <Input
                       value={conditions.company}
                       onChange={e => updateCond("company", e.target.value)}
                       placeholder="Содержит..."
+                      className="h-9"
                     />
-                    <p className="text-[10px] text-muted-foreground mt-0.5">Частичное совпадение</p>
-                  </div>
-                  <div>
-                    <Label className="text-xs text-muted-foreground flex items-center gap-1">
-                      <LinkIcon className="h-3 w-3" /> Источник
-                    </Label>
+                  </FilterField>
+                  <FilterField icon={LinkIcon} label="Источник">
                     <Select
                       value={conditions.source}
                       onChange={e => updateCond("source", e.target.value)}
+                      className="h-9"
                     >
                       {sourceOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                     </Select>
-                    <p className="text-[10px] text-muted-foreground mt-0.5">Откуда пришёл контакт?</p>
-                  </div>
+                  </FilterField>
                 </div>
 
                 {/* Row 2: Role + Tag */}
                 <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <Label className="text-xs text-muted-foreground flex items-center gap-1">
-                      <UserCircle className="h-3 w-3" /> Роль
-                    </Label>
+                  <FilterField icon={UserCircle} label="Должность">
                     <Input
                       value={conditions.role}
                       onChange={e => updateCond("role", e.target.value)}
-                      placeholder="Содержит..."
+                      placeholder="CEO, Менеджер..."
+                      className="h-9"
                     />
-                    <p className="text-[10px] text-muted-foreground mt-0.5">напр. «CEO», «Менеджер»</p>
-                  </div>
-                  <div>
-                    <Label className="text-xs text-muted-foreground flex items-center gap-1">
-                      <Tag className="h-3 w-3" /> Тег
-                    </Label>
+                  </FilterField>
+                  <FilterField icon={Tag} label="Тег">
                     <Input
                       value={conditions.tag}
                       onChange={e => updateCond("tag", e.target.value)}
-                      placeholder="Имя тега"
+                      placeholder="Имя тега..."
+                      className="h-9"
                     />
-                    <p className="text-[10px] text-muted-foreground mt-0.5">Контакты с этим тегом</p>
-                  </div>
+                  </FilterField>
                 </div>
 
-                {/* Row 3: Created dates */}
+                {/* Row 3: Name */}
+                <FilterField icon={Type} label="Имя контакта">
+                  <Input
+                    value={conditions.name}
+                    onChange={e => updateCond("name", e.target.value)}
+                    placeholder="Содержит..."
+                    className="h-9"
+                  />
+                </FilterField>
+
+                {/* Row 4: Dates */}
                 <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <Label className="text-xs text-muted-foreground flex items-center gap-1">
-                      <Calendar className="h-3 w-3" /> Создан после
-                    </Label>
+                  <FilterField icon={Calendar} label="Создан после">
                     <Input
                       type="date"
                       value={conditions.createdAfter}
                       onChange={e => updateCond("createdAfter", e.target.value)}
+                      className="h-9"
                     />
-                    <p className="text-[10px] text-muted-foreground mt-0.5">Контакты после этой даты</p>
-                  </div>
-                  <div>
-                    <Label className="text-xs text-muted-foreground flex items-center gap-1">
-                      <Calendar className="h-3 w-3" /> Создан до
-                    </Label>
+                  </FilterField>
+                  <FilterField icon={Calendar} label="Создан до">
                     <Input
                       type="date"
                       value={conditions.createdBefore}
                       onChange={e => updateCond("createdBefore", e.target.value)}
+                      className="h-9"
                     />
-                    <p className="text-[10px] text-muted-foreground mt-0.5">Контакты до этой даты</p>
-                  </div>
+                  </FilterField>
                 </div>
 
-                {/* Row 4: Name + checkboxes */}
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <Label className="text-xs text-muted-foreground flex items-center gap-1">
-                      <Type className="h-3 w-3" /> Имя
-                    </Label>
-                    <Input
-                      value={conditions.name}
-                      onChange={e => updateCond("name", e.target.value)}
-                      placeholder="Содержит..."
-                    />
-                    <p className="text-[10px] text-muted-foreground mt-0.5">По имени/фамилии контакта</p>
-                  </div>
-                  <div className="flex items-end gap-4 pb-1">
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={conditions.hasEmail}
-                        onChange={e => updateCond("hasEmail", e.target.checked)}
-                        className="h-4 w-4 rounded border-gray-300"
-                      />
-                      <span className="text-xs flex items-center gap-1">
-                        <Mail className="h-3 w-3" /> Есть Email
-                      </span>
-                    </label>
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={conditions.hasPhone}
-                        onChange={e => updateCond("hasPhone", e.target.checked)}
-                        className="h-4 w-4 rounded border-gray-300"
-                      />
-                      <span className="text-xs flex items-center gap-1">
-                        <Phone className="h-3 w-3" /> Есть Телефон
-                      </span>
-                    </label>
-                  </div>
+                {/* Row 5: Checkboxes */}
+                <div className="flex items-center gap-6 pt-1">
+                  <ToggleCheck
+                    checked={conditions.hasEmail}
+                    onChange={v => updateCond("hasEmail", v)}
+                    icon={Mail}
+                    label="Есть Email"
+                  />
+                  <ToggleCheck
+                    checked={conditions.hasPhone}
+                    onChange={v => updateCond("hasPhone", v)}
+                    icon={Phone}
+                    label="Есть Телефон"
+                  />
                 </div>
               </div>
             </div>
 
             {/* Preview result */}
             {previewCount !== null && (
-              <div className="rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 p-3 text-center">
-                <p className="text-sm">
-                  Найдено контактов: <span className="font-bold text-blue-700 dark:text-blue-300 text-lg">{previewCount.toLocaleString()}</span>
-                </p>
+              <div className="rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 p-4 flex items-center gap-3">
+                <div className="p-2 rounded-full bg-green-100 dark:bg-green-900/40">
+                  <Users className="h-5 w-5 text-green-600 dark:text-green-400" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-green-700 dark:text-green-300">{previewCount.toLocaleString()}</p>
+                  <p className="text-xs text-green-600 dark:text-green-400">контактов соответствует</p>
+                </div>
               </div>
             )}
           </div>
         </DialogContent>
-        <DialogFooter className="flex-wrap gap-2">
+        <DialogFooter>
           <Button
             type="button"
             variant="outline"
             onClick={handlePreview}
             disabled={previewing}
-            className="gap-1"
+            className="gap-1.5 mr-auto"
           >
-            <Eye className="h-4 w-4" />
-            {previewing ? "Загрузка..." : "Предпросмотр"}
+            {previewing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Eye className="h-4 w-4" />}
+            {previewing ? "Подсчёт..." : "Предпросмотр"}
           </Button>
-          <div className="flex-1" />
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Отмена</Button>
-          <Button type="submit" disabled={saving} className="min-w-[120px]">
+          <Button type="submit" disabled={saving} className="min-w-[120px] gap-1.5">
+            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
             {saving ? "Сохранение..." : "Сохранить"}
           </Button>
         </DialogFooter>
       </form>
     </Dialog>
+  )
+}
+
+function FilterField({ icon: Icon, label, children }: { icon: React.ElementType; label: string; children: React.ReactNode }) {
+  return (
+    <div className="space-y-1">
+      <Label className="text-xs text-muted-foreground flex items-center gap-1.5 font-normal">
+        <Icon className="h-3 w-3" /> {label}
+      </Label>
+      {children}
+    </div>
+  )
+}
+
+function ConditionChip({ label, onRemove }: { label: string; onRemove: () => void }) {
+  return (
+    <span className="inline-flex items-center gap-1 text-xs bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800 rounded-full pl-2.5 pr-1 py-0.5">
+      {label}
+      <button
+        type="button"
+        onClick={onRemove}
+        className="p-0.5 rounded-full hover:bg-purple-200 dark:hover:bg-purple-800 transition-colors"
+      >
+        <X className="h-3 w-3" />
+      </button>
+    </span>
+  )
+}
+
+function ToggleCheck({ checked, onChange, icon: Icon, label }: {
+  checked: boolean
+  onChange: (v: boolean) => void
+  icon: React.ElementType
+  label: string
+}) {
+  return (
+    <button
+      type="button"
+      onClick={() => onChange(!checked)}
+      className={cn(
+        "flex items-center gap-2 px-3 py-2 rounded-lg border text-sm transition-all",
+        checked
+          ? "bg-primary/10 border-primary/30 text-primary font-medium"
+          : "bg-background border-transparent hover:border-border text-muted-foreground hover:text-foreground"
+      )}
+    >
+      <div className={cn(
+        "h-4 w-4 rounded border flex items-center justify-center transition-colors",
+        checked ? "bg-primary border-primary" : "border-muted-foreground/30"
+      )}>
+        {checked && <Check className="h-3 w-3 text-primary-foreground" />}
+      </div>
+      <Icon className="h-3.5 w-3.5" />
+      {label}
+    </button>
   )
 }
