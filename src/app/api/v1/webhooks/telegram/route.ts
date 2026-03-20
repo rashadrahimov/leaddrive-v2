@@ -35,23 +35,8 @@ export async function POST(req: NextRequest) {
 
     const orgId = channelConfig.organizationId
 
-    // Try to find a contact with this telegram chatId in metadata or by name
-    let contactId: string | undefined
-    const contacts = await prisma.contact.findMany({
-      where: { organizationId: orgId },
-      select: { id: true, fullName: true, phone: true, customFields: true },
-      take: 500,
-    })
-
-    for (const c of contacts) {
-      const cf = c.customFields as any
-      if (cf?.telegramChatId === chatId || cf?.telegram_chat_id === chatId) {
-        contactId = c.id
-        break
-      }
-    }
-
     // Save incoming message
+    const contactId: string | undefined = undefined
     await prisma.channelMessage.create({
       data: {
         organizationId: orgId,
