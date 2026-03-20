@@ -2,13 +2,16 @@
 
 import { useEffect, useState } from "react"
 import { useSession } from "next-auth/react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { DataTable } from "@/components/data-table"
+import { Badge } from "@/components/ui/badge"
+import { Input } from "@/components/ui/input"
 import { ChannelConfigForm } from "@/components/channel-config-form"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
-import { Plus, Pencil, Trash2 } from "lucide-react"
+import {
+  Plus, Pencil, Trash2, Settings, Mail, MessageSquare, Smartphone, Send,
+  Search, Radio,
+} from "lucide-react"
+import { cn } from "@/lib/utils"
 
 interface ChannelConfig {
   id: string
@@ -21,6 +24,13 @@ interface ChannelConfig {
   isActive: boolean
 }
 
+const channelMeta: Record<string, { label: string; icon: any; color: string; bgColor: string }> = {
+  email: { label: "Email", icon: Mail, color: "text-blue-600", bgColor: "bg-blue-100 dark:bg-blue-900/30" },
+  telegram: { label: "Telegram", icon: Send, color: "text-sky-600", bgColor: "bg-sky-100 dark:bg-sky-900/30" },
+  whatsapp: { label: "WhatsApp", icon: MessageSquare, color: "text-green-600", bgColor: "bg-green-100 dark:bg-green-900/30" },
+  sms: { label: "SMS", icon: Smartphone, color: "text-gray-600", bgColor: "bg-gray-100 dark:bg-gray-900/30" },
+}
+
 export default function ChannelsPage() {
   const { data: session } = useSession()
   const [channels, setChannels] = useState<ChannelConfig[]>([])
@@ -29,6 +39,7 @@ export default function ChannelsPage() {
   const [editData, setEditData] = useState<ChannelConfig | undefined>()
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [deleteName, setDeleteName] = useState("")
+  const [search, setSearch] = useState("")
   const orgId = session?.user?.organizationId
 
   const fetchChannels = async () => {
@@ -47,66 +58,163 @@ export default function ChannelsPage() {
 
   const handleDelete = async () => {
     if (!deleteId) return
-    const res = await fetch(`/api/v1/channels/${deleteId}`, {
+    await fetch(`/api/v1/channels/${deleteId}`, {
       method: "DELETE",
       headers: orgId ? { "x-organization-id": String(orgId) } : {},
     })
-    if (!res.ok) throw new Error("Failed to delete")
     fetchChannels()
   }
 
-  const columns = [
-    {
-      key: "configName", label: "Name", sortable: true,
-      render: (item: any) => <div className="font-medium">{item.configName}</div>,
-    },
-    {
-      key: "channelType", label: "Type", sortable: true,
-      render: (item: any) => <Badge variant="outline">{item.channelType}</Badge>,
-    },
-    {
-      key: "isActive", label: "Status", sortable: true,
-      render: (item: any) => <Badge variant={item.isActive ? "default" : "secondary"}>{item.isActive ? "Active" : "Inactive"}</Badge>,
-    },
-    {
-      key: "edit", label: "", sortable: false,
-      render: (item: any) => (
-        <div className="flex gap-1">
-          <Button variant="ghost" size="sm" onClick={() => { setEditData(item); setShowForm(true) }}>
-            <Pencil className="h-3.5 w-3.5" />
-          </Button>
-          <Button variant="ghost" size="sm" onClick={() => { setDeleteId(item.id); setDeleteName(item.configName) }}>
-            <Trash2 className="h-3.5 w-3.5 text-destructive" />
-          </Button>
-        </div>
-      ),
-    },
-  ]
+  const filtered = channels.filter(ch => {
+    if (!search.trim()) return true
+    const q = search.toLowerCase()
+    return ch.configName.toLowerCase().includes(q) || ch.channelType.toLowerCase().includes(q)
+  })
+
+  const activeCount = channels.filter(c => c.isActive).length
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Communication Channels</h1>
-          <p className="text-muted-foreground">Configure your communication channels for customer engagement</p>
+          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+            <Settings className="h-6 w-6 text-primary" />
+            Настройка каналов
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Настройте параметры интеграции для каждого канала связи
+          </p>
         </div>
-        <Button className="gap-2" onClick={() => { setEditData(undefined); setShowForm(true) }}>
-          <Plus className="h-4 w-4" /> Add Channel
+        <Button onClick={() => { setEditData(undefined); setShowForm(true) }} className="gap-1.5">
+          <Plus className="h-4 w-4" /> Добавить канал
         </Button>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>All Channels</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <p className="text-muted-foreground">Loading...</p>
-          ) : (
-            <DataTable columns={columns} data={channels} searchPlaceholder="Search channels..." searchKey="configName" pageSize={10} />
-          )}
-        </CardContent>
-      </Card>
+      {/* Stats */}
+      <div className="grid grid-cols-3 gap-4">
+        <div className="border rounded-lg p-4 bg-card">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
+            <Radio className="h-4 w-4" /> Всего каналов
+          </div>
+          <p className="text-2xl font-bold">{channels.length}</p>
+        </div>
+        <div className="border rounded-lg p-4 bg-card">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
+            <div className="h-2 w-2 rounded-full bg-green-500" /> Активных
+          </div>
+          <p className="text-2xl font-bold text-green-600">{activeCount}</p>
+        </div>
+        <div className="border rounded-lg p-4 bg-card">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
+            <div className="h-2 w-2 rounded-full bg-gray-400" /> Неактивных
+          </div>
+          <p className="text-2xl font-bold text-muted-foreground">{channels.length - activeCount}</p>
+        </div>
+      </div>
+
+      {/* Search */}
+      {channels.length > 0 && (
+        <div className="relative max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Поиск каналов..."
+            className="pl-9"
+          />
+        </div>
+      )}
+
+      {/* Channel cards */}
+      <div className="space-y-3">
+        {loading ? (
+          <div className="space-y-3">
+            {[1, 2, 3].map(i => <div key={i} className="h-20 bg-muted rounded-lg animate-pulse" />)}
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className="rounded-lg border-2 border-dashed bg-muted/20 py-16 text-center">
+            <Radio className="h-8 w-8 text-muted-foreground mx-auto mb-3" />
+            <p className="text-muted-foreground font-medium">
+              {search ? "Ничего не найдено" : "Нет настроенных каналов"}
+            </p>
+            {!search && (
+              <>
+                <p className="text-sm text-muted-foreground mt-1">Добавьте первый канал для коммуникации</p>
+                <Button className="mt-4 gap-1.5" onClick={() => { setEditData(undefined); setShowForm(true) }}>
+                  <Plus className="h-4 w-4" /> Добавить канал
+                </Button>
+              </>
+            )}
+          </div>
+        ) : (
+          filtered.map(channel => {
+            const meta = channelMeta[channel.channelType] || channelMeta.email
+            const Icon = meta.icon
+            return (
+              <div
+                key={channel.id}
+                className="border rounded-lg bg-card hover:shadow-md transition-shadow p-4 flex items-center gap-4"
+              >
+                {/* Icon */}
+                <div className={cn("flex items-center justify-center w-12 h-12 rounded-lg shrink-0", meta.bgColor)}>
+                  <Icon className={cn("h-6 w-6", meta.color)} />
+                </div>
+
+                {/* Info */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-0.5">
+                    <h3 className="font-semibold truncate">{channel.configName}</h3>
+                    <Badge
+                      variant="outline"
+                      className={cn(
+                        "text-[10px] shrink-0",
+                        channel.isActive
+                          ? "border-green-200 bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400"
+                          : "border-gray-200 bg-gray-50 text-gray-500"
+                      )}
+                    >
+                      <span className={cn(
+                        "inline-block w-1.5 h-1.5 rounded-full mr-1",
+                        channel.isActive ? "bg-green-500" : "bg-gray-400"
+                      )} />
+                      {channel.isActive ? "Активен" : "Неактивен"}
+                    </Badge>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    {meta.label.toUpperCase()}
+                    {channel.phoneNumber && ` · ${channel.phoneNumber}`}
+                    {channel.botToken && " · Токен настроен"}
+                    {channel.webhookUrl && " · Webhook настроен"}
+                  </p>
+                </div>
+
+                {/* Actions */}
+                <div className="flex items-center gap-1 shrink-0">
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-9 w-9 p-0 text-amber-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20"
+                    onClick={() => { setEditData(channel); setShowForm(true) }}
+                    title="Редактировать"
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-9 w-9 p-0 text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                    onClick={() => { setDeleteId(channel.id); setDeleteName(channel.configName) }}
+                    title="Удалить"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            )
+          })
+        )}
+      </div>
 
       <ChannelConfigForm
         open={showForm}
@@ -120,7 +228,7 @@ export default function ChannelsPage() {
         open={!!deleteId}
         onOpenChange={(open) => { if (!open) setDeleteId(null) }}
         onConfirm={handleDelete}
-        title="Delete Channel"
+        title="Удалить канал"
         itemName={deleteName}
       />
     </div>
