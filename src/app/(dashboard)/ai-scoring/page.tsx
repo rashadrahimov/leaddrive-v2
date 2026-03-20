@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { useSession } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Brain, RefreshCw, Loader2, Sparkles } from "lucide-react"
+import { Brain, RefreshCw, Loader2, Sparkles, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface ScoredLead {
@@ -45,6 +45,7 @@ export default function AILeadScoringPage() {
   const [scoring, setScoring] = useState(false)
   const [scoringId, setScoringId] = useState<string | null>(null)
   const [aiPowered, setAiPowered] = useState(false)
+  const [sortBy, setSortBy] = useState("score_desc")
 
   const fetchLeads = async () => {
     try {
@@ -98,6 +99,24 @@ export default function AILeadScoringPage() {
   const avgScore = leads.length > 0 ? Math.round(leads.reduce((s, l) => s + l.score, 0) / leads.length) : 0
   const avgConversion = leads.length > 0 ? Math.round(leads.reduce((s, l) => s + l.conversionProb, 0) / leads.length) : 0
   const totalScored = leads.filter(l => l.lastScoredAt).length
+
+  const sortedLeads = [...leads].sort((a, b) => {
+    switch (sortBy) {
+      case "grade_desc": return a.grade.localeCompare(b.grade)
+      case "grade_asc": return b.grade.localeCompare(a.grade)
+      case "score_desc": return b.score - a.score
+      case "score_asc": return a.score - b.score
+      case "name_asc": return a.contactName.localeCompare(b.contactName)
+      case "name_desc": return b.contactName.localeCompare(a.contactName)
+      case "company_asc": return (a.companyName || "").localeCompare(b.companyName || "")
+      case "company_desc": return (b.companyName || "").localeCompare(a.companyName || "")
+      case "source_asc": return (a.source || "").localeCompare(b.source || "")
+      case "source_desc": return (b.source || "").localeCompare(a.source || "")
+      case "conversion_desc": return b.conversionProb - a.conversionProb
+      case "conversion_asc": return a.conversionProb - b.conversionProb
+      default: return 0
+    }
+  })
 
   if (loading) {
     return (
@@ -167,20 +186,45 @@ export default function AILeadScoringPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b bg-muted/50">
-                <th className="px-4 py-3 text-left font-medium text-muted-foreground">Грейд</th>
-                <th className="px-4 py-3 text-left font-medium text-muted-foreground">Балл</th>
-                <th className="px-4 py-3 text-left font-medium text-muted-foreground">Лид</th>
-                <th className="px-4 py-3 text-left font-medium text-muted-foreground">Компания</th>
-                <th className="px-4 py-3 text-left font-medium text-muted-foreground">Источник</th>
-                <th className="px-4 py-3 text-left font-medium text-muted-foreground">Конверсия</th>
-                <th className="px-4 py-3 text-left font-medium text-muted-foreground min-w-[200px]">AI Прогноз</th>
+                {[
+                  { key: "grade", label: "Грейд" },
+                  { key: "score", label: "Балл" },
+                  { key: "name", label: "Лид" },
+                  { key: "company", label: "Компания" },
+                  { key: "source", label: "Источник" },
+                  { key: "conversion", label: "Конверсия" },
+                  { key: null, label: "AI Прогноз", className: "min-w-[200px]" },
+                ].map(col => {
+                  const isActive = col.key && sortBy.startsWith(col.key)
+                  const isDesc = sortBy.endsWith("_desc")
+                  const SortIcon = !col.key ? null : isActive ? (isDesc ? ArrowDown : ArrowUp) : ArrowUpDown
+                  return (
+                    <th
+                      key={col.label}
+                      className={cn(
+                        "px-4 py-3 text-left font-medium text-muted-foreground select-none",
+                        col.className,
+                        col.key && "cursor-pointer hover:text-foreground transition-colors"
+                      )}
+                      onClick={col.key ? () => {
+                        if (isActive) setSortBy(`${col.key}_${isDesc ? "asc" : "desc"}`)
+                        else setSortBy(`${col.key}_desc`)
+                      } : undefined}
+                    >
+                      <span className="inline-flex items-center gap-1">
+                        {col.label}
+                        {SortIcon && <SortIcon className={cn("h-3 w-3", isActive ? "text-primary" : "opacity-40")} />}
+                      </span>
+                    </th>
+                  )
+                })}
                 <th className="px-4 py-3 text-left font-medium text-muted-foreground">Действия</th>
               </tr>
             </thead>
             <tbody>
               {leads.length === 0 ? (
                 <tr><td colSpan={8} className="px-4 py-8 text-center text-muted-foreground">Нет лидов</td></tr>
-              ) : leads.map(lead => (
+              ) : sortedLeads.map(lead => (
                 <tr key={lead.id} className="border-b hover:bg-muted/30">
                   <td className="px-4 py-3">
                     <span className={cn("inline-flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold", gradeColors[lead.grade])}>
