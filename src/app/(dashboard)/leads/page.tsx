@@ -8,6 +8,7 @@ import { Select } from "@/components/ui/select"
 import { LeadForm } from "@/components/lead-form"
 import { LeadConvertDialog } from "@/components/lead-convert-dialog"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
+import { LeadItemModal } from "@/components/lead-item-modal"
 import {
   UserPlus, Plus, Search, Pencil, Trash2, ArrowRight,
   Brain, Sparkles, Phone, Mail, Building2,
@@ -80,6 +81,7 @@ export default function LeadsPage() {
   const [convertLead, setConvertLead] = useState<Lead | null>(null)
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [deleteName, setDeleteName] = useState("")
+  const [selectedLead, setSelectedLead] = useState<Lead | null>(null)
 
   const fetchLeads = async () => {
     try {
@@ -235,7 +237,7 @@ export default function LeadsPage() {
               const grade = getGrade(lead.score)
               const reasoning = (lead.scoreDetails as any)?.reasoning
               return (
-                <tr key={lead.id} className="border-b hover:bg-muted/30">
+                <tr key={lead.id} className="border-b hover:bg-muted/30 cursor-pointer" onClick={() => setSelectedLead(lead)}>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
                       <span className={cn("inline-flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold", grade.color)}>
@@ -295,7 +297,7 @@ export default function LeadsPage() {
                       lead.lastScoredAt ? "Rule-based" : "—"
                     )}
                   </td>
-                  <td className="px-4 py-3">
+                  <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
                     <div className="flex items-center gap-1">
                       {lead.status !== "converted" && (
                         <Button
@@ -362,6 +364,16 @@ export default function LeadsPage() {
         onConfirm={handleDelete}
         title="Удалить лид"
         itemName={deleteName}
+      />
+
+      {/* Lead Detail Modal */}
+      <LeadItemModal
+        open={!!selectedLead}
+        onOpenChange={open => { if (!open) setSelectedLead(null) }}
+        lead={selectedLead}
+        orgId={orgId}
+        onSaved={fetchLeads}
+        onConvert={lead => { setSelectedLead(null); setConvertLead(lead) }}
       />
     </div>
   )
