@@ -25,12 +25,19 @@ export async function GET(req: NextRequest) {
   const limit = parseInt(searchParams.get("limit") || "50")
 
   const status = searchParams.get("status")
+  const includeConverted = searchParams.get("includeConverted") === "true"
 
   try {
-    const where = {
+    const where: any = {
       organizationId: orgId,
-      ...(search ? { contactName: { contains: search, mode: "insensitive" as const } } : {}),
-      ...(status ? { status } : { status: { not: "converted" } }),
+      ...(search ? {
+        OR: [
+          { contactName: { contains: search, mode: "insensitive" as const } },
+          { companyName: { contains: search, mode: "insensitive" as const } },
+          { email: { contains: search, mode: "insensitive" as const } },
+        ],
+      } : {}),
+      ...(status ? { status } : includeConverted ? {} : { status: { not: "converted" } }),
     }
 
     const [leads, total] = await Promise.all([
