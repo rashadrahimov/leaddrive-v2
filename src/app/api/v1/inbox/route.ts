@@ -244,3 +244,30 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: String(e) }, { status: 500 })
   }
 }
+
+// Mark messages as read
+export async function PATCH(req: NextRequest) {
+  const orgId = await getOrgId(req)
+  if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+
+  const body = await req.json()
+  const { messageIds } = body
+
+  if (!messageIds || !Array.isArray(messageIds) || messageIds.length === 0) {
+    return NextResponse.json({ error: "messageIds required" }, { status: 400 })
+  }
+
+  try {
+    await prisma.channelMessage.updateMany({
+      where: {
+        id: { in: messageIds },
+        organizationId: orgId,
+        direction: "inbound",
+      },
+      data: { status: "read" },
+    })
+    return NextResponse.json({ success: true })
+  } catch (e) {
+    return NextResponse.json({ error: String(e) }, { status: 500 })
+  }
+}

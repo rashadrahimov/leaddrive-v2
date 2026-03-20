@@ -137,12 +137,21 @@ export default function InboxPage() {
     const convo = filtered[selected]
     if (!convo) return
 
+    // For telegram, try telegramChatId, then scan messages metadata for chatId
+    let tgChatId = convo.telegramChatId
+    if (!tgChatId && replyChannel === "telegram") {
+      for (const msg of convo.messages) {
+        const meta = (msg as any).metadata
+        if (meta?.chatId) { tgChatId = meta.chatId; break }
+      }
+    }
+
     const to = replyChannel === "email"
       ? (convo.contactEmail || convo.contactName)
       : replyChannel === "sms"
         ? (convo.contactPhone || convo.contactName)
         : replyChannel === "telegram"
-          ? (convo.telegramChatId || convo.contactName)
+          ? (tgChatId || convo.contactName)
           : convo.contactName
 
     setSending(true)
@@ -192,6 +201,25 @@ export default function InboxPage() {
         fetchInbox()
       }
     } catch {} finally { setComposeSending(false) }
+  }
+
+  /* ── Mark as read ── */
+  const markAsRead = async (convo: Conversation) => {
+    const unreadIds = convo.messages
+      .filter(m => m.direction === "inbound" && m.status !== "read")
+      .map(m => m.id)
+    if (unreadIds.length === 0) return
+    try {
+      await fetch("/api/v1/inbox", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          ...(orgId ? { "x-organization-id": String(orgId) } : {}),
+        },
+        body: JSON.stringify({ messageIds: unreadIds }),
+      })
+      fetchInbox()
+    } catch {}
   }
 
   /* ── Filtered list ── */
@@ -309,6 +337,7 @@ export default function InboxPage() {
                   onClick={() => {
                     setSelected(idx)
                     setReplyChannel(convo.lastChannel || "email")
+                    if (convo.unreadCount > 0) markAsRead(convo)
                   }}
                   className={cn(
                     "p-3 rounded-lg cursor-pointer transition-colors",
