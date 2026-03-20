@@ -13,6 +13,8 @@ interface Message {
   content: string
   createdAt: string
   suggestTicket?: boolean
+  escalated?: boolean
+  escalationTicketId?: string | null
 }
 
 export default function PortalChatPage() {
@@ -57,6 +59,8 @@ export default function PortalChatPage() {
           content: reply.content || reply,
           createdAt: reply.createdAt || new Date().toISOString(),
           suggestTicket: json.data.suggestTicket || false,
+          escalated: json.data.escalated || false,
+          escalationTicketId: json.data.escalationTicketId || null,
         }])
       }
     } catch {
@@ -101,7 +105,20 @@ export default function PortalChatPage() {
                     {new Date(msg.createdAt).toLocaleTimeString()}
                   </p>
                 </div>
-                {msg.suggestTicket && (
+                {msg.escalated && msg.escalationTicketId && (
+                  <div className="mt-2 p-2.5 rounded-lg bg-red-50 border border-red-200">
+                    <p className="text-xs font-medium text-red-700 mb-1">Разговор передан оператору</p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="border-red-300 text-red-600 hover:bg-red-100"
+                      onClick={() => router.push(`/portal/tickets/${msg.escalationTicketId}`)}
+                    >
+                      <TicketPlus className="h-3.5 w-3.5 mr-1" /> Тикет #{msg.escalationTicketId?.slice(0, 8)}
+                    </Button>
+                  </div>
+                )}
+                {msg.suggestTicket && !msg.escalated && (
                   <Button
                     variant="outline"
                     size="sm"

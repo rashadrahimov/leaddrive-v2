@@ -22,6 +22,65 @@ async function getActiveAgentConfig(organizationId: string) {
   })
 }
 
+const TOOL_DESCRIPTIONS: Record<string, string> = {
+  get_tickets: "Ты можешь получать список тикетов клиента из CRM. Если клиент спрашивает о статусе тикета, помоги ему.",
+  create_ticket: "Ты можешь предложить создать новый тикет. Если проблема требует внимания — предложи создать тикет. Добавь в ответ ключевое слово [CREATE_TICKET] если клиент согласен создать тикет.",
+  contracts: "Ты можешь просматривать контракты и условия. Если клиент спрашивает о контракте или условиях — помоги ему.",
+  documents: "Ты можешь показывать документы клиента. Если клиент спрашивает о документах — помоги ему.",
+  escalate_to_human: "Ты можешь перевести разговор на живого оператора. Если клиент настаивает на живом операторе, или проблема слишком сложная — предложи эскалацию. Когда нужна эскалация, добавь в ответ ключевое слово [ESCALATE].",
+  kb_search: "Ты можешь искать в базе знаний. Используй контекст из KB для ответов.",
+}
+
+function buildToolsPrompt(toolsEnabled: string[]): string {
+  if (!toolsEnabled || toolsEnabled.length === 0) {
+    return "\n\nИНСТРУМЕНТЫ: У тебя нет доступных инструментов. Отвечай только текстом."
+  }
+  const enabled = toolsEnabled
+    .filter(t => TOOL_DESCRIPTIONS[t])
+    .map(t => `- ${t}: ${TOOL_DESCRIPTIONS[t]}`)
+  if (enabled.length === 0) return ""
+  return "\n\nДОСТУПНЫЕ ИНСТРУМЕНТЫ:\n" + enabled.join("\n") +
+    "\n\nВАЖНО: Используй ТОЛЬКО перечисленные инструменты. НЕ предлагай функции, которых нет в списке."
+}
+
+async function createEscalationTicket(
+  organizationId: string,
+  sessionId: string,
+  portalUserId: string | null,
+  companyId: string | null,
+  userMessage: string,
+): Promise<string | null> {
+  try {
+    // Generate unique ticket number
+    const count = await prisma.ticket.count({ where: { organizationId } })
+    const ticketNumber = `AI-${String(count + 1).padStart(4, "0")}`
+
+    const ticket = await prisma.ticket.create({
+      data: {
+        organizationId,
+        ticketNumber,
+        subject: `[AI Эскалация] ${userMessage.slice(0, 80)}`,
+        description: `Автоматически создан при эскалации из AI чата.\n\nСессия: ${sessionId}\nСообщение клиента: ${userMessage}`,
+        priority: "high",
+        status: "open",
+        category: "ai_escalation",
+        contactId: portalUserId,
+        companyId,
+        tags: ["ai_escalation", "auto_created"],
+      },
+    })
+    // Update session status to escalated
+    await prisma.aiChatSession.update({
+      where: { id: sessionId },
+      data: { status: "escalated" },
+    })
+    return ticket.id
+  } catch (e) {
+    console.error("Failed to create escalation ticket:", e)
+    return null
+  }
+}
+
 async function getGuardrails(organizationId: string): Promise<string[]> {
   const guardrails = await prisma.aiGuardrail.findMany({
     where: { organizationId, isActive: true },
@@ -206,6 +265,7 @@ export async function POST(req: NextRequest) {
       const temperature = agentConfig?.temperature ?? 0.7
       const kbMaxArticles = agentConfig?.kbMaxArticles || 5
       const kbEnabled = agentConfig?.kbEnabled ?? true
+      const toolsEnabled = agentConfig?.toolsEnabled || []
       usedModel = model
 
       // Get KB context and chat history
@@ -224,6 +284,9 @@ export async function POST(req: NextRequest) {
       if (guardrailPrompts.length > 0) {
         systemPrompt += "\n\nQUARANTİYALAR (mütləq riayət et):\n" + guardrailPrompts.map((g, i) => `${i + 1}. ${g}`).join("\n")
       }
+
+      // Append tools configuration based on toolsEnabled
+      systemPrompt += buildToolsPrompt(toolsEnabled as string[])
 
       // Append user context
       systemPrompt += `\n\nMüştəri adı: ${user.fullName}\nMüştəri email: ${user.email}\nTarix: ${new Date().toISOString().split("T")[0]}`
@@ -297,8 +360,39 @@ export async function POST(req: NextRequest) {
     data: { messagesCount: { increment: 2 } },
   })
 
-  // Check if AI suggests creating a ticket
-  const suggestTicket = /тикет|ticket|tiket|обратитесь|создайте|sorğu|yarada/i.test(assistantContent)
+  // Check for escalation marker [ESCALATE] — AI explicitly requested escalation
+  const shouldEscalate = assistantContent.includes("[ESCALATE]")
+  // Check for ticket creation marker [CREATE_TICKET]
+  const shouldCreateTicket = assistantContent.includes("[CREATE_TICKET]")
+  // Fallback: regex check for ticket suggestion
+  const suggestTicket = shouldCreateTicket || /тикет|ticket|tiket|обратитесь|создайте|sorğu|yarada/i.test(assistantContent)
+
+  let escalationTicketId: string | null = null
+
+  // Handle real escalation — create a ticket automatically
+  if (shouldEscalate) {
+    escalationTicketId = await createEscalationTicket(
+      user.organizationId,
+      session.id,
+      user.contactId,
+      user.companyId,
+      message,
+    )
+  }
+
+  // Clean markers from response before sending to user
+  let cleanedContent = assistantContent
+    .replace(/\[ESCALATE\]/g, "")
+    .replace(/\[CREATE_TICKET\]/g, "")
+    .trim()
+
+  // Update the saved message with cleaned content if markers were present
+  if (cleanedContent !== assistantContent) {
+    await prisma.aiChatMessage.update({
+      where: { id: assistantMessage.id },
+      data: { content: cleanedContent },
+    })
+  }
 
   return NextResponse.json({
     success: true,
@@ -307,10 +401,12 @@ export async function POST(req: NextRequest) {
       reply: {
         id: assistantMessage.id,
         role: "assistant",
-        content: assistantContent,
+        content: cleanedContent,
         createdAt: assistantMessage.createdAt,
       },
       suggestTicket,
+      escalated: shouldEscalate,
+      escalationTicketId,
     },
   })
 }
