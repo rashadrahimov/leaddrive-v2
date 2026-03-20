@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
     let contactId: string | undefined
     const contacts = await prisma.contact.findMany({
       where: { organizationId: orgId },
-      select: { id: true, firstName: true, lastName: true, phone: true, customFields: true },
+      select: { id: true, fullName: true, phone: true, customFields: true },
       take: 500,
     })
 

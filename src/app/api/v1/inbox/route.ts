@@ -70,13 +70,13 @@ export async function GET(req: NextRequest) {
     if (contactIds.length > 0) {
       const contacts = await prisma.contact.findMany({
         where: { id: { in: contactIds } },
-        select: { id: true, firstName: true, lastName: true, email: true, phone: true },
+        select: { id: true, fullName: true, email: true, phone: true },
       })
       const contactMap = new Map(contacts.map(c => [c.id, c]))
       for (const thread of Object.values(threads)) {
         const contact = contactMap.get(thread.contactId)
         if (contact) {
-          thread.contactName = `${contact.firstName || ""} ${contact.lastName || ""}`.trim() || thread.contactName
+          thread.contactName = contact.fullName || thread.contactName
           thread.contactEmail = contact.email
           thread.contactPhone = contact.phone
         }
