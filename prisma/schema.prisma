@@ -178,6 +178,8 @@ model Deal {
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   companyId      String?
   company        Company? @relation(fields: [companyId], references: [id])
+  campaignId     String?
+  campaign       Campaign? @relation(fields: [campaignId], references: [id])
   name           String
   stage          String   @default("LEAD")
   valueAmount    Float    @default(0)
@@ -192,6 +194,7 @@ model Deal {
 
   @@index([organizationId])
   @@index([organizationId, stage])
+  @@index([campaignId])
   @@map("deals")
 }
 
@@ -578,6 +581,7 @@ model Campaign {
   createdBy      String?
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
+  deals          Deal[]
 
   @@index([organizationId])
   @@map("campaigns")

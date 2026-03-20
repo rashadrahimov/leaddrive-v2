@@ -6,6 +6,7 @@ import { getOrgId } from "@/lib/api-auth"
 const createDealSchema = z.object({
   name: z.string().min(1).max(200),
   companyId: z.string().optional(),
+  campaignId: z.string().optional(),
   stage: z.string().optional(),
   valueAmount: z.number().min(0).optional(),
   currency: z.string().max(5).optional(),
@@ -36,7 +37,10 @@ export async function GET(req: NextRequest) {
         skip: (page - 1) * limit,
         take: limit,
         orderBy: { createdAt: "desc" },
-        include: { company: { select: { id: true, name: true } } },
+        include: {
+          company: { select: { id: true, name: true } },
+          campaign: { select: { id: true, name: true } },
+        },
       }),
       prisma.deal.count({ where }),
     ])
@@ -62,7 +66,8 @@ export async function POST(req: NextRequest) {
       data: {
         organizationId: orgId,
         name: parsed.data.name,
-        companyId: parsed.data.companyId,
+        companyId: parsed.data.companyId || null,
+        campaignId: parsed.data.campaignId || null,
         stage: parsed.data.stage || "LEAD",
         valueAmount: parsed.data.valueAmount || 0,
         currency: parsed.data.currency || "AZN",
@@ -71,7 +76,10 @@ export async function POST(req: NextRequest) {
         assignedTo: parsed.data.assignedTo,
         notes: parsed.data.notes,
       },
-      include: { company: { select: { id: true, name: true } } },
+      include: {
+        company: { select: { id: true, name: true } },
+        campaign: { select: { id: true, name: true } },
+      },
     })
     return NextResponse.json({ success: true, data: deal }, { status: 201 })
   } catch (e) {

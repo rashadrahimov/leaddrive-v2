@@ -21,6 +21,7 @@ export function DealForm({ open, onOpenChange, onSaved, initialData, orgId }: De
   const [form, setForm] = useState({
     name: initialData?.name || "",
     companyId: initialData?.companyId || "",
+    campaignId: initialData?.campaignId || "",
     stage: initialData?.stage || "LEAD",
     valueAmount: String(initialData?.valueAmount || "0"),
     currency: initialData?.currency || "AZN",
@@ -29,6 +30,7 @@ export function DealForm({ open, onOpenChange, onSaved, initialData, orgId }: De
     notes: initialData?.notes || "",
   })
   const [companies, setCompanies] = useState<Array<{ id: string; name: string }>>([])
+  const [campaigns, setCampaigns] = useState<Array<{ id: string; name: string }>>([])
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState("")
 
@@ -37,6 +39,7 @@ export function DealForm({ open, onOpenChange, onSaved, initialData, orgId }: De
       setForm({
         name: initialData?.name || "",
         companyId: initialData?.companyId || "",
+        campaignId: initialData?.campaignId || "",
         stage: initialData?.stage || "LEAD",
         valueAmount: String(initialData?.valueAmount || "0"),
         currency: initialData?.currency || "AZN",
@@ -55,6 +58,11 @@ export function DealForm({ open, onOpenChange, onSaved, initialData, orgId }: De
       }).then(r => r.json()).then(j => {
         if (j.success) setCompanies(j.data.companies.map((c: any) => ({ id: c.id, name: c.name })))
       }).catch(() => {})
+      fetch("/api/v1/campaigns?limit=500", {
+        headers: { "x-organization-id": orgId },
+      }).then(r => r.json()).then(j => {
+        if (j.success) setCampaigns(j.data.campaigns.map((c: any) => ({ id: c.id, name: c.name })))
+      }).catch(() => {})
     }
   }, [open, orgId])
 
@@ -66,6 +74,7 @@ export function DealForm({ open, onOpenChange, onSaved, initialData, orgId }: De
       const payload = {
         name: form.name,
         companyId: form.companyId || undefined,
+        campaignId: form.campaignId || undefined,
         stage: form.stage,
         valueAmount: parseFloat(form.valueAmount) || 0,
         currency: form.currency,
@@ -100,12 +109,21 @@ export function DealForm({ open, onOpenChange, onSaved, initialData, orgId }: De
               <Label htmlFor="name">Deal Name *</Label>
               <Input id="name" value={form.name} onChange={e => update("name", e.target.value)} required />
             </div>
-            <div>
-              <Label htmlFor="companyId">Company</Label>
-              <Select value={form.companyId} onChange={e => update("companyId", e.target.value)}>
-                <option value="">Select company...</option>
-                {companies.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-              </Select>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label htmlFor="companyId">Компания</Label>
+                <Select value={form.companyId} onChange={e => update("companyId", e.target.value)}>
+                  <option value="">Выбрать...</option>
+                  {companies.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="campaignId">Кампания (для ROI)</Label>
+                <Select value={form.campaignId} onChange={e => update("campaignId", e.target.value)}>
+                  <option value="">Без кампании</option>
+                  {campaigns.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                </Select>
+              </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>

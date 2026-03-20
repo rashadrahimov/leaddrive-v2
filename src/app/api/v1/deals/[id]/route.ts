@@ -5,9 +5,13 @@ import { getOrgId } from "@/lib/api-auth"
 
 const updateDealSchema = z.object({
   name: z.string().min(1).max(200).optional(),
+  companyId: z.string().nullable().optional(),
+  campaignId: z.string().nullable().optional(),
   stage: z.string().optional(),
   valueAmount: z.number().min(0).optional(),
+  currency: z.string().max(5).optional(),
   probability: z.number().min(0).max(100).optional(),
+  expectedClose: z.string().nullable().optional(),
   assignedTo: z.string().optional(),
   lostReason: z.string().max(500).optional(),
   notes: z.string().max(5000).optional(),
@@ -44,9 +48,13 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       where: { id, organizationId: orgId },
       data: {
         ...(parsed.data.name && { name: parsed.data.name }),
+        ...(parsed.data.companyId !== undefined && { companyId: parsed.data.companyId }),
+        ...(parsed.data.campaignId !== undefined && { campaignId: parsed.data.campaignId }),
         ...(parsed.data.stage && { stage: parsed.data.stage }),
         ...(parsed.data.valueAmount !== undefined && { valueAmount: parsed.data.valueAmount }),
+        ...(parsed.data.currency && { currency: parsed.data.currency }),
         ...(parsed.data.probability !== undefined && { probability: parsed.data.probability }),
+        ...(parsed.data.expectedClose !== undefined && { expectedClose: parsed.data.expectedClose ? new Date(parsed.data.expectedClose) : null }),
         ...(parsed.data.assignedTo && { assignedTo: parsed.data.assignedTo }),
         ...(parsed.data.lostReason && { lostReason: parsed.data.lostReason }),
         ...(parsed.data.notes && { notes: parsed.data.notes }),
