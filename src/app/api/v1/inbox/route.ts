@@ -23,17 +23,42 @@ export async function GET(req: NextRequest) {
       take: 500,
     })
 
-    // Group by contact (contactId or from/to address)
+    // Group by contact — use contactId first, then try to unify by telegram chatId
     const threads: Record<string, any> = {}
+    // Map telegram chatId → thread key for merging
+    const chatIdToKey: Record<string, string> = {}
+
     for (const msg of messages) {
-      const key = msg.contactId || (msg.direction === "inbound" ? msg.from : msg.to) || msg.from
+      const meta = msg.metadata as any
+      const tgChatId = meta?.chatId as string | undefined
+
+      // Determine grouping key
+      let key = msg.contactId || ""
+      if (!key) {
+        // For telegram messages, group by chatId
+        if (msg.channelType === "telegram" && tgChatId) {
+          key = chatIdToKey[tgChatId] || `tg_${tgChatId}`
+        } else if (msg.channelType === "telegram") {
+          // Outbound telegram without metadata chatId — try to match by `to` field
+          const toVal = msg.direction === "outbound" ? msg.to : msg.from
+          // Check if `to` is a chatId (numeric)
+          if (/^-?\d+$/.test(toVal)) {
+            key = chatIdToKey[toVal] || `tg_${toVal}`
+          } else {
+            key = toVal
+          }
+        } else {
+          key = (msg.direction === "inbound" ? msg.from : msg.to) || msg.from
+        }
+      }
+
       if (!threads[key]) {
         threads[key] = {
           contactId: msg.contactId,
           contactName: msg.direction === "inbound" ? msg.from : msg.to,
           contactEmail: null,
           contactPhone: null,
-          telegramChatId: null,
+          telegramChatId: tgChatId || null,
           lastMessage: msg.body?.slice(0, 100) || "",
           lastMessageAt: msg.createdAt,
           lastChannel: msg.channelType || "email",
@@ -43,16 +68,28 @@ export async function GET(req: NextRequest) {
           messages: [],
         }
       }
+
+      // Register chatId → key mapping for future messages
+      if (tgChatId && !chatIdToKey[tgChatId]) {
+        chatIdToKey[tgChatId] = key
+      }
+      // Also map numeric `to` for outbound
+      if (msg.channelType === "telegram" && msg.direction === "outbound" && /^-?\d+$/.test(msg.to)) {
+        if (!chatIdToKey[msg.to]) chatIdToKey[msg.to] = key
+      }
+
       threads[key].messages.push(msg)
       threads[key].messageCount++
       if (msg.channelType) threads[key].channels.add(msg.channelType)
-      // Extract telegram chatId from metadata
-      if (msg.channelType === "telegram" && !threads[key].telegramChatId) {
-        const meta = msg.metadata as any
-        if (meta?.chatId) threads[key].telegramChatId = meta.chatId
+      if (!threads[key].telegramChatId && tgChatId) {
+        threads[key].telegramChatId = tgChatId
       }
       if (msg.direction === "inbound" && msg.status !== "read") {
         threads[key].unreadCount++
+      }
+      // Update contact name from inbound (real name, not chatId)
+      if (msg.direction === "inbound" && msg.from && !/^-?\d+$/.test(msg.from)) {
+        threads[key].contactName = msg.from
       }
       // Update last message if this is newer
       if (new Date(msg.createdAt) > new Date(threads[key].lastMessageAt)) {
