@@ -116,6 +116,10 @@ export default function JourneysPage() {
   const [enrollOpen, setEnrollOpen] = useState<Journey | null>(null)
   const [enrollLeadId, setEnrollLeadId] = useState("")
   const [enrolling, setEnrolling] = useState(false)
+  const [leads, setLeads] = useState<{ id: string; contactName: string; email?: string; companyName?: string; status: string }[]>([])
+  const [leadsLoading, setLeadsLoading] = useState(false)
+  const [leadSearch, setLeadSearch] = useState("")
+  const [selectedLead, setSelectedLead] = useState<{ id: string; contactName: string; email?: string; companyName?: string } | null>(null)
   const orgId = session?.user?.organizationId
 
   const fetchJourneys = async () => {
@@ -195,8 +199,34 @@ export default function JourneysPage() {
     } catch {} finally { setSavingSteps(false) }
   }
 
+  const fetchLeads = async () => {
+    setLeadsLoading(true)
+    try {
+      const res = await fetch("/api/v1/leads?limit=500", {
+        headers: orgId ? { "x-organization-id": String(orgId) } : {},
+      })
+      const json = await res.json()
+      if (json.success) setLeads(json.data.leads || [])
+    } catch {} finally { setLeadsLoading(false) }
+  }
+
+  // Load leads when enroll dialog opens
+  useEffect(() => {
+    if (enrollOpen && leads.length === 0) fetchLeads()
+  }, [enrollOpen])
+
+  const filteredLeads = leads.filter(l => {
+    if (!leadSearch.trim()) return true
+    const q = leadSearch.toLowerCase()
+    return (
+      l.contactName?.toLowerCase().includes(q) ||
+      l.email?.toLowerCase().includes(q) ||
+      l.companyName?.toLowerCase().includes(q)
+    )
+  })
+
   async function handleEnroll() {
-    if (!enrollOpen || !enrollLeadId.trim()) return
+    if (!enrollOpen || !selectedLead) return
     setEnrolling(true)
     try {
       await fetch("/api/v1/journeys/enroll", {
@@ -205,10 +235,11 @@ export default function JourneysPage() {
           "Content-Type": "application/json",
           ...(orgId ? { "x-organization-id": String(orgId) } : {}),
         },
-        body: JSON.stringify({ journeyId: enrollOpen.id, leadId: enrollLeadId.trim() }),
+        body: JSON.stringify({ journeyId: enrollOpen.id, leadId: selectedLead.id }),
       })
       setEnrollOpen(null)
-      setEnrollLeadId("")
+      setSelectedLead(null)
+      setLeadSearch("")
       fetchJourneys()
     } catch {} finally { setEnrolling(false) }
   }
@@ -299,7 +330,7 @@ export default function JourneysPage() {
                 <Button size="sm" variant="outline" className="gap-1 text-xs h-8" onClick={() => openSteps(journey)}>
                   <Eye className="h-3 w-3" /> Шаги
                 </Button>
-                <Button size="sm" variant="outline" className="gap-1 text-xs h-8" onClick={() => { setEnrollOpen(journey); setEnrollLeadId("") }}>
+                <Button size="sm" variant="outline" className="gap-1 text-xs h-8" onClick={() => { setEnrollOpen(journey); setSelectedLead(null); setLeadSearch("") }}>
                   <UserPlus className="h-3 w-3" /> Записать лида
                 </Button>
                 <Button
@@ -341,7 +372,7 @@ export default function JourneysPage() {
                   size="sm"
                   variant="outline"
                   className="gap-1 text-xs h-7"
-                  onClick={() => { setEnrollOpen(stepsJourney); setEnrollLeadId("") }}
+                  onClick={() => { setEnrollOpen(stepsJourney); setSelectedLead(null); setLeadSearch("") }}
                 >
                   <UserPlus className="h-3 w-3" /> Записать лида
                 </Button>
@@ -634,7 +665,7 @@ export default function JourneysPage() {
       </Dialog>
 
       {/* ===== ENROLL LEAD DIALOG ===== */}
-      <Dialog open={!!enrollOpen} onOpenChange={open => { if (!open) setEnrollOpen(null) }}>
+      <Dialog open={!!enrollOpen} onOpenChange={open => { if (!open) { setEnrollOpen(null); setSelectedLead(null); setLeadSearch("") } }}>
         <DialogHeader>
           <DialogTitle>Записать лида в цепочку</DialogTitle>
         </DialogHeader>
@@ -642,18 +673,94 @@ export default function JourneysPage() {
           <p className="text-sm text-muted-foreground mb-3">
             Цепочка: <strong>{enrollOpen?.name}</strong>
           </p>
-          <div>
-            <Label className="text-xs text-muted-foreground">ID лида или контакта</Label>
-            <Input
-              value={enrollLeadId}
-              onChange={e => setEnrollLeadId(e.target.value)}
-              placeholder="Введите ID лида..."
-            />
-          </div>
+
+          {/* Selected lead chip */}
+          {selectedLead && (
+            <div className="flex items-center gap-2 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg mb-3">
+              <CheckCircle className="h-4 w-4 text-green-600 shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium truncate">{selectedLead.contactName}</p>
+                <p className="text-xs text-muted-foreground truncate">
+                  {[selectedLead.email, selectedLead.companyName].filter(Boolean).join(" · ") || "Без email"}
+                </p>
+              </div>
+              <button
+                onClick={() => setSelectedLead(null)}
+                className="p-1 rounded hover:bg-green-100 dark:hover:bg-green-800 text-muted-foreground"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          )}
+
+          {/* Search input */}
+          {!selectedLead && (
+            <div className="space-y-2">
+              <Label className="text-xs text-muted-foreground">Поиск по имени, email или компании</Label>
+              <div className="relative">
+                <Users className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  value={leadSearch}
+                  onChange={e => setLeadSearch(e.target.value)}
+                  placeholder="Начните вводить имя лида..."
+                  className="pl-9"
+                  autoFocus
+                />
+              </div>
+
+              {/* Leads list */}
+              <div className="border rounded-lg max-h-[240px] overflow-y-auto">
+                {leadsLoading ? (
+                  <div className="flex items-center justify-center py-8 text-muted-foreground">
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    Загрузка лидов...
+                  </div>
+                ) : filteredLeads.length === 0 ? (
+                  <div className="py-8 text-center text-sm text-muted-foreground">
+                    {leadSearch ? "Ничего не найдено" : "Нет доступных лидов"}
+                  </div>
+                ) : (
+                  filteredLeads.map(lead => (
+                    <button
+                      key={lead.id}
+                      onClick={() => setSelectedLead(lead)}
+                      className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-muted/50 transition-colors text-left border-b last:border-b-0"
+                    >
+                      <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary shrink-0 text-xs font-semibold">
+                        {lead.contactName?.charAt(0)?.toUpperCase() || "?"}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{lead.contactName}</p>
+                        <p className="text-xs text-muted-foreground truncate">
+                          {[lead.email, lead.companyName].filter(Boolean).join(" · ") || "Без данных"}
+                        </p>
+                      </div>
+                      <span className={cn(
+                        "text-[10px] px-1.5 py-0.5 rounded font-medium shrink-0",
+                        lead.status === "new" ? "bg-blue-100 text-blue-700" :
+                        lead.status === "qualified" ? "bg-green-100 text-green-700" :
+                        lead.status === "contacted" ? "bg-yellow-100 text-yellow-700" :
+                        "bg-gray-100 text-gray-600"
+                      )}>
+                        {lead.status === "new" ? "Новый" :
+                         lead.status === "qualified" ? "Квалифицирован" :
+                         lead.status === "contacted" ? "Связались" :
+                         lead.status === "converted" ? "Конвертирован" :
+                         lead.status === "lost" ? "Потерян" : lead.status}
+                      </span>
+                    </button>
+                  ))
+                )}
+              </div>
+              <p className="text-[11px] text-muted-foreground">
+                {filteredLeads.length} из {leads.length} лидов
+              </p>
+            </div>
+          )}
         </DialogContent>
         <DialogFooter>
-          <Button variant="outline" onClick={() => setEnrollOpen(null)}>Отмена</Button>
-          <Button onClick={handleEnroll} disabled={enrolling || !enrollLeadId.trim()} className="gap-1.5">
+          <Button variant="outline" onClick={() => { setEnrollOpen(null); setSelectedLead(null); setLeadSearch("") }}>Отмена</Button>
+          <Button onClick={handleEnroll} disabled={enrolling || !selectedLead} className="gap-1.5">
             {enrolling ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserPlus className="h-4 w-4" />}
             Записать
           </Button>
