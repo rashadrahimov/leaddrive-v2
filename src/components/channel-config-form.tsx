@@ -239,29 +239,49 @@ export function ChannelConfigForm({ open, onOpenChange, onSaved, initialData, or
 
             {form.channelType === "whatsapp" && (
               <>
-                <div>
-                  <Label htmlFor="apiKey" className="text-sm font-medium">API Key</Label>
-                  <Input
-                    id="apiKey"
-                    value={form.apiKey}
-                    onChange={(e) => update("apiKey", e.target.value)}
-                    placeholder="Ключ WhatsApp Business API"
-                    className="mt-1.5 font-mono text-sm"
-                    type="password"
-                  />
+                <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3">
+                  <p className="text-xs text-green-700 dark:text-green-300 font-medium mb-1">Meta WhatsApp Business API</p>
+                  <p className="text-xs text-green-600 dark:text-green-400">Данные из developers.facebook.com → WhatsApp → API Setup</p>
                 </div>
                 <div>
-                  <Label htmlFor="phoneNumber" className="text-sm font-medium">Номер телефона</Label>
+                  <Label htmlFor="apiKey" className="text-sm font-medium">Access Token (Маркер доступа) *</Label>
                   <Input
-                    id="phoneNumber"
-                    value={form.phoneNumber}
-                    onChange={(e) => update("phoneNumber", e.target.value)}
-                    placeholder="+994501234567"
-                    className="mt-1.5"
+                    id="apiKey"
+                    type="password"
+                    value={form.apiKey}
+                    onChange={(e) => update("apiKey", e.target.value)}
+                    placeholder="EAAi..."
+                    className="mt-1.5 font-mono text-sm"
+                    required
                   />
                   <p className="text-xs text-muted-foreground mt-1">
-                    Номер, подключённый к WhatsApp Business
+                    Временный токен действует 24 часа. Для постоянного — создайте System User.
                   </p>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label htmlFor="phoneNumber" className="text-sm font-medium">Phone Number ID *</Label>
+                    <Input
+                      id="phoneNumber"
+                      value={form.phoneNumber}
+                      onChange={(e) => update("phoneNumber", e.target.value)}
+                      placeholder="1089534267571015"
+                      className="mt-1.5 font-mono text-sm"
+                      required
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">ID номера телефона из API Setup</p>
+                  </div>
+                  <div>
+                    <Label htmlFor="webhookUrl" className="text-sm font-medium">Business Account ID</Label>
+                    <Input
+                      id="webhookUrl"
+                      value={form.webhookUrl}
+                      onChange={(e) => update("webhookUrl", e.target.value)}
+                      placeholder="907151598973492"
+                      className="mt-1.5 font-mono text-sm"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">ID аккаунта WhatsApp Business</p>
+                  </div>
                 </div>
               </>
             )}

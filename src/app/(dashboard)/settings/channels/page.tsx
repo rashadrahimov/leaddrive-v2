@@ -40,7 +40,36 @@ export default function ChannelsPage() {
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [deleteName, setDeleteName] = useState("")
   const [search, setSearch] = useState("")
+  const [testPhone, setTestPhone] = useState("")
+  const [testChannelId, setTestChannelId] = useState<string | null>(null)
+  const [testSending, setTestSending] = useState(false)
+  const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null)
   const orgId = session?.user?.organizationId
+
+  const sendTestWhatsApp = async () => {
+    if (!testPhone) return
+    setTestSending(true)
+    setTestResult(null)
+    try {
+      const res = await fetch("/api/v1/whatsapp/test", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(orgId ? { "x-organization-id": String(orgId) } : {}),
+        },
+        body: JSON.stringify({ to: testPhone }),
+      })
+      const data = await res.json()
+      setTestResult({
+        success: data.success,
+        message: data.success ? "Сообщение отправлено!" : (data.error || "Ошибка отправки"),
+      })
+    } catch (err: any) {
+      setTestResult({ success: false, message: err.message })
+    } finally {
+      setTestSending(false)
+    }
+  }
 
   const fetchChannels = async () => {
     try {
@@ -191,6 +220,17 @@ export default function ChannelsPage() {
 
                 {/* Actions */}
                 <div className="flex items-center gap-1 shrink-0">
+                  {channel.channelType === "whatsapp" && channel.isActive && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-9 w-9 p-0 text-green-500 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20"
+                      onClick={() => { setTestChannelId(channel.id); setTestResult(null); setTestPhone("") }}
+                      title="Тестовое сообщение"
+                    >
+                      <MessageSquare className="h-4 w-4" />
+                    </Button>
+                  )}
                   <Button
                     size="sm"
                     variant="ghost"
@@ -223,6 +263,42 @@ export default function ChannelsPage() {
         initialData={editData}
         orgId={orgId}
       />
+
+      {/* WhatsApp Test Message Dialog */}
+      {testChannelId && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center" onClick={() => setTestChannelId(null)}>
+          <div className="bg-background rounded-lg shadow-xl p-6 w-full max-w-md mx-4" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-lg font-semibold flex items-center gap-2 mb-4">
+              <MessageSquare className="h-5 w-5 text-green-600" />
+              Тестовое сообщение WhatsApp
+            </h3>
+            <div className="space-y-3">
+              <div>
+                <label className="text-sm font-medium">Номер получателя</label>
+                <Input
+                  value={testPhone}
+                  onChange={(e) => setTestPhone(e.target.value)}
+                  placeholder="+994501234567"
+                  className="mt-1"
+                />
+                <p className="text-xs text-muted-foreground mt-1">Формат: +код_страны номер (без пробелов)</p>
+              </div>
+              {testResult && (
+                <div className={`text-sm p-3 rounded ${testResult.success ? "bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400" : "bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400"}`}>
+                  {testResult.message}
+                </div>
+              )}
+              <div className="flex gap-2 justify-end">
+                <Button variant="outline" onClick={() => setTestChannelId(null)}>Отмена</Button>
+                <Button onClick={sendTestWhatsApp} disabled={testSending || !testPhone} className="bg-green-600 hover:bg-green-700 gap-2">
+                  <Send className="h-4 w-4" />
+                  {testSending ? "Отправка..." : "Отправить"}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <DeleteConfirmDialog
         open={!!deleteId}
