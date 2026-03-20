@@ -350,6 +350,12 @@ export function LeadItemModal({ open, onOpenChange, lead, orgId, onSaved, onConv
                   <div className="text-lg font-bold text-muted-foreground">{conversionProb}%</div>
                   <div className="text-[10px] text-muted-foreground">Конверсия</div>
                 </div>
+                {currentLead.estimatedValue ? (
+                  <div className="text-center mr-2 hidden sm:block">
+                    <div className="text-lg font-bold text-green-600">${currentLead.estimatedValue.toLocaleString()}</div>
+                    <div className="text-[10px] text-muted-foreground">Стоимость</div>
+                  </div>
+                ) : null}
                 <button onClick={() => onOpenChange(false)} className="p-2 rounded-full hover:bg-muted transition-colors">
                   <X className="h-5 w-5" />
                 </button>
