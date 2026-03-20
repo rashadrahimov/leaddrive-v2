@@ -11,7 +11,7 @@ import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
 import { LeadItemModal } from "@/components/lead-item-modal"
 import {
   UserPlus, Plus, Search, Pencil, Trash2, ArrowRight,
-  Brain, Phone, Mail, Building2,
+  Brain, Phone, Mail, Building2, ArrowUpDown, ArrowUp, ArrowDown,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -123,11 +123,23 @@ export default function LeadsPage() {
       case "score_asc": return a.score - b.score
       case "name_asc": return a.contactName.localeCompare(b.contactName)
       case "name_desc": return b.contactName.localeCompare(a.contactName)
-      case "newest": return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      case "priority": {
-        const order: Record<string, number> = { high: 0, medium: 1, low: 2 }
-        return (order[a.priority] ?? 1) - (order[b.priority] ?? 1)
+      case "company_asc": return (a.companyName || "").localeCompare(b.companyName || "")
+      case "company_desc": return (b.companyName || "").localeCompare(a.companyName || "")
+      case "conversion_desc": {
+        const ca = (a.scoreDetails as any)?.conversionProb ?? Math.round(a.score * 0.85)
+        const cb = (b.scoreDetails as any)?.conversionProb ?? Math.round(b.score * 0.85)
+        return cb - ca
       }
+      case "conversion_asc": {
+        const ca = (a.scoreDetails as any)?.conversionProb ?? Math.round(a.score * 0.85)
+        const cb = (b.scoreDetails as any)?.conversionProb ?? Math.round(b.score * 0.85)
+        return ca - cb
+      }
+      case "source_asc": return (a.source || "").localeCompare(b.source || "")
+      case "source_desc": return (b.source || "").localeCompare(a.source || "")
+      case "status_asc": return a.status.localeCompare(b.status)
+      case "status_desc": return b.status.localeCompare(a.status)
+      case "newest": return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       default: return 0
     }
   })
@@ -217,13 +229,41 @@ export default function LeadsPage() {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b bg-muted/50">
-              <th className="px-4 py-3 text-left font-medium text-muted-foreground w-16">Score</th>
-              <th className="px-4 py-3 text-left font-medium text-muted-foreground">Лид</th>
-              <th className="px-4 py-3 text-left font-medium text-muted-foreground">Компания</th>
-              <th className="px-4 py-3 text-left font-medium text-muted-foreground">Контакты</th>
-              <th className="px-3 py-3 text-left font-medium text-muted-foreground">Конверсия</th>
-              <th className="px-3 py-3 text-left font-medium text-muted-foreground">Источник</th>
-              <th className="px-3 py-3 text-left font-medium text-muted-foreground">Статус</th>
+              {[
+                { key: "score", label: "Score", className: "w-16 px-4" },
+                { key: "name", label: "Лид", className: "px-4" },
+                { key: "company", label: "Компания", className: "px-4" },
+                { key: null, label: "Контакты", className: "px-4" },
+                { key: "conversion", label: "Конверсия", className: "px-3" },
+                { key: "source", label: "Источник", className: "px-3" },
+                { key: "status", label: "Статус", className: "px-3" },
+              ].map(col => {
+                const isActive = col.key && sortBy.startsWith(col.key)
+                const isDesc = sortBy.endsWith("_desc")
+                const SortIcon = !col.key ? null : isActive ? (isDesc ? ArrowDown : ArrowUp) : ArrowUpDown
+                return (
+                  <th
+                    key={col.label}
+                    className={cn(
+                      "py-3 text-left font-medium text-muted-foreground select-none",
+                      col.className,
+                      col.key && "cursor-pointer hover:text-foreground transition-colors"
+                    )}
+                    onClick={col.key ? () => {
+                      if (isActive) {
+                        setSortBy(`${col.key}_${isDesc ? "asc" : "desc"}`)
+                      } else {
+                        setSortBy(`${col.key}_desc`)
+                      }
+                    } : undefined}
+                  >
+                    <span className="inline-flex items-center gap-1">
+                      {col.label}
+                      {SortIcon && <SortIcon className={cn("h-3 w-3", isActive ? "text-primary" : "opacity-40")} />}
+                    </span>
+                  </th>
+                )
+              })}
               <th className="px-4 py-3 text-left font-medium text-muted-foreground">Действия</th>
             </tr>
           </thead>
