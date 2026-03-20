@@ -127,6 +127,7 @@ export async function GET(req: NextRequest) {
           contactName: l.contactName,
           companyName: l.companyName,
           email: l.email,
+          phone: l.phone,
           source: l.source,
           status: l.status,
           priority: l.priority,
@@ -137,6 +138,8 @@ export async function GET(req: NextRequest) {
           reasoning: details.reasoning || null,
           lastScoredAt: l.lastScoredAt,
           estimatedValue: l.estimatedValue,
+          notes: l.notes,
+          createdAt: l.createdAt.toISOString(),
         }
       }),
       total: leads.length,

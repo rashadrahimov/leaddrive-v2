@@ -7,22 +7,26 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Brain, Sparkles, RefreshCw, Target, TrendingUp, Users, Zap } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { LeadItemModal } from "@/components/lead-item-modal"
 
 interface Lead {
   id: string
   contactName: string
-  companyName: string
-  email: string
-  source: string
+  companyName: string | null
+  email: string | null
+  phone: string | null
+  source: string | null
   status: string
   priority: string
   score: number
-  scoreDetails: Record<string, unknown> | null
+  scoreDetails: any
   grade: "A" | "B" | "C" | "D" | "F"
   conversionProb: number
   reasoning: string
   lastScoredAt: string | null
   estimatedValue: number | null
+  notes: string | null
+  createdAt: string
 }
 
 interface ScoringResponse {
@@ -72,6 +76,7 @@ export default function LeadScoringPage() {
   const [scoring, setScoring] = useState(false)
   const [rescoringId, setRescoringId] = useState<string | null>(null)
   const [aiPowered, setAiPowered] = useState(false)
+  const [selectedLead, setSelectedLead] = useState<Lead | null>(null)
 
   const headers: Record<string, string> = orgId
     ? { "x-organization-id": String(orgId) }
@@ -292,7 +297,7 @@ export default function LeadScoringPage() {
                   {sortedLeads.map((lead) => {
                     const gradeConf = GRADE_CONFIG[lead.grade] || GRADE_CONFIG["F"]
                     return (
-                      <tr key={lead.id} className="border-b last:border-0 hover:bg-muted/50">
+                      <tr key={lead.id} className="border-b last:border-0 hover:bg-muted/50 cursor-pointer" onClick={() => setSelectedLead(lead)}>
                         <td className="py-3 pr-4">
                           <Badge variant="outline" className={cn("font-bold text-sm", gradeConf.badgeClass)}>
                             {lead.grade}
@@ -323,7 +328,7 @@ export default function LeadScoringPage() {
                             {lead.reasoning || "—"}
                           </p>
                         </td>
-                        <td className="py-3">
+                        <td className="py-3" onClick={e => e.stopPropagation()}>
                           <Button
                             variant="ghost"
                             size="sm"
@@ -343,6 +348,15 @@ export default function LeadScoringPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Lead Detail Modal */}
+      <LeadItemModal
+        open={!!selectedLead}
+        onOpenChange={open => { if (!open) setSelectedLead(null) }}
+        lead={selectedLead}
+        orgId={orgId}
+        onSaved={fetchLeads}
+      />
     </div>
   )
 }
