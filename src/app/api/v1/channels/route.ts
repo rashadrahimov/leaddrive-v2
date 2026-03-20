@@ -10,6 +10,7 @@ const createChannelSchema = z.object({
   webhookUrl: z.string().optional(),
   apiKey: z.string().optional(),
   phoneNumber: z.string().optional(),
+  settings: z.any().optional(),
   isActive: z.boolean().optional().default(true),
 })
 

@@ -95,17 +95,49 @@ export async function processEnrollmentStep(enrollmentId: string, orgId: string)
 
       case "sms": {
         const message = replaceVars(config.message || "")
-        // Get SMS channel config
         const smsChannel = await prisma.channelConfig.findFirst({
           where: { organizationId: orgId, channelType: "sms", isActive: true },
         })
-        // Log SMS (actual sending depends on SMS gateway integration)
-        console.log(`[Journey SMS] To: ${recipientPhone}, Message: ${message}, Channel: ${smsChannel?.configName || "none"}`)
-        result = {
-          stepId: currentStep.id,
-          stepType: "sms",
-          status: "completed",
-          message: `SMS ${recipientPhone ? "sent" : "logged"}: "${message.slice(0, 50)}..." → ${recipientPhone || "(no phone)"}`,
+
+        if (smsChannel?.apiKey && smsChannel?.phoneNumber && recipientPhone) {
+          // Twilio SMS sending
+          const smsSettings = (smsChannel.settings as any) || {}
+          const accountSid = smsSettings.accountSid || ""
+          const authToken = smsChannel.apiKey
+
+          if (accountSid) {
+            try {
+              const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`
+              const twilioAuth = Buffer.from(`${accountSid}:${authToken}`).toString("base64")
+              const params = new URLSearchParams({
+                To: recipientPhone,
+                From: smsChannel.phoneNumber,
+                Body: message,
+              })
+              const smsRes = await fetch(twilioUrl, {
+                method: "POST",
+                headers: {
+                  "Authorization": `Basic ${twilioAuth}`,
+                  "Content-Type": "application/x-www-form-urlencoded",
+                },
+                body: params.toString(),
+              })
+              const smsData = await smsRes.json()
+              if (smsData.sid) {
+                result = { stepId: currentStep.id, stepType: "sms", status: "completed", message: `SMS sent via Twilio to ${recipientPhone}: SID ${smsData.sid}` }
+              } else {
+                result = { stepId: currentStep.id, stepType: "sms", status: "completed", message: `Twilio error: ${smsData.message || JSON.stringify(smsData)}` }
+              }
+            } catch (smsErr: any) {
+              result = { stepId: currentStep.id, stepType: "sms", status: "completed", message: `SMS error: ${smsErr.message}` }
+            }
+          } else {
+            console.log(`[Journey SMS] No accountSid configured. To: ${recipientPhone}, Message: ${message}`)
+            result = { stepId: currentStep.id, stepType: "sms", status: "completed", message: `SMS logged (no accountSid): "${message.slice(0, 50)}..." → ${recipientPhone}` }
+          }
+        } else {
+          console.log(`[Journey SMS] Missing config or phone. To: ${recipientPhone}, Message: ${message}`)
+          result = { stepId: currentStep.id, stepType: "sms", status: "completed", message: `SMS logged: "${message.slice(0, 50)}..." → ${recipientPhone || "(no phone)"}` }
         }
         break
       }
@@ -119,7 +151,8 @@ export async function processEnrollmentStep(enrollmentId: string, orgId: string)
         if (tgChannel?.botToken) {
           // Real Telegram sending via Bot API
           try {
-            const chatId = config.chatId || config.chat_id
+            const tgSettings = (tgChannel.settings as any) || {}
+            const chatId = config.chatId || config.chat_id || tgSettings.chatId
             if (chatId) {
               const tgRes = await fetch(`https://api.telegram.org/bot${tgChannel.botToken}/sendMessage`, {
                 method: "POST",

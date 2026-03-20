@@ -16,6 +16,8 @@ interface ChannelConfigFormData {
   webhookUrl: string
   apiKey: string
   phoneNumber: string
+  chatId: string
+  accountSid: string
   isActive: boolean
 }
 
@@ -43,6 +45,8 @@ export function ChannelConfigForm({ open, onOpenChange, onSaved, initialData, or
     webhookUrl: "",
     apiKey: "",
     phoneNumber: "",
+    chatId: "",
+    accountSid: "",
     isActive: true,
   })
   const [saving, setSaving] = useState(false)
@@ -50,6 +54,7 @@ export function ChannelConfigForm({ open, onOpenChange, onSaved, initialData, or
 
   useEffect(() => {
     if (open) {
+      const settings = (initialData as any)?.settings || {}
       setForm({
         configName: initialData?.configName || "",
         channelType: initialData?.channelType || "email",
@@ -57,6 +62,8 @@ export function ChannelConfigForm({ open, onOpenChange, onSaved, initialData, or
         webhookUrl: initialData?.webhookUrl || "",
         apiKey: initialData?.apiKey || "",
         phoneNumber: initialData?.phoneNumber || "",
+        chatId: settings.chatId || "",
+        accountSid: settings.accountSid || "",
         isActive: initialData?.isActive ?? true,
       })
       setError("")
@@ -87,6 +94,10 @@ export function ChannelConfigForm({ open, onOpenChange, onSaved, initialData, or
           webhookUrl: form.webhookUrl || undefined,
           apiKey: form.apiKey || undefined,
           phoneNumber: form.phoneNumber || undefined,
+          settings: {
+            ...(form.chatId ? { chatId: form.chatId } : {}),
+            ...(form.accountSid ? { accountSid: form.accountSid } : {}),
+          },
           isActive: form.isActive,
         }),
       })
@@ -164,19 +175,34 @@ export function ChannelConfigForm({ open, onOpenChange, onSaved, initialData, or
 
             {/* Динамические поля по типу канала */}
             {form.channelType === "telegram" && (
-              <div>
-                <Label htmlFor="botToken" className="text-sm font-medium">Bot Token</Label>
-                <Input
-                  id="botToken"
-                  value={form.botToken}
-                  onChange={(e) => update("botToken", e.target.value)}
-                  placeholder="123456:ABC-DEF..."
-                  className="mt-1.5 font-mono text-sm"
-                />
-                <p className="text-xs text-muted-foreground mt-1">
-                  Токен от @BotFather в Telegram
-                </p>
-              </div>
+              <>
+                <div>
+                  <Label htmlFor="botToken" className="text-sm font-medium">Bot Token</Label>
+                  <Input
+                    id="botToken"
+                    value={form.botToken}
+                    onChange={(e) => update("botToken", e.target.value)}
+                    placeholder="123456:ABC-DEF..."
+                    className="mt-1.5 font-mono text-sm"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Токен от @BotFather в Telegram
+                  </p>
+                </div>
+                <div>
+                  <Label htmlFor="chatId" className="text-sm font-medium">Chat ID</Label>
+                  <Input
+                    id="chatId"
+                    value={form.chatId}
+                    onChange={(e) => update("chatId", e.target.value)}
+                    placeholder="123456789 или -100123456789"
+                    className="mt-1.5 font-mono text-sm"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    ID чата или группы для отправки уведомлений. Узнать: отправьте /start боту, затем откройте api.telegram.org/bot[TOKEN]/getUpdates
+                  </p>
+                </div>
+              </>
             )}
 
             {form.channelType === "email" && (
@@ -243,25 +269,41 @@ export function ChannelConfigForm({ open, onOpenChange, onSaved, initialData, or
             {form.channelType === "sms" && (
               <>
                 <div>
-                  <Label htmlFor="apiKey" className="text-sm font-medium">API Key</Label>
+                  <Label htmlFor="accountSid" className="text-sm font-medium">Twilio Account SID</Label>
+                  <Input
+                    id="accountSid"
+                    value={form.accountSid}
+                    onChange={(e) => update("accountSid", e.target.value)}
+                    placeholder="ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                    className="mt-1.5 font-mono text-sm"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Account SID из консоли Twilio
+                  </p>
+                </div>
+                <div>
+                  <Label htmlFor="apiKey" className="text-sm font-medium">Twilio Auth Token</Label>
                   <Input
                     id="apiKey"
                     value={form.apiKey}
                     onChange={(e) => update("apiKey", e.target.value)}
-                    placeholder="Ключ SMS-сервиса"
+                    placeholder="Auth Token из Twilio"
                     className="mt-1.5 font-mono text-sm"
                     type="password"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="phoneNumber" className="text-sm font-medium">Номер отправителя</Label>
+                  <Label htmlFor="phoneNumber" className="text-sm font-medium">Номер отправителя (Twilio)</Label>
                   <Input
                     id="phoneNumber"
                     value={form.phoneNumber}
                     onChange={(e) => update("phoneNumber", e.target.value)}
-                    placeholder="+994501234567"
+                    placeholder="+14155552671"
                     className="mt-1.5"
                   />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Twilio номер для отправки SMS
+                  </p>
                 </div>
               </>
             )}

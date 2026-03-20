@@ -762,6 +762,7 @@ model ChannelConfig {
   webhookUrl     String?
   apiKey         String?
   phoneNumber    String?
+  settings       Json?
   isActive       Boolean  @default(true)
   createdBy      String?
   createdAt      DateTime @default(now())
