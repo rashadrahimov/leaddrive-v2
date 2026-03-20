@@ -45,14 +45,22 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    // 3. Build telegram chatId → contactId map from existing messages with contactId
+    // 3. Build telegram chatId maps from existing messages
     const chatIdToContact: Record<string, string> = {}
+    // Also map chatId → email address for grouping when no contactId exists
+    const chatIdToEmail: Record<string, string> = {}
     for (const msg of messages) {
-      if (msg.contactId && msg.channelType === "telegram") {
+      if (msg.channelType === "telegram") {
         const meta = msg.metadata as any
         const chatId = meta?.chatId as string | undefined
-        if (chatId && !chatIdToContact[chatId]) {
-          chatIdToContact[chatId] = msg.contactId
+        if (chatId) {
+          if (msg.contactId && !chatIdToContact[chatId]) {
+            chatIdToContact[chatId] = msg.contactId
+          }
+          // Outbound with email as `to` — associate chatId with that email
+          if (msg.direction === "outbound" && msg.to.includes("@") && !chatIdToEmail[chatId]) {
+            chatIdToEmail[chatId] = msg.to.toLowerCase()
+          }
         }
       }
     }
@@ -93,13 +101,32 @@ export async function GET(req: NextRequest) {
         if (msg.direction === "outbound" && /^-?\d+$/.test(msg.to)) {
           if (chatIdToContact[msg.to]) return `contact_${chatIdToContact[msg.to]}`
         }
-        // No contact match — group by chatId
+        // Outbound telegram might have email as `to` — try email lookup
+        if (msg.direction === "outbound" && msg.to.includes("@")) {
+          const contact = emailToContact[msg.to.toLowerCase()]
+          if (contact) return `contact_${contact.id}`
+        }
+        // No contact match — try to unify via chatId↔email association
+        if (tgChatId && chatIdToEmail[tgChatId]) {
+          // Group by email so outbound (to email) and inbound (from chatId) merge
+          return `addr_${chatIdToEmail[tgChatId]}`
+        }
+        // Outbound to email — use that email as grouping key (will match chatId→email above)
+        if (msg.direction === "outbound" && msg.to.includes("@")) {
+          return `addr_${msg.to.toLowerCase()}`
+        }
+        // Pure chatId grouping
         if (tgChatId) return `tg_${tgChatId}`
         if (/^-?\d+$/.test(msg.to)) return `tg_${msg.to}`
       }
 
-      // Fallback: group by address
+      // Fallback: try email match for any channel
       const addr = msg.direction === "inbound" ? msg.from : msg.to
+      if (addr?.includes("@")) {
+        const contact = emailToContact[addr.toLowerCase()]
+        if (contact) return `contact_${contact.id}`
+      }
+
       return `addr_${addr || msg.from || "unknown"}`
     }
 
