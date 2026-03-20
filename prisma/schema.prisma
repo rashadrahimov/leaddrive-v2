@@ -761,6 +761,57 @@ model AiChatMessage {
   @@map("ai_chat_messages")
 }
 
+model AiAlert {
+  id             String   @id @default(cuid())
+  organizationId String
+  type           String   // token_spike, high_latency, error, anomaly
+  severity       String   @default("warning") // info, warning, critical
+  message        String
+  sessionId      String?
+  metadata       Json?
+  isRead         Boolean  @default(false)
+  createdAt      DateTime @default(now())
+
+  @@index([organizationId])
+  @@map("ai_alerts")
+}
+
+model AiInteractionLog {
+  id               String   @id @default(cuid())
+  organizationId   String
+  sessionId        String?
+  userMessage      String
+  aiResponse       String
+  latencyMs        Float?
+  promptTokens     Int?
+  completionTokens Int?
+  costUsd          Float?
+  model            String?
+  toolsCalled      String[] @default([])
+  kbArticlesUsed   String[] @default([])
+  qualityScore     Float?
+  isCopilot        Boolean  @default(false)
+  createdAt        DateTime @default(now())
+
+  @@index([organizationId])
+  @@map("ai_interaction_logs")
+}
+
+model AiGuardrail {
+  id             String   @id @default(cuid())
+  organizationId String
+  ruleName       String
+  ruleType       String   @default("restriction") // restriction, filter, validation
+  description    String?
+  promptInjection String?
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([organizationId])
+  @@map("ai_guardrails")
+}
+
 model ChannelConfig {
   id             String   @id @default(cuid())
   organizationId String
