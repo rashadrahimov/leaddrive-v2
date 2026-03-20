@@ -4,13 +4,15 @@ import { useState, useRef, useEffect } from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Send, Bot, User } from "lucide-react"
+import { Send, Bot, User, TicketPlus } from "lucide-react"
+import { useRouter } from "next/navigation"
 
 interface Message {
   id: string
   role: "user" | "assistant"
   content: string
   createdAt: string
+  suggestTicket?: boolean
 }
 
 export default function PortalChatPage() {
@@ -19,6 +21,7 @@ export default function PortalChatPage() {
   const [sending, setSending] = useState(false)
   const [sessionId, setSessionId] = useState<string | null>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
+  const router = useRouter()
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" })
@@ -47,11 +50,13 @@ export default function PortalChatPage() {
       const json = await res.json()
       if (json.success) {
         if (json.data.sessionId) setSessionId(json.data.sessionId)
+        const reply = json.data.reply
         setMessages(prev => [...prev, {
-          id: (Date.now() + 1).toString(),
+          id: reply.id || (Date.now() + 1).toString(),
           role: "assistant",
-          content: json.data.reply,
-          createdAt: new Date().toISOString(),
+          content: reply.content || reply,
+          createdAt: reply.createdAt || new Date().toISOString(),
+          suggestTicket: json.data.suggestTicket || false,
         }])
       }
     } catch {
@@ -87,13 +92,25 @@ export default function PortalChatPage() {
                   <Bot className="h-4 w-4 text-primary" />
                 </div>
               )}
-              <div className={`max-w-[70%] rounded-lg p-3 ${
-                msg.role === "user" ? "bg-primary text-primary-foreground" : "bg-muted"
-              }`}>
-                <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
-                <p className={`text-[10px] mt-1 ${msg.role === "user" ? "opacity-70" : "text-muted-foreground"}`}>
-                  {new Date(msg.createdAt).toLocaleTimeString()}
-                </p>
+              <div className="max-w-[70%]">
+                <div className={`rounded-lg p-3 ${
+                  msg.role === "user" ? "bg-primary text-primary-foreground" : "bg-muted"
+                }`}>
+                  <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+                  <p className={`text-[10px] mt-1 ${msg.role === "user" ? "opacity-70" : "text-muted-foreground"}`}>
+                    {new Date(msg.createdAt).toLocaleTimeString()}
+                  </p>
+                </div>
+                {msg.suggestTicket && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="mt-2 border-orange-300 text-orange-600 hover:bg-orange-50"
+                    onClick={() => router.push("/portal/tickets")}
+                  >
+                    <TicketPlus className="h-3.5 w-3.5 mr-1" /> Создать тикет
+                  </Button>
+                )}
               </div>
               {msg.role === "user" && (
                 <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">

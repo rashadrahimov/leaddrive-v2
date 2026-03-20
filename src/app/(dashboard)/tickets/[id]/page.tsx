@@ -1,30 +1,59 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useParams } from "next/navigation"
 import Link from "next/link"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { ArrowLeft, Clock, User, Send, Lock, Star } from "lucide-react"
+import { Select } from "@/components/ui/select"
+import { ArrowLeft, Clock, Send, Lock, Star, Loader2, Bot, FileText, Zap, UserCheck, RefreshCw } from "lucide-react"
 
-interface TicketComment {
+interface TicketData {
   id: string
-  author: string
-  authorAvatar: string
-  content: string
+  ticketNumber: string
+  subject: string
+  description: string | null
+  status: string
+  priority: string
+  category: string
+  contactId: string | null
+  companyId: string | null
+  assignedTo: string | null
+  createdBy: string | null
+  slaDueAt: string | null
+  firstResponseAt: string | null
+  resolvedAt: string | null
+  closedAt: string | null
+  satisfactionRating: number | null
+  satisfactionComment: string | null
+  tags: string[]
+  createdAt: string
+  updatedAt: string
+  comments: CommentData[]
+}
+
+interface CommentData {
+  id: string
+  userId: string | null
+  comment: string
   isInternal: boolean
   createdAt: string
 }
 
+interface UserOption {
+  id: string
+  name: string | null
+  email: string
+}
+
 const STATUS_STYLES: Record<string, { label: string; className: string }> = {
-  open: { label: "Open", className: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300" },
-  in_progress: { label: "In Progress", className: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300" },
-  waiting: { label: "Waiting", className: "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300" },
-  resolved: { label: "Resolved", className: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300" },
-  closed: { label: "Closed", className: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300" },
+  new: { label: "Новый", className: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300" },
+  in_progress: { label: "В работе", className: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300" },
+  waiting: { label: "Ожидание", className: "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300" },
+  resolved: { label: "Решён", className: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300" },
+  closed: { label: "Закрыт", className: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300" },
 }
 
 const PRIORITY_STYLES: Record<string, { label: string; className: string }> = {
@@ -34,138 +63,442 @@ const PRIORITY_STYLES: Record<string, { label: string; className: string }> = {
   low: { label: "Low", className: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300" },
 }
 
-const MOCK_TICKET = {
-  id: "TK-0042",
-  subject: "Cannot access VPN after password reset",
-  description: "After resetting my Active Directory password yesterday, I can no longer connect to the corporate VPN. The Palo Alto GlobalProtect client shows 'Authentication failed' error. I need VPN access urgently for a client presentation tomorrow.",
-  status: "in_progress",
-  priority: "high",
-  company: "ZeytunPharma",
-  contact: "Elvin Mammadov",
-  contactEmail: "elvin@zeytunpharma.az",
-  assignee: "Kamran Aliyev",
-  assigneeAvatar: "KA",
-  category: "VPN / Network",
-  slaPolicy: "Business Critical",
-  slaDeadline: "2026-03-19T18:00:00",
-  slaTimeLeft: "4h 32m",
-  slaBreached: false,
-  createdAt: "2026-03-19 09:15",
-  updatedAt: "2026-03-19 11:30",
-  firstResponseAt: "2026-03-19 09:45",
+function formatDate(d: string | null) {
+  if (!d) return "—"
+  return new Date(d).toLocaleString("ru-RU", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })
 }
 
-const MOCK_COMMENTS: TicketComment[] = [
-  {
-    id: "1", author: "Elvin Mammadov", authorAvatar: "EM",
-    content: "I reset my password through the self-service portal yesterday at 4 PM. VPN was working before that. The error message says 'Authentication failed - please check your credentials'.",
-    isInternal: false, createdAt: "2026-03-19 09:15",
-  },
-  {
-    id: "2", author: "Kamran Aliyev", authorAvatar: "KA",
-    content: "Hi Elvin, thank you for reporting this. I can see your password was reset in AD at 16:02 yesterday. Let me check the Palo Alto logs for your connection attempts.",
-    isInternal: false, createdAt: "2026-03-19 09:45",
-  },
-  {
-    id: "3", author: "Kamran Aliyev", authorAvatar: "KA",
-    content: "[INTERNAL] Checked PA logs — his old session is still cached. Need to flush the user session from GlobalProtect gateway. Escalating to InfoSec team for gateway access.",
-    isInternal: true, createdAt: "2026-03-19 10:15",
-  },
-  {
-    id: "4", author: "Nigar Hasanova", authorAvatar: "NH",
-    content: "[INTERNAL] Flushed the cached session from GP gateway. The user should be able to reconnect now. Also added a KB article about this common issue after AD password resets.",
-    isInternal: true, createdAt: "2026-03-19 11:30",
-  },
-]
+function getSlaTimeLeft(slaDueAt: string | null, status: string): { text: string; breached: boolean } {
+  if (!slaDueAt) return { text: "—", breached: false }
+  if (status === "resolved" || status === "closed") return { text: "Решён", breached: false }
+  const diff = new Date(slaDueAt).getTime() - Date.now()
+  if (diff <= 0) return { text: "Просрочен", breached: true }
+  const hours = Math.floor(diff / 3600000)
+  const minutes = Math.floor((diff % 3600000) / 60000)
+  return { text: `${hours}ч ${minutes}м`, breached: false }
+}
+
+function getInitials(str: string | null): string {
+  if (!str) return "?"
+  return str.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2)
+}
 
 export default function TicketDetailPage() {
   const params = useParams()
+  const ticketId = params.id as string
+  const [ticket, setTicket] = useState<TicketData | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState("")
   const [newComment, setNewComment] = useState("")
   const [isInternal, setIsInternal] = useState(false)
   const [showInternal, setShowInternal] = useState(true)
+  const [sending, setSending] = useState(false)
 
-  const t = MOCK_TICKET
-  const statusStyle = STATUS_STYLES[t.status] || STATUS_STYLES.open
-  const priorityStyle = PRIORITY_STYLES[t.priority] || PRIORITY_STYLES.medium
-  const filteredComments = showInternal ? MOCK_COMMENTS : MOCK_COMMENTS.filter(c => !c.isInternal)
+  // Inline status change
+  const [newStatus, setNewStatus] = useState("")
+  const [updatingStatus, setUpdatingStatus] = useState(false)
 
-  const handleSendComment = () => {
-    if (!newComment.trim()) return
-    // TODO: API call
-    setNewComment("")
+  // Inline reassign
+  const [users, setUsers] = useState<UserOption[]>([])
+  const [newAssignee, setNewAssignee] = useState("")
+  const [updatingAssignee, setUpdatingAssignee] = useState(false)
+
+  // AI features
+  const [aiLoading, setAiLoading] = useState<string | null>(null) // "reply" | "summary" | "steps"
+  const [aiResult, setAiResult] = useState<{ type: string; text: string } | null>(null)
+
+  const fetchTicket = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/v1/tickets/${ticketId}`)
+      const json = await res.json()
+      if (json.success) {
+        setTicket(json.data)
+        setNewStatus(json.data.status)
+        setNewAssignee(json.data.assignedTo || "")
+      } else {
+        setError(json.error || "Failed to load ticket")
+      }
+    } catch {
+      setError("Failed to load ticket")
+    } finally {
+      setLoading(false)
+    }
+  }, [ticketId])
+
+  const fetchUsers = useCallback(async () => {
+    try {
+      const res = await fetch("/api/v1/users")
+      const json = await res.json()
+      if (json.success) setUsers(json.data || [])
+    } catch { /* ignore */ }
+  }, [])
+
+  useEffect(() => { fetchTicket(); fetchUsers() }, [fetchTicket, fetchUsers])
+
+  // Poll for updates every 15 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchTicket()
+    }, 15000)
+    return () => clearInterval(interval)
+  }, [fetchTicket])
+
+  const handleSendComment = async () => {
+    if (!newComment.trim() || sending) return
+    setSending(true)
+    try {
+      const res = await fetch(`/api/v1/tickets/${ticketId}/comments`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ comment: newComment, isInternal }),
+      })
+      const json = await res.json()
+      if (json.success) {
+        setNewComment("")
+        fetchTicket()
+      }
+    } catch { /* ignore */ } finally { setSending(false) }
   }
+
+  const handleUpdateStatus = async () => {
+    if (!ticket || newStatus === ticket.status) return
+    setUpdatingStatus(true)
+    try {
+      const res = await fetch(`/api/v1/tickets/${ticketId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus }),
+      })
+      if (res.ok) fetchTicket()
+    } catch { /* ignore */ } finally { setUpdatingStatus(false) }
+  }
+
+  const handleReassign = async () => {
+    if (!ticket) return
+    setUpdatingAssignee(true)
+    try {
+      const res = await fetch(`/api/v1/tickets/${ticketId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ assignedTo: newAssignee || "" }),
+      })
+      if (res.ok) fetchTicket()
+    } catch { /* ignore */ } finally { setUpdatingAssignee(false) }
+  }
+
+  const handleAiAction = async (action: string) => {
+    setAiLoading(action)
+    setAiResult(null)
+    try {
+      const res = await fetch("/api/v1/tickets/ai", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action, ticketId }),
+      })
+      const json = await res.json()
+      if (json.success) {
+        const text = json.data.text
+        if (action === "reply") {
+          setNewComment(text)
+        } else {
+          setAiResult({ type: action, text })
+        }
+      }
+    } catch { /* ignore */ } finally { setAiLoading(null) }
+  }
+
+  const handleAutoAssign = async () => {
+    setUpdatingAssignee(true)
+    try {
+      const res = await fetch(`/api/v1/tickets/${ticketId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+      })
+      const json = await res.json()
+      if (json.success) {
+        fetchTicket()
+      }
+    } catch { /* ignore */ } finally { setUpdatingAssignee(false) }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    )
+  }
+
+  if (error || !ticket) {
+    return (
+      <div className="space-y-4">
+        <Link href="/tickets">
+          <Button variant="ghost" size="sm"><ArrowLeft className="h-4 w-4 mr-1" /> Назад</Button>
+        </Link>
+        <Card>
+          <CardContent className="py-10 text-center text-muted-foreground">
+            {error || "Тикет не найден"}
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  const statusStyle = STATUS_STYLES[ticket.status] || STATUS_STYLES.new
+  const priorityStyle = PRIORITY_STYLES[ticket.priority] || PRIORITY_STYLES.medium
+  const comments = ticket.comments || []
+  const sortedComments = [...comments].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+  const filteredComments = showInternal ? sortedComments : sortedComments.filter(c => !c.isInternal)
+  const sla = getSlaTimeLeft(ticket.slaDueAt, ticket.status)
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex items-center gap-4">
         <Link href="/tickets">
-          <Button variant="ghost" size="sm"><ArrowLeft className="h-4 w-4 mr-1" /> Back</Button>
+          <Button variant="ghost" size="sm"><ArrowLeft className="h-4 w-4 mr-1" /> Назад</Button>
         </Link>
         <div className="flex items-center gap-2">
           <Badge className={statusStyle.className}>{statusStyle.label}</Badge>
           <Badge className={priorityStyle.className}>{priorityStyle.label}</Badge>
-          <span className="text-sm text-muted-foreground font-mono">{t.id}</span>
+          <span className="text-sm text-muted-foreground font-mono">{ticket.ticketNumber}</span>
         </div>
       </div>
+
+      {/* SLA & Priority Warnings */}
+      {sla.breached && ticket.status !== "resolved" && ticket.status !== "closed" && (
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3 flex items-center gap-3">
+          <Clock className="h-5 w-5 text-red-600 flex-shrink-0" />
+          <div className="flex-1">
+            <p className="text-sm font-medium text-red-800 dark:text-red-300">⚠️ SLA нарушен! Срочно требуется действие.</p>
+            <p className="text-xs text-red-600 dark:text-red-400">Дедлайн: {formatDate(ticket.slaDueAt)} · Приоритет: {priorityStyle.label}</p>
+          </div>
+          {!ticket.assignedTo && (
+            <Button size="sm" variant="destructive" onClick={handleAutoAssign} disabled={updatingAssignee}>
+              <Zap className="h-3.5 w-3.5 mr-1" /> Назначить
+            </Button>
+          )}
+        </div>
+      )}
+      {!sla.breached && ticket.slaDueAt && ticket.status !== "resolved" && ticket.status !== "closed" && (() => {
+        const hoursLeft = (new Date(ticket.slaDueAt).getTime() - Date.now()) / 3600000
+        if (hoursLeft > 0 && hoursLeft < 2) return (
+          <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3 flex items-center gap-3">
+            <Clock className="h-5 w-5 text-yellow-600 flex-shrink-0" />
+            <div className="flex-1">
+              <p className="text-sm font-medium text-yellow-800 dark:text-yellow-300">⏰ SLA истекает менее чем через 2 часа!</p>
+              <p className="text-xs text-yellow-600 dark:text-yellow-400">Осталось: {sla.text} · Приоритет: {priorityStyle.label}</p>
+            </div>
+          </div>
+        )
+        return null
+      })()}
+      {(ticket.priority === "critical" || ticket.priority === "high") && !ticket.assignedTo && ticket.status !== "resolved" && ticket.status !== "closed" && (
+        <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-3 flex items-center gap-3">
+          <RefreshCw className="h-5 w-5 text-orange-600 flex-shrink-0" />
+          <div className="flex-1">
+            <p className="text-sm font-medium text-orange-800 dark:text-orange-300">🔥 Тикет с высоким приоритетом не назначен!</p>
+            <p className="text-xs text-orange-600 dark:text-orange-400">Приоритет: {priorityStyle.label} · Требуется назначение агента</p>
+          </div>
+          <Button size="sm" className="bg-orange-500 hover:bg-orange-600 text-white" onClick={handleAutoAssign} disabled={updatingAssignee}>
+            <Zap className="h-3.5 w-3.5 mr-1" /> Авто-назначить
+          </Button>
+        </div>
+      )}
 
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Main content */}
         <div className="lg:col-span-2 space-y-4">
+          {/* Ticket info */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-xl">{t.subject}</CardTitle>
-              <p className="text-sm text-muted-foreground">{t.description}</p>
+              <CardTitle className="text-xl">{ticket.subject}</CardTitle>
+              <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
+                <span>Компания: <strong>{(ticket as any).companyName || "—"}</strong></span>
+                <span>Назначен: <strong>{(ticket as any).assigneeName || "Не назначен"}</strong></span>
+              </div>
+              <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                <span>Приоритет: <strong>{ticket.priority}</strong></span>
+                <span>Категория: <strong>{ticket.category}</strong></span>
+              </div>
+              {ticket.description && (
+                <div className="mt-3 p-3 bg-muted/50 rounded-lg">
+                  <p className="text-sm whitespace-pre-wrap">{ticket.description}</p>
+                </div>
+              )}
             </CardHeader>
           </Card>
 
+          {/* Comments */}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-3">
-              <CardTitle className="text-base">Comments ({filteredComments.length})</CardTitle>
+              <CardTitle className="text-base">Комментарии ({filteredComments.length})</CardTitle>
               <Button variant="ghost" size="sm" onClick={() => setShowInternal(!showInternal)}>
                 <Lock className="h-3.5 w-3.5 mr-1" />
-                {showInternal ? "Hide Internal" : "Show Internal"}
+                {showInternal ? "Скрыть внутренние" : "Показать внутренние"}
               </Button>
             </CardHeader>
             <CardContent className="space-y-4">
+              {filteredComments.length === 0 && (
+                <p className="text-sm text-muted-foreground text-center py-4">Нет комментариев</p>
+              )}
               {filteredComments.map(comment => (
-                <div key={comment.id} className={`flex gap-3 ${comment.isInternal ? "bg-amber-50/50 dark:bg-amber-950/20 -mx-3 px-3 py-2 rounded" : ""}`}>
+                <div key={comment.id} className={`flex gap-3 ${comment.isInternal ? "bg-amber-50/50 dark:bg-amber-950/20 -mx-3 px-3 py-2 rounded border-l-2 border-amber-400" : ""}`}>
                   <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-medium flex-shrink-0">
-                    {comment.authorAvatar}
+                    {getInitials((comment as any).userName || "System")}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium">{comment.author}</span>
-                      <span className="text-xs text-muted-foreground">{comment.createdAt}</span>
+                      <span className={`text-sm font-medium ${comment.isInternal ? "text-amber-700 dark:text-amber-400" : ""}`}>
+                        {(comment as any).userName || "System"}
+                      </span>
+                      <span className="text-xs text-muted-foreground">{formatDate(comment.createdAt)}</span>
                       {comment.isInternal && (
-                        <Badge variant="outline" className="text-[10px] h-4">
-                          <Lock className="h-2.5 w-2.5 mr-0.5" /> Internal
+                        <Badge variant="outline" className="text-[10px] h-4 border-amber-400 text-amber-600">
+                          <Lock className="h-2.5 w-2.5 mr-0.5" /> Внутренняя
                         </Badge>
                       )}
                     </div>
-                    <p className="text-sm mt-1 text-muted-foreground">{comment.content}</p>
+                    <p className="text-sm mt-1 text-muted-foreground whitespace-pre-wrap">{comment.comment}</p>
                   </div>
                 </div>
               ))}
 
-              <div className="border-t pt-4">
-                <div className="flex gap-2">
-                  <Input
-                    value={newComment}
-                    onChange={e => setNewComment(e.target.value)}
-                    placeholder={isInternal ? "Add internal note..." : "Reply to customer..."}
-                    className="flex-1"
-                    onKeyDown={e => e.key === "Enter" && handleSendComment()}
-                  />
-                  <Button variant={isInternal ? "outline" : "default"} size="sm" onClick={() => setIsInternal(!isInternal)}>
-                    <Lock className="h-3.5 w-3.5" />
+              {/* Comment input area */}
+              <div className="border-t pt-4 space-y-3">
+                <Textarea
+                  value={newComment}
+                  onChange={e => setNewComment(e.target.value)}
+                  placeholder={isInternal ? "Добавить внутреннюю заметку..." : "Ответить клиенту..."}
+                  rows={3}
+                  disabled={sending}
+                />
+
+                {/* Reply buttons row */}
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button
+                    size="sm"
+                    onClick={handleSendComment}
+                    disabled={sending || !newComment.trim()}
+                    className="bg-orange-500 hover:bg-orange-600"
+                  >
+                    {sending ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <Send className="h-3.5 w-3.5 mr-1" />}
+                    Ответить
                   </Button>
-                  <Button size="sm" onClick={handleSendComment}>
-                    <Send className="h-3.5 w-3.5 mr-1" /> Send
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => { setIsInternal(!isInternal) }}
+                    className={isInternal ? "border-amber-400 text-amber-600" : ""}
+                  >
+                    <Lock className="h-3.5 w-3.5 mr-1" />
+                    Внутр. заметка
+                  </Button>
+
+                  <div className="border-l h-6 mx-1" />
+
+                  {/* AI buttons */}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleAiAction("reply")}
+                    disabled={aiLoading !== null}
+                    className="border-green-300 text-green-700 hover:bg-green-50 dark:border-green-700 dark:text-green-400 dark:hover:bg-green-950"
+                  >
+                    {aiLoading === "reply" ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <Bot className="h-3.5 w-3.5 mr-1" />}
+                    AI Ответ
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleAiAction("summary")}
+                    disabled={aiLoading !== null}
+                    className="border-blue-300 text-blue-700 hover:bg-blue-50 dark:border-blue-700 dark:text-blue-400 dark:hover:bg-blue-950"
+                  >
+                    {aiLoading === "summary" ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <FileText className="h-3.5 w-3.5 mr-1" />}
+                    Резюме
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleAiAction("steps")}
+                    disabled={aiLoading !== null}
+                    className="border-yellow-300 text-yellow-700 hover:bg-yellow-50 dark:border-yellow-700 dark:text-yellow-400 dark:hover:bg-yellow-950"
+                  >
+                    {aiLoading === "steps" ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <Zap className="h-3.5 w-3.5 mr-1" />}
+                    Шаги
                   </Button>
                 </div>
+
                 {isInternal && (
-                  <p className="text-xs text-amber-600 mt-1">Internal note — not visible to customer</p>
+                  <p className="text-xs text-amber-600">Внутренняя заметка — не видна клиенту</p>
                 )}
+
+                {/* AI Result display */}
+                {aiResult && (
+                  <div className="p-3 bg-muted/50 rounded-lg border">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Bot className="h-4 w-4 text-green-600" />
+                      <span className="text-xs font-medium text-green-600">
+                        AI {aiResult.type === "summary" ? "Резюме" : "Шаги"}
+                      </span>
+                      <button onClick={() => setAiResult(null)} className="ml-auto text-xs text-muted-foreground hover:text-foreground">✕</button>
+                    </div>
+                    <p className="text-sm whitespace-pre-wrap">{aiResult.text}</p>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Inline actions: Status + Reassign */}
+          <Card>
+            <CardContent className="pt-6 space-y-4">
+              {/* Status change */}
+              <div className="flex items-center gap-3">
+                <Select value={newStatus} onChange={e => setNewStatus(e.target.value)} className="w-48">
+                  <option value="new">Новый</option>
+                  <option value="in_progress">В работе</option>
+                  <option value="waiting">Ожидание</option>
+                  <option value="resolved">Решён</option>
+                  <option value="closed">Закрыт</option>
+                </Select>
+                <Button
+                  onClick={handleUpdateStatus}
+                  disabled={updatingStatus || newStatus === ticket.status}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  {updatingStatus ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <RefreshCw className="h-3.5 w-3.5 mr-1" />}
+                  Обновить статус
+                </Button>
+              </div>
+
+              {/* Reassign */}
+              <div className="flex items-center gap-3">
+                <Select value={newAssignee} onChange={e => setNewAssignee(e.target.value)} className="w-48">
+                  <option value="">— Не назначен —</option>
+                  {users.map(u => (
+                    <option key={u.id} value={u.id}>{u.name || u.email}</option>
+                  ))}
+                </Select>
+                <Button
+                  variant="outline"
+                  onClick={handleReassign}
+                  disabled={updatingAssignee || newAssignee === (ticket.assignedTo || "")}
+                  className="border-orange-300 text-orange-600 hover:bg-orange-50"
+                >
+                  {updatingAssignee ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <UserCheck className="h-3.5 w-3.5 mr-1" />}
+                  Переназначить
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={handleAutoAssign}
+                  disabled={updatingAssignee}
+                  className="border-yellow-300 text-yellow-600 hover:bg-yellow-50"
+                >
+                  {updatingAssignee ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <Zap className="h-3.5 w-3.5 mr-1" />}
+                  Авто
+                </Button>
               </div>
             </CardContent>
           </Card>
@@ -174,52 +507,60 @@ export default function TicketDetailPage() {
         {/* Sidebar */}
         <div className="space-y-4">
           <Card>
-            <CardHeader className="pb-2"><CardTitle className="text-sm">Details</CardTitle></CardHeader>
+            <CardHeader className="pb-2"><CardTitle className="text-sm">Детали</CardTitle></CardHeader>
             <CardContent className="space-y-3 text-sm">
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Status</span>
+                <span className="text-muted-foreground">Статус</span>
                 <Badge className={statusStyle.className}>{statusStyle.label}</Badge>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Priority</span>
+                <span className="text-muted-foreground">Приоритет</span>
                 <Badge className={priorityStyle.className}>{priorityStyle.label}</Badge>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Category</span>
-                <span>{t.category}</span>
+                <span className="text-muted-foreground">Категория</span>
+                <span>{ticket.category}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Created</span>
-                <span>{t.createdAt}</span>
+                <span className="text-muted-foreground">Создан</span>
+                <span>{formatDate(ticket.createdAt)}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Updated</span>
-                <span>{t.updatedAt}</span>
+                <span className="text-muted-foreground">Обновлён</span>
+                <span>{formatDate(ticket.updatedAt)}</span>
               </div>
+              {ticket.tags.length > 0 && (
+                <div>
+                  <span className="text-muted-foreground">Теги</span>
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {ticket.tags.map(tag => (
+                      <Badge key={tag} variant="outline" className="text-[10px]">{tag}</Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
 
           <Card>
-            <CardHeader className="pb-2"><CardTitle className="text-sm">People</CardTitle></CardHeader>
+            <CardHeader className="pb-2"><CardTitle className="text-sm">Люди</CardTitle></CardHeader>
             <CardContent className="space-y-3 text-sm">
               <div>
-                <span className="text-muted-foreground">Assignee</span>
-                <div className="flex items-center gap-2 mt-1">
-                  <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-medium">
-                    {t.assigneeAvatar}
-                  </div>
-                  <span className="font-medium">{t.assignee}</span>
+                <span className="text-muted-foreground">Назначен</span>
+                <p className="font-medium">{(ticket as any).assigneeName || "Не назначен"}</p>
+              </div>
+              {ticket.companyId && (
+                <div>
+                  <span className="text-muted-foreground">Компания</span>
+                  <p className="font-medium">{(ticket as any).companyName || ticket.companyId}</p>
                 </div>
-              </div>
-              <div>
-                <span className="text-muted-foreground">Contact</span>
-                <p className="font-medium">{t.contact}</p>
-                <p className="text-xs text-muted-foreground">{t.contactEmail}</p>
-              </div>
-              <div>
-                <span className="text-muted-foreground">Company</span>
-                <p className="font-medium">{t.company}</p>
-              </div>
+              )}
+              {ticket.contactId && (
+                <div>
+                  <span className="text-muted-foreground">Контакт</span>
+                  <p className="font-medium font-mono text-xs">{ticket.contactId}</p>
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -231,22 +572,27 @@ export default function TicketDetailPage() {
             </CardHeader>
             <CardContent className="space-y-2 text-sm">
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Policy</span>
-                <span>{t.slaPolicy}</span>
+                <span className="text-muted-foreground">Дедлайн</span>
+                <span>{ticket.slaDueAt ? formatDate(ticket.slaDueAt) : "Не задан"}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Time Left</span>
-                <span className={`font-mono font-medium ${t.slaBreached ? "text-red-600" : "text-green-600"}`}>
-                  {t.slaTimeLeft}
+                <span className="text-muted-foreground">Осталось</span>
+                <span className={`font-mono font-medium ${sla.breached ? "text-red-600" : "text-green-600"}`}>
+                  {sla.text}
                 </span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">First Response</span>
-                <span className="text-green-600">30 min</span>
-              </div>
-              <div className="w-full bg-muted rounded-full h-2 mt-2">
-                <div className="bg-primary h-2 rounded-full" style={{ width: "45%" }} />
-              </div>
+              {ticket.firstResponseAt && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Первый ответ</span>
+                  <span className="text-green-600">{formatDate(ticket.firstResponseAt)}</span>
+                </div>
+              )}
+              {ticket.resolvedAt && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Решён</span>
+                  <span>{formatDate(ticket.resolvedAt)}</span>
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -257,7 +603,20 @@ export default function TicketDetailPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-muted-foreground">Not yet rated — survey sent after resolution</p>
+              {ticket.satisfactionRating ? (
+                <div>
+                  <div className="flex items-center gap-1">
+                    {[1, 2, 3, 4, 5].map(i => (
+                      <Star key={i} className={`h-4 w-4 ${i <= ticket.satisfactionRating! ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground"}`} />
+                    ))}
+                  </div>
+                  {ticket.satisfactionComment && (
+                    <p className="text-sm text-muted-foreground mt-1">{ticket.satisfactionComment}</p>
+                  )}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">Ещё не оценен</p>
+              )}
             </CardContent>
           </Card>
         </div>

@@ -1,0 +1,164 @@
+import { NextRequest, NextResponse } from "next/server"
+import { getOrgId } from "@/lib/api-auth"
+import { prisma } from "@/lib/prisma"
+import Anthropic from "@anthropic-ai/sdk"
+
+function getClient(): Anthropic | null {
+  if (!process.env.ANTHROPIC_API_KEY) return null
+  return new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+}
+
+// Search KB articles by keyword relevance
+async function findRelevantKbArticles(orgId: string, query: string, limit = 3): Promise<string> {
+  const keywords = query.toLowerCase().split(/\s+/).filter(w => w.length > 3)
+  if (keywords.length === 0) return ""
+
+  const articles = await prisma.kbArticle.findMany({
+    where: {
+      organizationId: orgId,
+      status: "published",
+      OR: keywords.flatMap(kw => [
+        { title: { contains: kw, mode: "insensitive" as const } },
+        { content: { contains: kw, mode: "insensitive" as const } },
+      ]),
+    },
+    select: { title: true, content: true },
+    take: limit,
+  })
+
+  if (articles.length === 0) return ""
+
+  return "\n\n--- KNOWLEDGE BASE ARTICLES ---\n" +
+    articles.map((a, i) => `[Article ${i + 1}] ${a.title}\n${a.content?.substring(0, 800) || ""}`).join("\n\n")
+}
+
+// POST /api/v1/tickets/ai?action=reply|summary|steps
+export async function POST(req: NextRequest) {
+  const orgId = await getOrgId(req)
+  if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+
+  const body = await req.json()
+  const { action, ticketId } = body
+
+  if (!action || !ticketId) {
+    return NextResponse.json({ error: "action and ticketId required" }, { status: 400 })
+  }
+
+  try {
+    const ticket = await prisma.ticket.findFirst({
+      where: { id: ticketId, organizationId: orgId },
+      include: { comments: { orderBy: { createdAt: "asc" } } },
+    })
+
+    if (!ticket) return NextResponse.json({ error: "Ticket not found" }, { status: 404 })
+
+    // Build context
+    const commentsText = ticket.comments
+      .map(c => `[${c.isInternal ? "Internal" : "Customer"}] ${c.comment}`)
+      .join("\n")
+
+    const context = `Ticket #${ticket.ticketNumber}: ${ticket.subject}
+Status: ${ticket.status} | Priority: ${ticket.priority} | Category: ${ticket.category}
+Description: ${ticket.description || "No description"}
+Comments:\n${commentsText || "No comments yet"}`
+
+    const client = getClient()
+
+    if (action === "reply") {
+      // Search KB for relevant articles
+      const searchQuery = `${ticket.subject} ${ticket.description || ""} ${ticket.category}`
+      const kbContext = await findRelevantKbArticles(orgId, searchQuery)
+
+      if (client) {
+        const systemPrompt = kbContext
+          ? `You are a professional support agent. You have access to the company's knowledge base articles below. Use them to provide accurate, helpful answers. If the KB articles contain relevant information, reference it in your reply. Reply in the same language as the customer's message. Do not use markdown, write plain text.${kbContext}`
+          : "You are a professional support agent. Write a helpful, concise reply to the customer based on the ticket context. Reply in the same language as the customer's message. Do not use markdown, write plain text."
+
+        const msg = await client.messages.create({
+          model: "claude-haiku-4-5-20251001",
+          max_tokens: 600,
+          system: systemPrompt,
+          messages: [{ role: "user", content: context }],
+        })
+        const text = msg.content[0].type === "text" ? msg.content[0].text : ""
+        return NextResponse.json({
+          success: true,
+          data: { text, kbUsed: kbContext.length > 0 },
+        })
+      }
+      return NextResponse.json({
+        success: true,
+        data: { text: getFallbackReply(ticket, kbContext), kbUsed: kbContext.length > 0 },
+      })
+    }
+
+    if (action === "summary") {
+      if (client) {
+        const msg = await client.messages.create({
+          model: "claude-haiku-4-5-20251001",
+          max_tokens: 300,
+          system: "Summarize this support ticket in 2-3 sentences. Include the main issue, current status, and any key actions taken. Write in the same language as the ticket content.",
+          messages: [{ role: "user", content: context }],
+        })
+        const text = msg.content[0].type === "text" ? msg.content[0].text : ""
+        return NextResponse.json({ success: true, data: { text } })
+      }
+      return NextResponse.json({
+        success: true,
+        data: { text: getFallbackSummary(ticket) },
+      })
+    }
+
+    if (action === "steps") {
+      if (client) {
+        const msg = await client.messages.create({
+          model: "claude-haiku-4-5-20251001",
+          max_tokens: 400,
+          system: "Based on this support ticket, suggest 3-5 concrete next steps the support agent should take to resolve it. Write numbered steps. Write in the same language as the ticket content.",
+          messages: [{ role: "user", content: context }],
+        })
+        const text = msg.content[0].type === "text" ? msg.content[0].text : ""
+        return NextResponse.json({ success: true, data: { text } })
+      }
+      return NextResponse.json({
+        success: true,
+        data: { text: getFallbackSteps(ticket) },
+      })
+    }
+
+    return NextResponse.json({ error: "Unknown action. Use: reply, summary, steps" }, { status: 400 })
+  } catch (e) {
+    console.error("Ticket AI error:", e)
+    return NextResponse.json({ error: "AI request failed" }, { status: 500 })
+  }
+}
+
+function getFallbackReply(ticket: any, kbContext?: string): string {
+  const lang = /[а-яА-Я]/.test(ticket.subject) ? "ru" : "en"
+  let reply = ""
+  if (lang === "ru") {
+    reply = `Здравствуйте!\n\nСпасибо за обращение "${ticket.subject}". Мы приняли ваш запрос и работаем над его решением.\n\nПриоритет: ${ticket.priority}\nКатегория: ${ticket.category}`
+  } else {
+    reply = `Hello!\n\nThank you for reaching out regarding "${ticket.subject}". We have received your request and are working on resolving it.\n\nPriority: ${ticket.priority}\nCategory: ${ticket.category}`
+  }
+  if (kbContext) {
+    // Extract article titles from KB context
+    const articleTitles = kbContext.match(/\[Article \d+\] (.+)/g)?.map(m => m.replace(/\[Article \d+\] /, "")) || []
+    if (articleTitles.length > 0) {
+      reply += lang === "ru"
+        ? `\n\nВозможно вам помогут следующие статьи из базы знаний:\n${articleTitles.map(t => `• ${t}`).join("\n")}`
+        : `\n\nThe following knowledge base articles may help:\n${articleTitles.map(t => `• ${t}`).join("\n")}`
+    }
+  }
+  reply += lang === "ru" ? "\n\nМы свяжемся с вами в ближайшее время." : "\n\nWe will follow up shortly."
+  return reply
+}
+
+function getFallbackSummary(ticket: any): string {
+  const commentCount = ticket.comments?.length || 0
+  return `Ticket "${ticket.subject}" (${ticket.ticketNumber}) — Status: ${ticket.status}, Priority: ${ticket.priority}, Category: ${ticket.category}. ${commentCount} comment(s). ${ticket.description || "No description provided."}`
+}
+
+function getFallbackSteps(ticket: any): string {
+  return `1. Review the ticket description and all comments\n2. Check if additional information is needed from the customer\n3. Investigate the ${ticket.category} issue\n4. Provide a resolution or escalate to the appropriate team\n5. Update ticket status and notify the customer`
+}
