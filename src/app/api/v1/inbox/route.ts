@@ -397,6 +397,14 @@ export async function POST(req: NextRequest) {
       },
     })
 
+    // Update lastContactAt on the contact
+    if (contactId && status === "delivered") {
+      await prisma.contact.updateMany({
+        where: { id: contactId, organizationId: orgId },
+        data: { lastContactAt: new Date() },
+      }).catch(() => {})
+    }
+
     if (status === "failed") {
       return NextResponse.json({ success: false, error: errorMsg || "Ошибка отправки" }, { status: 500 })
     }

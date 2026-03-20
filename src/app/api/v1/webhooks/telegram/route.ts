@@ -73,6 +73,14 @@ export async function POST(req: NextRequest) {
       },
     })
 
+    // Update lastContactAt
+    if (contactId) {
+      await prisma.contact.updateMany({
+        where: { id: contactId, organizationId: orgId },
+        data: { lastContactAt: new Date() },
+      }).catch(() => {})
+    }
+
     return NextResponse.json({ ok: true })
   } catch (err) {
     console.error("[TG Webhook] Error:", err)
