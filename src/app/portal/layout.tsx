@@ -18,8 +18,8 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
   const [user, setUser] = useState<PortalUser | null>(null)
 
   useEffect(() => {
-    // Skip auth check on login/register pages
-    if (pathname === "/portal/login" || pathname === "/portal/register") return
+    // Skip auth check on login/register/set-password pages
+    if (pathname === "/portal/login" || pathname === "/portal/register" || pathname === "/portal/set-password") return
 
     const stored = localStorage.getItem("portal-user")
     if (stored) {
@@ -35,8 +35,8 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
     router.push("/portal/login")
   }
 
-  // Don't show header on login/register pages
-  if (pathname === "/portal/login" || pathname === "/portal/register") {
+  // Don't show header on login/register/set-password pages
+  if (pathname === "/portal/login" || pathname === "/portal/register" || pathname === "/portal/set-password") {
     return <>{children}</>
   }
 

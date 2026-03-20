@@ -1,23 +1,17 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
-import { createPortalToken } from "@/lib/portal-auth"
-import bcrypt from "bcryptjs"
+import { randomBytes } from "crypto"
+import { sendEmail } from "@/lib/email"
 
-// POST /api/v1/public/portal-auth/register — register portal account
+// POST /api/v1/public/portal-auth/register — send verification email
 export async function POST(req: NextRequest) {
-  const { email, password, confirmPassword } = await req.json()
+  const { email } = await req.json()
 
   if (!email) return NextResponse.json({ error: "Email обязателен" }, { status: 400 })
-  if (!password || password.length < 6) {
-    return NextResponse.json({ error: "Пароль должен быть не менее 6 символов" }, { status: 400 })
-  }
-  if (password !== confirmPassword) {
-    return NextResponse.json({ error: "Пароли не совпадают" }, { status: 400 })
-  }
 
   const contact = await prisma.contact.findFirst({
-    where: { email },
-    include: { company: true },
+    where: { email: email.toLowerCase().trim() },
+    include: { organization: { select: { name: true } } },
   })
 
   if (!contact) {
@@ -25,57 +19,73 @@ export async function POST(req: NextRequest) {
   }
 
   if (!contact.portalAccessEnabled) {
-    return NextResponse.json({ error: "Доступ к порталу не активирован для вашего аккаунта. Обратитесь к администратору." }, { status: 403 })
+    return NextResponse.json({ error: "Доступ к порталу не активирован. Обратитесь к администратору." }, { status: 403 })
   }
 
   if (contact.portalPasswordHash) {
     return NextResponse.json({ error: "Аккаунт уже зарегистрирован. Войдите через страницу входа." }, { status: 409 })
   }
 
-  const hash = await bcrypt.hash(password, 12)
+  // Generate verification token (32 bytes = 64 hex chars)
+  const token = randomBytes(32).toString("hex")
+  const expires = new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours
 
   await prisma.contact.update({
     where: { id: contact.id },
     data: {
-      portalPasswordHash: hash,
-      portalLastLoginAt: new Date(),
+      portalVerificationToken: token,
+      portalVerificationExpires: expires,
     },
   })
+
+  // Build verification URL
+  const baseUrl = process.env.NEXTAUTH_URL || "https://v2.leaddrivecrm.org"
+  const verifyUrl = `${baseUrl}/portal/set-password?token=${token}`
+
+  // Send verification email
+  const result = await sendEmail({
+    to: email,
+    subject: "Подтверждение регистрации на портале",
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <h2 style="color: #1a1a1a;">Регистрация на портале</h2>
+        <p>Здравствуйте, <strong>${contact.fullName}</strong>!</p>
+        <p>Вы запросили регистрацию на клиентском портале <strong>${contact.organization.name}</strong>.</p>
+        <p>Для завершения регистрации перейдите по ссылке и создайте пароль:</p>
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${verifyUrl}" style="background-color: #2563eb; color: white; padding: 12px 32px; text-decoration: none; border-radius: 6px; font-weight: 600; display: inline-block;">
+            Создать пароль
+          </a>
+        </div>
+        <p style="color: #666; font-size: 13px;">Ссылка действительна в течение 24 часов.</p>
+        <p style="color: #666; font-size: 13px;">Если вы не запрашивали регистрацию, проигнорируйте это письмо.</p>
+        <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
+        <p style="color: #999; font-size: 12px;">LeadDrive CRM — клиентский портал</p>
+      </div>
+    `,
+    organizationId: contact.organizationId,
+    contactId: contact.id,
+  })
+
+  if (!result.success) {
+    return NextResponse.json({
+      error: "Не удалось отправить письмо. Проверьте настройки SMTP или обратитесь к администратору.",
+    }, { status: 500 })
+  }
 
   // Audit log
   try {
     await prisma.auditLog.create({
       data: {
         organizationId: contact.organizationId,
-        action: "portal_register",
+        action: "portal_verification_sent",
         entityType: "contact",
         entityId: contact.id,
         entityName: contact.fullName,
-        details: { ip: req.headers.get("x-forwarded-for") || "unknown" },
+        details: { email, ip: req.headers.get("x-forwarded-for") || "unknown" },
       },
     })
   } catch { /* non-critical */ }
 
-  // Auto-login after registration
-  const portalUser = {
-    contactId: contact.id,
-    organizationId: contact.organizationId,
-    companyId: contact.companyId,
-    fullName: contact.fullName,
-    email: contact.email!,
-  }
-
-  const token = await createPortalToken(portalUser)
-
-  const res = NextResponse.json({
-    success: true,
-    data: {
-      contactId: contact.id,
-      fullName: contact.fullName,
-      email: contact.email,
-      companyName: contact.company?.name || "",
-    },
-  })
-  res.cookies.set("portal-token", token, { httpOnly: true, path: "/", maxAge: 86400 * 7, sameSite: "lax" })
-  return res
+  return NextResponse.json({ success: true, message: "Письмо с ссылкой для подтверждения отправлено" })
 }
