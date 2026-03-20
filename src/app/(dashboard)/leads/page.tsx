@@ -224,7 +224,7 @@ export default function LeadsPage() {
               <th className="px-4 py-3 text-left font-medium text-muted-foreground min-w-[180px]">AI Прогноз</th>
               <th className="px-4 py-3 text-left font-medium text-muted-foreground">Источник</th>
               <th className="px-4 py-3 text-left font-medium text-muted-foreground">Статус</th>
-              <th className="px-4 py-3 text-left font-medium text-muted-foreground">Приоритет</th>
+              <th className="px-4 py-3 text-left font-medium text-muted-foreground">Конверсия</th>
               <th className="px-4 py-3 text-left font-medium text-muted-foreground">Действия</th>
             </tr>
           </thead>
@@ -293,9 +293,14 @@ export default function LeadsPage() {
                     </span>
                   </td>
                   <td className="px-4 py-3">
-                    <span className={cn("text-xs font-medium", priorityColors[lead.priority] || "text-gray-500")}>
-                      {priorityLabels[lead.priority] || lead.priority}
-                    </span>
+                    {(() => {
+                      const convProb = (lead.scoreDetails as any)?.conversionProb ?? Math.round(lead.score * 0.85)
+                      return (
+                        <span className={cn("text-xs font-bold", convProb >= 50 ? "text-green-600" : convProb >= 30 ? "text-yellow-600" : "text-red-500")}>
+                          {convProb}%
+                        </span>
+                      )
+                    })()}
                   </td>
                   <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
                     <div className="flex items-center gap-1">
