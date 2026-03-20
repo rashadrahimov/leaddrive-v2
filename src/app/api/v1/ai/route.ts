@@ -10,48 +10,94 @@ export async function POST(req: NextRequest) {
   if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
   const body = await req.json()
-  const { action, companyId, options } = body
+  const { action, companyId, leadId, options } = body
 
-  if (!action || !companyId) {
-    return NextResponse.json({ error: "action and companyId required" }, { status: 400 })
+  if (!action || (!companyId && !leadId)) {
+    return NextResponse.json({ error: "action and (companyId or leadId) required" }, { status: 400 })
   }
 
   try {
-    // Load company data for context
-    const company = await prisma.company.findFirst({
-      where: { id: companyId, organizationId: orgId },
-      include: {
-        contacts: { take: 5 },
-        deals: { take: 5 },
-        activities: { take: 10, orderBy: { createdAt: "desc" } },
-      },
-    })
-    if (!company) return NextResponse.json({ error: "Company not found" }, { status: 404 })
+    // Build context from either company or lead
+    let contextName = ""
+    let contactNames = ""
+    let dealInfo = ""
+    let activitiesList: any[] = []
+    let industry = ""
+    let website = ""
+    let leadStatus = ""
+    let userCount = 0
+    let mainContactName = "Уважаемый клиент"
+    let mainContactPhone = "+994 XX XXX XXXX"
+    let mainContactEmail = ""
 
-    const contactNames = company.contacts.map(c => c.fullName).join(", ")
-    const dealInfo = company.deals.map(d => `${d.title} (${d.stage}, ${d.valueAmount}₼)`).join("; ")
+    if (leadId) {
+      // Load lead data
+      const lead = await prisma.lead.findFirst({
+        where: { id: leadId, organizationId: orgId },
+      })
+      if (!lead) return NextResponse.json({ error: "Lead not found" }, { status: 404 })
+
+      contextName = lead.companyName || lead.contactName
+      mainContactName = lead.contactName
+      mainContactPhone = lead.phone || "+994 XX XXX XXXX"
+      mainContactEmail = lead.email || ""
+      contactNames = lead.contactName
+      leadStatus = lead.status
+      // Load activities linked to this lead (via contactId = lead.id)
+      activitiesList = await prisma.activity.findMany({
+        where: { organizationId: orgId, contactId: leadId },
+        orderBy: { createdAt: "desc" },
+        take: 10,
+      }).catch(() => [])
+    } else {
+      // Load company data for context
+      const company = await prisma.company.findFirst({
+        where: { id: companyId, organizationId: orgId },
+        include: {
+          contacts: { take: 5 },
+          deals: { take: 5 },
+          activities: { take: 10, orderBy: { createdAt: "desc" } },
+        },
+      })
+      if (!company) return NextResponse.json({ error: "Company not found" }, { status: 404 })
+
+      contextName = company.name
+      contactNames = company.contacts.map(c => c.fullName).join(", ")
+      dealInfo = company.deals.map(d => `${d.title} (${d.stage}, ${d.valueAmount}₼)`).join("; ")
+      activitiesList = company.activities
+      industry = company.industry || ""
+      website = company.website || ""
+      leadStatus = company.leadStatus || ""
+      userCount = company.userCount
+      const mainContact = company.contacts[0]
+      if (mainContact) {
+        mainContactName = mainContact.fullName
+        mainContactPhone = mainContact.phone || "+994 XX XXX XXXX"
+        mainContactEmail = mainContact.email || ""
+      }
+    }
 
     switch (action) {
       case "sentiment": {
         // AI Sentiment analysis
-        const hasActivities = company.activities.length > 0
-        const score = hasActivities ? Math.min(90, 30 + company.activities.length * 10) : 50
+        const hasActivities = activitiesList.length > 0
+        const score = hasActivities ? Math.min(90, 30 + activitiesList.length * 10) : 50
         const sentiment = score >= 70 ? "POSITIVE" : score >= 40 ? "NEUTRAL" : "NEGATIVE"
         const emoji = score >= 70 ? "😊" : score >= 40 ? "😐" : "😟"
-        const trend = company.activities.length > 3 ? "improving" : company.activities.length > 0 ? "stable" : "unknown"
+        const trend = activitiesList.length > 3 ? "improving" : activitiesList.length > 0 ? "stable" : "unknown"
         const risk = score >= 70 ? "LOW" : score >= 40 ? "MEDIUM" : "HIGH"
-        const confidence = Math.min(95, company.activities.length * 15 + 10)
+        const confidence = Math.min(95, activitiesList.length * 15 + 10)
 
         let summary = ""
         if (!hasActivities) {
-          summary = `Недостаточно данных для анализа взаимодействия с контактом ${contactNames || "неизвестен"} из ${company.name}. Рекомендуется установить контакт и начать сбор информации о взаимодействиях. Текущий статус компании: ${company.leadStatus === "converted" ? "конвертирован (клиент)" : company.leadStatus === "new" ? "новый лид" : company.leadStatus}. ${company.userCount > 0 ? `В компании ${company.userCount} пользователей.` : ""} ${company.industry ? `Отрасль: ${company.industry}.` : ""}`
+          summary = `Недостаточно данных для анализа взаимодействия с контактом ${contactNames || "неизвестен"} из ${contextName}. Рекомендуется установить контакт и начать сбор информации о взаимодействиях. Текущий статус: ${leadStatus === "converted" ? "конвертирован (клиент)" : leadStatus === "new" ? "новый лид" : leadStatus}. ${userCount > 0 ? `В компании ${userCount} пользователей.` : ""} ${industry ? `Отрасль: ${industry}.` : ""}`
         } else {
-          const activityTypes = company.activities.map(a => a.type)
+          const activityTypes = activitiesList.map((a: any) => a.type)
           const hasEmails = activityTypes.includes("email")
           const hasCalls = activityTypes.includes("call")
           const hasMeetings = activityTypes.includes("meeting")
           const channels = [hasEmails ? "email" : "", hasCalls ? "звонки" : "", hasMeetings ? "встречи" : ""].filter(Boolean).join(", ")
-          summary = `Анализ ${company.activities.length} взаимодействий с ${company.name} показывает ${sentiment.toLowerCase()} тональность. ${channels ? `Использованные каналы: ${channels}.` : ""} ${contactNames ? `Основные контакты: ${contactNames}.` : ""} ${dealInfo ? `Активные сделки: ${dealInfo}.` : "Нет активных сделок."} ${risk === "HIGH" ? "⚠️ Рекомендуется усилить коммуникацию для снижения риска потери клиента." : risk === "MEDIUM" ? "Рекомендуется поддерживать текущий уровень взаимодействия." : "Отношения развиваются позитивно."}`
+          summary = `Анализ ${activitiesList.length} взаимодействий с ${contextName} показывает ${sentiment.toLowerCase()} тональность. ${channels ? `Использованные каналы: ${channels}.` : ""} ${contactNames ? `Основные контакты: ${contactNames}.` : ""} ${dealInfo ? `Активные сделки: ${dealInfo}.` : "Нет активных сделок."} ${risk === "HIGH" ? "⚠️ Рекомендуется усилить коммуникацию для снижения риска потери клиента." : risk === "MEDIUM" ? "Рекомендуется поддерживать текущий уровень взаимодействия." : "Отношения развиваются позитивно."}`
         }
 
         return NextResponse.json({
@@ -62,24 +108,22 @@ export async function POST(req: NextRequest) {
 
       case "tasks": {
         // AI Task generation
-        const mainContact = company.contacts[0]
-        const contactName = mainContact?.fullName || "контактное лицо"
-        const contactPhone = mainContact?.phone || "+994 XX XXX XXXX"
-        const contactEmail = mainContact?.email || ""
+        const contactName = mainContactName
+        const contactPhone = mainContactPhone
 
         const now = new Date()
         const tasks = [
           {
             title: `Первоначальный контакт с ${contactName}`,
-            description: `Отправить приветственное письмо ${contactName} с представлением компании и предложением услуг${company.industry ? ` в сфере ${company.industry}` : ""}. Уточнить должность и область ответственности в организации.`,
+            description: `Отправить приветственное письмо ${contactName} с представлением компании и предложением услуг${industry ? ` в сфере ${industry}` : ""}. Уточнить должность и область ответственности в организации.`,
             priority: "HIGH",
             type: "email",
             dueDate: new Date(now.getTime() + 1 * 86400000).toISOString().split("T")[0],
             reasoning: `Контакт ещё не имеет истории коммуникаций. Необходимо установить первоначальный контакт и определить роль в компании.`,
           },
           {
-            title: `Исследование компании ${company.name}`,
-            description: `Провести анализ текущих потребностей ${company.name}${company.website ? ` (${company.website})` : ""} в области IT-услуг. Изучить их текущую инфраструктуру и выявить возможности для сотрудничества.`,
+            title: `Исследование компании ${contextName}`,
+            description: `Провести анализ текущих потребностей ${contextName}${website ? ` (${website})` : ""} в области IT-услуг. Изучить их текущую инфраструктуру и выявить возможности для сотрудничества.`,
             priority: "MEDIUM",
             type: "general",
             dueDate: new Date(now.getTime() + 3 * 86400000).toISOString().split("T")[0],
@@ -95,7 +139,7 @@ export async function POST(req: NextRequest) {
           },
           {
             title: `Запланировать встречу или демонстрацию`,
-            description: `После успешного телефонного контакта предложить встречу или онлайн-демонстрацию решений ${company.name ? `для ${company.name}` : ""}, адаптированных под потребности контакта.`,
+            description: `После успешного телефонного контакта предложить встречу или онлайн-демонстрацию решений ${contextName ? `для ${contextName}` : ""}, адаптированных под потребности контакта.`,
             priority: "MEDIUM",
             type: "meeting",
             dueDate: new Date(now.getTime() + 12 * 86400000).toISOString().split("T")[0],
@@ -103,7 +147,7 @@ export async function POST(req: NextRequest) {
           },
         ]
 
-        const strategy = `Стратегия фокусируется на установлении первоначального контакта с ${contactName} из ${company.name} через многоканальный подход: электронная почта, исследование потребностей компании, телефонный звонок и планирование встречи. Приоритет — быстро установить контакт и определить роль и интересы контакта для дальнейшей работы.`
+        const strategy = `Стратегия фокусируется на установлении первоначального контакта с ${contactName} из ${contextName} через многоканальный подход: электронная почта, исследование потребностей компании, телефонный звонок и планирование встречи. Приоритет — быстро установить контакт и определить роль и интересы контакта для дальнейшей работы.`
 
         return NextResponse.json({
           success: true,
@@ -116,18 +160,17 @@ export async function POST(req: NextRequest) {
         const textType = options?.textType || "Email"
         const tone = options?.tone || "Профессиональный"
         const instructions = options?.instructions || ""
-        const mainContact = company.contacts[0]
-        const contactName = mainContact?.fullName || "Уважаемый клиент"
+        const contactName = mainContactName
 
         let subject = ""
         let emailBody = ""
 
         if (textType === "Email") {
           subject = "Деловое предложение от нашей компании"
-          emailBody = `Уважаемый(ая) ${contactName},\n\nНадеюсь, что это письмо застает вас в добром здравии и хорошем настроении.\n\nМы с большим интересом следим за деятельностью ${company.name} и были бы рады установить деловые отношения с вашей организацией. Наша компания предоставляет решения, которые могут дополнить и усилить ваши ${company.industry ? `операции в области ${company.industry}` : "бизнес-процессы"}.\n\n${instructions ? `${instructions}\n\n` : ""}Мы были бы признательны за возможность обсудить потенциальное сотрудничество в удобное для вас время.\n\nС уважением,\nГüвən Technology LLC\nsupport@guventechnology.com`
+          emailBody = `Уважаемый(ая) ${contactName},\n\nНадеюсь, что это письмо застает вас в добром здравии и хорошем настроении.\n\nМы с большим интересом следим за деятельностью ${contextName} и были бы рады установить деловые отношения с вашей организацией. Наша компания предоставляет решения, которые могут дополнить и усилить ваши ${industry ? `операции в области ${industry}` : "бизнес-процессы"}.\n\n${instructions ? `${instructions}\n\n` : ""}Мы были бы признательны за возможность обсудить потенциальное сотрудничество в удобное для вас время.\n\nС уважением,\nGüvən Technology LLC\nsupport@guventechnology.com`
         } else {
           subject = ""
-          emailBody = `Здравствуйте, ${contactName}! Компания Güvən Technology хотела бы обсудить с вами возможности IT-сотрудничества${company.industry ? ` в сфере ${company.industry}` : ""}. Удобно ли вам перезвонить? ${instructions || ""}`
+          emailBody = `Здравствуйте, ${contactName}! Компания Güvən Technology хотела бы обсудить с вами возможности IT-сотрудничества${industry ? ` в сфере ${industry}` : ""}. Удобно ли вам перезвонить? ${instructions || ""}`
         }
 
         return NextResponse.json({
