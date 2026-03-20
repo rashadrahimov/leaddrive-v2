@@ -308,3 +308,28 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: String(e) }, { status: 500 })
   }
 }
+
+// Delete conversation (all messages by IDs)
+export async function DELETE(req: NextRequest) {
+  const orgId = await getOrgId(req)
+  if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+
+  const body = await req.json()
+  const { messageIds } = body
+
+  if (!messageIds || !Array.isArray(messageIds) || messageIds.length === 0) {
+    return NextResponse.json({ error: "messageIds required" }, { status: 400 })
+  }
+
+  try {
+    await prisma.channelMessage.deleteMany({
+      where: {
+        id: { in: messageIds },
+        organizationId: orgId,
+      },
+    })
+    return NextResponse.json({ success: true })
+  } catch (e) {
+    return NextResponse.json({ error: String(e) }, { status: 500 })
+  }
+}

@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select } from "@/components/ui/select"
 import { Dialog, DialogHeader, DialogTitle, DialogContent, DialogFooter } from "@/components/ui/dialog"
 import {
-  Search, Send, MessageSquare, Mail, Phone,
+  Search, Send, MessageSquare, Mail, Phone, Trash2,
   Loader2, Plus, ArrowLeft, MessageCircle,
   Inbox as InboxIcon, ArrowDownLeft, ArrowUpRight,
 } from "lucide-react"
@@ -222,6 +222,24 @@ export default function InboxPage() {
     } catch {}
   }
 
+  /* ── Delete conversation ── */
+  const deleteConvo = async (convo: Conversation) => {
+    if (!confirm("Удалить этот диалог и все сообщения?")) return
+    const ids = convo.messages.map(m => m.id)
+    try {
+      await fetch("/api/v1/inbox", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          ...(orgId ? { "x-organization-id": String(orgId) } : {}),
+        },
+        body: JSON.stringify({ messageIds: ids }),
+      })
+      setSelected(null)
+      fetchInbox()
+    } catch {}
+  }
+
   /* ── Filtered list ── */
   const filtered = conversations.filter(c =>
     c.contactName.toLowerCase().includes(search.toLowerCase()) ||
@@ -425,12 +443,20 @@ export default function InboxPage() {
                     </div>
                   </div>
                 </div>
-                <div className="flex gap-1">
+                <div className="flex items-center gap-2">
                   {selectedConvo.channels.map(ch => (
                     <Badge key={ch} variant="outline" className="text-[10px] gap-1">
                       {channelIcon(ch)} {channelLabel(ch)}
                     </Badge>
                   ))}
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="text-red-500 hover:text-red-700 hover:bg-red-50 h-7 w-7 p-0"
+                    onClick={() => deleteConvo(selectedConvo)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
                 </div>
               </div>
 
