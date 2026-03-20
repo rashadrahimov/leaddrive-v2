@@ -7,6 +7,7 @@ const updateContactSchema = z.object({
   fullName: z.string().min(1).max(200).optional(),
   email: z.string().email().optional().or(z.literal("")),
   phone: z.string().max(50).optional(),
+  phones: z.array(z.string().max(50)).optional(),
   position: z.string().max(200).optional(),
   companyId: z.string().optional(),
   source: z.string().max(50).optional(),

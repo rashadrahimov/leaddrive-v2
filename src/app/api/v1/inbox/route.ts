@@ -27,7 +27,7 @@ export async function GET(req: NextRequest) {
     // 2. Fetch all org contacts to build lookup maps
     const allContacts = await prisma.contact.findMany({
       where: { organizationId: orgId },
-      select: { id: true, fullName: true, email: true, phone: true },
+      select: { id: true, fullName: true, email: true, phone: true, phones: true },
     })
 
     // Build lookup maps: email→contactId, phone→contactId
@@ -37,11 +37,20 @@ export async function GET(req: NextRequest) {
     for (const c of allContacts) {
       contactById[c.id] = c
       if (c.email) emailToContact[c.email.toLowerCase()] = c
+      // Map primary phone
       if (c.phone) {
-        // Normalize phone: strip spaces, dashes
         const normalized = c.phone.replace(/[\s\-()]/g, "")
         phoneToContact[normalized] = c
         phoneToContact[c.phone] = c
+      }
+      // Map all additional phones
+      if (c.phones) {
+        for (const p of c.phones) {
+          if (p) {
+            phoneToContact[p] = c
+            phoneToContact[p.replace(/[\s\-()]/g, "")] = c
+          }
+        }
       }
     }
 

@@ -5,9 +5,13 @@ import { useEffect, useState } from "react"
 import { useSession } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Select } from "@/components/ui/select"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { ArrowLeft, Mail, Phone, Building2, Pencil, Calendar, MessageSquare } from "lucide-react"
+import { Dialog, DialogHeader, DialogTitle, DialogContent, DialogFooter } from "@/components/ui/dialog"
+import { ArrowLeft, Mail, Phone, Building2, Pencil, Calendar, MessageSquare, Plus, X, Loader2 } from "lucide-react"
 
 interface Activity {
   id: string
@@ -17,31 +21,19 @@ interface Activity {
   createdAt: string
 }
 
-interface Deal {
-  id: string
-  name: string
-  stage: string
-  valueAmount: number
-}
-
-interface Task {
-  id: string
-  title: string
-  status: string
-  dueDate?: string
-}
-
 interface Contact {
   id: string
   fullName: string
   email?: string
   phone?: string
+  phones: string[]
   position?: string
   department?: string
   source?: string
   tags: string[]
   isActive: boolean
   lastContactAt?: string
+  companyId?: string
   company?: { id: string; name: string }
   activities?: Activity[]
 }
@@ -59,25 +51,93 @@ export default function ContactDetailPage() {
   const id = params.id as string
   const orgId = session?.user?.organizationId
 
-  useEffect(() => {
-    const fetchContact = async () => {
-      try {
-        const res = await fetch(`/api/v1/contacts/${id}`, {
-          headers: orgId ? { "x-organization-id": String(orgId) } : {},
-        })
-        const json = await res.json()
-        if (json.success) {
-          setContact(json.data)
-        }
-      } catch {} finally {
-        setLoading(false)
-      }
-    }
+  // Edit dialog
+  const [showEdit, setShowEdit] = useState(false)
+  const [editData, setEditData] = useState({
+    fullName: "", email: "", phone: "", position: "", department: "", source: "",
+    companyId: "", isActive: true, phones: [] as string[],
+  })
+  const [saving, setSaving] = useState(false)
+  const [companies, setCompanies] = useState<{ id: string; name: string }[]>([])
 
-    if (id && session) {
-      fetchContact()
+  const fetchContact = async () => {
+    try {
+      const res = await fetch(`/api/v1/contacts/${id}`, {
+        headers: orgId ? { "x-organization-id": String(orgId) } : {},
+      })
+      const json = await res.json()
+      if (json.success) {
+        setContact(json.data)
+      }
+    } catch {} finally {
+      setLoading(false)
     }
+  }
+
+  useEffect(() => {
+    if (id && session) fetchContact()
   }, [id, session])
+
+  const openEdit = () => {
+    if (!contact) return
+    setEditData({
+      fullName: contact.fullName || "",
+      email: contact.email || "",
+      phone: contact.phone || "",
+      position: contact.position || "",
+      department: contact.department || "",
+      source: contact.source || "",
+      companyId: contact.companyId || "",
+      isActive: contact.isActive,
+      phones: contact.phones || [],
+    })
+    setShowEdit(true)
+    // Fetch companies for dropdown
+    fetch("/api/v1/companies?limit=500", {
+      headers: orgId ? { "x-organization-id": String(orgId) } : {},
+    })
+      .then(r => r.json())
+      .then(json => {
+        const list = json.data?.companies || json.data || []
+        setCompanies(Array.isArray(list) ? list.map((c: any) => ({ id: c.id, name: c.name })) : [])
+      })
+      .catch(() => {})
+  }
+
+  const handleSave = async () => {
+    setSaving(true)
+    try {
+      const res = await fetch(`/api/v1/contacts/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          ...(orgId ? { "x-organization-id": String(orgId) } : {}),
+        },
+        body: JSON.stringify({
+          fullName: editData.fullName,
+          email: editData.email || undefined,
+          phone: editData.phone || undefined,
+          position: editData.position || undefined,
+          department: editData.department || undefined,
+          source: editData.source || undefined,
+          companyId: editData.companyId || undefined,
+          isActive: editData.isActive,
+          phones: editData.phones.filter(p => p.trim()),
+        }),
+      })
+      const json = await res.json()
+      if (json.success) {
+        setShowEdit(false)
+        fetchContact()
+      }
+    } catch {} finally { setSaving(false) }
+  }
+
+  const addPhone = () => setEditData(d => ({ ...d, phones: [...d.phones, ""] }))
+  const removePhone = (idx: number) => setEditData(d => ({ ...d, phones: d.phones.filter((_, i) => i !== idx) }))
+  const updatePhone = (idx: number, val: string) => setEditData(d => ({
+    ...d, phones: d.phones.map((p, i) => i === idx ? val : p),
+  }))
 
   if (loading) {
     return (
@@ -140,7 +200,7 @@ export default function ContactDetailPage() {
             </div>
           </div>
         </div>
-        <Button variant="outline">
+        <Button variant="outline" onClick={openEdit}>
           <Pencil className="h-4 w-4" />
           Edit
         </Button>
@@ -150,19 +210,26 @@ export default function ContactDetailPage() {
         <Card>
           <CardContent className="flex items-center gap-3 pt-6">
             <Mail className="h-4 w-4 text-muted-foreground" />
-            <a href={`mailto:${contact.email}`} className="text-sm text-primary hover:underline">{contact.email}</a>
+            <a href={`mailto:${contact.email}`} className="text-sm text-primary hover:underline">{contact.email || "—"}</a>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="flex items-center gap-3 pt-6">
-            <Phone className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm">{contact.phone}</span>
+          <CardContent className="pt-6 space-y-1">
+            <div className="flex items-center gap-3">
+              <Phone className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm">{contact.phone || "—"}</span>
+            </div>
+            {contact.phones && contact.phones.length > 0 && contact.phones.map((p, i) => (
+              <div key={i} className="flex items-center gap-3 pl-7">
+                <span className="text-sm text-muted-foreground">{p}</span>
+              </div>
+            ))}
           </CardContent>
         </Card>
         <Card>
           <CardContent className="flex items-center gap-3 pt-6">
             <Calendar className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm">Last contact: {contact.lastContactAt}</span>
+            <span className="text-sm">Last contact: {contact.lastContactAt ? new Date(contact.lastContactAt).toLocaleDateString("ru-RU") : "—"}</span>
           </CardContent>
         </Card>
       </div>
@@ -236,6 +303,71 @@ export default function ContactDetailPage() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* ── Edit Dialog ── */}
+      <Dialog open={showEdit} onOpenChange={setShowEdit}>
+        <DialogHeader>
+          <DialogTitle>Редактировать контакт</DialogTitle>
+        </DialogHeader>
+        <DialogContent>
+          <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
+            <div>
+              <Label className="text-sm font-medium">Имя *</Label>
+              <Input value={editData.fullName} onChange={e => setEditData(d => ({ ...d, fullName: e.target.value }))} className="mt-1" />
+            </div>
+            <div>
+              <Label className="text-sm font-medium">Email</Label>
+              <Input value={editData.email} onChange={e => setEditData(d => ({ ...d, email: e.target.value }))} className="mt-1" />
+            </div>
+            <div>
+              <Label className="text-sm font-medium">Телефон (основной)</Label>
+              <Input value={editData.phone} onChange={e => setEditData(d => ({ ...d, phone: e.target.value }))} placeholder="+994..." className="mt-1" />
+            </div>
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <Label className="text-sm font-medium">Дополнительные телефоны</Label>
+                <Button type="button" size="sm" variant="outline" onClick={addPhone} className="h-7 text-xs gap-1">
+                  <Plus className="h-3 w-3" /> Добавить
+                </Button>
+              </div>
+              {editData.phones.map((p, i) => (
+                <div key={i} className="flex items-center gap-2 mt-1.5">
+                  <Input value={p} onChange={e => updatePhone(i, e.target.value)} placeholder="+994..." className="flex-1" />
+                  <Button type="button" size="icon" variant="ghost" onClick={() => removePhone(i)} className="h-8 w-8 text-red-500 hover:text-red-700 shrink-0">
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+            <div>
+              <Label className="text-sm font-medium">Должность</Label>
+              <Input value={editData.position} onChange={e => setEditData(d => ({ ...d, position: e.target.value }))} className="mt-1" />
+            </div>
+            <div>
+              <Label className="text-sm font-medium">Отдел</Label>
+              <Input value={editData.department} onChange={e => setEditData(d => ({ ...d, department: e.target.value }))} className="mt-1" />
+            </div>
+            <div>
+              <Label className="text-sm font-medium">Компания</Label>
+              <Select value={editData.companyId} onChange={e => setEditData(d => ({ ...d, companyId: e.target.value }))} className="mt-1">
+                <option value="">— Без компании —</option>
+                {companies.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+              </Select>
+            </div>
+            <div>
+              <Label className="text-sm font-medium">Источник</Label>
+              <Input value={editData.source} onChange={e => setEditData(d => ({ ...d, source: e.target.value }))} className="mt-1" />
+            </div>
+          </div>
+        </DialogContent>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setShowEdit(false)}>Отмена</Button>
+          <Button onClick={handleSave} disabled={saving || !editData.fullName.trim()} className="gap-1.5">
+            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Pencil className="h-4 w-4" />}
+            {saving ? "Сохранение..." : "Сохранить"}
+          </Button>
+        </DialogFooter>
+      </Dialog>
     </div>
   )
 }

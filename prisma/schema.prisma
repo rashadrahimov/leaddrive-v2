@@ -155,6 +155,7 @@ model Contact {
   fullName       String
   email          String?
   phone          String?
+  phones         String[] @default([])
   position       String?
   department     String?
   avatar         String?
