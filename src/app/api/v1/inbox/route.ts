@@ -256,7 +256,21 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // Resolve the actual chatId used for telegram (for grouping)
+    let resolvedChatId: string | undefined
+    if (channel === "telegram") {
+      const tgSettings = ((await prisma.channelConfig.findFirst({
+        where: { organizationId: orgId, channelType: "telegram", isActive: true },
+        select: { settings: true },
+      }))?.settings as any) || {}
+      resolvedChatId = /^-?\d+$/.test(to) ? to : tgSettings.chatId
+    }
+
     // Save message to DB
+    const meta: any = {}
+    if (errorMsg) meta.error = errorMsg
+    if (resolvedChatId) meta.chatId = resolvedChatId
+
     const message = await prisma.channelMessage.create({
       data: {
         organizationId: orgId,
@@ -268,7 +282,7 @@ export async function POST(req: NextRequest) {
         body: msgBody,
         status,
         contactId: contactId || undefined,
-        metadata: errorMsg ? { error: errorMsg } : undefined,
+        metadata: Object.keys(meta).length > 0 ? meta : undefined,
       },
     })
 

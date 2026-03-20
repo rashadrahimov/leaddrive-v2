@@ -127,6 +127,12 @@ export default function InboxPage() {
 
   useEffect(() => { fetchInbox() }, [session, channelFilter])
 
+  // Auto-poll every 5 seconds for new messages
+  useEffect(() => {
+    const interval = setInterval(() => { fetchInbox() }, 5000)
+    return () => clearInterval(interval)
+  }, [session, channelFilter])
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [selected, conversations])
