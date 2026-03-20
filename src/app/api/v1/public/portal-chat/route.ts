@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma"
 import { getPortalUser } from "@/lib/portal-auth"
 import Anthropic from "@anthropic-ai/sdk"
 
-const SYSTEM_PROMPT = `Sen LeadDrive CRM-in texniki dəstək agentisən. Sənin adındır "LeadDrive Support Pro".
+const DEFAULT_SYSTEM_PROMPT = `Sen LeadDrive CRM-in texniki dəstək agentisən. Sənin adındır "LeadDrive Support Pro".
 
 QAYDALAR:
 1. Müştərilərə Azərbaycan, Rus və ya İngilis dilində cavab ver — hansı dildə yazırlarsa, o dildə cavab ver.
@@ -15,7 +15,23 @@ QAYDALAR:
 7. Qiymətlər barədə danışmaq olmaz — menecerə yönləndir.
 8. Texniki suallar üçün dəqiq, addım-addım izahatlar ver.`
 
-async function getKbContext(organizationId: string, query: string): Promise<string> {
+async function getActiveAgentConfig(organizationId: string) {
+  return prisma.aiAgentConfig.findFirst({
+    where: { organizationId, isActive: true },
+    orderBy: { updatedAt: "desc" },
+  })
+}
+
+async function getGuardrails(organizationId: string): Promise<string[]> {
+  const guardrails = await prisma.aiGuardrail.findMany({
+    where: { organizationId, isActive: true },
+  })
+  return guardrails
+    .filter(g => g.promptInjection)
+    .map(g => g.promptInjection!)
+}
+
+async function getKbContext(organizationId: string, query: string, maxArticles: number = 5): Promise<string> {
   try {
     const articles = await prisma.kbArticle.findMany({
       where: {
@@ -26,7 +42,7 @@ async function getKbContext(organizationId: string, query: string): Promise<stri
           { content: { contains: query, mode: "insensitive" } },
         ],
       },
-      take: 5,
+      take: maxArticles,
       select: { title: true, content: true },
     })
     if (articles.length === 0) return "Bilik bazasında uyğun məqalə tapılmadı."
@@ -36,16 +52,97 @@ async function getKbContext(organizationId: string, query: string): Promise<stri
   }
 }
 
-async function getChatHistory(sessionId: string): Promise<Array<{ role: "user" | "assistant"; content: string }>> {
+async function getChatHistory(sessionId: string, maxMessages: number = 20): Promise<Array<{ role: "user" | "assistant"; content: string }>> {
   const messages = await prisma.aiChatMessage.findMany({
     where: { sessionId },
     orderBy: { createdAt: "asc" },
-    take: 20,
+    take: maxMessages,
     select: { role: true, content: true },
   })
   return messages
     .filter(m => m.role === "user" || m.role === "assistant")
     .map(m => ({ role: m.role as "user" | "assistant", content: m.content }))
+}
+
+async function logInteraction(
+  organizationId: string,
+  sessionId: string,
+  userMessage: string,
+  aiResponse: string,
+  latencyMs: number,
+  model: string,
+  usage?: { input_tokens: number; output_tokens: number },
+  kbArticlesUsed: string[] = [],
+) {
+  const promptTokens = usage?.input_tokens || 0
+  const completionTokens = usage?.output_tokens || 0
+  // Rough cost estimate (Sonnet pricing ~$3/M input, ~$15/M output)
+  const costUsd = (promptTokens * 0.003 + completionTokens * 0.015) / 1000
+
+  await prisma.aiInteractionLog.create({
+    data: {
+      organizationId,
+      sessionId,
+      userMessage: userMessage.slice(0, 500),
+      aiResponse: aiResponse.slice(0, 1000),
+      latencyMs,
+      promptTokens,
+      completionTokens,
+      costUsd,
+      model,
+      kbArticlesUsed,
+    },
+  })
+
+  // Check for anomalies and generate alerts
+  await checkAndCreateAlerts(organizationId, sessionId, latencyMs, promptTokens + completionTokens)
+}
+
+async function checkAndCreateAlerts(
+  organizationId: string,
+  sessionId: string,
+  latencyMs: number,
+  totalTokens: number,
+) {
+  // High latency alert (>10 seconds)
+  if (latencyMs > 10000) {
+    await prisma.aiAlert.create({
+      data: {
+        organizationId,
+        type: "high_latency",
+        severity: latencyMs > 20000 ? "critical" : "warning",
+        message: `High latency: ${latencyMs.toFixed(0)}ms (${(latencyMs / 1000).toFixed(1)}s)`,
+        sessionId,
+        metadata: { latency_ms: latencyMs },
+      },
+    })
+  }
+
+  // Token spike alert — compare with recent average
+  const recentLogs = await prisma.aiInteractionLog.findMany({
+    where: {
+      organizationId,
+      createdAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) },
+    },
+    select: { promptTokens: true, completionTokens: true },
+    take: 20,
+  })
+
+  if (recentLogs.length >= 3) {
+    const avgTokens = recentLogs.reduce((sum, l) => sum + (l.promptTokens || 0) + (l.completionTokens || 0), 0) / recentLogs.length
+    if (totalTokens > avgTokens * 3 && totalTokens > 2000) {
+      await prisma.aiAlert.create({
+        data: {
+          organizationId,
+          type: "token_spike",
+          severity: "warning",
+          message: `Token spike: ${totalTokens} tokens (avg: ${Math.round(avgTokens)})`,
+          sessionId,
+          metadata: { tokens: totalTokens, avg_24h: Math.round(avgTokens) },
+        },
+      })
+    }
+  }
 }
 
 export async function POST(req: NextRequest) {
@@ -90,26 +187,53 @@ export async function POST(req: NextRequest) {
   let assistantContent: string
 
   if (process.env.ANTHROPIC_API_KEY) {
+    const startTime = Date.now()
+    let usedModel = "claude-sonnet-4-6"
+    let usage: { input_tokens: number; output_tokens: number } | undefined
+
     try {
       const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
+      // Load active agent config from DB
+      const agentConfig = await getActiveAgentConfig(user.organizationId)
+
+      // Load guardrails from DB
+      const guardrailPrompts = await getGuardrails(user.organizationId)
+
+      // Determine model and parameters from config or defaults
+      const model = agentConfig?.model || "claude-sonnet-4-6"
+      const maxTokens = agentConfig?.maxTokens || 2048
+      const temperature = agentConfig?.temperature ?? 0.7
+      const kbMaxArticles = agentConfig?.kbMaxArticles || 5
+      const kbEnabled = agentConfig?.kbEnabled ?? true
+      usedModel = model
+
       // Get KB context and chat history
       const [kbContext, history] = await Promise.all([
-        getKbContext(user.organizationId, message),
+        kbEnabled ? getKbContext(user.organizationId, message, kbMaxArticles) : Promise.resolve(""),
         sessionId ? getChatHistory(session.id) : Promise.resolve([]),
       ])
 
-      const systemPrompt = SYSTEM_PROMPT
+      // Build system prompt: agent config > default, then inject guardrails
+      let systemPrompt = (agentConfig?.systemPrompt || DEFAULT_SYSTEM_PROMPT)
         .replace("{kb_context}", kbContext)
-        + `\n\nМүştəri adı: ${user.fullName}\nМüştəri email: ${user.email}\nTarix: ${new Date().toISOString().split("T")[0]}`
+        .replace("{current_date}", new Date().toISOString().split("T")[0])
+        .replace("{company_id}", user.companyId || "")
 
-      // Build messages array with history (excluding the just-saved user message which is already in history for existing sessions)
+      // Append guardrails
+      if (guardrailPrompts.length > 0) {
+        systemPrompt += "\n\nQUARANTİYALAR (mütləq riayət et):\n" + guardrailPrompts.map((g, i) => `${i + 1}. ${g}`).join("\n")
+      }
+
+      // Append user context
+      systemPrompt += `\n\nMüştəri adı: ${user.fullName}\nMüştəri email: ${user.email}\nTarix: ${new Date().toISOString().split("T")[0]}`
+
+      // Build messages array with history
       const messages: Array<{ role: "user" | "assistant"; content: string }> = [
-        ...history.slice(0, -1), // exclude the last one (the message we just saved)
+        ...history.slice(0, -1),
         { role: "user", content: message },
       ]
 
-      // Ensure messages alternate properly and start with user
       const cleanMessages = messages.filter((m, i) => {
         if (i === 0) return m.role === "user"
         return m.role !== messages[i - 1]?.role
@@ -120,9 +244,9 @@ export async function POST(req: NextRequest) {
       }
 
       const response = await client.messages.create({
-        model: "claude-sonnet-4-6",
-        max_tokens: 2048,
-        temperature: 0.7,
+        model,
+        max_tokens: maxTokens,
+        temperature,
         system: systemPrompt,
         messages: cleanMessages,
       })
@@ -132,9 +256,27 @@ export async function POST(req: NextRequest) {
         .map(block => block.text)
         .join("")
 
+      usage = response.usage
+
     } catch (error) {
       console.error("Claude API error:", error)
       assistantContent = getFallbackResponse(message, user.fullName)
+    }
+
+    // Log interaction with latency, tokens, cost + generate alerts
+    const latencyMs = Date.now() - startTime
+    try {
+      await logInteraction(
+        user.organizationId,
+        session.id,
+        message,
+        assistantContent,
+        latencyMs,
+        usedModel,
+        usage,
+      )
+    } catch (e) {
+      console.error("Failed to log interaction:", e)
     }
   } else {
     assistantContent = getFallbackResponse(message, user.fullName)

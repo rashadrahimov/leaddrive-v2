@@ -8,6 +8,37 @@ function getClient(): Anthropic | null {
   return new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 }
 
+async function logAiInteraction(
+  orgId: string,
+  userMessage: string,
+  aiResponse: string,
+  latencyMs: number,
+  model: string,
+  usage?: { input_tokens: number; output_tokens: number },
+) {
+  try {
+    const promptTokens = usage?.input_tokens || 0
+    const completionTokens = usage?.output_tokens || 0
+    const costUsd = (promptTokens * 0.00025 + completionTokens * 0.00125) / 1000 // Haiku pricing
+
+    await prisma.aiInteractionLog.create({
+      data: {
+        organizationId: orgId,
+        userMessage: userMessage.slice(0, 500),
+        aiResponse: aiResponse.slice(0, 1000),
+        latencyMs,
+        promptTokens,
+        completionTokens,
+        costUsd,
+        model,
+        isCopilot: true,
+      },
+    })
+  } catch (e) {
+    console.error("Failed to log AI interaction:", e)
+  }
+}
+
 // Search KB articles by keyword relevance
 async function findRelevantKbArticles(orgId: string, query: string, limit = 3): Promise<string> {
   const keywords = query.toLowerCase().split(/\s+/).filter(w => w.length > 3)
@@ -74,6 +105,7 @@ Comments:\n${commentsText || "No comments yet"}`
           ? `You are a professional support agent. You have access to the company's knowledge base articles below. Use them to provide accurate, helpful answers. If the KB articles contain relevant information, reference it in your reply. Reply in the same language as the customer's message. Do not use markdown, write plain text.${kbContext}`
           : "You are a professional support agent. Write a helpful, concise reply to the customer based on the ticket context. Reply in the same language as the customer's message. Do not use markdown, write plain text."
 
+        const t0 = Date.now()
         const msg = await client.messages.create({
           model: "claude-haiku-4-5-20251001",
           max_tokens: 600,
@@ -81,6 +113,7 @@ Comments:\n${commentsText || "No comments yet"}`
           messages: [{ role: "user", content: context }],
         })
         const text = msg.content[0].type === "text" ? msg.content[0].text : ""
+        await logAiInteraction(orgId, `[ticket-reply] ${ticket.subject}`, text, Date.now() - t0, "claude-haiku-4-5-20251001", msg.usage)
         return NextResponse.json({
           success: true,
           data: { text, kbUsed: kbContext.length > 0 },
@@ -94,6 +127,7 @@ Comments:\n${commentsText || "No comments yet"}`
 
     if (action === "summary") {
       if (client) {
+        const t0 = Date.now()
         const msg = await client.messages.create({
           model: "claude-haiku-4-5-20251001",
           max_tokens: 300,
@@ -101,6 +135,7 @@ Comments:\n${commentsText || "No comments yet"}`
           messages: [{ role: "user", content: context }],
         })
         const text = msg.content[0].type === "text" ? msg.content[0].text : ""
+        await logAiInteraction(orgId, `[ticket-summary] ${ticket.subject}`, text, Date.now() - t0, "claude-haiku-4-5-20251001", msg.usage)
         return NextResponse.json({ success: true, data: { text } })
       }
       return NextResponse.json({
@@ -111,6 +146,7 @@ Comments:\n${commentsText || "No comments yet"}`
 
     if (action === "steps") {
       if (client) {
+        const t0 = Date.now()
         const msg = await client.messages.create({
           model: "claude-haiku-4-5-20251001",
           max_tokens: 400,
@@ -118,6 +154,7 @@ Comments:\n${commentsText || "No comments yet"}`
           messages: [{ role: "user", content: context }],
         })
         const text = msg.content[0].type === "text" ? msg.content[0].text : ""
+        await logAiInteraction(orgId, `[ticket-steps] ${ticket.subject}`, text, Date.now() - t0, "claude-haiku-4-5-20251001", msg.usage)
         return NextResponse.json({ success: true, data: { text } })
       }
       return NextResponse.json({

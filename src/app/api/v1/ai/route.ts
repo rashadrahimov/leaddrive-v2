@@ -11,6 +11,34 @@ function getClient(): Anthropic | null {
   return new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 }
 
+async function logAiCall(
+  orgId: string,
+  userMessage: string,
+  aiResponse: string,
+  latencyMs: number,
+  model: string,
+  usage?: { input_tokens: number; output_tokens: number },
+) {
+  try {
+    const promptTokens = usage?.input_tokens || 0
+    const completionTokens = usage?.output_tokens || 0
+    const costUsd = (promptTokens * 0.00025 + completionTokens * 0.00125) / 1000
+    await prisma.aiInteractionLog.create({
+      data: {
+        organizationId: orgId,
+        userMessage: userMessage.slice(0, 500),
+        aiResponse: aiResponse.slice(0, 1000),
+        latencyMs,
+        promptTokens,
+        completionTokens,
+        costUsd,
+        model,
+        isCopilot: true,
+      },
+    })
+  } catch {}
+}
+
 export async function POST(req: NextRequest) {
   const orgId = await getOrgId(req)
   if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
@@ -97,13 +125,13 @@ export async function POST(req: NextRequest) {
 
     switch (action) {
       case "sentiment":
-        return handleSentiment(contextBlock, contextName, contactNames, activitiesList)
+        return handleSentiment(orgId, contextBlock, contextName, contactNames, activitiesList)
 
       case "tasks":
-        return handleTasks(contextBlock, contextName, mainContactName, mainContactPhone, mainContactEmail, industry, website)
+        return handleTasks(orgId, contextBlock, contextName, mainContactName, mainContactPhone, mainContactEmail, industry, website)
 
       case "text":
-        return handleText(contextBlock, contextName, mainContactName, industry, options)
+        return handleText(orgId, contextBlock, contextName, mainContactName, industry, options)
 
       default:
         return NextResponse.json({ error: `Unknown action: ${action}` }, { status: 400 })
@@ -115,11 +143,12 @@ export async function POST(req: NextRequest) {
 
 // ── SENTIMENT ──────────────────────────────────────────────
 
-async function handleSentiment(contextBlock: string, contextName: string, contactNames: string, activities: any[]) {
+async function handleSentiment(orgId: string, contextBlock: string, contextName: string, contactNames: string, activities: any[]) {
   const client = getClient()
   if (!client) return sentimentFallback(contextName, contactNames, activities)
 
   try {
+    const t0 = Date.now()
     const response = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
       max_tokens: 1024,
@@ -133,6 +162,7 @@ async function handleSentiment(contextBlock: string, contextName: string, contac
 
     const text = response.content.filter(b => b.type === "text").map(b => b.text).join("")
     const data = JSON.parse(text)
+    await logAiCall(orgId, `[sentiment] ${contextName}`, text.slice(0, 500), Date.now() - t0, "claude-haiku-4-5-20251001", response.usage)
     return NextResponse.json({ success: true, data })
   } catch (error) {
     console.error("Claude sentiment error:", error)
@@ -155,11 +185,12 @@ function sentimentFallback(contextName: string, contactNames: string, activities
 
 // ── TASKS ──────────────────────────────────────────────────
 
-async function handleTasks(contextBlock: string, contextName: string, contactName: string, contactPhone: string, contactEmail: string, industry: string, website: string) {
+async function handleTasks(orgId: string, contextBlock: string, contextName: string, contactName: string, contactPhone: string, contactEmail: string, industry: string, website: string) {
   const client = getClient()
   if (!client) return tasksFallback(contextName, contactName, contactPhone, industry, website)
 
   try {
+    const t0 = Date.now()
     const response = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
       max_tokens: 2048,
@@ -173,6 +204,7 @@ async function handleTasks(contextBlock: string, contextName: string, contactNam
 
     const text = response.content.filter(b => b.type === "text").map(b => b.text).join("")
     const data = JSON.parse(text)
+    await logAiCall(orgId, `[tasks] ${contextName}`, text.slice(0, 500), Date.now() - t0, "claude-haiku-4-5-20251001", response.usage)
     return NextResponse.json({ success: true, data })
   } catch (error) {
     console.error("Claude tasks error:", error)
@@ -218,7 +250,7 @@ function tasksFallback(contextName: string, contactName: string, contactPhone: s
 
 // ── TEXT GENERATION ────────────────────────────────────────
 
-async function handleText(contextBlock: string, contextName: string, contactName: string, industry: string, options: any) {
+async function handleText(orgId: string, contextBlock: string, contextName: string, contactName: string, industry: string, options: any) {
   const textType = options?.textType || "Email"
   const tone = options?.tone || "Профессиональный"
   const instructions = options?.instructions || ""
@@ -231,6 +263,7 @@ async function handleText(contextBlock: string, contextName: string, contactName
       ? `Напиши деловое письмо для ${contactName} из ${contextName}.\nТон: ${tone}.\n${instructions ? `Дополнительные инструкции: ${instructions}\n` : ""}\nКонтекст клиента:\n${contextBlock}\n\nОтветь JSON:\n{"subject": "тема письма", "body": "текст письма", "textType": "Email", "tone": "${tone}"}`
       : `Напиши SMS-сообщение для ${contactName} из ${contextName}.\nТон: ${tone}.\n${instructions ? `Инструкции: ${instructions}\n` : ""}\nКонтекст:\n${contextBlock}\n\nОтветь JSON:\n{"subject": "", "body": "текст SMS (до 160 символов)", "textType": "SMS", "tone": "${tone}"}`
 
+    const t0 = Date.now()
     const response = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
       max_tokens: 1500,
@@ -241,6 +274,7 @@ async function handleText(contextBlock: string, contextName: string, contactName
 
     const text = response.content.filter(b => b.type === "text").map(b => b.text).join("")
     const data = JSON.parse(text)
+    await logAiCall(orgId, `[text-${textType}] ${contextName}`, text.slice(0, 500), Date.now() - t0, "claude-haiku-4-5-20251001", response.usage)
     return NextResponse.json({ success: true, data })
   } catch (error) {
     console.error("Claude text error:", error)
