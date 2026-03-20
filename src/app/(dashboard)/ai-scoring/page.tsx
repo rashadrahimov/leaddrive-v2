@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react"
 import { useSession } from "next-auth/react"
 import { Button } from "@/components/ui/button"
-import { Brain, RefreshCw, Loader2 } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
+import { Brain, RefreshCw, Loader2, Sparkles } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface ScoredLead {
@@ -15,6 +16,7 @@ interface ScoredLead {
   score: number
   grade: string
   conversionProb: number
+  reasoning: string | null
   lastScoredAt: string | null
   estimatedValue: number | null
 }
@@ -42,6 +44,7 @@ export default function AILeadScoringPage() {
   const [loading, setLoading] = useState(true)
   const [scoring, setScoring] = useState(false)
   const [scoringId, setScoringId] = useState<string | null>(null)
+  const [aiPowered, setAiPowered] = useState(false)
 
   const fetchLeads = async () => {
     try {
@@ -58,7 +61,7 @@ export default function AILeadScoringPage() {
   async function scoreAll() {
     setScoring(true)
     try {
-      await fetch("/api/v1/lead-scoring", {
+      const res = await fetch("/api/v1/lead-scoring", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -66,6 +69,8 @@ export default function AILeadScoringPage() {
         },
         body: JSON.stringify({}),
       })
+      const json = await res.json()
+      if (json.success) setAiPowered(json.data.aiPowered)
       await fetchLeads()
     } catch {} finally { setScoring(false) }
   }
@@ -73,7 +78,7 @@ export default function AILeadScoringPage() {
   async function scoreOne(leadId: string) {
     setScoringId(leadId)
     try {
-      await fetch("/api/v1/lead-scoring", {
+      const res = await fetch("/api/v1/lead-scoring", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -81,6 +86,8 @@ export default function AILeadScoringPage() {
         },
         body: JSON.stringify({ leadId }),
       })
+      const json = await res.json()
+      if (json.success) setAiPowered(json.data.aiPowered)
       await fetchLeads()
     } catch {} finally { setScoringId(null) }
   }
@@ -111,16 +118,23 @@ export default function AILeadScoringPage() {
           </div>
           <div>
             <h1 className="text-2xl font-bold tracking-tight">AI Lead Scoring</h1>
-            <p className="text-sm text-muted-foreground">AI-скоринг лидов — автоматическая оценка и ранжирование</p>
+            <p className="text-sm text-muted-foreground">
+              AI-скоринг лидов — автоматическая оценка и ранжирование
+              {aiPowered && (
+                <Badge className="ml-2 bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">
+                  <Sparkles className="h-3 w-3 mr-1" /> Claude AI
+                </Badge>
+              )}
+            </p>
           </div>
         </div>
         <Button onClick={scoreAll} disabled={scoring} className="gap-2">
           {scoring ? <Loader2 className="h-4 w-4 animate-spin" /> : <Brain className="h-4 w-4" />}
-          Оценить все лиды с AI
+          {scoring ? "Анализ AI..." : "Оценить все лиды с AI"}
         </Button>
       </div>
 
-      {/* Grade cards — like v1 */}
+      {/* Grade cards */}
       <div className="grid grid-cols-5 gap-3">
         {(["A", "B", "C", "D", "F"] as const).map(grade => (
           <div key={grade} className={cn("rounded-lg p-5 text-center", gradeBgLight[grade])}>
@@ -148,7 +162,7 @@ export default function AILeadScoringPage() {
 
       {/* Lead table */}
       <div>
-        <h2 className="text-lg font-semibold mb-3">Топ-перспективы / Top Perspektivlər</h2>
+        <h2 className="text-lg font-semibold mb-3">Топ-перспективы</h2>
         <div className="rounded-lg border bg-card overflow-hidden">
           <table className="w-full text-sm">
             <thead>
@@ -159,7 +173,7 @@ export default function AILeadScoringPage() {
                 <th className="px-4 py-3 text-left font-medium text-muted-foreground">Компания</th>
                 <th className="px-4 py-3 text-left font-medium text-muted-foreground">Источник</th>
                 <th className="px-4 py-3 text-left font-medium text-muted-foreground">Конверсия</th>
-                <th className="px-4 py-3 text-left font-medium text-muted-foreground">AI Прогноз</th>
+                <th className="px-4 py-3 text-left font-medium text-muted-foreground min-w-[200px]">AI Прогноз</th>
                 <th className="px-4 py-3 text-left font-medium text-muted-foreground">Действия</th>
               </tr>
             </thead>
@@ -178,11 +192,18 @@ export default function AILeadScoringPage() {
                   <td className="px-4 py-3 text-muted-foreground">{lead.companyName || "—"}</td>
                   <td className="px-4 py-3 text-muted-foreground">{lead.source || "—"}</td>
                   <td className="px-4 py-3">
-                    <span className={cn("font-medium", lead.conversionProb >= 50 ? "text-green-600" : "text-red-500")}>
+                    <span className={cn("font-medium", lead.conversionProb >= 50 ? "text-green-600" : lead.conversionProb >= 30 ? "text-yellow-600" : "text-red-500")}>
                       {lead.conversionProb}%
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-muted-foreground">—</td>
+                  <td className="px-4 py-3 text-xs text-muted-foreground max-w-[250px]">
+                    {lead.reasoning ? (
+                      <span className="flex items-start gap-1">
+                        <Sparkles className="h-3 w-3 text-purple-500 shrink-0 mt-0.5" />
+                        {lead.reasoning}
+                      </span>
+                    ) : "—"}
+                  </td>
                   <td className="px-4 py-3">
                     <Button
                       size="sm"
