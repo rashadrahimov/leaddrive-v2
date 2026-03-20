@@ -141,7 +141,8 @@ export default function InboxPage() {
       })
         .then(r => r.json())
         .then(json => {
-          const list = (json.data || json.contacts || []).map((c: any) => ({
+          const raw = json.data?.contacts || json.data || json.contacts || []
+          const list = (Array.isArray(raw) ? raw : []).map((c: any) => ({
             id: c.id,
             fullName: c.fullName || c.name || "—",
             email: c.email || null,
