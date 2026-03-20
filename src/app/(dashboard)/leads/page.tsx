@@ -221,10 +221,10 @@ export default function LeadsPage() {
               <th className="px-4 py-3 text-left font-medium text-muted-foreground">Лид</th>
               <th className="px-4 py-3 text-left font-medium text-muted-foreground">Компания</th>
               <th className="px-4 py-3 text-left font-medium text-muted-foreground">Контакты</th>
-              <th className="px-4 py-3 text-left font-medium text-muted-foreground min-w-[180px]">AI Прогноз</th>
-              <th className="px-4 py-3 text-left font-medium text-muted-foreground">Источник</th>
-              <th className="px-4 py-3 text-left font-medium text-muted-foreground">Статус</th>
-              <th className="px-4 py-3 text-left font-medium text-muted-foreground">Конверсия</th>
+              <th className="px-3 py-3 text-left font-medium text-muted-foreground">Конверсия</th>
+              <th className="px-3 py-3 text-left font-medium text-muted-foreground max-w-[180px]">AI Прогноз</th>
+              <th className="px-3 py-3 text-left font-medium text-muted-foreground">Источник</th>
+              <th className="px-3 py-3 text-left font-medium text-muted-foreground">Статус</th>
               <th className="px-4 py-3 text-left font-medium text-muted-foreground">Действия</th>
             </tr>
           </thead>
@@ -274,25 +274,7 @@ export default function LeadsPage() {
                       {!lead.email && !lead.phone && <span className="text-muted-foreground">—</span>}
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-xs text-muted-foreground max-w-[200px]">
-                    {reasoning ? (
-                      <span className="flex items-start gap-1">
-                        <Sparkles className="h-3 w-3 text-purple-500 shrink-0 mt-0.5" />
-                        <span className="line-clamp-3">{reasoning}</span>
-                      </span>
-                    ) : (
-                      lead.lastScoredAt ? "Rule-based" : "—"
-                    )}
-                  </td>
-                  <td className="px-4 py-3 text-muted-foreground">
-                    {lead.source ? sourceLabels[lead.source] || lead.source : "—"}
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className={cn("text-xs px-2 py-0.5 rounded-full font-medium", statusColors[lead.status] || "bg-gray-100")}>
-                      {statusLabels[lead.status] || lead.status}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3">
+                  <td className="px-3 py-3">
                     {(() => {
                       const convProb = (lead.scoreDetails as any)?.conversionProb ?? Math.round(lead.score * 0.85)
                       return (
@@ -301,6 +283,24 @@ export default function LeadsPage() {
                         </span>
                       )
                     })()}
+                  </td>
+                  <td className="px-3 py-3 text-xs text-muted-foreground max-w-[180px]">
+                    {reasoning ? (
+                      <span className="flex items-start gap-1">
+                        <Sparkles className="h-3 w-3 text-purple-500 shrink-0 mt-0.5" />
+                        <span className="line-clamp-2">{reasoning}</span>
+                      </span>
+                    ) : (
+                      lead.lastScoredAt ? "Rule-based" : "—"
+                    )}
+                  </td>
+                  <td className="px-3 py-3 text-muted-foreground text-xs">
+                    {lead.source ? sourceLabels[lead.source] || lead.source : "—"}
+                  </td>
+                  <td className="px-3 py-3">
+                    <span className={cn("text-xs px-2 py-0.5 rounded-full font-medium", statusColors[lead.status] || "bg-gray-100")}>
+                      {statusLabels[lead.status] || lead.status}
+                    </span>
                   </td>
                   <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
                     <div className="flex items-center gap-1">
