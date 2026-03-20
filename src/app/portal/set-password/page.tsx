@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -9,6 +9,23 @@ import { Input } from "@/components/ui/input"
 import { Eye, EyeOff, CheckCircle, XCircle, Loader2 } from "lucide-react"
 
 export default function SetPasswordPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Card className="w-full max-w-md">
+          <CardContent className="py-10 text-center">
+            <Loader2 className="h-10 w-10 text-primary mx-auto mb-3 animate-spin" />
+            <p className="text-sm text-muted-foreground">Загрузка...</p>
+          </CardContent>
+        </Card>
+      </div>
+    }>
+      <SetPasswordContent />
+    </Suspense>
+  )
+}
+
+function SetPasswordContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const token = searchParams.get("token")
