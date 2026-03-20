@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
       leadStatus = lead.status
       // Load activities linked to this lead (via contactId = lead.id)
       activitiesList = await prisma.activity.findMany({
-        where: { organizationId: orgId, contactId: leadId },
+        where: { organizationId: orgId, relatedType: "lead", relatedId: leadId },
         orderBy: { createdAt: "desc" },
         take: 10,
       }).catch(() => [])

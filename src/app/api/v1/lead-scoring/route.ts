@@ -175,7 +175,7 @@ export async function POST(req: NextRequest) {
       // Fetch related data for AI context
       const [activities, deals] = await Promise.all([
         prisma.activity.findMany({
-          where: { organizationId: orgId, contactId: lead.id },
+          where: { organizationId: orgId, relatedType: "lead", relatedId: lead.id },
           orderBy: { createdAt: "desc" },
           take: 10,
         }).catch(() => []),

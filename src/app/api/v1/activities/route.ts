@@ -9,6 +9,8 @@ const createActivitySchema = z.object({
   description: z.string().optional(),
   contactId: z.string().optional(),
   companyId: z.string().optional(),
+  relatedType: z.string().optional(),
+  relatedId: z.string().optional(),
 })
 
 export async function GET(req: NextRequest) {
@@ -18,12 +20,16 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
   const companyId = searchParams.get("companyId")
   const contactId = searchParams.get("contactId")
+  const relatedType = searchParams.get("relatedType")
+  const relatedId = searchParams.get("relatedId")
 
   try {
-    const where = {
+    const where: any = {
       organizationId: orgId,
       ...(companyId ? { companyId } : {}),
       ...(contactId ? { contactId } : {}),
+      ...(relatedType ? { relatedType } : {}),
+      ...(relatedId ? { relatedId } : {}),
     }
 
     const activities = await prisma.activity.findMany({

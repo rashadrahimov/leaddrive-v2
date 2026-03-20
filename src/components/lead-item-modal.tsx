@@ -222,7 +222,7 @@ export function LeadItemModal({ open, onOpenChange, lead, orgId, onSaved, onConv
   // Activities
   const loadActivities = async () => {
     try {
-      const res = await fetch(`/api/v1/activities?contactId=${lead.id}`, {
+      const res = await fetch(`/api/v1/activities?relatedType=lead&relatedId=${lead.id}`, {
         headers: orgId ? { "x-organization-id": String(orgId) } : {},
       })
       const json = await res.json()
@@ -241,7 +241,8 @@ export function LeadItemModal({ open, onOpenChange, lead, orgId, onSaved, onConv
           type: activityType,
           subject: activitySubject,
           description: activityDesc,
-          contactId: lead.id,
+          relatedType: "lead",
+          relatedId: lead.id,
         }),
       })
       const json = await res.json()
