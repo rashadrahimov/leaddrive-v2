@@ -1,0 +1,32 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run *)",
+      "Bash(npx expo *)",
+      "Bash(npx react-native *)",
+      "Bash(cd *)",
+      "Bash(ls *)",
+      "Bash(cat *)",
+      "Bash(mkdir *)",
+      "Bash(cp *)",
+      "Bash(git *)",
+      "Bash(pip install *)",
+      "Bash(npm install *)",
+      "Bash(npx tsc *)",
+      "Bash(npx firebase *)",
+      "Bash(npx eas *)",
+      "Bash(ssh *)",
+      "Bash(npx prisma *)",
+      "Bash(npx next *)",
+      "Bash(npx tsx *)",
+      "Bash(PGPASSWORD=*)",
+      "Write",
+      "Edit",
+      "Read"
+    ],
+    "deny": [
+      "Bash(rm -rf /)",
+      "Bash(sudo *)"
+    ]
+  }
+}

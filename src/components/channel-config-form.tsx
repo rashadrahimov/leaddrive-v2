@@ -114,25 +114,54 @@ export function ChannelConfigForm({ open, onOpenChange, onSaved, initialData, or
                 </Select>
               </div>
             </div>
-            {(form.channelType === "telegram") && (
+            {form.channelType === "telegram" && (
               <div>
                 <Label htmlFor="botToken">Bot Token</Label>
                 <Input id="botToken" value={form.botToken} onChange={(e) => update("botToken", e.target.value)} placeholder="123456:ABC-DEF..." />
               </div>
             )}
-            <div>
-              <Label htmlFor="webhookUrl">Webhook URL</Label>
-              <Input id="webhookUrl" value={form.webhookUrl} onChange={(e) => update("webhookUrl", e.target.value)} placeholder="https://..." />
-            </div>
-            <div>
-              <Label htmlFor="apiKey">API Key</Label>
-              <Input id="apiKey" value={form.apiKey} onChange={(e) => update("apiKey", e.target.value)} placeholder="sk-..." />
-            </div>
-            {(form.channelType === "whatsapp" || form.channelType === "sms") && (
+            {form.channelType === "whatsapp" && (
+              <>
+                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+                  <p className="text-xs text-blue-700 dark:text-blue-300 font-medium mb-1">Meta WhatsApp Business API</p>
+                  <p className="text-xs text-blue-600 dark:text-blue-400">Данные из developers.facebook.com → WhatsApp → API Setup</p>
+                </div>
+                <div>
+                  <Label htmlFor="apiKey">Access Token (Маркер доступа) *</Label>
+                  <Input id="apiKey" type="password" value={form.apiKey} onChange={(e) => update("apiKey", e.target.value)} placeholder="EAAi..." required />
+                  <p className="text-xs text-muted-foreground mt-1">Временный токен действует 24 часа. Для постоянного — создайте System User.</p>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label htmlFor="phoneNumber">Phone Number ID *</Label>
+                    <Input id="phoneNumber" value={form.phoneNumber} onChange={(e) => update("phoneNumber", e.target.value)} placeholder="1089534267571015" required />
+                    <p className="text-xs text-muted-foreground mt-1">ID номера телефона из API Setup</p>
+                  </div>
+                  <div>
+                    <Label htmlFor="webhookUrl">Business Account ID</Label>
+                    <Input id="webhookUrl" value={form.webhookUrl} onChange={(e) => update("webhookUrl", e.target.value)} placeholder="907151598973492" />
+                    <p className="text-xs text-muted-foreground mt-1">ID аккаунта WhatsApp Business</p>
+                  </div>
+                </div>
+              </>
+            )}
+            {form.channelType === "sms" && (
               <div>
                 <Label htmlFor="phoneNumber">Phone Number</Label>
                 <Input id="phoneNumber" value={form.phoneNumber} onChange={(e) => update("phoneNumber", e.target.value)} placeholder="+1234567890" />
               </div>
+            )}
+            {form.channelType !== "whatsapp" && form.channelType !== "telegram" && form.channelType !== "sms" && (
+              <>
+                <div>
+                  <Label htmlFor="webhookUrl">Webhook URL</Label>
+                  <Input id="webhookUrl" value={form.webhookUrl} onChange={(e) => update("webhookUrl", e.target.value)} placeholder="https://..." />
+                </div>
+                <div>
+                  <Label htmlFor="apiKey">API Key</Label>
+                  <Input id="apiKey" value={form.apiKey} onChange={(e) => update("apiKey", e.target.value)} placeholder="sk-..." />
+                </div>
+              </>
             )}
             <label className="flex items-center gap-2 cursor-pointer">
               <input type="checkbox" checked={form.isActive} onChange={(e) => update("isActive", e.target.checked)} className="rounded" />
