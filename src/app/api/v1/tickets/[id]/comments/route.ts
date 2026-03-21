@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { prisma } from "@/lib/prisma"
 import { getOrgId } from "@/lib/api-auth"
+import { sendWhatsAppMessage } from "@/lib/whatsapp"
 
 const commentSchema = z.object({
   comment: z.string().min(1).max(5000),
@@ -41,6 +42,58 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       where: { id: ticketId },
       data: { firstResponseAt: new Date() },
     })
+  }
+
+  // Send reply to WhatsApp if ticket originated from WhatsApp and comment is not internal
+  if (!parsed.data.isInternal && ticket.tags && (ticket.tags as string[]).includes("whatsapp")) {
+    try {
+      // Extract phone number from ticket description (format: "+994512060838")
+      const phoneMatch = ticket.description?.match(/\+(\d{10,15})/)
+      let waPhone = phoneMatch?.[1]
+
+      // If no phone in description, try to get from contact
+      if (!waPhone && ticket.contactId) {
+        const contact = await prisma.contact.findFirst({
+          where: { id: ticket.contactId, organizationId: orgId },
+          select: { phone: true },
+        })
+        if (contact?.phone) {
+          waPhone = contact.phone.replace(/[\s\-\(\)\+]/g, "")
+        }
+      }
+
+      // Also try to find from recent WhatsApp inbound messages for this contact
+      if (!waPhone && ticket.contactId) {
+        const recentWaMsg = await prisma.channelMessage.findFirst({
+          where: {
+            organizationId: orgId,
+            contactId: ticket.contactId,
+            channelType: "whatsapp",
+            direction: "inbound",
+          },
+          orderBy: { createdAt: "desc" },
+          select: { metadata: true },
+        })
+        const meta = recentWaMsg?.metadata as any
+        if (meta?.waPhone) {
+          waPhone = meta.waPhone
+        }
+      }
+
+      if (waPhone) {
+        const result = await sendWhatsAppMessage({
+          to: waPhone,
+          message: parsed.data.comment,
+          organizationId: orgId,
+          contactId: ticket.contactId || undefined,
+        })
+        console.log(`[Ticket WA] Reply to ${waPhone} for ticket ${ticket.ticketNumber}: ${result.success ? "OK" : result.error}`)
+      } else {
+        console.log(`[Ticket WA] No phone found for ticket ${ticket.ticketNumber}`)
+      }
+    } catch (err) {
+      console.error(`[Ticket WA] Error sending reply:`, err)
+    }
   }
 
   return NextResponse.json({ success: true, data: comment }, { status: 201 })
