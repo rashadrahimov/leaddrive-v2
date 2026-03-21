@@ -102,8 +102,8 @@ Comments:\n${commentsText || "No comments yet"}`
 
       if (client) {
         const systemPrompt = kbContext
-          ? `You are a professional support agent. You have access to the company's knowledge base articles below. Use them to provide accurate, helpful answers. If the KB articles contain relevant information, reference it in your reply. Reply in the same language as the customer's message. Do not use markdown, write plain text.${kbContext}`
-          : "You are a professional support agent. Write a helpful, concise reply to the customer based on the ticket context. Reply in the same language as the customer's message. Do not use markdown, write plain text."
+          ? `You are a professional support agent. You have access to the company's knowledge base articles below. Use them to provide accurate, helpful answers. If the KB articles contain relevant information, reference it in your reply. ALWAYS reply in RUSSIAN language regardless of the ticket language. Do not use markdown, write plain text.${kbContext}`
+          : "You are a professional support agent. Write a helpful, concise reply to the customer based on the ticket context. ALWAYS reply in RUSSIAN language regardless of the ticket language. Do not use markdown, write plain text."
 
         const t0 = Date.now()
         const msg = await client.messages.create({
@@ -131,7 +131,7 @@ Comments:\n${commentsText || "No comments yet"}`
         const msg = await client.messages.create({
           model: "claude-haiku-4-5-20251001",
           max_tokens: 300,
-          system: "Summarize this support ticket in 2-3 sentences. Include the main issue, current status, and any key actions taken. Write in the same language as the ticket content.",
+          system: "Summarize this support ticket in 2-3 sentences. Include the main issue, current status, and any key actions taken. ALWAYS write in RUSSIAN language regardless of the ticket language.",
           messages: [{ role: "user", content: context }],
         })
         const text = msg.content[0].type === "text" ? msg.content[0].text : ""
@@ -150,7 +150,7 @@ Comments:\n${commentsText || "No comments yet"}`
         const msg = await client.messages.create({
           model: "claude-haiku-4-5-20251001",
           max_tokens: 400,
-          system: "Based on this support ticket, suggest 3-5 concrete next steps the support agent should take to resolve it. Write numbered steps. Write in the same language as the ticket content.",
+          system: "Based on this support ticket, suggest 3-5 concrete next steps the support agent should take to resolve it. Write numbered steps. ALWAYS write in RUSSIAN language regardless of the ticket language.",
           messages: [{ role: "user", content: context }],
         })
         const text = msg.content[0].type === "text" ? msg.content[0].text : ""
