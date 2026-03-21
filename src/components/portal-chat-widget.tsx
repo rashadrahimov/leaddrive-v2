@@ -128,6 +128,57 @@ export function PortalChatWidget({ userName }: PortalChatWidgetProps) {
     }
   }
 
+  const handleCreateTicket = async () => {
+    if (sending || !sessionId) return
+    setSending(true)
+    try {
+      // Collect user messages to build ticket subject/description
+      const userMessages = messages.filter(m => m.role === "user")
+      const subject = userMessages[0]?.content?.slice(0, 100) || "Запрос из чата"
+      const chatHistory = messages.map(m => `[${m.role === "user" ? "Клиент" : "AI"}] ${m.content}`).join("\n\n")
+
+      const res = await fetch("/api/v1/public/portal-tickets", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          subject,
+          description: `Создано из AI чата.\n\n--- ИСТОРИЯ ЧАТА ---\n${chatHistory}`,
+          category: "general",
+        }),
+      })
+      const json = await res.json()
+      if (res.ok && json.success) {
+        const ticket = json.data
+        const ticketNumber = ticket.ticketNumber || ticket.id?.slice(0, 8)
+        setMessages(prev => [...prev, {
+          id: Date.now().toString(),
+          role: "assistant",
+          content: `Тикет ${ticketNumber} успешно создан! Наша команда скоро свяжется с вами.`,
+          createdAt: new Date().toISOString(),
+          escalated: true,
+          escalationTicketId: ticket.id,
+          escalationTicketNumber: ticketNumber,
+        }])
+      } else {
+        setMessages(prev => [...prev, {
+          id: Date.now().toString(),
+          role: "assistant",
+          content: "Не удалось создать тикет. Попробуйте через раздел Тикеты.",
+          createdAt: new Date().toISOString(),
+        }])
+      }
+    } catch {
+      setMessages(prev => [...prev, {
+        id: Date.now().toString(),
+        role: "assistant",
+        content: "Ошибка при создании тикета. Попробуйте позже.",
+        createdAt: new Date().toISOString(),
+      }])
+    } finally {
+      setSending(false)
+    }
+  }
+
   const formatTime = (iso: string) => {
     return new Date(iso).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit", second: "2-digit" })
   }
@@ -207,9 +258,10 @@ export function PortalChatWidget({ userName }: PortalChatWidgetProps) {
                     <button
                       onClick={(e) => {
                         e.stopPropagation()
-                        window.location.href = "/portal/tickets?action=new"
+                        handleCreateTicket()
                       }}
-                      className="mt-1.5 inline-flex items-center gap-1 text-xs text-orange-600 border border-orange-200 rounded-full px-3 py-1 hover:bg-orange-50 transition-colors"
+                      disabled={sending}
+                      className="mt-1.5 inline-flex items-center gap-1 text-xs text-orange-600 border border-orange-200 rounded-full px-3 py-1 hover:bg-orange-50 transition-colors disabled:opacity-50"
                     >
                       <TicketPlus className="h-3 w-3" /> Создать тикет
                     </button>
