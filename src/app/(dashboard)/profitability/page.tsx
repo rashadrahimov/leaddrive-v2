@@ -368,7 +368,7 @@ export default function ProfitabilityPage() {
               const cost = serviceCosts[svc] || 0
               const revenue = serviceRevenues[svc] || 0
               const margin = revenue - cost
-              const marginPct = revenue > 0 ? ((margin / revenue) * 100) : cost > 0 ? -100 : 0
+              const marginPct = cost > 0 ? ((margin / cost) * 100) : 0
               const isProfit = margin >= 0
               const detail = serviceDetails[svc]
               const headcount = detail?.headcount || 0
