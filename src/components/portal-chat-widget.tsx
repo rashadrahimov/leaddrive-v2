@@ -80,12 +80,28 @@ export function PortalChatWidget({ userName }: PortalChatWidgetProps) {
   const inputRef = useRef<HTMLInputElement>(null)
   const router = useRouter()
 
-  // Load chat from localStorage on mount
+  // Load chat from localStorage on mount + auto-track tickets from messages
   useEffect(() => {
     const saved = loadChat()
     if (saved.messages.length > 0) setMessages(saved.messages)
     if (saved.sessionId) setSessionId(saved.sessionId)
-    if (saved.trackedTickets.length > 0) setTrackedTickets(saved.trackedTickets)
+
+    // Auto-discover tickets from messages (handles old sessions without trackedTickets)
+    const existingIds = new Set(saved.trackedTickets.map(t => t.id))
+    const discoveredTickets: TicketInfo[] = [...saved.trackedTickets]
+    for (const msg of saved.messages) {
+      if (msg.escalationTicketId && !existingIds.has(msg.escalationTicketId)) {
+        existingIds.add(msg.escalationTicketId)
+        discoveredTickets.push({
+          id: msg.escalationTicketId,
+          ticketNumber: msg.escalationTicketNumber || "",
+          status: "new",
+          satisfactionRating: null,
+          lastCommentCount: 0,
+        })
+      }
+    }
+    if (discoveredTickets.length > 0) setTrackedTickets(discoveredTickets)
   }, [])
 
   // Save chat to localStorage on every change
@@ -113,8 +129,8 @@ export function PortalChatWidget({ userName }: PortalChatWidgetProps) {
         const data = json.data
         const comments = data.comments || []
 
-        // Check for new operator comments (isAgent=true means operator)
-        const agentComments = comments.filter((c: { isAgent: boolean }) => c.isAgent)
+        // Check for operator comments (isAgent=true means operator)
+        const agentComments = comments.filter((c: { isAgent: boolean; comment: string }) => c.isAgent && !c.comment.startsWith("[Клиент]") && !c.comment.startsWith("[AI Bot]"))
         if (agentComments.length > ticket.lastCommentCount) {
           const newComments = agentComments.slice(ticket.lastCommentCount)
           setMessages(prev => {
