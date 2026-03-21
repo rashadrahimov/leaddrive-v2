@@ -22,6 +22,7 @@ export async function GET(req: NextRequest) {
 
   const { searchParams } = new URL(req.url)
   const search = searchParams.get("search") || ""
+  const stage = searchParams.get("stage") || ""
   const page = parseInt(searchParams.get("page") || "1")
   const limit = parseInt(searchParams.get("limit") || "50")
 
@@ -29,6 +30,7 @@ export async function GET(req: NextRequest) {
     const where = {
       organizationId: orgId,
       ...(search ? { name: { contains: search, mode: "insensitive" as const } } : {}),
+      ...(stage ? { stage } : {}),
     }
 
     const [deals, total] = await Promise.all([

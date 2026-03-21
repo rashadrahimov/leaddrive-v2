@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { StatCard } from "@/components/stat-card"
 import {
   DollarSign, Download, Search, ChevronDown, ChevronRight,
-  RotateCcw, Trash2, Loader2, Plus, Save, X,
+  RotateCcw, Trash2, Loader2, Plus, Save, X, Trophy, ArrowRight,
 } from "lucide-react"
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
@@ -123,6 +123,10 @@ export default function PricingPage() {
   const [salesSearch, setSalesSearch] = useState("")
   const [profilesList, setProfilesList] = useState<any[]>([])
   const [savingSale, setSavingSale] = useState(false)
+  // Won deals state
+  const [wonDeals, setWonDeals] = useState<any[]>([])
+  const [wonDealsLoading, setWonDealsLoading] = useState(false)
+  const [addingDealId, setAddingDealId] = useState<string | null>(null)
 
   const headers = orgId ? { "x-organization-id": String(orgId) } : {}
 
@@ -153,8 +157,22 @@ export default function PricingPage() {
     } catch { /* ignore */ }
   }, [orgId])
 
+  const fetchWonDeals = useCallback(async () => {
+    setWonDealsLoading(true)
+    try {
+      const res = await fetch("/api/v1/deals?limit=500&stage=WON", { headers: headers as any })
+      const json = await res.json()
+      const deals = json.success ? (json.data?.deals || json.data || []) : []
+      // Filter out deals already linked to additional sales
+      const linkedDealIds = new Set(salesData.filter((s: any) => s.dealId).map((s: any) => s.dealId))
+      setWonDeals(deals.filter((d: any) => !linkedDealIds.has(d.id)))
+    } catch { /* ignore */ }
+    finally { setWonDealsLoading(false) }
+  }, [orgId, salesData])
+
   useEffect(() => { if (session) fetchData() }, [session])
   useEffect(() => { if (session && activeTab === "sales") { fetchSales(); fetchProfiles() } }, [session, activeTab])
+  useEffect(() => { if (session && activeTab === "sales" && salesData.length >= 0) fetchWonDeals() }, [session, activeTab, salesData])
 
   // ─── Computed values ────────────────────────────────────
   const adjustedData = useMemo(() => {
@@ -943,6 +961,93 @@ export default function PricingPage() {
                 </div>
               </CardContent>
             </Card>
+          )}
+
+          {/* Won deals not yet added to pricing */}
+          {wonDeals.length > 0 && (
+            <Card className="border-green-200 bg-green-50/50">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-semibold flex items-center gap-2 text-green-800">
+                  <Trophy className="h-4 w-4" />
+                  Выигранные сделки ({wonDeals.length})
+                  <span className="text-xs font-normal text-green-600 ml-1">— не добавлены в допродажи</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-green-200 text-left text-green-700">
+                        <th className="pb-2 pr-4">Сделка</th>
+                        <th className="pb-2 pr-4">Компания</th>
+                        <th className="pb-2 pr-4 text-right">Сумма</th>
+                        <th className="pb-2 pr-4">Дата</th>
+                        <th className="pb-2 w-40"></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {wonDeals.map((deal: any) => (
+                        <tr key={deal.id} className="border-b border-green-100 last:border-0 hover:bg-green-100/50">
+                          <td className="py-2 pr-4 font-medium">{deal.name}</td>
+                          <td className="py-2 pr-4 text-muted-foreground">{deal.company?.name || "—"}</td>
+                          <td className="py-2 pr-4 text-right font-mono font-medium">
+                            {(deal.valueAmount || 0).toLocaleString("ru-RU", { maximumFractionDigits: 2 })} ₼
+                          </td>
+                          <td className="py-2 pr-4 text-xs text-muted-foreground">
+                            {deal.createdAt ? new Date(deal.createdAt).toLocaleDateString("ru-RU") : "—"}
+                          </td>
+                          <td className="py-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-7 text-xs border-green-300 text-green-700 hover:bg-green-100"
+                              disabled={addingDealId === deal.id || !deal.companyId}
+                              onClick={async () => {
+                                if (!deal.companyId) return
+                                setAddingDealId(deal.id)
+                                try {
+                                  const res = await fetch(`/api/v1/deals/${deal.id}/add-to-pricing`, {
+                                    method: "POST",
+                                    headers: { "Content-Type": "application/json", ...headers } as any,
+                                    body: JSON.stringify({
+                                      type: "recurring",
+                                      name: deal.name,
+                                      qty: 1,
+                                      price: deal.valueAmount || 0,
+                                      effectiveDate: new Date().toISOString().split("T")[0],
+                                    }),
+                                  })
+                                  const json = await res.json()
+                                  if (json.success) {
+                                    fetchSales()
+                                  } else {
+                                    alert(json.error || "Ошибка добавления")
+                                  }
+                                } catch { /* ignore */ }
+                                finally { setAddingDealId(null) }
+                              }}
+                            >
+                              {addingDealId === deal.id ? (
+                                <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                              ) : (
+                                <ArrowRight className="h-3 w-3 mr-1" />
+                              )}
+                              {!deal.companyId ? "Нет компании" : "Добавить в допродажи"}
+                            </Button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {wonDealsLoading && wonDeals.length === 0 && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground py-2">
+              <Loader2 className="h-4 w-4 animate-spin" /> Загрузка выигранных сделок...
+            </div>
           )}
 
           {/* KPI cards */}
