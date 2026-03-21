@@ -3,17 +3,18 @@ import { prisma } from "@/lib/prisma"
 import { getPortalUser } from "@/lib/portal-auth"
 import Anthropic from "@anthropic-ai/sdk"
 
-const DEFAULT_SYSTEM_PROMPT = `Sen LeadDrive CRM-in texniki dəstək agentisən. Sənin adındır "LeadDrive Support Pro".
+const DEFAULT_SYSTEM_PROMPT = `Ты — AI-ассистент техподдержки LeadDrive CRM. Твоё имя "LeadDrive Support Pro".
 
-QAYDALAR:
-1. Müştərilərə Azərbaycan, Rus və ya İngilis dilində cavab ver — hansı dildə yazırlarsa, o dildə cavab ver.
-2. Əgər KB konteksti varsa ({kb_context}), ilk növbədə oradakı məlumatdan istifadə et.
-3. Hər zaman nəzakətli, professional və qısa cavablar ver.
-4. Müştəri narazıdırsa, empatiya göstər və problemin həllinə fokuslan.
-5. Əgər sual sənin səlahiyyətindən kənardırsa, müştərini dəstək tiketinə yönləndir.
-6. SLA vaxtlarına diqqət et: Kritik - 4 saat, Yüksək - 8 saat, Orta - 24 saat, Aşağı - 72 saat.
-7. Qiymətlər barədə danışmaq olmaz — menecerə yönləndir.
-8. Texniki suallar üçün dəqiq, addım-addım izahatlar ver.`
+ПРАВИЛА:
+1. Отвечай на языке клиента. По умолчанию отвечай на РУССКОМ. Если клиент пишет на другом языке — переключись на его язык.
+2. Если есть контекст из базы знаний ({kb_context}), используй его в первую очередь.
+3. Будь вежливым, профессиональным, отвечай кратко и по делу.
+4. Если клиент недоволен — прояви эмпатию и сфокусируйся на решении.
+5. Если вопрос вне твоей компетенции — предложи создать тикет.
+6. SLA: Критический - 4 часа, Высокий - 8 часов, Средний - 24 часа, Низкий - 72 часа.
+7. О ценах не говори — направь к менеджеру.
+8. Для технических вопросов давай пошаговые инструкции.
+9. Если у тебя в контексте есть данные о тикетах или контрактах клиента — используй их для ответа.`
 
 async function getActiveAgentConfig(organizationId: string) {
   return prisma.aiAgentConfig.findFirst({
@@ -23,10 +24,10 @@ async function getActiveAgentConfig(organizationId: string) {
 }
 
 const TOOL_DESCRIPTIONS: Record<string, string> = {
-  get_tickets: "Ты можешь получать список тикетов клиента из CRM. Если клиент спрашивает о статусе тикета, помоги ему.",
+  get_tickets: "У тебя есть доступ к тикетам клиента — они перечислены в контексте выше. Покажи клиенту его тикеты, статусы и даты.",
   create_ticket: "Ты можешь предложить создать новый тикет. Если проблема требует внимания — предложи создать тикет. Добавь в ответ ключевое слово [CREATE_TICKET] если клиент согласен создать тикет.",
-  contracts: "Ты можешь просматривать контракты и условия. Если клиент спрашивает о контракте или условиях — помоги ему.",
-  documents: "Ты можешь показывать документы клиента. Если клиент спрашивает о документах — помоги ему.",
+  contracts: "У тебя есть доступ к контрактам клиента — они перечислены в контексте выше. Покажи клиенту информацию о его контрактах.",
+  documents: "Ты можешь рассказать клиенту о его документах. Если клиент спрашивает о документах — помоги ему.",
   kb_search: "Ты можешь искать в базе знаний. Используй контекст из KB для ответов.",
 }
 
@@ -125,6 +126,46 @@ async function createEscalationTicket(
   } catch (e) {
     console.error("Failed to create escalation ticket:", e)
     return null
+  }
+}
+
+// Fetch real customer tickets for AI context
+async function getCustomerTickets(organizationId: string, contactId: string | null): Promise<string> {
+  if (!contactId) return "Тикеты клиента: нет данных."
+  try {
+    const tickets = await prisma.ticket.findMany({
+      where: { organizationId, contactId },
+      orderBy: { createdAt: "desc" },
+      take: 10,
+      select: { ticketNumber: true, subject: true, status: true, priority: true, category: true, createdAt: true },
+    })
+    if (tickets.length === 0) return "Тикеты клиента: тикетов нет."
+    const list = tickets.map(t =>
+      `- ${t.ticketNumber}: "${t.subject}" | Статус: ${t.status} | Приоритет: ${t.priority} | Создан: ${t.createdAt.toISOString().split("T")[0]}`
+    ).join("\n")
+    return `Тикеты клиента (${tickets.length}):\n${list}`
+  } catch {
+    return "Тикеты клиента: ошибка при загрузке."
+  }
+}
+
+// Fetch real customer contracts for AI context
+async function getCustomerContracts(organizationId: string, companyId: string | null): Promise<string> {
+  if (!companyId) return "Контракты: нет данных."
+  try {
+    const contracts = await prisma.contract.findMany({
+      where: { organizationId, companyId },
+      orderBy: { createdAt: "desc" },
+      take: 10,
+      select: { contractNumber: true, title: true, status: true, startDate: true, endDate: true, value: true },
+    })
+    if (contracts.length === 0) return "Контракты: контрактов нет."
+    const list = contracts.map(c =>
+      `- ${c.contractNumber || "N/A"}: "${c.title}" | Статус: ${c.status} | ${c.startDate ? c.startDate.toISOString().split("T")[0] : "?"} — ${c.endDate ? c.endDate.toISOString().split("T")[0] : "бессрочный"} | Сумма: ${c.value || "N/A"}`
+    ).join("\n")
+    return `Контракты клиента (${contracts.length}):\n${list}`
+  } catch {
+    return "Контракты: ошибка при загрузке."
   }
 }
 
@@ -340,8 +381,23 @@ export async function POST(req: NextRequest) {
       // Append escalation configuration with rules
       systemPrompt += buildEscalationPrompt(escalationEnabled, escalationRules)
 
-      // Append user context
-      systemPrompt += `\n\nMüştəri adı: ${user.fullName}\nMüştəri email: ${user.email}\nTarix: ${new Date().toISOString().split("T")[0]}`
+      // Fetch real customer data for AI context (tickets, contracts)
+      const isTicketQuery = /тикет|ticket|tiket|обращен|заявк|статус/i.test(message)
+      const isContractQuery = /контракт|contract|müqavilə|договор|условия/i.test(message)
+
+      const [customerTickets, customerContracts] = await Promise.all([
+        (isTicketQuery || toolsEnabled.includes("get_tickets"))
+          ? getCustomerTickets(user.organizationId, user.contactId)
+          : Promise.resolve(""),
+        (isContractQuery || toolsEnabled.includes("contracts"))
+          ? getCustomerContracts(user.organizationId, user.companyId)
+          : Promise.resolve(""),
+      ])
+
+      // Append user context with real data
+      systemPrompt += `\n\nКлиент: ${user.fullName}\nEmail: ${user.email}\nДата: ${new Date().toISOString().split("T")[0]}`
+      if (customerTickets) systemPrompt += `\n\n${customerTickets}`
+      if (customerContracts) systemPrompt += `\n\n${customerContracts}`
 
       // Build messages array with history
       const messages: Array<{ role: "user" | "assistant"; content: string }> = [

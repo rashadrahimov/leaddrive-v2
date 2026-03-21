@@ -80,7 +80,7 @@ export function PortalChatWidget({ userName }: PortalChatWidgetProps) {
       setMessages(prev => [...prev, {
         id: (Date.now() + 1).toString(),
         role: "assistant",
-        content: "Xəta baş verdi. Zəhmət olmasa yenidən cəhd edin.",
+        content: "Произошла ошибка. Пожалуйста, попробуйте ещё раз.",
         createdAt: new Date().toISOString(),
       }])
     } finally {
@@ -122,9 +122,9 @@ export function PortalChatWidget({ userName }: PortalChatWidgetProps) {
                 <div>
                   <div className="bg-white rounded-lg rounded-tl-none p-3 shadow-sm border border-gray-100">
                     <p className="text-sm text-gray-800">
-                      Salam, <strong>{userName}</strong>! Mən LeadDrive AI Assistant-am.
+                      Здравствуйте, <strong>{userName}</strong>! Я LeadDrive AI Assistant.
                     </p>
-                    <p className="text-sm text-gray-800 mt-1">Nədə kömək edə bilərəm?</p>
+                    <p className="text-sm text-gray-800 mt-1">Чем могу помочь?</p>
                   </div>
                   <p className="text-[10px] text-gray-400 mt-1">{formatTime(new Date().toISOString())}</p>
                 </div>
@@ -186,7 +186,7 @@ export function PortalChatWidget({ userName }: PortalChatWidgetProps) {
                 <div className="bg-white rounded-lg rounded-tl-none p-3 shadow-sm border border-gray-100">
                   <div className="flex items-center gap-1.5">
                     <Loader2 className="h-3.5 w-3.5 text-indigo-500 animate-spin" />
-                    <span className="text-xs text-gray-500">Düşünür...</span>
+                    <span className="text-xs text-gray-500">Думает...</span>
                   </div>
                 </div>
               </div>
@@ -197,22 +197,22 @@ export function PortalChatWidget({ userName }: PortalChatWidgetProps) {
           {messages.length === 0 && (
             <div className="px-4 py-2 border-t border-gray-100 bg-white flex gap-2 overflow-x-auto">
               <button
-                onClick={() => handleSend("Tiketlərimi göstər")}
+                onClick={() => handleSend("Покажи мои тикеты")}
                 className="flex items-center gap-1 text-xs text-gray-600 border border-gray-200 rounded-full px-3 py-1.5 hover:bg-gray-50 whitespace-nowrap transition-colors"
               >
-                <Ticket className="h-3 w-3" /> Tiketlərim
+                <Ticket className="h-3 w-3" /> Мои тикеты
               </button>
               <button
-                onClick={() => handleSend("Yeni tiket yaratmaq istəyirəm")}
+                onClick={() => handleSend("Хочу создать новый тикет")}
                 className="flex items-center gap-1 text-xs text-gray-600 border border-gray-200 rounded-full px-3 py-1.5 hover:bg-gray-50 whitespace-nowrap transition-colors"
               >
-                <TicketPlus className="h-3 w-3" /> Yeni tiket
+                <TicketPlus className="h-3 w-3" /> Новый тикет
               </button>
               <button
-                onClick={() => handleSend("Müqavilələrimi göstər")}
+                onClick={() => handleSend("Покажи мои контракты")}
                 className="flex items-center gap-1 text-xs text-gray-600 border border-gray-200 rounded-full px-3 py-1.5 hover:bg-gray-50 whitespace-nowrap transition-colors"
               >
-                <FileText className="h-3 w-3" /> Müqavilələr
+                <FileText className="h-3 w-3" /> Контракты
               </button>
             </div>
           )}
@@ -225,7 +225,7 @@ export function PortalChatWidget({ userName }: PortalChatWidgetProps) {
                 value={input}
                 onChange={e => setInput(e.target.value)}
                 onKeyDown={e => e.key === "Enter" && handleSend()}
-                placeholder="Mesajınızı yazın..."
+                placeholder="Напишите сообщение..."
                 disabled={sending}
                 className="flex-1 text-sm text-gray-800 rounded-full border border-gray-200 bg-gray-50 px-4 py-2.5 outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400 disabled:opacity-50 transition-colors placeholder:text-gray-400"
               />
