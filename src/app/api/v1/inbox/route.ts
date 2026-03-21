@@ -393,11 +393,9 @@ export async function POST(req: NextRequest) {
           organizationId: orgId,
           contactId,
         })
-        status = waResult.success ? "delivered" : "failed"
-        if (!waResult.success) errorMsg = waResult.error || "WhatsApp send failed"
-        // sendWhatsAppMessage already logs to ChannelMessage, so skip the generic save below
+        // sendWhatsAppMessage already saves ChannelMessage to DB (both success & failure)
+        // so we return early to avoid duplicate records
         if (waResult.success) {
-          // Update lastContactAt
           if (contactId) {
             await prisma.contact.updateMany({
               where: { id: contactId, organizationId: orgId },
@@ -406,7 +404,7 @@ export async function POST(req: NextRequest) {
           }
           return NextResponse.json({ success: true, data: { id: "wa-sent", status: "delivered" } }, { status: 201 })
         }
-        break
+        return NextResponse.json({ success: false, error: waResult.error || "WhatsApp send failed" }, { status: 500 })
       }
     }
 
