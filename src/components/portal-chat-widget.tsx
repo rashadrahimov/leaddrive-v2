@@ -66,7 +66,7 @@ function saveChat(messages: Message[], sessionId: string | null, trackedTickets:
 }
 
 export function PortalChatWidget({ userName }: PortalChatWidgetProps) {
-  const [open, setOpen] = useState(false)
+  const [open, setOpen] = useState(true)
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState("")
   const [sending, setSending] = useState(false)
@@ -95,11 +95,16 @@ export function PortalChatWidget({ userName }: PortalChatWidgetProps) {
     }
   }, [messages, sessionId, trackedTickets])
 
+  // Use ref to avoid stale closures in polling
+  const trackedTicketsRef = useRef(trackedTickets)
+  trackedTicketsRef.current = trackedTickets
+
   // Poll tracked tickets for operator responses and status changes
   const pollTickets = useCallback(async () => {
-    if (trackedTickets.length === 0) return
+    const tickets = trackedTicketsRef.current
+    if (tickets.length === 0) return
 
-    for (const ticket of trackedTickets) {
+    for (const ticket of tickets) {
       try {
         const res = await fetch(`/api/v1/public/portal-tickets/${ticket.id}`)
         const json = await res.json()
@@ -111,12 +116,10 @@ export function PortalChatWidget({ userName }: PortalChatWidgetProps) {
         // Check for new operator comments (isAgent=true means operator)
         const agentComments = comments.filter((c: { isAgent: boolean }) => c.isAgent)
         if (agentComments.length > ticket.lastCommentCount) {
-          // New operator responses — add them to chat
           const newComments = agentComments.slice(ticket.lastCommentCount)
           setMessages(prev => {
             const newMsgs = [...prev]
             for (const c of newComments) {
-              // Avoid duplicates
               if (!newMsgs.some(m => m.id === `op-${c.id}`)) {
                 newMsgs.push({
                   id: `op-${c.id}`,
@@ -141,7 +144,6 @@ export function PortalChatWidget({ userName }: PortalChatWidgetProps) {
             t.id === ticket.id ? { ...t, status: newStatus, satisfactionRating: data.satisfactionRating } : t
           ))
 
-          // Add status update message
           setMessages(prev => {
             const statusMsgId = `status-${ticket.id}-${newStatus}`
             if (prev.some(m => m.id === statusMsgId)) return prev
@@ -154,22 +156,21 @@ export function PortalChatWidget({ userName }: PortalChatWidgetProps) {
             }]
           })
 
-          // If resolved/closed — show CSAT prompt
           if ((newStatus === "resolved" || newStatus === "closed") && !data.satisfactionRating) {
             setCsatTicketId(ticket.id)
           }
         }
       } catch { /* ignore polling errors */ }
     }
-  }, [trackedTickets])
+  }, [])
 
-  // Poll every 15 seconds when chat is open and there are tracked tickets
+  // Poll every 10 seconds when there are tracked tickets (always poll, chat always open)
   useEffect(() => {
-    if (!open || trackedTickets.length === 0) return
+    if (trackedTickets.length === 0) return
     pollTickets()
-    const interval = setInterval(pollTickets, 15000)
+    const interval = setInterval(pollTickets, 10000)
     return () => clearInterval(interval)
-  }, [open, trackedTickets.length, pollTickets])
+  }, [trackedTickets.length, pollTickets])
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -384,15 +385,14 @@ export function PortalChatWidget({ userName }: PortalChatWidgetProps) {
           {msg.escalated && msg.escalationTicketId && (
             <div className="mt-1.5 p-2 rounded-lg bg-red-50 border border-red-200">
               <p className="text-[10px] font-medium text-red-700 mb-1">Разговор передан оператору</p>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation()
-                  window.location.href = `/portal/tickets/${msg.escalationTicketId}`
-                }}
-                className="inline-flex items-center gap-1 text-xs text-red-600 border border-red-300 rounded-full px-2.5 py-0.5 hover:bg-red-100 transition-colors"
-              >
+              <div className="inline-flex items-center gap-1 text-xs text-red-600 border border-red-300 rounded-full px-2.5 py-0.5">
                 <TicketPlus className="h-3 w-3" /> Тикет {msg.escalationTicketNumber || `#${msg.escalationTicketId?.slice(0, 8)}`}
-              </button>
+                {(() => {
+                  const t = trackedTickets.find(tk => tk.id === msg.escalationTicketId)
+                  if (!t) return null
+                  return <span className="ml-1 text-[10px] text-gray-500">· {STATUS_LABELS[t.status] || t.status}</span>
+                })()}
+              </div>
             </div>
           )}
           {msg.suggestTicket && !msg.escalated && (
