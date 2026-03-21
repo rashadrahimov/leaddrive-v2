@@ -2,14 +2,14 @@
 
 import { useEffect, useState } from "react"
 import { useSession } from "next-auth/react"
-import { Card, CardContent } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { StatCard } from "@/components/stat-card"
 import { KbArticleForm } from "@/components/kb-article-form"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
-import { BookOpen, Plus, Search, Eye, Pencil, Trash2, Calendar } from "lucide-react"
+import { BookOpen, Plus, Search, Eye, Pencil, Trash2, ChevronDown, ChevronRight, FileText, FolderOpen, GripVertical } from "lucide-react"
+import Link from "next/link"
 
 interface KbArticle {
   id: string
@@ -18,9 +18,50 @@ interface KbArticle {
   categoryId?: string
   status: "published" | "draft"
   viewCount: number
+  helpfulCount: number
   tags: string[]
   createdAt: string
   updatedAt: string
+}
+
+// Group articles by categoryId
+function groupByCategory(articles: KbArticle[]): Record<string, KbArticle[]> {
+  const groups: Record<string, KbArticle[]> = {}
+  for (const a of articles) {
+    const cat = a.categoryId || "uncategorized"
+    if (!groups[cat]) groups[cat] = []
+    groups[cat].push(a)
+  }
+  return groups
+}
+
+const CATEGORY_LABELS: Record<string, string> = {
+  uncategorized: "Без категории",
+  general: "Общее",
+  technical: "Технические",
+  billing: "Биллинг",
+  faq: "FAQ",
+  onboarding: "Onboarding",
+  api: "API",
+  security: "Безопасность",
+}
+
+function getCategoryLabel(cat: string): string {
+  return CATEGORY_LABELS[cat] || cat.charAt(0).toUpperCase() + cat.slice(1)
+}
+
+function getContentPreview(content?: string): string {
+  if (!content) return ""
+  // Strip markdown/HTML and truncate
+  const plain = content
+    .replace(/#{1,6}\s/g, "")
+    .replace(/\*\*(.+?)\*\*/g, "$1")
+    .replace(/\*(.+?)\*/g, "$1")
+    .replace(/\[(.+?)\]\(.+?\)/g, "$1")
+    .replace(/<[^>]+>/g, "")
+    .replace(/\n+/g, " ")
+    .trim()
+  return plain.length > 120 ? plain.slice(0, 120) + "..." : plain
 }
 
 export default function KnowledgeBasePage() {
@@ -30,10 +71,12 @@ export default function KnowledgeBasePage() {
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
   const [filterStatus, setFilterStatus] = useState<string>("all")
+  const [filterCategory, setFilterCategory] = useState<string>("all")
   const [showForm, setShowForm] = useState(false)
   const [editData, setEditData] = useState<KbArticle | undefined>()
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [deleteName, setDeleteName] = useState("")
+  const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set())
   const orgId = session?.user?.organizationId
 
   const fetchArticles = async () => {
@@ -61,23 +104,35 @@ export default function KnowledgeBasePage() {
     fetchArticles()
   }
 
+  const toggleCategory = (cat: string) => {
+    setCollapsedCategories(prev => {
+      const next = new Set(prev)
+      if (next.has(cat)) next.delete(cat); else next.add(cat)
+      return next
+    })
+  }
+
   const filtered = articles.filter(a => {
     if (filterStatus !== "all" && a.status !== filterStatus) return false
-    if (search && !a.title.toLowerCase().includes(search.toLowerCase()) && !a.tags.some(t => t.includes(search.toLowerCase()))) return false
+    if (filterCategory !== "all" && (a.categoryId || "uncategorized") !== filterCategory) return false
+    if (search) {
+      const q = search.toLowerCase()
+      if (!a.title.toLowerCase().includes(q) && !a.tags.some(t => t.includes(q)) && !(a.content || "").toLowerCase().includes(q)) return false
+    }
     return true
   })
 
   const published = articles.filter(a => a.status === "published").length
   const totalViews = articles.reduce((s, a) => s + a.viewCount, 0)
+  const categories = [...new Set(articles.map(a => a.categoryId || "uncategorized"))]
+  const grouped = groupByCategory(filtered)
 
   if (loading) {
     return (
       <div className="space-y-6">
-        <h1 className="text-2xl font-bold tracking-tight">Knowledge Base</h1>
+        <h1 className="text-2xl font-bold tracking-tight">База знаний</h1>
         <div className="animate-pulse space-y-4">
-          <div className="grid gap-4 md:grid-cols-4">
-            {[1, 2, 3, 4].map((i) => <div key={i} className="h-24 bg-muted rounded-lg" />)}
-          </div>
+          <div className="grid gap-4 md:grid-cols-4">{[1, 2, 3, 4].map(i => <div key={i} className="h-20 bg-muted rounded-lg" />)}</div>
           <div className="h-96 bg-muted rounded-lg" />
         </div>
       </div>
@@ -85,83 +140,118 @@ export default function KnowledgeBasePage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-            <BookOpen className="h-6 w-6" /> Knowledge Base
-          </h1>
-          <p className="text-sm text-muted-foreground">Manage help articles for your team and clients</p>
+          <h1 className="text-2xl font-bold tracking-tight">База знаний</h1>
+          <p className="text-sm text-muted-foreground">{total} статей · {published} опубликовано · {totalViews} просмотров</p>
         </div>
-        <Button onClick={() => { setEditData(undefined); setShowForm(true) }}><Plus className="h-4 w-4 mr-1" /> New Article</Button>
+        <Button onClick={() => { setEditData(undefined); setShowForm(true) }} size="sm">
+          <Plus className="h-4 w-4 mr-1" /> Новая статья
+        </Button>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-4">
-        <StatCard title="Total Articles" value={total} icon={<BookOpen className="h-4 w-4" />} />
-        <StatCard title="Published" value={published} />
-        <StatCard title="Drafts" value={total - published} />
-        <StatCard title="Total Views" value={totalViews.toLocaleString()} icon={<Eye className="h-4 w-4" />} />
-      </div>
-
-      <div className="flex flex-wrap gap-3">
-        <div className="relative flex-1 min-w-64">
+      {/* Filters */}
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="relative flex-1 min-w-48 max-w-sm">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Search articles or tags..." value={search} onChange={e => setSearch(e.target.value)} className="pl-8" />
+          <Input placeholder="Поиск..." value={search} onChange={e => setSearch(e.target.value)} className="pl-8 h-9" />
         </div>
-        <select
-          value={filterStatus}
-          onChange={e => setFilterStatus(e.target.value)}
-          className="h-10 rounded-md border bg-background px-3 text-sm"
-        >
-          <option value="all">All Status</option>
-          <option value="published">Published</option>
-          <option value="draft">Draft</option>
-        </select>
-      </div>
-
-      <div className="space-y-3">
-        {filtered.length === 0 ? (
-          <Card>
-            <CardContent className="pt-8 pb-8 text-center">
-              <p className="text-muted-foreground">No articles found</p>
-            </CardContent>
-          </Card>
-        ) : (
-          filtered.map(article => (
-            <Card key={article.id} className="hover:bg-muted/30 transition-colors">
-              <CardContent className="pt-4 pb-4">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h3 className="font-medium">{article.title}</h3>
-                      <Badge variant={article.status === "published" ? "default" : "secondary"}>
-                        {article.status}
-                      </Badge>
-                    </div>
-                    <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
-                      <span className="flex items-center gap-1"><Eye className="h-3 w-3" /> {article.viewCount}</span>
-                      <span className="flex items-center gap-1"><Calendar className="h-3 w-3" /> {new Date(article.updatedAt).toLocaleDateString()}</span>
-                    </div>
-                    <div className="flex gap-1 mt-2">
-                      {article.tags.map(tag => (
-                        <Badge key={tag} variant="outline" className="text-[10px]">{tag}</Badge>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="flex gap-1 ml-4">
-                    <Button variant="ghost" size="sm" onClick={() => { setEditData(article); setShowForm(true) }}>
-                      <Pencil className="h-3.5 w-3.5" />
-                    </Button>
-                    <Button variant="ghost" size="sm" onClick={() => { setDeleteId(article.id); setDeleteName(article.title) }}>
-                      <Trash2 className="h-3.5 w-3.5 text-destructive" />
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))
+        <div className="flex items-center gap-1">
+          <Button variant={filterStatus === "all" ? "default" : "outline"} size="sm" className="h-9" onClick={() => setFilterStatus("all")}>
+            Все ({total})
+          </Button>
+          <Button variant={filterStatus === "published" ? "default" : "outline"} size="sm" className="h-9" onClick={() => setFilterStatus("published")}>
+            Опубл. ({published})
+          </Button>
+          <Button variant={filterStatus === "draft" ? "default" : "outline"} size="sm" className="h-9" onClick={() => setFilterStatus("draft")}>
+            Черновики ({total - published})
+          </Button>
+        </div>
+        {categories.length > 1 && (
+          <select
+            value={filterCategory}
+            onChange={e => setFilterCategory(e.target.value)}
+            className="h-9 rounded-md border bg-background px-2 text-sm"
+          >
+            <option value="all">Все категории</option>
+            {categories.sort().map(cat => (
+              <option key={cat} value={cat}>{getCategoryLabel(cat)}</option>
+            ))}
+          </select>
         )}
       </div>
+
+      {/* Articles table grouped by category */}
+      <Card>
+        <CardContent className="p-0">
+          {filtered.length === 0 ? (
+            <div className="py-12 text-center text-muted-foreground">
+              <BookOpen className="h-8 w-8 mx-auto mb-2 opacity-50" />
+              <p>{search ? "Статьи не найдены" : "Нет статей"}</p>
+            </div>
+          ) : filterCategory !== "all" ? (
+            // Flat list when category is filtered
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b bg-muted/30">
+                  <th className="p-2 pl-4 text-left font-medium w-[45%]">Название</th>
+                  <th className="p-2 text-left font-medium w-[30%]">Превью</th>
+                  <th className="p-2 text-center font-medium w-16">Статус</th>
+                  <th className="p-2 text-center font-medium w-16"><Eye className="h-3.5 w-3.5 mx-auto" /></th>
+                  <th className="p-2 text-center font-medium w-24">Дата</th>
+                  <th className="p-2 text-right font-medium w-20 pr-4"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map(article => (
+                  <ArticleRow
+                    key={article.id}
+                    article={article}
+                    onEdit={() => { setEditData(article); setShowForm(true) }}
+                    onDelete={() => { setDeleteId(article.id); setDeleteName(article.title) }}
+                  />
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            // Grouped by category
+            Object.entries(grouped)
+              .sort(([a], [b]) => a.localeCompare(b))
+              .map(([cat, catArticles]) => (
+                <div key={cat}>
+                  <button
+                    onClick={() => toggleCategory(cat)}
+                    className="w-full flex items-center gap-2 px-4 py-2 bg-muted/40 hover:bg-muted/60 transition-colors border-b text-left"
+                  >
+                    {collapsedCategories.has(cat)
+                      ? <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                      : <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                    }
+                    <FolderOpen className="h-4 w-4 text-muted-foreground" />
+                    <span className="font-medium text-sm">{getCategoryLabel(cat)}</span>
+                    <Badge variant="secondary" className="text-[10px] ml-1">{catArticles.length}</Badge>
+                  </button>
+                  {!collapsedCategories.has(cat) && (
+                    <table className="w-full text-sm">
+                      <tbody>
+                        {catArticles.map(article => (
+                          <ArticleRow
+                            key={article.id}
+                            article={article}
+                            onEdit={() => { setEditData(article); setShowForm(true) }}
+                            onDelete={() => { setDeleteId(article.id); setDeleteName(article.title) }}
+                          />
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
+              ))
+          )}
+        </CardContent>
+      </Card>
 
       <KbArticleForm
         open={showForm}
@@ -175,9 +265,52 @@ export default function KnowledgeBasePage() {
         open={!!deleteId}
         onOpenChange={(open) => { if (!open) setDeleteId(null) }}
         onConfirm={handleDelete}
-        title="Delete Article"
+        title="Удалить статью"
         itemName={deleteName}
       />
     </div>
+  )
+}
+
+function ArticleRow({ article, onEdit, onDelete }: { article: KbArticle; onEdit: () => void; onDelete: () => void }) {
+  const preview = getContentPreview(article.content)
+
+  return (
+    <tr className="border-b last:border-b-0 hover:bg-muted/20 transition-colors group">
+      <td className="p-2 pl-4">
+        <div className="flex items-center gap-2">
+          <FileText className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+          <div className="min-w-0">
+            <Link href={`/knowledge-base/${article.id}`} className="font-medium hover:text-primary truncate block">
+              {article.title}
+            </Link>
+            {article.tags.length > 0 && (
+              <div className="flex gap-1 mt-0.5">
+                {article.tags.slice(0, 3).map(tag => (
+                  <span key={tag} className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded">{tag}</span>
+                ))}
+                {article.tags.length > 3 && <span className="text-[10px] text-muted-foreground">+{article.tags.length - 3}</span>}
+              </div>
+            )}
+          </div>
+        </div>
+      </td>
+      <td className="p-2 text-xs text-muted-foreground truncate max-w-[200px]">{preview}</td>
+      <td className="p-2 text-center">
+        <span className={`inline-block w-2 h-2 rounded-full ${article.status === "published" ? "bg-green-500" : "bg-yellow-400"}`} title={article.status} />
+      </td>
+      <td className="p-2 text-center text-xs text-muted-foreground">{article.viewCount}</td>
+      <td className="p-2 text-center text-xs text-muted-foreground">{new Date(article.updatedAt).toLocaleDateString("ru-RU", { day: "2-digit", month: "2-digit" })}</td>
+      <td className="p-2 pr-4 text-right">
+        <div className="flex items-center gap-0.5 justify-end opacity-0 group-hover:opacity-100 transition-opacity">
+          <button onClick={onEdit} className="p-1 rounded hover:bg-muted" title="Редактировать">
+            <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
+          </button>
+          <button onClick={onDelete} className="p-1 rounded hover:bg-muted" title="Удалить">
+            <Trash2 className="h-3.5 w-3.5 text-destructive" />
+          </button>
+        </div>
+      </td>
+    </tr>
   )
 }
