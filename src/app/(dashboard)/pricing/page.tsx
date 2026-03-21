@@ -1096,8 +1096,11 @@ function CompanyEditor({ code, data, onSave, onDelete, saving, expandedCats, set
   const addSvcFormRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    if (addingServiceCat && addSvcFormRef.current) {
-      addSvcFormRef.current.scrollIntoView({ behavior: "smooth", block: "center" })
+    if (addingServiceCat) {
+      const t = setTimeout(() => {
+        addSvcFormRef.current?.scrollIntoView({ behavior: "smooth", block: "center" })
+      }, 100)
+      return () => clearTimeout(t)
     }
   }, [addingServiceCat])
 
