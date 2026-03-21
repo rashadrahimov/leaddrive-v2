@@ -374,6 +374,7 @@ model OverheadCost {
   hasVat         Boolean  @default(false)
   isAdmin        Boolean  @default(true)
   targetService  String?  // infosec, permanent_it, cloud, erp, helpdesk, pm, grc
+  amortMonths    Int      @default(0)  // 0=no amort, >0=divide amount by this many months (e.g. 60, 84)
   sortOrder      Int      @default(0)
   notes          String?
   createdAt      DateTime @default(now())

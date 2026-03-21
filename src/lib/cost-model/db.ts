@@ -102,6 +102,7 @@ export async function loadAndCompute(orgId: string): Promise<CostModelResult> {
     hasVat: r.hasVat,
     isAdmin: r.isAdmin,
     targetService: r.targetService ?? "",
+    amortMonths: (r as any).amortMonths ?? 0,
     sortOrder: r.sortOrder,
     notes: r.notes ?? "",
   }))

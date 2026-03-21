@@ -37,7 +37,12 @@ export function OverheadTab() {
 
   const calculateMonthly = (item: Partial<OverheadItem>): number => {
     let amt = item.amount || 0
-    if (item.isAnnual) amt = amt / 12
+    // Amortization: custom period (e.g. 60, 84 months)
+    if (item.amortMonths && item.amortMonths > 0) {
+      amt = amt / item.amortMonths
+    } else if (item.isAnnual) {
+      amt = amt / 12
+    }
     if (item.hasVat) amt = amt * 1.18
     if (item.category === "insurance" || item.category === "mobile") amt = amt * 137
     return Math.round(amt * 100) / 100
@@ -69,6 +74,7 @@ export function OverheadTab() {
         hasVat: editForm.hasVat,
         isAdmin: !editForm.targetService,
         targetService: editForm.targetService || "",
+        amortMonths: editForm.amortMonths || 0,
       })
       setEditingId(null)
       setEditForm({})
@@ -186,12 +192,12 @@ export function OverheadTab() {
               <thead>
                 <tr className="border-b text-left text-muted-foreground">
                   <th className="pb-2 pr-4">Label</th>
-                  <th className="pb-2 pr-4">Amount</th>
-                  <th className="pb-2 pr-4">Annual</th>
-                  <th className="pb-2 pr-4">VAT</th>
-                  <th className="pb-2 pr-4">Target Service</th>
-                  <th className="pb-2 pr-4">Type</th>
-                  <th className="pb-2 pr-4 text-right">Monthly</th>
+                  <th className="pb-2 pr-4">Məbləğ</th>
+                  <th className="pb-2 pr-4">Hesablama</th>
+                  <th className="pb-2 pr-4">ƏDV</th>
+                  <th className="pb-2 pr-4">Xidmət</th>
+                  <th className="pb-2 pr-4">Tip</th>
+                  <th className="pb-2 pr-4 text-right">Aylıq</th>
                   <th className="pb-2 w-20"></th>
                 </tr>
               </thead>
@@ -219,12 +225,31 @@ export function OverheadTab() {
                             />
                           </td>
                           <td className="py-2 pr-4">
-                            <input
-                              type="checkbox"
-                              checked={editForm.isAnnual || false}
-                              onChange={(e) => setEditForm(prev => ({ ...prev, isAnnual: e.target.checked }))}
-                              className="rounded"
-                            />
+                            <div className="flex items-center gap-1">
+                              <select
+                                value={editForm.amortMonths && editForm.amortMonths > 0 ? "amort" : editForm.isAnnual ? "annual" : "monthly"}
+                                onChange={(e) => {
+                                  const v = e.target.value
+                                  if (v === "monthly") setEditForm(prev => ({ ...prev, isAnnual: false, amortMonths: 0 }))
+                                  else if (v === "annual") setEditForm(prev => ({ ...prev, isAnnual: true, amortMonths: 0 }))
+                                  else setEditForm(prev => ({ ...prev, isAnnual: false, amortMonths: prev.amortMonths || 60 }))
+                                }}
+                                className="h-8 rounded-md border bg-background px-1 text-xs"
+                              >
+                                <option value="monthly">Aylıq</option>
+                                <option value="annual">İllik÷12</option>
+                                <option value="amort">Amort÷ay</option>
+                              </select>
+                              {editForm.amortMonths && editForm.amortMonths > 0 ? (
+                                <Input
+                                  type="number"
+                                  value={editForm.amortMonths}
+                                  onChange={(e) => setEditForm(prev => ({ ...prev, amortMonths: parseInt(e.target.value) || 0 }))}
+                                  className="h-8 w-16 text-xs"
+                                  placeholder="ay"
+                                />
+                              ) : null}
+                            </div>
                           </td>
                           <td className="py-2 pr-4">
                             <input
@@ -280,7 +305,11 @@ export function OverheadTab() {
                         <>
                           <td className="py-2 pr-4 font-medium">{item.label}</td>
                           <td className="py-2 pr-4 font-mono">{item.amount.toLocaleString("en", { minimumFractionDigits: 2 })}</td>
-                          <td className="py-2 pr-4">{item.isAnnual ? "Yes" : "No"}</td>
+                          <td className="py-2 pr-4 text-xs">
+                            {item.amortMonths && item.amortMonths > 0
+                              ? `÷${item.amortMonths} ay`
+                              : item.isAnnual ? "illik÷12" : "aylıq"}
+                          </td>
                           <td className="py-2 pr-4">{item.hasVat ? "18%" : "No"}</td>
                           <td className="py-2 pr-4">
                             {item.targetService
