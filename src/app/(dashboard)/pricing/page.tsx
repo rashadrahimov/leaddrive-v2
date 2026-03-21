@@ -95,6 +95,8 @@ export default function PricingPage() {
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<"model" | "edit">("model")
   const [adjustments, setAdj] = useState<PricingAdjustments>(emptyAdjustments())
+  const [filterGroup, setFilterGroup] = useState<string>("all")
+  const [filterCompany, setFilterCompany] = useState<string>("all")
   const [tableSearch, setTableSearch] = useState("")
   const [tableSortCol, setTableSortCol] = useState<string>("group")
   const [tableSortDir, setTableSortDir] = useState<"asc" | "desc">("asc")
@@ -133,15 +135,48 @@ export default function PricingPage() {
     return applyAdjustments(pricingData, adjustments)
   }, [pricingData, adjustments])
 
+  // Filtered data based on group/company filter
+  const filteredPricingData = useMemo(() => {
+    if (!pricingData) return null
+    if (filterGroup === "all" && filterCompany === "all") return pricingData
+    const filtered: PricingData = {}
+    for (const [code, info] of Object.entries(pricingData)) {
+      if (filterGroup !== "all" && info.group !== filterGroup) continue
+      if (filterCompany !== "all" && code !== filterCompany) continue
+      filtered[code] = info
+    }
+    return filtered
+  }, [pricingData, filterGroup, filterCompany])
+
+  const filteredAdjustedData = useMemo(() => {
+    if (!adjustedData) return null
+    if (filterGroup === "all" && filterCompany === "all") return adjustedData
+    const filtered: PricingData = {}
+    for (const [code, info] of Object.entries(adjustedData)) {
+      if (filterGroup !== "all" && info.group !== filterGroup) continue
+      if (filterCompany !== "all" && code !== filterCompany) continue
+      filtered[code] = info
+    }
+    return filtered
+  }, [adjustedData, filterGroup, filterCompany])
+
+  // Company list for filter dropdown
+  const companyList = useMemo(() => {
+    if (!pricingData) return []
+    let entries = Object.entries(pricingData).map(([code, info]) => ({ code, group: info.group }))
+    if (filterGroup !== "all") entries = entries.filter(e => e.group === filterGroup)
+    return entries.sort((a, b) => a.code.localeCompare(b.code))
+  }, [pricingData, filterGroup])
+
   const baseTotal = useMemo(() => {
-    if (!pricingData) return 0
-    return Object.values(pricingData).reduce((s, c) => s + c.monthly, 0)
-  }, [pricingData])
+    if (!filteredPricingData) return 0
+    return Object.values(filteredPricingData).reduce((s, c) => s + c.monthly, 0)
+  }, [filteredPricingData])
 
   const adjTotal = useMemo(() => {
-    if (!adjustedData) return 0
-    return Object.values(adjustedData).reduce((s, c) => s + c.monthly, 0)
-  }, [adjustedData])
+    if (!filteredAdjustedData) return 0
+    return Object.values(filteredAdjustedData).reduce((s, c) => s + c.monthly, 0)
+  }, [filteredAdjustedData])
 
   const annualEffect = (adjTotal - baseTotal) * 12
   const avgChange = baseTotal > 0 ? ((adjTotal - baseTotal) / baseTotal) * 100 : 0
@@ -166,24 +201,24 @@ export default function PricingPage() {
     return Array.from(cats).sort()
   }, [pricingData])
 
-  // ─── Chart data ─────────────────────────────────────────
+  // ─── Chart data (uses filtered data) ────────────────────
   const groupChartData = useMemo(() => {
-    if (!pricingData || !adjustedData) return []
+    if (!filteredPricingData || !filteredAdjustedData) return []
     return GROUP_ORDER.map((group) => {
-      const baseRev = Object.values(pricingData)
+      const baseRev = Object.values(filteredPricingData)
         .filter((c) => c.group === group)
         .reduce((s, c) => s + c.monthly, 0)
-      const adjRev = Object.values(adjustedData)
+      const adjRev = Object.values(filteredAdjustedData)
         .filter((c) => c.group === group)
         .reduce((s, c) => s + c.monthly, 0)
       return { name: group, "Базовая": Math.round(baseRev), "Новая": Math.round(adjRev) }
     }).filter((d) => d["Базовая"] > 0 || d["Новая"] > 0)
-  }, [pricingData, adjustedData])
+  }, [filteredPricingData, filteredAdjustedData])
 
   const catChartData = useMemo(() => {
-    if (!adjustedData) return []
+    if (!filteredAdjustedData) return []
     const totals: Record<string, number> = {}
-    for (const info of Object.values(adjustedData)) {
+    for (const info of Object.values(filteredAdjustedData)) {
       for (const [cat, val] of Object.entries(info.categories)) {
         totals[cat] = (totals[cat] || 0) + catTotal(val)
       }
@@ -192,21 +227,21 @@ export default function PricingPage() {
       .filter(([, v]) => v > 0)
       .sort((a, b) => b[1] - a[1])
       .map(([name, value]) => ({ name, value: Math.round(value) }))
-  }, [adjustedData])
+  }, [filteredAdjustedData])
 
   const topCompaniesData = useMemo(() => {
-    if (!adjustedData) return []
-    return Object.entries(adjustedData)
+    if (!filteredAdjustedData) return []
+    return Object.entries(filteredAdjustedData)
       .sort((a, b) => b[1].monthly - a[1].monthly)
       .slice(0, 15)
       .map(([name, info]) => ({ name, "Новая": Math.round(info.monthly) }))
-  }, [adjustedData])
+  }, [filteredAdjustedData])
 
-  // ─── Table data ─────────────────────────────────────────
+  // ─── Table data (uses filtered data) ───────────────────
   const tableData = useMemo(() => {
-    if (!pricingData || !adjustedData) return []
-    let entries = Object.entries(adjustedData).map(([code, adj]) => {
-      const base = pricingData[code]?.monthly || 0
+    if (!filteredPricingData || !filteredAdjustedData) return []
+    let entries = Object.entries(filteredAdjustedData).map(([code, adj]) => {
+      const base = filteredPricingData[code]?.monthly || 0
       const newVal = adj.monthly
       const diff = newVal - base
       const pct = base > 0 ? (diff / base) * 100 : 0
@@ -234,7 +269,7 @@ export default function PricingPage() {
       return tableSortDir === "asc" ? cmp : -cmp
     })
     return entries
-  }, [pricingData, adjustedData, tableSearch, tableSortCol, tableSortDir, adjustments])
+  }, [filteredPricingData, filteredAdjustedData, tableSearch, tableSortCol, tableSortDir, adjustments])
 
   const toggleSort = (col: string) => {
     if (tableSortCol === col) setTableSortDir((d) => d === "asc" ? "desc" : "asc")
@@ -394,6 +429,40 @@ export default function PricingPage() {
           ══════════════════════════════════════════════════════ */}
       {activeTab === "model" && (
         <>
+          {/* Filters */}
+          <Card>
+            <CardContent className="pt-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground mb-1 block">Фильтр по группе</label>
+                  <select
+                    value={filterGroup}
+                    onChange={(e) => { setFilterGroup(e.target.value); setFilterCompany("all") }}
+                    className="w-full h-9 border rounded px-2 text-sm"
+                  >
+                    <option value="all">Все группы</option>
+                    {GROUP_ORDER.filter(g => groupCounts[g]).map(g => (
+                      <option key={g} value={g}>{g} ({groupCounts[g]})</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground mb-1 block">Фильтр по компании</label>
+                  <select
+                    value={filterCompany}
+                    onChange={(e) => setFilterCompany(e.target.value)}
+                    className="w-full h-9 border rounded px-2 text-sm"
+                  >
+                    <option value="all">Все компании</option>
+                    {companyList.map(c => (
+                      <option key={c.code} value={c.code}>{c.code}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
           {/* KPI Cards */}
           <div className="grid gap-4 md:grid-cols-4">
             <StatCard
@@ -687,7 +756,7 @@ export default function PricingPage() {
       {activeTab === "edit" && (
         <div>
           <p className="text-sm text-muted-foreground mb-4">
-            Редактируйте цены услуг для каждой компании. Изменения сохраняются автоматически.
+            Редактируйте цены услуг для каждой компании. Нажмите «Сохранить» для применения изменений.
           </p>
           <div className="grid grid-cols-[280px_1fr] gap-6">
             {/* Company list */}
