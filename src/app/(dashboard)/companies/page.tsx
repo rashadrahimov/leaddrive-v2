@@ -29,7 +29,7 @@ interface Company {
   leadStatus: string
   leadScore: number
   leadTemperature?: string
-  userCount: number
+  portalUserCount: number
   annualRevenue?: number
   _count: { contacts: number; deals: number; contracts: number }
 }
@@ -97,7 +97,7 @@ export default function CompaniesPage() {
 
   const activeCount = statusCounts["active"] || 0
   const totalContacts = companies.reduce((s, c) => s + (c._count?.contacts || 0), 0)
-  const totalContracts = companies.reduce((s, c) => s + (c._count?.contracts || 0), 0)
+  const totalPortalUsers = companies.reduce((s, c) => s + (c.portalUserCount || 0), 0)
 
   if (loading) {
     return (
@@ -129,7 +129,7 @@ export default function CompaniesPage() {
         <StatCard title="Всего" value={total} icon={<Building2 className="h-4 w-4" />} />
         <StatCard title="Активные" value={activeCount} trend="up" />
         <StatCard title="Контактов" value={totalContacts} icon={<Users className="h-4 w-4" />} />
-        <StatCard title="Контрактов" value={totalContracts} icon={<FileText className="h-4 w-4" />} />
+        <StatCard title="Пользователи портала" value={totalPortalUsers} icon={<Users className="h-4 w-4" />} />
       </div>
 
       {/* Status filter tabs */}
@@ -211,7 +211,7 @@ export default function CompaniesPage() {
                     <TrendingUp className="h-3 w-3" /> {company._count?.deals || 0} сделок
                   </span>
                   <span className="flex items-center gap-1">
-                    <FileText className="h-3 w-3" /> {company._count?.contracts || 0} контрактов
+                    <Users className="h-3 w-3" /> {company.portalUserCount || 0} польз.
                   </span>
                 </div>
 

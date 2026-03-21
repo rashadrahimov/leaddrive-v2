@@ -33,7 +33,7 @@ export async function GET(req: NextRequest) {
       ...(category && category !== "all" ? { category } : { category: { not: "partner" } }),
     }
 
-    const [companies, total] = await Promise.all([
+    const [companiesRaw, total] = await Promise.all([
       prisma.company.findMany({
         where,
         skip: (page - 1) * limit,
@@ -41,10 +41,19 @@ export async function GET(req: NextRequest) {
         orderBy: { name: "asc" },
         include: {
           _count: { select: { contacts: true, deals: true, contracts: true } },
+          contacts: {
+            where: { portalAccessEnabled: true },
+            select: { id: true },
+          },
         },
       }),
       prisma.company.count({ where }),
     ])
+
+    const companies = companiesRaw.map(({ contacts: portalContacts, ...c }) => ({
+      ...c,
+      portalUserCount: portalContacts.length,
+    }))
 
     return NextResponse.json({
       success: true,
