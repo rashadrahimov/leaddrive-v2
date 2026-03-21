@@ -60,9 +60,10 @@ function buildEscalationPrompt(escalationEnabled: boolean, escalationRules: stri
 
   return "\n\nЭСКАЛАЦИЯ НА ОПЕРАТОРА:" +
     "\nТы можешь перевести разговор на живого оператора. Когда нужна эскалация — добавь ключевое слово [ESCALATE] в свой ответ." +
-    "\n\nЭскалируй в следующих случаях:" +
+    "\n\nЭскалируй ТОЛЬКО в следующих случаях:" +
     allRules.map((rule, i) => `\n${i + 1}. ${rule}`).join("") +
-    "\n\nПеред эскалацией кратко объясни клиенту что переводишь на живого оператора. Обязательно добавь [ESCALATE] в текст ответа."
+    "\n\nВАЖНО: НЕ эскалируй если клиент просто спрашивает о тикетах, контрактах, или задает обычные вопросы. Эскалация — только для перечисленных случаев выше." +
+    "\nПеред эскалацией кратко объясни клиенту что переводишь на живого оператора. Обязательно добавь [ESCALATE] в текст ответа."
 }
 
 async function createEscalationTicket(
@@ -192,10 +193,10 @@ async function getKbContext(organizationId: string, query: string, maxArticles: 
       take: maxArticles,
       select: { title: true, content: true },
     })
-    if (articles.length === 0) return "Bilik bazasında uyğun məqalə tapılmadı."
+    if (articles.length === 0) return "В базе знаний не найдено подходящих статей."
     return articles.map(a => `## ${a.title}\n${a.content?.slice(0, 500) || ""}`).join("\n\n")
   } catch {
-    return "Bilik bazası əlçatan deyil."
+    return "База знаний недоступна."
   }
 }
 
@@ -364,15 +365,20 @@ export async function POST(req: NextRequest) {
         sessionId ? getChatHistory(session.id) : Promise.resolve([]),
       ])
 
-      // Build system prompt: agent config > default, then inject guardrails
-      let systemPrompt = (agentConfig?.systemPrompt || DEFAULT_SYSTEM_PROMPT)
+      // Build system prompt: ALWAYS use default as base, append custom prompt if set
+      let systemPrompt = DEFAULT_SYSTEM_PROMPT
         .replace("{kb_context}", kbContext)
         .replace("{current_date}", new Date().toISOString().split("T")[0])
         .replace("{company_id}", user.companyId || "")
 
+      // Append custom system prompt from agent config (additional instructions only)
+      if (agentConfig?.systemPrompt && agentConfig.systemPrompt.trim().length > 0) {
+        systemPrompt += "\n\nДОПОЛНИТЕЛЬНЫЕ ИНСТРУКЦИИ:\n" + agentConfig.systemPrompt
+      }
+
       // Append guardrails
       if (guardrailPrompts.length > 0) {
-        systemPrompt += "\n\nQUARANTİYALAR (mütləq riayət et):\n" + guardrailPrompts.map((g, i) => `${i + 1}. ${g}`).join("\n")
+        systemPrompt += "\n\nГАРАНТИИ (строго соблюдай):\n" + guardrailPrompts.map((g, i) => `${i + 1}. ${g}`).join("\n")
       }
 
       // Append tools configuration based on toolsEnabled
@@ -476,8 +482,8 @@ export async function POST(req: NextRequest) {
   const shouldEscalate = isEscalationEnabled && assistantContent.includes("[ESCALATE]")
   // Check for ticket creation marker [CREATE_TICKET]
   const shouldCreateTicket = assistantContent.includes("[CREATE_TICKET]")
-  // Fallback: regex check for ticket suggestion
-  const suggestTicket = shouldCreateTicket || /тикет|ticket|tiket|обратитесь|создайте|sorğu|yarada/i.test(assistantContent)
+  // Only suggest ticket if AI explicitly used the marker or explicitly suggested creating one
+  const suggestTicket = shouldCreateTicket || /создайте тикет|создать тикет|откройте тикет|открыть тикет|create a ticket/i.test(assistantContent)
 
   let escalationTicketId: string | null = null
   let escalationTicketNumber: string | null = null
@@ -531,14 +537,14 @@ export async function POST(req: NextRequest) {
 
 function getFallbackResponse(message: string, userName: string): string {
   const lower = message.toLowerCase()
-  if (lower.includes("tiket") || lower.includes("ticket") || lower.includes("тикет")) {
-    return `${userName}, tiket yaratmaq üçün "Tiketlər" bölməsinə keçin. Orada yeni dəstək sorğusu aça bilərsiniz. Əgər təcili məsələdirsə, mövzuda "Kritik" prioritetini seçin.`
+  if (lower.includes("тикет") || lower.includes("ticket") || lower.includes("tiket")) {
+    return `${userName}, для создания тикета перейдите в раздел "Тикеты". Там вы можете открыть новый запрос в техподдержку. Если вопрос срочный — выберите приоритет "Критический".`
   }
-  if (lower.includes("qiymət") || lower.includes("price") || lower.includes("цена")) {
-    return `${userName}, qiymətlər və xüsusi təkliflər barədə məlumat almaq üçün satış menecerimizlə əlaqə saxlayın. Mən bu barədə məlumat verə bilmərəm.`
+  if (lower.includes("цена") || lower.includes("price") || lower.includes("qiymət")) {
+    return `${userName}, для получения информации о ценах и специальных предложениях свяжитесь с нашим менеджером по продажам. Я не могу предоставить эту информацию.`
   }
-  if (lower.includes("salam") || lower.includes("hello") || lower.includes("привет")) {
-    return `Salam, ${userName}! LeadDrive Support Pro xidmətinizdədir. Sizə necə kömək edə bilərəm?`
+  if (lower.includes("привет") || lower.includes("hello") || lower.includes("salam")) {
+    return `Здравствуйте, ${userName}! LeadDrive Support Pro к вашим услугам. Чем могу помочь?`
   }
-  return `Təşəkkür edirəm, ${userName}. Sorğunuzu aldım: "${message.slice(0, 100)}". Daha ətraflı kömək üçün dəstək tiketi yarada bilərsiniz.`
+  return `Спасибо, ${userName}. Ваш запрос получен: "${message.slice(0, 100)}". Для более подробной помощи вы можете создать тикет в техподдержку.`
 }

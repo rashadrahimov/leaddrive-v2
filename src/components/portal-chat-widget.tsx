@@ -153,7 +153,11 @@ export function PortalChatWidget({ userName }: PortalChatWidgetProps) {
                     <div className="mt-1.5 p-2 rounded-lg bg-red-50 border border-red-200">
                       <p className="text-[10px] font-medium text-red-700 mb-1">Разговор передан оператору</p>
                       <button
-                        onClick={() => router.push(`/portal/tickets/${msg.escalationTicketId}`)}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setOpen(false)
+                          router.push(`/portal/tickets/${msg.escalationTicketId}`)
+                        }}
                         className="inline-flex items-center gap-1 text-xs text-red-600 border border-red-300 rounded-full px-2.5 py-0.5 hover:bg-red-100 transition-colors"
                       >
                         <TicketPlus className="h-3 w-3" /> Тикет {msg.escalationTicketNumber || `#${msg.escalationTicketId?.slice(0, 8)}`}
@@ -162,7 +166,11 @@ export function PortalChatWidget({ userName }: PortalChatWidgetProps) {
                   )}
                   {msg.suggestTicket && !msg.escalated && (
                     <button
-                      onClick={() => router.push("/portal/tickets")}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setOpen(false)
+                        router.push("/portal/tickets?action=new")
+                      }}
                       className="mt-1.5 inline-flex items-center gap-1 text-xs text-orange-600 border border-orange-200 rounded-full px-3 py-1 hover:bg-orange-50 transition-colors"
                     >
                       <TicketPlus className="h-3 w-3" /> Создать тикет

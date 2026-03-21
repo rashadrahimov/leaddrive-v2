@@ -30,6 +30,13 @@ export default function PortalTicketsPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
+
+  // Auto-open form if ?action=new (from chat widget "Создать тикет" button)
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.location.search.includes("action=new")) {
+      setShowForm(true)
+    }
+  }, [])
   const [search, setSearch] = useState("")
   const [subject, setSubject] = useState("")
   const [description, setDescription] = useState("")
