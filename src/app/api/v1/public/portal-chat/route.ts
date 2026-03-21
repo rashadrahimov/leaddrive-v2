@@ -49,18 +49,30 @@ async function createEscalationTicket(
   portalUserId: string | null,
   companyId: string | null,
   userMessage: string,
-): Promise<string | null> {
+): Promise<{ ticketId: string; ticketNumber: string } | null> {
   try {
     // Generate unique ticket number
     const count = await prisma.ticket.count({ where: { organizationId } })
     const ticketNumber = `AI-${String(count + 1).padStart(4, "0")}`
+
+    // Get all chat messages from this session to copy into ticket
+    const chatMessages = await prisma.aiChatMessage.findMany({
+      where: { sessionId },
+      orderBy: { createdAt: "asc" },
+      select: { role: true, content: true, createdAt: true },
+    })
+
+    // Build description with full chat history
+    const chatHistory = chatMessages
+      .map(m => `[${m.role === "user" ? "Клиент" : "AI"}] ${m.content}`)
+      .join("\n\n")
 
     const ticket = await prisma.ticket.create({
       data: {
         organizationId,
         ticketNumber,
         subject: `[AI Эскалация] ${userMessage.slice(0, 80)}`,
-        description: `Автоматически создан при эскалации из AI чата.\n\nСессия: ${sessionId}\nСообщение клиента: ${userMessage}`,
+        description: `Автоматически создан при эскалации из AI чата.\n\nСессия: ${sessionId}\n\n--- ИСТОРИЯ ЧАТА ---\n${chatHistory}`,
         priority: "high",
         status: "open",
         category: "ai_escalation",
@@ -69,12 +81,26 @@ async function createEscalationTicket(
         tags: ["ai_escalation", "auto_created"],
       },
     })
+
+    // Copy chat messages as TicketComment entries so they appear in admin ticket detail
+    for (const msg of chatMessages) {
+      await prisma.ticketComment.create({
+        data: {
+          ticketId: ticket.id,
+          // userId: null means customer comment, for AI messages mark as internal
+          userId: null,
+          comment: `[${msg.role === "user" ? "Клиент" : "AI Bot"}] ${msg.content}`,
+          isInternal: msg.role === "assistant", // AI messages as internal notes
+        },
+      })
+    }
+
     // Update session status to escalated
     await prisma.aiChatSession.update({
       where: { id: sessionId },
       data: { status: "escalated" },
     })
-    return ticket.id
+    return { ticketId: ticket.id, ticketNumber }
   } catch (e) {
     console.error("Failed to create escalation ticket:", e)
     return null
@@ -368,16 +394,21 @@ export async function POST(req: NextRequest) {
   const suggestTicket = shouldCreateTicket || /тикет|ticket|tiket|обратитесь|создайте|sorğu|yarada/i.test(assistantContent)
 
   let escalationTicketId: string | null = null
+  let escalationTicketNumber: string | null = null
 
   // Handle real escalation — create a ticket automatically
   if (shouldEscalate) {
-    escalationTicketId = await createEscalationTicket(
+    const result = await createEscalationTicket(
       user.organizationId,
       session.id,
       user.contactId,
       user.companyId,
       message,
     )
+    if (result) {
+      escalationTicketId = result.ticketId
+      escalationTicketNumber = result.ticketNumber
+    }
   }
 
   // Clean markers from response before sending to user
@@ -407,6 +438,7 @@ export async function POST(req: NextRequest) {
       suggestTicket,
       escalated: shouldEscalate,
       escalationTicketId,
+      escalationTicketNumber,
     },
   })
 }

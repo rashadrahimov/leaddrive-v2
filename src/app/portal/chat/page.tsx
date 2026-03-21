@@ -15,6 +15,7 @@ interface Message {
   suggestTicket?: boolean
   escalated?: boolean
   escalationTicketId?: string | null
+  escalationTicketNumber?: string | null
 }
 
 export default function PortalChatPage() {
@@ -61,6 +62,7 @@ export default function PortalChatPage() {
           suggestTicket: json.data.suggestTicket || false,
           escalated: json.data.escalated || false,
           escalationTicketId: json.data.escalationTicketId || null,
+          escalationTicketNumber: json.data.escalationTicketNumber || null,
         }])
       } else {
         setMessages(prev => [...prev, {
@@ -121,7 +123,7 @@ export default function PortalChatPage() {
                       className="border-red-300 text-red-600 hover:bg-red-100"
                       onClick={() => router.push(`/portal/tickets/${msg.escalationTicketId}`)}
                     >
-                      <TicketPlus className="h-3.5 w-3.5 mr-1" /> Тикет #{msg.escalationTicketId?.slice(0, 8)}
+                      <TicketPlus className="h-3.5 w-3.5 mr-1" /> Тикет {msg.escalationTicketNumber || `#${msg.escalationTicketId?.slice(0, 8)}`}
                     </Button>
                   </div>
                 )}
