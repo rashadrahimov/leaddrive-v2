@@ -33,6 +33,15 @@ function CostBreakdown({ data }: { data: any }) {
   const techItems = (data.overheadBreakdown || []).filter((o: any) => !o.isAdmin)
   const directLabor = Object.values(data.deptCosts as Record<string, number>).reduce((s, v) => s + v, 0)
 
+  // BackOffice and GRC employees (in overhead)
+  const boEmployees = (data.employees || []).filter((e: any) => e.department === "BackOffice")
+  const grcEmployees = (data.employees || []).filter((e: any) => e.inOverhead && e.department !== "BackOffice")
+  const adminOhItemsList = [
+    ...adminOhItems.map((o: any) => ({ label: o.label, value: o.monthlyAmount })),
+    ...boEmployees.map((e: any) => ({ label: `BackOffice — ${e.position} (${e.count} nəf.)`, value: e.totalLaborCost, isSalary: true })),
+    ...grcEmployees.map((e: any) => ({ label: `${e.position} (${e.count} nəf.) [OH]`, value: e.totalLaborCost, isSalary: true })),
+  ]
+
   const sections = [
     {
       key: "admin",
@@ -40,8 +49,8 @@ function CostBreakdown({ data }: { data: any }) {
       label: "Admin Overhead",
       value: data.adminOverhead,
       pct: ((data.adminOverhead / data.grandTotalF) * 100).toFixed(1),
-      items: adminOhItems.map((o: any) => ({ label: o.label, value: o.monthlyAmount })),
-      note: "+ BackOffice + GRC əməkhaqqı (bax: Сотрудники tab)\nHeadcount nisbəti ilə şöbələrə paylanır",
+      items: adminOhItemsList,
+      note: "Headcount nisbəti ilə şöbələrə paylanır",
     },
     {
       key: "tech",
