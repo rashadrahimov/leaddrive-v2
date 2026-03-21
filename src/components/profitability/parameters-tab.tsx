@@ -1,40 +1,16 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { Save, RotateCcw } from "lucide-react"
-
-interface PricingParams {
-  total_users: number
-  total_employees: number
-  technical_staff: number
-  back_office_staff: number
-  monthly_work_hours: number
-  vat_rate: number
-  employer_tax_rate: number
-  risk_rate: number
-  misc_expense_rate: number
-  fixed_overhead_ratio: number
-}
-
-const DEFAULT_PARAMS: PricingParams = {
-  total_users: 4500,
-  total_employees: 137,
-  technical_staff: 107,
-  back_office_staff: 30,
-  monthly_work_hours: 160,
-  vat_rate: 0.18,
-  employer_tax_rate: 0.175,
-  risk_rate: 0.05,
-  misc_expense_rate: 0.01,
-  fixed_overhead_ratio: 0.25,
-}
+import { Save, RotateCcw, Loader2 } from "lucide-react"
+import { useParameters, useUpdateParameters } from "@/lib/cost-model/hooks"
+import type { CostModelParams } from "@/lib/cost-model/types"
 
 interface FieldDef {
-  key: keyof PricingParams
+  key: keyof CostModelParams
   label: string
   description: string
   type: "number" | "percentage"
@@ -42,57 +18,138 @@ interface FieldDef {
 }
 
 const FIELDS: FieldDef[] = [
-  { key: "total_users", label: "Total Portfolio Users", description: "Total user count across all client companies", type: "number", group: "Headcount" },
-  { key: "total_employees", label: "Total Employees", description: "All employees including back office", type: "number", group: "Headcount" },
-  { key: "technical_staff", label: "Technical Staff", description: "Employees in technical departments", type: "number", group: "Headcount" },
-  { key: "back_office_staff", label: "Back Office Staff", description: "Administrative and support employees", type: "number", group: "Headcount" },
-  { key: "monthly_work_hours", label: "Monthly Work Hours", description: "Standard working hours per month", type: "number", group: "Headcount" },
-  { key: "vat_rate", label: "VAT Rate", description: "Value-added tax rate applied to overhead costs", type: "percentage", group: "Tax Rates" },
-  { key: "employer_tax_rate", label: "Employer Tax Rate", description: "Additional tax on gross salary", type: "percentage", group: "Tax Rates" },
-  { key: "risk_rate", label: "Risk Rate", description: "Applied to Section F subtotal as contingency", type: "percentage", group: "Ratios" },
-  { key: "misc_expense_rate", label: "Misc Expense Rate", description: "Miscellaneous costs as fraction of subtotal", type: "percentage", group: "Ratios" },
-  { key: "fixed_overhead_ratio", label: "Fixed Overhead Ratio", description: "Fraction of costs allocated evenly (vs. per-user)", type: "percentage", group: "Ratios" },
+  { key: "totalEmployees", label: "Cəm İşçi Sayı", description: "Bütün işçilər, back-office daxil", type: "number", group: "MƏŞVƏR SAYI" },
+  { key: "backOfficeStaff", label: "Back-office", description: "İnzibati və dəstək işçiləri", type: "number", group: "MƏŞVƏR SAYI" },
+  { key: "technicalStaff", label: "Texniki İşçilər", description: "Texniki departamentlərdə çalışanlar", type: "number", group: "MƏŞVƏR SAYI" },
+  { key: "vatRate", label: "ƏDV Dərəcəsi", description: "Overhead xərclərinə tətbiq olunan ƏDV", type: "percentage", group: "VERGILER" },
+  { key: "employerTaxRate", label: "Sosial Sığorta", description: "Brüt əmək haqqına əlavə vergi", type: "percentage", group: "VERGILER" },
+  { key: "riskRate", label: "Risk Faizi", description: "F bölməsi cəminə ehtiyat kimi tətbiq olunur", type: "percentage", group: "NISBƏTLƏR" },
+  { key: "miscExpenseRate", label: "Müxtəlif Xərclər", description: "Alt cəmin fraksiyası kimi müxtəlif xərclər", type: "percentage", group: "NISBƏTLƏR" },
+  { key: "fixedOverheadRatio", label: "Sabit Overhead Payı", description: "Xərclərin bərabər bölüşdürülən hissəsi (istifadəçi başına deyil)", type: "percentage", group: "OVERHEAD PAYLAŞMASI" },
 ]
 
 export function ParametersTab() {
-  const [params, setParams] = useState<PricingParams>({ ...DEFAULT_PARAMS })
-  const [saved, setSaved] = useState(true)
+  const { data: serverParams, isLoading, error } = useParameters()
+  const updateMutation = useUpdateParameters()
 
-  const updateParam = (key: keyof PricingParams, value: number) => {
-    setParams(prev => ({ ...prev, [key]: value }))
-    setSaved(false)
+  const [localParams, setLocalParams] = useState<CostModelParams | null>(null)
+  const [dirty, setDirty] = useState(false)
+
+  // Sync server data into local state
+  useEffect(() => {
+    if (serverParams && !dirty) {
+      setLocalParams(serverParams)
+    }
+  }, [serverParams, dirty])
+
+  const params = localParams || serverParams
+
+  const updateParam = (key: keyof CostModelParams, value: number) => {
+    if (!params) return
+    setLocalParams({ ...params, [key]: value })
+    setDirty(true)
   }
 
   const handleSave = () => {
-    // TODO: API call to save parameters
-    setSaved(true)
+    if (!localParams) return
+    updateMutation.mutate(
+      {
+        totalEmployees: localParams.totalEmployees,
+        technicalStaff: localParams.technicalStaff,
+        backOfficeStaff: localParams.backOfficeStaff,
+        monthlyWorkHours: localParams.monthlyWorkHours,
+        vatRate: localParams.vatRate,
+        employerTaxRate: localParams.employerTaxRate,
+        riskRate: localParams.riskRate,
+        miscExpenseRate: localParams.miscExpenseRate,
+        fixedOverheadRatio: localParams.fixedOverheadRatio,
+      },
+      {
+        onSuccess: () => setDirty(false),
+      }
+    )
   }
 
   const handleReset = () => {
-    setParams({ ...DEFAULT_PARAMS })
-    setSaved(true)
+    if (serverParams) {
+      setLocalParams(serverParams)
+      setDirty(false)
+    }
   }
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        <span className="ml-2 text-muted-foreground">Yüklənir...</span>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <Card>
+        <CardContent className="py-10 text-center text-red-600">
+          Xəta baş verdi: {(error as Error).message}
+        </CardContent>
+      </Card>
+    )
+  }
+
+  if (!params) return null
+
   const groups = Array.from(new Set(FIELDS.map(f => f.group)))
+  const variableRatio = 1 - (params.fixedOverheadRatio || 0)
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm text-muted-foreground">
-            These parameters control how the cost model calculates service costs and allocations.
+            Bu parametrlər maya dəyəri modelinin xərc hesablamalarını idarə edir.
+          </p>
+          <p className="text-xs text-muted-foreground mt-1">
+            Paylaşma: Sabit {((params.fixedOverheadRatio || 0) * 100).toFixed(0)}% + Dəyişən {(variableRatio * 100).toFixed(0)}%
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={handleReset}>
-            <RotateCcw className="h-4 w-4 mr-1" /> Reset
+          <Button variant="outline" size="sm" onClick={handleReset} disabled={!dirty}>
+            <RotateCcw className="h-4 w-4 mr-1" /> Sıfırla
           </Button>
-          <Button size="sm" onClick={handleSave} disabled={saved}>
-            <Save className="h-4 w-4 mr-1" /> Save Changes
-            {!saved && <Badge variant="destructive" className="ml-2 h-4 text-[10px]">Unsaved</Badge>}
+          <Button size="sm" onClick={handleSave} disabled={!dirty || updateMutation.isPending}>
+            {updateMutation.isPending ? (
+              <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+            ) : (
+              <Save className="h-4 w-4 mr-1" />
+            )}
+            Saxla
+            {dirty && <Badge variant="destructive" className="ml-2 h-4 text-[10px]">Dəyişiklik</Badge>}
           </Button>
         </div>
       </div>
+
+      {/* Total Users — readonly */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base">Ümumi Məlumat</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-3 gap-4 items-center">
+            <div>
+              <label className="text-sm font-medium">Cəm İstifadəçi Sayı</label>
+              <p className="text-xs text-muted-foreground">Bütün müştərilərin istifadəçi sayı</p>
+            </div>
+            <div className="col-span-2">
+              <Input
+                type="number"
+                value={params.totalUsers || 0}
+                disabled
+                className="w-40 text-right bg-muted"
+              />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {groups.map(group => (
         <Card key={group}>
@@ -112,19 +169,19 @@ export function ParametersTab() {
                       <Input
                         type="number"
                         step="0.1"
-                        value={Math.round(params[field.key] * 10000) / 100}
+                        value={Math.round((params[field.key] as number) * 10000) / 100}
                         onChange={e => updateParam(field.key, (parseFloat(e.target.value) || 0) / 100)}
                         className="w-32 text-right"
                       />
                       <span className="text-sm text-muted-foreground">%</span>
                       <span className="text-xs text-muted-foreground ml-2">
-                        (raw: {params[field.key]})
+                        (raw: {params[field.key] as number})
                       </span>
                     </>
                   ) : (
                     <Input
                       type="number"
-                      value={params[field.key]}
+                      value={params[field.key] as number}
                       onChange={e => updateParam(field.key, parseFloat(e.target.value) || 0)}
                       className="w-40 text-right"
                     />
@@ -136,27 +193,35 @@ export function ParametersTab() {
         </Card>
       ))}
 
+      {/* Derived values */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Derived Values</CardTitle>
+          <CardTitle className="text-base">Hesablanan Dəyərlər</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid gap-3 md:grid-cols-2 text-sm">
             <div className="flex justify-between p-2 rounded bg-muted/50">
-              <span className="text-muted-foreground">Variable Overhead Ratio</span>
-              <span className="font-mono font-medium">{((1 - params.fixed_overhead_ratio) * 100).toFixed(1)}%</span>
+              <span className="text-muted-foreground">Dəyişən Overhead Nisbəti</span>
+              <span className="font-mono font-medium">{(variableRatio * 100).toFixed(1)}%</span>
             </div>
             <div className="flex justify-between p-2 rounded bg-muted/50">
-              <span className="text-muted-foreground">Income Tax Rate (fixed)</span>
+              <span className="text-muted-foreground">Gəlir Vergisi Dərəcəsi (sabit)</span>
               <span className="font-mono font-medium">14%</span>
             </div>
             <div className="flex justify-between p-2 rounded bg-muted/50">
-              <span className="text-muted-foreground">Cost per User (est.)</span>
-              <span className="font-mono font-medium">{params.total_users > 0 ? (645204.83 / params.total_users).toFixed(2) : "N/A"} ₼</span>
+              <span className="text-muted-foreground">İstifadəçi başına Maya (təxmini)</span>
+              <span className="font-mono font-medium">
+                {params.totalUsers > 0
+                  ? ((serverParams?.totalUsers ? (serverParams as any).costPerUser : 0) || "N/A")
+                  : "N/A"
+                } ₼
+              </span>
             </div>
             <div className="flex justify-between p-2 rounded bg-muted/50">
-              <span className="text-muted-foreground">Avg Salary Load Factor</span>
-              <span className="font-mono font-medium">{((1 / (1 - 0.14)) * (1 + params.employer_tax_rate)).toFixed(4)}x</span>
+              <span className="text-muted-foreground">Ort. Əmək Haqqı Yükü Əmsalı</span>
+              <span className="font-mono font-medium">
+                {((1 / (1 - 0.14)) * (1 + (params.employerTaxRate || 0))).toFixed(4)}x
+              </span>
             </div>
           </div>
         </CardContent>

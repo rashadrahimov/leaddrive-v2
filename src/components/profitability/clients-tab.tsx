@@ -1,50 +1,45 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
-import { ArrowUpDown, Search } from "lucide-react"
+import { ArrowUpDown, Search, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-
-interface ClientRow {
-  id: string
-  name: string
-  cost_code: string
-  user_count: number
-  total_cost: number
-  total_revenue: number
-  margin: number
-  margin_pct: number
-  status: "good" | "low" | "loss" | "no_revenue"
-}
+import { useCostModelAnalytics } from "@/lib/cost-model/hooks"
+import type { ClientMargin } from "@/lib/cost-model/types"
 
 const STATUS_STYLES: Record<string, { label: string; className: string }> = {
-  good: { label: "Profitable", className: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300" },
-  low: { label: "Low Margin", className: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300" },
-  loss: { label: "Loss", className: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300" },
-  no_revenue: { label: "No Revenue", className: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300" },
+  good: { label: "Mənfəət", className: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300" },
+  low: { label: "Aşağı", className: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300" },
+  loss: { label: "Zərər", className: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300" },
+  no_revenue: { label: "Gəlir yoxdur", className: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300" },
 }
 
-// Mock client data based on v1 production
-const MOCK_CLIENTS: ClientRow[] = [
-  { id: "1", name: "Azərişıq", cost_code: "AZ-001", user_count: 850, total_cost: 52840.12, total_revenue: 68500.00, margin: 15659.88, margin_pct: 22.86, status: "good" },
-  { id: "2", name: "SOCAR", cost_code: "SC-002", user_count: 1200, total_cost: 71283.50, total_revenue: 95000.00, margin: 23716.50, margin_pct: 24.96, status: "good" },
-  { id: "3", name: "AzerGold", cost_code: "AG-003", user_count: 300, total_cost: 22150.80, total_revenue: 28000.00, margin: 5849.20, margin_pct: 20.89, status: "good" },
-  { id: "4", name: "Bakcell", cost_code: "BC-004", user_count: 200, total_cost: 16734.20, total_revenue: 19500.00, margin: 2765.80, margin_pct: 14.18, status: "low" },
-  { id: "5", name: "Azercell", cost_code: "AC-005", user_count: 180, total_cost: 15650.30, total_revenue: 17200.00, margin: 1549.70, margin_pct: 9.01, status: "low" },
-  { id: "6", name: "AzInTelecom", cost_code: "AT-006", user_count: 150, total_cost: 13580.90, total_revenue: 12000.00, margin: -1580.90, margin_pct: -13.17, status: "loss" },
-  { id: "7", name: "Nar Mobile", cost_code: "NM-007", user_count: 120, total_cost: 11200.60, total_revenue: 9800.00, margin: -1400.60, margin_pct: -14.29, status: "loss" },
-  { id: "8", name: "AzərEnerji", cost_code: "AE-008", user_count: 100, total_cost: 9890.40, total_revenue: 8200.00, margin: -1690.40, margin_pct: -20.62, status: "loss" },
-  { id: "9", name: "ZeytunPharma", cost_code: "ZP-009", user_count: 75, total_cost: 8120.30, total_revenue: 6500.00, margin: -1620.30, margin_pct: -24.93, status: "loss" },
-  { id: "10", name: "Kapital Bank", cost_code: "KB-010", user_count: 500, total_cost: 35200.10, total_revenue: 48000.00, margin: 12799.90, margin_pct: 26.67, status: "good" },
-  { id: "11", name: "ABB Bank", cost_code: "AB-011", user_count: 350, total_cost: 26400.50, total_revenue: 32000.00, margin: 5599.50, margin_pct: 17.50, status: "good" },
-  { id: "12", name: "PASHA Bank", cost_code: "PB-012", user_count: 280, total_cost: 21200.30, total_revenue: 28500.00, margin: 7299.70, margin_pct: 25.61, status: "good" },
-]
+type SortField = "name" | "userCount" | "totalRevenue" | "helpdeskRevenue" | "primaryRevenue" | "totalCost" | "primaryMargin" | "margin" | "marginPct"
 
-type SortField = "name" | "user_count" | "total_cost" | "total_revenue" | "margin" | "margin_pct"
+function getFieldValue(client: ClientMargin & { primaryRevenue: number; primaryMargin: number }, field: SortField): string | number {
+  switch (field) {
+    case "name": return client.name
+    case "userCount": return client.userCount
+    case "totalRevenue": return client.totalRevenue
+    case "helpdeskRevenue": return client.helpdeskRevenue || 0
+    case "primaryRevenue": return client.primaryRevenue
+    case "totalCost": return client.totalCost
+    case "primaryMargin": return client.primaryMargin
+    case "margin": return client.margin
+    case "marginPct": return client.marginPct
+  }
+}
+
+function fmt(n: number): string {
+  return n.toLocaleString("en", { minimumFractionDigits: 2 }) + " ₼"
+}
 
 export function ClientsTab() {
+  const { data, isLoading, error } = useCostModelAnalytics()
+  const clients = data?.clients || []
+
   const [search, setSearch] = useState("")
   const [sortField, setSortField] = useState<SortField>("margin")
   const [sortAsc, setSortAsc] = useState(true)
@@ -58,19 +53,36 @@ export function ClientsTab() {
     }
   }
 
-  const filtered = MOCK_CLIENTS
-    .filter(c => c.name.toLowerCase().includes(search.toLowerCase()) || c.cost_code.toLowerCase().includes(search.toLowerCase()))
-    .sort((a, b) => {
-      const va = a[sortField]
-      const vb = b[sortField]
-      const cmp = typeof va === "string" ? va.localeCompare(vb as string) : (va as number) - (vb as number)
-      return sortAsc ? cmp : -cmp
-    })
+  const enriched = useMemo(() =>
+    clients.map(c => ({
+      ...c,
+      helpdeskRevenue: c.helpdeskRevenue || 0,
+      primaryRevenue: c.totalRevenue - (c.helpdeskRevenue || 0),
+      primaryMargin: c.margin + (c.helpdeskRevenue || 0),
+    })),
+    [clients]
+  )
 
-  const profitable = MOCK_CLIENTS.filter(c => c.status === "good").length
-  const lossCount = MOCK_CLIENTS.filter(c => c.status === "loss").length
-  const totalRevenue = MOCK_CLIENTS.reduce((s, c) => s + c.total_revenue, 0)
-  const totalCost = MOCK_CLIENTS.reduce((s, c) => s + c.total_cost, 0)
+  const filtered = useMemo(() =>
+    enriched
+      .filter(c =>
+        c.name.toLowerCase().includes(search.toLowerCase()) ||
+        (c.costCode || "").toLowerCase().includes(search.toLowerCase())
+      )
+      .sort((a, b) => {
+        const va = getFieldValue(a, sortField)
+        const vb = getFieldValue(b, sortField)
+        const cmp = typeof va === "string" ? va.localeCompare(vb as string) : (va as number) - (vb as number)
+        return sortAsc ? cmp : -cmp
+      }),
+    [enriched, search, sortField, sortAsc]
+  )
+
+  const totalCost = clients.reduce((s, c) => s + c.totalCost, 0)
+  const totalRevenue = clients.reduce((s, c) => s + c.totalRevenue, 0)
+  const totalBalance = totalRevenue - totalCost
+  const profitable = clients.filter(c => c.status === "good" || c.status === "low").length
+  const lossCount = clients.filter(c => c.status === "loss").length
 
   const SortHeader = ({ field, children }: { field: SortField; children: React.ReactNode }) => (
     <Button variant="ghost" size="sm" className="h-auto p-0 font-normal text-muted-foreground hover:text-foreground" onClick={() => toggleSort(field)}>
@@ -78,37 +90,63 @@ export function ClientsTab() {
     </Button>
   )
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        <span className="ml-2 text-muted-foreground">Yüklənir...</span>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <Card>
+        <CardContent className="py-10 text-center text-red-600">
+          Xəta baş verdi: {(error as Error).message}
+        </CardContent>
+      </Card>
+    )
+  }
+
   return (
     <div className="space-y-4">
+      {/* Summary row */}
       <div className="grid gap-4 md:grid-cols-4">
         <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Total Clients</CardTitle></CardHeader>
-          <CardContent><p className="text-2xl font-bold">{MOCK_CLIENTS.length}</p></CardContent>
+          <CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Cəm Maya</CardTitle></CardHeader>
+          <CardContent><p className="text-2xl font-bold">{fmt(totalCost)}</p></CardContent>
         </Card>
         <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Profitable</CardTitle></CardHeader>
-          <CardContent><p className="text-2xl font-bold text-green-600">{profitable}</p></CardContent>
+          <CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Cəm Gəlir</CardTitle></CardHeader>
+          <CardContent><p className="text-2xl font-bold">{fmt(totalRevenue)}</p></CardContent>
         </Card>
         <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Loss-Making</CardTitle></CardHeader>
-          <CardContent><p className="text-2xl font-bold text-red-600">{lossCount}</p></CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Total Margin</CardTitle></CardHeader>
+          <CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Cəm Balans</CardTitle></CardHeader>
           <CardContent>
-            <p className={`text-2xl font-bold ${totalRevenue - totalCost >= 0 ? "text-green-600" : "text-red-600"}`}>
-              {(totalRevenue - totalCost).toLocaleString("en", { minimumFractionDigits: 2 })} ₼
+            <p className={`text-2xl font-bold ${totalBalance >= 0 ? "text-green-600" : "text-red-600"}`}>
+              {fmt(totalBalance)}
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Müştərilər</CardTitle></CardHeader>
+          <CardContent>
+            <p className="text-2xl font-bold">{clients.length}</p>
+            <p className="text-xs text-muted-foreground">
+              <span className="text-green-600">Mənfəətli: {profitable}</span> / <span className="text-red-600">Zərərli: {lossCount}</span>
             </p>
           </CardContent>
         </Card>
       </div>
 
+      {/* Client table */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-base">Client Profitability</CardTitle>
+          <CardTitle className="text-base">Müştəri Mənfəətliliyi</CardTitle>
           <div className="relative w-64">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input placeholder="Search clients..." value={search} onChange={e => setSearch(e.target.value)} className="pl-8 h-9" />
+            <Input placeholder="Ad və ya kod ilə axtar..." value={search} onChange={e => setSearch(e.target.value)} className="pl-8 h-9" />
           </div>
         </CardHeader>
         <CardContent>
@@ -116,41 +154,64 @@ export function ClientsTab() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b text-left text-muted-foreground">
-                  <th className="pb-2 pr-4"><SortHeader field="name">Client</SortHeader></th>
-                  <th className="pb-2 pr-4"><SortHeader field="user_count">Users</SortHeader></th>
-                  <th className="pb-2 pr-4 text-right"><SortHeader field="total_revenue">Revenue</SortHeader></th>
-                  <th className="pb-2 pr-4 text-right"><SortHeader field="total_cost">Cost</SortHeader></th>
-                  <th className="pb-2 pr-4 text-right"><SortHeader field="margin">Margin</SortHeader></th>
-                  <th className="pb-2 pr-4 text-right"><SortHeader field="margin_pct">Margin %</SortHeader></th>
+                  <th className="pb-2 pr-4"><SortHeader field="name">Müştəri</SortHeader></th>
+                  <th className="pb-2 pr-4 text-right"><SortHeader field="userCount">İst.</SortHeader></th>
+                  <th className="pb-2 pr-4 text-right"><SortHeader field="totalRevenue">Qiymət</SortHeader></th>
+                  <th className="pb-2 pr-4 text-right"><SortHeader field="helpdeskRevenue">HelpDesk</SortHeader></th>
+                  <th className="pb-2 pr-4 text-right"><SortHeader field="primaryRevenue">Əsas Gəlir</SortHeader></th>
+                  <th className="pb-2 pr-4 text-right"><SortHeader field="totalCost">Maya</SortHeader></th>
+                  <th className="pb-2 pr-4 text-right"><SortHeader field="primaryMargin">Əsas Marja</SortHeader></th>
+                  <th className="pb-2 pr-4 text-right"><SortHeader field="margin">Tam Marja</SortHeader></th>
+                  <th className="pb-2 pr-4 text-right"><SortHeader field="marginPct">%</SortHeader></th>
                   <th className="pb-2 pr-4">Status</th>
                 </tr>
               </thead>
               <tbody>
-                {filtered.map(client => {
-                  const style = STATUS_STYLES[client.status]
-                  return (
-                    <tr key={client.id} className="border-b last:border-0 hover:bg-muted/50">
-                      <td className="py-2.5 pr-4">
-                        <div>
-                          <p className="font-medium">{client.name}</p>
-                          <p className="text-xs text-muted-foreground">{client.cost_code}</p>
-                        </div>
-                      </td>
-                      <td className="py-2.5 pr-4 font-mono">{client.user_count}</td>
-                      <td className="py-2.5 pr-4 text-right font-mono">{client.total_revenue.toLocaleString("en", { minimumFractionDigits: 2 })} ₼</td>
-                      <td className="py-2.5 pr-4 text-right font-mono">{client.total_cost.toLocaleString("en", { minimumFractionDigits: 2 })} ₼</td>
-                      <td className={`py-2.5 pr-4 text-right font-mono font-medium ${client.margin >= 0 ? "text-green-600" : "text-red-600"}`}>
-                        {client.margin >= 0 ? "+" : ""}{client.margin.toLocaleString("en", { minimumFractionDigits: 2 })} ₼
-                      </td>
-                      <td className={`py-2.5 pr-4 text-right font-mono font-medium ${client.margin_pct >= 0 ? "text-green-600" : "text-red-600"}`}>
-                        {client.margin_pct.toFixed(1)}%
-                      </td>
-                      <td className="py-2.5 pr-4">
-                        <Badge className={style.className}>{style.label}</Badge>
-                      </td>
-                    </tr>
-                  )
-                })}
+                {filtered.length === 0 ? (
+                  <tr>
+                    <td colSpan={10} className="py-8 text-center text-muted-foreground">
+                      {search ? "Nəticə tapılmadı" : "Müştəri məlumatı yoxdur"}
+                    </td>
+                  </tr>
+                ) : (
+                  filtered.map(client => {
+                    const style = STATUS_STYLES[client.status] || STATUS_STYLES.no_revenue
+                    const hd = client.helpdeskRevenue
+                    const primaryRev = client.primaryRevenue
+                    const primaryMargin = client.primaryMargin
+                    return (
+                      <tr key={String(client.id)} className="border-b last:border-0 hover:bg-muted/50">
+                        <td className="py-2.5 pr-4">
+                          <div>
+                            <a href={`/dashboard/profitability/clients/${client.id}`} className="font-medium hover:underline">
+                              {client.name}
+                            </a>
+                            {client.costCode && (
+                              <p className="text-xs text-muted-foreground">{client.costCode}</p>
+                            )}
+                          </div>
+                        </td>
+                        <td className="py-2.5 pr-4 text-right font-mono">{client.userCount.toLocaleString()}</td>
+                        <td className="py-2.5 pr-4 text-right font-mono">{fmt(client.totalRevenue)}</td>
+                        <td className="py-2.5 pr-4 text-right font-mono text-muted-foreground">{fmt(hd)}</td>
+                        <td className="py-2.5 pr-4 text-right font-mono">{fmt(primaryRev)}</td>
+                        <td className="py-2.5 pr-4 text-right font-mono">{fmt(client.totalCost)}</td>
+                        <td className={`py-2.5 pr-4 text-right font-mono font-medium ${primaryMargin >= 0 ? "text-green-600" : "text-red-600"}`}>
+                          {primaryMargin >= 0 ? "+" : ""}{fmt(primaryMargin)}
+                        </td>
+                        <td className={`py-2.5 pr-4 text-right font-mono font-medium ${client.margin >= 0 ? "text-green-600" : "text-red-600"}`}>
+                          {client.margin >= 0 ? "+" : ""}{fmt(client.margin)}
+                        </td>
+                        <td className={`py-2.5 pr-4 text-right font-mono font-medium ${client.marginPct >= 0 ? "text-green-600" : "text-red-600"}`}>
+                          {client.marginPct.toFixed(1)}%
+                        </td>
+                        <td className="py-2.5 pr-4">
+                          <Badge className={style.className}>{style.label}</Badge>
+                        </td>
+                      </tr>
+                    )
+                  })
+                )}
               </tbody>
             </table>
           </div>
