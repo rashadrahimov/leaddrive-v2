@@ -106,6 +106,7 @@ export default function TicketDetailPage() {
   // AI features
   const [aiLoading, setAiLoading] = useState<string | null>(null) // "reply" | "summary" | "steps"
   const [aiResult, setAiResult] = useState<{ type: string; text: string } | null>(null)
+  const [aiLang, setAiLang] = useState("ru") // "ru" | "az" | "en"
 
   const fetchTicket = useCallback(async () => {
     try {
@@ -193,7 +194,7 @@ export default function TicketDetailPage() {
       const res = await fetch("/api/v1/tickets/ai", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action, ticketId }),
+        body: JSON.stringify({ action, ticketId, lang: aiLang }),
       })
       const json = await res.json()
       if (json.success) {
@@ -396,6 +397,17 @@ export default function TicketDetailPage() {
                   </Button>
 
                   <div className="border-l h-6 mx-1" />
+
+                  {/* AI language selector */}
+                  <select
+                    value={aiLang}
+                    onChange={e => setAiLang(e.target.value)}
+                    className="h-8 px-2 text-xs border rounded-md bg-background"
+                  >
+                    <option value="ru">RU</option>
+                    <option value="az">AZ</option>
+                    <option value="en">EN</option>
+                  </select>
 
                   {/* AI buttons */}
                   <Button
