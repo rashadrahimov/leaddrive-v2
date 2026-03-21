@@ -647,7 +647,13 @@ export default function AICommandCenterPage() {
                       </div>
                       <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-50 border border-blue-200 text-sm">
                         <Settings2 className="h-3.5 w-3.5 text-blue-500" />
-                        <span className="text-gray-700">{tools.length}/5 инструментов</span>
+                        <span className="text-gray-700">{tools.length} инструментов</span>
+                      </div>
+                      <div className={cn("flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-sm",
+                        agent.escalationEnabled !== false ? "bg-red-50 border-red-200" : "bg-gray-50 border-gray-200"
+                      )}>
+                        <span>{agent.escalationEnabled !== false ? "🔴" : "⚪"}</span>
+                        <span className="text-gray-700">Эскалация: {agent.escalationEnabled !== false ? "вкл" : "выкл"}</span>
                       </div>
                       <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-sm">
                         <span>📚</span>

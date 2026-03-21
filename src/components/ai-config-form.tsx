@@ -7,8 +7,9 @@ import { Textarea } from "@/components/ui/textarea"
 import { cn } from "@/lib/utils"
 import {
   X, Zap, BrainCircuit, Sparkles, Save,
-  Ticket, FilePlus, FileText, FolderOpen, PhoneForwarded,
-  BookOpen, MessageCircle,
+  Ticket, FilePlus, FileText, FolderOpen,
+  BookOpen, MessageCircle, ShieldAlert, Plus, Trash2,
+  AlertTriangle, HeartHandshake, DollarSign, Repeat, Bug, Clock,
 } from "lucide-react"
 
 interface AiConfigFormData {
@@ -18,6 +19,8 @@ interface AiConfigFormData {
   temperature: number
   systemPrompt: string
   toolsEnabled: string[]
+  escalationEnabled: boolean
+  escalationRules: string[]
   kbEnabled: boolean
   kbMaxArticles: number
   isActive: boolean
@@ -37,7 +40,7 @@ const MODEL_OPTIONS = [
     id: "claude-haiku-4-5-20251001",
     name: "Claude Haiku 4.5",
     desc: "Быстрые ответы, низкая стоимость. Идеален для стандартных запросов.",
-    price: "$0.8 вход / $4 выход за 1М токенов",
+    price: "$0.8 / $4 за 1М токенов",
     icon: Zap,
     color: "from-emerald-400 to-teal-500",
     bgSelected: "border-emerald-400 bg-emerald-50/50",
@@ -45,8 +48,8 @@ const MODEL_OPTIONS = [
   {
     id: "claude-sonnet-4-6-20250514",
     name: "Claude Sonnet 4.6",
-    desc: "Баланс скорости и качества. Хорош для сложных запросов.",
-    price: "$3 вход / $15 выход за 1М токенов",
+    desc: "Баланс скорости и качества. Для сложных запросов.",
+    price: "$3 / $15 за 1М токенов",
     icon: BrainCircuit,
     color: "from-blue-400 to-indigo-500",
     bgSelected: "border-blue-400 bg-blue-50/50",
@@ -55,20 +58,101 @@ const MODEL_OPTIONS = [
     id: "claude-opus-4-6-20250514",
     name: "Claude Opus 4.6",
     desc: "Максимальное качество. Для самых сложных задач.",
-    price: "$15 вход / $75 выход за 1М токенов",
+    price: "$15 / $75 за 1М токенов",
     icon: Sparkles,
     color: "from-purple-400 to-pink-500",
     bgSelected: "border-purple-400 bg-purple-50/50",
   },
 ]
 
-const AVAILABLE_TOOLS = [
-  { id: "get_tickets", name: "Получить тикеты", desc: "Получение списка тикетов клиента из CRM", icon: Ticket, color: "bg-blue-100 text-blue-600" },
-  { id: "create_ticket", name: "Создать тикет", desc: "Создание нового тикета от имени клиента", icon: FilePlus, color: "bg-green-100 text-green-600" },
-  { id: "contracts", name: "Контракты", desc: "Просмотр контрактов и условий", icon: FileText, color: "bg-purple-100 text-purple-600" },
-  { id: "documents", name: "Документы", desc: "Доступ к документам клиента", icon: FolderOpen, color: "bg-amber-100 text-amber-600" },
-  { id: "escalate_to_human", name: "Эскалация", desc: "Перевод разговора на живого оператора", icon: PhoneForwarded, color: "bg-red-100 text-red-600" },
-  { id: "kb_search", name: "Поиск в KB", desc: "Поиск в базе знаний компании", icon: BookOpen, color: "bg-indigo-100 text-indigo-600" },
+// Simplified tool groups — what the AI can DO
+const TOOL_GROUPS = [
+  {
+    id: "crm_access",
+    name: "Доступ к CRM",
+    desc: "AI видит тикеты, контракты и документы клиента",
+    icon: FolderOpen,
+    color: "bg-blue-100 text-blue-600",
+    tools: ["get_tickets", "contracts", "documents"],
+  },
+  {
+    id: "ticket_creation",
+    name: "Создание тикетов",
+    desc: "AI может предложить создать тикет",
+    icon: FilePlus,
+    color: "bg-green-100 text-green-600",
+    tools: ["create_ticket"],
+  },
+  {
+    id: "kb_access",
+    name: "База знаний",
+    desc: "AI ищет ответы в вашей базе знаний",
+    icon: BookOpen,
+    color: "bg-indigo-100 text-indigo-600",
+    tools: ["kb_search"],
+  },
+]
+
+// Pre-built escalation rules with human-readable labels
+const ESCALATION_PRESETS = [
+  {
+    id: "customer_asks",
+    label: "Клиент просит оператора",
+    desc: "Когда клиент прямо просит перевести на живого человека",
+    prompt: "Клиент явно просит перевести на живого оператора или человека",
+    icon: HeartHandshake,
+    color: "text-blue-600 bg-blue-50",
+    alwaysOn: true,
+  },
+  {
+    id: "kb_miss",
+    label: "Нет ответа в базе знаний",
+    desc: "Когда AI не находит подходящую статью в KB",
+    prompt: "AI не смог найти ответ в базе знаний и не может помочь клиенту",
+    icon: BookOpen,
+    color: "text-indigo-600 bg-indigo-50",
+    alwaysOn: true,
+  },
+  {
+    id: "angry_customer",
+    label: "Клиент недоволен / жалуется",
+    desc: "Клиент злится, выражает недовольство или угрожает",
+    prompt: "Клиент выражает сильное недовольство, злость, угрозы или жалобы на сервис",
+    icon: AlertTriangle,
+    color: "text-orange-600 bg-orange-50",
+  },
+  {
+    id: "billing_issue",
+    label: "Вопрос об оплате / возврате",
+    desc: "Финансовые вопросы — оплата, счета, возвраты",
+    prompt: "Клиент спрашивает про оплату, счёт, возврат средств или финансовые вопросы",
+    icon: DollarSign,
+    color: "text-emerald-600 bg-emerald-50",
+  },
+  {
+    id: "repeat_contact",
+    label: "Повторное обращение",
+    desc: "Клиент обращается повторно с той же проблемой",
+    prompt: "Клиент обращается повторно по нерешённой проблеме или жалуется что его вопрос не решён",
+    icon: Repeat,
+    color: "text-purple-600 bg-purple-50",
+  },
+  {
+    id: "complex_technical",
+    label: "Сложная техническая проблема",
+    desc: "Проблема требует вмешательства инженера",
+    prompt: "Техническая проблема слишком сложная для AI — требуется инженер или DevOps специалист",
+    icon: Bug,
+    color: "text-red-600 bg-red-50",
+  },
+  {
+    id: "sla_urgent",
+    label: "Срочный / критический запрос",
+    desc: "Клиент говорит о срочности или production down",
+    prompt: "Клиент сообщает о критическом сбое, production down, срочном инциденте или потере данных",
+    icon: Clock,
+    color: "text-rose-600 bg-rose-50",
+  },
 ]
 
 export function AiConfigForm({ open, onOpenChange, onSaved, initialData, orgId }: AiConfigFormProps) {
@@ -80,6 +164,11 @@ export function AiConfigForm({ open, onOpenChange, onSaved, initialData, orgId }
     return []
   }
 
+  const parseRules = (rules: any): string[] => {
+    if (Array.isArray(rules)) return rules
+    return []
+  }
+
   const [form, setForm] = useState<AiConfigFormData>({
     configName: initialData?.configName || "",
     model: initialData?.model || "claude-haiku-4-5-20251001",
@@ -87,6 +176,8 @@ export function AiConfigForm({ open, onOpenChange, onSaved, initialData, orgId }
     temperature: Number(initialData?.temperature) || 0.7,
     systemPrompt: initialData?.systemPrompt || "",
     toolsEnabled: parseTools(initialData?.toolsEnabled),
+    escalationEnabled: initialData?.escalationEnabled ?? true,
+    escalationRules: parseRules(initialData?.escalationRules),
     kbEnabled: initialData?.kbEnabled ?? true,
     kbMaxArticles: Number(initialData?.kbMaxArticles) || 5,
     isActive: initialData?.isActive ?? true,
@@ -94,6 +185,7 @@ export function AiConfigForm({ open, onOpenChange, onSaved, initialData, orgId }
   })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState("")
+  const [customRule, setCustomRule] = useState("")
 
   useEffect(() => {
     if (open) {
@@ -104,12 +196,15 @@ export function AiConfigForm({ open, onOpenChange, onSaved, initialData, orgId }
         temperature: Number(initialData?.temperature) || 0.7,
         systemPrompt: initialData?.systemPrompt || "",
         toolsEnabled: parseTools(initialData?.toolsEnabled),
+        escalationEnabled: initialData?.escalationEnabled ?? true,
+        escalationRules: parseRules(initialData?.escalationRules),
         kbEnabled: initialData?.kbEnabled ?? true,
         kbMaxArticles: Number(initialData?.kbMaxArticles) || 5,
         isActive: initialData?.isActive ?? true,
         notes: initialData?.notes || "",
       })
       setError("")
+      setCustomRule("")
     }
   }, [open, initialData])
 
@@ -139,18 +234,56 @@ export function AiConfigForm({ open, onOpenChange, onSaved, initialData, orgId }
     }
   }
 
-  const toggleTool = (toolId: string) => {
+  // Tool group toggle — enables/disables all tools in the group
+  const isGroupEnabled = (group: typeof TOOL_GROUPS[0]) =>
+    group.tools.every(t => form.toolsEnabled.includes(t))
+
+  const toggleGroup = (group: typeof TOOL_GROUPS[0]) => {
+    const enabled = isGroupEnabled(group)
     setForm(f => ({
       ...f,
-      toolsEnabled: f.toolsEnabled.includes(toolId)
-        ? f.toolsEnabled.filter(t => t !== toolId)
-        : [...f.toolsEnabled, toolId],
+      toolsEnabled: enabled
+        ? f.toolsEnabled.filter(t => !group.tools.includes(t))
+        : [...new Set([...f.toolsEnabled, ...group.tools])],
     }))
   }
 
-  if (!open) return null
+  // Escalation rule toggle
+  const isRuleEnabled = (preset: typeof ESCALATION_PRESETS[0]) =>
+    form.escalationRules.includes(preset.prompt)
 
-  const selectedModel = MODEL_OPTIONS.find(m => m.id === form.model) || MODEL_OPTIONS[0]
+  const toggleRule = (preset: typeof ESCALATION_PRESETS[0]) => {
+    if (preset.alwaysOn) return // Cannot disable default rules
+    const enabled = isRuleEnabled(preset)
+    setForm(f => ({
+      ...f,
+      escalationRules: enabled
+        ? f.escalationRules.filter(r => r !== preset.prompt)
+        : [...f.escalationRules, preset.prompt],
+    }))
+  }
+
+  const addCustomRule = () => {
+    const rule = customRule.trim()
+    if (!rule) return
+    if (form.escalationRules.includes(rule)) return
+    setForm(f => ({ ...f, escalationRules: [...f.escalationRules, rule] }))
+    setCustomRule("")
+  }
+
+  const removeCustomRule = (rule: string) => {
+    // Don't allow removing preset rules via this method
+    const isPreset = ESCALATION_PRESETS.some(p => p.prompt === rule)
+    if (isPreset) return
+    setForm(f => ({ ...f, escalationRules: f.escalationRules.filter(r => r !== rule) }))
+  }
+
+  // Get custom rules (not matching any preset)
+  const customRules = form.escalationRules.filter(
+    rule => !ESCALATION_PRESETS.some(p => p.prompt === rule)
+  )
+
+  if (!open) return null
 
   return (
     <div className="fixed inset-0 z-50 bg-black/40 flex items-start justify-center overflow-y-auto py-8">
@@ -162,8 +295,8 @@ export function AiConfigForm({ open, onOpenChange, onSaved, initialData, orgId }
               <Sparkles className="h-6 w-6 text-white" />
             </div>
             <div>
-              <h2 className="text-xl font-bold">{isEdit ? "Редактирование конфигурации" : "Новая конфигурация"}</h2>
-              <p className="text-sm text-gray-500">Настройте параметры AI-агента</p>
+              <h2 className="text-xl font-bold">{isEdit ? "Редактирование агента" : "Новый AI-агент"}</h2>
+              <p className="text-sm text-gray-500">Настройте поведение и возможности AI</p>
             </div>
           </div>
           <button onClick={() => onOpenChange(false)} className="h-10 w-10 rounded-full hover:bg-gray-100 flex items-center justify-center transition">
@@ -174,32 +307,39 @@ export function AiConfigForm({ open, onOpenChange, onSaved, initialData, orgId }
         <div className="p-6 space-y-8">
           {error && <div className="text-sm text-red-600 bg-red-50 border border-red-200 p-3 rounded-xl">{error}</div>}
 
-          {/* ── Config Name ── */}
-          <div>
-            <label className="text-sm font-semibold text-gray-700 flex items-center gap-2 mb-2">
-              <span className="text-lg">🎯</span> Название конфигурации
+          {/* ── Row 1: Name + Active toggle ── */}
+          <div className="flex gap-4 items-end">
+            <div className="flex-1">
+              <label className="text-sm font-semibold text-gray-700 mb-2 block">Название агента</label>
+              <Input
+                value={form.configName}
+                onChange={(e) => setForm(f => ({ ...f, configName: e.target.value }))}
+                placeholder="Support Pro, Sales Bot..."
+                className="text-base h-12 rounded-xl"
+              />
+            </div>
+            <label className="flex items-center gap-3 cursor-pointer pb-2">
+              <div className={cn(
+                "relative w-12 h-7 rounded-full transition-colors",
+                form.isActive ? "bg-green-500" : "bg-gray-300"
+              )} onClick={() => setForm(f => ({ ...f, isActive: !f.isActive }))}>
+                <div className={cn(
+                  "absolute top-0.5 h-6 w-6 rounded-full bg-white shadow transition-transform",
+                  form.isActive ? "translate-x-[22px]" : "translate-x-0.5"
+                )} />
+              </div>
+              <span className={cn("text-sm font-semibold", form.isActive ? "text-green-600" : "text-gray-400")}>
+                {form.isActive ? "Активен" : "Выключен"}
+              </span>
             </label>
-            <Input
-              value={form.configName}
-              onChange={(e) => setForm(f => ({ ...f, configName: e.target.value }))}
-              placeholder="LeadDrive Support Pro"
-              className="text-base h-12 rounded-xl"
-            />
           </div>
 
-          {/* ── Model Selection Cards ── */}
+          {/* ── Model Selection ── */}
           <div>
-            <div className="flex items-center gap-2 mb-4">
-              <div className="h-8 w-8 rounded-lg bg-pink-100 flex items-center justify-center">
-                <BrainCircuit className="h-4 w-4 text-pink-600" />
-              </div>
-              <div>
-                <h3 className="font-semibold">Модель AI</h3>
-                <p className="text-xs text-gray-500">Выберите модель для ответов агента</p>
-              </div>
-            </div>
-
-            <div className="space-y-3">
+            <h3 className="font-semibold mb-3 flex items-center gap-2">
+              <BrainCircuit className="h-4 w-4 text-pink-500" /> Модель AI
+            </h3>
+            <div className="space-y-2.5">
               {MODEL_OPTIONS.map(model => {
                 const Icon = model.icon
                 const isSelected = form.model === model.id
@@ -209,192 +349,120 @@ export function AiConfigForm({ open, onOpenChange, onSaved, initialData, orgId }
                     type="button"
                     onClick={() => setForm(f => ({ ...f, model: model.id }))}
                     className={cn(
-                      "w-full flex items-center gap-4 p-4 rounded-xl border-2 transition-all text-left",
-                      isSelected ? model.bgSelected + " shadow-sm" : "border-gray-100 hover:border-gray-200 hover:bg-gray-50/50"
+                      "w-full flex items-center gap-4 p-3.5 rounded-xl border-2 transition-all text-left",
+                      isSelected ? model.bgSelected + " shadow-sm" : "border-gray-100 hover:border-gray-200"
                     )}
                   >
-                    <div className={cn("h-12 w-12 rounded-xl bg-gradient-to-br flex items-center justify-center flex-shrink-0", model.color)}>
-                      <Icon className="h-6 w-6 text-white" />
+                    <div className={cn("h-10 w-10 rounded-lg bg-gradient-to-br flex items-center justify-center flex-shrink-0", model.color)}>
+                      <Icon className="h-5 w-5 text-white" />
                     </div>
-                    <div className="flex-1">
+                    <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className="font-semibold">{model.name}</span>
-                        {isSelected && (
-                          <span className="text-[10px] font-bold text-blue-600 bg-blue-100 px-2 py-0.5 rounded-full uppercase">Выбрана</span>
-                        )}
+                        <span className="font-semibold text-sm">{model.name}</span>
+                        {isSelected && <span className="text-[10px] font-bold text-blue-600 bg-blue-100 px-2 py-0.5 rounded-full">ВЫБРАНА</span>}
                       </div>
-                      <p className="text-sm text-gray-500 mt-0.5">{model.desc}</p>
-                      <p className="text-xs text-gray-400 mt-1 flex items-center gap-1">
-                        <span>💰</span> {model.price}
-                      </p>
+                      <p className="text-xs text-gray-500">{model.desc}</p>
                     </div>
+                    <span className="text-[11px] text-gray-400 flex-shrink-0">{model.price}</span>
                   </button>
                 )
               })}
             </div>
           </div>
 
-          {/* ── Parameters with Sliders ── */}
+          {/* ── Parameters ── */}
           <div>
-            <div className="flex items-center gap-2 mb-4">
-              <div className="h-8 w-8 rounded-lg bg-blue-100 flex items-center justify-center">
-                <span className="text-sm">⚙️</span>
-              </div>
+            <h3 className="font-semibold mb-3 flex items-center gap-2">
+              <span className="text-sm">&#9881;&#65039;</span> Параметры
+            </h3>
+            <div className="grid grid-cols-3 gap-5">
+              {/* Max Tokens */}
               <div>
-                <h3 className="font-semibold">Параметры</h3>
-                <p className="text-xs text-gray-500">Настройте длину ответов, температуру и лимиты</p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-6">
-              {/* Max Tokens slider */}
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium text-gray-700 flex items-center gap-1.5">
-                    <span className="text-base">🎯</span> Макс. токенов
-                    <span className="text-[10px] text-gray-400">Длина ответа</span>
-                  </span>
-                  <span className="text-lg font-bold text-blue-600">{form.maxTokens}</span>
+                <div className="flex justify-between mb-1.5">
+                  <span className="text-xs font-medium text-gray-600">Длина ответа</span>
+                  <span className="text-sm font-bold text-blue-600">{form.maxTokens}</span>
                 </div>
                 <input
-                  type="range"
-                  min={256}
-                  max={4096}
-                  step={256}
+                  type="range" min={256} max={4096} step={256}
                   value={form.maxTokens}
                   onChange={(e) => setForm(f => ({ ...f, maxTokens: Number(e.target.value) }))}
                   className="w-full h-2 bg-gray-200 rounded-full appearance-none cursor-pointer accent-blue-500"
                 />
-                <div className="flex justify-between text-[10px] text-gray-400 mt-1">
-                  <span>256</span>
-                  <span>4096</span>
+                <div className="flex justify-between text-[10px] text-gray-400 mt-0.5">
+                  <span>Коротко</span><span>Подробно</span>
                 </div>
               </div>
-
-              {/* Temperature slider */}
+              {/* Temperature */}
               <div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium text-gray-700 flex items-center gap-1.5">
-                    <span className="text-base">🌡️</span> Температура
-                    <span className="text-[10px] text-gray-400">Креативность</span>
-                  </span>
-                  <span className="text-lg font-bold text-blue-600">{form.temperature}</span>
+                <div className="flex justify-between mb-1.5">
+                  <span className="text-xs font-medium text-gray-600">Креативность</span>
+                  <span className="text-sm font-bold text-blue-600">{form.temperature}</span>
                 </div>
                 <input
-                  type="range"
-                  min={0}
-                  max={2}
-                  step={0.1}
+                  type="range" min={0} max={2} step={0.1}
                   value={form.temperature}
                   onChange={(e) => setForm(f => ({ ...f, temperature: Number(e.target.value) }))}
                   className="w-full h-2 bg-gray-200 rounded-full appearance-none cursor-pointer accent-blue-500"
                 />
-                <div className="flex justify-between text-[10px] text-gray-400 mt-1">
-                  <span>0</span>
-                  <span>2</span>
+                <div className="flex justify-between text-[10px] text-gray-400 mt-0.5">
+                  <span>Точно</span><span>Креативно</span>
                 </div>
               </div>
-
-              {/* KB Max Articles slider */}
+              {/* KB Articles */}
               <div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium text-gray-700 flex items-center gap-1.5">
-                    <span className="text-base">📚</span> Статей из KB
-                    <span className="text-[10px] text-gray-400">Макс. контекст</span>
-                  </span>
-                  <span className="text-lg font-bold text-blue-600">{form.kbMaxArticles}</span>
+                <div className="flex justify-between mb-1.5">
+                  <span className="text-xs font-medium text-gray-600">Статей из KB</span>
+                  <span className="text-sm font-bold text-blue-600">{form.kbMaxArticles}</span>
                 </div>
                 <input
-                  type="range"
-                  min={1}
-                  max={10}
-                  step={1}
+                  type="range" min={1} max={10} step={1}
                   value={form.kbMaxArticles}
                   onChange={(e) => setForm(f => ({ ...f, kbMaxArticles: Number(e.target.value) }))}
                   className="w-full h-2 bg-gray-200 rounded-full appearance-none cursor-pointer accent-blue-500"
                 />
-                <div className="flex justify-between text-[10px] text-gray-400 mt-1">
-                  <span>1</span>
-                  <span>10</span>
+                <div className="flex justify-between text-[10px] text-gray-400 mt-0.5">
+                  <span>1</span><span>10</span>
                 </div>
-              </div>
-
-              {/* Active + KB toggle */}
-              <div className="flex flex-col justify-center gap-3">
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <div className={cn(
-                    "relative w-11 h-6 rounded-full transition-colors",
-                    form.isActive ? "bg-blue-500" : "bg-gray-300"
-                  )} onClick={() => setForm(f => ({ ...f, isActive: !f.isActive }))}>
-                    <div className={cn(
-                      "absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform",
-                      form.isActive ? "translate-x-[22px]" : "translate-x-0.5"
-                    )} />
-                  </div>
-                  <span className="text-sm font-medium">Активен</span>
-                </label>
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <div className={cn(
-                    "relative w-11 h-6 rounded-full transition-colors",
-                    form.kbEnabled ? "bg-blue-500" : "bg-gray-300"
-                  )} onClick={() => setForm(f => ({ ...f, kbEnabled: !f.kbEnabled }))}>
-                    <div className={cn(
-                      "absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform",
-                      form.kbEnabled ? "translate-x-[22px]" : "translate-x-0.5"
-                    )} />
-                  </div>
-                  <span className="text-sm font-medium">База знаний</span>
-                </label>
               </div>
             </div>
           </div>
 
-          {/* ── Tools Toggle Cards ── */}
+          {/* ── Capabilities (simplified tools) ── */}
           <div>
-            <div className="flex items-center gap-2 mb-4">
-              <div className="h-8 w-8 rounded-lg bg-gray-100 flex items-center justify-center">
-                <span className="text-sm">🔧</span>
-              </div>
-              <div>
-                <h3 className="font-semibold">Инструменты</h3>
-                <p className="text-xs text-gray-500">Включите/выключите доступные инструменты CRM</p>
-              </div>
-            </div>
+            <h3 className="font-semibold mb-1 flex items-center gap-2">
+              <span className="text-sm">&#128295;</span> Возможности агента
+            </h3>
+            <p className="text-xs text-gray-500 mb-3">Что AI-агент может делать в разговоре с клиентом</p>
 
-            <div className="grid grid-cols-2 gap-3">
-              {AVAILABLE_TOOLS.map(tool => {
-                const Icon = tool.icon
-                const isEnabled = form.toolsEnabled.includes(tool.id)
+            <div className="space-y-2.5">
+              {TOOL_GROUPS.map(group => {
+                const Icon = group.icon
+                const enabled = isGroupEnabled(group)
                 return (
                   <button
-                    key={tool.id}
+                    key={group.id}
                     type="button"
-                    onClick={() => toggleTool(tool.id)}
+                    onClick={() => toggleGroup(group)}
                     className={cn(
-                      "flex items-center gap-3 p-4 rounded-xl border-2 transition-all text-left",
-                      isEnabled
-                        ? "border-blue-300 bg-blue-50/60 shadow-sm"
-                        : "border-gray-100 hover:border-gray-200"
+                      "w-full flex items-center gap-3.5 p-3.5 rounded-xl border-2 transition-all text-left",
+                      enabled ? "border-blue-300 bg-blue-50/60 shadow-sm" : "border-gray-100 hover:border-gray-200"
                     )}
                   >
-                    {/* Toggle */}
                     <div className={cn(
                       "relative w-11 h-6 rounded-full transition-colors flex-shrink-0",
-                      isEnabled ? "bg-blue-500" : "bg-gray-300"
+                      enabled ? "bg-blue-500" : "bg-gray-300"
                     )}>
                       <div className={cn(
                         "absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform",
-                        isEnabled ? "translate-x-[22px]" : "translate-x-0.5"
+                        enabled ? "translate-x-[22px]" : "translate-x-0.5"
                       )} />
                     </div>
-                    {/* Icon */}
-                    <div className={cn("h-9 w-9 rounded-lg flex items-center justify-center flex-shrink-0", tool.color)}>
+                    <div className={cn("h-9 w-9 rounded-lg flex items-center justify-center flex-shrink-0", group.color)}>
                       <Icon className="h-4 w-4" />
                     </div>
-                    {/* Text */}
                     <div className="min-w-0">
-                      <p className="font-medium text-sm">{tool.name}</p>
-                      <p className="text-[11px] text-gray-500 truncate">{tool.desc}</p>
+                      <p className="font-medium text-sm">{group.name}</p>
+                      <p className="text-[11px] text-gray-500">{group.desc}</p>
                     </div>
                   </button>
                 )
@@ -402,37 +470,147 @@ export function AiConfigForm({ open, onOpenChange, onSaved, initialData, orgId }
             </div>
           </div>
 
+          {/* ── Escalation Settings ── */}
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <h3 className="font-semibold flex items-center gap-2">
+                <ShieldAlert className="h-4 w-4 text-red-500" /> Эскалация на оператора
+              </h3>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <div className={cn(
+                  "relative w-11 h-6 rounded-full transition-colors",
+                  form.escalationEnabled ? "bg-red-500" : "bg-gray-300"
+                )} onClick={() => setForm(f => ({ ...f, escalationEnabled: !f.escalationEnabled }))}>
+                  <div className={cn(
+                    "absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform",
+                    form.escalationEnabled ? "translate-x-[22px]" : "translate-x-0.5"
+                  )} />
+                </div>
+                <span className={cn("text-xs font-medium", form.escalationEnabled ? "text-red-600" : "text-gray-400")}>
+                  {form.escalationEnabled ? "Включена" : "Выключена"}
+                </span>
+              </label>
+            </div>
+            <p className="text-xs text-gray-500 mb-3">
+              Когда AI должен автоматически перевести разговор на живого оператора и создать тикет
+            </p>
+
+            {form.escalationEnabled && (
+              <div className="space-y-2">
+                {ESCALATION_PRESETS.map(preset => {
+                  const Icon = preset.icon
+                  const enabled = preset.alwaysOn || isRuleEnabled(preset)
+                  return (
+                    <button
+                      key={preset.id}
+                      type="button"
+                      onClick={() => toggleRule(preset)}
+                      className={cn(
+                        "w-full flex items-center gap-3 p-3 rounded-xl border transition-all text-left",
+                        enabled ? "border-red-200 bg-red-50/60" : "border-gray-100 hover:border-gray-200",
+                        preset.alwaysOn && "opacity-90 cursor-default"
+                      )}
+                    >
+                      {/* Checkbox */}
+                      <div className={cn(
+                        "w-5 h-5 rounded flex items-center justify-center flex-shrink-0 border-2 transition-colors",
+                        enabled ? "bg-red-500 border-red-500" : "border-gray-300 bg-white",
+                        preset.alwaysOn && "bg-red-400 border-red-400"
+                      )}>
+                        {enabled && (
+                          <svg className="w-3 h-3 text-white" viewBox="0 0 12 12" fill="none">
+                            <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                        )}
+                      </div>
+                      <div className={cn("h-8 w-8 rounded-lg flex items-center justify-center flex-shrink-0", preset.color)}>
+                        <Icon className="h-4 w-4" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium text-sm">{preset.label}</p>
+                          {preset.alwaysOn && (
+                            <span className="text-[9px] font-bold text-red-600 bg-red-100 px-1.5 py-0.5 rounded-full">ВСЕГДА</span>
+                          )}
+                        </div>
+                        <p className="text-[11px] text-gray-500">{preset.desc}</p>
+                      </div>
+                    </button>
+                  )
+                })}
+
+                {/* Custom rules */}
+                {customRules.length > 0 && (
+                  <div className="pt-1 space-y-1.5">
+                    {customRules.map((rule, i) => (
+                      <div key={i} className="flex items-center gap-2 p-2.5 rounded-lg border border-amber-200 bg-amber-50/50">
+                        <div className="w-5 h-5 rounded flex items-center justify-center flex-shrink-0 bg-amber-500 border-2 border-amber-500">
+                          <svg className="w-3 h-3 text-white" viewBox="0 0 12 12" fill="none">
+                            <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                        </div>
+                        <p className="text-sm text-gray-700 flex-1">{rule}</p>
+                        <button
+                          type="button"
+                          onClick={() => removeCustomRule(rule)}
+                          className="h-6 w-6 rounded-full hover:bg-red-100 flex items-center justify-center transition"
+                        >
+                          <Trash2 className="h-3.5 w-3.5 text-red-400" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Add custom rule */}
+                <div className="flex gap-2 pt-1">
+                  <Input
+                    value={customRule}
+                    onChange={(e) => setCustomRule(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && addCustomRule()}
+                    placeholder="Свое условие, например: Клиент упоминает юридические вопросы"
+                    className="flex-1 h-10 rounded-xl text-sm"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={addCustomRule}
+                    disabled={!customRule.trim()}
+                    className="rounded-xl h-10 px-3"
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+
           {/* ── System Prompt ── */}
           <div>
-            <div className="flex items-center gap-2 mb-3">
-              <div className="h-8 w-8 rounded-lg bg-violet-100 flex items-center justify-center">
-                <MessageCircle className="h-4 w-4 text-violet-600" />
-              </div>
-              <div>
-                <h3 className="font-semibold">Системный промпт</h3>
-                <p className="text-xs text-gray-500">Инструкции для AI-агента</p>
-              </div>
-            </div>
+            <h3 className="font-semibold mb-1 flex items-center gap-2">
+              <MessageCircle className="h-4 w-4 text-violet-500" /> Системный промпт
+              <span className="text-[10px] text-gray-400 font-normal">(необязательно)</span>
+            </h3>
+            <p className="text-xs text-gray-500 mb-2">Дополнительные инструкции для AI. Если пусто — используется промпт по умолчанию.</p>
             <Textarea
               value={form.systemPrompt}
               onChange={(e) => setForm(f => ({ ...f, systemPrompt: e.target.value }))}
-              rows={6}
+              rows={4}
               placeholder="Вы — помощник техподдержки LeadDrive CRM. Отвечайте профессионально и кратко..."
-              className="rounded-xl"
+              className="rounded-xl text-sm"
             />
           </div>
 
           {/* ── Notes ── */}
           <div>
-            <label className="text-sm font-semibold text-gray-700 flex items-center gap-2 mb-2">
-              <span className="text-lg">📝</span> Заметки
-            </label>
+            <label className="text-sm font-semibold text-gray-700 mb-2 block">Заметки</label>
             <Textarea
               value={form.notes}
               onChange={(e) => setForm(f => ({ ...f, notes: e.target.value }))}
               rows={2}
-              placeholder="Дополнительные заметки..."
-              className="rounded-xl"
+              placeholder="Для кого этот агент, примечания..."
+              className="rounded-xl text-sm"
             />
           </div>
         </div>
@@ -448,7 +626,7 @@ export function AiConfigForm({ open, onOpenChange, onSaved, initialData, orgId }
             className="rounded-xl px-8 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 shadow-lg"
           >
             <Save className="h-4 w-4 mr-2" />
-            {saving ? "Сохранение..." : isEdit ? "Сохранить изменения" : "Создать агента"}
+            {saving ? "Сохранение..." : isEdit ? "Сохранить" : "Создать агента"}
           </Button>
         </div>
       </div>

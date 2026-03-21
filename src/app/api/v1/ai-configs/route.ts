@@ -10,6 +10,8 @@ const createConfigSchema = z.object({
   temperature: z.number().optional(),
   systemPrompt: z.string().optional(),
   toolsEnabled: z.union([z.string(), z.array(z.string())]).optional(),
+  escalationEnabled: z.boolean().optional(),
+  escalationRules: z.array(z.string()).optional(),
   kbEnabled: z.boolean().optional(),
   kbMaxArticles: z.number().optional(),
   isActive: z.boolean().optional(),

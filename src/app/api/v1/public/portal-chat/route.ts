@@ -27,7 +27,6 @@ const TOOL_DESCRIPTIONS: Record<string, string> = {
   create_ticket: "Ты можешь предложить создать новый тикет. Если проблема требует внимания — предложи создать тикет. Добавь в ответ ключевое слово [CREATE_TICKET] если клиент согласен создать тикет.",
   contracts: "Ты можешь просматривать контракты и условия. Если клиент спрашивает о контракте или условиях — помоги ему.",
   documents: "Ты можешь показывать документы клиента. Если клиент спрашивает о документах — помоги ему.",
-  escalate_to_human: "Ты можешь перевести разговор на живого оператора. Если клиент настаивает на живом операторе, или проблема слишком сложная — предложи эскалацию. Когда нужна эскалация, добавь в ответ ключевое слово [ESCALATE].",
   kb_search: "Ты можешь искать в базе знаний. Используй контекст из KB для ответов.",
 }
 
@@ -35,12 +34,34 @@ function buildToolsPrompt(toolsEnabled: string[]): string {
   if (!toolsEnabled || toolsEnabled.length === 0) {
     return "\n\nИНСТРУМЕНТЫ: У тебя нет доступных инструментов. Отвечай только текстом."
   }
+  // Filter out escalate_to_human — escalation is now handled separately
   const enabled = toolsEnabled
-    .filter(t => TOOL_DESCRIPTIONS[t])
+    .filter(t => t !== "escalate_to_human" && TOOL_DESCRIPTIONS[t])
     .map(t => `- ${t}: ${TOOL_DESCRIPTIONS[t]}`)
   if (enabled.length === 0) return ""
   return "\n\nДОСТУПНЫЕ ИНСТРУМЕНТЫ:\n" + enabled.join("\n") +
     "\n\nВАЖНО: Используй ТОЛЬКО перечисленные инструменты. НЕ предлагай функции, которых нет в списке."
+}
+
+// Default escalation rules (always active when escalation is enabled)
+const DEFAULT_ESCALATION_RULES = [
+  "Клиент явно просит перевести на живого оператора или человека",
+  "AI не смог найти ответ в базе знаний и не может помочь клиенту",
+]
+
+function buildEscalationPrompt(escalationEnabled: boolean, escalationRules: string[]): string {
+  if (!escalationEnabled) {
+    return "\n\nЭСКАЛАЦИЯ: Эскалация отключена. НЕ предлагай перевод на оператора. Не добавляй [ESCALATE]."
+  }
+
+  // Merge default rules with custom ones (deduplicate)
+  const allRules = [...new Set([...DEFAULT_ESCALATION_RULES, ...escalationRules])]
+
+  return "\n\nЭСКАЛАЦИЯ НА ОПЕРАТОРА:" +
+    "\nТы можешь перевести разговор на живого оператора. Когда нужна эскалация — добавь ключевое слово [ESCALATE] в свой ответ." +
+    "\n\nЭскалируй в следующих случаях:" +
+    allRules.map((rule, i) => `\n${i + 1}. ${rule}`).join("") +
+    "\n\nПеред эскалацией кратко объясни клиенту что переводишь на живого оператора. Обязательно добавь [ESCALATE] в текст ответа."
 }
 
 async function createEscalationTicket(
@@ -292,6 +313,8 @@ export async function POST(req: NextRequest) {
       const kbMaxArticles = agentConfig?.kbMaxArticles || 5
       const kbEnabled = agentConfig?.kbEnabled ?? true
       const toolsEnabled = agentConfig?.toolsEnabled || []
+      const escalationEnabled = agentConfig?.escalationEnabled ?? true
+      const escalationRules = (agentConfig?.escalationRules as string[]) || []
       usedModel = model
 
       // Get KB context and chat history
@@ -313,6 +336,9 @@ export async function POST(req: NextRequest) {
 
       // Append tools configuration based on toolsEnabled
       systemPrompt += buildToolsPrompt(toolsEnabled as string[])
+
+      // Append escalation configuration with rules
+      systemPrompt += buildEscalationPrompt(escalationEnabled, escalationRules)
 
       // Append user context
       systemPrompt += `\n\nMüştəri adı: ${user.fullName}\nMüştəri email: ${user.email}\nTarix: ${new Date().toISOString().split("T")[0]}`
@@ -386,8 +412,12 @@ export async function POST(req: NextRequest) {
     data: { messagesCount: { increment: 2 } },
   })
 
-  // Check for escalation marker [ESCALATE] — AI explicitly requested escalation
-  const shouldEscalate = assistantContent.includes("[ESCALATE]")
+  // Load escalation config — check if escalation is enabled
+  const agentConfigForEscalation = await getActiveAgentConfig(user.organizationId)
+  const isEscalationEnabled = agentConfigForEscalation?.escalationEnabled ?? true
+
+  // Check for escalation marker [ESCALATE] — only if escalation is enabled
+  const shouldEscalate = isEscalationEnabled && assistantContent.includes("[ESCALATE]")
   // Check for ticket creation marker [CREATE_TICKET]
   const shouldCreateTicket = assistantContent.includes("[CREATE_TICKET]")
   // Fallback: regex check for ticket suggestion

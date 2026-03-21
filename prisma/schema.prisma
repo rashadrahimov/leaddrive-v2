@@ -719,12 +719,14 @@ model AiAgentConfig {
   maxTokens      Int      @default(1024)
   temperature    Float    @default(1.0)
   systemPrompt   String?
-  toolsEnabled   String[] @default([])
-  kbEnabled      Boolean  @default(true)
-  kbMaxArticles  Int      @default(3)
-  isActive       Boolean  @default(false)
-  version        Int      @default(1)
-  notes          String?
+  toolsEnabled      String[]  @default([])
+  escalationEnabled Boolean   @default(true)
+  escalationRules   String[]  @default([])
+  kbEnabled         Boolean   @default(true)
+  kbMaxArticles     Int       @default(3)
+  isActive          Boolean   @default(false)
+  version           Int       @default(1)
+  notes             String?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
