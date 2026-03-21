@@ -141,6 +141,7 @@ model Company {
   deals          Deal[]
   activities     Activity[]
   contracts      Contract[]
+  pricingProfiles PricingProfile[]
 
   @@index([organizationId])
   @@map("companies")
@@ -961,5 +962,125 @@ model DashboardLayout {
 
   @@index([organizationId, userId])
   @@map("dashboard_layouts")
+}
+
+// ═══════════════════════════════════════════════════
+// PRICING MODULE v2 (PostgreSQL-backed)
+// ═══════════════════════════════════════════════════
+
+model PricingGroup {
+  id             String   @id @default(cuid())
+  organizationId String
+  name           String
+  sortOrder      Int      @default(0)
+  createdAt      DateTime @default(now())
+
+  profiles       PricingProfile[]
+
+  @@unique([organizationId, name])
+  @@index([organizationId])
+  @@map("pricing_groups")
+}
+
+model PricingProfile {
+  id             String   @id @default(cuid())
+  organizationId String
+  companyCode    String
+  companyId      String?
+  company        Company? @relation(fields: [companyId], references: [id])
+  groupId        String
+  group          PricingGroup @relation(fields: [groupId], references: [id])
+  monthlyTotal   Float    @default(0)
+  annualTotal    Float    @default(0)
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  categories     PricingProfileCategory[]
+  additionalSales AdditionalSale[]
+
+  @@unique([organizationId, companyCode])
+  @@index([organizationId])
+  @@index([companyId])
+  @@map("pricing_profiles")
+}
+
+model PricingCategory {
+  id             String   @id @default(cuid())
+  organizationId String
+  name           String
+  boardCategory  String?
+  sortOrder      Int      @default(0)
+  createdAt      DateTime @default(now())
+
+  profileCategories PricingProfileCategory[]
+
+  @@unique([organizationId, name])
+  @@index([organizationId])
+  @@map("pricing_categories")
+}
+
+model PricingProfileCategory {
+  id             String   @id @default(cuid())
+  organizationId String
+  profileId      String
+  profile        PricingProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  categoryId     String
+  category       PricingCategory @relation(fields: [categoryId], references: [id])
+  total          Float    @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  services       PricingService[]
+
+  @@unique([profileId, categoryId])
+  @@index([organizationId])
+  @@map("pricing_profile_categories")
+}
+
+model PricingService {
+  id                  String   @id @default(cuid())
+  organizationId      String
+  profileCategoryId   String
+  profileCategory     PricingProfileCategory @relation(fields: [profileCategoryId], references: [id], onDelete: Cascade)
+  name                String
+  unit                String   @default("Per Device")
+  qty                 Int      @default(0)
+  price               Float    @default(0)
+  total               Float    @default(0)
+  sortOrder           Int      @default(0)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@index([profileCategoryId])
+  @@index([organizationId])
+  @@map("pricing_services")
+}
+
+model AdditionalSale {
+  id             String   @id @default(cuid())
+  organizationId String
+  profileId      String
+  profile        PricingProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  dealId         String?
+  type           String   @default("recurring") // recurring, one_time
+  name           String
+  description    String?
+  categoryName   String?
+  unit           String?
+  qty            Int      @default(1)
+  price          Float    @default(0)
+  total          Float    @default(0)
+  effectiveDate  DateTime
+  endDate        DateTime?
+  status         String   @default("active") // active, cancelled, completed
+  createdBy      String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([organizationId])
+  @@index([profileId])
+  @@index([dealId])
+  @@map("additional_sales")
 }
 
