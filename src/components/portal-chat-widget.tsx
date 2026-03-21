@@ -19,6 +19,30 @@ interface PortalChatWidgetProps {
   userName: string
 }
 
+const STORAGE_KEY = "leaddrive_chat"
+
+function loadChat(): { messages: Message[]; sessionId: string | null } {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY)
+    if (!raw) return { messages: [], sessionId: null }
+    const data = JSON.parse(raw)
+    // Expire after 24 hours
+    if (data.ts && Date.now() - data.ts > 24 * 60 * 60 * 1000) {
+      localStorage.removeItem(STORAGE_KEY)
+      return { messages: [], sessionId: null }
+    }
+    return { messages: data.messages || [], sessionId: data.sessionId || null }
+  } catch {
+    return { messages: [], sessionId: null }
+  }
+}
+
+function saveChat(messages: Message[], sessionId: string | null) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ messages, sessionId, ts: Date.now() }))
+  } catch { /* ignore */ }
+}
+
 export function PortalChatWidget({ userName }: PortalChatWidgetProps) {
   const [open, setOpen] = useState(false)
   const [messages, setMessages] = useState<Message[]>([])
@@ -28,6 +52,22 @@ export function PortalChatWidget({ userName }: PortalChatWidgetProps) {
   const scrollRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const router = useRouter()
+
+  // Load chat from localStorage on mount
+  useEffect(() => {
+    const saved = loadChat()
+    if (saved.messages.length > 0) {
+      setMessages(saved.messages)
+      setSessionId(saved.sessionId)
+    }
+  }, [])
+
+  // Save chat to localStorage on every change
+  useEffect(() => {
+    if (messages.length > 0) {
+      saveChat(messages, sessionId)
+    }
+  }, [messages, sessionId])
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -89,7 +129,7 @@ export function PortalChatWidget({ userName }: PortalChatWidgetProps) {
   }
 
   const formatTime = (iso: string) => {
-    return new Date(iso).toLocaleTimeString("az-AZ", { hour: "2-digit", minute: "2-digit", second: "2-digit" })
+    return new Date(iso).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit", second: "2-digit" })
   }
 
   return (
