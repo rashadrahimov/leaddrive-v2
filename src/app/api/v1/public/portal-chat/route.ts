@@ -103,15 +103,15 @@ async function createEscalationTicket(
       },
     })
 
-    // Copy chat messages as TicketComment entries so they appear in admin ticket detail
+    // Copy chat messages as TicketComment entries so they appear in ticket detail
+    // All messages are public (isInternal: false) so both portal and admin can see them
     for (const msg of chatMessages) {
       await prisma.ticketComment.create({
         data: {
           ticketId: ticket.id,
-          // userId: null means customer comment, for AI messages mark as internal
           userId: null,
           comment: `[${msg.role === "user" ? "Клиент" : "AI Bot"}] ${msg.content}`,
-          isInternal: msg.role === "assistant", // AI messages as internal notes
+          isInternal: false,
         },
       })
     }
