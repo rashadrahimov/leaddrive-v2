@@ -128,7 +128,7 @@ export default function CompaniesPage() {
       <div className="grid gap-4 md:grid-cols-4">
         <StatCard title="Всего" value={total} icon={<Building2 className="h-4 w-4" />} />
         <StatCard title="Активные" value={activeCount} trend="up" />
-        <StatCard title="Контактов" value={totalContacts} icon={<Users className="h-4 w-4" />} />
+        <StatCard title="Контакт. лица" value={totalContacts} icon={<Users className="h-4 w-4" />} />
         <StatCard title="Пользователей" value={totalUsers} icon={<Users className="h-4 w-4" />} />
       </div>
 
@@ -205,7 +205,7 @@ export default function CompaniesPage() {
 
                 <div className="flex justify-between text-xs text-muted-foreground mb-2">
                   <span className="flex items-center gap-1">
-                    <Users className="h-3 w-3" /> {company._count?.contacts || 0} контактов
+                    <Users className="h-3 w-3" /> {company._count?.contacts || 0} конт. лица
                   </span>
                   <span className="flex items-center gap-1">
                     <TrendingUp className="h-3 w-3" /> {company._count?.deals || 0} сделок
