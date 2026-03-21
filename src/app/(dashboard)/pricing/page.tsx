@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { StatCard } from "@/components/stat-card"
 import {
   DollarSign, Download, Search, ChevronDown, ChevronRight,
-  RotateCcw, Trash2, Loader2, Save, Undo2,
+  RotateCcw, Trash2, Loader2, Plus, Save, X,
 } from "lucide-react"
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
@@ -93,10 +93,8 @@ export default function PricingPage() {
 
   const [pricingData, setPricingData] = useState<PricingData | null>(null)
   const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState<"model" | "edit">("model")
+  const [activeTab, setActiveTab] = useState<"model" | "edit" | "sales">("model")
   const [adjustments, setAdj] = useState<PricingAdjustments>(emptyAdjustments())
-  const [filterGroup, setFilterGroup] = useState<string>("all")
-  const [filterCompany, setFilterCompany] = useState<string>("all")
   const [tableSearch, setTableSearch] = useState("")
   const [tableSortCol, setTableSortCol] = useState<string>("group")
   const [tableSortDir, setTableSortDir] = useState<"asc" | "desc">("asc")
@@ -111,7 +109,20 @@ export default function PricingPage() {
   const [editSearch, setEditSearch] = useState("")
   const [expandedCats, setExpandedCats] = useState<Set<string>>(new Set())
   const [saving, setSaving] = useState(false)
-  const [originalPricingData, setOriginalPricingData] = useState<PricingData | null>(null)
+
+  // Sales tab state
+  const [salesData, setSalesData] = useState<any[]>([])
+  const [salesLoading, setSalesLoading] = useState(false)
+  const [salesFilter, setSalesFilter] = useState<{ type: string; status: string }>({ type: "all", status: "all" })
+  const [showAddSale, setShowAddSale] = useState(false)
+  const [newSale, setNewSale] = useState({
+    profileId: "", type: "recurring" as string, name: "", description: "",
+    categoryName: "", unit: "Per Device", qty: 1, price: 0,
+    effectiveDate: new Date().toISOString().split("T")[0], endDate: "",
+  })
+  const [salesSearch, setSalesSearch] = useState("")
+  const [profilesList, setProfilesList] = useState<any[]>([])
+  const [savingSale, setSavingSale] = useState(false)
 
   const headers = orgId ? { "x-organization-id": String(orgId) } : {}
 
@@ -119,15 +130,31 @@ export default function PricingPage() {
     try {
       const res = await fetch("/api/v1/pricing/data", { headers: headers as any })
       const json = await res.json()
-      if (json.success) {
-        setPricingData(json.data)
-        if (!originalPricingData) setOriginalPricingData(structuredClone(json.data))
-      }
+      if (json.success) setPricingData(json.data)
     } catch { /* ignore */ }
     finally { setLoading(false) }
   }, [orgId])
 
+  const fetchSales = useCallback(async () => {
+    setSalesLoading(true)
+    try {
+      const res = await fetch("/api/v1/pricing/additional-sales?limit=500", { headers: headers as any })
+      const json = await res.json()
+      if (json.success) setSalesData(json.data.sales || [])
+    } catch { /* ignore */ }
+    finally { setSalesLoading(false) }
+  }, [orgId])
+
+  const fetchProfiles = useCallback(async () => {
+    try {
+      const res = await fetch("/api/v1/pricing/profiles?all=true", { headers: headers as any })
+      const json = await res.json()
+      if (json.success) setProfilesList(json.data.profiles || [])
+    } catch { /* ignore */ }
+  }, [orgId])
+
   useEffect(() => { if (session) fetchData() }, [session])
+  useEffect(() => { if (session && activeTab === "sales") { fetchSales(); fetchProfiles() } }, [session, activeTab])
 
   // ─── Computed values ────────────────────────────────────
   const adjustedData = useMemo(() => {
@@ -135,48 +162,15 @@ export default function PricingPage() {
     return applyAdjustments(pricingData, adjustments)
   }, [pricingData, adjustments])
 
-  // Filtered data based on group/company filter
-  const filteredPricingData = useMemo(() => {
-    if (!pricingData) return null
-    if (filterGroup === "all" && filterCompany === "all") return pricingData
-    const filtered: PricingData = {}
-    for (const [code, info] of Object.entries(pricingData)) {
-      if (filterGroup !== "all" && info.group !== filterGroup) continue
-      if (filterCompany !== "all" && code !== filterCompany) continue
-      filtered[code] = info
-    }
-    return filtered
-  }, [pricingData, filterGroup, filterCompany])
-
-  const filteredAdjustedData = useMemo(() => {
-    if (!adjustedData) return null
-    if (filterGroup === "all" && filterCompany === "all") return adjustedData
-    const filtered: PricingData = {}
-    for (const [code, info] of Object.entries(adjustedData)) {
-      if (filterGroup !== "all" && info.group !== filterGroup) continue
-      if (filterCompany !== "all" && code !== filterCompany) continue
-      filtered[code] = info
-    }
-    return filtered
-  }, [adjustedData, filterGroup, filterCompany])
-
-  // Company list for filter dropdown
-  const companyList = useMemo(() => {
-    if (!pricingData) return []
-    let entries = Object.entries(pricingData).map(([code, info]) => ({ code, group: info.group }))
-    if (filterGroup !== "all") entries = entries.filter(e => e.group === filterGroup)
-    return entries.sort((a, b) => a.code.localeCompare(b.code))
-  }, [pricingData, filterGroup])
-
   const baseTotal = useMemo(() => {
-    if (!filteredPricingData) return 0
-    return Object.values(filteredPricingData).reduce((s, c) => s + c.monthly, 0)
-  }, [filteredPricingData])
+    if (!pricingData) return 0
+    return Object.values(pricingData).reduce((s, c) => s + c.monthly, 0)
+  }, [pricingData])
 
   const adjTotal = useMemo(() => {
-    if (!filteredAdjustedData) return 0
-    return Object.values(filteredAdjustedData).reduce((s, c) => s + c.monthly, 0)
-  }, [filteredAdjustedData])
+    if (!adjustedData) return 0
+    return Object.values(adjustedData).reduce((s, c) => s + c.monthly, 0)
+  }, [adjustedData])
 
   const annualEffect = (adjTotal - baseTotal) * 12
   const avgChange = baseTotal > 0 ? ((adjTotal - baseTotal) / baseTotal) * 100 : 0
@@ -201,24 +195,24 @@ export default function PricingPage() {
     return Array.from(cats).sort()
   }, [pricingData])
 
-  // ─── Chart data (uses filtered data) ────────────────────
+  // ─── Chart data ─────────────────────────────────────────
   const groupChartData = useMemo(() => {
-    if (!filteredPricingData || !filteredAdjustedData) return []
+    if (!pricingData || !adjustedData) return []
     return GROUP_ORDER.map((group) => {
-      const baseRev = Object.values(filteredPricingData)
+      const baseRev = Object.values(pricingData)
         .filter((c) => c.group === group)
         .reduce((s, c) => s + c.monthly, 0)
-      const adjRev = Object.values(filteredAdjustedData)
+      const adjRev = Object.values(adjustedData)
         .filter((c) => c.group === group)
         .reduce((s, c) => s + c.monthly, 0)
       return { name: group, "Базовая": Math.round(baseRev), "Новая": Math.round(adjRev) }
     }).filter((d) => d["Базовая"] > 0 || d["Новая"] > 0)
-  }, [filteredPricingData, filteredAdjustedData])
+  }, [pricingData, adjustedData])
 
   const catChartData = useMemo(() => {
-    if (!filteredAdjustedData) return []
+    if (!adjustedData) return []
     const totals: Record<string, number> = {}
-    for (const info of Object.values(filteredAdjustedData)) {
+    for (const info of Object.values(adjustedData)) {
       for (const [cat, val] of Object.entries(info.categories)) {
         totals[cat] = (totals[cat] || 0) + catTotal(val)
       }
@@ -227,21 +221,21 @@ export default function PricingPage() {
       .filter(([, v]) => v > 0)
       .sort((a, b) => b[1] - a[1])
       .map(([name, value]) => ({ name, value: Math.round(value) }))
-  }, [filteredAdjustedData])
+  }, [adjustedData])
 
   const topCompaniesData = useMemo(() => {
-    if (!filteredAdjustedData) return []
-    return Object.entries(filteredAdjustedData)
+    if (!adjustedData) return []
+    return Object.entries(adjustedData)
       .sort((a, b) => b[1].monthly - a[1].monthly)
       .slice(0, 15)
       .map(([name, info]) => ({ name, "Новая": Math.round(info.monthly) }))
-  }, [filteredAdjustedData])
+  }, [adjustedData])
 
-  // ─── Table data (uses filtered data) ───────────────────
+  // ─── Table data ─────────────────────────────────────────
   const tableData = useMemo(() => {
-    if (!filteredPricingData || !filteredAdjustedData) return []
-    let entries = Object.entries(filteredAdjustedData).map(([code, adj]) => {
-      const base = filteredPricingData[code]?.monthly || 0
+    if (!pricingData || !adjustedData) return []
+    let entries = Object.entries(adjustedData).map(([code, adj]) => {
+      const base = pricingData[code]?.monthly || 0
       const newVal = adj.monthly
       const diff = newVal - base
       const pct = base > 0 ? (diff / base) * 100 : 0
@@ -269,7 +263,7 @@ export default function PricingPage() {
       return tableSortDir === "asc" ? cmp : -cmp
     })
     return entries
-  }, [filteredPricingData, filteredAdjustedData, tableSearch, tableSortCol, tableSortDir, adjustments])
+  }, [pricingData, adjustedData, tableSearch, tableSortCol, tableSortDir, adjustments])
 
   const toggleSort = (col: string) => {
     if (tableSortCol === col) setTableSortDir((d) => d === "asc" ? "desc" : "asc")
@@ -324,21 +318,6 @@ export default function PricingPage() {
     finally { setSaving(false) }
   }
 
-  const resetCompany = async (code: string) => {
-    if (!originalPricingData?.[code]) return
-    if (!confirm(`Сбросить цены ${code} к исходным данным?`)) return
-    setSaving(true)
-    try {
-      await fetch(`/api/v1/pricing/company/${encodeURIComponent(code)}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json", ...headers } as any,
-        body: JSON.stringify({ categories: originalPricingData[code].categories }),
-      })
-      await fetchData()
-    } catch { /* ignore */ }
-    finally { setSaving(false) }
-  }
-
   const deleteCompany = async (code: string) => {
     if (!confirm(`Удалить компанию ${code}?`)) return
     await fetch(`/api/v1/pricing/delete/${encodeURIComponent(code)}`, {
@@ -387,6 +366,12 @@ export default function PricingPage() {
           >
             Редактировать цены
           </Button>
+          <Button
+            variant={activeTab === "sales" ? "default" : "outline"}
+            onClick={() => setActiveTab("sales")}
+          >
+            Допродажи
+          </Button>
           <div className="relative">
             <Button variant="outline" onClick={() => setExportOpen(!exportOpen)}>
               <Download className="h-4 w-4 mr-1" /> Экспорт в Excel
@@ -429,40 +414,6 @@ export default function PricingPage() {
           ══════════════════════════════════════════════════════ */}
       {activeTab === "model" && (
         <>
-          {/* Filters */}
-          <Card>
-            <CardContent className="pt-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-xs font-medium text-muted-foreground mb-1 block">Фильтр по группе</label>
-                  <select
-                    value={filterGroup}
-                    onChange={(e) => { setFilterGroup(e.target.value); setFilterCompany("all") }}
-                    className="w-full h-9 border rounded px-2 text-sm"
-                  >
-                    <option value="all">Все группы</option>
-                    {GROUP_ORDER.filter(g => groupCounts[g]).map(g => (
-                      <option key={g} value={g}>{g} ({groupCounts[g]})</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="text-xs font-medium text-muted-foreground mb-1 block">Фильтр по компании</label>
-                  <select
-                    value={filterCompany}
-                    onChange={(e) => setFilterCompany(e.target.value)}
-                    className="w-full h-9 border rounded px-2 text-sm"
-                  >
-                    <option value="all">Все компании</option>
-                    {companyList.map(c => (
-                      <option key={c.code} value={c.code}>{c.code}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
           {/* KPI Cards */}
           <div className="grid gap-4 md:grid-cols-4">
             <StatCard
@@ -815,10 +766,8 @@ export default function PricingPage() {
                 <CompanyEditor
                   code={selectedCompany}
                   data={pricingData[selectedCompany]}
-                  originalData={originalPricingData?.[selectedCompany] || null}
                   onSave={(cats) => saveCompanyPricing(selectedCompany, cats)}
                   onDelete={() => deleteCompany(selectedCompany)}
-                  onReset={() => resetCompany(selectedCompany)}
                   saving={saving}
                   expandedCats={expandedCats}
                   setExpandedCats={setExpandedCats}
@@ -828,18 +777,307 @@ export default function PricingPage() {
           </div>
         </div>
       )}
+
+      {/* ══════════════════════════════════════════════════════
+          TAB 3: ADDITIONAL SALES (ДОПРОДАЖИ)
+          ══════════════════════════════════════════════════════ */}
+      {activeTab === "sales" && (
+        <div className="space-y-4">
+          {/* Header with filters and add button */}
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <div className="flex items-center gap-3">
+              <div className="relative w-64">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Поиск..."
+                  value={salesSearch}
+                  onChange={(e) => setSalesSearch(e.target.value)}
+                  className="pl-8 h-9"
+                />
+              </div>
+              <select
+                value={salesFilter.type}
+                onChange={(e) => setSalesFilter({ ...salesFilter, type: e.target.value })}
+                className="h-9 border rounded px-2 text-sm"
+              >
+                <option value="all">Все типы</option>
+                <option value="recurring">Ежемесячные (MRR)</option>
+                <option value="one_time">Единоразовые</option>
+              </select>
+              <select
+                value={salesFilter.status}
+                onChange={(e) => setSalesFilter({ ...salesFilter, status: e.target.value })}
+                className="h-9 border rounded px-2 text-sm"
+              >
+                <option value="all">Все статусы</option>
+                <option value="active">Активные</option>
+                <option value="cancelled">Отменённые</option>
+                <option value="completed">Завершённые</option>
+              </select>
+            </div>
+            <Button onClick={() => setShowAddSale(true)}>
+              <Plus className="h-4 w-4 mr-1" /> Добавить допродажу
+            </Button>
+          </div>
+
+          {/* Add sale form */}
+          {showAddSale && (
+            <Card>
+              <CardContent className="pt-4 space-y-3">
+                <div className="text-sm font-semibold">Новая допродажа</div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <div>
+                    <label className="text-xs text-muted-foreground">Компания *</label>
+                    <select
+                      value={newSale.profileId}
+                      onChange={(e) => setNewSale({ ...newSale, profileId: e.target.value })}
+                      className="w-full h-9 border rounded px-2 text-sm mt-1"
+                    >
+                      <option value="">Выберите...</option>
+                      {profilesList.map((p: any) => (
+                        <option key={p.id} value={p.id}>
+                          {p.companyCode} ({p.group?.name})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted-foreground">Тип *</label>
+                    <select
+                      value={newSale.type}
+                      onChange={(e) => setNewSale({ ...newSale, type: e.target.value })}
+                      className="w-full h-9 border rounded px-2 text-sm mt-1"
+                    >
+                      <option value="recurring">Ежемесячная (MRR)</option>
+                      <option value="one_time">Единоразовая</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted-foreground">Название *</label>
+                    <input
+                      type="text"
+                      value={newSale.name}
+                      onChange={(e) => setNewSale({ ...newSale, name: e.target.value })}
+                      className="w-full h-9 border rounded px-2 text-sm mt-1"
+                      placeholder="Описание допродажи"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted-foreground">Категория</label>
+                    <input
+                      type="text"
+                      value={newSale.categoryName}
+                      onChange={(e) => setNewSale({ ...newSale, categoryName: e.target.value })}
+                      className="w-full h-9 border rounded px-2 text-sm mt-1"
+                      placeholder="Опционально"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted-foreground">Единица</label>
+                    <select
+                      value={newSale.unit}
+                      onChange={(e) => setNewSale({ ...newSale, unit: e.target.value })}
+                      className="w-full h-9 border rounded px-2 text-sm mt-1"
+                    >
+                      {UNIT_TYPES.map((u) => <option key={u} value={u}>{u}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted-foreground">Кол-во</label>
+                    <input
+                      type="number"
+                      value={newSale.qty}
+                      onChange={(e) => setNewSale({ ...newSale, qty: parseInt(e.target.value) || 0 })}
+                      className="w-full h-9 border rounded px-2 text-sm mt-1"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted-foreground">Цена за ед.</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={newSale.price}
+                      onChange={(e) => setNewSale({ ...newSale, price: parseFloat(e.target.value) || 0 })}
+                      className="w-full h-9 border rounded px-2 text-sm mt-1"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted-foreground">Дата начала *</label>
+                    <input
+                      type="date"
+                      value={newSale.effectiveDate}
+                      onChange={(e) => setNewSale({ ...newSale, effectiveDate: e.target.value })}
+                      className="w-full h-9 border rounded px-2 text-sm mt-1"
+                    />
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Button
+                    onClick={async () => {
+                      if (!newSale.profileId || !newSale.name || !newSale.effectiveDate) return
+                      setSavingSale(true)
+                      try {
+                        await fetch("/api/v1/pricing/additional-sales", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json", ...headers } as any,
+                          body: JSON.stringify(newSale),
+                        })
+                        setShowAddSale(false)
+                        setNewSale({ profileId: "", type: "recurring", name: "", description: "", categoryName: "", unit: "Per Device", qty: 1, price: 0, effectiveDate: new Date().toISOString().split("T")[0], endDate: "" })
+                        fetchSales()
+                      } catch { /* ignore */ }
+                      finally { setSavingSale(false) }
+                    }}
+                    disabled={!newSale.profileId || !newSale.name || savingSale}
+                  >
+                    {savingSale ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Plus className="h-4 w-4 mr-1" />}
+                    Создать
+                  </Button>
+                  <Button variant="outline" onClick={() => setShowAddSale(false)}>Отмена</Button>
+                  {newSale.qty > 0 && newSale.price > 0 && (
+                    <span className="text-sm text-muted-foreground ml-auto">
+                      Итого: <strong>{(newSale.qty * newSale.price).toLocaleString("ru-RU", { maximumFractionDigits: 2 })} ₼</strong>
+                      {newSale.type === "recurring" && <span className="text-green-600"> /мес</span>}
+                    </span>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* KPI cards */}
+          <div className="grid gap-4 md:grid-cols-4">
+            <StatCard
+              title="Всего допродаж"
+              value={String(salesData.length)}
+              description="Записей"
+              icon={<DollarSign className="h-4 w-4" />}
+            />
+            <StatCard
+              title="MRR допродаж"
+              value={`${salesData.filter((s) => s.type === "recurring" && s.status === "active").reduce((sum: number, s: any) => sum + s.total, 0).toLocaleString("ru-RU", { maximumFractionDigits: 2 })} ₼`}
+              description="Ежемесячно"
+              trend="up"
+            />
+            <StatCard
+              title="Единоразовые"
+              value={`${salesData.filter((s) => s.type === "one_time").reduce((sum: number, s: any) => sum + s.total, 0).toLocaleString("ru-RU", { maximumFractionDigits: 2 })} ₼`}
+              description="Всего"
+            />
+            <StatCard
+              title="Активных"
+              value={String(salesData.filter((s) => s.status === "active").length)}
+              description={`из ${salesData.length}`}
+              trend="up"
+            />
+          </div>
+
+          {/* Sales table */}
+          <Card>
+            <CardContent className="pt-4">
+              {salesLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b text-left text-muted-foreground">
+                        <th className="pb-2 pr-2 w-8">#</th>
+                        <th className="pb-2 pr-4">Компания</th>
+                        <th className="pb-2 pr-4">Тип</th>
+                        <th className="pb-2 pr-4">Название</th>
+                        <th className="pb-2 pr-4">Категория</th>
+                        <th className="pb-2 pr-4 text-right">Кол-во</th>
+                        <th className="pb-2 pr-4 text-right">Цена</th>
+                        <th className="pb-2 pr-4 text-right">Итого</th>
+                        <th className="pb-2 pr-4">Дата</th>
+                        <th className="pb-2 pr-4">Статус</th>
+                        <th className="pb-2 w-16"></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {salesData
+                        .filter((s) => salesFilter.type === "all" || s.type === salesFilter.type)
+                        .filter((s) => salesFilter.status === "all" || s.status === salesFilter.status)
+                        .filter((s) => !salesSearch || s.name?.toLowerCase().includes(salesSearch.toLowerCase()) || s.profile?.companyCode?.toLowerCase().includes(salesSearch.toLowerCase()))
+                        .map((sale: any, i: number) => (
+                          <tr key={sale.id} className="border-b last:border-0 hover:bg-muted/50">
+                            <td className="py-2 pr-2 text-muted-foreground">{i + 1}</td>
+                            <td className="py-2 pr-4 font-medium">
+                              {sale.profile?.companyCode || "—"}
+                              {sale.profile?.company?.name && (
+                                <div className="text-xs text-muted-foreground">{sale.profile.company.name}</div>
+                              )}
+                            </td>
+                            <td className="py-2 pr-4">
+                              {sale.type === "recurring" ? (
+                                <Badge className="bg-green-100 text-green-800 hover:bg-green-100">MRR</Badge>
+                              ) : (
+                                <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">Единоразовая</Badge>
+                              )}
+                            </td>
+                            <td className="py-2 pr-4">{sale.name}</td>
+                            <td className="py-2 pr-4 text-xs text-muted-foreground">{sale.categoryName || "—"}</td>
+                            <td className="py-2 pr-4 text-right font-mono">{sale.qty}</td>
+                            <td className="py-2 pr-4 text-right font-mono">{sale.price?.toLocaleString("ru-RU", { maximumFractionDigits: 2 })} ₼</td>
+                            <td className="py-2 pr-4 text-right font-mono font-medium">{sale.total?.toLocaleString("ru-RU", { maximumFractionDigits: 2 })} ₼</td>
+                            <td className="py-2 pr-4 text-xs">
+                              {sale.effectiveDate ? new Date(sale.effectiveDate).toLocaleDateString("ru-RU") : "—"}
+                            </td>
+                            <td className="py-2 pr-4">
+                              {sale.status === "active" && <Badge variant="outline" className="text-green-600 border-green-300">Активна</Badge>}
+                              {sale.status === "cancelled" && <Badge variant="outline" className="text-red-600 border-red-300">Отменена</Badge>}
+                              {sale.status === "completed" && <Badge variant="outline" className="text-gray-600 border-gray-300">Завершена</Badge>}
+                            </td>
+                            <td className="py-2">
+                              <button
+                                onClick={async () => {
+                                  if (!confirm("Удалить эту допродажу?")) return
+                                  await fetch(`/api/v1/pricing/additional-sales/${sale.id}`, {
+                                    method: "DELETE",
+                                    headers: headers as any,
+                                  })
+                                  fetchSales()
+                                }}
+                                className="text-red-400 hover:text-red-600"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                    </tbody>
+                  </table>
+                  {salesData.length === 0 && (
+                    <div className="text-center py-8 text-muted-foreground">
+                      Нет допродаж. Нажмите «Добавить допродажу» чтобы создать первую.
+                    </div>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   )
 }
 
+// ─── Unit types ─────────────────────────────────────────────
+const UNIT_TYPES = [
+  "Per Device", "Per Systems", "Per Company", "Per User", "Per VM",
+  "Per 2 vCPU", "Per GB", "Per Resource", "Project based", "Man/Day",
+  "Hourly", "Hourly Rates",
+]
+
 // ─── Company Editor Component ───────────────────────────────
-function CompanyEditor({ code, data, originalData, onSave, onDelete, onReset, saving, expandedCats, setExpandedCats }: {
+function CompanyEditor({ code, data, onSave, onDelete, saving, expandedCats, setExpandedCats }: {
   code: string
   data: PricingCompany
-  originalData: PricingCompany | null
   onSave: (cats: Record<string, CategoryValue>) => void
   onDelete: () => void
-  onReset: () => void
   saving: boolean
   expandedCats: Set<string>
   setExpandedCats: (s: Set<string>) => void
@@ -847,6 +1085,14 @@ function CompanyEditor({ code, data, originalData, onSave, onDelete, onReset, sa
   const [localCats, setLocalCats] = useState(data.categories)
   const [originalCats, setOriginalCats] = useState(data.categories)
   const [hasChanges, setHasChanges] = useState(false)
+
+  // Add category dialog
+  const [showAddCat, setShowAddCat] = useState(false)
+  const [newCatName, setNewCatName] = useState("")
+
+  // Add service form (per category)
+  const [addingServiceCat, setAddingServiceCat] = useState<string | null>(null)
+  const [newSvc, setNewSvc] = useState({ name: "", unit: "Per Device", qty: 1, price: 0 })
 
   useEffect(() => {
     setLocalCats(data.categories)
@@ -861,15 +1107,57 @@ function CompanyEditor({ code, data, originalData, onSave, onDelete, onReset, sa
     setExpandedCats(next)
   }
 
+  const markChanged = (cats: Record<string, CategoryValue>) => {
+    setLocalCats(cats)
+    setHasChanges(true)
+  }
+
   const updateService = (cat: string, svcIdx: number, field: "qty" | "price", value: number) => {
     const catVal = localCats[cat]
     if (typeof catVal !== "object" || !("services" in catVal)) return
     const newServices = [...catVal.services]
     newServices[svcIdx] = { ...newServices[svcIdx], [field]: value, total: field === "qty" ? value * newServices[svcIdx].price : newServices[svcIdx].qty * value }
     const newTotal = newServices.reduce((s, svc) => s + svc.total, 0)
-    const newCats = { ...localCats, [cat]: { total: Math.round(newTotal * 100) / 100, services: newServices } }
-    setLocalCats(newCats)
-    setHasChanges(true)
+    markChanged({ ...localCats, [cat]: { total: Math.round(newTotal * 100) / 100, services: newServices } })
+  }
+
+  const deleteService = (cat: string, svcIdx: number) => {
+    const catVal = localCats[cat]
+    if (typeof catVal !== "object" || !("services" in catVal)) return
+    const newServices = catVal.services.filter((_, i) => i !== svcIdx)
+    const newTotal = newServices.reduce((s, svc) => s + svc.total, 0)
+    markChanged({ ...localCats, [cat]: { total: Math.round(newTotal * 100) / 100, services: newServices } })
+  }
+
+  const addService = (cat: string) => {
+    const catVal = localCats[cat]
+    if (!newSvc.name.trim()) return
+    const total = newSvc.qty * newSvc.price
+    const svc = { name: newSvc.name.trim(), unit: newSvc.unit, qty: newSvc.qty, price: newSvc.price, total }
+
+    if (typeof catVal === "object" && "services" in catVal) {
+      const newServices = [...catVal.services, svc]
+      const newTotal = newServices.reduce((s, s2) => s + s2.total, 0)
+      markChanged({ ...localCats, [cat]: { total: Math.round(newTotal * 100) / 100, services: newServices } })
+    } else {
+      markChanged({ ...localCats, [cat]: { total, services: [svc] } })
+    }
+    setAddingServiceCat(null)
+    setNewSvc({ name: "", unit: "Per Device", qty: 1, price: 0 })
+  }
+
+  const addCategory = () => {
+    if (!newCatName.trim() || newCatName.trim() in localCats) return
+    markChanged({ ...localCats, [newCatName.trim()]: { total: 0, services: [] } })
+    setShowAddCat(false)
+    setNewCatName("")
+  }
+
+  const deleteCategory = (cat: string) => {
+    if (!confirm(`Удалить категорию "${cat}" и все её услуги?`)) return
+    const newCats = { ...localCats }
+    delete newCats[cat]
+    markChanged(newCats)
   }
 
   const handleSave = () => {
@@ -883,6 +1171,12 @@ function CompanyEditor({ code, data, originalData, onSave, onDelete, onReset, sa
     setHasChanges(false)
   }
 
+  const handleReset = () => {
+    setLocalCats(data.categories)
+    setOriginalCats(data.categories)
+    setHasChanges(false)
+  }
+
   const monthly = Object.values(localCats).reduce<number>((s, v) => s + catTotal(v), 0)
   const annual = monthly * 12
 
@@ -892,9 +1186,10 @@ function CompanyEditor({ code, data, originalData, onSave, onDelete, onReset, sa
         <div className="flex items-center gap-3">
           <h2 className="text-xl font-bold">{code}</h2>
           <Badge>{data.group}</Badge>
-          <button onClick={onDelete} className="text-red-400 hover:text-red-600" title="Удалить компанию">
+          <button onClick={onDelete} className="text-red-400 hover:text-red-600">
             <Trash2 className="h-4 w-4" />
           </button>
+          {saving && <Loader2 className="h-4 w-4 animate-spin text-blue-500" />}
         </div>
         <div className="text-right">
           <div className="text-sm text-muted-foreground">Итого Ежемесячно</div>
@@ -907,21 +1202,18 @@ function CompanyEditor({ code, data, originalData, onSave, onDelete, onReset, sa
         </div>
       </div>
 
-      {/* Action buttons */}
+      {/* Save / Cancel / Reset buttons */}
       <div className="flex items-center gap-2">
-        <Button onClick={handleSave} disabled={!hasChanges || saving} size="sm" className="gap-1.5">
-          {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-          Сохранить
+        <Button size="sm" onClick={handleSave} disabled={!hasChanges || saving}>
+          <Save className="h-3.5 w-3.5 mr-1" /> Сохранить
         </Button>
-        <Button onClick={handleCancel} disabled={!hasChanges} variant="outline" size="sm" className="gap-1.5">
-          <Undo2 className="h-4 w-4" />
-          Отменить
+        <Button size="sm" variant="outline" onClick={handleCancel} disabled={!hasChanges}>
+          <X className="h-3.5 w-3.5 mr-1" /> Отменить
         </Button>
-        <Button onClick={onReset} variant="ghost" size="sm" className="gap-1.5 text-orange-600 hover:text-orange-700">
-          <RotateCcw className="h-4 w-4" />
-          Сбросить
+        <Button size="sm" variant="ghost" onClick={handleReset}>
+          <RotateCcw className="h-3.5 w-3.5 mr-1" /> Сбросить
         </Button>
-        {hasChanges && <span className="text-xs text-amber-600 ml-2">● Есть несохранённые изменения</span>}
+        {hasChanges && <span className="text-xs text-amber-600 ml-2">Есть несохранённые изменения</span>}
       </div>
 
       <div className="space-y-2">
@@ -932,66 +1224,176 @@ function CompanyEditor({ code, data, originalData, onSave, onDelete, onReset, sa
 
           return (
             <div key={cat} className="border rounded-lg">
-              <button
-                onClick={() => hasServices && toggleCat(cat)}
-                className="w-full flex items-center justify-between p-3 hover:bg-muted/50"
-              >
-                <span className="text-sm">{cat}</span>
+              <div className="flex items-center justify-between p-3 hover:bg-muted/50">
+                <button
+                  onClick={() => toggleCat(cat)}
+                  className="flex items-center gap-2 flex-1 text-left"
+                >
+                  {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                  <span className="text-sm">{cat}</span>
+                </button>
                 <div className="flex items-center gap-2">
                   <span className={`text-sm font-mono font-medium ${total > 0 ? "text-green-600" : "text-muted-foreground"}`}>
                     {total.toLocaleString("ru-RU", { maximumFractionDigits: 2 })} ₼
                   </span>
-                  {hasServices && (isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />)}
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setAddingServiceCat(addingServiceCat === cat ? null : cat); setExpandedCats(new Set([...expandedCats, cat])) }}
+                    className="text-blue-500 hover:text-blue-700 p-1"
+                    title="Добавить услугу"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                  </button>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); deleteCategory(cat) }}
+                    className="text-red-400 hover:text-red-600 p-1"
+                    title="Удалить категорию"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
                 </div>
-              </button>
+              </div>
 
-              {isExpanded && hasServices && typeof val === "object" && "services" in val && (
+              {isExpanded && (
                 <div className="px-3 pb-3">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="text-muted-foreground text-xs">
-                        <th className="text-left pb-1">Услуга</th>
-                        <th className="text-center pb-1 w-24">Единица</th>
-                        <th className="text-center pb-1 w-20">Кол-во</th>
-                        <th className="text-center pb-1 w-24">Цена за ед.</th>
-                        <th className="text-right pb-1 w-24">Итого</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {val.services.map((svc, si) => (
-                        <tr key={si} className="border-t">
-                          <td className="py-1.5 pr-2">{svc.name}</td>
-                          <td className="py-1.5 text-center text-xs text-muted-foreground">{svc.unit}</td>
-                          <td className="py-1.5">
-                            <input
-                              type="number"
-                              value={svc.qty}
-                              onChange={(e) => updateService(cat, si, "qty", parseFloat(e.target.value) || 0)}
-                              className="w-16 h-7 text-center border rounded text-sm mx-auto block"
-                            />
-                          </td>
-                          <td className="py-1.5">
-                            <input
-                              type="number"
-                              step="0.01"
-                              value={svc.price}
-                              onChange={(e) => updateService(cat, si, "price", parseFloat(e.target.value) || 0)}
-                              className="w-20 h-7 text-center border rounded text-sm mx-auto block"
-                            />
-                          </td>
-                          <td className="py-1.5 text-right font-mono">
-                            {svc.total.toLocaleString("ru-RU", { maximumFractionDigits: 2 })} ₼
-                          </td>
+                  {hasServices && typeof val === "object" && "services" in val && (
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="text-muted-foreground text-xs">
+                          <th className="text-left pb-1">Услуга</th>
+                          <th className="text-center pb-1 w-24">Единица</th>
+                          <th className="text-center pb-1 w-20">Кол-во</th>
+                          <th className="text-center pb-1 w-24">Цена за ед.</th>
+                          <th className="text-right pb-1 w-24">Итого</th>
+                          <th className="w-8"></th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody>
+                        {val.services.map((svc, si) => (
+                          <tr key={si} className="border-t">
+                            <td className="py-1.5 pr-2">{svc.name}</td>
+                            <td className="py-1.5 text-center text-xs text-muted-foreground">{svc.unit}</td>
+                            <td className="py-1.5">
+                              <input
+                                type="number"
+                                value={svc.qty}
+                                onChange={(e) => updateService(cat, si, "qty", parseFloat(e.target.value) || 0)}
+                                className="w-16 h-7 text-center border rounded text-sm mx-auto block"
+                              />
+                            </td>
+                            <td className="py-1.5">
+                              <input
+                                type="number"
+                                step="0.01"
+                                value={svc.price}
+                                onChange={(e) => updateService(cat, si, "price", parseFloat(e.target.value) || 0)}
+                                className="w-20 h-7 text-center border rounded text-sm mx-auto block"
+                              />
+                            </td>
+                            <td className="py-1.5 text-right font-mono">
+                              {svc.total.toLocaleString("ru-RU", { maximumFractionDigits: 2 })} ₼
+                            </td>
+                            <td className="py-1.5 text-center">
+                              <button
+                                onClick={() => deleteService(cat, si)}
+                                className="text-red-400 hover:text-red-600"
+                                title="Удалить услугу"
+                              >
+                                <X className="h-3.5 w-3.5" />
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+
+                  {/* Add service form */}
+                  {addingServiceCat === cat && (
+                    <div className="mt-2 p-3 bg-blue-50 rounded-lg space-y-2 border border-blue-200">
+                      <div className="text-xs font-semibold text-blue-700">Новая услуга</div>
+                      <div className="grid grid-cols-[1fr_120px_70px_90px] gap-2">
+                        <input
+                          type="text"
+                          placeholder="Название услуги"
+                          value={newSvc.name}
+                          onChange={(e) => setNewSvc({ ...newSvc, name: e.target.value })}
+                          className="h-8 px-2 border rounded text-sm"
+                        />
+                        <select
+                          value={newSvc.unit}
+                          onChange={(e) => setNewSvc({ ...newSvc, unit: e.target.value })}
+                          className="h-8 px-1 border rounded text-xs"
+                        >
+                          {UNIT_TYPES.map((u) => <option key={u} value={u}>{u}</option>)}
+                        </select>
+                        <input
+                          type="number"
+                          placeholder="Кол-во"
+                          value={newSvc.qty}
+                          onChange={(e) => setNewSvc({ ...newSvc, qty: parseInt(e.target.value) || 0 })}
+                          className="h-8 px-2 border rounded text-sm text-center"
+                        />
+                        <input
+                          type="number"
+                          step="0.01"
+                          placeholder="Цена"
+                          value={newSvc.price}
+                          onChange={(e) => setNewSvc({ ...newSvc, price: parseFloat(e.target.value) || 0 })}
+                          className="h-8 px-2 border rounded text-sm text-center"
+                        />
+                      </div>
+                      <div className="flex gap-2">
+                        <Button size="sm" onClick={() => addService(cat)} disabled={!newSvc.name.trim()}>
+                          <Plus className="h-3 w-3 mr-1" /> Добавить
+                        </Button>
+                        <Button size="sm" variant="ghost" onClick={() => setAddingServiceCat(null)}>
+                          Отмена
+                        </Button>
+                        {newSvc.qty > 0 && newSvc.price > 0 && (
+                          <span className="text-xs text-muted-foreground self-center ml-auto">
+                            Итого: {(newSvc.qty * newSvc.price).toLocaleString("ru-RU", { maximumFractionDigits: 2 })} ₼
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {!hasServices && addingServiceCat !== cat && (
+                    <div className="text-xs text-muted-foreground text-center py-2">Нет услуг</div>
+                  )}
                 </div>
               )}
             </div>
           )
         })}
       </div>
+
+      {/* Add category */}
+      {showAddCat ? (
+        <div className="p-3 bg-green-50 rounded-lg space-y-2 border border-green-200">
+          <div className="text-xs font-semibold text-green-700">Новая категория</div>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              placeholder="Название категории"
+              value={newCatName}
+              onChange={(e) => setNewCatName(e.target.value)}
+              className="flex-1 h-8 px-2 border rounded text-sm"
+              onKeyDown={(e) => e.key === "Enter" && addCategory()}
+            />
+            <Button size="sm" onClick={addCategory} disabled={!newCatName.trim()}>
+              <Plus className="h-3 w-3 mr-1" /> Добавить
+            </Button>
+            <Button size="sm" variant="ghost" onClick={() => { setShowAddCat(false); setNewCatName("") }}>
+              Отмена
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <Button variant="outline" size="sm" onClick={() => setShowAddCat(true)}>
+          <Plus className="h-3.5 w-3.5 mr-1" /> Добавить категорию
+        </Button>
+      )}
     </div>
   )
 }

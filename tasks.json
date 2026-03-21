@@ -21,6 +21,20 @@
     {"id": "7b", "description": "Customer Portal (auth, tickets, KB, AI chat)", "priority": 19, "dependencies": ["1c", "5a"], "status": "blocked"},
     {"id": "8a", "description": "Detail pages (contracts, offers, KB, campaigns)", "priority": 20, "dependencies": ["1a", "1b", "1c", "1d"], "status": "done"},
     {"id": "8b", "description": "Dashboard layout customization", "priority": 21, "dependencies": [], "status": "blocked"},
-    {"id": "8c", "description": "Final polish (Web-to-Lead, Lead Rules, Billing)", "priority": 22, "dependencies": [], "status": "blocked"}
+    {"id": "8c", "description": "Final polish (Web-to-Lead, Lead Rules, Billing)", "priority": 22, "dependencies": [], "status": "blocked"},
+
+    {"id": "P1", "description": "Pricing v2: Add Prisma models (PricingGroup, PricingProfile, PricingCategory, PricingProfileCategory, PricingService, AdditionalSale) + db push", "priority": 23, "dependencies": [], "status": "done"},
+    {"id": "P2", "description": "Pricing v2: Migration script JSON→PostgreSQL (59 companies, 7 groups, 11 categories, 12 unit types)", "priority": 24, "dependencies": ["P1"], "status": "done"},
+    {"id": "P3", "description": "Pricing v2: Core API routes — profiles CRUD, categories, services, unit-types", "priority": 25, "dependencies": ["P1"], "status": "done"},
+    {"id": "P4", "description": "Pricing v2: Additional Sales API (GET/POST/PUT/DELETE)", "priority": 26, "dependencies": ["P1"], "status": "done"},
+    {"id": "P5", "description": "Pricing v2: Backward-compat /api/v1/pricing/data route (DB→old format)", "priority": 27, "dependencies": ["P3"], "status": "done"},
+    {"id": "P6", "description": "Pricing v2: Refactor pricing page data fetching to use DB-backed API", "priority": 28, "dependencies": ["P5"], "status": "done"},
+    {"id": "P7", "description": "Pricing v2: Editor — add category button + add service form with unit type selector (12 types)", "priority": 29, "dependencies": ["P3", "P6"], "status": "done"},
+    {"id": "P8", "description": "Pricing v2: Editor — delete categories and services with confirmation", "priority": 30, "dependencies": ["P7"], "status": "done"},
+    {"id": "P9", "description": "Pricing v2: New tab 'Допродажи' — table, filters, add form (recurring/one-time), history", "priority": 31, "dependencies": ["P4", "P6"], "status": "done"},
+    {"id": "P10", "description": "Pricing v2: Company detail page — Pricing tab (profile, services, additional sales)", "priority": 32, "dependencies": ["P3", "P4"], "status": "done"},
+    {"id": "P11", "description": "Pricing v2: Deals integration — 'Add to Pricing' button on WON deals + API", "priority": 33, "dependencies": ["P4", "P10"], "status": "done"},
+    {"id": "P12", "description": "Pricing v2: Refactor Excel export to read from DB", "priority": 34, "dependencies": ["P5"], "status": "done"},
+    {"id": "P13", "description": "Pricing v2: Cleanup — remove old file-based routes, archive JSON, update types", "priority": 35, "dependencies": ["P6", "P7", "P9", "P12"], "status": "done"}
   ]
 }

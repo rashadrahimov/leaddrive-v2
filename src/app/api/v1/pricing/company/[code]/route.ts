@@ -1,36 +1,106 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getOrgId } from "@/lib/api-auth"
-import { catTotal, validateNumeric } from "@/lib/pricing"
-import fs from "fs"
-import path from "path"
-
-const PRICING_FILE = path.join(process.cwd(), "public", "data", "pricing_data.json")
+import { prisma } from "@/lib/prisma"
 
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ code: string }> }) {
   const orgId = await getOrgId(req)
   if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   const { code } = await params
-  let allData: Record<string, any>
-  try { allData = JSON.parse(fs.readFileSync(PRICING_FILE, "utf-8")) } catch { return NextResponse.json({ error: "Not found" }, { status: 404 }) }
-  if (!(code in allData)) return NextResponse.json({ error: `Company '${code}' not found` }, { status: 404 })
+
+  const profile = await prisma.pricingProfile.findFirst({
+    where: { organizationId: orgId, companyCode: code },
+    include: {
+      group: true,
+      categories: {
+        include: { category: true, services: true },
+      },
+    },
+  })
+  if (!profile) return NextResponse.json({ error: `Company '${code}' not found` }, { status: 404 })
+
   const updates = await req.json()
+
   if (updates.categories) {
-    for (const [cat, val] of Object.entries(updates.categories)) {
-      if (cat in allData[code].categories) {
-        if (typeof val === "object" && val !== null) {
-          const v = val as any; if ("total" in v) v.total = validateNumeric(v.total, cat)
-          if (Array.isArray(v.services)) for (const s of v.services) if ("price" in s) s.price = validateNumeric(s.price, cat)
-          allData[code].categories[cat] = v
-        } else {
-          const n = validateNumeric(val, cat); const ex = allData[code].categories[cat]
-          if (typeof ex === "object" && ex !== null) ex.total = n; else allData[code].categories[cat] = n
+    let monthlyTotal = 0
+
+    for (const [catName, val] of Object.entries(updates.categories) as [string, any][]) {
+      const pc = profile.categories.find((c) => c.category.name === catName)
+      if (!pc) continue
+
+      const catTotal = typeof val === "number" ? val : val?.total || 0
+      monthlyTotal += catTotal
+
+      await prisma.pricingProfileCategory.update({
+        where: { id: pc.id },
+        data: { total: catTotal },
+      })
+
+      if (val?.services && Array.isArray(val.services)) {
+        await prisma.pricingService.deleteMany({ where: { profileCategoryId: pc.id } })
+        for (const [idx, svc] of val.services.entries()) {
+          await prisma.pricingService.create({
+            data: {
+              organizationId: orgId,
+              profileCategoryId: pc.id,
+              name: svc.name || "Unnamed",
+              unit: svc.unit || "Per Device",
+              qty: typeof svc.qty === "number" ? svc.qty : 0,
+              price: typeof svc.price === "number" ? svc.price : 0,
+              total: typeof svc.total === "number" ? svc.total : 0,
+              sortOrder: idx,
+            },
+          })
         }
       }
     }
-    let total = 0; for (const v of Object.values(allData[code].categories)) total += catTotal(v as any)
-    allData[code].monthly = Math.round(total * 100) / 100; allData[code].annual = Math.round(total * 12 * 100) / 100
+
+    await prisma.pricingProfile.update({
+      where: { id: profile.id },
+      data: { monthlyTotal, annualTotal: monthlyTotal * 12 },
+    })
   }
-  if (updates.group) allData[code].group = updates.group
-  fs.writeFileSync(PRICING_FILE, JSON.stringify(allData, null, 2), "utf-8")
-  return NextResponse.json({ success: true, data: allData[code] })
+
+  if (updates.group) {
+    const group = await prisma.pricingGroup.findFirst({
+      where: { organizationId: orgId, name: updates.group },
+    })
+    if (group) {
+      await prisma.pricingProfile.update({
+        where: { id: profile.id },
+        data: { groupId: group.id },
+      })
+    }
+  }
+
+  // Return updated profile in legacy format
+  const updated = await prisma.pricingProfile.findFirst({
+    where: { id: profile.id },
+    include: {
+      group: true,
+      categories: {
+        include: { category: true, services: { orderBy: { sortOrder: "asc" } } },
+      },
+    },
+  })
+
+  const categories: Record<string, any> = {}
+  for (const pc of updated!.categories) {
+    categories[pc.category.name] = {
+      total: pc.total,
+      services: pc.services.map((s) => ({
+        name: s.name, qty: s.qty, price: s.price, total: s.total, unit: s.unit,
+      })),
+    }
+  }
+
+  return NextResponse.json({
+    success: true,
+    data: {
+      group: updated!.group.name,
+      categories,
+      monthly: updated!.monthlyTotal,
+      annual: updated!.annualTotal,
+      monthly_total: updated!.monthlyTotal,
+    },
+  })
 }

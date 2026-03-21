@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { ArrowLeft, Building2, Globe, Mail, Phone, MapPin, Users, Pencil } from "lucide-react"
+import { ArrowLeft, Building2, Globe, Mail, Phone, MapPin, Users, Pencil, DollarSign, Loader2, ChevronDown, ChevronRight } from "lucide-react"
 import { CompanyForm } from "@/components/company-form"
 
 interface CompanyDetail {
@@ -35,6 +35,10 @@ export default function CompanyDetailPage() {
   const [company, setCompany] = useState<CompanyDetail | null>(null)
   const [loading, setLoading] = useState(true)
   const [editOpen, setEditOpen] = useState(false)
+  const [pricingProfile, setPricingProfile] = useState<any>(null)
+  const [pricingLoading, setPricingLoading] = useState(false)
+  const [pricingSales, setPricingSales] = useState<any[]>([])
+  const [expandedPricingCats, setExpandedPricingCats] = useState<Set<string>>(new Set())
   const orgId = session?.user?.organizationId
 
   const fetchCompany = async () => {
@@ -47,7 +51,27 @@ export default function CompanyDetailPage() {
     } catch {} finally { setLoading(false) }
   }
 
+  const fetchPricing = async () => {
+    if (!orgId) return
+    setPricingLoading(true)
+    try {
+      const headers = { "x-organization-id": String(orgId) }
+      const res = await fetch(`/api/v1/pricing/profiles?companyId=${params.id}&all=true`, { headers })
+      const json = await res.json()
+      if (json.success && json.data.profiles?.length > 0) {
+        const profile = json.data.profiles[0]
+        setPricingProfile(profile)
+        // Fetch additional sales for this profile
+        const salesRes = await fetch(`/api/v1/pricing/additional-sales?profileId=${profile.id}`, { headers })
+        const salesJson = await salesRes.json()
+        if (salesJson.success) setPricingSales(salesJson.data.sales || [])
+      }
+    } catch { /* ignore */ }
+    finally { setPricingLoading(false) }
+  }
+
   useEffect(() => { if (params.id) fetchCompany() }, [params.id, session])
+  useEffect(() => { if (params.id && orgId) fetchPricing() }, [params.id, orgId])
 
   if (loading) {
     return <div className="space-y-6"><div className="animate-pulse"><div className="h-64 bg-muted rounded-lg" /></div></div>
@@ -98,6 +122,9 @@ export default function CompanyDetailPage() {
           <TabsTrigger value="contacts">Contacts ({company.contacts?.length || 0})</TabsTrigger>
           <TabsTrigger value="deals">Deals ({company.deals?.length || 0})</TabsTrigger>
           <TabsTrigger value="activities">Activities ({company.activities?.length || 0})</TabsTrigger>
+          <TabsTrigger value="pricing">
+            <DollarSign className="h-3.5 w-3.5 mr-1" /> Pricing
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">
@@ -185,6 +212,137 @@ export default function CompanyDetailPage() {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="pricing" className="space-y-4">
+          {pricingLoading ? (
+            <div className="flex items-center justify-center py-12"><Loader2 className="h-6 w-6 animate-spin" /></div>
+          ) : !pricingProfile ? (
+            <Card>
+              <CardContent className="py-12 text-center text-muted-foreground">
+                Для этой компании нет данных ценообразования.
+              </CardContent>
+            </Card>
+          ) : (
+            <>
+              {/* Profile summary */}
+              <div className="grid gap-4 md:grid-cols-4">
+                <Card><CardContent className="pt-6">
+                  <div className="text-xs text-muted-foreground">Код</div>
+                  <div className="text-lg font-bold">{pricingProfile.companyCode}</div>
+                </CardContent></Card>
+                <Card><CardContent className="pt-6">
+                  <div className="text-xs text-muted-foreground">Группа</div>
+                  <div className="text-lg font-bold">{pricingProfile.group?.name || "—"}</div>
+                </CardContent></Card>
+                <Card><CardContent className="pt-6">
+                  <div className="text-xs text-muted-foreground">Ежемесячно</div>
+                  <div className="text-lg font-bold text-green-600">{pricingProfile.monthlyTotal?.toLocaleString("ru-RU", { maximumFractionDigits: 2 })} ₼</div>
+                </CardContent></Card>
+                <Card><CardContent className="pt-6">
+                  <div className="text-xs text-muted-foreground">Ежегодно</div>
+                  <div className="text-lg font-bold">{pricingProfile.annualTotal?.toLocaleString("ru-RU", { maximumFractionDigits: 2 })} ₼</div>
+                </CardContent></Card>
+              </div>
+
+              {/* Categories and services */}
+              <Card>
+                <CardHeader><CardTitle className="text-base">Услуги по категориям</CardTitle></CardHeader>
+                <CardContent className="space-y-2">
+                  {(pricingProfile.categories || []).map((pc: any) => {
+                    const isExpanded = expandedPricingCats.has(pc.id)
+                    return (
+                      <div key={pc.id} className="border rounded-lg">
+                        <button
+                          onClick={() => {
+                            const next = new Set(expandedPricingCats)
+                            if (next.has(pc.id)) next.delete(pc.id); else next.add(pc.id)
+                            setExpandedPricingCats(next)
+                          }}
+                          className="w-full flex items-center justify-between p-3 hover:bg-muted/50"
+                        >
+                          <div className="flex items-center gap-2">
+                            {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                            <span className="text-sm font-medium">{pc.category?.name || "—"}</span>
+                            <span className="text-xs text-muted-foreground">({pc.services?.length || 0} услуг)</span>
+                          </div>
+                          <span className="text-sm font-mono font-medium text-green-600">{pc.total?.toLocaleString("ru-RU", { maximumFractionDigits: 2 })} ₼</span>
+                        </button>
+                        {isExpanded && pc.services?.length > 0 && (
+                          <div className="px-3 pb-3">
+                            <table className="w-full text-sm">
+                              <thead>
+                                <tr className="text-muted-foreground text-xs">
+                                  <th className="text-left pb-1">Услуга</th>
+                                  <th className="text-center pb-1 w-24">Единица</th>
+                                  <th className="text-center pb-1 w-16">Кол-во</th>
+                                  <th className="text-right pb-1 w-24">Цена</th>
+                                  <th className="text-right pb-1 w-24">Итого</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {pc.services.map((svc: any) => (
+                                  <tr key={svc.id} className="border-t">
+                                    <td className="py-1.5">{svc.name}</td>
+                                    <td className="py-1.5 text-center text-xs text-muted-foreground">{svc.unit}</td>
+                                    <td className="py-1.5 text-center font-mono">{svc.qty}</td>
+                                    <td className="py-1.5 text-right font-mono">{svc.price?.toLocaleString("ru-RU", { maximumFractionDigits: 2 })} ₼</td>
+                                    <td className="py-1.5 text-right font-mono font-medium">{svc.total?.toLocaleString("ru-RU", { maximumFractionDigits: 2 })} ₼</td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
+                  {(pricingProfile.categories || []).length === 0 && (
+                    <div className="text-sm text-muted-foreground text-center py-4">Нет категорий</div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Additional sales */}
+              {pricingSales.length > 0 && (
+                <Card>
+                  <CardHeader><CardTitle className="text-base">Допродажи ({pricingSales.length})</CardTitle></CardHeader>
+                  <CardContent>
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b text-left text-muted-foreground">
+                          <th className="pb-2 pr-4">Тип</th>
+                          <th className="pb-2 pr-4">Название</th>
+                          <th className="pb-2 pr-4 text-right">Итого</th>
+                          <th className="pb-2 pr-4">Дата</th>
+                          <th className="pb-2">Статус</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {pricingSales.map((sale: any) => (
+                          <tr key={sale.id} className="border-b last:border-0">
+                            <td className="py-2 pr-4">
+                              <Badge className={sale.type === "recurring" ? "bg-green-100 text-green-800" : "bg-blue-100 text-blue-800"}>
+                                {sale.type === "recurring" ? "MRR" : "Единоразовая"}
+                              </Badge>
+                            </td>
+                            <td className="py-2 pr-4">{sale.name}</td>
+                            <td className="py-2 pr-4 text-right font-mono font-medium">{sale.total?.toLocaleString("ru-RU", { maximumFractionDigits: 2 })} ₼</td>
+                            <td className="py-2 pr-4 text-xs">{sale.effectiveDate ? new Date(sale.effectiveDate).toLocaleDateString("ru-RU") : "—"}</td>
+                            <td className="py-2">
+                              <Badge variant="outline" className={sale.status === "active" ? "text-green-600 border-green-300" : "text-gray-600 border-gray-300"}>
+                                {sale.status === "active" ? "Активна" : sale.status === "cancelled" ? "Отменена" : "Завершена"}
+                              </Badge>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </CardContent>
+                </Card>
+              )}
+            </>
+          )}
         </TabsContent>
       </Tabs>
 

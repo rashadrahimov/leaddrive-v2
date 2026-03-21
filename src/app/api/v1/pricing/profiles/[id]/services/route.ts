@@ -1,0 +1,121 @@
+import { NextRequest, NextResponse } from "next/server"
+import { getOrgId } from "@/lib/api-auth"
+import { prisma } from "@/lib/prisma"
+
+export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const orgId = await getOrgId(req)
+  if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  const { id: profileId } = await params
+
+  const profile = await prisma.pricingProfile.findFirst({ where: { id: profileId, organizationId: orgId } })
+  if (!profile) return NextResponse.json({ error: "Profile not found" }, { status: 404 })
+
+  try {
+    const body = await req.json()
+    const { profileCategoryId, name, unit, qty, price } = body
+
+    if (!profileCategoryId || !name) {
+      return NextResponse.json({ error: "profileCategoryId and name are required" }, { status: 400 })
+    }
+
+    const pc = await prisma.pricingProfileCategory.findFirst({
+      where: { id: profileCategoryId, profileId, organizationId: orgId },
+    })
+    if (!pc) return NextResponse.json({ error: "Profile category not found" }, { status: 404 })
+
+    const maxOrder = await prisma.pricingService.aggregate({
+      where: { profileCategoryId },
+      _max: { sortOrder: true },
+    })
+
+    const total = (qty || 0) * (price || 0)
+    const service = await prisma.pricingService.create({
+      data: {
+        organizationId: orgId,
+        profileCategoryId,
+        name,
+        unit: unit || "Per Device",
+        qty: qty || 0,
+        price: price || 0,
+        total,
+        sortOrder: (maxOrder._max.sortOrder || 0) + 1,
+      },
+    })
+
+    // Update category total
+    const catServices = await prisma.pricingService.findMany({ where: { profileCategoryId } })
+    const catTotal = catServices.reduce((sum, s) => sum + s.total, 0)
+    await prisma.pricingProfileCategory.update({ where: { id: profileCategoryId }, data: { total: catTotal } })
+
+    return NextResponse.json({ success: true, data: service }, { status: 201 })
+  } catch (e: any) {
+    return NextResponse.json({ error: e.message || "Failed to create service" }, { status: 500 })
+  }
+}
+
+export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const orgId = await getOrgId(req)
+  if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  await params // validate route
+
+  try {
+    const body = await req.json()
+    const { serviceId, name, unit, qty, price } = body
+
+    if (!serviceId) return NextResponse.json({ error: "serviceId is required" }, { status: 400 })
+
+    const existing = await prisma.pricingService.findFirst({
+      where: { id: serviceId, organizationId: orgId },
+    })
+    if (!existing) return NextResponse.json({ error: "Service not found" }, { status: 404 })
+
+    const newQty = qty !== undefined ? qty : existing.qty
+    const newPrice = price !== undefined ? price : existing.price
+    const total = newQty * newPrice
+
+    const service = await prisma.pricingService.update({
+      where: { id: serviceId },
+      data: {
+        ...(name !== undefined && { name }),
+        ...(unit !== undefined && { unit }),
+        ...(qty !== undefined && { qty }),
+        ...(price !== undefined && { price }),
+        total,
+      },
+    })
+
+    // Update category total
+    const catServices = await prisma.pricingService.findMany({ where: { profileCategoryId: existing.profileCategoryId } })
+    const catTotal = catServices.reduce((sum, s) => sum + s.total, 0)
+    await prisma.pricingProfileCategory.update({ where: { id: existing.profileCategoryId }, data: { total: catTotal } })
+
+    return NextResponse.json({ success: true, data: service })
+  } catch (e: any) {
+    return NextResponse.json({ error: e.message || "Failed to update service" }, { status: 500 })
+  }
+}
+
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const orgId = await getOrgId(req)
+  if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  await params
+
+  const { searchParams } = new URL(req.url)
+  const serviceId = searchParams.get("serviceId")
+
+  if (!serviceId) return NextResponse.json({ error: "serviceId is required" }, { status: 400 })
+
+  const existing = await prisma.pricingService.findFirst({
+    where: { id: serviceId, organizationId: orgId },
+  })
+  if (!existing) return NextResponse.json({ error: "Service not found" }, { status: 404 })
+
+  await prisma.pricingService.delete({ where: { id: serviceId } })
+
+  // Update category total
+  const catServices = await prisma.pricingService.findMany({ where: { profileCategoryId: existing.profileCategoryId } })
+  const catTotal = catServices.reduce((sum, s) => sum + s.total, 0)
+  await prisma.pricingProfileCategory.update({ where: { id: existing.profileCategoryId }, data: { total: catTotal } })
+
+  return NextResponse.json({ success: true, data: { deleted: true } })
+}

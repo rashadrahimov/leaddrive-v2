@@ -184,6 +184,18 @@ export default function DealsPage() {
         onOpenChange={setSheetOpen}
         onEdit={() => { if (selectedDeal) { setSheetOpen(false); handleEditDeal(selectedDeal) } }}
         onDelete={() => { if (selectedDeal) { setSheetOpen(false); handleDeleteDeal(selectedDeal) } }}
+        orgId={orgId ? String(orgId) : undefined}
+        onAddToPricing={async (dealId, data) => {
+          try {
+            const res = await fetch(`/api/v1/deals/${dealId}/add-to-pricing`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": String(orgId) } : {}) },
+              body: JSON.stringify(data),
+            })
+            const json = await res.json()
+            return json.success === true
+          } catch { return false }
+        }}
       />
       <DealForm open={formOpen} onOpenChange={setFormOpen} onSaved={fetchDeals} initialData={editData} orgId={orgId} />
       <DeleteConfirmDialog open={deleteOpen} onOpenChange={setDeleteOpen} onConfirm={confirmDelete} title="Delete Deal" itemName={deleteItem?.name} />

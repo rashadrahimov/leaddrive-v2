@@ -2,11 +2,48 @@ import { NextRequest, NextResponse } from "next/server"
 import { getOrgId } from "@/lib/api-auth"
 import { generateTemplate1, generateTemplate2, generateBudgetPL } from "@/lib/pricing-export"
 import type { PricingAdjustments } from "@/lib/pricing"
+import { prisma } from "@/lib/prisma"
 import fs from "fs"
 import path from "path"
 
-const PRICING_FILE = path.join(process.cwd(), "public", "data", "pricing_data.json")
 const LEGAL_FILE = path.join(process.cwd(), "public", "data", "company_legal_names.json")
+
+async function loadPricingDataFromDB(orgId: string) {
+  const profiles = await prisma.pricingProfile.findMany({
+    where: { organizationId: orgId },
+    include: {
+      group: true,
+      categories: {
+        include: {
+          category: true,
+          services: { orderBy: { sortOrder: "asc" } },
+        },
+      },
+    },
+    orderBy: [{ group: { sortOrder: "asc" } }, { companyCode: "asc" }],
+  })
+
+  const data: Record<string, any> = {}
+  for (const profile of profiles) {
+    const categories: Record<string, any> = {}
+    for (const pc of profile.categories) {
+      categories[pc.category.name] = {
+        total: pc.total,
+        services: pc.services.map((s) => ({
+          name: s.name, qty: s.qty, price: s.price, total: s.total, unit: s.unit,
+        })),
+      }
+    }
+    data[profile.companyCode] = {
+      group: profile.group.name,
+      categories,
+      monthly: profile.monthlyTotal,
+      annual: profile.annualTotal,
+      monthly_total: profile.monthlyTotal,
+    }
+  }
+  return data
+}
 
 export async function POST(req: NextRequest) {
   const orgId = await getOrgId(req)
@@ -16,7 +53,7 @@ export async function POST(req: NextRequest) {
     const template = body.template || "1"
     const adjustments: PricingAdjustments | null = body.adjustments || null
     const effectiveDate: string | null = body.effective_date || null
-    const data = JSON.parse(fs.readFileSync(PRICING_FILE, "utf-8"))
+    const data = await loadPricingDataFromDB(orgId)
     let legal: Record<string, string> = {}
     try { legal = JSON.parse(fs.readFileSync(LEGAL_FILE, "utf-8")) } catch {}
     let buffer: Buffer; let filename: string

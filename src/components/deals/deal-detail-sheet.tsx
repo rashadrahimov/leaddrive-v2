@@ -5,7 +5,9 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
-import { DollarSign, Building, User, Calendar, ArrowRight, MessageSquare, Pencil, Trash2 } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import { DollarSign, Building, User, Calendar, ArrowRight, MessageSquare, Pencil, Trash2, Plus, Loader2 } from "lucide-react"
+import { useState } from "react"
 
 interface DealDetail {
   id: string
@@ -33,6 +35,8 @@ interface DealDetailSheetProps {
   onOpenChange: (open: boolean) => void
   onEdit?: () => void
   onDelete?: () => void
+  onAddToPricing?: (dealId: string, data: any) => Promise<boolean>
+  orgId?: string
 }
 
 const STAGE_COLORS: Record<string, string> = {
@@ -44,8 +48,32 @@ const STAGE_COLORS: Record<string, string> = {
   "Lost": "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300",
 }
 
-export function DealDetailSheet({ deal, open, onOpenChange, onEdit, onDelete }: DealDetailSheetProps) {
+export function DealDetailSheet({ deal, open, onOpenChange, onEdit, onDelete, onAddToPricing, orgId }: DealDetailSheetProps) {
+  const [showPricingForm, setShowPricingForm] = useState(false)
+  const [pricingForm, setPricingForm] = useState({
+    type: "recurring" as string,
+    name: "",
+    price: 0,
+    qty: 1,
+    effectiveDate: new Date().toISOString().split("T")[0],
+  })
+  const [pricingSaving, setPricingSaving] = useState(false)
+
   if (!deal) return null
+
+  const isWon = deal.stage === "Won" || deal.stage === "WON"
+
+  const handleAddToPricing = async () => {
+    if (!onAddToPricing || !deal.id || !pricingForm.name) return
+    setPricingSaving(true)
+    try {
+      const ok = await onAddToPricing(deal.id, pricingForm)
+      if (ok) {
+        setShowPricingForm(false)
+        setPricingForm({ type: "recurring", name: "", price: 0, qty: 1, effectiveDate: new Date().toISOString().split("T")[0] })
+      }
+    } finally { setPricingSaving(false) }
+  }
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -115,6 +143,80 @@ export function DealDetailSheet({ deal, open, onOpenChange, onEdit, onDelete }: 
               <Button variant="outline" size="sm" className="w-full" onClick={onEdit}>
                 <Pencil className="h-4 w-4 mr-1" /> Edit Deal
               </Button>
+
+              {/* Add to Pricing - only for WON deals */}
+              {isWon && onAddToPricing && (
+                <div className="mt-3">
+                  {!showPricingForm ? (
+                    <Button size="sm" className="w-full bg-green-600 hover:bg-green-700" onClick={() => setShowPricingForm(true)}>
+                      <DollarSign className="h-4 w-4 mr-1" /> Добавить в модель цен
+                    </Button>
+                  ) : (
+                    <div className="p-3 bg-green-50 rounded-lg space-y-2 border border-green-200">
+                      <div className="text-xs font-semibold text-green-700">Добавить в Pricing Model</div>
+                      <div className="space-y-2">
+                        <select
+                          value={pricingForm.type}
+                          onChange={(e) => setPricingForm({ ...pricingForm, type: e.target.value })}
+                          className="w-full h-8 border rounded px-2 text-sm"
+                        >
+                          <option value="recurring">Ежемесячная (MRR)</option>
+                          <option value="one_time">Единоразовая</option>
+                        </select>
+                        <Input
+                          placeholder="Название услуги"
+                          value={pricingForm.name}
+                          onChange={(e) => setPricingForm({ ...pricingForm, name: e.target.value })}
+                          className="h-8 text-sm"
+                        />
+                        <div className="grid grid-cols-3 gap-2">
+                          <div>
+                            <label className="text-xs text-muted-foreground">Кол-во</label>
+                            <Input
+                              type="number"
+                              value={pricingForm.qty}
+                              onChange={(e) => setPricingForm({ ...pricingForm, qty: parseInt(e.target.value) || 0 })}
+                              className="h-8 text-sm"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-xs text-muted-foreground">Цена</label>
+                            <Input
+                              type="number"
+                              step="0.01"
+                              value={pricingForm.price}
+                              onChange={(e) => setPricingForm({ ...pricingForm, price: parseFloat(e.target.value) || 0 })}
+                              className="h-8 text-sm"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-xs text-muted-foreground">Дата</label>
+                            <Input
+                              type="date"
+                              value={pricingForm.effectiveDate}
+                              onChange={(e) => setPricingForm({ ...pricingForm, effectiveDate: e.target.value })}
+                              className="h-8 text-sm"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button size="sm" onClick={handleAddToPricing} disabled={!pricingForm.name || pricingSaving}>
+                          {pricingSaving ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <Plus className="h-3.5 w-3.5 mr-1" />}
+                          Добавить
+                        </Button>
+                        <Button size="sm" variant="ghost" onClick={() => setShowPricingForm(false)}>Отмена</Button>
+                        {pricingForm.qty > 0 && pricingForm.price > 0 && (
+                          <span className="text-xs text-muted-foreground self-center ml-auto">
+                            {(pricingForm.qty * pricingForm.price).toLocaleString("ru-RU", { maximumFractionDigits: 2 })} ₼
+                            {pricingForm.type === "recurring" && " /мес"}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </TabsContent>
 
             <TabsContent value="history" className="mt-3">
