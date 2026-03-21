@@ -3,6 +3,7 @@ import { z } from "zod"
 import { prisma } from "@/lib/prisma"
 import { getOrgId } from "@/lib/api-auth"
 import { sendEmail } from "@/lib/email"
+import { sendWhatsAppMessage } from "@/lib/whatsapp"
 
 export async function GET(req: NextRequest) {
   const orgId = await getOrgId(req)
@@ -98,6 +99,19 @@ export async function GET(req: NextRequest) {
           const normalized = phone.replace(/[\s\-()]/g, "")
           const contact = phoneToContact[normalized] || phoneToContact[phone]
           if (contact) return `contact_${contact.id}`
+        }
+      }
+
+      // Try to match by WhatsApp phone number
+      if (msg.channelType === "whatsapp") {
+        const waPhone = meta?.waPhone as string | undefined
+        const phone = waPhone || (msg.direction === "inbound" ? msg.from : msg.to)
+        if (phone) {
+          const normalized = phone.replace(/[\s\-()+ ]/g, "")
+          const contact = phoneToContact[normalized] || phoneToContact[`+${normalized}`] || phoneToContact[phone]
+          if (contact) return `contact_${contact.id}`
+          // Group by WhatsApp phone number even without contact match
+          if (waPhone) return `wa_${waPhone}`
         }
       }
 
@@ -262,6 +276,19 @@ export async function POST(req: NextRequest) {
         where: { organizationId: orgId, phone: to },
         select: { id: true },
       })
+    } else if (channel === "whatsapp" && to) {
+      const cleanPhone = to.replace(/[\s\-()+ ]/g, "")
+      contact = await prisma.contact.findFirst({
+        where: {
+          organizationId: orgId,
+          OR: [
+            { phone: to },
+            { phone: `+${cleanPhone}` },
+            { phone: { contains: cleanPhone.slice(-9) } },
+          ],
+        },
+        select: { id: true },
+      })
     } else if (channel === "telegram" && /^-?\d+$/.test(to)) {
       // Find a previous message with this chatId that has a contactId
       const prev = await prisma.channelMessage.findFirst({
@@ -360,9 +387,25 @@ export async function POST(req: NextRequest) {
       }
 
       case "whatsapp": {
-        // Placeholder — log only
-        console.log(`[Inbox WhatsApp] To: ${to}, Message: ${msgBody}`)
-        status = "delivered"
+        const waResult = await sendWhatsAppMessage({
+          to,
+          message: msgBody,
+          organizationId: orgId,
+          contactId,
+        })
+        status = waResult.success ? "delivered" : "failed"
+        if (!waResult.success) errorMsg = waResult.error || "WhatsApp send failed"
+        // sendWhatsAppMessage already logs to ChannelMessage, so skip the generic save below
+        if (waResult.success) {
+          // Update lastContactAt
+          if (contactId) {
+            await prisma.contact.updateMany({
+              where: { id: contactId, organizationId: orgId },
+              data: { lastContactAt: new Date() },
+            }).catch(() => {})
+          }
+          return NextResponse.json({ success: true, data: { id: "wa-sent", status: "delivered" } }, { status: 201 })
+        }
         break
       }
     }
