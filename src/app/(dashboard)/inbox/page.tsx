@@ -180,13 +180,24 @@ export default function InboxPage() {
       }
     }
 
+    // For WhatsApp, try to get phone from metadata (waPhone) of inbound messages
+    let waPhone = ""
+    if (replyChannel === "whatsapp") {
+      for (const msg of convo.messages) {
+        const meta = (msg as any).metadata
+        if (meta?.waPhone) { waPhone = meta.waPhone; break }
+      }
+    }
+
     const to = replyChannel === "email"
       ? (convo.contactEmail || convo.contactName)
       : replyChannel === "sms"
         ? (convo.contactPhone || convo.contactName)
         : replyChannel === "telegram"
           ? (tgChatId || convo.contactName)
-          : convo.contactName
+          : replyChannel === "whatsapp"
+            ? (waPhone || convo.contactPhone || convo.contactName)
+            : convo.contactName
 
     setSending(true)
     try {
