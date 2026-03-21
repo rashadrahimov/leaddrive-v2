@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
+import { sendWhatsAppMessage } from "@/lib/whatsapp"
+import Anthropic from "@anthropic-ai/sdk"
 
 /**
  * WhatsApp Cloud API Webhook
@@ -237,6 +239,198 @@ async function processMessages(
     }
 
     console.log(`[WA Webhook] Inbound from ${waId} (${senderName}): ${text.slice(0, 50)}`)
+
+    // AI Auto-Reply: only for text messages
+    if (msg.type === "text" && text.trim()) {
+      try {
+        await handleAiAutoReply(orgId, waId, text, contactId, senderName)
+      } catch (err) {
+        console.error(`[WA Webhook] AI auto-reply error:`, err)
+      }
+    }
+  }
+}
+
+// ─── AI Auto-Reply for WhatsApp ───────────────────────────────────────────
+
+const WA_SYSTEM_PROMPT = `Ты — AI-ассистент компании, подключённый через WhatsApp. Твоё имя "LeadDrive AI".
+
+ПРАВИЛА:
+1. Отвечай КРАТКО — это мессенджер, не портал. Максимум 2-3 предложения.
+2. Будь вежливым и профессиональным.
+3. Если есть контекст из базы знаний — используй его.
+4. Если вопрос вне компетенции — предложи связаться с менеджером.
+5. О ценах не говори — направь к менеджеру.
+6. Не используй markdown разметку (жирный, курсив) — WhatsApp их не поддерживает так же.
+7. Отвечай на языке клиента.`
+
+async function handleAiAutoReply(
+  organizationId: string,
+  waPhone: string,
+  userMessage: string,
+  contactId: string | undefined,
+  senderName: string,
+) {
+  // Check if AI auto-reply is enabled for this org
+  const agentConfig = await prisma.aiAgentConfig.findFirst({
+    where: { organizationId, isActive: true },
+    orderBy: { updatedAt: "desc" },
+  })
+
+  // If no active agent config or no API key — skip auto-reply
+  if (!process.env.ANTHROPIC_API_KEY) {
+    console.log("[WA AI] No ANTHROPIC_API_KEY — skipping auto-reply")
+    return
+  }
+
+  // Find or create AI chat session for this WhatsApp phone
+  let session = await prisma.aiChatSession.findFirst({
+    where: {
+      organizationId,
+      status: "active",
+      metadata: { path: ["waPhone"], equals: waPhone },
+    },
+  })
+
+  if (!session) {
+    session = await prisma.aiChatSession.create({
+      data: {
+        organizationId,
+        portalUserId: contactId || null,
+        status: "active",
+        metadata: { waPhone, channel: "whatsapp", senderName },
+      },
+    })
+  }
+
+  // Save user message to AI session
+  await prisma.aiChatMessage.create({
+    data: {
+      sessionId: session.id,
+      role: "user",
+      content: userMessage,
+    },
+  })
+
+  // Get chat history for context
+  const history = await prisma.aiChatMessage.findMany({
+    where: { sessionId: session.id },
+    orderBy: { createdAt: "asc" },
+    take: 20,
+    select: { role: true, content: true },
+  })
+
+  // Get KB context
+  let kbContext = ""
+  try {
+    const articles = await prisma.kbArticle.findMany({
+      where: {
+        organizationId,
+        status: "published",
+        OR: [
+          { title: { contains: userMessage, mode: "insensitive" } },
+          { content: { contains: userMessage, mode: "insensitive" } },
+        ],
+      },
+      take: 3,
+      select: { title: true, content: true },
+    })
+    if (articles.length > 0) {
+      kbContext = "\n\nБАЗА ЗНАНИЙ:\n" + articles.map(a => `## ${a.title}\n${a.content?.slice(0, 300) || ""}`).join("\n\n")
+    }
+  } catch { /* ignore KB errors */ }
+
+  // Build system prompt
+  let systemPrompt = WA_SYSTEM_PROMPT
+  if (agentConfig?.systemPrompt) {
+    systemPrompt += "\n\nДОПОЛНИТЕЛЬНЫЕ ИНСТРУКЦИИ:\n" + agentConfig.systemPrompt
+  }
+  systemPrompt += kbContext
+  systemPrompt += `\n\nКлиент: ${senderName}\nТелефон: +${waPhone}\nДата: ${new Date().toISOString().split("T")[0]}`
+
+  // Build messages array
+  const messages: Array<{ role: "user" | "assistant"; content: string }> = history
+    .filter(m => m.role === "user" || m.role === "assistant")
+    .map(m => ({ role: m.role as "user" | "assistant", content: m.content }))
+
+  // Ensure alternating roles
+  const cleanMessages = messages.filter((m, i) => {
+    if (i === 0) return m.role === "user"
+    return m.role !== messages[i - 1]?.role
+  })
+
+  if (cleanMessages.length === 0 || cleanMessages[0].role !== "user") {
+    cleanMessages.unshift({ role: "user", content: userMessage })
+  }
+
+  try {
+    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+    const model = agentConfig?.model || "claude-haiku-4-5-20251001"
+    const maxTokens = Math.min(agentConfig?.maxTokens || 512, 1024) // Keep short for WhatsApp
+
+    const startTime = Date.now()
+    const response = await client.messages.create({
+      model,
+      max_tokens: maxTokens,
+      temperature: agentConfig?.temperature ?? 0.7,
+      system: systemPrompt,
+      messages: cleanMessages,
+    })
+
+    const aiReply = response.content
+      .filter(block => block.type === "text")
+      .map(block => block.text)
+      .join("")
+      .replace(/\[ESCALATE\]/g, "")
+      .replace(/\[CREATE_TICKET\]/g, "")
+      .trim()
+
+    if (!aiReply) return
+
+    // Save AI response to session
+    await prisma.aiChatMessage.create({
+      data: {
+        sessionId: session.id,
+        role: "assistant",
+        content: aiReply,
+      },
+    })
+
+    // Update session message count
+    await prisma.aiChatSession.update({
+      where: { id: session.id },
+      data: { messagesCount: { increment: 2 } },
+    })
+
+    // Log interaction
+    const latencyMs = Date.now() - startTime
+    const usage = response.usage
+    const costUsd = ((usage?.input_tokens || 0) * 0.001 + (usage?.output_tokens || 0) * 0.005) / 1000
+    await prisma.aiInteractionLog.create({
+      data: {
+        organizationId,
+        sessionId: session.id,
+        userMessage: userMessage.slice(0, 500),
+        aiResponse: aiReply.slice(0, 1000),
+        latencyMs,
+        promptTokens: usage?.input_tokens || 0,
+        completionTokens: usage?.output_tokens || 0,
+        costUsd,
+        model,
+      },
+    }).catch(() => {})
+
+    // Send AI reply back via WhatsApp
+    const result = await sendWhatsAppMessage({
+      to: waPhone,
+      message: aiReply,
+      organizationId,
+      contactId,
+    })
+
+    console.log(`[WA AI] Reply to ${waPhone}: ${aiReply.slice(0, 80)}... | ${result.success ? "OK" : result.error}`)
+  } catch (err: any) {
+    console.error(`[WA AI] Claude API error:`, err.message)
   }
 }
 
