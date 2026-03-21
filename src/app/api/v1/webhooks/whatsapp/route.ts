@@ -284,12 +284,16 @@ async function handleAiAutoReply(
   }
 
   // Find or create AI chat session for this WhatsApp phone
+  // Use companyId field to store "wa:{phone}" as session identifier
+  const waSessionKey = `wa:${waPhone}`
+
   let session = await prisma.aiChatSession.findFirst({
     where: {
       organizationId,
       status: "active",
-      metadata: { path: ["waPhone"], equals: waPhone },
+      companyId: waSessionKey,
     },
+    orderBy: { updatedAt: "desc" },
   })
 
   if (!session) {
@@ -297,8 +301,8 @@ async function handleAiAutoReply(
       data: {
         organizationId,
         portalUserId: contactId || null,
+        companyId: waSessionKey,
         status: "active",
-        metadata: { waPhone, channel: "whatsapp", senderName },
       },
     })
   }
