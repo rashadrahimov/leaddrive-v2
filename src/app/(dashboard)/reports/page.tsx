@@ -7,7 +7,7 @@ import { StatCard } from "@/components/stat-card"
 import { Badge } from "@/components/ui/badge"
 import {
   TrendingUp, DollarSign, BarChart3, CheckSquare, Clock,
-  Users, Building2, Target, FileText, Wallet, ArrowRight,
+  Users, Building2, Target, FileText, Wallet, ArrowRight, Star,
 } from "lucide-react"
 
 interface ReportData {
@@ -55,6 +55,11 @@ interface ReportData {
     wonDealsRevenue: number
     totalContracts: number
     activeContracts: number
+  }
+  csat?: {
+    average: number
+    totalRatings: number
+    byRating: { rating: number | null; count: number }[]
   }
 }
 
@@ -426,6 +431,48 @@ export default function ReportsPage() {
                 </div>
               ))}
             </div>
+          </CardContent>
+        </Card>
+
+        {/* CSAT */}
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex items-start justify-between">
+              <div>
+                <CardTitle className="text-base">Удовлетворённость (CSAT)</CardTitle>
+                <p className="text-xs text-muted-foreground mt-1">Оценки клиентов</p>
+              </div>
+              <Star className="h-5 w-5 text-yellow-500" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-baseline gap-1">
+              <span className="text-2xl font-bold">{data.csat?.average || 0}</span>
+              <span className="text-sm text-muted-foreground">/ 5</span>
+            </div>
+            <div className="text-xs text-muted-foreground mb-2">{data.csat?.totalRatings || 0} оценок</div>
+            {data.csat?.byRating && data.csat.byRating.length > 0 && (
+              <div className="space-y-1">
+                {[5, 4, 3, 2, 1].map(r => {
+                  const item = data.csat!.byRating.find(b => b.rating === r)
+                  const count = item?.count || 0
+                  const total = data.csat!.totalRatings || 1
+                  const pct = Math.round((count / total) * 100)
+                  return (
+                    <div key={r} className="flex items-center gap-2 text-xs">
+                      <div className="flex items-center gap-0.5 w-10">
+                        <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                        <span>{r}</span>
+                      </div>
+                      <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
+                        <div className="h-full bg-yellow-400 rounded-full" style={{ width: `${pct}%` }} />
+                      </div>
+                      <span className="w-8 text-right font-medium">{count}</span>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
           </CardContent>
         </Card>
 

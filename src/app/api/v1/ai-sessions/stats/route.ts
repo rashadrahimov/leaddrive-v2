@@ -69,10 +69,17 @@ export async function GET(req: NextRequest) {
     const totalTokens = allMessages.reduce((sum, m) => sum + (m.tokenCount || 0), 0)
     const totalCost = Math.round((totalTokens / 1000) * 0.003 * 1000) / 1000
 
-    // CSAT — placeholder (would come from feedback model)
-    const csat = 0
-    // Quality score — placeholder
-    const qualityScore = 0
+    // CSAT — average satisfaction rating from tickets with ratings
+    const csatResult = await prisma.ticket.aggregate({
+      where: { organizationId: orgId, satisfactionRating: { not: null } },
+      _avg: { satisfactionRating: true },
+      _count: { satisfactionRating: true },
+    })
+    const csat = csatResult._avg.satisfactionRating
+      ? Math.round(csatResult._avg.satisfactionRating * 10) / 10
+      : 0
+    // Quality score based on CSAT
+    const qualityScore = csat > 0 ? Math.round((csat / 5) * 100) : 0
 
     return NextResponse.json({
       success: true,

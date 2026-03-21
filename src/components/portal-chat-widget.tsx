@@ -1,18 +1,27 @@
 "use client"
 
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
-import { MessageSquare, X, Send, Bot, User, TicketPlus, Ticket, FileText, Loader2 } from "lucide-react"
+import { MessageSquare, X, Send, Bot, User, TicketPlus, Ticket, FileText, Loader2, Star, Headphones, CheckCircle, Clock, AlertCircle } from "lucide-react"
 
 interface Message {
   id: string
-  role: "user" | "assistant"
+  role: "user" | "assistant" | "operator"
   content: string
   createdAt: string
   suggestTicket?: boolean
   escalated?: boolean
   escalationTicketId?: string | null
   escalationTicketNumber?: string | null
+  ticketStatus?: string | null
+}
+
+interface TicketInfo {
+  id: string
+  ticketNumber: string
+  status: string
+  satisfactionRating: number | null
+  lastCommentCount: number
 }
 
 interface PortalChatWidgetProps {
@@ -21,25 +30,38 @@ interface PortalChatWidgetProps {
 
 const STORAGE_KEY = "leaddrive_chat"
 
-function loadChat(): { messages: Message[]; sessionId: string | null } {
+const STATUS_LABELS: Record<string, string> = {
+  new: "Новый", open: "Открыт", in_progress: "В работе", waiting: "Ожидание",
+  resolved: "Решён", closed: "Закрыт",
+}
+
+const STATUS_ICONS: Record<string, typeof Clock> = {
+  new: AlertCircle, open: AlertCircle, in_progress: Clock, waiting: Clock,
+  resolved: CheckCircle, closed: CheckCircle,
+}
+
+function loadChat(): { messages: Message[]; sessionId: string | null; trackedTickets: TicketInfo[] } {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
-    if (!raw) return { messages: [], sessionId: null }
+    if (!raw) return { messages: [], sessionId: null, trackedTickets: [] }
     const data = JSON.parse(raw)
-    // Expire after 24 hours
     if (data.ts && Date.now() - data.ts > 24 * 60 * 60 * 1000) {
       localStorage.removeItem(STORAGE_KEY)
-      return { messages: [], sessionId: null }
+      return { messages: [], sessionId: null, trackedTickets: [] }
     }
-    return { messages: data.messages || [], sessionId: data.sessionId || null }
+    return {
+      messages: data.messages || [],
+      sessionId: data.sessionId || null,
+      trackedTickets: data.trackedTickets || [],
+    }
   } catch {
-    return { messages: [], sessionId: null }
+    return { messages: [], sessionId: null, trackedTickets: [] }
   }
 }
 
-function saveChat(messages: Message[], sessionId: string | null) {
+function saveChat(messages: Message[], sessionId: string | null, trackedTickets: TicketInfo[]) {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ messages, sessionId, ts: Date.now() }))
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ messages, sessionId, trackedTickets, ts: Date.now() }))
   } catch { /* ignore */ }
 }
 
@@ -49,6 +71,11 @@ export function PortalChatWidget({ userName }: PortalChatWidgetProps) {
   const [input, setInput] = useState("")
   const [sending, setSending] = useState(false)
   const [sessionId, setSessionId] = useState<string | null>(null)
+  const [trackedTickets, setTrackedTickets] = useState<TicketInfo[]>([])
+  const [csatTicketId, setCsatTicketId] = useState<string | null>(null)
+  const [csatRating, setCsatRating] = useState(0)
+  const [csatHover, setCsatHover] = useState(0)
+  const [csatSending, setCsatSending] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const router = useRouter()
@@ -56,24 +83,99 @@ export function PortalChatWidget({ userName }: PortalChatWidgetProps) {
   // Load chat from localStorage on mount
   useEffect(() => {
     const saved = loadChat()
-    if (saved.messages.length > 0) {
-      setMessages(saved.messages)
-      setSessionId(saved.sessionId)
-    }
+    if (saved.messages.length > 0) setMessages(saved.messages)
+    if (saved.sessionId) setSessionId(saved.sessionId)
+    if (saved.trackedTickets.length > 0) setTrackedTickets(saved.trackedTickets)
   }, [])
 
   // Save chat to localStorage on every change
   useEffect(() => {
-    if (messages.length > 0) {
-      saveChat(messages, sessionId)
+    if (messages.length > 0 || trackedTickets.length > 0) {
+      saveChat(messages, sessionId, trackedTickets)
     }
-  }, [messages, sessionId])
+  }, [messages, sessionId, trackedTickets])
+
+  // Poll tracked tickets for operator responses and status changes
+  const pollTickets = useCallback(async () => {
+    if (trackedTickets.length === 0) return
+
+    for (const ticket of trackedTickets) {
+      try {
+        const res = await fetch(`/api/v1/public/portal-tickets/${ticket.id}`)
+        const json = await res.json()
+        if (!json.success) continue
+
+        const data = json.data
+        const comments = data.comments || []
+
+        // Check for new operator comments (isAgent=true means operator)
+        const agentComments = comments.filter((c: { isAgent: boolean }) => c.isAgent)
+        if (agentComments.length > ticket.lastCommentCount) {
+          // New operator responses — add them to chat
+          const newComments = agentComments.slice(ticket.lastCommentCount)
+          setMessages(prev => {
+            const newMsgs = [...prev]
+            for (const c of newComments) {
+              // Avoid duplicates
+              if (!newMsgs.some(m => m.id === `op-${c.id}`)) {
+                newMsgs.push({
+                  id: `op-${c.id}`,
+                  role: "operator",
+                  content: c.comment,
+                  createdAt: c.createdAt,
+                })
+              }
+            }
+            return newMsgs
+          })
+          setTrackedTickets(prev => prev.map(t =>
+            t.id === ticket.id ? { ...t, lastCommentCount: agentComments.length } : t
+          ))
+        }
+
+        // Check for status change
+        if (data.status !== ticket.status) {
+          const oldStatus = ticket.status
+          const newStatus = data.status
+          setTrackedTickets(prev => prev.map(t =>
+            t.id === ticket.id ? { ...t, status: newStatus, satisfactionRating: data.satisfactionRating } : t
+          ))
+
+          // Add status update message
+          setMessages(prev => {
+            const statusMsgId = `status-${ticket.id}-${newStatus}`
+            if (prev.some(m => m.id === statusMsgId)) return prev
+            return [...prev, {
+              id: statusMsgId,
+              role: "assistant",
+              content: `Статус тикета ${ticket.ticketNumber} изменён: ${STATUS_LABELS[oldStatus] || oldStatus} → ${STATUS_LABELS[newStatus] || newStatus}`,
+              createdAt: new Date().toISOString(),
+              ticketStatus: newStatus,
+            }]
+          })
+
+          // If resolved/closed — show CSAT prompt
+          if ((newStatus === "resolved" || newStatus === "closed") && !data.satisfactionRating) {
+            setCsatTicketId(ticket.id)
+          }
+        }
+      } catch { /* ignore polling errors */ }
+    }
+  }, [trackedTickets])
+
+  // Poll every 15 seconds when chat is open and there are tracked tickets
+  useEffect(() => {
+    if (!open || trackedTickets.length === 0) return
+    pollTickets()
+    const interval = setInterval(pollTickets, 15000)
+    return () => clearInterval(interval)
+  }, [open, trackedTickets.length, pollTickets])
 
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight
     }
-  }, [messages, sending])
+  }, [messages, sending, csatTicketId])
 
   useEffect(() => {
     if (open && inputRef.current) {
@@ -105,7 +207,7 @@ export function PortalChatWidget({ userName }: PortalChatWidgetProps) {
       if (json.success) {
         if (json.data.sessionId) setSessionId(json.data.sessionId)
         const reply = json.data.reply
-        setMessages(prev => [...prev, {
+        const newMsg: Message = {
           id: reply.id || (Date.now() + 1).toString(),
           role: "assistant",
           content: reply.content || reply,
@@ -114,7 +216,22 @@ export function PortalChatWidget({ userName }: PortalChatWidgetProps) {
           escalated: json.data.escalated || false,
           escalationTicketId: json.data.escalationTicketId || null,
           escalationTicketNumber: json.data.escalationTicketNumber || null,
-        }])
+        }
+        setMessages(prev => [...prev, newMsg])
+
+        // Track escalation ticket for polling
+        if (json.data.escalated && json.data.escalationTicketId) {
+          setTrackedTickets(prev => {
+            if (prev.some(t => t.id === json.data.escalationTicketId)) return prev
+            return [...prev, {
+              id: json.data.escalationTicketId,
+              ticketNumber: json.data.escalationTicketNumber || "",
+              status: "open",
+              satisfactionRating: null,
+              lastCommentCount: 0,
+            }]
+          })
+        }
       }
     } catch {
       setMessages(prev => [...prev, {
@@ -132,10 +249,11 @@ export function PortalChatWidget({ userName }: PortalChatWidgetProps) {
     if (sending || !sessionId) return
     setSending(true)
     try {
-      // Collect user messages to build ticket subject/description
       const userMessages = messages.filter(m => m.role === "user")
       const subject = userMessages[0]?.content?.slice(0, 100) || "Запрос из чата"
-      const chatHistory = messages.map(m => `[${m.role === "user" ? "Клиент" : "AI"}] ${m.content}`).join("\n\n")
+      const chatHistory = messages
+        .filter(m => m.role !== "operator")
+        .map(m => `[${m.role === "user" ? "Клиент" : "AI"}] ${m.content}`).join("\n\n")
 
       const res = await fetch("/api/v1/public/portal-tickets", {
         method: "POST",
@@ -159,6 +277,14 @@ export function PortalChatWidget({ userName }: PortalChatWidgetProps) {
           escalationTicketId: ticket.id,
           escalationTicketNumber: ticketNumber,
         }])
+        // Track this ticket for operator responses
+        setTrackedTickets(prev => [...prev, {
+          id: ticket.id,
+          ticketNumber,
+          status: "new",
+          satisfactionRating: null,
+          lastCommentCount: 0,
+        }])
       } else {
         setMessages(prev => [...prev, {
           id: Date.now().toString(),
@@ -179,8 +305,116 @@ export function PortalChatWidget({ userName }: PortalChatWidgetProps) {
     }
   }
 
+  const handleSubmitCsat = async () => {
+    if (!csatTicketId || csatRating === 0 || csatSending) return
+    setCsatSending(true)
+    try {
+      const res = await fetch(`/api/v1/public/portal-tickets/${csatTicketId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ satisfactionRating: csatRating }),
+      })
+      const json = await res.json()
+      if (json.success) {
+        const ticket = trackedTickets.find(t => t.id === csatTicketId)
+        setMessages(prev => [...prev, {
+          id: `csat-${csatTicketId}`,
+          role: "assistant",
+          content: `Спасибо за вашу оценку ${csatRating}/5 по тикету ${ticket?.ticketNumber || ""}! Ваш отзыв очень важен для нас.`,
+          createdAt: new Date().toISOString(),
+        }])
+        setCsatTicketId(null)
+        setCsatRating(0)
+        setTrackedTickets(prev => prev.map(t =>
+          t.id === csatTicketId ? { ...t, satisfactionRating: csatRating } : t
+        ))
+      }
+    } catch { /* ignore */ } finally {
+      setCsatSending(false)
+    }
+  }
+
   const formatTime = (iso: string) => {
     return new Date(iso).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit", second: "2-digit" })
+  }
+
+  const renderMessage = (msg: Message) => {
+    const isUser = msg.role === "user"
+    const isOperator = msg.role === "operator"
+    const StatusIcon = msg.ticketStatus ? (STATUS_ICONS[msg.ticketStatus] || Clock) : null
+
+    return (
+      <div key={msg.id} className={`flex gap-2.5 ${isUser ? "justify-end" : ""}`}>
+        {!isUser && (
+          <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${
+            isOperator ? "bg-green-100" : "bg-indigo-100"
+          }`}>
+            {isOperator
+              ? <Headphones className="h-3.5 w-3.5 text-green-600" />
+              : <Bot className="h-3.5 w-3.5 text-indigo-600" />
+            }
+          </div>
+        )}
+        <div className={isUser ? "max-w-[75%]" : "max-w-[80%]"}>
+          {/* Status update message */}
+          {msg.ticketStatus && StatusIcon && (
+            <div className="flex items-center gap-1.5 mb-1">
+              <StatusIcon className="h-3 w-3 text-blue-500" />
+              <span className="text-[10px] font-medium text-blue-600">Обновление статуса</span>
+            </div>
+          )}
+          {/* Operator label */}
+          {isOperator && (
+            <p className="text-[10px] font-medium text-green-600 mb-0.5">Оператор</p>
+          )}
+          <div className={`rounded-lg p-3 shadow-sm ${
+            isUser
+              ? "bg-blue-500 text-white rounded-tr-none"
+              : isOperator
+                ? "bg-green-50 border border-green-200 rounded-tl-none"
+                : msg.ticketStatus
+                  ? "bg-blue-50 border border-blue-200 rounded-tl-none"
+                  : "bg-white border border-gray-100 rounded-tl-none"
+          }`}>
+            <p className={`text-sm whitespace-pre-wrap ${isUser ? "" : "text-gray-800"}`}>{msg.content}</p>
+          </div>
+          <p className={`text-[10px] mt-1 ${isUser ? "text-right" : ""} text-gray-400`}>
+            {formatTime(msg.createdAt)}
+          </p>
+          {msg.escalated && msg.escalationTicketId && (
+            <div className="mt-1.5 p-2 rounded-lg bg-red-50 border border-red-200">
+              <p className="text-[10px] font-medium text-red-700 mb-1">Разговор передан оператору</p>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  window.location.href = `/portal/tickets/${msg.escalationTicketId}`
+                }}
+                className="inline-flex items-center gap-1 text-xs text-red-600 border border-red-300 rounded-full px-2.5 py-0.5 hover:bg-red-100 transition-colors"
+              >
+                <TicketPlus className="h-3 w-3" /> Тикет {msg.escalationTicketNumber || `#${msg.escalationTicketId?.slice(0, 8)}`}
+              </button>
+            </div>
+          )}
+          {msg.suggestTicket && !msg.escalated && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                handleCreateTicket()
+              }}
+              disabled={sending}
+              className="mt-1.5 inline-flex items-center gap-1 text-xs text-orange-600 border border-orange-200 rounded-full px-3 py-1 hover:bg-orange-50 transition-colors disabled:opacity-50"
+            >
+              <TicketPlus className="h-3 w-3" /> Создать тикет
+            </button>
+          )}
+        </div>
+        {isUser && (
+          <div className="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+            <User className="h-3.5 w-3.5 text-blue-600" />
+          </div>
+        )}
+      </div>
+    )
   }
 
   return (
@@ -200,6 +434,21 @@ export function PortalChatWidget({ userName }: PortalChatWidgetProps) {
                 <span className="text-white/80 text-xs">Online</span>
               </div>
             </div>
+            {/* New chat button */}
+            {messages.length > 0 && (
+              <button
+                onClick={() => {
+                  setMessages([])
+                  setSessionId(null)
+                  setTrackedTickets([])
+                  setCsatTicketId(null)
+                  localStorage.removeItem(STORAGE_KEY)
+                }}
+                className="text-white/70 hover:text-white text-xs border border-white/30 rounded-full px-2 py-0.5"
+              >
+                Новый чат
+              </button>
+            )}
           </div>
 
           {/* Messages */}
@@ -222,58 +471,7 @@ export function PortalChatWidget({ userName }: PortalChatWidgetProps) {
               </div>
             )}
 
-            {messages.map(msg => (
-              <div key={msg.id} className={`flex gap-2.5 ${msg.role === "user" ? "justify-end" : ""}`}>
-                {msg.role === "assistant" && (
-                  <div className="w-7 h-7 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <Bot className="h-3.5 w-3.5 text-indigo-600" />
-                  </div>
-                )}
-                <div className={msg.role === "user" ? "max-w-[75%]" : "max-w-[80%]"}>
-                  <div className={`rounded-lg p-3 shadow-sm ${
-                    msg.role === "user"
-                      ? "bg-blue-500 text-white rounded-tr-none"
-                      : "bg-white border border-gray-100 rounded-tl-none"
-                  }`}>
-                    <p className={`text-sm whitespace-pre-wrap ${msg.role === "assistant" ? "text-gray-800" : ""}`}>{msg.content}</p>
-                  </div>
-                  <p className={`text-[10px] mt-1 ${msg.role === "user" ? "text-right" : ""} text-gray-400`}>
-                    {formatTime(msg.createdAt)}
-                  </p>
-                  {msg.escalated && msg.escalationTicketId && (
-                    <div className="mt-1.5 p-2 rounded-lg bg-red-50 border border-red-200">
-                      <p className="text-[10px] font-medium text-red-700 mb-1">Разговор передан оператору</p>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          window.location.href = `/portal/tickets/${msg.escalationTicketId}`
-                        }}
-                        className="inline-flex items-center gap-1 text-xs text-red-600 border border-red-300 rounded-full px-2.5 py-0.5 hover:bg-red-100 transition-colors"
-                      >
-                        <TicketPlus className="h-3 w-3" /> Тикет {msg.escalationTicketNumber || `#${msg.escalationTicketId?.slice(0, 8)}`}
-                      </button>
-                    </div>
-                  )}
-                  {msg.suggestTicket && !msg.escalated && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        handleCreateTicket()
-                      }}
-                      disabled={sending}
-                      className="mt-1.5 inline-flex items-center gap-1 text-xs text-orange-600 border border-orange-200 rounded-full px-3 py-1 hover:bg-orange-50 transition-colors disabled:opacity-50"
-                    >
-                      <TicketPlus className="h-3 w-3" /> Создать тикет
-                    </button>
-                  )}
-                </div>
-                {msg.role === "user" && (
-                  <div className="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <User className="h-3.5 w-3.5 text-blue-600" />
-                  </div>
-                )}
-              </div>
-            ))}
+            {messages.map(renderMessage)}
 
             {/* Typing indicator */}
             {sending && (
@@ -286,6 +484,49 @@ export function PortalChatWidget({ userName }: PortalChatWidgetProps) {
                     <Loader2 className="h-3.5 w-3.5 text-indigo-500 animate-spin" />
                     <span className="text-xs text-gray-500">Думает...</span>
                   </div>
+                </div>
+              </div>
+            )}
+
+            {/* CSAT rating inline */}
+            {csatTicketId && (
+              <div className="flex gap-2.5">
+                <div className="w-7 h-7 rounded-full bg-yellow-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <Star className="h-3.5 w-3.5 text-yellow-600" />
+                </div>
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg rounded-tl-none p-3 shadow-sm">
+                  <p className="text-xs font-medium text-yellow-800 mb-2">Оцените качество поддержки</p>
+                  <div className="flex items-center gap-0.5 mb-2">
+                    {[1, 2, 3, 4, 5].map(i => (
+                      <button
+                        key={i}
+                        onClick={() => setCsatRating(i)}
+                        onMouseEnter={() => setCsatHover(i)}
+                        onMouseLeave={() => setCsatHover(0)}
+                        className="p-0.5 transition-transform hover:scale-110"
+                      >
+                        <Star className={`h-6 w-6 ${
+                          i <= (csatHover || csatRating)
+                            ? "fill-yellow-400 text-yellow-400"
+                            : "text-gray-300"
+                        }`} />
+                      </button>
+                    ))}
+                    {csatRating > 0 && (
+                      <span className="ml-1 text-[10px] text-yellow-700">
+                        {csatRating === 1 ? "Ужасно" : csatRating === 2 ? "Плохо" : csatRating === 3 ? "Нормально" : csatRating === 4 ? "Хорошо" : "Отлично!"}
+                      </span>
+                    )}
+                  </div>
+                  {csatRating > 0 && (
+                    <button
+                      onClick={handleSubmitCsat}
+                      disabled={csatSending}
+                      className="text-xs bg-yellow-500 text-white rounded-full px-3 py-1 hover:bg-yellow-600 disabled:opacity-50"
+                    >
+                      {csatSending ? "Отправка..." : "Отправить оценку"}
+                    </button>
+                  )}
                 </div>
               </div>
             )}

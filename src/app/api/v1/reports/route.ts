@@ -109,6 +109,18 @@ export async function GET(req: NextRequest) {
       _count: true,
     })
 
+    // CSAT (Customer Satisfaction) from ticket ratings
+    const csatData = await prisma.ticket.aggregate({
+      where: { organizationId: orgId, satisfactionRating: { not: null } },
+      _avg: { satisfactionRating: true },
+      _count: { satisfactionRating: true },
+    })
+    const csatByRating = await prisma.ticket.groupBy({
+      by: ["satisfactionRating"],
+      where: { organizationId: orgId, satisfactionRating: { not: null } },
+      _count: true,
+    })
+
     // Financial overview from contracts
     const contractsData = await prisma.contract.findMany({
       where: { organizationId: orgId },
@@ -169,6 +181,11 @@ export async function GET(req: NextRequest) {
           wonDealsRevenue: totalRevenue,
           totalContracts: contractsData.length,
           activeContracts: contractsData.filter(c => c.status === "active").length,
+        },
+        csat: {
+          average: csatData._avg.satisfactionRating ? Math.round(csatData._avg.satisfactionRating * 10) / 10 : 0,
+          totalRatings: csatData._count.satisfactionRating,
+          byRating: csatByRating.map(r => ({ rating: r.satisfactionRating, count: r._count })),
         },
       },
     })
