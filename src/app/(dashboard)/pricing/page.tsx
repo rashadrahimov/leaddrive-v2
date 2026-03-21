@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useMemo, useCallback } from "react"
+import { useState, useEffect, useMemo, useCallback, useRef } from "react"
 import { useSession } from "next-auth/react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -1093,6 +1093,13 @@ function CompanyEditor({ code, data, onSave, onDelete, saving, expandedCats, set
   // Add service form (per category)
   const [addingServiceCat, setAddingServiceCat] = useState<string | null>(null)
   const [newSvc, setNewSvc] = useState({ name: "", unit: "Per Device", qty: 1, price: 0 })
+  const addSvcFormRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (addingServiceCat && addSvcFormRef.current) {
+      addSvcFormRef.current.scrollIntoView({ behavior: "smooth", block: "center" })
+    }
+  }, [addingServiceCat])
 
   useEffect(() => {
     setLocalCats(data.categories)
@@ -1309,7 +1316,7 @@ function CompanyEditor({ code, data, onSave, onDelete, saving, expandedCats, set
 
                   {/* Add service form */}
                   {addingServiceCat === cat && (
-                    <div className="mt-2 p-3 bg-blue-50 rounded-lg space-y-2 border border-blue-200">
+                    <div ref={addSvcFormRef} className="mt-2 p-3 bg-blue-50 rounded-lg space-y-2 border border-blue-200">
                       <div className="text-xs font-semibold text-blue-700">Новая услуга</div>
                       <div className="grid grid-cols-[1fr_120px_70px_90px] gap-2">
                         <input
