@@ -295,6 +295,26 @@ async function checkAndCreateAlerts(
   }
 }
 
+// GET — validate if a chat session still exists (used by widget to detect admin-cleared sessions)
+export async function GET(req: NextRequest) {
+  const user = await getPortalUser()
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+
+  const sessionId = new URL(req.url).searchParams.get("sessionId")
+  if (!sessionId) return NextResponse.json({ success: false })
+
+  const session = await prisma.aiChatSession.findUnique({
+    where: { id: sessionId },
+    select: { id: true },
+  })
+
+  if (!session) {
+    return NextResponse.json({ success: true, data: { cleared: true } })
+  }
+
+  return NextResponse.json({ success: true, data: { cleared: false } })
+}
+
 export async function POST(req: NextRequest) {
   const user = await getPortalUser()
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })

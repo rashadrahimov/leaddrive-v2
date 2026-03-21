@@ -84,30 +84,58 @@ export function PortalChatWidget({ userName }: PortalChatWidgetProps) {
 
   const storageKey = getStorageKey(userName)
 
-  // Load chat from localStorage on mount + auto-track tickets from messages
+  // Load chat from localStorage on mount + validate session still exists on server
   useEffect(() => {
     // Clean up old shared key
     localStorage.removeItem("leaddrive_chat")
     const saved = loadChat(storageKey)
-    if (saved.messages.length > 0) setMessages(saved.messages)
-    if (saved.sessionId) setSessionId(saved.sessionId)
 
-    // Auto-discover tickets from messages (handles old sessions without trackedTickets)
-    const existingIds = new Set(saved.trackedTickets.map(t => t.id))
-    const discoveredTickets: TicketInfo[] = [...saved.trackedTickets]
-    for (const msg of saved.messages) {
-      if (msg.escalationTicketId && !existingIds.has(msg.escalationTicketId)) {
-        existingIds.add(msg.escalationTicketId)
-        discoveredTickets.push({
-          id: msg.escalationTicketId,
-          ticketNumber: msg.escalationTicketNumber || "",
-          status: "new",
-          satisfactionRating: null,
-          lastCommentCount: 0,
+    // If we have a saved session, validate it still exists on the server
+    if (saved.sessionId) {
+      fetch(`/api/v1/public/portal-chat?sessionId=${saved.sessionId}`)
+        .then(r => r.json())
+        .then(json => {
+          if (!json.success || json.data?.cleared) {
+            // Session was deleted from admin — clear local state
+            localStorage.removeItem(storageKey)
+            setMessages([])
+            setSessionId(null)
+            setTrackedTickets([])
+            return
+          }
+          // Session valid — load saved data
+          setMessages(saved.messages)
+          setSessionId(saved.sessionId)
+          loadTrackedTickets(saved)
         })
-      }
+        .catch(() => {
+          // On error, load saved data anyway
+          setMessages(saved.messages)
+          setSessionId(saved.sessionId)
+          loadTrackedTickets(saved)
+        })
+    } else if (saved.messages.length > 0) {
+      setMessages(saved.messages)
+      loadTrackedTickets(saved)
     }
-    if (discoveredTickets.length > 0) setTrackedTickets(discoveredTickets)
+
+    function loadTrackedTickets(data: { messages: Message[]; trackedTickets: TicketInfo[] }) {
+      const existingIds = new Set(data.trackedTickets.map(t => t.id))
+      const discoveredTickets: TicketInfo[] = [...data.trackedTickets]
+      for (const msg of data.messages) {
+        if (msg.escalationTicketId && !existingIds.has(msg.escalationTicketId)) {
+          existingIds.add(msg.escalationTicketId)
+          discoveredTickets.push({
+            id: msg.escalationTicketId,
+            ticketNumber: msg.escalationTicketNumber || "",
+            status: "new",
+            satisfactionRating: null,
+            lastCommentCount: 0,
+          })
+        }
+      }
+      if (discoveredTickets.length > 0) setTrackedTickets(discoveredTickets)
+    }
   }, [])
 
   // Save chat to localStorage on every change
