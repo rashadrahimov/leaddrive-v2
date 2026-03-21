@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { prisma } from "@/lib/prisma"
 import { getOrgId } from "@/lib/api-auth"
+import { sendWhatsAppMessage } from "@/lib/whatsapp"
 
 const updateTicketSchema = z.object({
   subject: z.string().min(1).max(300).optional(),
@@ -79,7 +80,15 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 })
 
   try {
-    const ticket = await prisma.ticket.updateMany({
+    // Fetch original ticket to detect status change
+    const original = await prisma.ticket.findFirst({
+      where: { id, organizationId: orgId },
+    })
+    if (!original) return NextResponse.json({ error: "Ticket not found" }, { status: 404 })
+
+    const oldStatus = original.status
+
+    await prisma.ticket.updateMany({
       where: { id, organizationId: orgId },
       data: {
         ...(parsed.data.subject && { subject: parsed.data.subject }),
@@ -95,12 +104,18 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       },
     })
 
-    if (ticket.count === 0) return NextResponse.json({ error: "Ticket not found" }, { status: 404 })
-
     const updated = await prisma.ticket.findFirst({
       where: { id, organizationId: orgId },
       include: { comments: { orderBy: { createdAt: "desc" } } },
     })
+
+    // Send WhatsApp notification on status change for WhatsApp tickets
+    const newStatus = parsed.data.status
+    if (newStatus && newStatus !== oldStatus && (original.tags as string[])?.includes("whatsapp")) {
+      sendWhatsAppStatusNotification(orgId, original, newStatus).catch(err =>
+        console.error("[Ticket WA] Status notification error:", err)
+      )
+    }
 
     return NextResponse.json({ success: true, data: updated })
   } catch (e) {
@@ -182,4 +197,65 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   } catch (e) {
     return NextResponse.json({ error: String(e) }, { status: 500 })
   }
+}
+
+// ─── WhatsApp status notification ────────────────────────────────────────
+
+const STATUS_MESSAGES: Record<string, string> = {
+  in_progress: "Sizin sorğunuz ({ticketNumber}) qəbul edildi və hazırda üzərində işlənilir.",
+  waiting: "Sorğunuz ({ticketNumber}) üzrə sizdən əlavə məlumat gözlənilir.",
+  resolved: "Sorğunuz ({ticketNumber}) həll edildi. Əgər razı deyilsinizsə, bu mesaja cavab yazın — sorğu yenidən açılacaq.",
+  closed: "Sorğunuz ({ticketNumber}) bağlandı. Əgər razı deyilsinizsə, bu mesaja cavab yazın — sorğu yenidən açılacaq.",
+}
+
+async function sendWhatsAppStatusNotification(
+  orgId: string,
+  ticket: { id: string; ticketNumber: string | null; description: string | null; contactId: string | null; tags: string[] },
+  newStatus: string,
+) {
+  const template = STATUS_MESSAGES[newStatus]
+  if (!template) return
+
+  const message = template.replace("{ticketNumber}", ticket.ticketNumber || ticket.id.slice(0, 8))
+
+  // Extract phone — same logic as comments route
+  let waPhone: string | undefined
+
+  // 1. From ticket description
+  const phoneMatch = ticket.description?.match(/\+(\d{10,15})/)
+  if (phoneMatch) waPhone = phoneMatch[1]
+
+  // 2. From contact record
+  if (!waPhone && ticket.contactId) {
+    const contact = await prisma.contact.findFirst({
+      where: { id: ticket.contactId, organizationId: orgId },
+      select: { phone: true },
+    })
+    if (contact?.phone) waPhone = contact.phone.replace(/[\s\-\(\)\+]/g, "")
+  }
+
+  // 3. From recent WhatsApp messages
+  if (!waPhone && ticket.contactId) {
+    const recentMsg = await prisma.channelMessage.findFirst({
+      where: { organizationId: orgId, contactId: ticket.contactId, channelType: "whatsapp", direction: "inbound" },
+      orderBy: { createdAt: "desc" },
+      select: { metadata: true },
+    })
+    const meta = recentMsg?.metadata as any
+    if (meta?.waPhone) waPhone = meta.waPhone
+  }
+
+  if (!waPhone) {
+    console.log(`[Ticket WA] No phone for status notification, ticket ${ticket.ticketNumber}`)
+    return
+  }
+
+  const result = await sendWhatsAppMessage({
+    to: waPhone,
+    message,
+    organizationId: orgId,
+    contactId: ticket.contactId || undefined,
+  })
+
+  console.log(`[Ticket WA] Status "${newStatus}" notification to ${waPhone}: ${result.success ? "OK" : result.error}`)
 }

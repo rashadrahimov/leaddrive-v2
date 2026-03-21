@@ -240,6 +240,12 @@ async function processMessages(
 
     console.log(`[WA Webhook] Inbound from ${waId} (${senderName}): ${text.slice(0, 50)}`)
 
+    // Check if customer has a closed/resolved WhatsApp ticket — auto-reopen
+    if (contactId && msg.type === "text" && text.trim()) {
+      const reopened = await tryReopenTicket(orgId, contactId, waId, text, senderName)
+      if (reopened) continue // Skip AI auto-reply if ticket was reopened
+    }
+
     // AI Auto-Reply: only for text messages
     if (msg.type === "text" && text.trim()) {
       try {
@@ -248,6 +254,69 @@ async function processMessages(
         console.error(`[WA Webhook] AI auto-reply error:`, err)
       }
     }
+  }
+}
+
+// ─── Auto-Reopen closed/resolved WhatsApp tickets ───────────────────────
+
+async function tryReopenTicket(
+  orgId: string,
+  contactId: string,
+  waPhone: string,
+  userMessage: string,
+  senderName: string,
+): Promise<boolean> {
+  try {
+    // Find most recent closed/resolved ticket with whatsapp tag for this contact
+    const ticket = await prisma.ticket.findFirst({
+      where: {
+        organizationId: orgId,
+        contactId,
+        status: { in: ["closed", "resolved"] },
+        tags: { has: "whatsapp" },
+      },
+      orderBy: { updatedAt: "desc" },
+    })
+
+    if (!ticket) return false
+
+    // Only reopen if closed within last 7 days
+    const closedAt = ticket.closedAt || ticket.resolvedAt || ticket.updatedAt
+    const daysSinceClosed = (Date.now() - closedAt.getTime()) / (1000 * 60 * 60 * 24)
+    if (daysSinceClosed > 7) return false
+
+    // Reopen the ticket
+    await prisma.ticket.update({
+      where: { id: ticket.id },
+      data: {
+        status: "open",
+        closedAt: null,
+        resolvedAt: null,
+      },
+    })
+
+    // Add customer's message as comment
+    await prisma.ticketComment.create({
+      data: {
+        ticketId: ticket.id,
+        comment: `[Клиент (WhatsApp)] ${userMessage}`,
+        isInternal: false,
+      },
+    })
+
+    // Notify customer
+    await sendWhatsAppMessage({
+      to: waPhone,
+      message: `Sorğunuz (${ticket.ticketNumber}) yenidən açıldı. Menecer tezliklə sizinlə əlaqə saxlayacaq.`,
+      organizationId: orgId,
+      contactId,
+    })
+
+    console.log(`[WA Reopen] Ticket ${ticket.ticketNumber} reopened by ${senderName} (${waPhone})`)
+    return true
+  } catch (err) {
+    console.error(`[WA Reopen] Error:`, err)
+    return false
   }
 }
 
