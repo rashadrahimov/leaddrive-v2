@@ -82,7 +82,10 @@ export function computeCostModel(
   for (const item of overheadItems) {
     let amt = item.amount ?? 0
 
-    if (item.isAnnual) {
+    // Amortization: divide by custom period (e.g. 60 months, 84 months)
+    if (item.amortMonths && item.amortMonths > 0) {
+      amt = amt / item.amortMonths
+    } else if (item.isAnnual) {
       amt = amt / 12
     }
 

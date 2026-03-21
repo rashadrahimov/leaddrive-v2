@@ -54,6 +54,7 @@ export function ParametersTab() {
     if (!localParams) return
     updateMutation.mutate(
       {
+        totalUsers: localParams.totalUsers,
         totalEmployees: localParams.totalEmployees,
         technicalStaff: localParams.technicalStaff,
         backOfficeStaff: localParams.backOfficeStaff,
@@ -128,7 +129,7 @@ export function ParametersTab() {
         </div>
       </div>
 
-      {/* Total Users — readonly */}
+      {/* Total Users — editable */}
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-base">Ümumi Məlumat</CardTitle>
@@ -143,8 +144,8 @@ export function ParametersTab() {
               <Input
                 type="number"
                 value={params.totalUsers || 0}
-                disabled
-                className="w-40 text-right bg-muted"
+                onChange={e => updateParam("totalUsers", parseInt(e.target.value) || 0)}
+                className="w-40 text-right"
               />
             </div>
           </div>

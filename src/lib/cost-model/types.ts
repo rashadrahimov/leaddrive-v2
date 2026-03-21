@@ -25,6 +25,7 @@ export interface OverheadItem {
   hasVat: boolean
   isAdmin: boolean
   targetService?: string
+  amortMonths?: number  // 0=no amort, >0=divide amount by this many months
   sortOrder: number
   notes?: string
 }
