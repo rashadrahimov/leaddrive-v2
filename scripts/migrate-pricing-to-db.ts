@@ -176,15 +176,18 @@ async function main() {
       // Services
       if (typeof catVal === 'object' && catVal !== null && 'services' in catVal && Array.isArray(catVal.services)) {
         for (const [svcIdx, svc] of catVal.services.entries()) {
+          const svcQty = svc.qty || 0
+          const svcPrice = svc.price || 0
+          const svcTotal = svc.total || (svcQty * svcPrice)
           await prisma.pricingService.create({
             data: {
               organizationId: ORG_ID,
               profileCategoryId: profileCat.id,
               name: svc.name || 'Unnamed',
               unit: svc.unit || 'Per Device',
-              qty: svc.qty || 0,
-              price: svc.price || 0,
-              total: svc.total || 0,
+              qty: svcQty,
+              price: svcPrice,
+              total: svcTotal,
               sortOrder: svcIdx,
             }
           })
