@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { StatCard } from "@/components/stat-card"
 import {
   DollarSign, Download, Search, ChevronDown, ChevronRight,
-  RotateCcw, Trash2, Loader2,
+  RotateCcw, Trash2, Loader2, Save, Undo2,
 } from "lucide-react"
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
@@ -109,6 +109,7 @@ export default function PricingPage() {
   const [editSearch, setEditSearch] = useState("")
   const [expandedCats, setExpandedCats] = useState<Set<string>>(new Set())
   const [saving, setSaving] = useState(false)
+  const [originalPricingData, setOriginalPricingData] = useState<PricingData | null>(null)
 
   const headers = orgId ? { "x-organization-id": String(orgId) } : {}
 
@@ -116,7 +117,10 @@ export default function PricingPage() {
     try {
       const res = await fetch("/api/v1/pricing/data", { headers: headers as any })
       const json = await res.json()
-      if (json.success) setPricingData(json.data)
+      if (json.success) {
+        setPricingData(json.data)
+        if (!originalPricingData) setOriginalPricingData(structuredClone(json.data))
+      }
     } catch { /* ignore */ }
     finally { setLoading(false) }
   }, [orgId])
@@ -279,6 +283,21 @@ export default function PricingPage() {
         method: "PUT",
         headers: { "Content-Type": "application/json", ...headers } as any,
         body: JSON.stringify({ categories }),
+      })
+      await fetchData()
+    } catch { /* ignore */ }
+    finally { setSaving(false) }
+  }
+
+  const resetCompany = async (code: string) => {
+    if (!originalPricingData?.[code]) return
+    if (!confirm(`Сбросить цены ${code} к исходным данным?`)) return
+    setSaving(true)
+    try {
+      await fetch(`/api/v1/pricing/company/${encodeURIComponent(code)}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", ...headers } as any,
+        body: JSON.stringify({ categories: originalPricingData[code].categories }),
       })
       await fetchData()
     } catch { /* ignore */ }
@@ -727,8 +746,10 @@ export default function PricingPage() {
                 <CompanyEditor
                   code={selectedCompany}
                   data={pricingData[selectedCompany]}
+                  originalData={originalPricingData?.[selectedCompany] || null}
                   onSave={(cats) => saveCompanyPricing(selectedCompany, cats)}
                   onDelete={() => deleteCompany(selectedCompany)}
+                  onReset={() => resetCompany(selectedCompany)}
                   saving={saving}
                   expandedCats={expandedCats}
                   setExpandedCats={setExpandedCats}
@@ -743,19 +764,25 @@ export default function PricingPage() {
 }
 
 // ─── Company Editor Component ───────────────────────────────
-function CompanyEditor({ code, data, onSave, onDelete, saving, expandedCats, setExpandedCats }: {
+function CompanyEditor({ code, data, originalData, onSave, onDelete, onReset, saving, expandedCats, setExpandedCats }: {
   code: string
   data: PricingCompany
+  originalData: PricingCompany | null
   onSave: (cats: Record<string, CategoryValue>) => void
   onDelete: () => void
+  onReset: () => void
   saving: boolean
   expandedCats: Set<string>
   setExpandedCats: (s: Set<string>) => void
 }) {
   const [localCats, setLocalCats] = useState(data.categories)
+  const [originalCats, setOriginalCats] = useState(data.categories)
+  const [hasChanges, setHasChanges] = useState(false)
 
   useEffect(() => {
     setLocalCats(data.categories)
+    setOriginalCats(data.categories)
+    setHasChanges(false)
   }, [code, data])
 
   const toggleCat = (cat: string) => {
@@ -773,10 +800,18 @@ function CompanyEditor({ code, data, onSave, onDelete, saving, expandedCats, set
     const newTotal = newServices.reduce((s, svc) => s + svc.total, 0)
     const newCats = { ...localCats, [cat]: { total: Math.round(newTotal * 100) / 100, services: newServices } }
     setLocalCats(newCats)
+    setHasChanges(true)
+  }
 
-    // Auto-save with debounce
-    const timer = setTimeout(() => onSave(newCats), 800)
-    return () => clearTimeout(timer)
+  const handleSave = () => {
+    onSave(localCats)
+    setOriginalCats(localCats)
+    setHasChanges(false)
+  }
+
+  const handleCancel = () => {
+    setLocalCats(originalCats)
+    setHasChanges(false)
   }
 
   const monthly = Object.values(localCats).reduce<number>((s, v) => s + catTotal(v), 0)
@@ -788,10 +823,9 @@ function CompanyEditor({ code, data, onSave, onDelete, saving, expandedCats, set
         <div className="flex items-center gap-3">
           <h2 className="text-xl font-bold">{code}</h2>
           <Badge>{data.group}</Badge>
-          <button onClick={onDelete} className="text-red-400 hover:text-red-600">
+          <button onClick={onDelete} className="text-red-400 hover:text-red-600" title="Удалить компанию">
             <Trash2 className="h-4 w-4" />
           </button>
-          {saving && <Loader2 className="h-4 w-4 animate-spin text-blue-500" />}
         </div>
         <div className="text-right">
           <div className="text-sm text-muted-foreground">Итого Ежемесячно</div>
@@ -802,6 +836,23 @@ function CompanyEditor({ code, data, onSave, onDelete, saving, expandedCats, set
             Ежегодно: {annual.toLocaleString("ru-RU", { maximumFractionDigits: 2 })} ₼
           </div>
         </div>
+      </div>
+
+      {/* Action buttons */}
+      <div className="flex items-center gap-2">
+        <Button onClick={handleSave} disabled={!hasChanges || saving} size="sm" className="gap-1.5">
+          {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+          Сохранить
+        </Button>
+        <Button onClick={handleCancel} disabled={!hasChanges} variant="outline" size="sm" className="gap-1.5">
+          <Undo2 className="h-4 w-4" />
+          Отменить
+        </Button>
+        <Button onClick={onReset} variant="ghost" size="sm" className="gap-1.5 text-orange-600 hover:text-orange-700">
+          <RotateCcw className="h-4 w-4" />
+          Сбросить
+        </Button>
+        {hasChanges && <span className="text-xs text-amber-600 ml-2">● Есть несохранённые изменения</span>}
       </div>
 
       <div className="space-y-2">
