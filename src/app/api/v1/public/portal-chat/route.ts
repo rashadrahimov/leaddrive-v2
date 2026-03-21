@@ -6,7 +6,7 @@ import Anthropic from "@anthropic-ai/sdk"
 const DEFAULT_SYSTEM_PROMPT = `Ты — AI-ассистент техподдержки LeadDrive CRM. Твоё имя "LeadDrive Support Pro".
 
 ПРАВИЛА:
-1. Отвечай на языке клиента. По умолчанию отвечай на РУССКОМ. Если клиент пишет на другом языке — переключись на его язык.
+1. ВСЕГДА отвечай на РУССКОМ языке, независимо от языка клиента. Это обязательное правило.
 2. Если есть контекст из базы знаний ({kb_context}), используй его в первую очередь.
 3. Будь вежливым, профессиональным, отвечай кратко и по делу.
 4. Если клиент недоволен — прояви эмпатию и сфокусируйся на решении.
@@ -14,7 +14,9 @@ const DEFAULT_SYSTEM_PROMPT = `Ты — AI-ассистент техподдер
 6. SLA: Критический - 4 часа, Высокий - 8 часов, Средний - 24 часа, Низкий - 72 часа.
 7. О ценах не говори — направь к менеджеру.
 8. Для технических вопросов давай пошаговые инструкции.
-9. Если у тебя в контексте есть данные о тикетах или контрактах клиента — используй их для ответа.`
+9. Если у тебя в контексте есть данные о тикетах или контрактах клиента — используй их для ответа.
+10. У тебя УЖЕ есть данные клиента (имя, email, компания) — они в контексте ниже. НИКОГДА не спрашивай у клиента его имя, email или другие данные которые ты уже знаешь. Просто используй их.
+11. Когда клиент хочет создать тикет — создавай его СРАЗУ, не спрашивай подтверждение. Добавь [CREATE_TICKET] в ответ и кратко подтверди что тикет создаётся.`
 
 async function getActiveAgentConfig(organizationId: string) {
   return prisma.aiAgentConfig.findFirst({
@@ -482,14 +484,28 @@ export async function POST(req: NextRequest) {
   const shouldEscalate = isEscalationEnabled && assistantContent.includes("[ESCALATE]")
   // Check for ticket creation marker [CREATE_TICKET]
   const shouldCreateTicket = assistantContent.includes("[CREATE_TICKET]")
-  // Only suggest ticket if AI explicitly used the marker or explicitly suggested creating one
-  const suggestTicket = shouldCreateTicket || /создайте тикет|создать тикет|откройте тикет|открыть тикет|create a ticket/i.test(assistantContent)
+    || /создайте тикет|создать тикет|откройте тикет|открыть тикет|create a ticket/i.test(assistantContent)
 
   let escalationTicketId: string | null = null
   let escalationTicketNumber: string | null = null
 
   // Handle real escalation — create a ticket automatically
   if (shouldEscalate) {
+    const result = await createEscalationTicket(
+      user.organizationId,
+      session.id,
+      user.contactId,
+      user.companyId,
+      message,
+    )
+    if (result) {
+      escalationTicketId = result.ticketId
+      escalationTicketNumber = result.ticketNumber
+    }
+  }
+
+  // Handle [CREATE_TICKET] — auto-create ticket (same as escalation but different category)
+  if (shouldCreateTicket && !shouldEscalate) {
     const result = await createEscalationTicket(
       user.organizationId,
       session.id,
@@ -527,8 +543,8 @@ export async function POST(req: NextRequest) {
         content: cleanedContent,
         createdAt: assistantMessage.createdAt,
       },
-      suggestTicket,
-      escalated: shouldEscalate,
+      suggestTicket: false,
+      escalated: shouldEscalate || (shouldCreateTicket && !!escalationTicketId),
       escalationTicketId,
       escalationTicketNumber,
     },

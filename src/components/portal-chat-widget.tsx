@@ -417,18 +417,6 @@ export function PortalChatWidget({ userName }: PortalChatWidgetProps) {
               </div>
             </div>
           )}
-          {msg.suggestTicket && !msg.escalated && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation()
-                handleCreateTicket()
-              }}
-              disabled={sending}
-              className="mt-1.5 inline-flex items-center gap-1 text-xs text-orange-600 border border-orange-200 rounded-full px-3 py-1 hover:bg-orange-50 transition-colors disabled:opacity-50"
-            >
-              <TicketPlus className="h-3 w-3" /> Создать тикет
-            </button>
-          )}
         </div>
         {isUser && (
           <div className="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0 mt-0.5">
