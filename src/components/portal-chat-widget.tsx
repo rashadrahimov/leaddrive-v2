@@ -155,8 +155,7 @@ export function PortalChatWidget({ userName }: PortalChatWidgetProps) {
                       <button
                         onClick={(e) => {
                           e.stopPropagation()
-                          setOpen(false)
-                          router.push(`/portal/tickets/${msg.escalationTicketId}`)
+                          window.location.href = `/portal/tickets/${msg.escalationTicketId}`
                         }}
                         className="inline-flex items-center gap-1 text-xs text-red-600 border border-red-300 rounded-full px-2.5 py-0.5 hover:bg-red-100 transition-colors"
                       >
@@ -168,8 +167,7 @@ export function PortalChatWidget({ userName }: PortalChatWidgetProps) {
                     <button
                       onClick={(e) => {
                         e.stopPropagation()
-                        setOpen(false)
-                        router.push("/portal/tickets?action=new")
+                        window.location.href = "/portal/tickets?action=new"
                       }}
                       className="mt-1.5 inline-flex items-center gap-1 text-xs text-orange-600 border border-orange-200 rounded-full px-3 py-1 hover:bg-orange-50 transition-colors"
                     >
