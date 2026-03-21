@@ -387,6 +387,7 @@ export async function POST(req: NextRequest) {
       }
 
       case "whatsapp": {
+        console.log(`[Inbox WA] Sending to: "${to}" | body: "${msgBody.slice(0, 50)}" | contactId: ${contactId}`)
         const waResult = await sendWhatsAppMessage({
           to,
           message: msgBody,
