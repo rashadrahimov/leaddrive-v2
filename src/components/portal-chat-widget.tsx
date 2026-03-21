@@ -28,7 +28,9 @@ interface PortalChatWidgetProps {
   userName: string
 }
 
-const STORAGE_KEY = "leaddrive_chat"
+function getStorageKey(userName: string) {
+  return `leaddrive_chat_${userName.replace(/\s+/g, "_").toLowerCase()}`
+}
 
 const STATUS_LABELS: Record<string, string> = {
   new: "Новый", open: "Открыт", in_progress: "В работе", waiting: "Ожидание",
@@ -40,13 +42,13 @@ const STATUS_ICONS: Record<string, typeof Clock> = {
   resolved: CheckCircle, closed: CheckCircle,
 }
 
-function loadChat(): { messages: Message[]; sessionId: string | null; trackedTickets: TicketInfo[] } {
+function loadChat(key: string): { messages: Message[]; sessionId: string | null; trackedTickets: TicketInfo[] } {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY)
+    const raw = localStorage.getItem(key)
     if (!raw) return { messages: [], sessionId: null, trackedTickets: [] }
     const data = JSON.parse(raw)
     if (data.ts && Date.now() - data.ts > 24 * 60 * 60 * 1000) {
-      localStorage.removeItem(STORAGE_KEY)
+      localStorage.removeItem(key)
       return { messages: [], sessionId: null, trackedTickets: [] }
     }
     return {
@@ -59,9 +61,9 @@ function loadChat(): { messages: Message[]; sessionId: string | null; trackedTic
   }
 }
 
-function saveChat(messages: Message[], sessionId: string | null, trackedTickets: TicketInfo[]) {
+function saveChat(key: string, messages: Message[], sessionId: string | null, trackedTickets: TicketInfo[]) {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ messages, sessionId, trackedTickets, ts: Date.now() }))
+    localStorage.setItem(key, JSON.stringify({ messages, sessionId, trackedTickets, ts: Date.now() }))
   } catch { /* ignore */ }
 }
 
@@ -80,9 +82,13 @@ export function PortalChatWidget({ userName }: PortalChatWidgetProps) {
   const inputRef = useRef<HTMLInputElement>(null)
   const router = useRouter()
 
+  const storageKey = getStorageKey(userName)
+
   // Load chat from localStorage on mount + auto-track tickets from messages
   useEffect(() => {
-    const saved = loadChat()
+    // Clean up old shared key
+    localStorage.removeItem("leaddrive_chat")
+    const saved = loadChat(storageKey)
     if (saved.messages.length > 0) setMessages(saved.messages)
     if (saved.sessionId) setSessionId(saved.sessionId)
 
@@ -107,9 +113,9 @@ export function PortalChatWidget({ userName }: PortalChatWidgetProps) {
   // Save chat to localStorage on every change
   useEffect(() => {
     if (messages.length > 0 || trackedTickets.length > 0) {
-      saveChat(messages, sessionId, trackedTickets)
+      saveChat(storageKey, messages, sessionId, trackedTickets)
     }
-  }, [messages, sessionId, trackedTickets])
+  }, [messages, sessionId, trackedTickets, storageKey])
 
   // Use ref to avoid stale closures in polling
   const trackedTicketsRef = useRef(trackedTickets)
@@ -458,7 +464,7 @@ export function PortalChatWidget({ userName }: PortalChatWidgetProps) {
                   setSessionId(null)
                   setTrackedTickets([])
                   setCsatTicketId(null)
-                  localStorage.removeItem(STORAGE_KEY)
+                  localStorage.removeItem(storageKey)
                 }}
                 className="text-white/70 hover:text-white text-xs border border-white/30 rounded-full px-2 py-0.5"
               >
