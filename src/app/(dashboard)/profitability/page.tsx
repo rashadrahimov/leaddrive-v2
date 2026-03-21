@@ -5,7 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { StatCard } from "@/components/stat-card"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Calculator, TrendingUp, TrendingDown, Users, DollarSign, Loader2 } from "lucide-react"
+import { Calculator, TrendingUp, TrendingDown, Users, DollarSign, Loader2, ChevronDown, ChevronRight } from "lucide-react"
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend,
@@ -23,6 +23,116 @@ const PIE_COLORS = ["#8b5cf6", "#3b82f6", "#f59e0b", "#ef4444", "#10b981"]
 
 function fmt(n: number): string {
   return Math.round(n).toLocaleString() + " ₼"
+}
+
+function CostBreakdown({ data }: { data: any }) {
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({})
+  const toggle = (key: string) => setExpanded((prev) => ({ ...prev, [key]: !prev[key] }))
+
+  const adminOhItems = (data.overheadBreakdown || []).filter((o: any) => o.isAdmin)
+  const techItems = (data.overheadBreakdown || []).filter((o: any) => !o.isAdmin)
+  const directLabor = Object.values(data.deptCosts as Record<string, number>).reduce((s, v) => s + v, 0)
+
+  const sections = [
+    {
+      key: "admin",
+      color: PIE_COLORS[0],
+      label: "Admin Overhead",
+      value: data.adminOverhead,
+      pct: ((data.adminOverhead / data.grandTotalF) * 100).toFixed(1),
+      items: adminOhItems.map((o: any) => ({ label: o.label, value: o.monthlyAmount })),
+      note: "+ BackOffice + GRC əməkhaqqı (bax: Сотрудники tab)\nHeadcount nisbəti ilə şöbələrə paylanır",
+    },
+    {
+      key: "tech",
+      color: PIE_COLORS[1],
+      label: "Texniki İnfrastruktur",
+      value: data.techInfraTotal,
+      pct: ((data.techInfraTotal / data.grandTotalF) * 100).toFixed(1),
+      items: techItems.map((o: any) => ({ label: o.label, value: o.monthlyAmount })),
+      note: "target_service üzrə birbaşa xidmətlərə paylanır",
+    },
+    {
+      key: "labor",
+      color: PIE_COLORS[2],
+      label: "Birbaşa Əmək Xərcləri",
+      value: directLabor,
+      pct: ((directLabor / data.grandTotalF) * 100).toFixed(1),
+      items: (data.employees || [])
+        .filter((e: any) => e.department !== "BackOffice" && !e.inOverhead)
+        .map((e: any) => ({
+          label: `${e.department} — ${e.position} (${e.count} nəf.)`,
+          value: e.totalLaborCost,
+        })),
+      note: null,
+    },
+    {
+      key: "misc",
+      color: PIE_COLORS[3],
+      label: `Ezam ${((data.params?.miscExpenseRate || 0.01) * 100).toFixed(0)}%`,
+      value: data.misc,
+      pct: ((data.misc / data.grandTotalF) * 100).toFixed(1),
+      items: [],
+      note: null,
+    },
+    {
+      key: "risk",
+      color: PIE_COLORS[4],
+      label: `Risk ${((data.params?.riskRate || 0.05) * 100).toFixed(0)}%`,
+      value: data.riskCost,
+      pct: ((data.riskCost / data.grandTotalF) * 100).toFixed(1),
+      items: [],
+      note: null,
+    },
+  ]
+
+  return (
+    <div className="mt-4 space-y-1 text-sm">
+      {sections.map((sec) => (
+        <div key={sec.key}>
+          <button
+            onClick={() => sec.items.length > 0 && toggle(sec.key)}
+            className="flex w-full items-center gap-2 py-2 hover:bg-muted/50 rounded px-2"
+          >
+            <span className="h-2.5 w-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: sec.color }} />
+            {sec.items.length > 0 ? (
+              expanded[sec.key] ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />
+            ) : (
+              <span className="w-3.5" />
+            )}
+            <span className="font-medium flex-1 text-left">{sec.label}</span>
+            <span className="font-mono text-muted-foreground">{fmt(sec.value)}</span>
+          </button>
+          {expanded[sec.key] && sec.items.length > 0 && (
+            <div className="ml-10 mb-2 space-y-0.5 text-xs text-muted-foreground">
+              {sec.items.map((item: any, i: number) => (
+                <div key={i} className="flex justify-between py-0.5 px-2">
+                  <span>{item.label}</span>
+                  <span className="font-mono">{fmt(item.value)}</span>
+                </div>
+              ))}
+              {sec.note && (
+                <div className="border-t mt-1 pt-1 italic whitespace-pre-line text-[10px]">{sec.note}</div>
+              )}
+            </div>
+          )}
+        </div>
+      ))}
+      <div className="border-t pt-2 mt-2 flex justify-between px-2 font-medium">
+        <span>Ümumi Maya (F)</span>
+        <span className="font-mono">{fmt(data.grandTotalF)}</span>
+      </div>
+      <div className="flex justify-between px-2 font-medium text-blue-600">
+        <span>Tam Xidmət Maya (G)</span>
+        <span className="font-mono">{fmt(data.grandTotalG)}</span>
+      </div>
+      <div className="px-2 mt-2 text-[10px] text-muted-foreground space-y-0.5">
+        <p><strong>Sec F</strong> — Min. maya: Admin OH + Tech + IT/InfoSec + Ezam + Risk</p>
+        <p><strong>Sec G</strong> — Tam maya: Bütün şöbələr + admin paylanma + tech birbaşa</p>
+        <p><strong>Paylaşma:</strong> {((data.params?.fixedOverheadRatio || 0.25) * 100).toFixed(0)}% sabit + {((1 - (data.params?.fixedOverheadRatio || 0.25)) * 100).toFixed(0)}% dəyişkən (istifadəçi sayına görə)</p>
+      </div>
+    </div>
+  )
 }
 
 export default function ProfitabilityPage() {
@@ -164,20 +274,21 @@ export default function ProfitabilityPage() {
 
           {/* Charts row */}
           <div className="grid gap-4 lg:grid-cols-2">
-            {/* Pie chart — cost composition */}
+            {/* Pie chart — cost composition + breakdown */}
             <Card>
               <CardHeader>
                 <CardTitle className="text-base">Maya Tərkibi</CardTitle>
+                <p className="text-xs text-muted-foreground">Sec G: {fmt(grandTotalG)}</p>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
+                <ResponsiveContainer width="100%" height={280}>
                   <PieChart>
                     <Pie
                       data={costComposition}
                       cx="50%"
                       cy="50%"
-                      innerRadius={70}
-                      outerRadius={110}
+                      innerRadius={65}
+                      outerRadius={105}
                       dataKey="value"
                       label={({ name, percent }) =>
                         `${name} ${(percent * 100).toFixed(0)}%`
@@ -187,31 +298,14 @@ export default function ProfitabilityPage() {
                         <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
                       ))}
                     </Pie>
-                    <Tooltip
-                      formatter={(value: number) => fmt(value)}
-                    />
+                    <Tooltip formatter={(value: number) => fmt(value)} />
                     <Legend />
-                    {/* Center text */}
-                    <text
-                      x="50%"
-                      y="48%"
-                      textAnchor="middle"
-                      dominantBaseline="middle"
-                      className="fill-foreground text-xs"
-                    >
-                      Sec F
-                    </text>
-                    <text
-                      x="50%"
-                      y="55%"
-                      textAnchor="middle"
-                      dominantBaseline="middle"
-                      className="fill-foreground text-sm font-bold"
-                    >
-                      {(grandTotalF / 1000).toFixed(1)}K ₼
-                    </text>
+                    <text x="50%" y="48%" textAnchor="middle" dominantBaseline="middle" className="fill-foreground text-xs">Sec F</text>
+                    <text x="50%" y="55%" textAnchor="middle" dominantBaseline="middle" className="fill-foreground text-sm font-bold">{(grandTotalF / 1000).toFixed(1)}K ₼</text>
                   </PieChart>
                 </ResponsiveContainer>
+                {/* Expandable breakdown */}
+                <CostBreakdown data={data} />
               </CardContent>
             </Card>
 
