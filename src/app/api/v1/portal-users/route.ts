@@ -74,13 +74,41 @@ export async function PATCH(req: NextRequest) {
   const orgId = await getOrgId(req)
   if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
-  const { contactIds, action, contactId, resetPassword, portalAccessEnabled } = await req.json()
+  const { contactIds, action, contactId, resetPassword, portalAccessEnabled, clearChatHistory, removeFromPortal } = await req.json()
 
   // Single contact update
   if (contactId) {
     const updateData: any = {}
     if (typeof portalAccessEnabled === "boolean") updateData.portalAccessEnabled = portalAccessEnabled
     if (resetPassword) updateData.portalPasswordHash = null
+
+    // Clear AI chat history for this contact
+    if (clearChatHistory || removeFromPortal) {
+      const sessions = await prisma.aiChatSession.findMany({
+        where: { organizationId: orgId, portalUserId: contactId },
+        select: { id: true },
+      })
+      if (sessions.length > 0) {
+        const sessionIds = sessions.map(s => s.id)
+        await prisma.aiChatMessage.deleteMany({ where: { sessionId: { in: sessionIds } } })
+        await prisma.aiChatSession.deleteMany({ where: { id: { in: sessionIds } } })
+      }
+
+      if (removeFromPortal) {
+        // Full portal reset — user can re-register from scratch
+        await prisma.contact.update({
+          where: { id: contactId },
+          data: {
+            portalPasswordHash: null,
+            portalAccessEnabled: true, // keep enabled so they can re-register
+            portalLastLoginAt: null,
+          },
+        })
+        return NextResponse.json({ success: true, removed: true })
+      }
+
+      return NextResponse.json({ success: true, cleared: sessions.length })
+    }
 
     await prisma.contact.update({
       where: { id: contactId },

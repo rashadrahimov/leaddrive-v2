@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { StatCard } from "@/components/stat-card"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
-import { Users, UserCheck, UserX, Clock, Search, Shield, ShieldOff, KeyRound, CheckCircle } from "lucide-react"
+import { Users, UserCheck, UserX, Clock, Search, Shield, ShieldOff, KeyRound, CheckCircle, MessageSquareX, UserMinus } from "lucide-react"
 
 interface PortalContact {
   id: string
@@ -38,6 +38,8 @@ export default function PortalUsersPage() {
   const [search, setSearch] = useState("")
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [resetDialog, setResetDialog] = useState<PortalContact | null>(null)
+  const [clearChatDialog, setClearChatDialog] = useState<PortalContact | null>(null)
+  const [removeDialog, setRemoveDialog] = useState<PortalContact | null>(null)
 
   const fetchData = async () => {
     const params = new URLSearchParams()
@@ -72,6 +74,28 @@ export default function PortalUsersPage() {
       body: JSON.stringify({ contactId: resetDialog.id, resetPassword: true }),
     })
     setResetDialog(null)
+    fetchData()
+  }
+
+  const handleClearChat = async () => {
+    if (!clearChatDialog) return
+    await fetch("/api/v1/portal-users", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ contactId: clearChatDialog.id, clearChatHistory: true }),
+    })
+    setClearChatDialog(null)
+    fetchData()
+  }
+
+  const handleRemoveFromPortal = async () => {
+    if (!removeDialog) return
+    await fetch("/api/v1/portal-users", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ contactId: removeDialog.id, removeFromPortal: true }),
+    })
+    setRemoveDialog(null)
     fetchData()
   }
 
@@ -226,6 +250,22 @@ export default function PortalUsersPage() {
                               <KeyRound className="h-3.5 w-3.5 text-orange-500" />
                             </button>
                           )}
+                          <button
+                            onClick={() => setClearChatDialog(c)}
+                            className="p-1.5 rounded hover:bg-muted"
+                            title="Очистить историю AI чата"
+                          >
+                            <MessageSquareX className="h-3.5 w-3.5 text-purple-500" />
+                          </button>
+                          {c.hasPassword && (
+                            <button
+                              onClick={() => setRemoveDialog(c)}
+                              className="p-1.5 rounded hover:bg-muted"
+                              title="Удалить из портала (заново пройдёт регистрацию)"
+                            >
+                              <UserMinus className="h-3.5 w-3.5 text-red-500" />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -243,6 +283,22 @@ export default function PortalUsersPage() {
         onConfirm={handleResetPassword}
         title="Сбросить пароль"
         itemName={resetDialog?.fullName}
+      />
+
+      <DeleteConfirmDialog
+        open={!!clearChatDialog}
+        onOpenChange={() => setClearChatDialog(null)}
+        onConfirm={handleClearChat}
+        title="Очистить историю AI чата"
+        itemName={clearChatDialog?.fullName}
+      />
+
+      <DeleteConfirmDialog
+        open={!!removeDialog}
+        onOpenChange={() => setRemoveDialog(null)}
+        onConfirm={handleRemoveFromPortal}
+        title="Удалить из портала"
+        itemName={`${removeDialog?.fullName} (сброс пароля + очистка чата — сможет заново зарегистрироваться)`}
       />
     </div>
   )
