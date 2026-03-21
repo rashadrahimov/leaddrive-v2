@@ -1,129 +1,196 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Brain, RefreshCw, Lightbulb, AlertTriangle, TrendingUp } from "lucide-react"
-
-interface Observation {
-  type: "insight" | "warning" | "opportunity"
-  title: string
-  description: string
-}
-
-const FALLBACK_OBSERVATIONS: Record<string, Observation[]> = {
-  analytics: [
-    { type: "warning", title: "Negative Overall Margin", description: "The portfolio is operating at negative margin. Review cost structure and pricing." },
-    { type: "insight", title: "Core Services Drive Revenue", description: "IT and InfoSec services generate the majority of revenue. Focus on growing these." },
-    { type: "opportunity", title: "Cost/User Optimization", description: "Increasing the user base can reduce cost per user without proportional cost increase." },
-  ],
-  services: [
-    { type: "warning", title: "HelpDesk Cost Review", description: "HelpDesk may operate at negative margin. Review operator-to-revenue ratio." },
-    { type: "insight", title: "Service Pricing Gap", description: "Some services may be underpriced relative to their cost base." },
-    { type: "opportunity", title: "Service Bundling", description: "Consider bundling complementary services to increase average contract value." },
-  ],
-  clients: [
-    { type: "insight", title: "Revenue Concentration", description: "Top clients account for a large share of revenue. Diversification recommended." },
-    { type: "warning", title: "Unprofitable Clients", description: "Small clients with few users may not cover fixed cost allocation." },
-    { type: "opportunity", title: "Minimum Client Threshold", description: "Consider a minimum user count or monthly fee for profitability." },
-  ],
-  overhead: [
-    { type: "insight", title: "Admin Overhead Ratio", description: "Administrative overhead is a significant cost component. Review allocation." },
-    { type: "opportunity", title: "Training ROI", description: "Verify training spend ROI and consider certification programs that increase billable rates." },
-    { type: "warning", title: "License Costs", description: "Review major license costs to ensure they are fully passed through in pricing." },
-  ],
-}
+import { Brain, RefreshCw, ChevronDown, ChevronRight, AlertCircle } from "lucide-react"
+import { useAiAnalysis, useRefreshAiAnalysis } from "@/lib/cost-model/hooks"
 
 interface AIObservationsProps {
   tab: string
 }
 
-export function AIObservations({ tab }: AIObservationsProps) {
-  const [loading, setLoading] = useState(false)
-  const [observations, setObservations] = useState<Observation[]>([])
-  const [aiPowered, setAiPowered] = useState(false)
+/**
+ * Simple markdown-like text to HTML:
+ * - **bold** → <strong>
+ * - \n → <br/>
+ * - Lines starting with "- " → list items
+ * - Lines starting with "###" → h4
+ * - Lines starting with "##" → h3
+ */
+function markdownToHtml(text: string): string {
+  const lines = text.split("\n")
+  let html = ""
+  let inList = false
 
-  const fetchObservations = async () => {
-    setLoading(true)
-    try {
-      const res = await fetch("/api/v1/ai-observations", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ tab }),
-      })
-      const json = await res.json()
-      if (json.success && json.data.observations?.length > 0) {
-        setObservations(json.data.observations)
-        setAiPowered(!json.data.fallback)
-      } else {
-        setObservations(FALLBACK_OBSERVATIONS[tab] || [])
-        setAiPowered(false)
-      }
-    } catch {
-      setObservations(FALLBACK_OBSERVATIONS[tab] || [])
-      setAiPowered(false)
-    } finally {
-      setLoading(false)
+  for (const line of lines) {
+    const trimmed = line.trim()
+
+    if (trimmed.startsWith("### ")) {
+      if (inList) { html += "</ul>"; inList = false }
+      html += `<h4 class="font-semibold text-sm mt-3 mb-1">${trimmed.slice(4)}</h4>`
+    } else if (trimmed.startsWith("## ")) {
+      if (inList) { html += "</ul>"; inList = false }
+      html += `<h3 class="font-bold text-base mt-4 mb-2">${trimmed.slice(3)}</h3>`
+    } else if (trimmed.startsWith("- ") || trimmed.startsWith("* ")) {
+      if (!inList) { html += '<ul class="list-disc pl-5 space-y-1">'; inList = true }
+      html += `<li class="text-sm">${trimmed.slice(2)}</li>`
+    } else if (trimmed === "") {
+      if (inList) { html += "</ul>"; inList = false }
+      html += "<br/>"
+    } else {
+      if (inList) { html += "</ul>"; inList = false }
+      html += `<p class="text-sm mb-1">${trimmed}</p>`
     }
   }
 
-  useEffect(() => {
-    fetchObservations()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tab])
+  if (inList) html += "</ul>"
 
-  const typeConfig = {
-    insight: { icon: Lightbulb, color: "text-blue-600", bg: "bg-blue-50 dark:bg-blue-950", badge: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300" },
-    warning: { icon: AlertTriangle, color: "text-amber-600", bg: "bg-amber-50 dark:bg-amber-950", badge: "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300" },
-    opportunity: { icon: TrendingUp, color: "text-green-600", bg: "bg-green-50 dark:bg-green-950", badge: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300" },
+  // Bold
+  html = html.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+  // Inline code
+  html = html.replace(/`([^`]+)`/g, '<code class="bg-muted px-1 py-0.5 rounded text-xs">$1</code>')
+
+  return html
+}
+
+export function AIObservations({ tab }: AIObservationsProps) {
+  const [enabled, setEnabled] = useState(false)
+  const [showThinking, setShowThinking] = useState(false)
+
+  const { data, isLoading, isError, error } = useAiAnalysis(tab, { enabled })
+  const refreshMutation = useRefreshAiAnalysis()
+
+  const handleAnalyze = () => {
+    setEnabled(true)
   }
 
-  if (observations.length === 0 && !loading) return null
+  const handleRefresh = () => {
+    refreshMutation.mutate({ tab, lang: "ru" })
+  }
+
+  const isRefreshing = refreshMutation.isPending
+
+  // Use mutation result if available, otherwise query result
+  const result = refreshMutation.data || data
 
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between pb-3">
         <CardTitle className="text-base flex items-center gap-2">
-          <Brain className="h-4 w-4" /> AI Observations
-          {aiPowered && <Badge variant="outline" className="text-[10px] ml-1">Claude AI</Badge>}
+          <Brain className="h-4 w-4" />
+          AI Analiz
+          {result?.cached && (
+            <Badge variant="outline" className="text-[10px] ml-1">
+              Cached
+            </Badge>
+          )}
         </CardTitle>
-        <Button variant="ghost" size="sm" onClick={fetchObservations} disabled={loading}>
-          <RefreshCw className={`h-4 w-4 mr-1 ${loading ? "animate-spin" : ""}`} />
-          {loading ? "Analyzing..." : "Refresh"}
-        </Button>
+        <div className="flex items-center gap-2">
+          {!enabled && !result && (
+            <Button variant="default" size="sm" onClick={handleAnalyze}>
+              <Brain className="h-4 w-4 mr-1" />
+              AI Analiz
+            </Button>
+          )}
+          {(enabled || result) && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleRefresh}
+              disabled={isLoading || isRefreshing}
+            >
+              <RefreshCw className={`h-4 w-4 mr-1 ${isRefreshing ? "animate-spin" : ""}`} />
+              Yenilə
+            </Button>
+          )}
+        </div>
       </CardHeader>
-      <CardContent className="space-y-3">
-        {loading && observations.length === 0 ? (
-          <div className="text-center py-6 text-muted-foreground text-sm">
-            <Brain className="h-8 w-8 mx-auto mb-2 animate-pulse opacity-30" />
-            Analyzing profitability data...
+
+      <CardContent>
+        {/* Not yet requested */}
+        {!enabled && !result && !isLoading && (
+          <div className="text-center py-8 text-muted-foreground text-sm">
+            <Brain className="h-10 w-10 mx-auto mb-3 opacity-20" />
+            <p>AI analizi hələ başlamayıb.</p>
+            <p className="text-xs mt-1">Yuxarıdakı &quot;AI Analiz&quot; düyməsini sıxın.</p>
           </div>
-        ) : (
-          observations.map((obs, i) => {
-            const config = typeConfig[obs.type] || typeConfig.insight
-            const Icon = config.icon
-            return (
-              <div key={i} className={`rounded-lg p-3 ${config.bg}`}>
-                <div className="flex items-start gap-3">
-                  <Icon className={`h-5 w-5 mt-0.5 flex-shrink-0 ${config.color}`} />
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="font-medium text-sm">{obs.title}</span>
-                      <Badge className={`text-[10px] ${config.badge}`}>
-                        {obs.type === "insight" ? "Insight" : obs.type === "warning" ? "Warning" : "Opportunity"}
-                      </Badge>
-                    </div>
-                    <p className="text-sm text-muted-foreground">{obs.description}</p>
-                  </div>
-                </div>
-              </div>
-            )
-          })
         )}
-        <p className="text-xs text-muted-foreground text-center">
-          Powered by {aiPowered ? "Claude AI" : "Rule-based analysis"}
-        </p>
+
+        {/* Loading state */}
+        {(isLoading || isRefreshing) && !result && (
+          <div className="text-center py-10 text-muted-foreground text-sm">
+            <div className="relative inline-block mb-4">
+              <Brain className="h-10 w-10 animate-pulse" />
+              <div className="absolute -top-1 -right-1 h-3 w-3 bg-violet-500 rounded-full animate-ping" />
+            </div>
+            <p className="font-medium">Claude düşünür... (30-60 san.)</p>
+            <p className="text-xs mt-1 text-muted-foreground">
+              Məlumatlar təhlil olunur, bir az gözləyin.
+            </p>
+          </div>
+        )}
+
+        {/* Error state */}
+        {isError && !result && (
+          <div className="text-center py-8 text-red-600 text-sm">
+            <AlertCircle className="h-8 w-8 mx-auto mb-2 opacity-60" />
+            <p className="font-medium">Analiz zamanı xəta baş verdi</p>
+            <p className="text-xs mt-1 text-muted-foreground">
+              {error instanceof Error ? error.message : "Bir daha cəhd edin."}
+            </p>
+            <Button variant="outline" size="sm" className="mt-3" onClick={handleAnalyze}>
+              Təkrar cəhd
+            </Button>
+          </div>
+        )}
+
+        {/* Refresh error */}
+        {refreshMutation.isError && (
+          <div className="mb-3 p-2 rounded bg-red-50 dark:bg-red-950 text-red-600 text-xs">
+            Yeniləmə xətası: {refreshMutation.error instanceof Error ? refreshMutation.error.message : "Naməlum xəta"}
+          </div>
+        )}
+
+        {/* Analysis result */}
+        {result?.analysis && (
+          <div className="space-y-4">
+            {/* Main analysis content */}
+            <div
+              className="prose prose-sm dark:prose-invert max-w-none"
+              dangerouslySetInnerHTML={{ __html: markdownToHtml(result.analysis) }}
+            />
+
+            {/* Thinking section (collapsible) */}
+            {result.thinking && (
+              <div className="border-t pt-3 mt-4">
+                <button
+                  onClick={() => setShowThinking(!showThinking)}
+                  className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  {showThinking ? (
+                    <ChevronDown className="h-3 w-3" />
+                  ) : (
+                    <ChevronRight className="h-3 w-3" />
+                  )}
+                  Düşüncə prosesi (thinking)
+                </button>
+                {showThinking && (
+                  <div className="mt-2 p-3 rounded bg-muted/50 text-xs text-muted-foreground whitespace-pre-wrap font-mono leading-relaxed max-h-64 overflow-y-auto">
+                    {result.thinking}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Footer */}
+            <p className="text-xs text-muted-foreground text-center pt-2 border-t">
+              Powered by Claude AI {result.cached ? "(cached)" : ""}
+              {isRefreshing && " — yenilənir..."}
+            </p>
+          </div>
+        )}
       </CardContent>
     </Card>
   )

@@ -1,0 +1,71 @@
+import { NextRequest, NextResponse } from "next/server"
+import { getOrgId } from "@/lib/api-auth"
+import { prisma } from "@/lib/prisma"
+import { writeCostModelLog, invalidateAiCache } from "@/lib/cost-model/db"
+
+export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const orgId = await getOrgId(req)
+    if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+
+    const { id } = await params
+    const body = await req.json()
+
+    const existing = await prisma.costEmployee.findFirst({
+      where: { id, organizationId: orgId },
+    })
+    if (!existing) {
+      return NextResponse.json({ error: "Employee not found" }, { status: 404 })
+    }
+
+    // Recalculate gross/superGross if netSalary changed
+    if (body.netSalary !== undefined && body.netSalary !== existing.netSalary) {
+      const params = await prisma.pricingParameters.findUnique({
+        where: { organizationId: orgId },
+      })
+      const employerTaxRate = params?.employerTaxRate ?? 0.175
+
+      body.grossSalary = body.netSalary / (1 - 0.14)
+      body.superGross = body.grossSalary * (1 + employerTaxRate)
+    }
+
+    const updated = await prisma.costEmployee.update({
+      where: { id },
+      data: body,
+    })
+
+    await writeCostModelLog(orgId, "cost_employees", id, "update", existing, updated)
+    invalidateAiCache()
+
+    return NextResponse.json({ success: true, data: updated })
+  } catch (error) {
+    console.error("Update employee error:", error)
+    return NextResponse.json({ error: "Failed to update employee" }, { status: 500 })
+  }
+}
+
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const orgId = await getOrgId(req)
+    if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+
+    const { id } = await params
+
+    const existing = await prisma.costEmployee.findFirst({
+      where: { id, organizationId: orgId },
+    })
+    if (!existing) {
+      return NextResponse.json({ error: "Employee not found" }, { status: 404 })
+    }
+
+    await prisma.costEmployee.delete({ where: { id } })
+
+    await writeCostModelLog(orgId, "cost_employees", id, "delete", existing, null)
+    invalidateAiCache()
+
+    return NextResponse.json({ success: true, data: { deleted: id } })
+  } catch (error) {
+    console.error("Delete employee error:", error)
+    return NextResponse.json({ error: "Failed to delete employee" }, { status: 500 })
+  }
+}
