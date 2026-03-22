@@ -2,14 +2,13 @@
 
 import { useEffect, useState } from "react"
 import { useSession } from "next-auth/react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { StatCard } from "@/components/stat-card"
 import { KanbanBoard } from "@/components/deals/kanban-board"
-import { DealDetailSheet } from "@/components/deals/deal-detail-sheet"
 import { Select } from "@/components/ui/select"
-import { Handshake, Plus, TrendingUp, TrendingDown, Pencil, Trash2 } from "lucide-react"
+import { Handshake, Plus, TrendingUp, TrendingDown } from "lucide-react"
 import { DealForm } from "@/components/deal-form"
-import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
 
 const STAGES = [
   { name: "LEAD", displayName: "Lead", color: "#6366f1" },
@@ -19,11 +18,6 @@ const STAGES = [
   { name: "WON", displayName: "Won", color: "#22c55e" },
   { name: "LOST", displayName: "Lost", color: "#ef4444" },
 ]
-
-const STAGE_NAME_MAP: Record<string, string> = {
-  LEAD: "Lead", QUALIFIED: "Qualified", PROPOSAL: "Proposal",
-  NEGOTIATION: "Negotiation", WON: "Won", LOST: "Lost",
-}
 
 interface Deal {
   id: string
@@ -41,14 +35,10 @@ interface Deal {
 
 export default function DealsPage() {
   const { data: session } = useSession()
+  const router = useRouter()
   const [deals, setDeals] = useState<Deal[]>([])
   const [loading, setLoading] = useState(true)
-  const [selectedDealId, setSelectedDealId] = useState<string | null>(null)
-  const [sheetOpen, setSheetOpen] = useState(false)
   const [formOpen, setFormOpen] = useState(false)
-  const [editData, setEditData] = useState<Record<string, any> | undefined>()
-  const [deleteOpen, setDeleteOpen] = useState(false)
-  const [deleteItem, setDeleteItem] = useState<Deal | null>(null)
   const [sortBy, setSortBy] = useState("newest")
   const orgId = session?.user?.organizationId
 
@@ -90,57 +80,6 @@ export default function DealsPage() {
   const wonDeals = deals.filter(d => d.stage === "WON")
   const wonValue = wonDeals.reduce((s, d) => s + d.valueAmount, 0)
 
-  const handleDealClick = (deal: { id: string }) => {
-    setSelectedDealId(deal.id)
-    setSheetOpen(true)
-  }
-
-  function handleEditDeal(deal: Deal) {
-    setEditData({ id: deal.id, name: deal.name, companyId: deal.company?.id, stage: deal.stage, valueAmount: deal.valueAmount, currency: deal.currency, probability: deal.probability, expectedClose: deal.expectedClose, notes: deal.notes })
-    setFormOpen(true)
-  }
-
-  function handleAdd() {
-    setEditData(undefined)
-    setFormOpen(true)
-  }
-
-  function handleDeleteDeal(deal: Deal) {
-    setDeleteItem(deal)
-    setDeleteOpen(true)
-  }
-
-  async function confirmDelete() {
-    if (!deleteItem) return
-    const res = await fetch(`/api/v1/deals/${deleteItem.id}`, {
-      method: "DELETE",
-      headers: orgId ? { "x-organization-id": String(orgId) } : {},
-    })
-    if (!res.ok) throw new Error((await res.json()).error || "Failed to delete")
-    fetchDeals()
-  }
-
-  const selectedDeal = selectedDealId ? deals.find(d => d.id === selectedDealId) : null
-
-  const dealForSheet = selectedDeal ? {
-    id: selectedDeal.id,
-    name: selectedDeal.name,
-    company: selectedDeal.company?.name || "N/A",
-    value: selectedDeal.valueAmount,
-    stage: STAGE_NAME_MAP[selectedDeal.stage] || selectedDeal.stage,
-    stageColor: STAGES.find(s => s.name === selectedDeal.stage)?.color || "#6b7280",
-    probability: selectedDeal.probability,
-    assignee: selectedDeal.assignedTo || "Unassigned",
-    assigneeAvatar: (selectedDeal.assignedTo || "U")[0].toUpperCase(),
-    createdAt: selectedDeal.createdAt?.slice(0, 10) || "",
-    expectedClose: selectedDeal.expectedClose?.slice(0, 10) || "",
-    description: selectedDeal.notes || "",
-    contact: "", contactEmail: "",
-    stageHistory: [],
-    activities: [],
-    team: [],
-  } : null
-
   if (loading) {
     return (
       <div className="space-y-6">
@@ -165,7 +104,7 @@ export default function DealsPage() {
             <option value="value_asc">Сумма ↑</option>
             <option value="name">Имя А → Я</option>
           </Select>
-          <Button onClick={handleAdd}><Plus className="h-4 w-4 mr-1" /> Новая сделка</Button>
+          <Button onClick={() => setFormOpen(true)}><Plus className="h-4 w-4 mr-1" /> Новая сделка</Button>
         </div>
       </div>
 
@@ -176,29 +115,13 @@ export default function DealsPage() {
         <StatCard title="Lost" value={deals.filter(d => d.stage === "LOST").length} icon={<TrendingDown className="h-4 w-4" />} trend="down" />
       </div>
 
-      <KanbanBoard stages={STAGES} deals={kanbanDeals} onDealClick={handleDealClick} />
-
-      <DealDetailSheet
-        deal={dealForSheet}
-        open={sheetOpen}
-        onOpenChange={setSheetOpen}
-        onEdit={() => { if (selectedDeal) { setSheetOpen(false); handleEditDeal(selectedDeal) } }}
-        onDelete={() => { if (selectedDeal) { setSheetOpen(false); handleDeleteDeal(selectedDeal) } }}
-        orgId={orgId ? String(orgId) : undefined}
-        onAddToPricing={async (dealId, data) => {
-          try {
-            const res = await fetch(`/api/v1/deals/${dealId}/add-to-pricing`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": String(orgId) } : {}) },
-              body: JSON.stringify(data),
-            })
-            const json = await res.json()
-            return json.success === true
-          } catch { return false }
-        }}
+      <KanbanBoard
+        stages={STAGES}
+        deals={kanbanDeals}
+        onDealClick={(deal) => router.push(`/deals/${deal.id}`)}
       />
-      <DealForm open={formOpen} onOpenChange={setFormOpen} onSaved={fetchDeals} initialData={editData} orgId={orgId} />
-      <DeleteConfirmDialog open={deleteOpen} onOpenChange={setDeleteOpen} onConfirm={confirmDelete} title="Delete Deal" itemName={deleteItem?.name} />
+
+      <DealForm open={formOpen} onOpenChange={setFormOpen} onSaved={fetchDeals} orgId={orgId} />
     </div>
   )
 }

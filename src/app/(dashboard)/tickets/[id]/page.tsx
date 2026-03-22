@@ -1,14 +1,15 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { useParams } from "next/navigation"
+import { useSession } from "next-auth/react"
 import Link from "next/link"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Select } from "@/components/ui/select"
-import { ArrowLeft, Clock, Send, Lock, Star, Loader2, Bot, FileText, Zap, UserCheck, RefreshCw } from "lucide-react"
+import { ArrowLeft, Clock, Send, Lock, Star, Loader2, Bot, FileText, Zap, UserCheck, RefreshCw, AlertTriangle, UserPlus } from "lucide-react"
 
 interface TicketData {
   id: string
@@ -68,14 +69,19 @@ function formatDate(d: string | null) {
   return new Date(d).toLocaleString("ru-RU", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })
 }
 
-function getSlaTimeLeft(slaDueAt: string | null, status: string): { text: string; breached: boolean } {
-  if (!slaDueAt) return { text: "—", breached: false }
-  if (status === "resolved" || status === "closed") return { text: "Решён", breached: false }
+function getSlaTimeLeft(slaDueAt: string | null, status: string): { text: string; breached: boolean; urgent: boolean } {
+  if (!slaDueAt) return { text: "—", breached: false, urgent: false }
+  if (status === "resolved" || status === "closed") return { text: "Решён", breached: false, urgent: false }
   const diff = new Date(slaDueAt).getTime() - Date.now()
-  if (diff <= 0) return { text: "Просрочен", breached: true }
+  if (diff <= 0) return { text: "Просрочен", breached: true, urgent: false }
   const hours = Math.floor(diff / 3600000)
   const minutes = Math.floor((diff % 3600000) / 60000)
-  return { text: `${hours}ч ${minutes}м`, breached: false }
+  const seconds = Math.floor((diff % 60000) / 1000)
+  const urgent = diff < 2 * 3600000 // less than 2 hours
+  const text = urgent
+    ? `${hours}ч ${minutes.toString().padStart(2, "0")}м ${seconds.toString().padStart(2, "0")}с`
+    : `${hours}ч ${minutes}м`
+  return { text, breached: false, urgent }
 }
 
 function getInitials(str: string | null): string {
@@ -85,10 +91,12 @@ function getInitials(str: string | null): string {
 
 export default function TicketDetailPage() {
   const params = useParams()
+  const { data: session } = useSession()
   const ticketId = params.id as string
   const [ticket, setTicket] = useState<TicketData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
+  const [tick, setTick] = useState(0) // live countdown tick
   const [newComment, setNewComment] = useState("")
   const [isInternal, setIsInternal] = useState(false)
   const [showInternal, setShowInternal] = useState(true)
@@ -138,11 +146,15 @@ export default function TicketDetailPage() {
 
   // Poll for updates every 15 seconds
   useEffect(() => {
-    const interval = setInterval(() => {
-      fetchTicket()
-    }, 15000)
+    const interval = setInterval(() => { fetchTicket() }, 15000)
     return () => clearInterval(interval)
   }, [fetchTicket])
+
+  // Live SLA countdown — tick every second
+  useEffect(() => {
+    const interval = setInterval(() => setTick(t => t + 1), 1000)
+    return () => clearInterval(interval)
+  }, [])
 
   const handleSendComment = async () => {
     if (!newComment.trim() || sending) return
@@ -216,10 +228,34 @@ export default function TicketDetailPage() {
         headers: { "Content-Type": "application/json" },
       })
       const json = await res.json()
-      if (json.success) {
-        fetchTicket()
-      }
+      if (json.success) fetchTicket()
     } catch { /* ignore */ } finally { setUpdatingAssignee(false) }
+  }
+
+  const handleAssignToMe = async () => {
+    const userId = session?.user?.id
+    if (!userId) return
+    setUpdatingAssignee(true)
+    try {
+      const res = await fetch(`/api/v1/tickets/${ticketId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ assignedTo: userId }),
+      })
+      if (res.ok) fetchTicket()
+    } catch { /* ignore */ } finally { setUpdatingAssignee(false) }
+  }
+
+  const handleEscalate = async () => {
+    setUpdatingStatus(true)
+    try {
+      const res = await fetch(`/api/v1/tickets/${ticketId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ priority: "critical" }),
+      })
+      if (res.ok) fetchTicket()
+    } catch { /* ignore */ } finally { setUpdatingStatus(false) }
   }
 
   if (loading) {
@@ -250,19 +286,82 @@ export default function TicketDetailPage() {
   const comments = ticket.comments || []
   const sortedComments = [...comments].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
   const filteredComments = showInternal ? sortedComments : sortedComments.filter(c => !c.isInternal)
-  const sla = getSlaTimeLeft(ticket.slaDueAt, ticket.status)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const sla = getSlaTimeLeft(ticket.slaDueAt, ticket.status) // recalculates every `tick`
+  void tick // ensure re-render on tick
+  const daysOpen = Math.floor((Date.now() - new Date(ticket.createdAt).getTime()) / 86400000)
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-3 flex-wrap">
         <Link href="/tickets">
-          <Button variant="ghost" size="sm"><ArrowLeft className="h-4 w-4 mr-1" /> Назад</Button>
+          <Button variant="ghost" size="icon" className="h-8 w-8"><ArrowLeft className="h-4 w-4" /></Button>
         </Link>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <h1 className="text-lg font-bold truncate">{ticket.subject}</h1>
+            <span className="text-xs text-muted-foreground font-mono">{ticket.ticketNumber}</span>
+          </div>
+          <div className="flex items-center gap-2 mt-1">
+            <Badge className={statusStyle.className}>{statusStyle.label}</Badge>
+            <Badge className={priorityStyle.className}>{priorityStyle.label}</Badge>
+            {ticket.category && <Badge variant="outline" className="text-xs">{ticket.category}</Badge>}
+          </div>
+        </div>
         <div className="flex items-center gap-2">
-          <Badge className={statusStyle.className}>{statusStyle.label}</Badge>
-          <Badge className={priorityStyle.className}>{priorityStyle.label}</Badge>
-          <span className="text-sm text-muted-foreground font-mono">{ticket.ticketNumber}</span>
+          {ticket.status !== "resolved" && ticket.status !== "closed" && (
+            <>
+              <Button
+                size="sm" variant="outline"
+                className="border-amber-300 text-amber-600 hover:bg-amber-50"
+                onClick={handleEscalate}
+                disabled={ticket.priority === "critical" || updatingStatus}
+              >
+                <AlertTriangle className="h-3.5 w-3.5 mr-1.5" /> Escalate
+              </Button>
+              <Button
+                size="sm" variant="outline"
+                className="border-blue-300 text-blue-600 hover:bg-blue-50"
+                onClick={handleAssignToMe}
+                disabled={updatingAssignee}
+              >
+                <UserPlus className="h-3.5 w-3.5 mr-1.5" /> Assign to me
+              </Button>
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* KPI Cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="bg-blue-500 text-white rounded-xl p-4 flex flex-col gap-1 shadow-sm">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-medium opacity-80">Days open</span>
+            <Clock className="h-4 w-4 opacity-80" />
+          </div>
+          <span className="text-2xl font-bold">{daysOpen}</span>
+        </div>
+        <div className={`${sla.breached ? "bg-red-500" : sla.urgent ? "bg-amber-500" : "bg-green-500"} text-white rounded-xl p-4 flex flex-col gap-1 shadow-sm`}>
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-medium opacity-80">SLA time left</span>
+            <Clock className="h-4 w-4 opacity-80" />
+          </div>
+          <span className="text-lg font-bold leading-tight font-mono">{sla.text}</span>
+        </div>
+        <div className="bg-violet-500 text-white rounded-xl p-4 flex flex-col gap-1 shadow-sm">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-medium opacity-80">Comments</span>
+            <Send className="h-4 w-4 opacity-80" />
+          </div>
+          <span className="text-2xl font-bold">{comments.length}</span>
+        </div>
+        <div className={`${ticket.priority === "critical" ? "bg-red-500" : ticket.priority === "high" ? "bg-orange-500" : "bg-slate-500"} text-white rounded-xl p-4 flex flex-col gap-1 shadow-sm`}>
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-medium opacity-80">Priority</span>
+            <AlertTriangle className="h-4 w-4 opacity-80" />
+          </div>
+          <span className="text-xl font-bold capitalize">{ticket.priority}</span>
         </div>
       </div>
 

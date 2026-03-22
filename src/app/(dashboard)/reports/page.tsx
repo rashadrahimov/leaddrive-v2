@@ -63,6 +63,93 @@ interface ReportData {
   }
 }
 
+// ── CircularGauge ────────────────────────────────────────────────────────────
+function CircularGauge({
+  value, max = 100, label, color = "#6366f1", size = 100,
+}: { value: number; max?: number; label: string; color?: string; size?: number }) {
+  const pct = Math.min(value / max, 1)
+  const r = 38
+  const cx = size / 2
+  const cy = size / 2
+  const circumference = 2 * Math.PI * r
+  const dashOffset = circumference * (1 - pct)
+  const displayValue = max === 100 ? `${value}%` : value.toLocaleString()
+
+  return (
+    <div className="flex flex-col items-center gap-1">
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="-rotate-90">
+        <circle cx={cx} cy={cy} r={r} fill="none" stroke="currentColor" strokeWidth={8} className="text-muted" />
+        <circle
+          cx={cx} cy={cy} r={r} fill="none"
+          stroke={color} strokeWidth={8}
+          strokeDasharray={circumference}
+          strokeDashoffset={dashOffset}
+          strokeLinecap="round"
+          style={{ transition: "stroke-dashoffset 0.6s ease" }}
+        />
+        <text
+          x={cx} y={cy + 1}
+          textAnchor="middle" dominantBaseline="middle"
+          className="rotate-90"
+          style={{ transform: `rotate(90deg)`, transformOrigin: `${cx}px ${cy}px`, fontSize: size < 90 ? "13px" : "15px", fontWeight: 700, fill: "currentColor" }}
+        >
+          {displayValue}
+        </text>
+      </svg>
+      <span className="text-xs text-muted-foreground text-center">{label}</span>
+    </div>
+  )
+}
+
+// ── FunnelPyramid ─────────────────────────────────────────────────────────────
+function FunnelPyramid({ data, labels, colors }: {
+  data: { status: string; count: number }[]
+  labels: Record<string, string>
+  colors: Record<string, string>
+}) {
+  const maxCount = Math.max(...data.map(d => d.count), 1)
+  const funnelStages = ["new", "contacted", "qualified", "converted"]
+    .map(s => data.find(d => d.status === s))
+    .filter(Boolean) as { status: string; count: number }[]
+
+  if (funnelStages.length === 0) return <p className="text-sm text-muted-foreground text-center py-4">Нет данных</p>
+
+  return (
+    <div className="flex flex-col gap-1.5">
+      {funnelStages.map((stage, i) => {
+        const widthPct = 40 + (stage.count / maxCount) * 60 // 40% to 100% width
+        // pyramid narrows from top to bottom
+        const pyramidWidth = 100 - (i / (funnelStages.length - 1 || 1)) * 55
+        const convRate = i > 0 && funnelStages[i - 1].count > 0
+          ? Math.round((stage.count / funnelStages[i - 1].count) * 100)
+          : null
+
+        const colorMap: Record<string, string> = {
+          new: "#3b82f6", contacted: "#f59e0b", qualified: "#8b5cf6", converted: "#22c55e",
+        }
+        const bg = colorMap[stage.status] || "#6b7280"
+
+        return (
+          <div key={stage.status} className="flex flex-col items-center gap-0.5">
+            {convRate !== null && (
+              <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                <svg width="10" height="10" viewBox="0 0 10 10"><path d="M5 1 L5 9 M2 6 L5 9 L8 6" stroke="currentColor" strokeWidth="1.5" fill="none" /></svg>
+                {convRate}% конверсия
+              </div>
+            )}
+            <div
+              className="h-8 rounded flex items-center justify-center text-white text-xs font-semibold transition-all"
+              style={{ width: `${pyramidWidth}%`, backgroundColor: bg }}
+            >
+              <span className="truncate px-2">{labels[stage.status] || stage.status}: {stage.count}</span>
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
 const funnelLabels: Record<string, string> = {
   new: "Новый",
   contacted: "Связались",
@@ -253,7 +340,7 @@ export default function ReportsPage() {
           </CardContent>
         </Card>
 
-        {/* Lead Funnel (T42) */}
+        {/* Lead Funnel — Pyramid (C4.2) */}
         <Card>
           <CardHeader className="pb-3">
             <div className="flex items-start justify-between">
@@ -265,32 +352,11 @@ export default function ReportsPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="space-y-2">
-              {funnelData.map((f, i) => {
-                const widthPct = (f.count / maxFunnelCount) * 100
-                return (
-                  <div key={f.status}>
-                    <div className="flex justify-between text-xs mb-0.5">
-                      <span className="flex items-center gap-1">
-                        {i > 0 && <ArrowRight className="h-3 w-3 text-muted-foreground" />}
-                        {funnelLabels[f.status] || f.status}
-                      </span>
-                      <span className="font-medium">{f.count}</span>
-                    </div>
-                    <div className="h-3 bg-muted rounded-full overflow-hidden">
-                      <div
-                        className={`h-full rounded-full transition-all ${funnelColors[f.status] || "bg-gray-400"}`}
-                        style={{ width: `${widthPct}%` }}
-                      />
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
+            <FunnelPyramid data={funnelData} labels={funnelLabels} colors={funnelColors} />
           </CardContent>
         </Card>
 
-        {/* Task Summary */}
+        {/* Task Summary — CircularGauge (C4.1) */}
         <Card>
           <CardHeader className="pb-3">
             <div className="flex items-start justify-between">
@@ -302,21 +368,19 @@ export default function ReportsPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{data.tasks.completionRate}%</div>
-            <div className="text-xs text-muted-foreground mb-2">Процент выполнения</div>
-            <div className="h-2 bg-muted rounded-full overflow-hidden mb-3">
-              <div className="h-full bg-green-500 rounded-full" style={{ width: `${data.tasks.completionRate}%` }} />
-            </div>
-            <div className="space-y-1">
-              {data.tasks.byStatus.map(t => (
-                <div key={t.status} className="flex justify-between text-xs">
-                  <span className="capitalize">{t.status === "completed" ? "Выполнено" : t.status === "in_progress" ? "В работе" : t.status === "todo" || t.status === "pending" ? "К выполнению" : t.status}</span>
-                  <span className="font-medium">{t.count}</span>
+            <div className="flex items-center gap-4 mb-3">
+              <CircularGauge value={data.tasks.completionRate} label="Выполнено" color="#22c55e" size={90} />
+              <div className="flex-1 space-y-1">
+                {data.tasks.byStatus.map(t => (
+                  <div key={t.status} className="flex justify-between text-xs">
+                    <span>{t.status === "completed" ? "Выполнено" : t.status === "in_progress" ? "В работе" : "К выполнению"}</span>
+                    <span className="font-medium">{t.count}</span>
+                  </div>
+                ))}
+                <div className="flex justify-between text-xs text-red-500">
+                  <span>Просрочено</span>
+                  <span className="font-medium">{data.tasks.overdue}</span>
                 </div>
-              ))}
-              <div className="flex justify-between text-xs text-red-500">
-                <span>Просрочено</span>
-                <span className="font-medium">{data.tasks.overdue}</span>
               </div>
             </div>
           </CardContent>
@@ -397,7 +461,7 @@ export default function ReportsPage() {
           </CardContent>
         </Card>
 
-        {/* Ticket SLA */}
+        {/* Ticket SLA — CircularGauge (C4.1) */}
         <Card>
           <CardHeader className="pb-3">
             <div className="flex items-start justify-between">
@@ -409,15 +473,16 @@ export default function ReportsPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{data.tickets.resolutionRate}%</div>
-            <div className="text-xs text-muted-foreground mb-2">Процент решения</div>
-            <div className="space-y-1">
-              {data.tickets.byStatus.map(t => (
-                <div key={t.status} className="flex justify-between text-xs">
-                  <span className="capitalize">{t.status === "new" ? "Новый" : t.status === "in_progress" ? "В работе" : t.status === "resolved" ? "Решён" : t.status === "closed" ? "Закрыт" : t.status}</span>
-                  <span className="font-medium">{t.count}</span>
-                </div>
-              ))}
+            <div className="flex items-center gap-4 mb-3">
+              <CircularGauge value={data.tickets.resolutionRate} label="Решено" color="#6366f1" size={90} />
+              <div className="flex-1 space-y-1">
+                {data.tickets.byStatus.map(t => (
+                  <div key={t.status} className="flex justify-between text-xs">
+                    <span>{t.status === "new" ? "Новый" : t.status === "in_progress" ? "В работе" : t.status === "resolved" ? "Решён" : "Закрыт"}</span>
+                    <span className="font-medium">{t.count}</span>
+                  </div>
+                ))}
+              </div>
             </div>
           </CardContent>
         </Card>

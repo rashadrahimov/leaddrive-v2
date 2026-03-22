@@ -25,7 +25,10 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   try {
     const deal = await prisma.deal.findFirst({
       where: { id, organizationId: orgId },
-      include: { company: { select: { id: true, name: true } } },
+      include: {
+        company: { select: { id: true, name: true } },
+        campaign: { select: { id: true, name: true } },
+      },
     })
 
     if (!deal) return NextResponse.json({ error: "Deal not found" }, { status: 404 })
@@ -65,7 +68,10 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 
     const updated = await prisma.deal.findFirst({
       where: { id, organizationId: orgId },
-      include: { company: { select: { id: true, name: true } } },
+      include: {
+        company: { select: { id: true, name: true } },
+        campaign: { select: { id: true, name: true } },
+      },
     })
 
     return NextResponse.json({ success: true, data: updated })

@@ -35,6 +35,13 @@
     {"id": "P10", "description": "Pricing v2: Company detail page — Pricing tab (profile, services, additional sales)", "priority": 32, "dependencies": ["P3", "P4"], "status": "done"},
     {"id": "P11", "description": "Pricing v2: Deals integration — 'Add to Pricing' button on WON deals + API", "priority": 33, "dependencies": ["P4", "P10"], "status": "done"},
     {"id": "P12", "description": "Pricing v2: Refactor Excel export to read from DB", "priority": 34, "dependencies": ["P5"], "status": "done"},
-    {"id": "P13", "description": "Pricing v2: Cleanup — remove old file-based routes, archive JSON, update types", "priority": 35, "dependencies": ["P6", "P7", "P9", "P12"], "status": "done"}
+    {"id": "P13", "description": "Pricing v2: Cleanup — remove old file-based routes, archive JSON, update types", "priority": 35, "dependencies": ["P6", "P7", "P9", "P12"], "status": "done"},
+
+    {"id": "C1", "description": "Deal Detail full page: pipeline chevrons, colored KPI cards, competitors table, predictive scoring, tags", "priority": 36, "dependencies": [], "status": "in_progress"},
+    {"id": "C2", "description": "Company Detail full page: unified timeline feed, KPI cards, tags", "priority": 37, "dependencies": [], "status": "pending"},
+    {"id": "C3", "description": "Ticket Detail full page: SLA countdown timer, Escalate/Assign to me buttons, unified communication timeline, related KB articles", "priority": 38, "dependencies": [], "status": "pending"},
+    {"id": "C4", "description": "Dashboard visual improvements: circular gauges in Reports, funnel pyramid visualization, KPI card style upgrade", "priority": 39, "dependencies": [], "status": "pending"},
+    {"id": "C5", "description": "Global Tags system: Prisma Tag model + relations, tag-input UI component, tags API", "priority": 40, "dependencies": [], "status": "pending"},
+    {"id": "C6", "description": "AI floating assistant panel: global slide-in AI chat available on every page", "priority": 41, "dependencies": [], "status": "pending"}
   ]
 }
