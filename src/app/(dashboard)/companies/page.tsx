@@ -219,16 +219,23 @@ export default function CompaniesPage() {
                   </span>
                 </div>
 
-                {company.leadTemperature && (
-                  <div className="flex items-center gap-2">
-                    <span className={`text-xs font-bold ${company.leadTemperature === "hot" ? "text-red-500" : company.leadTemperature === "warm" ? "text-orange-500" : "text-blue-500"}`}>
-                      {company.leadTemperature.toUpperCase()}
+                <div className="flex items-center gap-2 flex-wrap">
+                  {company.leadTemperature && (
+                    <>
+                      <span className={`text-xs font-bold ${company.leadTemperature === "hot" ? "text-red-500" : company.leadTemperature === "warm" ? "text-orange-500" : "text-blue-500"}`}>
+                        {company.leadTemperature.toUpperCase()}
+                      </span>
+                      <span className="text-xs bg-muted px-1.5 py-0.5 rounded font-medium">
+                        {company.leadScore}
+                      </span>
+                    </>
+                  )}
+                  {company.slaPolicy && (
+                    <span className="text-xs bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 px-1.5 py-0.5 rounded font-medium">
+                      SLA: {company.slaPolicy.name}
                     </span>
-                    <span className="text-xs bg-muted px-1.5 py-0.5 rounded font-medium">
-                      {company.leadScore}
-                    </span>
-                  </div>
-                )}
+                  )}
+                </div>
               </CardContent>
             </Card>
           ))

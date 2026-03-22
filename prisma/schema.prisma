@@ -137,6 +137,9 @@ model Company {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
+  slaPolicyId    String?
+  slaPolicy      SlaPolicy? @relation(fields: [slaPolicyId], references: [id], onDelete: SetNull)
+
   contacts       Contact[]
   deals          Deal[]
   activities     Activity[]
@@ -528,7 +531,10 @@ model SlaPolicy {
   resolutionHours    Int
   businessHoursOnly  Boolean  @default(true)
   isActive           Boolean  @default(true)
+  isDefault          Boolean  @default(false)
   createdAt          DateTime @default(now())
+
+  companies          Company[]
 
   @@index([organizationId])
   @@map("sla_policies")

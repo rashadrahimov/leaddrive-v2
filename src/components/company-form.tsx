@@ -19,6 +19,14 @@ interface CompanyFormData {
   country: string
   status: string
   description: string
+  slaPolicyId: string | null
+}
+
+interface SlaPolicyOption {
+  id: string
+  name: string
+  priority: string
+  resolutionHours: number
 }
 
 interface CompanyFormProps {
@@ -42,9 +50,11 @@ export function CompanyForm({ open, onOpenChange, onSaved, initialData, orgId }:
     country: initialData?.country || "",
     status: initialData?.status || "prospect",
     description: initialData?.description || "",
+    slaPolicyId: (initialData as any)?.slaPolicyId || null,
   })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState("")
+  const [slaPolicies, setSlaPolicies] = useState<SlaPolicyOption[]>([])
 
   useEffect(() => {
     if (open) {
@@ -59,8 +69,18 @@ export function CompanyForm({ open, onOpenChange, onSaved, initialData, orgId }:
         country: initialData?.country || "",
         status: initialData?.status || "prospect",
         description: initialData?.description || "",
+        slaPolicyId: (initialData as any)?.slaPolicyId || null,
       })
       setError("")
+      // Fetch SLA policies
+      fetch("/api/v1/sla-policies", {
+        headers: orgId ? { "x-organization-id": orgId } : {},
+      })
+        .then(r => r.json())
+        .then(json => {
+          if (json.success) setSlaPolicies(json.data || [])
+        })
+        .catch(() => {})
     }
   }, [open, initialData])
 
@@ -146,6 +166,20 @@ export function CompanyForm({ open, onOpenChange, onSaved, initialData, orgId }:
             <div>
               <Label htmlFor="address">Address</Label>
               <Input id="address" value={form.address} onChange={(e) => update("address", e.target.value)} />
+            </div>
+            <div>
+              <Label htmlFor="slaPolicy">SLA Policy</Label>
+              <Select
+                value={form.slaPolicyId || ""}
+                onChange={(e) => setForm(f => ({ ...f, slaPolicyId: e.target.value || null }))}
+              >
+                <option value="">— По умолчанию (по приоритету) —</option>
+                {slaPolicies.map(p => (
+                  <option key={p.id} value={p.id}>
+                    {p.name} — {p.priority} ({p.resolutionHours}ч)
+                  </option>
+                ))}
+              </Select>
             </div>
             <div>
               <Label htmlFor="description">Description</Label>

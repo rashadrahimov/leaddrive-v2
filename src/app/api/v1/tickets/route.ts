@@ -78,12 +78,29 @@ export async function POST(req: NextRequest) {
     // Auto-generate ticket number
     const ticketNumber = `TK-${String(Date.now()).slice(-4).padStart(4, "0")}`
 
-    // Calculate SLA due date from SLA policy
+    // Calculate SLA due date: company SLA → priority-based SLA → default
     const priority = parsed.data.priority || "medium"
     let slaDueAt: Date | undefined
-    const slaPolicy = await prisma.slaPolicy.findFirst({
-      where: { organizationId: orgId, priority, isActive: true },
-    })
+    let slaPolicy = null
+
+    // 1. Try company-specific SLA
+    if (parsed.data.companyId) {
+      const company = await prisma.company.findFirst({
+        where: { id: parsed.data.companyId, organizationId: orgId },
+        select: { slaPolicy: true },
+      })
+      if (company?.slaPolicy?.id) {
+        slaPolicy = company.slaPolicy
+      }
+    }
+
+    // 2. Fallback to priority-based SLA
+    if (!slaPolicy) {
+      slaPolicy = await prisma.slaPolicy.findFirst({
+        where: { organizationId: orgId, priority, isActive: true },
+      })
+    }
+
     if (slaPolicy) {
       slaDueAt = new Date(Date.now() + slaPolicy.resolutionHours * 3600000)
     }

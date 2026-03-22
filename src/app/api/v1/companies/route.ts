@@ -14,6 +14,7 @@ const createCompanySchema = z.object({
   country: z.string().max(100).optional(),
   description: z.string().max(5000).optional(),
   status: z.enum(["active", "inactive", "prospect"]).optional(),
+  slaPolicyId: z.string().nullable().optional(),
 })
 
 export async function GET(req: NextRequest) {
@@ -43,6 +44,7 @@ export async function GET(req: NextRequest) {
         orderBy: { name: "asc" },
         include: {
           _count: { select: { contacts: true, deals: true, contracts: true } },
+          slaPolicy: { select: { id: true, name: true, priority: true, resolutionHours: true } },
         },
       }),
       prisma.company.count({ where }),

@@ -336,6 +336,14 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
                 <span className="text-[10px] text-muted-foreground block">Дней в базе</span>
                 <span className="text-xs">{(fullData?.createdAt || company.createdAt) ? `${Math.floor((Date.now() - new Date(fullData?.createdAt || company.createdAt).getTime()) / 86400000)} дн.` : "—"}</span>
               </div>
+              <div className="p-2 bg-muted/30 rounded">
+                <span className="text-[10px] text-muted-foreground block">SLA</span>
+                <span className="text-xs">
+                  {(fullData as any)?.slaPolicy ? (
+                    <span className="text-blue-600 dark:text-blue-400 font-medium">{(fullData as any).slaPolicy.name}</span>
+                  ) : "По умолчанию"}
+                </span>
+              </div>
               <div className="p-2 bg-muted/30 rounded cursor-pointer hover:bg-muted/50 group" onClick={() => editField("Score", "leadScore", fullData?.leadScore ?? company.leadScore, true)}>
                 <span className="text-[10px] text-muted-foreground block">Score <Pencil className="h-2 w-2 inline opacity-0 group-hover:opacity-100" /></span>
                 <span className={`text-xs font-bold ${(fullData?.leadTemperature || company.leadTemperature) === "hot" ? "text-red-500" : (fullData?.leadTemperature || company.leadTemperature) === "warm" ? "text-orange-500" : "text-blue-500"}`}>
