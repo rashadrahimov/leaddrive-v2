@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useMemo } from "react"
 import { useSession } from "next-auth/react"
+import { useTranslations } from "next-intl"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -28,6 +29,7 @@ interface Contact {
 }
 
 export default function ContactsPage() {
+  const t = useTranslations("contacts")
   const router = useRouter()
   const { data: session } = useSession()
   const [contacts, setContacts] = useState<Contact[]>([])
@@ -177,7 +179,7 @@ export default function ContactsPage() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <h1 className="text-2xl font-bold tracking-tight">Контакты</h1>
+        <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
         <div className="animate-pulse"><div className="h-96 bg-muted rounded-lg" /></div>
       </div>
     )
@@ -187,17 +189,17 @@ export default function ContactsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Контакты</h1>
-          <p className="text-sm text-muted-foreground">Управление базой контактов</p>
+          <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
+          <p className="text-sm text-muted-foreground">{t("subtitleDesc")}</p>
         </div>
-        <Button onClick={handleAdd}><Plus className="h-4 w-4 mr-1" /> Добавить контакт</Button>
+        <Button onClick={handleAdd}><Plus className="h-4 w-4 mr-1" /> {t("add")}</Button>
       </div>
 
       <div className="grid gap-4 md:grid-cols-4">
-        <StatCard title="Всего" value={total} icon={<Users className="h-4 w-4" />} />
-        <StatCard title="Активные" value={contacts.filter(c => c.isActive).length} trend="up" />
-        <StatCard title="С email" value={contacts.filter(c => c.email).length} icon={<Mail className="h-4 w-4" />} />
-        <StatCard title="С телефоном" value={contacts.filter(c => c.phone).length} icon={<Phone className="h-4 w-4" />} />
+        <StatCard title={t("statTotal")} value={total} icon={<Users className="h-4 w-4" />} />
+        <StatCard title={t("statActive")} value={contacts.filter(c => c.isActive).length} trend="up" />
+        <StatCard title={t("statWithEmail")} value={contacts.filter(c => c.email).length} icon={<Mail className="h-4 w-4" />} />
+        <StatCard title={t("statWithPhone")} value={contacts.filter(c => c.phone).length} icon={<Phone className="h-4 w-4" />} />
       </div>
 
       {/* Selection action bar */}
@@ -205,7 +207,7 @@ export default function ContactsPage() {
         <div className="flex items-center gap-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg px-4 py-2.5">
           <CheckSquare className="h-4 w-4 text-blue-600" />
           <span className="text-sm font-medium text-blue-700 dark:text-blue-300">
-            Выбрано: {selected.size} из {filtered.length}
+            {t("selected", { n: selected.size, total: filtered.length })}
           </span>
           {!allFilteredSelected && (
             <button onClick={selectAllFiltered} className="text-sm text-blue-600 hover:text-blue-800 underline">
@@ -222,7 +224,7 @@ export default function ContactsPage() {
             className="gap-1"
             onClick={() => setBulkDeleteOpen(true)}
           >
-            <Trash2 className="h-3.5 w-3.5" /> Удалить ({selected.size})
+            <Trash2 className="h-3.5 w-3.5" /> {t("deleteSelected")} ({selected.size})
           </Button>
         </div>
       )}
@@ -232,7 +234,7 @@ export default function ContactsPage() {
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Поиск контактов..."
+            placeholder={t("searchPlaceholder")}
             value={search}
             onChange={e => { setSearch(e.target.value); setPage(1) }}
             className="pl-9"
@@ -241,11 +243,11 @@ export default function ContactsPage() {
         <span className="text-sm text-muted-foreground">{filtered.length} результатов</span>
         <div className="flex-1" />
         <Select value={sortBy} onChange={e => setSortBy(e.target.value)} className="w-[200px]">
-          <option value="name_asc">Имя А → Я</option>
-          <option value="name_desc">Имя Я → А</option>
+          <option value="name_asc">{t("sortNameAsc")}</option>
+          <option value="name_desc">{t("sortNameDesc")}</option>
           <option value="company">Компания</option>
-          <option value="email">С email</option>
-          <option value="active">Активные первые</option>
+          <option value="email">{t("statWithEmail")}</option>
+          <option value="active">{t("statActive")}</option>
         </Select>
       </div>
 
@@ -265,11 +267,11 @@ export default function ContactsPage() {
                   )}
                 </button>
               </th>
-              <th className="px-4 py-3 text-left font-medium text-muted-foreground">Имя</th>
-              <th className="px-4 py-3 text-left font-medium text-muted-foreground">Компания</th>
-              <th className="px-4 py-3 text-left font-medium text-muted-foreground">Email</th>
-              <th className="px-4 py-3 text-left font-medium text-muted-foreground">Телефон</th>
-              <th className="px-4 py-3 text-left font-medium text-muted-foreground">Статус</th>
+              <th className="px-4 py-3 text-left font-medium text-muted-foreground">{t("colName")}</th>
+              <th className="px-4 py-3 text-left font-medium text-muted-foreground">{t("colCompany")}</th>
+              <th className="px-4 py-3 text-left font-medium text-muted-foreground">{t("colEmail")}</th>
+              <th className="px-4 py-3 text-left font-medium text-muted-foreground">{t("colPhone")}</th>
+              <th className="px-4 py-3 text-left font-medium text-muted-foreground">{t("colStatus")}</th>
               <th className="px-4 py-3 text-left font-medium text-muted-foreground">Портал</th>
               <th className="px-4 py-3 w-20"></th>
             </tr>
@@ -321,7 +323,7 @@ export default function ContactsPage() {
                 </td>
                 <td className="px-4 py-3">
                   <Badge variant={item.isActive ? "default" : "secondary"}>
-                    {item.isActive ? "Активный" : "Неактивный"}
+                    {item.isActive ? t("statusActive") : t("statusInactive")}
                   </Badge>
                 </td>
                 <td className="px-4 py-3">
@@ -348,7 +350,7 @@ export default function ContactsPage() {
             {paginated.length === 0 && (
               <tr>
                 <td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">
-                  Контакты не найдены
+                  {t("noResults")}
                 </td>
               </tr>
             )}
@@ -374,7 +376,7 @@ export default function ContactsPage() {
       )}
 
       <ContactForm open={formOpen} onOpenChange={setFormOpen} onSaved={fetchContacts} initialData={editData} orgId={orgId} />
-      <DeleteConfirmDialog open={deleteOpen} onOpenChange={setDeleteOpen} onConfirm={confirmDelete} title="Удалить контакт" itemName={deleteItem?.fullName} />
+      <DeleteConfirmDialog open={deleteOpen} onOpenChange={setDeleteOpen} onConfirm={confirmDelete} title={t("deleteContact")} itemName={deleteItem?.fullName} />
       <DeleteConfirmDialog
         open={bulkDeleteOpen}
         onOpenChange={setBulkDeleteOpen}

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -41,24 +42,14 @@ interface LeadItemModalProps {
   onConvert?: (lead: LeadItem) => void
 }
 
-const statusLabels: Record<string, string> = {
-  new: "Новый", contacted: "Связались", qualified: "Квалифицирован",
-  converted: "Конвертирован", lost: "Потерян",
-}
+// statusLabels defined inside component
 
 const statusColors: Record<string, string> = {
   new: "bg-blue-500", contacted: "bg-yellow-500", qualified: "bg-purple-500",
   converted: "bg-green-500", lost: "bg-red-500",
 }
 
-const priorityLabels: Record<string, string> = {
-  low: "Низкий", medium: "Средний", high: "Высокий",
-}
-
-const sourceLabels: Record<string, string> = {
-  website: "Сайт", referral: "Реферал", cold_call: "Холодный звонок",
-  linkedin: "LinkedIn", email: "Email",
-}
+// priorityLabels and sourceLabels defined inside component
 
 const sourceOptions = ["website", "referral", "cold_call", "linkedin", "email"]
 
@@ -71,6 +62,19 @@ function getGrade(score: number): { letter: string; color: string } {
 }
 
 export function LeadItemModal({ open, onOpenChange, lead, orgId, onSaved, onConvert }: LeadItemModalProps) {
+  const t = useTranslations("modal")
+  const tl = useTranslations("leads")
+  const statusLabels: Record<string, string> = {
+    new: t("statusNew"), contacted: t("statusContacted"), qualified: t("statusQualified"),
+    converted: t("statusConverted"), lost: t("statusLost"),
+  }
+  const priorityLabels: Record<string, string> = {
+    low: t("priorityLow"), medium: t("priorityMedium"), high: t("priorityHigh"),
+  }
+  const sourceLabels: Record<string, string> = {
+    website: tl("sourceWebsite"), referral: tl("sourceReferral"),
+    cold_call: tl("sourceColdCall"), linkedin: tl("sourceLinkedin"), email: tl("sourceEmail"),
+  }
   const [activeTab, setActiveTab] = useState("details")
   const [saving, setSaving] = useState(false)
   const [scoring, setScoring] = useState(false)
@@ -100,7 +104,7 @@ export function LeadItemModal({ open, onOpenChange, lead, orgId, onSaved, onConv
 
   // AI Text state
   const [textType, setTextType] = useState("Email")
-  const [tone, setTone] = useState("Профессиональный")
+  const [tone, setTone] = useState("Professional")
   const [instructions, setInstructions] = useState("")
   const [generatedText, setGeneratedText] = useState<any>(null)
   const [emailSending, setEmailSending] = useState(false)
@@ -275,10 +279,10 @@ export function LeadItemModal({ open, onOpenChange, lead, orgId, onSaved, onConv
       if (json.success) {
         setEmailSent(true)
       } else {
-        setEmailError(json.error || "Ошибка отправки")
+        setEmailError(json.error || t("errorSending"))
       }
     } catch {
-      setEmailError("Ошибка сети")
+      setEmailError(t("errorNetwork"))
     } finally { setEmailSending(false) }
   }
 
@@ -290,12 +294,12 @@ export function LeadItemModal({ open, onOpenChange, lead, orgId, onSaved, onConv
   const daysSinceCreation = Math.floor((Date.now() - new Date(displayLead.createdAt).getTime()) / 86400000)
 
   const tabs = [
-    { id: "details", label: "Детали" },
-    { id: "activity", label: "Активность" },
-    { id: "sentiment", label: "Sentiment" },
-    { id: "tasks", label: "Tasks" },
-    { id: "aitext", label: "AI Text" },
-    { id: "ai", label: "AI Скоринг" },
+    { id: "details", label: t("tabDetails") },
+    { id: "activity", label: t("tabActivity") },
+    { id: "sentiment", label: t("tabSentiment") },
+    { id: "tasks", label: t("tabTasks") },
+    { id: "aitext", label: t("tabAiText") },
+    { id: "ai", label: t("tabAiScoring") },
   ]
 
   return (
@@ -349,12 +353,12 @@ export function LeadItemModal({ open, onOpenChange, lead, orgId, onSaved, onConv
                 </div>
                 <div className="text-center mr-2 hidden sm:block">
                   <div className="text-lg font-bold text-muted-foreground">{conversionProb}%</div>
-                  <div className="text-[10px] text-muted-foreground">Конверсия</div>
+                  <div className="text-[10px] text-muted-foreground">{t("conversion")}</div>
                 </div>
                 {displayLead.estimatedValue ? (
                   <div className="text-center mr-2 hidden sm:block">
                     <div className="text-lg font-bold text-green-600">${displayLead.estimatedValue.toLocaleString()}</div>
-                    <div className="text-[10px] text-muted-foreground">Стоимость</div>
+                    <div className="text-[10px] text-muted-foreground">{t("fieldValue")}</div>
                   </div>
                 ) : null}
                 <button onClick={() => onOpenChange(false)} className="p-2 rounded-full hover:bg-muted transition-colors">
@@ -390,7 +394,7 @@ export function LeadItemModal({ open, onOpenChange, lead, orgId, onSaved, onConv
                 {/* Status & Priority row */}
                 <div className="space-y-3">
                   <div>
-                    <p className="text-[10px] font-medium text-muted-foreground mb-1.5 uppercase tracking-wider">Статус</p>
+                    <p className="text-[10px] font-medium text-muted-foreground mb-1.5 uppercase tracking-wider">{t("statusLabel")}</p>
                     <div className="flex flex-wrap gap-1.5">
                       {(["new", "contacted", "qualified", "converted", "lost"] as const).map(s => (
                         <button
@@ -411,7 +415,7 @@ export function LeadItemModal({ open, onOpenChange, lead, orgId, onSaved, onConv
                     </div>
                   </div>
                   <div>
-                    <p className="text-[10px] font-medium text-muted-foreground mb-1.5 uppercase tracking-wider">Приоритет</p>
+                    <p className="text-[10px] font-medium text-muted-foreground mb-1.5 uppercase tracking-wider">{t("priorityLabel")}</p>
                     <div className="flex flex-wrap gap-1.5">
                       {(["low", "medium", "high"] as const).map(p => (
                         <button
@@ -438,18 +442,18 @@ export function LeadItemModal({ open, onOpenChange, lead, orgId, onSaved, onConv
                 {/* Lead info — view or edit */}
                 <div>
                   <div className="flex items-center justify-between mb-3">
-                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Информация о лиде</p>
+                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{t("infoLabel")}</p>
                     {!editing ? (
                       <Button variant="outline" size="sm" className="gap-1.5 h-7 text-xs" onClick={startEditing}>
-                        <Pencil className="h-3 w-3" /> Редактировать
+                        <Pencil className="h-3 w-3" /> {t("editButton")}
                       </Button>
                     ) : (
                       <div className="flex gap-1.5">
                         <Button size="sm" className="gap-1 h-7 text-xs" onClick={saveEditForm} disabled={saving}>
-                          <Save className="h-3 w-3" /> {saving ? "Сохранение..." : "Сохранить"}
+                          <Save className="h-3 w-3" /> {saving ? t("savingButton") : t("saveButton")}
                         </Button>
                         <Button variant="outline" size="sm" className="gap-1 h-7 text-xs" onClick={cancelEditing}>
-                          <XCircle className="h-3 w-3" /> Отмена
+                          <XCircle className="h-3 w-3" /> {t("cancelButton")}
                         </Button>
                       </div>
                     )}
@@ -460,22 +464,22 @@ export function LeadItemModal({ open, onOpenChange, lead, orgId, onSaved, onConv
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border rounded-lg bg-muted/20">
                       <div>
                         <Label className="text-xs flex items-center gap-1.5 mb-1.5">
-                          <User className="h-3 w-3" /> Имя контакта *
+                          <User className="h-3 w-3" /> {t("contactNameLabel")}
                         </Label>
                         <Input
                           value={editForm.contactName}
                           onChange={e => setEditForm({ ...editForm, contactName: e.target.value })}
-                          placeholder="Имя контакта"
+                          placeholder={t("contactNamePlaceholder")}
                         />
                       </div>
                       <div>
                         <Label className="text-xs flex items-center gap-1.5 mb-1.5">
-                          <Building2 className="h-3 w-3" /> Компания
+                          <Building2 className="h-3 w-3" /> {t("fieldCompany")}
                         </Label>
                         <Input
                           value={editForm.companyName}
                           onChange={e => setEditForm({ ...editForm, companyName: e.target.value })}
-                          placeholder="Название компании"
+                          placeholder={t("companyPlaceholder")}
                         />
                       </div>
                       <div>
@@ -491,7 +495,7 @@ export function LeadItemModal({ open, onOpenChange, lead, orgId, onSaved, onConv
                       </div>
                       <div>
                         <Label className="text-xs flex items-center gap-1.5 mb-1.5">
-                          <Phone className="h-3 w-3" /> Телефон
+                          <Phone className="h-3 w-3" /> {t("fieldPhone")}
                         </Label>
                         <Input
                           value={editForm.phone}
@@ -501,13 +505,13 @@ export function LeadItemModal({ open, onOpenChange, lead, orgId, onSaved, onConv
                       </div>
                       <div>
                         <Label className="text-xs flex items-center gap-1.5 mb-1.5">
-                          <Tag className="h-3 w-3" /> Источник
+                          <Tag className="h-3 w-3" /> {t("fieldSource")}
                         </Label>
                         <Select
                           value={editForm.source}
                           onChange={e => setEditForm({ ...editForm, source: e.target.value })}
                         >
-                          <option value="">— Не указан —</option>
+                          <option value="">{t("sourcePlaceholder")}</option>
                           {sourceOptions.map(s => (
                             <option key={s} value={s}>{sourceLabels[s] || s}</option>
                           ))}
@@ -515,7 +519,7 @@ export function LeadItemModal({ open, onOpenChange, lead, orgId, onSaved, onConv
                       </div>
                       <div>
                         <Label className="text-xs flex items-center gap-1.5 mb-1.5">
-                          <DollarSign className="h-3 w-3" /> Оценочная стоимость ($)
+                          <DollarSign className="h-3 w-3" /> {t("valuePlaceholder")}
                         </Label>
                         <Input
                           type="number"
@@ -525,12 +529,12 @@ export function LeadItemModal({ open, onOpenChange, lead, orgId, onSaved, onConv
                         />
                       </div>
                       <div className="md:col-span-2">
-                        <Label className="text-xs mb-1.5 block">Заметки</Label>
+                        <Label className="text-xs mb-1.5 block">{t("fieldNotes")}</Label>
                         <Textarea
                           value={editForm.notes}
                           onChange={e => setEditForm({ ...editForm, notes: e.target.value })}
                           rows={3}
-                          placeholder="Заметки о лиде..."
+                          placeholder={t("notesPlaceholder")}
                         />
                       </div>
                     </div>
@@ -540,14 +544,14 @@ export function LeadItemModal({ open, onOpenChange, lead, orgId, onSaved, onConv
                       <div className="p-3 bg-muted/30 rounded-lg">
                         <div className="flex items-center gap-1.5 mb-1">
                           <User className="h-3 w-3 text-muted-foreground" />
-                          <span className="text-[10px] text-muted-foreground uppercase">Контакт</span>
+                          <span className="text-[10px] text-muted-foreground uppercase">{t("fieldContact")}</span>
                         </div>
                         <span className="text-sm font-medium">{displayLead.contactName}</span>
                       </div>
                       <div className="p-3 bg-muted/30 rounded-lg">
                         <div className="flex items-center gap-1.5 mb-1">
                           <Building2 className="h-3 w-3 text-muted-foreground" />
-                          <span className="text-[10px] text-muted-foreground uppercase">Компания</span>
+                          <span className="text-[10px] text-muted-foreground uppercase">{t("fieldCompany")}</span>
                         </div>
                         <span className="text-sm font-medium">{displayLead.companyName || "—"}</span>
                       </div>
@@ -561,37 +565,37 @@ export function LeadItemModal({ open, onOpenChange, lead, orgId, onSaved, onConv
                       <div className="p-3 bg-muted/30 rounded-lg">
                         <div className="flex items-center gap-1.5 mb-1">
                           <Phone className="h-3 w-3 text-muted-foreground" />
-                          <span className="text-[10px] text-muted-foreground uppercase">Телефон</span>
+                          <span className="text-[10px] text-muted-foreground uppercase">{t("fieldPhone")}</span>
                         </div>
                         <span className="text-sm font-medium">{displayLead.phone || "—"}</span>
                       </div>
                       <div className="p-3 bg-muted/30 rounded-lg">
                         <div className="flex items-center gap-1.5 mb-1">
                           <Tag className="h-3 w-3 text-muted-foreground" />
-                          <span className="text-[10px] text-muted-foreground uppercase">Источник</span>
+                          <span className="text-[10px] text-muted-foreground uppercase">{t("fieldSource")}</span>
                         </div>
                         <span className="text-sm font-medium">{displayLead.source ? (sourceLabels[displayLead.source] || displayLead.source) : "—"}</span>
                       </div>
                       <div className="p-3 bg-muted/30 rounded-lg">
                         <div className="flex items-center gap-1.5 mb-1">
                           <DollarSign className="h-3 w-3 text-muted-foreground" />
-                          <span className="text-[10px] text-muted-foreground uppercase">Стоимость</span>
+                          <span className="text-[10px] text-muted-foreground uppercase">{t("fieldValue")}</span>
                         </div>
                         <span className="text-sm font-medium">{displayLead.estimatedValue ? `$${displayLead.estimatedValue.toLocaleString()}` : "—"}</span>
                       </div>
                       <div className="p-3 bg-muted/30 rounded-lg">
                         <div className="flex items-center gap-1.5 mb-1">
                           <Calendar className="h-3 w-3 text-muted-foreground" />
-                          <span className="text-[10px] text-muted-foreground uppercase">Создан</span>
+                          <span className="text-[10px] text-muted-foreground uppercase">{t("fieldCreatedShort")}</span>
                         </div>
                         <span className="text-sm font-medium">{new Date(displayLead.createdAt).toLocaleDateString()}</span>
                       </div>
                       <div className="p-3 bg-muted/30 rounded-lg">
                         <div className="flex items-center gap-1.5 mb-1">
                           <Clock className="h-3 w-3 text-muted-foreground" />
-                          <span className="text-[10px] text-muted-foreground uppercase">Возраст</span>
+                          <span className="text-[10px] text-muted-foreground uppercase">{t("fieldAge")}</span>
                         </div>
-                        <span className="text-sm font-medium">{daysSinceCreation} дн.</span>
+                        <span className="text-sm font-medium">{daysSinceCreation} {t("daysShort")}</span>
                       </div>
                     </div>
                   )}
@@ -600,10 +604,10 @@ export function LeadItemModal({ open, onOpenChange, lead, orgId, onSaved, onConv
                 {/* Notes (view mode only — edit mode has notes in form) */}
                 {!editing && (
                   <div>
-                    <p className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wider">Заметки</p>
+                    <p className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wider">{t("fieldNotes")}</p>
                     <div className="p-3 bg-muted/20 rounded-lg border min-h-[48px]">
                       <p className="text-sm text-muted-foreground whitespace-pre-wrap">
-                        {displayLead.notes || "Нет заметок. Нажмите «Редактировать» чтобы добавить."}
+                        {displayLead.notes || t("noNotes")}
                       </p>
                     </div>
                   </div>
@@ -624,7 +628,7 @@ export function LeadItemModal({ open, onOpenChange, lead, orgId, onSaved, onConv
                     </div>
                   </div>
                   <span className="text-xs text-muted-foreground">
-                    {displayLead.lastScoredAt ? `Оценён: ${new Date(displayLead.lastScoredAt).toLocaleDateString()}` : "Не оценён"}
+                    {displayLead.lastScoredAt ? `${t("scored")} ${new Date(displayLead.lastScoredAt).toLocaleDateString()}` : t("notScored")}
                   </span>
                 </div>
 
@@ -632,24 +636,24 @@ export function LeadItemModal({ open, onOpenChange, lead, orgId, onSaved, onConv
                 <div className="flex flex-wrap gap-2 pt-2 border-t">
                   {displayLead.status !== "converted" && onConvert && (
                     <Button className="gap-1.5" onClick={() => { onOpenChange(false); onConvert(displayLead) }}>
-                      <ArrowRight className="h-4 w-4" /> Конвертировать в сделку
+                      <ArrowRight className="h-4 w-4" /> {t("convertToDeal")}
                     </Button>
                   )}
                   <Button variant="outline" size="sm" className="gap-1 text-orange-700 border-orange-200 hover:bg-orange-50 dark:border-orange-800 dark:hover:bg-orange-950"
                     onClick={async () => {
-                      if (!confirm(`Пометить как потерянный: ${displayLead.contactName}?`)) return
+                      if (!confirm(`${t("confirmMarkLostMsg")} ${displayLead.contactName}?`)) return
                       await changeStatus("lost")
                     }}>
-                    <Ban className="h-3 w-3" /> Потерян
+                    <Ban className="h-3 w-3" /> {t("markLost")}
                   </Button>
                   <Button variant="outline" size="sm" className="gap-1 text-red-700 border-red-200 hover:bg-red-50 dark:border-red-800 dark:hover:bg-red-950"
                     onClick={async () => {
-                      if (!confirm(`Удалить ${displayLead.contactName}? Необратимо.`)) return
+                      if (!confirm(`${t("confirmDeleteMsg")} ${displayLead.contactName}`)) return
                       await fetch(`/api/v1/leads/${lead.id}`, { method: "DELETE", headers: orgId ? { "x-organization-id": String(orgId) } : {} })
                       onOpenChange(false)
                       onSaved?.()
                     }}>
-                    <Trash2 className="h-3 w-3" /> Удалить
+                    <Trash2 className="h-3 w-3" /> {t("deleteLead")}
                   </Button>
                 </div>
               </div>
@@ -659,9 +663,9 @@ export function LeadItemModal({ open, onOpenChange, lead, orgId, onSaved, onConv
             {activeTab === "activity" && (
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Активности</p>
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{t("activityActivities")}</p>
                   <Button size="sm" className="gap-1" onClick={() => { setShowActivityForm(!showActivityForm); if (!activities.length) loadActivities() }}>
-                    <Plus className="h-3 w-3" /> Записать
+                    <Plus className="h-3 w-3" /> {t("activityRecord")}
                   </Button>
                 </div>
 
@@ -670,28 +674,28 @@ export function LeadItemModal({ open, onOpenChange, lead, orgId, onSaved, onConv
                     <CardContent className="pt-4 pb-4 space-y-3">
                       <div className="grid grid-cols-2 gap-3">
                         <div>
-                          <Label className="text-xs">Тип</Label>
+                          <Label className="text-xs">{t("activityType")}</Label>
                           <Select value={activityType} onChange={e => setActivityType(e.target.value)}>
-                            <option value="note">Заметка</option>
-                            <option value="call">Звонок</option>
+                            <option value="note">{t("activityNoteShort")}</option>
+                            <option value="call">{t("activityCallShort")}</option>
                             <option value="email">Email</option>
-                            <option value="meeting">Встреча</option>
+                            <option value="meeting">{t("activityMeetingShort")}</option>
                           </Select>
                         </div>
                         <div>
-                          <Label className="text-xs">Тема *</Label>
-                          <Input value={activitySubject} onChange={e => setActivitySubject(e.target.value)} placeholder="Тема активности" />
+                          <Label className="text-xs">{t("activitySubject")}</Label>
+                          <Input value={activitySubject} onChange={e => setActivitySubject(e.target.value)} placeholder={t("activitySubjectPlaceholder")} />
                         </div>
                       </div>
                       <div>
-                        <Label className="text-xs">Описание</Label>
-                        <Textarea value={activityDesc} onChange={e => setActivityDesc(e.target.value)} rows={2} placeholder="Детали..." />
+                        <Label className="text-xs">{t("activityDescription")}</Label>
+                        <Textarea value={activityDesc} onChange={e => setActivityDesc(e.target.value)} rows={2} placeholder={t("activityDescPlaceholder")} />
                       </div>
                       <div className="flex gap-2">
                         <Button size="sm" onClick={saveActivity} disabled={activitySaving || !activitySubject.trim()}>
-                          {activitySaving ? "Сохраняем..." : "Сохранить"}
+                          {activitySaving ? t("saving") : t("saveButton")}
                         </Button>
-                        <Button size="sm" variant="outline" onClick={() => setShowActivityForm(false)}>Отмена</Button>
+                        <Button size="sm" variant="outline" onClick={() => setShowActivityForm(false)}>{t("cancelButton")}</Button>
                       </div>
                     </CardContent>
                   </Card>
@@ -702,7 +706,7 @@ export function LeadItemModal({ open, onOpenChange, lead, orgId, onSaved, onConv
                     {activities.map((a: any) => (
                       <div key={a.id} className="flex items-start gap-3 p-3 bg-muted/30 rounded-lg text-sm">
                         <Badge variant="outline" className="text-[10px] shrink-0 mt-0.5">
-                          {a.type === "call" ? "Звонок" : a.type === "email" ? "Email" : a.type === "meeting" ? "Встреча" : "Заметка"}
+                          {a.type === "call" ? t("activityCallShort") : a.type === "email" ? "Email" : a.type === "meeting" ? t("activityMeetingShort") : t("activityNoteShort")}
                         </Badge>
                         <div className="flex-1 min-w-0">
                           <p className="font-medium">{a.subject}</p>
@@ -714,9 +718,9 @@ export function LeadItemModal({ open, onOpenChange, lead, orgId, onSaved, onConv
                   </div>
                 ) : !showActivityForm ? (
                   <div className="text-center py-8 text-muted-foreground">
-                    <p className="text-sm">Нет записанных активностей</p>
-                    <p className="text-xs mt-1">Нажмите «Записать» чтобы добавить</p>
-                    <Button size="sm" variant="link" className="mt-2" onClick={loadActivities}>Обновить</Button>
+                    <p className="text-sm">{t("noActivities")}</p>
+                    <p className="text-xs mt-1">{t("noActivitiesHint")}</p>
+                    <Button size="sm" variant="link" className="mt-2" onClick={loadActivities}>{t("refresh")}</Button>
                   </div>
                 ) : null}
               </div>
@@ -729,9 +733,9 @@ export function LeadItemModal({ open, onOpenChange, lead, orgId, onSaved, onConv
                   <div className="text-center py-8">
                     <Brain className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
                     <Button onClick={async () => { const d = await callAI("sentiment"); if (d) setSentiment(d) }} disabled={aiLoading} className="gap-2">
-                      {aiLoading ? "Анализируем..." : "Анализировать тональность"}
+                      {aiLoading ? t("analyzing") : t("analyzeSentiment")}
                     </Button>
-                    <p className="text-sm text-muted-foreground mt-3">AI проанализирует все коммуникации с этим лидом</p>
+                    <p className="text-sm text-muted-foreground mt-3">{t("sentimentAnalysisHint")}</p>
                   </div>
                 ) : (
                   <div className="space-y-4">
@@ -748,25 +752,25 @@ export function LeadItemModal({ open, onOpenChange, lead, orgId, onSaved, onConv
                       </div>
                       <div>
                         <p className="text-lg font-bold">{sentiment.sentiment}</p>
-                        <p className="text-sm text-muted-foreground mt-1">Тональность коммуникаций</p>
+                        <p className="text-sm text-muted-foreground mt-1">{t("sentimentComm")}</p>
                       </div>
                     </div>
                     <div className="grid grid-cols-3 gap-3">
                       <Card><CardContent className="pt-3 pb-3 text-center">
-                        <p className="text-[10px] text-muted-foreground uppercase">Тренд</p>
-                        <p className="text-sm font-medium mt-1">{sentiment.trend === "improving" ? "Улучшается" : sentiment.trend === "stable" ? "Стабильный" : "Неизвестно"}</p>
+                        <p className="text-[10px] text-muted-foreground uppercase">{t("sentimentTrend")}</p>
+                        <p className="text-sm font-medium mt-1">{sentiment.trend === "improving" ? t("sentimentImproving") : sentiment.trend === "stable" ? t("sentimentStable") : t("unknown") || "—"}</p>
                       </CardContent></Card>
                       <Card><CardContent className="pt-3 pb-3 text-center">
-                        <p className="text-[10px] text-muted-foreground uppercase">Риск</p>
+                        <p className="text-[10px] text-muted-foreground uppercase">{t("sentimentRisk")}</p>
                         <p className={cn("text-sm font-bold mt-1", sentiment.risk === "HIGH" ? "text-red-500" : sentiment.risk === "MEDIUM" ? "text-orange-500" : "text-green-500")}>{sentiment.risk}</p>
                       </CardContent></Card>
                       <Card><CardContent className="pt-3 pb-3 text-center">
-                        <p className="text-[10px] text-muted-foreground uppercase">Уверенность</p>
+                        <p className="text-[10px] text-muted-foreground uppercase">{t("sentimentConfidence")}</p>
                         <p className="text-sm font-bold text-primary mt-1">{sentiment.confidence}%</p>
                       </CardContent></Card>
                     </div>
                     <div className="bg-muted/50 p-4 rounded-lg">
-                      <p className="text-[10px] font-medium text-muted-foreground mb-2 uppercase">Резюме</p>
+                      <p className="text-[10px] font-medium text-muted-foreground mb-2 uppercase">{t("sentimentSummary")}</p>
                       <p className="text-sm leading-relaxed">{sentiment.summary}</p>
                     </div>
                   </div>
@@ -781,14 +785,14 @@ export function LeadItemModal({ open, onOpenChange, lead, orgId, onSaved, onConv
                   <div className="text-center py-8">
                     <Sparkles className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
                     <Button onClick={async () => { const d = await callAI("tasks"); if (d) setAiTasks(d) }} disabled={aiLoading} className="gap-2">
-                      {aiLoading ? "Генерируем..." : "Сгенерировать задачи"}
+                      {aiLoading ? t("generating") : t("generateTasks")}
                     </Button>
-                    <p className="text-sm text-muted-foreground mt-3">AI проанализирует лид и предложит план действий</p>
+                    <p className="text-sm text-muted-foreground mt-3">{t("generateTasksHint")}</p>
                   </div>
                 ) : (
                   <div className="space-y-4">
                     <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg text-sm border border-yellow-200 dark:border-yellow-800">
-                      <p className="font-medium text-xs text-yellow-800 dark:text-yellow-300 uppercase mb-1">Стратегия</p>
+                      <p className="font-medium text-xs text-yellow-800 dark:text-yellow-300 uppercase mb-1">{t("strategyLabel")}</p>
                       <p>{aiTasks.strategy}</p>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -809,8 +813,8 @@ export function LeadItemModal({ open, onOpenChange, lead, orgId, onSaved, onConv
                       ))}
                     </div>
                     <div className="flex gap-2 justify-center pt-2">
-                      <Button size="sm" className="gap-1"><CheckCircle className="h-3 w-3" /> Создать все задачи</Button>
-                      <Button size="sm" variant="outline" onClick={async () => { const d = await callAI("tasks"); if (d) setAiTasks(d) }} className="gap-1"><RefreshCw className="h-3 w-3" /> Пересоздать</Button>
+                      <Button size="sm" className="gap-1"><CheckCircle className="h-3 w-3" /> {t("createAllTasks")}</Button>
+                      <Button size="sm" variant="outline" onClick={async () => { const d = await callAI("tasks"); if (d) setAiTasks(d) }} className="gap-1"><RefreshCw className="h-3 w-3" /> {t("recreate")}</Button>
                     </div>
                   </div>
                 )}
@@ -822,53 +826,53 @@ export function LeadItemModal({ open, onOpenChange, lead, orgId, onSaved, onConv
               <div className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   <div>
-                    <Label className="text-xs">Тип текста</Label>
+                    <Label className="text-xs">{t("textType")}</Label>
                     <Select value={textType} onChange={e => setTextType(e.target.value)}>
                       <option value="Email">Email</option>
-                      <option value="SMS">SMS</option>
+                      <option value="SMS">{t("aiTextSmsType")}</option>
                     </Select>
                   </div>
                   <div>
-                    <Label className="text-xs">Тон</Label>
+                    <Label className="text-xs">{t("tone")}</Label>
                     <Select value={tone} onChange={e => setTone(e.target.value)}>
-                      <option value="Профессиональный">Профессиональный</option>
-                      <option value="Дружелюбный">Дружелюбный</option>
-                      <option value="Формальный">Формальный</option>
-                      <option value="Убедительный">Убедительный</option>
+                      <option value="Professional">{t("toneProfessional")}</option>
+                      <option value="Friendly">{t("toneFriendly")}</option>
+                      <option value="Formal">{t("toneFormal")}</option>
+                      <option value="Persuasive">{t("tonePersuasive")}</option>
                     </Select>
                   </div>
                   <div>
-                    <Label className="text-xs">Доп. инструкции</Label>
-                    <Input value={instructions} onChange={e => setInstructions(e.target.value)} placeholder="Упомянуть скидку 10%..." />
+                    <Label className="text-xs">{t("extraInstructionsShort")}</Label>
+                    <Input value={instructions} onChange={e => setInstructions(e.target.value)} placeholder={t("extraInstructionsPlaceholder")} />
                   </div>
                 </div>
                 <Button onClick={async () => { const d = await callAI("text", { textType, tone, instructions }); if (d) { setGeneratedText(d); setEmailSent(false) } }} disabled={aiLoading} className="w-full gap-2">
-                  {aiLoading ? "Генерируем..." : "Сгенерировать текст"}
+                  {aiLoading ? t("generating") : t("generateText")}
                 </Button>
 
                 {generatedText && (
                   <div className="space-y-3 border rounded-lg p-4 bg-muted/10">
                     {generatedText.subject && (
                       <div>
-                        <Label className="text-xs text-primary uppercase">Тема</Label>
+                        <Label className="text-xs text-primary uppercase">{t("subjectLabel")}</Label>
                         <Input value={generatedText.subject} readOnly className="mt-1 bg-background" />
                       </div>
                     )}
                     <div>
-                      <Label className="text-xs uppercase">Текст</Label>
+                      <Label className="text-xs uppercase">{t("generatedBodyLabel")}</Label>
                       <Textarea value={generatedText.body} rows={8} className="mt-1 bg-background" readOnly />
                     </div>
                     <div className="flex gap-2 justify-end">
                       <Button size="sm" variant="outline" onClick={() => navigator.clipboard.writeText(generatedText.body)} className="gap-1">
-                        <Copy className="h-3 w-3" /> Копировать
+                        <Copy className="h-3 w-3" /> {t("copyText")}
                       </Button>
                       {displayLead.email && (
                         <Button size="sm" onClick={sendGeneratedEmail} disabled={emailSending || emailSent} className="gap-1">
-                          <Send className="h-3 w-3" /> {emailSent ? "Отправлено" : emailSending ? "Отправляем..." : "Отправить email"}
+                          <Send className="h-3 w-3" /> {emailSent ? t("emailSent") : emailSending ? t("sending") : t("sendEmail")}
                         </Button>
                       )}
                       <Button size="sm" variant="outline" onClick={async () => { const d = await callAI("text", { textType, tone, instructions }); if (d) { setGeneratedText(d); setEmailSent(false); setEmailError("") } }} className="gap-1">
-                        <RefreshCw className="h-3 w-3" /> Пересоздать
+                        <RefreshCw className="h-3 w-3" /> {t("recreate")}
                       </Button>
                     </div>
                     {emailError && (
@@ -884,10 +888,10 @@ export function LeadItemModal({ open, onOpenChange, lead, orgId, onSaved, onConv
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <h4 className="font-medium text-sm flex items-center gap-1.5">
-                    <Brain className="h-4 w-4 text-purple-500" /> AI Анализ
+                    <Brain className="h-4 w-4 text-purple-500" /> {t("aiScoringTitle")}
                   </h4>
                   <Button size="sm" variant="outline" className="gap-1 text-xs" onClick={scoreWithAI} disabled={scoring}>
-                    {scoring ? "Анализ..." : "Пересчитать с AI"}
+                    {scoring ? t("analyzing") : t("rescore")}
                   </Button>
                 </div>
 
@@ -905,23 +909,23 @@ export function LeadItemModal({ open, onOpenChange, lead, orgId, onSaved, onConv
                     <div className={cn("text-3xl font-bold", grade.color.replace("bg-", "text-").replace(" text-white", ""))}>
                       {grade.letter}
                     </div>
-                    <div className="text-xs text-muted-foreground mt-1">Грейд</div>
+                    <div className="text-xs text-muted-foreground mt-1">{t("gradeLabel")}</div>
                   </CardContent></Card>
                   <Card><CardContent className="pt-4 pb-4">
                     <div className="text-3xl font-bold text-primary">{displayLead.score}</div>
-                    <div className="text-xs text-muted-foreground mt-1">Балл</div>
+                    <div className="text-xs text-muted-foreground mt-1">{t("scoreLabel")}</div>
                   </CardContent></Card>
                   <Card><CardContent className="pt-4 pb-4">
                     <div className={cn("text-3xl font-bold", conversionProb >= 50 ? "text-green-600" : conversionProb >= 30 ? "text-yellow-600" : "text-red-500")}>
                       {conversionProb}%
                     </div>
-                    <div className="text-xs text-muted-foreground mt-1">Конверсия</div>
+                    <div className="text-xs text-muted-foreground mt-1">{t("conversionLabel")}</div>
                   </CardContent></Card>
                 </div>
 
                 {Object.keys(factors).length > 0 && (
                   <div>
-                    <h5 className="text-xs font-medium text-muted-foreground mb-3 uppercase tracking-wider">Факторы оценки</h5>
+                    <h5 className="text-xs font-medium text-muted-foreground mb-3 uppercase tracking-wider">{t("factorsLabel")}</h5>
                     <div className="space-y-2">
                       {Object.entries(factors).map(([key, value]) => (
                         <div key={key} className="flex items-center gap-3">
@@ -938,7 +942,7 @@ export function LeadItemModal({ open, onOpenChange, lead, orgId, onSaved, onConv
 
                 {!reasoning && !displayLead.lastScoredAt && (
                   <p className="text-sm text-muted-foreground text-center py-6">
-                    Лид ещё не был оценён AI. Нажмите «Пересчитать с AI» для анализа.
+                    {t("notScoredHint")}
                   </p>
                 )}
               </div>
