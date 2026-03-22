@@ -20,6 +20,7 @@ const updateCompanySchema = z.object({
   leadTemperature: z.string().optional(),
   userCount: z.number().optional(),
   annualRevenue: z.number().optional(),
+  slaPolicyId: z.string().nullable().optional(),
 })
 
 export async function GET(
@@ -38,6 +39,7 @@ export async function GET(
         deals: { orderBy: { createdAt: "desc" } },
         contracts: { orderBy: { createdAt: "desc" } },
         activities: { orderBy: { createdAt: "desc" }, take: 20 },
+        slaPolicy: { select: { id: true, name: true, priority: true, resolutionHours: true, firstResponseHours: true } },
       },
     })
     if (!company) return NextResponse.json({ error: "Not found" }, { status: 404 })
