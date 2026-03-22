@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { DataTable } from "@/components/data-table"
 import { StatCard } from "@/components/stat-card"
 import { TicketForm } from "@/components/ticket-form"
-import { Ticket, Plus, Clock, AlertTriangle, CheckCircle, Pencil, Trash2 } from "lucide-react"
+import { Ticket, Plus, Clock, AlertTriangle, CheckCircle, Pencil, Trash2, UserX } from "lucide-react"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
 import { cn } from "@/lib/utils"
 
@@ -159,6 +159,7 @@ export default function TicketsPage() {
   const openCount = tickets.filter(t => ["new", "in_progress", "waiting"].includes(t.status)).length
   const breachedCount = tickets.filter(t => isSlaBreached(t.slaDueAt) && !["resolved", "closed"].includes(t.status)).length
   const resolvedCount = tickets.filter(t => t.status === "resolved").length
+  const unassignedCount = tickets.filter(t => !t.assignedTo).length
 
   if (loading) {
     return (
@@ -190,9 +191,10 @@ export default function TicketsPage() {
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-5">
         <StatCard title="Total" value={tickets.length} icon={<Ticket className="h-4 w-4" />} />
         <StatCard title="Open" value={openCount} icon={<Clock className="h-4 w-4" />} />
+        <StatCard title="Unassigned" value={unassignedCount} icon={<UserX className="h-4 w-4" />} trend={unassignedCount > 0 ? "down" : "neutral"} />
         <StatCard title="SLA Breached" value={breachedCount} icon={<AlertTriangle className="h-4 w-4" />} trend={breachedCount > 0 ? "down" : "neutral"} />
         <StatCard title="Resolved" value={resolvedCount} icon={<CheckCircle className="h-4 w-4" />} trend="up" />
       </div>
