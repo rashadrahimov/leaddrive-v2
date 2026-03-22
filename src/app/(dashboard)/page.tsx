@@ -464,17 +464,17 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="flex gap-3 mb-4">
-              <div className="flex-1 text-center p-2 rounded-lg bg-green-100 dark:bg-green-900/40">
-                <div className="text-xl font-bold text-green-700 dark:text-green-400">{clients.profitable}</div>
-                <div className="text-[10px] text-green-700 dark:text-green-400">Прибыльных</div>
+              <div className="flex-1 text-center p-2 rounded-lg bg-white dark:bg-card border">
+                <div className="text-xl font-bold text-green-600">{clients.profitable}</div>
+                <div className="text-[10px] text-green-600">Прибыльных</div>
               </div>
-              <div className="flex-1 text-center p-2 rounded-lg bg-red-100 dark:bg-red-900/40">
-                <div className="text-xl font-bold text-red-700 dark:text-red-400">{clients.loss}</div>
-                <div className="text-[10px] text-red-700 dark:text-red-400">Убыточных</div>
+              <div className="flex-1 text-center p-2 rounded-lg bg-white dark:bg-card border">
+                <div className="text-xl font-bold text-red-600">{clients.loss}</div>
+                <div className="text-[10px] text-red-600">Убыточных</div>
               </div>
-              <div className="flex-1 text-center p-2 rounded-lg bg-slate-100 dark:bg-slate-800/60">
-                <div className="text-xl font-bold text-slate-600 dark:text-slate-300">{clients.noRevenue}</div>
-                <div className="text-[10px] text-slate-600 dark:text-slate-300">Без дохода</div>
+              <div className="flex-1 text-center p-2 rounded-lg bg-white dark:bg-card border">
+                <div className="text-xl font-bold text-slate-500">{clients.noRevenue}</div>
+                <div className="text-[10px] text-slate-500">Без дохода</div>
               </div>
             </div>
 
@@ -520,20 +520,20 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="flex gap-3 mb-4">
-              <div className="flex-1 text-center p-3 rounded-lg bg-red-100 dark:bg-red-900/40">
-                <Flame className="h-5 w-5 text-red-600 mx-auto mb-1" />
-                <div className="text-2xl font-bold text-red-600 dark:text-red-400">{hot}</div>
-                <div className="text-[10px] text-red-600 dark:text-red-400 font-medium">HOT</div>
+              <div className="flex-1 text-center p-3 rounded-lg bg-white dark:bg-card border">
+                <Flame className="h-5 w-5 text-red-500 mx-auto mb-1" />
+                <div className="text-2xl font-bold text-red-500">{hot}</div>
+                <div className="text-[10px] text-red-500 font-medium">HOT</div>
               </div>
-              <div className="flex-1 text-center p-3 rounded-lg bg-amber-100 dark:bg-amber-900/40">
-                <Thermometer className="h-5 w-5 text-amber-600 mx-auto mb-1" />
-                <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">{warm}</div>
-                <div className="text-[10px] text-amber-600 dark:text-amber-400 font-medium">WARM</div>
+              <div className="flex-1 text-center p-3 rounded-lg bg-white dark:bg-card border">
+                <Thermometer className="h-5 w-5 text-amber-500 mx-auto mb-1" />
+                <div className="text-2xl font-bold text-amber-500">{warm}</div>
+                <div className="text-[10px] text-amber-500 font-medium">WARM</div>
               </div>
-              <div className="flex-1 text-center p-3 rounded-lg bg-blue-100 dark:bg-blue-900/40">
-                <Snowflake className="h-5 w-5 text-blue-600 mx-auto mb-1" />
-                <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{cold}</div>
-                <div className="text-[10px] text-blue-600 dark:text-blue-400 font-medium">COLD</div>
+              <div className="flex-1 text-center p-3 rounded-lg bg-white dark:bg-card border">
+                <Snowflake className="h-5 w-5 text-blue-500 mx-auto mb-1" />
+                <div className="text-2xl font-bold text-blue-500">{cold}</div>
+                <div className="text-[10px] text-blue-500 font-medium">COLD</div>
               </div>
             </div>
 
@@ -548,21 +548,21 @@ export default function DashboardPage() {
 
             {/* Operations mini-stats */}
             <div className="grid grid-cols-2 gap-2 pt-3 border-t">
-              <div className="p-2 rounded bg-slate-100 dark:bg-slate-800/50 text-center">
+              <div className="p-2 rounded bg-white dark:bg-card border text-center">
                 <div className="text-sm font-bold">{operations.csatScore > 0 ? operations.csatScore.toFixed(1) : "—"}</div>
                 <div className="text-[10px] text-muted-foreground flex items-center justify-center gap-0.5">
                   <Star className="h-2.5 w-2.5 text-yellow-500" /> CSAT
                 </div>
               </div>
-              <div className="p-2 rounded bg-slate-100 dark:bg-slate-800/50 text-center">
+              <div className="p-2 rounded bg-white dark:bg-card border text-center">
                 <div className="text-sm font-bold">{tasks.completionRate}%</div>
                 <div className="text-[10px] text-muted-foreground">Задачи выполн.</div>
               </div>
-              <div className="p-2 rounded bg-slate-100 dark:bg-slate-800/50 text-center">
+              <div className="p-2 rounded bg-white dark:bg-card border text-center">
                 <div className="text-sm font-bold">{activity.count30d}</div>
                 <div className="text-[10px] text-muted-foreground">Активность 30д</div>
               </div>
-              <div className="p-2 rounded bg-slate-100 dark:bg-slate-800/50 text-center">
+              <div className="p-2 rounded bg-white dark:bg-card border text-center">
                 <div className="text-sm font-bold">{operations.criticalTickets}</div>
                 <div className="text-[10px] text-muted-foreground">Крит. тикеты</div>
               </div>
