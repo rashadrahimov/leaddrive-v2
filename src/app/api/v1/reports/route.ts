@@ -87,7 +87,7 @@ export async function GET(req: NextRequest) {
         id: true,
         name: true,
         contracts: {
-          select: { monthlyValue: true },
+          select: { valueAmount: true },
         },
       },
       take: 100,
@@ -96,7 +96,7 @@ export async function GET(req: NextRequest) {
     const topCompaniesByRevenue = topCompanies
       .map(c => ({
         name: c.name,
-        revenue: c.contracts.reduce((s, ct) => s + (ct.monthlyValue || 0), 0),
+        revenue: c.contracts.reduce((s, ct) => s + (ct.valueAmount || 0), 0),
       }))
       .filter(c => c.revenue > 0)
       .sort((a, b) => b.revenue - a.revenue)
