@@ -585,10 +585,10 @@ export default function DashboardPage() {
               {risks.map((r: any, i: number) => (
                 <div
                   key={i}
-                  className={`flex items-start gap-3 p-2.5 rounded-lg border-l-4 ${
-                    r.severity === "critical" ? "border-l-red-500 bg-red-50 dark:bg-red-950/20" :
-                    r.severity === "warning" ? "border-l-amber-500 bg-amber-50 dark:bg-amber-950/20" :
-                    "border-l-green-500 bg-green-50 dark:bg-green-950/20"
+                  className={`flex items-start gap-3 p-2.5 rounded-lg border-l-4 bg-white dark:bg-card border ${
+                    r.severity === "critical" ? "border-l-red-500" :
+                    r.severity === "warning" ? "border-l-amber-500" :
+                    "border-l-green-500"
                   }`}
                 >
                   <div className="flex-1">
