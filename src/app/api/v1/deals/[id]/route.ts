@@ -69,12 +69,12 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 })
 
   try {
-    // Auto-set probability when stage changes to WON/LOST
-    const stageData = parsed.data.stage
-    if (stageData === "WON" && parsed.data.probability === undefined) {
-      parsed.data.probability = 100
-    } else if (stageData === "LOST" && parsed.data.probability === undefined) {
-      parsed.data.probability = 0
+    // Auto-set probability when stage changes (if not explicitly provided)
+    const STAGE_PROBABILITY: Record<string, number> = {
+      LEAD: 10, QUALIFIED: 25, PROPOSAL: 50, NEGOTIATION: 75, WON: 100, LOST: 0,
+    }
+    if (parsed.data.stage && parsed.data.probability === undefined && STAGE_PROBABILITY[parsed.data.stage] !== undefined) {
+      parsed.data.probability = STAGE_PROBABILITY[parsed.data.stage]
     }
 
     const deal = await prisma.deal.updateMany({
