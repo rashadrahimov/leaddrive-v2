@@ -34,6 +34,19 @@ export function ParametersTab() {
 
   const [localParams, setLocalParams] = useState<CostModelParams | null>(null)
   const [dirty, setDirty] = useState(false)
+  const [realUserCount, setRealUserCount] = useState<number | null>(null)
+
+  // Fetch real totalUsers from companies
+  useEffect(() => {
+    fetch("/api/v1/companies?category=client&limit=1")
+      .then(r => r.json())
+      .then(json => {
+        if (json.success && json.data.totalUsers !== undefined) {
+          setRealUserCount(json.data.totalUsers)
+        }
+      })
+      .catch(() => {})
+  }, [])
 
   // Sync server data into local state
   useEffect(() => {
@@ -129,7 +142,7 @@ export function ParametersTab() {
         </div>
       </div>
 
-      {/* Total Users — editable */}
+      {/* Total Users — editable with auto-sync */}
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-base">Ümumi Məlumat</CardTitle>
@@ -139,14 +152,32 @@ export function ParametersTab() {
             <div>
               <label className="text-sm font-medium">Cəm İstifadəçi Sayı</label>
               <p className="text-xs text-muted-foreground">Bütün müştərilərin istifadəçi sayı</p>
+              {realUserCount !== null && params.totalUsers !== realUserCount && (
+                <p className="text-xs text-orange-600 mt-1">
+                  ⚠ Реальное: {realUserCount} (из компаний)
+                </p>
+              )}
+              {realUserCount !== null && params.totalUsers === realUserCount && (
+                <p className="text-xs text-green-600 mt-1">✓ Совпадает с данными компаний</p>
+              )}
             </div>
-            <div className="col-span-2">
+            <div className="col-span-2 flex items-center gap-2">
               <Input
                 type="number"
                 value={params.totalUsers || 0}
                 onChange={e => updateParam("totalUsers", parseInt(e.target.value) || 0)}
                 className="w-40 text-right"
               />
+              {realUserCount !== null && params.totalUsers !== realUserCount && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => updateParam("totalUsers", realUserCount)}
+                  className="text-xs whitespace-nowrap"
+                >
+                  Синхр. → {realUserCount}
+                </Button>
+              )}
             </div>
           </div>
         </CardContent>
