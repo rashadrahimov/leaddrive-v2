@@ -122,17 +122,18 @@ export function LeadItemModal({ open, onOpenChange, lead, orgId, onSaved, onConv
     }
   }, [open, lead])
 
-  if (!lead || !currentLead) return null
+  if (!lead) return null
+  const displayLead = currentLead ?? lead
 
   const startEditing = () => {
     setEditForm({
-      contactName: currentLead.contactName || "",
-      companyName: currentLead.companyName || "",
-      email: currentLead.email || "",
-      phone: currentLead.phone || "",
-      source: currentLead.source || "",
-      estimatedValue: currentLead.estimatedValue ? String(currentLead.estimatedValue) : "",
-      notes: currentLead.notes || "",
+      contactName: displayLead.contactName || "",
+      companyName: displayLead.companyName || "",
+      email: displayLead.email || "",
+      phone: displayLead.phone || "",
+      source: displayLead.source || "",
+      estimatedValue: displayLead.estimatedValue ? String(displayLead.estimatedValue) : "",
+      notes: displayLead.notes || "",
     })
     setEditing(true)
   }
@@ -257,7 +258,7 @@ export function LeadItemModal({ open, onOpenChange, lead, orgId, onSaved, onConv
 
   // Send generated email
   const sendGeneratedEmail = async () => {
-    if (!generatedText || !currentLead.email) return
+    if (!generatedText || !displayLead.email) return
     setEmailSending(true)
     setEmailError("")
     try {
@@ -265,7 +266,7 @@ export function LeadItemModal({ open, onOpenChange, lead, orgId, onSaved, onConv
         method: "POST",
         headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": String(orgId) } : {}) },
         body: JSON.stringify({
-          to: currentLead.email,
+          to: displayLead.email,
           body: generatedText.body,
           subject: generatedText.subject,
         }),
@@ -281,12 +282,12 @@ export function LeadItemModal({ open, onOpenChange, lead, orgId, onSaved, onConv
     } finally { setEmailSending(false) }
   }
 
-  const grade = getGrade(currentLead.score)
-  const details = (currentLead.scoreDetails as any) || {}
+  const grade = getGrade(displayLead.score)
+  const details = (displayLead.scoreDetails as any) || {}
   const reasoning = details.reasoning
   const factors = details.factors || {}
-  const conversionProb = details.conversionProb ?? Math.round(currentLead.score * 0.85)
-  const daysSinceCreation = Math.floor((Date.now() - new Date(currentLead.createdAt).getTime()) / 86400000)
+  const conversionProb = details.conversionProb ?? Math.round(displayLead.score * 0.85)
+  const daysSinceCreation = Math.floor((Date.now() - new Date(displayLead.createdAt).getTime()) / 86400000)
 
   const tabs = [
     { id: "details", label: "Детали" },
@@ -311,30 +312,30 @@ export function LeadItemModal({ open, onOpenChange, lead, orgId, onSaved, onConv
                   {grade.letter}
                 </span>
                 <div>
-                  <h2 className="text-xl font-bold">{currentLead.contactName}</h2>
+                  <h2 className="text-xl font-bold">{displayLead.contactName}</h2>
                   <div className="flex items-center gap-2 mt-1 flex-wrap">
-                    {currentLead.companyName && (
+                    {displayLead.companyName && (
                       <span className="text-sm text-muted-foreground flex items-center gap-1">
-                        <Building2 className="h-3.5 w-3.5" /> {currentLead.companyName}
+                        <Building2 className="h-3.5 w-3.5" /> {displayLead.companyName}
                       </span>
                     )}
-                    <Badge className={cn("text-white text-[10px]", statusColors[currentLead.status] || "bg-gray-500")}>
-                      {statusLabels[currentLead.status] || currentLead.status}
+                    <Badge className={cn("text-white text-[10px]", statusColors[displayLead.status] || "bg-gray-500")}>
+                      {statusLabels[displayLead.status] || displayLead.status}
                     </Badge>
                     <Badge variant="outline" className="text-[10px]">
-                      {priorityLabels[currentLead.priority] || currentLead.priority}
+                      {priorityLabels[displayLead.priority] || displayLead.priority}
                     </Badge>
                   </div>
                   {/* Contact shortcuts */}
                   <div className="flex items-center gap-3 mt-2">
-                    {currentLead.email && (
-                      <a href={`mailto:${currentLead.email}`} className="flex items-center gap-1 text-xs text-primary hover:underline">
-                        <Mail className="h-3 w-3" /> {currentLead.email}
+                    {displayLead.email && (
+                      <a href={`mailto:${displayLead.email}`} className="flex items-center gap-1 text-xs text-primary hover:underline">
+                        <Mail className="h-3 w-3" /> {displayLead.email}
                       </a>
                     )}
-                    {currentLead.phone && (
-                      <a href={`tel:${currentLead.phone}`} className="flex items-center gap-1 text-xs text-primary hover:underline">
-                        <Phone className="h-3 w-3" /> {currentLead.phone}
+                    {displayLead.phone && (
+                      <a href={`tel:${displayLead.phone}`} className="flex items-center gap-1 text-xs text-primary hover:underline">
+                        <Phone className="h-3 w-3" /> {displayLead.phone}
                       </a>
                     )}
                   </div>
@@ -343,16 +344,16 @@ export function LeadItemModal({ open, onOpenChange, lead, orgId, onSaved, onConv
               <div className="flex items-center gap-2">
                 {/* Score summary */}
                 <div className="text-center mr-2 hidden sm:block">
-                  <div className="text-2xl font-bold text-primary">{currentLead.score}</div>
+                  <div className="text-2xl font-bold text-primary">{displayLead.score}</div>
                   <div className="text-[10px] text-muted-foreground">Score</div>
                 </div>
                 <div className="text-center mr-2 hidden sm:block">
                   <div className="text-lg font-bold text-muted-foreground">{conversionProb}%</div>
                   <div className="text-[10px] text-muted-foreground">Конверсия</div>
                 </div>
-                {currentLead.estimatedValue ? (
+                {displayLead.estimatedValue ? (
                   <div className="text-center mr-2 hidden sm:block">
-                    <div className="text-lg font-bold text-green-600">${currentLead.estimatedValue.toLocaleString()}</div>
+                    <div className="text-lg font-bold text-green-600">${displayLead.estimatedValue.toLocaleString()}</div>
                     <div className="text-[10px] text-muted-foreground">Стоимость</div>
                   </div>
                 ) : null}
@@ -398,7 +399,7 @@ export function LeadItemModal({ open, onOpenChange, lead, orgId, onSaved, onConv
                           disabled={saving}
                           className={cn(
                             "flex items-center gap-1.5 text-xs py-1.5 px-3 rounded-md border transition-all",
-                            currentLead.status === s
+                            displayLead.status === s
                               ? "bg-primary/10 text-primary font-semibold border-primary/30"
                               : "bg-background hover:bg-muted/50 text-muted-foreground hover:text-foreground border-border"
                           )}
@@ -419,7 +420,7 @@ export function LeadItemModal({ open, onOpenChange, lead, orgId, onSaved, onConv
                           disabled={saving}
                           className={cn(
                             "flex items-center gap-1.5 text-xs py-1.5 px-3 rounded-md border transition-all",
-                            currentLead.priority === p
+                            displayLead.priority === p
                               ? "bg-primary/10 text-primary font-semibold border-primary/30"
                               : "bg-background hover:bg-muted/50 text-muted-foreground hover:text-foreground border-border"
                           )}
@@ -541,49 +542,49 @@ export function LeadItemModal({ open, onOpenChange, lead, orgId, onSaved, onConv
                           <User className="h-3 w-3 text-muted-foreground" />
                           <span className="text-[10px] text-muted-foreground uppercase">Контакт</span>
                         </div>
-                        <span className="text-sm font-medium">{currentLead.contactName}</span>
+                        <span className="text-sm font-medium">{displayLead.contactName}</span>
                       </div>
                       <div className="p-3 bg-muted/30 rounded-lg">
                         <div className="flex items-center gap-1.5 mb-1">
                           <Building2 className="h-3 w-3 text-muted-foreground" />
                           <span className="text-[10px] text-muted-foreground uppercase">Компания</span>
                         </div>
-                        <span className="text-sm font-medium">{currentLead.companyName || "—"}</span>
+                        <span className="text-sm font-medium">{displayLead.companyName || "—"}</span>
                       </div>
                       <div className="p-3 bg-muted/30 rounded-lg">
                         <div className="flex items-center gap-1.5 mb-1">
                           <Mail className="h-3 w-3 text-muted-foreground" />
                           <span className="text-[10px] text-muted-foreground uppercase">Email</span>
                         </div>
-                        <span className="text-sm font-medium truncate block">{currentLead.email || "—"}</span>
+                        <span className="text-sm font-medium truncate block">{displayLead.email || "—"}</span>
                       </div>
                       <div className="p-3 bg-muted/30 rounded-lg">
                         <div className="flex items-center gap-1.5 mb-1">
                           <Phone className="h-3 w-3 text-muted-foreground" />
                           <span className="text-[10px] text-muted-foreground uppercase">Телефон</span>
                         </div>
-                        <span className="text-sm font-medium">{currentLead.phone || "—"}</span>
+                        <span className="text-sm font-medium">{displayLead.phone || "—"}</span>
                       </div>
                       <div className="p-3 bg-muted/30 rounded-lg">
                         <div className="flex items-center gap-1.5 mb-1">
                           <Tag className="h-3 w-3 text-muted-foreground" />
                           <span className="text-[10px] text-muted-foreground uppercase">Источник</span>
                         </div>
-                        <span className="text-sm font-medium">{currentLead.source ? (sourceLabels[currentLead.source] || currentLead.source) : "—"}</span>
+                        <span className="text-sm font-medium">{displayLead.source ? (sourceLabels[displayLead.source] || displayLead.source) : "—"}</span>
                       </div>
                       <div className="p-3 bg-muted/30 rounded-lg">
                         <div className="flex items-center gap-1.5 mb-1">
                           <DollarSign className="h-3 w-3 text-muted-foreground" />
                           <span className="text-[10px] text-muted-foreground uppercase">Стоимость</span>
                         </div>
-                        <span className="text-sm font-medium">{currentLead.estimatedValue ? `$${currentLead.estimatedValue.toLocaleString()}` : "—"}</span>
+                        <span className="text-sm font-medium">{displayLead.estimatedValue ? `$${displayLead.estimatedValue.toLocaleString()}` : "—"}</span>
                       </div>
                       <div className="p-3 bg-muted/30 rounded-lg">
                         <div className="flex items-center gap-1.5 mb-1">
                           <Calendar className="h-3 w-3 text-muted-foreground" />
                           <span className="text-[10px] text-muted-foreground uppercase">Создан</span>
                         </div>
-                        <span className="text-sm font-medium">{new Date(currentLead.createdAt).toLocaleDateString()}</span>
+                        <span className="text-sm font-medium">{new Date(displayLead.createdAt).toLocaleDateString()}</span>
                       </div>
                       <div className="p-3 bg-muted/30 rounded-lg">
                         <div className="flex items-center gap-1.5 mb-1">
@@ -602,7 +603,7 @@ export function LeadItemModal({ open, onOpenChange, lead, orgId, onSaved, onConv
                     <p className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wider">Заметки</p>
                     <div className="p-3 bg-muted/20 rounded-lg border min-h-[48px]">
                       <p className="text-sm text-muted-foreground whitespace-pre-wrap">
-                        {currentLead.notes || "Нет заметок. Нажмите «Редактировать» чтобы добавить."}
+                        {displayLead.notes || "Нет заметок. Нажмите «Редактировать» чтобы добавить."}
                       </p>
                     </div>
                   </div>
@@ -613,37 +614,37 @@ export function LeadItemModal({ open, onOpenChange, lead, orgId, onSaved, onConv
                   <div className="flex-1">
                     <div className="flex items-center justify-between mb-1">
                       <span className="text-xs text-muted-foreground">AI Score</span>
-                      <span className="text-xs font-bold">{currentLead.score}/100</span>
+                      <span className="text-xs font-bold">{displayLead.score}/100</span>
                     </div>
                     <div className="h-2 bg-muted rounded-full overflow-hidden">
                       <div
-                        className={cn("h-full rounded-full transition-all", currentLead.score >= 80 ? "bg-green-500" : currentLead.score >= 60 ? "bg-blue-500" : currentLead.score >= 40 ? "bg-yellow-500" : "bg-red-500")}
-                        style={{ width: `${currentLead.score}%` }}
+                        className={cn("h-full rounded-full transition-all", displayLead.score >= 80 ? "bg-green-500" : displayLead.score >= 60 ? "bg-blue-500" : displayLead.score >= 40 ? "bg-yellow-500" : "bg-red-500")}
+                        style={{ width: `${displayLead.score}%` }}
                       />
                     </div>
                   </div>
                   <span className="text-xs text-muted-foreground">
-                    {currentLead.lastScoredAt ? `Оценён: ${new Date(currentLead.lastScoredAt).toLocaleDateString()}` : "Не оценён"}
+                    {displayLead.lastScoredAt ? `Оценён: ${new Date(displayLead.lastScoredAt).toLocaleDateString()}` : "Не оценён"}
                   </span>
                 </div>
 
                 {/* Actions row */}
                 <div className="flex flex-wrap gap-2 pt-2 border-t">
-                  {currentLead.status !== "converted" && onConvert && (
-                    <Button className="gap-1.5" onClick={() => { onOpenChange(false); onConvert(currentLead) }}>
+                  {displayLead.status !== "converted" && onConvert && (
+                    <Button className="gap-1.5" onClick={() => { onOpenChange(false); onConvert(displayLead) }}>
                       <ArrowRight className="h-4 w-4" /> Конвертировать в сделку
                     </Button>
                   )}
                   <Button variant="outline" size="sm" className="gap-1 text-orange-700 border-orange-200 hover:bg-orange-50 dark:border-orange-800 dark:hover:bg-orange-950"
                     onClick={async () => {
-                      if (!confirm(`Пометить как потерянный: ${currentLead.contactName}?`)) return
+                      if (!confirm(`Пометить как потерянный: ${displayLead.contactName}?`)) return
                       await changeStatus("lost")
                     }}>
                     <Ban className="h-3 w-3" /> Потерян
                   </Button>
                   <Button variant="outline" size="sm" className="gap-1 text-red-700 border-red-200 hover:bg-red-50 dark:border-red-800 dark:hover:bg-red-950"
                     onClick={async () => {
-                      if (!confirm(`Удалить ${currentLead.contactName}? Необратимо.`)) return
+                      if (!confirm(`Удалить ${displayLead.contactName}? Необратимо.`)) return
                       await fetch(`/api/v1/leads/${lead.id}`, { method: "DELETE", headers: orgId ? { "x-organization-id": String(orgId) } : {} })
                       onOpenChange(false)
                       onSaved?.()
@@ -861,7 +862,7 @@ export function LeadItemModal({ open, onOpenChange, lead, orgId, onSaved, onConv
                       <Button size="sm" variant="outline" onClick={() => navigator.clipboard.writeText(generatedText.body)} className="gap-1">
                         <Copy className="h-3 w-3" /> Копировать
                       </Button>
-                      {currentLead.email && (
+                      {displayLead.email && (
                         <Button size="sm" onClick={sendGeneratedEmail} disabled={emailSending || emailSent} className="gap-1">
                           <Send className="h-3 w-3" /> {emailSent ? "Отправлено" : emailSending ? "Отправляем..." : "Отправить email"}
                         </Button>
@@ -907,7 +908,7 @@ export function LeadItemModal({ open, onOpenChange, lead, orgId, onSaved, onConv
                     <div className="text-xs text-muted-foreground mt-1">Грейд</div>
                   </CardContent></Card>
                   <Card><CardContent className="pt-4 pb-4">
-                    <div className="text-3xl font-bold text-primary">{currentLead.score}</div>
+                    <div className="text-3xl font-bold text-primary">{displayLead.score}</div>
                     <div className="text-xs text-muted-foreground mt-1">Балл</div>
                   </CardContent></Card>
                   <Card><CardContent className="pt-4 pb-4">
@@ -935,7 +936,7 @@ export function LeadItemModal({ open, onOpenChange, lead, orgId, onSaved, onConv
                   </div>
                 )}
 
-                {!reasoning && !currentLead.lastScoredAt && (
+                {!reasoning && !displayLead.lastScoredAt && (
                   <p className="text-sm text-muted-foreground text-center py-6">
                     Лид ещё не был оценён AI. Нажмите «Пересчитать с AI» для анализа.
                   </p>
