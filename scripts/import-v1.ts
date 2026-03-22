@@ -406,25 +406,27 @@ async function main() {
   let ticketCount = 0
   for (const t of v1Tickets) {
     try {
-      const ticket = await prisma.ticket.create({
-        data: {
-          organizationId: org.id,
-          ticketNumber: `TK-${String(t.id).padStart(4, "0")}`,
-          subject: String(t.subject || "No subject"),
-          description: toStr(t.description),
-          priority: String(t.priority || "medium"),
-          status: String(t.status || "new"),
-          category: String(t.category || "general"),
-          contactId: mapId("contacts", t.contact_id),
-          companyId: mapId("companies", t.company_id),
-          assignedTo: toStr(t.assigned_to),
-          createdBy: toStr(t.created_by),
-          firstResponseAt: toDate(t.first_response_at),
-          resolvedAt: toDate(t.resolved_at),
-          closedAt: toDate(t.closed_at),
-          tags: Array.isArray(t.tags) ? t.tags.map(String) : [],
-          createdAt: toDate(t.created_at) || new Date(),
-        },
+      const ticketNum = `TK-${String(t.id).padStart(4, "0")}`
+      const ticketData = {
+        subject: String(t.subject || "No subject"),
+        description: toStr(t.description),
+        priority: String(t.priority || "medium"),
+        status: String(t.status || "new"),
+        category: String(t.category || "general"),
+        contactId: mapId("contacts", t.contact_id),
+        companyId: mapId("companies", t.company_id),
+        assignedTo: toStr(t.assigned_to),
+        createdBy: toStr(t.created_by),
+        firstResponseAt: toDate(t.first_response_at),
+        resolvedAt: toDate(t.resolved_at),
+        closedAt: toDate(t.closed_at),
+        tags: Array.isArray(t.tags) ? t.tags.map(String) : [],
+        createdAt: toDate(t.created_at) || new Date(),
+      }
+      const ticket = await prisma.ticket.upsert({
+        where: { organizationId_ticketNumber: { organizationId: org.id, ticketNumber: ticketNum } },
+        update: ticketData,
+        create: { organizationId: org.id, ticketNumber: ticketNum, ...ticketData },
       })
       saveId("tickets", t.id, ticket.id)
       ticketCount++
