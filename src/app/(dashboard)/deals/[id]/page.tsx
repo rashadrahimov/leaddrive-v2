@@ -24,6 +24,13 @@ const STAGES = [
   { key: "LOST",        label: "Lost",        color: "#ef4444", bg: "bg-red-500" },
 ]
 
+interface TeamMember {
+  id: string
+  userId: string
+  role: string
+  user: { id: string; name: string | null; email: string; avatar: string | null; role: string | null }
+}
+
 interface Deal {
   id: string
   name: string
@@ -37,8 +44,10 @@ interface Deal {
   createdAt: string
   updatedAt: string
   lostReason: string | null
+  tags: string[]
   company: { id: string; name: string } | null
   campaign: { id: string; name: string } | null
+  teamMembers: TeamMember[]
 }
 
 function DealPipelineStages({ currentStage }: { currentStage: string }) {
@@ -340,7 +349,10 @@ export default function DealDetailPage() {
   const [loading, setLoading] = useState(true)
   const [editOpen, setEditOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
-  const [tags, setTags] = useState<string[]>(["Hot lead", "Q1-2026"])
+  const [orgUsers, setOrgUsers] = useState<Array<{ id: string; name: string | null; email: string }>>([])
+  const [addingMember, setAddingMember] = useState(false)
+  const [selectedUserId, setSelectedUserId] = useState("")
+  const [selectedRole, setSelectedRole] = useState("member")
 
   const fetchDeal = async () => {
     try {
@@ -355,7 +367,57 @@ export default function DealDetailPage() {
     }
   }
 
-  useEffect(() => { if (session) fetchDeal() }, [session, id])
+  const fetchOrgUsers = async () => {
+    try {
+      const res = await fetch("/api/v1/users", {
+        headers: orgId ? { "x-organization-id": orgId } : {},
+      })
+      const json = await res.json()
+      if (json.success) setOrgUsers(json.data || [])
+    } catch {}
+  }
+
+  useEffect(() => { if (session) { fetchDeal(); fetchOrgUsers() } }, [session, id])
+
+  const saveTags = async (newTags: string[]) => {
+    if (!deal) return
+    try {
+      await fetch(`/api/v1/deals/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": orgId } : {}) },
+        body: JSON.stringify({ tags: newTags }),
+      })
+      setDeal({ ...deal, tags: newTags })
+    } catch {}
+  }
+
+  const addTeamMember = async () => {
+    if (!selectedUserId) return
+    try {
+      const res = await fetch(`/api/v1/deals/${id}/team`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": orgId } : {}) },
+        body: JSON.stringify({ userId: selectedUserId, role: selectedRole }),
+      })
+      if (res.ok) {
+        fetchDeal()
+        setAddingMember(false)
+        setSelectedUserId("")
+        setSelectedRole("member")
+      }
+    } catch {}
+  }
+
+  const removeTeamMember = async (userId: string) => {
+    try {
+      await fetch(`/api/v1/deals/${id}/team`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": orgId } : {}) },
+        body: JSON.stringify({ userId }),
+      })
+      fetchDeal()
+    } catch {}
+  }
 
   const handleDelete = async () => {
     const res = await fetch(`/api/v1/deals/${id}`, {
@@ -432,7 +494,7 @@ export default function DealDetailPage() {
       {/* ── Tags ── */}
       <div className="flex items-center gap-2">
         <Tag className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-        <TagsInput tags={tags} onChange={setTags} />
+        <TagsInput tags={deal.tags || []} onChange={saveTags} />
       </div>
 
       {/* ── Pipeline stages ── */}
@@ -545,15 +607,88 @@ export default function DealDetailPage() {
         {/* Team */}
         <TabsContent value="team">
           <Card className="shadow-sm border-none bg-card">
-            <CardContent className="pt-6">
-              <div className="flex flex-col items-center justify-center py-10 text-center">
-                <Users className="h-10 w-10 text-muted-foreground/30 mb-3" />
-                <p className="text-sm font-medium text-muted-foreground">Deal team</p>
-                <p className="text-xs text-muted-foreground/60 mt-1">Add team members working on this deal</p>
-                <Button variant="outline" size="sm" className="mt-4">
+            <CardContent className="pt-6 space-y-4">
+              {(deal.teamMembers || []).length > 0 ? (
+                <div className="space-y-2">
+                  {deal.teamMembers.map(member => {
+                    const ROLE_COLORS: Record<string, string> = {
+                      owner: "bg-amber-100 text-amber-700",
+                      member: "bg-blue-100 text-blue-700",
+                      support: "bg-green-100 text-green-700",
+                    }
+                    return (
+                      <div key={member.id} className="flex items-center gap-3 p-3 rounded-lg border hover:bg-muted/30 transition-colors">
+                        <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center text-sm font-semibold flex-shrink-0">
+                          {(member.user.name || member.user.email || "?")[0].toUpperCase()}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate">{member.user.name || member.user.email}</p>
+                          <p className="text-xs text-muted-foreground truncate">{member.user.email}</p>
+                        </div>
+                        <Badge className={`text-xs ${ROLE_COLORS[member.role] || ROLE_COLORS.member}`}>
+                          {member.role}
+                        </Badge>
+                        <Button
+                          variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-red-500"
+                          onClick={() => removeTeamMember(member.userId)}
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    )
+                  })}
+                </div>
+              ) : !addingMember ? (
+                <div className="flex flex-col items-center justify-center py-10 text-center">
+                  <Users className="h-10 w-10 text-muted-foreground/30 mb-3" />
+                  <p className="text-sm font-medium text-muted-foreground">No team members yet</p>
+                  <p className="text-xs text-muted-foreground/60 mt-1">Add team members working on this deal</p>
+                </div>
+              ) : null}
+
+              {addingMember ? (
+                <div className="p-4 bg-muted/40 rounded-xl border space-y-3">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-xs font-medium text-muted-foreground mb-1 block">User</label>
+                      <select
+                        className="w-full h-9 border rounded-lg px-3 text-sm bg-background"
+                        value={selectedUserId}
+                        onChange={e => setSelectedUserId(e.target.value)}
+                      >
+                        <option value="">Select user...</option>
+                        {orgUsers
+                          .filter(u => !deal.teamMembers?.some(m => m.userId === u.id))
+                          .map(u => (
+                            <option key={u.id} value={u.id}>{u.name || u.email}</option>
+                          ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-muted-foreground mb-1 block">Role</label>
+                      <select
+                        className="w-full h-9 border rounded-lg px-3 text-sm bg-background"
+                        value={selectedRole}
+                        onChange={e => setSelectedRole(e.target.value)}
+                      >
+                        <option value="owner">Owner</option>
+                        <option value="member">Member</option>
+                        <option value="support">Support</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button size="sm" onClick={addTeamMember} disabled={!selectedUserId}>
+                      <Plus className="h-3.5 w-3.5 mr-1" /> Add
+                    </Button>
+                    <Button size="sm" variant="ghost" onClick={() => setAddingMember(false)}>Cancel</Button>
+                  </div>
+                </div>
+              ) : (
+                <Button variant="outline" size="sm" onClick={() => setAddingMember(true)}>
                   <Plus className="h-3.5 w-3.5 mr-1" /> Add member
                 </Button>
-              </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>

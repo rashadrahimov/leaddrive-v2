@@ -15,7 +15,16 @@ const updateDealSchema = z.object({
   assignedTo: z.string().optional(),
   lostReason: z.string().max(500).optional(),
   notes: z.string().max(5000).optional(),
+  tags: z.array(z.string()).optional(),
 })
+
+const dealInclude = {
+  company: { select: { id: true, name: true } },
+  campaign: { select: { id: true, name: true } },
+  teamMembers: {
+    orderBy: { createdAt: "asc" as const },
+  },
+}
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const orgId = await getOrgId(req)
@@ -25,14 +34,27 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   try {
     const deal = await prisma.deal.findFirst({
       where: { id, organizationId: orgId },
-      include: {
-        company: { select: { id: true, name: true } },
-        campaign: { select: { id: true, name: true } },
-      },
+      include: dealInclude,
     })
 
     if (!deal) return NextResponse.json({ error: "Deal not found" }, { status: 404 })
-    return NextResponse.json({ success: true, data: deal })
+
+    // Enrich team members with user info
+    const userIds = deal.teamMembers.map(m => m.userId)
+    const users = userIds.length > 0
+      ? await prisma.user.findMany({
+          where: { id: { in: userIds } },
+          select: { id: true, name: true, email: true, avatar: true, role: true },
+        })
+      : []
+    const userMap = Object.fromEntries(users.map(u => [u.id, u]))
+
+    const enrichedTeam = deal.teamMembers.map(m => ({
+      ...m,
+      user: userMap[m.userId] || { id: m.userId, name: null, email: "", avatar: null, role: null },
+    }))
+
+    return NextResponse.json({ success: true, data: { ...deal, teamMembers: enrichedTeam } })
   } catch {
     return NextResponse.json({ error: "Failed to fetch deal" }, { status: 500 })
   }
@@ -69,6 +91,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
         ...(parsed.data.assignedTo && { assignedTo: parsed.data.assignedTo }),
         ...(parsed.data.lostReason && { lostReason: parsed.data.lostReason }),
         ...(parsed.data.notes && { notes: parsed.data.notes }),
+        ...(parsed.data.tags !== undefined && { tags: parsed.data.tags }),
       },
     })
 
@@ -76,10 +99,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 
     const updated = await prisma.deal.findFirst({
       where: { id, organizationId: orgId },
-      include: {
-        company: { select: { id: true, name: true } },
-        campaign: { select: { id: true, name: true } },
-      },
+      include: dealInclude,
     })
 
     return NextResponse.json({ success: true, data: updated })

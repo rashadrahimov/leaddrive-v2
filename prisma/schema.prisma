@@ -202,13 +202,29 @@ model Deal {
   assignedTo     String?
   lostReason     String?
   notes          String?
+  tags           String[] @default([])
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
+
+  teamMembers    DealTeamMember[]
 
   @@index([organizationId])
   @@index([organizationId, stage])
   @@index([campaignId])
   @@map("deals")
+}
+
+model DealTeamMember {
+  id        String   @id @default(cuid())
+  dealId    String
+  deal      Deal     @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  userId    String
+  role      String   @default("member")
+  createdAt DateTime @default(now())
+
+  @@unique([dealId, userId])
+  @@index([dealId])
+  @@map("deal_team_members")
 }
 
 model Lead {
