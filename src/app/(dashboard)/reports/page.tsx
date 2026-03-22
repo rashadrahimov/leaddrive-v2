@@ -94,6 +94,7 @@ export default function ReportsPage() {
   const { data: session } = useSession()
   const [data, setData] = useState<ReportData | null>(null)
   const [loading, setLoading] = useState(true)
+  const [fetchError, setFetchError] = useState<string | null>(null)
   const orgId = session?.user?.organizationId
 
   useEffect(() => {
@@ -104,12 +105,13 @@ export default function ReportsPage() {
         })
         const json = await res.json()
         if (json.success) setData(json.data)
-      } catch {} finally { setLoading(false) }
+        else setFetchError(json.error || "Ошибка загрузки данных")
+      } catch { setFetchError("Не удалось загрузить отчёты") } finally { setLoading(false) }
     }
     fetchReports()
   }, [session])
 
-  if (loading || !data) {
+  if (loading) {
     return (
       <div className="space-y-6">
         <h1 className="text-2xl font-bold tracking-tight">Отчёты и аналитика</h1>
@@ -117,6 +119,17 @@ export default function ReportsPage() {
           {[1, 2, 3, 4, 5, 6].map((i) => (
             <div key={i} className="h-40 bg-muted rounded-lg" />
           ))}
+        </div>
+      </div>
+    )
+  }
+
+  if (fetchError || !data) {
+    return (
+      <div className="space-y-6">
+        <h1 className="text-2xl font-bold tracking-tight">Отчёты и аналитика</h1>
+        <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-6 text-center text-destructive">
+          {fetchError || "Не удалось загрузить данные"}
         </div>
       </div>
     )

@@ -124,11 +124,11 @@ export async function GET(req: NextRequest) {
     // Financial overview from contracts
     const contractsData = await prisma.contract.findMany({
       where: { organizationId: orgId },
-      select: { monthlyValue: true, status: true },
+      select: { valueAmount: true, status: true },
     })
     const totalContractRevenue = contractsData
       .filter(c => c.status === "active")
-      .reduce((s, c) => s + (c.monthlyValue || 0), 0)
+      .reduce((s, c) => s + (c.valueAmount || 0), 0)
 
     return NextResponse.json({
       success: true,
@@ -180,7 +180,7 @@ export async function GET(req: NextRequest) {
           monthlyRevenue: totalContractRevenue,
           wonDealsRevenue: totalRevenue,
           totalContracts: contractsData.length,
-          activeContracts: contractsData.filter(c => c.status === "active").length,
+          activeContracts: contractsData.filter(c => c.status === "active" || c.status === "Active").length,
         },
         csat: {
           average: csatData._avg.satisfactionRating ? Math.round(csatData._avg.satisfactionRating * 10) / 10 : 0,

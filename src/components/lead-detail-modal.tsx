@@ -284,7 +284,7 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
           <div className="space-y-4">
             {/* Quick status change */}
             <div>
-              <p className="text-xs text-muted-foreground mb-2">Статус лида:</p>
+              <p className="text-xs text-muted-foreground mb-2">Статус в воронке:</p>
               <div className="grid grid-cols-3 gap-1.5">
                 {(["new", "contacted", "qualified", "converted", "rejected", "cancelled"] as const).map(s => (
                   <button
@@ -333,7 +333,7 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
                 <span className="text-xs">{(fullData?.createdAt || company.createdAt) ? new Date(fullData?.createdAt || company.createdAt).toLocaleDateString() : "—"}</span>
               </div>
               <div className="p-2 bg-muted/30 rounded">
-                <span className="text-[10px] text-muted-foreground block">Возраст лида</span>
+                <span className="text-[10px] text-muted-foreground block">Дней в базе</span>
                 <span className="text-xs">{(fullData?.createdAt || company.createdAt) ? `${Math.floor((Date.now() - new Date(fullData?.createdAt || company.createdAt).getTime()) / 86400000)} дн.` : "—"}</span>
               </div>
               <div className="p-2 bg-muted/30 rounded cursor-pointer hover:bg-muted/50 group" onClick={() => editField("Score", "leadScore", fullData?.leadScore ?? company.leadScore, true)}>
