@@ -57,6 +57,8 @@ export default function CompaniesPage() {
   const [search, setSearch] = useState("")
   const [sortBy, setSortBy] = useState("name_asc")
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null)
+  const [totalUsersApi, setTotalUsers] = useState(0)
+  const [totalContactsApi, setTotalContacts] = useState(0)
   const orgId = session?.user?.organizationId
 
   const fetchCompanies = async () => {
@@ -68,6 +70,8 @@ export default function CompaniesPage() {
       if (json.success) {
         setCompanies(json.data.companies)
         setTotal(json.data.total)
+        if (json.data.totalUsers !== undefined) setTotalUsers(json.data.totalUsers)
+        if (json.data.totalContacts !== undefined) setTotalContacts(json.data.totalContacts)
       }
     } catch {} finally { setLoading(false) }
   }
@@ -96,8 +100,8 @@ export default function CompaniesPage() {
   }
 
   const activeCount = statusCounts["active"] || 0
-  const totalContacts = companies.reduce((s, c) => s + (c._count?.contacts || 0), 0)
-  const totalUsers = companies.reduce((s, c) => s + (c.userCount || 0), 0)
+  const totalContacts = totalContactsApi || companies.reduce((s, c) => s + (c._count?.contacts || 0), 0)
+  const totalUsers = totalUsersApi || companies.reduce((s, c) => s + (c.userCount || 0), 0)
 
   if (loading) {
     return (

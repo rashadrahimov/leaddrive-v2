@@ -33,7 +33,9 @@ export async function GET(req: NextRequest) {
       ...(category && category !== "all" ? { category } : { category: { not: "partner" } }),
     }
 
-    const [companies, total] = await Promise.all([
+    const baseWhere = { organizationId: orgId, category: { not: "partner" } }
+
+    const [companies, total, agg] = await Promise.all([
       prisma.company.findMany({
         where,
         skip: (page - 1) * limit,
@@ -44,11 +46,19 @@ export async function GET(req: NextRequest) {
         },
       }),
       prisma.company.count({ where }),
+      prisma.company.aggregate({
+        where: baseWhere,
+        _sum: { userCount: true },
+        _count: true,
+      }),
     ])
+
+    const totalUsers = agg._sum.userCount || 0
+    const totalContacts = await prisma.contact.count({ where: { organizationId: orgId } })
 
     return NextResponse.json({
       success: true,
-      data: { companies, total, page, limit, search },
+      data: { companies, total, page, limit, search, totalUsers, totalContacts },
     })
   } catch (e) {
     console.error("Companies API error:", e)
