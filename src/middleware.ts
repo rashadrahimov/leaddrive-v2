@@ -45,6 +45,12 @@ export default auth((req) => {
     headers.set("x-user-role", String(role))
   }
 
+  // Inject locale from cookie for i18n
+  const localeCookie = req.cookies.get("NEXT_LOCALE")?.value
+  if (localeCookie) {
+    headers.set("x-locale", localeCookie)
+  }
+
   // Admin-only routes
   if (pathname.startsWith("/settings") && role !== "admin") {
     return NextResponse.redirect(new URL("/", req.url))

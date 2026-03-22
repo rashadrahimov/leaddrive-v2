@@ -1,11 +1,13 @@
-import type { NextConfig } from "next";
+import createNextIntlPlugin from "next-intl/plugin"
+import type { NextConfig } from "next"
+
+const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts")
 
 const nextConfig: NextConfig = {
   typescript: {
     // Build succeeds even with type errors — we fix types incrementally
     ignoreBuildErrors: true,
   },
-  output: "standalone",
-};
+}
 
-export default nextConfig;
+export default withNextIntl(nextConfig)

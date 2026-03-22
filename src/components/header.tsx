@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Sun, Moon, Search, LogOut } from "lucide-react"
 import { signOut } from "next-auth/react"
 import { NotificationBell } from "@/components/notification-bell"
+import { LanguageSwitcher } from "@/components/language-switcher"
 
 interface HeaderProps {
   orgName?: string
@@ -26,6 +27,8 @@ export function Header({ orgName = "Organization", userName = "User" }: HeaderPr
         </Button>
 
         <NotificationBell />
+
+        <LanguageSwitcher />
 
         <Button
           variant="ghost"
