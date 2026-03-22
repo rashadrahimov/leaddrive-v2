@@ -480,12 +480,16 @@ export default function DashboardPage() {
 
             {clients.topClients?.length > 0 && (
               <>
-                <p className="text-xs font-medium text-muted-foreground mb-1.5">Топ-5 клиентов</p>
+                <div className="flex items-center text-[10px] text-muted-foreground mb-1">
+                  <span className="flex-1">Топ-5 клиентов</span>
+                  <span className="ml-2 w-16 text-right">Доход</span>
+                  <span className="ml-2 w-12 text-right">Маржа</span>
+                </div>
                 <div className="space-y-1">
                   {clients.topClients.map((c: any, i: number) => (
                     <div key={i} className="flex items-center justify-between text-xs py-1 border-b border-muted/50 last:border-0">
                       <span className="truncate flex-1">{c.name}</span>
-                      <span className="font-mono text-green-600 ml-2">{fmt(c.revenue)} ₼</span>
+                      <span className="font-mono text-green-600 ml-2 w-16 text-right">{fmt(c.revenue)} ₼</span>
                       <span className={`font-mono ml-2 w-12 text-right ${c.marginPct >= 0 ? "text-green-600" : "text-red-600"}`}>
                         {c.marginPct?.toFixed(0) || 0}%
                       </span>
