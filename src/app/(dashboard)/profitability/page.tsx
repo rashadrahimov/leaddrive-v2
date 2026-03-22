@@ -309,29 +309,39 @@ export default function ProfitabilityPage() {
                 <p className="text-xs text-muted-foreground">Sec G: {fmt(grandTotalG)}</p>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={280}>
+                <ResponsiveContainer width="100%" height={220}>
                   <PieChart>
                     <Pie
                       data={costComposition}
                       cx="50%"
                       cy="50%"
-                      innerRadius={65}
-                      outerRadius={105}
+                      innerRadius={55}
+                      outerRadius={95}
                       dataKey="value"
-                      label={({ name, percent }) =>
-                        `${name} ${(percent * 100).toFixed(0)}%`
-                      }
+                      labelLine={false}
                     >
                       {costComposition.map((_, i) => (
                         <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
                       ))}
                     </Pie>
                     <Tooltip formatter={(value: number) => fmt(value)} />
-                    <Legend />
-                    <text x="50%" y="48%" textAnchor="middle" dominantBaseline="middle" className="fill-foreground text-xs">Sec F</text>
+                    <text x="50%" y="46%" textAnchor="middle" dominantBaseline="middle" className="fill-foreground text-xs">Sec F</text>
                     <text x="50%" y="55%" textAnchor="middle" dominantBaseline="middle" className="fill-foreground text-sm font-bold">{(grandTotalF / 1000).toFixed(1)}K ₼</text>
                   </PieChart>
                 </ResponsiveContainer>
+                <div className="grid grid-cols-2 gap-x-4 gap-y-1 mt-2">
+                  {costComposition.map((item, i) => {
+                    const total = costComposition.reduce((s, c) => s + c.value, 0)
+                    const pct = total > 0 ? ((item.value / total) * 100).toFixed(0) : "0"
+                    return (
+                      <div key={i} className="flex items-center gap-1.5 text-xs">
+                        <div className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ backgroundColor: PIE_COLORS[i % PIE_COLORS.length] }} />
+                        <span className="text-muted-foreground">{item.name}</span>
+                        <span className="ml-auto font-mono font-medium">{pct}%</span>
+                      </div>
+                    )
+                  })}
+                </div>
                 {/* Expandable breakdown */}
                 <CostBreakdown data={data} />
               </CardContent>

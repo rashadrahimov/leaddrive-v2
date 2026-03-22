@@ -604,40 +604,36 @@ export default function PricingPage() {
                     <CardTitle className="text-base">Доход по категориям</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="flex gap-4">
-                      <div className="flex-shrink-0" style={{ width: 200, height: 200 }}>
-                        <ResponsiveContainer width="100%" height="100%">
-                          <PieChart>
-                            <Pie
-                              data={catChartData}
-                              cx="50%"
-                              cy="50%"
-                              innerRadius={40}
-                              outerRadius={85}
-                              dataKey="value"
-                              labelLine={false}
-                            >
-                              {catChartData.map((_, i) => (
-                                <Cell key={i} fill={CAT_COLORS[i % CAT_COLORS.length]} />
-                              ))}
-                            </Pie>
-                            <Tooltip formatter={(v: number) => `${v.toLocaleString()} ₼`} />
-                          </PieChart>
-                        </ResponsiveContainer>
-                      </div>
-                      <div className="flex flex-col justify-center gap-1 min-w-0">
-                        {catChartData.map((item, i) => {
-                          const total = catChartData.reduce((s, c) => s + c.value, 0)
-                          const pct = total > 0 ? ((item.value / total) * 100).toFixed(0) : "0"
-                          return (
-                            <div key={i} className="flex items-center gap-2 text-xs">
-                              <div className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ backgroundColor: CAT_COLORS[i % CAT_COLORS.length] }} />
-                              <span className="text-muted-foreground truncate">{item.name}</span>
-                              <span className="ml-auto font-mono font-medium text-foreground flex-shrink-0">{pct}%</span>
-                            </div>
-                          )
-                        })}
-                      </div>
+                    <ResponsiveContainer width="100%" height={200}>
+                      <PieChart>
+                        <Pie
+                          data={catChartData}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={40}
+                          outerRadius={85}
+                          dataKey="value"
+                          labelLine={false}
+                        >
+                          {catChartData.map((_, i) => (
+                            <Cell key={i} fill={CAT_COLORS[i % CAT_COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip formatter={(v: number) => `${v.toLocaleString()} ₼`} />
+                      </PieChart>
+                    </ResponsiveContainer>
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-1 mt-3">
+                      {catChartData.map((item, i) => {
+                        const total = catChartData.reduce((s, c) => s + c.value, 0)
+                        const pct = total > 0 ? ((item.value / total) * 100).toFixed(0) : "0"
+                        return (
+                          <div key={i} className="flex items-center gap-1.5 text-xs">
+                            <div className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ backgroundColor: CAT_COLORS[i % CAT_COLORS.length] }} />
+                            <span className="text-muted-foreground">{item.name}</span>
+                            <span className="ml-auto font-mono font-medium text-foreground">{pct}%</span>
+                          </div>
+                        )
+                      })}
                     </div>
                   </CardContent>
                 </Card>
