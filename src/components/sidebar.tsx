@@ -12,6 +12,7 @@ import {
   TrendingUp, Filter, Workflow, Server, Bell,
 } from "lucide-react"
 import { useState } from "react"
+import { Logo } from "@/components/logo"
 
 interface NavItem {
   module: ModuleId
@@ -68,9 +69,9 @@ export function Sidebar({ org }: SidebarProps) {
       )}
     >
       <div className="flex h-14 items-center justify-between border-b px-4">
-        {!collapsed && (
-          <span className="text-lg font-bold text-primary">LeadDrive</span>
-        )}
+        <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+          <Logo collapsed={collapsed} size="sm" />
+        </Link>
         <button
           onClick={() => setCollapsed(!collapsed)}
           className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground"
