@@ -8,6 +8,7 @@ import {
   Building2, Users, Handshake, Ticket, TrendingUp, TrendingDown,
   DollarSign, AlertTriangle, Shield, Clock, CheckCircle2, Star,
   Activity, BarChart3, Target, Flame, Thermometer, Snowflake,
+  FileText, Wallet, ArrowRight, ArrowDown,
 } from "lucide-react"
 import {
   AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
@@ -110,7 +111,7 @@ export default function DashboardPage() {
 
   if (!data) return <div className="py-20 text-center text-muted-foreground">Нет данных</div>
 
-  const { financial, clients, pipeline, leads, operations, tasks, activity, risks } = data
+  const { financial, clients, pipeline, leads, operations, tasks, activity, risks, financialOverview, forecast } = data
   const marginColor = financial.marginPct >= 15 ? COLORS.revenue : financial.marginPct >= 5 ? "#f59e0b" : COLORS.cost
 
   // Temperature data
@@ -188,6 +189,68 @@ export default function DashboardPage() {
         />
       </div>
 
+      {/* ═══ Financial Overview ═══ */}
+      {financialOverview && (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <Card className="border-l-4 border-l-green-500">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-green-100 dark:bg-green-950/30">
+                  <Wallet className="h-5 w-5 text-green-600" />
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Выигранные сделки</p>
+                  <p className="text-xl font-bold">{fmt(financialOverview.wonDealsRevenue)} ₼</p>
+                  <p className="text-xs text-muted-foreground">{financialOverview.wonDealsCount} сделок · Ø {fmt(financialOverview.avgDealSize)} ₼</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="border-l-4 border-l-blue-500">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-950/30">
+                  <FileText className="h-5 w-5 text-blue-600" />
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Контракты (ежемес.)</p>
+                  <p className="text-xl font-bold">{fmt(financialOverview.monthlyContractRevenue)} ₼</p>
+                  <p className="text-xs text-muted-foreground">{financialOverview.activeContracts} активных из {financialOverview.totalContracts}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="border-l-4 border-l-purple-500">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-950/30">
+                  <Target className="h-5 w-5 text-purple-600" />
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Pipeline (в работе)</p>
+                  <p className="text-xl font-bold">{fmt(financialOverview.pipelineValue)} ₼</p>
+                  <p className="text-xs text-muted-foreground">{pipeline.deals} активных сделок</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="border-l-4 border-l-amber-500">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-amber-100 dark:bg-amber-950/30">
+                  <TrendingUp className="h-5 w-5 text-amber-600" />
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Конверсия лидов</p>
+                  <p className="text-xl font-bold">{leads.conversionRate || 0}%</p>
+                  <p className="text-xs text-muted-foreground">{leads.total || 0} лидов всего</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
       {/* ═══ Main Charts ═══ */}
       <div className="grid gap-4 lg:grid-cols-12">
         {/* Revenue vs Cost — would need snapshots, for now show service revenue bar */}
@@ -263,6 +326,86 @@ export default function DashboardPage() {
         </Card>
       </div>
 
+      {/* ═══ Sales Forecast + Lead Funnel ═══ */}
+      <div className="grid gap-4 lg:grid-cols-12">
+        {/* Sales Forecast */}
+        <Card className="lg:col-span-8">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center gap-2">
+              <TrendingUp className="h-4 w-4" /> Прогноз продаж (6 мес.)
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {forecast?.length > 0 ? (
+              <ResponsiveContainer width="100%" height={260}>
+                <BarChart data={forecast} margin={{ left: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                  <XAxis dataKey="month" tick={{ fontSize: 11 }} />
+                  <YAxis tickFormatter={(v: number) => fmt(v)} tick={{ fontSize: 11 }} />
+                  <Tooltip formatter={(v: number, name: string) => [`${v.toLocaleString()} ₼`, name === "actual" ? "Факт" : "Прогноз"]} />
+                  <Legend formatter={(v: string) => v === "actual" ? "Факт" : "Прогноз"} />
+                  <Bar dataKey="actual" fill="#22c55e" radius={[4, 4, 0, 0]} name="actual" />
+                  <Bar dataKey="projected" fill="#3b82f6" radius={[4, 4, 0, 0]} name="projected" opacity={0.6} />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-[260px] flex items-center justify-center text-muted-foreground">Нет данных</div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Lead Funnel */}
+        <Card className="lg:col-span-4">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center gap-2">
+              <ArrowDown className="h-4 w-4" /> Воронка лидов
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {(leads.funnel || []).length > 0 ? (
+              <div className="space-y-2">
+                {(leads.funnel || []).map((item: any, i: number) => {
+                  const funnelColors: Record<string, string> = {
+                    new: "#3b82f6", contacted: "#f59e0b", qualified: "#8b5cf6",
+                    converted: "#22c55e", rejected: "#94a3b8",
+                  }
+                  const funnelLabels: Record<string, string> = {
+                    new: "Новый", contacted: "Связались", qualified: "Квалифицир.",
+                    converted: "Конвертирован", rejected: "Не подходит",
+                  }
+                  const maxCount = Math.max(...(leads.funnel || []).map((f: any) => f.count || 1))
+                  const width = Math.max((item.count / maxCount) * 100, 12)
+                  return (
+                    <div key={item.status}>
+                      <div className="flex justify-between text-xs mb-0.5">
+                        <span>{funnelLabels[item.status] || item.status}</span>
+                        <span className="font-mono">{item.count} ({item.pct}%)</span>
+                      </div>
+                      <div className="w-full h-6 bg-muted/50 rounded overflow-hidden">
+                        <div
+                          className="h-full rounded flex items-center justify-center"
+                          style={{ width: `${width}%`, backgroundColor: funnelColors[item.status] || "#94a3b8" }}
+                        >
+                          {width > 20 && <span className="text-[10px] text-white font-medium">{item.count}</span>}
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+                <div className="flex items-center justify-between pt-3 mt-2 border-t">
+                  <span className="text-xs text-muted-foreground">Конверсия</span>
+                  <span className={`text-lg font-bold ${(leads.conversionRate || 0) > 20 ? "text-green-600" : "text-amber-600"}`}>
+                    {leads.conversionRate || 0}%
+                  </span>
+                </div>
+              </div>
+            ) : (
+              <div className="h-[260px] flex items-center justify-center text-muted-foreground">Нет данных по лидам</div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
       {/* ═══ Three Column Analytics ═══ */}
       <div className="grid gap-4 lg:grid-cols-3">
         {/* Pipeline */}
@@ -321,28 +464,32 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="flex gap-3 mb-4">
-              <div className="flex-1 text-center p-2 rounded-lg bg-green-50 dark:bg-green-950/30">
+              <div className="flex-1 text-center p-2 rounded-lg bg-white dark:bg-card border">
                 <div className="text-xl font-bold text-green-600">{clients.profitable}</div>
                 <div className="text-[10px] text-green-600">Прибыльных</div>
               </div>
-              <div className="flex-1 text-center p-2 rounded-lg bg-red-50 dark:bg-red-950/30">
+              <div className="flex-1 text-center p-2 rounded-lg bg-white dark:bg-card border">
                 <div className="text-xl font-bold text-red-600">{clients.loss}</div>
                 <div className="text-[10px] text-red-600">Убыточных</div>
               </div>
-              <div className="flex-1 text-center p-2 rounded-lg bg-muted/50">
-                <div className="text-xl font-bold text-muted-foreground">{clients.noRevenue}</div>
-                <div className="text-[10px] text-muted-foreground">Без дохода</div>
+              <div className="flex-1 text-center p-2 rounded-lg bg-white dark:bg-card border">
+                <div className="text-xl font-bold text-slate-500">{clients.noRevenue}</div>
+                <div className="text-[10px] text-slate-500">Без дохода</div>
               </div>
             </div>
 
             {clients.topClients?.length > 0 && (
               <>
-                <p className="text-xs font-medium text-muted-foreground mb-1.5">Топ-5 клиентов</p>
+                <div className="flex items-center text-[10px] text-muted-foreground mb-1">
+                  <span className="flex-1">Топ-5 клиентов</span>
+                  <span className="ml-2 w-16 text-right">Доход</span>
+                  <span className="ml-2 w-12 text-right">Маржа</span>
+                </div>
                 <div className="space-y-1">
                   {clients.topClients.map((c: any, i: number) => (
                     <div key={i} className="flex items-center justify-between text-xs py-1 border-b border-muted/50 last:border-0">
                       <span className="truncate flex-1">{c.name}</span>
-                      <span className="font-mono text-green-600 ml-2">{fmt(c.revenue)} ₼</span>
+                      <span className="font-mono text-green-600 ml-2 w-16 text-right">{fmt(c.revenue)} ₼</span>
                       <span className={`font-mono ml-2 w-12 text-right ${c.marginPct >= 0 ? "text-green-600" : "text-red-600"}`}>
                         {c.marginPct?.toFixed(0) || 0}%
                       </span>
@@ -377,17 +524,17 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="flex gap-3 mb-4">
-              <div className="flex-1 text-center p-3 rounded-lg bg-red-50 dark:bg-red-950/30">
+              <div className="flex-1 text-center p-3 rounded-lg bg-white dark:bg-card border">
                 <Flame className="h-5 w-5 text-red-500 mx-auto mb-1" />
                 <div className="text-2xl font-bold text-red-500">{hot}</div>
                 <div className="text-[10px] text-red-500 font-medium">HOT</div>
               </div>
-              <div className="flex-1 text-center p-3 rounded-lg bg-amber-50 dark:bg-amber-950/30">
+              <div className="flex-1 text-center p-3 rounded-lg bg-white dark:bg-card border">
                 <Thermometer className="h-5 w-5 text-amber-500 mx-auto mb-1" />
                 <div className="text-2xl font-bold text-amber-500">{warm}</div>
                 <div className="text-[10px] text-amber-500 font-medium">WARM</div>
               </div>
-              <div className="flex-1 text-center p-3 rounded-lg bg-blue-50 dark:bg-blue-950/30">
+              <div className="flex-1 text-center p-3 rounded-lg bg-white dark:bg-card border">
                 <Snowflake className="h-5 w-5 text-blue-500 mx-auto mb-1" />
                 <div className="text-2xl font-bold text-blue-500">{cold}</div>
                 <div className="text-[10px] text-blue-500 font-medium">COLD</div>
@@ -405,21 +552,21 @@ export default function DashboardPage() {
 
             {/* Operations mini-stats */}
             <div className="grid grid-cols-2 gap-2 pt-3 border-t">
-              <div className="p-2 rounded bg-muted/30 text-center">
+              <div className="p-2 rounded bg-white dark:bg-card border text-center">
                 <div className="text-sm font-bold">{operations.csatScore > 0 ? operations.csatScore.toFixed(1) : "—"}</div>
                 <div className="text-[10px] text-muted-foreground flex items-center justify-center gap-0.5">
                   <Star className="h-2.5 w-2.5 text-yellow-500" /> CSAT
                 </div>
               </div>
-              <div className="p-2 rounded bg-muted/30 text-center">
+              <div className="p-2 rounded bg-white dark:bg-card border text-center">
                 <div className="text-sm font-bold">{tasks.completionRate}%</div>
                 <div className="text-[10px] text-muted-foreground">Задачи выполн.</div>
               </div>
-              <div className="p-2 rounded bg-muted/30 text-center">
+              <div className="p-2 rounded bg-white dark:bg-card border text-center">
                 <div className="text-sm font-bold">{activity.count30d}</div>
                 <div className="text-[10px] text-muted-foreground">Активность 30д</div>
               </div>
-              <div className="p-2 rounded bg-muted/30 text-center">
+              <div className="p-2 rounded bg-white dark:bg-card border text-center">
                 <div className="text-sm font-bold">{operations.criticalTickets}</div>
                 <div className="text-[10px] text-muted-foreground">Крит. тикеты</div>
               </div>
@@ -442,10 +589,10 @@ export default function DashboardPage() {
               {risks.map((r: any, i: number) => (
                 <div
                   key={i}
-                  className={`flex items-start gap-3 p-2.5 rounded-lg border-l-4 ${
-                    r.severity === "critical" ? "border-l-red-500 bg-red-50 dark:bg-red-950/20" :
-                    r.severity === "warning" ? "border-l-amber-500 bg-amber-50 dark:bg-amber-950/20" :
-                    "border-l-green-500 bg-green-50 dark:bg-green-950/20"
+                  className={`flex items-start gap-3 p-2.5 rounded-lg border-l-4 bg-white dark:bg-card border ${
+                    r.severity === "critical" ? "border-l-red-500" :
+                    r.severity === "warning" ? "border-l-amber-500" :
+                    "border-l-green-500"
                   }`}
                 >
                   <div className="flex-1">

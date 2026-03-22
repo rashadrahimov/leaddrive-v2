@@ -13,41 +13,43 @@ import {
 } from "lucide-react"
 import { useState } from "react"
 import { Logo } from "@/components/logo"
+import { useTranslations } from "next-intl"
 
 interface NavItem {
   module: ModuleId
   href: string
   icon: React.ElementType
-  label: string
+  tKey: string
   group: string
 }
 
 const navItems: NavItem[] = [
-  { module: "core", href: "/", icon: LayoutDashboard, label: "Dashboard", group: "CRM" },
-  { module: "core", href: "/companies", icon: Building2, label: "Companies", group: "CRM" },
-  { module: "core", href: "/contacts", icon: Users, label: "Contacts", group: "CRM" },
-  { module: "deals", href: "/deals", icon: Handshake, label: "Deals", group: "CRM" },
-  { module: "leads", href: "/leads", icon: UserPlus, label: "Leads", group: "CRM" },
-  { module: "tasks", href: "/tasks", icon: CheckSquare, label: "Tasks", group: "CRM" },
-  { module: "contracts", href: "/contracts", icon: FileText, label: "Contracts", group: "CRM" },
-  { module: "campaigns", href: "/campaigns", icon: Mail, label: "Campaigns", group: "Marketing" },
-  { module: "campaigns", href: "/segments", icon: Filter, label: "Segments", group: "Marketing" },
-  { module: "campaigns", href: "/email-templates", icon: Send, label: "Email Templates", group: "Marketing" },
-  { module: "campaigns", href: "/email-log", icon: FileText, label: "Email Log", group: "Marketing" },
-  { module: "campaigns", href: "/campaign-roi", icon: TrendingUp, label: "Campaign ROI", group: "Marketing" },
-  { module: "leads", href: "/ai-scoring", icon: Target, label: "AI Scoring", group: "Marketing" },
-  { module: "leads", href: "/journeys", icon: Workflow, label: "Journeys", group: "Marketing" },
-  { module: "omnichannel", href: "/inbox", icon: MessageSquare, label: "Inbox", group: "Communication" },
-  { module: "tickets", href: "/tickets", icon: Ticket, label: "Tickets", group: "Support" },
-  { module: "knowledge-base", href: "/knowledge-base", icon: BookOpen, label: "Knowledge Base", group: "Support" },
-  { module: "profitability", href: "/profitability", icon: Calculator, label: "Profitability", group: "Analytics" },
-  { module: "profitability", href: "/pricing", icon: DollarSign, label: "Pricing", group: "Analytics" },
-  { module: "reports", href: "/reports", icon: BarChart3, label: "Reports", group: "Analytics" },
-  { module: "ai", href: "/ai-command-center", icon: Brain, label: "AI Center", group: "Analytics" },
-  { module: "core", href: "/notifications", icon: Bell, label: "Notifications", group: "CRM" },
-  { module: "workflows", href: "/settings/workflows", icon: Zap, label: "Workflows", group: "Settings" },
-  { module: "core", href: "/settings/smtp-settings", icon: Server, label: "SMTP", group: "Settings" },
-  { module: "core", href: "/settings", icon: Settings, label: "Settings", group: "Settings" },
+  { module: "core", href: "/", icon: LayoutDashboard, tKey: "dashboard", group: "CRM" },
+  { module: "core", href: "/companies", icon: Building2, tKey: "companies", group: "CRM" },
+  { module: "core", href: "/contacts", icon: Users, tKey: "contacts", group: "CRM" },
+  { module: "deals", href: "/deals", icon: Handshake, tKey: "deals", group: "CRM" },
+  { module: "leads", href: "/leads", icon: UserPlus, tKey: "leads", group: "CRM" },
+  { module: "tasks", href: "/tasks", icon: CheckSquare, tKey: "tasks", group: "CRM" },
+  { module: "contracts", href: "/contracts", icon: FileText, tKey: "contracts", group: "CRM" },
+  { module: "core", href: "/notifications", icon: Bell, tKey: "notifications", group: "CRM" },
+  { module: "campaigns", href: "/campaigns", icon: Mail, tKey: "campaigns", group: "Marketing" },
+  { module: "campaigns", href: "/segments", icon: Filter, tKey: "segments", group: "Marketing" },
+  { module: "campaigns", href: "/email-templates", icon: Send, tKey: "emailTemplates", group: "Marketing" },
+  { module: "campaigns", href: "/email-log", icon: FileText, tKey: "emailLog", group: "Marketing" },
+  { module: "campaigns", href: "/campaign-roi", icon: TrendingUp, tKey: "campaignRoi", group: "Marketing" },
+  { module: "leads", href: "/ai-scoring", icon: Target, tKey: "aiScoring", group: "Marketing" },
+  { module: "leads", href: "/journeys", icon: Workflow, tKey: "journeys", group: "Marketing" },
+  { module: "omnichannel", href: "/inbox", icon: MessageSquare, tKey: "inbox", group: "Communication" },
+  { module: "tickets", href: "/tickets", icon: Ticket, tKey: "tickets", group: "Support" },
+  { module: "knowledge-base", href: "/knowledge-base", icon: BookOpen, tKey: "knowledgeBase", group: "Support" },
+  { module: "profitability", href: "/profitability", icon: Calculator, tKey: "profitability", group: "Analytics" },
+  { module: "profitability", href: "/pricing", icon: DollarSign, tKey: "pricing", group: "Analytics" },
+  { module: "reports", href: "/reports", icon: BarChart3, tKey: "reports", group: "Analytics" },
+  { module: "ai", href: "/ai-command-center", icon: Brain, tKey: "aiCenter", group: "Analytics" },
+  { module: "workflows", href: "/settings/workflows", icon: Zap, tKey: "workflows", group: "Settings" },
+  { module: "core", href: "/settings/users", icon: Users, tKey: "users", group: "Settings" },
+  { module: "core", href: "/settings/smtp-settings", icon: Server, tKey: "smtp", group: "Settings" },
+  { module: "core", href: "/settings", icon: Settings, tKey: "settings", group: "Settings" },
 ]
 
 interface SidebarProps {
@@ -57,6 +59,7 @@ interface SidebarProps {
 export function Sidebar({ org }: SidebarProps) {
   const pathname = usePathname()
   const [collapsed, setCollapsed] = useState(false)
+  const t = useTranslations("nav")
 
   const filteredItems = navItems.filter((item) => hasModule(org, item.module))
   const groups = [...new Set(filteredItems.map((item) => item.group))]
@@ -85,7 +88,7 @@ export function Sidebar({ org }: SidebarProps) {
           <div key={group} className="mb-4">
             {!collapsed && (
               <div className="mb-1 px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                {group}
+                {t(`groups.${group}`)}
               </div>
             )}
             {filteredItems
@@ -103,10 +106,10 @@ export function Sidebar({ org }: SidebarProps) {
                         ? "bg-primary/10 text-primary font-medium"
                         : "text-muted-foreground hover:bg-accent hover:text-foreground"
                     )}
-                    title={collapsed ? item.label : undefined}
+                    title={collapsed ? t(item.tKey) : undefined}
                   >
                     <Icon className="h-4 w-4 shrink-0" />
-                    {!collapsed && <span>{item.label}</span>}
+                    {!collapsed && <span>{t(item.tKey)}</span>}
                   </Link>
                 )
               })}
