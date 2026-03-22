@@ -14,6 +14,7 @@ const createDealSchema = z.object({
   expectedClose: z.string().optional(),
   assignedTo: z.string().optional(),
   notes: z.string().max(5000).optional(),
+  tags: z.array(z.string()).optional(),
 })
 
 export async function GET(req: NextRequest) {
