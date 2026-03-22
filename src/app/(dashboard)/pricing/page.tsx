@@ -35,8 +35,6 @@ function AdjSlider({ value, onChange, label, count, datePicker, dateValue, onDat
   dateValue?: string
   onDateChange?: (v: string) => void
 }) {
-  // 0 is at position 50/150 = 33.33% of the slider track
-  const zeroPos = ((0 - (-50)) / (100 - (-50))) * 100 // 33.33%
   return (
     <div className="space-y-1.5">
       <div className="flex justify-between items-center">
@@ -47,21 +45,21 @@ function AdjSlider({ value, onChange, label, count, datePicker, dateValue, onDat
         <input
           type="range"
           min={-50}
-          max={100}
+          max={50}
           step={1}
           value={value}
           onChange={(e) => onChange(parseInt(e.target.value))}
           className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
           style={{ direction: "ltr" }}
         />
-        <div className="absolute top-1/2 -translate-y-1/2 pointer-events-none" style={{ left: `${zeroPos}%` }}>
+        <div className="absolute top-1/2 -translate-y-1/2 pointer-events-none" style={{ left: "50%" }}>
           <div className="w-0.5 h-4 bg-gray-500 rounded" />
         </div>
       </div>
-      <div className="relative flex text-xs text-muted-foreground h-4">
-        <span className="absolute left-0">-50%</span>
-        <span className="absolute" style={{ left: `${zeroPos}%`, transform: "translateX(-50%)" }}>0%</span>
-        <span className="absolute right-0">+100%</span>
+      <div className="flex justify-between text-xs text-muted-foreground">
+        <span>-50%</span>
+        <span>0%</span>
+        <span>+50%</span>
       </div>
       {datePicker && (
         <input
@@ -716,7 +714,7 @@ export default function PricingPage() {
                                 <input
                                   type="range"
                                   min={-50}
-                                  max={100}
+                                  max={50}
                                   value={row.compAdj}
                                   onChange={(e) => {
                                     const v = parseInt(e.target.value)
