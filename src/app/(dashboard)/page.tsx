@@ -1,7 +1,8 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import { useSession } from "next-auth/react"
+import { useCountUp } from "@/hooks/use-count-up"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import {
@@ -42,19 +43,28 @@ const actIcons: Record<string, string> = {
   call: "📞", email: "📧", meeting: "🤝", note: "📝", task: "✅", deal: "💰", ticket: "🎫",
 }
 
+function AnimatedNumber({ value }: { value: string | number }) {
+  const num = typeof value === "string" ? parseFloat(value.replace(/[^0-9.-]/g, "")) : value
+  const suffix = typeof value === "string" ? value.replace(/[0-9.,\-\s]/g, "").trim() : ""
+  const isNum = !isNaN(num) && isFinite(num)
+  const animated = useCountUp({ end: isNum ? num : 0, duration: 1400 })
+  if (!isNum) return <>{value}</>
+  return <>{animated}{suffix ? ` ${suffix}` : ""}</>
+}
+
 function KpiCard({ title, value, sub, icon, color, alert }: {
   title: string; value: string | number; sub?: string; icon: React.ReactNode; color: string; alert?: boolean
 }) {
   return (
-    <Card className={`relative overflow-hidden border-l-4 ${alert ? "animate-pulse" : ""}`} style={{ borderLeftColor: color }}>
+    <Card className={`relative overflow-hidden border-l-4 shadow-sm hover:shadow-md transition-all duration-200 ${alert ? "ring-2 ring-red-400/30" : ""}`} style={{ borderLeftColor: color }}>
       <CardContent className="p-4">
         <div className="flex justify-between items-start">
           <div>
             <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{title}</p>
-            <p className="text-2xl font-bold mt-1">{value}</p>
+            <p className="text-2xl font-bold mt-1 tabular-nums"><AnimatedNumber value={value} /></p>
             {sub && <p className="text-xs text-muted-foreground mt-0.5">{sub}</p>}
           </div>
-          <div className="p-2 rounded-lg bg-muted/50" style={{ color }}>{icon}</div>
+          <div className="p-2.5 rounded-xl bg-muted/40" style={{ color }}>{icon}</div>
         </div>
       </CardContent>
     </Card>
