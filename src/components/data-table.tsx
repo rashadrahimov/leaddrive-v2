@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { ChevronUp, ChevronDown, Search, ChevronLeft, ChevronRight } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useTranslations } from "next-intl"
 
 interface Column<T> {
   key: string
@@ -35,6 +36,7 @@ export function DataTable<T extends Record<string, unknown>>({
   const [sortCol, setSortCol] = useState("")
   const [sortAsc, setSortAsc] = useState(true)
   const [page, setPage] = useState(1)
+  const t = useTranslations("common")
 
   const filtered = data.filter((item) => {
     if (!search) return true
@@ -68,13 +70,13 @@ export function DataTable<T extends Record<string, unknown>>({
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder={searchPlaceholder}
+            placeholder={searchPlaceholder || t("search")}
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(1) }}
             className="pl-9"
           />
         </div>
-        <span className="text-sm text-muted-foreground">{filtered.length} results</span>
+        <span className="text-sm text-muted-foreground">{t("results", { count: filtered.length })}</span>
       </div>
 
       <div className="rounded-lg border bg-card overflow-hidden">
@@ -121,7 +123,7 @@ export function DataTable<T extends Record<string, unknown>>({
             {paginated.length === 0 && (
               <tr>
                 <td colSpan={columns.length} className="px-4 py-8 text-center text-muted-foreground">
-                  No data found
+                  {t("noData")}
                 </td>
               </tr>
             )}
@@ -132,7 +134,7 @@ export function DataTable<T extends Record<string, unknown>>({
       {totalPages > 1 && (
         <div className="flex items-center justify-between">
           <span className="text-sm text-muted-foreground">
-            Page {page} of {totalPages}
+            {t("pageOf", { current: page, total: totalPages })}
           </span>
           <div className="flex gap-1">
             <Button variant="outline" size="icon" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}>

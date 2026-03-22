@@ -93,6 +93,8 @@ export function aggregateBoardCats(categories: Record<string, CategoryValue>): R
 
 export function applyAdjustments(data: PricingData, adj: PricingAdjustments | null): PricingData {
   if (!adj) return data
+
+  // If all adjustments are zero, return original data to avoid rounding drift
   const g = (adj.global || 0) / 100
   const groups: Record<string, number> = {}
   for (const [k, v] of Object.entries(adj.groups || {})) groups[k] = v / 100
@@ -100,6 +102,12 @@ export function applyAdjustments(data: PricingData, adj: PricingAdjustments | nu
   for (const [k, v] of Object.entries(adj.categories || {})) cats[k] = v / 100
   const comps: Record<string, number> = {}
   for (const [k, v] of Object.entries(adj.companies || {})) comps[k] = v / 100
+
+  const hasAnyAdj = g !== 0
+    || Object.values(groups).some(v => v !== 0)
+    || Object.values(cats).some(v => v !== 0)
+    || Object.values(comps).some(v => v !== 0)
+  if (!hasAnyAdj) return data
 
   const result: PricingData = {}
   for (const [name, info] of Object.entries(data)) {

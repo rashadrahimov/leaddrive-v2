@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useSession } from "next-auth/react"
+import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { StatCard } from "@/components/stat-card"
 import { KanbanBoard } from "@/components/deals/kanban-board"
@@ -10,20 +11,6 @@ import { Select } from "@/components/ui/select"
 import { Handshake, Plus, TrendingUp, TrendingDown, Pencil, Trash2 } from "lucide-react"
 import { DealForm } from "@/components/deal-form"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
-
-const STAGES = [
-  { name: "LEAD", displayName: "Lead", color: "#6366f1" },
-  { name: "QUALIFIED", displayName: "Qualified", color: "#3b82f6" },
-  { name: "PROPOSAL", displayName: "Proposal", color: "#f59e0b" },
-  { name: "NEGOTIATION", displayName: "Negotiation", color: "#f97316" },
-  { name: "WON", displayName: "Won", color: "#22c55e" },
-  { name: "LOST", displayName: "Lost", color: "#ef4444" },
-]
-
-const STAGE_NAME_MAP: Record<string, string> = {
-  LEAD: "Lead", QUALIFIED: "Qualified", PROPOSAL: "Proposal",
-  NEGOTIATION: "Negotiation", WON: "Won", LOST: "Lost",
-}
 
 interface Deal {
   id: string
@@ -40,7 +27,26 @@ interface Deal {
 }
 
 export default function DealsPage() {
+  const t = useTranslations("deals")
   const { data: session } = useSession()
+
+  const STAGES = [
+    { name: "LEAD", displayName: t("stageLead"), color: "#6366f1" },
+    { name: "QUALIFIED", displayName: t("stageQualified"), color: "#3b82f6" },
+    { name: "PROPOSAL", displayName: t("stageProposal"), color: "#f59e0b" },
+    { name: "NEGOTIATION", displayName: t("stageNegotiation"), color: "#f97316" },
+    { name: "WON", displayName: t("stageWon"), color: "#22c55e" },
+    { name: "LOST", displayName: t("stageLost"), color: "#ef4444" },
+  ]
+
+  const STAGE_NAME_MAP: Record<string, string> = {
+    LEAD: t("stageLead"),
+    QUALIFIED: t("stageQualified"),
+    PROPOSAL: t("stageProposal"),
+    NEGOTIATION: t("stageNegotiation"),
+    WON: t("stageWon"),
+    LOST: t("stageLost"),
+  }
   const [deals, setDeals] = useState<Deal[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedDealId, setSelectedDealId] = useState<string | null>(null)
@@ -130,7 +136,7 @@ export default function DealsPage() {
     stage: STAGE_NAME_MAP[selectedDeal.stage] || selectedDeal.stage,
     stageColor: STAGES.find(s => s.name === selectedDeal.stage)?.color || "#6b7280",
     probability: selectedDeal.probability,
-    assignee: selectedDeal.assignedTo || "Unassigned",
+    assignee: selectedDeal.assignedTo || t("unassigned"),
     assigneeAvatar: (selectedDeal.assignedTo || "U")[0].toUpperCase(),
     createdAt: selectedDeal.createdAt?.slice(0, 10) || "",
     expectedClose: selectedDeal.expectedClose?.slice(0, 10) || "",
@@ -144,7 +150,7 @@ export default function DealsPage() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <h1 className="text-2xl font-bold tracking-tight">Deals Pipeline</h1>
+        <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
         <div className="animate-pulse"><div className="h-96 bg-muted rounded-lg" /></div>
       </div>
     )
@@ -154,26 +160,26 @@ export default function DealsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Deals Pipeline</h1>
-          <p className="text-sm text-muted-foreground">{deals.length} deals total</p>
+          <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
+          <p className="text-sm text-muted-foreground">{deals.length} {t("statTotal")}</p>
         </div>
         <div className="flex gap-2">
           <Select value={sortBy} onChange={e => setSortBy(e.target.value)} className="w-[180px]">
-            <option value="newest">Новые первые</option>
+            <option value="newest">{t("sortNewest")}</option>
             <option value="oldest">Старые первые</option>
-            <option value="value_desc">Сумма ↓</option>
-            <option value="value_asc">Сумма ↑</option>
+            <option value="value_desc">{t("sortValueDesc")}</option>
+            <option value="value_asc">{t("sortValueAsc")}</option>
             <option value="name">Имя А → Я</option>
           </Select>
-          <Button onClick={handleAdd}><Plus className="h-4 w-4 mr-1" /> Новая сделка</Button>
+          <Button onClick={handleAdd}><Plus className="h-4 w-4 mr-1" /> {t("add")}</Button>
         </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-4">
-        <StatCard title="Total Deals" value={deals.length} icon={<Handshake className="h-4 w-4" />} />
-        <StatCard title="Pipeline Value" value={`${totalValue.toLocaleString()} ₼`} icon={<TrendingUp className="h-4 w-4" />} />
-        <StatCard title="Won" value={`${wonValue.toLocaleString()} ₼`} description={`${wonDeals.length} deals`} trend="up" />
-        <StatCard title="Lost" value={deals.filter(d => d.stage === "LOST").length} icon={<TrendingDown className="h-4 w-4" />} trend="down" />
+        <StatCard title={t("statTotal")} value={deals.length} icon={<Handshake className="h-4 w-4" />} />
+        <StatCard title={t("statPipeline")} value={`${totalValue.toLocaleString()} ₼`} icon={<TrendingUp className="h-4 w-4" />} />
+        <StatCard title={t("statWon")} value={`${wonValue.toLocaleString()} ₼`} description={`${wonDeals.length} deals`} trend="up" />
+        <StatCard title={t("statLost")} value={deals.filter(d => d.stage === "LOST").length} icon={<TrendingDown className="h-4 w-4" />} trend="down" />
       </div>
 
       <KanbanBoard stages={STAGES} deals={kanbanDeals} onDealClick={handleDealClick} />
@@ -198,7 +204,7 @@ export default function DealsPage() {
         }}
       />
       <DealForm open={formOpen} onOpenChange={setFormOpen} onSaved={fetchDeals} initialData={editData} orgId={orgId} />
-      <DeleteConfirmDialog open={deleteOpen} onOpenChange={setDeleteOpen} onConfirm={confirmDelete} title="Delete Deal" itemName={deleteItem?.name} />
+      <DeleteConfirmDialog open={deleteOpen} onOpenChange={setDeleteOpen} onConfirm={confirmDelete} title={t("deleteDeal")} itemName={deleteItem?.name} />
     </div>
   )
 }

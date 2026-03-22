@@ -57,6 +57,7 @@ export function computeCostModel(
   employees: EmployeeRow[],
   clientCompanies: ClientCompany[] = [],
   clientServices: ClientServiceRow[] = [],
+  pricingRevenueByCompany: Record<string, number> = {},
 ): CostModelResult {
   const vat = params.vatRate ?? 0.18
   const empTax = params.employerTaxRate ?? 0.175
@@ -214,7 +215,10 @@ export function computeCostModel(
     const companyServices = clientServices.filter(
       (s) => s.companyId === companyId && s.isActive,
     )
-    const totalRevenue = r2(companyServices.reduce((sum, s) => sum + (s.monthlyRevenue ?? 0), 0))
+    const dbRevenue = r2(companyServices.reduce((sum, s) => sum + (s.monthlyRevenue ?? 0), 0))
+    const pricingRevenue = r2(pricingRevenueByCompany[companyId] ?? 0)
+    // Contract prices (pricing_profiles) = primary source; client_services = fallback
+    const totalRevenue = pricingRevenue > 0 ? pricingRevenue : dbRevenue
     const helpdeskRevenue = r2(
       companyServices
         .filter((s) => s.serviceType === "helpdesk")

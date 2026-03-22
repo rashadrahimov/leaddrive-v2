@@ -54,7 +54,7 @@ export async function writeCostModelLog(
 
 /** Load all cost model data and compute */
 export async function loadAndCompute(orgId: string): Promise<CostModelResult> {
-  const [paramsRow, overheadRows, employeeRows, companies, services] = await Promise.all([
+  const [paramsRow, overheadRows, employeeRows, companies, services, pricingProfiles] = await Promise.all([
     prisma.pricingParameters.findUnique({ where: { organizationId: orgId } }),
     prisma.overheadCost.findMany({ where: { organizationId: orgId }, orderBy: { sortOrder: "asc" } }),
     prisma.costEmployee.findMany({ where: { organizationId: orgId } }),
@@ -64,6 +64,10 @@ export async function loadAndCompute(orgId: string): Promise<CostModelResult> {
     }),
     prisma.clientService.findMany({
       where: { organizationId: orgId, isActive: true },
+    }),
+    prisma.pricingProfile.findMany({
+      where: { organizationId: orgId },
+      select: { companyId: true, monthlyTotal: true },
     }),
   ])
 
@@ -135,5 +139,13 @@ export async function loadAndCompute(orgId: string): Promise<CostModelResult> {
     notes: s.notes ?? "",
   }))
 
-  return computeCostModel(params, overhead, emps, clientComps, clientSvcs)
+  // Build pricing revenue map (contract prices — primary revenue source)
+  const pricingRevenueByCompany: Record<string, number> = {}
+  for (const pp of pricingProfiles) {
+    if (pp.companyId && pp.monthlyTotal > 0) {
+      pricingRevenueByCompany[pp.companyId] = (pricingRevenueByCompany[pp.companyId] ?? 0) + pp.monthlyTotal
+    }
+  }
+
+  return computeCostModel(params, overhead, emps, clientComps, clientSvcs, pricingRevenueByCompany)
 }

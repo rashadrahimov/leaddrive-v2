@@ -12,6 +12,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Dialog, DialogHeader, DialogTitle, DialogContent } from "@/components/ui/dialog"
 import { Building2, Users, FileText, X, Copy, Send, RefreshCw, CheckCircle, Trash2, Ban, Plus, Pencil, Brain, Sparkles, Target } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useTranslations } from "next-intl"
 
 interface LeadCompany {
   id: string
@@ -41,11 +42,6 @@ interface LeadDetailModalProps {
   onSaved?: () => void
 }
 
-const statusLabels: Record<string, string> = {
-  new: "Новый", contacted: "Связались", qualified: "Квалифицирован",
-  converted: "Конвертирован", rejected: "Не подходит", cancelled: "Аннулирован",
-}
-
 const statusColors: Record<string, string> = {
   new: "bg-blue-500", contacted: "bg-yellow-500", qualified: "bg-purple-500",
   converted: "bg-green-500", rejected: "bg-gray-400", cancelled: "bg-red-500",
@@ -61,6 +57,11 @@ function getGrade(score: number): { letter: string; color: string } {
 
 export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }: LeadDetailModalProps) {
   const router = useRouter()
+  const t = useTranslations("modal")
+  const statusLabels: Record<string, string> = {
+    new: t("statusNew"), contacted: t("statusContacted"), qualified: t("statusQualified"),
+    converted: t("statusConverted"), rejected: t("statusRejected"), cancelled: t("statusCancelled"),
+  }
   const [activeTab, setActiveTab] = useState("details")
   const [aiLoading, setAiLoading] = useState(false)
 
@@ -84,7 +85,7 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
 
   // AI Text state
   const [textType, setTextType] = useState("Email")
-  const [tone, setTone] = useState("Профессиональный")
+  const [tone, setTone] = useState("Professional")
   const [instructions, setInstructions] = useState("")
   const [generatedText, setGeneratedText] = useState<any>(null)
   const [emailSending, setEmailSending] = useState(false)
@@ -235,12 +236,12 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
   const convProb = Math.round(currentScore * 0.85)
 
   const tabs = [
-    { id: "details", label: "Детали" },
-    { id: "activity", label: "Активность" },
-    { id: "sentiment", label: "🐷 Sentiment" },
-    { id: "tasks", label: "⚡ Tasks" },
-    { id: "aitext", label: "✉️ AI Text" },
-    { id: "ai", label: "AI Скоринг" },
+    { id: "details", label: t("tabDetails") },
+    { id: "activity", label: t("tabActivity") },
+    { id: "sentiment", label: t("tabSentiment") },
+    { id: "tasks", label: t("tabTasks") },
+    { id: "aitext", label: t("tabAiText") },
+    { id: "ai", label: t("tabAiScoring") },
   ]
 
   return (
@@ -284,7 +285,7 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
           <div className="space-y-4">
             {/* Quick status change */}
             <div>
-              <p className="text-xs text-muted-foreground mb-2">Статус в воронке:</p>
+              <p className="text-xs text-muted-foreground mb-2">{t("funnelStatus")}</p>
               <div className="grid grid-cols-3 gap-1.5">
                 {(["new", "contacted", "qualified", "converted", "rejected", "cancelled"] as const).map(s => (
                   <button
@@ -305,53 +306,53 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
             {/* Info grid — all fields clickable to edit */}
             <div className="grid grid-cols-2 gap-2 text-sm">
               <div className="p-2 bg-muted/30 rounded cursor-pointer hover:bg-muted/50 group" onClick={() => editField("Email", "email", fullData?.email || company.email)}>
-                <span className="text-[10px] text-muted-foreground block">Email <Pencil className="h-2 w-2 inline opacity-0 group-hover:opacity-100" /></span>
+                <span className="text-[10px] text-muted-foreground block">{t("fieldEmail")} <Pencil className="h-2 w-2 inline opacity-0 group-hover:opacity-100" /></span>
                 <span className="text-xs">{fullData?.email || company.email || "—"}</span>
               </div>
               <div className="p-2 bg-muted/30 rounded cursor-pointer hover:bg-muted/50 group" onClick={() => editField("Телефон", "phone", fullData?.phone || company.phone)}>
-                <span className="text-[10px] text-muted-foreground block">Телефон <Pencil className="h-2 w-2 inline opacity-0 group-hover:opacity-100" /></span>
+                <span className="text-[10px] text-muted-foreground block">{t("fieldPhone")} <Pencil className="h-2 w-2 inline opacity-0 group-hover:opacity-100" /></span>
                 <span className="text-xs">{fullData?.phone || company.phone || "—"}</span>
               </div>
               <div className="p-2 bg-muted/30 rounded cursor-pointer hover:bg-muted/50 group" onClick={() => editField("Сайт", "website", fullData?.website || company.website)}>
-                <span className="text-[10px] text-muted-foreground block">Сайт <Pencil className="h-2 w-2 inline opacity-0 group-hover:opacity-100" /></span>
+                <span className="text-[10px] text-muted-foreground block">{t("fieldWebsite")} <Pencil className="h-2 w-2 inline opacity-0 group-hover:opacity-100" /></span>
                 <span className="text-xs">{fullData?.website || company.website || "—"}</span>
               </div>
               <div className="p-2 bg-muted/30 rounded cursor-pointer hover:bg-muted/50 group" onClick={() => editField("Отрасль", "industry", fullData?.industry || company.industry)}>
-                <span className="text-[10px] text-muted-foreground block">Отрасль <Pencil className="h-2 w-2 inline opacity-0 group-hover:opacity-100" /></span>
+                <span className="text-[10px] text-muted-foreground block">{t("fieldIndustry")} <Pencil className="h-2 w-2 inline opacity-0 group-hover:opacity-100" /></span>
                 <span className="text-xs">{fullData?.industry || company.industry || "—"}</span>
               </div>
               <div className="p-2 bg-muted/30 rounded cursor-pointer hover:bg-muted/50 group" onClick={() => editField("Оценочная цена (₼)", "annualRevenue", fullData?.annualRevenue || company.annualRevenue, true)}>
-                <span className="text-[10px] text-muted-foreground block">Оценочная цена <Pencil className="h-2 w-2 inline opacity-0 group-hover:opacity-100" /></span>
+                <span className="text-[10px] text-muted-foreground block">{t("fieldRevenue")} <Pencil className="h-2 w-2 inline opacity-0 group-hover:opacity-100" /></span>
                 <span className="text-xs">{(fullData?.annualRevenue || company.annualRevenue) ? `${(fullData?.annualRevenue || company.annualRevenue).toLocaleString()} ₼` : "—"}</span>
               </div>
               <div className="p-2 bg-muted/30 rounded cursor-pointer hover:bg-muted/50 group" onClick={() => editField("Пользователей", "userCount", fullData?.userCount ?? company.userCount, true)}>
-                <span className="text-[10px] text-muted-foreground block">Пользователей <Pencil className="h-2 w-2 inline opacity-0 group-hover:opacity-100" /></span>
+                <span className="text-[10px] text-muted-foreground block">{t("fieldUsers")} <Pencil className="h-2 w-2 inline opacity-0 group-hover:opacity-100" /></span>
                 <span className="text-xs">{fullData?.userCount ?? company.userCount ?? 0}</span>
               </div>
               <div className="p-2 bg-muted/30 rounded">
-                <span className="text-[10px] text-muted-foreground block">Дата создания</span>
+                <span className="text-[10px] text-muted-foreground block">{t("fieldCreatedAt")}</span>
                 <span className="text-xs">{(fullData?.createdAt || company.createdAt) ? new Date(fullData?.createdAt || company.createdAt).toLocaleDateString() : "—"}</span>
               </div>
               <div className="p-2 bg-muted/30 rounded">
-                <span className="text-[10px] text-muted-foreground block">Дней в базе</span>
+                <span className="text-[10px] text-muted-foreground block">{t("fieldDaysInBase")}</span>
                 <span className="text-xs">{(fullData?.createdAt || company.createdAt) ? `${Math.floor((Date.now() - new Date(fullData?.createdAt || company.createdAt).getTime()) / 86400000)} дн.` : "—"}</span>
               </div>
               <div className="p-2 bg-muted/30 rounded">
-                <span className="text-[10px] text-muted-foreground block">SLA</span>
+                <span className="text-[10px] text-muted-foreground block">{t("fieldSla")}</span>
                 <span className="text-xs">
                   {(fullData as any)?.slaPolicy ? (
                     <span className="text-blue-600 dark:text-blue-400 font-medium">{(fullData as any).slaPolicy.name}</span>
-                  ) : "По умолчанию"}
+                  ) : t("slaDefault")}
                 </span>
               </div>
               <div className="p-2 bg-muted/30 rounded cursor-pointer hover:bg-muted/50 group" onClick={() => editField("Score", "leadScore", fullData?.leadScore ?? company.leadScore, true)}>
-                <span className="text-[10px] text-muted-foreground block">Score <Pencil className="h-2 w-2 inline opacity-0 group-hover:opacity-100" /></span>
+                <span className="text-[10px] text-muted-foreground block">{t("fieldScore")} <Pencil className="h-2 w-2 inline opacity-0 group-hover:opacity-100" /></span>
                 <span className={`text-xs font-bold ${(fullData?.leadTemperature || company.leadTemperature) === "hot" ? "text-red-500" : (fullData?.leadTemperature || company.leadTemperature) === "warm" ? "text-orange-500" : "text-blue-500"}`}>
                   {((fullData?.leadTemperature || company.leadTemperature) || "cold").toUpperCase()} {fullData?.leadScore ?? company.leadScore}
                 </span>
               </div>
               <div className="p-2 bg-muted/30 rounded">
-                <span className="text-[10px] text-muted-foreground block">Контакты</span>
+                <span className="text-[10px] text-muted-foreground block">{t("fieldContacts")}</span>
                 <span className="text-xs">{fullData?.contacts?.length || company._count?.contacts || 0}</span>
               </div>
             </div>
@@ -359,19 +360,19 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
             {/* FIX #2: About section */}
             <div>
               <div className="flex items-center justify-between mb-1">
-                <h4 className="font-medium text-sm">О компании</h4>
+                <h4 className="font-medium text-sm">{t("aboutCompany")}</h4>
                 <Button variant="ghost" size="sm" className="h-6 text-xs" onClick={() => setEditingAbout(!editingAbout)}>
-                  <Pencil className="h-3 w-3 mr-1" /> {editingAbout ? "Отмена" : "Изменить"}
+                  <Pencil className="h-3 w-3 mr-1" /> {editingAbout ? t("cancelButton") : t("changeButton")}
                 </Button>
               </div>
               {editingAbout ? (
                 <div className="space-y-2">
-                  <Textarea value={aboutText} onChange={e => setAboutText(e.target.value)} rows={3} placeholder="Описание компании, заметки..." />
-                  <Button size="sm" onClick={saveAbout}>Сохранить</Button>
+                  <Textarea value={aboutText} onChange={e => setAboutText(e.target.value)} rows={3} placeholder={t("activityDescPlaceholder")} />
+                  <Button size="sm" onClick={saveAbout}>{t("saveButton")}</Button>
                 </div>
               ) : (
                 <p className="text-sm text-muted-foreground bg-muted/30 p-2 rounded min-h-[40px]">
-                  {company.description || aboutText || "Нет описания. Нажмите 'Изменить' чтобы добавить."}
+                  {company.description || aboutText || t("noDescription")}
                 </p>
               )}
             </div>
@@ -379,13 +380,13 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
             {/* Contacts with add/edit/delete */}
             <div>
               <div className="flex items-center justify-between mb-2">
-                <h4 className="font-medium text-sm">Ключевые люди ({fullData?.contacts?.length || company._count?.contacts || 0})</h4>
+                <h4 className="font-medium text-sm">{t("keyPeople")} ({fullData?.contacts?.length || company._count?.contacts || 0})</h4>
                 <div className="flex gap-1">
                   <Button variant="outline" size="sm" className="h-6 text-xs gap-1" onClick={() => { onOpenChange(false); router.push(`/contacts?new=1&companyId=${company.id}`) }}>
-                    <Plus className="h-3 w-3" /> Добавить
+                    <Plus className="h-3 w-3" /> {t("addContact")}
                   </Button>
                   <Button variant="ghost" size="sm" className="h-6 text-xs" onClick={() => { onOpenChange(false); router.push(`/companies/${company.id}`) }}>
-                    Все →
+                    {t("showAll")}
                   </Button>
                 </div>
               </div>
@@ -427,7 +428,7 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
                       onClick={() => setShowAllContacts(true)}
                       className="w-full text-xs text-center text-primary hover:underline py-1"
                     >
-                      + ещё {(fullData?.contacts || company.contacts).length - 5} контактов — показать все
+                      {t("showMore", { count: (fullData?.contacts || company.contacts).length - 5 })}
                     </button>
                   )}
                   {showAllContacts && (fullData?.contacts || company.contacts).length > 5 && (
@@ -435,16 +436,16 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
                       onClick={() => setShowAllContacts(false)}
                       className="w-full text-xs text-center text-muted-foreground hover:underline py-1"
                     >
-                      Свернуть
+                      {t("collapse")}
                     </button>
                   )}
                 </div>
-              ) : <p className="text-xs text-muted-foreground">Нет контактов. Нажмите "Добавить" чтобы создать.</p>}
+              ) : <p className="text-xs text-muted-foreground">{t("noContacts")}</p>}
             </div>
 
             {/* Deals */}
             <div>
-              <h4 className="font-medium text-sm mb-1">Сделки ({(fullData?.deals || company.deals)?.length || 0})</h4>
+              <h4 className="font-medium text-sm mb-1">{t("deals")} ({(fullData?.deals || company.deals)?.length || 0})</h4>
               {(fullData?.deals || company.deals) && (fullData?.deals || company.deals).length > 0 ? (
                 (fullData?.deals || company.deals).map((d: any) => (
                   <div key={d.id} className="flex justify-between text-xs p-2 bg-muted/30 rounded mb-1">
@@ -455,12 +456,12 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
                     </div>
                   </div>
                 ))
-              ) : <p className="text-xs text-muted-foreground">Нет сделок</p>}
+              ) : <p className="text-xs text-muted-foreground">{t("noDeals")}</p>}
             </div>
 
             {/* Contracts */}
             <div>
-              <h4 className="font-medium text-sm mb-1">Контракты ({fullData?.contracts?.length || 0})</h4>
+              <h4 className="font-medium text-sm mb-1">{t("contracts")} ({fullData?.contracts?.length || 0})</h4>
               {fullData?.contracts && fullData.contracts.length > 0 ? (
                 fullData.contracts.map((c: any) => (
                   <div key={c.id} className="flex justify-between items-center text-xs p-2 bg-muted/30 rounded mb-1">
@@ -476,7 +477,7 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
                     </div>
                   </div>
                 ))
-              ) : <p className="text-xs text-muted-foreground">Нет контрактов</p>}
+              ) : <p className="text-xs text-muted-foreground">{t("noContracts")}</p>}
             </div>
           </div>
         )}
@@ -485,7 +486,7 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
         {activeTab === "activity" && (
           <div className="space-y-4">
             <Button size="sm" className="gap-1" onClick={() => { setShowActivityForm(!showActivityForm); if (!activities.length) loadActivities() }}>
-              <Plus className="h-3 w-3" /> Записать
+              <Plus className="h-3 w-3" /> {t("activityRecord")}
             </Button>
 
             {showActivityForm && (
@@ -493,28 +494,28 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
                 <CardContent className="pt-3 pb-3 space-y-3">
                   <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <Label className="text-xs">Тип</Label>
+                      <Label className="text-xs">{t("activityType")}</Label>
                       <Select value={activityType} onChange={e => setActivityType(e.target.value)}>
-                        <option value="note">📝 Заметка</option>
-                        <option value="call">📞 Звонок</option>
-                        <option value="email">📧 Email</option>
-                        <option value="meeting">🤝 Встреча</option>
+                        <option value="note">{t("activityNote")}</option>
+                        <option value="call">{t("activityCall")}</option>
+                        <option value="email">{t("activityEmail")}</option>
+                        <option value="meeting">{t("activityMeeting")}</option>
                       </Select>
                     </div>
                     <div>
-                      <Label className="text-xs">Тема *</Label>
-                      <Input value={activitySubject} onChange={e => setActivitySubject(e.target.value)} placeholder="Тема активности" />
+                      <Label className="text-xs">{t("activitySubject")}</Label>
+                      <Input value={activitySubject} onChange={e => setActivitySubject(e.target.value)} placeholder={t("activitySubjectPlaceholder")} />
                     </div>
                   </div>
                   <div>
-                    <Label className="text-xs">Описание</Label>
-                    <Textarea value={activityDesc} onChange={e => setActivityDesc(e.target.value)} rows={2} placeholder="Детали..." />
+                    <Label className="text-xs">{t("activityDescription")}</Label>
+                    <Textarea value={activityDesc} onChange={e => setActivityDesc(e.target.value)} rows={2} placeholder={t("activityDescPlaceholder")} />
                   </div>
                   <div className="flex gap-2">
                     <Button size="sm" onClick={saveActivity} disabled={activitySaving || !activitySubject.trim()}>
-                      {activitySaving ? "Сохраняем..." : "Сохранить"}
+                      {activitySaving ? t("saving") : t("saveButton")}
                     </Button>
-                    <Button size="sm" variant="outline" onClick={() => setShowActivityForm(false)}>Отмена</Button>
+                    <Button size="sm" variant="outline" onClick={() => setShowActivityForm(false)}>{t("cancelButton")}</Button>
                   </div>
                 </CardContent>
               </Card>
@@ -536,9 +537,9 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
               </div>
             ) : !showActivityForm ? (
               <div className="text-center py-6 text-muted-foreground">
-                <p className="text-sm">Нет записанных активностей</p>
-                <p className="text-xs mt-1">Нажмите "Записать" чтобы добавить</p>
-                <Button size="sm" variant="link" className="mt-2" onClick={loadActivities}>Обновить</Button>
+                <p className="text-sm">{t("noActivities")}</p>
+                <p className="text-xs mt-1">{t("noActivitiesHint")}</p>
+                <Button size="sm" variant="link" className="mt-2" onClick={loadActivities}>{t("refresh")}</Button>
               </div>
             ) : null}
           </div>
@@ -550,9 +551,9 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
             {!sentiment ? (
               <div className="text-center py-4">
                 <Button onClick={async () => { const d = await callAI("sentiment"); if (d) setSentiment(d) }} disabled={aiLoading} className="gap-2">
-                  🐷 {aiLoading ? "Анализируем..." : "Анализировать тональность"}
+                  🐷 {aiLoading ? t("analyzing") : t("analyzeSentiment")}
                 </Button>
-                <p className="text-sm text-muted-foreground mt-2">AI проанализирует все коммуникации с этой компанией</p>
+                <p className="text-sm text-muted-foreground mt-2">{t("sentimentAnalysisHint")}</p>
               </div>
             ) : (
               <div className="space-y-4">
@@ -598,9 +599,9 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
             {!aiTasks ? (
               <div className="text-center py-4">
                 <Button onClick={async () => { const d = await callAI("tasks"); if (d) setAiTasks(d) }} disabled={aiLoading} className="gap-2">
-                  ⚡ {aiLoading ? "Генерируем..." : "Сгенерировать задачи"}
+                  ⚡ {aiLoading ? t("generating") : t("generateTasks")}
                 </Button>
-                <p className="text-sm text-muted-foreground mt-2">AI проанализирует и предложит задачи</p>
+                <p className="text-sm text-muted-foreground mt-2">{t("generateTasksHint")}</p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -623,8 +624,8 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
                   </Card>
                 ))}
                 <div className="flex gap-2 justify-center">
-                  <Button size="sm" className="gap-1"><CheckCircle className="h-3 w-3" /> Создать все задачи</Button>
-                  <Button size="sm" variant="outline" onClick={async () => { const d = await callAI("tasks"); if (d) setAiTasks(d) }} className="gap-1"><RefreshCw className="h-3 w-3" /> Пересоздать</Button>
+                  <Button size="sm" className="gap-1"><CheckCircle className="h-3 w-3" /> {t("createAllTasks")}</Button>
+                  <Button size="sm" variant="outline" onClick={async () => { const d = await callAI("tasks"); if (d) setAiTasks(d) }} className="gap-1"><RefreshCw className="h-3 w-3" /> {t("recreate")}</Button>
                 </div>
               </div>
             )}
@@ -636,25 +637,25 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className="text-xs">Тип текста</Label>
+                <Label className="text-xs">{t("textType")}</Label>
                 <Select value={textType} onChange={e => setTextType(e.target.value)}>
                   <option value="Email">📧 Email</option>
                   <option value="SMS">📱 SMS</option>
                 </Select>
               </div>
               <div>
-                <Label className="text-xs">Тон</Label>
+                <Label className="text-xs">{t("tone")}</Label>
                 <Select value={tone} onChange={e => setTone(e.target.value)}>
-                  <option value="Профессиональный">🏢 Профессиональный</option>
-                  <option value="Дружелюбный">😊 Дружелюбный</option>
-                  <option value="Формальный">📋 Формальный</option>
-                  <option value="Убедительный">💪 Убедительный</option>
+                  <option value="Professional">{t("toneProfessional")}</option>
+                  <option value="Friendly">{t("toneFriendly")}</option>
+                  <option value="Formal">{t("toneFormal")}</option>
+                  <option value="Persuasive">{t("tonePersuasive")}</option>
                 </Select>
               </div>
             </div>
             <div>
-              <Label className="text-xs">Дополнительные инструкции</Label>
-              <Textarea value={instructions} onChange={e => setInstructions(e.target.value)} rows={2} placeholder="Например: упомянуть скидку 10%, предложить демо..." />
+              <Label className="text-xs">{t("extraInstructions")}</Label>
+              <Textarea value={instructions} onChange={e => setInstructions(e.target.value)} rows={2} placeholder={t("extraInstructionsPlaceholder")} />
             </div>
             <Button onClick={async () => { const d = await callAI("text", { textType, tone, instructions }); if (d) { setGeneratedText(d); setEmailSent(false) } }} disabled={aiLoading} className="w-full gap-2">
               ✉️ {aiLoading ? "Генерируем..." : "Сгенерировать текст"}

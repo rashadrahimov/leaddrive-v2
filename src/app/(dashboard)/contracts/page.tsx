@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useSession } from "next-auth/react"
+import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { DataTable } from "@/components/data-table"
@@ -48,15 +49,7 @@ interface Contract {
   history?: AuditEntry[]
 }
 
-const statusLabels: Record<string, string> = {
-  draft: "Черновик",
-  sent: "Отправлен",
-  signed: "Подписан",
-  active: "Активный",
-  expiring: "Истекает",
-  expired: "Истёк",
-  renewed: "Продлён",
-}
+// statusLabels defined inside component
 
 const statusColors: Record<string, string> = {
   draft: "bg-gray-100 text-gray-600",
@@ -68,27 +61,7 @@ const statusColors: Record<string, string> = {
   renewed: "bg-teal-100 text-teal-700",
 }
 
-const typeLabels: Record<string, string> = {
-  service_agreement: "Договор услуг",
-  nda: "NDA",
-  maintenance: "Обслуживание",
-  license: "Лицензия",
-  sla: "SLA",
-  other: "Другое",
-}
-
-const fieldLabels: Record<string, string> = {
-  contractNumber: "Номер",
-  title: "Название",
-  companyId: "Компания",
-  type: "Тип",
-  status: "Статус",
-  startDate: "Дата начала",
-  endDate: "Дата окончания",
-  valueAmount: "Сумма",
-  currency: "Валюта",
-  notes: "Примечания",
-}
+// typeLabels and fieldLabels defined inside component
 
 function formatDate(dateStr?: string): string {
   if (!dateStr) return "—"
@@ -102,7 +75,23 @@ function daysUntilExpiry(endDate?: string): number | null {
 }
 
 export default function ContractsPage() {
+  const t = useTranslations("contracts")
   const { data: session } = useSession()
+  const statusLabels: Record<string, string> = {
+    draft: t("statusDraft"), sent: t("statusSent"), signed: t("statusSigned"),
+    active: t("statusActive"), expiring: t("statusExpiring"), expired: t("statusExpired"),
+    renewed: t("statusRenewed"),
+  }
+  const typeLabels: Record<string, string> = {
+    service_agreement: t("typeService"), nda: t("typeNda"), maintenance: t("typeMaintenance"),
+    license: t("typeLicense"), sla: t("typeSla"), other: t("typeOther"),
+  }
+  const fieldLabels: Record<string, string> = {
+    contractNumber: t("colNumber"), title: t("colTitle"), companyId: t("colCompany"),
+    type: t("detailType"), status: t("detailStatus"), startDate: t("detailPeriod"),
+    endDate: t("detailPeriod"), valueAmount: t("detailAmount"), currency: t("colValue"),
+    notes: t("detailNotes"),
+  }
   const [contracts, setContracts] = useState<Contract[]>([])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
@@ -251,14 +240,14 @@ export default function ContractsPage() {
   const columns = [
     {
       key: "contractNumber",
-      label: "Номер",
+      label: t("colNumber"),
       sortable: true,
       render: (item: any) => <span className="font-mono text-sm">{item.contractNumber}</span>,
     },
-    { key: "title", label: "Название", sortable: true },
+    { key: "title", label: t("colTitle"), sortable: true },
     {
       key: "company",
-      label: "Компания",
+      label: t("colCompany"),
       sortable: true,
       render: (item: any) => (
         <div className="flex items-center gap-1.5">
@@ -272,11 +261,11 @@ export default function ContractsPage() {
       ),
     },
     {
-      key: "type", label: "Тип", sortable: true,
+      key: "type", label: t("detailType"), sortable: true,
       render: (item: any) => <span className="text-sm">{typeLabels[item.type] || item.type || "—"}</span>,
     },
     {
-      key: "valueAmount", label: "Сумма", sortable: true,
+      key: "valueAmount", label: t("colValue"), sortable: true,
       render: (item: any) => (
         <span className="font-medium">
           {item.valueAmount ? `${item.valueAmount.toLocaleString()} ${item.currency}` : "—"}
@@ -284,7 +273,7 @@ export default function ContractsPage() {
       ),
     },
     {
-      key: "status", label: "Статус", sortable: true,
+      key: "status", label: t("colStatus"), sortable: true,
       render: (item: any) => (
         <span className={cn("text-xs px-2 py-0.5 rounded-full font-medium", statusColors[item.status] || "bg-gray-100")}>
           {statusLabels[item.status] || item.status}
@@ -292,7 +281,7 @@ export default function ContractsPage() {
       ),
     },
     {
-      key: "endDate", label: "Истекает", sortable: true,
+      key: "endDate", label: t("colExpiry"), sortable: true,
       render: (item: any) => {
         const days = daysUntilExpiry(item.endDate)
         const isExpiring = days !== null && days > 0 && days <= 90
@@ -328,7 +317,7 @@ export default function ContractsPage() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <h1 className="text-2xl font-bold tracking-tight">Контракты</h1>
+        <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
         <div className="animate-pulse space-y-4">
           <div className="grid gap-4 md:grid-cols-6">{[1, 2, 3, 4, 5, 6].map(i => <div key={i} className="h-24 bg-muted rounded-lg" />)}</div>
           <div className="h-96 bg-muted rounded-lg" />
@@ -341,23 +330,23 @@ export default function ContractsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Контракты</h1>
-          <p className="text-sm text-muted-foreground">Управление договорами с клиентами</p>
+          <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
+          <p className="text-sm text-muted-foreground">{t("subtitleDesc")}</p>
         </div>
         <Button onClick={() => { setEditData(undefined); setShowForm(true) }}>
-          <Plus className="h-4 w-4 mr-1" /> Новый контракт
+          <Plus className="h-4 w-4 mr-1" /> {t("add")}
         </Button>
       </div>
 
       {/* Stats */}
       <div className="grid gap-4 md:grid-cols-6">
-        <StatCard title="Всего" value={total} icon={<FileText className="h-4 w-4" />} />
-        <StatCard title="Активные" value={activeCount} trend="up" />
-        <StatCard title="Общая сумма" value={`${totalValue.toLocaleString()} ₼`} icon={<TrendingUp className="h-4 w-4" />} />
-        <StatCard title="MRR" value={`${Math.round(mrr).toLocaleString()} ₼`} description="ежемесячно" />
-        <StatCard title="Ср. стоимость" value={`${avgValue.toLocaleString()} ₼`} />
+        <StatCard title={t("statTotal")} value={total} icon={<FileText className="h-4 w-4" />} />
+        <StatCard title={t("statActive")} value={activeCount} trend="up" />
+        <StatCard title={t("statTotalValue")} value={`${totalValue.toLocaleString()} ₼`} icon={<TrendingUp className="h-4 w-4" />} />
+        <StatCard title={t("statMrr")} value={`${Math.round(mrr).toLocaleString()} ₼`} description={t("statMonthly")} />
+        <StatCard title={t("statAvgValue")} value={`${avgValue.toLocaleString()} ₼`} />
         <StatCard
-          title="Истекают скоро"
+          title={t("statExpiring")}
           value={expiringSoon}
           icon={<AlertTriangle className="h-4 w-4" />}
           trend={expiringSoon > 0 ? "down" : "neutral"}
@@ -367,7 +356,7 @@ export default function ContractsPage() {
       {/* Filter tabs */}
       <div className="flex flex-wrap gap-2">
         <Button variant={activeFilter === "all" ? "default" : "outline"} size="sm" onClick={() => setActiveFilter("all")}>
-          Все ({total})
+          {t("filterAll")} ({total})
         </Button>
         {(["draft", "sent", "signed", "active", "expiring", "expired", "renewed"] as const).map(key => (
           statusCounts[key] ? (
@@ -382,23 +371,23 @@ export default function ContractsPage() {
           onClick={() => setActiveFilter("expiring_soon")}
           className={cn(expiringSoon > 0 && activeFilter !== "expiring_soon" && "border-orange-300 text-orange-600")}
         >
-          <AlertTriangle className="h-3 w-3 mr-1" /> Истекают 90д ({expiringSoon})
+          <AlertTriangle className="h-3 w-3 mr-1" /> {t("filterExpiringSoon")} ({expiringSoon})
         </Button>
       </div>
 
       {/* Sort */}
       <div className="flex justify-end">
         <Select value={sortBy} onChange={e => setSortBy(e.target.value)} className="w-[200px]">
-          <option value="date_desc">Новые первые</option>
-          <option value="date_asc">Старые первые</option>
-          <option value="value_desc">Сумма ↓</option>
-          <option value="value_asc">Сумма ↑</option>
-          <option value="expiry">По дате истечения</option>
-          <option value="company">По компании</option>
+          <option value="date_desc">{t("sortNewest")}</option>
+          <option value="date_asc">{t("sortOldest")}</option>
+          <option value="value_desc">{t("sortValueDesc")}</option>
+          <option value="value_asc">{t("sortValueAsc")}</option>
+          <option value="expiry">{t("sortByExpiry")}</option>
+          <option value="company">{t("sortByCompany")}</option>
         </Select>
       </div>
 
-      <DataTable columns={columns} data={filtered} searchPlaceholder="Поиск контрактов..." searchKey="title" onRowClick={openDetail} />
+      <DataTable columns={columns} data={filtered} searchPlaceholder={t("searchPlaceholder")} searchKey="title" onRowClick={openDetail} />
 
       <ContractForm
         open={showForm}
@@ -412,7 +401,7 @@ export default function ContractsPage() {
         open={!!deleteId}
         onOpenChange={(open) => { if (!open) setDeleteId(null) }}
         onConfirm={handleDelete}
-        title="Удалить контракт"
+        title={t("deleteContract")}
         itemName={deleteName}
       />
 
@@ -422,7 +411,7 @@ export default function ContractsPage() {
           <div className="w-full max-w-lg bg-background shadow-xl h-full overflow-y-auto" onClick={e => e.stopPropagation()}>
             <div className="p-6">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-bold">Контракт #{detailContract.contractNumber}</h2>
+                <h2 className="text-lg font-bold">{t("detailContractNum")}{detailContract.contractNumber}</h2>
                 <button onClick={() => setDetailContract(null)} className="p-1 hover:bg-muted rounded"><X className="h-5 w-5" /></button>
               </div>
 
@@ -438,28 +427,28 @@ export default function ContractsPage() {
 
                 <div className="grid grid-cols-2 gap-3 text-sm">
                   <div className="bg-muted/50 rounded-lg p-3">
-                    <div className="text-muted-foreground text-xs">Статус</div>
+                    <div className="text-muted-foreground text-xs">{t("detailStatus")}</div>
                     <span className={cn("text-xs px-2 py-0.5 rounded-full font-medium mt-1 inline-block", statusColors[detailContract.status])}>
                       {statusLabels[detailContract.status] || detailContract.status}
                     </span>
                   </div>
                   <div className="bg-muted/50 rounded-lg p-3">
-                    <div className="text-muted-foreground text-xs">Тип</div>
+                    <div className="text-muted-foreground text-xs">{t("detailType")}</div>
                     <div className="font-medium mt-1">{typeLabels[detailContract.type || ""] || detailContract.type || "—"}</div>
                   </div>
                   <div className="bg-muted/50 rounded-lg p-3">
-                    <div className="text-muted-foreground text-xs">Сумма</div>
+                    <div className="text-muted-foreground text-xs">{t("detailAmount")}</div>
                     <div className="font-bold mt-1">{detailContract.valueAmount ? `${detailContract.valueAmount.toLocaleString()} ${detailContract.currency}` : "—"}</div>
                   </div>
                   <div className="bg-muted/50 rounded-lg p-3">
-                    <div className="text-muted-foreground text-xs">Срок</div>
+                    <div className="text-muted-foreground text-xs">{t("detailPeriod")}</div>
                     <div className="font-medium mt-1">{formatDate(detailContract.startDate)} — {formatDate(detailContract.endDate)}</div>
                   </div>
                 </div>
 
                 {detailContract.notes && (
                   <div className="bg-muted/50 rounded-lg p-3 text-sm">
-                    <div className="text-muted-foreground text-xs mb-1">Примечания</div>
+                    <div className="text-muted-foreground text-xs mb-1">{t("detailNotes")}</div>
                     <div>{detailContract.notes}</div>
                   </div>
                 )}
@@ -467,17 +456,17 @@ export default function ContractsPage() {
                 {/* History */}
                 <div className="border-t pt-4">
                   <h4 className="text-sm font-semibold flex items-center gap-1.5 mb-3">
-                    <History className="h-4 w-4" /> История изменений
+                    <History className="h-4 w-4" /> {t("historyTitle")}
                   </h4>
                   {detailLoading ? (
-                    <div className="text-sm text-muted-foreground animate-pulse">Загрузка...</div>
+                    <div className="text-sm text-muted-foreground animate-pulse">{t("historyLoading")}</div>
                   ) : detailContract.history && detailContract.history.length > 0 ? (
                     <div className="space-y-3">
                       {detailContract.history.map((entry: AuditEntry) => (
                         <div key={entry.id} className="border-l-2 border-primary/20 pl-3 text-sm">
                           <div className="flex items-center justify-between">
                             <span className="font-medium">
-                              {entry.action === "update" ? "Изменение" : entry.action === "delete" ? "Удаление" : entry.action === "create" ? "Создание" : entry.action}
+                              {entry.action === "update" ? t("actionUpdate") : entry.action === "delete" ? t("actionDelete") : entry.action === "create" ? t("actionCreate") : entry.action}
                             </span>
                             <span className="text-xs text-muted-foreground">
                               {new Date(entry.createdAt).toLocaleString("ru-RU", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
@@ -497,7 +486,7 @@ export default function ContractsPage() {
                       ))}
                     </div>
                   ) : (
-                    <p className="text-sm text-muted-foreground">Нет истории изменений</p>
+                    <p className="text-sm text-muted-foreground">{t("historyEmpty")}</p>
                   )}
                 </div>
 
@@ -505,7 +494,7 @@ export default function ContractsPage() {
                 <div className="border-t pt-4">
                   <div className="flex items-center justify-between mb-3">
                     <h4 className="text-sm font-semibold flex items-center gap-1.5">
-                      <File className="h-4 w-4" /> Файлы ({detailFiles.length})
+                      <File className="h-4 w-4" /> {t("filesTitle")} ({detailFiles.length})
                     </h4>
                     <label className={cn(
                       "inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded-md cursor-pointer transition-colors",
@@ -513,7 +502,7 @@ export default function ContractsPage() {
                       uploading && "opacity-50 pointer-events-none"
                     )}>
                       {uploading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3" />}
-                      {uploading ? "Загрузка..." : "Загрузить"}
+                      {uploading ? t("fileUploading") : t("fileUpload")}
                       <input type="file" className="hidden" onChange={handleFileUpload} disabled={uploading}
                         accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg,.webp,.txt,.csv" />
                     </label>
