@@ -5,6 +5,7 @@ const nextConfig: NextConfig = {
     // Build succeeds even with type errors — we fix types incrementally
     ignoreBuildErrors: true,
   },
+  output: "standalone",
 };
 
 export default nextConfig;
