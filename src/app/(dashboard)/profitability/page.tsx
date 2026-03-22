@@ -37,9 +37,10 @@ function CostBreakdown({ data }: { data: any }) {
   const boEmployees = (data.employees || []).filter((e: any) => e.department === "BackOffice")
   const grcEmployees = (data.employees || []).filter((e: any) => e.inOverhead && e.department !== "BackOffice")
   const adminOhItemsList = [
-    ...adminOhItems.map((o: any) => ({ label: o.label, value: o.monthlyAmount })),
-    ...boEmployees.map((e: any) => ({ label: `BackOffice — ${e.position} (${e.count} nəf.)`, value: e.totalLaborCost, isSalary: true })),
-    ...grcEmployees.map((e: any) => ({ label: `${e.position} (${e.count} nəf.) [OH]`, value: e.totalLaborCost, isSalary: true })),
+    ...adminOhItems.map((o: any) => ({ label: o.label, value: o.monthlyAmount, isSalary: false })),
+    { label: "_separator", value: 0, isSalary: false },
+    ...boEmployees.map((e: any) => ({ label: `BackOffice (${e.count} nəf.)`, value: e.totalLaborCost, isSalary: true })),
+    ...grcEmployees.map((e: any) => ({ label: `Overhead işçilər (${e.count} nəf.)`, value: e.totalLaborCost, isSalary: true })),
   ]
 
   const sections = [
@@ -96,49 +97,67 @@ function CostBreakdown({ data }: { data: any }) {
   ]
 
   return (
-    <div className="mt-4 space-y-1 text-sm">
+    <div className="mt-6 space-y-0.5 text-sm">
       {sections.map((sec) => (
         <div key={sec.key}>
           <button
             onClick={() => sec.items.length > 0 && toggle(sec.key)}
-            className="flex w-full items-center gap-2 py-2 hover:bg-muted/50 rounded px-2"
+            className={`flex w-full items-center gap-2.5 py-2.5 px-3 rounded-lg transition-colors ${
+              sec.items.length > 0 ? "hover:bg-muted/60 cursor-pointer" : "cursor-default"
+            }`}
           >
-            <span className="h-2.5 w-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: sec.color }} />
+            <span className="h-3 w-3 rounded-full flex-shrink-0 ring-2 ring-white shadow-sm" style={{ backgroundColor: sec.color }} />
             {sec.items.length > 0 ? (
-              expanded[sec.key] ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />
+              expanded[sec.key]
+                ? <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                : <ChevronRight className="h-4 w-4 text-muted-foreground" />
             ) : (
-              <span className="w-3.5" />
+              <span className="w-4" />
             )}
-            <span className="font-medium flex-1 text-left">{sec.label}</span>
-            <span className="font-mono text-muted-foreground">{fmt(sec.value)}</span>
+            <span className="font-semibold flex-1 text-left">{sec.label}</span>
+            <span className="font-mono text-muted-foreground tabular-nums">
+              {Math.round(sec.value).toLocaleString()} <span className="text-xs">₼</span>
+            </span>
           </button>
           {expanded[sec.key] && sec.items.length > 0 && (
-            <div className="ml-10 mb-2 space-y-0.5 text-xs text-muted-foreground">
-              {sec.items.map((item: any, i: number) => (
-                <div key={i} className="flex justify-between py-0.5 px-2">
-                  <span>{item.label}</span>
-                  <span className="font-mono">{fmt(item.value)}</span>
-                </div>
-              ))}
+            <div className="ml-11 mr-2 mb-3 rounded-lg border bg-muted/20 overflow-hidden">
+              {sec.items.map((item: any, i: number) =>
+                item.label === "_separator" ? (
+                  <div key={i} className="border-t border-dashed mx-3" />
+                ) : (
+                  <div key={i} className={`flex justify-between py-1.5 px-3 text-xs ${
+                    item.isSalary ? "bg-blue-50/50 dark:bg-blue-950/20 font-medium text-foreground" : "text-muted-foreground"
+                  } ${i > 0 && sec.items[i-1]?.label !== "_separator" ? "border-t border-muted/30" : ""}`}>
+                    <span className="pr-4">{item.label}</span>
+                    <span className="font-mono tabular-nums flex-shrink-0">
+                      {Math.round(item.value).toLocaleString()} ₼
+                    </span>
+                  </div>
+                )
+              )}
               {sec.note && (
-                <div className="border-t mt-1 pt-1 italic whitespace-pre-line text-[10px]">{sec.note}</div>
+                <div className="px-3 py-2 bg-muted/30 border-t text-[10px] italic text-muted-foreground">{sec.note}</div>
               )}
             </div>
           )}
         </div>
       ))}
-      <div className="border-t pt-2 mt-2 flex justify-between px-2 font-medium">
-        <span>Ümumi Maya (F)</span>
-        <span className="font-mono">{fmt(data.grandTotalF)}</span>
+
+      <div className="border-t mt-3 pt-3 space-y-1.5 px-3">
+        <div className="flex justify-between font-medium">
+          <span>Ümumi Maya (F)</span>
+          <span className="font-mono tabular-nums">{fmt(data.grandTotalF)}</span>
+        </div>
+        <div className="flex justify-between font-semibold text-blue-600">
+          <span>Tam Xidmət Maya (G)</span>
+          <span className="font-mono tabular-nums">{fmt(data.grandTotalG)}</span>
+        </div>
       </div>
-      <div className="flex justify-between px-2 font-medium text-blue-600">
-        <span>Tam Xidmət Maya (G)</span>
-        <span className="font-mono">{fmt(data.grandTotalG)}</span>
-      </div>
-      <div className="px-2 mt-2 text-[10px] text-muted-foreground space-y-0.5">
+
+      <div className="px-3 mt-3 pt-3 border-t text-[10px] text-muted-foreground space-y-0.5">
         <p><strong>Sec F</strong> — Min. maya: Admin OH + Tech + IT/InfoSec + Ezam + Risk</p>
         <p><strong>Sec G</strong> — Tam maya: Bütün şöbələr + admin paylanma + tech birbaşa</p>
-        <p><strong>Paylaşma:</strong> {((data.params?.fixedOverheadRatio || 0.25) * 100).toFixed(0)}% sabit + {((1 - (data.params?.fixedOverheadRatio || 0.25)) * 100).toFixed(0)}% dəyişkən (istifadəçi sayına görə)</p>
+        <p><strong>Paylaşma:</strong> {((data.params?.fixedOverheadRatio || 0.25) * 100).toFixed(0)}% sabit + {((1 - (data.params?.fixedOverheadRatio || 0.25)) * 100).toFixed(0)}% dəyişkən</p>
       </div>
     </div>
   )
