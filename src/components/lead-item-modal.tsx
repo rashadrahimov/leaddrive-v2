@@ -387,20 +387,20 @@ export function LeadItemModal({ open, onOpenChange, lead, orgId, onSaved, onConv
             {activeTab === "details" && (
               <div className="space-y-6">
                 {/* Status & Priority row */}
-                <div className="flex flex-col sm:flex-row gap-4">
-                  <div className="flex-1">
+                <div className="space-y-3">
+                  <div>
                     <p className="text-[10px] font-medium text-muted-foreground mb-1.5 uppercase tracking-wider">Статус</p>
-                    <div className="inline-flex rounded-lg border overflow-hidden">
-                      {(["new", "contacted", "qualified", "converted", "lost"] as const).map((s, i, arr) => (
+                    <div className="flex flex-wrap gap-1.5">
+                      {(["new", "contacted", "qualified", "converted", "lost"] as const).map(s => (
                         <button
                           key={s}
                           onClick={() => changeStatus(s)}
                           disabled={saving}
                           className={cn(
-                            "flex items-center gap-1.5 text-xs py-2 px-3 transition-all border-r last:border-r-0",
+                            "flex items-center gap-1.5 text-xs py-1.5 px-3 rounded-md border transition-all",
                             currentLead.status === s
-                              ? "bg-primary/10 text-primary font-semibold"
-                              : "bg-background hover:bg-muted/50 text-muted-foreground hover:text-foreground"
+                              ? "bg-primary/10 text-primary font-semibold border-primary/30"
+                              : "bg-background hover:bg-muted/50 text-muted-foreground hover:text-foreground border-border"
                           )}
                         >
                           <span className={cn("w-2 h-2 rounded-full shrink-0", statusColors[s])} />
@@ -409,19 +409,19 @@ export function LeadItemModal({ open, onOpenChange, lead, orgId, onSaved, onConv
                       ))}
                     </div>
                   </div>
-                  <div className="shrink-0">
+                  <div>
                     <p className="text-[10px] font-medium text-muted-foreground mb-1.5 uppercase tracking-wider">Приоритет</p>
-                    <div className="inline-flex rounded-lg border overflow-hidden">
+                    <div className="flex flex-wrap gap-1.5">
                       {(["low", "medium", "high"] as const).map(p => (
                         <button
                           key={p}
                           onClick={() => changePriority(p)}
                           disabled={saving}
                           className={cn(
-                            "flex items-center gap-1.5 text-xs py-2 px-4 transition-all border-r last:border-r-0",
+                            "flex items-center gap-1.5 text-xs py-1.5 px-3 rounded-md border transition-all",
                             currentLead.priority === p
-                              ? "bg-primary/10 text-primary font-semibold"
-                              : "bg-background hover:bg-muted/50 text-muted-foreground hover:text-foreground"
+                              ? "bg-primary/10 text-primary font-semibold border-primary/30"
+                              : "bg-background hover:bg-muted/50 text-muted-foreground hover:text-foreground border-border"
                           )}
                         >
                           <span className={cn("w-2 h-2 rounded-full shrink-0",
