@@ -14,6 +14,7 @@ import {
   Brain, Phone, Mail, Building2, ArrowUpDown, ArrowUp, ArrowDown,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useTranslations } from "next-intl"
 
 interface Lead {
   id: string
@@ -32,14 +33,6 @@ interface Lead {
   createdAt: string
 }
 
-const statusLabels: Record<string, string> = {
-  new: "Новый",
-  contacted: "Связались",
-  qualified: "Квалифицирован",
-  converted: "Конвертирован",
-  lost: "Потерян",
-}
-
 const statusColors: Record<string, string> = {
   new: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
   contacted: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
@@ -48,16 +41,8 @@ const statusColors: Record<string, string> = {
   lost: "bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400",
 }
 
-const priorityLabels: Record<string, string> = {
-  low: "Низкий", medium: "Средний", high: "Высокий",
-}
-
 const priorityColors: Record<string, string> = {
   low: "text-gray-500", medium: "text-yellow-600", high: "text-red-600",
-}
-
-const sourceLabels: Record<string, string> = {
-  website: "Сайт", referral: "Реферал", cold_call: "Холодный звонок", linkedin: "LinkedIn", email: "Email",
 }
 
 function getGrade(score: number): { letter: string; color: string } {
@@ -71,6 +56,16 @@ function getGrade(score: number): { letter: string; color: string } {
 export default function LeadsPage() {
   const { data: session } = useSession()
   const orgId = session?.user?.organizationId
+  const t = useTranslations("leads")
+
+  const statusLabels: Record<string, string> = {
+    new: t("statusNew"), contacted: t("statusContacted"), qualified: t("statusQualified"),
+    converted: t("statusConverted"), lost: t("statusLost"),
+  }
+  const sourceLabels: Record<string, string> = {
+    website: t("sourceWebsite"), referral: t("sourceReferral"), cold_call: t("sourceColdCall"),
+    linkedin: t("sourceLinkedin"), email: t("sourceEmail"),
+  }
   const [leads, setLeads] = useState<Lead[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
@@ -153,7 +148,7 @@ export default function LeadsPage() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <h1 className="text-2xl font-bold">Лиды</h1>
+        <h1 className="text-2xl font-bold">{t("title")}</h1>
         <div className="animate-pulse space-y-4">
           <div className="h-10 bg-muted rounded-lg w-full" />
           <div className="h-96 bg-muted rounded-lg" />
@@ -171,14 +166,14 @@ export default function LeadsPage() {
             <UserPlus className="h-6 w-6 text-primary" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Лиды ({leads.length})</h1>
+            <h1 className="text-2xl font-bold tracking-tight">{t("title")} ({leads.length})</h1>
             <p className="text-sm text-muted-foreground">
-              Ср. балл: {avgScore}/100 · Hot лидов: {hotLeads}
+              {t("avgScore")}: {avgScore}/100 · {t("hotLeads")}: {hotLeads}
             </p>
           </div>
         </div>
         <Button onClick={() => { setEditData(undefined); setShowForm(true) }} className="gap-2">
-          <Plus className="h-4 w-4" /> Новый лид
+          <Plus className="h-4 w-4" /> {t("newLead")}
         </Button>
       </div>
 
@@ -189,7 +184,7 @@ export default function LeadsPage() {
           size="sm"
           onClick={() => setStatusFilter("all")}
         >
-          Все ({leads.length})
+          {t("all")} ({leads.length})
         </Button>
         {Object.entries(statusLabels).map(([key, label]) => (
           <Button
@@ -208,19 +203,18 @@ export default function LeadsPage() {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Поиск лидов по имени, компании, email, телефону..."
+            placeholder={t("searchPlaceholder")}
             value={search}
             onChange={e => setSearch(e.target.value)}
             className="pl-9"
           />
         </div>
         <Select value={sortBy} onChange={e => setSortBy(e.target.value)} className="w-[180px]">
-          <option value="score_desc">AI Score ↓</option>
-          <option value="score_asc">AI Score ↑</option>
-          <option value="name_asc">Имя А → Я</option>
-          <option value="name_desc">Имя Я → А</option>
-          <option value="newest">Новые первые</option>
-          <option value="priority">Приоритет</option>
+          <option value="score_desc">{t("sortScoreDesc")}</option>
+          <option value="score_asc">{t("sortScoreAsc")}</option>
+          <option value="name_asc">{t("sortNameAsc")}</option>
+          <option value="name_desc">{t("sortNameDesc")}</option>
+          <option value="newest">{t("sortNewest")}</option>
         </Select>
       </div>
 
@@ -230,13 +224,13 @@ export default function LeadsPage() {
           <thead>
             <tr className="border-b bg-muted/50">
               {[
-                { key: "score", label: "Score", className: "w-16 px-4" },
-                { key: "name", label: "Лид", className: "px-4" },
-                { key: "company", label: "Компания", className: "px-4" },
-                { key: null, label: "Контакты", className: "px-4" },
-                { key: "conversion", label: "Конверсия", className: "px-3" },
-                { key: "source", label: "Источник", className: "px-3" },
-                { key: "status", label: "Статус", className: "px-3" },
+                { key: "score", label: t("colScore"), className: "w-16 px-4" },
+                { key: "name", label: t("colLead"), className: "px-4" },
+                { key: "company", label: t("colCompany"), className: "px-4" },
+                { key: null, label: t("colContacts"), className: "px-4" },
+                { key: "conversion", label: t("colConversion"), className: "px-3" },
+                { key: "source", label: t("colSource"), className: "px-3" },
+                { key: "status", label: t("colStatus"), className: "px-3" },
               ].map(col => {
                 const isActive = col.key && sortBy.startsWith(col.key)
                 const isDesc = sortBy.endsWith("_desc")
@@ -264,13 +258,13 @@ export default function LeadsPage() {
                   </th>
                 )
               })}
-              <th className="px-4 py-3 text-left font-medium text-muted-foreground">Действия</th>
+              <th className="px-4 py-3 text-left font-medium text-muted-foreground">{t("colActions")}</th>
             </tr>
           </thead>
           <tbody>
             {filtered.length === 0 ? (
               <tr><td colSpan={8} className="px-4 py-12 text-center text-muted-foreground">
-                {search ? "Ничего не найдено" : "Нет лидов. Создайте первый!"}
+                {search ? t("noResults") : t("noLeads")}
               </td></tr>
             ) : filtered.map(lead => {
               const grade = getGrade(lead.score)
@@ -338,7 +332,7 @@ export default function LeadsPage() {
                           variant="outline"
                           className="gap-1 text-xs text-green-600 hover:text-green-700"
                           onClick={() => setConvertLead(lead)}
-                          title="Конвертировать в сделку"
+                          title={t("convertTooltip")}
                         >
                           <ArrowRight className="h-3 w-3" />
                         </Button>
@@ -395,7 +389,7 @@ export default function LeadsPage() {
         open={!!deleteId}
         onOpenChange={open => { if (!open) setDeleteId(null) }}
         onConfirm={handleDelete}
-        title="Удалить лид"
+        title={t("deleteLead")}
         itemName={deleteName}
       />
 

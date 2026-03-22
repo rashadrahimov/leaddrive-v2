@@ -12,6 +12,7 @@ import { LeadDetailModal } from "@/components/lead-detail-modal"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
 import { Select } from "@/components/ui/select"
 import { Building2, Plus, Search, Users, FileText, TrendingUp, ArrowUpDown } from "lucide-react"
+import { useTranslations } from "next-intl"
 
 interface Company {
   id: string
@@ -34,12 +35,6 @@ interface Company {
   _count: { contacts: number; deals: number; contracts: number }
 }
 
-const statusLabels: Record<string, string> = {
-  active: "Активная",
-  prospect: "Проспект",
-  inactive: "Неактивная",
-}
-
 const statusColors: Record<string, string> = {
   active: "bg-green-100 text-green-700",
   prospect: "bg-blue-100 text-blue-700",
@@ -48,6 +43,10 @@ const statusColors: Record<string, string> = {
 
 export default function CompaniesPage() {
   const { data: session } = useSession()
+  const t = useTranslations("companies")
+  const statusLabels: Record<string, string> = {
+    active: t("statusActive"), prospect: t("statusProspect"), inactive: t("statusInactive"),
+  }
   const [companies, setCompanies] = useState<Company[]>([])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
@@ -106,7 +105,7 @@ export default function CompaniesPage() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <h1 className="text-2xl font-bold tracking-tight">Компании</h1>
+        <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
         <div className="animate-pulse space-y-4">
           <div className="grid gap-4 md:grid-cols-4">
             {[1, 2, 3, 4].map(i => <div key={i} className="h-24 bg-muted rounded-lg" />)}
@@ -121,19 +120,19 @@ export default function CompaniesPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Компании ({filtered.length})</h1>
-          <p className="text-sm text-muted-foreground">Управление клиентскими компаниями</p>
+          <h1 className="text-2xl font-bold tracking-tight">{t("title")} ({filtered.length})</h1>
+          <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
         </div>
         <Button onClick={() => { setEditData(undefined); setFormOpen(true) }}>
-          <Plus className="h-4 w-4 mr-1" /> Добавить
+          <Plus className="h-4 w-4 mr-1" /> {t("add")}
         </Button>
       </div>
 
       <div className="grid gap-4 md:grid-cols-4">
-        <StatCard title="Всего" value={total} icon={<Building2 className="h-4 w-4" />} />
-        <StatCard title="Активные" value={activeCount} trend="up" />
-        <StatCard title="Контакт. лица" value={totalContacts} icon={<Users className="h-4 w-4" />} />
-        <StatCard title="Пользователей" value={totalUsers} icon={<Users className="h-4 w-4" />} />
+        <StatCard title={t("statTotal")} value={total} icon={<Building2 className="h-4 w-4" />} />
+        <StatCard title={t("statActive")} value={activeCount} trend="up" />
+        <StatCard title={t("statContacts")} value={totalContacts} icon={<Users className="h-4 w-4" />} />
+        <StatCard title={t("statUsers")} value={totalUsers} icon={<Users className="h-4 w-4" />} />
       </div>
 
       {/* Status filter tabs */}
@@ -143,7 +142,7 @@ export default function CompaniesPage() {
           size="sm"
           onClick={() => setActiveFilter("all")}
         >
-          Все ({total})
+          {t("all")} ({total})
         </Button>
         {Object.entries(statusLabels).map(([key, label]) => (
           <Button
@@ -162,19 +161,19 @@ export default function CompaniesPage() {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Поиск компаний..."
+            placeholder={t("searchPlaceholder")}
             value={search}
             onChange={e => setSearch(e.target.value)}
             className="pl-9"
           />
         </div>
         <Select value={sortBy} onChange={e => setSortBy(e.target.value)} className="w-[180px]">
-          <option value="name_asc">Имя А → Я</option>
-          <option value="name_desc">Имя Я → А</option>
-          <option value="hot_cold">Hot → Cold</option>
-          <option value="cold_hot">Cold → Hot</option>
-          <option value="score">Score ↓</option>
-          <option value="contacts">Контакты ↓</option>
+          <option value="name_asc">{t("sortNameAsc")}</option>
+          <option value="name_desc">{t("sortNameDesc")}</option>
+          <option value="hot_cold">{t("sortHotCold")}</option>
+          <option value="cold_hot">{t("sortColdHot")}</option>
+          <option value="score">{t("sortScore")}</option>
+          <option value="contacts">{t("sortContacts")}</option>
         </Select>
       </div>
 
@@ -182,7 +181,7 @@ export default function CompaniesPage() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {filtered.length === 0 ? (
           <div className="col-span-3 text-center py-12 text-muted-foreground">
-            Нет компаний с выбранным фильтром
+            {t("noResults")}
           </div>
         ) : (
           filtered.map(company => (
@@ -209,13 +208,13 @@ export default function CompaniesPage() {
 
                 <div className="flex justify-between text-xs text-muted-foreground mb-2">
                   <span className="flex items-center gap-1">
-                    <Users className="h-3 w-3" /> {company._count?.contacts || 0} конт. лица
+                    <Users className="h-3 w-3" /> {company._count?.contacts || 0} {t("contacts")}
                   </span>
                   <span className="flex items-center gap-1">
-                    <TrendingUp className="h-3 w-3" /> {company._count?.deals || 0} сделок
+                    <TrendingUp className="h-3 w-3" /> {company._count?.deals || 0} {t("deals")}
                   </span>
                   <span className="flex items-center gap-1">
-                    <Users className="h-3 w-3" /> {company.userCount || 0} польз.
+                    <Users className="h-3 w-3" /> {company.userCount || 0} {t("users")}
                   </span>
                 </div>
 
