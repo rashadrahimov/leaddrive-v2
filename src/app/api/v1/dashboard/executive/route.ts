@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { auth } from "@/lib/auth"
+import { loadAndCompute } from "@/lib/cost-model/db"
 
 export async function GET(req: NextRequest) {
   let orgId = req.headers.get("x-organization-id")
@@ -76,43 +77,28 @@ export async function GET(req: NextRequest) {
       prisma.ticket.groupBy({ by: ["status"], where: { organizationId: orgId }, _count: true }),
     ])
 
-    // Cost model summary
+    // Cost model — direct compute (no internal fetch)
     let costSummary = { totalCost: 0, totalRevenue: 0, margin: 0, marginPct: 0, profitableClients: 0, lossClients: 0 }
-    try {
-      const costRes = await fetch(`${process.env.NEXTAUTH_URL || "http://localhost:3000"}/api/v1/cost-model`, {
-        headers: { "x-organization-id": orgId },
-      })
-      const costJson = await costRes.json()
-      if (costJson.success) {
-        const d = costJson.data
-        costSummary = {
-          totalCost: d.grandTotalG || 0,
-          totalRevenue: d.summary?.totalRevenue || 0,
-          margin: d.summary?.totalMargin || 0,
-          marginPct: d.summary?.marginPct || 0,
-          profitableClients: d.summary?.profitableClients || 0,
-          lossClients: d.summary?.lossClients || 0,
-        }
-      }
-    } catch {}
-
-    // Top clients
     let topClients: any[] = []
     let bottomClients: any[] = []
     try {
-      const clientsRes = await fetch(`${process.env.NEXTAUTH_URL || "http://localhost:3000"}/api/v1/cost-model/clients`, {
-        headers: { "x-organization-id": orgId },
-      })
-      const cJson = await clientsRes.json()
-      if (cJson.success && cJson.data?.clients) {
-        const sorted = cJson.data.clients.sort((a: any, b: any) => (b.totalRevenue || 0) - (a.totalRevenue || 0))
-        topClients = sorted.filter((c: any) => c.totalRevenue > 0).slice(0, 5).map((c: any) => ({
-          name: c.name, revenue: c.totalRevenue, margin: c.margin, marginPct: c.marginPct, userCount: c.userCount,
-        }))
-        bottomClients = sorted.filter((c: any) => c.margin < 0).slice(-3).map((c: any) => ({
-          name: c.name, revenue: c.totalRevenue, margin: c.margin, marginPct: c.marginPct, userCount: c.userCount,
-        }))
+      const costResult = await loadAndCompute(orgId)
+      costSummary = {
+        totalCost: costResult.grandTotalG || 0,
+        totalRevenue: costResult.summary?.totalRevenue || 0,
+        margin: costResult.summary?.totalMargin || 0,
+        marginPct: costResult.summary?.marginPct || 0,
+        profitableClients: costResult.summary?.profitableClients || 0,
+        lossClients: costResult.summary?.lossClients || 0,
       }
+      // Top/bottom clients from cost model
+      const sorted = (costResult.clients || []).sort((a: any, b: any) => (b.totalRevenue || 0) - (a.totalRevenue || 0))
+      topClients = sorted.filter((c: any) => c.totalRevenue > 0).slice(0, 5).map((c: any) => ({
+        name: c.name, revenue: c.totalRevenue, margin: c.margin, marginPct: c.marginPct, userCount: c.userCount,
+      }))
+      bottomClients = sorted.filter((c: any) => c.margin < 0).slice(-3).map((c: any) => ({
+        name: c.name, revenue: c.totalRevenue, margin: c.margin, marginPct: c.marginPct, userCount: c.userCount,
+      }))
     } catch {}
 
     // Risks
