@@ -41,6 +41,10 @@ export async function GET(req: NextRequest) {
       serviceRevenue,
       dealsByStage,
       ticketsByStatus,
+      leadsByStatus,
+      contractsData,
+      wonDealsAll,
+      dealsForForecast,
     ] = await Promise.all([
       // Companies
       prisma.company.count({ where: { organizationId: orgId, category: "client" } }),
@@ -75,6 +79,23 @@ export async function GET(req: NextRequest) {
       prisma.deal.groupBy({ by: ["stage"], where: { organizationId: orgId }, _count: true, _sum: { valueAmount: true } }),
       // Tickets by status
       prisma.ticket.groupBy({ by: ["status"], where: { organizationId: orgId }, _count: true }),
+      // Leads by status (for lead funnel)
+      prisma.lead.groupBy({ by: ["status"], where: { organizationId: orgId }, _count: true }),
+      // Contracts for financial overview
+      prisma.contract.findMany({
+        where: { organizationId: orgId },
+        select: { valueAmount: true, status: true },
+      }),
+      // All won deals (total revenue)
+      prisma.deal.findMany({
+        where: { organizationId: orgId, stage: "WON" },
+        select: { valueAmount: true },
+      }),
+      // Deals with dates for forecast
+      prisma.deal.findMany({
+        where: { organizationId: orgId },
+        select: { valueAmount: true, stage: true, createdAt: true, updatedAt: true },
+      }),
     ])
 
     // Cost model — direct compute (no internal fetch)
@@ -115,6 +136,51 @@ export async function GET(req: NextRequest) {
       risks.push({ severity: "ok", title: "Всё в порядке", description: "Критических проблем не обнаружено", metric: "✓" })
 
     const totalUsers = companiesAgg._sum.userCount || 0
+
+    // Financial overview from contracts + deals
+    const wonDealsRevenue = wonDealsAll.reduce((s: number, d: any) => s + (d.valueAmount || 0), 0)
+    const activeContracts = contractsData.filter((c: any) => c.status === "active" || c.status === "Active")
+    const totalContractValue = activeContracts.reduce((s: number, c: any) => s + (c.valueAmount || 0), 0)
+    const monthlyContractRevenue = Math.round(totalContractValue / 12)
+
+    // Lead funnel data (with conversion rates)
+    const totalLeadCount = leadsByStatus.reduce((s: number, l: any) => s + l._count, 0)
+    const leadFunnelOrder = ["new", "contacted", "qualified", "converted", "rejected"]
+    const leadFunnelData = leadFunnelOrder.map(status => {
+      const item = leadsByStatus.find((l: any) => l.status === status)
+      const count = item?._count || 0
+      return {
+        status,
+        count,
+        pct: totalLeadCount > 0 ? Math.round((count / totalLeadCount) * 100) : 0,
+      }
+    }).filter(l => l.count > 0)
+    const convertedLeads = leadsByStatus.find((l: any) => l.status === "converted")?._count || 0
+    const leadConversionRate = totalLeadCount > 0 ? Math.round((convertedLeads / totalLeadCount) * 100) : 0
+
+    // Sales forecast — last 6 months actual + next 6 projected
+    const forecast: { month: string; actual: number; projected: number }[] = []
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
+      const label = d.toLocaleDateString("ru", { month: "short" })
+      const monthDeals = dealsForForecast.filter((deal: any) => {
+        const dd = new Date(deal.updatedAt)
+        return dd.getFullYear() === d.getFullYear() && dd.getMonth() === d.getMonth() && deal.stage === "WON"
+      })
+      const actual = monthDeals.reduce((s: number, deal: any) => s + (deal.valueAmount || 0), 0)
+      forecast.push({ month: label, actual, projected: 0 })
+    }
+    // Average last 3 months for projection base
+    const last3 = forecast.slice(-3).map(f => f.actual)
+    const avgMonthly = last3.reduce((a, b) => a + b, 0) / Math.max(1, last3.filter(v => v > 0).length || 1)
+    // Add pipeline value distributed over next 6 months
+    const pipelineVal = pipelineAgg._sum.valueAmount || 0
+    const pipelineMonthly = pipelineVal / 6
+    for (let i = 1; i <= 6; i++) {
+      const d = new Date(now.getFullYear(), now.getMonth() + i, 1)
+      const label = d.toLocaleDateString("ru", { month: "short" })
+      forecast.push({ month: label, actual: 0, projected: Math.round(avgMonthly + pipelineMonthly * (1 - i * 0.1)) })
+    }
 
     // Service labels
     const serviceLabels: Record<string, string> = {
@@ -158,7 +224,20 @@ export async function GET(req: NextRequest) {
           byTemperature: leadsByTemp.map((t: any) => ({
             temp: t.leadTemperature, count: t._count,
           })),
+          funnel: leadFunnelData,
+          total: totalLeadCount,
+          conversionRate: leadConversionRate,
         },
+        financialOverview: {
+          wonDealsRevenue,
+          wonDealsCount: wonDealsAll.length,
+          avgDealSize: wonDealsAll.length > 0 ? Math.round(wonDealsRevenue / wonDealsAll.length) : 0,
+          monthlyContractRevenue,
+          totalContracts: contractsData.length,
+          activeContracts: activeContracts.length,
+          pipelineValue: pipelineAgg._sum.valueAmount || 0,
+        },
+        forecast,
         operations: {
           openTickets,
           criticalTickets,
