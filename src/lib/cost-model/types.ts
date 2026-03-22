@@ -67,6 +67,11 @@ export interface ClientServiceRow {
   notes?: string
 }
 
+export interface PricingRevenueRow {
+  companyId: string
+  monthlyTotal: number
+}
+
 export interface ServiceDetail {
   directLabor: number
   adminShare: number

@@ -11,6 +11,7 @@ import type {
   EmployeeRow,
   ClientCompany,
   ClientServiceRow,
+  PricingRevenueRow,
   CostModelResult,
 } from "./types"
 
@@ -54,7 +55,7 @@ export async function writeCostModelLog(
 
 /** Load all cost model data and compute */
 export async function loadAndCompute(orgId: string): Promise<CostModelResult> {
-  const [paramsRow, overheadRows, employeeRows, companies, services] = await Promise.all([
+  const [paramsRow, overheadRows, employeeRows, companies, services, pricingProfiles] = await Promise.all([
     prisma.pricingParameters.findUnique({ where: { organizationId: orgId } }),
     prisma.overheadCost.findMany({ where: { organizationId: orgId }, orderBy: { sortOrder: "asc" } }),
     prisma.costEmployee.findMany({ where: { organizationId: orgId } }),
@@ -64,6 +65,10 @@ export async function loadAndCompute(orgId: string): Promise<CostModelResult> {
     }),
     prisma.clientService.findMany({
       where: { organizationId: orgId, isActive: true },
+    }),
+    prisma.pricingProfile.findMany({
+      where: { organizationId: orgId },
+      select: { companyId: true, monthlyTotal: true },
     }),
   ])
 
@@ -135,5 +140,12 @@ export async function loadAndCompute(orgId: string): Promise<CostModelResult> {
     notes: s.notes ?? "",
   }))
 
-  return computeCostModel(params, overhead, emps, clientComps, clientSvcs)
+  const pricingRevenues: PricingRevenueRow[] = pricingProfiles
+    .filter((p) => p.companyId)
+    .map((p) => ({
+      companyId: p.companyId!,
+      monthlyTotal: p.monthlyTotal,
+    }))
+
+  return computeCostModel(params, overhead, emps, clientComps, clientSvcs, pricingRevenues)
 }

@@ -17,6 +17,7 @@ import type {
   EmployeeRowComputed,
   ClientCompany,
   ClientServiceRow,
+  PricingRevenueRow,
   ServiceDetail,
   ClientMargin,
   CostModelResult,
@@ -57,6 +58,7 @@ export function computeCostModel(
   employees: EmployeeRow[],
   clientCompanies: ClientCompany[] = [],
   clientServices: ClientServiceRow[] = [],
+  pricingRevenues: PricingRevenueRow[] = [],
 ): CostModelResult {
   const vat = params.vatRate ?? 0.18
   const empTax = params.employerTaxRate ?? 0.175
@@ -199,6 +201,12 @@ export function computeCostModel(
   const grandTotalG = r2(Object.values(serviceCosts).reduce((a, b) => a + b, 0))
 
   // ═══ Stage 5: Client Margins ═══
+  // Build pricing revenue lookup (from PricingProfile.monthlyTotal)
+  const pricingRevenueMap = new Map<string, number>()
+  for (const pr of pricingRevenues) {
+    if (pr.companyId) pricingRevenueMap.set(String(pr.companyId), pr.monthlyTotal)
+  }
+
   const activeCompanies = clientCompanies.filter((c) => c.userCount > 0)
   const totalActiveClients = Math.max(1, activeCompanies.length)
   const clients: ClientMargin[] = []
@@ -214,7 +222,10 @@ export function computeCostModel(
     const companyServices = clientServices.filter(
       (s) => s.companyId === companyId && s.isActive,
     )
-    const totalRevenue = r2(companyServices.reduce((sum, s) => sum + (s.monthlyRevenue ?? 0), 0))
+    const dbRevenue = r2(companyServices.reduce((sum, s) => sum + (s.monthlyRevenue ?? 0), 0))
+    // Prefer pricing module revenue over client_services (matches V1 behavior)
+    const pricingRev = pricingRevenueMap.get(String(companyId)) ?? 0
+    const totalRevenue = r2(pricingRev > 0 ? pricingRev : dbRevenue)
     const helpdeskRevenue = r2(
       companyServices
         .filter((s) => s.serviceType === "helpdesk")
