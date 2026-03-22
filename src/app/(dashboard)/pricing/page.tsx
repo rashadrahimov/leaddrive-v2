@@ -41,16 +41,23 @@ function AdjSlider({ value, onChange, label, count, datePicker, dateValue, onDat
         <span className="text-sm font-medium">{label}{count !== undefined ? ` (${count})` : ""}</span>
         <span className={`text-sm font-mono font-bold ${value > 0 ? "text-green-600" : value < 0 ? "text-red-600" : "text-muted-foreground"}`}>{value}%</span>
       </div>
-      <input
-        type="range"
-        min={-50}
-        max={100}
-        value={value}
-        onChange={(e) => onChange(parseInt(e.target.value))}
-        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
-      />
-      <div className="flex justify-between text-xs text-muted-foreground">
-        <span>-50%</span><span>0%</span><span>+100%</span>
+      <div className="relative">
+        <input
+          type="range"
+          min={-50}
+          max={100}
+          value={value}
+          onChange={(e) => onChange(parseInt(e.target.value))}
+          className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+        />
+        <div className="absolute top-1/2 -translate-y-1/2 pointer-events-none" style={{ left: "calc(33.33% - 0.5px)" }}>
+          <div className="w-px h-3 bg-gray-400" />
+        </div>
+      </div>
+      <div className="flex text-xs text-muted-foreground">
+        <span className="flex-none">-50%</span>
+        <span className="flex-1 text-center" style={{ marginLeft: "-16.67%" }}>0%</span>
+        <span className="flex-none">+100%</span>
       </div>
       {datePicker && (
         <input
@@ -593,17 +600,17 @@ export default function PricingPage() {
                     <CardTitle className="text-base">Доход по категориям</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <ResponsiveContainer width="100%" height={300}>
+                    <ResponsiveContainer width="100%" height={250}>
                       <PieChart>
                         <Pie
                           data={catChartData}
                           cx="50%"
                           cy="50%"
-                          innerRadius={60}
-                          outerRadius={110}
+                          innerRadius={50}
+                          outerRadius={95}
                           dataKey="value"
-                          label={({ name, percent }) => `${name.substring(0, 15)}… ${(percent * 100).toFixed(0)}%`}
-                          labelLine={{ strokeWidth: 1 }}
+                          label={({ percent }) => `${(percent * 100).toFixed(0)}%`}
+                          labelLine={false}
                         >
                           {catChartData.map((_, i) => (
                             <Cell key={i} fill={CAT_COLORS[i % CAT_COLORS.length]} />
@@ -612,6 +619,14 @@ export default function PricingPage() {
                         <Tooltip formatter={(v: number) => `${v.toLocaleString()} ₼`} />
                       </PieChart>
                     </ResponsiveContainer>
+                    <div className="flex flex-wrap gap-x-3 gap-y-1 mt-2">
+                      {catChartData.map((item, i) => (
+                        <div key={i} className="flex items-center gap-1.5 text-xs">
+                          <div className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ backgroundColor: CAT_COLORS[i % CAT_COLORS.length] }} />
+                          <span className="text-muted-foreground truncate max-w-[120px]">{item.name}</span>
+                        </div>
+                      ))}
+                    </div>
                   </CardContent>
                 </Card>
               </div>
