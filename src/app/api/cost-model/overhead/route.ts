@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getOrgId } from "@/lib/api-auth"
 import { prisma } from "@/lib/prisma"
 import { writeCostModelLog, invalidateAiCache } from "@/lib/cost-model/db"
+import { isValidServiceType, isKnownOverheadCategory } from "@/lib/cost-model/types"
 
 export async function GET(req: NextRequest) {
   try {
@@ -30,6 +31,14 @@ export async function POST(req: NextRequest) {
 
     if (!category || !label) {
       return NextResponse.json({ error: "Category and label are required" }, { status: 400 })
+    }
+
+    if (!isKnownOverheadCategory(category)) {
+      return NextResponse.json({ error: `Unknown overhead category "${category}". Contact admin to add new categories.` }, { status: 400 })
+    }
+
+    if (targetService && !isValidServiceType(targetService)) {
+      return NextResponse.json({ error: `Invalid targetService "${targetService}". Must be one of: permanent_it, infosec, erp, grc, projects, helpdesk, cloud` }, { status: 400 })
     }
 
     const item = await prisma.overheadCost.create({

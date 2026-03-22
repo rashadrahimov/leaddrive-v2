@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getOrgId } from "@/lib/api-auth"
 import { prisma } from "@/lib/prisma"
 import { writeCostModelLog, invalidateAiCache } from "@/lib/cost-model/db"
+import { isValidDepartment, INCOME_TAX_RATE, DEPARTMENTS } from "@/lib/cost-model/types"
 
 export async function GET(req: NextRequest) {
   try {
@@ -32,6 +33,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Department and position are required" }, { status: 400 })
     }
 
+    if (!isValidDepartment(department)) {
+      return NextResponse.json({ error: `Invalid department "${department}". Must be one of: ${DEPARTMENTS.join(", ")}` }, { status: 400 })
+    }
+
     // Check for duplicate department + position
     const duplicate = await prisma.costEmployee.findFirst({
       where: { organizationId: orgId, department, position },
@@ -51,7 +56,7 @@ export async function POST(req: NextRequest) {
 
     // Calculate gross and superGross from netSalary
     const net = netSalary ?? 0
-    const grossSalary = net / (1 - 0.14) // 14% income tax
+    const grossSalary = net / (1 - INCOME_TAX_RATE)
     const superGross = grossSalary * (1 + employerTaxRate)
 
     const employee = await prisma.costEmployee.create({
