@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getOrgId } from "@/lib/api-auth"
 import { prisma } from "@/lib/prisma"
 import { writeCostModelLog, invalidateAiCache } from "@/lib/cost-model/db"
+import { isValidDepartment, INCOME_TAX_RATE, DEPARTMENTS } from "@/lib/cost-model/types"
 
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -10,6 +11,10 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 
     const { id } = await params
     const body = await req.json()
+
+    if (body.department && !isValidDepartment(body.department)) {
+      return NextResponse.json({ error: `Invalid department "${body.department}". Must be one of: ${DEPARTMENTS.join(", ")}` }, { status: 400 })
+    }
 
     const existing = await prisma.costEmployee.findFirst({
       where: { id, organizationId: orgId },
@@ -25,7 +30,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       })
       const employerTaxRate = params?.employerTaxRate ?? 0.175
 
-      body.grossSalary = body.netSalary / (1 - 0.14)
+      body.grossSalary = body.netSalary / (1 - INCOME_TAX_RATE)
       body.superGross = body.grossSalary * (1 + employerTaxRate)
     }
 

@@ -2,12 +2,23 @@
  * LeadDrive CRM v2 — Cost Model Compute Engine
  * Ported from Python services/compute/cost_model.py
  *
+ * All string constants (service types, departments, categories) are
+ * imported from ./types.ts — do NOT hardcode strings here.
+ *
  * Target numbers (verified from v1):
- *   Grand Total G: 645,204.83
- *   Section F:     462,678.81
- *   Admin OH:      197,654.94
- *   Tech Infra:     98,661.62
+ *   Grand Total G: 645,205.59
+ *   Section F:     462,679.16
  */
+
+import {
+  INCOME_TAX_RATE,
+  SERVICE_DEPT_MAP,
+  TECH_DEPT_FALLBACK,
+  PER_EMPLOYEE_CATEGORIES,
+  isValidServiceType,
+  isValidDepartment,
+  isKnownOverheadCategory,
+} from "./types"
 
 import type {
   CostModelParams,
@@ -23,31 +34,6 @@ import type {
   CostModelResult,
 } from "./types"
 
-const INCOME_TAX_RATE = 0.14
-
-const SERVICE_DEPT_MAP: Record<string, string[]> = {
-  permanent_it: ["IT"],
-  infosec: ["InfoSec"],
-  erp: ["ERP"],
-  grc: ["GRC"],
-  projects: ["PM"],
-  helpdesk: ["HelpDesk"],
-  cloud: [],
-}
-
-const TECH_DEPT_FALLBACK: Record<string, string> = {
-  cloud_servers: "cloud",
-  cloud: "cloud",
-  ms_license: "permanent_it",
-  service_desk: "permanent_it",
-  cortex: "infosec",
-  firewall_amort: "infosec",
-  fw_amort: "infosec",
-  palo_alto: "infosec",
-  fw_license: "infosec",
-  pam: "infosec",
-}
-
 function r2(n: number): number {
   return Math.round(n * 100) / 100
 }
@@ -60,6 +46,8 @@ export function computeCostModel(
   clientServices: ClientServiceRow[] = [],
   pricingRevenues: PricingRevenueRow[] = [],
 ): CostModelResult {
+  const warnings: string[] = []
+
   const vat = params.vatRate ?? 0.18
   const empTax = params.employerTaxRate ?? 0.175
   const riskRate = params.riskRate ?? 0.05
@@ -82,6 +70,16 @@ export function computeCostModel(
   const overheadBreakdown: OverheadItemComputed[] = []
 
   for (const item of overheadItems) {
+    // Validate category
+    if (!isKnownOverheadCategory(item.category)) {
+      warnings.push(`Unknown overhead category "${item.category}" (label: ${item.label}). Cost included but may not route correctly.`)
+    }
+
+    // Validate targetService if provided
+    if (item.targetService && !isValidServiceType(item.targetService)) {
+      warnings.push(`Invalid targetService "${item.targetService}" on overhead "${item.label}". Must be one of: ${Object.keys(SERVICE_DEPT_MAP).join(", ")}`)
+    }
+
     let amt = item.amount ?? 0
 
     // Amortization: divide by custom period (e.g. 60 months, 84 months)
@@ -95,7 +93,7 @@ export function computeCostModel(
       amt = amt * (1 + vat)
     }
 
-    if (item.category === "insurance" || item.category === "mobile") {
+    if ((PER_EMPLOYEE_CATEGORIES as readonly string[]).includes(item.category)) {
       amt = amt * totalEmployeesParam
     }
 
@@ -117,6 +115,11 @@ export function computeCostModel(
   const processedEmployees: EmployeeRowComputed[] = []
 
   for (const emp of employees) {
+    // Validate department
+    if (!isValidDepartment(emp.department)) {
+      warnings.push(`Unknown department "${emp.department}" for position "${emp.position}". Must be one of: IT, InfoSec, ERP, GRC, PM, HelpDesk, BackOffice`)
+    }
+
     const net = emp.netSalary ?? 0
     const count = emp.count ?? 1
     const gross = INCOME_TAX_RATE < 1 ? net / (1 - INCOME_TAX_RATE) : net
@@ -159,17 +162,20 @@ export function computeCostModel(
   const svcTechCosts: Record<string, number> = {}
   for (const oh of overheadBreakdown) {
     const targetSvc = (oh.targetService ?? "").trim() || TECH_DEPT_FALLBACK[oh.category] || ""
-    if (targetSvc) {
+    if (targetSvc && !oh.isAdmin) {
+      // Only non-admin items go to svcTechCosts (admin items are in adminOverhead)
       svcTechCosts[targetSvc] = (svcTechCosts[targetSvc] ?? 0) + oh.monthlyAmount
     }
   }
 
-  // Subtract tech items that are in admin to avoid double-counting
+  // Admin items with targetService: subtract from admin share to avoid double-counting
   let techInAdmin = 0
   for (const oh of overheadBreakdown) {
     const targetSvc = (oh.targetService ?? "").trim() || TECH_DEPT_FALLBACK[oh.category] || ""
     if (oh.isAdmin && targetSvc) {
       techInAdmin += oh.monthlyAmount
+      // These admin items have a service target — add to svcTechCosts too
+      svcTechCosts[targetSvc] = (svcTechCosts[targetSvc] ?? 0) + oh.monthlyAmount
     }
   }
   const adminForGAdjusted = adminForG - techInAdmin
@@ -309,5 +315,6 @@ export function computeCostModel(
     costPerUserG: totalUsers > 0 ? r2(grandTotalG / totalUsers) : 0,
     serviceRevenues,
     serviceClients,
+    warnings,
   }
 }

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getOrgId } from "@/lib/api-auth"
 import { prisma } from "@/lib/prisma"
 import { writeCostModelLog, invalidateAiCache } from "@/lib/cost-model/db"
+import { isValidServiceType, isKnownOverheadCategory } from "@/lib/cost-model/types"
 
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -10,6 +11,14 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 
     const { id } = await params
     const body = await req.json()
+
+    // Validate if category or targetService are being changed
+    if (body.category && !isKnownOverheadCategory(body.category)) {
+      return NextResponse.json({ error: `Unknown overhead category "${body.category}"` }, { status: 400 })
+    }
+    if (body.targetService && !isValidServiceType(body.targetService)) {
+      return NextResponse.json({ error: `Invalid targetService "${body.targetService}"` }, { status: 400 })
+    }
 
     const existing = await prisma.overheadCost.findFirst({
       where: { id, organizationId: orgId },
