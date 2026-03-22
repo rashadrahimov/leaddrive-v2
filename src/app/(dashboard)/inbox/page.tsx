@@ -405,7 +405,7 @@ export default function InboxPage() {
                     if (convo.unreadCount > 0) markAsRead(convo)
                   }}
                   className={cn(
-                    "p-3 rounded-lg cursor-pointer transition-colors",
+                    "p-3 rounded-lg cursor-pointer transition-colors group",
                     selected === idx
                       ? "bg-primary text-primary-foreground"
                       : "hover:bg-muted"
@@ -450,9 +450,18 @@ export default function InboxPage() {
                         </span>
                       ))}
                     </div>
-                    <span className={cn("text-[10px]", selected === idx ? "opacity-60" : "text-muted-foreground")}>
-                      {formatTime(convo.lastMessageAt)}
-                    </span>
+                    <div className="flex items-center gap-1">
+                      <button
+                        className="opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-600 transition-opacity p-0.5"
+                        onClick={(e) => { e.stopPropagation(); deleteConvo(convo) }}
+                        title="Удалить диалог"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </button>
+                      <span className={cn("text-[10px]", selected === idx ? "opacity-60" : "text-muted-foreground")}>
+                        {formatTime(convo.lastMessageAt)}
+                      </span>
+                    </div>
                   </div>
                 </div>
               ))
