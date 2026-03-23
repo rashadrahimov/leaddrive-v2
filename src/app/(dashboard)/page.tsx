@@ -86,14 +86,25 @@ export default function DashboardPage() {
     taskSummary: true, ticketSummary: true, forecast: true, clientHealth: true, activityFeed: true,
   })
 
-  // Load widget config from localStorage per user
+  // Load widget config from API (org-level with role filtering)
   useEffect(() => {
-    const userId = (session?.user as any)?.id
-    if (!userId) return
-    try {
-      const stored = localStorage.getItem(`dashboard-widgets-${userId}`)
-      if (stored) setWidgets(prev => ({ ...prev, ...JSON.parse(stored) }))
-    } catch {}
+    const orgId = session?.user?.organizationId
+    const userRole = (session?.user as any)?.role || "viewer"
+    if (!orgId) return
+    fetch("/api/v1/dashboard/widget-config", {
+      headers: { "x-organization-id": String(orgId) },
+    })
+      .then(r => r.json())
+      .then(j => {
+        if (j.success && j.data?.widgets) {
+          const w: Record<string, boolean> = {}
+          for (const [key, val] of Object.entries(j.data.widgets) as [string, any][]) {
+            w[key] = val.enabled && (val.roles?.length === 0 || val.roles?.includes(userRole))
+          }
+          setWidgets(prev => ({ ...prev, ...w }))
+        }
+      })
+      .catch(() => {})
   }, [session])
 
   function timeAgo(d: string): string {
