@@ -19,67 +19,124 @@ export async function GET(req: NextRequest) {
   const dateTo = new Date(to)
   dateTo.setHours(23, 59, 59, 999)
 
+  // Today at start of day (for placing open tickets on today)
+  const todayStart = new Date()
+  todayStart.setHours(9, 0, 0, 0) // Default to 9:00 AM
+
   const items: any[] = []
 
-  // 1. TICKETS — with dueDate in range
+  // 1. TICKETS — open tickets show on today, closed/resolved show on their date
   try {
     const allTickets = await prisma.ticket.findMany({
       where: { organizationId: orgId },
       select: {
         id: true, subject: true, status: true, priority: true,
-        dueDate: true, createdAt: true, assignedToId: true,
+        slaDueAt: true, createdAt: true, assignedTo: true, closedAt: true,
       },
-      take: 200,
+      take: 300,
     })
 
-    allTickets.forEach(t => {
-      const d = t.dueDate || t.createdAt
-      if (d >= dateFrom && d <= dateTo) {
-        items.push({
-          id: t.id,
-          type: "ticket",
-          title: t.subject || "Ticket",
-          date: d.toISOString(),
-          hour: d.getHours(),
-          status: t.status,
-          priority: t.priority,
-          url: `/support/tickets/${t.id}`,
-        })
+    allTickets.forEach((t: any) => {
+      const isOpen = !["closed", "resolved"].includes(t.status)
+
+      if (isOpen) {
+        // Open tickets: show on today if today is in the week range
+        if (todayStart >= dateFrom && todayStart <= dateTo) {
+          const displayDate = t.slaDueAt || todayStart
+          items.push({
+            id: t.id,
+            type: "ticket",
+            title: t.subject || "Ticket",
+            date: displayDate.toISOString(),
+            hour: new Date(displayDate).getHours() || 9,
+            status: t.status,
+            priority: t.priority,
+            url: `/support/tickets/${t.id}`,
+          })
+        }
+      } else {
+        // Closed tickets: show on closedAt or createdAt date
+        const d = t.closedAt || t.createdAt
+        if (d >= dateFrom && d <= dateTo) {
+          items.push({
+            id: t.id,
+            type: "ticket",
+            title: t.subject || "Ticket",
+            date: d.toISOString(),
+            hour: d.getHours(),
+            status: t.status,
+            priority: t.priority,
+            url: `/support/tickets/${t.id}`,
+          })
+        }
       }
     })
-  } catch (e) {
-    // tickets may not have all fields
+  } catch (e: any) {
+    console.error("[calendar] tickets error:", e?.message)
   }
 
-  // 2. TASKS — assigned to current user with dueDate in range
+  // 2. TASKS — open tasks on today, completed on completedAt
   try {
     const tasks = await prisma.task.findMany({
       where: { organizationId: orgId },
       select: {
         id: true, title: true, status: true, priority: true,
-        dueDate: true, createdAt: true, assignedTo: true,
+        dueDate: true, createdAt: true, assignedTo: true, completedAt: true,
       },
-      take: 200,
+      take: 300,
     })
 
-    tasks.forEach(t => {
-      const d = t.dueDate || t.createdAt
-      if (d >= dateFrom && d <= dateTo) {
-        items.push({
-          id: t.id,
-          type: "task",
-          title: t.title || "Task",
-          date: d.toISOString(),
-          hour: d.getHours(),
-          status: t.status,
-          priority: t.priority,
-          url: `/tasks`,
-        })
+    tasks.forEach((t: any) => {
+      const isOpen = !["completed", "cancelled"].includes(t.status)
+
+      if (isOpen) {
+        // Open tasks with dueDate in range
+        const d = t.dueDate || todayStart
+        if (d >= dateFrom && d <= dateTo) {
+          items.push({
+            id: t.id,
+            type: "task",
+            title: t.title || "Task",
+            date: d.toISOString(),
+            hour: new Date(d).getHours() || 10,
+            status: t.status,
+            priority: t.priority,
+            url: `/tasks`,
+          })
+        } else if (todayStart >= dateFrom && todayStart <= dateTo && !t.dueDate) {
+          // Open task without dueDate: show on today
+          items.push({
+            id: t.id,
+            type: "task",
+            title: t.title || "Task",
+            date: todayStart.toISOString(),
+            hour: 10,
+            status: t.status,
+            priority: t.priority,
+            url: `/tasks`,
+          })
+        }
+      } else {
+        const d = t.completedAt || t.dueDate || t.createdAt
+        if (d >= dateFrom && d <= dateTo) {
+          items.push({
+            id: t.id,
+            type: "task",
+            title: t.title || "Task",
+            date: d.toISOString(),
+            hour: new Date(d).getHours(),
+            status: t.status,
+            priority: t.priority,
+            url: `/tasks`,
+          })
+        }
       }
     })
-  } catch (e) {}
+  } catch (e: any) {
+    console.error("[calendar] tasks error:", e?.message)
+  }
 
-  // 3. EVENTS — where user is participant or responsible
+  // 3. EVENTS — startDate in range
   try {
     const events = await prisma.event.findMany({
       where: {
@@ -111,9 +168,11 @@ export async function GET(req: NextRequest) {
         url: `/events/${ev.id}`,
       })
     })
-  } catch (e) {}
+  } catch (e: any) {
+    console.error("[calendar] events error:", e?.message)
+  }
 
-  // 4. ACTIVITIES — scheduled in range
+  // 4. ACTIVITIES — scheduledAt or createdAt in range
   try {
     const activities = await prisma.activity.findMany({
       where: { organizationId: orgId },
@@ -137,7 +196,9 @@ export async function GET(req: NextRequest) {
         })
       }
     })
-  } catch (e) {}
+  } catch (e: any) {
+    console.error("[calendar] activities error:", e?.message)
+  }
 
   // Sort by date
   items.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
