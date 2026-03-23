@@ -25,9 +25,7 @@ const COLORS = {
 const SERVICE_COLORS = ["#1B2A4A", "#2D4A7A", "#4A6FA5", "#E91E63", "#FF9800", "#4CAF50", "#9C27B0"]
 
 function fmt(n: number): string {
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`
-  if (n >= 1_000) return `${(n / 1_000).toFixed(0)}K`
-  return n.toFixed(0)
+  return n.toLocaleString("ru-RU", { maximumFractionDigits: 0 })
 }
 
 function timeAgo(d: string): string {
