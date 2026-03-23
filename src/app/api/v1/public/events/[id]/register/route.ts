@@ -60,15 +60,32 @@ export async function POST(
   const parsed = registerSchema.safeParse(body)
   if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 })
 
-  // Check if already registered
+  // Check if already exists (invited or registered)
   const existing = await prisma.eventParticipant.findFirst({
     where: { eventId: id, email: parsed.data.email },
   })
   if (existing) {
+    // Already invited — confirm attendance
+    if (existing.status === "registered" || existing.inviteStatus === "sent") {
+      await prisma.eventParticipant.update({
+        where: { id: existing.id },
+        data: {
+          status: "confirmed",
+          name: parsed.data.name || existing.name,
+          phone: parsed.data.phone || existing.phone,
+          notes: parsed.data.company ? `Company: ${parsed.data.company}` : existing.notes,
+        },
+      })
+      return NextResponse.json({
+        success: true,
+        data: { id: existing.id, message: "Attendance confirmed!" },
+      })
+    }
+    // Already confirmed/attended
     return NextResponse.json({ error: "You are already registered for this event" }, { status: 409 })
   }
 
-  // Try to find existing contact by email
+  // Try to find existing CRM contact by email
   const contact = await prisma.contact.findFirst({
     where: { organizationId: event.organizationId, email: parsed.data.email },
   })
@@ -82,7 +99,7 @@ export async function POST(
       email: parsed.data.email,
       phone: parsed.data.phone || undefined,
       role: parsed.data.role,
-      status: "registered",
+      status: "confirmed",
       source: "self_registered",
       notes: parsed.data.company ? `Company: ${parsed.data.company}` : parsed.data.notes,
     },

@@ -76,9 +76,9 @@ export default function EventRegistrationPage() {
       <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50 flex items-center justify-center p-4">
         <div className="max-w-md w-full text-center">
           <div className="text-7xl mb-6">🎉</div>
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">You're Registered!</h1>
+          <h1 className="text-3xl font-bold text-gray-800 mb-2">Attendance Confirmed!</h1>
           <p className="text-gray-600 mb-6">
-            Thank you for registering for <strong>{event.name}</strong>. We'll send you a confirmation email shortly.
+            Thank you! Your attendance for <strong>{event.name}</strong> is confirmed. See you there!
           </p>
           <div className="bg-white rounded-2xl shadow-lg p-6 text-left space-y-3">
             <div className="flex items-center gap-3">
