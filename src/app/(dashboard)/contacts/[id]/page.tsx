@@ -42,6 +42,74 @@ const activityIcons: Record<string, string> = {
   email: "📧", call: "📞", meeting: "🤝", note: "📝", task: "✅",
 }
 
+// Lazy import engagement tab — same component as deal engagement but with contact API
+function ContactEngagement({ contactId, orgId }: { contactId: string; orgId?: string }) {
+  const [Comp, setComp] = useState<any>(null)
+  useEffect(() => {
+    import("@/components/deals/engagement-tab").then(m => setComp(() => m.EngagementTab))
+  }, [])
+  if (!Comp) return <div className="text-center py-8 text-sm text-muted-foreground">Loading...</div>
+  // EngagementTab uses dealId but we pass contactId — we need contact-specific API
+  // Instead, fetch directly and render inline
+  return <ContactEngagementInner contactId={contactId} orgId={orgId} />
+}
+
+function ContactEngagementInner({ contactId, orgId }: { contactId: string; orgId?: string }) {
+  const [data, setData] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+  useEffect(() => {
+    const headers: any = orgId ? { "x-organization-id": orgId } : {}
+    fetch(`/api/v1/contacts/${contactId}/engagement`, { headers })
+      .then(r => r.json())
+      .then(j => { if (j.success) setData(j.data) })
+      .finally(() => setLoading(false))
+  }, [contactId, orgId])
+
+  if (loading) return <div className="text-center py-8"><Loader2 className="h-6 w-6 animate-spin mx-auto text-muted-foreground" /></div>
+  if (!data) return <p className="text-sm text-muted-foreground text-center py-8">No engagement data</p>
+
+  const items = [
+    { label: "Calls", value: data.activities.calls, emoji: "📞" },
+    { label: "Emails", value: data.activities.emails, emoji: "📧" },
+    { label: "Meetings", value: data.activities.meetings, emoji: "🤝" },
+    { label: "Notes", value: data.activities.notes, emoji: "📝" },
+    { label: "Tasks", value: data.activities.tasks, emoji: "✅" },
+  ]
+
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-5 gap-2">
+        {items.map(i => (
+          <Card key={i.label} className="border-none shadow-sm">
+            <CardContent className="p-3 text-center">
+              <p className="text-lg">{i.emoji}</p>
+              <p className="text-xl font-bold">{i.value}</p>
+              <p className="text-[10px] text-muted-foreground">{i.label}</p>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+      {data.email.sent > 0 && (
+        <Card className="border-none shadow-sm">
+          <CardContent className="p-4">
+            <p className="text-sm font-semibold mb-2">Email Nurturing</p>
+            <div className="grid grid-cols-3 gap-4 text-center">
+              <div><p className="text-xl font-bold text-blue-600">{data.email.sent}</p><p className="text-[10px] text-muted-foreground">Sent</p></div>
+              <div><p className="text-xl font-bold text-green-600">{data.email.openRate}%</p><p className="text-[10px] text-muted-foreground">Open Rate</p></div>
+              <div><p className="text-xl font-bold text-orange-600">{data.email.clickRate}%</p><p className="text-[10px] text-muted-foreground">Click Rate</p></div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+      {data.lastActivity && (
+        <p className="text-xs text-muted-foreground">
+          Last activity: {data.lastActivity.type} — {data.lastActivity.subject} · {new Date(data.lastActivity.date).toLocaleDateString("ru-RU")}
+        </p>
+      )}
+    </div>
+  )
+}
+
 export default function ContactDetailPage() {
   const router = useRouter()
   const params = useParams()
@@ -282,6 +350,7 @@ export default function ContactDetailPage() {
         <TabsList>
           <TabsTrigger value="activities">Activities ({contact.activities?.length || 0})</TabsTrigger>
           <TabsTrigger value="info">Info</TabsTrigger>
+          <TabsTrigger value="engagement">Engagement</TabsTrigger>
           <TabsTrigger value="recommendations" onClick={() => {
             if (recommendations.length === 0 && !loadingRecs) {
               setLoadingRecs(true)
@@ -412,6 +481,11 @@ export default function ContactDetailPage() {
               )}
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* Engagement */}
+        <TabsContent value="engagement">
+          <ContactEngagement contactId={id} orgId={orgId ? String(orgId) : undefined} />
         </TabsContent>
       </Tabs>
 

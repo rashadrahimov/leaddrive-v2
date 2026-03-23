@@ -15,6 +15,8 @@ import {
 import { DealForm } from "@/components/deal-form"
 import { EngagementTab } from "@/components/deals/engagement-tab"
 import { NextBestOffers } from "@/components/deals/next-best-offers"
+import { ActivityTimeline } from "@/components/deals/activity-timeline"
+import { DealHistory } from "@/components/deals/deal-history"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
 
 const STAGES = [
@@ -594,6 +596,7 @@ export default function DealDetailPage() {
           <TabsTrigger value="competitors" className="rounded-md text-sm">Competitors</TabsTrigger>
           <TabsTrigger value="team" className="rounded-md text-sm">Team</TabsTrigger>
           <TabsTrigger value="engagement" className="rounded-md text-sm">Engagement</TabsTrigger>
+          <TabsTrigger value="history" className="rounded-md text-sm">History</TabsTrigger>
         </TabsList>
 
         {/* Overview */}
@@ -699,15 +702,7 @@ export default function DealDetailPage() {
 
         {/* Activity */}
         <TabsContent value="activity">
-          <Card className="shadow-sm border-none bg-card">
-            <CardContent className="pt-6">
-              <div className="flex flex-col items-center justify-center py-10 text-center">
-                <MessageSquare className="h-10 w-10 text-muted-foreground/30 mb-3" />
-                <p className="text-sm font-medium text-muted-foreground">Activity timeline</p>
-                <p className="text-xs text-muted-foreground/60 mt-1">Emails, calls, and notes will appear here</p>
-              </div>
-            </CardContent>
-          </Card>
+          <ActivityTimeline dealId={id} orgId={orgId} />
         </TabsContent>
 
         {/* Contact Roles */}
@@ -912,6 +907,11 @@ export default function DealDetailPage() {
         {/* Engagement */}
         <TabsContent value="engagement">
           <EngagementTab dealId={id} orgId={orgId} />
+        </TabsContent>
+
+        {/* History */}
+        <TabsContent value="history">
+          <DealHistory dealId={id} orgId={orgId} deal={deal} />
         </TabsContent>
       </Tabs>
 

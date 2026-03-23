@@ -93,3 +93,18 @@ Also in this session:
 - AI brain icon for FAB button
 
 Build: PASSES | Deploy: SUCCESS
+
+E4 (DONE): Next Best Offers Widget
+- Component: src/components/deals/next-best-offers.tsx
+- Shows top 3 products with relevance %, card layout with amber gradient
+- 6 IT products seeded in production DB
+- Fetches from /api/v1/products
+
+E9 (DONE): Predictive Scoring Widget
+- Added under confidence slider: formula = confidence*0.85 + probability*0.15
+- Visual: percentage + trend arrow
+
+E6 (DONE): Contact Detail — KPI Cards + Communication Buttons
+- 4 KPI cards: Email, Phone, Last Contact, Activities
+- Communication buttons: Phone (green), Email (orange), WhatsApp (emerald)
+- File: src/app/(dashboard)/contacts/[id]/page.tsx
