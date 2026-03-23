@@ -34,6 +34,7 @@ export async function POST(req: NextRequest) {
 
   await sendEmail({
     to: email,
+    organizationId: user.organizationId,
     subject: "Reset your LeadDrive password",
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto;">
