@@ -214,7 +214,17 @@
     "activities": "Activities",
     "daysActive": "Days active",
     "daysLeft": "Days left",
-    "daysOpen": "Days open"
+    "daysOpen": "Days open",
+    "activity": "Activity",
+    "created": "Created",
+    "noNotesYet": "No notes yet",
+    "nextSteps": "Next Steps",
+    "addNextStep": "Add next step",
+    "noContactRoles": "No contact roles",
+    "noCompetitors": "No competitors",
+    "addCompetitor": "Add competitor",
+    "noTeamMembers": "No team members",
+    "addTeamMembersHint": "Add team members to deal"
   },
   "leads": {
     "title": "Leads",
