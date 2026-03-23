@@ -12,6 +12,7 @@ const updateUserSchema = z.object({
   phone: z.string().max(50).nullable().optional(),
   department: z.string().max(100).nullable().optional(),
   isActive: z.boolean().optional(),
+  resetTotp: z.boolean().optional(),
 })
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -70,13 +71,19 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     if (parsed.data.password) {
       updateData.passwordHash = await bcrypt.hash(parsed.data.password, 10)
     }
+    // Admin can reset user's 2FA
+    if (parsed.data.resetTotp === true) {
+      updateData.totpEnabled = false
+      updateData.totpSecret = null
+      updateData.backupCodes = []
+    }
 
     const user = await prisma.user.update({
       where: { id },
       data: updateData,
       select: {
         id: true, name: true, email: true, role: true,
-        phone: true, department: true, isActive: true, createdAt: true,
+        phone: true, department: true, isActive: true, totpEnabled: true, createdAt: true,
       },
     })
 

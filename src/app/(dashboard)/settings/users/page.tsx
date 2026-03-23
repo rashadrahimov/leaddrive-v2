@@ -337,9 +337,32 @@ export default function UsersSettingsPage() {
     {
       key: "totpEnabled", label: "2FA",
       render: (item: User) => (
-        <span className={`text-xs font-medium ${item.totpEnabled ? "text-green-600" : "text-muted-foreground"}`}>
-          {item.totpEnabled ? "Вкл" : "Выкл"}
-        </span>
+        <div className="flex items-center gap-2">
+          <span className={`text-xs font-medium ${item.totpEnabled ? "text-green-600" : "text-muted-foreground"}`}>
+            {item.totpEnabled ? "Вкл" : "Выкл"}
+          </span>
+          {item.totpEnabled && (
+            <Button
+              variant="ghost" size="sm"
+              className="h-6 px-2 text-xs text-orange-600 hover:text-orange-700 hover:bg-orange-50"
+              onClick={async (e) => {
+                e.stopPropagation()
+                if (!confirm("Сбросить 2FA для этого пользователя? Ему придётся настроить заново.")) return
+                await fetch(`/api/v1/users/${item.id}`, {
+                  method: "PUT",
+                  headers: {
+                    "Content-Type": "application/json",
+                    ...(orgId ? { "x-organization-id": String(orgId) } : {}),
+                  },
+                  body: JSON.stringify({ resetTotp: true }),
+                })
+                fetchUsers()
+              }}
+            >
+              Сбросить
+            </Button>
+          )}
+        </div>
       ),
     },
     {

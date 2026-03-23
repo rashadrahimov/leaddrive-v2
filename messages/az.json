@@ -64,7 +64,14 @@
     "backToLogin": "Girişə qayıt",
     "passwordMinLength": "Şifrə ən azı 6 simvol olmalıdır",
     "passwordsDoNotMatch": "Şifrələr uyğun gəlmir",
-    "passwordChanged": "Şifrə uğurla dəyişdirildi"
+    "passwordChanged": "Şifrə uğurla dəyişdirildi",
+    "verify2faTitle": "İki faktorlu autentifikasiya",
+    "verify2faSubtitle": "Autentifikator tətbiqindən kodu daxil edin",
+    "enterCode": "Təsdiq kodu",
+    "verifyCode": "Təsdiqlə",
+    "invalidCode": "Yanlış kod. Yenidən cəhd edin.",
+    "verifying": "Yoxlanılır...",
+    "backupCodeHint": "Ehtiyat kodu da istifadə edə bilərsiniz (8 simvol)"
   },
   "common": {
     "save": "Saxla",

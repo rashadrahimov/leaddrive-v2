@@ -34,9 +34,19 @@ export default auth((req) => {
     return NextResponse.redirect(loginUrl)
   }
 
+  // 2FA enforcement: if user needs 2FA verification, redirect to verify page
+  const session = req.auth as any
+  if (session?.user?.needs2fa === true) {
+    // Allow access to 2FA verification page and API
+    if (pathname === "/login/verify-2fa" || pathname.startsWith("/api/v1/auth/verify-2fa") || pathname.startsWith("/api/auth")) {
+      return NextResponse.next()
+    }
+    // Block everything else — redirect to 2FA verification
+    return NextResponse.redirect(new URL("/login/verify-2fa", req.url))
+  }
+
   // Inject organization context into headers for server components
   const headers = new Headers(req.headers)
-  const session = req.auth as any
   const orgId = session?.user?.organizationId
   const role = session?.user?.role
   const userId = session?.user?.id

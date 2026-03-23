@@ -64,7 +64,14 @@
     "backToLogin": "Back to login",
     "passwordMinLength": "Password must be at least 6 characters",
     "passwordsDoNotMatch": "Passwords do not match",
-    "passwordChanged": "Password changed successfully"
+    "passwordChanged": "Password changed successfully",
+    "verify2faTitle": "Two-factor authentication",
+    "verify2faSubtitle": "Enter the code from your authenticator app",
+    "enterCode": "Verification code",
+    "verifyCode": "Verify",
+    "invalidCode": "Invalid code. Please try again.",
+    "verifying": "Verifying...",
+    "backupCodeHint": "You can also use a backup code (8 characters)"
   },
   "common": {
     "save": "Save",

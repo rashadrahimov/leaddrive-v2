@@ -48,6 +48,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             organizationId: user.organizationId,
             organizationName: user.organization.name,
             plan: user.organization.plan,
+            // 2FA: if user has TOTP enabled, mark session as needing verification
+            needs2fa: user.totpEnabled === true,
           }
         } catch {
           // Fallback to dev stub if DB not connected
@@ -60,6 +62,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
               organizationId: "dev-org-1",
               organizationName: "Dev Organization",
               plan: "enterprise",
+              needs2fa: false,
             }
           }
           return null
@@ -72,12 +75,17 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     signIn: "/login",
   },
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
       if (user) {
         token.role = user.role
         token.organizationId = user.organizationId
         token.organizationName = user.organizationName
         token.plan = user.plan
+        token.needs2fa = user.needs2fa ?? false
+      }
+      // Allow client to clear needs2fa after successful 2FA verification
+      if (trigger === "update" && session?.needs2fa === false) {
+        token.needs2fa = false
       }
       return token
     },
@@ -91,6 +99,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           organizationId: token.organizationId as string,
           organizationName: token.organizationName as string,
           plan: token.plan as string,
+          needs2fa: token.needs2fa as boolean,
         },
       }
     },
