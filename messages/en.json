@@ -991,7 +991,14 @@
     "module_campaigns": "Campaigns",
     "module_reports": "Reports",
     "module_ai": "AI Center",
-    "module_settings": "Settings"
+    "module_settings": "Settings",
+    "clickToChange": "Click on an access level to change it",
+    "savePermissions": "Save",
+    "saving": "Saving...",
+    "saved": "Saved",
+    "cancelChanges": "Cancel",
+    "resetDefaults": "Reset defaults",
+    "adminSettingsLocked": "Admin always has full access to Settings"
   },
   "events": {
     "title": "Events",

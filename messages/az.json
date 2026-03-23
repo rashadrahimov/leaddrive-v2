@@ -990,7 +990,14 @@
     "module_campaigns": "Kampaniyalar",
     "module_reports": "Hesabatlar",
     "module_ai": "AI Mərkəzi",
-    "module_settings": "Parametrlər"
+    "module_settings": "Parametrlər",
+    "clickToChange": "Dəyişmək üçün giriş səviyyəsinə klikləyin",
+    "savePermissions": "Yadda saxla",
+    "saving": "Saxlanılır...",
+    "saved": "Saxlanıldı",
+    "cancelChanges": "Ləğv et",
+    "resetDefaults": "Defolt",
+    "adminSettingsLocked": "Admin həmişə Parametrlərə tam girişə malikdir"
   },
   "events": {
     "title": "Tədbirlər",
