@@ -991,7 +991,14 @@
     "module_campaigns": "Кампании",
     "module_reports": "Отчёты",
     "module_ai": "AI Центр",
-    "module_settings": "Настройки"
+    "module_settings": "Настройки",
+    "clickToChange": "Нажмите на уровень доступа, чтобы изменить его",
+    "savePermissions": "Сохранить",
+    "saving": "Сохранение...",
+    "saved": "Сохранено",
+    "cancelChanges": "Отмена",
+    "resetDefaults": "По умолчанию",
+    "adminSettingsLocked": "Админ всегда имеет полный доступ к настройкам"
   },
   "events": {
     "title": "Мероприятия",
