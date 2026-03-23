@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
+import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { DataTable } from "@/components/data-table"
@@ -34,16 +35,14 @@ const priorityColors: Record<string, string> = {
   low: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
 }
 
-const statusLabels: Record<string, string> = {
-  new: "New", open: "Open", in_progress: "In Progress", waiting: "Waiting", resolved: "Resolved", closed: "Closed",
-}
-
 function isSlaBreached(slaDueAt: string | null): boolean {
   if (!slaDueAt) return false
   return new Date(slaDueAt) < new Date()
 }
 
 export default function TicketsPage() {
+  const t = useTranslations("tickets")
+  const tc = useTranslations("common")
   const router = useRouter()
   const { data: session } = useSession()
   const [tickets, setTickets] = useState<TicketData[]>([])
@@ -55,6 +54,15 @@ export default function TicketsPage() {
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [deleteItem, setDeleteItem] = useState<TicketData | null>(null)
   const orgId = session?.user?.organizationId
+
+  const statusLabels: Record<string, string> = {
+    new: t("statusNew"),
+    open: t("statusOpen"),
+    in_progress: t("statusInProgress"),
+    waiting: t("statusWaiting"),
+    resolved: t("statusResolved"),
+    closed: t("statusClosed"),
+  }
 
   async function fetchTickets() {
     try {
@@ -109,25 +117,25 @@ export default function TicketsPage() {
 
   const columns = [
     {
-      key: "ticketNumber", label: "#", sortable: true,
+      key: "ticketNumber", label: t("colNumber"), sortable: true,
       render: (item: any) => <span className="font-mono text-xs">{item.ticketNumber}</span>,
     },
-    { key: "subject", label: "Subject", sortable: true },
+    { key: "subject", label: t("colSubject"), sortable: true },
     {
-      key: "priority", label: "Priority", sortable: true,
+      key: "priority", label: t("colPriority"), sortable: true,
       render: (item: any) => (
         <span className={cn("px-2 py-0.5 rounded-full text-xs font-medium", priorityColors[item.priority])}>
           {item.priority}
         </span>
       ),
     },
-    { key: "companyName", label: "Company", sortable: true, render: (item: any) => <span>{item.companyName || "—"}</span> },
+    { key: "companyName", label: t("colCompany"), sortable: true, render: (item: any) => <span>{item.companyName || "—"}</span> },
     {
-      key: "status", label: "Status", sortable: true,
+      key: "status", label: t("colStatus"), sortable: true,
       render: (item: any) => <Badge variant="outline">{statusLabels[item.status]}</Badge>,
     },
     {
-      key: "slaDueAt", label: "SLA", sortable: true,
+      key: "slaDueAt", label: t("colSla"), sortable: true,
       render: (item: any) => {
         if (!item.slaDueAt) return <span className="text-xs text-muted-foreground">—</span>
         const breached = isSlaBreached(item.slaDueAt) && !["resolved", "closed"].includes(item.status)
@@ -141,27 +149,27 @@ export default function TicketsPage() {
       },
     },
     {
-      key: "firstResponseAt", label: "Response", sortable: true,
+      key: "firstResponseAt", label: t("colResponse"), sortable: true,
       render: (item: any) => {
         if (!item.firstResponseAt) return <span className="text-xs text-muted-foreground">—</span>
         const ms = new Date(item.firstResponseAt).getTime() - new Date(item.createdAt).getTime()
         const mins = Math.floor(ms / 60000)
         const hours = Math.floor(mins / 60)
-        const label = hours > 0 ? `${hours}h ${mins % 60}m` : `${mins}m`
+        const label = hours > 0 ? `${hours}${tc("hours")} ${mins % 60}${tc("min")}` : `${mins}${tc("min")}`
         return <span className={cn("text-xs font-mono", hours > 4 ? "text-red-500" : hours > 1 ? "text-amber-500" : "text-green-500")}>{label}</span>
       },
     },
-    { key: "assigneeName", label: "Assigned", sortable: true, render: (item: any) => <span>{item.assigneeName || "—"}</span> },
+    { key: "assigneeName", label: t("colAssigned"), sortable: true, render: (item: any) => <span>{item.assigneeName || "—"}</span> },
     {
       key: "actions",
       label: "",
       className: "w-20",
       render: (item: any) => (
         <div className="flex items-center gap-1" onClick={(e: React.MouseEvent) => e.stopPropagation()}>
-          <button onClick={() => handleEdit(item)} className="p-1.5 rounded hover:bg-muted" title="Edit">
+          <button onClick={() => handleEdit(item)} className="p-1.5 rounded hover:bg-muted" title={tc("edit")}>
             <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
           </button>
-          <button onClick={() => handleDelete(item)} className="p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-900/20" title="Delete">
+          <button onClick={() => handleDelete(item)} className="p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-900/20" title={tc("delete")}>
             <Trash2 className="h-3.5 w-3.5 text-muted-foreground hover:text-red-500" />
           </button>
         </div>
@@ -177,7 +185,7 @@ export default function TicketsPage() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <h1 className="text-2xl font-bold tracking-tight">Tickets</h1>
+        <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
         <div className="animate-pulse space-y-4">
           <div className="grid gap-4 md:grid-cols-4">
             {[1, 2, 3, 4].map((i) => <div key={i} className="h-24 bg-muted rounded-lg" />)}
@@ -192,36 +200,36 @@ export default function TicketsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Tickets</h1>
-          <p className="text-sm text-muted-foreground">Support ticket management with SLA tracking</p>
+          <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
+          <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
         </div>
         <div className="flex items-center gap-2">
           <div className="flex rounded-lg border">
-            <button onClick={() => setView("list")} className={cn("px-3 py-1.5 text-sm", view === "list" ? "bg-primary text-primary-foreground" : "hover:bg-muted")}>List</button>
-            <button onClick={() => setView("kanban")} className={cn("px-3 py-1.5 text-sm", view === "kanban" ? "bg-primary text-primary-foreground" : "hover:bg-muted")}>Kanban</button>
+            <button onClick={() => setView("list")} className={cn("px-3 py-1.5 text-sm", view === "list" ? "bg-primary text-primary-foreground" : "hover:bg-muted")}>{t("list")}</button>
+            <button onClick={() => setView("kanban")} className={cn("px-3 py-1.5 text-sm", view === "kanban" ? "bg-primary text-primary-foreground" : "hover:bg-muted")}>{t("kanban")}</button>
           </div>
-          <Button onClick={handleAdd}><Plus className="h-4 w-4" /> New Ticket</Button>
+          <Button onClick={handleAdd}><Plus className="h-4 w-4" /> {t("newTicket")}</Button>
         </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-5">
-        <StatCard title="Total" value={tickets.length} icon={<Ticket className="h-4 w-4" />} />
-        <StatCard title="Open" value={openCount} icon={<Clock className="h-4 w-4" />} />
-        <StatCard title="Unassigned" value={unassignedCount} icon={<UserX className="h-4 w-4" />} trend={unassignedCount > 0 ? "down" : "neutral"} />
-        <StatCard title="SLA Breached" value={breachedCount} icon={<AlertTriangle className="h-4 w-4" />} trend={breachedCount > 0 ? "down" : "neutral"} />
-        <StatCard title="Resolved" value={resolvedCount} icon={<CheckCircle className="h-4 w-4" />} trend="up" />
+        <StatCard title={t("statTotal")} value={tickets.length} icon={<Ticket className="h-4 w-4" />} />
+        <StatCard title={t("statOpen")} value={openCount} icon={<Clock className="h-4 w-4" />} />
+        <StatCard title={t("statUnassigned")} value={unassignedCount} icon={<UserX className="h-4 w-4" />} trend={unassignedCount > 0 ? "down" : "neutral"} />
+        <StatCard title={t("statSlaBreach")} value={breachedCount} icon={<AlertTriangle className="h-4 w-4" />} trend={breachedCount > 0 ? "down" : "neutral"} />
+        <StatCard title={t("statResolved")} value={resolvedCount} icon={<CheckCircle className="h-4 w-4" />} trend="up" />
       </div>
 
       {/* Status filter tabs */}
       <div className="flex items-center gap-2 flex-wrap">
         {[
-          { key: "all", label: "All", count: tickets.length },
-          { key: "new", label: "New", count: tickets.filter(t => t.status === "new").length },
-          { key: "open", label: "Open", count: tickets.filter(t => t.status === "open").length },
-          { key: "in_progress", label: "In Progress", count: tickets.filter(t => t.status === "in_progress").length },
-          { key: "waiting", label: "Waiting", count: tickets.filter(t => t.status === "waiting").length },
-          { key: "resolved", label: "Resolved", count: tickets.filter(t => t.status === "resolved").length },
-          { key: "closed", label: "Closed", count: tickets.filter(t => t.status === "closed").length },
+          { key: "all", label: tc("all"), count: tickets.length },
+          { key: "new", label: t("statusNew"), count: tickets.filter(t => t.status === "new").length },
+          { key: "open", label: t("statusOpen"), count: tickets.filter(t => t.status === "open").length },
+          { key: "in_progress", label: t("statusInProgress"), count: tickets.filter(t => t.status === "in_progress").length },
+          { key: "waiting", label: t("statusWaiting"), count: tickets.filter(t => t.status === "waiting").length },
+          { key: "resolved", label: t("statusResolved"), count: tickets.filter(t => t.status === "resolved").length },
+          { key: "closed", label: t("statusClosed"), count: tickets.filter(t => t.status === "closed").length },
         ].filter(tab => tab.key === "all" || tab.count > 0).map(tab => (
           <button
             key={tab.key}
@@ -242,7 +250,7 @@ export default function TicketsPage() {
         <DataTable
           columns={columns}
           data={statusFilter === "all" ? tickets : tickets.filter(t => t.status === statusFilter)}
-          searchPlaceholder="Search tickets..."
+          searchPlaceholder={t("searchPlaceholder")}
           searchKey="subject"
           onRowClick={(item) => router.push(`/tickets/${item.id}`)}
         />
@@ -274,7 +282,7 @@ export default function TicketsPage() {
       )}
 
       <TicketForm open={formOpen} onOpenChange={setFormOpen} onSaved={fetchTickets} initialData={editData} orgId={orgId} />
-      <DeleteConfirmDialog open={deleteOpen} onOpenChange={setDeleteOpen} onConfirm={confirmDelete} title="Delete Ticket" itemName={deleteItem?.subject} />
+      <DeleteConfirmDialog open={deleteOpen} onOpenChange={setDeleteOpen} onConfirm={confirmDelete} title={t("deleteTicket")} itemName={deleteItem?.subject} />
     </div>
   )
 }

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
+import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -19,13 +20,13 @@ import { ActivityTimeline } from "@/components/deals/activity-timeline"
 import { DealHistory } from "@/components/deals/deal-history"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
 
-const STAGES = [
-  { key: "LEAD",        label: "Lead",        color: "#6366f1", bg: "bg-indigo-500" },
-  { key: "QUALIFIED",   label: "Qualified",   color: "#3b82f6", bg: "bg-blue-500" },
-  { key: "PROPOSAL",    label: "Proposal",    color: "#f59e0b", bg: "bg-amber-500" },
-  { key: "NEGOTIATION", label: "Negotiation", color: "#f97316", bg: "bg-orange-500" },
-  { key: "WON",         label: "Won",         color: "#22c55e", bg: "bg-green-500" },
-  { key: "LOST",        label: "Lost",        color: "#ef4444", bg: "bg-red-500" },
+const STAGE_STYLES = [
+  { key: "LEAD",        color: "#6366f1", bg: "bg-indigo-500" },
+  { key: "QUALIFIED",   color: "#3b82f6", bg: "bg-blue-500" },
+  { key: "PROPOSAL",    color: "#f59e0b", bg: "bg-amber-500" },
+  { key: "NEGOTIATION", color: "#f97316", bg: "bg-orange-500" },
+  { key: "WON",         color: "#22c55e", bg: "bg-green-500" },
+  { key: "LOST",        color: "#ef4444", bg: "bg-red-500" },
 ]
 
 interface TeamMember {
@@ -72,9 +73,10 @@ interface Deal {
   contactRoles: ContactRole[]
 }
 
-function DealPipelineStages({ currentStage }: { currentStage: string }) {
+function DealPipelineStages({ currentStage, stageLabels }: { currentStage: string; stageLabels: Record<string, string> }) {
   const isLost = currentStage === "LOST"
-  const activeStages = isLost ? STAGES : STAGES.filter(s => s.key !== "LOST")
+  const stages = STAGE_STYLES.map(s => ({ ...s, label: stageLabels[s.key] || s.key }))
+  const activeStages = isLost ? stages : stages.filter(s => s.key !== "LOST")
   const currentIdx = activeStages.findIndex(s => s.key === currentStage)
 
   return (
@@ -121,7 +123,7 @@ function DealPipelineStages({ currentStage }: { currentStage: string }) {
   )
 }
 
-function DealKpiCards({ deal }: { deal: Deal }) {
+function DealKpiCards({ deal, labels }: { deal: Deal; labels: { daysInFunnel: string; daysAtStage: string; dealValue: string; confidenceLevel: string } }) {
   const daysInFunnel = Math.floor(
     (Date.now() - new Date(deal.createdAt).getTime()) / 86400000
   )
@@ -131,28 +133,28 @@ function DealKpiCards({ deal }: { deal: Deal }) {
 
   const cards = [
     {
-      label: "Days in funnel",
+      label: labels.daysInFunnel,
       value: daysInFunnel,
       glow: "#3b82f6",
       iconBg: "bg-blue-500/10 text-blue-500",
       icon: <Clock className="h-4 w-4" />,
     },
     {
-      label: "Days at stage",
+      label: labels.daysAtStage,
       value: daysAtStage,
       glow: "#6366f1",
       iconBg: "bg-indigo-500/10 text-indigo-500",
       icon: <Clock className="h-4 w-4" />,
     },
     {
-      label: "Deal value",
+      label: labels.dealValue,
       value: `${deal.valueAmount.toLocaleString()} ${deal.currency}`,
       glow: "#0ea5a0",
       iconBg: "bg-teal-500/10 text-teal-500",
       icon: <DollarSign className="h-4 w-4" />,
     },
     {
-      label: "Confidence",
+      label: labels.confidenceLevel,
       value: `${deal.confidenceLevel ?? 50}%`,
       glow: deal.confidenceLevel >= 70 ? "#22c55e" : deal.confidenceLevel >= 40 ? "#f59e0b" : "#f97316",
       iconBg: deal.confidenceLevel >= 70 ? "bg-emerald-500/10 text-emerald-500" : deal.confidenceLevel >= 40 ? "bg-amber-500/10 text-amber-500" : "bg-orange-500/10 text-orange-500",
@@ -179,7 +181,7 @@ function DealKpiCards({ deal }: { deal: Deal }) {
   )
 }
 
-function ProbabilityBar({ probability }: { probability: number }) {
+function ProbabilityBar({ probability, label }: { probability: number; label: string }) {
   const color =
     probability >= 70 ? "bg-green-500" :
     probability >= 40 ? "bg-amber-500" : "bg-red-400"
@@ -187,7 +189,7 @@ function ProbabilityBar({ probability }: { probability: number }) {
   return (
     <div className="space-y-1.5">
       <div className="flex justify-between text-sm">
-        <span className="text-muted-foreground font-medium">Win probability</span>
+        <span className="text-muted-foreground font-medium">{label}</span>
         <span className="font-semibold">{probability}%</span>
       </div>
       <div className="h-2.5 bg-muted rounded-full overflow-hidden">
@@ -200,7 +202,7 @@ function ProbabilityBar({ probability }: { probability: number }) {
   )
 }
 
-function CompetitorsSection({ dealId, orgId }: { dealId: string; orgId?: string }) {
+function CompetitorsSection({ dealId, orgId, labels }: { dealId: string; orgId?: string; labels: { noCompetitors: string; addCompetitor: string; competitorName: string; theirProduct: string; theirStrengths: string; theirWeaknesses: string; add: string; cancel: string; competitor: string; product: string; strengths: string; weaknesses: string } }) {
   const [competitors, setCompetitors] = useState<Array<{
     id: string; name: string; product: string; strengths: string; weaknesses: string
   }>>([])
@@ -218,9 +220,9 @@ function CompetitorsSection({ dealId, orgId }: { dealId: string; orgId?: string 
     return (
       <div className="flex flex-col items-center justify-center py-8 text-center border-2 border-dashed border-muted rounded-xl">
         <Swords className="h-8 w-8 text-muted-foreground/40 mb-2" />
-        <p className="text-sm text-muted-foreground">No competitors tracked yet</p>
+        <p className="text-sm text-muted-foreground">{labels.noCompetitors}</p>
         <Button variant="outline" size="sm" className="mt-3" onClick={() => setAdding(true)}>
-          <Plus className="h-3.5 w-3.5 mr-1" /> Add competitor
+          <Plus className="h-3.5 w-3.5 mr-1" /> {labels.addCompetitor}
         </Button>
       </div>
     )
@@ -232,10 +234,10 @@ function CompetitorsSection({ dealId, orgId }: { dealId: string; orgId?: string 
         <table className="w-full text-sm">
           <thead>
             <tr className="bg-muted/50 border-b">
-              <th className="text-left p-3 font-medium text-muted-foreground">Competitor</th>
-              <th className="text-left p-3 font-medium text-muted-foreground">Product</th>
-              <th className="text-left p-3 font-medium text-muted-foreground">Strengths</th>
-              <th className="text-left p-3 font-medium text-muted-foreground">Weaknesses</th>
+              <th className="text-left p-3 font-medium text-muted-foreground">{labels.competitor}</th>
+              <th className="text-left p-3 font-medium text-muted-foreground">{labels.product}</th>
+              <th className="text-left p-3 font-medium text-muted-foreground">{labels.strengths}</th>
+              <th className="text-left p-3 font-medium text-muted-foreground">{labels.weaknesses}</th>
               <th className="p-3 w-8" />
             </tr>
           </thead>
@@ -276,7 +278,7 @@ function CompetitorsSection({ dealId, orgId }: { dealId: string; orgId?: string 
         <div className="p-4 bg-muted/40 rounded-xl border space-y-3">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-xs font-medium text-muted-foreground mb-1 block">Competitor name *</label>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">{labels.competitorName} *</label>
               <input
                 className="w-full h-8 border rounded-lg px-3 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/30"
                 placeholder="e.g. Salesforce"
@@ -285,7 +287,7 @@ function CompetitorsSection({ dealId, orgId }: { dealId: string; orgId?: string 
               />
             </div>
             <div>
-              <label className="text-xs font-medium text-muted-foreground mb-1 block">Their product</label>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">{labels.theirProduct}</label>
               <input
                 className="w-full h-8 border rounded-lg px-3 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/30"
                 placeholder="e.g. Sales Cloud"
@@ -294,7 +296,7 @@ function CompetitorsSection({ dealId, orgId }: { dealId: string; orgId?: string 
               />
             </div>
             <div>
-              <label className="text-xs font-medium text-muted-foreground mb-1 block">Their strengths</label>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">{labels.theirStrengths}</label>
               <input
                 className="w-full h-8 border rounded-lg px-3 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/30"
                 placeholder="e.g. Brand recognition"
@@ -303,7 +305,7 @@ function CompetitorsSection({ dealId, orgId }: { dealId: string; orgId?: string 
               />
             </div>
             <div>
-              <label className="text-xs font-medium text-muted-foreground mb-1 block">Their weaknesses</label>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">{labels.theirWeaknesses}</label>
               <input
                 className="w-full h-8 border rounded-lg px-3 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/30"
                 placeholder="e.g. High price"
@@ -314,21 +316,21 @@ function CompetitorsSection({ dealId, orgId }: { dealId: string; orgId?: string 
           </div>
           <div className="flex gap-2">
             <Button size="sm" onClick={addCompetitor} disabled={!form.name}>
-              <Plus className="h-3.5 w-3.5 mr-1" /> Add
+              <Plus className="h-3.5 w-3.5 mr-1" /> {labels.add}
             </Button>
-            <Button size="sm" variant="ghost" onClick={() => setAdding(false)}>Cancel</Button>
+            <Button size="sm" variant="ghost" onClick={() => setAdding(false)}>{labels.cancel}</Button>
           </div>
         </div>
       ) : (
         <Button variant="outline" size="sm" onClick={() => setAdding(true)}>
-          <Plus className="h-3.5 w-3.5 mr-1" /> Add competitor
+          <Plus className="h-3.5 w-3.5 mr-1" /> {labels.addCompetitor}
         </Button>
       )}
     </div>
   )
 }
 
-function TagsInput({ tags, onChange }: { tags: string[]; onChange: (tags: string[]) => void }) {
+function TagsInput({ tags, onChange, addTagLabel }: { tags: string[]; onChange: (tags: string[]) => void; addTagLabel: string }) {
   const [input, setInput] = useState("")
   const TAG_COLORS = ["bg-blue-100 text-blue-700", "bg-green-100 text-green-700", "bg-purple-100 text-purple-700", "bg-amber-100 text-amber-700", "bg-red-100 text-red-700"]
 
@@ -354,7 +356,7 @@ function TagsInput({ tags, onChange }: { tags: string[]; onChange: (tags: string
       <div className="flex items-center gap-1">
         <input
           className="h-6 w-24 border rounded-full px-2.5 text-xs bg-background focus:outline-none focus:ring-2 focus:ring-primary/30"
-          placeholder="+ Add tag"
+          placeholder={`+ ${addTagLabel}`}
           value={input}
           onChange={e => setInput(e.target.value)}
           onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); addTag() } }}
@@ -366,6 +368,8 @@ function TagsInput({ tags, onChange }: { tags: string[]; onChange: (tags: string
 }
 
 export default function DealDetailPage() {
+  const t = useTranslations("deals")
+  const tc = useTranslations("common")
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
   const { data: session } = useSession()
@@ -381,6 +385,17 @@ export default function DealDetailPage() {
   const [selectedRole, setSelectedRole] = useState("member")
   const [nextSteps, setNextSteps] = useState<Array<{ id: string; title: string; status: string; dueDate: string | null; completedAt: string | null }>>([])
   const [newStepTitle, setNewStepTitle] = useState("")
+
+  const stageLabels: Record<string, string> = {
+    LEAD: t("stageLead"),
+    QUALIFIED: t("stageQualified"),
+    PROPOSAL: t("stageProposal"),
+    NEGOTIATION: t("stageNegotiation"),
+    WON: t("stageWon"),
+    LOST: t("stageLost"),
+  }
+
+  const STAGES = STAGE_STYLES.map(s => ({ ...s, label: stageLabels[s.key] || s.key }))
 
   const fetchDeal = async () => {
     try {
@@ -482,9 +497,9 @@ export default function DealDetailPage() {
     return (
       <div className="flex flex-col items-center justify-center py-24 text-center">
         <AlertCircle className="h-12 w-12 text-muted-foreground/40 mb-4" />
-        <h2 className="text-lg font-semibold">Deal not found</h2>
+        <h2 className="text-lg font-semibold">{t("dealNotFound")}</h2>
         <Button variant="outline" className="mt-4" onClick={() => router.push("/deals")}>
-          <ArrowLeft className="h-4 w-4 mr-2" /> Back to Deals
+          <ArrowLeft className="h-4 w-4 mr-2" /> {t("backToDeals")}
         </Button>
       </div>
     )
@@ -517,14 +532,14 @@ export default function DealDetailPage() {
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
           <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
-            <Pencil className="h-3.5 w-3.5 mr-1.5" /> Edit
+            <Pencil className="h-3.5 w-3.5 mr-1.5" /> {t("editDeal")}
           </Button>
           <Button
             variant="outline" size="sm"
             className="text-red-500 hover:text-red-600 hover:border-red-300"
             onClick={() => setDeleteOpen(true)}
           >
-            <Trash2 className="h-3.5 w-3.5 mr-1.5" /> Delete
+            <Trash2 className="h-3.5 w-3.5 mr-1.5" /> {t("deleteDealBtn")}
           </Button>
         </div>
       </div>
@@ -532,26 +547,26 @@ export default function DealDetailPage() {
       {/* ── Tags ── */}
       <div className="flex items-center gap-2">
         <Tag className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-        <TagsInput tags={deal.tags || []} onChange={saveTags} />
+        <TagsInput tags={deal.tags || []} onChange={saveTags} addTagLabel={t("addTag")} />
       </div>
 
       {/* ── Pipeline stages ── */}
-      <DealPipelineStages currentStage={deal.stage} />
+      <DealPipelineStages currentStage={deal.stage} stageLabels={stageLabels} />
 
       {/* ── KPI Cards ── */}
-      <DealKpiCards deal={deal} />
+      <DealKpiCards deal={deal} labels={{ daysInFunnel: t("daysInFunnel"), daysAtStage: t("daysAtStage"), dealValue: t("dealValue"), confidenceLevel: t("confidenceLevel") }} />
 
       {/* ── Win probability + Confidence ── */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card className="border-none shadow-sm bg-card">
           <CardContent className="pt-5 pb-5">
-            <ProbabilityBar probability={deal.probability} />
+            <ProbabilityBar probability={deal.probability} label={t("winProbability")} />
           </CardContent>
         </Card>
         <Card className="border-none shadow-sm bg-card">
           <CardContent className="pt-5 pb-5 space-y-2">
             <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground font-medium">Confidence level</span>
+              <span className="text-muted-foreground font-medium">{t("confidenceLevel")}</span>
               <span className="font-semibold">{deal.confidenceLevel ?? 50}%</span>
             </div>
             <input
@@ -573,7 +588,7 @@ export default function DealDetailPage() {
             </div>
             {/* Predictive Scoring */}
             <div className="flex items-center justify-between pt-2 border-t mt-3">
-              <span className="text-sm text-muted-foreground font-medium">Predictive scoring</span>
+              <span className="text-sm text-muted-foreground font-medium">{t("predictiveScoring")}</span>
               <div className="flex items-center gap-1.5">
                 <span className="text-sm font-bold text-primary">
                   {Math.min(99, Math.round((deal.confidenceLevel ?? 50) * 0.85 + (deal.probability || 50) * 0.15))}%
@@ -591,13 +606,13 @@ export default function DealDetailPage() {
       {/* ── Tabs ── */}
       <Tabs defaultValue="overview" className="space-y-4">
         <TabsList className="bg-muted/60 p-1 h-auto flex-wrap">
-          <TabsTrigger value="overview" className="rounded-md text-sm">Overview</TabsTrigger>
-          <TabsTrigger value="activity" className="rounded-md text-sm">Activity</TabsTrigger>
-          <TabsTrigger value="contact-roles" className="rounded-md text-sm">Contact Roles</TabsTrigger>
-          <TabsTrigger value="competitors" className="rounded-md text-sm">Competitors</TabsTrigger>
-          <TabsTrigger value="team" className="rounded-md text-sm">Team</TabsTrigger>
-          <TabsTrigger value="engagement" className="rounded-md text-sm">Engagement</TabsTrigger>
-          <TabsTrigger value="history" className="rounded-md text-sm">History</TabsTrigger>
+          <TabsTrigger value="overview" className="rounded-md text-sm">{t("overview")}</TabsTrigger>
+          <TabsTrigger value="activity" className="rounded-md text-sm">{tc("activity")}</TabsTrigger>
+          <TabsTrigger value="contact-roles" className="rounded-md text-sm">{t("contactRoles")}</TabsTrigger>
+          <TabsTrigger value="competitors" className="rounded-md text-sm">{t("competitors")}</TabsTrigger>
+          <TabsTrigger value="team" className="rounded-md text-sm">{t("team")}</TabsTrigger>
+          <TabsTrigger value="engagement" className="rounded-md text-sm">{t("engagement")}</TabsTrigger>
+          <TabsTrigger value="history" className="rounded-md text-sm">{t("history")}</TabsTrigger>
         </TabsList>
 
         {/* Overview */}
@@ -618,12 +633,12 @@ export default function DealDetailPage() {
                     {/* Communication action buttons */}
                     <div className="flex items-center gap-2 mt-2">
                       {deal.contact.phone && (
-                        <a href={`tel:${deal.contact.phone}`} title="Call" className="h-8 w-8 rounded-full bg-green-500 hover:bg-green-600 flex items-center justify-center transition-colors shadow-sm">
+                        <a href={`tel:${deal.contact.phone}`} title={tc("call")} className="h-8 w-8 rounded-full bg-green-500 hover:bg-green-600 flex items-center justify-center transition-colors shadow-sm">
                           <Phone className="h-3.5 w-3.5 text-white" />
                         </a>
                       )}
                       {deal.contact.email && (
-                        <a href={`mailto:${deal.contact.email}`} title="Email" className="h-8 w-8 rounded-full bg-orange-500 hover:bg-orange-600 flex items-center justify-center transition-colors shadow-sm">
+                        <a href={`mailto:${deal.contact.email}`} title={tc("email")} className="h-8 w-8 rounded-full bg-orange-500 hover:bg-orange-600 flex items-center justify-center transition-colors shadow-sm">
                           <Mail className="h-3.5 w-3.5 text-white" />
                         </a>
                       )}
@@ -632,12 +647,12 @@ export default function DealDetailPage() {
                           <MessageSquare className="h-3.5 w-3.5 text-white" />
                         </a>
                       )}
-                      <button title="Chat" className="h-8 w-8 rounded-full bg-blue-500 hover:bg-blue-600 flex items-center justify-center transition-colors shadow-sm">
+                      <button title={tc("chat")} className="h-8 w-8 rounded-full bg-blue-500 hover:bg-blue-600 flex items-center justify-center transition-colors shadow-sm">
                         <MessageCircle className="h-3.5 w-3.5 text-white" />
                       </button>
                     </div>
                   </div>
-                  <Badge variant="outline" className="flex-shrink-0 text-xs">Contact Person</Badge>
+                  <Badge variant="outline" className="flex-shrink-0 text-xs">{tc("contactPerson")}</Badge>
                 </div>
               </CardContent>
             </Card>
@@ -648,19 +663,19 @@ export default function DealDetailPage() {
             <Card className="shadow-sm border-none bg-card">
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-                  Deal Information
+                  {t("dealInfo")}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 {[
-                  { icon: <DollarSign className="h-4 w-4 text-muted-foreground" />, label: "Value", value: `${deal.valueAmount.toLocaleString()} ${deal.currency}` },
-                  { icon: <User className="h-4 w-4 text-muted-foreground" />, label: "Assigned to", value: deal.assignedTo || "Unassigned" },
-                  { icon: <Calendar className="h-4 w-4 text-muted-foreground" />, label: "Expected close", value: deal.expectedClose ? new Date(deal.expectedClose).toLocaleDateString("ru-RU") : "—" },
-                  { icon: <Clock className="h-4 w-4 text-muted-foreground" />, label: "Created", value: new Date(deal.createdAt).toLocaleDateString("ru-RU") },
-                  { icon: <Building2 className="h-4 w-4 text-muted-foreground" />, label: "Company", value: deal.company?.name || "—" },
-                  { icon: <Target className="h-4 w-4 text-muted-foreground" />, label: "Campaign", value: deal.campaign?.name || "—" },
-                  { icon: <Target className="h-4 w-4 text-muted-foreground" />, label: "Customer need", value: deal.customerNeed || "—" },
-                  { icon: <Target className="h-4 w-4 text-muted-foreground" />, label: "Sales channel", value: deal.salesChannel || "—" },
+                  { icon: <DollarSign className="h-4 w-4 text-muted-foreground" />, label: t("dealValue"), value: `${deal.valueAmount.toLocaleString()} ${deal.currency}` },
+                  { icon: <User className="h-4 w-4 text-muted-foreground" />, label: t("assignedTo"), value: deal.assignedTo || tc("unassigned") },
+                  { icon: <Calendar className="h-4 w-4 text-muted-foreground" />, label: t("expectedClose"), value: deal.expectedClose ? new Date(deal.expectedClose).toLocaleDateString("ru-RU") : "—" },
+                  { icon: <Clock className="h-4 w-4 text-muted-foreground" />, label: tc("created"), value: new Date(deal.createdAt).toLocaleDateString("ru-RU") },
+                  { icon: <Building2 className="h-4 w-4 text-muted-foreground" />, label: t("company"), value: deal.company?.name || "—" },
+                  { icon: <Target className="h-4 w-4 text-muted-foreground" />, label: t("campaign"), value: deal.campaign?.name || "—" },
+                  { icon: <Target className="h-4 w-4 text-muted-foreground" />, label: t("customerNeed"), value: deal.customerNeed || "—" },
+                  { icon: <Target className="h-4 w-4 text-muted-foreground" />, label: t("salesChannel"), value: deal.salesChannel || "—" },
                 ].map(({ icon, label, value }) => (
                   <div key={label} className="flex items-center gap-3">
                     {icon}
@@ -675,14 +690,14 @@ export default function DealDetailPage() {
             <Card className="shadow-sm border-none bg-card">
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-                  Notes
+                  {t("notes")}
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 {deal.notes ? (
                   <p className="text-sm leading-relaxed whitespace-pre-wrap">{deal.notes}</p>
                 ) : (
-                  <p className="text-sm text-muted-foreground italic">No notes added yet.</p>
+                  <p className="text-sm text-muted-foreground italic">{tc("noNotesYet")}</p>
                 )}
                 {deal.lostReason && (
                   <>
@@ -690,7 +705,7 @@ export default function DealDetailPage() {
                     <div className="flex items-start gap-2">
                       <AlertCircle className="h-4 w-4 text-red-500 mt-0.5 flex-shrink-0" />
                       <div>
-                        <p className="text-xs font-medium text-red-500 mb-0.5">Lost reason</p>
+                        <p className="text-xs font-medium text-red-500 mb-0.5">{tc("lostReason")}</p>
                         <p className="text-sm">{deal.lostReason}</p>
                       </div>
                     </div>
@@ -711,7 +726,7 @@ export default function DealDetailPage() {
           <Card className="shadow-sm border-none bg-card">
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-base">
-                <Users className="h-4 w-4 text-muted-foreground" /> Contact Roles
+                <Users className="h-4 w-4 text-muted-foreground" /> {t("contactRoles")}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -720,11 +735,11 @@ export default function DealDetailPage() {
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="bg-muted/50 border-b">
-                        <th className="text-left p-3 font-medium text-muted-foreground">Contact</th>
-                        <th className="text-left p-3 font-medium text-muted-foreground">Role</th>
-                        <th className="text-left p-3 font-medium text-muted-foreground">Influence</th>
-                        <th className="text-left p-3 font-medium text-muted-foreground">Decision Factor</th>
-                        <th className="text-left p-3 font-medium text-muted-foreground">Loyalty</th>
+                        <th className="text-left p-3 font-medium text-muted-foreground">{tc("contact")}</th>
+                        <th className="text-left p-3 font-medium text-muted-foreground">{tc("role")}</th>
+                        <th className="text-left p-3 font-medium text-muted-foreground">{tc("influence")}</th>
+                        <th className="text-left p-3 font-medium text-muted-foreground">{tc("decisionFactor")}</th>
+                        <th className="text-left p-3 font-medium text-muted-foreground">{tc("loyalty")}</th>
                         <th className="p-3 w-8" />
                       </tr>
                     </thead>
@@ -772,7 +787,7 @@ export default function DealDetailPage() {
               ) : (
                 <div className="flex flex-col items-center justify-center py-8 text-center border-2 border-dashed border-muted rounded-xl">
                   <Users className="h-8 w-8 text-muted-foreground/40 mb-2" />
-                  <p className="text-sm text-muted-foreground">No contact roles defined</p>
+                  <p className="text-sm text-muted-foreground">{tc("noContactRoles")}</p>
                 </div>
               )}
               <Button variant="outline" size="sm" className="mt-3" onClick={async () => {
@@ -796,7 +811,7 @@ export default function DealDetailPage() {
                   }
                 } catch {}
               }}>
-                <Plus className="h-3.5 w-3.5 mr-1" /> Add contact role
+                <Plus className="h-3.5 w-3.5 mr-1" /> {tc("addContactRole")}
               </Button>
             </CardContent>
           </Card>
@@ -807,11 +822,28 @@ export default function DealDetailPage() {
           <Card className="shadow-sm border-none bg-card">
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-base">
-                <Swords className="h-4 w-4 text-muted-foreground" /> Competitor Tracking
+                <Swords className="h-4 w-4 text-muted-foreground" /> {t("competitors")}
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <CompetitorsSection dealId={deal.id} orgId={orgId} />
+              <CompetitorsSection
+                dealId={deal.id}
+                orgId={orgId}
+                labels={{
+                  noCompetitors: tc("noCompetitors"),
+                  addCompetitor: tc("addCompetitor"),
+                  competitorName: tc("competitorName"),
+                  theirProduct: tc("theirProduct"),
+                  theirStrengths: tc("theirStrengths"),
+                  theirWeaknesses: tc("theirWeaknesses"),
+                  add: tc("add"),
+                  cancel: tc("cancel"),
+                  competitor: tc("competitor"),
+                  product: tc("product"),
+                  strengths: tc("strengths"),
+                  weaknesses: tc("weaknesses"),
+                }}
+              />
             </CardContent>
           </Card>
         </TabsContent>
@@ -853,8 +885,8 @@ export default function DealDetailPage() {
               ) : !addingMember ? (
                 <div className="flex flex-col items-center justify-center py-10 text-center">
                   <Users className="h-10 w-10 text-muted-foreground/30 mb-3" />
-                  <p className="text-sm font-medium text-muted-foreground">No team members yet</p>
-                  <p className="text-xs text-muted-foreground/60 mt-1">Add team members working on this deal</p>
+                  <p className="text-sm font-medium text-muted-foreground">{tc("noTeamMembers")}</p>
+                  <p className="text-xs text-muted-foreground/60 mt-1">{tc("addTeamMembersHint")}</p>
                 </div>
               ) : null}
 
@@ -862,13 +894,13 @@ export default function DealDetailPage() {
                 <div className="p-4 bg-muted/40 rounded-xl border space-y-3">
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="text-xs font-medium text-muted-foreground mb-1 block">User</label>
+                      <label className="text-xs font-medium text-muted-foreground mb-1 block">{tc("user")}</label>
                       <select
                         className="w-full h-9 border rounded-lg px-3 text-sm bg-background"
                         value={selectedUserId}
                         onChange={e => setSelectedUserId(e.target.value)}
                       >
-                        <option value="">Select user...</option>
+                        <option value="">{tc("selectUser")}</option>
                         {orgUsers
                           .filter(u => !deal.teamMembers?.some(m => m.userId === u.id))
                           .map(u => (
@@ -877,28 +909,28 @@ export default function DealDetailPage() {
                       </select>
                     </div>
                     <div>
-                      <label className="text-xs font-medium text-muted-foreground mb-1 block">Role</label>
+                      <label className="text-xs font-medium text-muted-foreground mb-1 block">{tc("role")}</label>
                       <select
                         className="w-full h-9 border rounded-lg px-3 text-sm bg-background"
                         value={selectedRole}
                         onChange={e => setSelectedRole(e.target.value)}
                       >
-                        <option value="owner">Owner</option>
-                        <option value="member">Member</option>
-                        <option value="support">Support</option>
+                        <option value="owner">{tc("owner")}</option>
+                        <option value="member">{tc("member")}</option>
+                        <option value="support">{tc("support")}</option>
                       </select>
                     </div>
                   </div>
                   <div className="flex gap-2">
                     <Button size="sm" onClick={addTeamMember} disabled={!selectedUserId}>
-                      <Plus className="h-3.5 w-3.5 mr-1" /> Add
+                      <Plus className="h-3.5 w-3.5 mr-1" /> {tc("add")}
                     </Button>
-                    <Button size="sm" variant="ghost" onClick={() => setAddingMember(false)}>Cancel</Button>
+                    <Button size="sm" variant="ghost" onClick={() => setAddingMember(false)}>{tc("cancel")}</Button>
                   </div>
                 </div>
               ) : (
                 <Button variant="outline" size="sm" onClick={() => setAddingMember(true)}>
-                  <Plus className="h-3.5 w-3.5 mr-1" /> Add member
+                  <Plus className="h-3.5 w-3.5 mr-1" /> {tc("addMember")}
                 </Button>
               )}
             </CardContent>
@@ -920,7 +952,7 @@ export default function DealDetailPage() {
       <Card className="border-none shadow-sm bg-card">
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-base">
-            <CheckCircle2 className="h-4 w-4 text-muted-foreground" /> Next Steps
+            <CheckCircle2 className="h-4 w-4 text-muted-foreground" /> {tc("nextSteps")}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-2">
@@ -948,7 +980,7 @@ export default function DealDetailPage() {
 
           {nextSteps.filter(s => s.status === "completed").length > 0 && (
             <div className="pt-2 space-y-1">
-              <p className="text-xs text-muted-foreground font-medium">Completed</p>
+              <p className="text-xs text-muted-foreground font-medium">{tc("completed")}</p>
               {nextSteps.filter(s => s.status === "completed").map(step => (
                 <div key={step.id} className="flex items-center gap-3 p-2 rounded-lg opacity-50">
                   <CheckCircle2 className="h-4 w-4 text-green-500 flex-shrink-0" />
@@ -962,7 +994,7 @@ export default function DealDetailPage() {
           <div className="flex gap-2 pt-2">
             <input
               className="flex-1 h-9 border rounded-lg px-3 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/30"
-              placeholder="Add next step..."
+              placeholder={tc("addNextStep")}
               value={newStepTitle}
               onChange={e => setNewStepTitle(e.target.value)}
               onKeyDown={async e => {
@@ -987,7 +1019,7 @@ export default function DealDetailPage() {
               setNewStepTitle("")
               fetchNextSteps()
             }}>
-              <Plus className="h-3.5 w-3.5 mr-1" /> Add
+              <Plus className="h-3.5 w-3.5 mr-1" /> {tc("add")}
             </Button>
           </div>
         </CardContent>
@@ -1015,7 +1047,7 @@ export default function DealDetailPage() {
         open={deleteOpen}
         onOpenChange={setDeleteOpen}
         onConfirm={handleDelete}
-        title="Delete Deal"
+        title={t("deleteDeal")}
         itemName={deal.name}
       />
     </div>

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useSession } from "next-auth/react"
+import { useTranslations } from "next-intl"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { StatCard } from "@/components/stat-card"
 import { Badge } from "@/components/ui/badge"
@@ -63,7 +64,7 @@ interface ReportData {
   }
 }
 
-// ── CircularGauge ────────────────────────────────────────────────────────────
+// -- CircularGauge --
 function CircularGauge({
   value, max = 100, label, color = "#6366f1", size = 100,
 }: { value: number; max?: number; label: string; color?: string; size?: number }) {
@@ -101,23 +102,21 @@ function CircularGauge({
   )
 }
 
-// ── FunnelPyramid ─────────────────────────────────────────────────────────────
-function FunnelPyramid({ data, labels, colors }: {
+// -- FunnelPyramid --
+function FunnelPyramid({ data, labels }: {
   data: { status: string; count: number }[]
   labels: Record<string, string>
-  colors: Record<string, string>
 }) {
   const maxCount = Math.max(...data.map(d => d.count), 1)
   const funnelStages = ["new", "contacted", "qualified", "converted"]
     .map(s => data.find(d => d.status === s))
     .filter(Boolean) as { status: string; count: number }[]
 
-  if (funnelStages.length === 0) return <p className="text-sm text-muted-foreground text-center py-4">Нет данных</p>
+  if (funnelStages.length === 0) return <p className="text-sm text-muted-foreground text-center py-4">{labels._noData}</p>
 
   return (
     <div className="flex flex-col gap-1.5">
       {funnelStages.map((stage, i) => {
-        const widthPct = 40 + (stage.count / maxCount) * 60 // 40% to 100% width
         // pyramid narrows from top to bottom
         const pyramidWidth = 100 - (i / (funnelStages.length - 1 || 1)) * 55
         const convRate = i > 0 && funnelStages[i - 1].count > 0
@@ -134,7 +133,7 @@ function FunnelPyramid({ data, labels, colors }: {
             {convRate !== null && (
               <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
                 <svg width="10" height="10" viewBox="0 0 10 10"><path d="M5 1 L5 9 M2 6 L5 9 L8 6" stroke="currentColor" strokeWidth="1.5" fill="none" /></svg>
-                {convRate}% конверсия
+                {convRate}% {labels._conversion}
               </div>
             )}
             <div
@@ -150,39 +149,33 @@ function FunnelPyramid({ data, labels, colors }: {
   )
 }
 
-const funnelLabels: Record<string, string> = {
-  new: "Новый",
-  contacted: "Связались",
-  qualified: "Квалифицирован",
-  converted: "Конвертирован",
-  rejected: "Не подходит",
-  cancelled: "Аннулирован",
-}
-
-const funnelColors: Record<string, string> = {
-  new: "bg-blue-500",
-  contacted: "bg-yellow-500",
-  qualified: "bg-purple-500",
-  converted: "bg-green-500",
-  rejected: "bg-gray-400",
-  cancelled: "bg-red-400",
-}
-
-const stageLabels: Record<string, string> = {
-  LEAD: "Лид",
-  QUALIFIED: "Квалифицирован",
-  PROPOSAL: "Предложение",
-  NEGOTIATION: "Переговоры",
-  WON: "Выигрыш",
-  LOST: "Проиграно",
-}
-
 export default function ReportsPage() {
   const { data: session } = useSession()
+  const t = useTranslations("reports")
   const [data, setData] = useState<ReportData | null>(null)
   const [loading, setLoading] = useState(true)
   const [fetchError, setFetchError] = useState<string | null>(null)
   const orgId = session?.user?.organizationId
+
+  const funnelLabels: Record<string, string> = {
+    new: t("funnelNew"),
+    contacted: t("funnelContacted"),
+    qualified: t("funnelQualified"),
+    converted: t("funnelConverted"),
+    rejected: t("funnelRejected"),
+    cancelled: t("funnelCancelled"),
+    _conversion: t("funnelConversion"),
+    _noData: t("noData"),
+  }
+
+  const stageLabels: Record<string, string> = {
+    LEAD: t("stageLead"),
+    QUALIFIED: t("stageQualified"),
+    PROPOSAL: t("stageProposal"),
+    NEGOTIATION: t("stageNegotiation"),
+    WON: t("stageWon"),
+    LOST: t("stageLost"),
+  }
 
   useEffect(() => {
     async function fetchReports() {
@@ -192,8 +185,8 @@ export default function ReportsPage() {
         })
         const json = await res.json()
         if (json.success) setData(json.data)
-        else setFetchError(json.error || "Ошибка загрузки данных")
-      } catch { setFetchError("Не удалось загрузить отчёты") } finally { setLoading(false) }
+        else setFetchError(json.error || t("errorLoading"))
+      } catch { setFetchError(t("failedToLoad")) } finally { setLoading(false) }
     }
     fetchReports()
   }, [session])
@@ -201,7 +194,7 @@ export default function ReportsPage() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <h1 className="text-2xl font-bold tracking-tight">Отчёты и аналитика</h1>
+        <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
         <div className="animate-pulse grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {[1, 2, 3, 4, 5, 6].map((i) => (
             <div key={i} className="h-40 bg-muted rounded-lg" />
@@ -214,15 +207,15 @@ export default function ReportsPage() {
   if (fetchError || !data) {
     return (
       <div className="space-y-6">
-        <h1 className="text-2xl font-bold tracking-tight">Отчёты и аналитика</h1>
+        <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
         <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-6 text-center text-destructive">
-          {fetchError || "Не удалось загрузить данные"}
+          {fetchError || t("errorLoading")}
         </div>
       </div>
     )
   }
 
-  // Lead funnel — ordered stages
+  // Lead funnel -- ordered stages
   const funnelOrder = ["new", "contacted", "qualified", "converted", "rejected", "cancelled"]
   const funnelData = funnelOrder
     .map(status => {
@@ -230,13 +223,12 @@ export default function ReportsPage() {
       return { status, count: found?.count || 0 }
     })
     .filter(f => f.count > 0)
-  const maxFunnelCount = Math.max(...funnelData.map(f => f.count), 1)
 
-  // Sales forecast — simple linear projection based on won deals
+  // Sales forecast -- simple linear projection based on won deals
   const monthlyRevenue = data.financial?.monthlyRevenue || 0
   const wonRevenue = data.revenue.totalRevenue
   const avgMonthlyWon = wonRevenue > 0 ? wonRevenue / 6 : 0 // rough 6-month average
-  const forecastMonths = ["Апр", "Май", "Июн", "Июл", "Авг", "Сен"]
+  const forecastMonths = ["Apr", "May", "Jun", "Jul", "Aug", "Sep"]
   const forecastValues = forecastMonths.map((_, i) => {
     const base = monthlyRevenue + avgMonthlyWon
     const growth = 1 + (i * 0.05) // 5% growth per month
@@ -244,23 +236,36 @@ export default function ReportsPage() {
   })
   const maxForecast = Math.max(...forecastValues, 1)
 
+  const taskStatusLabel = (status: string) => {
+    if (status === "completed") return t("completedLabel")
+    if (status === "in_progress") return t("inProgressLabel")
+    return t("todoLabel")
+  }
+
+  const ticketStatusLabel = (status: string) => {
+    if (status === "new") return t("ticketNew")
+    if (status === "in_progress") return t("ticketInProgress")
+    if (status === "resolved") return t("ticketResolved")
+    return t("ticketClosed")
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Отчёты и аналитика</h1>
-          <p className="text-muted-foreground">Бизнес-аналитика и прогнозы</p>
+          <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
+          <p className="text-muted-foreground">{t("subtitle")}</p>
         </div>
       </div>
 
       {/* Overview Stats */}
       <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-6">
-        <StatCard title="Клиенты" value={data.overview.companies} icon={<Building2 className="h-4 w-4" />} />
-        <StatCard title="Контакты" value={data.overview.contacts} icon={<Users className="h-4 w-4" />} />
-        <StatCard title="Сделки" value={data.overview.deals} icon={<DollarSign className="h-4 w-4" />} />
-        <StatCard title="Лиды (новый)" value={data.overview.leads} icon={<Target className="h-4 w-4" />} />
-        <StatCard title="Задачи (просрочено)" value={data.overview.overdueTasks} icon={<CheckSquare className="h-4 w-4" />} trend={data.overview.overdueTasks > 0 ? "down" : "neutral"} />
-        <StatCard title="Тикеты" value={data.overview.tickets} icon={<Clock className="h-4 w-4" />} />
+        <StatCard title={t("statCompanies")} value={data.overview.companies} icon={<Building2 className="h-4 w-4" />} />
+        <StatCard title={t("statContacts")} value={data.overview.contacts} icon={<Users className="h-4 w-4" />} />
+        <StatCard title={t("statDeals")} value={data.overview.deals} icon={<DollarSign className="h-4 w-4" />} />
+        <StatCard title={t("statLeads")} value={data.overview.leads} icon={<Target className="h-4 w-4" />} />
+        <StatCard title={t("statTasksOverdue")} value={data.overview.overdueTasks} icon={<CheckSquare className="h-4 w-4" />} trend={data.overview.overdueTasks > 0 ? "down" : "neutral"} />
+        <StatCard title={t("statTickets")} value={data.overview.tickets} icon={<Clock className="h-4 w-4" />} />
       </div>
 
       {/* Main grid */}
@@ -270,8 +275,8 @@ export default function ReportsPage() {
           <CardHeader className="pb-3">
             <div className="flex items-start justify-between">
               <div>
-                <CardTitle className="text-base">Финансовый обзор</CardTitle>
-                <p className="text-xs text-muted-foreground mt-1">Доход и контракты</p>
+                <CardTitle className="text-base">{t("financialOverview")}</CardTitle>
+                <p className="text-xs text-muted-foreground mt-1">{t("revenueAndContracts")}</p>
               </div>
               <Wallet className="h-5 w-5 text-primary" />
             </div>
@@ -279,24 +284,24 @@ export default function ReportsPage() {
           <CardContent>
             <div className="space-y-3">
               <div className="flex justify-between">
-                <span className="text-sm text-muted-foreground">Доход (выигранные)</span>
-                <span className="font-bold text-green-600">{data.revenue.totalRevenue.toLocaleString()} ₼</span>
+                <span className="text-sm text-muted-foreground">{t("revenueWon")}</span>
+                <span className="font-bold text-green-600">{data.revenue.totalRevenue.toLocaleString()} \u20BC</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-sm text-muted-foreground">Ежемесячный (контракты)</span>
-                <span className="font-bold">{(data.financial?.monthlyRevenue || 0).toLocaleString()} ₼</span>
+                <span className="text-sm text-muted-foreground">{t("monthlyContracts")}</span>
+                <span className="font-bold">{(data.financial?.monthlyRevenue || 0).toLocaleString()} \u20BC</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-sm text-muted-foreground">Воронка (общая)</span>
-                <span className="font-bold">{data.pipeline.totalPipelineValue.toLocaleString()} ₼</span>
+                <span className="text-sm text-muted-foreground">{t("pipelineTotal")}</span>
+                <span className="font-bold">{data.pipeline.totalPipelineValue.toLocaleString()} \u20BC</span>
               </div>
               <div className="border-t pt-2 mt-2">
                 <div className="flex justify-between text-sm">
-                  <span>Контрактов всего</span>
+                  <span>{t("totalContracts")}</span>
                   <span className="font-medium">{data.financial?.totalContracts || 0}</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span>Активных</span>
+                  <span>{t("activeContracts")}</span>
                   <span className="font-medium text-green-600">{data.financial?.activeContracts || 0}</span>
                 </div>
               </div>
@@ -309,14 +314,14 @@ export default function ReportsPage() {
           <CardHeader className="pb-3">
             <div className="flex items-start justify-between">
               <div>
-                <CardTitle className="text-base">Воронка сделок</CardTitle>
-                <p className="text-xs text-muted-foreground mt-1">По этапам</p>
+                <CardTitle className="text-base">{t("dealsPipeline")}</CardTitle>
+                <p className="text-xs text-muted-foreground mt-1">{t("byStage")}</p>
               </div>
               <BarChart3 className="h-5 w-5 text-primary" />
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold mb-3">{data.pipeline.totalPipelineValue.toLocaleString()} ₼</div>
+            <div className="text-2xl font-bold mb-3">{data.pipeline.totalPipelineValue.toLocaleString()} \u20BC</div>
             <div className="space-y-2">
               {data.pipeline.stages.map(s => {
                 const maxVal = Math.max(...data.pipeline.stages.map(x => x.value), 1)
@@ -325,7 +330,7 @@ export default function ReportsPage() {
                   <div key={s.stage}>
                     <div className="flex justify-between text-xs mb-0.5">
                       <span>{stageLabels[s.stage] || s.stage}</span>
-                      <span className="font-medium">{s.count} · {s.value.toLocaleString()} ₼</span>
+                      <span className="font-medium">{s.count} \u00B7 {s.value.toLocaleString()} \u20BC</span>
                     </div>
                     <div className="h-2 bg-muted rounded-full overflow-hidden">
                       <div
@@ -340,45 +345,45 @@ export default function ReportsPage() {
           </CardContent>
         </Card>
 
-        {/* Lead Funnel — Pyramid (C4.2) */}
+        {/* Lead Funnel -- Pyramid (C4.2) */}
         <Card>
           <CardHeader className="pb-3">
             <div className="flex items-start justify-between">
               <div>
-                <CardTitle className="text-base">Воронка лидов</CardTitle>
-                <p className="text-xs text-muted-foreground mt-1">Конверсия: {data.leads.conversionRate}%</p>
+                <CardTitle className="text-base">{t("leadFunnel")}</CardTitle>
+                <p className="text-xs text-muted-foreground mt-1">{t("conversion")}: {data.leads.conversionRate}%</p>
               </div>
               <Target className="h-5 w-5 text-primary" />
             </div>
           </CardHeader>
           <CardContent>
-            <FunnelPyramid data={funnelData} labels={funnelLabels} colors={funnelColors} />
+            <FunnelPyramid data={funnelData} labels={funnelLabels} />
           </CardContent>
         </Card>
 
-        {/* Task Summary — CircularGauge (C4.1) */}
+        {/* Task Summary -- CircularGauge (C4.1) */}
         <Card>
           <CardHeader className="pb-3">
             <div className="flex items-start justify-between">
               <div>
-                <CardTitle className="text-base">Сводка задач</CardTitle>
-                <p className="text-xs text-muted-foreground mt-1">Выполнение и просрочки</p>
+                <CardTitle className="text-base">{t("taskSummary")}</CardTitle>
+                <p className="text-xs text-muted-foreground mt-1">{t("completionAndOverdue")}</p>
               </div>
               <CheckSquare className="h-5 w-5 text-primary" />
             </div>
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-4 mb-3">
-              <CircularGauge value={data.tasks.completionRate} label="Выполнено" color="#22c55e" size={90} />
+              <CircularGauge value={data.tasks.completionRate} label={t("completedLabel")} color="#22c55e" size={90} />
               <div className="flex-1 space-y-1">
-                {data.tasks.byStatus.map(t => (
-                  <div key={t.status} className="flex justify-between text-xs">
-                    <span>{t.status === "completed" ? "Выполнено" : t.status === "in_progress" ? "В работе" : "К выполнению"}</span>
-                    <span className="font-medium">{t.count}</span>
+                {data.tasks.byStatus.map(ts => (
+                  <div key={ts.status} className="flex justify-between text-xs">
+                    <span>{taskStatusLabel(ts.status)}</span>
+                    <span className="font-medium">{ts.count}</span>
                   </div>
                 ))}
                 <div className="flex justify-between text-xs text-red-500">
-                  <span>Просрочено</span>
+                  <span>{t("overdueLabel")}</span>
                   <span className="font-medium">{data.tasks.overdue}</span>
                 </div>
               </div>
@@ -391,8 +396,8 @@ export default function ReportsPage() {
           <CardHeader className="pb-3">
             <div className="flex items-start justify-between">
               <div>
-                <CardTitle className="text-base">Топ-10 клиентов</CardTitle>
-                <p className="text-xs text-muted-foreground mt-1">По доходу</p>
+                <CardTitle className="text-base">{t("topClients")}</CardTitle>
+                <p className="text-xs text-muted-foreground mt-1">{t("byRevenue")}</p>
               </div>
               <Building2 className="h-5 w-5 text-primary" />
             </div>
@@ -410,7 +415,7 @@ export default function ReportsPage() {
                           <span className="text-muted-foreground mr-1">{i + 1}.</span>
                           {c.name}
                         </span>
-                        <span className="font-medium flex-shrink-0">{c.revenue.toLocaleString()} ₼</span>
+                        <span className="font-medium flex-shrink-0">{c.revenue.toLocaleString()} \u20BC</span>
                       </div>
                       <div className="h-1.5 bg-muted rounded-full overflow-hidden">
                         <div className="h-full bg-primary/60 rounded-full" style={{ width: `${pct}%` }} />
@@ -420,7 +425,7 @@ export default function ReportsPage() {
                 })}
               </div>
             ) : (
-              <div className="text-sm text-muted-foreground text-center py-4">Нет данных</div>
+              <div className="text-sm text-muted-foreground text-center py-4">{t("noData")}</div>
             )}
           </CardContent>
         </Card>
@@ -430,8 +435,8 @@ export default function ReportsPage() {
           <CardHeader className="pb-3">
             <div className="flex items-start justify-between">
               <div>
-                <CardTitle className="text-base">Прогноз продаж</CardTitle>
-                <p className="text-xs text-muted-foreground mt-1">6 месяцев</p>
+                <CardTitle className="text-base">{t("salesForecast")}</CardTitle>
+                <p className="text-xs text-muted-foreground mt-1">{t("sixMonths")}</p>
               </div>
               <TrendingUp className="h-5 w-5 text-primary" />
             </div>
@@ -461,25 +466,25 @@ export default function ReportsPage() {
           </CardContent>
         </Card>
 
-        {/* Ticket SLA — CircularGauge (C4.1) */}
+        {/* Ticket SLA -- CircularGauge (C4.1) */}
         <Card>
           <CardHeader className="pb-3">
             <div className="flex items-start justify-between">
               <div>
-                <CardTitle className="text-base">SLA Тикетов</CardTitle>
-                <p className="text-xs text-muted-foreground mt-1">Решение и открытые</p>
+                <CardTitle className="text-base">{t("ticketSla")}</CardTitle>
+                <p className="text-xs text-muted-foreground mt-1">{t("resolutionAndOpen")}</p>
               </div>
               <Clock className="h-5 w-5 text-primary" />
             </div>
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-4 mb-3">
-              <CircularGauge value={data.tickets.resolutionRate} label="Решено" color="#6366f1" size={90} />
+              <CircularGauge value={data.tickets.resolutionRate} label={t("resolvedLabel")} color="#6366f1" size={90} />
               <div className="flex-1 space-y-1">
-                {data.tickets.byStatus.map(t => (
-                  <div key={t.status} className="flex justify-between text-xs">
-                    <span>{t.status === "new" ? "Новый" : t.status === "in_progress" ? "В работе" : t.status === "resolved" ? "Решён" : "Закрыт"}</span>
-                    <span className="font-medium">{t.count}</span>
+                {data.tickets.byStatus.map(ts => (
+                  <div key={ts.status} className="flex justify-between text-xs">
+                    <span>{ticketStatusLabel(ts.status)}</span>
+                    <span className="font-medium">{ts.count}</span>
                   </div>
                 ))}
               </div>
@@ -492,15 +497,15 @@ export default function ReportsPage() {
           <CardHeader className="pb-3">
             <div className="flex items-start justify-between">
               <div>
-                <CardTitle className="text-base">Конверсия лидов</CardTitle>
-                <p className="text-xs text-muted-foreground mt-1">По статусам</p>
+                <CardTitle className="text-base">{t("leadConversion")}</CardTitle>
+                <p className="text-xs text-muted-foreground mt-1">{t("byStatus")}</p>
               </div>
               <Target className="h-5 w-5 text-primary" />
             </div>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{data.leads.conversionRate}%</div>
-            <div className="text-xs text-muted-foreground mb-2">Конверсия</div>
+            <div className="text-xs text-muted-foreground mb-2">{t("conversion")}</div>
             <div className="space-y-1">
               {data.leads.byStatus.map(l => (
                 <div key={l.status} className="flex justify-between text-xs">
@@ -517,8 +522,8 @@ export default function ReportsPage() {
           <CardHeader className="pb-3">
             <div className="flex items-start justify-between">
               <div>
-                <CardTitle className="text-base">Удовлетворённость (CSAT)</CardTitle>
-                <p className="text-xs text-muted-foreground mt-1">Оценки клиентов</p>
+                <CardTitle className="text-base">{t("csat")}</CardTitle>
+                <p className="text-xs text-muted-foreground mt-1">{t("csatRatings")}</p>
               </div>
               <Star className="h-5 w-5 text-yellow-500" />
             </div>
@@ -528,7 +533,7 @@ export default function ReportsPage() {
               <span className="text-2xl font-bold">{data.csat?.average || 0}</span>
               <span className="text-sm text-muted-foreground">/ 5</span>
             </div>
-            <div className="text-xs text-muted-foreground mb-2">{data.csat?.totalRatings || 0} оценок</div>
+            <div className="text-xs text-muted-foreground mb-2">{data.csat?.totalRatings || 0} {t("ratings")}</div>
             {data.csat?.byRating && data.csat.byRating.length > 0 && (
               <div className="space-y-1">
                 {[5, 4, 3, 2, 1].map(r => {
@@ -559,16 +564,16 @@ export default function ReportsPage() {
           <CardHeader className="pb-3">
             <div className="flex items-start justify-between">
               <div>
-                <CardTitle className="text-base">Доход от сделок</CardTitle>
-                <p className="text-xs text-muted-foreground mt-1">Выигранные</p>
+                <CardTitle className="text-base">{t("dealRevenue")}</CardTitle>
+                <p className="text-xs text-muted-foreground mt-1">{t("wonDeals")}</p>
               </div>
               <DollarSign className="h-5 w-5 text-primary" />
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{data.revenue.totalRevenue.toLocaleString()} ₼</div>
-            <div className="text-xs text-muted-foreground">{data.revenue.wonDealsCount} выигранных сделок</div>
-            <div className="text-xs text-muted-foreground mt-1">Ср. размер: {data.revenue.avgDealSize.toLocaleString()} ₼</div>
+            <div className="text-2xl font-bold">{data.revenue.totalRevenue.toLocaleString()} \u20BC</div>
+            <div className="text-xs text-muted-foreground">{data.revenue.wonDealsCount} {t("wonDealsCount")}</div>
+            <div className="text-xs text-muted-foreground mt-1">{t("avgDealSize")}: {data.revenue.avgDealSize.toLocaleString()} \u20BC</div>
           </CardContent>
         </Card>
       </div>

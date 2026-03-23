@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react"
 import { useSession } from "next-auth/react"
+import { useTranslations } from "next-intl"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -16,7 +17,7 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
-/* ── Types ── */
+/* -- Types -- */
 interface ChannelMessage {
   id: string
   direction: string
@@ -51,7 +52,7 @@ interface Stats {
   conversations: number
 }
 
-/* ── Channel helpers ── */
+/* -- Channel helpers -- */
 const channelIcon = (ch: string) => {
   switch (ch) {
     case "email": return <Mail className="h-3.5 w-3.5" />
@@ -84,9 +85,11 @@ const channelLabel = (ch: string) => {
 
 const CHANNELS = ["all", "email", "telegram", "sms", "whatsapp"] as const
 
-/* ── Page ── */
+/* -- Page -- */
 export default function InboxPage() {
   const { data: session } = useSession()
+  const t = useTranslations("inbox")
+  const tc = useTranslations("common")
   const orgId = session?.user?.organizationId
 
   const [conversations, setConversations] = useState<Conversation[]>([])
@@ -165,7 +168,7 @@ export default function InboxPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [selected, conversations])
 
-  /* ── Reply ── */
+  /* -- Reply -- */
   const handleSendReply = async () => {
     if (!replyText.trim() || selected === null) return
     const convo = filtered[selected]
@@ -219,7 +222,7 @@ export default function InboxPage() {
     } catch {} finally { setSending(false) }
   }
 
-  /* ── Compose ── */
+  /* -- Compose -- */
   const handleCompose = async () => {
     if (!composeTo.trim() || !composeBody.trim()) return
     setComposeSending(true)
@@ -250,7 +253,7 @@ export default function InboxPage() {
     } catch {} finally { setComposeSending(false) }
   }
 
-  /* ── Mark as read ── */
+  /* -- Mark as read -- */
   const markAsRead = async (convo: Conversation) => {
     const unreadIds = convo.messages
       .filter(m => m.direction === "inbound" && m.status !== "read")
@@ -269,9 +272,9 @@ export default function InboxPage() {
     } catch {}
   }
 
-  /* ── Delete conversation ── */
+  /* -- Delete conversation -- */
   const deleteConvo = async (convo: Conversation) => {
-    if (!confirm("Удалить этот диалог и все сообщения?")) return
+    if (!confirm(t("deleteConversationConfirm"))) return
     const ids = convo.messages.map(m => m.id)
     try {
       await fetch("/api/v1/inbox", {
@@ -287,7 +290,7 @@ export default function InboxPage() {
     } catch {}
   }
 
-  /* ── Filtered list ── */
+  /* -- Filtered list -- */
   const filtered = conversations.filter(c =>
     c.contactName.toLowerCase().includes(search.toLowerCase()) ||
     c.lastMessage.toLowerCase().includes(search.toLowerCase()) ||
@@ -296,7 +299,7 @@ export default function InboxPage() {
 
   const selectedConvo = selected !== null ? filtered[selected] : null
 
-  /* ── Time formatter ── */
+  /* -- Time formatter -- */
   const formatTime = (date: string) => {
     const d = new Date(date)
     const now = new Date()
@@ -310,7 +313,7 @@ export default function InboxPage() {
     return d.toLocaleDateString("ru-RU", { day: "numeric", month: "short" })
   }
 
-  /* ── Loading skeleton ── */
+  /* -- Loading skeleton -- */
   if (loading) {
     return (
       <div className="space-y-4">
@@ -328,29 +331,29 @@ export default function InboxPage() {
 
   return (
     <div className="space-y-4">
-      {/* ── Header ── */}
+      {/* -- Header -- */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="p-2.5 bg-primary/10 rounded-lg">
             <InboxIcon className="h-6 w-6 text-primary" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Входящие</h1>
-            <p className="text-sm text-muted-foreground">Omni-Channel — все каналы в одном месте</p>
+            <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
+            <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
           </div>
         </div>
         <Button className="gap-2" onClick={() => setShowCompose(true)}>
-          <Plus className="h-4 w-4" /> Новое сообщение
+          <Plus className="h-4 w-4" /> {t("newMessage")}
         </Button>
       </div>
 
-      {/* ── Stats cards ── */}
+      {/* -- Stats cards -- */}
       <div className="grid grid-cols-4 gap-3">
         {[
-          { label: "Сообщения", value: stats.totalMessages, icon: MessageSquare, color: "text-blue-600" },
-          { label: "Входящие", value: stats.inbound, icon: ArrowDownLeft, color: "text-green-600" },
-          { label: "Исходящие", value: stats.outbound, icon: ArrowUpRight, color: "text-orange-600" },
-          { label: "Диалоги", value: stats.conversations, icon: MessageCircle, color: "text-purple-600" },
+          { label: t("statMessages"), value: stats.totalMessages, icon: MessageSquare, color: "text-blue-600" },
+          { label: t("statIncoming"), value: stats.inbound, icon: ArrowDownLeft, color: "text-green-600" },
+          { label: t("statOutgoing"), value: stats.outbound, icon: ArrowUpRight, color: "text-orange-600" },
+          { label: t("statConversations"), value: stats.conversations, icon: MessageCircle, color: "text-purple-600" },
         ].map(s => (
           <div key={s.label} className="rounded-lg border bg-card p-4">
             <div className="flex items-center gap-2 text-muted-foreground text-sm mb-1">
@@ -362,7 +365,7 @@ export default function InboxPage() {
         ))}
       </div>
 
-      {/* ── Channel filter tabs ── */}
+      {/* -- Channel filter tabs -- */}
       <div className="flex items-center gap-1 border-b pb-2">
         {CHANNELS.map(ch => (
           <button
@@ -375,19 +378,19 @@ export default function InboxPage() {
                 : "text-muted-foreground hover:bg-muted"
             )}
           >
-            {ch === "all" ? "Все" : channelLabel(ch)}
+            {ch === "all" ? tc("all") : channelLabel(ch)}
           </button>
         ))}
       </div>
 
-      {/* ── Main layout: conversation list + thread ── */}
+      {/* -- Main layout: conversation list + thread -- */}
       <div className="flex gap-4 h-[calc(100vh-380px)] min-h-[400px]">
-        {/* ── Left: conversation list ── */}
+        {/* -- Left: conversation list -- */}
         <div className="w-80 flex flex-col shrink-0">
           <div className="relative mb-3">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
-              placeholder="Поиск диалогов..."
+              placeholder={t("searchPlaceholder")}
               value={search}
               onChange={e => setSearch(e.target.value)}
               className="pl-9"
@@ -454,7 +457,7 @@ export default function InboxPage() {
                       <button
                         className="opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-600 transition-opacity p-0.5"
                         onClick={(e) => { e.stopPropagation(); deleteConvo(convo) }}
-                        title="Удалить диалог"
+                        title={t("deleteConversation")}
                       >
                         <Trash2 className="h-3 w-3" />
                       </button>
@@ -468,13 +471,13 @@ export default function InboxPage() {
             ) : (
               <div className="p-8 text-center text-muted-foreground text-sm">
                 <MessageSquare className="h-8 w-8 mx-auto mb-2 opacity-30" />
-                {conversations.length === 0 ? "Нет сообщений" : "Ничего не найдено"}
+                {conversations.length === 0 ? t("noMessages") : t("noConversations")}
               </div>
             )}
           </div>
         </div>
 
-        {/* ── Right: message thread ── */}
+        {/* -- Right: message thread -- */}
         <div className="flex-1 flex flex-col border rounded-lg overflow-hidden bg-card">
           {selectedConvo ? (
             <>
@@ -495,7 +498,7 @@ export default function InboxPage() {
                     <div className="text-xs text-muted-foreground flex items-center gap-2">
                       {selectedConvo.contactEmail && <span>{selectedConvo.contactEmail}</span>}
                       {selectedConvo.contactPhone && <span>{selectedConvo.contactPhone}</span>}
-                      <span>· {selectedConvo.messageCount} сообщ.</span>
+                      <span>· {selectedConvo.messageCount} {t("msgCount")}</span>
                     </div>
                   </div>
                 </div>
@@ -533,7 +536,7 @@ export default function InboxPage() {
                       )}>
                         {channelIcon(msg.channelType || "email")}
                         {channelLabel(msg.channelType || "email")}
-                        {msg.direction === "inbound" && <span>· от {msg.from}</span>}
+                        {msg.direction === "inbound" && <span>· {t("from")} {msg.from}</span>}
                       </div>
                       {msg.subject && (
                         <div className={cn("text-xs font-medium mb-1", msg.direction === "outbound" ? "opacity-80" : "text-foreground")}>
@@ -553,7 +556,7 @@ export default function InboxPage() {
                             "ml-1",
                             msg.status === "delivered" ? "text-green-300" : msg.status === "failed" ? "text-red-300" : ""
                           )}>
-                            {msg.status === "delivered" ? "✓" : msg.status === "failed" ? "✗" : "⏳"}
+                            {msg.status === "delivered" ? "\u2713" : msg.status === "failed" ? "\u2717" : "\u23F3"}
                           </span>
                         )}
                       </div>
@@ -577,7 +580,7 @@ export default function InboxPage() {
                     <option value="whatsapp">WhatsApp</option>
                   </Select>
                   <Input
-                    placeholder="Написать сообщение..."
+                    placeholder={t("writeMessage")}
                     value={replyText}
                     onChange={e => setReplyText(e.target.value)}
                     onKeyDown={e => e.key === "Enter" && !e.shiftKey && handleSendReply()}
@@ -599,13 +602,13 @@ export default function InboxPage() {
                 <InboxIcon className="h-12 w-12 mx-auto mb-3 text-muted-foreground/30" />
                 <p className="text-muted-foreground font-medium">
                   {conversations.length === 0
-                    ? "Нет сообщений"
-                    : "Выберите диалог"}
+                    ? t("noMessages")
+                    : t("selectConversation")}
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">
                   {conversations.length === 0
-                    ? "Сообщения из Email, Telegram, SMS и WhatsApp появятся здесь"
-                    : "Нажмите на диалог слева чтобы открыть переписку"}
+                    ? t("selectConversationHint")
+                    : t("clickToOpen")}
                 </p>
               </div>
             </div>
@@ -613,15 +616,15 @@ export default function InboxPage() {
         </div>
       </div>
 
-      {/* ── Compose dialog ── */}
+      {/* -- Compose dialog -- */}
       <Dialog open={showCompose} onOpenChange={setShowCompose}>
         <DialogHeader>
-          <DialogTitle>Новое сообщение</DialogTitle>
+          <DialogTitle>{t("newMessageDialog")}</DialogTitle>
         </DialogHeader>
         <DialogContent>
           <div className="space-y-4">
             <div>
-              <Label className="text-sm font-medium">Контакт</Label>
+              <Label className="text-sm font-medium">{tc("contact")}</Label>
               <Select
                 value={composeContactId}
                 onChange={e => {
@@ -639,16 +642,16 @@ export default function InboxPage() {
                 }}
                 className="mt-1.5"
               >
-                <option value="">— Выберите контакт —</option>
+                <option value="">{t("selectContact")}</option>
                 {contacts.map(c => (
                   <option key={c.id} value={c.id}>
-                    {c.fullName}{c.email ? ` · ${c.email}` : ""}{c.phone ? ` · ${c.phone}` : ""}
+                    {c.fullName}{c.email ? ` \u00B7 ${c.email}` : ""}{c.phone ? ` \u00B7 ${c.phone}` : ""}
                   </option>
                 ))}
               </Select>
             </div>
             <div>
-              <Label className="text-sm font-medium">Канал</Label>
+              <Label className="text-sm font-medium">{t("channel")}</Label>
               <Select
                 value={composeChannel}
                 onChange={e => {
@@ -674,32 +677,32 @@ export default function InboxPage() {
             </div>
             <div>
               <Label className="text-sm font-medium">
-                {composeChannel === "email" ? "Email адрес" : composeChannel === "sms" ? "Телефон" : composeChannel === "telegram" ? "Chat ID / Телефон" : "Адрес"}
+                {composeChannel === "email" ? t("emailAddress") : composeChannel === "sms" ? tc("phone") : composeChannel === "telegram" ? t("chatIdOrPhone") : tc("address")}
               </Label>
               <Input
                 value={composeTo}
                 onChange={e => setComposeTo(e.target.value)}
-                placeholder={composeChannel === "email" ? "user@example.com" : composeChannel === "sms" ? "+994..." : "Chat ID или телефон"}
+                placeholder={composeChannel === "email" ? "user@example.com" : composeChannel === "sms" ? t("phonePlaceholder") : t("chatIdOrPhone")}
                 className="mt-1.5"
               />
             </div>
             {composeChannel === "email" && (
               <div>
-                <Label className="text-sm font-medium">Тема</Label>
+                <Label className="text-sm font-medium">{t("topic")}</Label>
                 <Input
                   value={composeSubject}
                   onChange={e => setComposeSubject(e.target.value)}
-                  placeholder="Тема письма..."
+                  placeholder={t("subjectPlaceholder")}
                   className="mt-1.5"
                 />
               </div>
             )}
             <div>
-              <Label className="text-sm font-medium">Сообщение</Label>
+              <Label className="text-sm font-medium">{t("messageBody")}</Label>
               <Textarea
                 value={composeBody}
                 onChange={e => setComposeBody(e.target.value)}
-                placeholder="Текст сообщения..."
+                placeholder={t("messageBodyPlaceholder")}
                 rows={4}
                 className="mt-1.5"
               />
@@ -707,14 +710,14 @@ export default function InboxPage() {
           </div>
         </DialogContent>
         <DialogFooter>
-          <Button variant="outline" onClick={() => setShowCompose(false)}>Отмена</Button>
+          <Button variant="outline" onClick={() => setShowCompose(false)}>{tc("cancel")}</Button>
           <Button
             onClick={handleCompose}
             disabled={composeSending || !composeTo.trim() || !composeBody.trim()}
             className="gap-1.5"
           >
             {composeSending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-            {composeSending ? "Отправка..." : "Отправить"}
+            {composeSending ? tc("sending") : tc("send")}
           </Button>
         </DialogFooter>
       </Dialog>

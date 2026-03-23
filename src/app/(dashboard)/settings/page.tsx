@@ -4,78 +4,30 @@ import { useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { ChevronRight, CreditCard, Users, Radio, Zap, Layers, Globe, Lock, FileText, Clock, Shield } from "lucide-react"
-
-const SETTINGS_SECTIONS = [
-  {
-    icon: CreditCard,
-    title: "Billing",
-    description: "Plans, invoices, payment methods",
-    href: "/settings/billing",
-  },
-  {
-    icon: Users,
-    title: "Roles & Permissions",
-    description: "Manage user roles and access",
-    href: "/settings/roles",
-  },
-  {
-    icon: Radio,
-    title: "Channels",
-    description: "Configure communication channels",
-    href: "/settings/channels",
-  },
-  {
-    icon: Zap,
-    title: "Workflows",
-    description: "Create and manage automation rules",
-    href: "/settings/workflows",
-  },
-  {
-    icon: Layers,
-    title: "Custom Fields",
-    description: "Add custom fields to entities",
-    href: "/settings/custom-fields",
-  },
-  {
-    icon: Globe,
-    title: "Currencies",
-    description: "Manage supported currencies",
-    href: "/settings/currencies",
-  },
-  {
-    icon: Clock,
-    title: "SLA Policies",
-    description: "Response and resolution time targets",
-    href: "/settings/sla-policies",
-  },
-  {
-    icon: Shield,
-    title: "Portal Users",
-    description: "Manage client portal access and passwords",
-    href: "/settings/portal-users",
-  },
-  {
-    icon: Lock,
-    title: "Security",
-    description: "Password policies, 2FA, API keys",
-    href: "/settings/security",
-  },
-  {
-    icon: FileText,
-    title: "Audit Log",
-    description: "View all system activity",
-    href: "/settings/audit-log",
-  },
-]
+import { useTranslations } from "next-intl"
 
 export default function SettingsPage() {
   const router = useRouter()
+  const t = useTranslations("settings")
+
+  const SETTINGS_SECTIONS = [
+    { icon: CreditCard, title: t("billing"), description: t("billingDesc"), href: "/settings/billing" },
+    { icon: Users, title: t("roles"), description: t("rolesDesc"), href: "/settings/roles" },
+    { icon: Radio, title: t("channels"), description: t("channelsDesc"), href: "/settings/channels" },
+    { icon: Zap, title: t("workflows"), description: t("workflowsDesc"), href: "/settings/workflows" },
+    { icon: Layers, title: t("customFields"), description: t("customFieldsDesc"), href: "/settings/custom-fields" },
+    { icon: Globe, title: t("currencies"), description: t("currenciesDesc"), href: "/settings/currencies" },
+    { icon: Clock, title: t("slaPolicies"), description: t("slaPoliciesDesc"), href: "/settings/sla-policies" },
+    { icon: Shield, title: t("portalUsers"), description: t("portalUsersDesc"), href: "/settings/portal-users" },
+    { icon: Lock, title: t("security"), description: t("securityDesc"), href: "/settings/security" },
+    { icon: FileText, title: t("auditLog"), description: t("auditLogDesc"), href: "/settings/audit-log" },
+  ]
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
-        <p className="text-muted-foreground">Manage your account and system preferences</p>
+        <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
+        <p className="text-muted-foreground">{t("subtitle")}</p>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
@@ -83,7 +35,7 @@ export default function SettingsPage() {
           const IconComponent = section.icon
           return (
             <Card
-              key={section.title}
+              key={section.href}
               className="cursor-pointer hover:shadow-lg transition-shadow"
               onClick={() => router.push(section.href)}
             >

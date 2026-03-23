@@ -3,22 +3,13 @@
 import { useEffect, useState } from "react"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
+import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { StatCard } from "@/components/stat-card"
 import { KanbanBoard } from "@/components/deals/kanban-board"
 import { Select } from "@/components/ui/select"
 import { Handshake, Plus, TrendingUp, TrendingDown } from "lucide-react"
-import { t, getLocale } from "@/lib/locale"
 import { DealForm } from "@/components/deal-form"
-
-const STAGES = [
-  { name: "LEAD", displayName: "Lead", color: "#6366f1" },
-  { name: "QUALIFIED", displayName: "Qualified", color: "#3b82f6" },
-  { name: "PROPOSAL", displayName: "Proposal", color: "#f59e0b" },
-  { name: "NEGOTIATION", displayName: "Negotiation", color: "#f97316" },
-  { name: "WON", displayName: "Won", color: "#22c55e" },
-  { name: "LOST", displayName: "Lost", color: "#ef4444" },
-]
 
 interface Deal {
   id: string
@@ -35,6 +26,8 @@ interface Deal {
 }
 
 export default function DealsPage() {
+  const t = useTranslations("deals")
+  const tc = useTranslations("common")
   const { data: session } = useSession()
   const router = useRouter()
   const [deals, setDeals] = useState<Deal[]>([])
@@ -42,6 +35,15 @@ export default function DealsPage() {
   const [formOpen, setFormOpen] = useState(false)
   const [sortBy, setSortBy] = useState("newest")
   const orgId = session?.user?.organizationId
+
+  const STAGES = [
+    { name: "LEAD", displayName: t("stageLead"), color: "#6366f1" },
+    { name: "QUALIFIED", displayName: t("stageQualified"), color: "#3b82f6" },
+    { name: "PROPOSAL", displayName: t("stageProposal"), color: "#f59e0b" },
+    { name: "NEGOTIATION", displayName: t("stageNegotiation"), color: "#f97316" },
+    { name: "WON", displayName: t("stageWon"), color: "#22c55e" },
+    { name: "LOST", displayName: t("stageLost"), color: "#ef4444" },
+  ]
 
   const fetchDeals = async () => {
     try {
@@ -84,7 +86,7 @@ export default function DealsPage() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <h1 className="text-2xl font-bold tracking-tight">{t("Deals Pipeline")}</h1>
+        <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
         <div className="animate-pulse"><div className="h-96 bg-muted rounded-lg" /></div>
       </div>
     )
@@ -94,26 +96,26 @@ export default function DealsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">{t("Deals Pipeline")}</h1>
-          <p className="text-sm text-muted-foreground">{deals.length} deals total</p>
+          <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
+          <p className="text-sm text-muted-foreground">{deals.length} {t("totalDeals")}</p>
         </div>
         <div className="flex gap-2">
           <Select value={sortBy} onChange={e => setSortBy(e.target.value)} className="w-[180px]">
-            <option value="newest">Новые первые</option>
-            <option value="oldest">Старые первые</option>
-            <option value="value_desc">Сумма ↓</option>
-            <option value="value_asc">Сумма ↑</option>
-            <option value="name">Имя А → Я</option>
+            <option value="newest">{t("sortNewest")}</option>
+            <option value="oldest">{t("sortOldest")}</option>
+            <option value="value_desc">{t("sortAmountDesc")}</option>
+            <option value="value_asc">{t("sortAmountAsc")}</option>
+            <option value="name">{t("sortNameAsc")}</option>
           </Select>
-          <Button onClick={() => setFormOpen(true)}><Plus className="h-4 w-4 mr-1" /> Новая сделка</Button>
+          <Button onClick={() => setFormOpen(true)}><Plus className="h-4 w-4 mr-1" /> {t("newDeal")}</Button>
         </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-4">
-        <StatCard title={t("Total Deals")} value={deals.length} icon={<Handshake className="h-4 w-4" />} />
-        <StatCard title={t("Pipeline Value")} value={`${totalValue.toLocaleString()} ₼`} icon={<TrendingUp className="h-4 w-4" />} />
-        <StatCard title="Won" value={`${wonValue.toLocaleString()} ₼`} description={`${wonDeals.length} deals`} trend="up" />
-        <StatCard title="Lost" value={deals.filter(d => d.stage === "LOST").length} icon={<TrendingDown className="h-4 w-4" />} trend="down" />
+        <StatCard title={t("statTotal")} value={deals.length} icon={<Handshake className="h-4 w-4" />} />
+        <StatCard title={t("statPipelineValue")} value={`${totalValue.toLocaleString()} ₼`} icon={<TrendingUp className="h-4 w-4" />} />
+        <StatCard title={t("statWon")} value={`${wonValue.toLocaleString()} ₼`} description={`${wonDeals.length} ${t("totalDeals")}`} trend="up" />
+        <StatCard title={t("statLost")} value={deals.filter(d => d.stage === "LOST").length} icon={<TrendingDown className="h-4 w-4" />} trend="down" />
       </div>
 
       <KanbanBoard

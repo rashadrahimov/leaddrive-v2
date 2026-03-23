@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useSession } from "next-auth/react"
+import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { DataTable } from "@/components/data-table"
@@ -25,6 +26,7 @@ const statusColors: Record<string, "default" | "secondary" | "destructive" | "ou
 
 export default function OffersPage() {
   const { data: session } = useSession()
+  const t = useTranslations("offers")
   const [offers, setOffers] = useState<Offer[]>([])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
@@ -60,18 +62,18 @@ export default function OffersPage() {
   }
 
   const columns = [
-    { key: "offerNumber", label: "Number", sortable: true },
-    { key: "title", label: "Title", sortable: true },
+    { key: "offerNumber", label: t("colNumber"), sortable: true },
+    { key: "title", label: t("colTitle"), sortable: true },
     {
-      key: "totalAmount", label: "Amount", sortable: true,
+      key: "totalAmount", label: t("colAmount"), sortable: true,
       render: (item: any) => <span className="font-medium">{item.totalAmount ? item.totalAmount.toLocaleString() : "—"} {item.currency}</span>,
     },
     {
-      key: "status", label: "Status", sortable: true,
+      key: "status", label: t("colStatus"), sortable: true,
       render: (item: any) => <Badge variant={statusColors[item.status]}>{item.status}</Badge>,
     },
     {
-      key: "validUntil", label: "Valid Until", sortable: true,
+      key: "validUntil", label: t("colValidUntil"), sortable: true,
       render: (item: any) => item.validUntil ? new Date(item.validUntil).toLocaleDateString() : "—",
     },
     {
@@ -92,7 +94,7 @@ export default function OffersPage() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <h1 className="text-2xl font-bold tracking-tight">Offers</h1>
+        <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
         <div className="animate-pulse h-96 bg-muted rounded-lg" />
       </div>
     )
@@ -102,12 +104,12 @@ export default function OffersPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Offers</h1>
-          <p className="text-sm text-muted-foreground">Create and track proposals</p>
+          <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
+          <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
         </div>
-        <Button onClick={() => { setEditData(undefined); setShowForm(true) }}><Plus className="h-4 w-4 mr-1" /> New Offer</Button>
+        <Button onClick={() => { setEditData(undefined); setShowForm(true) }}><Plus className="h-4 w-4 mr-1" /> {t("newOffer")}</Button>
       </div>
-      <DataTable columns={columns} data={offers} searchPlaceholder="Search offers..." searchKey="title" />
+      <DataTable columns={columns} data={offers} searchPlaceholder={t("searchPlaceholder")} searchKey="title" />
 
       <OfferForm
         open={showForm}
@@ -121,7 +123,7 @@ export default function OffersPage() {
         open={!!deleteId}
         onOpenChange={(open) => { if (!open) setDeleteId(null) }}
         onConfirm={handleDelete}
-        title="Delete Offer"
+        title={t("deleteOffer")}
         itemName={deleteName}
       />
     </div>

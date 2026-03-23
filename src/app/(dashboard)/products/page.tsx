@@ -16,6 +16,7 @@ import { DataTable } from "@/components/data-table"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
 import { Package, Plus, Pencil, Trash2, DollarSign, Tag, Layers, CheckCircle, XCircle } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useTranslations } from "next-intl"
 
 interface Product {
   id: string
@@ -30,12 +31,8 @@ interface Product {
   createdAt: string
 }
 
-const CATEGORIES = [
-  { value: "service", label: "Service" },
-  { value: "product", label: "Product" },
-  { value: "addon", label: "Add-on" },
-  { value: "consulting", label: "Consulting" },
-]
+// Category labels defined inside component for i18n
+const CATEGORY_KEYS = ["service", "product", "addon", "consulting"]
 
 const categoryColors: Record<string, string> = {
   service: "bg-blue-100 text-blue-800",
@@ -47,7 +44,11 @@ const categoryColors: Record<string, string> = {
 export default function ProductsPage() {
   const { data: session } = useSession()
   const router = useRouter()
+  const t = useTranslations("products")
+  const tc = useTranslations("common")
   const orgId = session?.user?.organizationId
+  const catLabelKeys: Record<string, string> = { service: "categoryService", product: "categoryProduct", addon: "categoryAddon", consulting: "categoryConsulting" }
+  const CATEGORIES = CATEGORY_KEYS.map(k => ({ value: k, label: t(catLabelKeys[k]) }))
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [formOpen, setFormOpen] = useState(false)
@@ -135,7 +136,7 @@ export default function ProductsPage() {
 
   const columns = [
     {
-      key: "name", label: "Product", sortable: true,
+      key: "name", label: t("colProduct"), sortable: true,
       render: (item: any) => (
         <div className="flex items-center gap-3">
           <div className="h-9 w-9 rounded-lg bg-amber-100 flex items-center justify-center flex-shrink-0">
@@ -149,7 +150,7 @@ export default function ProductsPage() {
       ),
     },
     {
-      key: "category", label: "Category", sortable: true,
+      key: "category", label: t("colCategory"), sortable: true,
       render: (item: any) => (
         <Badge className={cn("text-xs", categoryColors[item.category] || "bg-gray-100 text-gray-800")}>
           {item.category}
@@ -157,7 +158,7 @@ export default function ProductsPage() {
       ),
     },
     {
-      key: "price", label: "Price", sortable: true,
+      key: "price", label: t("colPrice"), sortable: true,
       render: (item: any) => (
         <span className="text-sm font-semibold text-primary">
           {item.price > 0 ? `${item.price.toLocaleString()} ${item.currency}` : "Free"}
@@ -165,7 +166,7 @@ export default function ProductsPage() {
       ),
     },
     {
-      key: "features", label: "Features",
+      key: "features", label: t("colFeatures"),
       render: (item: any) => (
         <div className="flex gap-1 flex-wrap">
           {(item.features || []).slice(0, 3).map((f: string, i: number) => (
@@ -176,10 +177,10 @@ export default function ProductsPage() {
       ),
     },
     {
-      key: "isActive", label: "Status", sortable: true,
+      key: "isActive", label: t("colStatus"), sortable: true,
       render: (item: any) => (
         <Badge className={item.isActive ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"}>
-          {item.isActive ? "Active" : "Inactive"}
+          {item.isActive ? tc("active") : tc("inactive")}
         </Badge>
       ),
     },
@@ -202,24 +203,24 @@ export default function ProductsPage() {
             <Package className="h-5 w-5 text-amber-600" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Products & Services</h1>
-            <p className="text-sm text-muted-foreground">Manage your product catalog for recommendations and deals</p>
+            <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
+            <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
           </div>
         </div>
-        <Button onClick={openCreate}><Plus className="h-4 w-4 mr-1" /> New Product</Button>
+        <Button onClick={openCreate}><Plus className="h-4 w-4 mr-1" /> {t("newProduct")}</Button>
       </div>
 
       <div className="grid gap-4 md:grid-cols-4">
-        <StatCard title="Total Products" value={products.length} icon={<Package className="h-4 w-4" />} />
-        <StatCard title="Active" value={activeCount} icon={<CheckCircle className="h-4 w-4" />} />
-        <StatCard title="Total Value" value={`${totalValue.toLocaleString()} AZN`} icon={<DollarSign className="h-4 w-4" />} />
-        <StatCard title="Categories" value={[...new Set(products.map(p => p.category))].length} icon={<Layers className="h-4 w-4" />} />
+        <StatCard title={t("statTotal")} value={products.length} icon={<Package className="h-4 w-4" />} />
+        <StatCard title={t("statActive")} value={activeCount} icon={<CheckCircle className="h-4 w-4" />} />
+        <StatCard title={t("statTotalValue")} value={`${totalValue.toLocaleString()} AZN`} icon={<DollarSign className="h-4 w-4" />} />
+        <StatCard title={t("statCategories")} value={[...new Set(products.map(p => p.category))].length} icon={<Layers className="h-4 w-4" />} />
       </div>
 
       {/* Filter tabs */}
       <div className="flex items-center gap-2 flex-wrap">
         {[
-          { key: "all", label: "All", count: products.length },
+          { key: "all", label: tc("all"), count: products.length },
           ...CATEGORIES.map(c => ({ key: c.value, label: c.label, count: products.filter(p => p.category === c.value).length })),
         ].filter(t => t.key === "all" || t.count > 0).map(tab => (
           <button
@@ -235,31 +236,31 @@ export default function ProductsPage() {
         ))}
       </div>
 
-      <DataTable columns={columns} data={filtered} searchPlaceholder="Search products..." searchKey="name" onRowClick={(item) => router.push(`/products/${item.id}`)} />
+      <DataTable columns={columns} data={filtered} searchPlaceholder={t("searchPlaceholder")} searchKey="name" onRowClick={(item) => router.push(`/products/${item.id}`)} />
 
       {/* Create/Edit Dialog */}
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
         <DialogHeader>
-          <DialogTitle>{editItem ? "Edit Product" : "New Product"}</DialogTitle>
+          <DialogTitle>{editItem ? t("editProduct") : t("newProduct")}</DialogTitle>
         </DialogHeader>
         <DialogContent className="space-y-4">
           <div>
-            <Label>Name *</Label>
+            <Label>{t("nameLabel")} *</Label>
             <Input value={name} onChange={e => setName(e.target.value)} placeholder="Cloud Migration Package" />
           </div>
           <div>
-            <Label>Description</Label>
+            <Label>{t("descriptionLabel")}</Label>
             <Textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="Complete migration from on-premise to cloud..." rows={3} />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label>Category</Label>
+              <Label>{tc("category")}</Label>
               <Select value={category} onChange={e => setCategory(e.target.value)}>
                 {CATEGORIES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
               </Select>
             </div>
             <div>
-              <Label>Price</Label>
+              <Label>{t("priceLabel")}</Label>
               <div className="flex gap-2">
                 <Input type="number" value={price} onChange={e => setPrice(e.target.value)} placeholder="0" className="flex-1" />
                 <Select value={currency} onChange={e => setCurrency(e.target.value)} className="w-24">
@@ -271,27 +272,27 @@ export default function ProductsPage() {
             </div>
           </div>
           <div>
-            <Label>Features (comma-separated)</Label>
+            <Label>{t("featuresLabel")}</Label>
             <Input value={featuresStr} onChange={e => setFeaturesStr(e.target.value)} placeholder="Azure/AWS, Zero Downtime, Data Migration" />
           </div>
           <div>
-            <Label>Tags (comma-separated)</Label>
+            <Label>{t("tagsLabel")}</Label>
             <Input value={tagsStr} onChange={e => setTagsStr(e.target.value)} placeholder="cloud, migration, enterprise" />
           </div>
           <div className="flex items-center gap-2">
             <input type="checkbox" checked={isActive} onChange={e => setIsActive(e.target.checked)} id="isActive" className="rounded" />
-            <Label htmlFor="isActive">Active</Label>
+            <Label htmlFor="isActive">{t("activeLabel")}</Label>
           </div>
         </DialogContent>
         <DialogFooter>
-          <Button variant="outline" onClick={() => setFormOpen(false)}>Cancel</Button>
+          <Button variant="outline" onClick={() => setFormOpen(false)}>{tc("cancel")}</Button>
           <Button onClick={handleSave} disabled={saving || !name.trim()}>
-            {saving ? "Saving..." : editItem ? "Save Changes" : "Create Product"}
+            {saving ? tc("saving") : editItem ? t("saveChanges") : t("createProduct")}
           </Button>
         </DialogFooter>
       </Dialog>
 
-      <DeleteConfirmDialog open={deleteOpen} onOpenChange={setDeleteOpen} onConfirm={confirmDelete} title="Delete Product" itemName={deleteItem?.name} />
+      <DeleteConfirmDialog open={deleteOpen} onOpenChange={setDeleteOpen} onConfirm={confirmDelete} title={t("deleteProduct")} itemName={deleteItem?.name} />
     </div>
   )
 }

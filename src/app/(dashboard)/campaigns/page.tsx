@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
+import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { StatCard } from "@/components/stat-card"
@@ -34,14 +35,6 @@ interface Campaign {
   createdAt: string
 }
 
-const statusLabels: Record<string, string> = {
-  draft: "Черновик",
-  scheduled: "Запланирована",
-  sending: "Отправляется",
-  sent: "Отправлена",
-  cancelled: "Отменена",
-}
-
 const statusColors: Record<string, string> = {
   draft: "text-gray-500",
   scheduled: "text-amber-500",
@@ -58,6 +51,7 @@ const typeIcons: Record<string, string> = {
 export default function CampaignsPage() {
   const { data: session } = useSession()
   const router = useRouter()
+  const t = useTranslations("campaigns")
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
@@ -67,6 +61,14 @@ export default function CampaignsPage() {
   const [deleteName, setDeleteName] = useState("")
   const [search, setSearch] = useState("")
   const orgId = session?.user?.organizationId
+
+  const statusLabels: Record<string, string> = {
+    draft: t("statusDraft"),
+    scheduled: t("statusScheduled"),
+    sending: t("statusSending"),
+    sent: t("statusSent"),
+    cancelled: t("statusCancelled"),
+  }
 
   const fetchCampaigns = async () => {
     try {
@@ -93,7 +95,7 @@ export default function CampaignsPage() {
   }
 
   const handleSend = async (campaign: Campaign) => {
-    if (!confirm(`Отправить кампанию "${campaign.name}"?\n\nПолучателей: ${campaign.totalRecipients}`)) return
+    if (!confirm(`${t("sendCampaign")} "${campaign.name}"?\n\n${t("recipients")}: ${campaign.totalRecipients}`)) return
     try {
       const res = await fetch(`/api/v1/campaigns/${campaign.id}/send`, {
         method: "POST",
@@ -102,22 +104,22 @@ export default function CampaignsPage() {
       const json = await res.json()
       if (!res.ok) {
         if (json.smtpMissing) {
-          alert("⚠️ SMTP не настроен!\n\nДля отправки email нужно настроить переменные окружения:\n• SMTP_HOST\n• SMTP_USER\n• SMTP_PASS\n\nОбратитесь к администратору.")
+          alert(t("smtpNotConfigured"))
         } else {
-          alert(`Ошибка: ${json.error || "Ошибка отправки"}`)
+          alert(json.error || "Error")
         }
         return
       }
       if (json.data.sent === 0) {
-        alert(`⚠️ Ни одно письмо не отправлено (0 из ${json.data.total}).\n\nВозможно SMTP настроен неправильно.`)
+        alert(`${t("sentToRecipients")}: 0 / ${json.data.total}`)
       } else {
-        alert(`✅ Отправлено ${json.data.sent} из ${json.data.total} получателям`)
+        alert(`${t("sentToRecipients")}: ${json.data.sent} / ${json.data.total}`)
       }
       setShowForm(false)
       setEditData(undefined)
       fetchCampaigns()
     } catch (err: any) {
-      alert(`Ошибка: ${err.message}`)
+      alert(err.message)
     }
   }
 
@@ -135,7 +137,7 @@ export default function CampaignsPage() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <h1 className="text-2xl font-bold tracking-tight">Кампании</h1>
+        <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
         <div className="animate-pulse space-y-4">
           <div className="grid gap-4 md:grid-cols-5">{[1, 2, 3, 4, 5].map(i => <div key={i} className="h-24 bg-muted rounded-lg" />)}</div>
           <div className="h-96 bg-muted rounded-lg" />
@@ -148,28 +150,28 @@ export default function CampaignsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Кампании</h1>
-          <p className="text-sm text-muted-foreground">Создавайте и отправляйте массовые email/SMS рассылки контактам и лидам</p>
+          <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
+          <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
         </div>
         <Button onClick={() => { setEditData(undefined); setShowForm(true) }}>
-          <Plus className="h-4 w-4 mr-1" /> Новая кампания
+          <Plus className="h-4 w-4 mr-1" /> {t("newCampaign")}
         </Button>
       </div>
 
-      {/* Stats — 5 status cards like v1 */}
+      {/* Stats — 5 status cards */}
       <div className="grid gap-4 md:grid-cols-5">
-        <StatCard title="Черновик" value={statusCounts.draft} />
-        <StatCard title="Запланирована" value={statusCounts.scheduled} />
-        <StatCard title="Отправляется" value={statusCounts.sending} />
-        <StatCard title="Отправлена" value={statusCounts.sent} />
-        <StatCard title="Отменена" value={statusCounts.cancelled} />
+        <StatCard title={t("statusDraft")} value={statusCounts.draft} />
+        <StatCard title={t("statusScheduled")} value={statusCounts.scheduled} />
+        <StatCard title={t("statusSending")} value={statusCounts.sending} />
+        <StatCard title={t("statusSent")} value={statusCounts.sent} />
+        <StatCard title={t("statusCancelled")} value={statusCounts.cancelled} />
       </div>
 
       {/* Search */}
       <div className="relative max-w-md">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
-          placeholder="Поиск кампаний..."
+          placeholder={t("searchPlaceholder")}
           value={search}
           onChange={e => setSearch(e.target.value)}
           className="pl-9"
@@ -180,7 +182,7 @@ export default function CampaignsPage() {
       <div className="space-y-3">
         {filtered.length === 0 ? (
           <div className="text-center py-12 text-muted-foreground">
-            {campaigns.length === 0 ? "Нет кампаний. Создайте первую!" : "Ничего не найдено"}
+            {campaigns.length === 0 ? t("noCampaigns") : t("noResults")}
           </div>
         ) : (
           filtered.map(campaign => (
@@ -216,12 +218,12 @@ export default function CampaignsPage() {
                   {campaign.status === "sent" ? (
                     <div>
                       <div className="text-lg font-bold text-green-600">{campaign.totalSent}/{campaign.totalRecipients}</div>
-                      <div className="text-xs text-muted-foreground">Отправлено</div>
+                      <div className="text-xs text-muted-foreground">{t("sent")}</div>
                     </div>
                   ) : campaign.budget ? (
                     <div>
                       <div className="text-lg font-bold">{campaign.budget.toLocaleString()}</div>
-                      <div className="text-xs text-muted-foreground">Бюджет</div>
+                      <div className="text-xs text-muted-foreground">{t("budget")}</div>
                     </div>
                   ) : null}
                 </div>
@@ -251,7 +253,7 @@ export default function CampaignsPage() {
         open={!!deleteId}
         onOpenChange={(open) => { if (!open) setDeleteId(null) }}
         onConfirm={handleDelete}
-        title="Удалить кампанию"
+        title={t("deleteCampaign")}
         itemName={deleteName}
       />
     </div>

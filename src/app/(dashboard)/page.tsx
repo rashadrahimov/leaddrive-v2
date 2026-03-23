@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { useSession } from "next-auth/react"
 import { useCountUp } from "@/hooks/use-count-up"
-import { t } from "@/lib/locale"
+import { useTranslations } from "next-intl"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import {
@@ -25,15 +25,6 @@ const SERVICE_COLORS = ["#1B2A4A", "#2D4A7A", "#4A6FA5", "#E91E63", "#FF9800", "
 
 function fmt(n: number): string {
   return n.toLocaleString("ru-RU", { maximumFractionDigits: 0 })
-}
-
-function timeAgo(d: string): string {
-  const diff = Date.now() - new Date(d).getTime()
-  const m = Math.floor(diff / 60000)
-  if (m < 60) return `${m} мин`
-  const h = Math.floor(m / 60)
-  if (h < 24) return `${h} ч`
-  return `${Math.floor(h / 24)} дн`
 }
 
 const actIcons: Record<string, string> = {
@@ -75,13 +66,6 @@ function KpiCard({ title, value, sub, icon, color, alert }: {
   )
 }
 
-function getGreeting(): string {
-  const h = new Date().getHours()
-  if (h < 12) return "Доброе утро"
-  if (h < 18) return "Добрый день"
-  return "Добрый вечер"
-}
-
 const statusLabels: Record<string, string> = {
   new: "Новый", in_progress: "В работе", waiting: "Ожидание",
   resolved: "Решён", closed: "Закрыт",
@@ -91,8 +75,27 @@ const statusLabels: Record<string, string> = {
 
 export default function DashboardPage() {
   const { data: session } = useSession()
+  const t = useTranslations("dashboard")
+  const tc = useTranslations("common")
+  const tn = useTranslations("nav")
   const [data, setData] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+
+  function timeAgo(d: string): string {
+    const diff = Date.now() - new Date(d).getTime()
+    const m = Math.floor(diff / 60000)
+    if (m < 60) return `${m} ${tc("min")}`
+    const h = Math.floor(m / 60)
+    if (h < 24) return `${h} ${tc("hours")}`
+    return `${Math.floor(h / 24)} ${tc("days")}`
+  }
+
+  function getGreeting(): string {
+    const h = new Date().getHours()
+    if (h < 12) return t("greeting.morning")
+    if (h < 18) return t("greeting.afternoon")
+    return t("greeting.evening")
+  }
 
   useEffect(() => {
     async function load() {
@@ -123,7 +126,7 @@ export default function DashboardPage() {
     )
   }
 
-  if (!data) return <div className="py-20 text-center text-muted-foreground">Нет данных</div>
+  if (!data) return <div className="py-20 text-center text-muted-foreground">{t("noData")}</div>
 
   const { financial, clients, pipeline, leads, operations, tasks, activity, risks, financialOverview, forecast, atRiskDeals } = data
   const marginColor = financial.marginPct >= 15 ? COLORS.revenue : financial.marginPct >= 5 ? "#f59e0b" : COLORS.cost
@@ -139,41 +142,41 @@ export default function DashboardPage() {
       {/* ═══ Header ═══ */}
       <div>
         <h1 className="text-2xl font-bold tracking-tight">
-          {getGreeting()}, {session?.user?.name || "Директор"}
+          {getGreeting()}, {session?.user?.name || "Director"}
         </h1>
         <p className="text-sm text-muted-foreground">
-          Панель руководителя · {new Date().toLocaleDateString("ru", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
+          {t("executivePanel")} · {new Date().toLocaleDateString("ru", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
         </p>
       </div>
 
       {/* ═══ 4 Main KPIs ═══ */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <KpiCard
-          title="Месячный доход"
+          title={t("monthlyRevenue")}
           value={`${fmt(financial.monthlyRevenue)} ₼`}
-          sub={`Маржа: ${fmt(financial.monthlyMargin)} ₼ (${financial.marginPct.toFixed(1)}%)`}
+          sub={`${t("margin")}: ${fmt(financial.monthlyMargin)} ₼ (${financial.marginPct.toFixed(1)}%)`}
           icon={<DollarSign className="h-5 w-5" />}
           color={COLORS.revenue}
           alert={financial.marginPct < 5 && financial.monthlyRevenue > 0}
         />
         <KpiCard
-          title="Воронка продаж"
+          title={t("pipeline")}
           value={`${fmt(financial.pipelineValue)} ₼`}
-          sub={`${pipeline.deals} сделок · ${pipeline.wonThisMonth} выиграно`}
+          sub={`${pipeline.deals} ${t("activeDeals")} · ${pipeline.wonThisMonth} ${t("wonDeals")}`}
           icon={<Handshake className="h-5 w-5" />}
           color="#3b82f6"
         />
         <KpiCard
-          title="Клиенты"
+          title={t("clients")}
           value={clients.total}
-          sub={`${clients.profitable} прибыльных · ${clients.loss} убыточных`}
+          sub={`${clients.profitable} ${t("profitable")} · ${clients.loss} ${t("unprofitable")}`}
           icon={<Building2 className="h-5 w-5" />}
           color="#6366f1"
         />
         <KpiCard
-          title="Открытые тикеты"
+          title={t("openTickets")}
           value={operations.openTickets}
-          sub={operations.slaBreached > 0 ? `⚠ ${operations.slaBreached} SLA нарушено` : `${tasks.overdue} задач просрочено`}
+          sub={operations.slaBreached > 0 ? `⚠ ${operations.slaBreached} ${t("slaBreached")}` : `${tasks.overdue} ${t("tasksOverdue")}`}
           icon={<Ticket className="h-5 w-5" />}
           color={operations.slaBreached > 0 ? COLORS.cost : "#0ea5a0"}
           alert={operations.slaBreached > 0}
@@ -208,7 +211,7 @@ export default function DashboardPage() {
         <Card className="lg:col-span-8">
           <CardHeader className="pb-2">
             <CardTitle className="text-base flex items-center gap-2">
-              <BarChart3 className="h-4 w-4" /> Доход по услугам
+              <BarChart3 className="h-4 w-4" /> {t("revenueByService")}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -218,7 +221,7 @@ export default function DashboardPage() {
                   <CartesianGrid strokeDasharray="3 3" horizontal={false} />
                   <XAxis type="number" tickFormatter={(v: number) => `${fmt(v)} ₼`} />
                   <YAxis type="category" dataKey="name" width={120} tick={{ fontSize: 12 }} />
-                  <Tooltip formatter={(v: number) => [`${v.toLocaleString()} ₼`, "Доход"]} />
+                  <Tooltip formatter={(v: number) => [`${v.toLocaleString()} ₼`, tc("revenue")]} />
                   <Bar dataKey="value" radius={[0, 4, 4, 0]}>
                     {financial.revenueByService.map((_: any, i: number) => (
                       <Cell key={i} fill={SERVICE_COLORS[i % SERVICE_COLORS.length]} />
@@ -227,7 +230,7 @@ export default function DashboardPage() {
                 </BarChart>
               </ResponsiveContainer>
             ) : (
-              <div className="h-[280px] flex items-center justify-center text-muted-foreground">Нет данных</div>
+              <div className="h-[280px] flex items-center justify-center text-muted-foreground">{t("noData")}</div>
             )}
           </CardContent>
         </Card>
@@ -236,7 +239,7 @@ export default function DashboardPage() {
         <Card className="lg:col-span-4">
           <CardHeader className="pb-2">
             <CardTitle className="text-base flex items-center gap-2">
-              <Target className="h-4 w-4" /> Воронка продаж
+              <Target className="h-4 w-4" /> {t("salesPipeline")}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -265,15 +268,15 @@ export default function DashboardPage() {
             <div className="grid grid-cols-3 gap-2 mt-4 pt-3 border-t text-center">
               <div>
                 <div className="text-lg font-bold text-green-600">{pipeline.wonThisMonth}</div>
-                <div className="text-[10px] text-muted-foreground">Выиграно</div>
+                <div className="text-[10px] text-muted-foreground">{t("won")}</div>
               </div>
               <div>
                 <div className="text-lg font-bold text-red-500">{pipeline.lostThisMonth}</div>
-                <div className="text-[10px] text-muted-foreground">Проиграно</div>
+                <div className="text-[10px] text-muted-foreground">{t("lost")}</div>
               </div>
               <div>
                 <div className="text-lg font-bold text-blue-600">{fmt(pipeline.wonValue)} ₼</div>
-                <div className="text-[10px] text-muted-foreground">Сумма побед</div>
+                <div className="text-[10px] text-muted-foreground">{t("totalWon")}</div>
               </div>
             </div>
           </CardContent>
@@ -286,7 +289,7 @@ export default function DashboardPage() {
         <Card className="lg:col-span-5">
           <CardHeader className="pb-2">
             <CardTitle className="text-base flex items-center gap-2">
-              <TrendingUp className="h-4 w-4" /> Прогноз продаж (6 мес.)
+              <TrendingUp className="h-4 w-4" /> {t("salesForecast")}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -296,14 +299,14 @@ export default function DashboardPage() {
                   <CartesianGrid strokeDasharray="3 3" vertical={false} />
                   <XAxis dataKey="month" tick={{ fontSize: 11 }} />
                   <YAxis tickFormatter={(v: number) => fmt(v)} tick={{ fontSize: 11 }} />
-                  <Tooltip formatter={(v: number, name: string) => [`${v.toLocaleString()} ₼`, name === "actual" ? "Факт" : "Прогноз"]} />
-                  <Legend formatter={(v: string) => v === "actual" ? "Факт" : "Прогноз"} />
+                  <Tooltip formatter={(v: number, name: string) => [`${v.toLocaleString()} ₼`, name === "actual" ? t("actual") : t("projected")]} />
+                  <Legend formatter={(v: string) => v === "actual" ? t("actual") : t("projected")} />
                   <Bar dataKey="actual" fill="#22c55e" radius={[4, 4, 0, 0]} name="actual" />
                   <Bar dataKey="projected" fill="#3b82f6" radius={[4, 4, 0, 0]} name="projected" opacity={0.6} />
                 </BarChart>
               </ResponsiveContainer>
             ) : (
-              <div className="h-[220px] flex items-center justify-center text-muted-foreground">Нет данных</div>
+              <div className="h-[220px] flex items-center justify-center text-muted-foreground">{t("noData")}</div>
             )}
           </CardContent>
         </Card>
@@ -312,30 +315,30 @@ export default function DashboardPage() {
         <Card className="lg:col-span-4">
           <CardHeader className="pb-2">
             <CardTitle className="text-base flex items-center gap-2">
-              <Shield className="h-4 w-4" /> Здоровье клиентов
+              <Shield className="h-4 w-4" /> {t("clientHealth")}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex gap-3 mb-3">
               <div className="flex-1 text-center p-2 rounded-lg bg-green-50 dark:bg-green-950/20 border border-green-200/50">
                 <div className="text-xl font-bold text-green-600">{clients.profitable}</div>
-                <div className="text-[10px] text-green-600">Прибыльных</div>
+                <div className="text-[10px] text-green-600">{t("profitable")}</div>
               </div>
               <div className="flex-1 text-center p-2 rounded-lg bg-red-50 dark:bg-red-950/20 border border-red-200/50">
                 <div className="text-xl font-bold text-red-600">{clients.loss}</div>
-                <div className="text-[10px] text-red-600">Убыточных</div>
+                <div className="text-[10px] text-red-600">{t("unprofitable")}</div>
               </div>
               <div className="flex-1 text-center p-2 rounded-lg bg-slate-50 dark:bg-slate-950/20 border border-slate-200/50">
                 <div className="text-xl font-bold text-slate-500">{clients.noRevenue}</div>
-                <div className="text-[10px] text-slate-500">Без дохода</div>
+                <div className="text-[10px] text-slate-500">{tc("noData")}</div>
               </div>
             </div>
             {clients.topClients?.length > 0 && (
               <div className="space-y-1">
                 <div className="flex text-[10px] text-muted-foreground mb-1">
-                  <span className="flex-1">Топ-5</span>
-                  <span className="w-16 text-right">Доход</span>
-                  <span className="w-12 text-right">Маржа</span>
+                  <span className="flex-1">{t("topClients")}</span>
+                  <span className="w-16 text-right">{t("revenueCol")}</span>
+                  <span className="w-12 text-right">{t("marginCol")}</span>
                 </div>
                 {clients.topClients.map((c: any, i: number) => (
                   <div key={i} className="flex items-center text-xs py-1 border-b border-muted/50 last:border-0">
@@ -355,7 +358,7 @@ export default function DashboardPage() {
         <Card className="lg:col-span-3">
           <CardHeader className="pb-2">
             <CardTitle className="text-base flex items-center gap-2">
-              <Activity className="h-4 w-4" /> Активность
+              <Activity className="h-4 w-4" /> {t("activity")}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -372,7 +375,7 @@ export default function DashboardPage() {
                 </div>
               ))}
               {(activity.recent || []).length === 0 && (
-                <div className="text-xs text-muted-foreground py-4 text-center">Нет активности</div>
+                <div className="text-xs text-muted-foreground py-4 text-center">{t("noActivity")}</div>
               )}
             </div>
           </CardContent>
@@ -386,7 +389,7 @@ export default function DashboardPage() {
           <Card className="lg:col-span-8">
             <CardHeader className="pb-2">
               <CardTitle className="text-base flex items-center gap-2">
-                <Shield className="h-4 w-4 text-red-500" /> Сделки под угрозой
+                <Shield className="h-4 w-4 text-red-500" /> {t("atRiskDeals")}
                 <Badge variant="destructive" className="ml-auto text-xs">{atRiskDeals.length}</Badge>
               </CardTitle>
             </CardHeader>
@@ -417,16 +420,16 @@ export default function DashboardPage() {
         <Card className={atRiskDeals?.length > 0 ? "lg:col-span-4" : "lg:col-span-12"}>
           <CardHeader className="pb-2">
             <CardTitle className="text-base flex items-center gap-2">
-              <Clock className="h-4 w-4" /> Сводка
+              <Clock className="h-4 w-4" /> {t("summary")}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className={`grid gap-3 ${atRiskDeals?.length > 0 ? "" : "md:grid-cols-2 lg:grid-cols-4"}`}>
               {[
-                { label: "Конверсия лидов", value: `${leads.conversionRate || 0}%`, icon: <Target className="h-3.5 w-3.5 text-blue-500" /> },
+                { label: t("leadConversion"), value: `${leads.conversionRate || 0}%`, icon: <Target className="h-3.5 w-3.5 text-blue-500" /> },
                 { label: "CSAT", value: operations.csatScore > 0 ? `${operations.csatScore.toFixed(1)} ★` : "—", icon: <Star className="h-3.5 w-3.5 text-yellow-500" /> },
-                { label: "Задачи выполнены", value: `${tasks.completionRate}%`, icon: <CheckCircle2 className="h-3.5 w-3.5 text-green-500" /> },
-                { label: "Активность 30д", value: activity.count30d, icon: <Activity className="h-3.5 w-3.5 text-amber-500" /> },
+                { label: t("tasksCompleted"), value: `${tasks.completionRate}%`, icon: <CheckCircle2 className="h-3.5 w-3.5 text-green-500" /> },
+                { label: t("activity30d"), value: activity.count30d, icon: <Activity className="h-3.5 w-3.5 text-amber-500" /> },
               ].map(s => (
                 <div key={s.label} className="flex items-center gap-2.5">
                   {s.icon}
@@ -437,10 +440,10 @@ export default function DashboardPage() {
             </div>
             <div className="grid grid-cols-4 gap-2 mt-4 pt-3 border-t">
               {[
-                { label: "Сделки", href: "/deals", icon: <Handshake className="h-4 w-4" />, color: "bg-blue-50 text-blue-600 dark:bg-blue-950/30" },
-                { label: "Тикеты", href: "/tickets", icon: <Ticket className="h-4 w-4" />, color: "bg-violet-50 text-violet-600 dark:bg-violet-950/30" },
-                { label: "Отчёты", href: "/reports", icon: <BarChart3 className="h-4 w-4" />, color: "bg-amber-50 text-amber-600 dark:bg-amber-950/30" },
-                { label: "Компании", href: "/companies", icon: <Building2 className="h-4 w-4" />, color: "bg-green-50 text-green-600 dark:bg-green-950/30" },
+                { label: tn("deals"), href: "/deals", icon: <Handshake className="h-4 w-4" />, color: "bg-blue-50 text-blue-600 dark:bg-blue-950/30" },
+                { label: tn("tickets"), href: "/tickets", icon: <Ticket className="h-4 w-4" />, color: "bg-violet-50 text-violet-600 dark:bg-violet-950/30" },
+                { label: tn("reports"), href: "/reports", icon: <BarChart3 className="h-4 w-4" />, color: "bg-amber-50 text-amber-600 dark:bg-amber-950/30" },
+                { label: tn("companies"), href: "/companies", icon: <Building2 className="h-4 w-4" />, color: "bg-green-50 text-green-600 dark:bg-green-950/30" },
               ].map(q => (
                 <a key={q.label} href={q.href} className={`flex flex-col items-center gap-1 p-2 rounded-lg ${q.color} hover:opacity-80 transition-opacity`}>
                   {q.icon}

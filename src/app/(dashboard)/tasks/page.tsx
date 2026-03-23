@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react"
 import { useSession } from "next-auth/react"
+import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { DataTable } from "@/components/data-table"
@@ -25,21 +26,6 @@ interface Task {
 
 type ViewMode = "list" | "kanban" | "calendar"
 
-const statusLabels: Record<string, string> = {
-  pending: "К выполнению",
-  todo: "К выполнению",
-  in_progress: "В работе",
-  completed: "Выполнено",
-  cancelled: "Отменено",
-}
-
-const priorityLabels: Record<string, string> = {
-  urgent: "Срочный",
-  high: "Высокий",
-  medium: "Средний",
-  low: "Низкий",
-}
-
 const priorityColors: Record<string, "destructive" | "default" | "secondary" | "outline"> = {
   urgent: "destructive",
   high: "destructive",
@@ -57,13 +43,6 @@ const categoryIcons: Record<string, string> = {
   lead: "🎯",
   ticket: "🎫",
 }
-
-const monthNames = [
-  "Январь", "Февраль", "Март", "Апрель", "Май", "Июнь",
-  "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"
-]
-
-const dayNames = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"]
 
 function isOverdue(dueDate: string): boolean {
   if (!dueDate) return false
@@ -102,6 +81,7 @@ function isThisWeek(dateStr: string): boolean {
 
 // ─── Calendar Integration Modal ─────────────────────────────────
 function CalendarIntegrationModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const t = useTranslations("tasks")
   const [token, setToken] = useState<string | null>(null)
   const [feedUrl, setFeedUrl] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
@@ -146,19 +126,19 @@ function CalendarIntegrationModal({ open, onClose }: { open: boolean; onClose: (
       <div className="bg-background rounded-lg shadow-xl w-full max-w-lg mx-4 p-6" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-bold flex items-center gap-2">
-            <Link2 className="h-5 w-5" /> Подключить календарь
+            <Link2 className="h-5 w-5" /> {t("connectCalendar")}
           </h2>
           <button onClick={onClose} className="text-muted-foreground hover:text-foreground text-xl">&times;</button>
         </div>
 
         <p className="text-sm text-muted-foreground mb-4">
-          Подпишитесь на ваши задачи в Google Calendar, Apple Calendar или Outlook через ICS-ссылку.
+          {t("calendarSubscribeDesc")}
         </p>
 
         {feedUrl ? (
           <>
             <div className="mb-4">
-              <label className="text-sm font-medium mb-1 block">Ваша ссылка на календарь:</label>
+              <label className="text-sm font-medium mb-1 block">{t("calendarLinkLabel")}</label>
               <div className="flex gap-2">
                 <input
                   readOnly
@@ -172,19 +152,19 @@ function CalendarIntegrationModal({ open, onClose }: { open: boolean; onClose: (
             </div>
 
             <div className="space-y-3 mb-4">
-              <h3 className="text-sm font-semibold">Инструкции:</h3>
+              <h3 className="text-sm font-semibold">{t("calendarInstructions")}:</h3>
               <div className="space-y-2 text-sm text-muted-foreground">
                 <div className="flex gap-2">
-                  <span className="font-medium text-foreground min-w-[120px]">Apple Calendar:</span>
-                  <span>Файл → Новая подписка на календарь → вставьте ссылку</span>
+                  <span className="font-medium text-foreground min-w-[120px]">{t("appleCalendar")}</span>
+                  <span>{t("appleCalendarInstr")}</span>
                 </div>
                 <div className="flex gap-2">
-                  <span className="font-medium text-foreground min-w-[120px]">Google Calendar:</span>
-                  <span>Другие календари (+) → По URL → вставьте ссылку</span>
+                  <span className="font-medium text-foreground min-w-[120px]">{t("googleCalendar")}</span>
+                  <span>{t("googleCalendarInstr")}</span>
                 </div>
                 <div className="flex gap-2">
-                  <span className="font-medium text-foreground min-w-[120px]">Outlook:</span>
-                  <span>Добавить календарь → Из Интернета → вставьте ссылку</span>
+                  <span className="font-medium text-foreground min-w-[120px]">{t("outlookCalendar")}</span>
+                  <span>{t("outlookCalendarInstr")}</span>
                 </div>
               </div>
             </div>
@@ -194,23 +174,23 @@ function CalendarIntegrationModal({ open, onClose }: { open: boolean; onClose: (
                 href={feedUrl.replace("https://", "webcal://").replace("http://", "webcal://")}
                 className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
               >
-                <ExternalLink className="h-3.5 w-3.5" /> Открыть в календаре
+                <ExternalLink className="h-3.5 w-3.5" /> {t("calendarOpenInApp")}
               </a>
               <span className="text-muted-foreground">·</span>
               <button onClick={generateToken} disabled={loading} className="text-sm text-muted-foreground hover:text-foreground">
-                Сгенерировать новую ссылку
+                {t("calendarGenerateNew")}
               </button>
             </div>
 
             <div className="mt-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-md text-xs text-yellow-700 dark:text-yellow-300">
-              Эта ссылка даёт доступ к вашим задачам. Не делитесь ей с посторонними.
+              {t("calendarWarning")}
             </div>
           </>
         ) : (
           <div className="text-center py-6">
-            <p className="text-sm text-muted-foreground mb-4">У вас пока нет ссылки на календарь</p>
+            <p className="text-sm text-muted-foreground mb-4">{t("calendarNoLink")}</p>
             <Button onClick={generateToken} disabled={loading}>
-              {loading ? "Генерация..." : "Сгенерировать ссылку"}
+              {loading ? t("calendarGenerating") : t("calendarGenerateBtn")}
             </Button>
           </div>
         )}
@@ -221,10 +201,33 @@ function CalendarIntegrationModal({ open, onClose }: { open: boolean; onClose: (
 
 // ─── Calendar Grid Component ────────────────────────────────────
 function TaskCalendar({ tasks, orgId }: { tasks: Task[]; orgId?: string }) {
+  const t = useTranslations("tasks")
   const now = new Date()
   const [calMonth, setCalMonth] = useState(now.getMonth())
   const [calYear, setCalYear] = useState(now.getFullYear())
   const [calTasks, setCalTasks] = useState<Task[]>([])
+
+  const monthNames = [
+    t("monthJan"), t("monthFeb"), t("monthMar"), t("monthApr"), t("monthMay"), t("monthJun"),
+    t("monthJul"), t("monthAug"), t("monthSep"), t("monthOct"), t("monthNov"), t("monthDec")
+  ]
+
+  const dayNames = [t("dayMon"), t("dayTue"), t("dayWed"), t("dayThu"), t("dayFri"), t("daySat"), t("daySun")]
+
+  const statusLabels: Record<string, string> = {
+    pending: t("statusTodo"),
+    todo: t("statusTodo"),
+    in_progress: t("statusInProgress"),
+    completed: t("statusCompleted"),
+    cancelled: t("statusCancelled"),
+  }
+
+  const priorityLabels: Record<string, string> = {
+    urgent: t("priorityUrgent"),
+    high: t("priorityHigh"),
+    medium: t("priorityMedium"),
+    low: t("priorityLow"),
+  }
 
   const fetchCalendar = useCallback(async () => {
     try {
@@ -250,12 +253,12 @@ function TaskCalendar({ tasks, orgId }: { tasks: Task[]; orgId?: string }) {
 
   // Group tasks by day
   const tasksByDay: Record<number, Task[]> = {}
-  for (const t of calTasks) {
-    if (!t.dueDate) continue
-    const d = new Date(t.dueDate)
+  for (const task of calTasks) {
+    if (!task.dueDate) continue
+    const d = new Date(task.dueDate)
     const day = d.getDate()
     if (!tasksByDay[day]) tasksByDay[day] = []
-    tasksByDay[day].push(t)
+    tasksByDay[day].push(task)
   }
 
   // Build calendar grid
@@ -340,6 +343,8 @@ function TaskCalendar({ tasks, orgId }: { tasks: Task[]; orgId?: string }) {
 
 // ─── Main Page ──────────────────────────────────────────────────
 export default function TasksPage() {
+  const t = useTranslations("tasks")
+  const tc = useTranslations("common")
   const { data: session } = useSession()
   const [tasks, setTasks] = useState<Task[]>([])
   const [view, setView] = useState<ViewMode>("list")
@@ -352,6 +357,21 @@ export default function TasksPage() {
   const [sortBy, setSortBy] = useState("date_asc")
   const [calModalOpen, setCalModalOpen] = useState(false)
   const orgId = session?.user?.organizationId
+
+  const statusLabels: Record<string, string> = {
+    pending: t("statusTodo"),
+    todo: t("statusTodo"),
+    in_progress: t("statusInProgress"),
+    completed: t("statusCompleted"),
+    cancelled: t("statusCancelled"),
+  }
+
+  const priorityLabels: Record<string, string> = {
+    urgent: t("priorityUrgent"),
+    high: t("priorityHigh"),
+    medium: t("priorityMedium"),
+    low: t("priorityLow"),
+  }
 
   async function fetchTasks() {
     try {
@@ -445,7 +465,7 @@ export default function TasksPage() {
   const columns = [
     {
       key: "title",
-      label: "Задача",
+      label: t("colTask"),
       sortable: true,
       render: (item: any) => (
         <div className="flex items-center gap-2">
@@ -464,16 +484,16 @@ export default function TasksPage() {
     },
     {
       key: "relatedType",
-      label: "Категория",
+      label: t("colCategory"),
       render: (item: any) => (
-        <span className="text-base" title={item.relatedType || "general"}>
-          {categoryIcons[item.relatedType || ""] || "📋"} <span className="text-xs text-muted-foreground">{item.relatedType || "общее"}</span>
+        <span className="text-base" title={item.relatedType || t("generalCategory")}>
+          {categoryIcons[item.relatedType || ""] || "📋"} <span className="text-xs text-muted-foreground">{item.relatedType || t("generalCategory")}</span>
         </span>
       ),
     },
     {
       key: "priority",
-      label: "Приоритет",
+      label: t("colPriority"),
       sortable: true,
       render: (item: any) => (
         <Badge variant={priorityColors[item.priority] || "secondary"}>
@@ -483,7 +503,7 @@ export default function TasksPage() {
     },
     {
       key: "dueDate",
-      label: "Срок",
+      label: t("colDueDate"),
       sortable: true,
       render: (item: any) => (
         <div className={cn(
@@ -496,14 +516,14 @@ export default function TasksPage() {
         </div>
       ),
     },
-    { key: "assignedTo", label: "Исполнитель", sortable: true },
+    { key: "assignedTo", label: t("colAssignee"), sortable: true },
     {
       key: "status",
-      label: "Статус",
+      label: t("colStatus"),
       sortable: true,
       render: (item: any) => (
         <Badge variant={item.status === "completed" ? "secondary" : item.status === "in_progress" ? "default" : item.status === "cancelled" ? "destructive" : "outline"}>
-          {statusLabels[item.status] || "К выполнению"}
+          {statusLabels[item.status] || t("statusTodo")}
         </Badge>
       ),
     },
@@ -513,10 +533,10 @@ export default function TasksPage() {
       className: "w-20",
       render: (item: any) => (
         <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-          <button onClick={() => handleEdit(item)} className="p-1.5 rounded hover:bg-muted" title="Редактировать">
+          <button onClick={() => handleEdit(item)} className="p-1.5 rounded hover:bg-muted" title={tc("edit")}>
             <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
           </button>
-          <button onClick={() => handleDelete(item)} className="p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-900/20" title="Удалить">
+          <button onClick={() => handleDelete(item)} className="p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-900/20" title={tc("delete")}>
             <Trash2 className="h-3.5 w-3.5 text-muted-foreground hover:text-red-500" />
           </button>
         </div>
@@ -527,7 +547,7 @@ export default function TasksPage() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <h1 className="text-2xl font-bold tracking-tight">Задачи</h1>
+        <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
         <div className="animate-pulse space-y-4">
           <div className="grid gap-4 md:grid-cols-6">
             {[1, 2, 3, 4, 5, 6].map((i) => <div key={i} className="h-24 bg-muted rounded-lg" />)}
@@ -542,8 +562,8 @@ export default function TasksPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Задачи</h1>
-          <p className="text-sm text-muted-foreground">Управление задачами команды</p>
+          <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
+          <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
         </div>
         <div className="flex items-center gap-2">
           <div className="flex rounded-lg border">
@@ -551,37 +571,37 @@ export default function TasksPage() {
               onClick={() => setView("list")}
               className={cn("px-3 py-1.5 text-sm flex items-center gap-1", view === "list" ? "bg-primary text-primary-foreground" : "hover:bg-muted")}
             >
-              <ListChecks className="h-3.5 w-3.5" /> Список
+              <ListChecks className="h-3.5 w-3.5" /> {t("list")}
             </button>
             <button
               onClick={() => setView("kanban")}
               className={cn("px-3 py-1.5 text-sm flex items-center gap-1", view === "kanban" ? "bg-primary text-primary-foreground" : "hover:bg-muted")}
             >
-              <Columns3 className="h-3.5 w-3.5" /> Канбан
+              <Columns3 className="h-3.5 w-3.5" /> {t("kanban")}
             </button>
             <button
               onClick={() => setView("calendar")}
               className={cn("px-3 py-1.5 text-sm flex items-center gap-1", view === "calendar" ? "bg-primary text-primary-foreground" : "hover:bg-muted")}
             >
-              <CalendarDays className="h-3.5 w-3.5" /> Календарь
+              <CalendarDays className="h-3.5 w-3.5" /> {t("calendar")}
             </button>
           </div>
           <Button variant="outline" onClick={() => setCalModalOpen(true)}>
-            <Link2 className="h-4 w-4 mr-1" /> Подключить календарь
+            <Link2 className="h-4 w-4 mr-1" /> {t("connectCalendar")}
           </Button>
           <Button onClick={handleAdd}>
-            <Plus className="h-4 w-4 mr-1" /> Новая задача
+            <Plus className="h-4 w-4 mr-1" /> {t("newTask")}
           </Button>
         </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-6">
-        <StatCard title="Все" value={tasks.length} icon={<CheckSquare className="h-4 w-4" />} />
-        <StatCard title="Выполнено" value={completed} trend="up" description={`${completionPercentage}%`} />
-        <StatCard title="Просрочено" value={overdue} icon={<AlertTriangle className="h-4 w-4" />} trend={overdue > 0 ? "down" : "neutral"} />
-        <StatCard title="В работе" value={tasks.filter(t => t.status === "in_progress").length} icon={<Clock className="h-4 w-4" />} />
-        <StatCard title="Сегодня" value={todayCount} icon={<CalendarDays className="h-4 w-4" />} />
-        <StatCard title="На неделе" value={weekCount} icon={<CalendarDays className="h-4 w-4" />} />
+        <StatCard title={t("statAll")} value={tasks.length} icon={<CheckSquare className="h-4 w-4" />} />
+        <StatCard title={t("statCompleted")} value={completed} trend="up" description={`${completionPercentage}%`} />
+        <StatCard title={t("statOverdue")} value={overdue} icon={<AlertTriangle className="h-4 w-4" />} trend={overdue > 0 ? "down" : "neutral"} />
+        <StatCard title={t("statInProgress")} value={tasks.filter(t => t.status === "in_progress").length} icon={<Clock className="h-4 w-4" />} />
+        <StatCard title={t("statToday")} value={todayCount} icon={<CalendarDays className="h-4 w-4" />} />
+        <StatCard title={t("statThisWeek")} value={weekCount} icon={<CalendarDays className="h-4 w-4" />} />
       </div>
 
       {/* Status filter tabs */}
@@ -591,7 +611,7 @@ export default function TasksPage() {
           size="sm"
           onClick={() => setActiveFilter("all")}
         >
-          Все ({tasks.length})
+          {t("statAll")} ({tasks.length})
         </Button>
         {(["pending", "in_progress", "completed", "cancelled"] as const).map(key => (
           <Button
@@ -609,10 +629,10 @@ export default function TasksPage() {
       {view !== "calendar" && (
         <div className="flex justify-end">
           <Select value={sortBy} onChange={e => setSortBy(e.target.value)} className="w-[200px]">
-            <option value="date_asc">Срок ↑</option>
-            <option value="date_desc">Срок ↓</option>
-            <option value="priority">Приоритет</option>
-            <option value="name">Имя А → Я</option>
+            <option value="date_asc">{t("sortDueDateAsc")}</option>
+            <option value="date_desc">{t("sortDueDateDesc")}</option>
+            <option value="priority">{t("sortPriority")}</option>
+            <option value="name">{t("sortNameAsc")}</option>
           </Select>
         </div>
       )}
@@ -621,7 +641,7 @@ export default function TasksPage() {
         <DataTable
           columns={columns}
           data={filtered}
-          searchPlaceholder="Поиск задач..."
+          searchPlaceholder={t("searchPlaceholder")}
           searchKey="title"
         />
       )}
@@ -673,7 +693,7 @@ export default function TasksPage() {
       )}
 
       <TaskForm open={formOpen} onOpenChange={setFormOpen} onSaved={fetchTasks} initialData={editData} orgId={orgId} />
-      <DeleteConfirmDialog open={deleteOpen} onOpenChange={setDeleteOpen} onConfirm={confirmDelete} title="Удалить задачу" itemName={deleteItem?.title} />
+      <DeleteConfirmDialog open={deleteOpen} onOpenChange={setDeleteOpen} onConfirm={confirmDelete} title={t("deleteTask")} itemName={deleteItem?.title} />
       <CalendarIntegrationModal open={calModalOpen} onClose={() => setCalModalOpen(false)} />
     </div>
   )

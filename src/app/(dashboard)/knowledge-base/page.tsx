@@ -10,6 +10,7 @@ import { KbArticleForm } from "@/components/kb-article-form"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
 import { BookOpen, Plus, Search, Eye, Pencil, Trash2, ChevronDown, ChevronRight, FileText, FolderOpen, GripVertical } from "lucide-react"
 import Link from "next/link"
+import { useTranslations } from "next-intl"
 
 interface KbArticle {
   id: string
@@ -35,20 +36,7 @@ function groupByCategory(articles: KbArticle[]): Record<string, KbArticle[]> {
   return groups
 }
 
-const CATEGORY_LABELS: Record<string, string> = {
-  uncategorized: "Без категории",
-  general: "Общее",
-  technical: "Технические",
-  billing: "Биллинг",
-  faq: "FAQ",
-  onboarding: "Onboarding",
-  api: "API",
-  security: "Безопасность",
-}
-
-function getCategoryLabel(cat: string): string {
-  return CATEGORY_LABELS[cat] || cat.charAt(0).toUpperCase() + cat.slice(1)
-}
+// Category labels moved inside component for i18n
 
 function getContentPreview(content?: string): string {
   if (!content) return ""
@@ -66,6 +54,8 @@ function getContentPreview(content?: string): string {
 
 export default function KnowledgeBasePage() {
   const { data: session } = useSession()
+  const t = useTranslations("kb")
+  const tc = useTranslations("common")
   const [articles, setArticles] = useState<KbArticle[]>([])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
@@ -78,6 +68,13 @@ export default function KnowledgeBasePage() {
   const [deleteName, setDeleteName] = useState("")
   const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set())
   const orgId = session?.user?.organizationId
+
+  const catKeys: Record<string, string> = {
+    uncategorized: "noCategory", general: "categoryGeneral", technical: "categoryTechnical",
+    billing: "categoryBilling", faq: "categoryFaq", onboarding: "categoryOnboarding",
+    api: "categoryApi", security: "categorySecurity",
+  }
+  const getCategoryLabel = (cat: string) => catKeys[cat] ? t(catKeys[cat]) : cat.charAt(0).toUpperCase() + cat.slice(1)
 
   const fetchArticles = async () => {
     try {
@@ -130,7 +127,7 @@ export default function KnowledgeBasePage() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <h1 className="text-2xl font-bold tracking-tight">База знаний</h1>
+        <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
         <div className="animate-pulse space-y-4">
           <div className="grid gap-4 md:grid-cols-4">{[1, 2, 3, 4].map(i => <div key={i} className="h-20 bg-muted rounded-lg" />)}</div>
           <div className="h-96 bg-muted rounded-lg" />
@@ -144,11 +141,11 @@ export default function KnowledgeBasePage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">База знаний</h1>
-          <p className="text-sm text-muted-foreground">{total} статей · {published} опубликовано · {totalViews} просмотров</p>
+          <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
+          <p className="text-sm text-muted-foreground">{total} {t("articles")} · {published} {t("publishedArticles")} · {totalViews} {t("views")}</p>
         </div>
         <Button onClick={() => { setEditData(undefined); setShowForm(true) }} size="sm">
-          <Plus className="h-4 w-4 mr-1" /> Новая статья
+          <Plus className="h-4 w-4 mr-1" /> {t("newArticle")}
         </Button>
       </div>
 
@@ -156,17 +153,17 @@ export default function KnowledgeBasePage() {
       <div className="flex flex-wrap items-center gap-2">
         <div className="relative flex-1 min-w-48 max-w-sm">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Поиск..." value={search} onChange={e => setSearch(e.target.value)} className="pl-8 h-9" />
+          <Input placeholder={t("searchPlaceholder")} value={search} onChange={e => setSearch(e.target.value)} className="pl-8 h-9" />
         </div>
         <div className="flex items-center gap-1">
           <Button variant={filterStatus === "all" ? "default" : "outline"} size="sm" className="h-9" onClick={() => setFilterStatus("all")}>
-            Все ({total})
+            {t("filterAll")} ({total})
           </Button>
           <Button variant={filterStatus === "published" ? "default" : "outline"} size="sm" className="h-9" onClick={() => setFilterStatus("published")}>
-            Опубл. ({published})
+            {t("filterPublished")} ({published})
           </Button>
           <Button variant={filterStatus === "draft" ? "default" : "outline"} size="sm" className="h-9" onClick={() => setFilterStatus("draft")}>
-            Черновики ({total - published})
+            {t("filterDrafts")} ({total - published})
           </Button>
         </div>
         {categories.length > 1 && (
@@ -175,7 +172,7 @@ export default function KnowledgeBasePage() {
             onChange={e => setFilterCategory(e.target.value)}
             className="h-9 rounded-md border bg-background px-2 text-sm"
           >
-            <option value="all">Все категории</option>
+            <option value="all">{t("allCategories")}</option>
             {categories.sort().map(cat => (
               <option key={cat} value={cat}>{getCategoryLabel(cat)}</option>
             ))}
@@ -189,18 +186,18 @@ export default function KnowledgeBasePage() {
           {filtered.length === 0 ? (
             <div className="py-12 text-center text-muted-foreground">
               <BookOpen className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              <p>{search ? "Статьи не найдены" : "Нет статей"}</p>
+              <p>{search ? t("noArticlesFound") : t("noArticles")}</p>
             </div>
           ) : filterCategory !== "all" ? (
             // Flat list when category is filtered
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b bg-muted/30">
-                  <th className="p-2 pl-4 text-left font-medium w-[45%]">Название</th>
-                  <th className="p-2 text-left font-medium w-[30%]">Превью</th>
-                  <th className="p-2 text-center font-medium w-16">Статус</th>
+                  <th className="p-2 pl-4 text-left font-medium w-[45%]">{t("colTitle")}</th>
+                  <th className="p-2 text-left font-medium w-[30%]">{t("colPreview")}</th>
+                  <th className="p-2 text-center font-medium w-16">{t("colStatus")}</th>
                   <th className="p-2 text-center font-medium w-16"><Eye className="h-3.5 w-3.5 mx-auto" /></th>
-                  <th className="p-2 text-center font-medium w-24">Дата</th>
+                  <th className="p-2 text-center font-medium w-24">{t("colDate")}</th>
                   <th className="p-2 text-right font-medium w-20 pr-4"></th>
                 </tr>
               </thead>
@@ -265,7 +262,7 @@ export default function KnowledgeBasePage() {
         open={!!deleteId}
         onOpenChange={(open) => { if (!open) setDeleteId(null) }}
         onConfirm={handleDelete}
-        title="Удалить статью"
+        title={t("deleteArticle")}
         itemName={deleteName}
       />
     </div>
@@ -273,6 +270,7 @@ export default function KnowledgeBasePage() {
 }
 
 function ArticleRow({ article, onEdit, onDelete }: { article: KbArticle; onEdit: () => void; onDelete: () => void }) {
+  const tc = useTranslations("common")
   const preview = getContentPreview(article.content)
 
   return (
@@ -303,10 +301,10 @@ function ArticleRow({ article, onEdit, onDelete }: { article: KbArticle; onEdit:
       <td className="p-2 text-center text-xs text-muted-foreground">{new Date(article.updatedAt).toLocaleDateString("ru-RU", { day: "2-digit", month: "2-digit" })}</td>
       <td className="p-2 pr-4 text-right">
         <div className="flex items-center gap-0.5 justify-end opacity-0 group-hover:opacity-100 transition-opacity">
-          <button onClick={onEdit} className="p-1 rounded hover:bg-muted" title="Редактировать">
+          <button onClick={onEdit} className="p-1 rounded hover:bg-muted" title={tc("edit")}>
             <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
           </button>
-          <button onClick={onDelete} className="p-1 rounded hover:bg-muted" title="Удалить">
+          <button onClick={onDelete} className="p-1 rounded hover:bg-muted" title={tc("delete")}>
             <Trash2 className="h-3.5 w-3.5 text-destructive" />
           </button>
         </div>
