@@ -140,7 +140,7 @@ export default function EventRegistrationPage() {
                 className="flex items-center gap-2 px-4 py-2.5 bg-white rounded-xl shadow-md hover:shadow-lg transition-all text-sm font-medium text-gray-700 border"
               >
                 <span className="text-lg">📅</span>
-                Apple / Outlook (.ics)
+                Apple / Outlook Desktop
               </button>
               <a
                 href={(() => {
@@ -161,6 +161,27 @@ export default function EventRegistrationPage() {
               >
                 <span className="text-lg">📆</span>
                 Google Calendar
+              </a>
+              <a
+                href={(() => {
+                  const start = new Date(event.startDate)
+                  const end = event.endDate ? new Date(event.endDate) : new Date(start.getTime() + 2 * 60 * 60 * 1000)
+                  const params = new URLSearchParams({
+                    path: "/calendar/action/compose",
+                    rru: "addevent",
+                    subject: event.name,
+                    startdt: start.toISOString(),
+                    enddt: end.toISOString(),
+                    body: event.description || "",
+                    location: event.location || "",
+                  })
+                  return `https://outlook.live.com/calendar/0/action/compose?${params}`
+                })()}
+                target="_blank"
+                className="flex items-center gap-2 px-4 py-2.5 bg-white rounded-xl shadow-md hover:shadow-lg transition-all text-sm font-medium text-gray-700 border"
+              >
+                <span className="text-lg">📧</span>
+                Outlook Web
               </a>
             </div>
           </div>
