@@ -9,6 +9,11 @@ const updateWorkflowSchema = z.object({
   triggerEvent: z.string().optional(),
   conditions: z.any().optional(),
   isActive: z.boolean().optional(),
+  actions: z.array(z.object({
+    actionType: z.string().min(1),
+    actionConfig: z.any().optional().default({}),
+    actionOrder: z.number().int().min(0).optional().default(0),
+  })).optional(),
 })
 
 export async function GET(
@@ -42,15 +47,45 @@ export async function PUT(
   const parsed = updateWorkflowSchema.safeParse(body)
   if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 })
 
+  const { actions, ...ruleData } = parsed.data
+
   try {
-    const result = await prisma.workflowRule.updateMany({
-      where: { id, organizationId: orgId },
-      data: parsed.data,
-    })
-    if (result.count === 0) return NextResponse.json({ error: "Not found" }, { status: 404 })
+    if (actions !== undefined) {
+      // Transactional: update rule + replace all actions
+      await prisma.$transaction(async (tx) => {
+        // Update rule fields if any
+        if (Object.keys(ruleData).length > 0) {
+          await tx.workflowRule.updateMany({
+            where: { id, organizationId: orgId },
+            data: ruleData,
+          })
+        }
+        // Delete existing actions
+        await tx.workflowAction.deleteMany({ where: { ruleId: id } })
+        // Create new actions
+        if (actions.length > 0) {
+          await tx.workflowAction.createMany({
+            data: actions.map((a, i) => ({
+              ruleId: id,
+              actionType: a.actionType,
+              actionConfig: a.actionConfig || {},
+              actionOrder: a.actionOrder ?? i,
+            })),
+          })
+        }
+      })
+    } else {
+      // Just update rule fields
+      const result = await prisma.workflowRule.updateMany({
+        where: { id, organizationId: orgId },
+        data: ruleData,
+      })
+      if (result.count === 0) return NextResponse.json({ error: "Not found" }, { status: 404 })
+    }
+
     const updated = await prisma.workflowRule.findFirst({
       where: { id, organizationId: orgId },
-      include: { actions: true },
+      include: { actions: { orderBy: { actionOrder: "asc" } } },
     })
     return NextResponse.json({ success: true, data: updated })
   } catch (e) {

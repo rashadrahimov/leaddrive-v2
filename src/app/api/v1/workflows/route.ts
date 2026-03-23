@@ -27,8 +27,8 @@ export async function GET(req: NextRequest) {
     })
 
     return NextResponse.json({ success: true, data: workflows })
-  } catch {
-    return NextResponse.json({ success: true, data: [] })
+  } catch (e) {
+    return NextResponse.json({ error: String(e) }, { status: 500 })
   }
 }
 
