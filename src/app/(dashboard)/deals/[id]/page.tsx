@@ -14,6 +14,7 @@ import {
 } from "lucide-react"
 import { DealForm } from "@/components/deal-form"
 import { EngagementTab } from "@/components/deals/engagement-tab"
+import { NextBestOffers } from "@/components/deals/next-best-offers"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
 
 const STAGES = [
@@ -567,9 +568,22 @@ export default function DealDetailPage() {
             <div className="flex justify-between text-[10px] text-muted-foreground">
               <span>0</span><span>50</span><span>100</span>
             </div>
+            {/* Predictive Scoring */}
+            <div className="flex items-center justify-between pt-2 border-t mt-3">
+              <span className="text-sm text-muted-foreground font-medium">Predictive scoring</span>
+              <div className="flex items-center gap-1.5">
+                <span className="text-sm font-bold text-primary">
+                  {Math.min(99, Math.round((deal.confidenceLevel ?? 50) * 0.85 + (deal.probability || 50) * 0.15))}%
+                </span>
+                <TrendingUp className="h-3.5 w-3.5 text-primary" />
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>
+
+      {/* ── Next Best Offers ── */}
+      <NextBestOffers dealId={id} orgId={orgId} />
 
       {/* ── Tabs ── */}
       <Tabs defaultValue="overview" className="space-y-4">

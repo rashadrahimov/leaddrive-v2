@@ -60,3 +60,36 @@ Phase 8 (DONE): Detail pages
 Total files created: ~50+ new files
 Build: PASSES
 
+
+=== Creatio Redesign Phase (2026-03-23) ===
+
+E1 (DONE): Communication Action Buttons on Deal Detail
+- Added 4 Creatio-style colored circular buttons: Phone (green), Email (orange), WhatsApp (emerald), Chat (blue)
+- File: src/app/(dashboard)/deals/[id]/page.tsx
+- Contact card redesigned: phone/email as text + action buttons below
+
+E2+E3 (DONE): Engagement Tab + Email Nurturing
+- New API: src/app/api/v1/deals/[id]/engagement/route.ts
+  - Aggregates activities by type for deal's contact (last 3 months)
+  - Email metrics from EmailLog (sent/opened/clicked/bounced + rates)
+  - Monthly chart data for both activity and email dynamics
+- New component: src/components/deals/engagement-tab.tsx
+  - 5 activity KPI cards (calls/emails/meetings/notes/tasks)
+  - Activity Dynamics stacked AreaChart
+  - Email Nurturing: sent/open-rate/click-rate/bounced
+  - Email Dynamics LineChart
+- Added "Engagement" tab to deal detail
+
+Also in this session:
+- Agent Calendar: connected to real data (tickets/tasks/events/activities)
+- All-day section for items without specific time
+- Smart Today panel (summary for all-day, individual for timed)
+- Tickets: status filter tabs, pipeline on detail, sequential numbering, count fix
+- Events: fixed add/delete/resend bugs (missing await), beautiful invitation email
+- Pricing: rounding fix
+- 2FA: full TOTP setup/verify/disable flow
+- Forgot password: org SMTP integration
+- Pipeline translation: Воронка продаж (ru) / Proses axını (az)
+- AI brain icon for FAB button
+
+Build: PASSES | Deploy: SUCCESS

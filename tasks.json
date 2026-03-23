@@ -45,8 +45,8 @@
     {"id": "C6", "description": "AI floating assistant panel: global slide-in AI chat available on every page", "priority": 41, "dependencies": [], "status": "done"},
 
     {"id": "E1", "description": "Deal Detail: Communication action buttons (Phone, Email, WhatsApp, Chat) in Creatio style", "priority": 42, "dependencies": ["C1"], "status": "done"},
-    {"id": "E2", "description": "Deal Detail: Engagement tab with activity metrics + site visit dynamics chart", "priority": 43, "dependencies": ["E1"], "status": "in_progress"},
-    {"id": "E3", "description": "Deal Detail: Email Nurturing section (send/open/click rates + dynamics chart)", "priority": 44, "dependencies": ["E2"], "status": "pending"},
+    {"id": "E2", "description": "Deal Detail: Engagement tab with activity metrics + site visit dynamics chart", "priority": 43, "dependencies": ["E1"], "status": "done"},
+    {"id": "E3", "description": "Deal Detail: Email Nurturing section (send/open/click rates + dynamics chart)", "priority": 44, "dependencies": ["E2"], "status": "done"},
     {"id": "E4", "description": "Deal Detail: Next Best Offers widget in left sidebar", "priority": 45, "dependencies": ["E1"], "status": "pending"},
     {"id": "E5", "description": "Deal Detail: Full Activity Timeline tab (activities + emails + comments, filters, log activity)", "priority": 46, "dependencies": ["E2"], "status": "pending"},
     {"id": "E6", "description": "Contact Detail: KPI cards + Communication action buttons", "priority": 47, "dependencies": ["E1"], "status": "pending"},
