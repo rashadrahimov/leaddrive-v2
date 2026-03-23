@@ -211,7 +211,7 @@ async function handleTasks(orgId: string, contextBlock: string, contextName: str
     return NextResponse.json({ success: true, data })
   } catch (error) {
     console.error("Claude tasks error:", error)
-    return tasksFallback(contextName, contactName, contactPhone, industry, website)
+    return tasksFallback(contextName, contactName, contactPhone, industry, website, langName)
   }
 }
 
@@ -304,7 +304,7 @@ async function handleText(orgId: string, contextBlock: string, contextName: stri
     return NextResponse.json({ success: true, data })
   } catch (error) {
     console.error("Claude text error:", error)
-    return textFallback(textType, tone, instructions, contextName, contactName, industry)
+    return textFallback(textType, tone, instructions, contextName, contactName, industry, langName)
   }
 }
 
