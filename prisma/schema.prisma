@@ -154,6 +154,7 @@ model Company {
   leadTemperature String? // cold, warm, hot
   userCount      Int      @default(0)
   costCode       String?
+  voen           String?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
@@ -374,7 +375,10 @@ model Offer {
   status         String   @default("draft") // draft, sent, approved, rejected
   totalAmount    Float?
   currency       String   @default("AZN")
+  clientName     String?
   voen           String?
+  contactPerson  String?
+  contractNumber String?
   includeVat     Boolean  @default(false)
   discount       Float?   @default(0)
   validUntil     DateTime?

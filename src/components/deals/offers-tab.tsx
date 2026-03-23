@@ -187,6 +187,7 @@ export function OffersTab({
           defaultCompanyId={companyId}
           defaultContactId={contactId}
           defaultCurrency={currency}
+          dealValueAmount={valueAmount}
         />
       )}
 
