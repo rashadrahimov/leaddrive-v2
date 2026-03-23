@@ -31,3 +31,4 @@ npm-debug.log*
 # OS
 .fuse_hidden*
 Thumbs.db
+.claude/worktrees/
