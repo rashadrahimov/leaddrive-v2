@@ -1177,6 +1177,9 @@ model EventParticipant {
   phone          String?
   role           String   @default("attendee") // attendee, speaker, sponsor, organizer, vip
   status         String   @default("registered") // registered, confirmed, attended, cancelled, no_show
+  source         String   @default("invited")    // invited, self_registered, imported
+  invitedAt      DateTime?
+  inviteStatus   String   @default("not_sent")   // not_sent, sent, opened, declined
   registeredAt   DateTime @default(now())
   notes          String?
 

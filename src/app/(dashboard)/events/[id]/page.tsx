@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input"
 import {
   ArrowLeft, Pencil, Trash2, CalendarDays, MapPin, Globe, Users,
   DollarSign, UserPlus, CheckCircle2, XCircle, Clock, TrendingUp,
-  Mail, Phone, Search, X, UserCheck,
+  Mail, Phone, Search, X, UserCheck, Send, MailCheck, MailX, Loader2,
 } from "lucide-react"
 import { EventForm } from "@/components/event-form"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
@@ -51,6 +51,10 @@ export default function EventDetailPage() {
   const [loading, setLoading] = useState(true)
   const [editOpen, setEditOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
+
+  // Invitation
+  const [sendingInvites, setSendingInvites] = useState(false)
+  const [inviteResult, setInviteResult] = useState<string | null>(null)
 
   // Participant management
   const [showAddPanel, setShowAddPanel] = useState(false)
@@ -120,6 +124,47 @@ export default function EventDetailPage() {
       body: JSON.stringify({ name: pName, email: pEmail, phone: pPhone, role: pRole }),
     })
     setPName(""); setPEmail(""); setPPhone("")
+    fetchEvent()
+  }
+
+  const sendInvitesToAll = async () => {
+    const ids = (event.participants || []).filter((p: any) => p.email && p.inviteStatus !== "sent").map((p: any) => p.id)
+    if (ids.length === 0) { setInviteResult("All participants already invited"); return }
+    setSendingInvites(true)
+    setInviteResult(null)
+    try {
+      const res = await fetch(`/api/v1/events/${params.id}/participants`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", ...headers },
+        body: JSON.stringify({ action: "send_invites", participantIds: ids }),
+      })
+      const json = await res.json()
+      if (json.success) {
+        const d = json.data
+        setInviteResult(d.smtpConfigured
+          ? `Sent ${d.sent}/${d.total} invitations via email`
+          : `Marked ${d.total} as invited (SMTP not configured — configure in Settings → SMTP)`)
+      }
+      fetchEvent()
+    } catch { setInviteResult("Error sending invitations") }
+    finally { setSendingInvites(false) }
+  }
+
+  const sendInviteToOne = async (participantId: string) => {
+    await fetch(`/api/v1/events/${params.id}/participants`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", ...headers },
+      body: JSON.stringify({ action: "send_invites", participantIds: [participantId] }),
+    })
+    fetchEvent()
+  }
+
+  const updateParticipantField = async (participantId: string, field: string, value: string) => {
+    await fetch(`/api/v1/events/${params.id}/participants`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", ...headers },
+      body: JSON.stringify({ participantId, [field]: value }),
+    })
     fetchEvent()
   }
 
@@ -359,12 +404,42 @@ export default function EventDetailPage() {
 
         {/* Participants tab */}
         <TabsContent value="participants" className="space-y-4">
-          <div className="flex items-center justify-between">
-            <p className="text-sm text-muted-foreground">{event.participants?.length || 0} participants</p>
-            <Button size="sm" className="gap-1" onClick={() => setShowAddPanel(!showAddPanel)}>
-              <UserPlus className="h-3.5 w-3.5" /> {showAddPanel ? "Close" : "Add Participant"}
-            </Button>
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <div className="flex items-center gap-3">
+              <p className="text-sm text-muted-foreground">{event.participants?.length || 0} participants</p>
+              {event.participants?.length > 0 && (
+                <div className="flex items-center gap-2 text-xs">
+                  <span className="flex items-center gap-1 text-green-600">
+                    <MailCheck className="h-3 w-3" />
+                    {(event.participants || []).filter((p: any) => p.inviteStatus === "sent").length} invited
+                  </span>
+                  <span className="flex items-center gap-1 text-muted-foreground">
+                    <MailX className="h-3 w-3" />
+                    {(event.participants || []).filter((p: any) => p.inviteStatus !== "sent").length} not sent
+                  </span>
+                </div>
+              )}
+            </div>
+            <div className="flex gap-2">
+              {event.participants?.length > 0 && (
+                <Button size="sm" variant="outline" className="gap-1 text-xs" onClick={sendInvitesToAll} disabled={sendingInvites}>
+                  {sendingInvites ? <Loader2 className="h-3 w-3 animate-spin" /> : <Send className="h-3 w-3" />}
+                  Send All Invitations
+                </Button>
+              )}
+              <Button size="sm" className="gap-1" onClick={() => setShowAddPanel(!showAddPanel)}>
+                <UserPlus className="h-3.5 w-3.5" /> {showAddPanel ? "Close" : "Add Participant"}
+              </Button>
+            </div>
           </div>
+
+          {inviteResult && (
+            <div className="flex items-center gap-2 p-2.5 rounded-lg bg-blue-50 text-blue-700 text-sm">
+              <MailCheck className="h-4 w-4" />
+              {inviteResult}
+              <button onClick={() => setInviteResult(null)} className="ml-auto"><X className="h-3.5 w-3.5" /></button>
+            </div>
+          )}
 
           {/* Add participant panel */}
           {showAddPanel && (
@@ -456,6 +531,7 @@ export default function EventDetailPage() {
                       <th className="text-left p-3 font-medium text-muted-foreground">Contact</th>
                       <th className="text-left p-3 font-medium text-muted-foreground">Role</th>
                       <th className="text-left p-3 font-medium text-muted-foreground">Status</th>
+                      <th className="text-left p-3 font-medium text-muted-foreground">Invite</th>
                       <th className="text-left p-3 font-medium text-muted-foreground">Registered</th>
                       <th className="text-right p-3 font-medium text-muted-foreground">Actions</th>
                     </tr>
@@ -478,22 +554,46 @@ export default function EventDetailPage() {
                           {!p.email && !p.phone && "—"}
                         </td>
                         <td className="p-3">
-                          <Badge className={ROLE_STYLE[p.role] || "bg-gray-100 text-gray-600"} variant="outline">{p.role}</Badge>
+                          <select
+                            className={`text-xs font-medium border-0 rounded-full px-2 py-0.5 cursor-pointer ${ROLE_STYLE[p.role] || "bg-gray-100 text-gray-600"}`}
+                            value={p.role}
+                            onChange={e => updateParticipantField(p.id, "role", e.target.value)}
+                          >
+                            {["attendee","speaker","sponsor","organizer","vip"].map(r => <option key={r} value={r}>{r}</option>)}
+                          </select>
                         </td>
                         <td className="p-3">
-                          <Badge className={PARTICIPANT_STATUS_STYLE[p.status] || ""}>{p.status?.replace(/_/g, " ")}</Badge>
+                          <select
+                            className={`text-xs font-medium border-0 rounded-full px-2 py-0.5 cursor-pointer ${PARTICIPANT_STATUS_STYLE[p.status] || ""}`}
+                            value={p.status}
+                            onChange={e => updateParticipantField(p.id, "status", e.target.value)}
+                          >
+                            {["registered","confirmed","attended","cancelled","no_show"].map(s => <option key={s} value={s}>{s.replace(/_/g, " ")}</option>)}
+                          </select>
+                        </td>
+                        <td className="p-3">
+                          {p.inviteStatus === "sent" ? (
+                            <span className="flex items-center gap-1 text-xs text-green-600">
+                              <MailCheck className="h-3 w-3" />
+                              {p.invitedAt ? new Date(p.invitedAt).toLocaleDateString("ru-RU") : "Sent"}
+                            </span>
+                          ) : (
+                            <button
+                              onClick={() => sendInviteToOne(p.id)}
+                              className="flex items-center gap-1 text-xs text-muted-foreground hover:text-blue-600 transition-colors"
+                              title={p.email ? "Send invitation" : "No email"}
+                              disabled={!p.email}
+                            >
+                              <Mail className="h-3 w-3" />
+                              {p.email ? "Send" : "No email"}
+                            </button>
+                          )}
                         </td>
                         <td className="p-3 text-muted-foreground text-xs">
                           {new Date(p.registeredAt).toLocaleDateString("ru-RU")}
                         </td>
                         <td className="p-3 text-right">
                           <div className="flex items-center gap-1 justify-end">
-                            {p.status !== "attended" && (
-                              <Button variant="ghost" size="icon" className="h-7 w-7" title="Mark attended"
-                                onClick={() => updateParticipantStatus(p.id, "attended")}>
-                                <UserCheck className="h-3.5 w-3.5 text-green-500" />
-                              </Button>
-                            )}
                             <Button variant="ghost" size="icon" className="h-7 w-7" title="Remove"
                               onClick={() => removeParticipant(p.id)}>
                               <X className="h-3.5 w-3.5 text-red-400" />
