@@ -703,7 +703,12 @@
     "opens": "Opens",
     "openRate": "Open Rate",
     "clicks": "Clicks",
-    "clickRate": "Click Rate"
+    "clickRate": "Click Rate",
+    "hintName": "Campaign name, e.g. \"March newsletter\"",
+    "hintDescription": "What is this campaign about? Will be shown in email body",
+    "hintType": "Email for newsletters, SMS for short messages",
+    "hintTemplate": "Ready-made email template with design and variables",
+    "hintSubject": "Email newsletter subject line"
   },
   "offers": {
     "title": "Offers",

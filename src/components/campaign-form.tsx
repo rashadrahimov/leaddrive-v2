@@ -388,17 +388,16 @@ export function CampaignForm({ open, onOpenChange, onSaved, initialData, orgId, 
             {/* Name — full width */}
             <div>
               <Label className="text-xs text-muted-foreground">{tc("name")} *</Label>
-              <Input value={form.name} onChange={(e) => update("name", e.target.value)} required placeholder="напр. Мартовская рассылка" />
-              <p className="text-xs text-orange-500 mt-1">Название кампании для отслеживания, напр. «Мартовская рассылка»</p>
+              <Input value={form.name} onChange={(e) => update("name", e.target.value)} required />
+              <p className="text-xs text-muted-foreground mt-1">{t("hintName")}</p>
             </div>
 
             {/* Description — textarea */}
             <div>
               <Label className="text-xs text-muted-foreground">{tc("description")}</Label>
               <Textarea value={form.description} onChange={(e) => update("description", e.target.value)}
-                placeholder="О чём эта кампания? Будет показано в теле письма"
                 rows={3} />
-              <p className="text-xs text-orange-500 mt-1">О чём эта кампания? Будет показано в теле письма</p>
+              <p className="text-xs text-muted-foreground mt-1">{t("hintDescription")}</p>
             </div>
 
             {/* Type + Template on same row */}
@@ -409,7 +408,7 @@ export function CampaignForm({ open, onOpenChange, onSaved, initialData, orgId, 
                   <option value="email">Email</option>
                   <option value="sms">SMS</option>
                 </Select>
-                <p className="text-xs text-orange-500 mt-1">Email для рассылок, SMS для коротких сообщений</p>
+                <p className="text-xs text-muted-foreground mt-1">{t("hintType")}</p>
               </div>
               <div>
                 <Label className="text-xs text-muted-foreground">Email {tf("selectTemplate").toLowerCase()}</Label>
@@ -422,7 +421,7 @@ export function CampaignForm({ open, onOpenChange, onSaved, initialData, orgId, 
                     <option key={t.id} value={t.id}>{t.name}</option>
                   ))}
                 </Select>
-                <p className="text-xs text-orange-500 mt-1">Готовый шаблон письма с дизайном и переменными</p>
+                <p className="text-xs text-muted-foreground mt-1">{t("hintTemplate")}</p>
               </div>
             </div>
 
@@ -430,7 +429,7 @@ export function CampaignForm({ open, onOpenChange, onSaved, initialData, orgId, 
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label className="text-xs text-muted-foreground">{tf("emailSubject")}</Label>
-                <Input value={form.subject} onChange={(e) => update("subject", e.target.value)} placeholder="Тема email рассылки" />
+                <Input value={form.subject} onChange={(e) => update("subject", e.target.value)} placeholder={t("hintSubject")} />
               </div>
               <div>
                 <Label className="text-xs text-muted-foreground">{tf("scheduleSend")}</Label>
