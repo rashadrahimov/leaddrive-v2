@@ -224,7 +224,9 @@
     "noCompetitors": "Rəqib yoxdur",
     "addCompetitor": "Rəqib əlavə et",
     "noTeamMembers": "Komanda üzvü yoxdur",
-    "addTeamMembersHint": "Müqaviləyə komanda üzvü əlavə edin"
+    "addTeamMembersHint": "Müqaviləyə komanda üzvü əlavə edin",
+    "addContactRole": "Kontakt rolu əlavə et",
+    "addMember": "Üzv əlavə et"
   },
   "leads": {
     "title": "Lidlər",

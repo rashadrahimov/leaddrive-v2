@@ -224,7 +224,9 @@
     "noCompetitors": "Конкурентов нет",
     "addCompetitor": "Добавить конкурента",
     "noTeamMembers": "Нет участников команды",
-    "addTeamMembersHint": "Добавьте участников команды к сделке"
+    "addTeamMembersHint": "Добавьте участников команды к сделке",
+    "addContactRole": "Добавить контактную роль",
+    "addMember": "Добавить участника"
   },
   "leads": {
     "title": "Лиды",
