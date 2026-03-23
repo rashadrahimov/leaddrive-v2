@@ -13,6 +13,7 @@ import {
   Clock, TrendingUp, Target, Users, Swords, MessageSquare, MessageCircle,
   CheckCircle2, AlertCircle, Tag, Plus, X, Phone, Mail
 } from "lucide-react"
+import { ColorStatCard } from "@/components/color-stat-card"
 import { DealForm } from "@/components/deal-form"
 import { EngagementTab } from "@/components/deals/engagement-tab"
 import { NextBestOffers } from "@/components/deals/next-best-offers"
@@ -130,53 +131,39 @@ function DealKpiCards({ deal, labels }: { deal: Deal; labels: { daysInFunnel: st
   const daysAtStage = deal.stageChangedAt
     ? Math.floor((Date.now() - new Date(deal.stageChangedAt).getTime()) / 86400000)
     : daysInFunnel
-
-  const cards = [
-    {
-      label: labels.daysInFunnel,
-      value: daysInFunnel,
-      glow: "#3b82f6",
-      iconBg: "bg-blue-500/10 text-blue-500",
-      icon: <Clock className="h-4 w-4" />,
-    },
-    {
-      label: labels.daysAtStage,
-      value: daysAtStage,
-      glow: "#6366f1",
-      iconBg: "bg-indigo-500/10 text-indigo-500",
-      icon: <Clock className="h-4 w-4" />,
-    },
-    {
-      label: labels.dealValue,
-      value: `${deal.valueAmount.toLocaleString()} ${deal.currency}`,
-      glow: "#0ea5a0",
-      iconBg: "bg-teal-500/10 text-teal-500",
-      icon: <DollarSign className="h-4 w-4" />,
-    },
-    {
-      label: labels.confidenceLevel,
-      value: `${deal.confidenceLevel ?? 50}%`,
-      glow: deal.confidenceLevel >= 70 ? "#22c55e" : deal.confidenceLevel >= 40 ? "#f59e0b" : "#f97316",
-      iconBg: deal.confidenceLevel >= 70 ? "bg-emerald-500/10 text-emerald-500" : deal.confidenceLevel >= 40 ? "bg-amber-500/10 text-amber-500" : "bg-orange-500/10 text-orange-500",
-      icon: <TrendingUp className="h-4 w-4" />,
-    },
-  ]
+  const confidence = deal.confidenceLevel ?? 50
+  const confBg = confidence >= 70
+    ? "bg-green-500 shadow-green-500/30"
+    : confidence >= 40
+    ? "bg-amber-500 shadow-amber-500/30"
+    : "bg-orange-500 shadow-orange-500/30"
 
   return (
     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-      {cards.map((card) => (
-        <div
-          key={card.label}
-          className="relative overflow-hidden rounded-xl bg-white/60 dark:bg-white/[0.04] backdrop-blur-[12px] border border-white/30 dark:border-white/10 shadow-lg shadow-black/[0.03] p-4 flex flex-col gap-1"
-        >
-          <div className="absolute -bottom-3 left-6 right-6 h-6 rounded-full blur-xl opacity-30" style={{ backgroundColor: card.glow }} />
-          <div className="relative flex items-center justify-between">
-            <span className="text-xs font-medium text-muted-foreground">{card.label}</span>
-            <div className={`rounded-full p-1.5 ${card.iconBg}`}>{card.icon}</div>
-          </div>
-          <span className="relative text-2xl font-bold leading-tight">{card.value}</span>
-        </div>
-      ))}
+      <ColorStatCard
+        label={labels.daysInFunnel}
+        value={daysInFunnel}
+        icon={<Clock className="h-4 w-4" />}
+        color="blue"
+      />
+      <ColorStatCard
+        label={labels.daysAtStage}
+        value={daysAtStage}
+        icon={<Clock className="h-4 w-4" />}
+        color="indigo"
+      />
+      <ColorStatCard
+        label={labels.dealValue}
+        value={`${deal.valueAmount.toLocaleString()} ${deal.currency}`}
+        icon={<DollarSign className="h-4 w-4" />}
+        color="teal"
+      />
+      <ColorStatCard
+        label={labels.confidenceLevel}
+        value={`${confidence}%`}
+        icon={<TrendingUp className="h-4 w-4" />}
+        bgClass={confBg}
+      />
     </div>
   )
 }

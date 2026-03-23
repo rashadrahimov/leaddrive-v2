@@ -7,7 +7,8 @@ import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { ArrowLeft, Pencil, Trash2, FileCheck, DollarSign, Calendar, Hash } from "lucide-react"
+import { ArrowLeft, Pencil, Trash2, FileCheck, DollarSign, Calendar, Hash, Clock, CheckCircle2 } from "lucide-react"
+import { ColorStatCard } from "@/components/color-stat-card"
 import { OfferForm } from "@/components/offer-form"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
 
@@ -102,37 +103,46 @@ export default function OfferDetailPage() {
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card>
-          <CardContent className="flex items-center gap-3 pt-6">
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-            <div>
-              <div className="text-xs text-muted-foreground">{t("colAmount")}</div>
-              <span className="text-sm font-medium">
-                {offer.totalAmount ? `${Number(offer.totalAmount).toLocaleString()} ${offer.currency || "USD"}` : "—"}
-              </span>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="flex items-center gap-3 pt-6">
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-            <div>
-              <div className="text-xs text-muted-foreground">{t("colValidUntil")}</div>
-              <span className="text-sm font-medium">{formatDate(offer.validUntil)}</span>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="flex items-center gap-3 pt-6">
-            <Hash className="h-4 w-4 text-muted-foreground" />
-            <div>
-              <div className="text-xs text-muted-foreground">{t("colNumber")}</div>
-              <span className="text-sm font-medium">{offer.offerNumber || "—"}</span>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      {(() => {
+        const daysOpen = offer.createdAt
+          ? Math.floor((Date.now() - new Date(offer.createdAt).getTime()) / 86400000)
+          : null
+        const daysValid = offer.validUntil
+          ? Math.floor((new Date(offer.validUntil).getTime() - Date.now()) / 86400000)
+          : null
+        const statusBg = offer.status === "accepted" ? "bg-green-500 shadow-green-500/30"
+          : offer.status === "rejected" ? "bg-red-500 shadow-red-500/30"
+          : offer.status === "sent" ? "bg-blue-500 shadow-blue-500/30"
+          : "bg-slate-400 shadow-slate-400/30"
+        return (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <ColorStatCard
+              label={tc("daysOpen")}
+              value={daysOpen !== null ? daysOpen : "—"}
+              icon={<Clock className="h-4 w-4" />}
+              color="blue"
+            />
+            <ColorStatCard
+              label={t("colAmount")}
+              value={offer.totalAmount ? `${Number(offer.totalAmount).toLocaleString()} ${offer.currency || "USD"}` : "—"}
+              icon={<DollarSign className="h-4 w-4" />}
+              color="green"
+            />
+            <ColorStatCard
+              label={t("colValidUntil")}
+              value={daysValid !== null ? (daysValid < 0 ? t("expired") : `${daysValid} ${tc("days")}`) : "—"}
+              icon={<Calendar className="h-4 w-4" />}
+              color="violet"
+            />
+            <ColorStatCard
+              label={tc("status")}
+              value={offer.status}
+              icon={<CheckCircle2 className="h-4 w-4" />}
+              bgClass={statusBg}
+            />
+          </div>
+        )
+      })()}
 
       <Card>
         <CardHeader>

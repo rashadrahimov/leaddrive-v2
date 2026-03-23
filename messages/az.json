@@ -210,7 +210,11 @@
     "min": "dəq",
     "hours": "saat",
     "days": "gün",
-    "free": "Pulsuz"
+    "free": "Pulsuz",
+    "activities": "Fəaliyyətlər",
+    "daysActive": "Aktiv günlər",
+    "daysLeft": "Qalan günlər",
+    "daysOpen": "Açıq günlər"
   },
   "leads": {
     "title": "Lidlər",
@@ -402,7 +406,8 @@
     "meeting": "Görüş",
     "note": "Qeyd",
     "task": "Tapşırıq",
-    "editBtn": "Redaktə et"
+    "editBtn": "Redaktə et",
+    "lastContact": "Son əlaqə"
   },
   "deals": {
     "title": "Satış hunisi",
@@ -655,7 +660,8 @@
     "sortAmountDesc": "Məbləğ ↓",
     "sortAmountAsc": "Məbləğ ↑",
     "sortByExpiry": "Bitmə tarixinə görə",
-    "sortByCompany": "Şirkətə görə"
+    "sortByCompany": "Şirkətə görə",
+    "expired": "Müddəti bitib"
   },
   "campaigns": {
     "title": "Kampaniyalar",
@@ -676,7 +682,11 @@
     "sendCampaign": "Kampaniyanı göndər",
     "recipients": "alıcı",
     "smtpNotConfigured": "SMTP qurulmayıb!",
-    "sentToRecipients": "{total} alıcıdan {count} nəfərə göndərildi"
+    "sentToRecipients": "{total} alıcıdan {count} nəfərə göndərildi",
+    "opens": "Açılışlar",
+    "openRate": "Açılma faizi",
+    "clicks": "Kliklər",
+    "clickRate": "Klik faizi"
   },
   "offers": {
     "title": "Təkliflər",
@@ -688,7 +698,8 @@
     "colTitle": "Başlıq",
     "colAmount": "Məbləğ",
     "colStatus": "Status",
-    "colValidUntil": "Etibarlıdır"
+    "colValidUntil": "Etibarlıdır",
+    "expired": "Müddəti bitib"
   },
   "inbox": {
     "title": "Gələn qutusu",
@@ -901,7 +912,9 @@
     "createFirst": "İlk tədbirinizi yaradın",
     "totalEvents": "{count} tədbir",
     "online": "Onlayn",
-    "budget": "Büdcə"
+    "budget": "Büdcə",
+    "attended": "İştirak etdi",
+    "revenue": "Gəlir"
   },
   "profitability": {
     "title": "Gəlirlilik",

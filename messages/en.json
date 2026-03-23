@@ -210,7 +210,11 @@
     "min": "min",
     "hours": "h",
     "days": "d",
-    "free": "Free"
+    "free": "Free",
+    "activities": "Activities",
+    "daysActive": "Days active",
+    "daysLeft": "Days left",
+    "daysOpen": "Days open"
   },
   "leads": {
     "title": "Leads",
@@ -403,7 +407,8 @@
     "meeting": "Meeting",
     "note": "Note",
     "task": "Task",
-    "editBtn": "Edit"
+    "editBtn": "Edit",
+    "lastContact": "Last Contact"
   },
   "deals": {
     "title": "Sales Pipeline",
@@ -656,7 +661,8 @@
     "sortAmountDesc": "Amount ↓",
     "sortAmountAsc": "Amount ↑",
     "sortByExpiry": "By expiry date",
-    "sortByCompany": "By company"
+    "sortByCompany": "By company",
+    "expired": "Expired"
   },
   "campaigns": {
     "title": "Campaigns",
@@ -677,7 +683,11 @@
     "sendCampaign": "Send Campaign",
     "recipients": "recipients",
     "smtpNotConfigured": "SMTP not configured!",
-    "sentToRecipients": "Sent {count} of {total} recipients"
+    "sentToRecipients": "Sent {count} of {total} recipients",
+    "opens": "Opens",
+    "openRate": "Open Rate",
+    "clicks": "Clicks",
+    "clickRate": "Click Rate"
   },
   "offers": {
     "title": "Offers",
@@ -689,7 +699,8 @@
     "colTitle": "Title",
     "colAmount": "Amount",
     "colStatus": "Status",
-    "colValidUntil": "Valid Until"
+    "colValidUntil": "Valid Until",
+    "expired": "Expired"
   },
   "inbox": {
     "title": "Inbox",
@@ -902,7 +913,9 @@
     "createFirst": "Create your first event to get started",
     "totalEvents": "{count} events total",
     "online": "Online",
-    "budget": "Budget"
+    "budget": "Budget",
+    "attended": "Attended",
+    "revenue": "Revenue"
   },
   "profitability": {
     "title": "Profitability",

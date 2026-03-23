@@ -12,6 +12,7 @@ import {
   ArrowLeft, Pencil, Trash2, Megaphone, Users, Mail, MousePointerClick,
   CheckCircle2, XCircle, AlertTriangle, Eye, BarChart3
 } from "lucide-react"
+import { ColorStatCard } from "@/components/color-stat-card"
 import { CampaignForm } from "@/components/campaign-form"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
 import dynamic from "next/dynamic"
@@ -151,19 +152,10 @@ export default function CampaignDetailPage() {
 
       {/* Stats row */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        {[
-          { label: "Total opens", value: totalOpened },
-          { label: "Open rate", value: `${openRate}%` },
-          { label: "Total clicks", value: totalClicked },
-          { label: "Click rate", value: `${clickRate}%` },
-        ].map(s => (
-          <Card key={s.label} className="border-none shadow-sm">
-            <CardContent className="pt-4 pb-4">
-              <p className="text-xs text-muted-foreground">{s.label}</p>
-              <p className="text-xl font-bold mt-0.5">{typeof s.value === "number" ? s.value.toLocaleString() : s.value}</p>
-            </CardContent>
-          </Card>
-        ))}
+        <ColorStatCard label={t("opens")} value={totalOpened.toLocaleString()} icon={<Eye className="h-4 w-4" />} color="blue" />
+        <ColorStatCard label={t("openRate")} value={`${openRate}%`} icon={<BarChart3 className="h-4 w-4" />} color="teal" />
+        <ColorStatCard label={t("clicks")} value={totalClicked.toLocaleString()} icon={<MousePointerClick className="h-4 w-4" />} color="violet" />
+        <ColorStatCard label={t("clickRate")} value={`${clickRate}%`} icon={<BarChart3 className="h-4 w-4" />} color="indigo" />
       </div>
 
       {/* Tabs */}

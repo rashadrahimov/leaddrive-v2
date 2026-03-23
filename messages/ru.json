@@ -210,7 +210,11 @@
     "min": "мин",
     "hours": "ч",
     "days": "дн",
-    "free": "Бесплатно"
+    "free": "Бесплатно",
+    "activities": "Активности",
+    "daysActive": "Дней активен",
+    "daysLeft": "Дней осталось",
+    "daysOpen": "Дней открыт"
   },
   "leads": {
     "title": "Лиды",
@@ -403,7 +407,8 @@
     "meeting": "Встреча",
     "note": "Заметка",
     "task": "Задача",
-    "editBtn": "Редактировать"
+    "editBtn": "Редактировать",
+    "lastContact": "Последний контакт"
   },
   "deals": {
     "title": "Воронка продаж",
@@ -656,7 +661,8 @@
     "sortAmountDesc": "Сумма ↓",
     "sortAmountAsc": "Сумма ↑",
     "sortByExpiry": "По дате истечения",
-    "sortByCompany": "По компании"
+    "sortByCompany": "По компании",
+    "expired": "Истёк"
   },
   "campaigns": {
     "title": "Кампании",
@@ -677,7 +683,11 @@
     "sendCampaign": "Отправить кампанию",
     "recipients": "получателей",
     "smtpNotConfigured": "SMTP не настроен!",
-    "sentToRecipients": "Отправлено {count} из {total} получателям"
+    "sentToRecipients": "Отправлено {count} из {total} получателям",
+    "opens": "Открытия",
+    "openRate": "Открываемость",
+    "clicks": "Клики",
+    "clickRate": "Кликабельность"
   },
   "offers": {
     "title": "Предложения",
@@ -689,7 +699,8 @@
     "colTitle": "Название",
     "colAmount": "Сумма",
     "colStatus": "Статус",
-    "colValidUntil": "Действует до"
+    "colValidUntil": "Действует до",
+    "expired": "Истёк"
   },
   "inbox": {
     "title": "Входящие",
@@ -902,7 +913,9 @@
     "createFirst": "Создайте первое мероприятие",
     "totalEvents": "{count} мероприятий",
     "online": "Онлайн",
-    "budget": "Бюджет"
+    "budget": "Бюджет",
+    "attended": "Посетили",
+    "revenue": "Доход"
   },
   "profitability": {
     "title": "Прибыльность",

@@ -7,7 +7,8 @@ import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { ArrowLeft, Pencil, Trash2, FileText, Calendar, DollarSign, Hash } from "lucide-react"
+import { ArrowLeft, Pencil, Trash2, FileText, Calendar, DollarSign, Hash, Clock, AlertTriangle } from "lucide-react"
+import { ColorStatCard } from "@/components/color-stat-card"
 import { ContractForm } from "@/components/contract-form"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
 
@@ -101,46 +102,46 @@ export default function ContractDetailPage() {
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-4">
-        <Card>
-          <CardContent className="flex items-center gap-3 pt-6">
-            <Hash className="h-4 w-4 text-muted-foreground" />
-            <div>
-              <div className="text-xs text-muted-foreground">{tc("type")}</div>
-              <span className="text-sm font-medium">{contract.type || "—"}</span>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="flex items-center gap-3 pt-6">
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-            <div>
-              <div className="text-xs text-muted-foreground">{tc("startDate")}</div>
-              <span className="text-sm font-medium">{formatDate(contract.startDate)}</span>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="flex items-center gap-3 pt-6">
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-            <div>
-              <div className="text-xs text-muted-foreground">{tc("endDate")}</div>
-              <span className="text-sm font-medium">{formatDate(contract.endDate)}</span>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="flex items-center gap-3 pt-6">
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-            <div>
-              <div className="text-xs text-muted-foreground">{tc("value")}</div>
-              <span className="text-sm font-medium">
-                {contract.valueAmount ? `${Number(contract.valueAmount).toLocaleString()} ${contract.currency || "USD"}` : "—"}
-              </span>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      {(() => {
+        const daysActive = contract.startDate
+          ? Math.floor((Date.now() - new Date(contract.startDate).getTime()) / 86400000)
+          : null
+        const daysLeft = contract.endDate
+          ? Math.floor((new Date(contract.endDate).getTime() - Date.now()) / 86400000)
+          : null
+        const endBg = daysLeft === null ? "bg-slate-400 shadow-slate-400/30"
+          : daysLeft < 0 ? "bg-red-500 shadow-red-500/30"
+          : daysLeft < 30 ? "bg-amber-500 shadow-amber-500/30"
+          : "bg-orange-500 shadow-orange-500/30"
+        return (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <ColorStatCard
+              label={tc("daysActive")}
+              value={daysActive !== null ? daysActive : "—"}
+              icon={<Clock className="h-4 w-4" />}
+              color="blue"
+            />
+            <ColorStatCard
+              label={tc("value")}
+              value={contract.valueAmount ? `${Number(contract.valueAmount).toLocaleString()} ${contract.currency || "USD"}` : "—"}
+              icon={<DollarSign className="h-4 w-4" />}
+              color="green"
+            />
+            <ColorStatCard
+              label={tc("type")}
+              value={contract.type || "—"}
+              icon={<Hash className="h-4 w-4" />}
+              color="violet"
+            />
+            <ColorStatCard
+              label={tc("daysLeft")}
+              value={daysLeft !== null ? (daysLeft < 0 ? t("expired") : `${daysLeft}`) : "—"}
+              icon={<AlertTriangle className="h-4 w-4" />}
+              bgClass={endBg}
+            />
+          </div>
+        )
+      })()}
 
       <Card>
         <CardHeader>
