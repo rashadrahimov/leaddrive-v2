@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useTranslations } from "next-intl"
+import { useTranslations, useLocale } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -59,6 +59,7 @@ function getGrade(score: number): { letter: string; color: string } {
 
 export function LeadItemModal({ open, onOpenChange, lead, orgId, onSaved, onConvert }: LeadItemModalProps) {
   const t = useTranslations("leads")
+  const locale = useLocale()
   const tc = useTranslations("common")
 
   const statusLabels: Record<string, string> = {
@@ -216,7 +217,7 @@ export function LeadItemModal({ open, onOpenChange, lead, orgId, onSaved, onConv
       const res = await fetch("/api/v1/ai", {
         method: "POST",
         headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": String(orgId) } : {}) },
-        body: JSON.stringify({ action, leadId: lead.id, options }),
+        body: JSON.stringify({ action, leadId: lead.id, options, locale }),
       })
       const json = await res.json()
       if (json.success) return json.data
