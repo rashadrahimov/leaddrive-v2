@@ -6,6 +6,7 @@ import { Sidebar } from "@/components/sidebar"
 import { Header } from "@/components/header"
 import { ThemeProvider } from "@/components/theme-provider"
 import { CommandSearch } from "@/components/command-search"
+import { AiAssistantPanel } from "@/components/ai-assistant-panel"
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -35,6 +36,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               {children}
             </main>
             <CommandSearch />
+            <AiAssistantPanel />
           </div>
         </div>
       </QueryClientProvider>
