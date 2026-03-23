@@ -6,7 +6,7 @@
     "deals": "Müqavilələr",
     "leads": "Lidlər",
     "tasks": "Tapşırıqlar",
-    "contracts": "Kontraktlar",
+    "contracts": "Müqavilələr",
     "products": "Məhsullar",
     "campaigns": "Kampaniyalar",
     "segments": "Seqmentlər",
@@ -618,7 +618,7 @@
     "generalCategory": "ümumi"
   },
   "contracts": {
-    "title": "Kontraktlar",
+    "title": "Müqavilələr",
     "subtitle": "Müştəri müqavilələrini idarə et",
     "newContract": "Yeni kontrakt",
     "editContract": "Kontraktı redaktə et",
