@@ -268,7 +268,7 @@ export default function AgentCalendarPage() {
                           {ticketCount > 0 && (
                             <div
                               className="rounded-md border-l-[3px] border-l-red-500 bg-red-50 px-1.5 py-1 mb-0.5 text-xs cursor-pointer hover:shadow-md transition-all"
-                              onClick={() => router.push("/support/tickets")}
+                              onClick={() => router.push("/tickets")}
                             >
                               <div className="flex items-center gap-1">
                                 <Ticket className="h-3 w-3 text-red-600 flex-shrink-0" />

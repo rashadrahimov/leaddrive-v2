@@ -53,7 +53,7 @@ export async function GET(req: NextRequest) {
             allDay: !hasSpecificTime,
             status: t.status,
             priority: t.priority,
-            url: `/support/tickets/${t.id}`,
+            url: `/tickets/${t.id}`,
           })
         }
       } else {
@@ -68,7 +68,7 @@ export async function GET(req: NextRequest) {
             hour: d.getHours(),
             status: t.status,
             priority: t.priority,
-            url: `/support/tickets/${t.id}`,
+            url: `/tickets/${t.id}`,
           })
         }
       }
