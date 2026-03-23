@@ -214,6 +214,7 @@ model Deal {
 
   teamMembers    DealTeamMember[]
   contactRoles   DealContactRole[]
+  offers         Offer[]
 
   @@index([organizationId])
   @@index([organizationId, stage])
@@ -345,19 +346,47 @@ model Offer {
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   offerNumber    String
+  dealId         String?
+  deal           Deal?    @relation(fields: [dealId], references: [id])
   companyId      String?
+  contactId      String?
+  type           String   @default("commercial") // commercial, invoice, equipment, services
   title          String
-  status         String   @default("draft")
+  status         String   @default("draft") // draft, sent, approved, rejected
   totalAmount    Float?
   currency       String   @default("AZN")
+  voen           String?
+  includeVat     Boolean  @default(false)
+  discount       Float?   @default(0)
   validUntil     DateTime?
   notes          String?
+  recipientEmail String?
+  sentAt         DateTime?
   createdBy      String?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
+  items          OfferItem[]
+
   @@index([organizationId])
+  @@index([dealId])
   @@map("offers")
+}
+
+model OfferItem {
+  id        String @id @default(cuid())
+  offerId   String
+  offer     Offer  @relation(fields: [offerId], references: [id], onDelete: Cascade)
+  productId String?
+  name      String
+  quantity  Int    @default(1)
+  unitPrice Float  @default(0)
+  discount  Float  @default(0)
+  total     Float  @default(0)
+  sortOrder Int    @default(0)
+
+  @@index([offerId])
+  @@map("offer_items")
 }
 
 model Activity {
