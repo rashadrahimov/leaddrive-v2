@@ -12,6 +12,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Dialog, DialogHeader, DialogTitle, DialogContent } from "@/components/ui/dialog"
 import { Building2, Users, FileText, X, Copy, Send, RefreshCw, CheckCircle, Trash2, Ban, Plus, Pencil, Brain, Sparkles, Target } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useTranslations, useLocale } from "next-intl"
 
 interface LeadCompany {
   id: string
@@ -61,6 +62,8 @@ function getGrade(score: number): { letter: string; color: string } {
 
 export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }: LeadDetailModalProps) {
   const router = useRouter()
+  const t = useTranslations("leads")
+  const locale = useLocale()
   const [activeTab, setActiveTab] = useState("details")
   const [aiLoading, setAiLoading] = useState(false)
 
@@ -128,7 +131,7 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
       const res = await fetch("/api/v1/ai", {
         method: "POST",
         headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": orgId } : {}) },
-        body: JSON.stringify({ action, companyId: company.id, options }),
+        body: JSON.stringify({ action, companyId: company.id, options, locale }),
       })
       const json = await res.json()
       if (json.success) return json.data
@@ -237,10 +240,10 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
   const tabs = [
     { id: "details", label: "Детали" },
     { id: "activity", label: "Активность" },
-    { id: "sentiment", label: "🐷 Sentiment" },
-    { id: "tasks", label: "⚡ Tasks" },
-    { id: "aitext", label: "✉️ AI Text" },
-    { id: "ai", label: "AI Скоринг" },
+    { id: "sentiment", label: t("tabSentiment") },
+    { id: "tasks", label: t("tabTasks") },
+    { id: "aitext", label: t("tabAiText") },
+    { id: "ai", label: t("tabAiScoring") },
   ]
 
   return (
@@ -550,9 +553,9 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
             {!sentiment ? (
               <div className="text-center py-4">
                 <Button onClick={async () => { const d = await callAI("sentiment"); if (d) setSentiment(d) }} disabled={aiLoading} className="gap-2">
-                  🐷 {aiLoading ? "Анализируем..." : "Анализировать тональность"}
+                  {aiLoading ? t("analyzing") : t("analyzeSentiment")}
                 </Button>
-                <p className="text-sm text-muted-foreground mt-2">AI проанализирует все коммуникации с этой компанией</p>
+                <p className="text-sm text-muted-foreground mt-2">{t("sentimentDesc")}</p>
               </div>
             ) : (
               <div className="space-y-4">
@@ -598,9 +601,9 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
             {!aiTasks ? (
               <div className="text-center py-4">
                 <Button onClick={async () => { const d = await callAI("tasks"); if (d) setAiTasks(d) }} disabled={aiLoading} className="gap-2">
-                  ⚡ {aiLoading ? "Генерируем..." : "Сгенерировать задачи"}
+                  {aiLoading ? t("analyzing") : t("generateTasks")}
                 </Button>
-                <p className="text-sm text-muted-foreground mt-2">AI проанализирует и предложит задачи</p>
+                <p className="text-sm text-muted-foreground mt-2">{t("sentimentDesc")}</p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -624,7 +627,7 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
                 ))}
                 <div className="flex gap-2 justify-center">
                   <Button size="sm" className="gap-1"><CheckCircle className="h-3 w-3" /> Создать все задачи</Button>
-                  <Button size="sm" variant="outline" onClick={async () => { const d = await callAI("tasks"); if (d) setAiTasks(d) }} className="gap-1"><RefreshCw className="h-3 w-3" /> Пересоздать</Button>
+                  <Button size="sm" variant="outline" onClick={async () => { const d = await callAI("tasks"); if (d) setAiTasks(d) }} className="gap-1"><RefreshCw className="h-3 w-3" /> {t("regenerate")}</Button>
                 </div>
               </div>
             )}
@@ -657,7 +660,7 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
               <Textarea value={instructions} onChange={e => setInstructions(e.target.value)} rows={2} placeholder="Например: упомянуть скидку 10%, предложить демо..." />
             </div>
             <Button onClick={async () => { const d = await callAI("text", { textType, tone, instructions }); if (d) { setGeneratedText(d); setEmailSent(false) } }} disabled={aiLoading} className="w-full gap-2">
-              ✉️ {aiLoading ? "Генерируем..." : "Сгенерировать текст"}
+              {aiLoading ? t("analyzing") : t("generateText")}
             </Button>
 
             {generatedText && (
@@ -680,7 +683,7 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
                     <Send className="h-3 w-3" /> {emailSent ? "✅ Отправлено" : emailSending ? "Отправляем..." : "Отправить email"}
                   </Button>
                   <Button size="sm" variant="outline" onClick={async () => { const d = await callAI("text", { textType, tone, instructions }); if (d) { setGeneratedText(d); setEmailSent(false) } }} className="gap-1">
-                    <RefreshCw className="h-3 w-3" /> Пересоздать
+                    <RefreshCw className="h-3 w-3" /> {t("regenerate")}
                   </Button>
                 </div>
                 {emailError && (

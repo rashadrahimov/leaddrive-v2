@@ -44,7 +44,9 @@ export async function POST(req: NextRequest) {
   if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
   const body = await req.json()
-  const { action, companyId, leadId, options } = body
+  const { action, companyId, leadId, options, locale } = body
+  const langMap: Record<string, string> = { az: "Azerbaijani", ru: "Russian", en: "English" }
+  const lang = langMap[locale] || "Russian"
 
   if (!action || (!companyId && !leadId)) {
     return NextResponse.json({ error: "action and (companyId or leadId) required" }, { status: 400 })
@@ -125,13 +127,13 @@ export async function POST(req: NextRequest) {
 
     switch (action) {
       case "sentiment":
-        return handleSentiment(orgId, contextBlock, contextName, contactNames, activitiesList)
+        return handleSentiment(orgId, contextBlock, contextName, contactNames, activitiesList, lang)
 
       case "tasks":
-        return handleTasks(orgId, contextBlock, contextName, mainContactName, mainContactPhone, mainContactEmail, industry, website)
+        return handleTasks(orgId, contextBlock, contextName, mainContactName, mainContactPhone, mainContactEmail, industry, website, lang)
 
       case "text":
-        return handleText(orgId, contextBlock, contextName, mainContactName, industry, options)
+        return handleText(orgId, contextBlock, contextName, mainContactName, industry, options, lang)
 
       default:
         return NextResponse.json({ error: `Unknown action: ${action}` }, { status: 400 })
@@ -143,7 +145,7 @@ export async function POST(req: NextRequest) {
 
 // ── SENTIMENT ──────────────────────────────────────────────
 
-async function handleSentiment(orgId: string, contextBlock: string, contextName: string, contactNames: string, activities: any[]) {
+async function handleSentiment(orgId: string, contextBlock: string, contextName: string, contactNames: string, activities: any[], lang = "Russian") {
   const client = getClient()
   if (!client) return sentimentFallback(contextName, contactNames, activities)
 
@@ -153,10 +155,10 @@ async function handleSentiment(orgId: string, contextBlock: string, contextName:
       model: "claude-haiku-4-5-20251001",
       max_tokens: 1024,
       temperature: 0.3,
-      system: `Ты — AI-аналитик CRM-системы LeadDrive. Анализируй данные о клиенте и дай оценку тональности взаимоотношений. Отвечай ТОЛЬКО валидным JSON без markdown.`,
+      system: `You are an AI analyst for CRM system LeadDrive. Analyze client data and assess relationship sentiment. Reply ONLY with valid JSON, no markdown. Write the "summary" field in ${lang}.`,
       messages: [{
         role: "user",
-        content: `Проанализируй тональность взаимоотношений с клиентом на основе данных:\n\n${contextBlock}\n\nОтветь JSON:\n{"score": число 0-100, "sentiment": "POSITIVE"|"NEUTRAL"|"NEGATIVE", "emoji": "😊"|"😐"|"😟", "trend": "improving"|"stable"|"declining"|"unknown", "risk": "LOW"|"MEDIUM"|"HIGH", "confidence": число 0-100, "summary": "подробный анализ на русском языке (2-3 предложения)"}`,
+        content: `Analyze the relationship sentiment based on this data:\n\n${contextBlock}\n\nReply with JSON:\n{"score": number 0-100, "sentiment": "POSITIVE"|"NEUTRAL"|"NEGATIVE", "emoji": "😊"|"😐"|"😟", "trend": "improving"|"stable"|"declining"|"unknown", "risk": "LOW"|"MEDIUM"|"HIGH", "confidence": number 0-100, "summary": "detailed analysis in ${lang} (2-3 sentences)"}`,
       }],
     })
 
@@ -185,7 +187,7 @@ function sentimentFallback(contextName: string, contactNames: string, activities
 
 // ── TASKS ──────────────────────────────────────────────────
 
-async function handleTasks(orgId: string, contextBlock: string, contextName: string, contactName: string, contactPhone: string, contactEmail: string, industry: string, website: string) {
+async function handleTasks(orgId: string, contextBlock: string, contextName: string, contactName: string, contactPhone: string, contactEmail: string, industry: string, website: string, lang = "Russian") {
   const client = getClient()
   if (!client) return tasksFallback(contextName, contactName, contactPhone, industry, website)
 
@@ -195,10 +197,10 @@ async function handleTasks(orgId: string, contextBlock: string, contextName: str
       model: "claude-haiku-4-5-20251001",
       max_tokens: 2048,
       temperature: 0.5,
-      system: `Ты — AI-ассистент CRM-системы LeadDrive. Генерируй умные задачи для менеджеров по продажам. Учитывай контекст клиента. Отвечай ТОЛЬКО валидным JSON без markdown.`,
+      system: `You are an AI assistant for CRM system LeadDrive. Generate smart tasks for sales managers based on client context. Reply ONLY with valid JSON, no markdown. Write all text fields in ${lang}.`,
       messages: [{
         role: "user",
-        content: `На основе данных о клиенте сгенерируй 4 задачи для менеджера:\n\n${contextBlock}\n\nОтветь JSON:\n{"strategy": "краткое описание стратегии работы с клиентом (1-2 предложения)", "tasks": [{"title": "заголовок", "description": "подробное описание", "priority": "HIGH"|"MEDIUM"|"LOW", "type": "email"|"call"|"meeting"|"general", "dueDate": "YYYY-MM-DD", "reasoning": "почему эта задача важна"}]}\n\nДаты должны начинаться с ${new Date().toISOString().split("T")[0]}. Все тексты на русском.`,
+        content: `Generate 4 tasks for the manager based on client data:\n\n${contextBlock}\n\nReply with JSON:\n{"strategy": "brief strategy description (1-2 sentences)", "tasks": [{"title": "title", "description": "detailed description", "priority": "HIGH"|"MEDIUM"|"LOW", "type": "email"|"call"|"meeting"|"general", "dueDate": "YYYY-MM-DD", "reasoning": "why this task is important"}]}\n\nDates start from ${new Date().toISOString().split("T")[0]}. Write ALL text in ${lang}.`,
       }],
     })
 
@@ -250,9 +252,9 @@ function tasksFallback(contextName: string, contactName: string, contactPhone: s
 
 // ── TEXT GENERATION ────────────────────────────────────────
 
-async function handleText(orgId: string, contextBlock: string, contextName: string, contactName: string, industry: string, options: any) {
+async function handleText(orgId: string, contextBlock: string, contextName: string, contactName: string, industry: string, options: any, lang = "Russian") {
   const textType = options?.textType || "Email"
-  const tone = options?.tone || "Профессиональный"
+  const tone = options?.tone || "Professional"
   const instructions = options?.instructions || ""
 
   const client = getClient()
@@ -260,15 +262,15 @@ async function handleText(orgId: string, contextBlock: string, contextName: stri
 
   try {
     const prompt = textType === "Email"
-      ? `Напиши деловое письмо для ${contactName} из ${contextName}.\nТон: ${tone}.\n${instructions ? `Дополнительные инструкции: ${instructions}\n` : ""}\nКонтекст клиента:\n${contextBlock}\n\nОтветь JSON:\n{"subject": "тема письма", "body": "текст письма", "textType": "Email", "tone": "${tone}"}`
-      : `Напиши SMS-сообщение для ${contactName} из ${contextName}.\nТон: ${tone}.\n${instructions ? `Инструкции: ${instructions}\n` : ""}\nКонтекст:\n${contextBlock}\n\nОтветь JSON:\n{"subject": "", "body": "текст SMS (до 160 символов)", "textType": "SMS", "tone": "${tone}"}`
+      ? `Write a business email for ${contactName} from ${contextName}.\nTone: ${tone}.\n${instructions ? `Additional instructions: ${instructions}\n` : ""}\nClient context:\n${contextBlock}\n\nReply with JSON:\n{"subject": "email subject", "body": "email body text", "textType": "Email", "tone": "${tone}"}\n\nWrite email content in ${lang}.`
+      : `Write an SMS for ${contactName} from ${contextName}.\nTone: ${tone}.\n${instructions ? `Instructions: ${instructions}\n` : ""}\nContext:\n${contextBlock}\n\nReply with JSON:\n{"subject": "", "body": "SMS text (max 160 chars)", "textType": "SMS", "tone": "${tone}"}\n\nWrite SMS content in ${lang}.`
 
     const t0 = Date.now()
     const response = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
       max_tokens: 1500,
       temperature: 0.7,
-      system: `Ты — AI-копирайтер CRM-системы LeadDrive. Пишешь профессиональные тексты для бизнес-коммуникаций. Отвечай ТОЛЬКО валидным JSON без markdown. Подпись: Güvən Technology LLC.`,
+      system: `You are an AI copywriter for CRM system LeadDrive. Write professional business communications. Reply ONLY with valid JSON, no markdown. Signature: Güvən Technology LLC. Write all content in ${lang}.`,
       messages: [{ role: "user", content: prompt }],
     })
 
