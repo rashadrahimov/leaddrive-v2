@@ -95,35 +95,65 @@ export async function PATCH(
       where: { id: { in: ids }, eventId: id },
     })
 
-    // Try to send via SMTP
+    // Try to send via SMTP (stored in organization.settings.smtp)
     let sentCount = 0
-    const smtpConfig = await prisma.smtpSetting?.findFirst?.({ where: { organizationId: orgId, isActive: true } }).catch(() => null)
+    const org = await prisma.organization.findUnique({ where: { id: orgId }, select: { settings: true, name: true } })
+    const smtpSettings = (org?.settings as any)?.smtp
+    const smtpConfigured = !!(smtpSettings?.smtpHost && smtpSettings?.smtpUser && smtpSettings?.smtpPass)
 
-    if (smtpConfig) {
+    // Load invitation email template if exists
+    const template = await prisma.emailTemplate.findFirst({
+      where: { organizationId: orgId, name: "Event Invitation", isActive: true },
+    }).catch(() => null)
+
+    if (smtpConfigured) {
       const nodemailer = await import("nodemailer").catch(() => null)
       if (nodemailer) {
         const transport = nodemailer.createTransport({
-          host: smtpConfig.host,
-          port: smtpConfig.port || 587,
-          secure: (smtpConfig.port || 587) === 465,
-          auth: { user: smtpConfig.username, pass: smtpConfig.password },
+          host: smtpSettings.smtpHost,
+          port: smtpSettings.smtpPort || 587,
+          secure: (smtpSettings.smtpPort || 587) === 465,
+          auth: { user: smtpSettings.smtpUser, pass: smtpSettings.smtpPass },
         })
+
+        const registrationUrl = `${process.env.NEXTAUTH_URL || "https://v2.leaddrivecrm.org"}/events/${id}/register`
 
         for (const p of participants) {
           if (!p.email) continue
           try {
-            await transport.sendMail({
-              from: smtpConfig.fromEmail || smtpConfig.username,
-              to: p.email,
-              subject: `Invitation: ${event.name}`,
-              html: `
+            // Use template if available, otherwise fallback
+            let html: string
+            let subject: string
+
+            if (template?.htmlBody) {
+              html = template.htmlBody
+                .replace(/\{\{event_name\}\}/g, event.name)
+                .replace(/\{\{event_date\}\}/g, new Date(event.startDate).toLocaleString("ru-RU"))
+                .replace(/\{\{event_location\}\}/g, event.location || "Online")
+                .replace(/\{\{event_description\}\}/g, event.description || "")
+                .replace(/\{\{participant_role\}\}/g, p.role || "attendee")
+                .replace(/\{\{confirm_url\}\}/g, registrationUrl)
+                .replace(/\{\{client_name\}\}/g, p.name)
+                .replace(/\{\{company_name\}\}/g, org?.name || "")
+              subject = (template.subject || "Invitation: {{event_name}}")
+                .replace(/\{\{event_name\}\}/g, event.name)
+            } else {
+              subject = `Invitation: ${event.name}`
+              html = `
                 <h2>You're invited to ${event.name}</h2>
                 <p><strong>Date:</strong> ${new Date(event.startDate).toLocaleString("ru-RU")}</p>
                 ${event.location ? `<p><strong>Location:</strong> ${event.location}</p>` : ""}
                 ${event.isOnline && event.meetingUrl ? `<p><strong>Join online:</strong> <a href="${event.meetingUrl}">${event.meetingUrl}</a></p>` : ""}
                 ${event.description ? `<p>${event.description}</p>` : ""}
-                <p>We look forward to seeing you!</p>
-              `,
+                <p><a href="${registrationUrl}">Confirm attendance</a></p>
+              `
+            }
+
+            await transport.sendMail({
+              from: smtpSettings.fromEmail ? `${smtpSettings.fromName || ""} <${smtpSettings.fromEmail}>` : smtpSettings.smtpUser,
+              to: p.email,
+              subject,
+              html,
             })
             sentCount++
           } catch {}
@@ -139,7 +169,7 @@ export async function PATCH(
 
     return NextResponse.json({
       success: true,
-      data: { sent: sentCount, total: participants.length, smtpConfigured: !!smtpConfig },
+      data: { sent: sentCount, total: participants.length, smtpConfigured },
     })
   }
 
