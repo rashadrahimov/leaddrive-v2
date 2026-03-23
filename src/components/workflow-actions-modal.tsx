@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Select } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { Dialog, DialogHeader, DialogTitle, DialogContent, DialogFooter } from "@/components/ui/dialog"
-import { Plus, X, Pencil, Trash2, Mail, CheckSquare, Edit3, Bell, Globe, Zap, Loader2 } from "lucide-react"
+import { Plus, X, Pencil, Trash2, Mail, CheckSquare, Edit3, Bell, Globe, Zap, Loader2, UserPlus } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface WorkflowAction {
@@ -47,6 +47,7 @@ export function WorkflowActionsModal({ workflow, onClose, onSaved, orgId }: Work
     { value: "update_field", label: t("actionUpdateField"), icon: Edit3, color: "bg-purple-500", borderColor: "border-purple-200 bg-purple-50/50" },
     { value: "send_notification", label: t("actionNotification"), icon: Bell, color: "bg-orange-500", borderColor: "border-orange-200 bg-orange-50/50" },
     { value: "webhook", label: t("actionWebhook"), icon: Globe, color: "bg-slate-500", borderColor: "border-slate-200 bg-slate-50/50" },
+    { value: "auto_assign", label: t("actionAutoAssign"), icon: UserPlus, color: "bg-indigo-500", borderColor: "border-indigo-200 bg-indigo-50/50" },
   ]
 
   useEffect(() => {
@@ -67,6 +68,7 @@ export function WorkflowActionsModal({ workflow, onClose, onSaved, orgId }: Work
       case "update_field": return c.field ? `${c.field} = ${c.value || "..."}` : "..."
       case "send_notification": return c.message ? c.message.slice(0, 50) : "..."
       case "webhook": return c.url ? `${c.method || "POST"} ${c.url.slice(0, 40)}` : "..."
+      case "auto_assign": return c.assignTo || "..."
       default: return ""
     }
   }
@@ -266,11 +268,26 @@ export function WorkflowActionsModal({ workflow, onClose, onSaved, orgId }: Work
                   <>
                     <div>
                       <Label className="text-xs text-muted-foreground">{t("taskTitle")}</Label>
-                      <Input value={newConfig.title || ""} onChange={e => setNewConfig({ ...newConfig, title: e.target.value })} />
+                      <Input value={newConfig.title || ""} onChange={e => setNewConfig({ ...newConfig, title: e.target.value })} placeholder={t("taskTitlePlaceholder")} />
                     </div>
                     <div>
-                      <Label className="text-xs text-muted-foreground">{t("taskAssignee")}</Label>
-                      <Input value={newConfig.assignee || ""} onChange={e => setNewConfig({ ...newConfig, assignee: e.target.value })} />
+                      <Label className="text-xs text-muted-foreground">{t("taskDescription")}</Label>
+                      <Textarea value={newConfig.description || ""} onChange={e => setNewConfig({ ...newConfig, description: e.target.value })} rows={2} />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <Label className="text-xs text-muted-foreground">{t("taskPriority")}</Label>
+                        <Select value={newConfig.priority || "medium"} onChange={e => setNewConfig({ ...newConfig, priority: e.target.value })}>
+                          <option value="low">{t("priorityLow")}</option>
+                          <option value="medium">{t("priorityMedium")}</option>
+                          <option value="high">{t("priorityHigh")}</option>
+                          <option value="urgent">{t("priorityUrgent")}</option>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label className="text-xs text-muted-foreground">{t("taskAssignee")}</Label>
+                        <Input value={newConfig.assignee || ""} onChange={e => setNewConfig({ ...newConfig, assignee: e.target.value })} placeholder="User ID" />
+                      </div>
                     </div>
                   </>
                 )}
@@ -307,6 +324,12 @@ export function WorkflowActionsModal({ workflow, onClose, onSaved, orgId }: Work
                       </Select>
                     </div>
                   </>
+                )}
+                {newType === "auto_assign" && (
+                  <div>
+                    <Label className="text-xs text-muted-foreground">{t("assignTo")}</Label>
+                    <Input value={newConfig.assignTo || ""} onChange={e => setNewConfig({ ...newConfig, assignTo: e.target.value })} placeholder="User ID" />
+                  </div>
                 )}
               </div>
             )}

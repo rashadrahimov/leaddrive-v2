@@ -14,6 +14,7 @@ import {
   Plus, Workflow, CheckCircle, XCircle, Pencil, Trash2,
   Play, Pause, Eye, Briefcase, Target, Ticket, CheckSquare,
   User, Building2, Mail, Bell, Globe, Edit3, Search, Zap,
+  UserPlus, ArrowRight,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -35,28 +36,39 @@ interface WorkflowRule {
 }
 
 const entityIcons: Record<string, any> = {
-  deal: Briefcase,
-  lead: Target,
-  ticket: Ticket,
-  task: CheckSquare,
-  contact: User,
-  company: Building2,
+  deal: Briefcase, deals: Briefcase,
+  lead: Target, leads: Target,
+  ticket: Ticket, tickets: Ticket,
+  task: CheckSquare, tasks: CheckSquare,
+  contact: User, contacts: User,
+  company: Building2, companies: Building2,
 }
 
 const actionIcons: Record<string, any> = {
   send_email: Mail,
   create_task: CheckSquare,
   update_field: Edit3,
-  send_notification: Bell,
+  send_notification: Bell, notify: Bell,
   webhook: Globe,
+  auto_assign: UserPlus, assign_to: UserPlus,
 }
 
 const actionColors: Record<string, string> = {
   send_email: "text-blue-500",
   create_task: "text-teal-500",
   update_field: "text-purple-500",
-  send_notification: "text-orange-500",
+  send_notification: "text-orange-500", notify: "text-orange-500",
   webhook: "text-slate-500",
+  auto_assign: "text-indigo-500", assign_to: "text-indigo-500",
+}
+
+const actionBgColors: Record<string, string> = {
+  send_email: "bg-blue-50 text-blue-700 border-blue-200",
+  create_task: "bg-teal-50 text-teal-700 border-teal-200",
+  update_field: "bg-purple-50 text-purple-700 border-purple-200",
+  send_notification: "bg-orange-50 text-orange-700 border-orange-200", notify: "bg-orange-50 text-orange-700 border-orange-200",
+  webhook: "bg-slate-50 text-slate-700 border-slate-200",
+  auto_assign: "bg-indigo-50 text-indigo-700 border-indigo-200", assign_to: "bg-indigo-50 text-indigo-700 border-indigo-200",
 }
 
 export default function WorkflowsPage() {
@@ -75,11 +87,17 @@ export default function WorkflowsPage() {
 
   const entityLabels: Record<string, string> = {
     deal: t("entityDeal"),
+    deals: t("entityDeal"),
     lead: t("entityLead"),
+    leads: t("entityLead"),
     ticket: t("entityTicket"),
+    tickets: t("entityTicket"),
     task: t("entityTask"),
+    tasks: t("entityTask"),
     contact: t("entityContact"),
+    contacts: t("entityContact"),
     company: t("entityCompany"),
+    companies: t("entityCompany"),
   }
 
   const triggerLabels: Record<string, string> = {
@@ -88,6 +106,17 @@ export default function WorkflowsPage() {
     status_changed: t("triggerStatusChanged"),
     stage_changed: t("triggerStageChanged"),
     assigned: t("triggerAssigned"),
+  }
+
+  const actionLabels: Record<string, string> = {
+    send_email: t("actionSendEmail"),
+    create_task: t("actionCreateTask"),
+    update_field: t("actionUpdateField"),
+    send_notification: t("actionNotification"),
+    notify: t("actionNotification"),
+    webhook: t("actionWebhook"),
+    auto_assign: t("actionAutoAssign"),
+    assign_to: t("actionAutoAssign"),
   }
 
   const fetchWorkflows = async () => {
@@ -123,6 +152,27 @@ export default function WorkflowsPage() {
       body: JSON.stringify({ isActive: !wf.isActive }),
     })
     fetchWorkflows()
+  }
+
+  function getActionSummary(action: WorkflowAction): string {
+    const c = action.actionConfig || {}
+    switch (action.actionType) {
+      case "send_email": return c.subject || c.template || ""
+      case "create_task": return c.title || ""
+      case "update_field": return c.field ? `${c.field} = ${c.value || "..."}` : ""
+      case "send_notification": return c.message ? c.message.slice(0, 60) : ""
+      case "webhook": return c.url ? `${c.method || "POST"} ${c.url.slice(0, 40)}` : ""
+      case "auto_assign":
+      case "assign_to": return c.assignTo || c.assign_to || ""
+      default: return ""
+    }
+  }
+
+  function getConditionsSummary(conditions: any): string {
+    if (!conditions) return ""
+    const rules = conditions.rules
+    if (!Array.isArray(rules) || rules.length === 0) return ""
+    return rules.map((r: any) => `${r.field} ${r.operator} ${r.value || ""}`).join(", ")
   }
 
   const totalCount = workflows.length
@@ -192,71 +242,116 @@ export default function WorkflowsPage() {
           </div>
         ) : filtered.map(wf => {
           const EntityIcon = entityIcons[wf.entityType] || Workflow
-          const conditionCount = wf.conditions?.rules?.length || (
-            wf.conditions && typeof wf.conditions === "object"
-              ? Object.keys(wf.conditions).filter(k => k !== "rules").length
-              : 0
-          )
+          const conditionsSummary = getConditionsSummary(wf.conditions)
           return (
-            <div key={wf.id} className="border rounded-lg bg-card hover:shadow-md transition-shadow">
-              <div className="p-4 flex items-start justify-between gap-4">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className={cn(
-                      "text-xs px-2.5 py-0.5 rounded-full font-medium border",
-                      wf.isActive
-                        ? "bg-green-100 text-green-700 border-green-200"
-                        : "bg-gray-100 text-gray-600 border-gray-200"
-                    )}>
-                      {wf.isActive ? t("statActive") : t("statInactive")}
-                    </span>
-                    <h3 className="font-semibold truncate">{wf.name}</h3>
+            <div key={wf.id} className={cn(
+              "border rounded-lg bg-card hover:shadow-md transition-shadow",
+              !wf.isActive && "opacity-60"
+            )}>
+              <div className="p-4">
+                {/* Top row: status + name + buttons */}
+                <div className="flex items-start justify-between gap-4 mb-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className={cn(
+                        "text-xs px-2.5 py-0.5 rounded-full font-medium border",
+                        wf.isActive
+                          ? "bg-green-100 text-green-700 border-green-200"
+                          : "bg-gray-100 text-gray-600 border-gray-200"
+                      )}>
+                        {wf.isActive ? t("statActive") : t("statInactive")}
+                      </span>
+                      <h3 className="font-semibold truncate">{wf.name}</h3>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-4 text-xs text-muted-foreground mt-1">
-                    <span className="flex items-center gap-1">
-                      <EntityIcon className="h-3 w-3" />
-                      {entityLabels[wf.entityType] || wf.entityType}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Zap className="h-3 w-3 text-orange-500" />
-                      {triggerLabels[wf.triggerEvent] || wf.triggerEvent}
-                    </span>
-                    {conditionCount > 0 && (
-                      <span>{conditionCount} {t("conditions").toLowerCase()}</span>
-                    )}
-                    <span className="flex items-center gap-1">
-                      {wf.actions.map((a, i) => {
-                        const AIcon = actionIcons[a.actionType] || Zap
-                        return <AIcon key={i} className={cn("h-3 w-3", actionColors[a.actionType] || "text-muted-foreground")} />
-                      })}
-                      {wf.actions.length > 0 && <span className="ml-0.5">{wf.actions.length}</span>}
-                    </span>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="gap-1 text-xs h-8"
+                      onClick={() => setActionsWorkflow(wf)}
+                      title={t("tooltipActions")}
+                    >
+                      <Eye className="h-3 w-3" /> {t("actions")}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="gap-1 text-xs h-8"
+                      onClick={() => { setEditData(wf); setShowForm(true) }}
+                      title={t("tooltipEditTrigger")}
+                    >
+                      <Pencil className="h-3 w-3" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className={cn("gap-1 text-xs h-8", wf.isActive ? "text-yellow-600" : "text-green-600")}
+                      onClick={() => toggleActive(wf)}
+                      title={t("tooltipToggleActive")}
+                    >
+                      {wf.isActive ? <Pause className="h-3 w-3" /> : <Play className="h-3 w-3" />}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-8 w-8 p-0 text-muted-foreground hover:text-red-500"
+                      onClick={() => { setDeleteId(wf.id); setDeleteName(wf.name) }}
+                      title={t("tooltipDelete")}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
                   </div>
                 </div>
-                <div className="flex items-center gap-1.5 shrink-0">
-                  <Button size="sm" variant="outline" className="gap-1 text-xs h-8" onClick={() => setActionsWorkflow(wf)}>
-                    <Eye className="h-3 w-3" /> {t("actions")}
-                  </Button>
-                  <Button size="sm" variant="outline" className="gap-1 text-xs h-8" onClick={() => { setEditData(wf); setShowForm(true) }}>
-                    <Pencil className="h-3 w-3" />
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className={cn("gap-1 text-xs h-8", wf.isActive ? "text-yellow-600" : "text-green-600")}
-                    onClick={() => toggleActive(wf)}
-                  >
-                    {wf.isActive ? <Pause className="h-3 w-3" /> : <Play className="h-3 w-3" />}
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="h-8 w-8 p-0 text-muted-foreground hover:text-red-500"
-                    onClick={() => { setDeleteId(wf.id); setDeleteName(wf.name) }}
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </Button>
+
+                {/* Human-readable description: "Когда лид создан → ..." */}
+                <div className="flex items-center gap-2 text-sm mb-3 bg-muted/40 rounded-md px-3 py-2">
+                  <EntityIcon className="h-4 w-4 text-primary shrink-0" />
+                  <span className="text-muted-foreground">{t("whenPrefix")}</span>
+                  <span className="font-medium">{entityLabels[wf.entityType] || wf.entityType}</span>
+                  <span className="font-medium text-orange-600">{triggerLabels[wf.triggerEvent] || wf.triggerEvent}</span>
+                  {conditionsSummary && (
+                    <>
+                      <span className="text-muted-foreground">({t("withCondition")}: {conditionsSummary})</span>
+                    </>
+                  )}
+                  {wf.actions.length > 0 && (
+                    <>
+                      <ArrowRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                      <span className="font-medium text-teal-600">
+                        {wf.actions.length === 1
+                          ? (actionLabels[wf.actions[0].actionType] || wf.actions[0].actionType)
+                          : `${wf.actions.length} ${t("actions").toLowerCase()}`
+                        }
+                      </span>
+                    </>
+                  )}
                 </div>
+
+                {/* Action chips */}
+                {wf.actions.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {wf.actions.map((action, i) => {
+                      const AIcon = actionIcons[action.actionType] || Zap
+                      const summary = getActionSummary(action)
+                      return (
+                        <div
+                          key={i}
+                          className={cn(
+                            "inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-md border",
+                            actionBgColors[action.actionType] || "bg-muted text-muted-foreground border-border"
+                          )}
+                        >
+                          <AIcon className="h-3 w-3 shrink-0" />
+                          <span className="font-medium">{actionLabels[action.actionType] || action.actionType}</span>
+                          {summary && (
+                            <span className="opacity-70 truncate max-w-[200px]">: {summary}</span>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
               </div>
             </div>
           )
