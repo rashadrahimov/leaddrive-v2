@@ -120,7 +120,7 @@ export default function DashboardPage() {
 
   if (!data) return <div className="py-20 text-center text-muted-foreground">Нет данных</div>
 
-  const { financial, clients, pipeline, leads, operations, tasks, activity, risks, financialOverview, forecast } = data
+  const { financial, clients, pipeline, leads, operations, tasks, activity, risks, financialOverview, forecast, atRiskDeals } = data
   const marginColor = financial.marginPct >= 15 ? COLORS.revenue : financial.marginPct >= 5 ? "#f59e0b" : COLORS.cost
 
   // Temperature data
@@ -616,6 +616,46 @@ export default function DashboardPage() {
             </div>
           </CardContent>
         </Card>
+
+        {/* At Risk Deals */}
+        {atRiskDeals && atRiskDeals.length > 0 && (
+          <Card className="lg:col-span-4">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Shield className="h-4 w-4 text-red-500" /> Сделки под угрозой
+                <Badge variant="destructive" className="ml-auto text-xs">{atRiskDeals.length}</Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {atRiskDeals.map((d: any) => (
+                  <div
+                    key={d.id}
+                    onClick={() => window.location.href = `/deals/${d.id}`}
+                    className="flex items-center gap-3 p-2.5 rounded-lg border border-red-100 bg-red-50/50 hover:bg-red-100/50 cursor-pointer transition-colors"
+                  >
+                    <div className="h-10 w-10 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
+                      <span className="text-sm font-bold text-red-600">{d.predictive}%</span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">{d.name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {d.company || "—"} · {d.stage} · {d.daysInFunnel}d in funnel
+                      </p>
+                    </div>
+                    <div className="text-right flex-shrink-0">
+                      <p className="text-sm font-bold">{d.value?.toLocaleString()} {d.currency}</p>
+                      <div className="flex gap-1 justify-end mt-0.5">
+                        <span className="text-[9px] bg-blue-100 text-blue-700 rounded px-1">C:{d.confidence}%</span>
+                        <span className="text-[9px] bg-green-100 text-green-700 rounded px-1">P:{d.probability}%</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Tickets by Status */}
         <Card className="lg:col-span-4">

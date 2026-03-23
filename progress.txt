@@ -108,3 +108,23 @@ E6 (DONE): Contact Detail — KPI Cards + Communication Buttons
 - 4 KPI cards: Email, Phone, Last Contact, Activities
 - Communication buttons: Phone (green), Email (orange), WhatsApp (emerald)
 - File: src/app/(dashboard)/contacts/[id]/page.tsx
+
+E5 (DONE): Full Activity Timeline
+- Component: src/components/deals/activity-timeline.tsx
+- Fetches activities + comments, filter pills, vertical timeline
+- Replaced placeholder stub
+
+E7 (DONE): Contact Engagement Tab
+- API: src/app/api/v1/contacts/[id]/engagement/route.ts
+- Activity breakdown + email nurturing metrics
+- Inline component on contacts/[id]/page.tsx
+
+E8 (DONE): Tabs Reorganization
+- 7 tabs: Overview | Activity | Contact Roles | Competitors | Team | Engagement | History
+
+E10 (DONE): History Tab
+- Component: src/components/deals/deal-history.tsx
+- Stage changes, audit log, vertical timeline
+
+=== CREATIO REDESIGN PLAN COMPLETE ===
+All 10 tasks (E1-E10) done. 470+ lines of new code. 7 new files created.

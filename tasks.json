@@ -48,11 +48,11 @@
     {"id": "E2", "description": "Deal Detail: Engagement tab with activity metrics + site visit dynamics chart", "priority": 43, "dependencies": ["E1"], "status": "done"},
     {"id": "E3", "description": "Deal Detail: Email Nurturing section (send/open/click rates + dynamics chart)", "priority": 44, "dependencies": ["E2"], "status": "done"},
     {"id": "E4", "description": "Deal Detail: Next Best Offers widget in left sidebar", "priority": 45, "dependencies": ["E1"], "status": "done"},
-    {"id": "E5", "description": "Deal Detail: Full Activity Timeline tab (activities + emails + comments, filters, log activity)", "priority": 46, "dependencies": ["E2"], "status": "pending"},
+    {"id": "E5", "description": "Deal Detail: Full Activity Timeline tab (activities + emails + comments, filters, log activity)", "priority": 46, "dependencies": ["E2"], "status": "done"},
     {"id": "E6", "description": "Contact Detail: KPI cards + Communication action buttons", "priority": 47, "dependencies": ["E1"], "status": "done"},
-    {"id": "E7", "description": "Contact Detail: Engagement tab (email history + activity summary + chart)", "priority": 48, "dependencies": ["E2"], "status": "pending"},
-    {"id": "E8", "description": "Deal Detail: Tabs reorganization Creatio-style (Overview/Activity/Sales/Products/History/Engagement)", "priority": 49, "dependencies": ["E2", "E5"], "status": "pending"},
+    {"id": "E7", "description": "Contact Detail: Engagement tab (email history + activity summary + chart)", "priority": 48, "dependencies": ["E2"], "status": "done"},
+    {"id": "E8", "description": "Deal Detail: Tabs reorganization Creatio-style (Overview/Activity/Sales/Products/History/Engagement)", "priority": 49, "dependencies": ["E2", "E5"], "status": "done"},
     {"id": "E9", "description": "Deal Detail: Predictive Scoring widget under confidence slider", "priority": 50, "dependencies": ["E1"], "status": "done"},
-    {"id": "E10", "description": "Deal Detail: History tab enhancement (stage changes, value changes, audit log)", "priority": 51, "dependencies": ["E8"], "status": "pending"}
+    {"id": "E10", "description": "Deal Detail: History tab enhancement (stage changes, value changes, audit log)", "priority": 51, "dependencies": ["E8"], "status": "done"}
   ]
 }

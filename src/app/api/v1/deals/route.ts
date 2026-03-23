@@ -74,7 +74,7 @@ export async function POST(req: NextRequest) {
         stage: parsed.data.stage || "LEAD",
         valueAmount: parsed.data.valueAmount || 0,
         currency: parsed.data.currency || "AZN",
-        probability: parsed.data.probability || 0,
+        probability: parsed.data.probability || ({ LEAD: 10, QUALIFIED: 20, PROPOSAL: 50, NEGOTIATION: 70, CONTRACT: 85, WON: 100, LOST: 0 }[parsed.data.stage || "LEAD"] ?? 10),
         expectedClose: parsed.data.expectedClose ? new Date(parsed.data.expectedClose) : null,
         assignedTo: parsed.data.assignedTo,
         notes: parsed.data.notes,

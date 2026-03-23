@@ -45,6 +45,7 @@ export async function GET(req: NextRequest) {
       contractsData,
       wonDealsAll,
       dealsForForecast,
+      atRiskDeals,
     ] = await Promise.all([
       // Companies
       prisma.company.count({ where: { organizationId: orgId, category: "client" } }),
@@ -96,6 +97,17 @@ export async function GET(req: NextRequest) {
         where: { organizationId: orgId },
         select: { valueAmount: true, stage: true, createdAt: true, updatedAt: true },
       }),
+      // At-risk deals (low confidence, active)
+      prisma.deal.findMany({
+        where: { organizationId: orgId, stage: { notIn: ["WON", "LOST"] } },
+        select: {
+          id: true, name: true, valueAmount: true, currency: true, stage: true,
+          probability: true, confidenceLevel: true, stageChangedAt: true, createdAt: true,
+          company: { select: { name: true } },
+          contact: { select: { fullName: true } },
+        },
+        orderBy: { valueAmount: "desc" },
+      }),
     ])
 
     // Cost model — direct compute (no internal fetch)
@@ -132,6 +144,27 @@ export async function GET(req: NextRequest) {
       risks.push({ severity: "critical", title: "Нарушение SLA", description: `${slaBreached} тикетов с истёкшим SLA`, metric: `${slaBreached}` })
     if (overdueTasks > 3)
       risks.push({ severity: "warning", title: "Просроченные задачи", description: `${overdueTasks} задач просрочены`, metric: `${overdueTasks}` })
+    // At-risk deals (predictive score < 40%)
+    const STAGE_PROBABILITY: Record<string, number> = {
+      LEAD: 10, QUALIFIED: 20, PROPOSAL: 50, NEGOTIATION: 70, CONTRACT: 85,
+    }
+    const atRiskList = (atRiskDeals as any[]).map((d: any) => {
+      const confidence = d.confidenceLevel ?? 50
+      const probability = d.probability ?? (STAGE_PROBABILITY[d.stage] || 30)
+      const predictive = Math.round(confidence * 0.85 + probability * 0.15)
+      const daysInFunnel = Math.floor((Date.now() - new Date(d.createdAt).getTime()) / 86400000)
+      return { ...d, predictive, probability, daysInFunnel }
+    }).filter((d: any) => d.predictive < 40)
+    .sort((a: any, b: any) => a.predictive - b.predictive)
+
+    if (atRiskList.length > 0)
+      risks.push({
+        severity: "warning",
+        title: "Сделки под угрозой",
+        description: `${atRiskList.length} сделок с predictive scoring < 40%`,
+        metric: `${atRiskList.length}`,
+      })
+
     if (risks.length === 0)
       risks.push({ severity: "ok", title: "Всё в порядке", description: "Критических проблем не обнаружено", metric: "✓" })
 
@@ -260,6 +293,12 @@ export async function GET(req: NextRequest) {
           count30d: activityCount30d,
         },
         risks,
+        atRiskDeals: atRiskList.slice(0, 5).map((d: any) => ({
+          id: d.id, name: d.name, value: d.valueAmount, currency: d.currency,
+          stage: d.stage, predictive: d.predictive, probability: d.probability,
+          confidence: d.confidenceLevel ?? 50, daysInFunnel: d.daysInFunnel,
+          company: d.company?.name, contact: d.contact?.fullName,
+        })),
       },
     })
   } catch (e) {
