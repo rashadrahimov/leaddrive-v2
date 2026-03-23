@@ -13,6 +13,7 @@ import {
   CheckCircle2, AlertCircle, Tag, Plus, X, Phone, Mail
 } from "lucide-react"
 import { DealForm } from "@/components/deal-form"
+import { EngagementTab } from "@/components/deals/engagement-tab"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
 
 const STAGES = [
@@ -578,6 +579,7 @@ export default function DealDetailPage() {
           <TabsTrigger value="contact-roles" className="rounded-md text-sm">Contact Roles</TabsTrigger>
           <TabsTrigger value="competitors" className="rounded-md text-sm">Competitors</TabsTrigger>
           <TabsTrigger value="team" className="rounded-md text-sm">Team</TabsTrigger>
+          <TabsTrigger value="engagement" className="rounded-md text-sm">Engagement</TabsTrigger>
         </TabsList>
 
         {/* Overview */}
@@ -891,6 +893,11 @@ export default function DealDetailPage() {
               )}
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* Engagement */}
+        <TabsContent value="engagement">
+          <EngagementTab dealId={id} orgId={orgId} />
         </TabsContent>
       </Tabs>
 

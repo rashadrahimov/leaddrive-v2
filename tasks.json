@@ -37,11 +37,22 @@
     {"id": "P12", "description": "Pricing v2: Refactor Excel export to read from DB", "priority": 34, "dependencies": ["P5"], "status": "done"},
     {"id": "P13", "description": "Pricing v2: Cleanup — remove old file-based routes, archive JSON, update types", "priority": 35, "dependencies": ["P6", "P7", "P9", "P12"], "status": "done"},
 
-    {"id": "C1", "description": "Deal Detail full page: pipeline chevrons, colored KPI cards, competitors table, predictive scoring, tags", "priority": 36, "dependencies": [], "status": "in_progress"},
-    {"id": "C2", "description": "Company Detail full page: unified timeline feed, KPI cards, tags", "priority": 37, "dependencies": [], "status": "pending"},
-    {"id": "C3", "description": "Ticket Detail full page: SLA countdown timer, Escalate/Assign to me buttons, unified communication timeline, related KB articles", "priority": 38, "dependencies": [], "status": "pending"},
-    {"id": "C4", "description": "Dashboard visual improvements: circular gauges in Reports, funnel pyramid visualization, KPI card style upgrade", "priority": 39, "dependencies": [], "status": "pending"},
-    {"id": "C5", "description": "Global Tags system: Prisma Tag model + relations, tag-input UI component, tags API", "priority": 40, "dependencies": [], "status": "pending"},
-    {"id": "C6", "description": "AI floating assistant panel: global slide-in AI chat available on every page", "priority": 41, "dependencies": [], "status": "pending"}
+    {"id": "C1", "description": "Deal Detail full page: pipeline chevrons, colored KPI cards, competitors table, predictive scoring, tags", "priority": 36, "dependencies": [], "status": "done"},
+    {"id": "C2", "description": "Company Detail full page: unified timeline feed, KPI cards, tags", "priority": 37, "dependencies": [], "status": "done"},
+    {"id": "C3", "description": "Ticket Detail full page: SLA countdown timer, Escalate/Assign to me buttons, unified communication timeline, related KB articles + status pipeline + filter tabs", "priority": 38, "dependencies": [], "status": "done"},
+    {"id": "C4", "description": "Dashboard visual improvements: circular gauges in Reports, funnel pyramid visualization, KPI card style upgrade", "priority": 39, "dependencies": [], "status": "done"},
+    {"id": "C5", "description": "Global Tags system: Prisma Tag model + relations, tag-input UI component, tags API", "priority": 40, "dependencies": [], "status": "done"},
+    {"id": "C6", "description": "AI floating assistant panel: global slide-in AI chat available on every page", "priority": 41, "dependencies": [], "status": "done"},
+
+    {"id": "E1", "description": "Deal Detail: Communication action buttons (Phone, Email, WhatsApp, Chat) in Creatio style", "priority": 42, "dependencies": ["C1"], "status": "done"},
+    {"id": "E2", "description": "Deal Detail: Engagement tab with activity metrics + site visit dynamics chart", "priority": 43, "dependencies": ["E1"], "status": "in_progress"},
+    {"id": "E3", "description": "Deal Detail: Email Nurturing section (send/open/click rates + dynamics chart)", "priority": 44, "dependencies": ["E2"], "status": "pending"},
+    {"id": "E4", "description": "Deal Detail: Next Best Offers widget in left sidebar", "priority": 45, "dependencies": ["E1"], "status": "pending"},
+    {"id": "E5", "description": "Deal Detail: Full Activity Timeline tab (activities + emails + comments, filters, log activity)", "priority": 46, "dependencies": ["E2"], "status": "pending"},
+    {"id": "E6", "description": "Contact Detail: KPI cards + Communication action buttons", "priority": 47, "dependencies": ["E1"], "status": "pending"},
+    {"id": "E7", "description": "Contact Detail: Engagement tab (email history + activity summary + chart)", "priority": 48, "dependencies": ["E2"], "status": "pending"},
+    {"id": "E8", "description": "Deal Detail: Tabs reorganization Creatio-style (Overview/Activity/Sales/Products/History/Engagement)", "priority": 49, "dependencies": ["E2", "E5"], "status": "pending"},
+    {"id": "E9", "description": "Deal Detail: Predictive Scoring widget under confidence slider", "priority": 50, "dependencies": ["E1"], "status": "pending"},
+    {"id": "E10", "description": "Deal Detail: History tab enhancement (stage changes, value changes, audit log)", "priority": 51, "dependencies": ["E8"], "status": "pending"}
   ]
 }
