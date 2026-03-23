@@ -11,10 +11,14 @@ export async function GET(req: NextRequest) {
   const userId = (session?.user as any)?.id
 
   try {
+    const userFilter = userId
+      ? { OR: [{ userId }, { userId: "" }] }
+      : {}
+
     const notifications = await prisma.notification.findMany({
       where: {
         organizationId: orgId,
-        ...(userId ? { userId } : {}),
+        ...userFilter,
       },
       orderBy: { createdAt: "desc" },
       take: 50,
@@ -23,7 +27,7 @@ export async function GET(req: NextRequest) {
     const unreadCount = await prisma.notification.count({
       where: {
         organizationId: orgId,
-        ...(userId ? { userId } : {}),
+        ...userFilter,
         isRead: false,
       },
     })
@@ -51,10 +55,11 @@ export async function PATCH(req: NextRequest) {
     if (markAll) {
       const session = await auth()
       const userId = (session?.user as any)?.id
+      const userFilter = userId ? { OR: [{ userId }, { userId: "" }] } : {}
       await prisma.notification.updateMany({
         where: {
           organizationId: orgId,
-          ...(userId ? { userId } : {}),
+          ...userFilter,
           isRead: false,
         },
         data: { isRead: true },
