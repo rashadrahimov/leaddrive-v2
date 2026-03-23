@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useSession } from "next-auth/react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
@@ -45,6 +46,7 @@ const categoryColors: Record<string, string> = {
 
 export default function ProductsPage() {
   const { data: session } = useSession()
+  const router = useRouter()
   const orgId = session?.user?.organizationId
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
@@ -193,7 +195,7 @@ export default function ProductsPage() {
   ]
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-16">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="h-10 w-10 rounded-xl bg-amber-100 flex items-center justify-center">
@@ -233,7 +235,7 @@ export default function ProductsPage() {
         ))}
       </div>
 
-      <DataTable columns={columns} data={filtered} searchPlaceholder="Search products..." searchKey="name" />
+      <DataTable columns={columns} data={filtered} searchPlaceholder="Search products..." searchKey="name" onRowClick={(item) => router.push(`/products/${item.id}`)} />
 
       {/* Create/Edit Dialog */}
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
