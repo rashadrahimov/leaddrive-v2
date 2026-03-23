@@ -425,9 +425,12 @@ export default function AgentCalendarPage() {
           </CardHeader>
           <CardContent>
             {(() => {
-              const todayItems = items
-                .filter(item => isSameDay(new Date(item.date), today))
-                .sort((a, b) => a.hour - b.hour)
+              const todayItems = items.filter(item => isSameDay(new Date(item.date), today))
+              const allDayItems = todayItems.filter(i => i.allDay)
+              const timedItems = todayItems.filter(i => !i.allDay).sort((a, b) => a.hour - b.hour)
+
+              const ticketAllDay = allDayItems.filter(i => i.type === "ticket")
+              const taskAllDay = allDayItems.filter(i => i.type === "task")
 
               if (todayItems.length === 0) {
                 return (
@@ -439,30 +442,96 @@ export default function AgentCalendarPage() {
               }
 
               return (
-                <div className="space-y-2">
-                  {todayItems.map(item => {
-                    const config = TYPE_CONFIG[item.type] || TYPE_CONFIG.activity_note
-                    const Icon = config.icon
-                    const time = new Date(item.date).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" })
-                    return (
-                      <div
-                        key={item.id}
-                        onClick={() => item.url && router.push(item.url)}
-                        className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer hover:bg-muted/50 transition-colors border-l-[3px] ${config.border}`}
-                      >
-                        <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${config.bg}`}>
-                          <Icon className={`h-4 w-4 ${config.text}`} />
+                <div className="space-y-3">
+                  {/* All-day summary */}
+                  {allDayItems.length > 0 && (
+                    <div className="space-y-2">
+                      <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">All Day</p>
+                      {ticketAllDay.length > 0 && (
+                        <div
+                          onClick={() => router.push("/tickets")}
+                          className="flex items-center gap-3 p-2.5 rounded-lg cursor-pointer hover:bg-red-50/80 transition-colors border-l-[3px] border-l-red-500 bg-red-50/50"
+                        >
+                          <div className="h-8 w-8 rounded-lg flex items-center justify-center bg-red-100">
+                            <Ticket className="h-4 w-4 text-red-600" />
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-sm font-semibold text-red-700">{ticketAllDay.length} open tickets</p>
+                            <div className="flex gap-1 mt-0.5 flex-wrap">
+                              {(() => {
+                                const critical = ticketAllDay.filter(i => i.priority === "critical").length
+                                const high = ticketAllDay.filter(i => i.priority === "high").length
+                                const medium = ticketAllDay.filter(i => i.priority === "medium").length
+                                const low = ticketAllDay.filter(i => i.priority === "low").length
+                                return (
+                                  <>
+                                    {critical > 0 && <span className="text-[10px] bg-red-200 text-red-800 rounded px-1">{critical} critical</span>}
+                                    {high > 0 && <span className="text-[10px] bg-orange-200 text-orange-800 rounded px-1">{high} high</span>}
+                                    {medium > 0 && <span className="text-[10px] bg-yellow-200 text-yellow-800 rounded px-1">{medium} medium</span>}
+                                    {low > 0 && <span className="text-[10px] bg-green-200 text-green-800 rounded px-1">{low} low</span>}
+                                  </>
+                                )
+                              })()}
+                            </div>
+                          </div>
+                          <ChevronRight className="h-4 w-4 text-muted-foreground" />
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium truncate">{item.title}</p>
-                          <p className="text-xs text-muted-foreground">{time} · {config.label}</p>
+                      )}
+                      {taskAllDay.length > 0 && (
+                        <div
+                          onClick={() => router.push("/tasks")}
+                          className="flex items-center gap-3 p-2.5 rounded-lg cursor-pointer hover:bg-orange-50/80 transition-colors border-l-[3px] border-l-orange-500 bg-orange-50/50"
+                        >
+                          <div className="h-8 w-8 rounded-lg flex items-center justify-center bg-orange-100">
+                            <CheckSquare className="h-4 w-4 text-orange-600" />
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-sm font-semibold text-orange-700">{taskAllDay.length} open tasks</p>
+                          </div>
+                          <ChevronRight className="h-4 w-4 text-muted-foreground" />
                         </div>
-                        {item.priority && (
-                          <div className={`h-2 w-2 rounded-full ${PRIORITY_COLORS[item.priority] || "bg-gray-400"}`} />
-                        )}
-                      </div>
-                    )
-                  })}
+                      )}
+                    </div>
+                  )}
+
+                  {/* Timed items */}
+                  {timedItems.length > 0 && (
+                    <div className="space-y-2">
+                      {allDayItems.length > 0 && (
+                        <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider pt-1">Scheduled</p>
+                      )}
+                      {timedItems.map(item => {
+                        const config = TYPE_CONFIG[item.type] || TYPE_CONFIG.activity_note
+                        const Icon = config.icon
+                        const time = new Date(item.date).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" })
+                        return (
+                          <div
+                            key={item.id}
+                            onClick={() => item.url && router.push(item.url)}
+                            className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer hover:bg-muted/50 transition-colors border-l-[3px] ${config.border}`}
+                          >
+                            <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${config.bg}`}>
+                              <Icon className={`h-4 w-4 ${config.text}`} />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium truncate">{item.title}</p>
+                              <p className="text-xs text-muted-foreground">{time} · {config.label}</p>
+                            </div>
+                            {item.priority && (
+                              <div className={`h-2 w-2 rounded-full ${PRIORITY_COLORS[item.priority] || "bg-gray-400"}`} />
+                            )}
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
+
+                  {/* Empty timed */}
+                  {timedItems.length === 0 && allDayItems.length > 0 && (
+                    <div className="text-center py-3 text-muted-foreground">
+                      <p className="text-xs">No scheduled events for today</p>
+                    </div>
+                  )}
                 </div>
               )
             })()}
