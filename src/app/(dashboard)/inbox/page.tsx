@@ -15,6 +15,7 @@ import {
   Loader2, Plus, ArrowLeft, MessageCircle,
   Inbox as InboxIcon, ArrowDownLeft, ArrowUpRight,
 } from "lucide-react"
+import { ColorStatCard } from "@/components/color-stat-card"
 import { cn } from "@/lib/utils"
 
 /* -- Types -- */
@@ -348,21 +349,11 @@ export default function InboxPage() {
       </div>
 
       {/* -- Stats cards -- */}
-      <div className="grid grid-cols-4 gap-3">
-        {[
-          { label: t("statMessages"), value: stats.totalMessages, icon: MessageSquare, color: "text-blue-600" },
-          { label: t("statIncoming"), value: stats.inbound, icon: ArrowDownLeft, color: "text-green-600" },
-          { label: t("statOutgoing"), value: stats.outbound, icon: ArrowUpRight, color: "text-orange-600" },
-          { label: t("statConversations"), value: stats.conversations, icon: MessageCircle, color: "text-purple-600" },
-        ].map(s => (
-          <div key={s.label} className="rounded-lg border bg-card p-4">
-            <div className="flex items-center gap-2 text-muted-foreground text-sm mb-1">
-              <s.icon className={cn("h-4 w-4", s.color)} />
-              {s.label}
-            </div>
-            <div className="text-2xl font-bold">{s.value}</div>
-          </div>
-        ))}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <ColorStatCard label={t("statMessages")} value={stats.totalMessages} icon={<MessageSquare className="h-4 w-4" />} color="blue" />
+        <ColorStatCard label={t("statIncoming")} value={stats.inbound} icon={<ArrowDownLeft className="h-4 w-4" />} color="green" />
+        <ColorStatCard label={t("statOutgoing")} value={stats.outbound} icon={<ArrowUpRight className="h-4 w-4" />} color="orange" />
+        <ColorStatCard label={t("statConversations")} value={stats.conversations} icon={<MessageCircle className="h-4 w-4" />} color="violet" />
       </div>
 
       {/* -- Channel filter tabs -- */}
