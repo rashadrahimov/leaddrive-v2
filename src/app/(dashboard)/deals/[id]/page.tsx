@@ -370,6 +370,8 @@ export default function DealDetailPage() {
   const [addingMember, setAddingMember] = useState(false)
   const [selectedUserId, setSelectedUserId] = useState("")
   const [selectedRole, setSelectedRole] = useState("member")
+  const [nextSteps, setNextSteps] = useState<Array<{ id: string; title: string; status: string; dueDate: string | null; completedAt: string | null }>>([])
+  const [newStepTitle, setNewStepTitle] = useState("")
 
   const fetchDeal = async () => {
     try {
@@ -394,7 +396,17 @@ export default function DealDetailPage() {
     } catch {}
   }
 
-  useEffect(() => { if (session) { fetchDeal(); fetchOrgUsers() } }, [session, id])
+  const fetchNextSteps = async () => {
+    try {
+      const res = await fetch(`/api/v1/deals/${id}/next-steps`, {
+        headers: orgId ? { "x-organization-id": orgId } : {},
+      })
+      const json = await res.json()
+      if (json.success) setNextSteps(json.data || [])
+    } catch {}
+  }
+
+  useEffect(() => { if (session) { fetchDeal(); fetchOrgUsers(); fetchNextSteps() } }, [session, id])
 
   const saveTags = async (newTags: string[]) => {
     if (!deal) return
@@ -834,6 +846,83 @@ export default function DealDetailPage() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* ── Next Steps ── */}
+      <Card className="border-none shadow-sm bg-card">
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <CheckCircle2 className="h-4 w-4 text-muted-foreground" /> Next Steps
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          {nextSteps.filter(s => s.status !== "completed").map(step => (
+            <div key={step.id} className="flex items-center gap-3 p-2.5 rounded-lg border hover:bg-muted/30 transition-colors">
+              <button
+                className="h-5 w-5 rounded-full border-2 border-primary/40 hover:border-primary hover:bg-primary/10 flex-shrink-0 transition-colors"
+                onClick={async () => {
+                  await fetch(`/api/v1/deals/${id}/next-steps`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": orgId } : {}) },
+                    body: JSON.stringify({ taskId: step.id, status: "completed" }),
+                  })
+                  fetchNextSteps()
+                }}
+              />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium truncate">{step.title}</p>
+                {step.dueDate && (
+                  <p className="text-xs text-muted-foreground">{new Date(step.dueDate).toLocaleDateString("ru-RU")}</p>
+                )}
+              </div>
+            </div>
+          ))}
+
+          {nextSteps.filter(s => s.status === "completed").length > 0 && (
+            <div className="pt-2 space-y-1">
+              <p className="text-xs text-muted-foreground font-medium">Completed</p>
+              {nextSteps.filter(s => s.status === "completed").map(step => (
+                <div key={step.id} className="flex items-center gap-3 p-2 rounded-lg opacity-50">
+                  <CheckCircle2 className="h-4 w-4 text-green-500 flex-shrink-0" />
+                  <p className="text-sm line-through truncate">{step.title}</p>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Add new step */}
+          <div className="flex gap-2 pt-2">
+            <input
+              className="flex-1 h-9 border rounded-lg px-3 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/30"
+              placeholder="Add next step..."
+              value={newStepTitle}
+              onChange={e => setNewStepTitle(e.target.value)}
+              onKeyDown={async e => {
+                if (e.key === "Enter" && newStepTitle.trim()) {
+                  await fetch(`/api/v1/deals/${id}/next-steps`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": orgId } : {}) },
+                    body: JSON.stringify({ title: newStepTitle.trim() }),
+                  })
+                  setNewStepTitle("")
+                  fetchNextSteps()
+                }
+              }}
+            />
+            <Button size="sm" disabled={!newStepTitle.trim()} onClick={async () => {
+              if (!newStepTitle.trim()) return
+              await fetch(`/api/v1/deals/${id}/next-steps`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": orgId } : {}) },
+                body: JSON.stringify({ title: newStepTitle.trim() }),
+              })
+              setNewStepTitle("")
+              fetchNextSteps()
+            }}>
+              <Plus className="h-3.5 w-3.5 mr-1" /> Add
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* ── Modals ── */}
       <DealForm
