@@ -128,3 +128,26 @@ E10 (DONE): History Tab
 
 === CREATIO REDESIGN PLAN COMPLETE ===
 All 10 tasks (E1-E10) done. 470+ lines of new code. 7 new files created.
+
+E4 (DONE): Next Best Offers — AI scoring + clickable modal + Add to Deal
+E5 (DONE): Activity Timeline — filter pills, vertical timeline
+E6 (DONE): Contact KPIs + Communication Buttons
+E7 (DONE): Contact Engagement Tab
+E8 (DONE): Tabs Reorganization — 7 tabs on deal detail
+E9 (DONE): Predictive Scoring
+E10 (DONE): History Tab
+Products page (DONE): /products with CRUD, detail page /products/[id], sidebar nav
+At Risk deals widget (DONE): Dashboard shows deals with predictive < 40%
+AI recommend fix (DONE): removed contact relation from Deal queries
+
+=== NEXT SESSION: Visual Overhaul S1-S8 ===
+User wants: синие/красные/зелёные цвета, НЕ плагиат Creatio, свой уникальный стиль
+Plan:
+S1: Sidebar restyle — белый с цветными иконками по группам + accent bar
+S2: Header — gradient white→light blue
+S3: KPI cards — gradient backgrounds
+S4: List pages — colored icon headers
+S5: Detail pages — 2-column layout
+S6: Tables — zebra striping + hover
+S7: Empty states — illustrations
+S8: Buttons — gradient primary
