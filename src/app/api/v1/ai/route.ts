@@ -44,7 +44,10 @@ export async function POST(req: NextRequest) {
   if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
   const body = await req.json()
-  const { action, companyId, leadId, options } = body
+  const { action, companyId, leadId, options, locale: reqLocale } = body
+  const locale = reqLocale || "ru"
+  const langMap: Record<string, string> = { en: "English", ru: "Russian", az: "Azerbaijani" }
+  const langName = langMap[locale] || "Russian"
 
   if (!action || (!companyId && !leadId)) {
     return NextResponse.json({ error: "action and (companyId or leadId) required" }, { status: 400 })
@@ -125,13 +128,13 @@ export async function POST(req: NextRequest) {
 
     switch (action) {
       case "sentiment":
-        return handleSentiment(orgId, contextBlock, contextName, contactNames, activitiesList)
+        return handleSentiment(orgId, contextBlock, contextName, contactNames, activitiesList, langName)
 
       case "tasks":
-        return handleTasks(orgId, contextBlock, contextName, mainContactName, mainContactPhone, mainContactEmail, industry, website)
+        return handleTasks(orgId, contextBlock, contextName, mainContactName, mainContactPhone, mainContactEmail, industry, website, langName)
 
       case "text":
-        return handleText(orgId, contextBlock, contextName, mainContactName, industry, options)
+        return handleText(orgId, contextBlock, contextName, mainContactName, industry, options, langName)
 
       default:
         return NextResponse.json({ error: `Unknown action: ${action}` }, { status: 400 })
@@ -143,7 +146,7 @@ export async function POST(req: NextRequest) {
 
 // ── SENTIMENT ──────────────────────────────────────────────
 
-async function handleSentiment(orgId: string, contextBlock: string, contextName: string, contactNames: string, activities: any[]) {
+async function handleSentiment(orgId: string, contextBlock: string, contextName: string, contactNames: string, activities: any[], langName: string) {
   const client = getClient()
   if (!client) return sentimentFallback(contextName, contactNames, activities)
 
@@ -153,10 +156,10 @@ async function handleSentiment(orgId: string, contextBlock: string, contextName:
       model: "claude-haiku-4-5-20251001",
       max_tokens: 1024,
       temperature: 0.3,
-      system: `Ты — AI-аналитик CRM-системы LeadDrive. Анализируй данные о клиенте и дай оценку тональности взаимоотношений. Отвечай ТОЛЬКО валидным JSON без markdown.`,
+      system: `You are an AI analyst for LeadDrive CRM. Analyze client data and provide a sentiment assessment. Respond ONLY with valid JSON, no markdown. All text content MUST be in ${langName}.`,
       messages: [{
         role: "user",
-        content: `Проанализируй тональность взаимоотношений с клиентом на основе данных:\n\n${contextBlock}\n\nОтветь JSON:\n{"score": число 0-100, "sentiment": "POSITIVE"|"NEUTRAL"|"NEGATIVE", "emoji": "😊"|"😐"|"😟", "trend": "improving"|"stable"|"declining"|"unknown", "risk": "LOW"|"MEDIUM"|"HIGH", "confidence": число 0-100, "summary": "подробный анализ на русском языке (2-3 предложения)"}`,
+        content: `Analyze the sentiment of the relationship with the client based on data:\n\n${contextBlock}\n\nRespond with JSON (all text values in ${langName}):\n{"score": number 0-100, "sentiment": "POSITIVE"|"NEUTRAL"|"NEGATIVE", "emoji": "😊"|"😐"|"😟", "trend": "improving"|"stable"|"declining"|"unknown", "risk": "LOW"|"MEDIUM"|"HIGH", "confidence": number 0-100, "summary": "detailed analysis in ${langName} (2-3 sentences)"}`,
       }],
     })
 
@@ -185,9 +188,9 @@ function sentimentFallback(contextName: string, contactNames: string, activities
 
 // ── TASKS ──────────────────────────────────────────────────
 
-async function handleTasks(orgId: string, contextBlock: string, contextName: string, contactName: string, contactPhone: string, contactEmail: string, industry: string, website: string) {
+async function handleTasks(orgId: string, contextBlock: string, contextName: string, contactName: string, contactPhone: string, contactEmail: string, industry: string, website: string, langName: string) {
   const client = getClient()
-  if (!client) return tasksFallback(contextName, contactName, contactPhone, industry, website)
+  if (!client) return tasksFallback(contextName, contactName, contactPhone, industry, website, langName)
 
   try {
     const t0 = Date.now()
@@ -195,10 +198,10 @@ async function handleTasks(orgId: string, contextBlock: string, contextName: str
       model: "claude-haiku-4-5-20251001",
       max_tokens: 2048,
       temperature: 0.5,
-      system: `Ты — AI-ассистент CRM-системы LeadDrive. Генерируй умные задачи для менеджеров по продажам. Учитывай контекст клиента. Отвечай ТОЛЬКО валидным JSON без markdown.`,
+      system: `You are an AI assistant for LeadDrive CRM. Generate smart tasks for sales managers. Consider client context. Respond ONLY with valid JSON, no markdown. All text content MUST be in ${langName}.`,
       messages: [{
         role: "user",
-        content: `На основе данных о клиенте сгенерируй 4 задачи для менеджера:\n\n${contextBlock}\n\nОтветь JSON:\n{"strategy": "краткое описание стратегии работы с клиентом (1-2 предложения)", "tasks": [{"title": "заголовок", "description": "подробное описание", "priority": "HIGH"|"MEDIUM"|"LOW", "type": "email"|"call"|"meeting"|"general", "dueDate": "YYYY-MM-DD", "reasoning": "почему эта задача важна"}]}\n\nДаты должны начинаться с ${new Date().toISOString().split("T")[0]}. Все тексты на русском.`,
+        content: `Based on the client data, generate 4 tasks for the manager:\n\n${contextBlock}\n\nRespond with JSON (all text values in ${langName}):\n{"strategy": "brief strategy description (1-2 sentences)", "tasks": [{"title": "title", "description": "detailed description", "priority": "HIGH"|"MEDIUM"|"LOW", "type": "email"|"call"|"meeting"|"general", "dueDate": "YYYY-MM-DD", "reasoning": "why this task is important"}]}\n\nDates should start from ${new Date().toISOString().split("T")[0]}. All text content must be in ${langName}.`,
       }],
     })
 
@@ -212,63 +215,86 @@ async function handleTasks(orgId: string, contextBlock: string, contextName: str
   }
 }
 
-function tasksFallback(contextName: string, contactName: string, contactPhone: string, industry: string, website: string) {
+function tasksFallback(contextName: string, contactName: string, contactPhone: string, industry: string, website: string, langName: string) {
   const now = new Date()
+  const fb: Record<string, any> = {
+    Russian: {
+      t1: `Первоначальный контакт с ${contactName}`,
+      d1: `Отправить приветственное письмо ${contactName} с представлением компании${industry ? ` в сфере ${industry}` : ""}.`,
+      r1: `Необходимо установить первоначальный контакт.`,
+      t2: `Исследование компании ${contextName}`,
+      d2: `Провести анализ потребностей ${contextName}${website ? ` (${website})` : ""} в области IT-услуг.`,
+      r2: `Понимание бизнеса клиента позволит подготовить предложение.`,
+      t3: `Телефонный звонок ${contactName}`,
+      d3: `Позвонить по номеру ${contactPhone} для установления контакта.`,
+      r3: `Прямой контакт ускорит процесс.`,
+      t4: `Запланировать встречу или демонстрацию`,
+      d4: `Предложить встречу или демонстрацию решений для ${contextName}.`,
+      r4: `Встреча увеличит вероятность сделки.`,
+      strategy: `Стратегия: многоканальный подход к ${contactName} из ${contextName} — email, исследование, звонок, встреча.`,
+    },
+    Azerbaijani: {
+      t1: `${contactName} ilə ilkin əlaqə`,
+      d1: `${contactName}-a şirkətin təqdimatı ilə salamlama məktubu göndərin${industry ? ` ${industry} sahəsində` : ""}.`,
+      r1: `İlkin əlaqə qurmaq lazımdır.`,
+      t2: `${contextName} şirkətinin araşdırılması`,
+      d2: `${contextName}${website ? ` (${website})` : ""} IT xidmətləri sahəsində ehtiyaclarının təhlili.`,
+      r2: `Müştərinin biznesini anlamaq təklif hazırlamağa imkan verəcək.`,
+      t3: `${contactName}-a telefon zəngi`,
+      d3: `Əlaqə qurmaq üçün ${contactPhone} nömrəsinə zəng edin.`,
+      r3: `Birbaşa əlaqə prosesi sürətləndirəcək.`,
+      t4: `Görüş və ya nümayiş planlaşdırın`,
+      d4: `${contextName} üçün həllərin görüşü və ya nümayişi təklif edin.`,
+      r4: `Görüş sövdələşmə ehtimalını artıracaq.`,
+      strategy: `Strategiya: ${contactName} (${contextName}) ilə çoxkanallı yanaşma — email, araşdırma, zəng, görüş.`,
+    },
+    English: {
+      t1: `Initial contact with ${contactName}`,
+      d1: `Send a welcome email to ${contactName} introducing the company${industry ? ` in ${industry}` : ""}.`,
+      r1: `Need to establish initial contact.`,
+      t2: `Research ${contextName}`,
+      d2: `Analyze ${contextName}'s${website ? ` (${website})` : ""} needs in IT services.`,
+      r2: `Understanding the client's business will help prepare a proposal.`,
+      t3: `Phone call to ${contactName}`,
+      d3: `Call ${contactPhone} to establish contact.`,
+      r3: `Direct contact will speed up the process.`,
+      t4: `Schedule a meeting or demo`,
+      d4: `Offer a meeting or solution demo for ${contextName}.`,
+      r4: `A meeting will increase the chance of a deal.`,
+      strategy: `Strategy: multi-channel approach to ${contactName} from ${contextName} — email, research, call, meeting.`,
+    },
+  }
+  const l = fb[langName] || fb.Russian
   const tasks = [
-    {
-      title: `Первоначальный контакт с ${contactName}`,
-      description: `Отправить приветственное письмо ${contactName} с представлением компании${industry ? ` в сфере ${industry}` : ""}.`,
-      priority: "HIGH", type: "email",
-      dueDate: new Date(now.getTime() + 1 * 86400000).toISOString().split("T")[0],
-      reasoning: `Необходимо установить первоначальный контакт.`,
-    },
-    {
-      title: `Исследование компании ${contextName}`,
-      description: `Провести анализ потребностей ${contextName}${website ? ` (${website})` : ""} в области IT-услуг.`,
-      priority: "MEDIUM", type: "general",
-      dueDate: new Date(now.getTime() + 3 * 86400000).toISOString().split("T")[0],
-      reasoning: `Понимание бизнеса клиента позволит подготовить предложение.`,
-    },
-    {
-      title: `Телефонный звонок ${contactName}`,
-      description: `Позвонить по номеру ${contactPhone} для установления контакта.`,
-      priority: "HIGH", type: "call",
-      dueDate: new Date(now.getTime() + 5 * 86400000).toISOString().split("T")[0],
-      reasoning: `Прямой контакт ускорит процесс.`,
-    },
-    {
-      title: `Запланировать встречу или демонстрацию`,
-      description: `Предложить встречу или демонстрацию решений для ${contextName}.`,
-      priority: "MEDIUM", type: "meeting",
-      dueDate: new Date(now.getTime() + 12 * 86400000).toISOString().split("T")[0],
-      reasoning: `Встреча увеличит вероятность сделки.`,
-    },
+    { title: l.t1, description: l.d1, priority: "HIGH", type: "email", dueDate: new Date(now.getTime() + 1 * 86400000).toISOString().split("T")[0], reasoning: l.r1 },
+    { title: l.t2, description: l.d2, priority: "MEDIUM", type: "general", dueDate: new Date(now.getTime() + 3 * 86400000).toISOString().split("T")[0], reasoning: l.r2 },
+    { title: l.t3, description: l.d3, priority: "HIGH", type: "call", dueDate: new Date(now.getTime() + 5 * 86400000).toISOString().split("T")[0], reasoning: l.r3 },
+    { title: l.t4, description: l.d4, priority: "MEDIUM", type: "meeting", dueDate: new Date(now.getTime() + 12 * 86400000).toISOString().split("T")[0], reasoning: l.r4 },
   ]
-  const strategy = `Стратегия: многоканальный подход к ${contactName} из ${contextName} — email, исследование, звонок, встреча.`
-  return NextResponse.json({ success: true, data: { strategy, tasks } })
+  return NextResponse.json({ success: true, data: { strategy: l.strategy, tasks } })
 }
 
 // ── TEXT GENERATION ────────────────────────────────────────
 
-async function handleText(orgId: string, contextBlock: string, contextName: string, contactName: string, industry: string, options: any) {
+async function handleText(orgId: string, contextBlock: string, contextName: string, contactName: string, industry: string, options: any, langName: string) {
   const textType = options?.textType || "Email"
-  const tone = options?.tone || "Профессиональный"
+  const tone = options?.tone || "professional"
   const instructions = options?.instructions || ""
 
   const client = getClient()
-  if (!client) return textFallback(textType, tone, instructions, contextName, contactName, industry)
+  if (!client) return textFallback(textType, tone, instructions, contextName, contactName, industry, langName)
 
   try {
     const prompt = textType === "Email"
-      ? `Напиши деловое письмо для ${contactName} из ${contextName}.\nТон: ${tone}.\n${instructions ? `Дополнительные инструкции: ${instructions}\n` : ""}\nКонтекст клиента:\n${contextBlock}\n\nОтветь JSON:\n{"subject": "тема письма", "body": "текст письма", "textType": "Email", "tone": "${tone}"}`
-      : `Напиши SMS-сообщение для ${contactName} из ${contextName}.\nТон: ${tone}.\n${instructions ? `Инструкции: ${instructions}\n` : ""}\nКонтекст:\n${contextBlock}\n\nОтветь JSON:\n{"subject": "", "body": "текст SMS (до 160 символов)", "textType": "SMS", "tone": "${tone}"}`
+      ? `Write a business email for ${contactName} from ${contextName}.\nTone: ${tone}.\n${instructions ? `Additional instructions: ${instructions}\n` : ""}\nClient context:\n${contextBlock}\n\nRespond with JSON (all text values in ${langName}):\n{"subject": "email subject", "body": "email body", "textType": "Email", "tone": "${tone}"}`
+      : `Write an SMS message for ${contactName} from ${contextName}.\nTone: ${tone}.\n${instructions ? `Instructions: ${instructions}\n` : ""}\nContext:\n${contextBlock}\n\nRespond with JSON (all text values in ${langName}):\n{"subject": "", "body": "SMS text (up to 160 chars)", "textType": "SMS", "tone": "${tone}"}`
 
     const t0 = Date.now()
     const response = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
       max_tokens: 1500,
       temperature: 0.7,
-      system: `Ты — AI-копирайтер CRM-системы LeadDrive. Пишешь профессиональные тексты для бизнес-коммуникаций. Отвечай ТОЛЬКО валидным JSON без markdown. Подпись: Güvən Technology LLC.`,
+      system: `You are an AI copywriter for LeadDrive CRM. Write professional texts for business communications. Respond ONLY with valid JSON, no markdown. Signature: Güvən Technology LLC. All text content MUST be in ${langName}.`,
       messages: [{ role: "user", content: prompt }],
     })
 
@@ -282,14 +308,26 @@ async function handleText(orgId: string, contextBlock: string, contextName: stri
   }
 }
 
-function textFallback(textType: string, tone: string, instructions: string, contextName: string, contactName: string, industry: string) {
-  let subject = ""
-  let emailBody = ""
-  if (textType === "Email") {
-    subject = "Деловое предложение от нашей компании"
-    emailBody = `Уважаемый(ая) ${contactName},\n\nНадеюсь, что это письмо застает вас в добром здравии.\n\nМы с интересом следим за деятельностью ${contextName} и были бы рады установить деловые отношения. Наша компания предоставляет решения${industry ? ` в области ${industry}` : ""}.\n\n${instructions ? `${instructions}\n\n` : ""}С уважением,\nGüvən Technology LLC`
-  } else {
-    emailBody = `Здравствуйте, ${contactName}! Güvən Technology предлагает сотрудничество${industry ? ` в сфере ${industry}` : ""}. Удобно перезвонить? ${instructions || ""}`
+function textFallback(textType: string, tone: string, instructions: string, contextName: string, contactName: string, industry: string, langName: string) {
+  const fb: Record<string, { subject: string; body: string; sms: string }> = {
+    Russian: {
+      subject: "Деловое предложение от нашей компании",
+      body: `Уважаемый(ая) ${contactName},\n\nНадеюсь, что это письмо застает вас в добром здравии.\n\nМы с интересом следим за деятельностью ${contextName} и были бы рады установить деловые отношения. Наша компания предоставляет решения${industry ? ` в области ${industry}` : ""}.\n\n${instructions ? `${instructions}\n\n` : ""}С уважением,\nGüvən Technology LLC`,
+      sms: `Здравствуйте, ${contactName}! Güvən Technology предлагает сотрудничество${industry ? ` в сфере ${industry}` : ""}. Удобно перезвонить? ${instructions || ""}`,
+    },
+    Azerbaijani: {
+      subject: "Şirkətimizdən işgüzar təklif",
+      body: `Hörmətli ${contactName},\n\nÜmid edirik ki, bu məktub sizi yaxşı vəziyyətdə tapır.\n\n${contextName} şirkətinin fəaliyyətini maraqla izləyirik və işgüzar əlaqələr qurmaqdan məmnun olarıq. Şirkətimiz ${industry ? `${industry} sahəsində ` : ""}həllər təqdim edir.\n\n${instructions ? `${instructions}\n\n` : ""}Hörmətlə,\nGüvən Technology LLC`,
+      sms: `Salam, ${contactName}! Güvən Technology ${industry ? `${industry} sahəsində ` : ""}əməkdaşlıq təklif edir. Geri zəng etmək münasibdir? ${instructions || ""}`,
+    },
+    English: {
+      subject: "Business proposal from our company",
+      body: `Dear ${contactName},\n\nI hope this email finds you well.\n\nWe have been following ${contextName}'s activities with great interest and would be glad to establish a business relationship. Our company provides solutions${industry ? ` in ${industry}` : ""}.\n\n${instructions ? `${instructions}\n\n` : ""}Best regards,\nGüvən Technology LLC`,
+      sms: `Hello, ${contactName}! Güvən Technology offers collaboration${industry ? ` in ${industry}` : ""}. Good time to call back? ${instructions || ""}`,
+    },
   }
+  const l = fb[langName] || fb.Russian
+  const subject = textType === "Email" ? l.subject : ""
+  const emailBody = textType === "Email" ? l.body : l.sms
   return NextResponse.json({ success: true, data: { subject, body: emailBody, textType, tone } })
 }
