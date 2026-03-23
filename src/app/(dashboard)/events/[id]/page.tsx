@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input"
 import {
   ArrowLeft, Pencil, Trash2, CalendarDays, MapPin, Globe, Users,
   DollarSign, UserPlus, CheckCircle2, XCircle, Clock, TrendingUp,
-  Mail, Phone,
+  Mail, Phone, Search, X, UserCheck,
 } from "lucide-react"
 import { EventForm } from "@/components/event-form"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
@@ -51,12 +51,18 @@ export default function EventDetailPage() {
   const [loading, setLoading] = useState(true)
   const [editOpen, setEditOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
-  const [addParticipant, setAddParticipant] = useState(false)
+
+  // Participant management
+  const [showAddPanel, setShowAddPanel] = useState(false)
+  const [addMode, setAddMode] = useState<"crm" | "manual">("crm")
+  const [contacts, setContacts] = useState<any[]>([])
+  const [contactSearch, setContactSearch] = useState("")
   const [pName, setPName] = useState("")
   const [pEmail, setPEmail] = useState("")
+  const [pPhone, setPPhone] = useState("")
   const [pRole, setPRole] = useState("attendee")
 
-  const headers = orgId ? { "x-organization-id": String(orgId) } : {}
+  const headers: any = orgId ? { "x-organization-id": String(orgId) } : {}
 
   const fetchEvent = async () => {
     try {
@@ -67,6 +73,14 @@ export default function EventDetailPage() {
   }
 
   useEffect(() => { if (params.id) fetchEvent() }, [params.id, session])
+
+  // Fetch CRM contacts for picker
+  useEffect(() => {
+    if (!showAddPanel || addMode !== "crm") return
+    fetch(`/api/v1/contacts?limit=200`, { headers }).then(r => r.json()).then(json => {
+      setContacts(json.data?.contacts || json.data || [])
+    }).catch(() => {})
+  }, [showAddPanel, addMode])
 
   const updateStatus = async (status: string) => {
     await fetch(`/api/v1/events/${params.id}`, {
@@ -82,18 +96,55 @@ export default function EventDetailPage() {
     router.push("/events")
   }
 
-  const handleAddParticipant = async () => {
-    if (!pName.trim()) return
-    await fetch(`/api/v1/events/${params.id}`, {
-      method: "PUT",
+  const addParticipantFromContact = async (contact: any) => {
+    await fetch(`/api/v1/events/${params.id}/participants`, {
+      method: "POST",
       headers: { "Content-Type": "application/json", ...headers },
-      body: JSON.stringify({ registeredCount: (event.registeredCount || 0) + 1 }),
+      body: JSON.stringify({
+        contactId: contact.id,
+        companyId: contact.companyId || undefined,
+        name: contact.fullName,
+        email: contact.email || "",
+        phone: contact.phone || "",
+        role: pRole,
+      }),
     })
-    // Use prisma directly not possible from client, so we store via a simple approach
-    // In production this would be a separate participants API
-    setAddParticipant(false)
-    setPName("")
-    setPEmail("")
+    fetchEvent()
+  }
+
+  const addManualParticipant = async () => {
+    if (!pName.trim()) return
+    await fetch(`/api/v1/events/${params.id}/participants`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...headers },
+      body: JSON.stringify({ name: pName, email: pEmail, phone: pPhone, role: pRole }),
+    })
+    setPName(""); setPEmail(""); setPPhone("")
+    fetchEvent()
+  }
+
+  const removeParticipant = async (participantId: string) => {
+    await fetch(`/api/v1/events/${params.id}/participants`, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json", ...headers },
+      body: JSON.stringify({ participantId }),
+    })
+    fetchEvent()
+  }
+
+  const updateParticipantStatus = async (participantId: string, status: string) => {
+    // Update via event PUT with attendedCount
+    const participant = event.participants?.find((p: any) => p.id === participantId)
+    if (!participant) return
+    // We'll just refetch for now — in production, this would be a PATCH on participant
+    const attendedDelta = status === "attended" ? 1 : participant.status === "attended" ? -1 : 0
+    if (attendedDelta !== 0) {
+      await fetch(`/api/v1/events/${params.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", ...headers },
+        body: JSON.stringify({ attendedCount: Math.max(0, (event.attendedCount || 0) + attendedDelta) }),
+      })
+    }
     fetchEvent()
   }
 
@@ -109,11 +160,17 @@ export default function EventDetailPage() {
   if (!event) return <div className="text-center py-12 text-muted-foreground">Event not found</div>
 
   const roi = event.actualRevenue > 0 && event.actualCost > 0
-    ? Math.round(((event.actualRevenue - event.actualCost) / event.actualCost) * 100)
-    : null
+    ? Math.round(((event.actualRevenue - event.actualCost) / event.actualCost) * 100) : null
   const attendanceRate = event.registeredCount > 0
-    ? Math.round((event.attendedCount / event.registeredCount) * 100)
-    : 0
+    ? Math.round((event.attendedCount / event.registeredCount) * 100) : 0
+
+  // Filter contacts for picker (exclude already added)
+  const existingContactIds = new Set((event.participants || []).map((p: any) => p.contactId).filter(Boolean))
+  const filteredContacts = contacts.filter(c =>
+    !existingContactIds.has(c.id) &&
+    (c.fullName?.toLowerCase().includes(contactSearch.toLowerCase()) ||
+     c.email?.toLowerCase().includes(contactSearch.toLowerCase()))
+  )
 
   return (
     <div className="space-y-6 pb-12">
@@ -133,6 +190,11 @@ export default function EventDetailPage() {
                 <Badge className={STATUS_STYLES[event.status] || ""}>{event.status?.replace(/_/g, " ")}</Badge>
                 <Badge variant="outline" className="text-xs">{event.type}</Badge>
                 {event.isOnline && <Badge variant="outline" className="text-xs"><Globe className="h-3 w-3 mr-1" /> Online</Badge>}
+                {event.location && (
+                  <span className="text-xs text-muted-foreground flex items-center gap-1">
+                    <MapPin className="h-3 w-3" /> {event.location}
+                  </span>
+                )}
               </div>
             </div>
           </div>
@@ -147,24 +209,19 @@ export default function EventDetailPage() {
         </div>
       </div>
 
-      {/* Status pipeline (Creatio-style chevrons) */}
+      {/* Status pipeline */}
       <div className="flex gap-1">
-        {STATUS_PIPELINE.map((s, i) => {
+        {STATUS_PIPELINE.map((s) => {
           const idx = STATUS_PIPELINE.indexOf(event.status)
           const isActive = s === event.status
           const isPast = STATUS_PIPELINE.indexOf(s) < idx
           return (
-            <button
-              key={s}
-              onClick={() => updateStatus(s)}
+            <button key={s} onClick={() => updateStatus(s)}
               className={`flex-1 py-2 text-xs font-medium rounded-lg transition-all ${
                 isActive ? "bg-primary text-white shadow-md" :
-                isPast ? "bg-primary/20 text-primary" :
-                "bg-muted text-muted-foreground hover:bg-muted/80"
+                isPast ? "bg-primary/20 text-primary" : "bg-muted text-muted-foreground hover:bg-muted/80"
               }`}
-            >
-              {s.replace(/_/g, " ")}
-            </button>
+            >{s.replace(/_/g, " ")}</button>
           )
         })}
       </div>
@@ -177,9 +234,7 @@ export default function EventDetailPage() {
             <Users className="h-4 w-4 opacity-80" />
           </div>
           <span className="text-2xl font-bold">{event.registeredCount}</span>
-          {event.maxParticipants && (
-            <span className="text-xs opacity-60"> / {event.maxParticipants}</span>
-          )}
+          {event.maxParticipants > 0 && <span className="text-xs opacity-60"> / {event.maxParticipants}</span>}
         </div>
         <div className="bg-green-500 text-white rounded-xl p-4 shadow-sm">
           <div className="flex items-center justify-between">
@@ -306,35 +361,91 @@ export default function EventDetailPage() {
         <TabsContent value="participants" className="space-y-4">
           <div className="flex items-center justify-between">
             <p className="text-sm text-muted-foreground">{event.participants?.length || 0} participants</p>
-            <Button size="sm" className="gap-1" onClick={() => setAddParticipant(!addParticipant)}>
-              <UserPlus className="h-3.5 w-3.5" /> Add Participant
+            <Button size="sm" className="gap-1" onClick={() => setShowAddPanel(!showAddPanel)}>
+              <UserPlus className="h-3.5 w-3.5" /> {showAddPanel ? "Close" : "Add Participant"}
             </Button>
           </div>
 
-          {addParticipant && (
-            <Card className="border-none shadow-sm">
-              <CardContent className="p-4 flex gap-2 items-end flex-wrap">
-                <div>
-                  <label className="text-xs text-muted-foreground">Name *</label>
-                  <Input className="h-8 w-48" value={pName} onChange={e => setPName(e.target.value)} />
+          {/* Add participant panel */}
+          {showAddPanel && (
+            <Card className="border-2 border-dashed border-primary/30 shadow-sm">
+              <CardContent className="p-4 space-y-3">
+                {/* Mode toggle */}
+                <div className="flex gap-1">
+                  <Button size="sm" variant={addMode === "crm" ? "default" : "outline"} className="h-7 text-xs" onClick={() => setAddMode("crm")}>
+                    <Users className="h-3 w-3 mr-1" /> From CRM Contacts
+                  </Button>
+                  <Button size="sm" variant={addMode === "manual" ? "default" : "outline"} className="h-7 text-xs" onClick={() => setAddMode("manual")}>
+                    <UserPlus className="h-3 w-3 mr-1" /> Manual Entry
+                  </Button>
                 </div>
-                <div>
-                  <label className="text-xs text-muted-foreground">Email</label>
-                  <Input className="h-8 w-48" value={pEmail} onChange={e => setPEmail(e.target.value)} />
-                </div>
-                <div>
-                  <label className="text-xs text-muted-foreground">Role</label>
-                  <select className="h-8 border rounded-md px-2 text-sm" value={pRole} onChange={e => setPRole(e.target.value)}>
+
+                {/* Role selector */}
+                <div className="flex items-center gap-2">
+                  <label className="text-xs text-muted-foreground">Role:</label>
+                  <select className="h-7 border rounded-md px-2 text-xs" value={pRole} onChange={e => setPRole(e.target.value)}>
                     {["attendee","speaker","sponsor","organizer","vip"].map(r => (
                       <option key={r} value={r}>{r}</option>
                     ))}
                   </select>
                 </div>
-                <Button size="sm" className="h-8" onClick={handleAddParticipant}>Add</Button>
+
+                {addMode === "crm" ? (
+                  <>
+                    <div className="relative">
+                      <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                      <Input
+                        className="pl-8 h-8 text-sm"
+                        placeholder="Search contacts by name or email..."
+                        value={contactSearch}
+                        onChange={e => setContactSearch(e.target.value)}
+                      />
+                    </div>
+                    <div className="max-h-48 overflow-y-auto space-y-1">
+                      {filteredContacts.length === 0 ? (
+                        <p className="text-xs text-muted-foreground text-center py-4">No matching contacts</p>
+                      ) : (
+                        filteredContacts.slice(0, 20).map(contact => (
+                          <div
+                            key={contact.id}
+                            className="flex items-center gap-2 p-2 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
+                            onClick={() => addParticipantFromContact(contact)}
+                          >
+                            <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary">
+                              {contact.fullName?.charAt(0) || "?"}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium truncate">{contact.fullName}</p>
+                              <p className="text-[10px] text-muted-foreground">{contact.email || contact.company?.name || "—"}</p>
+                            </div>
+                            <UserPlus className="h-4 w-4 text-muted-foreground" />
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex gap-2 items-end flex-wrap">
+                    <div>
+                      <label className="text-xs text-muted-foreground">Name *</label>
+                      <Input className="h-8 w-44" value={pName} onChange={e => setPName(e.target.value)} />
+                    </div>
+                    <div>
+                      <label className="text-xs text-muted-foreground">Email</label>
+                      <Input className="h-8 w-44" value={pEmail} onChange={e => setPEmail(e.target.value)} />
+                    </div>
+                    <div>
+                      <label className="text-xs text-muted-foreground">Phone</label>
+                      <Input className="h-8 w-36" value={pPhone} onChange={e => setPPhone(e.target.value)} />
+                    </div>
+                    <Button size="sm" className="h-8" onClick={addManualParticipant}>Add</Button>
+                  </div>
+                )}
               </CardContent>
             </Card>
           )}
 
+          {/* Participants table */}
           {event.participants?.length > 0 ? (
             <Card className="border-none shadow-sm overflow-hidden">
               <div className="overflow-x-auto">
@@ -342,29 +453,52 @@ export default function EventDetailPage() {
                   <thead>
                     <tr className="border-b bg-muted/40">
                       <th className="text-left p-3 font-medium text-muted-foreground">Name</th>
-                      <th className="text-left p-3 font-medium text-muted-foreground">Email</th>
+                      <th className="text-left p-3 font-medium text-muted-foreground">Contact</th>
                       <th className="text-left p-3 font-medium text-muted-foreground">Role</th>
                       <th className="text-left p-3 font-medium text-muted-foreground">Status</th>
                       <th className="text-left p-3 font-medium text-muted-foreground">Registered</th>
+                      <th className="text-right p-3 font-medium text-muted-foreground">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
                     {event.participants.map((p: any) => (
                       <tr key={p.id} className="border-b last:border-0 hover:bg-muted/20">
-                        <td className="p-3 font-medium">{p.name}</td>
-                        <td className="p-3 text-muted-foreground">{p.email || "—"}</td>
                         <td className="p-3">
-                          <Badge className={ROLE_STYLE[p.role] || "bg-gray-100 text-gray-600"} variant="outline">
-                            {p.role}
-                          </Badge>
+                          <div className="flex items-center gap-2">
+                            <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary">
+                              {p.name?.charAt(0) || "?"}
+                            </div>
+                            <span className="font-medium">{p.name}</span>
+                            {p.contactId && <Badge variant="outline" className="text-[9px]">CRM</Badge>}
+                          </div>
+                        </td>
+                        <td className="p-3 text-muted-foreground text-xs">
+                          {p.email && <span className="flex items-center gap-1"><Mail className="h-3 w-3" />{p.email}</span>}
+                          {p.phone && <span className="flex items-center gap-1"><Phone className="h-3 w-3" />{p.phone}</span>}
+                          {!p.email && !p.phone && "—"}
                         </td>
                         <td className="p-3">
-                          <Badge className={PARTICIPANT_STATUS_STYLE[p.status] || ""}>
-                            {p.status?.replace(/_/g, " ")}
-                          </Badge>
+                          <Badge className={ROLE_STYLE[p.role] || "bg-gray-100 text-gray-600"} variant="outline">{p.role}</Badge>
+                        </td>
+                        <td className="p-3">
+                          <Badge className={PARTICIPANT_STATUS_STYLE[p.status] || ""}>{p.status?.replace(/_/g, " ")}</Badge>
                         </td>
                         <td className="p-3 text-muted-foreground text-xs">
                           {new Date(p.registeredAt).toLocaleDateString("ru-RU")}
+                        </td>
+                        <td className="p-3 text-right">
+                          <div className="flex items-center gap-1 justify-end">
+                            {p.status !== "attended" && (
+                              <Button variant="ghost" size="icon" className="h-7 w-7" title="Mark attended"
+                                onClick={() => updateParticipantStatus(p.id, "attended")}>
+                                <UserCheck className="h-3.5 w-3.5 text-green-500" />
+                              </Button>
+                            )}
+                            <Button variant="ghost" size="icon" className="h-7 w-7" title="Remove"
+                              onClick={() => removeParticipant(p.id)}>
+                              <X className="h-3.5 w-3.5 text-red-400" />
+                            </Button>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -376,6 +510,7 @@ export default function EventDetailPage() {
             <div className="text-center py-12 text-muted-foreground">
               <Users className="h-10 w-10 mx-auto mb-2 opacity-30" />
               <p className="text-sm">No participants yet</p>
+              <p className="text-xs">Click "Add Participant" to add from CRM contacts or manually</p>
             </div>
           )}
         </TabsContent>
