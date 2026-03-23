@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Select } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { Dialog, DialogHeader, DialogTitle, DialogContent, DialogFooter } from "@/components/ui/dialog"
-import { Send, Trash2, Users, Search, X, Filter, UserCheck, Mail, MessageSquare, Calendar, FileText, DollarSign, Clock } from "lucide-react"
+import { Send, Trash2, Users, Search, X, Mail, MessageSquare, Calendar, FileText, DollarSign, Clock } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface CampaignFormData {
@@ -52,7 +52,7 @@ interface CampaignFormProps {
   onDelete?: () => void
 }
 
-type RecipientMode = "all" | "segment" | "source" | "manual"
+type RecipientMode = "all" | "contacts" | "leads" | "segment" | "source" | "manual"
 
 const statusColors: Record<string, string> = {
   draft: "bg-gray-50 text-gray-600 border-gray-200",
@@ -106,6 +106,7 @@ export function CampaignForm({ open, onOpenChange, onSaved, initialData, orgId, 
   const [recipientModeChanged, setRecipientModeChanged] = useState(false)
   const [selectedSource, setSelectedSource] = useState("")
   const [selectedSegmentId, setSelectedSegmentId] = useState("")
+  const [leadsCount, setLeadsCount] = useState(0)
 
   // Load templates, segments and contacts
   useEffect(() => {
@@ -127,6 +128,12 @@ export function CampaignForm({ open, onOpenChange, onSaved, initialData, orgId, 
         headers: { "x-organization-id": String(orgId) },
       }).then(r => r.json()).then(j => {
         if (j.success) setContacts((j.data?.contacts || j.data || []).filter((c: Contact) => c.email))
+      }).catch(() => {})
+
+      fetch("/api/v1/leads?limit=1&page=1", {
+        headers: { "x-organization-id": String(orgId) },
+      }).then(r => r.json()).then(j => {
+        if (j.success) setLeadsCount(j.data?.total || 0)
       }).catch(() => {})
     }
   }, [open, orgId])
@@ -234,13 +241,15 @@ export function CampaignForm({ open, onOpenChange, onSaved, initialData, orgId, 
   const recipientCount = useMemo(() => {
     if (isEdit && !recipientModeChanged && Number(form.totalRecipients) > 0) return Number(form.totalRecipients)
     switch (recipientMode) {
-      case "all": return contacts.length
+      case "all": return contacts.length + leadsCount
+      case "contacts": return contacts.length
+      case "leads": return leadsCount
       case "segment": return segments.find(s => s.id === selectedSegmentId)?.contactCount || 0
       case "source": return sourceFilteredContacts.length
       case "manual": return selectedContacts.size
       default: return 0
     }
-  }, [recipientMode, contacts, segments, selectedSegmentId, sourceFilteredContacts, selectedContacts, isEdit, recipientModeChanged, form.totalRecipients])
+  }, [recipientMode, contacts, leadsCount, segments, selectedSegmentId, sourceFilteredContacts, selectedContacts, isEdit, recipientModeChanged, form.totalRecipients])
 
   const availableSources = useMemo(() => {
     const sources = new Set(contacts.map(c => c.source).filter(Boolean))
@@ -376,29 +385,34 @@ export function CampaignForm({ open, onOpenChange, onSaved, initialData, orgId, 
         <DialogContent className="max-h-[70vh] overflow-y-auto">
           {error && <div className="text-sm text-red-500 bg-red-50 dark:bg-red-900/20 p-2 rounded mb-3">{error}</div>}
           <div className="space-y-4">
-            {/* Name + Type on same row */}
-            <div className="grid grid-cols-4 gap-3">
-              <div className="col-span-3">
-                <Label className="text-xs text-muted-foreground">{tc("name")} *</Label>
-                <Input value={form.name} onChange={(e) => update("name", e.target.value)} required placeholder="напр. Мартовская рассылка" />
-              </div>
+            {/* Name — full width */}
+            <div>
+              <Label className="text-xs text-muted-foreground">{tc("name")} *</Label>
+              <Input value={form.name} onChange={(e) => update("name", e.target.value)} required placeholder="напр. Мартовская рассылка" />
+              <p className="text-xs text-orange-500 mt-1">Название кампании для отслеживания, напр. «Мартовская рассылка»</p>
+            </div>
+
+            {/* Description — textarea */}
+            <div>
+              <Label className="text-xs text-muted-foreground">{tc("description")}</Label>
+              <Textarea value={form.description} onChange={(e) => update("description", e.target.value)}
+                placeholder="О чём эта кампания? Будет показано в теле письма"
+                rows={3} />
+              <p className="text-xs text-orange-500 mt-1">О чём эта кампания? Будет показано в теле письма</p>
+            </div>
+
+            {/* Type + Template on same row */}
+            <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label className="text-xs text-muted-foreground">{tc("type")}</Label>
                 <Select value={form.type} onChange={(e) => update("type", e.target.value)}>
-                  <option value="email">📧 Email</option>
-                  <option value="sms">📱 SMS</option>
+                  <option value="email">Email</option>
+                  <option value="sms">SMS</option>
                 </Select>
-              </div>
-            </div>
-
-            {/* Subject + Template on same row */}
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label className="text-xs text-muted-foreground">{tf("emailSubject")}</Label>
-                <Input value={form.subject} onChange={(e) => update("subject", e.target.value)} placeholder="Тема email рассылки" />
+                <p className="text-xs text-orange-500 mt-1">Email для рассылок, SMS для коротких сообщений</p>
               </div>
               <div>
-                <Label className="text-xs text-muted-foreground">{tf("selectTemplate")}</Label>
+                <Label className="text-xs text-muted-foreground">Email {tf("selectTemplate").toLowerCase()}</Label>
                 <Select
                   value={form.templateId}
                   onChange={(e) => update("templateId", e.target.value)}
@@ -408,14 +422,15 @@ export function CampaignForm({ open, onOpenChange, onSaved, initialData, orgId, 
                     <option key={t.id} value={t.id}>{t.name}</option>
                   ))}
                 </Select>
+                <p className="text-xs text-orange-500 mt-1">Готовый шаблон письма с дизайном и переменными</p>
               </div>
             </div>
 
-            {/* Budget + Schedule on same row */}
+            {/* Subject + Schedule on same row */}
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className="text-xs text-muted-foreground">{t("budget")}</Label>
-                <Input type="number" step="0.01" value={form.budget} onChange={(e) => update("budget", e.target.value)} placeholder="0" />
+                <Label className="text-xs text-muted-foreground">{tf("emailSubject")}</Label>
+                <Input value={form.subject} onChange={(e) => update("subject", e.target.value)} placeholder="Тема email рассылки" />
               </div>
               <div>
                 <Label className="text-xs text-muted-foreground">{tf("scheduleSend")}</Label>
@@ -423,117 +438,90 @@ export function CampaignForm({ open, onOpenChange, onSaved, initialData, orgId, 
               </div>
             </div>
 
-            {/* Description — collapsible single line */}
-            <div>
-              <Label className="text-xs text-muted-foreground">{tc("description")}</Label>
-              <Input value={form.description} onChange={(e) => update("description", e.target.value)} placeholder="Цель и контекст кампании (необязательно)" />
-            </div>
-
-            {/* ── Recipient selector ── */}
-            <div className="rounded-lg border border-primary/20 bg-primary/5">
-              <div className="px-3 py-2.5 border-b border-primary/10 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Users className="h-4 w-4 text-primary" />
-                  <span className="font-semibold text-sm">{t("recipients")}</span>
-                </div>
-                <span className={cn(
-                  "text-sm font-bold px-2.5 py-0.5 rounded-full",
-                  recipientCount > 0
-                    ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-                    : "bg-gray-100 text-gray-500"
-                )}>
-                  {recipientCount}
-                </span>
+            {/* Budget — only when editing */}
+            {isEdit && (
+              <div>
+                <Label className="text-xs text-muted-foreground">{t("budget")}</Label>
+                <Input type="number" step="0.01" value={form.budget} onChange={(e) => update("budget", e.target.value)} placeholder="0" />
               </div>
-              <div className="p-3 space-y-2.5">
-                {/* Mode tabs */}
-                <div className="flex gap-1.5">
-                  {([
-                    { mode: "all" as const, icon: Users, label: tf("allContacts") },
-                    { mode: "segment" as const, icon: Filter, label: tf("segment") },
-                    { mode: "source" as const, icon: UserCheck, label: tf("selectSource") },
-                    { mode: "manual" as const, icon: Search, label: tf("manualSelect") },
-                  ] as const).map(({ mode, icon: Icon, label }) => (
-                    <button
-                      key={mode}
-                      type="button"
-                      onClick={() => {
-                        setRecipientMode(mode)
-                        setSelectedContacts(new Set())
-                        if (mode === "source") setSelectedSource("")
-                        setRecipientModeChanged(true)
-                      }}
-                      className={cn(
-                        "text-xs px-3 py-1.5 rounded-md border transition-colors flex items-center gap-1 flex-1 justify-center",
-                        recipientMode === mode
-                          ? "bg-primary text-primary-foreground border-primary font-medium"
-                          : "bg-background hover:bg-muted border-border text-muted-foreground"
-                      )}
-                    >
-                      <Icon className="h-3 w-3" /> {label}
-                    </button>
-                  ))}
-                </div>
+            )}
 
-                {/* Segment picker */}
-                {recipientMode === "segment" && (
+            {/* ── Recipients — simple dropdown like v1 ── */}
+            <div>
+              <Label className="text-xs text-muted-foreground">{t("recipients")}</Label>
+              <Select value={recipientMode} onChange={e => {
+                const mode = e.target.value as RecipientMode
+                setRecipientMode(mode)
+                setSelectedContacts(new Set())
+                if (mode === "source") setSelectedSource("")
+                setRecipientModeChanged(true)
+              }}>
+                <option value="all">Все контакты + лиды</option>
+                <option value="contacts">Только контакты</option>
+                <option value="leads">Только лиды</option>
+                <option value="segment">📊 По сегменту</option>
+                <option value="source">🔍 По источнику</option>
+                <option value="manual">✋ Выбрать вручную</option>
+              </Select>
+              <p className="text-xs text-muted-foreground mt-1">
+                Будет отправлено: <span className="font-semibold text-foreground">{recipientCount}</span> получателям
+              </p>
+
+              {/* Segment picker */}
+              {recipientMode === "segment" && (
+                <div className="mt-2">
                   <Select value={selectedSegmentId} onChange={e => setSelectedSegmentId(e.target.value)}>
                     <option value="">— {tf("selectSegment")} —</option>
                     {segments.map(s => (
                       <option key={s.id} value={s.id}>{s.name} ({s.contactCount})</option>
                     ))}
                   </Select>
-                )}
+                </div>
+              )}
 
-                {/* Source picker */}
-                {recipientMode === "source" && (
+              {/* Source picker */}
+              {recipientMode === "source" && (
+                <div className="mt-2">
                   <Select value={selectedSource} onChange={e => setSelectedSource(e.target.value)}>
                     <option value="">— {tf("selectSource")} —</option>
                     {(availableSources.length > 0 ? availableSources : sourceOptions).map(o => (
                       <option key={o.value} value={o.value}>{o.label}</option>
                     ))}
                   </Select>
-                )}
+                </div>
+              )}
 
-                {/* All info */}
-                {recipientMode === "all" && contacts.length > 0 && (
-                  <p className="text-xs text-muted-foreground">
-                    {t("sentToRecipients", { count: contacts.length })}
-                  </p>
-                )}
-
-                {/* Manual selector */}
-                {recipientMode === "manual" && (
-                  <>
-                    <div className="flex items-center gap-2">
-                      <div className="relative flex-1">
-                        <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-                        <Input placeholder={tc("search")} value={contactSearch}
-                          onChange={e => setContactSearch(e.target.value)} className="pl-7 h-8 text-sm" />
-                      </div>
-                      <Button type="button" size="sm" variant="default" className="h-8 text-xs px-2" onClick={selectAll}>{tc("selectAll")}</Button>
-                      <Button type="button" size="sm" variant="outline" className="h-8 text-xs px-2" onClick={selectNone}>{tc("clearAll")}</Button>
+              {/* Manual selector */}
+              {recipientMode === "manual" && (
+                <div className="mt-2 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <div className="relative flex-1">
+                      <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                      <Input placeholder={tc("search")} value={contactSearch}
+                        onChange={e => setContactSearch(e.target.value)} className="pl-7 h-8 text-sm" />
                     </div>
-                    <div className="max-h-40 overflow-y-auto border rounded bg-background">
-                      {searchFilteredContacts.length === 0 ? (
-                        <div className="p-3 text-sm text-muted-foreground text-center">{tc("noData")}</div>
-                      ) : searchFilteredContacts.map(c => (
-                        <label key={c.id} className={cn(
-                          "flex items-center justify-between px-2.5 py-1.5 cursor-pointer hover:bg-muted/50 text-sm border-b last:border-b-0",
-                          selectedContacts.has(c.id) && "bg-primary/5"
-                        )}>
-                          <div className="flex items-center gap-2">
-                            <input type="checkbox" checked={selectedContacts.has(c.id)}
-                              onChange={() => toggleContact(c.id)} className="rounded" />
-                            <span className="truncate">{c.fullName}</span>
-                          </div>
-                          <span className="text-xs text-muted-foreground ml-2 truncate">{c.email}</span>
-                        </label>
-                      ))}
-                    </div>
-                  </>
-                )}
-              </div>
+                    <Button type="button" size="sm" variant="default" className="h-8 text-xs px-2" onClick={selectAll}>{tc("selectAll")}</Button>
+                    <Button type="button" size="sm" variant="outline" className="h-8 text-xs px-2" onClick={selectNone}>{tc("clearAll")}</Button>
+                  </div>
+                  <div className="max-h-40 overflow-y-auto border rounded bg-background">
+                    {searchFilteredContacts.length === 0 ? (
+                      <div className="p-3 text-sm text-muted-foreground text-center">{tc("noData")}</div>
+                    ) : searchFilteredContacts.map(c => (
+                      <label key={c.id} className={cn(
+                        "flex items-center justify-between px-2.5 py-1.5 cursor-pointer hover:bg-muted/50 text-sm border-b last:border-b-0",
+                        selectedContacts.has(c.id) && "bg-primary/5"
+                      )}>
+                        <div className="flex items-center gap-2">
+                          <input type="checkbox" checked={selectedContacts.has(c.id)}
+                            onChange={() => toggleContact(c.id)} className="rounded" />
+                          <span className="truncate">{c.fullName}</span>
+                        </div>
+                        <span className="text-xs text-muted-foreground ml-2 truncate">{c.email}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </DialogContent>

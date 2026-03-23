@@ -11,7 +11,7 @@ const updateCampaignSchema = z.object({
   subject: z.string().optional(),
   templateId: z.string().optional(),
   segmentId: z.string().optional(),
-  recipientMode: z.enum(["all", "segment", "source", "manual"]).optional(),
+  recipientMode: z.enum(["all", "contacts", "leads", "segment", "source", "manual"]).optional(),
   recipientIds: z.array(z.string()).optional(),
   recipientSource: z.string().optional(),
   scheduledAt: z.string().optional(),

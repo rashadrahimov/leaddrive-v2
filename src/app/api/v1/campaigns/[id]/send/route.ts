@@ -69,6 +69,19 @@ export async function POST(
           select: { id: true, email: true, fullName: true },
         })
       }
+    } else if (mode === "contacts") {
+      // Only contacts (no leads)
+      contacts = await prisma.contact.findMany({
+        where: { organizationId: orgId, email: { not: null } },
+        select: { id: true, email: true, fullName: true },
+      })
+    } else if (mode === "leads") {
+      // Only leads with email
+      const leads = await prisma.lead.findMany({
+        where: { organizationId: orgId, email: { not: null } },
+        select: { id: true, email: true, contactName: true },
+      })
+      contacts = leads.map(l => ({ id: l.id, email: l.email, fullName: l.contactName }))
     } else if (mode === "source" && campaign.recipientSource) {
       // Contacts from specific source
       contacts = await prisma.contact.findMany({
@@ -76,11 +89,16 @@ export async function POST(
         select: { id: true, email: true, fullName: true },
       })
     } else {
-      // "all" — all contacts with email
-      contacts = await prisma.contact.findMany({
+      // "all" — all contacts + leads with email
+      const allContacts = await prisma.contact.findMany({
         where: { organizationId: orgId, email: { not: null } },
         select: { id: true, email: true, fullName: true },
       })
+      const allLeads = await prisma.lead.findMany({
+        where: { organizationId: orgId, email: { not: null } },
+        select: { id: true, email: true, contactName: true },
+      })
+      contacts = [...allContacts, ...allLeads.map(l => ({ id: l.id, email: l.email, fullName: l.contactName }))]
     }
 
     let sentCount = 0
