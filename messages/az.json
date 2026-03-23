@@ -1006,7 +1006,10 @@
     "wClientHealth": "Müştəri sağlamlığı",
     "wClientHealthDesc": "Gəlirli / gəlirsiz",
     "wActivityFeed": "Fəaliyyət lenti",
-    "wActivityFeedDesc": "Son fəaliyyətlər"
+    "wActivityFeedDesc": "Son fəaliyyətlər",
+    "active": "Aktiv",
+    "inactive": "Deaktiv",
+    "roles": "Rollar"
   },
   "portal": {
     "title": "Müştəri Portalı",
