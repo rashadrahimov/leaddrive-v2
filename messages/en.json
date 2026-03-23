@@ -64,7 +64,17 @@
     "backToLogin": "Back to login",
     "passwordMinLength": "Password must be at least 6 characters",
     "passwordsDoNotMatch": "Passwords do not match",
-    "passwordChanged": "Password changed successfully"
+    "passwordChanged": "Password changed successfully",
+    "twoFactorAuth": "Two-Factor Authentication",
+    "enterAuthCode": "Enter the code from your authenticator app",
+    "enterBackupCode": "Enter one of your backup codes",
+    "verificationCode": "Verification code",
+    "backupCode": "Backup code",
+    "useBackupCode": "Use a backup code",
+    "useAuthApp": "Use authenticator app",
+    "verify": "Verify",
+    "verifying": "Verifying...",
+    "invalid2faCode": "Invalid code. Please try again"
   },
   "common": {
     "save": "Save",
@@ -1603,5 +1613,13 @@
     "statusPending": "Pending",
     "statusApproved": "Approved",
     "statusRejected": "Rejected"
+  },
+  "planGating": {
+    "planRequired": "Available in {plan} plan",
+    "upgradePlan": "Upgrade plan",
+    "starter": "Starter",
+    "business": "Business",
+    "professional": "Professional",
+    "enterprise": "Enterprise"
   }
 }

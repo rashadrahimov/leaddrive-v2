@@ -33,15 +33,23 @@ export const MODULE_REGISTRY: Record<ModuleId, ModuleDefinition> = {
 
 export const PLANS = {
   starter: {
-    modules: ["core", "deals", "tasks"] as ModuleId[],
+    modules: ["core", "deals", "leads", "tasks"] as ModuleId[],
     limits: { users: 3, contacts: 500 },
     price: 9,
+  },
+  business: {
+    modules: [
+      "core", "deals", "leads", "tasks", "contracts", "tickets",
+      "knowledge-base",
+    ] as ModuleId[],
+    limits: { users: 10, contacts: 2500 },
+    price: 19,
   },
   professional: {
     modules: [
       "core", "deals", "leads", "tasks", "contracts", "tickets",
       "knowledge-base", "campaigns", "omnichannel", "reports",
-      "workflows", "currencies",
+      "workflows", "currencies", "events",
     ] as ModuleId[],
     limits: { users: 25, contacts: 10000 },
     price: 29,
