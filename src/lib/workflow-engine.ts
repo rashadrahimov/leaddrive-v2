@@ -1,6 +1,15 @@
 import { prisma } from "@/lib/prisma"
 import { createNotification } from "@/lib/notifications"
 
+// Normalize entity type: v1 uses plural "deals"/"leads", v2 uses singular "deal"/"lead"
+function normalizeEntityType(et: string): string {
+  const map: Record<string, string> = {
+    deals: "deal", leads: "lead", tickets: "ticket",
+    tasks: "task", contacts: "contact", companies: "company",
+  }
+  return map[et] || et
+}
+
 export async function executeWorkflows(
   orgId: string,
   entityType: string,
@@ -8,10 +17,16 @@ export async function executeWorkflows(
   entity: Record<string, any>
 ) {
   try {
+    // Search for both singular and plural entity types (v1 compat)
+    const normalized = normalizeEntityType(entityType)
+    const variants = [entityType]
+    if (normalized !== entityType) variants.push(normalized)
+    else variants.push(entityType + "s") // also check plural
+
     const rules = await prisma.workflowRule.findMany({
       where: {
         organizationId: orgId,
-        entityType,
+        entityType: { in: variants },
         triggerEvent,
         isActive: true,
       },
@@ -24,7 +39,7 @@ export async function executeWorkflows(
       if (!evaluateConditions(rule.conditions as any, entity)) continue
 
       for (const action of rule.actions) {
-        await executeAction(orgId, entityType, action as any, entity)
+        await executeAction(orgId, normalized, action as any, entity)
       }
     }
   } catch (e) {
@@ -91,16 +106,18 @@ async function executeAction(
   entity: Record<string, any>
 ) {
   const config = (typeof action.actionConfig === "object" && action.actionConfig) ? action.actionConfig : {} as Record<string, any>
+  const entityName = entity.title || entity.name || entity.contactName || "item"
 
   switch (action.actionType) {
     case "send_notification":
     case "notify":
+      // userId: "" means visible to all users in the org
       await createNotification({
         organizationId: orgId,
-        userId: config.userId || entity.assignedTo || "",
+        userId: "",
         type: "info",
         title: config.title || "Workflow",
-        message: config.message || `Action triggered for ${entity.title || entity.name || entity.contactName || "item"}`,
+        message: config.message || config.value || `Action triggered for ${entityName}`,
         entityType,
         entityId: entity.id,
       })
@@ -110,7 +127,7 @@ async function executeAction(
       await prisma.task.create({
         data: {
           organizationId: orgId,
-          title: config.title || `Follow up: ${entity.title || entity.name || entity.contactName || "item"}`,
+          title: config.title || config.value || `Follow up: ${entityName}`,
           description: config.description || "",
           status: "pending",
           priority: config.priority || "medium",
@@ -122,10 +139,9 @@ async function executeAction(
       break
 
     case "update_field":
-      if (config.field && config.value !== undefined) {
+      if (config.field && (config.value !== undefined)) {
         try {
-          const modelName = config.model || entityType
-          const model = (prisma as any)[modelName]
+          const model = (prisma as any)[entityType]
           if (model) {
             await model.updateMany({
               where: { id: entity.id, organizationId: orgId },
@@ -139,14 +155,15 @@ async function executeAction(
       break
 
     case "auto_assign":
-      if (config.assignTo) {
+    case "assign_to": {
+      const assignee = config.assignTo || config.assign_to || config.value
+      if (assignee) {
         try {
-          const modelName = config.model || entityType
-          const model = (prisma as any)[modelName]
+          const model = (prisma as any)[entityType]
           if (model) {
             await model.updateMany({
               where: { id: entity.id, organizationId: orgId },
-              data: { assignedTo: config.assignTo },
+              data: { assignedTo: assignee },
             })
           }
         } catch (e) {
@@ -154,6 +171,7 @@ async function executeAction(
         }
       }
       break
+    }
 
     case "send_email":
       // TODO: integrate with SMTP when configured

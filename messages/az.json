@@ -1443,6 +1443,22 @@
     "webhookUrl": "Webhook URL",
     "webhookMethod": "HTTP metodu",
     "selectActionType": "Əməliyyat növünü seçin",
-    "actionConfig": "Əməliyyat parametrləri"
+    "actionConfig": "Əməliyyat parametrləri",
+    "actionAutoAssign": "Avto-təyinat",
+    "assignTo": "İstifadəçiyə təyin et",
+    "whenPrefix": "Nə vaxt",
+    "thenArrow": "→",
+    "withCondition": "əgər",
+    "tooltipEditTrigger": "Trigger və şərtləri redaktə et",
+    "tooltipToggleActive": "Dayandır / Davam et",
+    "tooltipDelete": "Prosesi sil",
+    "tooltipActions": "Əməliyyatları konfiqurasiya et",
+    "taskDescription": "Tapşırıq təsviri",
+    "taskTitlePlaceholder": "Məs: Müştəriyə zəng et",
+    "taskPriority": "Prioritet",
+    "priorityLow": "Aşağı",
+    "priorityMedium": "Orta",
+    "priorityHigh": "Yüksək",
+    "priorityUrgent": "Təcili"
   }
 }

@@ -1444,6 +1444,22 @@
     "webhookUrl": "Webhook URL",
     "webhookMethod": "HTTP method",
     "selectActionType": "Select action type",
-    "actionConfig": "Action settings"
+    "actionConfig": "Action settings",
+    "actionAutoAssign": "Auto-assign",
+    "assignTo": "Assign to user",
+    "whenPrefix": "When",
+    "thenArrow": "→",
+    "withCondition": "if",
+    "tooltipEditTrigger": "Edit trigger and conditions",
+    "tooltipToggleActive": "Pause / Resume",
+    "tooltipDelete": "Delete workflow",
+    "tooltipActions": "Configure actions",
+    "taskDescription": "Task description",
+    "taskTitlePlaceholder": "e.g. Follow up with client",
+    "taskPriority": "Priority",
+    "priorityLow": "Low",
+    "priorityMedium": "Medium",
+    "priorityHigh": "High",
+    "priorityUrgent": "Urgent"
   }
 }

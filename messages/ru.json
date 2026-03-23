@@ -1444,6 +1444,22 @@
     "webhookUrl": "URL вебхука",
     "webhookMethod": "HTTP метод",
     "selectActionType": "Выберите тип действия",
-    "actionConfig": "Настройки действия"
+    "actionConfig": "Настройки действия",
+    "actionAutoAssign": "Авто-назначение",
+    "assignTo": "Назначить пользователю",
+    "whenPrefix": "Когда",
+    "thenArrow": "→",
+    "withCondition": "если",
+    "tooltipEditTrigger": "Редактировать триггер и условия",
+    "tooltipToggleActive": "Приостановить / Возобновить",
+    "tooltipDelete": "Удалить процесс",
+    "tooltipActions": "Настроить действия",
+    "taskDescription": "Описание задачи",
+    "taskTitlePlaceholder": "Например: Перезвонить клиенту",
+    "taskPriority": "Приоритет",
+    "priorityLow": "Низкий",
+    "priorityMedium": "Средний",
+    "priorityHigh": "Высокий",
+    "priorityUrgent": "Срочный"
   }
 }
