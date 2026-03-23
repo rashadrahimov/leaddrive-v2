@@ -103,7 +103,7 @@ export default function EventDetailPage() {
       headers: getH(),
       body: JSON.stringify({ status }),
     })
-    fetchEvent()
+    await fetchEvent()
   }
 
   const handleDelete = async () => {
@@ -124,7 +124,7 @@ export default function EventDetailPage() {
         role: pRole,
       }),
     })
-    fetchEvent()
+    await fetchEvent()
   }
 
   const addManualParticipant = async () => {
@@ -135,7 +135,7 @@ export default function EventDetailPage() {
       body: JSON.stringify({ name: pName, email: pEmail, phone: pPhone, role: pRole }),
     })
     setPName(""); setPEmail(""); setPPhone("")
-    fetchEvent()
+    await fetchEvent()
   }
 
   const sendInvitesToAll = async () => {
@@ -156,7 +156,7 @@ export default function EventDetailPage() {
           ? `Sent ${d.sent}/${d.total} invitations via email`
           : `Marked ${d.total} as invited (SMTP not configured — configure in Settings → SMTP)`)
       }
-      fetchEvent()
+      await fetchEvent()
     } catch { setInviteResult("Error sending invitations") }
     finally { setSendingInvites(false) }
   }
@@ -175,7 +175,7 @@ export default function EventDetailPage() {
           : `Marked as invited (SMTP not configured)`)
       }
     } catch {}
-    fetchEvent()
+    await fetchEvent()
   }
 
   const updateParticipantField = async (participantId: string, field: string, value: string) => {
@@ -184,17 +184,10 @@ export default function EventDetailPage() {
       headers: getH(),
       body: JSON.stringify({ participantId, [field]: value }),
     })
-    fetchEvent()
+    await fetchEvent()
   }
 
   const removeParticipant = async (participantId: string) => {
-    // Optimistic update — remove from UI immediately
-    setEvent((prev: any) => prev ? {
-      ...prev,
-      participants: (prev.participants || []).filter((p: any) => p.id !== participantId),
-      registeredCount: Math.max(0, (prev.registeredCount || 0) - 1),
-    } : prev)
-
     try {
       await fetch(`/api/v1/events/${params.id}/participants`, {
         method: "DELETE",
@@ -202,15 +195,12 @@ export default function EventDetailPage() {
         body: JSON.stringify({ participantId }),
       })
     } catch {}
-    // Refetch to sync with server
-    fetchEvent()
+    await fetchEvent()
   }
 
   const updateParticipantStatus = async (participantId: string, status: string) => {
-    // Update via event PUT with attendedCount
     const participant = event.participants?.find((p: any) => p.id === participantId)
     if (!participant) return
-    // We'll just refetch for now — in production, this would be a PATCH on participant
     const attendedDelta = status === "attended" ? 1 : participant.status === "attended" ? -1 : 0
     if (attendedDelta !== 0) {
       await fetch(`/api/v1/events/${params.id}`, {
@@ -219,7 +209,7 @@ export default function EventDetailPage() {
         body: JSON.stringify({ attendedCount: Math.max(0, (event.attendedCount || 0) + attendedDelta) }),
       })
     }
-    fetchEvent()
+    await fetchEvent()
   }
 
   if (loading) {

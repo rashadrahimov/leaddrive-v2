@@ -138,15 +138,64 @@ export async function PATCH(
               subject = (template.subject || "Invitation: {{event_name}}")
                 .replace(/\{\{event_name\}\}/g, event.name)
             } else {
-              subject = `Invitation: ${event.name}`
-              html = `
-                <h2>You're invited to ${event.name}</h2>
-                <p><strong>Date:</strong> ${new Date(event.startDate).toLocaleString("ru-RU")}</p>
-                ${event.location ? `<p><strong>Location:</strong> ${event.location}</p>` : ""}
-                ${event.isOnline && event.meetingUrl ? `<p><strong>Join online:</strong> <a href="${event.meetingUrl}">${event.meetingUrl}</a></p>` : ""}
-                ${event.description ? `<p>${event.description}</p>` : ""}
-                <p><a href="${registrationUrl}">Confirm attendance</a></p>
-              `
+              subject = `You're Invited: ${event.name}`
+              const startDate = new Date(event.startDate).toLocaleString("ru-RU", { dateStyle: "long", timeStyle: "short" })
+              const endDate = event.endDate ? new Date(event.endDate).toLocaleString("ru-RU", { dateStyle: "long", timeStyle: "short" }) : ""
+              html = `<!DOCTYPE html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background:#f0f2f5;font-family:Arial,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f0f2f5;padding:30px 0;">
+<tr><td align="center">
+<table width="600" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.1);">
+  <tr><td style="background:linear-gradient(135deg,#4F46E5,#7C3AED);padding:40px;text-align:center;">
+    <h1 style="margin:0;color:#fff;font-size:26px;font-weight:700;">${event.name}</h1>
+    <p style="margin:10px 0 0;color:rgba(255,255,255,0.85);font-size:14px;">${event.type || "Event"}</p>
+  </td></tr>
+  <tr><td style="padding:30px 40px 10px;">
+    <p style="margin:0;font-size:15px;color:#1F2937;">Hello <strong>${p.name}</strong>,</p>
+    <p style="margin:10px 0 0;font-size:14px;color:#4B5563;line-height:1.6;">
+      You are invited to join us! Please confirm your attendance by clicking the button below.
+    </p>
+  </td></tr>
+  <tr><td style="padding:15px 40px;">
+    <table width="100%" style="background:#F8FAFC;border-radius:10px;border:1px solid #E2E8F0;">
+      <tr><td style="padding:20px;">
+        <table width="100%">
+          <tr><td style="padding:8px 0;">
+            <table><tr>
+              <td style="width:36px;vertical-align:middle;"><div style="width:32px;height:32px;background:#EEF2FF;border-radius:8px;text-align:center;line-height:32px;font-size:16px;">&#128197;</div></td>
+              <td style="padding-left:12px;"><div style="font-size:11px;color:#9CA3AF;text-transform:uppercase;font-weight:700;">Date & Time</div><div style="font-size:14px;color:#1F2937;font-weight:600;">${startDate}${endDate ? ` — ${endDate}` : ""}</div></td>
+            </tr></table>
+          </td></tr>
+          ${event.location ? `<tr><td style="padding:8px 0;border-top:1px solid #E2E8F0;">
+            <table><tr>
+              <td style="width:36px;vertical-align:middle;"><div style="width:32px;height:32px;background:#FEF2F2;border-radius:8px;text-align:center;line-height:32px;font-size:16px;">&#128205;</div></td>
+              <td style="padding-left:12px;"><div style="font-size:11px;color:#9CA3AF;text-transform:uppercase;font-weight:700;">Location</div><div style="font-size:14px;color:#1F2937;font-weight:600;">${event.location}</div></td>
+            </tr></table>
+          </td></tr>` : ""}
+          ${event.isOnline && event.meetingUrl ? `<tr><td style="padding:8px 0;border-top:1px solid #E2E8F0;">
+            <table><tr>
+              <td style="width:36px;vertical-align:middle;"><div style="width:32px;height:32px;background:#F0FDF4;border-radius:8px;text-align:center;line-height:32px;font-size:16px;">&#128279;</div></td>
+              <td style="padding-left:12px;"><div style="font-size:11px;color:#9CA3AF;text-transform:uppercase;font-weight:700;">Join Online</div><div style="font-size:14px;"><a href="${event.meetingUrl}" style="color:#4F46E5;font-weight:600;">${event.meetingUrl}</a></div></td>
+            </tr></table>
+          </td></tr>` : ""}
+        </table>
+      </td></tr>
+    </table>
+  </td></tr>
+  ${event.description ? `<tr><td style="padding:5px 40px 15px;"><p style="margin:0;font-size:13px;color:#6B7280;line-height:1.5;background:#FEFCE8;border-radius:8px;padding:12px;border:1px solid #FDE68A;">${event.description.slice(0, 300)}</p></td></tr>` : ""}
+  <tr><td style="padding:10px 40px 25px;text-align:center;">
+    <a href="${registrationUrl}" style="display:inline-block;background:linear-gradient(135deg,#4F46E5,#7C3AED);color:#fff;padding:14px 40px;border-radius:10px;font-size:16px;font-weight:700;text-decoration:none;box-shadow:0 4px 12px rgba(79,70,229,0.4);">Confirm My Attendance</a>
+  </td></tr>
+  <tr><td style="padding:0 40px 20px;text-align:center;">
+    <p style="margin:0;font-size:12px;color:#9CA3AF;">Or copy this link: <a href="${registrationUrl}" style="color:#4F46E5;">${registrationUrl}</a></p>
+  </td></tr>
+  <tr><td style="padding:20px 40px;text-align:center;border-top:1px solid #E5E7EB;">
+    <p style="margin:0;font-size:12px;color:#9CA3AF;">Sent by <strong style="color:#4F46E5;">${org?.name || "LeadDrive CRM"}</strong></p>
+  </td></tr>
+</table>
+</td></tr></table>
+</body></html>`
             }
 
             await transport.sendMail({

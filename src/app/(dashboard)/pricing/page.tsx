@@ -199,8 +199,9 @@ export default function PricingPage() {
     return Object.values(adjustedData).reduce((s, c) => s + c.monthly, 0)
   }, [adjustedData])
 
-  const annualEffect = (adjTotal - baseTotal) * 12
-  const avgChange = baseTotal > 0 ? ((adjTotal - baseTotal) / baseTotal) * 100 : 0
+  const rawDiff = adjTotal - baseTotal
+  const annualEffect = Math.abs(rawDiff) < 0.01 ? 0 : rawDiff * 12
+  const avgChange = baseTotal > 0 && Math.abs(rawDiff) >= 0.01 ? (rawDiff / baseTotal) * 100 : 0
 
   // Group company counts
   const groupCounts = useMemo(() => {
