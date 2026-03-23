@@ -107,6 +107,63 @@ export default function EventRegistrationPage() {
               </div>
             )}
           </div>
+
+          {/* Add to Calendar buttons */}
+          <div className="mt-6 space-y-2">
+            <p className="text-sm text-gray-500 mb-2">Add to your calendar:</p>
+            <div className="flex gap-2 justify-center flex-wrap">
+              <button
+                onClick={() => {
+                  const start = new Date(event.startDate)
+                  const end = event.endDate ? new Date(event.endDate) : new Date(start.getTime() + 2 * 60 * 60 * 1000)
+                  const fmt = (d: Date) => d.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "")
+                  const ics = [
+                    "BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//LeadDrive CRM//EN",
+                    "BEGIN:VEVENT",
+                    `DTSTART:${fmt(start)}`,
+                    `DTEND:${fmt(end)}`,
+                    `SUMMARY:${event.name}`,
+                    event.location ? `LOCATION:${event.location}` : "",
+                    event.description ? `DESCRIPTION:${event.description.replace(/\n/g, "\\n").slice(0, 200)}` : "",
+                    event.meetingUrl ? `URL:${event.meetingUrl}` : "",
+                    "STATUS:CONFIRMED",
+                    "END:VEVENT", "END:VCALENDAR",
+                  ].filter(Boolean).join("\r\n")
+                  const blob = new Blob([ics], { type: "text/calendar;charset=utf-8" })
+                  const url = URL.createObjectURL(blob)
+                  const a = document.createElement("a")
+                  a.href = url
+                  a.download = `${event.name.replace(/[^a-zA-Z0-9]/g, "_")}.ics`
+                  a.click()
+                  URL.revokeObjectURL(url)
+                }}
+                className="flex items-center gap-2 px-4 py-2.5 bg-white rounded-xl shadow-md hover:shadow-lg transition-all text-sm font-medium text-gray-700 border"
+              >
+                <span className="text-lg">📅</span>
+                Apple / Outlook (.ics)
+              </button>
+              <a
+                href={(() => {
+                  const start = new Date(event.startDate)
+                  const end = event.endDate ? new Date(event.endDate) : new Date(start.getTime() + 2 * 60 * 60 * 1000)
+                  const fmt = (d: Date) => d.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "")
+                  const params = new URLSearchParams({
+                    action: "TEMPLATE",
+                    text: event.name,
+                    dates: `${fmt(start)}/${fmt(end)}`,
+                    details: event.description || "",
+                    location: event.location || (event.meetingUrl || ""),
+                  })
+                  return `https://calendar.google.com/calendar/render?${params}`
+                })()}
+                target="_blank"
+                className="flex items-center gap-2 px-4 py-2.5 bg-white rounded-xl shadow-md hover:shadow-lg transition-all text-sm font-medium text-gray-700 border"
+              >
+                <span className="text-lg">📆</span>
+                Google Calendar
+              </a>
+            </div>
+          </div>
         </div>
       </div>
     )
