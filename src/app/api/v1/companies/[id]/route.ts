@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
-import { prisma } from "@/lib/prisma"
+import { prisma, logAudit } from "@/lib/prisma"
 import { getOrgId } from "@/lib/api-auth"
 
 const updateCompanySchema = z.object({
@@ -67,6 +67,7 @@ export async function PUT(
     })
     if (company.count === 0) return NextResponse.json({ error: "Not found" }, { status: 404 })
     const updated = await prisma.company.findFirst({ where: { id, organizationId: orgId } })
+    logAudit(orgId, "update", "company", id, updated?.name || "", { newValue: parsed.data })
     return NextResponse.json({ success: true, data: updated })
   } catch (e) {
     return NextResponse.json({ error: String(e) }, { status: 500 })
@@ -82,8 +83,10 @@ export async function DELETE(
   const { id } = await params
 
   try {
+    const existing = await prisma.company.findFirst({ where: { id, organizationId: orgId }, select: { name: true } })
     const result = await prisma.company.deleteMany({ where: { id, organizationId: orgId } })
     if (result.count === 0) return NextResponse.json({ error: "Not found" }, { status: 404 })
+    logAudit(orgId, "delete", "company", id, existing?.name || "")
     return NextResponse.json({ success: true, data: { deleted: id } })
   } catch (e) {
     return NextResponse.json({ error: String(e) }, { status: 500 })

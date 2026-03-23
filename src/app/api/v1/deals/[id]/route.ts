@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
-import { prisma } from "@/lib/prisma"
+import { prisma, logAudit } from "@/lib/prisma"
 import { getOrgId } from "@/lib/api-auth"
 import { executeWorkflows } from "@/lib/workflow-engine"
 
@@ -134,6 +134,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       include: dealInclude,
     })
 
+    logAudit(orgId, "update", "deal", id, updated?.name || "", { newValue: parsed.data })
     // Trigger workflows for updates
     if (updated) {
       const triggerEvent = parsed.data.stage ? "stage_changed" : "updated"
@@ -152,11 +153,13 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
   const { id } = await params
 
   try {
+    const existing = await prisma.deal.findFirst({ where: { id, organizationId: orgId }, select: { name: true } })
     const result = await prisma.deal.deleteMany({
       where: { id, organizationId: orgId },
     })
 
     if (result.count === 0) return NextResponse.json({ error: "Deal not found" }, { status: 404 })
+    logAudit(orgId, "delete", "deal", id, existing?.name || "")
     return NextResponse.json({ success: true, data: { deleted: id } })
   } catch (e) {
     return NextResponse.json({ error: String(e) }, { status: 500 })

@@ -69,3 +69,18 @@ export function tenantPrisma(organizationId: string) {
     },
   })
 }
+
+/** Fire-and-forget audit log entry */
+export function logAudit(orgId: string, action: string, entityType: string, entityId: string, entityName?: string, extra?: { oldValue?: any; newValue?: any }) {
+  prisma.auditLog.create({
+    data: {
+      organizationId: orgId,
+      action,
+      entityType,
+      entityId,
+      entityName: entityName || undefined,
+      oldValue: extra?.oldValue || undefined,
+      newValue: extra?.newValue || undefined,
+    },
+  }).catch(() => {})
+}
