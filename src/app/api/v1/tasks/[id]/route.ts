@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
-import { prisma } from "@/lib/prisma"
+import { prisma, logAudit } from "@/lib/prisma"
 import { getOrgId } from "@/lib/api-auth"
 import { executeWorkflows } from "@/lib/workflow-engine"
 
@@ -47,6 +47,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       where: { id },
       data,
     })
+    logAudit(orgId, "update", "task", id, task.title, { newValue: parsed.data })
     const triggerEvent = parsed.data.status ? "status_changed" : "updated"
     executeWorkflows(orgId, "task", triggerEvent, task).catch(() => {})
     return NextResponse.json({ success: true, data: task })
@@ -61,7 +62,9 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
   const { id } = await params
 
   try {
+    const existing = await prisma.task.findFirst({ where: { id, organizationId: orgId }, select: { title: true } })
     await prisma.task.delete({ where: { id } })
+    logAudit(orgId, "delete", "task", id, existing?.title || "")
     return NextResponse.json({ success: true })
   } catch (e) {
     return NextResponse.json({ error: String(e) }, { status: 500 })

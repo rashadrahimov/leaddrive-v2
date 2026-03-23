@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
-import { prisma } from "@/lib/prisma"
+import { prisma, logAudit } from "@/lib/prisma"
 import { getOrgId } from "@/lib/api-auth"
 import { executeWorkflows } from "@/lib/workflow-engine"
 
@@ -135,6 +135,7 @@ export async function POST(req: NextRequest) {
         ...(slaPolicyName ? { slaPolicyName } : {}),
       },
     })
+    logAudit(orgId, "create", "ticket", ticket.id, ticket.subject)
     executeWorkflows(orgId, "ticket", "created", ticket).catch(() => {})
     return NextResponse.json({ success: true, data: ticket }, { status: 201 })
   } catch (e) {

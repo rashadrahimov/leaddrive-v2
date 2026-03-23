@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
-import { prisma } from "@/lib/prisma"
+import { prisma, logAudit } from "@/lib/prisma"
 import { getOrgId } from "@/lib/api-auth"
 
 const createCompanySchema = z.object({
@@ -85,6 +85,7 @@ export async function POST(req: NextRequest) {
     const company = await prisma.company.create({
       data: { organizationId: orgId, ...parsed.data },
     })
+    logAudit(orgId, "create", "company", company.id, company.name)
     return NextResponse.json({ success: true, data: company }, { status: 201 })
   } catch (e) {
     return NextResponse.json({ error: String(e) }, { status: 500 })

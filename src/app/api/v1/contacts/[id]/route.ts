@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
-import { prisma } from "@/lib/prisma"
+import { prisma, logAudit } from "@/lib/prisma"
 import { getOrgId } from "@/lib/api-auth"
 import { executeWorkflows } from "@/lib/workflow-engine"
 
@@ -49,6 +49,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     const result = await prisma.contact.updateMany({ where: { id, organizationId: orgId }, data: parsed.data })
     if (result.count === 0) return NextResponse.json({ error: "Not found" }, { status: 404 })
     const updated = await prisma.contact.findFirst({ where: { id, organizationId: orgId } })
+    logAudit(orgId, "update", "contact", id, updated?.fullName || "", { newValue: parsed.data })
     if (updated) executeWorkflows(orgId, "contact", "updated", updated).catch(() => {})
     return NextResponse.json({ success: true, data: updated })
   } catch (e) {
@@ -62,8 +63,10 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
   const { id } = await params
 
   try {
+    const existing = await prisma.contact.findFirst({ where: { id, organizationId: orgId }, select: { fullName: true } })
     const result = await prisma.contact.deleteMany({ where: { id, organizationId: orgId } })
     if (result.count === 0) return NextResponse.json({ error: "Not found" }, { status: 404 })
+    logAudit(orgId, "delete", "contact", id, existing?.fullName || "")
     return NextResponse.json({ success: true, data: { deleted: id } })
   } catch (e) {
     return NextResponse.json({ error: String(e) }, { status: 500 })

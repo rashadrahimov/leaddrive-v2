@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
-import { prisma } from "@/lib/prisma"
+import { prisma, logAudit } from "@/lib/prisma"
 import { getOrgId } from "@/lib/api-auth"
 import { executeWorkflows } from "@/lib/workflow-engine"
 
@@ -69,6 +69,7 @@ export async function POST(req: NextRequest) {
         relatedId: parsed.data.relatedId,
       },
     })
+    logAudit(orgId, "create", "task", task.id, task.title)
     executeWorkflows(orgId, "task", "created", task).catch(() => {})
     return NextResponse.json({ success: true, data: task }, { status: 201 })
   } catch (e) {

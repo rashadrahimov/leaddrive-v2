@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
-import { prisma } from "@/lib/prisma"
+import { prisma, logAudit } from "@/lib/prisma"
 import { getOrgId } from "@/lib/api-auth"
 import { sendWhatsAppMessage } from "@/lib/whatsapp"
 import { executeWorkflows } from "@/lib/workflow-engine"
@@ -118,6 +118,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       )
     }
 
+    logAudit(orgId, "update", "ticket", id, original.subject, { newValue: parsed.data })
     if (updated) {
       const triggerEvent = parsed.data.status ? "status_changed" : "updated"
       executeWorkflows(orgId, "ticket", triggerEvent, updated).catch(() => {})
@@ -135,11 +136,13 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
   const { id } = await params
 
   try {
+    const existing = await prisma.ticket.findFirst({ where: { id, organizationId: orgId }, select: { subject: true } })
     const result = await prisma.ticket.deleteMany({
       where: { id, organizationId: orgId },
     })
 
     if (result.count === 0) return NextResponse.json({ error: "Ticket not found" }, { status: 404 })
+    logAudit(orgId, "delete", "ticket", id, existing?.subject || "")
     return NextResponse.json({ success: true, data: { deleted: id } })
   } catch (e) {
     return NextResponse.json({ error: String(e) }, { status: 500 })

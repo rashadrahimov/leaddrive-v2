@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
-import { prisma } from "@/lib/prisma"
+import { prisma, logAudit } from "@/lib/prisma"
 import { getOrgId } from "@/lib/api-auth"
 import { executeWorkflows } from "@/lib/workflow-engine"
 
@@ -55,6 +55,7 @@ export async function PUT(
     })
     if (result.count === 0) return NextResponse.json({ error: "Not found" }, { status: 404 })
     const updated = await prisma.lead.findFirst({ where: { id, organizationId: orgId } })
+    logAudit(orgId, "update", "lead", id, updated?.contactName || "", { newValue: parsed.data })
     if (updated) {
       const triggerEvent = parsed.data.status ? "status_changed" : "updated"
       executeWorkflows(orgId, "lead", triggerEvent, updated).catch(() => {})
@@ -74,8 +75,10 @@ export async function DELETE(
   const { id } = await params
 
   try {
+    const existing = await prisma.lead.findFirst({ where: { id, organizationId: orgId }, select: { contactName: true } })
     const result = await prisma.lead.deleteMany({ where: { id, organizationId: orgId } })
     if (result.count === 0) return NextResponse.json({ error: "Not found" }, { status: 404 })
+    logAudit(orgId, "delete", "lead", id, existing?.contactName || "")
     return NextResponse.json({ success: true, data: { deleted: id } })
   } catch (e) {
     return NextResponse.json({ error: String(e) }, { status: 500 })
