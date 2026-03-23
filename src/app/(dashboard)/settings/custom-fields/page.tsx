@@ -377,18 +377,18 @@ export default function DashboardSettingsPage() {
         })}
       </div>
 
-      <div className="flex items-center justify-between pt-2 sticky bottom-0 bg-background/95 backdrop-blur py-4 border-t">
-        <p className="text-sm text-muted-foreground">
-          {t("activeWidgets")}: <span className="font-bold text-foreground">{activeCount}</span> / {WIDGET_KEYS.length}
-        </p>
+      <div className="flex flex-col items-center gap-2 pt-2 sticky bottom-0 bg-background/95 backdrop-blur py-4 border-t">
         <Button
           onClick={handleSave}
           disabled={saving}
-          className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white min-w-[140px]"
+          className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white min-w-[200px]"
         >
           <Check className="h-4 w-4" />
           {saved ? t("saved") : saving ? "..." : tc("save")}
         </Button>
+        <p className="text-sm text-muted-foreground">
+          {t("activeWidgets")}: <span className="font-bold text-foreground">{activeCount}</span> / {WIDGET_KEYS.length}
+        </p>
       </div>
     </div>
   )
