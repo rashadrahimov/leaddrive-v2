@@ -999,7 +999,12 @@
     "saved": "Saxlanıldı",
     "cancelChanges": "Ləğv et",
     "resetDefaults": "Defolt",
-    "adminSettingsLocked": "Admin həmişə Parametrlərə tam girişə malikdir"
+    "adminSettingsLocked": "Admin həmişə Parametrlərə tam girişə malikdir",
+    "availableRoles": "Mövcud rollar",
+    "addRole": "Rol əlavə et",
+    "deleteRole": "Rolu sil",
+    "roleName": "Rol adı",
+    "roleColor": "Rəng"
   },
   "events": {
     "title": "Tədbirlər",

@@ -998,7 +998,12 @@
     "saved": "Saved",
     "cancelChanges": "Cancel",
     "resetDefaults": "Reset defaults",
-    "adminSettingsLocked": "Admin always has full access to Settings"
+    "adminSettingsLocked": "Admin always has full access to Settings",
+    "availableRoles": "Available Roles",
+    "addRole": "Add Role",
+    "deleteRole": "Delete Role",
+    "roleName": "Role Name",
+    "roleColor": "Color"
   },
   "events": {
     "title": "Events",

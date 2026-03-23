@@ -31,18 +31,26 @@ interface User {
   createdAt: string
 }
 
-const ROLE_LABELS: Record<string, string> = {
-  admin: "Администратор",
-  manager: "Менеджер",
-  agent: "Агент",
-  viewer: "Наблюдатель",
+interface RoleConfig {
+  id: string
+  name: string
+  color: string
+  isSystem: boolean
 }
 
-const ROLE_COLORS: Record<string, string> = {
-  admin: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300",
-  manager: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300",
-  agent: "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300",
-  viewer: "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300",
+const COLOR_MAP: Record<string, string> = {
+  red: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300",
+  blue: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300",
+  purple: "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300",
+  gray: "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300",
+  emerald: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-300",
+  pink: "bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-300",
+  amber: "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300",
+  cyan: "bg-cyan-100 text-cyan-800 dark:bg-cyan-900 dark:text-cyan-300",
+  indigo: "bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-300",
+  teal: "bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-300",
+  orange: "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300",
+  slate: "bg-slate-100 text-slate-800 dark:bg-slate-900 dark:text-slate-300",
 }
 
 const ROLE_ICONS: Record<string, React.ReactNode> = {
@@ -63,13 +71,14 @@ interface UserFormData {
 }
 
 function UserFormDialog({
-  open, onOpenChange, onSaved, editUser, orgId,
+  open, onOpenChange, onSaved, editUser, orgId, availableRoles,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
   onSaved: () => void
   editUser?: User
   orgId?: string
+  availableRoles: RoleConfig[]
 }) {
   const isEdit = !!editUser
   const [form, setForm] = useState<UserFormData>({
@@ -163,10 +172,9 @@ function UserFormDialog({
               <div>
                 <Label htmlFor="role">Роль</Label>
                 <Select value={form.role} onChange={e => setForm(f => ({ ...f, role: e.target.value }))}>
-                  <option value="admin">Администратор</option>
-                  <option value="manager">Менеджер</option>
-                  <option value="agent">Агент</option>
-                  <option value="viewer">Наблюдатель</option>
+                  {availableRoles.map(r => (
+                    <option key={r.id} value={r.id}>{r.name}</option>
+                  ))}
                 </Select>
               </div>
               <div>
@@ -202,12 +210,31 @@ function UserFormDialog({
 export default function UsersSettingsPage() {
   const { data: session } = useSession()
   const [users, setUsers] = useState<User[]>([])
+  const [availableRoles, setAvailableRoles] = useState<RoleConfig[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [editUser, setEditUser] = useState<User | undefined>()
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [deleteName, setDeleteName] = useState("")
   const orgId = session?.user?.organizationId
+
+  const fetchData = async () => {
+    const headers = orgId ? { "x-organization-id": String(orgId) } : {}
+    try {
+      const [usersRes, rolesRes] = await Promise.all([
+        fetch("/api/v1/users", { headers }),
+        fetch("/api/v1/settings/roles", { headers }),
+      ])
+      if (usersRes.ok) {
+        const result = await usersRes.json()
+        setUsers(result.data || [])
+      }
+      if (rolesRes.ok) {
+        const result = await rolesRes.json()
+        if (result.data?.roles) setAvailableRoles(result.data.roles)
+      }
+    } catch {} finally { setLoading(false) }
+  }
 
   const fetchUsers = async () => {
     try {
@@ -218,10 +245,10 @@ export default function UsersSettingsPage() {
         const result = await res.json()
         setUsers(result.data || [])
       }
-    } catch {} finally { setLoading(false) }
+    } catch {}
   }
 
-  useEffect(() => { fetchUsers() }, [session])
+  useEffect(() => { fetchData() }, [session])
 
   const handleDelete = async () => {
     if (!deleteId) return
@@ -263,11 +290,15 @@ export default function UsersSettingsPage() {
     },
     {
       key: "role", label: "Роль", sortable: true,
-      render: (item: User) => (
-        <Badge className={`${ROLE_COLORS[item.role] || ROLE_COLORS.viewer} gap-1`}>
-          {ROLE_ICONS[item.role]}{ROLE_LABELS[item.role] || item.role}
-        </Badge>
-      ),
+      render: (item: User) => {
+        const roleConfig = availableRoles.find(r => r.id === item.role)
+        const colorClass = roleConfig ? (COLOR_MAP[roleConfig.color] || COLOR_MAP.slate) : COLOR_MAP.gray
+        return (
+          <Badge className={`${colorClass} gap-1`}>
+            {ROLE_ICONS[item.role]}{roleConfig?.name || item.role}
+          </Badge>
+        )
+      },
     },
     {
       key: "department", label: "Отдел", sortable: true,
@@ -373,6 +404,7 @@ export default function UsersSettingsPage() {
         onSaved={fetchUsers}
         editUser={editUser}
         orgId={orgId}
+        availableRoles={availableRoles}
       />
 
       <DeleteConfirmDialog
