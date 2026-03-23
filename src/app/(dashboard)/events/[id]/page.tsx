@@ -158,11 +158,21 @@ export default function EventDetailPage() {
   }
 
   const sendInviteToOne = async (participantId: string) => {
-    await fetch(`/api/v1/events/${params.id}/participants`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json", ...headers },
-      body: JSON.stringify({ action: "send_invites", participantIds: [participantId] }),
-    })
+    try {
+      const h: any = { "Content-Type": "application/json" }
+      if (orgId) h["x-organization-id"] = String(orgId)
+      const res = await fetch(`/api/v1/events/${params.id}/participants`, {
+        method: "PATCH",
+        headers: h,
+        body: JSON.stringify({ action: "send_invites", participantIds: [participantId] }),
+      })
+      const json = await res.json()
+      if (json.success) {
+        setInviteResult(json.data?.smtpConfigured
+          ? `Sent invitation to 1 participant`
+          : `Marked as invited (SMTP not configured)`)
+      }
+    } catch {}
     fetchEvent()
   }
 
