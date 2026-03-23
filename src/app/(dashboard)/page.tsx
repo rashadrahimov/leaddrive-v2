@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useRef } from "react"
+import { useEffect, useState } from "react"
 import { useSession } from "next-auth/react"
 import { useCountUp } from "@/hooks/use-count-up"
 import { t } from "@/lib/locale"
@@ -17,11 +17,9 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
 } from "recharts"
 
-// Colors
 const COLORS = {
   revenue: "#22c55e", cost: "#ef4444", margin: "#3b82f6",
   hot: "#ef4444", warm: "#f59e0b", cold: "#3b82f6",
-  profitable: "#22c55e", loss: "#ef4444", norev: "#94a3b8",
 }
 const SERVICE_COLORS = ["#1B2A4A", "#2D4A7A", "#4A6FA5", "#E91E63", "#FF9800", "#4CAF50", "#9C27B0"]
 
@@ -62,7 +60,6 @@ function KpiCard({ title, value, sub, icon, color, alert }: {
         borderColor: `${color}20`,
       }}
     >
-      {/* Top accent line */}
       <div className="absolute top-0 left-0 right-0 h-[3px] rounded-t-xl" style={{ backgroundColor: color }} />
       <div className="relative p-4 pt-5">
         <div className="flex justify-between items-start">
@@ -115,8 +112,8 @@ export default function DashboardPage() {
     return (
       <div className="space-y-6">
         <div className="h-8 w-64 bg-muted rounded animate-pulse" />
-        <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-6">
-          {[1,2,3,4,5,6].map(i => <div key={i} className="h-24 bg-muted rounded-lg animate-pulse" />)}
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {[1,2,3,4].map(i => <div key={i} className="h-28 bg-muted rounded-xl animate-pulse" />)}
         </div>
         <div className="grid gap-4 lg:grid-cols-12">
           <div className="lg:col-span-8 h-72 bg-muted rounded-lg animate-pulse" />
@@ -131,13 +128,6 @@ export default function DashboardPage() {
   const { financial, clients, pipeline, leads, operations, tasks, activity, risks, financialOverview, forecast, atRiskDeals } = data
   const marginColor = financial.marginPct >= 15 ? COLORS.revenue : financial.marginPct >= 5 ? "#f59e0b" : COLORS.cost
 
-  // Temperature data
-  const tempMap: Record<string, number> = {}
-  for (const t of leads.byTemperature || []) tempMap[t.temp] = t.count
-  const hot = tempMap["hot"] || 0, warm = tempMap["warm"] || 0, cold = tempMap["cold"] || 0
-  const totalLeads = hot + warm + cold
-
-  // Pipeline stages
   const stageOrder = ["LEAD", "QUALIFIED", "PROPOSAL", "NEGOTIATION", "WON", "LOST"]
   const stageColors: Record<string, string> = {
     LEAD: "#94a3b8", QUALIFIED: "#3b82f6", PROPOSAL: "#8b5cf6",
@@ -146,135 +136,79 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">
-            {getGreeting()}, {session?.user?.name || "Директор"}
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Панель руководителя · {new Date().toLocaleDateString("ru", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
-          </p>
-        </div>
+      {/* ═══ Header ═══ */}
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight">
+          {getGreeting()}, {session?.user?.name || "Директор"}
+        </h1>
+        <p className="text-sm text-muted-foreground">
+          Панель руководителя · {new Date().toLocaleDateString("ru", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
+        </p>
       </div>
 
-      {/* ═══ KPI Cards ═══ */}
-      <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-6">
+      {/* ═══ 4 Main KPIs ═══ */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <KpiCard
           title="Месячный доход"
           value={`${fmt(financial.monthlyRevenue)} ₼`}
-          sub={`Расходы: ${fmt(financial.monthlyCost)} ₼`}
+          sub={`Маржа: ${fmt(financial.monthlyMargin)} ₼ (${financial.marginPct.toFixed(1)}%)`}
           icon={<DollarSign className="h-5 w-5" />}
           color={COLORS.revenue}
-        />
-        <KpiCard
-          title="Маржа"
-          value={`${fmt(financial.monthlyMargin)} ₼`}
-          sub={`${financial.marginPct.toFixed(1)}% маржинальность`}
-          icon={financial.marginPct >= 10 ? <TrendingUp className="h-5 w-5" /> : <TrendingDown className="h-5 w-5" />}
-          color={marginColor}
           alert={financial.marginPct < 5 && financial.monthlyRevenue > 0}
         />
         <KpiCard
-          title={t("Pipeline")}
+          title="Воронка продаж"
           value={`${fmt(financial.pipelineValue)} ₼`}
-          sub={`${pipeline.deals} активных сделок`}
+          sub={`${pipeline.deals} сделок · ${pipeline.wonThisMonth} выиграно`}
           icon={<Handshake className="h-5 w-5" />}
           color="#3b82f6"
         />
         <KpiCard
           title="Клиенты"
           value={clients.total}
-          sub={`${clients.totalUsers.toLocaleString()} пользователей`}
+          sub={`${clients.profitable} прибыльных · ${clients.loss} убыточных`}
           icon={<Building2 className="h-5 w-5" />}
           color="#6366f1"
         />
         <KpiCard
-          title="Тикеты"
+          title="Открытые тикеты"
           value={operations.openTickets}
-          sub={operations.slaBreached > 0 ? `⚠ ${operations.slaBreached} SLA нарушено` : "SLA в норме"}
+          sub={operations.slaBreached > 0 ? `⚠ ${operations.slaBreached} SLA нарушено` : `${tasks.overdue} задач просрочено`}
           icon={<Ticket className="h-5 w-5" />}
-          color={operations.slaBreached > 0 ? COLORS.cost : COLORS.revenue}
+          color={operations.slaBreached > 0 ? COLORS.cost : "#0ea5a0"}
           alert={operations.slaBreached > 0}
-        />
-        <KpiCard
-          title="Просрочка"
-          value={tasks.overdue}
-          sub={`${tasks.dueThisWeek} на этой неделе`}
-          icon={<AlertTriangle className="h-5 w-5" />}
-          color={tasks.overdue > 0 ? COLORS.cost : COLORS.revenue}
         />
       </div>
 
-      {/* ═══ Financial Overview ═══ */}
-      {financialOverview && (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <Card className="border-l-4 border-l-green-500">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-green-100 dark:bg-green-950/30">
-                  <Wallet className="h-5 w-5 text-green-600" />
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Выигранные сделки</p>
-                  <p className="text-xl font-bold">{fmt(financialOverview.wonDealsRevenue)} ₼</p>
-                  <p className="text-xs text-muted-foreground">{financialOverview.wonDealsCount} сделок · Ø {fmt(financialOverview.avgDealSize)} ₼</p>
-                </div>
+      {/* ═══ Risks Banner (only if there are problems) ═══ */}
+      {risks?.length > 0 && risks.some((r: any) => r.severity === "critical" || r.severity === "warning") && (
+        <div className="flex gap-3 overflow-x-auto pb-1">
+          {risks.filter((r: any) => r.severity === "critical" || r.severity === "warning").map((r: any, i: number) => (
+            <div
+              key={i}
+              className={`flex items-center gap-2.5 px-4 py-2.5 rounded-lg border-l-4 bg-white dark:bg-card border shrink-0 ${
+                r.severity === "critical" ? "border-l-red-500" : "border-l-amber-500"
+              }`}
+            >
+              <AlertTriangle className={`h-4 w-4 shrink-0 ${r.severity === "critical" ? "text-red-500" : "text-amber-500"}`} />
+              <div>
+                <span className="text-sm font-medium">{r.title}</span>
+                <span className="text-xs text-muted-foreground ml-2">{r.description}</span>
               </div>
-            </CardContent>
-          </Card>
-          <Card className="border-l-4 border-l-blue-500">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-950/30">
-                  <FileText className="h-5 w-5 text-blue-600" />
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Контракты (ежемес.)</p>
-                  <p className="text-xl font-bold">{fmt(financialOverview.monthlyContractRevenue)} ₼</p>
-                  <p className="text-xs text-muted-foreground">{financialOverview.activeContracts} активных из {financialOverview.totalContracts}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="border-l-4 border-l-purple-500">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-950/30">
-                  <Target className="h-5 w-5 text-purple-600" />
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">{t("Pipeline")} (в работе)</p>
-                  <p className="text-xl font-bold">{fmt(financialOverview.pipelineValue)} ₼</p>
-                  <p className="text-xs text-muted-foreground">{pipeline.deals} активных сделок</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="border-l-4 border-l-amber-500">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-amber-100 dark:bg-amber-950/30">
-                  <TrendingUp className="h-5 w-5 text-amber-600" />
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Конверсия лидов</p>
-                  <p className="text-xl font-bold">{leads.conversionRate || 0}%</p>
-                  <p className="text-xs text-muted-foreground">{leads.total || 0} лидов всего</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              <Badge variant={r.severity === "critical" ? "destructive" : "secondary"} className="text-xs shrink-0 ml-2">
+                {r.metric}
+              </Badge>
+            </div>
+          ))}
         </div>
       )}
 
-      {/* ═══ Main Charts ═══ */}
+      {/* ═══ Charts Row: Revenue + Pipeline ═══ */}
       <div className="grid gap-4 lg:grid-cols-12">
-        {/* Revenue vs Cost — would need snapshots, for now show service revenue bar */}
         <Card className="lg:col-span-8">
           <CardHeader className="pb-2">
             <CardTitle className="text-base flex items-center gap-2">
-              <BarChart3 className="h-4 w-4" /> Доход по услугам (ежемесячный)
+              <BarChart3 className="h-4 w-4" /> Доход по услугам
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -298,135 +232,8 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        {/* Service Revenue Donut */}
+        {/* Pipeline Funnel */}
         <Card className="lg:col-span-4">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base">Структура дохода</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={200}>
-              <PieChart>
-                <Pie
-                  data={financial.revenueByService || []}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={50}
-                  outerRadius={85}
-                  dataKey="value"
-                  labelLine={false}
-                >
-                  {(financial.revenueByService || []).map((_: any, i: number) => (
-                    <Cell key={i} fill={SERVICE_COLORS[i % SERVICE_COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip formatter={(v: number) => `${v.toLocaleString()} ₼`} />
-                <text x="50%" y="48%" textAnchor="middle" className="fill-foreground text-xs">Всего</text>
-                <text x="50%" y="56%" textAnchor="middle" className="fill-foreground text-sm font-bold">
-                  {fmt(financial.monthlyRevenue)} ₼
-                </text>
-              </PieChart>
-            </ResponsiveContainer>
-            <div className="grid grid-cols-2 gap-x-3 gap-y-1 mt-1">
-              {(financial.revenueByService || []).map((s: any, i: number) => {
-                const total = (financial.revenueByService || []).reduce((a: number, b: any) => a + b.value, 0)
-                const pct = total > 0 ? ((s.value / total) * 100).toFixed(0) : "0"
-                return (
-                  <div key={i} className="flex items-center gap-1.5 text-xs">
-                    <div className="w-2 h-2 rounded-sm flex-shrink-0" style={{ backgroundColor: SERVICE_COLORS[i % SERVICE_COLORS.length] }} />
-                    <span className="text-muted-foreground truncate">{s.name}</span>
-                    <span className="ml-auto font-mono">{pct}%</span>
-                  </div>
-                )
-              })}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* ═══ Sales Forecast + Lead Funnel ═══ */}
-      <div className="grid gap-4 lg:grid-cols-12">
-        {/* Sales Forecast */}
-        <Card className="lg:col-span-8">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base flex items-center gap-2">
-              <TrendingUp className="h-4 w-4" /> Прогноз продаж (6 мес.)
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {forecast?.length > 0 ? (
-              <ResponsiveContainer width="100%" height={260}>
-                <BarChart data={forecast} margin={{ left: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                  <XAxis dataKey="month" tick={{ fontSize: 11 }} />
-                  <YAxis tickFormatter={(v: number) => fmt(v)} tick={{ fontSize: 11 }} />
-                  <Tooltip formatter={(v: number, name: string) => [`${v.toLocaleString()} ₼`, name === "actual" ? "Факт" : "Прогноз"]} />
-                  <Legend formatter={(v: string) => v === "actual" ? "Факт" : "Прогноз"} />
-                  <Bar dataKey="actual" fill="#22c55e" radius={[4, 4, 0, 0]} name="actual" />
-                  <Bar dataKey="projected" fill="#3b82f6" radius={[4, 4, 0, 0]} name="projected" opacity={0.6} />
-                </BarChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="h-[260px] flex items-center justify-center text-muted-foreground">Нет данных</div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Lead Funnel */}
-        <Card className="lg:col-span-4">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base flex items-center gap-2">
-              <ArrowDown className="h-4 w-4" /> Воронка лидов
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {(leads.funnel || []).length > 0 ? (
-              <div className="space-y-2">
-                {(leads.funnel || []).map((item: any, i: number) => {
-                  const funnelColors: Record<string, string> = {
-                    new: "#3b82f6", contacted: "#f59e0b", qualified: "#8b5cf6",
-                    converted: "#22c55e", rejected: "#94a3b8",
-                  }
-                  const funnelLabels: Record<string, string> = {
-                    new: "Новый", contacted: "Связались", qualified: "Квалифицир.",
-                    converted: "Конвертирован", rejected: "Не подходит",
-                  }
-                  const maxCount = Math.max(...(leads.funnel || []).map((f: any) => f.count || 1))
-                  const width = Math.max((item.count / maxCount) * 100, 12)
-                  return (
-                    <div key={item.status}>
-                      <div className="flex justify-between text-xs mb-0.5">
-                        <span>{funnelLabels[item.status] || item.status}</span>
-                        <span className="font-mono">{item.count} ({item.pct}%)</span>
-                      </div>
-                      <div className="w-full h-6 bg-muted/50 rounded overflow-hidden">
-                        <div
-                          className="h-full rounded flex items-center justify-center"
-                          style={{ width: `${width}%`, backgroundColor: funnelColors[item.status] || "#94a3b8" }}
-                        >
-                          {width > 20 && <span className="text-[10px] text-white font-medium">{item.count}</span>}
-                        </div>
-                      </div>
-                    </div>
-                  )
-                })}
-                <div className="flex items-center justify-between pt-3 mt-2 border-t">
-                  <span className="text-xs text-muted-foreground">Конверсия</span>
-                  <span className={`text-lg font-bold ${(leads.conversionRate || 0) > 20 ? "text-green-600" : "text-amber-600"}`}>
-                    {leads.conversionRate || 0}%
-                  </span>
-                </div>
-              </div>
-            ) : (
-              <div className="h-[260px] flex items-center justify-center text-muted-foreground">Нет данных по лидам</div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* ═══ Three Column Analytics ═══ */}
-      <div className="grid gap-4 lg:grid-cols-3">
-        {/* Pipeline */}
-        <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-base flex items-center gap-2">
               <Target className="h-4 w-4" /> Воронка продаж
@@ -471,253 +278,90 @@ export default function DashboardPage() {
             </div>
           </CardContent>
         </Card>
+      </div>
 
-        {/* Client Health */}
-        <Card>
+      {/* ═══ Forecast + Clients + Activity ═══ */}
+      <div className="grid gap-4 lg:grid-cols-12">
+        {/* Sales Forecast */}
+        <Card className="lg:col-span-5">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center gap-2">
+              <TrendingUp className="h-4 w-4" /> Прогноз продаж (6 мес.)
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {forecast?.length > 0 ? (
+              <ResponsiveContainer width="100%" height={220}>
+                <BarChart data={forecast} margin={{ left: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                  <XAxis dataKey="month" tick={{ fontSize: 11 }} />
+                  <YAxis tickFormatter={(v: number) => fmt(v)} tick={{ fontSize: 11 }} />
+                  <Tooltip formatter={(v: number, name: string) => [`${v.toLocaleString()} ₼`, name === "actual" ? "Факт" : "Прогноз"]} />
+                  <Legend formatter={(v: string) => v === "actual" ? "Факт" : "Прогноз"} />
+                  <Bar dataKey="actual" fill="#22c55e" radius={[4, 4, 0, 0]} name="actual" />
+                  <Bar dataKey="projected" fill="#3b82f6" radius={[4, 4, 0, 0]} name="projected" opacity={0.6} />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-[220px] flex items-center justify-center text-muted-foreground">Нет данных</div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Client Health — compact */}
+        <Card className="lg:col-span-4">
           <CardHeader className="pb-2">
             <CardTitle className="text-base flex items-center gap-2">
               <Shield className="h-4 w-4" /> Здоровье клиентов
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex gap-3 mb-4">
-              <div className="flex-1 text-center p-2 rounded-lg bg-white dark:bg-card border">
+            <div className="flex gap-3 mb-3">
+              <div className="flex-1 text-center p-2 rounded-lg bg-green-50 dark:bg-green-950/20 border border-green-200/50">
                 <div className="text-xl font-bold text-green-600">{clients.profitable}</div>
                 <div className="text-[10px] text-green-600">Прибыльных</div>
               </div>
-              <div className="flex-1 text-center p-2 rounded-lg bg-white dark:bg-card border">
+              <div className="flex-1 text-center p-2 rounded-lg bg-red-50 dark:bg-red-950/20 border border-red-200/50">
                 <div className="text-xl font-bold text-red-600">{clients.loss}</div>
                 <div className="text-[10px] text-red-600">Убыточных</div>
               </div>
-              <div className="flex-1 text-center p-2 rounded-lg bg-white dark:bg-card border">
+              <div className="flex-1 text-center p-2 rounded-lg bg-slate-50 dark:bg-slate-950/20 border border-slate-200/50">
                 <div className="text-xl font-bold text-slate-500">{clients.noRevenue}</div>
                 <div className="text-[10px] text-slate-500">Без дохода</div>
               </div>
             </div>
-
             {clients.topClients?.length > 0 && (
-              <>
-                <div className="flex items-center text-[10px] text-muted-foreground mb-1">
-                  <span className="flex-1">Топ-5 клиентов</span>
-                  <span className="ml-2 w-16 text-right">Доход</span>
-                  <span className="ml-2 w-12 text-right">Маржа</span>
+              <div className="space-y-1">
+                <div className="flex text-[10px] text-muted-foreground mb-1">
+                  <span className="flex-1">Топ-5</span>
+                  <span className="w-16 text-right">Доход</span>
+                  <span className="w-12 text-right">Маржа</span>
                 </div>
-                <div className="space-y-1">
-                  {clients.topClients.map((c: any, i: number) => (
-                    <div key={i} className="flex items-center justify-between text-xs py-1 border-b border-muted/50 last:border-0">
-                      <span className="truncate flex-1">{c.name}</span>
-                      <span className="font-mono text-green-600 ml-2 w-16 text-right">{fmt(c.revenue)} ₼</span>
-                      <span className={`font-mono ml-2 w-12 text-right ${c.marginPct >= 0 ? "text-green-600" : "text-red-600"}`}>
-                        {c.marginPct?.toFixed(0) || 0}%
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </>
-            )}
-
-            {clients.bottomClients?.length > 0 && (
-              <>
-                <p className="text-xs font-medium text-red-500 mt-3 mb-1.5">Убыточные</p>
-                <div className="space-y-1">
-                  {clients.bottomClients.map((c: any, i: number) => (
-                    <div key={i} className="flex items-center justify-between text-xs py-1">
-                      <span className="truncate flex-1">{c.name}</span>
-                      <span className="font-mono text-red-500 ml-2">{fmt(c.margin)} ₼</span>
-                    </div>
-                  ))}
-                </div>
-              </>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Lead Temperature */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Thermometer className="h-4 w-4" /> Температура лидов
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex gap-3 mb-4">
-              <div className="flex-1 text-center p-3 rounded-lg bg-white dark:bg-card border">
-                <Flame className="h-5 w-5 text-red-500 mx-auto mb-1" />
-                <div className="text-2xl font-bold text-red-500">{hot}</div>
-                <div className="text-[10px] text-red-500 font-medium">HOT</div>
-              </div>
-              <div className="flex-1 text-center p-3 rounded-lg bg-white dark:bg-card border">
-                <Thermometer className="h-5 w-5 text-amber-500 mx-auto mb-1" />
-                <div className="text-2xl font-bold text-amber-500">{warm}</div>
-                <div className="text-[10px] text-amber-500 font-medium">WARM</div>
-              </div>
-              <div className="flex-1 text-center p-3 rounded-lg bg-white dark:bg-card border">
-                <Snowflake className="h-5 w-5 text-blue-500 mx-auto mb-1" />
-                <div className="text-2xl font-bold text-blue-500">{cold}</div>
-                <div className="text-[10px] text-blue-500 font-medium">COLD</div>
-              </div>
-            </div>
-
-            {/* Temperature bar */}
-            {totalLeads > 0 && (
-              <div className="w-full h-3 rounded-full overflow-hidden flex mb-4">
-                {hot > 0 && <div style={{ width: `${(hot/totalLeads)*100}%`, backgroundColor: COLORS.hot }} />}
-                {warm > 0 && <div style={{ width: `${(warm/totalLeads)*100}%`, backgroundColor: COLORS.warm }} />}
-                {cold > 0 && <div style={{ width: `${(cold/totalLeads)*100}%`, backgroundColor: COLORS.cold }} />}
-              </div>
-            )}
-
-            {/* Operations mini-stats */}
-            <div className="grid grid-cols-2 gap-2 pt-3 border-t">
-              <div className="p-2 rounded bg-white dark:bg-card border text-center">
-                <div className="text-sm font-bold">{operations.csatScore > 0 ? operations.csatScore.toFixed(1) : "—"}</div>
-                <div className="text-[10px] text-muted-foreground flex items-center justify-center gap-0.5">
-                  <Star className="h-2.5 w-2.5 text-yellow-500" /> CSAT
-                </div>
-              </div>
-              <div className="p-2 rounded bg-white dark:bg-card border text-center">
-                <div className="text-sm font-bold">{tasks.completionRate}%</div>
-                <div className="text-[10px] text-muted-foreground">Задачи выполн.</div>
-              </div>
-              <div className="p-2 rounded bg-white dark:bg-card border text-center">
-                <div className="text-sm font-bold">{activity.count30d}</div>
-                <div className="text-[10px] text-muted-foreground">Активность 30д</div>
-              </div>
-              <div className="p-2 rounded bg-white dark:bg-card border text-center">
-                <div className="text-sm font-bold">{operations.criticalTickets}</div>
-                <div className="text-[10px] text-muted-foreground">Крит. тикеты</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* ═══ Bottom Row ═══ */}
-      <div className="grid gap-4 lg:grid-cols-12">
-        {/* Risks */}
-        <Card className="lg:col-span-4">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base flex items-center gap-2">
-              <AlertTriangle className="h-4 w-4" /> Риски и предупреждения
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {risks.map((r: any, i: number) => (
-                <div
-                  key={i}
-                  className={`flex items-start gap-3 p-2.5 rounded-lg border-l-4 bg-white dark:bg-card border ${
-                    r.severity === "critical" ? "border-l-red-500" :
-                    r.severity === "warning" ? "border-l-amber-500" :
-                    "border-l-green-500"
-                  }`}
-                >
-                  <div className="flex-1">
-                    <div className="text-sm font-medium">{r.title}</div>
-                    <div className="text-xs text-muted-foreground">{r.description}</div>
-                  </div>
-                  <Badge variant={r.severity === "critical" ? "destructive" : r.severity === "warning" ? "secondary" : "default"} className="text-xs">
-                    {r.metric}
-                  </Badge>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* At Risk Deals */}
-        {atRiskDeals && atRiskDeals.length > 0 && (
-          <Card className="lg:col-span-4">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base flex items-center gap-2">
-                <Shield className="h-4 w-4 text-red-500" /> Сделки под угрозой
-                <Badge variant="destructive" className="ml-auto text-xs">{atRiskDeals.length}</Badge>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                {atRiskDeals.map((d: any) => (
-                  <div
-                    key={d.id}
-                    onClick={() => window.location.href = `/deals/${d.id}`}
-                    className="flex items-center gap-3 p-2.5 rounded-lg border border-red-100 bg-red-50/50 hover:bg-red-100/50 cursor-pointer transition-colors"
-                  >
-                    <div className="h-10 w-10 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
-                      <span className="text-sm font-bold text-red-600">{d.predictive}%</span>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">{d.name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {d.company || "—"} · {d.stage} · {d.daysInFunnel}d in funnel
-                      </p>
-                    </div>
-                    <div className="text-right flex-shrink-0">
-                      <p className="text-sm font-bold">{d.value?.toLocaleString()} {d.currency}</p>
-                      <div className="flex gap-1 justify-end mt-0.5">
-                        <span className="text-[9px] bg-blue-100 text-blue-700 rounded px-1">C:{d.confidence}%</span>
-                        <span className="text-[9px] bg-green-100 text-green-700 rounded px-1">P:{d.probability}%</span>
-                      </div>
-                    </div>
+                {clients.topClients.map((c: any, i: number) => (
+                  <div key={i} className="flex items-center text-xs py-1 border-b border-muted/50 last:border-0">
+                    <span className="truncate flex-1">{c.name}</span>
+                    <span className="font-mono text-green-600 w-16 text-right">{fmt(c.revenue)} ₼</span>
+                    <span className={`font-mono w-12 text-right ${c.marginPct >= 0 ? "text-green-600" : "text-red-600"}`}>
+                      {c.marginPct?.toFixed(0) || 0}%
+                    </span>
                   </div>
                 ))}
               </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Tickets by Status */}
-        <Card className="lg:col-span-4">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Ticket className="h-4 w-4" /> Тикеты по статусу
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {(operations.ticketsByStatus || []).map((t: any, i: number) => {
-                const total = (operations.ticketsByStatus || []).reduce((s: number, x: any) => s + x.count, 0)
-                const pct = total > 0 ? (t.count / total) * 100 : 0
-                const statusColor = t.status === "new" ? "#3b82f6" : t.status === "in_progress" ? "#f59e0b" :
-                  t.status === "waiting" ? "#8b5cf6" : t.status === "resolved" ? "#22c55e" : "#94a3b8"
-                return (
-                  <div key={i}>
-                    <div className="flex justify-between text-xs mb-0.5">
-                      <span>{statusLabels[t.status] || t.status}</span>
-                      <span className="font-mono">{t.count}</span>
-                    </div>
-                    <div className="w-full h-2 bg-muted/50 rounded-full overflow-hidden">
-                      <div className="h-full rounded-full" style={{ width: `${pct}%`, backgroundColor: statusColor }} />
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-            <div className="grid grid-cols-2 gap-2 mt-4 pt-3 border-t text-center">
-              <div>
-                <div className="text-lg font-bold">{operations.openTickets}</div>
-                <div className="text-[10px] text-muted-foreground">Открытых</div>
-              </div>
-              <div>
-                <div className="text-lg font-bold text-yellow-500">
-                  {operations.csatScore > 0 ? `${operations.csatScore.toFixed(1)} ★` : "—"}
-                </div>
-                <div className="text-[10px] text-muted-foreground">CSAT ({operations.csatCount})</div>
-              </div>
-            </div>
+            )}
           </CardContent>
         </Card>
 
         {/* Activity Feed */}
-        <Card className="lg:col-span-4">
+        <Card className="lg:col-span-3">
           <CardHeader className="pb-2">
             <CardTitle className="text-base flex items-center gap-2">
-              <Activity className="h-4 w-4" /> Последняя активность
+              <Activity className="h-4 w-4" /> Активность
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-2.5">
-              {(activity.recent || []).map((a: any) => (
-                <div key={a.id} className="flex items-start gap-2.5">
+              {(activity.recent || []).slice(0, 7).map((a: any) => (
+                <div key={a.id} className="flex items-start gap-2">
                   <span className="text-sm mt-0.5">{actIcons[a.type] || "📋"}</span>
                   <div className="flex-1 min-w-0">
                     <div className="text-xs font-medium truncate">{a.subject || a.description || a.type}</div>
@@ -735,55 +379,54 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      {/* ═══ Bottom Row — Leaderboard + This Week Summary ═══ */}
+      {/* ═══ Bottom: At Risk Deals + Quick Actions ═══ */}
       <div className="grid gap-4 lg:grid-cols-12">
-        {/* Sales Leaderboard */}
-        <Card className="lg:col-span-5">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Star className="h-4 w-4" /> Лидерборд продаж
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {(pipeline.topDeals || []).length === 0 ? (
-              <div className="text-xs text-muted-foreground text-center py-4">Нет данных</div>
-            ) : (
-              <div className="space-y-2">
-                {(pipeline.topDeals || []).slice(0, 5).map((deal: any, i: number) => (
-                  <div key={deal.id || i} className="flex items-center gap-2.5">
-                    <span className={`inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold ${
-                      i === 0 ? "bg-yellow-100 text-yellow-700" :
-                      i === 1 ? "bg-gray-100 text-gray-600" :
-                      i === 2 ? "bg-amber-100 text-amber-700" : "bg-muted text-muted-foreground"
-                    }`}>
-                      {i + 1}
-                    </span>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">{deal.title || deal.name}</p>
-                      <p className="text-[10px] text-muted-foreground">{deal.company?.name || deal.stage || "—"}</p>
+        {/* At Risk Deals */}
+        {atRiskDeals && atRiskDeals.length > 0 && (
+          <Card className="lg:col-span-8">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Shield className="h-4 w-4 text-red-500" /> Сделки под угрозой
+                <Badge variant="destructive" className="ml-auto text-xs">{atRiskDeals.length}</Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-2 md:grid-cols-2">
+                {atRiskDeals.map((d: any) => (
+                  <div
+                    key={d.id}
+                    onClick={() => window.location.href = `/deals/${d.id}`}
+                    className="flex items-center gap-3 p-2.5 rounded-lg border border-red-100 dark:border-red-900/30 bg-red-50/50 dark:bg-red-950/20 hover:bg-red-100/50 cursor-pointer transition-colors"
+                  >
+                    <div className="h-9 w-9 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center flex-shrink-0">
+                      <span className="text-xs font-bold text-red-600">{d.predictive}%</span>
                     </div>
-                    <span className="text-sm font-bold tabular-nums">{fmt(deal.value || deal.amount || 0)} ₼</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">{d.name}</p>
+                      <p className="text-[10px] text-muted-foreground">{d.company || "—"} · {d.stage}</p>
+                    </div>
+                    <span className="text-sm font-bold shrink-0">{d.value?.toLocaleString()} {d.currency}</span>
                   </div>
                 ))}
               </div>
-            )}
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        )}
 
-        {/* This Week Summary */}
-        <Card className="lg:col-span-3">
+        {/* Quick Summary + Links */}
+        <Card className={atRiskDeals?.length > 0 ? "lg:col-span-4" : "lg:col-span-12"}>
           <CardHeader className="pb-2">
             <CardTitle className="text-base flex items-center gap-2">
-              <Clock className="h-4 w-4" /> За эту неделю
+              <Clock className="h-4 w-4" /> Сводка
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
+            <div className={`grid gap-3 ${atRiskDeals?.length > 0 ? "" : "md:grid-cols-2 lg:grid-cols-4"}`}>
               {[
-                { label: "Новые лиды", value: leads.totalLeads || 0, icon: <Target className="h-3.5 w-3.5 text-blue-500" /> },
-                { label: "Задачи выполнены", value: tasks?.completed || 0, icon: <CheckCircle2 className="h-3.5 w-3.5 text-green-500" /> },
-                { label: "Тикеты открыты", value: operations.openTickets || 0, icon: <Ticket className="h-3.5 w-3.5 text-violet-500" /> },
-                { label: "Активности", value: activity?.total || (activity?.recent || []).length, icon: <Activity className="h-3.5 w-3.5 text-amber-500" /> },
+                { label: "Конверсия лидов", value: `${leads.conversionRate || 0}%`, icon: <Target className="h-3.5 w-3.5 text-blue-500" /> },
+                { label: "CSAT", value: operations.csatScore > 0 ? `${operations.csatScore.toFixed(1)} ★` : "—", icon: <Star className="h-3.5 w-3.5 text-yellow-500" /> },
+                { label: "Задачи выполнены", value: `${tasks.completionRate}%`, icon: <CheckCircle2 className="h-3.5 w-3.5 text-green-500" /> },
+                { label: "Активность 30д", value: activity.count30d, icon: <Activity className="h-3.5 w-3.5 text-amber-500" /> },
               ].map(s => (
                 <div key={s.label} className="flex items-center gap-2.5">
                   {s.icon}
@@ -792,27 +435,16 @@ export default function DashboardPage() {
                 </div>
               ))}
             </div>
-          </CardContent>
-        </Card>
-
-        {/* Quick Actions */}
-        <Card className="lg:col-span-4">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base flex items-center gap-2">
-              <ArrowRight className="h-4 w-4" /> Быстрые ссылки
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-4 gap-2 mt-4 pt-3 border-t">
               {[
-                { label: "Сделки", href: "/deals", icon: <Handshake className="h-4 w-4" />, color: "bg-blue-50 text-blue-600" },
-                { label: "Тикеты", href: "/tickets", icon: <Ticket className="h-4 w-4" />, color: "bg-violet-50 text-violet-600" },
-                { label: "Мероприятия", href: "/events", icon: <Users className="h-4 w-4" />, color: "bg-green-50 text-green-600" },
-                { label: "Отчёты", href: "/reports", icon: <BarChart3 className="h-4 w-4" />, color: "bg-amber-50 text-amber-600" },
+                { label: "Сделки", href: "/deals", icon: <Handshake className="h-4 w-4" />, color: "bg-blue-50 text-blue-600 dark:bg-blue-950/30" },
+                { label: "Тикеты", href: "/tickets", icon: <Ticket className="h-4 w-4" />, color: "bg-violet-50 text-violet-600 dark:bg-violet-950/30" },
+                { label: "Отчёты", href: "/reports", icon: <BarChart3 className="h-4 w-4" />, color: "bg-amber-50 text-amber-600 dark:bg-amber-950/30" },
+                { label: "Компании", href: "/companies", icon: <Building2 className="h-4 w-4" />, color: "bg-green-50 text-green-600 dark:bg-green-950/30" },
               ].map(q => (
-                <a key={q.label} href={q.href} className={`flex items-center gap-2 p-2.5 rounded-lg ${q.color} hover:opacity-80 transition-opacity`}>
+                <a key={q.label} href={q.href} className={`flex flex-col items-center gap-1 p-2 rounded-lg ${q.color} hover:opacity-80 transition-opacity`}>
                   {q.icon}
-                  <span className="text-xs font-medium">{q.label}</span>
+                  <span className="text-[10px] font-medium">{q.label}</span>
                 </a>
               ))}
             </div>
