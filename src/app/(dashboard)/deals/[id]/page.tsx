@@ -9,8 +9,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
   ArrowLeft, Pencil, Trash2, Building2, User, Calendar, DollarSign,
-  Clock, TrendingUp, Target, Users, Swords, MessageSquare,
-  CheckCircle2, AlertCircle, Tag, Plus, X
+  Clock, TrendingUp, Target, Users, Swords, MessageSquare, MessageCircle,
+  CheckCircle2, AlertCircle, Tag, Plus, X, Phone, Mail
 } from "lucide-react"
 import { DealForm } from "@/components/deal-form"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
@@ -593,17 +593,28 @@ export default function DealDetailPage() {
                   <div className="flex-1 min-w-0">
                     <p className="text-base font-semibold">{deal.contact.fullName}</p>
                     {deal.contact.position && <p className="text-sm text-muted-foreground">{deal.contact.position}</p>}
-                    <div className="flex items-center gap-4 mt-1.5">
+                    {deal.contact.phone && <p className="text-xs text-muted-foreground mt-0.5">{deal.contact.phone}</p>}
+                    {deal.contact.email && <p className="text-xs text-muted-foreground">{deal.contact.email}</p>}
+                    {/* Communication action buttons */}
+                    <div className="flex items-center gap-2 mt-2">
                       {deal.contact.phone && (
-                        <a href={`tel:${deal.contact.phone}`} className="text-xs text-primary hover:underline flex items-center gap-1">
-                          📞 {deal.contact.phone}
+                        <a href={`tel:${deal.contact.phone}`} title="Call" className="h-8 w-8 rounded-full bg-green-500 hover:bg-green-600 flex items-center justify-center transition-colors shadow-sm">
+                          <Phone className="h-3.5 w-3.5 text-white" />
                         </a>
                       )}
                       {deal.contact.email && (
-                        <a href={`mailto:${deal.contact.email}`} className="text-xs text-primary hover:underline flex items-center gap-1">
-                          📧 {deal.contact.email}
+                        <a href={`mailto:${deal.contact.email}`} title="Email" className="h-8 w-8 rounded-full bg-orange-500 hover:bg-orange-600 flex items-center justify-center transition-colors shadow-sm">
+                          <Mail className="h-3.5 w-3.5 text-white" />
                         </a>
                       )}
+                      {deal.contact.phone && (
+                        <a href={`https://wa.me/${deal.contact.phone.replace(/[^0-9]/g, "")}`} target="_blank" title="WhatsApp" className="h-8 w-8 rounded-full bg-emerald-500 hover:bg-emerald-600 flex items-center justify-center transition-colors shadow-sm">
+                          <MessageSquare className="h-3.5 w-3.5 text-white" />
+                        </a>
+                      )}
+                      <button title="Chat" className="h-8 w-8 rounded-full bg-blue-500 hover:bg-blue-600 flex items-center justify-center transition-colors shadow-sm">
+                        <MessageCircle className="h-3.5 w-3.5 text-white" />
+                      </button>
                     </div>
                   </div>
                   <Badge variant="outline" className="flex-shrink-0 text-xs">Contact Person</Badge>
