@@ -95,7 +95,7 @@ function DealPipelineStages({ currentStage }: { currentStage: string }) {
                   ? "text-white shadow-sm"
                   : isDone
                   ? "text-white/90"
-                  : "text-muted-foreground bg-muted/60 dark:bg-muted/30"
+                  : "text-muted-foreground bg-muted/40 dark:bg-muted/20"
                 }
               `}
               style={{
@@ -133,30 +133,30 @@ function DealKpiCards({ deal }: { deal: Deal }) {
     {
       label: "Days in funnel",
       value: daysInFunnel,
-      bg: "bg-blue-500",
-      text: "text-white",
-      icon: <Clock className="h-4 w-4 opacity-80" />,
+      glow: "#3b82f6",
+      iconBg: "bg-blue-500/10 text-blue-500",
+      icon: <Clock className="h-4 w-4" />,
     },
     {
       label: "Days at stage",
       value: daysAtStage,
-      bg: "bg-blue-600",
-      text: "text-white",
-      icon: <Clock className="h-4 w-4 opacity-80" />,
+      glow: "#6366f1",
+      iconBg: "bg-indigo-500/10 text-indigo-500",
+      icon: <Clock className="h-4 w-4" />,
     },
     {
       label: "Deal value",
       value: `${deal.valueAmount.toLocaleString()} ${deal.currency}`,
-      bg: "bg-indigo-500",
-      text: "text-white",
-      icon: <DollarSign className="h-4 w-4 opacity-80" />,
+      glow: "#0ea5a0",
+      iconBg: "bg-teal-500/10 text-teal-500",
+      icon: <DollarSign className="h-4 w-4" />,
     },
     {
       label: "Confidence",
       value: `${deal.confidenceLevel ?? 50}%`,
-      bg: deal.confidenceLevel >= 70 ? "bg-green-500" : deal.confidenceLevel >= 40 ? "bg-amber-500" : "bg-orange-500",
-      text: "text-white",
-      icon: <TrendingUp className="h-4 w-4 opacity-80" />,
+      glow: deal.confidenceLevel >= 70 ? "#22c55e" : deal.confidenceLevel >= 40 ? "#f59e0b" : "#f97316",
+      iconBg: deal.confidenceLevel >= 70 ? "bg-emerald-500/10 text-emerald-500" : deal.confidenceLevel >= 40 ? "bg-amber-500/10 text-amber-500" : "bg-orange-500/10 text-orange-500",
+      icon: <TrendingUp className="h-4 w-4" />,
     },
   ]
 
@@ -165,13 +165,14 @@ function DealKpiCards({ deal }: { deal: Deal }) {
       {cards.map((card) => (
         <div
           key={card.label}
-          className={`${card.bg} ${card.text} rounded-xl p-4 flex flex-col gap-1 shadow-sm`}
+          className="relative overflow-hidden rounded-xl bg-white/60 dark:bg-white/[0.04] backdrop-blur-[12px] border border-white/30 dark:border-white/10 shadow-lg shadow-black/[0.03] p-4 flex flex-col gap-1"
         >
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-medium opacity-80">{card.label}</span>
-            {card.icon}
+          <div className="absolute -bottom-3 left-6 right-6 h-6 rounded-full blur-xl opacity-30" style={{ backgroundColor: card.glow }} />
+          <div className="relative flex items-center justify-between">
+            <span className="text-xs font-medium text-muted-foreground">{card.label}</span>
+            <div className={`rounded-full p-1.5 ${card.iconBg}`}>{card.icon}</div>
           </div>
-          <span className="text-2xl font-bold leading-tight">{card.value}</span>
+          <span className="relative text-2xl font-bold leading-tight">{card.value}</span>
         </div>
       ))}
     </div>
@@ -495,7 +496,7 @@ export default function DealDetailPage() {
     <div className="space-y-6 pb-12">
       {/* ── Header ── */}
       <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" onClick={() => router.push("/deals")} className="h-8 w-8">
+        <Button variant="ghost" size="icon" onClick={() => router.push("/deals")} className="h-8 w-8 text-[#1e3a5f] hover:text-[#0ea5a0] dark:text-white">
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div className="flex-1 min-w-0">

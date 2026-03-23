@@ -3,6 +3,8 @@
 interface LogoProps {
   collapsed?: boolean
   size?: "sm" | "md" | "lg"
+  /** When true, uses dark: overrides for navy sidebar in dark mode */
+  sidebar?: boolean
   className?: string
 }
 
@@ -12,12 +14,23 @@ const sizes = {
   lg: { icon: 48, fontSize: 30, crmSize: 26, gap: 10 },
 }
 
-export function Logo({ collapsed = false, size = "md", className = "" }: LogoProps) {
+export function Logo({ collapsed = false, size = "md", sidebar = false, className = "" }: LogoProps) {
   const s = sizes[size]
+
+  // Sidebar logo: navy text in light, white text in dark (for navy bg)
+  // Normal logo: always navy text
+  const textClass = sidebar
+    ? "text-[#1e3a5f] dark:text-white"
+    : "text-[#1e3a5f]"
+  const crmClass = sidebar
+    ? "text-slate-500 dark:text-slate-400 border-slate-300 dark:border-white/20"
+    : "text-slate-500 border-slate-300"
+  // SVG strokes for chevrons
+  const chevronStroke1 = sidebar ? "stroke-[#1e3a5f] dark:stroke-white/60" : "stroke-[#1e3a5f]"
+  const chevronStroke2 = sidebar ? "stroke-[#1e3a5f] dark:stroke-white/80" : "stroke-[#1e3a5f]"
 
   return (
     <div className={`flex items-center gap-2 ${className}`}>
-      {/* Icon: funnel-to-growth-arrow */}
       <svg
         width={s.icon}
         height={s.icon}
@@ -26,17 +39,16 @@ export function Logo({ collapsed = false, size = "md", className = "" }: LogoPro
         xmlns="http://www.w3.org/2000/svg"
         className="shrink-0"
       >
-        {/* Three ascending chevron lines forming funnel shape */}
         <path
           d="M8 52L20 36L32 52"
-          stroke="#1e3a5f"
+          className={chevronStroke1}
           strokeWidth="4"
           strokeLinecap="round"
           strokeLinejoin="round"
         />
         <path
           d="M14 44L24 26L34 44"
-          stroke="#1e3a5f"
+          className={chevronStroke2}
           strokeWidth="4"
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -48,7 +60,6 @@ export function Logo({ collapsed = false, size = "md", className = "" }: LogoPro
           strokeLinecap="round"
           strokeLinejoin="round"
         />
-        {/* Growth arrow shooting up-right */}
         <path
           d="M30 14L50 6"
           stroke="#0ea5a0"
@@ -64,28 +75,18 @@ export function Logo({ collapsed = false, size = "md", className = "" }: LogoPro
         />
       </svg>
 
-      {/* Text */}
       {!collapsed && (
         <div className="flex items-baseline" style={{ gap: s.gap }}>
           <span
-            className="font-bold tracking-tight"
-            style={{
-              fontSize: s.fontSize,
-              color: "#1e3a5f",
-              lineHeight: 1,
-            }}
+            className={`font-bold tracking-tight ${textClass}`}
+            style={{ fontSize: s.fontSize, lineHeight: 1 }}
           >
             Lead
             <span className="font-extrabold">Drive</span>
           </span>
           <span
-            className="border-l pl-2 font-light tracking-widest"
-            style={{
-              fontSize: s.crmSize,
-              color: "#64748b",
-              borderColor: "#cbd5e1",
-              lineHeight: 1,
-            }}
+            className={`border-l pl-2 font-light tracking-widest ${crmClass}`}
+            style={{ fontSize: s.crmSize, lineHeight: 1 }}
           >
             CRM
           </span>

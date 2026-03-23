@@ -56,6 +56,43 @@ const navItems: NavItem[] = [
   { module: "core", href: "/settings", icon: Settings, tKey: "settings", group: "Settings" },
 ]
 
+/* Colored icon circle backgrounds per group — Salesforce-like object icons */
+const GROUP_ICON_BG: Record<string, string> = {
+  CRM: "bg-teal-500 text-white",
+  Marketing: "bg-orange-500 text-white",
+  Communication: "bg-blue-500 text-white",
+  Support: "bg-emerald-500 text-white",
+  Analytics: "bg-purple-500 text-white",
+  Settings: "bg-slate-500 text-white",
+}
+
+const GROUP_LABEL_COLORS: Record<string, string> = {
+  CRM: "text-teal-600 dark:text-teal-400",
+  Marketing: "text-orange-600 dark:text-orange-400",
+  Communication: "text-blue-600 dark:text-blue-400",
+  Support: "text-emerald-600 dark:text-emerald-400",
+  Analytics: "text-purple-600 dark:text-purple-400",
+  Settings: "text-slate-500 dark:text-slate-400",
+}
+
+const GROUP_ACTIVE_BG: Record<string, string> = {
+  CRM: "bg-teal-50 dark:bg-teal-500/10 text-teal-700 dark:text-teal-300",
+  Marketing: "bg-orange-50 dark:bg-orange-500/10 text-orange-700 dark:text-orange-300",
+  Communication: "bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300",
+  Support: "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300",
+  Analytics: "bg-purple-50 dark:bg-purple-500/10 text-purple-700 dark:text-purple-300",
+  Settings: "bg-slate-100 dark:bg-slate-500/10 text-slate-700 dark:text-slate-300",
+}
+
+const GROUP_ACTIVE_BAR: Record<string, string> = {
+  CRM: "before:bg-teal-500",
+  Marketing: "before:bg-orange-500",
+  Communication: "before:bg-blue-500",
+  Support: "before:bg-emerald-500",
+  Analytics: "before:bg-purple-500",
+  Settings: "before:bg-slate-500",
+}
+
 interface SidebarProps {
   org: { plan: string; addons?: string[]; modules?: Record<string, boolean> }
 }
@@ -71,48 +108,68 @@ export function Sidebar({ org }: SidebarProps) {
   return (
     <aside
       className={cn(
-        "flex flex-col border-r bg-card transition-all duration-200",
+        "flex flex-col border-r border-border/60 bg-card dark:bg-[#1a3050] dark:border-white/10 transition-all duration-200",
         collapsed ? "w-16" : "w-64"
       )}
     >
-      <div className="flex h-14 items-center justify-between border-b px-4">
+      {/* Logo header */}
+      <div className="flex h-14 items-center justify-between border-b border-border/60 dark:border-white/10 px-4">
         <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-          <Logo collapsed={collapsed} size="sm" />
+          <Logo collapsed={collapsed} size="sm" sidebar />
         </Link>
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground"
+          className="rounded-md p-1.5 text-muted-foreground dark:text-white/50 hover:bg-muted dark:hover:bg-white/10 hover:text-foreground dark:hover:text-white/80 transition-colors"
         >
           <ChevronLeft className={cn("h-4 w-4 transition-transform", collapsed && "rotate-180")} />
         </button>
       </div>
 
+      {/* Navigation */}
       <nav className="flex-1 overflow-y-auto p-2">
-        {groups.map((group) => (
-          <div key={group} className="mb-4">
-            {!collapsed && (
-              <div className="mb-1 px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        {groups.map((group, groupIndex) => (
+          <div
+            key={group}
+            className={cn(
+              groupIndex > 0 && "border-t border-border/40 dark:border-white/[0.06] pt-3 mt-3"
+            )}
+          >
+            {!collapsed ? (
+              <div className={cn(
+                "mb-1.5 px-3 text-[10px] font-bold uppercase tracking-widest",
+                GROUP_LABEL_COLORS[group] || "text-muted-foreground"
+              )}>
                 {t(`groups.${group}`)}
               </div>
+            ) : (
+              groupIndex > 0 && <hr className="border-border/40 dark:border-white/[0.06] mx-3 my-1" />
             )}
             {filteredItems
               .filter((item) => item.group === group)
               .map((item) => {
                 const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href))
                 const Icon = item.icon
+                const iconBg = GROUP_ICON_BG[group] || "bg-slate-500 text-white"
+                const activeBg = GROUP_ACTIVE_BG[group] || "bg-muted text-foreground"
+                const activeBar = GROUP_ACTIVE_BAR[group] || "before:bg-teal-500"
                 return (
                   <Link
                     key={item.href}
                     href={item.href}
                     className={cn(
-                      "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
+                      "relative flex items-center gap-3 rounded-lg px-3 py-1.5 text-sm transition-all duration-150",
                       isActive
-                        ? "bg-primary/10 text-primary font-medium"
-                        : "text-muted-foreground hover:bg-accent hover:text-foreground"
+                        ? cn("font-medium before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:h-5 before:w-[3px] before:rounded-r", activeBg, activeBar, "dark:bg-white/10 dark:text-white")
+                        : "text-muted-foreground dark:text-white/60 hover:bg-muted/60 dark:hover:bg-white/[0.06] hover:text-foreground dark:hover:text-white/90"
                     )}
                     title={collapsed ? t(item.tKey) : undefined}
                   >
-                    <Icon className="h-4 w-4 shrink-0" />
+                    <div className={cn(
+                      "flex h-6 w-6 items-center justify-center rounded-md shrink-0 transition-all",
+                      isActive ? iconBg : "bg-muted/80 dark:bg-white/[0.08] text-muted-foreground"
+                    )}>
+                      <Icon className="h-3.5 w-3.5" />
+                    </div>
                     {!collapsed && <span>{t(item.tKey)}</span>}
                   </Link>
                 )

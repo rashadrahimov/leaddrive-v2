@@ -79,10 +79,10 @@ export function DataTable<T extends Record<string, unknown>>({
         <span className="text-sm text-muted-foreground">{t("results", { count: filtered.length })}</span>
       </div>
 
-      <div className="rounded-lg border bg-card overflow-hidden">
+      <div className="rounded-xl border border-border/60 bg-card/80 backdrop-blur-sm overflow-hidden shadow-sm">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b bg-muted/50">
+            <tr className="border-b bg-[#1e3a5f]/[0.04] dark:bg-white/[0.04]">
               {columns.map((col) => (
                 <th
                   key={col.key}
@@ -108,7 +108,8 @@ export function DataTable<T extends Record<string, unknown>>({
               <tr
                 key={String(item.id || i)}
                 className={cn(
-                  "border-b transition-colors hover:bg-muted/50",
+                  "border-b transition-colors hover:bg-[#0ea5a0]/[0.04] dark:hover:bg-[#0ea5a0]/[0.08]",
+                  i % 2 === 1 && "bg-muted/20",
                   onRowClick && "cursor-pointer"
                 )}
                 onClick={() => onRowClick?.(item)}

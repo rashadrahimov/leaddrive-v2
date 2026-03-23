@@ -1,6 +1,5 @@
 "use client"
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
 import { useCountUp } from "@/hooks/use-count-up"
 
@@ -11,17 +10,31 @@ interface StatCardProps {
   icon?: React.ReactNode
   trend?: "up" | "down" | "neutral"
   className?: string
-  accentColor?: "blue" | "green" | "red" | "amber" | "violet" | "indigo" | "orange"
+  accentColor?: "blue" | "green" | "red" | "amber" | "violet" | "indigo" | "orange" | "teal" | "navy"
 }
 
-const ACCENT_COLORS = {
-  blue: "border-l-blue-500",
-  green: "border-l-green-500",
-  red: "border-l-red-500",
-  amber: "border-l-amber-500",
-  violet: "border-l-violet-500",
-  indigo: "border-l-indigo-500",
-  orange: "border-l-orange-500",
+const ACCENT_HEX: Record<string, string> = {
+  blue: "#3b82f6",
+  green: "#22c55e",
+  red: "#ef4444",
+  amber: "#f59e0b",
+  violet: "#8b5cf6",
+  indigo: "#6366f1",
+  orange: "#f97316",
+  teal: "#0ea5a0",
+  navy: "#1e3a5f",
+}
+
+const ACCENT_ICON_BG: Record<string, string> = {
+  blue: "bg-blue-500/10 text-blue-500",
+  green: "bg-emerald-500/10 text-emerald-500",
+  red: "bg-red-500/10 text-red-500",
+  amber: "bg-amber-500/10 text-amber-500",
+  violet: "bg-violet-500/10 text-violet-500",
+  indigo: "bg-indigo-500/10 text-indigo-500",
+  orange: "bg-orange-500/10 text-orange-500",
+  teal: "bg-teal-500/10 text-teal-500",
+  navy: "bg-[#1e3a5f]/10 text-[#1e3a5f]",
 }
 
 const TREND_ICONS = {
@@ -45,17 +58,35 @@ function AnimatedValue({ value }: { value: string | number }) {
 }
 
 export function StatCard({ title, value, description, icon, trend, className, accentColor }: StatCardProps) {
+  const glowColor = accentColor ? ACCENT_HEX[accentColor] : "#0ea5a0"
+  const iconBg = accentColor ? ACCENT_ICON_BG[accentColor] : "bg-teal-500/10 text-teal-500"
+
   return (
-    <Card className={cn(
-      "border-l-4 shadow-sm hover:shadow-md transition-shadow duration-200",
-      accentColor ? ACCENT_COLORS[accentColor] : "border-l-primary/60",
+    <div className={cn(
+      "relative overflow-hidden rounded-xl",
+      "bg-white/60 dark:bg-white/[0.08]",
+      "backdrop-blur-[12px]",
+      "border border-white/30 dark:border-white/[0.12]",
+      "shadow-lg shadow-black/[0.03]",
+      "hover:shadow-xl hover:shadow-black/[0.06]",
+      "transition-all duration-300",
       className,
     )}>
-      <CardHeader className="flex flex-row items-center justify-between pb-1 pt-4 px-5">
-        <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{title}</CardTitle>
-        {icon && <div className="text-muted-foreground/60">{icon}</div>}
-      </CardHeader>
-      <CardContent className="px-5 pb-4">
+      {/* Glow effect underneath */}
+      <div
+        className="absolute -bottom-3 left-6 right-6 h-6 rounded-full blur-xl opacity-30"
+        style={{ backgroundColor: glowColor }}
+      />
+
+      <div className="relative flex flex-row items-center justify-between pb-1 pt-4 px-5">
+        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{title}</p>
+        {icon && (
+          <div className={cn("rounded-full p-2", iconBg)}>
+            {icon}
+          </div>
+        )}
+      </div>
+      <div className="relative px-5 pb-4">
         <div className="text-2xl font-bold tracking-tight">
           <AnimatedValue value={value} />
         </div>
@@ -68,7 +99,7 @@ export function StatCard({ title, value, description, icon, trend, className, ac
             {description}
           </p>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   )
 }

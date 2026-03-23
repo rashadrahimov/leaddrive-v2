@@ -55,18 +55,20 @@ function KpiCard({ title, value, sub, icon, color, alert }: {
   title: string; value: string | number; sub?: string; icon: React.ReactNode; color: string; alert?: boolean
 }) {
   return (
-    <Card className={`relative overflow-hidden border-l-4 shadow-sm hover:shadow-md transition-all duration-200 ${alert ? "ring-2 ring-red-400/30" : ""}`} style={{ borderLeftColor: color }}>
-      <CardContent className="p-4">
+    <div className={`relative overflow-hidden rounded-xl bg-white/60 dark:bg-white/[0.08] backdrop-blur-[12px] border border-white/30 dark:border-white/[0.12] shadow-lg shadow-black/[0.03] hover:shadow-xl hover:shadow-black/[0.06] transition-all duration-300 ${alert ? "ring-2 ring-red-400/30" : ""}`}>
+      {/* Glow */}
+      <div className="absolute -bottom-3 left-6 right-6 h-6 rounded-full blur-xl opacity-30" style={{ backgroundColor: color }} />
+      <div className="relative p-4">
         <div className="flex justify-between items-start">
           <div>
             <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{title}</p>
             <p className="text-2xl font-bold mt-1 tabular-nums"><AnimatedNumber value={value} /></p>
             {sub && <p className="text-xs text-muted-foreground mt-0.5">{sub}</p>}
           </div>
-          <div className="p-2.5 rounded-xl bg-muted/40" style={{ color }}>{icon}</div>
+          <div className="p-2.5 rounded-full" style={{ color, backgroundColor: `${color}15` }}>{icon}</div>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   )
 }
 
