@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState, useCallback } from "react"
+import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
 import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
@@ -345,6 +346,7 @@ function TaskCalendar({ tasks, orgId }: { tasks: Task[]; orgId?: string }) {
 export default function TasksPage() {
   const t = useTranslations("tasks")
   const tc = useTranslations("common")
+  const router = useRouter()
   const { data: session } = useSession()
   const [tasks, setTasks] = useState<Task[]>([])
   const [view, setView] = useState<ViewMode>("list")
@@ -643,6 +645,7 @@ export default function TasksPage() {
           data={filtered}
           searchPlaceholder={t("searchPlaceholder")}
           searchKey="title"
+          onRowClick={(item: any) => router.push(`/tasks/${item.id}`)}
         />
       )}
 
@@ -656,10 +659,10 @@ export default function TasksPage() {
               </div>
               <div className="space-y-2 min-h-[200px] rounded-lg border-2 border-dashed border-transparent p-2 hover:border-muted-foreground/20">
                 {filtered.filter(t => status === "pending" ? (t.status === "pending" || t.status === "todo") : t.status === status).map(task => (
-                  <div key={task.id} className="rounded-lg border bg-card p-3 shadow-sm">
+                  <div key={task.id} className="rounded-lg border bg-card p-3 shadow-sm cursor-pointer hover:shadow-md transition-shadow" onClick={() => router.push(`/tasks/${task.id}`)}>
                     <div className="flex items-center gap-2 mb-1">
                       <button
-                        onClick={() => toggleComplete(task)}
+                        onClick={(e) => { e.stopPropagation(); toggleComplete(task) }}
                         className={cn(
                           "h-4 w-4 rounded border-2 flex items-center justify-center flex-shrink-0",
                           task.status === "completed" ? "border-green-500 bg-green-500" : "border-muted-foreground/30 hover:border-primary"

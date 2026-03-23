@@ -11,7 +11,7 @@ import { CompanyForm } from "@/components/company-form"
 import { LeadDetailModal } from "@/components/lead-detail-modal"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
 import { Select } from "@/components/ui/select"
-import { Building2, Plus, Search, Users, FileText, TrendingUp, ArrowUpDown } from "lucide-react"
+import { Building2, Plus, Search, Users, FileText, TrendingUp, ArrowUpDown, Pencil, Trash2 } from "lucide-react"
 import { useTranslations } from "next-intl"
 
 interface Company {
@@ -57,6 +57,8 @@ export default function CompaniesPage() {
   const [search, setSearch] = useState("")
   const [sortBy, setSortBy] = useState("name_asc")
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null)
+  const [deleteOpen, setDeleteOpen] = useState(false)
+  const [deleteItem, setDeleteItem] = useState<Company | null>(null)
   const [totalUsersApi, setTotalUsers] = useState(0)
   const [totalContactsApi, setTotalContacts] = useState(0)
   const orgId = session?.user?.organizationId
@@ -97,6 +99,16 @@ export default function CompaniesPage() {
   const statusCounts: Record<string, number> = {}
   for (const c of companies) {
     statusCounts[c.status] = (statusCounts[c.status] || 0) + 1
+  }
+
+  async function confirmDelete() {
+    if (!deleteItem) return
+    const res = await fetch(`/api/v1/companies/${deleteItem.id}`, {
+      method: "DELETE",
+      headers: orgId ? { "x-organization-id": String(orgId) } : {},
+    })
+    if (!res.ok) throw new Error((await res.json()).error || "Failed to delete")
+    fetchCompanies()
   }
 
   const activeCount = statusCounts["active"] || 0
@@ -235,6 +247,20 @@ export default function CompaniesPage() {
                       SLA: {company.slaPolicy.name}
                     </span>
                   )}
+                  <div className="ml-auto flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                    <button
+                      onClick={() => { setEditData(company as any); setFormOpen(true) }}
+                      className="p-1 rounded hover:bg-muted" title={t("edit")}
+                    >
+                      <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
+                    </button>
+                    <button
+                      onClick={() => { setDeleteItem(company); setDeleteOpen(true) }}
+                      className="p-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20" title={t("delete")}
+                    >
+                      <Trash2 className="h-3.5 w-3.5 text-muted-foreground hover:text-red-500" />
+                    </button>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -243,6 +269,8 @@ export default function CompaniesPage() {
       </div>
 
       <CompanyForm open={formOpen} onOpenChange={setFormOpen} onSaved={fetchCompanies} initialData={editData} orgId={orgId} />
+
+      <DeleteConfirmDialog open={deleteOpen} onOpenChange={setDeleteOpen} onConfirm={confirmDelete} title={t("deleteCompany")} itemName={deleteItem?.name} />
 
       <LeadDetailModal
         open={!!selectedCompany}

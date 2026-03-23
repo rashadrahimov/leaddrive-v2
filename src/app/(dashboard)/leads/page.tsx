@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -57,6 +58,7 @@ function getGrade(score: number): { letter: string; color: string } {
 
 export default function LeadsPage() {
   const { data: session } = useSession()
+  const router = useRouter()
   const orgId = session?.user?.organizationId
   const t = useTranslations("leads")
   const tc = useTranslations("common")
@@ -280,7 +282,7 @@ export default function LeadsPage() {
             ) : filtered.map(lead => {
               const grade = getGrade(lead.score)
               return (
-                <tr key={lead.id} className="border-b hover:bg-muted/30 cursor-pointer" onClick={() => setSelectedLead(lead)}>
+                <tr key={lead.id} className="border-b hover:bg-muted/30 cursor-pointer" onClick={() => router.push(`/leads/${lead.id}`)}>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
                       <span className={cn("inline-flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold", grade.color)}>

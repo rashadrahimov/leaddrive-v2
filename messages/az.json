@@ -376,6 +376,9 @@
     "sortColdHot": "Soyuq → İsti",
     "sortScore": "Bal ↓",
     "sortContacts": "Kontaktlar ↓",
+    "edit": "Redaktə et",
+    "delete": "Sil",
+    "deleteCompany": "Şirkəti sil",
     "companyNotFound": "Şirkət tapılmadı",
     "tabOverview": "İcmal",
     "tabContacts": "Kontaktlar",
@@ -625,7 +628,16 @@
     "googleCalendar": "Google Calendar:",
     "googleCalendarInstr": "Digər təqvimlər (+) → URL ilə → linki yapışdırın",
     "outlookCalendar": "Outlook:",
-    "outlookCalendarInstr": "Təqvim əlavə et → İnternetdən → linki yapışdırın"
+    "outlookCalendarInstr": "Təqvim əlavə et → İnternetdən → linki yapışdırın",
+    "daysOpen": "Açıq günlər",
+    "taskDetails": "Tapşırıq detalları",
+    "description": "Təsvir",
+    "completedAt": "Tamamlandı",
+    "relatedEntity": "Əlaqəli obyekt",
+    "createdAt": "Yaradılıb",
+    "updatedAt": "Yenilənib",
+    "taskNotFound": "Tapşırıq tapılmadı",
+    "failedToLoad": "Tapşırığı yükləmək alınmadı"
   },
   "tickets": {
     "title": "Service Desk",
