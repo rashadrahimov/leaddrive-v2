@@ -203,15 +203,35 @@ model Deal {
   lostReason     String?
   notes          String?
   tags           String[] @default([])
+  stageChangedAt DateTime?
+  confidenceLevel Int      @default(50)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
   teamMembers    DealTeamMember[]
+  contactRoles   DealContactRole[]
 
   @@index([organizationId])
   @@index([organizationId, stage])
   @@index([campaignId])
   @@map("deals")
+}
+
+model DealContactRole {
+  id             String   @id @default(cuid())
+  dealId         String
+  deal           Deal     @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  contactId      String
+  role           String   @default("contact_person")
+  influence      String   @default("Medium")
+  decisionFactor String   @default("Ease of Use")
+  loyalty        String   @default("Neutral")
+  isPrimary      Boolean  @default(false)
+  createdAt      DateTime @default(now())
+
+  @@unique([dealId, contactId])
+  @@index([dealId])
+  @@map("deal_contact_roles")
 }
 
 model DealTeamMember {

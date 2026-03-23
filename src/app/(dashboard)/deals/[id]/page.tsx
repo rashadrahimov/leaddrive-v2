@@ -31,6 +31,17 @@ interface TeamMember {
   user: { id: string; name: string | null; email: string; avatar: string | null; role: string | null }
 }
 
+interface ContactRole {
+  id: string
+  contactId: string
+  role: string
+  influence: string
+  decisionFactor: string
+  loyalty: string
+  isPrimary: boolean
+  contact: { id: string; fullName: string; position: string | null; email: string | null; phone: string | null }
+}
+
 interface Deal {
   id: string
   name: string
@@ -38,9 +49,11 @@ interface Deal {
   valueAmount: number
   currency: string
   probability: number
+  confidenceLevel: number
   assignedTo: string | null
   notes: string | null
   expectedClose: string | null
+  stageChangedAt: string | null
   createdAt: string
   updatedAt: string
   lostReason: string | null
@@ -48,6 +61,7 @@ interface Deal {
   company: { id: string; name: string } | null
   campaign: { id: string; name: string } | null
   teamMembers: TeamMember[]
+  contactRoles: ContactRole[]
 }
 
 function DealPipelineStages({ currentStage }: { currentStage: string }) {
@@ -103,12 +117,22 @@ function DealKpiCards({ deal }: { deal: Deal }) {
   const daysInFunnel = Math.floor(
     (Date.now() - new Date(deal.createdAt).getTime()) / 86400000
   )
+  const daysAtStage = deal.stageChangedAt
+    ? Math.floor((Date.now() - new Date(deal.stageChangedAt).getTime()) / 86400000)
+    : daysInFunnel
 
   const cards = [
     {
       label: "Days in funnel",
       value: daysInFunnel,
       bg: "bg-blue-500",
+      text: "text-white",
+      icon: <Clock className="h-4 w-4 opacity-80" />,
+    },
+    {
+      label: "Days at stage",
+      value: daysAtStage,
+      bg: "bg-blue-600",
       text: "text-white",
       icon: <Clock className="h-4 w-4 opacity-80" />,
     },
@@ -120,18 +144,11 @@ function DealKpiCards({ deal }: { deal: Deal }) {
       icon: <DollarSign className="h-4 w-4 opacity-80" />,
     },
     {
-      label: "Win probability",
-      value: `${deal.probability}%`,
-      bg: deal.probability >= 70 ? "bg-green-500" : deal.probability >= 40 ? "bg-amber-500" : "bg-orange-500",
+      label: "Confidence",
+      value: `${deal.confidenceLevel ?? 50}%`,
+      bg: deal.confidenceLevel >= 70 ? "bg-green-500" : deal.confidenceLevel >= 40 ? "bg-amber-500" : "bg-orange-500",
       text: "text-white",
       icon: <TrendingUp className="h-4 w-4 opacity-80" />,
-    },
-    {
-      label: "Stage",
-      value: STAGES.find(s => s.key === deal.stage)?.label ?? deal.stage,
-      bg: "bg-violet-500",
-      text: "text-white",
-      icon: <Target className="h-4 w-4 opacity-80" />,
     },
   ]
 
@@ -503,18 +520,46 @@ export default function DealDetailPage() {
       {/* ── KPI Cards ── */}
       <DealKpiCards deal={deal} />
 
-      {/* ── Win probability bar ── */}
-      <Card className="border-none shadow-sm bg-card">
-        <CardContent className="pt-5 pb-5">
-          <ProbabilityBar probability={deal.probability} />
-        </CardContent>
-      </Card>
+      {/* ── Win probability + Confidence ── */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Card className="border-none shadow-sm bg-card">
+          <CardContent className="pt-5 pb-5">
+            <ProbabilityBar probability={deal.probability} />
+          </CardContent>
+        </Card>
+        <Card className="border-none shadow-sm bg-card">
+          <CardContent className="pt-5 pb-5 space-y-2">
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground font-medium">Confidence level</span>
+              <span className="font-semibold">{deal.confidenceLevel ?? 50}%</span>
+            </div>
+            <input
+              type="range" min="0" max="100" step="5"
+              value={deal.confidenceLevel ?? 50}
+              onChange={async (e) => {
+                const val = parseInt(e.target.value)
+                setDeal({ ...deal, confidenceLevel: val })
+                await fetch(`/api/v1/deals/${id}`, {
+                  method: "PUT",
+                  headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": orgId } : {}) },
+                  body: JSON.stringify({ confidenceLevel: val }),
+                })
+              }}
+              className="w-full h-2 bg-muted rounded-full appearance-none cursor-pointer accent-primary"
+            />
+            <div className="flex justify-between text-[10px] text-muted-foreground">
+              <span>0</span><span>50</span><span>100</span>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* ── Tabs ── */}
       <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList className="bg-muted/60 p-1 h-auto">
+        <TabsList className="bg-muted/60 p-1 h-auto flex-wrap">
           <TabsTrigger value="overview" className="rounded-md text-sm">Overview</TabsTrigger>
           <TabsTrigger value="activity" className="rounded-md text-sm">Activity</TabsTrigger>
+          <TabsTrigger value="contact-roles" className="rounded-md text-sm">Contact Roles</TabsTrigger>
           <TabsTrigger value="competitors" className="rounded-md text-sm">Competitors</TabsTrigger>
           <TabsTrigger value="team" className="rounded-md text-sm">Team</TabsTrigger>
         </TabsList>
@@ -586,6 +631,102 @@ export default function DealDetailPage() {
                 <p className="text-sm font-medium text-muted-foreground">Activity timeline</p>
                 <p className="text-xs text-muted-foreground/60 mt-1">Emails, calls, and notes will appear here</p>
               </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Contact Roles */}
+        <TabsContent value="contact-roles">
+          <Card className="shadow-sm border-none bg-card">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Users className="h-4 w-4 text-muted-foreground" /> Contact Roles
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {(deal.contactRoles || []).length > 0 ? (
+                <div className="overflow-x-auto rounded-lg border">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="bg-muted/50 border-b">
+                        <th className="text-left p-3 font-medium text-muted-foreground">Contact</th>
+                        <th className="text-left p-3 font-medium text-muted-foreground">Role</th>
+                        <th className="text-left p-3 font-medium text-muted-foreground">Influence</th>
+                        <th className="text-left p-3 font-medium text-muted-foreground">Decision Factor</th>
+                        <th className="text-left p-3 font-medium text-muted-foreground">Loyalty</th>
+                        <th className="p-3 w-8" />
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {deal.contactRoles.map(cr => (
+                        <tr key={cr.id} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
+                          <td className="p-3">
+                            <div>
+                              <p className="font-medium">{cr.contact.fullName}</p>
+                              <p className="text-xs text-muted-foreground">{cr.contact.position || cr.contact.email || ""}</p>
+                            </div>
+                          </td>
+                          <td className="p-3"><Badge variant="outline" className="text-xs">{cr.role}</Badge></td>
+                          <td className="p-3">
+                            <Badge className={`text-xs ${cr.influence === "High" ? "bg-red-100 text-red-700" : cr.influence === "Low" ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"}`}>
+                              {cr.influence}
+                            </Badge>
+                          </td>
+                          <td className="p-3 text-muted-foreground">{cr.decisionFactor}</td>
+                          <td className="p-3">
+                            <Badge className={`text-xs ${cr.loyalty?.includes("Supportive") ? "bg-green-100 text-green-700" : cr.loyalty?.includes("Opponent") ? "bg-red-100 text-red-700" : "bg-gray-100 text-gray-700"}`}>
+                              {cr.loyalty}
+                            </Badge>
+                          </td>
+                          <td className="p-3">
+                            <Button
+                              variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-red-500"
+                              onClick={async () => {
+                                await fetch(`/api/v1/deals/${id}/contact-roles`, {
+                                  method: "DELETE",
+                                  headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": orgId } : {}) },
+                                  body: JSON.stringify({ contactId: cr.contactId }),
+                                })
+                                fetchDeal()
+                              }}
+                            >
+                              <X className="h-3.5 w-3.5" />
+                            </Button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-8 text-center border-2 border-dashed border-muted rounded-xl">
+                  <Users className="h-8 w-8 text-muted-foreground/40 mb-2" />
+                  <p className="text-sm text-muted-foreground">No contact roles defined</p>
+                </div>
+              )}
+              <Button variant="outline" size="sm" className="mt-3" onClick={async () => {
+                // Add first available contact from company
+                if (!deal.company) return
+                try {
+                  const res = await fetch(`/api/v1/contacts?companyId=${deal.company.id}&limit=10`, {
+                    headers: orgId ? { "x-organization-id": orgId } : {},
+                  })
+                  const json = await res.json()
+                  const contacts = json.data?.contacts || []
+                  const existing = new Set((deal.contactRoles || []).map((cr: ContactRole) => cr.contactId))
+                  const available = contacts.filter((c: any) => !existing.has(c.id))
+                  if (available.length > 0) {
+                    await fetch(`/api/v1/deals/${id}/contact-roles`, {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": orgId } : {}) },
+                      body: JSON.stringify({ contactId: available[0].id }),
+                    })
+                    fetchDeal()
+                  }
+                } catch {}
+              }}>
+                <Plus className="h-3.5 w-3.5 mr-1" /> Add contact role
+              </Button>
             </CardContent>
           </Card>
         </TabsContent>

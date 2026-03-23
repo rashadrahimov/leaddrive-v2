@@ -16,14 +16,14 @@ const updateDealSchema = z.object({
   lostReason: z.string().max(500).optional(),
   notes: z.string().max(5000).optional(),
   tags: z.array(z.string()).optional(),
+  confidenceLevel: z.number().min(0).max(100).optional(),
 })
 
 const dealInclude = {
   company: { select: { id: true, name: true } },
   campaign: { select: { id: true, name: true } },
-  teamMembers: {
-    orderBy: { createdAt: "asc" as const },
-  },
+  teamMembers: true,
+  contactRoles: true,
 }
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -55,8 +55,9 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     }))
 
     return NextResponse.json({ success: true, data: { ...deal, teamMembers: enrichedTeam } })
-  } catch {
-    return NextResponse.json({ error: "Failed to fetch deal" }, { status: 500 })
+  } catch (e) {
+    console.error("GET deal error:", e)
+    return NextResponse.json({ error: String(e) }, { status: 500 })
   }
 }
 
@@ -83,7 +84,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
         ...(parsed.data.name && { name: parsed.data.name }),
         ...(parsed.data.companyId !== undefined && { companyId: parsed.data.companyId }),
         ...(parsed.data.campaignId !== undefined && { campaignId: parsed.data.campaignId }),
-        ...(parsed.data.stage && { stage: parsed.data.stage }),
+        ...(parsed.data.stage && { stage: parsed.data.stage, stageChangedAt: new Date() }),
         ...(parsed.data.valueAmount !== undefined && { valueAmount: parsed.data.valueAmount }),
         ...(parsed.data.currency && { currency: parsed.data.currency }),
         ...(parsed.data.probability !== undefined && { probability: parsed.data.probability }),
@@ -92,6 +93,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
         ...(parsed.data.lostReason && { lostReason: parsed.data.lostReason }),
         ...(parsed.data.notes && { notes: parsed.data.notes }),
         ...(parsed.data.tags !== undefined && { tags: parsed.data.tags }),
+        ...(parsed.data.confidenceLevel !== undefined && { confidenceLevel: parsed.data.confidenceLevel }),
       },
     })
 
