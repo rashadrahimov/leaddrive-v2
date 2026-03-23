@@ -632,8 +632,12 @@ model Campaign {
   totalSent      Int       @default(0)
   totalOpened    Int       @default(0)
   totalClicked   Int       @default(0)
+  totalBounced   Int       @default(0)
+  totalUnsubscribed Int    @default(0)
+  totalSpam      Int       @default(0)
   budget         Float     @default(0)
   actualCost     Float     @default(0)
+  flowData       Json?
   createdBy      String?
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
