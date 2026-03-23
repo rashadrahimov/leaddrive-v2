@@ -81,7 +81,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.organizationId = user.organizationId
         token.organizationName = user.organizationName
         token.plan = user.plan
-        token.needs2fa = user.needs2fa ?? false
+        token.needs2fa = (user as any).needs2fa ?? false
       }
       // Allow client to clear needs2fa after successful 2FA verification
       if (trigger === "update" && session?.needs2fa === false) {

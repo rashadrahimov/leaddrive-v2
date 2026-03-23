@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { auth } from "@/lib/auth"
-import * as OTPAuth from "otplib"
-
-const { authenticator } = OTPAuth
+import { verifySync } from "otplib"
 
 export async function POST(req: NextRequest) {
   const session = await auth()
@@ -30,7 +28,7 @@ export async function POST(req: NextRequest) {
   const cleanCode = code.replace(/[\s-]/g, "")
 
   if (cleanCode.length === 6) {
-    const isValid = authenticator.verify({ token: cleanCode, secret: user.totpSecret })
+    const isValid = verifySync({ token: cleanCode, secret: user.totpSecret }).valid
     if (isValid) {
       return NextResponse.json({ success: true, data: { verified: true } })
     }
