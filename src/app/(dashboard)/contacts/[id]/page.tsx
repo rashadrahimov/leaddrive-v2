@@ -196,6 +196,26 @@ export default function ContactDetailPage() {
                   </>
                 )}
               </div>
+              {contact.email && <p className="text-xs text-muted-foreground mt-0.5">{contact.email}</p>}
+              {contact.phone && <p className="text-xs text-muted-foreground">{contact.phone}</p>}
+              {/* Communication action buttons */}
+              <div className="flex items-center gap-2 mt-2">
+                {contact.phone && (
+                  <a href={`tel:${contact.phone}`} title="Call" className="h-8 w-8 rounded-full bg-green-500 hover:bg-green-600 flex items-center justify-center transition-colors shadow-sm">
+                    <Phone className="h-3.5 w-3.5 text-white" />
+                  </a>
+                )}
+                {contact.email && (
+                  <a href={`mailto:${contact.email}`} title="Email" className="h-8 w-8 rounded-full bg-orange-500 hover:bg-orange-600 flex items-center justify-center transition-colors shadow-sm">
+                    <Mail className="h-3.5 w-3.5 text-white" />
+                  </a>
+                )}
+                {contact.phone && (
+                  <a href={`https://wa.me/${contact.phone.replace(/[^0-9]/g, "")}`} target="_blank" title="WhatsApp" className="h-8 w-8 rounded-full bg-emerald-500 hover:bg-emerald-600 flex items-center justify-center transition-colors shadow-sm">
+                    <MessageSquare className="h-3.5 w-3.5 text-white" />
+                  </a>
+                )}
+              </div>
               <div className="mt-1 flex gap-1">
                 {contact.tags.map(tag => (
                   <Badge key={tag} variant="secondary" className="text-xs">{tag}</Badge>
@@ -210,30 +230,50 @@ export default function ContactDetailPage() {
         </Button>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card>
-          <CardContent className="flex items-center gap-3 pt-6">
-            <Mail className="h-4 w-4 text-muted-foreground" />
-            <a href={`mailto:${contact.email}`} className="text-sm text-primary hover:underline">{contact.email || "—"}</a>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6 space-y-1">
-            <div className="flex items-center gap-3">
-              <Phone className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm">{contact.phone || "—"}</span>
+      {/* KPI Cards */}
+      <div className="grid gap-4 md:grid-cols-4">
+        <Card className="border-none shadow-sm">
+          <CardContent className="p-4 flex items-center gap-3">
+            <div className="h-10 w-10 rounded-xl bg-blue-100 flex items-center justify-center">
+              <Mail className="h-5 w-5 text-blue-600" />
             </div>
-            {contact.phones && contact.phones.length > 0 && contact.phones.map((p, i) => (
-              <div key={i} className="flex items-center gap-3 pl-7">
-                <span className="text-sm text-muted-foreground">{p}</span>
-              </div>
-            ))}
+            <div>
+              <p className="text-xs text-muted-foreground">Email</p>
+              <p className="text-sm font-medium truncate">{contact.email || "—"}</p>
+            </div>
           </CardContent>
         </Card>
-        <Card>
-          <CardContent className="flex items-center gap-3 pt-6">
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm">Last contact: {contact.lastContactAt ? new Date(contact.lastContactAt).toLocaleDateString("ru-RU") : "—"}</span>
+        <Card className="border-none shadow-sm">
+          <CardContent className="p-4 flex items-center gap-3">
+            <div className="h-10 w-10 rounded-xl bg-green-100 flex items-center justify-center">
+              <Phone className="h-5 w-5 text-green-600" />
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Phone</p>
+              <p className="text-sm font-medium">{contact.phone || "—"}</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="border-none shadow-sm">
+          <CardContent className="p-4 flex items-center gap-3">
+            <div className="h-10 w-10 rounded-xl bg-violet-100 flex items-center justify-center">
+              <Calendar className="h-5 w-5 text-violet-600" />
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Last Contact</p>
+              <p className="text-sm font-medium">{contact.lastContactAt ? new Date(contact.lastContactAt).toLocaleDateString("ru-RU") : "—"}</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="border-none shadow-sm">
+          <CardContent className="p-4 flex items-center gap-3">
+            <div className="h-10 w-10 rounded-xl bg-amber-100 flex items-center justify-center">
+              <MessageSquare className="h-5 w-5 text-amber-600" />
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Activities</p>
+              <p className="text-sm font-medium">{contact.activities?.length || 0}</p>
+            </div>
           </CardContent>
         </Card>
       </div>
