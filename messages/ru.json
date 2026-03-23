@@ -27,6 +27,7 @@
     "smtp": "SMTP",
     "events": "Мероприятия",
     "agentDesktop": "Рабочий стол агента",
+    "agentCalendar": "Календарь агента",
     "settings": "Настройки",
     "groups": {
       "CRM": "CRM",

@@ -27,6 +27,7 @@
     "smtp": "SMTP",
     "events": "Events",
     "agentDesktop": "Agent Desktop",
+    "agentCalendar": "Agent Calendar",
     "settings": "Settings",
     "groups": {
       "CRM": "CRM",

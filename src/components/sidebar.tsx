@@ -43,6 +43,7 @@ const navItems: NavItem[] = [
   { module: "omnichannel", href: "/inbox", icon: MessageSquare, tKey: "inbox", group: "Communication" },
   { module: "tickets", href: "/tickets", icon: Ticket, tKey: "tickets", group: "Support" },
   { module: "tickets", href: "/support/agent-desktop", icon: Headphones, tKey: "agentDesktop", group: "Support" },
+  { module: "tickets", href: "/support/calendar", icon: CalendarDays, tKey: "agentCalendar", group: "Support" },
   { module: "knowledge-base", href: "/knowledge-base", icon: BookOpen, tKey: "knowledgeBase", group: "Support" },
   { module: "profitability", href: "/profitability", icon: Calculator, tKey: "profitability", group: "Analytics" },
   { module: "profitability", href: "/pricing", icon: DollarSign, tKey: "pricing", group: "Analytics" },

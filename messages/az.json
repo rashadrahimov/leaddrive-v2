@@ -27,6 +27,7 @@
     "smtp": "SMTP",
     "events": "Tədbirlər",
     "agentDesktop": "Agent masaüstü",
+    "agentCalendar": "Agent təqvimi",
     "settings": "Parametrlər",
     "groups": {
       "CRM": "CRM",

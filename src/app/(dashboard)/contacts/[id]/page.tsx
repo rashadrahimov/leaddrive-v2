@@ -11,7 +11,7 @@ import { Select } from "@/components/ui/select"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Dialog, DialogHeader, DialogTitle, DialogContent, DialogFooter } from "@/components/ui/dialog"
-import { ArrowLeft, Mail, Phone, Building2, Pencil, Calendar, MessageSquare, Plus, X, Loader2 } from "lucide-react"
+import { ArrowLeft, Mail, Phone, Building2, Pencil, Calendar, MessageSquare, Plus, X, Loader2, Sparkles, Star, DollarSign } from "lucide-react"
 
 interface Activity {
   id: string
@@ -50,6 +50,10 @@ export default function ContactDetailPage() {
   const [loading, setLoading] = useState(true)
   const id = params.id as string
   const orgId = session?.user?.organizationId
+
+  // AI Recommendations
+  const [recommendations, setRecommendations] = useState<any[]>([])
+  const [loadingRecs, setLoadingRecs] = useState(false)
 
   // Edit dialog
   const [showEdit, setShowEdit] = useState(false)
@@ -238,6 +242,20 @@ export default function ContactDetailPage() {
         <TabsList>
           <TabsTrigger value="activities">Activities ({contact.activities?.length || 0})</TabsTrigger>
           <TabsTrigger value="info">Info</TabsTrigger>
+          <TabsTrigger value="recommendations" onClick={() => {
+            if (recommendations.length === 0 && !loadingRecs) {
+              setLoadingRecs(true)
+              fetch("/api/v1/ai/recommend", {
+                method: "POST",
+                headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": String(orgId) } : {}) },
+                body: JSON.stringify({ contactId: id }),
+              }).then(r => r.json()).then(json => {
+                if (json.success) setRecommendations(json.data.recommendations || [])
+              }).finally(() => setLoadingRecs(false))
+            }
+          }}>
+            <Sparkles className="h-3 w-3 mr-1" /> AI Рекомендации
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="activities">
@@ -299,6 +317,59 @@ export default function ContactDetailPage() {
                   <span className="ml-2 font-medium">{contact.company?.name || "—"}</span>
                 </div>
               </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="recommendations">
+          <Card>
+            <CardContent className="pt-6">
+              {loadingRecs ? (
+                <div className="flex items-center justify-center py-8 gap-2 text-muted-foreground">
+                  <Loader2 className="h-4 w-4 animate-spin" /> Загрузка рекомендаций...
+                </div>
+              ) : recommendations.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Sparkles className="h-8 w-8 mx-auto mb-2 opacity-30" />
+                  <p className="text-sm">Нет продуктов для рекомендации</p>
+                  <p className="text-xs">Добавьте продукты в каталог через API</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {recommendations.map((rec: any, i: number) => (
+                    <div key={rec.productId} className="flex items-start gap-3 p-3 rounded-lg border hover:shadow-sm transition-shadow">
+                      <div className={`h-8 w-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                        i === 0 ? "bg-yellow-100 text-yellow-600" :
+                        i === 1 ? "bg-blue-100 text-blue-600" :
+                        "bg-gray-100 text-gray-600"
+                      }`}>
+                        <Star className="h-4 w-4" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-sm">{rec.name}</span>
+                          <Badge variant="outline" className="text-[10px]">{rec.category}</Badge>
+                          <Badge className={`text-[10px] ${
+                            rec.score > 70 ? "bg-green-100 text-green-700" :
+                            rec.score > 50 ? "bg-blue-100 text-blue-700" :
+                            "bg-gray-100 text-gray-600"
+                          }`}>
+                            {rec.score}% match
+                          </Badge>
+                        </div>
+                        {rec.description && <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{rec.description}</p>}
+                        <p className="text-[10px] text-muted-foreground mt-1">{rec.reason}</p>
+                      </div>
+                      <div className="text-right flex-shrink-0">
+                        <div className="flex items-center gap-1 text-sm font-bold">
+                          <DollarSign className="h-3.5 w-3.5" />
+                          {rec.price?.toLocaleString()} {rec.currency}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>

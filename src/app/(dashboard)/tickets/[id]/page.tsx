@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Select } from "@/components/ui/select"
-import { ArrowLeft, Clock, Send, Lock, Star, Loader2, Bot, FileText, Zap, UserCheck, RefreshCw, AlertTriangle, UserPlus } from "lucide-react"
+import { ArrowLeft, Clock, Send, Lock, Star, Loader2, Bot, FileText, Zap, UserCheck, RefreshCw, AlertTriangle, UserPlus, BookOpen } from "lucide-react"
 
 interface TicketData {
   id: string
@@ -102,6 +102,9 @@ export default function TicketDetailPage() {
   const [showInternal, setShowInternal] = useState(true)
   const [sending, setSending] = useState(false)
 
+  // Related KB articles
+  const [kbArticles, setKbArticles] = useState<any[]>([])
+
   // Inline status change
   const [newStatus, setNewStatus] = useState("")
   const [updatingStatus, setUpdatingStatus] = useState(false)
@@ -124,6 +127,12 @@ export default function TicketDetailPage() {
         setTicket(json.data)
         setNewStatus(json.data.status)
         setNewAssignee(json.data.assignedTo || "")
+        // Fetch related KB articles by category/tags
+        try {
+          const kbRes = await fetch(`/api/v1/kb?limit=5&search=${encodeURIComponent(json.data.category || "")}`)
+          const kbJson = await kbRes.json()
+          if (kbJson.success) setKbArticles(kbJson.data?.articles || kbJson.data || [])
+        } catch {}
       } else {
         setError(json.error || "Failed to load ticket")
       }
@@ -730,6 +739,31 @@ export default function TicketDetailPage() {
               )}
             </CardContent>
           </Card>
+
+          {/* Related KB Articles */}
+          {kbArticles.length > 0 && (
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <BookOpen className="h-3.5 w-3.5" /> Статьи из базы знаний
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  {kbArticles.slice(0, 3).map((article: any) => (
+                    <Link
+                      key={article.id}
+                      href={`/knowledge-base`}
+                      className="block p-2 rounded-lg hover:bg-muted/50 transition-colors"
+                    >
+                      <p className="text-sm font-medium line-clamp-1">{article.title}</p>
+                      <p className="text-[10px] text-muted-foreground line-clamp-1">{article.category || "General"}</p>
+                    </Link>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
     </div>

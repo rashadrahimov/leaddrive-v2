@@ -685,6 +685,91 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* ═══ Bottom Row — Leaderboard + This Week Summary ═══ */}
+      <div className="grid gap-4 lg:grid-cols-12">
+        {/* Sales Leaderboard */}
+        <Card className="lg:col-span-5">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Star className="h-4 w-4" /> Лидерборд продаж
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {(pipeline.topDeals || []).length === 0 ? (
+              <div className="text-xs text-muted-foreground text-center py-4">Нет данных</div>
+            ) : (
+              <div className="space-y-2">
+                {(pipeline.topDeals || []).slice(0, 5).map((deal: any, i: number) => (
+                  <div key={deal.id || i} className="flex items-center gap-2.5">
+                    <span className={`inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold ${
+                      i === 0 ? "bg-yellow-100 text-yellow-700" :
+                      i === 1 ? "bg-gray-100 text-gray-600" :
+                      i === 2 ? "bg-amber-100 text-amber-700" : "bg-muted text-muted-foreground"
+                    }`}>
+                      {i + 1}
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">{deal.title || deal.name}</p>
+                      <p className="text-[10px] text-muted-foreground">{deal.company?.name || deal.stage || "—"}</p>
+                    </div>
+                    <span className="text-sm font-bold tabular-nums">{fmt(deal.value || deal.amount || 0)} ₼</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* This Week Summary */}
+        <Card className="lg:col-span-3">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Clock className="h-4 w-4" /> За эту неделю
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {[
+                { label: "Новые лиды", value: leads.totalLeads || 0, icon: <Target className="h-3.5 w-3.5 text-blue-500" /> },
+                { label: "Задачи выполнены", value: tasks?.completed || 0, icon: <CheckCircle2 className="h-3.5 w-3.5 text-green-500" /> },
+                { label: "Тикеты открыты", value: operations.openTickets || 0, icon: <Ticket className="h-3.5 w-3.5 text-violet-500" /> },
+                { label: "Активности", value: activity?.total || (activity?.recent || []).length, icon: <Activity className="h-3.5 w-3.5 text-amber-500" /> },
+              ].map(s => (
+                <div key={s.label} className="flex items-center gap-2.5">
+                  {s.icon}
+                  <span className="flex-1 text-sm text-muted-foreground">{s.label}</span>
+                  <span className="text-sm font-bold">{s.value}</span>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Quick Actions */}
+        <Card className="lg:col-span-4">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center gap-2">
+              <ArrowRight className="h-4 w-4" /> Быстрые ссылки
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 gap-2">
+              {[
+                { label: "Сделки", href: "/deals", icon: <Handshake className="h-4 w-4" />, color: "bg-blue-50 text-blue-600" },
+                { label: "Тикеты", href: "/tickets", icon: <Ticket className="h-4 w-4" />, color: "bg-violet-50 text-violet-600" },
+                { label: "Мероприятия", href: "/events", icon: <Users className="h-4 w-4" />, color: "bg-green-50 text-green-600" },
+                { label: "Отчёты", href: "/reports", icon: <BarChart3 className="h-4 w-4" />, color: "bg-amber-50 text-amber-600" },
+              ].map(q => (
+                <a key={q.label} href={q.href} className={`flex items-center gap-2 p-2.5 rounded-lg ${q.color} hover:opacity-80 transition-opacity`}>
+                  {q.icon}
+                  <span className="text-xs font-medium">{q.label}</span>
+                </a>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
 }

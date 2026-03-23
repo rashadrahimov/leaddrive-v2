@@ -1184,3 +1184,21 @@ model EventParticipant {
   @@map("event_participants")
 }
 
+model Product {
+  id             String   @id @default(cuid())
+  organizationId String
+  name           String
+  description    String?
+  category       String   @default("service")  // service, product, addon, consulting
+  price          Float    @default(0)
+  currency       String   @default("AZN")
+  isActive       Boolean  @default(true)
+  features       String[] @default([])
+  tags           String[] @default([])
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([organizationId])
+  @@map("products")
+}
+

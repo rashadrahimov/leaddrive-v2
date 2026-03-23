@@ -22,6 +22,7 @@ interface TicketData {
   assignedTo: string
   createdAt: string
   slaDueAt: string
+  firstResponseAt: string
 }
 
 type ViewMode = "list" | "kanban"
@@ -136,6 +137,17 @@ export default function TicketsPage() {
             {new Date(item.slaDueAt).toLocaleDateString("ru-RU")}
           </div>
         )
+      },
+    },
+    {
+      key: "firstResponseAt", label: "Response", sortable: true,
+      render: (item: any) => {
+        if (!item.firstResponseAt) return <span className="text-xs text-muted-foreground">—</span>
+        const ms = new Date(item.firstResponseAt).getTime() - new Date(item.createdAt).getTime()
+        const mins = Math.floor(ms / 60000)
+        const hours = Math.floor(mins / 60)
+        const label = hours > 0 ? `${hours}h ${mins % 60}m` : `${mins}m`
+        return <span className={cn("text-xs font-mono", hours > 4 ? "text-red-500" : hours > 1 ? "text-amber-500" : "text-green-500")}>{label}</span>
       },
     },
     { key: "assigneeName", label: "Assigned", sortable: true, render: (item: any) => <span>{item.assigneeName || "—"}</span> },
