@@ -3,142 +3,145 @@
 import { useEffect, useState } from "react"
 import { useSession } from "next-auth/react"
 import { useTranslations } from "next-intl"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { DataTable } from "@/components/data-table"
-import { CustomFieldForm } from "@/components/custom-field-form"
-import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
-import { Plus, Pencil, Trash2 } from "lucide-react"
+import {
+  BarChart3, Filter, TrendingUp, DollarSign, CheckSquare,
+  Ticket, Target, Heart, Activity, Check, LayoutDashboard,
+} from "lucide-react"
 
-interface CustomField {
-  id: string
-  entityType: string
-  fieldName: string
-  fieldLabel: string
-  fieldType: string
-  options: string[]
-  isRequired: boolean
-  defaultValue?: string
-  isActive: boolean
+interface WidgetConfig {
+  statCards: boolean
+  leadFunnel: boolean
+  dealPipeline: boolean
+  revenueChart: boolean
+  taskSummary: boolean
+  ticketSummary: boolean
+  forecast: boolean
+  clientHealth: boolean
+  activityFeed: boolean
 }
 
-export default function CustomFieldsPage() {
+const DEFAULT_CONFIG: WidgetConfig = {
+  statCards: true,
+  leadFunnel: true,
+  dealPipeline: true,
+  revenueChart: true,
+  taskSummary: true,
+  ticketSummary: true,
+  forecast: true,
+  clientHealth: true,
+  activityFeed: true,
+}
+
+const WIDGETS: { key: keyof WidgetConfig; icon: any; labelKey: string; descKey: string }[] = [
+  { key: "statCards", icon: BarChart3, labelKey: "wStatCards", descKey: "wStatCardsDesc" },
+  { key: "leadFunnel", icon: Filter, labelKey: "wLeadFunnel", descKey: "wLeadFunnelDesc" },
+  { key: "dealPipeline", icon: TrendingUp, labelKey: "wDealPipeline", descKey: "wDealPipelineDesc" },
+  { key: "revenueChart", icon: DollarSign, labelKey: "wRevenueChart", descKey: "wRevenueChartDesc" },
+  { key: "taskSummary", icon: CheckSquare, labelKey: "wTaskSummary", descKey: "wTaskSummaryDesc" },
+  { key: "ticketSummary", icon: Ticket, labelKey: "wTicketSummary", descKey: "wTicketSummaryDesc" },
+  { key: "forecast", icon: Target, labelKey: "wForecast", descKey: "wForecastDesc" },
+  { key: "clientHealth", icon: Heart, labelKey: "wClientHealth", descKey: "wClientHealthDesc" },
+  { key: "activityFeed", icon: Activity, labelKey: "wActivityFeed", descKey: "wActivityFeedDesc" },
+]
+
+function getStorageKey(userId: string) {
+  return `dashboard-widgets-${userId}`
+}
+
+export default function DashboardSettingsPage() {
   const { data: session } = useSession()
-  const t = useTranslations("settings")
+  const t = useTranslations("dashboardSettings")
   const tc = useTranslations("common")
-  const [fields, setFields] = useState<CustomField[]>([])
-  const [loading, setLoading] = useState(true)
-  const [showForm, setShowForm] = useState(false)
-  const [editData, setEditData] = useState<CustomField | undefined>()
-  const [deleteId, setDeleteId] = useState<string | null>(null)
-  const [deleteName, setDeleteName] = useState("")
-  const orgId = session?.user?.organizationId
+  const userId = (session?.user as any)?.id || ""
 
-  const fetchFields = async () => {
+  const [config, setConfig] = useState<WidgetConfig>(DEFAULT_CONFIG)
+  const [saved, setSaved] = useState(false)
+
+  // Load from localStorage on mount
+  useEffect(() => {
+    if (!userId) return
     try {
-      const res = await fetch("/api/v1/custom-fields", {
-        headers: orgId ? { "x-organization-id": String(orgId) } : {},
-      })
-      if (res.ok) {
-        const result = await res.json()
-        setFields(result.data || [])
+      const stored = localStorage.getItem(getStorageKey(userId))
+      if (stored) {
+        const parsed = JSON.parse(stored)
+        setConfig({ ...DEFAULT_CONFIG, ...parsed })
       }
-    } catch {} finally { setLoading(false) }
+    } catch {}
+  }, [userId])
+
+  const toggle = (key: keyof WidgetConfig) => {
+    setConfig(prev => ({ ...prev, [key]: !prev[key] }))
+    setSaved(false)
   }
 
-  useEffect(() => { fetchFields() }, [session])
-
-  const handleDelete = async () => {
-    if (!deleteId) return
-    const res = await fetch(`/api/v1/custom-fields/${deleteId}`, {
-      method: "DELETE",
-      headers: orgId ? { "x-organization-id": String(orgId) } : {},
-    })
-    if (!res.ok) throw new Error("Failed to delete")
-    fetchFields()
+  const handleSave = () => {
+    if (!userId) return
+    localStorage.setItem(getStorageKey(userId), JSON.stringify(config))
+    setSaved(true)
+    setTimeout(() => setSaved(false), 2000)
   }
 
-  const columns = [
-    {
-      key: "fieldLabel", label: "Label", sortable: true,
-      render: (item: any) => <div className="font-medium">{item.fieldLabel}</div>,
-    },
-    {
-      key: "fieldName", label: "Field Name", sortable: true,
-      render: (item: any) => <code className="text-xs bg-muted px-1.5 py-0.5 rounded">{item.fieldName}</code>,
-    },
-    {
-      key: "entityType", label: "Entity", sortable: true,
-      render: (item: any) => <Badge variant="outline">{item.entityType}</Badge>,
-    },
-    {
-      key: "fieldType", label: tc("type"), sortable: true,
-      render: (item: any) => <Badge variant="secondary">{item.fieldType}</Badge>,
-    },
-    {
-      key: "isRequired", label: "Required", sortable: true,
-      render: (item: any) => <span className="text-sm">{item.isRequired ? tc("yes") : tc("no")}</span>,
-    },
-    {
-      key: "isActive", label: tc("status"), sortable: true,
-      render: (item: any) => <Badge variant={item.isActive ? "default" : "secondary"}>{item.isActive ? tc("active") : tc("inactive")}</Badge>,
-    },
-    {
-      key: "edit", label: "", sortable: false,
-      render: (item: any) => (
-        <div className="flex gap-1">
-          <Button variant="ghost" size="sm" onClick={() => { setEditData(item); setShowForm(true) }}>
-            <Pencil className="h-3.5 w-3.5" />
-          </Button>
-          <Button variant="ghost" size="sm" onClick={() => { setDeleteId(item.id); setDeleteName(item.fieldLabel) }}>
-            <Trash2 className="h-3.5 w-3.5 text-destructive" />
-          </Button>
-        </div>
-      ),
-    },
-  ]
+  const activeCount = Object.values(config).filter(Boolean).length
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">{t("customFields")}</h1>
-          <p className="text-muted-foreground">{t("customFieldsDesc")}</p>
+      <div className="flex items-center gap-3">
+        <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center">
+          <LayoutDashboard className="h-6 w-6 text-primary" />
         </div>
-        <Button className="gap-2" onClick={() => { setEditData(undefined); setShowForm(true) }}>
-          <Plus className="h-4 w-4" /> {tc("add")} Field
-        </Button>
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
+          <p className="text-muted-foreground">{t("subtitle")}</p>
+        </div>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("customFields")}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <p className="text-muted-foreground">{tc("loading")}</p>
-          ) : (
-            <DataTable columns={columns} data={fields} searchPlaceholder={tc("search")} searchKey="fieldLabel" pageSize={10} />
-          )}
-        </CardContent>
-      </Card>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {WIDGETS.map(({ key, icon: Icon, labelKey, descKey }) => {
+          const enabled = config[key]
+          return (
+            <button
+              key={key}
+              type="button"
+              onClick={() => toggle(key)}
+              className={`flex items-center gap-4 p-4 rounded-xl border-2 text-left transition-all duration-200 ${
+                enabled
+                  ? "border-primary/30 bg-primary/5 shadow-sm"
+                  : "border-muted bg-card hover:border-muted-foreground/20"
+              }`}
+            >
+              <div className={`h-10 w-10 rounded-lg flex items-center justify-center shrink-0 ${
+                enabled ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
+              }`}>
+                <Icon className="h-5 w-5" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className={`font-medium text-sm ${enabled ? "text-foreground" : "text-muted-foreground"}`}>
+                  {t(labelKey)}
+                </div>
+                <div className="text-xs text-muted-foreground">{t(descKey)}</div>
+              </div>
+              <div className={`h-6 w-11 rounded-full relative transition-colors duration-200 shrink-0 ${
+                enabled ? "bg-primary" : "bg-muted-foreground/20"
+              }`}>
+                <div className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform duration-200 ${
+                  enabled ? "translate-x-5" : "translate-x-0.5"
+                }`} />
+              </div>
+            </button>
+          )
+        })}
+      </div>
 
-      <CustomFieldForm
-        open={showForm}
-        onOpenChange={(open) => { setShowForm(open); if (!open) setEditData(undefined) }}
-        onSaved={fetchFields}
-        initialData={editData}
-        orgId={orgId}
-      />
-
-      <DeleteConfirmDialog
-        open={!!deleteId}
-        onOpenChange={(open) => { if (!open) setDeleteId(null) }}
-        onConfirm={handleDelete}
-        title={`${tc("delete")} Custom Field`}
-        itemName={deleteName}
-      />
+      <div className="flex items-center justify-between pt-2">
+        <p className="text-sm text-muted-foreground">
+          {t("activeWidgets")}: <span className="font-bold text-foreground">{activeCount}</span> / {WIDGETS.length}
+        </p>
+        <Button onClick={handleSave} className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white min-w-[140px]">
+          <Check className="h-4 w-4" />
+          {saved ? t("saved") : tc("save")}
+        </Button>
+      </div>
     </div>
   )
 }
