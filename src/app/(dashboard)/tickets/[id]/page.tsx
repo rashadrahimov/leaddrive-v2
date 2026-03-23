@@ -51,10 +51,21 @@ interface UserOption {
 
 const STATUS_STYLES: Record<string, { label: string; className: string }> = {
   new: { label: "Новый", className: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300" },
+  open: { label: "Открыт", className: "bg-cyan-100 text-cyan-800 dark:bg-cyan-900 dark:text-cyan-300" },
   in_progress: { label: "В работе", className: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300" },
   waiting: { label: "Ожидание", className: "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300" },
   resolved: { label: "Решён", className: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300" },
   closed: { label: "Закрыт", className: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300" },
+}
+
+const STATUS_PIPELINE = ["new", "open", "in_progress", "waiting", "resolved", "closed"]
+const STATUS_PIPELINE_COLORS: Record<string, string> = {
+  new: "bg-blue-500",
+  open: "bg-cyan-500",
+  in_progress: "bg-yellow-500",
+  waiting: "bg-purple-500",
+  resolved: "bg-green-500",
+  closed: "bg-gray-500",
 }
 
 const PRIORITY_STYLES: Record<string, { label: string; className: string }> = {
@@ -340,6 +351,45 @@ export default function TicketDetailPage() {
             </>
           )}
         </div>
+      </div>
+
+      {/* Status Pipeline */}
+      <div className="flex gap-0 rounded-xl overflow-hidden border">
+        {STATUS_PIPELINE.map((s, i) => {
+          const style = STATUS_STYLES[s] || STATUS_STYLES.new
+          const isCurrent = ticket.status === s
+          const currentIdx = STATUS_PIPELINE.indexOf(ticket.status)
+          const isPast = i < currentIdx
+          const color = STATUS_PIPELINE_COLORS[s]
+
+          return (
+            <button
+              key={s}
+              onClick={async () => {
+                if (s === ticket.status) return
+                setUpdatingStatus(true)
+                try {
+                  const res = await fetch(`/api/v1/tickets/${ticketId}`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ status: s }),
+                  })
+                  if (res.ok) fetchTicket()
+                } catch {} finally { setUpdatingStatus(false) }
+              }}
+              className={`flex-1 py-2.5 px-2 text-xs font-medium text-center transition-all relative ${
+                isCurrent
+                  ? `${color} text-white shadow-inner`
+                  : isPast
+                  ? `${color}/20 text-foreground/70`
+                  : "bg-muted/30 text-muted-foreground hover:bg-muted/60"
+              }`}
+              disabled={updatingStatus}
+            >
+              {style.label}
+            </button>
+          )
+        })}
       </div>
 
       {/* KPI Cards */}

@@ -35,7 +35,7 @@ const priorityColors: Record<string, string> = {
 }
 
 const statusLabels: Record<string, string> = {
-  new: "New", in_progress: "In Progress", waiting: "Waiting", resolved: "Resolved", closed: "Closed",
+  new: "New", open: "Open", in_progress: "In Progress", waiting: "Waiting", resolved: "Resolved", closed: "Closed",
 }
 
 function isSlaBreached(slaDueAt: string | null): boolean {
@@ -48,6 +48,7 @@ export default function TicketsPage() {
   const { data: session } = useSession()
   const [tickets, setTickets] = useState<TicketData[]>([])
   const [view, setView] = useState<ViewMode>("list")
+  const [statusFilter, setStatusFilter] = useState<string>("all")
   const [loading, setLoading] = useState(true)
   const [formOpen, setFormOpen] = useState(false)
   const [editData, setEditData] = useState<Record<string, any> | undefined>()
@@ -168,7 +169,7 @@ export default function TicketsPage() {
     },
   ]
 
-  const openCount = tickets.filter(t => ["new", "in_progress", "waiting"].includes(t.status)).length
+  const openCount = tickets.filter(t => !["resolved", "closed"].includes(t.status)).length
   const breachedCount = tickets.filter(t => isSlaBreached(t.slaDueAt) && !["resolved", "closed"].includes(t.status)).length
   const resolvedCount = tickets.filter(t => t.status === "resolved").length
   const unassignedCount = tickets.filter(t => !t.assignedTo).length
@@ -211,10 +212,36 @@ export default function TicketsPage() {
         <StatCard title="Resolved" value={resolvedCount} icon={<CheckCircle className="h-4 w-4" />} trend="up" />
       </div>
 
+      {/* Status filter tabs */}
+      <div className="flex items-center gap-2 flex-wrap">
+        {[
+          { key: "all", label: "All", count: tickets.length },
+          { key: "new", label: "New", count: tickets.filter(t => t.status === "new").length },
+          { key: "open", label: "Open", count: tickets.filter(t => t.status === "open").length },
+          { key: "in_progress", label: "In Progress", count: tickets.filter(t => t.status === "in_progress").length },
+          { key: "waiting", label: "Waiting", count: tickets.filter(t => t.status === "waiting").length },
+          { key: "resolved", label: "Resolved", count: tickets.filter(t => t.status === "resolved").length },
+          { key: "closed", label: "Closed", count: tickets.filter(t => t.status === "closed").length },
+        ].filter(tab => tab.key === "all" || tab.count > 0).map(tab => (
+          <button
+            key={tab.key}
+            onClick={() => setStatusFilter(tab.key)}
+            className={cn(
+              "px-3 py-1.5 text-sm rounded-full border transition-colors",
+              statusFilter === tab.key
+                ? "bg-primary text-primary-foreground border-primary"
+                : "bg-background hover:bg-muted border-border"
+            )}
+          >
+            {tab.label} ({tab.count})
+          </button>
+        ))}
+      </div>
+
       {view === "list" && (
         <DataTable
           columns={columns}
-          data={tickets}
+          data={statusFilter === "all" ? tickets : tickets.filter(t => t.status === statusFilter)}
           searchPlaceholder="Search tickets..."
           searchKey="subject"
           onRowClick={(item) => router.push(`/tickets/${item.id}`)}
@@ -223,7 +250,7 @@ export default function TicketsPage() {
 
       {view === "kanban" && (
         <div className="flex gap-4 overflow-x-auto pb-4">
-          {["new", "in_progress", "waiting", "resolved"].map((status) => (
+          {["new", "open", "in_progress", "waiting", "resolved"].map((status) => (
             <div key={status} className="min-w-[280px] flex-shrink-0">
               <div className="mb-3 flex items-center gap-2">
                 <span className="text-sm font-semibold">{statusLabels[status]}</span>

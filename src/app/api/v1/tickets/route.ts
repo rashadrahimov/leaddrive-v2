@@ -75,8 +75,16 @@ export async function POST(req: NextRequest) {
   if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 })
 
   try {
-    // Auto-generate ticket number
-    const ticketNumber = `TK-${String(Date.now()).slice(-4).padStart(4, "0")}`
+    // Auto-generate sequential ticket number
+    const lastTicket = await prisma.ticket.findFirst({
+      where: { organizationId: orgId },
+      orderBy: { createdAt: "desc" },
+      select: { ticketNumber: true },
+    })
+    const lastNum = lastTicket?.ticketNumber
+      ? parseInt(lastTicket.ticketNumber.replace(/[^0-9]/g, ""), 10) || 0
+      : 0
+    const ticketNumber = `TK-${String(lastNum + 1).padStart(4, "0")}`
 
     // Calculate SLA due date: company SLA → priority-based SLA → default
     const priority = parsed.data.priority || "medium"
