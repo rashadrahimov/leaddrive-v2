@@ -50,15 +50,33 @@ export async function POST(
   // Support bulk add (array of participants)
   const items = Array.isArray(body) ? body : [body]
   const created = []
+  const errors: string[] = []
 
   for (const item of items) {
     const parsed = addSchema.safeParse(item)
-    if (!parsed.success) continue
+    if (!parsed.success) {
+      const msg = parsed.error.issues.map(i => `${i.path.join(".")}: ${i.message}`).join(", ")
+      console.error("[PARTICIPANTS] Validation failed:", msg, "input:", JSON.stringify(item))
+      errors.push(msg)
+      continue
+    }
 
-    const participant = await prisma.eventParticipant.create({
-      data: { ...parsed.data, eventId: id },
-    })
-    created.push(participant)
+    try {
+      const participant = await prisma.eventParticipant.create({
+        data: { ...parsed.data, eventId: id },
+      })
+      created.push(participant)
+    } catch (err: any) {
+      console.error("[PARTICIPANTS] Prisma create error:", err?.message || err)
+      errors.push(err?.message || "Database error")
+    }
+  }
+
+  if (created.length === 0) {
+    return NextResponse.json({
+      success: false,
+      error: errors.length > 0 ? errors.join("; ") : "No participants were added",
+    }, { status: 400 })
   }
 
   // Update registered count

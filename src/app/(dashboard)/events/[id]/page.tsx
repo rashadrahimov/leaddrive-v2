@@ -72,6 +72,8 @@ export default function EventDetailPage() {
   const [pEmail, setPEmail] = useState("")
   const [pPhone, setPPhone] = useState("")
   const [pRole, setPRole] = useState("attendee")
+  const [addingParticipant, setAddingParticipant] = useState(false)
+  const [addError, setAddError] = useState<string | null>(null)
 
   const getH = () => {
     const h: any = { "Content-Type": "application/json" }
@@ -116,30 +118,69 @@ export default function EventDetailPage() {
   }
 
   const addParticipantFromContact = async (contact: any) => {
-    await fetch(`/api/v1/events/${params.id}/participants`, {
-      method: "POST",
-      headers: getH(),
-      body: JSON.stringify({
-        contactId: contact.id,
-        companyId: contact.companyId || undefined,
-        name: contact.fullName,
-        email: contact.email || "",
-        phone: contact.phone || "",
-        role: pRole,
-      }),
-    })
-    await fetchEvent()
+    if (addingParticipant) return
+    setAddingParticipant(true)
+    setAddError(null)
+    try {
+      const res = await fetch(`/api/v1/events/${params.id}/participants`, {
+        method: "POST",
+        headers: getH(),
+        body: JSON.stringify({
+          contactId: contact.id,
+          companyId: contact.companyId || undefined,
+          name: contact.fullName,
+          email: contact.email || "",
+          phone: contact.phone || "",
+          role: pRole,
+        }),
+      })
+      const json = await res.json()
+      console.log("[ADD_PARTICIPANT] CRM response:", res.status, json)
+      if (!res.ok || !json.success) {
+        setAddError(json.error || `Error ${res.status}`)
+        return
+      }
+      if (Array.isArray(json.data) && json.data.length === 0) {
+        setAddError("Participant was not added — check data")
+        return
+      }
+      await fetchEvent()
+    } catch (err: any) {
+      console.error("[ADD_PARTICIPANT] CRM error:", err)
+      setAddError(err.message || "Network error")
+    } finally {
+      setAddingParticipant(false)
+    }
   }
 
   const addManualParticipant = async () => {
-    if (!pName.trim()) return
-    await fetch(`/api/v1/events/${params.id}/participants`, {
-      method: "POST",
-      headers: getH(),
-      body: JSON.stringify({ name: pName, email: pEmail, phone: pPhone, role: pRole }),
-    })
-    setPName(""); setPEmail(""); setPPhone("")
-    await fetchEvent()
+    if (!pName.trim() || addingParticipant) return
+    setAddingParticipant(true)
+    setAddError(null)
+    try {
+      const res = await fetch(`/api/v1/events/${params.id}/participants`, {
+        method: "POST",
+        headers: getH(),
+        body: JSON.stringify({ name: pName, email: pEmail, phone: pPhone, role: pRole }),
+      })
+      const json = await res.json()
+      console.log("[ADD_PARTICIPANT] Manual response:", res.status, json)
+      if (!res.ok || !json.success) {
+        setAddError(json.error || `Error ${res.status}`)
+        return
+      }
+      if (Array.isArray(json.data) && json.data.length === 0) {
+        setAddError("Participant was not added — check data")
+        return
+      }
+      setPName(""); setPEmail(""); setPPhone("")
+      await fetchEvent()
+    } catch (err: any) {
+      console.error("[ADD_PARTICIPANT] Manual error:", err)
+      setAddError(err.message || "Network error")
+    } finally {
+      setAddingParticipant(false)
+    }
   }
 
   const sendInvitesToAll = async () => {
@@ -467,6 +508,15 @@ export default function EventDetailPage() {
             </div>
           )}
 
+          {/* Add error message */}
+          {addError && (
+            <div className="flex items-center gap-2 p-2.5 rounded-lg bg-red-50 text-red-700 text-sm">
+              <XCircle className="h-4 w-4" />
+              {addError}
+              <button onClick={() => setAddError(null)} className="ml-auto"><X className="h-3.5 w-3.5" /></button>
+            </div>
+          )}
+
           {/* Add participant panel */}
           {showAddPanel && (
             <Card className="border-2 border-dashed border-primary/30 shadow-sm">
@@ -539,7 +589,10 @@ export default function EventDetailPage() {
                       <label className="text-xs text-muted-foreground">Phone</label>
                       <Input className="h-8 w-36" value={pPhone} onChange={e => setPPhone(e.target.value)} />
                     </div>
-                    <Button size="sm" className="h-8" onClick={addManualParticipant}>{tc("add")}</Button>
+                    <Button size="sm" className="h-8" onClick={addManualParticipant} disabled={addingParticipant}>
+                      {addingParticipant ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : null}
+                      {tc("add")}
+                    </Button>
                   </div>
                 )}
               </CardContent>
