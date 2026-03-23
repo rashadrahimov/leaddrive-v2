@@ -58,8 +58,12 @@ interface Deal {
   updatedAt: string
   lostReason: string | null
   tags: string[]
+  contactId: string | null
+  customerNeed: string | null
+  salesChannel: string | null
   company: { id: string; name: string } | null
   campaign: { id: string; name: string } | null
+  contact: { id: string; fullName: string; position: string | null; email: string | null; phone: string | null; avatar: string | null } | null
   teamMembers: TeamMember[]
   contactRoles: ContactRole[]
 }
@@ -578,6 +582,36 @@ export default function DealDetailPage() {
 
         {/* Overview */}
         <TabsContent value="overview" className="space-y-4">
+          {/* Contact person card */}
+          {deal.contact && (
+            <Card className="shadow-sm border-none bg-gradient-to-r from-indigo-50/50 to-purple-50/50 dark:from-indigo-950/20 dark:to-purple-950/20">
+              <CardContent className="pt-5 pb-5">
+                <div className="flex items-center gap-4">
+                  <div className="h-14 w-14 rounded-full bg-indigo-500/10 flex items-center justify-center text-xl font-bold text-indigo-600 flex-shrink-0">
+                    {deal.contact.fullName.split(" ").map(n => n[0]).join("").slice(0, 2)}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-base font-semibold">{deal.contact.fullName}</p>
+                    {deal.contact.position && <p className="text-sm text-muted-foreground">{deal.contact.position}</p>}
+                    <div className="flex items-center gap-4 mt-1.5">
+                      {deal.contact.phone && (
+                        <a href={`tel:${deal.contact.phone}`} className="text-xs text-primary hover:underline flex items-center gap-1">
+                          📞 {deal.contact.phone}
+                        </a>
+                      )}
+                      {deal.contact.email && (
+                        <a href={`mailto:${deal.contact.email}`} className="text-xs text-primary hover:underline flex items-center gap-1">
+                          📧 {deal.contact.email}
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                  <Badge variant="outline" className="flex-shrink-0 text-xs">Contact Person</Badge>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Deal info */}
             <Card className="shadow-sm border-none bg-card">
@@ -594,6 +628,8 @@ export default function DealDetailPage() {
                   { icon: <Clock className="h-4 w-4 text-muted-foreground" />, label: "Created", value: new Date(deal.createdAt).toLocaleDateString("ru-RU") },
                   { icon: <Building2 className="h-4 w-4 text-muted-foreground" />, label: "Company", value: deal.company?.name || "—" },
                   { icon: <Target className="h-4 w-4 text-muted-foreground" />, label: "Campaign", value: deal.campaign?.name || "—" },
+                  { icon: <Target className="h-4 w-4 text-muted-foreground" />, label: "Customer need", value: deal.customerNeed || "—" },
+                  { icon: <Target className="h-4 w-4 text-muted-foreground" />, label: "Sales channel", value: deal.salesChannel || "—" },
                 ].map(({ icon, label, value }) => (
                   <div key={label} className="flex items-center gap-3">
                     {icon}

@@ -17,6 +17,9 @@ const updateDealSchema = z.object({
   notes: z.string().max(5000).optional(),
   tags: z.array(z.string()).optional(),
   confidenceLevel: z.number().min(0).max(100).optional(),
+  contactId: z.string().nullable().optional(),
+  customerNeed: z.string().max(500).optional(),
+  salesChannel: z.string().max(100).optional(),
 })
 
 const dealInclude = {
@@ -54,7 +57,30 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       user: userMap[m.userId] || { id: m.userId, name: null, email: "", avatar: null, role: null },
     }))
 
-    return NextResponse.json({ success: true, data: { ...deal, teamMembers: enrichedTeam } })
+    // Enrich contact info if contactId exists
+    let contact = null
+    if (deal.contactId) {
+      contact = await prisma.contact.findFirst({
+        where: { id: deal.contactId },
+        select: { id: true, fullName: true, position: true, email: true, phone: true, avatar: true, companyId: true },
+      })
+    }
+
+    // Enrich contact roles with contact info
+    const roleContactIds = deal.contactRoles.map(r => r.contactId)
+    const roleContacts = roleContactIds.length > 0
+      ? await prisma.contact.findMany({
+          where: { id: { in: roleContactIds } },
+          select: { id: true, fullName: true, position: true, email: true, phone: true },
+        })
+      : []
+    const roleContactMap = Object.fromEntries(roleContacts.map(c => [c.id, c]))
+    const enrichedRoles = deal.contactRoles.map(r => ({
+      ...r,
+      contact: roleContactMap[r.contactId] || { id: r.contactId, fullName: "Unknown", position: null, email: null, phone: null },
+    }))
+
+    return NextResponse.json({ success: true, data: { ...deal, teamMembers: enrichedTeam, contact, contactRoles: enrichedRoles } })
   } catch (e) {
     console.error("GET deal error:", e)
     return NextResponse.json({ error: String(e) }, { status: 500 })
@@ -94,6 +120,9 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
         ...(parsed.data.notes && { notes: parsed.data.notes }),
         ...(parsed.data.tags !== undefined && { tags: parsed.data.tags }),
         ...(parsed.data.confidenceLevel !== undefined && { confidenceLevel: parsed.data.confidenceLevel }),
+        ...(parsed.data.contactId !== undefined && { contactId: parsed.data.contactId }),
+        ...(parsed.data.customerNeed && { customerNeed: parsed.data.customerNeed }),
+        ...(parsed.data.salesChannel && { salesChannel: parsed.data.salesChannel }),
       },
     })
 
