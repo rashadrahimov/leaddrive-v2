@@ -36,6 +36,9 @@ interface Offer {
   notes: string | null
   contactId: string | null
   companyId: string | null
+  clientName: string | null
+  contactPerson: string | null
+  contractNumber: string | null
   discount: number | null
   items: OfferItem[]
   createdAt: string

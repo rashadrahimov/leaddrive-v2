@@ -109,7 +109,7 @@ export function OfferForm({
     : { "Content-Type": "application/json" }
 
   useEffect(() => {
-    const h = orgId ? { "x-organization-id": orgId } : {}
+    const h: Record<string, string> = orgId ? { "x-organization-id": orgId } : {}
     Promise.all([
       fetch("/api/v1/companies?limit=500", { headers: h }).then(r => r.json()),
       fetch("/api/v1/products", { headers: h }).then(r => r.json()),
