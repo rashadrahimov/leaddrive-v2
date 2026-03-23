@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useSession } from "next-auth/react"
+import { useTranslations } from "next-intl"
 import { DollarSign, TrendingUp, BarChart3, Target, Users, Eye, MousePointer } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -30,6 +31,8 @@ interface Summary {
 }
 
 export default function CampaignROIPage() {
+  const t = useTranslations("campaigns")
+  const tc = useTranslations("common")
   const { data: session } = useSession()
   const orgId = session?.user?.organizationId
   const [campaigns, setCampaigns] = useState<CampaignROI[]>([])
@@ -58,7 +61,7 @@ export default function CampaignROIPage() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <h1 className="text-2xl font-bold tracking-tight">ROI кампаний</h1>
+        <h1 className="text-2xl font-bold tracking-tight">{t("title")} ROI</h1>
         <div className="animate-pulse"><div className="h-96 bg-muted rounded-lg" /></div>
       </div>
     )
@@ -72,8 +75,8 @@ export default function CampaignROIPage() {
           <BarChart3 className="h-6 w-6 text-primary" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">ROI кампаний</h1>
-          <p className="text-sm text-muted-foreground">Анализ окупаемости инвестиций в кампании</p>
+          <h1 className="text-2xl font-bold tracking-tight">{t("title")} ROI</h1>
+          <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
         </div>
       </div>
 
@@ -81,19 +84,19 @@ export default function CampaignROIPage() {
       <div className="grid gap-4 md:grid-cols-4">
         <div className="border rounded-lg p-5 bg-card">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-muted-foreground">Общий доход</span>
+            <span className="text-sm text-muted-foreground">{tc("revenue")}</span>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </div>
           <div className="text-3xl font-bold text-green-600">${summary.totalRevenue.toLocaleString()}</div>
-          <p className="text-xs text-muted-foreground mt-1">Из выигранных сделок</p>
+          <p className="text-xs text-muted-foreground mt-1">{tc("total")}</p>
         </div>
         <div className="border rounded-lg p-5 bg-card">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-muted-foreground">Стоимость</span>
+            <span className="text-sm text-muted-foreground">{tc("cost")}</span>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </div>
           <div className="text-3xl font-bold">${summary.totalCost.toLocaleString()}</div>
-          <p className="text-xs text-muted-foreground mt-1">Бюджет кампаний</p>
+          <p className="text-xs text-muted-foreground mt-1">{t("budget")}</p>
         </div>
         <div className="border rounded-lg p-5 bg-card">
           <div className="flex items-center justify-between mb-2">
@@ -103,15 +106,15 @@ export default function CampaignROIPage() {
           <div className={cn("text-3xl font-bold", summary.totalRoi >= 0 ? "text-green-600" : "text-red-500")}>
             {summary.totalRoi.toFixed(1)}%
           </div>
-          <p className="text-xs text-muted-foreground mt-1">(Доход - Стоимость) / Стоимость</p>
+          <p className="text-xs text-muted-foreground mt-1">({tc("revenue")} - {tc("cost")}) / {tc("cost")}</p>
         </div>
         <div className="border rounded-lg p-5 bg-card">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-muted-foreground">Кампании</span>
+            <span className="text-sm text-muted-foreground">{t("title")}</span>
             <Target className="h-4 w-4 text-muted-foreground" />
           </div>
           <div className="text-3xl font-bold text-primary">{summary.campaignCount}</div>
-          <p className="text-xs text-muted-foreground mt-1">Всего кампаний</p>
+          <p className="text-xs text-muted-foreground mt-1">{tc("total")}</p>
         </div>
       </div>
 
@@ -119,7 +122,7 @@ export default function CampaignROIPage() {
       <div className="border rounded-lg p-4 bg-muted/30 flex items-center gap-8 text-sm">
         <div className="flex items-center gap-1.5">
           <Users className="h-4 w-4 text-muted-foreground" />
-          <span className="text-muted-foreground">Доставляемость:</span>
+          <span className="text-muted-foreground">{t("sent")}:</span>
           <span className="font-bold text-primary">
             {campaigns.reduce((s, c) => s + c.totalRecipients, 0) > 0
               ? Math.round(totalSent / campaigns.reduce((s, c) => s + c.totalRecipients, 0) * 100)
@@ -128,12 +131,12 @@ export default function CampaignROIPage() {
         </div>
         <div className="flex items-center gap-1.5">
           <Eye className="h-4 w-4 text-muted-foreground" />
-          <span className="text-muted-foreground">Открываемость:</span>
+          <span className="text-muted-foreground">{tc("openRate")}:</span>
           <span className="font-bold text-primary">{totalSent > 0 ? (totalOpened / totalSent * 100).toFixed(1) : 0}%</span>
         </div>
         <div className="flex items-center gap-1.5">
           <MousePointer className="h-4 w-4 text-muted-foreground" />
-          <span className="text-muted-foreground">Кликабельность:</span>
+          <span className="text-muted-foreground">{tc("clickRate")}:</span>
           <span className="font-bold text-primary">{totalSent > 0 ? (totalClicked / totalSent * 100).toFixed(1) : 0}%</span>
         </div>
       </div>

@@ -15,6 +15,7 @@ interface HeaderProps {
 
 export function Header({ orgName = "Organization", userName = "User" }: HeaderProps) {
   const t = useTranslations("common")
+  const tAuth = useTranslations("auth")
   const { theme, setTheme } = useTheme()
 
   return (
@@ -52,7 +53,7 @@ export function Header({ orgName = "Organization", userName = "User" }: HeaderPr
             {userName.charAt(0).toUpperCase()}
           </div>
           <span className="text-sm font-medium hidden md:block">{userName}</span>
-          <Button variant="ghost" size="icon" onClick={() => signOut({ callbackUrl: "/login" })} title="Sign out">
+          <Button variant="ghost" size="icon" onClick={() => signOut({ callbackUrl: "/login" })} title={tAuth("signOut")}>
             <LogOut className="h-4 w-4" />
           </Button>
         </div>

@@ -107,6 +107,7 @@
     "deleting": "Удаление...",
     "saving": "Сохранение...",
     "saveFailed": "Ошибка сохранения",
+    "signOut": "Выйти",
     "required": "Обязательное поле",
     "optional": "Необязательно",
     "selectAll": "Выбрать всё",
@@ -1116,7 +1117,9 @@
     "contactsMatch": "контактов соответствует",
     "contains": "Содержит...",
     "placeholderCeo": "CEO, Менеджер...",
-    "placeholderTag": "Имя тега..."
+    "placeholderTag": "Имя тега...",
+    "namePlaceholder": "Название сегмента",
+    "descPlaceholder": "Описание (необязательно)"
   },
   "notifications": {
     "title": "Уведомления",

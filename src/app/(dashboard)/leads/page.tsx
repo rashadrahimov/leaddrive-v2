@@ -57,6 +57,7 @@ export default function LeadsPage() {
   const { data: session } = useSession()
   const orgId = session?.user?.organizationId
   const t = useTranslations("leads")
+  const tc = useTranslations("common")
 
   const statusLabels: Record<string, string> = {
     new: t("statusNew"), contacted: t("statusContacted"), qualified: t("statusQualified"),
@@ -342,7 +343,7 @@ export default function LeadsPage() {
                         variant="outline"
                         className="text-xs"
                         onClick={() => { setEditData(lead); setShowForm(true) }}
-                        title="Редактировать"
+                        title={tc("edit")}
                       >
                         <Pencil className="h-3 w-3" />
                       </Button>
@@ -351,7 +352,7 @@ export default function LeadsPage() {
                         variant="ghost"
                         className="text-red-500 hover:text-red-700"
                         onClick={() => { setDeleteId(lead.id); setDeleteName(lead.contactName) }}
-                        title="Удалить"
+                        title={tc("delete")}
                       >
                         <Trash2 className="h-3 w-3" />
                       </Button>

@@ -107,6 +107,7 @@
     "deleting": "Deleting...",
     "saving": "Saving...",
     "saveFailed": "Failed to save",
+    "signOut": "Sign out",
     "required": "Required field",
     "optional": "Optional",
     "selectAll": "Select all",
@@ -1116,7 +1117,9 @@
     "contactsMatch": "contacts match",
     "contains": "Contains...",
     "placeholderCeo": "CEO, Manager...",
-    "placeholderTag": "Tag name..."
+    "placeholderTag": "Tag name...",
+    "namePlaceholder": "Segment name",
+    "descPlaceholder": "Description (optional)"
   },
   "notifications": {
     "title": "Notifications",

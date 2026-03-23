@@ -287,14 +287,14 @@ export default function LeadScoringPage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b text-left">
-                    <th className="pb-3 pr-4 font-medium text-muted-foreground">Грейд</th>
-                    <th className="pb-3 pr-4 font-medium text-muted-foreground">Балл</th>
-                    <th className="pb-3 pr-4 font-medium text-muted-foreground">Имя</th>
-                    <th className="pb-3 pr-4 font-medium text-muted-foreground">Компания</th>
-                    <th className="pb-3 pr-4 font-medium text-muted-foreground">Источник</th>
-                    <th className="pb-3 pr-4 font-medium text-muted-foreground">Конверсия %</th>
-                    <th className="pb-3 pr-4 font-medium text-muted-foreground">AI Прогноз</th>
-                    <th className="pb-3 font-medium text-muted-foreground">Действия</th>
+                    <th className="pb-3 pr-4 font-medium text-muted-foreground">{t("colScore")}</th>
+                    <th className="pb-3 pr-4 font-medium text-muted-foreground">{tc("score")}</th>
+                    <th className="pb-3 pr-4 font-medium text-muted-foreground">{tc("name")}</th>
+                    <th className="pb-3 pr-4 font-medium text-muted-foreground">{t("colCompany")}</th>
+                    <th className="pb-3 pr-4 font-medium text-muted-foreground">{t("colSource")}</th>
+                    <th className="pb-3 pr-4 font-medium text-muted-foreground">{t("colConversion")}</th>
+                    <th className="pb-3 pr-4 font-medium text-muted-foreground">{tai("stats")}</th>
+                    <th className="pb-3 font-medium text-muted-foreground">{tc("actions")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -340,7 +340,7 @@ export default function LeadScoringPage() {
                             disabled={rescoringId === lead.id}
                           >
                             <RefreshCw className={cn("h-4 w-4", rescoringId === lead.id && "animate-spin")} />
-                            <span className="ml-1">Пересчитать</span>
+                            <span className="ml-1">{tc("refresh")}</span>
                           </Button>
                         </td>
                       </tr>

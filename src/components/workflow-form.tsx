@@ -99,7 +99,7 @@ export function WorkflowForm({ open, onOpenChange, onSaved, initialData, orgId }
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogHeader>
-        <DialogTitle>{isEdit ? tf("editWorkflowRule") : tf("newWorkflowRule")}</DialogTitle>
+        <DialogTitle>{isEdit ? "Edit Workflow Rule" : "New Workflow Rule"}</DialogTitle>
       </DialogHeader>
       <form onSubmit={handleSubmit}>
         <DialogContent>

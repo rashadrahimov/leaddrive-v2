@@ -107,6 +107,7 @@
     "deleting": "Silinir...",
     "saving": "Saxlanılır...",
     "saveFailed": "Saxlama uğursuz oldu",
+    "signOut": "Çıxış",
     "required": "Mütləq sahə",
     "optional": "İstəyə bağlı",
     "selectAll": "Hamısını seç",
@@ -1115,7 +1116,9 @@
     "contactsMatch": "kontakt uyğundur",
     "contains": "Ehtiva edir...",
     "placeholderCeo": "CEO, Menecer...",
-    "placeholderTag": "Etiket adı..."
+    "placeholderTag": "Etiket adı...",
+    "namePlaceholder": "Seqment adı",
+    "descPlaceholder": "Təsvir (istəyə bağlı)"
   },
   "notifications": {
     "title": "Bildirişlər",

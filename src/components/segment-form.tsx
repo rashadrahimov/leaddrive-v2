@@ -222,14 +222,14 @@ export function SegmentForm({ open, onOpenChange, onSaved, initialData, orgId }:
               <Input
                 value={name}
                 onChange={e => setName(e.target.value)}
-                placeholder="Название сегмента *"
+                placeholder={`${t("namePlaceholder")} *`}
                 className="text-base font-medium h-11"
                 required
               />
               <Textarea
                 value={description}
                 onChange={e => setDescription(e.target.value)}
-                placeholder="Описание (необязательно)"
+                placeholder={t("descPlaceholder")}
                 rows={2}
                 className="resize-none"
               />

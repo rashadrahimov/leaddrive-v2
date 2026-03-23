@@ -376,13 +376,13 @@ export function AiConfigForm({ open, onOpenChange, onSaved, initialData, orgId }
           {/* ── Parameters ── */}
           <div>
             <h3 className="font-semibold mb-3 flex items-center gap-2">
-              <span className="text-sm">&#9881;&#65039;</span> Параметры
+              <span className="text-sm">&#9881;&#65039;</span> {t("parameters")}
             </h3>
             <div className="grid grid-cols-3 gap-5">
               {/* Max Tokens */}
               <div>
                 <div className="flex justify-between mb-1.5">
-                  <span className="text-xs font-medium text-gray-600">Длина ответа</span>
+                  <span className="text-xs font-medium text-gray-600">{t("responseLength")}</span>
                   <span className="text-sm font-bold text-blue-600">{form.maxTokens}</span>
                 </div>
                 <input
@@ -392,13 +392,13 @@ export function AiConfigForm({ open, onOpenChange, onSaved, initialData, orgId }
                   className="w-full h-2 bg-gray-200 rounded-full appearance-none cursor-pointer accent-blue-500"
                 />
                 <div className="flex justify-between text-[10px] text-gray-400 mt-0.5">
-                  <span>Коротко</span><span>Подробно</span>
+                  <span>{t("short")}</span><span>{t("detailed")}</span>
                 </div>
               </div>
               {/* Temperature */}
               <div>
                 <div className="flex justify-between mb-1.5">
-                  <span className="text-xs font-medium text-gray-600">Креативность</span>
+                  <span className="text-xs font-medium text-gray-600">{t("creativity")}</span>
                   <span className="text-sm font-bold text-blue-600">{form.temperature}</span>
                 </div>
                 <input
@@ -408,13 +408,13 @@ export function AiConfigForm({ open, onOpenChange, onSaved, initialData, orgId }
                   className="w-full h-2 bg-gray-200 rounded-full appearance-none cursor-pointer accent-blue-500"
                 />
                 <div className="flex justify-between text-[10px] text-gray-400 mt-0.5">
-                  <span>Точно</span><span>Креативно</span>
+                  <span>{t("precise")}</span><span>{t("creative")}</span>
                 </div>
               </div>
               {/* KB Articles */}
               <div>
                 <div className="flex justify-between mb-1.5">
-                  <span className="text-xs font-medium text-gray-600">Статей из KB</span>
+                  <span className="text-xs font-medium text-gray-600">{t("kbArticles")}</span>
                   <span className="text-sm font-bold text-blue-600">{form.kbMaxArticles}</span>
                 </div>
                 <input
@@ -433,9 +433,9 @@ export function AiConfigForm({ open, onOpenChange, onSaved, initialData, orgId }
           {/* ── Capabilities (simplified tools) ── */}
           <div>
             <h3 className="font-semibold mb-1 flex items-center gap-2">
-              <span className="text-sm">&#128295;</span> Возможности агента
+              <span className="text-sm">&#128295;</span> {t("agentCapabilities")}
             </h3>
-            <p className="text-xs text-gray-500 mb-3">Что AI-агент может делать в разговоре с клиентом</p>
+            <p className="text-xs text-gray-500 mb-3">{t("agentCapabilitiesDesc")}</p>
 
             <div className="space-y-2.5">
               {TOOL_GROUPS.map(group => {
@@ -464,8 +464,8 @@ export function AiConfigForm({ open, onOpenChange, onSaved, initialData, orgId }
                       <Icon className="h-4 w-4" />
                     </div>
                     <div className="min-w-0">
-                      <p className="font-medium text-sm">{group.name}</p>
-                      <p className="text-[11px] text-gray-500">{group.desc}</p>
+                      <p className="font-medium text-sm">{t(group.nameKey as any)}</p>
+                      <p className="text-[11px] text-gray-500">{t(group.descKey as any)}</p>
                     </div>
                   </button>
                 )
@@ -477,7 +477,7 @@ export function AiConfigForm({ open, onOpenChange, onSaved, initialData, orgId }
           <div>
             <div className="flex items-center justify-between mb-1">
               <h3 className="font-semibold flex items-center gap-2">
-                <ShieldAlert className="h-4 w-4 text-red-500" /> Эскалация на оператора
+                <ShieldAlert className="h-4 w-4 text-red-500" /> {t("escalationTitle")}
               </h3>
               <label className="flex items-center gap-2 cursor-pointer">
                 <div className={cn(
@@ -490,12 +490,12 @@ export function AiConfigForm({ open, onOpenChange, onSaved, initialData, orgId }
                   )} />
                 </div>
                 <span className={cn("text-xs font-medium", form.escalationEnabled ? "text-red-600" : "text-gray-400")}>
-                  {form.escalationEnabled ? "Включена" : "Выключена"}
+                  {form.escalationEnabled ? t("escalationEnabled") : t("escalationDisabled")}
                 </span>
               </label>
             </div>
             <p className="text-xs text-gray-500 mb-3">
-              Когда AI должен автоматически перевести разговор на живого оператора и создать тикет
+              {t("escalationDesc")}
             </p>
 
             {form.escalationEnabled && (
@@ -531,12 +531,12 @@ export function AiConfigForm({ open, onOpenChange, onSaved, initialData, orgId }
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
-                          <p className="font-medium text-sm">{preset.label}</p>
+                          <p className="font-medium text-sm">{t(preset.labelKey as any)}</p>
                           {preset.alwaysOn && (
-                            <span className="text-[9px] font-bold text-red-600 bg-red-100 px-1.5 py-0.5 rounded-full">ВСЕГДА</span>
+                            <span className="text-[9px] font-bold text-red-600 bg-red-100 px-1.5 py-0.5 rounded-full">{t("alwaysOn")}</span>
                           )}
                         </div>
-                        <p className="text-[11px] text-gray-500">{preset.desc}</p>
+                        <p className="text-[11px] text-gray-500">{t(preset.descKey as any)}</p>
                       </div>
                     </button>
                   )
@@ -571,7 +571,7 @@ export function AiConfigForm({ open, onOpenChange, onSaved, initialData, orgId }
                     value={customRule}
                     onChange={(e) => setCustomRule(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && addCustomRule()}
-                    placeholder="Свое условие, например: Клиент упоминает юридические вопросы"
+                    placeholder={t("customRulePlaceholder")}
                     className="flex-1 h-10 rounded-xl text-sm"
                   />
                   <Button
@@ -592,27 +592,27 @@ export function AiConfigForm({ open, onOpenChange, onSaved, initialData, orgId }
           {/* ── System Prompt ── */}
           <div>
             <h3 className="font-semibold mb-1 flex items-center gap-2">
-              <MessageCircle className="h-4 w-4 text-violet-500" /> Системный промпт
-              <span className="text-[10px] text-gray-400 font-normal">(необязательно)</span>
+              <MessageCircle className="h-4 w-4 text-violet-500" /> {t("systemPrompt")}
+              <span className="text-[10px] text-gray-400 font-normal">({t("optional")})</span>
             </h3>
-            <p className="text-xs text-gray-500 mb-2">Дополнительные инструкции для AI. Если пусто — используется промпт по умолчанию.</p>
+            <p className="text-xs text-gray-500 mb-2">{t("systemPromptDesc")}</p>
             <Textarea
               value={form.systemPrompt}
               onChange={(e) => setForm(f => ({ ...f, systemPrompt: e.target.value }))}
               rows={4}
-              placeholder="Вы — помощник техподдержки LeadDrive CRM. Отвечайте профессионально и кратко..."
+              placeholder={t("systemPromptPlaceholder")}
               className="rounded-xl text-sm"
             />
           </div>
 
           {/* ── Notes ── */}
           <div>
-            <label className="text-sm font-semibold text-gray-700 mb-2 block">Заметки</label>
+            <label className="text-sm font-semibold text-gray-700 mb-2 block">{t("notes")}</label>
             <Textarea
               value={form.notes}
               onChange={(e) => setForm(f => ({ ...f, notes: e.target.value }))}
               rows={2}
-              placeholder="Для кого этот агент, примечания..."
+              placeholder={t("notesPlaceholder")}
               className="rounded-xl text-sm"
             />
           </div>
@@ -621,7 +621,7 @@ export function AiConfigForm({ open, onOpenChange, onSaved, initialData, orgId }
         {/* Footer */}
         <div className="flex items-center justify-between p-6 border-t bg-gray-50/50 rounded-b-2xl">
           <Button variant="outline" onClick={() => onOpenChange(false)} className="rounded-xl px-6">
-            Отмена
+            {t("cancel")}
           </Button>
           <Button
             onClick={handleSubmit}
@@ -629,7 +629,7 @@ export function AiConfigForm({ open, onOpenChange, onSaved, initialData, orgId }
             className="rounded-xl px-8 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 shadow-lg"
           >
             <Save className="h-4 w-4 mr-2" />
-            {saving ? "Сохранение..." : isEdit ? "Сохранить" : "Создать агента"}
+            {saving ? t("saving") : isEdit ? t("saveAgent") : t("createAgent")}
           </Button>
         </div>
       </div>

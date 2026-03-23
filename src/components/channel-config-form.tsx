@@ -244,7 +244,7 @@ export function ChannelConfigForm({ open, onOpenChange, onSaved, initialData, or
               <>
                 <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3">
                   <p className="text-xs text-green-700 dark:text-green-300 font-medium mb-1">Meta WhatsApp Business API</p>
-                  <p className="text-xs text-green-600 dark:text-green-400">Данные из developers.facebook.com → WhatsApp → API Setup</p>
+                  <p className="text-xs text-green-600 dark:text-green-400">Data from developers.facebook.com → WhatsApp → API Setup</p>
                 </div>
                 <div>
                   <Label htmlFor="apiKey" className="text-sm font-medium">{tf("whatsappAccessToken")} *</Label>
@@ -310,7 +310,7 @@ export function ChannelConfigForm({ open, onOpenChange, onSaved, initialData, or
                     id="apiKey"
                     value={form.apiKey}
                     onChange={(e) => update("apiKey", e.target.value)}
-                    placeholder="Auth Token из Twilio"
+                    placeholder="Auth Token from Twilio"
                     className="mt-1.5 font-mono text-sm"
                     type="password"
                   />
