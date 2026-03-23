@@ -63,6 +63,7 @@ interface CalendarItem {
   endDate?: string
   hour: number
   endHour?: number
+  allDay?: boolean
   status?: string
   priority?: string
   url?: string
@@ -123,8 +124,12 @@ export default function AgentCalendarPage() {
   const getItemsForDay = (date: Date) =>
     items.filter(item => isSameDay(new Date(item.date), date))
 
+  const getAllDayItems = (date: Date) =>
+    items.filter(item => item.allDay && isSameDay(new Date(item.date), date))
+
   const getItemsForSlot = (date: Date, hour: number) =>
     items.filter(item => {
+      if (item.allDay) return false
       const d = new Date(item.date)
       return isSameDay(d, date) && d.getHours() === hour
     })
@@ -241,6 +246,68 @@ export default function AgentCalendarPage() {
                   )
                 })}
               </div>
+
+              {/* All-day row */}
+              {(() => {
+                const hasAnyAllDay = weekDates.some(d => getAllDayItems(d).length > 0)
+                if (!hasAnyAllDay) return null
+                return (
+                  <div className="grid grid-cols-[60px_repeat(7,1fr)] border-b bg-amber-50/30">
+                    <div className="p-2 text-[10px] text-muted-foreground text-right pr-3 pt-1 font-medium">
+                      ALL DAY
+                    </div>
+                    {weekDates.map((date, i) => {
+                      const isToday = isSameDay(date, today)
+                      const dayAllDay = getAllDayItems(date)
+                      // Group by type and count
+                      const ticketCount = dayAllDay.filter(i => i.type === "ticket").length
+                      const taskCount = dayAllDay.filter(i => i.type === "task").length
+
+                      return (
+                        <div key={i} className={`border-l p-1 ${isToday ? "bg-primary/[0.03]" : ""}`}>
+                          {ticketCount > 0 && (
+                            <div
+                              className="rounded-md border-l-[3px] border-l-red-500 bg-red-50 px-1.5 py-1 mb-0.5 text-xs cursor-pointer hover:shadow-md transition-all"
+                              onClick={() => router.push("/support/tickets")}
+                            >
+                              <div className="flex items-center gap-1">
+                                <Ticket className="h-3 w-3 text-red-600 flex-shrink-0" />
+                                <span className="font-medium text-red-700">{ticketCount} open</span>
+                              </div>
+                              {/* Priority breakdown */}
+                              <div className="flex gap-1 mt-0.5 flex-wrap">
+                                {(() => {
+                                  const critical = dayAllDay.filter(i => i.type === "ticket" && i.priority === "critical").length
+                                  const high = dayAllDay.filter(i => i.type === "ticket" && i.priority === "high").length
+                                  const medium = dayAllDay.filter(i => i.type === "ticket" && i.priority === "medium").length
+                                  return (
+                                    <>
+                                      {critical > 0 && <span className="text-[9px] bg-red-200 text-red-800 rounded px-1">{critical} critical</span>}
+                                      {high > 0 && <span className="text-[9px] bg-orange-200 text-orange-800 rounded px-1">{high} high</span>}
+                                      {medium > 0 && <span className="text-[9px] bg-yellow-200 text-yellow-800 rounded px-1">{medium} med</span>}
+                                    </>
+                                  )
+                                })()}
+                              </div>
+                            </div>
+                          )}
+                          {taskCount > 0 && (
+                            <div
+                              className="rounded-md border-l-[3px] border-l-orange-500 bg-orange-50 px-1.5 py-1 mb-0.5 text-xs cursor-pointer hover:shadow-md transition-all"
+                              onClick={() => router.push("/tasks")}
+                            >
+                              <div className="flex items-center gap-1">
+                                <CheckSquare className="h-3 w-3 text-orange-600 flex-shrink-0" />
+                                <span className="font-medium text-orange-700">{taskCount} tasks</span>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                )
+              })()}
 
               {/* Time slots */}
               {HOURS.map(hour => (

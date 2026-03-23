@@ -40,15 +40,17 @@ export async function GET(req: NextRequest) {
       const isOpen = !["closed", "resolved"].includes(t.status)
 
       if (isOpen) {
-        // Open tickets: show on today if today is in the week range
+        // Open tickets: show as all-day on today
         if (todayStart >= dateFrom && todayStart <= dateTo) {
+          const hasSpecificTime = !!t.slaDueAt
           const displayDate = t.slaDueAt || todayStart
           items.push({
             id: t.id,
             type: "ticket",
             title: t.subject || "Ticket",
             date: displayDate.toISOString(),
-            hour: new Date(displayDate).getHours() || 9,
+            hour: hasSpecificTime ? new Date(displayDate).getHours() : -1,
+            allDay: !hasSpecificTime,
             status: t.status,
             priority: t.priority,
             url: `/support/tickets/${t.id}`,
@@ -90,7 +92,7 @@ export async function GET(req: NextRequest) {
       const isOpen = !["completed", "cancelled"].includes(t.status)
 
       if (isOpen) {
-        // Open tasks with dueDate in range
+        const hasDueDate = !!t.dueDate
         const d = t.dueDate || todayStart
         if (d >= dateFrom && d <= dateTo) {
           items.push({
@@ -98,19 +100,20 @@ export async function GET(req: NextRequest) {
             type: "task",
             title: t.title || "Task",
             date: d.toISOString(),
-            hour: new Date(d).getHours() || 10,
+            hour: hasDueDate ? new Date(d).getHours() : -1,
+            allDay: !hasDueDate,
             status: t.status,
             priority: t.priority,
             url: `/tasks`,
           })
-        } else if (todayStart >= dateFrom && todayStart <= dateTo && !t.dueDate) {
-          // Open task without dueDate: show on today
+        } else if (todayStart >= dateFrom && todayStart <= dateTo && !hasDueDate) {
           items.push({
             id: t.id,
             type: "task",
             title: t.title || "Task",
             date: todayStart.toISOString(),
-            hour: 10,
+            hour: -1,
+            allDay: true,
             status: t.status,
             priority: t.priority,
             url: `/tasks`,
