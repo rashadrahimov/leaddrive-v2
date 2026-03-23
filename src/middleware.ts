@@ -17,6 +17,11 @@ export default auth((req) => {
     return NextResponse.next()
   }
 
+  // Allow public event registration pages
+  if (/^\/events\/[^/]+\/register/.test(pathname)) {
+    return NextResponse.next()
+  }
+
   // Allow public API (web-to-lead, calendar feed, journey processor, webhooks)
   if (pathname.startsWith("/api/v1/public/") || pathname.startsWith("/api/v1/calendar/feed/") || pathname === "/api/v1/journeys/process" || pathname.startsWith("/api/v1/webhooks/")) {
     return NextResponse.next()

@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input"
 import {
   ArrowLeft, Pencil, Trash2, CalendarDays, MapPin, Globe, Users,
   DollarSign, UserPlus, CheckCircle2, XCircle, Clock, TrendingUp,
-  Mail, Phone, Search, X, UserCheck, Send, MailCheck, MailX, Loader2,
+  Mail, Phone, Search, X, UserCheck, Send, MailCheck, MailX, Loader2, Link2, Check,
 } from "lucide-react"
 import { EventForm } from "@/components/event-form"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
@@ -51,6 +51,9 @@ export default function EventDetailPage() {
   const [loading, setLoading] = useState(true)
   const [editOpen, setEditOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
+
+  // Registration link
+  const [linkCopied, setLinkCopied] = useState(false)
 
   // Invitation
   const [sendingInvites, setSendingInvites] = useState(false)
@@ -259,6 +262,15 @@ export default function EventDetailPage() {
           </div>
         </div>
         <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={() => {
+            const url = `${window.location.origin}/events/${event.id}/register`
+            navigator.clipboard.writeText(url)
+            setLinkCopied(true)
+            setTimeout(() => setLinkCopied(false), 2000)
+          }}>
+            {linkCopied ? <Check className="h-3.5 w-3.5 mr-1 text-green-500" /> : <Link2 className="h-3.5 w-3.5 mr-1" />}
+            {linkCopied ? "Copied!" : "Registration Link"}
+          </Button>
           <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
             <Pencil className="h-3.5 w-3.5 mr-1" /> Edit
           </Button>
