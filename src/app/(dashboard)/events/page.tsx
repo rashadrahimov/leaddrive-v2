@@ -10,10 +10,11 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import {
   CalendarDays, Plus, Search, MapPin, Globe, Users, DollarSign,
-  Pencil, Trash2, Clock,
+  Pencil, Trash2, Clock, CheckCircle, XCircle, PlayCircle,
 } from "lucide-react"
 import { EventForm } from "@/components/event-form"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
+import { ColorStatCard } from "@/components/color-stat-card"
 
 const STATUS_STYLES: Record<string, string> = {
   planned: "bg-blue-100 text-blue-700",
@@ -105,6 +106,14 @@ export default function EventsPage() {
         </Button>
       </div>
 
+      {/* Stat cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <ColorStatCard label={t("title")} value={total} icon={<CalendarDays className="h-4 w-4" />} color="blue" />
+        <ColorStatCard label={t("statusPlanned")} value={(statusCounts.planned || 0) + (statusCounts.registration_open || 0)} icon={<PlayCircle className="h-4 w-4" />} color="violet" />
+        <ColorStatCard label={t("statusCompleted")} value={statusCounts.completed || 0} icon={<CheckCircle className="h-4 w-4" />} color="green" />
+        <ColorStatCard label={t("statusCancelled")} value={statusCounts.cancelled || 0} icon={<XCircle className="h-4 w-4" />} color="red" />
+      </div>
+
       {/* Status filters */}
       <div className="flex gap-2 flex-wrap">
         <Button
@@ -139,8 +148,8 @@ export default function EventsPage() {
 
       {/* Event cards */}
       {loading ? (
-        <div className="grid gap-3">
-          {[0,1,2].map(i => <div key={i} className="h-28 bg-muted rounded-xl animate-pulse" />)}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {[0,1,2,3].map(i => <div key={i} className="h-40 bg-muted rounded-xl animate-pulse" />)}
         </div>
       ) : events.length === 0 ? (
         <div className="text-center py-16 text-muted-foreground">
@@ -149,7 +158,7 @@ export default function EventsPage() {
           <p className="text-sm">{t("createFirst")}</p>
         </div>
       ) : (
-        <div className="grid gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {events.map(event => (
             <Card
               key={event.id}
@@ -157,7 +166,7 @@ export default function EventsPage() {
               onClick={() => router.push(`/events/${event.id}`)}
             >
               <CardContent className="p-4">
-                <div className="flex items-start gap-4">
+                <div className="flex items-start gap-3">
                   {/* Date block */}
                   <div className="flex-shrink-0 w-14 h-14 rounded-xl bg-primary/10 flex flex-col items-center justify-center">
                     <span className="text-xs font-medium text-primary uppercase">
@@ -169,15 +178,22 @@ export default function EventsPage() {
                   </div>
 
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h3 className="font-semibold truncate">{event.name}</h3>
-                      <Badge className={STATUS_STYLES[event.status] || ""}>{STATUS_LABELS[event.status] || event.status}</Badge>
+                    <div className="flex items-start justify-between gap-2 mb-1">
+                      <h3 className="font-semibold leading-tight">{event.name}</h3>
+                      <div className="flex gap-1" onClick={e => e.stopPropagation()}>
+                        <Button variant="ghost" size="icon" className="h-7 w-7 flex-shrink-0" onClick={() => setDeleteEvent(event)}>
+                          <Trash2 className="h-3.5 w-3.5 text-red-500" />
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-1.5 mb-2">
+                      <Badge className={`text-xs ${STATUS_STYLES[event.status] || ""}`}>{STATUS_LABELS[event.status] || event.status}</Badge>
                       <Badge variant="outline" className="text-xs">{TYPE_LABELS[event.type] || event.type}</Badge>
                     </div>
                     {event.description && (
-                      <p className="text-sm text-muted-foreground line-clamp-1 mb-2">{event.description}</p>
+                      <p className="text-xs text-muted-foreground line-clamp-1 mb-2">{event.description}</p>
                     )}
-                    <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                    <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
                       {event.location && (
                         <span className="flex items-center gap-1">
                           <MapPin className="h-3 w-3" /> {event.location}
@@ -191,7 +207,7 @@ export default function EventsPage() {
                       <span className="flex items-center gap-1">
                         <Users className="h-3 w-3" />
                         {event._count?.participants || event.registeredCount || 0}
-                        {event.maxParticipants ? ` / ${event.maxParticipants}` : ""} {t("participants")}
+                        {event.maxParticipants ? ` / ${event.maxParticipants}` : ""}
                       </span>
                       <span className="flex items-center gap-1">
                         <Clock className="h-3 w-3" />
@@ -203,12 +219,6 @@ export default function EventsPage() {
                         </span>
                       )}
                     </div>
-                  </div>
-
-                  <div className="flex gap-1" onClick={e => e.stopPropagation()}>
-                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setDeleteEvent(event)}>
-                      <Trash2 className="h-3.5 w-3.5 text-red-500" />
-                    </Button>
                   </div>
                 </div>
               </CardContent>

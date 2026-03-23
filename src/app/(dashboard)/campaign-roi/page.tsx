@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react"
 import { useTranslations } from "next-intl"
 import { DollarSign, TrendingUp, BarChart3, Target, Users, Eye, MousePointer } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { ColorStatCard } from "@/components/color-stat-card"
 
 interface CampaignROI {
   id: string
@@ -81,41 +82,11 @@ export default function CampaignROIPage() {
       </div>
 
       {/* Stats cards */}
-      <div className="grid gap-4 md:grid-cols-4">
-        <div className="border rounded-lg p-5 bg-card">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-muted-foreground">{tc("revenue")}</span>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </div>
-          <div className="text-3xl font-bold text-green-600">${summary.totalRevenue.toLocaleString()}</div>
-          <p className="text-xs text-muted-foreground mt-1">{tc("total")}</p>
-        </div>
-        <div className="border rounded-lg p-5 bg-card">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-muted-foreground">{tc("cost")}</span>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </div>
-          <div className="text-3xl font-bold">${summary.totalCost.toLocaleString()}</div>
-          <p className="text-xs text-muted-foreground mt-1">{t("budget")}</p>
-        </div>
-        <div className="border rounded-lg p-5 bg-card">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-muted-foreground">ROI</span>
-            <BarChart3 className="h-4 w-4 text-muted-foreground" />
-          </div>
-          <div className={cn("text-3xl font-bold", summary.totalRoi >= 0 ? "text-green-600" : "text-red-500")}>
-            {summary.totalRoi.toFixed(1)}%
-          </div>
-          <p className="text-xs text-muted-foreground mt-1">({tc("revenue")} - {tc("cost")}) / {tc("cost")}</p>
-        </div>
-        <div className="border rounded-lg p-5 bg-card">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-muted-foreground">{t("title")}</span>
-            <Target className="h-4 w-4 text-muted-foreground" />
-          </div>
-          <div className="text-3xl font-bold text-primary">{summary.campaignCount}</div>
-          <p className="text-xs text-muted-foreground mt-1">{tc("total")}</p>
-        </div>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <ColorStatCard label={tc("revenue")} value={`$${summary.totalRevenue.toLocaleString()}`} icon={<DollarSign className="h-4 w-4" />} color="green" />
+        <ColorStatCard label={tc("cost")} value={`$${summary.totalCost.toLocaleString()}`} icon={<TrendingUp className="h-4 w-4" />} color="blue" />
+        <ColorStatCard label="ROI" value={`${summary.totalRoi.toFixed(1)}%`} icon={<BarChart3 className="h-4 w-4" />} color={summary.totalRoi >= 0 ? "teal" : "red"} />
+        <ColorStatCard label={t("title")} value={summary.campaignCount} icon={<Target className="h-4 w-4" />} color="violet" />
       </div>
 
       {/* Summary bar */}

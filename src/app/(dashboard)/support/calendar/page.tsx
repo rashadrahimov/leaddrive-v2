@@ -11,6 +11,7 @@ import {
   MessageSquare, FileText, CheckSquare, Users, BarChart3,
   Ticket, CalendarDays, Video, MapPin, AlertTriangle, Loader2,
 } from "lucide-react"
+import { ColorStatCard } from "@/components/color-stat-card"
 
 const HOURS = Array.from({ length: 13 }, (_, i) => i + 7) // 7:00 - 19:00
 
@@ -161,51 +162,11 @@ export default function AgentCalendarPage() {
       </div>
 
       {/* Summary cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <Card className="border-none shadow-sm">
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-red-100 flex items-center justify-center">
-              <Ticket className="h-5 w-5 text-red-600" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold">{counts.tickets}</p>
-              <p className="text-xs text-muted-foreground">Tickets</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="border-none shadow-sm">
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-orange-100 flex items-center justify-center">
-              <CheckSquare className="h-5 w-5 text-orange-600" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold">{counts.tasks}</p>
-              <p className="text-xs text-muted-foreground">Tasks</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="border-none shadow-sm">
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-indigo-100 flex items-center justify-center">
-              <CalendarDays className="h-5 w-5 text-indigo-600" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold">{counts.events}</p>
-              <p className="text-xs text-muted-foreground">Events</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="border-none shadow-sm">
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-green-100 flex items-center justify-center">
-              <Phone className="h-5 w-5 text-green-600" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold">{counts.activities}</p>
-              <p className="text-xs text-muted-foreground">Activities</p>
-            </div>
-          </CardContent>
-        </Card>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <ColorStatCard label="Tickets" value={counts.tickets} icon={<Ticket className="h-4 w-4" />} color="red" />
+        <ColorStatCard label="Tasks" value={counts.tasks} icon={<CheckSquare className="h-4 w-4" />} color="orange" />
+        <ColorStatCard label="Events" value={counts.events} icon={<CalendarDays className="h-4 w-4" />} color="indigo" />
+        <ColorStatCard label="Activities" value={counts.activities} icon={<Phone className="h-4 w-4" />} color="green" />
       </div>
 
       {/* Weekly Calendar Grid */}
