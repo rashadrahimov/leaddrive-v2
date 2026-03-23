@@ -8,6 +8,7 @@ import { StatCard } from "@/components/stat-card"
 import { KanbanBoard } from "@/components/deals/kanban-board"
 import { Select } from "@/components/ui/select"
 import { Handshake, Plus, TrendingUp, TrendingDown } from "lucide-react"
+import { t, getLocale } from "@/lib/locale"
 import { DealForm } from "@/components/deal-form"
 
 const STAGES = [
@@ -83,7 +84,7 @@ export default function DealsPage() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <h1 className="text-2xl font-bold tracking-tight">Deals Pipeline</h1>
+        <h1 className="text-2xl font-bold tracking-tight">{t("Deals Pipeline")}</h1>
         <div className="animate-pulse"><div className="h-96 bg-muted rounded-lg" /></div>
       </div>
     )
@@ -93,7 +94,7 @@ export default function DealsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Deals Pipeline</h1>
+          <h1 className="text-2xl font-bold tracking-tight">{t("Deals Pipeline")}</h1>
           <p className="text-sm text-muted-foreground">{deals.length} deals total</p>
         </div>
         <div className="flex gap-2">
@@ -109,8 +110,8 @@ export default function DealsPage() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-4">
-        <StatCard title="Total Deals" value={deals.length} icon={<Handshake className="h-4 w-4" />} />
-        <StatCard title="Pipeline Value" value={`${totalValue.toLocaleString()} ₼`} icon={<TrendingUp className="h-4 w-4" />} />
+        <StatCard title={t("Total Deals")} value={deals.length} icon={<Handshake className="h-4 w-4" />} />
+        <StatCard title={t("Pipeline Value")} value={`${totalValue.toLocaleString()} ₼`} icon={<TrendingUp className="h-4 w-4" />} />
         <StatCard title="Won" value={`${wonValue.toLocaleString()} ₼`} description={`${wonDeals.length} deals`} trend="up" />
         <StatCard title="Lost" value={deals.filter(d => d.stage === "LOST").length} icon={<TrendingDown className="h-4 w-4" />} trend="down" />
       </div>

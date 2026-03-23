@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from "react"
 import { useSession } from "next-auth/react"
 import { useCountUp } from "@/hooks/use-count-up"
+import { t } from "@/lib/locale"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import {
@@ -167,7 +168,7 @@ export default function DashboardPage() {
           alert={financial.marginPct < 5 && financial.monthlyRevenue > 0}
         />
         <KpiCard
-          title="Pipeline"
+          title={t("Pipeline")}
           value={`${fmt(financial.pipelineValue)} ₼`}
           sub={`${pipeline.deals} активных сделок`}
           icon={<Handshake className="h-5 w-5" />}
@@ -235,7 +236,7 @@ export default function DashboardPage() {
                   <Target className="h-5 w-5 text-purple-600" />
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground">Pipeline (в работе)</p>
+                  <p className="text-xs text-muted-foreground">{t("Pipeline")} (в работе)</p>
                   <p className="text-xl font-bold">{fmt(financialOverview.pipelineValue)} ₼</p>
                   <p className="text-xs text-muted-foreground">{pipeline.deals} активных сделок</p>
                 </div>

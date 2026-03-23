@@ -18,21 +18,21 @@ const UI_TEXT: Record<string, { title: string; subtitle: string; greeting: strin
     subtitle: "Powered by Claude",
     greeting: "Ask me anything about your CRM data, deals, clients, or get help with analysis.",
     placeholder: "Ask LeadDrive AI...",
-    suggestions: ["Summarize my pipeline", "Which deals are at risk?", "Top clients by revenue"],
+    suggestions: ["Summarize my sales pipeline", "Which deals are at risk?", "Top clients by revenue"],
   },
   ru: {
     title: "LeadDrive AI",
     subtitle: "На базе Claude",
     greeting: "Спроси меня о данных CRM, сделках, клиентах, или получи помощь с аналитикой.",
     placeholder: "Спросить LeadDrive AI...",
-    suggestions: ["Сводка по pipeline", "Какие сделки под угрозой?", "Топ клиенты по выручке"],
+    suggestions: ["Сводка по воронке продаж", "Какие сделки под угрозой?", "Топ клиенты по выручке"],
   },
   az: {
     title: "LeadDrive AI",
     subtitle: "Claude əsasında",
     greeting: "CRM məlumatları, sövdələşmələr, müştərilər haqqında soruş və ya analitikada kömək al.",
     placeholder: "LeadDrive AI-dan soruş...",
-    suggestions: ["Pipeline-ı ümumiləşdir", "Hansı sövdələşmələr risk altındadır?", "Gəlirə görə ən yaxşı müştərilər"],
+    suggestions: ["Proses axınını ümumiləşdir", "Hansı sövdələşmələr risk altındadır?", "Gəlirə görə ən yaxşı müştərilər"],
   },
 }
 

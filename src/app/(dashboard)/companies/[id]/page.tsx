@@ -135,7 +135,7 @@ export default function CompanyDetailPage() {
   const kpiCards = [
     { label: "Contacts", value: company.contacts?.length || 0, bg: "bg-blue-500", icon: <Users className="h-4 w-4 opacity-80" /> },
     { label: "Active deals", value: activeDeals.length, bg: "bg-indigo-500", icon: <Handshake className="h-4 w-4 opacity-80" /> },
-    { label: "Pipeline", value: `${pipelineValue.toLocaleString()} ₼`, bg: "bg-green-500", icon: <TrendingUp className="h-4 w-4 opacity-80" /> },
+    { label: "Воронка", value: `${pipelineValue.toLocaleString()} ₼`, bg: "bg-green-500", icon: <TrendingUp className="h-4 w-4 opacity-80" /> },
     { label: "Days as client", value: daysAsClient, bg: "bg-violet-500", icon: <Clock className="h-4 w-4 opacity-80" /> },
   ]
 
