@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { prisma } from "@/lib/prisma"
 import { getOrgId } from "@/lib/api-auth"
+import { executeWorkflows } from "@/lib/workflow-engine"
 
 const updateDealSchema = z.object({
   name: z.string().min(1).max(200).optional(),
@@ -132,6 +133,12 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       where: { id, organizationId: orgId },
       include: dealInclude,
     })
+
+    // Trigger workflows for updates
+    if (updated) {
+      const triggerEvent = parsed.data.stage ? "stage_changed" : "updated"
+      executeWorkflows(orgId, "deal", triggerEvent, updated).catch(() => {})
+    }
 
     return NextResponse.json({ success: true, data: updated })
   } catch (e) {

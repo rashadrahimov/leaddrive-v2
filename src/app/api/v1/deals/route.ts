@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { prisma } from "@/lib/prisma"
 import { getOrgId } from "@/lib/api-auth"
+import { executeWorkflows } from "@/lib/workflow-engine"
 
 const createDealSchema = z.object({
   name: z.string().min(1).max(200),
@@ -84,6 +85,7 @@ export async function POST(req: NextRequest) {
         campaign: { select: { id: true, name: true } },
       },
     })
+    executeWorkflows(orgId, "deal", "created", deal).catch(() => {})
     return NextResponse.json({ success: true, data: deal }, { status: 201 })
   } catch (e) {
     return NextResponse.json({ error: String(e) }, { status: 500 })

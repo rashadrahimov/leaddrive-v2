@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { prisma } from "@/lib/prisma"
 import { getOrgId } from "@/lib/api-auth"
+import { executeWorkflows } from "@/lib/workflow-engine"
 
 const updateLeadSchema = z.object({
   contactName: z.string().min(1).max(255).optional(),
@@ -54,6 +55,10 @@ export async function PUT(
     })
     if (result.count === 0) return NextResponse.json({ error: "Not found" }, { status: 404 })
     const updated = await prisma.lead.findFirst({ where: { id, organizationId: orgId } })
+    if (updated) {
+      const triggerEvent = parsed.data.status ? "status_changed" : "updated"
+      executeWorkflows(orgId, "lead", triggerEvent, updated).catch(() => {})
+    }
     return NextResponse.json({ success: true, data: updated })
   } catch (e) {
     return NextResponse.json({ error: String(e) }, { status: 500 })

@@ -3,6 +3,7 @@ import { z } from "zod"
 import { prisma } from "@/lib/prisma"
 import { getOrgId } from "@/lib/api-auth"
 import { sendWhatsAppMessage } from "@/lib/whatsapp"
+import { executeWorkflows } from "@/lib/workflow-engine"
 
 const updateTicketSchema = z.object({
   subject: z.string().min(1).max(300).optional(),
@@ -115,6 +116,11 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       sendWhatsAppStatusNotification(orgId, original, newStatus).catch(err =>
         console.error("[Ticket WA] Status notification error:", err)
       )
+    }
+
+    if (updated) {
+      const triggerEvent = parsed.data.status ? "status_changed" : "updated"
+      executeWorkflows(orgId, "ticket", triggerEvent, updated).catch(() => {})
     }
 
     return NextResponse.json({ success: true, data: updated })

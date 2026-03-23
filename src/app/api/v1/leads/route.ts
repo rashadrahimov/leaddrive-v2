@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { prisma } from "@/lib/prisma"
 import { getOrgId } from "@/lib/api-auth"
+import { executeWorkflows } from "@/lib/workflow-engine"
 
 const createLeadSchema = z.object({
   contactName: z.string().min(1).max(200),
@@ -78,6 +79,7 @@ export async function POST(req: NextRequest) {
         notes: parsed.data.notes,
       },
     })
+    executeWorkflows(orgId, "lead", "created", lead).catch(() => {})
     return NextResponse.json({ success: true, data: lead }, { status: 201 })
   } catch (e) {
     return NextResponse.json({ error: String(e) }, { status: 500 })
