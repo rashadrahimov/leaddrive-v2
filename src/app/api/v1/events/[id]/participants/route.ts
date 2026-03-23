@@ -156,9 +156,14 @@ export async function PATCH(
               html,
             })
             sentCount++
-          } catch {}
+            console.log(`[INVITE] Sent to ${p.email} for event ${event.name}`)
+          } catch (emailErr: any) {
+            console.error(`[INVITE] Failed to send to ${p.email}:`, emailErr?.message || emailErr)
+          }
         }
       }
+    } else {
+      console.log(`[INVITE] SMTP not configured. smtpHost=${smtpSettings?.smtpHost}, smtpUser=${smtpSettings?.smtpUser}`)
     }
 
     // Mark all as sent regardless (so UI shows status)
