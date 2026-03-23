@@ -323,7 +323,7 @@
     },
     "executivePanel": "Rəhbər paneli",
     "monthlyRevenue": "Aylıq gəlir",
-    "pipeline": "Satış hunisi",
+    "pipeline": "Satışlar",
     "clients": "Müştərilər",
     "margin": "Marja",
     "marginPct": "marjinallıq",
@@ -335,7 +335,7 @@
     "slaOk": "SLA normada",
     "expenses": "Xərclər",
     "revenueByService": "Xidmətlər üzrə gəlir",
-    "salesPipeline": "Satış hunisi",
+    "salesPipeline": "Satışlar",
     "salesForecast": "Satış proqnozu (6 ay)",
     "clientHealth": "Müştəri sağlamlığı",
     "activity": "Fəaliyyət",
@@ -410,7 +410,7 @@
     "lastContact": "Son əlaqə"
   },
   "deals": {
-    "title": "Satış hunisi",
+    "title": "Satışlar",
     "totalDeals": "{count} müqavilə",
     "newDeal": "Yeni müqavilə",
     "deleteDeal": "Müqaviləni sil",
