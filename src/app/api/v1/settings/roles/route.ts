@@ -47,8 +47,20 @@ export async function GET(req: NextRequest) {
   })
 
   const settings = (org?.settings as any) || {}
-  const roles = settings.roles || DEFAULT_ROLES
-  const permissions = settings.permissions || DEFAULT_PERMISSIONS
+  const roles: RoleConfig[] = settings.roles || DEFAULT_ROLES
+  const savedPerms = settings.permissions || {}
+
+  // Merge: ensure every role has permissions (fill missing from defaults)
+  const permissions: Record<string, Record<string, string>> = {}
+  for (const role of roles) {
+    permissions[role.id] = savedPerms[role.id] || DEFAULT_PERMISSIONS[role.id] || {}
+    // Fill missing modules
+    for (const mod of MODULES) {
+      if (!permissions[role.id][mod]) {
+        permissions[role.id][mod] = DEFAULT_PERMISSIONS[role.id]?.[mod] || (mod === "settings" ? "none" : "view")
+      }
+    }
+  }
 
   return NextResponse.json({ success: true, data: { roles, permissions } })
 }
