@@ -998,7 +998,12 @@
     "saved": "Сохранено",
     "cancelChanges": "Отмена",
     "resetDefaults": "По умолчанию",
-    "adminSettingsLocked": "Админ всегда имеет полный доступ к настройкам"
+    "adminSettingsLocked": "Админ всегда имеет полный доступ к настройкам",
+    "availableRoles": "Доступные роли",
+    "addRole": "Добавить роль",
+    "deleteRole": "Удалить роль",
+    "roleName": "Название роли",
+    "roleColor": "Цвет"
   },
   "events": {
     "title": "Мероприятия",
