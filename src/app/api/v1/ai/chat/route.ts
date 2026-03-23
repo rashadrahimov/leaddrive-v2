@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
   const orgId = await getOrgId(req)
   if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
-  const { message, context, history } = await req.json()
+  const { message, context, history, locale } = await req.json()
   if (!message) return NextResponse.json({ error: "Message required" }, { status: 400 })
 
   const client = getClient()
@@ -44,7 +44,16 @@ export async function POST(req: NextRequest) {
       where: { organizationId: orgId, status: { in: ["new", "in_progress", "waiting"] } },
     })
 
+    const langMap: Record<string, string> = {
+      az: "Azerbaijani (Azərbaycan dili)",
+      ru: "Russian (Русский)",
+      en: "English",
+    }
+    const forceLang = langMap[locale || "ru"] || "Russian"
+
     const systemPrompt = `You are LeadDrive AI — an intelligent CRM assistant for Güvən Technology LLC, an IT outsourcing company in Baku, Azerbaijan.
+
+CRITICAL RULE #1: You MUST always respond in ${forceLang}. This is non-negotiable regardless of what language the user writes in.
 
 CRM Data Summary:
 - Companies: ${companyCount}
@@ -55,7 +64,7 @@ CRM Data Summary:
 Current page: ${context?.url || "unknown"} (${context?.title || ""})
 
 Rules:
-- Answer in the same language as the user's message (Russian, Azerbaijani, or English)
+- ALWAYS respond in ${forceLang}
 - Be concise and actionable
 - Reference specific data when possible
 - If asked about specific records, explain that you see aggregate data

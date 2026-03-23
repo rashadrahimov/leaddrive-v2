@@ -599,19 +599,30 @@ export default function EventDetailPage() {
                         </td>
                         <td className="p-3">
                           {p.inviteStatus === "sent" ? (
-                            <span className="flex items-center gap-1 text-xs text-green-600">
-                              <MailCheck className="h-3 w-3" />
-                              {p.invitedAt ? new Date(p.invitedAt).toLocaleDateString("ru-RU") : "Sent"}
-                            </span>
+                            <div className="flex items-center gap-1.5">
+                              <span className="flex items-center gap-1 text-xs text-green-600">
+                                <MailCheck className="h-3 w-3" />
+                                {p.invitedAt ? new Date(p.invitedAt).toLocaleDateString("ru-RU") : "Sent"}
+                              </span>
+                              {p.email && (
+                                <button
+                                  onClick={() => sendInviteToOne(p.id)}
+                                  className="text-[10px] text-blue-500 hover:text-blue-700 hover:underline"
+                                  title="Resend invitation"
+                                >
+                                  Resend
+                                </button>
+                              )}
+                            </div>
                           ) : (
                             <button
                               onClick={() => sendInviteToOne(p.id)}
-                              className="flex items-center gap-1 text-xs text-muted-foreground hover:text-blue-600 transition-colors"
+                              className="flex items-center gap-1 text-xs text-blue-500 hover:text-blue-700 transition-colors font-medium"
                               title={p.email ? "Send invitation" : "No email"}
                               disabled={!p.email}
                             >
-                              <Mail className="h-3 w-3" />
-                              {p.email ? "Send" : "No email"}
+                              <Send className="h-3 w-3" />
+                              {p.email ? "Send invite" : "No email"}
                             </button>
                           )}
                         </td>

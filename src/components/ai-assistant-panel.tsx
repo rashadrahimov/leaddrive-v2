@@ -12,13 +12,48 @@ interface Message {
   timestamp: Date
 }
 
+const UI_TEXT: Record<string, { title: string; subtitle: string; greeting: string; placeholder: string; suggestions: string[] }> = {
+  en: {
+    title: "LeadDrive AI",
+    subtitle: "Powered by Claude",
+    greeting: "Ask me anything about your CRM data, deals, clients, or get help with analysis.",
+    placeholder: "Ask LeadDrive AI...",
+    suggestions: ["Summarize my pipeline", "Which deals are at risk?", "Top clients by revenue"],
+  },
+  ru: {
+    title: "LeadDrive AI",
+    subtitle: "На базе Claude",
+    greeting: "Спроси меня о данных CRM, сделках, клиентах, или получи помощь с аналитикой.",
+    placeholder: "Спросить LeadDrive AI...",
+    suggestions: ["Сводка по pipeline", "Какие сделки под угрозой?", "Топ клиенты по выручке"],
+  },
+  az: {
+    title: "LeadDrive AI",
+    subtitle: "Claude əsasında",
+    greeting: "CRM məlumatları, sövdələşmələr, müştərilər haqqında soruş və ya analitikada kömək al.",
+    placeholder: "LeadDrive AI-dan soruş...",
+    suggestions: ["Pipeline-ı ümumiləşdir", "Hansı sövdələşmələr risk altındadır?", "Gəlirə görə ən yaxşı müştərilər"],
+  },
+}
+
+function getLocale(): string {
+  if (typeof document === "undefined") return "ru"
+  const cookie = document.cookie.split(";").map(c => c.trim()).find(c => c.startsWith("NEXT_LOCALE="))
+  return cookie?.split("=")[1] || "ru"
+}
+
 export function AiAssistantPanel() {
   const [open, setOpen] = useState(false)
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState("")
   const [loading, setLoading] = useState(false)
+  const [locale, setLocale] = useState("ru")
   const bottomRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
+
+  useEffect(() => { setLocale(getLocale()) }, [open])
+
+  const t = UI_TEXT[locale] || UI_TEXT.ru
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -46,7 +81,7 @@ export function AiAssistantPanel() {
       const res = await fetch("/api/v1/ai/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: text, context: pageContext, history: messages.slice(-6) }),
+        body: JSON.stringify({ message: text, context: pageContext, history: messages.slice(-6), locale }),
       })
       const json = await res.json()
 
@@ -89,8 +124,8 @@ export function AiAssistantPanel() {
                 <Bot className="h-5 w-5" />
               </div>
               <div>
-                <h3 className="text-sm font-semibold">LeadDrive AI</h3>
-                <p className="text-[10px] opacity-80">Powered by Claude</p>
+                <h3 className="text-sm font-semibold">{t.title}</h3>
+                <p className="text-[10px] opacity-80">{t.subtitle}</p>
               </div>
             </div>
             <div className="flex gap-1">
@@ -114,10 +149,10 @@ export function AiAssistantPanel() {
                 <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/30 dark:to-purple-900/30 flex items-center justify-center mb-4">
                   <Sparkles className="h-8 w-8 text-indigo-500" />
                 </div>
-                <h4 className="text-sm font-semibold mb-1">LeadDrive AI Assistant</h4>
-                <p className="text-xs text-muted-foreground mb-4">Ask me anything about your CRM data, deals, clients, or get help with analysis.</p>
+                <h4 className="text-sm font-semibold mb-1">{t.title} Assistant</h4>
+                <p className="text-xs text-muted-foreground mb-4">{t.greeting}</p>
                 <div className="space-y-2 w-full">
-                  {["Summarize my pipeline", "Which deals are at risk?", "Top clients by revenue"].map(q => (
+                  {t.suggestions.map(q => (
                     <button
                       key={q}
                       onClick={() => { setInput(q); setTimeout(sendMessage, 100) }}
@@ -166,7 +201,7 @@ export function AiAssistantPanel() {
                 value={input}
                 onChange={e => setInput(e.target.value)}
                 onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage() } }}
-                placeholder="Ask LeadDrive AI..."
+                placeholder={t.placeholder}
                 rows={1}
                 className="flex-1 resize-none rounded-xl border px-3 py-2.5 text-sm bg-muted/30 focus:outline-none focus:ring-2 focus:ring-primary/30"
                 disabled={loading}
