@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
-import { StatCard } from "@/components/stat-card"
+import { ColorStatCard } from "@/components/color-stat-card"
 import { DataTable } from "@/components/data-table"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
 import { Package, Plus, Pencil, Trash2, DollarSign, Tag, Layers, CheckCircle, XCircle } from "lucide-react"
@@ -210,11 +210,11 @@ export default function ProductsPage() {
         <Button onClick={openCreate}><Plus className="h-4 w-4 mr-1" /> {t("newProduct")}</Button>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-4">
-        <StatCard title={t("statTotal")} value={products.length} icon={<Package className="h-4 w-4" />} />
-        <StatCard title={t("statActive")} value={activeCount} icon={<CheckCircle className="h-4 w-4" />} />
-        <StatCard title={t("statTotalValue")} value={`${totalValue.toLocaleString()} AZN`} icon={<DollarSign className="h-4 w-4" />} />
-        <StatCard title={t("statCategories")} value={[...new Set(products.map(p => p.category))].length} icon={<Layers className="h-4 w-4" />} />
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <ColorStatCard label={t("statTotal")} value={products.length} icon={<Package className="h-4 w-4" />} color="blue" />
+        <ColorStatCard label={t("statActive")} value={activeCount} icon={<CheckCircle className="h-4 w-4" />} color="green" />
+        <ColorStatCard label={t("statTotalValue")} value={`${totalValue.toLocaleString()} AZN`} icon={<DollarSign className="h-4 w-4" />} color="violet" />
+        <ColorStatCard label={t("statCategories")} value={[...new Set(products.map(p => p.category))].length} icon={<Layers className="h-4 w-4" />} color="orange" />
       </div>
 
       {/* Filter tabs */}

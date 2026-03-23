@@ -6,10 +6,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { StatCard } from "@/components/stat-card"
+import { ColorStatCard } from "@/components/color-stat-card"
 import {
   DollarSign, Download, Search, ChevronDown, ChevronRight,
-  RotateCcw, Trash2, Loader2, Plus, Save, X, Trophy, ArrowRight,
+  RotateCcw, Trash2, Loader2, Plus, Save, X, Trophy, ArrowRight, BarChart3, TrendingUp,
 } from "lucide-react"
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
@@ -443,30 +443,30 @@ export default function PricingPage() {
       {activeTab === "model" && (
         <>
           {/* KPI Cards */}
-          <div className="grid gap-4 md:grid-cols-4">
-            <StatCard
-              title="Общий ежемесячный доход"
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <ColorStatCard
+              label="Общий ежемесячный доход"
               value={`${baseTotal.toLocaleString("ru-RU", { maximumFractionDigits: 2 })} ₼`}
-              description="Базовая"
               icon={<DollarSign className="h-4 w-4" />}
+              color="green"
             />
-            <StatCard
-              title="Прогнозируемый ежемесячный доход"
+            <ColorStatCard
+              label="Прогнозируемый ежемесячный доход"
               value={`${adjTotal.toLocaleString("ru-RU", { maximumFractionDigits: 2 })} ₼`}
-              description="Новая"
-              trend={adjTotal >= baseTotal ? "up" : "down"}
+              icon={<TrendingUp className="h-4 w-4" />}
+              color="blue"
             />
-            <StatCard
-              title="Годовой эффект"
+            <ColorStatCard
+              label="Годовой эффект"
               value={`${annualEffect.toLocaleString("ru-RU", { maximumFractionDigits: 0 })} ₼`}
-              description="Ежегодно"
-              trend={annualEffect >= 0 ? "up" : "down"}
+              icon={<BarChart3 className="h-4 w-4" />}
+              color={annualEffect >= 0 ? "teal" : "red"}
             />
-            <StatCard
-              title="Средняя корректировка"
+            <ColorStatCard
+              label="Средняя корректировка"
               value={`${avgChange.toFixed(2)}%`}
-              description="Разница"
-              trend={avgChange >= 0 ? "up" : "down"}
+              icon={<ArrowRight className="h-4 w-4" />}
+              color={avgChange >= 0 ? "violet" : "orange"}
             />
           </div>
 
@@ -1073,29 +1073,30 @@ export default function PricingPage() {
           )}
 
           {/* KPI cards */}
-          <div className="grid gap-4 md:grid-cols-4">
-            <StatCard
-              title="Всего допродаж"
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <ColorStatCard
+              label="Всего допродаж"
               value={String(salesData.length)}
-              description="Записей"
               icon={<DollarSign className="h-4 w-4" />}
+              color="blue"
             />
-            <StatCard
-              title="MRR допродаж"
+            <ColorStatCard
+              label="MRR допродаж"
               value={`${salesData.filter((s) => s.type === "recurring" && s.status === "active").reduce((sum: number, s: any) => sum + s.total, 0).toLocaleString("ru-RU", { maximumFractionDigits: 2 })} ₼`}
-              description="Ежемесячно"
-              trend="up"
+              icon={<TrendingUp className="h-4 w-4" />}
+              color="green"
             />
-            <StatCard
-              title="Единоразовые"
+            <ColorStatCard
+              label="Единоразовые"
               value={`${salesData.filter((s) => s.type === "one_time").reduce((sum: number, s: any) => sum + s.total, 0).toLocaleString("ru-RU", { maximumFractionDigits: 2 })} ₼`}
-              description="Всего"
+              icon={<DollarSign className="h-4 w-4" />}
+              color="orange"
             />
-            <StatCard
-              title="Активных"
+            <ColorStatCard
+              label="Активных"
               value={String(salesData.filter((s) => s.status === "active").length)}
-              description={`из ${salesData.length}`}
-              trend="up"
+              icon={<Trophy className="h-4 w-4" />}
+              color="teal"
             />
           </div>
 

@@ -5,7 +5,7 @@ import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
-import { StatCard } from "@/components/stat-card"
+import { ColorStatCard } from "@/components/color-stat-card"
 import { KanbanBoard } from "@/components/deals/kanban-board"
 import { Select } from "@/components/ui/select"
 import { Handshake, Plus, TrendingUp, TrendingDown } from "lucide-react"
@@ -111,11 +111,11 @@ export default function DealsPage() {
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-4">
-        <StatCard title={t("statTotal")} value={deals.length} icon={<Handshake className="h-4 w-4" />} />
-        <StatCard title={t("statPipelineValue")} value={`${totalValue.toLocaleString()} ₼`} icon={<TrendingUp className="h-4 w-4" />} />
-        <StatCard title={t("statWon")} value={`${wonValue.toLocaleString()} ₼`} description={`${wonDeals.length} ${t("totalDeals")}`} trend="up" />
-        <StatCard title={t("statLost")} value={deals.filter(d => d.stage === "LOST").length} icon={<TrendingDown className="h-4 w-4" />} trend="down" />
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <ColorStatCard label={t("statTotal")} value={deals.length} icon={<Handshake className="h-4 w-4" />} color="blue" />
+        <ColorStatCard label={t("statPipelineValue")} value={`${totalValue.toLocaleString()} ₼`} icon={<TrendingUp className="h-4 w-4" />} color="green" />
+        <ColorStatCard label={t("statWon")} value={`${wonValue.toLocaleString()} ₼`} icon={<TrendingUp className="h-4 w-4" />} color="teal" />
+        <ColorStatCard label={t("statLost")} value={deals.filter(d => d.stage === "LOST").length} icon={<TrendingDown className="h-4 w-4" />} color="red" />
       </div>
 
       <KanbanBoard

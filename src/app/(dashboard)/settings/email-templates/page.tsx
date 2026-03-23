@@ -6,10 +6,10 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { DataTable } from "@/components/data-table"
-import { StatCard } from "@/components/stat-card"
+import { ColorStatCard } from "@/components/color-stat-card"
 import { EmailTemplateForm } from "@/components/email-template-form"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
-import { Plus, Mail, Pencil, Trash2, Globe } from "lucide-react"
+import { Plus, Mail, Pencil, Trash2, Globe, Tag } from "lucide-react"
 
 interface EmailTemplate {
   id: string
@@ -119,10 +119,10 @@ export default function EmailTemplatesPage() {
         </Button>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
-        <StatCard title="Total Templates" value={total} icon={<Mail className="h-4 w-4" />} />
-        <StatCard title="Languages" value={new Set(templates.map(t => t.language)).size} icon={<Globe className="h-4 w-4" />} />
-        <StatCard title="Categories" value={new Set(templates.map(t => t.category)).size} />
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+        <ColorStatCard label="Total Templates" value={total} icon={<Mail className="h-4 w-4" />} color="blue" />
+        <ColorStatCard label="Languages" value={new Set(templates.map(t => t.language)).size} icon={<Globe className="h-4 w-4" />} color="violet" />
+        <ColorStatCard label="Categories" value={new Set(templates.map(t => t.category)).size} icon={<Tag className="h-4 w-4" />} color="orange" />
       </div>
 
       <DataTable columns={columns} data={templates} searchPlaceholder="Search templates..." searchKey="name" pageSize={10} />
