@@ -50,6 +50,7 @@ interface CampaignFormProps {
   orgId?: string
   onSend?: () => void
   onDelete?: () => void
+  onCreatedAndSend?: (campaignId: string) => void
 }
 
 type RecipientMode = "all" | "contacts" | "leads" | "segment" | "source" | "manual"
@@ -62,7 +63,7 @@ const statusColors: Record<string, string> = {
   cancelled: "bg-red-50 text-red-500 border-red-200",
 }
 
-export function CampaignForm({ open, onOpenChange, onSaved, initialData, orgId, onSend, onDelete }: CampaignFormProps) {
+export function CampaignForm({ open, onOpenChange, onSaved, initialData, orgId, onSend, onDelete, onCreatedAndSend }: CampaignFormProps) {
   const t = useTranslations("campaigns")
   const tf = useTranslations("forms")
   const tc = useTranslations("common")
@@ -95,6 +96,7 @@ export function CampaignForm({ open, onOpenChange, onSaved, initialData, orgId, 
     totalRecipients: "", budget: "",
   })
   const [saving, setSaving] = useState(false)
+  const [sendAfterSave, setSendAfterSave] = useState(false)
   const [error, setError] = useState("")
   const [templates, setTemplates] = useState<Template[]>([])
   const [templatesLoaded, setTemplatesLoaded] = useState(false)
@@ -206,6 +208,10 @@ export function CampaignForm({ open, onOpenChange, onSaved, initialData, orgId, 
       const json = await res.json()
       if (!res.ok) throw new Error(json.error || tc("failedToSave"))
       onSaved()
+      if (sendAfterSave && !isEdit && json.data?.id && onCreatedAndSend) {
+        onCreatedAndSend(json.data.id)
+        setSendAfterSave(false)
+      }
       onOpenChange(false)
     } catch (err: any) {
       setError(err.message)
@@ -388,16 +394,17 @@ export function CampaignForm({ open, onOpenChange, onSaved, initialData, orgId, 
             {/* Name — full width */}
             <div>
               <Label className="text-xs text-muted-foreground">{tc("name")} *</Label>
-              <Input value={form.name} onChange={(e) => update("name", e.target.value)} required />
-              <p className="text-xs text-muted-foreground mt-1">{t("hintName")}</p>
+              <Input value={form.name} onChange={(e) => update("name", e.target.value)} required placeholder="məs. Mart göndərişi" />
+              <p className="text-xs text-muted-foreground mt-1">Kampaniyanın adı, məs. «Mart göndərişi»</p>
             </div>
 
             {/* Description — textarea */}
             <div>
               <Label className="text-xs text-muted-foreground">{tc("description")}</Label>
               <Textarea value={form.description} onChange={(e) => update("description", e.target.value)}
+                placeholder="Kampaniya haqqında qısa məlumat"
                 rows={3} />
-              <p className="text-xs text-muted-foreground mt-1">{t("hintDescription")}</p>
+              <p className="text-xs text-muted-foreground mt-1">Kampaniya haqqında qısa məlumat</p>
             </div>
 
             {/* Type + Template on same row */}
@@ -408,7 +415,7 @@ export function CampaignForm({ open, onOpenChange, onSaved, initialData, orgId, 
                   <option value="email">Email</option>
                   <option value="sms">SMS</option>
                 </Select>
-                <p className="text-xs text-muted-foreground mt-1">{t("hintType")}</p>
+                <p className="text-xs text-muted-foreground mt-1">Email və ya SMS göndəriş növü</p>
               </div>
               <div>
                 <Label className="text-xs text-muted-foreground">Email {tf("selectTemplate").toLowerCase()}</Label>
@@ -421,7 +428,7 @@ export function CampaignForm({ open, onOpenChange, onSaved, initialData, orgId, 
                     <option key={t.id} value={t.id}>{t.name}</option>
                   ))}
                 </Select>
-                <p className="text-xs text-muted-foreground mt-1">{t("hintTemplate")}</p>
+                <p className="text-xs text-muted-foreground mt-1">Hazır e-poçt şablonu</p>
               </div>
             </div>
 
@@ -429,7 +436,7 @@ export function CampaignForm({ open, onOpenChange, onSaved, initialData, orgId, 
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label className="text-xs text-muted-foreground">{tf("emailSubject")}</Label>
-                <Input value={form.subject} onChange={(e) => update("subject", e.target.value)} placeholder={t("hintSubject")} />
+                <Input value={form.subject} onChange={(e) => update("subject", e.target.value)} placeholder="E-poçt mövzusu" />
               </div>
               <div>
                 <Label className="text-xs text-muted-foreground">{tf("scheduleSend")}</Label>
@@ -437,13 +444,11 @@ export function CampaignForm({ open, onOpenChange, onSaved, initialData, orgId, 
               </div>
             </div>
 
-            {/* Budget — only when editing */}
-            {isEdit && (
-              <div>
-                <Label className="text-xs text-muted-foreground">{t("budget")}</Label>
-                <Input type="number" step="0.01" value={form.budget} onChange={(e) => update("budget", e.target.value)} placeholder="0" />
-              </div>
-            )}
+            {/* Budget */}
+            <div>
+              <Label className="text-xs text-muted-foreground">{t("budget")}</Label>
+              <Input type="number" step="0.01" value={form.budget} onChange={(e) => update("budget", e.target.value)} placeholder="0" />
+            </div>
 
             {/* ── Recipients — simple dropdown like v1 ── */}
             <div>
@@ -455,15 +460,15 @@ export function CampaignForm({ open, onOpenChange, onSaved, initialData, orgId, 
                 if (mode === "source") setSelectedSource("")
                 setRecipientModeChanged(true)
               }}>
-                <option value="all">{t("recipientAll")}</option>
-                <option value="contacts">{t("recipientContacts")}</option>
-                <option value="leads">{t("recipientLeads")}</option>
-                <option value="segment">📊 {t("recipientSegment")}</option>
-                <option value="source">🔍 {t("recipientSource")}</option>
-                <option value="manual">✋ {t("recipientManual")}</option>
+                <option value="all">Bütün kontaktlar + lidlər</option>
+                <option value="contacts">Yalnız kontaktlar</option>
+                <option value="leads">Yalnız lidlər</option>
+                <option value="segment">📊 Seqmentə görə</option>
+                <option value="source">🔍 Mənbəyə görə</option>
+                <option value="manual">✋ Əl ilə seçmək</option>
               </Select>
               <p className="text-xs text-muted-foreground mt-1">
-                {t("willBeSentTo", { count: recipientCount })}
+                Göndəriləcək: <span className="font-semibold text-foreground">{recipientCount}</span> alıcıya
               </p>
 
               {/* Segment picker */}
@@ -539,6 +544,12 @@ export function CampaignForm({ open, onOpenChange, onSaved, initialData, orgId, 
             </Button>
             {isEdit && onSend && (
               <Button type="button" size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white gap-1" onClick={onSend}>
+                <Send className="h-3.5 w-3.5" /> {t("sendCampaign")}
+              </Button>
+            )}
+            {!isEdit && onCreatedAndSend && (
+              <Button type="submit" size="sm" disabled={saving} className="bg-emerald-600 hover:bg-emerald-700 text-white gap-1"
+                onClick={() => setSendAfterSave(true)}>
                 <Send className="h-3.5 w-3.5" /> {t("sendCampaign")}
               </Button>
             )}

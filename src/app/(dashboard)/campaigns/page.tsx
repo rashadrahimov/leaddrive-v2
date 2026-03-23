@@ -244,6 +244,18 @@ export default function CampaignsPage() {
         } : undefined}
         orgId={orgId}
         onSend={editData ? () => handleSend(editData) : undefined}
+        onCreatedAndSend={async (campaignId: string) => {
+          // Fetch the newly created campaign and send it
+          try {
+            const res = await fetch(`/api/v1/campaigns/${campaignId}`, {
+              headers: orgId ? { "x-organization-id": String(orgId) } : {},
+            })
+            const json = await res.json()
+            if (json.success && json.data) {
+              handleSend(json.data)
+            }
+          } catch {}
+        }}
         onDelete={editData ? () => { setDeleteId(editData.id); setDeleteName(editData.name); setShowForm(false) } : undefined}
       />
 
