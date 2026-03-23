@@ -81,6 +81,20 @@ export default function DashboardPage() {
   const tn = useTranslations("nav")
   const [data, setData] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [widgets, setWidgets] = useState<Record<string, boolean>>({
+    statCards: true, leadFunnel: true, dealPipeline: true, revenueChart: true,
+    taskSummary: true, ticketSummary: true, forecast: true, clientHealth: true, activityFeed: true,
+  })
+
+  // Load widget config from localStorage per user
+  useEffect(() => {
+    const userId = (session?.user as any)?.id
+    if (!userId) return
+    try {
+      const stored = localStorage.getItem(`dashboard-widgets-${userId}`)
+      if (stored) setWidgets(prev => ({ ...prev, ...JSON.parse(stored) }))
+    } catch {}
+  }, [session])
 
   function timeAgo(d: string): string {
     const diff = Date.now() - new Date(d).getTime()
@@ -151,7 +165,7 @@ export default function DashboardPage() {
       </div>
 
       {/* ═══ 4 Main KPIs ═══ */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      {widgets.statCards && <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <ColorStatCard
           label={t("monthlyRevenue")}
           value={`${fmt(financial.monthlyRevenue)} ₼`}
@@ -176,7 +190,7 @@ export default function DashboardPage() {
           icon={<Ticket className="h-4 w-4" />}
           color={operations.slaBreached > 0 ? "red" : "teal"}
         />
-      </div>
+      </div>}
 
       {/* ═══ Risks Banner (only if there are problems) ═══ */}
       {risks?.length > 0 && risks.some((r: any) => r.severity === "critical" || r.severity === "warning") && (
@@ -202,8 +216,8 @@ export default function DashboardPage() {
       )}
 
       {/* ═══ Charts Row: Revenue + Pipeline ═══ */}
-      <div className="grid gap-4 lg:grid-cols-12">
-        <Card className="lg:col-span-8">
+      {(widgets.revenueChart || widgets.dealPipeline) && <div className="grid gap-4 lg:grid-cols-12">
+        {widgets.revenueChart && <Card className="lg:col-span-8">
           <CardHeader className="pb-2">
             <CardTitle className="text-base flex items-center gap-2">
               <BarChart3 className="h-4 w-4" /> {t("revenueByService")}
@@ -228,10 +242,10 @@ export default function DashboardPage() {
               <div className="h-[280px] flex items-center justify-center text-muted-foreground">{t("noData")}</div>
             )}
           </CardContent>
-        </Card>
+        </Card>}
 
         {/* Pipeline Funnel */}
-        <Card className="lg:col-span-4">
+        {widgets.dealPipeline && <Card className="lg:col-span-4">
           <CardHeader className="pb-2">
             <CardTitle className="text-base flex items-center gap-2">
               <Target className="h-4 w-4" /> {t("salesPipeline")}
@@ -275,13 +289,13 @@ export default function DashboardPage() {
               </div>
             </div>
           </CardContent>
-        </Card>
-      </div>
+        </Card>}
+      </div>}
 
       {/* ═══ Forecast + Clients + Activity ═══ */}
-      <div className="grid gap-4 lg:grid-cols-12">
+      {(widgets.forecast || widgets.clientHealth || widgets.activityFeed) && <div className="grid gap-4 lg:grid-cols-12">
         {/* Sales Forecast */}
-        <Card className="lg:col-span-5">
+        {widgets.forecast && <Card className="lg:col-span-5">
           <CardHeader className="pb-2">
             <CardTitle className="text-base flex items-center gap-2">
               <TrendingUp className="h-4 w-4" /> {t("salesForecast")}
@@ -304,10 +318,10 @@ export default function DashboardPage() {
               <div className="h-[220px] flex items-center justify-center text-muted-foreground">{t("noData")}</div>
             )}
           </CardContent>
-        </Card>
+        </Card>}
 
         {/* Client Health — compact */}
-        <Card className="lg:col-span-4">
+        {widgets.clientHealth && <Card className="lg:col-span-4">
           <CardHeader className="pb-2">
             <CardTitle className="text-base flex items-center gap-2">
               <Shield className="h-4 w-4" /> {t("clientHealth")}
@@ -347,10 +361,10 @@ export default function DashboardPage() {
               </div>
             )}
           </CardContent>
-        </Card>
+        </Card>}
 
         {/* Activity Feed */}
-        <Card className="lg:col-span-3">
+        {widgets.activityFeed && <Card className="lg:col-span-3">
           <CardHeader className="pb-2">
             <CardTitle className="text-base flex items-center gap-2">
               <Activity className="h-4 w-4" /> {t("activity")}
@@ -374,11 +388,11 @@ export default function DashboardPage() {
               )}
             </div>
           </CardContent>
-        </Card>
-      </div>
+        </Card>}
+      </div>}
 
       {/* ═══ Bottom: At Risk Deals + Quick Actions ═══ */}
-      <div className="grid gap-4 lg:grid-cols-12">
+      {(widgets.taskSummary || widgets.ticketSummary) && <div className="grid gap-4 lg:grid-cols-12">
         {/* At Risk Deals */}
         {atRiskDeals && atRiskDeals.length > 0 && (
           <Card className="lg:col-span-8">
@@ -448,7 +462,7 @@ export default function DashboardPage() {
             </div>
           </CardContent>
         </Card>
-      </div>
+      </div>}
     </div>
   )
 }
