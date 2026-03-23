@@ -4,12 +4,14 @@ import { useState } from "react"
 import { signIn } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
+import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 
 export default function LoginPage() {
   const router = useRouter()
+  const t = useTranslations("auth")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
@@ -29,7 +31,7 @@ export default function LoginPage() {
     setLoading(false)
 
     if (result?.error) {
-      setError("Invalid email or password")
+      setError(t("invalidCredentials"))
     } else {
       router.push("/")
       router.refresh()
@@ -40,7 +42,7 @@ export default function LoginPage() {
     <Card>
       <CardHeader className="text-center">
         <CardTitle className="text-2xl font-bold">LeadDrive CRM</CardTitle>
-        <CardDescription>Sign in to your account</CardDescription>
+        <CardDescription>{t("signInToAccount")}</CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
@@ -51,7 +53,7 @@ export default function LoginPage() {
           )}
           <div className="space-y-2">
             <label htmlFor="email" className="text-sm font-medium">
-              Email
+              {t("email")}
             </label>
             <Input
               id="email"
@@ -64,7 +66,7 @@ export default function LoginPage() {
           </div>
           <div className="space-y-2">
             <label htmlFor="password" className="text-sm font-medium">
-              Password
+              {t("password")}
             </label>
             <Input
               id="password"
@@ -79,14 +81,14 @@ export default function LoginPage() {
         </CardContent>
         <CardFooter className="flex flex-col gap-3">
           <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Signing in..." : "Sign in"}
+            {loading ? t("signingIn") : t("signIn")}
           </Button>
           <div className="flex justify-between text-sm w-full">
             <Link href="/forgot-password" className="text-muted-foreground hover:text-primary">
-              Forgot password?
+              {t("forgotPassword")}
             </Link>
             <Link href="/register" className="text-muted-foreground hover:text-primary">
-              Create account
+              {t("createAccount")}
             </Link>
           </div>
         </CardFooter>

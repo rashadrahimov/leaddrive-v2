@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
+import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -28,29 +29,22 @@ interface EmailTemplateFormProps {
 }
 
 const variableButtons = [
-  { label: "Имя клиента", variable: "client_name", icon: "👤" },
-  { label: "Email клиента", variable: "client_email", icon: "📧" },
-  { label: "Компания", variable: "company", icon: "🏢" },
-  { label: "Услуга", variable: "service", icon: "🔧" },
-  { label: "Новые услуги", variable: "new_services", icon: "🆕" },
-  { label: "Улучшения", variable: "improvements", icon: "📊" },
-  { label: "Предстоящее", variable: "upcoming", icon: "📅" },
-  { label: "Дата", variable: "date", icon: "📆" },
-  { label: "Месяц", variable: "month", icon: "🗓" },
-  { label: "Год", variable: "year", icon: "📅" },
-]
-
-const categoryOptions = [
-  { value: "general", label: "Общее" },
-  { value: "welcome", label: "Приветствие" },
-  { value: "onboarding", label: "Онбординг" },
-  { value: "notification", label: "Уведомление" },
-  { value: "marketing", label: "Рассылка" },
-  { value: "follow_up", label: "Последующее" },
-  { value: "proposal", label: "Предложение" },
+  { labelKey: "varClientName", variable: "client_name", icon: "👤" },
+  { labelKey: "varClientEmail", variable: "client_email", icon: "📧" },
+  { labelKey: "varCompany", variable: "company", icon: "🏢" },
+  { labelKey: "varService", variable: "service", icon: "🔧" },
+  { labelKey: "varNewServices", variable: "new_services", icon: "🆕" },
+  { labelKey: "varImprovements", variable: "improvements", icon: "📊" },
+  { labelKey: "varUpcoming", variable: "upcoming", icon: "📅" },
+  { labelKey: "varDate", variable: "date", icon: "📆" },
+  { labelKey: "varMonth", variable: "month", icon: "🗓" },
+  { labelKey: "varYear", variable: "year", icon: "📅" },
 ]
 
 export function EmailTemplateForm({ open, onOpenChange, onSaved, initialData, orgId, onDelete }: EmailTemplateFormProps) {
+  const tf = useTranslations("forms")
+  const tc = useTranslations("common")
+  const t = useTranslations("emailTemplates")
   const isEdit = !!initialData?.id
   const [form, setForm] = useState<EmailTemplateFormData>({
     name: "",
@@ -100,7 +94,7 @@ export function EmailTemplateForm({ open, onOpenChange, onSaved, initialData, or
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!form.name || !form.subject) {
-      setError("Заполните название и тему письма")
+      setError(t("errorNameSubject") || "Name and subject are required")
       return
     }
     setSaving(true)
@@ -117,7 +111,7 @@ export function EmailTemplateForm({ open, onOpenChange, onSaved, initialData, or
         body: JSON.stringify(form),
       })
       const json = await res.json()
-      if (!res.ok) throw new Error(json.error || "Ошибка сохранения")
+      if (!res.ok) throw new Error(json.error || tc("failedToSave"))
       onSaved()
       onOpenChange(false)
     } catch (err: any) {
@@ -163,7 +157,7 @@ export function EmailTemplateForm({ open, onOpenChange, onSaved, initialData, or
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogHeader>
         <div className="flex items-center justify-between">
-          <DialogTitle>{isEdit ? "Редактировать шаблон" : "Новый шаблон"}</DialogTitle>
+          <DialogTitle>{isEdit ? tf("editEmailTemplate") : tf("newEmailTemplate")}</DialogTitle>
           <div className="flex items-center gap-2">
             {isEdit && (
               <button
@@ -176,7 +170,7 @@ export function EmailTemplateForm({ open, onOpenChange, onSaved, initialData, or
                 )}
                 onClick={() => update("isActive", !form.isActive)}
               >
-                {form.isActive ? "Активен" : "Неактивен"}
+                {form.isActive ? tc("active") : tc("inactive")}
               </button>
             )}
             <button
@@ -196,13 +190,19 @@ export function EmailTemplateForm({ open, onOpenChange, onSaved, initialData, or
             {/* Name + Category */}
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className="text-xs uppercase text-muted-foreground">Название шаблона</Label>
+                <Label className="text-xs uppercase text-muted-foreground">{tc("name")}</Label>
                 <Input value={form.name} onChange={(e) => update("name", e.target.value)} required />
               </div>
               <div>
-                <Label className="text-xs uppercase text-muted-foreground">Категория</Label>
+                <Label className="text-xs uppercase text-muted-foreground">{tc("category")}</Label>
                 <Select value={form.category} onChange={(e) => update("category", e.target.value)}>
-                  {categoryOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                  <option value="general">{t("catGeneral")}</option>
+                  <option value="welcome">{t("catWelcome")}</option>
+                  <option value="onboarding">{t("catOnboarding")}</option>
+                  <option value="notification">{t("catNotification")}</option>
+                  <option value="marketing">{t("catMarketing")}</option>
+                  <option value="follow_up">{t("catFollowUp")}</option>
+                  <option value="proposal">{t("catProposal")}</option>
                 </Select>
               </div>
             </div>
@@ -210,14 +210,14 @@ export function EmailTemplateForm({ open, onOpenChange, onSaved, initialData, or
             {/* Subject + Language */}
             <div className="grid grid-cols-3 gap-3">
               <div className="col-span-2">
-                <Label className="text-xs uppercase text-muted-foreground">Тема письма</Label>
+                <Label className="text-xs uppercase text-muted-foreground">{tc("subject")}</Label>
                 <Input value={form.subject} onChange={(e) => update("subject", e.target.value)} required />
               </div>
               <div>
-                <Label className="text-xs uppercase text-muted-foreground">Язык</Label>
+                <Label className="text-xs uppercase text-muted-foreground">{tc("language")}</Label>
                 <Select value={form.language} onChange={(e) => update("language", e.target.value)}>
                   <option value="ru">🇷🇺 Русский</option>
-                  <option value="az">🇦🇿 Азербайджанский</option>
+                  <option value="az">🇦🇿 Azərbaycan</option>
                   <option value="en">🇬🇧 English</option>
                 </Select>
               </div>
@@ -225,9 +225,9 @@ export function EmailTemplateForm({ open, onOpenChange, onSaved, initialData, or
 
             {/* Body editor */}
             <div>
-              <Label className="text-xs uppercase text-muted-foreground">Содержание письма</Label>
+              <Label className="text-xs uppercase text-muted-foreground">{tc("content")}</Label>
               <p className="text-xs text-muted-foreground mb-2">
-                Редактируйте текст как в Word. Синие кнопки ниже вставят персональные данные клиента.
+                {t("editorHint")}
               </p>
 
               {/* Tabs: Editor / Preview */}
@@ -242,7 +242,7 @@ export function EmailTemplateForm({ open, onOpenChange, onSaved, initialData, or
                   )}
                   onClick={() => setActiveTab("editor")}
                 >
-                  ✏️ Редактор
+                  ✏️ {t("tabEditor")}
                 </button>
                 <button
                   type="button"
@@ -254,7 +254,7 @@ export function EmailTemplateForm({ open, onOpenChange, onSaved, initialData, or
                   )}
                   onClick={() => setActiveTab("preview")}
                 >
-                  👁 Предпросмотр
+                  👁 {t("tabPreview")}
                 </button>
               </div>
 
@@ -262,20 +262,20 @@ export function EmailTemplateForm({ open, onOpenChange, onSaved, initialData, or
                 <div className="border rounded-b-lg">
                   {/* Toolbar */}
                   <div className="flex items-center gap-0.5 p-2 border-b bg-muted/30 flex-wrap">
-                    <button type="button" onClick={() => execCommand("undo")} className="p-1.5 rounded hover:bg-muted" title="Отменить (Ctrl+Z)">
+                    <button type="button" onClick={() => execCommand("undo")} className="p-1.5 rounded hover:bg-muted" title="Undo (Ctrl+Z)">
                       <Undo className="h-4 w-4" />
                     </button>
-                    <button type="button" onClick={() => execCommand("redo")} className="p-1.5 rounded hover:bg-muted" title="Повторить (Ctrl+Y)">
+                    <button type="button" onClick={() => execCommand("redo")} className="p-1.5 rounded hover:bg-muted" title="Redo (Ctrl+Y)">
                       <Redo className="h-4 w-4" />
                     </button>
                     <span className="w-px h-5 bg-border mx-1" />
-                    <button type="button" onClick={() => execCommand("bold")} className="p-1.5 rounded hover:bg-muted font-bold" title="Жирный (Ctrl+B)">
+                    <button type="button" onClick={() => execCommand("bold")} className="p-1.5 rounded hover:bg-muted font-bold" title="Bold (Ctrl+B)">
                       <Bold className="h-4 w-4" />
                     </button>
-                    <button type="button" onClick={() => execCommand("italic")} className="p-1.5 rounded hover:bg-muted" title="Курсив (Ctrl+I)">
+                    <button type="button" onClick={() => execCommand("italic")} className="p-1.5 rounded hover:bg-muted" title="Italic (Ctrl+I)">
                       <Italic className="h-4 w-4" />
                     </button>
-                    <button type="button" onClick={() => execCommand("underline")} className="p-1.5 rounded hover:bg-muted" title="Подчёркнутый (Ctrl+U)">
+                    <button type="button" onClick={() => execCommand("underline")} className="p-1.5 rounded hover:bg-muted" title="Underline (Ctrl+U)">
                       <Underline className="h-4 w-4" />
                     </button>
                     <span className="w-px h-5 bg-border mx-1" />
@@ -284,44 +284,44 @@ export function EmailTemplateForm({ open, onOpenChange, onSaved, initialData, or
                       onChange={e => { if (e.target.value) execCommand("fontSize", e.target.value); e.target.value = "" }}
                       defaultValue=""
                     >
-                      <option value="" disabled>Размер</option>
-                      <option value="1">Мелкий</option>
-                      <option value="3">Обычный</option>
-                      <option value="5">Крупный</option>
-                      <option value="7">Заголовок</option>
+                      <option value="" disabled>{t("fontSize")}</option>
+                      <option value="1">{t("fontSmall")}</option>
+                      <option value="3">{t("fontNormal")}</option>
+                      <option value="5">{t("fontLarge")}</option>
+                      <option value="7">{t("fontHeading")}</option>
                     </select>
                     <input
                       type="color"
                       className="w-7 h-7 rounded border cursor-pointer"
-                      title="Цвет текста"
+                      title={t("textColor")}
                       defaultValue="#000000"
                       onChange={e => execCommand("foreColor", e.target.value)}
                     />
                     <span className="w-px h-5 bg-border mx-1" />
-                    <button type="button" onClick={() => execCommand("justifyLeft")} className="p-1.5 rounded hover:bg-muted" title="По левому краю">
+                    <button type="button" onClick={() => execCommand("justifyLeft")} className="p-1.5 rounded hover:bg-muted" title="Align left">
                       <AlignLeft className="h-4 w-4" />
                     </button>
-                    <button type="button" onClick={() => execCommand("justifyCenter")} className="p-1.5 rounded hover:bg-muted" title="По центру">
+                    <button type="button" onClick={() => execCommand("justifyCenter")} className="p-1.5 rounded hover:bg-muted" title="Align center">
                       <AlignCenter className="h-4 w-4" />
                     </button>
-                    <button type="button" onClick={() => execCommand("justifyRight")} className="p-1.5 rounded hover:bg-muted" title="По правому краю">
+                    <button type="button" onClick={() => execCommand("justifyRight")} className="p-1.5 rounded hover:bg-muted" title="Align right">
                       <AlignRight className="h-4 w-4" />
                     </button>
                     <span className="w-px h-5 bg-border mx-1" />
-                    <button type="button" onClick={() => execCommand("insertUnorderedList")} className="p-1.5 rounded hover:bg-muted" title="Маркированный список">
+                    <button type="button" onClick={() => execCommand("insertUnorderedList")} className="p-1.5 rounded hover:bg-muted" title="Bullet list">
                       <List className="h-4 w-4" />
                     </button>
-                    <button type="button" onClick={() => execCommand("insertOrderedList")} className="p-1.5 rounded hover:bg-muted" title="Нумерованный список">
+                    <button type="button" onClick={() => execCommand("insertOrderedList")} className="p-1.5 rounded hover:bg-muted" title="Numbered list">
                       <ListOrdered className="h-4 w-4" />
                     </button>
                     <button
                       type="button"
                       onClick={() => {
-                        const url = prompt("Вставьте ссылку (URL):")
+                        const url = prompt("URL:")
                         if (url) execCommand("createLink", url)
                       }}
                       className="p-1.5 rounded hover:bg-muted"
-                      title="Вставить ссылку"
+                      title="Insert link"
                     >
                       <Link className="h-4 w-4" />
                     </button>
@@ -344,7 +344,7 @@ export function EmailTemplateForm({ open, onOpenChange, onSaved, initialData, or
                         }
                       }}
                       className="p-1.5 rounded hover:bg-muted text-muted-foreground"
-                      title="Показать HTML код (для опытных)"
+                      title="Show HTML source"
                     >
                       <Code className="h-3.5 w-3.5" />
                     </button>
@@ -352,16 +352,16 @@ export function EmailTemplateForm({ open, onOpenChange, onSaved, initialData, or
 
                   {/* Variable insert buttons */}
                   <div className="flex flex-wrap gap-1.5 p-2 border-b bg-blue-50/50 dark:bg-blue-950/20">
-                    <span className="text-xs text-blue-600 dark:text-blue-400 font-medium self-center mr-1">Данные клиента:</span>
+                    <span className="text-xs text-blue-600 dark:text-blue-400 font-medium self-center mr-1">{t("clientData")}:</span>
                     {variableButtons.map(v => (
                       <button
                         key={v.variable}
                         type="button"
                         onClick={() => insertVariable(v.variable)}
                         className="text-xs px-2.5 py-1 rounded-full bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900/40 dark:text-blue-300 border border-blue-200 dark:border-blue-700 transition-colors font-medium"
-                        title={`Вставит {{${v.variable}}} — заменится на реальные данные при отправке`}
+                        title={`{{${v.variable}}}`}
                       >
-                        {v.icon} {v.label}
+                        {v.icon} {t(v.labelKey as any)}
                       </button>
                     ))}
                   </div>
@@ -375,12 +375,11 @@ export function EmailTemplateForm({ open, onOpenChange, onSaved, initialData, or
                       onInput={syncEditorContent}
                       onBlur={syncEditorContent}
                       suppressContentEditableWarning
-                      data-placeholder="Начните писать текст письма здесь...&#10;&#10;Используйте синие кнопки выше чтобы вставить имя клиента, email и другие данные."
+                      data-placeholder={t("editorPlaceholder")}
                     />
                     {!form.htmlBody && (
                       <div className="absolute top-4 left-4 text-sm text-muted-foreground/50 pointer-events-none leading-relaxed">
-                        Начните писать текст письма здесь...<br /><br />
-                        Используйте синие кнопки выше чтобы вставить имя клиента, email и другие данные.
+                        {t("editorPlaceholder")}
                       </div>
                     )}
                   </div>
@@ -414,9 +413,9 @@ export function EmailTemplateForm({ open, onOpenChange, onSaved, initialData, or
             </Button>
           )}
           <div className="flex-1" />
-          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Отмена</Button>
+          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>{tc("cancel")}</Button>
           <Button type="submit" disabled={saving} className="min-w-[140px]">
-            {saving ? "Сохранение..." : "Сохранить"}
+            {saving ? tc("saving") : tc("save")}
           </Button>
         </DialogFooter>
       </form>

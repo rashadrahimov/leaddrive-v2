@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -17,6 +18,8 @@ interface TaskFormProps {
 }
 
 export function TaskForm({ open, onOpenChange, onSaved, initialData, orgId }: TaskFormProps) {
+  const t = useTranslations("forms")
+  const tc = useTranslations("common")
   const isEdit = !!initialData?.id
   const [form, setForm] = useState({
     title: initialData?.title || "",
@@ -62,25 +65,25 @@ export function TaskForm({ open, onOpenChange, onSaved, initialData, orgId }: Ta
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogHeader><DialogTitle>{isEdit ? "Edit Task" : "New Task"}</DialogTitle></DialogHeader>
+      <DialogHeader><DialogTitle>{isEdit ? t("editTask") : t("newTask")}</DialogTitle></DialogHeader>
       <form onSubmit={handleSubmit}>
         <DialogContent>
           {error && <div className="text-sm text-red-500 bg-red-50 dark:bg-red-900/20 p-2 rounded mb-3">{error}</div>}
           <div className="grid gap-4">
-            <div><Label>Title *</Label><Input value={form.title} onChange={e => u("title", e.target.value)} required /></div>
+            <div><Label>{tc("title")} *</Label><Input value={form.title} onChange={e => u("title", e.target.value)} required /></div>
             <div className="grid grid-cols-2 gap-3">
-              <div><Label>Priority</Label><Select value={form.priority} onChange={e => u("priority", e.target.value)}><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option></Select></div>
-              <div><Label>Due Date</Label><Input type="date" value={form.dueDate} onChange={e => u("dueDate", e.target.value)} /></div>
+              <div><Label>{tc("priority")}</Label><Select value={form.priority} onChange={e => u("priority", e.target.value)}><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option></Select></div>
+              <div><Label>{tc("dueDate")}</Label><Input type="date" value={form.dueDate} onChange={e => u("dueDate", e.target.value)} /></div>
             </div>
             {isEdit && (
-              <div><Label>Status</Label><Select value={form.status} onChange={e => u("status", e.target.value)}><option value="pending">Pending</option><option value="in_progress">In Progress</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option></Select></div>
+              <div><Label>{tc("status")}</Label><Select value={form.status} onChange={e => u("status", e.target.value)}><option value="pending">Pending</option><option value="in_progress">In Progress</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option></Select></div>
             )}
-            <div><Label>Description</Label><Textarea value={form.description} onChange={e => u("description", e.target.value)} rows={3} /></div>
+            <div><Label>{tc("description")}</Label><Textarea value={form.description} onChange={e => u("description", e.target.value)} rows={3} /></div>
           </div>
         </DialogContent>
         <DialogFooter>
-          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button type="submit" disabled={saving}>{saving ? "Saving..." : isEdit ? "Update" : "Create Task"}</Button>
+          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>{tc("cancel")}</Button>
+          <Button type="submit" disabled={saving}>{saving ? tc("saving") : isEdit ? tc("update") : tc("create")}</Button>
         </DialogFooter>
       </form>
     </Dialog>

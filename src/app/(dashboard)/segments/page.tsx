@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useSession } from "next-auth/react"
+import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
@@ -20,23 +21,11 @@ interface Segment {
   createdAt: string
 }
 
-const conditionLabelMap: Record<string, string> = {
-  company: "Компания",
-  source: "Источник",
-  role: "Должность",
-  tag: "Тег",
-  name: "Имя",
-  createdAfter: "После",
-  createdBefore: "До",
-  hasEmail: "Email",
-  hasPhone: "Телефон",
-}
-
-function getConditionChips(conditions: Record<string, any>): { key: string; label: string }[] {
+function getConditionChips(conditions: Record<string, any>, labelMap: Record<string, string>): { key: string; label: string }[] {
   const chips: { key: string; label: string }[] = []
   for (const [key, value] of Object.entries(conditions)) {
     if (!value) continue
-    const label = conditionLabelMap[key] || key
+    const label = labelMap[key] || key
     if (typeof value === "boolean") {
       chips.push({ key, label })
     } else {
@@ -48,6 +37,20 @@ function getConditionChips(conditions: Record<string, any>): { key: string; labe
 
 export default function SegmentsPage() {
   const { data: session } = useSession()
+  const t = useTranslations("segments")
+
+  const conditionLabelMap: Record<string, string> = {
+    company: t("condCompany"),
+    source: t("condSource"),
+    role: t("condRole"),
+    tag: t("condTag"),
+    name: t("condName"),
+    createdAfter: t("condAfter"),
+    createdBefore: t("condBefore"),
+    hasEmail: t("condHasEmail"),
+    hasPhone: t("condHasPhone"),
+  }
+
   const [segments, setSegments] = useState<Segment[]>([])
   const [totalContacts, setTotalContacts] = useState(0)
   const [loading, setLoading] = useState(true)
@@ -101,7 +104,7 @@ export default function SegmentsPage() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <h1 className="text-2xl font-bold tracking-tight">Сегменты</h1>
+        <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
         <div className="animate-pulse space-y-4">
           <div className="grid grid-cols-3 gap-4">{[1, 2, 3].map(i => <div key={i} className="h-20 bg-muted rounded-lg" />)}</div>
           <div className="space-y-3">{[1, 2, 3].map(i => <div key={i} className="h-24 bg-muted rounded-lg" />)}</div>
@@ -115,11 +118,11 @@ export default function SegmentsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Сегменты</h1>
-          <p className="text-sm text-muted-foreground">Группы контактов для целевых рассылок и аналитики</p>
+          <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
+          <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
         </div>
         <Button onClick={() => { setEditData(undefined); setShowForm(true) }} className="gap-1.5">
-          <Plus className="h-4 w-4" /> Новый сегмент
+          <Plus className="h-4 w-4" /> {t("newSegment")}
         </Button>
       </div>
 
@@ -138,7 +141,7 @@ export default function SegmentsPage() {
             </div>
             <div>
               <p className="text-xl font-bold">{segments.length}</p>
-              <p className="text-xs text-muted-foreground">Всего сегментов</p>
+              <p className="text-xs text-muted-foreground">{t("totalSegments")}</p>
             </div>
           </div>
         </button>
@@ -155,7 +158,7 @@ export default function SegmentsPage() {
             </div>
             <div>
               <p className="text-xl font-bold">{dynamicCount}</p>
-              <p className="text-xs text-muted-foreground">Динамические</p>
+              <p className="text-xs text-muted-foreground">{t("dynamic")}</p>
             </div>
           </div>
         </button>
@@ -172,7 +175,7 @@ export default function SegmentsPage() {
             </div>
             <div>
               <p className="text-xl font-bold">{staticCount}</p>
-              <p className="text-xs text-muted-foreground">Статические</p>
+              <p className="text-xs text-muted-foreground">{t("static")}</p>
             </div>
           </div>
         </button>
@@ -184,7 +187,7 @@ export default function SegmentsPage() {
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Поиск сегментов..."
+              placeholder={t("searchPlaceholder")}
               value={search}
               onChange={e => setSearch(e.target.value)}
               className="pl-9"
@@ -201,14 +204,14 @@ export default function SegmentsPage() {
             <Filter className="h-6 w-6 text-muted-foreground" />
           </div>
           <p className="text-muted-foreground font-medium">
-            {segments.length === 0 ? "Нет сегментов" : "Ничего не найдено"}
+            {segments.length === 0 ? t("noSegments") : t("noResults")}
           </p>
           <p className="text-sm text-muted-foreground mt-1">
-            {segments.length === 0 ? "Создайте первый сегмент для группировки контактов" : "Попробуйте изменить параметры поиска"}
+            {segments.length === 0 ? t("noSegmentsHint") : t("noResultsHint")}
           </p>
           {segments.length === 0 && (
             <Button className="mt-4 gap-1.5" onClick={() => { setEditData(undefined); setShowForm(true) }}>
-              <Plus className="h-4 w-4" /> Создать сегмент
+              <Plus className="h-4 w-4" /> {t("createSegment")}
             </Button>
           )}
         </div>
@@ -216,7 +219,7 @@ export default function SegmentsPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {filtered.map(segment => {
             const condObj = (segment.conditions && typeof segment.conditions === "object") ? segment.conditions as Record<string, any> : {}
-            const chips = getConditionChips(condObj)
+            const chips = getConditionChips(condObj, conditionLabelMap)
             const percentage = totalContacts > 0 ? Math.round((segment.contactCount / totalContacts) * 100) : 0
 
             return (
@@ -244,9 +247,9 @@ export default function SegmentsPage() {
                         )}
                       >
                         {segment.isDynamic ? (
-                          <><Zap className="h-2.5 w-2.5 mr-0.5" /> Авто</>
+                          <><Zap className="h-2.5 w-2.5 mr-0.5" /> {t("auto")}</>
                         ) : (
-                          <><Archive className="h-2.5 w-2.5 mr-0.5" /> Фикс</>
+                          <><Archive className="h-2.5 w-2.5 mr-0.5" /> {t("fixed")}</>
                         )}
                       </Badge>
                     </div>
@@ -254,14 +257,14 @@ export default function SegmentsPage() {
                       <button
                         className="p-1.5 rounded-md hover:bg-muted transition-colors"
                         onClick={(e) => { e.stopPropagation(); setEditData(segment); setShowForm(true) }}
-                        title="Редактировать"
+                        title={t("titleEdit")}
                       >
                         <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
                       </button>
                       <button
                         className="p-1.5 rounded-md hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
                         onClick={(e) => { e.stopPropagation(); setDeleteId(segment.id); setDeleteName(segment.name) }}
-                        title="Удалить"
+                        title={t("deleteSegment")}
                       >
                         <Trash2 className="h-3.5 w-3.5 text-muted-foreground hover:text-red-500" />
                       </button>

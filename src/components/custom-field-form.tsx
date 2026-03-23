@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -27,6 +28,8 @@ interface CustomFieldFormProps {
 }
 
 export function CustomFieldForm({ open, onOpenChange, onSaved, initialData, orgId }: CustomFieldFormProps) {
+  const tf = useTranslations("forms")
+  const tc = useTranslations("common")
   const isEdit = !!initialData?.id
   const [form, setForm] = useState<CustomFieldFormData>({
     fieldName: "",
@@ -100,7 +103,7 @@ export function CustomFieldForm({ open, onOpenChange, onSaved, initialData, orgI
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogHeader>
-        <DialogTitle>{isEdit ? "Edit Custom Field" : "New Custom Field"}</DialogTitle>
+        <DialogTitle>{isEdit ? tf("editCustomField") : tf("newCustomField")}</DialogTitle>
       </DialogHeader>
       <form onSubmit={handleSubmit}>
         <DialogContent>
@@ -108,39 +111,39 @@ export function CustomFieldForm({ open, onOpenChange, onSaved, initialData, orgI
           <div className="grid gap-4">
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label htmlFor="fieldName">Field Name *</Label>
+                <Label htmlFor="fieldName">{tf("fieldName")} *</Label>
                 <Input id="fieldName" value={form.fieldName} onChange={(e) => update("fieldName", e.target.value)} placeholder="custom_source" required />
               </div>
               <div>
-                <Label htmlFor="fieldLabel">Display Label *</Label>
+                <Label htmlFor="fieldLabel">{tf("displayLabel")} *</Label>
                 <Input id="fieldLabel" value={form.fieldLabel} onChange={(e) => update("fieldLabel", e.target.value)} placeholder="Lead Source" required />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label htmlFor="entityType">Entity Type</Label>
+                <Label htmlFor="entityType">{tf("entityType")}</Label>
                 <Select value={form.entityType} onChange={(e) => update("entityType", e.target.value)}>
-                  <option value="contact">Contact</option>
-                  <option value="deal">Deal</option>
-                  <option value="lead">Lead</option>
-                  <option value="company">Company</option>
+                  <option value="contact">{tf("entityContact")}</option>
+                  <option value="deal">{tf("entityDeal")}</option>
+                  <option value="lead">{tf("entityLead")}</option>
+                  <option value="company">{tf("entityCompany")}</option>
                 </Select>
               </div>
               <div>
-                <Label htmlFor="fieldType">Field Type</Label>
+                <Label htmlFor="fieldType">{tf("fieldType")}</Label>
                 <Select value={form.fieldType} onChange={(e) => update("fieldType", e.target.value)}>
-                  <option value="text">Text</option>
-                  <option value="number">Number</option>
-                  <option value="date">Date</option>
-                  <option value="select">Select</option>
-                  <option value="boolean">Boolean</option>
-                  <option value="textarea">Textarea</option>
+                  <option value="text">{tf("fieldTypeText")}</option>
+                  <option value="number">{tf("fieldTypeNumber")}</option>
+                  <option value="date">{tf("fieldTypeDate")}</option>
+                  <option value="select">{tf("fieldTypeSelect")}</option>
+                  <option value="boolean">{tf("fieldTypeBoolean")}</option>
+                  <option value="textarea">{tf("fieldTypeTextarea")}</option>
                 </Select>
               </div>
             </div>
             {form.fieldType === "select" && (
               <div>
-                <Label htmlFor="options">Options (comma-separated)</Label>
+                <Label htmlFor="options">{tf("optionsCommaSeparated")}</Label>
                 <Textarea
                   id="options"
                   value={form.options}
@@ -151,18 +154,18 @@ export function CustomFieldForm({ open, onOpenChange, onSaved, initialData, orgI
               </div>
             )}
             <div>
-              <Label htmlFor="defaultValue">Default Value</Label>
+              <Label htmlFor="defaultValue">{tf("defaultValue")}</Label>
               <Input id="defaultValue" value={form.defaultValue} onChange={(e) => update("defaultValue", e.target.value)} />
             </div>
             <label className="flex items-center gap-2 cursor-pointer">
               <input type="checkbox" checked={form.isRequired} onChange={(e) => update("isRequired", e.target.checked)} className="rounded" />
-              <span className="text-sm">Required</span>
+              <span className="text-sm">{tc("required")}</span>
             </label>
           </div>
         </DialogContent>
         <DialogFooter>
-          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button type="submit" disabled={saving}>{saving ? "Saving..." : isEdit ? "Update" : "Create"}</Button>
+          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>{tc("cancel")}</Button>
+          <Button type="submit" disabled={saving}>{saving ? tc("saving") : isEdit ? tc("update") : tc("create")}</Button>
         </DialogFooter>
       </form>
     </Dialog>

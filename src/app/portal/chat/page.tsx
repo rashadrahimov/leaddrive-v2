@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
+import { useTranslations } from "next-intl"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -19,6 +20,7 @@ interface Message {
 }
 
 export default function PortalChatPage() {
+  const t = useTranslations("portal")
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState("")
   const [sending, setSending] = useState(false)
@@ -116,14 +118,14 @@ export default function PortalChatPage() {
                 </div>
                 {msg.escalated && msg.escalationTicketId && (
                   <div className="mt-2 p-2.5 rounded-lg bg-red-50 border border-red-200">
-                    <p className="text-xs font-medium text-red-700 mb-1">Разговор передан оператору</p>
+                    <p className="text-xs font-medium text-red-700 mb-1">Escalated to agent</p>
                     <Button
                       variant="outline"
                       size="sm"
                       className="border-red-300 text-red-600 hover:bg-red-100"
                       onClick={() => router.push(`/portal/tickets/${msg.escalationTicketId}`)}
                     >
-                      <TicketPlus className="h-3.5 w-3.5 mr-1" /> Тикет {msg.escalationTicketNumber || `#${msg.escalationTicketId?.slice(0, 8)}`}
+                      <TicketPlus className="h-3.5 w-3.5 mr-1" /> Ticket {msg.escalationTicketNumber || `#${msg.escalationTicketId?.slice(0, 8)}`}
                     </Button>
                   </div>
                 )}
@@ -134,7 +136,7 @@ export default function PortalChatPage() {
                     className="mt-2 border-orange-300 text-orange-600 hover:bg-orange-50"
                     onClick={() => router.push("/portal/tickets")}
                   >
-                    <TicketPlus className="h-3.5 w-3.5 mr-1" /> Создать тикет
+                    <TicketPlus className="h-3.5 w-3.5 mr-1" /> {t("newTicket")}
                   </Button>
                 )}
               </div>

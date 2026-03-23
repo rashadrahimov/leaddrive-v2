@@ -3,6 +3,7 @@
 import { useRouter, useParams } from "next/navigation"
 import { useEffect, useState } from "react"
 import { useSession } from "next-auth/react"
+import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
@@ -44,17 +45,19 @@ const activityIcons: Record<string, string> = {
 
 // Lazy import engagement tab — same component as deal engagement but with contact API
 function ContactEngagement({ contactId, orgId }: { contactId: string; orgId?: string }) {
+  const tc = useTranslations("common")
   const [Comp, setComp] = useState<any>(null)
   useEffect(() => {
     import("@/components/deals/engagement-tab").then(m => setComp(() => m.EngagementTab))
   }, [])
-  if (!Comp) return <div className="text-center py-8 text-sm text-muted-foreground">Loading...</div>
+  if (!Comp) return <div className="text-center py-8 text-sm text-muted-foreground">{tc("loading")}</div>
   // EngagementTab uses dealId but we pass contactId — we need contact-specific API
   // Instead, fetch directly and render inline
   return <ContactEngagementInner contactId={contactId} orgId={orgId} />
 }
 
 function ContactEngagementInner({ contactId, orgId }: { contactId: string; orgId?: string }) {
+  const tc = useTranslations("common")
   const [data, setData] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   useEffect(() => {
@@ -94,7 +97,7 @@ function ContactEngagementInner({ contactId, orgId }: { contactId: string; orgId
           <CardContent className="p-4">
             <p className="text-sm font-semibold mb-2">Email Nurturing</p>
             <div className="grid grid-cols-3 gap-4 text-center">
-              <div><p className="text-xl font-bold text-blue-600">{data.email.sent}</p><p className="text-[10px] text-muted-foreground">Sent</p></div>
+              <div><p className="text-xl font-bold text-blue-600">{data.email.sent}</p><p className="text-[10px] text-muted-foreground">{tc("sent")}</p></div>
               <div><p className="text-xl font-bold text-green-600">{data.email.openRate}%</p><p className="text-[10px] text-muted-foreground">Open Rate</p></div>
               <div><p className="text-xl font-bold text-orange-600">{data.email.clickRate}%</p><p className="text-[10px] text-muted-foreground">Click Rate</p></div>
             </div>
@@ -111,6 +114,8 @@ function ContactEngagementInner({ contactId, orgId }: { contactId: string; orgId
 }
 
 export default function ContactDetailPage() {
+  const t = useTranslations("contacts")
+  const tc = useTranslations("common")
   const router = useRouter()
   const params = useParams()
   const { data: session } = useSession()
@@ -228,7 +233,7 @@ export default function ContactDetailPage() {
         </Button>
         <Card>
           <CardContent className="pt-6">
-            <p className="text-muted-foreground text-center">Contact not found</p>
+            <p className="text-muted-foreground text-center">{t("contactNotFound")}</p>
           </CardContent>
         </Card>
       </div>
@@ -254,7 +259,7 @@ export default function ContactDetailPage() {
                 <span>{contact.position}</span>
                 {contact.company && (
                   <>
-                    <span>at</span>
+                    <span>{t("at")}</span>
                     <button
                       onClick={() => router.push(`/companies/${contact.company!.id}`)}
                       className="text-primary hover:underline"
@@ -269,12 +274,12 @@ export default function ContactDetailPage() {
               {/* Communication action buttons */}
               <div className="flex items-center gap-2 mt-2">
                 {contact.phone && (
-                  <a href={`tel:${contact.phone}`} title="Call" className="h-8 w-8 rounded-full bg-green-500 hover:bg-green-600 flex items-center justify-center transition-colors shadow-sm">
+                  <a href={`tel:${contact.phone}`} title={t("call")} className="h-8 w-8 rounded-full bg-green-500 hover:bg-green-600 flex items-center justify-center transition-colors shadow-sm">
                     <Phone className="h-3.5 w-3.5 text-white" />
                   </a>
                 )}
                 {contact.email && (
-                  <a href={`mailto:${contact.email}`} title="Email" className="h-8 w-8 rounded-full bg-orange-500 hover:bg-orange-600 flex items-center justify-center transition-colors shadow-sm">
+                  <a href={`mailto:${contact.email}`} title={tc("email")} className="h-8 w-8 rounded-full bg-orange-500 hover:bg-orange-600 flex items-center justify-center transition-colors shadow-sm">
                     <Mail className="h-3.5 w-3.5 text-white" />
                   </a>
                 )}
@@ -294,7 +299,7 @@ export default function ContactDetailPage() {
         </div>
         <Button variant="outline" onClick={openEdit}>
           <Pencil className="h-4 w-4" />
-          Edit
+          {tc("edit")}
         </Button>
       </div>
 
@@ -306,7 +311,7 @@ export default function ContactDetailPage() {
               <Mail className="h-5 w-5 text-blue-600" />
             </div>
             <div>
-              <p className="text-xs text-muted-foreground">Email</p>
+              <p className="text-xs text-muted-foreground">{tc("email")}</p>
               <p className="text-sm font-medium truncate">{contact.email || "—"}</p>
             </div>
           </CardContent>
@@ -317,7 +322,7 @@ export default function ContactDetailPage() {
               <Phone className="h-5 w-5 text-green-600" />
             </div>
             <div>
-              <p className="text-xs text-muted-foreground">Phone</p>
+              <p className="text-xs text-muted-foreground">{tc("phone")}</p>
               <p className="text-sm font-medium">{contact.phone || "—"}</p>
             </div>
           </CardContent>
@@ -348,9 +353,9 @@ export default function ContactDetailPage() {
 
       <Tabs defaultValue="activities">
         <TabsList>
-          <TabsTrigger value="activities">Activities ({contact.activities?.length || 0})</TabsTrigger>
-          <TabsTrigger value="info">Info</TabsTrigger>
-          <TabsTrigger value="engagement">Engagement</TabsTrigger>
+          <TabsTrigger value="activities">{t("tabActivities")} ({contact.activities?.length || 0})</TabsTrigger>
+          <TabsTrigger value="info">{t("tabOverview")}</TabsTrigger>
+          <TabsTrigger value="engagement">{t("tabEngagement")}</TabsTrigger>
           <TabsTrigger value="recommendations" onClick={() => {
             if (recommendations.length === 0 && !loadingRecs) {
               setLoadingRecs(true)
@@ -373,7 +378,7 @@ export default function ContactDetailPage() {
               <CardTitle className="text-base">Activity Timeline</CardTitle>
               <Button size="sm">
                 <MessageSquare className="h-4 w-4" />
-                Log Activity
+                {t("addActivity")}
               </Button>
             </CardHeader>
             <CardContent>
@@ -399,7 +404,7 @@ export default function ContactDetailPage() {
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-muted-foreground text-center py-6">No activities yet</p>
+                <p className="text-sm text-muted-foreground text-center py-6">{t("noActivities")}</p>
               )}
             </CardContent>
           </Card>
@@ -410,7 +415,7 @@ export default function ContactDetailPage() {
             <CardContent className="space-y-3 pt-6 text-sm">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <span className="text-muted-foreground">Source:</span>
+                  <span className="text-muted-foreground">{tc("source")}:</span>
                   <span className="ml-2 font-medium">{contact.source || "—"}</span>
                 </div>
                 <div>
@@ -422,7 +427,7 @@ export default function ContactDetailPage() {
                   <Badge className="ml-2">{contact.isActive ? "Active" : "Inactive"}</Badge>
                 </div>
                 <div>
-                  <span className="text-muted-foreground">Company:</span>
+                  <span className="text-muted-foreground">{tc("company")}:</span>
                   <span className="ml-2 font-medium">{contact.company?.name || "—"}</span>
                 </div>
               </div>
@@ -492,27 +497,27 @@ export default function ContactDetailPage() {
       {/* ── Edit Dialog ── */}
       <Dialog open={showEdit} onOpenChange={setShowEdit}>
         <DialogHeader>
-          <DialogTitle>Редактировать контакт</DialogTitle>
+          <DialogTitle>{tc("edit")}</DialogTitle>
         </DialogHeader>
         <DialogContent>
           <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
             <div>
-              <Label className="text-sm font-medium">Имя *</Label>
+              <Label className="text-sm font-medium">{tc("fullName")} *</Label>
               <Input value={editData.fullName} onChange={e => setEditData(d => ({ ...d, fullName: e.target.value }))} className="mt-1" />
             </div>
             <div>
-              <Label className="text-sm font-medium">Email</Label>
+              <Label className="text-sm font-medium">{tc("email")}</Label>
               <Input value={editData.email} onChange={e => setEditData(d => ({ ...d, email: e.target.value }))} className="mt-1" />
             </div>
             <div>
-              <Label className="text-sm font-medium">Телефон (основной)</Label>
+              <Label className="text-sm font-medium">{tc("phone")}</Label>
               <Input value={editData.phone} onChange={e => setEditData(d => ({ ...d, phone: e.target.value }))} placeholder="+994..." className="mt-1" />
             </div>
             <div>
               <div className="flex items-center justify-between mb-1">
-                <Label className="text-sm font-medium">Дополнительные телефоны</Label>
+                <Label className="text-sm font-medium">{tc("phone")}</Label>
                 <Button type="button" size="sm" variant="outline" onClick={addPhone} className="h-7 text-xs gap-1">
-                  <Plus className="h-3 w-3" /> Добавить
+                  <Plus className="h-3 w-3" /> {tc("create")}
                 </Button>
               </div>
               {editData.phones.map((p, i) => (
@@ -525,31 +530,31 @@ export default function ContactDetailPage() {
               ))}
             </div>
             <div>
-              <Label className="text-sm font-medium">Должность</Label>
+              <Label className="text-sm font-medium">{tc("position")}</Label>
               <Input value={editData.position} onChange={e => setEditData(d => ({ ...d, position: e.target.value }))} className="mt-1" />
             </div>
             <div>
-              <Label className="text-sm font-medium">Отдел</Label>
+              <Label className="text-sm font-medium">Department</Label>
               <Input value={editData.department} onChange={e => setEditData(d => ({ ...d, department: e.target.value }))} className="mt-1" />
             </div>
             <div>
-              <Label className="text-sm font-medium">Компания</Label>
+              <Label className="text-sm font-medium">{tc("company")}</Label>
               <Select value={editData.companyId} onChange={e => setEditData(d => ({ ...d, companyId: e.target.value }))} className="mt-1">
-                <option value="">— Без компании —</option>
+                <option value="">{tc("noCompany")}</option>
                 {companies.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
               </Select>
             </div>
             <div>
-              <Label className="text-sm font-medium">Источник</Label>
+              <Label className="text-sm font-medium">{tc("source")}</Label>
               <Input value={editData.source} onChange={e => setEditData(d => ({ ...d, source: e.target.value }))} className="mt-1" />
             </div>
           </div>
         </DialogContent>
         <DialogFooter>
-          <Button variant="outline" onClick={() => setShowEdit(false)}>Отмена</Button>
+          <Button variant="outline" onClick={() => setShowEdit(false)}>{tc("cancel")}</Button>
           <Button onClick={handleSave} disabled={saving || !editData.fullName.trim()} className="gap-1.5">
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Pencil className="h-4 w-4" />}
-            {saving ? "Сохранение..." : "Сохранить"}
+            {saving ? tc("saving") : tc("save")}
           </Button>
         </DialogFooter>
       </Dialog>

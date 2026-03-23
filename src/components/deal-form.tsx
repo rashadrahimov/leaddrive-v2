@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -17,6 +18,8 @@ interface DealFormProps {
 }
 
 export function DealForm({ open, onOpenChange, onSaved, initialData, orgId }: DealFormProps) {
+  const t = useTranslations("forms")
+  const tc = useTranslations("common")
   const isEdit = !!initialData?.id
   const [form, setForm] = useState({
     name: initialData?.name || "",
@@ -100,34 +103,34 @@ export function DealForm({ open, onOpenChange, onSaved, initialData, orgId }: De
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogHeader><DialogTitle>{isEdit ? "Edit Deal" : "New Deal"}</DialogTitle></DialogHeader>
+      <DialogHeader><DialogTitle>{isEdit ? t("editDeal") : t("newDeal")}</DialogTitle></DialogHeader>
       <form onSubmit={handleSubmit}>
         <DialogContent>
           {error && <div className="text-sm text-red-500 bg-red-50 dark:bg-red-900/20 p-2 rounded mb-3">{error}</div>}
           <div className="grid gap-4">
             <div>
-              <Label htmlFor="name">Deal Name *</Label>
+              <Label htmlFor="name">{tc("name")} *</Label>
               <Input id="name" value={form.name} onChange={e => update("name", e.target.value)} required />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label htmlFor="companyId">Компания</Label>
+                <Label htmlFor="companyId">{tc("company")}</Label>
                 <Select value={form.companyId} onChange={e => update("companyId", e.target.value)}>
-                  <option value="">Выбрать...</option>
+                  <option value="">{tc("select")}...</option>
                   {companies.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </Select>
               </div>
               <div>
-                <Label htmlFor="campaignId">Кампания (для ROI)</Label>
+                <Label htmlFor="campaignId">{t("campaignForRoi")}</Label>
                 <Select value={form.campaignId} onChange={e => update("campaignId", e.target.value)}>
-                  <option value="">Без кампании</option>
+                  <option value="">{t("noCampaign")}</option>
                   {campaigns.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </Select>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label htmlFor="stage">Stage</Label>
+                <Label htmlFor="stage">{tc("status")}</Label>
                 <Select value={form.stage} onChange={e => update("stage", e.target.value)}>
                   <option value="LEAD">Lead</option>
                   <option value="QUALIFIED">Qualified</option>
@@ -144,11 +147,11 @@ export function DealForm({ open, onOpenChange, onSaved, initialData, orgId }: De
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label htmlFor="valueAmount">Value</Label>
+                <Label htmlFor="valueAmount">{tc("amount")}</Label>
                 <Input id="valueAmount" type="number" min="0" step="0.01" value={form.valueAmount} onChange={e => update("valueAmount", e.target.value)} />
               </div>
               <div>
-                <Label htmlFor="currency">Currency</Label>
+                <Label htmlFor="currency">{tc("currency")}</Label>
                 <Select value={form.currency} onChange={e => update("currency", e.target.value)}>
                   <option value="AZN">AZN ₼</option>
                   <option value="USD">USD $</option>
@@ -157,18 +160,18 @@ export function DealForm({ open, onOpenChange, onSaved, initialData, orgId }: De
               </div>
             </div>
             <div>
-              <Label htmlFor="expectedClose">Expected Close</Label>
+              <Label htmlFor="expectedClose">{tc("dueDate")}</Label>
               <Input id="expectedClose" type="date" value={form.expectedClose} onChange={e => update("expectedClose", e.target.value)} />
             </div>
             <div>
-              <Label htmlFor="notes">Notes</Label>
+              <Label htmlFor="notes">{tc("notes")}</Label>
               <Textarea id="notes" value={form.notes} onChange={e => update("notes", e.target.value)} rows={3} />
             </div>
           </div>
         </DialogContent>
         <DialogFooter>
-          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button type="submit" disabled={saving}>{saving ? "Saving..." : isEdit ? "Update" : "Create"}</Button>
+          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>{tc("cancel")}</Button>
+          <Button type="submit" disabled={saving}>{saving ? tc("saving") : isEdit ? tc("update") : tc("create")}</Button>
         </DialogFooter>
       </form>
     </Dialog>

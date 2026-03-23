@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useTranslations } from "next-intl"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -62,6 +63,8 @@ const FIELD_OPTIONS = ["source", "estimated_value", "interest", "company_size", 
 const OPERATOR_OPTIONS = ["==", "!=", ">=", "<=", "contains", "starts_with"]
 
 export default function LeadRulesPage() {
+  const t = useTranslations("settings")
+  const tc = useTranslations("common")
   const [rules, setRules] = useState<AssignmentRule[]>(INITIAL_RULES)
   const [editingId, setEditingId] = useState<string | null>(null)
 
@@ -93,12 +96,12 @@ export default function LeadRulesPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-            <Filter className="h-6 w-6" /> Lead Assignment Rules
+            <Filter className="h-6 w-6" /> {t("leadRules")}
           </h1>
-          <p className="text-sm text-muted-foreground">Configure how incoming leads are automatically assigned to team members</p>
+          <p className="text-sm text-muted-foreground">{t("leadRulesDesc")}</p>
         </div>
         <Button onClick={addRule}>
-          <Plus className="h-4 w-4 mr-1" /> Add Rule
+          <Plus className="h-4 w-4 mr-1" /> {tc("add")} Rule
         </Button>
       </div>
 
@@ -124,7 +127,7 @@ export default function LeadRulesPage() {
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-2">
                   <Badge variant={rule.isActive ? "default" : "secondary"}>
-                    {rule.isActive ? "Active" : "Inactive"}
+                    {rule.isActive ? tc("active") : tc("inactive")}
                   </Badge>
                   <Badge variant="outline">
                     {rule.method === "round_robin" ? (
@@ -138,7 +141,7 @@ export default function LeadRulesPage() {
               </div>
               <div className="flex gap-1">
                 <Button variant="ghost" size="sm" onClick={() => toggleActive(rule.id)} className="h-7 px-2 text-xs">
-                  {rule.isActive ? "Disable" : "Enable"}
+                  {rule.isActive ? "Disable" : tc("active")}
                 </Button>
                 <Button variant="ghost" size="sm" onClick={() => setEditingId(editingId === rule.id ? null : rule.id)} className="h-7 w-7 p-0">
                   <Pencil className="h-3.5 w-3.5" />

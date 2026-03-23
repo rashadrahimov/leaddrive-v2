@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useSession } from "next-auth/react"
+import { useTranslations } from "next-intl"
 import { Badge } from "@/components/ui/badge"
 import { DataTable } from "@/components/data-table"
 import { Shield } from "lucide-react"
@@ -25,6 +26,8 @@ const actionColors: Record<string, "default" | "secondary" | "destructive" | "ou
 
 export default function AuditLogPage() {
   const { data: session } = useSession()
+  const t = useTranslations("settings")
+  const tc = useTranslations("common")
   const [logs, setLogs] = useState<AuditLog[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -53,7 +56,7 @@ export default function AuditLogPage() {
   }, [session])
 
   const columns = [
-    { key: "createdAt", label: "Date", sortable: true },
+    { key: "createdAt", label: tc("date"), sortable: true },
     {
       key: "action",
       label: "Action",
@@ -61,7 +64,7 @@ export default function AuditLogPage() {
       render: (item: any) => <Badge variant={actionColors[item.action] || "outline"}>{item.action}</Badge>,
     },
     { key: "entityType", label: "Entity", sortable: true },
-    { key: "entityName", label: "Name", sortable: true },
+    { key: "entityName", label: tc("name"), sortable: true },
     {
       key: "userId",
       label: "User",
@@ -74,14 +77,14 @@ export default function AuditLogPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-          <Shield className="h-6 w-6" /> Audit Log
+          <Shield className="h-6 w-6" /> {t("auditLog")}
         </h1>
-        <p className="text-sm text-muted-foreground">All system actions and changes</p>
+        <p className="text-sm text-muted-foreground">{t("auditLogDesc")}</p>
       </div>
       {loading ? (
-        <p className="text-muted-foreground">Loading...</p>
+        <p className="text-muted-foreground">{tc("loading")}</p>
       ) : (
-        <DataTable columns={columns} data={logs} searchPlaceholder="Search logs..." searchKey="entityName" />
+        <DataTable columns={columns} data={logs} searchPlaceholder={tc("search")} searchKey="entityName" />
       )}
     </div>
   )

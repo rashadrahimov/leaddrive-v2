@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useSession } from "next-auth/react"
+import { useTranslations } from "next-intl"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -22,6 +23,8 @@ interface Currency {
 
 export default function CurrenciesPage() {
   const { data: session } = useSession()
+  const t = useTranslations("settings")
+  const tc = useTranslations("common")
   const [currencies, setCurrencies] = useState<Currency[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
@@ -65,7 +68,7 @@ export default function CurrenciesPage() {
       ),
     },
     {
-      key: "name", label: "Name", sortable: true,
+      key: "name", label: tc("name"), sortable: true,
       render: (item: any) => <div>{item.name}</div>,
     },
     {
@@ -77,8 +80,8 @@ export default function CurrenciesPage() {
       render: (item: any) => <div className="font-mono text-sm">{item.exchangeRate}</div>,
     },
     {
-      key: "isActive", label: "Status", sortable: true,
-      render: (item: any) => <Badge variant={item.isActive ? "default" : "secondary"}>{item.isActive ? "Active" : "Inactive"}</Badge>,
+      key: "isActive", label: tc("status"), sortable: true,
+      render: (item: any) => <Badge variant={item.isActive ? "default" : "secondary"}>{item.isActive ? tc("active") : tc("inactive")}</Badge>,
     },
     {
       key: "edit", label: "", sortable: false,
@@ -99,23 +102,23 @@ export default function CurrenciesPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Currencies</h1>
-          <p className="text-muted-foreground">Manage currencies and exchange rates</p>
+          <h1 className="text-2xl font-bold tracking-tight">{t("currencies")}</h1>
+          <p className="text-muted-foreground">{t("currenciesDesc")}</p>
         </div>
         <Button className="gap-2" onClick={() => { setEditData(undefined); setShowForm(true) }}>
-          <Plus className="h-4 w-4" /> Add Currency
+          <Plus className="h-4 w-4" /> {tc("add")} Currency
         </Button>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>All Currencies</CardTitle>
+          <CardTitle>{t("currencies")}</CardTitle>
         </CardHeader>
         <CardContent>
           {loading ? (
-            <p className="text-muted-foreground">Loading...</p>
+            <p className="text-muted-foreground">{tc("loading")}</p>
           ) : (
-            <DataTable columns={columns} data={currencies} searchPlaceholder="Search currencies..." searchKey="code" pageSize={10} />
+            <DataTable columns={columns} data={currencies} searchPlaceholder={tc("search")} searchKey="code" pageSize={10} />
           )}
         </CardContent>
       </Card>
@@ -132,7 +135,7 @@ export default function CurrenciesPage() {
         open={!!deleteId}
         onOpenChange={(open) => { if (!open) setDeleteId(null) }}
         onConfirm={handleDelete}
-        title="Delete Currency"
+        title={`${tc("delete")} Currency`}
         itemName={deleteName}
       />
     </div>

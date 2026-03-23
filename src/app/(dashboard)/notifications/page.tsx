@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useSession } from "next-auth/react"
+import { useTranslations } from "next-intl"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -43,6 +44,7 @@ const typeColors: Record<string, string> = {
 
 export default function NotificationsPage() {
   const { data: session } = useSession()
+  const t = useTranslations("notifications")
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
   const [loading, setLoading] = useState(true)
@@ -101,18 +103,18 @@ export default function NotificationsPage() {
     const now = new Date()
     const diff = now.getTime() - d.getTime()
     const mins = Math.floor(diff / 60000)
-    if (mins < 60) return `${mins} мин назад`
+    if (mins < 60) return t("minsAgo", { n: mins })
     const hours = Math.floor(mins / 60)
-    if (hours < 24) return `${hours} ч назад`
+    if (hours < 24) return t("hoursAgo", { n: hours })
     const days = Math.floor(hours / 24)
-    if (days < 7) return `${days} дн назад`
-    return d.toLocaleDateString("ru-RU")
+    if (days < 7) return t("daysAgo", { n: days })
+    return d.toLocaleDateString()
   }
 
   if (loading) {
     return (
       <div className="space-y-6">
-        <h1 className="text-2xl font-bold tracking-tight">Уведомления</h1>
+        <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
         <div className="animate-pulse space-y-3">
           {[1, 2, 3, 4, 5].map(i => <div key={i} className="h-16 bg-muted rounded-lg" />)}
         </div>
@@ -124,20 +126,20 @@ export default function NotificationsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Уведомления</h1>
-          <p className="text-sm text-muted-foreground">{notifications.length} уведомлений</p>
+          <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
+          <p className="text-sm text-muted-foreground">{t("count", { count: notifications.length })}</p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={markAllRead} disabled={unreadCount === 0}>
-            <CheckCheck className="h-4 w-4 mr-1" /> Прочитать все
+            <CheckCheck className="h-4 w-4 mr-1" /> {t("markAllRead")}
           </Button>
         </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
-        <StatCard title="Всего" value={notifications.length} icon={<Bell className="h-4 w-4" />} />
-        <StatCard title="Непрочитанные" value={unreadCount} icon={<BellOff className="h-4 w-4" />} trend={unreadCount > 0 ? "down" : "neutral"} />
-        <StatCard title="Прочитанные" value={notifications.length - unreadCount} icon={<CheckCheck className="h-4 w-4" />} />
+        <StatCard title={t("total")} value={notifications.length} icon={<Bell className="h-4 w-4" />} />
+        <StatCard title={t("unread")} value={unreadCount} icon={<BellOff className="h-4 w-4" />} trend={unreadCount > 0 ? "down" : "neutral"} />
+        <StatCard title={t("read")} value={notifications.length - unreadCount} icon={<CheckCheck className="h-4 w-4" />} />
       </div>
 
       {/* Filter tabs */}
@@ -147,14 +149,14 @@ export default function NotificationsPage() {
           size="sm"
           onClick={() => setFilter("all")}
         >
-          Все ({notifications.length})
+          {t("all") + " (" + notifications.length + ")"}
         </Button>
         <Button
           variant={filter === "unread" ? "default" : "outline"}
           size="sm"
           onClick={() => setFilter("unread")}
         >
-          Непрочитанные ({unreadCount})
+          {t("unreadFilter") + " (" + unreadCount + ")"}
         </Button>
       </div>
 
@@ -163,7 +165,7 @@ export default function NotificationsPage() {
         {filtered.length === 0 ? (
           <Card>
             <CardContent className="py-12 text-center text-muted-foreground">
-              {filter === "unread" ? "Нет непрочитанных уведомлений" : "Нет уведомлений"}
+              {filter === "unread" ? t("noUnread") : t("noNotifications")}
             </CardContent>
           </Card>
         ) : (

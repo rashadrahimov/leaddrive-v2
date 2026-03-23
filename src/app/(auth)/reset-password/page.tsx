@@ -3,6 +3,7 @@
 import { useState, Suspense } from "react"
 import { useSearchParams } from "next/navigation"
 import Link from "next/link"
+import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -16,6 +17,7 @@ export default function ResetPasswordPage() {
 }
 
 function ResetPasswordForm() {
+  const t = useTranslations("auth")
   const searchParams = useSearchParams()
   const token = searchParams.get("token")
   const [password, setPassword] = useState("")
@@ -28,12 +30,12 @@ function ResetPasswordForm() {
     return (
       <Card>
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl">Invalid Link</CardTitle>
-          <CardDescription>This password reset link is invalid or has expired.</CardDescription>
+          <CardTitle className="text-2xl">{t("resetPassword")}</CardTitle>
+          <CardDescription>{t("linkExpired") ?? "This password reset link is invalid or has expired."}</CardDescription>
         </CardHeader>
         <CardFooter className="justify-center">
           <Link href="/forgot-password" className="text-sm text-primary hover:underline">
-            Request a new reset link
+            {t("sendResetLink")}
           </Link>
         </CardFooter>
       </Card>
@@ -44,12 +46,12 @@ function ResetPasswordForm() {
     return (
       <Card>
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl">Password Reset</CardTitle>
-          <CardDescription>Your password has been updated successfully.</CardDescription>
+          <CardTitle className="text-2xl">{t("resetPassword")}</CardTitle>
+          <CardDescription>{t("passwordChanged")}</CardDescription>
         </CardHeader>
         <CardFooter className="justify-center">
           <Link href="/login" className="text-sm text-primary hover:underline">
-            Sign in with your new password
+            {t("signIn")}
           </Link>
         </CardFooter>
       </Card>
@@ -61,11 +63,11 @@ function ResetPasswordForm() {
     setError("")
 
     if (password.length < 8) {
-      setError("Password must be at least 8 characters")
+      setError(t("passwordMinLength"))
       return
     }
     if (password !== confirm) {
-      setError("Passwords do not match")
+      setError(t("passwordsDoNotMatch"))
       return
     }
 
@@ -89,27 +91,27 @@ function ResetPasswordForm() {
   return (
     <Card>
       <CardHeader className="text-center">
-        <CardTitle className="text-2xl">Set New Password</CardTitle>
-        <CardDescription>Enter your new password below</CardDescription>
+        <CardTitle className="text-2xl">{t("newPassword")}</CardTitle>
+        <CardDescription>{t("confirmPassword")}</CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
           {error && <div className="text-sm text-red-500 bg-red-50 dark:bg-red-900/20 p-2 rounded">{error}</div>}
           <div className="space-y-2">
-            <label htmlFor="password" className="text-sm font-medium">New Password</label>
+            <label htmlFor="password" className="text-sm font-medium">{t("newPassword")}</label>
             <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={8} />
           </div>
           <div className="space-y-2">
-            <label htmlFor="confirm" className="text-sm font-medium">Confirm Password</label>
+            <label htmlFor="confirm" className="text-sm font-medium">{t("confirmPassword")}</label>
             <Input id="confirm" type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} required minLength={8} />
           </div>
         </CardContent>
         <CardFooter className="flex flex-col gap-3">
           <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Resetting..." : "Reset Password"}
+            {loading ? t("sending") : t("resetPassword")}
           </Button>
           <Link href="/login" className="text-sm text-muted-foreground hover:text-primary">
-            Back to sign in
+            {t("backToLogin")}
           </Link>
         </CardFooter>
       </form>

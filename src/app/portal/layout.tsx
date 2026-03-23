@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { useRouter, usePathname } from "next/navigation"
 import Link from "next/link"
+import { useTranslations } from "next-intl"
 import { Ticket, BookOpen, LogOut } from "lucide-react"
 import { PortalChatWidget } from "@/components/portal-chat-widget"
 
@@ -16,6 +17,7 @@ interface PortalUser {
 export default function PortalLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter()
   const pathname = usePathname()
+  const t = useTranslations("portal")
   const [user, setUser] = useState<PortalUser | null>(null)
 
   useEffect(() => {
@@ -46,13 +48,13 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
       <header className="border-b bg-card">
         <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between">
           <div className="flex items-center gap-6">
-            <span className="text-lg font-bold text-primary">LeadDrive Portal</span>
+            <span className="text-lg font-bold text-primary">{t("title")}</span>
             <nav className="flex items-center gap-4 text-sm">
               <Link href="/portal/tickets" className={`flex items-center gap-1.5 transition-colors ${pathname === "/portal/tickets" || pathname === "/portal" ? "text-foreground font-medium" : "text-muted-foreground hover:text-foreground"}`}>
-                <Ticket className="h-4 w-4" /> My Tickets
+                <Ticket className="h-4 w-4" /> {t("myTickets")}
               </Link>
               <Link href="/portal/knowledge-base" className={`flex items-center gap-1.5 transition-colors ${pathname === "/portal/knowledge-base" ? "text-foreground font-medium" : "text-muted-foreground hover:text-foreground"}`}>
-                <BookOpen className="h-4 w-4" /> Knowledge Base
+                <BookOpen className="h-4 w-4" /> {t("knowledgeBase")}
               </Link>
             </nav>
           </div>

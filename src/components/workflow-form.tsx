@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -25,6 +26,8 @@ interface WorkflowFormProps {
 }
 
 export function WorkflowForm({ open, onOpenChange, onSaved, initialData, orgId }: WorkflowFormProps) {
+  const tf = useTranslations("forms")
+  const tc = useTranslations("common")
   const isEdit = !!initialData?.id
   const [form, setForm] = useState<WorkflowFormData>({
     name: initialData?.name || "",
@@ -96,41 +99,41 @@ export function WorkflowForm({ open, onOpenChange, onSaved, initialData, orgId }
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogHeader>
-        <DialogTitle>{isEdit ? "Edit Workflow Rule" : "New Workflow Rule"}</DialogTitle>
+        <DialogTitle>{isEdit ? tf("editWorkflowRule") : tf("newWorkflowRule")}</DialogTitle>
       </DialogHeader>
       <form onSubmit={handleSubmit}>
         <DialogContent>
           {error && <div className="text-sm text-red-500 bg-red-50 dark:bg-red-900/20 p-2 rounded mb-3">{error}</div>}
           <div className="grid gap-4">
             <div>
-              <Label htmlFor="name">Rule Name *</Label>
+              <Label htmlFor="name">{tf("ruleName")} *</Label>
               <Input id="name" value={form.name} onChange={(e) => update("name", e.target.value)} required />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label htmlFor="entityType">Entity Type</Label>
+                <Label htmlFor="entityType">{tf("entityType")}</Label>
                 <Select value={form.entityType} onChange={(e) => update("entityType", e.target.value)}>
-                  <option value="deal">Deal</option>
-                  <option value="lead">Lead</option>
-                  <option value="ticket">Ticket</option>
-                  <option value="task">Task</option>
-                  <option value="contact">Contact</option>
-                  <option value="company">Company</option>
+                  <option value="deal">{tf("entityDeal")}</option>
+                  <option value="lead">{tf("entityLead")}</option>
+                  <option value="ticket">{tf("entityTicket")}</option>
+                  <option value="task">{tf("entityTask")}</option>
+                  <option value="contact">{tf("entityContact")}</option>
+                  <option value="company">{tf("entityCompany")}</option>
                 </Select>
               </div>
               <div>
-                <Label htmlFor="triggerEvent">Trigger Event</Label>
+                <Label htmlFor="triggerEvent">{tf("triggerEvent")}</Label>
                 <Select value={form.triggerEvent} onChange={(e) => update("triggerEvent", e.target.value)}>
-                  <option value="created">Created</option>
-                  <option value="updated">Updated</option>
-                  <option value="status_changed">Status Changed</option>
-                  <option value="stage_changed">Stage Changed</option>
-                  <option value="assigned">Assigned</option>
+                  <option value="created">{tf("triggerCreated")}</option>
+                  <option value="updated">{tf("triggerUpdated")}</option>
+                  <option value="status_changed">{tf("triggerStatusChanged")}</option>
+                  <option value="stage_changed">{tf("triggerStageChanged")}</option>
+                  <option value="assigned">{tf("triggerAssigned")}</option>
                 </Select>
               </div>
             </div>
             <div>
-              <Label htmlFor="conditions">Conditions (JSON)</Label>
+              <Label htmlFor="conditions">{tf("conditionsJson")}</Label>
               <Textarea
                 id="conditions"
                 value={form.conditions}
@@ -142,13 +145,13 @@ export function WorkflowForm({ open, onOpenChange, onSaved, initialData, orgId }
             </div>
             <label className="flex items-center gap-2 cursor-pointer">
               <input type="checkbox" checked={form.isActive} onChange={(e) => update("isActive", e.target.checked)} className="rounded" />
-              <span className="text-sm">Active</span>
+              <span className="text-sm">{tc("active")}</span>
             </label>
           </div>
         </DialogContent>
         <DialogFooter>
-          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button type="submit" disabled={saving}>{saving ? "Saving..." : isEdit ? "Update" : "Create"}</Button>
+          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>{tc("cancel")}</Button>
+          <Button type="submit" disabled={saving}>{saving ? tc("saving") : isEdit ? tc("update") : tc("create")}</Button>
         </DialogFooter>
       </form>
     </Dialog>

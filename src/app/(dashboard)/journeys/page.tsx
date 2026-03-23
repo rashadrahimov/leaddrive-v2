@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useSession } from "next-auth/react"
+import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
@@ -40,33 +41,15 @@ interface Journey {
   steps?: JourneyStep[]
 }
 
-const statusLabels: Record<string, string> = {
-  draft: "Черновик", active: "Активный", paused: "Приостановлен", completed: "Завершён",
-}
 const statusColors: Record<string, string> = {
   draft: "bg-gray-100 text-gray-600 border-gray-200",
   active: "bg-green-100 text-green-700 border-green-200",
   paused: "bg-yellow-100 text-yellow-700 border-yellow-200",
   completed: "bg-blue-100 text-blue-700 border-blue-200",
 }
-const triggerLabels: Record<string, string> = {
-  lead_created: "Новый лид", contact_created: "Новый контакт",
-  deal_stage_change: "Смена стадии сделки", manual: "Вручную",
-}
 
-const stepTypes = [
-  { value: "send_email", label: "Email", icon: Mail, color: "bg-blue-500", borderColor: "border-blue-200 bg-blue-50/50 dark:bg-blue-900/10" },
-  { value: "sms", label: "SMS", icon: Smartphone, color: "bg-gray-700", borderColor: "border-gray-200 bg-gray-50/50 dark:bg-gray-900/10" },
-  { value: "wait", label: "Ожидание", icon: Clock, color: "bg-yellow-500", borderColor: "border-yellow-200 bg-yellow-50/50 dark:bg-yellow-900/10" },
-  { value: "condition", label: "Условие", icon: GitBranch, color: "bg-pink-500", borderColor: "border-pink-200 bg-pink-50/50 dark:bg-pink-900/10" },
-  { value: "create_task", label: "Задача", icon: FileText, color: "bg-teal-500", borderColor: "border-teal-200 bg-teal-50/50 dark:bg-teal-900/10" },
-  { value: "send_telegram", label: "Telegram", icon: Send, color: "bg-sky-500", borderColor: "border-sky-200 bg-sky-50/50 dark:bg-sky-900/10" },
-  { value: "send_whatsapp", label: "WhatsApp", icon: Heart, color: "bg-green-500", borderColor: "border-green-200 bg-green-50/50 dark:bg-green-900/10" },
-  { value: "update_field", label: "Обн. поле", icon: Settings, color: "bg-purple-500", borderColor: "border-purple-200 bg-purple-50/50 dark:bg-purple-900/10" },
-]
-
-function getStepInfo(type: string) {
-  return stepTypes.find(st => st.value === type) || stepTypes[0]
+function getStepInfo(type: string, stepTypesList: { value: string; label: string; icon: any; color: string; borderColor: string }[]) {
+  return stepTypesList.find(st => st.value === type) || stepTypesList[0]
 }
 
 function getStepSummary(step: { stepType: string; config: any }): string {
@@ -101,6 +84,8 @@ const conditionOperators = [
 
 export default function JourneysPage() {
   const { data: session } = useSession()
+  const t = useTranslations("journeys")
+  const tc = useTranslations("common")
   const [journeys, setJourneys] = useState<Journey[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
@@ -121,6 +106,29 @@ export default function JourneysPage() {
   const [leadSearch, setLeadSearch] = useState("")
   const [selectedLead, setSelectedLead] = useState<{ id: string; contactName: string; email?: string; companyName?: string } | null>(null)
   const orgId = session?.user?.organizationId
+
+  const statusLabels: Record<string, string> = {
+    draft: t("statusDraft"),
+    active: t("statusActive"),
+    paused: t("statusPaused"),
+    completed: t("statusCompleted"),
+  }
+  const triggerLabels: Record<string, string> = {
+    lead_created: t("triggerLeadCreated"),
+    contact_created: t("triggerContactCreated"),
+    deal_stage_change: t("triggerDealStageChange"),
+    manual: t("triggerManual"),
+  }
+  const stepTypes = [
+    { value: "send_email", label: t("stepEmail"), icon: Mail, color: "bg-blue-500", borderColor: "border-blue-200 bg-blue-50/50 dark:bg-blue-900/10" },
+    { value: "sms", label: t("stepSms"), icon: Smartphone, color: "bg-gray-700", borderColor: "border-gray-200 bg-gray-50/50 dark:bg-gray-900/10" },
+    { value: "wait", label: t("stepWait"), icon: Clock, color: "bg-yellow-500", borderColor: "border-yellow-200 bg-yellow-50/50 dark:bg-yellow-900/10" },
+    { value: "condition", label: "Условие", icon: GitBranch, color: "bg-pink-500", borderColor: "border-pink-200 bg-pink-50/50 dark:bg-pink-900/10" },
+    { value: "create_task", label: "Задача", icon: FileText, color: "bg-teal-500", borderColor: "border-teal-200 bg-teal-50/50 dark:bg-teal-900/10" },
+    { value: "send_telegram", label: "Telegram", icon: Send, color: "bg-sky-500", borderColor: "border-sky-200 bg-sky-50/50 dark:bg-sky-900/10" },
+    { value: "send_whatsapp", label: "WhatsApp", icon: Heart, color: "bg-green-500", borderColor: "border-green-200 bg-green-50/50 dark:bg-green-900/10" },
+    { value: "update_field", label: "Обн. поле", icon: Settings, color: "bg-purple-500", borderColor: "border-purple-200 bg-purple-50/50 dark:bg-purple-900/10" },
+  ]
 
   const fetchJourneys = async () => {
     try {
@@ -254,7 +262,7 @@ export default function JourneysPage() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <h1 className="text-2xl font-bold tracking-tight">Цепочки лидов</h1>
+        <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
         <div className="animate-pulse space-y-4">
           <div className="grid grid-cols-4 gap-4">{[1, 2, 3, 4].map(i => <div key={i} className="h-24 bg-muted rounded-lg" />)}</div>
           <div className="space-y-3">{[1, 2].map(i => <div key={i} className="h-32 bg-muted rounded-lg" />)}</div>
@@ -270,23 +278,23 @@ export default function JourneysPage() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
             <Workflow className="h-6 w-6 text-primary" />
-            Цепочки лидов
+            {t("title")}
           </h1>
           <p className="text-sm text-muted-foreground">
-            Автоматизируйте коммуникацию с клиентами: письма, задержки, условия в визуальном потоке
+            {t("subtitle")}
           </p>
         </div>
         <Button onClick={() => { setEditData(undefined); setShowForm(true) }} className="gap-1.5">
-          <Plus className="h-4 w-4" /> Создать путь
+          <Plus className="h-4 w-4" /> {t("newJourney")}
         </Button>
       </div>
 
       {/* Stats */}
       <div className="grid gap-4 md:grid-cols-4">
-        <StatCard title="Путей" value={totalJourneys} icon={<Workflow className="h-4 w-4" />} />
-        <StatCard title="Активных" value={activeCount} icon={<CheckCircle className="h-4 w-4" />} />
-        <StatCard title="Участников" value={totalEntries} icon={<Users className="h-4 w-4" />} />
-        <StatCard title="Конверсия" value={`${conversionRate}%`} icon={<Target className="h-4 w-4" />} />
+        <StatCard title={t("statTotal")} value={totalJourneys} icon={<Workflow className="h-4 w-4" />} />
+        <StatCard title={t("statActive")} value={activeCount} icon={<CheckCircle className="h-4 w-4" />} />
+        <StatCard title={t("statEntries")} value={totalEntries} icon={<Users className="h-4 w-4" />} />
+        <StatCard title={t("statCompleted")} value={`${conversionRate}%`} icon={<Target className="h-4 w-4" />} />
       </div>
 
       {/* Journey cards */}
@@ -294,10 +302,10 @@ export default function JourneysPage() {
         {journeys.length === 0 ? (
           <div className="rounded-lg border-2 border-dashed bg-muted/20 py-16 text-center">
             <Workflow className="h-8 w-8 text-muted-foreground mx-auto mb-3" />
-            <p className="text-muted-foreground font-medium">Нет цепочек</p>
-            <p className="text-sm text-muted-foreground mt-1">Создайте первый путь для автоматизации</p>
+            <p className="text-muted-foreground font-medium">{t("noJourneys")}</p>
+            <p className="text-sm text-muted-foreground mt-1">{t("noJourneysHint")}</p>
             <Button className="mt-4 gap-1.5" onClick={() => { setEditData(undefined); setShowForm(true) }}>
-              <Plus className="h-4 w-4" /> Создать путь
+              <Plus className="h-4 w-4" /> {t("newJourney")}
             </Button>
           </div>
         ) : journeys.map(journey => (
@@ -400,7 +408,7 @@ export default function JourneysPage() {
 
             {/* Steps flow */}
             {steps.map((step, index) => {
-              const info = getStepInfo(step.stepType)
+              const info = getStepInfo(step.stepType, stepTypes)
               const Icon = info.icon
               const summary = getStepSummary(step)
               return (
@@ -782,7 +790,7 @@ export default function JourneysPage() {
         open={!!deleteId}
         onOpenChange={open => { if (!open) setDeleteId(null) }}
         onConfirm={handleDelete}
-        title="Удалить цепочку"
+        title={t("deleteJourney")}
         itemName={deleteName}
       />
     </div>

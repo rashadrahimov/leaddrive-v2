@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label"
 import { Select } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { Dialog, DialogHeader, DialogTitle, DialogContent, DialogFooter } from "@/components/ui/dialog"
+import { useTranslations } from "next-intl"
 
 interface ContractFormData {
   contractNumber: string
@@ -35,6 +36,9 @@ interface ContractFormProps {
 }
 
 export function ContractForm({ open, onOpenChange, onSaved, initialData, orgId }: ContractFormProps) {
+  const t = useTranslations("forms")
+  const tc = useTranslations("common")
+  const tct = useTranslations("contracts")
   const isEdit = !!initialData?.id
   const [form, setForm] = useState<ContractFormData>({
     contractNumber: "",
@@ -117,7 +121,7 @@ export function ContractForm({ open, onOpenChange, onSaved, initialData, orgId }
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogHeader>
-        <DialogTitle>{isEdit ? "Редактировать контракт" : "Новый контракт"}</DialogTitle>
+        <DialogTitle>{isEdit ? t("editContract") : t("newContract")}</DialogTitle>
       </DialogHeader>
       <form onSubmit={handleSubmit}>
         <DialogContent>
@@ -125,18 +129,18 @@ export function ContractForm({ open, onOpenChange, onSaved, initialData, orgId }
           <div className="grid gap-4">
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label htmlFor="contractNumber">Номер контракта</Label>
+                <Label htmlFor="contractNumber">{t("contractNumber")}</Label>
                 <Input id="contractNumber" value={form.contractNumber} onChange={(e) => update("contractNumber", e.target.value)} required />
               </div>
               <div>
-                <Label htmlFor="title">Название *</Label>
+                <Label htmlFor="title">{tc("name")} *</Label>
                 <Input id="title" value={form.title} onChange={(e) => update("title", e.target.value)} required />
               </div>
             </div>
             <div>
-              <Label htmlFor="companyId">Компания</Label>
+              <Label htmlFor="companyId">{tc("company")}</Label>
               <Select value={form.companyId} onChange={(e) => update("companyId", e.target.value)}>
-                <option value="">— Не выбрана —</option>
+                <option value="">{tc("notSelected")}</option>
                 {companies.map(c => (
                   <option key={c.id} value={c.id}>{c.name}</option>
                 ))}
@@ -144,46 +148,46 @@ export function ContractForm({ open, onOpenChange, onSaved, initialData, orgId }
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label htmlFor="type">Тип</Label>
+                <Label htmlFor="type">{tc("type")}</Label>
                 <Select value={form.type} onChange={(e) => update("type", e.target.value)}>
-                  <option value="service_agreement">Договор услуг</option>
-                  <option value="nda">NDA</option>
-                  <option value="maintenance">Обслуживание</option>
-                  <option value="license">Лицензия</option>
-                  <option value="sla">SLA</option>
-                  <option value="other">Другое</option>
+                  <option value="service_agreement">{tct("typeService")}</option>
+                  <option value="nda">{tct("typeNda")}</option>
+                  <option value="maintenance">{tct("typeMaintenance")}</option>
+                  <option value="license">{tct("typeLicense")}</option>
+                  <option value="sla">{tct("typeSla")}</option>
+                  <option value="other">{tc("other")}</option>
                 </Select>
               </div>
               <div>
-                <Label htmlFor="status">Статус</Label>
+                <Label htmlFor="status">{tc("status")}</Label>
                 <Select value={form.status} onChange={(e) => update("status", e.target.value)}>
-                  <option value="draft">Черновик</option>
-                  <option value="sent">Отправлен</option>
-                  <option value="signed">Подписан</option>
-                  <option value="active">Активный</option>
-                  <option value="expiring">Истекает</option>
-                  <option value="expired">Истёк</option>
-                  <option value="renewed">Продлён</option>
+                  <option value="draft">{tct("statusDraft")}</option>
+                  <option value="sent">{tct("statusSent")}</option>
+                  <option value="signed">{tct("statusSigned")}</option>
+                  <option value="active">{tct("statusActive")}</option>
+                  <option value="expiring">{tct("statusExpiring")}</option>
+                  <option value="expired">{tct("statusExpired")}</option>
+                  <option value="renewed">{tct("statusRenewed")}</option>
                 </Select>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label htmlFor="startDate">Дата начала</Label>
+                <Label htmlFor="startDate">{tc("startDate")}</Label>
                 <Input id="startDate" type="date" value={form.startDate} onChange={(e) => update("startDate", e.target.value)} />
               </div>
               <div>
-                <Label htmlFor="endDate">Дата окончания</Label>
+                <Label htmlFor="endDate">{tc("endDate")}</Label>
                 <Input id="endDate" type="date" value={form.endDate} onChange={(e) => update("endDate", e.target.value)} />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label htmlFor="valueAmount">Сумма</Label>
+                <Label htmlFor="valueAmount">{tc("amount")}</Label>
                 <Input id="valueAmount" type="number" step="0.01" value={form.valueAmount} onChange={(e) => update("valueAmount", e.target.value)} />
               </div>
               <div>
-                <Label htmlFor="currency">Валюта</Label>
+                <Label htmlFor="currency">{tc("currency")}</Label>
                 <Select value={form.currency} onChange={(e) => update("currency", e.target.value)}>
                   <option value="AZN">AZN (₼)</option>
                   <option value="USD">USD ($)</option>
@@ -193,14 +197,14 @@ export function ContractForm({ open, onOpenChange, onSaved, initialData, orgId }
               </div>
             </div>
             <div>
-              <Label htmlFor="notes">Примечания</Label>
+              <Label htmlFor="notes">{tc("notes")}</Label>
               <Textarea id="notes" value={form.notes} onChange={(e) => update("notes", e.target.value)} rows={3} />
             </div>
           </div>
         </DialogContent>
         <DialogFooter>
-          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Отмена</Button>
-          <Button type="submit" disabled={saving}>{saving ? "Сохранение..." : isEdit ? "Обновить" : "Создать"}</Button>
+          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>{tc("cancel")}</Button>
+          <Button type="submit" disabled={saving}>{saving ? tc("saving") : isEdit ? tc("update") : tc("create")}</Button>
         </DialogFooter>
       </form>
     </Dialog>

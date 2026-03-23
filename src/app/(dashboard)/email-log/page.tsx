@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { useSession } from "next-auth/react"
+import { useTranslations } from "next-intl"
 import { StatCard } from "@/components/stat-card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -34,14 +35,6 @@ interface Stats {
   bounced: number
 }
 
-const statusLabels: Record<string, string> = {
-  pending: "Ожидает",
-  sent: "Отправлено",
-  delivered: "Доставлено",
-  failed: "Ошибка",
-  bounced: "Отскочено",
-}
-
 const statusColors: Record<string, string> = {
   pending: "bg-amber-100 text-amber-700",
   sent: "bg-green-100 text-green-700",
@@ -52,7 +45,17 @@ const statusColors: Record<string, string> = {
 
 export default function EmailLogPage() {
   const { data: session } = useSession()
+  const t = useTranslations("emailLog")
+  const tc = useTranslations("common")
   const orgId = session?.user?.organizationId
+
+  const statusLabels: Record<string, string> = {
+    pending: t("statusPending"),
+    sent: t("statusSent"),
+    delivered: t("statusDelivered"),
+    failed: t("statusFailed"),
+    bounced: t("statusBounced"),
+  }
 
   const [logs, setLogs] = useState<EmailLogEntry[]>([])
   const [stats, setStats] = useState<Stats>({ total: 0, outbound: 0, inbound: 0, sent: 0, failed: 0, bounced: 0 })
@@ -96,24 +99,22 @@ export default function EmailLogPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Журнал Email</h1>
-          <p className="text-sm text-muted-foreground">
-            Все отправленные и полученные письма — статус доставки, ошибки и история
-          </p>
+          <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
+          <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
         </div>
         <Button variant="outline" size="sm" onClick={fetchLogs} className="gap-1">
-          <RefreshCw className="h-4 w-4" /> Обновить
+          <RefreshCw className="h-4 w-4" /> {tc("refresh")}
         </Button>
       </div>
 
       {/* Stats */}
       <div className="grid gap-3 grid-cols-2 md:grid-cols-3 lg:grid-cols-6">
-        <StatCard title="Всего" value={stats.total} icon={<Mail className="h-4 w-4" />} />
-        <StatCard title="Исходящие" value={stats.outbound} icon={<Send className="h-4 w-4" />} />
-        <StatCard title="Входящие" value={stats.inbound} icon={<Inbox className="h-4 w-4" />} />
-        <StatCard title="Отправлено" value={stats.sent} icon={<CheckCircle className="h-4 w-4" />} />
-        <StatCard title="Ошибок" value={stats.failed} icon={<AlertTriangle className="h-4 w-4" />} />
-        <StatCard title="Отскочено" value={stats.bounced} icon={<RotateCcw className="h-4 w-4" />} />
+        <StatCard title={t("total")} value={stats.total} icon={<Mail className="h-4 w-4" />} />
+        <StatCard title={t("outbound")} value={stats.outbound} icon={<Send className="h-4 w-4" />} />
+        <StatCard title={t("inbound")} value={stats.inbound} icon={<Inbox className="h-4 w-4" />} />
+        <StatCard title={t("sent")} value={stats.sent} icon={<CheckCircle className="h-4 w-4" />} />
+        <StatCard title={t("failed")} value={stats.failed} icon={<AlertTriangle className="h-4 w-4" />} />
+        <StatCard title={t("bounced")} value={stats.bounced} icon={<RotateCcw className="h-4 w-4" />} />
       </div>
 
       {/* Filters */}
@@ -121,7 +122,7 @@ export default function EmailLogPage() {
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Поиск по теме, email..."
+            placeholder={t("searchPlaceholder")}
             value={search}
             onChange={e => { setSearch(e.target.value); setPage(1) }}
             className="pl-9"
@@ -134,21 +135,21 @@ export default function EmailLogPage() {
             onChange={e => { setFilterDirection(e.target.value); setPage(1) }}
             className="text-sm border rounded-md px-2 py-1.5 bg-background"
           >
-            <option value="">Все направления</option>
-            <option value="outbound">Исходящие</option>
-            <option value="inbound">Входящие</option>
+            <option value="">{t("allDirections")}</option>
+            <option value="outbound">{t("filterOutbound")}</option>
+            <option value="inbound">{t("filterInbound")}</option>
           </select>
           <select
             value={filterStatus}
             onChange={e => { setFilterStatus(e.target.value); setPage(1) }}
             className="text-sm border rounded-md px-2 py-1.5 bg-background"
           >
-            <option value="">Все статусы</option>
-            <option value="sent">Отправлено</option>
-            <option value="delivered">Доставлено</option>
-            <option value="failed">Ошибка</option>
-            <option value="bounced">Отскочено</option>
-            <option value="pending">Ожидает</option>
+            <option value="">{t("allStatuses")}</option>
+            <option value="sent">{statusLabels.sent}</option>
+            <option value="delivered">{statusLabels.delivered}</option>
+            <option value="failed">{statusLabels.failed}</option>
+            <option value="bounced">{statusLabels.bounced}</option>
+            <option value="pending">{statusLabels.pending}</option>
           </select>
         </div>
       </div>
@@ -163,12 +164,7 @@ export default function EmailLogPage() {
       ) : logs.length === 0 ? (
         <div className="text-center py-16 text-muted-foreground">
           <Mail className="mx-auto h-12 w-12 mb-4 opacity-40" />
-          <p className="text-lg font-medium">Нет записей</p>
-          <p className="text-sm mt-1">
-            {stats.total === 0
-              ? "Журнал пуст. При отправке писем через кампании они будут записаны здесь."
-              : "Ничего не найдено по вашему запросу"}
-          </p>
+          <p className="text-lg font-medium">{t("noEmails")}</p>
         </div>
       ) : (
         <div className="space-y-2">
@@ -196,26 +192,26 @@ export default function EmailLogPage() {
                       <div className="flex items-center gap-2 mb-1.5">
                         {isOutbound ? (
                           <span className="inline-flex items-center gap-1 text-xs font-medium text-green-600 bg-green-100 px-2 py-0.5 rounded-full">
-                            <ArrowUpRight className="h-3 w-3" /> Исходящее
+                            <ArrowUpRight className="h-3 w-3" /> {t("filterOutbound")}
                           </span>
                         ) : (
                           <span className="inline-flex items-center gap-1 text-xs font-medium text-blue-600 bg-blue-100 px-2 py-0.5 rounded-full">
-                            <ArrowDownLeft className="h-3 w-3" /> Входящее
+                            <ArrowDownLeft className="h-3 w-3" /> {t("filterInbound")}
                           </span>
                         )}
-                        <span className="font-semibold text-sm truncate">{log.subject || "(без темы)"}</span>
+                        <span className="font-semibold text-sm truncate">{log.subject || t("noSubject")}</span>
                         <span className={cn("text-xs px-2 py-0.5 rounded-full font-medium", statusColors[log.status] || "bg-gray-100 text-gray-600")}>
                           {statusLabels[log.status] || log.status}
                         </span>
                       </div>
                       <div className="flex flex-wrap items-center gap-x-6 gap-y-1 text-xs text-muted-foreground">
-                        <span>От: <span className="text-foreground">{log.fromEmail}</span></span>
-                        <span>Кому: <span className="text-foreground">{log.toEmail}</span></span>
+                        <span>{t("from")}: <span className="text-foreground">{log.fromEmail}</span></span>
+                        <span>{t("to")}: <span className="text-foreground">{log.toEmail}</span></span>
                       </div>
                       <div className="flex flex-wrap items-center gap-x-6 gap-y-1 text-xs text-muted-foreground mt-1">
-                        <span>Дата: {new Date(log.createdAt).toLocaleString("ru-RU")}</span>
-                        {log.sentBy && <span>Отправитель: {log.sentBy}</span>}
-                        {log.campaignId && <span className="text-blue-500">Кампания</span>}
+                        <span>{tc("date")}: {new Date(log.createdAt).toLocaleString()}</span>
+                        {log.sentBy && <span>{t("sentBy")}: {log.sentBy}</span>}
+                        {log.campaignId && <span className="text-blue-500">{t("campaign")}</span>}
                       </div>
                     </div>
                     <div className="flex items-center gap-3 shrink-0">
@@ -230,7 +226,7 @@ export default function EmailLogPage() {
                   <div className="px-4 pb-4 border-t">
                     {log.errorMessage && (
                       <div className="mt-3 p-3 bg-red-50 dark:bg-red-900/20 rounded-md text-sm text-red-700 dark:text-red-400">
-                        <span className="font-medium">Ошибка:</span> {log.errorMessage}
+                        <span className="font-medium">{t("errorLabel")}:</span> {log.errorMessage}
                       </div>
                     )}
                     {log.messageId && (
@@ -240,13 +236,13 @@ export default function EmailLogPage() {
                     )}
                     {log.body ? (
                       <div className="mt-3">
-                        <div className="text-xs text-muted-foreground mb-2 font-medium">Превью сообщения:</div>
+                        <div className="text-xs text-muted-foreground mb-2 font-medium">{t("messagePreview")}:</div>
                         <div className="border rounded-md bg-white dark:bg-gray-950 p-4 max-h-72 overflow-y-auto">
                           <div dangerouslySetInnerHTML={{ __html: log.body }} className="text-sm prose prose-sm max-w-none" />
                         </div>
                       </div>
                     ) : (
-                      <div className="mt-3 text-sm text-muted-foreground italic">Содержимое не сохранено</div>
+                      <div className="mt-3 text-sm text-muted-foreground italic">{t("noContent")}</div>
                     )}
                   </div>
                 )}
@@ -260,15 +256,15 @@ export default function EmailLogPage() {
       {totalPages > 1 && (
         <div className="flex items-center justify-between">
           <div className="text-sm text-muted-foreground">
-            Показано {(page - 1) * limit + 1}–{Math.min(page * limit, total)} из {total}
+            {t("showing", { from: (page - 1) * limit + 1, to: Math.min(page * limit, total), total })}
           </div>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage(p => p - 1)}>
-              Назад
+              {tc("back")}
             </Button>
             <span className="text-sm text-muted-foreground">{page} / {totalPages}</span>
             <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}>
-              Далее
+              {tc("next")}
             </Button>
           </div>
         </div>

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { useParams, useRouter } from "next/navigation"
+import { useTranslations } from "next-intl"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
@@ -33,7 +34,7 @@ interface CommentItem {
 }
 
 const STATUS_LABELS: Record<string, string> = {
-  new: "Новый", in_progress: "В работе", waiting: "Ожидание", resolved: "Решён", closed: "Закрыт",
+  new: "New", in_progress: "In Progress", waiting: "Waiting", resolved: "Resolved", closed: "Closed",
 }
 
 const STATUS_COLORS: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
@@ -41,13 +42,14 @@ const STATUS_COLORS: Record<string, "default" | "secondary" | "destructive" | "o
 }
 
 function formatDate(d: string) {
-  return new Date(d).toLocaleString("ru-RU", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })
+  return new Date(d).toLocaleString(undefined, { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })
 }
 
 export default function PortalTicketDetailPage() {
   const params = useParams()
   const router = useRouter()
   const ticketId = params.id as string
+  const t = useTranslations("portal")
 
   const [ticket, setTicket] = useState<TicketDetail | null>(null)
   const [loading, setLoading] = useState(true)
@@ -138,11 +140,11 @@ export default function PortalTicketDetailPage() {
     return (
       <div className="space-y-4">
         <Button variant="ghost" size="sm" onClick={() => router.push("/portal/tickets")}>
-          <ArrowLeft className="h-4 w-4 mr-1" /> Назад к тикетам
+          <ArrowLeft className="h-4 w-4 mr-1" /> {t("myTickets")}
         </Button>
         <Card>
           <CardContent className="py-10 text-center text-muted-foreground">
-            {error || "Тикет не найден"}
+            {error || "Ticket not found"}
           </CardContent>
         </Card>
       </div>
@@ -157,7 +159,7 @@ export default function PortalTicketDetailPage() {
       {/* Header */}
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="sm" onClick={() => router.push("/portal/tickets")}>
-          <ArrowLeft className="h-4 w-4 mr-1" /> Назад
+          <ArrowLeft className="h-4 w-4 mr-1" /> Back
         </Button>
         <div className="flex items-center gap-2">
           <Badge variant={STATUS_COLORS[ticket.status]}>{STATUS_LABELS[ticket.status] || ticket.status}</Badge>
@@ -171,8 +173,8 @@ export default function PortalTicketDetailPage() {
         <CardHeader>
           <CardTitle className="text-xl">{ticket.subject}</CardTitle>
           <div className="flex items-center gap-4 text-sm text-muted-foreground">
-            <span>Категория: {ticket.category}</span>
-            <span>Создан: {formatDate(ticket.createdAt)}</span>
+            <span>Category: {ticket.category}</span>
+            <span>Created: {formatDate(ticket.createdAt)}</span>
           </div>
         </CardHeader>
         {ticket.description && (
@@ -187,12 +189,12 @@ export default function PortalTicketDetailPage() {
       {/* Comments / Conversation */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Переписка ({ticket.comments.length})</CardTitle>
+          <CardTitle className="text-base">Conversation ({ticket.comments.length})</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           {ticket.comments.length === 0 && (
             <p className="text-sm text-muted-foreground text-center py-4">
-              Пока нет сообщений. Напишите первое!
+              No messages yet. Write the first one!
             </p>
           )}
 
@@ -228,7 +230,7 @@ export default function PortalTicketDetailPage() {
               <Textarea
                 value={newComment}
                 onChange={e => setNewComment(e.target.value)}
-                placeholder="Написать сообщение..."
+                placeholder="Write a message..."
                 rows={3}
                 disabled={sending}
                 onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSendComment() } }}
@@ -236,27 +238,27 @@ export default function PortalTicketDetailPage() {
               <div className="flex justify-end">
                 <Button onClick={handleSendComment} disabled={sending || !newComment.trim()}>
                   {sending ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Send className="h-4 w-4 mr-1" />}
-                  Отправить
+                  Send
                 </Button>
               </div>
             </div>
           ) : (
             <div className="border-t pt-4 text-center">
               <p className="text-sm text-muted-foreground">
-                Тикет {ticket.status === "resolved" ? "решён" : "закрыт"}.
-                Если нужна дополнительная помощь, напишите сообщение и тикет будет переоткрыт.
+                Ticket is {ticket.status === "resolved" ? "resolved" : "closed"}.
+                If you need further help, send a message and the ticket will be reopened.
               </p>
               <div className="mt-3 space-y-3">
                 <Textarea
                   value={newComment}
                   onChange={e => setNewComment(e.target.value)}
-                  placeholder="Написать сообщение (тикет будет переоткрыт)..."
+                  placeholder="Write a message (ticket will be reopened)..."
                   rows={2}
                   disabled={sending}
                 />
                 <Button variant="outline" onClick={handleSendComment} disabled={sending || !newComment.trim()}>
                   {sending ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Send className="h-4 w-4 mr-1" />}
-                  Отправить и переоткрыть
+                  Send and reopen
                 </Button>
               </div>
             </div>
@@ -269,7 +271,7 @@ export default function PortalTicketDetailPage() {
         <Card className="border-yellow-200 dark:border-yellow-800">
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
-              <Star className="h-4 w-4 text-yellow-500" /> Оцените качество поддержки
+              <Star className="h-4 w-4 text-yellow-500" /> Rate support quality
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -291,14 +293,14 @@ export default function PortalTicketDetailPage() {
               ))}
               {csatRating > 0 && (
                 <span className="ml-2 text-sm text-muted-foreground">
-                  {csatRating === 1 ? "Ужасно" : csatRating === 2 ? "Плохо" : csatRating === 3 ? "Нормально" : csatRating === 4 ? "Хорошо" : "Отлично!"}
+                  {csatRating === 1 ? "Terrible" : csatRating === 2 ? "Bad" : csatRating === 3 ? "OK" : csatRating === 4 ? "Good" : "Excellent!"}
                 </span>
               )}
             </div>
             <Textarea
               value={csatComment}
               onChange={e => setCsatComment(e.target.value)}
-              placeholder="Комментарий (необязательно)..."
+              placeholder="Comment (optional)..."
               rows={2}
             />
             <Button
@@ -307,7 +309,7 @@ export default function PortalTicketDetailPage() {
               className="bg-yellow-500 hover:bg-yellow-600 text-white"
             >
               {csatSending ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Star className="h-4 w-4 mr-1" />}
-              Отправить оценку
+              Submit rating
             </Button>
           </CardContent>
         </Card>
@@ -318,7 +320,7 @@ export default function PortalTicketDetailPage() {
         <Card className="border-green-200 dark:border-green-800">
           <CardContent className="py-4">
             <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">Ваша оценка:</span>
+              <span className="text-sm text-muted-foreground">Your rating:</span>
               <div className="flex items-center gap-0.5">
                 {[1, 2, 3, 4, 5].map(i => (
                   <Star key={i} className={`h-4 w-4 ${i <= ticket.satisfactionRating! ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground"}`} />

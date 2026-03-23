@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useMemo } from "react"
+import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -35,17 +36,6 @@ const emptyConditions: SegmentConditions = {
   hasPhone: false,
 }
 
-const sourceOptions = [
-  { value: "", label: "— Любой —" },
-  { value: "website", label: "Сайт" },
-  { value: "referral", label: "Рекомендация" },
-  { value: "cold_call", label: "Холодный звонок" },
-  { value: "email", label: "Email" },
-  { value: "social", label: "Соц. сети" },
-  { value: "event", label: "Мероприятие" },
-  { value: "other", label: "Другое" },
-]
-
 interface SegmentFormProps {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -55,7 +45,21 @@ interface SegmentFormProps {
 }
 
 export function SegmentForm({ open, onOpenChange, onSaved, initialData, orgId }: SegmentFormProps) {
+  const t = useTranslations("segments")
+  const tc = useTranslations("common")
   const isEdit = !!initialData?.id
+
+  const sourceOptions = [
+    { value: "", label: t("sourceAny") },
+    { value: "website", label: t("sourceWebsite") },
+    { value: "referral", label: t("sourceReferral") },
+    { value: "cold_call", label: t("sourceColdCall") },
+    { value: "email", label: t("sourceEmail") },
+    { value: "social", label: t("sourceSocial") },
+    { value: "event", label: t("sourceEvent") },
+    { value: "other", label: t("sourceOther") },
+  ]
+
   const [name, setName] = useState("")
   const [description, setDescription] = useState("")
   const [isDynamic, setIsDynamic] = useState(true)
@@ -144,7 +148,7 @@ export function SegmentForm({ open, onOpenChange, onSaved, initialData, orgId }:
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!name.trim()) {
-      setError("Введите название сегмента")
+      setError(t("nameRequired"))
       return
     }
     setSaving(true)
@@ -168,7 +172,7 @@ export function SegmentForm({ open, onOpenChange, onSaved, initialData, orgId }:
         body: JSON.stringify(payload),
       })
       const json = await res.json()
-      if (!res.ok) throw new Error(json.error || "Ошибка сохранения")
+      if (!res.ok) throw new Error(json.error || tc("saveFailed"))
       onSaved()
       onOpenChange(false)
     } catch (err: any) {
@@ -195,8 +199,8 @@ export function SegmentForm({ open, onOpenChange, onSaved, initialData, orgId }:
               <Users className="h-5 w-5 text-purple-600 dark:text-purple-400" />
             </div>
             <div>
-              <DialogTitle>{isEdit ? "Редактировать сегмент" : "Новый сегмент"}</DialogTitle>
-              <p className="text-sm text-muted-foreground mt-0.5">Настройте фильтры для группировки контактов</p>
+              <DialogTitle>{isEdit ? t("titleEdit") : t("titleNew")}</DialogTitle>
+              <p className="text-sm text-muted-foreground mt-0.5">{t("subtitle2")}</p>
             </div>
           </div>
           <button
@@ -244,7 +248,7 @@ export function SegmentForm({ open, onOpenChange, onSaved, initialData, orgId }:
                 )}
               >
                 <Zap className="h-3.5 w-3.5" />
-                Динамический
+                {t("dynamicType")}
               </button>
               <button
                 type="button"
@@ -257,7 +261,7 @@ export function SegmentForm({ open, onOpenChange, onSaved, initialData, orgId }:
                 )}
               >
                 <Archive className="h-3.5 w-3.5" />
-                Статический
+                {t("staticType")}
               </button>
             </div>
 
@@ -265,7 +269,7 @@ export function SegmentForm({ open, onOpenChange, onSaved, initialData, orgId }:
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-semibold flex items-center gap-2">
-                  Фильтры
+                  {t("filters")}
                   {activeConditionsCount > 0 && (
                     <Badge variant="default" className="h-5 min-w-[20px] justify-center text-[11px] px-1.5">
                       {activeConditionsCount}
@@ -278,7 +282,7 @@ export function SegmentForm({ open, onOpenChange, onSaved, initialData, orgId }:
                     onClick={() => setConditions(emptyConditions)}
                     className="text-xs text-muted-foreground hover:text-foreground transition-colors"
                   >
-                    Сбросить все
+                    {t("resetAll")}
                   </button>
                 )}
               </div>
@@ -287,31 +291,31 @@ export function SegmentForm({ open, onOpenChange, onSaved, initialData, orgId }:
               {activeConditionsCount > 0 && (
                 <div className="flex flex-wrap gap-1.5">
                   {conditions.company.trim() && (
-                    <ConditionChip label={`Компания: ${conditions.company}`} onRemove={() => clearCondition("company")} />
+                    <ConditionChip label={`${t("condCompany")}: ${conditions.company}`} onRemove={() => clearCondition("company")} />
                   )}
                   {conditions.source && (
-                    <ConditionChip label={`Источник: ${sourceOptions.find(o => o.value === conditions.source)?.label}`} onRemove={() => clearCondition("source")} />
+                    <ConditionChip label={`${t("condSource")}: ${sourceOptions.find(o => o.value === conditions.source)?.label}`} onRemove={() => clearCondition("source")} />
                   )}
                   {conditions.role.trim() && (
-                    <ConditionChip label={`Роль: ${conditions.role}`} onRemove={() => clearCondition("role")} />
+                    <ConditionChip label={`${t("condRole")}: ${conditions.role}`} onRemove={() => clearCondition("role")} />
                   )}
                   {conditions.tag.trim() && (
-                    <ConditionChip label={`Тег: ${conditions.tag}`} onRemove={() => clearCondition("tag")} />
+                    <ConditionChip label={`${t("condTag")}: ${conditions.tag}`} onRemove={() => clearCondition("tag")} />
                   )}
                   {conditions.name.trim() && (
-                    <ConditionChip label={`Имя: ${conditions.name}`} onRemove={() => clearCondition("name")} />
+                    <ConditionChip label={`${t("condName")}: ${conditions.name}`} onRemove={() => clearCondition("name")} />
                   )}
                   {conditions.createdAfter && (
-                    <ConditionChip label={`После: ${conditions.createdAfter}`} onRemove={() => clearCondition("createdAfter")} />
+                    <ConditionChip label={`${t("condAfter")}: ${conditions.createdAfter}`} onRemove={() => clearCondition("createdAfter")} />
                   )}
                   {conditions.createdBefore && (
-                    <ConditionChip label={`До: ${conditions.createdBefore}`} onRemove={() => clearCondition("createdBefore")} />
+                    <ConditionChip label={`${t("condBefore")}: ${conditions.createdBefore}`} onRemove={() => clearCondition("createdBefore")} />
                   )}
                   {conditions.hasEmail && (
-                    <ConditionChip label="Есть Email" onRemove={() => clearCondition("hasEmail")} />
+                    <ConditionChip label={t("condHasEmail")} onRemove={() => clearCondition("hasEmail")} />
                   )}
                   {conditions.hasPhone && (
-                    <ConditionChip label="Есть Телефон" onRemove={() => clearCondition("hasPhone")} />
+                    <ConditionChip label={t("condHasPhone")} onRemove={() => clearCondition("hasPhone")} />
                   )}
                 </div>
               )}
@@ -320,15 +324,15 @@ export function SegmentForm({ open, onOpenChange, onSaved, initialData, orgId }:
               <div className="rounded-lg border bg-muted/30 p-4 space-y-4">
                 {/* Row 1: Company + Source */}
                 <div className="grid grid-cols-2 gap-3">
-                  <FilterField icon={Building2} label="Компания">
+                  <FilterField icon={Building2} label={t("condCompany")}>
                     <Input
                       value={conditions.company}
                       onChange={e => updateCond("company", e.target.value)}
-                      placeholder="Содержит..."
+                      placeholder={t("contains")}
                       className="h-9"
                     />
                   </FilterField>
-                  <FilterField icon={LinkIcon} label="Источник">
+                  <FilterField icon={LinkIcon} label={t("condSource")}>
                     <Select
                       value={conditions.source}
                       onChange={e => updateCond("source", e.target.value)}
@@ -341,37 +345,37 @@ export function SegmentForm({ open, onOpenChange, onSaved, initialData, orgId }:
 
                 {/* Row 2: Role + Tag */}
                 <div className="grid grid-cols-2 gap-3">
-                  <FilterField icon={UserCircle} label="Должность">
+                  <FilterField icon={UserCircle} label={t("condRole")}>
                     <Input
                       value={conditions.role}
                       onChange={e => updateCond("role", e.target.value)}
-                      placeholder="CEO, Менеджер..."
+                      placeholder={t("placeholderCeo")}
                       className="h-9"
                     />
                   </FilterField>
-                  <FilterField icon={Tag} label="Тег">
+                  <FilterField icon={Tag} label={t("condTag")}>
                     <Input
                       value={conditions.tag}
                       onChange={e => updateCond("tag", e.target.value)}
-                      placeholder="Имя тега..."
+                      placeholder={t("placeholderTag")}
                       className="h-9"
                     />
                   </FilterField>
                 </div>
 
                 {/* Row 3: Name */}
-                <FilterField icon={Type} label="Имя контакта">
+                <FilterField icon={Type} label={t("condName")}>
                   <Input
                     value={conditions.name}
                     onChange={e => updateCond("name", e.target.value)}
-                    placeholder="Содержит..."
+                    placeholder={t("contains")}
                     className="h-9"
                   />
                 </FilterField>
 
                 {/* Row 4: Dates */}
                 <div className="grid grid-cols-2 gap-3">
-                  <FilterField icon={Calendar} label="Создан после">
+                  <FilterField icon={Calendar} label={t("condAfter")}>
                     <Input
                       type="date"
                       value={conditions.createdAfter}
@@ -379,7 +383,7 @@ export function SegmentForm({ open, onOpenChange, onSaved, initialData, orgId }:
                       className="h-9"
                     />
                   </FilterField>
-                  <FilterField icon={Calendar} label="Создан до">
+                  <FilterField icon={Calendar} label={t("condBefore")}>
                     <Input
                       type="date"
                       value={conditions.createdBefore}
@@ -395,13 +399,13 @@ export function SegmentForm({ open, onOpenChange, onSaved, initialData, orgId }:
                     checked={conditions.hasEmail}
                     onChange={v => updateCond("hasEmail", v)}
                     icon={Mail}
-                    label="Есть Email"
+                    label={t("condHasEmail")}
                   />
                   <ToggleCheck
                     checked={conditions.hasPhone}
                     onChange={v => updateCond("hasPhone", v)}
                     icon={Phone}
-                    label="Есть Телефон"
+                    label={t("condHasPhone")}
                   />
                 </div>
               </div>
@@ -415,7 +419,7 @@ export function SegmentForm({ open, onOpenChange, onSaved, initialData, orgId }:
                 </div>
                 <div>
                   <p className="text-2xl font-bold text-green-700 dark:text-green-300">{previewCount.toLocaleString()}</p>
-                  <p className="text-xs text-green-600 dark:text-green-400">контактов соответствует</p>
+                  <p className="text-xs text-green-600 dark:text-green-400">{t("contactsMatch")}</p>
                 </div>
               </div>
             )}
@@ -430,12 +434,12 @@ export function SegmentForm({ open, onOpenChange, onSaved, initialData, orgId }:
             className="gap-1.5 mr-auto"
           >
             {previewing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Eye className="h-4 w-4" />}
-            {previewing ? "Подсчёт..." : "Предпросмотр"}
+            {previewing ? t("previewing") : t("preview")}
           </Button>
-          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Отмена</Button>
+          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>{tc("cancel")}</Button>
           <Button type="submit" disabled={saving} className="min-w-[120px] gap-1.5">
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
-            {saving ? "Сохранение..." : "Сохранить"}
+            {saving ? tc("saving") : tc("save")}
           </Button>
         </DialogFooter>
       </form>

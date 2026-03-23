@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
+import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -67,6 +68,8 @@ export default function CompanyDetailPage() {
   const params = useParams()
   const router = useRouter()
   const { data: session } = useSession()
+  const t = useTranslations("companies")
+  const tc = useTranslations("common")
   const [company, setCompany] = useState<CompanyDetail | null>(null)
   const [loading, setLoading] = useState(true)
   const [editOpen, setEditOpen] = useState(false)
@@ -125,7 +128,7 @@ export default function CompanyDetailPage() {
   }
 
   if (!company) {
-    return <div className="text-center py-12 text-muted-foreground">Company not found</div>
+    return <div className="text-center py-12 text-muted-foreground">{t("companyNotFound")}</div>
   }
 
   const activeDeals = company.deals?.filter(d => !["WON", "LOST"].includes(d.stage)) || []
@@ -133,10 +136,10 @@ export default function CompanyDetailPage() {
   const daysAsClient = Math.floor((Date.now() - new Date(company.createdAt).getTime()) / 86400000)
 
   const kpiCards = [
-    { label: "Contacts", value: company.contacts?.length || 0, bg: "bg-blue-500", icon: <Users className="h-4 w-4 opacity-80" /> },
-    { label: "Active deals", value: activeDeals.length, bg: "bg-indigo-500", icon: <Handshake className="h-4 w-4 opacity-80" /> },
-    { label: "Воронка", value: `${pipelineValue.toLocaleString()} ₼`, bg: "bg-green-500", icon: <TrendingUp className="h-4 w-4 opacity-80" /> },
-    { label: "Days as client", value: daysAsClient, bg: "bg-violet-500", icon: <Clock className="h-4 w-4 opacity-80" /> },
+    { label: t("kpiContacts"), value: company.contacts?.length || 0, bg: "bg-blue-500", icon: <Users className="h-4 w-4 opacity-80" /> },
+    { label: t("kpiActiveDeals"), value: activeDeals.length, bg: "bg-indigo-500", icon: <Handshake className="h-4 w-4 opacity-80" /> },
+    { label: t("kpiPipeline"), value: `${pipelineValue.toLocaleString()} ₼`, bg: "bg-green-500", icon: <TrendingUp className="h-4 w-4 opacity-80" /> },
+    { label: t("kpiDaysAsClient"), value: daysAsClient, bg: "bg-violet-500", icon: <Clock className="h-4 w-4 opacity-80" /> },
   ]
 
   return (
@@ -161,7 +164,7 @@ export default function CompanyDetailPage() {
           </div>
         </div>
         <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
-          <Pencil className="h-3.5 w-3.5 mr-1.5" /> Edit
+          <Pencil className="h-3.5 w-3.5 mr-1.5" /> {tc("edit")}
         </Button>
       </div>
 
@@ -201,12 +204,12 @@ export default function CompanyDetailPage() {
       {/* Tabs */}
       <Tabs defaultValue="overview" className="space-y-4">
         <TabsList className="bg-muted/60 p-1 h-auto flex-wrap">
-          <TabsTrigger value="overview" className="rounded-md text-sm">Overview</TabsTrigger>
-          <TabsTrigger value="contacts" className="rounded-md text-sm">Contacts ({company.contacts?.length || 0})</TabsTrigger>
-          <TabsTrigger value="deals" className="rounded-md text-sm">Deals ({company.deals?.length || 0})</TabsTrigger>
-          <TabsTrigger value="timeline" className="rounded-md text-sm">Timeline</TabsTrigger>
+          <TabsTrigger value="overview" className="rounded-md text-sm">{t("tabOverview")}</TabsTrigger>
+          <TabsTrigger value="contacts" className="rounded-md text-sm">{t("tabContacts")} ({company.contacts?.length || 0})</TabsTrigger>
+          <TabsTrigger value="deals" className="rounded-md text-sm">{t("tabDeals")} ({company.deals?.length || 0})</TabsTrigger>
+          <TabsTrigger value="timeline" className="rounded-md text-sm">{t("tabTimeline")}</TabsTrigger>
           <TabsTrigger value="pricing" className="rounded-md text-sm">
-            <DollarSign className="h-3.5 w-3.5 mr-1" />Pricing
+            <DollarSign className="h-3.5 w-3.5 mr-1" />{t("tabPricing")}
           </TabsTrigger>
         </TabsList>
 
@@ -215,15 +218,15 @@ export default function CompanyDetailPage() {
           <div className="grid md:grid-cols-2 gap-4">
             <Card className="border-none shadow-sm bg-card">
               <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">About</CardTitle>
+                <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">{t("about")}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3 text-sm">
-                <p className="text-muted-foreground">{company.description || "No description"}</p>
+                <p className="text-muted-foreground">{company.description || t("noDescription")}</p>
                 <div className="grid grid-cols-2 gap-3 pt-1">
                   {[
-                    ["Industry", company.industry || "—"],
+                    [tc("industry"), company.industry || "—"],
                     ["Employees", company.employeeCount?.toString() || "—"],
-                    ["Country", company.country || "—"],
+                    [tc("country"), company.country || "—"],
                     ["Annual revenue", company.annualRevenue ? `${company.annualRevenue.toLocaleString()} ₼` : "—"],
                   ].map(([label, value]) => (
                     <div key={label}>
@@ -236,7 +239,7 @@ export default function CompanyDetailPage() {
             </Card>
             <Card className="border-none shadow-sm bg-card">
               <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Recent Activity</CardTitle>
+                <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">{t("recentActivity")}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 {(company.activities || []).slice(0, 5).map(activity => (
@@ -249,7 +252,7 @@ export default function CompanyDetailPage() {
                   </div>
                 ))}
                 {(company.activities || []).length === 0 && (
-                  <p className="text-sm text-muted-foreground">No activities</p>
+                  <p className="text-sm text-muted-foreground">{t("noActivities")}</p>
                 )}
               </CardContent>
             </Card>
@@ -260,7 +263,7 @@ export default function CompanyDetailPage() {
         <TabsContent value="contacts">
           <Card className="border-none shadow-sm bg-card">
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Contacts</CardTitle>
+              <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">{t("tabContacts")}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
@@ -285,7 +288,7 @@ export default function CompanyDetailPage() {
                     </div>
                   </div>
                 ))}
-                {(company.contacts || []).length === 0 && <p className="text-sm text-muted-foreground">No contacts</p>}
+                {(company.contacts || []).length === 0 && <p className="text-sm text-muted-foreground">{t("noContacts")}</p>}
               </div>
             </CardContent>
           </Card>
@@ -295,7 +298,7 @@ export default function CompanyDetailPage() {
         <TabsContent value="deals">
           <Card className="border-none shadow-sm bg-card">
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Deals</CardTitle>
+              <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">{t("tabDeals")}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
@@ -317,7 +320,7 @@ export default function CompanyDetailPage() {
                     </div>
                   </div>
                 ))}
-                {(company.deals || []).length === 0 && <p className="text-sm text-muted-foreground">No deals</p>}
+                {(company.deals || []).length === 0 && <p className="text-sm text-muted-foreground">{t("noDeals")}</p>}
               </div>
             </CardContent>
           </Card>
@@ -328,7 +331,7 @@ export default function CompanyDetailPage() {
           <Card className="border-none shadow-sm bg-card">
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
-                <Activity className="h-4 w-4" /> Unified Timeline
+                <Activity className="h-4 w-4" /> {t("unifiedTimeline")}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -337,7 +340,7 @@ export default function CompanyDetailPage() {
               ) : timeline.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-10 text-center">
                   <MessageSquare className="h-10 w-10 text-muted-foreground/30 mb-3" />
-                  <p className="text-sm text-muted-foreground">No timeline events yet</p>
+                  <p className="text-sm text-muted-foreground">{t("noTimeline")}</p>
                 </div>
               ) : (
                 <div className="relative">
@@ -383,17 +386,17 @@ export default function CompanyDetailPage() {
           ) : !pricingProfile ? (
             <Card className="border-none shadow-sm bg-card">
               <CardContent className="py-12 text-center text-muted-foreground">
-                Для этой компании нет данных ценообразования.
+                {t("pricingNoData")}
               </CardContent>
             </Card>
           ) : (
             <>
               <div className="grid gap-3 sm:grid-cols-4">
                 {[
-                  ["Код", pricingProfile.companyCode],
-                  ["Группа", pricingProfile.group?.name || "—"],
-                  ["Ежемесячно", `${pricingProfile.monthlyTotal?.toLocaleString("ru-RU", { maximumFractionDigits: 2 })} ₼`],
-                  ["Ежегодно", `${pricingProfile.annualTotal?.toLocaleString("ru-RU", { maximumFractionDigits: 2 })} ₼`],
+                  [t("pricingCode"), pricingProfile.companyCode],
+                  [t("pricingGroup"), pricingProfile.group?.name || "—"],
+                  [t("pricingMonthly"), `${pricingProfile.monthlyTotal?.toLocaleString("ru-RU", { maximumFractionDigits: 2 })} ₼`],
+                  [t("pricingAnnual"), `${pricingProfile.annualTotal?.toLocaleString("ru-RU", { maximumFractionDigits: 2 })} ₼`],
                 ].map(([label, value]) => (
                   <Card key={label} className="border-none shadow-sm bg-card">
                     <CardContent className="pt-5 pb-5">
@@ -405,7 +408,7 @@ export default function CompanyDetailPage() {
               </div>
 
               <Card className="border-none shadow-sm bg-card">
-                <CardHeader className="pb-3"><CardTitle className="text-base">Услуги по категориям</CardTitle></CardHeader>
+                <CardHeader className="pb-3"><CardTitle className="text-base">{t("pricingServices")}</CardTitle></CardHeader>
                 <CardContent className="space-y-2">
                   {(pricingProfile.categories || []).map((pc: any) => {
                     const isExpanded = expandedPricingCats.has(pc.id)
@@ -422,7 +425,7 @@ export default function CompanyDetailPage() {
                           <div className="flex items-center gap-2">
                             {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                             <span className="text-sm font-medium">{pc.category?.name || "—"}</span>
-                            <span className="text-xs text-muted-foreground">({pc.services?.length || 0} услуг)</span>
+                            <span className="text-xs text-muted-foreground">({pc.services?.length || 0} {t("pricingServices_count")})</span>
                           </div>
                           <span className="text-sm font-mono font-medium text-green-600">{pc.total?.toLocaleString("ru-RU", { maximumFractionDigits: 2 })} ₼</span>
                         </button>
@@ -456,14 +459,14 @@ export default function CompanyDetailPage() {
                     )
                   })}
                   {(pricingProfile.categories || []).length === 0 && (
-                    <div className="text-sm text-muted-foreground text-center py-4">Нет категорий</div>
+                    <div className="text-sm text-muted-foreground text-center py-4">{t("noCategories")}</div>
                   )}
                 </CardContent>
               </Card>
 
               {pricingSales.length > 0 && (
                 <Card className="border-none shadow-sm bg-card">
-                  <CardHeader className="pb-3"><CardTitle className="text-base">Допродажи ({pricingSales.length})</CardTitle></CardHeader>
+                  <CardHeader className="pb-3"><CardTitle className="text-base">{t("upsells")} ({pricingSales.length})</CardTitle></CardHeader>
                   <CardContent>
                     <table className="w-full text-sm">
                       <thead>
@@ -480,7 +483,7 @@ export default function CompanyDetailPage() {
                           <tr key={sale.id} className="border-b last:border-0">
                             <td className="py-2 pr-4">
                               <Badge className={sale.type === "recurring" ? "bg-green-100 text-green-800" : "bg-blue-100 text-blue-800"}>
-                                {sale.type === "recurring" ? "MRR" : "Единоразовая"}
+                                {sale.type === "recurring" ? t("recurring") : t("oneTime")}
                               </Badge>
                             </td>
                             <td className="py-2 pr-4">{sale.name}</td>
@@ -488,7 +491,7 @@ export default function CompanyDetailPage() {
                             <td className="py-2 pr-4 text-xs">{sale.effectiveDate ? new Date(sale.effectiveDate).toLocaleDateString("ru-RU") : "—"}</td>
                             <td className="py-2">
                               <Badge variant="outline" className={sale.status === "active" ? "text-green-600 border-green-300" : "text-gray-600 border-gray-300"}>
-                                {sale.status === "active" ? "Активна" : sale.status === "cancelled" ? "Отменена" : "Завершена"}
+                                {sale.status === "active" ? t("saleActive") : sale.status === "cancelled" ? t("saleCancelled") : t("saleCompleted")}
                               </Badge>
                             </td>
                           </tr>

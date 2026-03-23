@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { useTranslations } from "next-intl"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -31,6 +32,8 @@ interface Stats {
 type FilterType = "all" | "enabled" | "registered" | "pending" | "disabled"
 
 export default function PortalUsersPage() {
+  const t = useTranslations("settings")
+  const tc = useTranslations("common")
   const [contacts, setContacts] = useState<PortalContact[]>([])
   const [stats, setStats] = useState<Stats>({ totalWithEmail: 0, enabled: 0, registered: 0, recentLogins: 0 })
   const [loading, setLoading] = useState(true)
@@ -138,23 +141,23 @@ export default function PortalUsersPage() {
   }
 
   const getStatusBadge = (c: PortalContact) => {
-    if (!c.portalAccessEnabled) return <Badge variant="outline" className="text-xs">Отключён</Badge>
-    if (c.hasPassword) return <Badge className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 text-xs">Активен</Badge>
-    return <Badge className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400 text-xs">Ожидает регистрации</Badge>
+    if (!c.portalAccessEnabled) return <Badge variant="outline" className="text-xs">{tc("inactive")}</Badge>
+    if (c.hasPassword) return <Badge className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 text-xs">{tc("active")}</Badge>
+    return <Badge className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400 text-xs">{tc("pending")}</Badge>
   }
 
   const filters: { key: FilterType; label: string }[] = [
-    { key: "all", label: "Все" },
-    { key: "enabled", label: "Доступ включён" },
-    { key: "registered", label: "Зарегистрированы" },
-    { key: "pending", label: "Ожидают регистрации" },
-    { key: "disabled", label: "Отключены" },
+    { key: "all", label: tc("all") },
+    { key: "enabled", label: "Access enabled" },
+    { key: "registered", label: "Registered" },
+    { key: "pending", label: tc("pending") },
+    { key: "disabled", label: "Disabled" },
   ]
 
   if (loading) {
     return (
       <div className="space-y-6">
-        <h1 className="text-2xl font-bold tracking-tight">Пользователи портала</h1>
+        <h1 className="text-2xl font-bold tracking-tight">{t("portalUsers")}</h1>
         <div className="animate-pulse space-y-4">
           <div className="grid gap-4 md:grid-cols-4">{[1,2,3,4].map(i => <div key={i} className="h-24 bg-muted rounded-lg" />)}</div>
           <div className="h-96 bg-muted rounded-lg" />
@@ -166,15 +169,15 @@ export default function PortalUsersPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Пользователи портала</h1>
-        <p className="text-sm text-muted-foreground">Управление доступом клиентов к порталу самообслуживания</p>
+        <h1 className="text-2xl font-bold tracking-tight">{t("portalUsers")}</h1>
+        <p className="text-sm text-muted-foreground">{t("portalUsersDesc")}</p>
       </div>
 
       <div className="grid gap-4 md:grid-cols-4">
-        <StatCard title="Контактов с email" value={stats.totalWithEmail} icon={<Users className="h-4 w-4" />} />
-        <StatCard title="Доступ включён" value={stats.enabled} icon={<Shield className="h-4 w-4" />} />
-        <StatCard title="Зарегистрированы" value={stats.registered} icon={<UserCheck className="h-4 w-4" />} />
-        <StatCard title="Входы за 7 дней" value={stats.recentLogins} icon={<Clock className="h-4 w-4" />} />
+        <StatCard title="Contacts with email" value={stats.totalWithEmail} icon={<Users className="h-4 w-4" />} />
+        <StatCard title="Access enabled" value={stats.enabled} icon={<Shield className="h-4 w-4" />} />
+        <StatCard title="Registered" value={stats.registered} icon={<UserCheck className="h-4 w-4" />} />
+        <StatCard title="Logins in 7 days" value={stats.recentLogins} icon={<Clock className="h-4 w-4" />} />
       </div>
 
       <Card>
@@ -189,22 +192,22 @@ export default function PortalUsersPage() {
             </div>
             <div className="relative w-64">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input placeholder="Поиск по имени или email..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
+              <Input placeholder={tc("search")} value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
             </div>
           </div>
         </CardHeader>
         <CardContent>
           {selected.size > 0 && (
             <div className="flex items-center gap-2 mb-4 p-2 bg-muted/50 rounded-lg">
-              <span className="text-sm text-muted-foreground">Выбрано: {selected.size}</span>
-              <Button size="sm" variant="outline" onClick={handleBulkEnable}><Shield className="h-3.5 w-3.5 mr-1" /> Включить доступ</Button>
-              <Button size="sm" variant="outline" onClick={handleBulkDisable}><ShieldOff className="h-3.5 w-3.5 mr-1" /> Отключить</Button>
+              <span className="text-sm text-muted-foreground">Selected: {selected.size}</span>
+              <Button size="sm" variant="outline" onClick={handleBulkEnable}><Shield className="h-3.5 w-3.5 mr-1" /> Enable access</Button>
+              <Button size="sm" variant="outline" onClick={handleBulkDisable}><ShieldOff className="h-3.5 w-3.5 mr-1" /> Disable</Button>
             </div>
           )}
 
           {contacts.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
-              {search ? "Не найдено контактов по запросу" : "Нет контактов с email в организации"}
+              {search ? tc("noResults") : "No contacts with email in organization"}
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -212,12 +215,12 @@ export default function PortalUsersPage() {
                 <thead>
                   <tr className="border-b">
                     <th className="p-2 w-8"><input type="checkbox" checked={selected.size === contacts.length && contacts.length > 0} onChange={toggleAll} /></th>
-                    <th className="p-2 text-left font-medium">Имя</th>
-                    <th className="p-2 text-left font-medium">Email</th>
-                    <th className="p-2 text-left font-medium">Компания</th>
-                    <th className="p-2 text-left font-medium">Статус портала</th>
-                    <th className="p-2 text-left font-medium">Последний вход</th>
-                    <th className="p-2 text-right font-medium">Действия</th>
+                    <th className="p-2 text-left font-medium">{tc("fullName")}</th>
+                    <th className="p-2 text-left font-medium">{tc("email")}</th>
+                    <th className="p-2 text-left font-medium">{tc("company")}</th>
+                    <th className="p-2 text-left font-medium">Portal Status</th>
+                    <th className="p-2 text-left font-medium">Last Login</th>
+                    <th className="p-2 text-right font-medium">{tc("actions")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -234,7 +237,7 @@ export default function PortalUsersPage() {
                           <button
                             onClick={() => handleToggleAccess(c)}
                             className="p-1.5 rounded hover:bg-muted"
-                            title={c.portalAccessEnabled ? "Отключить доступ" : "Включить доступ"}
+                            title={c.portalAccessEnabled ? "Disable access" : "Enable access"}
                           >
                             {c.portalAccessEnabled
                               ? <ShieldOff className="h-3.5 w-3.5 text-red-500" />
@@ -245,7 +248,7 @@ export default function PortalUsersPage() {
                             <button
                               onClick={() => setResetDialog(c)}
                               className="p-1.5 rounded hover:bg-muted"
-                              title="Сбросить пароль"
+                              title="Reset password"
                             >
                               <KeyRound className="h-3.5 w-3.5 text-orange-500" />
                             </button>
@@ -253,7 +256,7 @@ export default function PortalUsersPage() {
                           <button
                             onClick={() => setClearChatDialog(c)}
                             className="p-1.5 rounded hover:bg-muted"
-                            title="Очистить историю AI чата"
+                            title="Clear AI chat history"
                           >
                             <MessageSquareX className="h-3.5 w-3.5 text-purple-500" />
                           </button>
@@ -261,7 +264,7 @@ export default function PortalUsersPage() {
                             <button
                               onClick={() => setRemoveDialog(c)}
                               className="p-1.5 rounded hover:bg-muted"
-                              title="Удалить из портала (заново пройдёт регистрацию)"
+                              title="Remove from portal (will need to re-register)"
                             >
                               <UserMinus className="h-3.5 w-3.5 text-red-500" />
                             </button>
@@ -281,7 +284,7 @@ export default function PortalUsersPage() {
         open={!!resetDialog}
         onOpenChange={() => setResetDialog(null)}
         onConfirm={handleResetPassword}
-        title="Сбросить пароль"
+        title="Reset Password"
         itemName={resetDialog?.fullName}
       />
 
@@ -289,7 +292,7 @@ export default function PortalUsersPage() {
         open={!!clearChatDialog}
         onOpenChange={() => setClearChatDialog(null)}
         onConfirm={handleClearChat}
-        title="Очистить историю AI чата"
+        title="Clear AI Chat History"
         itemName={clearChatDialog?.fullName}
       />
 
@@ -297,8 +300,8 @@ export default function PortalUsersPage() {
         open={!!removeDialog}
         onOpenChange={() => setRemoveDialog(null)}
         onConfirm={handleRemoveFromPortal}
-        title="Удалить из портала"
-        itemName={`${removeDialog?.fullName} (сброс пароля + очистка чата — сможет заново зарегистрироваться)`}
+        title="Remove from Portal"
+        itemName={removeDialog?.fullName}
       />
     </div>
   )

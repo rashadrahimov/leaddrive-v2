@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -38,6 +39,8 @@ interface CompanyFormProps {
 }
 
 export function CompanyForm({ open, onOpenChange, onSaved, initialData, orgId }: CompanyFormProps) {
+  const t = useTranslations("forms")
+  const tc = useTranslations("common")
   const isEdit = !!initialData?.id
   const [form, setForm] = useState<CompanyFormData>({
     name: initialData?.name || "",
@@ -115,65 +118,65 @@ export function CompanyForm({ open, onOpenChange, onSaved, initialData, orgId }:
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogHeader>
-        <DialogTitle>{isEdit ? "Edit Company" : "Add Company"}</DialogTitle>
+        <DialogTitle>{isEdit ? t("editCompany") : t("addCompany")}</DialogTitle>
       </DialogHeader>
       <form onSubmit={handleSubmit}>
         <DialogContent>
           {error && <div className="text-sm text-red-500 bg-red-50 dark:bg-red-900/20 p-2 rounded mb-3">{error}</div>}
           <div className="grid gap-4">
             <div>
-              <Label htmlFor="name">Company Name *</Label>
+              <Label htmlFor="name">{`${tc("name")} *`}</Label>
               <Input id="name" value={form.name} onChange={(e) => update("name", e.target.value)} required />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label htmlFor="industry">Industry</Label>
+                <Label htmlFor="industry">{tc("industry")}</Label>
                 <Input id="industry" value={form.industry} onChange={(e) => update("industry", e.target.value)} />
               </div>
               <div>
-                <Label htmlFor="status">Status</Label>
+                <Label htmlFor="status">{tc("status")}</Label>
                 <Select value={form.status} onChange={(e) => update("status", e.target.value)}>
                   <option value="prospect">Prospect</option>
-                  <option value="active">Active</option>
-                  <option value="inactive">Inactive</option>
+                  <option value="active">{tc("active")}</option>
+                  <option value="inactive">{tc("inactive")}</option>
                 </Select>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">{tc("email")}</Label>
                 <Input id="email" type="email" value={form.email} onChange={(e) => update("email", e.target.value)} />
               </div>
               <div>
-                <Label htmlFor="phone">Phone</Label>
+                <Label htmlFor="phone">{tc("phone")}</Label>
                 <Input id="phone" value={form.phone} onChange={(e) => update("phone", e.target.value)} />
               </div>
             </div>
             <div>
-              <Label htmlFor="website">Website</Label>
+              <Label htmlFor="website">{tc("website")}</Label>
               <Input id="website" value={form.website} onChange={(e) => update("website", e.target.value)} placeholder="https://" />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label htmlFor="city">City</Label>
+                <Label htmlFor="city">{tc("city")}</Label>
                 <Input id="city" value={form.city} onChange={(e) => update("city", e.target.value)} />
               </div>
               <div>
-                <Label htmlFor="country">Country</Label>
+                <Label htmlFor="country">{tc("country")}</Label>
                 <Input id="country" value={form.country} onChange={(e) => update("country", e.target.value)} />
               </div>
             </div>
             <div>
-              <Label htmlFor="address">Address</Label>
+              <Label htmlFor="address">{tc("address")}</Label>
               <Input id="address" value={form.address} onChange={(e) => update("address", e.target.value)} />
             </div>
             <div>
-              <Label htmlFor="slaPolicy">SLA Policy</Label>
+              <Label htmlFor="slaPolicy">{t("slaPolicy")}</Label>
               <Select
                 value={form.slaPolicyId || ""}
                 onChange={(e) => setForm(f => ({ ...f, slaPolicyId: e.target.value || null }))}
               >
-                <option value="">— По умолчанию (по приоритету) —</option>
+                <option value="">{t("defaultSla")}</option>
                 {slaPolicies.map(p => (
                   <option key={p.id} value={p.id}>
                     {p.name} — {p.priority} ({p.resolutionHours}ч)
@@ -182,14 +185,14 @@ export function CompanyForm({ open, onOpenChange, onSaved, initialData, orgId }:
               </Select>
             </div>
             <div>
-              <Label htmlFor="description">Description</Label>
+              <Label htmlFor="description">{tc("description")}</Label>
               <Textarea id="description" value={form.description} onChange={(e) => update("description", e.target.value)} rows={3} />
             </div>
           </div>
         </DialogContent>
         <DialogFooter>
-          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button type="submit" disabled={saving}>{saving ? "Saving..." : isEdit ? "Update" : "Create"}</Button>
+          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>{tc("cancel")}</Button>
+          <Button type="submit" disabled={saving}>{saving ? tc("saving") : isEdit ? tc("update") : tc("create")}</Button>
         </DialogFooter>
       </form>
     </Dialog>

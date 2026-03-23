@@ -2,12 +2,14 @@
 
 import { useState } from "react"
 import Link from "next/link"
+import { useTranslations } from "next-intl"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Mail, CheckCircle } from "lucide-react"
+import { Mail } from "lucide-react"
 
 export default function PortalRegisterPage() {
+  const t = useTranslations("portal")
   const [email, setEmail] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
@@ -25,7 +27,7 @@ export default function PortalRegisterPage() {
         body: JSON.stringify({ email: email.trim() }),
       })
       const json = await res.json()
-      if (!res.ok) throw new Error(json.error || "Ошибка")
+      if (!res.ok) throw new Error(json.error || "Error")
       setSent(true)
     } catch (err: any) {
       setError(err.message)
@@ -40,17 +42,17 @@ export default function PortalRegisterPage() {
         <Card className="w-full max-w-md">
           <CardContent className="py-10 text-center">
             <Mail className="h-12 w-12 text-blue-500 mx-auto mb-3" />
-            <h2 className="text-xl font-semibold mb-2">Проверьте почту</h2>
+            <h2 className="text-xl font-semibold mb-2">{t("checkEmail")}</h2>
             <p className="text-sm text-muted-foreground mb-1">
-              Мы отправили письмо на <strong>{email}</strong>
+              {t("emailSent")} <strong>{email}</strong>
             </p>
             <p className="text-sm text-muted-foreground">
-              Перейдите по ссылке в письме, чтобы создать пароль и получить доступ к порталу.
+              {t("followLink")}
             </p>
-            <p className="text-xs text-muted-foreground mt-4">Ссылка действительна 24 часа</p>
+            <p className="text-xs text-muted-foreground mt-4">{t("linkValid24h")}</p>
             <div className="mt-6">
               <Link href="/portal/login" className="text-sm text-primary hover:underline">
-                Вернуться ко входу
+                {t("backToLogin")}
               </Link>
             </div>
           </CardContent>
@@ -63,8 +65,8 @@ export default function PortalRegisterPage() {
     <div className="min-h-screen flex items-center justify-center bg-background">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl">Регистрация</CardTitle>
-          <p className="text-sm text-muted-foreground">Введите email для получения ссылки на регистрацию</p>
+          <CardTitle className="text-2xl">{t("registerTitle")}</CardTitle>
+          <p className="text-sm text-muted-foreground">{t("registerSubtitle")}</p>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -74,15 +76,15 @@ export default function PortalRegisterPage() {
               <Input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="your@company.com" className="mt-1" required />
             </div>
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Отправка..." : "Отправить ссылку"}
+              {loading ? "..." : t("sendLink")}
             </Button>
           </form>
           <div className="mt-4 text-center space-y-2">
             <Link href="/portal/login" className="text-sm text-primary hover:underline">
-              Уже есть аккаунт? Войти
+              {t("hasAccount")}
             </Link>
             <p className="text-xs text-muted-foreground">
-              Ваш email должен быть в базе контактов с активированным доступом к порталу
+              {t("contactAdmin")}
             </p>
           </div>
         </CardContent>

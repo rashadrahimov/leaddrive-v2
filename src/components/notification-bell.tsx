@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { useSession } from "next-auth/react"
 import { Bell, Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { useTranslations } from "next-intl"
 
 interface Notification {
   id: string
@@ -17,6 +18,7 @@ interface Notification {
 }
 
 export function NotificationBell() {
+  const t = useTranslations("notifications")
   const { data: session } = useSession()
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
@@ -82,17 +84,17 @@ export function NotificationBell() {
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
           <div className="absolute right-0 top-full mt-2 w-80 bg-background border rounded-lg shadow-lg z-50 max-h-96 overflow-hidden">
             <div className="flex items-center justify-between px-4 py-3 border-b">
-              <h4 className="font-medium text-sm">Notifications</h4>
+              <h4 className="font-medium text-sm">{t("title")}</h4>
               {unreadCount > 0 && (
                 <Button variant="ghost" size="sm" onClick={markAllRead} className="text-xs h-7">
-                  <Check className="h-3 w-3 mr-1" /> Mark all read
+                  <Check className="h-3 w-3 mr-1" /> {t("markAllRead")}
                 </Button>
               )}
             </div>
             <div className="overflow-y-auto max-h-72">
               {notifications.length === 0 ? (
                 <div className="px-4 py-8 text-center text-sm text-muted-foreground">
-                  No notifications
+                  {t("noNotifications")}
                 </div>
               ) : (
                 notifications.slice(0, 20).map(n => (

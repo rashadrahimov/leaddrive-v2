@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useTranslations } from "next-intl"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -13,12 +14,12 @@ import {
 } from "lucide-react"
 
 const TYPE_OPTIONS = [
-  { value: "conference", label: "Conference", icon: Presentation, color: "bg-blue-100 text-blue-600 border-blue-300" },
-  { value: "webinar", label: "Webinar", icon: Video, color: "bg-violet-100 text-violet-600 border-violet-300" },
-  { value: "workshop", label: "Workshop", icon: Wrench, color: "bg-amber-100 text-amber-600 border-amber-300" },
-  { value: "meetup", label: "Meetup", icon: Coffee, color: "bg-green-100 text-green-600 border-green-300" },
-  { value: "exhibition", label: "Exhibition", icon: Building2, color: "bg-pink-100 text-pink-600 border-pink-300" },
-  { value: "other", label: "Other", icon: HelpCircle, color: "bg-gray-100 text-gray-600 border-gray-300" },
+  { value: "conference", icon: Presentation, color: "bg-blue-100 text-blue-600 border-blue-300" },
+  { value: "webinar", icon: Video, color: "bg-violet-100 text-violet-600 border-violet-300" },
+  { value: "workshop", icon: Wrench, color: "bg-amber-100 text-amber-600 border-amber-300" },
+  { value: "meetup", icon: Coffee, color: "bg-green-100 text-green-600 border-green-300" },
+  { value: "exhibition", icon: Building2, color: "bg-pink-100 text-pink-600 border-pink-300" },
+  { value: "other", icon: HelpCircle, color: "bg-gray-100 text-gray-600 border-gray-300" },
 ]
 
 interface EventFormProps {
@@ -30,6 +31,9 @@ interface EventFormProps {
 }
 
 export function EventForm({ open, onOpenChange, onSaved, orgId, initialData }: EventFormProps) {
+  const tf = useTranslations("forms")
+  const tc = useTranslations("common")
+  const t = useTranslations("events")
   const isEdit = !!initialData?.id
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState("")
@@ -72,8 +76,8 @@ export function EventForm({ open, onOpenChange, onSaved, orgId, initialData }: E
   }, [initialData, open])
 
   const handleSubmit = async () => {
-    if (!form.name.trim()) return setError("Name is required")
-    if (!form.startDate) return setError("Start date is required")
+    if (!form.name.trim()) return setError(tc("required"))
+    if (!form.startDate) return setError(tc("required"))
     setSaving(true)
     setError("")
 
@@ -116,16 +120,16 @@ export function EventForm({ open, onOpenChange, onSaved, orgId, initialData }: E
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <CalendarDays className="h-5 w-5 text-primary" />
-            {isEdit ? "Edit Event" : "New Event"}
+            {isEdit ? tf("editEvent") : tf("newEvent")}
           </DialogTitle>
         </DialogHeader>
 
         {/* Step indicator */}
         <div className="flex gap-1 mb-2">
           {[
-            { n: 1, label: "Basic Info" },
-            { n: 2, label: "Location & Time" },
-            { n: 3, label: "Budget & Tags" },
+            { n: 1, label: t("stepBasicInfo") },
+            { n: 2, label: t("stepLocationTime") },
+            { n: 3, label: t("stepBudgetTags") },
           ].map(s => (
             <button
               key={s.n}
@@ -144,32 +148,33 @@ export function EventForm({ open, onOpenChange, onSaved, orgId, initialData }: E
           {step === 1 && (
             <>
               <div>
-                <Label>Event Name *</Label>
+                <Label>{t("eventName")} *</Label>
                 <Input value={form.name} onChange={e => set("name", e.target.value)} placeholder="e.g. IT Outsourcing Summit 2026" className="mt-1" />
               </div>
 
               <div>
-                <Label>Description</Label>
-                <Textarea value={form.description} onChange={e => set("description", e.target.value)} rows={3} placeholder="Describe the event..." className="mt-1" />
+                <Label>{tc("description")}</Label>
+                <Textarea value={form.description} onChange={e => set("description", e.target.value)} rows={3} placeholder={t("descriptionPlaceholder")} className="mt-1" />
               </div>
 
               <div>
-                <Label className="mb-2 block">Type</Label>
+                <Label className="mb-2 block">{tc("type")}</Label>
                 <div className="grid grid-cols-3 gap-2">
-                  {TYPE_OPTIONS.map(t => {
-                    const Icon = t.icon
-                    const active = form.type === t.value
+                  {TYPE_OPTIONS.map(opt => {
+                    const Icon = opt.icon
+                    const active = form.type === opt.value
+                    const labelKey = `type${opt.value.charAt(0).toUpperCase() + opt.value.slice(1)}` as any
                     return (
                       <button
-                        key={t.value}
+                        key={opt.value}
                         type="button"
-                        onClick={() => set("type", t.value)}
+                        onClick={() => set("type", opt.value)}
                         className={`flex items-center gap-2 p-2.5 rounded-lg border-2 transition-all text-sm font-medium ${
-                          active ? `${t.color} border-current shadow-sm` : "border-transparent bg-muted/50 text-muted-foreground hover:bg-muted"
+                          active ? `${opt.color} border-current shadow-sm` : "border-transparent bg-muted/50 text-muted-foreground hover:bg-muted"
                         }`}
                       >
                         <Icon className="h-4 w-4" />
-                        {t.label}
+                        {t(labelKey)}
                       </button>
                     )
                   })}
@@ -177,11 +182,13 @@ export function EventForm({ open, onOpenChange, onSaved, orgId, initialData }: E
               </div>
 
               <div>
-                <Label>Status</Label>
+                <Label>{tc("status")}</Label>
                 <select className="w-full h-9 border rounded-md px-3 text-sm mt-1" value={form.status} onChange={e => set("status", e.target.value)}>
-                  {["planned","registration_open","in_progress","completed","cancelled"].map(s => (
-                    <option key={s} value={s}>{s.replace(/_/g, " ")}</option>
-                  ))}
+                  <option value="planned">{t("statusPlanned")}</option>
+                  <option value="registration_open">{t("statusRegistrationOpen")}</option>
+                  <option value="in_progress">{t("statusInProgress")}</option>
+                  <option value="completed">{t("statusCompleted")}</option>
+                  <option value="cancelled">{t("statusCancelled")}</option>
                 </select>
               </div>
             </>
@@ -192,11 +199,11 @@ export function EventForm({ open, onOpenChange, onSaved, orgId, initialData }: E
             <>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label>Start Date & Time *</Label>
+                  <Label>{tc("startDate")} *</Label>
                   <Input type="datetime-local" value={form.startDate} onChange={e => set("startDate", e.target.value)} className="mt-1" />
                 </div>
                 <div>
-                  <Label>End Date & Time</Label>
+                  <Label>{tc("endDate")}</Label>
                   <Input type="datetime-local" value={form.endDate} onChange={e => set("endDate", e.target.value)} className="mt-1" />
                 </div>
               </div>
@@ -205,24 +212,24 @@ export function EventForm({ open, onOpenChange, onSaved, orgId, initialData }: E
                 <label className="flex items-center gap-2 text-sm font-medium cursor-pointer">
                   <input type="checkbox" checked={form.isOnline} onChange={e => set("isOnline", e.target.checked)} className="rounded" />
                   <Globe className="h-4 w-4 text-blue-500" />
-                  Online event
+                  {t("onlineEvent")}
                 </label>
               </div>
 
               {form.isOnline && (
                 <div>
-                  <Label>Meeting URL</Label>
+                  <Label>{t("meetingUrl")}</Label>
                   <Input value={form.meetingUrl} onChange={e => set("meetingUrl", e.target.value)} placeholder="https://zoom.us/j/..." className="mt-1" />
                 </div>
               )}
 
               <div>
-                <Label className="flex items-center gap-1"><MapPin className="h-3.5 w-3.5" /> Location</Label>
-                <Input value={form.location} onChange={e => set("location", e.target.value)} placeholder="City, venue, address..." className="mt-1" />
+                <Label className="flex items-center gap-1"><MapPin className="h-3.5 w-3.5" /> {t("location")}</Label>
+                <Input value={form.location} onChange={e => set("location", e.target.value)} placeholder={t("locationPlaceholder")} className="mt-1" />
               </div>
 
               <div>
-                <Label className="flex items-center gap-1"><Users className="h-3.5 w-3.5" /> Max Participants</Label>
+                <Label className="flex items-center gap-1"><Users className="h-3.5 w-3.5" /> {t("maxParticipants")}</Label>
                 <Input type="number" value={form.maxParticipants} onChange={e => set("maxParticipants", e.target.value)} placeholder="0 = unlimited" className="mt-1" />
               </div>
             </>
@@ -233,22 +240,22 @@ export function EventForm({ open, onOpenChange, onSaved, orgId, initialData }: E
             <>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label className="flex items-center gap-1"><DollarSign className="h-3.5 w-3.5" /> Budget (₼)</Label>
+                  <Label className="flex items-center gap-1"><DollarSign className="h-3.5 w-3.5" /> {t("budget")} (₼)</Label>
                   <Input type="number" value={form.budget} onChange={e => set("budget", e.target.value)} className="mt-1" />
                 </div>
                 <div>
-                  <Label>Expected Revenue (₼)</Label>
+                  <Label>{t("expectedRevenue")} (₼)</Label>
                   <Input type="number" value={form.expectedRevenue} onChange={e => set("expectedRevenue", e.target.value)} className="mt-1" />
                 </div>
               </div>
 
               <div>
-                <Label>Tags</Label>
+                <Label>{tc("tags")}</Label>
                 <div className="flex gap-2 mt-1">
                   <Input
                     value={tagInput}
                     onChange={e => setTagInput(e.target.value)}
-                    placeholder="Add tag..."
+                    placeholder={t("addTag")}
                     onKeyDown={e => e.key === "Enter" && (e.preventDefault(), addTag())}
                     className="flex-1"
                   />
@@ -268,11 +275,11 @@ export function EventForm({ open, onOpenChange, onSaved, orgId, initialData }: E
 
               {/* Preview summary */}
               <div className="p-3 rounded-lg bg-muted/50 space-y-1 text-sm">
-                <p className="font-medium text-xs text-muted-foreground uppercase">Summary</p>
-                <p><strong>{form.name || "Untitled"}</strong> — {TYPE_OPTIONS.find(t => t.value === form.type)?.label}</p>
+                <p className="font-medium text-xs text-muted-foreground uppercase">{t("summary")}</p>
+                <p><strong>{form.name || t("untitled")}</strong> — {TYPE_OPTIONS.find(opt => opt.value === form.type) && t(`type${form.type.charAt(0).toUpperCase() + form.type.slice(1)}` as any)}</p>
                 {form.startDate && <p className="text-muted-foreground">{new Date(form.startDate).toLocaleString("ru-RU")}</p>}
                 {form.location && <p className="text-muted-foreground"><MapPin className="h-3 w-3 inline mr-1" />{form.location}</p>}
-                {form.isOnline && <p className="text-muted-foreground"><Globe className="h-3 w-3 inline mr-1" />Online</p>}
+                {form.isOnline && <p className="text-muted-foreground"><Globe className="h-3 w-3 inline mr-1" />{t("online")}</p>}
               </div>
             </>
           )}
@@ -281,14 +288,14 @@ export function EventForm({ open, onOpenChange, onSaved, orgId, initialData }: E
 
           <div className="flex justify-between">
             <div>
-              {step > 1 && <Button variant="outline" onClick={() => setStep(s => s - 1)}>Back</Button>}
+              {step > 1 && <Button variant="outline" onClick={() => setStep(s => s - 1)}>{tc("back")}</Button>}
             </div>
             <div className="flex gap-2">
-              <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+              <Button variant="outline" onClick={() => onOpenChange(false)}>{tc("cancel")}</Button>
               {step < 3 ? (
-                <Button onClick={() => setStep(s => s + 1)}>Next</Button>
+                <Button onClick={() => setStep(s => s + 1)}>{tc("next")}</Button>
               ) : (
-                <Button onClick={handleSubmit} disabled={saving}>{saving ? "Saving..." : isEdit ? "Update" : "Create Event"}</Button>
+                <Button onClick={handleSubmit} disabled={saving}>{saving ? tc("saving") : isEdit ? tc("update") : tf("newEvent")}</Button>
               )}
             </div>
           </div>

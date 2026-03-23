@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useSession } from "next-auth/react"
+import { useTranslations } from "next-intl"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -24,6 +25,8 @@ interface CustomField {
 
 export default function CustomFieldsPage() {
   const { data: session } = useSession()
+  const t = useTranslations("settings")
+  const tc = useTranslations("common")
   const [fields, setFields] = useState<CustomField[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
@@ -70,16 +73,16 @@ export default function CustomFieldsPage() {
       render: (item: any) => <Badge variant="outline">{item.entityType}</Badge>,
     },
     {
-      key: "fieldType", label: "Type", sortable: true,
+      key: "fieldType", label: tc("type"), sortable: true,
       render: (item: any) => <Badge variant="secondary">{item.fieldType}</Badge>,
     },
     {
       key: "isRequired", label: "Required", sortable: true,
-      render: (item: any) => <span className="text-sm">{item.isRequired ? "Yes" : "No"}</span>,
+      render: (item: any) => <span className="text-sm">{item.isRequired ? tc("yes") : tc("no")}</span>,
     },
     {
-      key: "isActive", label: "Status", sortable: true,
-      render: (item: any) => <Badge variant={item.isActive ? "default" : "secondary"}>{item.isActive ? "Active" : "Inactive"}</Badge>,
+      key: "isActive", label: tc("status"), sortable: true,
+      render: (item: any) => <Badge variant={item.isActive ? "default" : "secondary"}>{item.isActive ? tc("active") : tc("inactive")}</Badge>,
     },
     {
       key: "edit", label: "", sortable: false,
@@ -100,23 +103,23 @@ export default function CustomFieldsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Custom Fields</h1>
-          <p className="text-muted-foreground">Create and manage custom fields for your entities</p>
+          <h1 className="text-2xl font-bold tracking-tight">{t("customFields")}</h1>
+          <p className="text-muted-foreground">{t("customFieldsDesc")}</p>
         </div>
         <Button className="gap-2" onClick={() => { setEditData(undefined); setShowForm(true) }}>
-          <Plus className="h-4 w-4" /> Add Field
+          <Plus className="h-4 w-4" /> {tc("add")} Field
         </Button>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>All Custom Fields</CardTitle>
+          <CardTitle>{t("customFields")}</CardTitle>
         </CardHeader>
         <CardContent>
           {loading ? (
-            <p className="text-muted-foreground">Loading...</p>
+            <p className="text-muted-foreground">{tc("loading")}</p>
           ) : (
-            <DataTable columns={columns} data={fields} searchPlaceholder="Search fields..." searchKey="fieldLabel" pageSize={10} />
+            <DataTable columns={columns} data={fields} searchPlaceholder={tc("search")} searchKey="fieldLabel" pageSize={10} />
           )}
         </CardContent>
       </Card>
@@ -133,7 +136,7 @@ export default function CustomFieldsPage() {
         open={!!deleteId}
         onOpenChange={(open) => { if (!open) setDeleteId(null) }}
         onConfirm={handleDelete}
-        title="Delete Custom Field"
+        title={`${tc("delete")} Custom Field`}
         itemName={deleteName}
       />
     </div>

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -39,8 +40,8 @@ const MODEL_OPTIONS = [
   {
     id: "claude-haiku-4-5-20251001",
     name: "Claude Haiku 4.5",
-    desc: "Быстрые ответы, низкая стоимость. Идеален для стандартных запросов.",
-    price: "$0.8 / $4 за 1М токенов",
+    descKey: "modelHaikuDesc",
+    price: "$0.8 / $4 per 1M tokens",
     icon: Zap,
     color: "from-emerald-400 to-teal-500",
     bgSelected: "border-emerald-400 bg-emerald-50/50",
@@ -48,8 +49,8 @@ const MODEL_OPTIONS = [
   {
     id: "claude-sonnet-4-6-20250514",
     name: "Claude Sonnet 4.6",
-    desc: "Баланс скорости и качества. Для сложных запросов.",
-    price: "$3 / $15 за 1М токенов",
+    descKey: "modelSonnetDesc",
+    price: "$3 / $15 per 1M tokens",
     icon: BrainCircuit,
     color: "from-blue-400 to-indigo-500",
     bgSelected: "border-blue-400 bg-blue-50/50",
@@ -57,8 +58,8 @@ const MODEL_OPTIONS = [
   {
     id: "claude-opus-4-6-20250514",
     name: "Claude Opus 4.6",
-    desc: "Максимальное качество. Для самых сложных задач.",
-    price: "$15 / $75 за 1М токенов",
+    descKey: "modelOpusDesc",
+    price: "$15 / $75 per 1M tokens",
     icon: Sparkles,
     color: "from-purple-400 to-pink-500",
     bgSelected: "border-purple-400 bg-purple-50/50",
@@ -69,93 +70,95 @@ const MODEL_OPTIONS = [
 const TOOL_GROUPS = [
   {
     id: "crm_access",
-    name: "Доступ к CRM",
-    desc: "AI видит тикеты, контракты и документы клиента",
+    nameKey: "toolCrmAccess",
+    descKey: "toolCrmAccessDesc",
     icon: FolderOpen,
     color: "bg-blue-100 text-blue-600",
     tools: ["get_tickets", "contracts", "documents"],
   },
   {
     id: "ticket_creation",
-    name: "Создание тикетов",
-    desc: "AI может предложить создать тикет",
+    nameKey: "toolTicketCreation",
+    descKey: "toolTicketCreationDesc",
     icon: FilePlus,
     color: "bg-green-100 text-green-600",
     tools: ["create_ticket"],
   },
   {
     id: "kb_access",
-    name: "База знаний",
-    desc: "AI ищет ответы в вашей базе знаний",
+    nameKey: "toolKbAccess",
+    descKey: "toolKbAccessDesc",
     icon: BookOpen,
     color: "bg-indigo-100 text-indigo-600",
     tools: ["kb_search"],
   },
 ]
 
-// Pre-built escalation rules with human-readable labels
+// Pre-built escalation rules
 const ESCALATION_PRESETS = [
   {
     id: "customer_asks",
-    label: "Клиент просит оператора",
-    desc: "Когда клиент прямо просит перевести на живого человека",
-    prompt: "Клиент явно просит перевести на живого оператора или человека",
+    labelKey: "escalCustomerAsks",
+    descKey: "escalCustomerAsksDesc",
+    prompt: "Customer explicitly asks to be transferred to a live operator or human",
     icon: HeartHandshake,
     color: "text-blue-600 bg-blue-50",
     alwaysOn: true,
   },
   {
     id: "kb_miss",
-    label: "Нет ответа в базе знаний",
-    desc: "Когда AI не находит подходящую статью в KB",
-    prompt: "AI не смог найти ответ в базе знаний и не может помочь клиенту",
+    labelKey: "escalKbMiss",
+    descKey: "escalKbMissDesc",
+    prompt: "AI could not find an answer in the knowledge base and cannot help the customer",
     icon: BookOpen,
     color: "text-indigo-600 bg-indigo-50",
     alwaysOn: true,
   },
   {
     id: "angry_customer",
-    label: "Клиент недоволен / жалуется",
-    desc: "Клиент злится, выражает недовольство или угрожает",
-    prompt: "Клиент выражает сильное недовольство, злость, угрозы или жалобы на сервис",
+    labelKey: "escalAngryCustomer",
+    descKey: "escalAngryCustomerDesc",
+    prompt: "Customer expresses strong dissatisfaction, anger, threats or complaints about service",
     icon: AlertTriangle,
     color: "text-orange-600 bg-orange-50",
   },
   {
     id: "billing_issue",
-    label: "Вопрос об оплате / возврате",
-    desc: "Финансовые вопросы — оплата, счета, возвраты",
-    prompt: "Клиент спрашивает про оплату, счёт, возврат средств или финансовые вопросы",
+    labelKey: "escalBillingIssue",
+    descKey: "escalBillingIssueDesc",
+    prompt: "Customer asks about payment, invoice, refund or financial questions",
     icon: DollarSign,
     color: "text-emerald-600 bg-emerald-50",
   },
   {
     id: "repeat_contact",
-    label: "Повторное обращение",
-    desc: "Клиент обращается повторно с той же проблемой",
-    prompt: "Клиент обращается повторно по нерешённой проблеме или жалуется что его вопрос не решён",
+    labelKey: "escalRepeatContact",
+    descKey: "escalRepeatContactDesc",
+    prompt: "Customer contacts again about an unresolved issue or complains that their problem was not solved",
     icon: Repeat,
     color: "text-purple-600 bg-purple-50",
   },
   {
     id: "complex_technical",
-    label: "Сложная техническая проблема",
-    desc: "Проблема требует вмешательства инженера",
-    prompt: "Техническая проблема слишком сложная для AI — требуется инженер или DevOps специалист",
+    labelKey: "escalComplexTechnical",
+    descKey: "escalComplexTechnicalDesc",
+    prompt: "Technical problem is too complex for AI — requires an engineer or DevOps specialist",
     icon: Bug,
     color: "text-red-600 bg-red-50",
   },
   {
     id: "sla_urgent",
-    label: "Срочный / критический запрос",
-    desc: "Клиент говорит о срочности или production down",
-    prompt: "Клиент сообщает о критическом сбое, production down, срочном инциденте или потере данных",
+    labelKey: "escalSlaUrgent",
+    descKey: "escalSlaUrgentDesc",
+    prompt: "Customer reports a critical failure, production down, urgent incident or data loss",
     icon: Clock,
     color: "text-rose-600 bg-rose-50",
   },
 ]
 
 export function AiConfigForm({ open, onOpenChange, onSaved, initialData, orgId }: AiConfigFormProps) {
+  const tf = useTranslations("forms")
+  const t = useTranslations("ai")
   const isEdit = !!initialData?.id
 
   const parseTools = (tools: any): string[] => {
@@ -209,7 +212,7 @@ export function AiConfigForm({ open, onOpenChange, onSaved, initialData, orgId }
   }, [open, initialData])
 
   const handleSubmit = async () => {
-    if (!form.configName.trim()) { setError("Введите название конфигурации"); return }
+    if (!form.configName.trim()) { setError(t("configNameRequired")); return }
     setSaving(true)
     setError("")
 
@@ -295,8 +298,8 @@ export function AiConfigForm({ open, onOpenChange, onSaved, initialData, orgId }
               <Sparkles className="h-6 w-6 text-white" />
             </div>
             <div>
-              <h2 className="text-xl font-bold">{isEdit ? "Редактирование агента" : "Новый AI-агент"}</h2>
-              <p className="text-sm text-gray-500">Настройте поведение и возможности AI</p>
+              <h2 className="text-xl font-bold">{isEdit ? tf("editAiAgent") : tf("newAiAgent")}</h2>
+              <p className="text-sm text-gray-500">{t("configureAgentDesc")}</p>
             </div>
           </div>
           <button onClick={() => onOpenChange(false)} className="h-10 w-10 rounded-full hover:bg-gray-100 flex items-center justify-center transition">
@@ -310,7 +313,7 @@ export function AiConfigForm({ open, onOpenChange, onSaved, initialData, orgId }
           {/* ── Row 1: Name + Active toggle ── */}
           <div className="flex gap-4 items-end">
             <div className="flex-1">
-              <label className="text-sm font-semibold text-gray-700 mb-2 block">Название агента</label>
+              <label className="text-sm font-semibold text-gray-700 mb-2 block">{t("agentName")}</label>
               <Input
                 value={form.configName}
                 onChange={(e) => setForm(f => ({ ...f, configName: e.target.value }))}
@@ -329,7 +332,7 @@ export function AiConfigForm({ open, onOpenChange, onSaved, initialData, orgId }
                 )} />
               </div>
               <span className={cn("text-sm font-semibold", form.isActive ? "text-green-600" : "text-gray-400")}>
-                {form.isActive ? "Активен" : "Выключен"}
+                {form.isActive ? t("active") : t("inactive")}
               </span>
             </label>
           </div>
@@ -337,7 +340,7 @@ export function AiConfigForm({ open, onOpenChange, onSaved, initialData, orgId }
           {/* ── Model Selection ── */}
           <div>
             <h3 className="font-semibold mb-3 flex items-center gap-2">
-              <BrainCircuit className="h-4 w-4 text-pink-500" /> Модель AI
+              <BrainCircuit className="h-4 w-4 text-pink-500" /> {t("aiModel")}
             </h3>
             <div className="space-y-2.5">
               {MODEL_OPTIONS.map(model => {
@@ -359,9 +362,9 @@ export function AiConfigForm({ open, onOpenChange, onSaved, initialData, orgId }
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <span className="font-semibold text-sm">{model.name}</span>
-                        {isSelected && <span className="text-[10px] font-bold text-blue-600 bg-blue-100 px-2 py-0.5 rounded-full">ВЫБРАНА</span>}
+                        {isSelected && <span className="text-[10px] font-bold text-blue-600 bg-blue-100 px-2 py-0.5 rounded-full">{t("selected")}</span>}
                       </div>
-                      <p className="text-xs text-gray-500">{model.desc}</p>
+                      <p className="text-xs text-gray-500">{t(model.descKey as any)}</p>
                     </div>
                     <span className="text-[11px] text-gray-400 flex-shrink-0">{model.price}</span>
                   </button>

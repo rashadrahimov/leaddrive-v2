@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -25,6 +26,8 @@ interface SlaPolicyFormProps {
 }
 
 export function SlaPolicyForm({ open, onOpenChange, onSaved, initialData, orgId }: SlaPolicyFormProps) {
+  const tf = useTranslations("forms")
+  const tc = useTranslations("common")
   const isEdit = !!initialData?.id
   const [form, setForm] = useState<SlaPolicyFormData>({
     name: "",
@@ -82,48 +85,48 @@ export function SlaPolicyForm({ open, onOpenChange, onSaved, initialData, orgId 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogHeader>
-        <DialogTitle>{isEdit ? "Edit SLA Policy" : "New SLA Policy"}</DialogTitle>
+        <DialogTitle>{isEdit ? tf("editSlaPolicy") : tf("newSlaPolicy")}</DialogTitle>
       </DialogHeader>
       <form onSubmit={handleSubmit}>
         <DialogContent>
           {error && <div className="text-sm text-red-500 bg-red-50 dark:bg-red-900/20 p-2 rounded mb-3">{error}</div>}
           <div className="grid gap-4">
             <div>
-              <Label htmlFor="name">Policy Name *</Label>
+              <Label htmlFor="name">{tf("policyName")} *</Label>
               <Input id="name" value={form.name} onChange={(e) => update("name", e.target.value)} placeholder="Critical SLA" required />
             </div>
             <div>
-              <Label htmlFor="priority">Priority</Label>
+              <Label htmlFor="priority">{tc("priority")}</Label>
               <Select value={form.priority} onChange={(e) => update("priority", e.target.value)}>
-                <option value="critical">Critical</option>
-                <option value="high">High</option>
-                <option value="medium">Medium</option>
-                <option value="low">Low</option>
+                <option value="critical">{tc("critical")}</option>
+                <option value="high">{tc("high")}</option>
+                <option value="medium">{tc("medium")}</option>
+                <option value="low">{tc("low")}</option>
               </Select>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label htmlFor="firstResponseHours">Response Time (hours) *</Label>
+                <Label htmlFor="firstResponseHours">{tf("responseTimeHours")} *</Label>
                 <Input id="firstResponseHours" type="number" step="0.5" min="0.5" value={form.firstResponseHours} onChange={(e) => update("firstResponseHours", parseFloat(e.target.value) || 1)} required />
               </div>
               <div>
-                <Label htmlFor="resolutionHours">Resolution Time (hours) *</Label>
+                <Label htmlFor="resolutionHours">{tf("resolutionTimeHours")} *</Label>
                 <Input id="resolutionHours" type="number" step="0.5" min="0.5" value={form.resolutionHours} onChange={(e) => update("resolutionHours", parseFloat(e.target.value) || 1)} required />
               </div>
             </div>
             <label className="flex items-center gap-2 cursor-pointer">
               <input type="checkbox" checked={form.businessHoursOnly} onChange={(e) => update("businessHoursOnly", e.target.checked)} className="rounded" />
-              <span className="text-sm">Business Hours Only</span>
+              <span className="text-sm">{tf("businessHoursOnly")}</span>
             </label>
             <label className="flex items-center gap-2 cursor-pointer">
               <input type="checkbox" checked={form.isActive} onChange={(e) => update("isActive", e.target.checked)} className="rounded" />
-              <span className="text-sm">Active</span>
+              <span className="text-sm">{tc("active")}</span>
             </label>
           </div>
         </DialogContent>
         <DialogFooter>
-          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button type="submit" disabled={saving}>{saving ? "Saving..." : isEdit ? "Update" : "Create"}</Button>
+          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>{tc("cancel")}</Button>
+          <Button type="submit" disabled={saving}>{saving ? tc("saving") : isEdit ? tc("update") : tc("create")}</Button>
         </DialogFooter>
       </form>
     </Dialog>

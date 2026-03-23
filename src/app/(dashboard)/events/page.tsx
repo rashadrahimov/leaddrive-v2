@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
+import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
@@ -22,24 +23,9 @@ const STATUS_STYLES: Record<string, string> = {
   cancelled: "bg-red-100 text-red-700",
 }
 
-const STATUS_LABELS: Record<string, string> = {
-  planned: "Planned",
-  registration_open: "Registration Open",
-  in_progress: "In Progress",
-  completed: "Completed",
-  cancelled: "Cancelled",
-}
-
-const TYPE_LABELS: Record<string, string> = {
-  conference: "Conference",
-  webinar: "Webinar",
-  workshop: "Workshop",
-  meetup: "Meetup",
-  exhibition: "Exhibition",
-  other: "Other",
-}
-
 export default function EventsPage() {
+  const t = useTranslations("events")
+  const tc = useTranslations("common")
   const { data: session } = useSession()
   const router = useRouter()
   const orgId = session?.user?.organizationId
@@ -50,6 +36,23 @@ export default function EventsPage() {
   const [statusFilter, setStatusFilter] = useState("")
   const [createOpen, setCreateOpen] = useState(false)
   const [deleteEvent, setDeleteEvent] = useState<any>(null)
+
+  const STATUS_LABELS: Record<string, string> = {
+    planned: t("statusPlanned"),
+    registration_open: t("statusRegistrationOpen"),
+    in_progress: t("statusInProgress"),
+    completed: t("statusCompleted"),
+    cancelled: t("statusCancelled"),
+  }
+
+  const TYPE_LABELS: Record<string, string> = {
+    conference: t("typeConference"),
+    webinar: t("typeWebinar"),
+    workshop: t("typeWorkshop"),
+    meetup: t("typeMeetup"),
+    exhibition: t("typeExhibition"),
+    other: t("typeOther"),
+  }
 
   const fetchEvents = async () => {
     try {
@@ -93,12 +96,12 @@ export default function EventsPage() {
             <CalendarDays className="h-5 w-5 text-primary" />
           </div>
           <div>
-            <h1 className="text-xl font-bold">Events</h1>
-            <p className="text-sm text-muted-foreground">{total} events total</p>
+            <h1 className="text-xl font-bold">{t("title")}</h1>
+            <p className="text-sm text-muted-foreground">{t("totalEvents", { count: total })}</p>
           </div>
         </div>
         <Button onClick={() => setCreateOpen(true)} className="gap-1.5">
-          <Plus className="h-4 w-4" /> New Event
+          <Plus className="h-4 w-4" /> {t("newEvent")}
         </Button>
       </div>
 
@@ -109,7 +112,7 @@ export default function EventsPage() {
           size="sm" className="h-8 text-xs"
           onClick={() => setStatusFilter("")}
         >
-          All ({total})
+          {tc("all")} ({total})
         </Button>
         {Object.entries(STATUS_LABELS).map(([key, label]) => (
           <Button
@@ -128,7 +131,7 @@ export default function EventsPage() {
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
           className="pl-9 h-9"
-          placeholder="Search events..."
+          placeholder={t("searchPlaceholder")}
           value={search}
           onChange={e => setSearch(e.target.value)}
         />
@@ -142,8 +145,8 @@ export default function EventsPage() {
       ) : events.length === 0 ? (
         <div className="text-center py-16 text-muted-foreground">
           <CalendarDays className="h-12 w-12 mx-auto mb-3 opacity-30" />
-          <p className="text-lg font-medium">No events yet</p>
-          <p className="text-sm">Create your first event to get started</p>
+          <p className="text-lg font-medium">{t("noEventsYet")}</p>
+          <p className="text-sm">{t("createFirst")}</p>
         </div>
       ) : (
         <div className="grid gap-3">
@@ -182,13 +185,13 @@ export default function EventsPage() {
                       )}
                       {event.isOnline && (
                         <span className="flex items-center gap-1">
-                          <Globe className="h-3 w-3" /> Online
+                          <Globe className="h-3 w-3" /> {t("online")}
                         </span>
                       )}
                       <span className="flex items-center gap-1">
                         <Users className="h-3 w-3" />
                         {event._count?.participants || event.registeredCount || 0}
-                        {event.maxParticipants ? ` / ${event.maxParticipants}` : ""} participants
+                        {event.maxParticipants ? ` / ${event.maxParticipants}` : ""} {t("participants")}
                       </span>
                       <span className="flex items-center gap-1">
                         <Clock className="h-3 w-3" />
@@ -219,7 +222,7 @@ export default function EventsPage() {
         open={!!deleteEvent}
         onOpenChange={(v) => !v && setDeleteEvent(null)}
         onConfirm={handleDelete}
-        title="Delete Event"
+        title={t("deleteEvent")}
         itemName={deleteEvent?.name}
       />
     </div>

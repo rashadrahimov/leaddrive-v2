@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
+import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -17,6 +18,8 @@ const statusColors: Record<string, "default" | "secondary" | "destructive"> = {
 }
 
 export default function ContractDetailPage() {
+  const t = useTranslations("contracts")
+  const tc = useTranslations("common")
   const params = useParams()
   const router = useRouter()
   const { data: session } = useSession()
@@ -63,7 +66,7 @@ export default function ContractDetailPage() {
   }
 
   if (!contract) {
-    return <div className="text-center py-12 text-muted-foreground">Contract not found</div>
+    return <div className="text-center py-12 text-muted-foreground">{tc("noData")}</div>
   }
 
   const formatDate = (d: string | null) => d ? new Date(d).toLocaleDateString() : "—"
@@ -82,7 +85,7 @@ export default function ContractDetailPage() {
             <div>
               <h1 className="text-2xl font-bold">{contract.title}</h1>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <span>{contract.contractNumber || "No number"}</span>
+                <span>{contract.contractNumber || "—"}</span>
                 <Badge variant={statusColors[contract.status] || "secondary"}>{contract.status}</Badge>
               </div>
             </div>
@@ -90,10 +93,10 @@ export default function ContractDetailPage() {
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => setEditOpen(true)}>
-            <Pencil className="h-4 w-4 mr-1" /> Edit
+            <Pencil className="h-4 w-4 mr-1" /> {tc("edit")}
           </Button>
           <Button variant="outline" className="text-destructive hover:text-destructive" onClick={() => setDeleteOpen(true)}>
-            <Trash2 className="h-4 w-4 mr-1" /> Delete
+            <Trash2 className="h-4 w-4 mr-1" /> {tc("delete")}
           </Button>
         </div>
       </div>
@@ -103,7 +106,7 @@ export default function ContractDetailPage() {
           <CardContent className="flex items-center gap-3 pt-6">
             <Hash className="h-4 w-4 text-muted-foreground" />
             <div>
-              <div className="text-xs text-muted-foreground">Type</div>
+              <div className="text-xs text-muted-foreground">{tc("type")}</div>
               <span className="text-sm font-medium">{contract.type || "—"}</span>
             </div>
           </CardContent>
@@ -112,7 +115,7 @@ export default function ContractDetailPage() {
           <CardContent className="flex items-center gap-3 pt-6">
             <Calendar className="h-4 w-4 text-muted-foreground" />
             <div>
-              <div className="text-xs text-muted-foreground">Start Date</div>
+              <div className="text-xs text-muted-foreground">{tc("startDate")}</div>
               <span className="text-sm font-medium">{formatDate(contract.startDate)}</span>
             </div>
           </CardContent>
@@ -121,7 +124,7 @@ export default function ContractDetailPage() {
           <CardContent className="flex items-center gap-3 pt-6">
             <Calendar className="h-4 w-4 text-muted-foreground" />
             <div>
-              <div className="text-xs text-muted-foreground">End Date</div>
+              <div className="text-xs text-muted-foreground">{tc("endDate")}</div>
               <span className="text-sm font-medium">{formatDate(contract.endDate)}</span>
             </div>
           </CardContent>
@@ -130,7 +133,7 @@ export default function ContractDetailPage() {
           <CardContent className="flex items-center gap-3 pt-6">
             <DollarSign className="h-4 w-4 text-muted-foreground" />
             <div>
-              <div className="text-xs text-muted-foreground">Value</div>
+              <div className="text-xs text-muted-foreground">{tc("value")}</div>
               <span className="text-sm font-medium">
                 {contract.valueAmount ? `${Number(contract.valueAmount).toLocaleString()} ${contract.currency || "USD"}` : "—"}
               </span>
@@ -141,30 +144,30 @@ export default function ContractDetailPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Details</CardTitle>
+          <CardTitle className="text-base">{tc("details")}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3 text-sm">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <span className="text-muted-foreground">Contract Number:</span>
+              <span className="text-muted-foreground">{t("number")}:</span>
               <span className="ml-2 font-medium">{contract.contractNumber || "—"}</span>
             </div>
             <div>
-              <span className="text-muted-foreground">Type:</span>
+              <span className="text-muted-foreground">{tc("type")}:</span>
               <span className="ml-2 font-medium">{contract.type || "—"}</span>
             </div>
             <div>
-              <span className="text-muted-foreground">Status:</span>
+              <span className="text-muted-foreground">{tc("status")}:</span>
               <Badge variant={statusColors[contract.status] || "secondary"} className="ml-2">{contract.status}</Badge>
             </div>
             <div>
-              <span className="text-muted-foreground">Currency:</span>
+              <span className="text-muted-foreground">{tc("currency")}:</span>
               <span className="ml-2 font-medium">{contract.currency || "—"}</span>
             </div>
           </div>
           {contract.notes && (
             <div className="pt-4 border-t">
-              <span className="text-muted-foreground">Notes:</span>
+              <span className="text-muted-foreground">{tc("notes")}:</span>
               <p className="mt-1 whitespace-pre-wrap">{contract.notes}</p>
             </div>
           )}
@@ -194,7 +197,7 @@ export default function ContractDetailPage() {
         open={deleteOpen}
         onOpenChange={setDeleteOpen}
         onConfirm={handleDelete}
-        title="Delete Contract"
+        title={t("deleteContract")}
         itemName={contract.title}
       />
     </div>

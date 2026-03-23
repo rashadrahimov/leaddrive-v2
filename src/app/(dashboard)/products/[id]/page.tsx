@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
+import { useTranslations } from "next-intl"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -17,23 +18,25 @@ import {
   Tag, Layers, CheckCircle, XCircle, Loader2, Save, Sparkles,
 } from "lucide-react"
 
-const CATEGORIES = [
-  { value: "service", label: "Service" },
-  { value: "product", label: "Product" },
-  { value: "addon", label: "Add-on" },
-  { value: "consulting", label: "Consulting" },
-]
-
 const categoryColors: Record<string, string> = {
   service: "bg-blue-500", product: "bg-green-500", addon: "bg-purple-500", consulting: "bg-amber-500",
 }
 
 export default function ProductDetailPage() {
+  const t = useTranslations("products")
+  const tc = useTranslations("common")
   const params = useParams()
   const router = useRouter()
   const { data: session } = useSession()
   const id = params.id as string
   const orgId = session?.user?.organizationId
+
+  const CATEGORIES = [
+    { value: "service", label: t("categoryService") },
+    { value: "product", label: t("categoryProduct") },
+    { value: "addon", label: t("categoryAddon") },
+    { value: "consulting", label: t("categoryConsulting") },
+  ]
 
   const [product, setProduct] = useState<any>(null)
   const [loading, setLoading] = useState(true)
@@ -119,9 +122,9 @@ export default function ProductDetailPage() {
     return (
       <div className="space-y-4">
         <Button variant="ghost" onClick={() => router.push("/products")}>
-          <ArrowLeft className="h-4 w-4 mr-1" /> Back
+          <ArrowLeft className="h-4 w-4 mr-1" /> {tc("back")}
         </Button>
-        <Card><CardContent className="py-10 text-center text-muted-foreground">Product not found</CardContent></Card>
+        <Card><CardContent className="py-10 text-center text-muted-foreground">{tc("noData")}</CardContent></Card>
       </div>
     )
   }
@@ -143,7 +146,7 @@ export default function ProductDetailPage() {
               {product.category}
             </Badge>
             <Badge className={product.isActive ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"}>
-              {product.isActive ? "Active" : "Inactive"}
+              {product.isActive ? tc("active") : tc("inactive")}
             </Badge>
           </div>
         </div>
@@ -151,20 +154,20 @@ export default function ProductDetailPage() {
           {!editing ? (
             <>
               <Button variant="outline" onClick={() => setEditing(true)}>
-                <Pencil className="h-4 w-4 mr-1" /> Edit
+                <Pencil className="h-4 w-4 mr-1" /> {tc("edit")}
               </Button>
               <Button variant="outline" className="text-red-500 hover:bg-red-50" onClick={() => setDeleteOpen(true)}>
-                <Trash2 className="h-4 w-4 mr-1" /> Delete
+                <Trash2 className="h-4 w-4 mr-1" /> {tc("delete")}
               </Button>
             </>
           ) : (
             <>
               <Button variant="outline" onClick={() => { setEditing(false); populateForm(product) }}>
-                <X className="h-4 w-4 mr-1" /> Cancel
+                <X className="h-4 w-4 mr-1" /> {tc("cancel")}
               </Button>
               <Button onClick={handleSave} disabled={saving}>
                 {saving ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Save className="h-4 w-4 mr-1" />}
-                Save
+                {tc("save")}
               </Button>
             </>
           )}
@@ -177,10 +180,10 @@ export default function ProductDetailPage() {
           <CardContent className="p-4">
             <div className="flex items-center gap-2 mb-1">
               <DollarSign className="h-4 w-4 text-green-500" />
-              <span className="text-xs text-muted-foreground">Price</span>
+              <span className="text-xs text-muted-foreground">{tc("price")}</span>
             </div>
             <p className="text-2xl font-bold text-primary">
-              {product.price > 0 ? `${product.price.toLocaleString()} ${product.currency}` : "Free"}
+              {product.price > 0 ? `${product.price.toLocaleString()} ${product.currency}` : tc("free")}
             </p>
           </CardContent>
         </Card>
@@ -188,7 +191,7 @@ export default function ProductDetailPage() {
           <CardContent className="p-4">
             <div className="flex items-center gap-2 mb-1">
               <Layers className="h-4 w-4 text-blue-500" />
-              <span className="text-xs text-muted-foreground">Category</span>
+              <span className="text-xs text-muted-foreground">{tc("category")}</span>
             </div>
             <p className="text-lg font-bold capitalize">{product.category}</p>
           </CardContent>
@@ -197,7 +200,7 @@ export default function ProductDetailPage() {
           <CardContent className="p-4">
             <div className="flex items-center gap-2 mb-1">
               <Sparkles className="h-4 w-4 text-amber-500" />
-              <span className="text-xs text-muted-foreground">Features</span>
+              <span className="text-xs text-muted-foreground">{tc("features")}</span>
             </div>
             <p className="text-lg font-bold">{(product.features || []).length}</p>
           </CardContent>
@@ -206,7 +209,7 @@ export default function ProductDetailPage() {
           <CardContent className="p-4">
             <div className="flex items-center gap-2 mb-1">
               <Tag className="h-4 w-4 text-violet-500" />
-              <span className="text-xs text-muted-foreground">Tags</span>
+              <span className="text-xs text-muted-foreground">{tc("tags")}</span>
             </div>
             <p className="text-lg font-bold">{(product.tags || []).length}</p>
           </CardContent>
@@ -216,8 +219,8 @@ export default function ProductDetailPage() {
       {/* Tabs */}
       <Tabs defaultValue="details" className="space-y-4">
         <TabsList className="bg-muted/60 p-1 h-auto">
-          <TabsTrigger value="details" className="rounded-md text-sm">Details</TabsTrigger>
-          <TabsTrigger value="features" className="rounded-md text-sm">Features ({(product.features || []).length})</TabsTrigger>
+          <TabsTrigger value="details" className="rounded-md text-sm">{tc("details")}</TabsTrigger>
+          <TabsTrigger value="features" className="rounded-md text-sm">{tc("features")} ({(product.features || []).length})</TabsTrigger>
         </TabsList>
 
         {/* Details Tab */}
@@ -226,22 +229,22 @@ export default function ProductDetailPage() {
             <Card className="border-none shadow-sm">
               <CardContent className="pt-6 space-y-4">
                 <div>
-                  <Label>Name *</Label>
+                  <Label>{t("nameLabel")} *</Label>
                   <Input value={name} onChange={e => setName(e.target.value)} />
                 </div>
                 <div>
-                  <Label>Description</Label>
+                  <Label>{t("descriptionLabel")}</Label>
                   <Textarea value={description} onChange={e => setDescription(e.target.value)} rows={4} />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label>Category</Label>
+                    <Label>{tc("category")}</Label>
                     <Select value={category} onChange={e => setCategory(e.target.value)}>
                       {CATEGORIES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
                     </Select>
                   </div>
                   <div>
-                    <Label>Price</Label>
+                    <Label>{tc("price")}</Label>
                     <div className="flex gap-2">
                       <Input type="number" value={price} onChange={e => setPrice(e.target.value)} className="flex-1" />
                       <Select value={currency} onChange={e => setCurrency(e.target.value)} className="w-24">
@@ -253,12 +256,12 @@ export default function ProductDetailPage() {
                   </div>
                 </div>
                 <div>
-                  <Label>Tags (comma-separated)</Label>
+                  <Label>{t("tagsLabel")}</Label>
                   <Input value={tagsStr} onChange={e => setTagsStr(e.target.value)} placeholder="cloud, migration, enterprise" />
                 </div>
                 <div className="flex items-center gap-2">
                   <input type="checkbox" checked={isActive} onChange={e => setIsActive(e.target.checked)} id="editActive" className="rounded" />
-                  <Label htmlFor="editActive">Active</Label>
+                  <Label htmlFor="editActive">{t("activeLabel")}</Label>
                 </div>
               </CardContent>
             </Card>
@@ -266,14 +269,14 @@ export default function ProductDetailPage() {
             <div className="grid md:grid-cols-2 gap-4">
               <Card className="border-none shadow-sm">
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-sm text-muted-foreground uppercase tracking-wide">Product Information</CardTitle>
+                  <CardTitle className="text-sm text-muted-foreground uppercase tracking-wide">{t("editProduct")}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   {[
-                    { icon: <Package className="h-4 w-4" />, label: "Name", value: product.name },
-                    { icon: <Layers className="h-4 w-4" />, label: "Category", value: product.category },
-                    { icon: <DollarSign className="h-4 w-4" />, label: "Price", value: product.price > 0 ? `${product.price.toLocaleString()} ${product.currency}` : "Free" },
-                    { icon: product.isActive ? <CheckCircle className="h-4 w-4 text-green-500" /> : <XCircle className="h-4 w-4 text-red-500" />, label: "Status", value: product.isActive ? "Active" : "Inactive" },
+                    { icon: <Package className="h-4 w-4" />, label: t("nameLabel"), value: product.name },
+                    { icon: <Layers className="h-4 w-4" />, label: tc("category"), value: product.category },
+                    { icon: <DollarSign className="h-4 w-4" />, label: tc("price"), value: product.price > 0 ? `${product.price.toLocaleString()} ${product.currency}` : tc("free") },
+                    { icon: product.isActive ? <CheckCircle className="h-4 w-4 text-green-500" /> : <XCircle className="h-4 w-4 text-red-500" />, label: tc("status"), value: product.isActive ? tc("active") : tc("inactive") },
                   ].map((row, i) => (
                     <div key={i} className="flex items-center gap-3">
                       <div className="text-muted-foreground">{row.icon}</div>
@@ -288,15 +291,15 @@ export default function ProductDetailPage() {
 
               <Card className="border-none shadow-sm">
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-sm text-muted-foreground uppercase tracking-wide">Description</CardTitle>
+                  <CardTitle className="text-sm text-muted-foreground uppercase tracking-wide">{t("descriptionLabel")}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <p className="text-sm text-muted-foreground leading-relaxed">
-                    {product.description || "No description provided."}
+                    {product.description || tc("noData")}
                   </p>
                   {(product.tags || []).length > 0 && (
                     <div className="mt-4">
-                      <p className="text-xs text-muted-foreground mb-2">Tags</p>
+                      <p className="text-xs text-muted-foreground mb-2">{tc("tags")}</p>
                       <div className="flex gap-1 flex-wrap">
                         {product.tags.map((tag: string, i: number) => (
                           <Badge key={i} variant="secondary" className="text-xs">{tag}</Badge>
@@ -315,21 +318,20 @@ export default function ProductDetailPage() {
           {editing ? (
             <Card className="border-none shadow-sm">
               <CardContent className="pt-6">
-                <Label>Features (comma-separated)</Label>
+                <Label>{t("featuresLabel")}</Label>
                 <Textarea
                   value={featuresStr}
                   onChange={e => setFeaturesStr(e.target.value)}
                   rows={6}
                   placeholder="Azure/AWS, Zero Downtime, Data Migration"
                 />
-                <p className="text-xs text-muted-foreground mt-2">Separate features with commas. These are shown in AI recommendations.</p>
               </CardContent>
             </Card>
           ) : (
             <Card className="border-none shadow-sm">
               <CardContent className="pt-6">
                 {(product.features || []).length === 0 ? (
-                  <p className="text-sm text-muted-foreground text-center py-8">No features listed</p>
+                  <p className="text-sm text-muted-foreground text-center py-8">{tc("noData")}</p>
                 ) : (
                   <div className="grid md:grid-cols-2 gap-3">
                     {product.features.map((f: string, i: number) => (
@@ -348,7 +350,7 @@ export default function ProductDetailPage() {
         </TabsContent>
       </Tabs>
 
-      <DeleteConfirmDialog open={deleteOpen} onOpenChange={setDeleteOpen} onConfirm={confirmDelete} title="Delete Product" itemName={product.name} />
+      <DeleteConfirmDialog open={deleteOpen} onOpenChange={setDeleteOpen} onConfirm={confirmDelete} title={t("deleteProduct")} itemName={product.name} />
     </div>
   )
 }

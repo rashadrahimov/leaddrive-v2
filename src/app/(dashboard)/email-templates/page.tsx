@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useSession } from "next-auth/react"
+import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { EmailTemplateForm } from "@/components/email-template-form"
@@ -22,16 +23,6 @@ interface EmailTemplate {
   createdAt: string
 }
 
-const categoryLabels: Record<string, string> = {
-  general: "Общее",
-  welcome: "Приветствие",
-  onboarding: "Онбординг",
-  notification: "Уведомление",
-  marketing: "Рассылка",
-  follow_up: "Последующее",
-  proposal: "Предложение",
-}
-
 const categoryIcons: Record<string, string> = {
   general: "📋",
   welcome: "👋",
@@ -50,6 +41,8 @@ const langFlags: Record<string, string> = {
 
 export default function EmailTemplatesPage() {
   const { data: session } = useSession()
+  const t = useTranslations("emailTemplates")
+  const tf = useTranslations("forms")
   const [templates, setTemplates] = useState<EmailTemplate[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
@@ -60,6 +53,16 @@ export default function EmailTemplatesPage() {
   const [filterLang, setFilterLang] = useState("all")
   const [filterCategory, setFilterCategory] = useState("all")
   const orgId = session?.user?.organizationId
+
+  const categoryLabels: Record<string, string> = {
+    general: t("catGeneral"),
+    welcome: t("catWelcome"),
+    onboarding: t("catOnboarding"),
+    notification: t("catNotification"),
+    marketing: t("catMarketing"),
+    follow_up: t("catFollowUp"),
+    proposal: t("catProposal"),
+  }
 
   const fetchTemplates = async () => {
     try {
@@ -85,20 +88,20 @@ export default function EmailTemplatesPage() {
   // Counts
   const langCounts: Record<string, number> = {}
   const catCounts: Record<string, number> = {}
-  for (const t of templates) {
-    const lang = t.language || "ru"
+  for (const tmpl of templates) {
+    const lang = tmpl.language || "ru"
     langCounts[lang] = (langCounts[lang] || 0) + 1
-    const cat = t.category || "general"
+    const cat = tmpl.category || "general"
     catCounts[cat] = (catCounts[cat] || 0) + 1
   }
 
   // Filter
-  const filtered = templates.filter(t => {
-    if (filterLang !== "all" && (t.language || "ru") !== filterLang) return false
-    if (filterCategory !== "all" && (t.category || "general") !== filterCategory) return false
+  const filtered = templates.filter(tmpl => {
+    if (filterLang !== "all" && (tmpl.language || "ru") !== filterLang) return false
+    if (filterCategory !== "all" && (tmpl.category || "general") !== filterCategory) return false
     if (search) {
       const q = search.toLowerCase()
-      if (!t.name.toLowerCase().includes(q) && !(t.subject || "").toLowerCase().includes(q)) return false
+      if (!tmpl.name.toLowerCase().includes(q) && !(tmpl.subject || "").toLowerCase().includes(q)) return false
     }
     return true
   })
@@ -106,7 +109,7 @@ export default function EmailTemplatesPage() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <h1 className="text-2xl font-bold tracking-tight">Шаблоны писем</h1>
+        <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
         <div className="animate-pulse space-y-4">
           <div className="h-12 bg-muted rounded-lg" />
           <div className="grid gap-4 md:grid-cols-3">{[1, 2, 3].map(i => <div key={i} className="h-40 bg-muted rounded-lg" />)}</div>
@@ -119,11 +122,11 @@ export default function EmailTemplatesPage() {
     <div className="space-y-5">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Шаблоны писем</h1>
-          <p className="text-sm text-muted-foreground">Просматривайте и управляйте шаблонами писем для рассылок</p>
+          <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
+          <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
         </div>
         <Button onClick={() => { setEditData(undefined); setShowForm(true) }}>
-          <Plus className="h-4 w-4 mr-1" /> Новый шаблон
+          <Plus className="h-4 w-4 mr-1" /> {t("newTemplate")}
         </Button>
       </div>
 
@@ -131,7 +134,7 @@ export default function EmailTemplatesPage() {
       <div className="relative max-w-2xl">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
-          placeholder="Поиск шаблонов..."
+          placeholder={t("searchPlaceholder")}
           value={search}
           onChange={e => setSearch(e.target.value)}
           className="pl-9"
@@ -146,7 +149,7 @@ export default function EmailTemplatesPage() {
           variant={filterLang === "all" ? "default" : "outline"}
           onClick={() => setFilterLang("all")}
         >
-          Все ({templates.length})
+          {t("allLangs")} ({templates.length})
         </Button>
         {(["az", "ru", "en"] as const).map(lang => (
           langCounts[lang] ? (
@@ -170,7 +173,7 @@ export default function EmailTemplatesPage() {
           variant={filterCategory === "all" ? "default" : "outline"}
           onClick={() => setFilterCategory("all")}
         >
-          Все
+          {t("allCategories")}
         </Button>
         {Object.entries(categoryLabels).map(([key, label]) => (
           catCounts[key] ? (
@@ -189,7 +192,12 @@ export default function EmailTemplatesPage() {
       {/* Template cards — 3 columns like v1 */}
       {filtered.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground">
-          {templates.length === 0 ? "Нет шаблонов. Создайте первый!" : "Ничего не найдено"}
+          {templates.length === 0 ? (
+            <>
+              <p>{t("noTemplates")}</p>
+              <p className="text-sm mt-1">{t("noTemplatesHint")}</p>
+            </>
+          ) : t("noResults")}
         </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -220,7 +228,9 @@ export default function EmailTemplatesPage() {
                     <span className="text-xs">{langFlags[lang]}</span>
                   </div>
                 </div>
-                <p className="text-xs text-muted-foreground mb-2 line-clamp-1">{template.subject || "—"}</p>
+                <p className="text-xs text-muted-foreground mb-2 line-clamp-1">
+                  {t("subject")}: {template.subject || "—"}
+                </p>
                 <p className="text-xs text-muted-foreground/70 mb-3 line-clamp-3 min-h-[3rem]">
                   {textPreview || "Пустой шаблон"}
                 </p>
@@ -228,7 +238,19 @@ export default function EmailTemplatesPage() {
                   <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">
                     {categoryIcons[cat]} {categoryLabels[cat] || cat}
                   </span>
-                  <span className="text-[10px] text-muted-foreground">Нажмите для изменения</span>
+                  <div className="flex items-center gap-2">
+                    <span className={cn(
+                      "text-[10px] px-1.5 py-0.5 rounded font-medium",
+                      isActive ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"
+                    )}>
+                      {isActive ? t("active") : t("inactive")}
+                    </span>
+                    {template.variables && template.variables.length > 0 && (
+                      <span className="text-[10px] text-muted-foreground">
+                        {template.variables.length} {t("variables")}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
             )
@@ -249,7 +271,7 @@ export default function EmailTemplatesPage() {
         open={!!deleteId}
         onOpenChange={(open) => { if (!open) setDeleteId(null) }}
         onConfirm={handleDelete}
-        title="Удалить шаблон"
+        title={t("deleteTemplate")}
         itemName={deleteName}
       />
     </div>

@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react"
 import { useParams } from "next/navigation"
 import { useSession } from "next-auth/react"
+import { useTranslations } from "next-intl"
 import Link from "next/link"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -49,13 +50,13 @@ interface UserOption {
   email: string
 }
 
-const STATUS_STYLES: Record<string, { label: string; className: string }> = {
-  new: { label: "Новый", className: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300" },
-  open: { label: "Открыт", className: "bg-cyan-100 text-cyan-800 dark:bg-cyan-900 dark:text-cyan-300" },
-  in_progress: { label: "В работе", className: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300" },
-  waiting: { label: "Ожидание", className: "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300" },
-  resolved: { label: "Решён", className: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300" },
-  closed: { label: "Закрыт", className: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300" },
+const STATUS_STYLES: Record<string, { className: string }> = {
+  new: { className: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300" },
+  open: { className: "bg-cyan-100 text-cyan-800 dark:bg-cyan-900 dark:text-cyan-300" },
+  in_progress: { className: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300" },
+  waiting: { className: "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300" },
+  resolved: { className: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300" },
+  closed: { className: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300" },
 }
 
 const STATUS_PIPELINE = ["new", "open", "in_progress", "waiting", "resolved", "closed"]
@@ -68,11 +69,11 @@ const STATUS_PIPELINE_COLORS: Record<string, string> = {
   closed: "bg-gray-500",
 }
 
-const PRIORITY_STYLES: Record<string, { label: string; className: string }> = {
-  critical: { label: "Critical", className: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300" },
-  high: { label: "High", className: "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300" },
-  medium: { label: "Medium", className: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300" },
-  low: { label: "Low", className: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300" },
+const PRIORITY_STYLES: Record<string, { className: string }> = {
+  critical: { className: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300" },
+  high: { className: "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300" },
+  medium: { className: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300" },
+  low: { className: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300" },
 }
 
 function formatDate(d: string | null) {
@@ -80,11 +81,11 @@ function formatDate(d: string | null) {
   return new Date(d).toLocaleString("ru-RU", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })
 }
 
-function getSlaTimeLeft(slaDueAt: string | null, status: string): { text: string; breached: boolean; urgent: boolean } {
+function getSlaTimeLeft(slaDueAt: string | null, status: string, resolvedLabel: string, breachedLabel: string): { text: string; breached: boolean; urgent: boolean } {
   if (!slaDueAt) return { text: "—", breached: false, urgent: false }
-  if (status === "resolved" || status === "closed") return { text: "Решён", breached: false, urgent: false }
+  if (status === "resolved" || status === "closed") return { text: resolvedLabel, breached: false, urgent: false }
   const diff = new Date(slaDueAt).getTime() - Date.now()
-  if (diff <= 0) return { text: "Просрочен", breached: true, urgent: false }
+  if (diff <= 0) return { text: breachedLabel, breached: true, urgent: false }
   const hours = Math.floor(diff / 3600000)
   const minutes = Math.floor((diff % 3600000) / 60000)
   const seconds = Math.floor((diff % 60000) / 1000)
@@ -101,6 +102,8 @@ function getInitials(str: string | null): string {
 }
 
 export default function TicketDetailPage() {
+  const t = useTranslations("tickets")
+  const tc = useTranslations("common")
   const params = useParams()
   const { data: session } = useSession()
   const ticketId = params.id as string
@@ -130,6 +133,22 @@ export default function TicketDetailPage() {
   const [aiResult, setAiResult] = useState<{ type: string; text: string } | null>(null)
   const [aiLang, setAiLang] = useState("ru") // "ru" | "az" | "en"
 
+  const STATUS_LABELS: Record<string, string> = {
+    new: t("statusNew"),
+    open: t("statusOpen"),
+    in_progress: t("statusInProgress"),
+    waiting: t("statusWaiting"),
+    resolved: t("statusResolved"),
+    closed: t("statusClosed"),
+  }
+
+  const PRIORITY_LABELS: Record<string, string> = {
+    critical: tc("critical"),
+    high: tc("high"),
+    medium: tc("medium"),
+    low: tc("low"),
+  }
+
   const fetchTicket = useCallback(async () => {
     try {
       const res = await fetch(`/api/v1/tickets/${ticketId}`)
@@ -145,14 +164,14 @@ export default function TicketDetailPage() {
           if (kbJson.success) setKbArticles(kbJson.data?.articles || kbJson.data || [])
         } catch {}
       } else {
-        setError(json.error || "Failed to load ticket")
+        setError(json.error || t("failedToLoad"))
       }
     } catch {
-      setError("Failed to load ticket")
+      setError(t("failedToLoad"))
     } finally {
       setLoading(false)
     }
-  }, [ticketId])
+  }, [ticketId, t])
 
   const fetchUsers = useCallback(async () => {
     try {
@@ -294,7 +313,7 @@ export default function TicketDetailPage() {
         </Link>
         <Card>
           <CardContent className="py-10 text-center text-muted-foreground">
-            {error || "Тикет не найден"}
+            {error || t("ticketNotFound")}
           </CardContent>
         </Card>
       </div>
@@ -307,7 +326,7 @@ export default function TicketDetailPage() {
   const sortedComments = [...comments].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
   const filteredComments = showInternal ? sortedComments : sortedComments.filter(c => !c.isInternal)
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const sla = getSlaTimeLeft(ticket.slaDueAt, ticket.status) // recalculates every `tick`
+  const sla = getSlaTimeLeft(ticket.slaDueAt, ticket.status, t("statusResolved"), t("slaBreached")) // recalculates every `tick`
   void tick // ensure re-render on tick
   const daysOpen = Math.floor((Date.now() - new Date(ticket.createdAt).getTime()) / 86400000)
 
@@ -324,8 +343,8 @@ export default function TicketDetailPage() {
             <span className="text-xs text-muted-foreground font-mono">{ticket.ticketNumber}</span>
           </div>
           <div className="flex items-center gap-2 mt-1">
-            <Badge className={statusStyle.className}>{statusStyle.label}</Badge>
-            <Badge className={priorityStyle.className}>{priorityStyle.label}</Badge>
+            <Badge className={statusStyle.className}>{STATUS_LABELS[ticket.status] || ticket.status}</Badge>
+            <Badge className={priorityStyle.className}>{PRIORITY_LABELS[ticket.priority] || ticket.priority}</Badge>
             {ticket.category && <Badge variant="outline" className="text-xs">{ticket.category}</Badge>}
           </div>
         </div>
@@ -338,7 +357,7 @@ export default function TicketDetailPage() {
                 onClick={handleEscalate}
                 disabled={ticket.priority === "critical" || updatingStatus}
               >
-                <AlertTriangle className="h-3.5 w-3.5 mr-1.5" /> Escalate
+                <AlertTriangle className="h-3.5 w-3.5 mr-1.5" /> {t("escalate")}
               </Button>
               <Button
                 size="sm" variant="outline"
@@ -346,7 +365,7 @@ export default function TicketDetailPage() {
                 onClick={handleAssignToMe}
                 disabled={updatingAssignee}
               >
-                <UserPlus className="h-3.5 w-3.5 mr-1.5" /> Assign to me
+                <UserPlus className="h-3.5 w-3.5 mr-1.5" /> {t("assignToMe")}
               </Button>
             </>
           )}
@@ -386,7 +405,7 @@ export default function TicketDetailPage() {
               }`}
               disabled={updatingStatus}
             >
-              {style.label}
+              {STATUS_LABELS[s] || s}
             </button>
           )
         })}
@@ -417,10 +436,10 @@ export default function TicketDetailPage() {
         </div>
         <div className={`${ticket.priority === "critical" ? "bg-red-500" : ticket.priority === "high" ? "bg-orange-500" : "bg-slate-500"} text-white rounded-xl p-4 flex flex-col gap-1 shadow-sm`}>
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium opacity-80">Priority</span>
+            <span className="text-xs font-medium opacity-80">{t("priorityLabel")}</span>
             <AlertTriangle className="h-4 w-4 opacity-80" />
           </div>
-          <span className="text-xl font-bold capitalize">{ticket.priority}</span>
+          <span className="text-xl font-bold capitalize">{PRIORITY_LABELS[ticket.priority] || ticket.priority}</span>
         </div>
       </div>
 
@@ -429,12 +448,12 @@ export default function TicketDetailPage() {
         <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3 flex items-center gap-3">
           <Clock className="h-5 w-5 text-red-600 flex-shrink-0" />
           <div className="flex-1">
-            <p className="text-sm font-medium text-red-800 dark:text-red-300">⚠️ SLA нарушен! Срочно требуется действие.</p>
-            <p className="text-xs text-red-600 dark:text-red-400">Дедлайн: {formatDate(ticket.slaDueAt)} · Приоритет: {priorityStyle.label}</p>
+            <p className="text-sm font-medium text-red-800 dark:text-red-300">⚠️ {t("slaBreachedWarning")}</p>
+            <p className="text-xs text-red-600 dark:text-red-400">Дедлайн: {formatDate(ticket.slaDueAt)} · Приоритет: {PRIORITY_LABELS[ticket.priority] || ticket.priority}</p>
           </div>
           {!ticket.assignedTo && (
             <Button size="sm" variant="destructive" onClick={handleAutoAssign} disabled={updatingAssignee}>
-              <Zap className="h-3.5 w-3.5 mr-1" /> Назначить
+              <Zap className="h-3.5 w-3.5 mr-1" /> {t("assign")}
             </Button>
           )}
         </div>
@@ -445,8 +464,8 @@ export default function TicketDetailPage() {
           <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3 flex items-center gap-3">
             <Clock className="h-5 w-5 text-yellow-600 flex-shrink-0" />
             <div className="flex-1">
-              <p className="text-sm font-medium text-yellow-800 dark:text-yellow-300">⏰ SLA истекает менее чем через 2 часа!</p>
-              <p className="text-xs text-yellow-600 dark:text-yellow-400">Осталось: {sla.text} · Приоритет: {priorityStyle.label}</p>
+              <p className="text-sm font-medium text-yellow-800 dark:text-yellow-300">⏰ {t("slaExpiringWarning")}</p>
+              <p className="text-xs text-yellow-600 dark:text-yellow-400">Осталось: {sla.text} · Приоритет: {PRIORITY_LABELS[ticket.priority] || ticket.priority}</p>
             </div>
           </div>
         )
@@ -456,11 +475,11 @@ export default function TicketDetailPage() {
         <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-3 flex items-center gap-3">
           <RefreshCw className="h-5 w-5 text-orange-600 flex-shrink-0" />
           <div className="flex-1">
-            <p className="text-sm font-medium text-orange-800 dark:text-orange-300">🔥 Тикет с высоким приоритетом не назначен!</p>
-            <p className="text-xs text-orange-600 dark:text-orange-400">Приоритет: {priorityStyle.label} · Требуется назначение агента</p>
+            <p className="text-sm font-medium text-orange-800 dark:text-orange-300">🔥 {t("highPriorityUnassigned")}</p>
+            <p className="text-xs text-orange-600 dark:text-orange-400">Приоритет: {PRIORITY_LABELS[ticket.priority] || ticket.priority} · Требуется назначение агента</p>
           </div>
           <Button size="sm" className="bg-orange-500 hover:bg-orange-600 text-white" onClick={handleAutoAssign} disabled={updatingAssignee}>
-            <Zap className="h-3.5 w-3.5 mr-1" /> Авто-назначить
+            <Zap className="h-3.5 w-3.5 mr-1" /> {t("autoAssign")}
           </Button>
         </div>
       )}
@@ -473,12 +492,12 @@ export default function TicketDetailPage() {
             <CardHeader>
               <CardTitle className="text-xl">{ticket.subject}</CardTitle>
               <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
-                <span>Компания: <strong>{(ticket as any).companyName || "—"}</strong></span>
-                <span>Назначен: <strong>{(ticket as any).assigneeName || "Не назначен"}</strong></span>
+                <span>{t("companyLabel")}: <strong>{(ticket as any).companyName || "—"}</strong></span>
+                <span>{t("assignedLabel")}: <strong>{(ticket as any).assigneeName || t("notAssigned")}</strong></span>
               </div>
               <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                <span>Приоритет: <strong>{ticket.priority}</strong></span>
-                <span>Категория: <strong>{ticket.category}</strong></span>
+                <span>{t("priorityLabel")}: <strong>{PRIORITY_LABELS[ticket.priority] || ticket.priority}</strong></span>
+                <span>{t("categoryLabel")}: <strong>{ticket.category}</strong></span>
               </div>
               {ticket.description && (
                 <div className="mt-3 p-3 bg-muted/50 rounded-lg">
@@ -494,7 +513,7 @@ export default function TicketDetailPage() {
               <CardTitle className="text-base">Комментарии ({filteredComments.length})</CardTitle>
               <Button variant="ghost" size="sm" onClick={() => setShowInternal(!showInternal)}>
                 <Lock className="h-3.5 w-3.5 mr-1" />
-                {showInternal ? "Скрыть внутренние" : "Показать внутренние"}
+                {showInternal ? t("hideInternal") : t("showInternal")}
               </Button>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -514,7 +533,7 @@ export default function TicketDetailPage() {
                       <span className="text-xs text-muted-foreground">{formatDate(comment.createdAt)}</span>
                       {comment.isInternal && (
                         <Badge variant="outline" className="text-[10px] h-4 border-amber-400 text-amber-600">
-                          <Lock className="h-2.5 w-2.5 mr-0.5" /> Внутренняя
+                          <Lock className="h-2.5 w-2.5 mr-0.5" /> {t("internalBadge")}
                         </Badge>
                       )}
                     </div>
@@ -528,7 +547,7 @@ export default function TicketDetailPage() {
                 <Textarea
                   value={newComment}
                   onChange={e => setNewComment(e.target.value)}
-                  placeholder={isInternal ? "Добавить внутреннюю заметку..." : "Ответить клиенту..."}
+                  placeholder={isInternal ? t("internalNotePlaceholder") : t("replyPlaceholder")}
                   rows={3}
                   disabled={sending}
                 />
@@ -542,7 +561,7 @@ export default function TicketDetailPage() {
                     className="bg-orange-500 hover:bg-orange-600"
                   >
                     {sending ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <Send className="h-3.5 w-3.5 mr-1" />}
-                    Ответить
+                    {t("replyBtn")}
                   </Button>
                   <Button
                     variant="outline"
@@ -551,7 +570,7 @@ export default function TicketDetailPage() {
                     className={isInternal ? "border-amber-400 text-amber-600" : ""}
                   >
                     <Lock className="h-3.5 w-3.5 mr-1" />
-                    Внутр. заметка
+                    {t("internalNote")}
                   </Button>
 
                   <div className="border-l h-6 mx-1" />
@@ -576,7 +595,7 @@ export default function TicketDetailPage() {
                     className="border-green-300 text-green-700 hover:bg-green-50 dark:border-green-700 dark:text-green-400 dark:hover:bg-green-950"
                   >
                     {aiLoading === "reply" ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <Bot className="h-3.5 w-3.5 mr-1" />}
-                    AI Ответ
+                    {t("aiReply")}
                   </Button>
                   <Button
                     variant="outline"
@@ -586,7 +605,7 @@ export default function TicketDetailPage() {
                     className="border-blue-300 text-blue-700 hover:bg-blue-50 dark:border-blue-700 dark:text-blue-400 dark:hover:bg-blue-950"
                   >
                     {aiLoading === "summary" ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <FileText className="h-3.5 w-3.5 mr-1" />}
-                    Резюме
+                    {t("aiSummary")}
                   </Button>
                   <Button
                     variant="outline"
@@ -596,12 +615,12 @@ export default function TicketDetailPage() {
                     className="border-yellow-300 text-yellow-700 hover:bg-yellow-50 dark:border-yellow-700 dark:text-yellow-400 dark:hover:bg-yellow-950"
                   >
                     {aiLoading === "steps" ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <Zap className="h-3.5 w-3.5 mr-1" />}
-                    Шаги
+                    {t("aiSteps")}
                   </Button>
                 </div>
 
                 {isInternal && (
-                  <p className="text-xs text-amber-600">Внутренняя заметка — не видна клиенту</p>
+                  <p className="text-xs text-amber-600">{t("internalNoteHint")}</p>
                 )}
 
                 {/* AI Result display */}
@@ -610,7 +629,7 @@ export default function TicketDetailPage() {
                     <div className="flex items-center gap-2 mb-2">
                       <Bot className="h-4 w-4 text-green-600" />
                       <span className="text-xs font-medium text-green-600">
-                        AI {aiResult.type === "summary" ? "Резюме" : "Шаги"}
+                        {aiResult.type === "summary" ? t("aiSummaryLabel") : t("aiStepsLabel")}
                       </span>
                       <button onClick={() => setAiResult(null)} className="ml-auto text-xs text-muted-foreground hover:text-foreground">✕</button>
                     </div>
@@ -627,11 +646,11 @@ export default function TicketDetailPage() {
               {/* Status change */}
               <div className="flex items-center gap-3">
                 <Select value={newStatus} onChange={e => setNewStatus(e.target.value)} className="w-48">
-                  <option value="new">Новый</option>
-                  <option value="in_progress">В работе</option>
-                  <option value="waiting">Ожидание</option>
-                  <option value="resolved">Решён</option>
-                  <option value="closed">Закрыт</option>
+                  <option value="new">{t("statusNew")}</option>
+                  <option value="in_progress">{t("statusInProgress")}</option>
+                  <option value="waiting">{t("statusWaiting")}</option>
+                  <option value="resolved">{t("statusResolved")}</option>
+                  <option value="closed">{t("statusClosed")}</option>
                 </Select>
                 <Button
                   onClick={handleUpdateStatus}
@@ -639,14 +658,14 @@ export default function TicketDetailPage() {
                   className="bg-blue-600 hover:bg-blue-700"
                 >
                   {updatingStatus ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <RefreshCw className="h-3.5 w-3.5 mr-1" />}
-                  Обновить статус
+                  {t("updateStatus")}
                 </Button>
               </div>
 
               {/* Reassign */}
               <div className="flex items-center gap-3">
                 <Select value={newAssignee} onChange={e => setNewAssignee(e.target.value)} className="w-48">
-                  <option value="">— Не назначен —</option>
+                  <option value="">{t("unassignedOption")}</option>
                   {users.map(u => (
                     <option key={u.id} value={u.id}>{u.name || u.email}</option>
                   ))}
@@ -658,7 +677,7 @@ export default function TicketDetailPage() {
                   className="border-orange-300 text-orange-600 hover:bg-orange-50"
                 >
                   {updatingAssignee ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <UserCheck className="h-3.5 w-3.5 mr-1" />}
-                  Переназначить
+                  {t("reassign")}
                 </Button>
                 <Button
                   variant="outline"
@@ -667,7 +686,7 @@ export default function TicketDetailPage() {
                   className="border-yellow-300 text-yellow-600 hover:bg-yellow-50"
                 >
                   {updatingAssignee ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <Zap className="h-3.5 w-3.5 mr-1" />}
-                  Авто
+                  {t("auto")}
                 </Button>
               </div>
             </CardContent>
@@ -677,19 +696,19 @@ export default function TicketDetailPage() {
         {/* Sidebar */}
         <div className="space-y-4">
           <Card>
-            <CardHeader className="pb-2"><CardTitle className="text-sm">Детали</CardTitle></CardHeader>
+            <CardHeader className="pb-2"><CardTitle className="text-sm">{t("detailsCard")}</CardTitle></CardHeader>
             <CardContent className="space-y-3 text-sm">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Статус</span>
-                <Badge className={statusStyle.className}>{statusStyle.label}</Badge>
+                <Badge className={statusStyle.className}>{STATUS_LABELS[ticket.status] || ticket.status}</Badge>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Приоритет</span>
-                <Badge className={priorityStyle.className}>{priorityStyle.label}</Badge>
+                <span className="text-muted-foreground">{t("priorityLabel")}</span>
+                <Badge className={priorityStyle.className}>{PRIORITY_LABELS[ticket.priority] || ticket.priority}</Badge>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Категория</span>
-                <span>{ticket.category}</span>
+                <span className="text-muted-foreground">{t("categoryLabel")}</span>
+                <span>{ticket.category === "general" ? t("generalCategory") : ticket.category}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Создан</span>
@@ -701,7 +720,7 @@ export default function TicketDetailPage() {
               </div>
               {ticket.tags.length > 0 && (
                 <div>
-                  <span className="text-muted-foreground">Теги</span>
+                  <span className="text-muted-foreground">{t("tagsLabel")}</span>
                   <div className="flex flex-wrap gap-1 mt-1">
                     {ticket.tags.map(tag => (
                       <Badge key={tag} variant="outline" className="text-[10px]">{tag}</Badge>
@@ -713,21 +732,21 @@ export default function TicketDetailPage() {
           </Card>
 
           <Card>
-            <CardHeader className="pb-2"><CardTitle className="text-sm">Люди</CardTitle></CardHeader>
+            <CardHeader className="pb-2"><CardTitle className="text-sm">{t("peopleCard")}</CardTitle></CardHeader>
             <CardContent className="space-y-3 text-sm">
               <div>
-                <span className="text-muted-foreground">Назначен</span>
-                <p className="font-medium">{(ticket as any).assigneeName || "Не назначен"}</p>
+                <span className="text-muted-foreground">{t("assignedLabel")}</span>
+                <p className="font-medium">{(ticket as any).assigneeName || t("notAssigned")}</p>
               </div>
               {ticket.companyId && (
                 <div>
-                  <span className="text-muted-foreground">Компания</span>
+                  <span className="text-muted-foreground">{t("companyLabel")}</span>
                   <p className="font-medium">{(ticket as any).companyName || ticket.companyId}</p>
                 </div>
               )}
               {ticket.contactId && (
                 <div>
-                  <span className="text-muted-foreground">Контакт</span>
+                  <span className="text-muted-foreground">{t("contactLabel")}</span>
                   <p className="font-medium font-mono text-xs">{ticket.contactId}</p>
                 </div>
               )}
@@ -737,29 +756,29 @@ export default function TicketDetailPage() {
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm flex items-center gap-2">
-                <Clock className="h-3.5 w-3.5" /> SLA
+                <Clock className="h-3.5 w-3.5" /> {t("slaCard")}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-2 text-sm">
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Дедлайн</span>
-                <span>{ticket.slaDueAt ? formatDate(ticket.slaDueAt) : "Не задан"}</span>
+                <span className="text-muted-foreground">{t("slaDeadline")}</span>
+                <span>{ticket.slaDueAt ? formatDate(ticket.slaDueAt) : t("slaNotSet")}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Осталось</span>
+                <span className="text-muted-foreground">{t("slaTimeRemaining")}</span>
                 <span className={`font-mono font-medium ${sla.breached ? "text-red-600" : "text-green-600"}`}>
                   {sla.text}
                 </span>
               </div>
               {ticket.firstResponseAt && (
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Первый ответ</span>
+                  <span className="text-muted-foreground">{t("slaFirstResponse")}</span>
                   <span className="text-green-600">{formatDate(ticket.firstResponseAt)}</span>
                 </div>
               )}
               {ticket.resolvedAt && (
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Решён</span>
+                  <span className="text-muted-foreground">{t("slaResolved")}</span>
                   <span>{formatDate(ticket.resolvedAt)}</span>
                 </div>
               )}
@@ -769,7 +788,7 @@ export default function TicketDetailPage() {
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm flex items-center gap-2">
-                <Star className="h-3.5 w-3.5" /> CSAT
+                <Star className="h-3.5 w-3.5" /> {t("csatCard")}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -785,7 +804,7 @@ export default function TicketDetailPage() {
                   )}
                 </div>
               ) : (
-                <p className="text-sm text-muted-foreground">Ещё не оценен</p>
+                <p className="text-sm text-muted-foreground">{t("notRated")}</p>
               )}
             </CardContent>
           </Card>
@@ -795,7 +814,7 @@ export default function TicketDetailPage() {
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm flex items-center gap-2">
-                  <BookOpen className="h-3.5 w-3.5" /> Статьи из базы знаний
+                  <BookOpen className="h-3.5 w-3.5" /> {t("kbArticles")}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -807,7 +826,7 @@ export default function TicketDetailPage() {
                       className="block p-2 rounded-lg hover:bg-muted/50 transition-colors"
                     >
                       <p className="text-sm font-medium line-clamp-1">{article.title}</p>
-                      <p className="text-[10px] text-muted-foreground line-clamp-1">{article.category || "General"}</p>
+                      <p className="text-[10px] text-muted-foreground line-clamp-1">{article.category || t("generalCategory")}</p>
                     </Link>
                   ))}
                 </div>

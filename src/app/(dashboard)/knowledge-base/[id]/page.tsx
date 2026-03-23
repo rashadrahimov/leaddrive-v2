@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
+import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -16,6 +17,8 @@ const statusColors: Record<string, "default" | "secondary"> = {
 }
 
 export default function KbArticleDetailPage() {
+  const t = useTranslations("kb")
+  const tc = useTranslations("common")
   const params = useParams()
   const router = useRouter()
   const { data: session } = useSession()
@@ -62,7 +65,7 @@ export default function KbArticleDetailPage() {
   }
 
   if (!article) {
-    return <div className="text-center py-12 text-muted-foreground">Article not found</div>
+    return <div className="text-center py-12 text-muted-foreground">{tc("noData")}</div>
   }
 
   const tags: string[] = Array.isArray(article.tags) ? article.tags : []
@@ -89,10 +92,10 @@ export default function KbArticleDetailPage() {
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => setEditOpen(true)}>
-            <Pencil className="h-4 w-4 mr-1" /> Edit
+            <Pencil className="h-4 w-4 mr-1" /> {tc("edit")}
           </Button>
           <Button variant="outline" className="text-destructive hover:text-destructive" onClick={() => setDeleteOpen(true)}>
-            <Trash2 className="h-4 w-4 mr-1" /> Delete
+            <Trash2 className="h-4 w-4 mr-1" /> {tc("delete")}
           </Button>
         </div>
       </div>
@@ -102,7 +105,7 @@ export default function KbArticleDetailPage() {
           <CardContent className="flex items-center gap-3 pt-6">
             <Eye className="h-4 w-4 text-muted-foreground" />
             <div>
-              <div className="text-xs text-muted-foreground">Views</div>
+              <div className="text-xs text-muted-foreground">{t("views")}</div>
               <span className="text-sm font-medium">{article.viewCount ?? 0}</span>
             </div>
           </CardContent>
@@ -111,7 +114,7 @@ export default function KbArticleDetailPage() {
           <CardContent className="flex items-center gap-3 pt-6">
             <Clock className="h-4 w-4 text-muted-foreground" />
             <div>
-              <div className="text-xs text-muted-foreground">Last Updated</div>
+              <div className="text-xs text-muted-foreground">{tc("updatedAt")}</div>
               <span className="text-sm font-medium">
                 {article.updatedAt ? new Date(article.updatedAt).toLocaleDateString() : "—"}
               </span>
@@ -122,7 +125,7 @@ export default function KbArticleDetailPage() {
           <CardContent className="flex items-center gap-3 pt-6">
             <Tag className="h-4 w-4 text-muted-foreground" />
             <div>
-              <div className="text-xs text-muted-foreground">Tags</div>
+              <div className="text-xs text-muted-foreground">{tc("tags")}</div>
               <div className="flex flex-wrap gap-1 mt-0.5">
                 {tags.length > 0 ? tags.map((tag) => (
                   <Badge key={tag} variant="outline" className="text-xs">{tag}</Badge>
@@ -135,7 +138,7 @@ export default function KbArticleDetailPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Content</CardTitle>
+          <CardTitle className="text-base">{tc("content")}</CardTitle>
         </CardHeader>
         <CardContent>
           {article.content ? (
@@ -144,7 +147,7 @@ export default function KbArticleDetailPage() {
               dangerouslySetInnerHTML={{ __html: article.content }}
             />
           ) : (
-            <p className="text-sm text-muted-foreground">No content</p>
+            <p className="text-sm text-muted-foreground">{tc("noData")}</p>
           )}
         </CardContent>
       </Card>
@@ -168,7 +171,7 @@ export default function KbArticleDetailPage() {
         open={deleteOpen}
         onOpenChange={setDeleteOpen}
         onConfirm={handleDelete}
-        title="Delete Article"
+        title={t("deleteArticle")}
         itemName={article.title}
       />
     </div>

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -17,6 +18,8 @@ interface LeadFormProps {
 }
 
 export function LeadForm({ open, onOpenChange, onSaved, initialData, orgId }: LeadFormProps) {
+  const t = useTranslations("forms")
+  const tc = useTranslations("common")
   const isEdit = !!initialData?.id
   const [form, setForm] = useState({
     contactName: initialData?.contactName || "",
@@ -70,33 +73,33 @@ export function LeadForm({ open, onOpenChange, onSaved, initialData, orgId }: Le
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogHeader><DialogTitle>{isEdit ? "Edit Lead" : "New Lead"}</DialogTitle></DialogHeader>
+      <DialogHeader><DialogTitle>{isEdit ? t("editLead") : t("newLead")}</DialogTitle></DialogHeader>
       <form onSubmit={handleSubmit}>
         <DialogContent>
           {error && <div className="text-sm text-red-500 bg-red-50 dark:bg-red-900/20 p-2 rounded mb-3">{error}</div>}
           <div className="grid gap-4">
             <div className="grid grid-cols-2 gap-3">
-              <div><Label>Contact Name *</Label><Input value={form.contactName} onChange={e => u("contactName", e.target.value)} required /></div>
-              <div><Label>Company Name</Label><Input value={form.companyName} onChange={e => u("companyName", e.target.value)} /></div>
+              <div><Label>{tc("name")} *</Label><Input value={form.contactName} onChange={e => u("contactName", e.target.value)} required /></div>
+              <div><Label>{tc("company")}</Label><Input value={form.companyName} onChange={e => u("companyName", e.target.value)} /></div>
             </div>
             <div className="grid grid-cols-2 gap-3">
-              <div><Label>Email</Label><Input type="email" value={form.email} onChange={e => u("email", e.target.value)} /></div>
-              <div><Label>Phone</Label><Input value={form.phone} onChange={e => u("phone", e.target.value)} /></div>
+              <div><Label>{tc("email")}</Label><Input type="email" value={form.email} onChange={e => u("email", e.target.value)} /></div>
+              <div><Label>{tc("phone")}</Label><Input value={form.phone} onChange={e => u("phone", e.target.value)} /></div>
             </div>
             <div className="grid grid-cols-3 gap-3">
-              <div><Label>Source</Label><Select value={form.source} onChange={e => u("source", e.target.value)}><option value="">Select...</option><option value="website">Website</option><option value="referral">Referral</option><option value="cold_call">Cold Call</option><option value="linkedin">LinkedIn</option></Select></div>
-              <div><Label>Priority</Label><Select value={form.priority} onChange={e => u("priority", e.target.value)}><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option></Select></div>
-              <div><Label>Est. Value</Label><Input type="number" value={form.estimatedValue} onChange={e => u("estimatedValue", e.target.value)} placeholder="0" /></div>
+              <div><Label>{tc("source")}</Label><Select value={form.source} onChange={e => u("source", e.target.value)}><option value="">{tc("select")}...</option><option value="website">Website</option><option value="referral">Referral</option><option value="cold_call">Cold Call</option><option value="linkedin">LinkedIn</option></Select></div>
+              <div><Label>{tc("priority")}</Label><Select value={form.priority} onChange={e => u("priority", e.target.value)}><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option></Select></div>
+              <div><Label>{t("estValue")}</Label><Input type="number" value={form.estimatedValue} onChange={e => u("estimatedValue", e.target.value)} placeholder="0" /></div>
             </div>
             {isEdit && (
-              <div><Label>Status</Label><Select value={form.status} onChange={e => u("status", e.target.value)}><option value="new">New</option><option value="contacted">Contacted</option><option value="qualified">Qualified</option><option value="converted">Converted</option><option value="lost">Lost</option></Select></div>
+              <div><Label>{tc("status")}</Label><Select value={form.status} onChange={e => u("status", e.target.value)}><option value="new">New</option><option value="contacted">Contacted</option><option value="qualified">Qualified</option><option value="converted">Converted</option><option value="lost">Lost</option></Select></div>
             )}
-            <div><Label>Notes</Label><Textarea value={form.notes} onChange={e => u("notes", e.target.value)} rows={2} /></div>
+            <div><Label>{tc("notes")}</Label><Textarea value={form.notes} onChange={e => u("notes", e.target.value)} rows={2} /></div>
           </div>
         </DialogContent>
         <DialogFooter>
-          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button type="submit" disabled={saving}>{saving ? "Saving..." : isEdit ? "Update" : "Create Lead"}</Button>
+          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>{tc("cancel")}</Button>
+          <Button type="submit" disabled={saving}>{saving ? tc("saving") : isEdit ? tc("update") : tc("create")}</Button>
         </DialogFooter>
       </form>
     </Dialog>

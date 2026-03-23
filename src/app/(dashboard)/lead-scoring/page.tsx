@@ -2,6 +2,7 @@
 
 import { useSession } from "next-auth/react"
 import { useEffect, useState, useCallback } from "react"
+import { useTranslations } from "next-intl"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -67,6 +68,9 @@ const GRADE_CONFIG: Record<string, { description: string; color: string; badgeCl
 }
 
 export default function LeadScoringPage() {
+  const t = useTranslations("leads")
+  const tc = useTranslations("common")
+  const tai = useTranslations("ai")
   const { data: session } = useSession()
   const orgId = session?.user?.organizationId
 
@@ -164,9 +168,9 @@ export default function LeadScoringPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">AI Lead Scoring</h1>
+          <h1 className="text-3xl font-bold">{tai("title")}</h1>
           <p className="text-muted-foreground mt-1">
-            AI-скоринг лидов — автоматическая оценка и ранжирование
+            {tai("subtitle")}
           </p>
         </div>
         <Button onClick={scoreAll} disabled={scoring || loading}>
@@ -175,7 +179,7 @@ export default function LeadScoringPage() {
           ) : (
             <Sparkles className="mr-2 h-4 w-4" />
           )}
-          {scoring ? "Оценка..." : "Оценить все лиды с AI"}
+          {scoring ? tc("loading") : tai("newAgent")}
         </Button>
       </div>
 
@@ -188,7 +192,7 @@ export default function LeadScoringPage() {
                 <Target className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Средний балл</p>
+                <p className="text-sm text-muted-foreground">{t("avgScore")}</p>
                 <p className="text-2xl font-bold">{avgScore}<span className="text-sm font-normal text-muted-foreground"> / 100</span></p>
               </div>
             </div>
@@ -201,7 +205,7 @@ export default function LeadScoringPage() {
                 <TrendingUp className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Ср. конверсия</p>
+                <p className="text-sm text-muted-foreground">{tc("probability")}</p>
                 <p className="text-2xl font-bold">{avgConversion}<span className="text-sm font-normal text-muted-foreground"> %</span></p>
               </div>
             </div>
@@ -214,7 +218,7 @@ export default function LeadScoringPage() {
                 <Users className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Всего оценено</p>
+                <p className="text-sm text-muted-foreground">{tai("totalSessions")}</p>
                 <p className="text-2xl font-bold">{scoredLeads.length}<span className="text-sm font-normal text-muted-foreground"> / {total}</span></p>
               </div>
             </div>
@@ -227,8 +231,8 @@ export default function LeadScoringPage() {
                 <Zap className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">AI-powered</p>
-                <p className="text-2xl font-bold">{aiPowered ? "Да" : "Нет"}</p>
+                <p className="text-sm text-muted-foreground">{tai("active")}</p>
+                <p className="text-2xl font-bold">{aiPowered ? tc("yes") : tc("no")}</p>
               </div>
             </div>
           </CardContent>
@@ -259,22 +263,22 @@ export default function LeadScoringPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Brain className="h-5 w-5" />
-            Результаты скоринга
+            {tai("stats")}
           </CardTitle>
         </CardHeader>
         <CardContent>
           {loading ? (
             <div className="flex items-center justify-center py-12 text-muted-foreground">
               <RefreshCw className="mr-2 h-5 w-5 animate-spin" />
-              Загрузка...
+              {tc("loading")}
             </div>
           ) : sortedLeads.length === 0 ? (
             <div className="flex items-center justify-center py-12 text-muted-foreground">
               <div className="text-center">
                 <Brain className="mx-auto h-12 w-12 mb-4 opacity-50" />
-                <p className="text-lg font-medium">Нет данных</p>
+                <p className="text-lg font-medium">{tc("noData")}</p>
                 <p className="text-sm mt-1">
-                  Нажмите "Оценить все лиды с AI" чтобы запустить скоринг
+                  {tai("noSessions")}
                 </p>
               </div>
             </div>

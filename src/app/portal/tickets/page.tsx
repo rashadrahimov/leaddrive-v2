@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { useTranslations } from "next-intl"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -26,12 +27,13 @@ const statusColors: Record<string, "default" | "secondary" | "destructive" | "ou
 }
 
 export default function PortalTicketsPage() {
+  const t = useTranslations("portal")
   const [tickets, setTickets] = useState<Ticket[]>([])
   const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
 
-  // Auto-open form if ?action=new (from chat widget "Создать тикет" button)
+  // Auto-open form if ?action=new (from chat widget "New Ticket" button)
   useEffect(() => {
     if (typeof window !== "undefined" && window.location.search.includes("action=new")) {
       setShowForm(true)
@@ -81,15 +83,15 @@ export default function PortalTicketsPage() {
     } finally { setSaving(false) }
   }
 
-  const filtered = tickets.filter(t =>
-    t.subject.toLowerCase().includes(search.toLowerCase()) ||
-    t.ticketNumber.toLowerCase().includes(search.toLowerCase())
+  const filtered = tickets.filter(tk =>
+    tk.subject.toLowerCase().includes(search.toLowerCase()) ||
+    tk.ticketNumber.toLowerCase().includes(search.toLowerCase())
   )
 
   if (loading) {
     return (
       <div className="space-y-4">
-        <h1 className="text-2xl font-bold">My Tickets</h1>
+        <h1 className="text-2xl font-bold">{t("myTickets")}</h1>
         <div className="animate-pulse space-y-3">
           {[1, 2, 3].map(i => <div key={i} className="h-20 bg-muted rounded-lg" />)}
         </div>
@@ -101,11 +103,11 @@ export default function PortalTicketsPage() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold">My Tickets</h1>
+          <h1 className="text-2xl font-bold">{t("myTickets")}</h1>
           <p className="text-muted-foreground text-sm mt-1">{tickets.length} ticket{tickets.length !== 1 ? "s" : ""}</p>
         </div>
         <Button onClick={() => setShowForm(!showForm)}>
-          <Plus className="h-4 w-4 mr-1" /> New Ticket
+          <Plus className="h-4 w-4 mr-1" /> {t("newTicket")}
         </Button>
       </div>
 
@@ -116,23 +118,23 @@ export default function PortalTicketsPage() {
               {error && <div className="text-sm text-red-500 bg-red-50 dark:bg-red-900/20 p-2 rounded">{error}</div>}
               <div>
                 <label className="text-sm font-medium">Subject *</label>
-                <Input value={subject} onChange={e => setSubject(e.target.value)} placeholder="Describe your issue" required className="mt-1" />
+                <Input value={subject} onChange={e => setSubject(e.target.value)} placeholder={t("describeIssue")} required className="mt-1" />
               </div>
               <div>
                 <label className="text-sm font-medium">Category</label>
                 <Select value={category} onChange={e => setCategory(e.target.value)} className="mt-1">
-                  <option value="general">General</option>
-                  <option value="technical">Technical</option>
-                  <option value="billing">Billing</option>
-                  <option value="feature_request">Feature Request</option>
+                  <option value="general">{t("categoryGeneral")}</option>
+                  <option value="technical">{t("categoryTechnical")}</option>
+                  <option value="billing">{t("categoryBilling")}</option>
+                  <option value="feature_request">{t("categoryFeature")}</option>
                 </Select>
               </div>
               <div>
                 <label className="text-sm font-medium">Description</label>
-                <Textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="Provide details..." rows={4} className="mt-1" />
+                <Textarea value={description} onChange={e => setDescription(e.target.value)} placeholder={t("provideDetails")} rows={4} className="mt-1" />
               </div>
               <div className="flex gap-2">
-                <Button type="submit" disabled={saving}>{saving ? "Creating..." : "Submit Ticket"}</Button>
+                <Button type="submit" disabled={saving}>{saving ? t("creating") : t("submitTicket")}</Button>
                 <Button type="button" variant="outline" onClick={() => setShowForm(false)}>Cancel</Button>
               </div>
             </form>
@@ -142,14 +144,14 @@ export default function PortalTicketsPage() {
 
       <div className="relative">
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <Input placeholder="Search tickets..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
+        <Input placeholder={t("searchTickets")} value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
       </div>
 
       <div className="space-y-3">
         {filtered.length === 0 ? (
           <Card>
             <CardContent className="py-8 text-center text-muted-foreground">
-              {tickets.length === 0 ? "No tickets yet. Create one to get started." : "No tickets match your search."}
+              {tickets.length === 0 ? t("noTickets") : "No tickets match your search."}
             </CardContent>
           </Card>
         ) : (

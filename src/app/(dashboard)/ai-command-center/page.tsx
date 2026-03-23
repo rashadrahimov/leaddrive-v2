@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useSession } from "next-auth/react"
+import { useTranslations } from "next-intl"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -138,6 +139,8 @@ function timeAgo(dateStr: string): string {
 
 export default function AICommandCenterPage() {
   const { data: session } = useSession()
+  const t = useTranslations("ai")
+  const tc = useTranslations("common")
   const [agents, setAgents] = useState<AgentConfig[]>([])
   const [sessions, setSessions] = useState<ChatSession[]>([])
   const [stats, setStats] = useState<AiStats | null>(null)
@@ -254,25 +257,25 @@ export default function AICommandCenterPage() {
   }
 
   const sessionColumns = [
-    { key: "id", label: "Сессия", render: (item: any) => <span className="font-mono text-xs">{item.id?.slice(0, 8)}...</span> },
-    { key: "messagesCount", label: "Сообщений", sortable: true },
+    { key: "id", label: t("sessions"), render: (item: any) => <span className="font-mono text-xs">{item.id?.slice(0, 8)}...</span> },
+    { key: "messagesCount", label: t("messages"), sortable: true },
     {
-      key: "status", label: "Статус", sortable: true,
+      key: "status", label: tc("status"), sortable: true,
       render: (item: any) => (
         <Badge variant={item.status === "active" ? "default" : item.status === "escalated" ? "destructive" : "secondary"}>
-          {item.status === "active" ? "Активна" : item.status === "resolved" ? "Решена" : item.status === "escalated" ? "Эскалация" : item.status}
+          {item.status === "active" ? tc("active") : item.status === "resolved" ? tc("resolved") : item.status === "escalated" ? t("escalations") : item.status}
         </Badge>
       ),
     },
     {
-      key: "createdAt", label: "Дата", sortable: true,
+      key: "createdAt", label: tc("date"), sortable: true,
       render: (item: any) => <span>{new Date(item.createdAt).toLocaleDateString("ru-RU")}</span>,
     },
     {
       key: "actions", label: "",
       render: (item: any) => (
         <Button variant="ghost" size="sm" onClick={() => handleViewSession(item.id)}>
-          <Eye className="h-3.5 w-3.5 mr-1" /> Детали
+          <Eye className="h-3.5 w-3.5 mr-1" /> {tc("details")}
         </Button>
       ),
     },
@@ -281,7 +284,7 @@ export default function AICommandCenterPage() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <h1 className="text-2xl font-bold tracking-tight">AI Command Center</h1>
+        <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
         <div className="animate-pulse"><div className="h-96 bg-muted rounded-lg" /></div>
       </div>
     )
@@ -298,8 +301,8 @@ export default function AICommandCenterPage() {
             <BrainCircuit className="h-7 w-7 text-white" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">AI Command Center</h1>
-            <p className="text-sm text-muted-foreground">AI Агент: производительность и аналитика</p>
+            <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
+            <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
           </div>
         </div>
         <div className="flex items-center gap-3">
@@ -321,7 +324,7 @@ export default function AICommandCenterPage() {
               : "bg-white hover:bg-gray-50 text-gray-600"
           )}
         >
-          <Activity className="h-4 w-4" /> Дашборд
+          <Activity className="h-4 w-4" /> Dashboard
         </button>
         <button
           onClick={() => setActiveTab("constructor")}
@@ -332,7 +335,7 @@ export default function AICommandCenterPage() {
               : "bg-white hover:bg-gray-50 text-gray-600"
           )}
         >
-          <Settings2 className="h-4 w-4" /> Конструктор агента
+          <Settings2 className="h-4 w-4" /> Agent Constructor
         </button>
       </div>
 
@@ -345,9 +348,9 @@ export default function AICommandCenterPage() {
             <div className="rounded-xl border bg-white p-5 shadow-sm">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Всего сессий</p>
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">{t("totalSessions")}</p>
                   <p className="text-3xl font-bold mt-1">{stats?.totalSessions || 0}</p>
-                  <p className="text-xs text-blue-600 mt-1">Сегодня: {stats?.activeSessions || 0}</p>
+                  <p className="text-xs text-blue-600 mt-1">{tc("today")}: {stats?.activeSessions || 0}</p>
                 </div>
                 <div className="h-12 w-12 rounded-xl bg-blue-50 flex items-center justify-center">
                   <MessageSquare className="h-6 w-6 text-blue-500" />
@@ -359,7 +362,7 @@ export default function AICommandCenterPage() {
             <div className="rounded-xl border bg-white p-5 shadow-sm">
               <div className="flex items-center justify-between">
                 <div className="flex-1">
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Дефлекция</p>
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">{t("deflectionRate")}</p>
                   <p className={cn("text-3xl font-bold mt-1", deflectionRate > 50 ? "text-green-600" : deflectionRate > 20 ? "text-amber-500" : "text-gray-900")}>
                     {deflectionRate.toFixed(1)}%
                   </p>
@@ -396,7 +399,7 @@ export default function AICommandCenterPage() {
             <div className="rounded-xl border bg-white p-5 shadow-sm">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">FCR</p>
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">{t("fcrRate")}</p>
                   <p className={cn("text-3xl font-bold mt-1", (stats?.fcrRate || 0) > 0 ? "text-green-600" : "")}>
                     {stats?.fcrRate || 0}%
                   </p>
@@ -417,8 +420,8 @@ export default function AICommandCenterPage() {
                 <Timer className="h-5 w-5 text-blue-600" />
               </div>
               <div>
-                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Ср. время решения</p>
-                <p className="text-2xl font-bold">{stats?.avgResolutionTime || 0} <span className="text-sm font-normal text-gray-400">мин</span></p>
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">{t("avgResolutionTime")}</p>
+                <p className="text-2xl font-bold">{stats?.avgResolutionTime || 0} <span className="text-sm font-normal text-gray-400">{t("min")}</span></p>
               </div>
             </div>
 
@@ -428,7 +431,7 @@ export default function AICommandCenterPage() {
                 <Activity className="h-5 w-5 text-indigo-600" />
               </div>
               <div>
-                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Всего сообщений</p>
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">{t("totalMessages")}</p>
                 <p className="text-2xl font-bold">{stats?.totalMessages || 0} <span className="text-sm font-normal text-gray-400">ср. {stats?.avgMessagesPerSession || 0}/сессия</span></p>
               </div>
             </div>
@@ -439,7 +442,7 @@ export default function AICommandCenterPage() {
                 <AlertTriangle className="h-5 w-5 text-red-500" />
               </div>
               <div>
-                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Эскалации</p>
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">{t("escalations")}</p>
                 <p className="text-2xl font-bold">{stats?.escalations || 0} <span className="text-sm font-normal text-gray-400">к агентам</span></p>
               </div>
             </div>
@@ -450,7 +453,7 @@ export default function AICommandCenterPage() {
                 <Clock className="h-5 w-5 text-amber-600" />
               </div>
               <div>
-                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Ср. задержка</p>
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">{t("avgLatency")}</p>
                 <p className="text-2xl font-bold">{stats?.avgLatency || 0}<span className="text-sm font-normal text-gray-400">s</span></p>
               </div>
             </div>
@@ -461,7 +464,7 @@ export default function AICommandCenterPage() {
                 <DollarSign className="h-5 w-5 text-green-600" />
               </div>
               <div>
-                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Общая стоимость</p>
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">{t("totalCost")}</p>
                 <p className="text-2xl font-bold text-green-600">${stats?.totalCost?.toFixed(3) || "0.000"}</p>
               </div>
             </div>
@@ -472,7 +475,7 @@ export default function AICommandCenterPage() {
                 <Gauge className="h-5 w-5 text-purple-600" />
               </div>
               <div>
-                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Оценка качества</p>
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">{t("qualityScore")}</p>
                 <p className="text-2xl font-bold">{stats?.qualityScore || 0}<span className="text-sm font-normal text-gray-400">/10</span></p>
               </div>
             </div>
@@ -483,14 +486,14 @@ export default function AICommandCenterPage() {
             <div className="flex items-center justify-between p-5 border-b">
               <div className="flex items-center gap-2">
                 <Bell className="h-5 w-5 text-red-500" />
-                <h3 className="font-semibold">Алерты</h3>
+                <h3 className="font-semibold">{t("alerts")}</h3>
                 {unreadAlerts > 0 && (
                   <span className="bg-red-500 text-white text-xs rounded-full px-2 py-0.5 font-medium">{unreadAlerts}</span>
                 )}
               </div>
               {unreadAlerts > 0 && (
                 <Button variant="outline" size="sm" className="text-red-600 border-red-200 hover:bg-red-50" onClick={handleMarkAllRead}>
-                  Прочитать все
+                  {t("markRead")}
                 </Button>
               )}
             </div>
@@ -519,7 +522,7 @@ export default function AICommandCenterPage() {
                   </div>
                 </div>
               )) : (
-                <div className="p-8 text-center text-gray-400 text-sm">Нет алертов</div>
+                <div className="p-8 text-center text-gray-400 text-sm">{t("noAlerts")}</div>
               )}
             </div>
           </div>
@@ -534,7 +537,7 @@ export default function AICommandCenterPage() {
             <div className="p-4">
               {sessions.length > 0 ? (
                 <DataTable columns={sessionColumns} data={sessions} searchPlaceholder="Поиск сессий..." searchKey="id" pageSize={10} />
-              ) : <div className="text-sm text-gray-400 p-4 text-center">Нет сессий</div>}
+              ) : <div className="text-sm text-gray-400 p-4 text-center">{t("noSessions")}</div>}
             </div>
           </div>
 
@@ -633,7 +636,7 @@ export default function AICommandCenterPage() {
                         {agent.isActive && (
                           <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-50 border border-green-200">
                             <div className="h-2 w-2 rounded-full bg-green-500" />
-                            <span className="text-xs font-medium text-green-700">АКТИВЕН</span>
+                            <span className="text-xs font-medium text-green-700">{t("active").toUpperCase()}</span>
                           </div>
                         )}
                       </div>
@@ -668,9 +671,9 @@ export default function AICommandCenterPage() {
                     {/* Tools as colored chips */}
                     {tools.length > 0 && (
                       <div className="flex flex-wrap gap-1.5">
-                        {tools.map(t => (
-                          <span key={t} className={cn("inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border text-xs font-medium", getToolColor(t))}>
-                            📄 {t.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase())}
+                        {tools.map(tool => (
+                          <span key={tool} className={cn("inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border text-xs font-medium", getToolColor(tool))}>
+                            📄 {tool.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase())}
                           </span>
                         ))}
                       </div>
@@ -684,7 +687,7 @@ export default function AICommandCenterPage() {
                         className="text-amber-600 border-amber-200 hover:bg-amber-50"
                         onClick={() => { setEditData(agent); setShowForm(true) }}
                       >
-                        <Pencil className="h-3.5 w-3.5 mr-1.5" /> Редактировать
+                        <Pencil className="h-3.5 w-3.5 mr-1.5" /> {t("editAgent")}
                       </Button>
                       {!agent.isActive && (
                         <Button
@@ -702,7 +705,7 @@ export default function AICommandCenterPage() {
                         className="text-red-500 border-red-200 hover:bg-red-50"
                         onClick={() => { setDeleteId(agent.id); setDeleteName(agent.configName) }}
                       >
-                        <Trash2 className="h-3.5 w-3.5 mr-1.5" /> Удалить
+                        <Trash2 className="h-3.5 w-3.5 mr-1.5" /> {tc("delete")}
                       </Button>
                     </div>
                   </div>
@@ -711,7 +714,7 @@ export default function AICommandCenterPage() {
               {agents.length === 0 && (
                 <div className="col-span-2 text-center py-12 text-gray-400 rounded-xl border bg-white">
                   <BrainCircuit className="h-12 w-12 mx-auto mb-3 opacity-30" />
-                  <p className="font-medium">Нет агентов</p>
+                  <p className="font-medium">{t("noAgents")}</p>
                   <p className="text-sm mt-1">Создайте первого агента для начала работы</p>
                 </div>
               )}

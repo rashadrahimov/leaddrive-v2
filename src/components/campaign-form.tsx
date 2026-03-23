@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useMemo } from "react"
+import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -53,24 +54,6 @@ interface CampaignFormProps {
 
 type RecipientMode = "all" | "segment" | "source" | "manual"
 
-const sourceOptions = [
-  { value: "website", label: "Сайт" },
-  { value: "referral", label: "Рекомендация" },
-  { value: "cold_call", label: "Холодный звонок" },
-  { value: "email", label: "Email" },
-  { value: "social", label: "Соц. сети" },
-  { value: "event", label: "Мероприятие" },
-  { value: "other", label: "Другое" },
-]
-
-const statusLabels: Record<string, string> = {
-  draft: "Черновик",
-  scheduled: "Запланирована",
-  sending: "Отправляется",
-  sent: "Отправлена",
-  cancelled: "Отменена",
-}
-
 const statusColors: Record<string, string> = {
   draft: "bg-gray-50 text-gray-600 border-gray-200",
   scheduled: "bg-amber-50 text-amber-600 border-amber-200",
@@ -80,6 +63,29 @@ const statusColors: Record<string, string> = {
 }
 
 export function CampaignForm({ open, onOpenChange, onSaved, initialData, orgId, onSend, onDelete }: CampaignFormProps) {
+  const t = useTranslations("campaigns")
+  const tf = useTranslations("forms")
+  const tc = useTranslations("common")
+  const ts = useTranslations("segments")
+
+  const sourceOptions = [
+    { value: "website", label: ts("sourceWebsite") },
+    { value: "referral", label: ts("sourceReferral") },
+    { value: "cold_call", label: ts("sourceColdCall") },
+    { value: "email", label: ts("sourceEmail") },
+    { value: "social", label: ts("sourceSocial") },
+    { value: "event", label: ts("sourceEvent") },
+    { value: "other", label: ts("sourceOther") },
+  ]
+
+  const statusLabels: Record<string, string> = {
+    draft: t("statusDraft"),
+    scheduled: t("statusScheduled"),
+    sending: t("statusSending"),
+    sent: t("statusSent"),
+    cancelled: t("statusCancelled"),
+  }
+
   const isEdit = !!initialData?.id
   const [editingSent, setEditingSent] = useState(false)
   const isSent = initialData?.status === "sent" && !editingSent
@@ -159,7 +165,7 @@ export function CampaignForm({ open, onOpenChange, onSaved, initialData, orgId, 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!form.name.trim()) { setError("Введите название кампании"); return }
+    if (!form.name.trim()) { setError(tc("required")); return }
     setSaving(true)
     setError("")
     try {
@@ -191,7 +197,7 @@ export function CampaignForm({ open, onOpenChange, onSaved, initialData, orgId, 
         body: JSON.stringify(payload),
       })
       const json = await res.json()
-      if (!res.ok) throw new Error(json.error || "Ошибка сохранения")
+      if (!res.ok) throw new Error(json.error || tc("failedToSave"))
       onSaved()
       onOpenChange(false)
     } catch (err: any) {
@@ -253,7 +259,7 @@ export function CampaignForm({ open, onOpenChange, onSaved, initialData, orgId, 
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogHeader>
           <div className="flex items-center justify-between">
-            <DialogTitle className="text-lg">{form.name || "Кампания"}</DialogTitle>
+            <DialogTitle className="text-lg">{form.name || t("title")}</DialogTitle>
             <div className="flex items-center gap-2">
               <span className={cn("text-xs px-2.5 py-1 rounded-full border font-medium", statusColors[form.status])}>
                 {statusLabels[form.status] || form.status}
@@ -273,54 +279,54 @@ export function CampaignForm({ open, onOpenChange, onSaved, initialData, orgId, 
           <div className="grid grid-cols-3 gap-3 mb-4">
             <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-3 text-center">
               <div className="text-2xl font-bold text-green-600">{initialData?.totalSent ?? Number(form.totalRecipients)}</div>
-              <div className="text-xs text-muted-foreground">Отправлено</div>
+              <div className="text-xs text-muted-foreground">{t("sent")}</div>
             </div>
             <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 text-center">
               <div className="text-2xl font-bold text-blue-600">{initialData?.totalOpened ?? 0}</div>
-              <div className="text-xs text-muted-foreground">Открыто</div>
+              <div className="text-xs text-muted-foreground">{tc("open")}</div>
             </div>
             <div className="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-3 text-center">
               <div className="text-2xl font-bold text-purple-600">{initialData?.totalClicked ?? 0}</div>
-              <div className="text-xs text-muted-foreground">Кликов</div>
+              <div className="text-xs text-muted-foreground">{tc("total")}</div>
             </div>
           </div>
           {/* Details */}
           <div className="space-y-2 text-sm">
             <div className="flex items-center gap-2 py-1.5 border-b">
               <Mail className="h-4 w-4 text-muted-foreground shrink-0" />
-              <span className="text-muted-foreground w-24">Тип</span>
+              <span className="text-muted-foreground w-24">{tc("type")}</span>
               <span className="font-medium">{form.type === "sms" ? "SMS" : "Email"}</span>
             </div>
             {form.subject && (
               <div className="flex items-center gap-2 py-1.5 border-b">
                 <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
-                <span className="text-muted-foreground w-24">Тема</span>
+                <span className="text-muted-foreground w-24">{tf("emailSubject")}</span>
                 <span className="font-medium">{form.subject}</span>
               </div>
             )}
             {templateName && (
               <div className="flex items-center gap-2 py-1.5 border-b">
                 <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
-                <span className="text-muted-foreground w-24">Шаблон</span>
+                <span className="text-muted-foreground w-24">{tf("selectTemplate")}</span>
                 <span className="font-medium">{templateName}</span>
               </div>
             )}
             <div className="flex items-center gap-2 py-1.5 border-b">
               <Users className="h-4 w-4 text-muted-foreground shrink-0" />
-              <span className="text-muted-foreground w-24">Получатели</span>
+              <span className="text-muted-foreground w-24">{t("recipients")}</span>
               <span className="font-medium">{Number(form.totalRecipients) || 0}</span>
             </div>
             {Number(form.budget) > 0 && (
               <div className="flex items-center gap-2 py-1.5 border-b">
                 <DollarSign className="h-4 w-4 text-muted-foreground shrink-0" />
-                <span className="text-muted-foreground w-24">Бюджет</span>
+                <span className="text-muted-foreground w-24">{t("budget")}</span>
                 <span className="font-medium">{Number(form.budget).toLocaleString()}</span>
               </div>
             )}
             {initialData?.sentAt && (
               <div className="flex items-center gap-2 py-1.5">
                 <Clock className="h-4 w-4 text-muted-foreground shrink-0" />
-                <span className="text-muted-foreground w-24">Отправлена</span>
+                <span className="text-muted-foreground w-24">{t("sent")}</span>
                 <span className="font-medium">{new Date(initialData.sentAt).toLocaleString("ru-RU")}</span>
               </div>
             )}
@@ -328,17 +334,17 @@ export function CampaignForm({ open, onOpenChange, onSaved, initialData, orgId, 
         </DialogContent>
         <DialogFooter>
           <div className="flex items-center gap-2 w-full">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Закрыть</Button>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>{tc("close")}</Button>
             <div className="flex-1" />
             <Button type="button" variant="outline" onClick={() => {
               setEditingSent(true)
               setForm(f => ({ ...f, status: "draft" }))
             }}>
-              Редактировать
+              {tc("edit")}
             </Button>
             {onSend && (
               <Button type="button" className="bg-emerald-600 hover:bg-emerald-700 text-white gap-1" onClick={onSend}>
-                <Send className="h-3.5 w-3.5" /> Повторить отправку
+                <Send className="h-3.5 w-3.5" /> {t("sendCampaign")}
               </Button>
             )}
           </div>
@@ -352,7 +358,7 @@ export function CampaignForm({ open, onOpenChange, onSaved, initialData, orgId, 
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogHeader>
         <div className="flex items-center justify-between">
-          <DialogTitle>{isEdit ? "Редактировать кампанию" : "Новая кампания"}</DialogTitle>
+          <DialogTitle>{isEdit ? tf("editCampaign") : tf("newCampaign")}</DialogTitle>
           <div className="flex items-center gap-2">
             {isEdit && (
               <span className={cn("text-xs px-2.5 py-1 rounded-full border font-medium", statusColors[form.status])}>
@@ -373,11 +379,11 @@ export function CampaignForm({ open, onOpenChange, onSaved, initialData, orgId, 
             {/* Name + Type on same row */}
             <div className="grid grid-cols-4 gap-3">
               <div className="col-span-3">
-                <Label className="text-xs text-muted-foreground">Название *</Label>
+                <Label className="text-xs text-muted-foreground">{tc("name")} *</Label>
                 <Input value={form.name} onChange={(e) => update("name", e.target.value)} required placeholder="напр. Мартовская рассылка" />
               </div>
               <div>
-                <Label className="text-xs text-muted-foreground">Тип</Label>
+                <Label className="text-xs text-muted-foreground">{tc("type")}</Label>
                 <Select value={form.type} onChange={(e) => update("type", e.target.value)}>
                   <option value="email">📧 Email</option>
                   <option value="sms">📱 SMS</option>
@@ -388,16 +394,16 @@ export function CampaignForm({ open, onOpenChange, onSaved, initialData, orgId, 
             {/* Subject + Template on same row */}
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className="text-xs text-muted-foreground">Тема письма</Label>
+                <Label className="text-xs text-muted-foreground">{tf("emailSubject")}</Label>
                 <Input value={form.subject} onChange={(e) => update("subject", e.target.value)} placeholder="Тема email рассылки" />
               </div>
               <div>
-                <Label className="text-xs text-muted-foreground">Шаблон</Label>
+                <Label className="text-xs text-muted-foreground">{tf("selectTemplate")}</Label>
                 <Select
                   value={form.templateId}
                   onChange={(e) => update("templateId", e.target.value)}
                 >
-                  <option value="">{templatesLoaded ? "— Не выбран —" : "Загрузка..."}</option>
+                  <option value="">{templatesLoaded ? tf("noTemplate") : tc("loading")}</option>
                   {templates.map(t => (
                     <option key={t.id} value={t.id}>{t.name}</option>
                   ))}
@@ -408,18 +414,18 @@ export function CampaignForm({ open, onOpenChange, onSaved, initialData, orgId, 
             {/* Budget + Schedule on same row */}
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className="text-xs text-muted-foreground">Бюджет</Label>
+                <Label className="text-xs text-muted-foreground">{t("budget")}</Label>
                 <Input type="number" step="0.01" value={form.budget} onChange={(e) => update("budget", e.target.value)} placeholder="0" />
               </div>
               <div>
-                <Label className="text-xs text-muted-foreground">Запланировать</Label>
+                <Label className="text-xs text-muted-foreground">{tf("scheduleSend")}</Label>
                 <Input type="datetime-local" value={form.scheduledAt} onChange={(e) => update("scheduledAt", e.target.value)} />
               </div>
             </div>
 
             {/* Description — collapsible single line */}
             <div>
-              <Label className="text-xs text-muted-foreground">Описание</Label>
+              <Label className="text-xs text-muted-foreground">{tc("description")}</Label>
               <Input value={form.description} onChange={(e) => update("description", e.target.value)} placeholder="Цель и контекст кампании (необязательно)" />
             </div>
 
@@ -428,7 +434,7 @@ export function CampaignForm({ open, onOpenChange, onSaved, initialData, orgId, 
               <div className="px-3 py-2.5 border-b border-primary/10 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Users className="h-4 w-4 text-primary" />
-                  <span className="font-semibold text-sm">Получатели</span>
+                  <span className="font-semibold text-sm">{t("recipients")}</span>
                 </div>
                 <span className={cn(
                   "text-sm font-bold px-2.5 py-0.5 rounded-full",
@@ -443,10 +449,10 @@ export function CampaignForm({ open, onOpenChange, onSaved, initialData, orgId, 
                 {/* Mode tabs */}
                 <div className="flex gap-1.5">
                   {([
-                    { mode: "all" as const, icon: Users, label: "Все" },
-                    { mode: "segment" as const, icon: Filter, label: "Сегмент" },
-                    { mode: "source" as const, icon: UserCheck, label: "Источник" },
-                    { mode: "manual" as const, icon: Search, label: "Вручную" },
+                    { mode: "all" as const, icon: Users, label: tf("allContacts") },
+                    { mode: "segment" as const, icon: Filter, label: tf("segment") },
+                    { mode: "source" as const, icon: UserCheck, label: tf("selectSource") },
+                    { mode: "manual" as const, icon: Search, label: tf("manualSelect") },
                   ] as const).map(({ mode, icon: Icon, label }) => (
                     <button
                       key={mode}
@@ -472,7 +478,7 @@ export function CampaignForm({ open, onOpenChange, onSaved, initialData, orgId, 
                 {/* Segment picker */}
                 {recipientMode === "segment" && (
                   <Select value={selectedSegmentId} onChange={e => setSelectedSegmentId(e.target.value)}>
-                    <option value="">— Выберите сегмент —</option>
+                    <option value="">— {tf("selectSegment")} —</option>
                     {segments.map(s => (
                       <option key={s.id} value={s.id}>{s.name} ({s.contactCount})</option>
                     ))}
@@ -482,7 +488,7 @@ export function CampaignForm({ open, onOpenChange, onSaved, initialData, orgId, 
                 {/* Source picker */}
                 {recipientMode === "source" && (
                   <Select value={selectedSource} onChange={e => setSelectedSource(e.target.value)}>
-                    <option value="">— Выберите источник —</option>
+                    <option value="">— {tf("selectSource")} —</option>
                     {(availableSources.length > 0 ? availableSources : sourceOptions).map(o => (
                       <option key={o.value} value={o.value}>{o.label}</option>
                     ))}
@@ -492,7 +498,7 @@ export function CampaignForm({ open, onOpenChange, onSaved, initialData, orgId, 
                 {/* All info */}
                 {recipientMode === "all" && contacts.length > 0 && (
                   <p className="text-xs text-muted-foreground">
-                    Всем {contacts.length} контактам с email
+                    {t("sentToRecipients", { count: contacts.length })}
                   </p>
                 )}
 
@@ -502,15 +508,15 @@ export function CampaignForm({ open, onOpenChange, onSaved, initialData, orgId, 
                     <div className="flex items-center gap-2">
                       <div className="relative flex-1">
                         <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-                        <Input placeholder="Поиск..." value={contactSearch}
+                        <Input placeholder={tc("search")} value={contactSearch}
                           onChange={e => setContactSearch(e.target.value)} className="pl-7 h-8 text-sm" />
                       </div>
-                      <Button type="button" size="sm" variant="default" className="h-8 text-xs px-2" onClick={selectAll}>Все</Button>
-                      <Button type="button" size="sm" variant="outline" className="h-8 text-xs px-2" onClick={selectNone}>Сбросить</Button>
+                      <Button type="button" size="sm" variant="default" className="h-8 text-xs px-2" onClick={selectAll}>{tc("selectAll")}</Button>
+                      <Button type="button" size="sm" variant="outline" className="h-8 text-xs px-2" onClick={selectNone}>{tc("clearAll")}</Button>
                     </div>
                     <div className="max-h-40 overflow-y-auto border rounded bg-background">
                       {searchFilteredContacts.length === 0 ? (
-                        <div className="p-3 text-sm text-muted-foreground text-center">Нет контактов</div>
+                        <div className="p-3 text-sm text-muted-foreground text-center">{tc("noData")}</div>
                       ) : searchFilteredContacts.map(c => (
                         <label key={c.id} className={cn(
                           "flex items-center justify-between px-2.5 py-1.5 cursor-pointer hover:bg-muted/50 text-sm border-b last:border-b-0",
@@ -536,17 +542,17 @@ export function CampaignForm({ open, onOpenChange, onSaved, initialData, orgId, 
             {isEdit && onDelete && (
               <Button type="button" variant="ghost" size="sm" onClick={onDelete}
                 className="text-red-500 hover:text-red-700 hover:bg-red-50 gap-1 mr-auto">
-                <Trash2 className="h-3.5 w-3.5" /> Удалить
+                <Trash2 className="h-3.5 w-3.5" /> {tc("delete")}
               </Button>
             )}
             {!isEdit && !onDelete && <div className="mr-auto" />}
-            <Button type="button" variant="outline" size="sm" onClick={() => onOpenChange(false)}>Отмена</Button>
+            <Button type="button" variant="outline" size="sm" onClick={() => onOpenChange(false)}>{tc("cancel")}</Button>
             <Button type="submit" disabled={saving} size="sm" className="min-w-[100px]">
-              {saving ? "..." : isEdit ? "Сохранить" : "Создать"}
+              {saving ? "..." : isEdit ? tc("save") : tc("create")}
             </Button>
             {isEdit && onSend && (
               <Button type="button" size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white gap-1" onClick={onSend}>
-                <Send className="h-3.5 w-3.5" /> Отправить
+                <Send className="h-3.5 w-3.5" /> {t("sendCampaign")}
               </Button>
             )}
           </div>

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useSession } from "next-auth/react"
+import { useTranslations } from "next-intl"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -35,6 +36,8 @@ function formatHours(h: number): string {
 
 export default function SlaPoliciesPage() {
   const { data: session } = useSession()
+  const t = useTranslations("settings")
+  const tc = useTranslations("common")
   const [policies, setPolicies] = useState<SlaPolicy[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
@@ -86,11 +89,11 @@ export default function SlaPoliciesPage() {
     },
     {
       key: "businessHoursOnly", label: "Business Hours", sortable: true,
-      render: (item: any) => <span className="text-sm">{item.businessHoursOnly ? "Yes" : "No"}</span>,
+      render: (item: any) => <span className="text-sm">{item.businessHoursOnly ? tc("yes") : tc("no")}</span>,
     },
     {
-      key: "isActive", label: "Status", sortable: true,
-      render: (item: any) => <Badge variant={item.isActive ? "default" : "secondary"}>{item.isActive ? "Active" : "Inactive"}</Badge>,
+      key: "isActive", label: tc("status"), sortable: true,
+      render: (item: any) => <Badge variant={item.isActive ? "default" : "secondary"}>{item.isActive ? tc("active") : tc("inactive")}</Badge>,
     },
     {
       key: "edit", label: "", sortable: false,
@@ -112,24 +115,24 @@ export default function SlaPoliciesPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-            <Clock className="h-6 w-6" /> SLA Policies
+            <Clock className="h-6 w-6" /> {t("slaPolicies")}
           </h1>
-          <p className="text-sm text-muted-foreground">Define response and resolution time targets for each priority level</p>
+          <p className="text-sm text-muted-foreground">{t("slaPoliciesDesc")}</p>
         </div>
         <Button className="gap-2" onClick={() => { setEditData(undefined); setShowForm(true) }}>
-          <Plus className="h-4 w-4" /> Add Policy
+          <Plus className="h-4 w-4" /> {tc("add")} Policy
         </Button>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>All SLA Policies</CardTitle>
+          <CardTitle>{t("slaPolicies")}</CardTitle>
         </CardHeader>
         <CardContent>
           {loading ? (
-            <p className="text-muted-foreground">Loading...</p>
+            <p className="text-muted-foreground">{tc("loading")}</p>
           ) : (
-            <DataTable columns={columns} data={policies} searchPlaceholder="Search policies..." searchKey="name" pageSize={10} />
+            <DataTable columns={columns} data={policies} searchPlaceholder={tc("search")} searchKey="name" pageSize={10} />
           )}
         </CardContent>
       </Card>
@@ -146,7 +149,7 @@ export default function SlaPoliciesPage() {
         open={!!deleteId}
         onOpenChange={(open) => { if (!open) setDeleteId(null) }}
         onConfirm={handleDelete}
-        title="Delete SLA Policy"
+        title={`${tc("delete")} SLA Policy`}
         itemName={deleteName}
       />
     </div>

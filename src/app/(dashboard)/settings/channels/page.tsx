@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useSession } from "next-auth/react"
+import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
@@ -33,6 +34,8 @@ const channelMeta: Record<string, { label: string; icon: any; color: string; bgC
 
 export default function ChannelsPage() {
   const { data: session } = useSession()
+  const t = useTranslations("settings")
+  const tc = useTranslations("common")
   const [channels, setChannels] = useState<ChannelConfig[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
@@ -62,7 +65,7 @@ export default function ChannelsPage() {
       const data = await res.json()
       setTestResult({
         success: data.success,
-        message: data.success ? "Сообщение отправлено!" : (data.error || "Ошибка отправки"),
+        message: data.success ? "Message sent!" : (data.error || "Send error"),
       })
     } catch (err: any) {
       setTestResult({ success: false, message: err.message })
@@ -109,14 +112,14 @@ export default function ChannelsPage() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
             <Settings className="h-6 w-6 text-primary" />
-            Настройка каналов
+            {t("channels")}
           </h1>
           <p className="text-sm text-muted-foreground">
-            Настройте параметры интеграции для каждого канала связи
+            {t("channelsDesc")}
           </p>
         </div>
         <Button onClick={() => { setEditData(undefined); setShowForm(true) }} className="gap-1.5">
-          <Plus className="h-4 w-4" /> Добавить канал
+          <Plus className="h-4 w-4" /> {tc("add")} Channel
         </Button>
       </div>
 
@@ -124,19 +127,19 @@ export default function ChannelsPage() {
       <div className="grid grid-cols-3 gap-4">
         <div className="border rounded-lg p-4 bg-card">
           <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
-            <Radio className="h-4 w-4" /> Всего каналов
+            <Radio className="h-4 w-4" /> Total Channels
           </div>
           <p className="text-2xl font-bold">{channels.length}</p>
         </div>
         <div className="border rounded-lg p-4 bg-card">
           <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
-            <div className="h-2 w-2 rounded-full bg-green-500" /> Активных
+            <div className="h-2 w-2 rounded-full bg-green-500" /> {tc("active")}
           </div>
           <p className="text-2xl font-bold text-green-600">{activeCount}</p>
         </div>
         <div className="border rounded-lg p-4 bg-card">
           <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
-            <div className="h-2 w-2 rounded-full bg-gray-400" /> Неактивных
+            <div className="h-2 w-2 rounded-full bg-gray-400" /> {tc("inactive")}
           </div>
           <p className="text-2xl font-bold text-muted-foreground">{channels.length - activeCount}</p>
         </div>
@@ -149,7 +152,7 @@ export default function ChannelsPage() {
           <Input
             value={search}
             onChange={e => setSearch(e.target.value)}
-            placeholder="Поиск каналов..."
+            placeholder={tc("search")}
             className="pl-9"
           />
         </div>
@@ -165,13 +168,13 @@ export default function ChannelsPage() {
           <div className="rounded-lg border-2 border-dashed bg-muted/20 py-16 text-center">
             <Radio className="h-8 w-8 text-muted-foreground mx-auto mb-3" />
             <p className="text-muted-foreground font-medium">
-              {search ? "Ничего не найдено" : "Нет настроенных каналов"}
+              {search ? tc("noResults") : "No channels configured"}
             </p>
             {!search && (
               <>
-                <p className="text-sm text-muted-foreground mt-1">Добавьте первый канал для коммуникации</p>
+                <p className="text-sm text-muted-foreground mt-1">Add your first communication channel</p>
                 <Button className="mt-4 gap-1.5" onClick={() => { setEditData(undefined); setShowForm(true) }}>
-                  <Plus className="h-4 w-4" /> Добавить канал
+                  <Plus className="h-4 w-4" /> {tc("add")} Channel
                 </Button>
               </>
             )}
@@ -207,14 +210,14 @@ export default function ChannelsPage() {
                         "inline-block w-1.5 h-1.5 rounded-full mr-1",
                         channel.isActive ? "bg-green-500" : "bg-gray-400"
                       )} />
-                      {channel.isActive ? "Активен" : "Неактивен"}
+                      {channel.isActive ? tc("active") : tc("inactive")}
                     </Badge>
                   </div>
                   <p className="text-sm text-muted-foreground">
                     {meta.label.toUpperCase()}
                     {channel.phoneNumber && ` · ${channel.phoneNumber}`}
-                    {channel.botToken && " · Токен настроен"}
-                    {channel.webhookUrl && " · Webhook настроен"}
+                    {channel.botToken && " · Token configured"}
+                    {channel.webhookUrl && " · Webhook configured"}
                   </p>
                 </div>
 
@@ -226,7 +229,7 @@ export default function ChannelsPage() {
                       variant="ghost"
                       className="h-9 w-9 p-0 text-green-500 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20"
                       onClick={() => { setTestChannelId(channel.id); setTestResult(null); setTestPhone("") }}
-                      title="Тестовое сообщение"
+                      title="Test message"
                     >
                       <MessageSquare className="h-4 w-4" />
                     </Button>
@@ -236,7 +239,7 @@ export default function ChannelsPage() {
                     variant="ghost"
                     className="h-9 w-9 p-0 text-amber-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20"
                     onClick={() => { setEditData(channel); setShowForm(true) }}
-                    title="Редактировать"
+                    title={tc("edit")}
                   >
                     <Pencil className="h-4 w-4" />
                   </Button>
@@ -245,7 +248,7 @@ export default function ChannelsPage() {
                     variant="ghost"
                     className="h-9 w-9 p-0 text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
                     onClick={() => { setDeleteId(channel.id); setDeleteName(channel.configName) }}
-                    title="Удалить"
+                    title={tc("delete")}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
@@ -270,18 +273,18 @@ export default function ChannelsPage() {
           <div className="bg-background rounded-lg shadow-xl p-6 w-full max-w-md mx-4" onClick={(e) => e.stopPropagation()}>
             <h3 className="text-lg font-semibold flex items-center gap-2 mb-4">
               <MessageSquare className="h-5 w-5 text-green-600" />
-              Тестовое сообщение WhatsApp
+              WhatsApp Test Message
             </h3>
             <div className="space-y-3">
               <div>
-                <label className="text-sm font-medium">Номер получателя</label>
+                <label className="text-sm font-medium">Recipient number</label>
                 <Input
                   value={testPhone}
                   onChange={(e) => setTestPhone(e.target.value)}
                   placeholder="+994501234567"
                   className="mt-1"
                 />
-                <p className="text-xs text-muted-foreground mt-1">Формат: +код_страны номер (без пробелов)</p>
+                <p className="text-xs text-muted-foreground mt-1">Format: +country_code number (no spaces)</p>
               </div>
               {testResult && (
                 <div className={`text-sm p-3 rounded ${testResult.success ? "bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400" : "bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400"}`}>
@@ -289,10 +292,10 @@ export default function ChannelsPage() {
                 </div>
               )}
               <div className="flex gap-2 justify-end">
-                <Button variant="outline" onClick={() => setTestChannelId(null)}>Отмена</Button>
+                <Button variant="outline" onClick={() => setTestChannelId(null)}>{tc("cancel")}</Button>
                 <Button onClick={sendTestWhatsApp} disabled={testSending || !testPhone} className="bg-green-600 hover:bg-green-700 gap-2">
                   <Send className="h-4 w-4" />
-                  {testSending ? "Отправка..." : "Отправить"}
+                  {testSending ? tc("sending") : tc("send")}
                 </Button>
               </div>
             </div>
@@ -304,7 +307,7 @@ export default function ChannelsPage() {
         open={!!deleteId}
         onOpenChange={(open) => { if (!open) setDeleteId(null) }}
         onConfirm={handleDelete}
-        title="Удалить канал"
+        title="Delete Channel"
         itemName={deleteName}
       />
     </div>

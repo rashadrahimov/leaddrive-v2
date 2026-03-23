@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useTranslations } from "next-intl"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -8,6 +9,8 @@ import { Shield, ShieldCheck, ShieldOff, Copy, Check, Loader2, ArrowLeft, Smartp
 import Link from "next/link"
 
 export default function SecuritySettingsPage() {
+  const t = useTranslations("settings")
+  const tc = useTranslations("common")
   const [enabled, setEnabled] = useState(false)
   const [loading, setLoading] = useState(true)
   const [step, setStep] = useState<"status" | "setup" | "verify" | "backup" | "disable">("status")
@@ -117,8 +120,8 @@ export default function SecuritySettingsPage() {
           <Shield className="h-5 w-5 text-primary" />
         </div>
         <div>
-          <h1 className="text-xl font-bold">Security</h1>
-          <p className="text-sm text-muted-foreground">Two-Factor Authentication (2FA)</p>
+          <h1 className="text-xl font-bold">{t("security")}</h1>
+          <p className="text-sm text-muted-foreground">{t("securityDesc")}</p>
         </div>
       </div>
 
@@ -139,7 +142,7 @@ export default function SecuritySettingsPage() {
                 </p>
               </div>
               <Badge className={`ml-auto ${enabled ? "bg-green-100 text-green-700" : "bg-orange-100 text-orange-700"}`}>
-                {enabled ? "Active" : "Inactive"}
+                {enabled ? tc("active") : tc("inactive")}
               </Badge>
             </div>
 

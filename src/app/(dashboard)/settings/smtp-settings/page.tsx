@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useSession } from "next-auth/react"
+import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -18,6 +19,8 @@ const presets: Record<string, { host: string; port: number; tls: boolean }> = {
 
 export default function SmtpSettingsPage() {
   const { data: session } = useSession()
+  const t = useTranslations("settings")
+  const tc = useTranslations("common")
   const orgId = session?.user?.organizationId
 
   const [smtpHost, setSmtpHost] = useState("")
@@ -88,8 +91,8 @@ export default function SmtpSettingsPage() {
         }),
       })
       const json = await res.json()
-      if (!res.ok) throw new Error(json.error || "Ошибка сохранения")
-      setSaveMsg({ type: "success", text: "Настройки сохранены!" })
+      if (!res.ok) throw new Error(json.error || "Save error")
+      setSaveMsg({ type: "success", text: tc("savedSuccessfully") })
       setIsConfigured(true)
     } catch (err: any) {
       setSaveMsg({ type: "error", text: err.message })
@@ -99,7 +102,7 @@ export default function SmtpSettingsPage() {
   }
 
   async function handleTest() {
-    if (!testEmail) { setTestMsg({ type: "error", text: "Введите email" }); return }
+    if (!testEmail) { setTestMsg({ type: "error", text: "Enter email" }); return }
     setTesting(true)
     setTestMsg(null)
     try {
@@ -112,8 +115,8 @@ export default function SmtpSettingsPage() {
         body: JSON.stringify({ email: testEmail }),
       })
       const json = await res.json()
-      if (!res.ok) throw new Error(json.error || "Ошибка отправки")
-      setTestMsg({ type: "success", text: `Тестовое письмо отправлено на ${testEmail}!` })
+      if (!res.ok) throw new Error(json.error || "Send error")
+      setTestMsg({ type: "success", text: `Test email sent to ${testEmail}!` })
     } catch (err: any) {
       setTestMsg({ type: "error", text: err.message })
     } finally {
@@ -124,7 +127,7 @@ export default function SmtpSettingsPage() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <h1 className="text-2xl font-bold tracking-tight">Настройки SMTP</h1>
+        <h1 className="text-2xl font-bold tracking-tight">{t("smtp")}</h1>
         <div className="animate-pulse"><div className="h-96 bg-muted rounded-lg" /></div>
       </div>
     )
@@ -138,19 +141,19 @@ export default function SmtpSettingsPage() {
           <Server className="h-6 w-6 text-primary" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Настройки SMTP</h1>
-          <p className="text-sm text-muted-foreground">Настройка сервера исходящей почты</p>
+          <h1 className="text-2xl font-bold tracking-tight">{t("smtp")}</h1>
+          <p className="text-sm text-muted-foreground">{t("smtpDesc")}</p>
         </div>
         {isConfigured && (
           <div className="ml-auto flex items-center gap-1.5 text-sm text-green-600 bg-green-50 dark:bg-green-900/20 px-3 py-1.5 rounded-full">
-            <CheckCircle className="h-4 w-4" /> Настроен
+            <CheckCircle className="h-4 w-4" /> Configured
           </div>
         )}
       </div>
 
       {/* Quick presets */}
       <div className="border rounded-lg p-4 bg-card">
-        <p className="text-sm font-medium text-muted-foreground mb-3">Быстрая настройка:</p>
+        <p className="text-sm font-medium text-muted-foreground mb-3">Quick setup:</p>
         <div className="flex gap-2 flex-wrap">
           {[
             { key: "gmail", label: "Gmail", color: "bg-red-500 hover:bg-red-600" },
@@ -174,54 +177,54 @@ export default function SmtpSettingsPage() {
       <div className="border rounded-lg p-6 bg-card space-y-5">
         {/* Host */}
         <div>
-          <Label className="text-sm">SMTP Сервер</Label>
+          <Label className="text-sm">SMTP Server</Label>
           <Input value={smtpHost} onChange={e => setSmtpHost(e.target.value)} placeholder="smtp.gmail.com" className="mt-1" />
-          <p className="text-xs text-muted-foreground mt-1">Адрес SMTP-сервера — например smtp.gmail.com, smtp.mailru.ru, smtp.office365.com</p>
+          <p className="text-xs text-muted-foreground mt-1">SMTP server address — e.g. smtp.gmail.com, smtp.mail.ru, smtp.office365.com</p>
         </div>
 
         {/* Port + TLS */}
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <Label className="text-sm">Порт</Label>
+            <Label className="text-sm">Port</Label>
             <Input value={smtpPort} onChange={e => setSmtpPort(e.target.value)} placeholder="587" className="mt-1" />
-            <p className="text-xs text-muted-foreground mt-1">Порт: 587 (TLS) или 465 (SSL) — 25 часто заблокирован</p>
+            <p className="text-xs text-muted-foreground mt-1">Port: 587 (TLS) or 465 (SSL) — 25 is often blocked</p>
           </div>
           <div>
-            <Label className="text-sm">Использовать TLS</Label>
+            <Label className="text-sm">Use TLS</Label>
             <Select value={smtpTls ? "yes" : "no"} onChange={e => setSmtpTls(e.target.value === "yes")} className="mt-1">
-              <option value="yes">Да</option>
-              <option value="no">Нет</option>
+              <option value="yes">{tc("yes")}</option>
+              <option value="no">{tc("no")}</option>
             </Select>
-            <p className="text-xs text-muted-foreground mt-1">Включить TLS шифрование — обычно "Да" для порта 587</p>
+            <p className="text-xs text-muted-foreground mt-1">Enable TLS encryption — usually "Yes" for port 587</p>
           </div>
         </div>
 
         {/* Login + Password */}
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <Label className="text-sm">Логин</Label>
+            <Label className="text-sm">Login</Label>
             <Input value={smtpUser} onChange={e => setSmtpUser(e.target.value)} placeholder="user@gmail.com" className="mt-1" />
-            <p className="text-xs text-muted-foreground mt-1">Имя пользователя SMTP — обычно ваш адрес электронной почты</p>
+            <p className="text-xs text-muted-foreground mt-1">SMTP username — usually your email address</p>
           </div>
           <div>
-            <Label className="text-sm">Пароль</Label>
+            <Label className="text-sm">Password</Label>
             <Input type="password" value={smtpPass} onChange={e => setSmtpPass(e.target.value)} placeholder="••••••••" className="mt-1" />
-            <p className="text-xs text-muted-foreground mt-1">Пароль SMTP или специальный пароль приложения</p>
+            <p className="text-xs text-muted-foreground mt-1">SMTP password or app-specific password</p>
           </div>
         </div>
 
         {/* Gmail warning */}
         {smtpHost.includes("gmail") && (
           <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
-            <p className="text-sm font-semibold text-amber-700 dark:text-amber-400 mb-1">Важно для Gmail:</p>
+            <p className="text-sm font-semibold text-amber-700 dark:text-amber-400 mb-1">Important for Gmail:</p>
             <p className="text-sm text-amber-600 dark:text-amber-300">
-              Gmail не позволяет использовать обычный пароль. Нужен <strong>Пароль приложения</strong>:
+              Gmail does not allow regular passwords. You need an <strong>App Password</strong>:
             </p>
             <ol className="text-sm text-amber-600 dark:text-amber-300 mt-1 ml-4 list-decimal space-y-0.5">
-              <li>Перейдите на myaccount.google.com/apppasswords</li>
-              <li>Включите двухфакторную аутентификацию, если ещё не включена</li>
-              <li>Создайте пароль приложения (выберите "Почта")</li>
-              <li>Скопируйте 16-символный пароль и вставьте его сюда</li>
+              <li>Go to myaccount.google.com/apppasswords</li>
+              <li>Enable two-factor authentication if not already enabled</li>
+              <li>Create an app password (select "Mail")</li>
+              <li>Copy the 16-character password and paste it here</li>
             </ol>
           </div>
         )}
@@ -229,14 +232,14 @@ export default function SmtpSettingsPage() {
         {/* From Email + From Name */}
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <Label className="text-sm">Email отправителя</Label>
+            <Label className="text-sm">From Email</Label>
             <Input value={fromEmail} onChange={e => setFromEmail(e.target.value)} placeholder="your@gmail.com" className="mt-1" />
-            <p className="text-xs text-muted-foreground mt-1">Адрес электронной почты который будет отображаться как отправитель</p>
+            <p className="text-xs text-muted-foreground mt-1">Email address that will appear as the sender</p>
           </div>
           <div>
-            <Label className="text-sm">Имя отправителя</Label>
+            <Label className="text-sm">From Name</Label>
             <Input value={fromName} onChange={e => setFromName(e.target.value)} placeholder="LeadDrive CRM" className="mt-1" />
-            <p className="text-xs text-muted-foreground mt-1">Имя для отображения получателям — например "Ваша компания"</p>
+            <p className="text-xs text-muted-foreground mt-1">Display name shown to recipients — e.g. "Your Company"</p>
           </div>
         </div>
 
@@ -244,7 +247,7 @@ export default function SmtpSettingsPage() {
         <div className="flex items-center gap-3 pt-2">
           <Button onClick={handleSave} disabled={saving || !smtpHost || !smtpUser || !smtpPass} className="min-w-[200px]">
             {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
-            Сохранить настройки
+            {tc("save")} Settings
           </Button>
           {saveMsg && (
             <div className={cn(
@@ -260,10 +263,10 @@ export default function SmtpSettingsPage() {
 
       {/* Test Email */}
       <div className="border rounded-lg p-6 bg-card space-y-4">
-        <h2 className="text-lg font-semibold">Тестовое письмо</h2>
+        <h2 className="text-lg font-semibold">Test Email</h2>
         <div className="flex gap-3 items-end">
           <div className="flex-1">
-            <Label className="text-sm">Email для теста</Label>
+            <Label className="text-sm">Test email address</Label>
             <Input
               type="email"
               value={testEmail}
@@ -274,7 +277,7 @@ export default function SmtpSettingsPage() {
           </div>
           <Button onClick={handleTest} disabled={testing || !isConfigured} variant="outline" className="gap-1.5">
             {testing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-            Отправить тестовое письмо
+            Send Test Email
           </Button>
         </div>
         {testMsg && (
@@ -289,7 +292,7 @@ export default function SmtpSettingsPage() {
           </div>
         )}
         {!isConfigured && (
-          <p className="text-xs text-muted-foreground">Сначала сохраните настройки SMTP, затем отправьте тестовое письмо для проверки</p>
+          <p className="text-xs text-muted-foreground">Save SMTP settings first, then send a test email to verify</p>
         )}
       </div>
     </div>

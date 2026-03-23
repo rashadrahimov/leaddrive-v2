@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useSession } from "next-auth/react"
+import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Brain, RefreshCw, Loader2, Sparkles, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react"
@@ -38,6 +39,9 @@ const gradeBgLight: Record<string, string> = {
 }
 
 export default function AILeadScoringPage() {
+  const t = useTranslations("ai")
+  const tc = useTranslations("common")
+  const tl = useTranslations("leads")
   const { data: session } = useSession()
   const orgId = session?.user?.organizationId
   const [leads, setLeads] = useState<ScoredLead[]>([])
@@ -121,7 +125,7 @@ export default function AILeadScoringPage() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <h1 className="text-2xl font-bold tracking-tight">AI Lead Scoring</h1>
+        <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
         <div className="animate-pulse"><div className="h-96 bg-muted rounded-lg" /></div>
       </div>
     )
@@ -136,9 +140,9 @@ export default function AILeadScoringPage() {
             <Brain className="h-6 w-6 text-primary" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">AI Lead Scoring</h1>
+            <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
             <p className="text-sm text-muted-foreground">
-              AI-скоринг лидов — автоматическая оценка и ранжирование
+              {t("subtitle")}
               {aiPowered && (
                 <Badge className="ml-2 bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">
                   <Sparkles className="h-3 w-3 mr-1" /> Claude AI
@@ -149,7 +153,7 @@ export default function AILeadScoringPage() {
         </div>
         <Button onClick={scoreAll} disabled={scoring} className="gap-2">
           {scoring ? <Loader2 className="h-4 w-4 animate-spin" /> : <Brain className="h-4 w-4" />}
-          {scoring ? "Анализ AI..." : "Оценить все лиды с AI"}
+          {scoring ? tc("loading") : t("newAgent")}
         </Button>
       </div>
 
@@ -167,33 +171,33 @@ export default function AILeadScoringPage() {
               {grade}
             </div>
             <div className="text-2xl font-bold mt-1">{gradeCounts[grade]}</div>
-            <div className="text-xs text-muted-foreground">лидов</div>
+            <div className="text-xs text-muted-foreground">{tl("title")}</div>
           </div>
         ))}
       </div>
 
       {/* Summary bar */}
       <div className="border rounded-lg p-4 bg-muted/30 flex items-center gap-8 text-sm">
-        <span>Средний балл: <strong className="text-primary">{avgScore}/100</strong></span>
-        <span>Ср. вероятность конверсии: <strong className="text-primary">{avgConversion}%</strong></span>
-        <span>Всего оценено: <strong className="text-primary">{totalScored}</strong></span>
+        <span>{tl("avgScore")}: <strong className="text-primary">{avgScore}/100</strong></span>
+        <span>{tc("probability")}: <strong className="text-primary">{avgConversion}%</strong></span>
+        <span>{t("totalSessions")}: <strong className="text-primary">{totalScored}</strong></span>
       </div>
 
       {/* Lead table */}
       <div>
-        <h2 className="text-lg font-semibold mb-3">Топ-перспективы</h2>
+        <h2 className="text-lg font-semibold mb-3">{tl("title")}</h2>
         <div className="rounded-lg border bg-card overflow-hidden">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b bg-muted/50">
                 {[
-                  { key: "grade", label: "Грейд" },
-                  { key: "score", label: "Балл" },
-                  { key: "name", label: "Лид" },
-                  { key: "company", label: "Компания" },
-                  { key: "source", label: "Источник" },
-                  { key: "conversion", label: "Конверсия" },
-                  { key: null, label: "AI Прогноз", className: "min-w-[200px]" },
+                  { key: "grade", label: tl("colScore") },
+                  { key: "score", label: tc("score") },
+                  { key: "name", label: tl("colLead") },
+                  { key: "company", label: tl("colCompany") },
+                  { key: "source", label: tl("colSource") },
+                  { key: "conversion", label: tl("colConversion") },
+                  { key: null, label: t("stats"), className: "min-w-[200px]" },
                 ].map(col => {
                   const isActive = col.key && sortBy.startsWith(col.key)
                   const isDesc = sortBy.endsWith("_desc")
@@ -218,13 +222,13 @@ export default function AILeadScoringPage() {
                     </th>
                   )
                 })}
-                <th className="px-4 py-3 text-left font-medium text-muted-foreground">Действия</th>
+                <th className="px-4 py-3 text-left font-medium text-muted-foreground">{tc("actions")}</th>
               </tr>
             </thead>
             <tbody>
               {leads.length === 0 ? (
-                <tr><td colSpan={8} className="px-4 py-8 text-center text-muted-foreground">Нет лидов</td></tr>
-              ) : sortedLeads.map(lead => (
+                <tr><td colSpan={8} className="px-4 py-8 text-center text-muted-foreground">{tl("noLeads")}</td></tr>
+              ) : sortedLeads.map((lead) => (
                 <tr key={lead.id} className="border-b hover:bg-muted/30">
                   <td className="px-4 py-3">
                     <span className={cn("inline-flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold", gradeColors[lead.grade])}>

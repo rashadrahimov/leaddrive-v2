@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
+import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -43,6 +44,8 @@ const ROLE_STYLE: Record<string, string> = {
 }
 
 export default function EventDetailPage() {
+  const t = useTranslations("events")
+  const tc = useTranslations("common")
   const params = useParams()
   const router = useRouter()
   const { data: session } = useSession()
@@ -221,7 +224,7 @@ export default function EventDetailPage() {
     )
   }
 
-  if (!event) return <div className="text-center py-12 text-muted-foreground">Event not found</div>
+  if (!event) return <div className="text-center py-12 text-muted-foreground">{tc("noData")}</div>
 
   const roi = event.actualRevenue > 0 && event.actualCost > 0
     ? Math.round(((event.actualRevenue - event.actualCost) / event.actualCost) * 100) : null
@@ -253,7 +256,7 @@ export default function EventDetailPage() {
               <div className="flex items-center gap-2">
                 <Badge className={STATUS_STYLES[event.status] || ""}>{event.status?.replace(/_/g, " ")}</Badge>
                 <Badge variant="outline" className="text-xs">{event.type}</Badge>
-                {event.isOnline && <Badge variant="outline" className="text-xs"><Globe className="h-3 w-3 mr-1" /> Online</Badge>}
+                {event.isOnline && <Badge variant="outline" className="text-xs"><Globe className="h-3 w-3 mr-1" /> {t("online")}</Badge>}
                 {event.location && (
                   <span className="text-xs text-muted-foreground flex items-center gap-1">
                     <MapPin className="h-3 w-3" /> {event.location}
@@ -271,13 +274,13 @@ export default function EventDetailPage() {
             setTimeout(() => setLinkCopied(false), 2000)
           }}>
             {linkCopied ? <Check className="h-3.5 w-3.5 mr-1 text-green-500" /> : <Link2 className="h-3.5 w-3.5 mr-1" />}
-            {linkCopied ? "Copied!" : "Registration Link"}
+            {linkCopied ? tc("saved") : t("register")}
           </Button>
           <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
-            <Pencil className="h-3.5 w-3.5 mr-1" /> Edit
+            <Pencil className="h-3.5 w-3.5 mr-1" /> {tc("edit")}
           </Button>
           <Button variant="outline" size="sm" className="text-red-500" onClick={() => setDeleteOpen(true)}>
-            <Trash2 className="h-3.5 w-3.5 mr-1" /> Delete
+            <Trash2 className="h-3.5 w-3.5 mr-1" /> {tc("delete")}
           </Button>
         </div>
       </div>
@@ -303,7 +306,7 @@ export default function EventDetailPage() {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <div className="bg-blue-500 text-white rounded-xl p-4 shadow-sm">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium opacity-80">Registered</span>
+            <span className="text-xs font-medium opacity-80">{t("participants")}</span>
             <Users className="h-4 w-4 opacity-80" />
           </div>
           <span className="text-2xl font-bold">{event.registeredCount}</span>
@@ -319,7 +322,7 @@ export default function EventDetailPage() {
         </div>
         <div className="bg-violet-500 text-white rounded-xl p-4 shadow-sm">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium opacity-80">Budget</span>
+            <span className="text-xs font-medium opacity-80">{t("budget")}</span>
             <DollarSign className="h-4 w-4 opacity-80" />
           </div>
           <span className="text-2xl font-bold">{event.budget?.toLocaleString()} ₼</span>
@@ -336,10 +339,10 @@ export default function EventDetailPage() {
       {/* Tabs */}
       <Tabs defaultValue="general" className="space-y-4">
         <TabsList className="bg-muted/60 p-1 h-auto">
-          <TabsTrigger value="general" className="rounded-md text-sm">General</TabsTrigger>
-          <TabsTrigger value="financial" className="rounded-md text-sm">Financial</TabsTrigger>
+          <TabsTrigger value="general" className="rounded-md text-sm">{tc("details")}</TabsTrigger>
+          <TabsTrigger value="financial" className="rounded-md text-sm">{tc("budget")}</TabsTrigger>
           <TabsTrigger value="participants" className="rounded-md text-sm">
-            Participants ({event.participants?.length || 0})
+            {t("participants")} ({event.participants?.length || 0})
           </TabsTrigger>
         </TabsList>
 
@@ -348,17 +351,17 @@ export default function EventDetailPage() {
           <div className="grid md:grid-cols-2 gap-4">
             <Card className="border-none shadow-sm">
               <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Event Info</CardTitle>
+                <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">{t("title")}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 {[
-                  { label: "Type", value: event.type },
-                  { label: "Start", value: new Date(event.startDate).toLocaleString("ru-RU") },
-                  { label: "End", value: event.endDate ? new Date(event.endDate).toLocaleString("ru-RU") : "—" },
-                  { label: "Location", value: event.location || "—" },
-                  { label: "Online", value: event.isOnline ? "Yes" : "No" },
+                  { label: tc("type"), value: event.type },
+                  { label: tc("startDate"), value: new Date(event.startDate).toLocaleString("ru-RU") },
+                  { label: tc("endDate"), value: event.endDate ? new Date(event.endDate).toLocaleString("ru-RU") : "—" },
+                  { label: t("location"), value: event.location || "—" },
+                  { label: t("online"), value: event.isOnline ? tc("yes") : tc("no") },
                   { label: "Meeting URL", value: event.meetingUrl || "—" },
-                  { label: "Created", value: new Date(event.createdAt).toLocaleString("ru-RU") },
+                  { label: tc("createdAt"), value: new Date(event.createdAt).toLocaleString("ru-RU") },
                 ].map(d => (
                   <div key={d.label} className="flex justify-between text-sm">
                     <span className="text-muted-foreground">{d.label}</span>
@@ -370,10 +373,10 @@ export default function EventDetailPage() {
 
             <Card className="border-none shadow-sm">
               <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Description</CardTitle>
+                <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">{tc("description")}</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-sm whitespace-pre-wrap">{event.description || "No description provided"}</p>
+                <p className="text-sm whitespace-pre-wrap">{event.description || tc("noData")}</p>
                 {event.tags?.length > 0 && (
                   <div className="flex gap-1.5 flex-wrap mt-3 pt-3 border-t">
                     {event.tags.map((tag: string) => (
@@ -391,14 +394,14 @@ export default function EventDetailPage() {
           <div className="grid md:grid-cols-2 gap-4">
             <Card className="border-none shadow-sm">
               <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Costs & Revenue</CardTitle>
+                <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">{tc("cost")} & {tc("revenue")}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 {[
-                  { label: "Budget", value: `${(event.budget || 0).toLocaleString()} ₼` },
-                  { label: "Actual Cost", value: `${(event.actualCost || 0).toLocaleString()} ₼` },
-                  { label: "Expected Revenue", value: `${(event.expectedRevenue || 0).toLocaleString()} ₼` },
-                  { label: "Actual Revenue", value: `${(event.actualRevenue || 0).toLocaleString()} ₼` },
+                  { label: tc("budget"), value: `${(event.budget || 0).toLocaleString()} ₼` },
+                  { label: tc("cost"), value: `${(event.actualCost || 0).toLocaleString()} ₼` },
+                  { label: tc("revenue"), value: `${(event.expectedRevenue || 0).toLocaleString()} ₼` },
+                  { label: tc("revenue"), value: `${(event.actualRevenue || 0).toLocaleString()} ₼` },
                 ].map(f => (
                   <div key={f.label} className="flex justify-between text-sm">
                     <span className="text-muted-foreground">{f.label}</span>
@@ -434,7 +437,7 @@ export default function EventDetailPage() {
         <TabsContent value="participants" className="space-y-4">
           <div className="flex items-center justify-between flex-wrap gap-2">
             <div className="flex items-center gap-3">
-              <p className="text-sm text-muted-foreground">{event.participants?.length || 0} participants</p>
+              <p className="text-sm text-muted-foreground">{event.participants?.length || 0} {t("participants")}</p>
               {event.participants?.length > 0 && (
                 <div className="flex items-center gap-2 text-xs">
                   <span className="flex items-center gap-1 text-green-600">
@@ -456,7 +459,7 @@ export default function EventDetailPage() {
                 </Button>
               )}
               <Button size="sm" className="gap-1" onClick={() => setShowAddPanel(!showAddPanel)}>
-                <UserPlus className="h-3.5 w-3.5" /> {showAddPanel ? "Close" : "Add Participant"}
+                <UserPlus className="h-3.5 w-3.5" /> {showAddPanel ? tc("close") : tc("add")}
               </Button>
             </div>
           </div>
@@ -506,7 +509,7 @@ export default function EventDetailPage() {
                     </div>
                     <div className="max-h-48 overflow-y-auto space-y-1">
                       {filteredContacts.length === 0 ? (
-                        <p className="text-xs text-muted-foreground text-center py-4">No matching contacts</p>
+                        <p className="text-xs text-muted-foreground text-center py-4">{tc("noResults")}</p>
                       ) : (
                         filteredContacts.slice(0, 20).map(contact => (
                           <div
@@ -541,7 +544,7 @@ export default function EventDetailPage() {
                       <label className="text-xs text-muted-foreground">Phone</label>
                       <Input className="h-8 w-36" value={pPhone} onChange={e => setPPhone(e.target.value)} />
                     </div>
-                    <Button size="sm" className="h-8" onClick={addManualParticipant}>Add</Button>
+                    <Button size="sm" className="h-8" onClick={addManualParticipant}>{tc("add")}</Button>
                   </div>
                 )}
               </CardContent>
@@ -555,13 +558,13 @@ export default function EventDetailPage() {
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b bg-muted/40">
-                      <th className="text-left p-3 font-medium text-muted-foreground">Name</th>
-                      <th className="text-left p-3 font-medium text-muted-foreground">Contact</th>
-                      <th className="text-left p-3 font-medium text-muted-foreground">Role</th>
-                      <th className="text-left p-3 font-medium text-muted-foreground">Status</th>
-                      <th className="text-left p-3 font-medium text-muted-foreground">Invite</th>
-                      <th className="text-left p-3 font-medium text-muted-foreground">Registered</th>
-                      <th className="text-right p-3 font-medium text-muted-foreground">Actions</th>
+                      <th className="text-left p-3 font-medium text-muted-foreground">{tc("name")}</th>
+                      <th className="text-left p-3 font-medium text-muted-foreground">{tc("contact")}</th>
+                      <th className="text-left p-3 font-medium text-muted-foreground">{tc("type")}</th>
+                      <th className="text-left p-3 font-medium text-muted-foreground">{tc("status")}</th>
+                      <th className="text-left p-3 font-medium text-muted-foreground">{tc("send")}</th>
+                      <th className="text-left p-3 font-medium text-muted-foreground">{t("date")}</th>
+                      <th className="text-right p-3 font-medium text-muted-foreground">{tc("actions")}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -648,15 +651,14 @@ export default function EventDetailPage() {
           ) : (
             <div className="text-center py-12 text-muted-foreground">
               <Users className="h-10 w-10 mx-auto mb-2 opacity-30" />
-              <p className="text-sm">No participants yet</p>
-              <p className="text-xs">Click "Add Participant" to add from CRM contacts or manually</p>
+              <p className="text-sm">{tc("noData")}</p>
             </div>
           )}
         </TabsContent>
       </Tabs>
 
       <EventForm open={editOpen} onOpenChange={setEditOpen} onSaved={fetchEvent} orgId={orgId} initialData={event} />
-      <DeleteConfirmDialog open={deleteOpen} onOpenChange={setDeleteOpen} onConfirm={handleDelete} title="Delete Event" itemName={event.name} />
+      <DeleteConfirmDialog open={deleteOpen} onOpenChange={setDeleteOpen} onConfirm={handleDelete} title={t("deleteEvent")} itemName={event.name} />
     </div>
   )
 }

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -25,6 +26,9 @@ interface JourneyFormProps {
 }
 
 export function JourneyForm({ open, onOpenChange, onSaved, initialData, orgId }: JourneyFormProps) {
+  const tf = useTranslations("forms")
+  const tc = useTranslations("common")
+  const t = useTranslations("journeys")
   const isEdit = !!initialData?.id
   const [form, setForm] = useState<JourneyFormData>({
     name: "",
@@ -50,7 +54,7 @@ export function JourneyForm({ open, onOpenChange, onSaved, initialData, orgId }:
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!form.name.trim()) {
-      setError("Введите название цепочки")
+      setError(tc("required"))
       return
     }
     setSaving(true)
@@ -67,7 +71,7 @@ export function JourneyForm({ open, onOpenChange, onSaved, initialData, orgId }:
         body: JSON.stringify(form),
       })
       const json = await res.json()
-      if (!res.ok) throw new Error(json.error || "Ошибка сохранения")
+      if (!res.ok) throw new Error(json.error || tc("failedToSave"))
       onSaved()
       onOpenChange(false)
     } catch (err: any) {
@@ -82,7 +86,7 @@ export function JourneyForm({ open, onOpenChange, onSaved, initialData, orgId }:
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogHeader>
-        <DialogTitle>{isEdit ? "Редактировать цепочку" : "Новая цепочка"}</DialogTitle>
+        <DialogTitle>{isEdit ? tf("editJourney") : tf("newJourney")}</DialogTitle>
       </DialogHeader>
       <form onSubmit={handleSubmit}>
         <DialogContent>
@@ -93,42 +97,42 @@ export function JourneyForm({ open, onOpenChange, onSaved, initialData, orgId }:
           )}
           <div className="space-y-4">
             <div>
-              <Label htmlFor="name" className="text-sm font-medium">Название *</Label>
+              <Label htmlFor="name" className="text-sm font-medium">{tc("name")} *</Label>
               <Input
                 id="name"
                 value={form.name}
                 onChange={(e) => update("name", e.target.value)}
-                placeholder="Например: Онбординг нового клиента"
+                placeholder={t("namePlaceholder")}
                 className="mt-1.5"
               />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label htmlFor="status" className="text-sm font-medium">Статус</Label>
+                <Label htmlFor="status" className="text-sm font-medium">{tc("status")}</Label>
                 <Select value={form.status} onChange={(e) => update("status", e.target.value)} className="mt-1.5">
-                  <option value="draft">Черновик</option>
-                  <option value="active">Активный</option>
-                  <option value="paused">Приостановлен</option>
-                  <option value="completed">Завершён</option>
+                  <option value="draft">{t("statusDraft")}</option>
+                  <option value="active">{t("statusActive")}</option>
+                  <option value="paused">{t("statusPaused")}</option>
+                  <option value="completed">{t("statusCompleted")}</option>
                 </Select>
               </div>
               <div>
-                <Label htmlFor="triggerType" className="text-sm font-medium">Триггер</Label>
+                <Label htmlFor="triggerType" className="text-sm font-medium">{t("trigger")}</Label>
                 <Select value={form.triggerType} onChange={(e) => update("triggerType", e.target.value)} className="mt-1.5">
-                  <option value="manual">Вручную</option>
-                  <option value="lead_created">Новый лид</option>
-                  <option value="contact_created">Новый контакт</option>
-                  <option value="deal_stage_change">Смена стадии сделки</option>
+                  <option value="manual">{t("triggerManual")}</option>
+                  <option value="lead_created">{t("triggerLeadCreated")}</option>
+                  <option value="contact_created">{t("triggerContactCreated")}</option>
+                  <option value="deal_stage_change">{t("triggerDealStageChange")}</option>
                 </Select>
               </div>
             </div>
             <div>
-              <Label htmlFor="description" className="text-sm font-medium">Описание</Label>
+              <Label htmlFor="description" className="text-sm font-medium">{tc("description")}</Label>
               <Textarea
                 id="description"
                 value={form.description}
                 onChange={(e) => update("description", e.target.value)}
-                placeholder="Краткое описание цепочки и её цели..."
+                placeholder={t("descriptionPlaceholder")}
                 rows={3}
                 className="mt-1.5"
               />
@@ -136,10 +140,10 @@ export function JourneyForm({ open, onOpenChange, onSaved, initialData, orgId }:
           </div>
         </DialogContent>
         <DialogFooter>
-          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Отмена</Button>
+          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>{tc("cancel")}</Button>
           <Button type="submit" disabled={saving} className="gap-1.5">
             {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-            {saving ? "Сохранение..." : isEdit ? "Сохранить" : "Создать"}
+            {saving ? tc("saving") : isEdit ? tc("save") : tc("create")}
           </Button>
         </DialogFooter>
       </form>

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
+import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -18,6 +19,8 @@ const statusColors: Record<string, "default" | "secondary" | "destructive" | "ou
 }
 
 export default function OfferDetailPage() {
+  const t = useTranslations("offers")
+  const tc = useTranslations("common")
   const params = useParams()
   const router = useRouter()
   const { data: session } = useSession()
@@ -64,7 +67,7 @@ export default function OfferDetailPage() {
   }
 
   if (!offer) {
-    return <div className="text-center py-12 text-muted-foreground">Offer not found</div>
+    return <div className="text-center py-12 text-muted-foreground">{tc("noData")}</div>
   }
 
   const formatDate = (d: string | null) => d ? new Date(d).toLocaleDateString() : "—"
@@ -83,7 +86,7 @@ export default function OfferDetailPage() {
             <div>
               <h1 className="text-2xl font-bold">{offer.title}</h1>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <span>{offer.offerNumber || "No number"}</span>
+                <span>{offer.offerNumber || "—"}</span>
                 <Badge variant={statusColors[offer.status] || "secondary"}>{offer.status}</Badge>
               </div>
             </div>
@@ -91,10 +94,10 @@ export default function OfferDetailPage() {
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => setEditOpen(true)}>
-            <Pencil className="h-4 w-4 mr-1" /> Edit
+            <Pencil className="h-4 w-4 mr-1" /> {tc("edit")}
           </Button>
           <Button variant="outline" className="text-destructive hover:text-destructive" onClick={() => setDeleteOpen(true)}>
-            <Trash2 className="h-4 w-4 mr-1" /> Delete
+            <Trash2 className="h-4 w-4 mr-1" /> {tc("delete")}
           </Button>
         </div>
       </div>
@@ -104,7 +107,7 @@ export default function OfferDetailPage() {
           <CardContent className="flex items-center gap-3 pt-6">
             <DollarSign className="h-4 w-4 text-muted-foreground" />
             <div>
-              <div className="text-xs text-muted-foreground">Total Amount</div>
+              <div className="text-xs text-muted-foreground">{t("colAmount")}</div>
               <span className="text-sm font-medium">
                 {offer.totalAmount ? `${Number(offer.totalAmount).toLocaleString()} ${offer.currency || "USD"}` : "—"}
               </span>
@@ -115,7 +118,7 @@ export default function OfferDetailPage() {
           <CardContent className="flex items-center gap-3 pt-6">
             <Calendar className="h-4 w-4 text-muted-foreground" />
             <div>
-              <div className="text-xs text-muted-foreground">Valid Until</div>
+              <div className="text-xs text-muted-foreground">{t("colValidUntil")}</div>
               <span className="text-sm font-medium">{formatDate(offer.validUntil)}</span>
             </div>
           </CardContent>
@@ -124,7 +127,7 @@ export default function OfferDetailPage() {
           <CardContent className="flex items-center gap-3 pt-6">
             <Hash className="h-4 w-4 text-muted-foreground" />
             <div>
-              <div className="text-xs text-muted-foreground">Offer Number</div>
+              <div className="text-xs text-muted-foreground">{t("colNumber")}</div>
               <span className="text-sm font-medium">{offer.offerNumber || "—"}</span>
             </div>
           </CardContent>
@@ -133,32 +136,32 @@ export default function OfferDetailPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Details</CardTitle>
+          <CardTitle className="text-base">{tc("details")}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3 text-sm">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <span className="text-muted-foreground">Offer Number:</span>
+              <span className="text-muted-foreground">{t("colNumber")}:</span>
               <span className="ml-2 font-medium">{offer.offerNumber || "—"}</span>
             </div>
             <div>
-              <span className="text-muted-foreground">Status:</span>
+              <span className="text-muted-foreground">{tc("status")}:</span>
               <Badge variant={statusColors[offer.status] || "secondary"} className="ml-2">{offer.status}</Badge>
             </div>
             <div>
-              <span className="text-muted-foreground">Total Amount:</span>
+              <span className="text-muted-foreground">{t("colAmount")}:</span>
               <span className="ml-2 font-medium">
                 {offer.totalAmount ? `${Number(offer.totalAmount).toLocaleString()} ${offer.currency || "USD"}` : "—"}
               </span>
             </div>
             <div>
-              <span className="text-muted-foreground">Valid Until:</span>
+              <span className="text-muted-foreground">{t("colValidUntil")}:</span>
               <span className="ml-2 font-medium">{formatDate(offer.validUntil)}</span>
             </div>
           </div>
           {offer.notes && (
             <div className="pt-4 border-t">
-              <span className="text-muted-foreground">Notes:</span>
+              <span className="text-muted-foreground">{tc("notes")}:</span>
               <p className="mt-1 whitespace-pre-wrap">{offer.notes}</p>
             </div>
           )}
@@ -186,7 +189,7 @@ export default function OfferDetailPage() {
         open={deleteOpen}
         onOpenChange={setDeleteOpen}
         onConfirm={handleDelete}
-        title="Delete Offer"
+        title={t("deleteOffer")}
         itemName={offer.title}
       />
     </div>

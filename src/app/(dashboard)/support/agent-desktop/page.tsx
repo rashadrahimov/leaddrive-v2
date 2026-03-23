@@ -273,7 +273,7 @@ export default function AgentDesktopPage() {
                           </Badge>
                         </td>
                         <td className="p-2 text-muted-foreground text-xs">
-                          {new Date(t.createdAt).toLocaleDateString("ru-RU")}
+                          {new Date(t.createdAt).toLocaleDateString(undefined)}
                         </td>
                       </tr>
                     ))}

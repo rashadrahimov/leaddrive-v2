@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
+import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -31,6 +32,8 @@ const STATUS_STYLES: Record<string, string> = {
 }
 
 export default function CampaignDetailPage() {
+  const t = useTranslations("campaigns")
+  const tc = useTranslations("common")
   const params = useParams()
   const router = useRouter()
   const { data: session } = useSession()
@@ -70,7 +73,7 @@ export default function CampaignDetailPage() {
     )
   }
 
-  if (!campaign) return <div className="text-center py-12 text-muted-foreground">Campaign not found</div>
+  if (!campaign) return <div className="text-center py-12 text-muted-foreground">{tc("noData")}</div>
 
   const totalSent = campaign.totalSent ?? 0
   const totalOpened = campaign.totalOpened ?? 0
@@ -106,10 +109,10 @@ export default function CampaignDetailPage() {
         </div>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
-            <Pencil className="h-3.5 w-3.5 mr-1" /> Edit
+            <Pencil className="h-3.5 w-3.5 mr-1" /> {tc("edit")}
           </Button>
           <Button variant="outline" size="sm" className="text-red-500 hover:text-red-600" onClick={() => setDeleteOpen(true)}>
-            <Trash2 className="h-3.5 w-3.5 mr-1" /> Delete
+            <Trash2 className="h-3.5 w-3.5 mr-1" /> {tc("delete")}
           </Button>
         </div>
       </div>
@@ -118,7 +121,7 @@ export default function CampaignDetailPage() {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <div className="bg-green-500 text-white rounded-xl p-4 shadow-sm">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium opacity-80">Delivered</span>
+            <span className="text-xs font-medium opacity-80">{t("sent")}</span>
             <CheckCircle2 className="h-4 w-4 opacity-80" />
           </div>
           <span className="text-2xl font-bold">{delivered.toLocaleString()}</span>
@@ -166,9 +169,9 @@ export default function CampaignDetailPage() {
       {/* Tabs */}
       <Tabs defaultValue="results" className="space-y-4">
         <TabsList className="bg-muted/60 p-1 h-auto">
-          <TabsTrigger value="results" className="rounded-md text-sm">Results</TabsTrigger>
+          <TabsTrigger value="results" className="rounded-md text-sm">{tc("results")}</TabsTrigger>
           <TabsTrigger value="flow" className="rounded-md text-sm">Flow</TabsTrigger>
-          <TabsTrigger value="details" className="rounded-md text-sm">Details</TabsTrigger>
+          <TabsTrigger value="details" className="rounded-md text-sm">{tc("details")}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="results" className="space-y-4">
@@ -202,10 +205,10 @@ export default function CampaignDetailPage() {
               </CardHeader>
               <CardContent className="space-y-3">
                 {[
-                  { label: "Budget", value: `${(campaign.budget || 0).toLocaleString()} ₼` },
-                  { label: "Actual cost", value: `${(campaign.actualCost || 0).toLocaleString()} ₼` },
-                  { label: "Cost per send", value: totalSent > 0 ? `${((campaign.actualCost || 0) / totalSent).toFixed(2)} ₼` : "—" },
-                  { label: "Cost per click", value: totalClicked > 0 ? `${((campaign.actualCost || 0) / totalClicked).toFixed(2)} ₼` : "—" },
+                  { label: t("budget"), value: `${(campaign.budget || 0).toLocaleString()} ₼` },
+                  { label: tc("cost"), value: `${(campaign.actualCost || 0).toLocaleString()} ₼` },
+                  { label: tc("cost"), value: totalSent > 0 ? `${((campaign.actualCost || 0) / totalSent).toFixed(2)} ₼` : "—" },
+                  { label: tc("cost"), value: totalClicked > 0 ? `${((campaign.actualCost || 0) / totalClicked).toFixed(2)} ₼` : "—" },
                 ].map(f => (
                   <div key={f.label} className="flex justify-between text-sm">
                     <span className="text-muted-foreground">{f.label}</span>
@@ -238,17 +241,17 @@ export default function CampaignDetailPage() {
         <TabsContent value="details">
           <Card className="border-none shadow-sm">
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Campaign Details</CardTitle>
+              <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">{t("title")}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               {[
-                { label: "Subject", value: campaign.subject || "—" },
-                { label: "Type", value: campaign.type },
-                { label: "Recipients", value: (campaign.totalRecipients ?? 0).toLocaleString() },
-                { label: "Sent", value: totalSent.toLocaleString() },
-                { label: "Scheduled", value: campaign.scheduledAt ? new Date(campaign.scheduledAt).toLocaleString("ru-RU") : "—" },
-                { label: "Sent at", value: campaign.sentAt ? new Date(campaign.sentAt).toLocaleString("ru-RU") : "—" },
-                { label: "Created", value: new Date(campaign.createdAt).toLocaleString("ru-RU") },
+                { label: tc("subject"), value: campaign.subject || "—" },
+                { label: tc("type"), value: campaign.type },
+                { label: t("recipients"), value: (campaign.totalRecipients ?? 0).toLocaleString() },
+                { label: t("sent"), value: totalSent.toLocaleString() },
+                { label: tc("date"), value: campaign.scheduledAt ? new Date(campaign.scheduledAt).toLocaleString("ru-RU") : "—" },
+                { label: t("sent"), value: campaign.sentAt ? new Date(campaign.sentAt).toLocaleString("ru-RU") : "—" },
+                { label: tc("createdAt"), value: new Date(campaign.createdAt).toLocaleString("ru-RU") },
               ].map(d => (
                 <div key={d.label} className="flex justify-between text-sm">
                   <span className="text-muted-foreground">{d.label}</span>
@@ -257,7 +260,7 @@ export default function CampaignDetailPage() {
               ))}
               {campaign.description && (
                 <div className="pt-2 border-t">
-                  <p className="text-xs text-muted-foreground mb-1">Description</p>
+                  <p className="text-xs text-muted-foreground mb-1">{tc("description")}</p>
                   <p className="text-sm">{campaign.description}</p>
                 </div>
               )}
@@ -275,7 +278,7 @@ export default function CampaignDetailPage() {
           scheduledAt: campaign.scheduledAt ? new Date(campaign.scheduledAt).toISOString().split("T")[0] : "",
         }}
       />
-      <DeleteConfirmDialog open={deleteOpen} onOpenChange={setDeleteOpen} onConfirm={handleDelete} title="Delete Campaign" itemName={campaign.name} />
+      <DeleteConfirmDialog open={deleteOpen} onOpenChange={setDeleteOpen} onConfirm={handleDelete} title={t("deleteCampaign")} itemName={campaign.name} />
     </div>
   )
 }

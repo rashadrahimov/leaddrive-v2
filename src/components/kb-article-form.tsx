@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label"
 import { Select } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { Dialog, DialogHeader, DialogTitle, DialogContent, DialogFooter } from "@/components/ui/dialog"
+import { useTranslations } from "next-intl"
 
 interface KbArticleFormData {
   title: string
@@ -25,6 +26,9 @@ interface KbArticleFormProps {
 }
 
 export function KbArticleForm({ open, onOpenChange, onSaved, initialData, orgId }: KbArticleFormProps) {
+  const tf = useTranslations("forms")
+  const tc = useTranslations("common")
+  const tk = useTranslations("kb")
   const isEdit = !!initialData?.id
   const [form, setForm] = useState<KbArticleFormData>({
     title: initialData?.title || "",
@@ -83,42 +87,42 @@ export function KbArticleForm({ open, onOpenChange, onSaved, initialData, orgId 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogHeader>
-        <DialogTitle>{isEdit ? "Edit Article" : "Add Article"}</DialogTitle>
+        <DialogTitle>{isEdit ? tf("editArticle") : tf("addArticle")}</DialogTitle>
       </DialogHeader>
       <form onSubmit={handleSubmit}>
         <DialogContent>
           {error && <div className="text-sm text-red-500 bg-red-50 dark:bg-red-900/20 p-2 rounded mb-3">{error}</div>}
           <div className="grid gap-4">
             <div>
-              <Label htmlFor="title">Title *</Label>
+              <Label htmlFor="title">{tc("title")} *</Label>
               <Input id="title" value={form.title} onChange={(e) => update("title", e.target.value)} required />
             </div>
             <div>
-              <Label htmlFor="content">Content *</Label>
+              <Label htmlFor="content">{tc("content")} *</Label>
               <Textarea id="content" value={form.content} onChange={(e) => update("content", e.target.value)} rows={8} required />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label htmlFor="categoryId">Category ID</Label>
-                <Input id="categoryId" value={form.categoryId} onChange={(e) => update("categoryId", e.target.value)} placeholder="Category UUID" />
+                <Label htmlFor="categoryId">{tc("category")}</Label>
+                <Input id="categoryId" value={form.categoryId} onChange={(e) => update("categoryId", e.target.value)} />
               </div>
               <div>
-                <Label htmlFor="status">Status</Label>
+                <Label htmlFor="status">{tc("status")}</Label>
                 <Select value={form.status} onChange={(e) => update("status", e.target.value)}>
-                  <option value="draft">Draft</option>
-                  <option value="published">Published</option>
+                  <option value="draft">{tc("draft")}</option>
+                  <option value="published">{tc("published")}</option>
                 </Select>
               </div>
             </div>
             <div>
-              <Label htmlFor="tags">Tags</Label>
+              <Label htmlFor="tags">{tc("tags")}</Label>
               <Input id="tags" value={form.tags} onChange={(e) => update("tags", e.target.value)} placeholder="tag1, tag2, tag3" />
             </div>
           </div>
         </DialogContent>
         <DialogFooter>
-          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button type="submit" disabled={saving}>{saving ? "Saving..." : isEdit ? "Update" : "Create"}</Button>
+          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>{tc("cancel")}</Button>
+          <Button type="submit" disabled={saving}>{saving ? tc("saving") : isEdit ? tc("update") : tc("create")}</Button>
         </DialogFooter>
       </form>
     </Dialog>

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -16,6 +17,8 @@ interface ContactFormProps {
 }
 
 export function ContactForm({ open, onOpenChange, onSaved, initialData, orgId }: ContactFormProps) {
+  const t = useTranslations("forms")
+  const tc = useTranslations("common")
   const isEdit = !!initialData?.id
   const [form, setForm] = useState({
     fullName: initialData?.fullName || "",
@@ -78,38 +81,38 @@ export function ContactForm({ open, onOpenChange, onSaved, initialData, orgId }:
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogHeader><DialogTitle>{isEdit ? "Edit Contact" : "Add Contact"}</DialogTitle></DialogHeader>
+      <DialogHeader><DialogTitle>{isEdit ? t("editContact") : t("addContact")}</DialogTitle></DialogHeader>
       <form onSubmit={handleSubmit}>
         <DialogContent>
           {error && <div className="text-sm text-red-500 bg-red-50 dark:bg-red-900/20 p-2 rounded mb-3">{error}</div>}
           <div className="grid gap-4">
             <div>
-              <Label htmlFor="fullName">Full Name *</Label>
+              <Label htmlFor="fullName">{`${tc("fullName")} *`}</Label>
               <Input id="fullName" value={form.fullName} onChange={e => update("fullName", e.target.value)} required />
             </div>
             <div className="grid grid-cols-2 gap-3">
-              <div><Label htmlFor="email">Email</Label><Input id="email" type="email" value={form.email} onChange={e => update("email", e.target.value)} /></div>
-              <div><Label htmlFor="phone">Phone</Label><Input id="phone" value={form.phone} onChange={e => update("phone", e.target.value)} /></div>
+              <div><Label htmlFor="email">{tc("email")}</Label><Input id="email" type="email" value={form.email} onChange={e => update("email", e.target.value)} /></div>
+              <div><Label htmlFor="phone">{tc("phone")}</Label><Input id="phone" value={form.phone} onChange={e => update("phone", e.target.value)} /></div>
             </div>
             <div className="grid grid-cols-2 gap-3">
-              <div><Label htmlFor="position">Position</Label><Input id="position" value={form.position} onChange={e => update("position", e.target.value)} /></div>
+              <div><Label htmlFor="position">{tc("position")}</Label><Input id="position" value={form.position} onChange={e => update("position", e.target.value)} /></div>
               <div>
-                <Label htmlFor="source">Source</Label>
+                <Label htmlFor="source">{tc("source")}</Label>
                 <Select value={form.source} onChange={e => update("source", e.target.value)}>
-                  <option value="">Select...</option>
+                  <option value="">{tc("select")}</option>
                   <option value="website">Website</option>
-                  <option value="referral">Referral</option>
-                  <option value="cold_call">Cold Call</option>
-                  <option value="linkedin">LinkedIn</option>
-                  <option value="event">Event</option>
-                  <option value="other">Other</option>
+                  <option value="referral">{tc("referral")}</option>
+                  <option value="cold_call">{tc("coldCall")}</option>
+                  <option value="linkedin">{tc("linkedin")}</option>
+                  <option value="event">{tc("event")}</option>
+                  <option value="other">{tc("other")}</option>
                 </Select>
               </div>
             </div>
             <div>
-              <Label htmlFor="companyId">Company</Label>
+              <Label htmlFor="companyId">{tc("company")}</Label>
               <Select value={form.companyId} onChange={e => update("companyId", e.target.value)}>
-                <option value="">No company</option>
+                <option value="">{tc("noCompany")}</option>
                 {companies.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
               </Select>
             </div>
@@ -122,14 +125,14 @@ export function ContactForm({ open, onOpenChange, onSaved, initialData, orgId }:
                 className="h-4 w-4 rounded border-gray-300"
               />
               <Label htmlFor="portalAccess" className="text-sm font-normal cursor-pointer">
-                Доступ к клиентскому порталу
+                {tc("portalAccess")}
               </Label>
             </div>
           </div>
         </DialogContent>
         <DialogFooter>
-          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button type="submit" disabled={saving}>{saving ? "Saving..." : isEdit ? "Update" : "Create"}</Button>
+          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>{tc("cancel")}</Button>
+          <Button type="submit" disabled={saving}>{saving ? tc("saving") : isEdit ? tc("update") : tc("create")}</Button>
         </DialogFooter>
       </form>
     </Dialog>

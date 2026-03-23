@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label"
 import { Select } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { Dialog, DialogHeader, DialogTitle, DialogContent, DialogFooter } from "@/components/ui/dialog"
+import { useTranslations } from "next-intl"
 
 interface OfferFormData {
   offerNumber: string
@@ -28,6 +29,8 @@ interface OfferFormProps {
 }
 
 export function OfferForm({ open, onOpenChange, onSaved, initialData, orgId }: OfferFormProps) {
+  const t = useTranslations("forms")
+  const tc = useTranslations("common")
   const isEdit = !!initialData?.id
   const [form, setForm] = useState<OfferFormData>({
     offerNumber: initialData?.offerNumber || "",
@@ -92,7 +95,7 @@ export function OfferForm({ open, onOpenChange, onSaved, initialData, orgId }: O
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogHeader>
-        <DialogTitle>{isEdit ? "Edit Offer" : "Add Offer"}</DialogTitle>
+        <DialogTitle>{isEdit ? t("editOffer") : t("addOffer")}</DialogTitle>
       </DialogHeader>
       <form onSubmit={handleSubmit}>
         <DialogContent>
@@ -100,52 +103,52 @@ export function OfferForm({ open, onOpenChange, onSaved, initialData, orgId }: O
           <div className="grid gap-4">
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label htmlFor="offerNumber">Offer Number</Label>
+                <Label htmlFor="offerNumber">{t("offerNumber")}</Label>
                 <Input id="offerNumber" value={form.offerNumber} onChange={(e) => update("offerNumber", e.target.value)} />
               </div>
               <div>
-                <Label htmlFor="title">Title *</Label>
+                <Label htmlFor="title">{tc("title")} *</Label>
                 <Input id="title" value={form.title} onChange={(e) => update("title", e.target.value)} required />
               </div>
             </div>
             <div>
-              <Label htmlFor="companyId">Company ID</Label>
-              <Input id="companyId" value={form.companyId} onChange={(e) => update("companyId", e.target.value)} placeholder="Company UUID" />
+              <Label htmlFor="companyId">{tc("company")}</Label>
+              <Input id="companyId" value={form.companyId} onChange={(e) => update("companyId", e.target.value)} />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label htmlFor="status">Status</Label>
+                <Label htmlFor="status">{tc("status")}</Label>
                 <Select value={form.status} onChange={(e) => update("status", e.target.value)}>
-                  <option value="draft">Draft</option>
-                  <option value="sent">Sent</option>
-                  <option value="accepted">Accepted</option>
-                  <option value="rejected">Rejected</option>
+                  <option value="draft">{tc("draft")}</option>
+                  <option value="sent">{tc("sent")}</option>
+                  <option value="accepted">{tc("completed")}</option>
+                  <option value="rejected">{tc("cancelled")}</option>
                 </Select>
               </div>
               <div>
-                <Label htmlFor="validUntil">Valid Until</Label>
+                <Label htmlFor="validUntil">{tc("validUntil")}</Label>
                 <Input id="validUntil" type="date" value={form.validUntil} onChange={(e) => update("validUntil", e.target.value)} />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label htmlFor="totalAmount">Total Amount</Label>
+                <Label htmlFor="totalAmount">{tc("amount")}</Label>
                 <Input id="totalAmount" type="number" step="0.01" value={form.totalAmount} onChange={(e) => update("totalAmount", e.target.value)} />
               </div>
               <div>
-                <Label htmlFor="currency">Currency</Label>
+                <Label htmlFor="currency">{tc("currency")}</Label>
                 <Input id="currency" value={form.currency} onChange={(e) => update("currency", e.target.value)} />
               </div>
             </div>
             <div>
-              <Label htmlFor="notes">Notes</Label>
+              <Label htmlFor="notes">{tc("notes")}</Label>
               <Textarea id="notes" value={form.notes} onChange={(e) => update("notes", e.target.value)} rows={3} />
             </div>
           </div>
         </DialogContent>
         <DialogFooter>
-          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button type="submit" disabled={saving}>{saving ? "Saving..." : isEdit ? "Update" : "Create"}</Button>
+          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>{tc("cancel")}</Button>
+          <Button type="submit" disabled={saving}>{saving ? tc("saving") : isEdit ? tc("update") : tc("create")}</Button>
         </DialogFooter>
       </form>
     </Dialog>

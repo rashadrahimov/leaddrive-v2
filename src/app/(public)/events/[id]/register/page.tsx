@@ -85,7 +85,7 @@ export default function EventRegistrationPage() {
               <span className="text-2xl">📅</span>
               <div>
                 <p className="text-xs text-gray-500 uppercase">Date</p>
-                <p className="font-semibold">{new Date(event.startDate).toLocaleString("ru-RU", { dateStyle: "long", timeStyle: "short" })}</p>
+                <p className="font-semibold">{new Date(event.startDate).toLocaleString(undefined, { dateStyle: "long", timeStyle: "short" })}</p>
               </div>
             </div>
             {event.location && (
@@ -130,7 +130,7 @@ export default function EventRegistrationPage() {
           <h1 className="text-3xl md:text-4xl font-bold mb-3">{event.name}</h1>
           <div className="flex items-center justify-center gap-4 text-sm opacity-90 flex-wrap">
             <span className="flex items-center gap-1.5">
-              📅 {new Date(event.startDate).toLocaleDateString("ru-RU", { day: "numeric", month: "long", year: "numeric" })}
+              📅 {new Date(event.startDate).toLocaleDateString(undefined, { day: "numeric", month: "long", year: "numeric" })}
             </span>
             {event.location && <span className="flex items-center gap-1.5">📍 {event.location}</span>}
             {event.isOnline && <span className="flex items-center gap-1.5">🌐 Online</span>}
@@ -232,10 +232,10 @@ export default function EventRegistrationPage() {
                   <span className="text-lg">📅</span>
                   <div>
                     <p className="text-gray-500 text-xs">Date & Time</p>
-                    <p className="font-medium">{new Date(event.startDate).toLocaleString("ru-RU", { dateStyle: "long", timeStyle: "short" })}</p>
+                    <p className="font-medium">{new Date(event.startDate).toLocaleString(undefined, { dateStyle: "long", timeStyle: "short" })}</p>
                     {event.endDate && (
                       <p className="text-gray-500 text-xs mt-0.5">
-                        to {new Date(event.endDate).toLocaleString("ru-RU", { dateStyle: "long", timeStyle: "short" })}
+                        to {new Date(event.endDate).toLocaleString(undefined, { dateStyle: "long", timeStyle: "short" })}
                       </p>
                     )}
                   </div>

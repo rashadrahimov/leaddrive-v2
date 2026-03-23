@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { useTranslations } from "next-intl"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -17,6 +18,7 @@ interface KbArticle {
 }
 
 export default function PortalKnowledgeBasePage() {
+  const t = useTranslations("portal")
   const [articles, setArticles] = useState<KbArticle[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
@@ -44,13 +46,13 @@ export default function PortalKnowledgeBasePage() {
 
   const filtered = articles.filter(a =>
     a.title.toLowerCase().includes(search.toLowerCase()) ||
-    a.tags.some(t => t.toLowerCase().includes(search.toLowerCase()))
+    a.tags.some(tag => tag.toLowerCase().includes(search.toLowerCase()))
   )
 
   if (loading) {
     return (
       <div className="space-y-4">
-        <h1 className="text-2xl font-bold flex items-center gap-2"><BookOpen className="h-6 w-6" /> Knowledge Base</h1>
+        <h1 className="text-2xl font-bold flex items-center gap-2"><BookOpen className="h-6 w-6" /> {t("knowledgeBase")}</h1>
         <div className="animate-pulse space-y-3">
           {[1, 2, 3].map(i => <div key={i} className="h-20 bg-muted rounded-lg" />)}
         </div>
@@ -62,7 +64,7 @@ export default function PortalKnowledgeBasePage() {
     return (
       <div className="space-y-4">
         <Button variant="ghost" onClick={() => setSelectedArticle(null)} className="gap-1">
-          <ArrowLeft className="h-4 w-4" /> Back to articles
+          <ArrowLeft className="h-4 w-4" /> {t("backToArticles")}
         </Button>
         <Card>
           <CardContent className="pt-6">
@@ -86,20 +88,20 @@ export default function PortalKnowledgeBasePage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2"><BookOpen className="h-6 w-6" /> Knowledge Base</h1>
-        <p className="text-muted-foreground text-sm mt-1">Find answers and help articles</p>
+        <h1 className="text-2xl font-bold flex items-center gap-2"><BookOpen className="h-6 w-6" /> {t("knowledgeBase")}</h1>
+        <p className="text-muted-foreground text-sm mt-1">{t("findAnswers")}</p>
       </div>
 
       <div className="relative">
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <Input placeholder="Search articles..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
+        <Input placeholder={t("searchArticles")} value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
       </div>
 
       <div className="space-y-3">
         {filtered.length === 0 ? (
           <Card>
             <CardContent className="py-8 text-center text-muted-foreground">
-              No articles found
+              {t("noArticles")}
             </CardContent>
           </Card>
         ) : (

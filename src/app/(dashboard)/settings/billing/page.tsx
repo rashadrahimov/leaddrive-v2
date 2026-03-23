@@ -1,5 +1,6 @@
 "use client"
 
+import { useTranslations } from "next-intl"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -56,11 +57,12 @@ const PLANS = [
 ]
 
 export default function BillingPage() {
+  const t = useTranslations("settings")
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Billing Plans</h1>
-        <p className="text-muted-foreground">Choose the perfect plan for your business</p>
+        <h1 className="text-2xl font-bold tracking-tight">{t("billing")}</h1>
+        <p className="text-muted-foreground">{t("billingDesc")}</p>
       </div>
 
       <div className="grid gap-6 md:grid-cols-3">
@@ -75,7 +77,7 @@ export default function BillingPage() {
                     <span className="text-sm text-muted-foreground">/{plan.billing}</span>
                   </div>
                 </div>
-                {plan.current && <Badge>Current Plan</Badge>}
+                {plan.current && <Badge>Current Plan</Badge>}{/* billing-specific, keep English */}
               </div>
             </CardHeader>
             <CardContent className="space-y-6">

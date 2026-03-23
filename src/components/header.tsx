@@ -6,6 +6,7 @@ import { Sun, Moon, Search, LogOut, Command } from "lucide-react"
 import { signOut } from "next-auth/react"
 import { NotificationBell } from "@/components/notification-bell"
 import { LanguageSwitcher } from "@/components/language-switcher"
+import { useTranslations } from "next-intl"
 
 interface HeaderProps {
   orgName?: string
@@ -13,6 +14,7 @@ interface HeaderProps {
 }
 
 export function Header({ orgName = "Organization", userName = "User" }: HeaderProps) {
+  const t = useTranslations("common")
   const { theme, setTheme } = useTheme()
 
   return (
@@ -23,7 +25,7 @@ export function Header({ orgName = "Organization", userName = "User" }: HeaderPr
         {/* Visible search bar */}
         <button className="flex items-center gap-2 rounded-lg bg-muted/50 px-3 py-1.5 text-sm text-muted-foreground hover:bg-muted transition-colors cursor-pointer">
           <Search className="h-3.5 w-3.5" />
-          <span className="hidden sm:inline">Search...</span>
+          <span className="hidden sm:inline">{t("search")}</span>
           <kbd className="hidden sm:inline-flex items-center gap-0.5 rounded border border-border/60 bg-background px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
             <Command className="h-2.5 w-2.5" />K
           </kbd>

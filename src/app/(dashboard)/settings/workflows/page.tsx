@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useSession } from "next-auth/react"
+import { useTranslations } from "next-intl"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -27,6 +28,8 @@ interface Workflow {
 
 export default function WorkflowsPage() {
   const { data: session } = useSession()
+  const t = useTranslations("settings")
+  const tc = useTranslations("common")
   const [workflows, setWorkflows] = useState<Workflow[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
@@ -73,12 +76,12 @@ export default function WorkflowsPage() {
       render: (item: any) => <Badge variant="secondary">{item.triggerEvent}</Badge>,
     },
     {
-      key: "actions", label: "Actions", sortable: true,
+      key: "actions", label: tc("actions"), sortable: true,
       render: (item: any) => <div className="text-sm">{item.actions.length} action{item.actions.length !== 1 ? "s" : ""}</div>,
     },
     {
-      key: "isActive", label: "Status", sortable: true,
-      render: (item: any) => <Badge variant={item.isActive ? "default" : "secondary"}>{item.isActive ? "Active" : "Inactive"}</Badge>,
+      key: "isActive", label: tc("status"), sortable: true,
+      render: (item: any) => <Badge variant={item.isActive ? "default" : "secondary"}>{item.isActive ? tc("active") : tc("inactive")}</Badge>,
     },
     {
       key: "edit", label: "", sortable: false,
@@ -99,23 +102,23 @@ export default function WorkflowsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Workflow Rules</h1>
-          <p className="text-muted-foreground">Automate business processes</p>
+          <h1 className="text-2xl font-bold tracking-tight">{t("workflows")}</h1>
+          <p className="text-muted-foreground">{t("workflowsDesc")}</p>
         </div>
         <Button className="gap-2" onClick={() => { setEditData(undefined); setShowForm(true) }}>
-          <Plus className="h-4 w-4" /> Create Workflow
+          <Plus className="h-4 w-4" /> {tc("create")} Workflow
         </Button>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Active Workflows</CardTitle>
+          <CardTitle>{t("workflows")}</CardTitle>
         </CardHeader>
         <CardContent>
           {loading ? (
-            <p className="text-muted-foreground">Loading...</p>
+            <p className="text-muted-foreground">{tc("loading")}</p>
           ) : (
-            <DataTable columns={columns} data={workflows} searchPlaceholder="Search workflows..." searchKey="name" pageSize={10} />
+            <DataTable columns={columns} data={workflows} searchPlaceholder={tc("search")} searchKey="name" pageSize={10} />
           )}
         </CardContent>
       </Card>
@@ -132,7 +135,7 @@ export default function WorkflowsPage() {
         open={!!deleteId}
         onOpenChange={(open) => { if (!open) setDeleteId(null) }}
         onConfirm={handleDelete}
-        title="Delete Workflow"
+        title={`${tc("delete")} Workflow`}
         itemName={deleteName}
       />
     </div>

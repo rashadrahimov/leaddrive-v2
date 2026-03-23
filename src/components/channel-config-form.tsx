@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -37,6 +38,8 @@ const channelTypes = [
 ]
 
 export function ChannelConfigForm({ open, onOpenChange, onSaved, initialData, orgId }: ChannelConfigFormProps) {
+  const tf = useTranslations("forms")
+  const tc = useTranslations("common")
   const isEdit = !!initialData?.id
   const [form, setForm] = useState<ChannelConfigFormData>({
     configName: "",
@@ -73,7 +76,7 @@ export function ChannelConfigForm({ open, onOpenChange, onSaved, initialData, or
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!form.configName.trim()) {
-      setError("Введите название канала")
+      setError(tc("required"))
       return
     }
     setSaving(true)
@@ -102,7 +105,7 @@ export function ChannelConfigForm({ open, onOpenChange, onSaved, initialData, or
         }),
       })
       const json = await res.json()
-      if (!res.ok) throw new Error(json.error || "Ошибка сохранения")
+      if (!res.ok) throw new Error(json.error || tc("failedToSave"))
       onSaved()
       onOpenChange(false)
     } catch (err: any) {
@@ -117,7 +120,7 @@ export function ChannelConfigForm({ open, onOpenChange, onSaved, initialData, or
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogHeader>
-        <DialogTitle>{isEdit ? "Редактировать канал" : "Новый канал"}</DialogTitle>
+        <DialogTitle>{isEdit ? tf("editChannel") : tf("newChannel")}</DialogTitle>
       </DialogHeader>
       <form onSubmit={handleSubmit}>
         <DialogContent>
@@ -128,24 +131,24 @@ export function ChannelConfigForm({ open, onOpenChange, onSaved, initialData, or
           )}
 
           <div className="space-y-5">
-            {/* Название */}
+            {/* Name */}
             <div>
-              <Label htmlFor="configName" className="text-sm font-medium">Название</Label>
+              <Label htmlFor="configName" className="text-sm font-medium">{tc("name")}</Label>
               <Input
                 id="configName"
                 value={form.configName}
                 onChange={(e) => update("configName", e.target.value)}
-                placeholder="Например: Рабочий Email, Telegram бот"
+                placeholder={tf("channelNamePlaceholder")}
                 className="mt-1.5"
               />
               <p className="text-xs text-muted-foreground mt-1">
-                Описательное название для идентификации в списках
+                {tf("channelNameHint")}
               </p>
             </div>
 
-            {/* Тип канала — визуальный выбор */}
+            {/* Channel type */}
             <div>
-              <Label className="text-sm font-medium">Тип канала</Label>
+              <Label className="text-sm font-medium">{tf("channelType")}</Label>
               <div className="grid grid-cols-4 gap-2 mt-1.5">
                 {channelTypes.map(ct => {
                   const Icon = ct.icon
@@ -169,7 +172,7 @@ export function ChannelConfigForm({ open, onOpenChange, onSaved, initialData, or
                 })}
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                Тип канала связи — Telegram, WhatsApp, Email или SMS
+                {tf("channelTypeHint")}
               </p>
             </div>
 
@@ -186,7 +189,7 @@ export function ChannelConfigForm({ open, onOpenChange, onSaved, initialData, or
                     className="mt-1.5 font-mono text-sm"
                   />
                   <p className="text-xs text-muted-foreground mt-1">
-                    Токен от @BotFather в Telegram
+                    {tf("telegramBotTokenHint")}
                   </p>
                 </div>
                 <div>
@@ -195,11 +198,11 @@ export function ChannelConfigForm({ open, onOpenChange, onSaved, initialData, or
                     id="chatId"
                     value={form.chatId}
                     onChange={(e) => update("chatId", e.target.value)}
-                    placeholder="123456789 или -100123456789"
+                    placeholder="123456789"
                     className="mt-1.5 font-mono text-sm"
                   />
                   <p className="text-xs text-muted-foreground mt-1">
-                    ID чата или группы для отправки уведомлений. Узнать: отправьте /start боту, затем откройте api.telegram.org/bot[TOKEN]/getUpdates
+                    {tf("telegramChatIdHint")}
                   </p>
                 </div>
               </>
@@ -208,17 +211,17 @@ export function ChannelConfigForm({ open, onOpenChange, onSaved, initialData, or
             {form.channelType === "email" && (
               <>
                 <div>
-                  <Label htmlFor="apiKey" className="text-sm font-medium">API Key / SMTP пароль</Label>
+                  <Label htmlFor="apiKey" className="text-sm font-medium">{tf("apiKeySmtpPassword")}</Label>
                   <Input
                     id="apiKey"
                     value={form.apiKey}
                     onChange={(e) => update("apiKey", e.target.value)}
-                    placeholder="sk-... или SMTP пароль"
+                    placeholder="sk-..."
                     className="mt-1.5 font-mono text-sm"
                     type="password"
                   />
                   <p className="text-xs text-muted-foreground mt-1">
-                    API ключ почтового сервиса или пароль приложения
+                    {tf("apiKeyHint")}
                   </p>
                 </div>
                 <div>
@@ -231,7 +234,7 @@ export function ChannelConfigForm({ open, onOpenChange, onSaved, initialData, or
                     className="mt-1.5"
                   />
                   <p className="text-xs text-muted-foreground mt-1">
-                    URL для входящих уведомлений (опционально)
+                    {tf("webhookUrlHint")}
                   </p>
                 </div>
               </>
@@ -244,7 +247,7 @@ export function ChannelConfigForm({ open, onOpenChange, onSaved, initialData, or
                   <p className="text-xs text-green-600 dark:text-green-400">Данные из developers.facebook.com → WhatsApp → API Setup</p>
                 </div>
                 <div>
-                  <Label htmlFor="apiKey" className="text-sm font-medium">Access Token (Маркер доступа) *</Label>
+                  <Label htmlFor="apiKey" className="text-sm font-medium">{tf("whatsappAccessToken")} *</Label>
                   <Input
                     id="apiKey"
                     type="password"
@@ -255,7 +258,7 @@ export function ChannelConfigForm({ open, onOpenChange, onSaved, initialData, or
                     required
                   />
                   <p className="text-xs text-muted-foreground mt-1">
-                    Временный токен действует 24 часа. Для постоянного — создайте System User.
+                    {tf("whatsappTokenHint")}
                   </p>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
@@ -269,7 +272,7 @@ export function ChannelConfigForm({ open, onOpenChange, onSaved, initialData, or
                       className="mt-1.5 font-mono text-sm"
                       required
                     />
-                    <p className="text-xs text-muted-foreground mt-1">ID номера телефона из API Setup</p>
+                    <p className="text-xs text-muted-foreground mt-1">{tf("whatsappPhoneIdHint")}</p>
                   </div>
                   <div>
                     <Label htmlFor="webhookUrl" className="text-sm font-medium">Business Account ID</Label>
@@ -280,7 +283,7 @@ export function ChannelConfigForm({ open, onOpenChange, onSaved, initialData, or
                       placeholder="907151598973492"
                       className="mt-1.5 font-mono text-sm"
                     />
-                    <p className="text-xs text-muted-foreground mt-1">ID аккаунта WhatsApp Business</p>
+                    <p className="text-xs text-muted-foreground mt-1">{tf("whatsappAccountIdHint")}</p>
                   </div>
                 </div>
               </>
@@ -298,7 +301,7 @@ export function ChannelConfigForm({ open, onOpenChange, onSaved, initialData, or
                     className="mt-1.5 font-mono text-sm"
                   />
                   <p className="text-xs text-muted-foreground mt-1">
-                    Account SID из консоли Twilio
+                    {tf("twilioSidHint")}
                   </p>
                 </div>
                 <div>
@@ -313,7 +316,7 @@ export function ChannelConfigForm({ open, onOpenChange, onSaved, initialData, or
                   />
                 </div>
                 <div>
-                  <Label htmlFor="phoneNumber" className="text-sm font-medium">Номер отправителя (Twilio)</Label>
+                  <Label htmlFor="phoneNumber" className="text-sm font-medium">{tf("twilioSenderPhone")}</Label>
                   <Input
                     id="phoneNumber"
                     value={form.phoneNumber}
@@ -322,13 +325,13 @@ export function ChannelConfigForm({ open, onOpenChange, onSaved, initialData, or
                     className="mt-1.5"
                   />
                   <p className="text-xs text-muted-foreground mt-1">
-                    Twilio номер для отправки SMS
+                    {tf("twilioPhoneHint")}
                   </p>
                 </div>
               </>
             )}
 
-            {/* Статус */}
+            {/* Status */}
             <label className="flex items-center gap-3 cursor-pointer p-3 rounded-lg border bg-muted/30 hover:bg-muted/50 transition-colors">
               <input
                 type="checkbox"
@@ -337,17 +340,17 @@ export function ChannelConfigForm({ open, onOpenChange, onSaved, initialData, or
                 className="rounded h-4 w-4"
               />
               <div>
-                <span className="text-sm font-medium">Канал активен</span>
-                <p className="text-xs text-muted-foreground">Неактивные каналы не будут использоваться для отправки</p>
+                <span className="text-sm font-medium">{tf("channelActive")}</span>
+                <p className="text-xs text-muted-foreground">{tf("channelActiveHint")}</p>
               </div>
             </label>
           </div>
         </DialogContent>
         <DialogFooter>
-          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Отмена</Button>
+          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>{tc("cancel")}</Button>
           <Button type="submit" disabled={saving} className="gap-1.5">
             {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-            {saving ? "Сохранение..." : isEdit ? "Сохранить" : "Создать"}
+            {saving ? tc("saving") : isEdit ? tc("save") : tc("create")}
           </Button>
         </DialogFooter>
       </form>

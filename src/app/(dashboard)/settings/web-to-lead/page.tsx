@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useTranslations } from "next-intl"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -8,6 +9,8 @@ import { Badge } from "@/components/ui/badge"
 import { Code, Copy, Check, ExternalLink, Globe } from "lucide-react"
 
 export default function WebToLeadPage() {
+  const t = useTranslations("settings")
+  const tc = useTranslations("common")
   const [copied, setCopied] = useState(false)
   const [orgSlug, setOrgSlug] = useState("guven-technology")
   const [formTitle, setFormTitle] = useState("Contact Us")
@@ -84,9 +87,9 @@ async function submitLeadDriveForm(e) {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-            <Globe className="h-6 w-6" /> Web-to-Lead Form
+            <Globe className="h-6 w-6" /> {t("webToLead")}
           </h1>
-          <p className="text-sm text-muted-foreground">Generate an embeddable form that creates leads in your CRM automatically</p>
+          <p className="text-sm text-muted-foreground">{t("webToLeadDesc")}</p>
         </div>
       </div>
 
