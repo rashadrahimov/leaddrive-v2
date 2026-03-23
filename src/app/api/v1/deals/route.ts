@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { prisma } from "@/lib/prisma"
 import { getOrgId } from "@/lib/api-auth"
-import { createNotification } from "@/lib/notifications"
+import { executeWorkflows } from "@/lib/workflow-engine"
 
 const createDealSchema = z.object({
   name: z.string().min(1).max(200),
@@ -85,19 +85,7 @@ export async function POST(req: NextRequest) {
         campaign: { select: { id: true, name: true } },
       },
     })
-    // Notify assignee about new deal
-    if (deal.assignedTo) {
-      createNotification({
-        organizationId: orgId,
-        userId: deal.assignedTo,
-        type: "info",
-        title: `Yeni satış: ${deal.name}`,
-        message: `${deal.valueAmount} ${deal.currency} — ${deal.stage}`,
-        entityType: "deal",
-        entityId: deal.id,
-      }).catch(() => {})
-    }
-
+    executeWorkflows(orgId, "deal", "created", deal).catch(() => {})
     return NextResponse.json({ success: true, data: deal }, { status: 201 })
   } catch (e) {
     return NextResponse.json({ error: String(e) }, { status: 500 })
