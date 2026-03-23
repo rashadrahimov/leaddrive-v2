@@ -455,15 +455,15 @@ export function CampaignForm({ open, onOpenChange, onSaved, initialData, orgId, 
                 if (mode === "source") setSelectedSource("")
                 setRecipientModeChanged(true)
               }}>
-                <option value="all">Все контакты + лиды</option>
-                <option value="contacts">Только контакты</option>
-                <option value="leads">Только лиды</option>
-                <option value="segment">📊 По сегменту</option>
-                <option value="source">🔍 По источнику</option>
-                <option value="manual">✋ Выбрать вручную</option>
+                <option value="all">{t("recipientAll")}</option>
+                <option value="contacts">{t("recipientContacts")}</option>
+                <option value="leads">{t("recipientLeads")}</option>
+                <option value="segment">📊 {t("recipientSegment")}</option>
+                <option value="source">🔍 {t("recipientSource")}</option>
+                <option value="manual">✋ {t("recipientManual")}</option>
               </Select>
               <p className="text-xs text-muted-foreground mt-1">
-                Будет отправлено: <span className="font-semibold text-foreground">{recipientCount}</span> получателям
+                {t("willBeSentTo", { count: recipientCount })}
               </p>
 
               {/* Segment picker */}

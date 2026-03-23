@@ -708,7 +708,14 @@
     "hintDescription": "What is this campaign about? Will be shown in email body",
     "hintType": "Email for newsletters, SMS for short messages",
     "hintTemplate": "Ready-made email template with design and variables",
-    "hintSubject": "Email newsletter subject line"
+    "hintSubject": "Email newsletter subject line",
+    "recipientAll": "All contacts + leads",
+    "recipientContacts": "Contacts only",
+    "recipientLeads": "Leads only",
+    "recipientSegment": "By segment",
+    "recipientSource": "By source",
+    "recipientManual": "Select manually",
+    "willBeSentTo": "Will be sent to: {count} recipients"
   },
   "offers": {
     "title": "Offers",

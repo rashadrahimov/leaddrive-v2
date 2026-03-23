@@ -707,7 +707,14 @@
     "hintDescription": "Bu kampaniya nə haqqındadır? Məktubun mətnində göstəriləcək",
     "hintType": "Email göndərişlər üçün, SMS qısa mesajlar üçün",
     "hintTemplate": "Dizayn və dəyişənlərlə hazır məktub şablonu",
-    "hintSubject": "E-poçt göndərişinin mövzusu"
+    "hintSubject": "E-poçt göndərişinin mövzusu",
+    "recipientAll": "Bütün kontaktlar + lidlər",
+    "recipientContacts": "Yalnız kontaktlar",
+    "recipientLeads": "Yalnız lidlər",
+    "recipientSegment": "Seqmentə görə",
+    "recipientSource": "Mənbəyə görə",
+    "recipientManual": "Əl ilə seçin",
+    "willBeSentTo": "Göndəriləcək: {count} alıcıya"
   },
   "offers": {
     "title": "Təkliflər",
