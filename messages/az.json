@@ -702,7 +702,12 @@
     "opens": "Açılışlar",
     "openRate": "Açılma faizi",
     "clicks": "Kliklər",
-    "clickRate": "Klik faizi"
+    "clickRate": "Klik faizi",
+    "hintName": "Kampaniya adı, məs. «Mart göndərişi»",
+    "hintDescription": "Bu kampaniya nə haqqındadır? Məktubun mətnində göstəriləcək",
+    "hintType": "Email göndərişlər üçün, SMS qısa mesajlar üçün",
+    "hintTemplate": "Dizayn və dəyişənlərlə hazır məktub şablonu",
+    "hintSubject": "E-poçt göndərişinin mövzusu"
   },
   "offers": {
     "title": "Təkliflər",
