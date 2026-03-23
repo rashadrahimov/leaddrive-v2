@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server"
 import { getOrgId } from "@/lib/api-auth"
 import { prisma } from "@/lib/prisma"
 
+type ActivityRow = { id: string; type: string; subject: string | null; createdAt: Date; completedAt: Date | null }
+type EmailLogRow = { status: string; createdAt: Date }
+
 // GET /api/v1/deals/[id]/engagement — engagement metrics for deal's contact
 export async function GET(
   req: NextRequest,
@@ -36,11 +39,11 @@ export async function GET(
   })
 
   // Activity breakdown
-  const calls = activities.filter(a => a.type === "call").length
-  const emails = activities.filter(a => a.type === "email").length
-  const meetings = activities.filter(a => a.type === "meeting").length
-  const notes = activities.filter(a => a.type === "note").length
-  const tasks = activities.filter(a => a.type === "task").length
+  const calls = activities.filter((a: ActivityRow) => a.type === "call").length
+  const emails = activities.filter((a: ActivityRow) => a.type === "email").length
+  const meetings = activities.filter((a: ActivityRow) => a.type === "meeting").length
+  const notes = activities.filter((a: ActivityRow) => a.type === "note").length
+  const tasks = activities.filter((a: ActivityRow) => a.type === "task").length
 
   // Last activity
   const lastActivity = activities[0] || null
@@ -54,16 +57,16 @@ export async function GET(
     const start = new Date(d.getFullYear(), d.getMonth(), 1)
     const end = new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59)
 
-    const monthActivities = activities.filter(a => {
+    const monthActivities = activities.filter((a: ActivityRow) => {
       const ad = new Date(a.createdAt)
       return ad >= start && ad <= end
     })
 
     monthlyData.push({
       month: monthStr,
-      calls: monthActivities.filter(a => a.type === "call").length,
-      emails: monthActivities.filter(a => a.type === "email").length,
-      meetings: monthActivities.filter(a => a.type === "meeting").length,
+      calls: monthActivities.filter((a: ActivityRow) => a.type === "call").length,
+      emails: monthActivities.filter((a: ActivityRow) => a.type === "email").length,
+      meetings: monthActivities.filter((a: ActivityRow) => a.type === "meeting").length,
     })
   }
 
@@ -89,11 +92,11 @@ export async function GET(
 
       emailMetrics = {
         sent: emailLogs.length,
-        delivered: emailLogs.filter(e => e.status === "delivered" || e.status === "sent").length,
-        opened: emailLogs.filter(e => e.status === "opened").length,
-        clicked: emailLogs.filter(e => e.status === "clicked").length,
-        bounced: emailLogs.filter(e => e.status === "bounced").length,
-        failed: emailLogs.filter(e => e.status === "failed").length,
+        delivered: emailLogs.filter((e: EmailLogRow) => e.status === "delivered" || e.status === "sent").length,
+        opened: emailLogs.filter((e: EmailLogRow) => e.status === "opened").length,
+        clicked: emailLogs.filter((e: EmailLogRow) => e.status === "clicked").length,
+        bounced: emailLogs.filter((e: EmailLogRow) => e.status === "bounced").length,
+        failed: emailLogs.filter((e: EmailLogRow) => e.status === "failed").length,
       }
 
       // Monthly email breakdown
@@ -104,7 +107,7 @@ export async function GET(
         const start = new Date(d.getFullYear(), d.getMonth(), 1)
         const end = new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59)
 
-        const ml = emailLogs.filter(e => {
+        const ml = emailLogs.filter((e: EmailLogRow) => {
           const ed = new Date(e.createdAt)
           return ed >= start && ed <= end
         })
@@ -112,8 +115,8 @@ export async function GET(
         emailMonthly.push({
           month: monthStr,
           sent: ml.length,
-          opened: ml.filter(e => e.status === "opened").length,
-          clicked: ml.filter(e => e.status === "clicked").length,
+          opened: ml.filter((e: EmailLogRow) => e.status === "opened").length,
+          clicked: ml.filter((e: EmailLogRow) => e.status === "clicked").length,
         })
       }
     }

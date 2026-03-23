@@ -115,7 +115,7 @@ export default function OffersPage() {
         open={showForm}
         onOpenChange={(open) => { setShowForm(open); if (!open) setEditData(undefined) }}
         onSaved={fetchOffers}
-        initialData={editData}
+        initialData={editData as any}
         orgId={orgId}
       />
 

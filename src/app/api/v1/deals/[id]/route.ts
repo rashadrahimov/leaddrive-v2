@@ -44,16 +44,16 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     if (!deal) return NextResponse.json({ error: "Deal not found" }, { status: 404 })
 
     // Enrich team members with user info
-    const userIds = deal.teamMembers.map(m => m.userId)
+    const userIds = deal.teamMembers.map((m: any) => m.userId)
     const users = userIds.length > 0
       ? await prisma.user.findMany({
           where: { id: { in: userIds } },
           select: { id: true, name: true, email: true, avatar: true, role: true },
         })
       : []
-    const userMap = Object.fromEntries(users.map(u => [u.id, u]))
+    const userMap = Object.fromEntries(users.map((u: any) => [u.id, u]))
 
-    const enrichedTeam = deal.teamMembers.map(m => ({
+    const enrichedTeam = deal.teamMembers.map((m: any) => ({
       ...m,
       user: userMap[m.userId] || { id: m.userId, name: null, email: "", avatar: null, role: null },
     }))
@@ -68,15 +68,15 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     }
 
     // Enrich contact roles with contact info
-    const roleContactIds = deal.contactRoles.map(r => r.contactId)
+    const roleContactIds = deal.contactRoles.map((r: any) => r.contactId)
     const roleContacts = roleContactIds.length > 0
       ? await prisma.contact.findMany({
           where: { id: { in: roleContactIds } },
           select: { id: true, fullName: true, position: true, email: true, phone: true },
         })
       : []
-    const roleContactMap = Object.fromEntries(roleContacts.map(c => [c.id, c]))
-    const enrichedRoles = deal.contactRoles.map(r => ({
+    const roleContactMap = Object.fromEntries(roleContacts.map((c: any) => [c.id, c]))
+    const enrichedRoles = deal.contactRoles.map((r: any) => ({
       ...r,
       contact: roleContactMap[r.contactId] || { id: r.contactId, fullName: "Unknown", position: null, email: null, phone: null },
     }))

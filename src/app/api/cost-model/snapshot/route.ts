@@ -9,6 +9,7 @@ export async function POST(req: NextRequest) {
     if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
     const result = await loadAndCompute(orgId)
+    const summary = result.summary as any
 
     const now = new Date()
     const snapshotMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`
@@ -21,27 +22,27 @@ export async function POST(req: NextRequest) {
         },
       },
       update: {
-        totalCost: result.summary?.totalCost ?? 0,
-        totalRevenue: result.summary?.totalRevenue ?? 0,
-        margin: result.summary?.margin ?? 0,
-        marginPct: result.summary?.marginPct ?? 0,
-        overheadTotal: result.summary?.overheadTotal ?? 0,
-        employeeCost: result.summary?.employeeCost ?? 0,
-        profitableClients: result.summary?.profitableClients ?? 0,
-        lossClients: result.summary?.lossClients ?? 0,
+        totalCost: summary?.totalCost ?? 0,
+        totalRevenue: summary?.totalRevenue ?? 0,
+        margin: summary?.margin ?? 0,
+        marginPct: summary?.marginPct ?? 0,
+        overheadTotal: summary?.overheadTotal ?? 0,
+        employeeCost: summary?.employeeCost ?? 0,
+        profitableClients: summary?.profitableClients ?? 0,
+        lossClients: summary?.lossClients ?? 0,
         dataJson: JSON.stringify(result),
       },
       create: {
         organizationId: orgId,
         snapshotMonth,
-        totalCost: result.summary?.totalCost ?? 0,
-        totalRevenue: result.summary?.totalRevenue ?? 0,
-        margin: result.summary?.margin ?? 0,
-        marginPct: result.summary?.marginPct ?? 0,
-        overheadTotal: result.summary?.overheadTotal ?? 0,
-        employeeCost: result.summary?.employeeCost ?? 0,
-        profitableClients: result.summary?.profitableClients ?? 0,
-        lossClients: result.summary?.lossClients ?? 0,
+        totalCost: summary?.totalCost ?? 0,
+        totalRevenue: summary?.totalRevenue ?? 0,
+        margin: summary?.margin ?? 0,
+        marginPct: summary?.marginPct ?? 0,
+        overheadTotal: summary?.overheadTotal ?? 0,
+        employeeCost: summary?.employeeCost ?? 0,
+        profitableClients: summary?.profitableClients ?? 0,
+        lossClients: summary?.lossClients ?? 0,
         dataJson: JSON.stringify(result),
       },
     })

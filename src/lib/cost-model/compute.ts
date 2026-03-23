@@ -183,7 +183,7 @@ export function computeCostModel(
   const serviceCosts: Record<string, number> = {}
   const serviceDetails: Record<string, ServiceDetail> = {}
 
-  for (const [svc, depts] of Object.entries(SERVICE_DEPT_MAP)) {
+  for (const [svc, depts] of Object.entries(SERVICE_DEPT_MAP) as [string, string[]][]) {
     const directLabor = depts.reduce((sum, d) => sum + (deptCosts[d] ?? 0), 0)
     const deptHeadcount = allDeptEmployees
       .filter((e) => depts.includes(e.department))

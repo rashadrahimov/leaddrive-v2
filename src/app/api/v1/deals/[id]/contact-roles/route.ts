@@ -23,16 +23,16 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       orderBy: { createdAt: "asc" },
     })
 
-    const contactIds = roles.map(r => r.contactId)
+    const contactIds = roles.map((r: any) => r.contactId)
     const contacts = contactIds.length > 0
       ? await prisma.contact.findMany({
           where: { id: { in: contactIds } },
           select: { id: true, fullName: true, position: true, email: true, phone: true },
         })
       : []
-    const contactMap = Object.fromEntries(contacts.map(c => [c.id, c]))
+    const contactMap = Object.fromEntries(contacts.map((c: any) => [c.id, c]))
 
-    const enriched = roles.map(r => ({
+    const enriched = roles.map((r: any) => ({
       ...r,
       contact: contactMap[r.contactId] || { id: r.contactId, fullName: "Unknown", position: null, email: null, phone: null },
     }))

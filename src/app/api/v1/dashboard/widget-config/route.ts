@@ -35,7 +35,7 @@ export async function GET(req: NextRequest) {
       select: { role: true },
       distinct: ["role"],
     })
-    const orgRoles = [...new Set(users.map(u => u.role).filter(Boolean))]
+    const orgRoles = [...new Set(users.map((u: any) => u.role).filter(Boolean))]
 
     return NextResponse.json({
       success: true,

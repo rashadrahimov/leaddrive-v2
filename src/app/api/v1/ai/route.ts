@@ -96,8 +96,8 @@ export async function POST(req: NextRequest) {
       if (!company) return NextResponse.json({ error: "Company not found" }, { status: 404 })
 
       contextName = company.name
-      contactNames = company.contacts.map(c => c.fullName).join(", ")
-      dealInfo = company.deals.map(d => `${d.title} (${d.stage}, ${d.valueAmount}₼)`).join("; ")
+      contactNames = company.contacts.map((c: any) => c.fullName).join(", ")
+      dealInfo = company.deals.map((d: any) => `${d.name || d.title} (${d.stage}, ${d.valueAmount}₼)`).join("; ")
       activitiesList = company.activities
       industry = company.industry || ""
       website = company.website || ""

@@ -31,7 +31,7 @@ export async function processEnrollmentStep(enrollmentId: string, orgId: string)
     return { stepId: "", stepType: "", status: "failed", message: "Journey not found" }
   }
 
-  const currentStep = journey.steps.find(s => s.id === enrollment.currentStepId)
+  const currentStep = journey.steps.find((s: any) => s.id === enrollment.currentStepId)
   if (!currentStep) {
     return { stepId: "", stepType: "", status: "failed", message: "Current step not found" }
   }
@@ -210,7 +210,7 @@ export async function processEnrollmentStep(enrollmentId: string, orgId: string)
         })
 
         // Move to next step (but don't execute yet — will be processed when nextActionAt arrives)
-        const nextStep = journey.steps.find(s => s.stepOrder === currentStep.stepOrder + 1)
+        const nextStep = journey.steps.find((s: any) => s.stepOrder === currentStep.stepOrder + 1)
         if (nextStep) {
           await prisma.journeyEnrollment.update({
             where: { id: enrollmentId },
@@ -298,7 +298,7 @@ export async function processEnrollmentStep(enrollmentId: string, orgId: string)
     })
 
     // Move to next step
-    const nextStep = journey.steps.find(s => s.stepOrder === currentStep.stepOrder + 1)
+    const nextStep = journey.steps.find((s: any) => s.stepOrder === currentStep.stepOrder + 1)
 
     if (nextStep) {
       await prisma.journeyEnrollment.update({

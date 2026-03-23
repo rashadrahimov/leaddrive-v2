@@ -155,7 +155,7 @@ export default function KbArticleDetailPage() {
           content: article.content || "",
           categoryId: article.categoryId || "",
           status: article.status,
-          tags: tags,
+          tags: tags.join(", "),
         }}
       />
 

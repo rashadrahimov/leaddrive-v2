@@ -11,5 +11,5 @@ export async function GET(req: NextRequest) {
     orderBy: { sortOrder: "asc" },
   })
 
-  return NextResponse.json({ success: true, data: groups.map((g) => g.name) })
+  return NextResponse.json({ success: true, data: groups.map((g: any) => g.name) })
 }

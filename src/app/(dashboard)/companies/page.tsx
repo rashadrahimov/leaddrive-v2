@@ -32,6 +32,7 @@ interface Company {
   leadTemperature?: string
   userCount: number
   annualRevenue?: number
+  slaPolicy?: { name: string } | null
   _count: { contacts: number; deals: number; contracts: number }
 }
 
@@ -246,7 +247,7 @@ export default function CompaniesPage() {
       <LeadDetailModal
         open={!!selectedCompany}
         onOpenChange={(open) => { if (!open) setSelectedCompany(null) }}
-        company={selectedCompany}
+        company={selectedCompany as any}
         orgId={orgId}
         onSaved={fetchCompanies}
       />

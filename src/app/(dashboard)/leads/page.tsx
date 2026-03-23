@@ -390,7 +390,7 @@ export default function LeadsPage() {
           open={!!convertLead}
           onOpenChange={open => { if (!open) setConvertLead(null) }}
           onConverted={fetchLeads}
-          lead={convertLead}
+          lead={convertLead as any}
           orgId={orgId}
         />
       )}

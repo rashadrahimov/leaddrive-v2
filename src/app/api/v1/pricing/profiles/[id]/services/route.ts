@@ -44,7 +44,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
     // Update category total
     const catServices = await prisma.pricingService.findMany({ where: { profileCategoryId } })
-    const catTotal = catServices.reduce((sum, s) => sum + s.total, 0)
+    const catTotal = catServices.reduce((sum: number, s: any) => sum + s.total, 0)
     await prisma.pricingProfileCategory.update({ where: { id: profileCategoryId }, data: { total: catTotal } })
 
     return NextResponse.json({ success: true, data: service }, { status: 201 })
@@ -86,7 +86,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 
     // Update category total
     const catServices = await prisma.pricingService.findMany({ where: { profileCategoryId: existing.profileCategoryId } })
-    const catTotal = catServices.reduce((sum, s) => sum + s.total, 0)
+    const catTotal = catServices.reduce((sum: number, s: any) => sum + s.total, 0)
     await prisma.pricingProfileCategory.update({ where: { id: existing.profileCategoryId }, data: { total: catTotal } })
 
     return NextResponse.json({ success: true, data: service })
@@ -114,7 +114,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
 
   // Update category total
   const catServices = await prisma.pricingService.findMany({ where: { profileCategoryId: existing.profileCategoryId } })
-  const catTotal = catServices.reduce((sum, s) => sum + s.total, 0)
+  const catTotal = catServices.reduce((sum: number, s: any) => sum + s.total, 0)
   await prisma.pricingProfileCategory.update({ where: { id: existing.profileCategoryId }, data: { total: catTotal } })
 
   return NextResponse.json({ success: true, data: { deleted: true } })

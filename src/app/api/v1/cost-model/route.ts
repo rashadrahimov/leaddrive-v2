@@ -19,14 +19,14 @@ export async function GET(req: NextRequest) {
     ])
 
     // Calculate totals
-    const totalOverhead = overhead.reduce((s, o) => {
+    const totalOverhead = overhead.reduce((s: number, o: any) => {
       const monthly = o.isAnnual ? o.amount / 12 : o.amount
       const withVat = o.hasVat ? monthly * 1.18 : monthly
       return s + withVat
     }, 0)
 
-    const totalEmployeeCost = employees.reduce((s, e) => s + e.superGross * e.count, 0)
-    const totalRevenue = services.reduce((s, cs) => s + cs.monthlyRevenue, 0)
+    const totalEmployeeCost = employees.reduce((s: number, e: any) => s + e.superGross * e.count, 0)
+    const totalRevenue = services.reduce((s: number, cs: any) => s + cs.monthlyRevenue, 0)
     const totalCost = totalOverhead + totalEmployeeCost
 
     // Service type breakdown
@@ -34,8 +34,8 @@ export async function GET(req: NextRequest) {
     const serviceRevenues: Record<string, number> = {}
     for (const t of serviceTypes) {
       serviceRevenues[t] = services
-        .filter((s) => s.serviceType === t)
-        .reduce((sum, s) => sum + s.monthlyRevenue, 0)
+        .filter((s: any) => s.serviceType === t)
+        .reduce((sum: number, s: any) => sum + s.monthlyRevenue, 0)
     }
 
     // Employee cost by department

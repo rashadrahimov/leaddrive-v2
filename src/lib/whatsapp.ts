@@ -60,7 +60,7 @@ export async function sendWhatsAppMessage({
         data: {
           organizationId,
           direction: "outbound",
-          from: config?.phoneNumberId || "system",
+          from: "system",
           to,
           body: message,
           status: "failed",

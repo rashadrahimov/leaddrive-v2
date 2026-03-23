@@ -98,7 +98,7 @@ export async function loadAndCompute(orgId: string): Promise<CostModelResult> {
         fixedOverheadRatio: 0.25,
       }
 
-  const overhead: OverheadItem[] = overheadRows.map((r) => ({
+  const overhead: OverheadItem[] = overheadRows.map((r: any) => ({
     id: r.id,
     category: r.category,
     label: r.label,
@@ -112,7 +112,7 @@ export async function loadAndCompute(orgId: string): Promise<CostModelResult> {
     notes: r.notes ?? "",
   }))
 
-  const emps: EmployeeRow[] = employeeRows.map((r) => ({
+  const emps: EmployeeRow[] = employeeRows.map((r: any) => ({
     id: r.id,
     department: r.department,
     position: r.position,
@@ -124,14 +124,14 @@ export async function loadAndCompute(orgId: string): Promise<CostModelResult> {
     notes: r.notes ?? "",
   }))
 
-  const clientComps: ClientCompany[] = companies.map((c) => ({
+  const clientComps: ClientCompany[] = companies.map((c: any) => ({
     id: c.id,
     name: c.name,
     costCode: c.costCode ?? "",
     userCount: c.userCount,
   }))
 
-  const clientSvcs: ClientServiceRow[] = services.map((s) => ({
+  const clientSvcs: ClientServiceRow[] = services.map((s: any) => ({
     id: s.id,
     companyId: s.companyId,
     serviceType: s.serviceType,
@@ -141,8 +141,8 @@ export async function loadAndCompute(orgId: string): Promise<CostModelResult> {
   }))
 
   const pricingRevenues: PricingRevenueRow[] = pricingProfiles
-    .filter((p) => p.companyId)
-    .map((p) => ({
+    .filter((p: any) => p.companyId)
+    .map((p: any) => ({
       companyId: p.companyId!,
       monthlyTotal: p.monthlyTotal,
     }))

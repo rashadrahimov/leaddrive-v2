@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
   }
 
   // Verify the token
-  const isValid = verifySync("totp", token, user.totpSecret)
+  const isValid = verifySync({ token, secret: user.totpSecret }).valid
   if (!isValid) {
     return NextResponse.json({ error: "Invalid code. Please try again." }, { status: 400 })
   }

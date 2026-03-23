@@ -56,7 +56,7 @@ export async function GET(req: NextRequest) {
     },
   })
 
-  const data = articles.map((a) => ({
+  const data = articles.map((a: any) => ({
     id: a.id,
     title: a.title,
     content: a.content ? a.content.slice(0, 200) : "",

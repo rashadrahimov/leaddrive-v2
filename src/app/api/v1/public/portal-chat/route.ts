@@ -89,7 +89,7 @@ async function createEscalationTicket(
 
     // Build description with full chat history
     const chatHistory = chatMessages
-      .map(m => `[${m.role === "user" ? "Клиент" : "AI"}] ${m.content}`)
+      .map((m: { role: string; content: string; createdAt: Date }) => `[${m.role === "user" ? "Клиент" : "AI"}] ${m.content}`)
       .join("\n\n")
 
     const ticket = await prisma.ticket.create({
@@ -143,7 +143,7 @@ async function getCustomerTickets(organizationId: string, contactId: string | nu
       select: { ticketNumber: true, subject: true, status: true, priority: true, category: true, createdAt: true },
     })
     if (tickets.length === 0) return "Тикеты клиента: тикетов нет."
-    const list = tickets.map(t =>
+    const list = tickets.map((t: { ticketNumber: string; subject: string; status: string; priority: string; category: string | null; createdAt: Date }) =>
       `- ${t.ticketNumber}: "${t.subject}" | Статус: ${t.status} | Приоритет: ${t.priority} | Создан: ${t.createdAt.toISOString().split("T")[0]}`
     ).join("\n")
     return `Тикеты клиента (${tickets.length}):\n${list}`
@@ -163,7 +163,7 @@ async function getCustomerContracts(organizationId: string, companyId: string | 
       select: { contractNumber: true, title: true, status: true, startDate: true, endDate: true, value: true },
     })
     if (contracts.length === 0) return "Контракты: контрактов нет."
-    const list = contracts.map(c =>
+    const list = contracts.map((c: { contractNumber: string | null; title: string; status: string; startDate: Date | null; endDate: Date | null; value: number | null }) =>
       `- ${c.contractNumber || "N/A"}: "${c.title}" | Статус: ${c.status} | ${c.startDate ? c.startDate.toISOString().split("T")[0] : "?"} — ${c.endDate ? c.endDate.toISOString().split("T")[0] : "бессрочный"} | Сумма: ${c.value || "N/A"}`
     ).join("\n")
     return `Контракты клиента (${contracts.length}):\n${list}`
@@ -177,8 +177,8 @@ async function getGuardrails(organizationId: string): Promise<string[]> {
     where: { organizationId, isActive: true },
   })
   return guardrails
-    .filter(g => g.promptInjection)
-    .map(g => g.promptInjection!)
+    .filter((g: { promptInjection: string | null }) => g.promptInjection)
+    .map((g: { promptInjection: string | null }) => g.promptInjection!)
 }
 
 async function getKbContext(organizationId: string, query: string, maxArticles: number = 5): Promise<string> {
@@ -196,7 +196,7 @@ async function getKbContext(organizationId: string, query: string, maxArticles: 
       select: { title: true, content: true },
     })
     if (articles.length === 0) return "В базе знаний не найдено подходящих статей."
-    return articles.map(a => `## ${a.title}\n${a.content?.slice(0, 500) || ""}`).join("\n\n")
+    return articles.map((a: { title: string; content: string | null }) => `## ${a.title}\n${a.content?.slice(0, 500) || ""}`).join("\n\n")
   } catch {
     return "База знаний недоступна."
   }
@@ -210,8 +210,8 @@ async function getChatHistory(sessionId: string, maxMessages: number = 20): Prom
     select: { role: true, content: true },
   })
   return messages
-    .filter(m => m.role === "user" || m.role === "assistant")
-    .map(m => ({ role: m.role as "user" | "assistant", content: m.content }))
+    .filter((m: { role: string; content: string }) => m.role === "user" || m.role === "assistant")
+    .map((m: { role: string; content: string }) => ({ role: m.role as "user" | "assistant", content: m.content }))
 }
 
 async function logInteraction(
@@ -279,7 +279,7 @@ async function checkAndCreateAlerts(
   })
 
   if (recentLogs.length >= 3) {
-    const avgTokens = recentLogs.reduce((sum, l) => sum + (l.promptTokens || 0) + (l.completionTokens || 0), 0) / recentLogs.length
+    const avgTokens = recentLogs.reduce((sum: number, l: { promptTokens: number | null; completionTokens: number | null }) => sum + (l.promptTokens || 0) + (l.completionTokens || 0), 0) / recentLogs.length
     if (totalTokens > avgTokens * 3 && totalTokens > 2000) {
       await prisma.aiAlert.create({
         data: {

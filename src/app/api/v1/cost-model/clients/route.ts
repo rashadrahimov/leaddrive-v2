@@ -23,15 +23,15 @@ export async function GET(req: NextRequest) {
     })
 
     const clients = companies
-      .map(company => {
-        const companyServices = services.filter(s => s.companyId === company.id)
-        const totalRevenue = companyServices.reduce((s, cs) => s + cs.monthlyRevenue, 0)
+      .map((company: any) => {
+        const companyServices = services.filter((s: any) => s.companyId === company.id)
+        const totalRevenue = companyServices.reduce((s: number, cs: any) => s + cs.monthlyRevenue, 0)
         return {
           id: company.id,
           name: company.name,
           costCode: company.costCode,
           userCount: company.userCount,
-          services: companyServices.map(s => ({
+          services: companyServices.map((s: any) => ({
             id: s.id,
             serviceType: s.serviceType,
             monthlyRevenue: s.monthlyRevenue,
@@ -40,7 +40,7 @@ export async function GET(req: NextRequest) {
           totalRevenue,
         }
       })
-      .filter(c => c.services.length > 0)
+      .filter((c: any) => c.services.length > 0)
 
     return NextResponse.json({
       success: true,

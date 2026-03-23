@@ -37,7 +37,7 @@ const ACCENT_ICON_BG: Record<string, string> = {
   navy: "bg-[#1e3a5f]/10 text-[#1e3a5f]",
 }
 
-const TREND_ICONS = {
+const TREND_ICONS: Record<string, string> = {
   up: "↑",
   down: "↓",
 }

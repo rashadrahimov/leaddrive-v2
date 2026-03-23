@@ -41,7 +41,7 @@ export async function GET(req: NextRequest) {
     ])
 
     // Revenue from won deals
-    const totalRevenue = wonDeals.reduce((s, d) => s + (d.valueAmount || 0), 0)
+    const totalRevenue = wonDeals.reduce((s: number, d: { valueAmount: number | null }) => s + (d.valueAmount || 0), 0)
 
     // Pipeline by stage
     const dealsByStage = await prisma.deal.groupBy({
@@ -72,12 +72,12 @@ export async function GET(req: NextRequest) {
       _count: true,
     })
 
-    const completedTasks = tasksByStatus.find(t => t.status === "completed")?._count || 0
+    const completedTasks = tasksByStatus.find((t: { status: string; _count: number }) => t.status === "completed")?._count || 0
     const totalTasks = tasks
     const taskCompletionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0
 
-    const resolvedTickets = ticketsByStatus.find(t => t.status === "resolved")?._count || 0
-    const closedTickets = ticketsByStatus.find(t => t.status === "closed")?._count || 0
+    const resolvedTickets = ticketsByStatus.find((t: { status: string; _count: number }) => t.status === "resolved")?._count || 0
+    const closedTickets = ticketsByStatus.find((t: { status: string; _count: number }) => t.status === "closed")?._count || 0
     const ticketResolutionRate = tickets > 0 ? Math.round(((resolvedTickets + closedTickets) / tickets) * 100) : 0
 
     // Top 10 companies by revenue (from contracts)
@@ -94,12 +94,12 @@ export async function GET(req: NextRequest) {
     })
 
     const topCompaniesByRevenue = topCompanies
-      .map(c => ({
+      .map((c: { name: string; contracts: { valueAmount: number | null }[] }) => ({
         name: c.name,
-        revenue: c.contracts.reduce((s, ct) => s + (ct.valueAmount || 0), 0),
+        revenue: c.contracts.reduce((s: number, ct: { valueAmount: number | null }) => s + (ct.valueAmount || 0), 0),
       }))
-      .filter(c => c.revenue > 0)
-      .sort((a, b) => b.revenue - a.revenue)
+      .filter((c: { name: string; revenue: number }) => c.revenue > 0)
+      .sort((a: { revenue: number }, b: { revenue: number }) => b.revenue - a.revenue)
       .slice(0, 10)
 
     // Lead funnel — companies by leadStatus
@@ -127,8 +127,8 @@ export async function GET(req: NextRequest) {
       select: { valueAmount: true, status: true },
     })
     const totalContractRevenue = contractsData
-      .filter(c => c.status === "active")
-      .reduce((s, c) => s + (c.valueAmount || 0), 0)
+      .filter((c: { status: string; valueAmount: number | null }) => c.status === "active")
+      .reduce((s: number, c: { status: string; valueAmount: number | null }) => s + (c.valueAmount || 0), 0)
 
     return NextResponse.json({
       success: true,
@@ -150,42 +150,42 @@ export async function GET(req: NextRequest) {
           avgDealSize: wonDeals.length > 0 ? Math.round(totalRevenue / wonDeals.length) : 0,
         },
         pipeline: {
-          stages: dealsByStage.map(s => ({
+          stages: dealsByStage.map((s: any) => ({
             stage: s.stage,
             count: s._count,
             value: s._sum.valueAmount || 0,
           })),
-          totalPipelineValue: dealsByStage.reduce((s, d) => s + (d._sum.valueAmount || 0), 0),
+          totalPipelineValue: dealsByStage.reduce((s: number, d: any) => s + (d._sum.valueAmount || 0), 0),
         },
         tasks: {
           total: tasks,
-          byStatus: tasksByStatus.map(t => ({ status: t.status, count: t._count })),
+          byStatus: tasksByStatus.map((t: { status: string; _count: number }) => ({ status: t.status, count: t._count })),
           completionRate: taskCompletionRate,
           overdue: overdueTasks,
         },
         tickets: {
           total: tickets,
-          byStatus: ticketsByStatus.map(t => ({ status: t.status, count: t._count })),
+          byStatus: ticketsByStatus.map((t: { status: string; _count: number }) => ({ status: t.status, count: t._count })),
           resolutionRate: ticketResolutionRate,
           open: openTickets,
         },
         leads: {
           total: leads,
-          byStatus: leadsByStatus.map(l => ({ status: l.status, count: l._count })),
-          conversionRate: leads > 0 ? Math.round((leadsByStatus.find(l => l.status === "converted")?._count || 0) / leads * 100) : 0,
+          byStatus: leadsByStatus.map((l: { status: string; _count: number }) => ({ status: l.status, count: l._count })),
+          conversionRate: leads > 0 ? Math.round((leadsByStatus.find((l: { status: string; _count: number }) => l.status === "converted")?._count || 0) / leads * 100) : 0,
         },
         topCompanies: topCompaniesByRevenue,
-        leadFunnel: leadFunnel.map(f => ({ status: f.leadStatus, count: f._count })),
+        leadFunnel: leadFunnel.map((f: { leadStatus: string | null; _count: number }) => ({ status: f.leadStatus, count: f._count })),
         financial: {
           monthlyRevenue: totalContractRevenue,
           wonDealsRevenue: totalRevenue,
           totalContracts: contractsData.length,
-          activeContracts: contractsData.filter(c => c.status === "active" || c.status === "Active").length,
+          activeContracts: contractsData.filter((c: { status: string; valueAmount: number | null }) => c.status === "active" || c.status === "Active").length,
         },
         csat: {
           average: csatData._avg.satisfactionRating ? Math.round(csatData._avg.satisfactionRating * 10) / 10 : 0,
           totalRatings: csatData._count.satisfactionRating,
-          byRating: csatByRating.map(r => ({ rating: r.satisfactionRating, count: r._count })),
+          byRating: csatByRating.map((r: { satisfactionRating: number | null; _count: number }) => ({ rating: r.satisfactionRating, count: r._count })),
         },
       },
     })

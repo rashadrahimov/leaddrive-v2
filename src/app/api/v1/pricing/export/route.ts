@@ -29,7 +29,7 @@ async function loadPricingDataFromDB(orgId: string) {
     for (const pc of profile.categories) {
       categories[pc.category.name] = {
         total: pc.total,
-        services: pc.services.map((s) => ({
+        services: pc.services.map((s: any) => ({
           name: s.name, qty: s.qty, price: s.price, total: s.total, unit: s.unit,
         })),
       }
@@ -60,6 +60,6 @@ export async function POST(req: NextRequest) {
     if (template === "2") { buffer = await generateTemplate2(data, legal, adjustments, effectiveDate); filename = "SALES_Report.xlsx" }
     else if (template === "budget" || template === "3") { buffer = await generateBudgetPL(data, legal, adjustments, effectiveDate); filename = "Budget_PL.xlsx" }
     else { buffer = await generateTemplate1(data, legal, adjustments, effectiveDate); filename = "SALES_2026.xlsx" }
-    return new NextResponse(buffer, { headers: { "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "Content-Disposition": `attachment; filename="${filename}"` } })
+    return new NextResponse(buffer as unknown as BodyInit, { headers: { "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "Content-Disposition": `attachment; filename="${filename}"` } })
   } catch (e) { console.error("Export failed:", e); return NextResponse.json({ error: "Export failed" }, { status: 500 }) }
 }
