@@ -17,6 +17,7 @@ interface OfferItem {
   unitPrice: number
   discount: number
   total: number
+  sortOrder: number
 }
 
 interface Offer {

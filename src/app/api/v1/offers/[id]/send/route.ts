@@ -30,7 +30,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     const sentBy = session?.user?.id
 
     // Build HTML email with offer details
-    const itemsHtml = offer.items.map((item, idx) => `
+    const itemsHtml = offer.items.map((item: any, idx: number) => `
       <tr>
         <td style="padding:8px;border:1px solid #ddd">${idx + 1}</td>
         <td style="padding:8px;border:1px solid #ddd">${item.name}</td>
