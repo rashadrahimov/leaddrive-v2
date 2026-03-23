@@ -181,13 +181,18 @@ export async function DELETE(
   const { participantId } = await req.json()
   if (!participantId) return NextResponse.json({ error: "participantId required" }, { status: 400 })
 
-  await prisma.eventParticipant.delete({ where: { id: participantId } })
+  try {
+    await prisma.eventParticipant.delete({ where: { id: participantId } })
+  } catch (e) {
+    return NextResponse.json({ error: "Participant not found" }, { status: 404 })
+  }
 
   const count = await prisma.eventParticipant.count({ where: { eventId: id } })
+  const attendedCount = await prisma.eventParticipant.count({ where: { eventId: id, status: "attended" } })
   await prisma.event.updateMany({
     where: { id, organizationId: orgId },
-    data: { registeredCount: count },
+    data: { registeredCount: count, attendedCount },
   })
 
-  return NextResponse.json({ success: true })
+  return NextResponse.json({ success: true, data: { remaining: count } })
 }

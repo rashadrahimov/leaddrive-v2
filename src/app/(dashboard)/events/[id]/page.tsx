@@ -70,7 +70,11 @@ export default function EventDetailPage() {
 
   const fetchEvent = async () => {
     try {
-      const res = await fetch(`/api/v1/events/${params.id}`, { headers })
+      const h: any = orgId ? { "x-organization-id": String(orgId) } : {}
+      const res = await fetch(`/api/v1/events/${params.id}?_t=${Date.now()}`, {
+        headers: h,
+        cache: "no-store",
+      })
       const json = await res.json()
       if (json.success) setEvent(json.data)
     } catch {} finally { setLoading(false) }
@@ -169,11 +173,21 @@ export default function EventDetailPage() {
   }
 
   const removeParticipant = async (participantId: string) => {
-    await fetch(`/api/v1/events/${params.id}/participants`, {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json", ...headers },
-      body: JSON.stringify({ participantId }),
-    })
+    // Optimistic update — remove from UI immediately
+    setEvent((prev: any) => prev ? {
+      ...prev,
+      participants: (prev.participants || []).filter((p: any) => p.id !== participantId),
+      registeredCount: Math.max(0, (prev.registeredCount || 0) - 1),
+    } : prev)
+
+    try {
+      await fetch(`/api/v1/events/${params.id}/participants`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json", ...headers },
+        body: JSON.stringify({ participantId }),
+      })
+    } catch {}
+    // Refetch to sync with server
     fetchEvent()
   }
 
