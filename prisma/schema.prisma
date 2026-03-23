@@ -193,7 +193,10 @@ model Deal {
   company        Company? @relation(fields: [companyId], references: [id])
   campaignId     String?
   campaign       Campaign? @relation(fields: [campaignId], references: [id])
+  contactId      String?
   name           String
+  customerNeed   String?
+  salesChannel   String?
   stage          String   @default("LEAD")
   valueAmount    Float    @default(0)
   currency       String   @default("AZN")
