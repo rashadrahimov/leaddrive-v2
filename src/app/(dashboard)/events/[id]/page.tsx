@@ -69,7 +69,11 @@ export default function EventDetailPage() {
   const [pPhone, setPPhone] = useState("")
   const [pRole, setPRole] = useState("attendee")
 
-  const headers: any = orgId ? { "x-organization-id": String(orgId) } : {}
+  const getH = () => {
+    const h: any = { "Content-Type": "application/json" }
+    if (orgId) h["x-organization-id"] = String(orgId)
+    return h
+  }
 
   const fetchEvent = async () => {
     try {
@@ -88,7 +92,7 @@ export default function EventDetailPage() {
   // Fetch CRM contacts for picker
   useEffect(() => {
     if (!showAddPanel || addMode !== "crm") return
-    fetch(`/api/v1/contacts?limit=200`, { headers }).then(r => r.json()).then(json => {
+    fetch(`/api/v1/contacts?limit=200`, { headers: getH() }).then(r => r.json()).then(json => {
       setContacts(json.data?.contacts || json.data || [])
     }).catch(() => {})
   }, [showAddPanel, addMode])
@@ -96,21 +100,21 @@ export default function EventDetailPage() {
   const updateStatus = async (status: string) => {
     await fetch(`/api/v1/events/${params.id}`, {
       method: "PUT",
-      headers: { "Content-Type": "application/json", ...headers },
+      headers: getH(),
       body: JSON.stringify({ status }),
     })
     fetchEvent()
   }
 
   const handleDelete = async () => {
-    await fetch(`/api/v1/events/${params.id}`, { method: "DELETE", headers })
+    await fetch(`/api/v1/events/${params.id}`, { method: "DELETE", headers: getH() })
     router.push("/events")
   }
 
   const addParticipantFromContact = async (contact: any) => {
     await fetch(`/api/v1/events/${params.id}/participants`, {
       method: "POST",
-      headers: { "Content-Type": "application/json", ...headers },
+      headers: getH(),
       body: JSON.stringify({
         contactId: contact.id,
         companyId: contact.companyId || undefined,
@@ -127,7 +131,7 @@ export default function EventDetailPage() {
     if (!pName.trim()) return
     await fetch(`/api/v1/events/${params.id}/participants`, {
       method: "POST",
-      headers: { "Content-Type": "application/json", ...headers },
+      headers: getH(),
       body: JSON.stringify({ name: pName, email: pEmail, phone: pPhone, role: pRole }),
     })
     setPName(""); setPEmail(""); setPPhone("")
@@ -142,7 +146,7 @@ export default function EventDetailPage() {
     try {
       const res = await fetch(`/api/v1/events/${params.id}/participants`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json", ...headers },
+        headers: getH(),
         body: JSON.stringify({ action: "send_invites", participantIds: ids }),
       })
       const json = await res.json()
@@ -159,11 +163,9 @@ export default function EventDetailPage() {
 
   const sendInviteToOne = async (participantId: string) => {
     try {
-      const h: any = { "Content-Type": "application/json" }
-      if (orgId) h["x-organization-id"] = String(orgId)
       const res = await fetch(`/api/v1/events/${params.id}/participants`, {
         method: "PATCH",
-        headers: h,
+        headers: getH(),
         body: JSON.stringify({ action: "send_invites", participantIds: [participantId] }),
       })
       const json = await res.json()
@@ -179,7 +181,7 @@ export default function EventDetailPage() {
   const updateParticipantField = async (participantId: string, field: string, value: string) => {
     await fetch(`/api/v1/events/${params.id}/participants`, {
       method: "PATCH",
-      headers: { "Content-Type": "application/json", ...headers },
+      headers: getH(),
       body: JSON.stringify({ participantId, [field]: value }),
     })
     fetchEvent()
@@ -196,7 +198,7 @@ export default function EventDetailPage() {
     try {
       await fetch(`/api/v1/events/${params.id}/participants`, {
         method: "DELETE",
-        headers: { "Content-Type": "application/json", ...headers },
+        headers: getH(),
         body: JSON.stringify({ participantId }),
       })
     } catch {}
@@ -213,7 +215,7 @@ export default function EventDetailPage() {
     if (attendedDelta !== 0) {
       await fetch(`/api/v1/events/${params.id}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json", ...headers },
+        headers: getH(),
         body: JSON.stringify({ attendedCount: Math.max(0, (event.attendedCount || 0) + attendedDelta) }),
       })
     }
