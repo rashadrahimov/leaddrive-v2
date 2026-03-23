@@ -102,9 +102,8 @@ export async function GET(req: NextRequest) {
         where: { organizationId: orgId, stage: { notIn: ["WON", "LOST"] } },
         select: {
           id: true, name: true, valueAmount: true, currency: true, stage: true,
-          probability: true, confidenceLevel: true, stageChangedAt: true, createdAt: true,
+          probability: true, confidenceLevel: true, stageChangedAt: true, createdAt: true, contactId: true,
           company: { select: { name: true } },
-          contact: { select: { fullName: true } },
         },
         orderBy: { valueAmount: "desc" },
       }),
@@ -297,7 +296,7 @@ export async function GET(req: NextRequest) {
           id: d.id, name: d.name, value: d.valueAmount, currency: d.currency,
           stage: d.stage, predictive: d.predictive, probability: d.probability,
           confidence: d.confidenceLevel ?? 50, daysInFunnel: d.daysInFunnel,
-          company: d.company?.name, contact: d.contact?.fullName,
+          company: d.company?.name,
         })),
       },
     })

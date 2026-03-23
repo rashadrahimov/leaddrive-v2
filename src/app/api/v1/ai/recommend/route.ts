@@ -30,7 +30,6 @@ export async function POST(req: NextRequest) {
       where: { id: dealId, organizationId: orgId },
       include: {
         company: { select: { name: true, industry: true, category: true, userCount: true } },
-        contact: { select: { fullName: true, position: true, department: true } },
       },
     })
     if (deal) {
@@ -44,8 +43,13 @@ export async function POST(req: NextRequest) {
         industry = deal.company.industry || ""
         contextParts.push(deal.company.name, deal.company.industry || "", deal.company.category || "")
       }
-      if (deal.contact) {
-        contextParts.push(deal.contact.position || "", deal.contact.department || "")
+      // Fetch contact separately (no relation in schema)
+      if (deal.contactId) {
+        const contact = await prisma.contact.findFirst({
+          where: { id: deal.contactId },
+          select: { fullName: true, position: true, department: true },
+        })
+        if (contact) contextParts.push(contact.position || "", contact.department || "")
       }
     }
   }
