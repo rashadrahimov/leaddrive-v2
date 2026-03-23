@@ -12,9 +12,11 @@ import { LeadItemModal } from "@/components/lead-item-modal"
 import {
   UserPlus, Plus, Search, Pencil, Trash2, ArrowRight,
   Brain, Phone, Mail, Building2, ArrowUpDown, ArrowUp, ArrowDown,
+  Flame, TrendingUp, CheckCircle,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useTranslations } from "next-intl"
+import { ColorStatCard } from "@/components/color-stat-card"
 
 interface Lead {
   id: string
@@ -176,6 +178,14 @@ export default function LeadsPage() {
         <Button onClick={() => { setEditData(undefined); setShowForm(true) }} className="gap-2">
           <Plus className="h-4 w-4" /> {t("newLead")}
         </Button>
+      </div>
+
+      {/* Stat cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <ColorStatCard label={t("title")} value={leads.length} icon={<UserPlus className="h-4 w-4" />} color="blue" />
+        <ColorStatCard label={t("hotLeads")} value={hotLeads} icon={<Flame className="h-4 w-4" />} color="orange" />
+        <ColorStatCard label={t("avgScore")} value={`${avgScore}/100`} icon={<TrendingUp className="h-4 w-4" />} color="indigo" />
+        <ColorStatCard label={t("statusConverted")} value={statusCounts.converted || 0} icon={<CheckCircle className="h-4 w-4" />} color="green" />
       </div>
 
       {/* Status filter tabs */}
