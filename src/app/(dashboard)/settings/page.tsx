@@ -15,7 +15,7 @@ export default function SettingsPage() {
     { icon: Users, title: t("roles"), description: t("rolesDesc"), href: "/settings/roles" },
     { icon: Radio, title: t("channels"), description: t("channelsDesc"), href: "/settings/channels" },
     { icon: Zap, title: t("workflows"), description: t("workflowsDesc"), href: "/settings/workflows" },
-    { icon: LayoutDashboard, title: t("dashboardSettings"), description: t("dashboardSettingsDesc"), href: "/settings/dashboard" },
+    { icon: LayoutDashboard, title: t("dashboardSettings"), description: t("dashboardSettingsDesc"), href: "/settings/custom-fields" },
     { icon: Globe, title: t("currencies"), description: t("currenciesDesc"), href: "/settings/currencies" },
     { icon: Clock, title: t("slaPolicies"), description: t("slaPoliciesDesc"), href: "/settings/sla-policies" },
     { icon: Shield, title: t("portalUsers"), description: t("portalUsersDesc"), href: "/settings/portal-users" },
