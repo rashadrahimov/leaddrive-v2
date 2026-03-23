@@ -76,16 +76,16 @@ export async function POST(req: NextRequest) {
   if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 })
 
   try {
-    // Auto-generate sequential ticket number
-    const lastTicket = await prisma.ticket.findFirst({
+    // Auto-generate sequential ticket number (find max across all tickets)
+    const allTickets = await prisma.ticket.findMany({
       where: { organizationId: orgId },
-      orderBy: { createdAt: "desc" },
       select: { ticketNumber: true },
     })
-    const lastNum = lastTicket?.ticketNumber
-      ? parseInt(lastTicket.ticketNumber.replace(/[^0-9]/g, ""), 10) || 0
-      : 0
-    const ticketNumber = `TK-${String(lastNum + 1).padStart(4, "0")}`
+    const maxNum = allTickets.reduce((max, t) => {
+      const num = parseInt(t.ticketNumber.replace(/[^0-9]/g, ""), 10) || 0
+      return num > max ? num : max
+    }, 0)
+    const ticketNumber = `TK-${String(maxNum + 1).padStart(4, "0")}`
 
     // Calculate SLA due date: company SLA → priority-based SLA → default
     const priority = parsed.data.priority || "medium"
@@ -110,8 +110,13 @@ export async function POST(req: NextRequest) {
       })
     }
 
+    let slaFirstResponseDueAt: Date | undefined
+    let slaPolicyName: string | undefined
+
     if (slaPolicy) {
       slaDueAt = new Date(Date.now() + slaPolicy.resolutionHours * 3600000)
+      slaFirstResponseDueAt = new Date(Date.now() + slaPolicy.firstResponseHours * 3600000)
+      slaPolicyName = slaPolicy.name
     }
 
     const ticket = await prisma.ticket.create({
@@ -126,6 +131,8 @@ export async function POST(req: NextRequest) {
         companyId: parsed.data.companyId,
         assignedTo: parsed.data.assignedTo,
         ...(slaDueAt ? { slaDueAt } : {}),
+        ...(slaFirstResponseDueAt ? { slaFirstResponseDueAt } : {}),
+        ...(slaPolicyName ? { slaPolicyName } : {}),
       },
     })
     executeWorkflows(orgId, "ticket", "created", ticket).catch(() => {})

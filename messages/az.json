@@ -676,6 +676,7 @@
     "slaNotSet": "Təyin edilməyib",
     "slaTimeRemaining": "Qalıb",
     "slaFirstResponse": "İlk cavab",
+    "slaResolution": "Həll müddəti",
     "slaResolved": "Həll edildi",
     "slaBreached": "Pozulub",
     "slaBreachedWarning": "SLA pozuldu! Təcili tədbirlər tələb olunur.",

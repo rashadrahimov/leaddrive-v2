@@ -533,8 +533,10 @@ model Ticket {
   companyId      String?
   assignedTo     String?
   createdBy      String?
-  slaDueAt       DateTime?
-  firstResponseAt DateTime?
+  slaDueAt              DateTime?
+  slaFirstResponseDueAt DateTime?
+  slaPolicyName         String?
+  firstResponseAt       DateTime?
   resolvedAt     DateTime?
   closedAt       DateTime?
   satisfactionRating Int?

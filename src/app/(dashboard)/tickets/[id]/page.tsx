@@ -25,6 +25,8 @@ interface TicketData {
   assignedTo: string | null
   createdBy: string | null
   slaDueAt: string | null
+  slaFirstResponseDueAt: string | null
+  slaPolicyName: string | null
   firstResponseAt: string | null
   resolvedAt: string | null
   closedAt: string | null
@@ -327,6 +329,8 @@ export default function TicketDetailPage() {
   const filteredComments = showInternal ? sortedComments : sortedComments.filter(c => !c.isInternal)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const sla = getSlaTimeLeft(ticket.slaDueAt, ticket.status, t("statusResolved"), t("slaBreached")) // recalculates every `tick`
+  const slaFirstResponse = getSlaTimeLeft(ticket.slaFirstResponseDueAt, ticket.status, t("statusResolved"), t("slaBreached"))
+  const hasFirstResponse = !!ticket.firstResponseAt
   void tick // ensure re-render on tick
   const daysOpen = Math.floor((Date.now() - new Date(ticket.createdAt).getTime()) / 86400000)
 
@@ -422,17 +426,29 @@ export default function TicketDetailPage() {
         </div>
         <div className={`${sla.breached ? "bg-red-500" : sla.urgent ? "bg-amber-500" : "bg-green-500"} text-white rounded-xl p-4 flex flex-col gap-1 shadow-sm`}>
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium opacity-80">SLA time left</span>
+            <span className="text-xs font-medium opacity-80">{t("slaResolution") || "SLA Resolution"}</span>
             <Clock className="h-4 w-4 opacity-80" />
           </div>
+          {ticket.slaPolicyName && <span className="text-[10px] font-medium opacity-70">{ticket.slaPolicyName}</span>}
           <span className="text-lg font-bold leading-tight font-mono">{sla.text}</span>
         </div>
-        <div className="bg-violet-500 text-white rounded-xl p-4 flex flex-col gap-1 shadow-sm">
+        <div className={`${hasFirstResponse ? "bg-green-500" : slaFirstResponse.breached ? "bg-red-500" : slaFirstResponse.urgent ? "bg-amber-500" : "bg-indigo-500"} text-white rounded-xl p-4 flex flex-col gap-1 shadow-sm`}>
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium opacity-80">Comments</span>
+            <span className="text-xs font-medium opacity-80">{t("slaFirstResponse")}</span>
             <Send className="h-4 w-4 opacity-80" />
           </div>
-          <span className="text-2xl font-bold">{comments.length}</span>
+          {hasFirstResponse ? (
+            <span className="text-lg font-bold leading-tight font-mono">
+              {(() => {
+                const ms = new Date(ticket.firstResponseAt!).getTime() - new Date(ticket.createdAt).getTime()
+                const h = Math.floor(ms / 3600000)
+                const m = Math.floor((ms % 3600000) / 60000)
+                return h > 0 ? `${h}ч ${m}м` : `${m}м`
+              })()}
+            </span>
+          ) : (
+            <span className="text-lg font-bold leading-tight font-mono">{slaFirstResponse.text}</span>
+          )}
         </div>
         <div className={`${ticket.priority === "critical" ? "bg-red-500" : ticket.priority === "high" ? "bg-orange-500" : "bg-slate-500"} text-white rounded-xl p-4 flex flex-col gap-1 shadow-sm`}>
           <div className="flex items-center justify-between">

@@ -23,6 +23,8 @@ interface TicketData {
   assignedTo: string
   createdAt: string
   slaDueAt: string
+  slaFirstResponseDueAt: string
+  slaPolicyName: string
   firstResponseAt: string
 }
 
@@ -33,6 +35,24 @@ const priorityColors: Record<string, string> = {
   high: "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400",
   medium: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400",
   low: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
+}
+
+function getSlaStatus(slaDueAt: string | null, status: string): "breached" | "warning" | "ok" | "none" | "done" {
+  if (!slaDueAt) return "none"
+  if (["resolved", "closed"].includes(status)) return "done"
+  const now = Date.now()
+  const due = new Date(slaDueAt).getTime()
+  if (due < now) return "breached"
+  if (due - now < 2 * 3600000) return "warning"
+  return "ok"
+}
+
+function formatTimeLeft(slaDueAt: string): string {
+  const diff = new Date(slaDueAt).getTime() - Date.now()
+  if (diff <= 0) return "—"
+  const h = Math.floor(diff / 3600000)
+  const m = Math.floor((diff % 3600000) / 60000)
+  return h > 0 ? `${h}ч ${m}м` : `${m}м`
 }
 
 function isSlaBreached(slaDueAt: string | null): boolean {
@@ -138,12 +158,33 @@ export default function TicketsPage() {
       key: "slaDueAt", label: t("colSla"), sortable: true,
       render: (item: any) => {
         if (!item.slaDueAt) return <span className="text-xs text-muted-foreground">—</span>
-        const breached = isSlaBreached(item.slaDueAt) && !["resolved", "closed"].includes(item.status)
+        const slaStatus = getSlaStatus(item.slaDueAt, item.status)
+        const colorMap = {
+          breached: "text-red-500",
+          warning: "text-amber-500",
+          ok: "text-green-600 dark:text-green-400",
+          done: "text-muted-foreground",
+          none: "text-muted-foreground",
+        }
+        const dotColorMap = {
+          breached: "bg-red-500",
+          warning: "bg-amber-500",
+          ok: "bg-green-500",
+          done: "bg-muted-foreground",
+          none: "bg-muted-foreground",
+        }
         return (
-          <div className={cn("flex items-center gap-1 text-xs", breached && "text-red-500 font-medium")}>
-            {breached && <AlertTriangle className="h-3 w-3" />}
-            <Clock className="h-3 w-3" />
-            {new Date(item.slaDueAt).toLocaleDateString("ru-RU")}
+          <div className={cn("flex items-center gap-1.5 text-xs", colorMap[slaStatus])}>
+            <span className={cn("inline-block h-2 w-2 rounded-full flex-shrink-0", dotColorMap[slaStatus])} />
+            <div className="flex flex-col">
+              {item.slaPolicyName && <span className="font-medium leading-tight">{item.slaPolicyName}</span>}
+              <span className="leading-tight">
+                {slaStatus === "breached" && <>{t("slaBreached")} <AlertTriangle className="inline h-3 w-3" /></>}
+                {slaStatus === "warning" && <>{formatTimeLeft(item.slaDueAt)}</>}
+                {slaStatus === "ok" && <>{formatTimeLeft(item.slaDueAt)}</>}
+                {slaStatus === "done" && <>{t("slaResolved") || "Resolved"}</>}
+              </span>
+            </div>
           </div>
         )
       },
@@ -272,7 +313,21 @@ export default function TicketsPage() {
                       <span className={cn("px-1.5 py-0.5 rounded text-[10px] font-medium", priorityColors[ticket.priority])}>{ticket.priority}</span>
                     </div>
                     <div className="text-sm font-medium mb-1">{ticket.subject}</div>
-                    <div className="text-xs text-muted-foreground">{(ticket as any).companyName || "—"}</div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-muted-foreground">{(ticket as any).companyName || "—"}</span>
+                      {ticket.slaDueAt && (() => {
+                        const s = getSlaStatus(ticket.slaDueAt, ticket.status)
+                        const dotColor = { breached: "bg-red-500", warning: "bg-amber-500", ok: "bg-green-500", done: "bg-muted-foreground", none: "" }
+                        if (s === "none") return null
+                        return (
+                          <span className="flex items-center gap-1">
+                            <span className={cn("h-1.5 w-1.5 rounded-full", dotColor[s])} />
+                            {s !== "done" && s !== "breached" && <span className="text-[10px] text-muted-foreground">{formatTimeLeft(ticket.slaDueAt)}</span>}
+                            {s === "breached" && <AlertTriangle className="h-3 w-3 text-red-500" />}
+                          </span>
+                        )
+                      })()}
+                    </div>
                   </div>
                 ))}
               </div>
