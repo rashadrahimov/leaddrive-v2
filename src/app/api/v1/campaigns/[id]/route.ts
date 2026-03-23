@@ -17,6 +17,7 @@ const updateCampaignSchema = z.object({
   scheduledAt: z.string().optional(),
   totalRecipients: z.number().optional(),
   budget: z.number().optional(),
+  flowData: z.any().optional(),
 })
 
 export async function GET(

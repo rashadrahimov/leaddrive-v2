@@ -25,6 +25,8 @@
     "workflows": "Workflows",
     "users": "Users",
     "smtp": "SMTP",
+    "events": "Events",
+    "agentDesktop": "Agent Desktop",
     "settings": "Settings",
     "groups": {
       "CRM": "CRM",

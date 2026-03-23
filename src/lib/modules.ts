@@ -2,7 +2,7 @@ export type ModuleId =
   | "core" | "deals" | "leads" | "tasks" | "contracts"
   | "tickets" | "knowledge-base" | "portal" | "campaigns" | "omnichannel"
   | "journeys" | "workflows" | "profitability" | "ai" | "reports"
-  | "currencies" | "custom-fields"
+  | "currencies" | "custom-fields" | "events"
 
 interface ModuleDefinition {
   name: string
@@ -28,6 +28,7 @@ export const MODULE_REGISTRY: Record<ModuleId, ModuleDefinition> = {
   reports:          { name: "Reports",          requires: ["core"] },
   currencies:       { name: "Multi-Currency",   requires: ["core"] },
   "custom-fields":  { name: "Custom Fields",    requires: ["core"] },
+  events:           { name: "Events",           requires: ["core"] },
 }
 
 export const PLANS = {
@@ -46,7 +47,7 @@ export const PLANS = {
     price: 29,
   },
   enterprise: {
-    modules: Object.keys(MODULE_REGISTRY) as ModuleId[],
+    modules: [...Object.keys(MODULE_REGISTRY)] as ModuleId[],
     limits: { users: -1, contacts: -1 },
     price: 59,
   },

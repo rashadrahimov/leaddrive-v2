@@ -9,7 +9,7 @@ import {
   CheckSquare, FileText, FileSpreadsheet, Calculator, Brain,
   Ticket, BookOpen, BarChart3, Mail, MessageSquare, Zap,
   Settings, ChevronLeft, DollarSign, Target, Send,
-  TrendingUp, Filter, Workflow, Server, Bell,
+  TrendingUp, Filter, Workflow, Server, Bell, CalendarDays, Headphones,
 } from "lucide-react"
 import { useState } from "react"
 import { Logo } from "@/components/logo"
@@ -39,8 +39,10 @@ const navItems: NavItem[] = [
   { module: "campaigns", href: "/campaign-roi", icon: TrendingUp, tKey: "campaignRoi", group: "Marketing" },
   { module: "leads", href: "/ai-scoring", icon: Target, tKey: "aiScoring", group: "Marketing" },
   { module: "leads", href: "/journeys", icon: Workflow, tKey: "journeys", group: "Marketing" },
+  { module: "events", href: "/events", icon: CalendarDays, tKey: "events", group: "Marketing" },
   { module: "omnichannel", href: "/inbox", icon: MessageSquare, tKey: "inbox", group: "Communication" },
   { module: "tickets", href: "/tickets", icon: Ticket, tKey: "tickets", group: "Support" },
+  { module: "tickets", href: "/support/agent-desktop", icon: Headphones, tKey: "agentDesktop", group: "Support" },
   { module: "knowledge-base", href: "/knowledge-base", icon: BookOpen, tKey: "knowledgeBase", group: "Support" },
   { module: "profitability", href: "/profitability", icon: Calculator, tKey: "profitability", group: "Analytics" },
   { module: "profitability", href: "/pricing", icon: DollarSign, tKey: "pricing", group: "Analytics" },

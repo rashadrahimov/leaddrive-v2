@@ -1135,3 +1135,52 @@ model AdditionalSale {
   @@map("additional_sales")
 }
 
+model Event {
+  id             String   @id @default(cuid())
+  organizationId String
+  name           String
+  description    String?
+  type           String   @default("conference") // conference, webinar, workshop, meetup, exhibition, other
+  status         String   @default("planned")    // planned, registration_open, in_progress, completed, cancelled
+  startDate      DateTime
+  endDate        DateTime?
+  location       String?
+  isOnline       Boolean  @default(false)
+  meetingUrl     String?
+  budget         Float    @default(0)
+  actualCost     Float    @default(0)
+  expectedRevenue Float   @default(0)
+  actualRevenue  Float    @default(0)
+  maxParticipants Int?
+  registeredCount Int     @default(0)
+  attendedCount   Int     @default(0)
+  responsibleId  String?
+  tags           String[] @default([])
+  createdBy      String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  participants   EventParticipant[]
+
+  @@index([organizationId])
+  @@map("events")
+}
+
+model EventParticipant {
+  id             String   @id @default(cuid())
+  eventId        String
+  event          Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  contactId      String?
+  companyId      String?
+  name           String
+  email          String?
+  phone          String?
+  role           String   @default("attendee") // attendee, speaker, sponsor, organizer, vip
+  status         String   @default("registered") // registered, confirmed, attended, cancelled, no_show
+  registeredAt   DateTime @default(now())
+  notes          String?
+
+  @@index([eventId])
+  @@map("event_participants")
+}
+

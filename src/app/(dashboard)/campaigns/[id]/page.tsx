@@ -13,6 +13,12 @@ import {
 } from "lucide-react"
 import { CampaignForm } from "@/components/campaign-form"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
+import dynamic from "next/dynamic"
+
+const CampaignFlowEditor = dynamic(
+  () => import("@/components/campaign-flow-editor").then(m => m.CampaignFlowEditor),
+  { ssr: false, loading: () => <div className="h-[600px] bg-muted/30 rounded-xl animate-pulse" /> }
+)
 
 const STATUS_STYLES: Record<string, string> = {
   draft: "bg-gray-100 text-gray-700",
@@ -161,6 +167,7 @@ export default function CampaignDetailPage() {
       <Tabs defaultValue="results" className="space-y-4">
         <TabsList className="bg-muted/60 p-1 h-auto">
           <TabsTrigger value="results" className="rounded-md text-sm">Results</TabsTrigger>
+          <TabsTrigger value="flow" className="rounded-md text-sm">Flow</TabsTrigger>
           <TabsTrigger value="details" className="rounded-md text-sm">Details</TabsTrigger>
         </TabsList>
 
@@ -208,6 +215,24 @@ export default function CampaignDetailPage() {
               </CardContent>
             </Card>
           </div>
+        </TabsContent>
+
+        <TabsContent value="flow">
+          <CampaignFlowEditor
+            flowData={campaign.flowData as any}
+            readOnly={campaign.status === "sent" || campaign.status === "completed"}
+            onSave={async (data) => {
+              await fetch(`/api/v1/campaigns/${params.id}`, {
+                method: "PUT",
+                headers: {
+                  "Content-Type": "application/json",
+                  ...(orgId ? { "x-organization-id": String(orgId) } : {}),
+                },
+                body: JSON.stringify({ flowData: data }),
+              })
+              fetchCampaign()
+            }}
+          />
         </TabsContent>
 
         <TabsContent value="details">

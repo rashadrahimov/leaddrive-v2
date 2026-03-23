@@ -25,6 +25,8 @@
     "workflows": "İş axınları",
     "users": "İstifadəçilər",
     "smtp": "SMTP",
+    "events": "Tədbirlər",
+    "agentDesktop": "Agent masaüstü",
     "settings": "Parametrlər",
     "groups": {
       "CRM": "CRM",

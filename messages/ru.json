@@ -25,6 +25,8 @@
     "workflows": "Автоматизации",
     "users": "Пользователи",
     "smtp": "SMTP",
+    "events": "Мероприятия",
+    "agentDesktop": "Рабочий стол агента",
     "settings": "Настройки",
     "groups": {
       "CRM": "CRM",
