@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react"
 import { useSession } from "next-auth/react"
-import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -50,7 +49,6 @@ const typeIcons: Record<string, string> = {
 
 export default function CampaignsPage() {
   const { data: session } = useSession()
-  const router = useRouter()
   const t = useTranslations("campaigns")
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
   const [total, setTotal] = useState(0)
@@ -189,7 +187,7 @@ export default function CampaignsPage() {
             <div
               key={campaign.id}
               className="border rounded-lg p-4 hover:shadow-sm transition-shadow cursor-pointer bg-card"
-              onClick={() => router.push(`/campaigns/${campaign.id}`)}
+              onClick={() => { setEditData(campaign); setShowForm(true) }}
             >
               <div className="flex items-start justify-between">
                 <div className="flex-1 min-w-0">
@@ -246,6 +244,18 @@ export default function CampaignsPage() {
         } : undefined}
         orgId={orgId}
         onSend={editData ? () => handleSend(editData) : undefined}
+        onCreatedAndSend={async (campaignId: string) => {
+          // Fetch the newly created campaign and send it
+          try {
+            const res = await fetch(`/api/v1/campaigns/${campaignId}`, {
+              headers: orgId ? { "x-organization-id": String(orgId) } : {},
+            })
+            const json = await res.json()
+            if (json.success && json.data) {
+              handleSend(json.data)
+            }
+          } catch {}
+        }}
         onDelete={editData ? () => { setDeleteId(editData.id); setDeleteName(editData.name); setShowForm(false) } : undefined}
       />
 
