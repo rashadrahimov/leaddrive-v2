@@ -60,7 +60,7 @@ async function findRelevantKbArticles(orgId: string, query: string, limit = 3): 
   if (articles.length === 0) return ""
 
   return "\n\n--- KNOWLEDGE BASE ARTICLES ---\n" +
-    articles.map((a, i) => `[Article ${i + 1}] ${a.title}\n${a.content?.substring(0, 800) || ""}`).join("\n\n")
+    articles.map((a: any, i: number) => `[Article ${i + 1}] ${a.title}\n${a.content?.substring(0, 800) || ""}`).join("\n\n")
 }
 
 // POST /api/v1/tickets/ai?action=reply|summary|steps
@@ -92,7 +92,7 @@ export async function POST(req: NextRequest) {
 
     // Build context
     const commentsText = ticket.comments
-      .map(c => `[${c.isInternal ? "Internal" : "Customer"}] ${c.comment}`)
+      .map((c: any) => `[${c.isInternal ? "Internal" : "Customer"}] ${c.comment}`)
       .join("\n")
 
     const context = `Ticket #${ticket.ticketNumber}: ${ticket.subject}

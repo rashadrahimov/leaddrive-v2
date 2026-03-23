@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server"
 import { getOrgId } from "@/lib/api-auth"
 import { prisma } from "@/lib/prisma"
 
+type ActivityRow = { id: string; type: string; subject: string | null; createdAt: Date }
+type EmailLogRow = { status: string; createdAt: Date }
+
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -25,11 +28,11 @@ export async function GET(
     orderBy: { createdAt: "desc" },
   })
 
-  const calls = activities.filter(a => a.type === "call").length
-  const emails = activities.filter(a => a.type === "email").length
-  const meetings = activities.filter(a => a.type === "meeting").length
-  const notes = activities.filter(a => a.type === "note").length
-  const tasks = activities.filter(a => a.type === "task").length
+  const calls = activities.filter((a: ActivityRow) => a.type === "call").length
+  const emails = activities.filter((a: ActivityRow) => a.type === "email").length
+  const meetings = activities.filter((a: ActivityRow) => a.type === "meeting").length
+  const notes = activities.filter((a: ActivityRow) => a.type === "note").length
+  const tasks = activities.filter((a: ActivityRow) => a.type === "task").length
 
   // Monthly chart
   const monthlyData: { month: string; calls: number; emails: number; meetings: number }[] = []
@@ -37,12 +40,12 @@ export async function GET(
     const d = new Date(); d.setMonth(d.getMonth() - i)
     const start = new Date(d.getFullYear(), d.getMonth(), 1)
     const end = new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59)
-    const ma = activities.filter(a => { const ad = new Date(a.createdAt); return ad >= start && ad <= end })
+    const ma = activities.filter((a: ActivityRow) => { const ad = new Date(a.createdAt); return ad >= start && ad <= end })
     monthlyData.push({
       month: d.toLocaleString("en", { month: "short" }),
-      calls: ma.filter(a => a.type === "call").length,
-      emails: ma.filter(a => a.type === "email").length,
-      meetings: ma.filter(a => a.type === "meeting").length,
+      calls: ma.filter((a: ActivityRow) => a.type === "call").length,
+      emails: ma.filter((a: ActivityRow) => a.type === "email").length,
+      meetings: ma.filter((a: ActivityRow) => a.type === "meeting").length,
     })
   }
 
@@ -57,18 +60,18 @@ export async function GET(
     })
     emailMetrics = {
       sent: emailLogs.length,
-      delivered: emailLogs.filter(e => ["delivered", "sent"].includes(e.status)).length,
-      opened: emailLogs.filter(e => e.status === "opened").length,
-      clicked: emailLogs.filter(e => e.status === "clicked").length,
-      bounced: emailLogs.filter(e => e.status === "bounced").length,
-      failed: emailLogs.filter(e => e.status === "failed").length,
+      delivered: emailLogs.filter((e: EmailLogRow) => ["delivered", "sent"].includes(e.status)).length,
+      opened: emailLogs.filter((e: EmailLogRow) => e.status === "opened").length,
+      clicked: emailLogs.filter((e: EmailLogRow) => e.status === "clicked").length,
+      bounced: emailLogs.filter((e: EmailLogRow) => e.status === "bounced").length,
+      failed: emailLogs.filter((e: EmailLogRow) => e.status === "failed").length,
     }
     for (let i = 5; i >= 0; i--) {
       const d = new Date(); d.setMonth(d.getMonth() - i)
       const start = new Date(d.getFullYear(), d.getMonth(), 1)
       const end = new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59)
-      const ml = emailLogs.filter(e => { const ed = new Date(e.createdAt); return ed >= start && ed <= end })
-      emailMonthly.push({ month: d.toLocaleString("en", { month: "short" }), sent: ml.length, opened: ml.filter(e => e.status === "opened").length, clicked: ml.filter(e => e.status === "clicked").length })
+      const ml = emailLogs.filter((e: EmailLogRow) => { const ed = new Date(e.createdAt); return ed >= start && ed <= end })
+      emailMonthly.push({ month: d.toLocaleString("en", { month: "short" }), sent: ml.length, opened: ml.filter((e: EmailLogRow) => e.status === "opened").length, clicked: ml.filter((e: EmailLogRow) => e.status === "clicked").length })
     }
   }
 

@@ -424,7 +424,7 @@ async function handleAiAutoReply(
       select: { title: true, content: true },
     })
     if (articles.length > 0) {
-      kbContext = "\n\nБАЗА ЗНАНИЙ:\n" + articles.map(a => `## ${a.title}\n${a.content?.slice(0, 300) || ""}`).join("\n\n")
+      kbContext = "\n\nБАЗА ЗНАНИЙ:\n" + articles.map((a: any) => `## ${a.title}\n${a.content?.slice(0, 300) || ""}`).join("\n\n")
     }
   } catch { /* ignore KB errors */ }
 
@@ -438,8 +438,8 @@ async function handleAiAutoReply(
 
   // Build messages array
   const messages: Array<{ role: "user" | "assistant"; content: string }> = history
-    .filter(m => m.role === "user" || m.role === "assistant")
-    .map(m => ({ role: m.role as "user" | "assistant", content: m.content }))
+    .filter((m: any) => m.role === "user" || m.role === "assistant")
+    .map((m: any) => ({ role: m.role as "user" | "assistant", content: m.content }))
 
   // Ensure alternating roles
   const cleanMessages = messages.filter((m, i) => {
@@ -507,7 +507,7 @@ async function handleAiAutoReply(
         })
 
         const chatHistory = chatMessages
-          .map(m => `[${m.role === "user" ? "Клиент" : "AI"}] ${m.content}`)
+          .map((m: any) => `[${m.role === "user" ? "Клиент" : "AI"}] ${m.content}`)
           .join("\n\n")
 
         const ticketCount = await prisma.ticket.count({ where: { organizationId } })

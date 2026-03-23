@@ -34,7 +34,7 @@ export async function GET(
         status: session.status,
         createdAt: session.createdAt,
         updatedAt: session.updatedAt,
-        messages: session.messages.map(m => ({
+        messages: session.messages.map((m: any) => ({
           id: m.id,
           role: m.role,
           content: m.content,

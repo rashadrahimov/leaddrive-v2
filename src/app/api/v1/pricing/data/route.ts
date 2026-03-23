@@ -31,7 +31,7 @@ export async function GET(req: NextRequest) {
       for (const pc of profile.categories) {
         categories[pc.category.name] = {
           total: pc.total,
-          services: pc.services.map((s) => ({
+          services: pc.services.map((s: any) => ({
             name: s.name,
             qty: s.qty,
             price: s.price,
@@ -82,7 +82,7 @@ export async function PUT(req: NextRequest) {
       let monthlyTotal = 0
 
       for (const [catName, catVal] of Object.entries(companyData.categories || {}) as [string, any][]) {
-        const pc = profile.categories.find((c) => c.category.name === catName)
+        const pc = profile.categories.find((c: any) => c.category.name === catName)
         if (!pc) continue
 
         const catTotal = typeof catVal === "number" ? catVal : catVal?.total || 0

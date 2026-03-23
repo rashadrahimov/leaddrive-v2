@@ -29,6 +29,7 @@ interface AgentConfig {
   toolsEnabled?: string[]
   kbEnabled?: boolean
   kbMaxArticles?: number
+  escalationEnabled?: boolean
   isActive: boolean
   version: number
   notes: string | null
@@ -838,7 +839,7 @@ export default function AICommandCenterPage() {
         open={showForm}
         onOpenChange={(open) => { setShowForm(open); if (!open) setEditData(undefined) }}
         onSaved={fetchData}
-        initialData={editData}
+        initialData={editData as any}
         orgId={orgId}
       />
 

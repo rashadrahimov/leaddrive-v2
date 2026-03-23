@@ -20,7 +20,7 @@ async function loadPricingData(orgId: string) {
     for (const pc of profile.categories) {
       categories[pc.category.name] = {
         total: pc.total,
-        services: pc.services.map((s) => ({ name: s.name, qty: s.qty, price: s.price, total: s.total, unit: s.unit })),
+        services: pc.services.map((s: any) => ({ name: s.name, qty: s.qty, price: s.price, total: s.total, unit: s.unit })),
       }
     }
     data[profile.companyCode] = {

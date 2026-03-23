@@ -39,7 +39,7 @@ export async function GET(req: NextRequest) {
 
     // Recalculate contactCount for dynamic segments
     const updated = await Promise.all(
-      segments.map(async (seg) => {
+      segments.map(async (seg: any) => {
         if (!seg.isDynamic) return seg
 
         const conditions = (seg.conditions && typeof seg.conditions === "object")

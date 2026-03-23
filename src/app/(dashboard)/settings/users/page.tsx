@@ -219,7 +219,7 @@ export default function UsersSettingsPage() {
   const orgId = session?.user?.organizationId
 
   const fetchData = async () => {
-    const headers = orgId ? { "x-organization-id": String(orgId) } : {}
+    const headers: Record<string, string> = orgId ? { "x-organization-id": String(orgId) } : {}
     try {
       const [usersRes, rolesRes] = await Promise.all([
         fetch("/api/v1/users", { headers }),
@@ -396,7 +396,7 @@ export default function UsersSettingsPage() {
         <StatCard title="Администраторы" value={adminCount} icon={<Shield className="h-4 w-4" />} />
       </div>
 
-      <DataTable data={users} columns={columns} searchKey="name" searchPlaceholder="Поиск пользователей..." />
+      <DataTable data={users as any} columns={columns as any} searchKey="name" searchPlaceholder="Поиск пользователей..." />
 
       <UserFormDialog
         open={showForm}

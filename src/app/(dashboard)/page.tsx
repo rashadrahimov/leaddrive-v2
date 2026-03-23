@@ -241,7 +241,7 @@ export default function DashboardPage() {
                   <CartesianGrid strokeDasharray="3 3" horizontal={false} />
                   <XAxis type="number" tickFormatter={(v: number) => `${fmt(v)} ₼`} />
                   <YAxis type="category" dataKey="name" width={120} tick={{ fontSize: 12 }} />
-                  <Tooltip formatter={(v: number) => [`${v.toLocaleString()} ₼`, tc("revenue")]} />
+                  <Tooltip formatter={((v: number) => [`${v.toLocaleString()} ₼`, tc("revenue")]) as any} />
                   <Bar dataKey="value" radius={[0, 4, 4, 0]}>
                     {financial.revenueByService.map((_: any, i: number) => (
                       <Cell key={i} fill={SERVICE_COLORS[i % SERVICE_COLORS.length]} />
@@ -319,7 +319,7 @@ export default function DashboardPage() {
                   <CartesianGrid strokeDasharray="3 3" vertical={false} />
                   <XAxis dataKey="month" tick={{ fontSize: 11 }} />
                   <YAxis tickFormatter={(v: number) => fmt(v)} tick={{ fontSize: 11 }} />
-                  <Tooltip formatter={(v: number, name: string) => [`${v.toLocaleString()} ₼`, name === "actual" ? t("actual") : t("projected")]} />
+                  <Tooltip formatter={((v: number, name: string) => [`${v.toLocaleString()} ₼`, name === "actual" ? t("actual") : t("projected")]) as any} />
                   <Legend formatter={(v: string) => v === "actual" ? t("actual") : t("projected")} />
                   <Bar dataKey="actual" fill="#22c55e" radius={[4, 4, 0, 0]} name="actual" />
                   <Bar dataKey="projected" fill="#3b82f6" radius={[4, 4, 0, 0]} name="projected" opacity={0.6} />

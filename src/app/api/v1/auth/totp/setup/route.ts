@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
-import { TOTP, generateSecret, generateURI } from "otplib"
+import { generateSecret, generateURI } from "otplib"
 import QRCode from "qrcode"
 
 export async function POST(req: NextRequest) {
@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
 
   // Generate secret
   const secret = generateSecret()
-  const otpauth = generateURI("totp", secret, user.email, "LeadDrive CRM")
+  const otpauth = generateURI({ label: user.email, issuer: "LeadDrive CRM", secret })
 
   // Generate QR code as data URL
   const qrCode = await QRCode.toDataURL(otpauth)

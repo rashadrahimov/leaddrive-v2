@@ -120,7 +120,7 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({
     success: true,
     data: {
-      leads: leads.map(l => {
+      leads: leads.map((l: any) => {
         const details = (l.scoreDetails as any) || {}
         return {
           id: l.id,

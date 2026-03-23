@@ -1,11 +1,9 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { auth } from "@/lib/auth"
-import * as OTPAuth from "otplib"
+import { generateSecret, generateURI, verifySync } from "otplib"
 import QRCode from "qrcode"
 import crypto from "crypto"
-
-const { authenticator } = OTPAuth
 
 // GET — get 2FA status
 export async function GET(req: NextRequest) {
@@ -41,7 +39,7 @@ export async function POST(req: NextRequest) {
 
   // SETUP — generate secret + QR code
   if (action === "setup") {
-    const secret = authenticator.generateSecret()
+    const secret = generateSecret()
 
     // Save secret (not yet enabled)
     await prisma.user.update({
@@ -49,11 +47,11 @@ export async function POST(req: NextRequest) {
       data: { totpSecret: secret, totpEnabled: false },
     })
 
-    const otpauth = authenticator.keyuri(
-      user.email,
-      "LeadDrive CRM",
-      secret
-    )
+    const otpauth = generateURI({
+      label: user.email,
+      issuer: "LeadDrive CRM",
+      secret,
+    })
 
     const qrDataUrl = await QRCode.toDataURL(otpauth)
 
@@ -73,7 +71,7 @@ export async function POST(req: NextRequest) {
     if (!code) return NextResponse.json({ error: "Code required" }, { status: 400 })
     if (!user.totpSecret) return NextResponse.json({ error: "Setup 2FA first" }, { status: 400 })
 
-    const isValid = authenticator.verify({ token: code, secret: user.totpSecret })
+    const isValid = verifySync({ token: code, secret: user.totpSecret }).valid
     if (!isValid) {
       return NextResponse.json({ error: "Invalid code. Please try again." }, { status: 400 })
     }
@@ -96,7 +94,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "2FA is not enabled" }, { status: 400 })
     }
 
-    const isValid = authenticator.verify({ token: code, secret: user.totpSecret })
+    const isValid = verifySync({ token: code, secret: user.totpSecret }).valid
     if (!isValid) {
       return NextResponse.json({ error: "Invalid code" }, { status: 400 })
     }
@@ -119,7 +117,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: true, data: { valid: true } })
     }
 
-    const isValid = authenticator.verify({ token: code, secret: user.totpSecret })
+    const isValid = verifySync({ token: code, secret: user.totpSecret }).valid
     return NextResponse.json({
       success: true,
       data: { valid: isValid },

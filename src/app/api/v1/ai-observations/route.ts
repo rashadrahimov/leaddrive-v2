@@ -21,10 +21,10 @@ export async function POST(req: NextRequest) {
     ])
 
     // Build summary data
-    const totalEmployeeCost = employees.reduce((sum, e) => sum + e.superGross * e.count, 0)
-    const totalOverhead = overhead.reduce((sum, o) => sum + (o.isAnnual ? o.amount / 12 : o.amount), 0)
+    const totalEmployeeCost = employees.reduce((sum: number, e: any) => sum + e.superGross * e.count, 0)
+    const totalOverhead = overhead.reduce((sum: number, o: any) => sum + (o.isAnnual ? o.amount / 12 : o.amount), 0)
     const revenueByService: Record<string, number> = {}
-    clientServices.forEach(cs => {
+    clientServices.forEach((cs: any) => {
       revenueByService[cs.serviceType] = (revenueByService[cs.serviceType] || 0) + cs.monthlyRevenue
     })
     const totalRevenue = Object.values(revenueByService).reduce((a, b) => a + b, 0)
@@ -33,14 +33,14 @@ export async function POST(req: NextRequest) {
     const marginPct = totalRevenue > 0 ? ((margin / totalRevenue) * 100).toFixed(2) : "0"
 
     const employeesByDept: Record<string, { count: number; cost: number }> = {}
-    employees.forEach(e => {
+    employees.forEach((e: any) => {
       if (!employeesByDept[e.department]) employeesByDept[e.department] = { count: 0, cost: 0 }
       employeesByDept[e.department].count += e.count
       employeesByDept[e.department].cost += e.superGross * e.count
     })
 
     const overheadByCategory: Record<string, number> = {}
-    overhead.forEach(o => {
+    overhead.forEach((o: any) => {
       const amt = o.isAnnual ? o.amount / 12 : o.amount
       overheadByCategory[o.category || o.label] = (overheadByCategory[o.category || o.label] || 0) + amt
     })
@@ -64,7 +64,7 @@ export async function POST(req: NextRequest) {
       ``,
       `== Количество клиентов по сервисам ==`,
       ...Object.entries(
-        clientServices.reduce((acc, cs) => {
+        clientServices.reduce((acc: Record<string, number>, cs: any) => {
           acc[cs.serviceType] = (acc[cs.serviceType] || 0) + 1
           return acc
         }, {} as Record<string, number>)

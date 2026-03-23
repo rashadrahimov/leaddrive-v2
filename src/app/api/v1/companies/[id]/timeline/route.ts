@@ -39,7 +39,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     }
 
     const timeline: TimelineEntry[] = [
-      ...activities.map(a => ({
+      ...activities.map((a: any) => ({
         id: a.id,
         type: "activity" as const,
         title: a.subject || a.type,
@@ -47,7 +47,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
         date: a.createdAt.toISOString(),
         meta: { activityType: a.type, createdBy: a.createdBy },
       })),
-      ...deals.map(d => ({
+      ...deals.map((d: any) => ({
         id: d.id,
         type: "deal" as const,
         title: d.name,
@@ -55,7 +55,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
         date: d.createdAt.toISOString(),
         meta: { stage: d.stage },
       })),
-      ...tickets.map(t => ({
+      ...tickets.map((t: any) => ({
         id: t.id,
         type: "ticket" as const,
         title: t.subject,

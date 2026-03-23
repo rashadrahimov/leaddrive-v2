@@ -24,7 +24,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ code
     let monthlyTotal = 0
 
     for (const [catName, val] of Object.entries(updates.categories) as [string, any][]) {
-      const pc = profile.categories.find((c) => c.category.name === catName)
+      const pc = profile.categories.find((c: any) => c.category.name === catName)
       if (!pc) continue
 
       const catTotal = typeof val === "number" ? val : val?.total || 0
@@ -87,7 +87,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ code
   for (const pc of updated!.categories) {
     categories[pc.category.name] = {
       total: pc.total,
-      services: pc.services.map((s) => ({
+      services: pc.services.map((s: any) => ({
         name: s.name, qty: s.qty, price: s.price, total: s.total, unit: s.unit,
       })),
     }

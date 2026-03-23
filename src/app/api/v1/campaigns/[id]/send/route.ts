@@ -56,8 +56,8 @@ export async function POST(
         if (cond.name) AND.push({ fullName: { contains: cond.name, mode: "insensitive" } })
         if (cond.createdAfter) AND.push({ createdAt: { gte: new Date(cond.createdAfter) } })
         if (cond.createdBefore) AND.push({ createdAt: { lte: new Date(cond.createdBefore) } })
-        if (cond.hasEmail) AND.push({ email: { not: null, not: "" } })
-        if (cond.hasPhone) AND.push({ phone: { not: null, not: "" } })
+        if (cond.hasEmail) AND.push({ email: { not: null }, AND: [{ email: { not: "" } }] })
+        if (cond.hasPhone) AND.push({ phone: { not: null }, AND: [{ phone: { not: "" } }] })
         if (AND.length > 0) where.AND = AND
         contacts = await prisma.contact.findMany({
           where,
@@ -82,7 +82,7 @@ export async function POST(
         where: { organizationId: orgId, email: { not: null } },
         select: { id: true, email: true, contactName: true },
       })
-      contacts = leads.map(l => ({ id: l.id, email: l.email, fullName: l.contactName }))
+      contacts = leads.map((l: any) => ({ id: l.id, email: l.email, fullName: l.contactName }))
     } else if (mode === "source" && campaign.recipientSource) {
       // Contacts from specific source
       contacts = await prisma.contact.findMany({
@@ -99,7 +99,7 @@ export async function POST(
         where: { organizationId: orgId, email: { not: null } },
         select: { id: true, email: true, contactName: true },
       })
-      contacts = [...allContacts, ...allLeads.map(l => ({ id: l.id, email: l.email, fullName: l.contactName }))]
+      contacts = [...allContacts, ...allLeads.map((l: any) => ({ id: l.id, email: l.email, fullName: l.contactName }))]
     }
 
     let sentCount = 0

@@ -52,7 +52,7 @@ export async function PUT(
   try {
     if (actions !== undefined) {
       // Transactional: update rule + replace all actions
-      await prisma.$transaction(async (tx) => {
+      await prisma.$transaction(async (tx: any) => {
         // Update rule fields if any
         if (Object.keys(ruleData).length > 0) {
           await tx.workflowRule.updateMany({

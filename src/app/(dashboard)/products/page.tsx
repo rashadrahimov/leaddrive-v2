@@ -68,7 +68,7 @@ export default function ProductsPage() {
   const [tagsStr, setTagsStr] = useState("")
   const [saving, setSaving] = useState(false)
 
-  const headers = () => orgId ? { "x-organization-id": String(orgId), "Content-Type": "application/json" } : { "Content-Type": "application/json" }
+  const headers = (): Record<string, string> => orgId ? { "x-organization-id": String(orgId), "Content-Type": "application/json" } : { "Content-Type": "application/json" }
 
   async function fetchProducts() {
     try {
@@ -236,7 +236,7 @@ export default function ProductsPage() {
         ))}
       </div>
 
-      <DataTable columns={columns} data={filtered} searchPlaceholder={t("searchPlaceholder")} searchKey="name" onRowClick={(item) => router.push(`/products/${item.id}`)} />
+      <DataTable columns={columns as any} data={filtered as any} searchPlaceholder={t("searchPlaceholder")} searchKey="name" onRowClick={(item: any) => router.push(`/products/${item.id}`)} />
 
       {/* Create/Edit Dialog */}
       <Dialog open={formOpen} onOpenChange={setFormOpen}>

@@ -31,7 +31,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
     // Resolve user names for comments, assignee, company
     const userIds = [...new Set([
-      ...ticket.comments.map(c => c.userId).filter(Boolean),
+      ...ticket.comments.map((c: any) => c.userId).filter(Boolean),
       ticket.assignedTo,
       ticket.createdBy,
     ].filter(Boolean))] as string[]
@@ -48,11 +48,11 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
         : Promise.resolve(null),
     ])
 
-    const userMap = Object.fromEntries(users.map(u => [u.id, u.name || u.email]))
+    const userMap = Object.fromEntries(users.map((u: any) => [u.id, u.name || u.email]))
 
     const contactName = contact?.fullName || contact?.email || "Клиент"
 
-    const enrichedComments = ticket.comments.map(c => ({
+    const enrichedComments = ticket.comments.map((c: any) => ({
       ...c,
       userName: c.userId ? userMap[c.userId] || "Support" : contactName,
     }))
@@ -188,7 +188,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     }
 
     // Sort by ticket count ascending — least loaded first
-    const sorted = users.sort((a, b) => (countMap[a.id] || 0) - (countMap[b.id] || 0))
+    const sorted = users.sort((a: any, b: any) => (countMap[a.id] || 0) - (countMap[b.id] || 0))
     const leastLoaded = sorted[0]
 
     await prisma.ticket.update({

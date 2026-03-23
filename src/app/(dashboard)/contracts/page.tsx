@@ -395,13 +395,13 @@ export default function ContractsPage() {
         </Select>
       </div>
 
-      <DataTable columns={columns} data={filtered} searchPlaceholder={t("searchPlaceholder")} searchKey="title" onRowClick={openDetail} />
+      <DataTable columns={columns as any} data={filtered as any} searchPlaceholder={t("searchPlaceholder")} searchKey="title" onRowClick={openDetail as any} />
 
       <ContractForm
         open={showForm}
         onOpenChange={(open) => { setShowForm(open); if (!open) setEditData(undefined) }}
         onSaved={fetchContracts}
-        initialData={editData}
+        initialData={editData as any}
         orgId={orgId}
       />
 

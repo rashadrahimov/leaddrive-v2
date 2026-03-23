@@ -40,8 +40,8 @@ export async function GET(req: NextRequest) {
     ])
 
     // Resolve company names and assignee names
-    const companyIds = [...new Set(rawTickets.map(t => t.companyId).filter(Boolean))] as string[]
-    const userIds = [...new Set(rawTickets.map(t => t.assignedTo).filter(Boolean))] as string[]
+    const companyIds = [...new Set(rawTickets.map((t: any) => t.companyId).filter(Boolean))] as string[]
+    const userIds = [...new Set(rawTickets.map((t: any) => t.assignedTo).filter(Boolean))] as string[]
 
     const [companies, users] = await Promise.all([
       companyIds.length > 0
@@ -52,10 +52,10 @@ export async function GET(req: NextRequest) {
         : Promise.resolve([]),
     ])
 
-    const companyMap = Object.fromEntries(companies.map(c => [c.id, c.name]))
-    const userMap = Object.fromEntries(users.map(u => [u.id, u.name || u.email]))
+    const companyMap = Object.fromEntries(companies.map((c: any) => [c.id, c.name]))
+    const userMap = Object.fromEntries(users.map((u: any) => [u.id, u.name || u.email]))
 
-    const tickets = rawTickets.map(t => ({
+    const tickets = rawTickets.map((t: any) => ({
       ...t,
       companyName: t.companyId ? companyMap[t.companyId] || null : null,
       assigneeName: t.assignedTo ? userMap[t.assignedTo] || null : null,
@@ -81,7 +81,7 @@ export async function POST(req: NextRequest) {
       where: { organizationId: orgId },
       select: { ticketNumber: true },
     })
-    const maxNum = allTickets.reduce((max, t) => {
+    const maxNum = allTickets.reduce((max: number, t: any) => {
       const num = parseInt(t.ticketNumber.replace(/[^0-9]/g, ""), 10) || 0
       return num > max ? num : max
     }, 0)

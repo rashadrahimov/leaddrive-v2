@@ -73,7 +73,7 @@ export async function POST(req: NextRequest) {
       where: { organizationId: orgId, contactId },
       select: { name: true, valueAmount: true, customerNeed: true },
     })
-    deals.forEach(d => {
+    deals.forEach((d: any) => {
       contextParts.push(d.customerNeed || "", d.name || "")
       dealValue = Math.max(dealValue, d.valueAmount || 0)
     })
@@ -82,7 +82,7 @@ export async function POST(req: NextRequest) {
   const contextStr = contextParts.filter(Boolean).join(" ").toLowerCase()
 
   // Smart scoring
-  const scored = products.map(product => {
+  const scored = products.map((product: any) => {
     let score = 40 // base score
 
     // Tag matching (high signal)
@@ -107,7 +107,7 @@ export async function POST(req: NextRequest) {
     // Industry matching
     if (industry) {
       const indLower = industry.toLowerCase()
-      if (product.tags.some(t => indLower.includes(t.toLowerCase()))) score += 15
+      if (product.tags.some((t: string) => indLower.includes(t.toLowerCase()))) score += 15
       if (product.name.toLowerCase().includes(indLower) || (product.description || "").toLowerCase().includes(indLower)) score += 10
     }
 
@@ -142,7 +142,7 @@ export async function POST(req: NextRequest) {
     }
   })
 
-  scored.sort((a, b) => b.score - a.score)
+  scored.sort((a: any, b: any) => b.score - a.score)
 
   return NextResponse.json({
     success: true,

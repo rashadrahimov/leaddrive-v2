@@ -22,9 +22,9 @@ export async function GET(req: NextRequest) {
       orderBy: { createdAt: "desc" },
     })
 
-    const data = campaigns.map(c => {
-      const wonDeals = c.deals.filter(d => d.stage === "WON")
-      const revenue = wonDeals.reduce((sum, d) => sum + d.valueAmount, 0)
+    const data = campaigns.map((c: any) => {
+      const wonDeals = c.deals.filter((d: any) => d.stage === "WON")
+      const revenue = wonDeals.reduce((sum: number, d: any) => sum + d.valueAmount, 0)
       const cost = c.budget || 0
       const roi = cost > 0 ? ((revenue - cost) / cost) * 100 : 0
       return {
@@ -45,8 +45,8 @@ export async function GET(req: NextRequest) {
       }
     })
 
-    const totalRevenue = data.reduce((s, c) => s + c.revenue, 0)
-    const totalCost = data.reduce((s, c) => s + c.budget, 0)
+    const totalRevenue = data.reduce((s: number, c: any) => s + c.revenue, 0)
+    const totalCost = data.reduce((s: number, c: any) => s + c.budget, 0)
     const totalRoi = totalCost > 0 ? ((totalRevenue - totalCost) / totalCost) * 100 : 0
 
     return NextResponse.json({

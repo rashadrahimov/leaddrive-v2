@@ -192,7 +192,7 @@ function PreviewLeadFunnel() {
   )
 }
 
-const PREVIEW_COMPONENTS: Record<string, () => JSX.Element> = {
+const PREVIEW_COMPONENTS: Record<string, () => React.ReactElement> = {
   statCards: PreviewStatCards,
   revenueChart: PreviewRevenueChart,
   dealPipeline: PreviewDealPipeline,

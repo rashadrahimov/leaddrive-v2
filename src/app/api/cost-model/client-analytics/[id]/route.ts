@@ -10,7 +10,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     const { id } = await params
     const result = await loadAndCompute(orgId)
 
-    const client = result.clients?.find((c: { companyId?: string; id?: string }) => c.companyId === id || c.id === id)
+    const client = result.clients?.find((c) => (c as any).companyId === id || c.id === id)
     if (!client) {
       return NextResponse.json({ error: "Client not found" }, { status: 404 })
     }

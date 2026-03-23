@@ -39,7 +39,7 @@ export async function GET(req: NextRequest) {
     take: 200,
   })
 
-  const data = contacts.map(c => ({
+  const data = contacts.map((c: any) => ({
     id: c.id,
     fullName: c.fullName,
     email: c.email,
@@ -58,10 +58,10 @@ export async function GET(req: NextRequest) {
   })
 
   const totalWithEmail = allContacts.length
-  const enabled = allContacts.filter(c => c.portalAccessEnabled).length
-  const registered = allContacts.filter(c => c.portalAccessEnabled && c.portalPasswordHash).length
+  const enabled = allContacts.filter((c: any) => c.portalAccessEnabled).length
+  const registered = allContacts.filter((c: any) => c.portalAccessEnabled && c.portalPasswordHash).length
   const weekAgo = new Date(Date.now() - 7 * 86400000)
-  const recentLogins = allContacts.filter(c => c.portalLastLoginAt && c.portalLastLoginAt > weekAgo).length
+  const recentLogins = allContacts.filter((c: any) => c.portalLastLoginAt && c.portalLastLoginAt > weekAgo).length
 
   return NextResponse.json({
     success: true,
@@ -89,7 +89,7 @@ export async function PATCH(req: NextRequest) {
         select: { id: true },
       })
       if (sessions.length > 0) {
-        const sessionIds = sessions.map(s => s.id)
+        const sessionIds = sessions.map((s: any) => s.id)
         await prisma.aiChatMessage.deleteMany({ where: { sessionId: { in: sessionIds } } })
         await prisma.aiChatSession.deleteMany({ where: { id: { in: sessionIds } } })
       }

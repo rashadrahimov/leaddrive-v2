@@ -25,13 +25,13 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   if (!ticket) return NextResponse.json({ error: "Ticket not found" }, { status: 404 })
 
   // Resolve user names for comments
-  const userIds = [...new Set(ticket.comments.map(c => c.userId).filter(Boolean))] as string[]
+  const userIds = [...new Set(ticket.comments.map((c: any) => c.userId).filter(Boolean))] as string[]
   const users = userIds.length > 0
     ? await prisma.user.findMany({ where: { id: { in: userIds } }, select: { id: true, name: true } })
     : []
-  const userMap = Object.fromEntries(users.map(u => [u.id, u.name || "Support"]))
+  const userMap = Object.fromEntries(users.map((u: any) => [u.id, u.name || "Support"]))
 
-  const comments = ticket.comments.map(c => ({
+  const comments = ticket.comments.map((c: any) => ({
     id: c.id,
     comment: c.comment,
     isAgent: !!c.userId,

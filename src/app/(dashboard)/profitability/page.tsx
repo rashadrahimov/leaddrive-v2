@@ -327,7 +327,7 @@ export default function ProfitabilityPage() {
                         <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
                       ))}
                     </Pie>
-                    <Tooltip formatter={(value: number) => fmt(value)} />
+                    <Tooltip formatter={((value: number) => fmt(value)) as any} />
                     <text x="50%" y="46%" textAnchor="middle" dominantBaseline="middle" className="fill-foreground text-xs">Sec F</text>
                     <text x="50%" y="55%" textAnchor="middle" dominantBaseline="middle" className="fill-foreground text-sm font-bold">{(grandTotalF / 1000).toFixed(1)}K ₼</text>
                   </PieChart>
@@ -360,7 +360,7 @@ export default function ProfitabilityPage() {
                   <BarChart data={serviceBarData} layout="vertical">
                     <XAxis type="number" tickFormatter={(v) => `${(v / 1000).toFixed(0)}K`} />
                     <YAxis dataKey="name" type="category" width={90} className="text-xs" />
-                    <Tooltip formatter={(value: number) => fmt(value)} />
+                    <Tooltip formatter={((value: number) => fmt(value)) as any} />
                     <Legend />
                     <Bar dataKey="Cost" fill="#ef4444" radius={[0, 4, 4, 0]} />
                     <Bar dataKey="Revenue" fill="#22c55e" radius={[0, 4, 4, 0]} />

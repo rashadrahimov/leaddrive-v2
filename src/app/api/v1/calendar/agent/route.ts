@@ -153,7 +153,7 @@ export async function GET(req: NextRequest) {
       take: 50,
     })
 
-    events.forEach(ev => {
+    events.forEach((ev: any) => {
       const d = new Date(ev.startDate)
       const endD = ev.endDate ? new Date(ev.endDate) : null
       items.push({
@@ -186,7 +186,7 @@ export async function GET(req: NextRequest) {
       take: 200,
     })
 
-    activities.forEach(a => {
+    activities.forEach((a: any) => {
       const d = a.scheduledAt || a.createdAt
       if (d >= dateFrom && d <= dateTo) {
         items.push({

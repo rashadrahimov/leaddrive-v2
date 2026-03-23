@@ -221,8 +221,8 @@ export async function GET(req: NextRequest) {
 
     // Stats
     const totalMessages = messages.length
-    const inboundCount = messages.filter(m => m.direction === "inbound").length
-    const outboundCount = messages.filter(m => m.direction === "outbound").length
+    const inboundCount = messages.filter((m: any) => m.direction === "inbound").length
+    const outboundCount = messages.filter((m: any) => m.direction === "outbound").length
 
     return NextResponse.json({
       success: true,

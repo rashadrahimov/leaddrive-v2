@@ -588,7 +588,7 @@ export default function PricingPage() {
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis type="number" tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
                         <YAxis dataKey="name" type="category" width={75} tick={{ fontSize: 12 }} />
-                        <Tooltip formatter={(v: number) => `${v.toLocaleString()} ₼`} />
+                        <Tooltip formatter={((v: number) => `${v.toLocaleString()} ₼`) as any} />
                         <Legend />
                         <Bar dataKey="Базовая" fill="#8B95A5" barSize={12} />
                         <Bar dataKey="Новая" fill="#2D4A7A" barSize={12} />
@@ -618,7 +618,7 @@ export default function PricingPage() {
                             <Cell key={i} fill={CAT_COLORS[i % CAT_COLORS.length]} />
                           ))}
                         </Pie>
-                        <Tooltip formatter={(v: number) => `${v.toLocaleString()} ₼`} />
+                        <Tooltip formatter={((v: number) => `${v.toLocaleString()} ₼`) as any} />
                       </PieChart>
                     </ResponsiveContainer>
                     <div className="grid grid-cols-2 gap-x-4 gap-y-1 mt-3">
@@ -649,7 +649,7 @@ export default function PricingPage() {
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis type="number" tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
                       <YAxis dataKey="name" type="category" width={95} tick={{ fontSize: 11 }} />
-                      <Tooltip formatter={(v: number) => `${v.toLocaleString()} ₼`} />
+                      <Tooltip formatter={((v: number) => `${v.toLocaleString()} ₼`) as any} />
                       <Legend />
                       <Bar dataKey="Новая" fill="#2D4A7A" barSize={16} />
                     </BarChart>
