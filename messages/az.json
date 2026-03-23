@@ -214,7 +214,17 @@
     "activities": "Fəaliyyətlər",
     "daysActive": "Aktiv günlər",
     "daysLeft": "Qalan günlər",
-    "daysOpen": "Açıq günlər"
+    "daysOpen": "Açıq günlər",
+    "activity": "Aktivlik",
+    "created": "Yaradılma tarixi",
+    "noNotesYet": "Hələ qeyd yoxdur",
+    "nextSteps": "Növbəti addımlar",
+    "addNextStep": "Növbəti addım əlavə et",
+    "noContactRoles": "Kontakt rolları yoxdur",
+    "noCompetitors": "Rəqib yoxdur",
+    "addCompetitor": "Rəqib əlavə et",
+    "noTeamMembers": "Komanda üzvü yoxdur",
+    "addTeamMembersHint": "Müqaviləyə komanda üzvü əlavə edin"
   },
   "leads": {
     "title": "Lidlər",
