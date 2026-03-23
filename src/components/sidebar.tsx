@@ -4,12 +4,14 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { type ModuleId, hasModule } from "@/lib/modules"
+import { isSidebarItemAccessible, getRequiredPlan } from "@/lib/plan-config"
 import {
   LayoutDashboard, Building2, Users, Handshake, UserPlus,
   CheckSquare, FileText, FileSpreadsheet, Calculator, Brain,
   Ticket, BookOpen, BarChart3, Mail, MessageSquare, Zap,
   Settings, ChevronLeft, DollarSign, Target, Send,
   TrendingUp, Filter, Workflow, Server, Bell, CalendarDays, Headphones, Package,
+  Lock,
 } from "lucide-react"
 import { useState } from "react"
 import { Logo } from "@/components/logo"
@@ -102,8 +104,20 @@ export function Sidebar({ org }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false)
   const t = useTranslations("nav")
 
-  const filteredItems = navItems.filter((item) => hasModule(org, item.module))
-  const groups = [...new Set(filteredItems.map((item) => item.group))]
+  const plan = org.plan || "enterprise"
+
+  // Filter by module system first, then annotate with plan accessibility
+  const filteredItems = navItems
+    .filter((item) => hasModule(org, item.module))
+    .map((item) => ({
+      ...item,
+      locked: !isSidebarItemAccessible(plan, item.href),
+      requiredPlan: getRequiredPlan(item.href),
+    }))
+
+  // Only show groups that have at least one accessible item
+  const accessibleItems = filteredItems.filter((item) => !item.locked)
+  const groups = [...new Set(accessibleItems.map((item) => item.group))]
 
   return (
     <aside
@@ -144,7 +158,7 @@ export function Sidebar({ org }: SidebarProps) {
             ) : (
               groupIndex > 0 && <hr className="border-border/40 dark:border-white/[0.06] mx-3 my-1" />
             )}
-            {filteredItems
+            {accessibleItems
               .filter((item) => item.group === group)
               .map((item) => {
                 const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href))

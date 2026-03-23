@@ -64,7 +64,17 @@
     "backToLogin": "Вернуться ко входу",
     "passwordMinLength": "Пароль должен быть не менее 6 символов",
     "passwordsDoNotMatch": "Пароли не совпадают",
-    "passwordChanged": "Пароль успешно изменён"
+    "passwordChanged": "Пароль успешно изменён",
+    "twoFactorAuth": "Двухфакторная аутентификация",
+    "enterAuthCode": "Введите код из приложения-аутентификатора",
+    "enterBackupCode": "Введите один из резервных кодов",
+    "verificationCode": "Код подтверждения",
+    "backupCode": "Резервный код",
+    "useBackupCode": "Использовать резервный код",
+    "useAuthApp": "Использовать приложение",
+    "verify": "Подтвердить",
+    "verifying": "Проверка...",
+    "invalid2faCode": "Неверный код. Попробуйте ещё раз"
   },
   "common": {
     "save": "Сохранить",
@@ -1538,5 +1548,13 @@
     "statusPending": "На рассмотрении",
     "statusApproved": "Одобрена",
     "statusRejected": "Отклонена"
+  },
+  "planGating": {
+    "planRequired": "Доступно в плане {plan}",
+    "upgradePlan": "Обновите план",
+    "starter": "Starter",
+    "business": "Business",
+    "professional": "Professional",
+    "enterprise": "Enterprise"
   }
 }

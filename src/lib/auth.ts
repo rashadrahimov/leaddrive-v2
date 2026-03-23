@@ -3,10 +3,12 @@ import Credentials from "next-auth/providers/credentials"
 import { z } from "zod"
 import { prisma } from "./prisma"
 import bcrypt from "bcryptjs"
+import { verifySync } from "otplib"
 
 const loginSchema = z.object({
   email: z.string().email(),
   password: z.string().min(6),
+  totpCode: z.string().optional(),
 })
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
@@ -16,6 +18,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       credentials: {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
+        totpCode: { label: "2FA Code", type: "text" },
       },
       async authorize(credentials) {
         const parsed = loginSchema.safeParse(credentials)
@@ -34,6 +37,37 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           const valid = await bcrypt.compare(parsed.data.password, user.passwordHash)
           if (!valid) return null
 
+          // 2FA check
+          if (user.totpEnabled && user.totpSecret) {
+            const totpCode = parsed.data.totpCode
+
+            // No code provided — signal frontend to show 2FA step
+            if (!totpCode) {
+              throw new Error("2FA_REQUIRED")
+            }
+
+            // Verify TOTP code
+            const isValidTotp = verifySync({ token: totpCode, secret: user.totpSecret }).valid
+
+            if (!isValidTotp) {
+              // Check backup codes
+              const backupCodes = (user.backupCodes as string[]) || []
+              const backupIndex = backupCodes.indexOf(totpCode)
+
+              if (backupIndex === -1) {
+                throw new Error("INVALID_2FA_CODE")
+              }
+
+              // Valid backup code — remove it (one-time use)
+              const updatedCodes = [...backupCodes]
+              updatedCodes.splice(backupIndex, 1)
+              await prisma.user.update({
+                where: { id: user.id },
+                data: { backupCodes: updatedCodes },
+              })
+            }
+          }
+
           // Update last login
           await prisma.user.update({
             where: { id: user.id },
@@ -49,7 +83,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             organizationName: user.organization.name,
             plan: user.organization.plan,
           }
-        } catch {
+        } catch (err) {
+          // Re-throw 2FA-specific errors so NextAuth passes them to the client
+          if (err instanceof Error && (err.message === "2FA_REQUIRED" || err.message === "INVALID_2FA_CODE")) {
+            throw err
+          }
           // Fallback to dev stub if DB not connected
           if (parsed.data.email === "admin@leaddrive.com" && parsed.data.password === "admin123") {
             return {

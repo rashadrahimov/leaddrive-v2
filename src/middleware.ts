@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 import { auth } from "@/lib/auth"
+import { canAccessModule } from "@/lib/plan-config"
 
 const publicPaths = ["/login", "/register", "/forgot-password", "/api/auth", "/portal"]
 
@@ -59,6 +60,14 @@ export default auth((req) => {
   // Admin-only routes
   if (pathname.startsWith("/settings") && role !== "admin") {
     return NextResponse.redirect(new URL("/", req.url))
+  }
+
+  // Plan-based feature gating — redirect to billing page if module not available
+  const plan = (session?.user as any)?.plan || "enterprise"
+  if (!canAccessModule(plan, pathname)) {
+    const billingUrl = new URL("/settings/billing", req.url)
+    billingUrl.searchParams.set("upgrade", "true")
+    return NextResponse.redirect(billingUrl)
   }
 
   return NextResponse.next({ headers })

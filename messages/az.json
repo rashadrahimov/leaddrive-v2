@@ -64,7 +64,17 @@
     "backToLogin": "Girişə qayıt",
     "passwordMinLength": "Şifrə ən azı 6 simvol olmalıdır",
     "passwordsDoNotMatch": "Şifrələr uyğun gəlmir",
-    "passwordChanged": "Şifrə uğurla dəyişdirildi"
+    "passwordChanged": "Şifrə uğurla dəyişdirildi",
+    "twoFactorAuth": "İki faktorlu autentifikasiya",
+    "enterAuthCode": "Autentifikasiya tətbiqindən kodu daxil edin",
+    "enterBackupCode": "Ehtiyat kodlardan birini daxil edin",
+    "verificationCode": "Təsdiq kodu",
+    "backupCode": "Ehtiyat kod",
+    "useBackupCode": "Ehtiyat kod istifadə et",
+    "useAuthApp": "Tətbiqi istifadə et",
+    "verify": "Təsdiq et",
+    "verifying": "Yoxlanılır...",
+    "invalid2faCode": "Yanlış kod. Yenidən cəhd edin"
   },
   "common": {
     "save": "Saxla",
@@ -1534,5 +1544,13 @@
     "statusPending": "Baxılır",
     "statusApproved": "Təsdiqləndi",
     "statusRejected": "Rədd edildi"
+  },
+  "planGating": {
+    "planRequired": "{plan} planında mövcuddur",
+    "upgradePlan": "Planı yeniləyin",
+    "starter": "Starter",
+    "business": "Business",
+    "professional": "Professional",
+    "enterprise": "Enterprise"
   }
 }
