@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useSession } from "next-auth/react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { StatCard } from "@/components/stat-card"
@@ -56,6 +57,7 @@ const typeIcons: Record<string, string> = {
 
 export default function CampaignsPage() {
   const { data: session } = useSession()
+  const router = useRouter()
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
@@ -185,7 +187,7 @@ export default function CampaignsPage() {
             <div
               key={campaign.id}
               className="border rounded-lg p-4 hover:shadow-sm transition-shadow cursor-pointer bg-card"
-              onClick={() => { setEditData(campaign); setShowForm(true) }}
+              onClick={() => router.push(`/campaigns/${campaign.id}`)}
             >
               <div className="flex items-start justify-between">
                 <div className="flex-1 min-w-0">
