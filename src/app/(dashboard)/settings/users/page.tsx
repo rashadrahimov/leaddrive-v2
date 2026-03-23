@@ -28,6 +28,7 @@ interface User {
   lastLogin: string | null
   loginCount: number
   totpEnabled: boolean
+  require2fa: boolean
   createdAt: string
 }
 
@@ -338,30 +339,40 @@ export default function UsersSettingsPage() {
       key: "totpEnabled", label: "2FA",
       render: (item: User) => (
         <div className="flex items-center gap-2">
-          <span className={`text-xs font-medium ${item.totpEnabled ? "text-green-600" : "text-muted-foreground"}`}>
-            {item.totpEnabled ? "Вкл" : "Выкл"}
-          </span>
-          {item.totpEnabled && (
-            <Button
-              variant="ghost" size="sm"
-              className="h-6 px-2 text-xs text-orange-600 hover:text-orange-700 hover:bg-orange-50"
-              onClick={async (e) => {
-                e.stopPropagation()
-                if (!confirm("Сбросить 2FA для этого пользователя? Ему придётся настроить заново.")) return
+          {/* Toggle require2fa */}
+          <button
+            type="button"
+            className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${
+              item.require2fa || item.totpEnabled ? "bg-green-500" : "bg-gray-300"
+            }`}
+            onClick={async (e) => {
+              e.stopPropagation()
+              if (item.totpEnabled && !item.require2fa) {
+                // Already configured, toggling off = reset
+                if (!confirm("Сбросить 2FA для этого пользователя?")) return
                 await fetch(`/api/v1/users/${item.id}`, {
                   method: "PUT",
-                  headers: {
-                    "Content-Type": "application/json",
-                    ...(orgId ? { "x-organization-id": String(orgId) } : {}),
-                  },
+                  headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": String(orgId) } : {}) },
                   body: JSON.stringify({ resetTotp: true }),
                 })
-                fetchUsers()
-              }}
-            >
-              Сбросить
-            </Button>
-          )}
+              } else {
+                // Toggle require2fa
+                await fetch(`/api/v1/users/${item.id}`, {
+                  method: "PUT",
+                  headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": String(orgId) } : {}) },
+                  body: JSON.stringify({ require2fa: !(item.require2fa || item.totpEnabled) }),
+                })
+              }
+              fetchUsers()
+            }}
+          >
+            <span className={`pointer-events-none inline-block h-4 w-4 rounded-full bg-white shadow transform transition-transform ${
+              item.require2fa || item.totpEnabled ? "translate-x-4" : "translate-x-0"
+            }`} />
+          </button>
+          <span className="text-xs text-muted-foreground">
+            {item.totpEnabled ? "Настроен" : item.require2fa ? "Обязат." : "Выкл"}
+          </span>
         </div>
       ),
     },

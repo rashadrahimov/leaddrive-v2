@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
       select: {
         id: true, name: true, email: true, role: true,
         phone: true, department: true, isActive: true,
-        totpEnabled: true, lastLogin: true, loginCount: true, createdAt: true,
+        totpEnabled: true, require2fa: true, lastLogin: true, loginCount: true, createdAt: true,
       },
       orderBy: { name: "asc" },
     })

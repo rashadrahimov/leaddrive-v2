@@ -76,6 +76,7 @@ model User {
   department     String?
   totpSecret     String?
   totpEnabled    Boolean   @default(false)
+  require2fa     Boolean   @default(false)
   backupCodes    Json      @default("[]")
   calendarToken  String?   @unique
   resetToken     String?
