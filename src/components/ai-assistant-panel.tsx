@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Bot, X, Send, Loader2, Sparkles, Trash2 } from "lucide-react"
+import { Bot, X, Send, Loader2, Sparkles, Trash2, Brain } from "lucide-react"
 
 interface Message {
   id: string
@@ -110,7 +110,7 @@ export function AiAssistantPanel() {
           onClick={() => setOpen(true)}
           className="fixed bottom-6 right-6 z-50 h-14 w-14 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-200 flex items-center justify-center group"
         >
-          <Sparkles className="h-6 w-6 group-hover:rotate-12 transition-transform" />
+          <Brain className="h-6 w-6 group-hover:scale-110 transition-transform" />
         </button>
       )}
 
