@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { prisma } from "@/lib/prisma"
 import { getOrgId } from "@/lib/api-auth"
+import { createNotification } from "@/lib/notifications"
 
 const updateDealSchema = z.object({
   name: z.string().min(1).max(200).optional(),
@@ -96,6 +97,10 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 })
 
   try {
+    // Fetch original to detect changes
+    const original = await prisma.deal.findFirst({ where: { id, organizationId: orgId } })
+    if (!original) return NextResponse.json({ error: "Deal not found" }, { status: 404 })
+
     // Auto-set probability when stage changes (if not explicitly provided)
     const STAGE_PROBABILITY: Record<string, number> = {
       LEAD: 10, QUALIFIED: 25, PROPOSAL: 50, NEGOTIATION: 75, WON: 100, LOST: 0,
@@ -132,6 +137,32 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       where: { id, organizationId: orgId },
       include: dealInclude,
     })
+
+    // Notify on stage change
+    if (parsed.data.stage && parsed.data.stage !== original.stage && original.assignedTo) {
+      createNotification({
+        organizationId: orgId,
+        userId: original.assignedTo,
+        type: parsed.data.stage === "WON" ? "success" : parsed.data.stage === "LOST" ? "warning" : "info",
+        title: `Satış mərhələsi dəyişdi: ${original.name}`,
+        message: `${original.stage} → ${parsed.data.stage}`,
+        entityType: "deal",
+        entityId: id,
+      }).catch(() => {})
+    }
+
+    // Notify on assignee change
+    if (parsed.data.assignedTo && parsed.data.assignedTo !== original.assignedTo) {
+      createNotification({
+        organizationId: orgId,
+        userId: parsed.data.assignedTo,
+        type: "info",
+        title: `Satış sizə təyin edildi: ${original.name}`,
+        message: `${original.valueAmount} ${original.currency} — ${updated?.stage || original.stage}`,
+        entityType: "deal",
+        entityId: id,
+      }).catch(() => {})
+    }
 
     return NextResponse.json({ success: true, data: updated })
   } catch (e) {

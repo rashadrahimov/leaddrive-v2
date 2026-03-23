@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { prisma } from "@/lib/prisma"
 import { getOrgId } from "@/lib/api-auth"
+import { createNotification } from "@/lib/notifications"
 
 const updateLeadSchema = z.object({
   contactName: z.string().min(1).max(255).optional(),
@@ -48,12 +49,29 @@ export async function PUT(
   if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 })
 
   try {
+    // Fetch original to detect assignee change
+    const original = await prisma.lead.findFirst({ where: { id, organizationId: orgId } })
+
     const result = await prisma.lead.updateMany({
       where: { id, organizationId: orgId },
       data: parsed.data,
     })
     if (result.count === 0) return NextResponse.json({ error: "Not found" }, { status: 404 })
     const updated = await prisma.lead.findFirst({ where: { id, organizationId: orgId } })
+
+    // Notify on assignee change
+    if (parsed.data.assignedTo && parsed.data.assignedTo !== original?.assignedTo) {
+      createNotification({
+        organizationId: orgId,
+        userId: parsed.data.assignedTo,
+        type: "info",
+        title: `Lid sizə təyin edildi: ${updated?.contactName || ""}`,
+        message: updated?.companyName || "",
+        entityType: "lead",
+        entityId: id,
+      }).catch(() => {})
+    }
+
     return NextResponse.json({ success: true, data: updated })
   } catch (e) {
     return NextResponse.json({ error: String(e) }, { status: 500 })

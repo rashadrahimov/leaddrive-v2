@@ -3,6 +3,7 @@ import { z } from "zod"
 import { prisma } from "@/lib/prisma"
 import { getOrgId } from "@/lib/api-auth"
 import { sendWhatsAppMessage } from "@/lib/whatsapp"
+import { createNotification } from "@/lib/notifications"
 
 const updateTicketSchema = z.object({
   subject: z.string().min(1).max(300).optional(),
@@ -109,8 +110,34 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       include: { comments: { orderBy: { createdAt: "desc" } } },
     })
 
-    // Send WhatsApp notification on status change for WhatsApp tickets
+    // Notify on assignee change
+    if (parsed.data.assignedTo && parsed.data.assignedTo !== original.assignedTo) {
+      createNotification({
+        organizationId: orgId,
+        userId: parsed.data.assignedTo,
+        type: "info",
+        title: `Tiket sizə təyin edildi: ${original.subject}`,
+        message: `${original.ticketNumber} — ${original.priority} prioritet`,
+        entityType: "ticket",
+        entityId: id,
+      }).catch(() => {})
+    }
+
+    // Notify on status change
     const newStatus = parsed.data.status
+    if (newStatus && newStatus !== oldStatus && original.assignedTo) {
+      createNotification({
+        organizationId: orgId,
+        userId: original.assignedTo,
+        type: newStatus === "resolved" ? "success" : "info",
+        title: `Tiket statusu dəyişdi: ${original.subject}`,
+        message: `${original.ticketNumber}: ${oldStatus} → ${newStatus}`,
+        entityType: "ticket",
+        entityId: id,
+      }).catch(() => {})
+    }
+
+    // Send WhatsApp notification on status change for WhatsApp tickets
     if (newStatus && newStatus !== oldStatus && (original.tags as string[])?.includes("whatsapp")) {
       sendWhatsAppStatusNotification(orgId, original, newStatus).catch(err =>
         console.error("[Ticket WA] Status notification error:", err)
@@ -186,6 +213,17 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       where: { id },
       data: { assignedTo: leastLoaded.id },
     })
+
+    // Notify auto-assigned agent
+    createNotification({
+      organizationId: orgId,
+      userId: leastLoaded.id,
+      type: "info",
+      title: `Tiket sizə təyin edildi: ${ticket.subject}`,
+      message: `${ticket.ticketNumber} — avtomatik təyinat`,
+      entityType: "ticket",
+      entityId: id,
+    }).catch(() => {})
 
     return NextResponse.json({
       success: true,
