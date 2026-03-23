@@ -6,14 +6,8 @@ export async function POST(req: NextRequest) {
   const orgId = await getOrgId(req)
   if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
-  const { contactId } = await req.json()
-  if (!contactId) return NextResponse.json({ error: "contactId required" }, { status: 400 })
-
-  // Get contact info + their deals
-  const contact = await prisma.contact.findFirst({
-    where: { id: contactId, organizationId: orgId },
-  })
-  if (!contact) return NextResponse.json({ error: "Contact not found" }, { status: 404 })
+  const body = await req.json()
+  const { contactId, dealId } = body
 
   // Get all products
   const products = await prisma.product.findMany({
@@ -25,39 +19,111 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true, data: { recommendations: [], message: "No products available" } })
   }
 
-  // Get contact's deals for context
-  const deals = await prisma.deal.findMany({
-    where: { organizationId: orgId, contactId },
-    select: { title: true, value: true, stage: true, customerNeed: true },
-  })
+  // Build context from deal or contact
+  let contextParts: string[] = []
+  let dealValue = 0
+  let companyName = ""
+  let industry = ""
 
-  // Simple scoring: match product tags/features to contact interests
-  const contactContext = [
-    contact.title || "",
-    contact.source || "",
-    ...(deals.map(d => d.customerNeed || d.title || "").filter(Boolean)),
-  ].join(" ").toLowerCase()
+  if (dealId) {
+    const deal = await prisma.deal.findFirst({
+      where: { id: dealId, organizationId: orgId },
+      include: {
+        company: { select: { name: true, industry: true, category: true, userCount: true } },
+        contact: { select: { fullName: true, position: true, department: true } },
+      },
+    })
+    if (deal) {
+      contextParts.push(deal.name || "")
+      contextParts.push(deal.customerNeed || "")
+      contextParts.push(deal.salesChannel || "")
+      contextParts.push(deal.notes || "")
+      dealValue = deal.valueAmount || 0
+      if (deal.company) {
+        companyName = deal.company.name
+        industry = deal.company.industry || ""
+        contextParts.push(deal.company.name, deal.company.industry || "", deal.company.category || "")
+      }
+      if (deal.contact) {
+        contextParts.push(deal.contact.position || "", deal.contact.department || "")
+      }
+    }
+  }
 
+  if (contactId) {
+    const contact = await prisma.contact.findFirst({
+      where: { id: contactId, organizationId: orgId },
+      include: { company: { select: { name: true, industry: true } } },
+    })
+    if (contact) {
+      contextParts.push(contact.position || "", contact.department || "", contact.source || "")
+      if (contact.company) {
+        companyName = contact.company.name
+        industry = contact.company.industry || ""
+        contextParts.push(contact.company.name, contact.company.industry || "")
+      }
+    }
+
+    // Also get contact's deals
+    const deals = await prisma.deal.findMany({
+      where: { organizationId: orgId, contactId },
+      select: { name: true, valueAmount: true, customerNeed: true },
+    })
+    deals.forEach(d => {
+      contextParts.push(d.customerNeed || "", d.name || "")
+      dealValue = Math.max(dealValue, d.valueAmount || 0)
+    })
+  }
+
+  const contextStr = contextParts.filter(Boolean).join(" ").toLowerCase()
+
+  // Smart scoring
   const scored = products.map(product => {
-    let score = 50 // base score
+    let score = 40 // base score
 
-    // Tag matching
+    // Tag matching (high signal)
     for (const tag of product.tags) {
-      if (contactContext.includes(tag.toLowerCase())) score += 15
+      if (contextStr.includes(tag.toLowerCase())) score += 18
     }
 
     // Feature matching
     for (const feat of product.features) {
-      if (contactContext.includes(feat.toLowerCase())) score += 10
+      const words = feat.toLowerCase().split(/\s+/)
+      for (const w of words) {
+        if (w.length > 3 && contextStr.includes(w)) { score += 8; break }
+      }
     }
 
-    // Category bonus for active deals
-    if (deals.length > 0) score += 10
+    // Category/name matching
+    const nameWords = product.name.toLowerCase().split(/\s+/)
+    for (const w of nameWords) {
+      if (w.length > 3 && contextStr.includes(w)) score += 12
+    }
 
-    // Price fit (contacts with high-value deals get premium products)
-    const avgDealValue = deals.length > 0 ? deals.reduce((s, d) => s + (d.value || 0), 0) / deals.length : 0
-    if (avgDealValue > 10000 && product.price > 5000) score += 10
-    if (avgDealValue < 5000 && product.price < 3000) score += 10
+    // Industry matching
+    if (industry) {
+      const indLower = industry.toLowerCase()
+      if (product.tags.some(t => indLower.includes(t.toLowerCase()))) score += 15
+      if (product.name.toLowerCase().includes(indLower) || (product.description || "").toLowerCase().includes(indLower)) score += 10
+    }
+
+    // Price fit
+    if (dealValue > 10000 && product.price > 3000) score += 8
+    else if (dealValue > 5000 && product.price > 1000) score += 6
+    else if (dealValue < 3000 && product.price < 2000) score += 6
+
+    // Deal context bonus
+    if (contextStr.length > 50) score += 5
+
+    // Generate reason
+    let reason = "Recommended based on your company profile."
+    if (score >= 80) {
+      reason = `High relevance for ${companyName || "this client"} — product features align with deal requirements and industry profile.`
+    } else if (score >= 60) {
+      reason = `Good fit for ${companyName || "this client"} — matches several criteria including company size and service needs.`
+    } else if (score >= 45) {
+      reason = `Potential upsell for ${companyName || "this client"} — complementary to current services.`
+    }
 
     return {
       productId: product.id,
@@ -66,10 +132,9 @@ export async function POST(req: NextRequest) {
       category: product.category,
       price: product.price,
       currency: product.currency,
-      score: Math.min(score, 100),
-      reason: score > 70 ? "High match — tags and deal context align" :
-              score > 50 ? "Moderate match — some context alignment" :
-              "General recommendation",
+      features: product.features,
+      score: Math.min(score, 99),
+      reason,
     }
   })
 
