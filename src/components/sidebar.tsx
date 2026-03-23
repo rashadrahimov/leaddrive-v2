@@ -9,7 +9,7 @@ import {
   CheckSquare, FileText, FileSpreadsheet, Calculator, Brain,
   Ticket, BookOpen, BarChart3, Mail, MessageSquare, Zap,
   Settings, ChevronLeft, DollarSign, Target, Send,
-  TrendingUp, Filter, Workflow, Server, Bell, CalendarDays, Headphones,
+  TrendingUp, Filter, Workflow, Server, Bell, CalendarDays, Headphones, Package,
 } from "lucide-react"
 import { useState } from "react"
 import { Logo } from "@/components/logo"
@@ -31,6 +31,7 @@ const navItems: NavItem[] = [
   { module: "leads", href: "/leads", icon: UserPlus, tKey: "leads", group: "CRM" },
   { module: "tasks", href: "/tasks", icon: CheckSquare, tKey: "tasks", group: "CRM" },
   { module: "contracts", href: "/contracts", icon: FileText, tKey: "contracts", group: "CRM" },
+  { module: "core", href: "/products", icon: Package, tKey: "products", group: "CRM" },
   { module: "core", href: "/notifications", icon: Bell, tKey: "notifications", group: "CRM" },
   { module: "campaigns", href: "/campaigns", icon: Mail, tKey: "campaigns", group: "Marketing" },
   { module: "campaigns", href: "/segments", icon: Filter, tKey: "segments", group: "Marketing" },
