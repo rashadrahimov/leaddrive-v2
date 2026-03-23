@@ -2,6 +2,141 @@ import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { prisma } from "@/lib/prisma"
 
+// Generate ICS calendar file content
+function generateICS(event: any): string {
+  const start = new Date(event.startDate)
+  const end = event.endDate ? new Date(event.endDate) : new Date(start.getTime() + 2 * 60 * 60 * 1000)
+  const fmt = (d: Date) => d.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "")
+  const uid = `${event.id}@leaddrivecrm.org`
+
+  return [
+    "BEGIN:VCALENDAR",
+    "VERSION:2.0",
+    "PRODID:-//LeadDrive CRM//Events//EN",
+    "CALSCALE:GREGORIAN",
+    "METHOD:REQUEST",
+    "BEGIN:VEVENT",
+    `UID:${uid}`,
+    `DTSTART:${fmt(start)}`,
+    `DTEND:${fmt(end)}`,
+    `SUMMARY:${event.name}`,
+    event.location ? `LOCATION:${event.location}` : "",
+    event.description ? `DESCRIPTION:${event.description.replace(/\n/g, "\\n").slice(0, 500)}` : "",
+    event.meetingUrl ? `URL:${event.meetingUrl}` : "",
+    "STATUS:CONFIRMED",
+    `ORGANIZER;CN=LeadDrive CRM:mailto:noreply@leaddrivecrm.org`,
+    "END:VEVENT",
+    "END:VCALENDAR",
+  ].filter(Boolean).join("\r\n")
+}
+
+// Send confirmation email with .ics attachment
+async function sendConfirmationEmail(event: any, participantName: string, participantEmail: string) {
+  try {
+    const org = await prisma.organization.findUnique({
+      where: { id: event.organizationId },
+      select: { settings: true, name: true },
+    })
+    const smtp = (org?.settings as any)?.smtp
+    if (!smtp?.smtpHost || !smtp?.smtpUser || !smtp?.smtpPass) return
+
+    const nodemailer = await import("nodemailer").catch(() => null)
+    if (!nodemailer) return
+
+    const transport = nodemailer.createTransport({
+      host: smtp.smtpHost,
+      port: smtp.smtpPort || 587,
+      secure: (smtp.smtpPort || 587) === 465,
+      auth: { user: smtp.smtpUser, pass: smtp.smtpPass },
+    })
+
+    const icsContent = generateICS(event)
+    const startDate = new Date(event.startDate).toLocaleString("ru-RU", { dateStyle: "long", timeStyle: "short" })
+    const endDate = event.endDate ? new Date(event.endDate).toLocaleString("ru-RU", { dateStyle: "long", timeStyle: "short" }) : ""
+
+    await transport.sendMail({
+      from: smtp.fromEmail ? `${smtp.fromName || org?.name || ""} <${smtp.fromEmail}>` : smtp.smtpUser,
+      to: participantEmail,
+      subject: `Confirmed: ${event.name}`,
+      html: `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background:#f0f2f5;font-family:Arial,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f0f2f5;padding:30px 0;">
+<tr><td align="center">
+<table width="600" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.1);">
+
+  <!-- Header -->
+  <tr><td style="background:#059669;padding:35px 40px;text-align:center;">
+    <div style="font-size:40px;margin-bottom:10px;">&#10003;</div>
+    <h1 style="margin:0;color:#fff;font-size:24px;font-weight:700;">You're Confirmed!</h1>
+    <p style="margin:8px 0 0;color:rgba(255,255,255,0.9);font-size:14px;">${event.name}</p>
+  </td></tr>
+
+  <!-- Greeting -->
+  <tr><td style="padding:25px 40px 10px;">
+    <p style="margin:0;font-size:15px;color:#1F2937;">Hello <strong>${participantName}</strong>,</p>
+    <p style="margin:8px 0 0;font-size:14px;color:#4B5563;line-height:1.6;">
+      Your attendance is confirmed! The event has been attached to this email — open the attachment to add it to your calendar automatically.
+    </p>
+  </td></tr>
+
+  <!-- Event Details -->
+  <tr><td style="padding:15px 40px;">
+    <table width="100%" style="background:#F8FAFC;border-radius:10px;border:1px solid #E2E8F0;">
+      <tr><td style="padding:20px;">
+        <table width="100%">
+          <tr><td style="padding:6px 0;">
+            <table><tr>
+              <td style="width:36px;vertical-align:middle;"><div style="width:32px;height:32px;background:#EEF2FF;border-radius:8px;text-align:center;line-height:32px;font-size:16px;">&#128197;</div></td>
+              <td style="padding-left:12px;"><div style="font-size:11px;color:#9CA3AF;text-transform:uppercase;font-weight:700;">When</div><div style="font-size:14px;color:#1F2937;font-weight:600;">${startDate}${endDate ? ` — ${endDate}` : ""}</div></td>
+            </tr></table>
+          </td></tr>
+          ${event.location ? `<tr><td style="padding:6px 0;border-top:1px solid #E2E8F0;">
+            <table><tr>
+              <td style="width:36px;vertical-align:middle;"><div style="width:32px;height:32px;background:#FEF2F2;border-radius:8px;text-align:center;line-height:32px;font-size:16px;">&#128205;</div></td>
+              <td style="padding-left:12px;"><div style="font-size:11px;color:#9CA3AF;text-transform:uppercase;font-weight:700;">Where</div><div style="font-size:14px;color:#1F2937;font-weight:600;">${event.location}</div></td>
+            </tr></table>
+          </td></tr>` : ""}
+          ${event.isOnline && event.meetingUrl ? `<tr><td style="padding:6px 0;border-top:1px solid #E2E8F0;">
+            <table><tr>
+              <td style="width:36px;vertical-align:middle;"><div style="width:32px;height:32px;background:#F0FDF4;border-radius:8px;text-align:center;line-height:32px;font-size:16px;">&#128279;</div></td>
+              <td style="padding-left:12px;"><div style="font-size:11px;color:#9CA3AF;text-transform:uppercase;font-weight:700;">Join Online</div><div style="font-size:14px;"><a href="${event.meetingUrl}" style="color:#4F46E5;font-weight:600;">${event.meetingUrl}</a></div></td>
+            </tr></table>
+          </td></tr>` : ""}
+        </table>
+      </td></tr>
+    </table>
+  </td></tr>
+
+  <!-- Calendar note -->
+  <tr><td style="padding:10px 40px 25px;text-align:center;">
+    <p style="margin:0;font-size:13px;color:#6B7280;background:#FFFBEB;border-radius:8px;padding:12px;border:1px solid #FDE68A;">
+      &#128197; <strong>Calendar attachment included</strong> — open the .ics file attached to this email to add the event to your calendar.
+    </p>
+  </td></tr>
+
+  <!-- Footer -->
+  <tr><td style="padding:20px 40px 25px;text-align:center;border-top:1px solid #E5E7EB;">
+    <p style="margin:0;font-size:12px;color:#9CA3AF;">Sent by <strong style="color:#4F46E5;">${org?.name || "LeadDrive CRM"}</strong></p>
+  </td></tr>
+
+</table>
+<table width="600"><tr><td style="padding:15px 0;text-align:center;"><p style="margin:0;font-size:11px;color:#9CA3AF;">Powered by LeadDrive CRM</p></td></tr></table>
+</td></tr></table>
+</body></html>`,
+      icalEvent: {
+        filename: "event.ics",
+        method: "REQUEST",
+        content: icsContent,
+      },
+    })
+    console.log(`[CONFIRM] Sent confirmation + .ics to ${participantEmail} for ${event.name}`)
+  } catch (e: any) {
+    console.error(`[CONFIRM] Failed to send to ${participantEmail}:`, e?.message)
+  }
+}
+
 // GET — public event info (no auth required)
 export async function GET(
   req: NextRequest,
@@ -19,14 +154,10 @@ export async function GET(
   })
   if (!event) return NextResponse.json({ error: "Event not found" }, { status: 404 })
 
-  // Only allow registration for open events
   const canRegister = ["planned", "registration_open"].includes(event.status)
   const isFull = event.maxParticipants ? event.registeredCount >= event.maxParticipants : false
 
-  return NextResponse.json({
-    success: true,
-    data: { ...event, canRegister, isFull },
-  })
+  return NextResponse.json({ success: true, data: { ...event, canRegister, isFull } })
 }
 
 // POST — self-register for event (no auth required)
@@ -65,7 +196,6 @@ export async function POST(
     where: { eventId: id, email: parsed.data.email },
   })
   if (existing) {
-    // Already invited — confirm attendance
     if (existing.status === "registered" || existing.inviteStatus === "sent") {
       await prisma.eventParticipant.update({
         where: { id: existing.id },
@@ -76,16 +206,13 @@ export async function POST(
           notes: parsed.data.company ? `Company: ${parsed.data.company}` : existing.notes,
         },
       })
-      return NextResponse.json({
-        success: true,
-        data: { id: existing.id, message: "Attendance confirmed!" },
-      })
+      // Send confirmation email with calendar
+      sendConfirmationEmail(event, parsed.data.name || existing.name, parsed.data.email)
+      return NextResponse.json({ success: true, data: { id: existing.id, message: "Attendance confirmed!" } })
     }
-    // Already confirmed/attended
     return NextResponse.json({ error: "You are already registered for this event" }, { status: 409 })
   }
 
-  // Try to find existing CRM contact by email
   const contact = await prisma.contact.findFirst({
     where: { organizationId: event.organizationId, email: parsed.data.email },
   })
@@ -105,12 +232,11 @@ export async function POST(
     },
   })
 
-  // Update count
   const count = await prisma.eventParticipant.count({ where: { eventId: id } })
-  await prisma.event.updateMany({
-    where: { id },
-    data: { registeredCount: count },
-  })
+  await prisma.event.updateMany({ where: { id }, data: { registeredCount: count } })
+
+  // Send confirmation email with calendar
+  sendConfirmationEmail(event, parsed.data.name, parsed.data.email)
 
   return NextResponse.json({
     success: true,
