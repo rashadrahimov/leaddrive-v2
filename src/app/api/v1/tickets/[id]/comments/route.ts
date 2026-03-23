@@ -3,6 +3,7 @@ import { z } from "zod"
 import { prisma } from "@/lib/prisma"
 import { getOrgId } from "@/lib/api-auth"
 import { sendWhatsAppMessage } from "@/lib/whatsapp"
+import { createNotification } from "@/lib/notifications"
 
 const commentSchema = z.object({
   comment: z.string().min(1).max(5000),
@@ -35,6 +36,19 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       isInternal: parsed.data.isInternal,
     },
   })
+
+  // Notify ticket assignee about new comment (if commenter is not the assignee)
+  if (ticket.assignedTo && ticket.assignedTo !== userId) {
+    createNotification({
+      organizationId: orgId,
+      userId: ticket.assignedTo,
+      type: "info",
+      title: `Tiketə şərh əlavə edildi: ${ticket.subject}`,
+      message: `${ticket.ticketNumber} — yeni şərh`,
+      entityType: "ticket",
+      entityId: ticketId,
+    }).catch(() => {})
+  }
 
   // Update firstResponseAt if this is the first staff response
   if (!ticket.firstResponseAt && !parsed.data.isInternal) {

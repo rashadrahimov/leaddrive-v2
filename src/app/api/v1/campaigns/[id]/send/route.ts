@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { getOrgId } from "@/lib/api-auth"
 import { sendEmail, renderTemplate } from "@/lib/email"
+import { createNotification } from "@/lib/notifications"
 
 export async function POST(
   req: NextRequest,
@@ -135,6 +136,17 @@ export async function POST(
         totalRecipients: contacts.length,
       },
     })
+
+    // Notify org about campaign sent
+    createNotification({
+      organizationId: orgId,
+      userId: "",
+      type: sentCount > 0 ? "success" : "warning",
+      title: `Kampaniya göndərildi: ${campaign.name}`,
+      message: `${sentCount} / ${contacts.length} alıcıya göndərildi`,
+      entityType: "campaign",
+      entityId: campaign.id,
+    }).catch(() => {})
 
     return NextResponse.json({
       success: sentCount > 0,

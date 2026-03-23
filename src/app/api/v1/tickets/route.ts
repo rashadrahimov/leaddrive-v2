@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { prisma } from "@/lib/prisma"
 import { getOrgId } from "@/lib/api-auth"
+import { createNotification } from "@/lib/notifications"
 
 const createTicketSchema = z.object({
   subject: z.string().min(1).max(300),
@@ -127,6 +128,20 @@ export async function POST(req: NextRequest) {
         ...(slaDueAt ? { slaDueAt } : {}),
       },
     })
+
+    // Notify assignee about new ticket
+    if (ticket.assignedTo) {
+      createNotification({
+        organizationId: orgId,
+        userId: ticket.assignedTo,
+        type: "info",
+        title: `Yeni tiket: ${ticket.subject}`,
+        message: `${ticketNumber} — ${ticket.priority} prioritet`,
+        entityType: "ticket",
+        entityId: ticket.id,
+      }).catch(() => {})
+    }
+
     return NextResponse.json({ success: true, data: ticket }, { status: 201 })
   } catch (e) {
     return NextResponse.json({ error: String(e) }, { status: 500 })
