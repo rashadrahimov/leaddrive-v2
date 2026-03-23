@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react"
 import { useSession } from "next-auth/react"
 import { useTranslations } from "next-intl"
-import { StatCard } from "@/components/stat-card"
+import { ColorStatCard } from "@/components/color-stat-card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Mail, Send, Inbox, CheckCircle, AlertTriangle, RotateCcw, Search, ChevronDown, ChevronUp, ArrowUpRight, ArrowDownLeft, Filter, RefreshCw } from "lucide-react"
@@ -108,13 +108,13 @@ export default function EmailLogPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid gap-3 grid-cols-2 md:grid-cols-3 lg:grid-cols-6">
-        <StatCard title={t("total")} value={stats.total} icon={<Mail className="h-4 w-4" />} />
-        <StatCard title={t("outbound")} value={stats.outbound} icon={<Send className="h-4 w-4" />} />
-        <StatCard title={t("inbound")} value={stats.inbound} icon={<Inbox className="h-4 w-4" />} />
-        <StatCard title={t("sent")} value={stats.sent} icon={<CheckCircle className="h-4 w-4" />} />
-        <StatCard title={t("failed")} value={stats.failed} icon={<AlertTriangle className="h-4 w-4" />} />
-        <StatCard title={t("bounced")} value={stats.bounced} icon={<RotateCcw className="h-4 w-4" />} />
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        <ColorStatCard label={t("total")} value={stats.total} icon={<Mail className="h-4 w-4" />} color="blue" />
+        <ColorStatCard label={t("outbound")} value={stats.outbound} icon={<Send className="h-4 w-4" />} color="violet" />
+        <ColorStatCard label={t("inbound")} value={stats.inbound} icon={<Inbox className="h-4 w-4" />} color="indigo" />
+        <ColorStatCard label={t("sent")} value={stats.sent} icon={<CheckCircle className="h-4 w-4" />} color="green" />
+        <ColorStatCard label={t("failed")} value={stats.failed} icon={<AlertTriangle className="h-4 w-4" />} color="red" />
+        <ColorStatCard label={t("bounced")} value={stats.bounced} icon={<RotateCcw className="h-4 w-4" />} color="orange" />
       </div>
 
       {/* Filters */}

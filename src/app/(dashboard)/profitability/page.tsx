@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { StatCard } from "@/components/stat-card"
+import { ColorStatCard } from "@/components/color-stat-card"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Calculator, TrendingUp, TrendingDown, Users, DollarSign, Loader2, ChevronDown, ChevronRight } from "lucide-react"
@@ -270,35 +270,36 @@ export default function ProfitabilityPage() {
         {/* ═══════════ ANALYTICS TAB ═══════════ */}
         <TabsContent value="analytics" className="space-y-6">
           {/* KPI cards */}
-          <div className="grid gap-4 md:grid-cols-5">
-            <StatCard
-              title="TOTAL COST/MONTH"
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+            <ColorStatCard
+              label="TOTAL COST/MONTH"
               value={fmt(grandTotalG)}
               icon={<DollarSign className="h-4 w-4" />}
-              description={`Base (F): ${fmt(grandTotalF)}`}
+              color="red"
             />
-            <StatCard
-              title="TOTAL REVENUE/MONTH"
+            <ColorStatCard
+              label="TOTAL REVENUE/MONTH"
               value={fmt(summary.totalRevenue)}
               icon={<TrendingUp className="h-4 w-4" />}
+              color="green"
             />
-            <StatCard
-              title="MARGIN/MONTH"
+            <ColorStatCard
+              label="MARGIN/MONTH"
               value={fmt(summary.totalMargin)}
               icon={<TrendingDown className="h-4 w-4" />}
-              description={`${summary.marginPct.toFixed(1)}%`}
-              trend={summary.totalMargin >= 0 ? "up" : "down"}
+              color={summary.totalMargin >= 0 ? "teal" : "red"}
             />
-            <StatCard
-              title="PROFITABLE CLIENTS"
+            <ColorStatCard
+              label="PROFITABLE CLIENTS"
               value={summary.profitableClients}
-              description={`Loss: ${summary.lossClients}`}
+              icon={<Users className="h-4 w-4" />}
+              color="blue"
             />
-            <StatCard
-              title="COST/1 USER"
+            <ColorStatCard
+              label="COST/1 USER"
               value={fmt(costPerUserF)}
               icon={<Users className="h-4 w-4" />}
-              description={`${totalUsers} users`}
+              color="violet"
             />
           </div>
 
@@ -386,19 +387,20 @@ export default function ProfitabilityPage() {
         {/* ═══════════ SERVICES TAB ═══════════ */}
         <TabsContent value="services" className="space-y-6">
           {/* Summary cards */}
-          <div className="grid gap-4 md:grid-cols-4">
-            <StatCard title="Total Cost" value={fmt(totalServiceCost)} icon={<DollarSign className="h-4 w-4" />} />
-            <StatCard title="Total Revenue" value={fmt(totalServiceRevenue)} icon={<TrendingUp className="h-4 w-4" />} />
-            <StatCard
-              title="Total Balance"
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <ColorStatCard label="Total Cost" value={fmt(totalServiceCost)} icon={<DollarSign className="h-4 w-4" />} color="red" />
+            <ColorStatCard label="Total Revenue" value={fmt(totalServiceRevenue)} icon={<TrendingUp className="h-4 w-4" />} color="green" />
+            <ColorStatCard
+              label="Total Balance"
               value={fmt(totalServiceBalance)}
-              trend={totalServiceBalance >= 0 ? "up" : "down"}
-              description={`${((totalServiceBalance / (totalServiceRevenue || 1)) * 100).toFixed(1)}%`}
+              icon={<DollarSign className="h-4 w-4" />}
+              color={totalServiceBalance >= 0 ? "teal" : "red"}
             />
-            <StatCard
-              title="Profitable / Loss"
+            <ColorStatCard
+              label="Profitable / Loss"
               value={`${profitableSvcCount} / ${lossSvcCount}`}
-              description={`${SERVICE_TYPES.length} services`}
+              icon={<TrendingUp className="h-4 w-4" />}
+              color="blue"
             />
           </div>
 

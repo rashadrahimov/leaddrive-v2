@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
-import { StatCard } from "@/components/stat-card"
+import { ColorStatCard } from "@/components/color-stat-card"
 import { JourneyForm } from "@/components/journey-form"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
 import { Dialog, DialogHeader, DialogTitle, DialogContent, DialogFooter } from "@/components/ui/dialog"
@@ -290,11 +290,11 @@ export default function JourneysPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid gap-4 md:grid-cols-4">
-        <StatCard title={t("statTotal")} value={totalJourneys} icon={<Workflow className="h-4 w-4" />} />
-        <StatCard title={t("statActive")} value={activeCount} icon={<CheckCircle className="h-4 w-4" />} />
-        <StatCard title={t("statEntries")} value={totalEntries} icon={<Users className="h-4 w-4" />} />
-        <StatCard title={t("statCompleted")} value={`${conversionRate}%`} icon={<Target className="h-4 w-4" />} />
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <ColorStatCard label={t("statTotal")} value={totalJourneys} icon={<Workflow className="h-4 w-4" />} color="blue" />
+        <ColorStatCard label={t("statActive")} value={activeCount} icon={<CheckCircle className="h-4 w-4" />} color="green" />
+        <ColorStatCard label={t("statEntries")} value={totalEntries} icon={<Users className="h-4 w-4" />} color="violet" />
+        <ColorStatCard label={t("statCompleted")} value={`${conversionRate}%`} icon={<Target className="h-4 w-4" />} color="teal" />
       </div>
 
       {/* Journey cards */}

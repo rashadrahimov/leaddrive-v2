@@ -6,7 +6,7 @@ import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { DataTable } from "@/components/data-table"
-import { StatCard } from "@/components/stat-card"
+import { ColorStatCard } from "@/components/color-stat-card"
 import { ContractForm } from "@/components/contract-form"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
 import { Select } from "@/components/ui/select"
@@ -352,18 +352,13 @@ export default function ContractsPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid gap-4 md:grid-cols-6">
-        <StatCard title={t("statTotal")} value={total} icon={<FileText className="h-4 w-4" />} />
-        <StatCard title={t("statActive")} value={activeCount} trend="up" />
-        <StatCard title={t("statTotalAmount")} value={`${totalValue.toLocaleString()} ₼`} icon={<TrendingUp className="h-4 w-4" />} />
-        <StatCard title={t("statMrr")} value={`${Math.round(mrr).toLocaleString()} ₼`} />
-        <StatCard title={t("statAvgValue")} value={`${avgValue.toLocaleString()} ₼`} />
-        <StatCard
-          title={t("statExpiringSoon")}
-          value={expiringSoon}
-          icon={<AlertTriangle className="h-4 w-4" />}
-          trend={expiringSoon > 0 ? "down" : "neutral"}
-        />
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        <ColorStatCard label={t("statTotal")} value={total} icon={<FileText className="h-4 w-4" />} color="blue" />
+        <ColorStatCard label={t("statActive")} value={activeCount} icon={<FileText className="h-4 w-4" />} color="green" />
+        <ColorStatCard label={t("statTotalAmount")} value={`${totalValue.toLocaleString()} ₼`} icon={<TrendingUp className="h-4 w-4" />} color="teal" />
+        <ColorStatCard label={t("statMrr")} value={`${Math.round(mrr).toLocaleString()} ₼`} icon={<TrendingUp className="h-4 w-4" />} color="violet" />
+        <ColorStatCard label={t("statAvgValue")} value={`${avgValue.toLocaleString()} ₼`} icon={<TrendingUp className="h-4 w-4" />} color="indigo" />
+        <ColorStatCard label={t("statExpiringSoon")} value={expiringSoon} icon={<AlertTriangle className="h-4 w-4" />} color="orange" />
       </div>
 
       {/* Filter tabs */}

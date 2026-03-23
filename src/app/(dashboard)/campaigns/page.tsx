@@ -6,11 +6,11 @@ import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { StatCard } from "@/components/stat-card"
+import { ColorStatCard } from "@/components/color-stat-card"
 import { CampaignForm } from "@/components/campaign-form"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
 import { Input } from "@/components/ui/input"
-import { Plus, Mail, Users, Send, Pencil, Trash2, Search } from "lucide-react"
+import { Plus, Mail, Users, Send, Pencil, Trash2, Search, Megaphone } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface Campaign {
@@ -159,12 +159,12 @@ export default function CampaignsPage() {
       </div>
 
       {/* Stats — 5 status cards */}
-      <div className="grid gap-4 md:grid-cols-5">
-        <StatCard title={t("statusDraft")} value={statusCounts.draft} />
-        <StatCard title={t("statusScheduled")} value={statusCounts.scheduled} />
-        <StatCard title={t("statusSending")} value={statusCounts.sending} />
-        <StatCard title={t("statusSent")} value={statusCounts.sent} />
-        <StatCard title={t("statusCancelled")} value={statusCounts.cancelled} />
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+        <ColorStatCard label={t("statusDraft")} value={statusCounts.draft} icon={<Megaphone className="h-4 w-4" />} color="slate" />
+        <ColorStatCard label={t("statusScheduled")} value={statusCounts.scheduled} icon={<Megaphone className="h-4 w-4" />} color="blue" />
+        <ColorStatCard label={t("statusSending")} value={statusCounts.sending} icon={<Megaphone className="h-4 w-4" />} color="amber" />
+        <ColorStatCard label={t("statusSent")} value={statusCounts.sent} icon={<Megaphone className="h-4 w-4" />} color="green" />
+        <ColorStatCard label={t("statusCancelled")} value={statusCounts.cancelled} icon={<Megaphone className="h-4 w-4" />} color="red" />
       </div>
 
       {/* Search */}

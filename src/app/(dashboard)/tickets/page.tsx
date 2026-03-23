@@ -7,7 +7,7 @@ import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { DataTable } from "@/components/data-table"
-import { StatCard } from "@/components/stat-card"
+import { ColorStatCard } from "@/components/color-stat-card"
 import { TicketForm } from "@/components/ticket-form"
 import { Ticket, Plus, Clock, AlertTriangle, CheckCircle, Pencil, Trash2, UserX } from "lucide-react"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
@@ -212,12 +212,12 @@ export default function TicketsPage() {
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-5">
-        <StatCard title={t("statTotal")} value={tickets.length} icon={<Ticket className="h-4 w-4" />} />
-        <StatCard title={t("statOpen")} value={openCount} icon={<Clock className="h-4 w-4" />} />
-        <StatCard title={t("statUnassigned")} value={unassignedCount} icon={<UserX className="h-4 w-4" />} trend={unassignedCount > 0 ? "down" : "neutral"} />
-        <StatCard title={t("statSlaBreach")} value={breachedCount} icon={<AlertTriangle className="h-4 w-4" />} trend={breachedCount > 0 ? "down" : "neutral"} />
-        <StatCard title={t("statResolved")} value={resolvedCount} icon={<CheckCircle className="h-4 w-4" />} trend="up" />
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+        <ColorStatCard label={t("statTotal")} value={tickets.length} icon={<Ticket className="h-4 w-4" />} color="blue" />
+        <ColorStatCard label={t("statOpen")} value={openCount} icon={<Clock className="h-4 w-4" />} color="amber" />
+        <ColorStatCard label={t("statUnassigned")} value={unassignedCount} icon={<UserX className="h-4 w-4" />} color="orange" />
+        <ColorStatCard label={t("statSlaBreach")} value={breachedCount} icon={<AlertTriangle className="h-4 w-4" />} color="red" />
+        <ColorStatCard label={t("statResolved")} value={resolvedCount} icon={<CheckCircle className="h-4 w-4" />} color="green" />
       </div>
 
       {/* Status filter tabs */}

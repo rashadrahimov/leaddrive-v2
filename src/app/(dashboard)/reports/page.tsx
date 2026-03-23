@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { useSession } from "next-auth/react"
 import { useTranslations } from "next-intl"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { StatCard } from "@/components/stat-card"
+import { ColorStatCard } from "@/components/color-stat-card"
 import { Badge } from "@/components/ui/badge"
 import {
   TrendingUp, DollarSign, BarChart3, CheckSquare, Clock,
@@ -259,13 +259,13 @@ export default function ReportsPage() {
       </div>
 
       {/* Overview Stats */}
-      <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-6">
-        <StatCard title={t("statCompanies")} value={data.overview.companies} icon={<Building2 className="h-4 w-4" />} />
-        <StatCard title={t("statContacts")} value={data.overview.contacts} icon={<Users className="h-4 w-4" />} />
-        <StatCard title={t("statDeals")} value={data.overview.deals} icon={<DollarSign className="h-4 w-4" />} />
-        <StatCard title={t("statLeads")} value={data.overview.leads} icon={<Target className="h-4 w-4" />} />
-        <StatCard title={t("statTasksOverdue")} value={data.overview.overdueTasks} icon={<CheckSquare className="h-4 w-4" />} trend={data.overview.overdueTasks > 0 ? "down" : "neutral"} />
-        <StatCard title={t("statTickets")} value={data.overview.tickets} icon={<Clock className="h-4 w-4" />} />
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        <ColorStatCard label={t("statCompanies")} value={data.overview.companies} icon={<Building2 className="h-4 w-4" />} color="blue" />
+        <ColorStatCard label={t("statContacts")} value={data.overview.contacts} icon={<Users className="h-4 w-4" />} color="violet" />
+        <ColorStatCard label={t("statDeals")} value={data.overview.deals} icon={<DollarSign className="h-4 w-4" />} color="green" />
+        <ColorStatCard label={t("statLeads")} value={data.overview.leads} icon={<Target className="h-4 w-4" />} color="orange" />
+        <ColorStatCard label={t("statTasksOverdue")} value={data.overview.overdueTasks} icon={<CheckSquare className="h-4 w-4" />} color="red" />
+        <ColorStatCard label={t("statTickets")} value={data.overview.tickets} icon={<Clock className="h-4 w-4" />} color="amber" />
       </div>
 
       {/* Main grid */}

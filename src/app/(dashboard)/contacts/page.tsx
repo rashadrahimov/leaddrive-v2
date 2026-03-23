@@ -7,7 +7,7 @@ import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
-import { StatCard } from "@/components/stat-card"
+import { ColorStatCard } from "@/components/color-stat-card"
 import { Select } from "@/components/ui/select"
 import { Users, Plus, Mail, Phone, Pencil, Trash2, Search, ChevronLeft, ChevronRight, CheckSquare, Square, MinusSquare } from "lucide-react"
 import { ContactForm } from "@/components/contact-form"
@@ -196,11 +196,11 @@ export default function ContactsPage() {
         <Button onClick={handleAdd}><Plus className="h-4 w-4 mr-1" /> {t("addContact")}</Button>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-4">
-        <StatCard title={t("statTotal")} value={total} icon={<Users className="h-4 w-4" />} />
-        <StatCard title={t("statActive")} value={contacts.filter(c => c.isActive).length} trend="up" />
-        <StatCard title={t("statWithEmail")} value={contacts.filter(c => c.email).length} icon={<Mail className="h-4 w-4" />} />
-        <StatCard title={t("statWithPhone")} value={contacts.filter(c => c.phone).length} icon={<Phone className="h-4 w-4" />} />
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <ColorStatCard label={t("statTotal")} value={total} icon={<Users className="h-4 w-4" />} color="blue" />
+        <ColorStatCard label={t("statActive")} value={contacts.filter(c => c.isActive).length} icon={<Users className="h-4 w-4" />} color="green" />
+        <ColorStatCard label={t("statWithEmail")} value={contacts.filter(c => c.email).length} icon={<Mail className="h-4 w-4" />} color="violet" />
+        <ColorStatCard label={t("statWithPhone")} value={contacts.filter(c => c.phone).length} icon={<Phone className="h-4 w-4" />} color="orange" />
       </div>
 
       {/* Selection action bar */}

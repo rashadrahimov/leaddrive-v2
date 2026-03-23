@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { StatCard } from "@/components/stat-card"
+import { ColorStatCard } from "@/components/color-stat-card"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
 import { Users, UserCheck, UserX, Clock, Search, Shield, ShieldOff, KeyRound, CheckCircle, MessageSquareX, UserMinus } from "lucide-react"
 
@@ -173,11 +173,11 @@ export default function PortalUsersPage() {
         <p className="text-sm text-muted-foreground">{t("portalUsersDesc")}</p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-4">
-        <StatCard title="Contacts with email" value={stats.totalWithEmail} icon={<Users className="h-4 w-4" />} />
-        <StatCard title="Access enabled" value={stats.enabled} icon={<Shield className="h-4 w-4" />} />
-        <StatCard title="Registered" value={stats.registered} icon={<UserCheck className="h-4 w-4" />} />
-        <StatCard title="Logins in 7 days" value={stats.recentLogins} icon={<Clock className="h-4 w-4" />} />
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <ColorStatCard label="Contacts with email" value={stats.totalWithEmail} icon={<Users className="h-4 w-4" />} color="blue" />
+        <ColorStatCard label="Access enabled" value={stats.enabled} icon={<Shield className="h-4 w-4" />} color="green" />
+        <ColorStatCard label="Registered" value={stats.registered} icon={<UserCheck className="h-4 w-4" />} color="violet" />
+        <ColorStatCard label="Logins in 7 days" value={stats.recentLogins} icon={<Clock className="h-4 w-4" />} color="amber" />
       </div>
 
       <Card>

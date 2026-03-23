@@ -6,7 +6,7 @@ import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { DataTable } from "@/components/data-table"
-import { StatCard } from "@/components/stat-card"
+import { ColorStatCard } from "@/components/color-stat-card"
 import { TaskForm } from "@/components/task-form"
 import { Select } from "@/components/ui/select"
 import { CheckSquare, Plus, Clock, AlertTriangle, Pencil, Trash2, CalendarDays, ListChecks, ChevronLeft, ChevronRight, Link2, Copy, Check, ExternalLink, Columns3 } from "lucide-react"
@@ -595,13 +595,13 @@ export default function TasksPage() {
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-6">
-        <StatCard title={t("statAll")} value={tasks.length} icon={<CheckSquare className="h-4 w-4" />} />
-        <StatCard title={t("statCompleted")} value={completed} trend="up" description={`${completionPercentage}%`} />
-        <StatCard title={t("statOverdue")} value={overdue} icon={<AlertTriangle className="h-4 w-4" />} trend={overdue > 0 ? "down" : "neutral"} />
-        <StatCard title={t("statInProgress")} value={tasks.filter(t => t.status === "in_progress").length} icon={<Clock className="h-4 w-4" />} />
-        <StatCard title={t("statToday")} value={todayCount} icon={<CalendarDays className="h-4 w-4" />} />
-        <StatCard title={t("statThisWeek")} value={weekCount} icon={<CalendarDays className="h-4 w-4" />} />
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        <ColorStatCard label={t("statAll")} value={tasks.length} icon={<CheckSquare className="h-4 w-4" />} color="blue" />
+        <ColorStatCard label={t("statCompleted")} value={completed} icon={<CheckSquare className="h-4 w-4" />} color="green" />
+        <ColorStatCard label={t("statOverdue")} value={overdue} icon={<AlertTriangle className="h-4 w-4" />} color="red" />
+        <ColorStatCard label={t("statInProgress")} value={tasks.filter(t => t.status === "in_progress").length} icon={<Clock className="h-4 w-4" />} color="amber" />
+        <ColorStatCard label={t("statToday")} value={todayCount} icon={<CalendarDays className="h-4 w-4" />} color="violet" />
+        <ColorStatCard label={t("statThisWeek")} value={weekCount} icon={<CalendarDays className="h-4 w-4" />} color="indigo" />
       </div>
 
       {/* Status filter tabs */}

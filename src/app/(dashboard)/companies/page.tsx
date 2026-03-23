@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { StatCard } from "@/components/stat-card"
+import { ColorStatCard } from "@/components/color-stat-card"
 import { CompanyForm } from "@/components/company-form"
 import { LeadDetailModal } from "@/components/lead-detail-modal"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
@@ -128,11 +128,11 @@ export default function CompaniesPage() {
         </Button>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-4">
-        <StatCard title={t("statTotal")} value={total} icon={<Building2 className="h-4 w-4" />} />
-        <StatCard title={t("statActive")} value={activeCount} trend="up" />
-        <StatCard title={t("statContacts")} value={totalContacts} icon={<Users className="h-4 w-4" />} />
-        <StatCard title={t("statUsers")} value={totalUsers} icon={<Users className="h-4 w-4" />} />
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <ColorStatCard label={t("statTotal")} value={total} icon={<Building2 className="h-4 w-4" />} color="blue" />
+        <ColorStatCard label={t("statActive")} value={activeCount} icon={<Building2 className="h-4 w-4" />} color="green" />
+        <ColorStatCard label={t("statContacts")} value={totalContacts} icon={<Users className="h-4 w-4" />} color="violet" />
+        <ColorStatCard label={t("statUsers")} value={totalUsers} icon={<Users className="h-4 w-4" />} color="orange" />
       </div>
 
       {/* Status filter tabs */}

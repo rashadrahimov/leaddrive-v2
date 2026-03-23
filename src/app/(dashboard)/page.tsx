@@ -6,6 +6,7 @@ import { useCountUp } from "@/hooks/use-count-up"
 import { useTranslations } from "next-intl"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { ColorStatCard } from "@/components/color-stat-card"
 import {
   Building2, Users, Handshake, Ticket, TrendingUp, TrendingDown,
   DollarSign, AlertTriangle, Shield, Clock, CheckCircle2, Star,
@@ -150,36 +151,30 @@ export default function DashboardPage() {
       </div>
 
       {/* ═══ 4 Main KPIs ═══ */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <KpiCard
-          title={t("monthlyRevenue")}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <ColorStatCard
+          label={t("monthlyRevenue")}
           value={`${fmt(financial.monthlyRevenue)} ₼`}
-          sub={`${t("margin")}: ${fmt(financial.monthlyMargin)} ₼ (${financial.marginPct.toFixed(1)}%)`}
-          icon={<DollarSign className="h-5 w-5" />}
-          color={COLORS.revenue}
-          alert={financial.marginPct < 5 && financial.monthlyRevenue > 0}
+          icon={<DollarSign className="h-4 w-4" />}
+          color="green"
         />
-        <KpiCard
-          title={t("pipeline")}
+        <ColorStatCard
+          label={t("pipeline")}
           value={`${fmt(financial.pipelineValue)} ₼`}
-          sub={`${pipeline.deals} ${t("activeDeals")} · ${pipeline.wonThisMonth} ${t("wonDeals")}`}
-          icon={<Handshake className="h-5 w-5" />}
-          color="#3b82f6"
+          icon={<Handshake className="h-4 w-4" />}
+          color="blue"
         />
-        <KpiCard
-          title={t("clients")}
+        <ColorStatCard
+          label={t("clients")}
           value={clients.total}
-          sub={`${clients.profitable} ${t("profitable")} · ${clients.loss} ${t("unprofitable")}`}
-          icon={<Building2 className="h-5 w-5" />}
-          color="#6366f1"
+          icon={<Building2 className="h-4 w-4" />}
+          color="indigo"
         />
-        <KpiCard
-          title={t("openTickets")}
+        <ColorStatCard
+          label={t("openTickets")}
           value={operations.openTickets}
-          sub={operations.slaBreached > 0 ? `⚠ ${operations.slaBreached} ${t("slaBreached")}` : `${tasks.overdue} ${t("tasksOverdue")}`}
-          icon={<Ticket className="h-5 w-5" />}
-          color={operations.slaBreached > 0 ? COLORS.cost : "#0ea5a0"}
-          alert={operations.slaBreached > 0}
+          icon={<Ticket className="h-4 w-4" />}
+          color={operations.slaBreached > 0 ? "red" : "teal"}
         />
       </div>
 
