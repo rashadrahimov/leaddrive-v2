@@ -42,7 +42,25 @@ model Organization {
   webhooks    Webhook[]
   auditLogs   AuditLog[]
 
+  planRequests PlanRequest[]
+
   @@map("organizations")
+}
+
+model PlanRequest {
+  id             String   @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  requestedPlan  String
+  contactName    String
+  contactEmail   String
+  contactPhone   String?
+  message        String?
+  status         String   @default("pending") // pending, approved, rejected
+  createdAt      DateTime @default(now())
+
+  @@index([organizationId])
+  @@map("plan_requests")
 }
 
 model User {
