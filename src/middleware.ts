@@ -34,15 +34,25 @@ export default auth((req) => {
     return NextResponse.redirect(loginUrl)
   }
 
-  // 2FA enforcement: if user needs 2FA verification, redirect to verify page
+  // 2FA enforcement
   const session = req.auth as any
+  const twoFaAllowedPaths = ["/login/verify-2fa", "/login/setup-2fa"]
+  const twoFaAllowedApi = ["/api/v1/auth/verify-2fa", "/api/v1/auth/2fa", "/api/auth"]
+
+  // If user has TOTP enabled — must verify code
   if (session?.user?.needs2fa === true) {
-    // Allow access to 2FA verification page and API
-    if (pathname === "/login/verify-2fa" || pathname.startsWith("/api/v1/auth/verify-2fa") || pathname.startsWith("/api/auth")) {
+    if (twoFaAllowedPaths.includes(pathname) || twoFaAllowedApi.some(p => pathname.startsWith(p))) {
       return NextResponse.next()
     }
-    // Block everything else — redirect to 2FA verification
     return NextResponse.redirect(new URL("/login/verify-2fa", req.url))
+  }
+
+  // If admin required 2FA but user hasn't set it up yet — force setup
+  if (session?.user?.needsSetup2fa === true) {
+    if (twoFaAllowedPaths.includes(pathname) || twoFaAllowedApi.some(p => pathname.startsWith(p))) {
+      return NextResponse.next()
+    }
+    return NextResponse.redirect(new URL("/login/setup-2fa", req.url))
   }
 
   // Inject organization context into headers for server components

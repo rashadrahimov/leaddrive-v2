@@ -13,6 +13,7 @@ const updateUserSchema = z.object({
   department: z.string().max(100).nullable().optional(),
   isActive: z.boolean().optional(),
   resetTotp: z.boolean().optional(),
+  require2fa: z.boolean().optional(),
 })
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -76,6 +77,11 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       updateData.totpEnabled = false
       updateData.totpSecret = null
       updateData.backupCodes = []
+      updateData.require2fa = false
+    }
+    // Admin can toggle require2fa
+    if (parsed.data.require2fa !== undefined) {
+      updateData.require2fa = parsed.data.require2fa
     }
 
     const user = await prisma.user.update({
@@ -83,7 +89,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       data: updateData,
       select: {
         id: true, name: true, email: true, role: true,
-        phone: true, department: true, isActive: true, totpEnabled: true, createdAt: true,
+        phone: true, department: true, isActive: true, totpEnabled: true, require2fa: true, createdAt: true,
       },
     })
 

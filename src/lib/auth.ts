@@ -48,8 +48,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             organizationId: user.organizationId,
             organizationName: user.organization.name,
             plan: user.organization.plan,
-            // 2FA: if user has TOTP enabled, mark session as needing verification
+            // 2FA: needs verification if TOTP already set up, or forced setup if require2fa
             needs2fa: user.totpEnabled === true,
+            needsSetup2fa: user.require2fa === true && user.totpEnabled === false,
           }
         } catch {
           // Fallback to dev stub if DB not connected
@@ -82,10 +83,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.organizationName = user.organizationName
         token.plan = user.plan
         token.needs2fa = user.needs2fa ?? false
+        token.needsSetup2fa = user.needsSetup2fa ?? false
       }
-      // Allow client to clear needs2fa after successful 2FA verification
-      if (trigger === "update" && session?.needs2fa === false) {
-        token.needs2fa = false
+      // Allow client to clear needs2fa/needsSetup2fa after successful verification/setup
+      if (trigger === "update") {
+        if (session?.needs2fa === false) token.needs2fa = false
+        if (session?.needsSetup2fa === false) token.needsSetup2fa = false
       }
       return token
     },
@@ -100,6 +103,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           organizationName: token.organizationName as string,
           plan: token.plan as string,
           needs2fa: token.needs2fa as boolean,
+          needsSetup2fa: token.needsSetup2fa as boolean,
         },
       }
     },
