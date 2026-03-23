@@ -7,7 +7,8 @@ import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { ArrowLeft, Pencil, Trash2, BookOpen, Eye, Clock, Tag } from "lucide-react"
+import { ArrowLeft, Pencil, Trash2, BookOpen, Eye, Clock, Tag, CheckCircle2 } from "lucide-react"
+import { ColorStatCard } from "@/components/color-stat-card"
 import { KbArticleForm } from "@/components/kb-article-form"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
 
@@ -100,40 +101,31 @@ export default function KbArticleDetailPage() {
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card>
-          <CardContent className="flex items-center gap-3 pt-6">
-            <Eye className="h-4 w-4 text-muted-foreground" />
-            <div>
-              <div className="text-xs text-muted-foreground">{t("views")}</div>
-              <span className="text-sm font-medium">{article.viewCount ?? 0}</span>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="flex items-center gap-3 pt-6">
-            <Clock className="h-4 w-4 text-muted-foreground" />
-            <div>
-              <div className="text-xs text-muted-foreground">{tc("updatedAt")}</div>
-              <span className="text-sm font-medium">
-                {article.updatedAt ? new Date(article.updatedAt).toLocaleDateString() : "—"}
-              </span>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="flex items-center gap-3 pt-6">
-            <Tag className="h-4 w-4 text-muted-foreground" />
-            <div>
-              <div className="text-xs text-muted-foreground">{tc("tags")}</div>
-              <div className="flex flex-wrap gap-1 mt-0.5">
-                {tags.length > 0 ? tags.map((tag) => (
-                  <Badge key={tag} variant="outline" className="text-xs">{tag}</Badge>
-                )) : <span className="text-sm text-muted-foreground">—</span>}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <ColorStatCard
+          label={t("views")}
+          value={article.viewCount ?? 0}
+          icon={<Eye className="h-4 w-4" />}
+          color="blue"
+        />
+        <ColorStatCard
+          label={tc("tags")}
+          value={tags.length}
+          icon={<Tag className="h-4 w-4" />}
+          color="violet"
+        />
+        <ColorStatCard
+          label={tc("category")}
+          value={article.category?.name || "—"}
+          icon={<BookOpen className="h-4 w-4" />}
+          color="teal"
+        />
+        <ColorStatCard
+          label={tc("status")}
+          value={article.status}
+          icon={<CheckCircle2 className="h-4 w-4" />}
+          bgClass={article.status === "published" ? "bg-green-500 shadow-green-500/30" : "bg-slate-400 shadow-slate-400/30"}
+        />
       </div>
 
       <Card>

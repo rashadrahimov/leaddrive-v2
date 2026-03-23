@@ -17,6 +17,7 @@ import {
   ArrowLeft, Package, Pencil, Trash2, Check, X, DollarSign,
   Tag, Layers, CheckCircle, XCircle, Loader2, Save, Sparkles,
 } from "lucide-react"
+import { ColorStatCard } from "@/components/color-stat-card"
 
 const categoryColors: Record<string, string> = {
   service: "bg-blue-500", product: "bg-green-500", addon: "bg-purple-500", consulting: "bg-amber-500",
@@ -176,44 +177,30 @@ export default function ProductDetailPage() {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <Card className="border-none shadow-sm">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 mb-1">
-              <DollarSign className="h-4 w-4 text-green-500" />
-              <span className="text-xs text-muted-foreground">{tc("price")}</span>
-            </div>
-            <p className="text-2xl font-bold text-primary">
-              {product.price > 0 ? `${product.price.toLocaleString()} ${product.currency}` : tc("free")}
-            </p>
-          </CardContent>
-        </Card>
-        <Card className="border-none shadow-sm">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 mb-1">
-              <Layers className="h-4 w-4 text-blue-500" />
-              <span className="text-xs text-muted-foreground">{tc("category")}</span>
-            </div>
-            <p className="text-lg font-bold capitalize">{product.category}</p>
-          </CardContent>
-        </Card>
-        <Card className="border-none shadow-sm">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 mb-1">
-              <Sparkles className="h-4 w-4 text-amber-500" />
-              <span className="text-xs text-muted-foreground">{tc("features")}</span>
-            </div>
-            <p className="text-lg font-bold">{(product.features || []).length}</p>
-          </CardContent>
-        </Card>
-        <Card className="border-none shadow-sm">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 mb-1">
-              <Tag className="h-4 w-4 text-violet-500" />
-              <span className="text-xs text-muted-foreground">{tc("tags")}</span>
-            </div>
-            <p className="text-lg font-bold">{(product.tags || []).length}</p>
-          </CardContent>
-        </Card>
+        <ColorStatCard
+          label={tc("price")}
+          value={product.price > 0 ? `${product.price.toLocaleString()} ${product.currency}` : tc("free")}
+          icon={<DollarSign className="h-4 w-4" />}
+          color="green"
+        />
+        <ColorStatCard
+          label={tc("category")}
+          value={product.category}
+          icon={<Layers className="h-4 w-4" />}
+          color="blue"
+        />
+        <ColorStatCard
+          label={tc("features")}
+          value={(product.features || []).length}
+          icon={<Sparkles className="h-4 w-4" />}
+          color="amber"
+        />
+        <ColorStatCard
+          label={tc("tags")}
+          value={(product.tags || []).length}
+          icon={<Tag className="h-4 w-4" />}
+          color="violet"
+        />
       </div>
 
       {/* Tabs */}

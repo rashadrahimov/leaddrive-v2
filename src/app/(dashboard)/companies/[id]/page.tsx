@@ -13,6 +13,7 @@ import {
   DollarSign, Loader2, ChevronDown, ChevronRight, Clock, Briefcase,
   TicketCheck, TrendingUp, Activity, Handshake, MessageSquare
 } from "lucide-react"
+import { ColorStatCard } from "@/components/color-stat-card"
 import { CompanyForm } from "@/components/company-form"
 
 interface CompanyDetail {
@@ -170,15 +171,10 @@ export default function CompanyDetailPage() {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        {kpiCards.map(card => (
-          <div key={card.label} className={`${card.bg} text-white rounded-xl p-4 flex flex-col gap-1 shadow-sm`}>
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-medium opacity-80">{card.label}</span>
-              {card.icon}
-            </div>
-            <span className="text-2xl font-bold leading-tight">{card.value}</span>
-          </div>
-        ))}
+        <ColorStatCard label={t("kpiContacts")} value={company.contacts?.length || 0} icon={<Users className="h-4 w-4" />} color="blue" />
+        <ColorStatCard label={t("kpiActiveDeals")} value={activeDeals.length} icon={<Handshake className="h-4 w-4" />} color="indigo" />
+        <ColorStatCard label={t("kpiPipeline")} value={`${pipelineValue.toLocaleString()} ₼`} icon={<TrendingUp className="h-4 w-4" />} color="green" />
+        <ColorStatCard label={t("kpiDaysAsClient")} value={daysAsClient} icon={<Clock className="h-4 w-4" />} color="violet" />
       </div>
 
       {/* Contact info row */}

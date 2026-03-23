@@ -14,6 +14,7 @@ import {
   DollarSign, UserPlus, CheckCircle2, XCircle, Clock, TrendingUp,
   Mail, Phone, Search, X, UserCheck, Send, MailCheck, MailX, Loader2, Link2, Check,
 } from "lucide-react"
+import { ColorStatCard } from "@/components/color-stat-card"
 import { EventForm } from "@/components/event-form"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
 
@@ -304,36 +305,30 @@ export default function EventDetailPage() {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className="bg-blue-500 text-white rounded-xl p-4 shadow-sm">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-medium opacity-80">{t("participants")}</span>
-            <Users className="h-4 w-4 opacity-80" />
-          </div>
-          <span className="text-2xl font-bold">{event.registeredCount}</span>
-          {event.maxParticipants > 0 && <span className="text-xs opacity-60"> / {event.maxParticipants}</span>}
-        </div>
-        <div className="bg-green-500 text-white rounded-xl p-4 shadow-sm">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-medium opacity-80">Attended</span>
-            <CheckCircle2 className="h-4 w-4 opacity-80" />
-          </div>
-          <span className="text-2xl font-bold">{event.attendedCount}</span>
-          <span className="text-xs opacity-60"> ({attendanceRate}%)</span>
-        </div>
-        <div className="bg-violet-500 text-white rounded-xl p-4 shadow-sm">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-medium opacity-80">{t("budget")}</span>
-            <DollarSign className="h-4 w-4 opacity-80" />
-          </div>
-          <span className="text-2xl font-bold">{event.budget?.toLocaleString()} ₼</span>
-        </div>
-        <div className="bg-amber-500 text-white rounded-xl p-4 shadow-sm">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-medium opacity-80">Revenue</span>
-            <TrendingUp className="h-4 w-4 opacity-80" />
-          </div>
-          <span className="text-2xl font-bold">{(event.actualRevenue || 0).toLocaleString()} ₼</span>
-        </div>
+        <ColorStatCard
+          label={t("participants")}
+          value={event.maxParticipants > 0 ? `${event.registeredCount} / ${event.maxParticipants}` : event.registeredCount}
+          icon={<Users className="h-4 w-4" />}
+          color="blue"
+        />
+        <ColorStatCard
+          label={t("attended")}
+          value={`${event.attendedCount} (${attendanceRate}%)`}
+          icon={<CheckCircle2 className="h-4 w-4" />}
+          color="green"
+        />
+        <ColorStatCard
+          label={t("budget")}
+          value={event.budget ? `${event.budget.toLocaleString()} ₼` : "—"}
+          icon={<DollarSign className="h-4 w-4" />}
+          color="violet"
+        />
+        <ColorStatCard
+          label={t("revenue")}
+          value={`${(event.actualRevenue || 0).toLocaleString()} ₼`}
+          icon={<TrendingUp className="h-4 w-4" />}
+          color="amber"
+        />
       </div>
 
       {/* Tabs */}

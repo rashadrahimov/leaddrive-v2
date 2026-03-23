@@ -12,7 +12,8 @@ import { Select } from "@/components/ui/select"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Dialog, DialogHeader, DialogTitle, DialogContent, DialogFooter } from "@/components/ui/dialog"
-import { ArrowLeft, Mail, Phone, Building2, Pencil, Calendar, MessageSquare, Plus, X, Loader2, Sparkles, Star, DollarSign } from "lucide-react"
+import { ArrowLeft, Mail, Phone, Building2, Pencil, Calendar, MessageSquare, Plus, X, Loader2, Sparkles, Star, DollarSign, Activity, Tag, CheckCircle2, Clock } from "lucide-react"
+import { ColorStatCard } from "@/components/color-stat-card"
 
 interface Activity {
   id: string
@@ -304,52 +305,42 @@ export default function ContactDetailPage() {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid gap-4 md:grid-cols-4">
-        <Card className="border-none shadow-sm">
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-blue-100 flex items-center justify-center">
-              <Mail className="h-5 w-5 text-blue-600" />
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground">{tc("email")}</p>
-              <p className="text-sm font-medium truncate">{contact.email || "—"}</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="border-none shadow-sm">
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-green-100 flex items-center justify-center">
-              <Phone className="h-5 w-5 text-green-600" />
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground">{tc("phone")}</p>
-              <p className="text-sm font-medium">{contact.phone || "—"}</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="border-none shadow-sm">
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-violet-100 flex items-center justify-center">
-              <Calendar className="h-5 w-5 text-violet-600" />
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground">Last Contact</p>
-              <p className="text-sm font-medium">{contact.lastContactAt ? new Date(contact.lastContactAt).toLocaleDateString("ru-RU") : "—"}</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="border-none shadow-sm">
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-amber-100 flex items-center justify-center">
-              <MessageSquare className="h-5 w-5 text-amber-600" />
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground">Activities</p>
-              <p className="text-sm font-medium">{contact.activities?.length || 0}</p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      {(() => {
+        const daysSince = contact.lastContactAt
+          ? Math.floor((Date.now() - new Date(contact.lastContactAt).getTime()) / 86400000)
+          : null
+        const confColor = contact.isActive
+          ? "bg-green-500 shadow-green-500/30"
+          : "bg-slate-400 shadow-slate-400/30"
+        return (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <ColorStatCard
+              label={t("lastContact")}
+              value={daysSince !== null ? `${daysSince} ${tc("days")}` : "—"}
+              icon={<Clock className="h-4 w-4" />}
+              color="blue"
+            />
+            <ColorStatCard
+              label={tc("activities")}
+              value={contact.activities?.length ?? 0}
+              icon={<Activity className="h-4 w-4" />}
+              color="violet"
+            />
+            <ColorStatCard
+              label={tc("tags")}
+              value={contact.tags?.length ?? 0}
+              icon={<Tag className="h-4 w-4" />}
+              color="teal"
+            />
+            <ColorStatCard
+              label={tc("status")}
+              value={contact.isActive ? tc("active") : tc("inactive")}
+              icon={<CheckCircle2 className="h-4 w-4" />}
+              bgClass={confColor}
+            />
+          </div>
+        )
+      })()}
 
       <Tabs defaultValue="activities">
         <TabsList>
