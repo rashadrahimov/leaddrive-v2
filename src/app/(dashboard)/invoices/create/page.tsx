@@ -75,7 +75,10 @@ export default function CreateInvoicePage() {
   const [items, setItems] = useState<InvoiceItem[]>([
     { id: "item-1", name: "", description: "", quantity: 1, unitPrice: 0, discount: 0, customFields: {} },
   ])
-  const [customColumns, setCustomColumns] = useState<CustomColumn[]>([])
+  const [customColumns, setCustomColumns] = useState<CustomColumn[]>([
+    { key: "project", label: "Layihə" },
+    { key: "unit", label: "Ö/V" },
+  ])
 
   // Summary
   const [discountType, setDiscountType] = useState<"percentage" | "fixed">("percentage")
@@ -547,40 +550,31 @@ export default function CreateInvoicePage() {
               <div className="border rounded-lg overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="bg-muted/60 border-b text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                      <th className="px-3 py-2.5 text-left w-10">#</th>
-                      <th className="px-3 py-2.5 text-left min-w-[200px]">{t("itemName") || "Name"}</th>
+                    <tr className="bg-[#0891b2] text-white text-xs font-semibold uppercase tracking-wider">
+                      <th className="px-3 py-2.5 text-left min-w-[250px]">Məhsul, xidmət və ya işin təsnifatı</th>
                       {customColumns.map((col) => (
-                        <th key={col.key} className="px-2 py-2.5 text-left min-w-[100px]">
+                        <th key={col.key} className="px-2 py-2.5 text-left min-w-[120px]">
                           <div className="flex items-center gap-1">
                             <span>{col.label}</span>
-                            <button onClick={() => removeCustomColumn(col.key)} className="text-muted-foreground/50 hover:text-destructive" title="Remove column">×</button>
+                            <button onClick={() => removeCustomColumn(col.key)} className="opacity-60 hover:opacity-100" title="Remove column">×</button>
                           </div>
                         </th>
                       ))}
-                      <th className="px-2 py-2.5 text-center w-[80px]">{t("qty") || "Qty"}</th>
-                      <th className="px-2 py-2.5 text-right w-[120px]">{t("unitPrice") || "Price"}</th>
-                      <th className="px-2 py-2.5 text-center w-[80px]">{t("discountPercent") || "Disc %"}</th>
-                      <th className="px-2 py-2.5 text-right w-[100px]">{t("total") || "Total"}</th>
+                      <th className="px-2 py-2.5 text-center w-[80px]">Miqdar</th>
+                      <th className="px-2 py-2.5 text-right w-[120px]">Qiymət</th>
+                      <th className="px-2 py-2.5 text-right w-[110px]">Məbləğ AZN</th>
                       <th className="w-[40px]"></th>
                     </tr>
                   </thead>
                   <tbody>
                     {items.map((item, index) => (
                       <tr key={item.id} className="border-b last:border-b-0 hover:bg-muted/20 transition-colors">
-                        <td className="px-3 py-2 text-muted-foreground font-mono">{index + 1}</td>
                         <td className="px-2 py-1">
                           <Input
-                            placeholder={t("itemNamePlaceholder") || "Service or product name"}
+                            placeholder="Xidmət və ya məhsulun adı"
                             value={item.name}
                             onChange={(e) => updateItem(item.id, "name", e.target.value)}
                             className="h-8 border-0 px-1 shadow-none focus-visible:ring-0 font-medium"
-                          />
-                          <Input
-                            placeholder={t("descriptionPlaceholder") || "Description (optional)"}
-                            value={item.description}
-                            onChange={(e) => updateItem(item.id, "description", e.target.value)}
-                            className="h-6 border-0 px-1 shadow-none focus-visible:ring-0 text-xs text-muted-foreground"
                           />
                         </td>
                         {customColumns.map((col) => (
@@ -594,19 +588,14 @@ export default function CreateInvoicePage() {
                           </td>
                         ))}
                         <td className="px-1 py-2">
-                          <Input type="number" min={1} step={1} value={item.quantity}
-                            onChange={(e) => updateItem(item.id, "quantity", Math.max(1, parseInt(e.target.value) || 1))}
+                          <Input type="number" min={0.01} step={0.01} value={item.quantity}
+                            onChange={(e) => updateItem(item.id, "quantity", Math.max(0.01, parseFloat(e.target.value) || 1))}
                             className="h-8 text-center w-[70px]" />
                         </td>
                         <td className="px-1 py-2">
                           <Input type="number" min={0} step={0.01} value={item.unitPrice}
                             onChange={(e) => updateItem(item.id, "unitPrice", Math.max(0, parseFloat(e.target.value) || 0))}
                             className="h-8 text-right w-[110px]" />
-                        </td>
-                        <td className="px-1 py-2">
-                          <Input type="number" min={0} max={100} step={0.1} value={item.discount}
-                            onChange={(e) => updateItem(item.id, "discount", Math.min(100, Math.max(0, parseFloat(e.target.value) || 0)))}
-                            className="h-8 text-center w-[70px]" />
                         </td>
                         <td className="px-2 py-2 text-right">
                           <span className={`font-semibold tabular-nums ${getLineTotal(item) > 0 ? "text-foreground" : "text-muted-foreground"}`}>
