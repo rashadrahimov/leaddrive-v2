@@ -1327,6 +1327,13 @@ model Invoice {
   termsAndConditions String?
   footerNote        String?
 
+  // Document details
+  signerName        String?
+  signerTitle       String?
+  contractNumber    String?
+  contractDate      String?
+  documentLanguage  String    @default("az")
+
   // Recurring
   recurringInvoiceId String?
   recurringInvoice   RecurringInvoice? @relation(fields: [recurringInvoiceId], references: [id])

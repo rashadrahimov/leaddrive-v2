@@ -95,6 +95,13 @@ export default function CreateInvoicePage() {
   const [terms, setTerms] = useState("")
   const [footerNote, setFooterNote] = useState("")
 
+  // Document details
+  const [documentLanguage, setDocumentLanguage] = useState("az")
+  const [signerName, setSignerName] = useState("")
+  const [signerTitle, setSignerTitle] = useState("")
+  const [contractNumber, setContractNumber] = useState("")
+  const [contractDate, setContractDate] = useState("")
+
   // UI state
   const [saving, setSaving] = useState(false)
   const [showProductDropdown, setShowProductDropdown] = useState(false)
@@ -270,6 +277,11 @@ export default function CreateInvoicePage() {
         notes,
         terms,
         footerNote,
+        signerName: signerName || undefined,
+        signerTitle: signerTitle || undefined,
+        contractNumber: contractNumber || undefined,
+        contractDate: contractDate || undefined,
+        documentLanguage,
         subtotal: calculations.subtotal,
         discountType,
         discountValue,
@@ -629,6 +641,50 @@ export default function CreateInvoicePage() {
                     placeholder={t("voenPlaceholder") || "Tax ID (VOEN)"}
                     value={voen}
                     onChange={(e) => setVoen(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              {/* Document language, signer, contract */}
+              <div className="grid grid-cols-2 gap-4 mt-4">
+                <div>
+                  <Label>{"Document Language"}</Label>
+                  <Select value={documentLanguage} onChange={(e) => setDocumentLanguage(e.target.value)}>
+                    <option value="az">Azərbaycan</option>
+                    <option value="ru">Русский</option>
+                    <option value="en">English</option>
+                  </Select>
+                </div>
+                <div>
+                  <Label>{"Contract Number"}</Label>
+                  <Input
+                    placeholder="GT/ZP/240806-01"
+                    value={contractNumber}
+                    onChange={(e) => setContractNumber(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <Label>{"Contract Date"}</Label>
+                  <Input
+                    type="date"
+                    value={contractDate}
+                    onChange={(e) => setContractDate(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <Label>{"Signer Name"}</Label>
+                  <Input
+                    placeholder="Rəşad Rəhimov"
+                    value={signerName}
+                    onChange={(e) => setSignerName(e.target.value)}
+                  />
+                </div>
+                <div className="col-span-2">
+                  <Label>{"Signer Title"}</Label>
+                  <Input
+                    placeholder="Biznes və strateji şirkətlər üzrə xüsusi nümayəndə"
+                    value={signerTitle}
+                    onChange={(e) => setSignerTitle(e.target.value)}
                   />
                 </div>
               </div>

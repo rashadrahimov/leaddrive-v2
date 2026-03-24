@@ -95,6 +95,11 @@ interface Invoice {
     phone: string | null
   } | null
   deal: { id: string; name: string } | null
+  documentLanguage: string | null
+  signerName: string | null
+  signerTitle: string | null
+  contractNumber: string | null
+  contractDate: string | null
   items: InvoiceItem[]
   payments: Payment[]
 }
@@ -527,6 +532,12 @@ export default function InvoiceDetailPage() {
           <Button variant="outline" size="sm" onClick={handleDownloadPdf}>
             <Download className="h-4 w-4 mr-1" />
             {t("downloadPdf")}
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => {
+            window.open(`/api/v1/invoices/${invoice.id}/act?lang=${invoice.documentLanguage || "az"}`, "_blank")
+          }}>
+            <FileSpreadsheet className="h-4 w-4 mr-1" />
+            {"Act"}
           </Button>
           <Button variant="outline" size="sm" onClick={handleDuplicate}>
             <Copy className="h-4 w-4 mr-1" />

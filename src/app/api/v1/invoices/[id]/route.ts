@@ -40,6 +40,11 @@ const updateSchema = z.object({
   notes: z.string().optional().nullable(),
   termsAndConditions: z.string().optional().nullable(),
   footerNote: z.string().optional().nullable(),
+  signerName: z.string().optional().nullable(),
+  signerTitle: z.string().optional().nullable(),
+  contractNumber: z.string().optional().nullable(),
+  contractDate: z.string().optional().nullable(),
+  documentLanguage: z.string().optional(),
   items: z.array(itemSchema).optional(),
 })
 

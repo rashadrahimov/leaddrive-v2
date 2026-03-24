@@ -42,6 +42,11 @@ const createSchema = z.object({
   notes: z.string().optional().nullable(),
   termsAndConditions: z.string().optional().nullable(),
   footerNote: z.string().optional().nullable(),
+  signerName: z.string().optional().nullable(),
+  signerTitle: z.string().optional().nullable(),
+  contractNumber: z.string().optional().nullable(),
+  contractDate: z.string().optional().nullable(),
+  documentLanguage: z.string().default("az"),
   items: z.array(itemSchema).default([]),
 })
 
@@ -150,6 +155,11 @@ export async function POST(req: NextRequest) {
         notes: d.notes,
         termsAndConditions: d.termsAndConditions,
         footerNote: d.footerNote,
+        signerName: d.signerName,
+        signerTitle: d.signerTitle,
+        contractNumber: d.contractNumber,
+        contractDate: d.contractDate,
+        documentLanguage: d.documentLanguage,
         viewToken: crypto.randomUUID(),
         items: { create: itemsData },
       },
