@@ -21,6 +21,7 @@ interface DataTableProps<T> {
   searchPlaceholder?: string
   searchKey?: string
   onRowClick?: (item: T) => void
+  rowClassName?: (item: T) => string
   pageSize?: number
 }
 
@@ -32,6 +33,7 @@ export function DataTable<T extends Record<string, unknown>>({
   searchPlaceholder = "Search...",
   searchKey = "name",
   onRowClick,
+  rowClassName,
   pageSize: defaultPageSize = 20,
 }: DataTableProps<T>) {
   const [search, setSearch] = useState("")
@@ -128,7 +130,8 @@ export function DataTable<T extends Record<string, unknown>>({
                 className={cn(
                   "border-b transition-colors hover:bg-[#0ea5a0]/[0.04] dark:hover:bg-[#0ea5a0]/[0.08]",
                   i % 2 === 1 && "bg-muted/20",
-                  onRowClick && "cursor-pointer"
+                  onRowClick && "cursor-pointer",
+                  rowClassName?.(item)
                 )}
                 onClick={() => onRowClick?.(item)}
               >
