@@ -934,6 +934,7 @@
     "duplicate": "Дублировать",
     "downloadPdf": "Скачать PDF",
     "downloadPdfStamp": "PDF с печатью",
+    "downloadPdfNoStamp": "PDF без печати",
     "convertFromOffer": "Конвертировать из КП",
     "issueDate": "Дата выставления",
     "dueDate": "Срок оплаты",

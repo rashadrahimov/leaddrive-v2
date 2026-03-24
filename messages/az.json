@@ -930,6 +930,7 @@
     "duplicate": "Dublikat yarat",
     "downloadPdf": "PDF yüklə",
     "downloadPdfStamp": "Möhürlə PDF",
+    "downloadPdfNoStamp": "Möhürsüz PDF",
     "convertFromOffer": "Təklifdən çevir",
     "issueDate": "Tarix",
     "dueDate": "Ödəniş tarixi",
