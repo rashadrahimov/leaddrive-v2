@@ -76,9 +76,7 @@ function generateActHtml(
   lang: DocLanguage
 ): string {
   const companyName = (inv.companyName as string) || orgName
-  // Strip surrounding quotes if any to avoid ""NAME"" duplication
-  const cleanCompanyName = companyName.replace(/^["']+|["']+$/g, "")
-  const companyNameUpper = cleanCompanyName.toUpperCase()
+  const companyNameUpper = companyName.toUpperCase()
   const clientCompanyName = (invoice.company?.name as string) || ""
   const directorName = (inv.directorName as string) || (inv.signerName as string) || ""
   const directorTitle = (inv.signerTitle as string) || ""
@@ -358,7 +356,7 @@ ${logoHtml}
 <div class="approval-block">
   <div class="approval-col" style="position: relative; min-height: 160px;">
     <div class="label">${t.approve}</div>
-    <div class="company-name">"${companyNameUpper}" MMC-nin</div>
+    <div class="company-name">${companyNameUpper}-nin</div>
     <div>${directorTitle || t.directorOf}</div>
     <div style="font-weight: 600;">${directorName || "_______________"}</div>
     ${companyStampUrl ? `<div style="position: relative; height: 100px; margin-top: 5px;">
@@ -453,7 +451,7 @@ ${logoHtml}
 
 <div class="signatures-block">
   <div class="sig-col" style="position: relative;">
-    <div class="sig-company">"${companyNameUpper}" MMC</div>
+    <div class="sig-company">${companyNameUpper}</div>
     <div>${actSignerTitle || ""}</div>
     <div style="font-weight: 600;">${actSignerName}</div>
     ${actSignerSignatureUrl ? `<img src="${actSignerSignatureUrl}" style="width: 160px; height: 80px; object-fit: contain; margin: 5px 0;" />` : ""}
