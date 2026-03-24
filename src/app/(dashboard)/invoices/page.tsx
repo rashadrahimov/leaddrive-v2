@@ -289,10 +289,10 @@ export default function InvoicesPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <ColorStatCard
           label={t("statTotalInvoiced")}
-          value={`${stats.totalInvoiced.toLocaleString()} ${stats.currency}`}
+          value={`${(stats.totalSubtotal || stats.totalInvoiced).toLocaleString()} ${stats.currency}`}
           icon={<DollarSign className="h-5 w-5" />}
           color="blue"
-          subValue={stats.totalTax > 0 ? `${t("withoutVat")}: ${stats.totalSubtotal.toLocaleString()} ${stats.currency}` : undefined}
+          subValue={stats.totalTax > 0 ? `${t("withVat")}: ${stats.totalInvoiced.toLocaleString()} ${stats.currency}` : undefined}
         />
         <ColorStatCard
           label={t("statPaid")}

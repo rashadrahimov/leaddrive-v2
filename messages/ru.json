@@ -906,6 +906,7 @@
     "statTotal": "Всего",
     "statTotalInvoiced": "Всего выставлено",
     "withoutVat": "без НДС",
+    "withVat": "с НДС",
     "statPaid": "Оплачено",
     "statOutstanding": "Ожидает",
     "statOverdue": "Просрочено",
