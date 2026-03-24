@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
-import { ArrowLeft, Plus, Trash2, Save, Package } from "lucide-react"
+import { ArrowLeft, Plus, Trash2, Save, Package, ChevronDown, ChevronUp } from "lucide-react"
 
 interface InvoiceItem {
   id: string
@@ -75,6 +75,7 @@ export default function EditInvoicePage() {
   // UI state
   const [saving, setSaving] = useState(false)
   const [showProductDropdown, setShowProductDropdown] = useState(false)
+  const [showNotes, setShowNotes] = useState(false)
 
   const headers: Record<string, string> = orgId ? { "x-organization-id": String(orgId) } : {}
 
@@ -230,76 +231,89 @@ export default function EditInvoicePage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="sm" onClick={() => router.push(`/invoices/${invoiceId}`)}>
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          {t("backToInvoices")}
-        </Button>
-      </div>
+    <div className="-mx-6 -mt-6 min-h-screen bg-muted/30">
 
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">{tc("edit")} — {t("invoiceDetails")}</h1>
-          <p className="text-muted-foreground text-sm mt-1">{invoiceNumber}</p>
+      {/* GRADIENT HEADER */}
+      <div className="bg-gradient-to-r from-cyan-600 to-blue-600 px-6 py-4 shadow-md">
+        <div className="flex items-center justify-between max-w-full">
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => router.push(`/invoices/${invoiceId}`)}
+              className="text-white/80 hover:text-white hover:bg-white/10"
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              {t("backToInvoices")}
+            </Button>
+            <div>
+              <p className="text-white/70 text-xs uppercase tracking-widest font-medium mb-0.5">
+                {tc("edit")} — {invoiceNumber}
+              </p>
+              <input
+                className="bg-transparent border-0 border-b border-white/30 focus:border-white outline-none text-white text-xl font-bold placeholder:text-white/40 w-80 pb-0.5"
+                placeholder={t("invoiceTitlePlaceholder")}
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+              />
+            </div>
+          </div>
+          {invoiceNumber && (
+            <Badge className="bg-white/20 text-white border-white/30 text-sm px-3 py-1 font-mono">
+              {invoiceNumber}
+            </Badge>
+          )}
         </div>
-        <Badge variant="outline" className="text-base px-3 py-1">{invoiceNumber}</Badge>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-        {/* Left Column */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Title */}
-          <Card>
-            <CardHeader><CardTitle className="text-base">{t("invoiceTitle")}</CardTitle></CardHeader>
-            <CardContent>
-              <Input placeholder={t("invoiceTitlePlaceholder")} value={title} onChange={e => setTitle(e.target.value)} />
-            </CardContent>
-          </Card>
+      {/* BODY */}
+      <div className="px-6 pt-5 pb-10 space-y-4 max-w-5xl mx-auto">
 
-          {/* Client */}
-          <Card>
-            <CardHeader><CardTitle className="text-base">{t("client")}</CardTitle></CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>{t("company")} *</Label>
-                  <Select value={company} onChange={e => setCompany(e.target.value)}>
+          {/* CLIENT CARD */}
+          <Card className="border-l-4 border-l-cyan-500">
+            <CardHeader className="pb-3 pt-4 px-4">
+              <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                {t("client")}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="px-4 pb-4">
+              <div className="grid grid-cols-3 gap-3">
+                <div className="space-y-1">
+                  <Label className="text-xs">{t("company")} *</Label>
+                  <Select value={company} onChange={e => setCompany(e.target.value)} className="h-8 text-sm">
                     <option value="">{t("selectCompany")}</option>
                     {companies.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                   </Select>
                 </div>
-                <div className="space-y-2">
-                  <Label>{t("contact")}</Label>
-                  <Select value={contact} onChange={e => setContact(e.target.value)} disabled={!company}>
+                <div className="space-y-1">
+                  <Label className="text-xs">{t("recipientContact")}</Label>
+                  <Select value={contact} onChange={e => setContact(e.target.value)} disabled={!company} className="h-8 text-sm">
                     <option value="">{t("selectContact")}</option>
                     {contacts.map(c => <option key={c.id} value={c.id}>{c.firstName} {c.lastName}</option>)}
                   </Select>
                 </div>
-              </div>
-              <div className="space-y-2">
-                <Label>{t("deal")} ({tc("optional")})</Label>
-                <Select value={deal} onChange={e => setDeal(e.target.value)}>
-                  <option value="">{t("selectDeal")}</option>
-                  {deals.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>{t("recipientEmail")}</Label>
-                <Input type="email" value={recipientEmail} onChange={e => setRecipientEmail(e.target.value)} />
+                <div className="space-y-1">
+                  <Label className="text-xs">{t("deal")}</Label>
+                  <Select value={deal} onChange={e => setDeal(e.target.value)} className="h-8 text-sm">
+                    <option value="">{t("selectDeal")}</option>
+                    {deals.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+                  </Select>
+                </div>
               </div>
             </CardContent>
           </Card>
 
-          {/* Items */}
-          <Card>
-            <CardHeader>
+          {/* ITEMS CARD */}
+          <Card className="border-l-4 border-l-blue-500">
+            <CardHeader className="pb-2 pt-3 px-4">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-base">{t("items")}</CardTitle>
+                <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                  {t("items")}
+                </CardTitle>
                 <div className="flex gap-2">
                   <div className="relative">
-                    <Button variant="outline" size="sm" onClick={() => setShowProductDropdown(!showProductDropdown)}>
-                      <Package className="h-4 w-4 mr-2" />{t("fromProducts")}
+                    <Button variant="outline" size="sm" onClick={() => setShowProductDropdown(!showProductDropdown)} className="h-7 text-xs">
+                      <Package className="h-3 w-3 mr-1" />{t("fromProducts")}
                     </Button>
                     {showProductDropdown && products.length > 0 && (
                       <div className="absolute right-0 mt-1 w-72 bg-popover border rounded-md shadow-lg z-50 max-h-60 overflow-y-auto">
@@ -312,84 +326,98 @@ export default function EditInvoicePage() {
                       </div>
                     )}
                   </div>
-                  <Button variant="outline" size="sm" onClick={addItem}>
-                    <Plus className="h-4 w-4 mr-2" />{t("addItem")}
+                  <Button variant="outline" size="sm" onClick={addItem} className="h-7 text-xs">
+                    <Plus className="h-3 w-3 mr-1" />{t("addItem")}
                   </Button>
                 </div>
               </div>
             </CardHeader>
-            <CardContent>
-              <div className="hidden md:grid grid-cols-12 gap-2 mb-2 text-xs font-medium text-muted-foreground px-1">
-                <div className="col-span-3">{t("itemName")}</div>
-                <div className="col-span-3">{t("description")}</div>
-                <div className="col-span-1">{t("qty")}</div>
-                <div className="col-span-2">{t("unitPrice")}</div>
-                <div className="col-span-1">{t("discountPercent")}</div>
-                <div className="col-span-1 text-right">{t("total")}</div>
-                <div className="col-span-1"></div>
+            <CardContent className="px-4 pb-3">
+              <div className="border rounded-lg overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="bg-[#0891b2] text-white text-xs font-semibold uppercase tracking-wider">
+                      <th className="px-3 py-2 text-left min-w-[200px]">{t("itemName")}</th>
+                      <th className="px-2 py-2 text-left min-w-[180px]">{t("description") || "Description"}</th>
+                      <th className="px-2 py-2 text-center w-[72px]">{t("qty")}</th>
+                      <th className="px-2 py-2 text-right w-[110px]">{t("unitPrice")}</th>
+                      <th className="px-2 py-2 text-center w-[80px]">{t("discountPercent")}</th>
+                      <th className="px-2 py-2 text-right w-[100px]">{t("total")}</th>
+                      <th className="w-[36px]"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {items.map((item, index) => (
+                      <tr key={item.id} className={`border-b last:border-b-0 hover:bg-muted/30 transition-colors ${index % 2 === 0 ? "" : "bg-muted/10"}`}>
+                        <td className="px-2 py-1">
+                          <Input placeholder={t("itemNamePlaceholder")} value={item.name} onChange={e => updateItem(item.id, "name", e.target.value)} className="h-7 border-0 px-1 shadow-none focus-visible:ring-0 font-medium text-sm" />
+                        </td>
+                        <td className="px-1 py-1">
+                          <Input placeholder={t("descriptionPlaceholder") || "Description"} value={item.description} onChange={e => updateItem(item.id, "description", e.target.value)} className="h-7 text-sm" />
+                        </td>
+                        <td className="px-1 py-1">
+                          <Input type="number" min={1} value={item.quantity} onChange={e => updateItem(item.id, "quantity", Math.max(1, parseInt(e.target.value) || 1))} className="h-7 text-center w-[65px] text-sm" />
+                        </td>
+                        <td className="px-1 py-1">
+                          <Input type="number" min={0} step={0.01} value={item.unitPrice} onChange={e => updateItem(item.id, "unitPrice", Math.max(0, parseFloat(e.target.value) || 0))} className="h-7 text-right w-[100px] text-sm" />
+                        </td>
+                        <td className="px-1 py-1">
+                          <Input type="number" min={0} max={100} step={0.1} value={item.discount} onChange={e => updateItem(item.id, "discount", Math.min(100, Math.max(0, parseFloat(e.target.value) || 0)))} className="h-7 text-center w-[70px] text-sm" />
+                        </td>
+                        <td className="px-2 py-1 text-right">
+                          <span className={`font-semibold tabular-nums text-sm ${getLineTotal(item) > 0 ? "text-foreground" : "text-muted-foreground"}`}>{fmt(getLineTotal(item))}</span>
+                        </td>
+                        <td className="px-1 py-1 text-center">
+                          <Button variant="ghost" size="sm" onClick={() => removeItem(item.id)} disabled={items.length === 1} className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive">
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                <div className="border-t bg-muted/20">
+                  <Button variant="ghost" size="sm" onClick={addItem} className="w-full h-8 rounded-none text-muted-foreground hover:text-foreground text-xs">
+                    <Plus className="h-3.5 w-3.5 mr-1.5" />{t("addAnotherItem")}
+                  </Button>
+                </div>
               </div>
-              <div className="space-y-2">
-                {items.map(item => (
-                  <div key={item.id} className="grid grid-cols-1 md:grid-cols-12 gap-2 items-start p-2 rounded-md border bg-muted/30">
-                    <div className="md:col-span-3">
-                      <Input placeholder={t("itemNamePlaceholder")} value={item.name} onChange={e => updateItem(item.id, "name", e.target.value)} className="h-9" />
-                    </div>
-                    <div className="md:col-span-3">
-                      <Input placeholder={t("descriptionPlaceholder")} value={item.description} onChange={e => updateItem(item.id, "description", e.target.value)} className="h-9" />
-                    </div>
-                    <div className="md:col-span-1">
-                      <Input type="number" min={1} value={item.quantity} onChange={e => updateItem(item.id, "quantity", Math.max(1, parseInt(e.target.value) || 1))} className="h-9" />
-                    </div>
-                    <div className="md:col-span-2">
-                      <Input type="number" min={0} step={0.01} value={item.unitPrice} onChange={e => updateItem(item.id, "unitPrice", Math.max(0, parseFloat(e.target.value) || 0))} className="h-9" />
-                    </div>
-                    <div className="md:col-span-1">
-                      <Input type="number" min={0} max={100} step={0.1} value={item.discount} onChange={e => updateItem(item.id, "discount", Math.min(100, Math.max(0, parseFloat(e.target.value) || 0)))} className="h-9" />
-                    </div>
-                    <div className="md:col-span-1 flex items-center justify-end">
-                      <span className="text-sm font-medium whitespace-nowrap mt-2 md:mt-0">{fmt(getLineTotal(item))}</span>
-                    </div>
-                    <div className="md:col-span-1 flex items-center justify-end">
-                      <Button variant="ghost" size="sm" onClick={() => removeItem(item.id)} disabled={items.length === 1} className="h-9 w-9 p-0 text-destructive hover:text-destructive">
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <Button variant="ghost" size="sm" onClick={addItem} className="mt-3 w-full border-dashed border">
-                <Plus className="h-4 w-4 mr-2" />{t("addAnotherItem")}
-              </Button>
             </CardContent>
           </Card>
 
-          {/* Details */}
-          <Card>
-            <CardHeader><CardTitle className="text-base">{t("details")}</CardTitle></CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <Label>{t("invoiceNumber")}</Label>
-                  <Input value={invoiceNumber} readOnly className="bg-muted" />
+          {/* DETAILS CARD */}
+          <Card className="border-l-4 border-l-violet-500">
+            <CardHeader className="pb-2 pt-3 px-4">
+              <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                {t("details")}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="px-4 pb-4 space-y-3">
+              <div className="grid grid-cols-6 gap-2">
+                <div className="space-y-1">
+                  <Label className="text-xs">{t("invoiceNumber")}</Label>
+                  <Input value={invoiceNumber} readOnly className="h-8 bg-muted text-sm font-mono" />
                 </div>
-                <div className="space-y-2">
-                  <Label>{t("issueDate")}</Label>
-                  <Input type="date" value={issueDate} onChange={e => setIssueDate(e.target.value)} />
+                <div className="space-y-1">
+                  <Label className="text-xs">{t("issueDate")}</Label>
+                  <Input type="date" value={issueDate} onChange={e => setIssueDate(e.target.value)} className="h-8 text-sm" />
                 </div>
-                <div className="space-y-2">
-                  <Label>{t("currency")}</Label>
-                  <Select value={currency} onChange={e => setCurrency(e.target.value)}>
+                <div className="space-y-1">
+                  <Label className="text-xs">{t("dueDate")}</Label>
+                  <Input type="date" value={dueDate} onChange={e => setDueDate(e.target.value)} className="h-8 text-sm" />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">{t("currency")}</Label>
+                  <Select value={currency} onChange={e => setCurrency(e.target.value)} className="h-8 text-sm">
                     <option value="AZN">AZN</option>
                     <option value="USD">USD</option>
                     <option value="EUR">EUR</option>
                     <option value="RUB">RUB</option>
                   </Select>
                 </div>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <Label>{t("paymentTerms")}</Label>
-                  <Select value={paymentTerms} onChange={e => setPaymentTerms(e.target.value)}>
+                <div className="space-y-1">
+                  <Label className="text-xs">{t("paymentTerms")}</Label>
+                  <Select value={paymentTerms} onChange={e => setPaymentTerms(e.target.value)} className="h-8 text-sm">
                     <option value="dueOnReceipt">{t("dueOnReceipt")}</option>
                     <option value="net15">{t("net15")}</option>
                     <option value="net30">{t("net30")}</option>
@@ -397,95 +425,109 @@ export default function EditInvoicePage() {
                     <option value="net60">{t("net60")}</option>
                   </Select>
                 </div>
-                <div className="space-y-2">
-                  <Label>{t("dueDate")}</Label>
-                  <Input type="date" value={dueDate} onChange={e => setDueDate(e.target.value)} />
-                </div>
-                <div className="space-y-2">
-                  <Label>VÖEN</Label>
-                  <Input value={voen} onChange={e => setVoen(e.target.value)} />
+                <div className="space-y-1">
+                  <Label className="text-xs">VÖEN</Label>
+                  <Input value={voen} onChange={e => setVoen(e.target.value)} className="h-8 text-sm" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          {/* Notes */}
-          <Card>
-            <CardHeader><CardTitle className="text-base">{t("notesAndTerms")}</CardTitle></CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label>{t("notes")}</Label>
-                <Textarea placeholder={t("notesPlaceholder")} value={notes} onChange={e => setNotes(e.target.value)} rows={3} />
+          {/* NOTES CARD (collapsible) */}
+          <Card className="border-l-4 border-l-amber-400">
+            <button
+              type="button"
+              onClick={() => setShowNotes(v => !v)}
+              className="w-full flex items-center justify-between px-4 py-3 text-left"
+            >
+              <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                {t("notesAndTerms")}
+              </span>
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                {notes || terms || footerNote
+                  ? <span className="text-amber-500 font-medium">● filled</span>
+                  : <span>optional</span>
+                }
+                {showNotes ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
               </div>
-              <div className="space-y-2">
-                <Label>{t("termsAndConditions")}</Label>
-                <Textarea placeholder={t("termsPlaceholder")} value={terms} onChange={e => setTerms(e.target.value)} rows={3} />
-              </div>
-              <div className="space-y-2">
-                <Label>{t("footerNote")}</Label>
-                <Textarea placeholder={t("footerNotePlaceholder")} value={footerNote} onChange={e => setFooterNote(e.target.value)} rows={2} />
-              </div>
-            </CardContent>
+            </button>
+            {showNotes && (
+              <CardContent className="px-4 pb-4 pt-0 space-y-3 border-t">
+                <div className="space-y-1 pt-3">
+                  <Label className="text-xs">{t("notes")}</Label>
+                  <Textarea placeholder={t("notesPlaceholder")} value={notes} onChange={e => setNotes(e.target.value)} rows={2} className="text-sm" />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">{t("termsAndConditions")}</Label>
+                  <Textarea placeholder={t("termsPlaceholder")} value={terms} onChange={e => setTerms(e.target.value)} rows={2} className="text-sm" />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">{t("footerNote")}</Label>
+                  <Textarea placeholder={t("footerNotePlaceholder")} value={footerNote} onChange={e => setFooterNote(e.target.value)} rows={1} className="text-sm" />
+                </div>
+              </CardContent>
+            )}
           </Card>
-        </div>
 
-        {/* Right Column - Summary */}
-        <div className="lg:col-span-1">
-          <div className="sticky top-6 space-y-6">
-            <Card>
-              <CardHeader><CardTitle className="text-base">{t("summary")}</CardTitle></CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">{t("subtotal")}</span>
-                  <span>{fmt(calculations.subtotal)} {currency}</span>
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-sm">{t("discount")}</Label>
-                  <div className="flex gap-2">
-                    <Select value={discountType} onChange={e => setDiscountType(e.target.value as "percentage" | "fixed")} className="w-20">
-                      <option value="percentage">%</option>
-                      <option value="fixed">{currency}</option>
-                    </Select>
-                    <Input type="number" min={0} step={0.01} value={discountValue} onChange={e => setDiscountValue(Math.max(0, parseFloat(e.target.value) || 0))} className="flex-1" />
-                  </div>
-                  {calculations.discountAmount > 0 && (
-                    <div className="flex justify-between text-sm text-destructive">
-                      <span>{t("discountAmount")}</span>
-                      <span>-{fmt(calculations.discountAmount)} {currency}</span>
-                    </div>
-                  )}
-                </div>
-                <div className="space-y-2">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" checked={includeVat} onChange={e => setIncludeVat(e.target.checked)} className="h-4 w-4 rounded border-input" />
-                    <span className="text-sm">{t("includeVat")} (18%)</span>
-                  </label>
-                  {includeVat && (
+          {/* SUMMARY + ACTIONS (bottom) */}
+          <Card className="border-t-4 border-t-cyan-500">
+            <CardContent className="px-4 py-4">
+              <div className="flex items-start gap-8">
+                <div className="flex-1 space-y-3">
+                  <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">{t("summary")}</h3>
+                  <div className="grid grid-cols-2 gap-x-8 gap-y-2">
                     <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">{t("vat")} (18%)</span>
-                      <span>{fmt(calculations.taxAmount)} {currency}</span>
+                      <span className="text-muted-foreground">{t("subtotal")}</span>
+                      <span className="font-medium tabular-nums">{fmt(calculations.subtotal)} {currency}</span>
                     </div>
-                  )}
-                </div>
-                <div className="border-t pt-3">
-                  <div className="flex justify-between items-center">
-                    <span className="text-base font-semibold">{t("total")}</span>
-                    <span className="text-xl font-bold">{fmt(calculations.total)} {currency}</span>
+                    <div className="space-y-1">
+                      <Label className="text-xs text-muted-foreground">{t("discount")}</Label>
+                      <div className="flex gap-1.5">
+                        <Select value={discountType} onChange={e => setDiscountType(e.target.value as "percentage" | "fixed")} className="w-16 h-8 text-sm">
+                          <option value="percentage">%</option>
+                          <option value="fixed">{currency}</option>
+                        </Select>
+                        <Input type="number" min={0} step={0.01} value={discountValue} onChange={e => setDiscountValue(Math.max(0, parseFloat(e.target.value) || 0))} className="flex-1 h-8 text-sm text-right" />
+                      </div>
+                      {calculations.discountAmount > 0 && (
+                        <div className="flex justify-between text-xs text-destructive">
+                          <span>{t("discountAmount")}</span>
+                          <span className="tabular-nums">-{fmt(calculations.discountAmount)} {currency}</span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" checked={includeVat} onChange={e => setIncludeVat(e.target.checked)} className="h-3.5 w-3.5 rounded border-input" />
+                        <span className="text-sm">{t("includeVat")} (18%)</span>
+                      </label>
+                      {includeVat && (
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">{t("vat")} (18%)</span>
+                          <span className="tabular-nums">{fmt(calculations.taxAmount)} {currency}</span>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="pt-6">
-                <Button className="w-full" onClick={handleSave} disabled={saving}>
-                  <Save className="h-4 w-4 mr-2" />
-                  {saving ? tc("saving") : tc("save")}
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
+                <div className="w-64 flex-shrink-0 space-y-3">
+                  <div className="border rounded-lg bg-muted/30 px-4 py-3">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-semibold">{t("total")}</span>
+                      <span className="text-2xl font-bold tabular-nums text-foreground">
+                        {fmt(calculations.total)}
+                        <span className="text-base font-semibold text-muted-foreground ml-1">{currency}</span>
+                      </span>
+                    </div>
+                  </div>
+                  <Button className="w-full h-9" onClick={handleSave} disabled={saving}>
+                    <Save className="h-4 w-4 mr-2" />
+                    {saving ? tc("saving") : tc("save")}
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
       </div>
     </div>
   )

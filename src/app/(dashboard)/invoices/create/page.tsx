@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
-import { ArrowLeft, Plus, Trash2, Save, Send, Package } from "lucide-react"
+import { ArrowLeft, Plus, Trash2, Save, Send, Package, ChevronDown, ChevronUp } from "lucide-react"
 
 interface InvoiceItem {
   id: string
@@ -125,6 +125,8 @@ export default function CreateInvoicePage() {
   // UI state
   const [saving, setSaving] = useState(false)
   const [showProductDropdown, setShowProductDropdown] = useState(false)
+  const [showNotes, setShowNotes] = useState(false)
+  const [showAdvanced, setShowAdvanced] = useState(false)
 
   const headers: Record<string, string> = orgId ? { "x-organization-id": String(orgId) } : {}
 
@@ -414,57 +416,58 @@ export default function CreateInvoicePage() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="sm" onClick={() => router.push("/invoices")}>
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          {t("backToInvoices") || "Back to Invoices"}
-        </Button>
-      </div>
+    <div className="-mx-6 -mt-6 min-h-screen bg-muted/30">
 
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">{t("createInvoice") || "Create Invoice"}</h1>
-          <p className="text-muted-foreground text-sm mt-1">
-            {t("createInvoiceDescription") || "Fill in the details to create a new invoice"}
-          </p>
-        </div>
-        {invoiceNumber && (
-          <Badge variant="outline" className="text-base px-3 py-1">
-            {invoiceNumber}
-          </Badge>
-        )}
-      </div>
-
-      <div className="space-y-6">
-        <div className="space-y-6">
-          {/* Title */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">{t("invoiceTitle") || "Invoice Title"}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Input
-                placeholder={t("invoiceTitlePlaceholder") || "e.g. Web Development Services - March 2026"}
+      {/* GRADIENT HEADER */}
+      <div className="bg-gradient-to-r from-cyan-600 to-blue-600 px-6 py-4 shadow-md">
+        <div className="flex items-center justify-between max-w-full">
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => router.push("/invoices")}
+              className="text-white/80 hover:text-white hover:bg-white/10"
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              {t("backToInvoices") || "Back to Invoices"}
+            </Button>
+            <div>
+              <p className="text-white/70 text-xs uppercase tracking-widest font-medium mb-0.5">
+                {t("createInvoice") || "Create Invoice"}
+              </p>
+              <input
+                className="bg-transparent border-0 border-b border-white/30 focus:border-white outline-none text-white text-xl font-bold placeholder:text-white/40 w-80 pb-0.5"
+                placeholder={t("invoiceTitlePlaceholder") || "e.g. Web Development Services – March 2026"}
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
               />
-            </CardContent>
-          </Card>
+            </div>
+          </div>
+          {invoiceNumber && (
+            <Badge className="bg-white/20 text-white border-white/30 text-sm px-3 py-1 font-mono">
+              {invoiceNumber}
+            </Badge>
+          )}
+        </div>
+      </div>
 
-          {/* Client Section */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">{t("client") || "Client"}</CardTitle>
+      {/* BODY */}
+      <div className="px-6 pt-5 pb-10 space-y-4 max-w-5xl mx-auto">
+
+          {/* CLIENT CARD */}
+          <Card className="border-l-4 border-l-cyan-500">
+            <CardHeader className="pb-3 pt-4 px-4">
+              <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                {t("client") || "Client"}
+              </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>{t("company") || "Company"} *</Label>
+            <CardContent className="px-4 pb-4">
+              <div className="grid grid-cols-3 gap-3">
+                <div className="space-y-1">
+                  <Label className="text-xs">{t("company") || "Company"} *</Label>
                   <div className="relative" data-dropdown-company>
                     <Input
-                      placeholder={t("selectCompany") || "Type to search company..."}
+                      placeholder={t("selectCompany") || "Search company..."}
                       value={companySearch}
                       onChange={(e) => {
                         setCompanySearch(e.target.value)
@@ -472,7 +475,7 @@ export default function CreateInvoicePage() {
                         if (!e.target.value) { setCompany(""); setContacts([]); setContact("") }
                       }}
                       onFocus={() => setShowCompanyDropdown(true)}
-                      className="h-10"
+                      className="h-8 text-sm"
                     />
                     {showCompanyDropdown && companySearch && (
                       <div className="absolute z-50 w-full mt-1 bg-popover border rounded-md shadow-lg max-h-48 overflow-y-auto">
@@ -499,117 +502,96 @@ export default function CreateInvoicePage() {
                     )}
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <Label>{t("recipientContact") || "Recipient Contact"}</Label>
-                  <Select
-                    value={contact}
-                    onChange={(e) => setContact(e.target.value)}
-                    disabled={!company}
-                  >
+                <div className="space-y-1">
+                  <Label className="text-xs">{t("recipientContact") || "Contact"}</Label>
+                  <Select value={contact} onChange={(e) => setContact(e.target.value)} disabled={!company} className="h-8 text-sm">
                     <option value="">{t("selectContact") || "Select contact..."}</option>
                     {contacts.map((c: any) => (
-                      <option key={c.id} value={c.id}>
-                        {c.fullName || `${c.firstName || ""} ${c.lastName || ""}`}
-                      </option>
+                      <option key={c.id} value={c.id}>{c.fullName || `${c.firstName || ""} ${c.lastName || ""}`}</option>
+                    ))}
+                  </Select>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">{t("deal") || "Deal"}</Label>
+                  <Select
+                    value={deal}
+                    onChange={(e) => {
+                      const dealId = e.target.value
+                      setDeal(dealId)
+                      if (dealId) {
+                        const d = deals.find((x) => x.id === dealId)
+                        if (d) {
+                          if (d.name) setTitle(d.name)
+                          if (d.currency) setCurrency(d.currency)
+                          if (d.contactId) setContact(d.contactId)
+                          if (d.valueAmount) {
+                            setItems((prev) => {
+                              const first = prev[0] || { id: "item-1", name: "", description: "", quantity: 1, unitPrice: 0, discount: 0, customFields: {} }
+                              return [{ ...first, name: d.name, unitPrice: d.valueAmount! }, ...prev.slice(1)]
+                            })
+                          }
+                        }
+                      }
+                    }}
+                    disabled={!company || deals.length === 0}
+                    className="h-8 text-sm"
+                  >
+                    <option value="">
+                      {!company ? (t("selectCompanyFirst") || "Select company first") : deals.length === 0 ? (t("noDeals") || "No deals") : (t("selectDeal") || "Select deal...")}
+                    </option>
+                    {deals.map((d) => (
+                      <option key={d.id} value={d.id}>{d.name}</option>
                     ))}
                   </Select>
                 </div>
               </div>
-              <div className="space-y-2">
-                <Label>{t("deal") || "Deal"} ({tc("optional") || "optional"})</Label>
-                <Select
-                  value={deal}
-                  onChange={(e) => {
-                    const dealId = e.target.value
-                    setDeal(dealId)
-                    if (dealId) {
-                      const d = deals.find((x) => x.id === dealId)
-                      if (d) {
-                        if (d.name) setTitle(d.name)
-                        if (d.currency) setCurrency(d.currency)
-                        if (d.contactId) setContact(d.contactId)
-                        if (d.valueAmount) {
-                          setItems((prev) => {
-                            const first = prev[0] || { id: "item-1", name: "", description: "", quantity: 1, unitPrice: 0, discount: 0, customFields: {} }
-                            return [{ ...first, name: d.name, unitPrice: d.valueAmount! }, ...prev.slice(1)]
-                          })
-                        }
-                      }
-                    }
-                  }}
-                  disabled={!company || deals.length === 0}
-                >
-                  <option value="">{!company ? (t("selectCompanyFirst") || "Select company first") : deals.length === 0 ? (t("noDeals") || "No deals") : (t("selectDeal") || "Select deal...")}</option>
-                  {deals.map((d) => (
-                    <option key={d.id} value={d.id}>
-                      {d.name}
-                    </option>
-                  ))}
-                </Select>
-              </div>
             </CardContent>
           </Card>
 
-          {/* Items Section */}
-          <Card>
-            <CardHeader>
+          {/* ITEMS CARD */}
+          <Card className="border-l-4 border-l-blue-500">
+            <CardHeader className="pb-2 pt-3 px-4">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-base">{t("items") || "Items"}</CardTitle>
+                <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                  {t("items") || "Items"}
+                </CardTitle>
                 <div className="flex gap-2">
-                  <Button variant="outline" size="sm" onClick={addCustomColumn}>
-                    <Plus className="h-4 w-4 mr-1" />
-                    Column
+                  <Button variant="outline" size="sm" onClick={addCustomColumn} className="h-7 text-xs">
+                    <Plus className="h-3 w-3 mr-1" />Column
                   </Button>
                   <div className="relative" data-dropdown-products>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setShowProductDropdown(!showProductDropdown)}
-                    >
-                      <Package className="h-4 w-4 mr-2" />
-                      {t("fromProducts") || "From Products"}
+                    <Button variant="outline" size="sm" onClick={() => setShowProductDropdown(!showProductDropdown)} className="h-7 text-xs">
+                      <Package className="h-3 w-3 mr-1" />{t("fromProducts") || "Products"}
                     </Button>
                     {showProductDropdown && (
                       <div className="absolute right-0 mt-1 w-72 bg-popover border rounded-md shadow-lg z-50 max-h-60 overflow-y-auto">
                         {products.map((product) => (
-                          <button
-                            key={product.id}
-                            className="w-full text-left px-3 py-2 hover:bg-accent text-sm flex justify-between items-center"
-                            onClick={() => addFromProduct(product)}
-                          >
+                          <button key={product.id} className="w-full text-left px-3 py-2 hover:bg-accent text-sm flex justify-between items-center" onClick={() => addFromProduct(product)}>
                             <span className="truncate mr-2">{product.name}</span>
-                            <span className="text-muted-foreground whitespace-nowrap">
-                              {formatCurrency(product.price)} {currency}
-                            </span>
+                            <span className="text-muted-foreground whitespace-nowrap">{formatCurrency(product.price)} {currency}</span>
                           </button>
                         ))}
-                        {products.length === 0 && (
-                          <div className="px-3 py-2 text-sm text-muted-foreground">
-                            {t("noProducts") || "No products found"}
-                          </div>
-                        )}
+                        {products.length === 0 && <div className="px-3 py-2 text-sm text-muted-foreground">{t("noProducts") || "No products found"}</div>}
                       </div>
                     )}
                   </div>
-                  <Button variant="outline" size="sm" onClick={addItem}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    {t("addItem") || "Add Item"}
+                  <Button variant="outline" size="sm" onClick={addItem} className="h-7 text-xs">
+                    <Plus className="h-3 w-3 mr-1" />{t("addItem") || "Add Item"}
                   </Button>
                 </div>
               </div>
             </CardHeader>
-            <CardContent>
-              {/* Items Table */}
+            <CardContent className="px-4 pb-3">
               <div className="border rounded-lg overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="bg-[#0891b2] text-white text-xs font-semibold uppercase tracking-wider">
-                      <th className="px-3 py-2.5 text-left min-w-[250px]">{t("colServiceName") || "Məhsul, xidmət və ya işin təsnifatı"}</th>
+                      <th className="px-3 py-2 text-left min-w-[220px]">{t("colServiceName") || "Məhsul, xidmət və ya işin təsnifatı"}</th>
                       {customColumns.map((col) => (
-                        <th key={col.key} className="px-2 py-2.5 text-left min-w-[120px]">
+                        <th key={col.key} className="px-2 py-2 text-left min-w-[110px]">
                           <div className="flex items-center gap-1">
                             <input
-                              className="bg-transparent border-b border-white/30 focus:border-white outline-none text-white text-xs font-semibold uppercase w-full min-w-[60px]"
+                              className="bg-transparent border-b border-white/30 focus:border-white outline-none text-white text-xs font-semibold uppercase w-full min-w-[55px]"
                               value={col.label}
                               onChange={(e) => setCustomColumns((prev) => prev.map((c) => c.key === col.key ? { ...c, label: e.target.value } : c))}
                             />
@@ -617,358 +599,262 @@ export default function CreateInvoicePage() {
                           </div>
                         </th>
                       ))}
-                      <th className="px-2 py-2.5 text-center w-[80px]">{t("colQuantity") || "Miqdar"}</th>
-                      <th className="px-2 py-2.5 text-right w-[120px]">{t("colPrice") || "Qiymət"}</th>
-                      <th className="px-2 py-2.5 text-right w-[110px]">{t("colAmountCurrency") || `Məbləğ ${currency}`}</th>
-                      <th className="w-[40px]"></th>
+                      <th className="px-2 py-2 text-center w-[72px]">{t("colQuantity") || "Miqdar"}</th>
+                      <th className="px-2 py-2 text-right w-[110px]">{t("colPrice") || "Qiymət"}</th>
+                      <th className="px-2 py-2 text-right w-[100px]">{t("colAmountCurrency") || `Məbləğ ${currency}`}</th>
+                      <th className="w-[36px]"></th>
                     </tr>
                   </thead>
                   <tbody>
                     {items.map((item, index) => (
-                      <tr key={item.id} className="border-b last:border-b-0 hover:bg-muted/20 transition-colors">
+                      <tr key={item.id} className={`border-b last:border-b-0 hover:bg-muted/30 transition-colors ${index % 2 === 0 ? "" : "bg-muted/10"}`}>
                         <td className="px-2 py-1">
-                          <Input
-                            placeholder={t("itemNamePlaceholder") || "Service or product name"}
-                            value={item.name}
-                            onChange={(e) => updateItem(item.id, "name", e.target.value)}
-                            className="h-8 border-0 px-1 shadow-none focus-visible:ring-0 font-medium"
-                          />
+                          <Input placeholder={t("itemNamePlaceholder") || "Service or product name"} value={item.name} onChange={(e) => updateItem(item.id, "name", e.target.value)} className="h-7 border-0 px-1 shadow-none focus-visible:ring-0 font-medium text-sm" />
                         </td>
                         {customColumns.map((col) => (
-                          <td key={col.key} className="px-1 py-2">
-                            <Input
-                              placeholder={col.label}
-                              value={item.customFields?.[col.key] || ""}
-                              onChange={(e) => updateItemCustomField(item.id, col.key, e.target.value)}
-                              className="h-8"
-                            />
+                          <td key={col.key} className="px-1 py-1">
+                            <Input placeholder={col.label} value={item.customFields?.[col.key] || ""} onChange={(e) => updateItemCustomField(item.id, col.key, e.target.value)} className="h-7 text-sm" />
                           </td>
                         ))}
-                        <td className="px-1 py-2">
-                          <Input type="number" min={0.01} step={0.01}
-                            value={item.quantity || ""}
-                            onFocus={(e) => { if (e.target.value === "0" || e.target.value === "1") e.target.select() }}
-                            onChange={(e) => updateItem(item.id, "quantity", parseFloat(e.target.value) || 0)}
-                            onBlur={(e) => { if (!e.target.value || parseFloat(e.target.value) <= 0) updateItem(item.id, "quantity", 1) }}
-                            className="h-8 text-center w-[70px]" />
+                        <td className="px-1 py-1">
+                          <Input type="number" min={0.01} step={0.01} value={item.quantity || ""} onFocus={(e) => { if (e.target.value === "0" || e.target.value === "1") e.target.select() }} onChange={(e) => updateItem(item.id, "quantity", parseFloat(e.target.value) || 0)} onBlur={(e) => { if (!e.target.value || parseFloat(e.target.value) <= 0) updateItem(item.id, "quantity", 1) }} className="h-7 text-center w-[65px] text-sm" />
                         </td>
-                        <td className="px-1 py-2">
-                          <Input type="number" min={0} step={0.01}
-                            value={item.unitPrice || ""}
-                            onFocus={(e) => { if (e.target.value === "0") e.target.select() }}
-                            onChange={(e) => updateItem(item.id, "unitPrice", parseFloat(e.target.value) || 0)}
-                            className="h-8 text-right w-[110px]" />
+                        <td className="px-1 py-1">
+                          <Input type="number" min={0} step={0.01} value={item.unitPrice || ""} onFocus={(e) => { if (e.target.value === "0") e.target.select() }} onChange={(e) => updateItem(item.id, "unitPrice", parseFloat(e.target.value) || 0)} className="h-7 text-right w-[100px] text-sm" />
                         </td>
-                        <td className="px-2 py-2 text-right">
-                          <span className={`font-semibold tabular-nums ${getLineTotal(item) > 0 ? "text-foreground" : "text-muted-foreground"}`}>
-                            {formatCurrency(getLineTotal(item))}
-                          </span>
+                        <td className="px-2 py-1 text-right">
+                          <span className={`font-semibold tabular-nums text-sm ${getLineTotal(item) > 0 ? "text-foreground" : "text-muted-foreground"}`}>{formatCurrency(getLineTotal(item))}</span>
                         </td>
-                        <td className="px-1 py-2 text-center">
-                          <Button variant="ghost" size="sm" onClick={() => removeItem(item.id)}
-                            disabled={items.length === 1} className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive">
-                            <Trash2 className="h-3.5 w-3.5" />
+                        <td className="px-1 py-1 text-center">
+                          <Button variant="ghost" size="sm" onClick={() => removeItem(item.id)} disabled={items.length === 1} className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive">
+                            <Trash2 className="h-3 w-3" />
                           </Button>
                         </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
-
-                {/* Add row button inside table */}
                 <div className="border-t bg-muted/20">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={addItem}
-                    className="w-full h-10 rounded-none text-muted-foreground hover:text-foreground"
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    {t("addAnotherItem") || "Add row"}
+                  <Button variant="ghost" size="sm" onClick={addItem} className="w-full h-8 rounded-none text-muted-foreground hover:text-foreground text-xs">
+                    <Plus className="h-3.5 w-3.5 mr-1.5" />{t("addAnotherItem") || "Add row"}
                   </Button>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          {/* Details Section */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">{t("details") || "Details"}</CardTitle>
+          {/* DETAILS CARD */}
+          <Card className="border-l-4 border-l-violet-500">
+            <CardHeader className="pb-2 pt-3 px-4">
+              <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                {t("details") || "Details"}
+              </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <Label>{t("invoiceNumber") || "Invoice Number"}</Label>
-                  <Input value={invoiceNumber} readOnly className="bg-muted" />
+            <CardContent className="px-4 pb-4 space-y-3">
+              <div className="grid grid-cols-5 gap-2">
+                <div className="space-y-1">
+                  <Label className="text-xs">{t("invoiceNumber") || "Invoice #"}</Label>
+                  <Input value={invoiceNumber} readOnly className="h-8 bg-muted text-sm font-mono" />
                 </div>
-                <div className="space-y-2">
-                  <Label>{t("issueDate") || "Issue Date"}</Label>
-                  <Input
-                    type="date"
-                    value={issueDate}
-                    onChange={(e) => setIssueDate(e.target.value)}
-                  />
+                <div className="space-y-1">
+                  <Label className="text-xs">{t("issueDate") || "Issue Date"}</Label>
+                  <Input type="date" value={issueDate} onChange={(e) => setIssueDate(e.target.value)} className="h-8 text-sm" />
                 </div>
-                <div className="space-y-2">
-                  <Label>{t("currency") || "Currency"}</Label>
-                  <Select value={currency} onChange={(e) => setCurrency(e.target.value)}>
+                <div className="space-y-1">
+                  <Label className="text-xs">{t("dueDate") || "Due Date"}</Label>
+                  <Input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} className="h-8 text-sm" />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">{t("currency") || "Currency"}</Label>
+                  <Select value={currency} onChange={(e) => setCurrency(e.target.value)} className="h-8 text-sm">
                     <option value="AZN">AZN</option>
                     <option value="USD">USD</option>
                     <option value="EUR">EUR</option>
                   </Select>
                 </div>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <Label>{t("paymentTerms") || "Payment Terms"}</Label>
-                  <Select value={paymentTerms} onChange={(e) => setPaymentTerms(e.target.value)}>
-                    <option value="due_on_receipt">{t("dueOnReceipt") || "Сразу при получении"}</option>
-                    <option value="net15">{t("net15") || "15 дней"}</option>
-                    <option value="net30">{t("net30") || "30 дней"}</option>
-                    <option value="net45">{t("net45") || "45 дней"}</option>
-                    <option value="net60">{t("net60") || "60 дней"}</option>
+                <div className="space-y-1">
+                  <Label className="text-xs">{t("paymentTerms") || "Terms"}</Label>
+                  <Select value={paymentTerms} onChange={(e) => setPaymentTerms(e.target.value)} className="h-8 text-sm">
+                    <option value="due_on_receipt">{t("dueOnReceipt") || "Due on receipt"}</option>
+                    <option value="net15">{t("net15") || "Net 15"}</option>
+                    <option value="net30">{t("net30") || "Net 30"}</option>
+                    <option value="net45">{t("net45") || "Net 45"}</option>
+                    <option value="net60">{t("net60") || "Net 60"}</option>
                   </Select>
                 </div>
-                <div className="space-y-2">
-                  <Label>{t("dueDate") || "Due Date"}</Label>
-                  <Input
-                    type="date"
-                    value={dueDate}
-                    onChange={(e) => setDueDate(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>VOEN</Label>
-                  <Input
-                    placeholder={t("voenPlaceholder") || "Tax ID (VOEN)"}
-                    value={voen}
-                    onChange={(e) => setVoen(e.target.value)}
-                  />
-                </div>
               </div>
-
-              {/* Document language, signer, contract */}
-              <div className="grid grid-cols-2 gap-4 mt-4">
-                <div>
-                  <Label>{"Document Language"}</Label>
-                  <Select value={documentLanguage} onChange={(e) => setDocumentLanguage(e.target.value)}>
-                    <option value="az">Azərbaycan</option>
-                    <option value="ru">Русский</option>
-                    <option value="en">English</option>
-                  </Select>
-                </div>
-                <div className="col-span-2">
-                  <Label>{t("contract") || "Contract"}</Label>
-                  <div className="grid grid-cols-3 gap-2">
-                    <Select
-                      value={selectedContract}
-                      onChange={(e) => {
-                        const cId = e.target.value
-                        setSelectedContract(cId)
-                        if (cId) {
-                          const c = contracts.find((x) => x.id === cId)
-                          if (c) {
-                            setContractNumber(c.contractNumber)
-                            setContractDate(c.startDate ? new Date(c.startDate).toISOString().split("T")[0] : "")
+              <button
+                type="button"
+                onClick={() => setShowAdvanced((v) => !v)}
+                className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+              >
+                {showAdvanced ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                {showAdvanced ? "Hide" : "Show"} advanced fields (VOEN, signer, contract, language)
+              </button>
+              {showAdvanced && (
+                <div className="space-y-3 border-t pt-3">
+                  <div className="grid grid-cols-4 gap-2">
+                    <div className="space-y-1">
+                      <Label className="text-xs">VOEN</Label>
+                      <Input placeholder={t("voenPlaceholder") || "Tax ID"} value={voen} onChange={(e) => setVoen(e.target.value)} className="h-8 text-sm" />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">{"Document Language"}</Label>
+                      <Select value={documentLanguage} onChange={(e) => setDocumentLanguage(e.target.value)} className="h-8 text-sm">
+                        <option value="az">Azərbaycan</option>
+                        <option value="ru">Русский</option>
+                        <option value="en">English</option>
+                      </Select>
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">{t("signerName") || "Signer Name"}</Label>
+                      <Input placeholder={t("signerNamePlaceholder") || "Full name"} value={signerName} onChange={(e) => setSignerName(e.target.value)} className="h-8 text-sm" />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">{t("signerTitleLabel") || "Signer Title"}</Label>
+                      <Input placeholder={t("signerTitlePlaceholder") || "Position / title"} value={signerTitle} onChange={(e) => setSignerTitle(e.target.value)} className="h-8 text-sm" />
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">{t("contract") || "Contract"}</Label>
+                    <div className="grid grid-cols-3 gap-2">
+                      <Select
+                        value={selectedContract}
+                        onChange={(e) => {
+                          const cId = e.target.value
+                          setSelectedContract(cId)
+                          if (cId) {
+                            const c = contracts.find((x) => x.id === cId)
+                            if (c) {
+                              setContractNumber(c.contractNumber)
+                              setContractDate(c.startDate ? new Date(c.startDate).toISOString().split("T")[0] : "")
+                            }
                           }
-                        }
-                      }}
-                    >
-                      <option value="">{contracts.length > 0 ? (t("selectContract") || "Select contract...") : (company ? "No contracts" : "Select company first")}</option>
-                      {contracts.map((c) => {
-                        const start = c.startDate ? new Date(c.startDate).toLocaleDateString() : ""
-                        const end = c.endDate ? new Date(c.endDate).toLocaleDateString() : ""
-                        const period = start ? ` (${start}${end ? ` - ${end}` : ""})` : ""
-                        return (
-                          <option key={c.id} value={c.id}>
-                            {c.contractNumber} — {c.title}{period}
-                          </option>
-                        )
-                      })}
-                    </Select>
-                    <Input
-                      placeholder={t("contractNumber") || "Contract №"}
-                      value={contractNumber}
-                      onChange={(e) => setContractNumber(e.target.value)}
-                    />
-                    <Input
-                      type="date"
-                      placeholder={t("contractDate") || "Date"}
-                      value={contractDate}
-                      onChange={(e) => setContractDate(e.target.value)}
-                    />
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {t("contractHint") || "Select a contract or enter manually. Number and date are editable."}
-                  </p>
-                </div>
-                <div>
-                  <Label>{t("signerName") || "Signer Name"}</Label>
-                  <Input
-                    placeholder={t("signerNamePlaceholder") || "Full name"}
-                    value={signerName}
-                    onChange={(e) => setSignerName(e.target.value)}
-                  />
-                </div>
-                <div className="col-span-2">
-                  <Label>{t("signerTitleLabel") || "Signer Title"}</Label>
-                  <Input
-                    placeholder={t("signerTitlePlaceholder") || "Position / title"}
-                    value={signerTitle}
-                    onChange={(e) => setSignerTitle(e.target.value)}
-                  />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Notes Section */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">{t("notesAndTerms") || "Notes & Terms"}</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label>{t("notes") || "Notes"}</Label>
-                <Textarea
-                  placeholder={t("notesPlaceholder") || "Additional notes for the client..."}
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  rows={3}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>{t("termsAndConditions") || "Terms & Conditions"}</Label>
-                <Textarea
-                  placeholder={t("termsPlaceholder") || "Payment terms, late fees, etc..."}
-                  value={terms}
-                  onChange={(e) => setTerms(e.target.value)}
-                  rows={3}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>{t("footerNote") || "Footer Note"}</Label>
-                <Textarea
-                  placeholder={t("footerNotePlaceholder") || "Thank you for your business!"}
-                  value={footerNote}
-                  onChange={(e) => setFooterNote(e.target.value)}
-                  rows={2}
-                />
-              </div>
-            </CardContent>
-          </Card>
-          {/* Summary Card */}
-          <Card>
-              <CardHeader>
-                <CardTitle className="text-base">{t("summary") || "Summary"}</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {/* Subtotal */}
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">{t("subtotal") || "Subtotal"}</span>
-                  <span>
-                    {formatCurrency(calculations.subtotal)} {currency}
-                  </span>
-                </div>
-
-                {/* Discount */}
-                <div className="space-y-2">
-                  <Label className="text-sm">{t("discount") || "Discount"}</Label>
-                  <div className="flex gap-2">
-                    <Select
-                      value={discountType}
-                      onChange={(e) =>
-                        setDiscountType(e.target.value as "percentage" | "fixed")
-                      }
-                      className="w-20"
-                    >
-                      <option value="percentage">%</option>
-                      <option value="fixed">{currency}</option>
-                    </Select>
-                    <Input
-                      type="number"
-                      min={0}
-                      step={0.01}
-                      value={discountValue}
-                      onChange={(e) =>
-                        setDiscountValue(Math.max(0, parseFloat(e.target.value) || 0))
-                      }
-                      className="flex-1"
-                    />
-                  </div>
-                  {calculations.discountAmount > 0 && (
-                    <div className="flex justify-between text-sm text-destructive">
-                      <span>{t("discountAmount") || "Discount"}</span>
-                      <span>
-                        -{formatCurrency(calculations.discountAmount)} {currency}
-                      </span>
+                        }}
+                        className="h-8 text-sm"
+                      >
+                        <option value="">{contracts.length > 0 ? (t("selectContract") || "Select contract...") : company ? "No contracts" : "Select company first"}</option>
+                        {contracts.map((c) => {
+                          const start = c.startDate ? new Date(c.startDate).toLocaleDateString() : ""
+                          const end = c.endDate ? new Date(c.endDate).toLocaleDateString() : ""
+                          const period = start ? ` (${start}${end ? ` - ${end}` : ""})` : ""
+                          return <option key={c.id} value={c.id}>{c.contractNumber} — {c.title}{period}</option>
+                        })}
+                      </Select>
+                      <Input placeholder={t("contractNumber") || "Contract №"} value={contractNumber} onChange={(e) => setContractNumber(e.target.value)} className="h-8 text-sm" />
+                      <Input type="date" value={contractDate} onChange={(e) => setContractDate(e.target.value)} className="h-8 text-sm" />
                     </div>
-                  )}
+                    <p className="text-xs text-muted-foreground mt-1">{t("contractHint") || "Select a contract or enter manually. Number and date are editable."}</p>
+                  </div>
                 </div>
+              )}
+            </CardContent>
+          </Card>
 
-                {/* VAT */}
-                <div className="space-y-2">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={includeVat}
-                      onChange={(e) => setIncludeVat(e.target.checked)}
-                      className="h-4 w-4 rounded border-input"
-                    />
-                    <span className="text-sm">
-                      {t("includeVat") || "Include VAT"} (18%)
-                    </span>
-                  </label>
-                  {includeVat && (
+          {/* NOTES CARD (collapsible) */}
+          <Card className="border-l-4 border-l-amber-400">
+            <button
+              type="button"
+              onClick={() => setShowNotes((v) => !v)}
+              className="w-full flex items-center justify-between px-4 py-3 text-left"
+            >
+              <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                {t("notesAndTerms") || "Notes & Terms"}
+              </span>
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                {notes || terms || footerNote
+                  ? <span className="text-amber-500 font-medium">● filled</span>
+                  : <span>optional</span>
+                }
+                {showNotes ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+              </div>
+            </button>
+            {showNotes && (
+              <CardContent className="px-4 pb-4 pt-0 space-y-3 border-t">
+                <div className="space-y-1 pt-3">
+                  <Label className="text-xs">{t("notes") || "Notes"}</Label>
+                  <Textarea placeholder={t("notesPlaceholder") || "Additional notes for the client..."} value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} className="text-sm" />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">{t("termsAndConditions") || "Terms & Conditions"}</Label>
+                  <Textarea placeholder={t("termsPlaceholder") || "Payment terms, late fees, etc..."} value={terms} onChange={(e) => setTerms(e.target.value)} rows={2} className="text-sm" />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">{t("footerNote") || "Footer Note"}</Label>
+                  <Textarea placeholder={t("footerNotePlaceholder") || "Thank you for your business!"} value={footerNote} onChange={(e) => setFooterNote(e.target.value)} rows={1} className="text-sm" />
+                </div>
+              </CardContent>
+            )}
+          </Card>
+
+          {/* SUMMARY + ACTIONS (bottom) */}
+          <Card className="border-t-4 border-t-cyan-500">
+            <CardContent className="px-4 py-4">
+              <div className="flex items-start gap-8">
+                {/* Summary left part */}
+                <div className="flex-1 space-y-3">
+                  <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">{t("summary") || "Summary"}</h3>
+                  <div className="grid grid-cols-2 gap-x-8 gap-y-2">
                     <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">
-                        {t("vat") || "VAT"} (18%)
-                      </span>
-                      <span>
-                        {formatCurrency(calculations.taxAmount)} {currency}
-                      </span>
+                      <span className="text-muted-foreground">{t("subtotal") || "Subtotal"}</span>
+                      <span className="font-medium tabular-nums">{formatCurrency(calculations.subtotal)} {currency}</span>
                     </div>
-                  )}
-                </div>
-
-                {/* Divider */}
-                <div className="border-t pt-3">
-                  <div className="flex justify-between items-center">
-                    <span className="text-base font-semibold">{t("total") || "Total"}</span>
-                    <span className="text-xl font-bold">
-                      {formatCurrency(calculations.total)} {currency}
-                    </span>
+                    <div className="space-y-1">
+                      <Label className="text-xs text-muted-foreground">{t("discount") || "Discount"}</Label>
+                      <div className="flex gap-1.5">
+                        <Select value={discountType} onChange={(e) => setDiscountType(e.target.value as "percentage" | "fixed")} className="w-16 h-8 text-sm">
+                          <option value="percentage">%</option>
+                          <option value="fixed">{currency}</option>
+                        </Select>
+                        <Input type="number" min={0} step={0.01} value={discountValue} onChange={(e) => setDiscountValue(Math.max(0, parseFloat(e.target.value) || 0))} className="flex-1 h-8 text-sm text-right" />
+                      </div>
+                      {calculations.discountAmount > 0 && (
+                        <div className="flex justify-between text-xs text-destructive">
+                          <span>{t("discountAmount") || "Discount"}</span>
+                          <span className="tabular-nums">-{formatCurrency(calculations.discountAmount)} {currency}</span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" checked={includeVat} onChange={(e) => setIncludeVat(e.target.checked)} className="h-3.5 w-3.5 rounded border-input" />
+                        <span className="text-sm">{t("includeVat") || "Include VAT"} (18%)</span>
+                      </label>
+                      {includeVat && (
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">{t("vat") || "VAT"} (18%)</span>
+                          <span className="tabular-nums">{formatCurrency(calculations.taxAmount)} {currency}</span>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
 
-            {/* Action Buttons */}
-            <Card>
-              <CardContent className="pt-6 space-y-3">
-                <Button
-                  className="w-full"
-                  onClick={() => handleSubmit("draft")}
-                  disabled={saving}
-                  variant="outline"
-                >
-                  <Save className="h-4 w-4 mr-2" />
-                  {saving ? (tc("saving") || "Saving...") : (t("saveDraft") || "Save Draft")}
-                </Button>
-                <Button
-                  className="w-full"
-                  onClick={() => handleSubmit("sent")}
-                  disabled={saving}
-                >
-                  <Send className="h-4 w-4 mr-2" />
-                  {saving
-                    ? (tc("saving") || "Saving...")
-                    : (t("saveAndSend") || "Save & Send")}
-                </Button>
-              </CardContent>
-            </Card>
-        </div>
+                {/* Total + Actions right part */}
+                <div className="w-64 flex-shrink-0 space-y-3">
+                  <div className="border rounded-lg bg-muted/30 px-4 py-3">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-semibold">{t("total") || "Total"}</span>
+                      <span className="text-2xl font-bold tabular-nums text-foreground">
+                        {formatCurrency(calculations.total)}
+                        <span className="text-base font-semibold text-muted-foreground ml-1">{currency}</span>
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button className="flex-1 h-9" variant="outline" onClick={() => handleSubmit("draft")} disabled={saving}>
+                      <Save className="h-4 w-4 mr-2" />
+                      {saving ? (tc("saving") || "Saving...") : (t("saveDraft") || "Save Draft")}
+                    </Button>
+                    <Button className="flex-1 h-9" onClick={() => handleSubmit("sent")} disabled={saving}>
+                      <Send className="h-4 w-4 mr-2" />
+                      {saving ? (tc("saving") || "Saving...") : (t("saveAndSend") || "Save & Send")}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
       </div>
     </div>
   )
