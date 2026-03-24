@@ -132,7 +132,7 @@ export function generateInvoiceHtml(
   .br { display: flex; padding: 2px 0; font-size: 10.5px; }
   .br .k { width: 48px; color: #0e7490; flex-shrink: 0; }
   .br .v { color: #222; font-weight: 600; }
-  .stamp-body { padding: 10px 12px; background: #f0fdfa; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 210px; }
+  .stamp-body { padding: 10px 12px; background: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 210px; }
   .stamp-img { width: 185px; height: 185px; object-fit: contain; }
   .sig-line { border-top: 1.5px solid #333; width: 190px; margin: 10px auto 6px; }
   .sig-name { font-size: 11.5px; font-weight: 700; color: #0891b2; text-align: center; }
