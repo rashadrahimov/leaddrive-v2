@@ -227,16 +227,34 @@ function KpiCards({
     invoice.status !== "cancelled" &&
     invoice.status !== "refunded"
 
+  const fmt = (n: number) => n.toLocaleString("az-AZ", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+    <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
       <Card>
         <CardContent className="pt-4 pb-3 px-4">
           <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
             <DollarSign className="h-3.5 w-3.5" />
-            {t("totalAmount")}
+            Ara cəm (ƏDV-siz)
           </div>
           <p className="text-lg font-bold">
-            {invoice.totalAmount.toLocaleString()} {invoice.currency}
+            {fmt(invoice.subtotal)} {invoice.currency}
+          </p>
+          {invoice.taxAmount > 0 && (
+            <p className="text-xs text-muted-foreground mt-0.5">
+              ƏDV ({invoice.taxRate <= 1 ? Math.round(invoice.taxRate * 100) : Math.round(invoice.taxRate)}%): {fmt(invoice.taxAmount)}
+            </p>
+          )}
+        </CardContent>
+      </Card>
+      <Card className="border-cyan-200 bg-cyan-50/50 dark:bg-cyan-950/30">
+        <CardContent className="pt-4 pb-3 px-4">
+          <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
+            <DollarSign className="h-3.5 w-3.5" />
+            {t("totalAmount")} (ƏDV daxil)
+          </div>
+          <p className="text-xl font-bold text-cyan-700 dark:text-cyan-400">
+            {fmt(invoice.totalAmount)} {invoice.currency}
           </p>
         </CardContent>
       </Card>
@@ -249,7 +267,7 @@ function KpiCards({
           <p
             className={`text-lg font-bold ${invoice.balanceDue > 0 ? "text-red-600" : "text-green-600"}`}
           >
-            {invoice.balanceDue.toLocaleString()} {invoice.currency}
+            {fmt(invoice.balanceDue)} {invoice.currency}
           </p>
         </CardContent>
       </Card>
@@ -260,7 +278,7 @@ function KpiCards({
             {t("paidAmount")}
           </div>
           <p className="text-lg font-bold text-green-600">
-            {invoice.paidAmount.toLocaleString()} {invoice.currency}
+            {fmt(invoice.paidAmount)} {invoice.currency}
           </p>
         </CardContent>
       </Card>
