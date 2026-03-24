@@ -515,11 +515,14 @@ export default function CreateInvoicePage() {
                     if (dealId) {
                       const d = deals.find((x) => x.id === dealId)
                       if (d) {
-                        if (!title && d.name) setTitle(d.name)
+                        if (d.name) setTitle(d.name)
                         if (d.currency) setCurrency(d.currency)
                         if (d.contactId) setContact(d.contactId)
-                        if (d.valueAmount && items.length === 1 && !items[0].name) {
-                          setItems([{ ...items[0], name: d.name, unitPrice: d.valueAmount }])
+                        if (d.valueAmount) {
+                          setItems((prev) => {
+                            const first = prev[0] || { id: "item-1", name: "", description: "", quantity: 1, unitPrice: 0, discount: 0, customFields: {} }
+                            return [{ ...first, name: d.name, unitPrice: d.valueAmount! }, ...prev.slice(1)]
+                          })
                         }
                       }
                     }
