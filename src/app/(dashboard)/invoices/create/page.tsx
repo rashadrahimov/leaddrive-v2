@@ -339,8 +339,9 @@ export default function CreateInvoicePage() {
 
     setSaving(true)
     try {
+      const finalTitle = title || invoiceNumber || `Invoice ${new Date().toLocaleDateString()}`
       const payload = {
-        title: title || invoiceNumber,
+        title: finalTitle,
         invoiceNumber,
         companyId: company,
         contactId: contact || undefined,
@@ -397,8 +398,13 @@ export default function CreateInvoicePage() {
         throw new Error(err.error || "Failed to create invoice")
       }
 
-      const invoice = await res.json()
-      router.push(`/invoices/${invoice.id}`)
+      const json = await res.json()
+      const invoiceId = json.data?.id || json.id
+      if (invoiceId) {
+        router.push(`/invoices/${invoiceId}`)
+      } else {
+        router.push("/invoices")
+      }
     } catch (error) {
       console.error("Failed to create invoice:", error)
       alert(error instanceof Error ? error.message : "Failed to create invoice")
