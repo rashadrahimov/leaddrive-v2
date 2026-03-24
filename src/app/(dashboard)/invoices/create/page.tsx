@@ -831,7 +831,7 @@ export default function CreateInvoicePage() {
                 </div>
 
                 {/* Total + Actions right part */}
-                <div className="w-64 flex-shrink-0 space-y-3">
+                <div className="w-72 flex-shrink-0 space-y-3">
                   <div className="border rounded-lg bg-muted/30 px-4 py-3">
                     <div className="flex justify-between items-center">
                       <span className="text-sm font-semibold">{t("total") || "Total"}</span>
@@ -841,16 +841,14 @@ export default function CreateInvoicePage() {
                       </span>
                     </div>
                   </div>
-                  <div className="flex gap-2">
-                    <Button className="flex-1 h-9" variant="outline" onClick={() => handleSubmit("draft")} disabled={saving}>
-                      <Save className="h-4 w-4 mr-2" />
-                      {saving ? (tc("saving") || "Saving...") : (t("saveDraft") || "Save Draft")}
-                    </Button>
-                    <Button className="flex-1 h-9" onClick={() => handleSubmit("sent")} disabled={saving}>
-                      <Send className="h-4 w-4 mr-2" />
-                      {saving ? (tc("saving") || "Saving...") : (t("saveAndSend") || "Save & Send")}
-                    </Button>
-                  </div>
+                  <Button className="w-full h-9" variant="outline" onClick={() => handleSubmit("draft")} disabled={saving}>
+                    <Save className="h-4 w-4 mr-2" />
+                    {saving ? (tc("saving") || "Saving...") : (t("saveDraft") || "Save Draft")}
+                  </Button>
+                  <Button className="w-full h-9" onClick={() => handleSubmit("sent")} disabled={saving}>
+                    <Send className="h-4 w-4 mr-2" />
+                    {saving ? (tc("saving") || "Saving...") : (t("saveAndSend") || "Save & Send")}
+                  </Button>
                 </div>
               </div>
             </CardContent>
