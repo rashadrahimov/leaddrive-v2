@@ -23,11 +23,13 @@ export async function GET(req: NextRequest) {
   const page = parseInt(searchParams.get("page") || "1")
   const limit = parseInt(searchParams.get("limit") || "50")
   const entityType = searchParams.get("entityType") || ""
+  const entityId = searchParams.get("entityId") || ""
 
   try {
     const where = {
       organizationId: orgId,
       ...(entityType ? { entityType } : {}),
+      ...(entityId ? { entityId } : {}),
     }
 
     const [logs, total] = await Promise.all([

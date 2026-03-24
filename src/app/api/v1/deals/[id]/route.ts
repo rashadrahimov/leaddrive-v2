@@ -105,6 +105,9 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       parsed.data.probability = STAGE_PROBABILITY[parsed.data.stage]
     }
 
+    // Capture old values before update
+    const existing = await prisma.deal.findFirst({ where: { id, organizationId: orgId }, select: { stage: true, valueAmount: true, assignedTo: true, name: true } })
+
     const deal = await prisma.deal.updateMany({
       where: { id, organizationId: orgId },
       data: {
@@ -134,7 +137,29 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       include: dealInclude,
     })
 
-    logAudit(orgId, "update", "deal", id, updated?.name || "", { newValue: parsed.data })
+    const oldValue: Record<string, any> = {}
+    const newValue: Record<string, any> = {}
+    if (parsed.data.stage && existing?.stage !== parsed.data.stage) {
+      oldValue.stage = existing?.stage
+      newValue.stage = parsed.data.stage
+    }
+    if (parsed.data.valueAmount !== undefined && existing?.valueAmount !== parsed.data.valueAmount) {
+      oldValue.valueAmount = existing?.valueAmount
+      newValue.valueAmount = parsed.data.valueAmount
+    }
+    if (parsed.data.assignedTo && existing?.assignedTo !== parsed.data.assignedTo) {
+      oldValue.assignedTo = existing?.assignedTo
+      newValue.assignedTo = parsed.data.assignedTo
+    }
+    if (parsed.data.name && existing?.name !== parsed.data.name) {
+      oldValue.name = existing?.name
+      newValue.name = parsed.data.name
+    }
+    // fallback: store full patch if no specific fields tracked
+    logAudit(orgId, "update", "deal", id, updated?.name || "", {
+      oldValue: Object.keys(oldValue).length > 0 ? oldValue : undefined,
+      newValue: Object.keys(newValue).length > 0 ? newValue : parsed.data,
+    })
     // Trigger workflows for updates
     if (updated) {
       const triggerEvent = parsed.data.stage ? "stage_changed" : "updated"

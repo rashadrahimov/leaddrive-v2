@@ -1569,6 +1569,7 @@ export default function InvoiceDetailPage() {
                       onChange={e => setNewStepConfig((c: any) => ({ ...c, unit: e.target.value }))}
                       className="flex-1"
                     >
+                      <option value="minutes">{t("chainWaitUnitMinutes")}</option>
                       <option value="hours">{t("chainWaitUnitHours")}</option>
                       <option value="days">{t("chainWaitUnitDays")}</option>
                       <option value="weeks">{t("chainWaitUnitWeeks")}</option>
