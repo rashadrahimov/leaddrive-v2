@@ -1061,7 +1061,12 @@
     "paymentMethod_card": "Карта",
     "paymentMethod_check": "Чек",
     "paymentMethod_other": "Другое",
-    "noActivity": "Активности пока нет"
+    "noActivity": "Активности пока нет",
+    "activityCreated": "Счёт создан",
+    "activitySent": "Счёт отправлен",
+    "activityViewed": "Счёт просмотрен клиентом",
+    "activityPaid": "Счёт полностью оплачен",
+    "activityPaymentRecorded": "Платёж записан"
   },
   "inbox": {
     "title": "Входящие",
