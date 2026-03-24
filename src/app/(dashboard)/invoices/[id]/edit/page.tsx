@@ -24,7 +24,7 @@ interface InvoiceItem {
 }
 
 interface Company { id: string; name: string }
-interface Contact { id: string; firstName: string; lastName: string; email: string }
+interface Contact { id: string; fullName: string; email: string }
 interface Deal { id: string; name: string }
 interface Product { id: string; name: string; price: number; description?: string }
 interface ContractRef { id: string; contractNumber: string; title: string; status?: string; startDate?: string; endDate?: string }
@@ -306,7 +306,7 @@ export default function EditInvoicePage() {
                   <Label className="text-xs">{t("recipientContact")}</Label>
                   <Select value={contact} onChange={e => setContact(e.target.value)} disabled={!company} className="h-8 text-sm">
                     <option value="">{t("selectContact")}</option>
-                    {contacts.map(c => <option key={c.id} value={c.id}>{c.firstName} {c.lastName}</option>)}
+                    {contacts.map(c => <option key={c.id} value={c.id}>{c.fullName}</option>)}
                   </Select>
                 </div>
                 <div className="space-y-1">
