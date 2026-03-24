@@ -36,16 +36,22 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     const settings = (org?.settings as Record<string, unknown>) || {}
     const smtp = settings.smtp as Record<string, unknown> | undefined
 
-    if (!smtp?.host) {
+    const smtpHost = (smtp?.smtpHost || smtp?.host) as string | undefined
+    const smtpPort = Number(smtp?.smtpPort || smtp?.port) || 587
+    const smtpUser = (smtp?.smtpUser || smtp?.user) as string | undefined
+    const smtpPass = (smtp?.smtpPass || smtp?.pass) as string | undefined
+    const smtpFrom = (smtp?.fromEmail || smtp?.from || smtpUser) as string | undefined
+
+    if (!smtpHost) {
       return NextResponse.json({ error: "SMTP not configured" }, { status: 400 })
     }
 
     const nodemailer = await import("nodemailer")
     const transporter = nodemailer.createTransport({
-      host: smtp.host as string,
-      port: (smtp.port as number) || 587,
-      secure: (smtp.port as number) === 465,
-      auth: { user: smtp.user as string, pass: smtp.pass as string },
+      host: smtpHost,
+      port: smtpPort,
+      secure: smtpPort === 465,
+      auth: { user: smtpUser, pass: smtpPass },
     })
 
     const d = parsed.data
@@ -53,7 +59,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     const message = d.message || `Please find attached invoice ${invoice.invoiceNumber} for ${invoice.totalAmount} ${invoice.currency}.`
 
     await transporter.sendMail({
-      from: smtp.from as string || smtp.user as string,
+      from: smtpFrom,
       to: d.recipientEmail,
       subject,
       html: `<div style="font-family: Arial, sans-serif; padding: 20px;">
