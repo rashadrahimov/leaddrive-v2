@@ -246,7 +246,7 @@ export default function EditInvoicePage() {
         <Badge variant="outline" className="text-base px-3 py-1">{invoiceNumber}</Badge>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
         {/* Left Column */}
         <div className="lg:col-span-2 space-y-6">
           {/* Title */}
