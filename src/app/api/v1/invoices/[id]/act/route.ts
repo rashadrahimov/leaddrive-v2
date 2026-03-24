@@ -80,7 +80,7 @@ function generateActHtml(
   const cleanCompanyName = companyName.replace(/^["']+|["']+$/g, "")
   const companyNameUpper = cleanCompanyName.toUpperCase()
   const clientCompanyName = (invoice.company?.name as string) || ""
-  const directorName = (inv.directorName as string) || ""
+  const directorName = (inv.directorName as string) || (inv.signerName as string) || ""
   const directorTitle = (inv.signerTitle as string) || ""
   const companyLogoUrl = (inv.companyLogoUrl as string) || ""
   const companyStampUrl = (inv.companyStampUrl as string) || ""
@@ -356,22 +356,24 @@ function generateActHtml(
 ${logoHtml}
 
 <div class="approval-block">
-  <div class="approval-col" style="position: relative;">
+  <div class="approval-col" style="position: relative; min-height: 160px;">
     <div class="label">${t.approve}</div>
     <div class="company-name">"${companyNameUpper}" MMC-nin</div>
     <div>${directorTitle || t.directorOf}</div>
-    <div>${directorName || "_______________"}</div>
-    <div>______________</div>
-    <div style="color: #666; font-size: 12px;">${t.signAndStamp}</div>
-    ${companyStampUrl ? `<img src="${companyStampUrl}" style="position: absolute; bottom: -30px; left: 0; width: 213px; height: 213px; object-fit: contain; opacity: 0.9;" />` : ""}
+    <div style="font-weight: 600;">${directorName || "_______________"}</div>
+    ${companyStampUrl ? `<div style="position: relative; height: 100px; margin-top: 5px;">
+      <img src="${companyStampUrl}" style="position: absolute; left: -10px; top: -40px; width: 213px; height: 213px; object-fit: contain; opacity: 0.85;" />
+      <div style="position: relative; z-index: 1; padding-top: 60px;">______________</div>
+    </div>` : `<div>______________</div>`}
+    <div style="color: #666; font-size: 11px;">${t.signAndStamp}</div>
   </div>
-  <div class="approval-col" style="text-align: right;">
+  <div class="approval-col" style="text-align: right; min-height: 160px;">
     <div class="label">${t.approve}</div>
     <div class="company-name">"${clientCompanyName}"</div>
     <div>${t.directorOf}</div>
     <div>&nbsp;</div>
-    <div>_______________</div>
-    <div style="color: #666; font-size: 12px;">${t.signAndStamp}</div>
+    <div style="margin-top: ${companyStampUrl ? '65px' : '0'};">_______________</div>
+    <div style="color: #666; font-size: 11px;">${t.signAndStamp}</div>
   </div>
 </div>
 
