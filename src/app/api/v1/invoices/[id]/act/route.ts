@@ -76,7 +76,9 @@ function generateActHtml(
   lang: DocLanguage
 ): string {
   const companyName = (inv.companyName as string) || orgName
-  const companyNameUpper = companyName.toUpperCase()
+  // Strip surrounding quotes if any to avoid ""NAME"" duplication
+  const cleanCompanyName = companyName.replace(/^["']+|["']+$/g, "")
+  const companyNameUpper = cleanCompanyName.toUpperCase()
   const clientCompanyName = (invoice.company?.name as string) || ""
   const directorName = (inv.directorName as string) || ""
   const directorTitle = (inv.signerTitle as string) || ""
@@ -156,14 +158,14 @@ function generateActHtml(
     font-family: 'Segoe UI', Arial, sans-serif;
     max-width: 800px;
     margin: 0 auto;
-    padding: 40px;
+    padding: 30px 40px;
     color: #1a1a1a;
-    font-size: 14px;
-    line-height: 1.5;
+    font-size: 13px;
+    line-height: 1.4;
   }
   .logo-block {
     text-align: center;
-    margin-bottom: 30px;
+    margin-bottom: 20px;
   }
   .logo-text {
     font-size: 28px;
@@ -175,7 +177,7 @@ function generateActHtml(
   .approval-block {
     display: flex;
     justify-content: space-between;
-    margin-bottom: 30px;
+    margin-bottom: 15px;
   }
   .approval-col {
     width: 45%;
@@ -190,20 +192,20 @@ function generateActHtml(
   }
   .act-title {
     text-align: center;
-    font-size: 22px;
+    font-size: 20px;
     font-weight: 700;
     font-style: italic;
     color: #1a1a1a;
-    margin: 30px 0;
+    margin: 15px 0;
     text-transform: none;
   }
   .legal-block {
     border: 1px solid #d1d5db;
     border-radius: 6px;
-    padding: 20px;
-    margin-bottom: 25px;
-    font-size: 13px;
-    line-height: 1.7;
+    padding: 15px;
+    margin-bottom: 15px;
+    font-size: 12px;
+    line-height: 1.5;
   }
   .legal-block .city-date {
     margin-bottom: 10px;
@@ -212,8 +214,8 @@ function generateActHtml(
   .info-section {
     border: 1px solid #d1d5db;
     border-radius: 6px;
-    padding: 20px;
-    margin-bottom: 25px;
+    padding: 12px 15px;
+    margin-bottom: 15px;
   }
   .info-header {
     font-size: 14px;
@@ -302,6 +304,7 @@ function generateActHtml(
   .clauses-block {
     border: 1px solid #d1d5db;
     border-radius: 6px;
+    font-size: 12px;
     padding: 20px;
     margin-bottom: 30px;
     font-size: 13px;
@@ -313,7 +316,7 @@ function generateActHtml(
   .signatures-block {
     display: flex;
     justify-content: space-between;
-    margin-top: 40px;
+    margin-top: 25px;
   }
   .sig-col {
     width: 45%;
@@ -356,11 +359,11 @@ ${logoHtml}
   <div class="approval-col" style="position: relative;">
     <div class="label">${t.approve}</div>
     <div class="company-name">"${companyNameUpper}" MMC-nin</div>
-    <div>${t.directorOf}</div>
+    <div>${directorTitle || t.directorOf}</div>
     <div>${directorName || "_______________"}</div>
     <div>______________</div>
     <div style="color: #666; font-size: 12px;">${t.signAndStamp}</div>
-    ${companyStampUrl ? `<img src="${companyStampUrl}" style="position: absolute; bottom: -20px; left: 10px; width: 150px; height: 150px; object-fit: contain; opacity: 0.9;" />` : ""}
+    ${companyStampUrl ? `<img src="${companyStampUrl}" style="position: absolute; bottom: -30px; left: 0; width: 213px; height: 213px; object-fit: contain; opacity: 0.9;" />` : ""}
   </div>
   <div class="approval-col" style="text-align: right;">
     <div class="label">${t.approve}</div>
@@ -401,9 +404,6 @@ ${logoHtml}
   </table>
 </div>
 
-<!-- ==================== PAGE 2 ==================== -->
-<div class="page-break"></div>
-
 <div class="services-header">${t.servicesProvided}</div>
 <table class="services-table" style="margin-bottom: 15px;">
   <thead>
@@ -435,7 +435,7 @@ ${logoHtml}
       <td>${formatMoney(subtotalNum, lang)} ${invoice.currency}</td>
     </tr>
     ${discountAmount > 0 ? `<tr><td>${t.discount}:</td><td>-${formatMoney(discountAmount, lang)} ${invoice.currency}</td></tr>` : ""}
-    ${invoice.includeVat ? `<tr><td>${t.vat} (${Number(invoice.taxRate) * 100}%):</td><td>${formatMoney(taxAmount, lang)} ${invoice.currency}</td></tr>` : ""}
+    ${invoice.includeVat ? `<tr><td>${t.vat} (${Number(invoice.taxRate) <= 1 ? Math.round(Number(invoice.taxRate) * 100) : Math.round(Number(invoice.taxRate))}%):</td><td>${formatMoney(taxAmount, lang)} ${invoice.currency}</td></tr>` : ""}
     <tr class="total-row">
       <td>${t.grandTotal}:</td>
       <td>${formatMoney(totalAmount, lang)} ${invoice.currency}</td>
@@ -452,7 +452,7 @@ ${logoHtml}
 <div class="signatures-block">
   <div class="sig-col" style="position: relative;">
     <div class="sig-company">"${companyNameUpper}" MMC</div>
-    <div>${actSignerTitle}</div>
+    <div>${actSignerTitle || ""}</div>
     <div style="font-weight: 600;">${actSignerName}</div>
     ${actSignerSignatureUrl ? `<img src="${actSignerSignatureUrl}" style="width: 160px; height: 80px; object-fit: contain; margin: 5px 0;" />` : ""}
     <div>${t.signature}:_______________</div>
