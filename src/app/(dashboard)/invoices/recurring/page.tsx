@@ -106,6 +106,8 @@ export default function RecurringInvoicesPage() {
   const [generating, setGenerating] = useState(false)
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [deleteName, setDeleteName] = useState("")
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [generateReport, setGenerateReport] = useState<Array<{ invoiceNumber: string; company?: string; status: string; error?: string }> | null>(null)
 
   const headers = useCallback((): Record<string, string> => {
     const h: Record<string, string> = { "Content-Type": "application/json" }
@@ -215,17 +217,51 @@ export default function RecurringInvoicesPage() {
 
   const handleGenerateNow = async () => {
     setGenerating(true)
+    setGenerateReport(null)
     try {
-      await fetch("/api/v1/recurring-invoices/generate", {
+      const res = await fetch("/api/v1/recurring-invoices/generate", {
         method: "POST",
         headers: headers(),
       })
+      const json = await res.json()
+      if (json.data?.report) {
+        setGenerateReport(json.data.report)
+      }
       fetchRules()
     } catch {
       // ignore
     } finally {
       setGenerating(false)
     }
+  }
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === rules.length) {
+      setSelectedIds(new Set())
+    } else {
+      setSelectedIds(new Set(rules.map((r) => r.id)))
+    }
+  }
+
+  const handleBulkToggle = async (activate: boolean) => {
+    for (const id of selectedIds) {
+      await fetch(`/api/v1/recurring-invoices/${id}`, {
+        method: "PUT",
+        headers: headers(),
+        body: JSON.stringify({ isActive: activate }),
+      })
+    }
+    setSelectedIds(new Set())
+    fetchRules()
   }
 
   const updateItem = (
@@ -319,6 +355,49 @@ export default function RecurringInvoicesPage() {
         </div>
       </div>
 
+      {/* Bulk actions bar */}
+      {selectedIds.size > 0 && (
+        <Card className="border-cyan-300 bg-cyan-50 dark:bg-cyan-950">
+          <CardContent className="py-3 px-4 flex items-center justify-between">
+            <span className="text-sm font-medium">{selectedIds.size} seçilib</span>
+            <div className="flex gap-2">
+              <Button size="sm" variant="outline" className="h-8 text-green-700 border-green-300 hover:bg-green-50" onClick={() => handleBulkToggle(true)}>
+                <Play className="h-3.5 w-3.5 mr-1" /> Aktivləşdir
+              </Button>
+              <Button size="sm" variant="outline" className="h-8 text-orange-700 border-orange-300 hover:bg-orange-50" onClick={() => handleBulkToggle(false)}>
+                <Pause className="h-3.5 w-3.5 mr-1" /> Dayandır
+              </Button>
+              <Button size="sm" className="h-8" onClick={handleGenerateNow} disabled={generating}>
+                <RefreshCw className={`h-3.5 w-3.5 mr-1 ${generating ? "animate-spin" : ""}`} />
+                İndi göndər
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Generate report */}
+      {generateReport && generateReport.length > 0 && (
+        <Card className="border-green-300">
+          <CardHeader className="pb-2 pt-3 px-4">
+            <CardTitle className="text-sm flex items-center justify-between">
+              <span>Son nəticə: {generateReport.filter(r => r.status === "sent").length} göndərildi, {generateReport.filter(r => r.status === "send_failed").length} xəta</span>
+              <Button variant="ghost" size="sm" onClick={() => setGenerateReport(null)} className="h-6 text-xs">X</Button>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="px-4 pb-3">
+            <div className="max-h-48 overflow-y-auto text-xs space-y-1">
+              {generateReport.map((r, i) => (
+                <div key={i} className={`flex justify-between py-1 px-2 rounded ${r.status === "sent" ? "bg-green-50 text-green-800" : r.status === "send_failed" ? "bg-red-50 text-red-800" : "bg-gray-50"}`}>
+                  <span>{r.invoiceNumber} — {r.company || "?"}</span>
+                  <span className="font-medium">{r.status === "sent" ? "OK" : r.status === "send_failed" ? ("Xeta: " + (r.error || "").slice(0, 40)) : "draft"}</span>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Rules list */}
       {rules.length === 0 ? (
         <Card>
@@ -333,12 +412,28 @@ export default function RecurringInvoicesPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-4">
+        <>
+        <div className="flex items-center gap-2 mb-2">
+          <input
+            type="checkbox"
+            checked={selectedIds.size === rules.length && rules.length > 0}
+            onChange={toggleSelectAll}
+            className="h-4 w-4 rounded border-gray-300"
+          />
+          <span className="text-xs text-muted-foreground">Hamısını seç ({rules.length})</span>
+        </div>
+        <div className="grid gap-3">
           {rules.map((rule) => (
-            <Card key={rule.id} className="hover:shadow-md transition-shadow">
+            <Card key={rule.id} className={`hover:shadow-md transition-shadow ${selectedIds.has(rule.id) ? "ring-2 ring-cyan-400" : ""}`}>
               <CardHeader className="pb-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.has(rule.id)}
+                      onChange={() => toggleSelect(rule.id)}
+                      className="h-4 w-4 rounded border-gray-300"
+                    />
                     <CardTitle className="text-base">{rule.title}</CardTitle>
                     <Badge variant="outline">
                       {rule.intervalCount > 1
@@ -422,6 +517,7 @@ export default function RecurringInvoicesPage() {
             </Card>
           ))}
         </div>
+        </>
       )}
 
       {/* Create Dialog */}
