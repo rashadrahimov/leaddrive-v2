@@ -412,6 +412,7 @@ export default function RecurringInvoicesPage() {
           </CardContent>
         </Card>
       ) : (
+        <>
         <div className="flex items-center gap-2 mb-2">
           <input
             type="checkbox"
@@ -516,6 +517,7 @@ export default function RecurringInvoicesPage() {
             </Card>
           ))}
         </div>
+        </>
       )}
 
       {/* Create Dialog */}
