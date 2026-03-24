@@ -43,8 +43,15 @@ export function DataTable<T extends Record<string, unknown>>({
 
   const filtered = data.filter((item) => {
     if (!search) return true
-    const val = String(item[searchKey] || "").toLowerCase()
-    return val.includes(search.toLowerCase())
+    const q = search.toLowerCase()
+    // Search across all string values including nested objects (e.g. company.name)
+    const values = Object.values(item).flatMap((v) => {
+      if (v && typeof v === "object" && !Array.isArray(v)) {
+        return Object.values(v as Record<string, unknown>).map((nv) => String(nv || ""))
+      }
+      return [String(v || "")]
+    })
+    return values.some((val) => val.toLowerCase().includes(q))
   })
 
   const sorted = [...filtered].sort((a, b) => {
