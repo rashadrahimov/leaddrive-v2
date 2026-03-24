@@ -78,6 +78,15 @@ function generateInvoiceHtml(
 
   const formatDate = (d: unknown) => d ? new Date(d as string).toLocaleDateString("az-AZ") : "—"
   const formatMoney = (n: unknown) => Number(n || 0).toLocaleString("az-AZ", { minimumFractionDigits: 2 })
+  const paymentTermsLabels: Record<string, string> = {
+    dueOnReceipt: "Alındıqda ödəniş",
+    net15: "Net 15",
+    net30: "Net 30",
+    net45: "Net 45",
+    net60: "Net 60",
+    custom: "Fərdi",
+  }
+  const formatPaymentTerms = (t: unknown) => t ? (paymentTermsLabels[t as string] || String(t)) : ""
 
   // Only show discount column if at least one item has a discount
   const hasDiscounts = invoice.items.some(item => Number(item.discount) > 0)
@@ -174,7 +183,7 @@ function generateInvoiceHtml(
 <div class="dates-bar">
   <div class="date-item"><strong>Tarix:</strong>${formatDate(invoice.issueDate)}</div>
   <div class="date-item"><strong>Son ödəniş:</strong>${formatDate(invoice.dueDate)}</div>
-  ${invoice.paymentTerms ? `<div class="date-item"><strong>Şərtlər:</strong>${invoice.paymentTerms}</div>` : ''}
+  ${invoice.paymentTerms ? `<div class="date-item"><strong>Şərtlər:</strong>${formatPaymentTerms(invoice.paymentTerms)}</div>` : ''}
   ${companyEmail ? `<div class="date-item"><strong>E-poçt:</strong>${companyEmail}</div>` : ''}
   ${companyPhone ? `<div class="date-item"><strong>Tel:</strong>${companyPhone}</div>` : ''}
 </div>
