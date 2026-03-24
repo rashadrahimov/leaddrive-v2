@@ -10,7 +10,7 @@ import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Select } from "@/components/ui/select"
-import { Plus, DollarSign, Clock, AlertTriangle, CheckCircle, Eye, Pencil, Trash2, Download, CalendarDays, TrendingUp, Send, FileText, BarChart3, XCircle } from "lucide-react"
+import { Plus, DollarSign, Clock, AlertTriangle, CheckCircle, Eye, Pencil, Trash2, Download, CalendarDays, TrendingUp, Send, FileText, BarChart3, XCircle, RefreshCw } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -184,7 +184,7 @@ export default function InvoicesPage() {
       label: t("colNumber"),
       sortable: true,
       render: (item: any) => (
-        <span className="font-mono text-sm">{item.invoiceNumber}</span>
+        <span className="font-mono text-sm">{item.invoiceNumber}{item.recurringInvoiceId && <span className="ml-1.5 text-[10px] bg-cyan-100 text-cyan-700 dark:bg-cyan-900 dark:text-cyan-300 px-1 py-0.5 rounded font-sans">↻</span>}</span>
       ),
     },
     {
@@ -296,9 +296,14 @@ export default function InvoicesPage() {
           <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
           <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
         </div>
-        <Button onClick={() => router.push("/invoices/create")}>
-          <Plus className="h-4 w-4 mr-1" /> {t("newInvoice")}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={() => router.push("/invoices/recurring")}>
+            <RefreshCw className="h-4 w-4 mr-1" /> {t("recurringInvoices")}
+          </Button>
+          <Button onClick={() => router.push("/invoices/create")}>
+            <Plus className="h-4 w-4 mr-1" /> {t("newInvoice")}
+          </Button>
+        </div>
       </div>
 
       {/* Row 1 — Financial summary */}
