@@ -639,13 +639,18 @@ export default function CreateInvoicePage() {
                           </td>
                         ))}
                         <td className="px-1 py-2">
-                          <Input type="number" min={0.01} step={0.01} value={item.quantity}
-                            onChange={(e) => updateItem(item.id, "quantity", Math.max(0.01, parseFloat(e.target.value) || 1))}
+                          <Input type="number" min={0.01} step={0.01}
+                            value={item.quantity || ""}
+                            onFocus={(e) => { if (e.target.value === "0" || e.target.value === "1") e.target.select() }}
+                            onChange={(e) => updateItem(item.id, "quantity", parseFloat(e.target.value) || 0)}
+                            onBlur={(e) => { if (!e.target.value || parseFloat(e.target.value) <= 0) updateItem(item.id, "quantity", 1) }}
                             className="h-8 text-center w-[70px]" />
                         </td>
                         <td className="px-1 py-2">
-                          <Input type="number" min={0} step={0.01} value={item.unitPrice}
-                            onChange={(e) => updateItem(item.id, "unitPrice", Math.max(0, parseFloat(e.target.value) || 0))}
+                          <Input type="number" min={0} step={0.01}
+                            value={item.unitPrice || ""}
+                            onFocus={(e) => { if (e.target.value === "0") e.target.select() }}
+                            onChange={(e) => updateItem(item.id, "unitPrice", parseFloat(e.target.value) || 0)}
                             className="h-8 text-right w-[110px]" />
                         </td>
                         <td className="px-2 py-2 text-right">
