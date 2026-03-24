@@ -1341,13 +1341,10 @@ model Invoice {
   recurringInvoice   RecurringInvoice? @relation(fields: [recurringInvoiceId], references: [id])
 
   // Communication chain
-  chainJourneyId    String?            // dedicated Journey for this invoice's reminder chain
+  chainJourneyId    String?   // dedicated Journey for this invoice's reminder chain
 
   // Custom columns definition
   customColumns     Json?     // [{ "key": "unit", "label": "Ölçü vahidi" }, ...]
-
-  // Communication chain
-  chainJourneyId    String?   // dedicated Journey for this invoice's reminder chain
 
   // Meta
   viewToken         String?   @unique
