@@ -576,7 +576,7 @@ export default function CreateInvoicePage() {
                       <tr key={item.id} className="border-b last:border-b-0 hover:bg-muted/20 transition-colors">
                         <td className="px-2 py-1">
                           <Input
-                            placeholder="Xidmət və ya məhsulun adı"
+                            placeholder={t("itemNamePlaceholder") || "Service or product name"}
                             value={item.name}
                             onChange={(e) => updateItem(item.id, "name", e.target.value)}
                             className="h-8 border-0 px-1 shadow-none focus-visible:ring-0 font-medium"
