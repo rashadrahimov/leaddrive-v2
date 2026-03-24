@@ -161,6 +161,14 @@ export default function InvoicesPage() {
 
   const columns = [
     {
+      key: "_index",
+      label: "#",
+      sortable: false,
+      render: (_item: any, index: number) => (
+        <span className="text-xs text-muted-foreground">{index + 1}</span>
+      ),
+    },
+    {
       key: "invoiceNumber",
       label: t("colNumber"),
       sortable: true,
