@@ -62,7 +62,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     const formatMoney = (n: unknown) => Number(n || 0).toLocaleString(locale, { minimumFractionDigits: 2 })
     const formatDate = (dt: unknown) => dt ? new Date(dt as string).toLocaleDateString(locale) : "—"
 
-    // Generate email template based on document language
+    // Generate email template based on document language (with custom templates if configured)
+    const customEmailTemplates = (invoiceSettings.emailTemplates as Record<string, Record<string, string>>) || undefined
     const emailData = getEmailTemplate(lang, {
       orgName: fromName,
       invoiceNumber: invoice.invoiceNumber || "",
@@ -70,7 +71,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       currency: (invoice.currency as string) || "AZN",
       dueDate: formatDate(invoice.dueDate),
       customMessage: d.message || undefined,
-    })
+    }, customEmailTemplates)
 
     // Use custom subject if provided, otherwise use template
     const subject = d.subject || emailData.subject

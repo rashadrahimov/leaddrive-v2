@@ -9,8 +9,9 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select } from "@/components/ui/select"
-import { Save, Settings, Building2, FileSpreadsheet, Loader2, CheckCircle, AlertCircle, Upload, X } from "lucide-react"
+import { Save, Settings, Building2, FileSpreadsheet, Loader2, CheckCircle, AlertCircle, Upload, X, Mail } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { DEFAULT_EMAIL_TEMPLATES } from "@/lib/invoice-html"
 
 export default function InvoiceSettingsPage() {
   const { data: session } = useSession()
@@ -21,6 +22,12 @@ export default function InvoiceSettingsPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [msg, setMsg] = useState<{ type: "success" | "error"; text: string } | null>(null)
+  const [templateLang, setTemplateLang] = useState<"az" | "ru" | "en">("az")
+  const [emailTemplates, setEmailTemplates] = useState<Record<string, { greeting: string; body: string; closing: string; note: string }>>({
+    az: { ...DEFAULT_EMAIL_TEMPLATES.az },
+    ru: { ...DEFAULT_EMAIL_TEMPLATES.ru },
+    en: { ...DEFAULT_EMAIL_TEMPLATES.en },
+  })
 
   const [settings, setSettings] = useState({
     companyName: "",
@@ -54,7 +61,19 @@ export default function InvoiceSettingsPage() {
       .then((r) => r.json())
       .then((j) => {
         if (j.success && j.data) {
-          setSettings((prev) => ({ ...prev, ...j.data }))
+          const { emailTemplates: savedTemplates, ...rest } = j.data
+          setSettings((prev) => ({ ...prev, ...rest }))
+          if (savedTemplates && typeof savedTemplates === "object") {
+            setEmailTemplates((prev) => {
+              const merged = { ...prev }
+              for (const lang of ["az", "ru", "en"]) {
+                if (savedTemplates[lang]) {
+                  merged[lang] = { ...prev[lang], ...savedTemplates[lang] }
+                }
+              }
+              return merged
+            })
+          }
         }
       })
       .catch(() => {})
@@ -114,7 +133,7 @@ export default function InvoiceSettingsPage() {
           "Content-Type": "application/json",
           ...(orgId ? { "x-organization-id": String(orgId) } : {}),
         },
-        body: JSON.stringify(settings),
+        body: JSON.stringify({ ...settings, emailTemplates }),
       })
       const json = await res.json()
       if (!res.ok) throw new Error(json.error || "Failed to save")
@@ -519,6 +538,104 @@ export default function InvoiceSettingsPage() {
               rows={3}
               className="mt-1"
             />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Email Templates */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <Mail className="h-5 w-5 text-muted-foreground" />
+            <div>
+              <CardTitle>E-poçt şablonları</CardTitle>
+              <CardDescription>
+                Hesab-faktura göndərilərkən istifadə olunan e-poçt mətni. Hər dil üçün ayrı şablon.
+              </CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {/* Language tabs */}
+          <div className="flex gap-1 border-b">
+            {(["az", "ru", "en"] as const).map((lang) => (
+              <button
+                key={lang}
+                type="button"
+                onClick={() => setTemplateLang(lang)}
+                className={cn(
+                  "px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors",
+                  templateLang === lang
+                    ? "border-cyan-500 text-cyan-600"
+                    : "border-transparent text-muted-foreground hover:text-foreground"
+                )}
+              >
+                {lang === "az" ? "Azərbaycan" : lang === "ru" ? "Русский" : "English"}
+              </button>
+            ))}
+          </div>
+
+          {/* Template fields for selected language */}
+          <div className="space-y-3">
+            <div>
+              <Label className="text-sm">
+                {templateLang === "az" ? "Müraciət (Greeting)" : templateLang === "ru" ? "Приветствие (Greeting)" : "Greeting"}
+              </Label>
+              <Input
+                value={emailTemplates[templateLang]?.greeting || ""}
+                onChange={(e) => setEmailTemplates((prev) => ({
+                  ...prev,
+                  [templateLang]: { ...prev[templateLang], greeting: e.target.value },
+                }))}
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <Label className="text-sm">
+                {templateLang === "az" ? "Əsas mətn (Body)" : templateLang === "ru" ? "Основной текст (Body)" : "Body text"}
+              </Label>
+              <Textarea
+                value={emailTemplates[templateLang]?.body || ""}
+                onChange={(e) => setEmailTemplates((prev) => ({
+                  ...prev,
+                  [templateLang]: { ...prev[templateLang], body: e.target.value },
+                }))}
+                rows={4}
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <Label className="text-sm">
+                {templateLang === "az" ? "Bağlanış (Closing)" : templateLang === "ru" ? "Закрытие (Closing)" : "Closing"}
+              </Label>
+              <Textarea
+                value={emailTemplates[templateLang]?.closing || ""}
+                onChange={(e) => setEmailTemplates((prev) => ({
+                  ...prev,
+                  [templateLang]: { ...prev[templateLang], closing: e.target.value },
+                }))}
+                rows={2}
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <Label className="text-sm">
+                {templateLang === "az" ? "Alt qeyd (Note)" : templateLang === "ru" ? "Примечание (Note)" : "Footer note"}
+              </Label>
+              <Textarea
+                value={emailTemplates[templateLang]?.note || ""}
+                onChange={(e) => setEmailTemplates((prev) => ({
+                  ...prev,
+                  [templateLang]: { ...prev[templateLang], note: e.target.value },
+                }))}
+                rows={2}
+                className="mt-1"
+              />
+            </div>
+          </div>
+
+          <div className="bg-muted/50 rounded-md px-3 py-2 text-xs text-muted-foreground">
+            <strong>Dəyişənlər:</strong> {"{orgName}"} — şirkət adı, {"{invoiceNumber}"} — faktura nömrəsi, {"{total}"} — yekun məbləğ, {"{currency}"} — valyuta, {"{dueDate}"} — ödəniş tarixi
           </div>
         </CardContent>
       </Card>

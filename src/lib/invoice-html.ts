@@ -246,38 +246,56 @@ ${terms || footerNote ? `
 </html>`
 }
 
-/** Email body templates by language */
+/** Default email templates by language */
+export const DEFAULT_EMAIL_TEMPLATES: Record<string, { greeting: string; body: string; closing: string; note: string }> = {
+  az: {
+    greeting: "Hörmətli tərəfdaş,",
+    body: "{orgName} şirkəti tərəfindən {invoiceNumber} nömrəli hesab-faktura təqdim olunur.\n\nÜmumi məbləğ: {total} {currency}\nÖdəniş tarixi: {dueDate}",
+    closing: "Hesab-faktura bu məktuba əlavə edilmişdir. Zəhmət olmasa, faylı açıb ödəniş üçün istifadə edin.",
+    note: "Suallarınız varsa, bizimlə əlaqə saxlamaqdan çəkinməyin.\nƏməkdaşlığınız üçün təşəkkür edirik!",
+  },
+  ru: {
+    greeting: "Уважаемый партнёр,",
+    body: "Компания {orgName} направляет вам счёт-фактуру {invoiceNumber}.\n\nСумма к оплате: {total} {currency}\nСрок оплаты: {dueDate}",
+    closing: "Счёт-фактура прилагается к данному письму. Пожалуйста, откройте вложение для ознакомления и оплаты.",
+    note: "При возникновении вопросов не стесняйтесь обращаться к нам.\nБлагодарим за сотрудничество!",
+  },
+  en: {
+    greeting: "Dear Partner,",
+    body: "Please find attached invoice {invoiceNumber} from {orgName}.\n\nTotal amount: {total} {currency}\nDue date: {dueDate}",
+    closing: "The invoice document is attached to this email. Please review and process the payment at your earliest convenience.",
+    note: "Should you have any questions, please don't hesitate to contact us.\nThank you for your business!",
+  },
+}
+
+export type EmailTemplateFields = { greeting?: string; body?: string; closing?: string; note?: string }
+
+/** Email body templates by language — supports custom templates from settings */
 export function getEmailTemplate(
   lang: string,
-  data: { orgName: string; invoiceNumber: string; total: string; currency: string; dueDate: string; customMessage?: string }
+  data: { orgName: string; invoiceNumber: string; total: string; currency: string; dueDate: string; customMessage?: string },
+  customTemplates?: Record<string, EmailTemplateFields>
 ): { subject: string; html: string } {
   const { orgName, invoiceNumber, total, currency, dueDate, customMessage } = data
+  const vars: Record<string, string> = { orgName, invoiceNumber, total, currency, dueDate }
 
-  const templates: Record<string, { subject: string; greeting: string; body: string; closing: string; note: string }> = {
-    az: {
-      subject: `${invoiceNumber} — ${orgName} hesab-fakturası`,
-      greeting: "Hörmətli tərəfdaş,",
-      body: `<strong>${orgName}</strong> şirkəti tərəfindən <strong>${invoiceNumber}</strong> nömrəli hesab-faktura təqdim olunur.<br><br>Ümumi məbləğ: <strong>${total} ${currency}</strong><br>Ödəniş tarixi: <strong>${dueDate}</strong>`,
-      closing: "Hesab-faktura bu məktuba əlavə edilmişdir. Zəhmət olmasa, faylı açıb ödəniş üçün istifadə edin.",
-      note: "Suallarınız varsa, bizimlə əlaqə saxlamaqdan çəkinməyin.<br>Əməkdaşlığınız üçün təşəkkür edirik!",
-    },
-    ru: {
-      subject: `${invoiceNumber} — Счёт от ${orgName}`,
-      greeting: "Уважаемый партнёр,",
-      body: `Компания <strong>${orgName}</strong> направляет вам счёт-фактуру <strong>${invoiceNumber}</strong>.<br><br>Сумма к оплате: <strong>${total} ${currency}</strong><br>Срок оплаты: <strong>${dueDate}</strong>`,
-      closing: "Счёт-фактура прилагается к данному письму. Пожалуйста, откройте вложение для ознакомления и оплаты.",
-      note: "При возникновении вопросов не стесняйтесь обращаться к нам.<br>Благодарим за сотрудничество!",
-    },
-    en: {
-      subject: `${invoiceNumber} — Invoice from ${orgName}`,
-      greeting: "Dear Partner,",
-      body: `Please find attached invoice <strong>${invoiceNumber}</strong> from <strong>${orgName}</strong>.<br><br>Total amount: <strong>${total} ${currency}</strong><br>Due date: <strong>${dueDate}</strong>`,
-      closing: "The invoice document is attached to this email. Please review and process the payment at your earliest convenience.",
-      note: "Should you have any questions, please don't hesitate to contact us.<br>Thank you for your business!",
-    },
+  const subjectTemplates: Record<string, string> = {
+    az: `${invoiceNumber} — ${orgName} hesab-fakturası`,
+    ru: `${invoiceNumber} — Счёт от ${orgName}`,
+    en: `${invoiceNumber} — Invoice from ${orgName}`,
   }
 
-  const t = templates[lang] || templates.az
+  const defaults = DEFAULT_EMAIL_TEMPLATES[lang] || DEFAULT_EMAIL_TEMPLATES.az
+  const custom = customTemplates?.[lang]
+
+  // Substitute {varName} placeholders with actual values
+  const sub = (text: string) => text.replace(/\{(\w+)\}/g, (_, key) => vars[key] || `{${key}}`)
+
+  const greeting = sub(custom?.greeting || defaults.greeting)
+  const body = sub(custom?.body || defaults.body).replace(/\n/g, "<br>")
+  const closing = sub(custom?.closing || defaults.closing).replace(/\n/g, "<br>")
+  const note = sub(custom?.note || defaults.note).replace(/\n/g, "<br>")
+  const subject = subjectTemplates[lang] || subjectTemplates.az
 
   const html = `
 <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
@@ -286,19 +304,19 @@ export function getEmailTemplate(
     <p style="color: rgba(255,255,255,0.7); font-size: 12px; margin: 4px 0 0;">${invoiceNumber}</p>
   </div>
   <div style="background: #f8fffe; border: 1px solid #e0f2f1; border-top: none; padding: 24px 28px; border-radius: 0 0 8px 8px;">
-    <p style="font-size: 14px; margin: 0 0 16px;">${t.greeting}</p>
+    <p style="font-size: 14px; margin: 0 0 16px;">${greeting}</p>
     ${customMessage ? `<p style="font-size: 14px; margin: 0 0 16px; padding: 12px 16px; background: #f0f9ff; border-left: 3px solid #0891b2; border-radius: 4px;">${customMessage}</p>` : ''}
-    <p style="font-size: 14px; line-height: 1.6; margin: 0 0 16px;">${t.body}</p>
+    <p style="font-size: 14px; line-height: 1.6; margin: 0 0 16px;">${body}</p>
     <div style="background: #0891b2; color: white; padding: 14px 20px; border-radius: 6px; text-align: center; margin: 20px 0;">
       <span style="font-size: 13px; opacity: 0.8;">${lang === 'ru' ? 'ИТОГО' : lang === 'en' ? 'TOTAL' : 'YEKUN'}</span>
       <br>
       <strong style="font-size: 24px; letter-spacing: 0.5px;">${total} ${currency}</strong>
     </div>
-    <p style="font-size: 13px; color: #666; margin: 16px 0 8px;">📎 ${t.closing}</p>
+    <p style="font-size: 13px; color: #666; margin: 16px 0 8px;">📎 ${closing}</p>
     <hr style="border: none; border-top: 1px solid #e0f2f1; margin: 16px 0;">
-    <p style="font-size: 12px; color: #999; margin: 0;">${t.note}</p>
+    <p style="font-size: 12px; color: #999; margin: 0;">${note}</p>
   </div>
 </div>`
 
-  return { subject: t.subject, html }
+  return { subject, html }
 }
