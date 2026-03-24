@@ -10,7 +10,7 @@ import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Select } from "@/components/ui/select"
-import { Plus, FileSpreadsheet, DollarSign, Clock, AlertTriangle, CheckCircle, Eye, Pencil, Trash2, Download, RefreshCw } from "lucide-react"
+import { Plus, DollarSign, Clock, AlertTriangle, CheckCircle, Eye, Pencil, Trash2, Download, CalendarDays, TrendingUp, Send, FileText, BarChart3, XCircle } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -36,6 +36,18 @@ interface InvoiceStats {
   totalOutstanding: number
   totalOverdue: number
   currency: string
+  totalCount: number
+  draftCount: number
+  sentCount: number
+  paidCount: number
+  overdueCount: number
+  partiallyPaidCount: number
+  cancelledCount: number
+  thisMonthCount: number
+  thisMonthAmount: number
+  thisYearCount: number
+  thisYearAmount: number
+  avgAmount: number
 }
 
 const statusBadge = (status: string) => {
@@ -70,11 +82,10 @@ export default function InvoicesPage() {
   const [loading, setLoading] = useState(true)
   const [statusFilter, setStatusFilter] = useState<string>("")
   const [stats, setStats] = useState<InvoiceStats>({
-    totalInvoiced: 0,
-    totalPaid: 0,
-    totalOutstanding: 0,
-    totalOverdue: 0,
-    currency: "USD",
+    totalInvoiced: 0, totalPaid: 0, totalOutstanding: 0, totalOverdue: 0, currency: "AZN",
+    totalCount: 0, draftCount: 0, sentCount: 0, paidCount: 0, overdueCount: 0,
+    partiallyPaidCount: 0, cancelledCount: 0, thisMonthCount: 0, thisMonthAmount: 0,
+    thisYearCount: 0, thisYearAmount: 0, avgAmount: 0,
   })
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [deleteName, setDeleteName] = useState("")
@@ -173,10 +184,7 @@ export default function InvoicesPage() {
       label: t("colNumber"),
       sortable: true,
       render: (item: any) => (
-        <span className="font-mono text-sm">
-          {item.invoiceNumber}
-          {item.recurringInvoiceId && <span className="ml-1.5 text-[10px] bg-cyan-100 text-cyan-700 dark:bg-cyan-900 dark:text-cyan-300 px-1 py-0.5 rounded font-sans">↻</span>}
-        </span>
+        <span className="font-mono text-sm">{item.invoiceNumber}</span>
       ),
     },
     {
@@ -288,16 +296,12 @@ export default function InvoicesPage() {
           <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
           <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={() => router.push("/invoices/recurring")}>
-            <RefreshCw className="h-4 w-4 mr-1" /> {t("recurringInvoices") || "Təkrarlanan"}
-          </Button>
-          <Button onClick={() => router.push("/invoices/create")}>
-            <Plus className="h-4 w-4 mr-1" /> {t("newInvoice")}
-          </Button>
-        </div>
+        <Button onClick={() => router.push("/invoices/create")}>
+          <Plus className="h-4 w-4 mr-1" /> {t("newInvoice")}
+        </Button>
       </div>
 
+      {/* Row 1 — Financial summary */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <ColorStatCard
           label={t("statTotalInvoiced")}
@@ -325,6 +329,58 @@ export default function InvoicesPage() {
         />
       </div>
 
+      {/* Row 2 — Detailed analytics (clickable filters) */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        {[
+          { icon: <CalendarDays className="h-3.5 w-3.5" />, label: t("thisMonth"), value: `${stats.thisMonthCount}`, sub: `${stats.thisMonthAmount.toLocaleString()} ${stats.currency}`, filter: null },
+          { icon: <TrendingUp className="h-3.5 w-3.5" />, label: t("thisYear"), value: `${stats.thisYearCount}`, sub: `${stats.thisYearAmount.toLocaleString()} ${stats.currency}`, filter: null },
+          { icon: <Send className="h-3.5 w-3.5" />, label: t("statSentCount"), value: `${stats.sentCount}`, sub: `${stats.totalCount} ${t("ofTotal")}`, filter: "sent" },
+          { icon: <FileText className="h-3.5 w-3.5" />, label: t("statDrafts"), value: `${stats.draftCount}`, sub: t("notSent"), filter: "draft" },
+          { icon: <BarChart3 className="h-3.5 w-3.5" />, label: t("statAvgInvoice"), value: `${Math.round(stats.avgAmount).toLocaleString()}`, sub: stats.currency, filter: null },
+          { icon: <XCircle className="h-3.5 w-3.5" />, label: t("statPartialCancel"), value: `${stats.partiallyPaidCount} / ${stats.cancelledCount}`, sub: t("partialCancelSub"), filter: "partially_paid" },
+        ].map(({ icon, label, value, sub, filter }) => (
+          <div
+            key={label}
+            onClick={() => filter && setStatusFilter(prev => prev === filter ? "" : filter)}
+            className={`rounded-lg border bg-card p-3 space-y-1 transition-all ${filter ? "cursor-pointer hover:border-primary hover:shadow-sm" : ""} ${filter && statusFilter === filter ? "border-primary bg-primary/5 shadow-sm" : ""}`}
+          >
+            <div className="flex items-center gap-1.5 text-muted-foreground">
+              {icon}
+              <span className="text-xs font-medium">{label}</span>
+              {filter && statusFilter === filter && <span className="ml-auto text-xs text-primary font-medium">✕</span>}
+            </div>
+            <p className="text-lg font-bold">{value} <span className="text-xs font-normal text-muted-foreground">{t("invoiceShort")}</span></p>
+            <p className="text-xs text-muted-foreground">{sub}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Payment progress bar */}
+      {stats.totalInvoiced > 0 && (
+        <div className="rounded-lg border bg-card px-4 py-3 space-y-2">
+          <div className="flex items-center justify-between text-sm">
+            <span className="font-medium">{t("paymentProgress")}</span>
+            <span className="text-muted-foreground">
+              {stats.totalPaid.toLocaleString()} / {stats.totalInvoiced.toLocaleString()} {stats.currency}
+              {" "}·{" "}
+              <span className="font-semibold text-green-600">{Math.round((stats.totalPaid / stats.totalInvoiced) * 100)}%</span>
+            </span>
+          </div>
+          <div className="h-2 rounded-full bg-muted overflow-hidden">
+            <div
+              className="h-full rounded-full bg-green-500 transition-all duration-500"
+              style={{ width: `${Math.min((stats.totalPaid / stats.totalInvoiced) * 100, 100)}%` }}
+            />
+          </div>
+          <div className="flex gap-4 text-xs text-muted-foreground">
+            <span className="flex items-center gap-1"><span className="inline-block w-2 h-2 rounded-full bg-green-500" />{t("status.paid")}: {stats.paidCount} {t("invoiceShort")}</span>
+            <span className="flex items-center gap-1"><span className="inline-block w-2 h-2 rounded-full bg-orange-400" />{t("waiting")}: {stats.sentCount} {t("invoiceShort")}</span>
+            <span className="flex items-center gap-1"><span className="inline-block w-2 h-2 rounded-full bg-red-500" />{t("status.overdue")}: {stats.overdueCount} {t("invoiceShort")}</span>
+            <span className="flex items-center gap-1"><span className="inline-block w-2 h-2 rounded-full bg-yellow-400" />{t("status.partially_paid")}: {stats.partiallyPaidCount} {t("invoiceShort")}</span>
+          </div>
+        </div>
+      )}
+
       <div className="flex items-center gap-4">
         <Select
           value={statusFilter}
@@ -347,6 +403,12 @@ export default function InvoicesPage() {
         searchPlaceholder={t("searchPlaceholder")}
         searchKey="invoiceNumber"
         onRowClick={(item: any) => router.push(`/invoices/${item.id}`)}
+        rowClassName={(item: any) => {
+          if (item.status === "overdue") return "bg-red-50/60 dark:bg-red-950/20"
+          if (item.status === "paid") return "bg-green-50/60 dark:bg-green-950/20"
+          if (item.status === "partially_paid") return "bg-yellow-50/60 dark:bg-yellow-950/20"
+          return ""
+        }}
       />
 
       <DeleteConfirmDialog
