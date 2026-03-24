@@ -10,7 +10,7 @@ import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Select } from "@/components/ui/select"
-import { Plus, FileSpreadsheet, DollarSign, Clock, AlertTriangle, CheckCircle, Eye, Pencil, Trash2, Download } from "lucide-react"
+import { Plus, FileSpreadsheet, DollarSign, Clock, AlertTriangle, CheckCircle, Eye, Pencil, Trash2, Download, RefreshCw } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -288,9 +288,14 @@ export default function InvoicesPage() {
           <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
           <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
         </div>
-        <Button onClick={() => router.push("/invoices/create")}>
-          <Plus className="h-4 w-4 mr-1" /> {t("newInvoice")}
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => router.push("/invoices/recurring")}>
+            <RefreshCw className="h-4 w-4 mr-1" /> {t("recurringInvoices") || "Təkrarlanan"}
+          </Button>
+          <Button onClick={() => router.push("/invoices/create")}>
+            <Plus className="h-4 w-4 mr-1" /> {t("newInvoice")}
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
