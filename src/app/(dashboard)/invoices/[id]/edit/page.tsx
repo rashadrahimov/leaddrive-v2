@@ -471,60 +471,58 @@ export default function EditInvoicePage() {
 
           {/* SUMMARY + ACTIONS (bottom) */}
           <Card className="border-t-4 border-t-cyan-500">
-            <CardContent className="px-4 py-4">
-              <div className="flex items-start gap-8">
-                <div className="flex-1 space-y-3">
-                  <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">{t("summary")}</h3>
-                  <div className="grid grid-cols-2 gap-x-8 gap-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">{t("subtotal")}</span>
-                      <span className="font-medium tabular-nums">{fmt(calculations.subtotal)} {currency}</span>
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-xs text-muted-foreground">{t("discount")}</Label>
-                      <div className="flex gap-1.5">
-                        <Select value={discountType} onChange={e => setDiscountType(e.target.value as "percentage" | "fixed")} className="w-16 h-8 text-sm">
-                          <option value="percentage">%</option>
-                          <option value="fixed">{currency}</option>
-                        </Select>
-                        <Input type="number" min={0} step={0.01} value={discountValue} onChange={e => setDiscountValue(Math.max(0, parseFloat(e.target.value) || 0))} className="flex-1 h-8 text-sm text-right" />
-                      </div>
-                      {calculations.discountAmount > 0 && (
-                        <div className="flex justify-between text-xs text-destructive">
-                          <span>{t("discountAmount")}</span>
-                          <span className="tabular-nums">-{fmt(calculations.discountAmount)} {currency}</span>
-                        </div>
-                      )}
-                    </div>
-                    <div className="space-y-1.5">
-                      <label className="flex items-center gap-2 cursor-pointer">
-                        <input type="checkbox" checked={includeVat} onChange={e => setIncludeVat(e.target.checked)} className="h-3.5 w-3.5 rounded border-input" />
-                        <span className="text-sm">{t("includeVat")} (18%)</span>
-                      </label>
-                      {includeVat && (
-                        <div className="flex justify-between text-sm">
-                          <span className="text-muted-foreground">{t("vat")} (18%)</span>
-                          <span className="tabular-nums">{fmt(calculations.taxAmount)} {currency}</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
+            <CardContent className="px-5 py-5 space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">{t("summary")}</h3>
+              </div>
+
+              <div className="space-y-3 max-w-md">
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">{t("subtotal")}</span>
+                  <span className="font-medium tabular-nums">{fmt(calculations.subtotal)} {currency}</span>
                 </div>
-                <div className="w-64 flex-shrink-0 space-y-3">
-                  <div className="border rounded-lg bg-muted/30 px-4 py-3">
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm font-semibold">{t("total")}</span>
-                      <span className="text-2xl font-bold tabular-nums text-foreground">
-                        {fmt(calculations.total)}
-                        <span className="text-base font-semibold text-muted-foreground ml-1">{currency}</span>
-                      </span>
-                    </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs text-muted-foreground">{t("discount")}</Label>
+                  <div className="flex gap-2 max-w-xs">
+                    <Select value={discountType} onChange={e => setDiscountType(e.target.value as "percentage" | "fixed")} className="w-20 h-8 text-sm">
+                      <option value="percentage">%</option>
+                      <option value="fixed">{currency}</option>
+                    </Select>
+                    <Input type="number" min={0} step={0.01} value={discountValue} onChange={e => setDiscountValue(Math.max(0, parseFloat(e.target.value) || 0))} className="w-32 h-8 text-sm text-right" />
                   </div>
-                  <Button className="w-full h-9" onClick={handleSave} disabled={saving}>
-                    <Save className="h-4 w-4 mr-2" />
-                    {saving ? tc("saving") : tc("save")}
-                  </Button>
+                  {calculations.discountAmount > 0 && (
+                    <div className="flex justify-between text-xs text-destructive max-w-xs">
+                      <span>{t("discountAmount")}</span>
+                      <span className="tabular-nums">-{fmt(calculations.discountAmount)} {currency}</span>
+                    </div>
+                  )}
                 </div>
+                <div className="space-y-1.5">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" checked={includeVat} onChange={e => setIncludeVat(e.target.checked)} className="h-3.5 w-3.5 rounded border-input" />
+                    <span className="text-sm">{t("includeVat")} (18%)</span>
+                  </label>
+                  {includeVat && (
+                    <div className="flex justify-between text-sm max-w-xs">
+                      <span className="text-muted-foreground">{t("vat")} (18%)</span>
+                      <span className="tabular-nums">{fmt(calculations.taxAmount)} {currency}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="border-t pt-4 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <span className="text-sm font-semibold">{t("total")}</span>
+                  <span className="text-2xl font-bold tabular-nums text-foreground">
+                    {fmt(calculations.total)}
+                    <span className="text-base font-semibold text-muted-foreground ml-1">{currency}</span>
+                  </span>
+                </div>
+                <Button className="h-9" onClick={handleSave} disabled={saving}>
+                  <Save className="h-4 w-4 mr-2" />
+                  {saving ? tc("saving") : tc("save")}
+                </Button>
               </div>
             </CardContent>
           </Card>
