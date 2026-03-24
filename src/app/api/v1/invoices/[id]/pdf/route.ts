@@ -136,7 +136,7 @@ function generateInvoiceHtml(
   body { font-family: Arial, 'Segoe UI', sans-serif; width: 794px; margin: 0 auto; color: #222; font-size: 11px; background: #fff; }
 
   /* ── TOP HEADER BAND ── */
-  .hdr-band { background: #1a5c5c; color: white; padding: 18px 28px 14px; display: flex; justify-content: space-between; align-items: flex-end; }
+  .hdr-band { background: linear-gradient(135deg, #0891b2, #2563eb); color: white; padding: 18px 28px 14px; display: flex; justify-content: space-between; align-items: flex-end; }
   .hdr-company { font-size: 17px; font-weight: 800; letter-spacing: 0.5px; line-height: 1.2; }
   .hdr-company small { display: block; font-size: 10px; font-weight: 400; opacity: 0.75; margin-top: 2px; letter-spacing: 0.3px; }
   .hdr-inv { text-align: right; }
@@ -144,8 +144,8 @@ function generateInvoiceHtml(
   .hdr-inv .num { font-size: 12px; opacity: 0.7; margin-top: 2px; }
 
   /* ── DATES BAR ── */
-  .dates-bar { background: #e8f4f4; border-bottom: 2px solid #1a5c5c; padding: 7px 28px; display: flex; gap: 32px; }
-  .date-item { font-size: 10.5px; color: #1a5c5c; }
+  .dates-bar { background: #e0f7fa; border-bottom: 2px solid #0891b2; padding: 7px 28px; display: flex; gap: 32px; }
+  .date-item { font-size: 10.5px; color: #0891b2; }
   .date-item strong { font-weight: 700; margin-right: 5px; }
 
   /* ── BODY ── */
@@ -153,51 +153,51 @@ function generateInvoiceHtml(
 
   /* ── PARTIES ── */
   .parties { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
-  .party { border: 1px solid #d0e4e4; border-radius: 4px; overflow: hidden; }
-  .party-hdr { background: #1a5c5c; color: white; font-size: 9.5px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; padding: 5px 12px; }
-  .party-body { padding: 9px 12px; background: #f7fafa; }
+  .party { border: 1px solid #b2ebf2; border-radius: 4px; overflow: hidden; }
+  .party-hdr { background: #0891b2; color: white; font-size: 9.5px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; padding: 5px 12px; }
+  .party-body { padding: 9px 12px; background: #f0fdfa; }
   .pr { display: flex; padding: 2px 0; font-size: 10.5px; }
-  .pr .k { width: 68px; color: #6b8f8f; flex-shrink: 0; }
+  .pr .k { width: 68px; color: #0e7490; flex-shrink: 0; }
   .pr .v { color: #222; font-weight: 600; }
 
   /* ── TABLE ── */
   .tbl { width: 100%; border-collapse: collapse; margin-bottom: 6px; }
-  .tbl thead tr { background: #1a5c5c; }
+  .tbl thead tr { background: #0891b2; }
   .tbl th { padding: 7px 10px; color: white; font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; text-align: left; }
   .tbl th:nth-child(n+3), .tbl td:nth-child(n+3) { text-align: right; }
-  .tbl tbody tr:nth-child(even) { background: #f7fafa; }
-  .tbl tbody tr { border-bottom: 1px solid #e8eded; }
+  .tbl tbody tr:nth-child(even) { background: #f0fdfa; }
+  .tbl tbody tr { border-bottom: 1px solid #e0f2f1; }
   .tbl td { padding: 6px 10px; font-size: 10.5px; color: #333; vertical-align: top; }
   .tbl td:first-child { color: #aaa; font-size: 10px; }
-  .tbl td:last-child { font-weight: 700; color: #1a5c5c; }
+  .tbl td:last-child { font-weight: 700; color: #0891b2; }
 
   /* ── SUMMARY ── */
   .sum-wrap { display: flex; justify-content: flex-end; margin: 6px 0 14px; }
-  .sum-box { width: 230px; border: 1px solid #d0e4e4; border-radius: 4px; overflow: hidden; }
-  .sum-row { display: flex; justify-content: space-between; padding: 4px 12px; font-size: 11px; border-bottom: 1px solid #eef4f4; color: #555; }
+  .sum-box { width: 230px; border: 1px solid #b2ebf2; border-radius: 4px; overflow: hidden; }
+  .sum-row { display: flex; justify-content: space-between; padding: 4px 12px; font-size: 11px; border-bottom: 1px solid #e0f7fa; color: #555; }
   .sum-row:last-child { border-bottom: none; }
-  .sum-row.yekun { background: #1a5c5c; color: white; font-weight: 800; font-size: 12.5px; padding: 7px 12px; }
+  .sum-row.yekun { background: #0891b2; color: white; font-weight: 800; font-size: 12.5px; padding: 7px 12px; }
 
   /* ── BOTTOM ── */
   .bottom { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-  .bot-box { border: 1px solid #d0e4e4; border-radius: 4px; overflow: hidden; }
-  .bot-hdr { background: #1a5c5c; color: white; font-size: 9.5px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; padding: 5px 12px; }
-  .bot-body { padding: 9px 12px; background: #f7fafa; }
+  .bot-box { border: 1px solid #b2ebf2; border-radius: 4px; overflow: hidden; }
+  .bot-hdr { background: #0891b2; color: white; font-size: 9.5px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; padding: 5px 12px; }
+  .bot-body { padding: 9px 12px; background: #f0fdfa; }
   .br { display: flex; padding: 2px 0; font-size: 10.5px; }
-  .br .k { width: 48px; color: #6b8f8f; flex-shrink: 0; }
+  .br .k { width: 48px; color: #0e7490; flex-shrink: 0; }
   .br .v { color: #222; font-weight: 600; }
-  .stamp-body { padding: 10px 12px; background: #f7fafa; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 210px; }
+  .stamp-body { padding: 10px 12px; background: #f0fdfa; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 210px; }
   .stamp-img { width: 185px; height: 185px; object-fit: contain; }
   .sig-line { border-top: 1.5px solid #333; width: 190px; margin: 10px auto 6px; }
-  .sig-name { font-size: 11.5px; font-weight: 700; color: #1a5c5c; text-align: center; }
+  .sig-name { font-size: 11.5px; font-weight: 700; color: #0891b2; text-align: center; }
   .sig-title { font-size: 10px; color: #777; margin-top: 2px; text-align: center; }
 
   /* ── FOOTER ── */
-  .footer { padding: 8px 28px 14px; font-size: 10px; color: #aaa; border-top: 1px solid #e8eded; margin-top: 12px; }
+  .footer { padding: 8px 28px 14px; font-size: 10px; color: #aaa; border-top: 1px solid #e0f2f1; margin-top: 12px; }
 
   /* ── PRINT BTN ── */
-  .print-btn { position: fixed; bottom: 18px; right: 18px; background: #1a5c5c; color: white; border: none; padding: 10px 22px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 700; box-shadow: 0 4px 14px rgba(26,92,92,0.4); }
-  .print-btn:hover { background: #0f766e; }
+  .print-btn { position: fixed; bottom: 18px; right: 18px; background: #0891b2; color: white; border: none; padding: 10px 22px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 700; box-shadow: 0 4px 14px rgba(8,145,178,0.4); }
+  .print-btn:hover { background: #0e7490; }
 </style>
 </head>
 <body>
