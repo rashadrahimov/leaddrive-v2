@@ -122,16 +122,16 @@ function generateInvoiceHtml(
   .summary-table tr td:last-child { text-align: right; font-weight: 500; }
   .summary-table .total { border-top: 2px solid #0f766e; font-size: 14px; font-weight: 700; color: #0f766e; }
   .summary-table .total td { padding-top: 6px; }
-  .bank-box { border: 1.5px solid #2196a6; border-radius: 4px; margin-bottom: 12px; overflow: hidden; }
+  .bottom-row { display: grid; grid-template-columns: 1fr auto; gap: 20px; align-items: end; margin-top: 12px; }
+  .bank-box { border: 1.5px solid #2196a6; border-radius: 4px; overflow: hidden; }
   .bank-box-title { background: #2196a6; color: white; font-weight: 700; font-size: 11px; padding: 5px 10px; letter-spacing: 0.5px; }
-  .bank-box-body { padding: 8px 10px; font-size: 11.5px; display: grid; grid-template-columns: 1fr 1fr; gap: 0 20px; }
+  .bank-box-body { padding: 8px 10px; font-size: 11.5px; }
   .bank-row { display: flex; gap: 4px; padding: 2px 0; }
   .bank-row strong { min-width: 70px; color: #1a1a1a; flex-shrink: 0; }
-  .signer-row { display: flex; justify-content: flex-end; margin-top: 14px; }
-  .signer-block { text-align: center; font-size: 12px; width: 220px; }
-  .stamp-wrap { height: 110px; display: flex; align-items: flex-end; justify-content: center; margin-bottom: -20px; }
-  .stamp-img { width: 110px; height: 110px; object-fit: contain; opacity: 0.9; }
-  .signer-line { border-top: 1px solid #1a1a1a; width: 200px; margin: 0 auto 5px; }
+  .signer-block { text-align: center; font-size: 12px; width: 220px; flex-shrink: 0; }
+  .stamp-wrap { display: flex; align-items: flex-end; justify-content: center; margin-bottom: -10px; }
+  .stamp-img { width: 120px; height: 120px; object-fit: contain; opacity: 0.9; }
+  .signer-line { border-top: 1px solid #1a1a1a; width: 200px; margin: 6px auto 5px; }
   .signer-name { font-weight: 600; }
   .signer-title { color: #666; font-size: 11px; margin-top: 2px; }
   .footer { border-top: 1px solid #e5e5e5; padding-top: 8px; font-size: 11px; color: #999; margin-top: 10px; }
@@ -210,28 +210,28 @@ function generateInvoiceHtml(
   </table>
 </div>
 
-${hasBankDetails ? `
-<div class="bank-box">
-  <div class="bank-box-title">BANK HESABI</div>
-  <div class="bank-box-body">
-    ${bankName ? `<div class="bank-row"><strong>Bank:</strong><span>${bankName}</span></div>` : ""}
-    ${bankVoen ? `<div class="bank-row"><strong>VÖEN:</strong><span>${bankVoen}</span></div>` : ""}
-    ${bankCode ? `<div class="bank-row"><strong>Kod:</strong><span>${bankCode}</span></div>` : ""}
-    ${bankSwift ? `<div class="bank-row"><strong>SWIFT:</strong><span>${bankSwift}</span></div>` : ""}
-    ${bankCorrAccount ? `<div class="bank-row"><strong>M/H:</strong><span>${bankCorrAccount}</span></div>` : ""}
-    ${bankAccount ? `<div class="bank-row"><strong>H/H:</strong><span>${bankAccount}</span></div>` : ""}
+<div class="bottom-row">
+  <div>
+    ${hasBankDetails ? `
+    <div class="bank-box">
+      <div class="bank-box-title">BANK HESABI</div>
+      <div class="bank-box-body">
+        ${bankName ? `<div class="bank-row"><strong>Bank:</strong><span>${bankName}</span></div>` : ""}
+        ${bankVoen ? `<div class="bank-row"><strong>VÖEN:</strong><span>${bankVoen}</span></div>` : ""}
+        ${bankCode ? `<div class="bank-row"><strong>Kod:</strong><span>${bankCode}</span></div>` : ""}
+        ${bankSwift ? `<div class="bank-row"><strong>SWIFT:</strong><span>${bankSwift}</span></div>` : ""}
+        ${bankCorrAccount ? `<div class="bank-row"><strong>M/H:</strong><span>${bankCorrAccount}</span></div>` : ""}
+        ${bankAccount ? `<div class="bank-row"><strong>H/H:</strong><span>${bankAccount}</span></div>` : ""}
+      </div>
+    </div>` : ""}
   </div>
-</div>` : ""}
-
-${signerName || (withStamp && companyStampUrl) ? `
-<div class="signer-row">
   <div class="signer-block">
     ${withStamp && companyStampUrl ? `<div class="stamp-wrap"><img src="${companyStampUrl}" class="stamp-img" alt="Stamp" /></div>` : ""}
     <div class="signer-line"></div>
     ${signerName ? `<div class="signer-name">${signerName}</div>` : ""}
     ${signerTitle ? `<div class="signer-title">${signerTitle}</div>` : ""}
   </div>
-</div>` : ""}
+</div>
 
 ${terms || footerNote ? `
 <div class="footer">
