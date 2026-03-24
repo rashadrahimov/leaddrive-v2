@@ -933,6 +933,7 @@
     "emailSent": "Invoice sent successfully",
     "duplicate": "Duplicate",
     "downloadPdf": "Download PDF",
+    "downloadPdfStamp": "PDF with Stamp",
     "convertFromOffer": "Convert from Offer",
     "issueDate": "Issue Date",
     "dueDate": "Due Date",

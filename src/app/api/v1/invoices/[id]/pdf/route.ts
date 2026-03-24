@@ -26,11 +26,11 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     const settings = (org?.settings as Record<string, unknown>) || {}
     const invoiceSettings = (settings.invoice as Record<string, unknown>) || {}
 
-    // Generate HTML-based PDF
-    const html = generateInvoiceHtml(invoice, org?.name || "", invoiceSettings)
-
     const { searchParams } = new URL(req.url)
     const format = searchParams.get("format")
+    const withStamp = searchParams.get("stamp") === "true"
+
+    const html = generateInvoiceHtml(invoice, org?.name || "", invoiceSettings, withStamp)
 
     if (format === "html") {
       return new NextResponse(html, {
@@ -53,7 +53,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 function generateInvoiceHtml(
   invoice: Record<string, unknown> & { items: Array<Record<string, unknown>>; company?: Record<string, unknown> | null; contact?: Record<string, unknown> | null },
   orgName: string,
-  settings: Record<string, unknown>
+  settings: Record<string, unknown>,
+  withStamp = false
 ): string {
   const companyName = (settings.companyName as string) || orgName
   const companyAddress = (settings.companyAddress as string) || ""
@@ -71,6 +72,7 @@ function generateInvoiceHtml(
   const hasBankDetails = bankName || bankAccount || bankSwift
   const signerName = (settings.signerName as string) || ""
   const signerTitle = (settings.signerTitle as string) || ""
+  const companyStampUrl = (settings.companyStampUrl as string) || ""
   const footerNote = (invoice.footerNote as string) || (settings.footerNote as string) || ""
   const terms = (invoice.termsAndConditions as string) || (settings.termsAndConditions as string) || ""
 
@@ -138,6 +140,8 @@ function generateInvoiceHtml(
   .signer-block .signer-line { border-top: 1px solid #1a1a1a; width: 200px; margin: 40px auto 6px; }
   .signer-block .signer-name { font-weight: 600; }
   .signer-block .signer-title { color: #666; font-size: 12px; margin-top: 2px; }
+  .stamp-img { width: 160px; height: 160px; object-fit: contain; position: absolute; top: -100px; left: 50%; transform: translateX(-50%); opacity: 0.9; pointer-events: none; }
+  .signer-block { position: relative; padding-top: 80px; }
 </style>
 </head>
 <body>
@@ -231,11 +235,12 @@ ${hasBankDetails ? `
   </div>
 </div>` : ""}
 
-${signerName ? `
+${signerName || (withStamp && companyStampUrl) ? `
 <div class="signer">
   <div class="signer-block">
+    ${withStamp && companyStampUrl ? `<img src="${companyStampUrl}" class="stamp-img" alt="Stamp" />` : ""}
     <div class="signer-line"></div>
-    <div class="signer-name">${signerName}</div>
+    ${signerName ? `<div class="signer-name">${signerName}</div>` : ""}
     ${signerTitle ? `<div class="signer-title">${signerTitle}</div>` : ""}
   </div>
 </div>` : ""}
