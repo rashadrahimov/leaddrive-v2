@@ -79,11 +79,11 @@ function generateInvoiceHtml(
   const formatDate = (d: unknown) => d ? new Date(d as string).toLocaleDateString("az-AZ") : "—"
   const formatMoney = (n: unknown) => Number(n || 0).toLocaleString("az-AZ", { minimumFractionDigits: 2 })
   const paymentTermsLabels: Record<string, string> = {
-    dueOnReceipt: "Alındıqda ödəniş",
-    net15: "Net 15",
-    net30: "Net 30",
-    net45: "Net 45",
-    net60: "Net 60",
+    dueOnReceipt: "Dərhal",
+    net15: "15 gün",
+    net30: "30 gün",
+    net45: "45 gün",
+    net60: "60 gün",
     custom: "Fərdi",
   }
   const formatPaymentTerms = (t: unknown) => t ? (paymentTermsLabels[t as string] || String(t)) : ""
