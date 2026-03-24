@@ -225,7 +225,17 @@
     "activities": "Активности",
     "daysActive": "Дней активен",
     "daysLeft": "Дней осталось",
-    "daysOpen": "Дней открыт"
+    "daysOpen": "Дней открыт",
+    "activity": "Активность",
+    "noContactRoles": "Роли контактов не заданы",
+    "addContactRole": "Добавить роль контакта",
+    "nextSteps": "Следующие шаги",
+    "addNextStep": "Добавить следующий шаг...",
+    "noCompetitors": "Конкуренты не добавлены",
+    "addCompetitor": "Добавить конкурента",
+    "noTeamMembers": "Нет участников команды",
+    "addTeamMembersHint": "Добавьте участников команды к этой сделке",
+    "addMember": "Добавить участника"
   },
   "leads": {
     "title": "Лиды",
