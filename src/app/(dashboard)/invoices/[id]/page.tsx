@@ -468,6 +468,10 @@ export default function InvoiceDetailPage() {
     window.open(url, "_blank")
   }
 
+  function handleDownloadAct() {
+    window.open(`/api/v1/invoices/${invoiceId}/act?format=html`, "_blank")
+  }
+
   async function handleRecordPayment() {
     setPaymentLoading(true)
     setPaymentError("")
@@ -606,6 +610,10 @@ export default function InvoiceDetailPage() {
           <Button variant="outline" size="sm" onClick={() => handleDownloadPdf(false)}>
             <Download className="h-4 w-4 mr-1" />
             {t("downloadPdfNoStamp")}
+          </Button>
+          <Button variant="outline" size="sm" onClick={handleDownloadAct}>
+            <FileText className="h-4 w-4 mr-1" />
+            Akt
           </Button>
           <Button variant="outline" size="sm" onClick={handleDuplicate}>
             <Copy className="h-4 w-4 mr-1" />

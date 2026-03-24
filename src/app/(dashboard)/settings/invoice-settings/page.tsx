@@ -49,6 +49,9 @@ export default function InvoiceSettingsPage() {
     signerName: "",
     signerTitle: "",
     companyStampUrl: "",
+    actSignerName: "",
+    actSignerTitle: "",
+    actSignerSignatureUrl: "",
     termsAndConditions: "",
     footerNote: "",
   })
@@ -119,6 +122,18 @@ export default function InvoiceSettingsPage() {
       const dataUrl = ev.target?.result as string
       const transparent = await removeWhiteBackground(dataUrl)
       updateField("companyStampUrl", transparent)
+    }
+    reader.readAsDataURL(file)
+  }
+
+  function handleSignatureUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = async (ev) => {
+      const dataUrl = ev.target?.result as string
+      const transparent = await removeWhiteBackground(dataUrl)
+      updateField("actSignerSignatureUrl", transparent)
     }
     reader.readAsDataURL(file)
   }
@@ -506,6 +521,85 @@ export default function InvoiceSettingsPage() {
                 />
               </label>
             )}
+          </div>
+
+          {/* Act signer section */}
+          <div className="border-t pt-4 mt-4">
+            <h4 className="text-sm font-semibold mb-3">Akt imzalayan (Təhvil-Təslim Aktı)</h4>
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              <div>
+                <Label className="text-sm">Ad Soyad</Label>
+                <Input
+                  value={settings.actSignerName || ""}
+                  onChange={(e) => updateField("actSignerName", e.target.value)}
+                  placeholder="Rəşad Rəhimov"
+                  className="mt-1"
+                />
+              </div>
+              <div>
+                <Label className="text-sm">Vəzifə</Label>
+                <Input
+                  value={settings.actSignerTitle || ""}
+                  onChange={(e) => updateField("actSignerTitle", e.target.value)}
+                  placeholder="Biznes və strateji şirkətlər üzrə xüsusi nümayəndə"
+                  className="mt-1"
+                />
+              </div>
+            </div>
+            <div>
+              <Label className="text-sm">İmza (skan)</Label>
+              <p className="text-xs text-muted-foreground mt-0.5 mb-2">
+                PNG/JPG formatında imza şəkli yükləyin. Akt sənədinə əlavə ediləcək.
+              </p>
+              {settings.actSignerSignatureUrl ? (
+                <div className="flex items-start gap-4 mt-1">
+                  <div className="relative border rounded-lg p-2 bg-muted/30">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={settings.actSignerSignatureUrl}
+                      alt="Signature"
+                      className="w-32 h-20 object-contain"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => updateField("actSignerSignatureUrl", "")}
+                      className="absolute -top-2 -right-2 bg-destructive text-white rounded-full p-0.5 hover:bg-destructive/80"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm text-green-600 font-medium mb-2">✓ İmza yüklənib</p>
+                    <label className="cursor-pointer">
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground border rounded-md px-3 py-2 hover:bg-muted/50 w-fit">
+                        <Upload className="h-4 w-4" />
+                        Dəyişdir
+                      </div>
+                      <input
+                        type="file"
+                        accept="image/png,image/jpeg,image/jpg,image/webp"
+                        className="hidden"
+                        onChange={handleSignatureUpload}
+                      />
+                    </label>
+                  </div>
+                </div>
+              ) : (
+                <label className="cursor-pointer mt-1 block">
+                  <div className="flex flex-col items-center justify-center border-2 border-dashed rounded-lg p-6 hover:bg-muted/30 transition-colors">
+                    <Upload className="h-8 w-8 text-muted-foreground mb-2" />
+                    <span className="text-sm font-medium">İmza şəklini yükləyin</span>
+                    <span className="text-xs text-muted-foreground mt-1">PNG, JPG — maks 2MB</span>
+                  </div>
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/jpg,image/webp"
+                    className="hidden"
+                    onChange={handleSignatureUpload}
+                  />
+                </label>
+              )}
+            </div>
           </div>
         </CardContent>
       </Card>

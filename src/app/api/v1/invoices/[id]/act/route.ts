@@ -79,9 +79,13 @@ function generateActHtml(
   const companyNameUpper = companyName.toUpperCase()
   const clientCompanyName = (invoice.company?.name as string) || ""
   const directorName = (inv.directorName as string) || ""
+  const directorTitle = (inv.signerTitle as string) || ""
   const companyLogoUrl = (inv.companyLogoUrl as string) || ""
-  const signerName = ((invoice as any).signerName as string) || directorName
-  const signerTitle = ((invoice as any).signerTitle as string) || ""
+  const companyStampUrl = (inv.companyStampUrl as string) || ""
+  // Bottom signer (act signer — different from director)
+  const actSignerName = (inv.actSignerName as string) || ((invoice as any).signerName as string) || directorName
+  const actSignerTitle = (inv.actSignerTitle as string) || ((invoice as any).signerTitle as string) || ""
+  const actSignerSignatureUrl = (inv.actSignerSignatureUrl as string) || ""
 
   // Contract info
   const contract = invoice.contract as any
@@ -120,19 +124,20 @@ function generateActHtml(
     ? `<div class="logo-block"><img src="${companyLogoUrl}" alt="${companyName}" style="max-height: 80px; max-width: 250px;" /></div>`
     : `<div class="logo-block"><div class="logo-text">${companyName}</div></div>`
 
-  // Items table rows
-  const itemsHtml = invoice.items
-    .map(
-      (item: any, i: number) => `
+  // Group items by category (description or customFields.project)
+  const categoryMap = new Map<string, number>()
+  for (const item of invoice.items as any[]) {
+    const cf = (item.customFields || {}) as Record<string, string>
+    const cat = cf.project || item.description || item.name || "Digər"
+    categoryMap.set(cat, (categoryMap.get(cat) || 0) + Number(item.total || 0))
+  }
+
+  const categoriesHtml = Array.from(categoryMap.entries())
+    .map(([cat, total]) => `
     <tr>
-      <td style="text-align: center;">${i + 1}</td>
-      <td>${item.name}${item.description ? `<br><small style="color:#666">${item.description}</small>` : ""}</td>
-      <td style="text-align: center;">${t.unitValue}</td>
-      <td style="text-align: center;">1</td>
-      <td style="text-align: right;">${formatMoney(item.unitPrice, lang)}</td>
-      <td style="text-align: right;">${formatMoney(item.total, lang)}</td>
-    </tr>`
-    )
+      <td style="text-transform: uppercase; font-weight: 600; padding: 10px 15px; border-bottom: 1px solid #e5e5e5;">${cat}</td>
+      <td style="text-align: right; font-weight: 500; padding: 10px 15px; border-bottom: 1px solid #e5e5e5;">${formatMoney(total, lang)}</td>
+    </tr>`)
     .join("")
 
   return `<!DOCTYPE html>
@@ -348,13 +353,14 @@ function generateActHtml(
 ${logoHtml}
 
 <div class="approval-block">
-  <div class="approval-col">
+  <div class="approval-col" style="position: relative;">
     <div class="label">${t.approve}</div>
     <div class="company-name">"${companyNameUpper}" MMC-nin</div>
     <div>${t.directorOf}</div>
     <div>${directorName || "_______________"}</div>
     <div>______________</div>
     <div style="color: #666; font-size: 12px;">${t.signAndStamp}</div>
+    ${companyStampUrl ? `<img src="${companyStampUrl}" style="position: absolute; bottom: -20px; left: 10px; width: 150px; height: 150px; object-fit: contain; opacity: 0.9;" />` : ""}
   </div>
   <div class="approval-col" style="text-align: right;">
     <div class="label">${t.approve}</div>
@@ -399,20 +405,27 @@ ${logoHtml}
 <div class="page-break"></div>
 
 <div class="services-header">${t.servicesProvided}</div>
-<table class="services-table">
+<table class="services-table" style="margin-bottom: 15px;">
   <thead>
     <tr>
-      <th style="width: 40px; text-align: center;">#</th>
       <th>${t.description}</th>
-      <th style="text-align: center;">${t.unit}</th>
-      <th style="text-align: center;">${t.quantity}</th>
-      <th style="text-align: right;">${t.unitPrice}</th>
-      <th style="text-align: right;">${t.total}</th>
+      <th style="text-align: right; width: 150px;">${t.total}</th>
     </tr>
   </thead>
   <tbody>
-    ${itemsHtml}
+    ${categoriesHtml}
   </tbody>
+</table>
+
+<table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; border: 1px solid #d1d5db;">
+  <tr>
+    <td style="padding: 8px 15px; font-weight: 600; border-bottom: 1px solid #e5e5e5;">${t.unit}:</td>
+    <td style="padding: 8px 15px; text-align: right; border-bottom: 1px solid #e5e5e5;">${t.unitValue}</td>
+  </tr>
+  <tr>
+    <td style="padding: 8px 15px; font-weight: 600;">${t.quantity}:</td>
+    <td style="padding: 8px 15px; text-align: right;">1</td>
+  </tr>
 </table>
 
 <div class="summary-block">
@@ -437,10 +450,11 @@ ${logoHtml}
 </div>
 
 <div class="signatures-block">
-  <div class="sig-col">
+  <div class="sig-col" style="position: relative;">
     <div class="sig-company">"${companyNameUpper}" MMC</div>
-    <div>${signerTitle}</div>
-    <div>${signerName}</div>
+    <div>${actSignerTitle}</div>
+    <div style="font-weight: 600;">${actSignerName}</div>
+    ${actSignerSignatureUrl ? `<img src="${actSignerSignatureUrl}" style="width: 160px; height: 80px; object-fit: contain; margin: 5px 0;" />` : ""}
     <div>${t.signature}:_______________</div>
   </div>
   <div class="sig-col" style="text-align: right;">
