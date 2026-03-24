@@ -44,6 +44,10 @@ interface Contact {
 interface Deal {
   id: string
   name: string
+  valueAmount?: number
+  currency?: string
+  contactId?: string
+  notes?: string
 }
 
 interface Product {
@@ -505,7 +509,21 @@ export default function CreateInvoicePage() {
                 <Label>{t("deal") || "Deal"} ({tc("optional") || "optional"})</Label>
                 <Select
                   value={deal}
-                  onChange={(e) => setDeal(e.target.value)}
+                  onChange={(e) => {
+                    const dealId = e.target.value
+                    setDeal(dealId)
+                    if (dealId) {
+                      const d = deals.find((x) => x.id === dealId)
+                      if (d) {
+                        if (!title && d.name) setTitle(d.name)
+                        if (d.currency) setCurrency(d.currency)
+                        if (d.contactId) setContact(d.contactId)
+                        if (d.valueAmount && items.length === 1 && !items[0].name) {
+                          setItems([{ ...items[0], name: d.name, unitPrice: d.valueAmount }])
+                        }
+                      }
+                    }
+                  }}
                   disabled={!company || deals.length === 0}
                 >
                   <option value="">{!company ? (t("selectCompanyFirst") || "Select company first") : deals.length === 0 ? (t("noDeals") || "No deals") : (t("selectDeal") || "Select deal...")}</option>
