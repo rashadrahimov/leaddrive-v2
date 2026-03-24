@@ -36,6 +36,18 @@ import {
   Clock,
   Eye,
   Pencil,
+  Workflow,
+  Play,
+  Square,
+  Mail,
+  MessageSquare,
+  MessageCircle,
+  Smartphone,
+  Heart,
+  Settings,
+  GitBranch,
+  Plus,
+  Loader2,
 } from "lucide-react"
 
 // ---------- Types ----------
@@ -331,6 +343,21 @@ export default function InvoiceDetailPage() {
   const [auditLog, setAuditLog] = useState<AuditEntry[]>([])
   const [auditLoading, setAuditLoading] = useState(false)
 
+  // Communication chain
+  const [chainData, setChainData] = useState<{
+    journey: { id: string; name: string; steps: any[] } | null
+    enrollment: { id: string; status: string; currentStepId: string | null; nextActionAt: string | null; enrolledAt: string } | null
+  } | null>(null)
+  const [chainLoading, setChainLoading] = useState(false)
+  const [chainStarting, setChainStarting] = useState(false)
+  const [chainStopping, setChainStopping] = useState(false)
+  const [chainError, setChainError] = useState("")
+  const [chainSteps, setChainSteps] = useState<any[]>([])
+  const [savingSteps, setSavingSteps] = useState(false)
+  const [addStepOpen, setAddStepOpen] = useState(false)
+  const [newStepType, setNewStepType] = useState("send_email")
+  const [newStepConfig, setNewStepConfig] = useState<any>({})
+
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     ...(orgId ? { "x-organization-id": String(orgId) } : {}),
@@ -386,11 +413,143 @@ export default function InvoiceDetailPage() {
     fetchInvoice()
   }, [fetchInvoice])
 
+  const fetchChain = useCallback(async () => {
+    if (!orgId) return
+    setChainLoading(true)
+    setChainError("")
+    try {
+      const res = await fetch(`/api/v1/invoices/${invoiceId}/chain`, { headers })
+      if (res.ok) {
+        const json = await res.json()
+        setChainData(json.data)
+        if (json.data?.journey?.steps) {
+          setChainSteps(json.data.journey.steps)
+        }
+      }
+    } catch {
+      // ignore
+    } finally {
+      setChainLoading(false)
+    }
+  }, [orgId, invoiceId])
+
   useEffect(() => {
     if (activeTab === "activity") {
       fetchAuditLog()
     }
-  }, [activeTab, fetchAuditLog])
+    if (activeTab === "chain") {
+      fetchChain()
+    }
+  }, [activeTab, fetchAuditLog, fetchChain])
+
+  // ---------- Chain actions ----------
+
+  const chainStepTypes = [
+    { value: "send_email", label: "Email", icon: Mail, color: "bg-blue-500", borderColor: "border-blue-200 bg-blue-50/50 dark:bg-blue-900/10" },
+    { value: "sms", label: "SMS", icon: Smartphone, color: "bg-gray-700", borderColor: "border-gray-200 bg-gray-50/50 dark:bg-gray-900/10" },
+    { value: "wait", label: "Ожидание", icon: Clock, color: "bg-yellow-500", borderColor: "border-yellow-200 bg-yellow-50/50 dark:bg-yellow-900/10" },
+    { value: "send_telegram", label: "Telegram", icon: Send, color: "bg-sky-500", borderColor: "border-sky-200 bg-sky-50/50 dark:bg-sky-900/10" },
+    { value: "send_whatsapp", label: "WhatsApp", icon: Heart, color: "bg-green-500", borderColor: "border-green-200 bg-green-50/50 dark:bg-green-900/10" },
+    { value: "condition", label: "Условие", icon: GitBranch, color: "bg-pink-500", borderColor: "border-pink-200 bg-pink-50/50 dark:bg-pink-900/10" },
+  ]
+
+  function getChainStepInfo(type: string) {
+    return chainStepTypes.find(st => st.value === type) || chainStepTypes[0]
+  }
+
+  function getChainStepSummary(step: any): string {
+    const c = step.config || {}
+    switch (step.stepType) {
+      case "send_email": return c.subject ? `Тема: ${c.subject}` : "Тема: (без темы)"
+      case "wait": return `Ждать: ${c.days || 1} ${c.unit || "дн."}`
+      case "send_telegram":
+      case "send_whatsapp":
+      case "sms": return c.message ? c.message.slice(0, 50) : "Сообщение"
+      default: return ""
+    }
+  }
+
+  async function handleSetupChain() {
+    setChainError("")
+    setChainLoading(true)
+    try {
+      const res = await fetch(`/api/v1/invoices/${invoiceId}/chain`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ action: "setup" }),
+      })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error || "Failed to setup chain")
+      setChainData(json.data)
+      setChainSteps(json.data?.journey?.steps || [])
+    } catch (err: any) {
+      setChainError(err.message)
+    } finally {
+      setChainLoading(false)
+    }
+  }
+
+  async function handleSaveChainSteps() {
+    if (!chainData?.journey) return
+    setSavingSteps(true)
+    try {
+      await fetch(`/api/v1/journeys/${chainData.journey.id}`, {
+        method: "PUT",
+        headers,
+        body: JSON.stringify({
+          name: chainData.journey.name,
+          steps: chainSteps.map((s, i) => ({ stepType: s.stepType, stepOrder: i + 1, config: s.config })),
+        }),
+      })
+      await fetchChain()
+    } catch {
+      // ignore
+    } finally {
+      setSavingSteps(false)
+    }
+  }
+
+  async function handleStartChain() {
+    setChainStarting(true)
+    setChainError("")
+    try {
+      const res = await fetch(`/api/v1/invoices/${invoiceId}/chain`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ action: "start" }),
+      })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error || "Failed to start chain")
+      await fetchChain()
+    } catch (err: any) {
+      setChainError(err.message)
+    } finally {
+      setChainStarting(false)
+    }
+  }
+
+  async function handleStopChain() {
+    setChainStopping(true)
+    try {
+      await fetch(`/api/v1/invoices/${invoiceId}/chain`, { method: "DELETE", headers })
+      await fetchChain()
+    } finally {
+      setChainStopping(false)
+    }
+  }
+
+  function addChainStep() {
+    const config: any = {}
+    if (newStepType === "wait") config.days = 1
+    setChainSteps(prev => [...prev, { stepType: newStepType, stepOrder: prev.length + 1, config: { ...config, ...newStepConfig }, statsEntered: 0, statsCompleted: 0 }])
+    setAddStepOpen(false)
+    setNewStepType("send_email")
+    setNewStepConfig({})
+  }
+
+  function removeChainStep(index: number) {
+    setChainSteps(prev => prev.filter((_, i) => i !== index))
+  }
 
   // ---------- Actions ----------
 
@@ -644,6 +803,10 @@ export default function InvoiceDetailPage() {
           <TabsTrigger value="items">{t("tabItems")}</TabsTrigger>
           <TabsTrigger value="payments">{t("tabPayments")}</TabsTrigger>
           <TabsTrigger value="activity">{t("tabActivity")}</TabsTrigger>
+          <TabsTrigger value="chain" className="flex items-center gap-1.5">
+            <Workflow className="h-3.5 w-3.5" />
+            Цепочка
+          </TabsTrigger>
           <TabsTrigger value="preview">{t("tabPreview")}</TabsTrigger>
         </TabsList>
 
@@ -1131,6 +1294,295 @@ export default function InvoiceDetailPage() {
             </CardContent>
           </Card>
         </TabsContent>
+
+        {/* ===== Chain Tab ===== */}
+        <TabsContent value="chain" className="space-y-4">
+          {chainLoading && !chainData ? (
+            <div className="flex justify-center py-16">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            </div>
+          ) : !chainData?.journey ? (
+            /* Empty state — chain not set up */
+            <Card>
+              <CardContent className="flex flex-col items-center justify-center py-16 gap-4">
+                <Workflow className="h-12 w-12 text-muted-foreground" />
+                <div className="text-center">
+                  <p className="font-medium">Цепочка не настроена</p>
+                  <p className="text-sm text-muted-foreground mt-1 max-w-xs">
+                    Автоматические напоминания по Email, SMS, WhatsApp и Telegram до получения оплаты
+                  </p>
+                </div>
+                <Button onClick={handleSetupChain} disabled={chainLoading}>
+                  {chainLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Workflow className="h-4 w-4 mr-2" />}
+                  Настроить цепочку
+                </Button>
+                {chainError && <p className="text-sm text-destructive">{chainError}</p>}
+              </CardContent>
+            </Card>
+          ) : (
+            <>
+              {/* Header row */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium">{chainData.journey.name}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {chainData.enrollment
+                      ? "Цепочка активна"
+                      : "Цепочка готова к запуску"}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  {chainData.enrollment ? (
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={handleStopChain}
+                      disabled={chainStopping}
+                    >
+                      {chainStopping ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Square className="h-4 w-4 mr-1" />}
+                      Остановить
+                    </Button>
+                  ) : (
+                    <>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={handleSaveChainSteps}
+                        disabled={savingSteps}
+                      >
+                        {savingSteps ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
+                        {savingSteps ? "Сохранение..." : "Сохранить шаги"}
+                      </Button>
+                      <Button
+                        size="sm"
+                        onClick={handleStartChain}
+                        disabled={chainStarting || chainSteps.length === 0}
+                        className="gap-1"
+                      >
+                        {chainStarting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
+                        Запустить
+                      </Button>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* Active chain status banner */}
+              {chainData.enrollment && (
+                <div className="flex items-center gap-3 p-3 rounded-lg bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800">
+                  <div className="h-2.5 w-2.5 rounded-full bg-green-500 animate-pulse flex-shrink-0" />
+                  <div className="text-sm text-green-800 dark:text-green-200">
+                    <span className="font-medium">Цепочка активна</span>
+                    {chainData.enrollment.nextActionAt && (
+                      <span className="text-green-700 dark:text-green-300 ml-2">
+                        · Следующее действие: {new Date(chainData.enrollment.nextActionAt).toLocaleString()}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Step builder / timeline */}
+              <Card>
+                <CardContent className="pt-4">
+                  {/* Trigger node */}
+                  <div className="flex items-center gap-3 mb-1">
+                    <div className="flex items-center justify-center w-9 h-9 rounded-full bg-purple-500 text-white flex-shrink-0">
+                      <Send className="h-4 w-4" />
+                    </div>
+                    <div className="flex-1 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-700 rounded-lg px-4 py-3">
+                      <span className="font-semibold text-sm text-purple-800 dark:text-purple-200">
+                        Триггер: Счёт отправлен
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Steps */}
+                  {chainSteps.map((step, index) => {
+                    const info = getChainStepInfo(step.stepType)
+                    const Icon = info.icon
+                    const summary = getChainStepSummary(step)
+                    const isRunning = !!chainData.enrollment
+                    const isCurrent = chainData.enrollment?.currentStepId === step.id
+                    const isCompleted = (step.statsCompleted || 0) > 0
+
+                    return (
+                      <div key={index}>
+                        <div className="ml-[17px] h-5 w-0.5 bg-primary/20" />
+                        <div className="flex items-start gap-3">
+                          <div className={`flex items-center justify-center w-9 h-9 rounded-full text-white flex-shrink-0 mt-1 ${
+                            isRunning
+                              ? isCompleted
+                                ? "bg-green-500"
+                                : isCurrent
+                                ? `${info.color} ring-2 ring-offset-1 ring-blue-400`
+                                : "bg-muted-foreground/30"
+                              : info.color
+                          }`}>
+                            <Icon className="h-4 w-4" />
+                          </div>
+                          <div className={`flex-1 border rounded-lg px-4 py-3 ${isRunning && !isCompleted && !isCurrent ? "opacity-50" : ""} ${info.borderColor}`}>
+                            <div className="flex items-center justify-between mb-1">
+                              <div className="flex items-center gap-2">
+                                <span className="font-semibold text-sm">{index + 1}. {info.label}</span>
+                                {isRunning && isCompleted && (
+                                  <span className="text-xs px-1.5 py-0.5 rounded-full bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300">Выполнено</span>
+                                )}
+                                {isRunning && isCurrent && !isCompleted && (
+                                  <span className="text-xs px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">Ожидает</span>
+                                )}
+                              </div>
+                              {!isRunning && (
+                                <div className="flex items-center gap-1">
+                                  <button
+                                    onClick={() => {
+                                      setNewStepType(step.stepType)
+                                      setNewStepConfig({ ...step.config })
+                                      removeChainStep(index)
+                                      setAddStepOpen(true)
+                                    }}
+                                    className="p-1 rounded hover:bg-muted text-muted-foreground"
+                                    title="Редактировать"
+                                  >
+                                    <Pencil className="h-3 w-3" />
+                                  </button>
+                                  <button
+                                    onClick={() => removeChainStep(index)}
+                                    className="p-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20 text-muted-foreground hover:text-red-500"
+                                  >
+                                    <Trash2 className="h-3 w-3" />
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                            {summary && <p className="text-xs text-muted-foreground">{summary}</p>}
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
+
+                  {/* Add step (only when not running) */}
+                  {!chainData.enrollment && (
+                    <div>
+                      <div className="ml-[17px] h-5 w-0.5 bg-primary/10" />
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center justify-center w-9 h-9 rounded-full bg-primary/10 text-primary flex-shrink-0">
+                          <Plus className="h-4 w-4" />
+                        </div>
+                        <button
+                          onClick={() => { setNewStepType("send_email"); setNewStepConfig({}); setAddStepOpen(true) }}
+                          className="flex-1 border-2 border-dashed rounded-lg px-4 py-3 text-sm text-muted-foreground hover:border-primary hover:text-primary transition-colors text-center"
+                        >
+                          + Добавить шаг
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {chainError && <p className="text-sm text-destructive">{chainError}</p>}
+            </>
+          )}
+        </TabsContent>
+
+        {/* ===== Add Chain Step Dialog ===== */}
+        <Dialog open={addStepOpen} onOpenChange={setAddStepOpen}>
+          <DialogHeader>
+            <DialogTitle>Добавить шаг #{chainSteps.length + 1}</DialogTitle>
+          </DialogHeader>
+          <DialogContent>
+            {/* Step type grid */}
+            <div className="grid grid-cols-3 gap-2 mb-4">
+              {chainStepTypes.map(st => {
+                const Icon = st.icon
+                const selected = newStepType === st.value
+                return (
+                  <button
+                    key={st.value}
+                    onClick={() => { setNewStepType(st.value); setNewStepConfig({}) }}
+                    className={`flex flex-col items-center gap-1.5 p-3 rounded-lg border-2 text-xs font-medium transition-all ${
+                      selected
+                        ? "border-primary bg-primary/5 text-primary"
+                        : "border-transparent bg-muted/50 text-muted-foreground hover:border-border hover:text-foreground"
+                    }`}
+                  >
+                    <Icon className="h-5 w-5" />
+                    {st.label}
+                  </button>
+                )
+              })}
+            </div>
+
+            {/* Step config */}
+            <div className="space-y-3">
+              {newStepType === "send_email" && (
+                <>
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Тема письма</Label>
+                    <Input
+                      value={newStepConfig.subject || ""}
+                      onChange={e => setNewStepConfig((c: any) => ({ ...c, subject: e.target.value }))}
+                      placeholder="Напоминание: Счёт {{invoice_number}}"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs text-muted-foreground">
+                      Текст · Переменные: {"{{invoice_number}}"}, {"{{amount}}"}, {"{{due_date}}"}, {"{{balance_due}}"}, {"{{recipient_name}}"}
+                    </Label>
+                    <Textarea
+                      value={newStepConfig.body || ""}
+                      onChange={e => setNewStepConfig((c: any) => ({ ...c, body: e.target.value }))}
+                      placeholder={"Уважаемый {{recipient_name}}, напоминаем об оплате счёта {{invoice_number}}..."}
+                      rows={4}
+                    />
+                  </div>
+                </>
+              )}
+              {(newStepType === "sms" || newStepType === "send_whatsapp" || newStepType === "send_telegram") && (
+                <div>
+                  <Label className="text-xs text-muted-foreground">
+                    Сообщение · Переменные: {"{{invoice_number}}"}, {"{{amount}}"}, {"{{balance_due}}"}, {"{{recipient_name}}"}
+                  </Label>
+                  <Textarea
+                    value={newStepConfig.message || ""}
+                    onChange={e => setNewStepConfig((c: any) => ({ ...c, message: e.target.value }))}
+                    placeholder={"Напоминание: Счёт {{invoice_number}} на {{amount}} ожидает оплаты."}
+                    rows={3}
+                  />
+                </div>
+              )}
+              {newStepType === "wait" && (
+                <div>
+                  <Label className="text-xs text-muted-foreground">Длительность ожидания</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      type="number"
+                      min={1}
+                      value={newStepConfig.days || 1}
+                      onChange={e => setNewStepConfig((c: any) => ({ ...c, days: parseInt(e.target.value) || 1 }))}
+                      className="w-24"
+                    />
+                    <Select
+                      value={newStepConfig.unit || "days"}
+                      onChange={e => setNewStepConfig((c: any) => ({ ...c, unit: e.target.value }))}
+                      className="flex-1"
+                    >
+                      <option value="hours">Часов</option>
+                      <option value="days">Дней</option>
+                      <option value="weeks">Недель</option>
+                    </Select>
+                  </div>
+                </div>
+              )}
+            </div>
+          </DialogContent>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAddStepOpen(false)}>Отмена</Button>
+            <Button onClick={addChainStep}>Добавить</Button>
+          </DialogFooter>
+        </Dialog>
 
         {/* ===== PDF Preview Tab ===== */}
         <TabsContent value="preview">

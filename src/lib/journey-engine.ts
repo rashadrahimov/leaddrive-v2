@@ -57,9 +57,48 @@ export async function processEnrollmentStep(enrollmentId: string, orgId: string)
   } else if (contactId) {
     const contact = await prisma.contact.findUnique({ where: { id: contactId } })
     if (contact) {
-      recipientName = `${contact.firstName || ""} ${contact.lastName || ""}`.trim()
+      recipientName = contact.fullName || ""
       recipientEmail = contact.email || ""
       recipientPhone = contact.phone || ""
+    }
+  }
+
+  // Invoice context (for invoice communication chains)
+  let invoiceNumber = ""
+  let invoiceAmount = ""
+  let invoiceDueDate = ""
+  let invoiceBalanceDue = ""
+  let invoicePdfUrl = ""
+
+  const invoiceId = (enrollment as any).invoiceId
+  if (invoiceId) {
+    const inv = await prisma.invoice.findUnique({
+      where: { id: invoiceId },
+      select: {
+        invoiceNumber: true,
+        totalAmount: true,
+        balanceDue: true,
+        dueDate: true,
+        currency: true,
+        viewToken: true,
+        recipientName: true,
+        recipientEmail: true,
+        company: { select: { name: true } },
+        contact: { select: { fullName: true, email: true, phone: true } },
+      },
+    })
+    if (inv) {
+      invoiceNumber     = inv.invoiceNumber
+      invoiceAmount     = `${inv.totalAmount.toLocaleString()} ${inv.currency}`
+      invoiceBalanceDue = `${inv.balanceDue.toLocaleString()} ${inv.currency}`
+      invoiceDueDate    = inv.dueDate ? new Date(inv.dueDate).toLocaleDateString() : ""
+      invoicePdfUrl     = inv.viewToken
+        ? `${process.env.NEXTAUTH_URL}/portal/invoice/${inv.viewToken}` : ""
+      // Fallback: if enrollment has no contact/lead, use invoice recipient info
+      if (!recipientName) recipientName = inv.recipientName || inv.contact?.fullName || ""
+      if (!recipientEmail) recipientEmail = inv.recipientEmail || inv.contact?.email || ""
+      if (!recipientPhone) recipientPhone = inv.contact?.phone || ""
+      if (!companyName) companyName = inv.company?.name || ""
     }
   }
 
@@ -67,9 +106,15 @@ export async function processEnrollmentStep(enrollmentId: string, orgId: string)
   function replaceVars(text: string): string {
     return text
       .replace(/\{\{contact_name\}\}/g, recipientName)
+      .replace(/\{\{recipient_name\}\}/g, recipientName)
       .replace(/\{\{company_name\}\}/g, companyName)
       .replace(/\{\{email\}\}/g, recipientEmail)
       .replace(/\{\{phone\}\}/g, recipientPhone)
+      .replace(/\{\{invoice_number\}\}/g, invoiceNumber)
+      .replace(/\{\{amount\}\}/g, invoiceAmount)
+      .replace(/\{\{due_date\}\}/g, invoiceDueDate)
+      .replace(/\{\{balance_due\}\}/g, invoiceBalanceDue)
+      .replace(/\{\{invoice_url\}\}/g, invoicePdfUrl)
   }
 
   let result: StepResult
