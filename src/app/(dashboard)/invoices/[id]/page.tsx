@@ -402,8 +402,9 @@ export default function InvoiceDetailPage() {
     }
   }
 
-  function handleDownloadPdf() {
-    window.open(`/api/v1/invoices/${invoiceId}/pdf`, "_blank")
+  function handleDownloadPdf(withStamp = false) {
+    const url = `/api/v1/invoices/${invoiceId}/pdf${withStamp ? "?stamp=true" : ""}`
+    window.open(url, "_blank")
   }
 
   async function handleRecordPayment() {
@@ -529,9 +530,13 @@ export default function InvoiceDetailPage() {
             <Send className="h-4 w-4 mr-1" />
             {t("send")}
           </Button>
-          <Button variant="outline" size="sm" onClick={handleDownloadPdf}>
+          <Button variant="outline" size="sm" onClick={() => handleDownloadPdf(false)}>
             <Download className="h-4 w-4 mr-1" />
             {t("downloadPdf")}
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => handleDownloadPdf(true)}>
+            <Download className="h-4 w-4 mr-1" />
+            {t("downloadPdfStamp")}
           </Button>
           <Button variant="outline" size="sm" onClick={handleDuplicate}>
             <Copy className="h-4 w-4 mr-1" />

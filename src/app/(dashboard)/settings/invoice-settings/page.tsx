@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select } from "@/components/ui/select"
-import { Save, Settings, Building2, FileSpreadsheet, Loader2, CheckCircle, AlertCircle } from "lucide-react"
+import { Save, Settings, Building2, FileSpreadsheet, Loader2, CheckCircle, AlertCircle, Upload, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 export default function InvoiceSettingsPage() {
@@ -41,6 +41,7 @@ export default function InvoiceSettingsPage() {
     bankCorrAccount: "",
     signerName: "",
     signerTitle: "",
+    companyStampUrl: "",
     termsAndConditions: "",
     footerNote: "",
   })
@@ -62,6 +63,17 @@ export default function InvoiceSettingsPage() {
 
   function updateField(field: string, value: string | number) {
     setSettings((prev) => ({ ...prev, [field]: value }))
+  }
+
+  function handleStampUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = (ev) => {
+      const dataUrl = ev.target?.result as string
+      updateField("companyStampUrl", dataUrl)
+    }
+    reader.readAsDataURL(file)
   }
 
   async function handleSave() {
@@ -368,9 +380,9 @@ export default function InvoiceSettingsPage() {
       {/* Signer */}
       <Card>
         <CardHeader>
-          <CardTitle>İmzalayan</CardTitle>
+          <CardTitle>İmzalayan və Möhür</CardTitle>
           <CardDescription>
-            Hesab-fakturanı imzalayan şəxsin məlumatları.
+            Hesab-fakturanı imzalayan şəxsin məlumatları və şirkət möhürü.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -393,6 +405,60 @@ export default function InvoiceSettingsPage() {
                 className="mt-1"
               />
             </div>
+          </div>
+          <div>
+            <Label className="text-sm">Şirkət Möhürü (skan)</Label>
+            <p className="text-xs text-muted-foreground mt-0.5 mb-2">
+              PNG/JPG formatında möhür şəkli yükləyin. &quot;Möhürlə PDF&quot; düyməsi ilə fakturaya əlavə ediləcək.
+            </p>
+            {settings.companyStampUrl ? (
+              <div className="flex items-start gap-4 mt-1">
+                <div className="relative border rounded-lg p-2 bg-muted/30">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={settings.companyStampUrl}
+                    alt="Company stamp"
+                    className="w-32 h-32 object-contain"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => updateField("companyStampUrl", "")}
+                    className="absolute -top-2 -right-2 bg-destructive text-white rounded-full p-0.5 hover:bg-destructive/80"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm text-green-600 font-medium mb-2">✓ Möhür yüklənib</p>
+                  <label className="cursor-pointer">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground border rounded-md px-3 py-2 hover:bg-muted/50 w-fit">
+                      <Upload className="h-4 w-4" />
+                      Dəyişdir
+                    </div>
+                    <input
+                      type="file"
+                      accept="image/png,image/jpeg,image/jpg,image/webp"
+                      className="hidden"
+                      onChange={handleStampUpload}
+                    />
+                  </label>
+                </div>
+              </div>
+            ) : (
+              <label className="cursor-pointer mt-1 block">
+                <div className="flex flex-col items-center justify-center border-2 border-dashed rounded-lg p-6 hover:bg-muted/30 transition-colors">
+                  <Upload className="h-8 w-8 text-muted-foreground mb-2" />
+                  <span className="text-sm font-medium">Möhür şəklini yükləyin</span>
+                  <span className="text-xs text-muted-foreground mt-1">PNG, JPG — maks 2MB</span>
+                </div>
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/jpg,image/webp"
+                  className="hidden"
+                  onChange={handleStampUpload}
+                />
+              </label>
+            )}
           </div>
         </CardContent>
       </Card>
