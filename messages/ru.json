@@ -1026,6 +1026,7 @@
     "contractNumber": "Номер договора",
     "contractDate": "Дата договора",
     "contractHint": "Выберите договор или введите вручную",
+    "recipientContact": "Контакт получателя",
     "selectCompanyFirst": "Сначала выберите компанию",
     "noDeals": "Нет сделок",
     "signerName": "Подписант",

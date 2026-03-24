@@ -490,7 +490,7 @@ export default function CreateInvoicePage() {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label>{t("contact") || "Contact"}</Label>
+                  <Label>{t("recipientContact") || "Recipient Contact"}</Label>
                   <Select
                     value={contact}
                     onChange={(e) => setContact(e.target.value)}

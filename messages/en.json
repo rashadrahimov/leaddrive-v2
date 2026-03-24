@@ -1026,6 +1026,7 @@
     "contractNumber": "Contract №",
     "contractDate": "Contract date",
     "contractHint": "Select a contract or enter manually",
+    "recipientContact": "Recipient Contact",
     "selectCompanyFirst": "Select company first",
     "noDeals": "No deals",
     "signerName": "Signer Name",
