@@ -88,91 +88,106 @@ function generateInvoiceHtml(
 <meta charset="utf-8">
 <title>Invoice ${invoice.invoiceNumber}</title>
 <style>
-  @page { size: A4; margin: 10mm; }
-  @media print { body { margin: 0; padding: 0; } .no-print { display: none; } }
-  * { box-sizing: border-box; }
-  body { font-family: 'Segoe UI', Arial, sans-serif; max-width: 794px; margin: 0 auto; padding: 20px 24px; color: #1a1a1a; font-size: 12px; }
-  .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; }
-  .invoice-title h2 { margin: 0; font-size: 22px; color: #0f766e; text-transform: uppercase; letter-spacing: 1px; }
-  .invoice-title .number { font-size: 13px; color: #666; margin-top: 3px; }
-  .status-badge { display: inline-block; padding: 2px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; text-transform: uppercase; margin-top: 4px; }
-  .status-draft { background: #f3f4f6; color: #6b7280; }
-  .status-sent { background: #dbeafe; color: #1d4ed8; }
-  .status-paid { background: #dcfce7; color: #166534; }
-  .status-overdue { background: #fee2e2; color: #dc2626; }
-  .status-partially_paid { background: #fef3c7; color: #d97706; }
-  .parties { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
-  .party-box { border: 1.5px solid #2196a6; border-radius: 4px; overflow: hidden; }
-  .party-box-title { background: #2196a6; color: white; font-weight: 700; font-size: 11px; padding: 5px 10px; letter-spacing: 0.5px; text-transform: uppercase; }
-  .party-box-body { padding: 8px 10px; font-size: 11.5px; }
-  .party-row { display: flex; gap: 4px; padding: 2px 0; }
-  .party-row strong { min-width: 80px; color: #1a1a1a; font-weight: 600; flex-shrink: 0; }
-  .party-row span { color: #333; }
-  .items-table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
-  .items-table th { background: #0f766e; color: white; padding: 6px 8px; text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.3px; }
-  .items-table th:last-child, .items-table td:last-child { text-align: right; }
-  .items-table th:nth-child(3), .items-table td:nth-child(3),
-  .items-table th:nth-child(4), .items-table td:nth-child(4),
-  .items-table th:nth-child(5), .items-table td:nth-child(5) { text-align: right; }
-  .items-table td { padding: 6px 8px; border-bottom: 1px solid #e5e5e5; font-size: 11.5px; }
-  .items-table tr:nth-child(even) { background: #fafafa; }
-  .summary { display: flex; justify-content: flex-end; margin-bottom: 10px; }
-  .summary-table { width: 260px; }
-  .summary-table tr td { padding: 3px 0; font-size: 12px; }
-  .summary-table tr td:last-child { text-align: right; font-weight: 500; }
-  .summary-table .total { border-top: 2px solid #0f766e; font-size: 14px; font-weight: 700; color: #0f766e; }
-  .summary-table .total td { padding-top: 6px; }
-  .bottom-row { display: grid; grid-template-columns: 1fr auto; gap: 20px; align-items: stretch; margin-top: 12px; }
-  .bank-box { border: 1.5px solid #2196a6; border-radius: 4px; overflow: hidden; }
-  .bank-box-title { background: #2196a6; color: white; font-weight: 700; font-size: 11px; padding: 5px 10px; letter-spacing: 0.5px; }
-  .bank-box-body { padding: 8px 10px; font-size: 11.5px; }
-  .bank-row { display: flex; gap: 4px; padding: 2px 0; }
-  .bank-row strong { min-width: 70px; color: #1a1a1a; flex-shrink: 0; }
-  .signer-block { text-align: center; font-size: 12px; width: 260px; flex-shrink: 0; border: 1.5px solid #2196a6; border-radius: 4px; overflow: hidden; }
-  .signer-block-title { background: #2196a6; color: white; font-weight: 700; font-size: 11px; padding: 5px 10px; letter-spacing: 0.5px; text-align: center; }
-  .signer-block-body { padding: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 160px; }
-  .stamp-img { width: 170px; height: 170px; object-fit: contain; opacity: 0.95; }
-  .signer-line { border-top: 1px solid #1a1a1a; width: 220px; margin: 8px auto 5px; }
-  .signer-name { font-weight: 600; }
-  .signer-title { color: #666; font-size: 11px; margin-top: 2px; }
-  .footer { border-top: 1px solid #e5e5e5; padding-top: 8px; font-size: 11px; color: #999; margin-top: 10px; }
-  .footer h4 { color: #666; font-size: 11px; text-transform: uppercase; margin: 6px 0 3px; }
-  .print-btn { position: fixed; bottom: 16px; right: 16px; background: #0f766e; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-size: 13px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
-  .print-btn:hover { background: #0d6660; }
+  @page { size: A4; margin: 8mm 10mm; }
+  @media print { body { margin: 0; padding: 0; } .no-print { display: none !important; } }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; max-width: 794px; margin: 0 auto; padding: 18px 22px; color: #1e293b; font-size: 11.5px; background: #fff; }
+
+  /* ── HEADER ───────────────────────────────── */
+  .top-bar { height: 4px; background: linear-gradient(90deg, #0f766e, #2196a6); border-radius: 2px; margin-bottom: 14px; }
+  .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; padding-bottom: 12px; border-bottom: 1px solid #e2e8f0; }
+  .header-left h1 { font-size: 24px; font-weight: 800; color: #0f766e; text-transform: uppercase; letter-spacing: 2px; line-height: 1; }
+  .header-left .inv-num { font-size: 13px; color: #64748b; margin-top: 4px; font-weight: 500; }
+  .header-right { text-align: right; }
+  .header-right .date-row { font-size: 11.5px; color: #475569; padding: 2px 0; }
+  .header-right .date-label { color: #94a3b8; margin-right: 6px; }
+
+  /* ── PARTIES ──────────────────────────────── */
+  .parties { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
+  .party-box { border-radius: 6px; overflow: hidden; border: 1px solid #e2e8f0; }
+  .party-box-title { padding: 6px 12px; font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: white; }
+  .party-seller .party-box-title { background: #0f766e; }
+  .party-buyer .party-box-title  { background: #1d4ed8; }
+  .party-box-body { padding: 10px 12px; background: #f8fafc; }
+  .party-row { display: flex; gap: 6px; padding: 2.5px 0; font-size: 11px; }
+  .party-row .lbl { min-width: 74px; color: #94a3b8; flex-shrink: 0; }
+  .party-row .val { color: #1e293b; font-weight: 500; }
+
+  /* ── TABLE ────────────────────────────────── */
+  .items-table { width: 100%; border-collapse: collapse; margin-bottom: 8px; border-radius: 6px; overflow: hidden; }
+  .items-table thead tr { background: #0f766e; }
+  .items-table th { padding: 7px 10px; text-align: left; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: white; }
+  .items-table th:nth-child(n+3), .items-table td:nth-child(n+3) { text-align: right; }
+  .items-table tbody tr { border-bottom: 1px solid #f1f5f9; }
+  .items-table tbody tr:nth-child(even) { background: #f8fafc; }
+  .items-table td { padding: 6px 10px; font-size: 11px; color: #334155; }
+  .items-table td:first-child { color: #94a3b8; }
+
+  /* ── SUMMARY ──────────────────────────────── */
+  .summary-wrap { display: flex; justify-content: flex-end; margin-bottom: 12px; }
+  .summary-box { width: 240px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; overflow: hidden; }
+  .summary-row { display: flex; justify-content: space-between; padding: 4px 12px; font-size: 11.5px; color: #475569; }
+  .summary-row + .summary-row { border-top: 1px solid #f1f5f9; }
+  .summary-row.total { background: #0f766e; color: white; font-weight: 700; font-size: 13px; padding: 7px 12px; }
+
+  /* ── BOTTOM ROW ───────────────────────────── */
+  .bottom-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
+  .section-box { border: 1px solid #e2e8f0; border-radius: 6px; overflow: hidden; }
+  .section-title { padding: 6px 12px; font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: white; background: #2196a6; }
+  .bank-body { padding: 10px 12px; background: #f8fafc; }
+  .bank-row { display: flex; gap: 6px; padding: 2.5px 0; font-size: 11px; }
+  .bank-row .lbl { min-width: 52px; color: #94a3b8; flex-shrink: 0; }
+  .bank-row .val { color: #1e293b; font-weight: 500; }
+  .stamp-body { padding: 12px; background: #f8fafc; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 180px; }
+  .stamp-img { width: 160px; height: 160px; object-fit: contain; }
+  .sig-line { border-top: 1.5px solid #334155; width: 180px; margin: 10px auto 6px; }
+  .sig-name { font-size: 12px; font-weight: 700; color: #1e293b; }
+  .sig-title { font-size: 10.5px; color: #64748b; margin-top: 2px; text-align: center; }
+
+  /* ── FOOTER ───────────────────────────────── */
+  .footer { border-top: 1px solid #e2e8f0; padding-top: 8px; margin-top: 10px; font-size: 10.5px; color: #94a3b8; }
+  .footer h4 { font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b; margin-bottom: 3px; }
+
+  /* ── PRINT BTN ────────────────────────────── */
+  .print-btn { position: fixed; bottom: 16px; right: 16px; background: #0f766e; color: white; border: none; padding: 10px 22px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; box-shadow: 0 4px 16px rgba(15,118,110,0.35); letter-spacing: 0.3px; }
+  .print-btn:hover { background: #0d9488; }
 </style>
 </head>
 <body>
+
+<div class="top-bar"></div>
+
 <div class="header">
-  <div class="invoice-title">
-    <h2>Hesab-faktura</h2>
-    <div class="number">${invoice.invoiceNumber}</div>
+  <div class="header-left">
+    <h1>Hesab-faktura</h1>
+    <div class="inv-num"># ${invoice.invoiceNumber}</div>
   </div>
-  <div style="text-align:right; font-size:12px; color:#666;">
-    <p style="margin:2px 0;">Tarix: ${formatDate(invoice.issueDate)}</p>
-    <p style="margin:2px 0;">Ödəniş tarixi: ${formatDate(invoice.dueDate)}</p>
-    ${invoice.paymentTerms ? `<p style="margin:2px 0;">Ödəniş şərtləri: ${invoice.paymentTerms}</p>` : ""}
+  <div class="header-right">
+    <div class="date-row"><span class="date-label">Tarix:</span>${formatDate(invoice.issueDate)}</div>
+    <div class="date-row"><span class="date-label">Son ödəniş:</span>${formatDate(invoice.dueDate)}</div>
+    ${invoice.paymentTerms ? `<div class="date-row"><span class="date-label">Şərtlər:</span>${invoice.paymentTerms}</div>` : ""}
   </div>
 </div>
 
 <div class="parties">
-  <div class="party-box">
+  <div class="party-box party-seller">
     <div class="party-box-title">İCRAÇI ŞİRKƏT</div>
     <div class="party-box-body">
-      <div class="party-row"><strong>Şirkət Adı:</strong><span>${companyName}</span></div>
-      <div class="party-row"><strong>VÖEN:</strong><span>${companyVoen}</span></div>
-      ${companyAddress ? `<div class="party-row"><strong>Ünvan:</strong><span>${companyAddress}</span></div>` : ""}
-      ${companyEmail ? `<div class="party-row"><strong>E-poçt:</strong><span>${companyEmail}</span></div>` : ""}
-      ${companyPhone ? `<div class="party-row"><strong>Telefon:</strong><span>${companyPhone}</span></div>` : ""}
+      <div class="party-row"><span class="lbl">Şirkət:</span><span class="val">${companyName}</span></div>
+      <div class="party-row"><span class="lbl">VÖEN:</span><span class="val">${companyVoen}</span></div>
+      ${companyAddress ? `<div class="party-row"><span class="lbl">Ünvan:</span><span class="val">${companyAddress}</span></div>` : ""}
+      ${companyEmail ? `<div class="party-row"><span class="lbl">E-poçt:</span><span class="val">${companyEmail}</span></div>` : ""}
+      ${companyPhone ? `<div class="party-row"><span class="lbl">Telefon:</span><span class="val">${companyPhone}</span></div>` : ""}
     </div>
   </div>
-  <div class="party-box">
+  <div class="party-box party-buyer">
     <div class="party-box-title">SİFARİŞÇİ ŞİRKƏT</div>
     <div class="party-box-body">
-      <div class="party-row"><strong>Şirkət Adı:</strong><span>${clientCo?.name || ""}</span></div>
-      ${clientVoen ? `<div class="party-row"><strong>VÖEN:</strong><span>${clientVoen}</span></div>` : ""}
-      ${clientCo?.address ? `<div class="party-row"><strong>Ünvan:</strong><span>${clientCo.address}</span></div>` : ""}
-      ${clientCo?.email ? `<div class="party-row"><strong>E-poçt:</strong><span>${clientCo.email}</span></div>` : ""}
-      ${clientCo?.phone ? `<div class="party-row"><strong>Telefon:</strong><span>${clientCo.phone}</span></div>` : ""}
+      <div class="party-row"><span class="lbl">Şirkət:</span><span class="val">${clientCo?.name || "—"}</span></div>
+      ${clientVoen ? `<div class="party-row"><span class="lbl">VÖEN:</span><span class="val">${clientVoen}</span></div>` : ""}
+      ${clientCo?.address ? `<div class="party-row"><span class="lbl">Ünvan:</span><span class="val">${clientCo.address}</span></div>` : ""}
+      ${clientCo?.email ? `<div class="party-row"><span class="lbl">E-poçt:</span><span class="val">${clientCo.email}</span></div>` : ""}
+      ${clientCo?.phone ? `<div class="party-row"><span class="lbl">Telefon:</span><span class="val">${clientCo.phone}</span></div>` : ""}
     </div>
   </div>
 </div>
@@ -180,67 +195,64 @@ function generateInvoiceHtml(
 <table class="items-table">
   <thead>
     <tr>
-      <th>#</th>
-      <th>Təsvir</th>
-      <th>Miqdar</th>
-      <th>Qiymət</th>
-      ${hasDiscounts ? "<th>Endirim</th>" : ""}
-      <th>Cəm</th>
+      <th style="width:28px">#</th>
+      <th>Məhsul / Xidmət</th>
+      <th style="width:60px">Miqdar</th>
+      <th style="width:110px">Qiymət</th>
+      ${hasDiscounts ? '<th style="width:70px">Endirim</th>' : ""}
+      <th style="width:110px">Cəm</th>
     </tr>
   </thead>
   <tbody>
     ${invoice.items.map((item, i) => `
     <tr>
       <td>${i + 1}</td>
-      <td>${item.name}${item.description ? `<br><small style="color:#999">${item.description}</small>` : ""}</td>
+      <td>${item.name}${item.description ? `<br><span style="color:#94a3b8;font-size:10px">${item.description}</span>` : ""}</td>
       <td>${item.quantity}</td>
       <td>${formatMoney(item.unitPrice)} ${invoice.currency}</td>
       ${hasDiscounts ? `<td>${Number(item.discount) > 0 ? `${item.discount}%` : "—"}</td>` : ""}
-      <td>${formatMoney(item.total)} ${invoice.currency}</td>
+      <td style="font-weight:600">${formatMoney(item.total)} ${invoice.currency}</td>
     </tr>`).join("")}
   </tbody>
 </table>
 
-<div class="summary">
-  <table class="summary-table">
-    <tr><td>Ara cəm:</td><td>${formatMoney(invoice.subtotal)} ${invoice.currency}</td></tr>
-    ${Number(invoice.discountAmount) > 0 ? `<tr><td>Endirim:</td><td>-${formatMoney(invoice.discountAmount)} ${invoice.currency}</td></tr>` : ""}
-    ${invoice.includeVat ? `<tr><td>ƏDV (${Number(invoice.taxRate) * 100}%):</td><td>${formatMoney(invoice.taxAmount)} ${invoice.currency}</td></tr>` : ""}
-    <tr class="total"><td>Yekun:</td><td>${formatMoney(invoice.totalAmount)} ${invoice.currency}</td></tr>
-    ${Number(invoice.paidAmount) > 0 ? `<tr><td>Ödənilmiş:</td><td>${formatMoney(invoice.paidAmount)} ${invoice.currency}</td></tr><tr class="total"><td>Qalıq:</td><td>${formatMoney(invoice.balanceDue)} ${invoice.currency}</td></tr>` : ""}
-  </table>
+<div class="summary-wrap">
+  <div class="summary-box">
+    <div class="summary-row"><span>Ara cəm</span><span>${formatMoney(invoice.subtotal)} ${invoice.currency}</span></div>
+    ${Number(invoice.discountAmount) > 0 ? `<div class="summary-row"><span>Endirim</span><span>−${formatMoney(invoice.discountAmount)} ${invoice.currency}</span></div>` : ""}
+    ${invoice.includeVat ? `<div class="summary-row"><span>ƏDV ${Number(invoice.taxRate) * 100}%</span><span>${formatMoney(invoice.taxAmount)} ${invoice.currency}</span></div>` : ""}
+    <div class="summary-row total"><span>YEKUN</span><span>${formatMoney(invoice.totalAmount)} ${invoice.currency}</span></div>
+    ${Number(invoice.paidAmount) > 0 ? `<div class="summary-row"><span>Ödənilmiş</span><span>${formatMoney(invoice.paidAmount)} ${invoice.currency}</span></div><div class="summary-row total"><span>QALIQ</span><span>${formatMoney(invoice.balanceDue)} ${invoice.currency}</span></div>` : ""}
+  </div>
 </div>
 
 <div class="bottom-row">
-  <div>
-    ${hasBankDetails ? `
-    <div class="bank-box">
-      <div class="bank-box-title">BANK HESABI</div>
-      <div class="bank-box-body">
-        ${bankName ? `<div class="bank-row"><strong>Bank:</strong><span>${bankName}</span></div>` : ""}
-        ${bankVoen ? `<div class="bank-row"><strong>VÖEN:</strong><span>${bankVoen}</span></div>` : ""}
-        ${bankCode ? `<div class="bank-row"><strong>Kod:</strong><span>${bankCode}</span></div>` : ""}
-        ${bankSwift ? `<div class="bank-row"><strong>SWIFT:</strong><span>${bankSwift}</span></div>` : ""}
-        ${bankCorrAccount ? `<div class="bank-row"><strong>M/H:</strong><span>${bankCorrAccount}</span></div>` : ""}
-        ${bankAccount ? `<div class="bank-row"><strong>H/H:</strong><span>${bankAccount}</span></div>` : ""}
-      </div>
-    </div>` : ""}
+  <div class="section-box">
+    <div class="section-title">Bank Hesabı</div>
+    <div class="bank-body">
+      ${bankName ? `<div class="bank-row"><span class="lbl">Bank:</span><span class="val">${bankName}</span></div>` : ""}
+      ${bankVoen ? `<div class="bank-row"><span class="lbl">VÖEN:</span><span class="val">${bankVoen}</span></div>` : ""}
+      ${bankCode ? `<div class="bank-row"><span class="lbl">Kod:</span><span class="val">${bankCode}</span></div>` : ""}
+      ${bankSwift ? `<div class="bank-row"><span class="lbl">SWIFT:</span><span class="val">${bankSwift}</span></div>` : ""}
+      ${bankCorrAccount ? `<div class="bank-row"><span class="lbl">M/H:</span><span class="val">${bankCorrAccount}</span></div>` : ""}
+      ${bankAccount ? `<div class="bank-row"><span class="lbl">H/H:</span><span class="val">${bankAccount}</span></div>` : ""}
+    </div>
   </div>
-  <div class="signer-block">
-    <div class="signer-block-title">TƏSDİQ (İMZA, MÖHÜR)</div>
-    <div class="signer-block-body">
+  <div class="section-box">
+    <div class="section-title">Təsdiq (İmza, Möhür)</div>
+    <div class="stamp-body">
       ${withStamp && companyStampUrl ? `<img src="${companyStampUrl}" class="stamp-img" alt="Stamp" />` : ""}
-      <div class="signer-line"></div>
-      ${signerName ? `<div class="signer-name">${signerName}</div>` : ""}
-      ${signerTitle ? `<div class="signer-title">${signerTitle}</div>` : ""}
+      <div class="sig-line"></div>
+      ${signerName ? `<div class="sig-name">${signerName}</div>` : ""}
+      ${signerTitle ? `<div class="sig-title">${signerTitle}</div>` : ""}
     </div>
   </div>
 </div>
 
 ${terms || footerNote ? `
 <div class="footer">
-  ${terms ? `<h4>Şərtlər</h4><p>${terms}</p>` : ""}
-  ${footerNote ? `<p>${footerNote}</p>` : ""}
+  ${terms ? `<h4>Şərtlər və Qaydalar</h4><p>${terms}</p>` : ""}
+  ${footerNote ? `<p style="margin-top:4px">${footerNote}</p>` : ""}
 </div>` : ""}
 
 <button class="print-btn no-print" onclick="window.print()">🖨️ Çap et / PDF</button>
