@@ -452,7 +452,7 @@ export default function CreateInvoicePage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>{t("company") || "Company"} *</Label>
-                  <div className="relative">
+                  <div className="relative" onClick={(e) => e.stopPropagation()}>
                     <Input
                       placeholder={t("selectCompany") || "Type to search company..."}
                       value={companySearch}
@@ -554,13 +554,13 @@ export default function CreateInvoicePage() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => setShowProductDropdown(!showProductDropdown)}
+                      onClick={(e) => { e.stopPropagation(); setShowProductDropdown(!showProductDropdown) }}
                     >
                       <Package className="h-4 w-4 mr-2" />
                       {t("fromProducts") || "From Products"}
                     </Button>
-                    {showProductDropdown && products.length > 0 && (
-                      <div className="absolute right-0 mt-1 w-72 bg-popover border rounded-md shadow-lg z-50 max-h-60 overflow-y-auto">
+                    {showProductDropdown && (
+                      <div className="absolute right-0 mt-1 w-72 bg-popover border rounded-md shadow-lg z-50 max-h-60 overflow-y-auto" onClick={(e) => e.stopPropagation()}>
                         {products.map((product) => (
                           <button
                             key={product.id}
