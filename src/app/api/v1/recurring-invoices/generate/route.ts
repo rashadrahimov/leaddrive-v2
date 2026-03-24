@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma"
 import { getOrgId } from "@/lib/api-auth"
 import { generateInvoiceNumber } from "@/lib/invoice-number"
 import { calculateItemTotal, calculateInvoiceTotals, calculateDueDate } from "@/lib/invoice-calculations"
+import { formatMonthYear } from "@/lib/invoice-templates"
 import { addDays, addWeeks, addMonths, addYears } from "date-fns"
 import crypto from "crypto"
 
@@ -71,11 +72,23 @@ export async function POST(req: NextRequest) {
       const issueDate = new Date()
       const dueDate = calculateDueDate(issueDate, rec.paymentTerms)
 
+      // Generate title from template or use static title
+      const template = (rec as any).titleTemplate as string | null
+      let invoiceTitle = rec.title
+      if (template) {
+        const monthYear = formatMonthYear(issueDate, "az")
+        const [monthName, yearStr] = monthYear.split(" ")
+        invoiceTitle = template
+          .replace(/\{month\}/gi, monthName || "")
+          .replace(/\{year\}/gi, yearStr || String(issueDate.getFullYear()))
+          .replace(/\{number\}/gi, String(rec.totalGenerated + 1))
+      }
+
       await prisma.invoice.create({
         data: {
           organizationId: orgId,
           invoiceNumber,
-          title: rec.title,
+          title: invoiceTitle,
           recurringInvoiceId: rec.id,
           companyId: rec.companyId || undefined,
           contactId: rec.contactId || undefined,

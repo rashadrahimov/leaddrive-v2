@@ -15,6 +15,7 @@ const itemSchema = z.object({
 
 const createSchema = z.object({
   title: z.string().min(1),
+  titleTemplate: z.string().optional().nullable(),
   companyId: z.string().optional().nullable(),
   contactId: z.string().optional().nullable(),
   dealId: z.string().optional().nullable(),
@@ -69,6 +70,7 @@ export async function POST(req: NextRequest) {
       data: {
         organizationId: orgId,
         title: d.title,
+        titleTemplate: d.titleTemplate,
         companyId: d.companyId || undefined,
         contactId: d.contactId || undefined,
         dealId: d.dealId || undefined,

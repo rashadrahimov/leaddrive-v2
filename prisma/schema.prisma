@@ -1399,6 +1399,7 @@ model RecurringInvoice {
   organizationId    String
   organization      Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   title             String
+  titleTemplate     String?   // e.g. "IT Xidmətləri — {month} {year}"
   companyId         String?
   contactId         String?
   dealId            String?

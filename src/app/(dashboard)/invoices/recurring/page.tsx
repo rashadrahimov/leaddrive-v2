@@ -74,6 +74,7 @@ const emptyItem = (): RecurringInvoiceItem => ({
 
 const defaultForm = {
   title: "",
+  titleTemplate: "",
   companyId: "",
   frequency: "monthly",
   intervalCount: 1,
@@ -155,6 +156,7 @@ export default function RecurringInvoicesPage() {
     try {
       const body: Record<string, unknown> = {
         title: form.title,
+        titleTemplate: form.titleTemplate || `${form.title} — {month} {year}`,
         frequency: form.frequency,
         intervalCount: Number(form.intervalCount) || 1,
         currency: form.currency,
@@ -434,11 +436,34 @@ export default function RecurringInvoicesPage() {
               <Label>{t("titleField")} *</Label>
               <Input
                 value={form.title}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, title: e.target.value }))
-                }
+                onChange={(e) => {
+                  const val = e.target.value
+                  setForm((f) => ({
+                    ...f,
+                    title: val,
+                    // Auto-fill template if user hasn't manually edited it
+                    titleTemplate: !f.titleTemplate || f.titleTemplate === `${f.title} — {month} {year}`
+                      ? `${val} — {month} {year}`
+                      : f.titleTemplate,
+                  }))
+                }}
                 placeholder={t("recurringTitlePlaceholder")}
               />
+            </div>
+
+            {/* Title Template */}
+            <div className="space-y-1">
+              <Label>Title Template</Label>
+              <Input
+                value={form.titleTemplate}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, titleTemplate: e.target.value }))
+                }
+                placeholder="{title} — {month} {year}"
+              />
+              <p className="text-xs text-muted-foreground">
+                Variables: {"{month}"}, {"{year}"}, {"{number}"}. Leave empty to use static title.
+              </p>
             </div>
 
             {/* Company */}
