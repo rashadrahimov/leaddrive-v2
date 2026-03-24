@@ -350,16 +350,14 @@ ${logoHtml}
 <div class="approval-block">
   <div class="approval-col">
     <div class="label">${t.approve}</div>
-    <div class="company-name">"${companyNameUpper}" MMC-nin</div>
-    <div>${t.directorOf}</div>
+    <div class="company-name">"${companyNameUpper}" MMC${t.directorOf}</div>
     <div>${directorName || "_______________"}</div>
     <div>______________</div>
     <div style="color: #666; font-size: 12px;">${t.signAndStamp}</div>
   </div>
   <div class="approval-col" style="text-align: right;">
     <div class="label">${t.approve}</div>
-    <div class="company-name">"${clientCompanyName}"</div>
-    <div>${t.directorOf}</div>
+    <div class="company-name">"${clientCompanyName}"${t.directorOf}</div>
     <div>&nbsp;</div>
     <div>_______________</div>
     <div style="color: #666; font-size: 12px;">${t.signAndStamp}</div>
