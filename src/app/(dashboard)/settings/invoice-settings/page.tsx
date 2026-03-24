@@ -49,6 +49,9 @@ export default function InvoiceSettingsPage() {
     signerName: "",
     signerTitle: "",
     companyStampUrl: "",
+    actSignerName: "",
+    actSignerTitle: "",
+    actSignerSignatureUrl: "",
     termsAndConditions: "",
     footerNote: "",
   })
