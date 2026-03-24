@@ -1068,7 +1068,10 @@
     "activitySent": "Счёт отправлен",
     "activityViewed": "Счёт просмотрен клиентом",
     "activityPaid": "Счёт полностью оплачен",
-    "activityPaymentRecorded": "Платёж записан"
+    "activityPaymentRecorded": "Платёж записан",
+    "colServiceName": "Наименование товара, услуги или работы",
+    "colQuantity": "Кол-во",
+    "colAmountCurrency": "Сумма"
   },
   "inbox": {
     "title": "Входящие",

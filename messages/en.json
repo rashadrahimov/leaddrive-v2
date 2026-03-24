@@ -1068,7 +1068,10 @@
     "activitySent": "Invoice sent",
     "activityViewed": "Invoice viewed by client",
     "activityPaid": "Invoice fully paid",
-    "activityPaymentRecorded": "Payment recorded"
+    "activityPaymentRecorded": "Payment recorded",
+    "colServiceName": "Product, service or work description",
+    "colQuantity": "Qty",
+    "colAmountCurrency": "Amount"
   },
   "inbox": {
     "title": "Inbox",
