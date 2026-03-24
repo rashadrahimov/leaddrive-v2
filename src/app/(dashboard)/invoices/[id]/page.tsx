@@ -67,7 +67,7 @@ interface AuditEntry {
 
 interface Invoice {
   id: string
-  number: string
+  invoiceNumber: string
   title: string | null
   status: string
   issueDate: string
@@ -183,7 +183,7 @@ function InvoicePipeline({
               }}
             >
               <span className="truncate">
-                {t(`status_${stage}`)}
+                {t(`status.${stage}`)}
               </span>
             </div>
           </div>
@@ -321,14 +321,14 @@ export default function InvoiceDetailPage() {
     try {
       const res = await fetch(`/api/v1/invoices/${invoiceId}`, { headers })
       if (!res.ok) throw new Error("Failed to fetch invoice")
-      const data = await res.json()
+      const json = await res.json()
+      const data = json.data ?? json
       setInvoice(data)
       // Pre-fill send form
       setSendForm((prev) => ({
         ...prev,
-        email:
-          data.recipientEmail || data.contact?.email || "",
-        subject: `Invoice ${data.number}`,
+        email: data.recipientEmail || data.contact?.email || "",
+        subject: `Invoice ${data.invoiceNumber}`,
       }))
       // Pre-fill payment amount
       setPaymentForm((prev) => ({
@@ -502,10 +502,10 @@ export default function InvoiceDetailPage() {
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-xl font-bold">
-                {invoice.number}
+                {invoice.invoiceNumber}
               </h1>
               <Badge className={STATUS_STYLES[invoice.status] || ""}>
-                {t(`status_${invoice.status}`)}
+                {t(`status.${invoice.status}`)}
               </Badge>
             </div>
             {invoice.title && (
@@ -576,7 +576,7 @@ export default function InvoiceDetailPage() {
                   <span className="text-muted-foreground">
                     {t("invoiceNumber")}
                   </span>
-                  <span className="font-medium">{invoice.number}</span>
+                  <span className="font-medium">{invoice.invoiceNumber}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">
@@ -609,7 +609,7 @@ export default function InvoiceDetailPage() {
                     <span className="text-muted-foreground">
                       {t("paymentTerms")}
                     </span>
-                    <span>{invoice.paymentTerms}</span>
+                    <span>{t(invoice.paymentTerms as any)}</span>
                   </div>
                 )}
                 <div className="flex justify-between">
@@ -996,7 +996,7 @@ export default function InvoiceDetailPage() {
         open={showDeleteDialog}
         onOpenChange={setShowDeleteDialog}
         onConfirm={handleDelete}
-        itemName={invoice.number}
+        itemName={invoice.invoiceNumber}
       />
 
       {/* ===== Record Payment Dialog ===== */}
