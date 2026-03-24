@@ -225,12 +225,12 @@ export async function processEnrollmentStep(enrollmentId: string, orgId: string)
       }
 
       case "send_whatsapp": {
-        const message = replaceVars(config.message || "")
         const waChannel = await prisma.channelConfig.findFirst({
           where: { organizationId: orgId, channelType: "whatsapp", isActive: true },
         })
         if (waChannel?.apiKey && waChannel?.phoneNumber && recipientPhone) {
           try {
+            // Use approved template "invoice_payment_reminder" with named parameters
             const waRes = await fetch(`https://graph.facebook.com/v18.0/${waChannel.phoneNumber}/messages`, {
               method: "POST",
               headers: {
@@ -240,22 +240,37 @@ export async function processEnrollmentStep(enrollmentId: string, orgId: string)
               body: JSON.stringify({
                 messaging_product: "whatsapp",
                 to: recipientPhone,
-                type: "text",
-                text: { body: message },
+                type: "template",
+                template: {
+                  name: "invoice_payment_reminder",
+                  language: { code: "az" },
+                  components: [
+                    {
+                      type: "body",
+                      parameters: [
+                        { type: "text", parameter_name: "customer_name", text: recipientName || recipientPhone },
+                        { type: "text", parameter_name: "invoice_number", text: invoiceNumber || "-" },
+                        { type: "text", parameter_name: "amount", text: invoiceAmount || "-" },
+                        { type: "text", parameter_name: "balance_due", text: invoiceBalanceDue || "-" },
+                        { type: "text", parameter_name: "due_date", text: invoiceDueDate || "-" },
+                      ],
+                    },
+                  ],
+                },
               }),
             })
             const waData = await waRes.json()
             if (waData.messages?.[0]?.id) {
-              result = { stepId: currentStep.id, stepType: "send_whatsapp", status: "completed", message: `WhatsApp sent to ${recipientPhone}: ${waData.messages[0].id}` }
+              result = { stepId: currentStep.id, stepType: "send_whatsapp", status: "completed", message: `WhatsApp template sent to ${recipientPhone}: ${waData.messages[0].id}` }
             } else {
-              result = { stepId: currentStep.id, stepType: "send_whatsapp", status: "completed", message: `WhatsApp API response: ${JSON.stringify(waData).slice(0, 200)}` }
+              result = { stepId: currentStep.id, stepType: "send_whatsapp", status: "completed", message: `WhatsApp API: ${JSON.stringify(waData).slice(0, 200)}` }
             }
           } catch (waErr: any) {
             result = { stepId: currentStep.id, stepType: "send_whatsapp", status: "completed", message: `WhatsApp error: ${waErr.message}` }
           }
         } else {
-          console.log(`[Journey WhatsApp] Missing config or phone. To: ${recipientPhone}, Message: ${message}`)
-          result = { stepId: currentStep.id, stepType: "send_whatsapp", status: "completed", message: `WhatsApp logged (no config): "${message.slice(0, 50)}..." → ${recipientPhone || "(no phone)"}` }
+          console.log(`[Journey WhatsApp] Missing config or phone. To: ${recipientPhone}`)
+          result = { stepId: currentStep.id, stepType: "send_whatsapp", status: "completed", message: `WhatsApp logged (no config) → ${recipientPhone || "(no phone)"}` }
         }
         break
       }
