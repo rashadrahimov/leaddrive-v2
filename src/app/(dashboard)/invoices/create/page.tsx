@@ -75,9 +75,11 @@ export default function CreateInvoicePage() {
   const [items, setItems] = useState<InvoiceItem[]>([
     { id: "item-1", name: "", description: "", quantity: 1, unitPrice: 0, discount: 0, customFields: {} },
   ])
+  const defaultProjectLabel = t("colProject") || "Layihə"
+  const defaultUnitLabel = t("colUnitMeasure") || "Ö/V"
   const [customColumns, setCustomColumns] = useState<CustomColumn[]>([
-    { key: "project", label: "Layihə" },
-    { key: "unit", label: "Ö/V" },
+    { key: "project", label: defaultProjectLabel },
+    { key: "unit", label: defaultUnitLabel },
   ])
 
   // Summary
@@ -401,9 +403,8 @@ export default function CreateInvoicePage() {
         )}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column - Main Content */}
-        <div className="lg:col-span-2 space-y-6">
+      <div className="max-w-4xl space-y-6">
+        <div className="space-y-6">
           {/* Title */}
           <Card>
             <CardHeader>
@@ -551,18 +552,22 @@ export default function CreateInvoicePage() {
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="bg-[#0891b2] text-white text-xs font-semibold uppercase tracking-wider">
-                      <th className="px-3 py-2.5 text-left min-w-[250px]">Məhsul, xidmət və ya işin təsnifatı</th>
+                      <th className="px-3 py-2.5 text-left min-w-[250px]">{t("colServiceName") || "Məhsul, xidmət və ya işin təsnifatı"}</th>
                       {customColumns.map((col) => (
                         <th key={col.key} className="px-2 py-2.5 text-left min-w-[120px]">
                           <div className="flex items-center gap-1">
-                            <span>{col.label}</span>
-                            <button onClick={() => removeCustomColumn(col.key)} className="opacity-60 hover:opacity-100" title="Remove column">×</button>
+                            <input
+                              className="bg-transparent border-b border-white/30 focus:border-white outline-none text-white text-xs font-semibold uppercase w-full min-w-[60px]"
+                              value={col.label}
+                              onChange={(e) => setCustomColumns((prev) => prev.map((c) => c.key === col.key ? { ...c, label: e.target.value } : c))}
+                            />
+                            <button onClick={() => removeCustomColumn(col.key)} className="opacity-60 hover:opacity-100 flex-shrink-0" title="Remove column">×</button>
                           </div>
                         </th>
                       ))}
-                      <th className="px-2 py-2.5 text-center w-[80px]">Miqdar</th>
-                      <th className="px-2 py-2.5 text-right w-[120px]">Qiymət</th>
-                      <th className="px-2 py-2.5 text-right w-[110px]">Məbləğ AZN</th>
+                      <th className="px-2 py-2.5 text-center w-[80px]">{t("colQuantity") || "Miqdar"}</th>
+                      <th className="px-2 py-2.5 text-right w-[120px]">{t("colPrice") || "Qiymət"}</th>
+                      <th className="px-2 py-2.5 text-right w-[110px]">{t("colAmountCurrency") || `Məbləğ ${currency}`}</th>
                       <th className="w-[40px]"></th>
                     </tr>
                   </thead>
@@ -767,13 +772,8 @@ export default function CreateInvoicePage() {
               </div>
             </CardContent>
           </Card>
-        </div>
-
-        {/* Right Column - Summary Sidebar */}
-        <div className="lg:col-span-1">
-          <div className="sticky top-6 space-y-6">
-            {/* Summary Card */}
-            <Card>
+          {/* Summary + Actions */}
+          <Card>
               <CardHeader>
                 <CardTitle className="text-base">{t("summary") || "Summary"}</CardTitle>
               </CardHeader>
@@ -882,7 +882,6 @@ export default function CreateInvoicePage() {
                 </Button>
               </CardContent>
             </Card>
-          </div>
         </div>
       </div>
     </div>
