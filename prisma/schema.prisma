@@ -1338,6 +1338,9 @@ model Invoice {
   recurringInvoiceId String?
   recurringInvoice   RecurringInvoice? @relation(fields: [recurringInvoiceId], references: [id])
 
+  // Custom columns definition
+  customColumns     Json?     // [{ "key": "unit", "label": "Ölçü vahidi" }, ...]
+
   // Meta
   viewToken         String?   @unique
   createdBy         String?
@@ -1369,6 +1372,7 @@ model InvoiceItem {
   taxRate     Float?
   total       Float   @default(0)
   sortOrder   Int     @default(0)
+  customFields Json?  // { "columnName": "value", ... }
 
   @@index([invoiceId])
   @@map("invoice_items")

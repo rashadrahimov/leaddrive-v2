@@ -15,6 +15,7 @@ const itemSchema = z.object({
   discount: z.number().min(0).max(100).default(0),
   taxRate: z.number().optional().nullable(),
   sortOrder: z.number().int().default(0),
+  customFields: z.record(z.string(), z.string()).optional().nullable(),
 })
 
 const createSchema = z.object({
@@ -47,6 +48,7 @@ const createSchema = z.object({
   contractNumber: z.string().optional().nullable(),
   contractDate: z.string().optional().nullable(),
   documentLanguage: z.string().default("az"),
+  customColumns: z.array(z.object({ key: z.string(), label: z.string() })).optional().nullable(),
   items: z.array(itemSchema).default([]),
 })
 
@@ -160,6 +162,7 @@ export async function POST(req: NextRequest) {
         contractNumber: d.contractNumber,
         contractDate: d.contractDate,
         documentLanguage: d.documentLanguage,
+        customColumns: d.customColumns || undefined,
         viewToken: crypto.randomUUID(),
         items: { create: itemsData },
       },

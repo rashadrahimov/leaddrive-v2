@@ -21,6 +21,12 @@ interface InvoiceItem {
   quantity: number
   unitPrice: number
   discount: number
+  customFields?: Record<string, string>
+}
+
+interface CustomColumn {
+  key: string
+  label: string
 }
 
 interface Company {
@@ -67,8 +73,9 @@ export default function CreateInvoicePage() {
 
   // Items
   const [items, setItems] = useState<InvoiceItem[]>([
-    { id: "item-1", name: "", description: "", quantity: 1, unitPrice: 0, discount: 0 },
+    { id: "item-1", name: "", description: "", quantity: 1, unitPrice: 0, discount: 0, customFields: {} },
   ])
+  const [customColumns, setCustomColumns] = useState<CustomColumn[]>([])
 
   // Summary
   const [discountType, setDiscountType] = useState<"percentage" | "fixed">("percentage")
@@ -215,7 +222,7 @@ export default function CreateInvoicePage() {
   const addItem = useCallback(() => {
     setItems((prev) => [
       ...prev,
-      { id: String(Date.now()) + "-" + Math.random().toString(36).slice(2, 8), name: "", description: "", quantity: 1, unitPrice: 0, discount: 0 },
+      { id: String(Date.now()) + "-" + Math.random().toString(36).slice(2, 8), name: "", description: "", quantity: 1, unitPrice: 0, discount: 0, customFields: {} },
     ])
   }, [])
 
@@ -226,6 +233,34 @@ export default function CreateInvoicePage() {
   const updateItem = useCallback((id: string, field: keyof InvoiceItem, value: string | number) => {
     setItems((prev) =>
       prev.map((item) => (item.id === id ? { ...item, [field]: value } : item))
+    )
+  }, [])
+
+  const updateItemCustomField = useCallback((id: string, colKey: string, value: string) => {
+    setItems((prev) =>
+      prev.map((item) =>
+        item.id === id
+          ? { ...item, customFields: { ...(item.customFields || {}), [colKey]: value } }
+          : item
+      )
+    )
+  }, [])
+
+  const addCustomColumn = useCallback(() => {
+    const label = prompt("Column name / Название столбца:")
+    if (!label?.trim()) return
+    const key = "col_" + Date.now()
+    setCustomColumns((prev) => [...prev, { key, label: label.trim() }])
+  }, [])
+
+  const removeCustomColumn = useCallback((key: string) => {
+    setCustomColumns((prev) => prev.filter((c) => c.key !== key))
+    setItems((prev) =>
+      prev.map((item) => {
+        const cf = { ...(item.customFields || {}) }
+        delete cf[key]
+        return { ...item, customFields: cf }
+      })
     )
   }, [])
 
@@ -240,6 +275,7 @@ export default function CreateInvoicePage() {
         quantity: 1,
         unitPrice: product.price || 0,
         discount: 0,
+        customFields: {},
       },
     ])
     setShowProductDropdown(false)
@@ -299,6 +335,7 @@ export default function CreateInvoicePage() {
         taxRate: includeVat ? taxRate : 0,
         taxAmount: calculations.taxAmount,
         total: calculations.total,
+        customColumns: customColumns.length > 0 ? customColumns : undefined,
         items: items
           .filter((i) => i.name.trim())
           .map((item) => ({
@@ -309,6 +346,7 @@ export default function CreateInvoicePage() {
             unitPrice: item.unitPrice,
             discount: item.discount,
             total: getLineTotal(item),
+            customFields: item.customFields && Object.keys(item.customFields).length > 0 ? item.customFields : undefined,
           })),
       }
 
@@ -462,6 +500,10 @@ export default function CreateInvoicePage() {
               <div className="flex items-center justify-between">
                 <CardTitle className="text-base">{t("items") || "Items"}</CardTitle>
                 <div className="flex gap-2">
+                  <Button variant="outline" size="sm" onClick={addCustomColumn}>
+                    <Plus className="h-4 w-4 mr-1" />
+                    Column
+                  </Button>
                   <div className="relative">
                     <Button
                       variant="outline"
@@ -502,106 +544,85 @@ export default function CreateInvoicePage() {
             </CardHeader>
             <CardContent>
               {/* Items Table */}
-              <div className="border rounded-lg overflow-hidden">
-                {/* Table Header */}
-                <div className="hidden md:grid grid-cols-[1fr_2.5fr_80px_120px_80px_100px_40px] gap-0 bg-muted/60 border-b text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                  <div className="px-3 py-2.5">#</div>
-                  <div className="px-3 py-2.5">{t("itemName") || "Name"}</div>
-                  <div className="px-3 py-2.5 text-center">{t("qty") || "Qty"}</div>
-                  <div className="px-3 py-2.5 text-right">{t("unitPrice") || "Price"}</div>
-                  <div className="px-3 py-2.5 text-center">{t("discountPercent") || "Disc %"}</div>
-                  <div className="px-3 py-2.5 text-right">{t("total") || "Total"}</div>
-                  <div className="px-1 py-2.5"></div>
-                </div>
-
-                {/* Item Rows */}
-                {items.map((item, index) => (
-                  <div
-                    key={item.id}
-                    className="grid grid-cols-1 md:grid-cols-[1fr_2.5fr_80px_120px_80px_100px_40px] gap-0 border-b last:border-b-0 hover:bg-muted/20 transition-colors"
-                  >
-                    {/* Row number */}
-                    <div className="hidden md:flex items-center px-3 py-2 text-sm text-muted-foreground font-mono">
-                      {index + 1}
-                    </div>
-                    {/* Name + Description */}
-                    <div className="px-3 py-2">
-                      <Input
-                        placeholder={t("itemNamePlaceholder") || "Service or product name"}
-                        value={item.name}
-                        onChange={(e) => updateItem(item.id, "name", e.target.value)}
-                        className="h-8 border-0 px-0 shadow-none focus-visible:ring-0 font-medium"
-                      />
-                      <Input
-                        placeholder={t("descriptionPlaceholder") || "Description (optional)"}
-                        value={item.description}
-                        onChange={(e) => updateItem(item.id, "description", e.target.value)}
-                        className="h-7 border-0 px-0 shadow-none focus-visible:ring-0 text-xs text-muted-foreground"
-                      />
-                    </div>
-                    {/* Qty */}
-                    <div className="px-2 py-2 flex items-center">
-                      <Label className="md:hidden text-xs text-muted-foreground mr-2">Qty</Label>
-                      <Input
-                        type="number"
-                        min={1}
-                        step={1}
-                        value={item.quantity}
-                        onChange={(e) =>
-                          updateItem(item.id, "quantity", Math.max(1, parseInt(e.target.value) || 1))
-                        }
-                        className="h-8 text-center"
-                      />
-                    </div>
-                    {/* Price */}
-                    <div className="px-2 py-2 flex items-center">
-                      <Label className="md:hidden text-xs text-muted-foreground mr-2">Price</Label>
-                      <Input
-                        type="number"
-                        min={0}
-                        step={0.01}
-                        value={item.unitPrice}
-                        onChange={(e) =>
-                          updateItem(item.id, "unitPrice", Math.max(0, parseFloat(e.target.value) || 0))
-                        }
-                        className="h-8 text-right"
-                      />
-                    </div>
-                    {/* Discount % */}
-                    <div className="px-2 py-2 flex items-center">
-                      <Label className="md:hidden text-xs text-muted-foreground mr-2">Disc</Label>
-                      <Input
-                        type="number"
-                        min={0}
-                        max={100}
-                        step={0.1}
-                        value={item.discount}
-                        onChange={(e) =>
-                          updateItem(item.id, "discount", Math.min(100, Math.max(0, parseFloat(e.target.value) || 0)))
-                        }
-                        className="h-8 text-center"
-                      />
-                    </div>
-                    {/* Line Total */}
-                    <div className="px-3 py-2 flex items-center justify-end">
-                      <span className={`text-sm font-semibold tabular-nums ${getLineTotal(item) > 0 ? "text-foreground" : "text-muted-foreground"}`}>
-                        {formatCurrency(getLineTotal(item))}
-                      </span>
-                    </div>
-                    {/* Delete */}
-                    <div className="px-1 py-2 flex items-center justify-center">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => removeItem(item.id)}
-                        disabled={items.length === 1}
-                        className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
+              <div className="border rounded-lg overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="bg-muted/60 border-b text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                      <th className="px-3 py-2.5 text-left w-10">#</th>
+                      <th className="px-3 py-2.5 text-left min-w-[200px]">{t("itemName") || "Name"}</th>
+                      {customColumns.map((col) => (
+                        <th key={col.key} className="px-2 py-2.5 text-left min-w-[100px]">
+                          <div className="flex items-center gap-1">
+                            <span>{col.label}</span>
+                            <button onClick={() => removeCustomColumn(col.key)} className="text-muted-foreground/50 hover:text-destructive" title="Remove column">×</button>
+                          </div>
+                        </th>
+                      ))}
+                      <th className="px-2 py-2.5 text-center w-[80px]">{t("qty") || "Qty"}</th>
+                      <th className="px-2 py-2.5 text-right w-[120px]">{t("unitPrice") || "Price"}</th>
+                      <th className="px-2 py-2.5 text-center w-[80px]">{t("discountPercent") || "Disc %"}</th>
+                      <th className="px-2 py-2.5 text-right w-[100px]">{t("total") || "Total"}</th>
+                      <th className="w-[40px]"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {items.map((item, index) => (
+                      <tr key={item.id} className="border-b last:border-b-0 hover:bg-muted/20 transition-colors">
+                        <td className="px-3 py-2 text-muted-foreground font-mono">{index + 1}</td>
+                        <td className="px-2 py-1">
+                          <Input
+                            placeholder={t("itemNamePlaceholder") || "Service or product name"}
+                            value={item.name}
+                            onChange={(e) => updateItem(item.id, "name", e.target.value)}
+                            className="h-8 border-0 px-1 shadow-none focus-visible:ring-0 font-medium"
+                          />
+                          <Input
+                            placeholder={t("descriptionPlaceholder") || "Description (optional)"}
+                            value={item.description}
+                            onChange={(e) => updateItem(item.id, "description", e.target.value)}
+                            className="h-6 border-0 px-1 shadow-none focus-visible:ring-0 text-xs text-muted-foreground"
+                          />
+                        </td>
+                        {customColumns.map((col) => (
+                          <td key={col.key} className="px-1 py-2">
+                            <Input
+                              placeholder={col.label}
+                              value={item.customFields?.[col.key] || ""}
+                              onChange={(e) => updateItemCustomField(item.id, col.key, e.target.value)}
+                              className="h-8"
+                            />
+                          </td>
+                        ))}
+                        <td className="px-1 py-2">
+                          <Input type="number" min={1} step={1} value={item.quantity}
+                            onChange={(e) => updateItem(item.id, "quantity", Math.max(1, parseInt(e.target.value) || 1))}
+                            className="h-8 text-center w-[70px]" />
+                        </td>
+                        <td className="px-1 py-2">
+                          <Input type="number" min={0} step={0.01} value={item.unitPrice}
+                            onChange={(e) => updateItem(item.id, "unitPrice", Math.max(0, parseFloat(e.target.value) || 0))}
+                            className="h-8 text-right w-[110px]" />
+                        </td>
+                        <td className="px-1 py-2">
+                          <Input type="number" min={0} max={100} step={0.1} value={item.discount}
+                            onChange={(e) => updateItem(item.id, "discount", Math.min(100, Math.max(0, parseFloat(e.target.value) || 0)))}
+                            className="h-8 text-center w-[70px]" />
+                        </td>
+                        <td className="px-2 py-2 text-right">
+                          <span className={`font-semibold tabular-nums ${getLineTotal(item) > 0 ? "text-foreground" : "text-muted-foreground"}`}>
+                            {formatCurrency(getLineTotal(item))}
+                          </span>
+                        </td>
+                        <td className="px-1 py-2 text-center">
+                          <Button variant="ghost" size="sm" onClick={() => removeItem(item.id)}
+                            disabled={items.length === 1} className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive">
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
 
                 {/* Add row button inside table */}
                 <div className="border-t bg-muted/20">
