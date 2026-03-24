@@ -68,10 +68,10 @@ function KpiCard({ title, value, sub, icon, color, alert }: {
 }
 
 const statusLabels: Record<string, string> = {
-  new: "Новый", in_progress: "В работе", waiting: "Ожидание",
-  resolved: "Решён", closed: "Закрыт",
-  LEAD: "Лид", QUALIFIED: "Квалиф.", PROPOSAL: "Предложение",
-  NEGOTIATION: "Переговоры", WON: "Выиграна", LOST: "Проиграна",
+  new: "Yeni", in_progress: "İcrada", waiting: "Gözləyir",
+  resolved: "Həll edildi", closed: "Bağlı",
+  LEAD: "Lid", QUALIFIED: "Kvalif.", PROPOSAL: "Təklif",
+  NEGOTIATION: "Danışıqlar", WON: "Qazanıldı", LOST: "İtirildi",
 }
 
 export default function DashboardPage() {
@@ -171,7 +171,7 @@ export default function DashboardPage() {
           {getGreeting()}, {session?.user?.name || "Director"}
         </h1>
         <p className="text-sm text-muted-foreground">
-          {t("executivePanel")} · {new Date().toLocaleDateString("ru", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
+          {t("executivePanel")} · {new Date().toLocaleDateString("az", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
         </p>
       </div>
 
