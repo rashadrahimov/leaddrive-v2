@@ -530,13 +530,13 @@ export default function InvoiceDetailPage() {
             <Send className="h-4 w-4 mr-1" />
             {t("send")}
           </Button>
-          <Button variant="outline" size="sm" onClick={() => handleDownloadPdf(false)}>
+          <Button variant="outline" size="sm" onClick={() => handleDownloadPdf(true)}>
             <Download className="h-4 w-4 mr-1" />
             {t("downloadPdf")}
           </Button>
-          <Button variant="outline" size="sm" onClick={() => handleDownloadPdf(true)}>
+          <Button variant="outline" size="sm" onClick={() => handleDownloadPdf(false)}>
             <Download className="h-4 w-4 mr-1" />
-            {t("downloadPdfStamp")}
+            {t("downloadPdfNoStamp")}
           </Button>
           <Button variant="outline" size="sm" onClick={handleDuplicate}>
             <Copy className="h-4 w-4 mr-1" />

@@ -934,6 +934,7 @@
     "duplicate": "Duplicate",
     "downloadPdf": "Download PDF",
     "downloadPdfStamp": "PDF with Stamp",
+    "downloadPdfNoStamp": "PDF without Stamp",
     "convertFromOffer": "Convert from Offer",
     "issueDate": "Issue Date",
     "dueDate": "Due Date",
