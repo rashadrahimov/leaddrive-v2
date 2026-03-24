@@ -1,5 +1,5 @@
 export type ModuleId =
-  | "core" | "deals" | "leads" | "tasks" | "contracts"
+  | "core" | "deals" | "leads" | "tasks" | "contracts" | "invoices"
   | "tickets" | "knowledge-base" | "portal" | "campaigns" | "omnichannel"
   | "journeys" | "workflows" | "profitability" | "ai" | "reports"
   | "currencies" | "custom-fields" | "events"
@@ -16,6 +16,7 @@ export const MODULE_REGISTRY: Record<ModuleId, ModuleDefinition> = {
   leads:            { name: "Leads",            requires: ["core"] },
   tasks:            { name: "Tasks",            requires: ["core"] },
   contracts:        { name: "Contracts",        requires: ["core"] },
+  invoices:         { name: "Invoices",         requires: ["deals"] },
   tickets:          { name: "Tickets & SLA",    requires: ["core"] },
   "knowledge-base": { name: "Knowledge Base",   requires: ["core"] },
   portal:           { name: "Client Portal",    requires: ["tickets"] },
@@ -39,7 +40,7 @@ export const PLANS = {
   },
   professional: {
     modules: [
-      "core", "deals", "leads", "tasks", "contracts", "tickets",
+      "core", "deals", "leads", "tasks", "contracts", "invoices", "tickets",
       "knowledge-base", "campaigns", "omnichannel", "reports",
       "workflows", "currencies",
     ] as ModuleId[],

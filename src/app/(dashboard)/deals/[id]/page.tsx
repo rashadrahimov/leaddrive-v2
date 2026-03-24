@@ -21,6 +21,7 @@ import { ActivityTimeline } from "@/components/deals/activity-timeline"
 import { DealHistory } from "@/components/deals/deal-history"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
 import { OffersTab } from "@/components/deals/offers-tab"
+import { InvoicesTab } from "@/components/deals/invoices-tab"
 
 const STAGE_STYLES = [
   { key: "LEAD",        color: "#6366f1", bg: "bg-indigo-500" },
@@ -600,6 +601,7 @@ export default function DealDetailPage() {
           <TabsTrigger value="competitors" className="rounded-md text-sm">{t("competitors")}</TabsTrigger>
           <TabsTrigger value="team" className="rounded-md text-sm">{t("team")}</TabsTrigger>
           <TabsTrigger value="offers" className="rounded-md text-sm">{t("offers")}</TabsTrigger>
+          <TabsTrigger value="invoices" className="rounded-md text-sm">Invoices</TabsTrigger>
           <TabsTrigger value="engagement" className="rounded-md text-sm">{t("engagement")}</TabsTrigger>
           <TabsTrigger value="history" className="rounded-md text-sm">{t("history")}</TabsTrigger>
         </TabsList>
@@ -937,6 +939,10 @@ export default function DealDetailPage() {
             currency={deal.currency}
             valueAmount={deal.valueAmount}
           />
+        </TabsContent>
+
+        <TabsContent value="invoices">
+          <InvoicesTab dealId={id} orgId={orgId || ""} />
         </TabsContent>
 
         {/* Engagement */}
