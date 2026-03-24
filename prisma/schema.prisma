@@ -1427,6 +1427,9 @@ model RecurringInvoice {
   termsAndConditions String?
   recipientEmail    String?
 
+  autoSend          Boolean   @default(false)
+  dayOfMonth        Int?      // e.g. 25 = generate on 25th
+
   isActive          Boolean   @default(true)
   createdBy         String?
   createdAt         DateTime  @default(now())
@@ -1451,6 +1454,7 @@ model RecurringInvoiceItem {
   unitPrice           Float   @default(0)
   discount            Float   @default(0)
   sortOrder           Int     @default(0)
+  customFields        Json?
 
   @@index([recurringInvoiceId])
   @@map("recurring_invoice_items")
