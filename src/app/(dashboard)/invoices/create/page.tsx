@@ -339,9 +339,8 @@ export default function CreateInvoicePage() {
         )}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-        {/* Left Column - Main Content */}
-        <div className="lg:col-span-2 space-y-6">
+      <div className="space-y-6">
+        <div className="space-y-6">
           {/* Title */}
           <Card>
             <CardHeader>
@@ -670,13 +669,8 @@ export default function CreateInvoicePage() {
               </div>
             </CardContent>
           </Card>
-        </div>
-
-        {/* Right Column - Summary Sidebar */}
-        <div className="lg:col-span-1">
-          <div className="sticky top-6 space-y-6">
-            {/* Summary Card */}
-            <Card>
+          {/* Summary Card */}
+          <Card>
               <CardHeader>
                 <CardTitle className="text-base">{t("summary") || "Summary"}</CardTitle>
               </CardHeader>
@@ -785,7 +779,6 @@ export default function CreateInvoicePage() {
                 </Button>
               </CardContent>
             </Card>
-          </div>
         </div>
       </div>
     </div>
