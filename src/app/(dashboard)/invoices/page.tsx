@@ -164,8 +164,8 @@ export default function InvoicesPage() {
       key: "_index",
       label: "#",
       sortable: false,
-      render: (_item: any, index: number) => (
-        <span className="text-xs text-muted-foreground">{index + 1}</span>
+      render: (_item: any, index?: number) => (
+        <span className="text-xs text-muted-foreground">{(index ?? 0) + 1}</span>
       ),
     },
     {
