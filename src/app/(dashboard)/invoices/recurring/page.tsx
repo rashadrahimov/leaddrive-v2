@@ -309,57 +309,90 @@ export default function RecurringInvoicesPage() {
     return new Date(d).toLocaleDateString()
   }
 
+  const activeCount = rules.filter((r) => r.isActive).length
+  const pausedCount = rules.length - activeCount
+  const [search, setSearch] = useState("")
+  const filteredRules = rules.filter((r) => {
+    if (!search) return true
+    const q = search.toLowerCase()
+    return r.title.toLowerCase().includes(q) || (r.company?.name || "").toLowerCase().includes(q) || (r.recipientEmail || "").toLowerCase().includes(q)
+  })
+
   if (loading) {
     return (
-      <div className="space-y-6">
-        <h1 className="text-2xl font-bold tracking-tight">
-          {t("recurringInvoices")}
-        </h1>
-        <div className="animate-pulse h-96 bg-muted rounded-lg" />
+      <div className="-mx-6 -mt-6 min-h-screen bg-muted/30">
+        <div className="bg-gradient-to-r from-cyan-600 to-blue-600 px-6 py-6">
+          <div className="animate-pulse h-12 bg-white/20 rounded-lg w-64" />
+        </div>
+        <div className="px-6 pt-6">
+          <div className="animate-pulse h-96 bg-muted rounded-lg" />
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => router.push("/invoices")}
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">
-              {t("recurringInvoices")}
-            </h1>
+    <div className="-mx-6 -mt-6 min-h-screen bg-muted/30 pb-20">
+      {/* Gradient Header */}
+      <div className="bg-gradient-to-r from-cyan-600 to-blue-600 px-6 py-5 shadow-md">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Button variant="ghost" size="sm" onClick={() => router.push("/invoices")} className="text-white/80 hover:text-white hover:bg-white/10">
+              <ArrowLeft className="h-4 w-4 mr-1" /> Geri
+            </Button>
+            <div>
+              <h1 className="text-xl font-bold text-white">Təkrarlanan hesab-fakturalar</h1>
+              <p className="text-white/70 text-xs mt-0.5">{rules.length} qayda / hər ayın 25-i avtomatik</p>
+            </div>
           </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            onClick={handleGenerateNow}
-            disabled={generating}
-          >
-            <RefreshCw
-              className={`h-4 w-4 mr-1 ${generating ? "animate-spin" : ""}`}
-            />
-            {t("generateNow")}
-          </Button>
-          <Button onClick={() => setDialogOpen(true)}>
-            <Plus className="h-4 w-4 mr-1" /> {t("newRecurring")}
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" className="bg-white/10 border-white/30 text-white hover:bg-white/20" onClick={handleGenerateNow} disabled={generating}>
+              <RefreshCw className={`h-4 w-4 mr-1 ${generating ? "animate-spin" : ""}`} /> Hazırla və göndər
+            </Button>
+            <Button size="sm" className="bg-white text-cyan-700 hover:bg-white/90" onClick={() => setDialogOpen(true)}>
+              <Plus className="h-4 w-4 mr-1" /> Yeni
+            </Button>
+          </div>
         </div>
       </div>
 
-      {/* Bulk actions bar */}
-      {selectedIds.size > 0 && (
-        <Card className="border-cyan-300 bg-cyan-50 dark:bg-cyan-950">
-          <CardContent className="py-3 px-4 flex items-center justify-between">
-            <span className="text-sm font-medium">{selectedIds.size} seçilib</span>
+      <div className="px-6 pt-5 space-y-4">
+
+        {/* Stats row */}
+        <div className="grid grid-cols-3 gap-3">
+          <div className="rounded-xl border bg-card p-4 flex items-center gap-3">
+            <div className="h-10 w-10 rounded-full bg-cyan-100 dark:bg-cyan-900 flex items-center justify-center">
+              <RefreshCw className="h-5 w-5 text-cyan-600" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold">{rules.length}</p>
+              <p className="text-xs text-muted-foreground">Ümumi qaydalar</p>
+            </div>
+          </div>
+          <div className="rounded-xl border bg-card p-4 flex items-center gap-3">
+            <div className="h-10 w-10 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center">
+              <Play className="h-5 w-5 text-green-600" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-green-600">{activeCount}</p>
+              <p className="text-xs text-muted-foreground">Aktiv</p>
+            </div>
+          </div>
+          <div className="rounded-xl border bg-card p-4 flex items-center gap-3">
+            <div className="h-10 w-10 rounded-full bg-orange-100 dark:bg-orange-900 flex items-center justify-center">
+              <Pause className="h-5 w-5 text-orange-600" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-orange-600">{pausedCount}</p>
+              <p className="text-xs text-muted-foreground">Dayandırılıb</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Bulk actions bar */}
+        {selectedIds.size > 0 && (
+          <div className="rounded-xl border-2 border-cyan-400 bg-cyan-50 dark:bg-cyan-950 p-3 flex items-center justify-between">
+            <span className="text-sm font-semibold text-cyan-800 dark:text-cyan-200">{selectedIds.size} seçilib</span>
             <div className="flex gap-2">
               <Button size="sm" variant="outline" className="h-8 text-green-700 border-green-300 hover:bg-green-50" onClick={() => handleBulkToggle(true)}>
                 <Play className="h-3.5 w-3.5 mr-1" /> Aktivləşdir
@@ -367,158 +400,120 @@ export default function RecurringInvoicesPage() {
               <Button size="sm" variant="outline" className="h-8 text-orange-700 border-orange-300 hover:bg-orange-50" onClick={() => handleBulkToggle(false)}>
                 <Pause className="h-3.5 w-3.5 mr-1" /> Dayandır
               </Button>
-              <Button size="sm" className="h-8" onClick={handleGenerateNow} disabled={generating}>
-                <RefreshCw className={`h-3.5 w-3.5 mr-1 ${generating ? "animate-spin" : ""}`} />
-                İndi göndər
+              <Button size="sm" className="h-8 bg-cyan-600 hover:bg-cyan-700" onClick={handleGenerateNow} disabled={generating}>
+                <RefreshCw className={`h-3.5 w-3.5 mr-1 ${generating ? "animate-spin" : ""}`} /> Hazırla
               </Button>
             </div>
-          </CardContent>
-        </Card>
-      )}
+          </div>
+        )}
 
-      {/* Generate report */}
-      {generateReport && generateReport.length > 0 && (
-        <Card className="border-green-300">
-          <CardHeader className="pb-2 pt-3 px-4">
-            <CardTitle className="text-sm flex items-center justify-between">
-              <span>Son nəticə: {generateReport.filter(r => r.status === "sent").length} göndərildi, {generateReport.filter(r => r.status === "send_failed").length} xəta</span>
-              <Button variant="ghost" size="sm" onClick={() => setGenerateReport(null)} className="h-6 text-xs">X</Button>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="px-4 pb-3">
-            <div className="max-h-48 overflow-y-auto text-xs space-y-1">
+        {/* Generate report */}
+        {generateReport && generateReport.length > 0 && (
+          <div className="rounded-xl border border-green-300 bg-green-50 dark:bg-green-950 p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-semibold text-green-800">Son nəticə: {generateReport.filter(r => r.status === "sent").length} göndərildi, {generateReport.filter(r => r.status === "send_failed").length} xəta</h3>
+              <Button variant="ghost" size="sm" onClick={() => setGenerateReport(null)} className="h-6 text-xs text-green-700">Bağla</Button>
+            </div>
+            <div className="max-h-48 overflow-y-auto space-y-1">
               {generateReport.map((r, i) => (
-                <div key={i} className={`flex justify-between py-1 px-2 rounded ${r.status === "sent" ? "bg-green-50 text-green-800" : r.status === "send_failed" ? "bg-red-50 text-red-800" : "bg-gray-50"}`}>
-                  <span>{r.invoiceNumber} — {r.company || "?"}</span>
-                  <span className="font-medium">{r.status === "sent" ? "OK" : r.status === "send_failed" ? ("Xeta: " + (r.error || "").slice(0, 40)) : "draft"}</span>
+                <div key={i} className={`flex justify-between py-1.5 px-3 rounded-lg text-xs ${r.status === "sent" ? "bg-green-100 text-green-800" : r.status === "send_failed" ? "bg-red-100 text-red-800" : "bg-white"}`}>
+                  <span className="font-medium">{r.invoiceNumber} — {r.company || "?"}</span>
+                  <span>{r.status === "sent" ? "Göndərildi" : r.status === "send_failed" ? ("Xəta: " + (r.error || "").slice(0, 40)) : "Qaralama"}</span>
                 </div>
               ))}
             </div>
-          </CardContent>
-        </Card>
-      )}
+          </div>
+        )}
 
-      {/* Rules list */}
-      {rules.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <Calendar className="h-12 w-12 text-muted-foreground mb-4" />
-            <p className="text-muted-foreground text-sm">
-              {t("noRecurringInvoices")}
-            </p>
-            <Button className="mt-4" onClick={() => setDialogOpen(true)}>
-              <Plus className="h-4 w-4 mr-1" /> {t("newRecurring")}
-            </Button>
-          </CardContent>
-        </Card>
-      ) : (
-        <>
-        <div className="flex items-center gap-2 mb-2">
-          <input
-            type="checkbox"
-            checked={selectedIds.size === rules.length && rules.length > 0}
-            onChange={toggleSelectAll}
-            className="h-4 w-4 rounded border-gray-300"
-          />
-          <span className="text-xs text-muted-foreground">Hamısını seç ({rules.length})</span>
+        {/* Search + Select All */}
+        <div className="flex items-center gap-3">
+          <div className="relative flex-1 max-w-sm">
+            <input
+              className="w-full h-9 pl-9 pr-3 text-sm border rounded-lg bg-card focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 outline-none"
+              placeholder="Axtar... (şirkət, ad, email)"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+            <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          </div>
+          <label className="flex items-center gap-2 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={selectedIds.size === filteredRules.length && filteredRules.length > 0}
+              onChange={toggleSelectAll}
+              className="h-4 w-4 rounded border-gray-300 accent-cyan-600"
+            />
+            <span className="text-xs text-muted-foreground">Hamısı ({filteredRules.length})</span>
+          </label>
         </div>
-        <div className="grid gap-3">
-          {rules.map((rule) => (
-            <Card key={rule.id} className={`hover:shadow-md transition-shadow ${selectedIds.has(rule.id) ? "ring-2 ring-cyan-400" : ""}`}>
-              <CardHeader className="pb-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <input
-                      type="checkbox"
-                      checked={selectedIds.has(rule.id)}
-                      onChange={() => toggleSelect(rule.id)}
-                      className="h-4 w-4 rounded border-gray-300"
-                    />
-                    <CardTitle className="text-base">{rule.title}</CardTitle>
-                    <Badge variant="outline">
-                      {rule.intervalCount > 1
-                        ? `${t("every")} ${rule.intervalCount} ${frequencyLabel(rule.frequency)}`
-                        : frequencyLabel(rule.frequency)}
-                    </Badge>
+
+        {/* Table */}
+        <div className="rounded-xl border bg-card overflow-hidden shadow-sm">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b bg-muted/40 text-xs text-muted-foreground uppercase tracking-wider">
+                <th className="w-10 px-3 py-2.5"></th>
+                <th className="px-3 py-2.5 text-left">Şirkət / Başlıq</th>
+                <th className="px-3 py-2.5 text-left">Email</th>
+                <th className="px-3 py-2.5 text-center">Status</th>
+                <th className="px-3 py-2.5 text-center">Növbəti</th>
+                <th className="px-3 py-2.5 text-center">Yaradılıb</th>
+                <th className="px-3 py-2.5 text-right w-24"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredRules.map((rule, i) => (
+                <tr key={rule.id}
+                  className={`border-b transition-colors hover:bg-cyan-50/50 dark:hover:bg-cyan-900/10 ${i % 2 === 1 ? "bg-muted/20" : ""} ${selectedIds.has(rule.id) ? "bg-cyan-50 dark:bg-cyan-950" : ""}`}
+                >
+                  <td className="px-3 py-2.5">
+                    <input type="checkbox" checked={selectedIds.has(rule.id)} onChange={() => toggleSelect(rule.id)} className="h-4 w-4 rounded accent-cyan-600" />
+                  </td>
+                  <td className="px-3 py-2.5">
+                    <div className="font-medium text-sm">{rule.company?.name || rule.title}</div>
+                    {rule.company && <div className="text-xs text-muted-foreground truncate max-w-[250px]">{rule.title}</div>}
+                  </td>
+                  <td className="px-3 py-2.5">
+                    <span className="text-xs text-muted-foreground">{rule.recipientEmail || "—"}</span>
+                  </td>
+                  <td className="px-3 py-2.5 text-center">
                     {rule.isActive ? (
-                      <Badge className="bg-green-100 text-green-800 hover:bg-green-100">
-                        {t("active")}
-                      </Badge>
+                      <span className="inline-flex items-center gap-1 text-xs font-medium text-green-700 bg-green-100 dark:bg-green-900 dark:text-green-300 px-2 py-0.5 rounded-full">
+                        <span className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse" /> Aktiv
+                      </span>
                     ) : (
-                      <Badge variant="secondary">{t("paused")}</Badge>
+                      <span className="inline-flex items-center gap-1 text-xs font-medium text-orange-700 bg-orange-100 dark:bg-orange-900 dark:text-orange-300 px-2 py-0.5 rounded-full">
+                        <span className="h-1.5 w-1.5 rounded-full bg-orange-500" /> Dayandırılıb
+                      </span>
                     )}
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleToggleActive(rule)}
-                      title={rule.isActive ? t("pause") : t("resume")}
-                    >
-                      {rule.isActive ? (
-                        <Pause className="h-4 w-4" />
-                      ) : (
-                        <Play className="h-4 w-4" />
-                      )}
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="text-destructive"
-                      onClick={() => {
-                        setDeleteId(rule.id)
-                        setDeleteName(rule.title)
-                      }}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
-                  {rule.company && (
-                    <div>
-                      <span className="text-muted-foreground">
-                        {t("company")}:
-                      </span>{" "}
-                      <span className="font-medium">{rule.company.name}</span>
+                  </td>
+                  <td className="px-3 py-2.5 text-center">
+                    <span className="text-xs font-mono">{formatDate(rule.nextRunDate)}</span>
+                  </td>
+                  <td className="px-3 py-2.5 text-center">
+                    <span className="text-xs tabular-nums">{rule.totalGenerated}</span>
+                  </td>
+                  <td className="px-3 py-2.5 text-right">
+                    <div className="flex items-center justify-end gap-0.5">
+                      <button onClick={() => handleToggleActive(rule)} className={`p-1.5 rounded-md transition-colors ${rule.isActive ? "hover:bg-orange-100 text-orange-600" : "hover:bg-green-100 text-green-600"}`} title={rule.isActive ? "Dayandır" : "Aktivləşdir"}>
+                        {rule.isActive ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
+                      </button>
+                      <button onClick={() => { setDeleteId(rule.id); setDeleteName(rule.title) }} className="p-1.5 rounded-md hover:bg-red-100 text-red-500 transition-colors" title="Sil">
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
                     </div>
-                  )}
-                  <div>
-                    <span className="text-muted-foreground">
-                      {t("nextRun")}:
-                    </span>{" "}
-                    <span className="font-medium">
-                      {formatDate(rule.nextRunDate)}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">
-                      {t("lastRun")}:
-                    </span>{" "}
-                    <span className="font-medium">
-                      {formatDate(rule.lastRunDate)}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">
-                      {t("totalGenerated")}:
-                    </span>{" "}
-                    <span className="font-medium">
-                      {rule.totalGenerated}
-                      {rule.maxOccurrences
-                        ? ` / ${rule.maxOccurrences}`
-                        : ""}
-                    </span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                  </td>
+                </tr>
+              ))}
+              {filteredRules.length === 0 && (
+                <tr>
+                  <td colSpan={7} className="px-4 py-8 text-center text-muted-foreground text-sm">Nəticə tapılmadı</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
-        </>
-      )}
+      </div>
 
       {/* Create Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
