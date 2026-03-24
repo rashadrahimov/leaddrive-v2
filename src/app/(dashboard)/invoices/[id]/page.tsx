@@ -326,19 +326,26 @@ export default function InvoiceDetailPage() {
     try {
       const res = await fetch(`/api/v1/invoices/${invoiceId}`, { headers })
       if (!res.ok) throw new Error("Failed to fetch invoice")
-      const data = await res.json()
-      setInvoice(data)
+      const json = await res.json()
+      const inv = json.data || json
+      // Map API fields to component interface
+      setInvoice({
+        ...inv,
+        number: inv.invoiceNumber || inv.number,
+        dueDate: inv.dueDate || "",
+        discountTotal: inv.discountAmount || inv.discountTotal || 0,
+        recipientVoen: inv.voen || inv.recipientVoen,
+      })
       // Pre-fill send form
       setSendForm((prev) => ({
         ...prev,
-        email:
-          data.recipientEmail || data.contact?.email || "",
-        subject: `Invoice ${data.number}`,
+        email: inv.recipientEmail || inv.contact?.email || "",
+        subject: `Invoice ${inv.invoiceNumber || inv.number}`,
       }))
       // Pre-fill payment amount
       setPaymentForm((prev) => ({
         ...prev,
-        amount: data.balanceDue,
+        amount: inv.balanceDue || 0,
       }))
     } catch {
       // ignore
