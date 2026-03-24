@@ -320,10 +320,15 @@ export default function InvoicesPage() {
           color="green"
         />
         <ColorStatCard
-          label={t("statOutstanding")}
-          value={`${stats.totalOutstanding.toLocaleString()} ${stats.currency}`}
+          label={t("statDebt")}
+          value={`${(stats.totalInvoiced - stats.totalPaid).toLocaleString()} ${stats.currency}`}
           icon={<Clock className="h-5 w-5" />}
           color="orange"
+          lines={[
+            { label: t("statInvoicedShort"), value: `${stats.totalInvoiced.toLocaleString()} ${stats.currency}` },
+            { label: t("statPaidShort"),     value: `${stats.totalPaid.toLocaleString()} ${stats.currency}` },
+            { label: t("statDiff"),          value: `${(stats.totalInvoiced - stats.totalPaid).toLocaleString()} ${stats.currency}` },
+          ]}
         />
         <ColorStatCard
           label={t("statOverdue")}
