@@ -29,6 +29,7 @@ const BUSINESS_MODULES = [
 
 const PROFESSIONAL_MODULES = [
   ...BUSINESS_MODULES,
+  "/invoices",
   "/campaigns",
   "/segments",
   "/email-templates",
@@ -52,6 +53,7 @@ const ENTERPRISE_MODULES = [
   "/settings/smtp-settings",
   "/settings/custom-fields",
   "/settings/dashboard",
+  "/settings/invoice-settings",
 ] as const
 
 export const PLAN_MODULES: Record<string, readonly string[]> = {
