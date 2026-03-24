@@ -968,6 +968,7 @@ export default function CreateInvoicePage() {
                 </Button>
               </CardContent>
             </Card>
+        </div>
       </div>
     </div>
   )
