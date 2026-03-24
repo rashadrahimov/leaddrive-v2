@@ -1064,7 +1064,10 @@
     "activitySent": "Faktura göndərildi",
     "activityViewed": "Faktura müştəri tərəfindən baxıldı",
     "activityPaid": "Faktura tam ödənildi",
-    "activityPaymentRecorded": "Ödəniş qeydə alındı"
+    "activityPaymentRecorded": "Ödəniş qeydə alındı",
+    "colServiceName": "Məhsul, xidmət və ya işin təsnifatı",
+    "colQuantity": "Miqdar",
+    "colAmountCurrency": "Məbləğ"
   },
   "inbox": {
     "title": "Gələn qutusu",
