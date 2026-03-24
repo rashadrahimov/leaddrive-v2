@@ -382,7 +382,7 @@ export default function RecurringInvoicesPage() {
           <CardHeader className="pb-2 pt-3 px-4">
             <CardTitle className="text-sm flex items-center justify-between">
               <span>Son nəticə: {generateReport.filter(r => r.status === "sent").length} göndərildi, {generateReport.filter(r => r.status === "send_failed").length} xəta</span>
-              <Button variant="ghost" size="sm" onClick={() => setGenerateReport(null)} className="h-6 text-xs">✕</Button>
+              <Button variant="ghost" size="sm" onClick={() => setGenerateReport(null)} className="h-6 text-xs">X</Button>
             </CardTitle>
           </CardHeader>
           <CardContent className="px-4 pb-3">
@@ -390,7 +390,7 @@ export default function RecurringInvoicesPage() {
               {generateReport.map((r, i) => (
                 <div key={i} className={`flex justify-between py-1 px-2 rounded ${r.status === "sent" ? "bg-green-50 text-green-800" : r.status === "send_failed" ? "bg-red-50 text-red-800" : "bg-gray-50"}`}>
                   <span>{r.invoiceNumber} — {r.company || "?"}</span>
-                  <span className="font-medium">{r.status === "sent" ? "✓" : r.status === "send_failed" ? `✗ ${r.error?.slice(0, 40)}` : "draft"}</span>
+                  <span className="font-medium">{r.status === "sent" ? "OK" : r.status === "send_failed" ? ("Xeta: " + (r.error || "").slice(0, 40)) : "draft"}</span>
                 </div>
               ))}
             </div>
