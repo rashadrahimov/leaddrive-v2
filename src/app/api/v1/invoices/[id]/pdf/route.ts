@@ -76,17 +76,50 @@ function generateInvoiceHtml(
   const footerNote = (invoice.footerNote as string) || (settings.footerNote as string) || ""
   const terms = (invoice.termsAndConditions as string) || (settings.termsAndConditions as string) || ""
 
-  const formatDate = (d: unknown) => d ? new Date(d as string).toLocaleDateString("az-AZ") : "—"
-  const formatMoney = (n: unknown) => Number(n || 0).toLocaleString("az-AZ", { minimumFractionDigits: 2 })
-  const paymentTermsLabels: Record<string, string> = {
-    dueOnReceipt: "Dərhal",
-    net15: "15 gün",
-    net30: "30 gün",
-    net45: "45 gün",
-    net60: "60 gün",
-    custom: "Fərdi",
+  const lang = (invoice.documentLanguage as string) || "az"
+  const locale = lang === "ru" ? "ru-RU" : lang === "en" ? "en-US" : "az-AZ"
+  const formatDate = (d: unknown) => d ? new Date(d as string).toLocaleDateString(locale) : "—"
+  const formatMoney = (n: unknown) => Number(n || 0).toLocaleString(locale, { minimumFractionDigits: 2 })
+
+  type LabelSet = {
+    invoiceTitle: string; seller: string; buyer: string; date: string; dueDate: string
+    paymentTermsLabel: string; email: string; phone: string; bank: string; stamp: string
+    subtotal: string; discount: string; vat: string; total: string; paid: string; balance: string
+    itemName: string; qty: string; price: string; disc: string; sum: string
+    terms: string
+    paymentTerms: Record<string, string>
   }
-  const formatPaymentTerms = (t: unknown) => t ? (paymentTermsLabels[t as string] || String(t)) : ""
+  const LABELS: Record<string, LabelSet> = {
+    az: {
+      invoiceTitle: "Hesab-Faktura", seller: "İcraçı Şirkət", buyer: "Sifarişçi Şirkət",
+      date: "Tarix", dueDate: "Son ödəniş", paymentTermsLabel: "Ödəniş şərtləri",
+      email: "E-poçt", phone: "Tel", bank: "Bank Hesabı", stamp: "Təsdiq (İmza, Möhür)",
+      subtotal: "Ara cəm", discount: "Endirim", vat: "ƏDV", total: "YEKUN", paid: "Ödənilmiş", balance: "QALIQ",
+      itemName: "Məhsul / Xidmət", qty: "Miqdar", price: "Qiymət", disc: "Endirim", sum: "Cəm",
+      terms: "Şərtlər",
+      paymentTerms: { dueOnReceipt: "Dərhal", net15: "15 gün", net30: "30 gün", net45: "45 gün", net60: "60 gün", custom: "Fərdi" },
+    },
+    ru: {
+      invoiceTitle: "Счёт-Фактура", seller: "Исполнитель", buyer: "Заказчик",
+      date: "Дата", dueDate: "Срок оплаты", paymentTermsLabel: "Условия оплаты",
+      email: "E-mail", phone: "Тел", bank: "Банковские реквизиты", stamp: "Подпись и печать",
+      subtotal: "Подытог", discount: "Скидка", vat: "НДС", total: "ИТОГО", paid: "Оплачено", balance: "ОСТАТОК",
+      itemName: "Товар / Услуга", qty: "Кол-во", price: "Цена", disc: "Скидка", sum: "Сумма",
+      terms: "Условия",
+      paymentTerms: { dueOnReceipt: "По получении", net15: "15 дней", net30: "30 дней", net45: "45 дней", net60: "60 дней", custom: "Другое" },
+    },
+    en: {
+      invoiceTitle: "Invoice", seller: "Seller", buyer: "Bill To",
+      date: "Date", dueDate: "Due Date", paymentTermsLabel: "Payment Terms",
+      email: "Email", phone: "Phone", bank: "Bank Details", stamp: "Authorized Signature",
+      subtotal: "Subtotal", discount: "Discount", vat: "VAT", total: "TOTAL", paid: "Paid", balance: "BALANCE DUE",
+      itemName: "Item / Service", qty: "Qty", price: "Price", disc: "Disc", sum: "Amount",
+      terms: "Terms",
+      paymentTerms: { dueOnReceipt: "Due on Receipt", net15: "Net 15", net30: "Net 30", net45: "Net 45", net60: "Net 60", custom: "Custom" },
+    },
+  }
+  const L = LABELS[lang] || LABELS.az
+  const formatPaymentTerms = (t: unknown) => t ? (L.paymentTerms[t as string] || String(t)) : ""
 
   // Only show discount column if at least one item has a discount
   const hasDiscounts = invoice.items.some(item => Number(item.discount) > 0)
@@ -175,38 +208,38 @@ function generateInvoiceHtml(
     <small>${companyVoen ? 'VÖEN: ' + companyVoen : ''}${companyVoen && companyAddress ? ' · ' : ''}${companyAddress || ''}</small>
   </div>
   <div class="hdr-inv">
-    <div class="title">Hesab-Faktura</div>
+    <div class="title">${L.invoiceTitle}</div>
     <div class="num"># ${invoice.invoiceNumber}</div>
   </div>
 </div>
 
 <div class="dates-bar">
-  <div class="date-item"><strong>Tarix:</strong>${formatDate(invoice.issueDate)}</div>
-  <div class="date-item"><strong>Son ödəniş:</strong>${formatDate(invoice.dueDate)}</div>
-  ${invoice.paymentTerms ? `<div class="date-item"><strong>Şərtlər:</strong>${formatPaymentTerms(invoice.paymentTerms)}</div>` : ''}
-  ${companyEmail ? `<div class="date-item"><strong>E-poçt:</strong>${companyEmail}</div>` : ''}
-  ${companyPhone ? `<div class="date-item"><strong>Tel:</strong>${companyPhone}</div>` : ''}
+  <div class="date-item"><strong>${L.date}:</strong>${formatDate(invoice.issueDate)}</div>
+  <div class="date-item"><strong>${L.dueDate}:</strong>${formatDate(invoice.dueDate)}</div>
+  ${invoice.paymentTerms ? `<div class="date-item"><strong>${L.paymentTermsLabel}:</strong>${formatPaymentTerms(invoice.paymentTerms)}</div>` : ''}
+  ${companyEmail ? `<div class="date-item"><strong>${L.email}:</strong>${companyEmail}</div>` : ''}
+  ${companyPhone ? `<div class="date-item"><strong>${L.phone}:</strong>${companyPhone}</div>` : ''}
 </div>
 
 <div class="body">
 
 <div class="parties">
   <div class="party">
-    <div class="party-hdr">İcraçı Şirkət</div>
+    <div class="party-hdr">${L.seller}</div>
     <div class="party-body">
-      <div class="pr"><span class="k">Şirkət:</span><span class="v">${companyName}</span></div>
+      <div class="pr"><span class="k">Ad:</span><span class="v">${companyName}</span></div>
       <div class="pr"><span class="k">VÖEN:</span><span class="v">${companyVoen}</span></div>
       ${companyAddress ? `<div class="pr"><span class="k">Ünvan:</span><span class="v">${companyAddress}</span></div>` : ''}
     </div>
   </div>
   <div class="party">
-    <div class="party-hdr">Sifarişçi Şirkət</div>
+    <div class="party-hdr">${L.buyer}</div>
     <div class="party-body">
-      <div class="pr"><span class="k">Şirkət:</span><span class="v">${clientCo?.name || '—'}</span></div>
+      <div class="pr"><span class="k">Ad:</span><span class="v">${clientCo?.name || '—'}</span></div>
       ${clientVoen ? `<div class="pr"><span class="k">VÖEN:</span><span class="v">${clientVoen}</span></div>` : ''}
       ${clientCo?.address ? `<div class="pr"><span class="k">Ünvan:</span><span class="v">${clientCo.address}</span></div>` : ''}
-      ${clientCo?.email ? `<div class="pr"><span class="k">E-poçt:</span><span class="v">${clientCo.email}</span></div>` : ''}
-      ${clientCo?.phone ? `<div class="pr"><span class="k">Tel:</span><span class="v">${clientCo.phone}</span></div>` : ''}
+      ${clientCo?.email ? `<div class="pr"><span class="k">${L.email}:</span><span class="v">${clientCo.email}</span></div>` : ''}
+      ${clientCo?.phone ? `<div class="pr"><span class="k">${L.phone}:</span><span class="v">${clientCo.phone}</span></div>` : ''}
     </div>
   </div>
 </div>
@@ -215,11 +248,11 @@ function generateInvoiceHtml(
   <thead>
     <tr>
       <th style="width:26px">#</th>
-      <th>Məhsul / Xidmət</th>
-      <th style="width:58px">Miqdar</th>
-      <th style="width:108px">Qiymət</th>
-      ${hasDiscounts ? '<th style="width:66px">Endirim</th>' : ''}
-      <th style="width:108px">Cəm</th>
+      <th>${L.itemName}</th>
+      <th style="width:58px">${L.qty}</th>
+      <th style="width:108px">${L.price}</th>
+      ${hasDiscounts ? `<th style="width:66px">${L.disc}</th>` : ''}
+      <th style="width:108px">${L.sum}</th>
     </tr>
   </thead>
   <tbody>
@@ -237,17 +270,17 @@ function generateInvoiceHtml(
 
 <div class="sum-wrap">
   <div class="sum-box">
-    <div class="sum-row"><span>Ara cəm</span><span>${formatMoney(invoice.subtotal)} ${invoice.currency}</span></div>
-    ${Number(invoice.discountAmount) > 0 ? `<div class="sum-row"><span>Endirim</span><span>−${formatMoney(invoice.discountAmount)} ${invoice.currency}</span></div>` : ''}
-    ${invoice.includeVat ? `<div class="sum-row"><span>ƏDV ${Number(invoice.taxRate) * 100}%</span><span>${formatMoney(invoice.taxAmount)} ${invoice.currency}</span></div>` : ''}
-    <div class="sum-row yekun"><span>YEKUN</span><span>${formatMoney(invoice.totalAmount)} ${invoice.currency}</span></div>
-    ${Number(invoice.paidAmount) > 0 ? `<div class="sum-row"><span>Ödənilmiş</span><span>${formatMoney(invoice.paidAmount)} ${invoice.currency}</span></div><div class="sum-row yekun"><span>QALIQ</span><span>${formatMoney(invoice.balanceDue)} ${invoice.currency}</span></div>` : ''}
+    <div class="sum-row"><span>${L.subtotal}</span><span>${formatMoney(invoice.subtotal)} ${invoice.currency}</span></div>
+    ${Number(invoice.discountAmount) > 0 ? `<div class="sum-row"><span>${L.discount}</span><span>−${formatMoney(invoice.discountAmount)} ${invoice.currency}</span></div>` : ''}
+    ${invoice.includeVat ? `<div class="sum-row"><span>${L.vat} ${Number(invoice.taxRate) * 100}%</span><span>${formatMoney(invoice.taxAmount)} ${invoice.currency}</span></div>` : ''}
+    <div class="sum-row yekun"><span>${L.total}</span><span>${formatMoney(invoice.totalAmount)} ${invoice.currency}</span></div>
+    ${Number(invoice.paidAmount) > 0 ? `<div class="sum-row"><span>${L.paid}</span><span>${formatMoney(invoice.paidAmount)} ${invoice.currency}</span></div><div class="sum-row yekun"><span>${L.balance}</span><span>${formatMoney(invoice.balanceDue)} ${invoice.currency}</span></div>` : ''}
   </div>
 </div>
 
 <div class="bottom">
   <div class="bot-box">
-    <div class="bot-hdr">Bank Hesabı</div>
+    <div class="bot-hdr">${L.bank}</div>
     <div class="bot-body">
       ${bankName ? `<div class="br"><span class="k">Bank:</span><span class="v">${bankName}</span></div>` : ''}
       ${bankVoen ? `<div class="br"><span class="k">VÖEN:</span><span class="v">${bankVoen}</span></div>` : ''}
@@ -258,7 +291,7 @@ function generateInvoiceHtml(
     </div>
   </div>
   <div class="bot-box">
-    <div class="bot-hdr">Təsdiq (İmza, Möhür)</div>
+    <div class="bot-hdr">${L.stamp}</div>
     <div class="stamp-body">
       ${withStamp && companyStampUrl ? `<img src="${companyStampUrl}" class="stamp-img" alt="Stamp" />` : ''}
       <div class="sig-line"></div>
@@ -272,11 +305,11 @@ function generateInvoiceHtml(
 
 ${terms || footerNote ? `
 <div class="footer">
-  ${terms ? `<strong>Şərtlər:</strong> ${terms}<br>` : ''}
+  ${terms ? `<strong>${L.terms}:</strong> ${terms}<br>` : ''}
   ${footerNote || ''}
 </div>` : ''}
 
-<button class="print-btn no-print" onclick="window.print()">🖨️ Çap et / PDF</button>
+<button class="print-btn no-print" onclick="window.print()">🖨️ ${L.invoiceTitle}</button>
 </body>
 </html>`
 }
