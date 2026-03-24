@@ -89,51 +89,46 @@ export async function getOrCreateInvoiceChainJourney(
 
     await tx.journeyStep.createMany({
       data: [
+        // Step 1: Email fires immediately when chain starts (no initial wait)
         {
           journeyId: j.id,
           stepOrder: 1,
-          stepType: "wait",
-          config: { days: 7, unit: "days" },
-        },
-        {
-          journeyId: j.id,
-          stepOrder: 2,
           stepType: "send_email",
           config: { subject: t.emailSubject, body: t.emailBody },
         },
         {
           journeyId: j.id,
-          stepOrder: 3,
+          stepOrder: 2,
           stepType: "wait",
           config: { days: 3, unit: "days" },
         },
         {
           journeyId: j.id,
-          stepOrder: 4,
+          stepOrder: 3,
           stepType: "sms",
           config: { message: t.smsMessage },
         },
         {
           journeyId: j.id,
-          stepOrder: 5,
+          stepOrder: 4,
           stepType: "wait",
           config: { days: 3, unit: "days" },
         },
         {
           journeyId: j.id,
-          stepOrder: 6,
+          stepOrder: 5,
           stepType: "send_whatsapp",
           config: { message: t.whatsappMessage },
         },
         {
           journeyId: j.id,
-          stepOrder: 7,
+          stepOrder: 6,
           stepType: "wait",
           config: { days: 3, unit: "days" },
         },
         {
           journeyId: j.id,
-          stepOrder: 8,
+          stepOrder: 7,
           stepType: "send_telegram",
           config: { message: t.telegramMessage },
         },
