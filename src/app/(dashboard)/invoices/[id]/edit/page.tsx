@@ -27,6 +27,7 @@ interface Company { id: string; name: string }
 interface Contact { id: string; firstName: string; lastName: string; email: string }
 interface Deal { id: string; name: string }
 interface Product { id: string; name: string; price: number; description?: string }
+interface ContractRef { id: string; contractNumber: string; title: string; status?: string; startDate?: string; endDate?: string }
 
 export default function EditInvoicePage() {
   const t = useTranslations("invoices")
@@ -48,6 +49,10 @@ export default function EditInvoicePage() {
   const [company, setCompany] = useState("")
   const [contact, setContact] = useState("")
   const [deal, setDeal] = useState("")
+  const [contracts, setContracts] = useState<ContractRef[]>([])
+  const [selectedContract, setSelectedContract] = useState("")
+  const [contractNumber, setContractNumber] = useState("")
+  const [contractDate, setContractDate] = useState("")
 
   // Items
   const [items, setItems] = useState<InvoiceItem[]>([])
@@ -92,6 +97,9 @@ export default function EditInvoicePage() {
         setCompany(inv.companyId || inv.company?.id || "")
         setContact(inv.contactId || inv.contact?.id || "")
         setDeal(inv.dealId || inv.deal?.id || "")
+        setSelectedContract(inv.contractId || inv.contract?.id || "")
+        setContractNumber(inv.contractNumber || "")
+        setContractDate(inv.contractDate || "")
         setCurrency(inv.currency || "AZN")
         setPaymentTerms(inv.paymentTerms || "net30")
         setIssueDate(inv.issueDate ? inv.issueDate.split("T")[0] : "")
@@ -134,6 +142,12 @@ export default function EditInvoicePage() {
   useEffect(() => {
     if (!orgId || !company) { setContacts([]); return }
     fetch(`/api/v1/contacts?companyId=${company}`, { headers }).then(r => r.json()).then(j => setContacts(j.data?.contacts || j.contacts || [])).catch(console.error)
+  }, [orgId, company]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Fetch contracts when company changes
+  useEffect(() => {
+    if (!orgId || !company) { setContracts([]); return }
+    fetch(`/api/v1/contracts?companyId=${company}&limit=100`, { headers }).then(r => r.json()).then(j => setContracts(j.data?.contracts || j.contracts || [])).catch(console.error)
   }, [orgId, company]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Calculations
@@ -182,6 +196,9 @@ export default function EditInvoicePage() {
         companyId: company || undefined,
         contactId: contact || undefined,
         dealId: deal || undefined,
+        contractId: selectedContract || undefined,
+        contractNumber: contractNumber || undefined,
+        contractDate: contractDate || undefined,
         currency,
         paymentTerms,
         issueDate,
@@ -428,6 +445,37 @@ export default function EditInvoicePage() {
                 <div className="space-y-1">
                   <Label className="text-xs">VÖEN</Label>
                   <Input value={voen} onChange={e => setVoen(e.target.value)} className="h-8 text-sm" />
+                </div>
+              </div>
+              {/* Contract row */}
+              <div className="grid grid-cols-3 gap-2 pt-2">
+                <div className="space-y-1">
+                  <Label className="text-xs">{t("contract") || "Müqavilə"}</Label>
+                  <Select value={selectedContract} onChange={e => {
+                    const cId = e.target.value
+                    setSelectedContract(cId)
+                    if (cId) {
+                      const c = contracts.find(x => x.id === cId)
+                      if (c) {
+                        setContractNumber(c.contractNumber)
+                        setContractDate(c.startDate ? new Date(c.startDate).toISOString().split("T")[0] : "")
+                      }
+                    }
+                  }} className="h-8 text-sm">
+                    <option value="">{contracts.length > 0 ? (t("selectContract") || "Müqavilə seçin...") : company ? "Müqavilə yoxdur" : "Əvvəlcə şirkət seçin"}</option>
+                    {contracts.map(c => {
+                      const period = c.startDate ? ` (${new Date(c.startDate).toLocaleDateString()})` : ""
+                      return <option key={c.id} value={c.id}>{c.contractNumber} — {c.title}{period}</option>
+                    })}
+                  </Select>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">{t("contractNumber") || "Müqavilə №"}</Label>
+                  <Input placeholder="Müqavilə №" value={contractNumber} onChange={e => setContractNumber(e.target.value)} className="h-8 text-sm" />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">{t("contractDate") || "Müqavilə tarixi"}</Label>
+                  <Input type="date" value={contractDate} onChange={e => setContractDate(e.target.value)} className="h-8 text-sm" />
                 </div>
               </div>
             </CardContent>
