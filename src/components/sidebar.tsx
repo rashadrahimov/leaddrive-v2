@@ -33,6 +33,7 @@ const navItems: NavItem[] = [
   { module: "leads", href: "/leads", icon: UserPlus, tKey: "leads", group: "CRM" },
   { module: "tasks", href: "/tasks", icon: CheckSquare, tKey: "tasks", group: "CRM" },
   { module: "contracts", href: "/contracts", icon: FileText, tKey: "contracts", group: "CRM" },
+  { module: "invoices", href: "/invoices", icon: FileSpreadsheet, tKey: "invoices", group: "CRM" },
   { module: "core", href: "/products", icon: Package, tKey: "products", group: "CRM" },
   { module: "core", href: "/notifications", icon: Bell, tKey: "notifications", group: "CRM" },
   { module: "campaigns", href: "/campaigns", icon: Mail, tKey: "campaigns", group: "Marketing" },

@@ -43,6 +43,9 @@ model Organization {
   auditLogs   AuditLog[]
 
   planRequests PlanRequest[]
+  invoices          Invoice[]
+  invoicePayments   InvoicePayment[]
+  recurringInvoices RecurringInvoice[]
 
   @@map("organizations")
 }
@@ -165,6 +168,7 @@ model Company {
   deals          Deal[]
   activities     Activity[]
   contracts      Contract[]
+  invoices       Invoice[]
   pricingProfiles PricingProfile[]
 
   @@index([organizationId])
@@ -199,6 +203,7 @@ model Contact {
   portalVerificationExpires  DateTime?
 
   activities     Activity[]
+  invoices       Invoice[]
 
   @@index([organizationId])
   @@index([organizationId, companyId])
@@ -235,6 +240,7 @@ model Deal {
   teamMembers    DealTeamMember[]
   contactRoles   DealContactRole[]
   offers         Offer[]
+  invoices       Invoice[]
 
   @@index([organizationId])
   @@index([organizationId, stage])
@@ -340,6 +346,7 @@ model Contract {
   updatedAt      DateTime @updatedAt
 
   files          ContractFile[]
+  invoices       Invoice[]
 
   @@index([organizationId])
   @@map("contracts")
@@ -1258,5 +1265,182 @@ model Product {
 
   @@index([organizationId])
   @@map("products")
+}
+
+// ═══════════════════════════════════════════════════
+// INVOICES & BILLING
+// ═══════════════════════════════════════════════════
+
+model Invoice {
+  id                String    @id @default(cuid())
+  organizationId    String
+  organization      Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  invoiceNumber     String
+  dealId            String?
+  deal              Deal?     @relation(fields: [dealId], references: [id])
+  companyId         String?
+  company           Company?  @relation(fields: [companyId], references: [id])
+  contactId         String?
+  contact           Contact?  @relation(fields: [contactId], references: [id])
+  contractId        String?
+  contract          Contract? @relation(fields: [contractId], references: [id])
+  offerId           String?
+
+  title             String
+  status            String    @default("draft") // draft, sent, viewed, partially_paid, paid, overdue, cancelled, refunded
+
+  // Financial
+  subtotal          Float     @default(0)
+  discountType      String    @default("percentage") // percentage, fixed
+  discountValue     Float     @default(0)
+  discountAmount    Float     @default(0)
+  taxRate           Float     @default(0)
+  taxAmount         Float     @default(0)
+  totalAmount       Float     @default(0)
+  paidAmount        Float     @default(0)
+  balanceDue        Float     @default(0)
+  currency          String    @default("AZN")
+
+  // Tax details
+  voen              String?
+  sellerVoen        String?
+  includeVat        Boolean   @default(false)
+
+  // Dates
+  issueDate         DateTime  @default(now())
+  dueDate           DateTime?
+  sentAt            DateTime?
+  viewedAt          DateTime?
+  paidAt            DateTime?
+
+  // Payment terms
+  paymentTerms      String    @default("net30")
+  paymentTermsDays  Int?
+
+  // Recipient
+  recipientEmail    String?
+  recipientName     String?
+  billingAddress    String?
+
+  // Notes
+  notes             String?
+  termsAndConditions String?
+  footerNote        String?
+
+  // Recurring
+  recurringInvoiceId String?
+  recurringInvoice   RecurringInvoice? @relation(fields: [recurringInvoiceId], references: [id])
+
+  // Meta
+  viewToken         String?   @unique
+  createdBy         String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  items             InvoiceItem[]
+  payments          InvoicePayment[]
+
+  @@unique([organizationId, invoiceNumber])
+  @@index([organizationId])
+  @@index([organizationId, status])
+  @@index([organizationId, companyId])
+  @@index([dealId])
+  @@index([contractId])
+  @@map("invoices")
+}
+
+model InvoiceItem {
+  id          String  @id @default(cuid())
+  invoiceId   String
+  invoice     Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  productId   String?
+  name        String
+  description String?
+  quantity    Float   @default(1)
+  unitPrice   Float   @default(0)
+  discount    Float   @default(0)
+  taxRate     Float?
+  total       Float   @default(0)
+  sortOrder   Int     @default(0)
+
+  @@index([invoiceId])
+  @@map("invoice_items")
+}
+
+model InvoicePayment {
+  id             String   @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  invoiceId      String
+  invoice        Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  amount         Float
+  currency       String   @default("AZN")
+  paymentMethod  String   @default("bank_transfer")
+  paymentDate    DateTime @default(now())
+  reference      String?
+  notes          String?
+  createdBy      String?
+  createdAt      DateTime @default(now())
+
+  @@index([invoiceId])
+  @@index([organizationId])
+  @@map("invoice_payments")
+}
+
+model RecurringInvoice {
+  id                String    @id @default(cuid())
+  organizationId    String
+  organization      Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  title             String
+  companyId         String?
+  contactId         String?
+  dealId            String?
+  contractId        String?
+
+  frequency         String    @default("monthly")
+  intervalCount     Int       @default(1)
+  startDate         DateTime
+  endDate           DateTime?
+  nextRunDate       DateTime?
+  lastRunDate       DateTime?
+  totalGenerated    Int       @default(0)
+  maxOccurrences    Int?
+
+  currency          String    @default("AZN")
+  taxRate           Float     @default(0)
+  includeVat        Boolean   @default(false)
+  voen              String?
+  paymentTerms      String    @default("net30")
+  notes             String?
+  termsAndConditions String?
+  recipientEmail    String?
+
+  isActive          Boolean   @default(true)
+  createdBy         String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  items             RecurringInvoiceItem[]
+  invoices          Invoice[]
+
+  @@index([organizationId])
+  @@index([organizationId, nextRunDate])
+  @@map("recurring_invoices")
+}
+
+model RecurringInvoiceItem {
+  id                  String  @id @default(cuid())
+  recurringInvoiceId  String
+  recurringInvoice    RecurringInvoice @relation(fields: [recurringInvoiceId], references: [id], onDelete: Cascade)
+  productId           String?
+  name                String
+  description         String?
+  quantity            Float   @default(1)
+  unitPrice           Float   @default(0)
+  discount            Float   @default(0)
+  sortOrder           Int     @default(0)
+
+  @@index([recurringInvoiceId])
+  @@map("recurring_invoice_items")
 }
 

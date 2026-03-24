@@ -1,0 +1,99 @@
+import { NextRequest, NextResponse } from "next/server"
+import { z } from "zod"
+import { prisma } from "@/lib/prisma"
+import { getOrgId } from "@/lib/api-auth"
+
+const itemSchema = z.object({
+  productId: z.string().optional().nullable(),
+  name: z.string().min(1),
+  description: z.string().optional().nullable(),
+  quantity: z.number().min(0.01).default(1),
+  unitPrice: z.number().min(0).default(0),
+  discount: z.number().min(0).max(100).default(0),
+  sortOrder: z.number().int().default(0),
+})
+
+const createSchema = z.object({
+  title: z.string().min(1),
+  companyId: z.string().optional().nullable(),
+  contactId: z.string().optional().nullable(),
+  dealId: z.string().optional().nullable(),
+  contractId: z.string().optional().nullable(),
+  frequency: z.enum(["daily", "weekly", "monthly", "quarterly", "yearly"]).default("monthly"),
+  intervalCount: z.number().int().min(1).default(1),
+  startDate: z.string(),
+  endDate: z.string().optional().nullable(),
+  maxOccurrences: z.number().int().optional().nullable(),
+  currency: z.string().default("AZN"),
+  taxRate: z.number().default(0),
+  includeVat: z.boolean().default(false),
+  voen: z.string().optional().nullable(),
+  paymentTerms: z.string().default("net30"),
+  notes: z.string().optional().nullable(),
+  termsAndConditions: z.string().optional().nullable(),
+  recipientEmail: z.string().optional().nullable(),
+  items: z.array(itemSchema).default([]),
+})
+
+export async function GET(req: NextRequest) {
+  const orgId = await getOrgId(req)
+  if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+
+  try {
+    const recurring = await prisma.recurringInvoice.findMany({
+      where: { organizationId: orgId },
+      include: { items: true, _count: { select: { invoices: true } } },
+      orderBy: { createdAt: "desc" },
+    })
+    return NextResponse.json({ success: true, data: recurring })
+  } catch (e) {
+    return NextResponse.json({ error: String(e) }, { status: 500 })
+  }
+}
+
+export async function POST(req: NextRequest) {
+  const orgId = await getOrgId(req)
+  if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+
+  const body = await req.json()
+  const parsed = createSchema.safeParse(body)
+  if (!parsed.success) {
+    return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 })
+  }
+
+  try {
+    const d = parsed.data
+    const startDate = new Date(d.startDate)
+
+    const recurring = await prisma.recurringInvoice.create({
+      data: {
+        organizationId: orgId,
+        title: d.title,
+        companyId: d.companyId || undefined,
+        contactId: d.contactId || undefined,
+        dealId: d.dealId || undefined,
+        contractId: d.contractId || undefined,
+        frequency: d.frequency,
+        intervalCount: d.intervalCount,
+        startDate,
+        endDate: d.endDate ? new Date(d.endDate) : undefined,
+        nextRunDate: startDate,
+        maxOccurrences: d.maxOccurrences,
+        currency: d.currency,
+        taxRate: d.taxRate,
+        includeVat: d.includeVat,
+        voen: d.voen,
+        paymentTerms: d.paymentTerms,
+        notes: d.notes,
+        termsAndConditions: d.termsAndConditions,
+        recipientEmail: d.recipientEmail,
+        items: { create: d.items },
+      },
+      include: { items: true },
+    })
+
+    return NextResponse.json({ success: true, data: recurring }, { status: 201 })
+  } catch (e) {
+    return NextResponse.json({ error: String(e) }, { status: 500 })
+  }
+}
