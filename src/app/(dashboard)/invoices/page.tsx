@@ -32,6 +32,8 @@ interface Invoice {
 
 interface InvoiceStats {
   totalInvoiced: number
+  totalSubtotal: number
+  totalTax: number
   totalPaid: number
   totalOutstanding: number
   totalOverdue: number
@@ -82,7 +84,8 @@ export default function InvoicesPage() {
   const [loading, setLoading] = useState(true)
   const [statusFilter, setStatusFilter] = useState<string>("")
   const [stats, setStats] = useState<InvoiceStats>({
-    totalInvoiced: 0, totalPaid: 0, totalOutstanding: 0, totalOverdue: 0, currency: "AZN",
+    totalInvoiced: 0, totalSubtotal: 0, totalTax: 0,
+    totalPaid: 0, totalOutstanding: 0, totalOverdue: 0, currency: "AZN",
     totalCount: 0, draftCount: 0, sentCount: 0, paidCount: 0, overdueCount: 0,
     partiallyPaidCount: 0, cancelledCount: 0, thisMonthCount: 0, thisMonthAmount: 0,
     thisYearCount: 0, thisYearAmount: 0, avgAmount: 0,
@@ -308,6 +311,7 @@ export default function InvoicesPage() {
           value={`${stats.totalInvoiced.toLocaleString()} ${stats.currency}`}
           icon={<DollarSign className="h-5 w-5" />}
           color="blue"
+          subValue={stats.totalTax > 0 ? `${t("withoutVat")}: ${stats.totalSubtotal.toLocaleString()} ${stats.currency}` : undefined}
         />
         <ColorStatCard
           label={t("statPaid")}

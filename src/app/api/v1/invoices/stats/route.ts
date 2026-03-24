@@ -13,12 +13,14 @@ export async function GET(req: NextRequest) {
 
     const invoices = await prisma.invoice.findMany({
       where: { organizationId: orgId },
-      select: { status: true, totalAmount: true, paidAmount: true, balanceDue: true, createdAt: true, issueDate: true },
+      select: { status: true, totalAmount: true, paidAmount: true, balanceDue: true, subtotal: true, taxAmount: true, createdAt: true, issueDate: true },
     })
 
     const stats = {
       totalCount: invoices.length,
       totalAmount: 0,
+      subtotalAmount: 0,
+      taxAmount: 0,
       paidAmount: 0,
       outstandingAmount: 0,
       overdueAmount: 0,
@@ -36,6 +38,8 @@ export async function GET(req: NextRequest) {
 
     for (const inv of invoices) {
       stats.totalAmount += inv.totalAmount
+      stats.subtotalAmount += inv.subtotal
+      stats.taxAmount += inv.taxAmount
       stats.paidAmount += inv.paidAmount
       const date = inv.issueDate || inv.createdAt
       if (date >= startOfMonth) { stats.thisMonthCount++; stats.thisMonthAmount += inv.totalAmount }
@@ -61,6 +65,8 @@ export async function GET(req: NextRequest) {
       ...stats,
       avgAmount,
       totalInvoiced: stats.totalAmount,
+      totalSubtotal: stats.subtotalAmount,
+      totalTax: stats.taxAmount,
       totalPaid: stats.paidAmount,
       totalOutstanding: stats.outstandingAmount,
       totalOverdue: stats.overdueAmount,

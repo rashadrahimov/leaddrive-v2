@@ -21,6 +21,8 @@ interface ColorStatCardProps {
   className?: string
   /** Override entire bg class (e.g. for dynamic colors) */
   bgClass?: string
+  /** Optional sub-line shown below main value (e.g. "без НДС: 616,896 AZN") */
+  subValue?: string
 }
 
 export function ColorStatCard({
@@ -30,6 +32,7 @@ export function ColorStatCard({
   color = "blue",
   className,
   bgClass,
+  subValue,
 }: ColorStatCardProps) {
   const { bg, shadow } = colorMap[color]
 
@@ -47,6 +50,9 @@ export function ColorStatCard({
         <span className="opacity-70">{icon}</span>
       </div>
       <span className="text-2xl font-bold leading-tight">{value}</span>
+      {subValue && (
+        <span className="text-xs opacity-70 mt-0.5">{subValue}</span>
+      )}
     </div>
   )
 }
