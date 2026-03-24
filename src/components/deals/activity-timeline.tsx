@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { useTranslations } from "next-intl"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -15,16 +16,17 @@ interface TimelineItem {
   author?: string
 }
 
-const TYPE_CONFIG: Record<string, { icon: any; bg: string; text: string; label: string }> = {
-  call: { icon: Phone, bg: "bg-green-100", text: "text-green-600", label: "Call" },
-  email: { icon: Mail, bg: "bg-blue-100", text: "text-blue-600", label: "Email" },
-  meeting: { icon: Users, bg: "bg-violet-100", text: "text-violet-600", label: "Meeting" },
-  note: { icon: FileText, bg: "bg-amber-100", text: "text-amber-600", label: "Note" },
-  task: { icon: CheckSquare, bg: "bg-orange-100", text: "text-orange-600", label: "Task" },
-  comment: { icon: MessageSquare, bg: "bg-gray-100", text: "text-gray-600", label: "Comment" },
+const TYPE_CONFIG: Record<string, { icon: any; bg: string; text: string; labelKey: string }> = {
+  call: { icon: Phone, bg: "bg-green-100", text: "text-green-600", labelKey: "actTypeCall" },
+  email: { icon: Mail, bg: "bg-blue-100", text: "text-blue-600", labelKey: "actTypeEmail" },
+  meeting: { icon: Users, bg: "bg-violet-100", text: "text-violet-600", labelKey: "actTypeMeeting" },
+  note: { icon: FileText, bg: "bg-amber-100", text: "text-amber-600", labelKey: "actTypeNote" },
+  task: { icon: CheckSquare, bg: "bg-orange-100", text: "text-orange-600", labelKey: "actTypeTask" },
+  comment: { icon: MessageSquare, bg: "bg-gray-100", text: "text-gray-600", labelKey: "actTypeComment" },
 }
 
 export function ActivityTimeline({ dealId, orgId }: { dealId: string; orgId?: string }) {
+  const tc = useTranslations("common")
   const [items, setItems] = useState<TimelineItem[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState("all")
@@ -97,7 +99,7 @@ export function ActivityTimeline({ dealId, orgId }: { dealId: string; orgId?: st
                 filter === f ? "bg-primary text-primary-foreground border-primary" : "bg-background hover:bg-muted"
               }`}
             >
-              {f === "all" ? "All" : TYPE_CONFIG[f]?.label || f} ({count})
+              {f === "all" ? tc("actTypeAll") : tc((TYPE_CONFIG[f]?.labelKey || "actTypeNote") as any)} ({count})
             </button>
           )
         })}
@@ -107,8 +109,8 @@ export function ActivityTimeline({ dealId, orgId }: { dealId: string; orgId?: st
       {filtered.length === 0 ? (
         <div className="text-center py-10">
           <MessageSquare className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
-          <p className="text-sm text-muted-foreground">No activities yet</p>
-          <p className="text-xs text-muted-foreground/60 mt-1">Emails, calls, and notes will appear here</p>
+          <p className="text-sm text-muted-foreground">{tc("noActivities")}</p>
+          <p className="text-xs text-muted-foreground/60 mt-1">{tc("activitiesHint")}</p>
         </div>
       ) : (
         <div className="relative">
@@ -132,11 +134,11 @@ export function ActivityTimeline({ dealId, orgId }: { dealId: string; orgId?: st
                   <div className="flex-1 pb-4 min-w-0">
                     <div className="bg-card rounded-lg border p-3 shadow-sm group-hover:shadow-md transition-shadow">
                       <div className="flex items-center gap-2 mb-1">
-                        <Badge variant="outline" className="text-[10px] h-4 px-1.5">{config.label}</Badge>
+                        <Badge variant="outline" className="text-[10px] h-4 px-1.5">{tc((config.labelKey || "actTypeNote") as any)}</Badge>
                         <span className="text-xs text-muted-foreground">
-                          {new Date(item.date).toLocaleString("ru-RU", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
+                          {new Date(item.date).toLocaleString("az-AZ", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
                         </span>
-                        {item.author && <span className="text-xs text-muted-foreground ml-auto">by {item.author}</span>}
+                        {item.author && <span className="text-xs text-muted-foreground ml-auto">{tc("by", { name: item.author })}</span>}
                       </div>
                       <p className="text-sm font-medium">{item.subject}</p>
                       {item.description && (

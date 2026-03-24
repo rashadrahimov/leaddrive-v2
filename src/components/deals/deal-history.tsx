@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Badge } from "@/components/ui/badge"
+import { useTranslations } from "next-intl"
 import { Loader2, Clock, ArrowRight, DollarSign, User, Tag, FileText } from "lucide-react"
 
 interface HistoryEntry {
@@ -23,7 +23,27 @@ const ACTION_CONFIG: Record<string, { icon: any; bg: string; text: string }> = {
   default: { icon: Clock, bg: "bg-gray-100", text: "text-gray-600" },
 }
 
+const ACTION_KEY_MAP: Record<string, string> = {
+  "create deal": "actionCreateDeal",
+  "create_deal": "actionCreateDeal",
+  "move deal stage": "actionMoveDealStage",
+  "move_deal_stage": "actionMoveDealStage",
+  "update deal": "actionUpdateDeal",
+  "update_deal": "actionUpdateDeal",
+  "delete deal": "actionDeleteDeal",
+  "delete_deal": "actionDeleteDeal",
+  "create contact": "actionCreateContact",
+  "create_contact": "actionCreateContact",
+  "update contact": "actionUpdateContact",
+  "update_contact": "actionUpdateContact",
+  "create note": "actionCreateNote",
+  "create_note": "actionCreateNote",
+  "update note": "actionUpdateNote",
+  "update_note": "actionUpdateNote",
+}
+
 export function DealHistory({ dealId, orgId, deal }: { dealId: string; orgId?: string; deal: any }) {
+  const tc = useTranslations("common")
   const [entries, setEntries] = useState<HistoryEntry[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -42,39 +62,48 @@ export function DealHistory({ dealId, orgId, deal }: { dealId: string; orgId?: s
     return <div className="text-center py-12"><Loader2 className="h-6 w-6 animate-spin mx-auto text-muted-foreground" /></div>
   }
 
-  // Build timeline from audit log + deal metadata
+  function formatDate(d: string) {
+    return new Date(d).toLocaleString("az-AZ", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })
+  }
+
+  function translateAction(action: string): string {
+    const normalized = action.toLowerCase()
+    const key = ACTION_KEY_MAP[normalized] || ACTION_KEY_MAP[normalized.replace(/ /g, "_")]
+    if (key) {
+      try { return tc(key as any) } catch { }
+    }
+    return action.replace(/_/g, " ")
+  }
+
   const timeline: { id: string; date: string; icon: any; bg: string; text: string; title: string; detail: string }[] = []
 
-  // Deal creation
   timeline.push({
     id: "created",
     date: deal.createdAt,
     ...ACTION_CONFIG.created,
-    title: "Deal created",
+    title: tc("dealCreated"),
     detail: `${deal.name} — ${deal.valueAmount?.toLocaleString()} ${deal.currency}`,
   })
 
-  // Stage change from stageChangedAt
   if (deal.stageChangedAt && deal.stageChangedAt !== deal.createdAt) {
     timeline.push({
       id: "stage-current",
       date: deal.stageChangedAt,
       ...ACTION_CONFIG.stage_change,
-      title: `Stage changed to ${deal.stage}`,
-      detail: `Current stage since ${new Date(deal.stageChangedAt).toLocaleDateString("ru-RU")}`,
+      title: tc("stageChangedTo", { stage: deal.stage }),
+      detail: tc("currentStageSince", { date: new Date(deal.stageChangedAt).toLocaleDateString("az-AZ") }),
     })
   }
 
-  // Audit log entries
   entries.forEach(e => {
     const details = typeof e.details === "string" ? JSON.parse(e.details || "{}") : (e.details || {})
     const config = ACTION_CONFIG[e.action] || ACTION_CONFIG.default
 
-    let title = e.action.replace(/_/g, " ")
+    let title = translateAction(e.action)
     let detail = ""
 
     if (details.field) {
-      title = `${details.field} changed`
+      title = tc("fieldChanged", { field: details.field })
       detail = `${details.oldValue || "—"} → ${details.newValue || "—"}`
     } else if (details.message) {
       detail = details.message
@@ -85,22 +114,21 @@ export function DealHistory({ dealId, orgId, deal }: { dealId: string; orgId?: s
       date: e.createdAt,
       ...config,
       title,
-      detail: detail || (e.userName ? `by ${e.userName}` : ""),
+      detail: detail || (e.userName ? tc("by", { name: e.userName }) : ""),
     })
   })
 
-  // Sort desc
   timeline.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
 
   if (timeline.length === 0) {
-    return <p className="text-sm text-muted-foreground text-center py-8">No history available</p>
+    return <p className="text-sm text-muted-foreground text-center py-8">{tc("noHistory")}</p>
   }
 
   return (
     <div className="relative">
       <div className="absolute left-5 top-0 bottom-0 w-px bg-border" />
       <div className="space-y-1">
-        {timeline.map((item, i) => {
+        {timeline.map((item) => {
           const Icon = item.icon
           return (
             <div key={item.id} className="flex gap-3 relative">
@@ -111,9 +139,7 @@ export function DealHistory({ dealId, orgId, deal }: { dealId: string; orgId?: s
                 <div className="bg-card rounded-lg border p-3 shadow-sm">
                   <div className="flex items-center gap-2 mb-0.5">
                     <p className="text-sm font-medium">{item.title}</p>
-                    <span className="text-xs text-muted-foreground ml-auto">
-                      {new Date(item.date).toLocaleString("ru-RU", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
-                    </span>
+                    <span className="text-xs text-muted-foreground ml-auto">{formatDate(item.date)}</span>
                   </div>
                   {item.detail && <p className="text-xs text-muted-foreground">{item.detail}</p>}
                 </div>

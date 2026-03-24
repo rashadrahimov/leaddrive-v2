@@ -601,7 +601,7 @@ export default function DealDetailPage() {
           <TabsTrigger value="competitors" className="rounded-md text-sm">{t("competitors")}</TabsTrigger>
           <TabsTrigger value="team" className="rounded-md text-sm">{t("team")}</TabsTrigger>
           <TabsTrigger value="offers" className="rounded-md text-sm">{t("offers")}</TabsTrigger>
-          <TabsTrigger value="invoices" className="rounded-md text-sm">Invoices</TabsTrigger>
+          <TabsTrigger value="invoices" className="rounded-md text-sm">{t("invoices")}</TabsTrigger>
           <TabsTrigger value="engagement" className="rounded-md text-sm">{t("engagement")}</TabsTrigger>
           <TabsTrigger value="history" className="rounded-md text-sm">{t("history")}</TabsTrigger>
         </TabsList>
@@ -661,8 +661,8 @@ export default function DealDetailPage() {
                 {[
                   { icon: <DollarSign className="h-4 w-4 text-muted-foreground" />, label: t("dealValue"), value: `${deal.valueAmount.toLocaleString()} ${deal.currency}` },
                   { icon: <User className="h-4 w-4 text-muted-foreground" />, label: t("assignedTo"), value: deal.assignedTo || tc("unassigned") },
-                  { icon: <Calendar className="h-4 w-4 text-muted-foreground" />, label: t("expectedClose"), value: deal.expectedClose ? new Date(deal.expectedClose).toLocaleDateString("ru-RU") : "—" },
-                  { icon: <Clock className="h-4 w-4 text-muted-foreground" />, label: tc("created"), value: new Date(deal.createdAt).toLocaleDateString("ru-RU") },
+                  { icon: <Calendar className="h-4 w-4 text-muted-foreground" />, label: t("expectedClose"), value: deal.expectedClose ? new Date(deal.expectedClose).toLocaleDateString("az-AZ") : "—" },
+                  { icon: <Clock className="h-4 w-4 text-muted-foreground" />, label: tc("created"), value: new Date(deal.createdAt).toLocaleDateString("az-AZ") },
                   { icon: <Building2 className="h-4 w-4 text-muted-foreground" />, label: t("company"), value: deal.company?.name || "—" },
                   { icon: <Target className="h-4 w-4 text-muted-foreground" />, label: t("campaign"), value: deal.campaign?.name || "—" },
                   { icon: <Target className="h-4 w-4 text-muted-foreground" />, label: t("customerNeed"), value: deal.customerNeed || "—" },
@@ -980,7 +980,7 @@ export default function DealDetailPage() {
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium truncate">{step.title}</p>
                 {step.dueDate && (
-                  <p className="text-xs text-muted-foreground">{new Date(step.dueDate).toLocaleDateString("ru-RU")}</p>
+                  <p className="text-xs text-muted-foreground">{new Date(step.dueDate).toLocaleDateString("az-AZ")}</p>
                 )}
               </div>
             </div>
