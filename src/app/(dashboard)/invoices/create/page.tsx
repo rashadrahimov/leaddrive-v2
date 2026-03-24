@@ -207,29 +207,6 @@ export default function CreateInvoicePage() {
       .then((res) => res.json())
       .then((json) => setContracts(json.data?.contracts || json.contracts || []))
       .catch(console.error)
-    // Auto-load pricing services as invoice items
-    fetch(`/api/v1/pricing/by-company/${company}`, { headers })
-      .then((res) => res.json())
-      .then((json) => {
-        const services = json.data?.services
-        if (services && services.length > 0) {
-          setItems(
-            services.map((s: { name: string; description: string; qty: number; unitPrice: number; unit?: string }, i: number) => ({
-              id: `pricing-${Date.now()}-${i}`,
-              name: s.name,
-              description: "",
-              quantity: s.qty || 1,
-              unitPrice: s.unitPrice || 0,
-              discount: 0,
-              customFields: {
-                ...(customColumns.find(c => c.key === "unit") ? { unit: s.unit || "" } : {}),
-                ...(customColumns.find(c => c.key === "project") ? { project: s.description || "" } : {}),
-              },
-            }))
-          )
-        }
-      })
-      .catch(console.error)
   }, [orgId, company]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Auto-calculate due date from payment terms
