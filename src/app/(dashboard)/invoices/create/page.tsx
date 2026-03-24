@@ -763,17 +763,17 @@ export default function CreateInvoicePage() {
                   </p>
                 </div>
                 <div>
-                  <Label>{"Signer Name"}</Label>
+                  <Label>{t("signerName") || "Signer Name"}</Label>
                   <Input
-                    placeholder="Rəşad Rəhimov"
+                    placeholder={t("signerNamePlaceholder") || "Full name"}
                     value={signerName}
                     onChange={(e) => setSignerName(e.target.value)}
                   />
                 </div>
                 <div className="col-span-2">
-                  <Label>{"Signer Title"}</Label>
+                  <Label>{t("signerTitleLabel") || "Signer Title"}</Label>
                   <Input
-                    placeholder="Biznes və strateji şirkətlər üzrə xüsusi nümayəndə"
+                    placeholder={t("signerTitlePlaceholder") || "Position / title"}
                     value={signerTitle}
                     onChange={(e) => setSignerTitle(e.target.value)}
                   />
