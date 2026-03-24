@@ -187,7 +187,10 @@ export default function InvoicesPage() {
       label: t("colNumber"),
       sortable: true,
       render: (item: any) => (
-        <span className="font-mono text-sm">{item.invoiceNumber}</span>
+        <span className="font-mono text-sm">
+          {item.invoiceNumber}
+          {item.recurringInvoiceId && <span className="ml-1.5 text-[10px] bg-cyan-100 text-cyan-700 dark:bg-cyan-900 dark:text-cyan-300 px-1 py-0.5 rounded font-sans">↻</span>}
+        </span>
       ),
     },
     {
