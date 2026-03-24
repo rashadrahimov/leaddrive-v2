@@ -511,7 +511,7 @@ export default function InvoiceDetailPage() {
         method: "POST",
         headers,
         body: JSON.stringify({
-          email: sendForm.email,
+          recipientEmail: sendForm.email,
           subject: sendForm.subject,
           message: sendForm.message,
         }),
