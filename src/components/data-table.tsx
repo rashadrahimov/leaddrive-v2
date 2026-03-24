@@ -24,18 +24,21 @@ interface DataTableProps<T> {
   pageSize?: number
 }
 
+const PAGE_SIZE_OPTIONS = [20, 50, 100, 0] // 0 = all
+
 export function DataTable<T extends Record<string, unknown>>({
   columns,
   data,
   searchPlaceholder = "Search...",
   searchKey = "name",
   onRowClick,
-  pageSize = 20,
+  pageSize: defaultPageSize = 20,
 }: DataTableProps<T>) {
   const [search, setSearch] = useState("")
   const [sortCol, setSortCol] = useState("")
   const [sortAsc, setSortAsc] = useState(true)
   const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(defaultPageSize)
   const t = useTranslations("common")
 
   const filtered = data.filter((item) => {
@@ -52,8 +55,11 @@ export function DataTable<T extends Record<string, unknown>>({
     return sortAsc ? cmp : -cmp
   })
 
-  const totalPages = Math.ceil(sorted.length / pageSize)
-  const paginated = sorted.slice((page - 1) * pageSize, page * pageSize)
+  const showAll = pageSize === 0
+  const effectivePageSize = showAll ? sorted.length : pageSize
+  const totalPages = showAll ? 1 : Math.ceil(sorted.length / pageSize)
+  const paginated = showAll ? sorted : sorted.slice((page - 1) * pageSize, page * pageSize)
+  const globalOffset = showAll ? 0 : (page - 1) * pageSize
 
   function toggleSort(key: string) {
     if (sortCol === key) {
@@ -64,8 +70,13 @@ export function DataTable<T extends Record<string, unknown>>({
     }
   }
 
+  function handlePageSizeChange(newSize: number) {
+    setPageSize(newSize)
+    setPage(1)
+  }
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 pb-20">
       <div className="flex items-center gap-3">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -116,7 +127,7 @@ export function DataTable<T extends Record<string, unknown>>({
               >
                 {columns.map((col) => (
                   <td key={col.key} className={cn("px-4 py-3", col.className)}>
-                    {col.render ? col.render(item, i) : String(item[col.key] ?? "—")}
+                    {col.render ? col.render(item, globalOffset + i) : String(item[col.key] ?? "—")}
                   </td>
                 ))}
               </tr>
@@ -132,11 +143,29 @@ export function DataTable<T extends Record<string, unknown>>({
         </table>
       </div>
 
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
           <span className="text-sm text-muted-foreground">
-            {t("pageOf", { current: page, total: totalPages })}
+            {totalPages > 1 ? t("pageOf", { current: page, total: totalPages }) : `${sorted.length} ${t("results", { count: sorted.length }).split(" ").slice(-1)[0]}`}
           </span>
+          <div className="flex items-center gap-1 ml-2">
+            {PAGE_SIZE_OPTIONS.map((size) => (
+              <button
+                key={size}
+                onClick={() => handlePageSizeChange(size)}
+                className={cn(
+                  "px-2 py-1 text-xs rounded-md transition-colors",
+                  pageSize === size
+                    ? "bg-primary text-primary-foreground font-medium"
+                    : "text-muted-foreground hover:bg-muted"
+                )}
+              >
+                {size === 0 ? t("all") || "Hamısı" : size}
+              </button>
+            ))}
+          </div>
+        </div>
+        {totalPages > 1 && (
           <div className="flex gap-1">
             <Button variant="outline" size="icon" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}>
               <ChevronLeft className="h-4 w-4" />
@@ -145,8 +174,8 @@ export function DataTable<T extends Record<string, unknown>>({
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   )
 }
