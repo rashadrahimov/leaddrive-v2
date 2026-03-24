@@ -437,9 +437,8 @@ export default function CreateInvoicePage() {
         )}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-        {/* Left Column - Main Content */}
-        <div className="lg:col-span-2 space-y-6">
+      <div className="max-w-4xl space-y-6">
+        <div className="space-y-6">
           {/* Title */}
           <Card>
             <CardHeader>
@@ -969,7 +968,6 @@ export default function CreateInvoicePage() {
                 </Button>
               </CardContent>
             </Card>
-        </div>
       </div>
     </div>
   )
