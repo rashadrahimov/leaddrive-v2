@@ -240,7 +240,7 @@ export default function EditInvoicePage() {
 
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">{tc("edit")} — {t("invoice")}</h1>
+          <h1 className="text-2xl font-bold">{tc("edit")} — {t("invoiceDetails")}</h1>
           <p className="text-muted-foreground text-sm mt-1">{invoiceNumber}</p>
         </div>
         <Badge variant="outline" className="text-base px-3 py-1">{invoiceNumber}</Badge>
