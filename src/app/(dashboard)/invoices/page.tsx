@@ -82,7 +82,7 @@ export default function InvoicesPage() {
   const [editForm, setEditForm] = useState({ title: "", issueDate: "", dueDate: "", paymentTerms: "", currency: "", notes: "" })
   const [editLoading, setEditLoading] = useState(false)
   const orgId = (session?.user as { organizationId?: string })?.organizationId
-  const headers = orgId ? { "Content-Type": "application/json", "x-organization-id": String(orgId) } : { "Content-Type": "application/json" }
+  const headers: Record<string, string> = { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": String(orgId) } : {}) }
 
   const fetchStats = async () => {
     try {
