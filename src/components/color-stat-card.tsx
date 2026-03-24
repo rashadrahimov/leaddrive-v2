@@ -19,10 +19,10 @@ interface ColorStatCardProps {
   icon: ReactNode
   color?: keyof typeof colorMap
   className?: string
-  /** Override entire bg class (e.g. for dynamic colors) */
   bgClass?: string
-  /** Optional sub-line shown below main value (e.g. "без НДС: 616,896 AZN") */
   subValue?: string
+  /** Breakdown lines shown below main value: [{label, value}] */
+  lines?: { label: string; value: string }[]
 }
 
 export function ColorStatCard({
@@ -33,6 +33,7 @@ export function ColorStatCard({
   className,
   bgClass,
   subValue,
+  lines,
 }: ColorStatCardProps) {
   const { bg, shadow } = colorMap[color]
 
@@ -52,6 +53,16 @@ export function ColorStatCard({
       <span className="text-2xl font-bold leading-tight">{value}</span>
       {subValue && (
         <span className="text-xs opacity-70 mt-0.5">{subValue}</span>
+      )}
+      {lines && lines.length > 0 && (
+        <div className="mt-1 space-y-0.5 border-t border-white/20 pt-1.5">
+          {lines.map((line, i) => (
+            <div key={i} className="flex justify-between text-xs opacity-80">
+              <span>{line.label}</span>
+              <span className="font-medium">{line.value}</span>
+            </div>
+          ))}
+        </div>
       )}
     </div>
   )
