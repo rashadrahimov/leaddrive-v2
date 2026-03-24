@@ -445,12 +445,12 @@ export default function InvoiceDetailPage() {
   // ---------- Chain actions ----------
 
   const chainStepTypes = [
-    { value: "send_email", label: "Email", icon: Mail, color: "bg-blue-500", borderColor: "border-blue-200 bg-blue-50/50 dark:bg-blue-900/10" },
-    { value: "sms", label: "SMS", icon: Smartphone, color: "bg-gray-700", borderColor: "border-gray-200 bg-gray-50/50 dark:bg-gray-900/10" },
-    { value: "wait", label: "Ожидание", icon: Clock, color: "bg-yellow-500", borderColor: "border-yellow-200 bg-yellow-50/50 dark:bg-yellow-900/10" },
-    { value: "send_telegram", label: "Telegram", icon: Send, color: "bg-sky-500", borderColor: "border-sky-200 bg-sky-50/50 dark:bg-sky-900/10" },
-    { value: "send_whatsapp", label: "WhatsApp", icon: Heart, color: "bg-green-500", borderColor: "border-green-200 bg-green-50/50 dark:bg-green-900/10" },
-    { value: "condition", label: "Условие", icon: GitBranch, color: "bg-pink-500", borderColor: "border-pink-200 bg-pink-50/50 dark:bg-pink-900/10" },
+    { value: "send_email", label: t("chainStepEmail"), icon: Mail, color: "bg-blue-500", borderColor: "border-blue-200 bg-blue-50/50 dark:bg-blue-900/10" },
+    { value: "sms", label: t("chainStepSms"), icon: Smartphone, color: "bg-gray-700", borderColor: "border-gray-200 bg-gray-50/50 dark:bg-gray-900/10" },
+    { value: "wait", label: t("chainStepWait"), icon: Clock, color: "bg-yellow-500", borderColor: "border-yellow-200 bg-yellow-50/50 dark:bg-yellow-900/10" },
+    { value: "send_telegram", label: t("chainStepTelegram"), icon: Send, color: "bg-sky-500", borderColor: "border-sky-200 bg-sky-50/50 dark:bg-sky-900/10" },
+    { value: "send_whatsapp", label: t("chainStepWhatsapp"), icon: Heart, color: "bg-green-500", borderColor: "border-green-200 bg-green-50/50 dark:bg-green-900/10" },
+    { value: "condition", label: t("chainStepCondition"), icon: GitBranch, color: "bg-pink-500", borderColor: "border-pink-200 bg-pink-50/50 dark:bg-pink-900/10" },
   ]
 
   function getChainStepInfo(type: string) {
@@ -460,11 +460,11 @@ export default function InvoiceDetailPage() {
   function getChainStepSummary(step: any): string {
     const c = step.config || {}
     switch (step.stepType) {
-      case "send_email": return c.subject ? `Тема: ${c.subject}` : "Тема: (без темы)"
-      case "wait": return `Ждать: ${c.days || 1} ${c.unit || "дн."}`
+      case "send_email": return c.subject ? `${t("chainSubjectLabel")}: ${c.subject}` : `${t("chainSubjectLabel")}: -`
+      case "wait": return `${t("chainStepWait")}: ${c.days || 1} ${c.unit || "days"}`
       case "send_telegram":
       case "send_whatsapp":
-      case "sms": return c.message ? c.message.slice(0, 50) : "Сообщение"
+      case "sms": return c.message ? c.message.slice(0, 50) : t("chainMessageLabel")
       default: return ""
     }
   }
@@ -805,7 +805,7 @@ export default function InvoiceDetailPage() {
           <TabsTrigger value="activity">{t("tabActivity")}</TabsTrigger>
           <TabsTrigger value="chain" className="flex items-center gap-1.5">
             <Workflow className="h-3.5 w-3.5" />
-            Цепочка
+            {t("chainTab")}
           </TabsTrigger>
           <TabsTrigger value="preview">{t("tabPreview")}</TabsTrigger>
         </TabsList>
@@ -1307,14 +1307,14 @@ export default function InvoiceDetailPage() {
               <CardContent className="flex flex-col items-center justify-center py-16 gap-4">
                 <Workflow className="h-12 w-12 text-muted-foreground" />
                 <div className="text-center">
-                  <p className="font-medium">Цепочка не настроена</p>
+                  <p className="font-medium">{t("chainNotConfigured")}</p>
                   <p className="text-sm text-muted-foreground mt-1 max-w-xs">
-                    Автоматические напоминания по Email, SMS, WhatsApp и Telegram до получения оплаты
+                    {t("chainNotConfiguredHint")}
                   </p>
                 </div>
                 <Button onClick={handleSetupChain} disabled={chainLoading}>
                   {chainLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Workflow className="h-4 w-4 mr-2" />}
-                  Настроить цепочку
+                  {t("chainSetup")}
                 </Button>
                 {chainError && <p className="text-sm text-destructive">{chainError}</p>}
               </CardContent>
@@ -1327,8 +1327,8 @@ export default function InvoiceDetailPage() {
                   <p className="text-sm font-medium">{chainData.journey.name}</p>
                   <p className="text-xs text-muted-foreground mt-0.5">
                     {chainData.enrollment
-                      ? "Цепочка активна"
-                      : "Цепочка готова к запуску"}
+                      ? t("chainActive")
+                      : t("chainReady")}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -1340,7 +1340,7 @@ export default function InvoiceDetailPage() {
                       disabled={chainStopping}
                     >
                       {chainStopping ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Square className="h-4 w-4 mr-1" />}
-                      Остановить
+                      {t("chainStop")}
                     </Button>
                   ) : (
                     <>
@@ -1351,7 +1351,7 @@ export default function InvoiceDetailPage() {
                         disabled={savingSteps}
                       >
                         {savingSteps ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
-                        {savingSteps ? "Сохранение..." : "Сохранить шаги"}
+                        {savingSteps ? t("chainSaving") : t("chainSaveSteps")}
                       </Button>
                       <Button
                         size="sm"
@@ -1360,7 +1360,7 @@ export default function InvoiceDetailPage() {
                         className="gap-1"
                       >
                         {chainStarting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
-                        Запустить
+                        {t("chainStart")}
                       </Button>
                     </>
                   )}
@@ -1372,10 +1372,10 @@ export default function InvoiceDetailPage() {
                 <div className="flex items-center gap-3 p-3 rounded-lg bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800">
                   <div className="h-2.5 w-2.5 rounded-full bg-green-500 animate-pulse flex-shrink-0" />
                   <div className="text-sm text-green-800 dark:text-green-200">
-                    <span className="font-medium">Цепочка активна</span>
+                    <span className="font-medium">{t("chainActive")}</span>
                     {chainData.enrollment.nextActionAt && (
                       <span className="text-green-700 dark:text-green-300 ml-2">
-                        · Следующее действие: {new Date(chainData.enrollment.nextActionAt).toLocaleString()}
+                        {t("chainNextAction")} {new Date(chainData.enrollment.nextActionAt).toLocaleString()}
                       </span>
                     )}
                   </div>
@@ -1392,7 +1392,7 @@ export default function InvoiceDetailPage() {
                     </div>
                     <div className="flex-1 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-700 rounded-lg px-4 py-3">
                       <span className="font-semibold text-sm text-purple-800 dark:text-purple-200">
-                        Триггер: Счёт отправлен
+                        {t("chainTrigger")}
                       </span>
                     </div>
                   </div>
@@ -1426,10 +1426,10 @@ export default function InvoiceDetailPage() {
                               <div className="flex items-center gap-2">
                                 <span className="font-semibold text-sm">{index + 1}. {info.label}</span>
                                 {isRunning && isCompleted && (
-                                  <span className="text-xs px-1.5 py-0.5 rounded-full bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300">Выполнено</span>
+                                  <span className="text-xs px-1.5 py-0.5 rounded-full bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300">{t("chainStepDone")}</span>
                                 )}
                                 {isRunning && isCurrent && !isCompleted && (
-                                  <span className="text-xs px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">Ожидает</span>
+                                  <span className="text-xs px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">{t("chainStepWaiting")}</span>
                                 )}
                               </div>
                               {!isRunning && (
@@ -1474,7 +1474,7 @@ export default function InvoiceDetailPage() {
                           onClick={() => { setNewStepType("send_email"); setNewStepConfig({}); setAddStepOpen(true) }}
                           className="flex-1 border-2 border-dashed rounded-lg px-4 py-3 text-sm text-muted-foreground hover:border-primary hover:text-primary transition-colors text-center"
                         >
-                          + Добавить шаг
+                          {t("chainAddStep")}
                         </button>
                       </div>
                     </div>
@@ -1490,7 +1490,7 @@ export default function InvoiceDetailPage() {
         {/* ===== Add Chain Step Dialog ===== */}
         <Dialog open={addStepOpen} onOpenChange={setAddStepOpen}>
           <DialogHeader>
-            <DialogTitle>Добавить шаг #{chainSteps.length + 1}</DialogTitle>
+            <DialogTitle>{t("chainAddStepTitle").replace("{num}", String(chainSteps.length + 1))}</DialogTitle>
           </DialogHeader>
           <DialogContent>
             {/* Step type grid */}
@@ -1520,21 +1520,21 @@ export default function InvoiceDetailPage() {
               {newStepType === "send_email" && (
                 <>
                   <div>
-                    <Label className="text-xs text-muted-foreground">Тема письма</Label>
+                    <Label className="text-xs text-muted-foreground">{t("chainSubjectLabel")}</Label>
                     <Input
                       value={newStepConfig.subject || ""}
                       onChange={e => setNewStepConfig((c: any) => ({ ...c, subject: e.target.value }))}
-                      placeholder="Напоминание: Счёт {{invoice_number}}"
+                      placeholder={t("chainSubjectPlaceholder")}
                     />
                   </div>
                   <div>
                     <Label className="text-xs text-muted-foreground">
-                      Текст · Переменные: {"{{invoice_number}}"}, {"{{amount}}"}, {"{{due_date}}"}, {"{{balance_due}}"}, {"{{recipient_name}}"}
+                      {t("chainBodyLabel")} · {t("chainVarsHint")}
                     </Label>
                     <Textarea
                       value={newStepConfig.body || ""}
                       onChange={e => setNewStepConfig((c: any) => ({ ...c, body: e.target.value }))}
-                      placeholder={"Уважаемый {{recipient_name}}, напоминаем об оплате счёта {{invoice_number}}..."}
+                      placeholder={t("chainBodyPlaceholder")}
                       rows={4}
                     />
                   </div>
@@ -1543,19 +1543,19 @@ export default function InvoiceDetailPage() {
               {(newStepType === "sms" || newStepType === "send_whatsapp" || newStepType === "send_telegram") && (
                 <div>
                   <Label className="text-xs text-muted-foreground">
-                    Сообщение · Переменные: {"{{invoice_number}}"}, {"{{amount}}"}, {"{{balance_due}}"}, {"{{recipient_name}}"}
+                    {t("chainMessageLabel")} · {t("chainVarsHint")}
                   </Label>
                   <Textarea
                     value={newStepConfig.message || ""}
                     onChange={e => setNewStepConfig((c: any) => ({ ...c, message: e.target.value }))}
-                    placeholder={"Напоминание: Счёт {{invoice_number}} на {{amount}} ожидает оплаты."}
+                    placeholder={t("chainMessagePlaceholder")}
                     rows={3}
                   />
                 </div>
               )}
               {newStepType === "wait" && (
                 <div>
-                  <Label className="text-xs text-muted-foreground">Длительность ожидания</Label>
+                  <Label className="text-xs text-muted-foreground">{t("chainWaitDaysLabel")}</Label>
                   <div className="flex gap-2">
                     <Input
                       type="number"
@@ -1569,9 +1569,9 @@ export default function InvoiceDetailPage() {
                       onChange={e => setNewStepConfig((c: any) => ({ ...c, unit: e.target.value }))}
                       className="flex-1"
                     >
-                      <option value="hours">Часов</option>
-                      <option value="days">Дней</option>
-                      <option value="weeks">Недель</option>
+                      <option value="hours">{t("chainWaitUnitHours")}</option>
+                      <option value="days">{t("chainWaitUnitDays")}</option>
+                      <option value="weeks">{t("chainWaitUnitWeeks")}</option>
                     </Select>
                   </div>
                 </div>
@@ -1579,8 +1579,8 @@ export default function InvoiceDetailPage() {
             </div>
           </DialogContent>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setAddStepOpen(false)}>Отмена</Button>
-            <Button onClick={addChainStep}>Добавить</Button>
+            <Button variant="outline" onClick={() => setAddStepOpen(false)}>{t("chainCancel")}</Button>
+            <Button onClick={addChainStep}>{t("chainAdd")}</Button>
           </DialogFooter>
         </Dialog>
 
