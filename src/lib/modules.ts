@@ -1,7 +1,7 @@
 export type ModuleId =
   | "core" | "deals" | "leads" | "tasks" | "contracts" | "invoices"
   | "tickets" | "knowledge-base" | "portal" | "campaigns" | "omnichannel"
-  | "journeys" | "workflows" | "profitability" | "ai" | "reports"
+  | "journeys" | "workflows" | "profitability" | "budgeting" | "ai" | "reports"
   | "currencies" | "custom-fields" | "events"
 
 interface ModuleDefinition {
@@ -25,6 +25,7 @@ export const MODULE_REGISTRY: Record<ModuleId, ModuleDefinition> = {
   journeys:         { name: "Journey Builder",  requires: ["campaigns"] },
   workflows:        { name: "Workflows",        requires: ["core"] },
   profitability:    { name: "Profitability",    requires: ["core"] },
+  budgeting:        { name: "Budgeting",        requires: ["core"] },
   ai:               { name: "AI Suite",         requires: ["core"] },
   reports:          { name: "Reports",          requires: ["core"] },
   currencies:       { name: "Multi-Currency",   requires: ["core"] },

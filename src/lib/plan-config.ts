@@ -48,6 +48,7 @@ const ENTERPRISE_MODULES = [
   ...PROFESSIONAL_MODULES,
   "/pricing",
   "/profitability",
+  "/budgeting",
   "/inbox",
   "/settings/portal-users",
   "/settings/smtp-settings",

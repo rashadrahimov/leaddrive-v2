@@ -46,6 +46,7 @@ model Organization {
   invoices          Invoice[]
   invoicePayments   InvoicePayment[]
   recurringInvoices RecurringInvoice[]
+  budgetPlans       BudgetPlan[]
 
   @@map("organizations")
 }
@@ -1463,5 +1464,103 @@ model RecurringInvoiceItem {
 
   @@index([recurringInvoiceId])
   @@map("recurring_invoice_items")
+}
+
+// ═══════════════════════════════════════════════════
+// BUDGETING
+// ═══════════════════════════════════════════════════
+
+model BudgetPlan {
+  id             String   @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  name           String
+  periodType     String   @default("monthly")  // monthly | quarterly | annual
+  year           Int
+  month          Int?
+  quarter        Int?
+  status         String   @default("draft")    // draft | approved | closed
+  notes          String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  lines           BudgetLine[]
+  actuals         BudgetActual[]
+  sections        BudgetSection[]
+  forecastEntries BudgetForecastEntry[]
+
+  @@index([organizationId])
+  @@map("budget_plans")
+}
+
+model BudgetLine {
+  id             String   @id @default(cuid())
+  organizationId String
+  planId         String
+  plan           BudgetPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+  category       String
+  department     String?
+  lineType       String   @default("expense")  // expense | revenue
+  plannedAmount  Float    @default(0)
+  forecastAmount Float?
+  costModelKey   String?  // e.g. "grandTotalG", "deptCosts.IT", "serviceRevenues.total"
+  isAutoActual   Boolean  @default(false)
+  notes          String?
+  sortOrder      Int      @default(0)
+
+  @@index([organizationId])
+  @@index([planId])
+  @@map("budget_lines")
+}
+
+model BudgetActual {
+  id             String   @id @default(cuid())
+  organizationId String
+  planId         String
+  plan           BudgetPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+  category       String
+  department     String?
+  lineType       String   @default("expense")
+  actualAmount   Float    @default(0)
+  expenseDate    String?
+  description    String?
+  createdAt      DateTime @default(now())
+
+  @@index([organizationId])
+  @@index([planId])
+  @@map("budget_actuals")
+}
+
+model BudgetSection {
+  id             String   @id @default(cuid())
+  organizationId String
+  planId         String
+  plan           BudgetPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+  name           String
+  sectionType    String   @default("expense") // revenue | expense | gross_profit | ebitda
+  sortOrder      Int      @default(0)
+  createdAt      DateTime @default(now())
+
+  @@index([organizationId])
+  @@index([planId])
+  @@map("budget_sections")
+}
+
+model BudgetForecastEntry {
+  id             String   @id @default(cuid())
+  organizationId String
+  planId         String
+  plan           BudgetPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+  month          Int
+  year           Int
+  category       String
+  forecastAmount Float    @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([planId, year, month, category])
+  @@index([organizationId])
+  @@index([planId])
+  @@map("budget_forecast_entries")
 }
 
