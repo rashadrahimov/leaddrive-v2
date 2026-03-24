@@ -712,11 +712,11 @@ export default function CreateInvoicePage() {
                 <div className="space-y-2">
                   <Label>{t("paymentTerms") || "Payment Terms"}</Label>
                   <Select value={paymentTerms} onChange={(e) => setPaymentTerms(e.target.value)}>
-                    <option value="due_on_receipt">{t("dueOnReceipt") || "Due on Receipt"}</option>
-                    <option value="net15">Net 15</option>
-                    <option value="net30">Net 30</option>
-                    <option value="net45">Net 45</option>
-                    <option value="net60">Net 60</option>
+                    <option value="due_on_receipt">{t("dueOnReceipt") || "Сразу при получении"}</option>
+                    <option value="net15">{t("net15") || "15 дней"}</option>
+                    <option value="net30">{t("net30") || "30 дней"}</option>
+                    <option value="net45">{t("net45") || "45 дней"}</option>
+                    <option value="net60">{t("net60") || "60 дней"}</option>
                   </Select>
                 </div>
                 <div className="space-y-2">
