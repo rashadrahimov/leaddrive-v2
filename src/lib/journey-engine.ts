@@ -226,8 +226,37 @@ export async function processEnrollmentStep(enrollmentId: string, orgId: string)
 
       case "send_whatsapp": {
         const message = replaceVars(config.message || "")
-        console.log(`[Journey WhatsApp] To: ${recipientPhone}, Message: ${message}`)
-        result = { stepId: currentStep.id, stepType: "send_whatsapp", status: "completed", message: `WhatsApp logged: "${message.slice(0, 50)}..."` }
+        const waChannel = await prisma.channelConfig.findFirst({
+          where: { organizationId: orgId, channelType: "whatsapp", isActive: true },
+        })
+        if (waChannel?.apiKey && waChannel?.phoneNumber && recipientPhone) {
+          try {
+            const waRes = await fetch(`https://graph.facebook.com/v18.0/${waChannel.phoneNumber}/messages`, {
+              method: "POST",
+              headers: {
+                "Authorization": `Bearer ${waChannel.apiKey}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                messaging_product: "whatsapp",
+                to: recipientPhone,
+                type: "text",
+                text: { body: message },
+              }),
+            })
+            const waData = await waRes.json()
+            if (waData.messages?.[0]?.id) {
+              result = { stepId: currentStep.id, stepType: "send_whatsapp", status: "completed", message: `WhatsApp sent to ${recipientPhone}: ${waData.messages[0].id}` }
+            } else {
+              result = { stepId: currentStep.id, stepType: "send_whatsapp", status: "completed", message: `WhatsApp API response: ${JSON.stringify(waData).slice(0, 200)}` }
+            }
+          } catch (waErr: any) {
+            result = { stepId: currentStep.id, stepType: "send_whatsapp", status: "completed", message: `WhatsApp error: ${waErr.message}` }
+          }
+        } else {
+          console.log(`[Journey WhatsApp] Missing config or phone. To: ${recipientPhone}, Message: ${message}`)
+          result = { stepId: currentStep.id, stepType: "send_whatsapp", status: "completed", message: `WhatsApp logged (no config): "${message.slice(0, 50)}..." → ${recipientPhone || "(no phone)"}` }
+        }
         break
       }
 
