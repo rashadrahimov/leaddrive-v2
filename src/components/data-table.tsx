@@ -11,7 +11,7 @@ interface Column<T> {
   key: string
   label: string
   sortable?: boolean
-  render?: (item: T) => React.ReactNode
+  render?: (item: T, index?: number) => React.ReactNode
   className?: string
 }
 
@@ -116,7 +116,7 @@ export function DataTable<T extends Record<string, unknown>>({
               >
                 {columns.map((col) => (
                   <td key={col.key} className={cn("px-4 py-3", col.className)}>
-                    {col.render ? col.render(item) : String(item[col.key] ?? "—")}
+                    {col.render ? col.render(item, i) : String(item[col.key] ?? "—")}
                   </td>
                 ))}
               </tr>
