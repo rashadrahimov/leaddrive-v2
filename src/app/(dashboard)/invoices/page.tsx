@@ -10,7 +10,7 @@ import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Select } from "@/components/ui/select"
-import { Plus, DollarSign, Clock, AlertTriangle, CheckCircle, Eye, Pencil, Trash2, Download, CalendarDays, TrendingUp, Send, FileText, BarChart3, XCircle } from "lucide-react"
+import { Plus, FileSpreadsheet, DollarSign, Clock, AlertTriangle, CheckCircle, Eye, Pencil, Trash2, Download, RefreshCw } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -32,24 +32,10 @@ interface Invoice {
 
 interface InvoiceStats {
   totalInvoiced: number
-  totalSubtotal: number
-  totalTax: number
   totalPaid: number
   totalOutstanding: number
   totalOverdue: number
   currency: string
-  totalCount: number
-  draftCount: number
-  sentCount: number
-  paidCount: number
-  overdueCount: number
-  partiallyPaidCount: number
-  cancelledCount: number
-  thisMonthCount: number
-  thisMonthAmount: number
-  thisYearCount: number
-  thisYearAmount: number
-  avgAmount: number
 }
 
 const statusBadge = (status: string) => {
@@ -84,11 +70,11 @@ export default function InvoicesPage() {
   const [loading, setLoading] = useState(true)
   const [statusFilter, setStatusFilter] = useState<string>("")
   const [stats, setStats] = useState<InvoiceStats>({
-    totalInvoiced: 0, totalSubtotal: 0, totalTax: 0,
-    totalPaid: 0, totalOutstanding: 0, totalOverdue: 0, currency: "AZN",
-    totalCount: 0, draftCount: 0, sentCount: 0, paidCount: 0, overdueCount: 0,
-    partiallyPaidCount: 0, cancelledCount: 0, thisMonthCount: 0, thisMonthAmount: 0,
-    thisYearCount: 0, thisYearAmount: 0, avgAmount: 0,
+    totalInvoiced: 0,
+    totalPaid: 0,
+    totalOutstanding: 0,
+    totalOverdue: 0,
+    currency: "USD",
   })
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [deleteName, setDeleteName] = useState("")
@@ -302,19 +288,22 @@ export default function InvoicesPage() {
           <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
           <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
         </div>
-        <Button onClick={() => router.push("/invoices/create")}>
-          <Plus className="h-4 w-4 mr-1" /> {t("newInvoice")}
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => router.push("/invoices/recurring")}>
+            <RefreshCw className="h-4 w-4 mr-1" /> {t("recurringInvoices") || "Təkrarlanan"}
+          </Button>
+          <Button onClick={() => router.push("/invoices/create")}>
+            <Plus className="h-4 w-4 mr-1" /> {t("newInvoice")}
+          </Button>
+        </div>
       </div>
 
-      {/* Row 1 — Financial summary */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <ColorStatCard
           label={t("statTotalInvoiced")}
-          value={`${(stats.totalSubtotal || stats.totalInvoiced).toLocaleString()} ${stats.currency}`}
+          value={`${stats.totalInvoiced.toLocaleString()} ${stats.currency}`}
           icon={<DollarSign className="h-5 w-5" />}
           color="blue"
-          subValue={stats.totalTax > 0 ? `${t("withVat")}: ${stats.totalInvoiced.toLocaleString()} ${stats.currency}` : undefined}
         />
         <ColorStatCard
           label={t("statPaid")}
@@ -323,15 +312,10 @@ export default function InvoicesPage() {
           color="green"
         />
         <ColorStatCard
-          label={t("statDebt")}
-          value={`${(stats.totalInvoiced - stats.totalPaid).toLocaleString()} ${stats.currency}`}
+          label={t("statOutstanding")}
+          value={`${stats.totalOutstanding.toLocaleString()} ${stats.currency}`}
           icon={<Clock className="h-5 w-5" />}
           color="orange"
-          lines={[
-            { label: t("statInvoicedShort"), value: `${stats.totalInvoiced.toLocaleString()} ${stats.currency}` },
-            { label: t("statPaidShort"),     value: `${stats.totalPaid.toLocaleString()} ${stats.currency}` },
-            { label: t("statDiff"),          value: `${(stats.totalInvoiced - stats.totalPaid).toLocaleString()} ${stats.currency}` },
-          ]}
         />
         <ColorStatCard
           label={t("statOverdue")}
@@ -340,58 +324,6 @@ export default function InvoicesPage() {
           color="red"
         />
       </div>
-
-      {/* Row 2 — Detailed analytics (clickable filters) */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-        {[
-          { icon: <CalendarDays className="h-3.5 w-3.5" />, label: "Этот месяц", value: `${stats.thisMonthCount}`, sub: `${stats.thisMonthAmount.toLocaleString()} ${stats.currency}`, filter: null },
-          { icon: <TrendingUp className="h-3.5 w-3.5" />, label: "Этот год", value: `${stats.thisYearCount}`, sub: `${stats.thisYearAmount.toLocaleString()} ${stats.currency}`, filter: null },
-          { icon: <Send className="h-3.5 w-3.5" />, label: "Отправлено", value: `${stats.sentCount}`, sub: `из ${stats.totalCount} всего`, filter: "sent" },
-          { icon: <FileText className="h-3.5 w-3.5" />, label: "Черновики", value: `${stats.draftCount}`, sub: "не отправлено", filter: "draft" },
-          { icon: <BarChart3 className="h-3.5 w-3.5" />, label: "Средний счёт", value: `${Math.round(stats.avgAmount).toLocaleString()}`, sub: stats.currency, filter: null },
-          { icon: <XCircle className="h-3.5 w-3.5" />, label: "Частично / Отмена", value: `${stats.partiallyPaidCount} / ${stats.cancelledCount}`, sub: "частично / отменено", filter: "partially_paid" },
-        ].map(({ icon, label, value, sub, filter }) => (
-          <div
-            key={label}
-            onClick={() => filter && setStatusFilter(prev => prev === filter ? "" : filter)}
-            className={`rounded-lg border bg-card p-3 space-y-1 transition-all ${filter ? "cursor-pointer hover:border-primary hover:shadow-sm" : ""} ${filter && statusFilter === filter ? "border-primary bg-primary/5 shadow-sm" : ""}`}
-          >
-            <div className="flex items-center gap-1.5 text-muted-foreground">
-              {icon}
-              <span className="text-xs font-medium">{label}</span>
-              {filter && statusFilter === filter && <span className="ml-auto text-xs text-primary font-medium">✕</span>}
-            </div>
-            <p className="text-lg font-bold">{value} <span className="text-xs font-normal text-muted-foreground">сч.</span></p>
-            <p className="text-xs text-muted-foreground">{sub}</p>
-          </div>
-        ))}
-      </div>
-
-      {/* Payment progress bar */}
-      {stats.totalInvoiced > 0 && (
-        <div className="rounded-lg border bg-card px-4 py-3 space-y-2">
-          <div className="flex items-center justify-between text-sm">
-            <span className="font-medium">Прогресс оплаты</span>
-            <span className="text-muted-foreground">
-              {stats.totalPaid.toLocaleString()} / {stats.totalInvoiced.toLocaleString()} {stats.currency}
-              {" "}·{" "}
-              <span className="font-semibold text-green-600">{Math.round((stats.totalPaid / stats.totalInvoiced) * 100)}%</span>
-            </span>
-          </div>
-          <div className="h-2 rounded-full bg-muted overflow-hidden">
-            <div
-              className="h-full rounded-full bg-green-500 transition-all duration-500"
-              style={{ width: `${Math.min((stats.totalPaid / stats.totalInvoiced) * 100, 100)}%` }}
-            />
-          </div>
-          <div className="flex gap-4 text-xs text-muted-foreground">
-            <span className="flex items-center gap-1"><span className="inline-block w-2 h-2 rounded-full bg-green-500" />Оплачено: {stats.paidCount} сч.</span>
-            <span className="flex items-center gap-1"><span className="inline-block w-2 h-2 rounded-full bg-orange-400" />Ожидает: {stats.sentCount} сч.</span>
-            <span className="flex items-center gap-1"><span className="inline-block w-2 h-2 rounded-full bg-red-500" />Просрочено: {stats.overdueCount} сч.</span>
-            <span className="flex items-center gap-1"><span className="inline-block w-2 h-2 rounded-full bg-yellow-400" />Частично: {stats.partiallyPaidCount} сч.</span>
-          </div>
-        </div>
-      )}
 
       <div className="flex items-center gap-4">
         <Select
@@ -415,12 +347,6 @@ export default function InvoicesPage() {
         searchPlaceholder={t("searchPlaceholder")}
         searchKey="invoiceNumber"
         onRowClick={(item: any) => router.push(`/invoices/${item.id}`)}
-        rowClassName={(item: any) => {
-          if (item.status === "overdue") return "bg-red-50/60 dark:bg-red-950/20"
-          if (item.status === "paid") return "bg-green-50/60 dark:bg-green-950/20"
-          if (item.status === "partially_paid") return "bg-yellow-50/60 dark:bg-yellow-950/20"
-          return ""
-        }}
       />
 
       <DeleteConfirmDialog
