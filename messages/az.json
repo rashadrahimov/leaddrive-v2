@@ -1022,6 +1022,8 @@
     "contractNumber": "Müqavilə №",
     "contractDate": "Müqavilə tarixi",
     "contractHint": "Müqavilə seçin və ya əl ilə daxil edin",
+    "selectCompanyFirst": "Əvvəlcə şirkət seçin",
+    "noDeals": "Sövdələşmə yoxdur",
     "signerName": "İmzalayanın adı",
     "signerNamePlaceholder": "Ad və soyad",
     "signerTitleLabel": "İmzalayanın vəzifəsi",

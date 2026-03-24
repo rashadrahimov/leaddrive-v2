@@ -29,10 +29,12 @@ export async function GET(req: NextRequest) {
   const limit = parseInt(searchParams.get("limit") || "50")
 
   try {
+    const companyId = searchParams.get("companyId")
     const where = {
       organizationId: orgId,
       ...(search ? { name: { contains: search, mode: "insensitive" as const } } : {}),
       ...(stage ? { stage } : {}),
+      ...(companyId ? { companyId } : {}),
     }
 
     const [deals, total] = await Promise.all([

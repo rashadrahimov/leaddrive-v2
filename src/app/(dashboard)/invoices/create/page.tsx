@@ -140,14 +140,18 @@ export default function CreateInvoicePage() {
       .catch(console.error)
   }, [orgId]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Fetch deals on mount
+  // Fetch deals when company changes
   useEffect(() => {
-    if (!orgId) return
-    fetch("/api/v1/deals?limit=500", { headers })
+    if (!orgId || !company) {
+      setDeals([])
+      setDeal("")
+      return
+    }
+    fetch(`/api/v1/deals?companyId=${company}&limit=100`, { headers })
       .then((res) => res.json())
       .then((json) => setDeals(json.data?.deals || json.deals || []))
       .catch(console.error)
-  }, [orgId]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [orgId, company]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Fetch products on mount
   useEffect(() => {
@@ -502,8 +506,9 @@ export default function CreateInvoicePage() {
                 <Select
                   value={deal}
                   onChange={(e) => setDeal(e.target.value)}
+                  disabled={!company || deals.length === 0}
                 >
-                  <option value="">{t("selectDeal") || "Select deal..."}</option>
+                  <option value="">{!company ? (t("selectCompanyFirst") || "Select company first") : deals.length === 0 ? (t("noDeals") || "No deals") : (t("selectDeal") || "Select deal...")}</option>
                   {deals.map((d) => (
                     <option key={d.id} value={d.id}>
                       {d.name}

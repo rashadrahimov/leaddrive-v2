@@ -1026,6 +1026,8 @@
     "contractNumber": "Номер договора",
     "contractDate": "Дата договора",
     "contractHint": "Выберите договор или введите вручную",
+    "selectCompanyFirst": "Сначала выберите компанию",
+    "noDeals": "Нет сделок",
     "signerName": "Подписант",
     "signerNamePlaceholder": "Имя и фамилия",
     "signerTitleLabel": "Должность подписанта",
