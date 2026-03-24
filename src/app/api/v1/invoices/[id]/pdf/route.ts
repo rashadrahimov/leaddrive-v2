@@ -136,7 +136,7 @@ function generateInvoiceHtml(
   body { font-family: Arial, 'Segoe UI', sans-serif; width: 794px; margin: 0 auto; color: #222; font-size: 11px; background: #fff; }
 
   /* ── TOP HEADER BAND ── */
-  .hdr-band { background: linear-gradient(135deg, #0891b2, #2563eb); color: white; padding: 18px 28px 14px; display: flex; justify-content: space-between; align-items: flex-end; }
+  .hdr-band { background: #0891b2; color: white; padding: 18px 28px 14px; display: flex; justify-content: space-between; align-items: flex-end; }
   .hdr-company { font-size: 17px; font-weight: 800; letter-spacing: 0.5px; line-height: 1.2; }
   .hdr-company small { display: block; font-size: 10px; font-weight: 400; opacity: 0.75; margin-top: 2px; letter-spacing: 0.3px; }
   .hdr-inv { text-align: right; }
