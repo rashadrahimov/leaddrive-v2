@@ -60,6 +60,8 @@ export default function CreateInvoicePage() {
   const [deals, setDeals] = useState<Deal[]>([])
   const [products, setProducts] = useState<Product[]>([])
   const [company, setCompany] = useState("")
+  const [companySearch, setCompanySearch] = useState("")
+  const [showCompanyDropdown, setShowCompanyDropdown] = useState(false)
   const [contact, setContact] = useState("")
   const [deal, setDeal] = useState("")
 
@@ -107,6 +109,13 @@ export default function CreateInvoicePage() {
   const [showProductDropdown, setShowProductDropdown] = useState(false)
 
   const headers: Record<string, string> = orgId ? { "x-organization-id": String(orgId) } : {}
+
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleClick = () => { setShowCompanyDropdown(false); setShowProductDropdown(false) }
+    document.addEventListener("click", handleClick)
+    return () => document.removeEventListener("click", handleClick)
+  }, [])
 
   // Fetch companies on mount
   useEffect(() => {
@@ -377,17 +386,42 @@ export default function CreateInvoicePage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>{t("company") || "Company"} *</Label>
-                  <Select
-                    value={company}
-                    onChange={(e) => setCompany(e.target.value)}
-                  >
-                    <option value="">{t("selectCompany") || "Select company..."}</option>
-                    {companies.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.name}
-                      </option>
-                    ))}
-                  </Select>
+                  <div className="relative">
+                    <Input
+                      placeholder={t("selectCompany") || "Type to search company..."}
+                      value={companySearch}
+                      onChange={(e) => {
+                        setCompanySearch(e.target.value)
+                        setShowCompanyDropdown(true)
+                        if (!e.target.value) { setCompany(""); setContacts([]); setContact("") }
+                      }}
+                      onFocus={() => setShowCompanyDropdown(true)}
+                      className="h-10"
+                    />
+                    {showCompanyDropdown && companySearch && (
+                      <div className="absolute z-50 w-full mt-1 bg-popover border rounded-md shadow-lg max-h-48 overflow-y-auto">
+                        {companies
+                          .filter((c) => c.name.toLowerCase().includes(companySearch.toLowerCase()))
+                          .slice(0, 15)
+                          .map((c) => (
+                            <button
+                              key={c.id}
+                              className={`w-full text-left px-3 py-2 hover:bg-accent text-sm ${company === c.id ? "bg-accent font-medium" : ""}`}
+                              onClick={() => {
+                                setCompany(c.id)
+                                setCompanySearch(c.name)
+                                setShowCompanyDropdown(false)
+                              }}
+                            >
+                              {c.name}
+                            </button>
+                          ))}
+                        {companies.filter((c) => c.name.toLowerCase().includes(companySearch.toLowerCase())).length === 0 && (
+                          <div className="px-3 py-2 text-sm text-muted-foreground">No companies found</div>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <Label>{t("contact") || "Contact"}</Label>
@@ -397,9 +431,9 @@ export default function CreateInvoicePage() {
                     disabled={!company}
                   >
                     <option value="">{t("selectContact") || "Select contact..."}</option>
-                    {contacts.map((c) => (
+                    {contacts.map((c: any) => (
                       <option key={c.id} value={c.id}>
-                        {c.firstName} {c.lastName}
+                        {c.fullName || `${c.firstName || ""} ${c.lastName || ""}`}
                       </option>
                     ))}
                   </Select>
@@ -467,50 +501,47 @@ export default function CreateInvoicePage() {
               </div>
             </CardHeader>
             <CardContent>
-              {/* Table Header */}
-              <div className="hidden md:grid grid-cols-12 gap-2 mb-2 text-xs font-medium text-muted-foreground px-1">
-                <div className="col-span-3">{t("itemName") || "Name"}</div>
-                <div className="col-span-3">{t("description") || "Description"}</div>
-                <div className="col-span-1">{t("qty") || "Qty"}</div>
-                <div className="col-span-2">{t("unitPrice") || "Unit Price"}</div>
-                <div className="col-span-1">{t("discountPercent") || "Disc %"}</div>
-                <div className="col-span-1 text-right">{t("total") || "Total"}</div>
-                <div className="col-span-1"></div>
-              </div>
+              {/* Items Table */}
+              <div className="border rounded-lg overflow-hidden">
+                {/* Table Header */}
+                <div className="hidden md:grid grid-cols-[1fr_2.5fr_80px_120px_80px_100px_40px] gap-0 bg-muted/60 border-b text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  <div className="px-3 py-2.5">#</div>
+                  <div className="px-3 py-2.5">{t("itemName") || "Name"}</div>
+                  <div className="px-3 py-2.5 text-center">{t("qty") || "Qty"}</div>
+                  <div className="px-3 py-2.5 text-right">{t("unitPrice") || "Price"}</div>
+                  <div className="px-3 py-2.5 text-center">{t("discountPercent") || "Disc %"}</div>
+                  <div className="px-3 py-2.5 text-right">{t("total") || "Total"}</div>
+                  <div className="px-1 py-2.5"></div>
+                </div>
 
-              {/* Item Rows */}
-              <div className="space-y-2">
+                {/* Item Rows */}
                 {items.map((item, index) => (
                   <div
                     key={item.id}
-                    className="grid grid-cols-1 md:grid-cols-12 gap-2 items-start p-2 rounded-md border bg-muted/30"
+                    className="grid grid-cols-1 md:grid-cols-[1fr_2.5fr_80px_120px_80px_100px_40px] gap-0 border-b last:border-b-0 hover:bg-muted/20 transition-colors"
                   >
-                    <div className="md:col-span-3">
-                      <Label className="md:hidden text-xs text-muted-foreground mb-1">
-                        {t("itemName") || "Name"}
-                      </Label>
+                    {/* Row number */}
+                    <div className="hidden md:flex items-center px-3 py-2 text-sm text-muted-foreground font-mono">
+                      {index + 1}
+                    </div>
+                    {/* Name + Description */}
+                    <div className="px-3 py-2">
                       <Input
-                        placeholder={t("itemNamePlaceholder") || "Item name"}
+                        placeholder={t("itemNamePlaceholder") || "Service or product name"}
                         value={item.name}
                         onChange={(e) => updateItem(item.id, "name", e.target.value)}
-                        className="h-9"
+                        className="h-8 border-0 px-0 shadow-none focus-visible:ring-0 font-medium"
                       />
-                    </div>
-                    <div className="md:col-span-3">
-                      <Label className="md:hidden text-xs text-muted-foreground mb-1">
-                        {t("description") || "Description"}
-                      </Label>
                       <Input
-                        placeholder={t("descriptionPlaceholder") || "Description"}
+                        placeholder={t("descriptionPlaceholder") || "Description (optional)"}
                         value={item.description}
                         onChange={(e) => updateItem(item.id, "description", e.target.value)}
-                        className="h-9"
+                        className="h-7 border-0 px-0 shadow-none focus-visible:ring-0 text-xs text-muted-foreground"
                       />
                     </div>
-                    <div className="md:col-span-1">
-                      <Label className="md:hidden text-xs text-muted-foreground mb-1">
-                        {t("qty") || "Qty"}
-                      </Label>
+                    {/* Qty */}
+                    <div className="px-2 py-2 flex items-center">
+                      <Label className="md:hidden text-xs text-muted-foreground mr-2">Qty</Label>
                       <Input
                         type="number"
                         min={1}
@@ -519,13 +550,12 @@ export default function CreateInvoicePage() {
                         onChange={(e) =>
                           updateItem(item.id, "quantity", Math.max(1, parseInt(e.target.value) || 1))
                         }
-                        className="h-9"
+                        className="h-8 text-center"
                       />
                     </div>
-                    <div className="md:col-span-2">
-                      <Label className="md:hidden text-xs text-muted-foreground mb-1">
-                        {t("unitPrice") || "Unit Price"}
-                      </Label>
+                    {/* Price */}
+                    <div className="px-2 py-2 flex items-center">
+                      <Label className="md:hidden text-xs text-muted-foreground mr-2">Price</Label>
                       <Input
                         type="number"
                         min={0}
@@ -534,13 +564,12 @@ export default function CreateInvoicePage() {
                         onChange={(e) =>
                           updateItem(item.id, "unitPrice", Math.max(0, parseFloat(e.target.value) || 0))
                         }
-                        className="h-9"
+                        className="h-8 text-right"
                       />
                     </div>
-                    <div className="md:col-span-1">
-                      <Label className="md:hidden text-xs text-muted-foreground mb-1">
-                        {t("discountPercent") || "Disc %"}
-                      </Label>
+                    {/* Discount % */}
+                    <div className="px-2 py-2 flex items-center">
+                      <Label className="md:hidden text-xs text-muted-foreground mr-2">Disc</Label>
                       <Input
                         type="number"
                         min={0}
@@ -548,43 +577,45 @@ export default function CreateInvoicePage() {
                         step={0.1}
                         value={item.discount}
                         onChange={(e) =>
-                          updateItem(
-                            item.id,
-                            "discount",
-                            Math.min(100, Math.max(0, parseFloat(e.target.value) || 0))
-                          )
+                          updateItem(item.id, "discount", Math.min(100, Math.max(0, parseFloat(e.target.value) || 0)))
                         }
-                        className="h-9"
+                        className="h-8 text-center"
                       />
                     </div>
-                    <div className="md:col-span-1 flex items-center justify-end">
-                      <Label className="md:hidden text-xs text-muted-foreground mb-1 mr-2">
-                        {t("total") || "Total"}
-                      </Label>
-                      <span className="text-sm font-medium whitespace-nowrap mt-2 md:mt-0">
+                    {/* Line Total */}
+                    <div className="px-3 py-2 flex items-center justify-end">
+                      <span className={`text-sm font-semibold tabular-nums ${getLineTotal(item) > 0 ? "text-foreground" : "text-muted-foreground"}`}>
                         {formatCurrency(getLineTotal(item))}
                       </span>
                     </div>
-                    <div className="md:col-span-1 flex items-center justify-end">
+                    {/* Delete */}
+                    <div className="px-1 py-2 flex items-center justify-center">
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => removeItem(item.id)}
                         disabled={items.length === 1}
-                        className="h-9 w-9 p-0 text-destructive hover:text-destructive"
+                        className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <Trash2 className="h-3.5 w-3.5" />
                       </Button>
                     </div>
                   </div>
                 ))}
-              </div>
 
-              {/* Quick add button at bottom */}
-              <Button variant="ghost" size="sm" onClick={addItem} className="mt-3 w-full border-dashed border">
-                <Plus className="h-4 w-4 mr-2" />
-                {t("addAnotherItem") || "Add another item"}
-              </Button>
+                {/* Add row button inside table */}
+                <div className="border-t bg-muted/20">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={addItem}
+                    className="w-full h-10 rounded-none text-muted-foreground hover:text-foreground"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    {t("addAnotherItem") || "Add row"}
+                  </Button>
+                </div>
+              </div>
             </CardContent>
           </Card>
 
