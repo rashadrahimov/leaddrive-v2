@@ -65,6 +65,8 @@ function generateInvoiceHtml(
   const bankVoen = (settings.bankVoen as string) || ""
   const bankCorrAccount = (settings.bankCorrAccount as string) || ""
   const hasBankDetails = bankName || bankAccount || bankSwift
+  const signerName = (settings.signerName as string) || ""
+  const signerTitle = (settings.signerTitle as string) || ""
   const footerNote = (invoice.footerNote as string) || (settings.footerNote as string) || ""
   const terms = (invoice.termsAndConditions as string) || (settings.termsAndConditions as string) || ""
 
@@ -120,6 +122,11 @@ function generateInvoiceHtml(
   .bank-box-body { padding: 12px 14px; font-size: 13px; }
   .bank-row { display: flex; gap: 6px; padding: 3px 0; }
   .bank-row strong { min-width: 80px; color: #1a1a1a; }
+  .signer { margin-top: 30px; display: flex; justify-content: flex-end; }
+  .signer-block { text-align: center; font-size: 13px; }
+  .signer-block .signer-line { border-top: 1px solid #1a1a1a; width: 200px; margin: 40px auto 6px; }
+  .signer-block .signer-name { font-weight: 600; }
+  .signer-block .signer-title { color: #666; font-size: 12px; margin-top: 2px; }
 </style>
 </head>
 <body>
@@ -196,6 +203,15 @@ ${hasBankDetails ? `
     ${bankAccount ? `<div class="bank-row"><strong>Hesab:</strong><span>${bankAccount}</span></div>` : ""}
     ${bankVoen ? `<div class="bank-row"><strong>VÖEN:</strong><span>${bankVoen}</span></div>` : ""}
     ${bankCorrAccount ? `<div class="bank-row"><strong>Müx. hesab:</strong><span>${bankCorrAccount}</span></div>` : ""}
+  </div>
+</div>` : ""}
+
+${signerName ? `
+<div class="signer">
+  <div class="signer-block">
+    <div class="signer-line"></div>
+    <div class="signer-name">${signerName}</div>
+    ${signerTitle ? `<div class="signer-title">${signerTitle}</div>` : ""}
   </div>
 </div>` : ""}
 

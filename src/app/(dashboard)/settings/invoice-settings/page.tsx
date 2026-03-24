@@ -37,6 +37,8 @@ export default function InvoiceSettingsPage() {
     bankAccount: "",
     bankVoen: "",
     bankCorrAccount: "",
+    signerName: "",
+    signerTitle: "",
     termsAndConditions: "",
     footerNote: "",
   })
@@ -333,6 +335,38 @@ export default function InvoiceSettingsPage() {
                 value={settings.bankCorrAccount}
                 onChange={(e) => updateField("bankCorrAccount", e.target.value)}
                 placeholder="AZ00NABZ00000000000000000000"
+                className="mt-1"
+              />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Signer */}
+      <Card>
+        <CardHeader>
+          <CardTitle>İmzalayan</CardTitle>
+          <CardDescription>
+            Hesab-fakturanı imzalayan şəxsin məlumatları.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label className="text-sm">Ad Soyad</Label>
+              <Input
+                value={settings.signerName}
+                onChange={(e) => updateField("signerName", e.target.value)}
+                placeholder="Yusif Rzayev"
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <Label className="text-sm">Vəzifə</Label>
+              <Input
+                value={settings.signerTitle}
+                onChange={(e) => updateField("signerTitle", e.target.value)}
+                placeholder='"GUVEN TECHNOLOGY" MMC-nin direktoru'
                 className="mt-1"
               />
             </div>
