@@ -225,7 +225,17 @@
     "activities": "Fəaliyyətlər",
     "daysActive": "Aktiv günlər",
     "daysLeft": "Qalan günlər",
-    "daysOpen": "Açıq günlər"
+    "daysOpen": "Açıq günlər",
+    "activity": "Fəaliyyət",
+    "noContactRoles": "Kontakt rolu yoxdur",
+    "addContactRole": "Kontakt rolu əlavə et",
+    "nextSteps": "Növbəti addımlar",
+    "addNextStep": "Yeni addım əlavə et...",
+    "noCompetitors": "Rəqib yoxdur",
+    "addCompetitor": "Rəqib əlavə et",
+    "noTeamMembers": "Komanda üzvü yoxdur",
+    "addTeamMembersHint": "Bu müqaviləyə komanda üzvü əlavə edin",
+    "addMember": "Üzv əlavə et"
   },
   "leads": {
     "title": "Lidlər",
