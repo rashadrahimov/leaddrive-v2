@@ -189,20 +189,30 @@ export async function processEnrollmentStep(enrollmentId: string, orgId: string)
 
       case "send_telegram": {
         const message = replaceVars(config.message || "")
-        // Get Telegram channel config with bot token
         const tgChannel = await prisma.channelConfig.findFirst({
           where: { organizationId: orgId, channelType: "telegram", isActive: true },
         })
         if (tgChannel?.botToken) {
-          // Real Telegram sending via Bot API
           try {
             const tgSettings = (tgChannel.settings as any) || {}
             const chatId = config.chatId || config.chat_id || tgSettings.chatId
             if (chatId) {
+              // Format message with header + body + website button
+              const tgText = `<b>💳 Ödəniş xatırlatması</b>\n\n${message}`
+              const tgBody: any = {
+                chat_id: chatId,
+                text: tgText,
+                parse_mode: "HTML",
+                reply_markup: {
+                  inline_keyboard: [[
+                    { text: "🌐 Guven Technology LLC", url: "https://www.gtc.az" },
+                  ]],
+                },
+              }
               const tgRes = await fetch(`https://api.telegram.org/bot${tgChannel.botToken}/sendMessage`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ chat_id: chatId, text: message, parse_mode: "HTML" }),
+                body: JSON.stringify(tgBody),
               })
               const tgData = await tgRes.json()
               if (tgData.ok) {
@@ -211,7 +221,7 @@ export async function processEnrollmentStep(enrollmentId: string, orgId: string)
                 result = { stepId: currentStep.id, stepType: "send_telegram", status: "completed", message: `Telegram API: ${tgData.description}` }
               }
             } else {
-              console.log(`[Journey Telegram] Bot: ${tgChannel.configName}, Message: ${message}`)
+              console.log(`[Journey Telegram] No chatId. Message: ${message}`)
               result = { stepId: currentStep.id, stepType: "send_telegram", status: "completed", message: `Telegram logged (no chatId): "${message.slice(0, 50)}..."` }
             }
           } catch (tgErr: any) {
@@ -230,8 +240,8 @@ export async function processEnrollmentStep(enrollmentId: string, orgId: string)
         })
         if (waChannel?.apiKey && waChannel?.phoneNumber && recipientPhone) {
           try {
-            // Use approved template "invoice_payment_reminder" with named parameters
-            const waRes = await fetch(`https://graph.facebook.com/v18.0/${waChannel.phoneNumber}/messages`, {
+            // Use approved template with positional parameters (v20.0 named vars)
+            const waRes = await fetch(`https://graph.facebook.com/v20.0/${waChannel.phoneNumber}/messages`, {
               method: "POST",
               headers: {
                 "Authorization": `Bearer ${waChannel.apiKey}`,
@@ -261,7 +271,7 @@ export async function processEnrollmentStep(enrollmentId: string, orgId: string)
             })
             const waData = await waRes.json()
             if (waData.messages?.[0]?.id) {
-              result = { stepId: currentStep.id, stepType: "send_whatsapp", status: "completed", message: `WhatsApp template sent to ${recipientPhone}: ${waData.messages[0].id}` }
+              result = { stepId: currentStep.id, stepType: "send_whatsapp", status: "completed", message: `WhatsApp sent to ${recipientPhone}: ${waData.messages[0].id}` }
             } else {
               result = { stepId: currentStep.id, stepType: "send_whatsapp", status: "completed", message: `WhatsApp API: ${JSON.stringify(waData).slice(0, 200)}` }
             }
