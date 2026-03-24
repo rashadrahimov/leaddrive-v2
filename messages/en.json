@@ -1060,7 +1060,13 @@
     "paymentMethod_cash": "Cash",
     "paymentMethod_card": "Card",
     "paymentMethod_check": "Check",
-    "paymentMethod_other": "Other"
+    "paymentMethod_other": "Other",
+    "noActivity": "No activity yet",
+    "activityCreated": "Invoice created",
+    "activitySent": "Invoice sent",
+    "activityViewed": "Invoice viewed by client",
+    "activityPaid": "Invoice fully paid",
+    "activityPaymentRecorded": "Payment recorded"
   },
   "inbox": {
     "title": "Inbox",

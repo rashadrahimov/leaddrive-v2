@@ -1056,7 +1056,13 @@
     "paymentMethod_cash": "Nağd",
     "paymentMethod_card": "Kart",
     "paymentMethod_check": "Çek",
-    "paymentMethod_other": "Digər"
+    "paymentMethod_other": "Digər",
+    "noActivity": "Hələ heç bir fəaliyyət yoxdur",
+    "activityCreated": "Faktura yaradıldı",
+    "activitySent": "Faktura göndərildi",
+    "activityViewed": "Faktura müştəri tərəfindən baxıldı",
+    "activityPaid": "Faktura tam ödənildi",
+    "activityPaymentRecorded": "Ödəniş qeydə alındı"
   },
   "inbox": {
     "title": "Gələn qutusu",

@@ -23,6 +23,7 @@ import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
 import {
   ArrowLeft,
   FileSpreadsheet,
+  FileText,
   Send,
   Download,
   Copy,
@@ -33,6 +34,7 @@ import {
   Building2,
   User,
   Clock,
+  Eye,
 } from "lucide-react"
 
 // ---------- Types ----------
@@ -85,6 +87,9 @@ interface Invoice {
   notes: string | null
   recipientEmail: string | null
   recipientVoen: string | null
+  sentAt: string | null
+  viewedAt: string | null
+  paidAt: string | null
   createdAt: string
   updatedAt: string
   company: { id: string; name: string } | null
@@ -937,42 +942,110 @@ export default function InvoiceDetailPage() {
                 <div className="flex justify-center py-8">
                   <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" />
                 </div>
-              ) : auditLog.length === 0 ? (
-                <p className="text-center text-muted-foreground py-8">
-                  {t("noActivity")}
-                </p>
-              ) : (
-                <div className="space-y-3">
-                  {auditLog.map((entry) => (
-                    <div
-                      key={entry.id}
-                      className="flex items-start gap-3 text-sm border-b last:border-0 pb-3 last:pb-0"
-                    >
-                      <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <Clock className="h-3.5 w-3.5 text-muted-foreground" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium">
-                            {entry.user?.name || entry.user?.email || t("system")}
-                          </span>
-                          <span className="text-muted-foreground">
-                            {entry.action}
-                          </span>
+              ) : (() => {
+                // Build combined activity feed
+                type ActivityItem = {
+                  id: string
+                  icon: React.ReactNode
+                  label: string
+                  detail?: string
+                  date: string
+                }
+                const items: ActivityItem[] = []
+
+                // Invoice created
+                if (invoice?.createdAt) {
+                  items.push({
+                    id: "created",
+                    icon: <FileText className="h-3.5 w-3.5 text-muted-foreground" />,
+                    label: t("activityCreated"),
+                    date: invoice.createdAt,
+                  })
+                }
+                // Invoice sent
+                if (invoice?.sentAt) {
+                  items.push({
+                    id: "sent",
+                    icon: <Send className="h-3.5 w-3.5 text-blue-500" />,
+                    label: t("activitySent"),
+                    detail: invoice.recipientEmail || undefined,
+                    date: invoice.sentAt,
+                  })
+                }
+                // Invoice viewed
+                if (invoice?.viewedAt) {
+                  items.push({
+                    id: "viewed",
+                    icon: <Eye className="h-3.5 w-3.5 text-indigo-500" />,
+                    label: t("activityViewed"),
+                    date: invoice.viewedAt,
+                  })
+                }
+                // Payments
+                invoice?.payments?.forEach((p) => {
+                  items.push({
+                    id: `payment-${p.id}`,
+                    icon: <CreditCard className="h-3.5 w-3.5 text-green-500" />,
+                    label: t("activityPaymentRecorded"),
+                    detail: `${p.amount.toLocaleString()} ${invoice.currency} — ${t(`paymentMethod_${p.method}`)}${p.reference ? ` (${p.reference})` : ""}`,
+                    date: p.createdAt,
+                  })
+                })
+                // Invoice paid
+                if (invoice?.paidAt && invoice.status === "paid") {
+                  items.push({
+                    id: "paid",
+                    icon: <DollarSign className="h-3.5 w-3.5 text-green-600" />,
+                    label: t("activityPaid"),
+                    date: invoice.paidAt,
+                  })
+                }
+                // Audit log entries
+                auditLog.forEach((entry) => {
+                  items.push({
+                    id: entry.id,
+                    icon: <Clock className="h-3.5 w-3.5 text-muted-foreground" />,
+                    label: `${entry.user?.name || entry.user?.email || t("system")}: ${entry.action}`,
+                    detail: entry.details || undefined,
+                    date: entry.createdAt,
+                  })
+                })
+
+                // Sort newest first
+                items.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+
+                if (items.length === 0) {
+                  return (
+                    <p className="text-center text-muted-foreground py-8">
+                      {t("noActivity")}
+                    </p>
+                  )
+                }
+
+                return (
+                  <div className="space-y-3">
+                    {items.map((item) => (
+                      <div
+                        key={item.id}
+                        className="flex items-start gap-3 text-sm border-b last:border-0 pb-3 last:pb-0"
+                      >
+                        <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center flex-shrink-0 mt-0.5">
+                          {item.icon}
                         </div>
-                        {entry.details && (
-                          <p className="text-muted-foreground text-xs mt-0.5">
-                            {entry.details}
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium">{item.label}</p>
+                          {item.detail && (
+                            <p className="text-muted-foreground text-xs mt-0.5">{item.detail}</p>
+                          )}
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {new Date(item.date).toLocaleString()}
                           </p>
-                        )}
-                        <p className="text-xs text-muted-foreground mt-1">
-                          {new Date(entry.createdAt).toLocaleString()}
-                        </p>
+                        </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
-              )}
+                    ))}
+                  </div>
+                )
+              })()}
             </CardContent>
           </Card>
         </TabsContent>

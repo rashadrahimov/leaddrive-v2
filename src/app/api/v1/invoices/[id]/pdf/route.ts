@@ -58,7 +58,19 @@ function generateInvoiceHtml(
   const companyName = (settings.companyName as string) || orgName
   const companyAddress = (settings.companyAddress as string) || ""
   const companyVoen = (settings.companyVoen as string) || (invoice.sellerVoen as string) || ""
-  const bankDetails = (settings.bankDetails as string) || ""
+  const companyEmail = (settings.companyEmail as string) || ""
+  const companyPhone = (settings.companyPhone as string) || ""
+  const clientCo = invoice.company as Record<string, unknown> | null
+  const clientVoen = (invoice.voen as string) || (clientCo?.voen as string) || ""
+  const bankName = (settings.bankName as string) || ""
+  const bankCode = (settings.bankCode as string) || ""
+  const bankSwift = (settings.bankSwift as string) || ""
+  const bankAccount = (settings.bankAccount as string) || ""
+  const bankVoen = (settings.bankVoen as string) || ""
+  const bankCorrAccount = (settings.bankCorrAccount as string) || ""
+  const hasBankDetails = bankName || bankAccount || bankSwift
+  const signerName = (settings.signerName as string) || ""
+  const signerTitle = (settings.signerTitle as string) || ""
   const footerNote = (invoice.footerNote as string) || (settings.footerNote as string) || ""
   const terms = (invoice.termsAndConditions as string) || (settings.termsAndConditions as string) || ""
 
@@ -109,38 +121,68 @@ function generateInvoiceHtml(
   .status-partially_paid { background: #fef3c7; color: #d97706; }
   .print-btn { position: fixed; bottom: 20px; right: 20px; background: #0f766e; color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-size: 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
   .print-btn:hover { background: #0d6660; }
-  .bank-details { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px; margin-bottom: 20px; font-size: 13px; white-space: pre-line; }
+  .bank-box { border: 1.5px solid #2196a6; border-radius: 4px; margin-bottom: 20px; overflow: hidden; }
+  .bank-box-title { background: #2196a6; color: white; font-weight: 700; font-size: 13px; padding: 8px 14px; letter-spacing: 0.5px; }
+  .bank-box-body { padding: 12px 14px; font-size: 13px; }
+  .bank-row { display: flex; gap: 6px; padding: 3px 0; }
+  .bank-row strong { min-width: 80px; color: #1a1a1a; }
+  .parties { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px; }
+  .party-box { border: 1.5px solid #2196a6; border-radius: 4px; overflow: hidden; }
+  .party-box-title { background: #2196a6; color: white; font-weight: 700; font-size: 12px; padding: 7px 14px; letter-spacing: 0.5px; text-transform: uppercase; }
+  .party-box-body { padding: 12px 14px; font-size: 13px; }
+  .party-row { display: flex; gap: 6px; padding: 3px 0; }
+  .party-row strong { min-width: 90px; color: #1a1a1a; font-weight: 600; }
+  .party-row span { color: #333; }
+  .signer { margin-top: 30px; display: flex; justify-content: flex-end; }
+  .signer-block { text-align: center; font-size: 13px; }
+  .signer-block .signer-line { border-top: 1px solid #1a1a1a; width: 200px; margin: 40px auto 6px; }
+  .signer-block .signer-name { font-weight: 600; }
+  .signer-block .signer-title { color: #666; font-size: 12px; margin-top: 2px; }
 </style>
 </head>
 <body>
 <div class="header">
-  <div class="company-info">
-    <h1>${companyName}</h1>
-    ${companyAddress ? `<p>${companyAddress}</p>` : ""}
-    ${companyVoen ? `<p>VÖEN: ${companyVoen}</p>` : ""}
-  </div>
-  <div class="invoice-title">
+  <div class="invoice-title" style="text-align:left;">
     <h2>Hesab-faktura</h2>
     <div class="number">${invoice.invoiceNumber}</div>
     <div style="margin-top: 8px;"><span class="status-badge status-${invoice.status}">${invoice.status}</span></div>
   </div>
+  <div style="text-align:right; font-size:13px; color:#666;">
+    <p style="margin:2px 0;">Tarix: ${formatDate(invoice.issueDate)}</p>
+    <p style="margin:2px 0;">Ödəniş tarixi: ${formatDate(invoice.dueDate)}</p>
+  </div>
 </div>
 
-<div class="meta-grid">
-  <div class="meta-box">
-    <h3>Müştəri</h3>
-    ${invoice.company ? `<p><strong>${(invoice.company as Record<string, unknown>).name}</strong></p>` : ""}
-    ${invoice.contact ? `<p>${(invoice.contact as Record<string, unknown>).fullName}</p>` : ""}
-    ${invoice.company && (invoice.company as Record<string, unknown>).address ? `<p>${(invoice.company as Record<string, unknown>).address}</p>` : ""}
-    ${invoice.voen ? `<p>VÖEN: ${invoice.voen}</p>` : ""}
+<div class="parties">
+  <div class="party-box">
+    <div class="party-box-title">İCRAÇI ŞİRKƏT</div>
+    <div class="party-box-body">
+      <div class="party-row"><strong>Şirkət Adı:</strong><span>${companyName}</span></div>
+      <div class="party-row"><strong>VÖEN:</strong><span>${companyVoen}</span></div>
+      <div class="party-row"><strong>Ünvan:</strong><span>${companyAddress}</span></div>
+      <div class="party-row"><strong>E-poçt:</strong><span>${companyEmail}</span></div>
+      <div class="party-row"><strong>Telefon:</strong><span>${companyPhone}</span></div>
+    </div>
   </div>
-  <div class="meta-box" style="text-align: right;">
-    <h3>Hesab məlumatları</h3>
-    <p>Tarix: ${formatDate(invoice.issueDate)}</p>
-    <p>Ödəniş tarixi: ${formatDate(invoice.dueDate)}</p>
-    <p>Ödəniş şərtləri: ${invoice.paymentTerms}</p>
+  <div class="party-box">
+    <div class="party-box-title">SİFARİŞÇİ ŞİRKƏT</div>
+    <div class="party-box-body">
+      <div class="party-row"><strong>Şirkət Adı:</strong><span>${clientCo?.name || ""}</span></div>
+      <div class="party-row"><strong>VÖEN:</strong><span>${clientVoen}</span></div>
+      <div class="party-row"><strong>Ünvan:</strong><span>${clientCo?.address || ""}</span></div>
+      <div class="party-row"><strong>E-poçt:</strong><span>${clientCo?.email || ""}</span></div>
+      <div class="party-row"><strong>Telefon:</strong><span>${clientCo?.phone || ""}</span></div>
+    </div>
   </div>
 </div>
+
+${invoice.contact || invoice.paymentTerms ? `
+<div class="meta-grid" style="margin-bottom:20px;">
+  ${invoice.contact ? `<div class="meta-box"><h3>Əlaqəli şəxs</h3><p>${(invoice.contact as Record<string, unknown>).fullName}</p></div>` : "<div></div>"}
+  <div class="meta-box" style="text-align:right;">
+    ${invoice.paymentTerms ? `<p style="font-size:13px;color:#666;">Ödəniş şərtləri: ${invoice.paymentTerms}</p>` : ""}
+  </div>
+</div>` : ""}
 
 <table class="items-table">
   <thead>
@@ -176,7 +218,27 @@ ${Number(invoice.paidAmount) > 0 ? `
   </table>
 </div>` : ""}
 
-${bankDetails ? `<div class="bank-details"><strong>Bank rekvizitləri:</strong><br>${bankDetails}</div>` : ""}
+${hasBankDetails ? `
+<div class="bank-box">
+  <div class="bank-box-title">BANK HESABI</div>
+  <div class="bank-box-body">
+    ${bankName ? `<div class="bank-row"><strong>Bank:</strong><span>${bankName}</span></div>` : ""}
+    ${bankCode ? `<div class="bank-row"><strong>Kod:</strong><span>${bankCode}</span></div>` : ""}
+    ${bankSwift ? `<div class="bank-row"><strong>SWIFT:</strong><span>${bankSwift}</span></div>` : ""}
+    ${bankAccount ? `<div class="bank-row"><strong>Hesab:</strong><span>${bankAccount}</span></div>` : ""}
+    ${bankVoen ? `<div class="bank-row"><strong>VÖEN:</strong><span>${bankVoen}</span></div>` : ""}
+    ${bankCorrAccount ? `<div class="bank-row"><strong>Müx. hesab:</strong><span>${bankCorrAccount}</span></div>` : ""}
+  </div>
+</div>` : ""}
+
+${signerName ? `
+<div class="signer">
+  <div class="signer-block">
+    <div class="signer-line"></div>
+    <div class="signer-name">${signerName}</div>
+    ${signerTitle ? `<div class="signer-title">${signerTitle}</div>` : ""}
+  </div>
+</div>` : ""}
 
 <div class="footer">
   ${terms ? `<h4>Şərtlər</h4><p>${terms}</p>` : ""}
