@@ -64,6 +64,8 @@ export default function CreateInvoicePage() {
   const [companies, setCompanies] = useState<Company[]>([])
   const [contacts, setContacts] = useState<Contact[]>([])
   const [deals, setDeals] = useState<Deal[]>([])
+  const [contracts, setContracts] = useState<Array<{ id: string; contractNumber: string; title: string; startDate?: string }>>([])
+  const [selectedContract, setSelectedContract] = useState("")
   const [products, setProducts] = useState<Product[]>([])
   const [company, setCompany] = useState("")
   const [companySearch, setCompanySearch] = useState("")
@@ -177,6 +179,19 @@ export default function CreateInvoicePage() {
     fetch(`/api/v1/contacts?companyId=${company}`, { headers })
       .then((res) => res.json())
       .then((json) => setContacts(json.data?.contacts || json.contacts || []))
+      .catch(console.error)
+  }, [orgId, company]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Fetch contracts when company changes
+  useEffect(() => {
+    if (!orgId || !company) {
+      setContracts([])
+      setSelectedContract("")
+      return
+    }
+    fetch(`/api/v1/contracts?companyId=${company}&limit=100`, { headers })
+      .then((res) => res.json())
+      .then((json) => setContracts(json.data?.contracts || json.contracts || []))
       .catch(console.error)
   }, [orgId, company]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -318,6 +333,7 @@ export default function CreateInvoicePage() {
         companyId: company,
         contactId: contact || undefined,
         dealId: deal || undefined,
+        contractId: selectedContract || undefined,
         status,
         currency,
         issueDate,
@@ -701,21 +717,45 @@ export default function CreateInvoicePage() {
                     <option value="en">English</option>
                   </Select>
                 </div>
-                <div>
-                  <Label>{"Contract Number"}</Label>
-                  <Input
-                    placeholder="GT/ZP/240806-01"
-                    value={contractNumber}
-                    onChange={(e) => setContractNumber(e.target.value)}
-                  />
-                </div>
-                <div>
-                  <Label>{"Contract Date"}</Label>
-                  <Input
-                    type="date"
-                    value={contractDate}
-                    onChange={(e) => setContractDate(e.target.value)}
-                  />
+                <div className="col-span-2">
+                  <Label>{t("contract") || "Contract"}</Label>
+                  <div className="grid grid-cols-3 gap-2">
+                    <Select
+                      value={selectedContract}
+                      onChange={(e) => {
+                        const cId = e.target.value
+                        setSelectedContract(cId)
+                        if (cId) {
+                          const c = contracts.find((x) => x.id === cId)
+                          if (c) {
+                            setContractNumber(c.contractNumber)
+                            setContractDate(c.startDate ? new Date(c.startDate).toISOString().split("T")[0] : "")
+                          }
+                        }
+                      }}
+                    >
+                      <option value="">{contracts.length > 0 ? (t("selectContract") || "Select contract...") : (company ? "No contracts" : "Select company first")}</option>
+                      {contracts.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.contractNumber} — {c.title}
+                        </option>
+                      ))}
+                    </Select>
+                    <Input
+                      placeholder={t("contractNumber") || "Contract №"}
+                      value={contractNumber}
+                      onChange={(e) => setContractNumber(e.target.value)}
+                    />
+                    <Input
+                      type="date"
+                      placeholder={t("contractDate") || "Date"}
+                      value={contractDate}
+                      onChange={(e) => setContractDate(e.target.value)}
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {t("contractHint") || "Select a contract or enter manually. Number and date are editable."}
+                  </p>
                 </div>
                 <div>
                   <Label>{"Signer Name"}</Label>

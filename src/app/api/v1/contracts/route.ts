@@ -27,10 +27,12 @@ export async function GET(req: NextRequest) {
   const status = searchParams.get("status")
 
   try {
+    const companyId = searchParams.get("companyId")
     const where = {
       organizationId: orgId,
       ...(search ? { title: { contains: search, mode: "insensitive" as const } } : {}),
       ...(status ? { status } : {}),
+      ...(companyId ? { companyId } : {}),
     }
 
     const [contracts, total] = await Promise.all([
