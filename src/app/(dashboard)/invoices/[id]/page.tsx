@@ -35,6 +35,7 @@ import {
   User,
   Clock,
   Eye,
+  Pencil,
 } from "lucide-react"
 
 // ---------- Types ----------
@@ -311,6 +312,21 @@ export default function InvoiceDetailPage() {
   const [sendLoading, setSendLoading] = useState(false)
   const [sendError, setSendError] = useState("")
 
+  // Edit dialog
+  const [showEditDialog, setShowEditDialog] = useState(false)
+  const [editForm, setEditForm] = useState({
+    title: "",
+    issueDate: "",
+    dueDate: "",
+    paymentTerms: "",
+    currency: "",
+    voen: "",
+    recipientEmail: "",
+    notes: "",
+  })
+  const [editLoading, setEditLoading] = useState(false)
+  const [editError, setEditError] = useState("")
+
   // Audit log
   const [auditLog, setAuditLog] = useState<AuditEntry[]>([])
   const [auditLoading, setAuditLoading] = useState(false)
@@ -399,6 +415,51 @@ export default function InvoiceDetailPage() {
     if (res.ok) {
       const data = await res.json()
       router.push(`/invoices/${data.id}`)
+    }
+  }
+
+  function openEditDialog() {
+    if (!invoice) return
+    setEditForm({
+      title: invoice.title || "",
+      issueDate: invoice.issueDate ? invoice.issueDate.split("T")[0] : "",
+      dueDate: invoice.dueDate ? invoice.dueDate.split("T")[0] : "",
+      paymentTerms: invoice.paymentTerms || "",
+      currency: invoice.currency || "AZN",
+      voen: invoice.recipientVoen || "",
+      recipientEmail: invoice.recipientEmail || "",
+      notes: invoice.notes || "",
+    })
+    setEditError("")
+    setShowEditDialog(true)
+  }
+
+  async function handleSaveEdit() {
+    setEditLoading(true)
+    setEditError("")
+    try {
+      const res = await fetch(`/api/v1/invoices/${invoiceId}`, {
+        method: "PUT",
+        headers,
+        body: JSON.stringify({
+          title: editForm.title || null,
+          issueDate: editForm.issueDate,
+          dueDate: editForm.dueDate || null,
+          paymentTerms: editForm.paymentTerms || null,
+          currency: editForm.currency,
+          voen: editForm.voen || null,
+          recipientEmail: editForm.recipientEmail || null,
+          notes: editForm.notes || null,
+        }),
+      })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error || "Failed to update invoice")
+      setShowEditDialog(false)
+      fetchInvoice()
+    } catch (err: any) {
+      setEditError(err.message)
+    } finally {
+      setEditLoading(false)
     }
   }
 
@@ -522,6 +583,14 @@ export default function InvoiceDetailPage() {
           </div>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={openEditDialog}
+          >
+            <Pencil className="h-4 w-4 mr-1" />
+            {tc("edit")}
+          </Button>
           <Button
             variant="outline"
             size="sm"
@@ -1188,6 +1257,114 @@ export default function InvoiceDetailPage() {
               ) : (
                 t("recordPayment")
               )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ===== Edit Invoice Dialog ===== */}
+      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Pencil className="h-5 w-5" />
+              {tc("edit")}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>{t("title")}</Label>
+              <Input
+                value={editForm.title}
+                onChange={(e) => setEditForm((p) => ({ ...p, title: e.target.value }))}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label>{t("issueDate")}</Label>
+                <Input
+                  type="date"
+                  value={editForm.issueDate}
+                  onChange={(e) => setEditForm((p) => ({ ...p, issueDate: e.target.value }))}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>{t("dueDate")}</Label>
+                <Input
+                  type="date"
+                  value={editForm.dueDate}
+                  onChange={(e) => setEditForm((p) => ({ ...p, dueDate: e.target.value }))}
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label>{t("paymentTerms")}</Label>
+                <Select
+                  value={editForm.paymentTerms}
+                  onChange={(e) => setEditForm((p) => ({ ...p, paymentTerms: e.target.value }))}
+                >
+                  <option value="">{tc("select")}</option>
+                  <option value="dueOnReceipt">{t("dueOnReceipt")}</option>
+                  <option value="net15">{t("net15")}</option>
+                  <option value="net30">{t("net30")}</option>
+                  <option value="net45">{t("net45")}</option>
+                  <option value="net60">{t("net60")}</option>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>{t("currency")}</Label>
+                <Select
+                  value={editForm.currency}
+                  onChange={(e) => setEditForm((p) => ({ ...p, currency: e.target.value }))}
+                >
+                  <option value="AZN">AZN</option>
+                  <option value="USD">USD</option>
+                  <option value="EUR">EUR</option>
+                  <option value="RUB">RUB</option>
+                </Select>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>{t("recipientEmail")}</Label>
+              <Input
+                type="email"
+                value={editForm.recipientEmail}
+                onChange={(e) => setEditForm((p) => ({ ...p, recipientEmail: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>VÖEN</Label>
+              <Input
+                value={editForm.voen}
+                onChange={(e) => setEditForm((p) => ({ ...p, voen: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>{t("notes")}</Label>
+              <Textarea
+                value={editForm.notes}
+                onChange={(e) => setEditForm((p) => ({ ...p, notes: e.target.value }))}
+                rows={3}
+              />
+            </div>
+            {editError && (
+              <p className="text-sm text-red-500 bg-red-50 dark:bg-red-900/20 p-2 rounded">
+                {editError}
+              </p>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowEditDialog(false)} disabled={editLoading}>
+              {tc("cancel")}
+            </Button>
+            <Button onClick={handleSaveEdit} disabled={editLoading}>
+              {editLoading ? (
+                <span className="flex items-center gap-2">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
+                  {tc("saving")}
+                </span>
+              ) : tc("save")}
             </Button>
           </DialogFooter>
         </DialogContent>
