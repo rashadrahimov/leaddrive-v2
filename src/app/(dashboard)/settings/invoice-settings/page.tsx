@@ -27,10 +27,6 @@ export default function InvoiceSettingsPage() {
     companyAddress: "",
     companyVoen: "",
     companyLogoUrl: "",
-    companyPhone: "",
-    companyEmail: "",
-    directorName: "",
-    directorTitle: "Direktor",
     numberPrefix: "INV-",
     defaultPaymentTerms: "net30",
     defaultTaxRate: 0.18,
@@ -176,7 +172,7 @@ export default function InvoiceSettingsPage() {
               <Input
                 value={settings.companyVoen}
                 onChange={(e) => updateField("companyVoen", e.target.value)}
-                placeholder="1406777811"
+                placeholder="1234567890"
                 className="mt-1"
               />
             </div>
@@ -188,56 +184,7 @@ export default function InvoiceSettingsPage() {
                 placeholder="https://example.com/logo.png"
                 className="mt-1"
               />
-            </div>
-            <div>
-              <Label className="text-sm">Phone</Label>
-              <Input
-                value={settings.companyPhone}
-                onChange={(e) => updateField("companyPhone", e.target.value)}
-                placeholder="(+012) 504-00-01"
-                className="mt-1"
-              />
-            </div>
-            <div>
-              <Label className="text-sm">Email</Label>
-              <Input
-                value={settings.companyEmail}
-                onChange={(e) => updateField("companyEmail", e.target.value)}
-                placeholder="accreceivable@company.az"
-                className="mt-1"
-              />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Director (for Act header) */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Director (Act Header)</CardTitle>
-          <CardDescription>
-            Director name shown in the approval header of acceptance acts.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label className="text-sm">Director Name</Label>
-              <Input
-                value={settings.directorName}
-                onChange={(e) => updateField("directorName", e.target.value)}
-                placeholder="Yusif Rzayev"
-                className="mt-1"
-              />
-            </div>
-            <div>
-              <Label className="text-sm">Director Title</Label>
-              <Input
-                value={settings.directorTitle}
-                onChange={(e) => updateField("directorTitle", e.target.value)}
-                placeholder="Direktor"
-                className="mt-1"
-              />
+              <p className="text-xs text-muted-foreground mt-1">Optional — displayed on invoice header</p>
             </div>
           </div>
         </CardContent>
@@ -324,67 +271,71 @@ export default function InvoiceSettingsPage() {
       {/* Bank Details */}
       <Card>
         <CardHeader>
-          <CardTitle>Bank Details</CardTitle>
+          <CardTitle>Bank Rekvizitləri</CardTitle>
           <CardDescription>
-            Banking information displayed on invoices for payment.
+            Hesab-fakturada göstəriləcək bank məlumatları.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label className="text-sm">Bank Name</Label>
+              <Label className="text-sm">Bank adı</Label>
               <Input
                 value={settings.bankName}
                 onChange={(e) => updateField("bankName", e.target.value)}
-                placeholder="PAŞA Bank ASC"
+                placeholder="Kapital Bank ASC"
                 className="mt-1"
               />
             </div>
             <div>
-              <Label className="text-sm">Bank Code</Label>
+              <Label className="text-sm">Kod (MFO)</Label>
               <Input
                 value={settings.bankCode}
                 onChange={(e) => updateField("bankCode", e.target.value)}
-                placeholder="505141"
+                placeholder="200087"
                 className="mt-1"
               />
             </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
             <div>
               <Label className="text-sm">SWIFT</Label>
               <Input
                 value={settings.bankSwift}
                 onChange={(e) => updateField("bankSwift", e.target.value)}
-                placeholder="PAHAAZ22"
+                placeholder="AIIBAZ2X"
                 className="mt-1"
               />
             </div>
             <div>
-              <Label className="text-sm">Bank VÖEN</Label>
+              <Label className="text-sm">Hesab nömrəsi</Label>
               <Input
-                value={settings.bankVoen}
-                onChange={(e) => updateField("bankVoen", e.target.value)}
-                placeholder="1700767721"
+                value={settings.bankAccount}
+                onChange={(e) => updateField("bankAccount", e.target.value)}
+                placeholder="AZ00AIIB00000000000000000000"
                 className="mt-1"
               />
             </div>
           </div>
-          <div>
-            <Label className="text-sm">Account Number (IBAN)</Label>
-            <Input
-              value={settings.bankAccount}
-              onChange={(e) => updateField("bankAccount", e.target.value)}
-              placeholder="AZ42PAHA40050AZNHC0100609268"
-              className="mt-1 font-mono"
-            />
-          </div>
-          <div>
-            <Label className="text-sm">Correspondent Account</Label>
-            <Input
-              value={settings.bankCorrAccount}
-              onChange={(e) => updateField("bankCorrAccount", e.target.value)}
-              placeholder="AZ82NABZ01350100000000071944"
-              className="mt-1 font-mono"
-            />
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label className="text-sm">VÖEN</Label>
+              <Input
+                value={settings.bankVoen}
+                onChange={(e) => updateField("bankVoen", e.target.value)}
+                placeholder="1234567890"
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <Label className="text-sm">Müxbir hesab</Label>
+              <Input
+                value={settings.bankCorrAccount}
+                onChange={(e) => updateField("bankCorrAccount", e.target.value)}
+                placeholder="AZ00NABZ00000000000000000000"
+                className="mt-1"
+              />
+            </div>
           </div>
         </CardContent>
       </Card>

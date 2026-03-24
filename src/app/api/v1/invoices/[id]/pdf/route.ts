@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { getOrgId } from "@/lib/api-auth"
-import { getTranslations, formatDate, formatMoney, type DocLanguage } from "@/lib/invoice-templates"
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const orgId = await getOrgId(req)
@@ -25,14 +24,21 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     })
 
     const settings = (org?.settings as Record<string, unknown>) || {}
-    const inv = (settings.invoice as Record<string, unknown>) || {}
+    const invoiceSettings = (settings.invoice as Record<string, unknown>) || {}
+
+    // Generate HTML-based PDF
+    const html = generateInvoiceHtml(invoice, org?.name || "", invoiceSettings)
 
     const { searchParams } = new URL(req.url)
-    const langParam = searchParams.get("lang") as DocLanguage | null
-    const lang: DocLanguage = langParam || (invoice.documentLanguage as DocLanguage) || "az"
+    const format = searchParams.get("format")
 
-    const html = generateInvoiceHtml(invoice, org?.name || "", inv, lang)
+    if (format === "html") {
+      return new NextResponse(html, {
+        headers: { "Content-Type": "text/html; charset=utf-8" },
+      })
+    }
 
+    // Return HTML as downloadable page (PDF generation via browser print)
     return new NextResponse(html, {
       headers: {
         "Content-Type": "text/html; charset=utf-8",
@@ -45,460 +51,160 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 }
 
 function generateInvoiceHtml(
-  invoice: Record<string, unknown> & {
-    items: Array<Record<string, unknown>>
-    company?: Record<string, unknown> | null
-    contact?: Record<string, unknown> | null
-  },
+  invoice: Record<string, unknown> & { items: Array<Record<string, unknown>>; company?: Record<string, unknown> | null; contact?: Record<string, unknown> | null },
   orgName: string,
-  inv: Record<string, unknown>,
-  lang: DocLanguage
+  settings: Record<string, unknown>
 ): string {
-  const t = getTranslations(lang)
+  const companyName = (settings.companyName as string) || orgName
+  const companyAddress = (settings.companyAddress as string) || ""
+  const companyVoen = (settings.companyVoen as string) || (invoice.sellerVoen as string) || ""
+  const bankName = (settings.bankName as string) || ""
+  const bankCode = (settings.bankCode as string) || ""
+  const bankSwift = (settings.bankSwift as string) || ""
+  const bankAccount = (settings.bankAccount as string) || ""
+  const bankVoen = (settings.bankVoen as string) || ""
+  const bankCorrAccount = (settings.bankCorrAccount as string) || ""
+  const hasBankDetails = bankName || bankAccount || bankSwift
+  const footerNote = (invoice.footerNote as string) || (settings.footerNote as string) || ""
+  const terms = (invoice.termsAndConditions as string) || (settings.termsAndConditions as string) || ""
 
-  // Organization (executor) details from settings
-  const execName = (inv.companyName as string) || orgName
-  const execVoen = (inv.companyVoen as string) || ""
-  const execAddress = (inv.companyAddress as string) || ""
-  const execEmail = (inv.companyEmail as string) || ""
-  const execPhone = (inv.companyPhone as string) || ""
-
-  // Bank details from settings
-  const bankName = (inv.bankName as string) || ""
-  const bankCode = (inv.bankCode as string) || ""
-  const bankSwift = (inv.bankSwift as string) || ""
-  const bankAccount = (inv.bankAccount as string) || ""
-  const bankVoen = (inv.bankVoen as string) || ""
-  const bankCorrAccount = (inv.bankCorrAccount as string) || ""
-
-  // Client details from invoice + company + contact
-  const company = invoice.company as Record<string, unknown> | null
-  const contact = invoice.contact as Record<string, unknown> | null
-  const clientName = (company?.name as string) || ""
-  const clientVoen = (invoice.voen as string) || ""
-  const clientAddress = (company?.address as string) || ""
-  const clientEmail = (company?.email as string) || (contact?.email as string) || ""
-  const clientPhone = (company?.phone as string) || ""
-
-  // Amounts
-  const subtotal = Number(invoice.subtotal || 0)
-  const taxAmount = Number(invoice.taxAmount || 0)
-  const totalAmount = Number(invoice.totalAmount || 0)
-  const currency = (invoice.currency as string) || "AZN"
-
-  // Invoice number parts
-  const invoiceNumber = (invoice.invoiceNumber as string) || ""
-  const numberPart = invoiceNumber.replace(/^[A-Z]+-/, "")
-
-  // Dates
-  const issueDate = formatDate(invoice.issueDate as Date | string | null, lang)
-
-  // Escape HTML
-  const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;")
-
-  // Items rows
-  const itemsHtml = invoice.items
-    .map(
-      (item) => `
-        <tr>
-          <td style="padding: 10px 14px; border: 1px solid #0891b2; font-weight: 700; text-transform: uppercase;">
-            ${esc(String(item.name || ""))}
-          </td>
-          <td style="padding: 10px 14px; border: 1px solid #0891b2; text-align: right; white-space: nowrap;">
-            ${formatMoney(Number(item.total || 0))} ${esc(currency)}
-          </td>
-        </tr>`
-    )
-    .join("")
+  const formatDate = (d: unknown) => d ? new Date(d as string).toLocaleDateString("az-AZ") : "—"
+  const formatMoney = (n: unknown) => Number(n || 0).toLocaleString("az-AZ", { minimumFractionDigits: 2 })
 
   return `<!DOCTYPE html>
-<html lang="${lang}">
+<html>
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>${t.invoiceTitle} ${esc(invoiceNumber)}</title>
+<title>Invoice ${invoice.invoiceNumber}</title>
 <style>
-  @media print {
-    body { margin: 0; padding: 15px; }
-    .no-print { display: none !important; }
-    @page { size: A4; margin: 15mm; }
-  }
-
-  * { box-sizing: border-box; }
-
-  body {
-    font-family: 'Segoe UI', Arial, sans-serif;
-    max-width: 800px;
-    margin: 0 auto;
-    padding: 30px;
-    color: #1a1a1a;
-    font-size: 14px;
-    line-height: 1.4;
-    background: #fff;
-  }
-
-  /* Top section - two column parties */
-  .parties {
-    display: flex;
-    gap: 20px;
-    margin-bottom: 25px;
-  }
-  .party-block {
-    flex: 1;
-    border: 1px solid #0891b2;
-  }
-  .party-header {
-    background: #0891b2;
-    color: #fff;
-    padding: 8px 14px;
-    font-weight: 700;
-    font-size: 13px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
-  .party-body {
-    padding: 10px 14px;
-  }
-  .party-row {
-    display: flex;
-    padding: 3px 0;
-    font-size: 13px;
-  }
-  .party-label {
-    min-width: 100px;
-    font-weight: 600;
-    color: #444;
-  }
-  .party-value {
-    flex: 1;
-  }
-
-  /* Invoice title */
-  .invoice-title {
-    text-align: center;
-    font-size: 22px;
-    font-weight: 700;
-    margin: 25px 0;
-    letter-spacing: 1px;
-  }
-
-  /* Company info block */
-  .company-info-block {
-    border: 1px solid #0891b2;
-    margin-bottom: 20px;
-  }
-  .company-info-header {
-    padding: 8px 14px;
-    font-weight: 700;
-    font-size: 13px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    border-bottom: 3px solid #0891b2;
-    color: #1a1a1a;
-  }
-  .company-info-row {
-    display: flex;
-    border-bottom: 1px solid #e5e7eb;
-    font-size: 13px;
-  }
-  .company-info-row:last-child {
-    border-bottom: none;
-  }
-  .company-info-label {
-    padding: 7px 14px;
-    min-width: 180px;
-    font-weight: 600;
-    color: #444;
-    border-right: 1px solid #e5e7eb;
-  }
-  .company-info-value {
-    padding: 7px 14px;
-    flex: 1;
-  }
-
-  /* Services table */
-  .services-header {
-    background: #0891b2;
-    color: #fff;
-    padding: 10px 14px;
-    font-weight: 700;
-    font-size: 13px;
-    text-transform: uppercase;
-    text-align: center;
-    letter-spacing: 0.5px;
-  }
-  .services-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-bottom: 5px;
-  }
-  .services-table td {
-    font-size: 14px;
-  }
-  .unit-info {
-    display: flex;
-    gap: 30px;
-    padding: 8px 14px;
-    font-size: 13px;
-    font-weight: 600;
-    border: 1px solid #0891b2;
-    border-top: none;
-    margin-bottom: 20px;
-  }
-
-  /* Totals */
-  .totals-block {
-    border: 1px solid #0891b2;
-    margin-bottom: 25px;
-  }
-  .totals-row {
-    display: flex;
-    justify-content: space-between;
-    padding: 8px 14px;
-    font-size: 14px;
-    border-bottom: 1px solid #e5e7eb;
-  }
-  .totals-row:last-child {
-    border-bottom: none;
-  }
-  .totals-row.total-final {
-    font-weight: 700;
-    font-size: 15px;
-    background: #f0fdfa;
-  }
-  .totals-label {
-    font-weight: 600;
-  }
-  .totals-value {
-    font-weight: 700;
-    white-space: nowrap;
-  }
-
-  /* Bottom section */
-  .bottom-section {
-    display: flex;
-    margin-bottom: 20px;
-  }
-  .bank-block {
-    flex: 1;
-    border: 1px solid #0891b2;
-  }
-  .bank-header {
-    background: #0891b2;
-    color: #fff;
-    padding: 8px 14px;
-    font-weight: 700;
-    font-size: 13px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
-  .bank-body {
-    padding: 10px 14px;
-  }
-  .bank-row {
-    display: flex;
-    padding: 3px 0;
-    font-size: 13px;
-  }
-  .bank-label {
-    min-width: 100px;
-    font-weight: 600;
-    color: #444;
-  }
-  .bank-value {
-    flex: 1;
-    word-break: break-all;
-  }
-
-  .confirm-block {
-    flex: 1;
-    border: 1px solid #0891b2;
-    border-left: none;
-  }
-  .confirm-header {
-    background: #0891b2;
-    color: #fff;
-    padding: 8px 14px;
-    font-weight: 700;
-    font-size: 13px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
-  .confirm-body {
-    padding: 14px;
-    min-height: 120px;
-  }
-
-  /* Print button */
-  .print-btn {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    background: #0891b2;
-    color: #fff;
-    border: none;
-    padding: 12px 24px;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: 600;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    z-index: 100;
-  }
-  .print-btn:hover {
-    background: #0e7490;
-  }
+  @media print { body { margin: 0; } .no-print { display: none; } }
+  body { font-family: 'Segoe UI', Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 40px; color: #1a1a1a; }
+  .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px; }
+  .company-info h1 { margin: 0 0 5px; font-size: 24px; color: #0f766e; }
+  .company-info p { margin: 2px 0; color: #666; font-size: 13px; }
+  .invoice-title { text-align: right; }
+  .invoice-title h2 { margin: 0; font-size: 32px; color: #0f766e; text-transform: uppercase; letter-spacing: 2px; }
+  .invoice-title .number { font-size: 14px; color: #666; margin-top: 5px; }
+  .meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 30px; }
+  .meta-box h3 { font-size: 12px; text-transform: uppercase; color: #999; margin: 0 0 8px; letter-spacing: 1px; }
+  .meta-box p { margin: 3px 0; font-size: 14px; }
+  .items-table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+  .items-table th { background: #0f766e; color: white; padding: 10px 12px; text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .items-table th:last-child, .items-table td:last-child { text-align: right; }
+  .items-table th:nth-child(3), .items-table td:nth-child(3),
+  .items-table th:nth-child(4), .items-table td:nth-child(4),
+  .items-table th:nth-child(5), .items-table td:nth-child(5) { text-align: right; }
+  .items-table td { padding: 10px 12px; border-bottom: 1px solid #e5e5e5; font-size: 14px; }
+  .items-table tr:nth-child(even) { background: #fafafa; }
+  .summary { display: flex; justify-content: flex-end; margin-bottom: 30px; }
+  .summary-table { width: 300px; }
+  .summary-table tr td { padding: 6px 0; font-size: 14px; }
+  .summary-table tr td:last-child { text-align: right; font-weight: 500; }
+  .summary-table .total { border-top: 2px solid #0f766e; font-size: 18px; font-weight: 700; color: #0f766e; }
+  .summary-table .total td { padding-top: 10px; }
+  .balance-due { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+  .balance-due .label { font-size: 14px; color: #166534; font-weight: 500; }
+  .balance-due .amount { font-size: 24px; font-weight: 700; color: #166534; }
+  .footer { border-top: 1px solid #e5e5e5; padding-top: 20px; font-size: 12px; color: #999; }
+  .footer h4 { color: #666; font-size: 12px; text-transform: uppercase; margin: 10px 0 5px; }
+  .status-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; text-transform: uppercase; }
+  .status-draft { background: #f3f4f6; color: #6b7280; }
+  .status-sent { background: #dbeafe; color: #1d4ed8; }
+  .status-paid { background: #dcfce7; color: #166534; }
+  .status-overdue { background: #fee2e2; color: #dc2626; }
+  .status-partially_paid { background: #fef3c7; color: #d97706; }
+  .print-btn { position: fixed; bottom: 20px; right: 20px; background: #0f766e; color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-size: 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+  .print-btn:hover { background: #0d6660; }
+  .bank-box { border: 1.5px solid #2196a6; border-radius: 4px; margin-bottom: 20px; overflow: hidden; }
+  .bank-box-title { background: #2196a6; color: white; font-weight: 700; font-size: 13px; padding: 8px 14px; letter-spacing: 0.5px; }
+  .bank-box-body { padding: 12px 14px; font-size: 13px; }
+  .bank-row { display: flex; gap: 6px; padding: 3px 0; }
+  .bank-row strong { min-width: 80px; color: #1a1a1a; }
 </style>
 </head>
 <body>
-
-<!-- Top section: Executor & Customer -->
-<div class="parties">
-  <div class="party-block">
-    <div class="party-header">${esc(t.executor)}</div>
-    <div class="party-body">
-      <div class="party-row">
-        <span class="party-label">${esc(t.companyName)}:</span>
-        <span class="party-value">${esc(execName)}</span>
-      </div>
-      <div class="party-row">
-        <span class="party-label">${esc(t.voen)}:</span>
-        <span class="party-value">${esc(execVoen)}</span>
-      </div>
-      <div class="party-row">
-        <span class="party-label">${esc(t.address)}:</span>
-        <span class="party-value">${esc(execAddress)}</span>
-      </div>
-      <div class="party-row">
-        <span class="party-label">${esc(t.email)}:</span>
-        <span class="party-value">${esc(execEmail)}</span>
-      </div>
-      <div class="party-row">
-        <span class="party-label">${esc(t.phone)}:</span>
-        <span class="party-value">${esc(execPhone)}</span>
-      </div>
-    </div>
+<div class="header">
+  <div class="company-info">
+    <h1>${companyName}</h1>
+    ${companyAddress ? `<p>${companyAddress}</p>` : ""}
+    ${companyVoen ? `<p>VÖEN: ${companyVoen}</p>` : ""}
   </div>
-
-  <div class="party-block">
-    <div class="party-header">${esc(t.customer)}</div>
-    <div class="party-body">
-      <div class="party-row">
-        <span class="party-label">${esc(t.companyName)}:</span>
-        <span class="party-value">${esc(clientName)}</span>
-      </div>
-      <div class="party-row">
-        <span class="party-label">${esc(t.voen)}:</span>
-        <span class="party-value">${esc(clientVoen)}</span>
-      </div>
-      <div class="party-row">
-        <span class="party-label">${esc(t.address)}:</span>
-        <span class="party-value">${esc(clientAddress)}</span>
-      </div>
-      <div class="party-row">
-        <span class="party-label">${esc(t.email)}:</span>
-        <span class="party-value">${esc(clientEmail)}</span>
-      </div>
-      <div class="party-row">
-        <span class="party-label">${esc(t.phone)}:</span>
-        <span class="party-value">${esc(clientPhone)}</span>
-      </div>
-    </div>
+  <div class="invoice-title">
+    <h2>Hesab-faktura</h2>
+    <div class="number">${invoice.invoiceNumber}</div>
+    <div style="margin-top: 8px;"><span class="status-badge status-${invoice.status}">${invoice.status}</span></div>
   </div>
 </div>
 
-<!-- Invoice Title -->
-<div class="invoice-title">
-  ${esc(t.invoiceTitle)} &#8470; ${esc(invoiceNumber)}
-</div>
-
-<!-- Company Info Block -->
-<div class="company-info-block">
-  <div class="company-info-header">
-    ${lang === "az" ? "ŞİRKƏT HAQQINDA MƏLUMAT" : lang === "ru" ? "ИНФОРМАЦИЯ О КОМПАНИИ" : "COMPANY INFORMATION"}
+<div class="meta-grid">
+  <div class="meta-box">
+    <h3>Müştəri</h3>
+    ${invoice.company ? `<p><strong>${(invoice.company as Record<string, unknown>).name}</strong></p>` : ""}
+    ${invoice.contact ? `<p>${(invoice.contact as Record<string, unknown>).fullName}</p>` : ""}
+    ${invoice.company && (invoice.company as Record<string, unknown>).address ? `<p>${(invoice.company as Record<string, unknown>).address}</p>` : ""}
+    ${invoice.voen ? `<p>VÖEN: ${invoice.voen}</p>` : ""}
   </div>
-  <div class="company-info-row">
-    <div class="company-info-label">${esc(t.companyName)}:</div>
-    <div class="company-info-value">${esc(clientName)}</div>
-  </div>
-  <div class="company-info-row">
-    <div class="company-info-label">${esc(t.documentNumber)}:</div>
-    <div class="company-info-value">${esc(numberPart)}</div>
-  </div>
-  <div class="company-info-row">
-    <div class="company-info-label">${esc(t.documentDate)}:</div>
-    <div class="company-info-value">${issueDate}</div>
+  <div class="meta-box" style="text-align: right;">
+    <h3>Hesab məlumatları</h3>
+    <p>Tarix: ${formatDate(invoice.issueDate)}</p>
+    <p>Ödəniş tarixi: ${formatDate(invoice.dueDate)}</p>
+    <p>Ödəniş şərtləri: ${invoice.paymentTerms}</p>
   </div>
 </div>
 
-<!-- Services Table -->
-<div class="services-header">${esc(t.servicesProvided)}</div>
-<table class="services-table">
+<table class="items-table">
+  <thead>
+    <tr><th>#</th><th>Təsvir</th><th>Miqdar</th><th>Qiymət</th><th>Endirim</th><th>Cəm</th></tr>
+  </thead>
   <tbody>
-    ${itemsHtml}
+    ${invoice.items.map((item, i) => `
+    <tr>
+      <td>${i + 1}</td>
+      <td>${item.name}${item.description ? `<br><small style="color:#999">${item.description}</small>` : ""}</td>
+      <td>${item.quantity}</td>
+      <td>${formatMoney(item.unitPrice)} ${invoice.currency}</td>
+      <td>${Number(item.discount) > 0 ? `${item.discount}%` : "—"}</td>
+      <td>${formatMoney(item.total)} ${invoice.currency}</td>
+    </tr>`).join("")}
   </tbody>
 </table>
-<div class="unit-info">
-  <span>${esc(t.unitOfMeasure)}: ${esc(t.unitMonth)}</span>
-  <span>${esc(t.quantity)}: 1</span>
+
+<div class="summary">
+  <table class="summary-table">
+    <tr><td>Ara cəm:</td><td>${formatMoney(invoice.subtotal)} ${invoice.currency}</td></tr>
+    ${Number(invoice.discountAmount) > 0 ? `<tr><td>Endirim:</td><td>-${formatMoney(invoice.discountAmount)} ${invoice.currency}</td></tr>` : ""}
+    ${invoice.includeVat ? `<tr><td>ƏDV (${Number(invoice.taxRate) * 100}%):</td><td>${formatMoney(invoice.taxAmount)} ${invoice.currency}</td></tr>` : ""}
+    <tr class="total"><td>Yekun:</td><td>${formatMoney(invoice.totalAmount)} ${invoice.currency}</td></tr>
+  </table>
 </div>
 
-<!-- Totals -->
-<div class="totals-block">
-  <div class="totals-row">
-    <span class="totals-label">${esc(t.subtotal)}:</span>
-    <span class="totals-value">${formatMoney(subtotal)} ${esc(currency)}</span>
+${Number(invoice.paidAmount) > 0 ? `
+<div class="summary">
+  <table class="summary-table">
+    <tr><td>Ödənilmiş:</td><td>${formatMoney(invoice.paidAmount)} ${invoice.currency}</td></tr>
+    <tr class="total"><td>Qalıq:</td><td>${formatMoney(invoice.balanceDue)} ${invoice.currency}</td></tr>
+  </table>
+</div>` : ""}
+
+${hasBankDetails ? `
+<div class="bank-box">
+  <div class="bank-box-title">BANK HESABI</div>
+  <div class="bank-box-body">
+    ${bankName ? `<div class="bank-row"><strong>Bank:</strong><span>${bankName}</span></div>` : ""}
+    ${bankCode ? `<div class="bank-row"><strong>Kod:</strong><span>${bankCode}</span></div>` : ""}
+    ${bankSwift ? `<div class="bank-row"><strong>SWIFT:</strong><span>${bankSwift}</span></div>` : ""}
+    ${bankAccount ? `<div class="bank-row"><strong>Hesab:</strong><span>${bankAccount}</span></div>` : ""}
+    ${bankVoen ? `<div class="bank-row"><strong>VÖEN:</strong><span>${bankVoen}</span></div>` : ""}
+    ${bankCorrAccount ? `<div class="bank-row"><strong>Müx. hesab:</strong><span>${bankCorrAccount}</span></div>` : ""}
   </div>
-  <div class="totals-row">
-    <span class="totals-label">${esc(t.vat18)}:</span>
-    <span class="totals-value">${formatMoney(taxAmount)}</span>
-  </div>
-  <div class="totals-row total-final">
-    <span class="totals-label">${esc(t.totalWithVat)}:</span>
-    <span class="totals-value">${formatMoney(totalAmount)}</span>
-  </div>
+</div>` : ""}
+
+<div class="footer">
+  ${terms ? `<h4>Şərtlər</h4><p>${terms}</p>` : ""}
+  ${footerNote ? `<p>${footerNote}</p>` : ""}
 </div>
 
-<!-- Bottom: Bank Details & Confirmation -->
-<div class="bottom-section">
-  <div class="bank-block">
-    <div class="bank-header">${esc(t.bankAccount)}</div>
-    <div class="bank-body">
-      <div class="bank-row">
-        <span class="bank-label">${esc(t.bank)}:</span>
-        <span class="bank-value">${esc(bankName)}</span>
-      </div>
-      <div class="bank-row">
-        <span class="bank-label">${esc(t.code)}:</span>
-        <span class="bank-value">${esc(bankCode)}</span>
-      </div>
-      <div class="bank-row">
-        <span class="bank-label">${esc(t.swift)}:</span>
-        <span class="bank-value">${esc(bankSwift)}</span>
-      </div>
-      <div class="bank-row">
-        <span class="bank-label">${esc(t.account)}:</span>
-        <span class="bank-value">${esc(bankAccount)}</span>
-      </div>
-      <div class="bank-row">
-        <span class="bank-label">${esc(t.voen)}:</span>
-        <span class="bank-value">${esc(bankVoen)}</span>
-      </div>
-      <div class="bank-row">
-        <span class="bank-label">${esc(t.corrAccount)}:</span>
-        <span class="bank-value">${esc(bankCorrAccount)}</span>
-      </div>
-    </div>
-  </div>
-
-  <div class="confirm-block">
-    <div class="confirm-header">${esc(t.confirmation)}</div>
-    <div class="confirm-body"></div>
-  </div>
-</div>
-
-<button class="print-btn no-print" onclick="window.print()">&#128424; ${lang === "az" ? "Çap et / PDF" : lang === "ru" ? "Печать / PDF" : "Print / PDF"}</button>
-
+<button class="print-btn no-print" onclick="window.print()">🖨️ Çap et / PDF</button>
 </body>
 </html>`
 }
