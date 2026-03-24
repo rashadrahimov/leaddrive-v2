@@ -122,16 +122,17 @@ function generateInvoiceHtml(
   .summary-table tr td:last-child { text-align: right; font-weight: 500; }
   .summary-table .total { border-top: 2px solid #0f766e; font-size: 14px; font-weight: 700; color: #0f766e; }
   .summary-table .total td { padding-top: 6px; }
-  .bottom-row { display: grid; grid-template-columns: 1fr auto; gap: 20px; align-items: end; margin-top: 12px; }
+  .bottom-row { display: grid; grid-template-columns: 1fr auto; gap: 20px; align-items: stretch; margin-top: 12px; }
   .bank-box { border: 1.5px solid #2196a6; border-radius: 4px; overflow: hidden; }
   .bank-box-title { background: #2196a6; color: white; font-weight: 700; font-size: 11px; padding: 5px 10px; letter-spacing: 0.5px; }
   .bank-box-body { padding: 8px 10px; font-size: 11.5px; }
   .bank-row { display: flex; gap: 4px; padding: 2px 0; }
   .bank-row strong { min-width: 70px; color: #1a1a1a; flex-shrink: 0; }
-  .signer-block { text-align: center; font-size: 12px; width: 220px; flex-shrink: 0; }
-  .stamp-wrap { display: flex; align-items: flex-end; justify-content: center; margin-bottom: -10px; }
-  .stamp-img { width: 120px; height: 120px; object-fit: contain; opacity: 0.9; }
-  .signer-line { border-top: 1px solid #1a1a1a; width: 200px; margin: 6px auto 5px; }
+  .signer-block { text-align: center; font-size: 12px; width: 260px; flex-shrink: 0; border: 1.5px solid #2196a6; border-radius: 4px; overflow: hidden; }
+  .signer-block-title { background: #2196a6; color: white; font-weight: 700; font-size: 11px; padding: 5px 10px; letter-spacing: 0.5px; text-align: center; }
+  .signer-block-body { padding: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 160px; }
+  .stamp-img { width: 170px; height: 170px; object-fit: contain; opacity: 0.95; }
+  .signer-line { border-top: 1px solid #1a1a1a; width: 220px; margin: 8px auto 5px; }
   .signer-name { font-weight: 600; }
   .signer-title { color: #666; font-size: 11px; margin-top: 2px; }
   .footer { border-top: 1px solid #e5e5e5; padding-top: 8px; font-size: 11px; color: #999; margin-top: 10px; }
@@ -226,10 +227,13 @@ function generateInvoiceHtml(
     </div>` : ""}
   </div>
   <div class="signer-block">
-    ${withStamp && companyStampUrl ? `<div class="stamp-wrap"><img src="${companyStampUrl}" class="stamp-img" alt="Stamp" /></div>` : ""}
-    <div class="signer-line"></div>
-    ${signerName ? `<div class="signer-name">${signerName}</div>` : ""}
-    ${signerTitle ? `<div class="signer-title">${signerTitle}</div>` : ""}
+    <div class="signer-block-title">TƏSDİQ (İMZA, MÖHÜR)</div>
+    <div class="signer-block-body">
+      ${withStamp && companyStampUrl ? `<img src="${companyStampUrl}" class="stamp-img" alt="Stamp" />` : ""}
+      <div class="signer-line"></div>
+      ${signerName ? `<div class="signer-name">${signerName}</div>` : ""}
+      ${signerTitle ? `<div class="signer-title">${signerTitle}</div>` : ""}
+    </div>
   </div>
 </div>
 
