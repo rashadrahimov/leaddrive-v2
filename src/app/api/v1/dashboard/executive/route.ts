@@ -136,13 +136,13 @@ export async function GET(req: NextRequest) {
     // Risks
     const risks: { severity: string; title: string; description: string; metric: string }[] = []
     if (costSummary.marginPct < 5 && costSummary.totalRevenue > 0)
-      risks.push({ severity: "critical", title: "Низкая маржа", description: `Маржинальность ${costSummary.marginPct.toFixed(1)}% — ниже целевого уровня 15%`, metric: `${costSummary.marginPct.toFixed(1)}%` })
+      risks.push({ severity: "critical", title: "Aşağı marja", description: `Marjinallıq ${costSummary.marginPct.toFixed(1)}% — hədəf 15%-dən aşağı`, metric: `${costSummary.marginPct.toFixed(1)}%` })
     if (costSummary.lossClients > costSummary.profitableClients * 0.5)
-      risks.push({ severity: "warning", title: "Убыточные клиенты", description: `${costSummary.lossClients} из ${costSummary.profitableClients + costSummary.lossClients} клиентов убыточны`, metric: `${costSummary.lossClients}` })
+      risks.push({ severity: "warning", title: "Zərərli müştərilər", description: `${costSummary.profitableClients + costSummary.lossClients} müştəridən ${costSummary.lossClients} zərərli`, metric: `${costSummary.lossClients}` })
     if (slaBreached > 0)
-      risks.push({ severity: "critical", title: "Нарушение SLA", description: `${slaBreached} тикетов с истёкшим SLA`, metric: `${slaBreached}` })
+      risks.push({ severity: "critical", title: "SLA pozulub", description: `${slaBreached} biletdə SLA müddəti bitib`, metric: `${slaBreached}` })
     if (overdueTasks > 3)
-      risks.push({ severity: "warning", title: "Просроченные задачи", description: `${overdueTasks} задач просрочены`, metric: `${overdueTasks}` })
+      risks.push({ severity: "warning", title: "Gecikmiş tapşırıqlar", description: `${overdueTasks} tapşırıq gecikib`, metric: `${overdueTasks}` })
     // At-risk deals (predictive score < 40%)
     const STAGE_PROBABILITY: Record<string, number> = {
       LEAD: 10, QUALIFIED: 20, PROPOSAL: 50, NEGOTIATION: 70, CONTRACT: 85,
@@ -159,13 +159,13 @@ export async function GET(req: NextRequest) {
     if (atRiskList.length > 0)
       risks.push({
         severity: "warning",
-        title: "Сделки под угрозой",
-        description: `${atRiskList.length} сделок с predictive scoring < 40%`,
+        title: "Risk altında müqavilələr",
+        description: `${atRiskList.length} müqavilənin proqnoz skoru 40%-dən aşağıdır`,
         metric: `${atRiskList.length}`,
       })
 
     if (risks.length === 0)
-      risks.push({ severity: "ok", title: "Всё в порядке", description: "Критических проблем не обнаружено", metric: "✓" })
+      risks.push({ severity: "ok", title: "Hər şey qaydasındadır", description: "Kritik problem aşkar edilmədi", metric: "✓" })
 
     const totalUsers = companiesAgg._sum.userCount || 0
 
