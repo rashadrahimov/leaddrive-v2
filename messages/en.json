@@ -905,6 +905,7 @@
     "statusAll": "All",
     "statTotal": "Total",
     "statTotalInvoiced": "Total Invoiced",
+    "withoutVat": "excl. VAT",
     "statPaid": "Paid",
     "statOutstanding": "Outstanding",
     "statOverdue": "Overdue",

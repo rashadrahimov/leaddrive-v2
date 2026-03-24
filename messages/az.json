@@ -901,6 +901,7 @@
     "statusAll": "Hamısı",
     "statTotal": "Ümumi",
     "statTotalInvoiced": "Ümumi faktura",
+    "withoutVat": "ƏDV-siz",
     "statPaid": "Ödənilib",
     "statOutstanding": "Gözləyir",
     "statOverdue": "Gecikdirilmiş",

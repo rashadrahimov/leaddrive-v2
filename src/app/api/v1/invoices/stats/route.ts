@@ -9,12 +9,14 @@ export async function GET(req: NextRequest) {
   try {
     const invoices = await prisma.invoice.findMany({
       where: { organizationId: orgId },
-      select: { status: true, totalAmount: true, paidAmount: true, balanceDue: true },
+      select: { status: true, totalAmount: true, paidAmount: true, balanceDue: true, subtotal: true, taxAmount: true },
     })
 
     const stats = {
       totalCount: invoices.length,
       totalAmount: 0,
+      subtotalAmount: 0,
+      taxAmount: 0,
       paidAmount: 0,
       outstandingAmount: 0,
       overdueAmount: 0,
@@ -27,6 +29,8 @@ export async function GET(req: NextRequest) {
 
     for (const inv of invoices) {
       stats.totalAmount += inv.totalAmount
+      stats.subtotalAmount += inv.subtotal
+      stats.taxAmount += inv.taxAmount
       stats.paidAmount += inv.paidAmount
       if (inv.status === "draft") stats.draftCount++
       else if (inv.status === "sent" || inv.status === "viewed") {
@@ -46,6 +50,8 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ success: true, data: {
       ...stats,
       totalInvoiced: stats.totalAmount,
+      totalSubtotal: stats.subtotalAmount,
+      totalTax: stats.taxAmount,
       totalPaid: stats.paidAmount,
       totalOutstanding: stats.outstandingAmount,
       totalOverdue: stats.overdueAmount,
