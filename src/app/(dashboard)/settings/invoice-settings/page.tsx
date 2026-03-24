@@ -26,6 +26,8 @@ export default function InvoiceSettingsPage() {
     companyName: "",
     companyAddress: "",
     companyVoen: "",
+    companyEmail: "",
+    companyPhone: "",
     companyLogoUrl: "",
     numberPrefix: "INV-",
     defaultPaymentTerms: "net30",
@@ -170,16 +172,37 @@ export default function InvoiceSettingsPage() {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label className="text-sm">Company VOEN (Tax ID)</Label>
+              <Label className="text-sm">VÖEN</Label>
               <Input
                 value={settings.companyVoen}
                 onChange={(e) => updateField("companyVoen", e.target.value)}
-                placeholder="1234567890"
+                placeholder="1406777811"
                 className="mt-1"
               />
             </div>
             <div>
-              <Label className="text-sm">Company Logo URL</Label>
+              <Label className="text-sm">E-poçt</Label>
+              <Input
+                type="email"
+                value={settings.companyEmail}
+                onChange={(e) => updateField("companyEmail", e.target.value)}
+                placeholder="info@guventechnology.az"
+                className="mt-1"
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label className="text-sm">Telefon</Label>
+              <Input
+                value={settings.companyPhone}
+                onChange={(e) => updateField("companyPhone", e.target.value)}
+                placeholder="+994 12 000 00 00"
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <Label className="text-sm">Logo URL</Label>
               <Input
                 value={settings.companyLogoUrl}
                 onChange={(e) => updateField("companyLogoUrl", e.target.value)}
