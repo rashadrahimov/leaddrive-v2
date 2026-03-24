@@ -65,13 +65,41 @@ export default function InvoiceSettingsPage() {
     setSettings((prev) => ({ ...prev, [field]: value }))
   }
 
+  function removeWhiteBackground(dataUrl: string): Promise<string> {
+    return new Promise((resolve) => {
+      const img = new Image()
+      img.onload = () => {
+        const canvas = document.createElement("canvas")
+        canvas.width = img.width
+        canvas.height = img.height
+        const ctx = canvas.getContext("2d")!
+        ctx.drawImage(img, 0, 0)
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
+        const data = imageData.data
+        for (let i = 0; i < data.length; i += 4) {
+          const r = data[i], g = data[i + 1], b = data[i + 2]
+          // Remove white and near-white pixels
+          if (r > 200 && g > 200 && b > 200) {
+            // Soft edge: partially transparent for grey pixels
+            const brightness = (r + g + b) / 3
+            data[i + 3] = Math.round(255 - ((brightness - 200) / 55) * 255)
+          }
+        }
+        ctx.putImageData(imageData, 0, 0)
+        resolve(canvas.toDataURL("image/png"))
+      }
+      img.src = dataUrl
+    })
+  }
+
   function handleStampUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
     const reader = new FileReader()
-    reader.onload = (ev) => {
+    reader.onload = async (ev) => {
       const dataUrl = ev.target?.result as string
-      updateField("companyStampUrl", dataUrl)
+      const transparent = await removeWhiteBackground(dataUrl)
+      updateField("companyStampUrl", transparent)
     }
     reader.readAsDataURL(file)
   }
