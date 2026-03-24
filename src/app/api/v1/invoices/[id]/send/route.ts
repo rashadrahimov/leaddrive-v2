@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { prisma } from "@/lib/prisma"
 import { getOrgId } from "@/lib/api-auth"
+import { generateInvoiceHtml, getEmailTemplate } from "@/lib/invoice-html"
 
 const sendSchema = z.object({
   recipientEmail: z.string().email(),
@@ -23,11 +24,10 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   try {
     const invoice = await prisma.invoice.findFirst({
       where: { id, organizationId: orgId },
-      include: { items: true, company: true },
+      include: { items: { orderBy: { sortOrder: "asc" } }, company: true, contact: true },
     })
     if (!invoice) return NextResponse.json({ error: "Not found" }, { status: 404 })
 
-    // Get SMTP settings
     const org = await prisma.organization.findUnique({
       where: { id: orgId },
       select: { settings: true, name: true },
@@ -35,12 +35,14 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
     const settings = (org?.settings as Record<string, unknown>) || {}
     const smtp = settings.smtp as Record<string, unknown> | undefined
+    const invoiceSettings = (settings.invoice as Record<string, unknown>) || {}
 
     const smtpHost = (smtp?.smtpHost || smtp?.host) as string | undefined
     const smtpPort = Number(smtp?.smtpPort || smtp?.port) || 587
     const smtpUser = (smtp?.smtpUser || smtp?.user) as string | undefined
     const smtpPass = (smtp?.smtpPass || smtp?.pass) as string | undefined
     const smtpFrom = (smtp?.fromEmail || smtp?.from || smtpUser) as string | undefined
+    const fromName = (smtp?.fromName as string) || (invoiceSettings.companyName as string) || org?.name || "LeadDrive"
 
     if (!smtpHost) {
       return NextResponse.json({ error: "SMTP not configured" }, { status: 400 })
@@ -55,23 +57,39 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     })
 
     const d = parsed.data
-    const subject = d.subject || `Invoice ${invoice.invoiceNumber} from ${org?.name || "LeadDrive"}`
-    const message = d.message || `Please find attached invoice ${invoice.invoiceNumber} for ${invoice.totalAmount} ${invoice.currency}.`
+    const lang = (invoice.documentLanguage as string) || "az"
+    const locale = lang === "ru" ? "ru-RU" : lang === "en" ? "en-US" : "az-AZ"
+    const formatMoney = (n: unknown) => Number(n || 0).toLocaleString(locale, { minimumFractionDigits: 2 })
+    const formatDate = (dt: unknown) => dt ? new Date(dt as string).toLocaleDateString(locale) : "—"
+
+    // Generate email template based on document language
+    const emailData = getEmailTemplate(lang, {
+      orgName: fromName,
+      invoiceNumber: invoice.invoiceNumber || "",
+      total: formatMoney(invoice.totalAmount),
+      currency: (invoice.currency as string) || "AZN",
+      dueDate: formatDate(invoice.dueDate),
+      customMessage: d.message || undefined,
+    })
+
+    // Use custom subject if provided, otherwise use template
+    const subject = d.subject || emailData.subject
+
+    // Generate invoice HTML with stamp for attachment
+    const invoiceHtml = generateInvoiceHtml(invoice, org?.name || "", invoiceSettings, true)
 
     await transporter.sendMail({
-      from: smtpFrom,
+      from: `"${fromName}" <${smtpFrom}>`,
       to: d.recipientEmail,
       subject,
-      html: `<div style="font-family: Arial, sans-serif; padding: 20px;">
-        <h2>Invoice ${invoice.invoiceNumber}</h2>
-        <p>${message}</p>
-        <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
-          <tr style="background: #f5f5f5;"><th style="padding: 8px; text-align: left;">Item</th><th style="padding: 8px; text-align: right;">Qty</th><th style="padding: 8px; text-align: right;">Price</th><th style="padding: 8px; text-align: right;">Total</th></tr>
-          ${invoice.items.map((item: any) => `<tr><td style="padding: 8px; border-bottom: 1px solid #eee;">${item.name}</td><td style="padding: 8px; text-align: right; border-bottom: 1px solid #eee;">${item.quantity}</td><td style="padding: 8px; text-align: right; border-bottom: 1px solid #eee;">${item.unitPrice}</td><td style="padding: 8px; text-align: right; border-bottom: 1px solid #eee;">${item.total}</td></tr>`).join("")}
-        </table>
-        <p style="font-size: 18px; font-weight: bold;">Total: ${invoice.totalAmount} ${invoice.currency}</p>
-        ${invoice.dueDate ? `<p>Due Date: ${new Date(invoice.dueDate).toLocaleDateString()}</p>` : ""}
-      </div>`,
+      html: emailData.html,
+      attachments: [
+        {
+          filename: `${invoice.invoiceNumber || "invoice"}.html`,
+          content: Buffer.from(invoiceHtml, "utf-8"),
+          contentType: "text/html",
+        },
+      ],
     })
 
     await prisma.invoice.update({
