@@ -64,7 +64,7 @@ export default function CreateInvoicePage() {
   const [companies, setCompanies] = useState<Company[]>([])
   const [contacts, setContacts] = useState<Contact[]>([])
   const [deals, setDeals] = useState<Deal[]>([])
-  const [contracts, setContracts] = useState<Array<{ id: string; contractNumber: string; title: string; startDate?: string }>>([])
+  const [contracts, setContracts] = useState<Array<{ id: string; contractNumber: string; title: string; status?: string; startDate?: string; endDate?: string }>>([])
   const [selectedContract, setSelectedContract] = useState("")
   const [products, setProducts] = useState<Product[]>([])
   const [company, setCompany] = useState("")
@@ -735,11 +735,16 @@ export default function CreateInvoicePage() {
                       }}
                     >
                       <option value="">{contracts.length > 0 ? (t("selectContract") || "Select contract...") : (company ? "No contracts" : "Select company first")}</option>
-                      {contracts.map((c) => (
-                        <option key={c.id} value={c.id}>
-                          {c.contractNumber} — {c.title}
-                        </option>
-                      ))}
+                      {contracts.map((c) => {
+                        const start = c.startDate ? new Date(c.startDate).toLocaleDateString() : ""
+                        const end = c.endDate ? new Date(c.endDate).toLocaleDateString() : ""
+                        const period = start ? ` (${start}${end ? ` - ${end}` : ""})` : ""
+                        return (
+                          <option key={c.id} value={c.id}>
+                            {c.contractNumber} — {c.title}{period}
+                          </option>
+                        )
+                      })}
                     </Select>
                     <Input
                       placeholder={t("contractNumber") || "Contract №"}
