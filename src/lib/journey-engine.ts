@@ -197,16 +197,23 @@ export async function processEnrollmentStep(enrollmentId: string, orgId: string)
             const tgSettings = (tgChannel.settings as any) || {}
             const chatId = config.chatId || config.chat_id || tgSettings.chatId
             if (chatId) {
-              // Format message with header + body + website button
-              const tgText = `<b>💳 Ödəniş xatırlatması</b>\n\n${message}`
+              const tgText = [
+                `<b>💳 Ödəniş xatırlatması</b>`,
+                ``,
+                message,
+                ``,
+                `Maliyyə məsələləri üçün:`,
+                `📧 accreceivable@gtc.az`,
+              ].join("\n")
               const tgBody: any = {
                 chat_id: chatId,
                 text: tgText,
                 parse_mode: "HTML",
                 reply_markup: {
-                  inline_keyboard: [[
-                    { text: "🌐 Guven Technology LLC", url: "https://www.gtc.az" },
-                  ]],
+                  inline_keyboard: [
+                    [{ text: "📞 +994 10 236 99 09", url: "tel:+994102369909" }],
+                    [{ text: "www.leaddrivecrm.org", url: "https://www.leaddrivecrm.org" }],
+                  ],
                 },
               }
               const tgRes = await fetch(`https://api.telegram.org/bot${tgChannel.botToken}/sendMessage`, {
