@@ -79,6 +79,23 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       },
     })
 
+    // Auto-stop communication chain when invoice is fully paid
+    if (newBalanceDue <= 0) {
+      const activeChain = await prisma.journeyEnrollment.findFirst({
+        where: { invoiceId: id, organizationId: orgId, status: "active" },
+      })
+      if (activeChain) {
+        await prisma.journeyEnrollment.update({
+          where: { id: activeChain.id },
+          data: { status: "completed", completedAt: new Date() },
+        })
+        await prisma.journey.update({
+          where: { id: activeChain.journeyId },
+          data: { activeCount: { decrement: 1 }, completedCount: { increment: 1 } },
+        })
+      }
+    }
+
     return NextResponse.json({ success: true, data: payment }, { status: 201 })
   } catch (e) {
     return NextResponse.json({ error: String(e) }, { status: 500 })

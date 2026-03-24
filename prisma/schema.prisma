@@ -791,6 +791,7 @@ model JourneyEnrollment {
   journeyId      String
   contactId      String?
   leadId         String?
+  invoiceId      String?   // links enrollment to a specific invoice chain
   currentStepId  String?
   status         String    @default("active")
   nextActionAt   DateTime?
@@ -798,6 +799,7 @@ model JourneyEnrollment {
   completedAt    DateTime?
 
   @@index([organizationId])
+  @@index([invoiceId])
   @@map("journey_enrollments")
 }
 
@@ -1337,6 +1339,9 @@ model Invoice {
   // Recurring
   recurringInvoiceId String?
   recurringInvoice   RecurringInvoice? @relation(fields: [recurringInvoiceId], references: [id])
+
+  // Communication chain
+  chainJourneyId    String?            // dedicated Journey for this invoice's reminder chain
 
   // Custom columns definition
   customColumns     Json?     // [{ "key": "unit", "label": "Ölçü vahidi" }, ...]
