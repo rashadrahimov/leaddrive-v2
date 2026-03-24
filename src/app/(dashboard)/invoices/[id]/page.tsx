@@ -586,7 +586,7 @@ export default function InvoiceDetailPage() {
           <Button
             variant="outline"
             size="sm"
-            onClick={openEditDialog}
+            onClick={() => router.push(`/invoices/${invoiceId}/edit`)}
           >
             <Pencil className="h-4 w-4 mr-1" />
             {tc("edit")}
