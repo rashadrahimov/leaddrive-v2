@@ -20,7 +20,7 @@ export async function getOrCreateInvoiceChainJourney(
   }
 
   // Create a dedicated journey + default steps in a transaction
-  const journey = await prisma.$transaction(async (tx) => {
+  const journey = await prisma.$transaction(async (tx: any) => {
     const j = await tx.journey.create({
       data: {
         organizationId: orgId,
