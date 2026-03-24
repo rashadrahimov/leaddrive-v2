@@ -130,9 +130,13 @@ export default function CreateInvoicePage() {
 
   // Close dropdowns when clicking outside
   useEffect(() => {
-    const handleClick = () => { setShowCompanyDropdown(false); setShowProductDropdown(false) }
-    document.addEventListener("click", handleClick)
-    return () => document.removeEventListener("click", handleClick)
+    const handleClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement
+      if (!target.closest("[data-dropdown-company]")) setShowCompanyDropdown(false)
+      if (!target.closest("[data-dropdown-products]")) setShowProductDropdown(false)
+    }
+    document.addEventListener("mousedown", handleClick)
+    return () => document.removeEventListener("mousedown", handleClick)
   }, [])
 
   // Fetch companies on mount
@@ -452,7 +456,7 @@ export default function CreateInvoicePage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>{t("company") || "Company"} *</Label>
-                  <div className="relative" onClick={(e) => e.stopPropagation()}>
+                  <div className="relative" data-dropdown-company>
                     <Input
                       placeholder={t("selectCompany") || "Type to search company..."}
                       value={companySearch}
@@ -550,17 +554,17 @@ export default function CreateInvoicePage() {
                     <Plus className="h-4 w-4 mr-1" />
                     Column
                   </Button>
-                  <div className="relative">
+                  <div className="relative" data-dropdown-products>
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={(e) => { e.stopPropagation(); setShowProductDropdown(!showProductDropdown) }}
+                      onClick={() => setShowProductDropdown(!showProductDropdown)}
                     >
                       <Package className="h-4 w-4 mr-2" />
                       {t("fromProducts") || "From Products"}
                     </Button>
                     {showProductDropdown && (
-                      <div className="absolute right-0 mt-1 w-72 bg-popover border rounded-md shadow-lg z-50 max-h-60 overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+                      <div className="absolute right-0 mt-1 w-72 bg-popover border rounded-md shadow-lg z-50 max-h-60 overflow-y-auto">
                         {products.map((product) => (
                           <button
                             key={product.id}
