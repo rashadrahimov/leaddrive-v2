@@ -437,7 +437,7 @@ export default function CreateInvoicePage() {
         )}
       </div>
 
-      <div className="max-w-4xl space-y-6">
+      <div className="space-y-6">
         <div className="space-y-6">
           {/* Title */}
           <Card>
@@ -858,7 +858,7 @@ export default function CreateInvoicePage() {
               </div>
             </CardContent>
           </Card>
-          {/* Summary + Actions */}
+          {/* Summary Card */}
           <Card>
               <CardHeader>
                 <CardTitle className="text-base">{t("summary") || "Summary"}</CardTitle>
