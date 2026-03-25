@@ -396,7 +396,7 @@ function WorkspaceTab({ planId }: { planId: string }) {
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(() => new Set(["admin", "tech_infra", "labor", "risk"]))
   const [addingSubItem, setAddingSubItem] = useState<string | null>(null)
   const [newSubItem, setNewSubItem] = useState({ category: "", amount: "", department: "" })
-  const [addingRow, setAddingRow] = useState(false)
+  const [addingSection, setAddingSection] = useState<string | null>(null) // "revenue" | "cogs" | "expense" | null
   const [addMode, setAddMode] = useState<"line" | "toGroup" | "newGroup">("line")
   const [newRow, setNewRow] = useState({ category: "", lineType: "expense", plannedAmount: "", forecastAmount: "", department: "", parentId: "" })
   const [filterText, setFilterText] = useState("")
@@ -476,19 +476,17 @@ function WorkspaceTab({ planId }: { planId: string }) {
     setEditCell(null)
   }
 
-  // All parent groups filtered by selected lineType (for dropdown in add form)
-  // Include groups with children OR groups created via "Создать группу" (notes starts with "group:")
-  const parentGroups = lines.filter((l: BudgetLine) => l.lineType === newRow.lineType && ((l.children && l.children.length > 0) || (l.notes && l.notes.startsWith("group:"))))
+  // All parent groups filtered by adding section's lineType
+  const parentGroups = lines.filter((l: BudgetLine) => l.lineType === (addingSection || "expense") && ((l.children && l.children.length > 0) || (l.notes && l.notes.startsWith("group:"))))
 
   // Add new row (line, sub-item in group, or new group)
   const handleAddRow = async () => {
-    if (!newRow.category.trim()) return
+    if (!newRow.category.trim() || !addingSection) return
     if (addMode === "newGroup") {
-      // Create parent group line with plannedAmount=0
       await createLine.mutateAsync({
         planId,
         category: newRow.category,
-        lineType: newRow.lineType as "expense" | "revenue" | "cogs",
+        lineType: addingSection as "expense" | "revenue" | "cogs",
         plannedAmount: 0,
         notes: `group:${newRow.category.toLowerCase().replace(/\s+/g, "_")}`,
       })
@@ -497,15 +495,14 @@ function WorkspaceTab({ planId }: { planId: string }) {
         planId,
         category: newRow.category,
         department: newRow.department || undefined,
-        lineType: newRow.lineType as "expense" | "revenue" | "cogs",
+        lineType: addingSection as "expense" | "revenue" | "cogs",
         plannedAmount: Number(newRow.plannedAmount) || 0,
-        forecastAmount: Number(newRow.forecastAmount) || undefined,
         parentId: addMode === "toGroup" ? (newRow.parentId || undefined) : undefined,
       })
     }
     setNewRow({ category: "", lineType: "expense", plannedAmount: "", forecastAmount: "", department: "", parentId: "" })
     setAddMode("line")
-    setAddingRow(false)
+    setAddingSection(null)
   }
 
   // Add actual from expand
@@ -853,8 +850,8 @@ function WorkspaceTab({ planId }: { planId: string }) {
     )
   }
 
-  // Universal grouped section renderer (for both expenses and revenues)
-  const renderGroupedSection = (title: string, sectionLines: BudgetLine[], totPlanned: number, sectionHintKey?: string) => {
+  // Universal grouped section renderer with per-section add form
+  const renderGroupedSection = (title: string, sectionLines: BudgetLine[], totPlanned: number, sectionHintKey?: string, sectionLineType?: string) => {
     const totActual = sectionLines.reduce((s: number, l: BudgetLine) => {
       if (l.children?.length) {
         return s + l.children.reduce((cs, c) => cs + (c.isAutoActual ? (autoActualMap.get(c.category) ?? 0) : (actualsByCat.get(`${c.category}||${c.lineType}`)?.total ?? 0)), 0)
@@ -892,6 +889,58 @@ function WorkspaceTab({ planId }: { planId: string }) {
           </td>
           <td />
         </tr>
+        {/* Per-section add form */}
+        {sectionLineType && addingSection === sectionLineType ? (
+          <>
+            <tr className="bg-green-50/50 dark:bg-green-900/5">
+              <td colSpan={6} className="px-3 py-1.5">
+                <div className="flex items-center gap-1">
+                  <Button size="sm" variant={addMode === "line" ? "default" : "outline"} className="h-7 text-xs" onClick={() => setAddMode("line")}>{t("addAsLine")}</Button>
+                  <Button size="sm" variant={addMode === "toGroup" ? "default" : "outline"} className="h-7 text-xs" onClick={() => setAddMode("toGroup")}>{t("addToGroup")}</Button>
+                  <Button size="sm" variant={addMode === "newGroup" ? "default" : "outline"} className="h-7 text-xs" onClick={() => setAddMode("newGroup")}>{t("addAsGroup")}</Button>
+                </div>
+              </td>
+            </tr>
+            <tr className="bg-green-50 dark:bg-green-900/10">
+              <td className="px-2 py-1.5">
+                <div className="flex flex-col gap-1">
+                  {addMode === "toGroup" && (
+                    <select value={newRow.parentId} onChange={e => setNewRow(d => ({ ...d, parentId: e.target.value }))} className="h-7 rounded-md border border-input bg-background px-2 text-xs w-full">
+                      <option value="">{t("selectGroup")}</option>
+                      {parentGroups.map((g: BudgetLine) => <option key={g.id} value={g.id}>{g.category}</option>)}
+                    </select>
+                  )}
+                  <Input placeholder={addMode === "newGroup" ? t("newGroupName") : t("placeholderCategoryShort")} className="h-7 text-xs" value={newRow.category} onChange={e => setNewRow(d => ({ ...d, category: e.target.value }))} autoFocus
+                    onKeyDown={e => { if (e.key === "Enter") handleAddRow(); if (e.key === "Escape") setAddingSection(null) }} />
+                </div>
+              </td>
+              {addMode !== "newGroup" ? (
+                <>
+                  <td className="px-2 py-1.5"><Input placeholder={t("colDepartment")} className="h-7 text-xs" value={newRow.department ?? ""} onChange={e => setNewRow(d => ({ ...d, department: e.target.value }))} /></td>
+                  <td className="px-2 py-1.5"><Input type="number" placeholder="0" className="h-7 text-xs text-right" value={newRow.plannedAmount} onChange={e => setNewRow(d => ({ ...d, plannedAmount: e.target.value }))} /></td>
+                </>
+              ) : (
+                <td colSpan={2} className="px-2 py-1 text-[10px] text-muted-foreground align-middle">Сумма = 0, подкатегории через «+»</td>
+              )}
+              <td />
+              <td className="px-2 py-1.5 text-center">
+                <div className="flex gap-1 justify-center">
+                  <Button size="sm" variant="default" className="h-7 text-xs" onClick={handleAddRow}><CheckCircle className="h-3 w-3 mr-1" />{t("btnSave")}</Button>
+                  <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => { setAddingSection(null); setAddMode("line") }}>{t("btnCancel")}</Button>
+                </div>
+              </td>
+              <td />
+            </tr>
+          </>
+        ) : sectionLineType ? (
+          <tr className="border-t border-dashed border-border/20">
+            <td colSpan={6} className="px-3 py-1">
+              <button onClick={() => { setAddingSection(sectionLineType); setAddMode("line"); setNewRow(d => ({ ...d, parentId: "" })) }} className="text-[11px] text-purple-600 dark:text-purple-400 hover:underline flex items-center gap-1">
+                <Plus className="h-3 w-3" /> {t("btnAddRow")}
+              </button>
+            </td>
+          </tr>
+        ) : null}
       </>
     )
   }
@@ -1009,8 +1058,8 @@ function WorkspaceTab({ planId }: { planId: string }) {
                 </tr>
               </thead>
               <tbody>
-                {renderGroupedSection(t("sectionRevenues"), revenueLines, totRevPlanned, "hintSectionRevenue")}
-                {renderGroupedSection(t("sectionCOGS"), cogsLines, totCOGSPlanned, "hintSectionCOGS")}
+                {renderGroupedSection(t("sectionRevenues"), revenueLines, totRevPlanned, "hintSectionRevenue", "revenue")}
+                {renderGroupedSection(t("sectionCOGS"), cogsLines, totCOGSPlanned, "hintSectionCOGS", "cogs")}
 
                 {/* Gross Profit row */}
                 {(revenueLines.length > 0 || cogsLines.length > 0) && (
@@ -1022,7 +1071,7 @@ function WorkspaceTab({ planId }: { planId: string }) {
                   </tr>
                 )}
 
-                {renderGroupedSection(t("sectionExpenses"), expenseLines, totExpPlanned, "hintSectionExpenses")}
+                {renderGroupedSection(t("sectionExpenses"), expenseLines, totExpPlanned, "hintSectionExpenses", "expense")}
 
                 {/* Operating Profit row */}
                 {(expenseLines.length > 0 || revenueLines.length > 0 || cogsLines.length > 0) && (
@@ -1034,74 +1083,8 @@ function WorkspaceTab({ planId }: { planId: string }) {
                   </tr>
                 )}
 
-                {/* Add new row */}
-                {addingRow ? (
-                  <>
-                    {/* Mode selector row */}
-                    <tr className="border-t border-border/50 bg-green-50/50 dark:bg-green-900/5">
-                      <td colSpan={6} className="px-3 py-2">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <select title={t("hintFieldType")} value={newRow.lineType} onChange={e => setNewRow(d => ({ ...d, lineType: e.target.value, parentId: "" }))} className="h-8 rounded-md border border-input bg-background px-2 text-sm">
-                            <option value="expense">{t("expense")}</option>
-                            <option value="revenue">{t("revenue")}</option>
-                            <option value="cogs">COGS</option>
-                          </select>
-                          <div className="flex gap-1">
-                            <Button size="sm" variant={addMode === "line" ? "default" : "outline"} className="h-8 text-xs" onClick={() => setAddMode("line")}>{t("addAsLine")}</Button>
-                            <Button size="sm" variant={addMode === "toGroup" ? "default" : "outline"} className="h-8 text-xs" onClick={() => setAddMode("toGroup")}>{t("addToGroup")}</Button>
-                            <Button size="sm" variant={addMode === "newGroup" ? "default" : "outline"} className="h-8 text-xs" onClick={() => setAddMode("newGroup")}>{t("addAsGroup")}</Button>
-                          </div>
-                        </div>
-                      </td>
-                    </tr>
-                    {/* Fields row */}
-                    <tr className="bg-green-50 dark:bg-green-900/10">
-                      <td className="px-2 py-1.5">
-                        <div className="flex flex-col gap-1">
-                          {addMode === "toGroup" && (
-                            <select title={t("hintFieldGroup")} value={newRow.parentId} onChange={e => setNewRow(d => ({ ...d, parentId: e.target.value }))} className="h-8 rounded-md border border-input bg-background px-2 text-sm w-full">
-                              <option value="">{t("selectGroup")}</option>
-                              {parentGroups.map((g: BudgetLine) => (
-                                <option key={g.id} value={g.id}>{g.category}</option>
-                              ))}
-                            </select>
-                          )}
-                          <Input placeholder={addMode === "newGroup" ? t("newGroupName") : t("placeholderCategoryShort")} className="h-8 text-sm" value={newRow.category} onChange={e => setNewRow(d => ({ ...d, category: e.target.value }))} autoFocus
-                            onKeyDown={e => { if (e.key === "Enter") handleAddRow(); if (e.key === "Escape") setAddingRow(false) }} />
-                        </div>
-                      </td>
-                      {addMode !== "newGroup" ? (
-                        <>
-                          <td className="px-2 py-1.5"><Input placeholder={t("colDepartment")} className="h-8 text-sm" value={newRow.department ?? ""} onChange={e => setNewRow(d => ({ ...d, department: e.target.value }))} /></td>
-                          <td className="px-2 py-1.5"><Input title={t("hintFieldAmount")} type="number" placeholder="0" className="h-8 text-sm text-right" value={newRow.plannedAmount} onChange={e => setNewRow(d => ({ ...d, plannedAmount: e.target.value }))} /></td>
-                        </>
-                      ) : (
-                        <td colSpan={2} className="px-2 py-1.5 text-xs text-muted-foreground align-middle">
-                          Группа создаётся с суммой 0 — добавляйте подкатегории через «+» на заголовке
-                        </td>
-                      )}
-                      <td />
-                      <td className="px-2 py-1.5 text-center">
-                        <div className="flex gap-1 justify-center">
-                          <Button size="sm" variant="default" className="h-8 text-xs" onClick={handleAddRow}><CheckCircle className="h-3.5 w-3.5 mr-1" /> {t("btnSave")}</Button>
-                          <Button size="sm" variant="ghost" className="h-8 text-xs" onClick={() => { setAddingRow(false); setAddMode("line") }}>{t("btnCancel")}</Button>
-                        </div>
-                      </td>
-                      <td />
-                    </tr>
-                  </>
-                ) : (
-                  <tr className="border-t border-dashed border-border/30">
-                    <td colSpan={6} className="px-3 py-2">
-                      <button title={t("hintBtnAddRow")} onClick={() => setAddingRow(true)} className="text-xs text-purple-600 dark:text-purple-400 hover:underline flex items-center gap-1">
-                        <Plus className="h-3.5 w-3.5" /> {t("btnAddRow")}
-                      </button>
-                    </td>
-                  </tr>
-                )}
-
                 {/* Empty state */}
-                {lines.length === 0 && !addingRow && (
+                {lines.length === 0 && !addingSection && (
                   <tr>
                     <td colSpan={6} className="text-center py-12 text-muted-foreground">
                       {t("emptyNoLines")}
