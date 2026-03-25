@@ -2071,24 +2071,55 @@ function TemplateSeedButton({ planId }: { planId: string }) {
 
   const seed = async () => {
     setSeeding(true)
-    const expenseLines = DEFAULT_EXPENSE_CATEGORIES.map((category, i) => ({
-      planId,
-      category,
-      lineType: "expense" as const,
-      plannedAmount: 0,
-      sortOrder: i,
-      costModelKey: TEMPLATE_CATEGORY_MAP[category] || undefined,
-      isAutoActual: !!TEMPLATE_CATEGORY_MAP[category],
-    }))
-    const revenueLines = DEFAULT_REVENUE_CATEGORIES.map((category, i) => ({
-      planId,
-      category,
-      lineType: "revenue" as const,
-      plannedAmount: 0,
-      sortOrder: i + 100,
-      costModelKey: TEMPLATE_CATEGORY_MAP[category] || undefined,
-      isAutoActual: !!TEMPLATE_CATEGORY_MAP[category],
-    }))
+
+    // Collect all costModelKeys to resolve from cost model
+    const allCategories = [...DEFAULT_EXPENSE_CATEGORIES, ...DEFAULT_REVENUE_CATEGORIES]
+    const keysToResolve = allCategories
+      .map(cat => TEMPLATE_CATEGORY_MAP[cat])
+      .filter(Boolean) as string[]
+
+    // Resolve cost model values in one API call
+    let costValues: Record<string, number> = {}
+    if (keysToResolve.length > 0) {
+      try {
+        const res = await fetch("/api/budgeting/resolve-costs", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ keys: keysToResolve }),
+        })
+        const json = await res.json()
+        if (json.success) costValues = json.data
+      } catch { /* fallback to 0 if cost model unavailable */ }
+    }
+
+    const expenseLines = DEFAULT_EXPENSE_CATEGORIES.map((category, i) => {
+      const cmKey = TEMPLATE_CATEGORY_MAP[category] || undefined
+      const cmValue = cmKey ? (costValues[cmKey] ?? 0) : 0
+      return {
+        planId,
+        category,
+        lineType: "expense" as const,
+        plannedAmount: cmValue,
+        forecastAmount: cmValue || undefined,
+        sortOrder: i,
+        costModelKey: cmKey,
+        isAutoActual: !!cmKey,
+      }
+    })
+    const revenueLines = DEFAULT_REVENUE_CATEGORIES.map((category, i) => {
+      const cmKey = TEMPLATE_CATEGORY_MAP[category] || undefined
+      const cmValue = cmKey ? (costValues[cmKey] ?? 0) : 0
+      return {
+        planId,
+        category,
+        lineType: "revenue" as const,
+        plannedAmount: cmValue,
+        forecastAmount: cmValue || undefined,
+        sortOrder: i + 100,
+        costModelKey: cmKey,
+        isAutoActual: !!cmKey,
+      }
+    })
     for (const line of [...expenseLines, ...revenueLines]) {
       await createLine.mutateAsync(line)
     }
