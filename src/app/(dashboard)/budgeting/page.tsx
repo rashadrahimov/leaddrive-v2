@@ -27,6 +27,7 @@ import {
   useDeleteBudgetLine,
   useBudgetActuals,
   useCreateBudgetActual,
+  useUpdateBudgetActual,
   useDeleteBudgetActual,
   useBudgetAnalytics,
   useBudgetSections,
@@ -365,6 +366,10 @@ function AddActualForm({ planId, existingCategories }: { planId: string; existin
 
 function OverviewTab({ planId }: { planId: string }) {
   const { data: analytics, isLoading, error } = useBudgetAnalytics(planId)
+  const aiNarrative = useAINarrative()
+  const syncActuals = useSyncActuals()
+  const [narrative, setNarrative] = useState<string | null>(null)
+  const [showNarrative, setShowNarrative] = useState(false)
 
   if (isLoading) return (
     <div className="flex items-center justify-center py-20">
@@ -378,6 +383,25 @@ function OverviewTab({ planId }: { planId: string }) {
   const { totalPlanned, totalForecast, totalActual, totalVariance, executionPct, yearEndProjection, byCategory, byDepartment, autoActualTotal } = analytics
 
   const execEmoji = executionPct >= 90 ? "🟢" : executionPct >= 60 ? "🟡" : "🔴"
+
+  const handleAINarrative = async () => {
+    setShowNarrative(true)
+    try {
+      const result = await aiNarrative.mutateAsync({ planId })
+      setNarrative(result.narrative)
+    } catch {
+      setNarrative("Ошибка генерации нарратива. Проверьте ANTHROPIC_API_KEY.")
+    }
+  }
+
+  const handleSyncActuals = async () => {
+    try {
+      const result = await syncActuals.mutateAsync(planId)
+      alert(`Обновлено ${result.synced} записей из cost model`)
+    } catch {
+      alert("Ошибка синхронизации с cost model")
+    }
+  }
 
   const barData = byCategory.slice(0, 12).map(c => ({
     name: c.category.length > 18 ? c.category.slice(0, 18) + "…" : c.category,
@@ -417,6 +441,43 @@ function OverviewTab({ planId }: { planId: string }) {
           color="amber"
         />
       </div>
+
+      {/* Action buttons: AI narrative + sync actuals */}
+      <div className="flex flex-wrap gap-2">
+        <Button size="sm" variant="outline" onClick={handleAINarrative} disabled={aiNarrative.isPending}>
+          {aiNarrative.isPending ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <AlertCircle className="h-4 w-4 mr-1" />}
+          Объяснить отклонения (AI)
+        </Button>
+        {autoActualTotal > 0 && (
+          <Button size="sm" variant="outline" onClick={handleSyncActuals} disabled={syncActuals.isPending}>
+            {syncActuals.isPending ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Link2 className="h-4 w-4 mr-1" />}
+            Обновить факт из cost model
+          </Button>
+        )}
+      </div>
+
+      {/* AI Narrative Card */}
+      {showNarrative && (
+        <Card className="border-purple-200 dark:border-purple-800">
+          <CardHeader className="pb-2">
+            <div className="flex justify-between items-center">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <AlertCircle className="h-4 w-4 text-purple-600" /> AI-анализ отклонений
+              </CardTitle>
+              <Button size="sm" variant="ghost" onClick={() => { setShowNarrative(false); setNarrative(null) }}>✕</Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {narrative ? (
+              <div className="text-sm whitespace-pre-wrap leading-relaxed">{narrative}</div>
+            ) : (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin" /> Генерация нарратива...
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Execution % */}
       <div className="flex items-center gap-3 text-sm">
@@ -754,12 +815,24 @@ function LinesTab({ planId }: { planId: string }) {
 
 function ActualsTab({ planId }: { planId: string }) {
   const { data: actuals = [], isLoading } = useBudgetActuals(planId)
+  const updateActual = useUpdateBudgetActual()
   const deleteActual = useDeleteBudgetActual()
   const [filterCat, setFilterCat] = useState("")
+  const [editId, setEditId] = useState<string | null>(null)
+  const [editData, setEditData] = useState({ actualAmount: 0, category: "", department: "", expenseDate: "", description: "" })
 
   const existingCategories = actuals.map(a => a.category)
   const filtered = filterCat ? actuals.filter(a => a.category.toLowerCase().includes(filterCat.toLowerCase())) : actuals
   const total = actuals.reduce((s, a) => s + a.actualAmount, 0)
+
+  const startEdit = (a: any) => {
+    setEditId(a.id)
+    setEditData({ actualAmount: a.actualAmount, category: a.category, department: a.department || "", expenseDate: a.expenseDate || "", description: a.description || "" })
+  }
+  const saveEdit = async (id: string) => {
+    await updateActual.mutateAsync({ id, planId, actualAmount: editData.actualAmount, category: editData.category, department: editData.department || undefined, expenseDate: editData.expenseDate || undefined, description: editData.description || undefined })
+    setEditId(null)
+  }
 
   if (isLoading) return <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-purple-500" /></div>
 
@@ -785,28 +858,55 @@ function ActualsTab({ planId }: { planId: string }) {
                     <th className="px-4 py-2 text-right font-medium">Сумма</th>
                     <th className="px-4 py-2 text-left font-medium">Дата</th>
                     <th className="px-4 py-2 text-left font-medium">Описание</th>
-                    <th className="px-4 py-2 text-center font-medium">Удалить</th>
+                    <th className="px-4 py-2 text-center font-medium">Действия</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filtered.map(actual => (
                     <tr key={actual.id} className="border-t border-border/50 hover:bg-muted/30">
-                      <td className="px-4 py-2">{actual.category}</td>
-                      <td className="px-4 py-2 text-muted-foreground">{actual.department || "—"}</td>
-                      <td className="px-4 py-2">
-                        <Badge variant="outline" className="text-xs">
-                          {actual.lineType === "revenue" ? "Доход" : "Расход"}
-                        </Badge>
-                      </td>
-                      <td className="px-4 py-2 text-right font-mono">{fmt(actual.actualAmount)}</td>
-                      <td className="px-4 py-2 text-muted-foreground">{actual.expenseDate || "—"}</td>
-                      <td className="px-4 py-2 text-muted-foreground text-xs">{actual.description || "—"}</td>
-                      <td className="px-4 py-2 text-center">
-                        <button onClick={() => deleteActual.mutate({ id: actual.id, planId })}
-                          className="p-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20 text-muted-foreground hover:text-red-600">
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
-                      </td>
+                      {editId === actual.id ? (
+                        <>
+                          <td className="px-2 py-1"><Input value={editData.category} onChange={e => setEditData(d => ({ ...d, category: e.target.value }))} className="h-7 text-xs" /></td>
+                          <td className="px-2 py-1"><Input value={editData.department} onChange={e => setEditData(d => ({ ...d, department: e.target.value }))} className="h-7 text-xs" /></td>
+                          <td className="px-4 py-2"><Badge variant="outline" className="text-xs">{actual.lineType === "revenue" ? "Доход" : "Расход"}</Badge></td>
+                          <td className="px-2 py-1"><Input type="number" value={editData.actualAmount} onChange={e => setEditData(d => ({ ...d, actualAmount: Number(e.target.value) }))} className="h-7 text-xs text-right" /></td>
+                          <td className="px-2 py-1"><Input value={editData.expenseDate} onChange={e => setEditData(d => ({ ...d, expenseDate: e.target.value }))} className="h-7 text-xs" placeholder="YYYY-MM-DD" /></td>
+                          <td className="px-2 py-1"><Input value={editData.description} onChange={e => setEditData(d => ({ ...d, description: e.target.value }))} className="h-7 text-xs" /></td>
+                          <td className="px-2 py-1 text-center">
+                            <div className="flex gap-1 justify-center">
+                              <Button size="sm" variant="ghost" className="h-7 text-xs px-2" onClick={() => saveEdit(actual.id)}>
+                                <CheckCircle className="h-3.5 w-3.5" />
+                              </Button>
+                              <Button size="sm" variant="ghost" className="h-7 text-xs px-2" onClick={() => setEditId(null)}>✕</Button>
+                            </div>
+                          </td>
+                        </>
+                      ) : (
+                        <>
+                          <td className="px-4 py-2">{actual.category}</td>
+                          <td className="px-4 py-2 text-muted-foreground">{actual.department || "—"}</td>
+                          <td className="px-4 py-2">
+                            <Badge variant="outline" className="text-xs">
+                              {actual.lineType === "revenue" ? "Доход" : "Расход"}
+                            </Badge>
+                          </td>
+                          <td className="px-4 py-2 text-right font-mono">{fmt(actual.actualAmount)}</td>
+                          <td className="px-4 py-2 text-muted-foreground">{actual.expenseDate || "—"}</td>
+                          <td className="px-4 py-2 text-muted-foreground text-xs">{actual.description || "—"}</td>
+                          <td className="px-4 py-2 text-center">
+                            <div className="flex gap-1 justify-center">
+                              <button onClick={() => startEdit(actual)}
+                                className="p-1 rounded hover:bg-blue-50 dark:hover:bg-blue-900/20 text-muted-foreground hover:text-blue-600">
+                                <Pencil className="h-3.5 w-3.5" />
+                              </button>
+                              <button onClick={() => deleteActual.mutate({ id: actual.id, planId })}
+                                className="p-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20 text-muted-foreground hover:text-red-600">
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </button>
+                            </div>
+                          </td>
+                        </>
+                      )}
                     </tr>
                   ))}
                 </tbody>
@@ -890,8 +990,27 @@ function PlansTab({ activePlanId, onSelect, onShowCreate }: { activePlanId: stri
 
 // ─── Comparison Tab ────────────────────────────────────────────────────────────
 
+const COMPARISON_COLORS = ["#8b5cf6", "#3b82f6", "#f59e0b", "#ef4444"]
+
 function ComparisonTab() {
   const { data: plans = [], isLoading } = useBudgetPlans()
+  const [selectedIds, setSelectedIds] = useState<string[]>([])
+  const [materialityPct, setMaterialityPct] = useState(5)
+  const [materialityAbs, setMaterialityAbs] = useState(500)
+  const [showAll, setShowAll] = useState(true)
+
+  // Load analytics for each selected plan
+  const a0 = useBudgetAnalytics(selectedIds[0] || "")
+  const a1 = useBudgetAnalytics(selectedIds[1] || "")
+  const a2 = useBudgetAnalytics(selectedIds[2] || "")
+  const a3 = useBudgetAnalytics(selectedIds[3] || "")
+  const analyticsArr = [a0.data, a1.data, a2.data, a3.data].filter(Boolean).slice(0, selectedIds.length)
+
+  const togglePlan = (id: string) => {
+    setSelectedIds(prev =>
+      prev.includes(id) ? prev.filter(p => p !== id) : prev.length < 4 ? [...prev, id] : prev
+    )
+  }
 
   if (isLoading) return <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-purple-500" /></div>
 
@@ -900,16 +1019,162 @@ function ComparisonTab() {
       <div className="text-center py-20 text-muted-foreground">
         <BarChart2 className="h-12 w-12 mx-auto mb-3 opacity-30" />
         <p className="font-medium">Недостаточно данных</p>
-        <p className="text-sm mt-1">Создайте несколько планов для сравнения</p>
+        <p className="text-sm mt-1">Создайте минимум 2 плана для сравнения</p>
       </div>
     )
   }
 
+  // Build chart data from all selected plans' byCategory
+  const allCategories = new Set<string>()
+  for (const a of analyticsArr) {
+    if (a?.byCategory) a.byCategory.forEach((c: any) => allCategories.add(c.category))
+  }
+  const topCategories = Array.from(allCategories).slice(0, 10)
+
+  const chartData = topCategories.map(cat => {
+    const row: any = { category: cat }
+    analyticsArr.forEach((a, i) => {
+      const planName = plans.find(p => p.id === selectedIds[i])?.name || `План ${i + 1}`
+      const found = a?.byCategory?.find((c: any) => c.category === cat)
+      row[planName] = found?.actual ?? 0
+    })
+    return row
+  })
+
+  // Variance table rows
+  const tableCategories = topCategories.map(cat => {
+    const row: any = { category: cat }
+    analyticsArr.forEach((a, i) => {
+      const found = a?.byCategory?.find((c: any) => c.category === cat)
+      row[`p${i}_planned`] = found?.planned ?? 0
+      row[`p${i}_actual`] = found?.actual ?? 0
+      row[`p${i}_variance`] = found?.variance ?? 0
+      row[`p${i}_pct`] = found?.variancePct ?? 0
+    })
+    return row
+  })
+
+  // Materiality filter
+  const isMaterial = (row: any) => {
+    if (showAll) return true
+    for (let i = 0; i < analyticsArr.length; i++) {
+      if (Math.abs(row[`p${i}_pct`] ?? 0) >= materialityPct || Math.abs(row[`p${i}_variance`] ?? 0) >= materialityAbs) return true
+    }
+    return false
+  }
+
   return (
-    <div className="text-center py-20 text-muted-foreground">
-      <BarChart2 className="h-12 w-12 mx-auto mb-3 opacity-30" />
-      <p className="font-medium">Сравнение планов</p>
-      <p className="text-sm mt-1">Функция многопланового сравнения будет доступна в следующей версии</p>
+    <div className="space-y-6">
+      {/* Plan selector */}
+      <Card>
+        <CardHeader><CardTitle className="text-sm">Выберите планы для сравнения (до 4)</CardTitle></CardHeader>
+        <CardContent>
+          <div className="flex flex-wrap gap-2">
+            {plans.map(p => (
+              <Button key={p.id} size="sm"
+                variant={selectedIds.includes(p.id) ? "default" : "outline"}
+                className={`text-xs ${selectedIds.includes(p.id) ? "bg-purple-600 hover:bg-purple-700" : ""}`}
+                onClick={() => togglePlan(p.id)}>
+                {p.name}
+              </Button>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {selectedIds.length >= 2 && analyticsArr.length >= 2 && (
+        <>
+          {/* P4-02: Grouped bar chart */}
+          <Card>
+            <CardHeader><CardTitle className="text-sm">Сравнение по категориям (факт)</CardTitle></CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={350}>
+                <BarChart data={chartData} margin={{ left: 10, right: 10 }}>
+                  <XAxis dataKey="category" tick={{ fontSize: 10 }} angle={-25} textAnchor="end" height={60} />
+                  <YAxis tick={{ fontSize: 11 }} tickFormatter={(v: number) => (v / 1000).toFixed(0) + "k"} />
+                  <Tooltip formatter={(v: any) => fmt(v)} />
+                  <Legend />
+                  {selectedIds.map((id, i) => {
+                    const planName = plans.find(p => p.id === id)?.name || `План ${i + 1}`
+                    return <Bar key={id} dataKey={planName} fill={COMPARISON_COLORS[i]} radius={[3, 3, 0, 0]} />
+                  })}
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+
+          {/* P4-04: Materiality filter */}
+          <div className="flex flex-wrap items-center gap-3 text-sm">
+            <span className="font-medium">Порог существенности:</span>
+            <div className="flex items-center gap-1">
+              <Input type="number" value={materialityPct} onChange={e => setMaterialityPct(Number(e.target.value))} className="h-7 w-16 text-xs text-right" /> %
+            </div>
+            <div className="flex items-center gap-1">
+              <Input type="number" value={materialityAbs} onChange={e => setMaterialityAbs(Number(e.target.value))} className="h-7 w-20 text-xs text-right" /> ₼
+            </div>
+            <Button size="sm" variant="outline" className="text-xs h-7" onClick={() => setShowAll(!showAll)}>
+              {showAll ? "Скрыть несущественные" : "Показать все"}
+            </Button>
+          </div>
+
+          {/* P4-03: Variance table */}
+          <Card>
+            <CardHeader><CardTitle className="text-sm">Таблица сравнения</CardTitle></CardHeader>
+            <CardContent className="p-0">
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs">
+                  <thead className="bg-muted/50">
+                    <tr>
+                      <th className="px-3 py-2 text-left font-medium sticky left-0 bg-muted/50">Категория</th>
+                      {selectedIds.map((id, i) => {
+                        const name = plans.find(p => p.id === id)?.name || `П${i + 1}`
+                        return [
+                          <th key={`${id}-p`} className="px-2 py-2 text-right font-medium" style={{ color: COMPARISON_COLORS[i] }}>{name} Бюджет</th>,
+                          <th key={`${id}-a`} className="px-2 py-2 text-right font-medium" style={{ color: COMPARISON_COLORS[i] }}>{name} Факт</th>,
+                          <th key={`${id}-v`} className="px-2 py-2 text-right font-medium" style={{ color: COMPARISON_COLORS[i] }}>Откл. %</th>,
+                        ]
+                      })}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {tableCategories.filter(isMaterial).map(row => (
+                      <tr key={row.category} className="border-t border-border/50">
+                        <td className="px-3 py-1.5 font-medium sticky left-0 bg-background">{row.category}</td>
+                        {selectedIds.map((_id, i) => [
+                          <td key={`${row.category}-p${i}-p`} className="px-2 py-1.5 text-right font-mono">{fmt(row[`p${i}_planned`])}</td>,
+                          <td key={`${row.category}-p${i}-a`} className="px-2 py-1.5 text-right font-mono">{fmt(row[`p${i}_actual`])}</td>,
+                          <td key={`${row.category}-p${i}-v`} className={`px-2 py-1.5 text-right font-mono font-bold ${(row[`p${i}_variance`] ?? 0) >= 0 ? "text-green-600" : "text-red-500"}`}>
+                            {(row[`p${i}_pct`] ?? 0).toFixed(1)}%
+                          </td>,
+                        ])}
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot className="border-t-2 border-border bg-muted/30">
+                    <tr>
+                      <td className="px-3 py-2 font-bold sticky left-0 bg-muted/30">ИТОГО</td>
+                      {selectedIds.map((_id, i) => {
+                        const a = analyticsArr[i]
+                        return [
+                          <td key={`total-p${i}-p`} className="px-2 py-2 text-right font-mono font-bold">{fmt(a?.totalPlanned ?? 0)}</td>,
+                          <td key={`total-p${i}-a`} className="px-2 py-2 text-right font-mono font-bold">{fmt(a?.totalActual ?? 0)}</td>,
+                          <td key={`total-p${i}-v`} className={`px-2 py-2 text-right font-mono font-bold ${(a?.totalVariance ?? 0) >= 0 ? "text-green-600" : "text-red-500"}`}>
+                            {a?.totalPlanned ? ((a.totalVariance / a.totalPlanned) * 100).toFixed(1) : "0.0"}%
+                          </td>,
+                        ]
+                      })}
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+        </>
+      )}
+
+      {selectedIds.length < 2 && selectedIds.length > 0 && (
+        <div className="text-center py-8 text-muted-foreground text-sm">Выберите ещё хотя бы 1 план</div>
+      )}
     </div>
   )
 }

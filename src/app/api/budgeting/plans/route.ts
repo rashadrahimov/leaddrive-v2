@@ -39,6 +39,20 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "periodType должен быть monthly, quarterly или annual" }, { status: 400 })
   }
 
+  // Check for duplicate plan in same period
+  const duplicate = await prisma.budgetPlan.findFirst({
+    where: {
+      organizationId: orgId,
+      periodType,
+      year: Number(year),
+      ...(month ? { month: Number(month) } : {}),
+      ...(quarter ? { quarter: Number(quarter) } : {}),
+    },
+  })
+  if (duplicate) {
+    return NextResponse.json({ error: `План для этого периода уже существует: "${duplicate.name}"` }, { status: 409 })
+  }
+
   const plan = await prisma.budgetPlan.create({
     data: {
       organizationId: orgId,

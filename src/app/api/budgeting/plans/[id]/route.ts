@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getOrgId } from "@/lib/api-auth"
 import { prisma } from "@/lib/prisma"
+import { createNotification } from "@/lib/notifications"
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const orgId = await getOrgId(req)
@@ -38,6 +39,26 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   if (plan.count === 0) return NextResponse.json({ error: "Not found" }, { status: 404 })
 
   const updated = await prisma.budgetPlan.findFirst({ where: { id, organizationId: orgId } })
+
+  // P4-10: Send notifications when plan is approved
+  if (status === "approved" && updated) {
+    const users = await prisma.user.findMany({
+      where: { organizationId: orgId },
+      select: { id: true },
+    })
+    for (const user of users) {
+      await createNotification({
+        organizationId: orgId,
+        userId: user.id,
+        type: "success",
+        title: "Бюджет утверждён",
+        message: `План "${updated.name}" утверждён`,
+        entityType: "budget_plan",
+        entityId: id,
+      })
+    }
+  }
+
   return NextResponse.json({ success: true, data: updated })
 }
 
