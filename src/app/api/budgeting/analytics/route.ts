@@ -23,35 +23,47 @@ export async function GET(req: NextRequest) {
 
   if (!plan) return NextResponse.json({ error: "Plan not found" }, { status: 404 })
 
-  // Build effective actuals for auto-actual lines:
-  // 1. Sum all BudgetActual snapshot records (past months, description="Авто-снапшот")
-  // 2. Add live cost model value for current month (if no snapshot exists for current month yet)
+  // Build effective actuals for auto-actual lines.
+  // Simple: monthly cost model value × elapsed months in the plan period.
+  // Q1 completed = ×3, Q2 just started (April) = ×1, Annual in March = ×3.
   const autoActualByCategory = new Map<string, number>()
   let autoActualTotal = 0
 
-  const currentMonth = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, "0")}`
+  if (hasAutoActual && costModel && plan) {
+    const now = new Date()
+    const curYear = now.getFullYear()
+    const curMonth = now.getMonth() + 1
 
-  if (hasAutoActual) {
-    // Step 1: Sum snapshot actuals (past months saved by cron/manual)
-    const snapshotActuals = manualActuals.filter((a: { description: string | null }) => a.description === "Авто-снапшот")
-    for (const a of snapshotActuals) {
-      const key = `${a.category}||${a.lineType}`
-      autoActualByCategory.set(key, (autoActualByCategory.get(key) ?? 0) + a.actualAmount)
-      autoActualTotal += a.actualAmount
+    let elapsedMonths = 1
+    if (plan.periodType === "monthly") {
+      elapsedMonths = 1
+    } else if (plan.periodType === "quarterly" && plan.quarter) {
+      const qStart = (plan.quarter - 1) * 3 + 1
+      const qEnd = qStart + 2
+      if (curYear > plan.year || (curYear === plan.year && curMonth > qEnd)) {
+        elapsedMonths = 3 // quarter fully completed
+      } else if (curYear === plan.year && curMonth >= qStart) {
+        elapsedMonths = curMonth - qStart + 1 // inside quarter
+      } else {
+        elapsedMonths = 0 // quarter hasn't started
+      }
+    } else if (plan.periodType === "annual") {
+      if (curYear > plan.year) {
+        elapsedMonths = 12
+      } else if (curYear === plan.year) {
+        elapsedMonths = curMonth
+      } else {
+        elapsedMonths = 0
+      }
     }
 
-    // Step 2: Check if current month has a snapshot already
-    const hasCurrentMonthSnapshot = snapshotActuals.some((a: { expenseDate: string | null }) => a.expenseDate === currentMonth)
-
-    // Step 3: If no snapshot for current month, add live cost model values
-    if (!hasCurrentMonthSnapshot && costModel) {
-      for (const line of lines) {
-        if (line.isAutoActual && line.costModelKey) {
-          const amount = resolveCostModelKey(costModel, line.costModelKey)
-          const key = `${line.category}||${line.lineType}`
-          autoActualByCategory.set(key, (autoActualByCategory.get(key) ?? 0) + amount)
-          autoActualTotal += amount
-        }
+    for (const line of lines) {
+      if (line.isAutoActual && line.costModelKey) {
+        const monthlyAmount = resolveCostModelKey(costModel, line.costModelKey)
+        const amount = monthlyAmount * Math.max(1, elapsedMonths)
+        const key = `${line.category}||${line.lineType}`
+        autoActualByCategory.set(key, (autoActualByCategory.get(key) ?? 0) + amount)
+        autoActualTotal += amount
       }
     }
   }
