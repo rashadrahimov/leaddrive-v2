@@ -33,6 +33,9 @@ import {
   useCreateBudgetSection,
   useDeleteBudgetSection,
   useBudgetForecastEntries,
+  useUpsertBudgetForecast,
+  useAINarrative,
+  useSyncActuals,
 } from "@/lib/budgeting/hooks"
 import {
   DEFAULT_EXPENSE_CATEGORIES,
@@ -42,7 +45,7 @@ import {
   type BudgetLine,
 } from "@/lib/budgeting/types"
 import { COST_MODEL_KEY_OPTIONS, TEMPLATE_CATEGORY_MAP } from "@/lib/budgeting/cost-model-map"
-import { buildMonthlyForecast } from "@/lib/budgeting/forecast"
+import { buildMonthlyForecast, buildCategoryForecast, applyScenario } from "@/lib/budgeting/forecast"
 import { BudgetWaterfallChart } from "@/components/budget-waterfall-chart"
 
 const PIE_COLORS = ["#8b5cf6", "#3b82f6", "#f59e0b", "#ef4444", "#10b981", "#f97316", "#06b6d4", "#84cc16"]
@@ -1091,16 +1094,38 @@ function PLTab({ planId }: { planId: string }) {
 
 function ForecastTab({ planId }: { planId: string }) {
   const { data: analytics } = useBudgetAnalytics(planId)
+  const { data: forecastEntries = [] } = useBudgetForecastEntries(planId)
+  const { data: budgetLines = [] } = useBudgetLines(planId)
+  const upsertForecast = useUpsertBudgetForecast()
   const plan = analytics?.plan
 
-  const currentMonth = plan?.month ?? new Date().getMonth() + 1
+  const [scenario, setScenario] = useState<"base" | "optimistic" | "pessimistic">("base")
+  const [editMonth, setEditMonth] = useState<number | null>(null)
+  const [editValue, setEditValue] = useState("")
+  const [generating, setGenerating] = useState(false)
+  const [showCategories, setShowCategories] = useState(false)
+
+  const currentMonth = new Date().getMonth() + 1
   const year = plan?.year ?? new Date().getFullYear()
   const totalPlanned = analytics?.totalPlanned ?? 0
   const totalForecast = analytics?.totalForecast ?? 0
   const totalActual = analytics?.totalActual ?? 0
   const yearEndProjection = analytics?.yearEndProjection ?? 0
 
-  const monthlyData = buildMonthlyForecast(year, totalPlanned, totalActual, currentMonth)
+  // P3-01: Build overrides map from DB entries (aggregated by month)
+  const overridesMap = useMemo(() => {
+    if (forecastEntries.length === 0) return undefined
+    const m = new Map<number, number>()
+    for (const e of forecastEntries) {
+      m.set(e.month, (m.get(e.month) ?? 0) + e.forecastAmount)
+    }
+    return m
+  }, [forecastEntries])
+
+  const rawMonthlyData = buildMonthlyForecast(year, totalPlanned, totalActual, currentMonth, undefined, undefined, overridesMap)
+
+  // P3-05: Apply scenario
+  const monthlyData = applyScenario(rawMonthlyData, scenario)
 
   const chartData = monthlyData.map(d => ({
     name: d.label,
@@ -1109,30 +1134,100 @@ function ForecastTab({ planId }: { planId: string }) {
     "Факт": d.actual || undefined,
   }))
 
+  // P3-02: Generate forecast entries for all categories
+  const handleGenerate = async () => {
+    if (budgetLines.length === 0) return
+    setGenerating(true)
+    try {
+      const categories = budgetLines.map((l: BudgetLine) => ({
+        category: l.category,
+        plannedAmount: l.plannedAmount,
+        lineType: l.lineType,
+      }))
+      const entries = buildCategoryForecast(categories, year, totalActual, currentMonth)
+      await upsertForecast.mutateAsync(entries.map(e => ({ ...e, planId })))
+    } finally {
+      setGenerating(false)
+    }
+  }
+
+  // P3-03: Save inline forecast edit
+  const saveEdit = async (month: number) => {
+    const val = Number(editValue)
+    if (isNaN(val) || val < 0) return
+    await upsertForecast.mutateAsync([{ planId, month, year, category: "__total__", forecastAmount: val }])
+    setEditMonth(null)
+    setEditValue("")
+  }
+
+  // P3-04: Category forecast matrix data
+  const categoryMatrix = useMemo(() => {
+    if (!showCategories) return []
+    const catMap = new Map<string, Map<number, number>>()
+    for (const e of forecastEntries) {
+      if (e.category === "__total__") continue
+      if (!catMap.has(e.category)) catMap.set(e.category, new Map())
+      catMap.get(e.category)!.set(e.month, (catMap.get(e.category)!.get(e.month) ?? 0) + e.forecastAmount)
+    }
+    // If no entries, use even distribution from budget lines
+    if (catMap.size === 0) {
+      for (const l of budgetLines) {
+        if (!catMap.has(l.category)) catMap.set(l.category, new Map())
+        for (let m = 1; m <= 12; m++) {
+          catMap.get(l.category)!.set(m, l.plannedAmount / 12)
+        }
+      }
+    }
+    return Array.from(catMap.entries()).map(([cat, months]) => ({ category: cat, months }))
+  }, [forecastEntries, budgetLines, showCategories])
+
   if (!analytics) return (
     <div className="flex justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-purple-500" /></div>
   )
 
   return (
     <div className="space-y-6">
+      {/* KPI Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
         <ColorStatCard label="БЮДЖЕТ (ГОД)" value={fmt(totalPlanned)} icon={<BarChart2 className="h-5 w-5" />} color="blue" />
         <ColorStatCard label="ПРОГНОЗ (ГОД)" value={fmt(totalForecast)} icon={<TrendingUp className="h-5 w-5" />} color="violet" />
         <ColorStatCard
-          label="ПРОЕКЦИЯ НА КОН. ГОДА"
+          label="ПРОЕКЦИЯ НА КОН. ПЕРИОДА"
           value={fmt(yearEndProjection)}
           icon={<CalendarRange className="h-5 w-5" />}
           color={yearEndProjection <= totalPlanned ? "green" : "red"}
         />
       </div>
 
+      {/* Controls: Scenario toggle + Generate button */}
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="flex rounded-lg border border-border overflow-hidden text-sm">
+          {(["base", "optimistic", "pessimistic"] as const).map(s => (
+            <button key={s} onClick={() => setScenario(s)}
+              className={`px-3 py-1.5 transition-colors ${scenario === s ? "bg-purple-600 text-white" : "hover:bg-muted"}`}>
+              {s === "base" ? "Базовый" : s === "optimistic" ? "Оптимист." : "Пессимист."}
+            </button>
+          ))}
+        </div>
+        <Button size="sm" variant="outline" onClick={handleGenerate} disabled={generating || budgetLines.length === 0}>
+          {generating ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <TrendingUp className="h-4 w-4 mr-1" />}
+          Сгенерировать прогноз
+        </Button>
+        {forecastEntries.length > 0 && (
+          <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 text-xs">
+            {forecastEntries.length} записей в БД
+          </Badge>
+        )}
+      </div>
+
+      {/* Chart */}
       <Card>
-        <CardHeader><CardTitle className="text-sm">12-месячный прогноз</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="text-sm">12-месячный прогноз {scenario !== "base" && `(${scenario === "optimistic" ? "оптимист." : "пессимист."})`}</CardTitle></CardHeader>
         <CardContent>
           <ResponsiveContainer width="100%" height={320}>
             <ComposedChart data={chartData} margin={{ left: 10, right: 10 }}>
               <XAxis dataKey="name" tick={{ fontSize: 11 }} />
-              <YAxis tick={{ fontSize: 11 }} tickFormatter={v => (v / 1000).toFixed(0) + "k"} />
+              <YAxis tick={{ fontSize: 11 }} tickFormatter={(v: number) => (v / 1000).toFixed(0) + "k"} />
               <Tooltip formatter={(v: any) => fmt(v)} />
               <Legend />
               <Bar dataKey="Факт" fill="#10b981" radius={[3, 3, 0, 0]} />
@@ -1143,6 +1238,7 @@ function ForecastTab({ planId }: { planId: string }) {
         </CardContent>
       </Card>
 
+      {/* Monthly table with inline edit */}
       <Card>
         <CardHeader><CardTitle className="text-sm">По месяцам</CardTitle></CardHeader>
         <CardContent className="p-0">
@@ -1162,7 +1258,20 @@ function ForecastTab({ planId }: { planId: string }) {
                   <tr key={d.month} className={`border-t border-border/50 ${d.isProjected ? "opacity-70" : ""}`}>
                     <td className="px-4 py-2 font-medium">{d.label} {d.year}</td>
                     <td className="px-4 py-2 text-right font-mono">{fmt(d.planned)}</td>
-                    <td className="px-4 py-2 text-right font-mono text-purple-600 dark:text-purple-400">{fmt(d.forecast)}</td>
+                    <td className="px-4 py-2 text-right font-mono text-purple-600 dark:text-purple-400">
+                      {editMonth === d.month ? (
+                        <Input type="number" className="h-7 w-28 text-right text-xs inline-block ml-auto"
+                          value={editValue} autoFocus
+                          onChange={e => setEditValue(e.target.value)}
+                          onBlur={() => saveEdit(d.month)}
+                          onKeyDown={e => e.key === "Enter" && saveEdit(d.month)} />
+                      ) : (
+                        <span className={`cursor-pointer hover:underline ${d.isOverride ? "font-bold" : ""}`}
+                          onClick={() => { if (!d.isProjected || d.isOverride || true) { setEditMonth(d.month); setEditValue(String(d.forecast)) } }}>
+                          {fmt(d.forecast)} {d.isOverride && <Pencil className="h-3 w-3 inline ml-1 opacity-50" />}
+                        </span>
+                      )}
+                    </td>
                     <td className="px-4 py-2 text-right font-mono text-green-600 dark:text-green-400">{d.isProjected ? "—" : fmt(d.actual)}</td>
                     <td className="px-4 py-2 text-center">
                       {d.isProjected
@@ -1175,6 +1284,53 @@ function ForecastTab({ planId }: { planId: string }) {
             </table>
           </div>
         </CardContent>
+      </Card>
+
+      {/* P3-04: Category forecast matrix */}
+      <Card>
+        <CardHeader>
+          <button className="flex items-center gap-2 text-sm font-medium"
+            onClick={() => setShowCategories(!showCategories)}>
+            {showCategories ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+            По категориям (матрица)
+          </button>
+        </CardHeader>
+        {showCategories && (
+          <CardContent className="p-0">
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs">
+                <thead className="bg-muted/50">
+                  <tr>
+                    <th className="px-3 py-2 text-left font-medium sticky left-0 bg-muted/50 min-w-[180px]">Категория</th>
+                    {Array.from({ length: 12 }, (_, i) => (
+                      <th key={i} className="px-2 py-2 text-right font-medium min-w-[80px]">
+                        {["Янв","Фев","Мар","Апр","Май","Июн","Июл","Авг","Сен","Окт","Ноя","Дек"][i]}
+                      </th>
+                    ))}
+                    <th className="px-3 py-2 text-right font-medium min-w-[100px]">Итого</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {categoryMatrix.map(({ category, months }) => {
+                    const total = Array.from(months.values()).reduce((s, v) => s + v, 0)
+                    return (
+                      <tr key={category} className="border-t border-border/50">
+                        <td className="px-3 py-1.5 font-medium sticky left-0 bg-background truncate max-w-[180px]">{category}</td>
+                        {Array.from({ length: 12 }, (_, i) => (
+                          <td key={i} className="px-2 py-1.5 text-right font-mono">{fmt(months.get(i + 1) ?? 0)}</td>
+                        ))}
+                        <td className="px-3 py-1.5 text-right font-mono font-bold">{fmt(total)}</td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+            {categoryMatrix.length === 0 && (
+              <p className="text-center text-muted-foreground py-6 text-sm">Нажмите «Сгенерировать прогноз» чтобы заполнить матрицу</p>
+            )}
+          </CardContent>
+        )}
       </Card>
     </div>
   )

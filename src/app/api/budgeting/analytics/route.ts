@@ -39,9 +39,16 @@ export async function GET(req: NextRequest) {
     }
   }
 
+  // Check if BudgetForecastEntry records exist — use them for totalForecast if so
+  const forecastEntries = await prisma.budgetForecastEntry.findMany({
+    where: { planId, organizationId: orgId },
+  })
+
   // Totals
   const totalPlanned = lines.reduce((s: number, l: { plannedAmount: number }) => s + l.plannedAmount, 0)
-  const totalForecast = lines.reduce((s: number, l: { forecastAmount: number | null; plannedAmount: number }) => s + (l.forecastAmount ?? l.plannedAmount), 0)
+  const totalForecast = forecastEntries.length > 0
+    ? forecastEntries.reduce((s: number, e: { forecastAmount: number }) => s + e.forecastAmount, 0)
+    : lines.reduce((s: number, l: { forecastAmount: number | null; plannedAmount: number }) => s + (l.forecastAmount ?? l.plannedAmount), 0)
   const manualActualTotal = manualActuals.reduce((s: number, a: { actualAmount: number }) => s + a.actualAmount, 0)
   const totalActual = autoActualTotal > 0 ? autoActualTotal : manualActualTotal
   const totalVariance = totalPlanned - totalActual

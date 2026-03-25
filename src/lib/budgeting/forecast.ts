@@ -5,7 +5,11 @@
  * 1. Actual data YTD (from cost model or manual actuals)
  * 2. Budget plan amount as the ceiling/reference
  * 3. Linear extrapolation from actuals YTD for remaining months
+ * 4. DB overrides from BudgetForecastEntry (user-confirmed or generated)
+ * 5. Scenario multipliers (base / optimistic / pessimistic)
  */
+
+export type ScenarioType = "base" | "optimistic" | "pessimistic"
 
 export interface MonthlyDataPoint {
   month: number     // 1-12
@@ -15,6 +19,7 @@ export interface MonthlyDataPoint {
   forecast: number
   actual: number    // 0 if not yet recorded
   isProjected: boolean // true for future months
+  isOverride: boolean  // true if forecast came from DB entry
 }
 
 const MONTH_LABELS = ["Янв", "Фев", "Мар", "Апр", "Май", "Июн", "Июл", "Авг", "Сен", "Окт", "Ноя", "Дек"]
@@ -28,6 +33,7 @@ const MONTH_LABELS = ["Янв", "Фев", "Мар", "Апр", "Май", "Июн"
  * @param currentMonth     Current month (1-12), actuals available up to this month
  * @param monthlyActuals   Optional map: month → actual amount (if known per-month)
  * @param monthlyPlanned   Optional map: month → planned amount per month
+ * @param overrides        Optional map: month → forecast from BudgetForecastEntry DB records
  */
 export function buildMonthlyForecast(
   year: number,
@@ -36,6 +42,7 @@ export function buildMonthlyForecast(
   currentMonth: number,
   monthlyActuals?: Map<number, number>,
   monthlyPlanned?: Map<number, number>,
+  overrides?: Map<number, number>,
 ): MonthlyDataPoint[] {
   const points: MonthlyDataPoint[] = []
 
@@ -48,12 +55,24 @@ export function buildMonthlyForecast(
   for (let m = 1; m <= 12; m++) {
     const planned = monthlyPlanned?.get(m) ?? defaultMonthlyPlanned
     const isPast = m <= currentMonth
-    const actual = isPast ? (monthlyActuals?.get(m) ?? (m === currentMonth ? totalActual - [...Array(currentMonth - 1)].reduce((s, _, i) => s + (monthlyActuals?.get(i + 1) ?? actualRunRate), 0) : actualRunRate)) : 0
-    const forecast = isPast
-      ? actual                           // Past = actual
-      : actualRunRate > 0                // Future = extrapolate from run rate
-        ? actualRunRate
-        : planned                        // Fallback to plan
+    const hasOverride = overrides?.has(m) ?? false
+
+    // Actual: use known per-month data, or distribute evenly
+    const actual = isPast
+      ? (monthlyActuals?.get(m) ?? actualRunRate)
+      : 0
+
+    // Forecast priority: DB override > past actual > extrapolation > plan
+    let forecast: number
+    if (hasOverride) {
+      forecast = overrides!.get(m)!
+    } else if (isPast) {
+      forecast = actual
+    } else if (actualRunRate > 0) {
+      forecast = actualRunRate
+    } else {
+      forecast = planned
+    }
 
     points.push({
       month: m,
@@ -61,8 +80,9 @@ export function buildMonthlyForecast(
       label: MONTH_LABELS[m - 1],
       planned: Math.round(planned),
       forecast: Math.round(forecast),
-      actual: isPast ? Math.round(actualRunRate) : 0,
+      actual: isPast ? Math.round(actual) : 0,
       isProjected: !isPast,
+      isOverride: hasOverride,
     })
   }
 
@@ -70,8 +90,73 @@ export function buildMonthlyForecast(
 }
 
 /**
+ * Build per-category monthly forecast entries for bulk generation.
+ * Returns an array of { category, month, year, forecastAmount } ready for DB upsert.
+ */
+export function buildCategoryForecast(
+  categories: Array<{ category: string; plannedAmount: number; lineType: string }>,
+  year: number,
+  totalActual: number,
+  currentMonth: number,
+): Array<{ category: string; month: number; year: number; forecastAmount: number }> {
+  const entries: Array<{ category: string; month: number; year: number; forecastAmount: number }> = []
+  const totalPlanned = categories.reduce((s, c) => s + c.plannedAmount, 0)
+
+  for (const cat of categories) {
+    const weight = totalPlanned > 0 ? cat.plannedAmount / totalPlanned : 1 / categories.length
+    const catActual = totalActual * weight
+    const catRunRate = currentMonth > 0 ? catActual / currentMonth : 0
+    const catMonthlyPlan = cat.plannedAmount / 12
+
+    for (let m = 1; m <= 12; m++) {
+      const isPast = m <= currentMonth
+      const forecastAmount = isPast
+        ? catRunRate
+        : catRunRate > 0 ? catRunRate : catMonthlyPlan
+
+      entries.push({
+        category: cat.category,
+        month: m,
+        year,
+        forecastAmount: Math.round(forecastAmount * 100) / 100,
+      })
+    }
+  }
+
+  return entries
+}
+
+/**
+ * Apply scenario multipliers to forecast data.
+ * Base = 1.0x, Optimistic = -10% expenses / +10% revenue, Pessimistic = +15% expenses / -10% revenue
+ */
+export function applyScenario(
+  points: MonthlyDataPoint[],
+  scenario: ScenarioType,
+  lineType: "expense" | "revenue" | "mixed" = "mixed",
+): MonthlyDataPoint[] {
+  if (scenario === "base") return points
+
+  return points.map(p => {
+    if (!p.isProjected && !p.isOverride) return p // Don't modify past actuals
+
+    let multiplier = 1.0
+    if (scenario === "optimistic") {
+      multiplier = lineType === "revenue" ? 1.10 : lineType === "expense" ? 0.90 : 0.95
+    } else { // pessimistic
+      multiplier = lineType === "revenue" ? 0.90 : lineType === "expense" ? 1.15 : 1.10
+    }
+
+    return {
+      ...p,
+      forecast: Math.round(p.forecast * multiplier),
+    }
+  })
+}
+
+/**
  * Calculate year-end projection from YTD actuals.
- * Simple linear extrapolation: (actual / monthsElapsed) * 12
+ * Simple linear extrapolation: (actual / monthsElapsed) * totalMonths
  */
 export function calcYearEndProjection(totalActual: number, currentMonth: number, totalMonths = 12): number {
   if (currentMonth <= 0) return 0

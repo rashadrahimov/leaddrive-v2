@@ -285,3 +285,34 @@ export function useBudgetAnalytics(planId: string) {
     enabled: !!orgId && !!planId,
   })
 }
+
+// ─── AI Narrative ────────────────────────────────────────────────────────────
+
+export function useAINarrative() {
+  const orgId = useOrgId()
+  return useMutation({
+    mutationFn: ({ planId, threshold }: { planId: string; threshold?: number }) =>
+      apiFetch<{ narrative: string }>("/api/budgeting/ai-narrative", orgId, {
+        method: "POST",
+        body: JSON.stringify({ planId, threshold }),
+      }),
+  })
+}
+
+// ─── Sync Actuals ────────────────────────────────────────────────────────────
+
+export function useSyncActuals() {
+  const orgId = useOrgId()
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (planId: string) =>
+      apiFetch<{ synced: number }>("/api/budgeting/sync-actuals", orgId, {
+        method: "POST",
+        body: JSON.stringify({ planId }),
+      }),
+    onSuccess: (_data, planId) => {
+      qc.invalidateQueries({ queryKey: ["budgeting", "actuals", planId, orgId] })
+      qc.invalidateQueries({ queryKey: ["budgeting", "analytics", planId, orgId] })
+    },
+  })
+}
