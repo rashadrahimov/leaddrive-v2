@@ -19,8 +19,12 @@ import { Textarea } from "@/components/ui/textarea"
 import { Progress } from "@/components/ui/progress"
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, Legend,
+  PieChart, Pie, Cell, Legend, CartesianGrid, LabelList,
 } from "recharts"
+import { BUDGET_COLORS, ANIMATION, AXIS_TICK, GRID_STYLE, HBarGradient, VBarGradient, fmtK } from "@/lib/budget-chart-theme"
+import { BudgetChartTooltip } from "@/components/budget-chart-tooltip"
+import { BudgetBarLabel } from "@/components/budget-bar-label"
+import { BudgetChartLegend } from "@/components/budget-chart-legend"
 import {
   useBudgetPlans,
   useCreateBudgetPlan,
@@ -59,7 +63,7 @@ import {
 import { COST_MODEL_KEY_OPTIONS, TEMPLATE_CATEGORY_MAP } from "@/lib/budgeting/cost-model-map"
 import { BudgetWaterfallChart } from "@/components/budget-waterfall-chart"
 
-const PIE_COLORS = ["#8b5cf6", "#3b82f6", "#f59e0b", "#ef4444", "#10b981", "#f97316", "#06b6d4", "#84cc16"]
+const PIE_COLORS = BUDGET_COLORS.pie
 
 function fmt(n: number): string {
   return Math.round(n).toLocaleString() + " ₼"
@@ -1317,36 +1321,60 @@ function WorkspaceTab({ planId }: { planId: string }) {
       {/* Charts — separate for expenses and revenue */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {expenseBarData.length > 0 && (
-          <Card>
-            <CardHeader><CardTitle className="text-sm" title={t("hintChartExpenses")}>{t("sectionExpenses")}: {t("colPlan")} vs {t("colActual")}</CardTitle></CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={Math.max(200, expenseBarData.length * 45)}>
-                <BarChart data={expenseBarData} layout="vertical" margin={{ left: 10, right: 10 }}>
-                  <XAxis type="number" tick={{ fontSize: 11 }} tickFormatter={(v: number) => (v / 1000).toFixed(0) + "k"} />
-                  <YAxis type="category" dataKey="name" tick={{ fontSize: 10 }} width={120} />
-                  <Tooltip formatter={(v: any) => fmt(v)} />
-                  <Legend />
-                  <Bar dataKey={planLabel} fill="#ef4444" radius={[0, 3, 3, 0]} />
-                  <Bar dataKey={actualLabel} fill="#f97316" radius={[0, 3, 3, 0]} />
+          <Card className="overflow-hidden">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-semibold" title={t("hintChartExpenses")}>{t("sectionExpenses")}: {t("colPlan")} vs {t("colActual")}</CardTitle>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <ResponsiveContainer width="100%" height={Math.max(220, expenseBarData.length * 50)}>
+                <BarChart data={expenseBarData} layout="vertical" margin={{ left: 10, right: 70, top: 5, bottom: 5 }}>
+                  <defs>
+                    <HBarGradient id="exp-plan-grad" color={BUDGET_COLORS.expensePlan} />
+                    <HBarGradient id="exp-actual-grad" color={BUDGET_COLORS.expenseActual} />
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted-foreground/15" horizontal={false} vertical={true} />
+                  <XAxis type="number" tick={AXIS_TICK} tickFormatter={(v: number) => fmtK(v)} axisLine={false} tickLine={false} />
+                  <YAxis type="category" dataKey="name" tick={{ fontSize: 11, fill: "#94a3b8" }} width={130} axisLine={false} tickLine={false} />
+                  <Tooltip content={<BudgetChartTooltip mode="plan-vs-actual" planKey={planLabel} actualKey={actualLabel} />} cursor={{ fill: "hsl(var(--muted))", opacity: 0.3 }} />
+                  <Bar dataKey={planLabel} fill="url(#exp-plan-grad)" radius={[0, 4, 4, 0]} animationDuration={ANIMATION.duration} animationEasing={ANIMATION.easing} barSize={16} />
+                  <Bar dataKey={actualLabel} fill="url(#exp-actual-grad)" radius={[0, 4, 4, 0]} animationDuration={ANIMATION.duration} animationEasing={ANIMATION.easing} barSize={16}>
+                    <LabelList content={(props: any) => <BudgetBarLabel {...props} horizontal />} />
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
+              <BudgetChartLegend items={[
+                { label: planLabel, color: BUDGET_COLORS.expensePlan, total: expenseBarData.reduce((s: number, d: any) => s + (d[planLabel] || 0), 0) },
+                { label: actualLabel, color: BUDGET_COLORS.expenseActual, total: expenseBarData.reduce((s: number, d: any) => s + (d[actualLabel] || 0), 0) },
+              ]} />
             </CardContent>
           </Card>
         )}
         {revenueBarData.length > 0 && (
-          <Card>
-            <CardHeader><CardTitle className="text-sm" title={t("hintChartRevenues")}>{t("sectionRevenues")}: {t("colPlan")} vs {t("colActual")}</CardTitle></CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={Math.max(200, revenueBarData.length * 45)}>
-                <BarChart data={revenueBarData} layout="vertical" margin={{ left: 10, right: 10 }}>
-                  <XAxis type="number" tick={{ fontSize: 11 }} tickFormatter={(v: number) => (v / 1000).toFixed(0) + "k"} />
-                  <YAxis type="category" dataKey="name" tick={{ fontSize: 10 }} width={120} />
-                  <Tooltip formatter={(v: any) => fmt(v)} />
-                  <Legend />
-                  <Bar dataKey={planLabel} fill="#8b5cf6" radius={[0, 3, 3, 0]} />
-                  <Bar dataKey={actualLabel} fill="#10b981" radius={[0, 3, 3, 0]} />
+          <Card className="overflow-hidden">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-semibold" title={t("hintChartRevenues")}>{t("sectionRevenues")}: {t("colPlan")} vs {t("colActual")}</CardTitle>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <ResponsiveContainer width="100%" height={Math.max(220, revenueBarData.length * 50)}>
+                <BarChart data={revenueBarData} layout="vertical" margin={{ left: 10, right: 70, top: 5, bottom: 5 }}>
+                  <defs>
+                    <HBarGradient id="rev-plan-grad" color={BUDGET_COLORS.revenuePlan} />
+                    <HBarGradient id="rev-actual-grad" color={BUDGET_COLORS.revenueActual} />
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted-foreground/15" horizontal={false} vertical={true} />
+                  <XAxis type="number" tick={AXIS_TICK} tickFormatter={(v: number) => fmtK(v)} axisLine={false} tickLine={false} />
+                  <YAxis type="category" dataKey="name" tick={{ fontSize: 11, fill: "#94a3b8" }} width={130} axisLine={false} tickLine={false} />
+                  <Tooltip content={<BudgetChartTooltip mode="plan-vs-actual" planKey={planLabel} actualKey={actualLabel} />} cursor={{ fill: "hsl(var(--muted))", opacity: 0.3 }} />
+                  <Bar dataKey={planLabel} fill="url(#rev-plan-grad)" radius={[0, 4, 4, 0]} animationDuration={ANIMATION.duration} animationEasing={ANIMATION.easing} barSize={16} />
+                  <Bar dataKey={actualLabel} fill="url(#rev-actual-grad)" radius={[0, 4, 4, 0]} animationDuration={ANIMATION.duration} animationEasing={ANIMATION.easing} barSize={16}>
+                    <LabelList content={(props: any) => <BudgetBarLabel {...props} horizontal />} />
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
+              <BudgetChartLegend items={[
+                { label: planLabel, color: BUDGET_COLORS.revenuePlan, total: revenueBarData.reduce((s: number, d: any) => s + (d[planLabel] || 0), 0) },
+                { label: actualLabel, color: BUDGET_COLORS.revenueActual, total: revenueBarData.reduce((s: number, d: any) => s + (d[actualLabel] || 0), 0) },
+              ]} />
             </CardContent>
           </Card>
         )}
@@ -1575,35 +1603,80 @@ function OverviewTab({ planId }: { planId: string }) {
       {/* Charts */}
       {barData.length > 0 && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card>
-            <CardHeader><CardTitle className="text-sm">{t("chartPlanForecastActual")}</CardTitle></CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={barData} layout="vertical" margin={{ left: 20, right: 10 }}>
-                  <XAxis type="number" tick={{ fontSize: 11 }} tickFormatter={v => (v / 1000).toFixed(0) + "k"} />
-                  <YAxis type="category" dataKey="name" tick={{ fontSize: 10 }} width={130} />
-                  <Tooltip formatter={(v: any) => fmt(v)} />
-                  <Legend />
-                  <Bar dataKey={ovPlanLabel} fill="#ef4444" radius={[0, 3, 3, 0]} />
-                  <Bar dataKey={ovForecastLabel} fill="#8b5cf6" radius={[0, 3, 3, 0]} />
-                  <Bar dataKey={ovActualLabel} fill="#10b981" radius={[0, 3, 3, 0]} />
+          <Card className="overflow-hidden">
+            <CardHeader className="pb-2"><CardTitle className="text-sm font-semibold">{t("chartPlanForecastActual")}</CardTitle></CardHeader>
+            <CardContent className="pt-0">
+              <ResponsiveContainer width="100%" height={Math.max(300, barData.length * 40)}>
+                <BarChart data={barData} layout="vertical" margin={{ left: 20, right: 70, top: 5, bottom: 5 }}>
+                  <defs>
+                    <HBarGradient id="ov-plan-grad" color={BUDGET_COLORS.planIndigo} />
+                    <HBarGradient id="ov-forecast-grad" color={BUDGET_COLORS.forecastAmber} />
+                    <HBarGradient id="ov-actual-grad" color={BUDGET_COLORS.actualGreen} />
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted-foreground/15" horizontal={false} vertical={true} />
+                  <XAxis type="number" tick={AXIS_TICK} tickFormatter={v => fmtK(v)} axisLine={false} tickLine={false} />
+                  <YAxis type="category" dataKey="name" tick={{ fontSize: 11, fill: "#94a3b8" }} width={140} axisLine={false} tickLine={false} />
+                  <Tooltip content={<BudgetChartTooltip mode="plan-forecast-actual" planKey={ovPlanLabel} actualKey={ovActualLabel} />} cursor={{ fill: "hsl(var(--muted))", opacity: 0.3 }} />
+                  <Bar dataKey={ovPlanLabel} fill="url(#ov-plan-grad)" radius={[0, 4, 4, 0]} animationDuration={ANIMATION.duration} animationEasing={ANIMATION.easing} barSize={12} />
+                  <Bar dataKey={ovForecastLabel} fill="url(#ov-forecast-grad)" radius={[0, 4, 4, 0]} animationDuration={ANIMATION.duration} animationEasing={ANIMATION.easing} barSize={12} />
+                  <Bar dataKey={ovActualLabel} fill="url(#ov-actual-grad)" radius={[0, 4, 4, 0]} animationDuration={ANIMATION.duration} animationEasing={ANIMATION.easing} barSize={12}>
+                    <LabelList content={(props: any) => <BudgetBarLabel {...props} horizontal />} />
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
+              <BudgetChartLegend items={[
+                { label: ovPlanLabel, color: BUDGET_COLORS.planIndigo },
+                { label: ovForecastLabel, color: BUDGET_COLORS.forecastAmber },
+                { label: ovActualLabel, color: BUDGET_COLORS.actualGreen },
+              ]} />
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader><CardTitle className="text-sm">{t("chartExpenseComposition")}</CardTitle></CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
+          <Card className="overflow-hidden">
+            <CardHeader className="pb-2"><CardTitle className="text-sm font-semibold">{t("chartExpenseComposition")}</CardTitle></CardHeader>
+            <CardContent className="pt-0">
+              <ResponsiveContainer width="100%" height={320}>
                 <PieChart>
-                  <Pie data={pieData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={60} outerRadius={100} paddingAngle={2}>
-                    {pieData.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
+                  <defs>
+                    {PIE_COLORS.map((color: string, i: number) => (
+                      <linearGradient key={i} id={`pie-grad-${i}`} x1="0" y1="0" x2="1" y2="1">
+                        <stop offset="0%" stopColor={color} stopOpacity={0.85} />
+                        <stop offset="100%" stopColor={color} stopOpacity={1} />
+                      </linearGradient>
+                    ))}
+                  </defs>
+                  <Pie
+                    data={pieData}
+                    dataKey="value"
+                    nameKey="name"
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={65}
+                    outerRadius={105}
+                    paddingAngle={3}
+                    animationDuration={ANIMATION.duration}
+                    animationEasing={ANIMATION.easing}
+                    stroke="none"
+                  >
+                    {pieData.map((_: any, i: number) => (
+                      <Cell key={i} fill={`url(#pie-grad-${i % PIE_COLORS.length})`} />
+                    ))}
                   </Pie>
-                  <Tooltip formatter={(v: any) => fmt(v)} />
-                  <Legend iconSize={10} wrapperStyle={{ fontSize: 11 }} />
+                  {/* Center label */}
+                  <text x="50%" y="48%" textAnchor="middle" dominantBaseline="central" className="fill-muted-foreground" fontSize={11}>
+                    {t("kpiPlan")}
+                  </text>
+                  <text x="50%" y="56%" textAnchor="middle" dominantBaseline="central" className="fill-foreground" fontSize={14} fontWeight="bold">
+                    {fmt(totalPlanned)}
+                  </text>
+                  <Tooltip content={<BudgetChartTooltip mode="composition" totalValue={totalPlanned} />} />
                 </PieChart>
               </ResponsiveContainer>
+              <BudgetChartLegend items={pieData.map((d: any, i: number) => ({
+                label: d.name,
+                color: PIE_COLORS[i % PIE_COLORS.length] as string,
+                total: d.value,
+              }))} />
             </CardContent>
           </Card>
         </div>
@@ -2116,7 +2189,7 @@ function PlansTab({ activePlanId, onSelect, onShowCreate }: { activePlanId: stri
 
 // ─── Comparison Tab ────────────────────────────────────────────────────────────
 
-const COMPARISON_COLORS = ["#8b5cf6", "#3b82f6", "#f59e0b", "#ef4444"]
+const COMPARISON_COLORS = BUDGET_COLORS.comparison
 
 function ComparisonTab() {
   const t = useTranslations("budgeting")
@@ -2212,21 +2285,42 @@ function ComparisonTab() {
       {selectedIds.length >= 2 && analyticsArr.length >= 2 && (
         <>
           {/* P4-02: Grouped bar chart */}
-          <Card>
-            <CardHeader><CardTitle className="text-sm">{t("chartComparisonByCategory")}</CardTitle></CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={350}>
-                <BarChart data={chartData} margin={{ left: 10, right: 10 }}>
-                  <XAxis dataKey="category" tick={{ fontSize: 10 }} angle={-25} textAnchor="end" height={60} />
-                  <YAxis tick={{ fontSize: 11 }} tickFormatter={(v: number) => (v / 1000).toFixed(0) + "k"} />
-                  <Tooltip formatter={(v: any) => fmt(v)} />
-                  <Legend />
+          <Card className="overflow-hidden">
+            <CardHeader className="pb-2"><CardTitle className="text-sm font-semibold">{t("chartComparisonByCategory")}</CardTitle></CardHeader>
+            <CardContent className="pt-0">
+              <ResponsiveContainer width="100%" height={380}>
+                <BarChart data={chartData} margin={{ left: 10, right: 10, top: 20, bottom: 5 }}>
+                  <defs>
+                    {selectedIds.map((_, i) => (
+                      <VBarGradient key={i} id={`comp-grad-${i}`} color={COMPARISON_COLORS[i]} />
+                    ))}
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted-foreground/15" horizontal={true} vertical={false} />
+                  <XAxis dataKey="category" tick={{ fontSize: 10, fill: "#94a3b8" }} angle={-25} textAnchor="end" height={60} axisLine={false} tickLine={false} />
+                  <YAxis tick={AXIS_TICK} tickFormatter={(v: number) => fmtK(v)} axisLine={false} tickLine={false} />
+                  <Tooltip content={<BudgetChartTooltip mode="comparison" />} cursor={{ fill: "hsl(var(--muted))", opacity: 0.3 }} />
                   {selectedIds.map((id, i) => {
                     const planName = plans.find(p => p.id === id)?.name || `${t("colPlan")} ${i + 1}`
-                    return <Bar key={id} dataKey={planName} fill={COMPARISON_COLORS[i]} radius={[3, 3, 0, 0]} />
+                    return (
+                      <Bar
+                        key={id}
+                        dataKey={planName}
+                        fill={`url(#comp-grad-${i})`}
+                        radius={[4, 4, 0, 0]}
+                        animationDuration={ANIMATION.duration}
+                        animationEasing={ANIMATION.easing}
+                        barSize={24}
+                      >
+                        <LabelList content={(props: any) => <BudgetBarLabel {...props} horizontal={false} />} />
+                      </Bar>
+                    )
                   })}
                 </BarChart>
               </ResponsiveContainer>
+              <BudgetChartLegend items={selectedIds.map((id, i) => ({
+                label: plans.find(p => p.id === id)?.name || `${t("colPlan")} ${i + 1}`,
+                color: COMPARISON_COLORS[i],
+              }))} />
             </CardContent>
           </Card>
 

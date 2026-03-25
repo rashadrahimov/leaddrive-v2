@@ -1,6 +1,7 @@
 "use client"
 
-import { ComposedChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, ReferenceLine, LabelList } from "recharts"
+import { ComposedChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, ReferenceLine, LabelList, CartesianGrid } from "recharts"
+import { BUDGET_COLORS, ANIMATION, AXIS_TICK, fmtK, fmt } from "@/lib/budget-chart-theme"
 
 interface WaterfallChartProps {
   totalPlanned: number
@@ -9,10 +10,6 @@ interface WaterfallChartProps {
   totalVariance: number
   yearEndProjection: number
   className?: string
-}
-
-function fmt(n: number): string {
-  return Math.round(n).toLocaleString() + " ₼"
 }
 
 function pctLabel(value: number, reference: number): string {
@@ -30,88 +27,131 @@ export function BudgetWaterfallChart({
   yearEndProjection,
   className,
 }: WaterfallChartProps) {
-  // Waterfall: Budget → Forecast Delta → Actual → Variance → Year-End Projection
   const forecastDelta = totalForecast - totalPlanned
-  const actualDelta = totalActual - totalForecast
-  const projectionDelta = yearEndProjection - totalActual
-
-  const forecastPct = totalPlanned > 0 ? Math.abs(forecastDelta / totalPlanned * 100) : 0
-  const variancePct = totalActual > 0 ? Math.abs(totalVariance / totalActual * 100) : 0
   const actualVsPlanPct = totalPlanned > 0 ? ((totalActual - totalPlanned) / totalPlanned * 100) : 0
   const projVsPlanPct = totalPlanned > 0 ? ((yearEndProjection - totalPlanned) / totalPlanned * 100) : 0
 
   const data = [
-    { name: "Бюджет", value: totalPlanned, base: 0, isStart: true, label: "" },
-    { name: "Δ Прогноз", value: Math.abs(forecastDelta), base: forecastDelta >= 0 ? totalPlanned : totalPlanned + forecastDelta, positive: forecastDelta >= 0, label: pctLabel(totalForecast, totalPlanned) },
-    { name: "Факт", value: totalActual, base: 0, isTotal: true, label: pctLabel(totalActual, totalPlanned) },
-    { name: "Δ Отклонение", value: Math.abs(totalVariance), base: totalVariance >= 0 ? totalActual : totalActual - Math.abs(totalVariance), positive: totalVariance >= 0, label: "" },
-    { name: "Проекция", value: yearEndProjection, base: 0, isTotal: true, label: pctLabel(yearEndProjection, totalPlanned) },
+    { name: "Бюджет", value: totalPlanned, base: 0, isStart: true, label: "", desc: "Запланированный бюджет" },
+    { name: "Δ Прогноз", value: Math.abs(forecastDelta), base: forecastDelta >= 0 ? totalPlanned : totalPlanned + forecastDelta, positive: forecastDelta >= 0, label: pctLabel(totalForecast, totalPlanned), desc: `Прогноз ${forecastDelta >= 0 ? "выше" : "ниже"} бюджета` },
+    { name: "Факт", value: totalActual, base: 0, isTotal: true, label: pctLabel(totalActual, totalPlanned), desc: "Фактические расходы" },
+    { name: "Δ Отклонение", value: Math.abs(totalVariance), base: totalVariance >= 0 ? totalActual : totalActual - Math.abs(totalVariance), positive: totalVariance >= 0, label: "", desc: `Отклонение ${totalVariance >= 0 ? "перерасход" : "экономия"}` },
+    { name: "Проекция", value: yearEndProjection, base: 0, isTotal: true, label: pctLabel(yearEndProjection, totalPlanned), desc: "Прогноз на конец года" },
   ]
 
   const getColor = (item: (typeof data)[0]) => {
-    if (item.isStart) return "#3b82f6"
+    if (item.isStart) return BUDGET_COLORS.planIndigo
     if (item.isTotal) {
-      // Color totals based on variance from plan
       if (item.name === "Факт") {
         const pct = Math.abs(actualVsPlanPct)
-        if (pct <= 5) return "#10b981"     // green: within 5%
-        if (pct <= 15) return "#f59e0b"    // amber: 5-15%
-        return "#ef4444"                    // red: >15%
+        if (pct <= 5) return BUDGET_COLORS.actualGreen
+        if (pct <= 15) return BUDGET_COLORS.warning
+        return BUDGET_COLORS.negative
       }
       if (item.name === "Проекция") {
         const pct = Math.abs(projVsPlanPct)
-        if (pct <= 5) return "#8b5cf6"
-        if (pct <= 15) return "#f59e0b"
-        return "#ef4444"
+        if (pct <= 5) return BUDGET_COLORS.planViolet
+        if (pct <= 15) return BUDGET_COLORS.warning
+        return BUDGET_COLORS.negative
       }
-      return "#8b5cf6"
+      return BUDGET_COLORS.planViolet
     }
-    if (item.positive === undefined) return "#6b7280"
-    return item.positive ? "#10b981" : "#ef4444"
+    if (item.positive === undefined) return BUDGET_COLORS.neutral
+    return item.positive ? BUDGET_COLORS.positive : BUDGET_COLORS.negative
   }
 
   const CustomTooltip = ({ active, payload }: any) => {
     if (!active || !payload?.length) return null
     const d = payload[0].payload
+    const color = getColor(d)
     return (
-      <div className="bg-popover border border-border rounded-lg p-3 shadow-lg text-sm">
-        <p className="font-medium mb-1">{d.name}</p>
-        <p>{fmt(d.value)}</p>
-        {d.label && <p className="text-xs mt-1 font-mono">{d.label} vs бюджет</p>}
+      <div className="bg-popover/95 backdrop-blur-sm border border-border rounded-xl p-3.5 shadow-xl text-sm min-w-[200px]">
+        <div className="flex items-center gap-2 mb-2 border-b border-border/50 pb-2">
+          <span className="w-3 h-3 rounded-sm" style={{ backgroundColor: color }} />
+          <span className="font-semibold text-popover-foreground">{d.name}</span>
+        </div>
+        <div className="flex justify-between items-center">
+          <span className="text-muted-foreground text-xs">{d.desc}</span>
+          <span className="font-mono font-bold text-popover-foreground">{fmt(d.value)}</span>
+        </div>
+        {d.label && (
+          <div className="mt-1.5 pt-1.5 border-t border-border/50 text-xs font-mono" style={{ color }}>
+            {d.label} vs бюджет
+          </div>
+        )}
       </div>
     )
   }
 
   const renderCustomLabel = (props: any) => {
-    const { x, y, width, value, index } = props
+    const { x, y, width, index } = props
     const item = data[index]
-    if (!item?.label) return null
-    const isNegative = item.label.startsWith("-")
+    if (!item) return null
+
+    // Show value label on all bars
+    const valueLabel = fmtK(item.value) + " ₼"
+    const pctLabelText = item.label
+
+    const isNegative = pctLabelText?.startsWith("-")
+    const pctColor = isNegative ? BUDGET_COLORS.negative
+      : pctLabelText?.startsWith("+") && parseFloat(pctLabelText) > 15 ? BUDGET_COLORS.negative
+      : BUDGET_COLORS.positive
+
     return (
-      <text
-        x={x + width / 2}
-        y={y - 6}
-        fill={isNegative ? "#ef4444" : item.label.startsWith("+") && parseFloat(item.label) > 15 ? "#ef4444" : "#10b981"}
-        textAnchor="middle"
-        fontSize={11}
-        fontWeight="bold"
-      >
-        {item.label}
-      </text>
+      <g>
+        <text
+          x={x + width / 2}
+          y={y - (pctLabelText ? 18 : 8)}
+          fill="#94a3b8"
+          textAnchor="middle"
+          fontSize={10}
+          fontWeight={500}
+          fontFamily="monospace"
+        >
+          {valueLabel}
+        </text>
+        {pctLabelText && (
+          <text
+            x={x + width / 2}
+            y={y - 5}
+            fill={pctColor}
+            textAnchor="middle"
+            fontSize={11}
+            fontWeight="bold"
+          >
+            {pctLabelText}
+          </text>
+        )}
+      </g>
     )
   }
 
   return (
-    <ResponsiveContainer width="100%" height={300} className={className}>
-      <ComposedChart data={data} margin={{ left: 10, right: 10, top: 25 }}>
-        <XAxis dataKey="name" tick={{ fontSize: 11 }} />
-        <YAxis tick={{ fontSize: 11 }} tickFormatter={v => (v / 1000).toFixed(0) + "k"} />
-        <Tooltip content={<CustomTooltip />} />
-        <ReferenceLine y={0} stroke="#6b7280" />
-        <Bar dataKey="base" stackId="waterfall" fill="transparent" />
-        <Bar dataKey="value" stackId="waterfall" radius={[3, 3, 0, 0]}>
+    <ResponsiveContainer width="100%" height={320} className={className}>
+      <ComposedChart data={data} margin={{ left: 10, right: 10, top: 35 }}>
+        <defs>
           {data.map((entry, i) => (
-            <Cell key={i} fill={getColor(entry)} />
+            <linearGradient key={i} id={`wf-grad-${i}`} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={getColor(entry)} stopOpacity={1} />
+              <stop offset="100%" stopColor={getColor(entry)} stopOpacity={0.6} />
+            </linearGradient>
+          ))}
+        </defs>
+        <CartesianGrid strokeDasharray="3 3" className="stroke-muted-foreground/15" vertical={false} />
+        <XAxis dataKey="name" tick={{ ...AXIS_TICK, fontWeight: 500 }} axisLine={{ stroke: "#e2e8f0", strokeWidth: 1 }} tickLine={false} />
+        <YAxis tick={AXIS_TICK} tickFormatter={v => fmtK(v)} axisLine={false} tickLine={false} />
+        <Tooltip content={<CustomTooltip />} cursor={{ fill: "hsl(var(--muted))", opacity: 0.3 }} />
+        <ReferenceLine y={totalPlanned} stroke={BUDGET_COLORS.planIndigo} strokeDasharray="6 4" strokeWidth={1.5} opacity={0.5} />
+        <Bar dataKey="base" stackId="waterfall" fill="transparent" animationDuration={0} />
+        <Bar
+          dataKey="value"
+          stackId="waterfall"
+          radius={[4, 4, 0, 0]}
+          animationDuration={ANIMATION.duration}
+          animationEasing={ANIMATION.easing}
+        >
+          {data.map((entry, i) => (
+            <Cell key={i} fill={`url(#wf-grad-${i})`} />
           ))}
           <LabelList content={renderCustomLabel} />
         </Bar>
