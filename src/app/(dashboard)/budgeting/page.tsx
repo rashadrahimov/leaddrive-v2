@@ -394,11 +394,11 @@ function WorkspaceTab({ planId }: { planId: string }) {
   // New actual form for expand
   const [newActual, setNewActual] = useState({ amount: "", description: "", date: "" })
 
-  // Build actuals by category map
+  // Build actuals by category+lineType map
   const actualsByCat = useMemo(() => {
     const m = new Map<string, { total: number; items: typeof actuals }>()
     for (const a of actuals) {
-      const key = a.category
+      const key = `${a.category}||${a.lineType}`
       const existing = m.get(key) ?? { total: 0, items: [] }
       existing.total += a.actualAmount
       existing.items.push(a)
@@ -511,7 +511,7 @@ function WorkspaceTab({ planId }: { planId: string }) {
 
   // Render one grid row
   const renderRow = (line: BudgetLine) => {
-    const catActuals = actualsByCat.get(line.category)
+    const catActuals = actualsByCat.get(`${line.category}||${line.lineType}`)
     const factValue = line.isAutoActual ? (autoActualMap.get(line.category) ?? 0) : (catActuals?.total ?? 0)
     const variance = line.lineType === "revenue" ? factValue - line.plannedAmount : line.plannedAmount - factValue
     const variancePct = line.plannedAmount > 0 ? (variance / line.plannedAmount) * 100 : 0
@@ -588,7 +588,7 @@ function WorkspaceTab({ planId }: { planId: string }) {
   // Render expand detail row for actuals
   const renderExpand = (line: BudgetLine) => {
     if (expandId !== line.id || line.isAutoActual) return null
-    const items = actualsByCat.get(line.category)?.items ?? []
+    const items = actualsByCat.get(`${line.category}||${line.lineType}`)?.items ?? []
     return (
       <tr key={`expand-${line.id}`} className="bg-muted/20">
         <td colSpan={7} className="px-4 py-2">
@@ -625,7 +625,7 @@ function WorkspaceTab({ planId }: { planId: string }) {
   // Section renderer
   const renderSection = (title: string, sectionLines: BudgetLine[], totPlanned: number, totForecast: number) => {
     const totActual = sectionLines.reduce((s: number, l: BudgetLine) => {
-      const fact = l.isAutoActual ? (autoActualMap.get(l.category) ?? 0) : (actualsByCat.get(l.category)?.total ?? 0)
+      const fact = l.isAutoActual ? (autoActualMap.get(l.category) ?? 0) : (actualsByCat.get(`${l.category}||${l.lineType}`)?.total ?? 0)
       return s + fact
     }, 0)
     return (
@@ -664,8 +664,8 @@ function WorkspaceTab({ planId }: { planId: string }) {
 
   const execEmoji = executionPct >= 90 ? "🟢" : executionPct >= 60 ? "🟡" : "🔴"
 
-  const totExpActual = expenseLines.reduce((s: number, l: BudgetLine) => s + (l.isAutoActual ? (autoActualMap.get(l.category) ?? 0) : (actualsByCat.get(l.category)?.total ?? 0)), 0)
-  const totRevActual = revenueLines.reduce((s: number, l: BudgetLine) => s + (l.isAutoActual ? (autoActualMap.get(l.category) ?? 0) : (actualsByCat.get(l.category)?.total ?? 0)), 0)
+  const totExpActual = expenseLines.reduce((s: number, l: BudgetLine) => s + (l.isAutoActual ? (autoActualMap.get(l.category) ?? 0) : (actualsByCat.get(`${l.category}||${l.lineType}`)?.total ?? 0)), 0)
+  const totRevActual = revenueLines.reduce((s: number, l: BudgetLine) => s + (l.isAutoActual ? (autoActualMap.get(l.category) ?? 0) : (actualsByCat.get(`${l.category}||${l.lineType}`)?.total ?? 0)), 0)
 
   return (
     <div className="space-y-6">
