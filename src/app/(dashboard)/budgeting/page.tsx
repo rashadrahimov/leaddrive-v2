@@ -689,7 +689,7 @@ function WorkspaceTab({ planId }: { planId: string }) {
     }
 
     return (
-      <tr key={line.id} className="border-t border-border/40 bg-muted/20 hover:bg-muted/40 cursor-pointer select-none" onClick={toggleGroup}>
+      <tr key={line.id} className="border-t border-border/40 bg-muted/20 hover:bg-muted/40 cursor-pointer select-none group" onClick={toggleGroup}>
         <td className="px-3 py-2.5" colSpan={2}>
           <div className="flex items-center gap-2">
             <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${colorClass}`} />
@@ -704,12 +704,26 @@ function WorkspaceTab({ planId }: { planId: string }) {
           {groupTotal > 0 ? `${(((groupTotal - groupActual) / groupTotal) * 100).toFixed(1)}%` : "—"}
         </td>
         <td className="px-2 py-2.5 text-center" onClick={e => e.stopPropagation()}>
-          <button
-            className="p-1 rounded hover:bg-purple-50 dark:hover:bg-purple-900/20 text-muted-foreground hover:text-purple-600 opacity-60 hover:opacity-100"
-            title={t("hintAddSubItem")}
-            onClick={() => setAddingSubItem(addingSubItem === line.id ? null : line.id)}>
-            <Plus className="h-3.5 w-3.5" />
-          </button>
+          <div className="flex items-center gap-1 justify-center">
+            <button
+              className="p-1 rounded hover:bg-purple-50 dark:hover:bg-purple-900/20 text-muted-foreground hover:text-purple-600 opacity-60 hover:opacity-100"
+              title={t("hintAddSubItem")}
+              onClick={() => setAddingSubItem(addingSubItem === line.id ? null : line.id)}>
+              <Plus className="h-3.5 w-3.5" />
+            </button>
+            <button
+              className="p-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20 text-muted-foreground hover:text-red-600 opacity-0 group-hover:opacity-60 hover:!opacity-100 transition-opacity"
+              title={t("hintDeleteLine")}
+              onClick={() => {
+                const childCount = children.length
+                const msg = childCount > 0
+                  ? `${t("confirmDeleteLine")} «${line.category}» (${childCount} подкатегорий будут откреплены)?`
+                  : `${t("confirmDeleteLine")} «${line.category}»?`
+                if (confirm(msg)) deleteLine.mutate({ id: line.id, planId })
+              }}>
+              <Trash2 className="h-3.5 w-3.5" />
+            </button>
+          </div>
         </td>
       </tr>
     )
