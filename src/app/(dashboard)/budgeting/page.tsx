@@ -13,8 +13,8 @@ import {
   CheckCircle, AlertCircle, BarChart2, DollarSign, CalendarRange, Link2,
   ChevronDown, ChevronRight, MessageSquare,
 } from "lucide-react"
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { Textarea } from "@/components/ui/textarea"
 import { Progress } from "@/components/ui/progress"
 import {
@@ -1274,6 +1274,7 @@ function WorkspaceTab({ planId }: { planId: string }) {
         <SheetContent>
           <SheetHeader>
             <SheetTitle>{t("drillDownTitle")}: {drillDownLine?.category}</SheetTitle>
+            <SheetDescription className="sr-only">{t("drillDownTitle")}</SheetDescription>
           </SheetHeader>
           <div className="mt-4 space-y-3">
             {drillDownLine?.isAutoActual ? (
@@ -1316,6 +1317,7 @@ function WorkspaceTab({ planId }: { planId: string }) {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{t("varianceNoteTitle")}: {varianceNoteLine?.category}</DialogTitle>
+            <DialogDescription className="sr-only">{t("varianceNotePlaceholder")}</DialogDescription>
           </DialogHeader>
           <Textarea
             placeholder={t("varianceNotePlaceholder")}
