@@ -393,7 +393,7 @@ function WorkspaceTab({ planId }: { planId: string }) {
   const [editCell, setEditCell] = useState<{ id: string; field: string } | null>(null)
   const [editValue, setEditValue] = useState("")
   const [expandId, setExpandId] = useState<string | null>(null)
-  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(() => new Set(["admin", "tech_infra", "labor", "risk"]))
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(() => new Set())
   const [addingSubItem, setAddingSubItem] = useState<string | null>(null)
   const [newSubItem, setNewSubItem] = useState({ category: "", amount: "", department: "" })
   const [addingSection, setAddingSection] = useState<string | null>(null) // "revenue" | "cogs" | "expense" | null
@@ -2336,7 +2336,7 @@ function ForecastTab({ planId }: { planId: string }) {
   const [addingCogs, setAddingCogs] = useState(false)
   const [addingExpense, setAddingExpense] = useState(false)
   const [newCategory, setNewCategory] = useState("")
-  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(() => new Set(["admin", "tech_infra", "labor", "risk"]))
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(() => new Set())
   const [scenario, setScenario] = useState<"base" | "optimistic" | "pessimistic">("base")
 
   const plan = analytics?.plan
