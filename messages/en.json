@@ -1924,13 +1924,11 @@
     "createPlan": "Create plan",
     "noPlans": "No budget plans",
     "noPlansSubtitle": "Create your first plan to get started",
-
     "tabWorkspace": "Workspace",
     "tabPL": "P&L",
     "tabForecast": "Forecast",
     "tabComparison": "Comparison",
     "tabPlans": "Plans",
-
     "statusApproved": "Approved",
     "statusClosed": "Closed",
     "statusDraft": "Draft",
@@ -1940,10 +1938,8 @@
     "btnReject": "Reject",
     "btnRevise": "Return for Revision",
     "rejectReason": "Rejection reason",
-
     "expense": "Expense",
     "revenue": "Revenue",
-
     "kpiPlan": "PLAN",
     "kpiForecast": "FORECAST",
     "kpiProjection": "Projection",
@@ -1953,7 +1949,6 @@
     "kpiVariance": "VARIANCE",
     "kpiExecution": "EXECUTION",
     "kpiYearEnd": "YEAR-END PROJECTION",
-
     "btnAiAnalysis": "AI Analysis",
     "btnUpdateActual": "Update actuals",
     "btnUpdateActualCostModel": "Update actuals from cost model",
@@ -1983,7 +1978,6 @@
     "btnGenerateForecast": "Generate forecast",
     "btnHideMaterial": "Hide immaterial",
     "btnShowAll": "Show all",
-
     "colCategory": "Category",
     "colDepartment": "Department",
     "colDepartmentShort": "Dept.",
@@ -2003,24 +1997,20 @@
     "colAmount": "Amount",
     "colMonth": "Month",
     "colStatus": "Status",
-
     "searchCategory": "Search category...",
     "filterAll": "All",
     "filterExpenses": "Expenses",
     "filterRevenues": "Revenues",
-
     "sectionExpenses": "Expenses",
     "sectionRevenues": "Revenues",
     "sectionMargin": "MARGIN (Revenue − Expenses)",
     "totalLabel": "Total",
-
     "badgeAuto": "auto",
     "badgeAutoLabel": "Auto",
     "badgeAutoTooltip": "From cost model",
     "badgeManual": "Manual",
     "badgeProjected": "Projected",
     "badgeActual": "Actual",
-
     "chartPlanVsActual": "Plan vs Actual",
     "chartBudgetStructure": "Budget structure",
     "chartPlanForecastActual": "Plan / Forecast / Actual by category",
@@ -2028,19 +2018,15 @@
     "chartWaterfall": "Waterfall analysis",
     "chartComparisonByCategory": "Comparison by category (actual)",
     "chartMonthlyForecast": "12-month forecast",
-
     "tableBudgetForecastActual": "Table: Budget | Forecast | Actual",
     "tableByDepartment": "By department",
     "tableComparison": "Comparison table",
     "tableByMonth": "By month",
     "tableCategoryMatrix": "By category (matrix)",
-
     "budgetExecution": "Budget execution:",
-
     "aiAnalysisTitle": "AI Variance Analysis",
     "generating": "Generating...",
     "generatingNarrative": "Generating narrative...",
-
     "emptyNoLines": "No budget items. Click \"Add row\" or \"Seed from template\".",
     "emptyNoActuals": "No actual expenses. Add the first one.",
     "emptyNoLinesHint": "No items. Add the first one or use a template.",
@@ -2050,23 +2036,18 @@
     "emptySelectMorePlans": "Select at least 1 more plan",
     "emptyNoRecords": "No records",
     "emptyAddLinesForAnalytics": "Add budget items to display analytics",
-
     "errorLoading": "Error loading analytics",
     "errorAiGeneration": "Generation error. Check ANTHROPIC_API_KEY.",
     "errorAiGenerationNarrative": "Narrative generation error. Check ANTHROPIC_API_KEY.",
     "errorSync": "Sync error",
     "errorSyncCostModel": "Error syncing with cost model",
-
     "msgSynced": "Updated {count} records",
     "msgSyncedCostModel": "Updated {count} records from cost model",
-
     "confirmDeleteLine": "Delete line",
     "confirmDeleteLineSuffix": "and all related actuals?",
     "confirmApprove": "Approve budget? Changes will be locked after approval.",
-
     "selectPlansTitle": "Select plans to compare (up to 4)",
     "materialityThreshold": "Materiality threshold:",
-
     "plTitle": "P&L Structure",
     "plRevenue": "Revenue",
     "plExpenses": "Expenses",
@@ -2075,7 +2056,6 @@
     "plSectionNamePlaceholder": "E.g.: Operating expenses",
     "plTypeLabel": "Type",
     "plDrilldown": "Drilldown:",
-
     "dlgCreateTitle": "Create budget plan",
     "dlgName": "Name",
     "dlgNamePlaceholder": "April 2026",
@@ -2086,7 +2066,6 @@
     "periodMonthly": "Monthly",
     "periodQuarterly": "Quarterly",
     "periodAnnual": "Annual",
-
     "fieldCategory": "Category",
     "fieldDepartment": "Department",
     "fieldType": "Type",
@@ -2097,7 +2076,6 @@
     "fieldActualAmount": "Actual amount",
     "fieldDate": "Date",
     "fieldDescription": "Description",
-
     "placeholderCategory": "Type or select...",
     "placeholderDepartment": "Department name",
     "placeholderForecast": "= plan if empty",
@@ -2106,17 +2084,14 @@
     "placeholderDescription": "Optional",
     "placeholderFilterCategory": "Filter by category...",
     "placeholderCategoryShort": "Category...",
-
     "optAll": "— All —",
     "optOther": "Other...",
     "optManualActual": "— Manual actual entry —",
     "optManual": "— Manual —",
-
     "scenarioLabel": "Scenario:",
     "scenarioBase": "Base",
     "scenarioOptimistic": "Optimistic",
     "scenarioPessimistic": "Pessimistic",
-
     "forecastRevenueTotal": "REVENUE (forecast)",
     "forecastExpenseTotal": "EXPENSES (forecast)",
     "forecastMarginTotal": "MARGIN (forecast)",
@@ -2127,21 +2102,15 @@
     "forecastGenerateHint": "Click \"Generate forecast\" to populate the matrix",
     "forecastScenarioSuffix": "(optimistic)",
     "forecastScenarioPessimSuffix": "(pessimistic)",
-
     "templateLoading": "Seeding...",
     "templateReady": "Seed from template",
-
     "actualRecordsFor": "Actual records for",
-
     "expensesLabel": "Expenses:",
     "revenuesLabel": "Revenues:",
-
     "noPlansCardTitle": "No plans",
     "noPlansCardSubtitle": "Create your first budget plan",
-
     "monthsShort": "Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec",
     "monthsFull": "January,February,March,April,May,June,July,August,September,October,November,December",
-
     "tabTemplates": "Templates",
     "templatesTitle": "Direction Templates",
     "templatesDescription": "Business direction library for quick plan population",
@@ -2157,7 +2126,6 @@
     "subtypeProduct": "Product",
     "subtypeCogs": "COGS",
     "selectTemplates": "Select templates to apply",
-
     "sectionCOGS": "COGS",
     "cogsLabel": "Cost of Goods Sold",
     "grossProfit": "Gross Profit",
@@ -2166,14 +2134,12 @@
     "unitCost": "Unit cost",
     "quantityLabel": "Qty",
     "cogs": "COGS",
-
     "hintTabWorkspace": "Main workspace: budget lines, plan vs actual, variances",
     "hintTabPL": "Income statement: Revenue → COGS → Gross Profit → Expenses → EBITDA",
     "hintTabForecast": "Monthly forecast with 3 scenarios: base, optimistic, pessimistic",
     "hintTabComparison": "Compare up to 4 plans: variances by category with materiality filter",
     "hintTabPlans": "Plan management: create, approve, reject, close",
     "hintTabTemplates": "Direction template library for quick new plan population",
-
     "hintKpiExpPlan": "Total planned expenses for the period",
     "hintKpiExpActual": "Actually incurred expenses (from cost model or manual entry)",
     "hintKpiRevPlan": "Total planned revenue for the period",
@@ -2182,32 +2148,26 @@
     "hintKpiMarginActual": "Actual margin = Actual revenue − Actual COGS − Actual expenses",
     "hintKpiVariance": "Deviation of actual from plan. Positive = better than plan",
     "hintKpiExecution": "Budget execution %. Green ≥90%, yellow 60-90%, red <60%",
-
     "hintColCategory": "Budget item name (expense or revenue category)",
     "hintColDepartment": "Department or business unit this item belongs to",
     "hintColPlan": "Planned amount for the period. Click to edit",
     "hintColActual": "Actual amount. Blue 'Auto' badge = from cost model",
     "hintColVariance": "Variance %. Green = favorable, red = unfavorable",
-
     "hintBtnAiAnalysis": "Generate AI analysis of budget variances (top 5 categories)",
     "hintBtnSyncActuals": "Update actuals from cost model for auto-actual lines",
     "hintBtnExport": "Download budget as Excel (3 sheets: overview, lines, actuals)",
     "hintBtnAddRow": "Add new budget line (expense, revenue, or COGS)",
-
     "hintSectionRevenue": "All revenue sources: services, products, subscriptions",
     "hintSectionCOGS": "Direct costs: goods purchased, direct service delivery costs",
     "hintSectionExpenses": "Operating expenses: salaries, rent, infrastructure, licenses",
     "hintGrossProfit": "Gross Profit = Revenue − COGS. Shows margin before operating expenses",
     "hintOperatingProfit": "Operating Profit (EBITDA) = Gross Profit − Operating Expenses",
-
     "hintScenarioBase": "Base scenario: no adjustments, as planned",
     "hintScenarioOptimistic": "Optimistic: revenue +10%, COGS −8%, expenses −10%",
     "hintScenarioPessimistic": "Pessimistic: revenue −10%, COGS +10%, expenses +15%",
     "hintForecastCell": "Click to enter forecast. Italic = calculated (plan ÷ months)",
-
     "hintMateriality": "Materiality threshold: only show items with variance above threshold",
     "hintBadgeAuto": "Value sourced automatically from cost model",
-
     "hintSectionTotal": "Section total",
     "hintChartExpenses": "Expenses: plan vs actual by category",
     "hintChartRevenues": "Revenues: plan vs actual by category",
@@ -2217,42 +2177,33 @@
     "hintExpandActuals": "Show/hide actual records",
     "hintAddSubItem": "Add subcategory to group",
     "hintBadgeChildCount": "Number of subcategories in group",
-
     "hintStatusDraft": "Draft: can be edited, lines and actuals can be added",
     "hintStatusPending": "Submitted for approval. Awaiting manager decision",
     "hintStatusApproved": "Approved: editing is locked",
     "hintStatusRejected": "Rejected: needs revision. Can be returned to draft",
     "hintStatusClosed": "Closed: archived plan, read-only",
-
     "hintBtnSubmitApproval": "Submit plan for manager approval",
     "hintBtnApprove": "Approve plan. Editing will be locked after approval",
     "hintBtnReject": "Reject plan with a reason",
     "hintBtnRevise": "Return plan for revision (status → draft)",
-
     "hintFieldGroup": "Select parent group for nested line",
     "hintFieldType": "Type: Expense (OpEx), Revenue, or COGS",
     "hintFieldAmount": "Planned amount in ₼ for the full period",
-
     "hintTemplateName": "Business direction name (e.g. 'AI Solutions', 'Cloud Services')",
     "hintTemplateApply": "Create budget lines from selected templates. Duplicates are skipped",
     "hintTemplateActive": "Inactive templates are hidden when applying to plans",
-
     "overspend": "OVERSPEND",
     "kpiExecutionTooltip": "Expense budget execution: Actual expenses / Planned expenses × 100%. Below 100% = savings, above 100% = overspend",
-
     "alertOverspendTitle": "Critical budget overspend",
     "alertOverspendDesc": "Expenses exceeded budget by {pct}% ({amount}). Budget review or expense adjustment recommended.",
     "alertWarningTitle": "Warning: expenses above plan",
     "alertWarningDesc": "Expenses exceeded budget by {pct}% ({amount}). Monitor remaining expenses to stay within budget.",
-
     "summaryOverspend": "{period}: expenses exceeded plan by {pct}% ({amount}).",
     "summaryUnderBudget": "{period}: expenses are {pct}% under budget (savings {amount}).",
     "summaryNoRevenue": "Revenue section is empty — P&L analysis not possible.",
-
     "filterVarianceOnly": "With variances",
     "hintFilterVariance": "Show only lines with non-zero variance between actual and plan",
     "hintAddRevenue": "Add revenue items for complete P&L analysis. Without revenue, margin and operating profit will be negative.",
-
     "filterMaterial": "Material only",
     "hintFilterMaterial": "Highlight only material variances (>5% or >500 ₼)",
     "expectedByTime": "Expected by time",
@@ -2262,10 +2213,12 @@
     "varianceNoteTitle": "Variance note",
     "varianceNotePlaceholder": "Explain the reason for the variance...",
     "noActuals": "No records",
-    "colDate": "Date",
-    "colDescription": "Description",
-    "colAmount": "Amount",
-    "btnSave": "Save",
-    "btnCancel": "Cancel"
+    "hintWaterfall": "Waterfall chart shows the path from plan to projection through forecast, actual, and variance. Helps visualize where changes occurred",
+    "hintOvPlan": "Total of all planned budget lines (expenses + revenue + COGS)",
+    "hintOvForecast": "Expected amount based on manager forecasts. May differ from plan based on current trends",
+    "hintOvActual": "Actual amounts spent/received. May include data from cost model (auto-actual)",
+    "hintOvVariance": "Difference between actual and plan. Positive = overspend or overperformance, negative = savings or underperformance",
+    "hintOvYearEnd": "Year-end projection: Actual for elapsed months + Forecast for remaining. Shows expected year-end result",
+    "hintColForecast": "Forecast amount for the period. Italic = calculated value (plan / number of months)"
   }
 }

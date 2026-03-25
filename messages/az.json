@@ -1920,13 +1920,11 @@
     "createPlan": "Plan yarat",
     "noPlans": "Büdcə planları yoxdur",
     "noPlansSubtitle": "İşə başlamaq üçün ilk planı yaradın",
-
     "tabWorkspace": "İş sahəsi",
     "tabPL": "P&L",
     "tabForecast": "Proqnoz",
     "tabComparison": "Müqayisə",
     "tabPlans": "Planlar",
-
     "statusApproved": "Təsdiqlənib",
     "statusClosed": "Bağlanıb",
     "statusDraft": "Qaralama",
@@ -1936,10 +1934,8 @@
     "btnReject": "Rədd et",
     "btnRevise": "Yenidən işləməyə qaytar",
     "rejectReason": "Rədd səbəbi",
-
     "expense": "Xərc",
     "revenue": "Gəlir",
-
     "kpiPlan": "PLAN",
     "kpiForecast": "PROQNOZ",
     "kpiProjection": "Proyeksiya",
@@ -1949,7 +1945,6 @@
     "kpiVariance": "KƏNARLAŞMA",
     "kpiExecution": "İCRA",
     "kpiYearEnd": "İL SONU PROQNOZLAŞDIRİLMASI",
-
     "btnAiAnalysis": "AI-analiz",
     "btnUpdateActual": "Faktı yenilə",
     "btnUpdateActualCostModel": "Cost model-dən faktı yenilə",
@@ -1961,7 +1956,7 @@
     "addToGroup": "Qrupa əlavə et",
     "addAsGroup": "Qrup yarat",
     "addAsLine": "Sətir əlavə et",
-    "btnSave": "Saxla",
+    "btnSave": "Yadda saxla",
     "btnCancel": "Ləğv et",
     "btnAdd": "Əlavə et",
     "btnApprove": "Təsdiqlə",
@@ -1979,7 +1974,6 @@
     "btnGenerateForecast": "Proqnoz yarat",
     "btnHideMaterial": "Əhəmiyyətsizləri gizlət",
     "btnShowAll": "Hamısını göstər",
-
     "colCategory": "Kateqoriya",
     "colDepartment": "Şöbə",
     "colDepartmentShort": "Şöbə",
@@ -1999,24 +1993,20 @@
     "colAmount": "Məbləğ",
     "colMonth": "Ay",
     "colStatus": "Status",
-
     "searchCategory": "Kateqoriya axtar...",
     "filterAll": "Hamısı",
     "filterExpenses": "Xərclər",
     "filterRevenues": "Gəlirlər",
-
     "sectionExpenses": "Xərclər",
     "sectionRevenues": "Gəlirlər",
     "sectionMargin": "MARJА (Gəlirlər − Xərclər)",
     "totalLabel": "Cəmi",
-
     "badgeAuto": "avto",
     "badgeAutoLabel": "Avto",
     "badgeAutoTooltip": "Cost model-dən",
     "badgeManual": "Əl ilə",
     "badgeProjected": "Proqnoz",
     "badgeActual": "Fakt",
-
     "chartPlanVsActual": "Plan vs Fakt",
     "chartBudgetStructure": "Büdcə strukturu",
     "chartPlanForecastActual": "Plan / Proqnoz / Fakt kateqoriyalar üzrə",
@@ -2024,19 +2014,15 @@
     "chartWaterfall": "Şəlalə analizi",
     "chartComparisonByCategory": "Kateqoriyalar üzrə müqayisə (fakt)",
     "chartMonthlyForecast": "12 aylıq proqnoz",
-
     "tableBudgetForecastActual": "Cədvəl: Büdcə | Proqnoz | Fakt",
     "tableByDepartment": "Şöbələr üzrə",
     "tableComparison": "Müqayisə cədvəli",
     "tableByMonth": "Aylar üzrə",
     "tableCategoryMatrix": "Kateqoriyalar üzrə (matris)",
-
     "budgetExecution": "Büdcə icrası:",
-
     "aiAnalysisTitle": "AI kənarlaşma analizi",
     "generating": "Yaradılır...",
     "generatingNarrative": "Narrativ yaradılır...",
-
     "emptyNoLines": "Büdcə maddələri yoxdur. «Sətir əlavə et» və ya «Şablonla doldur» düyməsinə basın.",
     "emptyNoActuals": "Faktiki xərclər yoxdur. İlkini əlavə edin.",
     "emptyNoLinesHint": "Maddə yoxdur. İlkini əlavə edin və ya şablondan istifadə edin.",
@@ -2046,23 +2032,18 @@
     "emptySelectMorePlans": "Daha ən azı 1 plan seçin",
     "emptyNoRecords": "Qeydlər yoxdur",
     "emptyAddLinesForAnalytics": "Analitika üçün plan maddələri əlavə edin",
-
     "errorLoading": "Analitika yükləmə xətası",
     "errorAiGeneration": "Yaratma xətası. ANTHROPIC_API_KEY yoxlayın.",
     "errorAiGenerationNarrative": "Narrativ yaratma xətası. ANTHROPIC_API_KEY yoxlayın.",
     "errorSync": "Sinxronizasiya xətası",
     "errorSyncCostModel": "Cost model ilə sinxronizasiya xətası",
-
     "msgSynced": "{count} qeyd yeniləndi",
     "msgSyncedCostModel": "Cost model-dən {count} qeyd yeniləndi",
-
     "confirmDeleteLine": "Sətri sil",
     "confirmDeleteLineSuffix": "və bütün əlaqəli faktları?",
     "confirmApprove": "Büdcəni təsdiqlə? Təsdiqləndikdən sonra dəyişikliklər qadağan olunacaq.",
-
     "selectPlansTitle": "Müqayisə üçün planları seçin (4-ə qədər)",
     "materialityThreshold": "Əhəmiyyət həddi:",
-
     "plTitle": "P&L Strukturu",
     "plRevenue": "Gəlir",
     "plExpenses": "Xərclər",
@@ -2071,7 +2052,6 @@
     "plSectionNamePlaceholder": "Məsələn: Əməliyyat xərcləri",
     "plTypeLabel": "Növ",
     "plDrilldown": "Təfərrüat:",
-
     "dlgCreateTitle": "Büdcə planı yarat",
     "dlgName": "Ad",
     "dlgNamePlaceholder": "Aprel 2026",
@@ -2082,7 +2062,6 @@
     "periodMonthly": "Aylıq",
     "periodQuarterly": "Rüblük",
     "periodAnnual": "İllik",
-
     "fieldCategory": "Kateqoriya",
     "fieldDepartment": "Şöbə",
     "fieldType": "Növ",
@@ -2093,7 +2072,6 @@
     "fieldActualAmount": "Faktiki məbləğ",
     "fieldDate": "Tarix",
     "fieldDescription": "Təsvir",
-
     "placeholderCategory": "Daxil edin və ya seçin...",
     "placeholderDepartment": "Şöbə adı",
     "placeholderForecast": "= plan əgər boşdursa",
@@ -2102,17 +2080,14 @@
     "placeholderDescription": "İstəyə bağlı",
     "placeholderFilterCategory": "Kateqoriya üzrə filtr...",
     "placeholderCategoryShort": "Kateqoriya...",
-
     "optAll": "— Hamısı —",
     "optOther": "Digər...",
     "optManualActual": "— Əl ilə fakt daxil etmə —",
     "optManual": "— Əl ilə —",
-
     "scenarioLabel": "Ssenari:",
     "scenarioBase": "Baza",
     "scenarioOptimistic": "Optimist",
     "scenarioPessimistic": "Pessimist",
-
     "forecastRevenueTotal": "GƏLİRLƏR (proqnoz)",
     "forecastExpenseTotal": "XƏRCLƏR (proqnoz)",
     "forecastMarginTotal": "MARJA (proqnoz)",
@@ -2123,21 +2098,15 @@
     "forecastGenerateHint": "Matrisi doldurmaq üçün «Proqnoz yarat» düyməsinə basın",
     "forecastScenarioSuffix": "(optimist)",
     "forecastScenarioPessimSuffix": "(pessimist)",
-
     "templateLoading": "Doldurulur…",
     "templateReady": "Şablonla doldur",
-
     "actualRecordsFor": "Faktiki qeydlər:",
-
     "expensesLabel": "Xərclər:",
     "revenuesLabel": "Gəlirlər:",
-
     "noPlansCardTitle": "Plan yoxdur",
     "noPlansCardSubtitle": "İlk büdcə planını yaradın",
-
     "monthsShort": "Yan,Fev,Mar,Apr,May,İyn,İyl,Avq,Sen,Okt,Noy,Dek",
     "monthsFull": "Yanvar,Fevral,Mart,Aprel,May,İyun,İyul,Avqust,Sentyabr,Oktyabr,Noyabr,Dekabr",
-
     "tabTemplates": "Şablonlar",
     "templatesTitle": "İstiqamət şablonları",
     "templatesDescription": "Planları tez doldurmaq üçün biznes istiqamətlər kitabxanası",
@@ -2153,7 +2122,6 @@
     "subtypeProduct": "Məhsul",
     "subtypeCogs": "Maya dəyəri",
     "selectTemplates": "Tətbiq üçün şablonları seçin",
-
     "sectionCOGS": "MAYA DƏYƏRİ (COGS)",
     "cogsLabel": "Maya dəyəri",
     "grossProfit": "Ümumi mənfəət",
@@ -2162,14 +2130,12 @@
     "unitCost": "Vahid maya",
     "quantityLabel": "Miqdar",
     "cogs": "COGS",
-
     "hintTabWorkspace": "Əsas iş sahəsi: büdcə sətirləri, plan vs fakt, sapma",
     "hintTabPL": "Mənfəət hesabatı: Gəlir → Maya → Ümumi mənfəət → Xərclər → EBITDA",
     "hintTabForecast": "Aylıq proqnoz 3 ssenari ilə: baza, optimist, pessimist",
     "hintTabComparison": "4-ə qədər planı müqayisə edin: kateqoriya üzrə sapma, materiallik filtri",
     "hintTabPlans": "Plan idarəetməsi: yaratma, təsdiq, rədd, bağlama",
     "hintTabTemplates": "Yeni planları tez doldurmaq üçün istiqamət şablonları kitabxanası",
-
     "hintKpiExpPlan": "Dövr üçün planlaşdırılmış xərclərin ümumi məbləği",
     "hintKpiExpActual": "Faktiki çəkilmiş xərclər (maya modelindən və ya əl ilə daxil edilmiş)",
     "hintKpiRevPlan": "Dövr üçün planlaşdırılmış gəlirlərin ümumi məbləği",
@@ -2178,32 +2144,26 @@
     "hintKpiMarginActual": "Faktiki marja = Faktiki gəlir − Faktiki maya − Faktiki xərclər",
     "hintKpiVariance": "Faktın plandan sapması. Müsbət = plandan yaxşı",
     "hintKpiExecution": "Büdcənin icra faizi. Yaşıl ≥90%, sarı 60-90%, qırmızı <60%",
-
     "hintColCategory": "Büdcə maddəsinin adı (xərc və ya gəlir kateqoriyası)",
     "hintColDepartment": "Bu maddənin aid olduğu şöbə və ya biznes vahidi",
     "hintColPlan": "Dövr üçün planlaşdırılmış məbləğ. Redaktə üçün klikləyin",
     "hintColActual": "Faktiki məbləğ. Mavi 'Avto' nişanı = maya modelindən",
     "hintColVariance": "Sapma %. Yaşıl = əlverişli, qırmızı = əlverişsiz",
-
     "hintBtnAiAnalysis": "Büdcə sapmalarının AI təhlilini yaradın (ilk 5 kateqoriya)",
     "hintBtnSyncActuals": "Avto-fakt sətirləri üçün maya modelindən faktiki məlumatları yeniləyin",
     "hintBtnExport": "Büdcəni Excel olaraq yükləyin (3 vərəq: icmal, sətir, fakt)",
     "hintBtnAddRow": "Yeni büdcə sətiri əlavə edin (xərc, gəlir və ya maya)",
-
     "hintSectionRevenue": "Bütün gəlir mənbələri: xidmətlər, məhsullar, abunəliklər",
     "hintSectionCOGS": "Birbaşa maya dəyəri: malların alışı, xidmət göstərmə xərcləri",
     "hintSectionExpenses": "Əməliyyat xərcləri: maaşlar, icarə, infrastruktur, lisenziyalar",
     "hintGrossProfit": "Ümumi mənfəət = Gəlir − Maya. OpEx-dən əvvəl marjinallığı göstərir",
     "hintOperatingProfit": "Əməliyyat mənfəəti (EBITDA) = Ümumi mənfəət − Əməliyyat xərcləri",
-
     "hintScenarioBase": "Baza ssenarisi: düzəlişsiz, planlaşdırıldığı kimi",
     "hintScenarioOptimistic": "Optimist: gəlir +10%, maya −8%, xərclər −10%",
     "hintScenarioPessimistic": "Pessimist: gəlir −10%, maya +10%, xərclər +15%",
     "hintForecastCell": "Proqnoz daxil etmək üçün klikləyin. Kursiv = hesablanmış (plan ÷ ay)",
-
     "hintMateriality": "Materiallik həddi: yalnız sapması həddi aşan maddələri göstər",
     "hintBadgeAuto": "Dəyər avtomatik olaraq şirkətin maya modelindən alınıb",
-
     "hintSectionTotal": "Bölmə üzrə cəmi",
     "hintChartExpenses": "Xərclər: kateqoriyalar üzrə plan vs fakt",
     "hintChartRevenues": "Gəlirlər: kateqoriyalar üzrə plan vs fakt",
@@ -2213,42 +2173,33 @@
     "hintExpandActuals": "Faktiki qeydləri göstər/gizlət",
     "hintAddSubItem": "Qrupa alt kateqoriya əlavə et",
     "hintBadgeChildCount": "Qrupdakı alt kateqoriyaların sayı",
-
     "hintStatusDraft": "Qaralama: redaktə edilə bilər, sətir və faktlar əlavə edilə bilər",
     "hintStatusPending": "Təsdiqə göndərilib. Rəhbərin qərarını gözləyir",
     "hintStatusApproved": "Təsdiqlənib: redaktə bağlanıb",
     "hintStatusRejected": "Rədd edilib: yenidən işlənməli. Qaralamaya qaytarıla bilər",
     "hintStatusClosed": "Bağlanıb: arxiv plan, yalnız oxumaq üçün",
-
     "hintBtnSubmitApproval": "Planı rəhbərin təsdiqinə göndər",
     "hintBtnApprove": "Planı təsdiqlə. Təsdiqdən sonra redaktə mümkün deyil",
     "hintBtnReject": "Planı səbəb göstərərək rədd et",
     "hintBtnRevise": "Planı yenidən işləməyə qaytar (status → qaralama)",
-
     "hintFieldGroup": "İç-içə sətir üçün ana qrupu seçin",
     "hintFieldType": "Tip: Xərc (OpEx), Gəlir (Revenue) və ya Maya (COGS)",
     "hintFieldAmount": "Bütün dövr üçün planlaşdırılmış məbləğ (₼)",
-
     "hintTemplateName": "Biznes istiqamət adı (məs. 'AI həlləri', 'Bulud xidmətləri')",
     "hintTemplateApply": "Seçilmiş şablonlardan büdcə sətirləri yaradın. Dublikatlar keçilir",
     "hintTemplateActive": "Qeyri-aktiv şablonlar planlara tətbiq zamanı göstərilmir",
-
     "overspend": "AŞMA",
     "kpiExecutionTooltip": "Xərc büdcəsinin icrası: Faktiki xərclər / Plan xərcləri × 100%",
-
     "alertOverspendTitle": "Kritik büdcə aşması",
     "alertOverspendDesc": "Xərclər planı {pct}% ({amount}) aşdı. Büdcənin yenidən nəzərdən keçirilməsi tövsiyə olunur.",
     "alertWarningTitle": "Diqqət: xərclər plandan yuxarıdır",
     "alertWarningDesc": "Xərclər planı {pct}% ({amount}) aşdı. Büdcə çərçivəsində qalmaq üçün qalan xərcləri nəzarətdə saxlayın.",
-
     "summaryOverspend": "{period}: xərclər planı {pct}% ({amount}) aşdı.",
     "summaryUnderBudget": "{period}: xərclər plandan {pct}% aşağıdır (qənaət {amount}).",
     "summaryNoRevenue": "Gəlir hissəsi doldurulmayıb — P&L analizi mümkün deyil.",
-
     "filterVarianceOnly": "Sapmalarla",
     "hintFilterVariance": "Yalnız fakt ilə plan arasında sıfırdan fərqli sapma olan sətirləri göstər",
     "hintAddRevenue": "Tam P&L analizi üçün gəlir maddələri əlavə edin. Gəlir olmadan marja və əməliyyat mənfəəti mənfi olacaq.",
-
     "filterMaterial": "Əhəmiyyətli",
     "hintFilterMaterial": "Yalnız əhəmiyyətli sapmaları vurğula (>5% və ya >500 ₼)",
     "expectedByTime": "Zamana görə gözlənti",
@@ -2258,10 +2209,12 @@
     "varianceNoteTitle": "Sapma şərhi",
     "varianceNotePlaceholder": "Sapmanın səbəbini izah edin...",
     "noActuals": "Qeyd yoxdur",
-    "colDate": "Tarix",
-    "colDescription": "Təsvir",
-    "colAmount": "Məbləğ",
-    "btnSave": "Yadda saxla",
-    "btnCancel": "Ləğv et"
+    "hintWaterfall": "Kaskad diaqram planından proqnoza, faktdan kənarlaşmaya qədər yolu göstərir",
+    "hintOvPlan": "Bütün planlaşdırılmış büdcə sətrlərinin cəmi (xərclər + gəlirlər + COGS)",
+    "hintOvForecast": "Menecerlərin proqnozlarına əsaslanan gözlənilən məbləğ",
+    "hintOvActual": "Faktiki xərclənmiş/alınmış məbləğlər",
+    "hintOvVariance": "Fakt ilə plan arasındakı fərq",
+    "hintOvYearEnd": "İl sonu proqnozu: keçmiş aylar üçün fakt + qalan aylar üçün proqnoz",
+    "hintColForecast": "Dövr üçün proqnoz məbləği"
   }
 }

@@ -1924,13 +1924,11 @@
     "createPlan": "Создать план",
     "noPlans": "Нет бюджетных планов",
     "noPlansSubtitle": "Создайте первый план для начала работы",
-
     "tabWorkspace": "Рабочая область",
     "tabPL": "P&L",
     "tabForecast": "Прогноз",
     "tabComparison": "Сравнение",
     "tabPlans": "Планы",
-
     "statusApproved": "Утверждён",
     "statusClosed": "Закрыт",
     "statusDraft": "Черновик",
@@ -1940,10 +1938,8 @@
     "btnReject": "Отклонить",
     "btnRevise": "Вернуть на доработку",
     "rejectReason": "Причина отклонения",
-
     "expense": "Расход",
     "revenue": "Доход",
-
     "kpiPlan": "ПЛАН",
     "kpiForecast": "ПРОГНОЗ",
     "kpiProjection": "Проекция",
@@ -1953,7 +1949,6 @@
     "kpiVariance": "ОТКЛОНЕНИЕ",
     "kpiExecution": "ИСПОЛНЕНИЕ",
     "kpiYearEnd": "ПРОЕКЦИЯ НА КОНЕЦ ГОДА",
-
     "btnAiAnalysis": "AI-анализ",
     "btnUpdateActual": "Обновить факт",
     "btnUpdateActualCostModel": "Обновить факт из cost model",
@@ -1983,7 +1978,6 @@
     "btnGenerateForecast": "Сгенерировать прогноз",
     "btnHideMaterial": "Скрыть несущественные",
     "btnShowAll": "Показать все",
-
     "colCategory": "Категория",
     "colDepartment": "Департамент",
     "colDepartmentShort": "Департ.",
@@ -2003,24 +1997,20 @@
     "colAmount": "Сумма",
     "colMonth": "Месяц",
     "colStatus": "Статус",
-
     "searchCategory": "Поиск категории...",
     "filterAll": "Все",
     "filterExpenses": "Расходы",
     "filterRevenues": "Доходы",
-
     "sectionExpenses": "Расходы",
     "sectionRevenues": "Доходы",
     "sectionMargin": "МАРЖА (Доходы − Расходы)",
     "totalLabel": "Итого",
-
     "badgeAuto": "авто",
     "badgeAutoLabel": "Авто",
     "badgeAutoTooltip": "Из cost model",
     "badgeManual": "Ручной",
     "badgeProjected": "Прогноз",
     "badgeActual": "Факт",
-
     "chartPlanVsActual": "План vs Факт",
     "chartBudgetStructure": "Структура бюджета",
     "chartPlanForecastActual": "План / Прогноз / Факт по категориям",
@@ -2028,19 +2018,15 @@
     "chartWaterfall": "Водопадный анализ",
     "chartComparisonByCategory": "Сравнение по категориям (факт)",
     "chartMonthlyForecast": "12-месячный прогноз",
-
     "tableBudgetForecastActual": "Таблица: Бюджет | Прогноз | Факт",
     "tableByDepartment": "По департаментам",
     "tableComparison": "Таблица сравнения",
     "tableByMonth": "По месяцам",
     "tableCategoryMatrix": "По категориям (матрица)",
-
     "budgetExecution": "Исполнение бюджета:",
-
     "aiAnalysisTitle": "AI-анализ отклонений",
     "generating": "Генерация...",
     "generatingNarrative": "Генерация нарратива...",
-
     "emptyNoLines": "Нет бюджетных статей. Нажмите «Добавить строку» или «Заполнить шаблоном».",
     "emptyNoActuals": "Нет фактических расходов. Добавьте первый.",
     "emptyNoLinesHint": "Нет статей. Добавьте первую или используйте шаблон.",
@@ -2050,23 +2036,18 @@
     "emptySelectMorePlans": "Выберите ещё хотя бы 1 план",
     "emptyNoRecords": "Нет записей",
     "emptyAddLinesForAnalytics": "Добавьте плановые статьи для отображения аналитики",
-
     "errorLoading": "Ошибка загрузки аналитики",
     "errorAiGeneration": "Ошибка генерации. Проверьте ANTHROPIC_API_KEY.",
     "errorAiGenerationNarrative": "Ошибка генерации нарратива. Проверьте ANTHROPIC_API_KEY.",
     "errorSync": "Ошибка синхронизации",
     "errorSyncCostModel": "Ошибка синхронизации с cost model",
-
     "msgSynced": "Обновлено {count} записей",
     "msgSyncedCostModel": "Обновлено {count} записей из cost model",
-
     "confirmDeleteLine": "Удалить строку",
     "confirmDeleteLineSuffix": "и все связанные факты?",
     "confirmApprove": "Утвердить бюджет? После утверждения изменения будут запрещены.",
-
     "selectPlansTitle": "Выберите планы для сравнения (до 4)",
     "materialityThreshold": "Порог существенности:",
-
     "plTitle": "P&L Структура",
     "plRevenue": "Выручка",
     "plExpenses": "Расходы",
@@ -2075,7 +2056,6 @@
     "plSectionNamePlaceholder": "Например: Операционные расходы",
     "plTypeLabel": "Тип",
     "plDrilldown": "Детализация:",
-
     "dlgCreateTitle": "Создать бюджетный план",
     "dlgName": "Название",
     "dlgNamePlaceholder": "Апрель 2026",
@@ -2086,7 +2066,6 @@
     "periodMonthly": "Месячный",
     "periodQuarterly": "Квартальный",
     "periodAnnual": "Годовой",
-
     "fieldCategory": "Категория",
     "fieldDepartment": "Департамент",
     "fieldType": "Тип",
@@ -2097,7 +2076,6 @@
     "fieldActualAmount": "Фактическая сумма",
     "fieldDate": "Дата",
     "fieldDescription": "Описание",
-
     "placeholderCategory": "Введите или выберите...",
     "placeholderDepartment": "Название департамента",
     "placeholderForecast": "= план если пусто",
@@ -2106,17 +2084,14 @@
     "placeholderDescription": "Необязательно",
     "placeholderFilterCategory": "Фильтр по категории...",
     "placeholderCategoryShort": "Категория...",
-
     "optAll": "— Все —",
     "optOther": "Другой...",
     "optManualActual": "— Ручной ввод факта —",
     "optManual": "— Вручную —",
-
     "scenarioLabel": "Сценарий:",
     "scenarioBase": "Базовый",
     "scenarioOptimistic": "Оптимист.",
     "scenarioPessimistic": "Пессимист.",
-
     "forecastRevenueTotal": "ДОХОДЫ (прогноз)",
     "forecastExpenseTotal": "РАСХОДЫ (прогноз)",
     "forecastMarginTotal": "МАРЖА (прогноз)",
@@ -2127,21 +2102,15 @@
     "forecastGenerateHint": "Нажмите «Сгенерировать прогноз» чтобы заполнить матрицу",
     "forecastScenarioSuffix": "(оптимист.)",
     "forecastScenarioPessimSuffix": "(пессимист.)",
-
     "templateLoading": "Заполняю…",
     "templateReady": "Заполнить шаблоном",
-
     "actualRecordsFor": "Фактические записи для",
-
     "expensesLabel": "Расходы:",
     "revenuesLabel": "Доходы:",
-
     "noPlansCardTitle": "Нет планов",
     "noPlansCardSubtitle": "Создайте первый бюджетный план",
-
     "monthsShort": "Янв,Фев,Мар,Апр,Май,Июн,Июл,Авг,Сен,Окт,Ноя,Дек",
     "monthsFull": "Январь,Февраль,Март,Апрель,Май,Июнь,Июль,Август,Сентябрь,Октябрь,Ноябрь,Декабрь",
-
     "tabTemplates": "Шаблоны",
     "templatesTitle": "Шаблоны направлений",
     "templatesDescription": "Библиотека направлений бизнеса для быстрого заполнения планов",
@@ -2157,7 +2126,6 @@
     "subtypeProduct": "Продукт",
     "subtypeCogs": "Себестоимость",
     "selectTemplates": "Выберите шаблоны для применения",
-
     "sectionCOGS": "СЕБЕСТОИМОСТЬ (COGS)",
     "cogsLabel": "Себестоимость",
     "grossProfit": "Валовая прибыль",
@@ -2166,14 +2134,12 @@
     "unitCost": "Себест. за ед.",
     "quantityLabel": "Кол-во",
     "cogs": "COGS",
-
     "hintTabWorkspace": "Основная рабочая область: бюджетные строки, план vs факт, отклонения",
     "hintTabPL": "Отчёт о прибылях и убытках: Выручка → COGS → Валовая прибыль → Расходы → EBITDA",
     "hintTabForecast": "Помесячный прогноз с тремя сценариями: базовый, оптимистичный, пессимистичный",
     "hintTabComparison": "Сравнение до 4 планов: отклонения по категориям с фильтром материальности",
     "hintTabPlans": "Управление планами: создание, утверждение, отклонение, закрытие",
     "hintTabTemplates": "Библиотека шаблонов направлений для быстрого заполнения новых планов",
-
     "hintKpiExpPlan": "Общая сумма запланированных расходов на период",
     "hintKpiExpActual": "Фактически понесённые расходы (из cost-модели или ручного ввода)",
     "hintKpiRevPlan": "Общая сумма запланированных доходов на период",
@@ -2182,32 +2148,26 @@
     "hintKpiMarginActual": "Фактическая маржа = Факт. доходы − Факт. COGS − Факт. расходы",
     "hintKpiVariance": "Отклонение факта от плана. Положительное = лучше плана",
     "hintKpiExecution": "Процент исполнения бюджета. Зелёный ≥90%, жёлтый 60-90%, красный <60%",
-
     "hintColCategory": "Название статьи бюджета (категория расходов или доходов)",
     "hintColDepartment": "Подразделение или бизнес-юнит, к которому относится статья",
     "hintColPlan": "Плановая сумма на период. Кликните для редактирования",
     "hintColActual": "Фактическая сумма. Синяя метка «Авто» = из cost-модели",
     "hintColVariance": "Отклонение в %. Зелёный = благоприятное, красный = неблагоприятное",
-
     "hintBtnAiAnalysis": "Сгенерировать AI-анализ отклонений от бюджета (топ-5 категорий)",
     "hintBtnSyncActuals": "Обновить фактические данные из cost-модели для строк с авто-факт",
     "hintBtnExport": "Скачать бюджет в формате Excel (3 листа: обзор, строки, факт)",
     "hintBtnAddRow": "Добавить новую бюджетную строку (расход, доход или COGS)",
-
     "hintSectionRevenue": "Все источники дохода: сервисы, продукты, подписки",
     "hintSectionCOGS": "Прямая себестоимость: закупка товаров, прямые затраты на оказание услуг",
     "hintSectionExpenses": "Операционные расходы: зарплаты, аренда, инфраструктура, лицензии",
     "hintGrossProfit": "Валовая прибыль = Выручка − Себестоимость (COGS). Показывает маржинальность до OpEx",
     "hintOperatingProfit": "Операционная прибыль (EBITDA) = Валовая прибыль − Операционные расходы",
-
     "hintScenarioBase": "Базовый сценарий: без корректировок, как запланировано",
     "hintScenarioOptimistic": "Оптимистичный: доходы +10%, себестоимость −8%, расходы −10%",
     "hintScenarioPessimistic": "Пессимистичный: доходы −10%, себестоимость +10%, расходы +15%",
     "hintForecastCell": "Кликните для ввода прогноза. Курсив = расчётное значение (план ÷ месяцы)",
-
     "hintMateriality": "Порог материальности: показывать только статьи с отклонением выше порога",
     "hintBadgeAuto": "Значение получено автоматически из cost-модели компании",
-
     "hintSectionTotal": "Итого по секции",
     "hintChartExpenses": "Расходы: сравнение плана с фактом по категориям",
     "hintChartRevenues": "Доходы: сравнение плана с фактом по категориям",
@@ -2217,42 +2177,33 @@
     "hintExpandActuals": "Показать/скрыть фактические записи",
     "hintAddSubItem": "Добавить подкатегорию в группу",
     "hintBadgeChildCount": "Количество подкатегорий в группе",
-
     "hintStatusDraft": "Черновик: можно редактировать, добавлять строки и факт",
     "hintStatusPending": "Отправлен на утверждение. Ожидает решения руководителя",
     "hintStatusApproved": "Утверждён: редактирование заблокировано",
     "hintStatusRejected": "Отклонён: нужна доработка. Можно вернуть в черновик",
     "hintStatusClosed": "Закрыт: архивный план, только для чтения",
-
     "hintBtnSubmitApproval": "Отправить план на утверждение руководителю",
     "hintBtnApprove": "Утвердить план. После утверждения редактирование невозможно",
     "hintBtnReject": "Отклонить план с указанием причины",
     "hintBtnRevise": "Вернуть план на доработку (статус → черновик)",
-
     "hintFieldGroup": "Выберите родительскую группу для вложенной строки",
     "hintFieldType": "Тип: Расход (OpEx), Доход (Revenue) или Себестоимость (COGS)",
     "hintFieldAmount": "Плановая сумма в ₼ на весь период",
-
     "hintTemplateName": "Название направления бизнеса (напр. «AI решения», «Cloud сервисы»)",
     "hintTemplateApply": "Создать бюджетные строки из выбранных шаблонов. Дубли пропускаются",
     "hintTemplateActive": "Неактивные шаблоны не отображаются при применении к планам",
-
     "overspend": "ПЕРЕРАСХОД",
     "kpiExecutionTooltip": "Процент исполнения расходного бюджета: Факт расходов / План расходов × 100%. Менее 100% = экономия, более 100% = перерасход",
-
     "alertOverspendTitle": "Критический перерасход бюджета",
     "alertOverspendDesc": "Расходы превысили план на {pct}% ({amount}). Рекомендуется пересмотр бюджета или корректировка расходов.",
     "alertWarningTitle": "Внимание: расходы выше плана",
     "alertWarningDesc": "Расходы превысили план на {pct}% ({amount}). Контролируйте оставшиеся расходы для удержания бюджета.",
-
     "summaryOverspend": "{period}: расходы превысили план на {pct}% ({amount}).",
     "summaryUnderBudget": "{period}: расходы ниже плана на {pct}% (экономия {amount}).",
     "summaryNoRevenue": "Доходная часть не заполнена — P&L анализ невозможен.",
-
     "filterVarianceOnly": "С отклонениями",
     "hintFilterVariance": "Показать только строки с ненулевым отклонением факта от плана",
     "hintAddRevenue": "Добавьте статьи доходов для полноценного P&L анализа. Без доходной части маржа и операционная прибыль будут отрицательными.",
-
     "filterMaterial": "Существенные",
     "hintFilterMaterial": "Подсветить только существенные отклонения (>5% или >500 ₼)",
     "expectedByTime": "Ожидание по времени",
@@ -2262,10 +2213,12 @@
     "varianceNoteTitle": "Комментарий к отклонению",
     "varianceNotePlaceholder": "Объясните причину отклонения...",
     "noActuals": "Нет записей",
-    "colDate": "Дата",
-    "colDescription": "Описание",
-    "colAmount": "Сумма",
-    "btnSave": "Сохранить",
-    "btnCancel": "Отмена"
+    "hintWaterfall": "Каскадная диаграмма показывает путь от плана к проекции через прогноз, факт и отклонение. Позволяет визуально оценить где именно произошли изменения",
+    "hintOvPlan": "Общая сумма всех запланированных бюджетных строк (расходы + доходы + COGS)",
+    "hintOvForecast": "Ожидаемая сумма на основе прогнозов менеджеров. Может отличаться от плана с учётом текущих трендов",
+    "hintOvActual": "Фактически потраченные/полученные суммы. Может включать данные из cost-модели (авто-факт)",
+    "hintOvVariance": "Разница между фактом и планом. Положительное значение = перерасход или сверхдоход, отрицательное = экономия или недобор",
+    "hintOvYearEnd": "Прогноз на конец года: Факт за прошедшие месяцы + Прогноз на оставшиеся. Показывает ожидаемый итог года",
+    "hintColForecast": "Прогнозная сумма на период. Курсив = расчётное значение (план / кол-во месяцев)"
   }
 }

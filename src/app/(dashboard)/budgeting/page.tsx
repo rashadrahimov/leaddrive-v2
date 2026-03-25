@@ -62,6 +62,7 @@ import {
 } from "@/lib/budgeting/types"
 import { COST_MODEL_KEY_OPTIONS, TEMPLATE_CATEGORY_MAP } from "@/lib/budgeting/cost-model-map"
 import { BudgetWaterfallChart } from "@/components/budget-waterfall-chart"
+import { InfoHint } from "@/components/info-hint"
 
 const PIE_COLORS = BUDGET_COLORS.pie
 
@@ -1065,17 +1066,17 @@ function WorkspaceTab({ planId }: { planId: string }) {
     <div className="space-y-6">
       {/* KPI Cards — 2 rows: expenses + revenue/margin */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <div title={t("hintKpiExpPlan")}><ColorStatCard label={t("sectionExpenses") + " (" + t("kpiPlan").toLowerCase() + ")"} value={fmt(totalExpensePlanned)} icon={<BarChart2 className="h-5 w-5" />} color="blue" /></div>
-        <div title={t("hintKpiExpActual")}><ColorStatCard label={t("sectionExpenses") + " (" + t("kpiActual").toLowerCase() + ")"} value={fmt(totalExpenseActual)} icon={<DollarSign className="h-5 w-5" />} color="red" /></div>
-        <div title={t("hintKpiRevPlan")}><ColorStatCard label={t("sectionRevenues") + " (" + t("kpiPlan").toLowerCase() + ")"} value={fmt(totalRevenuePlanned)} icon={<TrendingUp className="h-5 w-5" />} color="violet" /></div>
-        <div title={t("hintKpiRevActual")}><ColorStatCard label={t("sectionRevenues") + " (" + t("kpiActual").toLowerCase() + ")"} value={fmt(totalRevenueActual)} icon={<DollarSign className="h-5 w-5" />} color="green" /></div>
+        <ColorStatCard label={t("sectionExpenses") + " (" + t("kpiPlan").toLowerCase() + ")"} value={fmt(totalExpensePlanned)} icon={<BarChart2 className="h-5 w-5" />} color="blue" hint={t("hintKpiExpPlan")} />
+        <ColorStatCard label={t("sectionExpenses") + " (" + t("kpiActual").toLowerCase() + ")"} value={fmt(totalExpenseActual)} icon={<DollarSign className="h-5 w-5" />} color="red" hint={t("hintKpiExpActual")} />
+        <ColorStatCard label={t("sectionRevenues") + " (" + t("kpiPlan").toLowerCase() + ")"} value={fmt(totalRevenuePlanned)} icon={<TrendingUp className="h-5 w-5" />} color="violet" hint={t("hintKpiRevPlan")} />
+        <ColorStatCard label={t("sectionRevenues") + " (" + t("kpiActual").toLowerCase() + ")"} value={fmt(totalRevenueActual)} icon={<DollarSign className="h-5 w-5" />} color="green" hint={t("hintKpiRevActual")} />
       </div>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <div title={t("hintKpiMarginPlan")}><ColorStatCard label={t("sectionMargin").split("(")[0].trim() + " (" + t("kpiPlan").toLowerCase() + ")"} value={fmt(margin)} icon={<TrendingUp className="h-5 w-5" />} color={margin >= 0 ? "teal" : "red"} /></div>
-        <div title={t("hintKpiMarginActual")}><ColorStatCard label={t("sectionMargin").split("(")[0].trim() + " (" + t("kpiActual").toLowerCase() + ")"} value={fmt(marginActual)} icon={<DollarSign className="h-5 w-5" />} color={marginActual >= 0 ? "teal" : "red"} /></div>
-        <div title={t("hintKpiVariance")}><ColorStatCard label={t("kpiVariance")} value={(totalVariance >= 0 ? "+" : "") + fmt(totalVariance)} icon={totalVariance >= 0 ? <TrendingUp className="h-5 w-5" /> : <TrendingDown className="h-5 w-5" />} color={totalVariance >= 0 ? "teal" : "red"} /></div>
-        <div title={t("hintKpiExecution") + ": " + t("kpiExecutionTooltip")}>
-          <ColorStatCard label={expExecLabel} value={`${expExecEmoji} ${Math.round(expExecPct)}%`} icon={expExecPct > 110 ? <AlertCircle className="h-5 w-5" /> : <CheckCircle className="h-5 w-5" />} color={expExecColor} />
+        <ColorStatCard label={t("sectionMargin").split("(")[0].trim() + " (" + t("kpiPlan").toLowerCase() + ")"} value={fmt(margin)} icon={<TrendingUp className="h-5 w-5" />} color={margin >= 0 ? "teal" : "red"} hint={t("hintKpiMarginPlan")} />
+        <ColorStatCard label={t("sectionMargin").split("(")[0].trim() + " (" + t("kpiActual").toLowerCase() + ")"} value={fmt(marginActual)} icon={<DollarSign className="h-5 w-5" />} color={marginActual >= 0 ? "teal" : "red"} hint={t("hintKpiMarginActual")} />
+        <ColorStatCard label={t("kpiVariance")} value={(totalVariance >= 0 ? "+" : "") + fmt(totalVariance)} icon={totalVariance >= 0 ? <TrendingUp className="h-5 w-5" /> : <TrendingDown className="h-5 w-5" />} color={totalVariance >= 0 ? "teal" : "red"} hint={t("hintKpiVariance")} />
+        <div>
+          <ColorStatCard label={expExecLabel} value={`${expExecEmoji} ${Math.round(expExecPct)}%`} icon={expExecPct > 110 ? <AlertCircle className="h-5 w-5" /> : <CheckCircle className="h-5 w-5" />} color={expExecColor} hint={t("kpiExecutionTooltip")} />
           <div className="mt-1 px-3 pb-2">
             <div className="flex items-center justify-between text-[10px] text-muted-foreground mb-0.5">
               <span>{t("expectedByTime")}: {Math.round(elapsedPct)}%</span>
@@ -1177,14 +1178,14 @@ function WorkspaceTab({ planId }: { planId: string }) {
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-muted/50 sticky top-0 z-10">
+              <thead className="sticky top-0 z-10 bg-gradient-to-r from-indigo-50 via-purple-50 to-violet-50 dark:from-indigo-950/40 dark:via-purple-950/40 dark:to-violet-950/40 border-b-2 border-indigo-200 dark:border-indigo-800">
                 <tr>
-                  <th title={t("hintColCategory")} className="px-3 py-2 text-left font-medium text-xs">{t("colCategory")}</th>
-                  <th title={t("hintColDepartment")} className="px-2 py-2 text-left font-medium text-xs">{t("colDepartment")}</th>
-                  <th title={t("hintColPlan")} className="px-2 py-2 text-right font-medium text-xs">{t("colPlan")} ₼</th>
-                  <th title={t("hintColActual")} className="px-2 py-2 text-right font-medium text-xs text-[#065f46] dark:text-[#6ee7b7]">{t("colActual")} ₼</th>
-                  <th title={t("hintColVariance")} className="px-2 py-2 text-right font-medium text-xs">{t("colVariancePct")}</th>
-                  <th className="px-2 py-2 w-10" />
+                  <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-indigo-700 dark:text-indigo-300"><span className="inline-flex items-center gap-1.5">{t("colCategory")} <InfoHint text={t("hintColCategory")} size={12} /></span></th>
+                  <th className="px-2 py-3 text-left text-xs font-semibold uppercase tracking-wider text-indigo-600 dark:text-indigo-400"><span className="inline-flex items-center gap-1.5">{t("colDepartment")} <InfoHint text={t("hintColDepartment")} size={12} /></span></th>
+                  <th className="px-2 py-3 text-right text-xs font-semibold uppercase tracking-wider text-blue-600 dark:text-blue-400"><span className="inline-flex items-center gap-1 justify-end">{t("colPlan")} ₼ <InfoHint text={t("hintColPlan")} size={12} /></span></th>
+                  <th className="px-2 py-3 text-right text-xs font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400"><span className="inline-flex items-center gap-1 justify-end">{t("colActual")} ₼ <InfoHint text={t("hintColActual")} size={12} /></span></th>
+                  <th className="px-2 py-3 text-right text-xs font-semibold uppercase tracking-wider text-violet-600 dark:text-violet-400"><span className="inline-flex items-center gap-1 justify-end">{t("colVariancePct")} <InfoHint text={t("hintColVariance")} size={12} /></span></th>
+                  <th className="px-2 py-3 w-10" />
                 </tr>
               </thead>
               <tbody>
@@ -1246,7 +1247,7 @@ function WorkspaceTab({ planId }: { planId: string }) {
           <Card className="overflow-hidden">
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-sm font-semibold" title={t("hintChartExpenses")}>{t("sectionExpenses")}: {t("colPlan")} vs {t("colActual")}</CardTitle>
+                <CardTitle className="text-sm font-semibold flex items-center gap-1.5">{t("sectionExpenses")}: {t("colPlan")} vs {t("colActual")} <InfoHint text={t("hintChartExpenses")} size={14} /></CardTitle>
                 {expenseAllData.length > MAX_CHART_ITEMS + 1 && (
                   <span className="text-[10px] text-muted-foreground">Top {MAX_CHART_ITEMS} + прочие</span>
                 )}
@@ -1280,7 +1281,7 @@ function WorkspaceTab({ planId }: { planId: string }) {
           <Card className="overflow-hidden">
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-sm font-semibold" title={t("hintChartRevenues")}>{t("sectionRevenues")}: {t("colPlan")} vs {t("colActual")}</CardTitle>
+                <CardTitle className="text-sm font-semibold flex items-center gap-1.5">{t("sectionRevenues")}: {t("colPlan")} vs {t("colActual")} <InfoHint text={t("hintChartRevenues")} size={14} /></CardTitle>
                 {revenueAllData.length > MAX_CHART_ITEMS + 1 && (
                   <span className="text-[10px] text-muted-foreground">Top {MAX_CHART_ITEMS} + прочие</span>
                 )}
@@ -1314,7 +1315,7 @@ function WorkspaceTab({ planId }: { planId: string }) {
 
       {/* Waterfall Chart */}
       <Card>
-        <CardHeader><CardTitle className="text-sm">Waterfall: {t("kpiPlan")} → {t("kpiForecast")} → {t("colActual")} → {t("kpiProjection")}</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="text-sm flex items-center gap-1.5">Waterfall: {t("kpiPlan")} → {t("kpiForecast")} → {t("colActual")} → {t("kpiProjection")} <InfoHint text={t("hintWaterfall")} size={14} /></CardTitle></CardHeader>
         <CardContent>
           <BudgetWaterfallChart
             totalPlanned={totalPlanned}
@@ -1460,25 +1461,28 @@ function OverviewTab({ planId }: { planId: string }) {
     <div className="space-y-6">
       {/* 5 KPI Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-        <ColorStatCard label={t("kpiPlan")} value={fmt(totalPlanned)} icon={<BarChart2 className="h-5 w-5" />} color="blue" />
-        <ColorStatCard label={t("kpiForecast")} value={fmt(totalForecast)} icon={<TrendingUp className="h-5 w-5" />} color="violet" />
+        <ColorStatCard label={t("kpiPlan")} value={fmt(totalPlanned)} icon={<BarChart2 className="h-5 w-5" />} color="blue" hint={t("hintOvPlan")} />
+        <ColorStatCard label={t("kpiForecast")} value={fmt(totalForecast)} icon={<TrendingUp className="h-5 w-5" />} color="violet" hint={t("hintOvForecast")} />
         <ColorStatCard
           label={autoActualTotal > 0 ? t("kpiActualCostModel") : t("kpiActual")}
           value={fmt(totalActual)}
           icon={<DollarSign className="h-5 w-5" />}
           color="green"
+          hint={t("hintOvActual")}
         />
         <ColorStatCard
           label={t("kpiVariance")}
           value={(totalVariance >= 0 ? "+" : "") + fmt(totalVariance)}
           icon={totalVariance >= 0 ? <TrendingUp className="h-5 w-5" /> : <TrendingDown className="h-5 w-5" />}
           color={totalVariance >= 0 ? "teal" : "red"}
+          hint={t("hintOvVariance")}
         />
         <ColorStatCard
           label={t("kpiYearEnd")}
           value={fmt(yearEndProjection)}
           icon={<CalendarRange className="h-5 w-5" />}
           color="amber"
+          hint={t("hintOvYearEnd")}
         />
       </div>
 
@@ -1647,15 +1651,15 @@ function OverviewTab({ planId }: { planId: string }) {
           <CardContent className="p-0">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
-                <thead className="bg-muted/50">
+                <thead className="bg-gradient-to-r from-blue-50 via-purple-50 to-emerald-50 dark:from-blue-950/40 dark:via-purple-950/40 dark:to-emerald-950/40 border-b-2 border-purple-200 dark:border-purple-800">
                   <tr>
-                    <th className="px-4 py-2 text-left font-medium">{t("colCategory")}</th>
-                    <th className="px-4 py-2 text-left font-medium">{t("colType")}</th>
-                    <th className="px-4 py-2 text-right font-medium">{t("colBudget")}</th>
-                    <th className="px-4 py-2 text-right font-medium text-purple-600 dark:text-purple-400">{t("colForecast")}</th>
-                    <th className="px-4 py-2 text-right font-medium text-[#065f46] dark:text-[#6ee7b7]">{t("colActual")}</th>
-                    <th className="px-4 py-2 text-right font-medium">{t("colVariance")}</th>
-                    <th className="px-4 py-2 text-right font-medium">%</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-indigo-700 dark:text-indigo-300">{t("colCategory")}</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">{t("colType")}</th>
+                    <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-blue-600 dark:text-blue-400">{t("colBudget")}</th>
+                    <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-purple-600 dark:text-purple-400">{t("colForecast")}</th>
+                    <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">{t("colActual")}</th>
+                    <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-amber-600 dark:text-amber-400">{t("colVariance")}</th>
+                    <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-amber-600 dark:text-amber-400">%</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1692,13 +1696,13 @@ function OverviewTab({ planId }: { planId: string }) {
           <CardContent className="p-0">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
-                <thead className="bg-muted/50">
+                <thead className="bg-gradient-to-r from-blue-50 via-purple-50 to-emerald-50 dark:from-blue-950/40 dark:via-purple-950/40 dark:to-emerald-950/40 border-b-2 border-purple-200 dark:border-purple-800">
                   <tr>
-                    <th className="px-4 py-2 text-left font-medium">{t("colDepartment")}</th>
-                    <th className="px-4 py-2 text-right font-medium">{t("colBudget")}</th>
-                    <th className="px-4 py-2 text-right font-medium text-purple-600 dark:text-purple-400">{t("colForecast")}</th>
-                    <th className="px-4 py-2 text-right font-medium text-[#065f46] dark:text-[#6ee7b7]">{t("colActual")}</th>
-                    <th className="px-4 py-2 text-right font-medium">{t("colVariance")}</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-indigo-700 dark:text-indigo-300">{t("colDepartment")}</th>
+                    <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-blue-600 dark:text-blue-400">{t("colBudget")}</th>
+                    <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-purple-600 dark:text-purple-400">{t("colForecast")}</th>
+                    <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">{t("colActual")}</th>
+                    <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-amber-600 dark:text-amber-400">{t("colVariance")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1786,16 +1790,16 @@ function LinesTab({ planId }: { planId: string }) {
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
-                <thead className="bg-muted/50">
+                <thead className="bg-gradient-to-r from-indigo-50 via-blue-50 to-purple-50 dark:from-indigo-950/40 dark:via-blue-950/40 dark:to-purple-950/40 border-b-2 border-indigo-200 dark:border-indigo-800">
                   <tr>
-                    <th className="px-4 py-2 text-left font-medium">{t("colCategory")}</th>
-                    <th className="px-4 py-2 text-left font-medium">{t("colDepartmentShort")}</th>
-                    <th className="px-4 py-2 text-left font-medium">{t("colType")}</th>
-                    <th className="px-4 py-2 text-right font-medium">{t("colBudget")}</th>
-                    <th className="px-4 py-2 text-right font-medium text-purple-600 dark:text-purple-400">{t("colForecast")}</th>
-                    <th className="px-4 py-2 text-left font-medium text-blue-600 dark:text-blue-400">{t("colCostModel")}</th>
-                    <th className="px-4 py-2 text-center font-medium">{t("colAutoActual")}</th>
-                    <th className="px-4 py-2 text-center font-medium">{t("colActions")}</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-indigo-700 dark:text-indigo-300">{t("colCategory")}</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">{t("colDepartmentShort")}</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">{t("colType")}</th>
+                    <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-blue-600 dark:text-blue-400">{t("colBudget")}</th>
+                    <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-purple-600 dark:text-purple-400">{t("colForecast")}</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-sky-600 dark:text-sky-400">{t("colCostModel")}</th>
+                    <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">{t("colAutoActual")}</th>
+                    <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">{t("colActions")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1938,15 +1942,15 @@ function ActualsTab({ planId }: { planId: string }) {
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
-                <thead className="bg-muted/50">
+                <thead className="bg-gradient-to-r from-emerald-50 via-teal-50 to-cyan-50 dark:from-emerald-950/40 dark:via-teal-950/40 dark:to-cyan-950/40 border-b-2 border-emerald-200 dark:border-emerald-800">
                   <tr>
-                    <th className="px-4 py-2 text-left font-medium">{t("colCategory")}</th>
-                    <th className="px-4 py-2 text-left font-medium">{t("colDepartment")}</th>
-                    <th className="px-4 py-2 text-left font-medium">{t("colType")}</th>
-                    <th className="px-4 py-2 text-right font-medium">{t("colAmount")}</th>
-                    <th className="px-4 py-2 text-left font-medium">{t("colDate")}</th>
-                    <th className="px-4 py-2 text-left font-medium">{t("colDescription")}</th>
-                    <th className="px-4 py-2 text-center font-medium">{t("colActions")}</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-300">{t("colCategory")}</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">{t("colDepartment")}</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">{t("colType")}</th>
+                    <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-teal-600 dark:text-teal-400">{t("colAmount")}</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">{t("colDate")}</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">{t("colDescription")}</th>
+                    <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">{t("colActions")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -2275,15 +2279,15 @@ function ComparisonTab() {
             <CardContent className="p-0">
               <div className="overflow-x-auto">
                 <table className="w-full text-xs">
-                  <thead className="bg-muted/50">
+                  <thead className="bg-gradient-to-r from-violet-50 via-purple-50 to-fuchsia-50 dark:from-violet-950/40 dark:via-purple-950/40 dark:to-fuchsia-950/40 border-b-2 border-violet-200 dark:border-violet-800">
                     <tr>
-                      <th className="px-3 py-2 text-left font-medium sticky left-0 bg-muted/50">{t("colCategory")}</th>
+                      <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-violet-700 dark:text-violet-300 sticky left-0 bg-gradient-to-r from-violet-50 to-purple-50 dark:from-violet-950/40 dark:to-purple-950/40">{t("colCategory")}</th>
                       {selectedIds.map((id, i) => {
                         const name = plans.find(p => p.id === id)?.name || `${t("colPlan")} ${i + 1}`
                         return [
-                          <th key={`${id}-p`} className="px-2 py-2 text-right font-medium" style={{ color: COMPARISON_COLORS[i] }}>{name} {t("colBudget")}</th>,
-                          <th key={`${id}-a`} className="px-2 py-2 text-right font-medium" style={{ color: COMPARISON_COLORS[i] }}>{name} {t("colActual")}</th>,
-                          <th key={`${id}-v`} className="px-2 py-2 text-right font-medium" style={{ color: COMPARISON_COLORS[i] }}>{t("colVarianceShort")} %</th>,
+                          <th key={`${id}-p`} className="px-2 py-3 text-right text-xs font-semibold uppercase tracking-wider" style={{ color: COMPARISON_COLORS[i] }}>{name} {t("colBudget")}</th>,
+                          <th key={`${id}-a`} className="px-2 py-3 text-right text-xs font-semibold uppercase tracking-wider" style={{ color: COMPARISON_COLORS[i] }}>{name} {t("colActual")}</th>,
+                          <th key={`${id}-v`} className="px-2 py-3 text-right text-xs font-semibold uppercase tracking-wider" style={{ color: COMPARISON_COLORS[i] }}>{t("colVarianceShort")} %</th>,
                         ]
                       })}
                     </tr>
@@ -2442,13 +2446,13 @@ function PLTab({ planId }: { planId: string }) {
         </div>
         {!isCollapsed && !isCalculated && (
           <table className="w-full text-sm">
-            <thead className="bg-muted/20 border-t border-border">
+            <thead className="bg-gradient-to-r from-slate-50 via-indigo-50/50 to-violet-50/50 dark:from-slate-900/40 dark:via-indigo-950/30 dark:to-violet-950/30 border-b-2 border-indigo-200/60 dark:border-indigo-800/60">
               <tr>
-                <th className="px-4 py-2.5 text-left text-sm text-foreground/70 font-semibold uppercase tracking-wide">{t("colCategory")}</th>
-                <th className="px-4 py-2.5 text-right text-sm text-foreground/70 font-semibold uppercase tracking-wide">{t("colBudget")}</th>
-                <th className="px-4 py-2.5 text-right text-sm text-foreground/70 font-semibold uppercase tracking-wide">{t("colForecast")}</th>
-                <th className="px-4 py-2.5 text-right text-sm text-foreground/70 font-semibold uppercase tracking-wide">{t("colActual")}</th>
-                <th className="px-4 py-2.5 text-right text-sm text-foreground/70 font-semibold uppercase tracking-wide">{t("colVarianceShort")}</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-indigo-700 dark:text-indigo-300">{t("colCategory")}</th>
+                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-blue-600 dark:text-blue-400">{t("colBudget")}</th>
+                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-purple-600 dark:text-purple-400">{t("colForecast")}</th>
+                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">{t("colActual")}</th>
+                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-amber-600 dark:text-amber-400">{t("colVarianceShort")}</th>
               </tr>
             </thead>
             <tbody>
@@ -3005,13 +3009,13 @@ function ForecastTab({ planId }: { planId: string }) {
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-muted/50 sticky top-0">
+              <thead className="sticky top-0 bg-gradient-to-r from-amber-50 via-orange-50 to-yellow-50 dark:from-amber-950/40 dark:via-orange-950/40 dark:to-yellow-950/40 border-b-2 border-amber-200 dark:border-amber-800">
                 <tr>
-                  <th className="px-3 py-2 text-left font-medium text-xs sticky left-0 bg-muted/50 z-20 min-w-[180px]">{t("colCategory")}</th>
+                  <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-amber-700 dark:text-amber-300 sticky left-0 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/40 dark:to-orange-950/40 z-20 min-w-[180px]">{t("colCategory")}</th>
                   {monthLabels.map((label, i) => (
-                    <th key={i} className="px-2 py-2 text-right font-medium text-xs min-w-[90px]">{label}</th>
+                    <th key={i} className="px-2 py-3 text-right text-xs font-semibold uppercase tracking-wider text-orange-600 dark:text-orange-400 min-w-[90px]">{label}</th>
                   ))}
-                  <th className="px-3 py-2 text-right font-medium text-xs min-w-[100px]">{t("totalLabel")}</th>
+                  <th className="px-3 py-3 text-right text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-300 min-w-[100px]">{t("totalLabel")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -3127,14 +3131,14 @@ function TemplatesTab() {
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-muted/50">
+              <thead className="bg-gradient-to-r from-sky-50 via-cyan-50 to-teal-50 dark:from-sky-950/40 dark:via-cyan-950/40 dark:to-teal-950/40 border-b-2 border-sky-200 dark:border-sky-800">
                 <tr>
-                  <th title={t("hintTemplateName")} className="px-3 py-2 text-left font-medium text-xs">{t("templateName")}</th>
-                  <th className="px-2 py-2 text-left font-medium text-xs">{t("templateType")}</th>
-                  <th className="px-2 py-2 text-left font-medium text-xs">{t("templateSubtype")}</th>
-                  <th className="px-2 py-2 text-right font-medium text-xs">{t("templateAmount")}</th>
-                  <th title={t("hintTemplateActive")} className="px-2 py-2 text-center font-medium text-xs">{t("templateActive")}</th>
-                  <th className="px-2 py-2 w-20" />
+                  <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-sky-700 dark:text-sky-300"><span className="inline-flex items-center gap-1.5">{t("templateName")} <InfoHint text={t("hintTemplateName")} size={12} /></span></th>
+                  <th className="px-2 py-3 text-left text-xs font-semibold uppercase tracking-wider text-sky-600 dark:text-sky-400">{t("templateType")}</th>
+                  <th className="px-2 py-3 text-left text-xs font-semibold uppercase tracking-wider text-sky-600 dark:text-sky-400">{t("templateSubtype")}</th>
+                  <th className="px-2 py-3 text-right text-xs font-semibold uppercase tracking-wider text-teal-600 dark:text-teal-400">{t("templateAmount")}</th>
+                  <th className="px-2 py-3 text-center text-xs font-semibold uppercase tracking-wider text-sky-600 dark:text-sky-400"><span className="inline-flex items-center gap-1.5 justify-center">{t("templateActive")} <InfoHint text={t("hintTemplateActive")} size={12} /></span></th>
+                  <th className="px-2 py-3 w-20" />
                 </tr>
               </thead>
               <tbody>
@@ -3435,12 +3439,12 @@ export default function BudgetingPage() {
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="mb-4 flex-wrap">
-              <TabsTrigger value="workspace" title={t("hintTabWorkspace")}>{t("tabWorkspace")}</TabsTrigger>
-              <TabsTrigger value="pl" title={t("hintTabPL")}>{t("tabPL")}</TabsTrigger>
-              <TabsTrigger value="forecast" title={t("hintTabForecast")}>{t("tabForecast")}</TabsTrigger>
-              <TabsTrigger value="comparison" title={t("hintTabComparison")}>{t("tabComparison")}</TabsTrigger>
-              <TabsTrigger value="plans" title={t("hintTabPlans")}>{t("tabPlans")}</TabsTrigger>
-              <TabsTrigger value="templates" title={t("hintTabTemplates")}>{t("tabTemplates")}</TabsTrigger>
+              <TabsTrigger value="workspace" className="gap-1">{t("tabWorkspace")} <InfoHint text={t("hintTabWorkspace")} size={12} /></TabsTrigger>
+              <TabsTrigger value="pl" className="gap-1">{t("tabPL")} <InfoHint text={t("hintTabPL")} size={12} /></TabsTrigger>
+              <TabsTrigger value="forecast" className="gap-1">{t("tabForecast")} <InfoHint text={t("hintTabForecast")} size={12} /></TabsTrigger>
+              <TabsTrigger value="comparison" className="gap-1">{t("tabComparison")} <InfoHint text={t("hintTabComparison")} size={12} /></TabsTrigger>
+              <TabsTrigger value="plans" className="gap-1">{t("tabPlans")} <InfoHint text={t("hintTabPlans")} size={12} /></TabsTrigger>
+              <TabsTrigger value="templates" className="gap-1">{t("tabTemplates")} <InfoHint text={t("hintTabTemplates")} size={12} /></TabsTrigger>
             </TabsList>
 
             <TabsContent value="workspace">
