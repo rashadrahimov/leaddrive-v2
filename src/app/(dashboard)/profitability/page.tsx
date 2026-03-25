@@ -272,31 +272,31 @@ export default function ProfitabilityPage() {
           {/* KPI cards */}
           <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
             <ColorStatCard
-              label="TOTAL COST/MONTH"
+              label={t("totalCostMonth")}
               value={fmt(grandTotalG)}
               icon={<DollarSign className="h-4 w-4" />}
               color="red"
             />
             <ColorStatCard
-              label="TOTAL REVENUE/MONTH"
+              label={t("totalRevenueMonth")}
               value={fmt(summary.totalRevenue)}
               icon={<TrendingUp className="h-4 w-4" />}
               color="green"
             />
             <ColorStatCard
-              label="MARGIN/MONTH"
+              label={t("marginMonth")}
               value={fmt(summary.totalMargin)}
               icon={<TrendingDown className="h-4 w-4" />}
               color={summary.totalMargin >= 0 ? "teal" : "red"}
             />
             <ColorStatCard
-              label="PROFITABLE CLIENTS"
+              label={t("profitableClients")}
               value={summary.profitableClients}
               icon={<Users className="h-4 w-4" />}
               color="blue"
             />
             <ColorStatCard
-              label="COST/1 USER"
+              label={t("costPerUser")}
               value={fmt(costPerUserF)}
               icon={<Users className="h-4 w-4" />}
               color="violet"
@@ -388,16 +388,16 @@ export default function ProfitabilityPage() {
         <TabsContent value="services" className="space-y-6">
           {/* Summary cards */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <ColorStatCard label="Total Cost" value={fmt(totalServiceCost)} icon={<DollarSign className="h-4 w-4" />} color="red" />
-            <ColorStatCard label="Total Revenue" value={fmt(totalServiceRevenue)} icon={<TrendingUp className="h-4 w-4" />} color="green" />
+            <ColorStatCard label={t("totalCost")} value={fmt(totalServiceCost)} icon={<DollarSign className="h-4 w-4" />} color="red" />
+            <ColorStatCard label={t("totalRevenue")} value={fmt(totalServiceRevenue)} icon={<TrendingUp className="h-4 w-4" />} color="green" />
             <ColorStatCard
-              label="Total Balance"
+              label={t("totalBalance")}
               value={fmt(totalServiceBalance)}
               icon={<DollarSign className="h-4 w-4" />}
               color={totalServiceBalance >= 0 ? "teal" : "red"}
             />
             <ColorStatCard
-              label="Profitable / Loss"
+              label={t("profitableLoss")}
               value={`${profitableSvcCount} / ${lossSvcCount}`}
               icon={<TrendingUp className="h-4 w-4" />}
               color="blue"

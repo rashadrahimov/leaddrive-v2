@@ -1428,7 +1428,16 @@
     "statusCol": "Status",
     "activeSale": "Aktiv",
     "cancelledSale": "Ləğv edildi",
-    "completedSale": "Tamamlandı"
+    "completedSale": "Tamamlandı",
+    "totalCostMonth": "XƏRCLƏR / AY",
+    "totalRevenueMonth": "GƏLİR / AY",
+    "marginMonth": "MARJA / AY",
+    "profitableClients": "GƏLİRLİ MÜŞTƏRİLƏR",
+    "costPerUser": "XƏRC / 1 İSTİFADƏÇİ",
+    "totalCost": "Ümumi xərc",
+    "totalRevenue": "Ümumi gəlir",
+    "totalBalance": "Ümumi balans",
+    "profitableLoss": "Gəlirli / Zərərli"
   },
   "ai": {
     "title": "AI İdarəetmə Mərkəzi",

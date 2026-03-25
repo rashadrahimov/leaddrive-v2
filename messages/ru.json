@@ -1432,7 +1432,16 @@
     "statusCol": "Статус",
     "activeSale": "Активна",
     "cancelledSale": "Отменена",
-    "completedSale": "Завершена"
+    "completedSale": "Завершена",
+    "totalCostMonth": "РАСХОДЫ / МЕСЯЦ",
+    "totalRevenueMonth": "ВЫРУЧКА / МЕСЯЦ",
+    "marginMonth": "МАРЖА / МЕСЯЦ",
+    "profitableClients": "ПРИБЫЛЬНЫЕ КЛИЕНТЫ",
+    "costPerUser": "РАСХОД / 1 ЮЗЕР",
+    "totalCost": "Затраты",
+    "totalRevenue": "Выручка",
+    "totalBalance": "Баланс",
+    "profitableLoss": "Прибыльные / Убыточные"
   },
   "ai": {
     "title": "AI Центр управления",

@@ -1432,7 +1432,16 @@
     "statusCol": "Status",
     "activeSale": "Active",
     "cancelledSale": "Cancelled",
-    "completedSale": "Completed"
+    "completedSale": "Completed",
+    "totalCostMonth": "TOTAL COST / MONTH",
+    "totalRevenueMonth": "TOTAL REVENUE / MONTH",
+    "marginMonth": "MARGIN / MONTH",
+    "profitableClients": "PROFITABLE CLIENTS",
+    "costPerUser": "COST / 1 USER",
+    "totalCost": "Total Cost",
+    "totalRevenue": "Total Revenue",
+    "totalBalance": "Total Balance",
+    "profitableLoss": "Profitable / Loss"
   },
   "ai": {
     "title": "AI Command Center",
