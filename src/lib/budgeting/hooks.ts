@@ -316,3 +316,20 @@ export function useSyncActuals() {
     },
   })
 }
+
+// ─── Snapshot Actuals (monthly freeze) ───────────────────────────────────────
+
+export function useSnapshotActuals() {
+  const orgId = useOrgId()
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ planId, month }: { planId?: string; month?: string }) =>
+      apiFetch<{ month: string; created: number; skipped: number; plans: number }>("/api/budgeting/snapshot-actuals", orgId, {
+        method: "POST",
+        body: JSON.stringify({ planId, month }),
+      }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["budgeting"] })
+    },
+  })
+}

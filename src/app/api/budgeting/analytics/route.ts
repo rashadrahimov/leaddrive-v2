@@ -23,18 +23,35 @@ export async function GET(req: NextRequest) {
 
   if (!plan) return NextResponse.json({ error: "Plan not found" }, { status: 404 })
 
-  // Build effective actuals: if a line has isAutoActual + costModelKey, resolve from cost model
-  // Otherwise fall through to manual BudgetActual records
+  // Build effective actuals for auto-actual lines:
+  // 1. Sum all BudgetActual snapshot records (past months, description="Авто-снапшот")
+  // 2. Add live cost model value for current month (if no snapshot exists for current month yet)
   const autoActualByCategory = new Map<string, number>()
   let autoActualTotal = 0
 
-  if (costModel) {
-    for (const line of lines) {
-      if (line.isAutoActual && line.costModelKey) {
-        const amount = resolveCostModelKey(costModel, line.costModelKey)
-        const key = `${line.category}||${line.lineType}`
-        autoActualByCategory.set(key, (autoActualByCategory.get(key) ?? 0) + amount)
-        autoActualTotal += amount
+  const currentMonth = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, "0")}`
+
+  if (hasAutoActual) {
+    // Step 1: Sum snapshot actuals (past months saved by cron/manual)
+    const snapshotActuals = manualActuals.filter((a: { description: string | null }) => a.description === "Авто-снапшот")
+    for (const a of snapshotActuals) {
+      const key = `${a.category}||${a.lineType}`
+      autoActualByCategory.set(key, (autoActualByCategory.get(key) ?? 0) + a.actualAmount)
+      autoActualTotal += a.actualAmount
+    }
+
+    // Step 2: Check if current month has a snapshot already
+    const hasCurrentMonthSnapshot = snapshotActuals.some((a: { expenseDate: string | null }) => a.expenseDate === currentMonth)
+
+    // Step 3: If no snapshot for current month, add live cost model values
+    if (!hasCurrentMonthSnapshot && costModel) {
+      for (const line of lines) {
+        if (line.isAutoActual && line.costModelKey) {
+          const amount = resolveCostModelKey(costModel, line.costModelKey)
+          const key = `${line.category}||${line.lineType}`
+          autoActualByCategory.set(key, (autoActualByCategory.get(key) ?? 0) + amount)
+          autoActualTotal += amount
+        }
       }
     }
   }
@@ -85,17 +102,17 @@ export async function GET(req: NextRequest) {
   const forecastVariance = totalForecast - totalActual
 
   // Estimate period-end projection based on elapsed time within the plan's period
-  const now = new Date()
-  const currentMonth = now.getMonth() + 1
+  const nowDate = new Date()
+  const currentMonthNum = nowDate.getMonth() + 1
   const periodMonths = plan.periodType === "annual" ? 12 : plan.periodType === "quarterly" ? 3 : 1
   // For annual: months elapsed = currentMonth. For quarterly: months elapsed within the quarter.
   // For monthly: always 1.
   let monthsElapsed = 1
   if (plan.periodType === "annual") {
-    monthsElapsed = Math.max(1, currentMonth)
+    monthsElapsed = Math.max(1, currentMonthNum)
   } else if (plan.periodType === "quarterly" && plan.quarter) {
     const quarterStartMonth = (plan.quarter - 1) * 3 + 1
-    monthsElapsed = Math.max(1, Math.min(3, currentMonth - quarterStartMonth + 1))
+    monthsElapsed = Math.max(1, Math.min(3, currentMonthNum - quarterStartMonth + 1))
   }
   const yearEndProjection = totalActual > 0 ? (totalActual / monthsElapsed) * periodMonths : totalForecast
 

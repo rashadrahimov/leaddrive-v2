@@ -38,6 +38,7 @@ import {
   useUpsertBudgetForecast,
   useAINarrative,
   useSyncActuals,
+  useSnapshotActuals,
 } from "@/lib/budgeting/hooks"
 import {
   DEFAULT_EXPENSE_CATEGORIES,
@@ -380,6 +381,7 @@ function WorkspaceTab({ planId }: { planId: string }) {
   const deleteActual = useDeleteBudgetActual()
   const aiNarrative = useAINarrative()
   const syncActuals = useSyncActuals()
+  const snapshotActuals = useSnapshotActuals()
 
   // Edit state
   const [editCell, setEditCell] = useState<{ id: string; field: string } | null>(null)
@@ -503,6 +505,14 @@ function WorkspaceTab({ planId }: { planId: string }) {
       const result = await syncActuals.mutateAsync(planId)
       alert(t("msgSynced", { count: result.synced }))
     } catch { alert(t("errorSync")) }
+  }
+
+  // Snapshot month
+  const handleSnapshot = async () => {
+    try {
+      const result = await snapshotActuals.mutateAsync({ planId })
+      alert(`Снапшот за ${result.month}: создано ${result.created}, пропущено ${result.skipped}`)
+    } catch { alert("Ошибка создания снапшота") }
   }
 
   if (analyticsLoading || linesLoading) return (
@@ -695,6 +705,10 @@ function WorkspaceTab({ planId }: { planId: string }) {
             {t("btnUpdateActual")}
           </Button>
         )}
+        <Button size="sm" variant="outline" onClick={handleSnapshot} disabled={snapshotActuals.isPending}>
+          {snapshotActuals.isPending ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <CalendarRange className="h-4 w-4 mr-1" />}
+          Сохранить месяц
+        </Button>
         <a href={`/api/budgeting/export?planId=${planId}`} download>
           <Button size="sm" variant="outline"><DollarSign className="h-4 w-4 mr-1" /> {t("btnExport")}</Button>
         </a>
