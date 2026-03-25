@@ -71,12 +71,12 @@ const GROUP_ICON_BG: Record<string, string> = {
 }
 
 const GROUP_LABEL_COLORS: Record<string, string> = {
-  CRM: "text-teal-600 dark:text-teal-400",
-  Marketing: "text-orange-600 dark:text-orange-400",
-  Communication: "text-blue-600 dark:text-blue-400",
-  Support: "text-emerald-600 dark:text-emerald-400",
-  Analytics: "text-purple-600 dark:text-purple-400",
-  Settings: "text-slate-500 dark:text-slate-400",
+  CRM: "text-teal-400",
+  Marketing: "text-orange-400",
+  Communication: "text-blue-400",
+  Support: "text-emerald-400",
+  Analytics: "text-purple-400",
+  Settings: "text-slate-400",
 }
 
 const GROUP_ACTIVE_BG: Record<string, string> = {
@@ -124,18 +124,18 @@ export function Sidebar({ org }: SidebarProps) {
   return (
     <aside
       className={cn(
-        "flex flex-col border-r border-border/60 bg-card dark:bg-[#1a3050] dark:border-white/10 transition-all duration-200",
+        "flex flex-col border-r border-white/10 bg-[#1a3050] transition-all duration-200",
         collapsed ? "w-16" : "w-64"
       )}
     >
       {/* Logo header */}
-      <div className="flex h-14 items-center justify-between border-b border-border/60 dark:border-white/10 px-4">
+      <div className="flex h-14 items-center justify-between border-b border-white/10 px-4">
         <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
           <Logo collapsed={collapsed} size="sm" sidebar />
         </Link>
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className="rounded-md p-1.5 text-muted-foreground dark:text-white/50 hover:bg-muted dark:hover:bg-white/10 hover:text-foreground dark:hover:text-white/80 transition-colors"
+          className="rounded-md p-1.5 text-white/50 hover:bg-white/10 hover:text-white/80 transition-colors"
         >
           <ChevronLeft className={cn("h-4 w-4 transition-transform", collapsed && "rotate-180")} />
         </button>
@@ -147,18 +147,18 @@ export function Sidebar({ org }: SidebarProps) {
           <div
             key={group}
             className={cn(
-              groupIndex > 0 && "border-t border-border/40 dark:border-white/[0.06] pt-3 mt-3"
+              groupIndex > 0 && "border-t border-white/[0.06] pt-3 mt-3"
             )}
           >
             {!collapsed ? (
               <div className={cn(
                 "mb-1.5 px-3 text-[10px] font-bold uppercase tracking-widest",
-                GROUP_LABEL_COLORS[group] || "text-muted-foreground"
+                GROUP_LABEL_COLORS[group] || "text-white/40"
               )}>
                 {t(`groups.${group}`)}
               </div>
             ) : (
-              groupIndex > 0 && <hr className="border-border/40 dark:border-white/[0.06] mx-3 my-1" />
+              groupIndex > 0 && <hr className="border-white/[0.06] mx-3 my-1" />
             )}
             {accessibleItems
               .filter((item) => item.group === group)
@@ -175,14 +175,14 @@ export function Sidebar({ org }: SidebarProps) {
                     className={cn(
                       "relative flex items-center gap-3 rounded-lg px-3 py-1.5 text-sm transition-all duration-150",
                       isActive
-                        ? cn("font-medium before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:h-5 before:w-[3px] before:rounded-r", activeBg, activeBar, "dark:bg-white/10 dark:text-white")
-                        : "text-muted-foreground dark:text-white/60 hover:bg-muted/60 dark:hover:bg-white/[0.06] hover:text-foreground dark:hover:text-white/90"
+                        ? cn("font-medium before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:h-5 before:w-[3px] before:rounded-r", activeBar, "bg-white/10 text-white")
+                        : "text-white/60 hover:bg-white/[0.06] hover:text-white/90"
                     )}
                     title={collapsed ? t(item.tKey) : undefined}
                   >
                     <div className={cn(
                       "flex h-6 w-6 items-center justify-center rounded-md shrink-0 transition-all",
-                      isActive ? iconBg : "bg-muted/80 dark:bg-white/[0.08] text-muted-foreground"
+                      isActive ? iconBg : "bg-white/[0.08] text-white/60"
                     )}>
                       <Icon className="h-3.5 w-3.5" />
                     </div>
