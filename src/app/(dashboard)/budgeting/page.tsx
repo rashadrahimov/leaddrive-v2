@@ -2045,13 +2045,13 @@ function PLTab({ planId }: { planId: string }) {
           className={`flex items-center justify-between px-4 py-3 cursor-pointer ${isCalculated ? "bg-blue-50 dark:bg-blue-950/30" : "bg-muted/40"}`}
           onClick={() => toggleCollapse(sectionId)}
         >
-          <div className="flex items-center gap-2 font-medium text-sm">
+          <div className="flex items-center gap-2 font-bold text-sm">
             {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
             {title}
           </div>
-          <div className="flex gap-8 text-sm font-mono">
-            <span className="text-muted-foreground">{fmt(isCalculated ? calcPlanned : rows.reduce((s, r) => s + r.planned, 0))}</span>
-            <span className={`font-medium ${(isCalculated ? calcActual : rows.reduce((s, r) => s + r.actual, 0)) >= 0 ? "text-green-600 dark:text-green-400" : "text-red-500"}`}>
+          <div className="flex gap-8 text-sm font-mono font-bold">
+            <span>{fmt(isCalculated ? calcPlanned : rows.reduce((s, r) => s + r.planned, 0))}</span>
+            <span className={`${(isCalculated ? calcActual : rows.reduce((s, r) => s + r.actual, 0)) >= 0 ? "text-emerald-700 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>
               {fmt(isCalculated ? calcActual : rows.reduce((s, r) => s + r.actual, 0))}
             </span>
           </div>
@@ -2060,11 +2060,11 @@ function PLTab({ planId }: { planId: string }) {
           <table className="w-full text-sm">
             <thead className="bg-muted/20 border-t border-border">
               <tr>
-                <th className="px-4 py-2 text-left text-xs text-muted-foreground font-medium">{t("colCategory")}</th>
-                <th className="px-4 py-2 text-right text-xs text-muted-foreground font-medium">{t("colBudget")}</th>
-                <th className="px-4 py-2 text-right text-xs text-muted-foreground font-medium text-purple-600 dark:text-purple-400">{t("colForecast")}</th>
-                <th className="px-4 py-2 text-right text-xs text-muted-foreground font-medium text-green-600 dark:text-green-400">{t("colActual")}</th>
-                <th className="px-4 py-2 text-right text-xs text-muted-foreground font-medium">{t("colVarianceShort")}</th>
+                <th className="px-4 py-2.5 text-left text-sm text-foreground/70 font-semibold uppercase tracking-wide">{t("colCategory")}</th>
+                <th className="px-4 py-2.5 text-right text-sm text-foreground/70 font-semibold uppercase tracking-wide">{t("colBudget")}</th>
+                <th className="px-4 py-2.5 text-right text-sm text-foreground/70 font-semibold uppercase tracking-wide">{t("colForecast")}</th>
+                <th className="px-4 py-2.5 text-right text-sm text-foreground/70 font-semibold uppercase tracking-wide">{t("colActual")}</th>
+                <th className="px-4 py-2.5 text-right text-sm text-foreground/70 font-semibold uppercase tracking-wide">{t("colVarianceShort")}</th>
               </tr>
             </thead>
             <tbody>
@@ -2085,10 +2085,10 @@ function PLTab({ planId }: { planId: string }) {
                             {g.parent}
                             <Badge variant="outline" className="text-[10px] px-1 py-0">{g.children.length}</Badge>
                           </td>
-                          <td className="px-4 py-2 text-right font-mono text-xs font-semibold">{fmt(gPlanned)}</td>
-                          <td className="px-4 py-2 text-right font-mono text-xs font-semibold text-purple-600 dark:text-purple-400">{fmt(gForecast)}</td>
-                          <td className="px-4 py-2 text-right font-mono text-xs font-semibold text-green-600 dark:text-green-400">{fmt(gActual)}</td>
-                          <td className={`px-4 py-2 text-right font-mono text-xs font-semibold ${gVariance >= 0 ? "text-green-600 dark:text-green-400" : "text-red-500"}`}>
+                          <td className="px-4 py-2.5 text-right font-mono text-sm font-bold">{fmt(gPlanned)}</td>
+                          <td className="px-4 py-2.5 text-right font-mono text-sm font-bold">{fmt(gForecast)}</td>
+                          <td className="px-4 py-2.5 text-right font-mono text-sm font-bold">{fmt(gActual)}</td>
+                          <td className={`px-4 py-2.5 text-right font-mono text-sm font-bold ${gVariance >= 0 ? "text-emerald-700 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>
                             {gVariance >= 0 ? "+" : ""}{fmt(gVariance)}
                           </td>
                         </tr>
@@ -2098,10 +2098,10 @@ function PLTab({ planId }: { planId: string }) {
                               {drilldown === row.category && <span className="text-blue-500">▶</span>}
                               — {row.category}
                             </td>
-                            <td className="px-4 py-1.5 text-right font-mono text-xs">{fmt(row.planned)}</td>
-                            <td className="px-4 py-1.5 text-right font-mono text-xs text-purple-600 dark:text-purple-400">{fmt(row.forecast)}</td>
-                            <td className="px-4 py-1.5 text-right font-mono text-xs text-green-600 dark:text-green-400">{fmt(row.actual)}</td>
-                            <td className={`px-4 py-1.5 text-right font-mono text-xs font-medium ${row.variance >= 0 ? "text-green-600 dark:text-green-400" : "text-red-500"}`}>
+                            <td className="px-4 py-2 text-right font-mono text-sm">{fmt(row.planned)}</td>
+                            <td className="px-4 py-2 text-right font-mono text-sm">{fmt(row.forecast)}</td>
+                            <td className="px-4 py-2 text-right font-mono text-sm">{fmt(row.actual)}</td>
+                            <td className={`px-4 py-2 text-right font-mono text-sm font-semibold ${row.variance >= 0 ? "text-emerald-700 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>
                               {row.variance >= 0 ? "+" : ""}{fmt(row.variance)}
                             </td>
                           </tr>
@@ -2115,10 +2115,10 @@ function PLTab({ planId }: { planId: string }) {
                         {drilldown === row.category && <span className="text-blue-500">▶</span>}
                         {row.category}
                       </td>
-                      <td className="px-4 py-2 text-right font-mono text-xs">{fmt(row.planned)}</td>
-                      <td className="px-4 py-2 text-right font-mono text-xs text-purple-600 dark:text-purple-400">{fmt(row.forecast)}</td>
-                      <td className="px-4 py-2 text-right font-mono text-xs text-green-600 dark:text-green-400">{fmt(row.actual)}</td>
-                      <td className={`px-4 py-2 text-right font-mono text-xs font-medium ${row.variance >= 0 ? "text-green-600 dark:text-green-400" : "text-red-500"}`}>
+                      <td className="px-4 py-2 text-right font-mono text-sm">{fmt(row.planned)}</td>
+                      <td className="px-4 py-2 text-right font-mono text-sm">{fmt(row.forecast)}</td>
+                      <td className="px-4 py-2 text-right font-mono text-sm">{fmt(row.actual)}</td>
+                      <td className={`px-4 py-2 text-right font-mono text-sm font-semibold ${row.variance >= 0 ? "text-emerald-700 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>
                         {row.variance >= 0 ? "+" : ""}{fmt(row.variance)}
                       </td>
                     </tr>
@@ -2187,12 +2187,12 @@ function PLTab({ planId }: { planId: string }) {
       {renderSection(t("sectionCOGS"), cogsRows, "auto-cogs", false, 0, 0, cogsGrouped)}
 
       {/* Gross Profit = Revenue - COGS */}
-      <div className="border-2 border-emerald-300 dark:border-emerald-700 rounded-lg overflow-hidden mb-3 bg-emerald-50 dark:bg-emerald-950/20">
+      <div className="border-2 border-emerald-400 dark:border-emerald-600 rounded-lg overflow-hidden mb-3 bg-emerald-50/80 dark:bg-emerald-950/30">
         <div className="flex items-center justify-between px-4 py-3">
-          <div className="font-bold text-sm">{t("grossProfit")}</div>
-          <div className="flex gap-8 text-sm font-mono">
-            <span className="text-muted-foreground">{fmt(grossProfitPlanned)}</span>
-            <span className={`font-bold ${grossProfitActual >= 0 ? "text-emerald-600" : "text-red-500"}`}>{fmt(grossProfitActual)}</span>
+          <div className="font-bold text-base">{t("grossProfit")}</div>
+          <div className="flex gap-8 font-mono font-bold text-base">
+            <span>{fmt(grossProfitPlanned)}</span>
+            <span className={grossProfitActual >= 0 ? "text-emerald-700 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}>{fmt(grossProfitActual)}</span>
           </div>
         </div>
         {totalRevenuePlanned > 0 && (
@@ -2209,12 +2209,12 @@ function PLTab({ planId }: { planId: string }) {
         const opProfitPlanned = grossProfitPlanned - totalExpensePlanned
         const opProfitActual = grossProfitActual - totalExpenseActual
         return (
-          <div className="border-2 border-purple-300 dark:border-purple-700 rounded-lg overflow-hidden mb-3 bg-purple-50 dark:bg-purple-950/20">
+          <div className="border-2 border-slate-400 dark:border-slate-500 rounded-lg overflow-hidden mb-3 bg-slate-50 dark:bg-slate-900/30">
             <div className="flex items-center justify-between px-4 py-3">
-              <div className="font-bold text-sm">{t("operatingProfit")} (EBITDA)</div>
-              <div className="flex gap-8 text-sm font-mono">
-                <span className="text-muted-foreground">{fmt(opProfitPlanned)}</span>
-                <span className={`font-bold ${opProfitActual >= 0 ? "text-purple-600" : "text-red-500"}`}>{fmt(opProfitActual)}</span>
+              <div className="font-bold text-base">{t("operatingProfit")} (EBITDA)</div>
+              <div className="flex gap-8 font-mono font-bold text-base">
+                <span>{fmt(opProfitPlanned)}</span>
+                <span className={opProfitActual >= 0 ? "text-emerald-700 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}>{fmt(opProfitActual)}</span>
               </div>
             </div>
             {totalRevenuePlanned > 0 && (
