@@ -108,10 +108,13 @@ export async function GET(req: NextRequest) {
 
   const totalExpenseActual = autoActualExpense > 0 ? autoActualExpense : manualExpenseActual
   const totalRevenueActual = autoActualRevenue > 0 ? autoActualRevenue : manualRevenueActual
-  const totalActual = totalExpenseActual // KPI "ФАКТ" = expense actual
-  const totalVariance = totalPlanned - totalActual // positive = under budget (good)
-  const executionPct = totalPlanned > 0 ? (totalActual / totalPlanned) * 100 : 0
-  const forecastVariance = totalForecast - totalActual
+  const totalActual = totalExpenseActual
+  // Margin-based KPIs
+  const marginPlanned = totalRevenuePlanned - totalExpensePlanned
+  const marginActual = totalRevenueActual - totalExpenseActual
+  const totalVariance = marginActual - marginPlanned // positive = better than plan
+  const executionPct = marginPlanned !== 0 ? (marginActual / marginPlanned) * 100 : 0
+  const forecastVariance = totalExpenseForecast - totalExpenseActual
 
   // Estimate period-end projection based on elapsed time within the plan's period
   const nowDate = new Date()
@@ -229,8 +232,8 @@ export async function GET(req: NextRequest) {
       totalExpensePlanned,
       totalExpenseForecast,
       totalExpenseActual,
-      margin: totalRevenuePlanned - totalExpensePlanned,
-      marginActual: totalRevenueActual - totalExpenseActual,
+      margin: marginPlanned,
+      marginActual: marginActual,
       byCategory,
       byDepartment,
       costModelTotal: costModel?.grandTotalG ?? 0,
