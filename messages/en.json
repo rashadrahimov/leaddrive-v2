@@ -2084,6 +2084,9 @@
     "scenarioOptimistic": "Optimistic",
     "scenarioPessimistic": "Pessimistic",
 
+    "forecastRevenueTotal": "REVENUE (forecast)",
+    "forecastExpenseTotal": "EXPENSES (forecast)",
+    "forecastMarginTotal": "MARGIN (forecast)",
     "forecastBudgetYear": "BUDGET (YEAR)",
     "forecastForecastYear": "FORECAST (YEAR)",
     "forecastYearEndProjection": "PERIOD-END PROJECTION",

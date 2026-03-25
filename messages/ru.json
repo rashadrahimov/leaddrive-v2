@@ -2084,6 +2084,9 @@
     "scenarioOptimistic": "Оптимист.",
     "scenarioPessimistic": "Пессимист.",
 
+    "forecastRevenueTotal": "ДОХОДЫ (прогноз)",
+    "forecastExpenseTotal": "РАСХОДЫ (прогноз)",
+    "forecastMarginTotal": "МАРЖА (прогноз)",
     "forecastBudgetYear": "БЮДЖЕТ (ГОД)",
     "forecastForecastYear": "ПРОГНОЗ (ГОД)",
     "forecastYearEndProjection": "ПРОЕКЦИЯ НА КОН. ПЕРИОДА",

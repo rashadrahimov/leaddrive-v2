@@ -2080,6 +2080,9 @@
     "scenarioOptimistic": "Optimist",
     "scenarioPessimistic": "Pessimist",
 
+    "forecastRevenueTotal": "GƏLİRLƏR (proqnoz)",
+    "forecastExpenseTotal": "XƏRCLƏR (proqnoz)",
+    "forecastMarginTotal": "MARJA (proqnoz)",
     "forecastBudgetYear": "BÜDCƏ (İL)",
     "forecastForecastYear": "PROQNOZ (İL)",
     "forecastYearEndProjection": "DÖVR SONU PROQNOZLAŞDIRİLMASI",
