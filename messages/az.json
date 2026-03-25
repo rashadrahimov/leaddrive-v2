@@ -2092,6 +2092,7 @@
     "optManualActual": "— Əl ilə fakt daxil etmə —",
     "optManual": "— Əl ilə —",
 
+    "scenarioLabel": "Ssenari:",
     "scenarioBase": "Baza",
     "scenarioOptimistic": "Optimist",
     "scenarioPessimistic": "Pessimist",
@@ -2186,6 +2187,16 @@
 
     "hintMateriality": "Materiallik həddi: yalnız sapması həddi aşan maddələri göstər",
     "hintBadgeAuto": "Dəyər avtomatik olaraq şirkətin maya modelindən alınıb",
+
+    "hintSectionTotal": "Bölmə üzrə cəmi",
+    "hintChartExpenses": "Xərclər: kateqoriyalar üzrə plan vs fakt",
+    "hintChartRevenues": "Gəlirlər: kateqoriyalar üzrə plan vs fakt",
+    "hintSearchCategory": "Kateqoriya adına görə axtar",
+    "hintFilterType": "Tipə görə filtr: hamısı, xərclər və ya gəlirlər",
+    "hintDeleteLine": "Sətri sil",
+    "hintExpandActuals": "Faktiki qeydləri göstər/gizlət",
+    "hintAddSubItem": "Qrupa alt kateqoriya əlavə et",
+    "hintBadgeChildCount": "Qrupdakı alt kateqoriyaların sayı",
 
     "hintStatusDraft": "Qaralama: redaktə edilə bilər, sətir və faktlar əlavə edilə bilər",
     "hintStatusPending": "Təsdiqə göndərilib. Rəhbərin qərarını gözləyir",

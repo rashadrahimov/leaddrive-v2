@@ -2096,6 +2096,7 @@
     "optManualActual": "— Ручной ввод факта —",
     "optManual": "— Вручную —",
 
+    "scenarioLabel": "Сценарий:",
     "scenarioBase": "Базовый",
     "scenarioOptimistic": "Оптимист.",
     "scenarioPessimistic": "Пессимист.",
@@ -2190,6 +2191,16 @@
 
     "hintMateriality": "Порог материальности: показывать только статьи с отклонением выше порога",
     "hintBadgeAuto": "Значение получено автоматически из cost-модели компании",
+
+    "hintSectionTotal": "Итого по секции",
+    "hintChartExpenses": "Расходы: сравнение плана с фактом по категориям",
+    "hintChartRevenues": "Доходы: сравнение плана с фактом по категориям",
+    "hintSearchCategory": "Поиск по названию категории",
+    "hintFilterType": "Фильтр по типу: все, расходы или доходы",
+    "hintDeleteLine": "Удалить строку",
+    "hintExpandActuals": "Показать/скрыть фактические записи",
+    "hintAddSubItem": "Добавить подкатегорию в группу",
+    "hintBadgeChildCount": "Количество подкатегорий в группе",
 
     "hintStatusDraft": "Черновик: можно редактировать, добавлять строки и факт",
     "hintStatusPending": "Отправлен на утверждение. Ожидает решения руководителя",

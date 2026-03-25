@@ -2096,6 +2096,7 @@
     "optManualActual": "— Manual actual entry —",
     "optManual": "— Manual —",
 
+    "scenarioLabel": "Scenario:",
     "scenarioBase": "Base",
     "scenarioOptimistic": "Optimistic",
     "scenarioPessimistic": "Pessimistic",
@@ -2190,6 +2191,16 @@
 
     "hintMateriality": "Materiality threshold: only show items with variance above threshold",
     "hintBadgeAuto": "Value sourced automatically from cost model",
+
+    "hintSectionTotal": "Section total",
+    "hintChartExpenses": "Expenses: plan vs actual by category",
+    "hintChartRevenues": "Revenues: plan vs actual by category",
+    "hintSearchCategory": "Search by category name",
+    "hintFilterType": "Filter by type: all, expenses, or revenues",
+    "hintDeleteLine": "Delete line",
+    "hintExpandActuals": "Show/hide actual records",
+    "hintAddSubItem": "Add subcategory to group",
+    "hintBadgeChildCount": "Number of subcategories in group",
 
     "hintStatusDraft": "Draft: can be edited, lines and actuals can be added",
     "hintStatusPending": "Submitted for approval. Awaiting manager decision",
