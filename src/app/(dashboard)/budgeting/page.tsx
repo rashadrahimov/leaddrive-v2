@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import React, { useState, useMemo } from "react"
 import { useTranslations } from "next-intl"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ColorStatCard } from "@/components/color-stat-card"
@@ -385,9 +385,9 @@ function WorkspaceTab({ planId }: { planId: string }) {
   const [expandId, setExpandId] = useState<string | null>(null)
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(() => new Set(["admin", "tech_infra", "labor", "risk"]))
   const [addingSubItem, setAddingSubItem] = useState<string | null>(null)
-  const [newSubItem, setNewSubItem] = useState({ category: "", amount: "" })
+  const [newSubItem, setNewSubItem] = useState({ category: "", amount: "", department: "" })
   const [addingRow, setAddingRow] = useState(false)
-  const [newRow, setNewRow] = useState({ category: "", lineType: "expense", plannedAmount: "", forecastAmount: "", department: "" })
+  const [newRow, setNewRow] = useState({ category: "", lineType: "expense", plannedAmount: "", forecastAmount: "", department: "", parentId: "" })
   const [filterText, setFilterText] = useState("")
   const [filterType, setFilterType] = useState<"all" | "expense" | "revenue">("all")
   const [narrative, setNarrative] = useState<string | null>(null)
@@ -439,8 +439,8 @@ function WorkspaceTab({ planId }: { planId: string }) {
   // Totals
   const totExpPlanned = expenseLines.reduce((s: number, l: BudgetLine) => s + leafPlanned(l), 0)
   const totExpForecast = expenseLines.reduce((s: number, l: BudgetLine) => s + leafForecast(l), 0)
-  const totRevPlanned = revenueLines.reduce((s: number, l: BudgetLine) => s + l.plannedAmount, 0)
-  const totRevForecast = revenueLines.reduce((s: number, l: BudgetLine) => s + (l.forecastAmount ?? l.plannedAmount), 0)
+  const totRevPlanned = revenueLines.reduce((s: number, l: BudgetLine) => s + leafPlanned(l), 0)
+  const totRevForecast = revenueLines.reduce((s: number, l: BudgetLine) => s + leafForecast(l), 0)
 
   const { totalPlanned = 0, totalForecast = 0, totalActual = 0, totalVariance = 0, executionPct = 0, autoActualTotal = 0, yearEndProjection = 0, byCategory = [], totalRevenuePlanned = 0, totalRevenueActual = 0, totalExpensePlanned = 0, totalExpenseActual = 0, margin = 0, marginActual = 0 } = analytics ?? {}
 
@@ -462,6 +462,9 @@ function WorkspaceTab({ planId }: { planId: string }) {
     setEditCell(null)
   }
 
+  // All parent groups (for dropdown in add form)
+  const parentGroups = lines.filter((l: BudgetLine) => l.children && l.children.length > 0)
+
   // Add new row
   const handleAddRow = async () => {
     if (!newRow.category.trim()) return
@@ -472,8 +475,9 @@ function WorkspaceTab({ planId }: { planId: string }) {
       lineType: newRow.lineType as "expense" | "revenue",
       plannedAmount: Number(newRow.plannedAmount) || 0,
       forecastAmount: Number(newRow.forecastAmount) || undefined,
+      parentId: newRow.parentId || undefined,
     })
-    setNewRow({ category: "", lineType: "expense", plannedAmount: "", forecastAmount: "", department: "" })
+    setNewRow({ category: "", lineType: "expense", plannedAmount: "", forecastAmount: "", department: "", parentId: "" })
     setAddingRow(false)
   }
 
@@ -630,8 +634,9 @@ function WorkspaceTab({ planId }: { planId: string }) {
       lineType: parentLine.lineType as "expense" | "revenue",
       plannedAmount: Number(newSubItem.amount) || 0,
       parentId: parentLine.id,
+      department: newSubItem.department || undefined,
     })
-    setNewSubItem({ category: "", amount: "" })
+    setNewSubItem({ category: "", amount: "", department: "" })
     setAddingSubItem(null)
   }
 
@@ -691,8 +696,8 @@ function WorkspaceTab({ planId }: { planId: string }) {
     const noteText = child.notes && !child.notes.startsWith("group:") ? child.notes : null
 
     return (
-      <>
-        <tr key={child.id} className="border-t border-border/30 hover:bg-muted/20 group">
+      <React.Fragment key={child.id}>
+        <tr className="border-t border-border/30 hover:bg-muted/20 group">
           <td className="px-3 py-1.5 text-sm" colSpan={2}>
             <div className="flex items-center gap-1 pl-6">
               <span className="text-muted-foreground text-xs">—</span>
@@ -739,7 +744,7 @@ function WorkspaceTab({ planId }: { planId: string }) {
           </td>
         </tr>
         {renderExpand(child)}
-      </>
+      </React.Fragment>
     )
   }
 
@@ -748,12 +753,17 @@ function WorkspaceTab({ planId }: { planId: string }) {
     if (addingSubItem !== parentLine.id) return null
     return (
       <tr key={`add-sub-${parentLine.id}`} className="bg-purple-50 dark:bg-purple-900/10 border-t border-border/30">
-        <td className="px-3 py-1.5" colSpan={2}>
+        <td className="px-3 py-1.5">
           <div className="pl-6 flex items-center gap-2">
-            <Input placeholder="Name" className="h-6 text-xs flex-1" autoFocus value={newSubItem.category}
+            <Input placeholder={t("placeholderCategoryShort")} className="h-6 text-xs flex-1" autoFocus value={newSubItem.category}
               onChange={e => setNewSubItem(d => ({ ...d, category: e.target.value }))}
               onKeyDown={e => { if (e.key === "Enter") handleAddSubItem(parentLine) }} />
           </div>
+        </td>
+        <td className="px-2 py-1.5">
+          <Input placeholder={t("colDepartment")} className="h-6 text-xs" value={newSubItem.department}
+            onChange={e => setNewSubItem(d => ({ ...d, department: e.target.value }))}
+            onKeyDown={e => { if (e.key === "Enter") handleAddSubItem(parentLine) }} />
         </td>
         <td className="px-2 py-1.5">
           <Input type="number" placeholder="0" className="h-6 text-xs text-right" value={newSubItem.amount}
@@ -763,7 +773,7 @@ function WorkspaceTab({ planId }: { planId: string }) {
         <td colSpan={2} className="px-2 py-1.5">
           <div className="flex gap-1">
             <Button size="sm" variant="ghost" className="h-6 text-xs px-2" onClick={() => handleAddSubItem(parentLine)}>
-              <CheckCircle className="h-3 w-3 mr-1" /> Add
+              <CheckCircle className="h-3 w-3 mr-1" /> {t("btnSave")}
             </Button>
             <Button size="sm" variant="ghost" className="h-6 text-xs px-2" onClick={() => setAddingSubItem(null)}>{t("btnCancel")}</Button>
           </div>
@@ -798,8 +808,8 @@ function WorkspaceTab({ planId }: { planId: string }) {
     )
   }
 
-  // Grouped expense section with collapsible groups
-  const renderGroupedExpenses = (sectionLines: BudgetLine[]) => {
+  // Universal grouped section renderer (for both expenses and revenues)
+  const renderGroupedSection = (title: string, sectionLines: BudgetLine[], totPlanned: number) => {
     const totActual = sectionLines.reduce((s: number, l: BudgetLine) => {
       if (l.children?.length) {
         return s + l.children.reduce((cs, c) => cs + (c.isAutoActual ? (autoActualMap.get(c.category) ?? 0) : (actualsByCat.get(`${c.category}||${c.lineType}`)?.total ?? 0)), 0)
@@ -810,7 +820,7 @@ function WorkspaceTab({ planId }: { planId: string }) {
     return (
       <>
         <tr className="bg-muted/40">
-          <td colSpan={6} className="px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-muted-foreground">{t("sectionExpenses")}</td>
+          <td colSpan={6} className="px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-muted-foreground">{title}</td>
         </tr>
         {sectionLines.map(l => {
           const isGroupParent = l.children && l.children.length > 0
@@ -819,21 +829,21 @@ function WorkspaceTab({ planId }: { planId: string }) {
 
           if (isGroupParent) {
             return (
-              <>
+              <React.Fragment key={l.id}>
                 {renderGroupHeader(l)}
                 {renderAddSubItemForm(l)}
                 {isOpen && (l.children ?? []).map(child => renderChildRow(child))}
-              </>
+              </React.Fragment>
             )
           }
-          return [renderRow(l), renderExpand(l)]
+          return <React.Fragment key={l.id}>{renderRow(l)}{renderExpand(l)}</React.Fragment>
         })}
         <tr className="border-t-2 border-border bg-muted/30">
-          <td className="px-3 py-1.5 font-bold text-xs" colSpan={2}>{t("totalLabel")} {t("sectionExpenses").toLowerCase()}</td>
-          <td className="px-2 py-1.5 text-right font-mono text-xs font-bold">{fmt(totExpPlanned)}</td>
+          <td className="px-3 py-1.5 font-bold text-xs" colSpan={2}>{t("totalLabel")} {title.toLowerCase()}</td>
+          <td className="px-2 py-1.5 text-right font-mono text-xs font-bold">{fmt(totPlanned)}</td>
           <td className="px-2 py-1.5 text-right font-mono text-xs font-bold text-green-600">{fmt(totActual)}</td>
           <td className="px-2 py-1.5 text-right font-mono text-xs font-bold">
-            {totExpPlanned > 0 ? `${(((totExpPlanned - totActual) / totExpPlanned) * 100).toFixed(1)}%` : "—"}
+            {totPlanned > 0 ? `${(((totPlanned - totActual) / totPlanned) * 100).toFixed(1)}%` : "—"}
           </td>
           <td />
         </tr>
@@ -868,7 +878,12 @@ function WorkspaceTab({ planId }: { planId: string }) {
     }
     return s + (l.isAutoActual ? (autoActualMap.get(l.category) ?? 0) : (actualsByCat.get(`${l.category}||${l.lineType}`)?.total ?? 0))
   }, 0)
-  const totRevActual = revenueLines.reduce((s: number, l: BudgetLine) => s + (l.isAutoActual ? (autoActualMap.get(l.category) ?? 0) : (actualsByCat.get(`${l.category}||${l.lineType}`)?.total ?? 0)), 0)
+  const totRevActual = revenueLines.reduce((s: number, l: BudgetLine) => {
+    if (l.children?.length) {
+      return s + l.children.reduce((cs, c) => cs + (c.isAutoActual ? (autoActualMap.get(c.category) ?? 0) : (actualsByCat.get(`${c.category}||${c.lineType}`)?.total ?? 0)), 0)
+    }
+    return s + (l.isAutoActual ? (autoActualMap.get(l.category) ?? 0) : (actualsByCat.get(`${l.category}||${l.lineType}`)?.total ?? 0))
+  }, 0)
 
   return (
     <div className="space-y-6">
@@ -942,8 +957,8 @@ function WorkspaceTab({ planId }: { planId: string }) {
                 </tr>
               </thead>
               <tbody>
-                {expenseLines.length > 0 && renderGroupedExpenses(expenseLines)}
-                {revenueLines.length > 0 && renderSection(t("sectionRevenues"), revenueLines, totRevPlanned, totRevForecast)}
+                {expenseLines.length > 0 && renderGroupedSection(t("sectionExpenses"), expenseLines, totExpPlanned)}
+                {revenueLines.length > 0 && renderGroupedSection(t("sectionRevenues"), revenueLines, totRevPlanned)}
 
                 {/* Margin row */}
                 {(expenseLines.length > 0 || revenueLines.length > 0) && (
@@ -959,12 +974,20 @@ function WorkspaceTab({ planId }: { planId: string }) {
                 {addingRow ? (
                   <tr className="border-t border-border/50 bg-green-50 dark:bg-green-900/10">
                     <td className="px-2 py-1">
-                      <div className="flex items-center gap-1">
-                        <Input placeholder={t("placeholderCategoryShort")} className="h-7 text-xs flex-1" value={newRow.category} onChange={e => setNewRow(d => ({ ...d, category: e.target.value }))} autoFocus />
-                        <select value={newRow.lineType} onChange={e => setNewRow(d => ({ ...d, lineType: e.target.value }))} className="h-7 rounded-md border border-input bg-background px-1 text-[10px] w-[70px] shrink-0">
-                          <option value="expense">{t("expense")}</option>
-                          <option value="revenue">{t("revenue")}</option>
-                        </select>
+                      <div className="flex flex-col gap-1">
+                        <div className="flex items-center gap-1">
+                          <select value={newRow.parentId} onChange={e => setNewRow(d => ({ ...d, parentId: e.target.value }))} className="h-7 rounded-md border border-input bg-background px-1 text-[10px] flex-1">
+                            <option value="">{t("selectGroup")}</option>
+                            {parentGroups.map((g: BudgetLine) => (
+                              <option key={g.id} value={g.id}>{g.category}</option>
+                            ))}
+                          </select>
+                          <select value={newRow.lineType} onChange={e => setNewRow(d => ({ ...d, lineType: e.target.value, parentId: "" }))} className="h-7 rounded-md border border-input bg-background px-1 text-[10px] w-[70px] shrink-0">
+                            <option value="expense">{t("expense")}</option>
+                            <option value="revenue">{t("revenue")}</option>
+                          </select>
+                        </div>
+                        <Input placeholder={t("placeholderCategoryShort")} className="h-7 text-xs" value={newRow.category} onChange={e => setNewRow(d => ({ ...d, category: e.target.value }))} autoFocus />
                       </div>
                     </td>
                     <td className="px-2 py-1"><Input placeholder={t("colDepartment")} className="h-7 text-xs" value={newRow.department ?? ""} onChange={e => setNewRow(d => ({ ...d, department: e.target.value }))} /></td>
@@ -1895,9 +1918,39 @@ function PLTab({ planId }: { planId: string }) {
 
   const byCategory = analytics?.byCategory ?? []
 
+  // Filter out parent-only rows (planned=0 with children represented by parentCategory)
+  const parentCategories = new Set(byCategory.filter(c => c.parentCategory).map(c => c.parentCategory!))
+  const leafRows = byCategory.filter(c => !parentCategories.has(c.category) || c.parentCategory)
+
   // Group categories by section
-  const revRows = byCategory.filter(c => c.lineType === "revenue")
-  const expRows = byCategory.filter(c => c.lineType === "expense")
+  const revRows = leafRows.filter(c => c.lineType === "revenue")
+  const expRows = leafRows.filter(c => c.lineType === "expense")
+
+  // Build grouped structure: { parentCategory → children[] }
+  const buildGrouped = (rows: typeof byCategory) => {
+    const groups: { parent: string; children: typeof byCategory }[] = []
+    const standalone: typeof byCategory = []
+    const groupMap = new Map<string, typeof byCategory>()
+
+    for (const r of rows) {
+      if (r.parentCategory) {
+        const existing = groupMap.get(r.parentCategory) ?? []
+        existing.push(r)
+        groupMap.set(r.parentCategory, existing)
+      } else {
+        standalone.push(r)
+      }
+    }
+
+    for (const [parent, children] of groupMap) {
+      groups.push({ parent, children })
+    }
+
+    return { groups, standalone }
+  }
+
+  const expGrouped = buildGrouped(expRows)
+  const revGrouped = buildGrouped(revRows)
 
   const totalRevenuePlanned = revRows.reduce((s, r) => s + r.planned, 0)
   const totalRevenueActual = revRows.reduce((s, r) => s + r.actual, 0)
@@ -1906,7 +1959,7 @@ function PLTab({ planId }: { planId: string }) {
   const grossProfitPlanned = totalRevenuePlanned - totalExpensePlanned
   const grossProfitActual = totalRevenueActual - totalExpenseActual
 
-  const renderSection = (title: string, rows: typeof byCategory, sectionId: string, isCalculated = false, calcPlanned = 0, calcActual = 0) => {
+  const renderSection = (title: string, rows: typeof byCategory, sectionId: string, isCalculated = false, calcPlanned = 0, calcActual = 0, grouped?: { groups: { parent: string; children: typeof byCategory }[]; standalone: typeof byCategory }) => {
     const isCollapsed = collapsed.has(sectionId)
     return (
       <div key={sectionId} className="border border-border rounded-lg overflow-hidden mb-3">
@@ -1937,20 +1990,78 @@ function PLTab({ planId }: { planId: string }) {
               </tr>
             </thead>
             <tbody>
-              {rows.map((row, i) => (
-                <tr key={i} className="border-t border-border/30 hover:bg-muted/20 cursor-pointer" onClick={() => setDrilldown(drilldown === row.category ? null : row.category)}>
-                  <td className="px-4 py-2 flex items-center gap-1">
-                    {drilldown === row.category && <span className="text-blue-500">▶</span>}
-                    {row.category}
-                  </td>
-                  <td className="px-4 py-2 text-right font-mono text-xs">{fmt(row.planned)}</td>
-                  <td className="px-4 py-2 text-right font-mono text-xs text-purple-600 dark:text-purple-400">{fmt(row.forecast)}</td>
-                  <td className="px-4 py-2 text-right font-mono text-xs text-green-600 dark:text-green-400">{fmt(row.actual)}</td>
-                  <td className={`px-4 py-2 text-right font-mono text-xs font-medium ${row.variance >= 0 ? "text-green-600 dark:text-green-400" : "text-red-500"}`}>
-                    {row.variance >= 0 ? "+" : ""}{fmt(row.variance)}
-                  </td>
-                </tr>
-              ))}
+              {grouped ? (
+                <>
+                  {grouped.groups.map(g => {
+                    const gPlanned = g.children.reduce((s, r) => s + r.planned, 0)
+                    const gForecast = g.children.reduce((s, r) => s + r.forecast, 0)
+                    const gActual = g.children.reduce((s, r) => s + r.actual, 0)
+                    const gVariance = g.children.reduce((s, r) => s + r.variance, 0)
+                    const isGroupOpen = !collapsed.has(`pl-group-${g.parent}`)
+                    return (
+                      <React.Fragment key={g.parent}>
+                        <tr className="border-t border-border/30 bg-muted/10 cursor-pointer hover:bg-muted/30"
+                          onClick={() => toggleCollapse(`pl-group-${g.parent}`)}>
+                          <td className="px-4 py-2 font-semibold flex items-center gap-2">
+                            {isGroupOpen ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+                            {g.parent}
+                            <Badge variant="outline" className="text-[10px] px-1 py-0">{g.children.length}</Badge>
+                          </td>
+                          <td className="px-4 py-2 text-right font-mono text-xs font-semibold">{fmt(gPlanned)}</td>
+                          <td className="px-4 py-2 text-right font-mono text-xs font-semibold text-purple-600 dark:text-purple-400">{fmt(gForecast)}</td>
+                          <td className="px-4 py-2 text-right font-mono text-xs font-semibold text-green-600 dark:text-green-400">{fmt(gActual)}</td>
+                          <td className={`px-4 py-2 text-right font-mono text-xs font-semibold ${gVariance >= 0 ? "text-green-600 dark:text-green-400" : "text-red-500"}`}>
+                            {gVariance >= 0 ? "+" : ""}{fmt(gVariance)}
+                          </td>
+                        </tr>
+                        {isGroupOpen && g.children.map((row, i) => (
+                          <tr key={i} className="border-t border-border/20 hover:bg-muted/20 cursor-pointer" onClick={() => setDrilldown(drilldown === row.category ? null : row.category)}>
+                            <td className="px-4 py-1.5 pl-10 text-muted-foreground flex items-center gap-1">
+                              {drilldown === row.category && <span className="text-blue-500">▶</span>}
+                              — {row.category}
+                            </td>
+                            <td className="px-4 py-1.5 text-right font-mono text-xs">{fmt(row.planned)}</td>
+                            <td className="px-4 py-1.5 text-right font-mono text-xs text-purple-600 dark:text-purple-400">{fmt(row.forecast)}</td>
+                            <td className="px-4 py-1.5 text-right font-mono text-xs text-green-600 dark:text-green-400">{fmt(row.actual)}</td>
+                            <td className={`px-4 py-1.5 text-right font-mono text-xs font-medium ${row.variance >= 0 ? "text-green-600 dark:text-green-400" : "text-red-500"}`}>
+                              {row.variance >= 0 ? "+" : ""}{fmt(row.variance)}
+                            </td>
+                          </tr>
+                        ))}
+                      </React.Fragment>
+                    )
+                  })}
+                  {grouped.standalone.map((row, i) => (
+                    <tr key={`s-${i}`} className="border-t border-border/30 hover:bg-muted/20 cursor-pointer" onClick={() => setDrilldown(drilldown === row.category ? null : row.category)}>
+                      <td className="px-4 py-2 flex items-center gap-1">
+                        {drilldown === row.category && <span className="text-blue-500">▶</span>}
+                        {row.category}
+                      </td>
+                      <td className="px-4 py-2 text-right font-mono text-xs">{fmt(row.planned)}</td>
+                      <td className="px-4 py-2 text-right font-mono text-xs text-purple-600 dark:text-purple-400">{fmt(row.forecast)}</td>
+                      <td className="px-4 py-2 text-right font-mono text-xs text-green-600 dark:text-green-400">{fmt(row.actual)}</td>
+                      <td className={`px-4 py-2 text-right font-mono text-xs font-medium ${row.variance >= 0 ? "text-green-600 dark:text-green-400" : "text-red-500"}`}>
+                        {row.variance >= 0 ? "+" : ""}{fmt(row.variance)}
+                      </td>
+                    </tr>
+                  ))}
+                </>
+              ) : (
+                rows.map((row, i) => (
+                  <tr key={i} className="border-t border-border/30 hover:bg-muted/20 cursor-pointer" onClick={() => setDrilldown(drilldown === row.category ? null : row.category)}>
+                    <td className="px-4 py-2 flex items-center gap-1">
+                      {drilldown === row.category && <span className="text-blue-500">▶</span>}
+                      {row.category}
+                    </td>
+                    <td className="px-4 py-2 text-right font-mono text-xs">{fmt(row.planned)}</td>
+                    <td className="px-4 py-2 text-right font-mono text-xs text-purple-600 dark:text-purple-400">{fmt(row.forecast)}</td>
+                    <td className="px-4 py-2 text-right font-mono text-xs text-green-600 dark:text-green-400">{fmt(row.actual)}</td>
+                    <td className={`px-4 py-2 text-right font-mono text-xs font-medium ${row.variance >= 0 ? "text-green-600 dark:text-green-400" : "text-red-500"}`}>
+                      {row.variance >= 0 ? "+" : ""}{fmt(row.variance)}
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         )}
@@ -1994,8 +2105,8 @@ function PLTab({ planId }: { planId: string }) {
       )}
 
       {/* Auto-generated P&L sections */}
-      {renderSection(t("plRevenue"), revRows, "auto-revenue")}
-      {renderSection(t("plExpenses"), expRows, "auto-expense")}
+      {renderSection(t("plRevenue"), revRows, "auto-revenue", false, 0, 0, revGrouped)}
+      {renderSection(t("plExpenses"), expRows, "auto-expense", false, 0, 0, expGrouped)}
       {renderSection(t("plGrossProfit"), [], "auto-gross-profit", true, grossProfitPlanned, grossProfitActual)}
 
       {/* Custom sections */}
@@ -2059,6 +2170,7 @@ function ForecastTab({ planId }: { planId: string }) {
   const [addingRevenue, setAddingRevenue] = useState(false)
   const [addingExpense, setAddingExpense] = useState(false)
   const [newCategory, setNewCategory] = useState("")
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(() => new Set(["admin", "tech_infra", "labor", "risk"]))
 
   const plan = analytics?.plan
   const year = plan?.year ?? new Date().getFullYear()
@@ -2095,10 +2207,15 @@ function ForecastTab({ planId }: { planId: string }) {
     return m
   }, [forecastEntries])
 
-  // Build lines map for default values
+  // Build lines map for default values (includes children)
   const linesMap = useMemo(() => {
     const m = new Map<string, BudgetLine>()
-    for (const l of budgetLines) m.set(l.category, l)
+    for (const l of budgetLines) {
+      m.set(l.category, l)
+      if (l.children) {
+        for (const c of l.children) m.set(c.category, c)
+      }
+    }
     return m
   }, [budgetLines])
 
@@ -2120,14 +2237,35 @@ function ForecastTab({ planId }: { planId: string }) {
     return months.reduce((s, m) => s + getCellValue(category, lineType, m).value, 0)
   }
 
-  // Column total for a set of lines
+  // Get all leaf lines from a set (expanding parent→children)
+  const getLeafLines = (lines: BudgetLine[]): BudgetLine[] => {
+    const result: BudgetLine[] = []
+    for (const l of lines) {
+      if (l.children?.length) {
+        result.push(...l.children)
+      } else {
+        result.push(l)
+      }
+    }
+    return result
+  }
+
+  // Column total for a set of lines (uses leaf lines to avoid double-counting)
   const getColTotal = (lines: BudgetLine[], month: number): number => {
-    return lines.reduce((s, l) => s + getCellValue(l.category, l.lineType, month).value, 0)
+    return getLeafLines(lines).reduce((s, l) => s + getCellValue(l.category, l.lineType, month).value, 0)
   }
 
   // Section total
   const getSectionTotal = (lines: BudgetLine[]): number => {
-    return lines.reduce((s, l) => s + getRowTotal(l.category, l.lineType), 0)
+    return getLeafLines(lines).reduce((s, l) => s + getRowTotal(l.category, l.lineType), 0)
+  }
+
+  // Group row total (sum children)
+  const getGroupColTotal = (children: BudgetLine[], month: number): number => {
+    return children.reduce((s, c) => s + getCellValue(c.category, c.lineType, month).value, 0)
+  }
+  const getGroupRowTotal = (children: BudgetLine[]): number => {
+    return children.reduce((s, c) => s + getRowTotal(c.category, c.lineType), 0)
   }
 
   // KPI values
@@ -2187,10 +2325,11 @@ function ForecastTab({ planId }: { planId: string }) {
 
   const renderRow = (line: BudgetLine) => {
     const rowTotal = getRowTotal(line.category, line.lineType)
+    const isChild = !!line.parentId
     return (
       <tr key={`${line.id}-${line.lineType}`} className="border-t border-border/50 hover:bg-muted/30">
         <td className="px-3 py-2 text-sm font-medium sticky left-0 bg-white dark:bg-gray-950 z-10 min-w-[180px]">
-          {line.category}
+          {isChild ? <span className="pl-5 text-muted-foreground">— {line.category}</span> : line.category}
         </td>
         {months.map(m => {
           const { value, isDefault } = getCellValue(line.category, line.lineType, m)
@@ -2217,6 +2356,48 @@ function ForecastTab({ planId }: { planId: string }) {
     )
   }
 
+  const GROUP_COLORS: Record<string, string> = {
+    "group:admin":      "bg-violet-500",
+    "group:tech_infra": "bg-sky-500",
+    "group:labor":      "bg-emerald-500",
+    "group:risk":       "bg-amber-500",
+  }
+
+  const renderGroupHeaderRow = (line: BudgetLine) => {
+    const children = line.children ?? []
+    const groupTag = line.notes ?? ""
+    const colorClass = GROUP_COLORS[groupTag] ?? "bg-slate-400"
+    const isOpen = expandedGroups.has(groupTag.replace("group:", ""))
+    const toggleGroup = () => {
+      const key = groupTag.replace("group:", "")
+      setExpandedGroups(prev => {
+        const next = new Set(prev)
+        next.has(key) ? next.delete(key) : next.add(key)
+        return next
+      })
+    }
+
+    return (
+      <React.Fragment key={line.id}>
+        <tr className="border-t border-border/40 bg-muted/20 hover:bg-muted/40 cursor-pointer select-none" onClick={toggleGroup}>
+          <td className="px-3 py-2 sticky left-0 bg-muted/20 z-10 min-w-[180px]">
+            <div className="flex items-center gap-2">
+              <span className={`w-2 h-2 rounded-full shrink-0 ${colorClass}`} />
+              {isOpen ? <ChevronDown className="h-3 w-3 text-muted-foreground" /> : <ChevronRight className="h-3 w-3 text-muted-foreground" />}
+              <span className="font-semibold text-sm">{line.category}</span>
+              <Badge variant="outline" className="text-[10px] px-1 py-0">{children.length}</Badge>
+            </div>
+          </td>
+          {months.map(m => (
+            <td key={m} className="px-2 py-2 text-right font-mono text-sm font-semibold">{fmt(getGroupColTotal(children, m))}</td>
+          ))}
+          <td className="px-3 py-2 text-right font-mono text-sm font-bold">{fmt(getGroupRowTotal(children))}</td>
+        </tr>
+        {isOpen && children.map(child => renderRow(child))}
+      </React.Fragment>
+    )
+  }
+
   const renderSection = (title: string, lines: BudgetLine[], isAdding: boolean, setIsAdding: (v: boolean) => void, lineType: "revenue" | "expense") => (
     <>
       <tr className="bg-muted/40">
@@ -2224,7 +2405,10 @@ function ForecastTab({ planId }: { planId: string }) {
           {title}
         </td>
       </tr>
-      {lines.map(l => renderRow(l))}
+      {lines.map(l => {
+        if (l.children && l.children.length > 0) return renderGroupHeaderRow(l)
+        return renderRow(l)
+      })}
       {/* Add row */}
       {isAdding ? (
         <tr className="border-t border-border/50 bg-green-50 dark:bg-green-900/10">

@@ -131,6 +131,18 @@ export async function GET(req: NextRequest) {
   }
   const yearEndProjection = totalActual > 0 ? (totalActual / monthsElapsed) * periodMonths : totalForecast
 
+  // Build parent lookup: childCategory → parentCategory
+  const parentLookup = new Map<string, string>()
+  for (const l of lines) {
+    if (!l.parentId) {
+      // This is a parent line — register its children
+      const children = lines.filter((c: any) => c.parentId === l.id)
+      for (const c of children) {
+        parentLookup.set(`${c.category}||${c.lineType}`, l.category)
+      }
+    }
+  }
+
   // By category — merge lines, auto-actuals, and manual actuals
   const categoryMap = new Map<string, { planned: number; forecast: number; actual: number; lineType: string }>()
 
@@ -162,13 +174,12 @@ export async function GET(req: NextRequest) {
 
   const byCategory = Array.from(categoryMap.entries()).map(([key, val]) => {
     const [category, lineType] = key.split("||")
-    // Revenue: positive variance when actual > planned (overperformance = good)
-    // Expense: positive variance when planned > actual (under budget = good)
     const variance = lineType === "revenue"
       ? val.actual - val.planned
       : val.planned - val.actual
     const variancePct = val.planned > 0 ? (variance / val.planned) * 100 : 0
-    return { category, lineType, planned: val.planned, forecast: val.forecast, actual: val.actual, variance, variancePct }
+    const parentCategory = parentLookup.get(key) ?? null
+    return { category, lineType, planned: val.planned, forecast: val.forecast, actual: val.actual, variance, variancePct, parentCategory }
   })
 
   // By department

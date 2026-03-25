@@ -50,6 +50,7 @@ export interface BudgetCategoryRow {
   actual: number
   variance: number
   variancePct: number
+  parentCategory?: string | null
 }
 
 export interface BudgetDepartmentRow {
