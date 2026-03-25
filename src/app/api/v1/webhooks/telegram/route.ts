@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
       contactId = prevMsg.contactId
     }
 
-    await prisma.channelMessage.create({
+    const savedMsg = await prisma.channelMessage.create({
       data: {
         organizationId: orgId,
         channelConfigId: channelConfig.id,
@@ -72,6 +72,18 @@ export async function POST(req: NextRequest) {
         },
       },
     })
+
+    // Upsert social conversation for unified inbox
+    const { upsertSocialConversation } = await import("@/lib/facebook")
+    upsertSocialConversation(
+      orgId, "telegram", chatId,
+      senderName, text, channelConfig.id
+    ).then(conv => {
+      prisma.channelMessage.update({
+        where: { id: savedMsg.id },
+        data: { conversationId: conv.id },
+      }).catch(() => {})
+    }).catch(() => {})
 
     // Update lastContactAt
     if (contactId) {

@@ -47,6 +47,7 @@ model Organization {
   invoicePayments   InvoicePayment[]
   recurringInvoices RecurringInvoice[]
   budgetPlans       BudgetPlan[]
+  socialConversations SocialConversation[]
 
   @@map("organizations")
 }
@@ -934,17 +935,23 @@ model AiGuardrail {
 model ChannelConfig {
   id             String   @id @default(cuid())
   organizationId String
-  channelType    String   // telegram, whatsapp, email, sms
+  channelType    String   // telegram, whatsapp, email, sms, facebook, instagram, vkontakte
   configName     String
   botToken       String?
   webhookUrl     String?
   apiKey         String?
   phoneNumber    String?
+  appId          String?
+  appSecret      String?
+  pageId         String?
   settings       Json?
   isActive       Boolean  @default(true)
   createdBy      String?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
+
+  messages       ChannelMessage[]
+  conversations  SocialConversation[]
 
   @@index([organizationId])
   @@map("channel_configs")
@@ -955,7 +962,7 @@ model ChannelMessage {
   organizationId  String
   channelConfigId String?
   direction       String   // inbound, outbound
-  channelType     String?  // email, telegram, sms, whatsapp
+  channelType     String?  // email, telegram, sms, whatsapp, facebook, instagram, vkontakte
   contactId       String?
   from            String
   to              String
@@ -964,10 +971,17 @@ model ChannelMessage {
   status          String   @default("delivered") // pending, delivered, failed, read
   externalId      String?
   metadata        Json     @default("{}")
+  conversationId  String?
+  mediaUrl        String?
+  messageType     String   @default("text")
   createdAt       DateTime @default(now())
+
+  channelConfig   ChannelConfig?     @relation(fields: [channelConfigId], references: [id])
+  conversation    SocialConversation? @relation(fields: [conversationId], references: [id])
 
   @@index([organizationId])
   @@index([organizationId, contactId])
+  @@index([conversationId])
   @@map("channel_messages")
 }
 
@@ -1562,5 +1576,34 @@ model BudgetForecastEntry {
   @@index([organizationId])
   @@index([planId])
   @@map("budget_forecast_entries")
+}
+
+model SocialConversation {
+  id              String   @id @default(cuid())
+  organizationId  String
+  channelConfigId String?
+  platform        String   // whatsapp | telegram | facebook | instagram | vkontakte | email | sms
+  externalId      String   // platform-specific thread ID
+  contactId       String?
+  contactName     String   @default("")
+  contactAvatar   String?
+  status          String   @default("open")  // open | resolved | archived
+  unreadCount     Int      @default(0)
+  lastMessage     String   @default("")
+  lastMessageAt   DateTime @default(now())
+  assignedTo      String?
+  metadata        Json     @default("{}")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  messages        ChannelMessage[]
+  organization    Organization     @relation(fields: [organizationId], references: [id])
+  channelConfig   ChannelConfig?   @relation(fields: [channelConfigId], references: [id])
+
+  @@unique([organizationId, platform, externalId])
+  @@index([organizationId])
+  @@index([organizationId, status])
+  @@index([organizationId, lastMessageAt])
+  @@map("social_conversations")
 }
 

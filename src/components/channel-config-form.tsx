@@ -19,6 +19,10 @@ interface ChannelConfigFormData {
   phoneNumber: string
   chatId: string
   accountSid: string
+  appId: string
+  appSecret: string
+  pageId: string
+  confirmationCode: string
   isActive: boolean
 }
 
@@ -35,6 +39,9 @@ const channelTypes = [
   { value: "telegram", label: "Telegram", icon: Send, color: "text-sky-600", bgColor: "bg-sky-100 dark:bg-sky-900/30", borderActive: "border-sky-500 bg-sky-50 dark:bg-sky-900/20" },
   { value: "whatsapp", label: "WhatsApp", icon: MessageSquare, color: "text-green-600", bgColor: "bg-green-100 dark:bg-green-900/30", borderActive: "border-green-500 bg-green-50 dark:bg-green-900/20" },
   { value: "sms", label: "SMS", icon: Smartphone, color: "text-gray-600", bgColor: "bg-gray-100 dark:bg-gray-900/30", borderActive: "border-gray-500 bg-gray-50 dark:bg-gray-900/20" },
+  { value: "facebook", label: "Facebook", icon: MessageSquare, color: "text-blue-700", bgColor: "bg-blue-100 dark:bg-blue-900/30", borderActive: "border-blue-600 bg-blue-50 dark:bg-blue-900/20" },
+  { value: "instagram", label: "Instagram", icon: MessageSquare, color: "text-pink-600", bgColor: "bg-pink-100 dark:bg-pink-900/30", borderActive: "border-pink-500 bg-pink-50 dark:bg-pink-900/20" },
+  { value: "vkontakte", label: "VKontakte", icon: MessageSquare, color: "text-indigo-600", bgColor: "bg-indigo-100 dark:bg-indigo-900/30", borderActive: "border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20" },
 ]
 
 export function ChannelConfigForm({ open, onOpenChange, onSaved, initialData, orgId }: ChannelConfigFormProps) {
@@ -50,6 +57,10 @@ export function ChannelConfigForm({ open, onOpenChange, onSaved, initialData, or
     phoneNumber: "",
     chatId: "",
     accountSid: "",
+    appId: "",
+    appSecret: "",
+    pageId: "",
+    confirmationCode: "",
     isActive: true,
   })
   const [saving, setSaving] = useState(false)
@@ -67,6 +78,10 @@ export function ChannelConfigForm({ open, onOpenChange, onSaved, initialData, or
         phoneNumber: initialData?.phoneNumber || "",
         chatId: settings.chatId || "",
         accountSid: settings.accountSid || "",
+        appId: (initialData as any)?.appId || "",
+        appSecret: (initialData as any)?.appSecret || "",
+        pageId: (initialData as any)?.pageId || "",
+        confirmationCode: settings.confirmationCode || "",
         isActive: initialData?.isActive ?? true,
       })
       setError("")
@@ -97,9 +112,13 @@ export function ChannelConfigForm({ open, onOpenChange, onSaved, initialData, or
           webhookUrl: form.webhookUrl || undefined,
           apiKey: form.apiKey || undefined,
           phoneNumber: form.phoneNumber || undefined,
+          appId: form.appId || undefined,
+          appSecret: form.appSecret || undefined,
+          pageId: form.pageId || undefined,
           settings: {
             ...(form.chatId ? { chatId: form.chatId } : {}),
             ...(form.accountSid ? { accountSid: form.accountSid } : {}),
+            ...(form.confirmationCode ? { confirmationCode: form.confirmationCode } : {}),
           },
           isActive: form.isActive,
         }),
@@ -149,7 +168,7 @@ export function ChannelConfigForm({ open, onOpenChange, onSaved, initialData, or
             {/* Channel type */}
             <div>
               <Label className="text-sm font-medium">{tf("channelType")}</Label>
-              <div className="grid grid-cols-4 gap-2 mt-1.5">
+              <div className="grid grid-cols-4 gap-2 mt-1.5 sm:grid-cols-7">
                 {channelTypes.map(ct => {
                   const Icon = ct.icon
                   const selected = form.channelType === ct.value
@@ -327,6 +346,120 @@ export function ChannelConfigForm({ open, onOpenChange, onSaved, initialData, or
                   <p className="text-xs text-muted-foreground mt-1">
                     {tf("twilioPhoneHint")}
                   </p>
+                </div>
+              </>
+            )}
+
+            {(form.channelType === "facebook" || form.channelType === "instagram") && (
+              <>
+                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+                  <p className="text-xs text-blue-700 dark:text-blue-300 font-medium mb-1">
+                    {form.channelType === "facebook" ? "Facebook Messenger" : "Instagram Direct"} — Meta Graph API
+                  </p>
+                  <p className="text-xs text-blue-600 dark:text-blue-400 mb-1">
+                    Webhook URL: <code className="font-mono bg-blue-100 dark:bg-blue-900/40 px-1 rounded">
+                      {typeof window !== "undefined" ? window.location.origin : ""}/api/v1/webhooks/facebook
+                    </code>
+                  </p>
+                  <p className="text-xs text-blue-600 dark:text-blue-400">
+                    Verify Token: <code className="font-mono bg-blue-100 dark:bg-blue-900/40 px-1 rounded">leaddrive_fb_verify</code>
+                  </p>
+                </div>
+                <div>
+                  <Label htmlFor="apiKey" className="text-sm font-medium">Page Access Token *</Label>
+                  <Input
+                    id="apiKey"
+                    type="password"
+                    value={form.apiKey}
+                    onChange={(e) => update("apiKey", e.target.value)}
+                    placeholder="EAAi..."
+                    className="mt-1.5 font-mono text-sm"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label htmlFor="appId" className="text-sm font-medium">Facebook App ID</Label>
+                    <Input
+                      id="appId"
+                      value={form.appId}
+                      onChange={(e) => update("appId", e.target.value)}
+                      placeholder="1234567890"
+                      className="mt-1.5 font-mono text-sm"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="appSecret" className="text-sm font-medium">App Secret</Label>
+                    <Input
+                      id="appSecret"
+                      type="password"
+                      value={form.appSecret}
+                      onChange={(e) => update("appSecret", e.target.value)}
+                      placeholder="App secret for webhook verification"
+                      className="mt-1.5 font-mono text-sm"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <Label htmlFor="pageId" className="text-sm font-medium">Page ID *</Label>
+                  <Input
+                    id="pageId"
+                    value={form.pageId}
+                    onChange={(e) => update("pageId", e.target.value)}
+                    placeholder="Your Facebook Page ID"
+                    className="mt-1.5 font-mono text-sm"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Found in your Page settings or via Graph API
+                  </p>
+                </div>
+              </>
+            )}
+
+            {form.channelType === "vkontakte" && (
+              <>
+                <div className="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800 rounded-lg p-3">
+                  <p className="text-xs text-indigo-700 dark:text-indigo-300 font-medium mb-1">VKontakte Community Messages API</p>
+                  <p className="text-xs text-indigo-600 dark:text-indigo-400 mb-1">
+                    Webhook URL: <code className="font-mono bg-indigo-100 dark:bg-indigo-900/40 px-1 rounded">
+                      {typeof window !== "undefined" ? window.location.origin : ""}/api/v1/webhooks/vkontakte
+                    </code>
+                  </p>
+                </div>
+                <div>
+                  <Label htmlFor="apiKey" className="text-sm font-medium">Group Access Token *</Label>
+                  <Input
+                    id="apiKey"
+                    type="password"
+                    value={form.apiKey}
+                    onChange={(e) => update("apiKey", e.target.value)}
+                    placeholder="vk1.a.xxxx..."
+                    className="mt-1.5 font-mono text-sm"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Manage → API Usage → Create token
+                  </p>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label htmlFor="pageId" className="text-sm font-medium">Group ID *</Label>
+                    <Input
+                      id="pageId"
+                      value={form.pageId}
+                      onChange={(e) => update("pageId", e.target.value)}
+                      placeholder="123456789"
+                      className="mt-1.5 font-mono text-sm"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="confirmationCode" className="text-sm font-medium">Confirmation Code</Label>
+                    <Input
+                      id="confirmationCode"
+                      value={form.confirmationCode}
+                      onChange={(e) => update("confirmationCode", e.target.value)}
+                      placeholder="From VK Callback API settings"
+                      className="mt-1.5 font-mono text-sm"
+                    />
+                  </div>
                 </div>
               </>
             )}
