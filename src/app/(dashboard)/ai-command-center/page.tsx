@@ -544,11 +544,11 @@ export default function AICommandCenterPage() {
           </div>
 
           {/* Logs Section — v1 style with trace details */}
-          <div className="rounded-xl border bg-white dark:bg-gray-950 shadow-sm">
+          <div className="rounded-xl border bg-background shadow-sm">
             <div className="p-5 border-b flex items-center justify-between">
               <h3 className="font-semibold flex items-center gap-2">
                 <ScrollText className="h-5 w-5 text-indigo-500" /> Логи взаимодействий
-                <span className="text-xs text-gray-400 font-normal">({logsTotal} записей)</span>
+                <span className="text-xs text-muted-foreground font-normal">({logsTotal} записей)</span>
               </h3>
             </div>
             <div className="divide-y max-h-[700px] overflow-y-auto">
@@ -563,10 +563,10 @@ export default function AICommandCenterPage() {
                 const llmTime = log.latencyMs ? log.latencyMs - kbTime : 0
 
                 return (
-                  <div key={log.id} className="hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-colors">
+                  <div key={log.id} className="hover:bg-muted/50 dark:hover:bg-gray-900/50 transition-colors">
                     {/* Compact row */}
                     <div className="p-4 cursor-pointer flex items-center gap-4" onClick={() => setExpandedLogId(isExpanded ? null : log.id)}>
-                      <span className="text-xs text-gray-400 font-mono w-8 shrink-0">#{logsTotal - idx}</span>
+                      <span className="text-xs text-muted-foreground font-mono w-8 shrink-0">#{logsTotal - idx}</span>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm truncate">{log.userMessage.slice(0, 100)}</p>
                       </div>
@@ -575,42 +575,42 @@ export default function AICommandCenterPage() {
                         {latencySec && (
                           <span className={cn(
                             "text-xs font-mono font-bold",
-                            log.latencyMs! > 10000 ? "text-red-500" : log.latencyMs! > 5000 ? "text-amber-500" : "text-emerald-600"
+                            log.latencyMs! > 10000 ? "text-red-500" : log.latencyMs! > 5000 ? "text-amber-500" : "text-emerald-600 dark:text-emerald-400"
                           )}>
                             {latencySec}s
                           </span>
                         )}
-                        {log.costUsd != null && <span className="text-xs font-mono text-gray-500">${log.costUsd.toFixed(4)}</span>}
-                        {totalTokens > 0 && <span className="text-xs font-mono text-gray-400">{totalTokens} tok</span>}
-                        <span className="text-[10px] text-gray-400">{new Date(log.createdAt).toLocaleString("ru-RU")}</span>
-                        <Eye className={cn("h-4 w-4 transition-transform", isExpanded ? "text-indigo-500 rotate-180" : "text-gray-300")} />
+                        {log.costUsd != null && <span className="text-xs font-mono text-muted-foreground">${log.costUsd.toFixed(4)}</span>}
+                        {totalTokens > 0 && <span className="text-xs font-mono text-muted-foreground">{totalTokens} tok</span>}
+                        <span className="text-[10px] text-muted-foreground">{new Date(log.createdAt).toLocaleString("ru-RU")}</span>
+                        <Eye className={cn("h-4 w-4 transition-transform", isExpanded ? "text-indigo-500 rotate-180" : "text-muted-foreground")} />
                       </div>
                     </div>
 
                     {/* Expanded trace detail (v1 style) */}
                     {isExpanded && (
-                      <div className="px-4 pb-5 space-y-4 border-t bg-gray-50/50 dark:bg-gray-900/30">
+                      <div className="px-4 pb-5 space-y-4 border-t bg-muted/30 dark:bg-gray-900/30">
                         {/* KPI Cards */}
                         <div className="grid grid-cols-4 gap-3 pt-4">
-                          <div className="rounded-lg border bg-white dark:bg-gray-950 p-3 text-center">
-                            <div className="text-[10px] text-gray-400 uppercase tracking-wide">Задержка</div>
-                            <div className={cn("text-xl font-bold font-mono", log.latencyMs! > 10000 ? "text-red-500" : "text-emerald-600")}>{latencySec}s</div>
-                            <div className="text-[10px] text-gray-400">{log.latencyMs} ms</div>
+                          <div className="rounded-lg border bg-background p-3 text-center">
+                            <div className="text-[10px] text-muted-foreground uppercase tracking-wide">Задержка</div>
+                            <div className={cn("text-xl font-bold font-mono", log.latencyMs! > 10000 ? "text-red-500" : "text-emerald-600 dark:text-emerald-400")}>{latencySec}s</div>
+                            <div className="text-[10px] text-muted-foreground">{log.latencyMs} ms</div>
                           </div>
-                          <div className="rounded-lg border bg-white dark:bg-gray-950 p-3 text-center">
-                            <div className="text-[10px] text-gray-400 uppercase tracking-wide">Токены</div>
-                            <div className="text-xl font-bold font-mono text-blue-600">{totalTokens}</div>
-                            <div className="text-[10px] text-gray-400">{log.promptTokens ?? 0} вход / {log.completionTokens ?? 0} выход</div>
+                          <div className="rounded-lg border bg-background p-3 text-center">
+                            <div className="text-[10px] text-muted-foreground uppercase tracking-wide">Токены</div>
+                            <div className="text-xl font-bold font-mono text-blue-600 dark:text-blue-400">{totalTokens}</div>
+                            <div className="text-[10px] text-muted-foreground">{log.promptTokens ?? 0} вход / {log.completionTokens ?? 0} выход</div>
                           </div>
-                          <div className="rounded-lg border bg-white dark:bg-gray-950 p-3 text-center">
-                            <div className="text-[10px] text-gray-400 uppercase tracking-wide">Стоимость</div>
-                            <div className="text-xl font-bold font-mono text-amber-600">${(log.costUsd ?? 0).toFixed(4)}</div>
-                            <div className="text-[10px] text-gray-400">{log.model || "—"}</div>
+                          <div className="rounded-lg border bg-background p-3 text-center">
+                            <div className="text-[10px] text-muted-foreground uppercase tracking-wide">Стоимость</div>
+                            <div className="text-xl font-bold font-mono text-amber-600 dark:text-amber-400">${(log.costUsd ?? 0).toFixed(4)}</div>
+                            <div className="text-[10px] text-muted-foreground">{log.model || "—"}</div>
                           </div>
-                          <div className="rounded-lg border bg-white dark:bg-gray-950 p-3 text-center">
-                            <div className="text-[10px] text-gray-400 uppercase tracking-wide">Качество</div>
+                          <div className="rounded-lg border bg-background p-3 text-center">
+                            <div className="text-[10px] text-muted-foreground uppercase tracking-wide">Качество</div>
                             <div className="text-xl font-bold font-mono">{log.qualityScore != null ? `${log.qualityScore}/10` : "—"}</div>
-                            <div className="text-[10px] text-gray-400">{log.qualityScore != null ? "Оценено" : "Не оценено"}</div>
+                            <div className="text-[10px] text-muted-foreground">{log.qualityScore != null ? "Оценено" : "Не оценено"}</div>
                           </div>
                         </div>
 
@@ -618,7 +618,7 @@ export default function AICommandCenterPage() {
                         <div className="rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 p-3">
                           <div className="flex items-center gap-2 mb-1">
                             <User className="h-4 w-4 text-blue-500" />
-                            <span className="text-xs font-semibold text-blue-600 uppercase">Запрос пользователя</span>
+                            <span className="text-xs font-semibold text-blue-600 dark:text-blue-400 uppercase">Запрос пользователя</span>
                           </div>
                           <p className="text-sm">{log.userMessage}</p>
                         </div>
@@ -626,10 +626,10 @@ export default function AICommandCenterPage() {
                         {/* Processing cascade (timeline) */}
                         <div>
                           <div className="flex items-center justify-between mb-2">
-                            <span className="text-xs font-semibold text-gray-500 uppercase">Каскад обработки</span>
-                            <span className="text-[10px] text-gray-400">{(kbCount > 0 ? 2 : 1) + toolsCount} шагов · {latencySec}s</span>
+                            <span className="text-xs font-semibold text-muted-foreground uppercase">Каскад обработки</span>
+                            <span className="text-[10px] text-muted-foreground">{(kbCount > 0 ? 2 : 1) + toolsCount} шагов · {latencySec}s</span>
                           </div>
-                          <div className="h-6 rounded-full overflow-hidden flex bg-gray-200 dark:bg-gray-800">
+                          <div className="h-6 rounded-full overflow-hidden flex bg-muted">
                             {kbCount > 0 && log.latencyMs && (
                               <div className="bg-emerald-500 flex items-center justify-center text-[9px] text-white font-mono" style={{ width: `${Math.max(5, (kbTime / log.latencyMs) * 100)}%` }}>
                                 {kbTime}мс
@@ -651,57 +651,57 @@ export default function AICommandCenterPage() {
                         {/* Steps */}
                         <div className="space-y-2">
                           {/* KB Search step */}
-                          <div className="rounded-lg border bg-white dark:bg-gray-950 p-3">
+                          <div className="rounded-lg border bg-background p-3">
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-2">
-                                <div className="h-7 w-7 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center"><ScrollText className="h-4 w-4 text-emerald-600" /></div>
-                                <span className="text-sm font-semibold text-emerald-700 dark:text-emerald-400">Поиск по БЗ</span>
-                                <span className="text-[10px] text-gray-400">(Поиск релевантных статей)</span>
+                                <div className="h-7 w-7 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center"><ScrollText className="h-4 w-4 text-emerald-600 dark:text-emerald-400" /></div>
+                                <span className="text-sm font-semibold text-emerald-700 dark:text-emerald-300">Поиск по БЗ</span>
+                                <span className="text-[10px] text-muted-foreground">(Поиск релевантных статей)</span>
                               </div>
-                              <span className="text-xs font-mono text-emerald-600">{kbTime} мс</span>
+                              <span className="text-xs font-mono text-emerald-600 dark:text-emerald-400">{kbTime} мс</span>
                             </div>
-                            <div className="mt-2 flex items-center gap-4 text-xs text-gray-500">
+                            <div className="mt-2 flex items-center gap-4 text-xs text-muted-foreground">
                               <span>Найдено: <strong>{kbCount}</strong></span>
                               <span>Выбрано: <strong>{kbCount}</strong></span>
                             </div>
                             {kbCount > 0 && (
-                              <div className="mt-1 text-[10px] text-gray-400">
+                              <div className="mt-1 text-[10px] text-muted-foreground">
                                 {log.kbArticlesUsed.map((a, i) => <Badge key={i} variant="outline" className="text-[9px] mr-1">{a}</Badge>)}
                               </div>
                             )}
-                            {kbCount === 0 && <div className="mt-1 text-[10px] text-gray-400 italic">Нет подходящих статей</div>}
+                            {kbCount === 0 && <div className="mt-1 text-[10px] text-muted-foreground italic">Нет подходящих статей</div>}
                           </div>
 
                           {/* LLM Call step */}
-                          <div className="rounded-lg border bg-white dark:bg-gray-950 p-3">
+                          <div className="rounded-lg border bg-background p-3">
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-2">
-                                <div className="h-7 w-7 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center"><BrainCircuit className="h-4 w-4 text-blue-600" /></div>
-                                <span className="text-sm font-semibold text-blue-700 dark:text-blue-400">Вызов LLM</span>
-                                <span className="text-[10px] text-gray-400">(Запрос к Claude API)</span>
+                                <div className="h-7 w-7 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center"><BrainCircuit className="h-4 w-4 text-blue-600 dark:text-blue-400" /></div>
+                                <span className="text-sm font-semibold text-blue-700 dark:text-blue-300">Вызов LLM</span>
+                                <span className="text-[10px] text-muted-foreground">(Запрос к Claude API)</span>
                               </div>
                               <div className="flex items-center gap-2">
-                                <div className="w-16 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                                <div className="w-16 h-1.5 bg-muted rounded-full overflow-hidden">
                                   <div className="h-full bg-blue-500 rounded-full" style={{ width: `${log.latencyMs ? Math.min(100, (llmTime / log.latencyMs) * 100) : 0}%` }} />
                                 </div>
-                                <span className="text-xs font-mono text-blue-600">{llmTime} мс</span>
-                                <span className="text-[10px] text-gray-400">{log.latencyMs ? Math.round((llmTime / log.latencyMs) * 100) : 0}%</span>
+                                <span className="text-xs font-mono text-blue-600 dark:text-blue-400">{llmTime} мс</span>
+                                <span className="text-[10px] text-muted-foreground">{log.latencyMs ? Math.round((llmTime / log.latencyMs) * 100) : 0}%</span>
                               </div>
                             </div>
-                            <div className="mt-2 flex items-center gap-4 text-xs text-gray-500">
+                            <div className="mt-2 flex items-center gap-4 text-xs text-muted-foreground">
                               <span>Итерация: <strong>1</strong></span>
-                              <span>Вход: <strong className="text-blue-600">{log.promptTokens ?? 0} token</strong></span>
-                              <span>Выход: <strong className="text-amber-600">{log.completionTokens ?? 0} token</strong></span>
+                              <span>Вход: <strong className="text-blue-600 dark:text-blue-400">{log.promptTokens ?? 0} token</strong></span>
+                              <span>Выход: <strong className="text-amber-600 dark:text-amber-400">{log.completionTokens ?? 0} token</strong></span>
                             </div>
                           </div>
 
                           {/* Tools step (if any) */}
                           {toolsCount > 0 && (
-                            <div className="rounded-lg border bg-white dark:bg-gray-950 p-3">
+                            <div className="rounded-lg border bg-background p-3">
                               <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
-                                  <div className="h-7 w-7 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center"><Zap className="h-4 w-4 text-amber-600" /></div>
-                                  <span className="text-sm font-semibold text-amber-700 dark:text-amber-400">Вызов инструментов</span>
+                                  <div className="h-7 w-7 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center"><Zap className="h-4 w-4 text-amber-600 dark:text-amber-400" /></div>
+                                  <span className="text-sm font-semibold text-amber-700 dark:text-amber-300">Вызов инструментов</span>
                                 </div>
                               </div>
                               <div className="mt-2 flex flex-wrap gap-1">
@@ -712,10 +712,10 @@ export default function AICommandCenterPage() {
                         </div>
 
                         {/* AI Response */}
-                        <div className="rounded-lg bg-gray-100 dark:bg-gray-800 border p-3">
+                        <div className="rounded-lg bg-muted border p-3">
                           <div className="flex items-center gap-2 mb-1">
                             <Bot className="h-4 w-4 text-indigo-500" />
-                            <span className="text-xs font-semibold text-indigo-600 uppercase">Ответ AI</span>
+                            <span className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 uppercase">Ответ AI</span>
                             {log.isCopilot && <Badge className="text-[9px] bg-violet-100 text-violet-700">Copilot</Badge>}
                           </div>
                           <p className="text-sm whitespace-pre-wrap">{log.aiResponse}</p>
@@ -725,7 +725,7 @@ export default function AICommandCenterPage() {
                   </div>
                 )
               }) : (
-                <div className="p-8 text-center text-gray-400 text-sm">Нет логов</div>
+                <div className="p-8 text-center text-muted-foreground text-sm">Нет логов</div>
               )}
             </div>
           </div>
