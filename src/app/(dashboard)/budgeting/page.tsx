@@ -62,9 +62,11 @@ function fmt(n: number): string {
 }
 
 function statusBadge(status: string, t: (key: string) => string) {
+  if (status === "pending_approval") return <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">{t("statusPending")}</Badge>
   if (status === "approved") return <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">{t("statusApproved")}</Badge>
+  if (status === "rejected") return <Badge className="bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">{t("statusRejected")}</Badge>
   if (status === "closed") return <Badge className="bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400">{t("statusClosed")}</Badge>
-  return <Badge className="bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400">{t("statusDraft")}</Badge>
+  return <Badge className="bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400">{t("statusDraft")}</Badge>
 }
 
 function periodLabel(plan: any, t: (key: string) => string): string {
@@ -1700,6 +1702,16 @@ function PlansTab({ activePlanId, onSelect, onShowCreate }: { activePlanId: stri
                 <p className="text-sm text-muted-foreground">{periodLabel(plan, t)}</p>
               </CardHeader>
               <CardContent className="pt-0">
+                {/* Approval info */}
+                {plan.approvedAt && (
+                  <p className="text-xs text-muted-foreground mt-1">{t("statusApproved")}: {new Date(plan.approvedAt).toLocaleDateString()}</p>
+                )}
+                {plan.submittedAt && !plan.approvedAt && (
+                  <p className="text-xs text-muted-foreground mt-1">{t("statusPending")}: {new Date(plan.submittedAt).toLocaleDateString()}</p>
+                )}
+                {plan.status === "rejected" && plan.rejectedReason && (
+                  <p className="text-xs text-red-500 mt-1">{t("statusRejected")}: {plan.rejectedReason}</p>
+                )}
                 <div className="flex gap-2 mt-3">
                   <Button size="sm" variant={activePlanId === plan.id ? "default" : "outline"}
                     onClick={() => onSelect(plan.id)} className="flex-1 text-xs">
@@ -1707,18 +1719,49 @@ function PlansTab({ activePlanId, onSelect, onShowCreate }: { activePlanId: stri
                   </Button>
                   {plan.status === "draft" && (
                     <Button size="sm" variant="outline" className="text-xs"
-                      onClick={() => {
-                        if (confirm(t("confirmApprove"))) {
-                          updatePlan.mutate({ id: plan.id, status: "approved" })
-                        }
-                      }}>
-                      {t("btnApprove")}
+                      onClick={() => updatePlan.mutate({ id: plan.id, status: "pending_approval" })}>
+                      {t("btnSubmitApproval")}
                     </Button>
                   )}
-                  <button onClick={() => deletePlan.mutate(plan.id)}
-                    className="p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-900/20 text-muted-foreground hover:text-red-600 border border-border">
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
+                  {plan.status === "pending_approval" && (
+                    <>
+                      <Button size="sm" variant="outline" className="text-xs text-green-600 border-green-300 hover:bg-green-50"
+                        onClick={() => {
+                          if (confirm(t("confirmApprove"))) {
+                            updatePlan.mutate({ id: plan.id, status: "approved" })
+                          }
+                        }}>
+                        {t("btnApprove")}
+                      </Button>
+                      <Button size="sm" variant="outline" className="text-xs text-red-600 border-red-300 hover:bg-red-50"
+                        onClick={() => {
+                          const reason = prompt(t("rejectReason"))
+                          if (reason !== null) {
+                            updatePlan.mutate({ id: plan.id, status: "rejected", rejectedReason: reason || undefined })
+                          }
+                        }}>
+                        {t("btnReject")}
+                      </Button>
+                    </>
+                  )}
+                  {plan.status === "approved" && (
+                    <Button size="sm" variant="outline" className="text-xs"
+                      onClick={() => updatePlan.mutate({ id: plan.id, status: "closed" })}>
+                      {t("statusClosed")}
+                    </Button>
+                  )}
+                  {plan.status === "rejected" && (
+                    <Button size="sm" variant="outline" className="text-xs"
+                      onClick={() => updatePlan.mutate({ id: plan.id, status: "draft" })}>
+                      {t("btnRevise")}
+                    </Button>
+                  )}
+                  {(plan.status === "draft" || plan.status === "rejected") && (
+                    <button onClick={() => deletePlan.mutate(plan.id)}
+                      className="p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-900/20 text-muted-foreground hover:text-red-600 border border-border">
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -2139,12 +2182,49 @@ function PLTab({ planId }: { planId: string }) {
         </Card>
       )}
 
-      {/* Auto-generated P&L sections */}
+      {/* Auto-generated P&L — Income Statement */}
       {renderSection(t("plRevenue"), revRows, "auto-revenue", false, 0, 0, revGrouped)}
       {renderSection(t("sectionCOGS"), cogsRows, "auto-cogs", false, 0, 0, cogsGrouped)}
-      {renderSection(t("grossProfit"), [], "auto-gross-profit", true, grossProfitPlanned, grossProfitActual)}
+
+      {/* Gross Profit = Revenue - COGS */}
+      <div className="border-2 border-emerald-300 dark:border-emerald-700 rounded-lg overflow-hidden mb-3 bg-emerald-50 dark:bg-emerald-950/20">
+        <div className="flex items-center justify-between px-4 py-3">
+          <div className="font-bold text-sm">{t("grossProfit")}</div>
+          <div className="flex gap-8 text-sm font-mono">
+            <span className="text-muted-foreground">{fmt(grossProfitPlanned)}</span>
+            <span className={`font-bold ${grossProfitActual >= 0 ? "text-emerald-600" : "text-red-500"}`}>{fmt(grossProfitActual)}</span>
+          </div>
+        </div>
+        {totalRevenuePlanned > 0 && (
+          <div className="px-4 pb-2 text-xs text-muted-foreground">
+            Gross Margin: {((grossProfitPlanned / totalRevenuePlanned) * 100).toFixed(1)}% (план) / {totalRevenueActual > 0 ? ((grossProfitActual / totalRevenueActual) * 100).toFixed(1) : "—"}% (факт)
+          </div>
+        )}
+      </div>
+
       {renderSection(t("plExpenses"), expRows, "auto-expense", false, 0, 0, expGrouped)}
-      {renderSection(t("operatingProfit"), [], "auto-operating-profit", true, grossProfitPlanned - totalExpensePlanned, grossProfitActual - totalExpenseActual)}
+
+      {/* Operating Profit (EBITDA) = Gross Profit - OpEx */}
+      {(() => {
+        const opProfitPlanned = grossProfitPlanned - totalExpensePlanned
+        const opProfitActual = grossProfitActual - totalExpenseActual
+        return (
+          <div className="border-2 border-purple-300 dark:border-purple-700 rounded-lg overflow-hidden mb-3 bg-purple-50 dark:bg-purple-950/20">
+            <div className="flex items-center justify-between px-4 py-3">
+              <div className="font-bold text-sm">{t("operatingProfit")} (EBITDA)</div>
+              <div className="flex gap-8 text-sm font-mono">
+                <span className="text-muted-foreground">{fmt(opProfitPlanned)}</span>
+                <span className={`font-bold ${opProfitActual >= 0 ? "text-purple-600" : "text-red-500"}`}>{fmt(opProfitActual)}</span>
+              </div>
+            </div>
+            {totalRevenuePlanned > 0 && (
+              <div className="px-4 pb-2 text-xs text-muted-foreground">
+                EBITDA Margin: {((opProfitPlanned / totalRevenuePlanned) * 100).toFixed(1)}% (план) / {totalRevenueActual > 0 ? ((opProfitActual / totalRevenueActual) * 100).toFixed(1) : "—"}% (факт)
+              </div>
+            )}
+          </div>
+        )
+      })()}
 
       {/* Custom sections */}
       {sections.map(sec => (
@@ -2209,6 +2289,7 @@ function ForecastTab({ planId }: { planId: string }) {
   const [addingExpense, setAddingExpense] = useState(false)
   const [newCategory, setNewCategory] = useState("")
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(() => new Set(["admin", "tech_infra", "labor", "risk"]))
+  const [scenario, setScenario] = useState<"base" | "optimistic" | "pessimistic">("base")
 
   const plan = analytics?.plan
   const year = plan?.year ?? new Date().getFullYear()
@@ -2261,13 +2342,24 @@ function ForecastTab({ planId }: { planId: string }) {
   const cogsLines = useMemo(() => budgetLines.filter((l: BudgetLine) => l.lineType === "cogs"), [budgetLines])
   const expenseLines = useMemo(() => budgetLines.filter((l: BudgetLine) => l.lineType === "expense"), [budgetLines])
 
-  // Get cell value: saved forecast or default (planned / periodMonths)
+  // Scenario multiplier
+  const getScenarioMultiplier = (lineType: string): number => {
+    if (scenario === "base") return 1.0
+    if (scenario === "optimistic") {
+      return lineType === "revenue" ? 1.10 : lineType === "cogs" ? 0.92 : 0.90
+    }
+    // pessimistic
+    return lineType === "revenue" ? 0.90 : lineType === "cogs" ? 1.10 : 1.15
+  }
+
+  // Get cell value: saved forecast or default (planned / periodMonths), with scenario
   const getCellValue = (category: string, lineType: string, month: number): { value: number; isDefault: boolean } => {
     const key = `${category}||${lineType}||${month}`
     const saved = forecastMap.get(key)
-    if (saved !== undefined) return { value: saved, isDefault: false }
+    const multiplier = getScenarioMultiplier(lineType)
+    if (saved !== undefined) return { value: saved * multiplier, isDefault: false }
     const line = linesMap.get(category)
-    if (line) return { value: line.plannedAmount / periodMonths, isDefault: true }
+    if (line) return { value: (line.plannedAmount / periodMonths) * multiplier, isDefault: true }
     return { value: 0, isDefault: true }
   }
 
@@ -2492,14 +2584,31 @@ function ForecastTab({ planId }: { planId: string }) {
 
   return (
     <div className="space-y-6">
+      {/* Scenario toggle */}
+      <div className="flex items-center gap-2">
+        <span className="text-xs text-muted-foreground font-medium">{t("scenarioBase")}:</span>
+        {(["base", "optimistic", "pessimistic"] as const).map(s => (
+          <Button key={s} size="sm" variant={scenario === s ? "default" : "outline"} className="h-7 text-xs"
+            onClick={() => setScenario(s)}>
+            {s === "base" ? t("scenarioBase") : s === "optimistic" ? t("scenarioOptimistic") : t("scenarioPessimistic")}
+          </Button>
+        ))}
+        {scenario !== "base" && (
+          <Badge variant="outline" className="text-[10px] ml-2">
+            {scenario === "optimistic" ? "Revenue +10% / Costs -10%" : "Revenue -10% / Costs +15%"}
+          </Badge>
+        )}
+      </div>
+
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <ColorStatCard label={t("forecastRevenueTotal") || `${t("sectionRevenues")} (${t("colForecast").toLowerCase()})`} value={fmt(totalRevenue)} icon={<TrendingUp className="h-5 w-5" />} color="green" />
+        <ColorStatCard label={t("sectionCOGS")} value={fmt(totalCogs)} icon={<DollarSign className="h-5 w-5" />} color="amber" />
         <ColorStatCard label={t("forecastExpenseTotal") || `${t("sectionExpenses")} (${t("colForecast").toLowerCase()})`} value={fmt(totalExpense)} icon={<BarChart2 className="h-5 w-5" />} color="red" />
         <ColorStatCard
-          label={t("forecastMarginTotal") || `${t("sectionMargin").split("(")[0].trim()} (${t("colForecast").toLowerCase()})`}
+          label={t("operatingProfit")}
           value={fmt(totalMargin)}
-          icon={<DollarSign className="h-5 w-5" />}
+          icon={totalMargin >= 0 ? <TrendingUp className="h-5 w-5" /> : <TrendingDown className="h-5 w-5" />}
           color={totalMargin >= 0 ? "teal" : "red"}
         />
       </div>
