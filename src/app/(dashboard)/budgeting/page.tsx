@@ -2184,7 +2184,7 @@ export default function BudgetingPage() {
           {plansLoading ? (
             <Loader2 className="h-4 w-4 animate-spin text-purple-500" />
           ) : plans.length > 0 ? (
-            <select value={resolvedPlanId} onChange={e => { setActivePlanId(e.target.value); setActiveTab("overview") }}
+            <select value={resolvedPlanId} onChange={e => { setActivePlanId(e.target.value) }}
               className="border border-border rounded-md px-3 py-1.5 text-sm bg-background min-w-[180px]">
               {plans.map(p => (
                 <option key={p.id} value={p.id}>{p.name} — {periodLabel(p, t)}</option>
