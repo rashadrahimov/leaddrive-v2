@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils"
 import type { ReactNode } from "react"
+import { InfoHint } from "@/components/info-hint"
 
 const colorMap = {
   blue:   { bg: "bg-blue-500",   shadow: "shadow-blue-500/30" },
@@ -23,6 +24,8 @@ interface ColorStatCardProps {
   subValue?: string
   /** Breakdown lines shown below main value: [{label, value}] */
   lines?: { label: string; value: string }[]
+  /** Tooltip hint shown as info icon next to the label */
+  hint?: string
 }
 
 export function ColorStatCard({
@@ -34,6 +37,7 @@ export function ColorStatCard({
   bgClass,
   subValue,
   lines,
+  hint,
 }: ColorStatCardProps) {
   const { bg, shadow } = colorMap[color]
 
@@ -47,7 +51,10 @@ export function ColorStatCard({
       )}
     >
       <div className="flex items-center justify-between">
-        <span className="text-xs font-medium opacity-80">{label}</span>
+        <span className="text-xs font-medium opacity-80 flex items-center gap-1">
+          {label}
+          {hint && <InfoHint text={hint} size={12} className="opacity-70 hover:opacity-100 [&_svg]:text-white/60 [&_svg:hover]:text-white" />}
+        </span>
         <span className="opacity-70">{icon}</span>
       </div>
       <span className="text-2xl font-bold leading-tight">{value}</span>
