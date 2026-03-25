@@ -453,7 +453,7 @@ function WorkspaceTab({ planId }: { planId: string }) {
   const totCOGSPlanned = cogsLines.reduce((s: number, l: BudgetLine) => s + leafPlanned(l), 0)
   const totCOGSForecast = cogsLines.reduce((s: number, l: BudgetLine) => s + leafForecast(l), 0)
 
-  const { totalPlanned = 0, totalForecast = 0, totalActual = 0, totalVariance = 0, executionPct = 0, autoActualTotal = 0, yearEndProjection = 0, byCategory = [], totalRevenuePlanned = 0, totalRevenueActual = 0, totalExpensePlanned = 0, totalExpenseActual = 0, margin = 0, marginActual = 0 } = analytics ?? {}
+  const { totalPlanned = 0, totalForecast = 0, totalActual = 0, totalVariance = 0, executionPct = 0, autoActualTotal = 0, yearEndProjection = 0, byCategory = [], totalRevenuePlanned = 0, totalRevenueActual = 0, totalExpensePlanned = 0, totalExpenseActual = 0, totalCOGSPlanned = 0, totalCOGSActual = 0, grossProfit = 0, grossProfitActual = 0, margin = 0, marginActual = 0 } = analytics ?? {}
 
   // Inline edit handlers
   const startEdit = (id: string, field: string, currentVal: number) => {
@@ -473,8 +473,8 @@ function WorkspaceTab({ planId }: { planId: string }) {
     setEditCell(null)
   }
 
-  // All parent groups (for dropdown in add form)
-  const parentGroups = lines.filter((l: BudgetLine) => l.children && l.children.length > 0)
+  // All parent groups filtered by selected lineType (for dropdown in add form)
+  const parentGroups = lines.filter((l: BudgetLine) => l.children && l.children.length > 0 && l.lineType === newRow.lineType)
 
   // Add new row
   const handleAddRow = async () => {
@@ -483,7 +483,7 @@ function WorkspaceTab({ planId }: { planId: string }) {
       planId,
       category: newRow.category,
       department: newRow.department || undefined,
-      lineType: newRow.lineType as "expense" | "revenue",
+      lineType: newRow.lineType as "expense" | "revenue" | "cogs",
       plannedAmount: Number(newRow.plannedAmount) || 0,
       forecastAmount: Number(newRow.forecastAmount) || undefined,
       parentId: newRow.parentId || undefined,
@@ -498,7 +498,7 @@ function WorkspaceTab({ planId }: { planId: string }) {
     await createActual.mutateAsync({
       planId,
       category,
-      lineType: lineType as "expense" | "revenue",
+      lineType: lineType as "expense" | "revenue" | "cogs",
       actualAmount: Number(newActual.amount),
       description: newActual.description || undefined,
       expenseDate: newActual.date || undefined,
@@ -642,7 +642,7 @@ function WorkspaceTab({ planId }: { planId: string }) {
     await createLine.mutateAsync({
       planId,
       category: newSubItem.category,
-      lineType: parentLine.lineType as "expense" | "revenue",
+      lineType: parentLine.lineType as "expense" | "revenue" | "cogs",
       plannedAmount: Number(newSubItem.amount) || 0,
       parentId: parentLine.id,
       department: newSubItem.department || undefined,
@@ -975,8 +975,8 @@ function WorkspaceTab({ planId }: { planId: string }) {
                 </tr>
               </thead>
               <tbody>
-                {revenueLines.length > 0 && renderGroupedSection(t("sectionRevenues"), revenueLines, totRevPlanned)}
-                {cogsLines.length > 0 && renderGroupedSection(t("sectionCOGS"), cogsLines, totCOGSPlanned)}
+                {renderGroupedSection(t("sectionRevenues"), revenueLines, totRevPlanned)}
+                {renderGroupedSection(t("sectionCOGS"), cogsLines, totCOGSPlanned)}
 
                 {/* Gross Profit row */}
                 {(revenueLines.length > 0 || cogsLines.length > 0) && (
@@ -988,10 +988,10 @@ function WorkspaceTab({ planId }: { planId: string }) {
                   </tr>
                 )}
 
-                {expenseLines.length > 0 && renderGroupedSection(t("sectionExpenses"), expenseLines, totExpPlanned)}
+                {renderGroupedSection(t("sectionExpenses"), expenseLines, totExpPlanned)}
 
                 {/* Operating Profit row */}
-                {(expenseLines.length > 0 || revenueLines.length > 0) && (
+                {(expenseLines.length > 0 || revenueLines.length > 0 || cogsLines.length > 0) && (
                   <tr className="border-t-2 border-purple-300 dark:border-purple-800 bg-purple-50 dark:bg-purple-900/10">
                     <td className="px-3 py-2 font-bold text-sm" colSpan={2}>{t("operatingProfit")}</td>
                     <td className="px-2 py-2 text-right font-mono text-sm font-bold">{fmt(totRevPlanned - totCOGSPlanned - totExpPlanned)}</td>
@@ -1316,7 +1316,7 @@ function OverviewTab({ planId }: { planId: string }) {
                       <td className="px-4 py-2">{row.category}</td>
                       <td className="px-4 py-2">
                         <Badge variant="outline" className="text-xs">
-                          {row.lineType === "revenue" ? t("revenue") : t("expense")}
+                          {row.lineType === "revenue" ? t("revenue") : row.lineType === "cogs" ? t("cogs") : t("expense")}
                         </Badge>
                       </td>
                       <td className="px-4 py-2 text-right font-mono">{fmt(row.planned)}</td>
@@ -1501,7 +1501,7 @@ function LinesTab({ planId }: { planId: string }) {
                           <td className="px-4 py-2 text-muted-foreground">{line.department || "—"}</td>
                           <td className="px-4 py-2">
                             <Badge variant="outline" className="text-xs">
-                              {line.lineType === "revenue" ? t("revenue") : t("expense")}
+                              {line.lineType === "revenue" ? t("revenue") : line.lineType === "cogs" ? t("cogs") : t("expense")}
                             </Badge>
                           </td>
                           <td className="px-4 py-2 text-right font-mono">{fmt(line.plannedAmount)}</td>
@@ -1608,7 +1608,7 @@ function ActualsTab({ planId }: { planId: string }) {
                         <>
                           <td className="px-2 py-1"><Input value={editData.category} onChange={e => setEditData(d => ({ ...d, category: e.target.value }))} className="h-7 text-xs" /></td>
                           <td className="px-2 py-1"><Input value={editData.department} onChange={e => setEditData(d => ({ ...d, department: e.target.value }))} className="h-7 text-xs" /></td>
-                          <td className="px-4 py-2"><Badge variant="outline" className="text-xs">{actual.lineType === "revenue" ? t("revenue") : t("expense")}</Badge></td>
+                          <td className="px-4 py-2"><Badge variant="outline" className="text-xs">{actual.lineType === "revenue" ? t("revenue") : actual.lineType === "cogs" ? t("cogs") : t("expense")}</Badge></td>
                           <td className="px-2 py-1"><Input type="number" value={editData.actualAmount} onChange={e => setEditData(d => ({ ...d, actualAmount: Number(e.target.value) }))} className="h-7 text-xs text-right" /></td>
                           <td className="px-2 py-1"><Input value={editData.expenseDate} onChange={e => setEditData(d => ({ ...d, expenseDate: e.target.value }))} className="h-7 text-xs" placeholder="YYYY-MM-DD" /></td>
                           <td className="px-2 py-1"><Input value={editData.description} onChange={e => setEditData(d => ({ ...d, description: e.target.value }))} className="h-7 text-xs" /></td>
@@ -1627,7 +1627,7 @@ function ActualsTab({ planId }: { planId: string }) {
                           <td className="px-4 py-2 text-muted-foreground">{actual.department || "—"}</td>
                           <td className="px-4 py-2">
                             <Badge variant="outline" className="text-xs">
-                              {actual.lineType === "revenue" ? t("revenue") : t("expense")}
+                              {actual.lineType === "revenue" ? t("revenue") : actual.lineType === "cogs" ? t("cogs") : t("expense")}
                             </Badge>
                           </td>
                           <td className="px-4 py-2 text-right font-mono">{fmt(actual.actualAmount)}</td>
@@ -1955,6 +1955,7 @@ function PLTab({ planId }: { planId: string }) {
 
   // Group categories by section
   const revRows = leafRows.filter(c => c.lineType === "revenue")
+  const cogsRows = leafRows.filter(c => c.lineType === "cogs")
   const expRows = leafRows.filter(c => c.lineType === "expense")
 
   // Build grouped structure: { parentCategory → children[] }
@@ -1982,13 +1983,16 @@ function PLTab({ planId }: { planId: string }) {
 
   const expGrouped = buildGrouped(expRows)
   const revGrouped = buildGrouped(revRows)
+  const cogsGrouped = buildGrouped(cogsRows)
 
   const totalRevenuePlanned = revRows.reduce((s, r) => s + r.planned, 0)
   const totalRevenueActual = revRows.reduce((s, r) => s + r.actual, 0)
+  const totalCOGSPlanned = cogsRows.reduce((s, r) => s + r.planned, 0)
+  const totalCOGSActual = cogsRows.reduce((s, r) => s + r.actual, 0)
   const totalExpensePlanned = expRows.reduce((s, r) => s + r.planned, 0)
   const totalExpenseActual = expRows.reduce((s, r) => s + r.actual, 0)
-  const grossProfitPlanned = totalRevenuePlanned - totalExpensePlanned
-  const grossProfitActual = totalRevenueActual - totalExpenseActual
+  const grossProfitPlanned = totalRevenuePlanned - totalCOGSPlanned
+  const grossProfitActual = totalRevenueActual - totalCOGSActual
 
   const renderSection = (title: string, rows: typeof byCategory, sectionId: string, isCalculated = false, calcPlanned = 0, calcActual = 0, grouped?: { groups: { parent: string; children: typeof byCategory }[]; standalone: typeof byCategory }) => {
     const isCollapsed = collapsed.has(sectionId)
@@ -2137,8 +2141,10 @@ function PLTab({ planId }: { planId: string }) {
 
       {/* Auto-generated P&L sections */}
       {renderSection(t("plRevenue"), revRows, "auto-revenue", false, 0, 0, revGrouped)}
+      {renderSection(t("sectionCOGS"), cogsRows, "auto-cogs", false, 0, 0, cogsGrouped)}
+      {renderSection(t("grossProfit"), [], "auto-gross-profit", true, grossProfitPlanned, grossProfitActual)}
       {renderSection(t("plExpenses"), expRows, "auto-expense", false, 0, 0, expGrouped)}
-      {renderSection(t("plGrossProfit"), [], "auto-gross-profit", true, grossProfitPlanned, grossProfitActual)}
+      {renderSection(t("operatingProfit"), [], "auto-operating-profit", true, grossProfitPlanned - totalExpensePlanned, grossProfitActual - totalExpenseActual)}
 
       {/* Custom sections */}
       {sections.map(sec => (
@@ -2199,6 +2205,7 @@ function ForecastTab({ planId }: { planId: string }) {
   const [editCell, setEditCell] = useState<{ category: string; lineType: string; month: number } | null>(null)
   const [editValue, setEditValue] = useState("")
   const [addingRevenue, setAddingRevenue] = useState(false)
+  const [addingCogs, setAddingCogs] = useState(false)
   const [addingExpense, setAddingExpense] = useState(false)
   const [newCategory, setNewCategory] = useState("")
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(() => new Set(["admin", "tech_infra", "labor", "risk"]))
@@ -2251,6 +2258,7 @@ function ForecastTab({ planId }: { planId: string }) {
   }, [budgetLines])
 
   const revenueLines = useMemo(() => budgetLines.filter((l: BudgetLine) => l.lineType === "revenue"), [budgetLines])
+  const cogsLines = useMemo(() => budgetLines.filter((l: BudgetLine) => l.lineType === "cogs"), [budgetLines])
   const expenseLines = useMemo(() => budgetLines.filter((l: BudgetLine) => l.lineType === "expense"), [budgetLines])
 
   // Get cell value: saved forecast or default (planned / periodMonths)
@@ -2301,8 +2309,10 @@ function ForecastTab({ planId }: { planId: string }) {
 
   // KPI values
   const totalRevenue = getSectionTotal(revenueLines)
+  const totalCogs = getSectionTotal(cogsLines)
   const totalExpense = getSectionTotal(expenseLines)
-  const totalMargin = totalRevenue - totalExpense
+  const totalGrossProfit = totalRevenue - totalCogs
+  const totalMargin = totalRevenue - totalCogs - totalExpense
 
   // Inline edit handlers
   const startEdit = (category: string, lineType: string, month: number) => {
@@ -2328,7 +2338,7 @@ function ForecastTab({ planId }: { planId: string }) {
   }
 
   // Add new category
-  const handleAddCategory = async (lineType: "revenue" | "expense") => {
+  const handleAddCategory = async (lineType: "revenue" | "expense" | "cogs") => {
     if (!newCategory.trim()) return
     await createLine.mutateAsync({
       planId,
@@ -2429,7 +2439,7 @@ function ForecastTab({ planId }: { planId: string }) {
     )
   }
 
-  const renderSection = (title: string, lines: BudgetLine[], isAdding: boolean, setIsAdding: (v: boolean) => void, lineType: "revenue" | "expense") => (
+  const renderSection = (title: string, lines: BudgetLine[], isAdding: boolean, setIsAdding: (v: boolean) => void, lineType: "revenue" | "expense" | "cogs") => (
     <>
       <tr className="bg-muted/40">
         <td colSpan={months.length + 2} className="px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-muted-foreground">
@@ -2510,20 +2520,31 @@ function ForecastTab({ planId }: { planId: string }) {
               </thead>
               <tbody>
                 {renderSection(t("sectionRevenues"), revenueLines, addingRevenue, setAddingRevenue, "revenue")}
+                {renderSection(t("sectionCOGS"), cogsLines, addingCogs, setAddingCogs, "cogs")}
+
+                {/* Gross Profit row */}
+                <tr className="border-t-2 border-emerald-300 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/10">
+                  <td className="px-3 py-2 font-bold text-sm sticky left-0 bg-emerald-50 dark:bg-emerald-900/10 z-10">{t("grossProfit")}</td>
+                  {months.map(m => (
+                    <td key={m} className="px-2 py-2 text-right font-mono text-sm font-bold">
+                      {fmt(getColTotal(revenueLines, m) - getColTotal(cogsLines, m))}
+                    </td>
+                  ))}
+                  <td className="px-3 py-2 text-right font-mono text-sm font-bold">{fmt(totalGrossProfit)}</td>
+                </tr>
+
                 {renderSection(t("sectionExpenses"), expenseLines, addingExpense, setAddingExpense, "expense")}
 
-                {/* Margin row */}
-                {(revenueLines.length > 0 || expenseLines.length > 0) && (
-                  <tr className="border-t-2 border-purple-300 dark:border-purple-800 bg-purple-50 dark:bg-purple-900/10">
-                    <td className="px-3 py-2 font-bold text-sm sticky left-0 bg-purple-50 dark:bg-purple-900/10 z-10">{t("sectionMargin")}</td>
-                    {months.map(m => (
-                      <td key={m} className="px-2 py-2 text-right font-mono text-sm font-bold">
-                        {fmt(getColTotal(revenueLines, m) - getColTotal(expenseLines, m))}
-                      </td>
-                    ))}
-                    <td className="px-3 py-2 text-right font-mono text-sm font-bold">{fmt(totalMargin)}</td>
-                  </tr>
-                )}
+                {/* Operating Profit row */}
+                <tr className="border-t-2 border-purple-300 dark:border-purple-800 bg-purple-50 dark:bg-purple-900/10">
+                  <td className="px-3 py-2 font-bold text-sm sticky left-0 bg-purple-50 dark:bg-purple-900/10 z-10">{t("operatingProfit")}</td>
+                  {months.map(m => (
+                    <td key={m} className="px-2 py-2 text-right font-mono text-sm font-bold">
+                      {fmt(getColTotal(revenueLines, m) - getColTotal(cogsLines, m) - getColTotal(expenseLines, m))}
+                    </td>
+                  ))}
+                  <td className="px-3 py-2 text-right font-mono text-sm font-bold">{fmt(totalMargin)}</td>
+                </tr>
 
                 {/* Empty state */}
                 {budgetLines.length === 0 && (
