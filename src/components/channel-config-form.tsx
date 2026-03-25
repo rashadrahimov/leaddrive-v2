@@ -41,7 +41,6 @@ const channelTypes = [
   { value: "sms", label: "SMS", icon: Smartphone, color: "text-gray-600", bgColor: "bg-gray-100 dark:bg-gray-900/30", borderActive: "border-gray-500 bg-gray-50 dark:bg-gray-900/20" },
   { value: "facebook", label: "Facebook", icon: MessageSquare, color: "text-blue-700", bgColor: "bg-blue-100 dark:bg-blue-900/30", borderActive: "border-blue-600 bg-blue-50 dark:bg-blue-900/20" },
   { value: "instagram", label: "Instagram", icon: MessageSquare, color: "text-pink-600", bgColor: "bg-pink-100 dark:bg-pink-900/30", borderActive: "border-pink-500 bg-pink-50 dark:bg-pink-900/20" },
-  { value: "vkontakte", label: "VKontakte", icon: MessageSquare, color: "text-indigo-600", bgColor: "bg-indigo-100 dark:bg-indigo-900/30", borderActive: "border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20" },
 ]
 
 export function ChannelConfigForm({ open, onOpenChange, onSaved, initialData, orgId }: ChannelConfigFormProps) {
@@ -411,55 +410,6 @@ export function ChannelConfigForm({ open, onOpenChange, onSaved, initialData, or
                   <p className="text-xs text-muted-foreground mt-1">
                     Found in your Page settings or via Graph API
                   </p>
-                </div>
-              </>
-            )}
-
-            {form.channelType === "vkontakte" && (
-              <>
-                <div className="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800 rounded-lg p-3">
-                  <p className="text-xs text-indigo-700 dark:text-indigo-300 font-medium mb-1">VKontakte Community Messages API</p>
-                  <p className="text-xs text-indigo-600 dark:text-indigo-400 mb-1">
-                    Webhook URL: <code className="font-mono bg-indigo-100 dark:bg-indigo-900/40 px-1 rounded">
-                      {typeof window !== "undefined" ? window.location.origin : ""}/api/v1/webhooks/vkontakte
-                    </code>
-                  </p>
-                </div>
-                <div>
-                  <Label htmlFor="apiKey" className="text-sm font-medium">Group Access Token *</Label>
-                  <Input
-                    id="apiKey"
-                    type="password"
-                    value={form.apiKey}
-                    onChange={(e) => update("apiKey", e.target.value)}
-                    placeholder="vk1.a.xxxx..."
-                    className="mt-1.5 font-mono text-sm"
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Manage → API Usage → Create token
-                  </p>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <Label htmlFor="pageId" className="text-sm font-medium">Group ID *</Label>
-                    <Input
-                      id="pageId"
-                      value={form.pageId}
-                      onChange={(e) => update("pageId", e.target.value)}
-                      placeholder="123456789"
-                      className="mt-1.5 font-mono text-sm"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="confirmationCode" className="text-sm font-medium">Confirmation Code</Label>
-                    <Input
-                      id="confirmationCode"
-                      value={form.confirmationCode}
-                      onChange={(e) => update("confirmationCode", e.target.value)}
-                      placeholder="From VK Callback API settings"
-                      className="mt-1.5 font-mono text-sm"
-                    />
-                  </div>
                 </div>
               </>
             )}

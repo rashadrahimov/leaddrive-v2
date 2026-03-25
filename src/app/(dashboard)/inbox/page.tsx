@@ -93,7 +93,7 @@ const channelLabel = (ch: string) => {
   }
 }
 
-const CHANNELS = ["all", "email", "telegram", "sms", "whatsapp", "facebook", "instagram", "vkontakte"] as const
+const CHANNELS = ["all", "email", "telegram", "sms", "whatsapp", "facebook", "instagram"] as const
 
 /* -- Page -- */
 export default function InboxPage() {
@@ -580,7 +580,6 @@ export default function InboxPage() {
                     <option value="whatsapp">WhatsApp</option>
                     <option value="facebook">Facebook</option>
                     <option value="instagram">Instagram</option>
-                    <option value="vkontakte">VKontakte</option>
                   </Select>
                   <Input
                     placeholder={t("writeMessage")}
