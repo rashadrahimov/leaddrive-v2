@@ -1946,6 +1946,7 @@
 
     "kpiPlan": "PLAN",
     "kpiForecast": "FORECAST",
+    "kpiProjection": "Projection",
     "kpiActual": "ACTUAL",
     "kpiActualAuto": "ACTUAL (auto)",
     "kpiActualCostModel": "ACTUAL (cost model)",
@@ -2234,6 +2235,37 @@
 
     "hintTemplateName": "Business direction name (e.g. 'AI Solutions', 'Cloud Services')",
     "hintTemplateApply": "Create budget lines from selected templates. Duplicates are skipped",
-    "hintTemplateActive": "Inactive templates are hidden when applying to plans"
+    "hintTemplateActive": "Inactive templates are hidden when applying to plans",
+
+    "overspend": "OVERSPEND",
+    "kpiExecutionTooltip": "Expense budget execution: Actual expenses / Planned expenses × 100%. Below 100% = savings, above 100% = overspend",
+
+    "alertOverspendTitle": "Critical budget overspend",
+    "alertOverspendDesc": "Expenses exceeded budget by {pct}% ({amount}). Budget review or expense adjustment recommended.",
+    "alertWarningTitle": "Warning: expenses above plan",
+    "alertWarningDesc": "Expenses exceeded budget by {pct}% ({amount}). Monitor remaining expenses to stay within budget.",
+
+    "summaryOverspend": "{period}: expenses exceeded plan by {pct}% ({amount}).",
+    "summaryUnderBudget": "{period}: expenses are {pct}% under budget (savings {amount}).",
+    "summaryNoRevenue": "Revenue section is empty — P&L analysis not possible.",
+
+    "filterVarianceOnly": "With variances",
+    "hintFilterVariance": "Show only lines with non-zero variance between actual and plan",
+    "hintAddRevenue": "Add revenue items for complete P&L analysis. Without revenue, margin and operating profit will be negative.",
+
+    "filterMaterial": "Material only",
+    "hintFilterMaterial": "Highlight only material variances (>5% or >500 ₼)",
+    "expectedByTime": "Expected by time",
+    "drillDownTitle": "Detail",
+    "costModelSource": "Source: cost model",
+    "costModelKey": "Model key",
+    "varianceNoteTitle": "Variance note",
+    "varianceNotePlaceholder": "Explain the reason for the variance...",
+    "noActuals": "No records",
+    "colDate": "Date",
+    "colDescription": "Description",
+    "colAmount": "Amount",
+    "btnSave": "Save",
+    "btnCancel": "Cancel"
   }
 }

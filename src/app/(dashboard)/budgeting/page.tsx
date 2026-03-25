@@ -11,8 +11,12 @@ import { Input } from "@/components/ui/input"
 import {
   PiggyBank, Plus, Trash2, Pencil, Loader2, TrendingUp, TrendingDown,
   CheckCircle, AlertCircle, BarChart2, DollarSign, CalendarRange, Link2,
-  ChevronDown, ChevronRight,
+  ChevronDown, ChevronRight, MessageSquare,
 } from "lucide-react"
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import { Textarea } from "@/components/ui/textarea"
+import { Progress } from "@/components/ui/progress"
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend,
@@ -401,8 +405,14 @@ function WorkspaceTab({ planId }: { planId: string }) {
   const [newRow, setNewRow] = useState({ category: "", lineType: "expense", plannedAmount: "", forecastAmount: "", department: "", parentId: "" })
   const [filterText, setFilterText] = useState("")
   const [filterType, setFilterType] = useState<"all" | "expense" | "revenue">("all")
+  const [showMaterialOnly, setShowMaterialOnly] = useState(false)
   const [narrative, setNarrative] = useState<string | null>(null)
   const [showNarrative, setShowNarrative] = useState(false)
+  // Drill-down sheet for fact values
+  const [drillDownLine, setDrillDownLine] = useState<BudgetLine | null>(null)
+  // Variance note dialog
+  const [varianceNoteLine, setVarianceNoteLine] = useState<BudgetLine | null>(null)
+  const [varianceNoteText, setVarianceNoteText] = useState("")
 
   // New actual form for expand
   const [newActual, setNewActual] = useState({ amount: "", description: "", date: "" })
@@ -438,7 +448,15 @@ function WorkspaceTab({ planId }: { planId: string }) {
     if (filterText) result = result.filter((l: BudgetLine) => l.category.toLowerCase().includes(filterText.toLowerCase()))
     if (filterType !== "all") result = result.filter((l: BudgetLine) => l.lineType === filterType)
     return result
-  }, [lines, filterText, filterType])
+  }, [lines, filterText, filterType, autoActualMap, actualsByCat])
+
+  // Materiality check helper — used for opacity in table rows
+  const isMaterial = (l: BudgetLine): boolean => {
+    const factValue = l.isAutoActual ? (autoActualMap.get(l.category) ?? 0) : (actualsByCat.get(`${l.category}||${l.lineType}`)?.total ?? 0)
+    const varianceAbs = Math.abs(l.plannedAmount - factValue)
+    const variancePctVal = l.plannedAmount > 0 ? (varianceAbs / l.plannedAmount) * 100 : 0
+    return variancePctVal >= 5 || varianceAbs >= 500
+  }
 
   const expenseLines = filteredLines.filter((l: BudgetLine) => l.lineType === "expense")
   const revenueLines = filteredLines.filter((l: BudgetLine) => l.lineType === "revenue")
@@ -456,7 +474,7 @@ function WorkspaceTab({ planId }: { planId: string }) {
   const totCOGSPlanned = cogsLines.reduce((s: number, l: BudgetLine) => s + leafPlanned(l), 0)
   const totCOGSForecast = cogsLines.reduce((s: number, l: BudgetLine) => s + leafForecast(l), 0)
 
-  const { totalPlanned = 0, totalForecast = 0, totalActual = 0, totalVariance = 0, executionPct = 0, autoActualTotal = 0, yearEndProjection = 0, byCategory = [], totalRevenuePlanned = 0, totalRevenueActual = 0, totalExpensePlanned = 0, totalExpenseActual = 0, totalCOGSPlanned = 0, totalCOGSActual = 0, grossProfit = 0, grossProfitActual = 0, margin = 0, marginActual = 0 } = analytics ?? {}
+  const { totalPlanned = 0, totalForecast = 0, totalActual = 0, totalVariance = 0, executionPct = 0, expenseExecutionPct = 0, elapsedPct = 100, autoActualTotal = 0, yearEndProjection = 0, byCategory = [], totalRevenuePlanned = 0, totalRevenueActual = 0, totalExpensePlanned = 0, totalExpenseActual = 0, totalCOGSPlanned = 0, totalCOGSActual = 0, grossProfit = 0, grossProfitActual = 0, margin = 0, marginActual = 0 } = analytics ?? {}
 
   // Inline edit handlers
   const startEdit = (id: string, field: string, currentVal: number) => {
@@ -551,8 +569,10 @@ function WorkspaceTab({ planId }: { planId: string }) {
     const variancePct = line.plannedAmount > 0 ? (variance / line.plannedAmount) * 100 : 0
     const isExpanded = expandId === line.id
 
+    const rowMaterial = !showMaterialOnly || isMaterial(line)
+
     return (
-      <tr key={line.id} className="border-t border-border/50 hover:bg-muted/30 group">
+      <tr key={line.id} className={`border-t border-border/50 hover:bg-muted/30 group ${!rowMaterial ? "opacity-40" : ""}`}>
         {/* Category */}
         <td className="px-3 py-2 text-sm font-medium">{line.category}</td>
         {/* Department */}
@@ -572,27 +592,37 @@ function WorkspaceTab({ planId }: { planId: string }) {
             </button>
           )}
         </td>
-        {/* Fact */}
+        {/* Fact — clickable for drill-down */}
         <td className="px-2 py-2 text-right">
           <div className="flex items-center justify-end gap-1">
-            {line.isAutoActual ? (
-              <span className="font-mono text-sm text-blue-600 dark:text-blue-400" title={t("badgeAutoTooltip")}>
-                {fmt(factValue)}
-                <Badge title={t("hintBadgeAuto")} className="ml-1 text-[9px] bg-blue-100 text-blue-700 dark:bg-blue-900/30 px-1">{t("badgeAuto")}</Badge>
-              </span>
-            ) : (
-              <span className="font-mono text-sm text-green-600 dark:text-green-400 cursor-pointer hover:bg-green-50 dark:hover:bg-green-900/20 px-1 rounded"
-                title={t("hintExpandActuals")}
+            <button type="button"
+              className={`font-mono text-sm cursor-pointer px-1 rounded hover:underline ${line.isAutoActual ? "text-blue-600 dark:text-blue-400" : "text-green-600 dark:text-green-400"}`}
+              onClick={() => setDrillDownLine(line)}
+              title={t("drillDownTitle")}>
+              {fmt(factValue)}
+            </button>
+            {line.isAutoActual && (
+              <Badge title={t("hintBadgeAuto")} className="text-[9px] bg-blue-100 text-blue-700 dark:bg-blue-900/30 px-1">{t("badgeAuto")}</Badge>
+            )}
+            {!line.isAutoActual && (
+              <button type="button" className="text-muted-foreground hover:text-foreground"
                 onClick={() => setExpandId(isExpanded ? null : line.id)}>
-                {fmt(factValue)}
-                <ChevronDown className={`h-3 w-3 inline ml-0.5 transition-transform ${isExpanded ? "rotate-180" : ""}`} />
-              </span>
+                <ChevronDown className={`h-3 w-3 transition-transform ${isExpanded ? "rotate-180" : ""}`} />
+              </button>
             )}
           </div>
         </td>
-        {/* Variance */}
+        {/* Variance + annotation icon */}
         <td className={`px-2 py-2 text-right font-mono text-sm font-bold ${variance >= 0 ? "text-green-600" : "text-red-500"}`}>
-          {variance >= 0 ? "+" : ""}{variancePct.toFixed(1)}%
+          <div className="flex items-center justify-end gap-1">
+            <button type="button"
+              className={`p-0.5 rounded hover:bg-muted ${line.notes ? "text-blue-500" : "text-muted-foreground/40 hover:text-muted-foreground"}`}
+              title={line.notes || t("varianceNoteTitle")}
+              onClick={() => { setVarianceNoteLine(line); setVarianceNoteText(line.notes || "") }}>
+              <MessageSquare className="h-3.5 w-3.5" />
+            </button>
+            <span>{variance >= 0 ? "+" : ""}{variancePct.toFixed(1)}%</span>
+          </div>
         </td>
         {/* Actions */}
         <td className="px-2 py-2 text-center">
@@ -760,22 +790,34 @@ function WorkspaceTab({ planId }: { planId: string }) {
             )}
           </td>
           <td className="px-2 py-1.5 text-right">
-            {child.isAutoActual ? (
-              <span className="font-mono text-sm text-blue-600 dark:text-blue-400">
+            <div className="flex items-center justify-end gap-1">
+              <button type="button"
+                className={`font-mono text-sm cursor-pointer px-1 rounded hover:underline ${child.isAutoActual ? "text-blue-600 dark:text-blue-400" : "text-green-600 dark:text-green-400"}`}
+                onClick={() => setDrillDownLine(child)}
+                title={t("drillDownTitle")}>
                 {fmt(factValue)}
-                <Badge title={t("hintBadgeAuto")} className="ml-1 text-[9px] bg-blue-100 text-blue-700 dark:bg-blue-900/30 px-1">{t("badgeAuto")}</Badge>
-              </span>
-            ) : (
-              <span className="font-mono text-sm text-green-600 dark:text-green-400 cursor-pointer hover:bg-green-50 dark:hover:bg-green-900/20 px-1 rounded"
-                title={t("hintExpandActuals")}
-                onClick={() => setExpandId(isExpanded ? null : child.id)}>
-                {fmt(factValue)}
-                <ChevronDown className={`h-3 w-3 inline ml-0.5 transition-transform ${isExpanded ? "rotate-180" : ""}`} />
-              </span>
-            )}
+              </button>
+              {child.isAutoActual && (
+                <Badge title={t("hintBadgeAuto")} className="text-[9px] bg-blue-100 text-blue-700 dark:bg-blue-900/30 px-1">{t("badgeAuto")}</Badge>
+              )}
+              {!child.isAutoActual && (
+                <button type="button" className="text-muted-foreground hover:text-foreground"
+                  onClick={() => setExpandId(isExpanded ? null : child.id)}>
+                  <ChevronDown className={`h-3 w-3 transition-transform ${isExpanded ? "rotate-180" : ""}`} />
+                </button>
+              )}
+            </div>
           </td>
           <td className={`px-2 py-1.5 text-right font-mono text-xs font-bold ${variance >= 0 ? "text-green-600" : "text-red-500"}`}>
-            {variance >= 0 ? "+" : ""}{variancePct.toFixed(1)}%
+            <div className="flex items-center justify-end gap-1">
+              <button type="button"
+                className={`p-0.5 rounded hover:bg-muted ${noteText ? "text-blue-500" : "text-muted-foreground/40 hover:text-muted-foreground"}`}
+                title={noteText || t("varianceNoteTitle")}
+                onClick={() => { setVarianceNoteLine(child); setVarianceNoteText(child.notes || "") }}>
+                <MessageSquare className="h-3 w-3" />
+              </button>
+              <span>{variance >= 0 ? "+" : ""}{variancePct.toFixed(1)}%</span>
+            </div>
           </td>
           <td className="px-2 py-1.5 text-center">
             <button onClick={() => { if (confirm(t("confirmDeleteLine") + " «" + child.category + "»?")) deleteLine.mutate({ id: child.id, planId }) }}
@@ -837,11 +879,11 @@ function WorkspaceTab({ planId }: { planId: string }) {
           <td colSpan={6} className="px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-muted-foreground">{title}</td>
         </tr>
         {sectionLines.map(l => [renderRow(l), renderExpand(l)])}
-        <tr className="border-t-2 border-border bg-muted/30">
-          <td className="px-3 py-1.5 font-bold text-xs" colSpan={2} title={t("hintSectionTotal")}>{t("totalLabel")} {title.toLowerCase()}</td>
-          <td className="px-2 py-1.5 text-right font-mono text-xs font-bold">{fmt(totPlanned)}</td>
-          <td className="px-2 py-1.5 text-right font-mono text-xs font-bold text-green-600">{fmt(totActual)}</td>
-          <td className="px-2 py-1.5 text-right font-mono text-xs font-bold">
+        <tr className="border-y-2 border-border bg-muted/50">
+          <td className="px-3 py-2 font-bold text-sm" colSpan={2} title={t("hintSectionTotal")}>{t("totalLabel")} {title.toLowerCase()}</td>
+          <td className="px-2 py-2 text-right font-mono text-sm font-bold">{fmt(totPlanned)}</td>
+          <td className="px-2 py-2 text-right font-mono text-sm font-bold text-green-600">{fmt(totActual)}</td>
+          <td className="px-2 py-2 text-right font-mono text-sm font-bold">
             {totPlanned > 0 ? `${(((totPlanned - totActual) / totPlanned) * 100).toFixed(1)}%` : "—"}
           </td>
           <td />
@@ -883,11 +925,11 @@ function WorkspaceTab({ planId }: { planId: string }) {
           }
           return <React.Fragment key={l.id}>{renderRow(l)}{renderExpand(l)}</React.Fragment>
         })}
-        <tr className="border-t-2 border-border bg-muted/30">
-          <td className="px-3 py-1.5 font-bold text-xs" colSpan={2} title={t("hintSectionTotal")}>{t("totalLabel")} {title.toLowerCase()}</td>
-          <td className="px-2 py-1.5 text-right font-mono text-xs font-bold">{fmt(totPlanned)}</td>
-          <td className="px-2 py-1.5 text-right font-mono text-xs font-bold text-green-600">{fmt(totActual)}</td>
-          <td className="px-2 py-1.5 text-right font-mono text-xs font-bold">
+        <tr className="border-y-2 border-border bg-muted/50">
+          <td className="px-3 py-2 font-bold text-sm" colSpan={2} title={t("hintSectionTotal")}>{t("totalLabel")} {title.toLowerCase()}</td>
+          <td className="px-2 py-2 text-right font-mono text-sm font-bold">{fmt(totPlanned)}</td>
+          <td className="px-2 py-2 text-right font-mono text-sm font-bold text-green-600">{fmt(totActual)}</td>
+          <td className="px-2 py-2 text-right font-mono text-sm font-bold">
             {totPlanned > 0 ? `${(((totPlanned - totActual) / totPlanned) * 100).toFixed(1)}%` : "—"}
           </td>
           <td />
@@ -967,7 +1009,15 @@ function WorkspaceTab({ planId }: { planId: string }) {
       [actualLabel]: Math.round(c.actual),
     }))
 
-  const execEmoji = executionPct >= 90 ? "🟢" : executionPct >= 60 ? "🟡" : "🔴"
+  // Time-aware expense execution: compare spending % vs elapsed time %
+  const expExecPct = totalExpensePlanned > 0 ? (totalExpenseActual / totalExpensePlanned) * 100 : 0
+  const timeAwareOk = expExecPct <= elapsedPct + 10 // within 10pp of time-elapsed expectation
+  const expExecColor = expExecPct <= 100 ? (timeAwareOk ? "green" : "amber") : expExecPct <= 110 ? "amber" : "red"
+  const expExecEmoji = expExecPct > 110 ? "🔴" : timeAwareOk ? "🟢" : "🟡"
+  const expExecLabel = expExecPct > 110 ? t("overspend") : t("kpiExecution")
+  // Overspend alert
+  const overspendPct = expExecPct - 100
+  const overspendAmount = totalExpenseActual - totalExpensePlanned
 
   const totExpActual = expenseLines.reduce((s: number, l: BudgetLine) => {
     if (l.children?.length) {
@@ -1001,8 +1051,58 @@ function WorkspaceTab({ planId }: { planId: string }) {
         <div title={t("hintKpiMarginPlan")}><ColorStatCard label={t("sectionMargin").split("(")[0].trim() + " (" + t("kpiPlan").toLowerCase() + ")"} value={fmt(margin)} icon={<TrendingUp className="h-5 w-5" />} color={margin >= 0 ? "teal" : "red"} /></div>
         <div title={t("hintKpiMarginActual")}><ColorStatCard label={t("sectionMargin").split("(")[0].trim() + " (" + t("kpiActual").toLowerCase() + ")"} value={fmt(marginActual)} icon={<DollarSign className="h-5 w-5" />} color={marginActual >= 0 ? "teal" : "red"} /></div>
         <div title={t("hintKpiVariance")}><ColorStatCard label={t("kpiVariance")} value={(totalVariance >= 0 ? "+" : "") + fmt(totalVariance)} icon={totalVariance >= 0 ? <TrendingUp className="h-5 w-5" /> : <TrendingDown className="h-5 w-5" />} color={totalVariance >= 0 ? "teal" : "red"} /></div>
-        <div title={t("hintKpiExecution")}><ColorStatCard label={t("kpiExecution")} value={`${execEmoji} ${Math.round(executionPct)}%`} icon={<CheckCircle className="h-5 w-5" />} color={executionPct >= 90 ? "green" : executionPct >= 60 ? "amber" : "red"} /></div>
+        <div title={t("hintKpiExecution") + ": " + t("kpiExecutionTooltip")}>
+          <ColorStatCard label={expExecLabel} value={`${expExecEmoji} ${Math.round(expExecPct)}%`} icon={expExecPct > 110 ? <AlertCircle className="h-5 w-5" /> : <CheckCircle className="h-5 w-5" />} color={expExecColor} />
+          <div className="mt-1 px-3 pb-2">
+            <div className="flex items-center justify-between text-[10px] text-muted-foreground mb-0.5">
+              <span>{t("expectedByTime")}: {Math.round(elapsedPct)}%</span>
+              <span>{t("colActual")}: {Math.round(expExecPct)}%</span>
+            </div>
+            <div className="relative">
+              <Progress value={expExecPct} className="h-1.5" indicatorClassName={expExecColor === "green" ? "bg-green-500" : expExecColor === "amber" ? "bg-amber-500" : "bg-red-500"} />
+              <div className="absolute top-0 h-1.5 border-r-2 border-foreground/50" style={{ left: `${Math.min(elapsedPct, 100)}%` }} title={`${Math.round(elapsedPct)}% ${t("expectedByTime")}`} />
+            </div>
+          </div>
+        </div>
       </div>
+
+      {/* Overspend alert banner */}
+      {overspendPct > 25 && (
+        <div className="rounded-lg border-2 border-red-400 bg-red-50 dark:bg-red-950/30 dark:border-red-800 px-4 py-3 flex items-start gap-3">
+          <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400 shrink-0 mt-0.5" />
+          <div>
+            <p className="font-bold text-red-700 dark:text-red-400 text-sm">{t("alertOverspendTitle")}</p>
+            <p className="text-red-600 dark:text-red-300 text-xs mt-0.5">
+              {t("alertOverspendDesc", { pct: Math.round(overspendPct), amount: fmt(overspendAmount) })}
+            </p>
+          </div>
+        </div>
+      )}
+      {overspendPct > 10 && overspendPct <= 25 && (
+        <div className="rounded-lg border border-amber-400 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-800 px-4 py-3 flex items-start gap-3">
+          <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+          <div>
+            <p className="font-bold text-amber-700 dark:text-amber-400 text-sm">{t("alertWarningTitle")}</p>
+            <p className="text-amber-600 dark:text-amber-300 text-xs mt-0.5">
+              {t("alertWarningDesc", { pct: Math.round(overspendPct), amount: fmt(overspendAmount) })}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Executive Summary */}
+      {(totalExpensePlanned > 0 || totalRevenuePlanned > 0) && (
+        <div className="rounded-lg bg-muted/40 border border-border px-4 py-3 text-sm text-muted-foreground">
+          {totalExpenseActual > totalExpensePlanned ? (
+            <span>{t("summaryOverspend", { period: analytics?.plan?.name ?? "", pct: Math.round(overspendPct), amount: fmt(overspendAmount) })}</span>
+          ) : totalExpensePlanned > 0 ? (
+            <span>{t("summaryUnderBudget", { period: analytics?.plan?.name ?? "", pct: Math.round(100 - expExecPct), amount: fmt(totalExpensePlanned - totalExpenseActual) })}</span>
+          ) : null}
+          {totalRevenuePlanned === 0 && totalExpensePlanned > 0 && (
+            <span className="ml-1 text-amber-600 dark:text-amber-400">{t("summaryNoRevenue")}</span>
+          )}
+        </div>
+      )}
 
       {/* Actions */}
       <div className="flex flex-wrap items-center gap-2">
@@ -1027,6 +1127,10 @@ function WorkspaceTab({ planId }: { planId: string }) {
           <option value="expense">{t("filterExpenses")}</option>
           <option value="revenue">{t("filterRevenues")}</option>
         </select>
+        <Button size="sm" variant={showMaterialOnly ? "default" : "outline"} className="h-8 text-xs"
+          onClick={() => setShowMaterialOnly(!showMaterialOnly)} title={t("hintFilterMaterial")}>
+          {t("filterMaterial")}
+        </Button>
       </div>
 
       {/* AI Narrative */}
@@ -1050,7 +1154,7 @@ function WorkspaceTab({ planId }: { planId: string }) {
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-muted/50 sticky top-0">
+              <thead className="bg-muted/50 sticky top-0 z-10">
                 <tr>
                   <th title={t("hintColCategory")} className="px-3 py-2 text-left font-medium text-xs">{t("colCategory")}</th>
                   <th title={t("hintColDepartment")} className="px-2 py-2 text-left font-medium text-xs">{t("colDepartment")}</th>
@@ -1062,11 +1166,18 @@ function WorkspaceTab({ planId }: { planId: string }) {
               </thead>
               <tbody>
                 {renderGroupedSection(t("sectionRevenues"), revenueLines, totRevPlanned, "hintSectionRevenue", "revenue")}
+                {revenueLines.length === 0 && (
+                  <tr className="bg-amber-50/50 dark:bg-amber-950/10">
+                    <td colSpan={6} className="px-4 py-2 text-xs text-amber-700 dark:text-amber-400 italic">
+                      {t("hintAddRevenue")}
+                    </td>
+                  </tr>
+                )}
                 {renderGroupedSection(t("sectionCOGS"), cogsLines, totCOGSPlanned, "hintSectionCOGS", "cogs")}
 
                 {/* Gross Profit row */}
                 {(revenueLines.length > 0 || cogsLines.length > 0) && (
-                  <tr className="border-t-2 border-emerald-300 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/10">
+                  <tr className="border-y-2 border-emerald-300 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/10">
                     <td className="px-3 py-2" colSpan={2}>
                       <div className="font-bold text-sm">{t("grossProfit")}</div>
                       <div className="text-[10px] text-muted-foreground/60 font-normal">{t("hintGrossProfit")}</div>
@@ -1081,7 +1192,7 @@ function WorkspaceTab({ planId }: { planId: string }) {
 
                 {/* Operating Profit row */}
                 {(expenseLines.length > 0 || revenueLines.length > 0 || cogsLines.length > 0) && (
-                  <tr className="border-t-2 border-purple-300 dark:border-purple-800 bg-purple-50 dark:bg-purple-900/10">
+                  <tr className="border-y-2 border-purple-300 dark:border-purple-800 bg-purple-50 dark:bg-purple-900/10">
                     <td className="px-3 py-2" colSpan={2}>
                       <div className="font-bold text-sm">{t("operatingProfit")}</div>
                       <div className="text-[10px] text-muted-foreground/60 font-normal">{t("hintOperatingProfit")}</div>
@@ -1143,6 +1254,86 @@ function WorkspaceTab({ planId }: { planId: string }) {
           </Card>
         )}
       </div>
+
+      {/* Waterfall Chart */}
+      <Card>
+        <CardHeader><CardTitle className="text-sm">Waterfall: {t("kpiPlan")} → {t("kpiForecast")} → {t("colActual")} → {t("kpiProjection")}</CardTitle></CardHeader>
+        <CardContent>
+          <BudgetWaterfallChart
+            totalPlanned={totalPlanned}
+            totalForecast={totalForecast}
+            totalActual={totalActual}
+            totalVariance={totalVariance}
+            yearEndProjection={yearEndProjection}
+          />
+        </CardContent>
+      </Card>
+
+      {/* Drill-down Sheet for fact values */}
+      <Sheet open={!!drillDownLine} onOpenChange={open => { if (!open) setDrillDownLine(null) }}>
+        <SheetContent>
+          <SheetHeader>
+            <SheetTitle>{t("drillDownTitle")}: {drillDownLine?.category}</SheetTitle>
+          </SheetHeader>
+          <div className="mt-4 space-y-3">
+            {drillDownLine?.isAutoActual ? (
+              <div className="space-y-2">
+                <Badge className="bg-blue-100 text-blue-700 dark:bg-blue-900/30">{t("costModelSource")}</Badge>
+                <div className="text-sm text-muted-foreground">{t("costModelKey")}: <code className="bg-muted px-1 rounded">{drillDownLine.costModelKey || "—"}</code></div>
+                <div className="text-lg font-mono font-bold">{fmt(autoActualMap.get(drillDownLine.category) ?? 0)}</div>
+              </div>
+            ) : (
+              <div>
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="text-left py-1.5 text-xs font-medium">{t("colDate")}</th>
+                      <th className="text-left py-1.5 text-xs font-medium">{t("colDescription")}</th>
+                      <th className="text-right py-1.5 text-xs font-medium">{t("colAmount")}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(drillDownLine ? (actualsByCat.get(`${drillDownLine.category}||${drillDownLine.lineType}`)?.items ?? []) : []).map(a => (
+                      <tr key={a.id} className="border-b border-border/30">
+                        <td className="py-1.5 text-xs">{a.expenseDate || "—"}</td>
+                        <td className="py-1.5 text-xs">{a.description || "—"}</td>
+                        <td className="py-1.5 text-right font-mono text-xs">{fmt(a.actualAmount)}</td>
+                      </tr>
+                    ))}
+                    {drillDownLine && (actualsByCat.get(`${drillDownLine.category}||${drillDownLine.lineType}`)?.items ?? []).length === 0 && (
+                      <tr><td colSpan={3} className="py-4 text-center text-muted-foreground text-xs italic">{t("noActuals")}</td></tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      {/* Variance note Dialog */}
+      <Dialog open={!!varianceNoteLine} onOpenChange={open => { if (!open) setVarianceNoteLine(null) }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t("varianceNoteTitle")}: {varianceNoteLine?.category}</DialogTitle>
+          </DialogHeader>
+          <Textarea
+            placeholder={t("varianceNotePlaceholder")}
+            value={varianceNoteText}
+            onChange={e => setVarianceNoteText(e.target.value)}
+            rows={4}
+          />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setVarianceNoteLine(null)}>{t("btnCancel")}</Button>
+            <Button onClick={() => {
+              if (varianceNoteLine) {
+                updateLine.mutate({ id: varianceNoteLine.id, planId, notes: varianceNoteText })
+                setVarianceNoteLine(null)
+              }
+            }}>{t("btnSave")}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
@@ -1166,9 +1357,11 @@ function OverviewTab({ planId }: { planId: string }) {
     <div className="text-center py-20 text-muted-foreground">{t("errorLoading")}</div>
   )
 
-  const { totalPlanned, totalForecast, totalActual, totalVariance, executionPct, yearEndProjection, byCategory, byDepartment, autoActualTotal } = analytics
+  const { totalPlanned, totalForecast, totalActual, totalVariance, executionPct, expenseExecutionPct = 0, yearEndProjection, byCategory, byDepartment, autoActualTotal, totalExpensePlanned = 0, totalExpenseActual = 0 } = analytics
 
-  const execEmoji = executionPct >= 90 ? "🟢" : executionPct >= 60 ? "🟡" : "🔴"
+  // Expense execution: <100% = under budget (green), 100-110% = warning, >110% = overspend (red)
+  const expExecPct = expenseExecutionPct || (totalExpensePlanned > 0 ? (totalExpenseActual / totalExpensePlanned) * 100 : 0)
+  const execEmoji = expExecPct <= 100 ? "🟢" : expExecPct <= 110 ? "🟡" : "🔴"
 
   const handleAINarrative = async () => {
     setShowNarrative(true)
@@ -1268,14 +1461,15 @@ function OverviewTab({ planId }: { planId: string }) {
       )}
 
       {/* Execution % */}
-      <div className="flex items-center gap-3 text-sm">
+      <div className="flex items-center gap-3 text-sm" title={t("kpiExecutionTooltip")}>
         <span className="text-muted-foreground">{t("budgetExecution")}</span>
-        <span className={`font-bold text-lg ${executionPct >= 90 ? "text-green-600 dark:text-green-400" : executionPct >= 60 ? "text-amber-600 dark:text-amber-400" : "text-red-500"}`}>
-          {execEmoji} {Math.round(executionPct)}%
+        <span className={`font-bold text-lg ${expExecPct <= 100 ? "text-green-600 dark:text-green-400" : expExecPct <= 110 ? "text-amber-600 dark:text-amber-400" : "text-red-500"}`}>
+          {execEmoji} {Math.round(expExecPct)}%
         </span>
-        {executionPct >= 90
+        {expExecPct <= 100
           ? <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
-          : <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400" />}
+          : <AlertCircle className="h-4 w-4 text-red-500" />}
+        {expExecPct > 110 && <span className="text-xs font-bold text-red-500 uppercase">{t("overspend")}</span>}
       </div>
 
       {/* Charts */}

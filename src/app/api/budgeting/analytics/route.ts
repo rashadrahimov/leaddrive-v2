@@ -60,7 +60,7 @@ export async function GET(req: NextRequest) {
     for (const line of lines) {
       if (line.isAutoActual && line.costModelKey) {
         const monthlyAmount = resolveCostModelKey(costModel, line.costModelKey)
-        const amount = monthlyAmount * Math.max(1, elapsedMonths)
+        const amount = monthlyAmount * elapsedMonths
         const key = `${line.category}||${line.lineType}`
         autoActualByCategory.set(key, (autoActualByCategory.get(key) ?? 0) + amount)
         autoActualTotal += amount
@@ -92,17 +92,15 @@ export async function GET(req: NextRequest) {
   const totalCOGSPlanned = cogsLines.reduce((s: number, l: { plannedAmount: number }) => s + l.plannedAmount, 0)
   const totalCOGSForecast = cogsLines.reduce((s: number, l: { forecastAmount: number | null; plannedAmount: number }) => s + (l.forecastAmount ?? l.plannedAmount), 0)
 
-  // Split auto-actuals by type (expense, revenue, cogs)
+  // Split auto-actuals by type (expense, revenue, cogs) — iterate map keys to avoid double-counting
   let autoActualExpense = 0
   let autoActualRevenue = 0
   let autoActualCOGS = 0
-  for (const line of lines) {
-    if (line.isAutoActual && line.costModelKey) {
-      const amount = autoActualByCategory.get(`${line.category}||${line.lineType}`) ?? 0
-      if (line.lineType === "revenue") autoActualRevenue += amount
-      else if (line.lineType === "cogs") autoActualCOGS += amount
-      else autoActualExpense += amount
-    }
+  for (const [key, amount] of autoActualByCategory) {
+    const lineType = key.split("||")[1] ?? "expense"
+    if (lineType === "revenue") autoActualRevenue += amount
+    else if (lineType === "cogs") autoActualCOGS += amount
+    else autoActualExpense += amount
   }
 
   // Split manual actuals by type
@@ -195,14 +193,18 @@ export async function GET(req: NextRequest) {
     return { category, lineType, planned: val.planned, forecast: val.forecast, actual: val.actual, variance, variancePct, parentCategory }
   })
 
-  // By department
-  const deptMap = new Map<string, { planned: number; forecast: number; actual: number }>()
+  // By department — track expense and revenue separately for correct variance
+  const deptMap = new Map<string, { expPlanned: number; expActual: number; revPlanned: number; revActual: number; forecast: number }>()
 
   for (const l of lines) {
     const dept = l.department || "Общие"
-    const existing = deptMap.get(dept) ?? { planned: 0, forecast: 0, actual: 0 }
-    existing.planned += l.plannedAmount
+    const existing = deptMap.get(dept) ?? { expPlanned: 0, expActual: 0, revPlanned: 0, revActual: 0, forecast: 0 }
     existing.forecast += l.forecastAmount ?? l.plannedAmount
+    if (l.lineType === "revenue") {
+      existing.revPlanned += l.plannedAmount
+    } else {
+      existing.expPlanned += l.plannedAmount
+    }
     deptMap.set(dept, existing)
   }
 
@@ -212,8 +214,12 @@ export async function GET(req: NextRequest) {
       if (line.isAutoActual && line.costModelKey) {
         const dept = line.department || "Общие"
         const amount = resolveCostModelKey(costModel, line.costModelKey)
-        const existing = deptMap.get(dept) ?? { planned: 0, forecast: 0, actual: 0 }
-        existing.actual += amount
+        const existing = deptMap.get(dept) ?? { expPlanned: 0, expActual: 0, revPlanned: 0, revActual: 0, forecast: 0 }
+        if (line.lineType === "revenue") {
+          existing.revActual += amount
+        } else {
+          existing.expActual += amount
+        }
         deptMap.set(dept, existing)
       }
     }
@@ -224,18 +230,74 @@ export async function GET(req: NextRequest) {
     const catKey = `${a.category}||${a.lineType}`
     if (autoActualByCategory.has(catKey)) continue
     const dept = a.department || "Общие"
-    const existing = deptMap.get(dept) ?? { planned: 0, forecast: 0, actual: 0 }
-    existing.actual += a.actualAmount
+    const existing = deptMap.get(dept) ?? { expPlanned: 0, expActual: 0, revPlanned: 0, revActual: 0, forecast: 0 }
+    if (a.lineType === "revenue") {
+      existing.revActual += a.actualAmount
+    } else {
+      existing.expActual += a.actualAmount
+    }
     deptMap.set(dept, existing)
   }
 
-  const byDepartment = Array.from(deptMap.entries()).map(([department, val]) => ({
-    department,
-    planned: val.planned,
-    forecast: val.forecast,
-    actual: val.actual,
-    variance: val.planned - val.actual, // departments mix revenue+expense — net variance
-  }))
+  const byDepartment = Array.from(deptMap.entries()).map(([department, val]) => {
+    const planned = val.expPlanned + val.revPlanned
+    const actual = val.expActual + val.revActual
+    // Variance: expense savings + revenue overperformance = positive
+    const expVariance = val.expPlanned - val.expActual   // positive = under budget (good)
+    const revVariance = val.revActual - val.revPlanned    // positive = over target (good)
+    return {
+      department,
+      planned,
+      forecast: val.forecast,
+      actual,
+      variance: expVariance + revVariance,
+    }
+  })
+
+  // Expense execution % — how much of expense budget was spent (>100% = overspend)
+  const expenseExecutionPct = totalExpensePlanned > 0 ? (totalExpenseActual / totalExpensePlanned) * 100 : 0
+
+  // Elapsed time % within the plan period (for time-aware execution indicator)
+  let elapsedPct = 100
+  if (plan.status !== "closed") {
+    const now = new Date()
+    const cy = now.getFullYear()
+    const cm = now.getMonth() + 1
+    const cd = now.getDate()
+    const daysInMonth = (y: number, m: number) => new Date(y, m, 0).getDate()
+
+    if (plan.periodType === "monthly" && plan.month) {
+      if (cy > plan.year || (cy === plan.year && cm > plan.month)) {
+        elapsedPct = 100
+      } else if (cy === plan.year && cm === plan.month) {
+        elapsedPct = (cd / daysInMonth(cy, cm)) * 100
+      } else {
+        elapsedPct = 0
+      }
+    } else if (plan.periodType === "quarterly" && plan.quarter) {
+      const qStart = (plan.quarter - 1) * 3 + 1
+      const qEnd = qStart + 2
+      if (cy > plan.year || (cy === plan.year && cm > qEnd)) {
+        elapsedPct = 100
+      } else if (cy === plan.year && cm >= qStart && cm <= qEnd) {
+        const monthsFullyDone = cm - qStart
+        const dayFraction = cd / daysInMonth(cy, cm)
+        elapsedPct = ((monthsFullyDone + dayFraction) / 3) * 100
+      } else {
+        elapsedPct = 0
+      }
+    } else if (plan.periodType === "annual") {
+      if (cy > plan.year) {
+        elapsedPct = 100
+      } else if (cy === plan.year) {
+        const monthsFullyDone = cm - 1
+        const dayFraction = cd / daysInMonth(cy, cm)
+        elapsedPct = ((monthsFullyDone + dayFraction) / 12) * 100
+      } else {
+        elapsedPct = 0
+      }
+    }
+  }
 
   return NextResponse.json({
     success: true,
@@ -247,6 +309,8 @@ export async function GET(req: NextRequest) {
       totalVariance,
       forecastVariance,
       executionPct,
+      expenseExecutionPct,
+      elapsedPct: Math.round(elapsedPct * 10) / 10,
       autoActualTotal,
       yearEndProjection,
       // Revenue totals (separate from expense KPIs)

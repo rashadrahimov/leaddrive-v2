@@ -1942,6 +1942,7 @@
 
     "kpiPlan": "PLAN",
     "kpiForecast": "PROQNOZ",
+    "kpiProjection": "Proyeksiya",
     "kpiActual": "FAKT",
     "kpiActualAuto": "FAKT (avto)",
     "kpiActualCostModel": "FAKT (cost model)",
@@ -2230,6 +2231,37 @@
 
     "hintTemplateName": "Biznes istiqamət adı (məs. 'AI həlləri', 'Bulud xidmətləri')",
     "hintTemplateApply": "Seçilmiş şablonlardan büdcə sətirləri yaradın. Dublikatlar keçilir",
-    "hintTemplateActive": "Qeyri-aktiv şablonlar planlara tətbiq zamanı göstərilmir"
+    "hintTemplateActive": "Qeyri-aktiv şablonlar planlara tətbiq zamanı göstərilmir",
+
+    "overspend": "AŞMA",
+    "kpiExecutionTooltip": "Xərc büdcəsinin icrası: Faktiki xərclər / Plan xərcləri × 100%",
+
+    "alertOverspendTitle": "Kritik büdcə aşması",
+    "alertOverspendDesc": "Xərclər planı {pct}% ({amount}) aşdı. Büdcənin yenidən nəzərdən keçirilməsi tövsiyə olunur.",
+    "alertWarningTitle": "Diqqət: xərclər plandan yuxarıdır",
+    "alertWarningDesc": "Xərclər planı {pct}% ({amount}) aşdı. Büdcə çərçivəsində qalmaq üçün qalan xərcləri nəzarətdə saxlayın.",
+
+    "summaryOverspend": "{period}: xərclər planı {pct}% ({amount}) aşdı.",
+    "summaryUnderBudget": "{period}: xərclər plandan {pct}% aşağıdır (qənaət {amount}).",
+    "summaryNoRevenue": "Gəlir hissəsi doldurulmayıb — P&L analizi mümkün deyil.",
+
+    "filterVarianceOnly": "Sapmalarla",
+    "hintFilterVariance": "Yalnız fakt ilə plan arasında sıfırdan fərqli sapma olan sətirləri göstər",
+    "hintAddRevenue": "Tam P&L analizi üçün gəlir maddələri əlavə edin. Gəlir olmadan marja və əməliyyat mənfəəti mənfi olacaq.",
+
+    "filterMaterial": "Əhəmiyyətli",
+    "hintFilterMaterial": "Yalnız əhəmiyyətli sapmaları vurğula (>5% və ya >500 ₼)",
+    "expectedByTime": "Zamana görə gözlənti",
+    "drillDownTitle": "Təfərrüat",
+    "costModelSource": "Mənbə: xərc modeli",
+    "costModelKey": "Model açarı",
+    "varianceNoteTitle": "Sapma şərhi",
+    "varianceNotePlaceholder": "Sapmanın səbəbini izah edin...",
+    "noActuals": "Qeyd yoxdur",
+    "colDate": "Tarix",
+    "colDescription": "Təsvir",
+    "colAmount": "Məbləğ",
+    "btnSave": "Yadda saxla",
+    "btnCancel": "Ləğv et"
   }
 }

@@ -98,6 +98,7 @@ export function buildCategoryForecast(
   year: number,
   totalActual: number,
   currentMonth: number,
+  periodMonths = 12,
 ): Array<{ category: string; month: number; year: number; forecastAmount: number }> {
   const entries: Array<{ category: string; month: number; year: number; forecastAmount: number }> = []
   const totalPlanned = categories.reduce((s, c) => s + c.plannedAmount, 0)
@@ -106,7 +107,7 @@ export function buildCategoryForecast(
     const weight = totalPlanned > 0 ? cat.plannedAmount / totalPlanned : 1 / categories.length
     const catActual = totalActual * weight
     const catRunRate = currentMonth > 0 ? catActual / currentMonth : 0
-    const catMonthlyPlan = cat.plannedAmount / 12
+    const catMonthlyPlan = cat.plannedAmount / periodMonths
 
     for (let m = 1; m <= 12; m++) {
       const isPast = m <= currentMonth
