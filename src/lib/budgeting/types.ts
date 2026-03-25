@@ -39,7 +39,7 @@ export interface BudgetActual {
   planId: string
   category: string
   department?: string | null
-  lineType: "expense" | "revenue"
+  lineType: "expense" | "revenue" | "cogs"
   actualAmount: number
   expenseDate?: string | null
   description?: string | null
@@ -146,7 +146,7 @@ export interface CreateBudgetActualInput {
   planId: string
   category: string
   department?: string
-  lineType: "expense" | "revenue"
+  lineType: "expense" | "revenue" | "cogs"
   actualAmount: number
   expenseDate?: string
   description?: string
@@ -156,7 +156,7 @@ export interface UpdateBudgetActualInput {
   actualAmount?: number
   category?: string
   department?: string
-  lineType?: "expense" | "revenue"
+  lineType?: "expense" | "revenue" | "cogs"
   expenseDate?: string
   description?: string
 }
