@@ -1493,8 +1493,14 @@ model BudgetPlan {
   year           Int
   month          Int?
   quarter        Int?
-  status         String   @default("draft")    // draft | approved | closed
+  status         String   @default("draft")    // draft | pending_approval | approved | rejected | closed
   notes          String?
+  submittedBy    String?
+  submittedAt    DateTime?
+  approvedBy     String?
+  approvedAt     DateTime?
+  rejectedReason String?
+  amendmentOf    String?  // ID of plan this amends
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 

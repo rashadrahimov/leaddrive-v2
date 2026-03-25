@@ -1924,6 +1924,12 @@
     "statusApproved": "Утверждён",
     "statusClosed": "Закрыт",
     "statusDraft": "Черновик",
+    "statusPending": "На утверждении",
+    "statusRejected": "Отклонён",
+    "btnSubmitApproval": "На утверждение",
+    "btnReject": "Отклонить",
+    "btnRevise": "Вернуть на доработку",
+    "rejectReason": "Причина отклонения",
 
     "expense": "Расход",
     "revenue": "Доход",

@@ -6,8 +6,14 @@ export interface BudgetPlan {
   year: number
   month?: number | null
   quarter?: number | null
-  status: "draft" | "approved" | "closed"
+  status: "draft" | "pending_approval" | "approved" | "rejected" | "closed"
   notes?: string | null
+  submittedBy?: string | null
+  submittedAt?: string | null
+  approvedBy?: string | null
+  approvedAt?: string | null
+  rejectedReason?: string | null
+  amendmentOf?: string | null
   createdAt: string
   updatedAt: string
 }
@@ -84,6 +90,7 @@ export interface BudgetAnalytics {
   margin: number
   marginActual: number
   totalCOGSPlanned: number
+  totalCOGSForecast: number
   totalCOGSActual: number
   grossProfit: number
   grossProfitActual: number
@@ -103,8 +110,9 @@ export interface CreateBudgetPlanInput {
 
 export interface UpdateBudgetPlanInput {
   name?: string
-  status?: "draft" | "approved" | "closed"
+  status?: "draft" | "pending_approval" | "approved" | "rejected" | "closed"
   notes?: string
+  rejectedReason?: string
 }
 
 export interface CreateBudgetLineInput {

@@ -1920,6 +1920,12 @@
     "statusApproved": "Təsdiqlənib",
     "statusClosed": "Bağlanıb",
     "statusDraft": "Qaralama",
+    "statusPending": "Təsdiqə göndərilib",
+    "statusRejected": "Rədd edilib",
+    "btnSubmitApproval": "Təsdiqə göndər",
+    "btnReject": "Rədd et",
+    "btnRevise": "Yenidən işləməyə qaytar",
+    "rejectReason": "Rədd səbəbi",
 
     "expense": "Xərc",
     "revenue": "Gəlir",

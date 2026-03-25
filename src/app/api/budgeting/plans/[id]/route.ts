@@ -25,15 +25,38 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 
   const { id } = await params
   const body = await req.json()
-  const { name, status, notes } = body
+  const { name, status, notes, rejectedReason } = body
+
+  // Build update data with approval workflow fields
+  const updateData: Record<string, any> = {}
+  if (name !== undefined) updateData.name = name
+  if (notes !== undefined) updateData.notes = notes
+  if (status !== undefined) {
+    updateData.status = status
+    if (status === "pending_approval") {
+      updateData.submittedAt = new Date()
+      updateData.submittedBy = req.headers.get("x-user-id") || "unknown"
+    }
+    if (status === "approved") {
+      updateData.approvedAt = new Date()
+      updateData.approvedBy = req.headers.get("x-user-id") || "admin"
+    }
+    if (status === "rejected") {
+      updateData.rejectedReason = rejectedReason || null
+    }
+    if (status === "draft") {
+      // Reset approval fields when reverting to draft
+      updateData.submittedAt = null
+      updateData.submittedBy = null
+      updateData.approvedAt = null
+      updateData.approvedBy = null
+      updateData.rejectedReason = null
+    }
+  }
 
   const plan = await prisma.budgetPlan.updateMany({
     where: { id, organizationId: orgId },
-    data: {
-      ...(name !== undefined && { name }),
-      ...(status !== undefined && { status }),
-      ...(notes !== undefined && { notes }),
-    },
+    data: updateData,
   })
 
   if (plan.count === 0) return NextResponse.json({ error: "Not found" }, { status: 404 })

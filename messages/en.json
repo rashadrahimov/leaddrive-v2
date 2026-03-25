@@ -1924,6 +1924,12 @@
     "statusApproved": "Approved",
     "statusClosed": "Closed",
     "statusDraft": "Draft",
+    "statusPending": "Pending Approval",
+    "statusRejected": "Rejected",
+    "btnSubmitApproval": "Submit for Approval",
+    "btnReject": "Reject",
+    "btnRevise": "Return for Revision",
+    "rejectReason": "Rejection reason",
 
     "expense": "Expense",
     "revenue": "Revenue",

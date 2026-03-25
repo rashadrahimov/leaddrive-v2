@@ -88,13 +88,19 @@ export async function GET(req: NextRequest) {
     : totalExpenseForecast // KPI "ПРОГНОЗ" = only expenses
   const manualActualTotal = manualActuals.reduce((s: number, a: { actualAmount: number }) => s + a.actualAmount, 0)
 
-  // Split auto-actuals by type
+  // COGS totals
+  const totalCOGSPlanned = cogsLines.reduce((s: number, l: { plannedAmount: number }) => s + l.plannedAmount, 0)
+  const totalCOGSForecast = cogsLines.reduce((s: number, l: { forecastAmount: number | null; plannedAmount: number }) => s + (l.forecastAmount ?? l.plannedAmount), 0)
+
+  // Split auto-actuals by type (expense, revenue, cogs)
   let autoActualExpense = 0
   let autoActualRevenue = 0
+  let autoActualCOGS = 0
   for (const line of lines) {
     if (line.isAutoActual && line.costModelKey) {
       const amount = autoActualByCategory.get(`${line.category}||${line.lineType}`) ?? 0
       if (line.lineType === "revenue") autoActualRevenue += amount
+      else if (line.lineType === "cogs") autoActualCOGS += amount
       else autoActualExpense += amount
     }
   }
@@ -102,17 +108,23 @@ export async function GET(req: NextRequest) {
   // Split manual actuals by type
   let manualExpenseActual = 0
   let manualRevenueActual = 0
+  let manualCOGSActual = 0
   for (const a of manualActuals) {
     if (a.lineType === "revenue") manualRevenueActual += a.actualAmount
+    else if (a.lineType === "cogs") manualCOGSActual += a.actualAmount
     else manualExpenseActual += a.actualAmount
   }
 
   const totalExpenseActual = autoActualExpense > 0 ? autoActualExpense : manualExpenseActual
   const totalRevenueActual = autoActualRevenue > 0 ? autoActualRevenue : manualRevenueActual
+  const totalCOGSActual = autoActualCOGS > 0 ? autoActualCOGS : manualCOGSActual
   const totalActual = totalExpenseActual
-  // Margin-based KPIs
-  const marginPlanned = totalRevenuePlanned - totalExpensePlanned
-  const marginActual = totalRevenueActual - totalExpenseActual
+
+  // Financial KPIs — correct P&L chain
+  const grossProfitPlanned = totalRevenuePlanned - totalCOGSPlanned
+  const grossProfitActual = totalRevenueActual - totalCOGSActual
+  const marginPlanned = grossProfitPlanned - totalExpensePlanned  // Operating Profit
+  const marginActual = grossProfitActual - totalExpenseActual
   const totalVariance = marginActual - marginPlanned // positive = better than plan
   const executionPct = marginPlanned !== 0 ? (marginActual / marginPlanned) * 100 : 0
   const forecastVariance = totalExpenseForecast - totalExpenseActual
@@ -246,10 +258,11 @@ export async function GET(req: NextRequest) {
       totalExpenseActual,
       margin: marginPlanned,
       marginActual: marginActual,
-      totalCOGSPlanned: cogsLines.reduce((s: number, l: { plannedAmount: number }) => s + l.plannedAmount, 0),
-      totalCOGSActual: 0, // COGS actuals TBD
-      grossProfit: totalRevenuePlanned - cogsLines.reduce((s: number, l: { plannedAmount: number }) => s + l.plannedAmount, 0),
-      grossProfitActual: totalRevenueActual, // simplified for now
+      totalCOGSPlanned,
+      totalCOGSForecast,
+      totalCOGSActual,
+      grossProfit: grossProfitPlanned,
+      grossProfitActual,
       byCategory,
       byDepartment,
       costModelTotal: costModel?.grandTotalG ?? 0,
