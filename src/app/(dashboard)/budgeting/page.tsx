@@ -2216,7 +2216,7 @@ function PLTab({ planId }: { planId: string }) {
   const { data: sections = [], isLoading: sectionsLoading } = useBudgetSections(planId)
   const createSection = useCreateBudgetSection()
   const deleteSection = useDeleteBudgetSection()
-  const [collapsedInit, setCollapsedInit] = useState(false)
+  const collapsedInitRef = React.useRef(false)
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set())
   const [showAddSection, setShowAddSection] = useState(false)
   const [newSectionName, setNewSectionName] = useState("")
@@ -2229,10 +2229,6 @@ function PLTab({ planId }: { planId: string }) {
       next.has(id) ? next.delete(id) : next.add(id)
       return next
     })
-  }
-
-  if (analyticsLoading || sectionsLoading) {
-    return <div className="flex justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-purple-500" /></div>
   }
 
   const byCategory = analytics?.byCategory ?? []
@@ -2273,17 +2269,25 @@ function PLTab({ planId }: { planId: string }) {
   const revGrouped = buildGrouped(revRows)
   const cogsGrouped = buildGrouped(cogsRows)
 
-  // Collapse all sections and groups by default
+  // Collapse all sections and groups by default (run once when data loads)
+  const categoryCount = byCategory.length
+  const sectionCount = sections.length
   React.useEffect(() => {
-    if (collapsedInit || byCategory.length === 0) return
-    const ids = new Set(["auto-revenue", "auto-cogs", "auto-expense"])
-    for (const g of [...expGrouped.groups, ...revGrouped.groups, ...cogsGrouped.groups]) {
-      ids.add(`pl-group-${g.parent}`)
-    }
-    for (const s of sections) ids.add(s.id)
-    setCollapsed(ids)
-    setCollapsedInit(true)
-  }, [byCategory.length, collapsedInit, expGrouped.groups, revGrouped.groups, cogsGrouped.groups, sections])
+    if (collapsedInitRef.current || categoryCount === 0) return
+    collapsedInitRef.current = true
+    setCollapsed(prev => {
+      const ids = new Set(prev)
+      ids.add("auto-revenue")
+      ids.add("auto-cogs")
+      ids.add("auto-expense")
+      // Groups and custom sections will be collapsed as they appear
+      return ids
+    })
+  }, [categoryCount, sectionCount])
+
+  if (analyticsLoading || sectionsLoading) {
+    return <div className="flex justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-purple-500" /></div>
+  }
 
   const totalRevenuePlanned = revRows.reduce((s, r) => s + r.planned, 0)
   const totalRevenueActual = revRows.reduce((s, r) => s + r.actual, 0)
