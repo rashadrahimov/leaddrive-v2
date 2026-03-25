@@ -477,7 +477,8 @@ function WorkspaceTab({ planId }: { planId: string }) {
   }
 
   // All parent groups filtered by selected lineType (for dropdown in add form)
-  const parentGroups = lines.filter((l: BudgetLine) => l.children && l.children.length > 0 && l.lineType === newRow.lineType)
+  // Include groups with children OR groups created via "Создать группу" (notes starts with "group:")
+  const parentGroups = lines.filter((l: BudgetLine) => l.lineType === newRow.lineType && ((l.children && l.children.length > 0) || (l.notes && l.notes.startsWith("group:"))))
 
   // Add new row (line, sub-item in group, or new group)
   const handleAddRow = async () => {
@@ -853,7 +854,7 @@ function WorkspaceTab({ planId }: { planId: string }) {
           <td colSpan={6} className="px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-muted-foreground" title={sectionHintKey ? t(sectionHintKey) : undefined}>{title}</td>
         </tr>
         {sectionLines.map(l => {
-          const isGroupParent = l.children && l.children.length > 0
+          const isGroupParent = (l.children && l.children.length > 0) || (l.notes && l.notes.startsWith("group:"))
           const groupTag = l.notes ?? ""
           const isOpen = expandedGroups.has(groupTag.replace("group:", ""))
 
