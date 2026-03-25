@@ -3,6 +3,7 @@ import { z } from "zod"
 import { prisma, logAudit } from "@/lib/prisma"
 import { getOrgId } from "@/lib/api-auth"
 import { executeWorkflows } from "@/lib/workflow-engine"
+import { createNotification } from "@/lib/notifications"
 
 const createContactSchema = z.object({
   fullName: z.string().min(1).max(200),
@@ -60,6 +61,14 @@ export async function POST(req: NextRequest) {
     const contact = await prisma.contact.create({ data: { organizationId: orgId, ...parsed.data } })
     logAudit(orgId, "create", "contact", contact.id, contact.fullName)
     executeWorkflows(orgId, "contact", "created", contact).catch(() => {})
+    createNotification({
+      organizationId: orgId,
+      type: "info",
+      title: "Новый контакт",
+      message: `Добавлен контакт «${contact.fullName}»`,
+      entityType: "contact",
+      entityId: contact.id,
+    }).catch(() => {})
     return NextResponse.json({ success: true, data: contact }, { status: 201 })
   } catch (e) {
     return NextResponse.json({ error: String(e) }, { status: 500 })

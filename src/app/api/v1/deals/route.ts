@@ -3,6 +3,7 @@ import { z } from "zod"
 import { prisma, logAudit } from "@/lib/prisma"
 import { getOrgId } from "@/lib/api-auth"
 import { executeWorkflows } from "@/lib/workflow-engine"
+import { createNotification } from "@/lib/notifications"
 
 const createDealSchema = z.object({
   name: z.string().min(1).max(200),
@@ -89,6 +90,14 @@ export async function POST(req: NextRequest) {
     })
     logAudit(orgId, "create", "deal", deal.id, deal.name)
     executeWorkflows(orgId, "deal", "created", deal).catch(() => {})
+    createNotification({
+      organizationId: orgId,
+      type: "success",
+      title: "Новая сделка",
+      message: `Создана сделка «${deal.name}»${deal.valueAmount ? ` на ${deal.valueAmount} ${deal.currency}` : ""}`,
+      entityType: "deal",
+      entityId: deal.id,
+    }).catch(() => {})
     return NextResponse.json({ success: true, data: deal }, { status: 201 })
   } catch (e) {
     return NextResponse.json({ error: String(e) }, { status: 500 })

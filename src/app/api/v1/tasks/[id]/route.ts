@@ -3,6 +3,7 @@ import { z } from "zod"
 import { prisma, logAudit } from "@/lib/prisma"
 import { getOrgId } from "@/lib/api-auth"
 import { executeWorkflows } from "@/lib/workflow-engine"
+import { createNotification } from "@/lib/notifications"
 
 const updateTaskSchema = z.object({
   title: z.string().min(1).max(300).optional(),
@@ -50,6 +51,16 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     logAudit(orgId, "update", "task", id, task.title, { newValue: parsed.data })
     const triggerEvent = parsed.data.status ? "status_changed" : "updated"
     executeWorkflows(orgId, "task", triggerEvent, task).catch(() => {})
+    if (parsed.data.status === "completed") {
+      createNotification({
+        organizationId: orgId,
+        type: "success",
+        title: "Задача выполнена",
+        message: `Задача «${task.title}» завершена`,
+        entityType: "task",
+        entityId: id,
+      }).catch(() => {})
+    }
     return NextResponse.json({ success: true, data: task })
   } catch (e) {
     return NextResponse.json({ error: String(e) }, { status: 500 })

@@ -3,6 +3,7 @@ import { z } from "zod"
 import { prisma, logAudit } from "@/lib/prisma"
 import { getOrgId } from "@/lib/api-auth"
 import { executeWorkflows } from "@/lib/workflow-engine"
+import { createNotification } from "@/lib/notifications"
 
 const createTaskSchema = z.object({
   title: z.string().min(1).max(300),
@@ -71,6 +72,15 @@ export async function POST(req: NextRequest) {
     })
     logAudit(orgId, "create", "task", task.id, task.title)
     executeWorkflows(orgId, "task", "created", task).catch(() => {})
+    createNotification({
+      organizationId: orgId,
+      userId: task.assignedTo || "",
+      type: task.priority === "urgent" ? "warning" : "info",
+      title: "Новая задача",
+      message: `Создана задача «${task.title}»${task.priority === "urgent" ? " (СРОЧНАЯ)" : ""}`,
+      entityType: "task",
+      entityId: task.id,
+    }).catch(() => {})
     return NextResponse.json({ success: true, data: task }, { status: 201 })
   } catch (e) {
     return NextResponse.json({ error: String(e) }, { status: 500 })

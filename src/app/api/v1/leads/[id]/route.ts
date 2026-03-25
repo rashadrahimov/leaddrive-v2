@@ -3,6 +3,7 @@ import { z } from "zod"
 import { prisma, logAudit } from "@/lib/prisma"
 import { getOrgId } from "@/lib/api-auth"
 import { executeWorkflows } from "@/lib/workflow-engine"
+import { createNotification } from "@/lib/notifications"
 
 const updateLeadSchema = z.object({
   contactName: z.string().min(1).max(255).optional(),
@@ -59,6 +60,17 @@ export async function PUT(
     if (updated) {
       const triggerEvent = parsed.data.status ? "status_changed" : "updated"
       executeWorkflows(orgId, "lead", triggerEvent, updated).catch(() => {})
+
+      if (parsed.data.status) {
+        createNotification({
+          organizationId: orgId,
+          type: parsed.data.status === "converted" ? "success" : parsed.data.status === "lost" ? "warning" : "info",
+          title: parsed.data.status === "converted" ? "Лид конвертирован!" : "Смена статуса лида",
+          message: `Лид «${updated.contactName}»: статус → ${parsed.data.status}`,
+          entityType: "lead",
+          entityId: id,
+        }).catch(() => {})
+      }
     }
     return NextResponse.json({ success: true, data: updated })
   } catch (e) {

@@ -3,6 +3,7 @@ import { z } from "zod"
 import { prisma, logAudit } from "@/lib/prisma"
 import { getOrgId } from "@/lib/api-auth"
 import { executeWorkflows } from "@/lib/workflow-engine"
+import { createNotification } from "@/lib/notifications"
 
 const updateDealSchema = z.object({
   name: z.string().min(1).max(200).optional(),
@@ -164,6 +165,18 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     if (updated) {
       const triggerEvent = parsed.data.stage ? "stage_changed" : "updated"
       executeWorkflows(orgId, "deal", triggerEvent, updated).catch(() => {})
+
+      // Notification for stage change
+      if (parsed.data.stage && existing?.stage !== parsed.data.stage) {
+        createNotification({
+          organizationId: orgId,
+          type: parsed.data.stage === "WON" ? "success" : parsed.data.stage === "LOST" ? "error" : "info",
+          title: parsed.data.stage === "WON" ? "Сделка выиграна!" : parsed.data.stage === "LOST" ? "Сделка проиграна" : "Смена стадии сделки",
+          message: `Сделка «${updated.name}»: ${existing?.stage} → ${parsed.data.stage}`,
+          entityType: "deal",
+          entityId: id,
+        }).catch(() => {})
+      }
     }
 
     return NextResponse.json({ success: true, data: updated })
