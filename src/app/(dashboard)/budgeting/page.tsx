@@ -528,13 +528,14 @@ function WorkspaceTab({ planId }: { planId: string }) {
           {editCell?.id === line.id && editCell?.field === "plannedAmount" ? (
             <Input type="number" className="h-7 w-24 text-right text-xs ml-auto" value={editValue} autoFocus
               onChange={e => setEditValue(e.target.value)}
-              onBlur={saveEdit}
-              onKeyDown={e => e.key === "Enter" && saveEdit()} />
+              onBlur={() => saveEdit()}
+              onKeyDown={e => { if (e.key === "Enter") saveEdit() }} />
           ) : (
-            <span className="font-mono text-sm cursor-pointer hover:bg-purple-50 dark:hover:bg-purple-900/20 px-1 rounded"
+            <button type="button" className="font-mono text-sm cursor-pointer hover:bg-purple-50 dark:hover:bg-purple-900/20 px-1 rounded border border-transparent hover:border-purple-300 dark:hover:border-purple-700 transition-colors"
               onClick={() => startEdit(line.id, "plannedAmount", line.plannedAmount)}>
               {fmt(line.plannedAmount)}
-            </span>
+              <Pencil className="h-2.5 w-2.5 inline ml-1 opacity-0 group-hover:opacity-40" />
+            </button>
           )}
         </td>
         {/* Forecast - editable */}
@@ -542,13 +543,14 @@ function WorkspaceTab({ planId }: { planId: string }) {
           {editCell?.id === line.id && editCell?.field === "forecastAmount" ? (
             <Input type="number" className="h-7 w-24 text-right text-xs ml-auto" value={editValue} autoFocus
               onChange={e => setEditValue(e.target.value)}
-              onBlur={saveEdit}
-              onKeyDown={e => e.key === "Enter" && saveEdit()} />
+              onBlur={() => saveEdit()}
+              onKeyDown={e => { if (e.key === "Enter") saveEdit() }} />
           ) : (
-            <span className="font-mono text-sm text-purple-600 dark:text-purple-400 cursor-pointer hover:bg-purple-50 dark:hover:bg-purple-900/20 px-1 rounded"
+            <button type="button" className="font-mono text-sm text-purple-600 dark:text-purple-400 cursor-pointer hover:bg-purple-50 dark:hover:bg-purple-900/20 px-1 rounded border border-transparent hover:border-purple-300 dark:hover:border-purple-700 transition-colors"
               onClick={() => startEdit(line.id, "forecastAmount", line.forecastAmount ?? line.plannedAmount)}>
               {fmt(line.forecastAmount ?? line.plannedAmount)}
-            </span>
+              <Pencil className="h-2.5 w-2.5 inline ml-1 opacity-0 group-hover:opacity-40" />
+            </button>
           )}
         </td>
         {/* Fact */}
