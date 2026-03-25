@@ -2243,6 +2243,8 @@
 
     "summaryOverspend": "{period}: xərclər planı {pct}% ({amount}) aşdı.",
     "summaryUnderBudget": "{period}: xərclər plandan {pct}% aşağıdır (qənaət {amount}).",
+    "summaryNegativeMargin": "Diqqət: əməliyyat ZƏRƏRİ ({amount}). Xərclər gəlirləri üstələyir.",
+    "summaryRevenueShortfall": " Gəlir plandan {pct}% aşağıdır (çatışmazlıq {amount}).",
     "summaryNoRevenue": "Gəlir hissəsi doldurulmayıb — P&L analizi mümkün deyil.",
 
     "filterVarianceOnly": "Sapmalarla",
@@ -2251,7 +2253,12 @@
 
     "filterMaterial": "Əhəmiyyətli",
     "hintFilterMaterial": "Yalnız əhəmiyyətli sapmaları vurğula (>5% və ya >500 ₼)",
-    "expectedByTime": "Zamana görə gözlənti",
+    "expectedByTime": "Vaxt üzrə keçən",
+    "revenueExecution": "Gəlir icrası",
+    "grossMarginPct": "Ümumi marja",
+    "burnRate": "Zərər tempi",
+    "perPeriod": "dövr",
+    "revenueShortfall": "Çatışmazlıq",
     "drillDownTitle": "Təfərrüat",
     "costModelSource": "Mənbə: xərc modeli",
     "costModelKey": "Model açarı",

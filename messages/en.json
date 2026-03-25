@@ -2247,6 +2247,8 @@
 
     "summaryOverspend": "{period}: expenses exceeded plan by {pct}% ({amount}).",
     "summaryUnderBudget": "{period}: expenses are {pct}% under budget (savings {amount}).",
+    "summaryNegativeMargin": "Warning: operating loss ({amount}). Expenses exceed revenue.",
+    "summaryRevenueShortfall": " Revenue is {pct}% below target (shortfall {amount}).",
     "summaryNoRevenue": "Revenue section is empty — P&L analysis not possible.",
 
     "filterVarianceOnly": "With variances",
@@ -2255,7 +2257,12 @@
 
     "filterMaterial": "Material only",
     "hintFilterMaterial": "Highlight only material variances (>5% or >500 ₼)",
-    "expectedByTime": "Expected by time",
+    "expectedByTime": "Time elapsed",
+    "revenueExecution": "Revenue execution",
+    "grossMarginPct": "Gross margin",
+    "burnRate": "Loss rate",
+    "perPeriod": "period",
+    "revenueShortfall": "Shortfall",
     "drillDownTitle": "Detail",
     "costModelSource": "Source: cost model",
     "costModelKey": "Model key",

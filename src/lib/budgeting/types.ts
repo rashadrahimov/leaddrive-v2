@@ -80,9 +80,11 @@ export interface BudgetAnalytics {
   forecastVariance: number
   executionPct: number
   expenseExecutionPct: number
+  revenueExecutionPct: number
   elapsedPct: number
   autoActualTotal: number
   yearEndProjection: number
+  marginYearEndProjection: number
   totalExpensePlanned: number
   totalExpenseForecast: number
   totalExpenseActual: number

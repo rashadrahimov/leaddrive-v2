@@ -2247,6 +2247,8 @@
 
     "summaryOverspend": "{period}: расходы превысили план на {pct}% ({amount}).",
     "summaryUnderBudget": "{period}: расходы ниже плана на {pct}% (экономия {amount}).",
+    "summaryNegativeMargin": "Внимание: операционный УБЫТОК ({amount}). Расходы превышают доходы.",
+    "summaryRevenueShortfall": " Выручка на {pct}% ниже плана (недобор {amount}).",
     "summaryNoRevenue": "Доходная часть не заполнена — P&L анализ невозможен.",
 
     "filterVarianceOnly": "С отклонениями",
@@ -2255,7 +2257,12 @@
 
     "filterMaterial": "Существенные",
     "hintFilterMaterial": "Подсветить только существенные отклонения (>5% или >500 ₼)",
-    "expectedByTime": "Ожидание по времени",
+    "expectedByTime": "Прошло по времени",
+    "revenueExecution": "Исполнение доходов",
+    "grossMarginPct": "Валовая маржа",
+    "burnRate": "Темп убытка",
+    "perPeriod": "период",
+    "revenueShortfall": "Недобор",
     "drillDownTitle": "Детализация",
     "costModelSource": "Источник: модель затрат",
     "costModelKey": "Ключ модели",

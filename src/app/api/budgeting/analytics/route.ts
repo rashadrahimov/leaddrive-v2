@@ -141,6 +141,8 @@ export async function GET(req: NextRequest) {
     monthsElapsed = Math.max(1, Math.min(3, currentMonthNum - quarterStartMonth + 1))
   }
   const yearEndProjection = totalActual > 0 ? (totalActual / monthsElapsed) * periodMonths : totalForecast
+  // Margin year-end projection — project operating profit, not just expenses
+  const marginYearEndProjection = monthsElapsed > 0 ? (marginActual / monthsElapsed) * periodMonths : marginPlanned
 
   // Build parent lookup: childCategory → parentCategory
   const parentLookup = new Map<string, string>()
@@ -256,6 +258,8 @@ export async function GET(req: NextRequest) {
 
   // Expense execution % — how much of expense budget was spent (>100% = overspend)
   const expenseExecutionPct = totalExpensePlanned > 0 ? (totalExpenseActual / totalExpensePlanned) * 100 : 0
+  // Revenue execution % — how much of revenue target was achieved (<100% = shortfall)
+  const revenueExecutionPct = totalRevenuePlanned > 0 ? (totalRevenueActual / totalRevenuePlanned) * 100 : 0
 
   // Elapsed time % within the plan period (for time-aware execution indicator)
   let elapsedPct = 100
@@ -310,9 +314,11 @@ export async function GET(req: NextRequest) {
       forecastVariance,
       executionPct,
       expenseExecutionPct,
+      revenueExecutionPct,
       elapsedPct: Math.round(elapsedPct * 10) / 10,
       autoActualTotal,
       yearEndProjection,
+      marginYearEndProjection,
       // Revenue totals (separate from expense KPIs)
       totalRevenuePlanned,
       totalRevenueForecast,
