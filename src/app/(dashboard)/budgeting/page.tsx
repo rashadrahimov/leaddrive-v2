@@ -567,10 +567,11 @@ function WorkspaceTab({ planId }: { planId: string }) {
             {line.isAutoActual ? (
               <span className="font-mono text-sm text-blue-600 dark:text-blue-400" title={t("badgeAutoTooltip")}>
                 {fmt(factValue)}
-                <Badge className="ml-1 text-[9px] bg-blue-100 text-blue-700 dark:bg-blue-900/30 px-1">{t("badgeAuto")}</Badge>
+                <Badge title={t("hintBadgeAuto")} className="ml-1 text-[9px] bg-blue-100 text-blue-700 dark:bg-blue-900/30 px-1">{t("badgeAuto")}</Badge>
               </span>
             ) : (
               <span className="font-mono text-sm text-green-600 dark:text-green-400 cursor-pointer hover:bg-green-50 dark:hover:bg-green-900/20 px-1 rounded"
+                title={t("hintExpandActuals")}
                 onClick={() => setExpandId(isExpanded ? null : line.id)}>
                 {fmt(factValue)}
                 <ChevronDown className={`h-3 w-3 inline ml-0.5 transition-transform ${isExpanded ? "rotate-180" : ""}`} />
@@ -585,6 +586,7 @@ function WorkspaceTab({ planId }: { planId: string }) {
         {/* Actions */}
         <td className="px-2 py-2 text-center">
           <button onClick={() => { if (confirm(t("confirmDeleteLine") + " «" + line.category + "» " + t("confirmDeleteLineSuffix"))) deleteLine.mutate({ id: line.id, planId }) }}
+            title={t("hintDeleteLine")}
             className="p-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20 text-muted-foreground hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity">
             <Trash2 className="h-3.5 w-3.5" />
           </button>
@@ -609,7 +611,7 @@ function WorkspaceTab({ planId }: { planId: string }) {
                 <span className="text-muted-foreground">{a.expenseDate || "—"}</span>
                 <span className="text-muted-foreground flex-1">{a.description || ""}</span>
                 <button onClick={() => deleteActual.mutate({ id: a.id, planId })}
-                  className="text-red-400 hover:text-red-600"><Trash2 className="h-3 w-3" /></button>
+                  title={t("hintDeleteLine")} className="text-red-400 hover:text-red-600"><Trash2 className="h-3 w-3" /></button>
               </div>
             ))}
             <div className="flex items-center gap-2 pt-1 border-t border-border/50">
@@ -679,7 +681,7 @@ function WorkspaceTab({ planId }: { planId: string }) {
             <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${colorClass}`} />
             {isOpen ? <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" /> : <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />}
             <span className="font-semibold text-sm">{line.category}</span>
-            <Badge variant="outline" className="ml-1 text-[10px] px-1.5 py-0">{children.length}</Badge>
+            <Badge variant="outline" title={t("hintBadgeChildCount")} className="ml-1 text-[10px] px-1.5 py-0">{children.length}</Badge>
           </div>
         </td>
         <td className="px-2 py-2.5 text-right font-mono text-sm font-semibold">{fmt(groupTotal)}</td>
@@ -690,7 +692,7 @@ function WorkspaceTab({ planId }: { planId: string }) {
         <td className="px-2 py-2.5 text-center" onClick={e => e.stopPropagation()}>
           <button
             className="p-1 rounded hover:bg-purple-50 dark:hover:bg-purple-900/20 text-muted-foreground hover:text-purple-600 opacity-60 hover:opacity-100"
-            title="Add sub-item"
+            title={t("hintAddSubItem")}
             onClick={() => setAddingSubItem(addingSubItem === line.id ? null : line.id)}>
             <Plus className="h-3.5 w-3.5" />
           </button>
@@ -736,10 +738,11 @@ function WorkspaceTab({ planId }: { planId: string }) {
             {child.isAutoActual ? (
               <span className="font-mono text-sm text-blue-600 dark:text-blue-400">
                 {fmt(factValue)}
-                <Badge className="ml-1 text-[9px] bg-blue-100 text-blue-700 dark:bg-blue-900/30 px-1">{t("badgeAuto")}</Badge>
+                <Badge title={t("hintBadgeAuto")} className="ml-1 text-[9px] bg-blue-100 text-blue-700 dark:bg-blue-900/30 px-1">{t("badgeAuto")}</Badge>
               </span>
             ) : (
               <span className="font-mono text-sm text-green-600 dark:text-green-400 cursor-pointer hover:bg-green-50 dark:hover:bg-green-900/20 px-1 rounded"
+                title={t("hintExpandActuals")}
                 onClick={() => setExpandId(isExpanded ? null : child.id)}>
                 {fmt(factValue)}
                 <ChevronDown className={`h-3 w-3 inline ml-0.5 transition-transform ${isExpanded ? "rotate-180" : ""}`} />
@@ -751,6 +754,7 @@ function WorkspaceTab({ planId }: { planId: string }) {
           </td>
           <td className="px-2 py-1.5 text-center">
             <button onClick={() => { if (confirm(t("confirmDeleteLine") + " «" + child.category + "»?")) deleteLine.mutate({ id: child.id, planId }) }}
+              title={t("hintDeleteLine")}
               className="p-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20 text-muted-foreground hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity">
               <Trash2 className="h-3.5 w-3.5" />
             </button>
@@ -809,7 +813,7 @@ function WorkspaceTab({ planId }: { planId: string }) {
         </tr>
         {sectionLines.map(l => [renderRow(l), renderExpand(l)])}
         <tr className="border-t-2 border-border bg-muted/30">
-          <td className="px-3 py-1.5 font-bold text-xs" colSpan={2}>{t("totalLabel")} {title.toLowerCase()}</td>
+          <td className="px-3 py-1.5 font-bold text-xs" colSpan={2} title={t("hintSectionTotal")}>{t("totalLabel")} {title.toLowerCase()}</td>
           <td className="px-2 py-1.5 text-right font-mono text-xs font-bold">{fmt(totPlanned)}</td>
           <td className="px-2 py-1.5 text-right font-mono text-xs font-bold text-green-600">{fmt(totActual)}</td>
           <td className="px-2 py-1.5 text-right font-mono text-xs font-bold">
@@ -852,7 +856,7 @@ function WorkspaceTab({ planId }: { planId: string }) {
           return <React.Fragment key={l.id}>{renderRow(l)}{renderExpand(l)}</React.Fragment>
         })}
         <tr className="border-t-2 border-border bg-muted/30">
-          <td className="px-3 py-1.5 font-bold text-xs" colSpan={2}>{t("totalLabel")} {title.toLowerCase()}</td>
+          <td className="px-3 py-1.5 font-bold text-xs" colSpan={2} title={t("hintSectionTotal")}>{t("totalLabel")} {title.toLowerCase()}</td>
           <td className="px-2 py-1.5 text-right font-mono text-xs font-bold">{fmt(totPlanned)}</td>
           <td className="px-2 py-1.5 text-right font-mono text-xs font-bold text-green-600">{fmt(totActual)}</td>
           <td className="px-2 py-1.5 text-right font-mono text-xs font-bold">
@@ -937,8 +941,8 @@ function WorkspaceTab({ planId }: { planId: string }) {
           <Button size="sm" variant="outline" title={t("hintBtnExport")}><DollarSign className="h-4 w-4 mr-1" /> {t("btnExport")}</Button>
         </a>
         <div className="flex-1" />
-        <Input placeholder={t("searchCategory")} value={filterText} onChange={e => setFilterText(e.target.value)} className="h-8 w-48 text-xs" />
-        <select value={filterType} onChange={e => setFilterType(e.target.value as any)} className="h-8 rounded-md border border-input bg-background px-2 text-xs">
+        <Input placeholder={t("searchCategory")} title={t("hintSearchCategory")} value={filterText} onChange={e => setFilterText(e.target.value)} className="h-8 w-48 text-xs" />
+        <select value={filterType} onChange={e => setFilterType(e.target.value as any)} title={t("hintFilterType")} className="h-8 rounded-md border border-input bg-background px-2 text-xs">
           <option value="all">{t("filterAll")}</option>
           <option value="expense">{t("filterExpenses")}</option>
           <option value="revenue">{t("filterRevenues")}</option>
@@ -1062,7 +1066,7 @@ function WorkspaceTab({ planId }: { planId: string }) {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {expenseBarData.length > 0 && (
           <Card>
-            <CardHeader><CardTitle className="text-sm">{t("sectionExpenses")}: {t("colPlan")} vs {t("colActual")}</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="text-sm" title={t("hintChartExpenses")}>{t("sectionExpenses")}: {t("colPlan")} vs {t("colActual")}</CardTitle></CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={Math.max(200, expenseBarData.length * 45)}>
                 <BarChart data={expenseBarData} layout="vertical" margin={{ left: 10, right: 10 }}>
@@ -1079,7 +1083,7 @@ function WorkspaceTab({ planId }: { planId: string }) {
         )}
         {revenueBarData.length > 0 && (
           <Card>
-            <CardHeader><CardTitle className="text-sm">{t("sectionRevenues")}: {t("colPlan")} vs {t("colActual")}</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="text-sm" title={t("hintChartRevenues")}>{t("sectionRevenues")}: {t("colPlan")} vs {t("colActual")}</CardTitle></CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={Math.max(200, revenueBarData.length * 45)}>
                 <BarChart data={revenueBarData} layout="vertical" margin={{ left: 10, right: 10 }}>
@@ -2083,7 +2087,7 @@ function PLTab({ planId }: { planId: string }) {
                           <td className="px-4 py-2 font-semibold flex items-center gap-2">
                             {isGroupOpen ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
                             {g.parent}
-                            <Badge variant="outline" className="text-[10px] px-1 py-0">{g.children.length}</Badge>
+                            <Badge variant="outline" title={t("hintBadgeChildCount")} className="text-[10px] px-1 py-0">{g.children.length}</Badge>
                           </td>
                           <td className="px-4 py-2.5 text-right font-mono text-sm font-bold">{fmt(gPlanned)}</td>
                           <td className="px-4 py-2.5 text-right font-mono text-sm font-bold">{fmt(gForecast)}</td>
@@ -2518,7 +2522,7 @@ function ForecastTab({ planId }: { planId: string }) {
               <span className={`w-2 h-2 rounded-full shrink-0 ${colorClass}`} />
               {isOpen ? <ChevronDown className="h-3 w-3 text-muted-foreground" /> : <ChevronRight className="h-3 w-3 text-muted-foreground" />}
               <span className="font-semibold text-sm">{line.category}</span>
-              <Badge variant="outline" className="text-[10px] px-1 py-0">{children.length}</Badge>
+              <Badge variant="outline" title={t("hintBadgeChildCount")} className="text-[10px] px-1 py-0">{children.length}</Badge>
             </div>
           </td>
           {months.map(m => (
@@ -2573,7 +2577,7 @@ function ForecastTab({ planId }: { planId: string }) {
       )}
       {/* Section totals */}
       <tr className="border-t-2 border-border bg-muted/30">
-        <td className="px-3 py-1.5 font-bold text-xs sticky left-0 bg-muted/30 z-10">{t("totalLabel")} {title.toLowerCase()}</td>
+        <td className="px-3 py-1.5 font-bold text-xs sticky left-0 bg-muted/30 z-10" title={t("hintSectionTotal")}>{t("totalLabel")} {title.toLowerCase()}</td>
         {months.map(m => (
           <td key={m} className="px-2 py-1.5 text-right font-mono text-xs font-bold">{fmt(getColTotal(lines, m))}</td>
         ))}
@@ -2585,18 +2589,20 @@ function ForecastTab({ planId }: { planId: string }) {
   return (
     <div className="space-y-6">
       {/* Scenario toggle */}
-      <div className="flex items-center gap-2">
-        <span className="text-xs text-muted-foreground font-medium">{t("scenarioBase")}:</span>
-        {(["base", "optimistic", "pessimistic"] as const).map(s => (
-          <Button key={s} size="sm" variant={scenario === s ? "default" : "outline"} className="h-7 text-xs"
-            title={s === "base" ? t("hintScenarioBase") : s === "optimistic" ? t("hintScenarioOptimistic") : t("hintScenarioPessimistic")}
-            onClick={() => setScenario(s)}>
-            {s === "base" ? t("scenarioBase") : s === "optimistic" ? t("scenarioOptimistic") : t("scenarioPessimistic")}
-          </Button>
-        ))}
+      <div className="flex items-center gap-3">
+        <span className="text-sm font-semibold">{t("scenarioLabel")}</span>
+        <div className="flex gap-1">
+          {(["base", "optimistic", "pessimistic"] as const).map(s => (
+            <Button key={s} size="sm" variant={scenario === s ? "default" : "outline"} className="h-8 text-sm px-4"
+              title={s === "base" ? t("hintScenarioBase") : s === "optimistic" ? t("hintScenarioOptimistic") : t("hintScenarioPessimistic")}
+              onClick={() => setScenario(s)}>
+              {s === "base" ? t("scenarioBase") : s === "optimistic" ? t("scenarioOptimistic") : t("scenarioPessimistic")}
+            </Button>
+          ))}
+        </div>
         {scenario !== "base" && (
-          <Badge variant="outline" className="text-[10px] ml-2">
-            {scenario === "optimistic" ? "Revenue +10% / Costs -10%" : "Revenue -10% / Costs +15%"}
+          <Badge variant="secondary" className="text-xs">
+            {scenario === "optimistic" ? t("hintScenarioOptimistic") : t("hintScenarioPessimistic")}
           </Badge>
         )}
       </div>
