@@ -1942,6 +1942,7 @@
     "btnUpdateActualCostModel": "Update actuals from cost model",
     "btnExport": "Excel",
     "btnAddRow": "Add row",
+    "selectGroup": "Group...",
     "btnSave": "Save",
     "btnCancel": "Cancel",
     "btnAdd": "Add",

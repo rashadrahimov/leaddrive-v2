@@ -1942,6 +1942,7 @@
     "btnUpdateActualCostModel": "Обновить факт из cost model",
     "btnExport": "Excel",
     "btnAddRow": "Добавить строку",
+    "selectGroup": "Группа...",
     "btnSave": "Сохранить",
     "btnCancel": "Отмена",
     "btnAdd": "Добавить",
