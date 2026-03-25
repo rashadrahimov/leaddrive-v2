@@ -1013,22 +1013,41 @@ function WorkspaceTab({ planId }: { planId: string }) {
 
   const planLabel = t("colPlan")
   const actualLabel = t("colActual")
+  const MAX_CHART_ITEMS = 8
 
-  const expenseBarData = byCategory
+  const expenseAllData = byCategory
     .filter((c: any) => c.lineType === "expense" && (c.planned > 0 || c.actual > 0))
-    .map((c: any) => ({
-      name: c.category.length > 16 ? c.category.slice(0, 16) + "…" : c.category,
-      [planLabel]: Math.round(c.planned),
-      [actualLabel]: Math.round(c.actual),
-    }))
+    .sort((a: any, b: any) => Math.max(b.actual, b.planned) - Math.max(a.actual, a.planned))
 
-  const revenueBarData = byCategory
-    .filter((c: any) => c.lineType === "revenue" && (c.planned > 0 || c.actual > 0))
-    .map((c: any) => ({
-      name: c.category.length > 16 ? c.category.slice(0, 16) + "…" : c.category,
+  const expenseBarData = (() => {
+    const toRow = (c: any) => ({
+      name: c.category.length > 20 ? c.category.slice(0, 20) + "…" : c.category,
       [planLabel]: Math.round(c.planned),
       [actualLabel]: Math.round(c.actual),
-    }))
+    })
+    if (expenseAllData.length <= MAX_CHART_ITEMS + 1) return expenseAllData.map(toRow)
+    const top = expenseAllData.slice(0, MAX_CHART_ITEMS).map(toRow)
+    const rest = expenseAllData.slice(MAX_CHART_ITEMS)
+    top.push({ name: `Прочие (${rest.length})`, [planLabel]: Math.round(rest.reduce((s: number, c: any) => s + c.planned, 0)), [actualLabel]: Math.round(rest.reduce((s: number, c: any) => s + c.actual, 0)) })
+    return top
+  })()
+
+  const revenueAllData = byCategory
+    .filter((c: any) => c.lineType === "revenue" && (c.planned > 0 || c.actual > 0))
+    .sort((a: any, b: any) => Math.max(b.actual, b.planned) - Math.max(a.actual, a.planned))
+
+  const revenueBarData = (() => {
+    const toRow = (c: any) => ({
+      name: c.category.length > 20 ? c.category.slice(0, 20) + "…" : c.category,
+      [planLabel]: Math.round(c.planned),
+      [actualLabel]: Math.round(c.actual),
+    })
+    if (revenueAllData.length <= MAX_CHART_ITEMS + 1) return revenueAllData.map(toRow)
+    const top = revenueAllData.slice(0, MAX_CHART_ITEMS).map(toRow)
+    const rest = revenueAllData.slice(MAX_CHART_ITEMS)
+    top.push({ name: `Прочие (${rest.length})`, [planLabel]: Math.round(rest.reduce((s: number, c: any) => s + c.planned, 0)), [actualLabel]: Math.round(rest.reduce((s: number, c: any) => s + c.actual, 0)) })
+    return top
+  })()
 
   // Time-aware expense execution: compare spending % vs elapsed time %
   const expExecPct = totalExpensePlanned > 0 ? (totalExpenseActual / totalExpensePlanned) * 100 : 0
@@ -1323,10 +1342,15 @@ function WorkspaceTab({ planId }: { planId: string }) {
         {expenseBarData.length > 0 && (
           <Card className="overflow-hidden">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-semibold" title={t("hintChartExpenses")}>{t("sectionExpenses")}: {t("colPlan")} vs {t("colActual")}</CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-sm font-semibold" title={t("hintChartExpenses")}>{t("sectionExpenses")}: {t("colPlan")} vs {t("colActual")}</CardTitle>
+                {expenseAllData.length > MAX_CHART_ITEMS + 1 && (
+                  <span className="text-[10px] text-muted-foreground">Top {MAX_CHART_ITEMS} + прочие</span>
+                )}
+              </div>
             </CardHeader>
             <CardContent className="pt-0">
-              <ResponsiveContainer width="100%" height={Math.max(220, expenseBarData.length * 50)}>
+              <ResponsiveContainer width="100%" height={Math.min(420, Math.max(220, expenseBarData.length * 44))}>
                 <BarChart data={expenseBarData} layout="vertical" margin={{ left: 10, right: 70, top: 5, bottom: 5 }}>
                   <defs>
                     <HBarGradient id="exp-plan-grad" color={BUDGET_COLORS.expensePlan} />
@@ -1334,10 +1358,10 @@ function WorkspaceTab({ planId }: { planId: string }) {
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" className="stroke-muted-foreground/15" horizontal={false} vertical={true} />
                   <XAxis type="number" tick={AXIS_TICK} tickFormatter={(v: number) => fmtK(v)} axisLine={false} tickLine={false} />
-                  <YAxis type="category" dataKey="name" tick={{ fontSize: 11, fill: "#94a3b8" }} width={130} axisLine={false} tickLine={false} />
+                  <YAxis type="category" dataKey="name" tick={{ fontSize: 11, fill: "#94a3b8" }} width={140} axisLine={false} tickLine={false} />
                   <Tooltip content={<BudgetChartTooltip mode="plan-vs-actual" planKey={planLabel} actualKey={actualLabel} />} cursor={{ fill: "hsl(var(--muted))", opacity: 0.3 }} />
-                  <Bar dataKey={planLabel} fill="url(#exp-plan-grad)" radius={[0, 4, 4, 0]} animationDuration={ANIMATION.duration} animationEasing={ANIMATION.easing} barSize={16} />
-                  <Bar dataKey={actualLabel} fill="url(#exp-actual-grad)" radius={[0, 4, 4, 0]} animationDuration={ANIMATION.duration} animationEasing={ANIMATION.easing} barSize={16}>
+                  <Bar dataKey={planLabel} fill="url(#exp-plan-grad)" radius={[0, 4, 4, 0]} animationDuration={ANIMATION.duration} animationEasing={ANIMATION.easing} barSize={14} />
+                  <Bar dataKey={actualLabel} fill="url(#exp-actual-grad)" radius={[0, 4, 4, 0]} animationDuration={ANIMATION.duration} animationEasing={ANIMATION.easing} barSize={14}>
                     <LabelList content={(props: any) => <BudgetBarLabel {...props} horizontal />} />
                   </Bar>
                 </BarChart>
@@ -1352,10 +1376,15 @@ function WorkspaceTab({ planId }: { planId: string }) {
         {revenueBarData.length > 0 && (
           <Card className="overflow-hidden">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-semibold" title={t("hintChartRevenues")}>{t("sectionRevenues")}: {t("colPlan")} vs {t("colActual")}</CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-sm font-semibold" title={t("hintChartRevenues")}>{t("sectionRevenues")}: {t("colPlan")} vs {t("colActual")}</CardTitle>
+                {revenueAllData.length > MAX_CHART_ITEMS + 1 && (
+                  <span className="text-[10px] text-muted-foreground">Top {MAX_CHART_ITEMS} + прочие</span>
+                )}
+              </div>
             </CardHeader>
             <CardContent className="pt-0">
-              <ResponsiveContainer width="100%" height={Math.max(220, revenueBarData.length * 50)}>
+              <ResponsiveContainer width="100%" height={Math.min(420, Math.max(220, revenueBarData.length * 44))}>
                 <BarChart data={revenueBarData} layout="vertical" margin={{ left: 10, right: 70, top: 5, bottom: 5 }}>
                   <defs>
                     <HBarGradient id="rev-plan-grad" color={BUDGET_COLORS.revenuePlan} />
@@ -1363,10 +1392,10 @@ function WorkspaceTab({ planId }: { planId: string }) {
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" className="stroke-muted-foreground/15" horizontal={false} vertical={true} />
                   <XAxis type="number" tick={AXIS_TICK} tickFormatter={(v: number) => fmtK(v)} axisLine={false} tickLine={false} />
-                  <YAxis type="category" dataKey="name" tick={{ fontSize: 11, fill: "#94a3b8" }} width={130} axisLine={false} tickLine={false} />
+                  <YAxis type="category" dataKey="name" tick={{ fontSize: 11, fill: "#94a3b8" }} width={140} axisLine={false} tickLine={false} />
                   <Tooltip content={<BudgetChartTooltip mode="plan-vs-actual" planKey={planLabel} actualKey={actualLabel} />} cursor={{ fill: "hsl(var(--muted))", opacity: 0.3 }} />
-                  <Bar dataKey={planLabel} fill="url(#rev-plan-grad)" radius={[0, 4, 4, 0]} animationDuration={ANIMATION.duration} animationEasing={ANIMATION.easing} barSize={16} />
-                  <Bar dataKey={actualLabel} fill="url(#rev-actual-grad)" radius={[0, 4, 4, 0]} animationDuration={ANIMATION.duration} animationEasing={ANIMATION.easing} barSize={16}>
+                  <Bar dataKey={planLabel} fill="url(#rev-plan-grad)" radius={[0, 4, 4, 0]} animationDuration={ANIMATION.duration} animationEasing={ANIMATION.easing} barSize={14} />
+                  <Bar dataKey={actualLabel} fill="url(#rev-actual-grad)" radius={[0, 4, 4, 0]} animationDuration={ANIMATION.duration} animationEasing={ANIMATION.easing} barSize={14}>
                     <LabelList content={(props: any) => <BudgetBarLabel {...props} horizontal />} />
                   </Bar>
                 </BarChart>
