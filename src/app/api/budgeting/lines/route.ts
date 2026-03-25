@@ -9,9 +9,15 @@ export async function GET(req: NextRequest) {
   const planId = req.nextUrl.searchParams.get("planId")
   if (!planId) return NextResponse.json({ error: "planId required" }, { status: 400 })
 
+  // Return top-level lines with nested children
   const lines = await prisma.budgetLine.findMany({
-    where: { planId, organizationId: orgId },
+    where: { planId, organizationId: orgId, parentId: null },
     orderBy: [{ sortOrder: "asc" }, { category: "asc" }],
+    include: {
+      children: {
+        orderBy: [{ sortOrder: "asc" }, { category: "asc" }],
+      },
+    },
   })
 
   return NextResponse.json({ success: true, data: lines })
@@ -22,7 +28,7 @@ export async function POST(req: NextRequest) {
   if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
   const body = await req.json()
-  const { plan_id, planId, category, department, line_type, lineType, planned_amount, plannedAmount, forecastAmount, costModelKey, isAutoActual, notes } = body
+  const { plan_id, planId, category, department, line_type, lineType, planned_amount, plannedAmount, forecastAmount, costModelKey, isAutoActual, notes, parentId } = body
 
   const resolvedPlanId = planId || plan_id
   const resolvedLineType = lineType || line_type || "expense"
@@ -58,6 +64,7 @@ export async function POST(req: NextRequest) {
       costModelKey: costModelKey || null,
       isAutoActual: isAutoActual === true,
       notes: notes || null,
+      parentId: parentId || null,
     },
   })
 

@@ -25,6 +25,8 @@ export interface BudgetLine {
   isAutoActual: boolean
   notes?: string | null
   sortOrder: number
+  parentId?: string | null
+  children?: BudgetLine[]
 }
 
 export interface BudgetActual {
@@ -106,6 +108,7 @@ export interface CreateBudgetLineInput {
   costModelKey?: string
   isAutoActual?: boolean
   notes?: string
+  parentId?: string
 }
 
 export interface UpdateBudgetLineInput {
@@ -119,6 +122,7 @@ export interface UpdateBudgetLineInput {
   costModelKey?: string
   isAutoActual?: boolean
   notes?: string
+  parentId?: string | null
 }
 
 export interface CreateBudgetActualInput {

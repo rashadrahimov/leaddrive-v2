@@ -383,6 +383,9 @@ function WorkspaceTab({ planId }: { planId: string }) {
   const [editCell, setEditCell] = useState<{ id: string; field: string } | null>(null)
   const [editValue, setEditValue] = useState("")
   const [expandId, setExpandId] = useState<string | null>(null)
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(() => new Set(["admin", "tech_infra", "labor", "risk"]))
+  const [addingSubItem, setAddingSubItem] = useState<string | null>(null)
+  const [newSubItem, setNewSubItem] = useState({ category: "", amount: "" })
   const [addingRow, setAddingRow] = useState(false)
   const [newRow, setNewRow] = useState({ category: "", lineType: "expense", plannedAmount: "", forecastAmount: "", department: "" })
   const [filterText, setFilterText] = useState("")
@@ -429,9 +432,13 @@ function WorkspaceTab({ planId }: { planId: string }) {
   const expenseLines = filteredLines.filter((l: BudgetLine) => l.lineType === "expense")
   const revenueLines = filteredLines.filter((l: BudgetLine) => l.lineType === "revenue")
 
+  // Helper: get leaf amount (children sum if group parent, else own amount)
+  const leafPlanned = (l: BudgetLine) => l.children?.length ? l.children.reduce((s, c) => s + c.plannedAmount, 0) : l.plannedAmount
+  const leafForecast = (l: BudgetLine) => l.children?.length ? l.children.reduce((s, c) => s + (c.forecastAmount ?? c.plannedAmount), 0) : (l.forecastAmount ?? l.plannedAmount)
+
   // Totals
-  const totExpPlanned = expenseLines.reduce((s: number, l: BudgetLine) => s + l.plannedAmount, 0)
-  const totExpForecast = expenseLines.reduce((s: number, l: BudgetLine) => s + (l.forecastAmount ?? l.plannedAmount), 0)
+  const totExpPlanned = expenseLines.reduce((s: number, l: BudgetLine) => s + leafPlanned(l), 0)
+  const totExpForecast = expenseLines.reduce((s: number, l: BudgetLine) => s + leafForecast(l), 0)
   const totRevPlanned = revenueLines.reduce((s: number, l: BudgetLine) => s + l.plannedAmount, 0)
   const totRevForecast = revenueLines.reduce((s: number, l: BudgetLine) => s + (l.forecastAmount ?? l.plannedAmount), 0)
 
@@ -606,7 +613,167 @@ function WorkspaceTab({ planId }: { planId: string }) {
     )
   }
 
-  // Section renderer
+  // Group colors by notes tag
+  const GROUP_COLORS: Record<string, string> = {
+    "group:admin":      "bg-violet-500",
+    "group:tech_infra": "bg-blue-500",
+    "group:labor":      "bg-emerald-500",
+    "group:risk":       "bg-amber-500",
+  }
+
+  // Add sub-item under a parent group
+  const handleAddSubItem = async (parentLine: BudgetLine) => {
+    if (!newSubItem.category.trim()) return
+    await createLine.mutateAsync({
+      planId,
+      category: newSubItem.category,
+      lineType: parentLine.lineType as "expense" | "revenue",
+      plannedAmount: Number(newSubItem.amount) || 0,
+      parentId: parentLine.id,
+    })
+    setNewSubItem({ category: "", amount: "" })
+    setAddingSubItem(null)
+  }
+
+  // Render a group header row (collapsible)
+  const renderGroupHeader = (line: BudgetLine) => {
+    const groupTag = line.notes ?? ""
+    const colorClass = GROUP_COLORS[groupTag] ?? "bg-slate-400"
+    const children = line.children ?? []
+    const groupTotal = children.reduce((s, c) => s + c.plannedAmount, 0)
+    const groupActual = children.reduce((s, c) => {
+      return s + (c.isAutoActual ? (autoActualMap.get(c.category) ?? 0) : (actualsByCat.get(`${c.category}||${c.lineType}`)?.total ?? 0))
+    }, 0)
+    const isOpen = expandedGroups.has(groupTag.replace("group:", ""))
+    const toggleGroup = () => {
+      const key = groupTag.replace("group:", "")
+      setExpandedGroups(prev => {
+        const next = new Set(prev)
+        next.has(key) ? next.delete(key) : next.add(key)
+        return next
+      })
+    }
+
+    return (
+      <tr key={line.id} className="border-t border-border/40 bg-muted/20 hover:bg-muted/40 cursor-pointer select-none" onClick={toggleGroup}>
+        <td className="px-3 py-2.5" colSpan={2}>
+          <div className="flex items-center gap-2">
+            <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${colorClass}`} />
+            {isOpen ? <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" /> : <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />}
+            <span className="font-semibold text-sm">{line.category}</span>
+            <Badge variant="outline" className="ml-1 text-[10px] px-1.5 py-0">{children.length}</Badge>
+          </div>
+        </td>
+        <td className="px-2 py-2.5 text-right font-mono text-sm font-semibold">{fmt(groupTotal)}</td>
+        <td className="px-2 py-2.5 text-right font-mono text-sm font-semibold text-green-600">{fmt(groupActual)}</td>
+        <td className="px-2 py-2.5 text-right text-sm font-semibold text-muted-foreground">
+          {groupTotal > 0 ? `${(((groupTotal - groupActual) / groupTotal) * 100).toFixed(1)}%` : "—"}
+        </td>
+        <td className="px-2 py-2.5 text-center" onClick={e => e.stopPropagation()}>
+          <button
+            className="p-1 rounded hover:bg-purple-50 dark:hover:bg-purple-900/20 text-muted-foreground hover:text-purple-600 opacity-60 hover:opacity-100"
+            title="Add sub-item"
+            onClick={() => setAddingSubItem(addingSubItem === line.id ? null : line.id)}>
+            <Plus className="h-3.5 w-3.5" />
+          </button>
+        </td>
+      </tr>
+    )
+  }
+
+  // Render a child (sub-item) row — indented
+  const renderChildRow = (child: BudgetLine) => {
+    const factValue = child.isAutoActual ? (autoActualMap.get(child.category) ?? 0) : (actualsByCat.get(`${child.category}||${child.lineType}`)?.total ?? 0)
+    const variance = child.lineType === "revenue" ? factValue - child.plannedAmount : child.plannedAmount - factValue
+    const variancePct = child.plannedAmount > 0 ? (variance / child.plannedAmount) * 100 : 0
+    const isExpanded = expandId === child.id
+
+    const noteText = child.notes && !child.notes.startsWith("group:") ? child.notes : null
+
+    return (
+      <>
+        <tr key={child.id} className="border-t border-border/30 hover:bg-muted/20 group">
+          <td className="px-3 py-1.5 text-sm" colSpan={2}>
+            <div className="flex items-center gap-1 pl-6">
+              <span className="text-muted-foreground text-xs">—</span>
+              <span className="flex-1">{child.category}</span>
+              {child.department && <Badge variant="outline" className="text-[9px] px-1">{child.department}</Badge>}
+            </div>
+            {noteText && <div className="pl-8 text-[10px] text-muted-foreground italic mt-0.5">{noteText}</div>}
+          </td>
+          <td className="px-2 py-1.5 text-right">
+            {editCell?.id === child.id && editCell?.field === "plannedAmount" ? (
+              <Input type="number" className="h-6 w-24 text-right text-xs ml-auto" value={editValue} autoFocus
+                onChange={e => setEditValue(e.target.value)}
+                onBlur={() => saveEdit()} onKeyDown={e => { if (e.key === "Enter") saveEdit() }} />
+            ) : (
+              <button type="button" className="font-mono text-sm cursor-pointer hover:bg-purple-50 dark:hover:bg-purple-900/20 px-1 rounded border border-transparent hover:border-purple-300 dark:hover:border-purple-700 transition-colors"
+                onClick={() => startEdit(child.id, "plannedAmount", child.plannedAmount)}>
+                {fmt(child.plannedAmount)}
+                <Pencil className="h-2.5 w-2.5 inline ml-1 opacity-0 group-hover:opacity-40" />
+              </button>
+            )}
+          </td>
+          <td className="px-2 py-1.5 text-right">
+            {child.isAutoActual ? (
+              <span className="font-mono text-sm text-blue-600 dark:text-blue-400">
+                {fmt(factValue)}
+                <Badge className="ml-1 text-[9px] bg-blue-100 text-blue-700 dark:bg-blue-900/30 px-1">{t("badgeAuto")}</Badge>
+              </span>
+            ) : (
+              <span className="font-mono text-sm text-green-600 dark:text-green-400 cursor-pointer hover:bg-green-50 dark:hover:bg-green-900/20 px-1 rounded"
+                onClick={() => setExpandId(isExpanded ? null : child.id)}>
+                {fmt(factValue)}
+                <ChevronDown className={`h-3 w-3 inline ml-0.5 transition-transform ${isExpanded ? "rotate-180" : ""}`} />
+              </span>
+            )}
+          </td>
+          <td className={`px-2 py-1.5 text-right font-mono text-xs font-bold ${variance >= 0 ? "text-green-600" : "text-red-500"}`}>
+            {variance >= 0 ? "+" : ""}{variancePct.toFixed(1)}%
+          </td>
+          <td className="px-2 py-1.5 text-center">
+            <button onClick={() => { if (confirm(t("confirmDeleteLine") + " «" + child.category + "»?")) deleteLine.mutate({ id: child.id, planId }) }}
+              className="p-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20 text-muted-foreground hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity">
+              <Trash2 className="h-3.5 w-3.5" />
+            </button>
+          </td>
+        </tr>
+        {renderExpand(child)}
+      </>
+    )
+  }
+
+  // Render add sub-item inline form
+  const renderAddSubItemForm = (parentLine: BudgetLine) => {
+    if (addingSubItem !== parentLine.id) return null
+    return (
+      <tr key={`add-sub-${parentLine.id}`} className="bg-purple-50 dark:bg-purple-900/10 border-t border-border/30">
+        <td className="px-3 py-1.5" colSpan={2}>
+          <div className="pl-6 flex items-center gap-2">
+            <Input placeholder="Name" className="h-6 text-xs flex-1" autoFocus value={newSubItem.category}
+              onChange={e => setNewSubItem(d => ({ ...d, category: e.target.value }))}
+              onKeyDown={e => { if (e.key === "Enter") handleAddSubItem(parentLine) }} />
+          </div>
+        </td>
+        <td className="px-2 py-1.5">
+          <Input type="number" placeholder="0" className="h-6 text-xs text-right" value={newSubItem.amount}
+            onChange={e => setNewSubItem(d => ({ ...d, amount: e.target.value }))}
+            onKeyDown={e => { if (e.key === "Enter") handleAddSubItem(parentLine) }} />
+        </td>
+        <td colSpan={2} className="px-2 py-1.5">
+          <div className="flex gap-1">
+            <Button size="sm" variant="ghost" className="h-6 text-xs px-2" onClick={() => handleAddSubItem(parentLine)}>
+              <CheckCircle className="h-3 w-3 mr-1" /> Add
+            </Button>
+            <Button size="sm" variant="ghost" className="h-6 text-xs px-2" onClick={() => setAddingSubItem(null)}>{t("btnCancel")}</Button>
+          </div>
+        </td>
+        <td />
+      </tr>
+    )
+  }
+
+  // Section renderer (used for revenue; expenses use renderGroupedExpenses below)
   const renderSection = (title: string, sectionLines: BudgetLine[], totPlanned: number, _totForecast: number) => {
     const totActual = sectionLines.reduce((s: number, l: BudgetLine) => {
       const fact = l.isAutoActual ? (autoActualMap.get(l.category) ?? 0) : (actualsByCat.get(`${l.category}||${l.lineType}`)?.total ?? 0)
@@ -624,6 +791,49 @@ function WorkspaceTab({ planId }: { planId: string }) {
           <td className="px-2 py-1.5 text-right font-mono text-xs font-bold text-green-600">{fmt(totActual)}</td>
           <td className="px-2 py-1.5 text-right font-mono text-xs font-bold">
             {totPlanned > 0 ? `${(((totPlanned - totActual) / totPlanned) * 100).toFixed(1)}%` : "—"}
+          </td>
+          <td />
+        </tr>
+      </>
+    )
+  }
+
+  // Grouped expense section with collapsible groups
+  const renderGroupedExpenses = (sectionLines: BudgetLine[]) => {
+    const totActual = sectionLines.reduce((s: number, l: BudgetLine) => {
+      if (l.children?.length) {
+        return s + l.children.reduce((cs, c) => cs + (c.isAutoActual ? (autoActualMap.get(c.category) ?? 0) : (actualsByCat.get(`${c.category}||${c.lineType}`)?.total ?? 0)), 0)
+      }
+      return s + (l.isAutoActual ? (autoActualMap.get(l.category) ?? 0) : (actualsByCat.get(`${l.category}||${l.lineType}`)?.total ?? 0))
+    }, 0)
+
+    return (
+      <>
+        <tr className="bg-muted/40">
+          <td colSpan={6} className="px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-muted-foreground">{t("sectionExpenses")}</td>
+        </tr>
+        {sectionLines.map(l => {
+          const isGroupParent = l.children && l.children.length > 0
+          const groupTag = l.notes ?? ""
+          const isOpen = expandedGroups.has(groupTag.replace("group:", ""))
+
+          if (isGroupParent) {
+            return (
+              <>
+                {renderGroupHeader(l)}
+                {renderAddSubItemForm(l)}
+                {isOpen && (l.children ?? []).map(child => renderChildRow(child))}
+              </>
+            )
+          }
+          return [renderRow(l), renderExpand(l)]
+        })}
+        <tr className="border-t-2 border-border bg-muted/30">
+          <td className="px-3 py-1.5 font-bold text-xs" colSpan={2}>{t("totalLabel")} {t("sectionExpenses").toLowerCase()}</td>
+          <td className="px-2 py-1.5 text-right font-mono text-xs font-bold">{fmt(totExpPlanned)}</td>
+          <td className="px-2 py-1.5 text-right font-mono text-xs font-bold text-green-600">{fmt(totActual)}</td>
+          <td className="px-2 py-1.5 text-right font-mono text-xs font-bold">
+            {totExpPlanned > 0 ? `${(((totExpPlanned - totActual) / totExpPlanned) * 100).toFixed(1)}%` : "—"}
           </td>
           <td />
         </tr>
@@ -652,7 +862,12 @@ function WorkspaceTab({ planId }: { planId: string }) {
 
   const execEmoji = executionPct >= 90 ? "🟢" : executionPct >= 60 ? "🟡" : "🔴"
 
-  const totExpActual = expenseLines.reduce((s: number, l: BudgetLine) => s + (l.isAutoActual ? (autoActualMap.get(l.category) ?? 0) : (actualsByCat.get(`${l.category}||${l.lineType}`)?.total ?? 0)), 0)
+  const totExpActual = expenseLines.reduce((s: number, l: BudgetLine) => {
+    if (l.children?.length) {
+      return s + l.children.reduce((cs, c) => cs + (c.isAutoActual ? (autoActualMap.get(c.category) ?? 0) : (actualsByCat.get(`${c.category}||${c.lineType}`)?.total ?? 0)), 0)
+    }
+    return s + (l.isAutoActual ? (autoActualMap.get(l.category) ?? 0) : (actualsByCat.get(`${l.category}||${l.lineType}`)?.total ?? 0))
+  }, 0)
   const totRevActual = revenueLines.reduce((s: number, l: BudgetLine) => s + (l.isAutoActual ? (autoActualMap.get(l.category) ?? 0) : (actualsByCat.get(`${l.category}||${l.lineType}`)?.total ?? 0)), 0)
 
   return (
@@ -727,7 +942,7 @@ function WorkspaceTab({ planId }: { planId: string }) {
                 </tr>
               </thead>
               <tbody>
-                {expenseLines.length > 0 && renderSection(t("sectionExpenses"), expenseLines, totExpPlanned, totExpForecast)}
+                {expenseLines.length > 0 && renderGroupedExpenses(expenseLines)}
                 {revenueLines.length > 0 && renderSection(t("sectionRevenues"), revenueLines, totRevPlanned, totRevForecast)}
 
                 {/* Margin row */}

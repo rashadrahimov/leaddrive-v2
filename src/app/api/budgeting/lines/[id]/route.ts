@@ -8,7 +8,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 
   const { id } = await params
   const body = await req.json()
-  const { category, department, lineType, plannedAmount, forecastAmount, costModelKey, isAutoActual, notes } = body
+  const { category, department, lineType, plannedAmount, forecastAmount, costModelKey, isAutoActual, notes, parentId } = body
 
   // Check plan is not approved
   const line = await prisma.budgetLine.findFirst({ where: { id, organizationId: orgId }, select: { planId: true } })
@@ -37,6 +37,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       ...(costModelKey !== undefined && { costModelKey: costModelKey || null }),
       ...(isAutoActual !== undefined && { isAutoActual: Boolean(isAutoActual) }),
       ...(notes !== undefined && { notes }),
+      ...(parentId !== undefined && { parentId: parentId || null }),
     },
   })
 
