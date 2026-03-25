@@ -44,14 +44,43 @@ export async function GET(req: NextRequest) {
     where: { planId, organizationId: orgId },
   })
 
-  // Totals
-  const totalPlanned = lines.reduce((s: number, l: { plannedAmount: number }) => s + l.plannedAmount, 0)
+  // Totals — split by expense vs revenue
+  const expenseLines = lines.filter((l: { lineType: string }) => l.lineType === "expense")
+  const revenueLines = lines.filter((l: { lineType: string }) => l.lineType === "revenue")
+
+  const totalExpensePlanned = expenseLines.reduce((s: number, l: { plannedAmount: number }) => s + l.plannedAmount, 0)
+  const totalRevenuePlanned = revenueLines.reduce((s: number, l: { plannedAmount: number }) => s + l.plannedAmount, 0)
+  const totalPlanned = totalExpensePlanned // KPI "ПЛАН" = only expenses
+  const totalExpenseForecast = expenseLines.reduce((s: number, l: { forecastAmount: number | null; plannedAmount: number }) => s + (l.forecastAmount ?? l.plannedAmount), 0)
+  const totalRevenueForecast = revenueLines.reduce((s: number, l: { forecastAmount: number | null; plannedAmount: number }) => s + (l.forecastAmount ?? l.plannedAmount), 0)
   const totalForecast = forecastEntries.length > 0
     ? forecastEntries.reduce((s: number, e: { forecastAmount: number }) => s + e.forecastAmount, 0)
-    : lines.reduce((s: number, l: { forecastAmount: number | null; plannedAmount: number }) => s + (l.forecastAmount ?? l.plannedAmount), 0)
+    : totalExpenseForecast // KPI "ПРОГНОЗ" = only expenses
   const manualActualTotal = manualActuals.reduce((s: number, a: { actualAmount: number }) => s + a.actualAmount, 0)
-  const totalActual = autoActualTotal > 0 ? autoActualTotal : manualActualTotal
-  const totalVariance = totalPlanned - totalActual
+
+  // Split auto-actuals by type
+  let autoActualExpense = 0
+  let autoActualRevenue = 0
+  for (const line of lines) {
+    if (line.isAutoActual && line.costModelKey) {
+      const amount = autoActualByCategory.get(`${line.category}||${line.lineType}`) ?? 0
+      if (line.lineType === "revenue") autoActualRevenue += amount
+      else autoActualExpense += amount
+    }
+  }
+
+  // Split manual actuals by type
+  let manualExpenseActual = 0
+  let manualRevenueActual = 0
+  for (const a of manualActuals) {
+    if (a.lineType === "revenue") manualRevenueActual += a.actualAmount
+    else manualExpenseActual += a.actualAmount
+  }
+
+  const totalExpenseActual = autoActualExpense > 0 ? autoActualExpense : manualExpenseActual
+  const totalRevenueActual = autoActualRevenue > 0 ? autoActualRevenue : manualRevenueActual
+  const totalActual = totalExpenseActual // KPI "ФАКТ" = expense actual
+  const totalVariance = totalPlanned - totalActual // positive = under budget (good)
   const executionPct = totalPlanned > 0 ? (totalActual / totalPlanned) * 100 : 0
   const forecastVariance = totalForecast - totalActual
 
@@ -164,6 +193,15 @@ export async function GET(req: NextRequest) {
       executionPct,
       autoActualTotal,
       yearEndProjection,
+      // Revenue totals (separate from expense KPIs)
+      totalRevenuePlanned,
+      totalRevenueForecast,
+      totalRevenueActual,
+      totalExpensePlanned,
+      totalExpenseForecast,
+      totalExpenseActual,
+      margin: totalRevenuePlanned - totalExpensePlanned,
+      marginActual: totalRevenueActual - totalExpenseActual,
       byCategory,
       byDepartment,
       costModelTotal: costModel?.grandTotalG ?? 0,

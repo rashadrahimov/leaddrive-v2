@@ -68,6 +68,14 @@ export interface BudgetAnalytics {
   executionPct: number
   autoActualTotal: number
   yearEndProjection: number
+  totalExpensePlanned: number
+  totalExpenseForecast: number
+  totalExpenseActual: number
+  totalRevenuePlanned: number
+  totalRevenueForecast: number
+  totalRevenueActual: number
+  margin: number
+  marginActual: number
   byCategory: BudgetCategoryRow[]
   byDepartment: BudgetDepartmentRow[]
   costModelTotal: number

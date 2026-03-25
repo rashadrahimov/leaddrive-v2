@@ -437,7 +437,7 @@ function WorkspaceTab({ planId }: { planId: string }) {
   const totRevPlanned = revenueLines.reduce((s: number, l: BudgetLine) => s + l.plannedAmount, 0)
   const totRevForecast = revenueLines.reduce((s: number, l: BudgetLine) => s + (l.forecastAmount ?? l.plannedAmount), 0)
 
-  const { totalPlanned = 0, totalForecast = 0, totalActual = 0, totalVariance = 0, executionPct = 0, autoActualTotal = 0, yearEndProjection = 0, byCategory = [] } = analytics ?? {}
+  const { totalPlanned = 0, totalForecast = 0, totalActual = 0, totalVariance = 0, executionPct = 0, autoActualTotal = 0, yearEndProjection = 0, byCategory = [], totalRevenuePlanned = 0, totalRevenueActual = 0, totalExpensePlanned = 0, totalExpenseActual = 0, margin = 0, marginActual = 0 } = analytics ?? {}
 
   // Inline edit handlers
   const startEdit = (id: string, field: string, currentVal: number) => {
@@ -669,11 +669,16 @@ function WorkspaceTab({ planId }: { planId: string }) {
 
   return (
     <div className="space-y-6">
-      {/* KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
-        <ColorStatCard label={t("kpiPlan")} value={fmt(totalPlanned)} icon={<BarChart2 className="h-5 w-5" />} color="blue" />
-        <ColorStatCard label={t("kpiForecast")} value={fmt(totalForecast)} icon={<TrendingUp className="h-5 w-5" />} color="violet" />
-        <ColorStatCard label={autoActualTotal > 0 ? t("kpiActualAuto") : t("kpiActual")} value={fmt(totalActual)} icon={<DollarSign className="h-5 w-5" />} color="green" />
+      {/* KPI Cards — 2 rows: expenses + revenue/margin */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <ColorStatCard label={t("sectionExpenses") + " (" + t("kpiPlan").toLowerCase() + ")"} value={fmt(totalExpensePlanned)} icon={<BarChart2 className="h-5 w-5" />} color="blue" />
+        <ColorStatCard label={t("sectionExpenses") + " (" + t("kpiActual").toLowerCase() + ")"} value={fmt(totalExpenseActual)} icon={<DollarSign className="h-5 w-5" />} color="red" />
+        <ColorStatCard label={t("sectionRevenues") + " (" + t("kpiPlan").toLowerCase() + ")"} value={fmt(totalRevenuePlanned)} icon={<TrendingUp className="h-5 w-5" />} color="violet" />
+        <ColorStatCard label={t("sectionRevenues") + " (" + t("kpiActual").toLowerCase() + ")"} value={fmt(totalRevenueActual)} icon={<DollarSign className="h-5 w-5" />} color="green" />
+      </div>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <ColorStatCard label={t("sectionMargin").split("(")[0].trim() + " (" + t("kpiPlan").toLowerCase() + ")"} value={fmt(margin)} icon={<TrendingUp className="h-5 w-5" />} color={margin >= 0 ? "teal" : "red"} />
+        <ColorStatCard label={t("sectionMargin").split("(")[0].trim() + " (" + t("kpiActual").toLowerCase() + ")"} value={fmt(marginActual)} icon={<DollarSign className="h-5 w-5" />} color={marginActual >= 0 ? "teal" : "red"} />
         <ColorStatCard label={t("kpiVariance")} value={(totalVariance >= 0 ? "+" : "") + fmt(totalVariance)} icon={totalVariance >= 0 ? <TrendingUp className="h-5 w-5" /> : <TrendingDown className="h-5 w-5" />} color={totalVariance >= 0 ? "teal" : "red"} />
         <ColorStatCard label={t("kpiExecution")} value={`${execEmoji} ${Math.round(executionPct)}%`} icon={<CheckCircle className="h-5 w-5" />} color={executionPct >= 90 ? "green" : executionPct >= 60 ? "amber" : "red"} />
       </div>
