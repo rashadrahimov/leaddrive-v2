@@ -386,7 +386,7 @@ function WorkspaceTab({ planId }: { planId: string }) {
   const [editValue, setEditValue] = useState("")
   const [expandId, setExpandId] = useState<string | null>(null)
   const [addingRow, setAddingRow] = useState(false)
-  const [newRow, setNewRow] = useState({ category: "", lineType: "expense", plannedAmount: "", forecastAmount: "" })
+  const [newRow, setNewRow] = useState({ category: "", lineType: "expense", plannedAmount: "", forecastAmount: "", department: "" })
   const [filterText, setFilterText] = useState("")
   const [filterType, setFilterType] = useState<"all" | "expense" | "revenue">("all")
   const [narrative, setNarrative] = useState<string | null>(null)
@@ -463,11 +463,12 @@ function WorkspaceTab({ planId }: { planId: string }) {
     await createLine.mutateAsync({
       planId,
       category: newRow.category,
+      department: newRow.department || undefined,
       lineType: newRow.lineType as "expense" | "revenue",
       plannedAmount: Number(newRow.plannedAmount) || 0,
       forecastAmount: Number(newRow.forecastAmount) || undefined,
     })
-    setNewRow({ category: "", lineType: "expense", plannedAmount: "", forecastAmount: "" })
+    setNewRow({ category: "", lineType: "expense", plannedAmount: "", forecastAmount: "", department: "" })
     setAddingRow(false)
   }
 
@@ -749,16 +750,20 @@ function WorkspaceTab({ planId }: { planId: string }) {
                 {/* Add new row */}
                 {addingRow ? (
                   <tr className="border-t border-border/50 bg-green-50 dark:bg-green-900/10">
-                    <td className="px-2 py-1"><Input placeholder={t("placeholderCategoryShort")} className="h-7 text-xs" value={newRow.category} onChange={e => setNewRow(d => ({ ...d, category: e.target.value }))} autoFocus /></td>
                     <td className="px-2 py-1">
-                      <select value={newRow.lineType} onChange={e => setNewRow(d => ({ ...d, lineType: e.target.value }))} className="h-7 rounded-md border border-input bg-background px-1 text-xs w-full">
-                        <option value="expense">{t("expense")}</option>
-                        <option value="revenue">{t("revenue")}</option>
-                      </select>
+                      <div className="flex items-center gap-1">
+                        <Input placeholder={t("placeholderCategoryShort")} className="h-7 text-xs flex-1" value={newRow.category} onChange={e => setNewRow(d => ({ ...d, category: e.target.value }))} autoFocus />
+                        <select value={newRow.lineType} onChange={e => setNewRow(d => ({ ...d, lineType: e.target.value }))} className="h-7 rounded-md border border-input bg-background px-1 text-[10px] w-[70px] shrink-0">
+                          <option value="expense">{t("expense")}</option>
+                          <option value="revenue">{t("revenue")}</option>
+                        </select>
+                      </div>
                     </td>
+                    <td className="px-2 py-1"><Input placeholder={t("colDepartment")} className="h-7 text-xs" value={newRow.department ?? ""} onChange={e => setNewRow(d => ({ ...d, department: e.target.value }))} /></td>
                     <td className="px-2 py-1"><Input type="number" placeholder="0" className="h-7 text-xs text-right" value={newRow.plannedAmount} onChange={e => setNewRow(d => ({ ...d, plannedAmount: e.target.value }))} /></td>
                     <td className="px-2 py-1"><Input type="number" placeholder={t("placeholderForecastShort")} className="h-7 text-xs text-right" value={newRow.forecastAmount} onChange={e => setNewRow(d => ({ ...d, forecastAmount: e.target.value }))} /></td>
-                    <td colSpan={2} className="px-2 py-1 text-center">
+                    <td />
+                    <td className="px-2 py-1 text-center">
                       <div className="flex gap-1 justify-center">
                         <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={handleAddRow}><CheckCircle className="h-3.5 w-3.5 mr-1" /> {t("btnSave")}</Button>
                         <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setAddingRow(false)}>{t("btnCancel")}</Button>
