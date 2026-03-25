@@ -11,12 +11,15 @@ export async function GET(req: NextRequest) {
   const planId = req.nextUrl.searchParams.get("planId")
   if (!planId) return NextResponse.json({ error: "planId required" }, { status: 400 })
 
-  const [plan, lines, manualActuals, costModel] = await Promise.all([
+  const [plan, lines, manualActuals] = await Promise.all([
     prisma.budgetPlan.findFirst({ where: { id: planId, organizationId: orgId } }),
     prisma.budgetLine.findMany({ where: { planId, organizationId: orgId } }),
     prisma.budgetActual.findMany({ where: { planId, organizationId: orgId } }),
-    loadAndCompute(orgId).catch(() => null),
   ])
+
+  // Only load cost model if at least one line uses auto-actual (performance optimization)
+  const hasAutoActual = lines.some((l: { isAutoActual: boolean }) => l.isAutoActual)
+  const costModel = hasAutoActual ? await loadAndCompute(orgId).catch(() => null) : null
 
   if (!plan) return NextResponse.json({ error: "Plan not found" }, { status: 404 })
 
@@ -45,12 +48,20 @@ export async function GET(req: NextRequest) {
   const executionPct = totalPlanned > 0 ? (totalActual / totalPlanned) * 100 : 0
   const forecastVariance = totalForecast - totalActual
 
-  // Estimate year-end projection based on current month progress
+  // Estimate period-end projection based on elapsed time within the plan's period
   const now = new Date()
-  const currentMonth = plan.month ?? now.getMonth() + 1
-  const monthsElapsed = Math.max(1, currentMonth)
-  const monthsTotal = plan.periodType === "annual" ? 12 : plan.periodType === "quarterly" ? 3 : 1
-  const yearEndProjection = monthsElapsed > 0 ? (totalActual / monthsElapsed) * monthsTotal : totalForecast
+  const currentMonth = now.getMonth() + 1
+  const periodMonths = plan.periodType === "annual" ? 12 : plan.periodType === "quarterly" ? 3 : 1
+  // For annual: months elapsed = currentMonth. For quarterly: months elapsed within the quarter.
+  // For monthly: always 1.
+  let monthsElapsed = 1
+  if (plan.periodType === "annual") {
+    monthsElapsed = Math.max(1, currentMonth)
+  } else if (plan.periodType === "quarterly" && plan.quarter) {
+    const quarterStartMonth = (plan.quarter - 1) * 3 + 1
+    monthsElapsed = Math.max(1, Math.min(3, currentMonth - quarterStartMonth + 1))
+  }
+  const yearEndProjection = totalActual > 0 ? (totalActual / monthsElapsed) * periodMonths : totalForecast
 
   // By category — merge lines, auto-actuals, and manual actuals
   const categoryMap = new Map<string, { planned: number; forecast: number; actual: number; lineType: string }>()
@@ -83,7 +94,11 @@ export async function GET(req: NextRequest) {
 
   const byCategory = Array.from(categoryMap.entries()).map(([key, val]) => {
     const [category, lineType] = key.split("||")
-    const variance = val.planned - val.actual
+    // Revenue: positive variance when actual > planned (overperformance = good)
+    // Expense: positive variance when planned > actual (under budget = good)
+    const variance = lineType === "revenue"
+      ? val.actual - val.planned
+      : val.planned - val.actual
     const variancePct = val.planned > 0 ? (variance / val.planned) * 100 : 0
     return { category, lineType, planned: val.planned, forecast: val.forecast, actual: val.actual, variance, variancePct }
   })
@@ -99,7 +114,23 @@ export async function GET(req: NextRequest) {
     deptMap.set(dept, existing)
   }
 
+  // Apply auto-actuals to departments (resolve from lines that have isAutoActual + costModelKey)
+  if (costModel) {
+    for (const line of lines) {
+      if (line.isAutoActual && line.costModelKey) {
+        const dept = line.department || "Общие"
+        const amount = resolveCostModelKey(costModel, line.costModelKey)
+        const existing = deptMap.get(dept) ?? { planned: 0, forecast: 0, actual: 0 }
+        existing.actual += amount
+        deptMap.set(dept, existing)
+      }
+    }
+  }
+
+  // Apply manual actuals for departments (skip categories covered by auto-actual)
   for (const a of manualActuals) {
+    const catKey = `${a.category}||${a.lineType}`
+    if (autoActualByCategory.has(catKey)) continue
     const dept = a.department || "Общие"
     const existing = deptMap.get(dept) ?? { planned: 0, forecast: 0, actual: 0 }
     existing.actual += a.actualAmount
@@ -111,7 +142,7 @@ export async function GET(req: NextRequest) {
     planned: val.planned,
     forecast: val.forecast,
     actual: val.actual,
-    variance: val.planned - val.actual,
+    variance: val.planned - val.actual, // departments mix revenue+expense — net variance
   }))
 
   return NextResponse.json({

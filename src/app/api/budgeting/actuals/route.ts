@@ -33,6 +33,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "planId and category are required" }, { status: 400 })
   }
 
+  // Check plan is not approved
+  const plan = await prisma.budgetPlan.findFirst({ where: { id: resolvedPlanId, organizationId: orgId } })
+  if (plan?.status === "approved") {
+    return NextResponse.json({ error: "План утверждён — изменения запрещены" }, { status: 403 })
+  }
+
+  if (Number(resolvedAmount) < 0) {
+    return NextResponse.json({ error: "Сумма не может быть отрицательной" }, { status: 400 })
+  }
+
   const actual = await prisma.budgetActual.create({
     data: {
       organizationId: orgId,

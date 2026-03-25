@@ -34,6 +34,15 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
 
   const { id } = await params
 
+  // Check plan is not approved
+  const actualToDelete = await prisma.budgetActual.findFirst({ where: { id, organizationId: orgId }, select: { planId: true } })
+  if (actualToDelete) {
+    const plan = await prisma.budgetPlan.findFirst({ where: { id: actualToDelete.planId }, select: { status: true } })
+    if (plan?.status === "approved") {
+      return NextResponse.json({ error: "План утверждён — изменения запрещены" }, { status: 403 })
+    }
+  }
+
   await prisma.budgetActual.deleteMany({ where: { id, organizationId: orgId } })
 
   return NextResponse.json({ success: true, data: null })

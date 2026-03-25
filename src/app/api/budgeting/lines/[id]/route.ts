@@ -10,6 +10,22 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   const body = await req.json()
   const { category, department, lineType, plannedAmount, forecastAmount, costModelKey, isAutoActual, notes } = body
 
+  // Check plan is not approved
+  const line = await prisma.budgetLine.findFirst({ where: { id, organizationId: orgId }, select: { planId: true } })
+  if (line) {
+    const plan = await prisma.budgetPlan.findFirst({ where: { id: line.planId }, select: { status: true } })
+    if (plan?.status === "approved") {
+      return NextResponse.json({ error: "План утверждён — изменения запрещены" }, { status: 403 })
+    }
+  }
+
+  if (plannedAmount !== undefined && Number(plannedAmount) < 0) {
+    return NextResponse.json({ error: "Сумма не может быть отрицательной" }, { status: 400 })
+  }
+  if (forecastAmount !== undefined && forecastAmount != null && Number(forecastAmount) < 0) {
+    return NextResponse.json({ error: "Прогнозная сумма не может быть отрицательной" }, { status: 400 })
+  }
+
   const result = await prisma.budgetLine.updateMany({
     where: { id, organizationId: orgId },
     data: {
@@ -35,6 +51,15 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
   if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
   const { id } = await params
+
+  // Check plan is not approved
+  const lineToDelete = await prisma.budgetLine.findFirst({ where: { id, organizationId: orgId }, select: { planId: true } })
+  if (lineToDelete) {
+    const plan = await prisma.budgetPlan.findFirst({ where: { id: lineToDelete.planId }, select: { status: true } })
+    if (plan?.status === "approved") {
+      return NextResponse.json({ error: "План утверждён — изменения запрещены" }, { status: 403 })
+    }
+  }
 
   await prisma.budgetLine.deleteMany({ where: { id, organizationId: orgId } })
 

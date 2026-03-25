@@ -129,6 +129,27 @@ export async function GET(req: NextRequest) {
   ]
   ws3.getRow(1).eachCell(cell => Object.assign(cell, headerStyle))
 
+  // Add auto-actuals from cost model first
+  if (costModel) {
+    for (const line of lines) {
+      if (line.isAutoActual && line.costModelKey) {
+        const amount = resolveCostModelKey(costModel, line.costModelKey)
+        if (amount > 0) {
+          const row = ws3.addRow({
+            category: `${line.category} (авто)`,
+            department: line.department || "",
+            lineType: line.lineType === "expense" ? "Расход" : "Доход",
+            actualAmount: amount,
+            expenseDate: "",
+            description: `Из cost model: ${line.costModelKey}`,
+          })
+          row.getCell("actualAmount").numFmt = currencyFmt
+        }
+      }
+    }
+  }
+
+  // Add manual actuals
   actuals.forEach((actual: { category: string; department: string | null; lineType: string; actualAmount: number; expenseDate: string | null; description: string | null }) => {
     const row = ws3.addRow({
       category: actual.category,

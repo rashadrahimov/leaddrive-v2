@@ -863,7 +863,11 @@ function PlansTab({ activePlanId, onSelect, onShowCreate }: { activePlanId: stri
                   </Button>
                   {plan.status === "draft" && (
                     <Button size="sm" variant="outline" className="text-xs"
-                      onClick={() => updatePlan.mutate({ id: plan.id, status: "approved" })}>
+                      onClick={() => {
+                        if (confirm("Утвердить бюджет? После утверждения изменения будут запрещены.")) {
+                          updatePlan.mutate({ id: plan.id, status: "approved" })
+                        }
+                      }}>
                       Утвердить
                     </Button>
                   )}
@@ -1101,8 +1105,8 @@ function ForecastTab({ planId }: { planId: string }) {
   const chartData = monthlyData.map(d => ({
     name: d.label,
     "Бюджет": d.planned,
-    "Прогноз": d.isProjected ? d.forecast : undefined,
-    "Факт": !d.isProjected ? d.actual : undefined,
+    "Прогноз": d.forecast,
+    "Факт": d.actual || undefined,
   }))
 
   if (!analytics) return (

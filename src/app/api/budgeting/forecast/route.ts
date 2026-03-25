@@ -23,6 +23,15 @@ export async function POST(req: NextRequest) {
 
   const body = await req.json()
 
+  // Check plan is not approved (use first entry's planId)
+  const firstPlanId = Array.isArray(body.entries) ? body.entries[0]?.planId : body.planId
+  if (firstPlanId) {
+    const plan = await prisma.budgetPlan.findFirst({ where: { id: firstPlanId, organizationId: orgId }, select: { status: true } })
+    if (plan?.status === "approved") {
+      return NextResponse.json({ error: "План утверждён — изменения запрещены" }, { status: 403 })
+    }
+  }
+
   // Supports bulk upsert: body.entries = [{ planId, month, year, category, forecastAmount }]
   const entries: Array<{ planId: string; month: number; year: number; category: string; forecastAmount: number }> =
     Array.isArray(body.entries) ? body.entries : [body]
