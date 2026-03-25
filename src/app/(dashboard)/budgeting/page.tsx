@@ -397,6 +397,7 @@ function WorkspaceTab({ planId }: { planId: string }) {
   const [addingSubItem, setAddingSubItem] = useState<string | null>(null)
   const [newSubItem, setNewSubItem] = useState({ category: "", amount: "", department: "" })
   const [addingRow, setAddingRow] = useState(false)
+  const [addMode, setAddMode] = useState<"line" | "toGroup" | "newGroup">("line")
   const [newRow, setNewRow] = useState({ category: "", lineType: "expense", plannedAmount: "", forecastAmount: "", department: "", parentId: "" })
   const [filterText, setFilterText] = useState("")
   const [filterType, setFilterType] = useState<"all" | "expense" | "revenue">("all")
@@ -478,19 +479,31 @@ function WorkspaceTab({ planId }: { planId: string }) {
   // All parent groups filtered by selected lineType (for dropdown in add form)
   const parentGroups = lines.filter((l: BudgetLine) => l.children && l.children.length > 0 && l.lineType === newRow.lineType)
 
-  // Add new row
+  // Add new row (line, sub-item in group, or new group)
   const handleAddRow = async () => {
     if (!newRow.category.trim()) return
-    await createLine.mutateAsync({
-      planId,
-      category: newRow.category,
-      department: newRow.department || undefined,
-      lineType: newRow.lineType as "expense" | "revenue" | "cogs",
-      plannedAmount: Number(newRow.plannedAmount) || 0,
-      forecastAmount: Number(newRow.forecastAmount) || undefined,
-      parentId: newRow.parentId || undefined,
-    })
+    if (addMode === "newGroup") {
+      // Create parent group line with plannedAmount=0
+      await createLine.mutateAsync({
+        planId,
+        category: newRow.category,
+        lineType: newRow.lineType as "expense" | "revenue" | "cogs",
+        plannedAmount: 0,
+        notes: `group:${newRow.category.toLowerCase().replace(/\s+/g, "_")}`,
+      })
+    } else {
+      await createLine.mutateAsync({
+        planId,
+        category: newRow.category,
+        department: newRow.department || undefined,
+        lineType: newRow.lineType as "expense" | "revenue" | "cogs",
+        plannedAmount: Number(newRow.plannedAmount) || 0,
+        forecastAmount: Number(newRow.forecastAmount) || undefined,
+        parentId: addMode === "toGroup" ? (newRow.parentId || undefined) : undefined,
+      })
+    }
     setNewRow({ category: "", lineType: "expense", plannedAmount: "", forecastAmount: "", department: "", parentId: "" })
+    setAddMode("line")
     setAddingRow(false)
   }
 
@@ -1008,36 +1021,60 @@ function WorkspaceTab({ planId }: { planId: string }) {
 
                 {/* Add new row */}
                 {addingRow ? (
-                  <tr className="border-t border-border/50 bg-green-50 dark:bg-green-900/10">
-                    <td className="px-2 py-1">
-                      <div className="flex flex-col gap-1">
-                        <div className="flex items-center gap-1">
-                          <select title={t("hintFieldGroup")} value={newRow.parentId} onChange={e => setNewRow(d => ({ ...d, parentId: e.target.value }))} className="h-7 rounded-md border border-input bg-background px-1 text-[10px] flex-1">
-                            <option value="">{t("selectGroup")}</option>
-                            {parentGroups.map((g: BudgetLine) => (
-                              <option key={g.id} value={g.id}>{g.category}</option>
-                            ))}
-                          </select>
-                          <select value={newRow.lineType} onChange={e => setNewRow(d => ({ ...d, lineType: e.target.value, parentId: "" }))} className="h-7 rounded-md border border-input bg-background px-1 text-[10px] w-[70px] shrink-0">
+                  <>
+                    {/* Mode selector row */}
+                    <tr className="border-t border-border/50 bg-green-50/50 dark:bg-green-900/5">
+                      <td colSpan={6} className="px-3 py-2">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <select title={t("hintFieldType")} value={newRow.lineType} onChange={e => setNewRow(d => ({ ...d, lineType: e.target.value, parentId: "" }))} className="h-8 rounded-md border border-input bg-background px-2 text-sm">
                             <option value="expense">{t("expense")}</option>
                             <option value="revenue">{t("revenue")}</option>
                             <option value="cogs">COGS</option>
                           </select>
+                          <div className="flex gap-1">
+                            <Button size="sm" variant={addMode === "line" ? "default" : "outline"} className="h-8 text-xs" onClick={() => setAddMode("line")}>{t("addAsLine")}</Button>
+                            <Button size="sm" variant={addMode === "toGroup" ? "default" : "outline"} className="h-8 text-xs" onClick={() => setAddMode("toGroup")}>{t("addToGroup")}</Button>
+                            <Button size="sm" variant={addMode === "newGroup" ? "default" : "outline"} className="h-8 text-xs" onClick={() => setAddMode("newGroup")}>{t("addAsGroup")}</Button>
+                          </div>
                         </div>
-                        <Input placeholder={t("placeholderCategoryShort")} className="h-7 text-xs" value={newRow.category} onChange={e => setNewRow(d => ({ ...d, category: e.target.value }))} autoFocus />
-                      </div>
-                    </td>
-                    <td className="px-2 py-1"><Input placeholder={t("colDepartment")} className="h-7 text-xs" value={newRow.department ?? ""} onChange={e => setNewRow(d => ({ ...d, department: e.target.value }))} /></td>
-                    <td className="px-2 py-1"><Input type="number" placeholder="0" className="h-7 text-xs text-right" value={newRow.plannedAmount} onChange={e => setNewRow(d => ({ ...d, plannedAmount: e.target.value }))} /></td>
-                    <td />
-                    <td className="px-2 py-1 text-center">
-                      <div className="flex gap-1 justify-center">
-                        <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={handleAddRow}><CheckCircle className="h-3.5 w-3.5 mr-1" /> {t("btnSave")}</Button>
-                        <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setAddingRow(false)}>{t("btnCancel")}</Button>
-                      </div>
-                    </td>
-                    <td />
-                  </tr>
+                      </td>
+                    </tr>
+                    {/* Fields row */}
+                    <tr className="bg-green-50 dark:bg-green-900/10">
+                      <td className="px-2 py-1.5">
+                        <div className="flex flex-col gap-1">
+                          {addMode === "toGroup" && (
+                            <select title={t("hintFieldGroup")} value={newRow.parentId} onChange={e => setNewRow(d => ({ ...d, parentId: e.target.value }))} className="h-8 rounded-md border border-input bg-background px-2 text-sm w-full">
+                              <option value="">{t("selectGroup")}</option>
+                              {parentGroups.map((g: BudgetLine) => (
+                                <option key={g.id} value={g.id}>{g.category}</option>
+                              ))}
+                            </select>
+                          )}
+                          <Input placeholder={addMode === "newGroup" ? t("newGroupName") : t("placeholderCategoryShort")} className="h-8 text-sm" value={newRow.category} onChange={e => setNewRow(d => ({ ...d, category: e.target.value }))} autoFocus
+                            onKeyDown={e => { if (e.key === "Enter") handleAddRow(); if (e.key === "Escape") setAddingRow(false) }} />
+                        </div>
+                      </td>
+                      {addMode !== "newGroup" ? (
+                        <>
+                          <td className="px-2 py-1.5"><Input placeholder={t("colDepartment")} className="h-8 text-sm" value={newRow.department ?? ""} onChange={e => setNewRow(d => ({ ...d, department: e.target.value }))} /></td>
+                          <td className="px-2 py-1.5"><Input title={t("hintFieldAmount")} type="number" placeholder="0" className="h-8 text-sm text-right" value={newRow.plannedAmount} onChange={e => setNewRow(d => ({ ...d, plannedAmount: e.target.value }))} /></td>
+                        </>
+                      ) : (
+                        <td colSpan={2} className="px-2 py-1.5 text-xs text-muted-foreground align-middle">
+                          Группа создаётся с суммой 0 — добавляйте подкатегории через «+» на заголовке
+                        </td>
+                      )}
+                      <td />
+                      <td className="px-2 py-1.5 text-center">
+                        <div className="flex gap-1 justify-center">
+                          <Button size="sm" variant="default" className="h-8 text-xs" onClick={handleAddRow}><CheckCircle className="h-3.5 w-3.5 mr-1" /> {t("btnSave")}</Button>
+                          <Button size="sm" variant="ghost" className="h-8 text-xs" onClick={() => { setAddingRow(false); setAddMode("line") }}>{t("btnCancel")}</Button>
+                        </div>
+                      </td>
+                      <td />
+                    </tr>
+                  </>
                 ) : (
                   <tr className="border-t border-dashed border-border/30">
                     <td colSpan={6} className="px-3 py-2">
