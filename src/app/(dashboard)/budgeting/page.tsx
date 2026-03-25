@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useMemo } from "react"
+import { useTranslations } from "next-intl"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ColorStatCard } from "@/components/color-stat-card"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -55,15 +56,15 @@ function fmt(n: number): string {
   return Math.round(n).toLocaleString() + " ₼"
 }
 
-function statusBadge(status: string) {
-  if (status === "approved") return <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">Утверждён</Badge>
-  if (status === "closed") return <Badge className="bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400">Закрыт</Badge>
-  return <Badge className="bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400">Черновик</Badge>
+function statusBadge(status: string, t: (key: string) => string) {
+  if (status === "approved") return <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">{t("statusApproved")}</Badge>
+  if (status === "closed") return <Badge className="bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400">{t("statusClosed")}</Badge>
+  return <Badge className="bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400">{t("statusDraft")}</Badge>
 }
 
-function periodLabel(plan: any): string {
+function periodLabel(plan: any, t: (key: string) => string): string {
   if (plan.periodType === "monthly" && plan.month) {
-    const months = ["Янв", "Фев", "Мар", "Апр", "Май", "Июн", "Июл", "Авг", "Сен", "Окт", "Ноя", "Дек"]
+    const months = t("monthsShort").split(",")
     return `${months[plan.month - 1]} ${plan.year}`
   }
   if (plan.periodType === "quarterly" && plan.quarter) return `Q${plan.quarter} ${plan.year}`
@@ -73,6 +74,7 @@ function periodLabel(plan: any): string {
 // ─── Create Plan Dialog ───────────────────────────────────────────────────────
 
 function CreatePlanDialog({ onClose }: { onClose: () => void }) {
+  const t = useTranslations("budgeting")
   const create = useCreateBudgetPlan()
   const [name, setName] = useState("")
   const [periodType, setPeriodType] = useState<"monthly" | "quarterly" | "annual">("monthly")
@@ -96,33 +98,33 @@ function CreatePlanDialog({ onClose }: { onClose: () => void }) {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle>Создать бюджетный план</CardTitle>
+          <CardTitle>{t("dlgCreateTitle")}</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="text-sm font-medium mb-1 block">Название</label>
-              <Input value={name} onChange={e => setName(e.target.value)} placeholder="Апрель 2026" required />
+              <label className="text-sm font-medium mb-1 block">{t("dlgName")}</label>
+              <Input value={name} onChange={e => setName(e.target.value)} placeholder={t("dlgNamePlaceholder")} required />
             </div>
             <div>
-              <label className="text-sm font-medium mb-1 block">Тип периода</label>
+              <label className="text-sm font-medium mb-1 block">{t("dlgPeriodType")}</label>
               <select value={periodType} onChange={e => setPeriodType(e.target.value as any)}
                 className="w-full border border-border rounded-md px-3 py-2 text-sm bg-background">
-                <option value="monthly">Месячный</option>
-                <option value="quarterly">Квартальный</option>
-                <option value="annual">Годовой</option>
+                <option value="monthly">{t("periodMonthly")}</option>
+                <option value="quarterly">{t("periodQuarterly")}</option>
+                <option value="annual">{t("periodAnnual")}</option>
               </select>
             </div>
             <div>
-              <label className="text-sm font-medium mb-1 block">Год</label>
+              <label className="text-sm font-medium mb-1 block">{t("dlgYear")}</label>
               <Input type="number" value={year} onChange={e => setYear(Number(e.target.value))} min={2020} max={2030} required />
             </div>
             {periodType === "monthly" && (
               <div>
-                <label className="text-sm font-medium mb-1 block">Месяц</label>
+                <label className="text-sm font-medium mb-1 block">{t("dlgMonth")}</label>
                 <select value={month} onChange={e => setMonth(Number(e.target.value))}
                   className="w-full border border-border rounded-md px-3 py-2 text-sm bg-background">
-                  {["Январь","Февраль","Март","Апрель","Май","Июнь","Июль","Август","Сентябрь","Октябрь","Ноябрь","Декабрь"].map((m, i) => (
+                  {t("monthsFull").split(",").map((m, i) => (
                     <option key={i} value={i + 1}>{m}</option>
                   ))}
                 </select>
@@ -130,7 +132,7 @@ function CreatePlanDialog({ onClose }: { onClose: () => void }) {
             )}
             {periodType === "quarterly" && (
               <div>
-                <label className="text-sm font-medium mb-1 block">Квартал</label>
+                <label className="text-sm font-medium mb-1 block">{t("dlgQuarter")}</label>
                 <select value={quarter} onChange={e => setQuarter(Number(e.target.value))}
                   className="w-full border border-border rounded-md px-3 py-2 text-sm bg-background">
                   <option value={1}>Q1</option>
@@ -142,9 +144,9 @@ function CreatePlanDialog({ onClose }: { onClose: () => void }) {
             )}
             <div className="flex gap-2 pt-2">
               <Button type="submit" disabled={create.isPending} className="flex-1">
-                {create.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Создать"}
+                {create.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : t("btnCreate")}
               </Button>
-              <Button type="button" variant="outline" onClick={onClose} className="flex-1">Отмена</Button>
+              <Button type="button" variant="outline" onClick={onClose} className="flex-1">{t("btnCancel")}</Button>
             </div>
           </form>
         </CardContent>
@@ -156,6 +158,7 @@ function CreatePlanDialog({ onClose }: { onClose: () => void }) {
 // ─── Add Line Form ─────────────────────────────────────────────────────────────
 
 function AddLineForm({ planId, existingCategories }: { planId: string; existingCategories: string[] }) {
+  const t = useTranslations("budgeting")
   const create = useCreateBudgetLine()
   const [category, setCategory] = useState("")
   const [department, setDepartment] = useState("")
@@ -192,7 +195,7 @@ function AddLineForm({ planId, existingCategories }: { planId: string; existingC
 
   if (!show) return (
     <Button size="sm" onClick={() => setShow(true)} className="mb-4">
-      <Plus className="h-4 w-4 mr-1" /> Добавить статью
+      <Plus className="h-4 w-4 mr-1" /> {t("btnAddLine")}
     </Button>
   )
 
@@ -204,60 +207,60 @@ function AddLineForm({ planId, existingCategories }: { planId: string; existingC
             {allCategories.map(c => <option key={c} value={c} />)}
           </datalist>
           <div>
-            <label className="text-xs font-medium mb-1 block">Категория</label>
+            <label className="text-xs font-medium mb-1 block">{t("fieldCategory")}</label>
             <Input list="categories-list" value={category} onChange={e => setCategory(e.target.value)}
-              placeholder="Введите или выберите..." required />
+              placeholder={t("placeholderCategory")} required />
           </div>
           <div>
-            <label className="text-xs font-medium mb-1 block">Департамент</label>
+            <label className="text-xs font-medium mb-1 block">{t("fieldDepartment")}</label>
             <select value={department} onChange={e => setDepartment(e.target.value)}
               className="w-full border border-border rounded-md px-3 py-2 text-sm bg-background">
-              <option value="">— Все —</option>
+              <option value="">{t("optAll")}</option>
               {DEPARTMENTS.map(d => <option key={d} value={d}>{d}</option>)}
-              <option value="__custom__">Другой...</option>
+              <option value="__custom__">{t("optOther")}</option>
             </select>
             {department === "__custom__" && (
               <Input className="mt-1" value={customDept} onChange={e => setCustomDept(e.target.value)}
-                placeholder="Название департамента" />
+                placeholder={t("placeholderDepartment")} />
             )}
           </div>
           <div>
-            <label className="text-xs font-medium mb-1 block">Тип</label>
+            <label className="text-xs font-medium mb-1 block">{t("fieldType")}</label>
             <select value={lineType} onChange={e => setLineType(e.target.value as any)}
               className="w-full border border-border rounded-md px-3 py-2 text-sm bg-background">
-              <option value="expense">Расход</option>
-              <option value="revenue">Доход</option>
+              <option value="expense">{t("expense")}</option>
+              <option value="revenue">{t("revenue")}</option>
             </select>
           </div>
           <div>
-            <label className="text-xs font-medium mb-1 block">Плановая сумма (₼)</label>
+            <label className="text-xs font-medium mb-1 block">{t("fieldPlannedAmount")} (₼)</label>
             <Input type="number" value={amount} onChange={e => setAmount(e.target.value)} min={0} step={0.01} required />
           </div>
           <div>
-            <label className="text-xs font-medium mb-1 block">Прогноз (₼)</label>
-            <Input type="number" value={forecastAmount} onChange={e => setForecastAmount(e.target.value)} min={0} step={0.01} placeholder="= план если пусто" />
+            <label className="text-xs font-medium mb-1 block">{t("fieldForecastAmount")} (₼)</label>
+            <Input type="number" value={forecastAmount} onChange={e => setForecastAmount(e.target.value)} min={0} step={0.01} placeholder={t("placeholderForecast")} />
           </div>
           <div className="sm:col-span-2">
             <label className="text-xs font-medium mb-1 block flex items-center gap-1">
-              <Link2 className="h-3 w-3" /> Привязка к cost model
+              <Link2 className="h-3 w-3" /> {t("fieldCostModelKey")}
             </label>
             <select value={costModelKey} onChange={e => setCostModelKey(e.target.value)}
               className="w-full border border-border rounded-md px-3 py-2 text-sm bg-background">
-              <option value="">— Ручной ввод факта —</option>
+              <option value="">{t("optManualActual")}</option>
               {COST_MODEL_KEY_OPTIONS.map(o => (
                 <option key={o.value} value={o.value}>[{o.group}] {o.label}</option>
               ))}
             </select>
           </div>
           <div>
-            <label className="text-xs font-medium mb-1 block">Заметки</label>
-            <Input value={notes} onChange={e => setNotes(e.target.value)} placeholder="Необязательно" />
+            <label className="text-xs font-medium mb-1 block">{t("fieldNotes")}</label>
+            <Input value={notes} onChange={e => setNotes(e.target.value)} placeholder={t("placeholderNotes")} />
           </div>
           <div className="flex items-end gap-2">
             <Button type="submit" disabled={create.isPending} size="sm">
-              {create.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Добавить"}
+              {create.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : t("btnAdd")}
             </Button>
-            <Button type="button" variant="outline" size="sm" onClick={() => setShow(false)}>Отмена</Button>
+            <Button type="button" variant="outline" size="sm" onClick={() => setShow(false)}>{t("btnCancel")}</Button>
           </div>
         </form>
       </CardContent>
@@ -268,6 +271,7 @@ function AddLineForm({ planId, existingCategories }: { planId: string; existingC
 // ─── Add Actual Form ───────────────────────────────────────────────────────────
 
 function AddActualForm({ planId, existingCategories }: { planId: string; existingCategories: string[] }) {
+  const t = useTranslations("budgeting")
   const create = useCreateBudgetActual()
   const [category, setCategory] = useState("")
   const [department, setDepartment] = useState("")
@@ -301,7 +305,7 @@ function AddActualForm({ planId, existingCategories }: { planId: string; existin
 
   if (!show) return (
     <Button size="sm" onClick={() => setShow(true)} className="mb-4">
-      <Plus className="h-4 w-4 mr-1" /> Добавить факт
+      <Plus className="h-4 w-4 mr-1" /> {t("btnAddActual")}
     </Button>
   )
 
@@ -313,48 +317,48 @@ function AddActualForm({ planId, existingCategories }: { planId: string; existin
             {allCategories.map(c => <option key={c} value={c} />)}
           </datalist>
           <div>
-            <label className="text-xs font-medium mb-1 block">Категория</label>
+            <label className="text-xs font-medium mb-1 block">{t("fieldCategory")}</label>
             <Input list="actuals-categories-list" value={category} onChange={e => setCategory(e.target.value)}
-              placeholder="Введите или выберите..." required />
+              placeholder={t("placeholderCategory")} required />
           </div>
           <div>
-            <label className="text-xs font-medium mb-1 block">Департамент</label>
+            <label className="text-xs font-medium mb-1 block">{t("fieldDepartment")}</label>
             <select value={department} onChange={e => setDepartment(e.target.value)}
               className="w-full border border-border rounded-md px-3 py-2 text-sm bg-background">
-              <option value="">— Все —</option>
+              <option value="">{t("optAll")}</option>
               {DEPARTMENTS.map(d => <option key={d} value={d}>{d}</option>)}
-              <option value="__custom__">Другой...</option>
+              <option value="__custom__">{t("optOther")}</option>
             </select>
             {department === "__custom__" && (
               <Input className="mt-1" value={customDept} onChange={e => setCustomDept(e.target.value)}
-                placeholder="Название департамента" />
+                placeholder={t("placeholderDepartment")} />
             )}
           </div>
           <div>
-            <label className="text-xs font-medium mb-1 block">Тип</label>
+            <label className="text-xs font-medium mb-1 block">{t("fieldType")}</label>
             <select value={lineType} onChange={e => setLineType(e.target.value as any)}
               className="w-full border border-border rounded-md px-3 py-2 text-sm bg-background">
-              <option value="expense">Расход</option>
-              <option value="revenue">Доход</option>
+              <option value="expense">{t("expense")}</option>
+              <option value="revenue">{t("revenue")}</option>
             </select>
           </div>
           <div>
-            <label className="text-xs font-medium mb-1 block">Фактическая сумма (₼)</label>
+            <label className="text-xs font-medium mb-1 block">{t("fieldActualAmount")} (₼)</label>
             <Input type="number" value={amount} onChange={e => setAmount(e.target.value)} min={0} step={0.01} required />
           </div>
           <div>
-            <label className="text-xs font-medium mb-1 block">Дата</label>
+            <label className="text-xs font-medium mb-1 block">{t("fieldDate")}</label>
             <Input type="date" value={expenseDate} onChange={e => setExpenseDate(e.target.value)} />
           </div>
           <div>
-            <label className="text-xs font-medium mb-1 block">Описание</label>
-            <Input value={description} onChange={e => setDescription(e.target.value)} placeholder="Необязательно" />
+            <label className="text-xs font-medium mb-1 block">{t("fieldDescription")}</label>
+            <Input value={description} onChange={e => setDescription(e.target.value)} placeholder={t("placeholderDescription")} />
           </div>
           <div className="flex items-end gap-2">
             <Button type="submit" disabled={create.isPending} size="sm">
-              {create.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Добавить"}
+              {create.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : t("btnAdd")}
             </Button>
-            <Button type="button" variant="outline" size="sm" onClick={() => setShow(false)}>Отмена</Button>
+            <Button type="button" variant="outline" size="sm" onClick={() => setShow(false)}>{t("btnCancel")}</Button>
           </div>
         </form>
       </CardContent>
@@ -365,6 +369,7 @@ function AddActualForm({ planId, existingCategories }: { planId: string; existin
 // ─── Workspace Tab (G-01 through G-09) ───────────────────────────────────────
 
 function WorkspaceTab({ planId }: { planId: string }) {
+  const t = useTranslations("budgeting")
   const { data: analytics, isLoading: analyticsLoading } = useBudgetAnalytics(planId)
   const { data: lines = [], isLoading: linesLoading } = useBudgetLines(planId)
   const { data: actuals = [] } = useBudgetActuals(planId)
@@ -487,7 +492,7 @@ function WorkspaceTab({ planId }: { planId: string }) {
       const result = await aiNarrative.mutateAsync({ planId })
       setNarrative(result.narrative)
     } catch {
-      setNarrative("Ошибка генерации. Проверьте ANTHROPIC_API_KEY.")
+      setNarrative(t("errorAiGeneration"))
     }
   }
 
@@ -495,8 +500,8 @@ function WorkspaceTab({ planId }: { planId: string }) {
   const handleSync = async () => {
     try {
       const result = await syncActuals.mutateAsync(planId)
-      alert(`Обновлено ${result.synced} записей`)
-    } catch { alert("Ошибка синхронизации") }
+      alert(t("msgSynced", { count: result.synced }))
+    } catch { alert(t("errorSync")) }
   }
 
   if (analyticsLoading || linesLoading) return (
@@ -549,9 +554,9 @@ function WorkspaceTab({ planId }: { planId: string }) {
         <td className="px-2 py-2 text-right">
           <div className="flex items-center justify-end gap-1">
             {line.isAutoActual ? (
-              <span className="font-mono text-sm text-blue-600 dark:text-blue-400" title="Из cost model">
+              <span className="font-mono text-sm text-blue-600 dark:text-blue-400" title={t("badgeAutoTooltip")}>
                 {fmt(factValue)}
-                <Badge className="ml-1 text-[9px] bg-blue-100 text-blue-700 dark:bg-blue-900/30 px-1">авто</Badge>
+                <Badge className="ml-1 text-[9px] bg-blue-100 text-blue-700 dark:bg-blue-900/30 px-1">{t("badgeAuto")}</Badge>
               </span>
             ) : (
               <span className="font-mono text-sm text-green-600 dark:text-green-400 cursor-pointer hover:bg-green-50 dark:hover:bg-green-900/20 px-1 rounded"
@@ -568,7 +573,7 @@ function WorkspaceTab({ planId }: { planId: string }) {
         </td>
         {/* Actions */}
         <td className="px-2 py-2 text-center">
-          <button onClick={() => { if (confirm("Удалить строку «" + line.category + "» и все связанные факты?")) deleteLine.mutate({ id: line.id, planId }) }}
+          <button onClick={() => { if (confirm(t("confirmDeleteLine") + " «" + line.category + "» " + t("confirmDeleteLineSuffix"))) deleteLine.mutate({ id: line.id, planId }) }}
             className="p-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20 text-muted-foreground hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity">
             <Trash2 className="h-3.5 w-3.5" />
           </button>
@@ -585,8 +590,8 @@ function WorkspaceTab({ planId }: { planId: string }) {
       <tr key={`expand-${line.id}`} className="bg-muted/20">
         <td colSpan={7} className="px-4 py-2">
           <div className="text-xs space-y-1">
-            <div className="font-medium text-muted-foreground mb-1">Фактические записи для «{line.category}»:</div>
-            {items.length === 0 && <div className="text-muted-foreground italic">Нет записей</div>}
+            <div className="font-medium text-muted-foreground mb-1">{t("actualRecordsFor")} «{line.category}»:</div>
+            {items.length === 0 && <div className="text-muted-foreground italic">{t("emptyNoRecords")}</div>}
             {items.map(a => (
               <div key={a.id} className="flex items-center gap-3 py-0.5">
                 <span className="font-mono">{fmt(a.actualAmount)}</span>
@@ -597,15 +602,15 @@ function WorkspaceTab({ planId }: { planId: string }) {
               </div>
             ))}
             <div className="flex items-center gap-2 pt-1 border-t border-border/50">
-              <Input type="number" placeholder="Сумма" className="h-6 w-20 text-xs" value={newActual.amount}
+              <Input type="number" placeholder={t("colAmount")} className="h-6 w-20 text-xs" value={newActual.amount}
                 onChange={e => setNewActual(d => ({ ...d, amount: e.target.value }))} />
-              <Input placeholder="Описание" className="h-6 flex-1 text-xs" value={newActual.description}
+              <Input placeholder={t("colDescription")} className="h-6 flex-1 text-xs" value={newActual.description}
                 onChange={e => setNewActual(d => ({ ...d, description: e.target.value }))} />
               <Input type="date" className="h-6 w-32 text-xs" value={newActual.date}
                 onChange={e => setNewActual(d => ({ ...d, date: e.target.value }))} />
               <Button size="sm" variant="ghost" className="h-6 text-xs px-2"
                 onClick={() => handleAddActual(line.category, line.lineType)}>
-                <Plus className="h-3 w-3 mr-1" /> Добавить
+                <Plus className="h-3 w-3 mr-1" /> {t("btnAdd")}
               </Button>
             </div>
           </div>
@@ -627,7 +632,7 @@ function WorkspaceTab({ planId }: { planId: string }) {
         </tr>
         {sectionLines.map(l => [renderRow(l), renderExpand(l)])}
         <tr className="border-t-2 border-border bg-muted/30">
-          <td className="px-3 py-1.5 font-bold text-xs" colSpan={2}>Итого {title.toLowerCase()}</td>
+          <td className="px-3 py-1.5 font-bold text-xs" colSpan={2}>{t("totalLabel")} {title.toLowerCase()}</td>
           <td className="px-2 py-1.5 text-right font-mono text-xs font-bold">{fmt(totPlanned)}</td>
           <td className="px-2 py-1.5 text-right font-mono text-xs font-bold text-purple-600">{fmt(totForecast)}</td>
           <td className="px-2 py-1.5 text-right font-mono text-xs font-bold text-green-600">{fmt(totActual)}</td>
@@ -640,10 +645,12 @@ function WorkspaceTab({ planId }: { planId: string }) {
     )
   }
 
+  const planLabel = t("colPlan")
+  const actualLabel = t("colActual")
   const barData = byCategory.slice(0, 10).map((c: any) => ({
     name: c.category.length > 16 ? c.category.slice(0, 16) + "…" : c.category,
-    "План": Math.round(c.planned),
-    "Факт": Math.round(c.actual),
+    [planLabel]: Math.round(c.planned),
+    [actualLabel]: Math.round(c.actual),
   }))
 
   const pieData = byCategory
@@ -661,34 +668,34 @@ function WorkspaceTab({ planId }: { planId: string }) {
     <div className="space-y-6">
       {/* KPI Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
-        <ColorStatCard label="ПЛАН" value={fmt(totalPlanned)} icon={<BarChart2 className="h-5 w-5" />} color="blue" />
-        <ColorStatCard label="ПРОГНОЗ" value={fmt(totalForecast)} icon={<TrendingUp className="h-5 w-5" />} color="violet" />
-        <ColorStatCard label={autoActualTotal > 0 ? "ФАКТ (авто)" : "ФАКТ"} value={fmt(totalActual)} icon={<DollarSign className="h-5 w-5" />} color="green" />
-        <ColorStatCard label="ОТКЛОНЕНИЕ" value={(totalVariance >= 0 ? "+" : "") + fmt(totalVariance)} icon={totalVariance >= 0 ? <TrendingUp className="h-5 w-5" /> : <TrendingDown className="h-5 w-5" />} color={totalVariance >= 0 ? "teal" : "red"} />
-        <ColorStatCard label="ИСПОЛНЕНИЕ" value={`${execEmoji} ${Math.round(executionPct)}%`} icon={<CheckCircle className="h-5 w-5" />} color={executionPct >= 90 ? "green" : executionPct >= 60 ? "amber" : "red"} />
+        <ColorStatCard label={t("kpiPlan")} value={fmt(totalPlanned)} icon={<BarChart2 className="h-5 w-5" />} color="blue" />
+        <ColorStatCard label={t("kpiForecast")} value={fmt(totalForecast)} icon={<TrendingUp className="h-5 w-5" />} color="violet" />
+        <ColorStatCard label={autoActualTotal > 0 ? t("kpiActualAuto") : t("kpiActual")} value={fmt(totalActual)} icon={<DollarSign className="h-5 w-5" />} color="green" />
+        <ColorStatCard label={t("kpiVariance")} value={(totalVariance >= 0 ? "+" : "") + fmt(totalVariance)} icon={totalVariance >= 0 ? <TrendingUp className="h-5 w-5" /> : <TrendingDown className="h-5 w-5" />} color={totalVariance >= 0 ? "teal" : "red"} />
+        <ColorStatCard label={t("kpiExecution")} value={`${execEmoji} ${Math.round(executionPct)}%`} icon={<CheckCircle className="h-5 w-5" />} color={executionPct >= 90 ? "green" : executionPct >= 60 ? "amber" : "red"} />
       </div>
 
       {/* Actions */}
       <div className="flex flex-wrap items-center gap-2">
         <Button size="sm" variant="outline" onClick={handleAINarrative} disabled={aiNarrative.isPending}>
           {aiNarrative.isPending ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <AlertCircle className="h-4 w-4 mr-1" />}
-          AI-анализ
+          {t("btnAiAnalysis")}
         </Button>
         {autoActualTotal > 0 && (
           <Button size="sm" variant="outline" onClick={handleSync} disabled={syncActuals.isPending}>
             {syncActuals.isPending ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Link2 className="h-4 w-4 mr-1" />}
-            Обновить факт
+            {t("btnUpdateActual")}
           </Button>
         )}
         <a href={`/api/budgeting/export?planId=${planId}`} download>
-          <Button size="sm" variant="outline"><DollarSign className="h-4 w-4 mr-1" /> Excel</Button>
+          <Button size="sm" variant="outline"><DollarSign className="h-4 w-4 mr-1" /> {t("btnExport")}</Button>
         </a>
         <div className="flex-1" />
-        <Input placeholder="Поиск категории..." value={filterText} onChange={e => setFilterText(e.target.value)} className="h-8 w-48 text-xs" />
+        <Input placeholder={t("searchCategory")} value={filterText} onChange={e => setFilterText(e.target.value)} className="h-8 w-48 text-xs" />
         <select value={filterType} onChange={e => setFilterType(e.target.value as any)} className="h-8 rounded-md border border-input bg-background px-2 text-xs">
-          <option value="all">Все</option>
-          <option value="expense">Расходы</option>
-          <option value="revenue">Доходы</option>
+          <option value="all">{t("filterAll")}</option>
+          <option value="expense">{t("filterExpenses")}</option>
+          <option value="revenue">{t("filterRevenues")}</option>
         </select>
       </div>
 
@@ -697,13 +704,13 @@ function WorkspaceTab({ planId }: { planId: string }) {
         <Card className="border-purple-200 dark:border-purple-800">
           <CardHeader className="pb-2">
             <div className="flex justify-between items-center">
-              <CardTitle className="text-sm flex items-center gap-2"><AlertCircle className="h-4 w-4 text-purple-600" /> AI-анализ отклонений</CardTitle>
+              <CardTitle className="text-sm flex items-center gap-2"><AlertCircle className="h-4 w-4 text-purple-600" /> {t("aiAnalysisTitle")}</CardTitle>
               <Button size="sm" variant="ghost" onClick={() => { setShowNarrative(false); setNarrative(null) }}>✕</Button>
             </div>
           </CardHeader>
           <CardContent>
             {narrative ? <div className="text-sm whitespace-pre-wrap leading-relaxed">{narrative}</div>
-              : <div className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /> Генерация...</div>}
+              : <div className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /> {t("generating")}</div>}
           </CardContent>
         </Card>
       )}
@@ -715,23 +722,23 @@ function WorkspaceTab({ planId }: { planId: string }) {
             <table className="w-full text-sm">
               <thead className="bg-muted/50 sticky top-0">
                 <tr>
-                  <th className="px-3 py-2 text-left font-medium text-xs">Категория</th>
-                  <th className="px-2 py-2 text-left font-medium text-xs">Департамент</th>
-                  <th className="px-2 py-2 text-right font-medium text-xs">План ₼</th>
-                  <th className="px-2 py-2 text-right font-medium text-xs text-purple-600">Прогноз ₼</th>
-                  <th className="px-2 py-2 text-right font-medium text-xs text-green-600">Факт ₼</th>
-                  <th className="px-2 py-2 text-right font-medium text-xs">Откл %</th>
+                  <th className="px-3 py-2 text-left font-medium text-xs">{t("colCategory")}</th>
+                  <th className="px-2 py-2 text-left font-medium text-xs">{t("colDepartment")}</th>
+                  <th className="px-2 py-2 text-right font-medium text-xs">{t("colPlan")} ₼</th>
+                  <th className="px-2 py-2 text-right font-medium text-xs text-purple-600">{t("colForecast")} ₼</th>
+                  <th className="px-2 py-2 text-right font-medium text-xs text-green-600">{t("colActual")} ₼</th>
+                  <th className="px-2 py-2 text-right font-medium text-xs">{t("colVariancePct")}</th>
                   <th className="px-2 py-2 w-10" />
                 </tr>
               </thead>
               <tbody>
-                {expenseLines.length > 0 && renderSection("Расходы", expenseLines, totExpPlanned, totExpForecast)}
-                {revenueLines.length > 0 && renderSection("Доходы", revenueLines, totRevPlanned, totRevForecast)}
+                {expenseLines.length > 0 && renderSection(t("sectionExpenses"), expenseLines, totExpPlanned, totExpForecast)}
+                {revenueLines.length > 0 && renderSection(t("sectionRevenues"), revenueLines, totRevPlanned, totRevForecast)}
 
                 {/* Margin row */}
                 {(expenseLines.length > 0 || revenueLines.length > 0) && (
                   <tr className="border-t-2 border-purple-300 dark:border-purple-800 bg-purple-50 dark:bg-purple-900/10">
-                    <td className="px-3 py-2 font-bold text-sm" colSpan={2}>МАРЖА (Доходы − Расходы)</td>
+                    <td className="px-3 py-2 font-bold text-sm" colSpan={2}>{t("sectionMargin")}</td>
                     <td className="px-2 py-2 text-right font-mono text-sm font-bold">{fmt(totRevPlanned - totExpPlanned)}</td>
                     <td className="px-2 py-2 text-right font-mono text-sm font-bold text-purple-600">{fmt(totRevForecast - totExpForecast)}</td>
                     <td className="px-2 py-2 text-right font-mono text-sm font-bold text-green-600">{fmt(totRevActual - totExpActual)}</td>
@@ -742,19 +749,19 @@ function WorkspaceTab({ planId }: { planId: string }) {
                 {/* Add new row */}
                 {addingRow ? (
                   <tr className="border-t border-border/50 bg-green-50 dark:bg-green-900/10">
-                    <td className="px-2 py-1"><Input placeholder="Категория..." className="h-7 text-xs" value={newRow.category} onChange={e => setNewRow(d => ({ ...d, category: e.target.value }))} autoFocus /></td>
+                    <td className="px-2 py-1"><Input placeholder={t("placeholderCategoryShort")} className="h-7 text-xs" value={newRow.category} onChange={e => setNewRow(d => ({ ...d, category: e.target.value }))} autoFocus /></td>
                     <td className="px-2 py-1">
                       <select value={newRow.lineType} onChange={e => setNewRow(d => ({ ...d, lineType: e.target.value }))} className="h-7 rounded-md border border-input bg-background px-1 text-xs w-full">
-                        <option value="expense">Расход</option>
-                        <option value="revenue">Доход</option>
+                        <option value="expense">{t("expense")}</option>
+                        <option value="revenue">{t("revenue")}</option>
                       </select>
                     </td>
                     <td className="px-2 py-1"><Input type="number" placeholder="0" className="h-7 text-xs text-right" value={newRow.plannedAmount} onChange={e => setNewRow(d => ({ ...d, plannedAmount: e.target.value }))} /></td>
-                    <td className="px-2 py-1"><Input type="number" placeholder="= план" className="h-7 text-xs text-right" value={newRow.forecastAmount} onChange={e => setNewRow(d => ({ ...d, forecastAmount: e.target.value }))} /></td>
+                    <td className="px-2 py-1"><Input type="number" placeholder={t("placeholderForecastShort")} className="h-7 text-xs text-right" value={newRow.forecastAmount} onChange={e => setNewRow(d => ({ ...d, forecastAmount: e.target.value }))} /></td>
                     <td colSpan={2} className="px-2 py-1 text-center">
                       <div className="flex gap-1 justify-center">
-                        <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={handleAddRow}><CheckCircle className="h-3.5 w-3.5 mr-1" /> Сохранить</Button>
-                        <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setAddingRow(false)}>Отмена</Button>
+                        <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={handleAddRow}><CheckCircle className="h-3.5 w-3.5 mr-1" /> {t("btnSave")}</Button>
+                        <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setAddingRow(false)}>{t("btnCancel")}</Button>
                       </div>
                     </td>
                     <td />
@@ -763,7 +770,7 @@ function WorkspaceTab({ planId }: { planId: string }) {
                   <tr className="border-t border-dashed border-border/30">
                     <td colSpan={7} className="px-3 py-2">
                       <button onClick={() => setAddingRow(true)} className="text-xs text-purple-600 dark:text-purple-400 hover:underline flex items-center gap-1">
-                        <Plus className="h-3.5 w-3.5" /> Добавить строку
+                        <Plus className="h-3.5 w-3.5" /> {t("btnAddRow")}
                       </button>
                     </td>
                   </tr>
@@ -773,7 +780,7 @@ function WorkspaceTab({ planId }: { planId: string }) {
                 {lines.length === 0 && !addingRow && (
                   <tr>
                     <td colSpan={7} className="text-center py-12 text-muted-foreground">
-                      Нет бюджетных статей. Нажмите «Добавить строку» или «Заполнить шаблоном».
+                      {t("emptyNoLines")}
                     </td>
                   </tr>
                 )}
@@ -787,7 +794,7 @@ function WorkspaceTab({ planId }: { planId: string }) {
       {barData.length > 0 && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card>
-            <CardHeader><CardTitle className="text-sm">План vs Факт</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="text-sm">{t("chartPlanVsActual")}</CardTitle></CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={280}>
                 <BarChart data={barData} layout="vertical" margin={{ left: 10, right: 10 }}>
@@ -795,14 +802,14 @@ function WorkspaceTab({ planId }: { planId: string }) {
                   <YAxis type="category" dataKey="name" tick={{ fontSize: 10 }} width={120} />
                   <Tooltip formatter={(v: any) => fmt(v)} />
                   <Legend />
-                  <Bar dataKey="План" fill="#ef4444" radius={[0, 3, 3, 0]} />
-                  <Bar dataKey="Факт" fill="#10b981" radius={[0, 3, 3, 0]} />
+                  <Bar dataKey={planLabel} fill="#ef4444" radius={[0, 3, 3, 0]} />
+                  <Bar dataKey={actualLabel} fill="#10b981" radius={[0, 3, 3, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
           </Card>
           <Card>
-            <CardHeader><CardTitle className="text-sm">Структура бюджета</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="text-sm">{t("chartBudgetStructure")}</CardTitle></CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={280}>
                 <PieChart>
@@ -824,6 +831,7 @@ function WorkspaceTab({ planId }: { planId: string }) {
 // ─── Overview Tab ─────────────────────────────────────────────────────────────
 
 function OverviewTab({ planId }: { planId: string }) {
+  const t = useTranslations("budgeting")
   const { data: analytics, isLoading, error } = useBudgetAnalytics(planId)
   const aiNarrative = useAINarrative()
   const syncActuals = useSyncActuals()
@@ -836,7 +844,7 @@ function OverviewTab({ planId }: { planId: string }) {
     </div>
   )
   if (error || !analytics) return (
-    <div className="text-center py-20 text-muted-foreground">Ошибка загрузки аналитики</div>
+    <div className="text-center py-20 text-muted-foreground">{t("errorLoading")}</div>
   )
 
   const { totalPlanned, totalForecast, totalActual, totalVariance, executionPct, yearEndProjection, byCategory, byDepartment, autoActualTotal } = analytics
@@ -849,24 +857,27 @@ function OverviewTab({ planId }: { planId: string }) {
       const result = await aiNarrative.mutateAsync({ planId })
       setNarrative(result.narrative)
     } catch {
-      setNarrative("Ошибка генерации нарратива. Проверьте ANTHROPIC_API_KEY.")
+      setNarrative(t("errorAiGenerationNarrative"))
     }
   }
 
   const handleSyncActuals = async () => {
     try {
       const result = await syncActuals.mutateAsync(planId)
-      alert(`Обновлено ${result.synced} записей из cost model`)
+      alert(t("msgSyncedCostModel", { count: result.synced }))
     } catch {
-      alert("Ошибка синхронизации с cost model")
+      alert(t("errorSyncCostModel"))
     }
   }
 
+  const ovPlanLabel = t("colPlan")
+  const ovForecastLabel = t("colForecast")
+  const ovActualLabel = t("colActual")
   const barData = byCategory.slice(0, 12).map(c => ({
     name: c.category.length > 18 ? c.category.slice(0, 18) + "…" : c.category,
-    "План": Math.round(c.planned),
-    "Прогноз": Math.round(c.forecast),
-    "Факт": Math.round(c.actual),
+    [ovPlanLabel]: Math.round(c.planned),
+    [ovForecastLabel]: Math.round(c.forecast),
+    [ovActualLabel]: Math.round(c.actual),
   }))
 
   const pieData = byCategory
@@ -879,22 +890,22 @@ function OverviewTab({ planId }: { planId: string }) {
     <div className="space-y-6">
       {/* 5 KPI Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-        <ColorStatCard label="ПЛАН" value={fmt(totalPlanned)} icon={<BarChart2 className="h-5 w-5" />} color="blue" />
-        <ColorStatCard label="ПРОГНОЗ" value={fmt(totalForecast)} icon={<TrendingUp className="h-5 w-5" />} color="violet" />
+        <ColorStatCard label={t("kpiPlan")} value={fmt(totalPlanned)} icon={<BarChart2 className="h-5 w-5" />} color="blue" />
+        <ColorStatCard label={t("kpiForecast")} value={fmt(totalForecast)} icon={<TrendingUp className="h-5 w-5" />} color="violet" />
         <ColorStatCard
-          label={autoActualTotal > 0 ? "ФАКТ (cost model)" : "ФАКТ"}
+          label={autoActualTotal > 0 ? t("kpiActualCostModel") : t("kpiActual")}
           value={fmt(totalActual)}
           icon={<DollarSign className="h-5 w-5" />}
           color="green"
         />
         <ColorStatCard
-          label="ОТКЛОНЕНИЕ"
+          label={t("kpiVariance")}
           value={(totalVariance >= 0 ? "+" : "") + fmt(totalVariance)}
           icon={totalVariance >= 0 ? <TrendingUp className="h-5 w-5" /> : <TrendingDown className="h-5 w-5" />}
           color={totalVariance >= 0 ? "teal" : "red"}
         />
         <ColorStatCard
-          label="ПРОЕКЦИЯ НА КОНЕЦ ГОДА"
+          label={t("kpiYearEnd")}
           value={fmt(yearEndProjection)}
           icon={<CalendarRange className="h-5 w-5" />}
           color="amber"
@@ -905,12 +916,12 @@ function OverviewTab({ planId }: { planId: string }) {
       <div className="flex flex-wrap gap-2">
         <Button size="sm" variant="outline" onClick={handleAINarrative} disabled={aiNarrative.isPending}>
           {aiNarrative.isPending ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <AlertCircle className="h-4 w-4 mr-1" />}
-          Объяснить отклонения (AI)
+          {t("btnExplainVariances")}
         </Button>
         {autoActualTotal > 0 && (
           <Button size="sm" variant="outline" onClick={handleSyncActuals} disabled={syncActuals.isPending}>
             {syncActuals.isPending ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Link2 className="h-4 w-4 mr-1" />}
-            Обновить факт из cost model
+            {t("btnUpdateActualCostModel")}
           </Button>
         )}
       </div>
@@ -921,7 +932,7 @@ function OverviewTab({ planId }: { planId: string }) {
           <CardHeader className="pb-2">
             <div className="flex justify-between items-center">
               <CardTitle className="text-sm flex items-center gap-2">
-                <AlertCircle className="h-4 w-4 text-purple-600" /> AI-анализ отклонений
+                <AlertCircle className="h-4 w-4 text-purple-600" /> {t("aiAnalysisTitle")}
               </CardTitle>
               <Button size="sm" variant="ghost" onClick={() => { setShowNarrative(false); setNarrative(null) }}>✕</Button>
             </div>
@@ -931,7 +942,7 @@ function OverviewTab({ planId }: { planId: string }) {
               <div className="text-sm whitespace-pre-wrap leading-relaxed">{narrative}</div>
             ) : (
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Loader2 className="h-4 w-4 animate-spin" /> Генерация нарратива...
+                <Loader2 className="h-4 w-4 animate-spin" /> {t("generatingNarrative")}
               </div>
             )}
           </CardContent>
@@ -940,7 +951,7 @@ function OverviewTab({ planId }: { planId: string }) {
 
       {/* Execution % */}
       <div className="flex items-center gap-3 text-sm">
-        <span className="text-muted-foreground">Исполнение бюджета:</span>
+        <span className="text-muted-foreground">{t("budgetExecution")}</span>
         <span className={`font-bold text-lg ${executionPct >= 90 ? "text-green-600 dark:text-green-400" : executionPct >= 60 ? "text-amber-600 dark:text-amber-400" : "text-red-500"}`}>
           {execEmoji} {Math.round(executionPct)}%
         </span>
@@ -953,7 +964,7 @@ function OverviewTab({ planId }: { planId: string }) {
       {barData.length > 0 && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card>
-            <CardHeader><CardTitle className="text-sm">План / Прогноз / Факт по категориям</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="text-sm">{t("chartPlanForecastActual")}</CardTitle></CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={barData} layout="vertical" margin={{ left: 20, right: 10 }}>
@@ -961,16 +972,16 @@ function OverviewTab({ planId }: { planId: string }) {
                   <YAxis type="category" dataKey="name" tick={{ fontSize: 10 }} width={130} />
                   <Tooltip formatter={(v: any) => fmt(v)} />
                   <Legend />
-                  <Bar dataKey="План" fill="#ef4444" radius={[0, 3, 3, 0]} />
-                  <Bar dataKey="Прогноз" fill="#8b5cf6" radius={[0, 3, 3, 0]} />
-                  <Bar dataKey="Факт" fill="#10b981" radius={[0, 3, 3, 0]} />
+                  <Bar dataKey={ovPlanLabel} fill="#ef4444" radius={[0, 3, 3, 0]} />
+                  <Bar dataKey={ovForecastLabel} fill="#8b5cf6" radius={[0, 3, 3, 0]} />
+                  <Bar dataKey={ovActualLabel} fill="#10b981" radius={[0, 3, 3, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
           </Card>
 
           <Card>
-            <CardHeader><CardTitle className="text-sm">Состав плановых расходов</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="text-sm">{t("chartExpenseComposition")}</CardTitle></CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
                 <PieChart>
@@ -991,13 +1002,13 @@ function OverviewTab({ planId }: { planId: string }) {
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle className="text-sm">Водопадный анализ</CardTitle>
+              <CardTitle className="text-sm">{t("chartWaterfall")}</CardTitle>
               <a
                 href={`/api/budgeting/export?planId=${planId}`}
                 className="text-xs text-purple-600 dark:text-purple-400 underline underline-offset-2 hover:no-underline"
                 download
               >
-                Скачать Excel
+                {t("btnDownloadExcel")}
               </a>
             </div>
           </CardHeader>
@@ -1016,18 +1027,18 @@ function OverviewTab({ planId }: { planId: string }) {
       {/* 3-column variance table */}
       {byCategory.length > 0 && (
         <Card>
-          <CardHeader><CardTitle className="text-sm">Таблица: Бюджет | Прогноз | Факт</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-sm">{t("tableBudgetForecastActual")}</CardTitle></CardHeader>
           <CardContent className="p-0">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead className="bg-muted/50">
                   <tr>
-                    <th className="px-4 py-2 text-left font-medium">Категория</th>
-                    <th className="px-4 py-2 text-left font-medium">Тип</th>
-                    <th className="px-4 py-2 text-right font-medium">Бюджет</th>
-                    <th className="px-4 py-2 text-right font-medium text-purple-600 dark:text-purple-400">Прогноз</th>
-                    <th className="px-4 py-2 text-right font-medium text-green-600 dark:text-green-400">Факт</th>
-                    <th className="px-4 py-2 text-right font-medium">Отклонение</th>
+                    <th className="px-4 py-2 text-left font-medium">{t("colCategory")}</th>
+                    <th className="px-4 py-2 text-left font-medium">{t("colType")}</th>
+                    <th className="px-4 py-2 text-right font-medium">{t("colBudget")}</th>
+                    <th className="px-4 py-2 text-right font-medium text-purple-600 dark:text-purple-400">{t("colForecast")}</th>
+                    <th className="px-4 py-2 text-right font-medium text-green-600 dark:text-green-400">{t("colActual")}</th>
+                    <th className="px-4 py-2 text-right font-medium">{t("colVariance")}</th>
                     <th className="px-4 py-2 text-right font-medium">%</th>
                   </tr>
                 </thead>
@@ -1037,7 +1048,7 @@ function OverviewTab({ planId }: { planId: string }) {
                       <td className="px-4 py-2">{row.category}</td>
                       <td className="px-4 py-2">
                         <Badge variant="outline" className="text-xs">
-                          {row.lineType === "revenue" ? "Доход" : "Расход"}
+                          {row.lineType === "revenue" ? t("revenue") : t("expense")}
                         </Badge>
                       </td>
                       <td className="px-4 py-2 text-right font-mono">{fmt(row.planned)}</td>
@@ -1061,17 +1072,17 @@ function OverviewTab({ planId }: { planId: string }) {
       {/* By Department */}
       {byDepartment.length > 1 && (
         <Card>
-          <CardHeader><CardTitle className="text-sm">По департаментам</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-sm">{t("tableByDepartment")}</CardTitle></CardHeader>
           <CardContent className="p-0">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead className="bg-muted/50">
                   <tr>
-                    <th className="px-4 py-2 text-left font-medium">Департамент</th>
-                    <th className="px-4 py-2 text-right font-medium">Бюджет</th>
-                    <th className="px-4 py-2 text-right font-medium text-purple-600 dark:text-purple-400">Прогноз</th>
-                    <th className="px-4 py-2 text-right font-medium text-green-600 dark:text-green-400">Факт</th>
-                    <th className="px-4 py-2 text-right font-medium">Отклонение</th>
+                    <th className="px-4 py-2 text-left font-medium">{t("colDepartment")}</th>
+                    <th className="px-4 py-2 text-right font-medium">{t("colBudget")}</th>
+                    <th className="px-4 py-2 text-right font-medium text-purple-600 dark:text-purple-400">{t("colForecast")}</th>
+                    <th className="px-4 py-2 text-right font-medium text-green-600 dark:text-green-400">{t("colActual")}</th>
+                    <th className="px-4 py-2 text-right font-medium">{t("colVariance")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1095,7 +1106,7 @@ function OverviewTab({ planId }: { planId: string }) {
 
       {byCategory.length === 0 && (
         <div className="text-center py-12 text-muted-foreground">
-          Добавьте плановые статьи для отображения аналитики
+          {t("emptyAddLinesForAnalytics")}
         </div>
       )}
     </div>
@@ -1105,6 +1116,7 @@ function OverviewTab({ planId }: { planId: string }) {
 // ─── Lines Tab ────────────────────────────────────────────────────────────────
 
 function LinesTab({ planId }: { planId: string }) {
+  const t = useTranslations("budgeting")
   const { data: lines = [], isLoading } = useBudgetLines(planId)
   const updateLine = useUpdateBudgetLine()
   const deleteLine = useDeleteBudgetLine()
@@ -1154,20 +1166,20 @@ function LinesTab({ planId }: { planId: string }) {
       <Card>
         <CardContent className="p-0">
           {lines.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">Нет статей. Добавьте первую или используйте шаблон.</div>
+            <div className="text-center py-12 text-muted-foreground">{t("emptyNoLinesHint")}</div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead className="bg-muted/50">
                   <tr>
-                    <th className="px-4 py-2 text-left font-medium">Категория</th>
-                    <th className="px-4 py-2 text-left font-medium">Департ.</th>
-                    <th className="px-4 py-2 text-left font-medium">Тип</th>
-                    <th className="px-4 py-2 text-right font-medium">Бюджет</th>
-                    <th className="px-4 py-2 text-right font-medium text-purple-600 dark:text-purple-400">Прогноз</th>
-                    <th className="px-4 py-2 text-left font-medium text-blue-600 dark:text-blue-400">Cost Model</th>
-                    <th className="px-4 py-2 text-center font-medium">Автофакт</th>
-                    <th className="px-4 py-2 text-center font-medium">Действия</th>
+                    <th className="px-4 py-2 text-left font-medium">{t("colCategory")}</th>
+                    <th className="px-4 py-2 text-left font-medium">{t("colDepartmentShort")}</th>
+                    <th className="px-4 py-2 text-left font-medium">{t("colType")}</th>
+                    <th className="px-4 py-2 text-right font-medium">{t("colBudget")}</th>
+                    <th className="px-4 py-2 text-right font-medium text-purple-600 dark:text-purple-400">{t("colForecast")}</th>
+                    <th className="px-4 py-2 text-left font-medium text-blue-600 dark:text-blue-400">{t("colCostModel")}</th>
+                    <th className="px-4 py-2 text-center font-medium">{t("colAutoActual")}</th>
+                    <th className="px-4 py-2 text-center font-medium">{t("colActions")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1182,25 +1194,25 @@ function LinesTab({ planId }: { planId: string }) {
                             <Input list={`edit-cats-${line.id}`} value={editData.category || ""} onChange={e => setEditData(d => ({ ...d, category: e.target.value }))} className="h-7 text-xs" />
                           </td>
                           <td className="px-2 py-1">
-                            <Input value={editData.department || ""} onChange={e => setEditData(d => ({ ...d, department: e.target.value }))} className="h-7 text-xs" placeholder="Департамент" />
+                            <Input value={editData.department || ""} onChange={e => setEditData(d => ({ ...d, department: e.target.value }))} className="h-7 text-xs" placeholder={t("colDepartment")} />
                           </td>
                           <td className="px-2 py-1">
                             <select value={editData.lineType} onChange={e => setEditData(d => ({ ...d, lineType: e.target.value as any }))}
                               className="border border-border rounded px-2 py-1 text-xs bg-background">
-                              <option value="expense">Расход</option>
-                              <option value="revenue">Доход</option>
+                              <option value="expense">{t("expense")}</option>
+                              <option value="revenue">{t("revenue")}</option>
                             </select>
                           </td>
                           <td className="px-2 py-1">
                             <Input type="number" value={editData.plannedAmount || ""} onChange={e => setEditData(d => ({ ...d, plannedAmount: Number(e.target.value) }))} className="h-7 text-xs text-right" />
                           </td>
                           <td className="px-2 py-1">
-                            <Input type="number" value={editData.forecastAmount || ""} onChange={e => setEditData(d => ({ ...d, forecastAmount: e.target.value ? Number(e.target.value) : undefined }))} className="h-7 text-xs text-right" placeholder="= план" />
+                            <Input type="number" value={editData.forecastAmount || ""} onChange={e => setEditData(d => ({ ...d, forecastAmount: e.target.value ? Number(e.target.value) : undefined }))} className="h-7 text-xs text-right" placeholder={t("placeholderForecastShort")} />
                           </td>
                           <td className="px-2 py-1" colSpan={2}>
                             <select value={editData.costModelKey || ""} onChange={e => setEditData(d => ({ ...d, costModelKey: e.target.value, isAutoActual: !!e.target.value }))}
                               className="border border-border rounded px-2 py-1 text-xs bg-background w-full">
-                              <option value="">— Вручную —</option>
+                              <option value="">{t("optManual")}</option>
                               {COST_MODEL_KEY_OPTIONS.map(o => (
                                 <option key={o.value} value={o.value}>{o.label}</option>
                               ))}
@@ -1221,20 +1233,20 @@ function LinesTab({ planId }: { planId: string }) {
                           <td className="px-4 py-2 text-muted-foreground">{line.department || "—"}</td>
                           <td className="px-4 py-2">
                             <Badge variant="outline" className="text-xs">
-                              {line.lineType === "revenue" ? "Доход" : "Расход"}
+                              {line.lineType === "revenue" ? t("revenue") : t("expense")}
                             </Badge>
                           </td>
                           <td className="px-4 py-2 text-right font-mono">{fmt(line.plannedAmount)}</td>
                           <td className="px-4 py-2 text-right font-mono text-purple-600 dark:text-purple-400">
-                            {line.forecastAmount != null ? fmt(line.forecastAmount) : <span className="text-muted-foreground text-xs">= план</span>}
+                            {line.forecastAmount != null ? fmt(line.forecastAmount) : <span className="text-muted-foreground text-xs">{t("placeholderForecastShort")}</span>}
                           </td>
                           <td className="px-4 py-2 text-xs text-blue-600 dark:text-blue-400">
                             {line.costModelKey ? <span title={line.costModelKey} className="flex items-center gap-1"><Link2 className="h-3 w-3" />{line.costModelKey.split(".").pop()}</span> : "—"}
                           </td>
                           <td className="px-4 py-2 text-center">
                             {line.isAutoActual
-                              ? <Badge className="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 text-xs">Авто</Badge>
-                              : <span className="text-muted-foreground text-xs">Ручной</span>}
+                              ? <Badge className="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 text-xs">{t("badgeAutoLabel")}</Badge>
+                              : <span className="text-muted-foreground text-xs">{t("badgeManual")}</span>}
                           </td>
                           <td className="px-4 py-2 text-center">
                             <div className="flex gap-1 justify-center">
@@ -1254,10 +1266,10 @@ function LinesTab({ planId }: { planId: string }) {
                 </tbody>
                 <tfoot className="border-t-2 border-border bg-muted/30">
                   <tr>
-                    <td colSpan={3} className="px-4 py-2 font-medium text-sm">Итого</td>
+                    <td colSpan={3} className="px-4 py-2 font-medium text-sm">{t("totalLabel")}</td>
                     <td className="px-4 py-2 text-right font-bold font-mono">{fmt(total)}</td>
                     <td colSpan={4} className="px-4 py-2 text-xs text-muted-foreground">
-                      Расходы: {fmt(expenseTotal)} | Доходы: {fmt(revenueTotal)}
+                      {t("expensesLabel")} {fmt(expenseTotal)} | {t("revenuesLabel")} {fmt(revenueTotal)}
                     </td>
                   </tr>
                 </tfoot>
@@ -1273,6 +1285,7 @@ function LinesTab({ planId }: { planId: string }) {
 // ─── Actuals Tab ───────────────────────────────────────────────────────────────
 
 function ActualsTab({ planId }: { planId: string }) {
+  const t = useTranslations("budgeting")
   const { data: actuals = [], isLoading } = useBudgetActuals(planId)
   const updateActual = useUpdateBudgetActual()
   const deleteActual = useDeleteBudgetActual()
@@ -1299,25 +1312,25 @@ function ActualsTab({ planId }: { planId: string }) {
     <div>
       <AddActualForm planId={planId} existingCategories={existingCategories} />
       <div className="mb-3 flex gap-2 items-center">
-        <Input placeholder="Фильтр по категории..." value={filterCat} onChange={e => setFilterCat(e.target.value)} className="max-w-xs" />
-        {filterCat && <Button variant="ghost" size="sm" onClick={() => setFilterCat("")}>Сбросить</Button>}
+        <Input placeholder={t("placeholderFilterCategory")} value={filterCat} onChange={e => setFilterCat(e.target.value)} className="max-w-xs" />
+        {filterCat && <Button variant="ghost" size="sm" onClick={() => setFilterCat("")}>{t("btnReset")}</Button>}
       </div>
       <Card>
         <CardContent className="p-0">
           {actuals.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">Нет фактических расходов. Добавьте первый.</div>
+            <div className="text-center py-12 text-muted-foreground">{t("emptyNoActuals")}</div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead className="bg-muted/50">
                   <tr>
-                    <th className="px-4 py-2 text-left font-medium">Категория</th>
-                    <th className="px-4 py-2 text-left font-medium">Департамент</th>
-                    <th className="px-4 py-2 text-left font-medium">Тип</th>
-                    <th className="px-4 py-2 text-right font-medium">Сумма</th>
-                    <th className="px-4 py-2 text-left font-medium">Дата</th>
-                    <th className="px-4 py-2 text-left font-medium">Описание</th>
-                    <th className="px-4 py-2 text-center font-medium">Действия</th>
+                    <th className="px-4 py-2 text-left font-medium">{t("colCategory")}</th>
+                    <th className="px-4 py-2 text-left font-medium">{t("colDepartment")}</th>
+                    <th className="px-4 py-2 text-left font-medium">{t("colType")}</th>
+                    <th className="px-4 py-2 text-right font-medium">{t("colAmount")}</th>
+                    <th className="px-4 py-2 text-left font-medium">{t("colDate")}</th>
+                    <th className="px-4 py-2 text-left font-medium">{t("colDescription")}</th>
+                    <th className="px-4 py-2 text-center font-medium">{t("colActions")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1327,7 +1340,7 @@ function ActualsTab({ planId }: { planId: string }) {
                         <>
                           <td className="px-2 py-1"><Input value={editData.category} onChange={e => setEditData(d => ({ ...d, category: e.target.value }))} className="h-7 text-xs" /></td>
                           <td className="px-2 py-1"><Input value={editData.department} onChange={e => setEditData(d => ({ ...d, department: e.target.value }))} className="h-7 text-xs" /></td>
-                          <td className="px-4 py-2"><Badge variant="outline" className="text-xs">{actual.lineType === "revenue" ? "Доход" : "Расход"}</Badge></td>
+                          <td className="px-4 py-2"><Badge variant="outline" className="text-xs">{actual.lineType === "revenue" ? t("revenue") : t("expense")}</Badge></td>
                           <td className="px-2 py-1"><Input type="number" value={editData.actualAmount} onChange={e => setEditData(d => ({ ...d, actualAmount: Number(e.target.value) }))} className="h-7 text-xs text-right" /></td>
                           <td className="px-2 py-1"><Input value={editData.expenseDate} onChange={e => setEditData(d => ({ ...d, expenseDate: e.target.value }))} className="h-7 text-xs" placeholder="YYYY-MM-DD" /></td>
                           <td className="px-2 py-1"><Input value={editData.description} onChange={e => setEditData(d => ({ ...d, description: e.target.value }))} className="h-7 text-xs" /></td>
@@ -1346,7 +1359,7 @@ function ActualsTab({ planId }: { planId: string }) {
                           <td className="px-4 py-2 text-muted-foreground">{actual.department || "—"}</td>
                           <td className="px-4 py-2">
                             <Badge variant="outline" className="text-xs">
-                              {actual.lineType === "revenue" ? "Доход" : "Расход"}
+                              {actual.lineType === "revenue" ? t("revenue") : t("expense")}
                             </Badge>
                           </td>
                           <td className="px-4 py-2 text-right font-mono">{fmt(actual.actualAmount)}</td>
@@ -1371,7 +1384,7 @@ function ActualsTab({ planId }: { planId: string }) {
                 </tbody>
                 <tfoot className="border-t-2 border-border bg-muted/30">
                   <tr>
-                    <td colSpan={3} className="px-4 py-2 font-medium text-sm">Итого</td>
+                    <td colSpan={3} className="px-4 py-2 font-medium text-sm">{t("totalLabel")}</td>
                     <td className="px-4 py-2 text-right font-bold font-mono">{fmt(total)}</td>
                     <td colSpan={3} />
                   </tr>
@@ -1388,6 +1401,7 @@ function ActualsTab({ planId }: { planId: string }) {
 // ─── Plans Tab ────────────────────────────────────────────────────────────────
 
 function PlansTab({ activePlanId, onSelect, onShowCreate }: { activePlanId: string; onSelect: (id: string) => void; onShowCreate: () => void }) {
+  const t = useTranslations("budgeting")
   const { data: plans = [], isLoading } = useBudgetPlans()
   const updatePlan = useUpdateBudgetPlan()
   const deletePlan = useDeleteBudgetPlan()
@@ -1397,14 +1411,14 @@ function PlansTab({ activePlanId, onSelect, onShowCreate }: { activePlanId: stri
   return (
     <div>
       <div className="flex justify-end mb-4">
-        <Button size="sm" onClick={onShowCreate}><Plus className="h-4 w-4 mr-1" /> Новый план</Button>
+        <Button size="sm" onClick={onShowCreate}><Plus className="h-4 w-4 mr-1" /> {t("btnNewPlan")}</Button>
       </div>
       {plans.length === 0 ? (
         <div className="text-center py-16 text-muted-foreground">
           <PiggyBank className="h-12 w-12 mx-auto mb-3 opacity-30" />
-          <p className="font-medium">Нет планов</p>
-          <p className="text-sm mt-1">Создайте первый бюджетный план</p>
-          <Button className="mt-4" onClick={onShowCreate}><Plus className="h-4 w-4 mr-1" /> Создать план</Button>
+          <p className="font-medium">{t("noPlansCardTitle")}</p>
+          <p className="text-sm mt-1">{t("noPlansCardSubtitle")}</p>
+          <Button className="mt-4" onClick={onShowCreate}><Plus className="h-4 w-4 mr-1" /> {t("createPlan")}</Button>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -1413,24 +1427,24 @@ function PlansTab({ activePlanId, onSelect, onShowCreate }: { activePlanId: stri
               <CardHeader className="pb-2">
                 <div className="flex items-start justify-between gap-2">
                   <CardTitle className="text-base leading-tight">{plan.name}</CardTitle>
-                  {statusBadge(plan.status)}
+                  {statusBadge(plan.status, t)}
                 </div>
-                <p className="text-sm text-muted-foreground">{periodLabel(plan)}</p>
+                <p className="text-sm text-muted-foreground">{periodLabel(plan, t)}</p>
               </CardHeader>
               <CardContent className="pt-0">
                 <div className="flex gap-2 mt-3">
                   <Button size="sm" variant={activePlanId === plan.id ? "default" : "outline"}
                     onClick={() => onSelect(plan.id)} className="flex-1 text-xs">
-                    {activePlanId === plan.id ? "Активный" : "Выбрать"}
+                    {activePlanId === plan.id ? t("btnActive") : t("btnSelect")}
                   </Button>
                   {plan.status === "draft" && (
                     <Button size="sm" variant="outline" className="text-xs"
                       onClick={() => {
-                        if (confirm("Утвердить бюджет? После утверждения изменения будут запрещены.")) {
+                        if (confirm(t("confirmApprove"))) {
                           updatePlan.mutate({ id: plan.id, status: "approved" })
                         }
                       }}>
-                      Утвердить
+                      {t("btnApprove")}
                     </Button>
                   )}
                   <button onClick={() => deletePlan.mutate(plan.id)}
@@ -1452,6 +1466,7 @@ function PlansTab({ activePlanId, onSelect, onShowCreate }: { activePlanId: stri
 const COMPARISON_COLORS = ["#8b5cf6", "#3b82f6", "#f59e0b", "#ef4444"]
 
 function ComparisonTab() {
+  const t = useTranslations("budgeting")
   const { data: plans = [], isLoading } = useBudgetPlans()
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [materialityPct, setMaterialityPct] = useState(5)
@@ -1477,8 +1492,8 @@ function ComparisonTab() {
     return (
       <div className="text-center py-20 text-muted-foreground">
         <BarChart2 className="h-12 w-12 mx-auto mb-3 opacity-30" />
-        <p className="font-medium">Недостаточно данных</p>
-        <p className="text-sm mt-1">Создайте минимум 2 плана для сравнения</p>
+        <p className="font-medium">{t("emptyNotEnoughData")}</p>
+        <p className="text-sm mt-1">{t("emptyNotEnoughDataSub")}</p>
       </div>
     )
   }
@@ -1493,7 +1508,7 @@ function ComparisonTab() {
   const chartData = topCategories.map(cat => {
     const row: any = { category: cat }
     analyticsArr.forEach((a, i) => {
-      const planName = plans.find(p => p.id === selectedIds[i])?.name || `План ${i + 1}`
+      const planName = plans.find(p => p.id === selectedIds[i])?.name || `${t("colPlan")} ${i + 1}`
       const found = a?.byCategory?.find((c: any) => c.category === cat)
       row[planName] = found?.actual ?? 0
     })
@@ -1526,7 +1541,7 @@ function ComparisonTab() {
     <div className="space-y-6">
       {/* Plan selector */}
       <Card>
-        <CardHeader><CardTitle className="text-sm">Выберите планы для сравнения (до 4)</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="text-sm">{t("selectPlansTitle")}</CardTitle></CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-2">
             {plans.map(p => (
@@ -1545,7 +1560,7 @@ function ComparisonTab() {
         <>
           {/* P4-02: Grouped bar chart */}
           <Card>
-            <CardHeader><CardTitle className="text-sm">Сравнение по категориям (факт)</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="text-sm">{t("chartComparisonByCategory")}</CardTitle></CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={350}>
                 <BarChart data={chartData} margin={{ left: 10, right: 10 }}>
@@ -1554,7 +1569,7 @@ function ComparisonTab() {
                   <Tooltip formatter={(v: any) => fmt(v)} />
                   <Legend />
                   {selectedIds.map((id, i) => {
-                    const planName = plans.find(p => p.id === id)?.name || `План ${i + 1}`
+                    const planName = plans.find(p => p.id === id)?.name || `${t("colPlan")} ${i + 1}`
                     return <Bar key={id} dataKey={planName} fill={COMPARISON_COLORS[i]} radius={[3, 3, 0, 0]} />
                   })}
                 </BarChart>
@@ -1564,7 +1579,7 @@ function ComparisonTab() {
 
           {/* P4-04: Materiality filter */}
           <div className="flex flex-wrap items-center gap-3 text-sm">
-            <span className="font-medium">Порог существенности:</span>
+            <span className="font-medium">{t("materialityThreshold")}</span>
             <div className="flex items-center gap-1">
               <Input type="number" value={materialityPct} onChange={e => setMaterialityPct(Number(e.target.value))} className="h-7 w-16 text-xs text-right" /> %
             </div>
@@ -1572,25 +1587,25 @@ function ComparisonTab() {
               <Input type="number" value={materialityAbs} onChange={e => setMaterialityAbs(Number(e.target.value))} className="h-7 w-20 text-xs text-right" /> ₼
             </div>
             <Button size="sm" variant="outline" className="text-xs h-7" onClick={() => setShowAll(!showAll)}>
-              {showAll ? "Скрыть несущественные" : "Показать все"}
+              {showAll ? t("btnHideMaterial") : t("btnShowAll")}
             </Button>
           </div>
 
           {/* P4-03: Variance table */}
           <Card>
-            <CardHeader><CardTitle className="text-sm">Таблица сравнения</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="text-sm">{t("tableComparison")}</CardTitle></CardHeader>
             <CardContent className="p-0">
               <div className="overflow-x-auto">
                 <table className="w-full text-xs">
                   <thead className="bg-muted/50">
                     <tr>
-                      <th className="px-3 py-2 text-left font-medium sticky left-0 bg-muted/50">Категория</th>
+                      <th className="px-3 py-2 text-left font-medium sticky left-0 bg-muted/50">{t("colCategory")}</th>
                       {selectedIds.map((id, i) => {
-                        const name = plans.find(p => p.id === id)?.name || `П${i + 1}`
+                        const name = plans.find(p => p.id === id)?.name || `${t("colPlan")} ${i + 1}`
                         return [
-                          <th key={`${id}-p`} className="px-2 py-2 text-right font-medium" style={{ color: COMPARISON_COLORS[i] }}>{name} Бюджет</th>,
-                          <th key={`${id}-a`} className="px-2 py-2 text-right font-medium" style={{ color: COMPARISON_COLORS[i] }}>{name} Факт</th>,
-                          <th key={`${id}-v`} className="px-2 py-2 text-right font-medium" style={{ color: COMPARISON_COLORS[i] }}>Откл. %</th>,
+                          <th key={`${id}-p`} className="px-2 py-2 text-right font-medium" style={{ color: COMPARISON_COLORS[i] }}>{name} {t("colBudget")}</th>,
+                          <th key={`${id}-a`} className="px-2 py-2 text-right font-medium" style={{ color: COMPARISON_COLORS[i] }}>{name} {t("colActual")}</th>,
+                          <th key={`${id}-v`} className="px-2 py-2 text-right font-medium" style={{ color: COMPARISON_COLORS[i] }}>{t("colVarianceShort")} %</th>,
                         ]
                       })}
                     </tr>
@@ -1611,7 +1626,7 @@ function ComparisonTab() {
                   </tbody>
                   <tfoot className="border-t-2 border-border bg-muted/30">
                     <tr>
-                      <td className="px-3 py-2 font-bold sticky left-0 bg-muted/30">ИТОГО</td>
+                      <td className="px-3 py-2 font-bold sticky left-0 bg-muted/30">{t("totalLabel")}</td>
                       {selectedIds.map((_id, i) => {
                         const a = analyticsArr[i]
                         return [
@@ -1632,7 +1647,7 @@ function ComparisonTab() {
       )}
 
       {selectedIds.length < 2 && selectedIds.length > 0 && (
-        <div className="text-center py-8 text-muted-foreground text-sm">Выберите ещё хотя бы 1 план</div>
+        <div className="text-center py-8 text-muted-foreground text-sm">{t("emptySelectMorePlans")}</div>
       )}
     </div>
   )
@@ -1641,6 +1656,7 @@ function ComparisonTab() {
 // ─── P&L Tab ──────────────────────────────────────────────────────────────────
 
 function PLTab({ planId }: { planId: string }) {
+  const t = useTranslations("budgeting")
   const { data: analytics, isLoading: analyticsLoading } = useBudgetAnalytics(planId)
   const { data: sections = [], isLoading: sectionsLoading } = useBudgetSections(planId)
   const createSection = useCreateBudgetSection()
@@ -1699,11 +1715,11 @@ function PLTab({ planId }: { planId: string }) {
           <table className="w-full text-sm">
             <thead className="bg-muted/20 border-t border-border">
               <tr>
-                <th className="px-4 py-2 text-left text-xs text-muted-foreground font-medium">Категория</th>
-                <th className="px-4 py-2 text-right text-xs text-muted-foreground font-medium">Бюджет</th>
-                <th className="px-4 py-2 text-right text-xs text-muted-foreground font-medium text-purple-600 dark:text-purple-400">Прогноз</th>
-                <th className="px-4 py-2 text-right text-xs text-muted-foreground font-medium text-green-600 dark:text-green-400">Факт</th>
-                <th className="px-4 py-2 text-right text-xs text-muted-foreground font-medium">Откл.</th>
+                <th className="px-4 py-2 text-left text-xs text-muted-foreground font-medium">{t("colCategory")}</th>
+                <th className="px-4 py-2 text-right text-xs text-muted-foreground font-medium">{t("colBudget")}</th>
+                <th className="px-4 py-2 text-right text-xs text-muted-foreground font-medium text-purple-600 dark:text-purple-400">{t("colForecast")}</th>
+                <th className="px-4 py-2 text-right text-xs text-muted-foreground font-medium text-green-600 dark:text-green-400">{t("colActual")}</th>
+                <th className="px-4 py-2 text-right text-xs text-muted-foreground font-medium">{t("colVarianceShort")}</th>
               </tr>
             </thead>
             <tbody>
@@ -1731,9 +1747,9 @@ function PLTab({ planId }: { planId: string }) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">P&amp;L Структура</h2>
+        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">{t("plTitle")}</h2>
         <Button size="sm" variant="outline" onClick={() => setShowAddSection(v => !v)}>
-          <Plus className="h-3.5 w-3.5 mr-1" /> Добавить секцию
+          <Plus className="h-3.5 w-3.5 mr-1" /> {t("btnAddSection")}
         </Button>
       </div>
 
@@ -1741,11 +1757,11 @@ function PLTab({ planId }: { planId: string }) {
         <Card className="p-4">
           <div className="flex gap-3 items-end">
             <div className="flex-1">
-              <label className="text-xs font-medium mb-1 block">Название секции</label>
-              <Input value={newSectionName} onChange={e => setNewSectionName(e.target.value)} placeholder="Например: Операционные расходы" />
+              <label className="text-xs font-medium mb-1 block">{t("plSectionNameLabel")}</label>
+              <Input value={newSectionName} onChange={e => setNewSectionName(e.target.value)} placeholder={t("plSectionNamePlaceholder")} />
             </div>
             <div>
-              <label className="text-xs font-medium mb-1 block">Тип</label>
+              <label className="text-xs font-medium mb-1 block">{t("plTypeLabel")}</label>
               <select value={newSectionType} onChange={e => setNewSectionType(e.target.value)}
                 className="border border-border rounded-md px-3 py-2 text-sm bg-background">
                 {SECTION_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
@@ -1757,16 +1773,16 @@ function PLTab({ planId }: { planId: string }) {
               setNewSectionName("")
               setShowAddSection(false)
             }} disabled={createSection.isPending}>
-              {createSection.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Создать"}
+              {createSection.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : t("btnCreate")}
             </Button>
           </div>
         </Card>
       )}
 
       {/* Auto-generated P&L sections */}
-      {renderSection("Выручка", revRows, "auto-revenue")}
-      {renderSection("Расходы", expRows, "auto-expense")}
-      {renderSection("Валовая прибыль", [], "auto-gross-profit", true, grossProfitPlanned, grossProfitActual)}
+      {renderSection(t("plRevenue"), revRows, "auto-revenue")}
+      {renderSection(t("plExpenses"), expRows, "auto-expense")}
+      {renderSection(t("plGrossProfit"), [], "auto-gross-profit", true, grossProfitPlanned, grossProfitActual)}
 
       {/* Custom sections */}
       {sections.map(sec => (
@@ -1786,20 +1802,20 @@ function PLTab({ planId }: { planId: string }) {
         <Card className="border-blue-200 dark:border-blue-800 bg-blue-50/50 dark:bg-blue-950/20">
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-sm text-blue-700 dark:text-blue-300">Детализация: {drilldown}</CardTitle>
-              <button onClick={() => setDrilldown(null)} className="text-muted-foreground hover:text-foreground text-xs">✕ Закрыть</button>
+              <CardTitle className="text-sm text-blue-700 dark:text-blue-300">{t("plDrilldown")} {drilldown}</CardTitle>
+              <button onClick={() => setDrilldown(null)} className="text-muted-foreground hover:text-foreground text-xs">✕ {t("btnClose")}</button>
             </div>
           </CardHeader>
           <CardContent>
             {(() => {
               const row = byCategory.find(r => r.category === drilldown)
-              if (!row) return <p className="text-sm text-muted-foreground">Нет данных</p>
+              if (!row) return <p className="text-sm text-muted-foreground">{t("emptyNoData")}</p>
               return (
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
-                  <div><p className="text-xs text-muted-foreground">Бюджет</p><p className="font-bold font-mono">{fmt(row.planned)}</p></div>
-                  <div><p className="text-xs text-muted-foreground">Прогноз</p><p className="font-bold font-mono text-purple-600 dark:text-purple-400">{fmt(row.forecast)}</p></div>
-                  <div><p className="text-xs text-muted-foreground">Факт</p><p className="font-bold font-mono text-green-600 dark:text-green-400">{fmt(row.actual)}</p></div>
-                  <div><p className="text-xs text-muted-foreground">Отклонение</p>
+                  <div><p className="text-xs text-muted-foreground">{t("colBudget")}</p><p className="font-bold font-mono">{fmt(row.planned)}</p></div>
+                  <div><p className="text-xs text-muted-foreground">{t("colForecast")}</p><p className="font-bold font-mono text-purple-600 dark:text-purple-400">{fmt(row.forecast)}</p></div>
+                  <div><p className="text-xs text-muted-foreground">{t("colActual")}</p><p className="font-bold font-mono text-green-600 dark:text-green-400">{fmt(row.actual)}</p></div>
+                  <div><p className="text-xs text-muted-foreground">{t("colVariance")}</p>
                     <p className={`font-bold font-mono ${row.variance >= 0 ? "text-green-600 dark:text-green-400" : "text-red-500"}`}>
                       {row.variance >= 0 ? "+" : ""}{fmt(row.variance)} ({Math.round(row.variancePct)}%)
                     </p>
@@ -1817,6 +1833,7 @@ function PLTab({ planId }: { planId: string }) {
 // ─── Forecast Tab ─────────────────────────────────────────────────────────────
 
 function ForecastTab({ planId }: { planId: string }) {
+  const t = useTranslations("budgeting")
   const { data: analytics } = useBudgetAnalytics(planId)
   const { data: forecastEntries = [] } = useBudgetForecastEntries(planId)
   const { data: budgetLines = [] } = useBudgetLines(planId)
@@ -1851,11 +1868,14 @@ function ForecastTab({ planId }: { planId: string }) {
   // P3-05: Apply scenario
   const monthlyData = applyScenario(rawMonthlyData, scenario)
 
+  const fcBudgetLabel = t("colBudget")
+  const fcForecastLabel = t("colForecast")
+  const fcActualLabel = t("colActual")
   const chartData = monthlyData.map(d => ({
     name: d.label,
-    "Бюджет": d.planned,
-    "Прогноз": d.forecast,
-    "Факт": d.actual || undefined,
+    [fcBudgetLabel]: d.planned,
+    [fcForecastLabel]: d.forecast,
+    [fcActualLabel]: d.actual || undefined,
   }))
 
   // P3-02: Generate forecast entries for all categories
@@ -1913,10 +1933,10 @@ function ForecastTab({ planId }: { planId: string }) {
     <div className="space-y-6">
       {/* KPI Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-        <ColorStatCard label="БЮДЖЕТ (ГОД)" value={fmt(totalPlanned)} icon={<BarChart2 className="h-5 w-5" />} color="blue" />
-        <ColorStatCard label="ПРОГНОЗ (ГОД)" value={fmt(totalForecast)} icon={<TrendingUp className="h-5 w-5" />} color="violet" />
+        <ColorStatCard label={t("forecastBudgetYear")} value={fmt(totalPlanned)} icon={<BarChart2 className="h-5 w-5" />} color="blue" />
+        <ColorStatCard label={t("forecastForecastYear")} value={fmt(totalForecast)} icon={<TrendingUp className="h-5 w-5" />} color="violet" />
         <ColorStatCard
-          label="ПРОЕКЦИЯ НА КОН. ПЕРИОДА"
+          label={t("forecastYearEndProjection")}
           value={fmt(yearEndProjection)}
           icon={<CalendarRange className="h-5 w-5" />}
           color={yearEndProjection <= totalPlanned ? "green" : "red"}
@@ -1929,24 +1949,24 @@ function ForecastTab({ planId }: { planId: string }) {
           {(["base", "optimistic", "pessimistic"] as const).map(s => (
             <button key={s} onClick={() => setScenario(s)}
               className={`px-3 py-1.5 transition-colors ${scenario === s ? "bg-purple-600 text-white" : "hover:bg-muted"}`}>
-              {s === "base" ? "Базовый" : s === "optimistic" ? "Оптимист." : "Пессимист."}
+              {s === "base" ? t("scenarioBase") : s === "optimistic" ? t("scenarioOptimistic") : t("scenarioPessimistic")}
             </button>
           ))}
         </div>
         <Button size="sm" variant="outline" onClick={handleGenerate} disabled={generating || budgetLines.length === 0}>
           {generating ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <TrendingUp className="h-4 w-4 mr-1" />}
-          Сгенерировать прогноз
+          {t("btnGenerateForecast")}
         </Button>
         {forecastEntries.length > 0 && (
           <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 text-xs">
-            {forecastEntries.length} записей в БД
+            {t("forecastRecordsInDB", { count: forecastEntries.length })}
           </Badge>
         )}
       </div>
 
       {/* Chart */}
       <Card>
-        <CardHeader><CardTitle className="text-sm">12-месячный прогноз {scenario !== "base" && `(${scenario === "optimistic" ? "оптимист." : "пессимист."})`}</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="text-sm">{t("chartMonthlyForecast")} {scenario !== "base" && `(${scenario === "optimistic" ? t("forecastScenarioSuffix") : t("forecastScenarioPessimSuffix")})`}</CardTitle></CardHeader>
         <CardContent>
           <ResponsiveContainer width="100%" height={320}>
             <ComposedChart data={chartData} margin={{ left: 10, right: 10 }}>
@@ -1954,9 +1974,9 @@ function ForecastTab({ planId }: { planId: string }) {
               <YAxis tick={{ fontSize: 11 }} tickFormatter={(v: number) => (v / 1000).toFixed(0) + "k"} />
               <Tooltip formatter={(v: any) => fmt(v)} />
               <Legend />
-              <Bar dataKey="Факт" fill="#10b981" radius={[3, 3, 0, 0]} />
-              <Area dataKey="Прогноз" fill="#8b5cf640" stroke="#8b5cf6" strokeWidth={2} strokeDasharray="5 5" type="monotone" />
-              <Bar dataKey="Бюджет" fill="#ef444440" stroke="#ef4444" strokeWidth={1} radius={[3, 3, 0, 0]} />
+              <Bar dataKey={fcActualLabel} fill="#10b981" radius={[3, 3, 0, 0]} />
+              <Area dataKey={fcForecastLabel} fill="#8b5cf640" stroke="#8b5cf6" strokeWidth={2} strokeDasharray="5 5" type="monotone" />
+              <Bar dataKey={fcBudgetLabel} fill="#ef444440" stroke="#ef4444" strokeWidth={1} radius={[3, 3, 0, 0]} />
             </ComposedChart>
           </ResponsiveContainer>
         </CardContent>
@@ -1964,17 +1984,17 @@ function ForecastTab({ planId }: { planId: string }) {
 
       {/* Monthly table with inline edit */}
       <Card>
-        <CardHeader><CardTitle className="text-sm">По месяцам</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="text-sm">{t("tableByMonth")}</CardTitle></CardHeader>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-muted/50">
                 <tr>
-                  <th className="px-4 py-2 text-left font-medium">Месяц</th>
-                  <th className="px-4 py-2 text-right font-medium">Бюджет</th>
-                  <th className="px-4 py-2 text-right font-medium text-purple-600 dark:text-purple-400">Прогноз</th>
-                  <th className="px-4 py-2 text-right font-medium text-green-600 dark:text-green-400">Факт</th>
-                  <th className="px-4 py-2 text-center font-medium">Статус</th>
+                  <th className="px-4 py-2 text-left font-medium">{t("colMonth")}</th>
+                  <th className="px-4 py-2 text-right font-medium">{t("colBudget")}</th>
+                  <th className="px-4 py-2 text-right font-medium text-purple-600 dark:text-purple-400">{t("colForecast")}</th>
+                  <th className="px-4 py-2 text-right font-medium text-green-600 dark:text-green-400">{t("colActual")}</th>
+                  <th className="px-4 py-2 text-center font-medium">{t("colStatus")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -1999,8 +2019,8 @@ function ForecastTab({ planId }: { planId: string }) {
                     <td className="px-4 py-2 text-right font-mono text-green-600 dark:text-green-400">{d.isProjected ? "—" : fmt(d.actual)}</td>
                     <td className="px-4 py-2 text-center">
                       {d.isProjected
-                        ? <Badge className="bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 text-xs">Прогноз</Badge>
-                        : <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 text-xs">Факт</Badge>}
+                        ? <Badge className="bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 text-xs">{t("badgeProjected")}</Badge>
+                        : <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 text-xs">{t("badgeActual")}</Badge>}
                     </td>
                   </tr>
                 ))}
@@ -2016,7 +2036,7 @@ function ForecastTab({ planId }: { planId: string }) {
           <button className="flex items-center gap-2 text-sm font-medium"
             onClick={() => setShowCategories(!showCategories)}>
             {showCategories ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-            По категориям (матрица)
+            {t("tableCategoryMatrix")}
           </button>
         </CardHeader>
         {showCategories && (
@@ -2025,13 +2045,13 @@ function ForecastTab({ planId }: { planId: string }) {
               <table className="w-full text-xs">
                 <thead className="bg-muted/50">
                   <tr>
-                    <th className="px-3 py-2 text-left font-medium sticky left-0 bg-muted/50 min-w-[180px]">Категория</th>
-                    {Array.from({ length: 12 }, (_, i) => (
+                    <th className="px-3 py-2 text-left font-medium sticky left-0 bg-muted/50 min-w-[180px]">{t("colCategory")}</th>
+                    {t("monthsShort").split(",").map((m, i) => (
                       <th key={i} className="px-2 py-2 text-right font-medium min-w-[80px]">
-                        {["Янв","Фев","Мар","Апр","Май","Июн","Июл","Авг","Сен","Окт","Ноя","Дек"][i]}
+                        {m}
                       </th>
                     ))}
-                    <th className="px-3 py-2 text-right font-medium min-w-[100px]">Итого</th>
+                    <th className="px-3 py-2 text-right font-medium min-w-[100px]">{t("totalLabel")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -2051,7 +2071,7 @@ function ForecastTab({ planId }: { planId: string }) {
               </table>
             </div>
             {categoryMatrix.length === 0 && (
-              <p className="text-center text-muted-foreground py-6 text-sm">Нажмите «Сгенерировать прогноз» чтобы заполнить матрицу</p>
+              <p className="text-center text-muted-foreground py-6 text-sm">{t("forecastGenerateHint")}</p>
             )}
           </CardContent>
         )}
@@ -2063,6 +2083,7 @@ function ForecastTab({ planId }: { planId: string }) {
 // ─── Template Seeder ──────────────────────────────────────────────────────────
 
 function TemplateSeedButton({ planId }: { planId: string }) {
+  const t = useTranslations("budgeting")
   const createLine = useCreateBudgetLine()
   const { data: lines = [] } = useBudgetLines(planId)
   const [seeding, setSeeding] = useState(false)
@@ -2129,7 +2150,7 @@ function TemplateSeedButton({ planId }: { planId: string }) {
   return (
     <button onClick={seed} disabled={seeding}
       className="ml-2 text-xs text-purple-600 dark:text-purple-400 underline underline-offset-2 hover:no-underline disabled:opacity-50">
-      {seeding ? "Заполняю…" : "Заполнить шаблоном"}
+      {seeding ? t("templateLoading") : t("templateReady")}
     </button>
   )
 }
@@ -2137,6 +2158,7 @@ function TemplateSeedButton({ planId }: { planId: string }) {
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function BudgetingPage() {
+  const t = useTranslations("budgeting")
   const { data: plans = [], isLoading: plansLoading } = useBudgetPlans()
   const [activePlanId, setActivePlanId] = useState<string>("")
   const [showCreate, setShowCreate] = useState(false)
@@ -2154,8 +2176,8 @@ export default function BudgetingPage() {
             <PiggyBank className="h-5 w-5" />
           </div>
           <div>
-            <h1 className="text-xl font-bold">Бюджетирование</h1>
-            <p className="text-sm text-muted-foreground">Планирование, прогноз и контроль бюджета</p>
+            <h1 className="text-xl font-bold">{t("title")}</h1>
+            <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
           </div>
         </div>
         <div className="flex items-center gap-3 flex-wrap">
@@ -2165,12 +2187,12 @@ export default function BudgetingPage() {
             <select value={resolvedPlanId} onChange={e => { setActivePlanId(e.target.value); setActiveTab("overview") }}
               className="border border-border rounded-md px-3 py-1.5 text-sm bg-background min-w-[180px]">
               {plans.map(p => (
-                <option key={p.id} value={p.id}>{p.name} — {periodLabel(p)}</option>
+                <option key={p.id} value={p.id}>{p.name} — {periodLabel(p, t)}</option>
               ))}
             </select>
           ) : null}
           <Button size="sm" onClick={() => setShowCreate(true)}>
-            <Plus className="h-4 w-4 mr-1" /> Создать план
+            <Plus className="h-4 w-4 mr-1" /> {t("createPlan")}
           </Button>
         </div>
       </div>
@@ -2179,10 +2201,10 @@ export default function BudgetingPage() {
       {!plansLoading && plans.length === 0 && (
         <div className="text-center py-24 text-muted-foreground">
           <PiggyBank className="h-16 w-16 mx-auto mb-4 opacity-20" />
-          <p className="text-lg font-medium">Нет бюджетных планов</p>
-          <p className="text-sm mt-2">Создайте первый план для начала работы</p>
+          <p className="text-lg font-medium">{t("noPlans")}</p>
+          <p className="text-sm mt-2">{t("noPlansSubtitle")}</p>
           <Button className="mt-6" onClick={() => setShowCreate(true)}>
-            <Plus className="h-4 w-4 mr-1" /> Создать план
+            <Plus className="h-4 w-4 mr-1" /> {t("createPlan")}
           </Button>
         </div>
       )}
@@ -2191,19 +2213,19 @@ export default function BudgetingPage() {
       {resolvedPlanId && (
         <>
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <span>Активный план:</span>
+            <span>{t("activePlan")}</span>
             <span className="font-medium text-foreground">{plans.find(p => p.id === resolvedPlanId)?.name}</span>
-            {statusBadge(plans.find(p => p.id === resolvedPlanId)?.status || "draft")}
+            {statusBadge(plans.find(p => p.id === resolvedPlanId)?.status || "draft", t)}
             <TemplateSeedButton planId={resolvedPlanId} />
           </div>
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="mb-4 flex-wrap">
-              <TabsTrigger value="workspace">Рабочая область</TabsTrigger>
-              <TabsTrigger value="pl">P&amp;L</TabsTrigger>
-              <TabsTrigger value="forecast">Прогноз</TabsTrigger>
-              <TabsTrigger value="comparison">Сравнение</TabsTrigger>
-              <TabsTrigger value="plans">Планы</TabsTrigger>
+              <TabsTrigger value="workspace">{t("tabWorkspace")}</TabsTrigger>
+              <TabsTrigger value="pl">{t("tabPL")}</TabsTrigger>
+              <TabsTrigger value="forecast">{t("tabForecast")}</TabsTrigger>
+              <TabsTrigger value="comparison">{t("tabComparison")}</TabsTrigger>
+              <TabsTrigger value="plans">{t("tabPlans")}</TabsTrigger>
             </TabsList>
 
             <TabsContent value="workspace">
