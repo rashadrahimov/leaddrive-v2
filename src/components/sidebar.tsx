@@ -11,7 +11,7 @@ import {
   Ticket, BookOpen, BarChart3, Mail, MessageSquare, Zap,
   Settings, ChevronLeft, DollarSign, Target, Send,
   TrendingUp, Filter, Workflow, Server, Bell, CalendarDays, Headphones, Package,
-  Lock,
+  Lock, PiggyBank,
 } from "lucide-react"
 import { useState } from "react"
 import { Logo } from "@/components/logo"
@@ -50,6 +50,7 @@ const navItems: NavItem[] = [
   { module: "tickets", href: "/support/calendar", icon: CalendarDays, tKey: "agentCalendar", group: "Support" },
   { module: "knowledge-base", href: "/knowledge-base", icon: BookOpen, tKey: "knowledgeBase", group: "Support" },
   { module: "profitability", href: "/profitability", icon: Calculator, tKey: "profitability", group: "Analytics" },
+  { module: "budgeting", href: "/budgeting", icon: PiggyBank, tKey: "budgeting", group: "Analytics" },
   { module: "profitability", href: "/pricing", icon: DollarSign, tKey: "pricing", group: "Analytics" },
   { module: "reports", href: "/reports", icon: BarChart3, tKey: "reports", group: "Analytics" },
   { module: "ai", href: "/ai-command-center", icon: Brain, tKey: "aiCenter", group: "Analytics" },

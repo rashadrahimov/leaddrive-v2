@@ -151,3 +151,5 @@ S5: Detail pages — 2-column layout
 S6: Tables — zebra striping + hover
 S7: Empty states — illustrations
 S8: Buttons — gradient primary
+2026-03-25 02:18 | Phase 1 FP&A DONE: B1-01..B1-10 + B1-TEST all green. Schema: forecastAmount/costModelKey/isAutoActual on BudgetLine. Analytics API: auto-actuals from cost model via resolveCostModelKey(). Page: 5 KPI cards (Plan/Forecast/Actual/Variance/YE Projection), 3-column Budget|Forecast|Actual table, Forecast column inline edit in Lines tab, Cost Model key dropdown per line, TemplateSeedButton assigns costModelKeys. TypeScript clean, build passed.
+2026-03-25 02:39 | Phase 2-4 FP&A DONE: BudgetSection + BudgetForecastEntry models. Sections API (/api/budgeting/sections). Forecast API (/api/budgeting/forecast). Forecast engine (src/lib/budgeting/forecast.ts). P&L tab with drill-down panel. Forecast tab (12-month ComposedChart). Waterfall chart component. Excel export (/api/budgeting/export). 7 tabs total: Обзор|P&L|Прогноз|Статьи|Факт|Планы|Сравнение. TS clean, build passed 15m.
