@@ -38,6 +38,11 @@ import {
   useUpsertBudgetForecast,
   useAINarrative,
   useSyncActuals,
+  useBudgetTemplates,
+  useCreateBudgetTemplate,
+  useUpdateBudgetTemplate,
+  useDeleteBudgetTemplate,
+  useApplyTemplates,
 } from "@/lib/budgeting/hooks"
 import {
   DEFAULT_EXPENSE_CATEGORIES,
@@ -45,6 +50,7 @@ import {
   DEPARTMENTS,
   SECTION_TYPES,
   type BudgetLine,
+  type BudgetDirectionTemplate,
 } from "@/lib/budgeting/types"
 import { COST_MODEL_KEY_OPTIONS, TEMPLATE_CATEGORY_MAP } from "@/lib/budgeting/cost-model-map"
 import { BudgetWaterfallChart } from "@/components/budget-waterfall-chart"
@@ -229,6 +235,7 @@ function AddLineForm({ planId, existingCategories }: { planId: string; existingC
               className="w-full border border-border rounded-md px-3 py-2 text-sm bg-background">
               <option value="expense">{t("expense")}</option>
               <option value="revenue">{t("revenue")}</option>
+              <option value="cogs">COGS</option>
             </select>
           </div>
           <div>
@@ -339,6 +346,7 @@ function AddActualForm({ planId, existingCategories }: { planId: string; existin
               className="w-full border border-border rounded-md px-3 py-2 text-sm bg-background">
               <option value="expense">{t("expense")}</option>
               <option value="revenue">{t("revenue")}</option>
+              <option value="cogs">COGS</option>
             </select>
           </div>
           <div>
@@ -431,6 +439,7 @@ function WorkspaceTab({ planId }: { planId: string }) {
 
   const expenseLines = filteredLines.filter((l: BudgetLine) => l.lineType === "expense")
   const revenueLines = filteredLines.filter((l: BudgetLine) => l.lineType === "revenue")
+  const cogsLines = filteredLines.filter((l: BudgetLine) => l.lineType === "cogs")
 
   // Helper: get leaf amount (children sum if group parent, else own amount)
   const leafPlanned = (l: BudgetLine) => l.children?.length ? l.children.reduce((s, c) => s + c.plannedAmount, 0) : l.plannedAmount
@@ -441,6 +450,8 @@ function WorkspaceTab({ planId }: { planId: string }) {
   const totExpForecast = expenseLines.reduce((s: number, l: BudgetLine) => s + leafForecast(l), 0)
   const totRevPlanned = revenueLines.reduce((s: number, l: BudgetLine) => s + leafPlanned(l), 0)
   const totRevForecast = revenueLines.reduce((s: number, l: BudgetLine) => s + leafForecast(l), 0)
+  const totCOGSPlanned = cogsLines.reduce((s: number, l: BudgetLine) => s + leafPlanned(l), 0)
+  const totCOGSForecast = cogsLines.reduce((s: number, l: BudgetLine) => s + leafForecast(l), 0)
 
   const { totalPlanned = 0, totalForecast = 0, totalActual = 0, totalVariance = 0, executionPct = 0, autoActualTotal = 0, yearEndProjection = 0, byCategory = [], totalRevenuePlanned = 0, totalRevenueActual = 0, totalExpensePlanned = 0, totalExpenseActual = 0, margin = 0, marginActual = 0 } = analytics ?? {}
 
@@ -884,6 +895,12 @@ function WorkspaceTab({ planId }: { planId: string }) {
     }
     return s + (l.isAutoActual ? (autoActualMap.get(l.category) ?? 0) : (actualsByCat.get(`${l.category}||${l.lineType}`)?.total ?? 0))
   }, 0)
+  const totCOGSActual = cogsLines.reduce((s: number, l: BudgetLine) => {
+    if (l.children?.length) {
+      return s + l.children.reduce((cs, c) => cs + (c.isAutoActual ? (autoActualMap.get(c.category) ?? 0) : (actualsByCat.get(`${c.category}||${c.lineType}`)?.total ?? 0)), 0)
+    }
+    return s + (l.isAutoActual ? (autoActualMap.get(l.category) ?? 0) : (actualsByCat.get(`${l.category}||${l.lineType}`)?.total ?? 0))
+  }, 0)
 
   return (
     <div className="space-y-6">
@@ -913,6 +930,7 @@ function WorkspaceTab({ planId }: { planId: string }) {
             {t("btnUpdateActual")}
           </Button>
         )}
+        <ApplyTemplatesButton planId={planId} />
         <a href={`/api/budgeting/export?planId=${planId}`} download>
           <Button size="sm" variant="outline"><DollarSign className="h-4 w-4 mr-1" /> {t("btnExport")}</Button>
         </a>
@@ -957,15 +975,27 @@ function WorkspaceTab({ planId }: { planId: string }) {
                 </tr>
               </thead>
               <tbody>
-                {expenseLines.length > 0 && renderGroupedSection(t("sectionExpenses"), expenseLines, totExpPlanned)}
                 {revenueLines.length > 0 && renderGroupedSection(t("sectionRevenues"), revenueLines, totRevPlanned)}
+                {cogsLines.length > 0 && renderGroupedSection(t("sectionCOGS"), cogsLines, totCOGSPlanned)}
 
-                {/* Margin row */}
+                {/* Gross Profit row */}
+                {(revenueLines.length > 0 || cogsLines.length > 0) && (
+                  <tr className="border-t-2 border-emerald-300 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/10">
+                    <td className="px-3 py-2 font-bold text-sm" colSpan={2}>{t("grossProfit")}</td>
+                    <td className="px-2 py-2 text-right font-mono text-sm font-bold">{fmt(totRevPlanned - totCOGSPlanned)}</td>
+                    <td className="px-2 py-2 text-right font-mono text-sm font-bold text-green-600">{fmt(totRevActual - totCOGSActual)}</td>
+                    <td colSpan={2} />
+                  </tr>
+                )}
+
+                {expenseLines.length > 0 && renderGroupedSection(t("sectionExpenses"), expenseLines, totExpPlanned)}
+
+                {/* Operating Profit row */}
                 {(expenseLines.length > 0 || revenueLines.length > 0) && (
                   <tr className="border-t-2 border-purple-300 dark:border-purple-800 bg-purple-50 dark:bg-purple-900/10">
-                    <td className="px-3 py-2 font-bold text-sm" colSpan={2}>{t("sectionMargin")}</td>
-                    <td className="px-2 py-2 text-right font-mono text-sm font-bold">{fmt(totRevPlanned - totExpPlanned)}</td>
-                    <td className="px-2 py-2 text-right font-mono text-sm font-bold text-green-600">{fmt(totRevActual - totExpActual)}</td>
+                    <td className="px-3 py-2 font-bold text-sm" colSpan={2}>{t("operatingProfit")}</td>
+                    <td className="px-2 py-2 text-right font-mono text-sm font-bold">{fmt(totRevPlanned - totCOGSPlanned - totExpPlanned)}</td>
+                    <td className="px-2 py-2 text-right font-mono text-sm font-bold text-green-600">{fmt(totRevActual - totCOGSActual - totExpActual)}</td>
                     <td colSpan={2} />
                   </tr>
                 )}
@@ -985,6 +1015,7 @@ function WorkspaceTab({ planId }: { planId: string }) {
                           <select value={newRow.lineType} onChange={e => setNewRow(d => ({ ...d, lineType: e.target.value, parentId: "" }))} className="h-7 rounded-md border border-input bg-background px-1 text-[10px] w-[70px] shrink-0">
                             <option value="expense">{t("expense")}</option>
                             <option value="revenue">{t("revenue")}</option>
+                            <option value="cogs">COGS</option>
                           </select>
                         </div>
                         <Input placeholder={t("placeholderCategoryShort")} className="h-7 text-xs" value={newRow.category} onChange={e => setNewRow(d => ({ ...d, category: e.target.value }))} autoFocus />
@@ -2511,6 +2542,241 @@ function ForecastTab({ planId }: { planId: string }) {
   )
 }
 
+// ─── Templates Tab ───────────────────────────────────────────────────────────
+
+function TemplatesTab() {
+  const t = useTranslations("budgeting")
+  const { data: templates = [], isLoading } = useBudgetTemplates()
+  const createTemplate = useCreateBudgetTemplate()
+  const updateTemplate = useUpdateBudgetTemplate()
+  const deleteTemplate = useDeleteBudgetTemplate()
+
+  const [adding, setAdding] = useState(false)
+  const [newTpl, setNewTpl] = useState({ name: "", lineType: "expense" as "revenue" | "expense" | "cogs", lineSubtype: "service", defaultAmount: "" })
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
+
+  const handleAdd = async () => {
+    if (!newTpl.name) return
+    await createTemplate.mutateAsync({
+      name: newTpl.name,
+      lineType: newTpl.lineType,
+      lineSubtype: newTpl.lineSubtype,
+      defaultAmount: Number(newTpl.defaultAmount) || 0,
+    })
+    setNewTpl({ name: "", lineType: "expense", lineSubtype: "service", defaultAmount: "" })
+    setAdding(false)
+  }
+
+  const toggleActive = async (tpl: BudgetDirectionTemplate) => {
+    await updateTemplate.mutateAsync({ id: tpl.id, isActive: !tpl.isActive })
+  }
+
+  const handleDelete = async (id: string) => {
+    await deleteTemplate.mutateAsync(id)
+    setConfirmDelete(null)
+  }
+
+  if (isLoading) return <div className="flex items-center justify-center py-12"><Loader2 className="h-6 w-6 animate-spin" /></div>
+
+  const subtypeLabel = (s: string | null | undefined) => {
+    if (s === "service") return t("subtypeService")
+    if (s === "product") return t("subtypeProduct")
+    if (s === "cogs") return t("subtypeCogs")
+    return s || "—"
+  }
+
+  const typeLabel = (lt: string) => {
+    if (lt === "revenue") return t("revenue")
+    if (lt === "cogs") return "COGS"
+    return t("expense")
+  }
+
+  return (
+    <div className="space-y-4">
+      <Card>
+        <CardHeader className="pb-2">
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-base">{t("templatesTitle")}</CardTitle>
+              <p className="text-xs text-muted-foreground mt-1">{t("templatesDescription")}</p>
+            </div>
+            {!adding && (
+              <Button size="sm" onClick={() => setAdding(true)}>
+                <Plus className="h-4 w-4 mr-1" /> {t("btnAddTemplate")}
+              </Button>
+            )}
+          </div>
+        </CardHeader>
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-muted/50">
+                <tr>
+                  <th className="px-3 py-2 text-left font-medium text-xs">{t("templateName")}</th>
+                  <th className="px-2 py-2 text-left font-medium text-xs">{t("templateType")}</th>
+                  <th className="px-2 py-2 text-left font-medium text-xs">{t("templateSubtype")}</th>
+                  <th className="px-2 py-2 text-right font-medium text-xs">{t("templateAmount")}</th>
+                  <th className="px-2 py-2 text-center font-medium text-xs">{t("templateActive")}</th>
+                  <th className="px-2 py-2 w-20" />
+                </tr>
+              </thead>
+              <tbody>
+                {adding && (
+                  <tr className="border-b border-border/50 bg-green-50 dark:bg-green-900/10">
+                    <td className="px-2 py-1">
+                      <Input className="h-7 text-xs" placeholder={t("templateName")} value={newTpl.name}
+                        onChange={e => setNewTpl(d => ({ ...d, name: e.target.value }))}
+                        onKeyDown={e => e.key === "Enter" && handleAdd()} autoFocus />
+                    </td>
+                    <td className="px-2 py-1">
+                      <select value={newTpl.lineType} onChange={e => setNewTpl(d => ({ ...d, lineType: e.target.value as any }))}
+                        className="h-7 w-full rounded-md border border-input bg-background px-1 text-xs">
+                        <option value="expense">{t("expense")}</option>
+                        <option value="revenue">{t("revenue")}</option>
+                        <option value="cogs">COGS</option>
+                      </select>
+                    </td>
+                    <td className="px-2 py-1">
+                      <select value={newTpl.lineSubtype} onChange={e => setNewTpl(d => ({ ...d, lineSubtype: e.target.value }))}
+                        className="h-7 w-full rounded-md border border-input bg-background px-1 text-xs">
+                        <option value="service">{t("subtypeService")}</option>
+                        <option value="product">{t("subtypeProduct")}</option>
+                        <option value="cogs">{t("subtypeCogs")}</option>
+                      </select>
+                    </td>
+                    <td className="px-2 py-1">
+                      <Input type="number" className="h-7 text-xs text-right" placeholder="0" value={newTpl.defaultAmount}
+                        onChange={e => setNewTpl(d => ({ ...d, defaultAmount: e.target.value }))}
+                        onKeyDown={e => e.key === "Enter" && handleAdd()} />
+                    </td>
+                    <td />
+                    <td className="px-2 py-1 text-center">
+                      <div className="flex gap-1 justify-center">
+                        <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={handleAdd} disabled={createTemplate.isPending}>
+                          {createTemplate.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCircle className="h-3.5 w-3.5" />}
+                        </Button>
+                        <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setAdding(false)}>{t("btnCancel")}</Button>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+                {templates.map((tpl: BudgetDirectionTemplate) => (
+                  <tr key={tpl.id} className="border-b border-border/50 hover:bg-muted/20">
+                    <td className="px-3 py-1.5 text-xs font-medium">{tpl.name}</td>
+                    <td className="px-2 py-1.5 text-xs">
+                      <Badge variant="outline" className="text-[10px]">{typeLabel(tpl.lineType)}</Badge>
+                    </td>
+                    <td className="px-2 py-1.5 text-xs text-muted-foreground">{subtypeLabel(tpl.lineSubtype)}</td>
+                    <td className="px-2 py-1.5 text-xs text-right font-mono">{fmt(tpl.defaultAmount)}</td>
+                    <td className="px-2 py-1.5 text-center">
+                      <button onClick={() => toggleActive(tpl)} className={`inline-block w-8 h-4 rounded-full transition-colors ${tpl.isActive ? "bg-green-500" : "bg-gray-300 dark:bg-gray-600"}`}>
+                        <span className={`block w-3 h-3 rounded-full bg-white transition-transform mx-0.5 ${tpl.isActive ? "translate-x-4" : "translate-x-0"}`} />
+                      </button>
+                    </td>
+                    <td className="px-2 py-1.5 text-center">
+                      {confirmDelete === tpl.id ? (
+                        <div className="flex gap-1 justify-center">
+                          <Button size="sm" variant="destructive" className="h-6 text-[10px] px-2" onClick={() => handleDelete(tpl.id)}>
+                            {deleteTemplate.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <><Trash2 className="h-3 w-3 mr-0.5" /> OK</>}
+                          </Button>
+                          <Button size="sm" variant="ghost" className="h-6 text-[10px] px-2" onClick={() => setConfirmDelete(null)}>{t("btnCancel")}</Button>
+                        </div>
+                      ) : (
+                        <Button size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={() => setConfirmDelete(tpl.id)}>
+                          <Trash2 className="h-3.5 w-3.5 text-muted-foreground hover:text-red-500" />
+                        </Button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+                {templates.length === 0 && !adding && (
+                  <tr>
+                    <td colSpan={6} className="text-center py-8 text-muted-foreground text-xs">{t("emptyNoLines")}</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
+
+// ─── Apply Templates Dialog ─────────────────────────────────────────────────
+
+function ApplyTemplatesButton({ planId }: { planId: string }) {
+  const t = useTranslations("budgeting")
+  const { data: templates = [] } = useBudgetTemplates()
+  const applyTemplates = useApplyTemplates()
+  const [open, setOpen] = useState(false)
+  const [selected, setSelected] = useState<Set<string>>(new Set())
+  const [result, setResult] = useState<{ created: number; skipped: number } | null>(null)
+
+  const activeTemplates = templates.filter((tpl: BudgetDirectionTemplate) => tpl.isActive)
+
+  const toggle = (id: string) => {
+    setSelected(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id); else next.add(id)
+      return next
+    })
+  }
+
+  const handleApply = async () => {
+    if (selected.size === 0) return
+    const res = await applyTemplates.mutateAsync({ planId, templateIds: Array.from(selected) })
+    setResult(res)
+    setTimeout(() => { setOpen(false); setResult(null); setSelected(new Set()) }, 2000)
+  }
+
+  if (activeTemplates.length === 0) return null
+
+  return (
+    <>
+      <Button size="sm" variant="outline" onClick={() => setOpen(true)}>
+        <Plus className="h-4 w-4 mr-1" /> {t("btnApplyTemplates")}
+      </Button>
+      {open && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <Card className="w-full max-w-md">
+            <CardHeader>
+              <CardTitle className="text-sm">{t("selectTemplates")}</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {result ? (
+                <div className="flex items-center gap-2 text-sm text-green-600">
+                  <CheckCircle className="h-4 w-4" />
+                  {t("templateApplied", { created: result.created, skipped: result.skipped })}
+                </div>
+              ) : (
+                <>
+                  <div className="max-h-60 overflow-y-auto space-y-1">
+                    {activeTemplates.map((tpl: BudgetDirectionTemplate) => (
+                      <label key={tpl.id} className="flex items-center gap-2 py-1 px-2 rounded hover:bg-muted/40 cursor-pointer text-xs">
+                        <input type="checkbox" checked={selected.has(tpl.id)} onChange={() => toggle(tpl.id)} className="rounded" />
+                        <span className="flex-1">{tpl.name}</span>
+                        <Badge variant="outline" className="text-[10px]">{tpl.lineType}</Badge>
+                        <span className="font-mono text-muted-foreground">{fmt(tpl.defaultAmount)}</span>
+                      </label>
+                    ))}
+                  </div>
+                  <div className="flex gap-2 pt-2">
+                    <Button size="sm" onClick={handleApply} disabled={selected.size === 0 || applyTemplates.isPending} className="flex-1">
+                      {applyTemplates.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : t("btnApplyTemplates")}
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => { setOpen(false); setSelected(new Set()) }} className="flex-1">{t("btnCancel")}</Button>
+                  </div>
+                </>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      )}
+    </>
+  )
+}
+
 // ─── Template Seeder ──────────────────────────────────────────────────────────
 
 function TemplateSeedButton({ planId }: { planId: string }) {
@@ -2657,6 +2923,7 @@ export default function BudgetingPage() {
               <TabsTrigger value="forecast">{t("tabForecast")}</TabsTrigger>
               <TabsTrigger value="comparison">{t("tabComparison")}</TabsTrigger>
               <TabsTrigger value="plans">{t("tabPlans")}</TabsTrigger>
+              <TabsTrigger value="templates">{t("tabTemplates")}</TabsTrigger>
             </TabsList>
 
             <TabsContent value="workspace">
@@ -2673,6 +2940,9 @@ export default function BudgetingPage() {
             </TabsContent>
             <TabsContent value="plans">
               <PlansTab activePlanId={resolvedPlanId} onSelect={id => { setActivePlanId(id); setActiveTab("workspace") }} onShowCreate={() => setShowCreate(true)} />
+            </TabsContent>
+            <TabsContent value="templates">
+              <TemplatesTab />
             </TabsContent>
           </Tabs>
         </>

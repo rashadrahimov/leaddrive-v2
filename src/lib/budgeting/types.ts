@@ -18,9 +18,13 @@ export interface BudgetLine {
   planId: string
   category: string
   department?: string | null
-  lineType: "expense" | "revenue"
+  lineType: "expense" | "revenue" | "cogs"
+  lineSubtype?: string | null  // service | product | cogs
   plannedAmount: number
   forecastAmount?: number | null
+  unitPrice?: number | null
+  unitCost?: number | null
+  quantity?: number | null
   costModelKey?: string | null
   isAutoActual: boolean
   notes?: string | null
@@ -79,6 +83,10 @@ export interface BudgetAnalytics {
   totalRevenueActual: number
   margin: number
   marginActual: number
+  totalCOGSPlanned: number
+  totalCOGSActual: number
+  grossProfit: number
+  grossProfitActual: number
   byCategory: BudgetCategoryRow[]
   byDepartment: BudgetDepartmentRow[]
   costModelTotal: number
@@ -103,9 +111,13 @@ export interface CreateBudgetLineInput {
   planId: string
   category: string
   department?: string
-  lineType: "expense" | "revenue"
+  lineType: "expense" | "revenue" | "cogs"
+  lineSubtype?: string
   plannedAmount: number
   forecastAmount?: number
+  unitPrice?: number
+  unitCost?: number
+  quantity?: number
   costModelKey?: string
   isAutoActual?: boolean
   notes?: string
@@ -117,9 +129,13 @@ export interface UpdateBudgetLineInput {
   planId: string
   category?: string
   department?: string
-  lineType?: "expense" | "revenue"
+  lineType?: "expense" | "revenue" | "cogs"
+  lineSubtype?: string
   plannedAmount?: number
   forecastAmount?: number
+  unitPrice?: number
+  unitCost?: number
+  quantity?: number
   costModelKey?: string
   isAutoActual?: boolean
   notes?: string
@@ -173,7 +189,7 @@ export interface BudgetSection {
   organizationId: string
   planId: string
   name: string
-  sectionType: "revenue" | "expense" | "gross_profit" | "ebitda"
+  sectionType: "revenue" | "expense" | "cogs" | "gross_profit" | "ebitda"
   sortOrder: number
   createdAt: string
 }
@@ -193,10 +209,57 @@ export interface BudgetForecastEntry {
 
 export const SECTION_TYPES = [
   { value: "revenue", label: "Выручка" },
+  { value: "cogs", label: "Себестоимость (COGS)" },
   { value: "expense", label: "Расходы" },
   { value: "gross_profit", label: "Валовая прибыль (расчётная)" },
   { value: "ebitda", label: "EBITDA (расчётная)" },
 ]
+
+export interface BudgetDirectionTemplate {
+  id: string
+  organizationId: string
+  name: string
+  description?: string | null
+  lineType: "revenue" | "expense" | "cogs"
+  lineSubtype?: string | null
+  defaultAmount: number
+  unitPrice?: number | null
+  unitCost?: number | null
+  quantity?: number | null
+  costModelKey?: string | null
+  department?: string | null
+  sortOrder: number
+  isActive: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+export interface CreateTemplateInput {
+  name: string
+  description?: string
+  lineType: "revenue" | "expense" | "cogs"
+  lineSubtype?: string
+  defaultAmount?: number
+  unitPrice?: number
+  unitCost?: number
+  quantity?: number
+  costModelKey?: string
+  department?: string
+}
+
+export interface UpdateTemplateInput {
+  name?: string
+  description?: string
+  lineType?: "revenue" | "expense" | "cogs"
+  lineSubtype?: string
+  defaultAmount?: number
+  unitPrice?: number
+  unitCost?: number
+  quantity?: number
+  costModelKey?: string
+  department?: string
+  isActive?: boolean
+}
 
 export const DEPARTMENTS = [
   "IT",

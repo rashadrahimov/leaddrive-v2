@@ -2117,6 +2117,31 @@
     "noPlansCardSubtitle": "Create your first budget plan",
 
     "monthsShort": "Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec",
-    "monthsFull": "January,February,March,April,May,June,July,August,September,October,November,December"
+    "monthsFull": "January,February,March,April,May,June,July,August,September,October,November,December",
+
+    "tabTemplates": "Templates",
+    "templatesTitle": "Direction Templates",
+    "templatesDescription": "Business direction library for quick plan population",
+    "templateName": "Name",
+    "templateType": "Type",
+    "templateSubtype": "Subtype",
+    "templateAmount": "Default amount",
+    "templateActive": "Active",
+    "btnAddTemplate": "Add template",
+    "btnApplyTemplates": "Apply templates",
+    "templateApplied": "Created: {created}, skipped: {skipped}",
+    "subtypeService": "Service",
+    "subtypeProduct": "Product",
+    "subtypeCogs": "COGS",
+    "selectTemplates": "Select templates to apply",
+
+    "sectionCOGS": "COGS",
+    "cogsLabel": "Cost of Goods Sold",
+    "grossProfit": "Gross Profit",
+    "operatingProfit": "Operating Profit",
+    "unitPrice": "Unit price",
+    "unitCost": "Unit cost",
+    "quantityLabel": "Qty",
+    "cogs": "COGS"
   }
 }

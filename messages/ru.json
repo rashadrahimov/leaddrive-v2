@@ -2117,6 +2117,31 @@
     "noPlansCardSubtitle": "Создайте первый бюджетный план",
 
     "monthsShort": "Янв,Фев,Мар,Апр,Май,Июн,Июл,Авг,Сен,Окт,Ноя,Дек",
-    "monthsFull": "Январь,Февраль,Март,Апрель,Май,Июнь,Июль,Август,Сентябрь,Октябрь,Ноябрь,Декабрь"
+    "monthsFull": "Январь,Февраль,Март,Апрель,Май,Июнь,Июль,Август,Сентябрь,Октябрь,Ноябрь,Декабрь",
+
+    "tabTemplates": "Шаблоны",
+    "templatesTitle": "Шаблоны направлений",
+    "templatesDescription": "Библиотека направлений бизнеса для быстрого заполнения планов",
+    "templateName": "Название",
+    "templateType": "Тип",
+    "templateSubtype": "Подтип",
+    "templateAmount": "Сумма по умолчанию",
+    "templateActive": "Активный",
+    "btnAddTemplate": "Добавить шаблон",
+    "btnApplyTemplates": "Применить шаблоны",
+    "templateApplied": "Применено: {created}, пропущено: {skipped}",
+    "subtypeService": "Сервис",
+    "subtypeProduct": "Продукт",
+    "subtypeCogs": "Себестоимость",
+    "selectTemplates": "Выберите шаблоны для применения",
+
+    "sectionCOGS": "СЕБЕСТОИМОСТЬ (COGS)",
+    "cogsLabel": "Себестоимость",
+    "grossProfit": "Валовая прибыль",
+    "operatingProfit": "Операционная прибыль",
+    "unitPrice": "Цена за ед.",
+    "unitCost": "Себест. за ед.",
+    "quantityLabel": "Кол-во",
+    "cogs": "COGS"
   }
 }
