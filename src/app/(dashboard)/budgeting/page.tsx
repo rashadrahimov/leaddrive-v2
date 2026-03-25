@@ -862,7 +862,10 @@ function WorkspaceTab({ planId }: { planId: string }) {
     return (
       <>
         <tr className="bg-muted/40">
-          <td colSpan={6} className="px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-muted-foreground" title={sectionHintKey ? t(sectionHintKey) : undefined}>{title}</td>
+          <td colSpan={6} className="px-3 pt-2 pb-1">
+            <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{title}</div>
+            {sectionHintKey && <div className="text-[10px] text-muted-foreground/60 font-normal mt-0.5">{t(sectionHintKey)}</div>}
+          </td>
         </tr>
         {sectionLines.map(l => {
           const isGroupParent = (l.children && l.children.length > 0) || (l.notes && l.notes.startsWith("group:"))
@@ -1064,7 +1067,10 @@ function WorkspaceTab({ planId }: { planId: string }) {
                 {/* Gross Profit row */}
                 {(revenueLines.length > 0 || cogsLines.length > 0) && (
                   <tr className="border-t-2 border-emerald-300 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/10">
-                    <td title={t("hintGrossProfit")} className="px-3 py-2 font-bold text-sm" colSpan={2}>{t("grossProfit")}</td>
+                    <td className="px-3 py-2" colSpan={2}>
+                      <div className="font-bold text-sm">{t("grossProfit")}</div>
+                      <div className="text-[10px] text-muted-foreground/60 font-normal">{t("hintGrossProfit")}</div>
+                    </td>
                     <td className="px-2 py-2 text-right font-mono text-sm font-bold">{fmt(totRevPlanned - totCOGSPlanned)}</td>
                     <td className="px-2 py-2 text-right font-mono text-sm font-bold text-green-600">{fmt(totRevActual - totCOGSActual)}</td>
                     <td colSpan={2} />
@@ -1076,7 +1082,10 @@ function WorkspaceTab({ planId }: { planId: string }) {
                 {/* Operating Profit row */}
                 {(expenseLines.length > 0 || revenueLines.length > 0 || cogsLines.length > 0) && (
                   <tr className="border-t-2 border-purple-300 dark:border-purple-800 bg-purple-50 dark:bg-purple-900/10">
-                    <td title={t("hintOperatingProfit")} className="px-3 py-2 font-bold text-sm" colSpan={2}>{t("operatingProfit")}</td>
+                    <td className="px-3 py-2" colSpan={2}>
+                      <div className="font-bold text-sm">{t("operatingProfit")}</div>
+                      <div className="text-[10px] text-muted-foreground/60 font-normal">{t("hintOperatingProfit")}</div>
+                    </td>
                     <td className="px-2 py-2 text-right font-mono text-sm font-bold">{fmt(totRevPlanned - totCOGSPlanned - totExpPlanned)}</td>
                     <td className="px-2 py-2 text-right font-mono text-sm font-bold text-green-600">{fmt(totRevActual - totCOGSActual - totExpActual)}</td>
                     <td colSpan={2} />
