@@ -596,7 +596,7 @@ function WorkspaceTab({ planId }: { planId: string }) {
         <td className="px-2 py-2 text-right">
           <div className="flex items-center justify-end gap-1">
             <button type="button"
-              className={`font-mono text-sm cursor-pointer px-1 rounded hover:underline ${line.isAutoActual ? "text-blue-600 dark:text-blue-400" : "text-green-700 dark:text-green-300"}`}
+              className={`font-mono text-sm cursor-pointer px-1 rounded hover:underline ${line.isAutoActual ? "text-blue-600 dark:text-blue-400" : "text-emerald-800 dark:text-emerald-300"}`}
               onClick={() => setDrillDownLine(line)}
               title={t("drillDownTitle")}>
               {fmt(factValue)}
@@ -613,7 +613,7 @@ function WorkspaceTab({ planId }: { planId: string }) {
           </div>
         </td>
         {/* Variance + annotation icon */}
-        <td className={`px-2 py-2 text-right font-mono text-sm font-bold ${variance >= 0 ? "text-green-700 dark:text-green-300" : "text-red-500"}`}>
+        <td className={`px-2 py-2 text-right font-mono text-sm font-bold ${variance >= 0 ? "text-emerald-800 dark:text-emerald-300" : "text-red-500"}`}>
           <div className="flex items-center justify-end gap-1">
             <button type="button"
               className={`p-0.5 rounded hover:bg-muted ${line.notes ? "text-blue-500" : "text-muted-foreground/40 hover:text-muted-foreground"}`}
@@ -726,7 +726,7 @@ function WorkspaceTab({ planId }: { planId: string }) {
           </div>
         </td>
         <td className="px-2 py-2.5 text-right font-mono text-sm font-semibold">{fmt(groupTotal)}</td>
-        <td className="px-2 py-2.5 text-right font-mono text-sm font-semibold text-green-700 dark:text-green-300">{fmt(groupActual)}</td>
+        <td className="px-2 py-2.5 text-right font-mono text-sm font-semibold text-emerald-800 dark:text-emerald-300">{fmt(groupActual)}</td>
         <td className="px-2 py-2.5 text-right text-sm font-semibold text-muted-foreground">
           {groupTotal > 0 ? `${(((groupTotal - groupActual) / groupTotal) * 100).toFixed(1)}%` : "—"}
         </td>
@@ -792,7 +792,7 @@ function WorkspaceTab({ planId }: { planId: string }) {
           <td className="px-2 py-1.5 text-right">
             <div className="flex items-center justify-end gap-1">
               <button type="button"
-                className={`font-mono text-sm cursor-pointer px-1 rounded hover:underline ${child.isAutoActual ? "text-blue-600 dark:text-blue-400" : "text-green-700 dark:text-green-300"}`}
+                className={`font-mono text-sm cursor-pointer px-1 rounded hover:underline ${child.isAutoActual ? "text-blue-600 dark:text-blue-400" : "text-emerald-800 dark:text-emerald-300"}`}
                 onClick={() => setDrillDownLine(child)}
                 title={t("drillDownTitle")}>
                 {fmt(factValue)}
@@ -808,7 +808,7 @@ function WorkspaceTab({ planId }: { planId: string }) {
               )}
             </div>
           </td>
-          <td className={`px-2 py-1.5 text-right font-mono text-xs font-bold ${variance >= 0 ? "text-green-700 dark:text-green-300" : "text-red-500"}`}>
+          <td className={`px-2 py-1.5 text-right font-mono text-xs font-bold ${variance >= 0 ? "text-emerald-800 dark:text-emerald-300" : "text-red-500"}`}>
             <div className="flex items-center justify-end gap-1">
               <button type="button"
                 className={`p-0.5 rounded hover:bg-muted ${noteText ? "text-blue-500" : "text-muted-foreground/40 hover:text-muted-foreground"}`}
@@ -882,7 +882,7 @@ function WorkspaceTab({ planId }: { planId: string }) {
         <tr className="border-y-2 border-border bg-muted/50">
           <td className="px-3 py-2 font-bold text-sm" colSpan={2} title={t("hintSectionTotal")}>{t("totalLabel")} {title.toLowerCase()}</td>
           <td className="px-2 py-2 text-right font-mono text-sm font-bold">{fmt(totPlanned)}</td>
-          <td className="px-2 py-2 text-right font-mono text-sm font-bold text-green-700 dark:text-green-300">{fmt(totActual)}</td>
+          <td className="px-2 py-2 text-right font-mono text-sm font-bold text-emerald-800 dark:text-emerald-300">{fmt(totActual)}</td>
           <td className="px-2 py-2 text-right font-mono text-sm font-bold">
             {totPlanned > 0 ? `${(((totPlanned - totActual) / totPlanned) * 100).toFixed(1)}%` : "—"}
           </td>
@@ -928,7 +928,7 @@ function WorkspaceTab({ planId }: { planId: string }) {
         <tr className="border-y-2 border-border bg-muted/50">
           <td className="px-3 py-2 font-bold text-sm" colSpan={2} title={t("hintSectionTotal")}>{t("totalLabel")} {title.toLowerCase()}</td>
           <td className="px-2 py-2 text-right font-mono text-sm font-bold">{fmt(totPlanned)}</td>
-          <td className="px-2 py-2 text-right font-mono text-sm font-bold text-green-700 dark:text-green-300">{fmt(totActual)}</td>
+          <td className="px-2 py-2 text-right font-mono text-sm font-bold text-emerald-800 dark:text-emerald-300">{fmt(totActual)}</td>
           <td className="px-2 py-2 text-right font-mono text-sm font-bold">
             {totPlanned > 0 ? `${(((totPlanned - totActual) / totPlanned) * 100).toFixed(1)}%` : "—"}
           </td>
@@ -1159,7 +1159,7 @@ function WorkspaceTab({ planId }: { planId: string }) {
                   <th title={t("hintColCategory")} className="px-3 py-2 text-left font-medium text-xs">{t("colCategory")}</th>
                   <th title={t("hintColDepartment")} className="px-2 py-2 text-left font-medium text-xs">{t("colDepartment")}</th>
                   <th title={t("hintColPlan")} className="px-2 py-2 text-right font-medium text-xs">{t("colPlan")} ₼</th>
-                  <th title={t("hintColActual")} className="px-2 py-2 text-right font-medium text-xs text-green-700 dark:text-green-300">{t("colActual")} ₼</th>
+                  <th title={t("hintColActual")} className="px-2 py-2 text-right font-medium text-xs text-emerald-800 dark:text-emerald-300">{t("colActual")} ₼</th>
                   <th title={t("hintColVariance")} className="px-2 py-2 text-right font-medium text-xs">{t("colVariancePct")}</th>
                   <th className="px-2 py-2 w-10" />
                 </tr>
@@ -1183,7 +1183,7 @@ function WorkspaceTab({ planId }: { planId: string }) {
                       <div className="text-[10px] text-muted-foreground/60 font-normal">{t("hintGrossProfit")}</div>
                     </td>
                     <td className="px-2 py-2 text-right font-mono text-sm font-bold">{fmt(totRevPlanned - totCOGSPlanned)}</td>
-                    <td className="px-2 py-2 text-right font-mono text-sm font-bold text-green-700 dark:text-green-300">{fmt(totRevActual - totCOGSActual)}</td>
+                    <td className="px-2 py-2 text-right font-mono text-sm font-bold text-emerald-800 dark:text-emerald-300">{fmt(totRevActual - totCOGSActual)}</td>
                     <td colSpan={2} />
                   </tr>
                 )}
@@ -1198,7 +1198,7 @@ function WorkspaceTab({ planId }: { planId: string }) {
                       <div className="text-[10px] text-muted-foreground/60 font-normal">{t("hintOperatingProfit")}</div>
                     </td>
                     <td className="px-2 py-2 text-right font-mono text-sm font-bold">{fmt(totRevPlanned - totCOGSPlanned - totExpPlanned)}</td>
-                    <td className="px-2 py-2 text-right font-mono text-sm font-bold text-green-700 dark:text-green-300">{fmt(totRevActual - totCOGSActual - totExpActual)}</td>
+                    <td className="px-2 py-2 text-right font-mono text-sm font-bold text-emerald-800 dark:text-emerald-300">{fmt(totRevActual - totCOGSActual - totExpActual)}</td>
                     <td colSpan={2} />
                   </tr>
                 )}
@@ -1465,11 +1465,11 @@ function OverviewTab({ planId }: { planId: string }) {
       {/* Execution % */}
       <div className="flex items-center gap-3 text-sm" title={t("kpiExecutionTooltip")}>
         <span className="text-muted-foreground">{t("budgetExecution")}</span>
-        <span className={`font-bold text-lg ${expExecPct <= 100 ? "text-green-700 dark:text-green-300" : expExecPct <= 110 ? "text-amber-600 dark:text-amber-400" : "text-red-500"}`}>
+        <span className={`font-bold text-lg ${expExecPct <= 100 ? "text-emerald-800 dark:text-emerald-300" : expExecPct <= 110 ? "text-amber-600 dark:text-amber-400" : "text-red-500"}`}>
           {execEmoji} {Math.round(expExecPct)}%
         </span>
         {expExecPct <= 100
-          ? <CheckCircle className="h-4 w-4 text-green-700 dark:text-green-300" />
+          ? <CheckCircle className="h-4 w-4 text-emerald-800 dark:text-emerald-300" />
           : <AlertCircle className="h-4 w-4 text-red-500" />}
         {expExecPct > 110 && <span className="text-xs font-bold text-red-500 uppercase">{t("overspend")}</span>}
       </div>
@@ -1551,7 +1551,7 @@ function OverviewTab({ planId }: { planId: string }) {
                     <th className="px-4 py-2 text-left font-medium">{t("colType")}</th>
                     <th className="px-4 py-2 text-right font-medium">{t("colBudget")}</th>
                     <th className="px-4 py-2 text-right font-medium text-purple-600 dark:text-purple-400">{t("colForecast")}</th>
-                    <th className="px-4 py-2 text-right font-medium text-green-700 dark:text-green-300">{t("colActual")}</th>
+                    <th className="px-4 py-2 text-right font-medium text-emerald-800 dark:text-emerald-300">{t("colActual")}</th>
                     <th className="px-4 py-2 text-right font-medium">{t("colVariance")}</th>
                     <th className="px-4 py-2 text-right font-medium">%</th>
                   </tr>
@@ -1567,11 +1567,11 @@ function OverviewTab({ planId }: { planId: string }) {
                       </td>
                       <td className="px-4 py-2 text-right font-mono">{fmt(row.planned)}</td>
                       <td className="px-4 py-2 text-right font-mono text-purple-600 dark:text-purple-400">{fmt(row.forecast)}</td>
-                      <td className="px-4 py-2 text-right font-mono text-green-700 dark:text-green-300">{fmt(row.actual)}</td>
-                      <td className={`px-4 py-2 text-right font-medium ${row.variance >= 0 ? "text-green-700 dark:text-green-300" : "text-red-500"}`}>
+                      <td className="px-4 py-2 text-right font-mono text-emerald-800 dark:text-emerald-300">{fmt(row.actual)}</td>
+                      <td className={`px-4 py-2 text-right font-medium ${row.variance >= 0 ? "text-emerald-800 dark:text-emerald-300" : "text-red-500"}`}>
                         {row.variance >= 0 ? "+" : ""}{fmt(row.variance)}
                       </td>
-                      <td className={`px-4 py-2 text-right ${row.variancePct >= 0 ? "text-green-700 dark:text-green-300" : "text-red-500"}`}>
+                      <td className={`px-4 py-2 text-right ${row.variancePct >= 0 ? "text-emerald-800 dark:text-emerald-300" : "text-red-500"}`}>
                         {row.variancePct >= 0 ? "+" : ""}{Math.round(row.variancePct)}%
                       </td>
                     </tr>
@@ -1595,7 +1595,7 @@ function OverviewTab({ planId }: { planId: string }) {
                     <th className="px-4 py-2 text-left font-medium">{t("colDepartment")}</th>
                     <th className="px-4 py-2 text-right font-medium">{t("colBudget")}</th>
                     <th className="px-4 py-2 text-right font-medium text-purple-600 dark:text-purple-400">{t("colForecast")}</th>
-                    <th className="px-4 py-2 text-right font-medium text-green-700 dark:text-green-300">{t("colActual")}</th>
+                    <th className="px-4 py-2 text-right font-medium text-emerald-800 dark:text-emerald-300">{t("colActual")}</th>
                     <th className="px-4 py-2 text-right font-medium">{t("colVariance")}</th>
                   </tr>
                 </thead>
@@ -1605,8 +1605,8 @@ function OverviewTab({ planId }: { planId: string }) {
                       <td className="px-4 py-2 font-medium">{row.department}</td>
                       <td className="px-4 py-2 text-right font-mono">{fmt(row.planned)}</td>
                       <td className="px-4 py-2 text-right font-mono text-purple-600 dark:text-purple-400">{fmt(row.forecast)}</td>
-                      <td className="px-4 py-2 text-right font-mono text-green-700 dark:text-green-300">{fmt(row.actual)}</td>
-                      <td className={`px-4 py-2 text-right font-medium ${row.variance >= 0 ? "text-green-700 dark:text-green-300" : "text-red-500"}`}>
+                      <td className="px-4 py-2 text-right font-mono text-emerald-800 dark:text-emerald-300">{fmt(row.actual)}</td>
+                      <td className={`px-4 py-2 text-right font-medium ${row.variance >= 0 ? "text-emerald-800 dark:text-emerald-300" : "text-red-500"}`}>
                         {row.variance >= 0 ? "+" : ""}{fmt(row.variance)}
                       </td>
                     </tr>
@@ -2172,7 +2172,7 @@ function ComparisonTab() {
                         {selectedIds.map((_id, i) => [
                           <td key={`${row.category}-p${i}-p`} className="px-2 py-1.5 text-right font-mono">{fmt(row[`p${i}_planned`])}</td>,
                           <td key={`${row.category}-p${i}-a`} className="px-2 py-1.5 text-right font-mono">{fmt(row[`p${i}_actual`])}</td>,
-                          <td key={`${row.category}-p${i}-v`} className={`px-2 py-1.5 text-right font-mono font-bold ${(row[`p${i}_variance`] ?? 0) >= 0 ? "text-green-700 dark:text-green-300" : "text-red-500"}`}>
+                          <td key={`${row.category}-p${i}-v`} className={`px-2 py-1.5 text-right font-mono font-bold ${(row[`p${i}_variance`] ?? 0) >= 0 ? "text-emerald-800 dark:text-emerald-300" : "text-red-500"}`}>
                             {(row[`p${i}_pct`] ?? 0).toFixed(1)}%
                           </td>,
                         ])}
@@ -2187,7 +2187,7 @@ function ComparisonTab() {
                         return [
                           <td key={`total-p${i}-p`} className="px-2 py-2 text-right font-mono font-bold">{fmt(a?.totalPlanned ?? 0)}</td>,
                           <td key={`total-p${i}-a`} className="px-2 py-2 text-right font-mono font-bold">{fmt(a?.totalActual ?? 0)}</td>,
-                          <td key={`total-p${i}-v`} className={`px-2 py-2 text-right font-mono font-bold ${(a?.totalVariance ?? 0) >= 0 ? "text-green-700 dark:text-green-300" : "text-red-500"}`}>
+                          <td key={`total-p${i}-v`} className={`px-2 py-2 text-right font-mono font-bold ${(a?.totalVariance ?? 0) >= 0 ? "text-emerald-800 dark:text-emerald-300" : "text-red-500"}`}>
                             {a?.totalPlanned ? ((a.totalVariance / a.totalPlanned) * 100).toFixed(1) : "0.0"}%
                           </td>,
                         ]
@@ -2312,7 +2312,7 @@ function PLTab({ planId }: { planId: string }) {
           </div>
           <div className="flex gap-8 text-sm font-mono font-bold">
             <span>{fmt(isCalculated ? calcPlanned : rows.reduce((s, r) => s + r.planned, 0))}</span>
-            <span className={`${(isCalculated ? calcActual : rows.reduce((s, r) => s + r.actual, 0)) >= 0 ? "text-green-700 dark:text-green-300" : "text-red-600 dark:text-red-400"}`}>
+            <span className={`${(isCalculated ? calcActual : rows.reduce((s, r) => s + r.actual, 0)) >= 0 ? "text-emerald-800 dark:text-emerald-300" : "text-red-600 dark:text-red-400"}`}>
               {fmt(isCalculated ? calcActual : rows.reduce((s, r) => s + r.actual, 0))}
             </span>
           </div>
@@ -2349,7 +2349,7 @@ function PLTab({ planId }: { planId: string }) {
                           <td className="px-4 py-2.5 text-right font-mono text-sm font-bold">{fmt(gPlanned)}</td>
                           <td className="px-4 py-2.5 text-right font-mono text-sm font-bold">{fmt(gForecast)}</td>
                           <td className="px-4 py-2.5 text-right font-mono text-sm font-bold">{fmt(gActual)}</td>
-                          <td className={`px-4 py-2.5 text-right font-mono text-sm font-bold ${gVariance >= 0 ? "text-green-700 dark:text-green-300" : "text-red-600 dark:text-red-400"}`}>
+                          <td className={`px-4 py-2.5 text-right font-mono text-sm font-bold ${gVariance >= 0 ? "text-emerald-800 dark:text-emerald-300" : "text-red-600 dark:text-red-400"}`}>
                             {gVariance >= 0 ? "+" : ""}{fmt(gVariance)}
                           </td>
                         </tr>
@@ -2362,7 +2362,7 @@ function PLTab({ planId }: { planId: string }) {
                             <td className="px-4 py-2 text-right font-mono text-sm">{fmt(row.planned)}</td>
                             <td className="px-4 py-2 text-right font-mono text-sm">{fmt(row.forecast)}</td>
                             <td className="px-4 py-2 text-right font-mono text-sm">{fmt(row.actual)}</td>
-                            <td className={`px-4 py-2 text-right font-mono text-sm font-semibold ${row.variance >= 0 ? "text-green-700 dark:text-green-300" : "text-red-600 dark:text-red-400"}`}>
+                            <td className={`px-4 py-2 text-right font-mono text-sm font-semibold ${row.variance >= 0 ? "text-emerald-800 dark:text-emerald-300" : "text-red-600 dark:text-red-400"}`}>
                               {row.variance >= 0 ? "+" : ""}{fmt(row.variance)}
                             </td>
                           </tr>
@@ -2379,7 +2379,7 @@ function PLTab({ planId }: { planId: string }) {
                       <td className="px-4 py-2 text-right font-mono text-sm">{fmt(row.planned)}</td>
                       <td className="px-4 py-2 text-right font-mono text-sm">{fmt(row.forecast)}</td>
                       <td className="px-4 py-2 text-right font-mono text-sm">{fmt(row.actual)}</td>
-                      <td className={`px-4 py-2 text-right font-mono text-sm font-semibold ${row.variance >= 0 ? "text-green-700 dark:text-green-300" : "text-red-600 dark:text-red-400"}`}>
+                      <td className={`px-4 py-2 text-right font-mono text-sm font-semibold ${row.variance >= 0 ? "text-emerald-800 dark:text-emerald-300" : "text-red-600 dark:text-red-400"}`}>
                         {row.variance >= 0 ? "+" : ""}{fmt(row.variance)}
                       </td>
                     </tr>
@@ -2394,8 +2394,8 @@ function PLTab({ planId }: { planId: string }) {
                     </td>
                     <td className="px-4 py-2 text-right font-mono text-xs">{fmt(row.planned)}</td>
                     <td className="px-4 py-2 text-right font-mono text-xs text-purple-600 dark:text-purple-400">{fmt(row.forecast)}</td>
-                    <td className="px-4 py-2 text-right font-mono text-xs text-green-700 dark:text-green-300">{fmt(row.actual)}</td>
-                    <td className={`px-4 py-2 text-right font-mono text-xs font-medium ${row.variance >= 0 ? "text-green-700 dark:text-green-300" : "text-red-500"}`}>
+                    <td className="px-4 py-2 text-right font-mono text-xs text-emerald-800 dark:text-emerald-300">{fmt(row.actual)}</td>
+                    <td className={`px-4 py-2 text-right font-mono text-xs font-medium ${row.variance >= 0 ? "text-emerald-800 dark:text-emerald-300" : "text-red-500"}`}>
                       {row.variance >= 0 ? "+" : ""}{fmt(row.variance)}
                     </td>
                   </tr>
@@ -2453,7 +2453,7 @@ function PLTab({ planId }: { planId: string }) {
           <div className="font-bold text-base">{t("grossProfit")}</div>
           <div className="flex gap-8 font-mono font-bold text-base">
             <span>{fmt(grossProfitPlanned)}</span>
-            <span className={grossProfitActual >= 0 ? "text-green-700 dark:text-green-300" : "text-red-600 dark:text-red-400"}>{fmt(grossProfitActual)}</span>
+            <span className={grossProfitActual >= 0 ? "text-emerald-800 dark:text-emerald-300" : "text-red-600 dark:text-red-400"}>{fmt(grossProfitActual)}</span>
           </div>
         </div>
         {totalRevenuePlanned > 0 && (
@@ -2475,7 +2475,7 @@ function PLTab({ planId }: { planId: string }) {
               <div className="font-bold text-base">{t("operatingProfit")} (EBITDA)</div>
               <div className="flex gap-8 font-mono font-bold text-base">
                 <span>{fmt(opProfitPlanned)}</span>
-                <span className={opProfitActual >= 0 ? "text-green-700 dark:text-green-300" : "text-red-600 dark:text-red-400"}>{fmt(opProfitActual)}</span>
+                <span className={opProfitActual >= 0 ? "text-emerald-800 dark:text-emerald-300" : "text-red-600 dark:text-red-400"}>{fmt(opProfitActual)}</span>
               </div>
             </div>
             {totalRevenuePlanned > 0 && (
@@ -2517,9 +2517,9 @@ function PLTab({ planId }: { planId: string }) {
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
                   <div><p className="text-xs text-muted-foreground">{t("colBudget")}</p><p className="font-bold font-mono">{fmt(row.planned)}</p></div>
                   <div><p className="text-xs text-muted-foreground">{t("colForecast")}</p><p className="font-bold font-mono text-purple-600 dark:text-purple-400">{fmt(row.forecast)}</p></div>
-                  <div><p className="text-xs text-muted-foreground">{t("colActual")}</p><p className="font-bold font-mono text-green-700 dark:text-green-300">{fmt(row.actual)}</p></div>
+                  <div><p className="text-xs text-muted-foreground">{t("colActual")}</p><p className="font-bold font-mono text-emerald-800 dark:text-emerald-300">{fmt(row.actual)}</p></div>
                   <div><p className="text-xs text-muted-foreground">{t("colVariance")}</p>
-                    <p className={`font-bold font-mono ${row.variance >= 0 ? "text-green-700 dark:text-green-300" : "text-red-500"}`}>
+                    <p className={`font-bold font-mono ${row.variance >= 0 ? "text-emerald-800 dark:text-emerald-300" : "text-red-500"}`}>
                       {row.variance >= 0 ? "+" : ""}{fmt(row.variance)} ({Math.round(row.variancePct)}%)
                     </p>
                   </div>
@@ -3139,7 +3139,7 @@ function ApplyTemplatesButton({ planId }: { planId: string }) {
             </CardHeader>
             <CardContent className="space-y-3">
               {result ? (
-                <div className="flex items-center gap-2 text-sm text-green-700 dark:text-green-300">
+                <div className="flex items-center gap-2 text-sm text-emerald-800 dark:text-emerald-300">
                   <CheckCircle className="h-4 w-4" />
                   {t("templateApplied", { created: result.created, skipped: result.skipped })}
                 </div>
