@@ -633,17 +633,22 @@ function WorkspaceTab({ planId }: { planId: string }) {
 
   const planLabel = t("colPlan")
   const actualLabel = t("colActual")
-  const barData = byCategory.slice(0, 14).map((c: any) => {
-    const suffix = c.lineType === "revenue" ? " ↑" : " ↓"
-    const name = (c.category.length > 14 ? c.category.slice(0, 14) + "…" : c.category) + suffix
-    return { name, [planLabel]: Math.round(c.planned), [actualLabel]: Math.round(c.actual) }
-  })
 
-  const pieData = byCategory
-    .filter((c: any) => c.planned > 0)
-    .sort((a: any, b: any) => b.planned - a.planned)
-    .slice(0, 8)
-    .map((c: any) => ({ name: c.category.length > 16 ? c.category.slice(0, 16) + "…" : c.category, value: Math.round(c.planned) }))
+  const expenseBarData = byCategory
+    .filter((c: any) => c.lineType === "expense" && (c.planned > 0 || c.actual > 0))
+    .map((c: any) => ({
+      name: c.category.length > 16 ? c.category.slice(0, 16) + "…" : c.category,
+      [planLabel]: Math.round(c.planned),
+      [actualLabel]: Math.round(c.actual),
+    }))
+
+  const revenueBarData = byCategory
+    .filter((c: any) => c.lineType === "revenue" && (c.planned > 0 || c.actual > 0))
+    .map((c: any) => ({
+      name: c.category.length > 16 ? c.category.slice(0, 16) + "…" : c.category,
+      [planLabel]: Math.round(c.planned),
+      [actualLabel]: Math.round(c.actual),
+    }))
 
   const execEmoji = executionPct >= 90 ? "🟢" : executionPct >= 60 ? "🟡" : "🔴"
 
@@ -782,40 +787,43 @@ function WorkspaceTab({ planId }: { planId: string }) {
         </CardContent>
       </Card>
 
-      {/* Charts */}
-      {barData.length > 0 && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Charts — separate for expenses and revenue */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {expenseBarData.length > 0 && (
           <Card>
-            <CardHeader><CardTitle className="text-sm">{t("chartPlanVsActual")}</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="text-sm">{t("sectionExpenses")}: {t("colPlan")} vs {t("colActual")}</CardTitle></CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={280}>
-                <BarChart data={barData} layout="vertical" margin={{ left: 10, right: 10 }}>
+              <ResponsiveContainer width="100%" height={Math.max(200, expenseBarData.length * 45)}>
+                <BarChart data={expenseBarData} layout="vertical" margin={{ left: 10, right: 10 }}>
                   <XAxis type="number" tick={{ fontSize: 11 }} tickFormatter={(v: number) => (v / 1000).toFixed(0) + "k"} />
                   <YAxis type="category" dataKey="name" tick={{ fontSize: 10 }} width={120} />
                   <Tooltip formatter={(v: any) => fmt(v)} />
                   <Legend />
                   <Bar dataKey={planLabel} fill="#ef4444" radius={[0, 3, 3, 0]} />
+                  <Bar dataKey={actualLabel} fill="#f97316" radius={[0, 3, 3, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        )}
+        {revenueBarData.length > 0 && (
+          <Card>
+            <CardHeader><CardTitle className="text-sm">{t("sectionRevenues")}: {t("colPlan")} vs {t("colActual")}</CardTitle></CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={Math.max(200, revenueBarData.length * 45)}>
+                <BarChart data={revenueBarData} layout="vertical" margin={{ left: 10, right: 10 }}>
+                  <XAxis type="number" tick={{ fontSize: 11 }} tickFormatter={(v: number) => (v / 1000).toFixed(0) + "k"} />
+                  <YAxis type="category" dataKey="name" tick={{ fontSize: 10 }} width={120} />
+                  <Tooltip formatter={(v: any) => fmt(v)} />
+                  <Legend />
+                  <Bar dataKey={planLabel} fill="#8b5cf6" radius={[0, 3, 3, 0]} />
                   <Bar dataKey={actualLabel} fill="#10b981" radius={[0, 3, 3, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
           </Card>
-          <Card>
-            <CardHeader><CardTitle className="text-sm">{t("chartBudgetStructure")}</CardTitle></CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={280}>
-                <PieChart>
-                  <Pie data={pieData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={55} outerRadius={95} paddingAngle={2}>
-                    {pieData.map((_: any, i: number) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
-                  </Pie>
-                  <Tooltip formatter={(v: any) => fmt(v)} />
-                  <Legend iconSize={10} wrapperStyle={{ fontSize: 11 }} />
-                </PieChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   )
 }
