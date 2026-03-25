@@ -1178,13 +1178,13 @@ function WorkspaceTab({ planId }: { planId: string }) {
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="sticky top-0 z-10 bg-gradient-to-r from-indigo-50 via-purple-50 to-violet-50 dark:from-indigo-950/40 dark:via-purple-950/40 dark:to-violet-950/40 border-b-2 border-indigo-200 dark:border-indigo-800">
+              <thead className="sticky top-0 z-10 bg-[#1a3050] border-b-2 border-white/10">
                 <tr>
-                  <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-indigo-700 dark:text-indigo-300"><span className="inline-flex items-center gap-1.5">{t("colCategory")} <InfoHint text={t("hintColCategory")} size={12} /></span></th>
-                  <th className="px-2 py-3 text-left text-xs font-semibold uppercase tracking-wider text-indigo-600 dark:text-indigo-400"><span className="inline-flex items-center gap-1.5">{t("colDepartment")} <InfoHint text={t("hintColDepartment")} size={12} /></span></th>
-                  <th className="px-2 py-3 text-right text-xs font-semibold uppercase tracking-wider text-blue-600 dark:text-blue-400"><span className="inline-flex items-center gap-1 justify-end">{t("colPlan")} ₼ <InfoHint text={t("hintColPlan")} size={12} /></span></th>
-                  <th className="px-2 py-3 text-right text-xs font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400"><span className="inline-flex items-center gap-1 justify-end">{t("colActual")} ₼ <InfoHint text={t("hintColActual")} size={12} /></span></th>
-                  <th className="px-2 py-3 text-right text-xs font-semibold uppercase tracking-wider text-violet-600 dark:text-violet-400"><span className="inline-flex items-center gap-1 justify-end">{t("colVariancePct")} <InfoHint text={t("hintColVariance")} size={12} /></span></th>
+                  <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-white/90"><span className="inline-flex items-center gap-1.5">{t("colCategory")} <InfoHint text={t("hintColCategory")} size={12} /></span></th>
+                  <th className="px-2 py-3 text-left text-xs font-semibold uppercase tracking-wider text-white/70"><span className="inline-flex items-center gap-1.5">{t("colDepartment")} <InfoHint text={t("hintColDepartment")} size={12} /></span></th>
+                  <th className="px-2 py-3 text-right text-xs font-semibold uppercase tracking-wider text-sky-300"><span className="inline-flex items-center gap-1 justify-end">{t("colPlan")} ₼ <InfoHint text={t("hintColPlan")} size={12} /></span></th>
+                  <th className="px-2 py-3 text-right text-xs font-semibold uppercase tracking-wider text-emerald-300"><span className="inline-flex items-center gap-1 justify-end">{t("colActual")} ₼ <InfoHint text={t("hintColActual")} size={12} /></span></th>
+                  <th className="px-2 py-3 text-right text-xs font-semibold uppercase tracking-wider text-amber-300"><span className="inline-flex items-center gap-1 justify-end">{t("colVariancePct")} <InfoHint text={t("hintColVariance")} size={12} /></span></th>
                   <th className="px-2 py-3 w-10" />
                 </tr>
               </thead>
@@ -1651,15 +1651,15 @@ function OverviewTab({ planId }: { planId: string }) {
           <CardContent className="p-0">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
-                <thead className="bg-gradient-to-r from-blue-50 via-purple-50 to-emerald-50 dark:from-blue-950/40 dark:via-purple-950/40 dark:to-emerald-950/40 border-b-2 border-purple-200 dark:border-purple-800">
+                <thead className="bg-[#1a3050] border-b-2 border-white/10">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-indigo-700 dark:text-indigo-300">{t("colCategory")}</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">{t("colType")}</th>
-                    <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-blue-600 dark:text-blue-400">{t("colBudget")}</th>
-                    <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-purple-600 dark:text-purple-400">{t("colForecast")}</th>
-                    <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">{t("colActual")}</th>
-                    <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-amber-600 dark:text-amber-400">{t("colVariance")}</th>
-                    <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-amber-600 dark:text-amber-400">%</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-white/90">{t("colCategory")}</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-white/70">{t("colType")}</th>
+                    <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-sky-300">{t("colBudget")}</th>
+                    <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-purple-300">{t("colForecast")}</th>
+                    <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-emerald-300">{t("colActual")}</th>
+                    <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-amber-300">{t("colVariance")}</th>
+                    <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-amber-300">%</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1696,13 +1696,13 @@ function OverviewTab({ planId }: { planId: string }) {
           <CardContent className="p-0">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
-                <thead className="bg-gradient-to-r from-blue-50 via-purple-50 to-emerald-50 dark:from-blue-950/40 dark:via-purple-950/40 dark:to-emerald-950/40 border-b-2 border-purple-200 dark:border-purple-800">
+                <thead className="bg-[#1a3050] border-b-2 border-white/10">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-indigo-700 dark:text-indigo-300">{t("colDepartment")}</th>
-                    <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-blue-600 dark:text-blue-400">{t("colBudget")}</th>
-                    <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-purple-600 dark:text-purple-400">{t("colForecast")}</th>
-                    <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">{t("colActual")}</th>
-                    <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-amber-600 dark:text-amber-400">{t("colVariance")}</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-white/90">{t("colDepartment")}</th>
+                    <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-sky-300">{t("colBudget")}</th>
+                    <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-purple-300">{t("colForecast")}</th>
+                    <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-emerald-300">{t("colActual")}</th>
+                    <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-amber-300">{t("colVariance")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1790,16 +1790,16 @@ function LinesTab({ planId }: { planId: string }) {
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
-                <thead className="bg-gradient-to-r from-indigo-50 via-blue-50 to-purple-50 dark:from-indigo-950/40 dark:via-blue-950/40 dark:to-purple-950/40 border-b-2 border-indigo-200 dark:border-indigo-800">
+                <thead className="bg-[#1a3050] border-b-2 border-white/10">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-indigo-700 dark:text-indigo-300">{t("colCategory")}</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">{t("colDepartmentShort")}</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">{t("colType")}</th>
-                    <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-blue-600 dark:text-blue-400">{t("colBudget")}</th>
-                    <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-purple-600 dark:text-purple-400">{t("colForecast")}</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-sky-600 dark:text-sky-400">{t("colCostModel")}</th>
-                    <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">{t("colAutoActual")}</th>
-                    <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">{t("colActions")}</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-white/90">{t("colCategory")}</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-white/70">{t("colDepartmentShort")}</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-white/70">{t("colType")}</th>
+                    <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-sky-300">{t("colBudget")}</th>
+                    <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-purple-300">{t("colForecast")}</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-cyan-300">{t("colCostModel")}</th>
+                    <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-white/70">{t("colAutoActual")}</th>
+                    <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-white/70">{t("colActions")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1942,15 +1942,15 @@ function ActualsTab({ planId }: { planId: string }) {
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
-                <thead className="bg-gradient-to-r from-emerald-50 via-teal-50 to-cyan-50 dark:from-emerald-950/40 dark:via-teal-950/40 dark:to-cyan-950/40 border-b-2 border-emerald-200 dark:border-emerald-800">
+                <thead className="bg-[#1a3050] border-b-2 border-white/10">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-300">{t("colCategory")}</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">{t("colDepartment")}</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">{t("colType")}</th>
-                    <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-teal-600 dark:text-teal-400">{t("colAmount")}</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">{t("colDate")}</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">{t("colDescription")}</th>
-                    <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">{t("colActions")}</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-white/90">{t("colCategory")}</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-white/70">{t("colDepartment")}</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-white/70">{t("colType")}</th>
+                    <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-emerald-300">{t("colAmount")}</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-white/70">{t("colDate")}</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-white/70">{t("colDescription")}</th>
+                    <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-white/70">{t("colActions")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -2279,9 +2279,9 @@ function ComparisonTab() {
             <CardContent className="p-0">
               <div className="overflow-x-auto">
                 <table className="w-full text-xs">
-                  <thead className="bg-gradient-to-r from-violet-50 via-purple-50 to-fuchsia-50 dark:from-violet-950/40 dark:via-purple-950/40 dark:to-fuchsia-950/40 border-b-2 border-violet-200 dark:border-violet-800">
+                  <thead className="bg-[#1a3050] border-b-2 border-white/10">
                     <tr>
-                      <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-violet-700 dark:text-violet-300 sticky left-0 bg-gradient-to-r from-violet-50 to-purple-50 dark:from-violet-950/40 dark:to-purple-950/40">{t("colCategory")}</th>
+                      <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-white/90 sticky left-0 bg-[#1a3050]">{t("colCategory")}</th>
                       {selectedIds.map((id, i) => {
                         const name = plans.find(p => p.id === id)?.name || `${t("colPlan")} ${i + 1}`
                         return [
@@ -2446,13 +2446,13 @@ function PLTab({ planId }: { planId: string }) {
         </div>
         {!isCollapsed && !isCalculated && (
           <table className="w-full text-sm">
-            <thead className="bg-gradient-to-r from-slate-50 via-indigo-50/50 to-violet-50/50 dark:from-slate-900/40 dark:via-indigo-950/30 dark:to-violet-950/30 border-b-2 border-indigo-200/60 dark:border-indigo-800/60">
+            <thead className="bg-[#1a3050] border-b-2 border-white/10">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-indigo-700 dark:text-indigo-300">{t("colCategory")}</th>
-                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-blue-600 dark:text-blue-400">{t("colBudget")}</th>
-                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-purple-600 dark:text-purple-400">{t("colForecast")}</th>
-                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">{t("colActual")}</th>
-                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-amber-600 dark:text-amber-400">{t("colVarianceShort")}</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-white/90">{t("colCategory")}</th>
+                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-sky-300">{t("colBudget")}</th>
+                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-purple-300">{t("colForecast")}</th>
+                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-emerald-300">{t("colActual")}</th>
+                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-amber-300">{t("colVarianceShort")}</th>
               </tr>
             </thead>
             <tbody>
@@ -3009,13 +3009,13 @@ function ForecastTab({ planId }: { planId: string }) {
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="sticky top-0 bg-gradient-to-r from-amber-50 via-orange-50 to-yellow-50 dark:from-amber-950/40 dark:via-orange-950/40 dark:to-yellow-950/40 border-b-2 border-amber-200 dark:border-amber-800">
+              <thead className="sticky top-0 bg-[#1a3050] border-b-2 border-white/10">
                 <tr>
-                  <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-amber-700 dark:text-amber-300 sticky left-0 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/40 dark:to-orange-950/40 z-20 min-w-[180px]">{t("colCategory")}</th>
+                  <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-white/90 sticky left-0 bg-[#1a3050] z-20 min-w-[180px]">{t("colCategory")}</th>
                   {monthLabels.map((label, i) => (
-                    <th key={i} className="px-2 py-3 text-right text-xs font-semibold uppercase tracking-wider text-orange-600 dark:text-orange-400 min-w-[90px]">{label}</th>
+                    <th key={i} className="px-2 py-3 text-right text-xs font-semibold uppercase tracking-wider text-sky-300/80 min-w-[90px]">{label}</th>
                   ))}
-                  <th className="px-3 py-3 text-right text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-300 min-w-[100px]">{t("totalLabel")}</th>
+                  <th className="px-3 py-3 text-right text-xs font-bold uppercase tracking-wider text-amber-300 min-w-[100px]">{t("totalLabel")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -3131,13 +3131,13 @@ function TemplatesTab() {
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-gradient-to-r from-sky-50 via-cyan-50 to-teal-50 dark:from-sky-950/40 dark:via-cyan-950/40 dark:to-teal-950/40 border-b-2 border-sky-200 dark:border-sky-800">
+              <thead className="bg-[#1a3050] border-b-2 border-white/10">
                 <tr>
-                  <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-sky-700 dark:text-sky-300"><span className="inline-flex items-center gap-1.5">{t("templateName")} <InfoHint text={t("hintTemplateName")} size={12} /></span></th>
-                  <th className="px-2 py-3 text-left text-xs font-semibold uppercase tracking-wider text-sky-600 dark:text-sky-400">{t("templateType")}</th>
-                  <th className="px-2 py-3 text-left text-xs font-semibold uppercase tracking-wider text-sky-600 dark:text-sky-400">{t("templateSubtype")}</th>
-                  <th className="px-2 py-3 text-right text-xs font-semibold uppercase tracking-wider text-teal-600 dark:text-teal-400">{t("templateAmount")}</th>
-                  <th className="px-2 py-3 text-center text-xs font-semibold uppercase tracking-wider text-sky-600 dark:text-sky-400"><span className="inline-flex items-center gap-1.5 justify-center">{t("templateActive")} <InfoHint text={t("hintTemplateActive")} size={12} /></span></th>
+                  <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-white/90"><span className="inline-flex items-center gap-1.5">{t("templateName")} <InfoHint text={t("hintTemplateName")} size={12} /></span></th>
+                  <th className="px-2 py-3 text-left text-xs font-semibold uppercase tracking-wider text-white/70">{t("templateType")}</th>
+                  <th className="px-2 py-3 text-left text-xs font-semibold uppercase tracking-wider text-white/70">{t("templateSubtype")}</th>
+                  <th className="px-2 py-3 text-right text-xs font-semibold uppercase tracking-wider text-emerald-300">{t("templateAmount")}</th>
+                  <th className="px-2 py-3 text-center text-xs font-semibold uppercase tracking-wider text-white/70"><span className="inline-flex items-center gap-1.5 justify-center">{t("templateActive")} <InfoHint text={t("hintTemplateActive")} size={12} /></span></th>
                   <th className="px-2 py-3 w-20" />
                 </tr>
               </thead>
