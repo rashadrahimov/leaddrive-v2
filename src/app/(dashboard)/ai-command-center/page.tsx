@@ -149,7 +149,7 @@ export default function AICommandCenterPage() {
   const [unreadAlerts, setUnreadAlerts] = useState(0)
   const [logs, setLogs] = useState<InteractionLog[]>([])
   const [logsTotal, setLogsTotal] = useState(0)
-  const [expandedLogId, setExpandedLogId] = useState<string | null>(null)
+  const [selectedLog, setSelectedLog] = useState<InteractionLog | null>(null)
   const [guardrails, setGuardrails] = useState<Guardrail[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
@@ -555,7 +555,7 @@ export default function AICommandCenterPage() {
               {logs.length > 0 ? logs.map((log, idx) => {
                 const totalTokens = (log.promptTokens ?? 0) + (log.completionTokens ?? 0)
                 const latencySec = log.latencyMs ? (log.latencyMs / 1000).toFixed(1) : null
-                const isExpanded = expandedLogId === log.id
+                const isSelected = selectedLog?.id === log.id
                 const kbCount = log.kbArticlesUsed?.length ?? 0
                 const toolsCount = log.toolsCalled?.length ?? 0
                 // Simulate cascade timing
@@ -565,7 +565,7 @@ export default function AICommandCenterPage() {
                 return (
                   <div key={log.id} className="hover:bg-muted/50 dark:hover:bg-gray-900/50 transition-colors">
                     {/* Compact row */}
-                    <div className="p-4 cursor-pointer flex items-center gap-4" onClick={() => setExpandedLogId(isExpanded ? null : log.id)}>
+                    <div className="p-4 cursor-pointer flex items-center gap-4" onClick={() => setSelectedLog(isSelected ? null : log)}>
                       <span className="text-xs text-muted-foreground font-mono w-8 shrink-0">#{logsTotal - idx}</span>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm truncate">{log.userMessage.slice(0, 100)}</p>
@@ -583,145 +583,10 @@ export default function AICommandCenterPage() {
                         {log.costUsd != null && <span className="text-xs font-mono text-muted-foreground">${log.costUsd.toFixed(4)}</span>}
                         {totalTokens > 0 && <span className="text-xs font-mono text-muted-foreground">{totalTokens} tok</span>}
                         <span className="text-[10px] text-muted-foreground">{new Date(log.createdAt).toLocaleString("ru-RU")}</span>
-                        <Eye className={cn("h-4 w-4 transition-transform", isExpanded ? "text-indigo-500 rotate-180" : "text-muted-foreground")} />
+                        <Eye className={cn("h-4 w-4 transition-transform", isSelected ? "text-indigo-500 rotate-180" : "text-muted-foreground")} />
                       </div>
                     </div>
 
-                    {/* Expanded trace detail (v1 style) */}
-                    {isExpanded && (
-                      <div className="px-4 pb-5 space-y-4 border-t bg-muted/30 dark:bg-gray-900/30">
-                        {/* KPI Cards */}
-                        <div className="grid grid-cols-4 gap-3 pt-4">
-                          <div className="rounded-lg border bg-background p-3 text-center">
-                            <div className="text-[10px] text-muted-foreground uppercase tracking-wide">Задержка</div>
-                            <div className={cn("text-xl font-bold font-mono", log.latencyMs! > 10000 ? "text-red-500" : "text-emerald-600 dark:text-emerald-400")}>{latencySec}s</div>
-                            <div className="text-[10px] text-muted-foreground">{log.latencyMs} ms</div>
-                          </div>
-                          <div className="rounded-lg border bg-background p-3 text-center">
-                            <div className="text-[10px] text-muted-foreground uppercase tracking-wide">Токены</div>
-                            <div className="text-xl font-bold font-mono text-blue-600 dark:text-blue-400">{totalTokens}</div>
-                            <div className="text-[10px] text-muted-foreground">{log.promptTokens ?? 0} вход / {log.completionTokens ?? 0} выход</div>
-                          </div>
-                          <div className="rounded-lg border bg-background p-3 text-center">
-                            <div className="text-[10px] text-muted-foreground uppercase tracking-wide">Стоимость</div>
-                            <div className="text-xl font-bold font-mono text-amber-600 dark:text-amber-400">${(log.costUsd ?? 0).toFixed(4)}</div>
-                            <div className="text-[10px] text-muted-foreground">{log.model || "—"}</div>
-                          </div>
-                          <div className="rounded-lg border bg-background p-3 text-center">
-                            <div className="text-[10px] text-muted-foreground uppercase tracking-wide">Качество</div>
-                            <div className="text-xl font-bold font-mono">{log.qualityScore != null ? `${log.qualityScore}/10` : "—"}</div>
-                            <div className="text-[10px] text-muted-foreground">{log.qualityScore != null ? "Оценено" : "Не оценено"}</div>
-                          </div>
-                        </div>
-
-                        {/* User query */}
-                        <div className="rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 p-3">
-                          <div className="flex items-center gap-2 mb-1">
-                            <User className="h-4 w-4 text-blue-500" />
-                            <span className="text-xs font-semibold text-blue-600 dark:text-blue-400 uppercase">Запрос пользователя</span>
-                          </div>
-                          <p className="text-sm">{log.userMessage}</p>
-                        </div>
-
-                        {/* Processing cascade (timeline) */}
-                        <div>
-                          <div className="flex items-center justify-between mb-2">
-                            <span className="text-xs font-semibold text-muted-foreground uppercase">Каскад обработки</span>
-                            <span className="text-[10px] text-muted-foreground">{(kbCount > 0 ? 2 : 1) + toolsCount} шагов · {latencySec}s</span>
-                          </div>
-                          <div className="h-6 rounded-full overflow-hidden flex bg-muted">
-                            {kbCount > 0 && log.latencyMs && (
-                              <div className="bg-emerald-500 flex items-center justify-center text-[9px] text-white font-mono" style={{ width: `${Math.max(5, (kbTime / log.latencyMs) * 100)}%` }}>
-                                {kbTime}мс
-                              </div>
-                            )}
-                            {toolsCount > 0 && (
-                              <div className="bg-amber-500 flex items-center justify-center text-[9px] text-white font-mono" style={{ width: "8%" }}>
-                                tools
-                              </div>
-                            )}
-                            {log.latencyMs && (
-                              <div className="bg-blue-500 flex-1 flex items-center justify-center text-[9px] text-white font-mono">
-                                {llmTime}мс
-                              </div>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Steps */}
-                        <div className="space-y-2">
-                          {/* KB Search step */}
-                          <div className="rounded-lg border bg-background p-3">
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-2">
-                                <div className="h-7 w-7 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center"><ScrollText className="h-4 w-4 text-emerald-600 dark:text-emerald-400" /></div>
-                                <span className="text-sm font-semibold text-emerald-700 dark:text-emerald-300">Поиск по БЗ</span>
-                                <span className="text-[10px] text-muted-foreground">(Поиск релевантных статей)</span>
-                              </div>
-                              <span className="text-xs font-mono text-emerald-600 dark:text-emerald-400">{kbTime} мс</span>
-                            </div>
-                            <div className="mt-2 flex items-center gap-4 text-xs text-muted-foreground">
-                              <span>Найдено: <strong>{kbCount}</strong></span>
-                              <span>Выбрано: <strong>{kbCount}</strong></span>
-                            </div>
-                            {kbCount > 0 && (
-                              <div className="mt-1 text-[10px] text-muted-foreground">
-                                {log.kbArticlesUsed.map((a, i) => <Badge key={i} variant="outline" className="text-[9px] mr-1">{a}</Badge>)}
-                              </div>
-                            )}
-                            {kbCount === 0 && <div className="mt-1 text-[10px] text-muted-foreground italic">Нет подходящих статей</div>}
-                          </div>
-
-                          {/* LLM Call step */}
-                          <div className="rounded-lg border bg-background p-3">
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-2">
-                                <div className="h-7 w-7 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center"><BrainCircuit className="h-4 w-4 text-blue-600 dark:text-blue-400" /></div>
-                                <span className="text-sm font-semibold text-blue-700 dark:text-blue-300">Вызов LLM</span>
-                                <span className="text-[10px] text-muted-foreground">(Запрос к Claude API)</span>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <div className="w-16 h-1.5 bg-muted rounded-full overflow-hidden">
-                                  <div className="h-full bg-blue-500 rounded-full" style={{ width: `${log.latencyMs ? Math.min(100, (llmTime / log.latencyMs) * 100) : 0}%` }} />
-                                </div>
-                                <span className="text-xs font-mono text-blue-600 dark:text-blue-400">{llmTime} мс</span>
-                                <span className="text-[10px] text-muted-foreground">{log.latencyMs ? Math.round((llmTime / log.latencyMs) * 100) : 0}%</span>
-                              </div>
-                            </div>
-                            <div className="mt-2 flex items-center gap-4 text-xs text-muted-foreground">
-                              <span>Итерация: <strong>1</strong></span>
-                              <span>Вход: <strong className="text-blue-600 dark:text-blue-400">{log.promptTokens ?? 0} token</strong></span>
-                              <span>Выход: <strong className="text-amber-600 dark:text-amber-400">{log.completionTokens ?? 0} token</strong></span>
-                            </div>
-                          </div>
-
-                          {/* Tools step (if any) */}
-                          {toolsCount > 0 && (
-                            <div className="rounded-lg border bg-background p-3">
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                  <div className="h-7 w-7 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center"><Zap className="h-4 w-4 text-amber-600 dark:text-amber-400" /></div>
-                                  <span className="text-sm font-semibold text-amber-700 dark:text-amber-300">Вызов инструментов</span>
-                                </div>
-                              </div>
-                              <div className="mt-2 flex flex-wrap gap-1">
-                                {log.toolsCalled.map((tool, i) => <Badge key={i} variant="outline" className="text-[10px]">{tool}</Badge>)}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-
-                        {/* AI Response */}
-                        <div className="rounded-lg bg-muted border p-3">
-                          <div className="flex items-center gap-2 mb-1">
-                            <Bot className="h-4 w-4 text-indigo-500" />
-                            <span className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 uppercase">Ответ AI</span>
-                            {log.isCopilot && <Badge className="text-[9px] bg-violet-100 text-violet-700">Copilot</Badge>}
-                          </div>
-                          <p className="text-sm whitespace-pre-wrap">{log.aiResponse}</p>
-                        </div>
-                      </div>
-                    )}
                   </div>
                 )
               }) : (
@@ -729,6 +594,166 @@ export default function AICommandCenterPage() {
               )}
             </div>
           </div>
+
+          {/* Trace Detail Modal */}
+          {selectedLog && (() => {
+            const totalTokens = (selectedLog.promptTokens ?? 0) + (selectedLog.completionTokens ?? 0)
+            const latencySec = selectedLog.latencyMs ? (selectedLog.latencyMs / 1000).toFixed(1) : null
+            const kbCount = selectedLog.kbArticlesUsed?.length ?? 0
+            const toolsCount = selectedLog.toolsCalled?.length ?? 0
+            const kbTime = kbCount > 0 ? Math.round(selectedLog.latencyMs! * 0.02) : 0
+            const llmTime = selectedLog.latencyMs ? selectedLog.latencyMs - kbTime : 0
+            const logIndex = logs.findIndex(l => l.id === selectedLog.id)
+
+            return (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={() => setSelectedLog(null)}>
+                <div className="bg-background rounded-xl shadow-2xl border max-w-3xl w-full max-h-[85vh] overflow-y-auto m-4" onClick={e => e.stopPropagation()}>
+                  {/* Header */}
+                  <div className="flex items-center justify-between p-5 border-b sticky top-0 bg-background z-10 rounded-t-xl">
+                    <div>
+                      <h2 className="text-lg font-bold">Sessiya izləmə / Трассировка #{logIndex >= 0 ? logsTotal - logIndex : '?'}</h2>
+                      <p className="text-xs text-muted-foreground">{new Date(selectedLog.createdAt).toISOString()} · Model: {selectedLog.model}</p>
+                    </div>
+                    <button onClick={() => setSelectedLog(null)} className="p-2 rounded-lg hover:bg-muted"><X className="h-5 w-5" /></button>
+                  </div>
+
+                  {/* Body */}
+                  <div className="p-5 space-y-5">
+                    {/* KPI Cards */}
+                    <div className="grid grid-cols-4 gap-3">
+                      <div className="rounded-lg border bg-background p-3 text-center">
+                        <div className="text-[10px] text-muted-foreground uppercase tracking-wide">Задержка</div>
+                        <div className={cn("text-xl font-bold font-mono", selectedLog.latencyMs! > 10000 ? "text-red-500" : "text-emerald-600 dark:text-emerald-400")}>{latencySec}s</div>
+                        <div className="text-[10px] text-muted-foreground">{selectedLog.latencyMs} ms</div>
+                      </div>
+                      <div className="rounded-lg border bg-background p-3 text-center">
+                        <div className="text-[10px] text-muted-foreground uppercase tracking-wide">Токены</div>
+                        <div className="text-xl font-bold font-mono text-blue-600 dark:text-blue-400">{totalTokens}</div>
+                        <div className="text-[10px] text-muted-foreground">{selectedLog.promptTokens ?? 0} вход / {selectedLog.completionTokens ?? 0} выход</div>
+                      </div>
+                      <div className="rounded-lg border bg-background p-3 text-center">
+                        <div className="text-[10px] text-muted-foreground uppercase tracking-wide">Стоимость</div>
+                        <div className="text-xl font-bold font-mono text-amber-600 dark:text-amber-400">${(selectedLog.costUsd ?? 0).toFixed(4)}</div>
+                        <div className="text-[10px] text-muted-foreground">{selectedLog.model || "—"}</div>
+                      </div>
+                      <div className="rounded-lg border bg-background p-3 text-center">
+                        <div className="text-[10px] text-muted-foreground uppercase tracking-wide">Качество</div>
+                        <div className="text-xl font-bold font-mono">{selectedLog.qualityScore != null ? `${selectedLog.qualityScore}/10` : "—"}</div>
+                        <div className="text-[10px] text-muted-foreground">{selectedLog.qualityScore != null ? "Оценено" : "Не оценено"}</div>
+                      </div>
+                    </div>
+
+                    {/* User query */}
+                    <div className="rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 p-3">
+                      <div className="flex items-center gap-2 mb-1">
+                        <User className="h-4 w-4 text-blue-500" />
+                        <span className="text-xs font-semibold text-blue-600 dark:text-blue-400 uppercase">Запрос пользователя</span>
+                      </div>
+                      <p className="text-sm">{selectedLog.userMessage}</p>
+                    </div>
+
+                    {/* Processing cascade (timeline) */}
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs font-semibold text-muted-foreground uppercase">Каскад обработки</span>
+                        <span className="text-[10px] text-muted-foreground">{(kbCount > 0 ? 2 : 1) + toolsCount} шагов · {latencySec}s</span>
+                      </div>
+                      <div className="h-6 rounded-full overflow-hidden flex bg-muted">
+                        {kbCount > 0 && selectedLog.latencyMs && (
+                          <div className="bg-emerald-500 flex items-center justify-center text-[9px] text-white font-mono" style={{ width: `${Math.max(5, (kbTime / selectedLog.latencyMs) * 100)}%` }}>
+                            {kbTime}мс
+                          </div>
+                        )}
+                        {toolsCount > 0 && (
+                          <div className="bg-amber-500 flex items-center justify-center text-[9px] text-white font-mono" style={{ width: "8%" }}>
+                            tools
+                          </div>
+                        )}
+                        {selectedLog.latencyMs && (
+                          <div className="bg-blue-500 flex-1 flex items-center justify-center text-[9px] text-white font-mono">
+                            {llmTime}мс
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Steps */}
+                    <div className="space-y-2">
+                      {/* KB Search step */}
+                      <div className="rounded-lg border bg-background p-3">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <div className="h-7 w-7 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center"><ScrollText className="h-4 w-4 text-emerald-600 dark:text-emerald-400" /></div>
+                            <span className="text-sm font-semibold text-emerald-700 dark:text-emerald-300">Поиск по БЗ</span>
+                            <span className="text-[10px] text-muted-foreground">(Поиск релевантных статей)</span>
+                          </div>
+                          <span className="text-xs font-mono text-emerald-600 dark:text-emerald-400">{kbTime} мс</span>
+                        </div>
+                        <div className="mt-2 flex items-center gap-4 text-xs text-muted-foreground">
+                          <span>Найдено: <strong>{kbCount}</strong></span>
+                          <span>Выбрано: <strong>{kbCount}</strong></span>
+                        </div>
+                        {kbCount > 0 && (
+                          <div className="mt-1 text-[10px] text-muted-foreground">
+                            {selectedLog.kbArticlesUsed.map((a, i) => <Badge key={i} variant="outline" className="text-[9px] mr-1">{a}</Badge>)}
+                          </div>
+                        )}
+                        {kbCount === 0 && <div className="mt-1 text-[10px] text-muted-foreground italic">Нет подходящих статей</div>}
+                      </div>
+
+                      {/* LLM Call step */}
+                      <div className="rounded-lg border bg-background p-3">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <div className="h-7 w-7 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center"><BrainCircuit className="h-4 w-4 text-blue-600 dark:text-blue-400" /></div>
+                            <span className="text-sm font-semibold text-blue-700 dark:text-blue-300">Вызов LLM</span>
+                            <span className="text-[10px] text-muted-foreground">(Запрос к Claude API)</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <div className="w-16 h-1.5 bg-muted rounded-full overflow-hidden">
+                              <div className="h-full bg-blue-500 rounded-full" style={{ width: `${selectedLog.latencyMs ? Math.min(100, (llmTime / selectedLog.latencyMs) * 100) : 0}%` }} />
+                            </div>
+                            <span className="text-xs font-mono text-blue-600 dark:text-blue-400">{llmTime} мс</span>
+                            <span className="text-[10px] text-muted-foreground">{selectedLog.latencyMs ? Math.round((llmTime / selectedLog.latencyMs) * 100) : 0}%</span>
+                          </div>
+                        </div>
+                        <div className="mt-2 flex items-center gap-4 text-xs text-muted-foreground">
+                          <span>Итерация: <strong>1</strong></span>
+                          <span>Вход: <strong className="text-blue-600 dark:text-blue-400">{selectedLog.promptTokens ?? 0} token</strong></span>
+                          <span>Выход: <strong className="text-amber-600 dark:text-amber-400">{selectedLog.completionTokens ?? 0} token</strong></span>
+                        </div>
+                      </div>
+
+                      {/* Tools step (if any) */}
+                      {toolsCount > 0 && (
+                        <div className="rounded-lg border bg-background p-3">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <div className="h-7 w-7 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center"><Zap className="h-4 w-4 text-amber-600 dark:text-amber-400" /></div>
+                              <span className="text-sm font-semibold text-amber-700 dark:text-amber-300">Вызов инструментов</span>
+                            </div>
+                          </div>
+                          <div className="mt-2 flex flex-wrap gap-1">
+                            {selectedLog.toolsCalled.map((tool, i) => <Badge key={i} variant="outline" className="text-[10px]">{tool}</Badge>)}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* AI Response */}
+                    <div className="rounded-lg bg-muted border p-3">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Bot className="h-4 w-4 text-indigo-500" />
+                        <span className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 uppercase">Ответ AI</span>
+                        {selectedLog.isCopilot && <Badge className="text-[9px] bg-violet-100 text-violet-700">Copilot</Badge>}
+                      </div>
+                      <p className="text-sm whitespace-pre-wrap">{selectedLog.aiResponse}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )
+          })()}
         </>
       )}
 
