@@ -62,11 +62,11 @@ function fmt(n: number): string {
 }
 
 function statusBadge(status: string, t: (key: string) => string) {
-  if (status === "pending_approval") return <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">{t("statusPending")}</Badge>
-  if (status === "approved") return <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">{t("statusApproved")}</Badge>
-  if (status === "rejected") return <Badge className="bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">{t("statusRejected")}</Badge>
-  if (status === "closed") return <Badge className="bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400">{t("statusClosed")}</Badge>
-  return <Badge className="bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400">{t("statusDraft")}</Badge>
+  if (status === "pending_approval") return <Badge title={t("hintStatusPending")} className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">{t("statusPending")}</Badge>
+  if (status === "approved") return <Badge title={t("hintStatusApproved")} className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">{t("statusApproved")}</Badge>
+  if (status === "rejected") return <Badge title={t("hintStatusRejected")} className="bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">{t("statusRejected")}</Badge>
+  if (status === "closed") return <Badge title={t("hintStatusClosed")} className="bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400">{t("statusClosed")}</Badge>
+  return <Badge title={t("hintStatusDraft")} className="bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400">{t("statusDraft")}</Badge>
 }
 
 function periodLabel(plan: any, t: (key: string) => string): string {
@@ -233,7 +233,7 @@ function AddLineForm({ planId, existingCategories }: { planId: string; existingC
           </div>
           <div>
             <label className="text-xs font-medium mb-1 block">{t("fieldType")}</label>
-            <select value={lineType} onChange={e => setLineType(e.target.value as any)}
+            <select title={t("hintFieldType")} value={lineType} onChange={e => setLineType(e.target.value as any)}
               className="w-full border border-border rounded-md px-3 py-2 text-sm bg-background">
               <option value="expense">{t("expense")}</option>
               <option value="revenue">{t("revenue")}</option>
@@ -242,7 +242,7 @@ function AddLineForm({ planId, existingCategories }: { planId: string; existingC
           </div>
           <div>
             <label className="text-xs font-medium mb-1 block">{t("fieldPlannedAmount")} (₼)</label>
-            <Input type="number" value={amount} onChange={e => setAmount(e.target.value)} min={0} step={0.01} required />
+            <Input title={t("hintFieldAmount")} type="number" value={amount} onChange={e => setAmount(e.target.value)} min={0} step={0.01} required />
           </div>
           <div>
             <label className="text-xs font-medium mb-1 block">{t("fieldForecastAmount")} (₼)</label>
@@ -822,7 +822,7 @@ function WorkspaceTab({ planId }: { planId: string }) {
   }
 
   // Universal grouped section renderer (for both expenses and revenues)
-  const renderGroupedSection = (title: string, sectionLines: BudgetLine[], totPlanned: number) => {
+  const renderGroupedSection = (title: string, sectionLines: BudgetLine[], totPlanned: number, sectionHintKey?: string) => {
     const totActual = sectionLines.reduce((s: number, l: BudgetLine) => {
       if (l.children?.length) {
         return s + l.children.reduce((cs, c) => cs + (c.isAutoActual ? (autoActualMap.get(c.category) ?? 0) : (actualsByCat.get(`${c.category}||${c.lineType}`)?.total ?? 0)), 0)
@@ -833,7 +833,7 @@ function WorkspaceTab({ planId }: { planId: string }) {
     return (
       <>
         <tr className="bg-muted/40">
-          <td colSpan={6} className="px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-muted-foreground">{title}</td>
+          <td colSpan={6} className="px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-muted-foreground" title={sectionHintKey ? t(sectionHintKey) : undefined}>{title}</td>
         </tr>
         {sectionLines.map(l => {
           const isGroupParent = l.children && l.children.length > 0
@@ -908,33 +908,33 @@ function WorkspaceTab({ planId }: { planId: string }) {
     <div className="space-y-6">
       {/* KPI Cards — 2 rows: expenses + revenue/margin */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <ColorStatCard label={t("sectionExpenses") + " (" + t("kpiPlan").toLowerCase() + ")"} value={fmt(totalExpensePlanned)} icon={<BarChart2 className="h-5 w-5" />} color="blue" />
-        <ColorStatCard label={t("sectionExpenses") + " (" + t("kpiActual").toLowerCase() + ")"} value={fmt(totalExpenseActual)} icon={<DollarSign className="h-5 w-5" />} color="red" />
-        <ColorStatCard label={t("sectionRevenues") + " (" + t("kpiPlan").toLowerCase() + ")"} value={fmt(totalRevenuePlanned)} icon={<TrendingUp className="h-5 w-5" />} color="violet" />
-        <ColorStatCard label={t("sectionRevenues") + " (" + t("kpiActual").toLowerCase() + ")"} value={fmt(totalRevenueActual)} icon={<DollarSign className="h-5 w-5" />} color="green" />
+        <div title={t("hintKpiExpPlan")}><ColorStatCard label={t("sectionExpenses") + " (" + t("kpiPlan").toLowerCase() + ")"} value={fmt(totalExpensePlanned)} icon={<BarChart2 className="h-5 w-5" />} color="blue" /></div>
+        <div title={t("hintKpiExpActual")}><ColorStatCard label={t("sectionExpenses") + " (" + t("kpiActual").toLowerCase() + ")"} value={fmt(totalExpenseActual)} icon={<DollarSign className="h-5 w-5" />} color="red" /></div>
+        <div title={t("hintKpiRevPlan")}><ColorStatCard label={t("sectionRevenues") + " (" + t("kpiPlan").toLowerCase() + ")"} value={fmt(totalRevenuePlanned)} icon={<TrendingUp className="h-5 w-5" />} color="violet" /></div>
+        <div title={t("hintKpiRevActual")}><ColorStatCard label={t("sectionRevenues") + " (" + t("kpiActual").toLowerCase() + ")"} value={fmt(totalRevenueActual)} icon={<DollarSign className="h-5 w-5" />} color="green" /></div>
       </div>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <ColorStatCard label={t("sectionMargin").split("(")[0].trim() + " (" + t("kpiPlan").toLowerCase() + ")"} value={fmt(margin)} icon={<TrendingUp className="h-5 w-5" />} color={margin >= 0 ? "teal" : "red"} />
-        <ColorStatCard label={t("sectionMargin").split("(")[0].trim() + " (" + t("kpiActual").toLowerCase() + ")"} value={fmt(marginActual)} icon={<DollarSign className="h-5 w-5" />} color={marginActual >= 0 ? "teal" : "red"} />
-        <ColorStatCard label={t("kpiVariance")} value={(totalVariance >= 0 ? "+" : "") + fmt(totalVariance)} icon={totalVariance >= 0 ? <TrendingUp className="h-5 w-5" /> : <TrendingDown className="h-5 w-5" />} color={totalVariance >= 0 ? "teal" : "red"} />
-        <ColorStatCard label={t("kpiExecution")} value={`${execEmoji} ${Math.round(executionPct)}%`} icon={<CheckCircle className="h-5 w-5" />} color={executionPct >= 90 ? "green" : executionPct >= 60 ? "amber" : "red"} />
+        <div title={t("hintKpiMarginPlan")}><ColorStatCard label={t("sectionMargin").split("(")[0].trim() + " (" + t("kpiPlan").toLowerCase() + ")"} value={fmt(margin)} icon={<TrendingUp className="h-5 w-5" />} color={margin >= 0 ? "teal" : "red"} /></div>
+        <div title={t("hintKpiMarginActual")}><ColorStatCard label={t("sectionMargin").split("(")[0].trim() + " (" + t("kpiActual").toLowerCase() + ")"} value={fmt(marginActual)} icon={<DollarSign className="h-5 w-5" />} color={marginActual >= 0 ? "teal" : "red"} /></div>
+        <div title={t("hintKpiVariance")}><ColorStatCard label={t("kpiVariance")} value={(totalVariance >= 0 ? "+" : "") + fmt(totalVariance)} icon={totalVariance >= 0 ? <TrendingUp className="h-5 w-5" /> : <TrendingDown className="h-5 w-5" />} color={totalVariance >= 0 ? "teal" : "red"} /></div>
+        <div title={t("hintKpiExecution")}><ColorStatCard label={t("kpiExecution")} value={`${execEmoji} ${Math.round(executionPct)}%`} icon={<CheckCircle className="h-5 w-5" />} color={executionPct >= 90 ? "green" : executionPct >= 60 ? "amber" : "red"} /></div>
       </div>
 
       {/* Actions */}
       <div className="flex flex-wrap items-center gap-2">
-        <Button size="sm" variant="outline" onClick={handleAINarrative} disabled={aiNarrative.isPending}>
+        <Button size="sm" variant="outline" title={t("hintBtnAiAnalysis")} onClick={handleAINarrative} disabled={aiNarrative.isPending}>
           {aiNarrative.isPending ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <AlertCircle className="h-4 w-4 mr-1" />}
           {t("btnAiAnalysis")}
         </Button>
         {autoActualTotal > 0 && (
-          <Button size="sm" variant="outline" onClick={handleSync} disabled={syncActuals.isPending}>
+          <Button size="sm" variant="outline" title={t("hintBtnSyncActuals")} onClick={handleSync} disabled={syncActuals.isPending}>
             {syncActuals.isPending ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Link2 className="h-4 w-4 mr-1" />}
             {t("btnUpdateActual")}
           </Button>
         )}
         <ApplyTemplatesButton planId={planId} />
         <a href={`/api/budgeting/export?planId=${planId}`} download>
-          <Button size="sm" variant="outline"><DollarSign className="h-4 w-4 mr-1" /> {t("btnExport")}</Button>
+          <Button size="sm" variant="outline" title={t("hintBtnExport")}><DollarSign className="h-4 w-4 mr-1" /> {t("btnExport")}</Button>
         </a>
         <div className="flex-1" />
         <Input placeholder={t("searchCategory")} value={filterText} onChange={e => setFilterText(e.target.value)} className="h-8 w-48 text-xs" />
@@ -968,34 +968,34 @@ function WorkspaceTab({ planId }: { planId: string }) {
             <table className="w-full text-sm">
               <thead className="bg-muted/50 sticky top-0">
                 <tr>
-                  <th className="px-3 py-2 text-left font-medium text-xs">{t("colCategory")}</th>
-                  <th className="px-2 py-2 text-left font-medium text-xs">{t("colDepartment")}</th>
-                  <th className="px-2 py-2 text-right font-medium text-xs">{t("colPlan")} ₼</th>
-                  <th className="px-2 py-2 text-right font-medium text-xs text-green-600">{t("colActual")} ₼</th>
-                  <th className="px-2 py-2 text-right font-medium text-xs">{t("colVariancePct")}</th>
+                  <th title={t("hintColCategory")} className="px-3 py-2 text-left font-medium text-xs">{t("colCategory")}</th>
+                  <th title={t("hintColDepartment")} className="px-2 py-2 text-left font-medium text-xs">{t("colDepartment")}</th>
+                  <th title={t("hintColPlan")} className="px-2 py-2 text-right font-medium text-xs">{t("colPlan")} ₼</th>
+                  <th title={t("hintColActual")} className="px-2 py-2 text-right font-medium text-xs text-green-600">{t("colActual")} ₼</th>
+                  <th title={t("hintColVariance")} className="px-2 py-2 text-right font-medium text-xs">{t("colVariancePct")}</th>
                   <th className="px-2 py-2 w-10" />
                 </tr>
               </thead>
               <tbody>
-                {renderGroupedSection(t("sectionRevenues"), revenueLines, totRevPlanned)}
-                {renderGroupedSection(t("sectionCOGS"), cogsLines, totCOGSPlanned)}
+                {renderGroupedSection(t("sectionRevenues"), revenueLines, totRevPlanned, "hintSectionRevenue")}
+                {renderGroupedSection(t("sectionCOGS"), cogsLines, totCOGSPlanned, "hintSectionCOGS")}
 
                 {/* Gross Profit row */}
                 {(revenueLines.length > 0 || cogsLines.length > 0) && (
                   <tr className="border-t-2 border-emerald-300 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/10">
-                    <td className="px-3 py-2 font-bold text-sm" colSpan={2}>{t("grossProfit")}</td>
+                    <td title={t("hintGrossProfit")} className="px-3 py-2 font-bold text-sm" colSpan={2}>{t("grossProfit")}</td>
                     <td className="px-2 py-2 text-right font-mono text-sm font-bold">{fmt(totRevPlanned - totCOGSPlanned)}</td>
                     <td className="px-2 py-2 text-right font-mono text-sm font-bold text-green-600">{fmt(totRevActual - totCOGSActual)}</td>
                     <td colSpan={2} />
                   </tr>
                 )}
 
-                {renderGroupedSection(t("sectionExpenses"), expenseLines, totExpPlanned)}
+                {renderGroupedSection(t("sectionExpenses"), expenseLines, totExpPlanned, "hintSectionExpenses")}
 
                 {/* Operating Profit row */}
                 {(expenseLines.length > 0 || revenueLines.length > 0 || cogsLines.length > 0) && (
                   <tr className="border-t-2 border-purple-300 dark:border-purple-800 bg-purple-50 dark:bg-purple-900/10">
-                    <td className="px-3 py-2 font-bold text-sm" colSpan={2}>{t("operatingProfit")}</td>
+                    <td title={t("hintOperatingProfit")} className="px-3 py-2 font-bold text-sm" colSpan={2}>{t("operatingProfit")}</td>
                     <td className="px-2 py-2 text-right font-mono text-sm font-bold">{fmt(totRevPlanned - totCOGSPlanned - totExpPlanned)}</td>
                     <td className="px-2 py-2 text-right font-mono text-sm font-bold text-green-600">{fmt(totRevActual - totCOGSActual - totExpActual)}</td>
                     <td colSpan={2} />
@@ -1008,7 +1008,7 @@ function WorkspaceTab({ planId }: { planId: string }) {
                     <td className="px-2 py-1">
                       <div className="flex flex-col gap-1">
                         <div className="flex items-center gap-1">
-                          <select value={newRow.parentId} onChange={e => setNewRow(d => ({ ...d, parentId: e.target.value }))} className="h-7 rounded-md border border-input bg-background px-1 text-[10px] flex-1">
+                          <select title={t("hintFieldGroup")} value={newRow.parentId} onChange={e => setNewRow(d => ({ ...d, parentId: e.target.value }))} className="h-7 rounded-md border border-input bg-background px-1 text-[10px] flex-1">
                             <option value="">{t("selectGroup")}</option>
                             {parentGroups.map((g: BudgetLine) => (
                               <option key={g.id} value={g.id}>{g.category}</option>
@@ -1037,7 +1037,7 @@ function WorkspaceTab({ planId }: { planId: string }) {
                 ) : (
                   <tr className="border-t border-dashed border-border/30">
                     <td colSpan={6} className="px-3 py-2">
-                      <button onClick={() => setAddingRow(true)} className="text-xs text-purple-600 dark:text-purple-400 hover:underline flex items-center gap-1">
+                      <button title={t("hintBtnAddRow")} onClick={() => setAddingRow(true)} className="text-xs text-purple-600 dark:text-purple-400 hover:underline flex items-center gap-1">
                         <Plus className="h-3.5 w-3.5" /> {t("btnAddRow")}
                       </button>
                     </td>
@@ -1718,14 +1718,14 @@ function PlansTab({ activePlanId, onSelect, onShowCreate }: { activePlanId: stri
                     {activePlanId === plan.id ? t("btnActive") : t("btnSelect")}
                   </Button>
                   {plan.status === "draft" && (
-                    <Button size="sm" variant="outline" className="text-xs"
+                    <Button size="sm" variant="outline" className="text-xs" title={t("hintBtnSubmitApproval")}
                       onClick={() => updatePlan.mutate({ id: plan.id, status: "pending_approval" })}>
                       {t("btnSubmitApproval")}
                     </Button>
                   )}
                   {plan.status === "pending_approval" && (
                     <>
-                      <Button size="sm" variant="outline" className="text-xs text-green-600 border-green-300 hover:bg-green-50"
+                      <Button size="sm" variant="outline" className="text-xs text-green-600 border-green-300 hover:bg-green-50" title={t("hintBtnApprove")}
                         onClick={() => {
                           if (confirm(t("confirmApprove"))) {
                             updatePlan.mutate({ id: plan.id, status: "approved" })
@@ -1733,7 +1733,7 @@ function PlansTab({ activePlanId, onSelect, onShowCreate }: { activePlanId: stri
                         }}>
                         {t("btnApprove")}
                       </Button>
-                      <Button size="sm" variant="outline" className="text-xs text-red-600 border-red-300 hover:bg-red-50"
+                      <Button size="sm" variant="outline" className="text-xs text-red-600 border-red-300 hover:bg-red-50" title={t("hintBtnReject")}
                         onClick={() => {
                           const reason = prompt(t("rejectReason"))
                           if (reason !== null) {
@@ -1751,7 +1751,7 @@ function PlansTab({ activePlanId, onSelect, onShowCreate }: { activePlanId: stri
                     </Button>
                   )}
                   {plan.status === "rejected" && (
-                    <Button size="sm" variant="outline" className="text-xs"
+                    <Button size="sm" variant="outline" className="text-xs" title={t("hintBtnRevise")}
                       onClick={() => updatePlan.mutate({ id: plan.id, status: "draft" })}>
                       {t("btnRevise")}
                     </Button>
@@ -2589,6 +2589,7 @@ function ForecastTab({ planId }: { planId: string }) {
         <span className="text-xs text-muted-foreground font-medium">{t("scenarioBase")}:</span>
         {(["base", "optimistic", "pessimistic"] as const).map(s => (
           <Button key={s} size="sm" variant={scenario === s ? "default" : "outline"} className="h-7 text-xs"
+            title={s === "base" ? t("hintScenarioBase") : s === "optimistic" ? t("hintScenarioOptimistic") : t("hintScenarioPessimistic")}
             onClick={() => setScenario(s)}>
             {s === "base" ? t("scenarioBase") : s === "optimistic" ? t("scenarioOptimistic") : t("scenarioPessimistic")}
           </Button>
@@ -2742,11 +2743,11 @@ function TemplatesTab() {
             <table className="w-full text-sm">
               <thead className="bg-muted/50">
                 <tr>
-                  <th className="px-3 py-2 text-left font-medium text-xs">{t("templateName")}</th>
+                  <th title={t("hintTemplateName")} className="px-3 py-2 text-left font-medium text-xs">{t("templateName")}</th>
                   <th className="px-2 py-2 text-left font-medium text-xs">{t("templateType")}</th>
                   <th className="px-2 py-2 text-left font-medium text-xs">{t("templateSubtype")}</th>
                   <th className="px-2 py-2 text-right font-medium text-xs">{t("templateAmount")}</th>
-                  <th className="px-2 py-2 text-center font-medium text-xs">{t("templateActive")}</th>
+                  <th title={t("hintTemplateActive")} className="px-2 py-2 text-center font-medium text-xs">{t("templateActive")}</th>
                   <th className="px-2 py-2 w-20" />
                 </tr>
               </thead>
@@ -2864,7 +2865,7 @@ function ApplyTemplatesButton({ planId }: { planId: string }) {
 
   return (
     <>
-      <Button size="sm" variant="outline" onClick={() => setOpen(true)}>
+      <Button size="sm" variant="outline" title={t("hintTemplateApply")} onClick={() => setOpen(true)}>
         <Plus className="h-4 w-4 mr-1" /> {t("btnApplyTemplates")}
       </Button>
       {open && (
@@ -3048,12 +3049,12 @@ export default function BudgetingPage() {
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="mb-4 flex-wrap">
-              <TabsTrigger value="workspace">{t("tabWorkspace")}</TabsTrigger>
-              <TabsTrigger value="pl">{t("tabPL")}</TabsTrigger>
-              <TabsTrigger value="forecast">{t("tabForecast")}</TabsTrigger>
-              <TabsTrigger value="comparison">{t("tabComparison")}</TabsTrigger>
-              <TabsTrigger value="plans">{t("tabPlans")}</TabsTrigger>
-              <TabsTrigger value="templates">{t("tabTemplates")}</TabsTrigger>
+              <TabsTrigger value="workspace" title={t("hintTabWorkspace")}>{t("tabWorkspace")}</TabsTrigger>
+              <TabsTrigger value="pl" title={t("hintTabPL")}>{t("tabPL")}</TabsTrigger>
+              <TabsTrigger value="forecast" title={t("hintTabForecast")}>{t("tabForecast")}</TabsTrigger>
+              <TabsTrigger value="comparison" title={t("hintTabComparison")}>{t("tabComparison")}</TabsTrigger>
+              <TabsTrigger value="plans" title={t("hintTabPlans")}>{t("tabPlans")}</TabsTrigger>
+              <TabsTrigger value="templates" title={t("hintTabTemplates")}>{t("tabTemplates")}</TabsTrigger>
             </TabsList>
 
             <TabsContent value="workspace">

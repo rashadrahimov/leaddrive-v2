@@ -2144,6 +2144,66 @@
     "unitPrice": "Vahid qiymət",
     "unitCost": "Vahid maya",
     "quantityLabel": "Miqdar",
-    "cogs": "COGS"
+    "cogs": "COGS",
+
+    "hintTabWorkspace": "Əsas iş sahəsi: büdcə sətirləri, plan vs fakt, sapma",
+    "hintTabPL": "Mənfəət hesabatı: Gəlir → Maya → Ümumi mənfəət → Xərclər → EBITDA",
+    "hintTabForecast": "Aylıq proqnoz 3 ssenari ilə: baza, optimist, pessimist",
+    "hintTabComparison": "4-ə qədər planı müqayisə edin: kateqoriya üzrə sapma, materiallik filtri",
+    "hintTabPlans": "Plan idarəetməsi: yaratma, təsdiq, rədd, bağlama",
+    "hintTabTemplates": "Yeni planları tez doldurmaq üçün istiqamət şablonları kitabxanası",
+
+    "hintKpiExpPlan": "Dövr üçün planlaşdırılmış xərclərin ümumi məbləği",
+    "hintKpiExpActual": "Faktiki çəkilmiş xərclər (maya modelindən və ya əl ilə daxil edilmiş)",
+    "hintKpiRevPlan": "Dövr üçün planlaşdırılmış gəlirlərin ümumi məbləği",
+    "hintKpiRevActual": "Dövr ərzində faktiki əldə edilmiş gəlir",
+    "hintKpiMarginPlan": "Plan marja = Gəlir − Maya − Xərclər",
+    "hintKpiMarginActual": "Faktiki marja = Faktiki gəlir − Faktiki maya − Faktiki xərclər",
+    "hintKpiVariance": "Faktın plandan sapması. Müsbət = plandan yaxşı",
+    "hintKpiExecution": "Büdcənin icra faizi. Yaşıl ≥90%, sarı 60-90%, qırmızı <60%",
+
+    "hintColCategory": "Büdcə maddəsinin adı (xərc və ya gəlir kateqoriyası)",
+    "hintColDepartment": "Bu maddənin aid olduğu şöbə və ya biznes vahidi",
+    "hintColPlan": "Dövr üçün planlaşdırılmış məbləğ. Redaktə üçün klikləyin",
+    "hintColActual": "Faktiki məbləğ. Mavi 'Avto' nişanı = maya modelindən",
+    "hintColVariance": "Sapma %. Yaşıl = əlverişli, qırmızı = əlverişsiz",
+
+    "hintBtnAiAnalysis": "Büdcə sapmalarının AI təhlilini yaradın (ilk 5 kateqoriya)",
+    "hintBtnSyncActuals": "Avto-fakt sətirləri üçün maya modelindən faktiki məlumatları yeniləyin",
+    "hintBtnExport": "Büdcəni Excel olaraq yükləyin (3 vərəq: icmal, sətir, fakt)",
+    "hintBtnAddRow": "Yeni büdcə sətiri əlavə edin (xərc, gəlir və ya maya)",
+
+    "hintSectionRevenue": "Bütün gəlir mənbələri: xidmətlər, məhsullar, abunəliklər",
+    "hintSectionCOGS": "Birbaşa maya dəyəri: malların alışı, xidmət göstərmə xərcləri",
+    "hintSectionExpenses": "Əməliyyat xərcləri: maaşlar, icarə, infrastruktur, lisenziyalar",
+    "hintGrossProfit": "Ümumi mənfəət = Gəlir − Maya. OpEx-dən əvvəl marjinallığı göstərir",
+    "hintOperatingProfit": "Əməliyyat mənfəəti (EBITDA) = Ümumi mənfəət − Əməliyyat xərcləri",
+
+    "hintScenarioBase": "Baza ssenarisi: düzəlişsiz, planlaşdırıldığı kimi",
+    "hintScenarioOptimistic": "Optimist: gəlir +10%, maya −8%, xərclər −10%",
+    "hintScenarioPessimistic": "Pessimist: gəlir −10%, maya +10%, xərclər +15%",
+    "hintForecastCell": "Proqnoz daxil etmək üçün klikləyin. Kursiv = hesablanmış (plan ÷ ay)",
+
+    "hintMateriality": "Materiallik həddi: yalnız sapması həddi aşan maddələri göstər",
+    "hintBadgeAuto": "Dəyər avtomatik olaraq şirkətin maya modelindən alınıb",
+
+    "hintStatusDraft": "Qaralama: redaktə edilə bilər, sətir və faktlar əlavə edilə bilər",
+    "hintStatusPending": "Təsdiqə göndərilib. Rəhbərin qərarını gözləyir",
+    "hintStatusApproved": "Təsdiqlənib: redaktə bağlanıb",
+    "hintStatusRejected": "Rədd edilib: yenidən işlənməli. Qaralamaya qaytarıla bilər",
+    "hintStatusClosed": "Bağlanıb: arxiv plan, yalnız oxumaq üçün",
+
+    "hintBtnSubmitApproval": "Planı rəhbərin təsdiqinə göndər",
+    "hintBtnApprove": "Planı təsdiqlə. Təsdiqdən sonra redaktə mümkün deyil",
+    "hintBtnReject": "Planı səbəb göstərərək rədd et",
+    "hintBtnRevise": "Planı yenidən işləməyə qaytar (status → qaralama)",
+
+    "hintFieldGroup": "İç-içə sətir üçün ana qrupu seçin",
+    "hintFieldType": "Tip: Xərc (OpEx), Gəlir (Revenue) və ya Maya (COGS)",
+    "hintFieldAmount": "Bütün dövr üçün planlaşdırılmış məbləğ (₼)",
+
+    "hintTemplateName": "Biznes istiqamət adı (məs. 'AI həlləri', 'Bulud xidmətləri')",
+    "hintTemplateApply": "Seçilmiş şablonlardan büdcə sətirləri yaradın. Dublikatlar keçilir",
+    "hintTemplateActive": "Qeyri-aktiv şablonlar planlara tətbiq zamanı göstərilmir"
   }
 }

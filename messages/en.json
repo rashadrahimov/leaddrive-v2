@@ -2148,6 +2148,66 @@
     "unitPrice": "Unit price",
     "unitCost": "Unit cost",
     "quantityLabel": "Qty",
-    "cogs": "COGS"
+    "cogs": "COGS",
+
+    "hintTabWorkspace": "Main workspace: budget lines, plan vs actual, variances",
+    "hintTabPL": "Income statement: Revenue → COGS → Gross Profit → Expenses → EBITDA",
+    "hintTabForecast": "Monthly forecast with 3 scenarios: base, optimistic, pessimistic",
+    "hintTabComparison": "Compare up to 4 plans: variances by category with materiality filter",
+    "hintTabPlans": "Plan management: create, approve, reject, close",
+    "hintTabTemplates": "Direction template library for quick new plan population",
+
+    "hintKpiExpPlan": "Total planned expenses for the period",
+    "hintKpiExpActual": "Actually incurred expenses (from cost model or manual entry)",
+    "hintKpiRevPlan": "Total planned revenue for the period",
+    "hintKpiRevActual": "Actually received revenue for the period",
+    "hintKpiMarginPlan": "Planned margin = Revenue − COGS − Expenses",
+    "hintKpiMarginActual": "Actual margin = Actual revenue − Actual COGS − Actual expenses",
+    "hintKpiVariance": "Deviation of actual from plan. Positive = better than plan",
+    "hintKpiExecution": "Budget execution %. Green ≥90%, yellow 60-90%, red <60%",
+
+    "hintColCategory": "Budget item name (expense or revenue category)",
+    "hintColDepartment": "Department or business unit this item belongs to",
+    "hintColPlan": "Planned amount for the period. Click to edit",
+    "hintColActual": "Actual amount. Blue 'Auto' badge = from cost model",
+    "hintColVariance": "Variance %. Green = favorable, red = unfavorable",
+
+    "hintBtnAiAnalysis": "Generate AI analysis of budget variances (top 5 categories)",
+    "hintBtnSyncActuals": "Update actuals from cost model for auto-actual lines",
+    "hintBtnExport": "Download budget as Excel (3 sheets: overview, lines, actuals)",
+    "hintBtnAddRow": "Add new budget line (expense, revenue, or COGS)",
+
+    "hintSectionRevenue": "All revenue sources: services, products, subscriptions",
+    "hintSectionCOGS": "Direct costs: goods purchased, direct service delivery costs",
+    "hintSectionExpenses": "Operating expenses: salaries, rent, infrastructure, licenses",
+    "hintGrossProfit": "Gross Profit = Revenue − COGS. Shows margin before operating expenses",
+    "hintOperatingProfit": "Operating Profit (EBITDA) = Gross Profit − Operating Expenses",
+
+    "hintScenarioBase": "Base scenario: no adjustments, as planned",
+    "hintScenarioOptimistic": "Optimistic: revenue +10%, COGS −8%, expenses −10%",
+    "hintScenarioPessimistic": "Pessimistic: revenue −10%, COGS +10%, expenses +15%",
+    "hintForecastCell": "Click to enter forecast. Italic = calculated (plan ÷ months)",
+
+    "hintMateriality": "Materiality threshold: only show items with variance above threshold",
+    "hintBadgeAuto": "Value sourced automatically from cost model",
+
+    "hintStatusDraft": "Draft: can be edited, lines and actuals can be added",
+    "hintStatusPending": "Submitted for approval. Awaiting manager decision",
+    "hintStatusApproved": "Approved: editing is locked",
+    "hintStatusRejected": "Rejected: needs revision. Can be returned to draft",
+    "hintStatusClosed": "Closed: archived plan, read-only",
+
+    "hintBtnSubmitApproval": "Submit plan for manager approval",
+    "hintBtnApprove": "Approve plan. Editing will be locked after approval",
+    "hintBtnReject": "Reject plan with a reason",
+    "hintBtnRevise": "Return plan for revision (status → draft)",
+
+    "hintFieldGroup": "Select parent group for nested line",
+    "hintFieldType": "Type: Expense (OpEx), Revenue, or COGS",
+    "hintFieldAmount": "Planned amount in ₼ for the full period",
+
+    "hintTemplateName": "Business direction name (e.g. 'AI Solutions', 'Cloud Services')",
+    "hintTemplateApply": "Create budget lines from selected templates. Duplicates are skipped",
+    "hintTemplateActive": "Inactive templates are hidden when applying to plans"
   }
 }
