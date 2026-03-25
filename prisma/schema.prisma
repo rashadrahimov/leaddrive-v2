@@ -1514,9 +1514,13 @@ model BudgetLine {
   plan           BudgetPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
   category       String
   department     String?
-  lineType       String   @default("expense")  // expense | revenue
+  lineType       String   @default("expense")  // expense | revenue | cogs
+  lineSubtype    String?  // service | product | cogs | null
   plannedAmount  Float    @default(0)
   forecastAmount Float?
+  unitPrice      Float?   // For product lines: price per unit
+  unitCost       Float?   // For COGS: cost per unit
+  quantity       Int?     // For product/COGS: number of units
   costModelKey   String?  // e.g. "grandTotalG", "deptCosts.IT", "serviceRevenues.total"
   isAutoActual   Boolean  @default(false)
   notes          String?
@@ -1581,6 +1585,28 @@ model BudgetForecastEntry {
   @@index([organizationId])
   @@index([planId])
   @@map("budget_forecast_entries")
+}
+
+model BudgetDirectionTemplate {
+  id              String   @id @default(cuid())
+  organizationId  String
+  name            String
+  description     String?
+  lineType        String   @default("revenue")  // revenue | expense | cogs
+  lineSubtype     String?  // service | product | cogs
+  defaultAmount   Float    @default(0)
+  unitPrice       Float?
+  unitCost        Float?
+  quantity         Int?
+  costModelKey    String?
+  department      String?
+  sortOrder       Int      @default(0)
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([organizationId])
+  @@map("budget_direction_templates")
 }
 
 model SocialConversation {

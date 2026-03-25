@@ -2123,6 +2123,31 @@
     "noPlansCardSubtitle": "İlk büdcə planını yaradın",
 
     "monthsShort": "Yan,Fev,Mar,Apr,May,İyn,İyl,Avq,Sen,Okt,Noy,Dek",
-    "monthsFull": "Yanvar,Fevral,Mart,Aprel,May,İyun,İyul,Avqust,Sentyabr,Oktyabr,Noyabr,Dekabr"
+    "monthsFull": "Yanvar,Fevral,Mart,Aprel,May,İyun,İyul,Avqust,Sentyabr,Oktyabr,Noyabr,Dekabr",
+
+    "tabTemplates": "Şablonlar",
+    "templatesTitle": "İstiqamət şablonları",
+    "templatesDescription": "Planları tez doldurmaq üçün biznes istiqamətlər kitabxanası",
+    "templateName": "Ad",
+    "templateType": "Tip",
+    "templateSubtype": "Alt tip",
+    "templateAmount": "Standart məbləğ",
+    "templateActive": "Aktiv",
+    "btnAddTemplate": "Şablon əlavə et",
+    "btnApplyTemplates": "Şablonları tətbiq et",
+    "templateApplied": "Yaradıldı: {created}, keçildi: {skipped}",
+    "subtypeService": "Xidmət",
+    "subtypeProduct": "Məhsul",
+    "subtypeCogs": "Maya dəyəri",
+    "selectTemplates": "Tətbiq üçün şablonları seçin",
+
+    "sectionCOGS": "MAYA DƏYƏRİ (COGS)",
+    "cogsLabel": "Maya dəyəri",
+    "grossProfit": "Ümumi mənfəət",
+    "operatingProfit": "Əməliyyat mənfəəti",
+    "unitPrice": "Vahid qiymət",
+    "unitCost": "Vahid maya",
+    "quantityLabel": "Miqdar",
+    "cogs": "COGS"
   }
 }

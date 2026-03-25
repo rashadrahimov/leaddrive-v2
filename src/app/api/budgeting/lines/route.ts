@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
   if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
   const body = await req.json()
-  const { plan_id, planId, category, department, line_type, lineType, planned_amount, plannedAmount, forecastAmount, costModelKey, isAutoActual, notes, parentId } = body
+  const { plan_id, planId, category, department, line_type, lineType, lineSubtype, planned_amount, plannedAmount, forecastAmount, unitPrice, unitCost, quantity, costModelKey, isAutoActual, notes, parentId } = body
 
   const resolvedPlanId = planId || plan_id
   const resolvedLineType = lineType || line_type || "expense"
@@ -59,8 +59,12 @@ export async function POST(req: NextRequest) {
       category,
       department: department || null,
       lineType: resolvedLineType,
+      lineSubtype: lineSubtype || null,
       plannedAmount: Number(resolvedAmount),
       forecastAmount: forecastAmount != null ? Number(forecastAmount) : null,
+      unitPrice: unitPrice != null ? Number(unitPrice) : null,
+      unitCost: unitCost != null ? Number(unitCost) : null,
+      quantity: quantity != null ? Number(quantity) : null,
       costModelKey: costModelKey || null,
       isAutoActual: isAutoActual === true,
       notes: notes || null,

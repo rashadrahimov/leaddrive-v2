@@ -73,9 +73,10 @@ export async function GET(req: NextRequest) {
     where: { planId, organizationId: orgId },
   })
 
-  // Totals — split by expense vs revenue
+  // Totals — split by expense vs revenue vs cogs
   const expenseLines = lines.filter((l: { lineType: string }) => l.lineType === "expense")
   const revenueLines = lines.filter((l: { lineType: string }) => l.lineType === "revenue")
+  const cogsLines = lines.filter((l: { lineType: string }) => l.lineType === "cogs")
 
   const totalExpensePlanned = expenseLines.reduce((s: number, l: { plannedAmount: number }) => s + l.plannedAmount, 0)
   const totalRevenuePlanned = revenueLines.reduce((s: number, l: { plannedAmount: number }) => s + l.plannedAmount, 0)
@@ -245,6 +246,10 @@ export async function GET(req: NextRequest) {
       totalExpenseActual,
       margin: marginPlanned,
       marginActual: marginActual,
+      totalCOGSPlanned: cogsLines.reduce((s: number, l: { plannedAmount: number }) => s + l.plannedAmount, 0),
+      totalCOGSActual: 0, // COGS actuals TBD
+      grossProfit: totalRevenuePlanned - cogsLines.reduce((s: number, l: { plannedAmount: number }) => s + l.plannedAmount, 0),
+      grossProfitActual: totalRevenueActual, // simplified for now
       byCategory,
       byDepartment,
       costModelTotal: costModel?.grandTotalG ?? 0,

@@ -8,7 +8,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 
   const { id } = await params
   const body = await req.json()
-  const { category, department, lineType, plannedAmount, forecastAmount, costModelKey, isAutoActual, notes, parentId } = body
+  const { category, department, lineType, lineSubtype, plannedAmount, forecastAmount, unitPrice, unitCost, quantity, costModelKey, isAutoActual, notes, parentId } = body
 
   // Check plan is not approved
   const line = await prisma.budgetLine.findFirst({ where: { id, organizationId: orgId }, select: { planId: true } })
@@ -32,8 +32,12 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       ...(category !== undefined && { category }),
       ...(department !== undefined && { department }),
       ...(lineType !== undefined && { lineType }),
+      ...(lineSubtype !== undefined && { lineSubtype: lineSubtype || null }),
       ...(plannedAmount !== undefined && { plannedAmount: Number(plannedAmount) }),
       ...(forecastAmount !== undefined && { forecastAmount: forecastAmount != null ? Number(forecastAmount) : null }),
+      ...(unitPrice !== undefined && { unitPrice: unitPrice != null ? Number(unitPrice) : null }),
+      ...(unitCost !== undefined && { unitCost: unitCost != null ? Number(unitCost) : null }),
+      ...(quantity !== undefined && { quantity: quantity != null ? Number(quantity) : null }),
       ...(costModelKey !== undefined && { costModelKey: costModelKey || null }),
       ...(isAutoActual !== undefined && { isAutoActual: Boolean(isAutoActual) }),
       ...(notes !== undefined && { notes }),

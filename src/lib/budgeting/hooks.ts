@@ -6,12 +6,15 @@ import type {
   BudgetLine,
   BudgetActual,
   BudgetAnalytics,
+  BudgetDirectionTemplate,
   CreateBudgetPlanInput,
   UpdateBudgetPlanInput,
   CreateBudgetLineInput,
   UpdateBudgetLineInput,
   CreateBudgetActualInput,
   UpdateBudgetActualInput,
+  CreateTemplateInput,
+  UpdateTemplateInput,
 } from "./types"
 
 function useOrgId() {
@@ -312,6 +315,69 @@ export function useSyncActuals() {
       }),
     onSuccess: (_data, planId) => {
       qc.invalidateQueries({ queryKey: ["budgeting", "actuals", planId, orgId] })
+      qc.invalidateQueries({ queryKey: ["budgeting", "analytics", planId, orgId] })
+    },
+  })
+}
+
+// ─── Direction Templates ─────────────────────────────────────────────────────
+
+export function useBudgetTemplates() {
+  const orgId = useOrgId()
+  return useQuery({
+    queryKey: ["budgeting", "templates", orgId],
+    queryFn: () => apiFetch<BudgetDirectionTemplate[]>("/api/budgeting/templates", orgId),
+    enabled: !!orgId,
+  })
+}
+
+export function useCreateBudgetTemplate() {
+  const orgId = useOrgId()
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (input: CreateTemplateInput) =>
+      apiFetch<BudgetDirectionTemplate>("/api/budgeting/templates", orgId, {
+        method: "POST",
+        body: JSON.stringify(input),
+      }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["budgeting", "templates", orgId] }),
+  })
+}
+
+export function useUpdateBudgetTemplate() {
+  const orgId = useOrgId()
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, ...input }: UpdateTemplateInput & { id: string }) =>
+      apiFetch<BudgetDirectionTemplate>(`/api/budgeting/templates/${id}`, orgId, {
+        method: "PUT",
+        body: JSON.stringify(input),
+      }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["budgeting", "templates", orgId] }),
+  })
+}
+
+export function useDeleteBudgetTemplate() {
+  const orgId = useOrgId()
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) =>
+      apiFetch<void>(`/api/budgeting/templates/${id}`, orgId, { method: "DELETE" }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["budgeting", "templates", orgId] }),
+  })
+}
+
+export function useApplyTemplates() {
+  const orgId = useOrgId()
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ planId, templateIds }: { planId: string; templateIds: string[] }) =>
+      apiFetch<{ created: number; skipped: number }>(`/api/budgeting/plans/${planId}/apply-templates`, orgId, {
+        method: "POST",
+        body: JSON.stringify({ templateIds }),
+      }),
+    onSuccess: (_data, { planId }) => {
+      qc.invalidateQueries({ queryKey: ["budgeting", "lines", planId, orgId] })
       qc.invalidateQueries({ queryKey: ["budgeting", "analytics", planId, orgId] })
     },
   })
