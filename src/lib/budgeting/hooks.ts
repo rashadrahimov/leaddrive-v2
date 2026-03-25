@@ -263,7 +263,7 @@ export function useUpsertBudgetForecast() {
   const orgId = useOrgId()
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (entries: Array<{ planId: string; month: number; year: number; category: string; forecastAmount: number }>) =>
+    mutationFn: (entries: Array<{ planId: string; month: number; year: number; category: string; lineType?: string; forecastAmount: number }>) =>
       apiFetch<BudgetForecastEntry[]>("/api/budgeting/forecast", orgId, {
         method: "POST",
         body: JSON.stringify({ entries }),

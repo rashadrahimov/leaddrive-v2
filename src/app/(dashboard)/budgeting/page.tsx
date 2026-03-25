@@ -1832,7 +1832,7 @@ function ForecastTab({ planId }: { planId: string }) {
   const upsertForecast = useUpsertBudgetForecast()
   const createLine = useCreateBudgetLine()
 
-  const [editCell, setEditCell] = useState<{ category: string; month: number } | null>(null)
+  const [editCell, setEditCell] = useState<{ category: string; lineType: string; month: number } | null>(null)
   const [editValue, setEditValue] = useState("")
   const [addingRevenue, setAddingRevenue] = useState(false)
   const [addingExpense, setAddingExpense] = useState(false)
@@ -1861,12 +1861,13 @@ function ForecastTab({ planId }: { planId: string }) {
     return months.map(m => all[m - 1] || `M${m}`)
   }, [months, t])
 
-  // Build forecast lookup: category+month -> forecastAmount
+  // Build forecast lookup: category+lineType+month -> forecastAmount
   const forecastMap = useMemo(() => {
     const m = new Map<string, number>()
     for (const e of forecastEntries) {
       if (e.category === "__total__") continue
-      const key = `${e.category}||${e.month}`
+      const lt = (e as any).lineType || "expense"
+      const key = `${e.category}||${lt}||${e.month}`
       m.set(key, (m.get(key) ?? 0) + e.forecastAmount)
     }
     return m
@@ -1883,8 +1884,8 @@ function ForecastTab({ planId }: { planId: string }) {
   const expenseLines = useMemo(() => budgetLines.filter((l: BudgetLine) => l.lineType === "expense"), [budgetLines])
 
   // Get cell value: saved forecast or default (planned / periodMonths)
-  const getCellValue = (category: string, month: number): { value: number; isDefault: boolean } => {
-    const key = `${category}||${month}`
+  const getCellValue = (category: string, lineType: string, month: number): { value: number; isDefault: boolean } => {
+    const key = `${category}||${lineType}||${month}`
     const saved = forecastMap.get(key)
     if (saved !== undefined) return { value: saved, isDefault: false }
     const line = linesMap.get(category)
@@ -1893,18 +1894,18 @@ function ForecastTab({ planId }: { planId: string }) {
   }
 
   // Row total
-  const getRowTotal = (category: string): number => {
-    return months.reduce((s, m) => s + getCellValue(category, m).value, 0)
+  const getRowTotal = (category: string, lineType: string): number => {
+    return months.reduce((s, m) => s + getCellValue(category, lineType, m).value, 0)
   }
 
   // Column total for a set of lines
   const getColTotal = (lines: BudgetLine[], month: number): number => {
-    return lines.reduce((s, l) => s + getCellValue(l.category, month).value, 0)
+    return lines.reduce((s, l) => s + getCellValue(l.category, l.lineType, month).value, 0)
   }
 
   // Section total
   const getSectionTotal = (lines: BudgetLine[]): number => {
-    return lines.reduce((s, l) => s + getRowTotal(l.category), 0)
+    return lines.reduce((s, l) => s + getRowTotal(l.category, l.lineType), 0)
   }
 
   // KPI values
@@ -1913,9 +1914,9 @@ function ForecastTab({ planId }: { planId: string }) {
   const totalMargin = totalRevenue - totalExpense
 
   // Inline edit handlers
-  const startEdit = (category: string, month: number) => {
-    const { value } = getCellValue(category, month)
-    setEditCell({ category, month })
+  const startEdit = (category: string, lineType: string, month: number) => {
+    const { value } = getCellValue(category, lineType, month)
+    setEditCell({ category, lineType, month })
     setEditValue(String(Math.round(value)))
   }
 
@@ -1928,6 +1929,7 @@ function ForecastTab({ planId }: { planId: string }) {
       month: editCell.month,
       year,
       category: editCell.category,
+      lineType: editCell.lineType,
       forecastAmount: val,
     }])
     setEditCell(null)
@@ -1962,15 +1964,15 @@ function ForecastTab({ planId }: { planId: string }) {
   )
 
   const renderRow = (line: BudgetLine) => {
-    const rowTotal = getRowTotal(line.category)
+    const rowTotal = getRowTotal(line.category, line.lineType)
     return (
-      <tr key={line.id} className="border-t border-border/50 hover:bg-muted/30">
+      <tr key={`${line.id}-${line.lineType}`} className="border-t border-border/50 hover:bg-muted/30">
         <td className="px-3 py-2 text-sm font-medium sticky left-0 bg-white dark:bg-gray-950 z-10 min-w-[180px]">
           {line.category}
         </td>
         {months.map(m => {
-          const { value, isDefault } = getCellValue(line.category, m)
-          const isEditing = editCell?.category === line.category && editCell?.month === m
+          const { value, isDefault } = getCellValue(line.category, line.lineType, m)
+          const isEditing = editCell?.category === line.category && editCell?.lineType === line.lineType && editCell?.month === m
           return (
             <td key={m} className="px-2 py-2 text-right min-w-[90px]">
               {isEditing ? (
@@ -1981,7 +1983,7 @@ function ForecastTab({ planId }: { planId: string }) {
               ) : (
                 <button type="button"
                   className={`font-mono text-sm cursor-pointer hover:bg-purple-50 dark:hover:bg-purple-900/20 px-1 rounded border border-transparent hover:border-purple-300 dark:hover:border-purple-700 transition-colors ${isDefault ? "text-muted-foreground italic" : ""}`}
-                  onClick={() => startEdit(line.category, m)}>
+                  onClick={() => startEdit(line.category, line.lineType, m)}>
                   {fmt(value)}
                 </button>
               )}
