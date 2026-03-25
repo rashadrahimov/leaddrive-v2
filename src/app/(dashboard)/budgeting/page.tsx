@@ -15,7 +15,7 @@ import {
 } from "lucide-react"
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, Legend, ComposedChart, Area,
+  PieChart, Pie, Cell, Legend,
 } from "recharts"
 import {
   useBudgetPlans,
@@ -47,7 +47,6 @@ import {
   type BudgetLine,
 } from "@/lib/budgeting/types"
 import { COST_MODEL_KEY_OPTIONS, TEMPLATE_CATEGORY_MAP } from "@/lib/budgeting/cost-model-map"
-import { buildMonthlyForecast, buildCategoryForecast, applyScenario } from "@/lib/budgeting/forecast"
 import { BudgetWaterfallChart } from "@/components/budget-waterfall-chart"
 
 const PIE_COLORS = ["#8b5cf6", "#3b82f6", "#f59e0b", "#ef4444", "#10b981", "#f97316", "#06b6d4", "#84cc16"]
@@ -538,21 +537,6 @@ function WorkspaceTab({ planId }: { planId: string }) {
             </button>
           )}
         </td>
-        {/* Forecast - editable */}
-        <td className="px-2 py-2 text-right">
-          {editCell?.id === line.id && editCell?.field === "forecastAmount" ? (
-            <Input type="number" className="h-7 w-24 text-right text-xs ml-auto" value={editValue} autoFocus
-              onChange={e => setEditValue(e.target.value)}
-              onBlur={() => saveEdit()}
-              onKeyDown={e => { if (e.key === "Enter") saveEdit() }} />
-          ) : (
-            <button type="button" className="font-mono text-sm text-purple-600 dark:text-purple-400 cursor-pointer hover:bg-purple-50 dark:hover:bg-purple-900/20 px-1 rounded border border-transparent hover:border-purple-300 dark:hover:border-purple-700 transition-colors"
-              onClick={() => startEdit(line.id, "forecastAmount", line.forecastAmount ?? line.plannedAmount)}>
-              {fmt(line.forecastAmount ?? line.plannedAmount)}
-              <Pencil className="h-2.5 w-2.5 inline ml-1 opacity-0 group-hover:opacity-40" />
-            </button>
-          )}
-        </td>
         {/* Fact */}
         <td className="px-2 py-2 text-right">
           <div className="flex items-center justify-end gap-1">
@@ -591,7 +575,7 @@ function WorkspaceTab({ planId }: { planId: string }) {
     const items = actualsByCat.get(`${line.category}||${line.lineType}`)?.items ?? []
     return (
       <tr key={`expand-${line.id}`} className="bg-muted/20">
-        <td colSpan={7} className="px-4 py-2">
+        <td colSpan={6} className="px-4 py-2">
           <div className="text-xs space-y-1">
             <div className="font-medium text-muted-foreground mb-1">{t("actualRecordsFor")} «{line.category}»:</div>
             {items.length === 0 && <div className="text-muted-foreground italic">{t("emptyNoRecords")}</div>}
@@ -623,7 +607,7 @@ function WorkspaceTab({ planId }: { planId: string }) {
   }
 
   // Section renderer
-  const renderSection = (title: string, sectionLines: BudgetLine[], totPlanned: number, totForecast: number) => {
+  const renderSection = (title: string, sectionLines: BudgetLine[], totPlanned: number, _totForecast: number) => {
     const totActual = sectionLines.reduce((s: number, l: BudgetLine) => {
       const fact = l.isAutoActual ? (autoActualMap.get(l.category) ?? 0) : (actualsByCat.get(`${l.category}||${l.lineType}`)?.total ?? 0)
       return s + fact
@@ -631,13 +615,12 @@ function WorkspaceTab({ planId }: { planId: string }) {
     return (
       <>
         <tr className="bg-muted/40">
-          <td colSpan={7} className="px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-muted-foreground">{title}</td>
+          <td colSpan={6} className="px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-muted-foreground">{title}</td>
         </tr>
         {sectionLines.map(l => [renderRow(l), renderExpand(l)])}
         <tr className="border-t-2 border-border bg-muted/30">
           <td className="px-3 py-1.5 font-bold text-xs" colSpan={2}>{t("totalLabel")} {title.toLowerCase()}</td>
           <td className="px-2 py-1.5 text-right font-mono text-xs font-bold">{fmt(totPlanned)}</td>
-          <td className="px-2 py-1.5 text-right font-mono text-xs font-bold text-purple-600">{fmt(totForecast)}</td>
           <td className="px-2 py-1.5 text-right font-mono text-xs font-bold text-green-600">{fmt(totActual)}</td>
           <td className="px-2 py-1.5 text-right font-mono text-xs font-bold">
             {totPlanned > 0 ? `${(((totPlanned - totActual) / totPlanned) * 100).toFixed(1)}%` : "—"}
@@ -733,7 +716,6 @@ function WorkspaceTab({ planId }: { planId: string }) {
                   <th className="px-3 py-2 text-left font-medium text-xs">{t("colCategory")}</th>
                   <th className="px-2 py-2 text-left font-medium text-xs">{t("colDepartment")}</th>
                   <th className="px-2 py-2 text-right font-medium text-xs">{t("colPlan")} ₼</th>
-                  <th className="px-2 py-2 text-right font-medium text-xs text-purple-600">{t("colForecast")} ₼</th>
                   <th className="px-2 py-2 text-right font-medium text-xs text-green-600">{t("colActual")} ₼</th>
                   <th className="px-2 py-2 text-right font-medium text-xs">{t("colVariancePct")}</th>
                   <th className="px-2 py-2 w-10" />
@@ -748,7 +730,6 @@ function WorkspaceTab({ planId }: { planId: string }) {
                   <tr className="border-t-2 border-purple-300 dark:border-purple-800 bg-purple-50 dark:bg-purple-900/10">
                     <td className="px-3 py-2 font-bold text-sm" colSpan={2}>{t("sectionMargin")}</td>
                     <td className="px-2 py-2 text-right font-mono text-sm font-bold">{fmt(totRevPlanned - totExpPlanned)}</td>
-                    <td className="px-2 py-2 text-right font-mono text-sm font-bold text-purple-600">{fmt(totRevForecast - totExpForecast)}</td>
                     <td className="px-2 py-2 text-right font-mono text-sm font-bold text-green-600">{fmt(totRevActual - totExpActual)}</td>
                     <td colSpan={2} />
                   </tr>
@@ -768,7 +749,6 @@ function WorkspaceTab({ planId }: { planId: string }) {
                     </td>
                     <td className="px-2 py-1"><Input placeholder={t("colDepartment")} className="h-7 text-xs" value={newRow.department ?? ""} onChange={e => setNewRow(d => ({ ...d, department: e.target.value }))} /></td>
                     <td className="px-2 py-1"><Input type="number" placeholder="0" className="h-7 text-xs text-right" value={newRow.plannedAmount} onChange={e => setNewRow(d => ({ ...d, plannedAmount: e.target.value }))} /></td>
-                    <td className="px-2 py-1"><Input type="number" placeholder={t("placeholderForecastShort")} className="h-7 text-xs text-right" value={newRow.forecastAmount} onChange={e => setNewRow(d => ({ ...d, forecastAmount: e.target.value }))} /></td>
                     <td />
                     <td className="px-2 py-1 text-center">
                       <div className="flex gap-1 justify-center">
@@ -780,7 +760,7 @@ function WorkspaceTab({ planId }: { planId: string }) {
                   </tr>
                 ) : (
                   <tr className="border-t border-dashed border-border/30">
-                    <td colSpan={7} className="px-3 py-2">
+                    <td colSpan={6} className="px-3 py-2">
                       <button onClick={() => setAddingRow(true)} className="text-xs text-purple-600 dark:text-purple-400 hover:underline flex items-center gap-1">
                         <Plus className="h-3.5 w-3.5" /> {t("btnAddRow")}
                       </button>
@@ -791,7 +771,7 @@ function WorkspaceTab({ planId }: { planId: string }) {
                 {/* Empty state */}
                 {lines.length === 0 && !addingRow && (
                   <tr>
-                    <td colSpan={7} className="text-center py-12 text-muted-foreground">
+                    <td colSpan={6} className="text-center py-12 text-muted-foreground">
                       {t("emptyNoLines")}
                     </td>
                   </tr>
@@ -1842,251 +1822,282 @@ function PLTab({ planId }: { planId: string }) {
   )
 }
 
-// ─── Forecast Tab ─────────────────────────────────────────────────────────────
+// ─── Forecast Tab (Monthly Matrix) ───────────────────────────────────────────
 
 function ForecastTab({ planId }: { planId: string }) {
   const t = useTranslations("budgeting")
-  const { data: analytics } = useBudgetAnalytics(planId)
+  const { data: analytics, isLoading: analyticsLoading } = useBudgetAnalytics(planId)
   const { data: forecastEntries = [] } = useBudgetForecastEntries(planId)
-  const { data: budgetLines = [] } = useBudgetLines(planId)
+  const { data: budgetLines = [], isLoading: linesLoading } = useBudgetLines(planId)
   const upsertForecast = useUpsertBudgetForecast()
-  const plan = analytics?.plan
+  const createLine = useCreateBudgetLine()
 
-  const [scenario, setScenario] = useState<"base" | "optimistic" | "pessimistic">("base")
-  const [editMonth, setEditMonth] = useState<number | null>(null)
+  const [editCell, setEditCell] = useState<{ category: string; month: number } | null>(null)
   const [editValue, setEditValue] = useState("")
-  const [generating, setGenerating] = useState(false)
-  const [showCategories, setShowCategories] = useState(false)
+  const [addingRevenue, setAddingRevenue] = useState(false)
+  const [addingExpense, setAddingExpense] = useState(false)
+  const [newCategory, setNewCategory] = useState("")
 
-  const currentMonth = new Date().getMonth() + 1
+  const plan = analytics?.plan
   const year = plan?.year ?? new Date().getFullYear()
-  const totalPlanned = analytics?.totalPlanned ?? 0
-  const totalForecast = analytics?.totalForecast ?? 0
-  const totalActual = analytics?.totalActual ?? 0
-  const yearEndProjection = analytics?.yearEndProjection ?? 0
 
-  // P3-01: Build overrides map from DB entries (aggregated by month)
-  const overridesMap = useMemo(() => {
-    if (forecastEntries.length === 0) return undefined
-    const m = new Map<number, number>()
+  // Determine months for this period
+  const months = useMemo(() => {
+    if (!plan) return [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+    if (plan.periodType === "quarterly" && plan.quarter) {
+      const start = (plan.quarter - 1) * 3 + 1
+      return [start, start + 1, start + 2]
+    }
+    if (plan.periodType === "monthly" && plan.month) {
+      return [plan.month]
+    }
+    return [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+  }, [plan])
+
+  const periodMonths = months.length
+
+  const monthLabels = useMemo(() => {
+    const all = t("monthsShort").split(",")
+    return months.map(m => all[m - 1] || `M${m}`)
+  }, [months, t])
+
+  // Build forecast lookup: category+month -> forecastAmount
+  const forecastMap = useMemo(() => {
+    const m = new Map<string, number>()
     for (const e of forecastEntries) {
-      m.set(e.month, (m.get(e.month) ?? 0) + e.forecastAmount)
+      if (e.category === "__total__") continue
+      const key = `${e.category}||${e.month}`
+      m.set(key, (m.get(key) ?? 0) + e.forecastAmount)
     }
     return m
   }, [forecastEntries])
 
-  const rawMonthlyData = buildMonthlyForecast(year, totalPlanned, totalActual, currentMonth, undefined, undefined, overridesMap)
+  // Build lines map for default values
+  const linesMap = useMemo(() => {
+    const m = new Map<string, BudgetLine>()
+    for (const l of budgetLines) m.set(l.category, l)
+    return m
+  }, [budgetLines])
 
-  // P3-05: Apply scenario
-  const monthlyData = applyScenario(rawMonthlyData, scenario)
+  const revenueLines = useMemo(() => budgetLines.filter((l: BudgetLine) => l.lineType === "revenue"), [budgetLines])
+  const expenseLines = useMemo(() => budgetLines.filter((l: BudgetLine) => l.lineType === "expense"), [budgetLines])
 
-  const fcBudgetLabel = t("colBudget")
-  const fcForecastLabel = t("colForecast")
-  const fcActualLabel = t("colActual")
-  const chartData = monthlyData.map(d => ({
-    name: d.label,
-    [fcBudgetLabel]: d.planned,
-    [fcForecastLabel]: d.forecast,
-    [fcActualLabel]: d.actual || undefined,
-  }))
-
-  // P3-02: Generate forecast entries for all categories
-  const handleGenerate = async () => {
-    if (budgetLines.length === 0) return
-    setGenerating(true)
-    try {
-      const categories = budgetLines.map((l: BudgetLine) => ({
-        category: l.category,
-        plannedAmount: l.plannedAmount,
-        lineType: l.lineType,
-      }))
-      const entries = buildCategoryForecast(categories, year, totalActual, currentMonth)
-      await upsertForecast.mutateAsync(entries.map(e => ({ ...e, planId })))
-    } finally {
-      setGenerating(false)
-    }
+  // Get cell value: saved forecast or default (planned / periodMonths)
+  const getCellValue = (category: string, month: number): { value: number; isDefault: boolean } => {
+    const key = `${category}||${month}`
+    const saved = forecastMap.get(key)
+    if (saved !== undefined) return { value: saved, isDefault: false }
+    const line = linesMap.get(category)
+    if (line) return { value: line.plannedAmount / periodMonths, isDefault: true }
+    return { value: 0, isDefault: true }
   }
 
-  // P3-03: Save inline forecast edit
-  const saveEdit = async (month: number) => {
+  // Row total
+  const getRowTotal = (category: string): number => {
+    return months.reduce((s, m) => s + getCellValue(category, m).value, 0)
+  }
+
+  // Column total for a set of lines
+  const getColTotal = (lines: BudgetLine[], month: number): number => {
+    return lines.reduce((s, l) => s + getCellValue(l.category, month).value, 0)
+  }
+
+  // Section total
+  const getSectionTotal = (lines: BudgetLine[]): number => {
+    return lines.reduce((s, l) => s + getRowTotal(l.category), 0)
+  }
+
+  // KPI values
+  const totalRevenue = getSectionTotal(revenueLines)
+  const totalExpense = getSectionTotal(expenseLines)
+  const totalMargin = totalRevenue - totalExpense
+
+  // Inline edit handlers
+  const startEdit = (category: string, month: number) => {
+    const { value } = getCellValue(category, month)
+    setEditCell({ category, month })
+    setEditValue(String(Math.round(value)))
+  }
+
+  const saveEdit = async () => {
+    if (!editCell) return
     const val = Number(editValue)
-    if (isNaN(val) || val < 0) return
-    await upsertForecast.mutateAsync([{ planId, month, year, category: "__total__", forecastAmount: val }])
-    setEditMonth(null)
+    if (isNaN(val) || val < 0) { setEditCell(null); return }
+    await upsertForecast.mutateAsync([{
+      planId,
+      month: editCell.month,
+      year,
+      category: editCell.category,
+      forecastAmount: val,
+    }])
+    setEditCell(null)
     setEditValue("")
   }
 
-  // P3-04: Category forecast matrix data
-  const categoryMatrix = useMemo(() => {
-    if (!showCategories) return []
-    const catMap = new Map<string, Map<number, number>>()
-    for (const e of forecastEntries) {
-      if (e.category === "__total__") continue
-      if (!catMap.has(e.category)) catMap.set(e.category, new Map())
-      catMap.get(e.category)!.set(e.month, (catMap.get(e.category)!.get(e.month) ?? 0) + e.forecastAmount)
-    }
-    // If no entries, use even distribution from budget lines
-    if (catMap.size === 0) {
-      for (const l of budgetLines) {
-        if (!catMap.has(l.category)) catMap.set(l.category, new Map())
-        for (let m = 1; m <= 12; m++) {
-          catMap.get(l.category)!.set(m, l.plannedAmount / 12)
-        }
-      }
-    }
-    return Array.from(catMap.entries()).map(([cat, months]) => ({ category: cat, months }))
-  }, [forecastEntries, budgetLines, showCategories])
+  // Add new category
+  const handleAddCategory = async (lineType: "revenue" | "expense") => {
+    if (!newCategory.trim()) return
+    await createLine.mutateAsync({
+      planId,
+      category: newCategory.trim(),
+      lineType,
+      plannedAmount: 0,
+    })
+    // Create zero forecast entries for each month
+    const entries = months.map(m => ({
+      planId,
+      month: m,
+      year,
+      category: newCategory.trim(),
+      forecastAmount: 0,
+    }))
+    await upsertForecast.mutateAsync(entries)
+    setNewCategory("")
+    setAddingRevenue(false)
+    setAddingExpense(false)
+  }
 
-  if (!analytics) return (
+  if (analyticsLoading || linesLoading) return (
     <div className="flex justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-purple-500" /></div>
+  )
+
+  const renderRow = (line: BudgetLine) => {
+    const rowTotal = getRowTotal(line.category)
+    return (
+      <tr key={line.id} className="border-t border-border/50 hover:bg-muted/30">
+        <td className="px-3 py-2 text-sm font-medium sticky left-0 bg-white dark:bg-gray-950 z-10 min-w-[180px]">
+          {line.category}
+        </td>
+        {months.map(m => {
+          const { value, isDefault } = getCellValue(line.category, m)
+          const isEditing = editCell?.category === line.category && editCell?.month === m
+          return (
+            <td key={m} className="px-2 py-2 text-right min-w-[90px]">
+              {isEditing ? (
+                <Input type="number" className="h-7 w-24 text-right text-xs ml-auto" value={editValue} autoFocus
+                  onChange={e => setEditValue(e.target.value)}
+                  onBlur={() => saveEdit()}
+                  onKeyDown={e => { if (e.key === "Enter") saveEdit(); if (e.key === "Escape") setEditCell(null) }} />
+              ) : (
+                <button type="button"
+                  className={`font-mono text-sm cursor-pointer hover:bg-purple-50 dark:hover:bg-purple-900/20 px-1 rounded border border-transparent hover:border-purple-300 dark:hover:border-purple-700 transition-colors ${isDefault ? "text-muted-foreground italic" : ""}`}
+                  onClick={() => startEdit(line.category, m)}>
+                  {fmt(value)}
+                </button>
+              )}
+            </td>
+          )
+        })}
+        <td className="px-3 py-2 text-right font-mono text-sm font-bold min-w-[100px]">{fmt(rowTotal)}</td>
+      </tr>
+    )
+  }
+
+  const renderSection = (title: string, lines: BudgetLine[], isAdding: boolean, setIsAdding: (v: boolean) => void, lineType: "revenue" | "expense") => (
+    <>
+      <tr className="bg-muted/40">
+        <td colSpan={months.length + 2} className="px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+          {title}
+        </td>
+      </tr>
+      {lines.map(l => renderRow(l))}
+      {/* Add row */}
+      {isAdding ? (
+        <tr className="border-t border-border/50 bg-green-50 dark:bg-green-900/10">
+          <td className="px-3 py-1 sticky left-0 bg-green-50 dark:bg-green-900/10 z-10">
+            <div className="flex items-center gap-1">
+              <Input placeholder={t("placeholderCategoryShort")} className="h-7 text-xs" value={newCategory}
+                onChange={e => setNewCategory(e.target.value)} autoFocus
+                onKeyDown={e => { if (e.key === "Enter") handleAddCategory(lineType); if (e.key === "Escape") { setIsAdding(false); setNewCategory("") } }} />
+              <Button size="sm" variant="ghost" className="h-7 text-xs px-2" onClick={() => handleAddCategory(lineType)}
+                disabled={createLine.isPending}>
+                {createLine.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <CheckCircle className="h-3.5 w-3.5" />}
+              </Button>
+              <Button size="sm" variant="ghost" className="h-7 text-xs px-2" onClick={() => { setIsAdding(false); setNewCategory("") }}>
+                {t("btnCancel")}
+              </Button>
+            </div>
+          </td>
+          <td colSpan={months.length + 1} />
+        </tr>
+      ) : (
+        <tr className="border-t border-dashed border-border/30">
+          <td colSpan={months.length + 2} className="px-3 py-1.5">
+            <button onClick={() => { setIsAdding(true); setNewCategory("") }}
+              className="text-xs text-purple-600 dark:text-purple-400 hover:underline flex items-center gap-1">
+              <Plus className="h-3.5 w-3.5" /> {t("btnAddRow")}
+            </button>
+          </td>
+        </tr>
+      )}
+      {/* Section totals */}
+      <tr className="border-t-2 border-border bg-muted/30">
+        <td className="px-3 py-1.5 font-bold text-xs sticky left-0 bg-muted/30 z-10">{t("totalLabel")} {title.toLowerCase()}</td>
+        {months.map(m => (
+          <td key={m} className="px-2 py-1.5 text-right font-mono text-xs font-bold">{fmt(getColTotal(lines, m))}</td>
+        ))}
+        <td className="px-3 py-1.5 text-right font-mono text-xs font-bold">{fmt(getSectionTotal(lines))}</td>
+      </tr>
+    </>
   )
 
   return (
     <div className="space-y-6">
       {/* KPI Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-        <ColorStatCard label={t("forecastBudgetYear")} value={fmt(totalPlanned)} icon={<BarChart2 className="h-5 w-5" />} color="blue" />
-        <ColorStatCard label={t("forecastForecastYear")} value={fmt(totalForecast)} icon={<TrendingUp className="h-5 w-5" />} color="violet" />
+        <ColorStatCard label={t("forecastRevenueTotal") || `${t("sectionRevenues")} (${t("colForecast").toLowerCase()})`} value={fmt(totalRevenue)} icon={<TrendingUp className="h-5 w-5" />} color="green" />
+        <ColorStatCard label={t("forecastExpenseTotal") || `${t("sectionExpenses")} (${t("colForecast").toLowerCase()})`} value={fmt(totalExpense)} icon={<BarChart2 className="h-5 w-5" />} color="red" />
         <ColorStatCard
-          label={t("forecastYearEndProjection")}
-          value={fmt(yearEndProjection)}
-          icon={<CalendarRange className="h-5 w-5" />}
-          color={yearEndProjection <= totalPlanned ? "green" : "red"}
+          label={t("forecastMarginTotal") || `${t("sectionMargin").split("(")[0].trim()} (${t("colForecast").toLowerCase()})`}
+          value={fmt(totalMargin)}
+          icon={<DollarSign className="h-5 w-5" />}
+          color={totalMargin >= 0 ? "teal" : "red"}
         />
       </div>
 
-      {/* Controls: Scenario toggle + Generate button */}
-      <div className="flex flex-wrap items-center gap-3">
-        <div className="flex rounded-lg border border-border overflow-hidden text-sm">
-          {(["base", "optimistic", "pessimistic"] as const).map(s => (
-            <button key={s} onClick={() => setScenario(s)}
-              className={`px-3 py-1.5 transition-colors ${scenario === s ? "bg-purple-600 text-white" : "hover:bg-muted"}`}>
-              {s === "base" ? t("scenarioBase") : s === "optimistic" ? t("scenarioOptimistic") : t("scenarioPessimistic")}
-            </button>
-          ))}
-        </div>
-        <Button size="sm" variant="outline" onClick={handleGenerate} disabled={generating || budgetLines.length === 0}>
-          {generating ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <TrendingUp className="h-4 w-4 mr-1" />}
-          {t("btnGenerateForecast")}
-        </Button>
-        {forecastEntries.length > 0 && (
-          <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 text-xs">
-            {t("forecastRecordsInDB", { count: forecastEntries.length })}
-          </Badge>
-        )}
-      </div>
-
-      {/* Chart */}
+      {/* Monthly matrix table */}
       <Card>
-        <CardHeader><CardTitle className="text-sm">{t("chartMonthlyForecast")} {scenario !== "base" && `(${scenario === "optimistic" ? t("forecastScenarioSuffix") : t("forecastScenarioPessimSuffix")})`}</CardTitle></CardHeader>
-        <CardContent>
-          <ResponsiveContainer width="100%" height={320}>
-            <ComposedChart data={chartData} margin={{ left: 10, right: 10 }}>
-              <XAxis dataKey="name" tick={{ fontSize: 11 }} />
-              <YAxis tick={{ fontSize: 11 }} tickFormatter={(v: number) => (v / 1000).toFixed(0) + "k"} />
-              <Tooltip formatter={(v: any) => fmt(v)} />
-              <Legend />
-              <Bar dataKey={fcActualLabel} fill="#10b981" radius={[3, 3, 0, 0]} />
-              <Area dataKey={fcForecastLabel} fill="#8b5cf640" stroke="#8b5cf6" strokeWidth={2} strokeDasharray="5 5" type="monotone" />
-              <Bar dataKey={fcBudgetLabel} fill="#ef444440" stroke="#ef4444" strokeWidth={1} radius={[3, 3, 0, 0]} />
-            </ComposedChart>
-          </ResponsiveContainer>
-        </CardContent>
-      </Card>
-
-      {/* Monthly table with inline edit */}
-      <Card>
-        <CardHeader><CardTitle className="text-sm">{t("tableByMonth")}</CardTitle></CardHeader>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-muted/50">
+              <thead className="bg-muted/50 sticky top-0">
                 <tr>
-                  <th className="px-4 py-2 text-left font-medium">{t("colMonth")}</th>
-                  <th className="px-4 py-2 text-right font-medium">{t("colBudget")}</th>
-                  <th className="px-4 py-2 text-right font-medium text-purple-600 dark:text-purple-400">{t("colForecast")}</th>
-                  <th className="px-4 py-2 text-right font-medium text-green-600 dark:text-green-400">{t("colActual")}</th>
-                  <th className="px-4 py-2 text-center font-medium">{t("colStatus")}</th>
+                  <th className="px-3 py-2 text-left font-medium text-xs sticky left-0 bg-muted/50 z-20 min-w-[180px]">{t("colCategory")}</th>
+                  {monthLabels.map((label, i) => (
+                    <th key={i} className="px-2 py-2 text-right font-medium text-xs min-w-[90px]">{label}</th>
+                  ))}
+                  <th className="px-3 py-2 text-right font-medium text-xs min-w-[100px]">{t("totalLabel")}</th>
                 </tr>
               </thead>
               <tbody>
-                {monthlyData.map(d => (
-                  <tr key={d.month} className={`border-t border-border/50 ${d.isProjected ? "opacity-70" : ""}`}>
-                    <td className="px-4 py-2 font-medium">{d.label} {d.year}</td>
-                    <td className="px-4 py-2 text-right font-mono">{fmt(d.planned)}</td>
-                    <td className="px-4 py-2 text-right font-mono text-purple-600 dark:text-purple-400">
-                      {editMonth === d.month ? (
-                        <Input type="number" className="h-7 w-28 text-right text-xs inline-block ml-auto"
-                          value={editValue} autoFocus
-                          onChange={e => setEditValue(e.target.value)}
-                          onBlur={() => saveEdit(d.month)}
-                          onKeyDown={e => e.key === "Enter" && saveEdit(d.month)} />
-                      ) : (
-                        <span className={`cursor-pointer hover:underline ${d.isOverride ? "font-bold" : ""}`}
-                          onClick={() => { if (!d.isProjected || d.isOverride || true) { setEditMonth(d.month); setEditValue(String(d.forecast)) } }}>
-                          {fmt(d.forecast)} {d.isOverride && <Pencil className="h-3 w-3 inline ml-1 opacity-50" />}
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-4 py-2 text-right font-mono text-green-600 dark:text-green-400">{d.isProjected ? "—" : fmt(d.actual)}</td>
-                    <td className="px-4 py-2 text-center">
-                      {d.isProjected
-                        ? <Badge className="bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 text-xs">{t("badgeProjected")}</Badge>
-                        : <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 text-xs">{t("badgeActual")}</Badge>}
+                {renderSection(t("sectionRevenues"), revenueLines, addingRevenue, setAddingRevenue, "revenue")}
+                {renderSection(t("sectionExpenses"), expenseLines, addingExpense, setAddingExpense, "expense")}
+
+                {/* Margin row */}
+                {(revenueLines.length > 0 || expenseLines.length > 0) && (
+                  <tr className="border-t-2 border-purple-300 dark:border-purple-800 bg-purple-50 dark:bg-purple-900/10">
+                    <td className="px-3 py-2 font-bold text-sm sticky left-0 bg-purple-50 dark:bg-purple-900/10 z-10">{t("sectionMargin")}</td>
+                    {months.map(m => (
+                      <td key={m} className="px-2 py-2 text-right font-mono text-sm font-bold">
+                        {fmt(getColTotal(revenueLines, m) - getColTotal(expenseLines, m))}
+                      </td>
+                    ))}
+                    <td className="px-3 py-2 text-right font-mono text-sm font-bold">{fmt(totalMargin)}</td>
+                  </tr>
+                )}
+
+                {/* Empty state */}
+                {budgetLines.length === 0 && (
+                  <tr>
+                    <td colSpan={months.length + 2} className="text-center py-12 text-muted-foreground">
+                      {t("emptyNoLines")}
                     </td>
                   </tr>
-                ))}
+                )}
               </tbody>
             </table>
           </div>
         </CardContent>
-      </Card>
-
-      {/* P3-04: Category forecast matrix */}
-      <Card>
-        <CardHeader>
-          <button className="flex items-center gap-2 text-sm font-medium"
-            onClick={() => setShowCategories(!showCategories)}>
-            {showCategories ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-            {t("tableCategoryMatrix")}
-          </button>
-        </CardHeader>
-        {showCategories && (
-          <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <table className="w-full text-xs">
-                <thead className="bg-muted/50">
-                  <tr>
-                    <th className="px-3 py-2 text-left font-medium sticky left-0 bg-muted/50 min-w-[180px]">{t("colCategory")}</th>
-                    {t("monthsShort").split(",").map((m, i) => (
-                      <th key={i} className="px-2 py-2 text-right font-medium min-w-[80px]">
-                        {m}
-                      </th>
-                    ))}
-                    <th className="px-3 py-2 text-right font-medium min-w-[100px]">{t("totalLabel")}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {categoryMatrix.map(({ category, months }) => {
-                    const total = Array.from(months.values()).reduce((s, v) => s + v, 0)
-                    return (
-                      <tr key={category} className="border-t border-border/50">
-                        <td className="px-3 py-1.5 font-medium sticky left-0 bg-background truncate max-w-[180px]">{category}</td>
-                        {Array.from({ length: 12 }, (_, i) => (
-                          <td key={i} className="px-2 py-1.5 text-right font-mono">{fmt(months.get(i + 1) ?? 0)}</td>
-                        ))}
-                        <td className="px-3 py-1.5 text-right font-mono font-bold">{fmt(total)}</td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            </div>
-            {categoryMatrix.length === 0 && (
-              <p className="text-center text-muted-foreground py-6 text-sm">{t("forecastGenerateHint")}</p>
-            )}
-          </CardContent>
-        )}
       </Card>
     </div>
   )

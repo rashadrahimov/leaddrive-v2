@@ -32,17 +32,18 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // Supports bulk upsert: body.entries = [{ planId, month, year, category, forecastAmount }]
-  const entries: Array<{ planId: string; month: number; year: number; category: string; forecastAmount: number }> =
+  // Supports bulk upsert: body.entries = [{ planId, month, year, category, lineType, forecastAmount }]
+  const entries: Array<{ planId: string; month: number; year: number; category: string; lineType?: string; forecastAmount: number }> =
     Array.isArray(body.entries) ? body.entries : [body]
 
   const results = []
   for (const entry of entries) {
-    const { planId, month, year, category, forecastAmount } = entry
+    const { planId, month, year, category, lineType, forecastAmount } = entry
     if (!planId || !month || !year || !category) continue
+    const lt = lineType || "expense"
 
     const upserted = await prisma.budgetForecastEntry.upsert({
-      where: { planId_year_month_category: { planId, year, month, category } },
+      where: { planId_year_month_category_lineType: { planId, year, month, category, lineType: lt } },
       update: { forecastAmount: Number(forecastAmount) ?? 0 },
       create: {
         organizationId: orgId,
@@ -50,6 +51,7 @@ export async function POST(req: NextRequest) {
         month,
         year,
         category,
+        lineType: lt,
         forecastAmount: Number(forecastAmount) ?? 0,
       },
     })

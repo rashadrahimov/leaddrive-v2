@@ -180,6 +180,7 @@ export interface BudgetForecastEntry {
   month: number
   year: number
   category: string
+  lineType: string
   forecastAmount: number
   createdAt: string
   updatedAt: string

@@ -1568,11 +1568,12 @@ model BudgetForecastEntry {
   month          Int
   year           Int
   category       String
+  lineType       String   @default("expense")
   forecastAmount Float    @default(0)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  @@unique([planId, year, month, category])
+  @@unique([planId, year, month, category, lineType])
   @@index([organizationId])
   @@index([planId])
   @@map("budget_forecast_entries")
