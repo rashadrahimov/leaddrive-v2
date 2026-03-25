@@ -2465,7 +2465,7 @@ function ForecastTab({ planId }: { planId: string }) {
     const isChild = !!line.parentId
     return (
       <tr key={`${line.id}-${line.lineType}`} className="border-t border-border/50 hover:bg-muted/30">
-        <td className="px-3 py-2 text-sm font-medium sticky left-0 bg-white dark:bg-gray-950 z-10 min-w-[180px]">
+        <td className="px-3 py-2 text-sm font-medium sticky left-0 bg-background z-10 min-w-[180px]">
           {isChild ? <span className="pl-5 text-muted-foreground">— {line.category}</span> : line.category}
         </td>
         {months.map(m => {
