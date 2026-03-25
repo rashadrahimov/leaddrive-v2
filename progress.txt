@@ -153,3 +153,96 @@ S7: Empty states — illustrations
 S8: Buttons — gradient primary
 2026-03-25 02:18 | Phase 1 FP&A DONE: B1-01..B1-10 + B1-TEST all green. Schema: forecastAmount/costModelKey/isAutoActual on BudgetLine. Analytics API: auto-actuals from cost model via resolveCostModelKey(). Page: 5 KPI cards (Plan/Forecast/Actual/Variance/YE Projection), 3-column Budget|Forecast|Actual table, Forecast column inline edit in Lines tab, Cost Model key dropdown per line, TemplateSeedButton assigns costModelKeys. TypeScript clean, build passed.
 2026-03-25 02:39 | Phase 2-4 FP&A DONE: BudgetSection + BudgetForecastEntry models. Sections API (/api/budgeting/sections). Forecast API (/api/budgeting/forecast). Forecast engine (src/lib/budgeting/forecast.ts). P&L tab with drill-down panel. Forecast tab (12-month ComposedChart). Waterfall chart component. Excel export (/api/budgeting/export). 7 tabs total: Обзор|P&L|Прогноз|Статьи|Факт|Планы|Сравнение. TS clean, build passed 15m.
+Wed Mar 25 17:56:58 +04 2026
+
+=== BUDGETING MODULE STATUS — March 25, 2026 ===
+
+WHAT'S DONE:
+- Full budgeting module deployed at /budgeting with 5 tabs: Рабочая область, P&L, Прогноз, Сравнение, Планы
+- 2 plans: Q1 2026 (Факт) and Q2 2026 (Бюджет компании)
+- Data sources: Revenue forecast from Excel (Sales forecast 2026.xlsx), Expense facts from /profitability (cost model)
+- Revenue facts from pricing_profiles (616,367/mo real sales, NOT serviceRevenues 673,625)
+- i18n: 3 languages (ru/en/az), useTranslations connected
+- ForecastTab: monthly matrix with inline edit, BudgetForecastEntry in DB
+- WorkspaceTab: editable grid (Plan/Fact/Variance), no Forecast column
+- KPIs: margin-based (ОТКЛОНЕНИЕ = margin actual - margin plan, ИСПОЛНЕНИЕ = margin%)
+- Charts: separate expense and revenue bar charts
+- Hardening: approved plan lock, negative validation, period validation, duplicate prevention
+
+NEXT TASK — RESTRUCTURE EXPENSE LINES:
+Current problem: Budget shows expenses by SERVICE (Daimi IT, InfoSec, ERP, etc.) which are serviceCosts from cost model.
+These include overhead distributed into each service. But user wants to see REAL cost structure like on /profitability:
+
+1. Admin Overhead (197,655 ₼/mo) — with sub-items:
+   - Ofis icarəsi: 30,000
+   - İşçi sığortası: 5,480
+   - Mobil rabitə: 4,110
+   - LMS Platforma: 4,917
+   - Treninqlər: 20,833
+   - AI Lisenziyaları: 374
+   - Maşın amortizasiyası: 2,500
+   - Maşın cari xərcləri: 1,200
+   - Laptop xərci: 8,500
+   - İnternet: 439
+   - Team building: 10,000
+   - BackOffice (17 ppl.): 109,302
+
+2. Technical Infrastructure (98,662 ₼/mo):
+   - Cortex/Crowdstrike: 41,667
+   - MS Lisenziya: 6,800
+   - Service Desk: 4,917
+   - Palo Alto: 6,333
+   - PAM: 3,333
+   - Firewall amort: 1,548
+   - Cloud servers: 20,000 (→ assigned to cloud service)
+   - Other tech items...
+
+3. Direct Labor Costs (348,889 ₼/mo):
+   - IT dept: 80,880
+   - InfoSec: 59,087
+   - ERP: 26,045
+   - GRC: 26,798
+   - PM: 23,156
+   - HelpDesk: 132,922
+
+4. Risk + Misc:
+   - Misc: 4,363
+   - Risk reserve: 22,032
+
+TOTAL monthly expense = 645,206 ₼ (matches /profitability TOTAL COST/MONTH)
+
+WHAT NEEDS TO BE DONE:
+1. Schema: Add parent/child relationship to BudgetLine (or BudgetSection groups)
+   - Option A: Add parentId to BudgetLine for nested structure
+   - Option B: Use BudgetSection as group header + BudgetLine as children
+2. Delete current serviceCost-based expense lines from both plans
+3. Create new expense lines matching /profitability structure (overhead items + dept labor + tech infra)
+4. Update ForecastTab to show nested/grouped expenses
+5. Update WorkspaceTab to show collapsible groups
+6. Populate BudgetForecastEntry for new expense categories
+7. Populate BudgetActual for Q1 (3 months) and Q2 (1 month)
+8. Add "attach expense" / "add sub-item" capability in UI
+
+KEY FILES:
+- src/app/(dashboard)/budgeting/page.tsx — main UI (WorkspaceTab, ForecastTab)
+- src/app/api/budgeting/analytics/route.ts — analytics with margin-based KPIs
+- src/app/api/budgeting/forecast/route.ts — forecast CRUD (with lineType)
+- src/lib/budgeting/types.ts — BudgetLine, BudgetForecastEntry (has lineType field)
+- prisma/schema.prisma — BudgetLine, BudgetForecastEntry, BudgetSection, BudgetActual
+- messages/ru.json, en.json, az.json — translations (budgeting section ~120 keys)
+
+DATA SOURCES:
+- /profitability → overhead_costs table (18 items with category, label, amount, isAnnual, isAdmin, targetService)
+- /profitability → cost_employees table (department, grossSalary)
+- Excel: /Users/rashadoni/Documents/Copy of Sales forecast 2026.xlsx (revenue forecast by service by month)
+- pricing_profiles table → real monthly revenue per client (total 616,367/mo)
+
+DB IDs:
+- Org: cmmxg74k10000td3rr37dl6am
+- Q1 plan: cmn5mgp3e0011td7zvtks4fd0
+- Q2 plan: cmn5mdcxr0001td7zlo5q141p
+
+SERVER:
+- Production: root@178.156.249.177, PM2 process leaddrive-v2, port 3001
+- Deploy: local build → rsync standalone → pm2 restart
+- DB: postgresql://hermes:hermes@localhost:5432/leaddrive_v2

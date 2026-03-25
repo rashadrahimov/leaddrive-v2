@@ -27,6 +27,7 @@ function fmt(n: number): string {
 }
 
 function CostBreakdown({ data }: { data: any }) {
+  const t = useTranslations("profitability")
   const [expanded, setExpanded] = useState<Record<string, boolean>>({})
   const toggle = (key: string) => setExpanded((prev) => ({ ...prev, [key]: !prev[key] }))
 
@@ -48,25 +49,25 @@ function CostBreakdown({ data }: { data: any }) {
     {
       key: "admin",
       color: PIE_COLORS[0],
-      label: "Admin Overhead",
+      label: t("adminOverhead") ?? "Admin Overhead",
       value: data.adminOverhead,
       pct: ((data.adminOverhead / data.grandTotalF) * 100).toFixed(1),
       items: adminOhItemsList,
-      note: "Distributed by headcount ratio",
+      note: t("distributedByHeadcount") ?? "Distributed by headcount ratio",
     },
     {
       key: "tech",
       color: PIE_COLORS[1],
-      label: "Technical Infrastructure",
+      label: t("techInfra") ?? "Technical Infrastructure",
       value: data.techInfraTotal,
       pct: ((data.techInfraTotal / data.grandTotalF) * 100).toFixed(1),
       items: techItems.map((o: any) => ({ label: o.label, value: o.monthlyAmount })),
-      note: "Distributed directly to services by target_service",
+      note: t("distributedToServices") ?? "Distributed directly to services",
     },
     {
       key: "labor",
       color: PIE_COLORS[2],
-      label: "Direct Labor Costs",
+      label: t("directLaborCosts") ?? "Direct Labor Costs",
       value: directLabor,
       pct: ((directLabor / data.grandTotalF) * 100).toFixed(1),
       items: (data.employees || [])
@@ -217,11 +218,11 @@ export default function ProfitabilityPage() {
   // ── Pie chart data: cost composition ──
   const directLabor = Object.values(deptCosts).reduce((s, v) => s + v, 0)
   const costComposition = [
-    { name: "Admin OH", value: Math.round(adminOverhead) },
-    { name: "Tech Infra", value: Math.round(techInfraTotal) },
-    { name: "Direct Labor", value: Math.round(directLabor) },
-    { name: "Travel", value: Math.round(misc) },
-    { name: "Risk", value: Math.round(riskCost) },
+    { name: t("adminOH") ?? "Admin OH", value: Math.round(adminOverhead) },
+    { name: t("techInfraShort") ?? "Tech Infra", value: Math.round(techInfraTotal) },
+    { name: t("directLabor") ?? "Direct Labor", value: Math.round(directLabor) },
+    { name: t("miscShort") ?? "Travel", value: Math.round(misc) },
+    { name: t("riskShort") ?? "Risk", value: Math.round(riskCost) },
   ].filter((c) => c.value > 0)
 
   // ── Bar chart data: service cost vs revenue ──

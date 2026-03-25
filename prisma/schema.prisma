@@ -1521,9 +1521,13 @@ model BudgetLine {
   isAutoActual   Boolean  @default(false)
   notes          String?
   sortOrder      Int      @default(0)
+  parentId       String?
+  parent         BudgetLine?  @relation("LineChildren", fields: [parentId], references: [id], onDelete: SetNull)
+  children       BudgetLine[] @relation("LineChildren")
 
   @@index([organizationId])
   @@index([planId])
+  @@index([parentId])
   @@map("budget_lines")
 }
 
