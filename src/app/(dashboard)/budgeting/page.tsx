@@ -633,11 +633,11 @@ function WorkspaceTab({ planId }: { planId: string }) {
 
   const planLabel = t("colPlan")
   const actualLabel = t("colActual")
-  const barData = byCategory.slice(0, 10).map((c: any) => ({
-    name: c.category.length > 16 ? c.category.slice(0, 16) + "…" : c.category,
-    [planLabel]: Math.round(c.planned),
-    [actualLabel]: Math.round(c.actual),
-  }))
+  const barData = byCategory.slice(0, 14).map((c: any) => {
+    const suffix = c.lineType === "revenue" ? " ↑" : " ↓"
+    const name = (c.category.length > 14 ? c.category.slice(0, 14) + "…" : c.category) + suffix
+    return { name, [planLabel]: Math.round(c.planned), [actualLabel]: Math.round(c.actual) }
+  })
 
   const pieData = byCategory
     .filter((c: any) => c.planned > 0)
@@ -865,12 +865,11 @@ function OverviewTab({ planId }: { planId: string }) {
   const ovPlanLabel = t("colPlan")
   const ovForecastLabel = t("colForecast")
   const ovActualLabel = t("colActual")
-  const barData = byCategory.slice(0, 12).map(c => ({
-    name: c.category.length > 18 ? c.category.slice(0, 18) + "…" : c.category,
-    [ovPlanLabel]: Math.round(c.planned),
-    [ovForecastLabel]: Math.round(c.forecast),
-    [ovActualLabel]: Math.round(c.actual),
-  }))
+  const barData = byCategory.slice(0, 14).map(c => {
+    const suffix = c.lineType === "revenue" ? " ↑" : " ↓"
+    const name = (c.category.length > 14 ? c.category.slice(0, 14) + "…" : c.category) + suffix
+    return { name, [ovPlanLabel]: Math.round(c.planned), [ovForecastLabel]: Math.round(c.forecast), [ovActualLabel]: Math.round(c.actual) }
+  })
 
   const pieData = byCategory
     .filter(c => c.planned > 0)
