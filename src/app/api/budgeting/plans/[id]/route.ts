@@ -75,11 +75,16 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       if (autoLines.length > 0) {
         const cm = await loadAndCompute(orgId).catch(() => null)
         const { count, months } = getPeriodMonths(planData)
-        const forecasts = await prisma.salesForecast.findMany({
-          where: { organizationId: orgId, year: planData.year, month: { in: months } },
-        })
+        const [forecasts, expForecasts] = await Promise.all([
+          prisma.salesForecast.findMany({
+            where: { organizationId: orgId, year: planData.year, month: { in: months } },
+          }),
+          prisma.expenseForecast.findMany({
+            where: { organizationId: orgId, year: planData.year, month: { in: months } },
+          }),
+        ])
         for (const line of autoLines) {
-          const computed = computePlannedForLine(line, cm, forecasts, count, months)
+          const computed = computePlannedForLine(line, cm, forecasts, count, months, expForecasts)
           await prisma.budgetLine.update({
             where: { id: line.id },
             data: { plannedAmount: Math.round(computed * 100) / 100, isAutoPlanned: false },

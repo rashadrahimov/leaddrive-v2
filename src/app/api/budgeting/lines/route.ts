@@ -32,17 +32,22 @@ export async function GET(req: NextRequest) {
   if (hasAutoPlanned && plan) {
     const costModel = await loadAndCompute(orgId).catch(() => null)
     const { count: periodMonthCount, months: periodMonthNumbers } = getPeriodMonths(plan)
-    const salesForecasts = await prisma.salesForecast.findMany({
-      where: { organizationId: orgId, year: plan.year, month: { in: periodMonthNumbers } },
-    })
+    const [salesForecasts, expenseForecasts] = await Promise.all([
+      prisma.salesForecast.findMany({
+        where: { organizationId: orgId, year: plan.year, month: { in: periodMonthNumbers } },
+      }),
+      prisma.expenseForecast.findMany({
+        where: { organizationId: orgId, year: plan.year, month: { in: periodMonthNumbers } },
+      }),
+    ])
 
     for (const line of lines) {
       if ((line as any).isAutoPlanned) {
-        ;(line as any).plannedAmount = computePlannedForLine(line as any, costModel, salesForecasts, periodMonthCount, periodMonthNumbers)
+        ;(line as any).plannedAmount = computePlannedForLine(line as any, costModel, salesForecasts, periodMonthCount, periodMonthNumbers, expenseForecasts)
       }
       for (const child of (line as any).children ?? []) {
         if (child.isAutoPlanned) {
-          child.plannedAmount = computePlannedForLine(child, costModel, salesForecasts, periodMonthCount, periodMonthNumbers)
+          child.plannedAmount = computePlannedForLine(child, costModel, salesForecasts, periodMonthCount, periodMonthNumbers, expenseForecasts)
         }
       }
     }

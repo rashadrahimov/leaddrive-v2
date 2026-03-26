@@ -31,16 +31,21 @@ export async function GET(req: NextRequest) {
 
   // === Auto-planned: compute period months + load SalesForecast ===
   const { count: periodMonthCount, months: periodMonthNumbers } = getPeriodMonths(plan)
-  const salesForecasts = hasAutoPlanned
-    ? await prisma.salesForecast.findMany({
-        where: { organizationId: orgId, year: plan.year, month: { in: periodMonthNumbers } },
-      })
-    : []
+  const [salesForecasts, expenseForecasts] = hasAutoPlanned
+    ? await Promise.all([
+        prisma.salesForecast.findMany({
+          where: { organizationId: orgId, year: plan.year, month: { in: periodMonthNumbers } },
+        }),
+        prisma.expenseForecast.findMany({
+          where: { organizationId: orgId, year: plan.year, month: { in: periodMonthNumbers } },
+        }),
+      ])
+    : [[], []]
 
   // Helper: get effective planned amount (dynamic or stored)
   function getEffectivePlanned(line: any): number {
     if (line.isAutoPlanned) {
-      return computePlannedForLine(line, costModel, salesForecasts, periodMonthCount, periodMonthNumbers)
+      return computePlannedForLine(line, costModel, salesForecasts, periodMonthCount, periodMonthNumbers, expenseForecasts)
     }
     return line.plannedAmount
   }

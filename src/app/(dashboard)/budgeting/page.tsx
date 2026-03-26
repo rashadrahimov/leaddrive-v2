@@ -63,6 +63,7 @@ import {
 import { COST_MODEL_KEY_OPTIONS, TEMPLATE_CATEGORY_MAP } from "@/lib/budgeting/cost-model-map"
 import { BudgetConfigTab } from "@/components/budget-config-tab"
 import { SalesForecastTab } from "@/components/sales-forecast-tab"
+import { ExpenseForecastTab } from "@/components/expense-forecast-tab"
 import { BudgetWaterfallChart } from "@/components/budget-waterfall-chart"
 import { BudgetExecutionGauge } from "@/components/budget-execution-gauge"
 import { BudgetCategoryBars } from "@/components/budget-category-bars"
@@ -3448,6 +3449,7 @@ export default function BudgetingPage() {
               <TabsTrigger value="plans" className="gap-1">{t("tabPlans")} <InfoHint text={t("hintTabPlans")} size={12} /></TabsTrigger>
               <TabsTrigger value="templates" className="gap-1">{t("tabTemplates")} <InfoHint text={t("hintTabTemplates")} size={12} /></TabsTrigger>
               <TabsTrigger value="sales-forecast" className="gap-1"><TrendingUp className="h-3.5 w-3.5" /> Прогноз продаж</TabsTrigger>
+              <TabsTrigger value="expense-forecast" className="gap-1"><TrendingDown className="h-3.5 w-3.5" /> Прогноз расходов</TabsTrigger>
               <TabsTrigger value="config" className="gap-1"><Settings2 className="h-3.5 w-3.5" /> {t("tabConfig")}</TabsTrigger>
             </TabsList>
 
@@ -3471,6 +3473,9 @@ export default function BudgetingPage() {
             </TabsContent>
             <TabsContent value="sales-forecast">
               <SalesForecastTab />
+            </TabsContent>
+            <TabsContent value="expense-forecast">
+              <ExpenseForecastTab />
             </TabsContent>
             <TabsContent value="config">
               <BudgetConfigTab />

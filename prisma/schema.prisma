@@ -51,6 +51,7 @@ model Organization {
   budgetDepartments BudgetDepartment[]
   socialConversations SocialConversation[]
   salesForecasts     SalesForecast[]
+  expenseForecasts   ExpenseForecast[]
   projects           Project[]
 
   @@map("organizations")
@@ -1527,6 +1528,7 @@ model BudgetCostType {
   budgetActuals    BudgetActual[]
   forecastEntries  BudgetForecastEntry[]
   directionTemplates BudgetDirectionTemplate[]
+  expenseForecasts   ExpenseForecast[]
 
   @@unique([organizationId, key])
   @@index([organizationId])
@@ -1552,6 +1554,7 @@ model BudgetDepartment {
   forecastEntries  BudgetForecastEntry[]
   directionTemplates BudgetDirectionTemplate[]
   salesForecasts     SalesForecast[]
+  expenseForecasts   ExpenseForecast[]
 
   @@unique([organizationId, key])
   @@index([organizationId])
@@ -1734,6 +1737,27 @@ model SalesForecast {
   @@index([organizationId])
   @@index([organizationId, year])
   @@map("sales_forecasts")
+}
+
+model ExpenseForecast {
+  id              String   @id @default(cuid())
+  organizationId  String
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  costTypeId      String
+  budgetCostType  BudgetCostType @relation(fields: [costTypeId], references: [id], onDelete: Cascade)
+  departmentId    String?
+  budgetDept      BudgetDepartment? @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  year            Int
+  month           Int      // 1-12
+  amount          Float    @default(0)  // monthly expense forecast (AZN)
+  notes           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([organizationId])
+  @@index([organizationId, year])
+  @@index([organizationId, costTypeId, departmentId, year, month])
+  @@map("expense_forecasts")
 }
 
 model SocialConversation {

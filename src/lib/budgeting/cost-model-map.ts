@@ -163,20 +163,35 @@ export function getPeriodMonths(plan: {
 
 /**
  * Вычислить плановую сумму для одной budget line.
- * - Расход (lineType != revenue) + costModelKey → resolveCostModelKey × periodMonths
- * - Доход (lineType == revenue) + departmentId → sum(SalesForecast для dept за months)
+ * - Расход: PRIMARY из cost model, FALLBACK из ExpenseForecast
+ * - Доход: PRIMARY из cost model (serviceRevenues), FALLBACK из SalesForecast
  */
 export function computePlannedForLine(
-  line: { lineType: string; costModelKey: string | null; departmentId: string | null },
+  line: { lineType: string; costModelKey: string | null; departmentId: string | null; costTypeId?: string | null },
   costModel: CostModelResult | null,
   salesForecasts: { departmentId: string; month: number; amount: number }[],
   periodMonths: number,
   periodMonthNumbers: number[],
+  expenseForecasts?: { costTypeId: string; departmentId: string | null; month: number; amount: number }[],
 ): number {
-  // Расход: из cost model × кол-во месяцев периода
-  if (line.lineType !== "revenue" && line.costModelKey && costModel) {
-    const monthly = resolveCostModelKey(costModel, line.costModelKey)
-    return monthly * periodMonths
+  // Расход: PRIMARY из cost model, FALLBACK из ExpenseForecast
+  if (line.lineType !== "revenue") {
+    // Primary: из cost model × кол-во месяцев периода
+    if (line.costModelKey && costModel) {
+      const monthly = resolveCostModelKey(costModel, line.costModelKey)
+      if (monthly > 0) return monthly * periodMonths
+    }
+    // Fallback: из ExpenseForecast (для бизнесов без cost model)
+    if (expenseForecasts && line.costTypeId) {
+      return expenseForecasts
+        .filter(f =>
+          f.costTypeId === line.costTypeId &&
+          f.departmentId === line.departmentId &&
+          periodMonthNumbers.includes(f.month)
+        )
+        .reduce((sum, f) => sum + f.amount, 0)
+    }
+    return 0
   }
   // Доход: PRIMARY из cost model (serviceRevenues), FALLBACK на SalesForecast
   if (line.lineType === "revenue") {
