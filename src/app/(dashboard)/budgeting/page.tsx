@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input"
 import {
   PiggyBank, Plus, Trash2, Pencil, Loader2, TrendingUp, TrendingDown,
   CheckCircle, AlertCircle, BarChart2, DollarSign, CalendarRange, Link2,
-  ChevronDown, ChevronRight, MessageSquare,
+  ChevronDown, ChevronRight, MessageSquare, Target,
 } from "lucide-react"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
@@ -479,7 +479,7 @@ function WorkspaceTab({ planId }: { planId: string }) {
   const totCOGSPlanned = cogsLines.reduce((s: number, l: BudgetLine) => s + leafPlanned(l), 0)
   const totCOGSForecast = cogsLines.reduce((s: number, l: BudgetLine) => s + leafForecast(l), 0)
 
-  const { totalPlanned = 0, totalForecast = 0, totalActual = 0, totalVariance = 0, executionPct = 0, expenseExecutionPct = 0, elapsedPct = 100, autoActualTotal = 0, yearEndProjection = 0, byCategory = [], totalRevenuePlanned = 0, totalRevenueActual = 0, totalExpensePlanned = 0, totalExpenseActual = 0, totalCOGSPlanned = 0, totalCOGSActual = 0, grossProfit = 0, grossProfitActual = 0, margin = 0, marginActual = 0 } = analytics ?? {}
+  const { totalPlanned = 0, totalForecast = 0, totalActual = 0, totalVariance = 0, executionPct = 0, expenseExecutionPct = 0, elapsedPct = 100, autoActualTotal = 0, yearEndProjection = 0, byCategory = [], totalRevenuePlanned = 0, totalRevenueActual = 0, totalRevenueForecast = 0, totalExpensePlanned = 0, totalExpenseActual = 0, totalExpenseForecast = 0, totalCOGSPlanned = 0, totalCOGSActual = 0, totalCOGSForecast = 0, grossProfit = 0, grossProfitActual = 0, margin = 0, marginActual = 0, marginForecast = 0 } = analytics ?? {}
 
   // Inline edit handlers
   const startEdit = (id: string, field: string, currentVal: number) => {
@@ -1083,7 +1083,22 @@ function WorkspaceTab({ planId }: { planId: string }) {
           subValue={`${totalRevenuePlanned > 0 ? Math.round((totalRevenueActual / totalRevenuePlanned) * 100) : 0}% ${t("kpiExecution").toLowerCase()}`}
         />
       </div>
-      {/* Row 2 — Analytics: margin, variance, execution with breakdowns */}
+      {/* Row 2 — Forecast: expected outcome based on current projections */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <ColorStatCard label={t("sectionExpenses") + " (" + t("colForecast").toLowerCase() + ")"} value={fmt(totalExpenseForecast)} icon={<TrendingUp className="h-5 w-5" />} color="indigo" hint={t("hintColForecast")}
+          subValue={totalExpenseForecast !== totalExpensePlanned ? `${totalExpenseForecast > totalExpensePlanned ? "▲" : "▼"} ${Math.abs(Math.round(((totalExpenseForecast - totalExpensePlanned) / (totalExpensePlanned || 1)) * 100))}% vs ${t("kpiPlan").toLowerCase()}` : `= ${t("kpiPlan").toLowerCase()}`}
+        />
+        <ColorStatCard label={t("sectionRevenues") + " (" + t("colForecast").toLowerCase() + ")"} value={fmt(totalRevenueForecast)} icon={<TrendingUp className="h-5 w-5" />} color="indigo" hint={t("hintColForecast")}
+          subValue={totalRevenueForecast !== totalRevenuePlanned ? `${totalRevenueForecast > totalRevenuePlanned ? "▲" : "▼"} ${Math.abs(Math.round(((totalRevenueForecast - totalRevenuePlanned) / (totalRevenuePlanned || 1)) * 100))}% vs ${t("kpiPlan").toLowerCase()}` : `= ${t("kpiPlan").toLowerCase()}`}
+        />
+        <ColorStatCard label={t("sectionMargin").split("(")[0].trim() + " (" + t("colForecast").toLowerCase() + ")"} value={fmt(marginForecast)} icon={<TrendingUp className="h-5 w-5" />} color={marginForecast >= 0 ? "indigo" : "red"} hint={t("hintColForecast")}
+          subValue={marginForecast !== margin ? `${marginForecast > margin ? "▲" : "▼"} ${Math.abs(Math.round(((marginForecast - margin) / (margin || 1)) * 100))}% vs ${t("kpiPlan").toLowerCase()}` : `= ${t("kpiPlan").toLowerCase()}`}
+        />
+        <ColorStatCard label={t("kpiProjection")} value={fmt(yearEndProjection)} icon={<Target className="h-5 w-5" />} color="slate" hint={t("hintOvYearEnd")}
+          subValue={`${t("colActual")} × ${Math.round(12 / Math.max(1, elapsedPct / 100 * 12))}x`}
+        />
+      </div>
+      {/* Row 3 — Analytics: margin, variance, execution with breakdowns */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <ColorStatCard label={t("sectionMargin").split("(")[0].trim() + " (" + t("kpiPlan").toLowerCase() + ")"} value={fmt(margin)} icon={<TrendingUp className="h-5 w-5" />} color={margin >= 0 ? "teal" : "red"} hint={t("hintKpiMarginPlan")}
           subValue={`${t("sectionRevenues")} − ${t("sectionExpenses")}${totalCOGSPlanned > 0 ? " − COGS" : ""}`}
