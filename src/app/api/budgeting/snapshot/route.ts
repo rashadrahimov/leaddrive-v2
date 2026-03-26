@@ -102,16 +102,21 @@ export async function GET(req: NextRequest) {
 }
 
 function computeAnalytics(lines: any[], actuals: any[]) {
-  // Aggregate by category for actuals
+  // Sum actuals directly by their lineType (matches live analytics API behavior)
+  let totalExpenseActual = 0, totalRevenueActual = 0, totalCOGSActual = 0
   const actualsByCat = new Map<string, number>()
   for (const a of actuals) {
+    const amt = Number(a.actualAmount || 0)
     const key = `${a.category}||${a.lineType}`
-    actualsByCat.set(key, (actualsByCat.get(key) || 0) + Number(a.actualAmount || 0))
+    actualsByCat.set(key, (actualsByCat.get(key) || 0) + amt)
+    if (a.lineType === "revenue") totalRevenueActual += amt
+    else if (a.lineType === "cogs") totalCOGSActual += amt
+    else totalExpenseActual += amt
   }
 
-  let totalExpensePlanned = 0, totalExpenseActual = 0
-  let totalRevenuePlanned = 0, totalRevenueActual = 0
-  let totalCOGSPlanned = 0, totalCOGSActual = 0
+  let totalExpensePlanned = 0
+  let totalRevenuePlanned = 0
+  let totalCOGSPlanned = 0
 
   const byCategory: any[] = []
 
@@ -122,13 +127,10 @@ function computeAnalytics(lines: any[], actuals: any[]) {
 
     if (l.lineType === "expense") {
       totalExpensePlanned += planned
-      totalExpenseActual += actual
     } else if (l.lineType === "revenue") {
       totalRevenuePlanned += planned
-      totalRevenueActual += actual
     } else if (l.lineType === "cogs") {
       totalCOGSPlanned += planned
-      totalCOGSActual += actual
     }
 
     byCategory.push({
