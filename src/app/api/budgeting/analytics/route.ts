@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getOrgId } from "@/lib/api-auth"
 import { prisma } from "@/lib/prisma"
 import { loadAndCompute } from "@/lib/cost-model/db"
-import { resolveCostModelKey } from "@/lib/budgeting/cost-model-map"
+import { resolveCostModelKey, resolvePatternForDept } from "@/lib/budgeting/cost-model-map"
 
 export async function GET(req: NextRequest) {
   const orgId = await getOrgId(req)
@@ -11,10 +11,15 @@ export async function GET(req: NextRequest) {
   const planId = req.nextUrl.searchParams.get("planId")
   if (!planId) return NextResponse.json({ error: "planId required" }, { status: 400 })
 
-  const [plan, lines, manualActuals] = await Promise.all([
+  const [plan, lines, manualActuals, costTypes, departments] = await Promise.all([
     prisma.budgetPlan.findFirst({ where: { id: planId, organizationId: orgId } }),
-    prisma.budgetLine.findMany({ where: { planId, organizationId: orgId } }),
+    prisma.budgetLine.findMany({
+      where: { planId, organizationId: orgId },
+      include: { costType: true, budgetDept: true },
+    }),
     prisma.budgetActual.findMany({ where: { planId, organizationId: orgId } }),
+    prisma.budgetCostType.findMany({ where: { organizationId: orgId, isActive: true }, orderBy: { sortOrder: "asc" } }),
+    prisma.budgetDepartment.findMany({ where: { organizationId: orgId, isActive: true }, orderBy: { sortOrder: "asc" } }),
   ])
 
   // Only load cost model if at least one line uses auto-actual (performance optimization)
@@ -312,6 +317,142 @@ export async function GET(req: NextRequest) {
     }
   }
 
+  // ═══ Matrix data: costType × department ═══
+  // Build matrix only when we have costTypes and departments configured
+  type MatrixCell = {
+    costTypeKey: string
+    costTypeLabel: string
+    departmentKey: string | null
+    departmentLabel: string | null
+    planned: number
+    actual: number
+    forecast: number
+    variance: number
+    variancePct: number
+    lineType: string
+  }
+  type Totals = { planned: number; actual: number; forecast: number; variance: number }
+
+  const matrixCells: MatrixCell[] = []
+  const matrixRowTotals: Record<string, Totals> = {}
+  const matrixColTotals: Record<string, Totals> = {}
+  const matrixGrandTotal: Totals = { planned: 0, actual: 0, forecast: 0, variance: 0 }
+
+  if (costTypes.length > 0) {
+    // Lines with matrix FK references
+    const matrixLines = lines.filter((l: any) => l.costTypeId)
+
+    // Compute auto-actual per matrix cell if cost model available
+    const now2 = new Date()
+    const curYear2 = now2.getFullYear()
+    const curMonth2 = now2.getMonth() + 1
+    let elapsedMonths2 = 1
+    if (plan) {
+      if (plan.periodType === "monthly") elapsedMonths2 = 1
+      else if (plan.periodType === "quarterly" && plan.quarter) {
+        const qStart = (plan.quarter - 1) * 3 + 1
+        const qEnd = qStart + 2
+        if (curYear2 > plan.year || (curYear2 === plan.year && curMonth2 > qEnd)) elapsedMonths2 = 3
+        else if (curYear2 === plan.year && curMonth2 >= qStart) elapsedMonths2 = curMonth2 - qStart + 1
+        else elapsedMonths2 = 0
+      } else if (plan.periodType === "annual") {
+        if (curYear2 > plan.year) elapsedMonths2 = 12
+        else if (curYear2 === plan.year) elapsedMonths2 = curMonth2
+        else elapsedMonths2 = 0
+      }
+    }
+
+    // Group matrix lines by costType × department
+    const cellMap = new Map<string, { planned: number; actual: number; forecast: number; lineType: string; costTypeKey: string; costTypeLabel: string; deptKey: string | null; deptLabel: string | null }>()
+
+    for (const line of matrixLines) {
+      const ct = (line as any).costType
+      const dept = (line as any).budgetDept
+      const cellKey = `${ct?.key || "unknown"}||${dept?.key || "_shared"}`
+
+      const existing = cellMap.get(cellKey) ?? {
+        planned: 0, actual: 0, forecast: 0,
+        lineType: line.lineType,
+        costTypeKey: ct?.key || "unknown",
+        costTypeLabel: ct?.label || line.category,
+        deptKey: dept?.key || null,
+        deptLabel: dept?.label || null,
+      }
+      existing.planned += line.plannedAmount
+      existing.forecast += line.forecastAmount ?? line.plannedAmount
+
+      // Auto-actual from cost model
+      if (line.isAutoActual && costModel && ct?.costModelPattern) {
+        const resolvedKey = dept?.serviceKey
+          ? resolvePatternForDept(ct.costModelPattern, dept.serviceKey)
+          : ct.costModelPattern.includes("{dept}") ? null : ct.costModelPattern
+        if (resolvedKey) {
+          const monthlyAmount = resolveCostModelKey(costModel, resolvedKey)
+          existing.actual += monthlyAmount * elapsedMonths2
+        }
+      } else if (line.isAutoActual && costModel && line.costModelKey) {
+        // Fallback: use direct costModelKey on the line
+        const monthlyAmount = resolveCostModelKey(costModel, line.costModelKey)
+        existing.actual += monthlyAmount * elapsedMonths2
+      }
+
+      cellMap.set(cellKey, existing)
+    }
+
+    // Convert cells to array and compute totals
+    for (const [, cell] of cellMap) {
+      const variance = cell.lineType === "revenue"
+        ? cell.actual - cell.planned
+        : cell.planned - cell.actual
+      const variancePct = cell.planned > 0 ? (variance / cell.planned) * 100 : 0
+
+      matrixCells.push({
+        costTypeKey: cell.costTypeKey,
+        costTypeLabel: cell.costTypeLabel,
+        departmentKey: cell.deptKey,
+        departmentLabel: cell.deptLabel,
+        planned: cell.planned,
+        actual: cell.actual,
+        forecast: cell.forecast,
+        variance,
+        variancePct,
+        lineType: cell.lineType,
+      })
+
+      // Row totals (by costType)
+      const rt = matrixRowTotals[cell.costTypeKey] ?? { planned: 0, actual: 0, forecast: 0, variance: 0 }
+      rt.planned += cell.planned
+      rt.actual += cell.actual
+      rt.forecast += cell.forecast
+      rt.variance += variance
+      matrixRowTotals[cell.costTypeKey] = rt
+
+      // Column totals (by department)
+      const colKey = cell.deptKey || "_shared"
+      const ct2 = matrixColTotals[colKey] ?? { planned: 0, actual: 0, forecast: 0, variance: 0 }
+      ct2.planned += cell.planned
+      ct2.actual += cell.actual
+      ct2.forecast += cell.forecast
+      ct2.variance += variance
+      matrixColTotals[colKey] = ct2
+
+      // Grand total
+      matrixGrandTotal.planned += cell.planned
+      matrixGrandTotal.actual += cell.actual
+      matrixGrandTotal.forecast += cell.forecast
+      matrixGrandTotal.variance += variance
+    }
+  }
+
+  const matrix = {
+    costTypes: costTypes.map((ct: any) => ({ key: ct.key, label: ct.label, isShared: ct.isShared, color: ct.color })),
+    departments: departments.map((d: any) => ({ key: d.key, label: d.label, hasRevenue: d.hasRevenue, color: d.color })),
+    cells: matrixCells,
+    rowTotals: matrixRowTotals,
+    colTotals: matrixColTotals,
+    grandTotal: matrixGrandTotal,
+  }
+
   return NextResponse.json({
     success: true,
     data: {
@@ -345,6 +486,7 @@ export async function GET(req: NextRequest) {
       grossProfitActual,
       byCategory,
       byDepartment,
+      matrix,
       costModelTotal: costModel?.grandTotalG ?? 0,
     },
   })

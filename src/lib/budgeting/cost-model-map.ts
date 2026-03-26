@@ -59,7 +59,33 @@ export function resolveCostModelKey(result: CostModelResult, key: CostModelKey):
     return result.serviceCosts[svc] ?? 0
   }
 
+  // serviceDetails.{svc}.{field} → e.g. serviceDetails.permanent_it.directLabor
+  if (key.startsWith("serviceDetails.")) {
+    const parts = key.split(".")
+    if (parts.length === 3) {
+      const svc = parts[1]
+      const field = parts[2] as keyof (typeof result.serviceDetails)[string]
+      const detail = result.serviceDetails[svc]
+      if (detail && field in detail) return (detail[field] as number) ?? 0
+    }
+    return 0
+  }
+
   return 0
+}
+
+/**
+ * Resolve a costModelPattern (from BudgetCostType) for a specific department.
+ * Replaces `{dept}` placeholder with the department's serviceKey.
+ *
+ * Example: "serviceDetails.{dept}.directLabor" + serviceKey="permanent_it"
+ *   → "serviceDetails.permanent_it.directLabor"
+ */
+export function resolvePatternForDept(pattern: string, serviceKey: string | null): string | null {
+  if (!pattern) return null
+  if (!pattern.includes("{dept}")) return pattern // shared cost type — no dept substitution
+  if (!serviceKey) return null // department has no serviceKey (e.g. BackOffice)
+  return pattern.replace("{dept}", serviceKey)
 }
 
 /** Human-readable labels for cost model keys (used in dropdowns) */
