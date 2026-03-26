@@ -1067,8 +1067,11 @@ function WorkspaceTab({ planId }: { planId: string }) {
 
   return (
     <div className="space-y-6">
-      {/* KPI Cards — 2 rows: expenses + revenue/margin */}
-      {/* Row 1 — Quick glance: raw plan vs actual numbers */}
+      {/* KPI Cards — 3 rows with headers */}
+      <div className="flex items-center gap-2 mb-1">
+        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("kpiPlan")} & {t("kpiActual")}</span>
+        <div className="flex-1 h-px bg-border" />
+      </div>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <ColorStatCard label={t("sectionExpenses") + " (" + t("kpiPlan").toLowerCase() + ")"} value={fmt(totalExpensePlanned)} icon={<BarChart2 className="h-5 w-5" />} color="blue" hint={t("hintKpiExpPlan")}
           subValue={`${expenseLines.length} ${t("colCategory").toLowerCase()}`}
@@ -1083,7 +1086,10 @@ function WorkspaceTab({ planId }: { planId: string }) {
           subValue={`${totalRevenuePlanned > 0 ? Math.round((totalRevenueActual / totalRevenuePlanned) * 100) : 0}% ${t("kpiExecution").toLowerCase()}`}
         />
       </div>
-      {/* Row 2 — Forecast: expected outcome based on current projections */}
+      <div className="flex items-center gap-2 mb-1">
+        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("colForecast")}</span>
+        <div className="flex-1 h-px bg-border" />
+      </div>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <ColorStatCard label={t("sectionExpenses") + " (" + t("colForecast").toLowerCase() + ")"} value={fmt(totalExpenseForecast)} icon={<TrendingUp className="h-5 w-5" />} color="indigo" hint={t("hintColForecast")}
           subValue={totalExpenseForecast !== totalExpensePlanned ? `${totalExpenseForecast > totalExpensePlanned ? "▲" : "▼"} ${Math.abs(Math.round(((totalExpenseForecast - totalExpensePlanned) / (totalExpensePlanned || 1)) * 100))}% vs ${t("kpiPlan").toLowerCase()}` : `= ${t("kpiPlan").toLowerCase()}`}
@@ -1098,7 +1104,10 @@ function WorkspaceTab({ planId }: { planId: string }) {
           subValue={`${t("colActual")} × ${Math.round(12 / Math.max(1, elapsedPct / 100 * 12))}x`}
         />
       </div>
-      {/* Row 3 — Analytics: margin, variance, execution with breakdowns */}
+      <div className="flex items-center gap-2 mb-1">
+        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("sectionMargin")} & {t("kpiExecution")}</span>
+        <div className="flex-1 h-px bg-border" />
+      </div>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <ColorStatCard label={t("sectionMargin").split("(")[0].trim() + " (" + t("kpiPlan").toLowerCase() + ")"} value={fmt(margin)} icon={<TrendingUp className="h-5 w-5" />} color={margin >= 0 ? "teal" : "red"} hint={t("hintKpiMarginPlan")}
           subValue={`${t("sectionRevenues")} − ${t("sectionExpenses")}${totalCOGSPlanned > 0 ? " − COGS" : ""}`}
