@@ -2189,7 +2189,7 @@
     "hintTemplateApply": "Seçilmiş şablonlardan büdcə sətirləri yaradın. Dublikatlar keçilir",
     "hintTemplateActive": "Qeyri-aktiv şablonlar planlara tətbiq zamanı göstərilmir",
     "overspend": "AŞMA",
-    "kpiExecutionTooltip": "Xərc büdcəsinin icrası: Faktiki xərclər / Plan xərcləri × 100%",
+    "kpiExecutionTooltip": "Marja üzrə büdcə icrası: Faktiki marja / Plan marjası × 100%. Həm gəlir, həm xərcləri nəzərə alır",
     "alertOverspendTitle": "Kritik büdcə aşması",
     "alertOverspendDesc": "Xərclər planı {pct}% ({amount}) aşdı. Büdcənin yenidən nəzərdən keçirilməsi tövsiyə olunur.",
     "alertWarningTitle": "Diqqət: xərclər plandan yuxarıdır",
