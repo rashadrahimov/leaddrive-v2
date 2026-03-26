@@ -127,7 +127,7 @@ export function BudgetWaterfallChart({
   }
 
   return (
-    <ResponsiveContainer width="100%" height={320} className={className}>
+    <ResponsiveContainer width="100%" height={260} className={className}>
       <ComposedChart data={data} margin={{ left: 10, right: 10, top: 35 }}>
         <defs>
           {data.map((entry, i) => (

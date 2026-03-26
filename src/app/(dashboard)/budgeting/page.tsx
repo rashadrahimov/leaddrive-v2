@@ -1110,27 +1110,47 @@ function WorkspaceTab({ planId }: { planId: string }) {
         />
       </div>
 
-      {/* ROW 2: Waterfall Chart */}
+      {/* ROW 2: Waterfall + Margin Summary (side by side) */}
       {byCategory.length > 0 && (
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm">{t("chartWaterfall") || "Водопад бюджета"}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <BudgetWaterfallChart
-              totalPlanned={totalPlanned}
-              totalForecast={totalForecast}
-              totalActual={totalActual}
-              totalVariance={totalVariance}
-              yearEndProjection={yearEndProjection}
-            />
-          </CardContent>
-        </Card>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <Card>
+            <CardHeader className="pb-1">
+              <CardTitle className="text-sm">{t("chartWaterfall") || "Водопад бюджета"}</CardTitle>
+            </CardHeader>
+            <CardContent className="pb-3">
+              <BudgetWaterfallChart
+                totalPlanned={totalPlanned}
+                totalForecast={totalForecast}
+                totalActual={totalActual}
+                totalVariance={totalVariance}
+                yearEndProjection={yearEndProjection}
+              />
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-1">
+              <CardTitle className="text-sm">{t("sectionMargin").split("(")[0].trim() || "Маржа"}: {t("kpiPlan")} / {t("colForecast")} / {t("kpiActual")}</CardTitle>
+            </CardHeader>
+            <CardContent className="pb-3">
+              <BudgetMarginSummary
+                revenuePlan={totalRevenuePlanned}
+                revenueForecast={totalRevenueForecast}
+                revenueActual={totalRevenueActual}
+                expensePlan={totalExpensePlanned}
+                expenseForecast={totalExpenseForecast}
+                expenseActual={totalExpenseActual}
+                marginPlan={margin}
+                marginForecast={marginForecast}
+                marginActual={marginActual}
+              />
+            </CardContent>
+          </Card>
+        </div>
       )}
 
       {/* ROW 3: Gauge + Category Bars */}
       {byCategory.length > 0 && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           <Card className="lg:col-span-1">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm">{t("budgetExecution") || "Исполнение бюджета"}</CardTitle>
@@ -1153,28 +1173,6 @@ function WorkspaceTab({ planId }: { planId: string }) {
             </CardContent>
           </Card>
         </div>
-      )}
-
-      {/* ROW 4: Margin Summary */}
-      {(totalExpensePlanned > 0 || totalRevenuePlanned > 0) && (
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm">{t("sectionMargin").split("(")[0].trim() || "Маржа"}: {t("kpiPlan")} / {t("colForecast")} / {t("kpiActual")}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <BudgetMarginSummary
-              revenuePlan={totalRevenuePlanned}
-              revenueForecast={totalRevenueForecast}
-              revenueActual={totalRevenueActual}
-              expensePlan={totalExpensePlanned}
-              expenseForecast={totalExpenseForecast}
-              expenseActual={totalExpenseActual}
-              marginPlan={margin}
-              marginForecast={marginForecast}
-              marginActual={marginActual}
-            />
-          </CardContent>
-        </Card>
       )}
 
       {/* Overspend alert banner */}
