@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Slider } from "@/components/ui/slider"
 import { Badge } from "@/components/ui/badge"
-import { Clock, RotateCcw, ChevronDown, ChevronUp, History } from "lucide-react"
+import { Clock, RotateCcw, ChevronDown, ChevronUp, History, ChevronLeft, ChevronRight, Eye } from "lucide-react"
 import { formatTimePoint } from "@/lib/budgeting/time-machine-utils"
 import type { TimePoint } from "@/lib/budgeting/time-machine-utils"
 
@@ -34,7 +34,6 @@ export function BudgetTimeMachine({
   const handleSliderChange = useCallback(
     (value: number[]) => {
       const idx = value[0]
-      // Debounce API calls
       if (debounceRef.current) clearTimeout(debounceRef.current)
       debounceRef.current = setTimeout(() => {
         onIndexChange(idx)
@@ -50,12 +49,17 @@ export function BudgetTimeMachine({
   }, [])
 
   if (timePoints.length === 0) {
-    return null // No history yet
+    return null
   }
 
   const currentPoint = timePoints[currentIndex]
+  const canGoPrev = currentIndex > 0
+  const canGoNext = currentIndex < timePoints.length - 1
 
+  // Collapsed / inactive state
   if (!isActive) {
+    // Show last change summary
+    const lastPoint = timePoints[timePoints.length - 1]
     return (
       <Card className="border-dashed border-purple-300 dark:border-purple-700 bg-purple-50/50 dark:bg-purple-950/20">
         <CardContent className="py-3 px-4">
@@ -63,12 +67,15 @@ export function BudgetTimeMachine({
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <History className="h-4 w-4 text-purple-500" />
               <span>
-                Time Machine — {timePoints.length} checkpoint{timePoints.length !== 1 ? "s" : ""} available
+                Budget History — <strong>{timePoints.length}</strong> edit{timePoints.length !== 1 ? "s" : ""} recorded
+              </span>
+              <span className="text-xs opacity-60">
+                · last: {formatTimePoint(lastPoint.timestamp)}
               </span>
             </div>
             <Button variant="outline" size="sm" onClick={onActivate} className="border-purple-300 text-purple-700 hover:bg-purple-100 dark:border-purple-700 dark:text-purple-300 dark:hover:bg-purple-900">
-              <Clock className="h-3.5 w-3.5 mr-1.5" />
-              Explore History
+              <Eye className="h-3.5 w-3.5 mr-1.5" />
+              View Changes
             </Button>
           </div>
         </CardContent>
@@ -83,10 +90,10 @@ export function BudgetTimeMachine({
           <div className="flex items-center gap-2">
             <Clock className="h-5 w-5 text-purple-600 dark:text-purple-400 animate-pulse" />
             <CardTitle className="text-base font-semibold text-purple-900 dark:text-purple-100">
-              Time Machine
+              Budget History
             </CardTitle>
-            <Badge variant="secondary" className="bg-purple-200 text-purple-800 dark:bg-purple-800 dark:text-purple-200 text-xs">
-              Viewing historical state
+            <Badge variant="secondary" className="bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200 text-xs">
+              Read-only mode
             </Badge>
             {isLoading && (
               <Badge variant="outline" className="text-xs animate-pulse">
@@ -104,13 +111,13 @@ export function BudgetTimeMachine({
               {collapsed ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
             </Button>
             <Button
-              variant="outline"
+              variant="default"
               size="sm"
               onClick={onDeactivate}
-              className="border-purple-300 text-purple-700 hover:bg-purple-100 dark:border-purple-700 dark:text-purple-300"
+              className="bg-purple-600 hover:bg-purple-700 text-white"
             >
               <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
-              Return to current
+              Back to Live
             </Button>
           </div>
         </div>
@@ -118,28 +125,66 @@ export function BudgetTimeMachine({
 
       {!collapsed && (
         <CardContent className="pt-1 pb-3 px-4">
-          <div className="space-y-2">
-            <Slider
-              min={0}
-              max={timePoints.length - 1}
-              step={1}
-              value={[currentIndex]}
-              onValueChange={handleSliderChange}
-              className="[&_[role=slider]]:bg-purple-600 [&_[role=slider]]:border-purple-700 [&_[role=slider]]:shadow-purple-300 [&_.range]:bg-purple-500"
-            />
-            <div className="flex items-center justify-between text-xs text-muted-foreground">
-              <span>{formatTimePoint(timePoints[0].timestamp)}</span>
-              <span className="font-medium text-purple-700 dark:text-purple-300">
-                {currentPoint ? (
-                  <>
-                    {formatTimePoint(currentPoint.timestamp)} — {currentPoint.summary}
-                  </>
-                ) : (
-                  "Select a point"
-                )}
-              </span>
-              <span>{formatTimePoint(timePoints[timePoints.length - 1].timestamp)}</span>
+          <div className="space-y-3">
+            {/* Slider with prev/next buttons */}
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 w-7 p-0 shrink-0"
+                disabled={!canGoPrev}
+                onClick={() => onIndexChange(currentIndex - 1)}
+                title="Previous change"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <Slider
+                min={0}
+                max={timePoints.length - 1}
+                step={1}
+                value={[currentIndex]}
+                onValueChange={handleSliderChange}
+                className="[&_[role=slider]]:bg-purple-600 [&_[role=slider]]:border-purple-700 [&_[role=slider]]:shadow-purple-300 [&_.range]:bg-purple-500"
+              />
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 w-7 p-0 shrink-0"
+                disabled={!canGoNext}
+                onClick={() => onIndexChange(currentIndex + 1)}
+                title="Next change"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
             </div>
+
+            {/* Current point info */}
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-muted-foreground">
+                {formatTimePoint(timePoints[0].timestamp)}
+              </span>
+
+              {/* Center: current checkpoint details */}
+              <div className="flex flex-col items-center">
+                <span className="text-sm font-medium text-purple-700 dark:text-purple-300">
+                  {currentPoint ? formatTimePoint(currentPoint.timestamp) : "Select a point"}
+                </span>
+                {currentPoint && (
+                  <span className="text-xs text-muted-foreground">
+                    {currentPoint.summary} · checkpoint {currentIndex + 1} of {timePoints.length}
+                  </span>
+                )}
+              </div>
+
+              <span className="text-xs text-muted-foreground">
+                {formatTimePoint(timePoints[timePoints.length - 1].timestamp)}
+              </span>
+            </div>
+
+            {/* Hint */}
+            <p className="text-[11px] text-muted-foreground/70 text-center">
+              Drag the slider or use arrows to see how your budget looked at each point in time. All data below reflects the selected moment.
+            </p>
           </div>
         </CardContent>
       )}

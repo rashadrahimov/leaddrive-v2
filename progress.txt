@@ -246,3 +246,4 @@ SERVER:
 - Production: root@178.156.249.177, PM2 process leaddrive-v2, port 3001
 - Deploy: local build → rsync standalone → pm2 restart
 - DB: postgresql://hermes:hermes@localhost:5432/leaddrive_v2
+2026-03-25 18:19 | DONE: Restructure expense lines in budgeting. Added parentId self-relation to BudgetLine (schema + migration). Updated types, API GET (nested children), POST/PUT (parentId). Created seed script with hardcoded production values (Admin Overhead 197,655 + Tech Infra 98,662 + Direct Labor 348,889 + Risk+Misc 26,395 = 671,601/mo). WorkspaceTab: collapsible group headers with colored dots, chevrons, sub-items indented, add sub-item form inline. Build passed.

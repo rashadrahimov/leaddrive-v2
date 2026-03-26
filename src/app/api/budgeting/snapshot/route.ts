@@ -20,8 +20,7 @@ export async function GET(req: NextRequest) {
 
   const atDate = new Date(at)
 
-  // Get the latest changelog entry per entity at or before the given timestamp
-  // Using raw SQL with DISTINCT ON for performance
+  // 1. Get changelog entries at or before the given timestamp (changed entities)
   const latestEntries: any[] = await prisma.$queryRaw`
     SELECT DISTINCT ON ("entityId")
       "entityId", "entityType", "action", "snapshot", "createdAt"
@@ -32,22 +31,31 @@ export async function GET(req: NextRequest) {
     ORDER BY "entityId", "createdAt" DESC
   `
 
-  // Separate by entity type, exclude deleted entities
-  const lines: any[] = []
-  const actuals: any[] = []
+  // Build sets of entity IDs that have changelog entries
+  const changedLineIds = new Set<string>()
+  const changedActualIds = new Set<string>()
+  const deletedIds = new Set<string>()
+
+  const snapshotLines: any[] = []
+  const snapshotActuals: any[] = []
   const forecasts: any[] = []
 
   for (const entry of latestEntries) {
-    if (entry.action === "delete") continue // entity was deleted at this point
+    if (entry.action === "delete") {
+      deletedIds.add(entry.entityId)
+      continue
+    }
     const snapshot = entry.snapshot
     if (!snapshot) continue
 
     switch (entry.entityType) {
       case "line":
-        lines.push(snapshot)
+        changedLineIds.add(entry.entityId)
+        snapshotLines.push(snapshot)
         break
       case "actual":
-        actuals.push(snapshot)
+        changedActualIds.add(entry.entityId)
+        snapshotActuals.push(snapshot)
         break
       case "forecast":
         forecasts.push(snapshot)
@@ -55,12 +63,41 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  // Compute basic analytics from reconstructed state
+  // 2. Fetch ALL current lines and actuals for this plan
+  //    Lines that were never changed = their current state IS historical state
+  const [currentLines, currentActuals] = await Promise.all([
+    prisma.budgetLine.findMany({
+      where: { planId, organizationId: orgId },
+    }),
+    prisma.budgetActual.findMany({
+      where: { planId, organizationId: orgId },
+    }),
+  ])
+
+  // 3. Merge: changelog lines override, unchanged lines use current state
+  const lines: any[] = [...snapshotLines]
+  for (const cl of currentLines) {
+    if (!changedLineIds.has(cl.id) && !deletedIds.has(cl.id)) {
+      lines.push(cl) // unchanged line — use current state
+    }
+  }
+
+  const actuals: any[] = [...snapshotActuals]
+  for (const ca of currentActuals) {
+    if (!changedActualIds.has(ca.id) && !deletedIds.has(ca.id)) {
+      actuals.push(ca) // unchanged actual — use current state
+    }
+  }
+
+  // Compute analytics from full reconstructed state
   const analytics = computeAnalytics(lines, actuals)
 
   return NextResponse.json({
     success: true,
-    data: { lines, actuals, forecasts, analytics, reconstructedAt: at },
+    data: {
+      lines, actuals, forecasts, analytics, reconstructedAt: at,
+      changedEntityIds: [...changedLineIds, ...changedActualIds],
+    },
   })
 }
 
