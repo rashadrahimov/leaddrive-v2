@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input"
 import {
   PiggyBank, Plus, Trash2, Pencil, Loader2, TrendingUp, TrendingDown,
   CheckCircle, AlertCircle, BarChart2, DollarSign, CalendarRange, Link2,
-  ChevronDown, ChevronRight, MessageSquare, Target,
+  ChevronDown, ChevronRight, MessageSquare, Target, Brain,
 } from "lucide-react"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
@@ -1185,7 +1185,7 @@ function WorkspaceTab({ planId }: { planId: string }) {
       {/* Actions */}
       <div className="flex flex-wrap items-center gap-2">
         <Button size="sm" variant="outline" title={t("hintBtnAiAnalysis")} onClick={handleAINarrative} disabled={aiNarrative.isPending}>
-          {aiNarrative.isPending ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <AlertCircle className="h-4 w-4 mr-1" />}
+          {aiNarrative.isPending ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Brain className="h-4 w-4 mr-1" />}
           {t("btnAiAnalysis")}
         </Button>
         {autoActualTotal > 0 && (
@@ -1543,7 +1543,7 @@ function OverviewTab({ planId }: { planId: string }) {
       {/* Action buttons: AI narrative + sync actuals */}
       <div className="flex flex-wrap gap-2">
         <Button size="sm" variant="outline" onClick={handleAINarrative} disabled={aiNarrative.isPending}>
-          {aiNarrative.isPending ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <AlertCircle className="h-4 w-4 mr-1" />}
+          {aiNarrative.isPending ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Brain className="h-4 w-4 mr-1" />}
           {t("btnExplainVariances")}
         </Button>
         {autoActualTotal > 0 && (
