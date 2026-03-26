@@ -4,6 +4,15 @@
 
 ## ОБЯЗАТЕЛЬНЫЕ секции (НЕ удалять/менять без подтверждения пользователя!)
 
+### ROW 0: Time Machine (collapsible)
+- `BudgetTimeMachine` — интерактивный slider для просмотра истории изменений бюджета
+  - Компонент: `src/components/budget-time-machine.tsx`
+  - Свёрнутое состояние: "Time Machine — N checkpoints available" + кнопка "Explore History"
+  - Развёрнутое: slider с временной шкалой, badge "Viewing historical state", кнопка "Return to current"
+  - При активации: все данные (KPI, графики, таблица) показывают историческое состояние
+  - При активации: кнопки редактирования и удаления скрыты (read-only mode)
+  - Heatmap: ячейки мигают зелёным/красным/жёлтым при изменении значений
+
 ### ROW 1: 3 KPI Cards (grid-cols-3)
 1. **Расходы (факт)** — красная карточка, `ColorStatCard color="red"`
    - Значение: `totalExpenseActual`

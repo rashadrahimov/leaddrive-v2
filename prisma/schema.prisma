@@ -577,6 +577,25 @@ model CostModelLog {
   @@map("cost_model_logs")
 }
 
+model BudgetChangeLog {
+  id             String   @id @default(cuid())
+  organizationId String
+  planId         String
+  entityType     String   // "line" | "actual" | "forecast"
+  entityId       String
+  action         String   // "create" | "update" | "delete"
+  field          String?  // null for create/delete, field name for update
+  oldValue       Json?
+  newValue       Json?
+  snapshot       Json?    // full entity state after this change
+  userId         String?
+  createdAt      DateTime @default(now())
+
+  @@index([planId, createdAt])
+  @@index([organizationId])
+  @@map("budget_change_logs")
+}
+
 // ═══════════════════════════════════════════════════
 // SERVICE & SUPPORT
 // ═══════════════════════════════════════════════════

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getOrgId } from "@/lib/api-auth"
-import { prisma } from "@/lib/prisma"
+import { prisma, logBudgetChange } from "@/lib/prisma"
 
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const orgId = await getOrgId(req)
@@ -10,8 +10,8 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   const body = await req.json()
   const { category, department, lineType, lineSubtype, plannedAmount, forecastAmount, unitPrice, unitCost, quantity, costModelKey, isAutoActual, notes, parentId } = body
 
-  // Check plan is not approved
-  const line = await prisma.budgetLine.findFirst({ where: { id, organizationId: orgId }, select: { planId: true } })
+  // Fetch old state for change log
+  const line = await prisma.budgetLine.findFirst({ where: { id, organizationId: orgId } })
   if (line) {
     const plan = await prisma.budgetPlan.findFirst({ where: { id: line.planId }, select: { status: true } })
     if (plan?.status === "approved") {
@@ -48,6 +48,19 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   if (result.count === 0) return NextResponse.json({ error: "Not found" }, { status: 404 })
 
   const updated = await prisma.budgetLine.findFirst({ where: { id, organizationId: orgId } })
+
+  if (updated && line) {
+    // Log each changed field
+    const fields = ["category", "department", "lineType", "lineSubtype", "plannedAmount", "forecastAmount", "unitPrice", "unitCost", "quantity", "costModelKey", "isAutoActual", "notes", "parentId"] as const
+    for (const f of fields) {
+      const oldVal = (line as any)[f]
+      const newVal = (updated as any)[f]
+      if (JSON.stringify(oldVal) !== JSON.stringify(newVal)) {
+        logBudgetChange({ orgId, planId: line.planId, entityType: "line", entityId: id, action: "update", field: f, oldValue: oldVal, newValue: newVal, snapshot: updated })
+      }
+    }
+  }
+
   return NextResponse.json({ success: true, data: updated })
 }
 
@@ -57,8 +70,8 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
 
   const { id } = await params
 
-  // Check plan is not approved
-  const lineToDelete = await prisma.budgetLine.findFirst({ where: { id, organizationId: orgId }, select: { planId: true } })
+  // Fetch full state before deletion for change log
+  const lineToDelete = await prisma.budgetLine.findFirst({ where: { id, organizationId: orgId } })
   if (lineToDelete) {
     const plan = await prisma.budgetPlan.findFirst({ where: { id: lineToDelete.planId }, select: { status: true } })
     if (plan?.status === "approved") {
@@ -67,6 +80,10 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
   }
 
   await prisma.budgetLine.deleteMany({ where: { id, organizationId: orgId } })
+
+  if (lineToDelete) {
+    logBudgetChange({ orgId, planId: lineToDelete.planId, entityType: "line", entityId: id, action: "delete", oldValue: lineToDelete })
+  }
 
   return NextResponse.json({ success: true, data: null })
 }

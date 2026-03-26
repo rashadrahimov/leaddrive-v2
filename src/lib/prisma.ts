@@ -84,3 +84,32 @@ export function logAudit(orgId: string, action: string, entityType: string, enti
     },
   }).catch(() => {})
 }
+
+/** Fire-and-forget budget change log for Time Machine */
+export function logBudgetChange(opts: {
+  orgId: string
+  planId: string
+  entityType: string
+  entityId: string
+  action: string
+  field?: string
+  oldValue?: any
+  newValue?: any
+  snapshot?: any
+  userId?: string
+}) {
+  prisma.budgetChangeLog.create({
+    data: {
+      organizationId: opts.orgId,
+      planId: opts.planId,
+      entityType: opts.entityType,
+      entityId: opts.entityId,
+      action: opts.action,
+      field: opts.field || undefined,
+      oldValue: opts.oldValue ?? undefined,
+      newValue: opts.newValue ?? undefined,
+      snapshot: opts.snapshot ?? undefined,
+      userId: opts.userId || undefined,
+    },
+  }).catch(() => {})
+}

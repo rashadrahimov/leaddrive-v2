@@ -399,3 +399,27 @@ export function useSnapshotActuals() {
     },
   })
 }
+
+// ═══════════════════════════════════════════════════
+// TIME MACHINE
+// ═══════════════════════════════════════════════════
+
+export function useBudgetChangelog(planId?: string) {
+  const orgId = useOrgId()
+  return useQuery({
+    queryKey: ["budgeting", "changelog", planId],
+    queryFn: () => apiFetch<{ changes: any[]; timePoints: Array<{ timestamp: string; changeCount: number; summary: string }> }>(`/api/budgeting/changelog?planId=${planId}`, orgId),
+    enabled: !!planId && !!orgId,
+    staleTime: 30_000,
+  })
+}
+
+export function useBudgetSnapshot(planId?: string, timestamp?: string | null) {
+  const orgId = useOrgId()
+  return useQuery({
+    queryKey: ["budgeting", "snapshot", planId, timestamp],
+    queryFn: () => apiFetch<{ lines: any[]; actuals: any[]; forecasts: any[]; analytics: any; reconstructedAt: string }>(`/api/budgeting/snapshot?planId=${planId}&at=${encodeURIComponent(timestamp!)}`, orgId),
+    enabled: !!planId && !!orgId && !!timestamp,
+    staleTime: 60_000,
+  })
+}

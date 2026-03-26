@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getOrgId } from "@/lib/api-auth"
-import { prisma } from "@/lib/prisma"
+import { prisma, logBudgetChange } from "@/lib/prisma"
 
 export async function GET(req: NextRequest) {
   const orgId = await getOrgId(req)
@@ -55,6 +55,8 @@ export async function POST(req: NextRequest) {
       description: description || null,
     },
   })
+
+  logBudgetChange({ orgId, planId: resolvedPlanId, entityType: "actual", entityId: actual.id, action: "create", snapshot: actual })
 
   return NextResponse.json({ success: true, data: actual }, { status: 201 })
 }

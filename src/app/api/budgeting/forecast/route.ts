@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getOrgId } from "@/lib/api-auth"
-import { prisma } from "@/lib/prisma"
+import { prisma, logBudgetChange } from "@/lib/prisma"
 
 export async function GET(req: NextRequest) {
   const orgId = await getOrgId(req)
@@ -42,6 +42,10 @@ export async function POST(req: NextRequest) {
     if (!planId || !month || !year || !category) continue
     const lt = lineType || "expense"
 
+    const existing = await prisma.budgetForecastEntry.findUnique({
+      where: { planId_year_month_category_lineType: { planId, year, month, category, lineType: lt } },
+    })
+
     const upserted = await prisma.budgetForecastEntry.upsert({
       where: { planId_year_month_category_lineType: { planId, year, month, category, lineType: lt } },
       update: { forecastAmount: Number(forecastAmount) ?? 0 },
@@ -55,6 +59,19 @@ export async function POST(req: NextRequest) {
         forecastAmount: Number(forecastAmount) ?? 0,
       },
     })
+
+    logBudgetChange({
+      orgId,
+      planId,
+      entityType: "forecast",
+      entityId: upserted.id,
+      action: existing ? "update" : "create",
+      field: existing ? "forecastAmount" : undefined,
+      oldValue: existing?.forecastAmount ?? undefined,
+      newValue: upserted.forecastAmount,
+      snapshot: upserted,
+    })
+
     results.push(upserted)
   }
 
