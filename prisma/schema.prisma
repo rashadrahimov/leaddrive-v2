@@ -1603,6 +1603,9 @@ model BudgetLine {
   costType       BudgetCostType? @relation(fields: [costTypeId], references: [id], onDelete: SetNull)
   departmentId   String?
   budgetDept     BudgetDepartment? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  vatIncluded    Boolean  @default(false) // true = amount includes VAT
+  vatRate        Float?   // e.g. 0.18 for 18% — null means no VAT applicable
+  amountExVat    Float?   // computed: plannedAmount / (1 + vatRate) when vatIncluded=true
   notes          String?
   sortOrder      Int      @default(0)
   parentId       String?
