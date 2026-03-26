@@ -47,6 +47,8 @@ model Organization {
   invoicePayments   InvoicePayment[]
   recurringInvoices RecurringInvoice[]
   budgetPlans       BudgetPlan[]
+  budgetCostTypes   BudgetCostType[]
+  budgetDepartments BudgetDepartment[]
   socialConversations SocialConversation[]
 
   @@map("organizations")
@@ -1484,6 +1486,55 @@ model RecurringInvoiceItem {
 // BUDGETING
 // ═══════════════════════════════════════════════════
 
+model BudgetCostType {
+  id               String   @id @default(cuid())
+  organizationId   String
+  organization     Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  key              String   // machine key: "labor", "overhead_admin", etc.
+  label            String   // user-facing: "ФОТ (зарплаты)"
+  costModelPattern String?  // template: "serviceDetails.{dept}.directLabor"
+  isShared         Boolean  @default(false)  // true = not split by department (backoffice, risk)
+  allocationMethod String?  // "proportional" | "fixed" | null
+  color            String?  // hex color for UI
+  sortOrder        Int      @default(0)
+  isActive         Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  budgetLines      BudgetLine[]
+  budgetActuals    BudgetActual[]
+  forecastEntries  BudgetForecastEntry[]
+  directionTemplates BudgetDirectionTemplate[]
+
+  @@unique([organizationId, key])
+  @@index([organizationId])
+  @@map("budget_cost_types")
+}
+
+model BudgetDepartment {
+  id             String   @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  key            String   // machine key: "it", "infosec", etc.
+  label          String   // user-facing: "Daimi IT", "InfoSec"
+  serviceKey     String?  // cost model service key: "permanent_it", "infosec"
+  hasRevenue     Boolean  @default(true)  // false for BackOffice
+  color          String?  // hex color for UI
+  sortOrder      Int      @default(0)
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  budgetLines      BudgetLine[]
+  budgetActuals    BudgetActual[]
+  forecastEntries  BudgetForecastEntry[]
+  directionTemplates BudgetDirectionTemplate[]
+
+  @@unique([organizationId, key])
+  @@index([organizationId])
+  @@map("budget_departments")
+}
+
 model BudgetPlan {
   id             String   @id @default(cuid())
   organizationId String
@@ -1529,6 +1580,10 @@ model BudgetLine {
   quantity       Int?     // For product/COGS: number of units
   costModelKey   String?  // e.g. "grandTotalG", "deptCosts.IT", "serviceRevenues.total"
   isAutoActual   Boolean  @default(false)
+  costTypeId     String?
+  costType       BudgetCostType? @relation(fields: [costTypeId], references: [id], onDelete: SetNull)
+  departmentId   String?
+  budgetDept     BudgetDepartment? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
   notes          String?
   sortOrder      Int      @default(0)
   parentId       String?
@@ -1538,6 +1593,8 @@ model BudgetLine {
   @@index([organizationId])
   @@index([planId])
   @@index([parentId])
+  @@index([costTypeId])
+  @@index([departmentId])
   @@map("budget_lines")
 }
 
@@ -1552,10 +1609,16 @@ model BudgetActual {
   actualAmount   Float    @default(0)
   expenseDate    String?
   description    String?
+  costTypeId     String?
+  costType       BudgetCostType? @relation(fields: [costTypeId], references: [id], onDelete: SetNull)
+  departmentId   String?
+  budgetDept     BudgetDepartment? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
   createdAt      DateTime @default(now())
 
   @@index([organizationId])
   @@index([planId])
+  @@index([costTypeId])
+  @@index([departmentId])
   @@map("budget_actuals")
 }
 
@@ -1584,12 +1647,18 @@ model BudgetForecastEntry {
   category       String
   lineType       String   @default("expense")
   forecastAmount Float    @default(0)
+  costTypeId     String?
+  costType       BudgetCostType? @relation(fields: [costTypeId], references: [id], onDelete: SetNull)
+  departmentId   String?
+  budgetDept     BudgetDepartment? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
   @@unique([planId, year, month, category, lineType])
   @@index([organizationId])
   @@index([planId])
+  @@index([costTypeId])
+  @@index([departmentId])
   @@map("budget_forecast_entries")
 }
 
@@ -1606,12 +1675,18 @@ model BudgetDirectionTemplate {
   quantity         Int?
   costModelKey    String?
   department      String?
+  costTypeId      String?
+  costType        BudgetCostType? @relation(fields: [costTypeId], references: [id], onDelete: SetNull)
+  departmentId    String?
+  budgetDept      BudgetDepartment? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
   sortOrder       Int      @default(0)
   isActive        Boolean  @default(true)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
   @@index([organizationId])
+  @@index([costTypeId])
+  @@index([departmentId])
   @@map("budget_direction_templates")
 }
 

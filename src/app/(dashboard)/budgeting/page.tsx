@@ -66,6 +66,8 @@ import { BudgetExecutionGauge } from "@/components/budget-execution-gauge"
 import { BudgetCategoryBars } from "@/components/budget-category-bars"
 import { BudgetMarginSummary } from "@/components/budget-margin-summary"
 import { InfoHint } from "@/components/info-hint"
+import { BudgetMatrixGrid } from "@/components/budget-matrix-grid"
+import { LayoutGrid, List } from "lucide-react"
 
 const PIE_COLORS = BUDGET_COLORS.pie
 
@@ -424,6 +426,8 @@ function WorkspaceTab({ planId, onNavigateTab }: { planId: string; onNavigateTab
 
   // Number format toggle — shadows outer fmt() within WorkspaceTab
   const [compactNumbers, setCompactNumbers] = useState(false)
+  // List/Matrix view mode
+  const [workspaceView, setWorkspaceView] = useState<"list" | "matrix">("list")
   const fmt = compactNumbers ? (n: number) => fmtK(n) + " ₼" : (n: number) => Math.round(n).toLocaleString() + " ₼"
 
   // New actual form for expand
@@ -1231,6 +1235,16 @@ function WorkspaceTab({ planId, onNavigateTab }: { planId: string; onNavigateTab
           onClick={() => setCompactNumbers(!compactNumbers)} title="Сокращённый формат чисел (K/M)">
           {compactNumbers ? "1.2M" : "1,234"}
         </Button>
+        <div className="flex items-center border rounded-md overflow-hidden">
+          <Button size="sm" variant={workspaceView === "list" ? "default" : "ghost"} className="h-8 text-xs rounded-none px-2"
+            onClick={() => setWorkspaceView("list")} title="Список">
+            <List className="h-4 w-4" />
+          </Button>
+          <Button size="sm" variant={workspaceView === "matrix" ? "default" : "ghost"} className="h-8 text-xs rounded-none px-2"
+            onClick={() => setWorkspaceView("matrix")} title="Матрица (Департамент × Тип затрат)">
+            <LayoutGrid className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
 
       {/* AI Narrative */}
@@ -1249,8 +1263,36 @@ function WorkspaceTab({ planId, onNavigateTab }: { planId: string; onNavigateTab
         </Card>
       )}
 
+      {/* === MATRIX VIEW === */}
+      {workspaceView === "matrix" && analytics?.matrix && (
+        <BudgetMatrixGrid matrix={analytics.matrix} compact={compactNumbers} />
+      )}
+      {workspaceView === "matrix" && (!analytics?.matrix || analytics.matrix.cells.length === 0) && (
+        <Card>
+          <CardContent className="p-8 text-center text-muted-foreground">
+            <LayoutGrid className="h-12 w-12 mx-auto mb-3 opacity-40" />
+            <p className="text-lg font-medium mb-2">Матрица не настроена</p>
+            <p className="text-sm mb-4">Для использования матричного вида необходимо сгенерировать бюджетные строки по схеме «Тип затрат × Департамент».</p>
+            <Button
+              onClick={async () => {
+                await fetch(`/api/budgeting/matrix-seed`, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ planId }),
+                })
+                // Refresh data
+                window.location.reload()
+              }}
+            >
+              <LayoutGrid className="h-4 w-4 mr-2" />
+              Сгенерировать матрицу
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
       {/* === MAIN EDITABLE GRID === */}
-      <Card>
+      {workspaceView === "list" && <Card>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -1315,7 +1357,7 @@ function WorkspaceTab({ planId, onNavigateTab }: { planId: string; onNavigateTab
             </table>
           </div>
         </CardContent>
-      </Card>
+      </Card>}
 
       {/* Drill-down Sheet for fact values */}
       <Sheet open={!!drillDownLine} onOpenChange={open => { if (!open) setDrillDownLine(null) }}>
