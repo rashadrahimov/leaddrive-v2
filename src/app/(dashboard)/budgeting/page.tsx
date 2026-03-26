@@ -62,6 +62,9 @@ import {
 } from "@/lib/budgeting/types"
 import { COST_MODEL_KEY_OPTIONS, TEMPLATE_CATEGORY_MAP } from "@/lib/budgeting/cost-model-map"
 import { BudgetWaterfallChart } from "@/components/budget-waterfall-chart"
+import { BudgetExecutionGauge } from "@/components/budget-execution-gauge"
+import { BudgetCategoryBars } from "@/components/budget-category-bars"
+import { BudgetMarginSummary } from "@/components/budget-margin-summary"
 import { InfoHint } from "@/components/info-hint"
 
 const PIE_COLORS = BUDGET_COLORS.pie
@@ -1067,68 +1070,31 @@ function WorkspaceTab({ planId }: { planId: string }) {
 
   return (
     <div className="space-y-6">
-      {/* KPI Cards — 3 rows with headers */}
-      <div className="flex items-center gap-2 mb-1">
-        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("kpiPlan")} & {t("kpiActual")}</span>
-        <div className="flex-1 h-px bg-border" />
-      </div>
+      {/* ROW 1: 4 Summary KPI Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <ColorStatCard label={t("sectionExpenses") + " (" + t("kpiPlan").toLowerCase() + ")"} value={fmt(totalExpensePlanned)} icon={<BarChart2 className="h-5 w-5" />} color="blue" hint={t("hintKpiExpPlan")}
-          subValue={`${expenseLines.length} ${t("colCategory").toLowerCase()}`}
+        <ColorStatCard
+          label={t("sectionExpenses") + " (" + t("kpiActual").toLowerCase() + ")"}
+          value={fmt(totalExpenseActual)}
+          icon={<DollarSign className="h-5 w-5" />}
+          color="red"
+          hint={t("hintKpiExpActual")}
+          subValue={`${Math.round(expExecPct)}% ${t("kpiExecution").toLowerCase()} · ${t("kpiPlan").toLowerCase()}: ${fmt(totalExpensePlanned)}`}
         />
-        <ColorStatCard label={t("sectionExpenses") + " (" + t("kpiActual").toLowerCase() + ")"} value={fmt(totalExpenseActual)} icon={<DollarSign className="h-5 w-5" />} color="red" hint={t("hintKpiExpActual")}
-          subValue={`${Math.round(expExecPct)}% ${t("kpiExecution").toLowerCase()}`}
+        <ColorStatCard
+          label={t("sectionRevenues") + " (" + t("kpiActual").toLowerCase() + ")"}
+          value={fmt(totalRevenueActual)}
+          icon={<TrendingUp className="h-5 w-5" />}
+          color="green"
+          hint={t("hintKpiRevActual")}
+          subValue={`${totalRevenuePlanned > 0 ? Math.round((totalRevenueActual / totalRevenuePlanned) * 100) : 0}% ${t("kpiExecution").toLowerCase()} · ${t("kpiPlan").toLowerCase()}: ${fmt(totalRevenuePlanned)}`}
         />
-        <ColorStatCard label={t("sectionRevenues") + " (" + t("kpiPlan").toLowerCase() + ")"} value={fmt(totalRevenuePlanned)} icon={<TrendingUp className="h-5 w-5" />} color="violet" hint={t("hintKpiRevPlan")}
-          subValue={`${revenueLines.length} ${t("colCategory").toLowerCase()}`}
-        />
-        <ColorStatCard label={t("sectionRevenues") + " (" + t("kpiActual").toLowerCase() + ")"} value={fmt(totalRevenueActual)} icon={<DollarSign className="h-5 w-5" />} color="green" hint={t("hintKpiRevActual")}
-          subValue={`${totalRevenuePlanned > 0 ? Math.round((totalRevenueActual / totalRevenuePlanned) * 100) : 0}% ${t("kpiExecution").toLowerCase()}`}
-        />
-      </div>
-      <div className="flex items-center gap-2 mb-1">
-        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("colForecast")}</span>
-        <div className="flex-1 h-px bg-border" />
-      </div>
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <ColorStatCard label={t("sectionExpenses") + " (" + t("colForecast").toLowerCase() + ")"} value={fmt(totalExpenseForecast)} icon={<TrendingUp className="h-5 w-5" />} color="indigo" hint={t("hintColForecast")}
-          subValue={totalExpenseForecast !== totalExpensePlanned ? `${totalExpenseForecast > totalExpensePlanned ? "▲" : "▼"} ${Math.abs(Math.round(((totalExpenseForecast - totalExpensePlanned) / (totalExpensePlanned || 1)) * 100))}% vs ${t("kpiPlan").toLowerCase()}` : `= ${t("kpiPlan").toLowerCase()}`}
-        />
-        <ColorStatCard label={t("sectionRevenues") + " (" + t("colForecast").toLowerCase() + ")"} value={fmt(totalRevenueForecast)} icon={<TrendingUp className="h-5 w-5" />} color="indigo" hint={t("hintColForecast")}
-          subValue={totalRevenueForecast !== totalRevenuePlanned ? `${totalRevenueForecast > totalRevenuePlanned ? "▲" : "▼"} ${Math.abs(Math.round(((totalRevenueForecast - totalRevenuePlanned) / (totalRevenuePlanned || 1)) * 100))}% vs ${t("kpiPlan").toLowerCase()}` : `= ${t("kpiPlan").toLowerCase()}`}
-        />
-        <ColorStatCard label={t("sectionMargin").split("(")[0].trim() + " (" + t("colForecast").toLowerCase() + ")"} value={fmt(marginForecast)} icon={<TrendingUp className="h-5 w-5" />} color={marginForecast >= 0 ? "indigo" : "red"} hint={t("hintColForecast")}
-          subValue={marginForecast !== margin ? `${marginForecast > margin ? "▲" : "▼"} ${Math.abs(Math.round(((marginForecast - margin) / (margin || 1)) * 100))}% vs ${t("kpiPlan").toLowerCase()}` : `= ${t("kpiPlan").toLowerCase()}`}
-        />
-        <ColorStatCard label={t("kpiProjection")} value={fmt(yearEndProjection)} icon={<Target className="h-5 w-5" />} color="slate" hint={t("hintOvYearEnd")}
-          subValue={`${t("colActual")} × ${Math.round(12 / Math.max(1, elapsedPct / 100 * 12))}x`}
-        />
-      </div>
-      <div className="flex items-center gap-2 mb-1">
-        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("sectionMargin")} & {t("kpiExecution")}</span>
-        <div className="flex-1 h-px bg-border" />
-      </div>
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <ColorStatCard label={t("sectionMargin").split("(")[0].trim() + " (" + t("kpiPlan").toLowerCase() + ")"} value={fmt(margin)} icon={<TrendingUp className="h-5 w-5" />} color={margin >= 0 ? "teal" : "red"} hint={t("hintKpiMarginPlan")}
-          subValue={`${t("sectionRevenues")} − ${t("sectionExpenses")}${totalCOGSPlanned > 0 ? " − COGS" : ""}`}
-          lines={[
-            { label: t("sectionRevenues"), value: fmt(totalRevenuePlanned) },
-            { label: t("sectionExpenses"), value: fmt(totalExpensePlanned) },
-          ]}
-        />
-        <ColorStatCard label={t("sectionMargin").split("(")[0].trim() + " (" + t("kpiActual").toLowerCase() + ")"} value={fmt(marginActual)} icon={<DollarSign className="h-5 w-5" />} color={marginActual >= 0 ? "teal" : "red"} hint={t("hintKpiMarginActual")}
-          subValue={`${margin !== 0 ? Math.round((marginActual / margin) * 100) : 0}% ${t("kpiExecution").toLowerCase()}`}
-          lines={[
-            { label: t("sectionRevenues"), value: fmt(totalRevenueActual) },
-            { label: t("sectionExpenses"), value: fmt(totalExpenseActual) },
-          ]}
-        />
-        <ColorStatCard label={t("kpiVariance")} value={(totalVariance >= 0 ? "+" : "") + fmt(totalVariance)} icon={totalVariance >= 0 ? <TrendingUp className="h-5 w-5" /> : <TrendingDown className="h-5 w-5" />} color={totalVariance >= 0 ? "teal" : "red"} hint={t("hintKpiVariance")}
-          subValue={`${totalVariance >= 0 ? "▲" : "▼"} ${Math.abs(Math.round((totalVariance / (margin || 1)) * 100))}% ${margin !== 0 ? (totalVariance >= 0 ? t("kpiPlan").toLowerCase() : t("kpiPlan").toLowerCase()) : ""}`}
-          lines={[
-            { label: t("sectionExpenses"), value: (totalExpensePlanned - totalExpenseActual >= 0 ? "+" : "") + fmt(totalExpensePlanned - totalExpenseActual) },
-            { label: t("sectionRevenues"), value: (totalRevenueActual - totalRevenuePlanned >= 0 ? "+" : "") + fmt(totalRevenueActual - totalRevenuePlanned) },
-          ]}
+        <ColorStatCard
+          label={t("sectionMargin").split("(")[0].trim() + " (" + t("kpiActual").toLowerCase() + ")"}
+          value={fmt(marginActual)}
+          icon={marginActual >= 0 ? <TrendingUp className="h-5 w-5" /> : <TrendingDown className="h-5 w-5" />}
+          color={marginActual >= 0 ? "teal" : "red"}
+          hint={t("hintKpiMarginActual")}
+          subValue={`${t("kpiVariance")}: ${totalVariance >= 0 ? "+" : ""}${fmt(totalVariance)}`}
         />
         <ColorStatCard
           label={t("kpiExecution")}
@@ -1137,12 +1103,75 @@ function WorkspaceTab({ planId }: { planId: string }) {
           color={budgetExecColor}
           hint={t("kpiExecutionTooltip")}
           subValue={`${t("expectedByTime")}: ${Math.round(elapsedPct)}%`}
-          lines={[
-            { label: t("sectionExpenses"), value: `${Math.round(expExecPct)}%` },
-            { label: t("sectionRevenues"), value: `${totalRevenuePlanned > 0 ? Math.round((totalRevenueActual / totalRevenuePlanned) * 100) : 0}%` },
-          ]}
         />
       </div>
+
+      {/* ROW 2: Waterfall Chart */}
+      {byCategory.length > 0 && (
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm">{t("chartWaterfall") || "Водопад бюджета"}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <BudgetWaterfallChart
+              totalPlanned={totalPlanned}
+              totalForecast={totalForecast}
+              totalActual={totalActual}
+              totalVariance={totalVariance}
+              yearEndProjection={yearEndProjection}
+            />
+          </CardContent>
+        </Card>
+      )}
+
+      {/* ROW 3: Gauge + Category Bars */}
+      {byCategory.length > 0 && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <Card className="lg:col-span-1">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm">{t("budgetExecution") || "Исполнение бюджета"}</CardTitle>
+            </CardHeader>
+            <CardContent className="flex justify-center">
+              <BudgetExecutionGauge
+                executionPct={budgetExecPct}
+                expenseExecPct={expExecPct}
+                revenueExecPct={totalRevenuePlanned > 0 ? (totalRevenueActual / totalRevenuePlanned) * 100 : 0}
+                elapsedPct={elapsedPct}
+              />
+            </CardContent>
+          </Card>
+          <Card className="lg:col-span-2">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm">{t("chartPlanForecastActual") || "План vs Факт по категориям"}</CardTitle>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <BudgetCategoryBars categories={byCategory} />
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* ROW 4: Margin Summary */}
+      {(totalExpensePlanned > 0 || totalRevenuePlanned > 0) && (
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm">{t("sectionMargin").split("(")[0].trim() || "Маржа"}: {t("kpiPlan")} / {t("colForecast")} / {t("kpiActual")}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <BudgetMarginSummary
+              revenuePlan={totalRevenuePlanned}
+              revenueForecast={totalRevenueForecast}
+              revenueActual={totalRevenueActual}
+              expensePlan={totalExpensePlanned}
+              expenseForecast={totalExpenseForecast}
+              expenseActual={totalExpenseActual}
+              marginPlan={margin}
+              marginForecast={marginForecast}
+              marginActual={marginActual}
+            />
+          </CardContent>
+        </Card>
+      )}
 
       {/* Overspend alert banner */}
       {overspendPct > 25 && (
@@ -1483,11 +1512,19 @@ function OverviewTab({ planId }: { planId: string }) {
     <div className="text-center py-20 text-muted-foreground">{t("errorLoading")}</div>
   )
 
-  const { totalPlanned, totalForecast, totalActual, totalVariance, executionPct, expenseExecutionPct = 0, yearEndProjection, byCategory, byDepartment, autoActualTotal, totalExpensePlanned = 0, totalExpenseActual = 0 } = analytics
+  const {
+    totalPlanned, totalForecast, totalActual, totalVariance,
+    executionPct, expenseExecutionPct = 0, revenueExecutionPct = 0,
+    elapsedPct = 0, yearEndProjection, byCategory, byDepartment,
+    autoActualTotal, totalExpensePlanned = 0, totalExpenseActual = 0,
+    totalExpenseForecast = 0, totalRevenuePlanned = 0, totalRevenueActual = 0,
+    totalRevenueForecast = 0, margin = 0, marginActual = 0,
+  } = analytics
 
   // Expense execution: <100% = under budget (green), 100-110% = warning, >110% = overspend (red)
   const expExecPct = expenseExecutionPct || (totalExpensePlanned > 0 ? (totalExpenseActual / totalExpensePlanned) * 100 : 0)
-  const execEmoji = expExecPct <= 100 ? "🟢" : expExecPct <= 110 ? "🟡" : "🔴"
+  const revExecPct = revenueExecutionPct || (totalRevenuePlanned > 0 ? (totalRevenueActual / totalRevenuePlanned) * 100 : 0)
+  const marginForecast = totalRevenueForecast - totalExpenseForecast
 
   const handleAINarrative = async () => {
     setShowNarrative(true)
@@ -1508,51 +1545,45 @@ function OverviewTab({ planId }: { planId: string }) {
     }
   }
 
-  const ovPlanLabel = t("colPlan")
-  const ovForecastLabel = t("colForecast")
-  const ovActualLabel = t("colActual")
-  const barData = byCategory.slice(0, 14).map(c => {
-    const suffix = c.lineType === "revenue" ? " ↑" : " ↓"
-    const name = (c.category.length > 14 ? c.category.slice(0, 14) + "…" : c.category) + suffix
-    return { name, [ovPlanLabel]: Math.round(c.planned), [ovForecastLabel]: Math.round(c.forecast), [ovActualLabel]: Math.round(c.actual) }
-  })
-
-  const pieData = byCategory
-    .filter(c => c.planned > 0)
-    .sort((a, b) => b.planned - a.planned)
-    .slice(0, 8)
-    .map(c => ({ name: c.category.length > 18 ? c.category.slice(0, 18) + "…" : c.category, value: Math.round(c.planned) }))
-
   return (
     <div className="space-y-6">
-      {/* 5 KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-        <ColorStatCard label={t("kpiPlan")} value={fmt(totalPlanned)} icon={<BarChart2 className="h-5 w-5" />} color="blue" hint={t("hintOvPlan")} />
-        <ColorStatCard label={t("kpiForecast")} value={fmt(totalForecast)} icon={<TrendingUp className="h-5 w-5" />} color="violet" hint={t("hintOvForecast")} />
+      {/* ROW 1: 4 Summary KPI Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <ColorStatCard
-          label={autoActualTotal > 0 ? t("kpiActualCostModel") : t("kpiActual")}
-          value={fmt(totalActual)}
+          label={t("sectionExpenses") + " (" + t("kpiActual").toLowerCase() + ")"}
+          value={fmt(totalExpenseActual)}
           icon={<DollarSign className="h-5 w-5" />}
+          color="red"
+          hint={t("hintKpiExpActual")}
+          subValue={`${Math.round(expExecPct)}% ${t("kpiExecution").toLowerCase()} · ${t("kpiPlan").toLowerCase()}: ${fmt(totalExpensePlanned)}`}
+        />
+        <ColorStatCard
+          label={t("sectionRevenues") + " (" + t("kpiActual").toLowerCase() + ")"}
+          value={fmt(totalRevenueActual)}
+          icon={<TrendingUp className="h-5 w-5" />}
           color="green"
-          hint={t("hintOvActual")}
+          hint={t("hintKpiRevActual")}
+          subValue={`${Math.round(revExecPct)}% ${t("kpiExecution").toLowerCase()} · ${t("kpiPlan").toLowerCase()}: ${fmt(totalRevenuePlanned)}`}
         />
         <ColorStatCard
-          label={t("kpiVariance")}
-          value={(totalVariance >= 0 ? "+" : "") + fmt(totalVariance)}
-          icon={totalVariance >= 0 ? <TrendingUp className="h-5 w-5" /> : <TrendingDown className="h-5 w-5" />}
-          color={totalVariance >= 0 ? "teal" : "red"}
-          hint={t("hintOvVariance")}
+          label={t("sectionMargin").split("(")[0].trim() + " (" + t("kpiActual").toLowerCase() + ")"}
+          value={fmt(marginActual)}
+          icon={marginActual >= 0 ? <TrendingUp className="h-5 w-5" /> : <TrendingDown className="h-5 w-5" />}
+          color={marginActual >= 0 ? "teal" : "red"}
+          hint={t("hintKpiMarginActual")}
+          subValue={`${t("kpiVariance")}: ${totalVariance >= 0 ? "+" : ""}${fmt(totalVariance)}`}
         />
         <ColorStatCard
-          label={t("kpiYearEnd")}
-          value={fmt(yearEndProjection)}
-          icon={<CalendarRange className="h-5 w-5" />}
-          color="amber"
-          hint={t("hintOvYearEnd")}
+          label={t("kpiExecution")}
+          value={`${Math.round(executionPct)}%`}
+          icon={executionPct >= 50 ? <CheckCircle className="h-5 w-5" /> : <AlertCircle className="h-5 w-5" />}
+          color={executionPct >= 80 ? "green" : executionPct >= 50 ? "amber" : "red"}
+          hint={t("kpiExecutionTooltip")}
+          subValue={`${t("expectedByTime") || "По времени"}: ${Math.round(elapsedPct)}%`}
         />
       </div>
 
-      {/* Action buttons: AI narrative + sync actuals */}
+      {/* Action buttons: AI narrative + sync actuals + export */}
       <div className="flex flex-wrap gap-2">
         <Button
           size="sm"
@@ -1575,6 +1606,9 @@ function OverviewTab({ planId }: { planId: string }) {
             {t("btnUpdateActualCostModel")}
           </Button>
         )}
+        <a href={`/api/budgeting/export?planId=${planId}`} download>
+          <Button size="sm" variant="outline"><DollarSign className="h-4 w-4 mr-1" /> {t("btnDownloadExcel") || "Excel"}</Button>
+        </a>
       </div>
 
       {/* AI Narrative Card */}
@@ -1600,114 +1634,11 @@ function OverviewTab({ planId }: { planId: string }) {
         </Card>
       )}
 
-      {/* Execution % */}
-      <div className="flex items-center gap-3 text-sm" title={t("kpiExecutionTooltip")}>
-        <span className="text-muted-foreground">{t("budgetExecution")}</span>
-        <span className={`font-bold text-lg ${expExecPct <= 100 ? "text-[#065f46] dark:text-[#6ee7b7]" : expExecPct <= 110 ? "text-amber-600 dark:text-amber-400" : "text-red-500"}`}>
-          {execEmoji} {Math.round(expExecPct)}%
-        </span>
-        {expExecPct <= 100
-          ? <CheckCircle className="h-4 w-4 text-[#065f46] dark:text-[#6ee7b7]" />
-          : <AlertCircle className="h-4 w-4 text-red-500" />}
-        {expExecPct > 110 && <span className="text-xs font-bold text-red-500 uppercase">{t("overspend")}</span>}
-      </div>
-
-      {/* Charts */}
-      {barData.length > 0 && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card className="overflow-hidden">
-            <CardHeader className="pb-2"><CardTitle className="text-sm font-semibold">{t("chartPlanForecastActual")}</CardTitle></CardHeader>
-            <CardContent className="pt-0">
-              <ResponsiveContainer width="100%" height={Math.max(300, barData.length * 40)}>
-                <BarChart data={barData} layout="vertical" margin={{ left: 20, right: 70, top: 5, bottom: 5 }}>
-                  <defs>
-                    <HBarGradient id="ov-plan-grad" color={BUDGET_COLORS.planIndigo} />
-                    <HBarGradient id="ov-forecast-grad" color={BUDGET_COLORS.forecastAmber} />
-                    <HBarGradient id="ov-actual-grad" color={BUDGET_COLORS.actualGreen} />
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted-foreground/15" horizontal={false} vertical={true} />
-                  <XAxis type="number" tick={AXIS_TICK} tickFormatter={v => fmtK(v)} axisLine={false} tickLine={false} />
-                  <YAxis type="category" dataKey="name" tick={{ fontSize: 11, fill: "#94a3b8" }} width={140} axisLine={false} tickLine={false} />
-                  <Tooltip content={<BudgetChartTooltip mode="plan-forecast-actual" planKey={ovPlanLabel} actualKey={ovActualLabel} />} cursor={{ fill: "hsl(var(--muted))", opacity: 0.3 }} />
-                  <Bar dataKey={ovPlanLabel} fill="url(#ov-plan-grad)" radius={[0, 4, 4, 0]} animationDuration={ANIMATION.duration} animationEasing={ANIMATION.easing} barSize={12} />
-                  <Bar dataKey={ovForecastLabel} fill="url(#ov-forecast-grad)" radius={[0, 4, 4, 0]} animationDuration={ANIMATION.duration} animationEasing={ANIMATION.easing} barSize={12} />
-                  <Bar dataKey={ovActualLabel} fill="url(#ov-actual-grad)" radius={[0, 4, 4, 0]} animationDuration={ANIMATION.duration} animationEasing={ANIMATION.easing} barSize={12}>
-                    <LabelList content={(props: any) => <BudgetBarLabel {...props} horizontal />} />
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-              <BudgetChartLegend items={[
-                { label: ovPlanLabel, color: BUDGET_COLORS.planIndigo },
-                { label: ovForecastLabel, color: BUDGET_COLORS.forecastAmber },
-                { label: ovActualLabel, color: BUDGET_COLORS.actualGreen },
-              ]} />
-            </CardContent>
-          </Card>
-
-          <Card className="overflow-hidden">
-            <CardHeader className="pb-2"><CardTitle className="text-sm font-semibold">{t("chartExpenseComposition")}</CardTitle></CardHeader>
-            <CardContent className="pt-0">
-              <ResponsiveContainer width="100%" height={320}>
-                <PieChart>
-                  <defs>
-                    {PIE_COLORS.map((color: string, i: number) => (
-                      <linearGradient key={i} id={`pie-grad-${i}`} x1="0" y1="0" x2="1" y2="1">
-                        <stop offset="0%" stopColor={color} stopOpacity={0.85} />
-                        <stop offset="100%" stopColor={color} stopOpacity={1} />
-                      </linearGradient>
-                    ))}
-                  </defs>
-                  <Pie
-                    data={pieData}
-                    dataKey="value"
-                    nameKey="name"
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={65}
-                    outerRadius={105}
-                    paddingAngle={3}
-                    animationDuration={ANIMATION.duration}
-                    animationEasing={ANIMATION.easing}
-                    stroke="none"
-                  >
-                    {pieData.map((_: any, i: number) => (
-                      <Cell key={i} fill={`url(#pie-grad-${i % PIE_COLORS.length})`} />
-                    ))}
-                  </Pie>
-                  {/* Center label */}
-                  <text x="50%" y="48%" textAnchor="middle" dominantBaseline="central" className="fill-muted-foreground" fontSize={11}>
-                    {t("kpiPlan")}
-                  </text>
-                  <text x="50%" y="56%" textAnchor="middle" dominantBaseline="central" className="fill-foreground" fontSize={14} fontWeight="bold">
-                    {fmt(totalPlanned)}
-                  </text>
-                  <Tooltip content={<BudgetChartTooltip mode="composition" totalValue={totalPlanned} />} />
-                </PieChart>
-              </ResponsiveContainer>
-              <BudgetChartLegend items={pieData.map((d: any, i: number) => ({
-                label: d.name,
-                color: PIE_COLORS[i % PIE_COLORS.length] as string,
-                total: d.value,
-              }))} />
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
-      {/* Waterfall chart */}
+      {/* ROW 2: Waterfall Chart (full width) */}
       {byCategory.length > 0 && (
         <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-sm">{t("chartWaterfall")}</CardTitle>
-              <a
-                href={`/api/budgeting/export?planId=${planId}`}
-                className="text-xs text-purple-600 dark:text-purple-400 underline underline-offset-2 hover:no-underline"
-                download
-              >
-                {t("btnDownloadExcel")}
-              </a>
-            </div>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm">{t("chartWaterfall")}</CardTitle>
           </CardHeader>
           <CardContent>
             <BudgetWaterfallChart
@@ -1716,6 +1647,55 @@ function OverviewTab({ planId }: { planId: string }) {
               totalActual={totalActual}
               totalVariance={totalVariance}
               yearEndProjection={yearEndProjection}
+            />
+          </CardContent>
+        </Card>
+      )}
+
+      {/* ROW 3: Gauge + Category Bars */}
+      {byCategory.length > 0 && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <Card className="lg:col-span-1">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm">{t("budgetExecution") || "Исполнение бюджета"}</CardTitle>
+            </CardHeader>
+            <CardContent className="flex justify-center">
+              <BudgetExecutionGauge
+                executionPct={executionPct}
+                expenseExecPct={expExecPct}
+                revenueExecPct={revExecPct}
+                elapsedPct={elapsedPct}
+              />
+            </CardContent>
+          </Card>
+          <Card className="lg:col-span-2">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm">{t("chartPlanForecastActual") || "План vs Факт по категориям"}</CardTitle>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <BudgetCategoryBars categories={byCategory} />
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* ROW 4: Margin Summary (Revenue / Expenses / Margin grouped bars) */}
+      {(totalExpensePlanned > 0 || totalRevenuePlanned > 0) && (
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm">{t("sectionMargin").split("(")[0].trim() || "Маржа"}: {t("kpiPlan")} / {t("colForecast")} / {t("kpiActual")}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <BudgetMarginSummary
+              revenuePlan={totalRevenuePlanned}
+              revenueForecast={totalRevenueForecast}
+              revenueActual={totalRevenueActual}
+              expensePlan={totalExpensePlanned}
+              expenseForecast={totalExpenseForecast}
+              expenseActual={totalExpenseActual}
+              marginPlan={margin}
+              marginForecast={marginForecast}
+              marginActual={marginActual}
             />
           </CardContent>
         </Card>
