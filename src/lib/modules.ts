@@ -2,7 +2,7 @@ export type ModuleId =
   | "core" | "deals" | "leads" | "tasks" | "contracts" | "invoices"
   | "tickets" | "knowledge-base" | "portal" | "campaigns" | "omnichannel"
   | "journeys" | "workflows" | "profitability" | "budgeting" | "ai" | "reports"
-  | "currencies" | "custom-fields" | "events"
+  | "currencies" | "custom-fields" | "events" | "projects"
 
 interface ModuleDefinition {
   name: string
@@ -31,6 +31,7 @@ export const MODULE_REGISTRY: Record<ModuleId, ModuleDefinition> = {
   currencies:       { name: "Multi-Currency",   requires: ["core"] },
   "custom-fields":  { name: "Custom Fields",    requires: ["core"] },
   events:           { name: "Events",           requires: ["core"] },
+  projects:         { name: "Projects",         requires: ["tasks"] },
 }
 
 export const PLANS = {
@@ -51,7 +52,7 @@ export const PLANS = {
     modules: [
       "core", "deals", "leads", "tasks", "contracts", "invoices", "tickets",
       "knowledge-base", "campaigns", "omnichannel", "reports",
-      "workflows", "currencies", "events",
+      "workflows", "currencies", "events", "projects",
     ] as ModuleId[],
     limits: { users: 25, contacts: 10000 },
     price: 29,

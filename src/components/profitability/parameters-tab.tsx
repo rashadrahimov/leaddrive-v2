@@ -24,7 +24,7 @@ const FIELDS: FieldDef[] = [
   { key: "vatRate", label: "ƏDV Dərəcəsi", description: "Overhead xərclərinə tətbiq olunan ƏDV", type: "percentage", group: "VERGILER" },
   { key: "employerTaxRate", label: "Sosial Sığorta", description: "Brüt əmək haqqına əlavə vergi", type: "percentage", group: "VERGILER" },
   { key: "riskRate", label: "Risk Faizi", description: "F bölməsi cəminə ehtiyat kimi tətbiq olunur", type: "percentage", group: "NISBƏTLƏR" },
-  { key: "miscExpenseRate", label: "Müxtəlif Xərclər", description: "Alt cəmin fraksiyası kimi müxtəlif xərclər", type: "percentage", group: "NISBƏTLƏR" },
+  { key: "miscExpenseRate", label: "Ezamiyyət Faizi", description: "F bölməsi cəminə ezamiyyət xərcləri kimi tətbiq olunur", type: "percentage", group: "NISBƏTLƏR" },
   { key: "fixedOverheadRatio", label: "Sabit Overhead Payı", description: "Xərclərin bərabər bölüşdürülən hissəsi (istifadəçi başına deyil)", type: "percentage", group: "OVERHEAD PAYLAŞMASI" },
 ]
 

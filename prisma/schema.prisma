@@ -50,6 +50,8 @@ model Organization {
   budgetCostTypes   BudgetCostType[]
   budgetDepartments BudgetDepartment[]
   socialConversations SocialConversation[]
+  salesForecasts     SalesForecast[]
+  projects           Project[]
 
   @@map("organizations")
 }
@@ -174,6 +176,7 @@ model Company {
   contracts      Contract[]
   invoices       Invoice[]
   pricingProfiles PricingProfile[]
+  projects       Project[]
 
   @@index([organizationId])
   @@map("companies")
@@ -1548,6 +1551,7 @@ model BudgetDepartment {
   budgetActuals    BudgetActual[]
   forecastEntries  BudgetForecastEntry[]
   directionTemplates BudgetDirectionTemplate[]
+  salesForecasts     SalesForecast[]
 
   @@unique([organizationId, key])
   @@index([organizationId])
@@ -1712,6 +1716,25 @@ model BudgetDirectionTemplate {
   @@map("budget_direction_templates")
 }
 
+model SalesForecast {
+  id              String   @id @default(cuid())
+  organizationId  String
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  departmentId    String
+  budgetDept      BudgetDepartment @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  year            Int
+  month           Int      // 1-12
+  amount          Float    @default(0)  // monthly revenue forecast (excl. VAT, AZN)
+  notes           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([organizationId, departmentId, year, month])
+  @@index([organizationId])
+  @@index([organizationId, year])
+  @@map("sales_forecasts")
+}
+
 model SocialConversation {
   id              String   @id @default(cuid())
   organizationId  String
@@ -1741,3 +1764,114 @@ model SocialConversation {
   @@map("social_conversations")
 }
 
+// ═══════════════════════════════════════════════════
+// PROJECT MANAGEMENT (ERP Module)
+// ═══════════════════════════════════════════════════
+
+model Project {
+  id                   String    @id @default(cuid())
+  organizationId       String
+  organization         Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  name                 String
+  code                 String?   // e.g. "PRJ-001"
+  description          String?
+  status               String    @default("planning") // planning, active, on_hold, completed, cancelled
+  priority             String    @default("medium")   // low, medium, high, critical
+  startDate            DateTime?
+  endDate              DateTime?
+  actualStartDate      DateTime?
+  actualEndDate        DateTime?
+  budget               Float     @default(0)
+  actualCost           Float     @default(0)
+  currency             String    @default("AZN")
+  completionPercentage Int       @default(0)
+  managerId            String?   // userId of project manager
+  companyId            String?
+  company              Company?  @relation(fields: [companyId], references: [id])
+  dealId               String?
+  color                String    @default("#6366f1")
+  tags                 String[]  @default([])
+  createdBy            String?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  members              ProjectMember[]
+  milestones           ProjectMilestone[]
+  tasks                ProjectTask[]
+
+  @@index([organizationId])
+  @@index([organizationId, status])
+  @@index([companyId])
+  @@map("projects")
+}
+
+model ProjectMember {
+  id             String   @id @default(cuid())
+  organizationId String
+  projectId      String
+  project        Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  userId         String
+  role           String   @default("member") // manager, member, viewer
+  hourlyRate     Float?   @default(0)
+  hoursLogged    Float    @default(0)
+  joinedAt       DateTime @default(now())
+
+  @@unique([projectId, userId])
+  @@index([organizationId])
+  @@index([projectId])
+  @@map("project_members")
+}
+
+model ProjectMilestone {
+  id             String    @id @default(cuid())
+  organizationId String
+  projectId      String
+  project        Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  name           String
+  description    String?
+  dueDate        DateTime?
+  completedAt    DateTime?
+  status         String    @default("pending") // pending, in_progress, completed, overdue
+  color          String    @default("#6366f1")
+  sortOrder      Int       @default(0)
+  createdAt      DateTime  @default(now())
+
+  tasks          ProjectTask[]
+
+  @@index([projectId])
+  @@index([organizationId])
+  @@map("project_milestones")
+}
+
+model ProjectTask {
+  id              String    @id @default(cuid())
+  organizationId  String
+  projectId       String
+  project         Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  milestoneId     String?
+  milestone       ProjectMilestone? @relation(fields: [milestoneId], references: [id], onDelete: SetNull)
+  parentId        String?
+  parent          ProjectTask?  @relation("SubTasks", fields: [parentId], references: [id], onDelete: SetNull)
+  children        ProjectTask[] @relation("SubTasks")
+  title           String
+  description     String?
+  status          String    @default("todo") // todo, in_progress, review, done, cancelled
+  priority        String    @default("medium")
+  assignedTo      String?
+  dueDate         DateTime?
+  estimatedHours  Float?    @default(0)
+  actualHours     Float     @default(0)
+  completedAt     DateTime?
+  sortOrder       Int       @default(0)
+  tags            String[]  @default([])
+  createdBy       String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([projectId])
+  @@index([organizationId])
+  @@index([milestoneId])
+  @@index([parentId])
+  @@index([organizationId, assignedTo])
+  @@map("project_tasks")
+}

@@ -41,8 +41,8 @@ function CostBreakdown({ data }: { data: any }) {
   const adminOhItemsList = [
     ...adminOhItems.map((o: any) => ({ label: o.label, value: o.monthlyAmount, isSalary: false })),
     { label: "_separator", value: 0, isSalary: false },
-    ...boEmployees.map((e: any) => ({ label: `BackOffice (${e.count} ppl.)`, value: e.totalLaborCost, isSalary: true })),
-    ...grcEmployees.map((e: any) => ({ label: `Overhead employees (${e.count} ppl.)`, value: e.totalLaborCost, isSalary: true })),
+    ...boEmployees.map((e: any) => ({ label: t("backOfficeStaff", { count: e.count }), value: e.totalLaborCost, isSalary: true })),
+    ...grcEmployees.map((e: any) => ({ label: t("overheadEmployees", { count: e.count }), value: e.totalLaborCost, isSalary: true })),
   ]
 
   const sections = [
@@ -73,7 +73,7 @@ function CostBreakdown({ data }: { data: any }) {
       items: (data.employees || [])
         .filter((e: any) => e.department !== "BackOffice" && !e.inOverhead)
         .map((e: any) => ({
-          label: `${e.department} — ${e.position} (${e.count} ppl.)`,
+          label: `${e.department} — ${e.position} (${t("staffCount", { count: e.count })})`,
           value: e.totalLaborCost,
         })),
       note: null,
@@ -81,7 +81,7 @@ function CostBreakdown({ data }: { data: any }) {
     {
       key: "misc",
       color: PIE_COLORS[3],
-      label: `Travel ${((data.params?.miscExpenseRate || 0.01) * 100).toFixed(0)}%`,
+      label: `${t("miscShort")} ${((data.params?.miscExpenseRate || 0.01) * 100).toFixed(0)}%`,
       value: data.misc,
       pct: ((data.misc / data.grandTotalF) * 100).toFixed(1),
       items: [],
@@ -90,7 +90,7 @@ function CostBreakdown({ data }: { data: any }) {
     {
       key: "risk",
       color: PIE_COLORS[4],
-      label: `Risk ${((data.params?.riskRate || 0.05) * 100).toFixed(0)}%`,
+      label: `${t("riskShort")} ${((data.params?.riskRate || 0.05) * 100).toFixed(0)}%`,
       value: data.riskCost,
       pct: ((data.riskCost / data.grandTotalF) * 100).toFixed(1),
       items: [],
@@ -147,19 +147,19 @@ function CostBreakdown({ data }: { data: any }) {
 
       <div className="border-t mt-3 pt-3 space-y-1.5 px-3">
         <div className="flex justify-between font-medium">
-          <span>Total Cost (F)</span>
+          <span>{t("totalCostF")}</span>
           <span className="font-mono tabular-nums">{fmt(data.grandTotalF)}</span>
         </div>
         <div className="flex justify-between font-semibold text-blue-600">
-          <span>Full Service Cost (G)</span>
+          <span>{t("fullServiceCostG")}</span>
           <span className="font-mono tabular-nums">{fmt(data.grandTotalG)}</span>
         </div>
       </div>
 
       <div className="px-3 mt-3 pt-3 border-t text-[10px] text-muted-foreground space-y-0.5">
-        <p><strong>Sec F</strong> — Min. cost: Admin OH + Tech + IT/InfoSec + Travel + Risk</p>
-        <p><strong>Sec G</strong> — Full cost: All departments + admin allocation + tech direct</p>
-        <p><strong>Allocation:</strong> {((data.params?.fixedOverheadRatio || 0.25) * 100).toFixed(0)}% fixed + {((1 - (data.params?.fixedOverheadRatio || 0.25)) * 100).toFixed(0)}% variable</p>
+        <p><strong>Sec F</strong> — {t("secFDesc")}</p>
+        <p><strong>Sec G</strong> — {t("secGDesc")}</p>
+        <p><strong>{t("allocation")}:</strong> {((data.params?.fixedOverheadRatio || 0.25) * 100).toFixed(0)}% {t("fixed")} + {((1 - (data.params?.fixedOverheadRatio || 0.25)) * 100).toFixed(0)}% {t("variable")}</p>
       </div>
     </div>
   )
@@ -191,7 +191,7 @@ export default function ProfitabilityPage() {
         </h1>
         <Card>
           <CardContent className="py-12 text-center text-muted-foreground">
-            Failed to load data. Check parameters and overheads.
+            {t("failedToLoad")}
           </CardContent>
         </Card>
       </div>
@@ -232,8 +232,8 @@ export default function ProfitabilityPage() {
     return {
       name: SERVICE_LABELS[svc],
       svc,
-      Cost: Math.round(cost),
-      Revenue: Math.round(revenue),
+      cost: Math.round(cost),
+      revenue: Math.round(revenue),
       balance: Math.round(revenue - cost),
     }
   })
@@ -260,12 +260,12 @@ export default function ProfitabilityPage() {
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
-          <TabsTrigger value="analytics">Analytics</TabsTrigger>
-          <TabsTrigger value="services">Services</TabsTrigger>
-          <TabsTrigger value="clients">Clients</TabsTrigger>
-          <TabsTrigger value="overhead">Overhead</TabsTrigger>
-          <TabsTrigger value="employees">Employees</TabsTrigger>
-          <TabsTrigger value="parameters">Parameters</TabsTrigger>
+          <TabsTrigger value="analytics">{t("tabAnalytics")}</TabsTrigger>
+          <TabsTrigger value="services">{t("tabServices")}</TabsTrigger>
+          <TabsTrigger value="clients">{t("tabClients")}</TabsTrigger>
+          <TabsTrigger value="overhead">{t("tabOverhead")}</TabsTrigger>
+          <TabsTrigger value="employees">{t("tabEmployees")}</TabsTrigger>
+          <TabsTrigger value="parameters">{t("tabParameters")}</TabsTrigger>
         </TabsList>
 
         {/* ═══════════ ANALYTICS TAB ═══════════ */}
@@ -309,7 +309,7 @@ export default function ProfitabilityPage() {
             {/* Pie chart — cost composition + breakdown */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-base">Cost Composition</CardTitle>
+                <CardTitle className="text-base">{t("costComposition")}</CardTitle>
                 <p className="text-xs text-muted-foreground">Sec G: {fmt(grandTotalG)}</p>
               </CardHeader>
               <CardContent>
@@ -354,7 +354,7 @@ export default function ProfitabilityPage() {
             {/* Horizontal bar chart — service cost vs revenue */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-base">Service Cost vs Revenue</CardTitle>
+                <CardTitle className="text-base">{t("serviceCostVsRevenue")}</CardTitle>
               </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={300}>
@@ -363,8 +363,8 @@ export default function ProfitabilityPage() {
                     <YAxis dataKey="name" type="category" width={90} className="text-xs" />
                     <Tooltip formatter={((value: number) => fmt(value)) as any} />
                     <Legend />
-                    <Bar dataKey="Cost" fill="#ef4444" radius={[0, 4, 4, 0]} />
-                    <Bar dataKey="Revenue" fill="#22c55e" radius={[0, 4, 4, 0]} />
+                    <Bar dataKey="cost" name={t("cost")} fill="#ef4444" radius={[0, 4, 4, 0]} />
+                    <Bar dataKey="revenue" name={t("revenue")} fill="#22c55e" radius={[0, 4, 4, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
                 {/* Balance summary below chart */}
@@ -425,7 +425,7 @@ export default function ProfitabilityPage() {
                     <div className="flex items-center justify-between">
                       <CardTitle className="text-base">{SERVICE_LABELS[svc]}</CardTitle>
                       <Badge variant={isProfit ? "default" : "destructive"} className="text-xs">
-                        {isProfit ? "Profit" : "Loss"}
+                        {isProfit ? t("profit") : t("loss")}
                       </Badge>
                     </div>
                   </CardHeader>
@@ -433,7 +433,7 @@ export default function ProfitabilityPage() {
                     {/* Cost bar */}
                     <div className="space-y-1">
                       <div className="flex justify-between text-xs">
-                        <span className="text-muted-foreground">Cost</span>
+                        <span className="text-muted-foreground">{t("cost")}</span>
                         <span className="font-medium">{fmt(cost)}</span>
                       </div>
                       <div className="h-2 rounded-full bg-muted overflow-hidden">
@@ -446,7 +446,7 @@ export default function ProfitabilityPage() {
                     {/* Revenue bar */}
                     <div className="space-y-1">
                       <div className="flex justify-between text-xs">
-                        <span className="text-muted-foreground">Revenue</span>
+                        <span className="text-muted-foreground">{t("revenue")}</span>
                         <span className="font-medium">{fmt(revenue)}</span>
                       </div>
                       <div className="h-2 rounded-full bg-muted overflow-hidden">
@@ -462,19 +462,19 @@ export default function ProfitabilityPage() {
                         <div className={`text-sm font-bold ${isProfit ? "text-green-600" : "text-red-600"}`}>
                           {marginPct.toFixed(0)}%
                         </div>
-                        <div className="text-[10px] text-muted-foreground">MARGIN</div>
+                        <div className="text-[10px] text-muted-foreground">{t("margin")}</div>
                       </div>
                       <div>
                         <div className="text-sm font-bold">{headcount}</div>
-                        <div className="text-[10px] text-muted-foreground">STAFF</div>
+                        <div className="text-[10px] text-muted-foreground">{t("staff")}</div>
                       </div>
                       <div>
                         <div className="text-sm font-bold">{clients}</div>
-                        <div className="text-[10px] text-muted-foreground">CLIENTS</div>
+                        <div className="text-[10px] text-muted-foreground">{t("clients")}</div>
                       </div>
                       <div>
                         <div className="text-sm font-bold">{costPerEmp > 0 ? fmt(costPerEmp) : "-"}</div>
-                        <div className="text-[10px] text-muted-foreground">COST/STAFF</div>
+                        <div className="text-[10px] text-muted-foreground">{t("costPerStaff")}</div>
                       </div>
                     </div>
                   </CardContent>

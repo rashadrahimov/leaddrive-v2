@@ -11,7 +11,7 @@ import {
   Ticket, BookOpen, BarChart3, Mail, MessageSquare, Zap,
   Settings, ChevronLeft, DollarSign, Target, Send,
   TrendingUp, Filter, Workflow, Server, Bell, CalendarDays, Headphones, Package,
-  Lock, PiggyBank,
+  Lock, PiggyBank, FolderKanban,
 } from "lucide-react"
 import { useState } from "react"
 import { Logo } from "@/components/logo"
@@ -54,6 +54,7 @@ const navItems: NavItem[] = [
   { module: "profitability", href: "/pricing", icon: DollarSign, tKey: "pricing", group: "Analytics" },
   { module: "reports", href: "/reports", icon: BarChart3, tKey: "reports", group: "Analytics" },
   { module: "ai", href: "/ai-command-center", icon: Brain, tKey: "aiCenter", group: "Analytics" },
+  { module: "projects", href: "/projects", icon: FolderKanban, tKey: "projects", group: "ERP" },
   { module: "workflows", href: "/settings/workflows", icon: Zap, tKey: "workflows", group: "Settings" },
   { module: "core", href: "/settings/users", icon: Users, tKey: "users", group: "Settings" },
   { module: "core", href: "/settings/smtp-settings", icon: Server, tKey: "smtp", group: "Settings" },
@@ -67,6 +68,7 @@ const GROUP_ICON_BG: Record<string, string> = {
   Communication: "bg-blue-500 text-white",
   Support: "bg-emerald-500 text-white",
   Analytics: "bg-purple-500 text-white",
+  ERP: "bg-indigo-500 text-white",
   Settings: "bg-slate-500 text-white",
 }
 
@@ -76,6 +78,7 @@ const GROUP_LABEL_COLORS: Record<string, string> = {
   Communication: "text-blue-400",
   Support: "text-emerald-400",
   Analytics: "text-purple-400",
+  ERP: "text-indigo-400",
   Settings: "text-slate-400",
 }
 
@@ -85,6 +88,7 @@ const GROUP_ACTIVE_BG: Record<string, string> = {
   Communication: "bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300",
   Support: "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300",
   Analytics: "bg-purple-50 dark:bg-purple-500/10 text-purple-700 dark:text-purple-300",
+  ERP: "bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-300",
   Settings: "bg-slate-100 dark:bg-slate-500/10 text-slate-700 dark:text-slate-300",
 }
 
@@ -94,6 +98,7 @@ const GROUP_ACTIVE_BAR: Record<string, string> = {
   Communication: "before:bg-blue-500",
   Support: "before:bg-emerald-500",
   Analytics: "before:bg-purple-500",
+  ERP: "before:bg-indigo-500",
   Settings: "before:bg-slate-500",
 }
 
