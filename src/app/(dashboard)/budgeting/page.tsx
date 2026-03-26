@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useMemo, useCallback, useRef } from "react"
+import React, { useState, useMemo, useRef } from "react"
 import { useTranslations } from "next-intl"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ColorStatCard } from "@/components/color-stat-card"
@@ -46,8 +46,6 @@ import {
   useUpsertBudgetForecast,
   useAINarrative,
   useSyncActuals,
-  useBudgetChangelog,
-  useBudgetSnapshot,
   useBudgetTemplates,
   useCreateBudgetTemplate,
   useUpdateBudgetTemplate,
@@ -67,8 +65,7 @@ import { BudgetWaterfallChart } from "@/components/budget-waterfall-chart"
 import { BudgetExecutionGauge } from "@/components/budget-execution-gauge"
 import { BudgetCategoryBars } from "@/components/budget-category-bars"
 import { BudgetMarginSummary } from "@/components/budget-margin-summary"
-import { BudgetTimeMachine } from "@/components/budget-time-machine"
-import { getChangedCells, getFlashClass } from "@/lib/budgeting/time-machine-utils"
+import { BudgetChangeHistory } from "@/components/budget-change-history"
 import { InfoHint } from "@/components/info-hint"
 
 const PIE_COLORS = BUDGET_COLORS.pie
@@ -395,53 +392,10 @@ function AddActualForm({ planId, existingCategories }: { planId: string; existin
 
 function WorkspaceTab({ planId, onNavigateTab }: { planId: string; onNavigateTab?: (tab: string) => void }) {
   const t = useTranslations("budgeting")
-  const { data: liveAnalytics, isLoading: analyticsLoading } = useBudgetAnalytics(planId)
-  const { data: liveLines = [], isLoading: linesLoading } = useBudgetLines(planId)
-  const { data: liveActuals = [] } = useBudgetActuals(planId)
+  const { data: analytics, isLoading: analyticsLoading } = useBudgetAnalytics(planId)
+  const { data: lines = [], isLoading: linesLoading } = useBudgetLines(planId)
+  const { data: actuals = [] } = useBudgetActuals(planId)
 
-  // Time Machine state
-  const [tmActive, setTmActive] = useState(false)
-  const [tmIndex, setTmIndex] = useState(0)
-  const { data: changelogData } = useBudgetChangelog(planId)
-  const timePoints = changelogData?.timePoints ?? []
-  const tmTimestamp = tmActive && timePoints[tmIndex] ? timePoints[tmIndex].timestamp + ":59.999Z" : null
-  const { data: snapshotData, isLoading: snapshotLoading } = useBudgetSnapshot(planId, tmTimestamp)
-  const prevSnapshotRef = useRef<{ lines: any[]; actuals: any[] }>({ lines: [], actuals: [] })
-  const [flashKey, setFlashKey] = useState(0)
-
-  // Override data when Time Machine is active
-  const analytics = tmActive && snapshotData ? snapshotData.analytics : liveAnalytics
-  const lines: any[] = tmActive && snapshotData ? snapshotData.lines : liveLines
-  const actuals: any[] = tmActive && snapshotData ? snapshotData.actuals : liveActuals
-
-  // Track changed cells for heatmap
-  const changedCells = useMemo(() => {
-    if (!tmActive || !snapshotData) return new Map()
-    const prev = prevSnapshotRef.current
-    const changed = getChangedCells(prev.lines, snapshotData.lines, prev.actuals, snapshotData.actuals)
-    prevSnapshotRef.current = { lines: snapshotData.lines, actuals: snapshotData.actuals }
-    return changed
-  }, [tmActive, snapshotData])
-
-  const handleTmActivate = useCallback(() => {
-    setTmActive(true)
-    setTmIndex(timePoints.length - 1)
-    prevSnapshotRef.current = { lines: liveLines as any[], actuals: liveActuals as any[] }
-  }, [timePoints.length, liveLines, liveActuals])
-
-  const handleTmDeactivate = useCallback(() => {
-    setTmActive(false)
-    setTmIndex(0)
-    prevSnapshotRef.current = { lines: [], actuals: [] }
-  }, [])
-
-  const handleTmIndexChange = useCallback((idx: number) => {
-    if (snapshotData) {
-      prevSnapshotRef.current = { lines: snapshotData.lines, actuals: snapshotData.actuals }
-    }
-    setTmIndex(idx)
-    setFlashKey(k => k + 1)
-  }, [snapshotData])
   const updateLine = useUpdateBudgetLine()
   const createLine = useCreateBudgetLine()
   const deleteLine = useDeleteBudgetLine()
@@ -631,18 +585,14 @@ function WorkspaceTab({ planId, onNavigateTab }: { planId: string; onNavigateTab
 
     const rowMaterial = !showMaterialOnly || isMaterial(line)
 
-    // Time Machine heatmap flash
-    const planFlash = changedCells.get(`line:${line.id}:plannedAmount`)
-    const actualFlash = changedCells.get(`actual:${line.category}||${line.lineType}`)
-
     return (
-      <tr key={`${line.id}-${flashKey}`} className={`border-t border-border/50 hover:bg-muted/30 group ${!rowMaterial ? "opacity-40" : ""}`}>
+      <tr key={line.id} className={`border-t border-border/50 hover:bg-muted/30 group ${!rowMaterial ? "opacity-40" : ""}`}>
         {/* Category */}
         <td className="px-3 py-2 text-sm font-medium">{line.category}</td>
         {/* Department */}
         <td className="px-2 py-2 text-xs text-muted-foreground">{line.department || "—"}</td>
         {/* Plan - editable */}
-        <td className={`px-2 py-2 text-right ${planFlash ? getFlashClass(planFlash) : ""}`}>
+        <td className="px-2 py-2 text-right">
           {editCell?.id === line.id && editCell?.field === "plannedAmount" ? (
             <Input type="number" className="h-7 w-24 text-right text-xs ml-auto" value={editValue} autoFocus
               onChange={e => setEditValue(e.target.value)}
@@ -650,14 +600,14 @@ function WorkspaceTab({ planId, onNavigateTab }: { planId: string; onNavigateTab
               onKeyDown={e => { if (e.key === "Enter") saveEdit() }} />
           ) : (
             <button type="button" className="font-mono text-sm cursor-pointer hover:bg-purple-50 dark:hover:bg-purple-900/20 px-1 rounded border border-transparent hover:border-purple-300 dark:hover:border-purple-700 transition-colors"
-              onClick={() => !tmActive && startEdit(line.id, "plannedAmount", line.plannedAmount)}>
+              onClick={() => startEdit(line.id, "plannedAmount", line.plannedAmount)}>
               {fmt(line.plannedAmount)}
               <Pencil className="h-2.5 w-2.5 inline ml-1 opacity-0 group-hover:opacity-40" />
             </button>
           )}
         </td>
         {/* Fact — clickable for drill-down */}
-        <td className={`px-2 py-2 text-right ${actualFlash ? getFlashClass(actualFlash) : ""}`}>
+        <td className="px-2 py-2 text-right">
           <div className="flex items-center justify-end gap-1">
             <button type="button"
               className={`font-mono text-sm cursor-pointer px-1 rounded hover:underline ${line.isAutoActual ? "text-blue-600 dark:text-blue-400" : "text-[#065f46] dark:text-[#6ee7b7]"}`}
@@ -690,13 +640,11 @@ function WorkspaceTab({ planId, onNavigateTab }: { planId: string; onNavigateTab
         </td>
         {/* Actions */}
         <td className="px-2 py-2 text-center">
-          {!tmActive && (
-            <button onClick={() => { if (confirm(t("confirmDeleteLine") + " «" + line.category + "» " + t("confirmDeleteLineSuffix"))) deleteLine.mutate({ id: line.id, planId }) }}
-              title={t("hintDeleteLine")}
-              className="p-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20 text-muted-foreground hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity">
-              <Trash2 className="h-3.5 w-3.5" />
-            </button>
-          )}
+          <button onClick={() => { if (confirm(t("confirmDeleteLine") + " «" + line.category + "» " + t("confirmDeleteLineSuffix"))) deleteLine.mutate({ id: line.id, planId }) }}
+            title={t("hintDeleteLine")}
+            className="p-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20 text-muted-foreground hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity">
+            <Trash2 className="h-3.5 w-3.5" />
+          </button>
         </td>
       </tr>
     )
@@ -1128,16 +1076,8 @@ function WorkspaceTab({ planId, onNavigateTab }: { planId: string; onNavigateTab
 
   return (
     <div className="space-y-6">
-      {/* ROW 0: Time Machine */}
-      <BudgetTimeMachine
-        timePoints={timePoints}
-        isActive={tmActive}
-        isLoading={snapshotLoading}
-        currentIndex={tmIndex}
-        onActivate={handleTmActivate}
-        onDeactivate={handleTmDeactivate}
-        onIndexChange={handleTmIndexChange}
-      />
+      {/* ROW 0: Budget Change History */}
+      <BudgetChangeHistory planId={planId} />
 
       {/* ROW 1: 3 KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">

@@ -404,22 +404,40 @@ export function useSnapshotActuals() {
 // TIME MACHINE
 // ═══════════════════════════════════════════════════
 
+export interface ChangeLogItem {
+  id: string
+  action: string
+  entityType: string
+  entityId: string
+  field: string | null
+  oldValue: any
+  newValue: any
+  category: string | null
+  userName: string
+  createdAt: string
+}
+
 export function useBudgetChangelog(planId?: string) {
   const orgId = useOrgId()
   return useQuery({
     queryKey: ["budgeting", "changelog", planId],
-    queryFn: () => apiFetch<{ changes: any[]; timePoints: Array<{ timestamp: string; changeCount: number; summary: string }> }>(`/api/budgeting/changelog?planId=${planId}`, orgId),
+    queryFn: () => apiFetch<{ items: ChangeLogItem[]; total: number }>(`/api/budgeting/changelog?planId=${planId}`, orgId),
     enabled: !!planId && !!orgId,
-    staleTime: 30_000,
+    staleTime: 10_000,
   })
 }
 
-export function useBudgetSnapshot(planId?: string, timestamp?: string | null) {
+export function useUndoBudgetChange() {
   const orgId = useOrgId()
-  return useQuery({
-    queryKey: ["budgeting", "snapshot", planId, timestamp],
-    queryFn: () => apiFetch<{ lines: any[]; actuals: any[]; forecasts: any[]; analytics: any; reconstructedAt: string }>(`/api/budgeting/snapshot?planId=${planId}&at=${encodeURIComponent(timestamp!)}`, orgId),
-    enabled: !!planId && !!orgId && !!timestamp,
-    staleTime: 60_000,
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (changeId: string) =>
+      apiFetch<{ reverted: string; to: any }>("/api/budgeting/changelog", orgId, {
+        method: "POST",
+        body: JSON.stringify({ changeId }),
+      }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["budgeting"] })
+    },
   })
 }
