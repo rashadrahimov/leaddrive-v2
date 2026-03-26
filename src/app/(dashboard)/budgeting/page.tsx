@@ -1381,20 +1381,6 @@ function WorkspaceTab({ planId }: { planId: string }) {
         )}
       </div>
 
-      {/* Waterfall Chart */}
-      <Card>
-        <CardHeader><CardTitle className="text-sm flex items-center gap-1.5">Waterfall: {t("kpiPlan")} → {t("kpiForecast")} → {t("colActual")} → {t("kpiProjection")} <InfoHint text={t("hintWaterfall")} size={14} /></CardTitle></CardHeader>
-        <CardContent>
-          <BudgetWaterfallChart
-            totalPlanned={totalPlanned}
-            totalForecast={totalForecast}
-            totalActual={totalActual}
-            totalVariance={totalVariance}
-            yearEndProjection={yearEndProjection}
-          />
-        </CardContent>
-      </Card>
-
       {/* Drill-down Sheet for fact values */}
       <Sheet open={!!drillDownLine} onOpenChange={open => { if (!open) setDrillDownLine(null) }}>
         <SheetContent>
