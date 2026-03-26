@@ -389,7 +389,7 @@ function AddActualForm({ planId, existingCategories }: { planId: string; existin
 
 // ─── Workspace Tab (G-01 through G-09) ───────────────────────────────────────
 
-function WorkspaceTab({ planId }: { planId: string }) {
+function WorkspaceTab({ planId, onNavigateTab }: { planId: string; onNavigateTab?: (tab: string) => void }) {
   const t = useTranslations("budgeting")
   const { data: analytics, isLoading: analyticsLoading } = useBudgetAnalytics(planId)
   const { data: lines = [], isLoading: linesLoading } = useBudgetLines(planId)
@@ -421,6 +421,10 @@ function WorkspaceTab({ planId }: { planId: string }) {
   // Variance note dialog
   const [varianceNoteLine, setVarianceNoteLine] = useState<BudgetLine | null>(null)
   const [varianceNoteText, setVarianceNoteText] = useState("")
+
+  // Number format toggle — shadows outer fmt() within WorkspaceTab
+  const [compactNumbers, setCompactNumbers] = useState(false)
+  const fmt = compactNumbers ? (n: number) => fmtK(n) + " ₼" : (n: number) => Math.round(n).toLocaleString() + " ₼"
 
   // New actual form for expand
   const [newActual, setNewActual] = useState({ amount: "", description: "", date: "" })
@@ -1223,6 +1227,10 @@ function WorkspaceTab({ planId }: { planId: string }) {
           onClick={() => setShowMaterialOnly(!showMaterialOnly)} title={t("hintFilterMaterial")}>
           {t("filterMaterial")}
         </Button>
+        <Button size="sm" variant={compactNumbers ? "default" : "outline"} className="h-8 text-xs font-mono"
+          onClick={() => setCompactNumbers(!compactNumbers)} title="Сокращённый формат чисел (K/M)">
+          {compactNumbers ? "1.2M" : "1,234"}
+        </Button>
       </div>
 
       {/* AI Narrative */}
@@ -1534,6 +1542,7 @@ function OverviewTab({ planId }: { planId: string }) {
               totalActual={totalActual}
               totalVariance={totalVariance}
               yearEndProjection={yearEndProjection}
+              onBarClick={() => onNavigateTab?.("pl")}
             />
           </CardContent>
         </Card>
@@ -1595,7 +1604,7 @@ function OverviewTab({ planId }: { planId: string }) {
           <CardContent className="p-0">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
-                <thead className="bg-[#1a3050] border-b-2 border-white/10">
+                <thead className="sticky top-0 z-10 bg-[#1a3050] border-b-2 border-white/10">
                   <tr>
                     <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-white/90">{t("colCategory")}</th>
                     <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-white/70">{t("colType")}</th>
@@ -1640,7 +1649,7 @@ function OverviewTab({ planId }: { planId: string }) {
           <CardContent className="p-0">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
-                <thead className="bg-[#1a3050] border-b-2 border-white/10">
+                <thead className="sticky top-0 z-10 bg-[#1a3050] border-b-2 border-white/10">
                   <tr>
                     <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-white/90">{t("colDepartment")}</th>
                     <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-sky-300">{t("colBudget")}</th>
@@ -2223,7 +2232,7 @@ function ComparisonTab() {
             <CardContent className="p-0">
               <div className="overflow-x-auto">
                 <table className="w-full text-xs">
-                  <thead className="bg-[#1a3050] border-b-2 border-white/10">
+                  <thead className="sticky top-0 z-10 bg-[#1a3050] border-b-2 border-white/10">
                     <tr>
                       <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-white/90 sticky left-0 bg-[#1a3050]">{t("colCategory")}</th>
                       {selectedIds.map((id, i) => {
@@ -2372,7 +2381,7 @@ function PLTab({ planId }: { planId: string }) {
   const renderSection = (title: string, rows: typeof byCategory, sectionId: string, isCalculated = false, calcPlanned = 0, calcActual = 0, grouped?: { groups: { parent: string; children: typeof byCategory }[]; standalone: typeof byCategory }) => {
     const isCollapsed = collapsed.has(sectionId)
     return (
-      <div key={sectionId} className="border border-border rounded-lg overflow-hidden mb-3">
+      <div key={sectionId} className="border border-border rounded-lg overflow-x-auto mb-3">
         <div
           className={`flex items-center justify-between px-4 py-3 cursor-pointer ${isCalculated ? "bg-blue-50 dark:bg-blue-950/30" : "bg-muted/40"}`}
           onClick={() => toggleCollapse(sectionId)}
@@ -2390,7 +2399,7 @@ function PLTab({ planId }: { planId: string }) {
         </div>
         {!isCollapsed && !isCalculated && (
           <table className="w-full text-sm">
-            <thead className="bg-[#1a3050] border-b-2 border-white/10">
+            <thead className="sticky top-0 z-10 bg-[#1a3050] border-b-2 border-white/10">
               <tr>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-white/90">{t("colCategory")}</th>
                 <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-sky-300">{t("colBudget")}</th>
@@ -2529,7 +2538,7 @@ function PLTab({ planId }: { planId: string }) {
         </div>
         {totalRevenuePlanned > 0 && (
           <div className="px-4 pb-2 text-xs text-muted-foreground">
-            Gross Margin: {((grossProfitPlanned / totalRevenuePlanned) * 100).toFixed(1)}% (план) / {totalRevenueActual > 0 ? ((grossProfitActual / totalRevenueActual) * 100).toFixed(1) : "—"}% (факт)
+            <span className="inline-flex items-center gap-1">Gross Margin <InfoHint text="Gross Margin = (Revenue − COGS) / Revenue × 100%. Показывает долю выручки после вычета прямых затрат." size={12} />:</span> {((grossProfitPlanned / totalRevenuePlanned) * 100).toFixed(1)}% (план) / {totalRevenueActual > 0 ? ((grossProfitActual / totalRevenueActual) * 100).toFixed(1) : "—"}% (факт)
           </div>
         )}
       </div>
@@ -2551,7 +2560,7 @@ function PLTab({ planId }: { planId: string }) {
             </div>
             {totalRevenuePlanned > 0 && (
               <div className="px-4 pb-2 text-xs text-muted-foreground">
-                EBITDA Margin: {((opProfitPlanned / totalRevenuePlanned) * 100).toFixed(1)}% (план) / {totalRevenueActual > 0 ? ((opProfitActual / totalRevenueActual) * 100).toFixed(1) : "—"}% (факт)
+                <span className="inline-flex items-center gap-1">EBITDA Margin <InfoHint text="EBITDA Margin = (Revenue − COGS − OpEx) / Revenue × 100%. Показывает операционную рентабельность до вычета амортизации, процентов и налогов." size={12} />:</span> {((opProfitPlanned / totalRevenuePlanned) * 100).toFixed(1)}% (план) / {totalRevenueActual > 0 ? ((opProfitActual / totalRevenueActual) * 100).toFixed(1) : "—"}% (факт)
               </div>
             )}
           </div>
@@ -3392,7 +3401,7 @@ export default function BudgetingPage() {
             </TabsList>
 
             <TabsContent value="workspace">
-              <WorkspaceTab planId={resolvedPlanId} />
+              <WorkspaceTab planId={resolvedPlanId} onNavigateTab={setActiveTab} />
             </TabsContent>
             <TabsContent value="pl">
               <PLTab planId={resolvedPlanId} />
