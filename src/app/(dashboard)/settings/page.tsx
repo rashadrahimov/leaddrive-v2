@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { ChevronRight, CreditCard, Users, Radio, Zap, LayoutDashboard, Globe, Lock, FileText, Clock, Shield, FileSpreadsheet, Grid3X3 } from "lucide-react"
+import { ChevronRight, CreditCard, Users, Radio, Zap, LayoutDashboard, Globe, Lock, FileText, Clock, Shield, FileSpreadsheet } from "lucide-react"
 import { useTranslations } from "next-intl"
 
 export default function SettingsPage() {
@@ -20,8 +20,7 @@ export default function SettingsPage() {
     { icon: Globe, title: t("currencies"), description: t("currenciesDesc"), href: "/settings/currencies" },
     { icon: Clock, title: t("slaPolicies"), description: t("slaPoliciesDesc"), href: "/settings/sla-policies" },
     { icon: Shield, title: t("portalUsers"), description: t("portalUsersDesc"), href: "/settings/portal-users" },
-    { icon: Grid3X3, title: "Настройка бюджета", description: "Типы затрат и департаменты для матричного бюджета", href: "/settings/budget-config" },
-    { icon: Lock, title: t("security"), description: t("securityDesc"), href: "/settings/security" },
+{ icon: Lock, title: t("security"), description: t("securityDesc"), href: "/settings/security" },
     { icon: FileText, title: t("auditLog"), description: t("auditLogDesc"), href: "/settings/audit-log" },
   ]
 

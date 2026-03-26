@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input"
 import {
   PiggyBank, Plus, Trash2, Pencil, Loader2, TrendingUp, TrendingDown,
   CheckCircle, AlertCircle, BarChart2, DollarSign, CalendarRange, Link2,
-  ChevronDown, ChevronRight, MessageSquare, Target, Brain, Sparkles,
+  ChevronDown, ChevronRight, MessageSquare, Target, Brain, Sparkles, Settings2,
 } from "lucide-react"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
@@ -61,6 +61,7 @@ import {
   type BudgetDirectionTemplate,
 } from "@/lib/budgeting/types"
 import { COST_MODEL_KEY_OPTIONS, TEMPLATE_CATEGORY_MAP } from "@/lib/budgeting/cost-model-map"
+import { BudgetConfigTab } from "@/components/budget-config-tab"
 import { BudgetWaterfallChart } from "@/components/budget-waterfall-chart"
 import { BudgetExecutionGauge } from "@/components/budget-execution-gauge"
 import { BudgetCategoryBars } from "@/components/budget-category-bars"
@@ -3445,6 +3446,7 @@ export default function BudgetingPage() {
               <TabsTrigger value="comparison" className="gap-1">{t("tabComparison")} <InfoHint text={t("hintTabComparison")} size={12} /></TabsTrigger>
               <TabsTrigger value="plans" className="gap-1">{t("tabPlans")} <InfoHint text={t("hintTabPlans")} size={12} /></TabsTrigger>
               <TabsTrigger value="templates" className="gap-1">{t("tabTemplates")} <InfoHint text={t("hintTabTemplates")} size={12} /></TabsTrigger>
+              <TabsTrigger value="config" className="gap-1"><Settings2 className="h-3.5 w-3.5" /> Настройка</TabsTrigger>
             </TabsList>
 
             <TabsContent value="workspace">
@@ -3464,6 +3466,9 @@ export default function BudgetingPage() {
             </TabsContent>
             <TabsContent value="templates">
               <TemplatesTab />
+            </TabsContent>
+            <TabsContent value="config">
+              <BudgetConfigTab />
             </TabsContent>
           </Tabs>
         </>
