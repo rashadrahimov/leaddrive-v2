@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
     }
 
     if (targetService && !isValidServiceType(targetService)) {
-      return NextResponse.json({ error: `Invalid targetService "${targetService}". Must be one of: permanent_it, infosec, erp, grc, projects, helpdesk, cloud` }, { status: 400 })
+      return NextResponse.json({ error: `Invalid targetService "${targetService}". Must be a valid service type.` }, { status: 400 })
     }
 
     const item = await prisma.overheadCost.create({

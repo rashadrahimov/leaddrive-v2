@@ -13,6 +13,7 @@ import {
   useDeleteOverhead,
 } from "@/lib/cost-model/hooks"
 import type { OverheadItem } from "@/lib/cost-model/types"
+import { OVERHEAD_CATEGORIES } from "@/lib/cost-model/types"
 
 const SERVICE_OPTIONS = [
   { value: "", label: "None (Admin)" },
@@ -23,6 +24,7 @@ const SERVICE_OPTIONS = [
   { value: "grc", label: "GRC" },
   { value: "projects", label: "PM" },
   { value: "cloud", label: "Cloud" },
+  { value: "waf", label: "WAF" },
 ]
 
 export function OverheadTab() {
@@ -67,7 +69,7 @@ export function OverheadTab() {
     try {
       await updateMutation.mutateAsync({
         id: editingId,
-        category: editForm.category,
+        category: editForm.category || OVERHEAD_CATEGORIES[0],
         label: editForm.label,
         amount: editForm.amount,
         isAnnual: editForm.isAnnual,
@@ -101,9 +103,10 @@ export function OverheadTab() {
   const addItem = async () => {
     setError(null)
     try {
+      const defaultCategory = OVERHEAD_CATEGORIES[0]
       const created: any = await createMutation.mutateAsync({
-        category: "new_item",
-        label: "New Cost Item",
+        category: defaultCategory,
+        label: "Yeni xərc",
         amount: 0,
         isAnnual: false,
         hasVat: false,
@@ -115,8 +118,8 @@ export function OverheadTab() {
         setEditingId(String(created.id))
         setEditForm({
           ...created,
-          category: "new_item",
-          label: "New Cost Item",
+          category: defaultCategory,
+          label: "Yeni xərc",
           amount: 0,
           isAnnual: false,
           hasVat: false,
@@ -192,6 +195,7 @@ export function OverheadTab() {
               <thead>
                 <tr className="border-b text-left text-muted-foreground">
                   <th className="pb-2 pr-4">Label</th>
+                  <th className="pb-2 pr-4">Kateqoriya</th>
                   <th className="pb-2 pr-4">Məbləğ</th>
                   <th className="pb-2 pr-4">Hesablama</th>
                   <th className="pb-2 pr-4">ƏDV</th>
@@ -215,6 +219,17 @@ export function OverheadTab() {
                               onChange={(e) => setEditForm(prev => ({ ...prev, label: e.target.value }))}
                               className="h-8 text-sm"
                             />
+                          </td>
+                          <td className="py-2 pr-4">
+                            <select
+                              value={editForm.category || ""}
+                              onChange={(e) => setEditForm(prev => ({ ...prev, category: e.target.value }))}
+                              className="h-8 rounded-md border bg-background px-2 text-xs"
+                            >
+                              {OVERHEAD_CATEGORIES.map(cat => (
+                                <option key={cat} value={cat}>{cat}</option>
+                              ))}
+                            </select>
                           </td>
                           <td className="py-2 pr-4">
                             <Input
@@ -304,6 +319,7 @@ export function OverheadTab() {
                       ) : (
                         <>
                           <td className="py-2 pr-4 font-medium">{item.label}</td>
+                          <td className="py-2 pr-4 text-xs text-muted-foreground">{item.category}</td>
                           <td className="py-2 pr-4 font-mono">{item.amount.toLocaleString("en", { minimumFractionDigits: 2 })}</td>
                           <td className="py-2 pr-4 text-xs">
                             {item.amortMonths && item.amortMonths > 0

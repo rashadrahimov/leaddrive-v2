@@ -42,12 +42,19 @@ export function resolveCostModelKey(result: CostModelResult, key: CostModelKey):
   }
 
   if (key === "serviceRevenues.total") {
-    return Object.values(result.serviceRevenues).reduce((s, v) => s + v, 0)
+    // Use summary.totalRevenue (from PricingProfile) to match profitability page
+    return result.summary.totalRevenue
   }
 
   if (key.startsWith("serviceRevenues.")) {
     const svc = key.slice("serviceRevenues.".length)
-    return result.serviceRevenues[svc] ?? 0
+    const raw = result.serviceRevenues[svc] ?? 0
+    // Scale per-service revenue proportionally to match summary.totalRevenue (PricingProfile)
+    const rawTotal = Object.values(result.serviceRevenues).reduce((s, v) => s + v, 0)
+    if (rawTotal > 0 && result.summary.totalRevenue > 0) {
+      return raw * (result.summary.totalRevenue / rawTotal)
+    }
+    return raw
   }
 
   if (key === "serviceCosts.total") {
@@ -171,11 +178,19 @@ export function computePlannedForLine(
     const monthly = resolveCostModelKey(costModel, line.costModelKey)
     return monthly * periodMonths
   }
-  // Доход: из SalesForecast — сумма по месяцам периода для этого департамента
-  if (line.lineType === "revenue" && line.departmentId) {
-    return salesForecasts
-      .filter(f => f.departmentId === line.departmentId && periodMonthNumbers.includes(f.month))
-      .reduce((sum, f) => sum + f.amount, 0)
+  // Доход: PRIMARY из cost model (serviceRevenues), FALLBACK на SalesForecast
+  if (line.lineType === "revenue") {
+    // Primary: из cost model serviceRevenues (совпадает с прибыльностью)
+    if (line.costModelKey && costModel) {
+      const monthly = resolveCostModelKey(costModel, line.costModelKey)
+      if (monthly > 0) return monthly * periodMonths
+    }
+    // Fallback: из SalesForecast (если cost model не имеет данных)
+    if (line.departmentId) {
+      return salesForecasts
+        .filter(f => f.departmentId === line.departmentId && periodMonthNumbers.includes(f.month))
+        .reduce((sum, f) => sum + f.amount, 0)
+    }
   }
   return 0
 }

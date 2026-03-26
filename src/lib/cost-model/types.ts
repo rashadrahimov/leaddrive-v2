@@ -8,7 +8,7 @@
 export const INCOME_TAX_RATE = 0.14
 
 // ── Service Types ─────────────────────────────────────────────────────────
-export const SERVICE_TYPES = ["permanent_it", "infosec", "erp", "grc", "projects", "helpdesk", "cloud"] as const
+export const SERVICE_TYPES = ["permanent_it", "infosec", "erp", "grc", "projects", "helpdesk", "cloud", "waf"] as const
 export type ServiceType = (typeof SERVICE_TYPES)[number]
 
 export const SERVICE_LABELS: Record<ServiceType, string> = {
@@ -19,6 +19,7 @@ export const SERVICE_LABELS: Record<ServiceType, string> = {
   projects: "Layihələr (PM)",
   helpdesk: "HelpDesk",
   cloud: "Bulud",
+  waf: "WAF",
 }
 
 // ── Departments ───────────────────────────────────────────────────────────
@@ -43,13 +44,16 @@ export const SERVICE_DEPT_MAP: Record<ServiceType, Department[]> = {
   grc: ["GRC"],
   projects: ["PM"],
   helpdesk: ["HelpDesk"],
-  cloud: [], // cloud has no direct staff — funded via overhead only
+  cloud: [], // IaaS from Pasha Technology (Cloud + SaaS), funded via overhead only
+  waf: [],   // IaaS from Pasha Technology, resold as managed WAF
 }
 
 // ── Overhead category → service fallback (for tech infra routing) ─────────
 export const TECH_DEPT_FALLBACK: Record<string, ServiceType> = {
   cloud_servers: "cloud",
   cloud: "cloud",
+  waf_service: "waf",
+  waf: "waf",
   ms_license: "permanent_it",
   service_desk: "permanent_it",
   cortex: "infosec",
@@ -65,7 +69,8 @@ export const PER_EMPLOYEE_CATEGORIES = ["insurance", "mobile"] as const
 
 // ── Known overhead categories ─────────────────────────────────────────────
 export const OVERHEAD_CATEGORIES = [
-  "cloud_servers", "office_rent", "insurance", "mobile", "cortex",
+  "cloud_servers", "waf_service",
+  "office_rent", "insurance", "mobile", "cortex",
   "ms_license", "service_desk", "palo_alto", "pam", "lms",
   "trainings", "ai_licenses", "car_amort", "car_expenses",
   "firewall_amort", "laptops", "internet", "team_building",

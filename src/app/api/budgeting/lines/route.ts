@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getOrgId } from "@/lib/api-auth"
 import { prisma, logBudgetChange } from "@/lib/prisma"
+import { loadAndCompute } from "@/lib/cost-model/db"
+import { getPeriodMonths, computePlannedForLine } from "@/lib/budgeting/cost-model-map"
 
 export async function GET(req: NextRequest) {
   const orgId = await getOrgId(req)
@@ -10,15 +12,41 @@ export async function GET(req: NextRequest) {
   if (!planId) return NextResponse.json({ error: "planId required" }, { status: 400 })
 
   // Return top-level lines with nested children
-  const lines = await prisma.budgetLine.findMany({
-    where: { planId, organizationId: orgId, parentId: null },
-    orderBy: [{ sortOrder: "asc" }, { category: "asc" }],
-    include: {
-      children: {
-        orderBy: [{ sortOrder: "asc" }, { category: "asc" }],
+  const [lines, plan] = await Promise.all([
+    prisma.budgetLine.findMany({
+      where: { planId, organizationId: orgId, parentId: null },
+      orderBy: [{ sortOrder: "asc" }, { category: "asc" }],
+      include: {
+        children: {
+          orderBy: [{ sortOrder: "asc" }, { category: "asc" }],
+        },
       },
-    },
-  })
+    }),
+    prisma.budgetPlan.findFirst({ where: { id: planId, organizationId: orgId } }),
+  ])
+
+  // Compute dynamic planned amounts for isAutoPlanned lines
+  const allLines = lines.flatMap((l: any) => [l, ...(l.children ?? [])])
+  const hasAutoPlanned = allLines.some((l: any) => l.isAutoPlanned)
+
+  if (hasAutoPlanned && plan) {
+    const costModel = await loadAndCompute(orgId).catch(() => null)
+    const { count: periodMonthCount, months: periodMonthNumbers } = getPeriodMonths(plan)
+    const salesForecasts = await prisma.salesForecast.findMany({
+      where: { organizationId: orgId, year: plan.year, month: { in: periodMonthNumbers } },
+    })
+
+    for (const line of lines) {
+      if ((line as any).isAutoPlanned) {
+        ;(line as any).plannedAmount = computePlannedForLine(line as any, costModel, salesForecasts, periodMonthCount, periodMonthNumbers)
+      }
+      for (const child of (line as any).children ?? []) {
+        if (child.isAutoPlanned) {
+          child.plannedAmount = computePlannedForLine(child, costModel, salesForecasts, periodMonthCount, periodMonthNumbers)
+        }
+      }
+    }
+  }
 
   return NextResponse.json({ success: true, data: lines })
 }
