@@ -1079,6 +1079,7 @@ function WorkspaceTab({ planId }: { planId: string }) {
           color="red"
           hint={t("hintKpiExpActual")}
           subValue={`${Math.round(expExecPct)}% ${t("kpiExecution").toLowerCase()} · ${t("kpiPlan").toLowerCase()}: ${fmt(totalExpensePlanned)}`}
+          animate
         />
         <ColorStatCard
           label={t("sectionRevenues") + " (" + t("kpiActual").toLowerCase() + ")"}
@@ -1087,6 +1088,7 @@ function WorkspaceTab({ planId }: { planId: string }) {
           color="green"
           hint={t("hintKpiRevActual")}
           subValue={`${totalRevenuePlanned > 0 ? Math.round((totalRevenueActual / totalRevenuePlanned) * 100) : 0}% ${t("kpiExecution").toLowerCase()} · ${t("kpiPlan").toLowerCase()}: ${fmt(totalRevenuePlanned)}`}
+          animate
         />
         <ColorStatCard
           label={t("sectionMargin").split("(")[0].trim() + " (" + t("kpiActual").toLowerCase() + ")"}
@@ -1095,6 +1097,7 @@ function WorkspaceTab({ planId }: { planId: string }) {
           color={marginActual >= 0 ? "teal" : "red"}
           hint={t("hintKpiMarginActual")}
           subValue={`${t("kpiVariance")}: ${totalVariance >= 0 ? "+" : ""}${fmt(totalVariance)}`}
+          animate
         />
         <ColorStatCard
           label={t("kpiExecution")}
@@ -1103,6 +1106,7 @@ function WorkspaceTab({ planId }: { planId: string }) {
           color={budgetExecColor}
           hint={t("kpiExecutionTooltip")}
           subValue={`${t("expectedByTime")}: ${Math.round(elapsedPct)}%`}
+          animate
         />
       </div>
 
