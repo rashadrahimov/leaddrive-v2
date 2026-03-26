@@ -1264,7 +1264,7 @@ function WorkspaceTab({ planId, onNavigateTab }: { planId: string; onNavigateTab
       )}
 
       {/* === MATRIX VIEW === */}
-      {workspaceView === "matrix" && analytics?.matrix && (
+      {workspaceView === "matrix" && analytics?.matrix && analytics.matrix.cells.length > 0 && (
         <BudgetMatrixGrid matrix={analytics.matrix} compact={compactNumbers} />
       )}
       {workspaceView === "matrix" && (!analytics?.matrix || analytics.matrix.cells.length === 0) && (
