@@ -2193,7 +2193,7 @@
     "hintTemplateApply": "Create budget lines from selected templates. Duplicates are skipped",
     "hintTemplateActive": "Inactive templates are hidden when applying to plans",
     "overspend": "OVERSPEND",
-    "kpiExecutionTooltip": "Expense budget execution: Actual expenses / Planned expenses × 100%. Below 100% = savings, above 100% = overspend",
+    "kpiExecutionTooltip": "Budget execution by margin: Actual margin / Planned margin × 100%. Accounts for both revenue and expenses. Breakdown by expenses and revenue shown below",
     "alertOverspendTitle": "Critical budget overspend",
     "alertOverspendDesc": "Expenses exceeded budget by {pct}% ({amount}). Budget review or expense adjustment recommended.",
     "alertWarningTitle": "Warning: expenses above plan",
