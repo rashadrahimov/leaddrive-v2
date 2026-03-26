@@ -65,20 +65,26 @@ function animateValue(original: string | number, animated: number): string {
   if (typeof original === "number") return String(animated)
   // Replace the numeric part with animated value, keep suffix/prefix
   const str = String(original)
-  const match = str.match(/^([^0-9-]*)([-]?[\d,]+(?:\.\d+)?)\s*([kKMB]?)(.*$)/)
-  if (!match) return str
-  const [, prefix, , unit, suffix] = match
-  // If original uses compact units (k/M), format animated value with same unit
-  if (unit === "k" || unit === "K") {
-    return prefix + Math.round(animated / 1000).toLocaleString() + unit + suffix
+  const match = str.match(/^([^0-9-]*)([-]?[\d,]+(?:\.\d+)?)(\s*[kKMB])(.*$)/)
+  if (match) {
+    // Compact format with unit (k/M/B) — preserve unit in output
+    const [, prefix, , unitWithSpace, suffix] = match
+    const unit = unitWithSpace.trim()
+    if (unit === "k" || unit === "K") {
+      return prefix + Math.round(animated / 1000).toLocaleString() + unitWithSpace + suffix
+    }
+    if (unit === "M") {
+      return prefix + (animated / 1_000_000).toFixed(1) + unitWithSpace + suffix
+    }
+    if (unit === "B") {
+      return prefix + (animated / 1_000_000_000).toFixed(1) + unitWithSpace + suffix
+    }
   }
-  if (unit === "M") {
-    return prefix + (animated / 1_000_000).toFixed(1) + unit + suffix
-  }
-  if (unit === "B") {
-    return prefix + (animated / 1_000_000_000).toFixed(1) + unit + suffix
-  }
-  return prefix + animated.toLocaleString() + suffix
+  // Standard format — use original regex that preserves spacing in suffix
+  const stdMatch = str.match(/^([^0-9-]*)([-]?[\d,]+)(.*$)/)
+  if (!stdMatch) return str
+  const [, stdPrefix, , stdSuffix] = stdMatch
+  return stdPrefix + animated.toLocaleString() + stdSuffix
 }
 
 interface ColorStatCardProps {
