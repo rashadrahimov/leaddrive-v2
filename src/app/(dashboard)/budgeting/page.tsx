@@ -1225,6 +1225,16 @@ function WorkspaceTab({ planId, onNavigateTab }: { planId: string; onNavigateTab
         <a href={`/api/budgeting/export?planId=${planId}`} download>
           <Button size="sm" variant="outline" title={t("hintBtnExport")}><DollarSign className="h-4 w-4 mr-1" /> {t("btnExport")}</Button>
         </a>
+        <div className="flex items-center border rounded-md overflow-hidden">
+          <Button size="sm" variant={workspaceView === "list" ? "default" : "ghost"} className="h-8 text-xs rounded-none px-2"
+            onClick={() => setWorkspaceView("list")} title="Список">
+            <List className="h-4 w-4" />
+          </Button>
+          <Button size="sm" variant={workspaceView === "matrix" ? "default" : "ghost"} className="h-8 text-xs rounded-none px-2"
+            onClick={() => setWorkspaceView("matrix")} title="Матрица (Департамент × Тип затрат)">
+            <LayoutGrid className="h-4 w-4" />
+          </Button>
+        </div>
         <div className="flex-1" />
         <Input placeholder={t("searchCategory")} title={t("hintSearchCategory")} value={filterText} onChange={e => setFilterText(e.target.value)} className="h-8 w-48 text-xs" />
         <select value={filterType} onChange={e => setFilterType(e.target.value as any)} title={t("hintFilterType")} className="h-8 rounded-md border border-input bg-background px-2 text-xs">
@@ -1240,16 +1250,6 @@ function WorkspaceTab({ planId, onNavigateTab }: { planId: string; onNavigateTab
           onClick={() => setCompactNumbers(!compactNumbers)} title="Сокращённый формат чисел (K/M)">
           {compactNumbers ? "1.2M" : "1,234"}
         </Button>
-        <div className="flex items-center border rounded-md overflow-hidden">
-          <Button size="sm" variant={workspaceView === "list" ? "default" : "ghost"} className="h-8 text-xs rounded-none px-2"
-            onClick={() => setWorkspaceView("list")} title="Список">
-            <List className="h-4 w-4" />
-          </Button>
-          <Button size="sm" variant={workspaceView === "matrix" ? "default" : "ghost"} className="h-8 text-xs rounded-none px-2"
-            onClick={() => setWorkspaceView("matrix")} title="Матрица (Департамент × Тип затрат)">
-            <LayoutGrid className="h-4 w-4" />
-          </Button>
-        </div>
       </div>
 
       {/* AI Narrative */}
