@@ -1075,32 +1075,39 @@ function WorkspaceTab({ planId }: { planId: string }) {
         <ColorStatCard label={t("sectionRevenues") + " (" + t("kpiActual").toLowerCase() + ")"} value={fmt(totalRevenueActual)} icon={<DollarSign className="h-5 w-5" />} color="green" hint={t("hintKpiRevActual")} />
       </div>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <ColorStatCard label={t("sectionMargin").split("(")[0].trim() + " (" + t("kpiPlan").toLowerCase() + ")"} value={fmt(margin)} icon={<TrendingUp className="h-5 w-5" />} color={margin >= 0 ? "teal" : "red"} hint={t("hintKpiMarginPlan")} />
-        <ColorStatCard label={t("sectionMargin").split("(")[0].trim() + " (" + t("kpiActual").toLowerCase() + ")"} value={fmt(marginActual)} icon={<DollarSign className="h-5 w-5" />} color={marginActual >= 0 ? "teal" : "red"} hint={t("hintKpiMarginActual")} />
-        <ColorStatCard label={t("kpiVariance")} value={(totalVariance >= 0 ? "+" : "") + fmt(totalVariance)} icon={totalVariance >= 0 ? <TrendingUp className="h-5 w-5" /> : <TrendingDown className="h-5 w-5" />} color={totalVariance >= 0 ? "teal" : "red"} hint={t("hintKpiVariance")} />
-        <div>
-          <ColorStatCard
-            label={t("kpiExecution")}
-            value={`${budgetExecEmoji} ${Math.round(budgetExecPct)}%`}
-            icon={budgetExecPct >= 50 ? <CheckCircle className="h-5 w-5" /> : <AlertCircle className="h-5 w-5" />}
-            color={budgetExecColor}
-            hint={t("kpiExecutionTooltip")}
-            lines={[
-              { label: t("sectionExpenses"), value: `${Math.round(expExecPct)}%` },
-              { label: t("sectionRevenues"), value: `${totalRevenuePlanned > 0 ? Math.round((totalRevenueActual / totalRevenuePlanned) * 100) : 0}%` },
-            ]}
-          />
-          <div className="mt-1 px-3 pb-2">
-            <div className="flex items-center justify-between text-[10px] text-muted-foreground mb-0.5">
-              <span>{t("expectedByTime")}: {Math.round(elapsedPct)}%</span>
-              <span>{t("colActual")}: {Math.round(budgetExecPct)}%</span>
-            </div>
-            <div className="relative">
-              <Progress value={Math.max(0, budgetExecPct)} className="h-1.5" indicatorClassName={budgetExecColor === "green" ? "bg-green-500" : budgetExecColor === "amber" ? "bg-amber-500" : "bg-red-500"} />
-              <div className="absolute top-0 h-1.5 border-r-2 border-foreground/50" style={{ left: `${Math.min(elapsedPct, 100)}%` }} title={`${Math.round(elapsedPct)}% ${t("expectedByTime")}`} />
-            </div>
-          </div>
-        </div>
+        <ColorStatCard label={t("sectionMargin").split("(")[0].trim() + " (" + t("kpiPlan").toLowerCase() + ")"} value={fmt(margin)} icon={<TrendingUp className="h-5 w-5" />} color={margin >= 0 ? "teal" : "red"} hint={t("hintKpiMarginPlan")}
+          subValue={`${t("sectionRevenues")}: ${fmt(totalRevenuePlanned)}`}
+          lines={[
+            { label: t("sectionExpenses"), value: fmt(totalExpensePlanned) },
+            { label: "COGS", value: fmt(totalCOGSPlanned) },
+          ]}
+        />
+        <ColorStatCard label={t("sectionMargin").split("(")[0].trim() + " (" + t("kpiActual").toLowerCase() + ")"} value={fmt(marginActual)} icon={<DollarSign className="h-5 w-5" />} color={marginActual >= 0 ? "teal" : "red"} hint={t("hintKpiMarginActual")}
+          subValue={`${t("sectionRevenues")}: ${fmt(totalRevenueActual)}`}
+          lines={[
+            { label: t("sectionExpenses"), value: fmt(totalExpenseActual) },
+            { label: "COGS", value: fmt(totalCOGSActual) },
+          ]}
+        />
+        <ColorStatCard label={t("kpiVariance")} value={(totalVariance >= 0 ? "+" : "") + fmt(totalVariance)} icon={totalVariance >= 0 ? <TrendingUp className="h-5 w-5" /> : <TrendingDown className="h-5 w-5" />} color={totalVariance >= 0 ? "teal" : "red"} hint={t("hintKpiVariance")}
+          subValue={totalVariance >= 0 ? t("summaryUnderBudget", { period: "", pct: Math.round(Math.abs(totalVariance / (margin || 1)) * 100), amount: fmt(Math.abs(totalVariance)) }).trim() : ""}
+          lines={[
+            { label: t("sectionExpenses"), value: (totalExpensePlanned - totalExpenseActual >= 0 ? "+" : "") + fmt(totalExpensePlanned - totalExpenseActual) },
+            { label: t("sectionRevenues"), value: (totalRevenueActual - totalRevenuePlanned >= 0 ? "+" : "") + fmt(totalRevenueActual - totalRevenuePlanned) },
+          ]}
+        />
+        <ColorStatCard
+          label={t("kpiExecution")}
+          value={`${budgetExecEmoji} ${Math.round(budgetExecPct)}%`}
+          icon={budgetExecPct >= 50 ? <CheckCircle className="h-5 w-5" /> : <AlertCircle className="h-5 w-5" />}
+          color={budgetExecColor}
+          hint={t("kpiExecutionTooltip")}
+          subValue={`${t("expectedByTime")}: ${Math.round(elapsedPct)}%`}
+          lines={[
+            { label: t("sectionExpenses"), value: `${Math.round(expExecPct)}%` },
+            { label: t("sectionRevenues"), value: `${totalRevenuePlanned > 0 ? Math.round((totalRevenueActual / totalRevenuePlanned) * 100) : 0}%` },
+          ]}
+        />
       </div>
 
       {/* Overspend alert banner */}
