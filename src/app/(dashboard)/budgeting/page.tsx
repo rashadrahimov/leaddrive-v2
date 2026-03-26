@@ -1086,20 +1086,21 @@ function WorkspaceTab({ planId }: { planId: string }) {
       {/* Row 2 — Analytics: margin, variance, execution with breakdowns */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <ColorStatCard label={t("sectionMargin").split("(")[0].trim() + " (" + t("kpiPlan").toLowerCase() + ")"} value={fmt(margin)} icon={<TrendingUp className="h-5 w-5" />} color={margin >= 0 ? "teal" : "red"} hint={t("hintKpiMarginPlan")}
+          subValue={`${t("sectionRevenues")} − ${t("sectionExpenses")}${totalCOGSPlanned > 0 ? " − COGS" : ""}`}
           lines={[
             { label: t("sectionRevenues"), value: fmt(totalRevenuePlanned) },
             { label: t("sectionExpenses"), value: fmt(totalExpensePlanned) },
-            ...(totalCOGSPlanned > 0 ? [{ label: "COGS", value: fmt(totalCOGSPlanned) }] : []),
           ]}
         />
         <ColorStatCard label={t("sectionMargin").split("(")[0].trim() + " (" + t("kpiActual").toLowerCase() + ")"} value={fmt(marginActual)} icon={<DollarSign className="h-5 w-5" />} color={marginActual >= 0 ? "teal" : "red"} hint={t("hintKpiMarginActual")}
+          subValue={`${margin !== 0 ? Math.round((marginActual / margin) * 100) : 0}% ${t("kpiExecution").toLowerCase()}`}
           lines={[
             { label: t("sectionRevenues"), value: fmt(totalRevenueActual) },
             { label: t("sectionExpenses"), value: fmt(totalExpenseActual) },
-            ...(totCOGSActual > 0 ? [{ label: "COGS", value: fmt(totCOGSActual) }] : []),
           ]}
         />
         <ColorStatCard label={t("kpiVariance")} value={(totalVariance >= 0 ? "+" : "") + fmt(totalVariance)} icon={totalVariance >= 0 ? <TrendingUp className="h-5 w-5" /> : <TrendingDown className="h-5 w-5" />} color={totalVariance >= 0 ? "teal" : "red"} hint={t("hintKpiVariance")}
+          subValue={`${totalVariance >= 0 ? "▲" : "▼"} ${Math.abs(Math.round((totalVariance / (margin || 1)) * 100))}% ${margin !== 0 ? (totalVariance >= 0 ? t("kpiPlan").toLowerCase() : t("kpiPlan").toLowerCase()) : ""}`}
           lines={[
             { label: t("sectionExpenses"), value: (totalExpensePlanned - totalExpenseActual >= 0 ? "+" : "") + fmt(totalExpensePlanned - totalExpenseActual) },
             { label: t("sectionRevenues"), value: (totalRevenueActual - totalRevenuePlanned >= 0 ? "+" : "") + fmt(totalRevenueActual - totalRevenuePlanned) },
