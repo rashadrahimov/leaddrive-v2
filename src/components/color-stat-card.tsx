@@ -44,12 +44,20 @@ function useCountUp(target: number, duration = 800) {
   return value
 }
 
-/** Extract numeric value from formatted string like "1,125,853 ₼" or "168%" */
+/** Extract numeric value from formatted string like "1,125,853 ₼", "645k ₼", or "168%" */
 function extractNumber(val: string | number): number | null {
   if (typeof val === "number") return val
-  const cleaned = val.replace(/[^\d.,-]/g, "").replace(/,/g, "")
-  const n = parseFloat(cleaned)
-  return isNaN(n) ? null : n
+  const str = String(val)
+  // Match number with optional compact unit (k/M/B)
+  const m = str.match(/([-]?[\d,]+(?:\.\d+)?)\s*([kKMB]?)/)
+  if (!m) return null
+  const num = parseFloat(m[1].replace(/,/g, ""))
+  if (isNaN(num)) return null
+  const unit = m[2]
+  if (unit === "k" || unit === "K") return num * 1000
+  if (unit === "M") return num * 1_000_000
+  if (unit === "B") return num * 1_000_000_000
+  return num
 }
 
 /** Rebuild formatted string with animated number */
@@ -57,9 +65,19 @@ function animateValue(original: string | number, animated: number): string {
   if (typeof original === "number") return String(animated)
   // Replace the numeric part with animated value, keep suffix/prefix
   const str = String(original)
-  const match = str.match(/^([^0-9-]*)([-]?[\d,]+)(.*$)/)
+  const match = str.match(/^([^0-9-]*)([-]?[\d,]+(?:\.\d+)?)\s*([kKMB]?)(.*$)/)
   if (!match) return str
-  const [, prefix, , suffix] = match
+  const [, prefix, , unit, suffix] = match
+  // If original uses compact units (k/M), format animated value with same unit
+  if (unit === "k" || unit === "K") {
+    return prefix + Math.round(animated / 1000).toLocaleString() + unit + suffix
+  }
+  if (unit === "M") {
+    return prefix + (animated / 1_000_000).toFixed(1) + unit + suffix
+  }
+  if (unit === "B") {
+    return prefix + (animated / 1_000_000_000).toFixed(1) + unit + suffix
+  }
   return prefix + animated.toLocaleString() + suffix
 }
 
