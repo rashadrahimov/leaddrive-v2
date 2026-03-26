@@ -340,7 +340,7 @@ export async function GET(req: NextRequest) {
 
   if (costTypes.length > 0) {
     // Lines with matrix FK references
-    const matrixLines = lines.filter((l: any) => l.costTypeId)
+    const matrixLines = lines.filter((l: any) => l.costTypeId || (l.lineType === "revenue" && l.departmentId))
 
     // Compute auto-actual per matrix cell if cost model available
     const now2 = new Date()
@@ -368,13 +368,15 @@ export async function GET(req: NextRequest) {
     for (const line of matrixLines) {
       const ct = (line as any).costType
       const dept = (line as any).budgetDept
-      const cellKey = `${ct?.key || "unknown"}||${dept?.key || "_shared"}`
+      const ctKey = line.lineType === "revenue" ? "_revenue" : (ct?.key || "unknown")
+      const ctLabel = line.lineType === "revenue" ? "Revenue" : (ct?.label || line.category)
+      const cellKey = `${ctKey}||${dept?.key || "_shared"}`
 
       const existing = cellMap.get(cellKey) ?? {
         planned: 0, actual: 0, forecast: 0,
         lineType: line.lineType,
-        costTypeKey: ct?.key || "unknown",
-        costTypeLabel: ct?.label || line.category,
+        costTypeKey: ctKey,
+        costTypeLabel: ctLabel,
         deptKey: dept?.key || null,
         deptLabel: dept?.label || null,
       }
@@ -427,20 +429,21 @@ export async function GET(req: NextRequest) {
       rt.variance += variance
       matrixRowTotals[cell.costTypeKey] = rt
 
-      // Column totals (by department)
-      const colKey = cell.deptKey || "_shared"
-      const ct2 = matrixColTotals[colKey] ?? { planned: 0, actual: 0, forecast: 0, variance: 0 }
-      ct2.planned += cell.planned
-      ct2.actual += cell.actual
-      ct2.forecast += cell.forecast
-      ct2.variance += variance
-      matrixColTotals[colKey] = ct2
+      // Column totals and grand total — expenses only (revenue shown separately in UI)
+      if (cell.lineType !== "revenue") {
+        const colKey = cell.deptKey || "_shared"
+        const ct2 = matrixColTotals[colKey] ?? { planned: 0, actual: 0, forecast: 0, variance: 0 }
+        ct2.planned += cell.planned
+        ct2.actual += cell.actual
+        ct2.forecast += cell.forecast
+        ct2.variance += variance
+        matrixColTotals[colKey] = ct2
 
-      // Grand total
-      matrixGrandTotal.planned += cell.planned
-      matrixGrandTotal.actual += cell.actual
-      matrixGrandTotal.forecast += cell.forecast
-      matrixGrandTotal.variance += variance
+        matrixGrandTotal.planned += cell.planned
+        matrixGrandTotal.actual += cell.actual
+        matrixGrandTotal.forecast += cell.forecast
+        matrixGrandTotal.variance += variance
+      }
     }
   }
 
