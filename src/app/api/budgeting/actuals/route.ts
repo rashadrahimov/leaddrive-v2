@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getOrgId, getSession } from "@/lib/api-auth"
 import { prisma, logBudgetChange } from "@/lib/prisma"
 import { buildDeptFilter } from "@/lib/budgeting/department-access"
+import { processCurrencyFields } from "@/lib/budgeting/currency"
 import type { Role } from "@/lib/permissions"
 
 export async function GET(req: NextRequest) {
@@ -28,7 +29,7 @@ export async function POST(req: NextRequest) {
   if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
   const body = await req.json()
-  const { plan_id, planId, category, department, line_type, lineType, actual_amount, actualAmount, expenseDate, expense_date, description } = body
+  const { plan_id, planId, category, department, line_type, lineType, actual_amount, actualAmount, expenseDate, expense_date, description, currencyCode, exchangeRate } = body
 
   const resolvedPlanId = planId || plan_id
   const resolvedLineType = lineType || line_type || "expense"
@@ -49,6 +50,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Сумма не может быть отрицательной" }, { status: 400 })
   }
 
+  // Process currency conversion (F7)
+  const currencyFields = await processCurrencyFields(
+    orgId,
+    Number(resolvedAmount),
+    currencyCode || null,
+    exchangeRate != null ? Number(exchangeRate) : null,
+  )
+
   const actual = await prisma.budgetActual.create({
     data: {
       organizationId: orgId,
@@ -56,9 +65,12 @@ export async function POST(req: NextRequest) {
       category,
       department: department || null,
       lineType: resolvedLineType,
-      actualAmount: Number(resolvedAmount),
+      actualAmount: currencyFields.plannedAmount, // converted to base currency
       expenseDate: resolvedDate || null,
       description: description || null,
+      currencyCode: currencyFields.currencyCode,
+      exchangeRate: currencyFields.exchangeRate,
+      originalAmount: currencyFields.originalAmount,
     },
   })
 

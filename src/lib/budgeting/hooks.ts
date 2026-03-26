@@ -554,3 +554,133 @@ export function useCreateApprovalComment() {
     },
   })
 }
+
+// ─── F3: Versioning ───────────────────────────────────────────
+
+export function useBudgetVersions(planId: string | null) {
+  const orgId = useOrgId()
+  return useQuery({
+    queryKey: ["budgeting", "versions", planId],
+    queryFn: async () => {
+      const res = await apiFetch(`/api/budgeting/plans/${planId}/versions`, orgId)
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error || "API error")
+      return json as Array<{
+        id: string
+        name: string
+        status: string
+        version: number
+        versionLabel: string | null
+        amendmentOf: string | null
+        createdAt: string
+        approvedAt: string | null
+        approvedBy: string | null
+      }>
+    },
+    enabled: !!orgId && !!planId,
+  })
+}
+
+export function useCreateBudgetVersion() {
+  const orgId = useOrgId()
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (planId: string) => {
+      const res = await fetch(`/api/budgeting/plans/${planId}/create-version`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-organization-id": orgId },
+      })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error || "API error")
+      return json
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["budgeting", "versions"] })
+      qc.invalidateQueries({ queryKey: ["budgeting", "plans"] })
+    },
+  })
+}
+
+export function useBudgetDiff(planIdA: string | null, planIdB: string | null) {
+  const orgId = useOrgId()
+  return useQuery({
+    queryKey: ["budgeting", "diff", planIdA, planIdB],
+    queryFn: async () => {
+      const res = await apiFetch(
+        `/api/budgeting/plans/${planIdA}/diff?compareWith=${planIdB}`,
+        orgId,
+      )
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error || "API error")
+      return json as {
+        planA: string
+        planB: string
+        totalChanges: number
+        diff: Array<{
+          category: string
+          department: string | null
+          lineType: string
+          planA: number
+          planB: number
+          delta: number
+          status: "added" | "removed" | "changed" | "unchanged"
+        }>
+      }
+    },
+    enabled: !!orgId && !!planIdA && !!planIdB,
+  })
+}
+
+// ─── F7: Multi-Currency ───────────────────────────────────────
+
+export function useExchangeRates(currencyCode?: string) {
+  const orgId = useOrgId()
+  const url = currencyCode
+    ? `/api/budgeting/exchange-rates?currencyCode=${currencyCode}`
+    : `/api/budgeting/exchange-rates`
+  return useQuery({
+    queryKey: ["budgeting", "exchange-rates", currencyCode || "all"],
+    queryFn: async () => {
+      const res = await apiFetch(url, orgId)
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error || "API error")
+      return json as {
+        rates: Array<{
+          id: string
+          currencyCode: string
+          rate: number
+          rateDate: string
+        }>
+        currencies: Array<{
+          id: string
+          code: string
+          name: string
+          symbol: string
+          exchangeRate: number
+          isBase: boolean
+        }>
+      }
+    },
+    enabled: !!orgId,
+  })
+}
+
+export function useCreateExchangeRate() {
+  const orgId = useOrgId()
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (data: { currencyCode: string; rate: number; rateDate?: string }) => {
+      const res = await fetch("/api/budgeting/exchange-rates", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-organization-id": orgId },
+        body: JSON.stringify(data),
+      })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error || "API error")
+      return json
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["budgeting", "exchange-rates"] })
+    },
+  })
+}

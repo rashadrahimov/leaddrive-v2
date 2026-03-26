@@ -4,6 +4,7 @@ import { prisma, logBudgetChange } from "@/lib/prisma"
 import { loadAndCompute } from "@/lib/cost-model/db"
 import { getPeriodMonths, computePlannedForLine } from "@/lib/budgeting/cost-model-map"
 import { buildDeptFilter } from "@/lib/budgeting/department-access"
+import { processCurrencyFields } from "@/lib/budgeting/currency"
 import type { Role } from "@/lib/permissions"
 
 export async function GET(req: NextRequest) {
@@ -68,7 +69,7 @@ export async function POST(req: NextRequest) {
   if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
   const body = await req.json()
-  const { plan_id, planId, category, department, line_type, lineType, lineSubtype, planned_amount, plannedAmount, forecastAmount, unitPrice, unitCost, quantity, costModelKey, isAutoActual, notes, parentId } = body
+  const { plan_id, planId, category, department, line_type, lineType, lineSubtype, planned_amount, plannedAmount, forecastAmount, unitPrice, unitCost, quantity, costModelKey, isAutoActual, notes, parentId, currencyCode, exchangeRate } = body
 
   const resolvedPlanId = planId || plan_id
   const resolvedLineType = lineType || line_type || "expense"
@@ -92,6 +93,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Прогнозная сумма не может быть отрицательной" }, { status: 400 })
   }
 
+  // Process currency conversion (F7)
+  const currencyFields = await processCurrencyFields(
+    orgId,
+    Number(resolvedAmount),
+    currencyCode || null,
+    exchangeRate != null ? Number(exchangeRate) : null,
+  )
+
   const line = await prisma.budgetLine.create({
     data: {
       organizationId: orgId,
@@ -100,7 +109,7 @@ export async function POST(req: NextRequest) {
       department: department || null,
       lineType: resolvedLineType,
       lineSubtype: lineSubtype || null,
-      plannedAmount: Number(resolvedAmount),
+      plannedAmount: currencyFields.plannedAmount,
       forecastAmount: forecastAmount != null ? Number(forecastAmount) : null,
       unitPrice: unitPrice != null ? Number(unitPrice) : null,
       unitCost: unitCost != null ? Number(unitCost) : null,
@@ -109,6 +118,9 @@ export async function POST(req: NextRequest) {
       isAutoActual: isAutoActual === true,
       notes: notes || null,
       parentId: parentId || null,
+      currencyCode: currencyFields.currencyCode,
+      exchangeRate: currencyFields.exchangeRate,
+      originalAmount: currencyFields.originalAmount,
     },
   })
 

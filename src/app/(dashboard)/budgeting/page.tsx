@@ -52,6 +52,10 @@ import {
   useUpdateBudgetTemplate,
   useDeleteBudgetTemplate,
   useApplyTemplates,
+  useBudgetVersions,
+  useCreateBudgetVersion,
+  useBudgetDiff,
+  useExchangeRates,
 } from "@/lib/budgeting/hooks"
 import {
   DEFAULT_EXPENSE_CATEGORIES,
@@ -68,6 +72,9 @@ import { ExpenseForecastTab } from "@/components/expense-forecast-tab"
 import { BudgetDepartmentAccess } from "@/components/budget-department-access"
 import { BudgetApprovalWorkflow } from "@/components/budget-approval-workflow"
 import { BudgetApprovalHistory } from "@/components/budget-approval-history"
+import { BudgetVersionHistory } from "@/components/budget-version-history"
+import { BudgetVersionDiff } from "@/components/budget-version-diff"
+import { BudgetFxSummary } from "@/components/budget-fx-summary"
 import { BudgetWaterfallChart } from "@/components/budget-waterfall-chart"
 import { BudgetExecutionGauge } from "@/components/budget-execution-gauge"
 import { BudgetCategoryBars } from "@/components/budget-category-bars"
@@ -1438,6 +1445,12 @@ function WorkspaceTab({ planId, onNavigateTab }: { planId: string; onNavigateTab
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* F7: Multi-Currency FX Summary */}
+      <BudgetFxSummary
+        lines={(lines as any[]).flatMap((l: any) => [l, ...(l.children ?? [])])}
+        baseCurrency="AZN"
+      />
     </div>
   )
 }
@@ -2036,6 +2049,15 @@ function PlansTab({ activePlanId, onSelect, onShowCreate }: { activePlanId: stri
   const userRole = (sessionData?.user as any)?.role || "viewer"
   const activePlan = plans.find(p => p.id === activePlanId) || null
 
+  // F3: Versioning
+  const { data: versions = [] } = useBudgetVersions(activePlanId || null)
+  const createVersion = useCreateBudgetVersion()
+  const [diffPlanIds, setDiffPlanIds] = useState<{ a: string; b: string } | null>(null)
+  const { data: diffData, isLoading: diffLoading } = useBudgetDiff(
+    diffPlanIds?.a || null,
+    diffPlanIds?.b || null,
+  )
+
   if (isLoading) return <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-purple-500" /></div>
 
   return (
@@ -2095,6 +2117,43 @@ function PlansTab({ activePlanId, onSelect, onShowCreate }: { activePlanId: stri
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-6">
           <BudgetApprovalWorkflow plan={activePlan} userRole={userRole} />
           <BudgetApprovalHistory planId={activePlan.id} />
+        </div>
+      )}
+
+      {/* F3: Version History */}
+      {activePlan && versions.length > 0 && (
+        <div className="mt-6 space-y-4">
+          <BudgetVersionHistory
+            versions={versions}
+            currentPlanId={activePlanId}
+            onSelectVersion={onSelect}
+            onCreateVersion={() => createVersion.mutate(activePlanId)}
+            onCompare={(a, b) => setDiffPlanIds({ a, b })}
+            isCreating={createVersion.isPending}
+          />
+          {diffData && (
+            <BudgetVersionDiff
+              data={diffData}
+              isLoading={diffLoading}
+              versionLabelA={versions.find(v => v.id === diffPlanIds?.a)?.versionLabel || "Plan A"}
+              versionLabelB={versions.find(v => v.id === diffPlanIds?.b)?.versionLabel || "Plan B"}
+            />
+          )}
+        </div>
+      )}
+
+      {/* F3: Create version button if no version chain yet */}
+      {activePlan && versions.length === 0 && (
+        <div className="mt-4">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => createVersion.mutate(activePlanId)}
+            disabled={createVersion.isPending}
+          >
+            {createVersion.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Plus className="h-4 w-4 mr-1" />}
+            Create Version (snapshot current plan)
+          </Button>
         </div>
       )}
     </div>

@@ -55,6 +55,7 @@ model Organization {
   projects           Project[]
   budgetDeptOwners   BudgetDepartmentOwner[]
   budgetApprovalComments BudgetApprovalComment[]
+  currencyRateHistory CurrencyRateHistory[]
 
   @@map("organizations")
 }
@@ -1110,6 +1111,19 @@ model Currency {
   @@map("currencies")
 }
 
+model CurrencyRateHistory {
+  id             String   @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  currencyCode   String
+  rate           Float
+  rateDate       DateTime
+  createdAt      DateTime @default(now())
+
+  @@index([organizationId, currencyCode, rateDate])
+  @@map("currency_rate_history")
+}
+
 model DashboardLayout {
   id             String   @id @default(cuid())
   organizationId String
@@ -1623,6 +1637,9 @@ model BudgetLine {
   vatIncluded    Boolean  @default(false) // true = amount includes VAT
   vatRate        Float?   // e.g. 0.18 for 18% — null means no VAT applicable
   amountExVat    Float?   // computed: plannedAmount / (1 + vatRate) when vatIncluded=true
+  currencyCode   String?  // "USD", "EUR", null = base currency
+  exchangeRate   Float?   // rate at time of entry (e.g. 1.70 for 1 USD = 1.70 AZN)
+  originalAmount Float?   // amount in original currency
   notes          String?
   sortOrder      Int      @default(0)
   parentId       String?
@@ -1648,6 +1665,9 @@ model BudgetActual {
   actualAmount   Float    @default(0)
   expenseDate    String?
   description    String?
+  currencyCode   String?  // "USD", "EUR", null = base currency
+  exchangeRate   Float?   // rate at time of entry
+  originalAmount Float?   // amount in original currency
   costTypeId     String?
   costType       BudgetCostType? @relation(fields: [costTypeId], references: [id], onDelete: SetNull)
   departmentId   String?
