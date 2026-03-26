@@ -5,6 +5,107 @@ import { loadAndCompute } from "@/lib/cost-model/db"
 import { resolveCostModelKey } from "@/lib/budgeting/cost-model-map"
 import ExcelJS from "exceljs"
 
+// ── Color palette ────────────────────────────────────────────────────────────
+const PURPLE = "FF6D28D9"
+const PURPLE_LIGHT = "FFEDE9FE"
+const GREEN = "FF16A34A"
+const GREEN_BG = "FFF0FDF4"
+const RED = "FFDC2626"
+const RED_BG = "FFFEF2F2"
+const AMBER = "FFF59E0B"
+const AMBER_BG = "FFFFFBEB"
+const GRAY_HEADER = "FFF8FAFC"
+const GRAY_BORDER = "FFE2E8F0"
+const DARK_TEXT = "FF1E293B"
+const MUTED_TEXT = "FF64748B"
+
+// ── Reusable styles ──────────────────────────────────────────────────────────
+const currFmt = '#,##0.00" ₼"'
+const pctFmt = "0.0%"
+
+function headerStyle(): Partial<ExcelJS.Style> {
+  return {
+    font: { bold: true, color: { argb: "FFFFFFFF" }, size: 11 },
+    fill: { type: "pattern", pattern: "solid", fgColor: { argb: PURPLE } },
+    alignment: { horizontal: "center", vertical: "middle" },
+    border: {
+      bottom: { style: "thin", color: { argb: PURPLE } },
+    },
+  }
+}
+
+function sectionHeaderStyle(): Partial<ExcelJS.Style> {
+  return {
+    font: { bold: true, color: { argb: DARK_TEXT }, size: 11 },
+    fill: { type: "pattern", pattern: "solid", fgColor: { argb: PURPLE_LIGHT } },
+    alignment: { horizontal: "left", vertical: "middle" },
+    border: {
+      bottom: { style: "thin", color: { argb: PURPLE } },
+      top: { style: "thin", color: { argb: PURPLE } },
+    },
+  }
+}
+
+function totalRowStyle(): Partial<ExcelJS.Style> {
+  return {
+    font: { bold: true, color: { argb: DARK_TEXT }, size: 11 },
+    fill: { type: "pattern", pattern: "solid", fgColor: { argb: GRAY_HEADER } },
+    border: {
+      top: { style: "double", color: { argb: DARK_TEXT } },
+      bottom: { style: "thin", color: { argb: GRAY_BORDER } },
+    },
+  }
+}
+
+function applyHeaderRow(ws: ExcelJS.Worksheet) {
+  const row = ws.getRow(1)
+  row.height = 28
+  row.eachCell((cell) => {
+    Object.assign(cell, headerStyle())
+  })
+}
+
+function freezeFirstRow(ws: ExcelJS.Worksheet) {
+  ws.views = [{ state: "frozen", ySplit: 1, xSplit: 0 }]
+}
+
+function autoFilter(ws: ExcelJS.Worksheet, colCount: number) {
+  const lastCol = String.fromCharCode(64 + colCount)
+  ws.autoFilter = { from: "A1", to: `${lastCol}1` }
+}
+
+function varianceColor(value: number): { font: Partial<ExcelJS.Font>; fill: Partial<ExcelJS.Fill> } {
+  if (value > 0) return {
+    font: { color: { argb: GREEN }, bold: false },
+    fill: { type: "pattern", pattern: "solid", fgColor: { argb: GREEN_BG } },
+  }
+  if (value < 0) return {
+    font: { color: { argb: RED }, bold: false },
+    fill: { type: "pattern", pattern: "solid", fgColor: { argb: RED_BG } },
+  }
+  return {
+    font: { color: { argb: MUTED_TEXT }, bold: false },
+    fill: { type: "pattern", pattern: "solid", fgColor: { argb: "FFFFFFFF" } },
+  }
+}
+
+function addVarianceCell(row: ExcelJS.Row, colKey: string, value: number) {
+  const cell = row.getCell(colKey)
+  cell.numFmt = currFmt
+  const vc = varianceColor(value)
+  cell.font = vc.font
+  cell.fill = vc.fill as ExcelJS.Fill
+}
+
+function addPctVarianceCell(row: ExcelJS.Row, colKey: string, value: number) {
+  const cell = row.getCell(colKey)
+  cell.numFmt = pctFmt
+  cell.value = value / 100 // Excel expects 0.xx for percent
+  const vc = varianceColor(value)
+  cell.font = vc.font
+  cell.fill = vc.fill as ExcelJS.Fill
+}
+
 export async function GET(req: NextRequest) {
   const orgId = await getOrgId(req)
   if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
@@ -12,170 +113,697 @@ export async function GET(req: NextRequest) {
   const planId = req.nextUrl.searchParams.get("planId")
   if (!planId) return NextResponse.json({ error: "planId required" }, { status: 400 })
 
-  const [plan, lines, actuals, costModel] = await Promise.all([
+  const [plan, lines, manualActuals, forecastEntries] = await Promise.all([
     prisma.budgetPlan.findFirst({ where: { id: planId, organizationId: orgId } }),
     prisma.budgetLine.findMany({ where: { planId, organizationId: orgId }, orderBy: { sortOrder: "asc" } }),
     prisma.budgetActual.findMany({ where: { planId, organizationId: orgId }, orderBy: { createdAt: "asc" } }),
-    loadAndCompute(orgId).catch(() => null),
+    prisma.budgetForecastEntry.findMany({ where: { planId, organizationId: orgId }, orderBy: [{ year: "asc" }, { month: "asc" }] }),
   ])
 
   if (!plan) return NextResponse.json({ error: "Plan not found" }, { status: 404 })
 
-  const wb = new ExcelJS.Workbook()
-  wb.creator = "LeadDrive CRM"
-  wb.created = new Date()
+  // Load cost model only if needed
+  const hasAutoActual = lines.some((l: any) => l.isAutoActual)
+  const costModel = hasAutoActual ? await loadAndCompute(orgId).catch(() => null) : null
 
-  const headerStyle: Partial<ExcelJS.Style> = {
-    font: { bold: true, color: { argb: "FFFFFFFF" } },
-    fill: { type: "pattern", pattern: "solid", fgColor: { argb: "FF6D28D9" } },
-    alignment: { horizontal: "center" },
-    border: { bottom: { style: "thin", color: { argb: "FF6D28D9" } } },
-  }
+  // ── Compute all financials ─────────────────────────────────────────────────
+  const expenseLines = lines.filter((l: any) => l.lineType === "expense")
+  const revenueLines = lines.filter((l: any) => l.lineType === "revenue")
+  const cogsLines = lines.filter((l: any) => l.lineType === "cogs")
 
-  const currencyFmt = '#,##0" ₼"'
+  const totalExpensePlanned = expenseLines.reduce((s: number, l: any) => s + l.plannedAmount, 0)
+  const totalRevenuePlanned = revenueLines.reduce((s: number, l: any) => s + l.plannedAmount, 0)
+  const totalCOGSPlanned = cogsLines.reduce((s: number, l: any) => s + l.plannedAmount, 0)
 
-  // ── Sheet 1: Overview ─────────────────────────────────────────────────────
-  const ws1 = wb.addWorksheet("Обзор")
-  ws1.columns = [
-    { header: "Показатель", key: "label", width: 28 },
-    { header: "Значение", key: "value", width: 20 },
-  ]
-  ws1.getRow(1).eachCell(cell => Object.assign(cell, headerStyle))
+  const totalExpenseForecast = expenseLines.reduce((s: number, l: any) => s + (l.forecastAmount ?? l.plannedAmount), 0)
+  const totalRevenueForecast = revenueLines.reduce((s: number, l: any) => s + (l.forecastAmount ?? l.plannedAmount), 0)
+  const totalCOGSForecast = cogsLines.reduce((s: number, l: any) => s + (l.forecastAmount ?? l.plannedAmount), 0)
 
-  const totalPlanned = lines.reduce((s: number, l: { plannedAmount: number }) => s + l.plannedAmount, 0)
-  const totalForecast = lines.reduce((s: number, l: { forecastAmount: number | null; plannedAmount: number }) => s + (l.forecastAmount ?? l.plannedAmount), 0)
+  // ForecastEntry overrides
+  const feRevenue = forecastEntries.filter((e: any) => e.lineType === "revenue")
+  const feExpense = forecastEntries.filter((e: any) => e.lineType === "expense")
+  const feCogs = forecastEntries.filter((e: any) => e.lineType === "cogs")
+  const totalRevenueForecastFE = feRevenue.length > 0 ? feRevenue.reduce((s: number, e: any) => s + e.forecastAmount, 0) : totalRevenueForecast
+  const totalExpenseForecastFE = feExpense.length > 0 ? feExpense.reduce((s: number, e: any) => s + e.forecastAmount, 0) : totalExpenseForecast
+  const totalCOGSForecastFE = feCogs.length > 0 ? feCogs.reduce((s: number, e: any) => s + e.forecastAmount, 0) : totalCOGSForecast
 
-  let autoActualTotal = 0
-  if (costModel) {
+  // Auto-actuals from cost model
+  const autoActualByCategory = new Map<string, number>()
+  let autoActualExpense = 0, autoActualRevenue = 0, autoActualCOGS = 0
+
+  if (hasAutoActual && costModel && plan) {
+    const now = new Date()
+    const curYear = now.getFullYear(), curMonth = now.getMonth() + 1
+    let elapsedMonths = 1
+    if (plan.periodType === "monthly") {
+      elapsedMonths = 1
+    } else if (plan.periodType === "quarterly" && plan.quarter) {
+      const qStart = (plan.quarter - 1) * 3 + 1
+      const qEnd = qStart + 2
+      if (curYear > plan.year || (curYear === plan.year && curMonth > qEnd)) elapsedMonths = 3
+      else if (curYear === plan.year && curMonth >= qStart) elapsedMonths = curMonth - qStart + 1
+      else elapsedMonths = 0
+    } else if (plan.periodType === "annual") {
+      if (curYear > plan.year) elapsedMonths = 12
+      else if (curYear === plan.year) elapsedMonths = curMonth
+      else elapsedMonths = 0
+    }
+
     for (const line of lines) {
-      if (line.isAutoActual && line.costModelKey) {
-        autoActualTotal += resolveCostModelKey(costModel, line.costModelKey)
+      if ((line as any).isAutoActual && (line as any).costModelKey) {
+        const monthlyAmount = resolveCostModelKey(costModel, (line as any).costModelKey)
+        const amount = monthlyAmount * elapsedMonths
+        const key = `${(line as any).category}||${(line as any).lineType}`
+        autoActualByCategory.set(key, (autoActualByCategory.get(key) ?? 0) + amount)
+        if ((line as any).lineType === "revenue") autoActualRevenue += amount
+        else if ((line as any).lineType === "cogs") autoActualCOGS += amount
+        else autoActualExpense += amount
       }
     }
   }
-  const manualActualTotal = actuals.reduce((s: number, a: { actualAmount: number }) => s + a.actualAmount, 0)
-  const totalActual = autoActualTotal > 0 ? autoActualTotal : manualActualTotal
-  const totalVariance = totalPlanned - totalActual
-  const executionPct = totalPlanned > 0 ? (totalActual / totalPlanned) * 100 : 0
 
-  const overviewRows = [
-    ["Название плана", plan.name],
-    ["Период", `${plan.year}${plan.month ? `-${String(plan.month).padStart(2, "0")}` : ""}`],
-    ["Статус", plan.status],
-    ["", ""],
-    ["Бюджет (план)", totalPlanned],
-    ["Прогноз", totalForecast],
-    ["Факт", totalActual],
-    ["Отклонение (план - факт)", totalVariance],
-    ["Исполнение бюджета %", `${Math.round(executionPct)}%`],
-    ["Cost Model Total", costModel?.grandTotalG ?? 0],
+  // Manual actuals split
+  let manualExpenseActual = 0, manualRevenueActual = 0, manualCOGSActual = 0
+  for (const a of manualActuals) {
+    if ((a as any).lineType === "revenue") manualRevenueActual += (a as any).actualAmount
+    else if ((a as any).lineType === "cogs") manualCOGSActual += (a as any).actualAmount
+    else manualExpenseActual += (a as any).actualAmount
+  }
+
+  const totalExpenseActual = autoActualExpense > 0 ? autoActualExpense : manualExpenseActual
+  const totalRevenueActual = autoActualRevenue > 0 ? autoActualRevenue : manualRevenueActual
+  const totalCOGSActual = autoActualCOGS > 0 ? autoActualCOGS : manualCOGSActual
+
+  // P&L chain
+  const grossProfitPlanned = totalRevenuePlanned - totalCOGSPlanned
+  const grossProfitActual = totalRevenueActual - totalCOGSActual
+  const grossProfitForecast = totalRevenueForecastFE - totalCOGSForecastFE
+  const marginPlanned = grossProfitPlanned - totalExpensePlanned
+  const marginActual = grossProfitActual - totalExpenseActual
+  const marginForecast = grossProfitForecast - totalExpenseForecastFE
+  const totalVariance = marginActual - marginPlanned
+  const executionPct = marginPlanned !== 0 ? (marginActual / marginPlanned) * 100 : 0
+
+  // ── Create Workbook ────────────────────────────────────────────────────────
+  const wb = new ExcelJS.Workbook()
+  wb.creator = "LeadDrive CRM"
+  wb.created = new Date()
+  wb.calcProperties = { fullCalcOnLoad: true }
+
+  const periodLabel = plan.periodType === "annual"
+    ? `${plan.year} (Годовой)`
+    : plan.periodType === "quarterly"
+      ? `${plan.year} Q${plan.quarter}`
+      : `${plan.year}-${String(plan.month).padStart(2, "0")}`
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // SHEET 1: DASHBOARD — Executive Summary
+  // ═══════════════════════════════════════════════════════════════════════════
+  const wsDash = wb.addWorksheet("📊 Дашборд", { properties: { tabColor: { argb: PURPLE } } })
+
+  // Title area
+  wsDash.mergeCells("A1:F1")
+  const titleCell = wsDash.getCell("A1")
+  titleCell.value = `Бюджет: ${plan.name} | ${periodLabel}`
+  titleCell.font = { bold: true, size: 16, color: { argb: PURPLE } }
+  titleCell.alignment = { horizontal: "left", vertical: "middle" }
+  wsDash.getRow(1).height = 36
+
+  wsDash.mergeCells("A2:F2")
+  const subtitleCell = wsDash.getCell("A2")
+  subtitleCell.value = `Статус: ${plan.status === "active" ? "Активный" : plan.status === "draft" ? "Черновик" : "Закрыт"} | Сгенерировано: ${new Date().toLocaleDateString("ru-RU")} | LeadDrive CRM`
+  subtitleCell.font = { size: 10, color: { argb: MUTED_TEXT } }
+
+  // KPI Section
+  const kpiStartRow = 4
+  wsDash.mergeCells(`A${kpiStartRow}:F${kpiStartRow}`)
+  const kpiHeader = wsDash.getCell(`A${kpiStartRow}`)
+  kpiHeader.value = "КЛЮЧЕВЫЕ ПОКАЗАТЕЛИ"
+  Object.assign(kpiHeader, sectionHeaderStyle())
+  wsDash.getRow(kpiStartRow).height = 24
+
+  // KPI Grid (2x3)
+  const kpiData = [
+    ["Расходы (План)", totalExpensePlanned, "Расходы (Факт)", totalExpenseActual, "Отклонение расходов", totalExpensePlanned - totalExpenseActual],
+    ["Доходы (План)", totalRevenuePlanned, "Доходы (Факт)", totalRevenueActual, "Отклонение доходов", totalRevenueActual - totalRevenuePlanned],
+    ["Маржа (План)", marginPlanned, "Маржа (Факт)", marginActual, "Отклонение маржи", totalVariance],
+    ["Прогноз расходов", totalExpenseForecastFE, "Прогноз доходов", totalRevenueForecastFE, "Прогноз маржи", marginForecast],
   ]
 
-  overviewRows.forEach(([label, value], i) => {
-    const row = ws1.addRow({ label, value })
-    if (typeof value === "number" && i >= 4 && i <= 9) {
-      row.getCell("value").numFmt = currencyFmt
+  const kpiCols = [
+    { key: "lbl1", width: 22 }, { key: "val1", width: 18 },
+    { key: "lbl2", width: 22 }, { key: "val2", width: 18 },
+    { key: "lbl3", width: 22 }, { key: "val3", width: 18 },
+  ]
+  kpiCols.forEach((c, i) => { wsDash.getColumn(i + 1).width = c.width })
+
+  kpiData.forEach((kpiRow, idx) => {
+    const rowNum = kpiStartRow + 1 + idx
+    const row = wsDash.getRow(rowNum)
+    row.height = 22
+
+    // Label-value pairs
+    for (let p = 0; p < 3; p++) {
+      const lblCell = row.getCell(p * 2 + 1)
+      const valCell = row.getCell(p * 2 + 2)
+      lblCell.value = kpiRow[p * 2] as string
+      lblCell.font = { size: 10, color: { argb: MUTED_TEXT } }
+      lblCell.alignment = { horizontal: "right", vertical: "middle" }
+      valCell.value = kpiRow[p * 2 + 1] as number
+      valCell.numFmt = currFmt
+      valCell.font = { bold: true, size: 11, color: { argb: DARK_TEXT } }
+      valCell.alignment = { horizontal: "left", vertical: "middle" }
+
+      // Color variance cells
+      if (p === 2) {
+        const val = kpiRow[5] as number
+        const vc = varianceColor(val)
+        valCell.font = { bold: true, size: 11, ...vc.font }
+        valCell.fill = vc.fill as ExcelJS.Fill
+      }
     }
   })
 
-  // ── Sheet 2: Budget Lines ──────────────────────────────────────────────────
-  const ws2 = wb.addWorksheet("Плановые статьи")
-  ws2.columns = [
-    { header: "Категория", key: "category", width: 32 },
-    { header: "Департамент", key: "department", width: 16 },
-    { header: "Тип", key: "lineType", width: 10 },
-    { header: "Бюджет (₼)", key: "plannedAmount", width: 16 },
-    { header: "Прогноз (₼)", key: "forecastAmount", width: 16 },
-    { header: "Cost Model Key", key: "costModelKey", width: 24 },
-    { header: "Авто-факт", key: "isAutoActual", width: 12 },
-    { header: "Заметки", key: "notes", width: 32 },
-  ]
-  ws2.getRow(1).eachCell(cell => Object.assign(cell, headerStyle))
+  // Execution % row
+  const execRow = kpiStartRow + 1 + kpiData.length + 1
+  wsDash.mergeCells(`A${execRow}:B${execRow}`)
+  wsDash.getCell(`A${execRow}`).value = "Исполнение бюджета (по марже)"
+  wsDash.getCell(`A${execRow}`).font = { bold: true, size: 11, color: { argb: DARK_TEXT } }
+  const execValCell = wsDash.getCell(`C${execRow}`)
+  execValCell.value = executionPct / 100
+  execValCell.numFmt = "0.0%"
+  execValCell.font = {
+    bold: true, size: 14,
+    color: { argb: executionPct >= 80 ? GREEN : executionPct >= 50 ? AMBER : RED },
+  }
 
-  lines.forEach((line: { category: string; department: string | null; lineType: string; plannedAmount: number; forecastAmount: number | null; costModelKey: string | null; isAutoActual: boolean; notes: string | null }) => {
-    const row = ws2.addRow({
-      category: line.category,
-      department: line.department || "",
-      lineType: line.lineType === "expense" ? "Расход" : "Доход",
-      plannedAmount: line.plannedAmount,
-      forecastAmount: line.forecastAmount ?? line.plannedAmount,
-      costModelKey: line.costModelKey || "",
-      isAutoActual: line.isAutoActual ? "Да" : "Нет",
-      notes: line.notes || "",
+  // P&L Preview Section
+  const plStartRow = execRow + 2
+  wsDash.mergeCells(`A${plStartRow}:F${plStartRow}`)
+  const plHeader = wsDash.getCell(`A${plStartRow}`)
+  plHeader.value = "ОТЧЁТ О ПРИБЫЛЯХ И УБЫТКАХ (P&L)"
+  Object.assign(plHeader, sectionHeaderStyle())
+  wsDash.getRow(plStartRow).height = 24
+
+  const plColHeaders = ["", "План", "Прогноз", "Факт", "Отклонение", "Откл. %"]
+  const plHeaderRow = wsDash.getRow(plStartRow + 1)
+  plColHeaders.forEach((h, i) => {
+    const cell = plHeaderRow.getCell(i + 1)
+    cell.value = h
+    cell.font = { bold: true, size: 10, color: { argb: MUTED_TEXT } }
+    cell.alignment = { horizontal: i === 0 ? "left" : "center" }
+    cell.border = { bottom: { style: "thin", color: { argb: GRAY_BORDER } } }
+  })
+
+  const plRows = [
+    { label: "Доходы", plan: totalRevenuePlanned, forecast: totalRevenueForecastFE, actual: totalRevenueActual, isBold: true },
+    { label: "Себестоимость (COGS)", plan: -totalCOGSPlanned, forecast: -totalCOGSForecastFE, actual: -totalCOGSActual, isBold: false },
+    { label: "Валовая прибыль", plan: grossProfitPlanned, forecast: grossProfitForecast, actual: grossProfitActual, isBold: true, isSubtotal: true },
+    { label: "Операционные расходы", plan: -totalExpensePlanned, forecast: -totalExpenseForecastFE, actual: -totalExpenseActual, isBold: false },
+    { label: "Операционная прибыль (Маржа)", plan: marginPlanned, forecast: marginForecast, actual: marginActual, isBold: true, isTotal: true },
+  ]
+
+  plRows.forEach((plRow, idx) => {
+    const rowNum = plStartRow + 2 + idx
+    const row = wsDash.getRow(rowNum)
+    row.height = 22
+
+    row.getCell(1).value = plRow.label
+    row.getCell(1).font = { bold: plRow.isBold, size: 11, color: { argb: DARK_TEXT } }
+    if (!plRow.isBold) row.getCell(1).alignment = { indent: 2 }
+
+    row.getCell(2).value = plRow.plan
+    row.getCell(2).numFmt = currFmt
+    row.getCell(3).value = plRow.forecast
+    row.getCell(3).numFmt = currFmt
+    row.getCell(4).value = plRow.actual
+    row.getCell(4).numFmt = currFmt
+
+    const variance = plRow.actual - plRow.plan
+    row.getCell(5).value = variance
+    addVarianceCell(row, "5", variance)
+
+    const variancePct = plRow.plan !== 0 ? (variance / Math.abs(plRow.plan)) * 100 : 0
+    addPctVarianceCell(row, "6", variancePct)
+
+    if (plRow.isSubtotal || plRow.isTotal) {
+      const borderStyle = plRow.isTotal ? "double" as const : "thin" as const
+      for (let c = 1; c <= 6; c++) {
+        row.getCell(c).border = { top: { style: borderStyle, color: { argb: DARK_TEXT } } }
+        row.getCell(c).font = { ...row.getCell(c).font, bold: true }
+      }
+    }
+  })
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // SHEET 2: Plan vs Forecast vs Actual — by category
+  // ═══════════════════════════════════════════════════════════════════════════
+  const wsPFA = wb.addWorksheet("📋 План-Прогноз-Факт", { properties: { tabColor: { argb: "FF3B82F6" } } })
+  wsPFA.columns = [
+    { header: "Категория", key: "category", width: 30 },
+    { header: "Тип", key: "lineType", width: 12 },
+    { header: "Департамент", key: "department", width: 16 },
+    { header: "План (₼)", key: "planned", width: 16 },
+    { header: "Прогноз (₼)", key: "forecast", width: 16 },
+    { header: "Факт (₼)", key: "actual", width: 16 },
+    { header: "Отклонение (₼)", key: "variance", width: 16 },
+    { header: "Откл. %", key: "variancePct", width: 12 },
+    { header: "Статус", key: "status", width: 14 },
+  ]
+  applyHeaderRow(wsPFA)
+  freezeFirstRow(wsPFA)
+  autoFilter(wsPFA, 9)
+
+  // Build category actuals map
+  const categoryActuals = new Map<string, number>()
+  for (const [key, amount] of autoActualByCategory) {
+    categoryActuals.set(key, (categoryActuals.get(key) ?? 0) + amount)
+  }
+  for (const a of manualActuals) {
+    const key = `${(a as any).category}||${(a as any).lineType}`
+    if (autoActualByCategory.has(key)) continue
+    categoryActuals.set(key, (categoryActuals.get(key) ?? 0) + (a as any).actualAmount)
+  }
+
+  // Group by lineType sections
+  const typeLabels: Record<string, string> = { revenue: "Доходы", cogs: "Себестоимость", expense: "Расходы" }
+  const typeOrder = ["revenue", "cogs", "expense"]
+  const sectionTotals: Record<string, { planned: number; forecast: number; actual: number }> = {}
+
+  for (const lineType of typeOrder) {
+    const typedLines = lines.filter((l: any) => l.lineType === lineType)
+    if (typedLines.length === 0) continue
+
+    // Section header
+    const secRow = wsPFA.addRow({ category: `▸ ${typeLabels[lineType] || lineType}` })
+    secRow.eachCell((cell) => Object.assign(cell, sectionHeaderStyle()))
+    secRow.height = 22
+
+    let secPlanned = 0, secForecast = 0, secActual = 0
+
+    for (const line of typedLines) {
+      const l = line as any
+      const catKey = `${l.category}||${l.lineType}`
+      const actual = categoryActuals.get(catKey) ?? 0
+      const planned = l.plannedAmount
+      const forecast = l.forecastAmount ?? l.plannedAmount
+      secPlanned += planned
+      secForecast += forecast
+      secActual += actual
+
+      const variance = lineType === "revenue" ? actual - planned : planned - actual
+      const variancePct = planned > 0 ? (variance / planned) * 100 : 0
+      const status = variancePct > 5 ? "✅ Экономия" : variancePct < -5 ? "⚠️ Перерасход" : "➖ В норме"
+
+      const row = wsPFA.addRow({
+        category: l.category,
+        lineType: typeLabels[lineType],
+        department: l.department || "Общие",
+        planned,
+        forecast,
+        actual,
+        variance,
+        variancePct,
+        status: lineType === "revenue"
+          ? (variancePct > 5 ? "✅ Сверх плана" : variancePct < -5 ? "⚠️ Ниже плана" : "➖ В норме")
+          : status,
+      })
+
+      row.getCell("planned").numFmt = currFmt
+      row.getCell("forecast").numFmt = currFmt
+      row.getCell("actual").numFmt = currFmt
+      addVarianceCell(row, "variance", variance)
+      addPctVarianceCell(row, "variancePct", variancePct)
+    }
+
+    // Section subtotal
+    const subRow = wsPFA.addRow({
+      category: `Итого ${typeLabels[lineType]}`,
+      planned: secPlanned,
+      forecast: secForecast,
+      actual: secActual,
+      variance: lineType === "revenue" ? secActual - secPlanned : secPlanned - secActual,
     })
-    row.getCell("plannedAmount").numFmt = currencyFmt
-    row.getCell("forecastAmount").numFmt = currencyFmt
-  })
+    subRow.eachCell((cell) => Object.assign(cell, totalRowStyle()))
+    subRow.getCell("planned").numFmt = currFmt
+    subRow.getCell("forecast").numFmt = currFmt
+    subRow.getCell("actual").numFmt = currFmt
+    addVarianceCell(subRow, "variance", lineType === "revenue" ? secActual - secPlanned : secPlanned - secActual)
+    sectionTotals[lineType] = { planned: secPlanned, forecast: secForecast, actual: secActual }
 
-  // Total row
-  const linesTotal = ws2.addRow({
-    category: "ИТОГО",
-    plannedAmount: totalPlanned,
-    forecastAmount: totalForecast,
-  })
-  linesTotal.font = { bold: true }
-  linesTotal.getCell("plannedAmount").numFmt = currencyFmt
-  linesTotal.getCell("forecastAmount").numFmt = currencyFmt
+    wsPFA.addRow({}) // spacer
+  }
 
-  // ── Sheet 3: Actuals ───────────────────────────────────────────────────────
-  const ws3 = wb.addWorksheet("Фактические расходы")
-  ws3.columns = [
-    { header: "Категория", key: "category", width: 32 },
-    { header: "Департамент", key: "department", width: 16 },
-    { header: "Тип", key: "lineType", width: 10 },
-    { header: "Сумма (₼)", key: "actualAmount", width: 16 },
-    { header: "Дата", key: "expenseDate", width: 14 },
-    { header: "Описание", key: "description", width: 40 },
+  // Grand total: Operating Profit
+  const grandRow = wsPFA.addRow({
+    category: "ОПЕРАЦИОННАЯ ПРИБЫЛЬ",
+    planned: marginPlanned,
+    forecast: marginForecast,
+    actual: marginActual,
+    variance: totalVariance,
+  })
+  grandRow.eachCell((cell) => {
+    cell.font = { bold: true, size: 12, color: { argb: PURPLE } }
+    cell.border = { top: { style: "double", color: { argb: PURPLE } }, bottom: { style: "double", color: { argb: PURPLE } } }
+  })
+  grandRow.getCell("planned").numFmt = currFmt
+  grandRow.getCell("forecast").numFmt = currFmt
+  grandRow.getCell("actual").numFmt = currFmt
+  addVarianceCell(grandRow, "variance", totalVariance)
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // SHEET 3: Monthly Forecast Breakdown
+  // ═══════════════════════════════════════════════════════════════════════════
+  if (forecastEntries.length > 0) {
+    const wsForecast = wb.addWorksheet("📅 Прогноз по месяцам", { properties: { tabColor: { argb: "FF8B5CF6" } } })
+
+    // Group by month
+    const monthlyData = new Map<string, { revenue: number; expense: number; cogs: number }>()
+    for (const fe of forecastEntries) {
+      const entry = fe as any
+      const key = `${entry.year}-${String(entry.month).padStart(2, "0")}`
+      const existing = monthlyData.get(key) ?? { revenue: 0, expense: 0, cogs: 0 }
+      if (entry.lineType === "revenue") existing.revenue += entry.forecastAmount
+      else if (entry.lineType === "cogs") existing.cogs += entry.forecastAmount
+      else existing.expense += entry.forecastAmount
+      monthlyData.set(key, existing)
+    }
+
+    wsForecast.columns = [
+      { header: "Месяц", key: "month", width: 14 },
+      { header: "Доходы (₼)", key: "revenue", width: 16 },
+      { header: "Себестоимость (₼)", key: "cogs", width: 18 },
+      { header: "Расходы (₼)", key: "expense", width: 16 },
+      { header: "Валовая прибыль (₼)", key: "grossProfit", width: 20 },
+      { header: "Маржа (₼)", key: "margin", width: 16 },
+    ]
+    applyHeaderRow(wsForecast)
+    freezeFirstRow(wsForecast)
+
+    const monthNames = ["", "Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"]
+    let totalRevF = 0, totalExpF = 0, totalCogsF = 0
+
+    const sortedMonths = Array.from(monthlyData.entries()).sort(([a], [b]) => a.localeCompare(b))
+    for (const [monthKey, data] of sortedMonths) {
+      const [y, m] = monthKey.split("-")
+      const grossProfit = data.revenue - data.cogs
+      const margin = grossProfit - data.expense
+      totalRevF += data.revenue
+      totalExpF += data.expense
+      totalCogsF += data.cogs
+
+      const row = wsForecast.addRow({
+        month: `${monthNames[parseInt(m)]} ${y}`,
+        revenue: data.revenue,
+        cogs: data.cogs,
+        expense: data.expense,
+        grossProfit,
+        margin,
+      })
+      row.getCell("revenue").numFmt = currFmt
+      row.getCell("cogs").numFmt = currFmt
+      row.getCell("expense").numFmt = currFmt
+      row.getCell("grossProfit").numFmt = currFmt
+      row.getCell("margin").numFmt = currFmt
+
+      // Color margin
+      const mc = varianceColor(margin)
+      row.getCell("margin").font = { bold: true, ...mc.font }
+      row.getCell("margin").fill = mc.fill as ExcelJS.Fill
+    }
+
+    // Total
+    const totalFRow = wsForecast.addRow({
+      month: "ИТОГО",
+      revenue: totalRevF,
+      cogs: totalCogsF,
+      expense: totalExpF,
+      grossProfit: totalRevF - totalCogsF,
+      margin: totalRevF - totalCogsF - totalExpF,
+    })
+    totalFRow.eachCell((cell) => Object.assign(cell, totalRowStyle()))
+    totalFRow.getCell("revenue").numFmt = currFmt
+    totalFRow.getCell("cogs").numFmt = currFmt
+    totalFRow.getCell("expense").numFmt = currFmt
+    totalFRow.getCell("grossProfit").numFmt = currFmt
+    totalFRow.getCell("margin").numFmt = currFmt
+
+    // Also add per-category monthly breakdown
+    const catMonthly = new Map<string, Map<string, number>>()
+    for (const fe of forecastEntries) {
+      const entry = fe as any
+      const monthKey = `${entry.year}-${String(entry.month).padStart(2, "0")}`
+      const catKey = `${entry.category} (${typeLabels[entry.lineType] || entry.lineType})`
+      if (!catMonthly.has(catKey)) catMonthly.set(catKey, new Map())
+      const catMap = catMonthly.get(catKey)!
+      catMap.set(monthKey, (catMap.get(monthKey) ?? 0) + entry.forecastAmount)
+    }
+
+    if (catMonthly.size > 0) {
+      wsForecast.addRow({}) // spacer
+      const detailHeaderRow = wsForecast.addRow({ month: "ДЕТАЛИЗАЦИЯ ПО КАТЕГОРИЯМ" })
+      detailHeaderRow.eachCell((cell) => Object.assign(cell, sectionHeaderStyle()))
+
+      const allMonthKeys = Array.from(monthlyData.keys()).sort()
+
+      // Category header with months
+      const catHeaderRow = wsForecast.addRow({})
+      catHeaderRow.getCell(1).value = "Категория"
+      catHeaderRow.getCell(1).font = { bold: true, color: { argb: MUTED_TEXT } }
+      allMonthKeys.forEach((mk, i) => {
+        const [y, m] = mk.split("-")
+        catHeaderRow.getCell(i + 2).value = `${monthNames[parseInt(m)].substring(0, 3)} ${y}`
+        catHeaderRow.getCell(i + 2).font = { bold: true, color: { argb: MUTED_TEXT } }
+        catHeaderRow.getCell(i + 2).alignment = { horizontal: "center" }
+      })
+      catHeaderRow.getCell(allMonthKeys.length + 2).value = "Итого"
+      catHeaderRow.getCell(allMonthKeys.length + 2).font = { bold: true, color: { argb: MUTED_TEXT } }
+
+      for (const [catKey, monthMap] of catMonthly) {
+        const catRow = wsForecast.addRow({})
+        catRow.getCell(1).value = catKey
+        let catTotal = 0
+        allMonthKeys.forEach((mk, i) => {
+          const val = monthMap.get(mk) ?? 0
+          catTotal += val
+          catRow.getCell(i + 2).value = val
+          catRow.getCell(i + 2).numFmt = currFmt
+        })
+        catRow.getCell(allMonthKeys.length + 2).value = catTotal
+        catRow.getCell(allMonthKeys.length + 2).numFmt = currFmt
+        catRow.getCell(allMonthKeys.length + 2).font = { bold: true }
+      }
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // SHEET 4: Department Analysis
+  // ═══════════════════════════════════════════════════════════════════════════
+  const wsDept = wb.addWorksheet("🏢 По департаментам", { properties: { tabColor: { argb: "FF10B981" } } })
+  wsDept.columns = [
+    { header: "Департамент", key: "department", width: 22 },
+    { header: "Расходы (План)", key: "expPlan", width: 18 },
+    { header: "Расходы (Факт)", key: "expActual", width: 18 },
+    { header: "Доходы (План)", key: "revPlan", width: 18 },
+    { header: "Доходы (Факт)", key: "revActual", width: 18 },
+    { header: "Прогноз", key: "forecast", width: 16 },
+    { header: "Отклонение (₼)", key: "variance", width: 16 },
   ]
-  ws3.getRow(1).eachCell(cell => Object.assign(cell, headerStyle))
+  applyHeaderRow(wsDept)
+  freezeFirstRow(wsDept)
+  autoFilter(wsDept, 7)
 
-  // Add auto-actuals from cost model first
+  // Build dept data
+  const deptMap = new Map<string, { expPlan: number; expActual: number; revPlan: number; revActual: number; forecast: number }>()
+  for (const l of lines) {
+    const line = l as any
+    const dept = line.department || "Общие"
+    const existing = deptMap.get(dept) ?? { expPlan: 0, expActual: 0, revPlan: 0, revActual: 0, forecast: 0 }
+    existing.forecast += line.forecastAmount ?? line.plannedAmount
+    if (line.lineType === "revenue") existing.revPlan += line.plannedAmount
+    else existing.expPlan += line.plannedAmount
+    deptMap.set(dept, existing)
+  }
+  // Apply actuals
   if (costModel) {
     for (const line of lines) {
-      if (line.isAutoActual && line.costModelKey) {
-        const amount = resolveCostModelKey(costModel, line.costModelKey)
+      const l = line as any
+      if (l.isAutoActual && l.costModelKey) {
+        const dept = l.department || "Общие"
+        const key = `${l.category}||${l.lineType}`
+        const amount = autoActualByCategory.get(key) ?? 0
+        const existing = deptMap.get(dept)!
+        if (l.lineType === "revenue") existing.revActual += amount
+        else existing.expActual += amount
+      }
+    }
+  }
+  for (const a of manualActuals) {
+    const actual = a as any
+    const catKey = `${actual.category}||${actual.lineType}`
+    if (autoActualByCategory.has(catKey)) continue
+    const dept = actual.department || "Общие"
+    const existing = deptMap.get(dept) ?? { expPlan: 0, expActual: 0, revPlan: 0, revActual: 0, forecast: 0 }
+    if (actual.lineType === "revenue") existing.revActual += actual.actualAmount
+    else existing.expActual += actual.actualAmount
+    deptMap.set(dept, existing)
+  }
+
+  let dTotalExpPlan = 0, dTotalExpAct = 0, dTotalRevPlan = 0, dTotalRevAct = 0, dTotalForecast = 0
+  for (const [dept, data] of deptMap) {
+    const variance = (data.expPlan - data.expActual) + (data.revActual - data.revPlan)
+    dTotalExpPlan += data.expPlan; dTotalExpAct += data.expActual
+    dTotalRevPlan += data.revPlan; dTotalRevAct += data.revActual
+    dTotalForecast += data.forecast
+
+    const row = wsDept.addRow({
+      department: dept,
+      expPlan: data.expPlan,
+      expActual: data.expActual,
+      revPlan: data.revPlan,
+      revActual: data.revActual,
+      forecast: data.forecast,
+      variance,
+    })
+    row.getCell("expPlan").numFmt = currFmt
+    row.getCell("expActual").numFmt = currFmt
+    row.getCell("revPlan").numFmt = currFmt
+    row.getCell("revActual").numFmt = currFmt
+    row.getCell("forecast").numFmt = currFmt
+    addVarianceCell(row, "variance", variance)
+  }
+
+  const dTotalRow = wsDept.addRow({
+    department: "ИТОГО",
+    expPlan: dTotalExpPlan, expActual: dTotalExpAct,
+    revPlan: dTotalRevPlan, revActual: dTotalRevAct,
+    forecast: dTotalForecast,
+    variance: (dTotalExpPlan - dTotalExpAct) + (dTotalRevAct - dTotalRevPlan),
+  })
+  dTotalRow.eachCell((cell) => Object.assign(cell, totalRowStyle()))
+  dTotalRow.getCell("expPlan").numFmt = currFmt
+  dTotalRow.getCell("expActual").numFmt = currFmt
+  dTotalRow.getCell("revPlan").numFmt = currFmt
+  dTotalRow.getCell("revActual").numFmt = currFmt
+  dTotalRow.getCell("forecast").numFmt = currFmt
+  addVarianceCell(dTotalRow, "variance", (dTotalExpPlan - dTotalExpAct) + (dTotalRevAct - dTotalRevPlan))
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // SHEET 5: Actuals Detail
+  // ═══════════════════════════════════════════════════════════════════════════
+  const wsActuals = wb.addWorksheet("📝 Факт (детали)", { properties: { tabColor: { argb: "FFF59E0B" } } })
+  wsActuals.columns = [
+    { header: "Категория", key: "category", width: 30 },
+    { header: "Департамент", key: "department", width: 16 },
+    { header: "Тип", key: "lineType", width: 12 },
+    { header: "Сумма (₼)", key: "amount", width: 16 },
+    { header: "Дата", key: "date", width: 14 },
+    { header: "Источник", key: "source", width: 16 },
+    { header: "Описание", key: "description", width: 40 },
+  ]
+  applyHeaderRow(wsActuals)
+  freezeFirstRow(wsActuals)
+  autoFilter(wsActuals, 7)
+
+  // Auto-actuals from cost model
+  if (costModel) {
+    for (const line of lines) {
+      const l = line as any
+      if (l.isAutoActual && l.costModelKey) {
+        const catKey = `${l.category}||${l.lineType}`
+        const amount = autoActualByCategory.get(catKey) ?? 0
         if (amount > 0) {
-          const row = ws3.addRow({
-            category: `${line.category} (авто)`,
-            department: line.department || "",
-            lineType: line.lineType === "expense" ? "Расход" : "Доход",
-            actualAmount: amount,
-            expenseDate: "",
-            description: `Из cost model: ${line.costModelKey}`,
+          const row = wsActuals.addRow({
+            category: l.category,
+            department: l.department || "Общие",
+            lineType: typeLabels[l.lineType] || l.lineType,
+            amount,
+            date: "",
+            source: "🤖 Cost Model",
+            description: `Авторасчёт: ${l.costModelKey}`,
           })
-          row.getCell("actualAmount").numFmt = currencyFmt
+          row.getCell("amount").numFmt = currFmt
+          row.getCell("source").font = { color: { argb: PURPLE } }
         }
       }
     }
   }
 
-  // Add manual actuals
-  actuals.forEach((actual: { category: string; department: string | null; lineType: string; actualAmount: number; expenseDate: string | null; description: string | null }) => {
-    const row = ws3.addRow({
+  // Manual actuals
+  for (const a of manualActuals) {
+    const actual = a as any
+    const row = wsActuals.addRow({
       category: actual.category,
-      department: actual.department || "",
-      lineType: actual.lineType === "expense" ? "Расход" : "Доход",
-      actualAmount: actual.actualAmount,
-      expenseDate: actual.expenseDate || "",
+      department: actual.department || "Общие",
+      lineType: typeLabels[actual.lineType] || actual.lineType,
+      amount: actual.actualAmount,
+      date: actual.expenseDate ? new Date(actual.expenseDate).toLocaleDateString("ru-RU") : "",
+      source: "✍️ Вручную",
       description: actual.description || "",
     })
-    row.getCell("actualAmount").numFmt = currencyFmt
+    row.getCell("amount").numFmt = currFmt
+  }
+
+  const actTotalRow = wsActuals.addRow({
+    category: "ИТОГО",
+    amount: totalExpenseActual + totalRevenueActual + totalCOGSActual,
   })
+  actTotalRow.eachCell((cell) => Object.assign(cell, totalRowStyle()))
+  actTotalRow.getCell("amount").numFmt = currFmt
 
-  const actualsTotal = ws3.addRow({ category: "ИТОГО", actualAmount: totalActual })
-  actualsTotal.font = { bold: true }
-  actualsTotal.getCell("actualAmount").numFmt = currencyFmt
+  // ═══════════════════════════════════════════════════════════════════════════
+  // SHEET 6: Budget Lines (raw data)
+  // ═══════════════════════════════════════════════════════════════════════════
+  const wsLines = wb.addWorksheet("📄 Статьи бюджета", { properties: { tabColor: { argb: "FF6366F1" } } })
+  wsLines.columns = [
+    { header: "Категория", key: "category", width: 30 },
+    { header: "Тип", key: "lineType", width: 12 },
+    { header: "Департамент", key: "department", width: 16 },
+    { header: "Бюджет (₼)", key: "planned", width: 16 },
+    { header: "Прогноз (₼)", key: "forecast", width: 16 },
+    { header: "Cost Model Key", key: "costModelKey", width: 22 },
+    { header: "Авторасчёт", key: "isAuto", width: 12 },
+    { header: "Заметки", key: "notes", width: 36 },
+  ]
+  applyHeaderRow(wsLines)
+  freezeFirstRow(wsLines)
+  autoFilter(wsLines, 8)
 
-  // Generate buffer
+  for (const line of lines) {
+    const l = line as any
+    const row = wsLines.addRow({
+      category: l.category,
+      lineType: typeLabels[l.lineType] || l.lineType,
+      department: l.department || "Общие",
+      planned: l.plannedAmount,
+      forecast: l.forecastAmount ?? l.plannedAmount,
+      costModelKey: l.costModelKey || "",
+      isAuto: l.isAutoActual ? "Да" : "Нет",
+      notes: l.notes || "",
+    })
+    row.getCell("planned").numFmt = currFmt
+    row.getCell("forecast").numFmt = currFmt
+  }
+
+  const linesTotalRow = wsLines.addRow({
+    category: "ИТОГО",
+    planned: lines.reduce((s: number, l: any) => s + l.plannedAmount, 0),
+    forecast: lines.reduce((s: number, l: any) => s + (l.forecastAmount ?? l.plannedAmount), 0),
+  })
+  linesTotalRow.eachCell((cell) => Object.assign(cell, totalRowStyle()))
+  linesTotalRow.getCell("planned").numFmt = currFmt
+  linesTotalRow.getCell("forecast").numFmt = currFmt
+
+  // ── Generate & respond ─────────────────────────────────────────────────────
   const buffer = await wb.xlsx.writeBuffer()
 
-  const periodStr = plan.month ? `${plan.year}-${String(plan.month).padStart(2, "0")}` : `${plan.year}`
+  const periodStr = plan.month ? `${plan.year}-${String(plan.month).padStart(2, "0")}` : plan.quarter ? `${plan.year}-Q${plan.quarter}` : `${plan.year}`
   const filename = `budget_${plan.name.replace(/\s+/g, "_")}_${periodStr}.xlsx`
 
   return new NextResponse(buffer, {
     headers: {
       "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      "Content-Disposition": `attachment; filename="${filename}"`,
+      "Content-Disposition": `attachment; filename="${encodeURIComponent(filename)}"`,
     },
   })
 }
