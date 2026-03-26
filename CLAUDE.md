@@ -156,6 +156,13 @@ When given a task:
 5. Log progress to progress.txt
 6. Move to next task automatically
 
+## КРИТИЧНО: Защита UI дизайна (ОБЯЗАТЕЛЬНО для ВСЕХ сессий!)
+- **НИКОГДА** не удалять, перемещать или заменять UI компоненты/секции без ЯВНОГО подтверждения пользователя
+- Перед изменением layout — прочитать `docs/budgeting-layout.md` (и аналогичные файлы для других страниц)
+- Если изменение затрагивает удаление/перемещение элементов — СНАЧАЛА уведомить пользователя и получить подтверждение
+- После деплоя — проверить на production через Chrome MCP что ВСЕ секции из документации на месте
+- Причина: ранее при рефакторинге терялись компоненты (waterfall, bar charts, alerts) — пользователь обнаруживал баги после деплоя
+
 ## User Preferences
 - Language: Russian (for communication), English (for code/commits)
 - Style: "не мухлюй!" — be thorough, don't skip anything
