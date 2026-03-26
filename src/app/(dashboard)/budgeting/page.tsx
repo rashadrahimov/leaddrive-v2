@@ -1069,10 +1069,34 @@ function WorkspaceTab({ planId }: { planId: string }) {
     <div className="space-y-6">
       {/* KPI Cards — 2 rows: expenses + revenue/margin */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <ColorStatCard label={t("sectionExpenses") + " (" + t("kpiPlan").toLowerCase() + ")"} value={fmt(totalExpensePlanned)} icon={<BarChart2 className="h-5 w-5" />} color="blue" hint={t("hintKpiExpPlan")} />
-        <ColorStatCard label={t("sectionExpenses") + " (" + t("kpiActual").toLowerCase() + ")"} value={fmt(totalExpenseActual)} icon={<DollarSign className="h-5 w-5" />} color="red" hint={t("hintKpiExpActual")} />
-        <ColorStatCard label={t("sectionRevenues") + " (" + t("kpiPlan").toLowerCase() + ")"} value={fmt(totalRevenuePlanned)} icon={<TrendingUp className="h-5 w-5" />} color="violet" hint={t("hintKpiRevPlan")} />
-        <ColorStatCard label={t("sectionRevenues") + " (" + t("kpiActual").toLowerCase() + ")"} value={fmt(totalRevenueActual)} icon={<DollarSign className="h-5 w-5" />} color="green" hint={t("hintKpiRevActual")} />
+        <ColorStatCard label={t("sectionExpenses") + " (" + t("kpiPlan").toLowerCase() + ")"} value={fmt(totalExpensePlanned)} icon={<BarChart2 className="h-5 w-5" />} color="blue" hint={t("hintKpiExpPlan")}
+          subValue={`${expenseLines.length} ${t("colCategory").toLowerCase()}`}
+          lines={[
+            { label: "OpEx", value: fmt(totExpPlanned) },
+            { label: "COGS", value: fmt(totalCOGSPlanned) },
+          ]}
+        />
+        <ColorStatCard label={t("sectionExpenses") + " (" + t("kpiActual").toLowerCase() + ")"} value={fmt(totalExpenseActual)} icon={<DollarSign className="h-5 w-5" />} color="red" hint={t("hintKpiExpActual")}
+          subValue={`${Math.round(expExecPct)}% ${t("kpiExecution").toLowerCase()}`}
+          lines={[
+            { label: "OpEx", value: fmt(totExpActual) },
+            { label: "COGS", value: fmt(totCOGSActual) },
+          ]}
+        />
+        <ColorStatCard label={t("sectionRevenues") + " (" + t("kpiPlan").toLowerCase() + ")"} value={fmt(totalRevenuePlanned)} icon={<TrendingUp className="h-5 w-5" />} color="violet" hint={t("hintKpiRevPlan")}
+          subValue={`${revenueLines.length} ${t("colCategory").toLowerCase()}`}
+          lines={[
+            { label: t("sectionMargin").split("(")[0].trim(), value: fmt(margin) },
+            { label: "COGS", value: fmt(totalCOGSPlanned) },
+          ]}
+        />
+        <ColorStatCard label={t("sectionRevenues") + " (" + t("kpiActual").toLowerCase() + ")"} value={fmt(totalRevenueActual)} icon={<DollarSign className="h-5 w-5" />} color="green" hint={t("hintKpiRevActual")}
+          subValue={`${totalRevenuePlanned > 0 ? Math.round((totalRevenueActual / totalRevenuePlanned) * 100) : 0}% ${t("kpiExecution").toLowerCase()}`}
+          lines={[
+            { label: t("sectionMargin").split("(")[0].trim(), value: fmt(marginActual) },
+            { label: "COGS", value: fmt(totCOGSActual) },
+          ]}
+        />
       </div>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <ColorStatCard label={t("sectionMargin").split("(")[0].trim() + " (" + t("kpiPlan").toLowerCase() + ")"} value={fmt(margin)} icon={<TrendingUp className="h-5 w-5" />} color={margin >= 0 ? "teal" : "red"} hint={t("hintKpiMarginPlan")}
