@@ -10,6 +10,7 @@ interface WaterfallChartProps {
   totalVariance: number
   yearEndProjection: number
   className?: string
+  onBarClick?: (barName: string) => void
 }
 
 function pctLabel(value: number, reference: number): string {
@@ -26,6 +27,7 @@ export function BudgetWaterfallChart({
   totalVariance,
   yearEndProjection,
   className,
+  onBarClick,
 }: WaterfallChartProps) {
   const forecastDelta = totalForecast - totalPlanned
   const actualVsPlanPct = totalPlanned > 0 ? ((totalActual - totalPlanned) / totalPlanned * 100) : 0
@@ -149,6 +151,8 @@ export function BudgetWaterfallChart({
           radius={[4, 4, 0, 0]}
           animationDuration={ANIMATION.duration}
           animationEasing={ANIMATION.easing}
+          onClick={(_: any, index: number) => { if (onBarClick) onBarClick(data[index].name) }}
+          style={{ cursor: onBarClick ? "pointer" : "default" }}
         >
           {data.map((entry, i) => (
             <Cell key={i} fill={`url(#wf-grad-${i})`} />
