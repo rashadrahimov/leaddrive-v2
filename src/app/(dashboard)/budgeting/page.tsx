@@ -56,6 +56,14 @@ import {
   useCreateBudgetVersion,
   useBudgetDiff,
   useExchangeRates,
+  useImportCsv,
+  useImportHistory,
+  useRollingForecast,
+  useAutoForecast,
+  useCashFlow,
+  useCashFlowAlerts,
+  useResolveCashFlowAlert,
+  useGenerateCashFlow,
 } from "@/lib/budgeting/hooks"
 import {
   DEFAULT_EXPENSE_CATEGORIES,
@@ -75,6 +83,12 @@ import { BudgetApprovalHistory } from "@/components/budget-approval-history"
 import { BudgetVersionHistory } from "@/components/budget-version-history"
 import { BudgetVersionDiff } from "@/components/budget-version-diff"
 import { BudgetFxSummary } from "@/components/budget-fx-summary"
+import { BudgetCsvImport } from "@/components/budget-csv-import"
+import { BudgetImportHistory } from "@/components/budget-import-history"
+import { BudgetRollingForecast } from "@/components/budget-rolling-forecast"
+import { BudgetCashFlowChart } from "@/components/budget-cash-flow-chart"
+import { BudgetCashFlowTable } from "@/components/budget-cash-flow-table"
+import { BudgetCashFlowAlerts } from "@/components/budget-cash-flow-alerts"
 import { BudgetWaterfallChart } from "@/components/budget-waterfall-chart"
 import { BudgetExecutionGauge } from "@/components/budget-execution-gauge"
 import { BudgetCategoryBars } from "@/components/budget-category-bars"
@@ -82,7 +96,7 @@ import { BudgetMarginSummary } from "@/components/budget-margin-summary"
 import { BudgetChangeHistory } from "@/components/budget-change-history"
 import { InfoHint } from "@/components/info-hint"
 import { BudgetMatrixGrid } from "@/components/budget-matrix-grid"
-import { LayoutGrid, List } from "lucide-react"
+import { LayoutGrid, List, Banknote, FileSpreadsheet } from "lucide-react"
 
 const PIE_COLORS = BUDGET_COLORS.pie
 
@@ -105,6 +119,117 @@ function periodLabel(plan: any, t: (key: string) => string): string {
   }
   if (plan.periodType === "quarterly" && plan.quarter) return `Q${plan.quarter} ${plan.year}`
   return `${plan.year}`
+}
+
+// ─── F2: Integrations Tab ─────────────────────────────────────────────────────
+
+function IntegrationsTab({ planId }: { planId: string }) {
+  const importCsv = useImportCsv()
+  const { data: imports = [], isLoading: importsLoading } = useImportHistory(planId)
+  const [lastResult, setLastResult] = useState<any>(null)
+
+  const handleImport = async (data: any) => {
+    const result = await importCsv.mutateAsync(data)
+    setLastResult(result)
+  }
+
+  return (
+    <div className="space-y-6">
+      <BudgetCsvImport
+        planId={planId}
+        onImport={handleImport}
+        isImporting={importCsv.isPending}
+        lastResult={lastResult}
+      />
+      <BudgetImportHistory imports={imports} isLoading={importsLoading} />
+    </div>
+  )
+}
+
+// ─── F4: Rolling Forecast Tab ─────────────────────────────────────────────────
+
+function RollingTab({ planId }: { planId: string }) {
+  const { data: rollingData } = useRollingForecast(planId)
+  const autoForecast = useAutoForecast()
+
+  if (!rollingData || !rollingData.months.length) {
+    return (
+      <Card>
+        <CardContent className="py-12 text-center text-muted-foreground">
+          <CalendarRange className="h-12 w-12 mx-auto mb-3 opacity-30" />
+          <p className="font-medium text-lg mb-2">Rolling Forecast</p>
+          <p className="text-sm">This plan is not configured as a rolling forecast.</p>
+          <p className="text-sm mt-1">Create a Rolling Plan from the Plans tab to enable this feature.</p>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  return (
+    <div className="space-y-6">
+      <BudgetRollingForecast
+        months={rollingData.months}
+        totalActual={rollingData.totalActual}
+        totalForecast={rollingData.totalForecast}
+        onAutoForecast={() => autoForecast.mutate({ planId })}
+        isForecasting={autoForecast.isPending}
+      />
+    </div>
+  )
+}
+
+// ─── F6: Cash Flow Tab ────────────────────────────────────────────────────────
+
+function CashFlowTab() {
+  const [year] = useState(new Date().getFullYear())
+  const { data: cashFlowData } = useCashFlow(year)
+  const { data: alerts = [] } = useCashFlowAlerts(year)
+  const resolveAlert = useResolveCashFlowAlert()
+  const generateCashFlow = useGenerateCashFlow()
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-end">
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => generateCashFlow.mutate({ year })}
+          disabled={generateCashFlow.isPending}
+        >
+          {generateCashFlow.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Sparkles className="h-4 w-4 mr-1" />}
+          Generate from Budget
+        </Button>
+      </div>
+
+      {alerts.length > 0 && (
+        <BudgetCashFlowAlerts
+          alerts={alerts}
+          onResolve={(id) => resolveAlert.mutate(id)}
+        />
+      )}
+
+      {cashFlowData && cashFlowData.months.length > 0 ? (
+        <>
+          <BudgetCashFlowChart
+            months={cashFlowData.months}
+            year={cashFlowData.year}
+            totalInflows={cashFlowData.totalInflows}
+            totalOutflows={cashFlowData.totalOutflows}
+          />
+          <BudgetCashFlowTable months={cashFlowData.months} />
+        </>
+      ) : (
+        <Card>
+          <CardContent className="py-12 text-center text-muted-foreground">
+            <Banknote className="h-12 w-12 mx-auto mb-3 opacity-30" />
+            <p className="font-medium text-lg mb-2">Cash Flow Forecast</p>
+            <p className="text-sm">No cash flow data for {year}.</p>
+            <p className="text-sm mt-1">Click "Generate from Budget" to create entries from your budget plan.</p>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  )
 }
 
 // ─── Create Plan Dialog ───────────────────────────────────────────────────────
@@ -3485,6 +3610,9 @@ export default function BudgetingPage() {
               <TabsTrigger value="templates" className="gap-1">{t("tabTemplates")} <InfoHint text={t("hintTabTemplates")} size={12} /></TabsTrigger>
               <TabsTrigger value="sales-forecast" className="gap-1"><TrendingUp className="h-3.5 w-3.5" /> Прогноз продаж</TabsTrigger>
               <TabsTrigger value="expense-forecast" className="gap-1"><TrendingDown className="h-3.5 w-3.5" /> Прогноз расходов</TabsTrigger>
+              <TabsTrigger value="integrations" className="gap-1"><FileSpreadsheet className="h-3.5 w-3.5" /> Integrations</TabsTrigger>
+              <TabsTrigger value="rolling" className="gap-1"><CalendarRange className="h-3.5 w-3.5" /> Rolling Forecast</TabsTrigger>
+              <TabsTrigger value="cash-flow" className="gap-1"><Banknote className="h-3.5 w-3.5" /> Cash Flow</TabsTrigger>
               <TabsTrigger value="config" className="gap-1"><Settings2 className="h-3.5 w-3.5" /> {t("tabConfig")}</TabsTrigger>
             </TabsList>
 
@@ -3511,6 +3639,15 @@ export default function BudgetingPage() {
             </TabsContent>
             <TabsContent value="expense-forecast">
               <ExpenseForecastTab />
+            </TabsContent>
+            <TabsContent value="integrations">
+              <IntegrationsTab planId={resolvedPlanId} />
+            </TabsContent>
+            <TabsContent value="rolling">
+              <RollingTab planId={resolvedPlanId} />
+            </TabsContent>
+            <TabsContent value="cash-flow">
+              <CashFlowTab />
             </TabsContent>
             <TabsContent value="config">
               <div className="space-y-6">

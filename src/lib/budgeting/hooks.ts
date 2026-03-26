@@ -684,3 +684,257 @@ export function useCreateExchangeRate() {
     },
   })
 }
+
+// ─── F2: Accounting Integration ───────────────────────────────
+
+export function useAccountingIntegrations() {
+  const orgId = useOrgId()
+  return useQuery({
+    queryKey: ["budgeting", "integrations"],
+    queryFn: async () => {
+      const res = await apiFetch("/api/budgeting/integrations", orgId)
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error || "API error")
+      return json as any[]
+    },
+    enabled: !!orgId,
+  })
+}
+
+export function useCreateIntegration() {
+  const orgId = useOrgId()
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (data: { provider: string; name: string; config?: any }) => {
+      const res = await fetch("/api/budgeting/integrations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-organization-id": orgId },
+        body: JSON.stringify(data),
+      })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error || "API error")
+      return json
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["budgeting", "integrations"] })
+    },
+  })
+}
+
+export function useImportCsv() {
+  const orgId = useOrgId()
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (data: { planId: string; rows: any[]; integrationId?: string; fileName?: string }) => {
+      const res = await fetch("/api/budgeting/import-csv", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-organization-id": orgId },
+        body: JSON.stringify(data),
+      })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error || "API error")
+      return json
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["budgeting", "actuals"] })
+      qc.invalidateQueries({ queryKey: ["budgeting", "import-history"] })
+      qc.invalidateQueries({ queryKey: ["budgeting", "analytics"] })
+    },
+  })
+}
+
+export function useImportHistory(planId?: string) {
+  const orgId = useOrgId()
+  const url = planId ? `/api/budgeting/import-csv?planId=${planId}` : "/api/budgeting/import-csv"
+  return useQuery({
+    queryKey: ["budgeting", "import-history", planId || "all"],
+    queryFn: async () => {
+      const res = await apiFetch(url, orgId)
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error || "API error")
+      return json as any[]
+    },
+    enabled: !!orgId,
+  })
+}
+
+// ─── F4: Rolling Forecast ─────────────────────────────────────
+
+export function useCreateRollingPlan() {
+  const orgId = useOrgId()
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (data: { name: string; startYear: number; startMonth: number; rollingMonths?: number }) => {
+      const res = await fetch("/api/budgeting/rolling", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-organization-id": orgId },
+        body: JSON.stringify(data),
+      })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error || "API error")
+      return json
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["budgeting", "plans"] })
+      qc.invalidateQueries({ queryKey: ["budgeting", "rolling"] })
+    },
+  })
+}
+
+export function useRollingForecast(planId: string | null) {
+  const orgId = useOrgId()
+  return useQuery({
+    queryKey: ["budgeting", "rolling", planId],
+    queryFn: async () => {
+      const res = await apiFetch(`/api/budgeting/rolling?planId=${planId}`, orgId)
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error || "API error")
+      return json as {
+        plan: any
+        months: Array<{
+          year: number
+          month: number
+          status: string
+          actualTotal: number
+          forecastTotal: number
+          total: number
+        }>
+        lineCount: number
+        totalActual: number
+        totalForecast: number
+      }
+    },
+    enabled: !!orgId && !!planId,
+  })
+}
+
+export function useAutoForecast() {
+  const orgId = useOrgId()
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (data: { planId: string; lookbackMonths?: number }) => {
+      const res = await fetch("/api/budgeting/rolling/auto-forecast", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-organization-id": orgId },
+        body: JSON.stringify(data),
+      })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error || "API error")
+      return json
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["budgeting", "rolling"] })
+    },
+  })
+}
+
+// ─── F6: Cash Flow ────────────────────────────────────────────
+
+export function useCashFlow(year: number) {
+  const orgId = useOrgId()
+  return useQuery({
+    queryKey: ["budgeting", "cash-flow", year],
+    queryFn: async () => {
+      const res = await apiFetch(`/api/budgeting/cash-flow?year=${year}`, orgId)
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error || "API error")
+      return json as {
+        year: number
+        months: Array<{
+          month: number
+          year: number
+          opening: number
+          inflows: number
+          outflows: number
+          net: number
+          closing: number
+        }>
+        totalInflows: number
+        totalOutflows: number
+      }
+    },
+    enabled: !!orgId,
+  })
+}
+
+export function useCreateCashFlowEntry() {
+  const orgId = useOrgId()
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (data: {
+      year: number; month: number; entryType: string; amount: number;
+      description?: string; source?: string
+    }) => {
+      const res = await fetch("/api/budgeting/cash-flow", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-organization-id": orgId },
+        body: JSON.stringify(data),
+      })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error || "API error")
+      return json
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["budgeting", "cash-flow"] })
+    },
+  })
+}
+
+export function useCashFlowAlerts(year: number) {
+  const orgId = useOrgId()
+  return useQuery({
+    queryKey: ["budgeting", "cash-flow-alerts", year],
+    queryFn: async () => {
+      const res = await apiFetch(`/api/budgeting/cash-flow/alerts?year=${year}`, orgId)
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error || "API error")
+      return json as Array<{
+        id: string; year: number; month: number; alertType: string;
+        message: string; threshold: number | null; projectedBalance: number;
+        isResolved: boolean; createdAt: string
+      }>
+    },
+    enabled: !!orgId,
+  })
+}
+
+export function useResolveCashFlowAlert() {
+  const orgId = useOrgId()
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (alertId: string) => {
+      const res = await fetch("/api/budgeting/cash-flow/alerts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-organization-id": orgId },
+        body: JSON.stringify({ alertId }),
+      })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error || "API error")
+      return json
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["budgeting", "cash-flow-alerts"] })
+    },
+  })
+}
+
+export function useGenerateCashFlow() {
+  const orgId = useOrgId()
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (data: { year: number; planId?: string }) => {
+      const res = await fetch("/api/budgeting/cash-flow/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-organization-id": orgId },
+        body: JSON.stringify(data),
+      })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error || "API error")
+      return json
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["budgeting", "cash-flow"] })
+      qc.invalidateQueries({ queryKey: ["budgeting", "cash-flow-alerts"] })
+    },
+  })
+}

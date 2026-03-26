@@ -55,7 +55,12 @@ model Organization {
   projects           Project[]
   budgetDeptOwners   BudgetDepartmentOwner[]
   budgetApprovalComments BudgetApprovalComment[]
-  currencyRateHistory CurrencyRateHistory[]
+  currencyRateHistory    CurrencyRateHistory[]
+  accountingIntegrations AccountingIntegration[]
+  accountingImports      AccountingImport[]
+  rollingForecastMonths  RollingForecastMonth[]
+  cashFlowEntries        CashFlowEntry[]
+  cashFlowAlerts         CashFlowAlert[]
 
   @@map("organizations")
 }
@@ -1124,6 +1129,114 @@ model CurrencyRateHistory {
   @@map("currency_rate_history")
 }
 
+// ═══════════════════════════════════════════════════
+// F2: ACCOUNTING INTEGRATION
+// ═══════════════════════════════════════════════════
+
+model AccountingIntegration {
+  id              String   @id @default(cuid())
+  organizationId  String
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  provider        String   // "csv" | "1c" | "quickbooks" | "xero"
+  name            String
+  config          Json     @default("{}")
+  categoryMapping Json     @default("{}")  // { "accountingCategory": "budgetCostTypeId" }
+  isActive        Boolean  @default(true)
+  lastSyncAt      DateTime?
+  lastSyncStatus  String?  // "success" | "error" | "partial"
+  lastSyncError   String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  imports         AccountingImport[]
+
+  @@index([organizationId])
+  @@map("accounting_integrations")
+}
+
+model AccountingImport {
+  id              String   @id @default(cuid())
+  organizationId  String
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  integrationId   String?
+  integration     AccountingIntegration? @relation(fields: [integrationId], references: [id])
+  planId          String
+  plan            BudgetPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+  fileName        String?
+  importType      String   // "csv" | "webhook" | "api_sync"
+  status          String   @default("pending") // pending | processing | completed | failed
+  totalRows       Int      @default(0)
+  matchedRows     Int      @default(0)
+  unmatchedRows   Int      @default(0)
+  errors          Json?
+  createdAt       DateTime @default(now())
+
+  @@index([organizationId])
+  @@index([planId])
+  @@map("accounting_imports")
+}
+
+// ═══════════════════════════════════════════════════
+// F4: ROLLING FORECAST
+// ═══════════════════════════════════════════════════
+
+model RollingForecastMonth {
+  id             String     @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  planId         String
+  plan           BudgetPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+  year           Int
+  month          Int
+  status         String     @default("forecast") // "actual" | "forecast"
+  lockedAt       DateTime?
+  createdAt      DateTime   @default(now())
+
+  @@unique([planId, year, month])
+  @@index([organizationId])
+  @@map("rolling_forecast_months")
+}
+
+// ═══════════════════════════════════════════════════
+// F6: CASH FLOW FORECASTING
+// ═══════════════════════════════════════════════════
+
+model CashFlowEntry {
+  id             String   @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  year           Int
+  month          Int
+  entryType      String   // "inflow" | "outflow"
+  source         String   // "budget_line" | "invoice" | "contract" | "manual"
+  sourceId       String?
+  amount         Float
+  currencyCode   String   @default("AZN")
+  description    String?
+  paymentDate    DateTime?
+  isProjected    Boolean  @default(true)
+  createdAt      DateTime @default(now())
+
+  @@index([organizationId, year, month])
+  @@map("cash_flow_entries")
+}
+
+model CashFlowAlert {
+  id               String   @id @default(cuid())
+  organizationId   String
+  organization     Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  year             Int
+  month            Int
+  alertType        String   // "negative_balance" | "low_balance" | "large_outflow"
+  message          String
+  threshold        Float?
+  projectedBalance Float
+  isResolved       Boolean  @default(false)
+  createdAt        DateTime @default(now())
+
+  @@index([organizationId])
+  @@map("cash_flow_alerts")
+}
+
 model DashboardLayout {
   id             String   @id @default(cuid())
   organizationId String
@@ -1600,6 +1713,8 @@ model BudgetPlan {
   version        Int      @default(1)
   versionLabel   String?  // "v1", "v2 (Q1 revision)"
   snapshotData   Json?    // full snapshot for versioning: { lines: [...] }
+  isRolling      Boolean  @default(false)
+  rollingMonths  Int      @default(12)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
@@ -1607,7 +1722,9 @@ model BudgetPlan {
   actuals           BudgetActual[]
   sections          BudgetSection[]
   forecastEntries   BudgetForecastEntry[]
-  approvalComments  BudgetApprovalComment[]
+  approvalComments     BudgetApprovalComment[]
+  accountingImports    AccountingImport[]
+  rollingForecastMonths RollingForecastMonth[]
 
   @@index([organizationId])
   @@map("budget_plans")
