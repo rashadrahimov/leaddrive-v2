@@ -1072,29 +1072,29 @@ function WorkspaceTab({ planId }: { planId: string }) {
         <ColorStatCard label={t("sectionExpenses") + " (" + t("kpiPlan").toLowerCase() + ")"} value={fmt(totalExpensePlanned)} icon={<BarChart2 className="h-5 w-5" />} color="blue" hint={t("hintKpiExpPlan")}
           subValue={`${expenseLines.length} ${t("colCategory").toLowerCase()}`}
           lines={[
-            { label: "OpEx", value: fmt(totExpPlanned) },
-            { label: "COGS", value: fmt(totalCOGSPlanned) },
+            { label: t("colForecast"), value: fmt(totExpForecast) },
+            { label: "COGS (" + t("kpiPlan").toLowerCase() + ")", value: fmt(totalCOGSPlanned) },
           ]}
         />
         <ColorStatCard label={t("sectionExpenses") + " (" + t("kpiActual").toLowerCase() + ")"} value={fmt(totalExpenseActual)} icon={<DollarSign className="h-5 w-5" />} color="red" hint={t("hintKpiExpActual")}
           subValue={`${Math.round(expExecPct)}% ${t("kpiExecution").toLowerCase()}`}
           lines={[
-            { label: "OpEx", value: fmt(totExpActual) },
-            { label: "COGS", value: fmt(totCOGSActual) },
+            { label: t("kpiVariance"), value: (totalExpensePlanned - totalExpenseActual >= 0 ? "+" : "") + fmt(totalExpensePlanned - totalExpenseActual) },
+            { label: "COGS (" + t("kpiActual").toLowerCase() + ")", value: fmt(totCOGSActual) },
           ]}
         />
         <ColorStatCard label={t("sectionRevenues") + " (" + t("kpiPlan").toLowerCase() + ")"} value={fmt(totalRevenuePlanned)} icon={<TrendingUp className="h-5 w-5" />} color="violet" hint={t("hintKpiRevPlan")}
           subValue={`${revenueLines.length} ${t("colCategory").toLowerCase()}`}
           lines={[
+            { label: t("colForecast"), value: fmt(totRevForecast) },
             { label: t("sectionMargin").split("(")[0].trim(), value: fmt(margin) },
-            { label: "COGS", value: fmt(totalCOGSPlanned) },
           ]}
         />
         <ColorStatCard label={t("sectionRevenues") + " (" + t("kpiActual").toLowerCase() + ")"} value={fmt(totalRevenueActual)} icon={<DollarSign className="h-5 w-5" />} color="green" hint={t("hintKpiRevActual")}
           subValue={`${totalRevenuePlanned > 0 ? Math.round((totalRevenueActual / totalRevenuePlanned) * 100) : 0}% ${t("kpiExecution").toLowerCase()}`}
           lines={[
+            { label: t("kpiVariance"), value: (totalRevenueActual - totalRevenuePlanned >= 0 ? "+" : "") + fmt(totalRevenueActual - totalRevenuePlanned) },
             { label: t("sectionMargin").split("(")[0].trim(), value: fmt(marginActual) },
-            { label: "COGS", value: fmt(totCOGSActual) },
           ]}
         />
       </div>
