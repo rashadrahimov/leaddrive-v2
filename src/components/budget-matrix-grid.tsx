@@ -2,6 +2,7 @@
 
 import { cn } from "@/lib/utils"
 import { useState } from "react"
+import { useTranslations } from "next-intl"
 
 interface MatrixCostType {
   key: string
@@ -64,6 +65,7 @@ export function BudgetMatrixGrid({
   compact?: boolean
 }) {
   const [viewMode, setViewMode] = useState<ViewMode>("planned")
+  const t = useTranslations("budgeting")
   const { costTypes, departments, cells, rowTotals, colTotals, grandTotal } = matrix
 
   // Filter: only departments with hasRevenue (active service departments)
@@ -134,10 +136,9 @@ export function BudgetMatrixGrid({
   if (isEmpty) {
     return (
       <div className="rounded-xl border bg-white p-8 text-center text-muted-foreground dark:bg-slate-900">
-        <p className="text-lg font-medium mb-2">Матрица пуста</p>
+        <p className="text-lg font-medium mb-2">{t("matrixEmpty")}</p>
         <p className="text-sm">
-          Нажмите «Сгенерировать матрицу» чтобы создать бюджетные строки
-          по типам затрат × департаментам.
+          {t("matrixEmptyHint")}
         </p>
       </div>
     )
@@ -150,7 +151,7 @@ export function BudgetMatrixGrid({
     <div className="space-y-3">
       {/* View mode toggle */}
       <div className="flex items-center gap-2">
-        <span className="text-xs font-medium text-muted-foreground">Показать:</span>
+        <span className="text-xs font-medium text-muted-foreground">{t("matrixShow")}</span>
         {(["planned", "actual", "variance"] as ViewMode[]).map((mode) => (
           <button
             key={mode}
@@ -162,7 +163,7 @@ export function BudgetMatrixGrid({
                 : "bg-muted text-muted-foreground hover:bg-muted/80"
             )}
           >
-            {mode === "planned" ? "План" : mode === "actual" ? "Факт" : "Отклонение"}
+            {mode === "planned" ? t("matrixPlan") : mode === "actual" ? t("matrixActual") : t("matrixVariance")}
           </button>
         ))}
       </div>
@@ -173,7 +174,7 @@ export function BudgetMatrixGrid({
           <thead>
             <tr className="border-b bg-muted/50">
               <th className="sticky left-0 z-10 bg-muted/50 px-3 py-2 text-left font-medium text-xs min-w-[160px]">
-                Тип затрат
+                {t("matrixCostType")}
               </th>
               {activeDepts.map((d) => (
                 <th key={d.key} className="px-3 py-2 text-right font-medium text-xs min-w-[100px]">
@@ -186,7 +187,7 @@ export function BudgetMatrixGrid({
                 </th>
               ))}
               <th className="px-3 py-2 text-right font-bold text-xs min-w-[100px] bg-muted/80">
-                ИТОГО
+                {t("matrixTotal")}
               </th>
             </tr>
           </thead>
@@ -240,7 +241,7 @@ export function BudgetMatrixGrid({
 
             {/* Expense totals row */}
             <tr className="border-b-2 border-double bg-muted/50 font-bold">
-              <td className="sticky left-0 z-10 bg-muted/50 px-3 py-2 text-xs">ИТОГО РАСХОДЫ</td>
+              <td className="sticky left-0 z-10 bg-muted/50 px-3 py-2 text-xs">{t("matrixTotalExpenses")}</td>
               {activeDepts.map((d) => {
                 const val = getColTotal(d.key)
                 return (
@@ -259,7 +260,7 @@ export function BudgetMatrixGrid({
               <>
                 <tr className="border-b hover:bg-green-50/50 dark:hover:bg-green-900/10 transition-colors">
                   <td className="sticky left-0 z-10 bg-white dark:bg-slate-900 px-3 py-1.5 font-medium text-xs text-green-700 dark:text-green-400">
-                    ВЫРУЧКА
+                    {t("matrixRevenue")}
                   </td>
                   {activeDepts.map((d) => {
                     const val = getRevenueValue(d.key)
@@ -276,7 +277,7 @@ export function BudgetMatrixGrid({
 
                 {/* Margin row */}
                 <tr className="bg-muted/30 font-bold">
-                  <td className="sticky left-0 z-10 bg-muted/30 px-3 py-2 text-xs">МАРЖА</td>
+                  <td className="sticky left-0 z-10 bg-muted/30 px-3 py-2 text-xs">{t("matrixMargin")}</td>
                   {activeDepts.map((d) => {
                     const margin = getDeptMargin(d.key)
                     return (

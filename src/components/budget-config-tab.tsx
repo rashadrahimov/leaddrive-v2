@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useSession } from "next-auth/react"
+import { useTranslations } from "next-intl"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -40,6 +41,7 @@ function ColorDot({ color }: { color: string | null }) {
 export function BudgetConfigTab() {
   const { data: session } = useSession()
   const orgId = session?.user?.organizationId
+  const t = useTranslations("budgeting")
 
   const [costTypes, setCostTypes] = useState<CostType[]>([])
   const [departments, setDepartments] = useState<Department[]>([])
@@ -158,10 +160,10 @@ export function BudgetConfigTab() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2 text-base">
-              <Layers className="h-5 w-5" /> Типы затрат
+              <Layers className="h-5 w-5" /> {t("configCostTypes")}
             </CardTitle>
             <Button size="sm" onClick={() => openCtDialog()}>
-              <Plus className="h-4 w-4 mr-1" /> Добавить
+              <Plus className="h-4 w-4 mr-1" /> {t("configAdd")}
             </Button>
           </div>
         </CardHeader>
@@ -170,12 +172,12 @@ export function BudgetConfigTab() {
             <table className="w-full text-sm">
               <thead className="bg-muted/50">
                 <tr>
-                  <th className="px-3 py-2 text-left text-xs font-medium">Ключ</th>
-                  <th className="px-3 py-2 text-left text-xs font-medium">Название</th>
-                  <th className="px-3 py-2 text-left text-xs font-medium">Шаблон Cost Model</th>
-                  <th className="px-3 py-2 text-center text-xs font-medium">Общий</th>
-                  <th className="px-3 py-2 text-center text-xs font-medium">Аллокация</th>
-                  <th className="px-3 py-2 text-center text-xs font-medium">Статус</th>
+                  <th className="px-3 py-2 text-left text-xs font-medium">{t("configKey")}</th>
+                  <th className="px-3 py-2 text-left text-xs font-medium">{t("configName")}</th>
+                  <th className="px-3 py-2 text-left text-xs font-medium">{t("configCostModelPattern")}</th>
+                  <th className="px-3 py-2 text-center text-xs font-medium">{t("configShared")}</th>
+                  <th className="px-3 py-2 text-center text-xs font-medium">{t("configAllocation")}</th>
+                  <th className="px-3 py-2 text-center text-xs font-medium">{t("configStatus")}</th>
                   <th className="px-3 py-2 w-20" />
                 </tr>
               </thead>
@@ -190,10 +192,10 @@ export function BudgetConfigTab() {
                     </td>
                     <td className="px-3 py-2">{ct.label}</td>
                     <td className="px-3 py-2 font-mono text-xs text-muted-foreground">{ct.costModelPattern || "—"}</td>
-                    <td className="px-3 py-2 text-center">{ct.isShared ? <Badge variant="secondary" className="text-[10px]">Общий</Badge> : "—"}</td>
+                    <td className="px-3 py-2 text-center">{ct.isShared ? <Badge variant="secondary" className="text-[10px]">{t("configShared")}</Badge> : "—"}</td>
                     <td className="px-3 py-2 text-center text-xs">{ct.allocationMethod || "—"}</td>
                     <td className="px-3 py-2 text-center">
-                      {ct.isActive ? <Badge className="bg-green-100 text-green-700 text-[10px]">Активен</Badge> : <Badge variant="secondary" className="text-[10px]">Отключён</Badge>}
+                      {ct.isActive ? <Badge className="bg-green-100 text-green-700 text-[10px]">{t("configActive")}</Badge> : <Badge variant="secondary" className="text-[10px]">{t("configDisabled")}</Badge>}
                     </td>
                     <td className="px-3 py-2">
                       <div className="flex gap-1">
@@ -208,7 +210,7 @@ export function BudgetConfigTab() {
                   </tr>
                 ))}
                 {costTypes.length === 0 && (
-                  <tr><td colSpan={7} className="py-8 text-center text-muted-foreground">Нет типов затрат</td></tr>
+                  <tr><td colSpan={7} className="py-8 text-center text-muted-foreground">{t("configNoCostTypes")}</td></tr>
                 )}
               </tbody>
             </table>
@@ -221,10 +223,10 @@ export function BudgetConfigTab() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2 text-base">
-              <Building2 className="h-5 w-5" /> Департаменты
+              <Building2 className="h-5 w-5" /> {t("configDepartments")}
             </CardTitle>
             <Button size="sm" onClick={() => openDeptDialog()}>
-              <Plus className="h-4 w-4 mr-1" /> Добавить
+              <Plus className="h-4 w-4 mr-1" /> {t("configAdd")}
             </Button>
           </div>
         </CardHeader>
@@ -233,11 +235,11 @@ export function BudgetConfigTab() {
             <table className="w-full text-sm">
               <thead className="bg-muted/50">
                 <tr>
-                  <th className="px-3 py-2 text-left text-xs font-medium">Ключ</th>
-                  <th className="px-3 py-2 text-left text-xs font-medium">Название</th>
-                  <th className="px-3 py-2 text-left text-xs font-medium">Service Key</th>
-                  <th className="px-3 py-2 text-center text-xs font-medium">Выручка</th>
-                  <th className="px-3 py-2 text-center text-xs font-medium">Статус</th>
+                  <th className="px-3 py-2 text-left text-xs font-medium">{t("configKey")}</th>
+                  <th className="px-3 py-2 text-left text-xs font-medium">{t("configName")}</th>
+                  <th className="px-3 py-2 text-left text-xs font-medium">{t("configServiceKey")}</th>
+                  <th className="px-3 py-2 text-center text-xs font-medium">{t("configRevenue")}</th>
+                  <th className="px-3 py-2 text-center text-xs font-medium">{t("configStatus")}</th>
                   <th className="px-3 py-2 w-20" />
                 </tr>
               </thead>
@@ -252,9 +254,9 @@ export function BudgetConfigTab() {
                     </td>
                     <td className="px-3 py-2">{d.label}</td>
                     <td className="px-3 py-2 font-mono text-xs text-muted-foreground">{d.serviceKey || "—"}</td>
-                    <td className="px-3 py-2 text-center">{d.hasRevenue ? <Badge className="bg-green-100 text-green-700 text-[10px]">Да</Badge> : <Badge variant="secondary" className="text-[10px]">Нет</Badge>}</td>
+                    <td className="px-3 py-2 text-center">{d.hasRevenue ? <Badge className="bg-green-100 text-green-700 text-[10px]">{t("configYes")}</Badge> : <Badge variant="secondary" className="text-[10px]">{t("configNo")}</Badge>}</td>
                     <td className="px-3 py-2 text-center">
-                      {d.isActive ? <Badge className="bg-green-100 text-green-700 text-[10px]">Активен</Badge> : <Badge variant="secondary" className="text-[10px]">Отключён</Badge>}
+                      {d.isActive ? <Badge className="bg-green-100 text-green-700 text-[10px]">{t("configActive")}</Badge> : <Badge variant="secondary" className="text-[10px]">{t("configDisabled")}</Badge>}
                     </td>
                     <td className="px-3 py-2">
                       <div className="flex gap-1">
@@ -269,7 +271,7 @@ export function BudgetConfigTab() {
                   </tr>
                 ))}
                 {departments.length === 0 && (
-                  <tr><td colSpan={6} className="py-8 text-center text-muted-foreground">Нет департаментов</td></tr>
+                  <tr><td colSpan={6} className="py-8 text-center text-muted-foreground">{t("configNoDepartments")}</td></tr>
                 )}
               </tbody>
             </table>
@@ -281,40 +283,40 @@ export function BudgetConfigTab() {
       <Dialog open={ctDialog} onOpenChange={setCtDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{editCt ? "Редактировать тип затрат" : "Новый тип затрат"}</DialogTitle>
+            <DialogTitle>{editCt ? t("configEditCostType") : t("configNewCostType")}</DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
             <div>
-              <label className="text-xs font-medium">Ключ (machine key)</label>
+              <label className="text-xs font-medium">{t("configKeyLabel")}</label>
               <Input value={ctForm.key} onChange={e => setCtForm({ ...ctForm, key: e.target.value })} disabled={!!editCt} placeholder="labor" />
             </div>
             <div>
-              <label className="text-xs font-medium">Название</label>
+              <label className="text-xs font-medium">{t("configNameLabel")}</label>
               <Input value={ctForm.label} onChange={e => setCtForm({ ...ctForm, label: e.target.value })} placeholder="ФОТ (зарплаты)" />
             </div>
             <div>
-              <label className="text-xs font-medium">Шаблон Cost Model</label>
+              <label className="text-xs font-medium">{t("configPatternLabel")}</label>
               <Input value={ctForm.costModelPattern} onChange={e => setCtForm({ ...ctForm, costModelPattern: e.target.value })} placeholder="serviceDetails.{dept}.directLabor" />
-              <p className="text-[10px] text-muted-foreground mt-1">{"{dept}"} будет заменён на serviceKey департамента</p>
+              <p className="text-[10px] text-muted-foreground mt-1">{t("configPatternHint")}</p>
             </div>
             <div className="flex items-center gap-4">
               <label className="flex items-center gap-2 text-xs">
                 <input type="checkbox" checked={ctForm.isShared} onChange={e => setCtForm({ ...ctForm, isShared: e.target.checked })} />
-                Общий (без разбивки по департаментам)
+                {t("configSharedLabel")}
               </label>
             </div>
             {ctForm.isShared && (
               <div>
-                <label className="text-xs font-medium">Метод аллокации</label>
+                <label className="text-xs font-medium">{t("configAllocationMethod")}</label>
                 <select value={ctForm.allocationMethod} onChange={e => setCtForm({ ...ctForm, allocationMethod: e.target.value })} className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm">
-                  <option value="">Без аллокации</option>
-                  <option value="proportional">Пропорционально</option>
-                  <option value="fixed">Фиксированный</option>
+                  <option value="">{t("configAllocNone")}</option>
+                  <option value="proportional">{t("configAllocProportional")}</option>
+                  <option value="fixed">{t("configAllocFixed")}</option>
                 </select>
               </div>
             )}
             <div>
-              <label className="text-xs font-medium">Цвет</label>
+              <label className="text-xs font-medium">{t("configColor")}</label>
               <div className="flex items-center gap-2">
                 <input type="color" value={ctForm.color} onChange={e => setCtForm({ ...ctForm, color: e.target.value })} className="h-8 w-10 rounded border cursor-pointer" />
                 <span className="text-xs font-mono text-muted-foreground">{ctForm.color}</span>
@@ -322,10 +324,10 @@ export function BudgetConfigTab() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setCtDialog(false)}>Отмена</Button>
+            <Button variant="outline" onClick={() => setCtDialog(false)}>{t("configCancel")}</Button>
             <Button onClick={saveCt} disabled={saving || !ctForm.key || !ctForm.label}>
               {saving && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}
-              {editCt ? "Сохранить" : "Создать"}
+              {editCt ? t("configSave") : t("configCreate")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -335,30 +337,30 @@ export function BudgetConfigTab() {
       <Dialog open={deptDialog} onOpenChange={setDeptDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{editDept ? "Редактировать департамент" : "Новый департамент"}</DialogTitle>
+            <DialogTitle>{editDept ? t("configEditDepartment") : t("configNewDepartment")}</DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
             <div>
-              <label className="text-xs font-medium">Ключ (machine key)</label>
+              <label className="text-xs font-medium">{t("configKeyLabel")}</label>
               <Input value={deptForm.key} onChange={e => setDeptForm({ ...deptForm, key: e.target.value })} disabled={!!editDept} placeholder="it" />
             </div>
             <div>
-              <label className="text-xs font-medium">Название</label>
+              <label className="text-xs font-medium">{t("configNameLabel")}</label>
               <Input value={deptForm.label} onChange={e => setDeptForm({ ...deptForm, label: e.target.value })} placeholder="Daimi IT" />
             </div>
             <div>
-              <label className="text-xs font-medium">Service Key (cost model)</label>
+              <label className="text-xs font-medium">{t("configServiceKeyLabel")}</label>
               <Input value={deptForm.serviceKey} onChange={e => setDeptForm({ ...deptForm, serviceKey: e.target.value })} placeholder="permanent_it" />
-              <p className="text-[10px] text-muted-foreground mt-1">Ключ из SERVICE_DEPT_MAP в cost model</p>
+              <p className="text-[10px] text-muted-foreground mt-1">{t("configServiceKeyHint")}</p>
             </div>
             <div className="flex items-center gap-4">
               <label className="flex items-center gap-2 text-xs">
                 <input type="checkbox" checked={deptForm.hasRevenue} onChange={e => setDeptForm({ ...deptForm, hasRevenue: e.target.checked })} />
-                Генерирует выручку
+                {t("configGeneratesRevenue")}
               </label>
             </div>
             <div>
-              <label className="text-xs font-medium">Цвет</label>
+              <label className="text-xs font-medium">{t("configColor")}</label>
               <div className="flex items-center gap-2">
                 <input type="color" value={deptForm.color} onChange={e => setDeptForm({ ...deptForm, color: e.target.value })} className="h-8 w-10 rounded border cursor-pointer" />
                 <span className="text-xs font-mono text-muted-foreground">{deptForm.color}</span>
@@ -366,10 +368,10 @@ export function BudgetConfigTab() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeptDialog(false)}>Отмена</Button>
+            <Button variant="outline" onClick={() => setDeptDialog(false)}>{t("configCancel")}</Button>
             <Button onClick={saveDept} disabled={saving || !deptForm.key || !deptForm.label}>
               {saving && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}
-              {editDept ? "Сохранить" : "Создать"}
+              {editDept ? t("configSave") : t("configCreate")}
             </Button>
           </DialogFooter>
         </DialogContent>

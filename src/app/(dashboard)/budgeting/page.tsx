@@ -1277,8 +1277,8 @@ function WorkspaceTab({ planId, onNavigateTab }: { planId: string; onNavigateTab
         <Card>
           <CardContent className="p-8 text-center text-muted-foreground">
             <LayoutGrid className="h-12 w-12 mx-auto mb-3 opacity-40" />
-            <p className="text-lg font-medium mb-2">Матрица не настроена</p>
-            <p className="text-sm mb-4">Для использования матричного вида необходимо сгенерировать бюджетные строки по схеме «Тип затрат × Департамент».</p>
+            <p className="text-lg font-medium mb-2">{t("matrixNotConfigured")}</p>
+            <p className="text-sm mb-4">{t("matrixNotConfiguredHint")}</p>
             <Button
               onClick={async () => {
                 await fetch(`/api/budgeting/matrix-seed`, {
@@ -1291,7 +1291,7 @@ function WorkspaceTab({ planId, onNavigateTab }: { planId: string; onNavigateTab
               }}
             >
               <LayoutGrid className="h-4 w-4 mr-2" />
-              Сгенерировать матрицу
+              {t("matrixGenerate")}
             </Button>
           </CardContent>
         </Card>
@@ -3446,7 +3446,7 @@ export default function BudgetingPage() {
               <TabsTrigger value="comparison" className="gap-1">{t("tabComparison")} <InfoHint text={t("hintTabComparison")} size={12} /></TabsTrigger>
               <TabsTrigger value="plans" className="gap-1">{t("tabPlans")} <InfoHint text={t("hintTabPlans")} size={12} /></TabsTrigger>
               <TabsTrigger value="templates" className="gap-1">{t("tabTemplates")} <InfoHint text={t("hintTabTemplates")} size={12} /></TabsTrigger>
-              <TabsTrigger value="config" className="gap-1"><Settings2 className="h-3.5 w-3.5" /> Настройка</TabsTrigger>
+              <TabsTrigger value="config" className="gap-1"><Settings2 className="h-3.5 w-3.5" /> {t("tabConfig")}</TabsTrigger>
             </TabsList>
 
             <TabsContent value="workspace">
