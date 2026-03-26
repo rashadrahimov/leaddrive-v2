@@ -1070,8 +1070,8 @@ function WorkspaceTab({ planId }: { planId: string }) {
 
   return (
     <div className="space-y-6">
-      {/* ROW 1: 4 Summary KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      {/* ROW 1: 3 KPI Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <ColorStatCard
           label={t("sectionExpenses") + " (" + t("kpiActual").toLowerCase() + ")"}
           value={fmt(totalExpenseActual)}
@@ -1099,21 +1099,12 @@ function WorkspaceTab({ planId }: { planId: string }) {
           subValue={`${t("kpiVariance")}: ${totalVariance >= 0 ? "+" : ""}${fmt(totalVariance)}`}
           animate
         />
-        <ColorStatCard
-          label={t("kpiExecution")}
-          value={`${budgetExecEmoji} ${Math.round(budgetExecPct)}%`}
-          icon={budgetExecPct >= 50 ? <CheckCircle className="h-5 w-5" /> : <AlertCircle className="h-5 w-5" />}
-          color={budgetExecColor}
-          hint={t("kpiExecutionTooltip")}
-          subValue={`${t("expectedByTime")}: ${Math.round(elapsedPct)}%`}
-          animate
-        />
       </div>
 
-      {/* ROW 2: Waterfall + Margin Summary (side by side) */}
+      {/* ROW 2: Waterfall + Gauge (diagrams on top) */}
       {byCategory.length > 0 && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <Card>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <Card className="lg:col-span-2">
             <CardHeader className="pb-1">
               <CardTitle className="text-sm">{t("chartWaterfall") || "Водопад бюджета"}</CardTitle>
             </CardHeader>
@@ -1127,30 +1118,6 @@ function WorkspaceTab({ planId }: { planId: string }) {
               />
             </CardContent>
           </Card>
-          <Card>
-            <CardHeader className="pb-1">
-              <CardTitle className="text-sm">{t("sectionMargin").split("(")[0].trim() || "Маржа"}: {t("kpiPlan")} / {t("colForecast")} / {t("kpiActual")}</CardTitle>
-            </CardHeader>
-            <CardContent className="pb-3">
-              <BudgetMarginSummary
-                revenuePlan={totalRevenuePlanned}
-                revenueForecast={totalRevenueForecast}
-                revenueActual={totalRevenueActual}
-                expensePlan={totalExpensePlanned}
-                expenseForecast={totalExpenseForecast}
-                expenseActual={totalExpenseActual}
-                marginPlan={margin}
-                marginForecast={marginForecast}
-                marginActual={marginActual}
-              />
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
-      {/* ROW 3: Gauge + Category Bars */}
-      {byCategory.length > 0 && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           <Card className="lg:col-span-1">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm">{t("budgetExecution") || "Исполнение бюджета"}</CardTitle>
@@ -1164,15 +1131,19 @@ function WorkspaceTab({ planId }: { planId: string }) {
               />
             </CardContent>
           </Card>
-          <Card className="lg:col-span-2">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm">{t("chartPlanForecastActual") || "План vs Факт по категориям"}</CardTitle>
-            </CardHeader>
-            <CardContent className="pt-0">
-              <BudgetCategoryBars categories={byCategory} />
-            </CardContent>
-          </Card>
         </div>
+      )}
+
+      {/* ROW 3: Category Bars (full width, categories on bottom) */}
+      {byCategory.length > 0 && (
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm">{t("chartPlanForecastActual") || "План vs Факт по категориям"}</CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <BudgetCategoryBars categories={byCategory} />
+          </CardContent>
+        </Card>
       )}
 
       {/* Overspend alert banner */}
