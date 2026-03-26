@@ -11,11 +11,9 @@ interface BudgetExecutionGaugeProps {
 }
 
 function getColor(pct: number) {
-  // Чем ближе к 100% — тем лучше (зелёный)
-  // Чем дальше от 100% (в любую сторону) — тем хуже (красный)
-  const diff = Math.abs(pct - 100)
-  if (diff <= 15) return BUDGET_COLORS.positive
-  if (diff <= 30) return BUDGET_COLORS.warning
+  // >= 80% — зелёный, 50-80% — жёлтый, < 50% — красный
+  if (pct >= 80) return BUDGET_COLORS.positive
+  if (pct >= 50) return BUDGET_COLORS.warning
   return BUDGET_COLORS.negative
 }
 
