@@ -10,8 +10,10 @@ interface BudgetExecutionGaugeProps {
   className?: string
 }
 
-function getColor(pct: number, target: number) {
-  const diff = Math.abs(pct - target)
+function getColor(pct: number) {
+  // Чем ближе к 100% — тем лучше (зелёный)
+  // Чем дальше от 100% (в любую сторону) — тем хуже (красный)
+  const diff = Math.abs(pct - 100)
   if (diff <= 15) return BUDGET_COLORS.positive
   if (diff <= 30) return BUDGET_COLORS.warning
   return BUDGET_COLORS.negative
@@ -42,9 +44,9 @@ export function BudgetExecutionGauge({
   elapsedPct,
   className,
 }: BudgetExecutionGaugeProps) {
-  const mainColor = getColor(executionPct, elapsedPct)
-  const expColor = getColor(expenseExecPct, elapsedPct)
-  const revColor = getColor(revenueExecPct, elapsedPct)
+  const mainColor = getColor(executionPct)
+  const expColor = getColor(expenseExecPct)
+  const revColor = getColor(revenueExecPct)
 
   const size = 160
   const r = 62
