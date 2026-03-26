@@ -32,10 +32,6 @@ export function getChangedCells(
 
   // Build lookup for previous state
   const prevLineMap = new Map(prevLines.map((l: any) => [l.id, l]))
-  const prevActualMap = new Map(prevActuals.map((a: any) => [
-    `${a.category}||${a.lineType}`,
-    (prevActualMap?.get(`${a.category}||${a.lineType}`) || 0) + Number(a.actualAmount || 0),
-  ]))
 
   // Compare lines
   for (const line of currentLines) {
