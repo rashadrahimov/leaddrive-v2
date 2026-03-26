@@ -9,7 +9,8 @@
       "Grep",
       "Agent",
       "mcp__Claude_Preview__*",
-      "mcp__Claude_in_Chrome__*"
+      "mcp__Claude_in_Chrome__*",
+      "mcp__nano_banana__*"
     ],
     "deny": [
       "Bash(rm -rf /)",

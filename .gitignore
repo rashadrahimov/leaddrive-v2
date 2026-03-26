@@ -13,6 +13,7 @@ node_modules/
 .env
 .env.local
 .env.production
+.mcp.json
 
 # misc
 .DS_Store
@@ -32,3 +33,7 @@ npm-debug.log*
 .fuse_hidden*
 Thumbs.db
 .claude/worktrees/
+
+# Generated images (Nano-Banana MCP)
+public/generated/*
+!public/generated/.gitkeep
