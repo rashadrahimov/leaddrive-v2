@@ -1292,7 +1292,7 @@ function WorkspaceTab({ planId, onNavigateTab }: { planId: string; onNavigateTab
       )}
 
       {/* === MAIN EDITABLE GRID === */}
-      {workspaceView === "list" && <Card>
+      {workspaceView === "list" && (<Card>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -1357,7 +1357,7 @@ function WorkspaceTab({ planId, onNavigateTab }: { planId: string; onNavigateTab
             </table>
           </div>
         </CardContent>
-      </Card>}
+      </Card>)}
 
       {/* Drill-down Sheet for fact values */}
       <Sheet open={!!drillDownLine} onOpenChange={open => { if (!open) setDrillDownLine(null) }}>
