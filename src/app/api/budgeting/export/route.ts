@@ -89,7 +89,7 @@ function varianceColor(value: number): { font: Partial<ExcelJS.Font>; fill: Part
   }
 }
 
-function addVarianceCell(row: ExcelJS.Row, colKey: string, value: number) {
+function addVarianceCell(row: ExcelJS.Row, colKey: string | number, value: number) {
   const cell = row.getCell(colKey)
   cell.numFmt = currFmt
   const vc = varianceColor(value)
@@ -97,7 +97,7 @@ function addVarianceCell(row: ExcelJS.Row, colKey: string, value: number) {
   cell.fill = vc.fill as ExcelJS.Fill
 }
 
-function addPctVarianceCell(row: ExcelJS.Row, colKey: string, value: number) {
+function addPctVarianceCell(row: ExcelJS.Row, colKey: string | number, value: number) {
   const cell = row.getCell(colKey)
   cell.numFmt = pctFmt
   cell.value = value / 100 // Excel expects 0.xx for percent
@@ -219,7 +219,7 @@ export async function GET(req: NextRequest) {
   // ═══════════════════════════════════════════════════════════════════════════
   // SHEET 1: DASHBOARD — Executive Summary
   // ═══════════════════════════════════════════════════════════════════════════
-  const wsDash = wb.addWorksheet("📊 Дашборд", { properties: { tabColor: { argb: PURPLE } } })
+  const wsDash = wb.addWorksheet("Дашборд", { properties: { tabColor: { argb: PURPLE } } })
 
   // Title area
   wsDash.mergeCells("A1:F1")
@@ -341,10 +341,10 @@ export async function GET(req: NextRequest) {
 
     const variance = plRow.actual - plRow.plan
     row.getCell(5).value = variance
-    addVarianceCell(row, "5", variance)
+    addVarianceCell(row, 5, variance)
 
     const variancePct = plRow.plan !== 0 ? (variance / Math.abs(plRow.plan)) * 100 : 0
-    addPctVarianceCell(row, "6", variancePct)
+    addPctVarianceCell(row, 6, variancePct)
 
     if (plRow.isSubtotal || plRow.isTotal) {
       const borderStyle = plRow.isTotal ? "double" as const : "thin" as const
@@ -358,7 +358,7 @@ export async function GET(req: NextRequest) {
   // ═══════════════════════════════════════════════════════════════════════════
   // SHEET 2: Plan vs Forecast vs Actual — by category
   // ═══════════════════════════════════════════════════════════════════════════
-  const wsPFA = wb.addWorksheet("📋 План-Прогноз-Факт", { properties: { tabColor: { argb: "FF3B82F6" } } })
+  const wsPFA = wb.addWorksheet("План-Прогноз-Факт", { properties: { tabColor: { argb: "FF3B82F6" } } })
   wsPFA.columns = [
     { header: "Категория", key: "category", width: 30 },
     { header: "Тип", key: "lineType", width: 12 },
@@ -395,7 +395,7 @@ export async function GET(req: NextRequest) {
     if (typedLines.length === 0) continue
 
     // Section header
-    const secRow = wsPFA.addRow({ category: `▸ ${typeLabels[lineType] || lineType}` })
+    const secRow = wsPFA.addRow({ category: `>> ${typeLabels[lineType] || lineType}` })
     secRow.eachCell((cell) => Object.assign(cell, sectionHeaderStyle()))
     secRow.height = 22
 
@@ -413,7 +413,7 @@ export async function GET(req: NextRequest) {
 
       const variance = lineType === "revenue" ? actual - planned : planned - actual
       const variancePct = planned > 0 ? (variance / planned) * 100 : 0
-      const status = variancePct > 5 ? "✅ Экономия" : variancePct < -5 ? "⚠️ Перерасход" : "➖ В норме"
+      const status = variancePct > 5 ? "+ Экономия" : variancePct < -5 ? "! Перерасход" : "= В норме"
 
       const row = wsPFA.addRow({
         category: l.category,
@@ -425,7 +425,7 @@ export async function GET(req: NextRequest) {
         variance,
         variancePct,
         status: lineType === "revenue"
-          ? (variancePct > 5 ? "✅ Сверх плана" : variancePct < -5 ? "⚠️ Ниже плана" : "➖ В норме")
+          ? (variancePct > 5 ? "+ Сверх плана" : variancePct < -5 ? "! Ниже плана" : "= В норме")
           : status,
       })
 
@@ -475,7 +475,7 @@ export async function GET(req: NextRequest) {
   // SHEET 3: Monthly Forecast Breakdown
   // ═══════════════════════════════════════════════════════════════════════════
   if (forecastEntries.length > 0) {
-    const wsForecast = wb.addWorksheet("📅 Прогноз по месяцам", { properties: { tabColor: { argb: "FF8B5CF6" } } })
+    const wsForecast = wb.addWorksheet("Прогноз по месяцам", { properties: { tabColor: { argb: "FF8B5CF6" } } })
 
     // Group by month
     const monthlyData = new Map<string, { revenue: number; expense: number; cogs: number }>()
@@ -599,7 +599,7 @@ export async function GET(req: NextRequest) {
   // ═══════════════════════════════════════════════════════════════════════════
   // SHEET 4: Department Analysis
   // ═══════════════════════════════════════════════════════════════════════════
-  const wsDept = wb.addWorksheet("🏢 По департаментам", { properties: { tabColor: { argb: "FF10B981" } } })
+  const wsDept = wb.addWorksheet("По департаментам", { properties: { tabColor: { argb: "FF10B981" } } })
   wsDept.columns = [
     { header: "Департамент", key: "department", width: 22 },
     { header: "Расходы (План)", key: "expPlan", width: 18 },
@@ -691,7 +691,7 @@ export async function GET(req: NextRequest) {
   // ═══════════════════════════════════════════════════════════════════════════
   // SHEET 5: Actuals Detail
   // ═══════════════════════════════════════════════════════════════════════════
-  const wsActuals = wb.addWorksheet("📝 Факт (детали)", { properties: { tabColor: { argb: "FFF59E0B" } } })
+  const wsActuals = wb.addWorksheet("Факт (детали)", { properties: { tabColor: { argb: "FFF59E0B" } } })
   wsActuals.columns = [
     { header: "Категория", key: "category", width: 30 },
     { header: "Департамент", key: "department", width: 16 },
@@ -719,7 +719,7 @@ export async function GET(req: NextRequest) {
             lineType: typeLabels[l.lineType] || l.lineType,
             amount,
             date: "",
-            source: "🤖 Cost Model",
+            source: "Cost Model (авто)",
             description: `Авторасчёт: ${l.costModelKey}`,
           })
           row.getCell("amount").numFmt = currFmt
@@ -738,7 +738,7 @@ export async function GET(req: NextRequest) {
       lineType: typeLabels[actual.lineType] || actual.lineType,
       amount: actual.actualAmount,
       date: actual.expenseDate ? new Date(actual.expenseDate).toLocaleDateString("ru-RU") : "",
-      source: "✍️ Вручную",
+      source: "Вручную",
       description: actual.description || "",
     })
     row.getCell("amount").numFmt = currFmt
@@ -754,7 +754,7 @@ export async function GET(req: NextRequest) {
   // ═══════════════════════════════════════════════════════════════════════════
   // SHEET 6: Budget Lines (raw data)
   // ═══════════════════════════════════════════════════════════════════════════
-  const wsLines = wb.addWorksheet("📄 Статьи бюджета", { properties: { tabColor: { argb: "FF6366F1" } } })
+  const wsLines = wb.addWorksheet("Статьи бюджета", { properties: { tabColor: { argb: "FF6366F1" } } })
   wsLines.columns = [
     { header: "Категория", key: "category", width: 30 },
     { header: "Тип", key: "lineType", width: 12 },
@@ -798,12 +798,15 @@ export async function GET(req: NextRequest) {
   const buffer = await wb.xlsx.writeBuffer()
 
   const periodStr = plan.month ? `${plan.year}-${String(plan.month).padStart(2, "0")}` : plan.quarter ? `${plan.year}-Q${plan.quarter}` : `${plan.year}`
-  const filename = `budget_${plan.name.replace(/\s+/g, "_")}_${periodStr}.xlsx`
+  // Sanitize filename: remove non-ASCII for the ASCII fallback, keep full name for UTF-8 version
+  const rawName = `budget_${plan.name.replace(/\s+/g, "_")}_${periodStr}.xlsx`
+  const asciiName = rawName.replace(/[^\x20-\x7E]/g, "_")
+  const utf8Name = encodeURIComponent(rawName)
 
   return new NextResponse(buffer, {
     headers: {
       "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      "Content-Disposition": `attachment; filename="${encodeURIComponent(filename)}"`,
+      "Content-Disposition": `attachment; filename="${asciiName}"; filename*=UTF-8''${utf8Name}`,
     },
   })
 }
