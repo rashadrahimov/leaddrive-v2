@@ -130,3 +130,52 @@ export const TEMPLATE_CATEGORY_MAP: Record<string, CostModelKey | undefined> = {
   // Revenue categories → cost model keys
   "Выручка от сервисов": "serviceRevenues.total",
 }
+
+/**
+ * Вычислить номера месяцев для периода плана.
+ * quarterly Q1 → [1,2,3], Q2 → [4,5,6], monthly M3 → [3], annual → [1..12]
+ */
+export function getPeriodMonths(plan: {
+  periodType: string
+  year: number
+  quarter?: number | null
+  month?: number | null
+}): { count: number; months: number[] } {
+  if (plan.periodType === "monthly" && plan.month) {
+    return { count: 1, months: [plan.month] }
+  }
+  if (plan.periodType === "quarterly" && plan.quarter) {
+    const s = (plan.quarter - 1) * 3 + 1
+    return { count: 3, months: [s, s + 1, s + 2] }
+  }
+  if (plan.periodType === "annual") {
+    return { count: 12, months: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] }
+  }
+  return { count: 1, months: [] }
+}
+
+/**
+ * Вычислить плановую сумму для одной budget line.
+ * - Расход (lineType != revenue) + costModelKey → resolveCostModelKey × periodMonths
+ * - Доход (lineType == revenue) + departmentId → sum(SalesForecast для dept за months)
+ */
+export function computePlannedForLine(
+  line: { lineType: string; costModelKey: string | null; departmentId: string | null },
+  costModel: CostModelResult | null,
+  salesForecasts: { departmentId: string; month: number; amount: number }[],
+  periodMonths: number,
+  periodMonthNumbers: number[],
+): number {
+  // Расход: из cost model × кол-во месяцев периода
+  if (line.lineType !== "revenue" && line.costModelKey && costModel) {
+    const monthly = resolveCostModelKey(costModel, line.costModelKey)
+    return monthly * periodMonths
+  }
+  // Доход: из SalesForecast — сумма по месяцам периода для этого департамента
+  if (line.lineType === "revenue" && line.departmentId) {
+    return salesForecasts
+      .filter(f => f.departmentId === line.departmentId && periodMonthNumbers.includes(f.month))
+      .reduce((sum, f) => sum + f.amount, 0)
+  }
+  return 0
+}

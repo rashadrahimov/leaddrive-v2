@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getOrgId } from "@/lib/api-auth"
 import { prisma } from "@/lib/prisma"
 import { loadAndCompute } from "@/lib/cost-model/db"
-import { resolveCostModelKey, resolvePatternForDept } from "@/lib/budgeting/cost-model-map"
+import { resolveCostModelKey, resolvePatternForDept, getPeriodMonths, computePlannedForLine } from "@/lib/budgeting/cost-model-map"
 
 export async function GET(req: NextRequest) {
   const orgId = await getOrgId(req)
@@ -22,11 +22,28 @@ export async function GET(req: NextRequest) {
     prisma.budgetDepartment.findMany({ where: { organizationId: orgId, isActive: true }, orderBy: { sortOrder: "asc" } }),
   ])
 
-  // Only load cost model if at least one line uses auto-actual (performance optimization)
-  const hasAutoActual = lines.some((l: { isAutoActual: boolean }) => l.isAutoActual)
-  const costModel = hasAutoActual ? await loadAndCompute(orgId).catch(() => null) : null
+  // Load cost model if any line uses auto-actual OR auto-planned
+  const hasAutoActual = lines.some((l: any) => l.isAutoActual)
+  const hasAutoPlanned = lines.some((l: any) => l.isAutoPlanned)
+  const costModel = (hasAutoActual || hasAutoPlanned) ? await loadAndCompute(orgId).catch(() => null) : null
 
   if (!plan) return NextResponse.json({ error: "Plan not found" }, { status: 404 })
+
+  // === Auto-planned: compute period months + load SalesForecast ===
+  const { count: periodMonthCount, months: periodMonthNumbers } = getPeriodMonths(plan)
+  const salesForecasts = hasAutoPlanned
+    ? await prisma.salesForecast.findMany({
+        where: { organizationId: orgId, year: plan.year, month: { in: periodMonthNumbers } },
+      })
+    : []
+
+  // Helper: get effective planned amount (dynamic or stored)
+  function getEffectivePlanned(line: any): number {
+    if (line.isAutoPlanned) {
+      return computePlannedForLine(line, costModel, salesForecasts, periodMonthCount, periodMonthNumbers)
+    }
+    return line.plannedAmount
+  }
 
   // Build effective actuals for auto-actual lines.
   // Simple: monthly cost model value × elapsed months in the plan period.
@@ -83,11 +100,11 @@ export async function GET(req: NextRequest) {
   const revenueLines = lines.filter((l: { lineType: string }) => l.lineType === "revenue")
   const cogsLines = lines.filter((l: { lineType: string }) => l.lineType === "cogs")
 
-  const totalExpensePlanned = expenseLines.reduce((s: number, l: { plannedAmount: number }) => s + l.plannedAmount, 0)
-  const totalRevenuePlanned = revenueLines.reduce((s: number, l: { plannedAmount: number }) => s + l.plannedAmount, 0)
+  const totalExpensePlanned = expenseLines.reduce((s: number, l: any) => s + getEffectivePlanned(l), 0)
+  const totalRevenuePlanned = revenueLines.reduce((s: number, l: any) => s + getEffectivePlanned(l), 0)
   const totalPlanned = totalExpensePlanned // KPI "ПЛАН" = only expenses
-  const totalExpenseForecast = expenseLines.reduce((s: number, l: { forecastAmount: number | null; plannedAmount: number }) => s + (l.forecastAmount ?? l.plannedAmount), 0)
-  const totalRevenueForecast = revenueLines.reduce((s: number, l: { forecastAmount: number | null; plannedAmount: number }) => s + (l.forecastAmount ?? l.plannedAmount), 0)
+  const totalExpenseForecast = expenseLines.reduce((s: number, l: any) => s + (l.forecastAmount ?? getEffectivePlanned(l)), 0)
+  const totalRevenueForecast = revenueLines.reduce((s: number, l: any) => s + (l.forecastAmount ?? getEffectivePlanned(l)), 0)
   // Forecast from ForecastEntries (monthly) — split by lineType
   const feRevenue = forecastEntries.filter((e: { lineType: string }) => e.lineType === "revenue")
   const feExpense = forecastEntries.filter((e: { lineType: string }) => e.lineType === "expense")
@@ -101,7 +118,7 @@ export async function GET(req: NextRequest) {
   const manualActualTotal = manualActuals.reduce((s: number, a: { actualAmount: number }) => s + a.actualAmount, 0)
 
   // COGS totals
-  const totalCOGSPlanned = cogsLines.reduce((s: number, l: { plannedAmount: number }) => s + l.plannedAmount, 0)
+  const totalCOGSPlanned = cogsLines.reduce((s: number, l: any) => s + getEffectivePlanned(l), 0)
   const totalCOGSForecast = feCogs.length > 0 ? feCogs.reduce((s: number, e: { forecastAmount: number }) => s + e.forecastAmount, 0) : cogsLines.reduce((s: number, l: { forecastAmount: number | null; plannedAmount: number }) => s + (l.forecastAmount ?? l.plannedAmount), 0)
 
   // Split auto-actuals by type (expense, revenue, cogs) — iterate map keys to avoid double-counting
@@ -176,8 +193,8 @@ export async function GET(req: NextRequest) {
   for (const l of lines) {
     const key = `${l.category}||${l.lineType}`
     const existing = categoryMap.get(key) ?? { planned: 0, forecast: 0, actual: 0, lineType: l.lineType }
-    existing.planned += l.plannedAmount
-    existing.forecast += l.forecastAmount ?? l.plannedAmount
+    existing.planned += getEffectivePlanned(l)
+    existing.forecast += l.forecastAmount ?? getEffectivePlanned(l)
     categoryMap.set(key, existing)
   }
 
@@ -215,11 +232,11 @@ export async function GET(req: NextRequest) {
   for (const l of lines) {
     const dept = l.department || "Общие"
     const existing = deptMap.get(dept) ?? { expPlanned: 0, expActual: 0, revPlanned: 0, revActual: 0, forecast: 0 }
-    existing.forecast += l.forecastAmount ?? l.plannedAmount
+    existing.forecast += l.forecastAmount ?? getEffectivePlanned(l)
     if (l.lineType === "revenue") {
-      existing.revPlanned += l.plannedAmount
+      existing.revPlanned += getEffectivePlanned(l)
     } else {
-      existing.expPlanned += l.plannedAmount
+      existing.expPlanned += getEffectivePlanned(l)
     }
     deptMap.set(dept, existing)
   }
@@ -380,8 +397,8 @@ export async function GET(req: NextRequest) {
         deptKey: dept?.key || null,
         deptLabel: dept?.label || null,
       }
-      existing.planned += line.plannedAmount
-      existing.forecast += line.forecastAmount ?? line.plannedAmount
+      existing.planned += getEffectivePlanned(line)
+      existing.forecast += line.forecastAmount ?? getEffectivePlanned(line)
 
       // Auto-actual from cost model
       if (line.isAutoActual && costModel && ct?.costModelPattern) {

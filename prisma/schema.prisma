@@ -1602,6 +1602,7 @@ model BudgetLine {
   unitCost       Float?   // For COGS: cost per unit
   quantity       Int?     // For product/COGS: number of units
   costModelKey   String?  // e.g. "grandTotalG", "deptCosts.IT", "serviceRevenues.total"
+  isAutoPlanned  Boolean  @default(true)   // true = план из cost model + SalesForecast
   isAutoActual   Boolean  @default(false)
   costTypeId     String?
   costType       BudgetCostType? @relation(fields: [costTypeId], references: [id], onDelete: SetNull)

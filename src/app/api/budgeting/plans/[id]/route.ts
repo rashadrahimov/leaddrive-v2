@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server"
 import { getOrgId } from "@/lib/api-auth"
 import { prisma } from "@/lib/prisma"
 import { createNotification } from "@/lib/notifications"
+import { loadAndCompute } from "@/lib/cost-model/db"
+import { computePlannedForLine, getPeriodMonths } from "@/lib/budgeting/cost-model-map"
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const orgId = await getOrgId(req)
@@ -62,6 +64,30 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   if (plan.count === 0) return NextResponse.json({ error: "Not found" }, { status: 404 })
 
   const updated = await prisma.budgetPlan.findFirst({ where: { id, organizationId: orgId } })
+
+  // Freeze auto-planned values when plan is approved
+  if (status === "approved") {
+    const planData = await prisma.budgetPlan.findFirst({ where: { id, organizationId: orgId } })
+    if (planData) {
+      const autoLines = await prisma.budgetLine.findMany({
+        where: { planId: id, organizationId: orgId, isAutoPlanned: true },
+      })
+      if (autoLines.length > 0) {
+        const cm = await loadAndCompute(orgId).catch(() => null)
+        const { count, months } = getPeriodMonths(planData)
+        const forecasts = await prisma.salesForecast.findMany({
+          where: { organizationId: orgId, year: planData.year, month: { in: months } },
+        })
+        for (const line of autoLines) {
+          const computed = computePlannedForLine(line, cm, forecasts, count, months)
+          await prisma.budgetLine.update({
+            where: { id: line.id },
+            data: { plannedAmount: Math.round(computed * 100) / 100, isAutoPlanned: false },
+          })
+        }
+      }
+    }
+  }
 
   // P4-10: Send notifications when plan is approved
   if (status === "approved" && updated) {
