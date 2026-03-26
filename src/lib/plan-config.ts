@@ -42,6 +42,7 @@ const PROFESSIONAL_MODULES = [
   "/settings/workflows",
   "/settings/lead-rules",
   "/settings/web-to-lead",
+  "/projects",
 ] as const
 
 const ENTERPRISE_MODULES = [

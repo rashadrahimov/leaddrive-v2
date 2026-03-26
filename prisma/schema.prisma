@@ -79,7 +79,7 @@ model User {
   email          String
   name           String
   passwordHash   String
-  role           String    @default("viewer") // admin, manager, viewer
+  role           String    @default("viewer") // admin, manager, sales, support, viewer
   avatar         String?
   phone          String?
   department     String?

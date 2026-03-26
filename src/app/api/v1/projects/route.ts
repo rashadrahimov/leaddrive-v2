@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { prisma } from "@/lib/prisma"
-import { getOrgId } from "@/lib/api-auth"
+import { requireAuth, isAuthError } from "@/lib/api-auth"
 
 const createProjectSchema = z.object({
   name: z.string().min(1).max(255),
@@ -21,8 +21,9 @@ const createProjectSchema = z.object({
 })
 
 export async function GET(req: NextRequest) {
-  const orgId = await getOrgId(req)
-  if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  const auth = await requireAuth(req)
+  if (isAuthError(auth)) return auth
+  const orgId = auth.orgId
 
   const { searchParams } = new URL(req.url)
   const search = searchParams.get("search") || ""
@@ -68,8 +69,9 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const orgId = await getOrgId(req)
-  if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  const auth = await requireAuth(req)
+  if (isAuthError(auth)) return auth
+  const orgId = auth.orgId
 
   const body = await req.json()
   const parsed = createProjectSchema.safeParse(body)
