@@ -1,24 +1,31 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getOrgId } from "@/lib/api-auth"
+import { getOrgId, getSession } from "@/lib/api-auth"
 import { prisma, logBudgetChange } from "@/lib/prisma"
 import { loadAndCompute } from "@/lib/cost-model/db"
 import { getPeriodMonths, computePlannedForLine } from "@/lib/budgeting/cost-model-map"
+import { buildDeptFilter } from "@/lib/budgeting/department-access"
+import type { Role } from "@/lib/permissions"
 
 export async function GET(req: NextRequest) {
-  const orgId = await getOrgId(req)
-  if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  const session = await getSession(req)
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  const { orgId, userId, role } = session
 
   const planId = req.nextUrl.searchParams.get("planId")
   if (!planId) return NextResponse.json({ error: "planId required" }, { status: 400 })
 
+  // Department access filter
+  const deptFilter = await buildDeptFilter(orgId, userId, role as Role)
+
   // Return top-level lines with nested children
   const [lines, plan] = await Promise.all([
     prisma.budgetLine.findMany({
-      where: { planId, organizationId: orgId, parentId: null },
+      where: { planId, organizationId: orgId, parentId: null, ...deptFilter },
       orderBy: [{ sortOrder: "asc" }, { category: "asc" }],
       include: {
         children: {
           orderBy: [{ sortOrder: "asc" }, { category: "asc" }],
+          ...(deptFilter ? { where: deptFilter } : {}),
         },
       },
     }),

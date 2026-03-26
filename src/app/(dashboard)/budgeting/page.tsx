@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo, useRef } from "react"
 import { useTranslations } from "next-intl"
+import { useSession as useSessionHook } from "next-auth/react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ColorStatCard } from "@/components/color-stat-card"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -64,6 +65,9 @@ import { COST_MODEL_KEY_OPTIONS, TEMPLATE_CATEGORY_MAP } from "@/lib/budgeting/c
 import { BudgetConfigTab } from "@/components/budget-config-tab"
 import { SalesForecastTab } from "@/components/sales-forecast-tab"
 import { ExpenseForecastTab } from "@/components/expense-forecast-tab"
+import { BudgetDepartmentAccess } from "@/components/budget-department-access"
+import { BudgetApprovalWorkflow } from "@/components/budget-approval-workflow"
+import { BudgetApprovalHistory } from "@/components/budget-approval-history"
 import { BudgetWaterfallChart } from "@/components/budget-waterfall-chart"
 import { BudgetExecutionGauge } from "@/components/budget-execution-gauge"
 import { BudgetCategoryBars } from "@/components/budget-category-bars"
@@ -2028,6 +2032,9 @@ function PlansTab({ activePlanId, onSelect, onShowCreate }: { activePlanId: stri
   const { data: plans = [], isLoading } = useBudgetPlans()
   const updatePlan = useUpdateBudgetPlan()
   const deletePlan = useDeleteBudgetPlan()
+  const { data: sessionData } = useSessionHook()
+  const userRole = (sessionData?.user as any)?.role || "viewer"
+  const activePlan = plans.find(p => p.id === activePlanId) || null
 
   if (isLoading) return <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-purple-500" /></div>
 
@@ -2070,45 +2077,6 @@ function PlansTab({ activePlanId, onSelect, onShowCreate }: { activePlanId: stri
                     onClick={() => onSelect(plan.id)} className="flex-1 text-xs">
                     {activePlanId === plan.id ? t("btnActive") : t("btnSelect")}
                   </Button>
-                  {plan.status === "draft" && (
-                    <Button size="sm" variant="outline" className="text-xs" title={t("hintBtnSubmitApproval")}
-                      onClick={() => updatePlan.mutate({ id: plan.id, status: "pending_approval" })}>
-                      {t("btnSubmitApproval")}
-                    </Button>
-                  )}
-                  {plan.status === "pending_approval" && (
-                    <>
-                      <Button size="sm" variant="outline" className="text-xs text-green-600 border-green-300 hover:bg-green-50" title={t("hintBtnApprove")}
-                        onClick={() => {
-                          if (confirm(t("confirmApprove"))) {
-                            updatePlan.mutate({ id: plan.id, status: "approved" })
-                          }
-                        }}>
-                        {t("btnApprove")}
-                      </Button>
-                      <Button size="sm" variant="outline" className="text-xs text-red-600 border-red-300 hover:bg-red-50" title={t("hintBtnReject")}
-                        onClick={() => {
-                          const reason = prompt(t("rejectReason"))
-                          if (reason !== null) {
-                            updatePlan.mutate({ id: plan.id, status: "rejected", rejectedReason: reason || undefined })
-                          }
-                        }}>
-                        {t("btnReject")}
-                      </Button>
-                    </>
-                  )}
-                  {plan.status === "approved" && (
-                    <Button size="sm" variant="outline" className="text-xs"
-                      onClick={() => updatePlan.mutate({ id: plan.id, status: "closed" })}>
-                      {t("statusClosed")}
-                    </Button>
-                  )}
-                  {plan.status === "rejected" && (
-                    <Button size="sm" variant="outline" className="text-xs" title={t("hintBtnRevise")}
-                      onClick={() => updatePlan.mutate({ id: plan.id, status: "draft" })}>
-                      {t("btnRevise")}
-                    </Button>
-                  )}
                   {(plan.status === "draft" || plan.status === "rejected") && (
                     <button onClick={() => deletePlan.mutate(plan.id)}
                       className="p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-900/20 text-muted-foreground hover:text-red-600 border border-border">
@@ -2119,6 +2087,14 @@ function PlansTab({ activePlanId, onSelect, onShowCreate }: { activePlanId: stri
               </CardContent>
             </Card>
           ))}
+        </div>
+      )}
+
+      {/* Approval Workflow & History for active plan */}
+      {activePlan && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-6">
+          <BudgetApprovalWorkflow plan={activePlan} userRole={userRole} />
+          <BudgetApprovalHistory planId={activePlan.id} />
         </div>
       )}
     </div>
@@ -3478,7 +3454,10 @@ export default function BudgetingPage() {
               <ExpenseForecastTab />
             </TabsContent>
             <TabsContent value="config">
-              <BudgetConfigTab />
+              <div className="space-y-6">
+                <BudgetConfigTab />
+                <BudgetDepartmentAccess />
+              </div>
             </TabsContent>
           </Tabs>
         </>

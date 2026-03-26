@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getOrgId } from "@/lib/api-auth"
+import { getOrgId, getSession } from "@/lib/api-auth"
 import { prisma } from "@/lib/prisma"
 import { createNotification } from "@/lib/notifications"
 import { loadAndCompute } from "@/lib/cost-model/db"
@@ -22,12 +22,29 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 }
 
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const orgId = await getOrgId(req)
-  if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  const session = await getSession(req)
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
+  const { orgId, userId, role, name: userName } = session
   const { id } = await params
   const body = await req.json()
   const { name, status, notes, rejectedReason } = body
+
+  // ── Role-based approval checks ──
+  if (status === "approved" || status === "rejected") {
+    if (role !== "admin" && role !== "manager") {
+      // Check if user has canApprove on any department
+      const approverDepts = await prisma.budgetDepartmentOwner.findMany({
+        where: { organizationId: orgId, userId, canApprove: true },
+      })
+      if (approverDepts.length === 0) {
+        return NextResponse.json(
+          { error: "Only admin, manager, or designated approvers can approve/reject plans" },
+          { status: 403 },
+        )
+      }
+    }
+  }
 
   // Build update data with approval workflow fields
   const updateData: Record<string, any> = {}
@@ -37,11 +54,11 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     updateData.status = status
     if (status === "pending_approval") {
       updateData.submittedAt = new Date()
-      updateData.submittedBy = req.headers.get("x-user-id") || "unknown"
+      updateData.submittedBy = userId
     }
     if (status === "approved") {
       updateData.approvedAt = new Date()
-      updateData.approvedBy = req.headers.get("x-user-id") || "admin"
+      updateData.approvedBy = userId
     }
     if (status === "rejected") {
       updateData.rejectedReason = rejectedReason || null
@@ -64,6 +81,29 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   if (plan.count === 0) return NextResponse.json({ error: "Not found" }, { status: 404 })
 
   const updated = await prisma.budgetPlan.findFirst({ where: { id, organizationId: orgId } })
+
+  // ── Auto-create approval comment on status transitions ──
+  if (status && updated) {
+    const commentMap: Record<string, string> = {
+      pending_approval: body.comment || "Plan submitted for approval",
+      approved: body.comment || "Plan approved",
+      rejected: body.comment || rejectedReason || "Plan rejected",
+      closed: body.comment || "Plan closed",
+      draft: body.comment || "Plan reverted to draft",
+    }
+    if (commentMap[status]) {
+      await prisma.budgetApprovalComment.create({
+        data: {
+          organizationId: orgId,
+          planId: id,
+          userId,
+          userName,
+          status,
+          comment: commentMap[status],
+        },
+      }).catch(() => {}) // fire-and-forget
+    }
+  }
 
   // Freeze auto-planned values when plan is approved
   if (status === "approved") {
@@ -94,22 +134,38 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     }
   }
 
-  // P4-10: Send notifications when plan is approved
-  if (status === "approved" && updated) {
+  // ── Send notifications on status changes ──
+  if (status && updated) {
     const users = await prisma.user.findMany({
       where: { organizationId: orgId },
       select: { id: true },
     })
-    for (const user of users) {
-      await createNotification({
-        organizationId: orgId,
-        userId: user.id,
-        type: "success",
-        title: "Бюджет утверждён",
-        message: `План "${updated.name}" утверждён`,
-        entityType: "budget_plan",
-        entityId: id,
-      })
+
+    const titleMap: Record<string, string> = {
+      pending_approval: "Budget submitted for approval",
+      approved: "Budget approved",
+      rejected: "Budget rejected",
+      closed: "Budget closed",
+    }
+    const typeMap: Record<string, string> = {
+      pending_approval: "info",
+      approved: "success",
+      rejected: "warning",
+      closed: "info",
+    }
+
+    if (titleMap[status]) {
+      for (const user of users) {
+        await createNotification({
+          organizationId: orgId,
+          userId: user.id,
+          type: typeMap[status] || "info",
+          title: titleMap[status],
+          message: `Plan "${updated.name}" — ${titleMap[status].toLowerCase()}`,
+          entityType: "budget_plan",
+          entityId: id,
+        })
+      }
     }
   }
 

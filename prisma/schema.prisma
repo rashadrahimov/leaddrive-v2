@@ -53,6 +53,8 @@ model Organization {
   salesForecasts     SalesForecast[]
   expenseForecasts   ExpenseForecast[]
   projects           Project[]
+  budgetDeptOwners   BudgetDepartmentOwner[]
+  budgetApprovalComments BudgetApprovalComment[]
 
   @@map("organizations")
 }
@@ -96,6 +98,8 @@ model User {
   isActive       Boolean   @default(true)
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
+
+  budgetDeptOwnership BudgetDepartmentOwner[]
 
   @@unique([organizationId, email])
   @@map("users")
@@ -1555,6 +1559,7 @@ model BudgetDepartment {
   directionTemplates BudgetDirectionTemplate[]
   salesForecasts     SalesForecast[]
   expenseForecasts   ExpenseForecast[]
+  owners             BudgetDepartmentOwner[]
 
   @@unique([organizationId, key])
   @@index([organizationId])
@@ -1577,14 +1582,18 @@ model BudgetPlan {
   approvedBy     String?
   approvedAt     DateTime?
   rejectedReason String?
-  amendmentOf    String?  // ID of plan this amends
+  amendmentOf    String?  // ID of plan this amends (version chain root)
+  version        Int      @default(1)
+  versionLabel   String?  // "v1", "v2 (Q1 revision)"
+  snapshotData   Json?    // full snapshot for versioning: { lines: [...] }
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  lines           BudgetLine[]
-  actuals         BudgetActual[]
-  sections        BudgetSection[]
-  forecastEntries BudgetForecastEntry[]
+  lines             BudgetLine[]
+  actuals           BudgetActual[]
+  sections          BudgetSection[]
+  forecastEntries   BudgetForecastEntry[]
+  approvalComments  BudgetApprovalComment[]
 
   @@index([organizationId])
   @@map("budget_plans")
@@ -1758,6 +1767,45 @@ model ExpenseForecast {
   @@index([organizationId, year])
   @@index([organizationId, costTypeId, departmentId, year, month])
   @@map("expense_forecasts")
+}
+
+// ═══════════════════════════════════════════════════
+// BUDGET ACCESS CONTROL & APPROVAL
+// ═══════════════════════════════════════════════════
+
+model BudgetDepartmentOwner {
+  id             String           @id @default(cuid())
+  organizationId String
+  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  departmentId   String
+  budgetDept     BudgetDepartment @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  canEdit        Boolean          @default(true)
+  canApprove     Boolean          @default(false)
+  createdAt      DateTime         @default(now())
+
+  @@unique([organizationId, departmentId, userId])
+  @@index([organizationId])
+  @@index([userId])
+  @@map("budget_department_owners")
+}
+
+model BudgetApprovalComment {
+  id             String     @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  planId         String
+  plan           BudgetPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+  userId         String
+  userName       String
+  status         String     // submitted | review | approved | rejected | comment
+  comment        String
+  createdAt      DateTime   @default(now())
+
+  @@index([planId, createdAt])
+  @@index([organizationId])
+  @@map("budget_approval_comments")
 }
 
 model SocialConversation {

@@ -441,3 +441,116 @@ export function useUndoBudgetChange() {
     },
   })
 }
+
+// ─── Department Owners (F5) ──────────────────────────────────────────────────
+
+interface DepartmentOwner {
+  id: string
+  departmentId: string
+  userId: string
+  canEdit: boolean
+  canApprove: boolean
+  budgetDept: { id: string; key: string; label: string }
+  user: { id: string; name: string; email: string; role: string }
+}
+
+export function useBudgetDeptOwners() {
+  const orgId = useOrgId()
+  return useQuery({
+    queryKey: ["budgeting", "dept-owners", orgId],
+    queryFn: async () => {
+      const res = await fetch("/api/budgeting/department-owners", {
+        headers: { "x-organization-id": orgId },
+      })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error || "API error")
+      return json as DepartmentOwner[]
+    },
+    enabled: !!orgId,
+  })
+}
+
+export function useAssignDeptOwner() {
+  const orgId = useOrgId()
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (data: { departmentId: string; userId: string; canEdit?: boolean; canApprove?: boolean }) => {
+      const res = await fetch("/api/budgeting/department-owners", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-organization-id": orgId },
+        body: JSON.stringify(data),
+      })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error || "API error")
+      return json as DepartmentOwner
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["budgeting", "dept-owners"] })
+    },
+  })
+}
+
+export function useRemoveDeptOwner() {
+  const orgId = useOrgId()
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const res = await fetch(`/api/budgeting/department-owners?id=${id}`, {
+        method: "DELETE",
+        headers: { "x-organization-id": orgId },
+      })
+      if (!res.ok) throw new Error("Failed to remove")
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["budgeting", "dept-owners"] })
+    },
+  })
+}
+
+// ─── Approval Comments (F1) ──────────────────────────────────────────────────
+
+interface ApprovalComment {
+  id: string
+  planId: string
+  userId: string
+  userName: string
+  status: string
+  comment: string
+  createdAt: string
+}
+
+export function useBudgetApprovalComments(planId?: string) {
+  const orgId = useOrgId()
+  return useQuery({
+    queryKey: ["budgeting", "approval-comments", planId, orgId],
+    queryFn: async () => {
+      const res = await fetch(`/api/budgeting/plans/${planId}/comments`, {
+        headers: { "x-organization-id": orgId },
+      })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error || "API error")
+      return json as ApprovalComment[]
+    },
+    enabled: !!orgId && !!planId,
+  })
+}
+
+export function useCreateApprovalComment() {
+  const orgId = useOrgId()
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (data: { planId: string; comment: string; status?: string }) => {
+      const res = await fetch(`/api/budgeting/plans/${data.planId}/comments`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-organization-id": orgId },
+        body: JSON.stringify({ comment: data.comment, status: data.status }),
+      })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error || "API error")
+      return json as ApprovalComment
+    },
+    onSuccess: (_data, variables) => {
+      qc.invalidateQueries({ queryKey: ["budgeting", "approval-comments", variables.planId] })
+    },
+  })
+}
