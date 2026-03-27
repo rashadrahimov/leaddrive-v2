@@ -1,6 +1,7 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useMemo } from "react"
+import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
 import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
@@ -10,25 +11,39 @@ import { OfferForm } from "@/components/offer-form"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
 import { InfoHint } from "@/components/info-hint"
 import { PageDescription } from "@/components/page-description"
-import { FileSpreadsheet, Plus, Pencil, Trash2 } from "lucide-react"
+import { ColorStatCard } from "@/components/color-stat-card"
+import {
+  FileSpreadsheet, Plus, Pencil, Trash2, FileCheck, DollarSign,
+  Clock, CheckCircle2, XCircle, Send as SendIcon, Package,
+} from "lucide-react"
 
 interface Offer {
   id: string
   offerNumber: string
   title: string
+  type?: string
   companyId?: string
-  status: "draft" | "sent" | "accepted" | "rejected"
+  company?: { name: string }
+  status: string
   totalAmount?: number
   currency: string
   validUntil?: string
-  notes?: string
+  createdAt?: string
+  items?: any[]
 }
 
-const statusColors: Record<string, "default" | "secondary" | "destructive" | "outline"> = { draft: "secondary", sent: "default", accepted: "outline", rejected: "destructive" }
+const STATUS_COLORS: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
+  draft: "secondary",
+  sent: "default",
+  approved: "outline",
+  rejected: "destructive",
+}
 
 export default function OffersPage() {
   const { data: session } = useSession()
   const t = useTranslations("offers")
+  const tc = useTranslations("common")
+  const router = useRouter()
   const [offers, setOffers] = useState<Offer[]>([])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
@@ -36,11 +51,15 @@ export default function OffersPage() {
   const [editData, setEditData] = useState<Offer | undefined>()
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [deleteName, setDeleteName] = useState("")
+  const [statusFilter, setStatusFilter] = useState<string>("all")
   const orgId = session?.user?.organizationId
 
   const fetchOffers = async () => {
     try {
-      const res = await fetch("/api/v1/offers?limit=500", {
+      const url = statusFilter !== "all"
+        ? `/api/v1/offers?limit=500&status=${statusFilter}`
+        : "/api/v1/offers?limit=500"
+      const res = await fetch(url, {
         headers: orgId ? { "x-organization-id": String(orgId) } : {},
       })
       const json = await res.json()
@@ -48,10 +67,16 @@ export default function OffersPage() {
         setOffers(json.data.offers)
         setTotal(json.data.total)
       }
-    } catch (err) { console.error(err) } finally { setLoading(false) }
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setLoading(false)
+    }
   }
 
-  useEffect(() => { fetchOffers() }, [session])
+  useEffect(() => {
+    fetchOffers()
+  }, [session, statusFilter])
 
   const handleDelete = async () => {
     if (!deleteId) return
@@ -63,29 +88,82 @@ export default function OffersPage() {
     fetchOffers()
   }
 
+  // Stats
+  const stats = useMemo(() => {
+    const all = offers
+    const draft = all.filter((o) => o.status === "draft").length
+    const sent = all.filter((o) => o.status === "sent").length
+    const approved = all.filter((o) => o.status === "approved" || o.status === "accepted").length
+    const rejected = all.filter((o) => o.status === "rejected").length
+    const totalValue = all.reduce((sum, o) => sum + (o.totalAmount || 0), 0)
+    const currency = all[0]?.currency || "AZN"
+    return { draft, sent, approved, rejected, totalValue, currency, total: all.length }
+  }, [offers])
+
+  const statusLabel = (status: string) => {
+    if (t.has(`status.${status}`)) return t(`status.${status}` as any)
+    return status
+  }
+
   const columns = [
-    { key: "offerNumber", label: t("colNumber"), sortable: true, hint: t("hintColNumber") },
+    {
+      key: "offerNumber",
+      label: t("colNumber"),
+      sortable: true,
+      hint: t("hintColNumber"),
+      render: (item: any) => (
+        <button className="text-primary hover:underline font-medium" onClick={() => router.push(`/offers/${item.id}`)}>
+          {item.offerNumber}
+        </button>
+      ),
+    },
     { key: "title", label: t("colTitle"), sortable: true, hint: t("hintColTitle") },
     {
-      key: "totalAmount", label: t("colAmount"), sortable: true, hint: t("hintColAmount"),
-      render: (item: any) => <span className="font-medium">{item.totalAmount ? item.totalAmount.toLocaleString() : "—"} {item.currency}</span>,
+      key: "type",
+      label: t("type"),
+      sortable: true,
+      render: (item: any) => (
+        <span className="text-muted-foreground text-xs">{t(`type${(item.type || "commercial").charAt(0).toUpperCase() + (item.type || "commercial").slice(1)}` as any)}</span>
+      ),
     },
     {
-      key: "status", label: t("colStatus"), sortable: true, hint: t("hintColStatus"),
-      render: (item: any) => <Badge variant={statusColors[item.status]}>{item.status}</Badge>,
+      key: "totalAmount",
+      label: t("colAmount"),
+      sortable: true,
+      hint: t("hintColAmount"),
+      render: (item: any) => (
+        <span className="font-medium tabular-nums">{item.totalAmount ? item.totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2 }) : "—"} {item.currency}</span>
+      ),
     },
     {
-      key: "validUntil", label: t("colValidUntil"), sortable: true, hint: t("hintColValidUntil"),
-      render: (item: any) => item.validUntil ? new Date(item.validUntil).toLocaleDateString() : "—",
+      key: "status",
+      label: t("colStatus"),
+      sortable: true,
+      hint: t("hintColStatus"),
+      render: (item: any) => <Badge variant={STATUS_COLORS[item.status] || "secondary"}>{statusLabel(item.status)}</Badge>,
     },
     {
-      key: "actions", label: "", sortable: false,
+      key: "validUntil",
+      label: t("colValidUntil"),
+      sortable: true,
+      hint: t("hintColValidUntil"),
+      render: (item: any) => {
+        if (!item.validUntil) return "—"
+        const d = new Date(item.validUntil)
+        const expired = d.getTime() < Date.now()
+        return <span className={expired ? "text-red-500" : ""}>{d.toLocaleDateString()}{expired ? ` (${t("expired")})` : ""}</span>
+      },
+    },
+    {
+      key: "actions",
+      label: "",
+      sortable: false,
       render: (item: any) => (
         <div className="flex gap-1">
-          <Button variant="ghost" size="sm" onClick={() => { setEditData(item); setShowForm(true) }}>
+          <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); setEditData(item); setShowForm(true) }}>
             <Pencil className="h-3.5 w-3.5" />
           </Button>
-          <Button variant="ghost" size="sm" onClick={() => { setDeleteId(item.id); setDeleteName(item.title) }}>
+          <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); setDeleteId(item.id); setDeleteName(item.title) }}>
             <Trash2 className="h-3.5 w-3.5 text-destructive" />
           </Button>
         </div>
@@ -97,10 +175,23 @@ export default function OffersPage() {
     return (
       <div className="space-y-6">
         <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
-        <div className="animate-pulse h-96 bg-muted rounded-lg" />
+        <div className="animate-pulse">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+            {[...Array(4)].map((_, i) => <div key={i} className="h-24 bg-muted rounded-xl" />)}
+          </div>
+          <div className="h-96 bg-muted rounded-lg" />
+        </div>
       </div>
     )
   }
+
+  const statusTabs = [
+    { key: "all", label: tc("all"), count: stats.total, icon: <Package className="h-3.5 w-3.5" /> },
+    { key: "draft", label: statusLabel("draft"), count: stats.draft, icon: <Clock className="h-3.5 w-3.5" /> },
+    { key: "sent", label: statusLabel("sent"), count: stats.sent, icon: <SendIcon className="h-3.5 w-3.5" /> },
+    { key: "approved", label: statusLabel("approved"), count: stats.approved, icon: <CheckCircle2 className="h-3.5 w-3.5" /> },
+    { key: "rejected", label: statusLabel("rejected"), count: stats.rejected, icon: <XCircle className="h-3.5 w-3.5" /> },
+  ]
 
   return (
     <div className="space-y-6">
@@ -109,12 +200,67 @@ export default function OffersPage() {
           <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
           <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
         </div>
-        <Button onClick={() => { setEditData(undefined); setShowForm(true) }}><Plus className="h-4 w-4 mr-1" /> {t("newOffer")}</Button>
+        <Button onClick={() => { setEditData(undefined); setShowForm(true) }}>
+          <Plus className="h-4 w-4 mr-1" /> {t("newOffer")}
+        </Button>
       </div>
 
       <PageDescription text={t("pageDescription")} />
 
-      <DataTable columns={columns} data={offers} searchPlaceholder={t("searchPlaceholder")} searchKey="title" />
+      {/* KPI Cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <ColorStatCard
+          label={tc("total")}
+          value={stats.total}
+          icon={<FileCheck className="h-4 w-4" />}
+          color="blue"
+        />
+        <ColorStatCard
+          label={t("colAmount")}
+          value={`${stats.totalValue.toLocaleString(undefined, { minimumFractionDigits: 0 })} ${stats.currency}`}
+          icon={<DollarSign className="h-4 w-4" />}
+          color="green"
+        />
+        <ColorStatCard
+          label={statusLabel("approved")}
+          value={stats.approved}
+          icon={<CheckCircle2 className="h-4 w-4" />}
+          color="teal"
+        />
+        <ColorStatCard
+          label={statusLabel("rejected")}
+          value={stats.rejected}
+          icon={<XCircle className="h-4 w-4" />}
+          color="red"
+        />
+      </div>
+
+      {/* Status Filter Tabs */}
+      <div className="flex gap-1 flex-wrap">
+        {statusTabs.map((tab) => (
+          <Button
+            key={tab.key}
+            variant={statusFilter === tab.key ? "default" : "outline"}
+            size="sm"
+            onClick={() => setStatusFilter(tab.key)}
+            className="gap-1.5"
+          >
+            {tab.icon}
+            {tab.label}
+            <span className={`ml-1 text-xs rounded-full px-1.5 ${statusFilter === tab.key ? "bg-primary-foreground/20" : "bg-muted"}`}>
+              {tab.count}
+            </span>
+          </Button>
+        ))}
+      </div>
+
+      <DataTable
+        columns={columns}
+        data={offers}
+        searchPlaceholder={t("searchPlaceholder")}
+        searchKey="title"
+        onRowClick={(item: any) => router.push(`/offers/${item.id}`)}
+      />
 
       <OfferForm
         open={showForm}

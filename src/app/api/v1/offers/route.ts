@@ -3,15 +3,30 @@ import { z } from "zod"
 import { prisma } from "@/lib/prisma"
 import { getOrgId } from "@/lib/api-auth"
 
+const itemSchema = z.object({
+  productId: z.string().nullable().optional(),
+  name: z.string().min(1),
+  quantity: z.number().min(0.01).default(1),
+  unitPrice: z.number().min(0).default(0),
+  discount: z.number().min(0).max(100).default(0),
+  sortOrder: z.number().int().default(0),
+})
+
 const createOfferSchema = z.object({
-  offerNumber: z.string().min(1).max(100),
+  type: z.enum(["commercial", "invoice", "equipment", "services"]).default("commercial"),
   title: z.string().min(1).max(255),
-  companyId: z.string().optional(),
-  status: z.enum(["draft", "sent", "accepted", "rejected"]).optional(),
-  totalAmount: z.number().optional(),
-  currency: z.string().optional(),
-  validUntil: z.string().optional(),
-  notes: z.string().optional(),
+  companyId: z.string().nullable().optional(),
+  contactId: z.string().nullable().optional(),
+  clientName: z.string().nullable().optional(),
+  voen: z.string().nullable().optional(),
+  contactPerson: z.string().nullable().optional(),
+  contractNumber: z.string().nullable().optional(),
+  includeVat: z.boolean().default(false),
+  discount: z.number().min(0).default(0),
+  currency: z.string().default("AZN"),
+  validUntil: z.string().nullable().optional(),
+  notes: z.string().nullable().optional(),
+  items: z.array(itemSchema).default([]),
 })
 
 export async function GET(req: NextRequest) {
@@ -37,6 +52,7 @@ export async function GET(req: NextRequest) {
         skip: (page - 1) * limit,
         take: limit,
         orderBy: { createdAt: "desc" },
+        include: { items: { select: { id: true } } },
       }),
       prisma.offer.count({ where }),
     ])
@@ -64,13 +80,34 @@ export async function POST(req: NextRequest) {
   }
 
   try {
+    // Generate offer number
+    const count = await prisma.offer.count({ where: { organizationId: orgId } })
+    const year = new Date().getFullYear()
+    const offerNumber = `OFF-${year}-${String(count + 1).padStart(3, "0")}`
+
+    const { items, validUntil, ...offerData } = parsed.data
+
+    // Calculate item totals
+    const itemsWithTotals = items.map((item, idx) => {
+      const subtotal = item.quantity * item.unitPrice
+      const discountAmount = subtotal * (item.discount / 100)
+      return { ...item, total: subtotal - discountAmount, sortOrder: item.sortOrder || idx }
+    })
+
+    const totalAmount = itemsWithTotals.reduce((sum, i) => sum + i.total, 0)
+
     const offer = await prisma.offer.create({
       data: {
         organizationId: orgId,
-        ...parsed.data,
-        validUntil: parsed.data.validUntil ? new Date(parsed.data.validUntil) : undefined,
+        offerNumber,
+        ...offerData,
+        validUntil: validUntil ? new Date(validUntil) : null,
+        totalAmount,
+        items: itemsWithTotals.length > 0 ? { create: itemsWithTotals } : undefined,
       },
+      include: { items: { orderBy: { sortOrder: "asc" } } },
     })
+
     return NextResponse.json({ success: true, data: offer }, { status: 201 })
   } catch (e) {
     return NextResponse.json({ error: String(e) }, { status: 500 })
