@@ -79,6 +79,7 @@ export type PlanTier = (typeof PLAN_TIERS)[number]
  */
 const ALWAYS_ACCESSIBLE = [
   "/",
+  "/dashboard",
   "/settings",
   "/settings/billing",
   "/settings/security",

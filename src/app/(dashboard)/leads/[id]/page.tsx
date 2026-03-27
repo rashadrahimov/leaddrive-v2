@@ -11,11 +11,17 @@ import { LeadForm } from "@/components/lead-form"
 import { LeadConvertDialog } from "@/components/lead-convert-dialog"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
 import { ColorStatCard } from "@/components/color-stat-card"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import { Select } from "@/components/ui/select"
+import { Label } from "@/components/ui/label"
 import {
   ArrowLeft, Pencil, Trash2, ArrowRight, Loader2,
   Mail, Phone, Building2, User, FileText, Globe,
   TrendingUp, Calendar, DollarSign, Flame, CheckCircle2,
+  Brain, Sparkles, Copy, Send, RefreshCw, CheckCircle,
 } from "lucide-react"
+import { useLocale } from "next-intl"
 import { cn } from "@/lib/utils"
 import { InfoHint } from "@/components/info-hint"
 
@@ -75,9 +81,24 @@ export default function LeadDetailPage() {
   const [showForm, setShowForm] = useState(false)
   const [showDelete, setShowDelete] = useState(false)
   const [showConvert, setShowConvert] = useState(false)
+  const [activeTab, setActiveTab] = useState("details")
+
+  // AI state
+  const [aiLoading, setAiLoading] = useState(false)
+  const [sentiment, setSentiment] = useState<any>(null)
+  const [aiTasks, setAiTasks] = useState<any>(null)
+  const [textType, setTextType] = useState("Email")
+  const [tone, setTone] = useState("professional")
+  const [instructions, setInstructions] = useState("")
+  const [generatedText, setGeneratedText] = useState<any>(null)
+  const [emailSending, setEmailSending] = useState(false)
+  const [emailSent, setEmailSent] = useState(false)
+  const [emailError, setEmailError] = useState("")
+  const [scoring, setScoring] = useState(false)
 
   const id = params.id as string
   const orgId = session?.user?.organizationId
+  const locale = useLocale()
 
   const statusLabels: Record<string, string> = {
     new: t("statusNew"),
@@ -152,6 +173,51 @@ export default function LeadDetailPage() {
     router.push("/leads")
   }
 
+  // AI helper
+  const callAI = async (action: string, options?: any) => {
+    setAiLoading(true)
+    try {
+      const res = await fetch("/api/v1/ai", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": String(orgId) } : {}) },
+        body: JSON.stringify({ action, leadId: id, options, locale }),
+      })
+      const json = await res.json()
+      if (json.success) return json.data
+    } catch (err) { console.error(err) } finally { setAiLoading(false) }
+    return null
+  }
+
+  const scoreWithAI = async () => {
+    setScoring(true)
+    try {
+      await fetch("/api/v1/lead-scoring", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(orgId ? { "x-organization-id": String(orgId) } : {}),
+        },
+        body: JSON.stringify({ leadId: id }),
+      })
+      await fetchLead()
+    } catch (err) { console.error(err) } finally { setScoring(false) }
+  }
+
+  const sendGeneratedEmail = async () => {
+    if (!generatedText || !lead?.email) return
+    setEmailSending(true)
+    setEmailError("")
+    try {
+      const res = await fetch("/api/v1/inbox", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": String(orgId) } : {}) },
+        body: JSON.stringify({ channel: "email", to: lead.email, subject: generatedText.subject, body: generatedText.body }),
+      })
+      const json = await res.json()
+      if (json.success) { setEmailSent(true) } else { setEmailError(json.error || "Failed to send") }
+    } catch (err) { setEmailError("Network error") } finally { setEmailSending(false) }
+  }
+
   if (loading) {
     return (
       <div className="space-y-6">
@@ -181,6 +247,7 @@ export default function LeadDetailPage() {
   const daysSinceCreated = Math.floor(
     (Date.now() - new Date(lead.createdAt).getTime()) / 86400000
   )
+  const conversionProb = (lead.scoreDetails as any)?.conversionProb ?? Math.round(lead.score * 0.85)
 
   return (
     <div className="space-y-6">
@@ -315,7 +382,35 @@ export default function LeadDetailPage() {
         />
       </div>
 
-      {/* Lead Info Card */}
+      {/* Tabs */}
+      <div className="flex gap-1 border-b overflow-x-auto">
+        {[
+          { id: "details", label: t("modalDetails") || "Details" },
+          { id: "sentiment", label: t("modalSentiment") || "Sentiment" },
+          { id: "tasks", label: t("modalTasks") || "Tasks" },
+          { id: "aitext", label: t("modalAiText") || "AI Text" },
+          { id: "ai", label: t("modalAiScoring") || "AI Scoring" },
+        ].map(tab => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={`px-4 py-2.5 text-sm whitespace-nowrap border-b-2 transition-colors ${
+              activeTab === tab.id
+                ? "border-primary text-primary font-medium"
+                : "border-transparent text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {tab.id === "sentiment" && <Brain className="h-3.5 w-3.5 inline mr-1.5" />}
+            {tab.id === "tasks" && <Sparkles className="h-3.5 w-3.5 inline mr-1.5" />}
+            {tab.id === "aitext" && <Mail className="h-3.5 w-3.5 inline mr-1.5" />}
+            {tab.id === "ai" && <TrendingUp className="h-3.5 w-3.5 inline mr-1.5" />}
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Tab: Details (existing Lead Info) */}
+      {activeTab === "details" && (
       <Card>
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-1.5">{t("modalLeadInfo")} <InfoHint text={t("hintColContact")} size={14} /></CardTitle>
@@ -403,6 +498,241 @@ export default function LeadDetailPage() {
           </div>
         </CardContent>
       </Card>
+      )}
+
+      {/* Tab: Sentiment */}
+      {activeTab === "sentiment" && (
+        <Card>
+          <CardContent className="pt-6">
+            {!sentiment ? (
+              <div className="text-center py-8">
+                <Brain className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
+                <Button onClick={async () => { const d = await callAI("sentiment"); if (d) setSentiment(d) }} disabled={aiLoading} className="gap-2">
+                  {aiLoading ? (t("modalAnalyzing") || "Analyzing...") : (t("modalAnalyzeSentiment") || "Analyze Sentiment")}
+                </Button>
+                <p className="text-sm text-muted-foreground mt-3">{t("modalSentimentDesc") || "AI will analyze sentiment based on lead data and interactions"}</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="flex items-center gap-6 justify-center">
+                  <div className="relative w-28 h-28 flex items-center justify-center">
+                    <svg className="w-28 h-28" viewBox="0 0 100 100">
+                      <circle cx="50" cy="50" r="45" fill="none" stroke="#e5e7eb" strokeWidth="8" />
+                      <circle cx="50" cy="50" r="45" fill="none" stroke={sentiment.score >= 70 ? "#22c55e" : sentiment.score >= 40 ? "#3b82f6" : "#ef4444"} strokeWidth="8" strokeDasharray={`${sentiment.score * 2.83} 283`} strokeLinecap="round" transform="rotate(-90 50 50)" />
+                    </svg>
+                    <div className="absolute text-center">
+                      <div className="text-3xl">{sentiment.emoji}</div>
+                      <div className="text-sm font-bold">{sentiment.score}%</div>
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-lg font-bold">{sentiment.sentiment}</p>
+                    <p className="text-sm text-muted-foreground mt-1">{t("modalSentimentLabel") || "Sentiment"}</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-3 gap-3">
+                  <Card><CardContent className="pt-3 pb-3 text-center">
+                    <p className="text-[10px] text-muted-foreground uppercase">{t("modalTrend") || "Trend"}</p>
+                    <p className="text-sm font-medium mt-1">{sentiment.trend === "improving" ? (t("modalTrendImproving") || "Improving") : sentiment.trend === "stable" ? (t("modalTrendStable") || "Stable") : (t("modalTrendUnknown") || "Unknown")}</p>
+                  </CardContent></Card>
+                  <Card><CardContent className="pt-3 pb-3 text-center">
+                    <p className="text-[10px] text-muted-foreground uppercase">{t("modalRisk") || "Risk"}</p>
+                    <p className={cn("text-sm font-bold mt-1", sentiment.risk === "HIGH" ? "text-red-500" : sentiment.risk === "MEDIUM" ? "text-orange-500" : "text-green-500")}>{sentiment.risk}</p>
+                  </CardContent></Card>
+                  <Card><CardContent className="pt-3 pb-3 text-center">
+                    <p className="text-[10px] text-muted-foreground uppercase">{t("modalConfidence") || "Confidence"}</p>
+                    <p className="text-sm font-bold text-primary mt-1">{sentiment.confidence}%</p>
+                  </CardContent></Card>
+                </div>
+                <div className="bg-muted/50 p-4 rounded-lg">
+                  <p className="text-[10px] font-medium text-muted-foreground mb-2 uppercase">{t("modalSummary") || "Summary"}</p>
+                  <p className="text-sm leading-relaxed">{sentiment.summary}</p>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Tab: Tasks */}
+      {activeTab === "tasks" && (
+        <Card>
+          <CardContent className="pt-6">
+            {!aiTasks ? (
+              <div className="text-center py-8">
+                <Sparkles className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
+                <Button onClick={async () => { const d = await callAI("tasks"); if (d) setAiTasks(d) }} disabled={aiLoading} className="gap-2">
+                  {aiLoading ? (t("modalGenerating") || "Generating...") : (t("modalGenerateTasks") || "Generate Tasks")}
+                </Button>
+                <p className="text-sm text-muted-foreground mt-3">{t("modalTasksDesc") || "AI will suggest next best actions for this lead"}</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg text-sm border border-yellow-200 dark:border-yellow-800">
+                  <p className="font-medium text-xs text-yellow-800 dark:text-yellow-300 uppercase mb-1">{t("modalStrategy") || "Strategy"}</p>
+                  <p>{aiTasks.strategy}</p>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {aiTasks.tasks?.map((task: any, i: number) => (
+                    <Card key={i}>
+                      <CardContent className="pt-4 pb-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex gap-1">
+                            <Badge variant={task.priority === "HIGH" ? "destructive" : "secondary"} className="text-[10px]">{task.priority}</Badge>
+                            <Badge variant="outline" className="text-[10px]">{task.type}</Badge>
+                          </div>
+                          <span className="text-[10px] text-muted-foreground">{task.dueDate}</span>
+                        </div>
+                        <h4 className="font-medium text-sm mb-1">{task.title}</h4>
+                        <p className="text-xs text-muted-foreground leading-relaxed">{task.description}</p>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+                <div className="flex gap-2 justify-center pt-2">
+                  <Button size="sm" className="gap-1"><CheckCircle className="h-3 w-3" /> {t("modalCreateAllTasks") || "Create All Tasks"}</Button>
+                  <Button size="sm" variant="outline" onClick={async () => { const d = await callAI("tasks"); if (d) setAiTasks(d) }} className="gap-1"><RefreshCw className="h-3 w-3" /> {t("modalRegenerate") || "Regenerate"}</Button>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Tab: AI Text */}
+      {activeTab === "aitext" && (
+        <Card>
+          <CardContent className="pt-6 space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div>
+                <Label className="text-xs">{t("modalTextType") || "Type"}</Label>
+                <Select value={textType} onChange={(e: any) => setTextType(e.target.value)}>
+                  <option value="Email">Email</option>
+                  <option value="SMS">SMS</option>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-xs">{t("modalTone") || "Tone"}</Label>
+                <Select value={tone} onChange={(e: any) => setTone(e.target.value)}>
+                  <option value="professional">{t("modalProfessional") || "Professional"}</option>
+                  <option value="friendly">{t("modalFriendly") || "Friendly"}</option>
+                  <option value="formal">{t("modalFormal") || "Formal"}</option>
+                  <option value="persuasive">{t("modalPersuasive") || "Persuasive"}</option>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-xs">{t("modalExtraInstructions") || "Instructions"}</Label>
+                <Input value={instructions} onChange={(e: any) => setInstructions(e.target.value)} placeholder={t("modalExtraInstructionsPlaceholder") || "Extra instructions..."} />
+              </div>
+            </div>
+            <Button onClick={async () => { const d = await callAI("text", { textType, tone, instructions }); if (d) { setGeneratedText(d); setEmailSent(false) } }} disabled={aiLoading} className="w-full gap-2">
+              {aiLoading ? (t("modalGenerating") || "Generating...") : (t("modalGenerateText") || "Generate Text")}
+            </Button>
+
+            {generatedText && (
+              <div className="space-y-3 border rounded-lg p-4 bg-muted/10">
+                {generatedText.subject && (
+                  <div>
+                    <Label className="text-xs text-primary uppercase">{t("modalSubject") || "Subject"}</Label>
+                    <Input value={generatedText.subject} readOnly className="mt-1 bg-background" />
+                  </div>
+                )}
+                <div>
+                  <Label className="text-xs uppercase">{t("modalText") || "Text"}</Label>
+                  <Textarea value={generatedText.body} rows={8} className="mt-1 bg-background" readOnly />
+                </div>
+                <div className="flex gap-2 justify-end">
+                  <Button size="sm" variant="outline" onClick={() => navigator.clipboard.writeText(generatedText.body)} className="gap-1">
+                    <Copy className="h-3 w-3" /> {t("modalCopy") || "Copy"}
+                  </Button>
+                  {lead.email && (
+                    <Button size="sm" onClick={sendGeneratedEmail} disabled={emailSending || emailSent} className="gap-1">
+                      <Send className="h-3 w-3" /> {emailSent ? (t("modalSent") || "Sent!") : emailSending ? (t("modalSending") || "Sending...") : (t("modalSendEmail") || "Send Email")}
+                    </Button>
+                  )}
+                  <Button size="sm" variant="outline" onClick={async () => { const d = await callAI("text", { textType, tone, instructions }); if (d) { setGeneratedText(d); setEmailSent(false); setEmailError("") } }} className="gap-1">
+                    <RefreshCw className="h-3 w-3" /> {t("modalRegenerate") || "Regenerate"}
+                  </Button>
+                </div>
+                {emailError && (
+                  <p className="text-sm text-red-600 bg-red-50 dark:bg-red-900/20 p-2 rounded">{emailError}</p>
+                )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Tab: AI Scoring */}
+      {activeTab === "ai" && (
+        <Card>
+          <CardContent className="pt-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <h4 className="font-medium text-sm flex items-center gap-1.5">
+                <Brain className="h-4 w-4 text-purple-500" /> {t("modalAiAnalysis") || "AI Analysis"}
+              </h4>
+              <Button size="sm" variant="outline" className="gap-1 text-xs" onClick={scoreWithAI} disabled={scoring}>
+                {scoring ? (t("modalRecalculating") || "Recalculating...") : (t("modalRecalculate") || "Recalculate")}
+              </Button>
+            </div>
+
+            {lead.scoreDetails?.reasoning && (
+              <div className="p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-800">
+                <div className="flex items-start gap-2">
+                  <Sparkles className="h-4 w-4 text-purple-500 shrink-0 mt-0.5" />
+                  <p className="text-sm text-purple-900 dark:text-purple-200 leading-relaxed">{lead.scoreDetails.reasoning}</p>
+                </div>
+              </div>
+            )}
+
+            <div className="grid grid-cols-3 gap-3 text-center">
+              <Card><CardContent className="pt-4 pb-4">
+                <div className={cn("text-3xl font-bold", grade.color.replace("bg-", "text-").replace(" text-white", ""))}>
+                  {grade.letter}
+                </div>
+                <div className="text-xs text-muted-foreground mt-1">{t("modalGrade") || "Grade"}</div>
+              </CardContent></Card>
+              <Card><CardContent className="pt-4 pb-4">
+                <div className="text-3xl font-bold text-primary">{lead.score}</div>
+                <div className="text-xs text-muted-foreground mt-1">{t("modalScore") || "Score"}</div>
+              </CardContent></Card>
+              <Card><CardContent className="pt-4 pb-4">
+                <div className={cn("text-3xl font-bold", conversionProb >= 50 ? "text-green-600" : conversionProb >= 30 ? "text-yellow-600" : "text-red-500")}>
+                  {conversionProb}%
+                </div>
+                <div className="text-xs text-muted-foreground mt-1">{t("modalConversion") || "Conversion"}</div>
+              </CardContent></Card>
+            </div>
+
+            {lead.scoreDetails?.factors && (
+              <div className="space-y-2">
+                <p className="text-xs font-medium text-muted-foreground uppercase">{t("modalFactors")}</p>
+                {Object.entries(lead.scoreDetails.factors).map(([key, val]: [string, any]) => {
+                  const normalized = key.charAt(0).toLowerCase() + key.slice(1)
+                  const factorLabels: Record<string, string> = {
+                    recency: t("factorRecency"),
+                    dealPotential: t("factorDealPotential"),
+                    sourceQuality: t("factorSourceQuality"),
+                    engagementLevel: t("factorEngagement"),
+                    contactCompleteness: t("factorCompleteness"),
+                  }
+                  return (
+                  <div key={key} className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">{factorLabels[normalized] || key.replace(/([A-Z])/g, " $1").trim()}</span>
+                    <div className="flex items-center gap-2">
+                      <div className="w-24 h-2 bg-muted rounded-full overflow-hidden">
+                        <div className="h-full bg-primary rounded-full" style={{ width: `${val}%` }} />
+                      </div>
+                      <span className="font-medium w-8 text-right">{val}%</span>
+                    </div>
+                  </div>
+                  )
+                })}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Lead Form Dialog */}
       <LeadForm

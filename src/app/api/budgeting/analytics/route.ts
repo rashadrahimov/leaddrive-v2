@@ -109,7 +109,7 @@ export async function GET(req: NextRequest) {
   const totalRevenuePlanned = revenueLines.reduce((s: number, l: any) => s + getEffectivePlanned(l), 0)
   // COGS totals — must be computed before totalPlanned
   const totalCOGSPlanned = cogsLines.reduce((s: number, l: any) => s + getEffectivePlanned(l), 0)
-  const totalPlanned = totalExpensePlanned + totalCOGSPlanned // KPI "ПЛАН" = COGS + OpEx
+  const totalPlanned = totalExpensePlanned // OpEx only (COGS allocates same costs by service)
   const totalExpenseForecast = expenseLines.reduce((s: number, l: any) => s + (l.forecastAmount ?? getEffectivePlanned(l)), 0)
   const totalRevenueForecast = revenueLines.reduce((s: number, l: any) => s + (l.forecastAmount ?? getEffectivePlanned(l)), 0)
   // Forecast from ForecastEntries (monthly) — split by lineType
@@ -150,16 +150,15 @@ export async function GET(req: NextRequest) {
   const totalExpenseActual = autoActualExpense > 0 ? autoActualExpense : manualExpenseActual
   const totalRevenueActual = autoActualRevenue > 0 ? autoActualRevenue : manualRevenueActual
   const totalCOGSActual = autoActualCOGS > 0 ? autoActualCOGS : manualCOGSActual
-  const totalActual = totalExpenseActual + totalCOGSActual  // All costs: COGS + OpEx
-  const totalAllPlanned = totalExpensePlanned + totalCOGSPlanned
+  const totalActual = totalExpenseActual  // OpEx only (COGS allocates same costs by service)
+  const totalAllPlanned = totalExpensePlanned
 
-  // Financial KPIs — correct P&L chain
-  const grossProfitPlanned = totalRevenuePlanned - totalCOGSPlanned
-  const grossProfitActual = totalRevenueActual - totalCOGSActual
-  const marginPlanned = grossProfitPlanned - totalExpensePlanned  // Operating Profit
-  const marginActual = grossProfitActual - totalExpenseActual
-  const grossProfitForecast = totalRevenueForecastFE - (feCogs.length > 0 ? feCogs.reduce((s: number, e: { forecastAmount: number }) => s + e.forecastAmount, 0) : totalCOGSForecast)
-  const marginForecast = grossProfitForecast - totalExpenseForecastFE
+  // Financial KPIs — Operating Profit = Revenue - Expenses (COGS not added, same costs)
+  const grossProfitPlanned = totalRevenuePlanned - totalExpensePlanned
+  const grossProfitActual = totalRevenueActual - totalExpenseActual
+  const marginPlanned = grossProfitPlanned  // Same as gross profit (no separate COGS deduction)
+  const marginActual = grossProfitActual
+  const marginForecast = totalRevenueForecastFE - totalExpenseForecastFE
   const totalVariance = marginActual - marginPlanned // positive = better than plan
   // Composite budget execution: 60% revenue achievement + 40% cost discipline
   // Revenue achievement: fact/plan (capped at 150%)
@@ -171,7 +170,7 @@ export async function GET(req: NextRequest) {
     ? Math.min((totalAllPlanned / totalActual) * 100, 150)
     : 100
   const executionPct = Math.max(0, Math.round(revAchievement * 0.6 + costDiscipline * 0.4))
-  const forecastVariance = (totalExpenseForecast + totalCOGSForecast) - totalActual
+  const forecastVariance = totalExpenseForecast - totalActual
 
   // Estimate period-end projection based on elapsed time within the plan's period
   const nowDate = new Date()

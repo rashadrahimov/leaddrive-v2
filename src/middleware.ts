@@ -3,7 +3,7 @@ import type { NextRequest } from "next/server"
 import { auth } from "@/lib/auth"
 import { canAccessModule } from "@/lib/plan-config"
 
-const publicPaths = ["/login", "/register", "/forgot-password", "/api/auth", "/portal", "/home", "/pricing", "/features", "/demo", "/about", "/contact", "/blog", "/legal", "/landing"]
+const publicPaths = ["/login", "/register", "/forgot-password", "/api/auth", "/portal", "/home", "/pricing", "/features", "/demo", "/about", "/contact", "/blog", "/legal", "/landing", "/marketing"]
 
 export default auth((req) => {
   const { pathname } = req.nextUrl

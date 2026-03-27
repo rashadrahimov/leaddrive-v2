@@ -932,9 +932,12 @@ function WorkspaceTab({ planId, onNavigateTab }: { planId: string; onNavigateTab
     const colorClass = GROUP_COLORS[groupTag] ?? "bg-slate-400"
     const children = line.children ?? []
     const groupTotal = children.reduce((s, c) => s + c.plannedAmount, 0)
-    const groupActual = children.reduce((s, c) => {
-      return s + (c.isAutoActual ? (autoActualMap.get(c.category) ?? 0) : (actualsByCat.get(`${c.category}||${c.lineType}`)?.total ?? 0))
-    }, 0)
+    // If parent group has isAutoActual, use parent's auto-actual (e.g. adminOverhead, techInfraTotal)
+    const groupActual = line.isAutoActual
+      ? (autoActualMap.get(line.category) ?? 0)
+      : children.reduce((s, c) => {
+          return s + (c.isAutoActual ? (autoActualMap.get(c.category) ?? 0) : (actualsByCat.get(`${c.category}||${c.lineType}`)?.total ?? 0))
+        }, 0)
     const isOpen = expandedGroups.has(groupTag.replace("group:", ""))
     const toggleGroup = () => {
       const key = groupTag.replace("group:", "")
@@ -1122,14 +1125,18 @@ function WorkspaceTab({ planId, onNavigateTab }: { planId: string; onNavigateTab
     )
   }
 
+  // Helper: get actual for a line (parent auto-actual takes priority over children sum)
+  const getLineActual = (l: BudgetLine): number => {
+    if (l.isAutoActual) return autoActualMap.get(l.category) ?? 0
+    if (l.children?.length) {
+      return l.children.reduce((cs, c) => cs + (c.isAutoActual ? (autoActualMap.get(c.category) ?? 0) : (actualsByCat.get(`${c.category}||${c.lineType}`)?.total ?? 0)), 0)
+    }
+    return actualsByCat.get(`${l.category}||${l.lineType}`)?.total ?? 0
+  }
+
   // Universal grouped section renderer with per-section add form
   const renderGroupedSection = (title: string, sectionLines: BudgetLine[], totPlanned: number, sectionHintKey?: string, sectionLineType?: string) => {
-    const totActual = sectionLines.reduce((s: number, l: BudgetLine) => {
-      if (l.children?.length) {
-        return s + l.children.reduce((cs, c) => cs + (c.isAutoActual ? (autoActualMap.get(c.category) ?? 0) : (actualsByCat.get(`${c.category}||${c.lineType}`)?.total ?? 0)), 0)
-      }
-      return s + (l.isAutoActual ? (autoActualMap.get(l.category) ?? 0) : (actualsByCat.get(`${l.category}||${l.lineType}`)?.total ?? 0))
-    }, 0)
+    const totActual = sectionLines.reduce((s: number, l: BudgetLine) => s + getLineActual(l), 0)
 
     return (
       <>
@@ -1349,24 +1356,9 @@ function WorkspaceTab({ planId, onNavigateTab }: { planId: string; onNavigateTab
   const budgetExecColor = budgetExecPct >= 80 ? "green" as const : budgetExecPct >= 50 ? "amber" as const : "red" as const
   const budgetExecEmoji = budgetExecPct >= 80 ? "🟢" : budgetExecPct >= 50 ? "🟡" : "🔴"
 
-  const totExpActual = expenseLines.reduce((s: number, l: BudgetLine) => {
-    if (l.children?.length) {
-      return s + l.children.reduce((cs, c) => cs + (c.isAutoActual ? (autoActualMap.get(c.category) ?? 0) : (actualsByCat.get(`${c.category}||${c.lineType}`)?.total ?? 0)), 0)
-    }
-    return s + (l.isAutoActual ? (autoActualMap.get(l.category) ?? 0) : (actualsByCat.get(`${l.category}||${l.lineType}`)?.total ?? 0))
-  }, 0)
-  const totRevActual = revenueLines.reduce((s: number, l: BudgetLine) => {
-    if (l.children?.length) {
-      return s + l.children.reduce((cs, c) => cs + (c.isAutoActual ? (autoActualMap.get(c.category) ?? 0) : (actualsByCat.get(`${c.category}||${c.lineType}`)?.total ?? 0)), 0)
-    }
-    return s + (l.isAutoActual ? (autoActualMap.get(l.category) ?? 0) : (actualsByCat.get(`${l.category}||${l.lineType}`)?.total ?? 0))
-  }, 0)
-  const totCOGSActual = cogsLines.reduce((s: number, l: BudgetLine) => {
-    if (l.children?.length) {
-      return s + l.children.reduce((cs, c) => cs + (c.isAutoActual ? (autoActualMap.get(c.category) ?? 0) : (actualsByCat.get(`${c.category}||${c.lineType}`)?.total ?? 0)), 0)
-    }
-    return s + (l.isAutoActual ? (autoActualMap.get(l.category) ?? 0) : (actualsByCat.get(`${l.category}||${l.lineType}`)?.total ?? 0))
-  }, 0)
+  const totExpActual = expenseLines.reduce((s: number, l: BudgetLine) => s + getLineActual(l), 0)
+  const totRevActual = revenueLines.reduce((s: number, l: BudgetLine) => s + getLineActual(l), 0)
+  const totCOGSActual = cogsLines.reduce((s: number, l: BudgetLine) => s + getLineActual(l), 0)
 
   return (
     <div className="space-y-6">
@@ -1613,32 +1605,40 @@ function WorkspaceTab({ planId, onNavigateTab }: { planId: string; onNavigateTab
                 {renderGroupedSection(t("sectionCOGS"), cogsLines, totCOGSPlanned, "hintSectionCOGS", "cogs")}
 
                 {/* Gross Profit row */}
-                {(revenueLines.length > 0 || cogsLines.length > 0) && (
-                  <tr className="border-y-2 border-emerald-300 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/10">
+                {(revenueLines.length > 0 || cogsLines.length > 0) && (() => {
+                  const gpActual = totRevActual - totCOGSActual
+                  const gpNeg = gpActual < 0
+                  return (
+                  <tr className={`border-y-2 ${gpNeg ? "border-red-300 dark:border-red-800 bg-red-50 dark:bg-red-900/10" : "border-emerald-300 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/10"}`}>
                     <td className="px-3 py-2" colSpan={2}>
                       <div className="font-bold text-sm">{t("grossProfit")}</div>
                       <div className="text-[10px] text-muted-foreground/60 font-normal">{t("hintGrossProfit")}</div>
                     </td>
                     <td className="px-2 py-2 text-right font-mono text-sm font-bold"><AnimatedNumber value={totRevPlanned - totCOGSPlanned} duration={500} formatter={fmt} /></td>
-                    <td className="px-2 py-2 text-right font-mono text-sm font-bold text-[#065f46] dark:text-[#6ee7b7]"><AnimatedNumber value={totRevActual - totCOGSActual} duration={500} formatter={fmt} /></td>
+                    <td className={`px-2 py-2 text-right font-mono text-sm font-bold ${gpNeg ? "text-red-600 dark:text-red-400" : "text-[#065f46] dark:text-[#6ee7b7]"}`}><AnimatedNumber value={gpActual} duration={500} formatter={fmt} /></td>
                     <td colSpan={2} />
                   </tr>
-                )}
+                  )
+                })()}
 
                 {renderGroupedSection(t("sectionExpenses"), expenseLines, totExpPlanned, "hintSectionExpenses", "expense")}
 
                 {/* Operating Profit row */}
-                {(expenseLines.length > 0 || revenueLines.length > 0 || cogsLines.length > 0) && (
-                  <tr className="border-y-2 border-purple-300 dark:border-purple-800 bg-purple-50 dark:bg-purple-900/10">
+                {(expenseLines.length > 0 || revenueLines.length > 0 || cogsLines.length > 0) && (() => {
+                  const opActual = totRevActual - totExpActual
+                  const opNeg = opActual < 0
+                  return (
+                  <tr className={`border-y-2 ${opNeg ? "border-red-300 dark:border-red-800 bg-red-50 dark:bg-red-900/10" : "border-purple-300 dark:border-purple-800 bg-purple-50 dark:bg-purple-900/10"}`}>
                     <td className="px-3 py-2" colSpan={2}>
                       <div className="font-bold text-sm">{t("operatingProfit")}</div>
                       <div className="text-[10px] text-muted-foreground/60 font-normal">{t("hintOperatingProfit")}</div>
                     </td>
                     <td className="px-2 py-2 text-right font-mono text-sm font-bold"><AnimatedNumber value={totRevPlanned - totExpPlanned} duration={500} formatter={fmt} /></td>
-                    <td className="px-2 py-2 text-right font-mono text-sm font-bold text-[#065f46] dark:text-[#6ee7b7]"><AnimatedNumber value={totRevActual - totExpActual} duration={500} formatter={fmt} /></td>
+                    <td className={`px-2 py-2 text-right font-mono text-sm font-bold ${opNeg ? "text-red-600 dark:text-red-400" : "text-[#065f46] dark:text-[#6ee7b7]"}`}><AnimatedNumber value={opActual} duration={500} formatter={fmt} /></td>
                     <td colSpan={2} />
                   </tr>
-                )}
+                  )
+                })()}
 
                 {/* Empty state */}
                 {lines.length === 0 && !addingSection && (
@@ -2754,6 +2754,14 @@ function PLTab({ planId }: { planId: string }) {
   const parentCategories = new Set(byCategory.filter(c => c.parentCategory).map(c => c.parentCategory!))
   const leafRows = byCategory.filter(c => !parentCategories.has(c.category) || c.parentCategory)
 
+  // Parent row map: parent category name → its byCategory entry (has auto-actual values)
+  const parentRowMap = new Map<string, typeof byCategory[0]>()
+  for (const row of byCategory) {
+    if (parentCategories.has(row.category) && !row.parentCategory) {
+      parentRowMap.set(row.category, row)
+    }
+  }
+
   const revRows = leafRows.filter(c => c.lineType === "revenue")
   const cogsRows = leafRows.filter(c => c.lineType === "cogs")
   const expRows = leafRows.filter(c => c.lineType === "expense")
@@ -2762,6 +2770,14 @@ function PLTab({ planId }: { planId: string }) {
   const DIRECT_GROUPS = new Set(["Direct Labor Costs", "Technical Infrastructure"])
   const directExpRows = expRows.filter(c => c.parentCategory && DIRECT_GROUPS.has(c.parentCategory))
   const indirectExpRows = expRows.filter(c => !c.parentCategory || !DIRECT_GROUPS.has(c.parentCategory))
+
+  // Helper: get group actual — use parent's auto-actual if children sum to 0
+  const getGroupActual = (parentName: string, childRows: typeof byCategory): number => {
+    const childSum = childRows.reduce((s, r) => s + r.actual, 0)
+    if (childSum > 0) return childSum
+    const parentRow = parentRowMap.get(parentName)
+    return parentRow?.actual ?? 0
+  }
 
   const buildGrouped = (rows: typeof byCategory) => {
     const groups: { parent: string; children: typeof byCategory }[] = []
@@ -2818,14 +2834,16 @@ function PLTab({ planId }: { planId: string }) {
     return <div className="flex justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-purple-500" /></div>
   }
 
+  // Revenue totals — also account for parent auto-actuals
   const totalRevenuePlanned = revRows.reduce((s, r) => s + r.planned, 0)
-  const totalRevenueActual = revRows.reduce((s, r) => s + r.actual, 0)
-  // Direct costs: labor + tech infrastructure
+  const revLeafActual = revRows.reduce((s, r) => s + r.actual, 0)
+  const totalRevenueActual = revLeafActual > 0 ? revLeafActual : revGrouped.groups.reduce((s, g) => s + getGroupActual(g.parent, g.children), 0) + revGrouped.standalone.reduce((s, r) => s + r.actual, 0)
+  // Direct costs: labor + tech infrastructure — use parent auto-actuals when children have 0
   const totalDirectPlanned = directExpRows.reduce((s, r) => s + r.planned, 0)
-  const totalDirectActual = directExpRows.reduce((s, r) => s + r.actual, 0)
+  const totalDirectActual = directGrouped.groups.reduce((s, g) => s + getGroupActual(g.parent, g.children), 0) + directGrouped.standalone.reduce((s, r) => s + r.actual, 0)
   // Indirect costs: admin overhead + risk + standalone expense lines
   const totalIndirectPlanned = indirectExpRows.reduce((s, r) => s + r.planned, 0)
-  const totalIndirectActual = indirectExpRows.reduce((s, r) => s + r.actual, 0)
+  const totalIndirectActual = indirectGrouped.groups.reduce((s, g) => s + getGroupActual(g.parent, g.children), 0) + indirectGrouped.standalone.reduce((s, r) => s + r.actual, 0)
   // Total all expenses (for KPI)
   const totalExpensePlanned = totalDirectPlanned + totalIndirectPlanned
   const totalExpenseActual = totalDirectActual + totalIndirectActual
@@ -2955,8 +2973,8 @@ function PLTab({ planId }: { planId: string }) {
                   {grouped.groups.map(g => {
                     const gPlanned = g.children.reduce((s, r) => s + r.planned, 0)
                     const gForecast = g.children.reduce((s, r) => s + r.forecast, 0)
-                    const gActual = g.children.reduce((s, r) => s + r.actual, 0)
-                    const gVariance = g.children.reduce((s, r) => s + r.variance, 0)
+                    const gActual = getGroupActual(g.parent, g.children)
+                    const gVariance = isExpense ? gPlanned - gActual : gActual - gPlanned
                     const gPctOfTotal = sectionTotal > 0 ? Math.round((gPlanned / sectionTotal) * 100) : 0
                     const isGroupOpen = !collapsed.has(`pl-group-${g.parent}`)
                     return (
@@ -3083,8 +3101,8 @@ function PLTab({ planId }: { planId: string }) {
           title={t("grossProfit")}
           planned={grossProfitPlanned}
           actual={grossProfitActual}
-          icon={<TrendingUp className="h-4 w-4 text-emerald-500" />}
-          color="border-emerald-200 dark:border-emerald-800 bg-emerald-50/50 dark:bg-emerald-950/20"
+          icon={grossProfitActual < 0 ? <TrendingDown className="h-4 w-4 text-red-500" /> : <TrendingUp className="h-4 w-4 text-emerald-500" />}
+          color={grossProfitActual < 0 ? "border-red-200 dark:border-red-800 bg-red-50/50 dark:bg-red-950/20" : "border-emerald-200 dark:border-emerald-800 bg-emerald-50/50 dark:bg-emerald-950/20"}
           marginPct={totalRevenueActual > 0 ? `Margin: ${((grossProfitActual / totalRevenueActual) * 100).toFixed(1)}%` : undefined}
         />
         <KPICard
@@ -3099,8 +3117,8 @@ function PLTab({ planId }: { planId: string }) {
           title="EBITDA"
           planned={opProfitPlanned}
           actual={opProfitActual}
-          icon={<Target className="h-4 w-4 text-purple-500" />}
-          color="border-purple-200 dark:border-purple-800 bg-purple-50/50 dark:bg-purple-950/20"
+          icon={opProfitActual < 0 ? <TrendingDown className="h-4 w-4 text-red-500" /> : <Target className="h-4 w-4 text-purple-500" />}
+          color={opProfitActual < 0 ? "border-red-200 dark:border-red-800 bg-red-50/50 dark:bg-red-950/20" : "border-purple-200 dark:border-purple-800 bg-purple-50/50 dark:bg-purple-950/20"}
           marginPct={totalRevenueActual > 0 ? `Margin: ${((opProfitActual / totalRevenueActual) * 100).toFixed(1)}%` : undefined}
         />
       </div>
@@ -3149,11 +3167,11 @@ function PLTab({ planId }: { planId: string }) {
       {renderSection("Прямые затраты", directExpRows, "auto-direct", <Settings2 className="h-4 w-4" />, "bg-orange-50/60 dark:bg-orange-950/20", false, 0, 0, true, directGrouped)}
 
       {/* Gross Profit = Revenue - Direct Costs */}
-      <div className="border-2 border-emerald-500/50 dark:border-emerald-600/50 rounded-xl overflow-hidden mb-3 bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/40 dark:to-teal-950/30">
+      <div className={`border-2 rounded-xl overflow-hidden mb-3 ${grossProfitActual < 0 ? "border-red-400/50 dark:border-red-500/50 bg-gradient-to-r from-red-50 to-rose-50 dark:from-red-950/40 dark:to-rose-950/30" : "border-emerald-500/50 dark:border-emerald-600/50 bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/40 dark:to-teal-950/30"}`}>
         <div className="flex items-center justify-between px-5 py-4">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-900/50 flex items-center justify-center">
-              <TrendingUp className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+            <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${grossProfitActual < 0 ? "bg-red-100 dark:bg-red-900/50" : "bg-emerald-100 dark:bg-emerald-900/50"}`}>
+              {grossProfitActual < 0 ? <TrendingDown className="h-4 w-4 text-red-600 dark:text-red-400" /> : <TrendingUp className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />}
             </div>
             <div>
               <div className="font-bold text-base">{t("grossProfit")}</div>
@@ -3179,11 +3197,11 @@ function PLTab({ planId }: { planId: string }) {
       {renderSection("Накладные расходы", indirectExpRows, "auto-indirect", <Banknote className="h-4 w-4" />, "bg-amber-50/60 dark:bg-amber-950/20", false, 0, 0, true, indirectGrouped)}
 
       {/* EBITDA */}
-      <div className="border-2 border-purple-400/50 dark:border-purple-500/50 rounded-xl overflow-hidden mb-3 bg-gradient-to-r from-slate-50 to-purple-50 dark:from-slate-900/40 dark:to-purple-950/30">
+      <div className={`border-2 rounded-xl overflow-hidden mb-3 ${opProfitActual < 0 ? "border-red-400/50 dark:border-red-500/50 bg-gradient-to-r from-red-50 to-rose-50 dark:from-red-950/40 dark:to-rose-950/30" : "border-purple-400/50 dark:border-purple-500/50 bg-gradient-to-r from-slate-50 to-purple-50 dark:from-slate-900/40 dark:to-purple-950/30"}`}>
         <div className="flex items-center justify-between px-5 py-4">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-purple-100 dark:bg-purple-900/50 flex items-center justify-center">
-              <Target className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+            <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${opProfitActual < 0 ? "bg-red-100 dark:bg-red-900/50" : "bg-purple-100 dark:bg-purple-900/50"}`}>
+              {opProfitActual < 0 ? <TrendingDown className="h-4 w-4 text-red-600 dark:text-red-400" /> : <Target className="h-4 w-4 text-purple-600 dark:text-purple-400" />}
             </div>
             <div>
               <div className="font-bold text-base">{t("operatingProfit")} (EBITDA)</div>
@@ -3657,27 +3675,33 @@ function ForecastTab({ planId }: { planId: string }) {
                 {renderSection(t("sectionCOGS"), cogsLines, addingCogs, setAddingCogs, "cogs")}
 
                 {/* Gross Profit row */}
-                <tr className="border-t-2 border-emerald-300 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/10">
-                  <td className="px-3 py-2 font-bold text-sm sticky left-0 bg-emerald-50 dark:bg-emerald-900/10 z-10">{t("grossProfit")}</td>
-                  {months.map(m => (
-                    <td key={m} className="px-2 py-2 text-right font-mono text-sm font-bold">
-                      <AnimatedNumber value={getColTotal(revenueLines, m) - getColTotal(expenseLines, m)} duration={500} />
+                <tr className={`border-t-2 ${totalGrossProfit < 0 ? "border-red-300 dark:border-red-800 bg-red-50 dark:bg-red-900/10" : "border-emerald-300 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/10"}`}>
+                  <td className={`px-3 py-2 font-bold text-sm sticky left-0 z-10 ${totalGrossProfit < 0 ? "bg-red-50 dark:bg-red-900/10" : "bg-emerald-50 dark:bg-emerald-900/10"}`}>{t("grossProfit")}</td>
+                  {months.map(m => {
+                    const gpVal = getColTotal(revenueLines, m) - getColTotal(expenseLines, m)
+                    return (
+                    <td key={m} className={`px-2 py-2 text-right font-mono text-sm font-bold ${gpVal < 0 ? "text-red-600 dark:text-red-400" : ""}`}>
+                      <AnimatedNumber value={gpVal} duration={500} />
                     </td>
-                  ))}
-                  <td className="px-3 py-2 text-right font-mono text-sm font-bold"><AnimatedNumber value={totalGrossProfit} duration={600} /></td>
+                    )
+                  })}
+                  <td className={`px-3 py-2 text-right font-mono text-sm font-bold ${totalGrossProfit < 0 ? "text-red-600 dark:text-red-400" : ""}`}><AnimatedNumber value={totalGrossProfit} duration={600} /></td>
                 </tr>
 
                 {renderSection(t("sectionExpenses"), expenseLines, addingExpense, setAddingExpense, "expense")}
 
                 {/* Operating Profit row */}
-                <tr className="border-t-2 border-purple-300 dark:border-purple-800 bg-purple-50 dark:bg-purple-900/10">
-                  <td className="px-3 py-2 font-bold text-sm sticky left-0 bg-purple-50 dark:bg-purple-900/10 z-10">{t("operatingProfit")}</td>
-                  {months.map(m => (
-                    <td key={m} className="px-2 py-2 text-right font-mono text-sm font-bold">
-                      <AnimatedNumber value={getColTotal(revenueLines, m) - getColTotal(expenseLines, m)} duration={500} />
+                <tr className={`border-t-2 ${totalMargin < 0 ? "border-red-300 dark:border-red-800 bg-red-50 dark:bg-red-900/10" : "border-purple-300 dark:border-purple-800 bg-purple-50 dark:bg-purple-900/10"}`}>
+                  <td className={`px-3 py-2 font-bold text-sm sticky left-0 z-10 ${totalMargin < 0 ? "bg-red-50 dark:bg-red-900/10" : "bg-purple-50 dark:bg-purple-900/10"}`}>{t("operatingProfit")}</td>
+                  {months.map(m => {
+                    const opVal = getColTotal(revenueLines, m) - getColTotal(expenseLines, m)
+                    return (
+                    <td key={m} className={`px-2 py-2 text-right font-mono text-sm font-bold ${opVal < 0 ? "text-red-600 dark:text-red-400" : ""}`}>
+                      <AnimatedNumber value={opVal} duration={500} />
                     </td>
-                  ))}
-                  <td className="px-3 py-2 text-right font-mono text-sm font-bold"><AnimatedNumber value={totalMargin} duration={600} /></td>
+                    )
+                  })}
+                  <td className={`px-3 py-2 text-right font-mono text-sm font-bold ${totalMargin < 0 ? "text-red-600 dark:text-red-400" : ""}`}><AnimatedNumber value={totalMargin} duration={600} /></td>
                 </tr>
 
                 {/* Empty state */}

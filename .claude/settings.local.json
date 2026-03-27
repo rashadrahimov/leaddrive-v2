@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(rsync -az --delete .next/standalone/ root@178.156.249.177:/opt/leaddrive-v2/.next/standalone/)",
+      "Bash(rsync -az --delete .next/static/ root@178.156.249.177:/opt/leaddrive-v2/.next/static/)"
+    ]
+  }
+}

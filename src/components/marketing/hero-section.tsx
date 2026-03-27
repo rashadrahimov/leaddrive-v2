@@ -140,20 +140,13 @@ export function HeroSection() {
                   </div>
                 </div>
               </div>
-              {/* Screenshot placeholder */}
-              <div className="aspect-[16/9] bg-gradient-to-br from-[hsl(210,20%,97%)] to-[hsl(210,25%,94%)] flex items-center justify-center">
-                <div className="text-center p-8">
-                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#F97316] to-[#FACC15] mx-auto mb-4 flex items-center justify-center">
-                    <svg width="32" height="32" viewBox="0 0 64 64" fill="none">
-                      <path d="M20 36L30 14L40 36" stroke="white" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
-                      <path d="M30 14L50 6" stroke="white" strokeWidth="4" strokeLinecap="round" />
-                      <path d="M42 4L50 6L48 14" stroke="white" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  </div>
-                  <p className="text-lg font-semibold text-slate-800">LeadDrive CRM Dashboard</p>
-                  <p className="text-sm text-gray-400 mt-1">Interactive demo coming soon</p>
-                </div>
-              </div>
+              {/* Dashboard screenshot */}
+              <img
+                src="/marketing/crm-dashboard.png"
+                alt="LeadDrive CRM Dashboard"
+                className="w-full"
+                loading="eager"
+              />
             </div>
 
             {/* Floating accent cards */}

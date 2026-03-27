@@ -78,22 +78,14 @@ export function ModuleShowcase() {
             </div>
           </div>
 
-          {/* Screenshot placeholder */}
+          {/* Screenshot */}
           <div className="bg-white rounded-xl border border-gray-200 shadow-lg overflow-hidden">
-            <div className="aspect-[4/3] bg-gradient-to-br from-[hsl(210,20%,97%)] to-[hsl(210,25%,94%)] flex items-center justify-center p-8">
-              {(() => {
-                const Icon = active.icon
-                return (
-                  <div className="text-center">
-                    <div className="w-16 h-16 rounded-2xl bg-orange-500/10 mx-auto mb-4 flex items-center justify-center">
-                      <Icon className="h-8 w-8 text-orange-500" />
-                    </div>
-                    <p className="font-semibold text-slate-800">{active.title} Module</p>
-                    <p className="text-sm text-gray-400 mt-1">{active.features.length} features</p>
-                  </div>
-                )
-              })()}
-            </div>
+            <img
+              src={active.screenshot}
+              alt={`${active.title} Module`}
+              className="w-full"
+              loading="lazy"
+            />
           </div>
         </motion.div>
       </AnimatePresence>

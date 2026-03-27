@@ -67,7 +67,7 @@ export const moduleGroups: ModuleGroup[] = [
     title: "CRM",
     icon: Users,
     description: "Full-cycle sales management from lead to close. Pipeline visualization, deal tracking, and contact management with AI-powered lead scoring.",
-    features: ["Dashboard & KPIs", "Companies & Contacts", "Deals & Pipeline", "Leads & Scoring", "Tasks & Calendar", "Contracts & Invoices", "Products Catalog"],
+    features: ["Dashboard & KPIs", "Companies & Contacts", "Deals & Pipeline", "Leads & Scoring", "AI Sales Assistant", "Tasks & Calendar", "Contracts & Invoices", "Products Catalog"],
     screenshot: "/marketing/crm-dashboard.png",
   },
   {
@@ -75,7 +75,7 @@ export const moduleGroups: ModuleGroup[] = [
     title: "Marketing",
     icon: Megaphone,
     description: "Multi-channel campaign automation with journey builder, email sequences, and ROI tracking.",
-    features: ["Campaign Manager", "Email Templates", "Journey Builder", "Segments", "Events", "AI Scoring", "Campaign ROI"],
+    features: ["Campaign Manager", "Email Templates", "Journey Builder", "Segments", "Events", "AI Scoring", "AI Copywriting", "Campaign ROI"],
     screenshot: "/marketing/marketing-campaigns.png",
   },
   {
@@ -131,7 +131,7 @@ export const advantages = [
   },
   {
     title: "AI Agent Platform",
-    description: "Native Claude integration for customer service, lead scoring, and business insights. Not an add-on — it's core.",
+    description: "Native Claude integration: sentiment analysis, smart task generation, email copywriting, lead scoring, and customer service. Built into every card — not an add-on.",
     icon: Bot,
     color: "#7c3aed",
     href: "/features/ai",
