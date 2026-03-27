@@ -1,0 +1,5 @@
+[GET] https://v2.leaddrivecrm.org/api/auth/session => [200] OK
+[GET] https://v2.leaddrivecrm.org/login?_rsc=lqhut => [200] OK
+[GET] https://v2.leaddrivecrm.org/api/auth/session => [200] OK
+[GET] https://v2.leaddrivecrm.org/login?_rsc=19be9 => [200] OK
+[POST] https://v2.leaddrivecrm.org/api/v1/auth/register => [502] Bad Gateway
