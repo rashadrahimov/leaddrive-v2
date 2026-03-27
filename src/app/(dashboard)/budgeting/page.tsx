@@ -796,8 +796,8 @@ function WorkspaceTab({ planId, onNavigateTab }: { planId: string; onNavigateTab
 
     return (
       <tr key={line.id} className={`border-t border-border/50 hover:bg-muted/30 group ${!rowMaterial ? "opacity-40" : ""}`}>
-        {/* Category */}
-        <td className="px-3 py-2 text-sm font-medium">{line.category}</td>
+        {/* Category — strip cost type prefix for expenses with " — " pattern */}
+        <td className="px-3 py-2 text-sm font-medium">{line.lineType === "expense" && line.category.includes(" — ") ? line.category.split(" — ").slice(1).join(" — ") : line.category}</td>
         {/* Department */}
         <td className="px-2 py-2 text-xs text-muted-foreground">{line.department || "—"}</td>
         {/* Plan - editable */}
@@ -1138,22 +1138,97 @@ function WorkspaceTab({ planId, onNavigateTab }: { planId: string; onNavigateTab
             {sectionHintKey && <div className="text-[10px] text-muted-foreground/60 font-normal mt-0.5">{t(sectionHintKey)}</div>}
           </td>
         </tr>
-        {sectionLines.map(l => {
-          const isGroupParent = (l.children && l.children.length > 0) || (l.notes && l.notes.startsWith("group:"))
-          const groupTag = l.notes ?? ""
-          const isOpen = expandedGroups.has(groupTag.replace("group:", ""))
+        {(() => {
+          const isCostSection = sectionLineType === "expense" || sectionLineType === "cogs"
 
-          if (isGroupParent) {
+          // For expense/cogs lines with "prefix — dept" format, group by prefix with subtotals
+          if (isCostSection && sectionLines.some(l => l.category.includes(" — "))) {
+            const groups = new Map<string, BudgetLine[]>()
+            const ungrouped: BudgetLine[] = []
+            for (const l of sectionLines) {
+              if (l.category.includes(" — ")) {
+                const prefix = l.category.split(" — ")[0]
+                if (!groups.has(prefix)) groups.set(prefix, [])
+                groups.get(prefix)!.push(l)
+              } else {
+                ungrouped.push(l)
+              }
+            }
+
+            const getLineActual = (l: BudgetLine) =>
+              l.isAutoActual ? (autoActualMap.get(l.category) ?? 0) : (actualsByCat.get(`${l.category}||${l.lineType}`)?.total ?? 0)
+
             return (
-              <React.Fragment key={l.id}>
-                {renderGroupHeader(l)}
-                {renderAddSubItemForm(l)}
-                {isOpen && (l.children ?? []).map(child => renderChildRow(child))}
-              </React.Fragment>
+              <>
+                {Array.from(groups.entries()).map(([prefix, groupLines]) => {
+                  const grpPlanned = groupLines.reduce((s, l) => s + l.plannedAmount, 0)
+                  const grpActual = groupLines.reduce((s, l) => s + getLineActual(l), 0)
+                  const grpVar = grpPlanned > 0 ? ((grpPlanned - grpActual) / grpPlanned * 100).toFixed(1) + "%" : "—"
+                  return (
+                    <React.Fragment key={`grp-${prefix}`}>
+                      <tr className="bg-slate-100 dark:bg-slate-800/60 border-t-2 border-slate-300 dark:border-slate-600">
+                        <td colSpan={2} className="px-4 py-2">
+                          <span className="text-[13px] font-bold text-slate-700 dark:text-slate-200 tracking-wide">{prefix}</span>
+                        </td>
+                        <td className="px-2 py-2 text-right font-mono text-xs font-semibold text-slate-500 dark:text-slate-400">{fmt(grpPlanned)}</td>
+                        <td className="px-2 py-2 text-right font-mono text-xs font-semibold text-slate-500 dark:text-slate-400">{fmt(grpActual)}</td>
+                        <td className="px-2 py-2 text-right font-mono text-xs font-semibold text-slate-500 dark:text-slate-400">{grpVar}</td>
+                        <td />
+                      </tr>
+                      {groupLines.map(l => {
+                        const isGroupParent = (l.children && l.children.length > 0) || (l.notes && l.notes.startsWith("group:"))
+                        const groupTag = l.notes ?? ""
+                        const isOpen = expandedGroups.has(groupTag.replace("group:", ""))
+                        if (isGroupParent) {
+                          return (
+                            <React.Fragment key={l.id}>
+                              {renderGroupHeader(l)}
+                              {renderAddSubItemForm(l)}
+                              {isOpen && (l.children ?? []).map(child => renderChildRow(child))}
+                            </React.Fragment>
+                          )
+                        }
+                        return <React.Fragment key={l.id}>{renderRow(l)}{renderExpand(l)}</React.Fragment>
+                      })}
+                    </React.Fragment>
+                  )
+                })}
+                {ungrouped.map(l => {
+                  const isGroupParent = (l.children && l.children.length > 0) || (l.notes && l.notes.startsWith("group:"))
+                  const groupTag = l.notes ?? ""
+                  const isOpen = expandedGroups.has(groupTag.replace("group:", ""))
+                  if (isGroupParent) {
+                    return (
+                      <React.Fragment key={l.id}>
+                        {renderGroupHeader(l)}
+                        {renderAddSubItemForm(l)}
+                        {isOpen && (l.children ?? []).map(child => renderChildRow(child))}
+                      </React.Fragment>
+                    )
+                  }
+                  return <React.Fragment key={l.id}>{renderRow(l)}{renderExpand(l)}</React.Fragment>
+                })}
+              </>
             )
           }
-          return <React.Fragment key={l.id}>{renderRow(l)}{renderExpand(l)}</React.Fragment>
-        })}
+
+          // Default: flat render for revenue/cogs
+          return sectionLines.map(l => {
+            const isGroupParent = (l.children && l.children.length > 0) || (l.notes && l.notes.startsWith("group:"))
+            const groupTag = l.notes ?? ""
+            const isOpen = expandedGroups.has(groupTag.replace("group:", ""))
+            if (isGroupParent) {
+              return (
+                <React.Fragment key={l.id}>
+                  {renderGroupHeader(l)}
+                  {renderAddSubItemForm(l)}
+                  {isOpen && (l.children ?? []).map(child => renderChildRow(child))}
+                </React.Fragment>
+              )
+            }
+            return <React.Fragment key={l.id}>{renderRow(l)}{renderExpand(l)}</React.Fragment>
+          })
+        })()}
         <tr className="border-y-2 border-border bg-muted/50">
           <td className="px-3 py-2 font-bold text-sm" colSpan={2} title={t("hintSectionTotal")}>{t("totalLabel")} {title.toLowerCase()}</td>
           <td className="px-2 py-2 text-right font-mono text-sm font-bold">{fmt(totPlanned)}</td>
@@ -1257,15 +1332,18 @@ function WorkspaceTab({ planId, onNavigateTab }: { planId: string; onNavigateTab
     return top
   })()
 
-  // Expense execution: how much of expense budget was spent
-  const expExecPct = totalExpensePlanned > 0 ? (totalExpenseActual / totalExpensePlanned) * 100 : 0
-  // Overspend alert (expense-only)
+  // Total costs = COGS + OpEx for KPI display
+  const totalCostPlanned = totalExpensePlanned + totalCOGSPlanned
+  const totalCostActual = totalExpenseActual + totalCOGSActual
+  // Expense execution: how much of total cost budget was spent
+  const expExecPct = totalCostPlanned > 0 ? (totalCostActual / totalCostPlanned) * 100 : 0
+  // Overspend alert
   const overspendPct = expExecPct - 100
-  const overspendAmount = totalExpenseActual - totalExpensePlanned
+  const overspendAmount = totalCostActual - totalCostPlanned
 
   // Composite budget execution: 60% revenue achievement + 40% cost discipline
   const revAchieve = totalRevenuePlanned > 0 ? Math.min((totalRevenueActual / totalRevenuePlanned) * 100, 150) : 100
-  const costDisc = totalExpenseActual > 0 && totalExpensePlanned > 0 ? Math.min((totalExpensePlanned / totalExpenseActual) * 100, 150) : 100
+  const costDisc = totalCostActual > 0 && totalCostPlanned > 0 ? Math.min((totalCostPlanned / totalCostActual) * 100, 150) : 100
   const budgetExecPct = Math.max(0, Math.round(revAchieve * 0.6 + costDisc * 0.4))
   const budgetExecColor = budgetExecPct >= 80 ? "green" as const : budgetExecPct >= 50 ? "amber" as const : "red" as const
   const budgetExecEmoji = budgetExecPct >= 80 ? "🟢" : budgetExecPct >= 50 ? "🟡" : "🔴"
@@ -1298,11 +1376,11 @@ function WorkspaceTab({ planId, onNavigateTab }: { planId: string; onNavigateTab
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <ColorStatCard
           label={t("sectionExpenses") + " (" + t("kpiActual").toLowerCase() + ")"}
-          value={fmt(totalExpenseActual)}
+          value={fmt(totalCostActual)}
           icon={<DollarSign className="h-5 w-5" />}
           color="red"
           hint={t("hintKpiExpActual")}
-          subValue={`${Math.round(expExecPct)}% ${t("kpiExecution").toLowerCase()} · ${t("kpiPlan").toLowerCase()}: ${fmt(totalExpensePlanned)}`}
+          subValue={`${Math.round(expExecPct)}% ${t("kpiExecution").toLowerCase()} · ${t("kpiPlan").toLowerCase()}: ${fmt(totalCostPlanned)}`}
           animate
         />
         <ColorStatCard
@@ -1395,14 +1473,14 @@ function WorkspaceTab({ planId, onNavigateTab }: { planId: string; onNavigateTab
       )}
 
       {/* Executive Summary */}
-      {(totalExpensePlanned > 0 || totalRevenuePlanned > 0) && (
+      {(totalCostPlanned > 0 || totalRevenuePlanned > 0) && (
         <div className="rounded-lg bg-muted/40 border border-border px-4 py-3 text-sm text-muted-foreground">
-          {totalExpenseActual > totalExpensePlanned ? (
+          {totalCostActual > totalCostPlanned ? (
             <span>{t("summaryOverspend", { period: analytics?.plan?.name ?? "", pct: Math.round(overspendPct), amount: fmt(overspendAmount) })}</span>
-          ) : totalExpensePlanned > 0 ? (
-            <span>{t("summaryUnderBudget", { period: analytics?.plan?.name ?? "", pct: Math.round(100 - expExecPct), amount: fmt(totalExpensePlanned - totalExpenseActual) })}</span>
+          ) : totalCostPlanned > 0 ? (
+            <span>{t("summaryUnderBudget", { period: analytics?.plan?.name ?? "", pct: Math.round(100 - expExecPct), amount: fmt(totalCostPlanned - totalCostActual) })}</span>
           ) : null}
-          {totalRevenuePlanned === 0 && totalExpensePlanned > 0 && (
+          {totalRevenuePlanned === 0 && totalCostPlanned > 0 && (
             <span className="ml-1 text-amber-600 dark:text-amber-400">{t("summaryNoRevenue")}</span>
           )}
         </div>
@@ -1680,8 +1758,12 @@ function OverviewTab({ planId }: { planId: string }) {
     totalRevenueForecast = 0, margin = 0, marginActual = 0,
   } = analytics
 
+  const totalCOGSPlanned = analytics.totalCOGSPlanned ?? 0
+  const totalCOGSActual = analytics.totalCOGSActual ?? 0
+  const totalCostPlanned = totalExpensePlanned + totalCOGSPlanned
+  const totalCostActual = totalExpenseActual + totalCOGSActual
   // Expense execution: <100% = under budget (green), 100-110% = warning, >110% = overspend (red)
-  const expExecPct = expenseExecutionPct || (totalExpensePlanned > 0 ? (totalExpenseActual / totalExpensePlanned) * 100 : 0)
+  const expExecPct = totalCostPlanned > 0 ? (totalCostActual / totalCostPlanned) * 100 : 0
   const revExecPct = revenueExecutionPct || (totalRevenuePlanned > 0 ? (totalRevenueActual / totalRevenuePlanned) * 100 : 0)
   const marginForecast = totalRevenueForecast - totalExpenseForecast
 
@@ -1710,11 +1792,11 @@ function OverviewTab({ planId }: { planId: string }) {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <ColorStatCard
           label={t("sectionExpenses") + " (" + t("kpiActual").toLowerCase() + ")"}
-          value={fmt(totalExpenseActual)}
+          value={fmt(totalCostActual)}
           icon={<DollarSign className="h-5 w-5" />}
           color="red"
           hint={t("hintKpiExpActual")}
-          subValue={`${Math.round(expExecPct)}% ${t("kpiExecution").toLowerCase()} · ${t("kpiPlan").toLowerCase()}: ${fmt(totalExpensePlanned)}`}
+          subValue={`${Math.round(expExecPct)}% ${t("kpiExecution").toLowerCase()} · ${t("kpiPlan").toLowerCase()}: ${fmt(totalCostPlanned)}`}
         />
         <ColorStatCard
           label={t("sectionRevenues") + " (" + t("kpiActual").toLowerCase() + ")"}
@@ -2655,6 +2737,7 @@ function PLTab({ planId }: { planId: string }) {
   const [newSectionName, setNewSectionName] = useState("")
   const [newSectionType, setNewSectionType] = useState("expense")
   const [drilldown, setDrilldown] = useState<string | null>(null)
+  const [allExpanded, setAllExpanded] = useState(false)
 
   const toggleCollapse = (id: string) => {
     setCollapsed(prev => {
@@ -2666,21 +2749,17 @@ function PLTab({ planId }: { planId: string }) {
 
   const byCategory = analytics?.byCategory ?? []
 
-  // Filter out parent-only rows (planned=0 with children represented by parentCategory)
   const parentCategories = new Set(byCategory.filter(c => c.parentCategory).map(c => c.parentCategory!))
   const leafRows = byCategory.filter(c => !parentCategories.has(c.category) || c.parentCategory)
 
-  // Group categories by section
   const revRows = leafRows.filter(c => c.lineType === "revenue")
   const cogsRows = leafRows.filter(c => c.lineType === "cogs")
   const expRows = leafRows.filter(c => c.lineType === "expense")
 
-  // Build grouped structure: { parentCategory → children[] }
   const buildGrouped = (rows: typeof byCategory) => {
     const groups: { parent: string; children: typeof byCategory }[] = []
     const standalone: typeof byCategory = []
     const groupMap = new Map<string, typeof byCategory>()
-
     for (const r of rows) {
       if (r.parentCategory) {
         const existing = groupMap.get(r.parentCategory) ?? []
@@ -2690,11 +2769,9 @@ function PLTab({ planId }: { planId: string }) {
         standalone.push(r)
       }
     }
-
     for (const [parent, children] of groupMap) {
       groups.push({ parent, children })
     }
-
     return { groups, standalone }
   }
 
@@ -2702,7 +2779,6 @@ function PLTab({ planId }: { planId: string }) {
   const revGrouped = buildGrouped(revRows)
   const cogsGrouped = buildGrouped(cogsRows)
 
-  // Collapse all sections and groups by default (run once when data loads)
   const categoryCount = byCategory.length
   const sectionCount = sections.length
   React.useEffect(() => {
@@ -2713,10 +2789,25 @@ function PLTab({ planId }: { planId: string }) {
       ids.add("auto-revenue")
       ids.add("auto-cogs")
       ids.add("auto-expense")
-      // Groups and custom sections will be collapsed as they appear
       return ids
     })
   }, [categoryCount, sectionCount])
+
+  const toggleAll = () => {
+    if (allExpanded) {
+      // Collapse all
+      const ids = new Set<string>()
+      ids.add("auto-revenue")
+      ids.add("auto-cogs")
+      ids.add("auto-expense")
+      setCollapsed(ids)
+      setAllExpanded(false)
+    } else {
+      // Expand all
+      setCollapsed(new Set())
+      setAllExpanded(true)
+    }
+  }
 
   if (analyticsLoading || sectionsLoading) {
     return <div className="flex justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-purple-500" /></div>
@@ -2730,35 +2821,122 @@ function PLTab({ planId }: { planId: string }) {
   const totalExpenseActual = expRows.reduce((s, r) => s + r.actual, 0)
   const grossProfitPlanned = totalRevenuePlanned - totalCOGSPlanned
   const grossProfitActual = totalRevenueActual - totalCOGSActual
+  const opProfitPlanned = grossProfitPlanned - totalExpensePlanned
+  const opProfitActual = grossProfitActual - totalExpenseActual
 
-  const renderSection = (title: string, rows: typeof byCategory, sectionId: string, isCalculated = false, calcPlanned = 0, calcActual = 0, grouped?: { groups: { parent: string; children: typeof byCategory }[]; standalone: typeof byCategory }) => {
-    const isCollapsed = collapsed.has(sectionId)
+  // Helpers for execution bars
+  const execPct = (actual: number, planned: number) => planned > 0 ? Math.min(Math.round((actual / planned) * 100), 200) : 0
+  const execColor = (pct: number, isExpense: boolean) => {
+    if (isExpense) return pct > 110 ? "bg-red-500" : pct > 90 ? "bg-amber-500" : "bg-emerald-500"
+    return pct >= 90 ? "bg-emerald-500" : pct >= 70 ? "bg-amber-500" : "bg-red-500"
+  }
+
+  // Mini execution bar component
+  const ExecBar = ({ actual, planned, isExpense = false, className = "" }: { actual: number; planned: number; isExpense?: boolean; className?: string }) => {
+    const pct = execPct(Math.abs(actual), Math.abs(planned))
+    const color = execColor(pct, isExpense)
     return (
-      <div key={sectionId} className="border border-border rounded-lg overflow-x-auto mb-3">
+      <div className={`flex items-center gap-2 ${className}`}>
+        <div className="w-16 h-1.5 bg-muted rounded-full overflow-hidden">
+          <div className={`h-full rounded-full transition-all duration-500 ${color}`} style={{ width: `${Math.min(pct, 100)}%` }} />
+        </div>
+        <span className="text-[10px] font-mono text-muted-foreground w-8">{pct}%</span>
+      </div>
+    )
+  }
+
+  // KPI card for summary
+  const KPICard = ({ title, planned, actual, icon, color, isExpense = false, marginPct }: {
+    title: string; planned: number; actual: number; icon: React.ReactNode; color: string; isExpense?: boolean; marginPct?: string
+  }) => {
+    const variance = isExpense ? planned - actual : actual - planned
+    const pct = execPct(Math.abs(actual), Math.abs(planned))
+    const isPositive = variance >= 0
+    return (
+      <div className={`rounded-xl border p-4 ${color} transition-all hover:shadow-md`}>
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            {icon}
+            <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{title}</span>
+          </div>
+          {isPositive
+            ? <TrendingUp className="h-4 w-4 text-emerald-500" />
+            : <TrendingDown className="h-4 w-4 text-red-500" />}
+        </div>
+        <div className="text-lg font-bold font-mono">{fmt(actual)}</div>
+        <div className="flex items-center gap-2 mt-1">
+          <span className="text-xs text-muted-foreground">/ {fmt(planned)}</span>
+          <span className={`text-xs font-semibold ${isPositive ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>
+            {isPositive ? "+" : ""}{fmt(variance)}
+          </span>
+        </div>
+        <div className="mt-2 flex items-center gap-2">
+          <div className="flex-1 h-2 bg-muted/60 rounded-full overflow-hidden">
+            <div
+              className={`h-full rounded-full transition-all duration-700 ${execColor(pct, isExpense)}`}
+              style={{ width: `${Math.min(pct, 100)}%` }}
+            />
+          </div>
+          <span className="text-xs font-mono font-medium">{pct}%</span>
+        </div>
+        {marginPct && <div className="mt-1 text-[10px] text-muted-foreground">{marginPct}</div>}
+      </div>
+    )
+  }
+
+  const renderSection = (title: string, rows: typeof byCategory, sectionId: string, sectionIcon: React.ReactNode, sectionColor: string, isCalculated = false, calcPlanned = 0, calcActual = 0, isExpense = false, grouped?: { groups: { parent: string; children: typeof byCategory }[]; standalone: typeof byCategory }) => {
+    const isCollapsed = collapsed.has(sectionId)
+    const secPlanned = isCalculated ? calcPlanned : rows.reduce((s, r) => s + r.planned, 0)
+    const secActual = isCalculated ? calcActual : rows.reduce((s, r) => s + r.actual, 0)
+    const secVariance = isExpense ? secPlanned - secActual : secActual - secPlanned
+    const secExecPct = execPct(Math.abs(secActual), Math.abs(secPlanned))
+    const sectionTotal = secPlanned // for % of total per row
+
+    return (
+      <div key={sectionId} className="border border-border rounded-xl overflow-hidden mb-3 shadow-sm transition-all hover:shadow-md">
         <div
-          className={`flex items-center justify-between px-4 py-3 cursor-pointer ${isCalculated ? "bg-blue-50 dark:bg-blue-950/30" : "bg-muted/40"}`}
+          className={`flex items-center justify-between px-4 py-3.5 cursor-pointer transition-colors ${sectionColor}`}
           onClick={() => toggleCollapse(sectionId)}
         >
-          <div className="flex items-center gap-2 font-bold text-sm">
-            {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-            {title}
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 font-bold text-sm">
+              {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+              {sectionIcon}
+              {title}
+            </div>
+            {!isCalculated && rows.length > 0 && (
+              <Badge variant="outline" className="text-[10px] px-1.5 py-0 font-mono">{rows.length}</Badge>
+            )}
           </div>
-          <div className="flex gap-8 text-sm font-mono font-bold">
-            <span>{fmt(isCalculated ? calcPlanned : rows.reduce((s, r) => s + r.planned, 0))}</span>
-            <span className={`${(isCalculated ? calcActual : rows.reduce((s, r) => s + r.actual, 0)) >= 0 ? "text-[#065f46] dark:text-[#6ee7b7]" : "text-red-600 dark:text-red-400"}`}>
-              {fmt(isCalculated ? calcActual : rows.reduce((s, r) => s + r.actual, 0))}
-            </span>
+          <div className="flex items-center gap-4">
+            {/* Execution bar in header */}
+            <div className="hidden sm:flex items-center gap-2">
+              <div className="w-20 h-2 bg-black/10 dark:bg-white/10 rounded-full overflow-hidden">
+                <div className={`h-full rounded-full transition-all duration-500 ${execColor(secExecPct, isExpense)}`} style={{ width: `${Math.min(secExecPct, 100)}%` }} />
+              </div>
+              <span className="text-[10px] font-mono opacity-70">{secExecPct}%</span>
+            </div>
+            <div className="flex gap-6 text-sm font-mono font-bold">
+              <span className="text-right min-w-[100px]">{fmt(secPlanned)}</span>
+              <span className={`text-right min-w-[100px] ${secActual >= 0 ? "" : "text-red-600 dark:text-red-400"}`}>
+                {fmt(secActual)}
+              </span>
+              <span className={`text-right min-w-[80px] text-xs self-center ${secVariance >= 0 ? "text-emerald-700 dark:text-emerald-300" : "text-red-600 dark:text-red-400"}`}>
+                {secVariance >= 0 ? "+" : ""}{fmt(secVariance)}
+              </span>
+            </div>
           </div>
         </div>
         {!isCollapsed && !isCalculated && (
           <table className="w-full text-sm">
             <thead className="sticky top-0 z-10 bg-[#1a3050] border-b-2 border-white/10">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-white/90">{t("colCategory")}</th>
-                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-sky-300">{t("colBudget")}</th>
-                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-purple-300">{t("colForecast")}</th>
-                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-emerald-300">{t("colActual")}</th>
-                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-amber-300">{t("colVarianceShort")}</th>
+                <th className="px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-wider text-white/90">{t("colCategory")}</th>
+                <th className="px-4 py-2.5 text-right text-xs font-semibold uppercase tracking-wider text-sky-300">{t("colBudget")}</th>
+                <th className="px-4 py-2.5 text-right text-xs font-semibold uppercase tracking-wider text-purple-300">{t("colForecast")}</th>
+                <th className="px-4 py-2.5 text-right text-xs font-semibold uppercase tracking-wider text-emerald-300">{t("colActual")}</th>
+                <th className="px-4 py-2.5 text-center text-xs font-semibold uppercase tracking-wider text-cyan-300">%</th>
+                <th className="px-4 py-2.5 text-right text-xs font-semibold uppercase tracking-wider text-amber-300">{t("colVarianceShort")}</th>
               </tr>
             </thead>
             <tbody>
@@ -2769,70 +2947,109 @@ function PLTab({ planId }: { planId: string }) {
                     const gForecast = g.children.reduce((s, r) => s + r.forecast, 0)
                     const gActual = g.children.reduce((s, r) => s + r.actual, 0)
                     const gVariance = g.children.reduce((s, r) => s + r.variance, 0)
+                    const gPctOfTotal = sectionTotal > 0 ? Math.round((gPlanned / sectionTotal) * 100) : 0
                     const isGroupOpen = !collapsed.has(`pl-group-${g.parent}`)
                     return (
                       <React.Fragment key={g.parent}>
-                        <tr className="border-t border-border/30 bg-muted/10 cursor-pointer hover:bg-muted/30"
+                        <tr className="border-t border-border/30 bg-muted/10 cursor-pointer hover:bg-muted/30 transition-colors"
                           onClick={() => toggleCollapse(`pl-group-${g.parent}`)}>
-                          <td className="px-4 py-2 font-semibold flex items-center gap-2">
-                            {isGroupOpen ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
-                            {g.parent}
-                            <Badge variant="outline" title={t("hintBadgeChildCount")} className="text-[10px] px-1 py-0">{g.children.length}</Badge>
+                          <td className="px-4 py-2.5 font-semibold">
+                            <div className="flex items-center gap-2">
+                              {isGroupOpen ? <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" /> : <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />}
+                              {g.parent}
+                              <Badge variant="outline" title={t("hintBadgeChildCount")} className="text-[10px] px-1 py-0">{g.children.length}</Badge>
+                            </div>
                           </td>
                           <td className="px-4 py-2.5 text-right font-mono text-sm font-bold">{fmt(gPlanned)}</td>
                           <td className="px-4 py-2.5 text-right font-mono text-sm font-bold">{fmt(gForecast)}</td>
                           <td className="px-4 py-2.5 text-right font-mono text-sm font-bold">{fmt(gActual)}</td>
-                          <td className={`px-4 py-2.5 text-right font-mono text-sm font-bold ${gVariance >= 0 ? "text-[#065f46] dark:text-[#6ee7b7]" : "text-red-600 dark:text-red-400"}`}>
-                            {gVariance >= 0 ? "+" : ""}{fmt(gVariance)}
+                          <td className="px-4 py-2.5 text-center">
+                            <span className="inline-block bg-muted/80 rounded-full px-2 py-0.5 text-[10px] font-mono font-bold">{gPctOfTotal}%</span>
+                          </td>
+                          <td className={`px-4 py-2.5 text-right font-mono text-sm font-bold ${gVariance >= 0 ? "text-emerald-700 dark:text-emerald-300" : "text-red-600 dark:text-red-400"}`}>
+                            <div className="flex items-center justify-end gap-1.5">
+                              {gVariance >= 0
+                                ? <TrendingUp className="h-3 w-3" />
+                                : <TrendingDown className="h-3 w-3" />}
+                              {gVariance >= 0 ? "+" : ""}{fmt(gVariance)}
+                            </div>
                           </td>
                         </tr>
-                        {isGroupOpen && g.children.map((row, i) => (
-                          <tr key={i} className="border-t border-border/20 hover:bg-muted/20 cursor-pointer" onClick={() => setDrilldown(drilldown === row.category ? null : row.category)}>
-                            <td className="px-4 py-1.5 pl-10 text-muted-foreground flex items-center gap-1">
-                              {drilldown === row.category && <span className="text-blue-500">▶</span>}
-                              — {row.category}
-                            </td>
-                            <td className="px-4 py-2 text-right font-mono text-sm">{fmt(row.planned)}</td>
-                            <td className="px-4 py-2 text-right font-mono text-sm">{fmt(row.forecast)}</td>
-                            <td className="px-4 py-2 text-right font-mono text-sm">{fmt(row.actual)}</td>
-                            <td className={`px-4 py-2 text-right font-mono text-sm font-semibold ${row.variance >= 0 ? "text-[#065f46] dark:text-[#6ee7b7]" : "text-red-600 dark:text-red-400"}`}>
-                              {row.variance >= 0 ? "+" : ""}{fmt(row.variance)}
-                            </td>
-                          </tr>
-                        ))}
+                        {isGroupOpen && g.children.map((row, i) => {
+                          const rowPct = gPlanned > 0 ? Math.round((row.planned / gPlanned) * 100) : 0
+                          const isActive = drilldown === row.category
+                          return (
+                            <tr key={i} className={`border-t border-border/20 cursor-pointer transition-colors ${isActive ? "bg-blue-50 dark:bg-blue-950/30" : "hover:bg-muted/20"}`}
+                              onClick={() => setDrilldown(isActive ? null : row.category)}>
+                              <td className="px-4 py-2 pl-10">
+                                <div className="flex items-center gap-2 text-muted-foreground">
+                                  <span className={`w-1.5 h-1.5 rounded-full ${isActive ? "bg-blue-500" : "bg-muted-foreground/30"}`} />
+                                  {row.category}
+                                </div>
+                              </td>
+                              <td className="px-4 py-2 text-right font-mono text-sm">{fmt(row.planned)}</td>
+                              <td className="px-4 py-2 text-right font-mono text-sm text-purple-600 dark:text-purple-400">{fmt(row.forecast)}</td>
+                              <td className="px-4 py-2 text-right font-mono text-sm">{fmt(row.actual)}</td>
+                              <td className="px-4 py-2 text-center">
+                                <ExecBar actual={row.actual} planned={row.planned} isExpense={isExpense} />
+                              </td>
+                              <td className={`px-4 py-2 text-right font-mono text-sm font-semibold ${row.variance >= 0 ? "text-emerald-700 dark:text-emerald-300" : "text-red-600 dark:text-red-400"}`}>
+                                {row.variance >= 0 ? "+" : ""}{fmt(row.variance)}
+                              </td>
+                            </tr>
+                          )
+                        })}
                       </React.Fragment>
                     )
                   })}
-                  {grouped.standalone.map((row, i) => (
-                    <tr key={`s-${i}`} className="border-t border-border/30 hover:bg-muted/20 cursor-pointer" onClick={() => setDrilldown(drilldown === row.category ? null : row.category)}>
-                      <td className="px-4 py-2 flex items-center gap-1">
-                        {drilldown === row.category && <span className="text-blue-500">▶</span>}
-                        {row.category}
+                  {grouped.standalone.map((row, i) => {
+                    const isActive = drilldown === row.category
+                    return (
+                      <tr key={`s-${i}`} className={`border-t border-border/30 cursor-pointer transition-colors ${isActive ? "bg-blue-50 dark:bg-blue-950/30" : "hover:bg-muted/20"}`}
+                        onClick={() => setDrilldown(isActive ? null : row.category)}>
+                        <td className="px-4 py-2">
+                          <div className="flex items-center gap-2">
+                            <span className={`w-1.5 h-1.5 rounded-full ${isActive ? "bg-blue-500" : "bg-muted-foreground/30"}`} />
+                            {row.category}
+                          </div>
+                        </td>
+                        <td className="px-4 py-2 text-right font-mono text-sm">{fmt(row.planned)}</td>
+                        <td className="px-4 py-2 text-right font-mono text-sm text-purple-600 dark:text-purple-400">{fmt(row.forecast)}</td>
+                        <td className="px-4 py-2 text-right font-mono text-sm">{fmt(row.actual)}</td>
+                        <td className="px-4 py-2 text-center">
+                          <ExecBar actual={row.actual} planned={row.planned} isExpense={isExpense} />
+                        </td>
+                        <td className={`px-4 py-2 text-right font-mono text-sm font-semibold ${row.variance >= 0 ? "text-emerald-700 dark:text-emerald-300" : "text-red-600 dark:text-red-400"}`}>
+                          {row.variance >= 0 ? "+" : ""}{fmt(row.variance)}
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </>
+              ) : (
+                rows.map((row, i) => {
+                  const isActive = drilldown === row.category
+                  return (
+                    <tr key={i} className={`border-t border-border/30 cursor-pointer transition-colors ${isActive ? "bg-blue-50 dark:bg-blue-950/30" : "hover:bg-muted/20"}`}
+                      onClick={() => setDrilldown(isActive ? null : row.category)}>
+                      <td className="px-4 py-2">
+                        <div className="flex items-center gap-2">
+                          <span className={`w-1.5 h-1.5 rounded-full ${isActive ? "bg-blue-500" : "bg-muted-foreground/30"}`} />
+                          {row.category}
+                        </div>
                       </td>
                       <td className="px-4 py-2 text-right font-mono text-sm">{fmt(row.planned)}</td>
-                      <td className="px-4 py-2 text-right font-mono text-sm">{fmt(row.forecast)}</td>
+                      <td className="px-4 py-2 text-right font-mono text-sm text-purple-600 dark:text-purple-400">{fmt(row.forecast)}</td>
                       <td className="px-4 py-2 text-right font-mono text-sm">{fmt(row.actual)}</td>
-                      <td className={`px-4 py-2 text-right font-mono text-sm font-semibold ${row.variance >= 0 ? "text-[#065f46] dark:text-[#6ee7b7]" : "text-red-600 dark:text-red-400"}`}>
+                      <td className="px-4 py-2 text-center">
+                        <ExecBar actual={row.actual} planned={row.planned} isExpense={isExpense} />
+                      </td>
+                      <td className={`px-4 py-2 text-right font-mono text-sm font-semibold ${row.variance >= 0 ? "text-emerald-700 dark:text-emerald-300" : "text-red-600 dark:text-red-400"}`}>
                         {row.variance >= 0 ? "+" : ""}{fmt(row.variance)}
                       </td>
                     </tr>
-                  ))}
-                </>
-              ) : (
-                rows.map((row, i) => (
-                  <tr key={i} className="border-t border-border/30 hover:bg-muted/20 cursor-pointer" onClick={() => setDrilldown(drilldown === row.category ? null : row.category)}>
-                    <td className="px-4 py-2 flex items-center gap-1">
-                      {drilldown === row.category && <span className="text-blue-500">▶</span>}
-                      {row.category}
-                    </td>
-                    <td className="px-4 py-2 text-right font-mono text-xs">{fmt(row.planned)}</td>
-                    <td className="px-4 py-2 text-right font-mono text-xs text-purple-600 dark:text-purple-400">{fmt(row.forecast)}</td>
-                    <td className="px-4 py-2 text-right font-mono text-xs text-[#065f46] dark:text-[#6ee7b7]">{fmt(row.actual)}</td>
-                    <td className={`px-4 py-2 text-right font-mono text-xs font-medium ${row.variance >= 0 ? "text-[#065f46] dark:text-[#6ee7b7]" : "text-red-500"}`}>
-                      {row.variance >= 0 ? "+" : ""}{fmt(row.variance)}
-                    </td>
-                  </tr>
-                ))
+                  )
+                })
               )}
             </tbody>
           </table>
@@ -2843,11 +3060,52 @@ function PLTab({ planId }: { planId: string }) {
 
   return (
     <div className="space-y-4">
+      {/* KPI Summary Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <KPICard
+          title={t("plRevenue")}
+          planned={totalRevenuePlanned}
+          actual={totalRevenueActual}
+          icon={<DollarSign className="h-4 w-4 text-blue-500" />}
+          color="border-blue-200 dark:border-blue-800 bg-blue-50/50 dark:bg-blue-950/20"
+        />
+        <KPICard
+          title={t("grossProfit")}
+          planned={grossProfitPlanned}
+          actual={grossProfitActual}
+          icon={<TrendingUp className="h-4 w-4 text-emerald-500" />}
+          color="border-emerald-200 dark:border-emerald-800 bg-emerald-50/50 dark:bg-emerald-950/20"
+          marginPct={totalRevenueActual > 0 ? `Margin: ${((grossProfitActual / totalRevenueActual) * 100).toFixed(1)}%` : undefined}
+        />
+        <KPICard
+          title={t("plExpenses")}
+          planned={totalExpensePlanned}
+          actual={totalExpenseActual}
+          icon={<Banknote className="h-4 w-4 text-amber-500" />}
+          color="border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-950/20"
+          isExpense
+        />
+        <KPICard
+          title="EBITDA"
+          planned={opProfitPlanned}
+          actual={opProfitActual}
+          icon={<Target className="h-4 w-4 text-purple-500" />}
+          color="border-purple-200 dark:border-purple-800 bg-purple-50/50 dark:bg-purple-950/20"
+          marginPct={totalRevenueActual > 0 ? `Margin: ${((opProfitActual / totalRevenueActual) * 100).toFixed(1)}%` : undefined}
+        />
+      </div>
+
       <div className="flex items-center justify-between">
         <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">{t("plTitle")}</h2>
-        <Button size="sm" variant="outline" onClick={() => setShowAddSection(v => !v)}>
-          <Plus className="h-3.5 w-3.5 mr-1" /> {t("btnAddSection")}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button size="sm" variant="ghost" onClick={toggleAll} className="text-xs">
+            {allExpanded ? <List className="h-3.5 w-3.5 mr-1" /> : <LayoutGrid className="h-3.5 w-3.5 mr-1" />}
+            {allExpanded ? "Свернуть все" : "Развернуть все"}
+          </Button>
+          <Button size="sm" variant="outline" onClick={() => setShowAddSection(v => !v)}>
+            <Plus className="h-3.5 w-3.5 mr-1" /> {t("btnAddSection")}
+          </Button>
+        </div>
       </div>
 
       {showAddSection && (
@@ -2876,53 +3134,67 @@ function PLTab({ planId }: { planId: string }) {
         </Card>
       )}
 
-      {/* Auto-generated P&L — Income Statement */}
-      {renderSection(t("plRevenue"), revRows, "auto-revenue", false, 0, 0, revGrouped)}
-      {renderSection(t("sectionCOGS"), cogsRows, "auto-cogs", false, 0, 0, cogsGrouped)}
+      {/* P&L Income Statement */}
+      {renderSection(t("plRevenue"), revRows, "auto-revenue", <DollarSign className="h-4 w-4" />, "bg-blue-50/60 dark:bg-blue-950/20", false, 0, 0, false, revGrouped)}
+      {renderSection(t("sectionCOGS"), cogsRows, "auto-cogs", <Settings2 className="h-4 w-4" />, "bg-orange-50/60 dark:bg-orange-950/20", false, 0, 0, true, cogsGrouped)}
 
-      {/* Gross Profit = Revenue - COGS */}
-      <div className="border-2 border-emerald-500 dark:border-emerald-600 rounded-lg overflow-hidden mb-3 bg-white dark:bg-emerald-950/40">
-        <div className="flex items-center justify-between px-4 py-3">
-          <div className="font-bold text-base">{t("grossProfit")}</div>
-          <div className="flex gap-8 font-mono font-bold text-base">
+      {/* Gross Profit */}
+      <div className="border-2 border-emerald-500/50 dark:border-emerald-600/50 rounded-xl overflow-hidden mb-3 bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/40 dark:to-teal-950/30">
+        <div className="flex items-center justify-between px-5 py-4">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-900/50 flex items-center justify-center">
+              <TrendingUp className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+            </div>
+            <div>
+              <div className="font-bold text-base">{t("grossProfit")}</div>
+              {totalRevenuePlanned > 0 && (
+                <div className="text-xs text-muted-foreground mt-0.5">
+                  Gross Margin: {((grossProfitPlanned / totalRevenuePlanned) * 100).toFixed(1)}% (план) / {totalRevenueActual > 0 ? ((grossProfitActual / totalRevenueActual) * 100).toFixed(1) : "—"}% (факт)
+                </div>
+              )}
+            </div>
+          </div>
+          <div className="flex items-center gap-6 font-mono font-bold text-base">
             <span>{fmt(grossProfitPlanned)}</span>
-            <span className={grossProfitActual >= 0 ? "text-[#065f46] dark:text-[#6ee7b7]" : "text-red-600 dark:text-red-400"}>{fmt(grossProfitActual)}</span>
+            <span className={grossProfitActual >= 0 ? "text-emerald-700 dark:text-emerald-300" : "text-red-600 dark:text-red-400"}>{fmt(grossProfitActual)}</span>
+            <span className={`text-sm ${grossProfitActual - grossProfitPlanned >= 0 ? "text-emerald-600" : "text-red-500"}`}>
+              {grossProfitActual - grossProfitPlanned >= 0 ? "+" : ""}{fmt(grossProfitActual - grossProfitPlanned)}
+            </span>
           </div>
         </div>
-        {totalRevenuePlanned > 0 && (
-          <div className="px-4 pb-2 text-xs text-muted-foreground">
-            <span className="inline-flex items-center gap-1">Gross Margin <InfoHint text="Gross Margin = (Revenue − COGS) / Revenue × 100%. Показывает долю выручки после вычета прямых затрат." size={12} />:</span> {((grossProfitPlanned / totalRevenuePlanned) * 100).toFixed(1)}% (план) / {totalRevenueActual > 0 ? ((grossProfitActual / totalRevenueActual) * 100).toFixed(1) : "—"}% (факт)
-          </div>
-        )}
       </div>
 
-      {renderSection(t("plExpenses"), expRows, "auto-expense", false, 0, 0, expGrouped)}
+      {renderSection(t("plExpenses"), expRows, "auto-expense", <Banknote className="h-4 w-4" />, "bg-amber-50/60 dark:bg-amber-950/20", false, 0, 0, true, expGrouped)}
 
-      {/* Operating Profit (EBITDA) = Gross Profit - OpEx */}
-      {(() => {
-        const opProfitPlanned = grossProfitPlanned - totalExpensePlanned
-        const opProfitActual = grossProfitActual - totalExpenseActual
-        return (
-          <div className="border-2 border-slate-400 dark:border-slate-500 rounded-lg overflow-hidden mb-3 bg-slate-50 dark:bg-slate-900/30">
-            <div className="flex items-center justify-between px-4 py-3">
-              <div className="font-bold text-base">{t("operatingProfit")} (EBITDA)</div>
-              <div className="flex gap-8 font-mono font-bold text-base">
-                <span>{fmt(opProfitPlanned)}</span>
-                <span className={opProfitActual >= 0 ? "text-[#065f46] dark:text-[#6ee7b7]" : "text-red-600 dark:text-red-400"}>{fmt(opProfitActual)}</span>
-              </div>
+      {/* EBITDA */}
+      <div className="border-2 border-purple-400/50 dark:border-purple-500/50 rounded-xl overflow-hidden mb-3 bg-gradient-to-r from-slate-50 to-purple-50 dark:from-slate-900/40 dark:to-purple-950/30">
+        <div className="flex items-center justify-between px-5 py-4">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-purple-100 dark:bg-purple-900/50 flex items-center justify-center">
+              <Target className="h-4 w-4 text-purple-600 dark:text-purple-400" />
             </div>
-            {totalRevenuePlanned > 0 && (
-              <div className="px-4 pb-2 text-xs text-muted-foreground">
-                <span className="inline-flex items-center gap-1">EBITDA Margin <InfoHint text="EBITDA Margin = (Revenue − COGS − OpEx) / Revenue × 100%. Показывает операционную рентабельность до вычета амортизации, процентов и налогов." size={12} />:</span> {((opProfitPlanned / totalRevenuePlanned) * 100).toFixed(1)}% (план) / {totalRevenueActual > 0 ? ((opProfitActual / totalRevenueActual) * 100).toFixed(1) : "—"}% (факт)
-              </div>
-            )}
+            <div>
+              <div className="font-bold text-base">{t("operatingProfit")} (EBITDA)</div>
+              {totalRevenuePlanned > 0 && (
+                <div className="text-xs text-muted-foreground mt-0.5">
+                  EBITDA Margin: {((opProfitPlanned / totalRevenuePlanned) * 100).toFixed(1)}% (план) / {totalRevenueActual > 0 ? ((opProfitActual / totalRevenueActual) * 100).toFixed(1) : "—"}% (факт)
+                </div>
+              )}
+            </div>
           </div>
-        )
-      })()}
+          <div className="flex items-center gap-6 font-mono font-bold text-base">
+            <span>{fmt(opProfitPlanned)}</span>
+            <span className={opProfitActual >= 0 ? "text-emerald-700 dark:text-emerald-300" : "text-red-600 dark:text-red-400"}>{fmt(opProfitActual)}</span>
+            <span className={`text-sm ${opProfitActual - opProfitPlanned >= 0 ? "text-emerald-600" : "text-red-500"}`}>
+              {opProfitActual - opProfitPlanned >= 0 ? "+" : ""}{fmt(opProfitActual - opProfitPlanned)}
+            </span>
+          </div>
+        </div>
+      </div>
 
       {/* Custom sections */}
       {sections.map(sec => (
-        <div key={sec.id} className="border border-border rounded-lg overflow-hidden mb-3">
+        <div key={sec.id} className="border border-border rounded-xl overflow-hidden mb-3">
           <div className="flex items-center justify-between px-4 py-3 bg-muted/40">
             <span className="font-medium text-sm">{sec.name}</span>
             <button onClick={() => deleteSection.mutate({ id: sec.id, planId })}
@@ -2935,26 +3207,67 @@ function PLTab({ planId }: { planId: string }) {
 
       {/* Drill-down panel */}
       {drilldown && (
-        <Card className="border-blue-200 dark:border-blue-800 bg-blue-50/50 dark:bg-blue-950/20">
+        <Card className="border-blue-300 dark:border-blue-700 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/20 shadow-lg">
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-sm text-blue-700 dark:text-blue-300">{t("plDrilldown")} {drilldown}</CardTitle>
-              <button onClick={() => setDrilldown(null)} className="text-muted-foreground hover:text-foreground text-xs">✕ {t("btnClose")}</button>
+              <CardTitle className="text-sm text-blue-700 dark:text-blue-300 flex items-center gap-2">
+                <BarChart2 className="h-4 w-4" />
+                {drilldown}
+              </CardTitle>
+              <button onClick={() => setDrilldown(null)} className="text-muted-foreground hover:text-foreground text-xs px-2 py-1 rounded hover:bg-muted transition-colors">✕ {t("btnClose")}</button>
             </div>
           </CardHeader>
           <CardContent>
             {(() => {
               const row = byCategory.find(r => r.category === drilldown)
               if (!row) return <p className="text-sm text-muted-foreground">{t("emptyNoData")}</p>
+              const isExp = row.lineType === "expense" || row.lineType === "cogs"
+              const maxVal = Math.max(row.planned, row.forecast, row.actual, 1)
+              const items = [
+                { label: t("colBudget"), value: row.planned, color: "#3b82f6" },
+                { label: t("colForecast"), value: row.forecast, color: "#a855f7" },
+                { label: t("colActual"), value: row.actual, color: "#10b981" },
+              ]
               return (
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
-                  <div><p className="text-xs text-muted-foreground">{t("colBudget")}</p><p className="font-bold font-mono">{fmt(row.planned)}</p></div>
-                  <div><p className="text-xs text-muted-foreground">{t("colForecast")}</p><p className="font-bold font-mono text-purple-600 dark:text-purple-400">{fmt(row.forecast)}</p></div>
-                  <div><p className="text-xs text-muted-foreground">{t("colActual")}</p><p className="font-bold font-mono text-[#065f46] dark:text-[#6ee7b7]">{fmt(row.actual)}</p></div>
-                  <div><p className="text-xs text-muted-foreground">{t("colVariance")}</p>
-                    <p className={`font-bold font-mono ${row.variance >= 0 ? "text-[#065f46] dark:text-[#6ee7b7]" : "text-red-500"}`}>
-                      {row.variance >= 0 ? "+" : ""}{fmt(row.variance)} ({Math.round(row.variancePct)}%)
-                    </p>
+                <div className="space-y-4">
+                  {/* Visual bar comparison */}
+                  <div className="space-y-2">
+                    {items.map((item) => (
+                      <div key={item.label} className="flex items-center gap-3">
+                        <span className="text-xs text-muted-foreground w-20 text-right">{item.label}</span>
+                        <div className="flex-1 h-6 bg-muted/40 rounded-md overflow-hidden relative">
+                          <div
+                            className="h-full rounded-md transition-all duration-700 flex items-center justify-end pr-2"
+                            style={{ width: `${Math.max((item.value / maxVal) * 100, 2)}%`, backgroundColor: item.color }}
+                          >
+                            <span className="text-[10px] font-mono font-bold text-white drop-shadow-sm">
+                              {fmt(item.value)}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  {/* Stats grid */}
+                  <div className="grid grid-cols-3 gap-4 pt-2 border-t border-border/30">
+                    <div className="text-center">
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-wide">{t("colVariance")}</p>
+                      <p className={`font-bold font-mono text-sm ${row.variance >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-500"}`}>
+                        {row.variance >= 0 ? "+" : ""}{fmt(row.variance)}
+                      </p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Отклонение</p>
+                      <p className={`font-bold font-mono text-sm ${row.variancePct >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-500"}`}>
+                        {row.variancePct >= 0 ? "+" : ""}{row.variancePct.toFixed(1)}%
+                      </p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Исполнение</p>
+                      <p className="font-bold font-mono text-sm">
+                        {row.planned > 0 ? Math.round((row.actual / row.planned) * 100) : 0}%
+                      </p>
+                    </div>
                   </div>
                 </div>
               )
