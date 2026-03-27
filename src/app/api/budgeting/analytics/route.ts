@@ -107,7 +107,9 @@ export async function GET(req: NextRequest) {
 
   const totalExpensePlanned = expenseLines.reduce((s: number, l: any) => s + getEffectivePlanned(l), 0)
   const totalRevenuePlanned = revenueLines.reduce((s: number, l: any) => s + getEffectivePlanned(l), 0)
-  const totalPlanned = totalExpensePlanned // KPI "ПЛАН" = only expenses
+  // COGS totals — must be computed before totalPlanned
+  const totalCOGSPlanned = cogsLines.reduce((s: number, l: any) => s + getEffectivePlanned(l), 0)
+  const totalPlanned = totalExpensePlanned + totalCOGSPlanned // KPI "ПЛАН" = COGS + OpEx
   const totalExpenseForecast = expenseLines.reduce((s: number, l: any) => s + (l.forecastAmount ?? getEffectivePlanned(l)), 0)
   const totalRevenueForecast = revenueLines.reduce((s: number, l: any) => s + (l.forecastAmount ?? getEffectivePlanned(l)), 0)
   // Forecast from ForecastEntries (monthly) — split by lineType
@@ -122,8 +124,6 @@ export async function GET(req: NextRequest) {
     : totalExpenseForecast
   const manualActualTotal = manualActuals.reduce((s: number, a: { actualAmount: number }) => s + a.actualAmount, 0)
 
-  // COGS totals
-  const totalCOGSPlanned = cogsLines.reduce((s: number, l: any) => s + getEffectivePlanned(l), 0)
   const totalCOGSForecast = feCogs.length > 0 ? feCogs.reduce((s: number, e: { forecastAmount: number }) => s + e.forecastAmount, 0) : cogsLines.reduce((s: number, l: { forecastAmount: number | null; plannedAmount: number }) => s + (l.forecastAmount ?? l.plannedAmount), 0)
 
   // Split auto-actuals by type (expense, revenue, cogs) — iterate map keys to avoid double-counting
@@ -150,7 +150,8 @@ export async function GET(req: NextRequest) {
   const totalExpenseActual = autoActualExpense > 0 ? autoActualExpense : manualExpenseActual
   const totalRevenueActual = autoActualRevenue > 0 ? autoActualRevenue : manualRevenueActual
   const totalCOGSActual = autoActualCOGS > 0 ? autoActualCOGS : manualCOGSActual
-  const totalActual = totalExpenseActual
+  const totalActual = totalExpenseActual + totalCOGSActual  // All costs: COGS + OpEx
+  const totalAllPlanned = totalExpensePlanned + totalCOGSPlanned
 
   // Financial KPIs — correct P&L chain
   const grossProfitPlanned = totalRevenuePlanned - totalCOGSPlanned
@@ -166,11 +167,11 @@ export async function GET(req: NextRequest) {
   const revAchievement = totalRevenuePlanned > 0
     ? Math.min((totalRevenueActual / totalRevenuePlanned) * 100, 150)
     : 100
-  const costDiscipline = totalExpenseActual > 0 && totalExpensePlanned > 0
-    ? Math.min((totalExpensePlanned / totalExpenseActual) * 100, 150)
+  const costDiscipline = totalActual > 0 && totalAllPlanned > 0
+    ? Math.min((totalAllPlanned / totalActual) * 100, 150)
     : 100
   const executionPct = Math.max(0, Math.round(revAchievement * 0.6 + costDiscipline * 0.4))
-  const forecastVariance = totalExpenseForecast - totalExpenseActual
+  const forecastVariance = (totalExpenseForecast + totalCOGSForecast) - totalActual
 
   // Estimate period-end projection based on elapsed time within the plan's period
   const nowDate = new Date()

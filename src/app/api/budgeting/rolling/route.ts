@@ -4,9 +4,9 @@ import { prisma } from "@/lib/prisma"
 import { loadAndCompute } from "@/lib/cost-model/db"
 
 const SVC_REVENUE_MAP: Record<string, string> = {
-  permanent_it: "Выручка — Daimi IT", infosec: "Выручка — InfoSec",
-  erp: "Выручка — ERP", grc: "Выручка — GRC", projects: "Выручка — PM",
-  helpdesk: "Выручка — HelpDesk", cloud: "Выручка — Cloud", waf: "Выручка — WAF",
+  permanent_it: "Daimi IT", infosec: "InfoSec",
+  erp: "ERP", grc: "GRC", projects: "PM",
+  helpdesk: "HelpDesk", cloud: "Cloud", waf: "WAF",
 }
 
 // POST — create a rolling forecast plan with 12 months + auto-populate from cost model
@@ -54,8 +54,14 @@ export async function POST(req: NextRequest) {
 
   if (sourcePlan) {
     const sourceLines = await prisma.budgetLine.findMany({ where: { planId: sourcePlan.id } })
-    for (const sl of sourceLines) {
-      await prisma.budgetLine.create({
+
+    // Clone parent lines first, then children with mapped parentId
+    const parentLines = sourceLines.filter(sl => !sl.parentId)
+    const childLines = sourceLines.filter(sl => sl.parentId)
+    const idMapping = new Map<string, string>()
+
+    for (const sl of parentLines) {
+      const created = await prisma.budgetLine.create({
         data: {
           organizationId: orgId, planId: plan.id, category: sl.category,
           department: sl.department, lineType: sl.lineType,
@@ -63,6 +69,21 @@ export async function POST(req: NextRequest) {
           isAutoActual: false, isAutoPlanned: false,
           notes: sl.notes, sortOrder: sl.sortOrder,
           lineSubtype: sl.lineSubtype, parentId: null,
+        },
+      })
+      idMapping.set(sl.id, created.id)
+    }
+
+    for (const sl of childLines) {
+      const newParentId = sl.parentId ? idMapping.get(sl.parentId) ?? null : null
+      await prisma.budgetLine.create({
+        data: {
+          organizationId: orgId, planId: plan.id, category: sl.category,
+          department: sl.department, lineType: sl.lineType,
+          plannedAmount: sl.plannedAmount, costModelKey: sl.costModelKey,
+          isAutoActual: false, isAutoPlanned: false,
+          notes: sl.notes, sortOrder: sl.sortOrder,
+          lineSubtype: sl.lineSubtype, parentId: newParentId,
         },
       })
     }

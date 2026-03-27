@@ -4,9 +4,9 @@ import { prisma } from "@/lib/prisma"
 import { loadAndCompute } from "@/lib/cost-model/db"
 
 const DEPT_CATEGORY_MAP: Record<string, string> = {
-  it: "Выручка — Daimi IT", infosec: "Выручка — InfoSec",
-  erp: "Выручка — ERP", grc: "Выручка — GRC", pm: "Выручка — PM",
-  helpdesk: "Выручка — HelpDesk", cloud: "Выручка — Cloud", waf: "Выручка — WAF",
+  it: "Daimi IT", infosec: "InfoSec",
+  erp: "ERP", grc: "GRC", pm: "PM",
+  helpdesk: "HelpDesk", cloud: "Cloud", waf: "WAF",
 }
 
 function getPeriodMonths(periodType: string, quarter?: number | null, month?: number | null): number[] {
@@ -110,11 +110,15 @@ export async function POST(req: NextRequest) {
         forecastByDept[key] = (forecastByDept[key] || 0) + sf.amount
       }
 
-      for (const sl of sourceLines) {
+      // Clone parent lines first, then children with mapped parentId
+      const parentLines = sourceLines.filter(sl => !sl.parentId)
+      const childLines = sourceLines.filter(sl => sl.parentId)
+      const idMapping = new Map<string, string>() // oldId → newId
+
+      for (const sl of parentLines) {
         let plannedAmount = 0
 
         if (sl.lineType === "revenue") {
-          // Revenue: from SalesForecast (user's Excel data)
           for (const [deptKey, category] of Object.entries(DEPT_CATEGORY_MAP)) {
             if (sl.category === category) {
               plannedAmount = forecastByDept[deptKey] ?? 0
@@ -122,7 +126,6 @@ export async function POST(req: NextRequest) {
             }
           }
         } else if (sl.costModelKey) {
-          // Expenses: from cost model × number of months
           const parts = sl.costModelKey.split(".")
           if (parts[0] === "serviceDetails" && parts.length === 3) {
             const detail = costModel.serviceDetails[parts[1]]
@@ -132,7 +135,7 @@ export async function POST(req: NextRequest) {
           }
         }
 
-        await prisma.budgetLine.create({
+        const created = await prisma.budgetLine.create({
           data: {
             organizationId: orgId, planId: plan.id, category: sl.category,
             department: sl.department, lineType: sl.lineType,
@@ -141,6 +144,36 @@ export async function POST(req: NextRequest) {
             isAutoActual: false, isAutoPlanned: false,
             notes: sl.notes, sortOrder: sl.sortOrder,
             lineSubtype: sl.lineSubtype, parentId: null,
+          },
+        })
+        idMapping.set(sl.id, created.id)
+      }
+
+      for (const sl of childLines) {
+        let plannedAmount = 0
+
+        if (sl.costModelKey) {
+          const parts = sl.costModelKey.split(".")
+          if (parts[0] === "serviceDetails" && parts.length === 3) {
+            const detail = costModel.serviceDetails[parts[1]]
+            if (detail && parts[2] in detail) {
+              plannedAmount = ((detail as any)[parts[2]] ?? 0) * planMonths.length
+            }
+          }
+        } else {
+          plannedAmount = sl.plannedAmount
+        }
+
+        const newParentId = sl.parentId ? idMapping.get(sl.parentId) ?? null : null
+        await prisma.budgetLine.create({
+          data: {
+            organizationId: orgId, planId: plan.id, category: sl.category,
+            department: sl.department, lineType: sl.lineType,
+            plannedAmount: Math.round(plannedAmount * 100) / 100,
+            costModelKey: sl.costModelKey,
+            isAutoActual: false, isAutoPlanned: false,
+            notes: sl.notes, sortOrder: sl.sortOrder,
+            lineSubtype: sl.lineSubtype, parentId: newParentId,
           },
         })
       }
