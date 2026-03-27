@@ -1,16 +1,9 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
-import { auth } from "@/lib/auth"
+import { getOrgId } from "@/lib/api-auth"
 
 export async function GET(req: NextRequest) {
-  // Try header first, then session
-  let orgId = req.headers.get("x-organization-id")
-
-  if (!orgId) {
-    const session = await auth()
-    orgId = session?.user?.organizationId || null
-  }
-
+  const orgId = await getOrgId(req)
   if (!orgId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
@@ -66,15 +59,8 @@ export async function GET(req: NextRequest) {
         myTasks,
       },
     })
-  } catch {
-    return NextResponse.json({
-      success: true,
-      data: {
-        stats: { companies: 0, contacts: 0, activeDeals: 0, pipelineValue: 0, openTickets: 0, overdueTasks: 0 },
-        revenueByMonth: {},
-        recentActivities: [],
-        myTasks: [],
-      },
-    })
+  } catch (err) {
+    console.error("Dashboard error:", err)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

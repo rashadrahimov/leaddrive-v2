@@ -13,6 +13,7 @@ import { Users, Plus, Mail, Phone, Pencil, Trash2, Search, ChevronLeft, ChevronR
 import { ContactForm } from "@/components/contact-form"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
 import { cn } from "@/lib/utils"
+import { toast } from "sonner"
 
 interface Contact {
   id: string
@@ -59,7 +60,7 @@ export default function ContactsPage() {
         setContacts(json.data.contacts)
         setTotal(json.data.total)
       }
-    } catch {} finally { setLoading(false) }
+    } catch (err) { console.error(err) } finally { setLoading(false) }
   }
 
   useEffect(() => { fetchContacts() }, [session])
@@ -110,7 +111,7 @@ export default function ContactsPage() {
       setSelected(new Set())
       fetchContacts()
     } catch (err: any) {
-      alert(`Ошибка: ${err.message}`)
+      toast.error(`Ошибка: ${err.message}`)
     } finally {
       setBulkDeleting(false)
     }

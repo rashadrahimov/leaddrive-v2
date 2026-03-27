@@ -137,7 +137,7 @@ export default function JourneysPage() {
       })
       const json = await res.json()
       if (json.success) setJourneys(json.data.journeys)
-    } catch {} finally { setLoading(false) }
+    } catch (err) { console.error(err) } finally { setLoading(false) }
   }
 
   useEffect(() => { fetchJourneys() }, [session])
@@ -204,7 +204,7 @@ export default function JourneysPage() {
       })
       setStepsJourney(null)
       fetchJourneys()
-    } catch {} finally { setSavingSteps(false) }
+    } catch (err) { console.error(err) } finally { setSavingSteps(false) }
   }
 
   const fetchLeads = async () => {
@@ -215,7 +215,7 @@ export default function JourneysPage() {
       })
       const json = await res.json()
       if (json.success) setLeads(json.data.leads || [])
-    } catch {} finally { setLeadsLoading(false) }
+    } catch (err) { console.error(err) } finally { setLeadsLoading(false) }
   }
 
   // Load leads when enroll dialog opens
@@ -249,7 +249,7 @@ export default function JourneysPage() {
       setSelectedLead(null)
       setLeadSearch("")
       fetchJourneys()
-    } catch {} finally { setEnrolling(false) }
+    } catch (err) { console.error(err) } finally { setEnrolling(false) }
   }
 
   const totalJourneys = journeys.length

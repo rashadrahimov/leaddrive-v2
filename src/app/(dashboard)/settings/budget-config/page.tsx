@@ -66,7 +66,7 @@ export default function BudgetConfigPage() {
       ])
       if (ctRes.ok) setCostTypes((await ctRes.json()).data || [])
       if (deptRes.ok) setDepartments((await deptRes.json()).data || [])
-    } catch {} finally { setLoading(false) }
+    } catch (err) { console.error(err) } finally { setLoading(false) }
   }
 
   useEffect(() => { fetchData() }, [session])
@@ -101,7 +101,7 @@ export default function BudgetConfigPage() {
       }
       setCtDialog(false)
       fetchData()
-    } catch {} finally { setSaving(false) }
+    } catch (err) { console.error(err) } finally { setSaving(false) }
   }
 
   const deleteCt = async (id: string) => {
@@ -139,7 +139,7 @@ export default function BudgetConfigPage() {
       }
       setDeptDialog(false)
       fetchData()
-    } catch {} finally { setSaving(false) }
+    } catch (err) { console.error(err) } finally { setSaving(false) }
   }
 
   const deleteDept = async (id: string) => {

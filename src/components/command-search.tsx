@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { Search, Building2, Users, Handshake, UserPlus, CheckSquare, FileText } from "lucide-react"
 
@@ -12,17 +12,6 @@ interface SearchItem {
   href: string
 }
 
-const MOCK_ITEMS: SearchItem[] = [
-  { id: "c1", type: "company", name: "Zeytun Pharma", subtitle: "Pharmaceutical", href: "/companies/1" },
-  { id: "c2", type: "company", name: "Delta Telecom", subtitle: "Telecom", href: "/companies/2" },
-  { id: "c3", type: "company", name: "Azmade", subtitle: "IT", href: "/companies/3" },
-  { id: "ct1", type: "contact", name: "Rashad Rahimov", subtitle: "Zeytun Pharma", href: "/contacts/1" },
-  { id: "ct2", type: "contact", name: "Kamran Hasanov", subtitle: "Delta Telecom", href: "/contacts/2" },
-  { id: "d1", type: "deal", name: "GT-OFF-2026-005 — ZEYTUN", subtitle: "16,284 ₼", href: "/deals" },
-  { id: "l1", type: "lead", name: "Farid Gulalizade", subtitle: "Tabia", href: "/leads" },
-  { id: "t1", type: "task", name: "Подготовить контракт Zeytun", subtitle: "High priority", href: "/tasks" },
-]
-
 const typeIcons: Record<string, React.ElementType> = {
   company: Building2, contact: Users, deal: Handshake, lead: UserPlus, task: CheckSquare, contract: FileText,
 }
@@ -30,15 +19,32 @@ const typeIcons: Record<string, React.ElementType> = {
 export function CommandSearch() {
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState("")
+  const [results, setResults] = useState<SearchItem[]>([])
+  const [loading, setLoading] = useState(false)
   const [selectedIndex, setSelectedIndex] = useState(0)
   const router = useRouter()
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>()
 
-  const filtered = query.length > 0
-    ? MOCK_ITEMS.filter(item =>
-        item.name.toLowerCase().includes(query.toLowerCase()) ||
-        item.subtitle?.toLowerCase().includes(query.toLowerCase())
-      )
-    : MOCK_ITEMS.slice(0, 5)
+  const search = useCallback(async (q: string) => {
+    if (q.length < 2) { setResults([]); return }
+    setLoading(true)
+    try {
+      const res = await fetch(`/api/v1/search?q=${encodeURIComponent(q)}`)
+      const json = await res.json()
+      setResults(json.data || [])
+    } catch (err) {
+      console.error(err)
+      setResults([])
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(() => search(query), 300)
+    return () => clearTimeout(debounceRef.current)
+  }, [query, search])
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
@@ -52,18 +58,19 @@ export function CommandSearch() {
     return () => document.removeEventListener("keydown", handleKeyDown)
   }, [])
 
-  useEffect(() => { setSelectedIndex(0) }, [query])
+  useEffect(() => { setSelectedIndex(0) }, [results])
 
   function handleSelect(item: SearchItem) {
     router.push(item.href)
     setOpen(false)
     setQuery("")
+    setResults([])
   }
 
   function handleKeyDown(e: React.KeyboardEvent) {
-    if (e.key === "ArrowDown") { e.preventDefault(); setSelectedIndex(i => Math.min(i + 1, filtered.length - 1)) }
+    if (e.key === "ArrowDown") { e.preventDefault(); setSelectedIndex(i => Math.min(i + 1, results.length - 1)) }
     if (e.key === "ArrowUp") { e.preventDefault(); setSelectedIndex(i => Math.max(i - 1, 0)) }
-    if (e.key === "Enter" && filtered[selectedIndex]) { handleSelect(filtered[selectedIndex]) }
+    if (e.key === "Enter" && results[selectedIndex]) { handleSelect(results[selectedIndex]) }
   }
 
   if (!open) return null
@@ -85,10 +92,14 @@ export function CommandSearch() {
             <kbd className="rounded border px-1.5 py-0.5 text-[10px] font-mono text-muted-foreground">ESC</kbd>
           </div>
           <div className="max-h-72 overflow-y-auto p-2">
-            {filtered.length === 0 ? (
+            {loading ? (
+              <div className="py-6 text-center text-sm text-muted-foreground">Searching...</div>
+            ) : query.length < 2 ? (
+              <div className="py-6 text-center text-sm text-muted-foreground">Type at least 2 characters to search</div>
+            ) : results.length === 0 ? (
               <div className="py-6 text-center text-sm text-muted-foreground">No results found</div>
             ) : (
-              filtered.map((item, i) => {
+              results.map((item, i) => {
                 const Icon = typeIcons[item.type] || Search
                 return (
                   <button

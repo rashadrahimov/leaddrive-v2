@@ -90,7 +90,7 @@ export default function EventDetailPage() {
       })
       const json = await res.json()
       if (json.success) setEvent(json.data)
-    } catch {} finally { setLoading(false) }
+    } catch (err) { console.error(err) } finally { setLoading(false) }
   }
 
   useEffect(() => { if (params.id) fetchEvent() }, [params.id, session])
@@ -219,7 +219,7 @@ export default function EventDetailPage() {
           ? `Sent invitation to 1 participant`
           : `Marked as invited (SMTP not configured)`)
       }
-    } catch {}
+    } catch (err) { console.error(err) }
     await fetchEvent()
   }
 
@@ -239,7 +239,7 @@ export default function EventDetailPage() {
         headers: getH(),
         body: JSON.stringify({ participantId }),
       })
-    } catch {}
+    } catch (err) { console.error(err) }
     await fetchEvent()
   }
 

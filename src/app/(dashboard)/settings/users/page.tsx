@@ -234,7 +234,7 @@ export default function UsersSettingsPage() {
         const result = await rolesRes.json()
         if (result.data?.roles) setAvailableRoles(result.data.roles)
       }
-    } catch {} finally { setLoading(false) }
+    } catch (err) { console.error(err) } finally { setLoading(false) }
   }
 
   const fetchUsers = async () => {
@@ -246,7 +246,7 @@ export default function UsersSettingsPage() {
         const result = await res.json()
         setUsers(result.data || [])
       }
-    } catch {}
+    } catch (err) { console.error(err) }
   }
 
   useEffect(() => { fetchData() }, [session])

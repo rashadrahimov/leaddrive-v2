@@ -36,7 +36,7 @@ async function logAiCall(
         isCopilot: true,
       },
     })
-  } catch {}
+  } catch (err) { console.error(err) }
 }
 
 export async function POST(req: NextRequest) {

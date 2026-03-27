@@ -108,7 +108,7 @@ function CalendarIntegrationModal({ open, onClose }: { open: boolean; onClose: (
         setToken(json.data.token)
         setFeedUrl(json.data.feedUrl)
       }
-    } catch {} finally { setLoading(false) }
+    } catch (err) { console.error(err) } finally { setLoading(false) }
   }
 
   async function copyUrl() {
@@ -117,7 +117,7 @@ function CalendarIntegrationModal({ open, onClose }: { open: boolean; onClose: (
       await navigator.clipboard.writeText(feedUrl)
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
-    } catch {}
+    } catch (err) { console.error(err) }
   }
 
   if (!open) return null
@@ -237,7 +237,7 @@ function TaskCalendar({ tasks, orgId }: { tasks: Task[]; orgId?: string }) {
       })
       const json = await res.json()
       if (json.success) setCalTasks(json.data.tasks)
-    } catch {}
+    } catch (err) { console.error(err) }
   }, [calMonth, calYear, orgId])
 
   useEffect(() => { fetchCalendar() }, [fetchCalendar])
@@ -384,7 +384,8 @@ export default function TasksPage() {
       if (json.success) {
         setTasks(json.data.tasks)
       }
-    } catch {
+    } catch (err) {
+      console.error(err)
     } finally {
       setLoading(false)
     }
@@ -406,7 +407,7 @@ export default function TasksPage() {
         body: JSON.stringify({ status: newStatus }),
       })
       fetchTasks()
-    } catch {}
+    } catch (err) { console.error(err) }
   }
 
   function handleEdit(item: Task) {

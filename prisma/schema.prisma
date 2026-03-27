@@ -188,6 +188,7 @@ model Company {
   invoices       Invoice[]
   pricingProfiles PricingProfile[]
   projects       Project[]
+  tickets        Ticket[]
 
   @@index([organizationId])
   @@map("companies")
@@ -198,7 +199,7 @@ model Contact {
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   companyId      String?
-  company        Company? @relation(fields: [companyId], references: [id])
+  company        Company? @relation(fields: [companyId], references: [id], onDelete: SetNull)
   fullName       String
   email          String?
   phone          String?
@@ -222,6 +223,7 @@ model Contact {
 
   activities     Activity[]
   invoices       Invoice[]
+  tickets        Ticket[]
 
   @@index([organizationId])
   @@index([organizationId, companyId])
@@ -233,9 +235,9 @@ model Deal {
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   companyId      String?
-  company        Company? @relation(fields: [companyId], references: [id])
+  company        Company? @relation(fields: [companyId], references: [id], onDelete: SetNull)
   campaignId     String?
-  campaign       Campaign? @relation(fields: [campaignId], references: [id])
+  campaign       Campaign? @relation(fields: [campaignId], references: [id], onDelete: SetNull)
   contactId      String?
   name           String
   customerNeed   String?
@@ -350,7 +352,7 @@ model Contract {
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   contractNumber String
   companyId      String?
-  company        Company?  @relation(fields: [companyId], references: [id])
+  company        Company?  @relation(fields: [companyId], references: [id], onDelete: SetNull)
   title          String
   type           String   @default("service_agreement")
   status         String   @default("draft")
@@ -392,7 +394,7 @@ model Offer {
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   offerNumber    String
   dealId         String?
-  deal           Deal?    @relation(fields: [dealId], references: [id])
+  deal           Deal?    @relation(fields: [dealId], references: [id], onDelete: SetNull)
   companyId      String?
   contactId      String?
   type           String   @default("commercial") // commercial, invoice, equipment, services
@@ -445,9 +447,9 @@ model Activity {
   subject        String?
   description    String?
   contactId      String?
-  contact        Contact? @relation(fields: [contactId], references: [id])
+  contact        Contact? @relation(fields: [contactId], references: [id], onDelete: SetNull)
   companyId      String?
-  company        Company? @relation(fields: [companyId], references: [id])
+  company        Company? @relation(fields: [companyId], references: [id], onDelete: SetNull)
   relatedType    String?
   relatedId      String?
   createdBy      String?
@@ -626,7 +628,9 @@ model Ticket {
   status         String    @default("new")
   category       String    @default("general")
   contactId      String?
+  contact        Contact? @relation(fields: [contactId], references: [id], onDelete: SetNull)
   companyId      String?
+  company        Company? @relation(fields: [companyId], references: [id], onDelete: SetNull)
   assignedTo     String?
   createdBy      String?
   slaDueAt              DateTime?
@@ -1273,7 +1277,7 @@ model PricingProfile {
   organizationId String
   companyCode    String
   companyId      String?
-  company        Company? @relation(fields: [companyId], references: [id])
+  company        Company? @relation(fields: [companyId], references: [id], onDelete: SetNull)
   groupId        String
   group          PricingGroup @relation(fields: [groupId], references: [id])
   monthlyTotal   Float    @default(0)
@@ -1450,13 +1454,13 @@ model Invoice {
   organization      Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   invoiceNumber     String
   dealId            String?
-  deal              Deal?     @relation(fields: [dealId], references: [id])
+  deal              Deal?     @relation(fields: [dealId], references: [id], onDelete: SetNull)
   companyId         String?
-  company           Company?  @relation(fields: [companyId], references: [id])
+  company           Company?  @relation(fields: [companyId], references: [id], onDelete: SetNull)
   contactId         String?
-  contact           Contact?  @relation(fields: [contactId], references: [id])
+  contact           Contact?  @relation(fields: [contactId], references: [id], onDelete: SetNull)
   contractId        String?
-  contract          Contract? @relation(fields: [contractId], references: [id])
+  contract          Contract? @relation(fields: [contractId], references: [id], onDelete: SetNull)
   offerId           String?
 
   title             String
@@ -1997,7 +2001,7 @@ model Project {
   completionPercentage Int       @default(0)
   managerId            String?   // userId of project manager
   companyId            String?
-  company              Company?  @relation(fields: [companyId], references: [id])
+  company              Company?  @relation(fields: [companyId], references: [id], onDelete: SetNull)
   dealId               String?
   color                String    @default("#6366f1")
   tags                 String[]  @default([])

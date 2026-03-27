@@ -141,7 +141,7 @@ export default function InboxPage() {
         setConversations(json.data.conversations || [])
         setStats(json.data.stats || { totalMessages: 0, inbound: 0, outbound: 0, conversations: 0 })
       }
-    } catch {} finally { setLoading(false) }
+    } catch (err) { console.error(err) } finally { setLoading(false) }
   }
 
   useEffect(() => { fetchInbox() }, [session, channelFilter])
@@ -229,7 +229,7 @@ export default function InboxPage() {
       })
       setReplyText("")
       fetchInbox()
-    } catch {} finally { setSending(false) }
+    } catch (err) { console.error(err) } finally { setSending(false) }
   }
 
   /* -- Compose -- */
@@ -260,7 +260,7 @@ export default function InboxPage() {
         setComposeContactId("")
         fetchInbox()
       }
-    } catch {} finally { setComposeSending(false) }
+    } catch (err) { console.error(err) } finally { setComposeSending(false) }
   }
 
   /* -- Mark as read -- */
@@ -279,7 +279,7 @@ export default function InboxPage() {
         body: JSON.stringify({ messageIds: unreadIds }),
       })
       fetchInbox()
-    } catch {}
+    } catch (err) { console.error(err) }
   }
 
   /* -- Delete conversation -- */
@@ -297,7 +297,7 @@ export default function InboxPage() {
       })
       setSelected(null)
       fetchInbox()
-    } catch {}
+    } catch (err) { console.error(err) }
   }
 
   /* -- Filtered list -- */

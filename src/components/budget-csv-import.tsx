@@ -4,7 +4,7 @@ import { useState, useRef } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Upload, FileSpreadsheet, CheckCircle2, AlertCircle, Loader2 } from "lucide-react"
+import { Upload, FileSpreadsheet, CheckCircle2, AlertCircle, Loader2, Download } from "lucide-react"
 
 interface Props {
   planId: string
@@ -19,13 +19,34 @@ interface Props {
   } | null
 }
 
+function splitCsvLine(line: string): string[] {
+  const result: string[] = []
+  let current = ""
+  let inQuotes = false
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i]
+    if (ch === '"') {
+      if (inQuotes && line[i + 1] === '"') { current += '"'; i++ }
+      else inQuotes = !inQuotes
+    } else if (ch === "," && !inQuotes) {
+      result.push(current.trim())
+      current = ""
+    } else {
+      current += ch
+    }
+  }
+  result.push(current.trim())
+  return result
+}
+
 function parseCSV(text: string): any[] {
-  const lines = text.trim().split("\n")
+  const lines = text.trim().split(/\r?\n/)
   if (lines.length < 2) return []
-  const headers = lines[0].split(",").map((h) => h.trim().replace(/^"|"$/g, ""))
+  const headers = splitCsvLine(lines[0])
   const rows = []
   for (let i = 1; i < lines.length; i++) {
-    const values = lines[i].split(",").map((v) => v.trim().replace(/^"|"$/g, ""))
+    if (!lines[i].trim()) continue
+    const values = splitCsvLine(lines[i])
     const row: any = {}
     headers.forEach((h, idx) => {
       row[h] = values[idx] || ""
@@ -63,33 +84,45 @@ export function BudgetCsvImport({ planId, integrationId, onImport, isImporting, 
       <CardHeader className="pb-3">
         <CardTitle className="text-base flex items-center gap-2">
           <FileSpreadsheet className="h-4 w-4" />
-          CSV Import
+          Импорт CSV
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
+        {/* Download template + Upload area */}
+        <div className="flex gap-3">
+          <a href={`/api/budgeting/csv-template?planId=${planId}`} download className="block">
+            <Button size="sm" variant="outline" className="gap-1.5" type="button" asChild>
+              <span><Download className="h-4 w-4" /> Скачать шаблон CSV</span>
+            </Button>
+          </a>
+          <p className="text-xs text-muted-foreground self-center">
+            Шаблон содержит все категории и департаменты из текущего плана. Заполните колонку <code>amount</code>.
+          </p>
+        </div>
+
         <div className="border-2 border-dashed rounded-lg p-6 text-center">
           <input ref={fileRef} type="file" accept=".csv,.txt" onChange={handleFile} className="hidden" />
           <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
           <p className="text-sm text-muted-foreground mb-2">
-            Drag CSV file or click to upload
+            Загрузите CSV файл с фактическими данными
           </p>
           <Button size="sm" variant="outline" onClick={() => fileRef.current?.click()}>
-            Choose File
+            Выбрать файл
           </Button>
           {fileName && <p className="text-xs text-muted-foreground mt-2">{fileName}</p>}
         </div>
 
         <div className="text-xs text-muted-foreground">
-          Expected columns: <code>category, amount, department, date, description, lineType</code>
+          Колонки: <code>category, amount, department, date, description, lineType</code>
         </div>
 
         {preview && (
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <Badge variant="outline">{preview.length} rows parsed</Badge>
+              <Badge variant="outline">{preview.length} строк распознано</Badge>
               <Button size="sm" onClick={handleImport} disabled={isImporting}>
                 {isImporting ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Upload className="h-4 w-4 mr-1" />}
-                Import {preview.length} rows
+                Загрузить {preview.length} строк
               </Button>
             </div>
             <div className="max-h-40 overflow-auto border rounded text-xs">
@@ -110,7 +143,7 @@ export function BudgetCsvImport({ planId, integrationId, onImport, isImporting, 
                     </tr>
                   ))}
                   {preview.length > 10 && (
-                    <tr><td colSpan={999} className="px-2 py-1 text-muted-foreground">... and {preview.length - 10} more rows</td></tr>
+                    <tr><td colSpan={999} className="px-2 py-1 text-muted-foreground">... ещё {preview.length - 10} строк</td></tr>
                   )}
                 </tbody>
               </table>
@@ -127,13 +160,13 @@ export function BudgetCsvImport({ planId, integrationId, onImport, isImporting, 
                 <CheckCircle2 className="h-4 w-4 text-green-600" />
               )}
               <span className="font-medium">
-                {lastResult.matchedRows}/{lastResult.totalRows} rows imported
+                {lastResult.matchedRows}/{lastResult.totalRows} строк загружено
               </span>
             </div>
             {lastResult.errors && lastResult.errors.length > 0 && (
               <div className="text-xs text-muted-foreground mt-1">
                 {lastResult.errors.slice(0, 5).map((e, i) => (
-                  <div key={i}>Row {e.row}: {e.error}</div>
+                  <div key={i}>Строка {e.row}: {e.error}</div>
                 ))}
               </div>
             )}

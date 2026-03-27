@@ -55,7 +55,7 @@ export default function SlaPoliciesPage() {
         const result = await res.json()
         setPolicies(result.data || [])
       }
-    } catch {} finally { setLoading(false) }
+    } catch (err) { console.error(err) } finally { setLoading(false) }
   }
 
   useEffect(() => { fetchPolicies() }, [session])

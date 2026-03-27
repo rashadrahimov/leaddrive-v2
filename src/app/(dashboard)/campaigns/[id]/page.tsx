@@ -51,7 +51,7 @@ export default function CampaignDetailPage() {
       })
       const json = await res.json()
       if (json.success && json.data) setCampaign(json.data)
-    } catch {} finally { setLoading(false) }
+    } catch (err) { console.error(err) } finally { setLoading(false) }
   }
 
   useEffect(() => { if (params.id) fetchCampaign() }, [params.id, session])

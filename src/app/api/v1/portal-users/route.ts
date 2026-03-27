@@ -127,7 +127,7 @@ export async function PATCH(req: NextRequest) {
           entityName: contact?.fullName || "",
         },
       })
-    } catch {}
+    } catch (err) { console.error(err) }
 
     return NextResponse.json({ success: true })
   }

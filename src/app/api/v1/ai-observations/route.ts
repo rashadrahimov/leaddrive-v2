@@ -100,6 +100,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true, data: { observations } })
   } catch (error) {
     console.error("AI observations error:", error)
-    return NextResponse.json({ success: true, data: { observations: [], error: String(error) } })
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

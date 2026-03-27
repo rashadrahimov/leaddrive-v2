@@ -61,7 +61,7 @@ export default function NotificationsPage() {
         setNotifications(json.data.notifications || [])
         setUnreadCount(json.data.unreadCount || 0)
       }
-    } catch {} finally { setLoading(false) }
+    } catch (err) { console.error(err) } finally { setLoading(false) }
   }
 
   useEffect(() => { fetchNotifications() }, [session])
@@ -77,7 +77,7 @@ export default function NotificationsPage() {
         body: JSON.stringify({ markAll: true }),
       })
       fetchNotifications()
-    } catch {}
+    } catch (err) { console.error(err) }
   }
 
   const markRead = async (id: string) => {
@@ -91,7 +91,7 @@ export default function NotificationsPage() {
         body: JSON.stringify({ ids: [id] }),
       })
       fetchNotifications()
-    } catch {}
+    } catch (err) { console.error(err) }
   }
 
   const filtered = filter === "unread"

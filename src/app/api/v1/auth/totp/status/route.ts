@@ -24,7 +24,7 @@ export async function GET() {
       ? JSON.parse(user.backupCodes)
       : user.backupCodes
     if (Array.isArray(parsed)) backupCodes = parsed
-  } catch {}
+  } catch (err) { console.error(err) }
 
   return NextResponse.json({
     success: true,

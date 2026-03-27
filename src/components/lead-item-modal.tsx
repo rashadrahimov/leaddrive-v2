@@ -156,7 +156,7 @@ export function LeadItemModal({ open, onOpenChange, lead, orgId, onSaved, onConv
       if (json.success && json.data) {
         setCurrentLead(json.data)
       }
-    } catch {}
+    } catch (err) { console.error(err) }
   }
 
   const updateField = async (fields: Record<string, any>) => {
@@ -169,7 +169,7 @@ export function LeadItemModal({ open, onOpenChange, lead, orgId, onSaved, onConv
       })
       await reloadLead()
       onSaved?.()
-    } catch {} finally { setSaving(false) }
+    } catch (err) { console.error(err) } finally { setSaving(false) }
   }
 
   const saveEditForm = async () => {
@@ -207,7 +207,7 @@ export function LeadItemModal({ open, onOpenChange, lead, orgId, onSaved, onConv
       })
       await reloadLead()
       onSaved?.()
-    } catch {} finally { setScoring(false) }
+    } catch (err) { console.error(err) } finally { setScoring(false) }
   }
 
   // AI helper
@@ -221,7 +221,7 @@ export function LeadItemModal({ open, onOpenChange, lead, orgId, onSaved, onConv
       })
       const json = await res.json()
       if (json.success) return json.data
-    } catch {} finally { setAiLoading(false) }
+    } catch (err) { console.error(err) } finally { setAiLoading(false) }
     return null
   }
 
@@ -233,7 +233,7 @@ export function LeadItemModal({ open, onOpenChange, lead, orgId, onSaved, onConv
       })
       const json = await res.json()
       if (json.success) setActivities(json.data.activities || [])
-    } catch {}
+    } catch (err) { console.error(err) }
   }
 
   const saveActivity = async () => {
@@ -258,7 +258,7 @@ export function LeadItemModal({ open, onOpenChange, lead, orgId, onSaved, onConv
         setActivityDesc("")
         loadActivities()
       }
-    } catch {} finally { setActivitySaving(false) }
+    } catch (err) { console.error(err) } finally { setActivitySaving(false) }
   }
 
   // Send generated email

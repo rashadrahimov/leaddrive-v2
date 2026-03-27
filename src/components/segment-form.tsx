@@ -142,7 +142,7 @@ export function SegmentForm({ open, onOpenChange, onSaved, initialData, orgId }:
       })
       const json = await res.json()
       if (json.success) setPreviewCount(json.data.count)
-    } catch {} finally { setPreviewing(false) }
+    } catch (err) { console.error(err) } finally { setPreviewing(false) }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {

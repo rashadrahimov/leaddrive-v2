@@ -86,7 +86,7 @@ export default function EmailLogPage() {
         setTotal(json.data.total)
         setStats(json.data.stats)
       }
-    } catch {}
+    } catch (err) { console.error(err) }
     setLoading(false)
   }, [orgId, page, search, filterStatus, filterDirection])
 

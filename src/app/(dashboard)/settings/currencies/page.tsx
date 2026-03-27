@@ -42,7 +42,7 @@ export default function CurrenciesPage() {
         const result = await res.json()
         setCurrencies(result.data || [])
       }
-    } catch {} finally { setLoading(false) }
+    } catch (err) { console.error(err) } finally { setLoading(false) }
   }
 
   useEffect(() => { fetchCurrencies() }, [session])

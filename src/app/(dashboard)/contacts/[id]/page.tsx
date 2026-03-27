@@ -147,7 +147,7 @@ export default function ContactDetailPage() {
       if (json.success) {
         setContact(json.data)
       }
-    } catch {} finally {
+    } catch (err) { console.error(err) } finally {
       setLoading(false)
     }
   }
@@ -208,7 +208,7 @@ export default function ContactDetailPage() {
         setShowEdit(false)
         fetchContact()
       }
-    } catch {} finally { setSaving(false) }
+    } catch (err) { console.error(err) } finally { setSaving(false) }
   }
 
   const addPhone = () => setEditData(d => ({ ...d, phones: [...d.phones, ""] }))

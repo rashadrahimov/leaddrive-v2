@@ -71,7 +71,7 @@ export default function EmailTemplatesPage() {
       })
       const json = await res.json()
       if (json.success) setTemplates(json.data.templates)
-    } catch {} finally { setLoading(false) }
+    } catch (err) { console.error(err) } finally { setLoading(false) }
   }
 
   useEffect(() => { fetchTemplates() }, [session])

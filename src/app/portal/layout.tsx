@@ -34,7 +34,7 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
 
   const handleLogout = async () => {
     localStorage.removeItem("portal-user")
-    try { await fetch("/api/v1/public/portal-auth", { method: "DELETE" }) } catch {}
+    try { await fetch("/api/v1/public/portal-auth", { method: "DELETE" }) } catch (err) { console.error(err) }
     router.push("/portal/login")
   }
 

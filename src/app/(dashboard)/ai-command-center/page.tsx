@@ -193,7 +193,7 @@ export default function AICommandCenterPage() {
         setLogsTotal(logsRes.data?.total || 0)
       }
       if (guardrailsRes.success) setGuardrails(guardrailsRes.data?.guardrails || [])
-    } catch {} finally { setLoading(false) }
+    } catch (err) { console.error(err) } finally { setLoading(false) }
   }
 
   useEffect(() => { fetchData() }, [session])
@@ -230,7 +230,7 @@ export default function AICommandCenterPage() {
       const res = await fetch(`/api/v1/ai-sessions/${id}`, { headers: hdrs() })
       const json = await res.json()
       if (json.success) setSessionMessages(json.data.session.messages || [])
-    } catch {} finally { setSessionLoading(false) }
+    } catch (err) { console.error(err) } finally { setSessionLoading(false) }
   }
 
   const handleAddGuardrail = async () => {

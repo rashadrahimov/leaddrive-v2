@@ -44,7 +44,7 @@ export default function EmailTemplatesPage() {
         setTemplates(json.data.templates)
         setTotal(json.data.total)
       }
-    } catch {} finally { setLoading(false) }
+    } catch (err) { console.error(err) } finally { setLoading(false) }
   }
 
   useEffect(() => { fetchTemplates() }, [session])

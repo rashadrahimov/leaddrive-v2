@@ -75,7 +75,7 @@ export default function CompaniesPage() {
         if (json.data.totalUsers !== undefined) setTotalUsers(json.data.totalUsers)
         if (json.data.totalContacts !== undefined) setTotalContacts(json.data.totalContacts)
       }
-    } catch {} finally { setLoading(false) }
+    } catch (err) { console.error(err) } finally { setLoading(false) }
   }
 
   useEffect(() => { fetchCompanies() }, [session])

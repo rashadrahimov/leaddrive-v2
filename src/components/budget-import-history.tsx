@@ -44,7 +44,7 @@ export function BudgetImportHistory({ imports, isLoading }: Props) {
       <CardHeader className="pb-3">
         <CardTitle className="text-base flex items-center gap-2">
           <History className="h-4 w-4" />
-          Import History
+          История импорта
           <Badge variant="outline" className="ml-2">{imports.length}</Badge>
         </CardTitle>
       </CardHeader>
@@ -60,15 +60,15 @@ export function BudgetImportHistory({ imports, isLoading }: Props) {
                   <div>
                     <div className="text-sm font-medium flex items-center gap-2">
                       <FileSpreadsheet className="h-3.5 w-3.5 text-muted-foreground" />
-                      {imp.fileName || "Import"}
+                      {imp.fileName || "Импорт"}
                       {imp.integration && (
                         <Badge variant="outline" className="text-[10px]">{imp.integration.provider}</Badge>
                       )}
                     </div>
                     <div className="text-xs text-muted-foreground">
-                      {new Date(imp.createdAt).toLocaleString()} · {imp.matchedRows}/{imp.totalRows} matched
+                      {new Date(imp.createdAt).toLocaleString()} · {imp.matchedRows}/{imp.totalRows} загружено
                       {imp.unmatchedRows > 0 && (
-                        <span className="text-yellow-600 ml-1">({imp.unmatchedRows} failed)</span>
+                        <span className="text-yellow-600 ml-1">({imp.unmatchedRows} ошибок)</span>
                       )}
                     </div>
                   </div>

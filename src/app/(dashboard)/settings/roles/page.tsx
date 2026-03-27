@@ -117,7 +117,7 @@ export default function RolesSettingsPage() {
           setSavedPermissions(result.data.permissions)
         }
       }
-    } catch {} finally { setLoading(false) }
+    } catch (err) { console.error(err) } finally { setLoading(false) }
   }, [orgId])
 
   useEffect(() => { fetchData() }, [fetchData])

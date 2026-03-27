@@ -89,7 +89,7 @@ export default function CompanyDetailPage() {
       })
       const json = await res.json()
       if (json.success && json.data) setCompany(json.data)
-    } catch {} finally { setLoading(false) }
+    } catch (err) { console.error(err) } finally { setLoading(false) }
   }
 
   const fetchPricing = async () => {
@@ -106,7 +106,7 @@ export default function CompanyDetailPage() {
         const salesJson = await salesRes.json()
         if (salesJson.success) setPricingSales(salesJson.data.sales || [])
       }
-    } catch {} finally { setPricingLoading(false) }
+    } catch (err) { console.error(err) } finally { setPricingLoading(false) }
   }
 
   const fetchTimeline = async () => {
@@ -118,7 +118,7 @@ export default function CompanyDetailPage() {
       })
       const json = await res.json()
       if (json.success) setTimeline(json.data.timeline)
-    } catch {} finally { setTimelineLoading(false) }
+    } catch (err) { console.error(err) } finally { setTimelineLoading(false) }
   }
 
   useEffect(() => { if (params.id) fetchCompany() }, [params.id, session])

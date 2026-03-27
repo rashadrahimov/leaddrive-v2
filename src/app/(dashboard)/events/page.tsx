@@ -68,7 +68,7 @@ export default function EventsPage() {
         setEvents(json.data.events)
         setTotal(json.data.total)
       }
-    } catch {} finally { setLoading(false) }
+    } catch (err) { console.error(err) } finally { setLoading(false) }
   }
 
   useEffect(() => { if (session) fetchEvents() }, [session, search, statusFilter])

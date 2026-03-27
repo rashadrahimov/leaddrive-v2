@@ -65,10 +65,7 @@ export async function GET(req: NextRequest) {
     })
   } catch (e) {
     console.error("Companies API error:", e)
-    return NextResponse.json({
-      success: true,
-      data: { companies: [], total: 0, page, limit, search },
-    })
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
 

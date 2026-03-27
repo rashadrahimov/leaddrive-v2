@@ -65,7 +65,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ success: true, data: { tickets, total, page, limit } })
   } catch (e) {
     console.error("Tickets GET error:", e)
-    return NextResponse.json({ success: true, data: { tickets: [], total: 0, page, limit } })
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
 

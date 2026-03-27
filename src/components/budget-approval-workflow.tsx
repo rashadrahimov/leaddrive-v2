@@ -32,10 +32,10 @@ interface Props {
 }
 
 const STEPS = [
-  { key: "draft", label: "Draft", icon: FileText },
-  { key: "pending_approval", label: "Submitted", icon: Send },
-  { key: "approved", label: "Approved", icon: CheckCircle2 },
-  { key: "closed", label: "Closed", icon: Lock },
+  { key: "draft", label: "Черновик", icon: FileText },
+  { key: "pending_approval", label: "На согласовании", icon: Send },
+  { key: "approved", label: "Утверждён", icon: CheckCircle2 },
+  { key: "closed", label: "Закрыт", icon: Lock },
 ]
 
 const STATUS_COLORS: Record<string, string> = {
@@ -77,15 +77,15 @@ export function BudgetApprovalWorkflow({ plan, userRole }: Props) {
     <Card>
       <CardHeader className="pb-3">
         <CardTitle className="text-base flex items-center justify-between">
-          <span>Approval Workflow</span>
+          <span>Согласование</span>
           <Badge className={STATUS_COLORS[plan.status] || "bg-gray-100"}>
-            {plan.status === "pending_approval" ? "Pending Approval" : plan.status.charAt(0).toUpperCase() + plan.status.slice(1)}
+            {plan.status === "pending_approval" ? "На согласовании" : plan.status === "draft" ? "Черновик" : plan.status === "approved" ? "Утверждён" : plan.status === "rejected" ? "Отклонён" : plan.status === "closed" ? "Закрыт" : plan.status}
           </Badge>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Visual stepper */}
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-0.5">
           {STEPS.map((step, i) => {
             const Icon = step.icon
             const isActive = i === currentStep
@@ -93,18 +93,18 @@ export function BudgetApprovalWorkflow({ plan, userRole }: Props) {
             const isRejected = plan.status === "rejected" && i === 1
 
             return (
-              <div key={step.key} className="flex items-center flex-1">
-                <div className={`flex items-center gap-1.5 px-2 py-1.5 rounded-md text-xs font-medium w-full justify-center
+              <div key={step.key} className="flex items-center flex-1 min-w-0">
+                <div className={`flex items-center gap-1 px-1.5 py-1.5 rounded-md text-xs font-medium w-full justify-center whitespace-nowrap
                   ${isRejected ? "bg-red-100 text-red-800 border border-red-300" : ""}
                   ${isActive && !isRejected ? "bg-primary text-primary-foreground" : ""}
                   ${isDone ? "bg-green-100 text-green-800" : ""}
                   ${!isActive && !isDone && !isRejected ? "bg-muted text-muted-foreground" : ""}
                 `}>
                   <Icon className="h-3.5 w-3.5 shrink-0" />
-                  <span className="truncate">{isRejected ? "Rejected" : step.label}</span>
+                  <span>{isRejected ? "Отклонён" : step.label}</span>
                 </div>
                 {i < STEPS.length - 1 && (
-                  <div className={`h-0.5 w-4 shrink-0 mx-0.5 ${isDone ? "bg-green-400" : "bg-muted"}`} />
+                  <div className={`h-0.5 w-3 shrink-0 mx-0.5 ${isDone ? "bg-green-400" : "bg-muted"}`} />
                 )}
               </div>
             )
@@ -115,24 +115,24 @@ export function BudgetApprovalWorkflow({ plan, userRole }: Props) {
         {plan.submittedAt && (
           <div className="text-xs text-muted-foreground flex items-center gap-1">
             <Clock className="h-3 w-3" />
-            Submitted: {new Date(plan.submittedAt).toLocaleString()}
+            Отправлен: {new Date(plan.submittedAt).toLocaleString()}
           </div>
         )}
         {plan.approvedAt && (
           <div className="text-xs text-muted-foreground flex items-center gap-1">
             <CheckCircle2 className="h-3 w-3 text-green-600" />
-            Approved: {new Date(plan.approvedAt).toLocaleString()}
+            Утверждён: {new Date(plan.approvedAt).toLocaleString()}
           </div>
         )}
         {plan.rejectedReason && (
           <div className="text-xs text-red-600 bg-red-50 p-2 rounded">
-            Rejection reason: {plan.rejectedReason}
+            Причина отклонения: {plan.rejectedReason}
           </div>
         )}
 
         {/* Comment input */}
         <Textarea
-          placeholder="Add a comment (optional)..."
+          placeholder="Комментарий (необязательно)..."
           value={comment}
           onChange={(e) => setComment(e.target.value)}
           className="h-16 text-sm"
@@ -147,7 +147,7 @@ export function BudgetApprovalWorkflow({ plan, userRole }: Props) {
               disabled={updatePlan.isPending}
             >
               {updatePlan.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Send className="h-4 w-4 mr-1" />}
-              Submit for Approval
+              На согласование
             </Button>
           )}
 
@@ -161,33 +161,33 @@ export function BudgetApprovalWorkflow({ plan, userRole }: Props) {
                 disabled={updatePlan.isPending}
               >
                 {updatePlan.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <CheckCircle2 className="h-4 w-4 mr-1" />}
-                Approve
+                Утвердить
               </Button>
 
               <Button size="sm" variant="destructive" onClick={() => setShowRejectDialog(true)}>
                 <XCircle className="h-4 w-4 mr-1" />
-                Reject
+                Отклонить
               </Button>
 
               <Dialog open={showRejectDialog} onOpenChange={setShowRejectDialog}>
                 <DialogContent>
                   <DialogHeader>
-                    <DialogTitle>Reject Budget Plan</DialogTitle>
+                    <DialogTitle>Отклонить бюджетный план</DialogTitle>
                   </DialogHeader>
-                  <p className="text-sm text-muted-foreground">Please provide a reason for rejection.</p>
+                  <p className="text-sm text-muted-foreground">Укажите причину отклонения.</p>
                   <Textarea
-                    placeholder="Reason for rejection..."
+                    placeholder="Причина отклонения..."
                     value={rejectReason}
                     onChange={(e) => setRejectReason(e.target.value)}
                   />
                   <DialogFooter>
-                    <Button variant="outline" onClick={() => setShowRejectDialog(false)}>Cancel</Button>
+                    <Button variant="outline" onClick={() => setShowRejectDialog(false)}>Отмена</Button>
                     <Button
                       variant="destructive"
                       onClick={() => handleStatusChange("rejected", { rejectedReason: rejectReason })}
                       disabled={!rejectReason.trim()}
                     >
-                      Reject
+                      Отклонить
                     </Button>
                   </DialogFooter>
                 </DialogContent>
@@ -203,19 +203,42 @@ export function BudgetApprovalWorkflow({ plan, userRole }: Props) {
               disabled={updatePlan.isPending}
             >
               <RotateCcw className="h-4 w-4 mr-1" />
-              Revert to Draft
+              Вернуть в черновик
             </Button>
           )}
 
           {plan.status === "approved" && canApproveReject && (
+            <>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => handleStatusChange("closed")}
+                disabled={updatePlan.isPending}
+              >
+                <Lock className="h-4 w-4 mr-1" />
+                Закрыть план
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => handleStatusChange("draft")}
+                disabled={updatePlan.isPending}
+              >
+                <RotateCcw className="h-4 w-4 mr-1" />
+                Переоткрыть
+              </Button>
+            </>
+          )}
+
+          {plan.status === "closed" && canApproveReject && (
             <Button
               size="sm"
               variant="outline"
-              onClick={() => handleStatusChange("closed")}
+              onClick={() => handleStatusChange("draft")}
               disabled={updatePlan.isPending}
             >
-              <Lock className="h-4 w-4 mr-1" />
-              Close Plan
+              <RotateCcw className="h-4 w-4 mr-1" />
+              Переоткрыть
             </Button>
           )}
         </div>

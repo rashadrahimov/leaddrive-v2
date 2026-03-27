@@ -25,7 +25,7 @@ interface Props {
   totalOutflows: number
 }
 
-const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+const MONTH_NAMES = ["Янв", "Фев", "Мар", "Апр", "Май", "Июн", "Июл", "Авг", "Сен", "Окт", "Ноя", "Дек"]
 
 function fmt(n: number): string {
   if (Math.abs(n) >= 1000000) return (n / 1000000).toFixed(1) + "M"
@@ -49,17 +49,17 @@ export function BudgetCashFlowChart({ months, year, totalInflows, totalOutflows 
         <CardTitle className="text-base flex items-center justify-between">
           <span className="flex items-center gap-2">
             <Banknote className="h-4 w-4" />
-            Cash Flow — {year}
+            Денежный поток — {year}
           </span>
           <div className="flex gap-2">
             <Badge variant="outline" className="text-green-700 bg-green-50">
-              In: {fmt(totalInflows)}
+              Приход: {fmt(totalInflows)}
             </Badge>
             <Badge variant="outline" className="text-red-700 bg-red-50">
-              Out: {fmt(totalOutflows)}
+              Расход: {fmt(totalOutflows)}
             </Badge>
             {hasNegative && (
-              <Badge className="bg-red-100 text-red-800">Cash Gap Detected</Badge>
+              <Badge className="bg-red-100 text-red-800">Кассовый разрыв</Badge>
             )}
           </div>
         </CardTitle>
@@ -74,19 +74,19 @@ export function BudgetCashFlowChart({ months, year, totalInflows, totalOutflows 
               <Tooltip
                 formatter={(value: number, name: string) => [
                   fmt(Math.abs(value)),
-                  name === "outflows" ? "Outflows" : name === "inflows" ? "Inflows" : "Balance",
+                  name === "outflows" ? "Расходы" : name === "inflows" ? "Приходы" : "Баланс",
                 ]}
               />
               <Legend />
-              <Bar dataKey="inflows" fill="#22c55e" name="Inflows" radius={[2, 2, 0, 0]} />
-              <Bar dataKey="outflows" fill="#ef4444" name="Outflows" radius={[2, 2, 0, 0]} />
+              <Bar dataKey="inflows" fill="#22c55e" name="Приходы" radius={[2, 2, 0, 0]} />
+              <Bar dataKey="outflows" fill="#ef4444" name="Расходы" radius={[2, 2, 0, 0]} />
               <Line
                 type="monotone"
                 dataKey="closing"
                 stroke="#6366f1"
                 strokeWidth={2}
                 dot={{ r: 3, fill: "#6366f1" }}
-                name="Balance"
+                name="Баланс"
               />
             </ComposedChart>
           </ResponsiveContainer>

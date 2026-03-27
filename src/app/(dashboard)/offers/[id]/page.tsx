@@ -38,7 +38,7 @@ export default function OfferDetailPage() {
       })
       const json = await res.json()
       if (json.success && json.data) setOffer(json.data)
-    } catch {} finally {
+    } catch (err) { console.error(err) } finally {
       setLoading(false)
     }
   }

@@ -127,7 +127,7 @@ export function WorkflowActionsModal({ workflow, onClose, onSaved, orgId }: Work
       })
       onSaved()
       onClose()
-    } catch {} finally { setSaving(false) }
+    } catch (err) { console.error(err) } finally { setSaving(false) }
   }
 
   if (!workflow) return null

@@ -271,7 +271,7 @@ export default function DashboardSettingsPage() {
       })
       setSaved(true)
       setTimeout(() => setSaved(false), 2000)
-    } catch {} finally {
+    } catch (err) { console.error(err) } finally {
       setSaving(false)
     }
   }

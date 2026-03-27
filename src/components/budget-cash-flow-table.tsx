@@ -17,7 +17,7 @@ interface Props {
   months: MonthData[]
 }
 
-const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+const MONTH_NAMES = ["Янв", "Фев", "Мар", "Апр", "Май", "Июн", "Июл", "Авг", "Сен", "Окт", "Ноя", "Дек"]
 
 function fmt(n: number): string {
   return n.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 })
@@ -29,7 +29,7 @@ export function BudgetCashFlowTable({ months }: Props) {
       <CardHeader className="pb-3">
         <CardTitle className="text-base flex items-center gap-2">
           <Table2 className="h-4 w-4" />
-          Cash Flow Statement
+          Отчёт о движении денежных средств
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -37,12 +37,12 @@ export function BudgetCashFlowTable({ months }: Props) {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b bg-muted/50">
-                <th className="py-2 px-3 text-left font-medium">Month</th>
-                <th className="py-2 px-3 text-right font-medium">Opening</th>
-                <th className="py-2 px-3 text-right font-medium text-green-700">Inflows</th>
-                <th className="py-2 px-3 text-right font-medium text-red-700">Outflows</th>
-                <th className="py-2 px-3 text-right font-medium">Net</th>
-                <th className="py-2 px-3 text-right font-medium">Closing</th>
+                <th className="py-2 px-3 text-left font-medium">Месяц</th>
+                <th className="py-2 px-3 text-right font-medium">Начало</th>
+                <th className="py-2 px-3 text-right font-medium text-green-700">Приходы</th>
+                <th className="py-2 px-3 text-right font-medium text-red-700">Расходы</th>
+                <th className="py-2 px-3 text-right font-medium">Нетто</th>
+                <th className="py-2 px-3 text-right font-medium">Конец</th>
               </tr>
             </thead>
             <tbody>
@@ -63,7 +63,7 @@ export function BudgetCashFlowTable({ months }: Props) {
             </tbody>
             <tfoot>
               <tr className="border-t-2 font-bold">
-                <td className="py-2 px-3">Total</td>
+                <td className="py-2 px-3">Итого</td>
                 <td className="py-2 px-3 text-right font-mono text-xs">{fmt(months[0]?.opening || 0)}</td>
                 <td className="py-2 px-3 text-right font-mono text-xs text-green-700">
                   +{fmt(months.reduce((s, m) => s + m.inflows, 0))}

@@ -51,7 +51,7 @@ export default function PortalTicketsPage() {
       const res = await fetch("/api/v1/public/portal-tickets")
       const json = await res.json()
       if (json.success) setTickets(json.data.tickets || json.data || [])
-    } catch {} finally { setLoading(false) }
+    } catch (err) { console.error(err) } finally { setLoading(false) }
   }
 
   useEffect(() => { fetchTickets() }, [])

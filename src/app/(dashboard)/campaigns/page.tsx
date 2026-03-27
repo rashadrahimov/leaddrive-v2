@@ -11,6 +11,7 @@ import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
 import { Input } from "@/components/ui/input"
 import { Plus, Mail, Users, Send, Pencil, Trash2, Search, Megaphone } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { toast } from "sonner"
 
 interface Campaign {
   id: string
@@ -78,7 +79,7 @@ export default function CampaignsPage() {
         setCampaigns(json.data.campaigns)
         setTotal(json.data.total)
       }
-    } catch {} finally { setLoading(false) }
+    } catch (err) { console.error(err) } finally { setLoading(false) }
   }
 
   useEffect(() => { fetchCampaigns() }, [session])
@@ -102,22 +103,22 @@ export default function CampaignsPage() {
       const json = await res.json()
       if (!res.ok) {
         if (json.smtpMissing) {
-          alert(t("smtpNotConfigured"))
+          toast.error(t("smtpNotConfigured"))
         } else {
-          alert(json.error || "Error")
+          toast.error(json.error || "Error")
         }
         return
       }
       if (json.data.sent === 0) {
-        alert(`${t("sentToRecipients")}: 0 / ${json.data.total}`)
+        toast.info(`${t("sentToRecipients")}: 0 / ${json.data.total}`)
       } else {
-        alert(`${t("sentToRecipients")}: ${json.data.sent} / ${json.data.total}`)
+        toast.success(`${t("sentToRecipients")}: ${json.data.sent} / ${json.data.total}`)
       }
       setShowForm(false)
       setEditData(undefined)
       fetchCampaigns()
     } catch (err: any) {
-      alert(err.message)
+      toast.error(err.message)
     }
   }
 
@@ -254,7 +255,7 @@ export default function CampaignsPage() {
             if (json.success && json.data) {
               handleSend(json.data)
             }
-          } catch {}
+          } catch (err) { console.error(err) }
         }}
         onDelete={editData ? () => { setDeleteId(editData.id); setDeleteName(editData.name); setShowForm(false) } : undefined}
       />

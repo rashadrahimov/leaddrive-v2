@@ -22,7 +22,7 @@ interface Props {
   onResolve?: (alertId: string) => void
 }
 
-const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+const MONTH_NAMES = ["Янв", "Фев", "Мар", "Апр", "Май", "Июн", "Июл", "Авг", "Сен", "Окт", "Ноя", "Дек"]
 
 function fmt(n: number): string {
   return n.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 })
@@ -42,7 +42,7 @@ export function BudgetCashFlowAlerts({ alerts, onResolve }: Props) {
       <CardHeader className="pb-3">
         <CardTitle className="text-base flex items-center gap-2">
           <AlertTriangle className="h-4 w-4 text-red-500" />
-          Cash Flow Alerts
+          Кассовые алерты
           <Badge className="bg-red-100 text-red-800 ml-2">{alerts.length}</Badge>
         </CardTitle>
       </CardHeader>
@@ -63,14 +63,14 @@ export function BudgetCashFlowAlerts({ alerts, onResolve }: Props) {
                     </div>
                     <div className="text-xs text-muted-foreground">{alert.message}</div>
                     <div className="text-xs font-mono mt-0.5">
-                      Projected balance: <span className="font-bold text-red-700">{fmt(alert.projectedBalance)}</span>
+                      Прогноз баланса: <span className="font-bold text-red-700">{fmt(alert.projectedBalance)}</span>
                     </div>
                   </div>
                 </div>
                 {onResolve && (
                   <Button size="sm" variant="ghost" onClick={() => onResolve(alert.id)}>
                     <CheckCircle2 className="h-4 w-4 mr-1" />
-                    Resolve
+                    Решено
                   </Button>
                 )}
               </div>

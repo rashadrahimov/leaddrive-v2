@@ -29,7 +29,7 @@ export default function PortalKnowledgeBasePage() {
       const res = await fetch("/api/v1/public/portal-kb")
       const json = await res.json()
       if (json.success) setArticles(json.data.articles || [])
-    } catch {} finally { setLoading(false) }
+    } catch (err) { console.error(err) } finally { setLoading(false) }
   }
 
   const viewArticle = async (article: KbArticle) => {

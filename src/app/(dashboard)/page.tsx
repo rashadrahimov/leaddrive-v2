@@ -132,7 +132,7 @@ export default function DashboardPage() {
         })
         const json = await res.json()
         if (json.success) setData(json.data)
-      } catch {} finally { setLoading(false) }
+      } catch (err) { console.error(err) } finally { setLoading(false) }
     }
     load()
   }, [session])

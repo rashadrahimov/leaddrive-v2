@@ -90,7 +90,7 @@ export default function LeadsPage() {
       })
       const json = await res.json()
       if (json.success) setLeads(json.data.leads || [])
-    } catch {} finally { setLoading(false) }
+    } catch (err) { console.error(err) } finally { setLoading(false) }
   }
 
   useEffect(() => { fetchLeads() }, [session])

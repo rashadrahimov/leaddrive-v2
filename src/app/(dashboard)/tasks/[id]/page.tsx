@@ -155,7 +155,7 @@ export default function TaskDetailPage() {
         body: JSON.stringify({ status: newStatus }),
       })
       if (res.ok) fetchTask()
-    } catch {} finally { setUpdatingStatus(false) }
+    } catch (err) { console.error(err) } finally { setUpdatingStatus(false) }
   }
 
   const handleDelete = async () => {

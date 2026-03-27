@@ -55,7 +55,7 @@ export default function PortalUsersPage() {
         setContacts(json.data.contacts)
         setStats(json.data.stats)
       }
-    } catch {} finally { setLoading(false) }
+    } catch (err) { console.error(err) } finally { setLoading(false) }
   }
 
   useEffect(() => { fetchData() }, [filter, search])

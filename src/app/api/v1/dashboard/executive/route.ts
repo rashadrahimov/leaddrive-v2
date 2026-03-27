@@ -1,14 +1,10 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
-import { auth } from "@/lib/auth"
+import { getOrgId } from "@/lib/api-auth"
 import { loadAndCompute } from "@/lib/cost-model/db"
 
 export async function GET(req: NextRequest) {
-  let orgId = req.headers.get("x-organization-id")
-  if (!orgId) {
-    const session = await auth()
-    orgId = session?.user?.organizationId || null
-  }
+  const orgId = await getOrgId(req)
   if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
   try {
@@ -131,7 +127,7 @@ export async function GET(req: NextRequest) {
       bottomClients = sorted.filter((c: any) => c.margin < 0).slice(-3).map((c: any) => ({
         name: c.name, revenue: c.totalRevenue, margin: c.margin, marginPct: c.marginPct, userCount: c.userCount,
       }))
-    } catch {}
+    } catch (err) { console.error(err) }
 
     // Risks
     const risks: { severity: string; title: string; description: string; metric: string }[] = []

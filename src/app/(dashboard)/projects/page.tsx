@@ -107,7 +107,7 @@ export default function ProjectsPage() {
         setProjects(json.data.projects)
         setTotal(json.data.total)
       }
-    } catch {} finally { setLoading(false) }
+    } catch (err) { console.error(err) } finally { setLoading(false) }
   }, [orgId])
 
   useEffect(() => { fetchProjects() }, [fetchProjects])
@@ -174,7 +174,7 @@ export default function ProjectsPage() {
         resetForm()
         fetchProjects()
       }
-    } catch {} finally { setSaving(false) }
+    } catch (err) { console.error(err) } finally { setSaving(false) }
   }
 
   const handleDelete = async () => {

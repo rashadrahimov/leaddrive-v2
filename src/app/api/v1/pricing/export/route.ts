@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
     const effectiveDate: string | null = body.effective_date || null
     const data = await loadPricingDataFromDB(orgId)
     let legal: Record<string, string> = {}
-    try { legal = JSON.parse(fs.readFileSync(LEGAL_FILE, "utf-8")) } catch {}
+    try { legal = JSON.parse(fs.readFileSync(LEGAL_FILE, "utf-8")) } catch (err) { console.error(err) }
     let buffer: Buffer; let filename: string
     if (template === "2") { buffer = await generateTemplate2(data, legal, adjustments, effectiveDate); filename = "SALES_Report.xlsx" }
     else if (template === "budget" || template === "3") { buffer = await generateBudgetPL(data, legal, adjustments, effectiveDate); filename = "Budget_PL.xlsx" }

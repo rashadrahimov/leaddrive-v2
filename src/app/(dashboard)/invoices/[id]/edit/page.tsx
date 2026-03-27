@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { ArrowLeft, Plus, Trash2, Save, Package, ChevronDown, ChevronUp } from "lucide-react"
+import { toast } from "sonner"
 
 interface InvoiceItem {
   id: string
@@ -233,7 +234,7 @@ export default function EditInvoicePage() {
       }
       router.push(`/invoices/${invoiceId}`)
     } catch (error) {
-      alert(error instanceof Error ? error.message : "Failed to update invoice")
+      toast.error(error instanceof Error ? error.message : "Failed to update invoice")
     } finally {
       setSaving(false)
     }

@@ -57,10 +57,10 @@ export function BudgetApprovalHistory({ planId }: Props) {
     return (
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-base">Approval History</CardTitle>
+          <CardTitle className="text-base">История согласования</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-muted-foreground text-center py-4">No approval activity yet.</p>
+          <p className="text-sm text-muted-foreground text-center py-4">Пока нет действий по согласованию.</p>
         </CardContent>
       </Card>
     )
@@ -71,7 +71,7 @@ export function BudgetApprovalHistory({ planId }: Props) {
       <CardHeader className="pb-3">
         <CardTitle className="text-base flex items-center gap-2">
           <MessageSquare className="h-4 w-4" />
-          Approval History
+          История согласования
           <Badge variant="secondary" className="text-xs">{comments.length}</Badge>
         </CardTitle>
       </CardHeader>

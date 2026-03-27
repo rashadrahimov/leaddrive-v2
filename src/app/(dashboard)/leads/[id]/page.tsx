@@ -109,7 +109,8 @@ export default function LeadDetailPage() {
       if (json.success) {
         setLead(json.data)
       }
-    } catch {
+    } catch (err) {
+      console.error(err)
     } finally {
       setLoading(false)
     }
@@ -135,7 +136,8 @@ export default function LeadDetailPage() {
       if (json.success) {
         setLead(json.data)
       }
-    } catch {
+    } catch (err) {
+      console.error(err)
     } finally {
       setUpdatingStatus(false)
     }

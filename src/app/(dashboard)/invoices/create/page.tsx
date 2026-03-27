@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { ArrowLeft, Plus, Trash2, Save, Send, Package, ChevronDown, ChevronUp } from "lucide-react"
+import { toast } from "sonner"
 
 interface InvoiceItem {
   id: string
@@ -330,11 +331,11 @@ export default function CreateInvoicePage() {
   const handleSubmit = async (status: "draft" | "sent") => {
     if (!orgId) return
     if (!company) {
-      alert(t("selectCompany") || "Please select a company")
+      toast.error(t("selectCompany") || "Please select a company")
       return
     }
     if (items.length === 0 || !items.some((i) => i.name.trim())) {
-      alert(t("addAtLeastOneItem") || "Please add at least one item")
+      toast.error(t("addAtLeastOneItem") || "Please add at least one item")
       return
     }
 
@@ -408,7 +409,7 @@ export default function CreateInvoicePage() {
       }
     } catch (error) {
       console.error("Failed to create invoice:", error)
-      alert(error instanceof Error ? error.message : "Failed to create invoice")
+      toast.error(error instanceof Error ? error.message : "Failed to create invoice")
     } finally {
       setSaving(false)
     }

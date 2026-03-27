@@ -83,7 +83,7 @@ export default function ChannelsPage() {
         const result = await res.json()
         setChannels(result.data || [])
       }
-    } catch {} finally { setLoading(false) }
+    } catch (err) { console.error(err) } finally { setLoading(false) }
   }
 
   useEffect(() => { fetchChannels() }, [session])

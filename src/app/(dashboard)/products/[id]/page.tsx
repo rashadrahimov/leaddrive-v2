@@ -70,7 +70,7 @@ export default function ProductDetailPage() {
         setProduct(json.data)
         populateForm(json.data)
       }
-    } catch {} finally { setLoading(false) }
+    } catch (err) { console.error(err) } finally { setLoading(false) }
   }
 
   function populateForm(p: any) {
@@ -103,7 +103,7 @@ export default function ProductDetailPage() {
         await fetchProduct()
         setEditing(false)
       }
-    } catch {} finally { setSaving(false) }
+    } catch (err) { console.error(err) } finally { setSaving(false) }
   }
 
   async function confirmDelete() {

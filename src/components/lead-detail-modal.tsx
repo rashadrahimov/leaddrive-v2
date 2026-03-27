@@ -13,6 +13,7 @@ import { Dialog, DialogHeader, DialogTitle, DialogContent } from "@/components/u
 import { Building2, Users, FileText, X, Copy, Send, RefreshCw, CheckCircle, Trash2, Ban, Plus, Pencil, Brain, Sparkles, Target } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useTranslations, useLocale } from "next-intl"
+import { toast } from "sonner"
 
 interface LeadCompany {
   id: string
@@ -135,7 +136,7 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
       })
       const json = await res.json()
       if (json.success) return json.data
-    } catch {} finally { setAiLoading(false) }
+    } catch (err) { console.error(err) } finally { setAiLoading(false) }
     return null
   }
 
@@ -175,7 +176,7 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
       })
       const json = await res.json()
       if (json.success) setActivities(json.data.activities || [])
-    } catch {}
+    } catch (err) { console.error(err) }
   }
 
   const saveActivity = async () => {
@@ -199,17 +200,17 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
         setActivityDesc("")
         loadActivities()
       } else {
-        alert("Ошибка сохранения: " + (json.error || "Неизвестная ошибка"))
+        toast.error("Ошибка сохранения: " + (json.error || "Неизвестная ошибка"))
       }
     } catch (e) {
-      alert("Ошибка: " + e)
+      toast.error("Ошибка: " + e)
     } finally { setActivitySaving(false) }
   }
 
   const sendGeneratedEmail = async () => {
     if (!generatedText) return
     const firstContact = (fullData?.contacts || company.contacts)?.[0]
-    if (!firstContact?.email) { alert("Нет email контакта для отправки"); return }
+    if (!firstContact?.email) { toast.error("Нет email контакта для отправки"); return }
     setEmailSending(true)
     setEmailError("")
     try {
@@ -708,7 +709,7 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
                   if (d) {
                     await updateField({ leadScore: d.score })
                   }
-                } catch {} finally { setScoring(false) }
+                } catch (err) { console.error(err) } finally { setScoring(false) }
               }} disabled={scoring}>
                 {scoring ? "Анализ..." : "Пересчитать с AI"}
               </Button>

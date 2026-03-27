@@ -75,7 +75,7 @@ export default function ProductsPage() {
       const res = await fetch("/api/v1/products", { headers: orgId ? { "x-organization-id": String(orgId) } : {} })
       const json = await res.json()
       if (json.success) setProducts(json.data || [])
-    } catch {} finally { setLoading(false) }
+    } catch (err) { console.error(err) } finally { setLoading(false) }
   }
 
   useEffect(() => { fetchProducts() }, [session])
@@ -121,7 +121,7 @@ export default function ProductsPage() {
       }
       setFormOpen(false)
       await fetchProducts()
-    } catch {} finally { setSaving(false) }
+    } catch (err) { console.error(err) } finally { setSaving(false) }
   }
 
   async function confirmDelete() {

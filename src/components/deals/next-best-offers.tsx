@@ -80,7 +80,7 @@ export function NextBestOffers({ dealId, orgId }: { dealId: string; orgId?: stri
         body: JSON.stringify({ productId: product.id, name: product.name, price: product.price, currency: product.currency }),
       })
       setAddedIds(prev => new Set([...prev, product.id]))
-    } catch {}
+    } catch (err) { console.error(err) }
     finally { setAdding(false) }
   }
 

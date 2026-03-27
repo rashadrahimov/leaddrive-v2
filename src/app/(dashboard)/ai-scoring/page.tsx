@@ -58,7 +58,7 @@ export default function AILeadScoringPage() {
       })
       const json = await res.json()
       if (json.success) setLeads(json.data.leads)
-    } catch {} finally { setLoading(false) }
+    } catch (err) { console.error(err) } finally { setLoading(false) }
   }
 
   useEffect(() => { fetchLeads() }, [session])
@@ -77,7 +77,7 @@ export default function AILeadScoringPage() {
       const json = await res.json()
       if (json.success) setAiPowered(json.data.aiPowered)
       await fetchLeads()
-    } catch {} finally { setScoring(false) }
+    } catch (err) { console.error(err) } finally { setScoring(false) }
   }
 
   async function scoreOne(leadId: string) {
@@ -94,7 +94,7 @@ export default function AILeadScoringPage() {
       const json = await res.json()
       if (json.success) setAiPowered(json.data.aiPowered)
       await fetchLeads()
-    } catch {} finally { setScoringId(null) }
+    } catch (err) { console.error(err) } finally { setScoringId(null) }
   }
 
   // Grade distribution

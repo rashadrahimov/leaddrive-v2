@@ -35,12 +35,14 @@ export function NotificationBell() {
         setNotifications(json.data.notifications)
         setUnreadCount(json.data.unreadCount)
       }
-    } catch {}
+    } catch (err) { console.error(err) }
   }
 
   useEffect(() => {
     fetchNotifications()
-    const interval = setInterval(fetchNotifications, 30000) // poll every 30s
+    const interval = setInterval(() => {
+      if (document.visibilityState === "visible") fetchNotifications()
+    }, 30000)
     return () => clearInterval(interval)
   }, [session])
 
@@ -55,7 +57,7 @@ export function NotificationBell() {
         body: JSON.stringify({ markAll: true }),
       })
       fetchNotifications()
-    } catch {}
+    } catch (err) { console.error(err) }
   }
 
   const typeColors: Record<string, string> = {

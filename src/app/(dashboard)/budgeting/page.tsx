@@ -58,8 +58,10 @@ import {
   useExchangeRates,
   useImportCsv,
   useImportHistory,
+  useCreateRollingPlan,
   useRollingForecast,
   useAutoForecast,
+  useCloseRollingMonth,
   useCashFlow,
   useCashFlowAlerts,
   useResolveCashFlowAlert,
@@ -97,6 +99,7 @@ import { BudgetChangeHistory } from "@/components/budget-change-history"
 import { InfoHint } from "@/components/info-hint"
 import { BudgetMatrixGrid } from "@/components/budget-matrix-grid"
 import { LayoutGrid, List, Banknote, FileSpreadsheet } from "lucide-react"
+import { toast } from "sonner"
 
 const PIE_COLORS = BUDGET_COLORS.pie
 
@@ -151,15 +154,16 @@ function IntegrationsTab({ planId }: { planId: string }) {
 function RollingTab({ planId }: { planId: string }) {
   const { data: rollingData } = useRollingForecast(planId)
   const autoForecast = useAutoForecast()
+  const closeMonth = useCloseRollingMonth()
 
   if (!rollingData || !rollingData.months.length) {
     return (
       <Card>
         <CardContent className="py-12 text-center text-muted-foreground">
           <CalendarRange className="h-12 w-12 mx-auto mb-3 opacity-30" />
-          <p className="font-medium text-lg mb-2">Rolling Forecast</p>
-          <p className="text-sm">This plan is not configured as a rolling forecast.</p>
-          <p className="text-sm mt-1">Create a Rolling Plan from the Plans tab to enable this feature.</p>
+          <p className="font-medium text-lg mb-2">Скользящий прогноз</p>
+          <p className="text-sm">Текущий план не является скользящим.</p>
+          <p className="text-sm mt-1">Создайте скользящий план на вкладке «Планы» (кнопка «Скользящий план»).</p>
         </CardContent>
       </Card>
     )
@@ -173,6 +177,8 @@ function RollingTab({ planId }: { planId: string }) {
         totalForecast={rollingData.totalForecast}
         onAutoForecast={() => autoForecast.mutate({ planId })}
         isForecasting={autoForecast.isPending}
+        onCloseMonth={(year, month) => closeMonth.mutate({ planId, year, month })}
+        isClosingMonth={closeMonth.isPending}
       />
     </div>
   )
@@ -197,7 +203,7 @@ function CashFlowTab() {
           disabled={generateCashFlow.isPending}
         >
           {generateCashFlow.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Sparkles className="h-4 w-4 mr-1" />}
-          Generate from Budget
+          Сгенерировать из бюджета
         </Button>
       </div>
 
@@ -680,14 +686,22 @@ function WorkspaceTab({ planId, onNavigateTab }: { planId: string; onNavigateTab
     setAddingSection(null)
   }
 
+  // Parse number: handle comma decimal separator (Excel paste) and spaces
+  const parseAmount = (v: string): number => {
+    const cleaned = v.replace(/\s/g, "").replace(",", ".")
+    return Number(cleaned) || 0
+  }
+
   // Add actual from expand
   const handleAddActual = async (category: string, lineType: string) => {
     if (!newActual.amount) return
+    const amt = parseAmount(newActual.amount)
+    if (amt <= 0) return
     await createActual.mutateAsync({
       planId,
       category,
       lineType: lineType as "expense" | "revenue" | "cogs",
-      actualAmount: Number(newActual.amount),
+      actualAmount: amt,
       description: newActual.description || undefined,
       expenseDate: newActual.date || undefined,
     })
@@ -709,8 +723,8 @@ function WorkspaceTab({ planId, onNavigateTab }: { planId: string; onNavigateTab
   const handleSync = async () => {
     try {
       const result = await syncActuals.mutateAsync(planId)
-      alert(t("msgSynced", { count: result.synced }))
-    } catch { alert(t("errorSync")) }
+      toast.success(t("msgSynced", { count: result.synced }))
+    } catch { toast.error(t("errorSync")) }
   }
 
 
@@ -752,19 +766,25 @@ function WorkspaceTab({ planId, onNavigateTab }: { planId: string; onNavigateTab
         {/* Fact — clickable for drill-down */}
         <td className="px-2 py-2 text-right">
           <div className="flex items-center justify-end gap-1">
-            <button type="button"
-              className={`font-mono text-sm cursor-pointer px-1 rounded hover:underline ${line.isAutoActual ? "text-blue-600 dark:text-blue-400" : "text-[#065f46] dark:text-[#6ee7b7]"}`}
-              onClick={() => setDrillDownLine(line)}
-              title={t("drillDownTitle")}>
-              {fmt(factValue)}
-            </button>
-            {line.isAutoActual && (
-              <Badge title={t("hintBadgeAuto")} className="text-[9px] bg-blue-100 text-blue-700 dark:bg-blue-900/30 px-1">{t("badgeAuto")}</Badge>
-            )}
-            {!line.isAutoActual && (
-              <button type="button" className="text-muted-foreground hover:text-foreground"
-                onClick={() => setExpandId(isExpanded ? null : line.id)}>
-                <ChevronDown className={`h-3 w-3 transition-transform ${isExpanded ? "rotate-180" : ""}`} />
+            {line.isAutoActual ? (
+              <>
+                <button type="button"
+                  className="font-mono text-sm cursor-pointer px-1 rounded hover:underline text-blue-600 dark:text-blue-400"
+                  onClick={() => setDrillDownLine(line)}
+                  title={t("drillDownTitle")}>
+                  {fmt(factValue)}
+                </button>
+                <Badge title={t("hintBadgeAuto")} className="text-[9px] bg-blue-100 text-blue-700 dark:bg-blue-900/30 px-1">{t("badgeAuto")}</Badge>
+              </>
+            ) : (
+              <button type="button"
+                className={`font-mono text-sm cursor-pointer px-1 rounded border border-transparent transition-colors hover:bg-emerald-50 hover:border-emerald-300 dark:hover:bg-emerald-900/20 dark:hover:border-emerald-700 ${
+                  factValue > 0 ? "text-[#065f46] dark:text-[#6ee7b7]" : "text-muted-foreground"
+                }`}
+                onClick={() => setExpandId(isExpanded ? null : line.id)}
+                title="Нажмите для добавления факта">
+                {fmt(factValue)}
+                <Pencil className="h-2.5 w-2.5 inline ml-1 opacity-0 group-hover:opacity-40" />
               </button>
             )}
           </div>
@@ -813,7 +833,7 @@ function WorkspaceTab({ planId, onNavigateTab }: { planId: string; onNavigateTab
               </div>
             ))}
             <div className="flex items-center gap-2 pt-1 border-t border-border/50">
-              <Input type="number" placeholder={t("colAmount")} className="h-6 w-20 text-xs" value={newActual.amount}
+              <Input type="text" inputMode="decimal" placeholder={t("colAmount")} className="h-6 w-24 text-xs" value={newActual.amount}
                 onChange={e => setNewActual(d => ({ ...d, amount: e.target.value }))} />
               <Input placeholder={t("colDescription")} className="h-6 flex-1 text-xs" value={newActual.description}
                 onChange={e => setNewActual(d => ({ ...d, description: e.target.value }))} />
@@ -1626,9 +1646,9 @@ function OverviewTab({ planId }: { planId: string }) {
   const handleSyncActuals = async () => {
     try {
       const result = await syncActuals.mutateAsync(planId)
-      alert(t("msgSyncedCostModel", { count: result.synced }))
+      toast.success(t("msgSyncedCostModel", { count: result.synced }))
     } catch {
-      alert(t("errorSyncCostModel"))
+      toast.error(t("errorSyncCostModel"))
     }
   }
 
@@ -2183,13 +2203,78 @@ function PlansTab({ activePlanId, onSelect, onShowCreate }: { activePlanId: stri
     diffPlanIds?.b || null,
   )
 
+  // F4: Rolling plan creation
+  const createRolling = useCreateRollingPlan()
+  const [showRollingDialog, setShowRollingDialog] = useState(false)
+  const [rollingForm, setRollingForm] = useState({ name: "", startYear: new Date().getFullYear(), startMonth: new Date().getMonth() + 1 })
+
+  const handleCreateRolling = async () => {
+    if (!rollingForm.name) return
+    await createRolling.mutateAsync(rollingForm)
+    setShowRollingDialog(false)
+    setRollingForm({ name: "", startYear: new Date().getFullYear(), startMonth: new Date().getMonth() + 1 })
+  }
+
   if (isLoading) return <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-purple-500" /></div>
 
   return (
     <div>
-      <div className="flex justify-end mb-4">
+      <div className="flex justify-end gap-2 mb-4">
+        <Button size="sm" variant="outline" onClick={() => setShowRollingDialog(true)}>
+          <CalendarRange className="h-4 w-4 mr-1" /> Скользящий план
+        </Button>
         <Button size="sm" onClick={onShowCreate}><Plus className="h-4 w-4 mr-1" /> {t("btnNewPlan")}</Button>
       </div>
+
+      {/* Rolling Plan Dialog */}
+      <Dialog open={showRollingDialog} onOpenChange={setShowRollingDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Создать скользящий план</DialogTitle>
+            <DialogDescription>
+              Скользящий прогноз на 12 месяцев с автоматическим продлением. Ежемесячно закрывайте факт, система добавляет новый месяц в конец.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <Input
+              placeholder="Название плана"
+              value={rollingForm.name}
+              onChange={e => setRollingForm(f => ({ ...f, name: e.target.value }))}
+              onKeyDown={e => e.key === "Enter" && handleCreateRolling()}
+              autoFocus
+            />
+            <div className="flex gap-3">
+              <div className="flex-1">
+                <label className="text-xs text-muted-foreground mb-1 block">Начало: год</label>
+                <Input
+                  type="number"
+                  value={rollingForm.startYear}
+                  onChange={e => setRollingForm(f => ({ ...f, startYear: Number(e.target.value) }))}
+                />
+              </div>
+              <div className="flex-1">
+                <label className="text-xs text-muted-foreground mb-1 block">Начало: месяц</label>
+                <select
+                  value={rollingForm.startMonth}
+                  onChange={e => setRollingForm(f => ({ ...f, startMonth: Number(e.target.value) }))}
+                  className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+                >
+                  {["Январь","Февраль","Март","Апрель","Май","Июнь","Июль","Август","Сентябрь","Октябрь","Ноябрь","Декабрь"].map((m, i) => (
+                    <option key={i} value={i + 1}>{m}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowRollingDialog(false)}>Отмена</Button>
+            <Button onClick={handleCreateRolling} disabled={!rollingForm.name || createRolling.isPending}>
+              {createRolling.isPending && <Loader2 className="h-4 w-4 animate-spin mr-1" />}
+              Создать
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       {plans.length === 0 ? (
         <div className="text-center py-16 text-muted-foreground">
           <PiggyBank className="h-12 w-12 mx-auto mb-3 opacity-30" />
@@ -2329,12 +2414,19 @@ function ComparisonTab() {
   }
   const topCategories = Array.from(allCategories).slice(0, 10)
 
+  // Build unique plan labels (deduplicate same names)
+  const planLabels: string[] = selectedIds.map((id, i) => {
+    const plan = plans.find(p => p.id === id)
+    const baseName = plan?.name || `${t("colPlan")} ${i + 1}`
+    const dupeCount = selectedIds.slice(0, i).filter(prevId => plans.find(p => p.id === prevId)?.name === baseName).length
+    return dupeCount > 0 ? `${baseName} (${dupeCount + 1})` : baseName
+  })
+
   const chartData = topCategories.map(cat => {
     const row: any = { category: cat }
     analyticsArr.forEach((a, i) => {
-      const planName = plans.find(p => p.id === selectedIds[i])?.name || `${t("colPlan")} ${i + 1}`
       const found = a?.byCategory?.find((c: any) => c.category === cat)
-      row[planName] = found?.actual ?? 0
+      row[planLabels[i]] = found?.actual ?? 0
     })
     return row
   })
@@ -2398,11 +2490,10 @@ function ComparisonTab() {
                   <YAxis tick={AXIS_TICK} tickFormatter={(v: number) => fmtK(v)} axisLine={false} tickLine={false} />
                   <Tooltip content={<BudgetChartTooltip mode="comparison" />} cursor={{ fill: "hsl(var(--muted))", opacity: 0.3 }} />
                   {selectedIds.map((id, i) => {
-                    const planName = plans.find(p => p.id === id)?.name || `${t("colPlan")} ${i + 1}`
                     return (
                       <Bar
                         key={id}
-                        dataKey={planName}
+                        dataKey={planLabels[i]}
                         fill={`url(#comp-grad-${i})`}
                         radius={[4, 4, 0, 0]}
                         animationDuration={ANIMATION.duration}
@@ -3601,20 +3692,23 @@ export default function BudgetingPage() {
           </div>
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="mb-4 flex-wrap">
-              <TabsTrigger value="workspace" className="gap-1">{t("tabWorkspace")} <InfoHint text={t("hintTabWorkspace")} size={12} /></TabsTrigger>
-              <TabsTrigger value="pl" className="gap-1">{t("tabPL")} <InfoHint text={t("hintTabPL")} size={12} /></TabsTrigger>
-              <TabsTrigger value="forecast" className="gap-1">{t("tabForecast")} <InfoHint text={t("hintTabForecast")} size={12} /></TabsTrigger>
-              <TabsTrigger value="comparison" className="gap-1">{t("tabComparison")} <InfoHint text={t("hintTabComparison")} size={12} /></TabsTrigger>
-              <TabsTrigger value="plans" className="gap-1">{t("tabPlans")} <InfoHint text={t("hintTabPlans")} size={12} /></TabsTrigger>
-              <TabsTrigger value="templates" className="gap-1">{t("tabTemplates")} <InfoHint text={t("hintTabTemplates")} size={12} /></TabsTrigger>
-              <TabsTrigger value="sales-forecast" className="gap-1"><TrendingUp className="h-3.5 w-3.5" /> Прогноз продаж</TabsTrigger>
-              <TabsTrigger value="expense-forecast" className="gap-1"><TrendingDown className="h-3.5 w-3.5" /> Прогноз расходов</TabsTrigger>
-              <TabsTrigger value="integrations" className="gap-1"><FileSpreadsheet className="h-3.5 w-3.5" /> Integrations</TabsTrigger>
-              <TabsTrigger value="rolling" className="gap-1"><CalendarRange className="h-3.5 w-3.5" /> Rolling Forecast</TabsTrigger>
-              <TabsTrigger value="cash-flow" className="gap-1"><Banknote className="h-3.5 w-3.5" /> Cash Flow</TabsTrigger>
-              <TabsTrigger value="config" className="gap-1"><Settings2 className="h-3.5 w-3.5" /> {t("tabConfig")}</TabsTrigger>
-            </TabsList>
+            <div className="mb-4 overflow-x-auto scrollbar-thin">
+              <TabsList className="inline-flex w-max">
+                <TabsTrigger value="workspace" className="gap-1 text-xs px-2.5">{t("tabWorkspace")}</TabsTrigger>
+                <TabsTrigger value="pl" className="gap-1 text-xs px-2.5">{t("tabPL")}</TabsTrigger>
+                <TabsTrigger value="forecast" className="gap-1 text-xs px-2.5">{t("tabForecast")}</TabsTrigger>
+                <TabsTrigger value="comparison" className="gap-1 text-xs px-2.5">{t("tabComparison")}</TabsTrigger>
+                <TabsTrigger value="plans" className="gap-1 text-xs px-2.5">{t("tabPlans")}</TabsTrigger>
+                <span className="mx-1 h-5 w-px bg-border shrink-0" />
+                <TabsTrigger value="sales-forecast" className="gap-1 text-xs px-2.5"><TrendingUp className="h-3 w-3" /> Продажи</TabsTrigger>
+                <TabsTrigger value="expense-forecast" className="gap-1 text-xs px-2.5"><TrendingDown className="h-3 w-3" /> Расходы</TabsTrigger>
+                <TabsTrigger value="integrations" className="gap-1 text-xs px-2.5"><FileSpreadsheet className="h-3 w-3" /> Импорт</TabsTrigger>
+                <TabsTrigger value="rolling" className="gap-1 text-xs px-2.5"><CalendarRange className="h-3 w-3" /> Rolling</TabsTrigger>
+                <TabsTrigger value="cash-flow" className="gap-1 text-xs px-2.5"><Banknote className="h-3 w-3" /> Cash Flow</TabsTrigger>
+                <span className="mx-1 h-5 w-px bg-border shrink-0" />
+                <TabsTrigger value="config" className="gap-1 text-xs px-2.5"><Settings2 className="h-3 w-3" /> {t("tabConfig")}</TabsTrigger>
+              </TabsList>
+            </div>
 
             <TabsContent value="workspace">
               <WorkspaceTab planId={resolvedPlanId} onNavigateTab={setActiveTab} />
@@ -3631,9 +3725,7 @@ export default function BudgetingPage() {
             <TabsContent value="plans">
               <PlansTab activePlanId={resolvedPlanId} onSelect={id => { setActivePlanId(id); setActiveTab("workspace") }} onShowCreate={() => setShowCreate(true)} />
             </TabsContent>
-            <TabsContent value="templates">
-              <TemplatesTab />
-            </TabsContent>
+            {/* Templates moved into Config tab */}
             <TabsContent value="sales-forecast">
               <SalesForecastTab />
             </TabsContent>
@@ -3653,6 +3745,7 @@ export default function BudgetingPage() {
               <div className="space-y-6">
                 <BudgetConfigTab />
                 <BudgetDepartmentAccess />
+                <TemplatesTab />
               </div>
             </TabsContent>
           </Tabs>

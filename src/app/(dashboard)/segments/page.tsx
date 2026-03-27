@@ -76,7 +76,7 @@ export default function SegmentsPage() {
       const contactJson = await contactRes.json()
       if (segJson.success) setSegments(segJson.data.segments)
       if (contactJson.success) setTotalContacts(contactJson.data.total || 0)
-    } catch {} finally { setLoading(false) }
+    } catch (err) { console.error(err) } finally { setLoading(false) }
   }
 
   useEffect(() => { fetchSegments() }, [session])

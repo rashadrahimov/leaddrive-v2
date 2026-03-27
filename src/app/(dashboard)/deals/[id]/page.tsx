@@ -393,7 +393,8 @@ export default function DealDetailPage() {
       })
       const json = await res.json()
       if (json.success) setDeal(json.data)
-    } catch {
+    } catch (err) {
+      console.error(err)
     } finally {
       setLoading(false)
     }
@@ -406,7 +407,7 @@ export default function DealDetailPage() {
       })
       const json = await res.json()
       if (json.success) setOrgUsers(json.data || [])
-    } catch {}
+    } catch (err) { console.error(err) }
   }
 
   const fetchNextSteps = async () => {
@@ -416,7 +417,7 @@ export default function DealDetailPage() {
       })
       const json = await res.json()
       if (json.success) setNextSteps(json.data || [])
-    } catch {}
+    } catch (err) { console.error(err) }
   }
 
   useEffect(() => { if (session) { fetchDeal(); fetchOrgUsers(); fetchNextSteps() } }, [session, id])
@@ -430,7 +431,7 @@ export default function DealDetailPage() {
         body: JSON.stringify({ tags: newTags }),
       })
       setDeal({ ...deal, tags: newTags })
-    } catch {}
+    } catch (err) { console.error(err) }
   }
 
   const addTeamMember = async () => {
@@ -447,7 +448,7 @@ export default function DealDetailPage() {
         setSelectedUserId("")
         setSelectedRole("member")
       }
-    } catch {}
+    } catch (err) { console.error(err) }
   }
 
   const removeTeamMember = async (userId: string) => {
@@ -458,7 +459,7 @@ export default function DealDetailPage() {
         body: JSON.stringify({ userId }),
       })
       fetchDeal()
-    } catch {}
+    } catch (err) { console.error(err) }
   }
 
   const handleDelete = async () => {
@@ -800,7 +801,7 @@ export default function DealDetailPage() {
                     })
                     fetchDeal()
                   }
-                } catch {}
+                } catch (err) { console.error(err) }
               }}>
                 <Plus className="h-3.5 w-3.5 mr-1" /> {tc("addContactRole")}
               </Button>

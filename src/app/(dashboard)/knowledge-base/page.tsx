@@ -86,7 +86,7 @@ export default function KnowledgeBasePage() {
         setArticles(json.data.articles)
         setTotal(json.data.total)
       }
-    } catch {} finally { setLoading(false) }
+    } catch (err) { console.error(err) } finally { setLoading(false) }
   }
 
   useEffect(() => { fetchArticles() }, [session])

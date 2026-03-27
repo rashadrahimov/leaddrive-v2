@@ -103,7 +103,7 @@ Rules:
           costUsd: ((response.usage?.input_tokens || 0) * 0.003 + (response.usage?.output_tokens || 0) * 0.015) / 1000,
         },
       })
-    } catch {}
+    } catch (err) { console.error(err) }
 
     return NextResponse.json({ success: true, data: { reply } })
   } catch (e) {

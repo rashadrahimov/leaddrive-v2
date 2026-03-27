@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Loader2, Send } from "lucide-react"
 import { useTranslations } from "next-intl"
+import { toast } from "sonner"
 
 interface Offer {
   id: string
@@ -48,7 +49,7 @@ export function SendOfferDialog({
   }
 
   const handleSend = async () => {
-    if (!email.trim()) { alert(t("emailRequired")); return }
+    if (!email.trim()) { toast.error(t("emailRequired")); return }
     setSending(true)
     try {
       const res = await fetch(`/api/v1/offers/${offer.id}/send`, {
@@ -58,13 +59,13 @@ export function SendOfferDialog({
       })
       const data = await res.json()
       if (data.success) {
-        alert(t("emailSent"))
+        toast.success(t("emailSent"))
         onSent()
       } else {
-        alert(data.error || "Error sending email")
+        toast.error(data.error || "Error sending email")
       }
     } catch (e) {
-      alert(String(e))
+      toast.error(String(e))
     } finally {
       setSending(false)
     }

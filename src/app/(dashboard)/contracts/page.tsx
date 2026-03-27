@@ -12,6 +12,7 @@ import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
 import { Select } from "@/components/ui/select"
 import { FileText, Plus, Pencil, Trash2, AlertTriangle, Clock, TrendingUp, Building2, History, X, Upload, Download, File, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { toast } from "sonner"
 
 interface AuditEntry {
   id: string
@@ -130,7 +131,7 @@ export default function ContractsPage() {
         setContracts(json.data.contracts)
         setTotal(json.data.total)
       }
-    } catch {} finally { setLoading(false) }
+    } catch (err) { console.error(err) } finally { setLoading(false) }
   }
 
   useEffect(() => { fetchContracts() }, [session])
@@ -152,7 +153,7 @@ export default function ContractsPage() {
       if (contractJson.success) setDetailContract(contractJson.data)
       const filesJson = await filesRes.json()
       if (filesJson.success) setDetailFiles(filesJson.data)
-    } catch {} finally { setDetailLoading(false) }
+    } catch (err) { console.error(err) } finally { setDetailLoading(false) }
   }
 
   async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -171,7 +172,7 @@ export default function ContractsPage() {
       if (!res.ok) throw new Error(json.error || "Upload failed")
       setDetailFiles(prev => [json.data, ...prev])
     } catch (err: any) {
-      alert(err.message)
+      toast.error(err.message)
     } finally {
       setUploading(false)
       e.target.value = ""
@@ -186,7 +187,7 @@ export default function ContractsPage() {
         headers: orgId ? { "x-organization-id": String(orgId) } : {},
       })
       setDetailFiles(prev => prev.filter(f => f.id !== fileId))
-    } catch {}
+    } catch (err) { console.error(err) }
   }
 
   function formatFileSize(bytes: number): string {

@@ -102,7 +102,7 @@ export default function InvoicesPage() {
       })
       const json = await res.json()
       if (json.success) setStats(json.data)
-    } catch {}
+    } catch (err) { console.error(err) }
   }
 
   const fetchInvoices = async () => {
@@ -116,7 +116,8 @@ export default function InvoicesPage() {
       )
       const json = await res.json()
       if (json.success) setInvoices(json.data.invoices)
-    } catch {
+    } catch (err) {
+      console.error(err)
     } finally {
       setLoading(false)
     }

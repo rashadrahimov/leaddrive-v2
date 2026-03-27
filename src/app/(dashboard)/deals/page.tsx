@@ -52,7 +52,7 @@ export default function DealsPage() {
       })
       const json = await res.json()
       if (json.success) setDeals(json.data.deals)
-    } catch {} finally { setLoading(false) }
+    } catch (err) { console.error(err) } finally { setLoading(false) }
   }
 
   useEffect(() => { fetchDeals() }, [session])

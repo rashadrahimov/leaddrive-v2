@@ -15,6 +15,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
   PieChart, Pie, Cell, ResponsiveContainer,
 } from "recharts"
+import { toast } from "sonner"
 import {
   GROUP_ORDER, BOARD_CATS, CATEGORY_MAP,
   catTotal, applyAdjustments, aggregateBoardCats, emptyAdjustments,
@@ -1043,7 +1044,7 @@ export default function PricingPage() {
                                   if (json.success) {
                                     fetchSales()
                                   } else {
-                                    alert(json.error || "Ошибка добавления")
+                                    toast.error(json.error || "Ошибка добавления")
                                   }
                                 } catch { /* ignore */ }
                                 finally { setAddingDealId(null) }

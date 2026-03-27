@@ -164,7 +164,7 @@ export default function TicketDetailPage() {
           const kbRes = await fetch(`/api/v1/kb?limit=5&search=${encodeURIComponent(json.data.category || "")}`)
           const kbJson = await kbRes.json()
           if (kbJson.success) setKbArticles(kbJson.data?.articles || kbJson.data || [])
-        } catch {}
+        } catch (err) { console.error(err) }
       } else {
         setError(json.error || t("failedToLoad"))
       }
@@ -398,7 +398,7 @@ export default function TicketDetailPage() {
                     body: JSON.stringify({ status: s }),
                   })
                   if (res.ok) fetchTicket()
-                } catch {} finally { setUpdatingStatus(false) }
+                } catch (err) { console.error(err) } finally { setUpdatingStatus(false) }
               }}
               className={`flex-1 py-2.5 px-2 text-xs font-medium text-center transition-all relative ${
                 isCurrent

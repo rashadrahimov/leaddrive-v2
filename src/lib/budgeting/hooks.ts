@@ -72,6 +72,7 @@ export function useUpdateBudgetPlan() {
     onSuccess: (_data, { id }) => {
       qc.invalidateQueries({ queryKey: ["budgeting", "plans", orgId] })
       qc.invalidateQueries({ queryKey: ["budgeting", "analytics", id, orgId] })
+      qc.invalidateQueries({ queryKey: ["budgeting", "approval-comments", id, orgId] })
     },
   })
 }
@@ -786,7 +787,9 @@ export function useRollingForecast(planId: string | null) {
   return useQuery({
     queryKey: ["budgeting", "rolling", planId],
     queryFn: async () => {
-      const res = await apiFetch(`/api/budgeting/rolling?planId=${planId}`, orgId)
+      const res = await fetch(`/api/budgeting/rolling?planId=${planId}`, {
+        headers: { "Content-Type": "application/json", "x-organization-id": orgId },
+      })
       const json = await res.json()
       if (!res.ok) throw new Error(json.error || "API error")
       return json as {
@@ -815,6 +818,26 @@ export function useAutoForecast() {
     mutationFn: async (data: { planId: string; lookbackMonths?: number }) => {
       const res = await fetch("/api/budgeting/rolling/auto-forecast", {
         method: "POST",
+        headers: { "Content-Type": "application/json", "x-organization-id": orgId },
+        body: JSON.stringify(data),
+      })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error || "API error")
+      return json
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["budgeting", "rolling"] })
+    },
+  })
+}
+
+export function useCloseRollingMonth() {
+  const orgId = useOrgId()
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (data: { planId: string; year: number; month: number }) => {
+      const res = await fetch("/api/budgeting/rolling", {
+        method: "PATCH",
         headers: { "Content-Type": "application/json", "x-organization-id": orgId },
         body: JSON.stringify(data),
       })

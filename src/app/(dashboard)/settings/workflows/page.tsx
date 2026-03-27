@@ -128,7 +128,7 @@ export default function WorkflowsPage() {
         const result = await res.json()
         setWorkflows(result.data || [])
       }
-    } catch {} finally { setLoading(false) }
+    } catch (err) { console.error(err) } finally { setLoading(false) }
   }
 
   useEffect(() => { fetchWorkflows() }, [session])

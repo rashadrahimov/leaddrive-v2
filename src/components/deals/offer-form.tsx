@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select } from "@/components/ui/select"
 import { Plus, Trash2, Loader2, Building2, FileText, ShoppingCart, Calculator } from "lucide-react"
 import { useTranslations } from "next-intl"
+import { toast } from "sonner"
 
 interface Company {
   id: string
@@ -174,7 +175,7 @@ export function OfferForm({
   const grandTotal = afterDiscount + vatAmount
 
   const handleSave = async () => {
-    if (!title.trim()) { alert(t("titleRequired")); return }
+    if (!title.trim()) { toast.error(t("titleRequired")); return }
     setSaving(true)
 
     const payload = {
@@ -207,10 +208,10 @@ export function OfferForm({
       if (data.success) {
         onSaved()
       } else {
-        alert(data.error || "Error")
+        toast.error(data.error || "Error")
       }
     } catch (e) {
-      alert(String(e))
+      toast.error(String(e))
     } finally {
       setSaving(false)
     }
