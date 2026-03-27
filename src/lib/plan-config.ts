@@ -50,6 +50,7 @@ const ENTERPRISE_MODULES = [
   "/pricing",
   "/profitability",
   "/budgeting",
+  "/finance",
   "/inbox",
   "/settings/portal-users",
   "/settings/smtp-settings",
