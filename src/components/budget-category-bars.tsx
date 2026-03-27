@@ -24,16 +24,26 @@ export function BudgetCategoryBars({ categories, className }: BudgetCategoryBars
 
   const data = [...filtered]
     .sort((a, b) => Math.max(b.planned, b.actual) - Math.max(a.planned, a.actual))
-    .slice(0, 8)
-    .map(c => ({
-      name: c.category.length > 18 ? c.category.slice(0, 16) + "…" : c.category,
-      fullName: c.category,
-      plan: c.planned,
-      actual: c.actual,
-      variancePct: c.variancePct,
-      variance: c.variance,
-      lineType: c.lineType,
-    }))
+    .slice(0, 10)
+    .map(c => {
+      // Show short name: extract department part after " — ", or truncate
+      const dashIdx = c.category.indexOf(" — ")
+      const prefix = dashIdx > 0 ? c.category.slice(0, dashIdx) : c.category
+      const dept = dashIdx > 0 ? c.category.slice(dashIdx + 3) : ""
+      const shortName = dept
+        ? `${prefix.length > 12 ? prefix.slice(0, 10) + "…" : prefix} — ${dept}`
+        : (c.category.length > 22 ? c.category.slice(0, 20) + "…" : c.category)
+      return {
+        name: shortName,
+        fullName: c.category,
+        plan: c.planned,
+        forecast: c.forecast,
+        actual: c.actual,
+        variancePct: c.variancePct,
+        variance: c.variance,
+        lineType: c.lineType,
+      }
+    })
 
   const expenseCount = categories.filter(c => c.lineType === "expense").length
   const revenueCount = categories.filter(c => c.lineType === "revenue").length
@@ -64,6 +74,13 @@ export function BudgetCategoryBars({ categories, className }: BudgetCategoryBars
               <span className="text-muted-foreground text-xs">План</span>
             </span>
             <span className="font-mono font-medium">{fmt(d.plan)}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: BUDGET_COLORS.warning }} />
+              <span className="text-muted-foreground text-xs">Прогноз</span>
+            </span>
+            <span className="font-mono font-medium">{fmt(d.forecast)}</span>
           </div>
           <div className="flex justify-between">
             <span className="flex items-center gap-1.5">
@@ -130,11 +147,11 @@ export function BudgetCategoryBars({ categories, className }: BudgetCategoryBars
         ))}
       </div>
 
-      <ResponsiveContainer width="100%" height={Math.max(200, data.length * 44 + 40)}>
-        <BarChart data={data} layout="vertical" margin={{ left: 10, right: 50, top: 5, bottom: 5 }} barGap={2} barSize={14}>
+      <ResponsiveContainer width="100%" height={Math.max(200, data.length * 55 + 40)}>
+        <BarChart data={data} layout="vertical" margin={{ left: 10, right: 50, top: 5, bottom: 5 }} barGap={1} barSize={12}>
           <CartesianGrid strokeDasharray="3 3" className="stroke-muted-foreground/15" horizontal={false} />
           <XAxis type="number" tick={AXIS_TICK} tickFormatter={v => fmtK(v)} axisLine={false} tickLine={false} />
-          <YAxis type="category" dataKey="name" tick={{ ...AXIS_TICK, fontSize: 10 }} width={120} axisLine={false} tickLine={false} />
+          <YAxis type="category" dataKey="name" tick={{ ...AXIS_TICK, fontSize: 10 }} width={140} axisLine={false} tickLine={false} />
           <Tooltip content={<CustomTooltip />} cursor={{ fill: "hsl(var(--muted))", opacity: 0.3 }} />
           <Bar
             dataKey="plan"
@@ -150,6 +167,23 @@ export function BudgetCategoryBars({ categories, className }: BudgetCategoryBars
                 key={i}
                 fill={BUDGET_COLORS.planIndigo}
                 opacity={selectedIdx !== null && selectedIdx !== i ? 0.3 : 0.7}
+              />
+            ))}
+          </Bar>
+          <Bar
+            dataKey="forecast"
+            fill={BUDGET_COLORS.warning}
+            radius={[0, 3, 3, 0]}
+            animationDuration={ANIMATION.duration}
+            animationEasing={ANIMATION.easing}
+            onClick={handleBarClick}
+            className="cursor-pointer"
+          >
+            {data.map((_, i) => (
+              <Cell
+                key={i}
+                fill={BUDGET_COLORS.warning}
+                opacity={selectedIdx !== null && selectedIdx !== i ? 0.3 : 0.85}
               />
             ))}
           </Bar>
