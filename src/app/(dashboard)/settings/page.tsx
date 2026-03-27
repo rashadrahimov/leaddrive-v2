@@ -16,7 +16,7 @@ export default function SettingsPage() {
     { icon: Radio, title: t("channels"), description: t("channelsDesc"), href: "/settings/channels" },
     { icon: Zap, title: t("workflows"), description: t("workflowsDesc"), href: "/settings/workflows" },
     { icon: LayoutDashboard, title: t("dashboardSettings"), description: t("dashboardSettingsDesc"), href: "/settings/custom-fields" },
-    { icon: FileSpreadsheet, title: "Invoice Settings", description: "Invoice defaults, branding & bank details", href: "/settings/invoice-settings" },
+    { icon: FileSpreadsheet, title: t("invoiceSettings"), description: t("invoiceSettingsDesc"), href: "/settings/invoice-settings" },
     { icon: Globe, title: t("currencies"), description: t("currenciesDesc"), href: "/settings/currencies" },
     { icon: Clock, title: t("slaPolicies"), description: t("slaPoliciesDesc"), href: "/settings/sla-policies" },
     { icon: Shield, title: t("portalUsers"), description: t("portalUsersDesc"), href: "/settings/portal-users" },

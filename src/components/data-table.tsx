@@ -156,7 +156,7 @@ export function DataTable<T extends Record<string, unknown>>({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <span className="text-sm text-muted-foreground">
-            {totalPages > 1 ? t("pageOf", { current: page, total: totalPages }) : `${sorted.length} ${t("results", { count: sorted.length }).split(" ").slice(-1)[0]}`}
+            {totalPages > 1 ? t("pageOf", { current: page, total: totalPages }) : t("results", { count: sorted.length })}
           </span>
           <div className="flex items-center gap-1 ml-2">
             {PAGE_SIZE_OPTIONS.map((size) => (

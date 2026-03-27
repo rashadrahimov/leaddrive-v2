@@ -1172,7 +1172,21 @@
     "selectPaymentTerms": "Select payment terms",
     "saving": "Saving...",
     "create": "Create",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "totalRules": "Total rules",
+    "pausedLabel": "Paused",
+    "selectedCount": "{count} selected",
+    "activateBtn": "Activate",
+    "pauseBtn": "Pause",
+    "generateBtn": "Generate",
+    "lastResult": "Last result: {sent} sent, {errors} errors",
+    "closeBtn": "Close",
+    "statusSent": "Sent",
+    "statusSendFailed": "Error",
+    "statusDraft": "Draft",
+    "stopTooltip": "Pause",
+    "activateTooltip": "Activate",
+    "deleteTooltip": "Delete"
   },
   "inbox": {
     "title": "Inbox",
@@ -1356,6 +1370,8 @@
     "webToLeadDesc": "Configure lead capture forms",
     "leadRules": "Lead Rules",
     "leadRulesDesc": "Automatic lead routing",
+    "invoiceSettings": "Invoice Settings",
+    "invoiceSettingsDesc": "Invoice defaults, branding & bank details",
     "rolesPageSubtitle": "View role permissions and access levels across modules",
     "role_admin": "Admin",
     "role_manager": "Manager",
@@ -1424,7 +1440,8 @@
     "online": "Online",
     "budget": "Budget",
     "attended": "Attended",
-    "revenue": "Revenue"
+    "revenue": "Revenue",
+    "descriptionPlaceholder": "Event description..."
   },
   "profitability": {
     "title": "Profitability",
@@ -1664,7 +1681,14 @@
     "editEmailTemplate": "Edit Template",
     "newEmailTemplate": "New Template",
     "editJourney": "Edit Journey",
-    "newJourney": "New Journey"
+    "newJourney": "New Journey",
+    "estValue": "Estimated Value",
+    "newSlaPolicy": "New SLA Policy",
+    "editSlaPolicy": "Edit SLA Policy",
+    "policyName": "Policy Name",
+    "responseTimeHours": "Response Time (hours)",
+    "resolutionTimeHours": "Resolution Time (hours)",
+    "businessHoursOnly": "Business hours only"
   },
   "segments": {
     "title": "Segments",
@@ -1808,7 +1832,9 @@
     "noJourneys": "No journeys yet",
     "noJourneysHint": "Create your first automation sequence",
     "noResults": "Nothing found",
-    "participants": "participants"
+    "participants": "participants",
+    "namePlaceholder": "Journey name",
+    "descriptionPlaceholder": "Description (optional)"
   },
   "workflows": {
     "title": "Workflows",
@@ -1874,7 +1900,8 @@
     "webhookUrl": "Webhook URL",
     "webhookMethod": "HTTP method",
     "selectActionType": "Select action type",
-    "actionConfig": "Action settings"
+    "actionConfig": "Action settings",
+    "whenPrefix": "When"
   },
   "billing": {
     "title": "Plans & Subscription",

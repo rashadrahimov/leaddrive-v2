@@ -163,7 +163,7 @@ export default function InvoiceSettingsPage() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <h1 className="text-2xl font-bold tracking-tight">Invoice Settings</h1>
+        <h1 className="text-2xl font-bold tracking-tight">{t("invoiceSettings")}</h1>
         <div className="animate-pulse">
           <div className="h-96 bg-muted rounded-lg" />
         </div>
@@ -180,9 +180,9 @@ export default function InvoiceSettingsPage() {
             <Settings className="h-6 w-6 text-primary" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Invoice Settings</h1>
+            <h1 className="text-2xl font-bold tracking-tight">{t("invoiceSettings")}</h1>
             <p className="text-sm text-muted-foreground">
-              Configure default settings for invoices and commercial offers
+              {t("invoiceSettingsDesc")}
             </p>
           </div>
         </div>

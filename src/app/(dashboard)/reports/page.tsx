@@ -285,15 +285,15 @@ export default function ReportsPage() {
             <div className="space-y-3">
               <div className="flex justify-between">
                 <span className="text-sm text-muted-foreground">{t("revenueWon")}</span>
-                <span className="font-bold text-green-600">{data.revenue.totalRevenue.toLocaleString()} \u20BC</span>
+                <span className="font-bold text-green-600">{data.revenue.totalRevenue.toLocaleString()} ₼</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-sm text-muted-foreground">{t("monthlyContracts")}</span>
-                <span className="font-bold">{(data.financial?.monthlyRevenue || 0).toLocaleString()} \u20BC</span>
+                <span className="font-bold">{(data.financial?.monthlyRevenue || 0).toLocaleString()} ₼</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-sm text-muted-foreground">{t("pipelineTotal")}</span>
-                <span className="font-bold">{data.pipeline.totalPipelineValue.toLocaleString()} \u20BC</span>
+                <span className="font-bold">{data.pipeline.totalPipelineValue.toLocaleString()} ₼</span>
               </div>
               <div className="border-t pt-2 mt-2">
                 <div className="flex justify-between text-sm">
@@ -321,7 +321,7 @@ export default function ReportsPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold mb-3">{data.pipeline.totalPipelineValue.toLocaleString()} \u20BC</div>
+            <div className="text-2xl font-bold mb-3">{data.pipeline.totalPipelineValue.toLocaleString()} ₼</div>
             <div className="space-y-2">
               {data.pipeline.stages.map(s => {
                 const maxVal = Math.max(...data.pipeline.stages.map(x => x.value), 1)
@@ -330,7 +330,7 @@ export default function ReportsPage() {
                   <div key={s.stage}>
                     <div className="flex justify-between text-xs mb-0.5">
                       <span>{stageLabels[s.stage] || s.stage}</span>
-                      <span className="font-medium">{s.count} \u00B7 {s.value.toLocaleString()} \u20BC</span>
+                      <span className="font-medium">{s.count} \u00B7 {s.value.toLocaleString()} ₼</span>
                     </div>
                     <div className="h-2 bg-muted rounded-full overflow-hidden">
                       <div
@@ -415,7 +415,7 @@ export default function ReportsPage() {
                           <span className="text-muted-foreground mr-1">{i + 1}.</span>
                           {c.name}
                         </span>
-                        <span className="font-medium flex-shrink-0">{c.revenue.toLocaleString()} \u20BC</span>
+                        <span className="font-medium flex-shrink-0">{c.revenue.toLocaleString()} ₼</span>
                       </div>
                       <div className="h-1.5 bg-muted rounded-full overflow-hidden">
                         <div className="h-full bg-primary/60 rounded-full" style={{ width: `${pct}%` }} />
@@ -571,9 +571,9 @@ export default function ReportsPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{data.revenue.totalRevenue.toLocaleString()} \u20BC</div>
+            <div className="text-2xl font-bold">{data.revenue.totalRevenue.toLocaleString()} ₼</div>
             <div className="text-xs text-muted-foreground">{data.revenue.wonDealsCount} {t("wonDealsCount")}</div>
-            <div className="text-xs text-muted-foreground mt-1">{t("avgDealSize")}: {data.revenue.avgDealSize.toLocaleString()} \u20BC</div>
+            <div className="text-xs text-muted-foreground mt-1">{t("avgDealSize")}: {data.revenue.avgDealSize.toLocaleString()} ₼</div>
           </CardContent>
         </Card>
       </div>

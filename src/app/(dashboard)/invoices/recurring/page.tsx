@@ -92,6 +92,7 @@ const defaultForm = {
 export default function RecurringInvoicesPage() {
   const { data: session } = useSession()
   const t = useTranslations("invoices")
+  const tc = useTranslations("common")
   const router = useRouter()
 
   const orgId = (session?.user as { organizationId?: string })?.organizationId
@@ -338,11 +339,11 @@ export default function RecurringInvoicesPage() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Button variant="ghost" size="sm" onClick={() => router.push("/invoices")} className="text-white/80 hover:text-white hover:bg-white/10">
-              <ArrowLeft className="h-4 w-4 mr-1" /> Geri
+              <ArrowLeft className="h-4 w-4 mr-1" /> {t("backToList")}
             </Button>
             <div>
-              <h1 className="text-xl font-bold text-white">Təkrarlanan hesab-fakturalar</h1>
-              <p className="text-white/70 text-xs mt-0.5">{rules.length} qayda / hər ayın 25-i avtomatik</p>
+              <h1 className="text-xl font-bold text-white">{t("recurringInvoices")}</h1>
+              <p className="text-white/70 text-xs mt-0.5">{rules.length} {t("recurring").toLowerCase()}</p>
             </div>
           </div>
           <div className="flex gap-2">
@@ -366,7 +367,7 @@ export default function RecurringInvoicesPage() {
             </div>
             <div>
               <p className="text-2xl font-bold">{rules.length}</p>
-              <p className="text-xs text-muted-foreground">Ümumi qaydalar</p>
+              <p className="text-xs text-muted-foreground">{t("totalRules")}</p>
             </div>
           </div>
           <div className="rounded-xl border bg-card p-4 flex items-center gap-3">
@@ -375,7 +376,7 @@ export default function RecurringInvoicesPage() {
             </div>
             <div>
               <p className="text-2xl font-bold text-green-600">{activeCount}</p>
-              <p className="text-xs text-muted-foreground">Aktiv</p>
+              <p className="text-xs text-muted-foreground">{t("active")}</p>
             </div>
           </div>
           <div className="rounded-xl border bg-card p-4 flex items-center gap-3">
@@ -384,7 +385,7 @@ export default function RecurringInvoicesPage() {
             </div>
             <div>
               <p className="text-2xl font-bold text-orange-600">{pausedCount}</p>
-              <p className="text-xs text-muted-foreground">Dayandırılıb</p>
+              <p className="text-xs text-muted-foreground">{t("pausedLabel")}</p>
             </div>
           </div>
         </div>
@@ -392,16 +393,16 @@ export default function RecurringInvoicesPage() {
         {/* Bulk actions bar */}
         {selectedIds.size > 0 && (
           <div className="rounded-xl border-2 border-cyan-400 bg-cyan-50 dark:bg-cyan-950 p-3 flex items-center justify-between">
-            <span className="text-sm font-semibold text-cyan-800 dark:text-cyan-200">{selectedIds.size} seçilib</span>
+            <span className="text-sm font-semibold text-cyan-800 dark:text-cyan-200">{t("selectedCount", { count: selectedIds.size })}</span>
             <div className="flex gap-2">
               <Button size="sm" variant="outline" className="h-8 text-green-700 border-green-300 hover:bg-green-50" onClick={() => handleBulkToggle(true)}>
-                <Play className="h-3.5 w-3.5 mr-1" /> Aktivləşdir
+                <Play className="h-3.5 w-3.5 mr-1" /> {t("activateBtn")}
               </Button>
               <Button size="sm" variant="outline" className="h-8 text-orange-700 border-orange-300 hover:bg-orange-50" onClick={() => handleBulkToggle(false)}>
-                <Pause className="h-3.5 w-3.5 mr-1" /> Dayandır
+                <Pause className="h-3.5 w-3.5 mr-1" /> {t("pauseBtn")}
               </Button>
               <Button size="sm" className="h-8 bg-cyan-600 hover:bg-cyan-700" onClick={handleGenerateNow} disabled={generating}>
-                <RefreshCw className={`h-3.5 w-3.5 mr-1 ${generating ? "animate-spin" : ""}`} /> Hazırla
+                <RefreshCw className={`h-3.5 w-3.5 mr-1 ${generating ? "animate-spin" : ""}`} /> {t("generateBtn")}
               </Button>
             </div>
           </div>
@@ -411,14 +412,14 @@ export default function RecurringInvoicesPage() {
         {generateReport && generateReport.length > 0 && (
           <div className="rounded-xl border border-green-300 bg-green-50 dark:bg-green-950 p-4">
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-semibold text-green-800">Son nəticə: {generateReport.filter(r => r.status === "sent").length} göndərildi, {generateReport.filter(r => r.status === "send_failed").length} xəta</h3>
-              <Button variant="ghost" size="sm" onClick={() => setGenerateReport(null)} className="h-6 text-xs text-green-700">Bağla</Button>
+              <h3 className="text-sm font-semibold text-green-800">{t("lastResult", { sent: generateReport.filter(r => r.status === "sent").length, errors: generateReport.filter(r => r.status === "send_failed").length })}</h3>
+              <Button variant="ghost" size="sm" onClick={() => setGenerateReport(null)} className="h-6 text-xs text-green-700">{t("closeBtn")}</Button>
             </div>
             <div className="max-h-48 overflow-y-auto space-y-1">
               {generateReport.map((r, i) => (
                 <div key={i} className={`flex justify-between py-1.5 px-3 rounded-lg text-xs ${r.status === "sent" ? "bg-green-100 text-green-800" : r.status === "send_failed" ? "bg-red-100 text-red-800" : "bg-white"}`}>
                   <span className="font-medium">{r.invoiceNumber} — {r.company || "?"}</span>
-                  <span>{r.status === "sent" ? "Göndərildi" : r.status === "send_failed" ? ("Xəta: " + (r.error || "").slice(0, 40)) : "Qaralama"}</span>
+                  <span>{r.status === "sent" ? t("statusSent") : r.status === "send_failed" ? (t("statusSendFailed") + ": " + (r.error || "").slice(0, 40)) : t("statusDraft")}</span>
                 </div>
               ))}
             </div>
@@ -479,11 +480,11 @@ export default function RecurringInvoicesPage() {
                   <td className="px-3 py-2.5 text-center">
                     {rule.isActive ? (
                       <span className="inline-flex items-center gap-1 text-xs font-medium text-green-700 bg-green-100 dark:bg-green-900 dark:text-green-300 px-2 py-0.5 rounded-full">
-                        <span className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse" /> Aktiv
+                        <span className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse" /> {t("active")}
                       </span>
                     ) : (
                       <span className="inline-flex items-center gap-1 text-xs font-medium text-orange-700 bg-orange-100 dark:bg-orange-900 dark:text-orange-300 px-2 py-0.5 rounded-full">
-                        <span className="h-1.5 w-1.5 rounded-full bg-orange-500" /> Dayandırılıb
+                        <span className="h-1.5 w-1.5 rounded-full bg-orange-500" /> {t("pausedLabel")}
                       </span>
                     )}
                   </td>
@@ -495,10 +496,10 @@ export default function RecurringInvoicesPage() {
                   </td>
                   <td className="px-3 py-2.5 text-right">
                     <div className="flex items-center justify-end gap-0.5">
-                      <button onClick={() => handleToggleActive(rule)} className={`p-1.5 rounded-md transition-colors ${rule.isActive ? "hover:bg-orange-100 text-orange-600" : "hover:bg-green-100 text-green-600"}`} title={rule.isActive ? "Dayandır" : "Aktivləşdir"}>
+                      <button onClick={() => handleToggleActive(rule)} className={`p-1.5 rounded-md transition-colors ${rule.isActive ? "hover:bg-orange-100 text-orange-600" : "hover:bg-green-100 text-green-600"}`} title={rule.isActive ? t("stopTooltip") : t("activateTooltip")}>
                         {rule.isActive ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
                       </button>
-                      <button onClick={() => { setDeleteId(rule.id); setDeleteName(rule.title) }} className="p-1.5 rounded-md hover:bg-red-100 text-red-500 transition-colors" title="Sil">
+                      <button onClick={() => { setDeleteId(rule.id); setDeleteName(rule.title) }} className="p-1.5 rounded-md hover:bg-red-100 text-red-500 transition-colors" title={t("deleteTooltip")}>
                         <Trash2 className="h-3.5 w-3.5" />
                       </button>
                     </div>

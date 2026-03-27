@@ -97,7 +97,7 @@ export default function DealsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
-          <p className="text-sm text-muted-foreground">{deals.length} {t("totalDeals")}</p>
+          <p className="text-sm text-muted-foreground">{t("totalDeals", { count: deals.length })}</p>
         </div>
         <div className="flex gap-2">
           <Select value={sortBy} onChange={e => setSortBy(e.target.value)} className="w-[180px]">

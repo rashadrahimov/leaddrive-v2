@@ -1170,7 +1170,21 @@
     "selectPaymentTerms": "Ödəniş şərtlərini seçin",
     "saving": "Saxlanılır...",
     "create": "Yarat",
-    "cancel": "Ləğv et"
+    "cancel": "Ləğv et",
+    "totalRules": "Ümumi qaydalar",
+    "pausedLabel": "Dayandırılıb",
+    "selectedCount": "{count} seçilib",
+    "activateBtn": "Aktivləşdir",
+    "pauseBtn": "Dayandır",
+    "generateBtn": "Hazırla",
+    "lastResult": "Son nəticə: {sent} göndərildi, {errors} xəta",
+    "closeBtn": "Bağla",
+    "statusSent": "Göndərildi",
+    "statusSendFailed": "Xəta",
+    "statusDraft": "Qaralama",
+    "stopTooltip": "Dayandır",
+    "activateTooltip": "Aktivləşdir",
+    "deleteTooltip": "Sil"
   },
   "inbox": {
     "title": "Gələn qutusu",
@@ -1354,6 +1368,8 @@
     "webToLeadDesc": "Lid toplama formlarını konfiqurasiya edin",
     "leadRules": "Lid Qaydaları",
     "leadRulesDesc": "Avtomatik lid yönləndirmə",
+    "invoiceSettings": "Hesab-faktura parametrləri",
+    "invoiceSettingsDesc": "Hesab-faktura defoltları, brendinq və bank rekvizitləri",
     "rolesPageSubtitle": "Rol icazələrini və giriş səviyyələrini modullar üzrə baxın",
     "role_admin": "Admin",
     "role_manager": "Menecer",
@@ -1422,7 +1438,8 @@
     "online": "Onlayn",
     "budget": "Büdcə",
     "attended": "İştirak etdi",
-    "revenue": "Gəlir"
+    "revenue": "Gəlir",
+    "descriptionPlaceholder": "Tədbir təsviri..."
   },
   "profitability": {
     "title": "Gəlirlilik",
@@ -1662,7 +1679,14 @@
     "editEmailTemplate": "Şablonu redaktə et",
     "newEmailTemplate": "Yeni şablon",
     "editJourney": "Zənciri redaktə et",
-    "newJourney": "Yeni zəncir"
+    "newJourney": "Yeni zəncir",
+    "estValue": "Gözlənilən məbləğ",
+    "newSlaPolicy": "Yeni SLA siyasəti",
+    "editSlaPolicy": "SLA siyasətini redaktə et",
+    "policyName": "Siyasət adı",
+    "responseTimeHours": "Cavab müddəti (saat)",
+    "resolutionTimeHours": "Həll müddəti (saat)",
+    "businessHoursOnly": "Yalnız iş saatları"
   },
   "segments": {
     "title": "Seqmentlər",
@@ -1806,7 +1830,9 @@
     "noJourneys": "Zəncir yoxdur",
     "noJourneysHint": "İlk avtomatik zənciri yaradın",
     "noResults": "Heç nə tapılmadı",
-    "participants": "iştirakçı"
+    "participants": "iştirakçı",
+    "namePlaceholder": "Zəncir adı",
+    "descriptionPlaceholder": "Təsvir (istəyə bağlı)"
   },
   "workflows": {
     "title": "İş Axınları",
@@ -1872,7 +1898,8 @@
     "webhookUrl": "Webhook URL",
     "webhookMethod": "HTTP metodu",
     "selectActionType": "Əməliyyat növünü seçin",
-    "actionConfig": "Əməliyyat parametrləri"
+    "actionConfig": "Əməliyyat parametrləri",
+    "whenPrefix": "Nə vaxt"
   },
   "billing": {
     "title": "Tariflər və abunəlik",

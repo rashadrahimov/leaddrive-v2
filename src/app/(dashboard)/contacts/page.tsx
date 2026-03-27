@@ -241,7 +241,7 @@ export default function ContactsPage() {
             className="pl-9"
           />
         </div>
-        <span className="text-sm text-muted-foreground">{filtered.length} {tc("results")}</span>
+        <span className="text-sm text-muted-foreground">{tc("results", { count: filtered.length })}</span>
         <div className="flex-1" />
         <Select value={sortBy} onChange={e => setSortBy(e.target.value)} className="w-[200px]">
           <option value="name_asc">{t("sortNameAsc")}</option>

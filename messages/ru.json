@@ -1172,7 +1172,21 @@
     "selectPaymentTerms": "Выберите условия оплаты",
     "saving": "Сохранение...",
     "create": "Создать",
-    "cancel": "Отмена"
+    "cancel": "Отмена",
+    "totalRules": "Всего правил",
+    "pausedLabel": "На паузе",
+    "selectedCount": "{count} выбрано",
+    "activateBtn": "Активировать",
+    "pauseBtn": "Приостановить",
+    "generateBtn": "Сформировать",
+    "lastResult": "Результат: {sent} отправлено, {errors} ошибок",
+    "closeBtn": "Закрыть",
+    "statusSent": "Отправлен",
+    "statusSendFailed": "Ошибка",
+    "statusDraft": "Черновик",
+    "stopTooltip": "Приостановить",
+    "activateTooltip": "Активировать",
+    "deleteTooltip": "Удалить"
   },
   "inbox": {
     "title": "Входящие",
@@ -1356,6 +1370,8 @@
     "webToLeadDesc": "Настройка форм захвата лидов",
     "leadRules": "Правила лидов",
     "leadRulesDesc": "Автоматическая маршрутизация лидов",
+    "invoiceSettings": "Настройки счетов",
+    "invoiceSettingsDesc": "Параметры счетов, брендинг и реквизиты",
     "rolesPageSubtitle": "Просмотр прав доступа ролей по модулям системы",
     "role_admin": "Админ",
     "role_manager": "Менеджер",
@@ -1424,7 +1440,8 @@
     "online": "Онлайн",
     "budget": "Бюджет",
     "attended": "Посетили",
-    "revenue": "Доход"
+    "revenue": "Доход",
+    "descriptionPlaceholder": "Описание мероприятия..."
   },
   "profitability": {
     "title": "Прибыльность",
@@ -1664,7 +1681,14 @@
     "editEmailTemplate": "Редактировать шаблон",
     "newEmailTemplate": "Новый шаблон",
     "editJourney": "Редактировать цепочку",
-    "newJourney": "Новая цепочка"
+    "newJourney": "Новая цепочка",
+    "estValue": "Ожидаемая сумма",
+    "newSlaPolicy": "Новая SLA политика",
+    "editSlaPolicy": "Редактировать SLA политику",
+    "policyName": "Название политики",
+    "responseTimeHours": "Время ответа (часы)",
+    "resolutionTimeHours": "Время решения (часы)",
+    "businessHoursOnly": "Только рабочее время"
   },
   "segments": {
     "title": "Сегменты",
@@ -1808,7 +1832,9 @@
     "noJourneys": "Нет цепочек",
     "noJourneysHint": "Создайте первую автоматическую цепочку",
     "noResults": "Ничего не найдено",
-    "participants": "участников"
+    "participants": "участников",
+    "namePlaceholder": "Название цепочки",
+    "descriptionPlaceholder": "Описание (необязательно)"
   },
   "workflows": {
     "title": "Рабочие процессы",
@@ -1874,7 +1900,8 @@
     "webhookUrl": "URL вебхука",
     "webhookMethod": "HTTP метод",
     "selectActionType": "Выберите тип действия",
-    "actionConfig": "Настройки действия"
+    "actionConfig": "Настройки действия",
+    "whenPrefix": "Когда"
   },
   "billing": {
     "title": "Тарифы и подписка",
