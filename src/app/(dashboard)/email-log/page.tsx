@@ -8,6 +8,8 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Mail, Send, Inbox, CheckCircle, AlertTriangle, RotateCcw, Search, ChevronDown, ChevronUp, ArrowUpRight, ArrowDownLeft, Filter, RefreshCw } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { InfoHint } from "@/components/info-hint"
+import { PageDescription } from "@/components/page-description"
 
 interface EmailLogEntry {
   id: string
@@ -107,13 +109,15 @@ export default function EmailLogPage() {
         </Button>
       </div>
 
+      <PageDescription text={t("pageDescription")} />
+
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-        <ColorStatCard label={t("total")} value={stats.total} icon={<Mail className="h-4 w-4" />} color="blue" />
-        <ColorStatCard label={t("outbound")} value={stats.outbound} icon={<Send className="h-4 w-4" />} color="violet" />
-        <ColorStatCard label={t("inbound")} value={stats.inbound} icon={<Inbox className="h-4 w-4" />} color="indigo" />
-        <ColorStatCard label={t("sent")} value={stats.sent} icon={<CheckCircle className="h-4 w-4" />} color="green" />
-        <ColorStatCard label={t("failed")} value={stats.failed} icon={<AlertTriangle className="h-4 w-4" />} color="red" />
+        <ColorStatCard label={t("total")} value={stats.total} icon={<Mail className="h-4 w-4" />} color="blue" hint={t("hintTotalEmails")} />
+        <ColorStatCard label={t("outbound")} value={stats.outbound} icon={<Send className="h-4 w-4" />} color="violet" hint={t("hintOutbound")} />
+        <ColorStatCard label={t("inbound")} value={stats.inbound} icon={<Inbox className="h-4 w-4" />} color="indigo" hint={t("hintInbound")} />
+        <ColorStatCard label={t("sent")} value={stats.sent} icon={<CheckCircle className="h-4 w-4" />} color="green" hint={t("hintSentCount")} />
+        <ColorStatCard label={t("failed")} value={stats.failed} icon={<AlertTriangle className="h-4 w-4" />} color="red" hint={t("hintFailedCount")} />
         <ColorStatCard label={t("bounced")} value={stats.bounced} icon={<RotateCcw className="h-4 w-4" />} color="orange" />
       </div>
 
@@ -139,6 +143,7 @@ export default function EmailLogPage() {
             <option value="outbound">{t("filterOutbound")}</option>
             <option value="inbound">{t("filterInbound")}</option>
           </select>
+          <InfoHint text={t("hintColStatus")} size={12} />
           <select
             value={filterStatus}
             onChange={e => { setFilterStatus(e.target.value); setPage(1) }}

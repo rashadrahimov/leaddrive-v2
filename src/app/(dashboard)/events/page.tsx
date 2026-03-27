@@ -15,6 +15,7 @@ import {
 import { EventForm } from "@/components/event-form"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
 import { ColorStatCard } from "@/components/color-stat-card"
+import { PageDescription } from "@/components/page-description"
 
 const STATUS_STYLES: Record<string, string> = {
   planned: "bg-blue-100 text-blue-700",
@@ -106,12 +107,14 @@ export default function EventsPage() {
         </Button>
       </div>
 
+      <PageDescription text={t("pageDescription")} />
+
       {/* Stat cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <ColorStatCard label={t("title")} value={total} icon={<CalendarDays className="h-4 w-4" />} color="blue" />
-        <ColorStatCard label={t("statusPlanned")} value={(statusCounts.planned || 0) + (statusCounts.registration_open || 0)} icon={<PlayCircle className="h-4 w-4" />} color="violet" />
-        <ColorStatCard label={t("statusCompleted")} value={statusCounts.completed || 0} icon={<CheckCircle className="h-4 w-4" />} color="green" />
-        <ColorStatCard label={t("statusCancelled")} value={statusCounts.cancelled || 0} icon={<XCircle className="h-4 w-4" />} color="red" />
+        <ColorStatCard label={t("title")} value={total} icon={<CalendarDays className="h-4 w-4" />} color="blue" hint={t("hintTotalEvents")} />
+        <ColorStatCard label={t("statusPlanned")} value={(statusCounts.planned || 0) + (statusCounts.registration_open || 0)} icon={<PlayCircle className="h-4 w-4" />} color="violet" hint={t("hintPlanned")} />
+        <ColorStatCard label={t("statusCompleted")} value={statusCounts.completed || 0} icon={<CheckCircle className="h-4 w-4" />} color="green" hint={t("hintCompleted")} />
+        <ColorStatCard label={t("statusCancelled")} value={statusCounts.cancelled || 0} icon={<XCircle className="h-4 w-4" />} color="red" hint={t("hintCancelled")} />
       </div>
 
       {/* Status filters */}

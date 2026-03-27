@@ -10,6 +10,7 @@ import { ColorStatCard } from "@/components/color-stat-card"
 import { EmailTemplateForm } from "@/components/email-template-form"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
 import { Plus, Mail, Pencil, Trash2, Globe, Tag } from "lucide-react"
+import { useTranslations } from "next-intl"
 
 interface EmailTemplate {
   id: string
@@ -25,6 +26,7 @@ interface EmailTemplate {
 
 export default function EmailTemplatesPage() {
   const { data: session } = useSession()
+  const ts = useTranslations("settings")
   const [templates, setTemplates] = useState<EmailTemplate[]>([])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
@@ -113,6 +115,7 @@ export default function EmailTemplatesPage() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Email Templates</h1>
           <p className="text-sm text-muted-foreground">Manage email templates for campaigns and notifications</p>
+          <p className="text-sm text-muted-foreground mt-1">{ts("hintEmailTemplatesSettings")}</p>
         </div>
         <Button onClick={() => { setEditData(undefined); setShowForm(true) }}>
           <Plus className="h-4 w-4 mr-1" /> New Template

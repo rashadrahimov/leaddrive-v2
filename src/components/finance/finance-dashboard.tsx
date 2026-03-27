@@ -23,8 +23,8 @@ export function FinanceDashboard() {
   const { data, isLoading, error } = useFinanceDashboard(year)
 
   if (isLoading) return <DashboardSkeleton />
-  if (error) return <div className="p-8 text-center text-red-500">Error loading dashboard: {(error as Error).message}</div>
-  if (!data) return <div className="p-8 text-center text-muted-foreground">No data available</div>
+  if (error) return <div className="p-8 text-center text-red-500">Ошибка загрузки: {(error as Error).message}</div>
+  if (!data) return <div className="p-8 text-center text-muted-foreground">Нет данных</div>
 
   const { kpis, revenueTrend, expenseBreakdown, arAging, alerts } = data
 
@@ -33,8 +33,8 @@ export function FinanceDashboard() {
       {/* Year selector */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-bold">Financial Overview</h2>
-          <p className="text-sm text-muted-foreground">Key metrics and trends for {year}</p>
+          <h2 className="text-lg font-bold">Финансовый обзор</h2>
+          <p className="text-sm text-muted-foreground">Ключевые показатели и тренды за {year} год</p>
         </div>
         <select
           value={year}
@@ -53,7 +53,7 @@ export function FinanceDashboard() {
       {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
         <FinanceKpiCard
-          title="Revenue"
+          title="Выручка"
           value={kpis.revenue.fact}
           plan={kpis.revenue.plan}
           variancePct={kpis.revenue.variancePct}
@@ -61,7 +61,7 @@ export function FinanceDashboard() {
           color="#22c55e"
         />
         <FinanceKpiCard
-          title="Expenses"
+          title="Расходы"
           value={kpis.expenses.fact}
           plan={kpis.expenses.plan}
           variancePct={kpis.expenses.variancePct}
@@ -70,28 +70,28 @@ export function FinanceDashboard() {
           invertVariance
         />
         <FinanceKpiCard
-          title="Net Profit"
+          title="Чистая прибыль"
           value={kpis.netProfit.fact}
           icon={<DollarSign className="w-5 h-5" />}
           color={kpis.netProfit.fact >= 0 ? "#22c55e" : "#ef4444"}
         />
         <FinanceKpiCard
-          title="Cash Balance"
+          title="Остаток ДС"
           value={kpis.cashBalance.current}
           icon={<Wallet className="w-5 h-5" />}
           color={kpis.cashBalance.current >= 0 ? "#3b82f6" : "#ef4444"}
         />
         <FinanceKpiCard
-          title="Receivables"
+          title="Дебиторка"
           value={kpis.arTotal.amount}
-          sub={kpis.arTotal.overdueCount > 0 ? `${kpis.arTotal.overdueCount} overdue` : undefined}
+          sub={kpis.arTotal.overdueCount > 0 ? `${kpis.arTotal.overdueCount} просрочено` : undefined}
           icon={<FileText className="w-5 h-5" />}
           color="#f59e0b"
         />
         <FinanceKpiCard
-          title="Payables"
+          title="Кредиторка"
           value={kpis.apTotal.amount}
-          sub={kpis.apTotal.overdueCount > 0 ? `${kpis.apTotal.overdueCount} overdue` : undefined}
+          sub={kpis.apTotal.overdueCount > 0 ? `${kpis.apTotal.overdueCount} просрочено` : undefined}
           icon={<CreditCard className="w-5 h-5" />}
           color="#8b5cf6"
         />
@@ -102,7 +102,7 @@ export function FinanceDashboard() {
         {/* Revenue & Expense Trend */}
         <Card className="lg:col-span-2">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-semibold">Revenue & Expense Trend</CardTitle>
+            <CardTitle className="text-sm font-semibold">Тренд выручки и расходов</CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={280}>
@@ -111,7 +111,7 @@ export function FinanceDashboard() {
                 <XAxis dataKey="label" tick={{ fontSize: 11 }} />
                 <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => v >= 1000 ? `${(v / 1000).toFixed(0)}K` : v} />
                 <Tooltip
-                  formatter={(value: number, name: string) => [fmt(value) + " AZN", name === "revenue" ? "Revenue" : name === "expenses" ? "Expenses" : "Net"]}
+                  formatter={(value: number, name: string) => [fmt(value) + " AZN", name === "revenue" ? "Выручка" : name === "expenses" ? "Расходы" : "Нетто"]}
                   labelFormatter={(label) => `${label} ${year}`}
                 />
                 <Bar dataKey="revenue" fill="#22c55e" opacity={0.8} radius={[4, 4, 0, 0]} name="revenue" />
@@ -125,7 +125,7 @@ export function FinanceDashboard() {
         {/* Expense Breakdown Pie */}
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-semibold">Expense Breakdown</CardTitle>
+            <CardTitle className="text-sm font-semibold">Структура расходов</CardTitle>
           </CardHeader>
           <CardContent>
             {expenseBreakdown.length > 0 ? (
@@ -161,7 +161,7 @@ export function FinanceDashboard() {
                 </div>
               </>
             ) : (
-              <div className="h-[200px] flex items-center justify-center text-sm text-muted-foreground">No expense data</div>
+              <div className="h-[200px] flex items-center justify-center text-sm text-muted-foreground">Нет данных по расходам</div>
             )}
           </CardContent>
         </Card>
@@ -171,7 +171,7 @@ export function FinanceDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-semibold">Receivables Aging</CardTitle>
+            <CardTitle className="text-sm font-semibold">Возраст дебиторки</CardTitle>
           </CardHeader>
           <CardContent>
             {arAging.some((b) => b.amount > 0) ? (
@@ -189,7 +189,7 @@ export function FinanceDashboard() {
                 </BarChart>
               </ResponsiveContainer>
             ) : (
-              <div className="h-[220px] flex items-center justify-center text-sm text-muted-foreground">No receivables data</div>
+              <div className="h-[220px] flex items-center justify-center text-sm text-muted-foreground">Нет данных по дебиторке</div>
             )}
           </CardContent>
         </Card>
@@ -197,21 +197,21 @@ export function FinanceDashboard() {
         {/* Quick Stats Card */}
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-semibold">Financial Summary</CardTitle>
+            <CardTitle className="text-sm font-semibold">Финансовая сводка</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              <SummaryRow label="Gross Revenue (Plan)" value={kpis.revenue.plan} color="#22c55e" />
-              <SummaryRow label="Gross Revenue (Fact)" value={kpis.revenue.fact} color="#16a34a" />
-              <SummaryRow label="Total Expenses (Plan)" value={kpis.expenses.plan} color="#f59e0b" />
-              <SummaryRow label="Total Expenses (Fact)" value={kpis.expenses.fact} color="#ef4444" />
+              <SummaryRow label="Выручка (план)" value={kpis.revenue.plan} color="#22c55e" />
+              <SummaryRow label="Выручка (факт)" value={kpis.revenue.fact} color="#16a34a" />
+              <SummaryRow label="Расходы (план)" value={kpis.expenses.plan} color="#f59e0b" />
+              <SummaryRow label="Расходы (факт)" value={kpis.expenses.fact} color="#ef4444" />
               <div className="border-t pt-2" />
-              <SummaryRow label="Net Profit" value={kpis.netProfit.fact} color={kpis.netProfit.fact >= 0 ? "#22c55e" : "#ef4444"} bold />
-              <SummaryRow label="Cash Balance" value={kpis.cashBalance.current} color="#3b82f6" bold />
+              <SummaryRow label="Чистая прибыль" value={kpis.netProfit.fact} color={kpis.netProfit.fact >= 0 ? "#22c55e" : "#ef4444"} bold />
+              <SummaryRow label="Остаток ДС" value={kpis.cashBalance.current} color="#3b82f6" bold />
               <div className="border-t pt-2" />
-              <SummaryRow label="Total Receivables (A/R)" value={kpis.arTotal.amount} color="#f59e0b" />
-              <SummaryRow label="Total Payables (A/P)" value={kpis.apTotal.amount} color="#8b5cf6" />
-              <SummaryRow label="Net Position (A/R - A/P)" value={kpis.arTotal.amount - kpis.apTotal.amount} color="#3b82f6" bold />
+              <SummaryRow label="Дебиторка (A/R)" value={kpis.arTotal.amount} color="#f59e0b" />
+              <SummaryRow label="Кредиторка (A/P)" value={kpis.apTotal.amount} color="#8b5cf6" />
+              <SummaryRow label="Нетто-позиция (A/R − A/P)" value={kpis.arTotal.amount - kpis.apTotal.amount} color="#3b82f6" bold />
             </div>
           </CardContent>
         </Card>

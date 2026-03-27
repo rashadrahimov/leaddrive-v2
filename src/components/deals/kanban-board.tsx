@@ -2,11 +2,13 @@
 
 import { DealCard } from "./deal-card"
 import { cn } from "@/lib/utils"
+import { InfoHint } from "@/components/info-hint"
 
 interface Stage {
   name: string
   displayName: string
   color: string
+  hint?: string
 }
 
 interface Deal {
@@ -40,6 +42,7 @@ export function KanbanBoard({ stages, deals, onDealClick }: KanbanBoardProps) {
               <div className="flex items-center gap-1.5">
                 <div className="h-2.5 w-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: stage.color }} />
                 <span className="text-xs font-semibold truncate">{stage.displayName}</span>
+                {stage.hint && <InfoHint text={stage.hint} size={12} />}
                 <span className="rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground flex-shrink-0">
                   {stageDeals.length}
                 </span>

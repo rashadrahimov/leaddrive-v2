@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { DataTable } from "@/components/data-table"
 import { ColorStatCard } from "@/components/color-stat-card"
+import { InfoHint } from "@/components/info-hint"
+import { PageDescription } from "@/components/page-description"
 import { TaskForm } from "@/components/task-form"
 import { Select } from "@/components/ui/select"
 import { CheckSquare, Plus, Clock, AlertTriangle, Pencil, Trash2, CalendarDays, ListChecks, ChevronLeft, ChevronRight, Link2, Copy, Check, ExternalLink, Columns3 } from "lucide-react"
@@ -469,6 +471,7 @@ export default function TasksPage() {
     {
       key: "title",
       label: t("colTask"),
+      hint: t("hintColTitle"),
       sortable: true,
       render: (item: any) => (
         <div className="flex items-center gap-2">
@@ -488,6 +491,7 @@ export default function TasksPage() {
     {
       key: "relatedType",
       label: t("colCategory"),
+      hint: t("hintColRelated"),
       render: (item: any) => (
         <span className="text-base" title={item.relatedType || t("generalCategory")}>
           {categoryIcons[item.relatedType || ""] || "📋"} <span className="text-xs text-muted-foreground">{item.relatedType || t("generalCategory")}</span>
@@ -497,6 +501,7 @@ export default function TasksPage() {
     {
       key: "priority",
       label: t("colPriority"),
+      hint: t("hintColPriority"),
       sortable: true,
       render: (item: any) => (
         <Badge variant={priorityColors[item.priority] || "secondary"}>
@@ -507,6 +512,7 @@ export default function TasksPage() {
     {
       key: "dueDate",
       label: t("colDueDate"),
+      hint: t("hintColDueDate"),
       sortable: true,
       render: (item: any) => (
         <div className={cn(
@@ -519,10 +525,11 @@ export default function TasksPage() {
         </div>
       ),
     },
-    { key: "assignedTo", label: t("colAssignee"), sortable: true },
+    { key: "assignedTo", label: t("colAssignee"), hint: t("hintColAssigned"), sortable: true },
     {
       key: "status",
       label: t("colStatus"),
+      hint: t("hintColStatus"),
       sortable: true,
       render: (item: any) => (
         <Badge variant={item.status === "completed" ? "secondary" : item.status === "in_progress" ? "default" : item.status === "cancelled" ? "destructive" : "outline"}>
@@ -567,6 +574,7 @@ export default function TasksPage() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
           <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
+          <PageDescription text={t("pageDescription")} />
         </div>
         <div className="flex items-center gap-2">
           <div className="flex rounded-lg border">
@@ -599,10 +607,10 @@ export default function TasksPage() {
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-        <ColorStatCard label={t("statAll")} value={tasks.length} icon={<CheckSquare className="h-4 w-4" />} color="blue" />
-        <ColorStatCard label={t("statCompleted")} value={completed} icon={<CheckSquare className="h-4 w-4" />} color="green" />
-        <ColorStatCard label={t("statOverdue")} value={overdue} icon={<AlertTriangle className="h-4 w-4" />} color="red" />
-        <ColorStatCard label={t("statInProgress")} value={tasks.filter(t => t.status === "in_progress").length} icon={<Clock className="h-4 w-4" />} color="amber" />
+        <ColorStatCard label={t("statAll")} value={tasks.length} icon={<CheckSquare className="h-4 w-4" />} color="blue" hint={t("hintTotalTasks")} />
+        <ColorStatCard label={t("statCompleted")} value={completed} icon={<CheckSquare className="h-4 w-4" />} color="green" hint={t("hintCompletedWeek")} />
+        <ColorStatCard label={t("statOverdue")} value={overdue} icon={<AlertTriangle className="h-4 w-4" />} color="red" hint={t("hintOverdueTasks")} />
+        <ColorStatCard label={t("statInProgress")} value={tasks.filter(t => t.status === "in_progress").length} icon={<Clock className="h-4 w-4" />} color="amber" hint={t("hintCompletionRate")} />
         <ColorStatCard label={t("statToday")} value={todayCount} icon={<CalendarDays className="h-4 w-4" />} color="violet" />
         <ColorStatCard label={t("statThisWeek")} value={weekCount} icon={<CalendarDays className="h-4 w-4" />} color="indigo" />
       </div>

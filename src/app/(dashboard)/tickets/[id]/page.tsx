@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Select } from "@/components/ui/select"
 import { ArrowLeft, Clock, Send, Lock, Star, Loader2, Bot, FileText, Zap, UserCheck, RefreshCw, AlertTriangle, UserPlus, BookOpen } from "lucide-react"
+import { InfoHint } from "@/components/info-hint"
 
 interface TicketData {
   id: string
@@ -712,7 +713,7 @@ export default function TicketDetailPage() {
         {/* Sidebar */}
         <div className="space-y-4">
           <Card>
-            <CardHeader className="pb-2"><CardTitle className="text-sm">{t("detailsCard")}</CardTitle></CardHeader>
+            <CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-1">{t("detailsCard")} <InfoHint text={t("hintColSubject")} size={12} /></CardTitle></CardHeader>
             <CardContent className="space-y-3 text-sm">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Статус</span>
@@ -748,7 +749,7 @@ export default function TicketDetailPage() {
           </Card>
 
           <Card>
-            <CardHeader className="pb-2"><CardTitle className="text-sm">{t("peopleCard")}</CardTitle></CardHeader>
+            <CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-1">{t("peopleCard")} <InfoHint text={t("hintColAssigned")} size={12} /></CardTitle></CardHeader>
             <CardContent className="space-y-3 text-sm">
               <div>
                 <span className="text-muted-foreground">{t("assignedLabel")}</span>
@@ -772,7 +773,7 @@ export default function TicketDetailPage() {
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm flex items-center gap-2">
-                <Clock className="h-3.5 w-3.5" /> {t("slaCard")}
+                <Clock className="h-3.5 w-3.5" /> {t("slaCard")} <InfoHint text={t("hintColSla")} size={12} />
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-2 text-sm">

@@ -143,6 +143,7 @@ export default function SmtpSettingsPage() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">{t("smtp")}</h1>
           <p className="text-sm text-muted-foreground">{t("smtpDesc")}</p>
+          <p className="text-sm text-muted-foreground mt-1">{t("hintSmtp")}</p>
         </div>
         {isConfigured && (
           <div className="ml-auto flex items-center gap-1.5 text-sm text-green-600 bg-green-50 dark:bg-green-900/20 px-3 py-1.5 rounded-full">

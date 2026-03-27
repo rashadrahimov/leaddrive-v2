@@ -409,7 +409,19 @@
     "modalNetworkError": "Şəbəkə xətası",
     "modalSendError": "Göndərmə xətası",
     "detailScoreGrade": "Bal / Dərəcə",
-    "detailDaysSinceCreated": "Yaradılandan bəri günlər"
+    "detailDaysSinceCreated": "Yaradılandan bəri günlər",
+    "pageDescription": "Lid idarəetməsi: potensial müştəriləri izləyin, qiymətləndirin və çevirin",
+    "hintTotalLeads": "Sistemdəki ümumi lid sayı",
+    "hintHotLeads": "Çevrilmə ehtimalı yüksək olan lidlər (bal 80+)",
+    "hintWarmLeads": "Maraq göstərən lidlər (bal 40-79)",
+    "hintColdLeads": "İşlənməsi lazım olan erkən mərhələ lidləri (bal 40-dan aşağı)",
+    "hintColGrade": "Qiymətləndirmə modelinə əsaslanan A-F lid dərəcəsi",
+    "hintColContact": "Bu lidlə əlaqəli əlaqə şəxsi",
+    "hintColSource": "Lidin əldə edildiyi kanal",
+    "hintColStatus": "Cari status: Yeni → Əlaqə saxlanıldı → Təsdiqləndi → Çevrildi və ya İtirildi",
+    "hintColPriority": "Potensial dəyər və təcililiyə əsaslanan prioritet səviyyəsi",
+    "hintColScore": "Lid qiymətləndirmə qaydalarına əsaslanan rəqəmsal bal (0-100)",
+    "hintColTemperature": "Vizual göstərici: 🔥 İsti, 🟡 Ilıq, 🔵 Soyuq"
   },
   "companies": {
     "title": "Şirkətlər",
@@ -468,7 +480,29 @@
     "oneTime": "Birdəfəlik",
     "saleActive": "Aktiv",
     "saleCancelled": "Ləğv edildi",
-    "saleCompleted": "Tamamlandı"
+    "saleCompleted": "Tamamlandı",
+    "pageDescription": "Müştəri şirkətlərinizi idarə edin: status, əlaqələr, sövdələşmələr və fəaliyyət",
+    "hintActiveClients": "Aktiv statuslu şirkətlər — cari müştəriləriniz",
+    "hintTotalContacts": "Bütün şirkətlərdəki ümumi əlaqə şəxsləri sayı",
+    "hintTotalUsers": "Şirkətlərə bağlı CRM istifadəçilərinin sayı",
+    "hintCompaniesCount": "Verilənlər bazasındakı ümumi şirkət sayı",
+    "hintColName": "Şirkətin hüquqi və ya ticarət adı",
+    "hintColIndustry": "İş sahəsi və ya sənaye sektoru",
+    "hintColCategory": "Şirkət statusu: Aktiv (müştəri), Potensial, Qeyri-aktiv",
+    "hintColLocation": "Şirkətin yerləşdiyi şəhər və ya bölgə",
+    "hintColContacts": "Bu şirkətlə əlaqəli əlaqə şəxslərinin sayı",
+    "hintColDeals": "Bu şirkətlə əlaqəli sövdələşmələrin sayı",
+    "hintColScore": "Lid balı — nə qədər yüksəkdirsə, çevrilmə ehtimalı bir o qədər yüksəkdir",
+    "hintColTemperature": "Lid temperaturu: İsti (almağa hazır), Ilıq (maraqlı), Soyuq (erkən mərhələ)",
+    "hintKpiContacts": "Bu şirkətə bağlı əlaqə şəxslərinin ümumi sayı",
+    "hintKpiActiveDeals": "Hazırda davam edən sövdələşmələr (Qazanılmış/İtirilmiş xaric)",
+    "hintKpiPipeline": "Pipeline-dakı aktiv sövdələşmələrin ümumi dəyəri",
+    "hintKpiDaysAsClient": "Şirkətin CRM-ə əlavə olunmasından keçən gün sayı",
+    "hintTabOverview": "Şirkət haqqında ümumi məlumat və son fəaliyyət",
+    "hintTabContacts": "Bu şirkətlə əlaqəli insanlar",
+    "hintTabDeals": "Bu şirkətə bağlı bütün sövdələşmələr",
+    "hintTabTimeline": "Fəaliyyətlərin, sövdələşmələrin və biletlərin xronoloji tarixçəsi",
+    "hintTabPricing": "Qiymət profili, xidmət bölgüsü və əlavə satışlar"
   },
   "dashboard": {
     "title": "İdarə paneli",
@@ -522,7 +556,23 @@
     "actual": "Fakt",
     "projected": "Proqnoz",
     "incomeStructure": "Gəlir strukturu",
-    "totalIncome": "Cəmi"
+    "totalIncome": "Cəmi",
+    "pageDescription": "CRM-in ümumi görünüşü: əsas göstəricilər, qrafiklər və son fəaliyyət",
+    "hintTotalCompanies": "CRM-dəki ümumi şirkət sayı",
+    "hintTotalContacts": "Bütün şirkətlərdəki ümumi əlaqə sayı",
+    "hintTotalDeals": "Boru xəttinin bütün mərhələlərindəki sövdələşmə sayı",
+    "hintTotalLeads": "Hal-hazırda izlənilən ümumi lidlər",
+    "hintTotalTickets": "Bütün statuslardakı dəstək biletlərinin sayı",
+    "hintOpenTasks": "Hələ tamamlanmamış tapşırıqlar",
+    "hintPendingTickets": "Cavab və ya əməliyyat gözləyən biletlər",
+    "hintRevenueForecast": "Sövdələşmə boru xətti və ehtimallara əsaslanan gəlir proqnozu",
+    "hintDealPipelineValue": "Boru xəttindəki bütün sövdələşmələrin ümumi dəyəri",
+    "hintRevenueTrend": "Əvvəlki dövrə nisbətən gəlir dəyişikliyi",
+    "hintTaskCompletion": "Vaxtında tamamlanan tapşırıqların faizi",
+    "hintSupportQuality": "SLA və həll göstəricilərinə əsaslanan ümumi dəstək keyfiyyəti",
+    "hintLeadFunnel": "Yeni-dən çevrilmişə qədər mərhələlərə görə lidlərin vizual bölgüsü",
+    "hintDealPipeline": "Sövdələşmələrin boru xətti mərhələlərinə görə paylanması",
+    "hintActivityFeed": "Son əməliyyatlar: zənglər, e-poçtlar, görüşlər və qeydlər"
   },
   "contacts": {
     "title": "Kontaktlar",
@@ -567,7 +617,18 @@
     "note": "Qeyd",
     "task": "Tapşırıq",
     "editBtn": "Redaktə et",
-    "lastContact": "Son əlaqə"
+    "lastContact": "Son əlaqə",
+    "pageDescription": "Əlaqə bazanız: insanları, şirkətlərini və ünsiyyət tarixçəsini izləyin",
+    "hintTotalContacts": "Sistemdəki ümumi əlaqə sayı",
+    "hintActiveContacts": "Son vaxtlarda aktiv olan əlaqələr",
+    "hintPortalAccess": "Özünəxidmət müştəri portalına girişi olan əlaqələr",
+    "hintColName": "Əlaqə şəxsinin tam adı",
+    "hintColEmail": "Ünsiyyət üçün əsas e-poçt ünvanı",
+    "hintColPhone": "Əlaqənin telefon nömrəsi",
+    "hintColPosition": "Şirkətdəki vəzifəsi və ya rolu",
+    "hintColCompany": "Əlaqənin aid olduğu şirkət",
+    "hintColSource": "Bu əlaqənin necə əldə edildiyi (sayt, tövsiyə, tədbir və s.)",
+    "hintColPortal": "Bu əlaqənin müştəri portalına daxil ola bilib-bilməyəcəyi"
   },
   "deals": {
     "title": "Satış pipeline",
@@ -618,7 +679,27 @@
     "noDealsInStage": "Sövdələşmə yoxdur",
     "addTag": "Teq əlavə et",
     "editDeal": "Redaktə et",
-    "deleteDealBtn": "Sil"
+    "deleteDealBtn": "Sil",
+    "pageDescription": "Satış boru xətti: sövdələşmələri liddən bağlanmaya qədər izləyin",
+    "hintTotalDeals": "Bütün mərhələlərdəki ümumi sövdələşmə sayı",
+    "hintPipelineValue": "Boru xəttindəki bütün sövdələşmələrin ümumi məbləği",
+    "hintWonValue": "Uğurla bağlanmış sövdələşmələrin ümumi dəyəri",
+    "hintLostCount": "İtirilmiş sövdələşmələrin sayı",
+    "hintStageLead": "Başlanğıc mərhələ — yeni imkan müəyyən edilib",
+    "hintStageQualified": "Lid real imkan kimi təsdiqlənib",
+    "hintStageProposal": "Müştəriyə təklif və ya offər göndərilib",
+    "hintStageNegotiation": "Müştəri ilə şərtlər müzakirə edilir",
+    "hintStageWon": "Sövdələşmə uğurla bağlanıb — gəlir təsdiqlənib",
+    "hintStageLost": "Sövdələşmə itirildi — gələcək satışları yaxşılaşdırmaq üçün səbəbi təhlil edin",
+    "hintColName": "Sövdələşmənin adı",
+    "hintColValue": "Sövdələşmənin pul dəyəri",
+    "hintColStage": "Satış boru xəttindəki cari mərhələ",
+    "hintColProbability": "Sövdələşmənin bağlanma ehtimalı (%)",
+    "hintColCompany": "Bu sövdələşmə ilə əlaqəli şirkət",
+    "hintDaysInFunnel": "Sövdələşmənin yaradılmasından bəri keçən gün sayı",
+    "hintDaysAtStage": "Sövdələşmənin cari mərhələdə olduğu gün sayı",
+    "hintDealValue": "Bu sövdələşmənin pul dəyəri",
+    "hintConfidence": "Bu sövdələşmənin bağlanmasına inam səviyyəniz (dəyişdirilə bilər)"
   },
   "tasks": {
     "title": "Tapşırıqlar",
@@ -697,7 +778,18 @@
     "createdAt": "Yaradılıb",
     "updatedAt": "Yenilənib",
     "taskNotFound": "Tapşırıq tapılmadı",
-    "failedToLoad": "Tapşırığı yükləmək alınmadı"
+    "failedToLoad": "Tapşırığı yükləmək alınmadı",
+    "pageDescription": "Tapşırıq idarəetməsi: komanda tapşırıqlarını yaradın, təyin edin və izləyin",
+    "hintTotalTasks": "Sistemdəki ümumi tapşırıq sayı",
+    "hintOverdueTasks": "Vaxtı keçmiş və diqqət tələb edən tapşırıqlar",
+    "hintCompletedWeek": "Cari həftə ərzində tamamlanan tapşırıqlar",
+    "hintCompletionRate": "Tamamlanmış tapşırıqların ümumi faizi",
+    "hintColTitle": "Nə edilməli olduğunun qısa təsviri",
+    "hintColStatus": "Cari irəliləyiş: Başlanmayıb, Davam edir, Tamamlanıb",
+    "hintColPriority": "Təcililik səviyyəsi: Aşağı, Orta, Yüksək, Təcili",
+    "hintColDueDate": "Tapşırığın tamamlanma son tarixi",
+    "hintColAssigned": "Bu tapşırığa məsul olan komanda üzvü",
+    "hintColRelated": "Əlaqəli obyekt: sövdələşmə, əlaqə, şirkət və ya bilet"
   },
   "tickets": {
     "title": "Service Desk",
@@ -787,7 +879,19 @@
     "categoryLabel": "Kateqoriya",
     "contactLabel": "Əlaqə",
     "tagsLabel": "Teqlər",
-    "generalCategory": "ümumi"
+    "generalCategory": "ümumi",
+    "pageDescription": "Dəstək masası: müştəri problemlərini idarə edin, SLA uyğunluğunu və həll vaxtlarını izləyin",
+    "hintTotalTickets": "Ümumi dəstək biletlərinin sayı",
+    "hintSlaBreached": "SLA cavab və ya həll vaxtını aşmış biletlər",
+    "hintFirstResponseRate": "SLA çərçivəsində ilk cavab alan biletlərin faizi",
+    "hintAvgResolution": "Biletin yaradılmasından bağlanmasına qədər orta həll vaxtı",
+    "hintColNumber": "Unikal bilet identifikatoru",
+    "hintColSubject": "Problemin qısa təsviri",
+    "hintColPriority": "Problemin ciddiliyi: Kritik, Yüksək, Orta, Aşağı",
+    "hintColStatus": "Həyat dövrü: Yeni → Açıq → Davam edir → Gözləmədə → Həll edilib → Bağlanıb",
+    "hintColSla": "SLA son tarixinə qədər qalan vaxt. Qırmızı = pozulub, sarı = xəbərdarlıq",
+    "hintColCompany": "Problemi bildirən müştəri şirkəti",
+    "hintColAssigned": "Bu biletlə məşğul olan dəstək agenti"
   },
   "contracts": {
     "title": "Müqavilələr",
@@ -833,7 +937,17 @@
     "sortAmountAsc": "Məbləğ ↑",
     "sortByExpiry": "Bitmə tarixinə görə",
     "sortByCompany": "Şirkətə görə",
-    "expired": "Müddəti bitib"
+    "expired": "Müddəti bitib",
+    "pageDescription": "Müqavilə idarəetməsi: razılaşmaları, yeniləmələri və son tarixləri izləyin",
+    "hintTotalContracts": "Sistemdəki ümumi müqavilə sayı",
+    "hintActiveContracts": "Hal-hazırda aktiv və imzalanmış müqavilələr",
+    "hintExpiringSoon": "Yaxın 30 gün ərzində bitəcək müqavilələr",
+    "hintContractValue": "Bütün müqavilələrin ümumi pul dəyəri",
+    "hintColNumber": "Unikal müqavilə identifikatoru",
+    "hintColType": "Müqavilə növü: Xidmət, NDA, Texniki dəstək, Lisenziya, SLA",
+    "hintColStatus": "Dövrü: Qaralama → Göndərilib → İmzalanıb → Aktiv → Bitir → Bitib/Yenilənib",
+    "hintColDates": "Müqavilə müddətinin başlanğıc və bitmə tarixləri",
+    "hintColAmount": "Müqavilənin pul dəyəri"
   },
   "campaigns": {
     "title": "Kampaniyalar",
@@ -858,7 +972,20 @@
     "opens": "Açılışlar",
     "openRate": "Açılma faizi",
     "clicks": "Kliklər",
-    "clickRate": "Klik faizi"
+    "clickRate": "Klik faizi",
+    "pageDescription": "Marketinq kampaniyaları: e-poçt və SMS göndərin, açılma və klik dərəcələrini izləyin",
+    "hintTotalCampaigns": "Ümumi marketinq kampaniyalarının sayı",
+    "hintSentMonth": "Cari ayda göndərilmiş kampaniyalar",
+    "hintOpenRate": "Mesajı açan alıcıların faizi",
+    "hintClickRate": "Mesajdakı linkə kliklənmiş alıcıların faizi",
+    "hintColName": "Kampaniyanın adı",
+    "hintColType": "Kanal növü: E-poçt və ya SMS",
+    "hintColStatus": "Status: Qaralama → Planlaşdırılıb → Göndərilir → Göndərilib",
+    "hintColRecipients": "Hədəf alıcıların sayı",
+    "hintColOpened": "Mesajı açan alıcıların sayı",
+    "hintColClicked": "Linkə klik edən alıcıların sayı",
+    "hintOpens": "Kampaniyanın ümumi açılma sayı",
+    "hintClicks": "Kampaniyada linklərə ümumi klik sayı"
   },
   "offers": {
     "title": "Təkliflər",
@@ -935,7 +1062,13 @@
       "sent": "Göndərilib",
       "approved": "Təsdiqlənib",
       "rejected": "Rədd edilib"
-    }
+    },
+    "pageDescription": "Kommersiya təklifləri: müştərilərə təkliflər yaradın, göndərin və izləyin",
+    "hintColNumber": "Unikal təklif referans nömrəsi",
+    "hintColTitle": "Kommersiya təklifinin başlığı",
+    "hintColAmount": "Təklifin ümumi pul dəyəri",
+    "hintColStatus": "Status: Qaralama → Göndərilib → Qəbul edilib/Rədd edilib",
+    "hintColValidUntil": "Son tarix — bundan sonra təklif etibarsızdır"
   },
   "invoices": {
     "title": "Hesab-fakturalar",
@@ -1222,7 +1355,17 @@
     "chainWaitUnitMinutes": "Dəqiqə",
     "chainWaitUnitHours": "Saat",
     "chainWaitUnitDays": "Gün",
-    "chainWaitUnitWeeks": "Həftə"
+    "chainWaitUnitWeeks": "Həftə",
+    "pageDescription": "Faktura idarəetməsi: müştərilərdən ödənişləri yaradın, göndərin və izləyin",
+    "hintTotalInvoiced": "Bütün müştərilərə hesablanmış ümumi məbləğ",
+    "hintTotalPaid": "Müştərilərdən alınmış ümumi məbləğ",
+    "hintTotalOutstanding": "Ödənilməmiş fakturalar — müştərilərin hələ borclu olduğu məbləğ",
+    "hintTotalOverdue": "Son tarixi keçmiş ödənilməmiş fakturalar",
+    "hintColNumber": "Unikal faktura nömrəsi",
+    "hintColAmount": "Fakturanın ümumi məbləği",
+    "hintColStatus": "Ödəniş statusu: Qaralama → Göndərilib → Baxılıb → Ödənilib/Gecikib",
+    "hintColDueDate": "Ödəniş son tarixi — bu tarixdən sonra faktura gecikmiş sayılır",
+    "hintColBalance": "Ödənilməli qalan məbləğ"
   },
   "inbox": {
     "title": "Gələn qutusu",
@@ -1252,7 +1395,12 @@
     "messageBodyPlaceholder": "Mesaj mətni...",
     "subjectPlaceholder": "Mövzu...",
     "from": "göndərən",
-    "msgCount": "mesaj"
+    "msgCount": "mesaj",
+    "pageDescription": "Vahid gələnlər: E-poçt, Telegram, WhatsApp, SMS-dən bütün söhbətlər bir yerdə",
+    "hintTotalMessages": "Bütün kanallardakı ümumi mesaj sayı",
+    "hintInbound": "Müştərilərdən alınan mesajlar",
+    "hintOutbound": "Müştərilərə göndərilən mesajlar",
+    "hintConversations": "Əlaqələrlə unikal söhbət mövzuları"
   },
   "reports": {
     "title": "Hesabatlar və Analitika",
@@ -1315,7 +1463,14 @@
     "stageProposal": "Təklif",
     "stageNegotiation": "Danışıqlar",
     "stageWon": "Qazandı",
-    "stageLost": "Uduzdu"
+    "stageLost": "Uduzdu",
+    "pageDescription": "Hesabatlar və analitika: əsas göstəricilər, boru xətti təhlili və performans panelləri",
+    "hintRevenueOverview": "Ümumi gəlir, uğurlu sövdələşmələr sayı və orta sövdələşmə həcmi",
+    "hintPipelineStages": "Dəyərlərlə boru xətti mərhələsinə görə sövdələşmələrin paylanması",
+    "hintTaskSummary": "Tapşırıq tamamlanma dərəcəsi və status bölgüsü",
+    "hintTicketSummary": "Bilet həll dərəcəsi və status bölgüsü",
+    "hintLeadFunnel": "Yenidən çevrilmişə qədər lid çevrilmə hunisi",
+    "hintTopCompanies": "Əldə edilən gəlirə görə sıralanan şirkətlər"
   },
   "products": {
     "title": "Məhsullar və Xidmətlər",
@@ -1344,7 +1499,16 @@
     "tagsLabel": "Teqlər (vergüllə)",
     "activeLabel": "Aktiv",
     "saveChanges": "Dəyişiklikləri saxla",
-    "createProduct": "Məhsul yarat"
+    "createProduct": "Məhsul yarat",
+    "pageDescription": "Məhsul və xidmət kataloqu: təkliflərinizi, qiymətləri və kateqoriyaları idarə edin",
+    "hintTotalProducts": "Ümumi məhsul və xidmət sayı",
+    "hintActiveProducts": "Hal-hazırda satışda olan məhsullar",
+    "hintTotalRevenue": "Bütün məhsullardan əldə edilən ümumi gəlir",
+    "hintAvgPrice": "Bütün aktiv məhsulların orta qiyməti",
+    "hintColName": "Məhsul və ya xidmət adı",
+    "hintColCategory": "Növ: Xidmət, Məhsul, Əlavə və ya Konsaltinq",
+    "hintColPrice": "Məhsul və ya xidmətin vahid qiyməti",
+    "hintColActive": "Bu məhsulun hal-hazırda mövcud olub-olmadığı"
   },
   "kb": {
     "title": "Bilik bazası",
@@ -1371,7 +1535,12 @@
     "colStatus": "Status",
     "colDate": "Tarix",
     "noArticles": "Məqalə yoxdur",
-    "noArticlesFound": "Məqalə tapılmadı"
+    "noArticlesFound": "Məqalə tapılmadı",
+    "pageDescription": "Bilik Bazası: müştərilər və dəstək komandası üçün məqalələr və bələdçilər",
+    "hintTotalArticles": "Bilik bazasındakı ümumi məqalə sayı",
+    "hintPublished": "Portal istifadəçiləri və müştərilər üçün görünən məqalələr",
+    "hintDraft": "Hələ yazılan məqalələr — müştərilərə görünmür",
+    "hintViews": "Məqalələrin baxılma sayı"
   },
   "settings": {
     "title": "Parametrlər",
@@ -1442,7 +1611,27 @@
     "addRole": "Rol əlavə et",
     "deleteRole": "Rolu sil",
     "roleName": "Rol adı",
-    "roleColor": "Rəng"
+    "roleColor": "Rəng",
+    "pageDescription": "Sistem parametrləri: istifadəçilər, rollar, inteqrasiyalar və CRM davranışı",
+    "hintUsers": "CRM istifadəçi hesablarını, rolları və giriş icazələrini idarə edin",
+    "hintRoles": "Hər CRM modulu üçün istifadəçi rollarını və icazələrini müəyyən edin",
+    "hintSecurity": "İki faktorlu autentifikasiya, parol siyasətləri və təhlükəsizlik parametrləri",
+    "hintCurrencies": "Çoxvalyutalı sövdələşmələr üçün valyutaları və məzənnələri konfiqurasiya edin",
+    "hintCustomFields": "Şirkətlərə, əlaqələrə, sövdələşmələrə xüsusi sahələr əlavə edin",
+    "hintWorkflows": "Avtomatlaşdırma qaydaları: avtomatik təyinat, bildiriş, qeydlərin yenilənməsi",
+    "hintSla": "SLA siyasətləri: biletlər üçün cavab və həll vaxtı hədəflərini müəyyən edin",
+    "hintChannels": "Ünsiyyət kanalları: E-poçt, Telegram, WhatsApp, SMS konfiqurasiyası",
+    "hintAuditLog": "İstifadəçilər tərəfindən sistemdə edilən bütün dəyişikliklərin tarixçəsi",
+    "hintBilling": "Abunə planı, istifadə limitləri və ödəniş məlumatları",
+    "hintBudgetConfig": "Büdcə planlaşdırma konfiqurasiyası: maliyyə ili, kateqoriyalar, təsdiq qaydaları",
+    "hintDashboardSettings": "Panel vidgetlərini, düzeni və görünən göstəriciləri fərdiləşdirin",
+    "hintEmailTemplatesSettings": "Sistem bildirişləri üçün standart e-poçt şablonlarını konfiqurasiya edin",
+    "hintInvoiceSettings": "Faktura nömrələməsi, standart şərtlər, ödəniş detalları və brendinq",
+    "hintLeadRules": "Lid qiymətləndirmə qaydaları: avtomatik qiymətləndirmə üçün meyarlar və çəkilər",
+    "hintPortalUsers": "Əlaqələr üçün müştəri portalına girişi idarə edin",
+    "hintSalesForecast": "Satış proqnozu konfiqurasiyası: dövrlər, hədəflər və boru xətti çəkiləri",
+    "hintSmtp": "Sistemdən e-poçt göndərmək üçün SMTP server konfiqurasiyası",
+    "hintWebToLead": "Sayt ziyarətçilərindən avtomatik lid yaradan veb formalar"
   },
   "events": {
     "title": "Tədbirlər",
@@ -1477,7 +1666,14 @@
     "budget": "Büdcə",
     "attended": "İştirak etdi",
     "revenue": "Gəlir",
-    "descriptionPlaceholder": "Tədbir təsviri..."
+    "descriptionPlaceholder": "Tədbir təsviri...",
+    "pageDescription": "Tədbirlər: konfransları, vebinarları, seminarları idarə edin",
+    "hintTotalEvents": "Sistemdəki ümumi tədbir sayı",
+    "hintPlanned": "Planlaşdırılmış və ya qeydiyyat qəbul edən tədbirlər",
+    "hintCompleted": "Artıq keçirilmiş tədbirlər",
+    "hintCancelled": "Ləğv edilmiş tədbirlər",
+    "hintColType": "Növ: Konfrans, Vebinar, Seminar, Görüş, Sərgi",
+    "hintColStatus": "Status: Planlaşdırılıb, Qeydiyyat açıq, Davam edir, Tamamlanıb, Ləğv edilib"
   },
   "profitability": {
     "title": "Gəlirlilik",
@@ -1549,7 +1745,15 @@
     "totalCost": "Ümumi xərc",
     "totalRevenue": "Ümumi gəlir",
     "totalBalance": "Ümumi balans",
-    "profitableLoss": "Gəlirli / Zərərli"
+    "profitableLoss": "Gəlirli / Zərərli",
+    "pageDescription": "Rentabellik analitikası: xərc strukturu, marjalar və xidmət səviyyəsində təhlil",
+    "hintTabCostBreakdown": "Bütün şirkət xərclərinin kateqoriyalara görə ətraflı bölgüsü",
+    "hintTabServices": "Hər xidmət üzrə gəlir, xərc və marja təhlili",
+    "hintTabOverhead": "İnzibati və infrastruktur əlavə xərcləri",
+    "hintTabClients": "Hər müştəri üzrə rentabellik təhlili",
+    "hintTabEmployees": "İşçi xərci və istifadə təhlili",
+    "hintTabParams": "Xərc modeli parametrləri və dərəcələri",
+    "hintTabAi": "Rentabellik üzrə AI tərəfindən hazırlanmış müşahidələr və tövsiyələr"
   },
   "ai": {
     "title": "AI İdarəetmə Mərkəzi",
@@ -1589,7 +1793,21 @@
     "inactive": "Qeyri-aktiv",
     "all": "Hamısı",
     "unread": "Oxunmamış",
-    "markRead": "Oxunmuş kimi işarələ"
+    "markRead": "Oxunmuş kimi işarələ",
+    "pageDescription": "AI Əmr Mərkəzi: AI agentlərini, söhbət sessiyalarını və qarşılıqlı əlaqə analitikasını idarə edin",
+    "hintTotalSessions": "Ümumi AI söhbət sessiyalarının sayı",
+    "hintActiveSessions": "Hal-hazırda aktiv AI söhbətləri",
+    "hintDeflectionRate": "İnsan eskalasiyası olmadan AI tərəfindən həll edilən problemlərin faizi",
+    "hintCsat": "AI qarşılıqlı əlaqəsi üçün müştəri məmnuniyyəti balı",
+    "hintFcr": "İlk əlaqədə həll — ilk qarşılıqlı əlaqədə həll edilən problemlər",
+    "hintAvgResolution": "AI-nin problemi həll etmək üçün orta vaxtı (dəqiqə)",
+    "hintTabDashboard": "AI performans göstəriciləri və KPI-ların icmalı",
+    "hintTabAgentConstructor": "AI agent modellərini, promptları, alətləri və davranışı konfiqurasiya edin",
+    "hintTabSessions": "AI söhbət sessiyası tarixçəsinə və transkripsiyalara baxın",
+    "hintTabLogs": "API zəngləri və cavabları ilə ətraflı qarşılıqlı əlaqə jurnalları",
+    "hintTabGuardrails": "Təhlükəsizlik qaydaları və prompt injection qorunması",
+    "hintScoringPageDescription": "AI ilə lid qiymətləndirmə: lid keyfiyyətinin və çevrilmə ehtimalının avtomatik qiymətləndirilməsi",
+    "hintLeadScoringPageDescription": "Vizual lid qiymətləndirmə paneli: lidlər dərəcə (A-F) üzrə qruplaşdırılıb"
   },
   "dashboardSettings": {
     "title": "İdarə paneli parametrləri",
@@ -1774,7 +1992,12 @@
     "placeholderCeo": "CEO, Menecer...",
     "placeholderTag": "Etiket adı...",
     "namePlaceholder": "Seqment adı",
-    "descPlaceholder": "Təsvir (istəyə bağlı)"
+    "descPlaceholder": "Təsvir (istəyə bağlı)",
+    "pageDescription": "Auditoriya seqmentləri: hədəfli kampaniyalar üçün əlaqələri meyarlara görə qruplaşdırın",
+    "hintTotalSegments": "Müəyyən edilmiş ümumi seqment sayı",
+    "hintDynamic": "Meyarlara uyğun avtomatik yenilənən seqmentlər",
+    "hintStatic": "Əl ilə tərtib edilmiş sabit əlaqə siyahılı seqmentlər",
+    "hintContactCount": "Bütün seqmentlərdəki ümumi əlaqə sayı"
   },
   "notifications": {
     "title": "Bildirişlər",
@@ -1789,7 +2012,10 @@
     "noNotifications": "Bildiriş yoxdur",
     "minsAgo": "{n} dəq əvvəl",
     "hoursAgo": "{n} saat əvvəl",
-    "daysAgo": "{n} gün əvvəl"
+    "daysAgo": "{n} gün əvvəl",
+    "pageDescription": "Bildirişlər: sövdələşmələr, tapşırıqlar, biletlər və digər hadisələr haqqında sistem xəbərdarlıqları",
+    "hintTotal": "Ümumi bildiriş sayı",
+    "hintUnread": "Hələ oxumadığınız bildirişlər"
   },
   "emailTemplates": {
     "title": "Email şablonları",
@@ -1812,7 +2038,13 @@
     "subject": "Mövzu",
     "variables": "dəyişən",
     "active": "Aktiv",
-    "inactive": "Qeyri-aktiv"
+    "inactive": "Qeyri-aktiv",
+    "pageDescription": "E-poçt şablonları: kampaniyalar və bildirişlər üçün dəyişənlərlə təkrar istifadə olunan mesaj şablonları",
+    "hintTotalTemplates": "Ümumi e-poçt şablonlarının sayı",
+    "hintColName": "Daxili istifadə üçün şablon adı",
+    "hintColSubject": "Alıcıların görəcəyi e-poçt mövzusu",
+    "hintColCategory": "Şablon kateqoriyası: Xoş gəldin, Onboarding, Marketinq, Təqib və s.",
+    "hintColLanguage": "Şablon məzmununun dili"
   },
   "emailLog": {
     "title": "Email Jurnalı",
@@ -1842,7 +2074,14 @@
     "errorLabel": "Xəta",
     "messagePreview": "Mesaj önizləməsi",
     "noContent": "Məzmun saxlanılmayıb",
-    "showing": "Göstərilir {from}–{to} / {total}"
+    "showing": "Göstərilir {from}–{to} / {total}",
+    "pageDescription": "E-poçt jurnalı: göndərilmiş və alınmış bütün e-poçtların çatdırılma statusu ilə tarixçəsi",
+    "hintTotalEmails": "E-poçt jurnalındakı ümumi qeyd sayı",
+    "hintOutbound": "Sistemdən xarici alıcılara göndərilmiş e-poçtlar",
+    "hintInbound": "Xarici göndərənlərdən alınmış e-poçtlar",
+    "hintSentCount": "Uğurla çatdırılmış e-poçtlar",
+    "hintFailedCount": "Çatdırılması uğursuz olan e-poçtlar",
+    "hintColStatus": "Çatdırılma statusu: Gözləyir, Göndərilib, Çatdırılıb, Uğursuz, Geri qaytarılıb"
   },
   "journeys": {
     "title": "Müştəri Zəncirləri",
@@ -1870,7 +2109,12 @@
     "noResults": "Heç nə tapılmadı",
     "participants": "iştirakçı",
     "namePlaceholder": "Zəncir adı",
-    "descriptionPlaceholder": "Təsvir (istəyə bağlı)"
+    "descriptionPlaceholder": "Təsvir (istəyə bağlı)",
+    "pageDescription": "Müştəri yolları: hadisələrlə işə salınan çoxaddımlı iş axınlarını avtomatlaşdırın",
+    "hintTotalJourneys": "Ümumi müştəri yollarının sayı",
+    "hintActiveJourneys": "Hal-hazırda işləyən və əlaqələri emal edən yollar",
+    "hintTotalEntries": "Bütün yollara daxil olan ümumi əlaqə sayı",
+    "hintCompletionRate": "Tam yolu tamamlayan əlaqələrin faizi"
   },
   "workflows": {
     "title": "İş Axınları",
@@ -2087,7 +2331,16 @@
     "kanban": "Kanban",
     "timeline": "Vaxt xətti",
     "created": "Yaradılıb",
-    "updated": "Yenilənib"
+    "updated": "Yenilənib",
+    "pageDescription": "Layihə idarəetməsi: büdcələr, vaxt qrafikləri, tapşırıqlar və komanda təyinatları",
+    "hintTotalProjects": "Ümumi layihə sayı",
+    "hintActiveProjects": "Hal-hazırda davam edən layihələr",
+    "hintTotalBudget": "Bütün layihə büdcələrinin cəmi",
+    "hintActualCost": "Bütün layihələr üzrə faktiki xərclər",
+    "hintBudgetRemaining": "Qalan büdcə = Ümumi büdcə - Faktiki xərc",
+    "hintColStatus": "Status: Planlaşdırma, Aktiv, Gözləmədə, Tamamlanıb, Ləğv edilib",
+    "hintColCompletion": "İrəliləyiş faizi — layihənin nə qədəri tamamlanıb",
+    "hintColPriority": "Layihənin prioritet səviyyəsi"
   },
   "budgeting": {
     "title": "Büdcələşdirmə",
@@ -2451,5 +2704,20 @@
     "configServiceKeyHint": "Cost model-də SERVICE_DEPT_MAP açarı",
     "configGeneratesRevenue": "Gəlir yaradır",
     "tabConfig": "Konfiqurasiya"
+  },
+  "pricing": {
+    "pageDescription": "Qiymət modeli: xidmət qiymətlərini, xərc strukturunu və marjaları konfiqurasiya edin",
+    "hintTabPricing": "Gəlir, xərc və marja bölgüsü ilə cari qiymət modeli",
+    "hintTabEdit": "Sürüşdürücülərlə qiymətləri, xərcləri və marjaları tənzimləyin",
+    "hintTabSales": "Satış performansı və kampaniya analitikası"
+  },
+  "campaignRoi": {
+    "pageDescription": "Kampaniya ROI təhlili: hər marketinq kampaniyası üçün investisiya gəlirini ölçün",
+    "hintTotalRevenue": "Marketinq kampaniyalarına aid edilən ümumi gəlir",
+    "hintTotalCost": "Bütün marketinq kampaniyalarına çəkilən ümumi xərc",
+    "hintRoi": "İnvestisiya gəliri = (Gəlir - Xərc) / Xərc × 100%",
+    "hintSendRate": "Alıcılara uğurla çatdırılmış mesajların faizi",
+    "hintOpenRate": "Çatdırılmış mesajların açılma faizi",
+    "hintClickRate": "Açılmış mesajlarda linkə klik faizi"
   }
 }

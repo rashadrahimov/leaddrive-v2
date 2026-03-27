@@ -38,7 +38,7 @@ export function APDashboard() {
   const [showCreate, setShowCreate] = useState(false)
   const [showPayment, setShowPayment] = useState<string | null>(null)
 
-  if (billsLoading || statsLoading) return <div className="p-8 text-center text-muted-foreground">Loading payables...</div>
+  if (billsLoading || statsLoading) return <div className="p-8 text-center text-muted-foreground">Загрузка кредиторки...</div>
 
   const AGING_COLORS = ["#22c55e", "#f59e0b", "#f97316", "#ef4444"]
 
@@ -46,15 +46,15 @@ export function APDashboard() {
     <div className="space-y-6">
       {/* Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <SummaryCard title="Total Payables" value={`${fmt(stats?.total || 0)} AZN`} icon={<CreditCard className="w-5 h-5" />} color="#8b5cf6" />
-        <SummaryCard title="Overdue Amount" value={`${fmt(stats?.overdueTotal || 0)} AZN`} icon={<AlertTriangle className="w-5 h-5" />} color="#ef4444" />
-        <SummaryCard title="Overdue Bills" value={String(stats?.overdueCount || 0)} icon={<Clock className="w-5 h-5" />} color="#f59e0b" />
+        <SummaryCard title="Всего кредиторка" value={`${fmt(stats?.total || 0)} AZN`} icon={<CreditCard className="w-5 h-5" />} color="#8b5cf6" />
+        <SummaryCard title="Просрочено" value={`${fmt(stats?.overdueTotal || 0)} AZN`} icon={<AlertTriangle className="w-5 h-5" />} color="#ef4444" />
+        <SummaryCard title="Просроченных счетов" value={String(stats?.overdueCount || 0)} icon={<Clock className="w-5 h-5" />} color="#f59e0b" />
       </div>
 
       <div className="flex justify-between items-center">
-        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Bills</h3>
+        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Счета к оплате</h3>
         <Button size="sm" onClick={() => setShowCreate(true)}>
-          <Plus className="w-4 h-4 mr-1" /> New Bill
+          <Plus className="w-4 h-4 mr-1" /> Новый счёт
         </Button>
       </div>
 
@@ -62,7 +62,7 @@ export function APDashboard() {
         {/* Aging Chart */}
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-semibold">Aging Analysis</CardTitle>
+            <CardTitle className="text-sm font-semibold">Анализ по срокам</CardTitle>
           </CardHeader>
           <CardContent>
             {stats?.aging?.some((b) => b.amount > 0) ? (
@@ -71,7 +71,7 @@ export function APDashboard() {
                   <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
                   <XAxis dataKey="label" tick={{ fontSize: 11 }} />
                   <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => fmt(v)} />
-                  <Tooltip formatter={(value: number) => [`${fmt(value)} AZN`, "Amount"]} />
+                  <Tooltip formatter={(value: number) => [`${fmt(value)} AZN`, "Сумма"]} />
                   <Bar dataKey="amount" radius={[6, 6, 0, 0]}>
                     {stats.aging.map((_, i) => (
                       <Cell key={i} fill={AGING_COLORS[i]} />
@@ -80,7 +80,7 @@ export function APDashboard() {
                 </BarChart>
               </ResponsiveContainer>
             ) : (
-              <div className="h-[220px] flex items-center justify-center text-sm text-muted-foreground">No aging data</div>
+              <div className="h-[220px] flex items-center justify-center text-sm text-muted-foreground">Нет данных</div>
             )}
           </CardContent>
         </Card>
@@ -88,7 +88,7 @@ export function APDashboard() {
         {/* Top Vendors */}
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-semibold">Top Vendors</CardTitle>
+            <CardTitle className="text-sm font-semibold">Крупнейшие поставщики</CardTitle>
           </CardHeader>
           <CardContent>
             {stats?.topVendors && stats.topVendors.length > 0 ? (
@@ -99,7 +99,7 @@ export function APDashboard() {
                       <span className="text-xs font-bold text-muted-foreground w-5">{i + 1}</span>
                       <div>
                         <p className="text-sm font-medium">{v.vendorName}</p>
-                        <p className="text-xs text-muted-foreground">{v.billCount} bill(s)</p>
+                        <p className="text-xs text-muted-foreground">{v.billCount} счёт(ов)</p>
                       </div>
                     </div>
                     <p className="text-sm font-bold tabular-nums">{fmt(v.amount)} AZN</p>
@@ -107,7 +107,7 @@ export function APDashboard() {
                 ))}
               </div>
             ) : (
-              <div className="h-[220px] flex items-center justify-center text-sm text-muted-foreground">No vendors</div>
+              <div className="h-[220px] flex items-center justify-center text-sm text-muted-foreground">Нет поставщиков</div>
             )}
           </CardContent>
         </Card>
@@ -121,13 +121,13 @@ export function APDashboard() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b text-left">
-                    <th className="py-2 px-2 font-medium text-muted-foreground">Bill #</th>
-                    <th className="py-2 px-2 font-medium text-muted-foreground">Vendor</th>
-                    <th className="py-2 px-2 font-medium text-muted-foreground">Title</th>
-                    <th className="py-2 px-2 font-medium text-muted-foreground">Status</th>
-                    <th className="py-2 px-2 font-medium text-muted-foreground text-right">Total</th>
-                    <th className="py-2 px-2 font-medium text-muted-foreground text-right">Balance</th>
-                    <th className="py-2 px-2 font-medium text-muted-foreground text-right">Due</th>
+                    <th className="py-2 px-2 font-medium text-muted-foreground">Счёт №</th>
+                    <th className="py-2 px-2 font-medium text-muted-foreground">Поставщик</th>
+                    <th className="py-2 px-2 font-medium text-muted-foreground">Название</th>
+                    <th className="py-2 px-2 font-medium text-muted-foreground">Статус</th>
+                    <th className="py-2 px-2 font-medium text-muted-foreground text-right">Сумма</th>
+                    <th className="py-2 px-2 font-medium text-muted-foreground text-right">Остаток</th>
+                    <th className="py-2 px-2 font-medium text-muted-foreground text-right">Срок</th>
                     <th className="py-2 px-2"></th>
                   </tr>
                 </thead>
@@ -139,7 +139,7 @@ export function APDashboard() {
                       <td className="py-2 px-2">{bill.title}</td>
                       <td className="py-2 px-2">
                         <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_COLORS[bill.status] || ""}`}>
-                          {bill.status}
+                          {{ draft: "Черновик", pending: "Ожидает", partially_paid: "Частично", paid: "Оплачен", overdue: "Просрочен", cancelled: "Отменён" }[bill.status] || bill.status}
                         </span>
                       </td>
                       <td className="py-2 px-2 text-right tabular-nums">{fmt(bill.totalAmount)}</td>
@@ -151,10 +151,10 @@ export function APDashboard() {
                         <div className="flex gap-1 justify-end">
                           {bill.status !== "paid" && bill.status !== "cancelled" && (
                             <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => setShowPayment(bill.id)}>
-                              <DollarSign className="w-3 h-3 mr-1" /> Pay
+                              <DollarSign className="w-3 h-3 mr-1" /> Оплатить
                             </Button>
                           )}
-                          <Button size="sm" variant="ghost" className="h-7 text-xs text-red-500" onClick={() => { if (confirm("Delete this bill?")) deleteBill.mutate(bill.id) }}>
+                          <Button size="sm" variant="ghost" className="h-7 text-xs text-red-500" onClick={() => { if (confirm("Удалить этот счёт?")) deleteBill.mutate(bill.id) }}>
                             <Trash2 className="w-3 h-3" />
                           </Button>
                         </div>
@@ -165,7 +165,7 @@ export function APDashboard() {
               </table>
             </div>
           ) : (
-            <div className="py-12 text-center text-muted-foreground text-sm">No bills yet. Click "New Bill" to create one.</div>
+            <div className="py-12 text-center text-muted-foreground text-sm">Нет счетов. Нажмите «Новый счёт» чтобы создать.</div>
           )}
         </CardContent>
       </Card>
@@ -195,20 +195,20 @@ function CreateBillDialog({ open, onClose, onCreate }: { open: boolean; onClose:
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent>
-        <DialogHeader><DialogTitle>New Bill</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>Новый счёт</DialogTitle></DialogHeader>
         <div className="grid gap-3">
-          <div><Label>Bill Number *</Label><Input value={form.billNumber} onChange={(e) => setForm({ ...form, billNumber: e.target.value })} placeholder="BILL-001" /></div>
-          <div><Label>Vendor Name *</Label><Input value={form.vendorName} onChange={(e) => setForm({ ...form, vendorName: e.target.value })} placeholder="Vendor LLC" /></div>
-          <div><Label>Title *</Label><Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Office rent March 2026" /></div>
+          <div><Label>Номер счёта *</Label><Input value={form.billNumber} onChange={(e) => setForm({ ...form, billNumber: e.target.value })} placeholder="BILL-001" /></div>
+          <div><Label>Поставщик *</Label><Input value={form.vendorName} onChange={(e) => setForm({ ...form, vendorName: e.target.value })} placeholder="ООО Пример" /></div>
+          <div><Label>Название *</Label><Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Аренда офиса Март 2026" /></div>
           <div className="grid grid-cols-2 gap-3">
-            <div><Label>Amount (AZN) *</Label><Input type="number" value={form.totalAmount} onChange={(e) => setForm({ ...form, totalAmount: e.target.value })} placeholder="5000" /></div>
-            <div><Label>Due Date</Label><Input type="date" value={form.dueDate} onChange={(e) => setForm({ ...form, dueDate: e.target.value })} /></div>
+            <div><Label>Сумма (AZN) *</Label><Input type="number" value={form.totalAmount} onChange={(e) => setForm({ ...form, totalAmount: e.target.value })} placeholder="5000" /></div>
+            <div><Label>Срок оплаты</Label><Input type="date" value={form.dueDate} onChange={(e) => setForm({ ...form, dueDate: e.target.value })} /></div>
           </div>
-          <div><Label>Category</Label><Input value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} placeholder="rent, software, services..." /></div>
+          <div><Label>Категория</Label><Input value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} placeholder="аренда, ПО, услуги..." /></div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button onClick={handleSubmit} disabled={onCreate.isPending}>{onCreate.isPending ? "Creating..." : "Create Bill"}</Button>
+          <Button variant="outline" onClick={onClose}>Отмена</Button>
+          <Button onClick={handleSubmit} disabled={onCreate.isPending}>{onCreate.isPending ? "Создаётся..." : "Создать счёт"}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -230,14 +230,14 @@ function AddPaymentDialog({ billId, onClose, onPay }: { billId: string; onClose:
   return (
     <Dialog open onOpenChange={onClose}>
       <DialogContent>
-        <DialogHeader><DialogTitle>Add Payment</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>Добавить оплату</DialogTitle></DialogHeader>
         <div className="grid gap-3">
-          <div><Label>Amount (AZN) *</Label><Input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="1000" /></div>
-          <div><Label>Reference</Label><Input value={ref} onChange={(e) => setRef(e.target.value)} placeholder="Bank transfer #..." /></div>
+          <div><Label>Сумма (AZN) *</Label><Input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="1000" /></div>
+          <div><Label>Основание</Label><Input value={ref} onChange={(e) => setRef(e.target.value)} placeholder="Банковский перевод №..." /></div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button onClick={handleSubmit} disabled={onPay.isPending}>{onPay.isPending ? "Paying..." : "Record Payment"}</Button>
+          <Button variant="outline" onClick={onClose}>Отмена</Button>
+          <Button onClick={handleSubmit} disabled={onPay.isPending}>{onPay.isPending ? "Оплата..." : "Записать оплату"}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

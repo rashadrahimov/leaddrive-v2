@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation"
 import { ColorStatCard } from "@/components/color-stat-card"
 import { DataTable } from "@/components/data-table"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
+import { PageDescription } from "@/components/page-description"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Select } from "@/components/ui/select"
@@ -183,6 +184,7 @@ export default function InvoicesPage() {
     {
       key: "invoiceNumber",
       label: t("colNumber"),
+      hint: t("hintColNumber"),
       sortable: true,
       render: (item: any) => (
         <span className="font-mono text-sm">{item.invoiceNumber}{item.recurringInvoiceId && <span className="ml-1.5 text-[10px] bg-cyan-100 text-cyan-700 dark:bg-cyan-900 dark:text-cyan-300 px-1 py-0.5 rounded font-sans">↻</span>}</span>
@@ -202,6 +204,7 @@ export default function InvoicesPage() {
     {
       key: "totalAmount",
       label: t("colAmount"),
+      hint: t("hintColAmount"),
       sortable: true,
       render: (item: any) => (
         <span className="font-medium">
@@ -213,12 +216,14 @@ export default function InvoicesPage() {
     {
       key: "status",
       label: t("colStatus"),
+      hint: t("hintColStatus"),
       sortable: true,
       render: (item: any) => statusBadge(item.status),
     },
     {
       key: "dueDate",
       label: t("colDueDate"),
+      hint: t("hintColDueDate"),
       sortable: true,
       render: (item: any) =>
         item.dueDate ? new Date(item.dueDate).toLocaleDateString() : "—",
@@ -226,6 +231,7 @@ export default function InvoicesPage() {
     {
       key: "balanceDue",
       label: t("colBalanceDue"),
+      hint: t("hintColBalance"),
       sortable: true,
       render: (item: any) => (
         <span className="font-medium">
@@ -306,6 +312,7 @@ export default function InvoicesPage() {
           </Button>
         </div>
       </div>
+      <PageDescription text={t("pageDescription")} />
 
       {/* Row 1 — Financial summary */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -314,24 +321,28 @@ export default function InvoicesPage() {
           value={`${stats.totalInvoiced.toLocaleString()} ${stats.currency}`}
           icon={<DollarSign className="h-5 w-5" />}
           color="blue"
+          hint={t("hintTotalInvoiced")}
         />
         <ColorStatCard
           label={t("statPaid")}
           value={`${stats.totalPaid.toLocaleString()} ${stats.currency}`}
           icon={<CheckCircle className="h-5 w-5" />}
           color="green"
+          hint={t("hintTotalPaid")}
         />
         <ColorStatCard
           label={t("statOutstanding")}
           value={`${stats.totalOutstanding.toLocaleString()} ${stats.currency}`}
           icon={<Clock className="h-5 w-5" />}
           color="orange"
+          hint={t("hintTotalOutstanding")}
         />
         <ColorStatCard
           label={t("statOverdue")}
           value={`${stats.totalOverdue.toLocaleString()} ${stats.currency}`}
           icon={<AlertTriangle className="h-5 w-5" />}
           color="red"
+          hint={t("hintTotalOverdue")}
         />
       </div>
 

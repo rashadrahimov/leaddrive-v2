@@ -10,6 +10,8 @@ import {
   TrendingUp, DollarSign, BarChart3, CheckSquare, Clock,
   Users, Building2, Target, FileText, Wallet, ArrowRight, Star,
 } from "lucide-react"
+import { InfoHint } from "@/components/info-hint"
+import { PageDescription } from "@/components/page-description"
 
 interface ReportData {
   overview: {
@@ -258,6 +260,8 @@ export default function ReportsPage() {
         </div>
       </div>
 
+      <PageDescription text={t("pageDescription")} />
+
       {/* Overview Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
         <ColorStatCard label={t("statCompanies")} value={data.overview.companies} icon={<Building2 className="h-4 w-4" />} color="blue" />
@@ -275,7 +279,7 @@ export default function ReportsPage() {
           <CardHeader className="pb-3">
             <div className="flex items-start justify-between">
               <div>
-                <CardTitle className="text-base">{t("financialOverview")}</CardTitle>
+                <CardTitle className="text-base flex items-center gap-1">{t("financialOverview")} <InfoHint text={t("hintRevenueOverview")} size={12} /></CardTitle>
                 <p className="text-xs text-muted-foreground mt-1">{t("revenueAndContracts")}</p>
               </div>
               <Wallet className="h-5 w-5 text-primary" />
@@ -314,7 +318,7 @@ export default function ReportsPage() {
           <CardHeader className="pb-3">
             <div className="flex items-start justify-between">
               <div>
-                <CardTitle className="text-base">{t("dealsPipeline")}</CardTitle>
+                <CardTitle className="text-base flex items-center gap-1">{t("dealsPipeline")} <InfoHint text={t("hintPipelineStages")} size={12} /></CardTitle>
                 <p className="text-xs text-muted-foreground mt-1">{t("byStage")}</p>
               </div>
               <BarChart3 className="h-5 w-5 text-primary" />
@@ -350,7 +354,7 @@ export default function ReportsPage() {
           <CardHeader className="pb-3">
             <div className="flex items-start justify-between">
               <div>
-                <CardTitle className="text-base">{t("leadFunnel")}</CardTitle>
+                <CardTitle className="text-base flex items-center gap-1">{t("leadFunnel")} <InfoHint text={t("hintLeadFunnel")} size={12} /></CardTitle>
                 <p className="text-xs text-muted-foreground mt-1">{t("conversion")}: {data.leads.conversionRate}%</p>
               </div>
               <Target className="h-5 w-5 text-primary" />
@@ -366,7 +370,7 @@ export default function ReportsPage() {
           <CardHeader className="pb-3">
             <div className="flex items-start justify-between">
               <div>
-                <CardTitle className="text-base">{t("taskSummary")}</CardTitle>
+                <CardTitle className="text-base flex items-center gap-1">{t("taskSummary")} <InfoHint text={t("hintTaskSummary")} size={12} /></CardTitle>
                 <p className="text-xs text-muted-foreground mt-1">{t("completionAndOverdue")}</p>
               </div>
               <CheckSquare className="h-5 w-5 text-primary" />
@@ -396,7 +400,7 @@ export default function ReportsPage() {
           <CardHeader className="pb-3">
             <div className="flex items-start justify-between">
               <div>
-                <CardTitle className="text-base">{t("topClients")}</CardTitle>
+                <CardTitle className="text-base flex items-center gap-1">{t("topClients")} <InfoHint text={t("hintTopCompanies")} size={12} /></CardTitle>
                 <p className="text-xs text-muted-foreground mt-1">{t("byRevenue")}</p>
               </div>
               <Building2 className="h-5 w-5 text-primary" />
@@ -471,7 +475,7 @@ export default function ReportsPage() {
           <CardHeader className="pb-3">
             <div className="flex items-start justify-between">
               <div>
-                <CardTitle className="text-base">{t("ticketSla")}</CardTitle>
+                <CardTitle className="text-base flex items-center gap-1">{t("ticketSla")} <InfoHint text={t("hintTicketSummary")} size={12} /></CardTitle>
                 <p className="text-xs text-muted-foreground mt-1">{t("resolutionAndOpen")}</p>
               </div>
               <Clock className="h-5 w-5 text-primary" />

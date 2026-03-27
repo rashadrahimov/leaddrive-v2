@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Loader2, Save, TrendingUp, ArrowLeft, Download, Upload } from "lucide-react"
 import Link from "next/link"
+import { useTranslations } from "next-intl"
 
 interface Department {
   id: string
@@ -34,6 +35,7 @@ function fmt(n: number): string {
 
 export default function SalesForecastPage() {
   const { data: session } = useSession()
+  const ts = useTranslations("settings")
   const orgId = session?.user?.organizationId
 
   const [departments, setDepartments] = useState<Department[]>([])
@@ -210,6 +212,7 @@ export default function SalesForecastPage() {
             </Link>
             <TrendingUp className="h-5 w-5" />
             <h1 className="text-xl font-bold">Прогноз продаж</h1>
+            <p className="text-sm text-muted-foreground">{ts("hintSalesForecast")}</p>
           </div>
           <div className="flex items-center gap-2">
             <label className="flex items-center gap-1.5 text-xs cursor-pointer select-none text-muted-foreground">

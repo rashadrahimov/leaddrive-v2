@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ArrowLeft, Pencil, Trash2, FileCheck, DollarSign, Calendar, Hash, Clock, CheckCircle2 } from "lucide-react"
 import { ColorStatCard } from "@/components/color-stat-card"
+import { InfoHint } from "@/components/info-hint"
 import { OfferForm } from "@/components/offer-form"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
 
@@ -127,18 +128,21 @@ export default function OfferDetailPage() {
               value={offer.totalAmount ? `${Number(offer.totalAmount).toLocaleString()} ${offer.currency || "USD"}` : "—"}
               icon={<DollarSign className="h-4 w-4" />}
               color="green"
+              hint={t("hintColAmount")}
             />
             <ColorStatCard
               label={t("colValidUntil")}
               value={daysValid !== null ? (daysValid < 0 ? t("expired") : `${daysValid} ${tc("days")}`) : "—"}
               icon={<Calendar className="h-4 w-4" />}
               color="violet"
+              hint={t("hintColValidUntil")}
             />
             <ColorStatCard
               label={tc("status")}
               value={offer.status}
               icon={<CheckCircle2 className="h-4 w-4" />}
               bgClass={statusBg}
+              hint={t("hintColStatus")}
             />
           </div>
         )
@@ -146,7 +150,7 @@ export default function OfferDetailPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">{tc("details")}</CardTitle>
+          <CardTitle className="text-base flex items-center gap-1">{tc("details")} <InfoHint text={t("pageDescription")} size={12} /></CardTitle>
         </CardHeader>
         <CardContent className="space-y-3 text-sm">
           <div className="grid grid-cols-2 gap-4">

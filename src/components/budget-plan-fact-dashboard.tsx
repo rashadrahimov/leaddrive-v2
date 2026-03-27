@@ -68,8 +68,8 @@ export function BudgetPlanFactDashboard({ year }: { year: number }) {
     enabled: !!orgId,
   })
 
-  if (isLoading) return <div className="p-6 text-center text-muted-foreground">Loading Plan vs Fact...</div>
-  if (!data) return <div className="p-6 text-center text-muted-foreground">No data</div>
+  if (isLoading) return <div className="p-6 text-center text-muted-foreground">Загрузка План vs Факт...</div>
+  if (!data) return <div className="p-6 text-center text-muted-foreground">Нет данных</div>
 
   const { totals } = data
 
@@ -77,14 +77,14 @@ export function BudgetPlanFactDashboard({ year }: { year: number }) {
     <div className="space-y-4">
       {/* Header */}
       <div>
-        <h3 className="text-sm font-semibold">Plan vs Fact</h3>
-        <p className="text-xs text-muted-foreground">Budget variance analysis — {year}</p>
+        <h3 className="text-sm font-semibold">План vs Факт</h3>
+        <p className="text-xs text-muted-foreground">Анализ отклонений бюджета — {year}</p>
       </div>
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         <VarianceCard
-          title="Revenue"
+          title="Выручка"
           plan={totals.revenuePlan}
           fact={totals.revenueFact}
           variance={totals.revenueVariance}
@@ -92,7 +92,7 @@ export function BudgetPlanFactDashboard({ year }: { year: number }) {
           positiveIsGood={true}
         />
         <VarianceCard
-          title="Expenses"
+          title="Расходы"
           plan={totals.expensePlan}
           fact={totals.expenseFact}
           variance={totals.expenseVariance}
@@ -100,7 +100,7 @@ export function BudgetPlanFactDashboard({ year }: { year: number }) {
           positiveIsGood={false}
         />
         <VarianceCard
-          title="Net Profit"
+          title="Чистая прибыль"
           plan={totals.netPlan}
           fact={totals.netFact}
           variance={totals.netFact - totals.netPlan}
@@ -112,7 +112,7 @@ export function BudgetPlanFactDashboard({ year }: { year: number }) {
       {/* Revenue Chart */}
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm">Revenue: Plan vs Fact</CardTitle>
+          <CardTitle className="text-sm">Выручка: План vs Факт</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="h-[250px]">
@@ -122,8 +122,8 @@ export function BudgetPlanFactDashboard({ year }: { year: number }) {
                 <XAxis dataKey="label" tick={AXIS_TICK} />
                 <YAxis tick={AXIS_TICK} tickFormatter={(v) => `${Math.round(v / 1000)}k`} />
                 <Tooltip content={<BudgetChartTooltip />} />
-                <Bar dataKey="revenuePlan" name="Plan" fill="#93c5fd" radius={[2, 2, 0, 0]} {...ANIMATION} />
-                <Bar dataKey="revenueFact" name="Fact" fill="#2563eb" radius={[2, 2, 0, 0]} {...ANIMATION} />
+                <Bar dataKey="revenuePlan" name="План" fill="#93c5fd" radius={[2, 2, 0, 0]} {...ANIMATION} />
+                <Bar dataKey="revenueFact" name="Факт" fill="#2563eb" radius={[2, 2, 0, 0]} {...ANIMATION} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -133,7 +133,7 @@ export function BudgetPlanFactDashboard({ year }: { year: number }) {
       {/* Expense Chart */}
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm">Expenses: Plan vs Fact</CardTitle>
+          <CardTitle className="text-sm">Расходы: План vs Факт</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="h-[250px]">
@@ -143,8 +143,8 @@ export function BudgetPlanFactDashboard({ year }: { year: number }) {
                 <XAxis dataKey="label" tick={AXIS_TICK} />
                 <YAxis tick={AXIS_TICK} tickFormatter={(v) => `${Math.round(v / 1000)}k`} />
                 <Tooltip content={<BudgetChartTooltip />} />
-                <Bar dataKey="expensePlan" name="Plan" fill="#fca5a5" radius={[2, 2, 0, 0]} {...ANIMATION} />
-                <Bar dataKey="expenseFact" name="Fact" fill="#dc2626" radius={[2, 2, 0, 0]} {...ANIMATION} />
+                <Bar dataKey="expensePlan" name="План" fill="#fca5a5" radius={[2, 2, 0, 0]} {...ANIMATION} />
+                <Bar dataKey="expenseFact" name="Факт" fill="#dc2626" radius={[2, 2, 0, 0]} {...ANIMATION} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -154,22 +154,22 @@ export function BudgetPlanFactDashboard({ year }: { year: number }) {
       {/* Monthly Table */}
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm">Monthly Breakdown</CardTitle>
+          <CardTitle className="text-sm">Помесячная разбивка</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <table className="w-full text-xs">
               <thead>
                 <tr className="border-b bg-muted/50">
-                  <th className="text-left py-2 px-3 font-medium">Month</th>
-                  <th className="text-right py-2 px-3 font-medium">Rev Plan</th>
-                  <th className="text-right py-2 px-3 font-medium">Rev Fact</th>
-                  <th className="text-right py-2 px-3 font-medium">Var %</th>
-                  <th className="text-right py-2 px-3 font-medium">Exp Plan</th>
-                  <th className="text-right py-2 px-3 font-medium">Exp Fact</th>
-                  <th className="text-right py-2 px-3 font-medium">Var %</th>
-                  <th className="text-right py-2 px-3 font-medium">Net Plan</th>
-                  <th className="text-right py-2 px-3 font-medium">Net Fact</th>
+                  <th className="text-left py-2 px-3 font-medium">Месяц</th>
+                  <th className="text-right py-2 px-3 font-medium">Выр. План</th>
+                  <th className="text-right py-2 px-3 font-medium">Выр. Факт</th>
+                  <th className="text-right py-2 px-3 font-medium">Откл %</th>
+                  <th className="text-right py-2 px-3 font-medium">Расх. План</th>
+                  <th className="text-right py-2 px-3 font-medium">Расх. Факт</th>
+                  <th className="text-right py-2 px-3 font-medium">Откл %</th>
+                  <th className="text-right py-2 px-3 font-medium">Нетто План</th>
+                  <th className="text-right py-2 px-3 font-medium">Нетто Факт</th>
                 </tr>
               </thead>
               <tbody>
@@ -194,7 +194,7 @@ export function BudgetPlanFactDashboard({ year }: { year: number }) {
                 ))}
                 {/* Totals row */}
                 <tr className="border-t-2 bg-muted/30 font-bold">
-                  <td className="py-2 px-3">Total</td>
+                  <td className="py-2 px-3">Итого</td>
                   <td className="text-right py-2 px-3 tabular-nums">{fmt(totals.revenuePlan)}</td>
                   <td className="text-right py-2 px-3 tabular-nums">{fmt(totals.revenueFact)}</td>
                   <td className="text-right py-2 px-3">
@@ -238,11 +238,11 @@ function VarianceCard({ title, plan, fact, variance, variancePct, positiveIsGood
         </div>
         <div className="grid grid-cols-2 gap-2">
           <div>
-            <span className="text-[10px] text-muted-foreground block">Plan</span>
+            <span className="text-[10px] text-muted-foreground block">План</span>
             <span className="text-sm font-semibold tabular-nums">{fmt(plan)}</span>
           </div>
           <div>
-            <span className="text-[10px] text-muted-foreground block">Fact</span>
+            <span className="text-[10px] text-muted-foreground block">Факт</span>
             <span className="text-sm font-bold tabular-nums">{fmt(fact)}</span>
           </div>
         </div>

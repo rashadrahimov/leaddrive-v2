@@ -16,6 +16,7 @@ import {
   Users, Plus, Pencil, Trash2, Shield, ShieldCheck, Eye,
   Loader2, UserCheck, UserX, Search,
 } from "lucide-react"
+import { useTranslations } from "next-intl"
 
 interface User {
   id: string
@@ -210,6 +211,7 @@ function UserFormDialog({
 
 export default function UsersSettingsPage() {
   const { data: session } = useSession()
+  const ts = useTranslations("settings")
   const [users, setUsers] = useState<User[]>([])
   const [availableRoles, setAvailableRoles] = useState<RoleConfig[]>([])
   const [loading, setLoading] = useState(true)
@@ -416,7 +418,7 @@ export default function UsersSettingsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Пользователи ({users.length})</h1>
-          <p className="text-sm text-muted-foreground">Управление пользователями системы</p>
+          <p className="text-sm text-muted-foreground">{ts("hintUsers")}</p>
         </div>
         <Button onClick={() => { setEditUser(undefined); setShowForm(true) }}>
           <Plus className="h-4 w-4 mr-1" /> Добавить

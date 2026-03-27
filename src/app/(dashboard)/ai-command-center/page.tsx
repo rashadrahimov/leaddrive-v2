@@ -11,6 +11,8 @@ import { DataTable } from "@/components/data-table"
 import { AiConfigForm } from "@/components/ai-config-form"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
 import { cn } from "@/lib/utils"
+import { InfoHint } from "@/components/info-hint"
+import { PageDescription } from "@/components/page-description"
 import {
   Zap, TrendingUp, Clock, Plus, Pencil, Trash2,
   MessageSquare, ShieldCheck, Timer, DollarSign,
@@ -315,6 +317,8 @@ export default function AICommandCenterPage() {
         </div>
       </div>
 
+      <PageDescription text={t("pageDescription")} />
+
       {/* Tabs — large, v1-style */}
       <div className="grid grid-cols-2 gap-0 rounded-xl overflow-hidden border">
         <button
@@ -326,7 +330,7 @@ export default function AICommandCenterPage() {
               : "bg-white hover:bg-gray-50 text-gray-600"
           )}
         >
-          <Activity className="h-4 w-4" /> Dashboard
+          <Activity className="h-4 w-4" /> Dashboard <InfoHint text={t("hintTabDashboard")} size={12} />
         </button>
         <button
           onClick={() => setActiveTab("constructor")}
@@ -337,7 +341,7 @@ export default function AICommandCenterPage() {
               : "bg-white hover:bg-gray-50 text-gray-600"
           )}
         >
-          <Settings2 className="h-4 w-4" /> Agent Constructor
+          <Settings2 className="h-4 w-4" /> Agent Constructor <InfoHint text={t("hintTabAgentConstructor")} size={12} />
         </button>
       </div>
 
@@ -350,9 +354,9 @@ export default function AICommandCenterPage() {
             <div className="rounded-xl border bg-white p-5 shadow-sm">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">{t("totalSessions")}</p>
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider flex items-center gap-1">{t("totalSessions")} <InfoHint text={t("hintTotalSessions")} size={12} /></p>
                   <p className="text-3xl font-bold mt-1">{stats?.totalSessions || 0}</p>
-                  <p className="text-xs text-blue-600 mt-1">{tc("today")}: {stats?.activeSessions || 0}</p>
+                  <p className="text-xs text-blue-600 mt-1 flex items-center gap-1">{tc("today")}: {stats?.activeSessions || 0} <InfoHint text={t("hintActiveSessions")} size={12} /></p>
                 </div>
                 <div className="h-12 w-12 rounded-xl bg-blue-50 flex items-center justify-center">
                   <MessageSquare className="h-6 w-6 text-blue-500" />
@@ -364,7 +368,7 @@ export default function AICommandCenterPage() {
             <div className="rounded-xl border bg-white p-5 shadow-sm">
               <div className="flex items-center justify-between">
                 <div className="flex-1">
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">{t("deflectionRate")}</p>
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider flex items-center gap-1">{t("deflectionRate")} <InfoHint text={t("hintDeflectionRate")} size={12} /></p>
                   <p className={cn("text-3xl font-bold mt-1", deflectionRate > 50 ? "text-green-600" : deflectionRate > 20 ? "text-amber-500" : "text-gray-900")}>
                     {deflectionRate.toFixed(1)}%
                   </p>
@@ -385,7 +389,7 @@ export default function AICommandCenterPage() {
             <div className="rounded-xl border bg-white p-5 shadow-sm">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">CSAT</p>
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider flex items-center gap-1">CSAT <InfoHint text={t("hintCsat")} size={12} /></p>
                   <p className="text-3xl font-bold mt-1">
                     {stats?.csat ? <>{stats.csat}<span className="text-lg text-gray-400">/5</span></> : "—"}
                   </p>
@@ -401,7 +405,7 @@ export default function AICommandCenterPage() {
             <div className="rounded-xl border bg-white p-5 shadow-sm">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">{t("fcrRate")}</p>
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider flex items-center gap-1">{t("fcrRate")} <InfoHint text={t("hintFcr")} size={12} /></p>
                   <p className={cn("text-3xl font-bold mt-1", (stats?.fcrRate || 0) > 0 ? "text-green-600" : "")}>
                     {stats?.fcrRate || 0}%
                   </p>
@@ -422,7 +426,7 @@ export default function AICommandCenterPage() {
                 <Timer className="h-5 w-5 text-blue-600" />
               </div>
               <div>
-                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">{t("avgResolutionTime")}</p>
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider flex items-center gap-1">{t("avgResolutionTime")} <InfoHint text={t("hintAvgResolution")} size={12} /></p>
                 <p className="text-2xl font-bold">{stats?.avgResolutionTime || 0} <span className="text-sm font-normal text-gray-400">{t("min")}</span></p>
               </div>
             </div>
@@ -533,7 +537,7 @@ export default function AICommandCenterPage() {
           <div className="rounded-xl border bg-white shadow-sm">
             <div className="p-5 border-b">
               <h3 className="font-semibold flex items-center gap-2">
-                <ScrollText className="h-5 w-5 text-blue-500" /> Сессии за 7 дней
+                <ScrollText className="h-5 w-5 text-blue-500" /> Сессии за 7 дней <InfoHint text={t("hintTabSessions")} size={12} />
               </h3>
             </div>
             <div className="p-4">
@@ -547,7 +551,7 @@ export default function AICommandCenterPage() {
           <div className="rounded-xl border bg-background shadow-sm">
             <div className="p-5 border-b flex items-center justify-between">
               <h3 className="font-semibold flex items-center gap-2">
-                <ScrollText className="h-5 w-5 text-indigo-500" /> Логи взаимодействий
+                <ScrollText className="h-5 w-5 text-indigo-500" /> Логи взаимодействий <InfoHint text={t("hintTabLogs")} size={12} />
                 <span className="text-xs text-muted-foreground font-normal">({logsTotal} записей)</span>
               </h3>
             </div>
@@ -896,7 +900,7 @@ export default function AICommandCenterPage() {
             <div className="flex items-center justify-between p-5 border-b">
               <div>
                 <h3 className="font-semibold flex items-center gap-2">
-                  <span className="text-red-500">🛡️</span> Правила и ограничения
+                  <span className="text-red-500">🛡️</span> Правила и ограничения <InfoHint text={t("hintTabGuardrails")} size={12} />
                 </h3>
                 <p className="text-sm text-gray-500">Что агенту запрещено делать</p>
               </div>

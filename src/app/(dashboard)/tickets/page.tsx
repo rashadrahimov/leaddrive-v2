@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { DataTable } from "@/components/data-table"
 import { ColorStatCard } from "@/components/color-stat-card"
+import { InfoHint } from "@/components/info-hint"
+import { PageDescription } from "@/components/page-description"
 import { TicketForm } from "@/components/ticket-form"
 import { Ticket, Plus, Clock, AlertTriangle, CheckCircle, Pencil, Trash2, UserX } from "lucide-react"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
@@ -137,25 +139,25 @@ export default function TicketsPage() {
 
   const columns = [
     {
-      key: "ticketNumber", label: t("colNumber"), sortable: true,
+      key: "ticketNumber", label: t("colNumber"), hint: t("hintColNumber"), sortable: true,
       render: (item: any) => <span className="font-mono text-xs">{item.ticketNumber}</span>,
     },
-    { key: "subject", label: t("colSubject"), sortable: true },
+    { key: "subject", label: t("colSubject"), hint: t("hintColSubject"), sortable: true },
     {
-      key: "priority", label: t("colPriority"), sortable: true,
+      key: "priority", label: t("colPriority"), hint: t("hintColPriority"), sortable: true,
       render: (item: any) => (
         <span className={cn("px-2 py-0.5 rounded-full text-xs font-medium", priorityColors[item.priority])}>
           {item.priority}
         </span>
       ),
     },
-    { key: "companyName", label: t("colCompany"), sortable: true, render: (item: any) => <span>{item.companyName || "—"}</span> },
+    { key: "companyName", label: t("colCompany"), hint: t("hintColCompany"), sortable: true, render: (item: any) => <span>{item.companyName || "—"}</span> },
     {
-      key: "status", label: t("colStatus"), sortable: true,
+      key: "status", label: t("colStatus"), hint: t("hintColStatus"), sortable: true,
       render: (item: any) => <Badge variant="outline">{statusLabels[item.status]}</Badge>,
     },
     {
-      key: "slaDueAt", label: t("colSla"), sortable: true,
+      key: "slaDueAt", label: t("colSla"), hint: t("hintColSla"), sortable: true,
       render: (item: any) => {
         if (!item.slaDueAt) return <span className="text-xs text-muted-foreground">—</span>
         const slaStatus = getSlaStatus(item.slaDueAt, item.status)
@@ -200,7 +202,7 @@ export default function TicketsPage() {
         return <span className={cn("text-xs font-mono", hours > 4 ? "text-red-500" : hours > 1 ? "text-amber-500" : "text-green-500")}>{label}</span>
       },
     },
-    { key: "assigneeName", label: t("colAssigned"), sortable: true, render: (item: any) => <span>{item.assigneeName || "—"}</span> },
+    { key: "assigneeName", label: t("colAssigned"), hint: t("hintColAssigned"), sortable: true, render: (item: any) => <span>{item.assigneeName || "—"}</span> },
     {
       key: "actions",
       label: "",
@@ -243,6 +245,7 @@ export default function TicketsPage() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
           <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
+          <PageDescription text={t("pageDescription")} />
         </div>
         <div className="flex items-center gap-2">
           <div className="flex rounded-lg border">
@@ -254,11 +257,11 @@ export default function TicketsPage() {
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-        <ColorStatCard label={t("statTotal")} value={tickets.length} icon={<Ticket className="h-4 w-4" />} color="blue" />
-        <ColorStatCard label={t("statOpen")} value={openCount} icon={<Clock className="h-4 w-4" />} color="amber" />
+        <ColorStatCard label={t("statTotal")} value={tickets.length} icon={<Ticket className="h-4 w-4" />} color="blue" hint={t("hintTotalTickets")} />
+        <ColorStatCard label={t("statOpen")} value={openCount} icon={<Clock className="h-4 w-4" />} color="amber" hint={t("hintFirstResponseRate")} />
         <ColorStatCard label={t("statUnassigned")} value={unassignedCount} icon={<UserX className="h-4 w-4" />} color="orange" />
-        <ColorStatCard label={t("statSlaBreach")} value={breachedCount} icon={<AlertTriangle className="h-4 w-4" />} color="red" />
-        <ColorStatCard label={t("statResolved")} value={resolvedCount} icon={<CheckCircle className="h-4 w-4" />} color="green" />
+        <ColorStatCard label={t("statSlaBreach")} value={breachedCount} icon={<AlertTriangle className="h-4 w-4" />} color="red" hint={t("hintSlaBreached")} />
+        <ColorStatCard label={t("statResolved")} value={resolvedCount} icon={<CheckCircle className="h-4 w-4" />} color="green" hint={t("hintAvgResolution")} />
       </div>
 
       {/* Status filter tabs */}

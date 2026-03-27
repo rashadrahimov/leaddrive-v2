@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ArrowLeft, Pencil, Trash2, FileText, Calendar, DollarSign, Hash, Clock, AlertTriangle } from "lucide-react"
 import { ColorStatCard } from "@/components/color-stat-card"
+import { InfoHint } from "@/components/info-hint"
 import { ContractForm } from "@/components/contract-form"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
 
@@ -126,18 +127,21 @@ export default function ContractDetailPage() {
               value={contract.valueAmount ? `${Number(contract.valueAmount).toLocaleString()} ${contract.currency || "USD"}` : "—"}
               icon={<DollarSign className="h-4 w-4" />}
               color="green"
+              hint={t("hintColAmount")}
             />
             <ColorStatCard
               label={tc("type")}
               value={contract.type || "—"}
               icon={<Hash className="h-4 w-4" />}
               color="violet"
+              hint={t("hintColType")}
             />
             <ColorStatCard
               label={tc("daysLeft")}
               value={daysLeft !== null ? (daysLeft < 0 ? t("expired") : `${daysLeft}`) : "—"}
               icon={<AlertTriangle className="h-4 w-4" />}
               bgClass={endBg}
+              hint={t("hintColDates")}
             />
           </div>
         )
@@ -145,7 +149,7 @@ export default function ContractDetailPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">{tc("details")}</CardTitle>
+          <CardTitle className="text-base flex items-center gap-1">{tc("details")} <InfoHint text={t("pageDescription")} size={12} /></CardTitle>
         </CardHeader>
         <CardContent className="space-y-3 text-sm">
           <div className="grid grid-cols-2 gap-4">

@@ -10,6 +10,7 @@ import { KanbanBoard } from "@/components/deals/kanban-board"
 import { Select } from "@/components/ui/select"
 import { Handshake, Plus, TrendingUp, TrendingDown } from "lucide-react"
 import { DealForm } from "@/components/deal-form"
+import { PageDescription } from "@/components/page-description"
 
 interface Deal {
   id: string
@@ -37,12 +38,12 @@ export default function DealsPage() {
   const orgId = session?.user?.organizationId
 
   const STAGES = [
-    { name: "LEAD", displayName: t("stageLead"), color: "#6366f1" },
-    { name: "QUALIFIED", displayName: t("stageQualified"), color: "#3b82f6" },
-    { name: "PROPOSAL", displayName: t("stageProposal"), color: "#f59e0b" },
-    { name: "NEGOTIATION", displayName: t("stageNegotiation"), color: "#f97316" },
-    { name: "WON", displayName: t("stageWon"), color: "#22c55e" },
-    { name: "LOST", displayName: t("stageLost"), color: "#ef4444" },
+    { name: "LEAD", displayName: t("stageLead"), color: "#6366f1", hint: t("hintStageLead") },
+    { name: "QUALIFIED", displayName: t("stageQualified"), color: "#3b82f6", hint: t("hintStageQualified") },
+    { name: "PROPOSAL", displayName: t("stageProposal"), color: "#f59e0b", hint: t("hintStageProposal") },
+    { name: "NEGOTIATION", displayName: t("stageNegotiation"), color: "#f97316", hint: t("hintStageNegotiation") },
+    { name: "WON", displayName: t("stageWon"), color: "#22c55e", hint: t("hintStageWon") },
+    { name: "LOST", displayName: t("stageLost"), color: "#ef4444", hint: t("hintStageLost") },
   ]
 
   const fetchDeals = async () => {
@@ -111,11 +112,13 @@ export default function DealsPage() {
         </div>
       </div>
 
+      <PageDescription text={t("pageDescription")} />
+
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <ColorStatCard label={t("statTotal")} value={deals.length} icon={<Handshake className="h-4 w-4" />} color="blue" />
-        <ColorStatCard label={t("statPipelineValue")} value={`${totalValue.toLocaleString()} ₼`} icon={<TrendingUp className="h-4 w-4" />} color="green" />
-        <ColorStatCard label={t("statWon")} value={`${wonValue.toLocaleString()} ₼`} icon={<TrendingUp className="h-4 w-4" />} color="teal" />
-        <ColorStatCard label={t("statLost")} value={deals.filter(d => d.stage === "LOST").length} icon={<TrendingDown className="h-4 w-4" />} color="red" />
+        <ColorStatCard label={t("statTotal")} value={deals.length} icon={<Handshake className="h-4 w-4" />} color="blue" hint={t("hintTotalDeals")} />
+        <ColorStatCard label={t("statPipelineValue")} value={`${totalValue.toLocaleString()} ₼`} icon={<TrendingUp className="h-4 w-4" />} color="green" hint={t("hintPipelineValue")} />
+        <ColorStatCard label={t("statWon")} value={`${wonValue.toLocaleString()} ₼`} icon={<TrendingUp className="h-4 w-4" />} color="teal" hint={t("hintWonValue")} />
+        <ColorStatCard label={t("statLost")} value={deals.filter(d => d.stage === "LOST").length} icon={<TrendingDown className="h-4 w-4" />} color="red" hint={t("hintLostCount")} />
       </div>
 
       <KanbanBoard

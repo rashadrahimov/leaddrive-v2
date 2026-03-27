@@ -10,10 +10,10 @@ import { FundManager } from "@/components/finance/fund-manager"
 import { LayoutDashboard, FileText, CreditCard, PiggyBank } from "lucide-react"
 
 const TABS = [
-  { value: "overview", label: "Overview", icon: LayoutDashboard },
-  { value: "receivables", label: "Receivables (A/R)", icon: FileText },
-  { value: "payables", label: "Payables (A/P)", icon: CreditCard },
-  { value: "funds", label: "Funds", icon: PiggyBank },
+  { value: "overview", label: "Обзор", icon: LayoutDashboard },
+  { value: "receivables", label: "Дебиторка (A/R)", icon: FileText },
+  { value: "payables", label: "Кредиторка (A/P)", icon: CreditCard },
+  { value: "funds", label: "Фонды", icon: PiggyBank },
 ] as const
 
 export default function FinancePage() {
@@ -24,7 +24,7 @@ export default function FinancePage() {
   return (
     <div className="flex-1 space-y-4 p-4 md:p-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold tracking-tight">Finance</h1>
+        <h1 className="text-2xl font-bold tracking-tight">Финансы</h1>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">

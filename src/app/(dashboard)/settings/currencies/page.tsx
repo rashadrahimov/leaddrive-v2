@@ -104,6 +104,7 @@ export default function CurrenciesPage() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">{t("currencies")}</h1>
           <p className="text-muted-foreground">{t("currenciesDesc")}</p>
+          <p className="text-sm text-muted-foreground mt-1">{t("hintCurrencies")}</p>
         </div>
         <Button className="gap-2" onClick={() => { setEditData(undefined); setShowForm(true) }}>
           <Plus className="h-4 w-4" /> {tc("add")} Currency

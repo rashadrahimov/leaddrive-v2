@@ -13,6 +13,7 @@ import {
   CheckCircle2, XCircle, AlertTriangle, Eye, BarChart3
 } from "lucide-react"
 import { ColorStatCard } from "@/components/color-stat-card"
+import { PageDescription } from "@/components/page-description"
 import { CampaignForm } from "@/components/campaign-form"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
 import dynamic from "next/dynamic"
@@ -152,10 +153,10 @@ export default function CampaignDetailPage() {
 
       {/* Stats row */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <ColorStatCard label={t("opens")} value={totalOpened.toLocaleString()} icon={<Eye className="h-4 w-4" />} color="blue" />
-        <ColorStatCard label={t("openRate")} value={`${openRate}%`} icon={<BarChart3 className="h-4 w-4" />} color="teal" />
-        <ColorStatCard label={t("clicks")} value={totalClicked.toLocaleString()} icon={<MousePointerClick className="h-4 w-4" />} color="violet" />
-        <ColorStatCard label={t("clickRate")} value={`${clickRate}%`} icon={<BarChart3 className="h-4 w-4" />} color="indigo" />
+        <ColorStatCard label={t("opens")} value={totalOpened.toLocaleString()} icon={<Eye className="h-4 w-4" />} color="blue" hint={t("hintOpens")} />
+        <ColorStatCard label={t("openRate")} value={`${openRate}%`} icon={<BarChart3 className="h-4 w-4" />} color="teal" hint={t("hintOpenRate")} />
+        <ColorStatCard label={t("clicks")} value={totalClicked.toLocaleString()} icon={<MousePointerClick className="h-4 w-4" />} color="violet" hint={t("hintClicks")} />
+        <ColorStatCard label={t("clickRate")} value={`${clickRate}%`} icon={<BarChart3 className="h-4 w-4" />} color="indigo" hint={t("hintClickRate")} />
       </div>
 
       {/* Tabs */}

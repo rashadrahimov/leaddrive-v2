@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Brain, RefreshCw, Loader2, Sparkles, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { PageDescription } from "@/components/page-description"
 
 interface ScoredLead {
   id: string
@@ -156,6 +157,8 @@ export default function AILeadScoringPage() {
           {scoring ? tc("loading") : t("newAgent")}
         </Button>
       </div>
+
+      <PageDescription text={t("hintScoringPageDescription")} />
 
       {/* Grade cards */}
       <div className="grid grid-cols-5 gap-3">

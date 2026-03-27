@@ -3,6 +3,7 @@
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { BarChart3, TrendingUp, Users, DollarSign } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 const widgets = [
   { id: 1, name: 'Revenue Overview', icon: DollarSign },
@@ -12,12 +13,14 @@ const widgets = [
 ];
 
 export default function DashboardPage() {
+  const ts = useTranslations('settings');
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold">Dashboard Builder</h1>
           <p className="text-muted-foreground mt-2">Customize your dashboard widgets</p>
+          <p className="text-sm text-muted-foreground mt-1">{ts('hintDashboardSettings')}</p>
         </div>
         <Button>Save Layout</Button>
       </div>

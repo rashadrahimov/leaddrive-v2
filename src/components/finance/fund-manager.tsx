@@ -27,7 +27,7 @@ export function FundManager() {
   const [showTx, setShowTx] = useState(false)
   const [showRules, setShowRules] = useState(false)
 
-  if (isLoading) return <div className="p-8 text-center text-muted-foreground">Loading funds...</div>
+  if (isLoading) return <div className="p-8 text-center text-muted-foreground">Загрузка фондов...</div>
 
   const totalBalance = (funds || []).reduce((s, f) => s + f.currentBalance, 0)
 
@@ -36,11 +36,11 @@ export function FundManager() {
       {/* Summary */}
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm text-muted-foreground">Total Funds Balance</p>
+          <p className="text-sm text-muted-foreground">Общий баланс фондов</p>
           <p className="text-2xl font-bold tabular-nums">{fmt(totalBalance)} AZN</p>
         </div>
         <Button size="sm" onClick={() => setShowCreate(true)}>
-          <Plus className="w-4 h-4 mr-1" /> New Fund
+          <Plus className="w-4 h-4 mr-1" /> Новый фонд
         </Button>
       </div>
 
@@ -60,7 +60,7 @@ export function FundManager() {
                       <PiggyBank className="w-4 h-4" style={{ color }} />
                       {fund.name}
                     </CardTitle>
-                    {!fund.isActive && <Badge variant="secondary" className="text-[10px]">Inactive</Badge>}
+                    {!fund.isActive && <Badge variant="secondary" className="text-[10px]">Неактивен</Badge>}
                   </div>
                   {fund.description && <p className="text-xs text-muted-foreground">{fund.description}</p>}
                 </CardHeader>
@@ -75,7 +75,7 @@ export function FundManager() {
                     {fund.targetAmount && (
                       <>
                         <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                          <span>Target: {fmt(fund.targetAmount)}</span>
+                          <span>Цель: {fmt(fund.targetAmount)}</span>
                           <span>{pct}%</span>
                         </div>
                         <Progress value={pct || 0} className="h-2 mt-1" />
@@ -85,18 +85,18 @@ export function FundManager() {
 
                   {/* Rules count */}
                   {fund.rules && fund.rules.length > 0 && (
-                    <p className="text-xs text-muted-foreground">{fund.rules.length} auto-allocation rule(s)</p>
+                    <p className="text-xs text-muted-foreground">{fund.rules.length} правил(о) авто-распределения</p>
                   )}
 
                   {/* Actions */}
                   <div className="flex gap-1 pt-1">
                     <Button size="sm" variant="outline" className="h-7 text-xs flex-1" onClick={() => { setSelectedFund(fund.id); setShowTx(true) }}>
-                      <ArrowDownToLine className="w-3 h-3 mr-1" /> Deposit
+                      <ArrowDownToLine className="w-3 h-3 mr-1" /> Внести
                     </Button>
                     <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => { setSelectedFund(fund.id); setShowRules(true) }}>
                       <Settings2 className="w-3 h-3" />
                     </Button>
-                    <Button size="sm" variant="ghost" className="h-7 text-xs text-red-500" onClick={() => { if (confirm(`Delete fund "${fund.name}"?`)) deleteFund.mutate(fund.id) }}>
+                    <Button size="sm" variant="ghost" className="h-7 text-xs text-red-500" onClick={() => { if (confirm(`Удалить фонд «${fund.name}»?`)) deleteFund.mutate(fund.id) }}>
                       <Trash2 className="w-3 h-3" />
                     </Button>
                   </div>
@@ -108,7 +108,7 @@ export function FundManager() {
       ) : (
         <div className="py-20 text-center text-muted-foreground">
           <PiggyBank className="w-12 h-12 mx-auto mb-3 opacity-30" />
-          <p className="text-sm">No funds yet. Create one to start reserving money.</p>
+          <p className="text-sm">Нет фондов. Создайте первый для резервирования средств.</p>
         </div>
       )}
 
@@ -142,18 +142,18 @@ function CreateFundDialog({ open, onClose, onCreate }: { open: boolean; onClose:
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent>
-        <DialogHeader><DialogTitle>New Fund</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>Новый фонд</DialogTitle></DialogHeader>
         <div className="grid gap-3">
-          <div><Label>Name *</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Tax Reserve" /></div>
-          <div><Label>Description</Label><Input value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Reserve for quarterly taxes" /></div>
+          <div><Label>Название *</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Налоговый резерв" /></div>
+          <div><Label>Описание</Label><Input value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Резерв на квартальные налоги" /></div>
           <div className="grid grid-cols-2 gap-3">
-            <div><Label>Target Amount</Label><Input type="number" value={form.targetAmount} onChange={(e) => setForm({ ...form, targetAmount: e.target.value })} placeholder="50000" /></div>
-            <div><Label>Color</Label><Input type="color" value={form.color} onChange={(e) => setForm({ ...form, color: e.target.value })} /></div>
+            <div><Label>Целевая сумма</Label><Input type="number" value={form.targetAmount} onChange={(e) => setForm({ ...form, targetAmount: e.target.value })} placeholder="50000" /></div>
+            <div><Label>Цвет</Label><Input type="color" value={form.color} onChange={(e) => setForm({ ...form, color: e.target.value })} /></div>
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button onClick={handleSubmit} disabled={onCreate.isPending}>{onCreate.isPending ? "Creating..." : "Create Fund"}</Button>
+          <Button variant="outline" onClick={onClose}>Отмена</Button>
+          <Button onClick={handleSubmit} disabled={onCreate.isPending}>{onCreate.isPending ? "Создаётся..." : "Создать фонд"}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -178,26 +178,26 @@ function TransactionDialog({ fundId, onClose }: { fundId: string; onClose: () =>
   return (
     <Dialog open onOpenChange={onClose}>
       <DialogContent className="max-w-md">
-        <DialogHeader><DialogTitle>Fund Transactions</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>Транзакции фонда</DialogTitle></DialogHeader>
 
         {/* Add transaction form */}
         <div className="grid gap-2 p-3 bg-muted/50 rounded-lg">
           <div className="flex gap-2">
             <select value={type} onChange={(e) => setType(e.target.value)} className="h-9 rounded-md border border-input bg-background px-2 text-sm">
-              <option value="deposit">Deposit</option>
-              <option value="withdrawal">Withdrawal</option>
+              <option value="deposit">Внесение</option>
+              <option value="withdrawal">Списание</option>
             </select>
-            <Input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="Amount" className="flex-1" />
+            <Input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="Сумма" className="flex-1" />
             <Button size="sm" onClick={handleAdd} disabled={createTx.isPending}>
               {type === "deposit" ? <ArrowDownToLine className="w-4 h-4" /> : <ArrowUpFromLine className="w-4 h-4" />}
             </Button>
           </div>
-          <Input value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="Description (optional)" />
+          <Input value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="Описание (необязательно)" />
         </div>
 
         {/* Transaction history */}
         <div className="max-h-[300px] overflow-y-auto space-y-1">
-          {isLoading && <p className="text-sm text-muted-foreground text-center py-4">Loading...</p>}
+          {isLoading && <p className="text-sm text-muted-foreground text-center py-4">Загрузка...</p>}
           {transactions && transactions.length > 0 ? transactions.map((tx) => (
             <div key={tx.id} className="flex items-center justify-between py-2 px-1 border-b last:border-0">
               <div className="flex items-center gap-2">
@@ -219,7 +219,7 @@ function TransactionDialog({ fundId, onClose }: { fundId: string; onClose: () =>
               </div>
             </div>
           )) : (
-            !isLoading && <p className="text-sm text-muted-foreground text-center py-4">No transactions yet</p>
+            !isLoading && <p className="text-sm text-muted-foreground text-center py-4">Нет транзакций</p>
           )}
         </div>
       </DialogContent>
@@ -253,16 +253,16 @@ function RulesDialog({ fundId, onClose }: { fundId: string; onClose: () => void 
   return (
     <Dialog open onOpenChange={onClose}>
       <DialogContent className="max-w-md">
-        <DialogHeader><DialogTitle>Auto-Allocation Rules</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>Правила авто-распределения</DialogTitle></DialogHeader>
 
         {/* Add rule form */}
         <div className="grid gap-2 p-3 bg-muted/50 rounded-lg">
-          <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Rule name" />
+          <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Название правила" />
           <div className="flex gap-2">
             <select value={trigger} onChange={(e) => setTrigger(e.target.value)} className="h-9 rounded-md border border-input bg-background px-2 text-sm flex-1">
-              <option value="revenue_percentage">% of Revenue</option>
-              <option value="fixed_monthly">Fixed Monthly</option>
-              <option value="invoice_paid">On Invoice Paid</option>
+              <option value="revenue_percentage">% от выручки</option>
+              <option value="fixed_monthly">Фикс. ежемесячно</option>
+              <option value="invoice_paid">При оплате счёта</option>
             </select>
             {trigger === "revenue_percentage" && (
               <Input type="number" value={pct} onChange={(e) => setPct(e.target.value)} placeholder="%" className="w-20" />
@@ -282,14 +282,14 @@ function RulesDialog({ fundId, onClose }: { fundId: string; onClose: () => void 
               <div>
                 <p className="text-sm font-medium">{rule.name}</p>
                 <p className="text-xs text-muted-foreground">
-                  {rule.triggerType === "revenue_percentage" && `${((rule.percentage || 0) * 100).toFixed(0)}% of revenue`}
-                  {rule.triggerType === "fixed_monthly" && `${fmt(rule.fixedAmount || 0)} AZN/month`}
-                  {rule.triggerType === "invoice_paid" && "On each invoice payment"}
+                  {rule.triggerType === "revenue_percentage" && `${((rule.percentage || 0) * 100).toFixed(0)}% от выручки`}
+                  {rule.triggerType === "fixed_monthly" && `${fmt(rule.fixedAmount || 0)} AZN/мес`}
+                  {rule.triggerType === "invoice_paid" && "При каждой оплате счёта"}
                 </p>
               </div>
               <div className="flex items-center gap-2">
                 <Badge variant={rule.isActive ? "default" : "secondary"} className="text-[10px]">
-                  {rule.isActive ? "Active" : "Inactive"}
+                  {rule.isActive ? "Активно" : "Неактивно"}
                 </Badge>
                 <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-red-500" onClick={() => deleteRule.mutate({ id: rule.id, fundId })}>
                   <Trash2 className="w-3 h-3" />
@@ -297,7 +297,7 @@ function RulesDialog({ fundId, onClose }: { fundId: string; onClose: () => void 
               </div>
             </div>
           )) : (
-            !isLoading && <p className="text-sm text-muted-foreground text-center py-4">No rules yet</p>
+            !isLoading && <p className="text-sm text-muted-foreground text-center py-4">Нет правил</p>
           )}
         </div>
       </DialogContent>

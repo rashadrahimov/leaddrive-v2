@@ -18,6 +18,7 @@ import {
   Tag, Layers, CheckCircle, XCircle, Loader2, Save, Sparkles,
 } from "lucide-react"
 import { ColorStatCard } from "@/components/color-stat-card"
+import { InfoHint } from "@/components/info-hint"
 
 const categoryColors: Record<string, string> = {
   service: "bg-blue-500", product: "bg-green-500", addon: "bg-purple-500", consulting: "bg-amber-500",
@@ -182,12 +183,14 @@ export default function ProductDetailPage() {
           value={product.price > 0 ? `${product.price.toLocaleString()} ${product.currency}` : tc("free")}
           icon={<DollarSign className="h-4 w-4" />}
           color="green"
+          hint={t("hintColPrice")}
         />
         <ColorStatCard
           label={tc("category")}
           value={product.category}
           icon={<Layers className="h-4 w-4" />}
           color="blue"
+          hint={t("hintColCategory")}
         />
         <ColorStatCard
           label={tc("features")}
@@ -206,8 +209,8 @@ export default function ProductDetailPage() {
       {/* Tabs */}
       <Tabs defaultValue="details" className="space-y-4">
         <TabsList className="bg-muted/60 p-1 h-auto">
-          <TabsTrigger value="details" className="rounded-md text-sm">{tc("details")}</TabsTrigger>
-          <TabsTrigger value="features" className="rounded-md text-sm">{tc("features")} ({(product.features || []).length})</TabsTrigger>
+          <TabsTrigger value="details" className="rounded-md text-sm">{tc("details")} <InfoHint text={t("pageDescription")} size={12} className="ml-1" /></TabsTrigger>
+          <TabsTrigger value="features" className="rounded-md text-sm">{tc("features")} ({(product.features || []).length}) <InfoHint text={t("hintColActive")} size={12} className="ml-1" /></TabsTrigger>
         </TabsList>
 
         {/* Details Tab */}

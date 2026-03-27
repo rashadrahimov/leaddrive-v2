@@ -19,6 +19,7 @@ import {
   Loader2, Smartphone, Heart, Settings,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { PageDescription } from "@/components/page-description"
 
 interface JourneyStep {
   id: string
@@ -289,12 +290,14 @@ export default function JourneysPage() {
         </Button>
       </div>
 
+      <PageDescription text={t("pageDescription")} />
+
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <ColorStatCard label={t("statTotal")} value={totalJourneys} icon={<Workflow className="h-4 w-4" />} color="blue" />
-        <ColorStatCard label={t("statActive")} value={activeCount} icon={<CheckCircle className="h-4 w-4" />} color="green" />
-        <ColorStatCard label={t("statEntries")} value={totalEntries} icon={<Users className="h-4 w-4" />} color="violet" />
-        <ColorStatCard label={t("statCompleted")} value={`${conversionRate}%`} icon={<Target className="h-4 w-4" />} color="teal" />
+        <ColorStatCard label={t("statTotal")} value={totalJourneys} icon={<Workflow className="h-4 w-4" />} color="blue" hint={t("hintTotalJourneys")} />
+        <ColorStatCard label={t("statActive")} value={activeCount} icon={<CheckCircle className="h-4 w-4" />} color="green" hint={t("hintActiveJourneys")} />
+        <ColorStatCard label={t("statEntries")} value={totalEntries} icon={<Users className="h-4 w-4" />} color="violet" hint={t("hintTotalEntries")} />
+        <ColorStatCard label={t("statCompleted")} value={`${conversionRate}%`} icon={<Target className="h-4 w-4" />} color="teal" hint={t("hintCompletionRate")} />
       </div>
 
       {/* Journey cards */}

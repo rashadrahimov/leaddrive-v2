@@ -15,6 +15,7 @@ import {
   Pencil, Trash2, Loader2, CheckCircle2, FileText, ExternalLink,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { InfoHint } from "@/components/info-hint"
 
 interface TaskData {
   id: string
@@ -284,7 +285,7 @@ export default function TaskDetailPage() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
-            <FileText className="h-4 w-4" /> {t("taskDetails")}
+            <FileText className="h-4 w-4" /> {t("taskDetails")} <InfoHint text={t("hintColTitle")} size={12} />
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -294,7 +295,7 @@ export default function TaskDetailPage() {
               <p className="text-sm font-medium mt-0.5">{task.title}</p>
             </div>
             <div>
-              <label className="text-xs font-medium text-muted-foreground">{t("colStatus")}</label>
+              <label className="text-xs font-medium text-muted-foreground flex items-center gap-1">{t("colStatus")} <InfoHint text={t("hintColStatus")} size={12} /></label>
               <div className="mt-0.5">
                 <Badge className={statusStyle.className}>{STATUS_LABELS[task.status] || task.status}</Badge>
               </div>
@@ -304,17 +305,17 @@ export default function TaskDetailPage() {
               <p className="text-sm mt-0.5 whitespace-pre-wrap">{task.description || "\u2014"}</p>
             </div>
             <div>
-              <label className="text-xs font-medium text-muted-foreground">{t("colAssignee")}</label>
+              <label className="text-xs font-medium text-muted-foreground flex items-center gap-1">{t("colAssignee")} <InfoHint text={t("hintColAssigned")} size={12} /></label>
               <p className="text-sm mt-0.5">{task.assignedTo || "\u2014"}</p>
             </div>
             <div>
-              <label className="text-xs font-medium text-muted-foreground">{t("colPriority")}</label>
+              <label className="text-xs font-medium text-muted-foreground flex items-center gap-1">{t("colPriority")} <InfoHint text={t("hintColPriority")} size={12} /></label>
               <div className="mt-0.5">
                 <Badge className={priorityStyle.className}>{PRIORITY_LABELS[task.priority] || task.priority}</Badge>
               </div>
             </div>
             <div>
-              <label className="text-xs font-medium text-muted-foreground">{t("colDueDate")}</label>
+              <label className="text-xs font-medium text-muted-foreground flex items-center gap-1">{t("colDueDate")} <InfoHint text={t("hintColDueDate")} size={12} /></label>
               <p className="text-sm mt-0.5">{formatDate(task.dueDate)}</p>
             </div>
             <div>

@@ -184,6 +184,7 @@ export default function InvoiceSettingsPage() {
             <p className="text-sm text-muted-foreground">
               {t("invoiceSettingsDesc")}
             </p>
+            <p className="text-sm text-muted-foreground mt-1">{t("hintInvoiceSettings")}</p>
           </div>
         </div>
         <div className="flex items-center gap-3">

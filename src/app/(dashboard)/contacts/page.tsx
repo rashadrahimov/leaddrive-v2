@@ -14,6 +14,8 @@ import { ContactForm } from "@/components/contact-form"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
+import { InfoHint } from "@/components/info-hint"
+import { PageDescription } from "@/components/page-description"
 
 interface Contact {
   id: string
@@ -197,9 +199,11 @@ export default function ContactsPage() {
         <Button onClick={handleAdd}><Plus className="h-4 w-4 mr-1" /> {t("addContact")}</Button>
       </div>
 
+      <PageDescription text={t("pageDescription")} />
+
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <ColorStatCard label={t("statTotal")} value={total} icon={<Users className="h-4 w-4" />} color="blue" />
-        <ColorStatCard label={t("statActive")} value={contacts.filter(c => c.isActive).length} icon={<Users className="h-4 w-4" />} color="green" />
+        <ColorStatCard label={t("statTotal")} value={total} icon={<Users className="h-4 w-4" />} color="blue" hint={t("hintTotalContacts")} />
+        <ColorStatCard label={t("statActive")} value={contacts.filter(c => c.isActive).length} icon={<Users className="h-4 w-4" />} color="green" hint={t("hintActiveContacts")} />
         <ColorStatCard label={t("statWithEmail")} value={contacts.filter(c => c.email).length} icon={<Mail className="h-4 w-4" />} color="violet" />
         <ColorStatCard label={t("statWithPhone")} value={contacts.filter(c => c.phone).length} icon={<Phone className="h-4 w-4" />} color="orange" />
       </div>
@@ -269,12 +273,12 @@ export default function ContactsPage() {
                   )}
                 </button>
               </th>
-              <th className="px-4 py-3 text-left font-medium text-muted-foreground">{t("colName")}</th>
-              <th className="px-4 py-3 text-left font-medium text-muted-foreground">{t("colCompany")}</th>
-              <th className="px-4 py-3 text-left font-medium text-muted-foreground">{t("colEmail")}</th>
-              <th className="px-4 py-3 text-left font-medium text-muted-foreground">{t("colPhone")}</th>
+              <th className="px-4 py-3 text-left font-medium text-muted-foreground"><span className="inline-flex items-center gap-1">{t("colName")} <InfoHint text={t("hintColName")} size={12} /></span></th>
+              <th className="px-4 py-3 text-left font-medium text-muted-foreground"><span className="inline-flex items-center gap-1">{t("colCompany")} <InfoHint text={t("hintColCompany")} size={12} /></span></th>
+              <th className="px-4 py-3 text-left font-medium text-muted-foreground"><span className="inline-flex items-center gap-1">{t("colEmail")} <InfoHint text={t("hintColEmail")} size={12} /></span></th>
+              <th className="px-4 py-3 text-left font-medium text-muted-foreground"><span className="inline-flex items-center gap-1">{t("colPhone")} <InfoHint text={t("hintColPhone")} size={12} /></span></th>
               <th className="px-4 py-3 text-left font-medium text-muted-foreground">{t("colStatus")}</th>
-              <th className="px-4 py-3 text-left font-medium text-muted-foreground">{t("colPortal")}</th>
+              <th className="px-4 py-3 text-left font-medium text-muted-foreground"><span className="inline-flex items-center gap-1">{t("colPortal")} <InfoHint text={t("hintColPortal")} size={12} /></span></th>
               <th className="px-4 py-3 w-20"></th>
             </tr>
           </thead>

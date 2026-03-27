@@ -236,6 +236,7 @@ export default function RolesSettingsPage() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">{t("roles")}</h1>
           <p className="text-muted-foreground">{t("rolesPageSubtitle")}</p>
+          <p className="text-sm text-muted-foreground mt-1">{t("hintRoles")}</p>
         </div>
         <div className="flex items-center gap-2">
           {hasChanges && (

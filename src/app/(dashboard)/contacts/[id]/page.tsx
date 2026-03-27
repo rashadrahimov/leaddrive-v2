@@ -14,6 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Dialog, DialogHeader, DialogTitle, DialogContent, DialogFooter } from "@/components/ui/dialog"
 import { ArrowLeft, Mail, Phone, Building2, Pencil, Calendar, MessageSquare, Plus, X, Loader2, Sparkles, Star, DollarSign, Activity, Tag, CheckCircle2, Clock } from "lucide-react"
 import { ColorStatCard } from "@/components/color-stat-card"
+import { InfoHint } from "@/components/info-hint"
 
 interface Activity {
   id: string
@@ -366,7 +367,7 @@ export default function ContactDetailPage() {
         <TabsContent value="activities">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-base">Activity Timeline</CardTitle>
+              <CardTitle className="text-base flex items-center gap-1.5">Activity Timeline <InfoHint text="Chronological log of all interactions with this contact" size={12} /></CardTitle>
               <Button size="sm">
                 <MessageSquare className="h-4 w-4" />
                 {t("addActivity")}

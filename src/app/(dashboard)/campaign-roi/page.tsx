@@ -6,6 +6,8 @@ import { useTranslations } from "next-intl"
 import { DollarSign, TrendingUp, BarChart3, Target, Users, Eye, MousePointer } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { ColorStatCard } from "@/components/color-stat-card"
+import { InfoHint } from "@/components/info-hint"
+import { PageDescription } from "@/components/page-description"
 
 interface CampaignROI {
   id: string
@@ -33,6 +35,7 @@ interface Summary {
 
 export default function CampaignROIPage() {
   const t = useTranslations("campaigns")
+  const tr = useTranslations("campaignRoi")
   const tc = useTranslations("common")
   const { data: session } = useSession()
   const orgId = session?.user?.organizationId
@@ -81,11 +84,13 @@ export default function CampaignROIPage() {
         </div>
       </div>
 
+      <PageDescription text={tr("pageDescription")} />
+
       {/* Stats cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <ColorStatCard label={tc("revenue")} value={`$${summary.totalRevenue.toLocaleString()}`} icon={<DollarSign className="h-4 w-4" />} color="green" />
-        <ColorStatCard label={tc("cost")} value={`$${summary.totalCost.toLocaleString()}`} icon={<TrendingUp className="h-4 w-4" />} color="blue" />
-        <ColorStatCard label="ROI" value={`${summary.totalRoi.toFixed(1)}%`} icon={<BarChart3 className="h-4 w-4" />} color={summary.totalRoi >= 0 ? "teal" : "red"} />
+        <ColorStatCard label={tc("revenue")} value={`$${summary.totalRevenue.toLocaleString()}`} icon={<DollarSign className="h-4 w-4" />} color="green" hint={tr("hintTotalRevenue")} />
+        <ColorStatCard label={tc("cost")} value={`$${summary.totalCost.toLocaleString()}`} icon={<TrendingUp className="h-4 w-4" />} color="blue" hint={tr("hintTotalCost")} />
+        <ColorStatCard label="ROI" value={`${summary.totalRoi.toFixed(1)}%`} icon={<BarChart3 className="h-4 w-4" />} color={summary.totalRoi >= 0 ? "teal" : "red"} hint={tr("hintRoi")} />
         <ColorStatCard label={t("title")} value={summary.campaignCount} icon={<Target className="h-4 w-4" />} color="violet" />
       </div>
 
@@ -99,16 +104,19 @@ export default function CampaignROIPage() {
               ? Math.round(totalSent / campaigns.reduce((s, c) => s + c.totalRecipients, 0) * 100)
               : 0}%
           </span>
+          <InfoHint text={tr("hintSendRate")} size={12} />
         </div>
         <div className="flex items-center gap-1.5">
           <Eye className="h-4 w-4 text-muted-foreground" />
           <span className="text-muted-foreground">{tc("openRate")}:</span>
           <span className="font-bold text-primary">{totalSent > 0 ? (totalOpened / totalSent * 100).toFixed(1) : 0}%</span>
+          <InfoHint text={tr("hintOpenRate")} size={12} />
         </div>
         <div className="flex items-center gap-1.5">
           <MousePointer className="h-4 w-4 text-muted-foreground" />
           <span className="text-muted-foreground">{tc("clickRate")}:</span>
           <span className="font-bold text-primary">{totalSent > 0 ? (totalClicked / totalSent * 100).toFixed(1) : 0}%</span>
+          <InfoHint text={tr("hintClickRate")} size={12} />
         </div>
       </div>
 

@@ -90,6 +90,7 @@ async function submitLeadDriveForm(e) {
             <Globe className="h-6 w-6" /> {t("webToLead")}
           </h1>
           <p className="text-sm text-muted-foreground">{t("webToLeadDesc")}</p>
+          <p className="text-sm text-muted-foreground mt-1">{t("hintWebToLead")}</p>
         </div>
       </div>
 

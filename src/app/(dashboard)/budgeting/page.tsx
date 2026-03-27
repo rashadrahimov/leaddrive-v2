@@ -221,9 +221,9 @@ function CashFlowTab() {
       <div className="flex items-center justify-between">
         <div className="flex gap-1 bg-muted rounded-lg p-1">
           {[
-            { key: "overview" as const, label: "Cash Flow" },
-            { key: "odds" as const, label: "ODDS" },
-            { key: "plan-fact" as const, label: "Plan vs Fact" },
+            { key: "overview" as const, label: "Денежный поток" },
+            { key: "odds" as const, label: "ОДДС" },
+            { key: "plan-fact" as const, label: "План vs Факт" },
           ].map(({ key, label }) => (
             <button
               key={key}
@@ -1263,10 +1263,10 @@ function WorkspaceTab({ planId, onNavigateTab }: { planId: string; onNavigateTab
   const overspendPct = expExecPct - 100
   const overspendAmount = totalExpenseActual - totalExpensePlanned
 
-  // Overall budget execution — margin-based (actual margin / planned margin * 100)
-  // Positive margin plan, positive actual = good execution
-  // Negative actual with positive plan = budget failed
-  const budgetExecPct = margin !== 0 ? (marginActual / margin) * 100 : 0
+  // Composite budget execution: 60% revenue achievement + 40% cost discipline
+  const revAchieve = totalRevenuePlanned > 0 ? Math.min((totalRevenueActual / totalRevenuePlanned) * 100, 150) : 100
+  const costDisc = totalExpenseActual > 0 && totalExpensePlanned > 0 ? Math.min((totalExpensePlanned / totalExpenseActual) * 100, 150) : 100
+  const budgetExecPct = Math.max(0, Math.round(revAchieve * 0.6 + costDisc * 0.4))
   const budgetExecColor = budgetExecPct >= 80 ? "green" as const : budgetExecPct >= 50 ? "amber" as const : "red" as const
   const budgetExecEmoji = budgetExecPct >= 80 ? "🟢" : budgetExecPct >= 50 ? "🟡" : "🔴"
 

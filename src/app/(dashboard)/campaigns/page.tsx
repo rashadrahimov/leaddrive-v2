@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input"
 import { Plus, Mail, Users, Send, Pencil, Trash2, Search, Megaphone } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
+import { PageDescription } from "@/components/page-description"
 
 interface Campaign {
   id: string
@@ -157,12 +158,14 @@ export default function CampaignsPage() {
         </Button>
       </div>
 
+      <PageDescription text={t("pageDescription")} />
+
       {/* Stats — 5 status cards */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-        <ColorStatCard label={t("statusDraft")} value={statusCounts.draft} icon={<Megaphone className="h-4 w-4" />} color="slate" />
-        <ColorStatCard label={t("statusScheduled")} value={statusCounts.scheduled} icon={<Megaphone className="h-4 w-4" />} color="blue" />
-        <ColorStatCard label={t("statusSending")} value={statusCounts.sending} icon={<Megaphone className="h-4 w-4" />} color="amber" />
-        <ColorStatCard label={t("statusSent")} value={statusCounts.sent} icon={<Megaphone className="h-4 w-4" />} color="green" />
+        <ColorStatCard label={t("statusDraft")} value={statusCounts.draft} icon={<Megaphone className="h-4 w-4" />} color="slate" hint={t("hintTotalCampaigns")} />
+        <ColorStatCard label={t("statusScheduled")} value={statusCounts.scheduled} icon={<Megaphone className="h-4 w-4" />} color="blue" hint={t("hintSentMonth")} />
+        <ColorStatCard label={t("statusSending")} value={statusCounts.sending} icon={<Megaphone className="h-4 w-4" />} color="amber" hint={t("hintOpenRate")} />
+        <ColorStatCard label={t("statusSent")} value={statusCounts.sent} icon={<Megaphone className="h-4 w-4" />} color="green" hint={t("hintClickRate")} />
         <ColorStatCard label={t("statusCancelled")} value={statusCounts.cancelled} icon={<Megaphone className="h-4 w-4" />} color="red" />
       </div>
 

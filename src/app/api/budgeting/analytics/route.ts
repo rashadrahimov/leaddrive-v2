@@ -160,7 +160,16 @@ export async function GET(req: NextRequest) {
   const grossProfitForecast = totalRevenueForecastFE - (feCogs.length > 0 ? feCogs.reduce((s: number, e: { forecastAmount: number }) => s + e.forecastAmount, 0) : totalCOGSForecast)
   const marginForecast = grossProfitForecast - totalExpenseForecastFE
   const totalVariance = marginActual - marginPlanned // positive = better than plan
-  const executionPct = marginPlanned !== 0 ? (marginActual / marginPlanned) * 100 : 0
+  // Composite budget execution: 60% revenue achievement + 40% cost discipline
+  // Revenue achievement: fact/plan (capped at 150%)
+  // Cost discipline: plan/fact inverted — under budget is good (capped at 150%)
+  const revAchievement = totalRevenuePlanned > 0
+    ? Math.min((totalRevenueActual / totalRevenuePlanned) * 100, 150)
+    : 100
+  const costDiscipline = totalExpenseActual > 0 && totalExpensePlanned > 0
+    ? Math.min((totalExpensePlanned / totalExpenseActual) * 100, 150)
+    : 100
+  const executionPct = Math.max(0, Math.round(revAchievement * 0.6 + costDiscipline * 0.4))
   const forecastVariance = totalExpenseForecast - totalExpenseActual
 
   // Estimate period-end projection based on elapsed time within the plan's period
@@ -418,6 +427,13 @@ export async function GET(req: NextRequest) {
         // Fallback: use direct costModelKey on the line
         const monthlyAmount = resolveCostModelKey(costModel, line.costModelKey)
         existing.actual += monthlyAmount * elapsedMonths2
+      } else if (!line.isAutoActual) {
+        // Manual actuals: look up from BudgetActual records by category+lineType
+        const catKey = `${line.category}||${line.lineType}`
+        const manualAmount = autoActualByCategory.has(catKey) ? 0 : (manualActuals
+          .filter((a: any) => a.category === line.category && a.lineType === line.lineType)
+          .reduce((s: number, a: any) => s + a.actualAmount, 0))
+        existing.actual += manualAmount
       }
 
       cellMap.set(cellKey, existing)

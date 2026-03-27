@@ -118,6 +118,7 @@ export default function SlaPoliciesPage() {
             <Clock className="h-6 w-6" /> {t("slaPolicies")}
           </h1>
           <p className="text-sm text-muted-foreground">{t("slaPoliciesDesc")}</p>
+          <p className="text-sm text-muted-foreground mt-1">{t("hintSla")}</p>
         </div>
         <Button className="gap-2" onClick={() => { setEditData(undefined); setShowForm(true) }}>
           <Plus className="h-4 w-4" /> {tc("add")} Policy

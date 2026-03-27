@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ColorStatCard } from "@/components/color-stat-card"
+import { PageDescription } from "@/components/page-description"
 import { cn } from "@/lib/utils"
 import {
   Bell, BellOff, CheckCheck, Settings, Info, AlertTriangle,
@@ -136,9 +137,11 @@ export default function NotificationsPage() {
         </div>
       </div>
 
+      <PageDescription text={t("pageDescription")} />
+
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-        <ColorStatCard label={t("total")} value={notifications.length} icon={<Bell className="h-4 w-4" />} color="blue" />
-        <ColorStatCard label={t("unread")} value={unreadCount} icon={<BellOff className="h-4 w-4" />} color="orange" />
+        <ColorStatCard label={t("total")} value={notifications.length} icon={<Bell className="h-4 w-4" />} color="blue" hint={t("hintTotal")} />
+        <ColorStatCard label={t("unread")} value={unreadCount} icon={<BellOff className="h-4 w-4" />} color="orange" hint={t("hintUnread")} />
         <ColorStatCard label={t("read")} value={notifications.length - unreadCount} icon={<CheckCheck className="h-4 w-4" />} color="green" />
       </div>
 

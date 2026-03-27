@@ -10,6 +10,7 @@ import { ColorStatCard } from "@/components/color-stat-card"
 import { CompanyForm } from "@/components/company-form"
 import { LeadDetailModal } from "@/components/lead-detail-modal"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
+import { PageDescription } from "@/components/page-description"
 import { Select } from "@/components/ui/select"
 import { Building2, Plus, Search, Users, FileText, TrendingUp, ArrowUpDown, Pencil, Trash2 } from "lucide-react"
 import { useTranslations } from "next-intl"
@@ -140,12 +141,13 @@ export default function CompaniesPage() {
           <Plus className="h-4 w-4 mr-1" /> {t("add")}
         </Button>
       </div>
+      <PageDescription text={t("pageDescription")} />
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <ColorStatCard label={t("statTotal")} value={total} icon={<Building2 className="h-4 w-4" />} color="blue" />
-        <ColorStatCard label={t("statActive")} value={activeCount} icon={<Building2 className="h-4 w-4" />} color="green" />
-        <ColorStatCard label={t("statContacts")} value={totalContacts} icon={<Users className="h-4 w-4" />} color="violet" />
-        <ColorStatCard label={t("statUsers")} value={totalUsers} icon={<Users className="h-4 w-4" />} color="orange" />
+        <ColorStatCard label={t("statTotal")} value={total} icon={<Building2 className="h-4 w-4" />} color="blue" hint={t("hintCompaniesCount")} />
+        <ColorStatCard label={t("statActive")} value={activeCount} icon={<Building2 className="h-4 w-4" />} color="green" hint={t("hintActiveClients")} />
+        <ColorStatCard label={t("statContacts")} value={totalContacts} icon={<Users className="h-4 w-4" />} color="violet" hint={t("hintTotalContacts")} />
+        <ColorStatCard label={t("statUsers")} value={totalUsers} icon={<Users className="h-4 w-4" />} color="orange" hint={t("hintTotalUsers")} />
       </div>
 
       {/* Status filter tabs */}

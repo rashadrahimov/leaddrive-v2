@@ -21,10 +21,10 @@ export async function GET(req: NextRequest) {
   })
 
   const aging = [
-    { label: "Current (0-30)", amount: 0, count: 0 },
-    { label: "31-60 days", amount: 0, count: 0 },
-    { label: "61-90 days", amount: 0, count: 0 },
-    { label: "90+ days", amount: 0, count: 0 },
+    { label: "0-30 дн", amount: 0, count: 0 },
+    { label: "31-60 дн", amount: 0, count: 0 },
+    { label: "61-90 дн", amount: 0, count: 0 },
+    { label: "90+ дн", amount: 0, count: 0 },
   ]
 
   let total = 0

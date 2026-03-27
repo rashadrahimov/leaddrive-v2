@@ -5,23 +5,25 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { ChevronRight, CreditCard, Users, Radio, Zap, LayoutDashboard, Globe, Lock, FileText, Clock, Shield, FileSpreadsheet } from "lucide-react"
 import { useTranslations } from "next-intl"
+import { InfoHint } from "@/components/info-hint"
+import { PageDescription } from "@/components/page-description"
 
 export default function SettingsPage() {
   const router = useRouter()
   const t = useTranslations("settings")
 
   const SETTINGS_SECTIONS = [
-    { icon: CreditCard, title: t("billing"), description: t("billingDesc"), href: "/settings/billing" },
-    { icon: Users, title: t("roles"), description: t("rolesDesc"), href: "/settings/roles" },
-    { icon: Radio, title: t("channels"), description: t("channelsDesc"), href: "/settings/channels" },
-    { icon: Zap, title: t("workflows"), description: t("workflowsDesc"), href: "/settings/workflows" },
-    { icon: LayoutDashboard, title: t("dashboardSettings"), description: t("dashboardSettingsDesc"), href: "/settings/custom-fields" },
-    { icon: FileSpreadsheet, title: t("invoiceSettings"), description: t("invoiceSettingsDesc"), href: "/settings/invoice-settings" },
-    { icon: Globe, title: t("currencies"), description: t("currenciesDesc"), href: "/settings/currencies" },
-    { icon: Clock, title: t("slaPolicies"), description: t("slaPoliciesDesc"), href: "/settings/sla-policies" },
-    { icon: Shield, title: t("portalUsers"), description: t("portalUsersDesc"), href: "/settings/portal-users" },
-{ icon: Lock, title: t("security"), description: t("securityDesc"), href: "/settings/security" },
-    { icon: FileText, title: t("auditLog"), description: t("auditLogDesc"), href: "/settings/audit-log" },
+    { icon: CreditCard, title: t("billing"), description: t("billingDesc"), href: "/settings/billing", hint: t("hintBilling") },
+    { icon: Users, title: t("roles"), description: t("rolesDesc"), href: "/settings/roles", hint: t("hintRoles") },
+    { icon: Radio, title: t("channels"), description: t("channelsDesc"), href: "/settings/channels", hint: t("hintChannels") },
+    { icon: Zap, title: t("workflows"), description: t("workflowsDesc"), href: "/settings/workflows", hint: t("hintWorkflows") },
+    { icon: LayoutDashboard, title: t("dashboardSettings"), description: t("dashboardSettingsDesc"), href: "/settings/custom-fields", hint: t("hintDashboardSettings") },
+    { icon: FileSpreadsheet, title: t("invoiceSettings"), description: t("invoiceSettingsDesc"), href: "/settings/invoice-settings", hint: t("hintInvoiceSettings") },
+    { icon: Globe, title: t("currencies"), description: t("currenciesDesc"), href: "/settings/currencies", hint: t("hintCurrencies") },
+    { icon: Clock, title: t("slaPolicies"), description: t("slaPoliciesDesc"), href: "/settings/sla-policies", hint: t("hintSla") },
+    { icon: Shield, title: t("portalUsers"), description: t("portalUsersDesc"), href: "/settings/portal-users", hint: t("hintPortalUsers") },
+    { icon: Lock, title: t("security"), description: t("securityDesc"), href: "/settings/security", hint: t("hintSecurity") },
+    { icon: FileText, title: t("auditLog"), description: t("auditLogDesc"), href: "/settings/audit-log", hint: t("hintAuditLog") },
   ]
 
   return (
@@ -29,6 +31,7 @@ export default function SettingsPage() {
       <div>
         <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
         <p className="text-muted-foreground">{t("subtitle")}</p>
+        <PageDescription text={t("pageDescription")} />
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
@@ -47,7 +50,7 @@ export default function SettingsPage() {
                       <IconComponent className="h-5 w-5 text-primary" />
                     </div>
                     <div>
-                      <h3 className="font-semibold">{section.title}</h3>
+                      <h3 className="font-semibold flex items-center gap-1.5">{section.title} <InfoHint text={section.hint} size={12} /></h3>
                       <p className="text-sm text-muted-foreground mt-1">{section.description}</p>
                     </div>
                   </div>

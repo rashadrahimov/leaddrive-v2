@@ -121,7 +121,7 @@ export default function SecuritySettingsPage() {
         </div>
         <div>
           <h1 className="text-xl font-bold">{t("security")}</h1>
-          <p className="text-sm text-muted-foreground">{t("securityDesc")}</p>
+          <p className="text-sm text-muted-foreground">{t("hintSecurity")}</p>
         </div>
       </div>
 

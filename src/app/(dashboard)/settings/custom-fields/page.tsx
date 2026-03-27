@@ -208,6 +208,7 @@ export default function DashboardSettingsPage() {
   const { data: session } = useSession()
   const t = useTranslations("dashboardSettings")
   const tc = useTranslations("common")
+  const ts = useTranslations("settings")
   const orgId = session?.user?.organizationId
 
   const [config, setConfig] = useState<WidgetConfig>({})
@@ -296,6 +297,7 @@ export default function DashboardSettingsPage() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
           <p className="text-muted-foreground">{t("subtitle")}</p>
+          <p className="text-sm text-muted-foreground mt-1">{ts("hintDashboardSettings")}</p>
         </div>
       </div>
 

@@ -20,6 +20,7 @@ import { NextBestOffers } from "@/components/deals/next-best-offers"
 import { ActivityTimeline } from "@/components/deals/activity-timeline"
 import { DealHistory } from "@/components/deals/deal-history"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
+import { InfoHint } from "@/components/info-hint"
 import { OffersTab } from "@/components/deals/offers-tab"
 import { InvoicesTab } from "@/components/deals/invoices-tab"
 
@@ -126,7 +127,7 @@ function DealPipelineStages({ currentStage, stageLabels }: { currentStage: strin
   )
 }
 
-function DealKpiCards({ deal, labels }: { deal: Deal; labels: { daysInFunnel: string; daysAtStage: string; dealValue: string; confidenceLevel: string } }) {
+function DealKpiCards({ deal, labels }: { deal: Deal; labels: { daysInFunnel: string; daysAtStage: string; dealValue: string; confidenceLevel: string; hintDaysInFunnel?: string; hintDaysAtStage?: string; hintDealValue?: string; hintConfidence?: string } }) {
   const daysInFunnel = Math.floor(
     (Date.now() - new Date(deal.createdAt).getTime()) / 86400000
   )
@@ -147,24 +148,28 @@ function DealKpiCards({ deal, labels }: { deal: Deal; labels: { daysInFunnel: st
         value={daysInFunnel}
         icon={<Clock className="h-4 w-4" />}
         color="blue"
+        hint={labels.hintDaysInFunnel}
       />
       <ColorStatCard
         label={labels.daysAtStage}
         value={daysAtStage}
         icon={<Clock className="h-4 w-4" />}
         color="indigo"
+        hint={labels.hintDaysAtStage}
       />
       <ColorStatCard
         label={labels.dealValue}
         value={`${deal.valueAmount.toLocaleString()} ${deal.currency}`}
         icon={<DollarSign className="h-4 w-4" />}
         color="teal"
+        hint={labels.hintDealValue}
       />
       <ColorStatCard
         label={labels.confidenceLevel}
         value={`${confidence}%`}
         icon={<TrendingUp className="h-4 w-4" />}
         bgClass={confBg}
+        hint={labels.hintConfidence}
       />
     </div>
   )
@@ -544,7 +549,7 @@ export default function DealDetailPage() {
       <DealPipelineStages currentStage={deal.stage} stageLabels={stageLabels} />
 
       {/* ── KPI Cards ── */}
-      <DealKpiCards deal={deal} labels={{ daysInFunnel: t("daysInFunnel"), daysAtStage: t("daysAtStage"), dealValue: t("dealValue"), confidenceLevel: t("confidenceLevel") }} />
+      <DealKpiCards deal={deal} labels={{ daysInFunnel: t("daysInFunnel"), daysAtStage: t("daysAtStage"), dealValue: t("dealValue"), confidenceLevel: t("confidenceLevel"), hintDaysInFunnel: t("hintDaysInFunnel"), hintDaysAtStage: t("hintDaysAtStage"), hintDealValue: t("hintDealValue"), hintConfidence: t("hintConfidence") }} />
 
       {/* ── Win probability + Confidence ── */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -654,8 +659,8 @@ export default function DealDetailPage() {
             {/* Deal info */}
             <Card className="shadow-sm border-none bg-card">
               <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-                  {t("dealInfo")}
+                <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
+                  {t("dealInfo")} <InfoHint text="Key details about this deal: value, assignment, dates, and related entities" size={12} />
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
@@ -718,7 +723,7 @@ export default function DealDetailPage() {
           <Card className="shadow-sm border-none bg-card">
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-base">
-                <Users className="h-4 w-4 text-muted-foreground" /> {t("contactRoles")}
+                <Users className="h-4 w-4 text-muted-foreground" /> {t("contactRoles")} <InfoHint text="People involved in this deal and their roles in the decision-making process" size={12} />
               </CardTitle>
             </CardHeader>
             <CardContent>

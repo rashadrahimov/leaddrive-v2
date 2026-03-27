@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { DataTable } from "@/components/data-table"
 import { ColorStatCard } from "@/components/color-stat-card"
+import { PageDescription } from "@/components/page-description"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
 import {
   FolderKanban, Plus, Pencil, Trash2, Building2,
@@ -239,6 +240,7 @@ export default function ProjectsPage() {
     {
       key: "status",
       label: t("status"),
+      hint: t("hintColStatus"),
       sortable: true,
       render: (item: Project) => (
         <span className={cn("text-xs px-2 py-0.5 rounded-full font-medium", statusColors[item.status])}>
@@ -249,6 +251,7 @@ export default function ProjectsPage() {
     {
       key: "priority",
       label: t("priority"),
+      hint: t("hintColPriority"),
       sortable: true,
       render: (item: Project) => (
         <span className={cn("text-xs px-2 py-0.5 rounded-full font-medium", priorityColors[item.priority])}>
@@ -259,6 +262,7 @@ export default function ProjectsPage() {
     {
       key: "completion",
       label: t("completion"),
+      hint: t("hintColCompletion"),
       sortable: true,
       render: (item: Project) => (
         <div className="flex items-center gap-2">
@@ -339,10 +343,12 @@ export default function ProjectsPage() {
         </Button>
       </div>
 
+      <PageDescription text={t("pageDescription")} />
+
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <ColorStatCard label={t("kpiTotal")} value={total} icon={<FolderKanban className="h-4 w-4" />} color="indigo" />
-        <ColorStatCard label={t("kpiActive")} value={activeCount} icon={<Clock className="h-4 w-4" />} color="green" />
+        <ColorStatCard label={t("kpiTotal")} value={total} icon={<FolderKanban className="h-4 w-4" />} color="indigo" hint={t("hintTotalProjects")} />
+        <ColorStatCard label={t("kpiActive")} value={activeCount} icon={<Clock className="h-4 w-4" />} color="green" hint={t("hintActiveProjects")} />
         <ColorStatCard label={t("kpiCompleted")} value={completedCount} icon={<CheckCircle2 className="h-4 w-4" />} color="blue" />
         <ColorStatCard label={t("kpiOverdue")} value={overdueCount} icon={<CalendarDays className="h-4 w-4" />} color="red" />
       </div>

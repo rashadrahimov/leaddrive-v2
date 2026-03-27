@@ -18,6 +18,8 @@ import {
 import { cn } from "@/lib/utils"
 import { useTranslations } from "next-intl"
 import { ColorStatCard } from "@/components/color-stat-card"
+import { InfoHint } from "@/components/info-hint"
+import { PageDescription } from "@/components/page-description"
 
 interface Lead {
   id: string
@@ -182,11 +184,13 @@ export default function LeadsPage() {
         </Button>
       </div>
 
+      <PageDescription text={t("pageDescription")} />
+
       {/* Stat cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <ColorStatCard label={t("title")} value={leads.length} icon={<UserPlus className="h-4 w-4" />} color="blue" />
-        <ColorStatCard label={t("hotLeads")} value={hotLeads} icon={<Flame className="h-4 w-4" />} color="orange" />
-        <ColorStatCard label={t("avgScore")} value={`${avgScore}/100`} icon={<TrendingUp className="h-4 w-4" />} color="indigo" />
+        <ColorStatCard label={t("title")} value={leads.length} icon={<UserPlus className="h-4 w-4" />} color="blue" hint={t("hintTotalLeads")} />
+        <ColorStatCard label={t("hotLeads")} value={hotLeads} icon={<Flame className="h-4 w-4" />} color="orange" hint={t("hintHotLeads")} />
+        <ColorStatCard label={t("avgScore")} value={`${avgScore}/100`} icon={<TrendingUp className="h-4 w-4" />} color="indigo" hint={t("hintColScore")} />
         <ColorStatCard label={t("statusConverted")} value={statusCounts.converted || 0} icon={<CheckCircle className="h-4 w-4" />} color="green" />
       </div>
 
@@ -237,13 +241,13 @@ export default function LeadsPage() {
           <thead>
             <tr className="border-b bg-muted/50">
               {[
-                { key: "score", label: t("colScore"), className: "w-16 px-4" },
-                { key: "name", label: t("colLead"), className: "px-4" },
+                { key: "score", label: t("colScore"), className: "w-16 px-4", hint: t("hintColGrade") },
+                { key: "name", label: t("colLead"), className: "px-4", hint: t("hintColContact") },
                 { key: "company", label: t("colCompany"), className: "px-4" },
                 { key: null, label: t("colContacts"), className: "px-4" },
-                { key: "conversion", label: t("colConversion"), className: "px-3" },
-                { key: "source", label: t("colSource"), className: "px-3" },
-                { key: "status", label: t("colStatus"), className: "px-3" },
+                { key: "conversion", label: t("colConversion"), className: "px-3", hint: t("hintColTemperature") },
+                { key: "source", label: t("colSource"), className: "px-3", hint: t("hintColSource") },
+                { key: "status", label: t("colStatus"), className: "px-3", hint: t("hintColStatus") },
               ].map(col => {
                 const isActive = col.key && sortBy.startsWith(col.key)
                 const isDesc = sortBy.endsWith("_desc")
@@ -266,6 +270,7 @@ export default function LeadsPage() {
                   >
                     <span className="inline-flex items-center gap-1">
                       {col.label}
+                      {(col as any).hint && <InfoHint text={(col as any).hint} size={12} />}
                       {SortIcon && <SortIcon className={cn("h-3 w-3", isActive ? "text-primary" : "opacity-40")} />}
                     </span>
                   </th>

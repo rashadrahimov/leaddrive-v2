@@ -9,6 +9,8 @@ import { EmailTemplateForm } from "@/components/email-template-form"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
 import { Plus, Search } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { InfoHint } from "@/components/info-hint"
+import { PageDescription } from "@/components/page-description"
 
 interface EmailTemplate {
   id: string
@@ -130,6 +132,8 @@ export default function EmailTemplatesPage() {
         </Button>
       </div>
 
+      <PageDescription text={t("pageDescription")} />
+
       {/* Search */}
       <div className="relative max-w-2xl">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -143,13 +147,13 @@ export default function EmailTemplatesPage() {
 
       {/* Language filter */}
       <div className="flex flex-wrap items-center gap-2">
-        <span className="text-sm text-muted-foreground font-medium">ЯЗЫК:</span>
+        <span className="text-sm text-muted-foreground font-medium flex items-center gap-1">ЯЗЫК: <InfoHint text={t("hintColLanguage")} size={12} /></span>
         <Button
           size="sm"
           variant={filterLang === "all" ? "default" : "outline"}
           onClick={() => setFilterLang("all")}
         >
-          {t("allLangs")} ({templates.length})
+          {t("allLangs")} ({templates.length}) <InfoHint text={t("hintTotalTemplates")} size={12} />
         </Button>
         {(["az", "ru", "en"] as const).map(lang => (
           langCounts[lang] ? (
@@ -167,7 +171,7 @@ export default function EmailTemplatesPage() {
 
       {/* Category filter */}
       <div className="flex flex-wrap items-center gap-2">
-        <span className="text-sm text-muted-foreground font-medium">ТИП:</span>
+        <span className="text-sm text-muted-foreground font-medium flex items-center gap-1">ТИП: <InfoHint text={t("hintColCategory")} size={12} /></span>
         <Button
           size="sm"
           variant={filterCategory === "all" ? "default" : "outline"}

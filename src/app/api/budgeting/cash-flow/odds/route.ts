@@ -27,9 +27,9 @@ export async function GET(req: NextRequest) {
   // Group by activity type
   const activities = ["operating", "investing", "financing"] as const
   const activityLabels: Record<string, string> = {
-    operating: "Operating Activities",
-    investing: "Investing Activities",
-    financing: "Financing Activities",
+    operating: "Операционная деятельность",
+    investing: "Инвестиционная деятельность",
+    financing: "Финансовая деятельность",
   }
 
   const sections = activities.map((activity) => {

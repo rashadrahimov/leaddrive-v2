@@ -99,6 +99,7 @@ export default function LeadRulesPage() {
             <Filter className="h-6 w-6" /> {t("leadRules")}
           </h1>
           <p className="text-sm text-muted-foreground">{t("leadRulesDesc")}</p>
+          <p className="text-sm text-muted-foreground mt-1">{t("hintLeadRules")}</p>
         </div>
         <Button onClick={addRule}>
           <Plus className="h-4 w-4 mr-1" /> {tc("add")} Rule

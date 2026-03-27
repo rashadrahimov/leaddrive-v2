@@ -8,6 +8,8 @@ import { Badge } from "@/components/ui/badge"
 import { DataTable } from "@/components/data-table"
 import { OfferForm } from "@/components/offer-form"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
+import { InfoHint } from "@/components/info-hint"
+import { PageDescription } from "@/components/page-description"
 import { FileSpreadsheet, Plus, Pencil, Trash2 } from "lucide-react"
 
 interface Offer {
@@ -62,18 +64,18 @@ export default function OffersPage() {
   }
 
   const columns = [
-    { key: "offerNumber", label: t("colNumber"), sortable: true },
-    { key: "title", label: t("colTitle"), sortable: true },
+    { key: "offerNumber", label: t("colNumber"), sortable: true, hint: t("hintColNumber") },
+    { key: "title", label: t("colTitle"), sortable: true, hint: t("hintColTitle") },
     {
-      key: "totalAmount", label: t("colAmount"), sortable: true,
+      key: "totalAmount", label: t("colAmount"), sortable: true, hint: t("hintColAmount"),
       render: (item: any) => <span className="font-medium">{item.totalAmount ? item.totalAmount.toLocaleString() : "—"} {item.currency}</span>,
     },
     {
-      key: "status", label: t("colStatus"), sortable: true,
+      key: "status", label: t("colStatus"), sortable: true, hint: t("hintColStatus"),
       render: (item: any) => <Badge variant={statusColors[item.status]}>{item.status}</Badge>,
     },
     {
-      key: "validUntil", label: t("colValidUntil"), sortable: true,
+      key: "validUntil", label: t("colValidUntil"), sortable: true, hint: t("hintColValidUntil"),
       render: (item: any) => item.validUntil ? new Date(item.validUntil).toLocaleDateString() : "—",
     },
     {
@@ -109,6 +111,9 @@ export default function OffersPage() {
         </div>
         <Button onClick={() => { setEditData(undefined); setShowForm(true) }}><Plus className="h-4 w-4 mr-1" /> {t("newOffer")}</Button>
       </div>
+
+      <PageDescription text={t("pageDescription")} />
+
       <DataTable columns={columns} data={offers} searchPlaceholder={t("searchPlaceholder")} searchKey="title" />
 
       <OfferForm

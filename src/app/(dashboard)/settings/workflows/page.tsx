@@ -75,6 +75,7 @@ export default function WorkflowsPage() {
   const { data: session } = useSession()
   const t = useTranslations("workflows")
   const tc = useTranslations("common")
+  const ts = useTranslations("settings")
   const [workflows, setWorkflows] = useState<WorkflowRule[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
@@ -205,6 +206,7 @@ export default function WorkflowsPage() {
             {t("title")}
           </h1>
           <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
+          <p className="text-sm text-muted-foreground mt-1">{ts("hintWorkflows")}</p>
         </div>
         <Button onClick={() => { setEditData(undefined); setShowForm(true) }} className="gap-1.5">
           <Plus className="h-4 w-4" /> {t("newWorkflow")}

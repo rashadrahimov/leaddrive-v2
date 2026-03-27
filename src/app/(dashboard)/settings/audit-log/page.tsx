@@ -80,6 +80,7 @@ export default function AuditLogPage() {
           <Shield className="h-6 w-6" /> {t("auditLog")}
         </h1>
         <p className="text-sm text-muted-foreground">{t("auditLogDesc")}</p>
+        <p className="text-sm text-muted-foreground mt-1">{t("hintAuditLog")}</p>
       </div>
       {loading ? (
         <p className="text-muted-foreground">{tc("loading")}</p>

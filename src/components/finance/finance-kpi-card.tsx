@@ -44,7 +44,7 @@ export function FinanceKpiCard({ title, value, plan, sub, icon, color, variance,
             </p>
             {plan !== undefined && plan > 0 && (
               <div className="flex items-center gap-1.5 mt-1.5">
-                <span className="text-[10px] text-muted-foreground">Plan: {fmt(plan)}</span>
+                <span className="text-[10px] text-muted-foreground">План: {fmt(plan)}</span>
                 {variancePct !== undefined && (
                   <span className={`inline-flex items-center gap-0.5 text-[10px] font-medium ${varianceColor}`}>
                     <VarianceIcon className="w-3 h-3" />

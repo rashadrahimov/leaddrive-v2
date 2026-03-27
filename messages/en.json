@@ -410,7 +410,19 @@
     "modalNotScoredYet": "Not yet scored by AI. Click \"Recalculate with AI\" to analyze.",
     "modalSourceNotSet": "Not set",
     "modalNetworkError": "Network error",
-    "modalSendError": "Send error"
+    "modalSendError": "Send error",
+    "pageDescription": "Lead management: track, score and convert potential customers",
+    "hintTotalLeads": "Total number of leads in the system",
+    "hintHotLeads": "High-probability leads ready for conversion (score 80+)",
+    "hintWarmLeads": "Engaged leads showing interest (score 40-79)",
+    "hintColdLeads": "Early-stage leads requiring nurturing (score below 40)",
+    "hintColGrade": "Lead grade A-F based on scoring model",
+    "hintColContact": "Contact person associated with this lead",
+    "hintColSource": "Channel through which the lead was acquired",
+    "hintColStatus": "Current status: New → Contacted → Qualified → Converted or Lost",
+    "hintColPriority": "Priority level based on potential value and urgency",
+    "hintColScore": "Numerical score (0-100) based on lead scoring rules",
+    "hintColTemperature": "Visual indicator: 🔥 Hot, 🟡 Warm, 🔵 Cold"
   },
   "companies": {
     "title": "Companies",
@@ -469,7 +481,29 @@
     "oneTime": "One-time",
     "saleActive": "Active",
     "saleCancelled": "Cancelled",
-    "saleCompleted": "Completed"
+    "saleCompleted": "Completed",
+    "pageDescription": "Manage your client companies: track status, contacts, deals and activity",
+    "hintActiveClients": "Companies with active status — your current customers",
+    "hintTotalContacts": "Total number of contact persons across all companies",
+    "hintTotalUsers": "Number of CRM users linked to companies",
+    "hintCompaniesCount": "Total number of companies in the database",
+    "hintColName": "Legal or trade name of the company",
+    "hintColIndustry": "Business sector or industry vertical",
+    "hintColCategory": "Company status: Active (customer), Prospect (potential), Inactive",
+    "hintColLocation": "City or region where the company is located",
+    "hintColContacts": "Number of contact persons associated with this company",
+    "hintColDeals": "Number of deals associated with this company",
+    "hintColScore": "Lead scoring value — higher means more likely to convert",
+    "hintColTemperature": "Lead temperature: Hot (ready to buy), Warm (interested), Cold (early stage)",
+    "hintKpiContacts": "Total contact persons linked to this company",
+    "hintKpiActiveDeals": "Deals currently in progress (not Won or Lost)",
+    "hintKpiPipeline": "Total monetary value of active deals in the pipeline",
+    "hintKpiDaysAsClient": "Number of days since this company was added to CRM",
+    "hintTabOverview": "General information and recent activity for this company",
+    "hintTabContacts": "People associated with this company",
+    "hintTabDeals": "All deals linked to this company",
+    "hintTabTimeline": "Chronological history of activities, deals and tickets",
+    "hintTabPricing": "Pricing profile, service breakdown and additional sales"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -524,7 +558,23 @@
     "actual": "Actual",
     "projected": "Projected",
     "incomeStructure": "Income Structure",
-    "totalIncome": "Total"
+    "totalIncome": "Total",
+    "pageDescription": "Overview of your CRM: key metrics, charts and recent activity",
+    "hintTotalCompanies": "Total number of companies in your CRM",
+    "hintTotalContacts": "Total number of contacts across all companies",
+    "hintTotalDeals": "Number of deals at all stages of the pipeline",
+    "hintTotalLeads": "Total leads currently being tracked",
+    "hintTotalTickets": "Number of support tickets across all statuses",
+    "hintOpenTasks": "Tasks that are not yet completed",
+    "hintPendingTickets": "Tickets waiting for response or action",
+    "hintRevenueForecast": "Projected revenue based on deal pipeline and probabilities",
+    "hintDealPipelineValue": "Total value of all deals currently in the pipeline",
+    "hintRevenueTrend": "Revenue change compared to previous period",
+    "hintTaskCompletion": "Percentage of tasks completed on time",
+    "hintSupportQuality": "Overall support quality score based on SLA and resolution metrics",
+    "hintLeadFunnel": "Visual breakdown of leads by stage from new to converted",
+    "hintDealPipeline": "Distribution of deals across pipeline stages",
+    "hintActivityFeed": "Recent actions: calls, emails, meetings, and notes"
   },
   "contacts": {
     "title": "Contacts",
@@ -569,7 +619,18 @@
     "note": "Note",
     "task": "Task",
     "editBtn": "Edit",
-    "lastContact": "Last Contact"
+    "lastContact": "Last Contact",
+    "pageDescription": "Your contact database: track people, their companies, and communication history",
+    "hintTotalContacts": "Total number of contacts in the system",
+    "hintActiveContacts": "Contacts who have been active recently",
+    "hintPortalAccess": "Contacts with access to the self-service client portal",
+    "hintColName": "Full name of the contact person",
+    "hintColEmail": "Primary email address for communication",
+    "hintColPhone": "Phone number of the contact",
+    "hintColPosition": "Job title or role at the company",
+    "hintColCompany": "Company the contact is associated with",
+    "hintColSource": "How this contact was acquired (website, referral, event, etc.)",
+    "hintColPortal": "Whether this contact can log into the client portal"
   },
   "deals": {
     "title": "Sales Pipeline",
@@ -620,7 +681,27 @@
     "noDealsInStage": "No deals",
     "addTag": "Add tag",
     "editDeal": "Edit",
-    "deleteDealBtn": "Delete"
+    "deleteDealBtn": "Delete",
+    "pageDescription": "Sales pipeline: track deals from lead to close, manage stages and values",
+    "hintTotalDeals": "Total number of deals at all stages",
+    "hintPipelineValue": "Sum of all deal values currently in the pipeline",
+    "hintWonValue": "Total value of deals closed as won",
+    "hintLostCount": "Number of deals that were lost",
+    "hintStageLead": "Initial stage — a new opportunity has been identified",
+    "hintStageQualified": "Lead has been qualified as a real opportunity",
+    "hintStageProposal": "A proposal or offer has been sent to the client",
+    "hintStageNegotiation": "Terms are being negotiated with the client",
+    "hintStageWon": "Deal successfully closed — revenue confirmed",
+    "hintStageLost": "Deal was lost — analyze reason to improve future sales",
+    "hintColName": "Name or title of the deal",
+    "hintColValue": "Monetary value of the deal",
+    "hintColStage": "Current stage in the sales pipeline",
+    "hintColProbability": "Estimated probability of closing the deal (%)",
+    "hintColCompany": "Company associated with this deal",
+    "hintDaysInFunnel": "Total number of days since this deal was created",
+    "hintDaysAtStage": "Number of days the deal has been at its current stage",
+    "hintDealValue": "The monetary value of this deal",
+    "hintConfidence": "Your confidence level in closing this deal (adjustable)"
   },
   "tasks": {
     "title": "Tasks",
@@ -699,7 +780,18 @@
     "createdAt": "Created",
     "updatedAt": "Updated",
     "taskNotFound": "Task not found",
-    "failedToLoad": "Failed to load task"
+    "failedToLoad": "Failed to load task",
+    "pageDescription": "Task management: create, assign and track tasks across your team",
+    "hintTotalTasks": "Total number of tasks in the system",
+    "hintOverdueTasks": "Tasks past their due date that need attention",
+    "hintCompletedWeek": "Tasks completed during the current week",
+    "hintCompletionRate": "Percentage of all tasks that have been completed",
+    "hintColTitle": "Short description of what needs to be done",
+    "hintColStatus": "Current progress: Not Started, In Progress, or Completed",
+    "hintColPriority": "Urgency level: Low, Medium, High, or Urgent",
+    "hintColDueDate": "Deadline for completing this task",
+    "hintColAssigned": "Team member responsible for this task",
+    "hintColRelated": "Linked entity: deal, contact, company, or ticket"
   },
   "tickets": {
     "title": "Tickets",
@@ -789,7 +881,19 @@
     "categoryLabel": "Category",
     "contactLabel": "Contact",
     "tagsLabel": "Tags",
-    "generalCategory": "general"
+    "generalCategory": "general",
+    "pageDescription": "Support desk: manage customer issues, track SLA compliance and resolution times",
+    "hintTotalTickets": "Total number of support tickets",
+    "hintSlaBreached": "Tickets that exceeded the SLA response or resolution time",
+    "hintFirstResponseRate": "Percentage of tickets that received first response within SLA",
+    "hintAvgResolution": "Average time to resolve a ticket from creation to closure",
+    "hintColNumber": "Unique ticket identifier",
+    "hintColSubject": "Brief description of the issue",
+    "hintColPriority": "Issue severity: Critical, High, Medium, Low",
+    "hintColStatus": "Ticket lifecycle: New → Open → In Progress → Waiting → Resolved → Closed",
+    "hintColSla": "Time remaining until SLA deadline. Red = breached, yellow = warning",
+    "hintColCompany": "Client company that reported the issue",
+    "hintColAssigned": "Support agent handling this ticket"
   },
   "contracts": {
     "title": "Contracts",
@@ -835,7 +939,17 @@
     "sortAmountAsc": "Amount ↑",
     "sortByExpiry": "By expiry date",
     "sortByCompany": "By company",
-    "expired": "Expired"
+    "expired": "Expired",
+    "pageDescription": "Contract management: track agreements, renewals and expiration dates",
+    "hintTotalContracts": "Total number of contracts in the system",
+    "hintActiveContracts": "Currently active and signed contracts",
+    "hintExpiringSoon": "Contracts expiring within the next 30 days",
+    "hintContractValue": "Total monetary value of all contracts",
+    "hintColNumber": "Unique contract identifier",
+    "hintColType": "Contract type: Service Agreement, NDA, Maintenance, License, SLA",
+    "hintColStatus": "Lifecycle: Draft → Sent → Signed → Active → Expiring → Expired/Renewed",
+    "hintColDates": "Start and end dates of the contract period",
+    "hintColAmount": "Monetary value of the contract"
   },
   "campaigns": {
     "title": "Campaigns",
@@ -860,7 +974,20 @@
     "opens": "Opens",
     "openRate": "Open Rate",
     "clicks": "Clicks",
-    "clickRate": "Click Rate"
+    "clickRate": "Click Rate",
+    "pageDescription": "Marketing campaigns: send emails and SMS, track open and click rates",
+    "hintTotalCampaigns": "Total number of marketing campaigns",
+    "hintSentMonth": "Campaigns sent during the current month",
+    "hintOpenRate": "Percentage of recipients who opened the message",
+    "hintClickRate": "Percentage of recipients who clicked a link in the message",
+    "hintColName": "Campaign name or title",
+    "hintColType": "Channel type: Email or SMS",
+    "hintColStatus": "Campaign status: Draft → Scheduled → Sending → Sent",
+    "hintColRecipients": "Number of target recipients",
+    "hintColOpened": "Number of recipients who opened the message",
+    "hintColClicked": "Number of recipients who clicked a link",
+    "hintOpens": "Total number of times the campaign was opened",
+    "hintClicks": "Total number of link clicks in the campaign"
   },
   "offers": {
     "title": "Offers",
@@ -937,7 +1064,13 @@
       "sent": "Sent",
       "approved": "Approved",
       "rejected": "Rejected"
-    }
+    },
+    "pageDescription": "Commercial offers: create, send and track proposals to clients",
+    "hintColNumber": "Unique offer reference number",
+    "hintColTitle": "Title or subject of the commercial offer",
+    "hintColAmount": "Total monetary value of the offer",
+    "hintColStatus": "Offer status: Draft → Sent → Accepted/Rejected",
+    "hintColValidUntil": "Expiration date — after this the offer is no longer valid"
   },
   "invoices": {
     "title": "Invoices",
@@ -1224,7 +1357,17 @@
     "chainWaitUnitMinutes": "Minutes",
     "chainWaitUnitHours": "Hours",
     "chainWaitUnitDays": "Days",
-    "chainWaitUnitWeeks": "Weeks"
+    "chainWaitUnitWeeks": "Weeks",
+    "pageDescription": "Invoice management: create, send and track payments from clients",
+    "hintTotalInvoiced": "Total amount invoiced to all clients",
+    "hintTotalPaid": "Total amount received from clients",
+    "hintTotalOutstanding": "Unpaid invoices — amount still owed by clients",
+    "hintTotalOverdue": "Invoices past their due date that remain unpaid",
+    "hintColNumber": "Unique invoice number",
+    "hintColAmount": "Total amount on the invoice",
+    "hintColStatus": "Payment status: Draft → Sent → Viewed → Paid/Overdue",
+    "hintColDueDate": "Payment deadline — invoice becomes overdue after this date",
+    "hintColBalance": "Remaining balance to be paid"
   },
   "inbox": {
     "title": "Inbox",
@@ -1254,7 +1397,12 @@
     "messageBodyPlaceholder": "Message text...",
     "subjectPlaceholder": "Email subject...",
     "from": "from",
-    "msgCount": "msg."
+    "msgCount": "msg.",
+    "pageDescription": "Unified inbox: all conversations across Email, Telegram, WhatsApp, SMS in one place",
+    "hintTotalMessages": "Total number of messages across all channels",
+    "hintInbound": "Messages received from clients",
+    "hintOutbound": "Messages sent to clients",
+    "hintConversations": "Unique conversation threads with contacts"
   },
   "reports": {
     "title": "Reports & Analytics",
@@ -1317,7 +1465,14 @@
     "stageProposal": "Proposal",
     "stageNegotiation": "Negotiation",
     "stageWon": "Won",
-    "stageLost": "Lost"
+    "stageLost": "Lost",
+    "pageDescription": "Reports & analytics: key metrics, pipeline analysis, and performance dashboards",
+    "hintRevenueOverview": "Total revenue, number of won deals, and average deal size",
+    "hintPipelineStages": "Distribution of deals by pipeline stage with values",
+    "hintTaskSummary": "Task completion rate and status breakdown",
+    "hintTicketSummary": "Ticket resolution rate and status breakdown",
+    "hintLeadFunnel": "Lead conversion funnel from new to converted",
+    "hintTopCompanies": "Companies ranked by revenue generated"
   },
   "products": {
     "title": "Products & Services",
@@ -1346,7 +1501,16 @@
     "tagsLabel": "Tags (comma-separated)",
     "activeLabel": "Active",
     "saveChanges": "Save Changes",
-    "createProduct": "Create Product"
+    "createProduct": "Create Product",
+    "pageDescription": "Product & service catalog: manage your offerings, prices and categories",
+    "hintTotalProducts": "Total number of products and services",
+    "hintActiveProducts": "Products currently available for sale",
+    "hintTotalRevenue": "Total revenue generated from all products",
+    "hintAvgPrice": "Average price across all active products",
+    "hintColName": "Product or service name",
+    "hintColCategory": "Type: Service, Product, Add-on, or Consulting",
+    "hintColPrice": "Unit price of the product or service",
+    "hintColActive": "Whether this product is currently available"
   },
   "kb": {
     "title": "Knowledge Base",
@@ -1373,7 +1537,12 @@
     "colStatus": "Status",
     "colDate": "Date",
     "noArticles": "No articles",
-    "noArticlesFound": "No articles found"
+    "noArticlesFound": "No articles found",
+    "pageDescription": "Knowledge Base: articles and guides for customers and support team",
+    "hintTotalArticles": "Total number of knowledge base articles",
+    "hintPublished": "Articles visible to portal users and customers",
+    "hintDraft": "Articles still being written — not visible to customers",
+    "hintViews": "Number of times articles have been viewed"
   },
   "settings": {
     "title": "Settings",
@@ -1444,7 +1613,27 @@
     "addRole": "Add Role",
     "deleteRole": "Delete Role",
     "roleName": "Role Name",
-    "roleColor": "Color"
+    "roleColor": "Color",
+    "pageDescription": "System settings: configure users, roles, integrations and CRM behavior",
+    "hintUsers": "Manage CRM user accounts, roles and access permissions",
+    "hintRoles": "Define user roles and their permissions for each CRM module",
+    "hintSecurity": "Two-factor authentication, password policies and security settings",
+    "hintCurrencies": "Configure currencies and exchange rates for multi-currency deals",
+    "hintCustomFields": "Add custom fields to companies, contacts, deals and other entities",
+    "hintWorkflows": "Automation rules: auto-assign, notify, and update records on triggers",
+    "hintSla": "SLA policies: define response and resolution time targets for tickets",
+    "hintChannels": "Communication channels: Email, Telegram, WhatsApp, SMS configuration",
+    "hintAuditLog": "History of all changes made in the system by users",
+    "hintBilling": "Subscription plan, usage limits and billing information",
+    "hintBudgetConfig": "Budget planning configuration: fiscal year, categories, approval rules",
+    "hintDashboardSettings": "Customize dashboard widgets, layout and visible metrics",
+    "hintEmailTemplatesSettings": "Configure default email templates for system notifications",
+    "hintInvoiceSettings": "Invoice numbering, default terms, payment details and branding",
+    "hintLeadRules": "Lead scoring rules: define criteria and weights for automatic scoring",
+    "hintPortalUsers": "Manage customer portal access for contacts",
+    "hintSalesForecast": "Sales forecast configuration: periods, targets, and pipeline weights",
+    "hintSmtp": "SMTP server configuration for sending emails from the system",
+    "hintWebToLead": "Web forms that automatically create leads from your website visitors"
   },
   "events": {
     "title": "Events",
@@ -1479,7 +1668,14 @@
     "budget": "Budget",
     "attended": "Attended",
     "revenue": "Revenue",
-    "descriptionPlaceholder": "Event description..."
+    "descriptionPlaceholder": "Event description...",
+    "pageDescription": "Events: manage conferences, webinars, workshops and other gatherings",
+    "hintTotalEvents": "Total number of events in the system",
+    "hintPlanned": "Events that are scheduled or accepting registrations",
+    "hintCompleted": "Events that have already taken place",
+    "hintCancelled": "Events that were cancelled",
+    "hintColType": "Event type: Conference, Webinar, Workshop, Meetup, Exhibition",
+    "hintColStatus": "Event status: Planned, Registration Open, In Progress, Completed, Cancelled"
   },
   "profitability": {
     "title": "Profitability",
@@ -1551,7 +1747,15 @@
     "totalCost": "Total Cost",
     "totalRevenue": "Total Revenue",
     "totalBalance": "Total Balance",
-    "profitableLoss": "Profitable / Loss"
+    "profitableLoss": "Profitable / Loss",
+    "pageDescription": "Profitability analytics: cost structure, margins and service-level analysis",
+    "hintTabCostBreakdown": "Detailed breakdown of all company costs by category",
+    "hintTabServices": "Revenue, cost and margin analysis per service",
+    "hintTabOverhead": "Administrative and infrastructure overhead costs",
+    "hintTabClients": "Per-client profitability analysis",
+    "hintTabEmployees": "Employee cost and utilization analysis",
+    "hintTabParams": "Cost model parameters and rates",
+    "hintTabAi": "AI-generated insights and recommendations on profitability"
   },
   "ai": {
     "title": "AI Command Center",
@@ -1591,7 +1795,21 @@
     "inactive": "Inactive",
     "all": "All",
     "unread": "Unread",
-    "markRead": "Mark read"
+    "markRead": "Mark read",
+    "pageDescription": "AI Command Center: manage AI agents, chat sessions and interaction analytics",
+    "hintTotalSessions": "Total number of AI chat sessions",
+    "hintActiveSessions": "Currently active AI conversations",
+    "hintDeflectionRate": "Percentage of issues resolved by AI without human escalation",
+    "hintCsat": "Customer satisfaction score for AI interactions",
+    "hintFcr": "First Contact Resolution — issues resolved in the first interaction",
+    "hintAvgResolution": "Average time for AI to resolve an issue (minutes)",
+    "hintTabDashboard": "Overview of AI performance metrics and KPIs",
+    "hintTabAgentConstructor": "Configure AI agent models, prompts, tools and behavior",
+    "hintTabSessions": "Browse AI chat session history and transcripts",
+    "hintTabLogs": "Detailed interaction logs with API calls and responses",
+    "hintTabGuardrails": "Safety rules and prompt injection protection",
+    "hintScoringPageDescription": "AI-powered lead scoring: automatic evaluation of lead quality and conversion probability",
+    "hintLeadScoringPageDescription": "Visual lead scoring dashboard: leads grouped by grade (A-F) with scores and conversion data"
   },
   "dashboardSettings": {
     "title": "Dashboard Settings",
@@ -1776,7 +1994,12 @@
     "placeholderCeo": "CEO, Manager...",
     "placeholderTag": "Tag name...",
     "namePlaceholder": "Segment name",
-    "descPlaceholder": "Description (optional)"
+    "descPlaceholder": "Description (optional)",
+    "pageDescription": "Audience segments: group contacts by criteria for targeted campaigns",
+    "hintTotalSegments": "Total number of defined segments",
+    "hintDynamic": "Segments that auto-update based on matching criteria",
+    "hintStatic": "Manually curated segments with fixed contact lists",
+    "hintContactCount": "Total contacts across all segments"
   },
   "notifications": {
     "title": "Notifications",
@@ -1791,7 +2014,10 @@
     "noNotifications": "No notifications",
     "minsAgo": "{n} min ago",
     "hoursAgo": "{n} h ago",
-    "daysAgo": "{n} d ago"
+    "daysAgo": "{n} d ago",
+    "pageDescription": "Notifications: system alerts about deals, tasks, tickets and other events",
+    "hintTotal": "Total number of notifications",
+    "hintUnread": "Notifications you haven't read yet"
   },
   "emailTemplates": {
     "title": "Email Templates",
@@ -1814,7 +2040,13 @@
     "subject": "Subject",
     "variables": "variables",
     "active": "Active",
-    "inactive": "Inactive"
+    "inactive": "Inactive",
+    "pageDescription": "Email templates: reusable message templates with variables for campaigns and notifications",
+    "hintTotalTemplates": "Total number of email templates",
+    "hintColName": "Template name for internal reference",
+    "hintColSubject": "Email subject line that recipients will see",
+    "hintColCategory": "Template category: Welcome, Onboarding, Marketing, Follow-up, etc.",
+    "hintColLanguage": "Language of the template content"
   },
   "emailLog": {
     "title": "Email Log",
@@ -1844,7 +2076,14 @@
     "errorLabel": "Error",
     "messagePreview": "Message preview",
     "noContent": "Content not saved",
-    "showing": "Showing {from}–{to} of {total}"
+    "showing": "Showing {from}–{to} of {total}",
+    "pageDescription": "Email log: history of all sent and received emails with delivery status",
+    "hintTotalEmails": "Total number of email records in the log",
+    "hintOutbound": "Emails sent from the system to external recipients",
+    "hintInbound": "Emails received from external senders",
+    "hintSentCount": "Successfully delivered emails",
+    "hintFailedCount": "Emails that failed to deliver",
+    "hintColStatus": "Delivery status: Pending, Sent, Delivered, Failed, Bounced"
   },
   "journeys": {
     "title": "Customer Journeys",
@@ -1872,7 +2111,12 @@
     "noResults": "Nothing found",
     "participants": "participants",
     "namePlaceholder": "Journey name",
-    "descriptionPlaceholder": "Description (optional)"
+    "descriptionPlaceholder": "Description (optional)",
+    "pageDescription": "Customer journeys: automate multi-step workflows triggered by events",
+    "hintTotalJourneys": "Total number of customer journeys",
+    "hintActiveJourneys": "Journeys currently running and processing contacts",
+    "hintTotalEntries": "Total contacts that entered all journeys",
+    "hintCompletionRate": "Percentage of contacts who completed the full journey"
   },
   "workflows": {
     "title": "Workflows",
@@ -2089,7 +2333,16 @@
     "kanban": "Kanban",
     "timeline": "Timeline",
     "created": "Created",
-    "updated": "Updated"
+    "updated": "Updated",
+    "pageDescription": "Project management: track budgets, timelines, tasks and team assignments",
+    "hintTotalProjects": "Total number of projects",
+    "hintActiveProjects": "Projects currently in progress",
+    "hintTotalBudget": "Sum of all project budgets",
+    "hintActualCost": "Total actual spending across all projects",
+    "hintBudgetRemaining": "Remaining budget = Total Budget - Actual Cost",
+    "hintColStatus": "Project status: Planning, Active, On Hold, Completed, Cancelled",
+    "hintColCompletion": "Progress percentage — how much of the project is done",
+    "hintColPriority": "Project priority level"
   },
   "budgeting": {
     "title": "Budgeting",
@@ -2453,5 +2706,20 @@
     "configServiceKeyHint": "Key from SERVICE_DEPT_MAP in cost model",
     "configGeneratesRevenue": "Generates revenue",
     "tabConfig": "Configuration"
+  },
+  "pricing": {
+    "pageDescription": "Pricing model: configure service pricing, cost structure and margins",
+    "hintTabPricing": "View current pricing model with revenue, cost and margin breakdown",
+    "hintTabEdit": "Adjust prices, costs and margins with sliders",
+    "hintTabSales": "Sales performance and campaign analytics"
+  },
+  "campaignRoi": {
+    "pageDescription": "Campaign ROI analysis: measure return on investment for each marketing campaign",
+    "hintTotalRevenue": "Total revenue attributed to marketing campaigns",
+    "hintTotalCost": "Total spending on all marketing campaigns",
+    "hintRoi": "Return on Investment = (Revenue - Cost) / Cost × 100%",
+    "hintSendRate": "Percentage of messages successfully delivered to recipients",
+    "hintOpenRate": "Percentage of delivered messages that were opened",
+    "hintClickRate": "Percentage of opened messages where a link was clicked"
   }
 }

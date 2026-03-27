@@ -15,9 +15,9 @@ function fmt(n: number): string {
 export function ARDashboard() {
   const { data, isLoading, error } = useReceivables()
 
-  if (isLoading) return <div className="p-8 text-center text-muted-foreground">Loading receivables...</div>
-  if (error) return <div className="p-8 text-center text-red-500">Error: {(error as Error).message}</div>
-  if (!data) return <div className="p-8 text-center text-muted-foreground">No data</div>
+  if (isLoading) return <div className="p-8 text-center text-muted-foreground">Загрузка дебиторки...</div>
+  if (error) return <div className="p-8 text-center text-red-500">Ошибка: {(error as Error).message}</div>
+  if (!data) return <div className="p-8 text-center text-muted-foreground">Нет данных</div>
 
   const AGING_COLORS = ["#22c55e", "#f59e0b", "#f97316", "#ef4444"]
 
@@ -25,16 +25,16 @@ export function ARDashboard() {
     <div className="space-y-6">
       {/* Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <SummaryCard title="Total Receivables" value={`${fmt(data.total)} AZN`} icon={<DollarSign className="w-5 h-5" />} color="#3b82f6" />
-        <SummaryCard title="Overdue Amount" value={`${fmt(data.overdueTotal)} AZN`} icon={<AlertTriangle className="w-5 h-5" />} color="#ef4444" />
-        <SummaryCard title="Overdue Invoices" value={String(data.overdueCount)} icon={<Clock className="w-5 h-5" />} color="#f59e0b" />
+        <SummaryCard title="Всего дебиторка" value={`${fmt(data.total)} AZN`} icon={<DollarSign className="w-5 h-5" />} color="#3b82f6" />
+        <SummaryCard title="Просрочено" value={`${fmt(data.overdueTotal)} AZN`} icon={<AlertTriangle className="w-5 h-5" />} color="#ef4444" />
+        <SummaryCard title="Просроченных счетов" value={String(data.overdueCount)} icon={<Clock className="w-5 h-5" />} color="#f59e0b" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Aging Chart */}
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-semibold">Aging Analysis</CardTitle>
+            <CardTitle className="text-sm font-semibold">Анализ по срокам</CardTitle>
           </CardHeader>
           <CardContent>
             {data.aging.some((b) => b.amount > 0) ? (
@@ -43,7 +43,7 @@ export function ARDashboard() {
                   <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
                   <XAxis dataKey="label" tick={{ fontSize: 11 }} />
                   <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => fmt(v)} />
-                  <Tooltip formatter={(value: number) => [`${fmt(value)} AZN`, "Amount"]} />
+                  <Tooltip formatter={(value: number) => [`${fmt(value)} AZN`, "Сумма"]} />
                   <Bar dataKey="amount" radius={[6, 6, 0, 0]}>
                     {data.aging.map((_, i) => (
                       <Cell key={i} fill={AGING_COLORS[i]} />
@@ -52,7 +52,7 @@ export function ARDashboard() {
                 </BarChart>
               </ResponsiveContainer>
             ) : (
-              <div className="h-[250px] flex items-center justify-center text-sm text-muted-foreground">No aging data</div>
+              <div className="h-[250px] flex items-center justify-center text-sm text-muted-foreground">Нет данных</div>
             )}
           </CardContent>
         </Card>
@@ -61,7 +61,7 @@ export function ARDashboard() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-semibold flex items-center gap-2">
-              <Building2 className="w-4 h-4" /> Top Debtors
+              <Building2 className="w-4 h-4" /> Крупнейшие должники
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -73,14 +73,14 @@ export function ARDashboard() {
                       <span className="text-xs font-bold text-muted-foreground w-5">{i + 1}</span>
                       <div>
                         <p className="text-sm font-medium">{d.companyName}</p>
-                        <p className="text-xs text-muted-foreground">{d.invoiceCount} invoice(s)</p>
+                        <p className="text-xs text-muted-foreground">{d.invoiceCount} счёт(ов)</p>
                       </div>
                     </div>
                     <div className="text-right">
                       <p className="text-sm font-bold tabular-nums">{fmt(d.amount)} AZN</p>
                       {d.overdueAmount > 0 && (
                         <Badge variant="destructive" className="text-[10px] px-1.5 py-0">
-                          {fmt(d.overdueAmount)} overdue
+                          {fmt(d.overdueAmount)} просрочено
                         </Badge>
                       )}
                     </div>
@@ -88,7 +88,7 @@ export function ARDashboard() {
                 ))}
               </div>
             ) : (
-              <div className="h-[250px] flex items-center justify-center text-sm text-muted-foreground">No debtors</div>
+              <div className="h-[250px] flex items-center justify-center text-sm text-muted-foreground">Нет должников</div>
             )}
           </CardContent>
         </Card>
@@ -99,7 +99,7 @@ export function ARDashboard() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-semibold text-red-600 flex items-center gap-2">
-              <AlertTriangle className="w-4 h-4" /> Overdue Invoices
+              <AlertTriangle className="w-4 h-4" /> Просроченные счета
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -108,10 +108,10 @@ export function ARDashboard() {
                 <thead>
                   <tr className="border-b text-left">
                     <th className="py-2 px-2 font-medium text-muted-foreground">#</th>
-                    <th className="py-2 px-2 font-medium text-muted-foreground">Invoice</th>
-                    <th className="py-2 px-2 font-medium text-muted-foreground">Company</th>
-                    <th className="py-2 px-2 font-medium text-muted-foreground text-right">Balance Due</th>
-                    <th className="py-2 px-2 font-medium text-muted-foreground text-right">Days Overdue</th>
+                    <th className="py-2 px-2 font-medium text-muted-foreground">Счёт</th>
+                    <th className="py-2 px-2 font-medium text-muted-foreground">Компания</th>
+                    <th className="py-2 px-2 font-medium text-muted-foreground text-right">Остаток</th>
+                    <th className="py-2 px-2 font-medium text-muted-foreground text-right">Дней просрочки</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -123,7 +123,7 @@ export function ARDashboard() {
                       <td className="py-2 px-2 text-right font-bold tabular-nums text-red-600">{fmt(inv.balanceDue)} AZN</td>
                       <td className="py-2 px-2 text-right">
                         <Badge variant={inv.daysOverdue > 60 ? "destructive" : "secondary"} className="text-xs">
-                          {inv.daysOverdue}d
+                          {inv.daysOverdue} дн
                         </Badge>
                       </td>
                     </tr>

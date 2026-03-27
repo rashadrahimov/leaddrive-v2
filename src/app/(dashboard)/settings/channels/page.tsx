@@ -117,6 +117,7 @@ export default function ChannelsPage() {
           <p className="text-sm text-muted-foreground">
             {t("channelsDesc")}
           </p>
+          <p className="text-sm text-muted-foreground mt-1">{t("hintChannels")}</p>
         </div>
         <Button onClick={() => { setEditData(undefined); setShowForm(true) }} className="gap-1.5">
           <Plus className="h-4 w-4" /> {tc("add")} Channel

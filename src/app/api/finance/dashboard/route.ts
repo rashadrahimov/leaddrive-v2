@@ -177,7 +177,7 @@ export async function GET(req: NextRequest) {
       id: "ar-overdue",
       type: "overdue_invoice",
       severity: overdueInvoices.length > 5 ? "critical" : "warning",
-      message: `${overdueInvoices.length} overdue invoice(s) — ${fmt(arOverdue)} AZN`,
+      message: `${overdueInvoices.length} просроченных счетов — ${fmt(arOverdue)} AZN`,
       link: "/finance?tab=receivables",
       amount: arOverdue,
     })
@@ -187,7 +187,7 @@ export async function GET(req: NextRequest) {
       id: "low-cash",
       type: "low_cash",
       severity: "critical",
-      message: `Negative cash balance: ${fmt(cashBalance)} AZN`,
+      message: `Отрицательный остаток ДС: ${fmt(cashBalance)} AZN`,
       link: "/budgeting?tab=cash-flow",
       amount: cashBalance,
     })
@@ -198,7 +198,7 @@ export async function GET(req: NextRequest) {
       id: "budget-overspend",
       type: "budget_overspend",
       severity: "warning",
-      message: `Budget overspend: ${fmt(overspend)} AZN (${Math.round((overspend / expensePlan) * 100)}% over plan)`,
+      message: `Перерасход бюджета: ${fmt(overspend)} AZN (${Math.round((overspend / expensePlan) * 100)}% сверх плана)`,
       link: "/budgeting",
       amount: overspend,
     })
@@ -208,7 +208,7 @@ export async function GET(req: NextRequest) {
       id: "ap-overdue",
       type: "upcoming_payment",
       severity: "warning",
-      message: `${overdueBills.length} overdue bill(s) — ${fmt(apOverdue)} AZN`,
+      message: `${overdueBills.length} просроченных платежей — ${fmt(apOverdue)} AZN`,
       link: "/finance?tab=payables",
       amount: apOverdue,
     })

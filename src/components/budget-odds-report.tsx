@@ -54,8 +54,8 @@ export function BudgetODDSReport({ year }: { year: number }) {
     enabled: !!orgId,
   })
 
-  if (isLoading) return <div className="p-6 text-center text-muted-foreground">Loading ODDS report...</div>
-  if (!data) return <div className="p-6 text-center text-muted-foreground">No data</div>
+  if (isLoading) return <div className="p-6 text-center text-muted-foreground">Загрузка отчёта ОДДС...</div>
+  if (!data) return <div className="p-6 text-center text-muted-foreground">Нет данных</div>
 
   const toggleSection = (activity: string) => {
     const next = new Set(expandedSections)
@@ -75,17 +75,17 @@ export function BudgetODDSReport({ year }: { year: number }) {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-sm font-semibold">ODDS (Cash Flow Statement)</h3>
-          <p className="text-xs text-muted-foreground">Year {year}</p>
+          <h3 className="text-sm font-semibold">ОДДС (Отчёт о движении денежных средств)</h3>
+          <p className="text-xs text-muted-foreground">{year} год</p>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-xs text-muted-foreground">Compare with:</span>
+          <span className="text-xs text-muted-foreground">Сравнить с:</span>
           <select
             value={compareYear || ""}
             onChange={(e) => setCompareYear(e.target.value ? Number(e.target.value) : null)}
             className="h-8 rounded-md border border-input bg-background px-2 text-xs"
           >
-            <option value="">None</option>
+            <option value="">Нет</option>
             <option value={year - 1}>{year - 1}</option>
             <option value={year - 2}>{year - 2}</option>
           </select>
@@ -129,7 +129,7 @@ export function BudgetODDSReport({ year }: { year: number }) {
                   <div>
                     <div className="flex items-center gap-1.5 mb-2">
                       <ArrowDownToLine className="w-3.5 h-3.5 text-green-600" />
-                      <span className="text-xs font-semibold text-green-600">Inflows: {fmt(section.totalInflow)} AZN</span>
+                      <span className="text-xs font-semibold text-green-600">Поступления: {fmt(section.totalInflow)} AZN</span>
                     </div>
                     {section.inflowByCategory.length > 0 ? (
                       <div className="space-y-1">
@@ -141,7 +141,7 @@ export function BudgetODDSReport({ year }: { year: number }) {
                         ))}
                       </div>
                     ) : (
-                      <p className="text-xs text-muted-foreground">No inflows</p>
+                      <p className="text-xs text-muted-foreground">Нет поступлений</p>
                     )}
                   </div>
 
@@ -149,7 +149,7 @@ export function BudgetODDSReport({ year }: { year: number }) {
                   <div>
                     <div className="flex items-center gap-1.5 mb-2">
                       <ArrowUpFromLine className="w-3.5 h-3.5 text-red-600" />
-                      <span className="text-xs font-semibold text-red-600">Outflows: {fmt(section.totalOutflow)} AZN</span>
+                      <span className="text-xs font-semibold text-red-600">Выплаты: {fmt(section.totalOutflow)} AZN</span>
                     </div>
                     {section.outflowByCategory.length > 0 ? (
                       <div className="space-y-1">
@@ -161,7 +161,7 @@ export function BudgetODDSReport({ year }: { year: number }) {
                         ))}
                       </div>
                     ) : (
-                      <p className="text-xs text-muted-foreground">No outflows</p>
+                      <p className="text-xs text-muted-foreground">Нет выплат</p>
                     )}
                   </div>
                 </div>
@@ -175,18 +175,18 @@ export function BudgetODDSReport({ year }: { year: number }) {
       <Card className="bg-muted/30">
         <CardContent className="py-4">
           <div className="flex items-center justify-between">
-            <span className="text-sm font-bold">Net Cash Flow</span>
+            <span className="text-sm font-bold">Чистый денежный поток</span>
             <div className="flex items-center gap-4">
               <div className="text-right">
-                <span className="text-xs text-muted-foreground block">Inflows</span>
+                <span className="text-xs text-muted-foreground block">Поступления</span>
                 <span className="text-sm font-bold tabular-nums text-green-600">{fmt(data.grandInflow)}</span>
               </div>
               <div className="text-right">
-                <span className="text-xs text-muted-foreground block">Outflows</span>
+                <span className="text-xs text-muted-foreground block">Выплаты</span>
                 <span className="text-sm font-bold tabular-nums text-red-600">{fmt(data.grandOutflow)}</span>
               </div>
               <div className="text-right pl-3 border-l">
-                <span className="text-xs text-muted-foreground block">Net</span>
+                <span className="text-xs text-muted-foreground block">Нетто</span>
                 <span className={`text-lg font-bold tabular-nums ${data.grandNet >= 0 ? "text-green-600" : "text-red-600"}`}>
                   {data.grandNet >= 0 ? "+" : ""}{fmt(data.grandNet)} AZN
                 </span>

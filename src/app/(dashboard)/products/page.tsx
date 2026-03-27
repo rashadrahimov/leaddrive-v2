@@ -14,6 +14,8 @@ import { Textarea } from "@/components/ui/textarea"
 import { ColorStatCard } from "@/components/color-stat-card"
 import { DataTable } from "@/components/data-table"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
+import { InfoHint } from "@/components/info-hint"
+import { PageDescription } from "@/components/page-description"
 import { Package, Plus, Pencil, Trash2, DollarSign, Tag, Layers, CheckCircle, XCircle } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useTranslations } from "next-intl"
@@ -136,7 +138,7 @@ export default function ProductsPage() {
 
   const columns = [
     {
-      key: "name", label: t("colProduct"), sortable: true,
+      key: "name", label: t("colProduct"), sortable: true, hint: t("hintColName"),
       render: (item: any) => (
         <div className="flex items-center gap-3">
           <div className="h-9 w-9 rounded-lg bg-amber-100 flex items-center justify-center flex-shrink-0">
@@ -150,7 +152,7 @@ export default function ProductsPage() {
       ),
     },
     {
-      key: "category", label: t("colCategory"), sortable: true,
+      key: "category", label: t("colCategory"), sortable: true, hint: t("hintColCategory"),
       render: (item: any) => (
         <Badge className={cn("text-xs", categoryColors[item.category] || "bg-gray-100 text-gray-800")}>
           {item.category}
@@ -158,7 +160,7 @@ export default function ProductsPage() {
       ),
     },
     {
-      key: "price", label: t("colPrice"), sortable: true,
+      key: "price", label: t("colPrice"), sortable: true, hint: t("hintColPrice"),
       render: (item: any) => (
         <span className="text-sm font-semibold text-primary">
           {item.price > 0 ? `${item.price.toLocaleString()} ${item.currency}` : "Free"}
@@ -177,7 +179,7 @@ export default function ProductsPage() {
       ),
     },
     {
-      key: "isActive", label: t("colStatus"), sortable: true,
+      key: "isActive", label: t("colStatus"), sortable: true, hint: t("hintColActive"),
       render: (item: any) => (
         <Badge className={item.isActive ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"}>
           {item.isActive ? tc("active") : tc("inactive")}
@@ -210,11 +212,13 @@ export default function ProductsPage() {
         <Button onClick={openCreate}><Plus className="h-4 w-4 mr-1" /> {t("newProduct")}</Button>
       </div>
 
+      <PageDescription text={t("pageDescription")} />
+
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <ColorStatCard label={t("statTotal")} value={products.length} icon={<Package className="h-4 w-4" />} color="blue" />
-        <ColorStatCard label={t("statActive")} value={activeCount} icon={<CheckCircle className="h-4 w-4" />} color="green" />
-        <ColorStatCard label={t("statTotalValue")} value={`${totalValue.toLocaleString()} AZN`} icon={<DollarSign className="h-4 w-4" />} color="violet" />
-        <ColorStatCard label={t("statCategories")} value={[...new Set(products.map(p => p.category))].length} icon={<Layers className="h-4 w-4" />} color="orange" />
+        <ColorStatCard label={t("statTotal")} value={products.length} icon={<Package className="h-4 w-4" />} color="blue" hint={t("hintTotalProducts")} />
+        <ColorStatCard label={t("statActive")} value={activeCount} icon={<CheckCircle className="h-4 w-4" />} color="green" hint={t("hintActiveProducts")} />
+        <ColorStatCard label={t("statTotalValue")} value={`${totalValue.toLocaleString()} AZN`} icon={<DollarSign className="h-4 w-4" />} color="violet" hint={t("hintTotalRevenue")} />
+        <ColorStatCard label={t("statCategories")} value={[...new Set(products.map(p => p.category))].length} icon={<Layers className="h-4 w-4" />} color="orange" hint={t("hintAvgPrice")} />
       </div>
 
       {/* Filter tabs */}

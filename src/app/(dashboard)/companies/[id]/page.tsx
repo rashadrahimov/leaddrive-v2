@@ -14,6 +14,7 @@ import {
   TicketCheck, TrendingUp, Activity, Handshake, MessageSquare
 } from "lucide-react"
 import { ColorStatCard } from "@/components/color-stat-card"
+import { InfoHint } from "@/components/info-hint"
 import { CompanyForm } from "@/components/company-form"
 
 interface CompanyDetail {
@@ -171,10 +172,10 @@ export default function CompanyDetailPage() {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <ColorStatCard label={t("kpiContacts")} value={company.contacts?.length || 0} icon={<Users className="h-4 w-4" />} color="blue" />
-        <ColorStatCard label={t("kpiActiveDeals")} value={activeDeals.length} icon={<Handshake className="h-4 w-4" />} color="indigo" />
-        <ColorStatCard label={t("kpiPipeline")} value={`${pipelineValue.toLocaleString()} ₼`} icon={<TrendingUp className="h-4 w-4" />} color="green" />
-        <ColorStatCard label={t("kpiDaysAsClient")} value={daysAsClient} icon={<Clock className="h-4 w-4" />} color="violet" />
+        <ColorStatCard label={t("kpiContacts")} value={company.contacts?.length || 0} icon={<Users className="h-4 w-4" />} color="blue" hint={t("hintKpiContacts")} />
+        <ColorStatCard label={t("kpiActiveDeals")} value={activeDeals.length} icon={<Handshake className="h-4 w-4" />} color="indigo" hint={t("hintKpiActiveDeals")} />
+        <ColorStatCard label={t("kpiPipeline")} value={`${pipelineValue.toLocaleString()} ₼`} icon={<TrendingUp className="h-4 w-4" />} color="green" hint={t("hintKpiPipeline")} />
+        <ColorStatCard label={t("kpiDaysAsClient")} value={daysAsClient} icon={<Clock className="h-4 w-4" />} color="violet" hint={t("hintKpiDaysAsClient")} />
       </div>
 
       {/* Contact info row */}
@@ -200,12 +201,12 @@ export default function CompanyDetailPage() {
       {/* Tabs */}
       <Tabs defaultValue="overview" className="space-y-4">
         <TabsList className="bg-muted/60 p-1 h-auto flex-wrap">
-          <TabsTrigger value="overview" className="rounded-md text-sm">{t("tabOverview")}</TabsTrigger>
-          <TabsTrigger value="contacts" className="rounded-md text-sm">{t("tabContacts")} ({company.contacts?.length || 0})</TabsTrigger>
-          <TabsTrigger value="deals" className="rounded-md text-sm">{t("tabDeals")} ({company.deals?.length || 0})</TabsTrigger>
-          <TabsTrigger value="timeline" className="rounded-md text-sm">{t("tabTimeline")}</TabsTrigger>
+          <TabsTrigger value="overview" className="rounded-md text-sm">{t("tabOverview")} <InfoHint text={t("hintTabOverview")} size={12} className="ml-1" /></TabsTrigger>
+          <TabsTrigger value="contacts" className="rounded-md text-sm">{t("tabContacts")} ({company.contacts?.length || 0}) <InfoHint text={t("hintTabContacts")} size={12} className="ml-1" /></TabsTrigger>
+          <TabsTrigger value="deals" className="rounded-md text-sm">{t("tabDeals")} ({company.deals?.length || 0}) <InfoHint text={t("hintTabDeals")} size={12} className="ml-1" /></TabsTrigger>
+          <TabsTrigger value="timeline" className="rounded-md text-sm">{t("tabTimeline")} <InfoHint text={t("hintTabTimeline")} size={12} className="ml-1" /></TabsTrigger>
           <TabsTrigger value="pricing" className="rounded-md text-sm">
-            <DollarSign className="h-3.5 w-3.5 mr-1" />{t("tabPricing")}
+            <DollarSign className="h-3.5 w-3.5 mr-1" />{t("tabPricing")} <InfoHint text={t("hintTabPricing")} size={12} className="ml-1" />
           </TabsTrigger>
         </TabsList>
 

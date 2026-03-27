@@ -16,6 +16,9 @@ import {
   PieChart, Pie, Cell, ResponsiveContainer,
 } from "recharts"
 import { toast } from "sonner"
+import { useTranslations } from "next-intl"
+import { InfoHint } from "@/components/info-hint"
+import { PageDescription } from "@/components/page-description"
 import {
   GROUP_ORDER, BOARD_CATS, CATEGORY_MAP,
   catTotal, applyAdjustments, aggregateBoardCats, emptyAdjustments,
@@ -99,6 +102,7 @@ function CollapsibleSection({ title, defaultOpen, children }: {
 // ─── Main Page ──────────────────────────────────────────────
 export default function PricingPage() {
   const { data: session } = useSession()
+  const tp = useTranslations("pricing")
   const orgId = session?.user?.organizationId
 
   const [pricingData, setPricingData] = useState<PricingData | null>(null)
@@ -381,25 +385,31 @@ export default function PricingPage() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-4">
-        <h1 className="text-2xl font-bold tracking-tight">Модель ценообразования ИТ-услуг</h1>
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Модель ценообразования ИТ-услуг</h1>
+          <PageDescription text={tp("pageDescription")} />
+        </div>
         <div className="flex gap-2">
           <Button
             variant={activeTab === "model" ? "default" : "outline"}
             onClick={() => setActiveTab("model")}
+            className="gap-1"
           >
-            Модель цен
+            Модель цен <InfoHint text={tp("hintTabPricing")} size={12} />
           </Button>
           <Button
             variant={activeTab === "edit" ? "default" : "outline"}
             onClick={() => setActiveTab("edit")}
+            className="gap-1"
           >
-            Редактировать цены
+            Редактировать цены <InfoHint text={tp("hintTabEdit")} size={12} />
           </Button>
           <Button
             variant={activeTab === "sales" ? "default" : "outline"}
             onClick={() => setActiveTab("sales")}
+            className="gap-1"
           >
-            Допродажи
+            Допродажи <InfoHint text={tp("hintTabSales")} size={12} />
           </Button>
           <div className="relative">
             <Button variant="outline" onClick={() => setExportOpen(!exportOpen)}>

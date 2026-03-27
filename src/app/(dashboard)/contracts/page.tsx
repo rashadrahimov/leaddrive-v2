@@ -10,6 +10,8 @@ import { ColorStatCard } from "@/components/color-stat-card"
 import { ContractForm } from "@/components/contract-form"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
 import { Select } from "@/components/ui/select"
+import { InfoHint } from "@/components/info-hint"
+import { PageDescription } from "@/components/page-description"
 import { FileText, Plus, Pencil, Trash2, AlertTriangle, Clock, TrendingUp, Building2, History, X, Upload, Download, File, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
@@ -256,6 +258,7 @@ export default function ContractsPage() {
       key: "contractNumber",
       label: t("number"),
       sortable: true,
+      hint: t("hintColNumber"),
       render: (item: any) => <span className="font-mono text-sm">{item.contractNumber}</span>,
     },
     { key: "title", label: t("name"), sortable: true },
@@ -275,11 +278,11 @@ export default function ContractsPage() {
       ),
     },
     {
-      key: "type", label: t("type"), sortable: true,
+      key: "type", label: t("type"), sortable: true, hint: t("hintColType"),
       render: (item: any) => <span className="text-sm">{typeLabels[item.type] || item.type || "—"}</span>,
     },
     {
-      key: "valueAmount", label: t("amount"), sortable: true,
+      key: "valueAmount", label: t("amount"), sortable: true, hint: t("hintColAmount"),
       render: (item: any) => (
         <span className="font-medium">
           {item.valueAmount ? `${item.valueAmount.toLocaleString()} ${item.currency}` : "—"}
@@ -287,7 +290,7 @@ export default function ContractsPage() {
       ),
     },
     {
-      key: "status", label: t("status"), sortable: true,
+      key: "status", label: t("status"), sortable: true, hint: t("hintColStatus"),
       render: (item: any) => (
         <span className={cn("text-xs px-2 py-0.5 rounded-full font-medium", statusColors[item.status] || "bg-gray-100")}>
           {statusLabels[item.status] || item.status}
@@ -295,7 +298,7 @@ export default function ContractsPage() {
       ),
     },
     {
-      key: "endDate", label: t("endDate"), sortable: true,
+      key: "endDate", label: t("endDate"), sortable: true, hint: t("hintColDates"),
       render: (item: any) => {
         const days = daysUntilExpiry(item.endDate)
         const isExpiring = days !== null && days > 0 && days <= 90
@@ -352,14 +355,16 @@ export default function ContractsPage() {
         </Button>
       </div>
 
+      <PageDescription text={t("pageDescription")} />
+
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-        <ColorStatCard label={t("statTotal")} value={total} icon={<FileText className="h-4 w-4" />} color="blue" />
-        <ColorStatCard label={t("statActive")} value={activeCount} icon={<FileText className="h-4 w-4" />} color="green" />
-        <ColorStatCard label={t("statTotalAmount")} value={`${totalValue.toLocaleString()} ₼`} icon={<TrendingUp className="h-4 w-4" />} color="teal" />
+        <ColorStatCard label={t("statTotal")} value={total} icon={<FileText className="h-4 w-4" />} color="blue" hint={t("hintTotalContracts")} />
+        <ColorStatCard label={t("statActive")} value={activeCount} icon={<FileText className="h-4 w-4" />} color="green" hint={t("hintActiveContracts")} />
+        <ColorStatCard label={t("statTotalAmount")} value={`${totalValue.toLocaleString()} ₼`} icon={<TrendingUp className="h-4 w-4" />} color="teal" hint={t("hintContractValue")} />
         <ColorStatCard label={t("statMrr")} value={`${Math.round(mrr).toLocaleString()} ₼`} icon={<TrendingUp className="h-4 w-4" />} color="violet" />
         <ColorStatCard label={t("statAvgValue")} value={`${avgValue.toLocaleString()} ₼`} icon={<TrendingUp className="h-4 w-4" />} color="indigo" />
-        <ColorStatCard label={t("statExpiringSoon")} value={expiringSoon} icon={<AlertTriangle className="h-4 w-4" />} color="orange" />
+        <ColorStatCard label={t("statExpiringSoon")} value={expiringSoon} icon={<AlertTriangle className="h-4 w-4" />} color="orange" hint={t("hintExpiringSoon")} />
       </div>
 
       {/* Filter tabs */}

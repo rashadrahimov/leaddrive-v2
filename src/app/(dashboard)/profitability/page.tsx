@@ -11,6 +11,8 @@ import {
   PieChart, Pie, Cell, Legend,
 } from "recharts"
 import { useTranslations } from "next-intl"
+import { InfoHint } from "@/components/info-hint"
+import { PageDescription } from "@/components/page-description"
 import { useCostModelAnalytics } from "@/lib/cost-model/hooks"
 import { SERVICE_LABELS, SERVICE_TYPES } from "@/lib/cost-model/types"
 import type { ServiceType } from "@/lib/cost-model/types"
@@ -257,15 +259,16 @@ export default function ProfitabilityPage() {
           <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
         </div>
       </div>
+      <PageDescription text={t("pageDescription")} />
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
-          <TabsTrigger value="analytics">{t("tabAnalytics")}</TabsTrigger>
-          <TabsTrigger value="services">{t("tabServices")}</TabsTrigger>
-          <TabsTrigger value="clients">{t("tabClients")}</TabsTrigger>
-          <TabsTrigger value="overhead">{t("tabOverhead")}</TabsTrigger>
-          <TabsTrigger value="employees">{t("tabEmployees")}</TabsTrigger>
-          <TabsTrigger value="parameters">{t("tabParameters")}</TabsTrigger>
+          <TabsTrigger value="analytics" className="gap-1">{t("tabAnalytics")} <InfoHint text={t("hintTabCostBreakdown")} size={12} /></TabsTrigger>
+          <TabsTrigger value="services" className="gap-1">{t("tabServices")} <InfoHint text={t("hintTabServices")} size={12} /></TabsTrigger>
+          <TabsTrigger value="clients" className="gap-1">{t("tabClients")} <InfoHint text={t("hintTabClients")} size={12} /></TabsTrigger>
+          <TabsTrigger value="overhead" className="gap-1">{t("tabOverhead")} <InfoHint text={t("hintTabOverhead")} size={12} /></TabsTrigger>
+          <TabsTrigger value="employees" className="gap-1">{t("tabEmployees")} <InfoHint text={t("hintTabEmployees")} size={12} /></TabsTrigger>
+          <TabsTrigger value="parameters" className="gap-1">{t("tabParameters")} <InfoHint text={t("hintTabParams")} size={12} /></TabsTrigger>
         </TabsList>
 
         {/* ═══════════ ANALYTICS TAB ═══════════ */}

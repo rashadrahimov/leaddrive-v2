@@ -17,6 +17,7 @@ import {
   TrendingUp, Calendar, DollarSign, Flame, CheckCircle2,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { InfoHint } from "@/components/info-hint"
 
 interface Lead {
   id: string
@@ -291,6 +292,7 @@ export default function LeadDetailPage() {
           value={`${lead.score}/100 (${grade.letter})`}
           icon={<TrendingUp className="h-4 w-4" />}
           color="indigo"
+          hint={t("hintColScore")}
         />
         <ColorStatCard
           label={t("detailDaysSinceCreated")}
@@ -309,13 +311,14 @@ export default function LeadDetailPage() {
           value={priorityLabels[lead.priority] || lead.priority}
           icon={<Flame className="h-4 w-4" />}
           color={lead.priority === "high" ? "orange" : lead.priority === "medium" ? "amber" : "slate"}
+          hint={t("hintColPriority")}
         />
       </div>
 
       {/* Lead Info Card */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">{t("modalLeadInfo")}</CardTitle>
+          <CardTitle className="text-base flex items-center gap-1.5">{t("modalLeadInfo")} <InfoHint text={t("hintColContact")} size={14} /></CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
@@ -357,6 +360,7 @@ export default function LeadDetailPage() {
               <span className="font-medium">
                 {lead.source ? (sourceLabels[lead.source] || lead.source) : "---"}
               </span>
+              <InfoHint text={t("hintColSource")} size={12} />
             </div>
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4 text-muted-foreground flex-shrink-0" />

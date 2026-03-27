@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Brain, Sparkles, RefreshCw, Target, TrendingUp, Users, Zap } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { PageDescription } from "@/components/page-description"
 import { LeadItemModal } from "@/components/lead-item-modal"
 
 interface Lead {
@@ -182,6 +183,8 @@ export default function LeadScoringPage() {
           {scoring ? tc("loading") : tai("newAgent")}
         </Button>
       </div>
+
+      <PageDescription text={tai("hintLeadScoringPageDescription")} />
 
       {/* Stats */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

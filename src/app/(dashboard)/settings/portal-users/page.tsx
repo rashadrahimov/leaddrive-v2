@@ -171,6 +171,7 @@ export default function PortalUsersPage() {
       <div>
         <h1 className="text-2xl font-bold tracking-tight">{t("portalUsers")}</h1>
         <p className="text-sm text-muted-foreground">{t("portalUsersDesc")}</p>
+        <p className="text-sm text-muted-foreground mt-1">{t("hintPortalUsers")}</p>
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">

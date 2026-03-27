@@ -10,6 +10,8 @@ import { SegmentForm } from "@/components/segment-form"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
 import { Plus, Search, Users, Filter, Zap, Pencil, Trash2, Archive, MoreHorizontal } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { InfoHint } from "@/components/info-hint"
+import { PageDescription } from "@/components/page-description"
 
 interface Segment {
   id: string
@@ -126,6 +128,8 @@ export default function SegmentsPage() {
         </Button>
       </div>
 
+      <PageDescription text={t("pageDescription")} />
+
       {/* Stats row */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         <button
@@ -141,7 +145,7 @@ export default function SegmentsPage() {
             </div>
             <div>
               <p className="text-xl font-bold">{segments.length}</p>
-              <p className="text-xs text-muted-foreground">{t("totalSegments")}</p>
+              <p className="text-xs text-muted-foreground flex items-center gap-1">{t("totalSegments")} <InfoHint text={t("hintTotalSegments")} size={12} /></p>
             </div>
           </div>
         </button>
@@ -158,7 +162,7 @@ export default function SegmentsPage() {
             </div>
             <div>
               <p className="text-xl font-bold">{dynamicCount}</p>
-              <p className="text-xs text-muted-foreground">{t("dynamic")}</p>
+              <p className="text-xs text-muted-foreground flex items-center gap-1">{t("dynamic")} <InfoHint text={t("hintDynamic")} size={12} /></p>
             </div>
           </div>
         </button>
@@ -175,7 +179,7 @@ export default function SegmentsPage() {
             </div>
             <div>
               <p className="text-xl font-bold">{staticCount}</p>
-              <p className="text-xs text-muted-foreground">{t("static")}</p>
+              <p className="text-xs text-muted-foreground flex items-center gap-1">{t("static")} <InfoHint text={t("hintStatic")} size={12} /></p>
             </div>
           </div>
         </button>

@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Plus, Pencil, Trash2, Loader2, Building2, Layers } from "lucide-react"
+import { useTranslations } from "next-intl"
 
 interface CostType {
   id: string
@@ -39,6 +40,7 @@ function ColorDot({ color }: { color: string | null }) {
 
 export default function BudgetConfigPage() {
   const { data: session } = useSession()
+  const ts = useTranslations("settings")
   const orgId = session?.user?.organizationId
 
   const [costTypes, setCostTypes] = useState<CostType[]>([])
@@ -156,7 +158,7 @@ export default function BudgetConfigPage() {
       <div>
         <h1 className="text-2xl font-bold">Настройка бюджета</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Конфигурация типов затрат и департаментов для матричного бюджета
+          {ts("hintBudgetConfig")}
         </p>
       </div>
 

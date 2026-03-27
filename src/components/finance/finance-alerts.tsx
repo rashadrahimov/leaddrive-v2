@@ -15,7 +15,7 @@ export function FinanceAlerts({ alerts }: { alerts: FinanceAlert[] }) {
 
   return (
     <div className="space-y-2">
-      <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Alerts</h3>
+      <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Оповещения</h3>
       {alerts.map((alert) => {
         const style = SEVERITY_STYLES[alert.severity] || SEVERITY_STYLES.info
         const Icon = style.icon
@@ -25,7 +25,7 @@ export function FinanceAlerts({ alerts }: { alerts: FinanceAlert[] }) {
             <span className="text-sm flex-1">{alert.message}</span>
             {alert.link && (
               <Link href={alert.link} className="text-xs font-medium text-primary hover:underline inline-flex items-center gap-1">
-                View <ArrowRight className="w-3 h-3" />
+                Открыть <ArrowRight className="w-3 h-3" />
               </Link>
             )}
           </div>

@@ -16,6 +16,7 @@ import {
   Inbox as InboxIcon, ArrowDownLeft, ArrowUpRight,
 } from "lucide-react"
 import { ColorStatCard } from "@/components/color-stat-card"
+import { PageDescription } from "@/components/page-description"
 import { cn } from "@/lib/utils"
 
 /* -- Types -- */
@@ -357,12 +358,14 @@ export default function InboxPage() {
         </Button>
       </div>
 
+      <PageDescription text={t("pageDescription")} />
+
       {/* -- Stats cards -- */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <ColorStatCard label={t("statMessages")} value={stats.totalMessages} icon={<MessageSquare className="h-4 w-4" />} color="blue" />
-        <ColorStatCard label={t("statIncoming")} value={stats.inbound} icon={<ArrowDownLeft className="h-4 w-4" />} color="green" />
-        <ColorStatCard label={t("statOutgoing")} value={stats.outbound} icon={<ArrowUpRight className="h-4 w-4" />} color="orange" />
-        <ColorStatCard label={t("statConversations")} value={stats.conversations} icon={<MessageCircle className="h-4 w-4" />} color="violet" />
+        <ColorStatCard label={t("statMessages")} value={stats.totalMessages} icon={<MessageSquare className="h-4 w-4" />} color="blue" hint={t("hintTotalMessages")} />
+        <ColorStatCard label={t("statIncoming")} value={stats.inbound} icon={<ArrowDownLeft className="h-4 w-4" />} color="green" hint={t("hintInbound")} />
+        <ColorStatCard label={t("statOutgoing")} value={stats.outbound} icon={<ArrowUpRight className="h-4 w-4" />} color="orange" hint={t("hintOutbound")} />
+        <ColorStatCard label={t("statConversations")} value={stats.conversations} icon={<MessageCircle className="h-4 w-4" />} color="violet" hint={t("hintConversations")} />
       </div>
 
       {/* -- Channel filter tabs -- */}

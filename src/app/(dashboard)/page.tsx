@@ -7,6 +7,8 @@ import { useTranslations } from "next-intl"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { ColorStatCard } from "@/components/color-stat-card"
+import { InfoHint } from "@/components/info-hint"
+import { PageDescription } from "@/components/page-description"
 import {
   Building2, Users, Handshake, Ticket, TrendingUp, TrendingDown,
   DollarSign, AlertTriangle, Shield, Clock, CheckCircle2, Star,
@@ -174,6 +176,7 @@ export default function DashboardPage() {
           {t("executivePanel")} · {new Date().toLocaleDateString("az", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
         </p>
       </div>
+      <PageDescription text={t("pageDescription")} />
 
       {/* ═══ 4 Main KPIs ═══ */}
       {widgets.statCards && <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -182,24 +185,28 @@ export default function DashboardPage() {
           value={`${fmt(financial.monthlyRevenue)} ₼`}
           icon={<DollarSign className="h-4 w-4" />}
           color="green"
+          hint={t("hintRevenueForecast")}
         />
         <ColorStatCard
           label={t("pipeline")}
           value={`${fmt(financial.pipelineValue)} ₼`}
           icon={<Handshake className="h-4 w-4" />}
           color="blue"
+          hint={t("hintDealPipelineValue")}
         />
         <ColorStatCard
           label={t("clients")}
           value={clients.total}
           icon={<Building2 className="h-4 w-4" />}
           color="indigo"
+          hint={t("hintTotalCompanies")}
         />
         <ColorStatCard
           label={t("openTickets")}
           value={operations.openTickets}
           icon={<Ticket className="h-4 w-4" />}
           color={operations.slaBreached > 0 ? "red" : "teal"}
+          hint={t("hintPendingTickets")}
         />
       </div>}
 
@@ -231,7 +238,7 @@ export default function DashboardPage() {
         {widgets.revenueChart && <Card className="lg:col-span-8">
           <CardHeader className="pb-2">
             <CardTitle className="text-base flex items-center gap-2">
-              <BarChart3 className="h-4 w-4" /> {t("revenueByService")}
+              <BarChart3 className="h-4 w-4" /> {t("revenueByService")} <InfoHint text={t("hintRevenueTrend")} size={12} />
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -259,7 +266,7 @@ export default function DashboardPage() {
         {widgets.dealPipeline && <Card className="lg:col-span-4">
           <CardHeader className="pb-2">
             <CardTitle className="text-base flex items-center gap-2">
-              <Target className="h-4 w-4" /> {t("salesPipeline")}
+              <Target className="h-4 w-4" /> {t("salesPipeline")} <InfoHint text={t("hintDealPipeline")} size={12} />
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -309,7 +316,7 @@ export default function DashboardPage() {
         {widgets.forecast && <Card className="lg:col-span-5">
           <CardHeader className="pb-2">
             <CardTitle className="text-base flex items-center gap-2">
-              <TrendingUp className="h-4 w-4" /> {t("salesForecast")}
+              <TrendingUp className="h-4 w-4" /> {t("salesForecast")} <InfoHint text={t("hintRevenueForecast")} size={12} />
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -335,7 +342,7 @@ export default function DashboardPage() {
         {widgets.clientHealth && <Card className="lg:col-span-4">
           <CardHeader className="pb-2">
             <CardTitle className="text-base flex items-center gap-2">
-              <Shield className="h-4 w-4" /> {t("clientHealth")}
+              <Shield className="h-4 w-4" /> {t("clientHealth")} <InfoHint text={t("hintSupportQuality")} size={12} />
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -378,7 +385,7 @@ export default function DashboardPage() {
         {widgets.activityFeed && <Card className="lg:col-span-3">
           <CardHeader className="pb-2">
             <CardTitle className="text-base flex items-center gap-2">
-              <Activity className="h-4 w-4" /> {t("activity")}
+              <Activity className="h-4 w-4" /> {t("activity")} <InfoHint text={t("hintActivityFeed")} size={12} />
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -409,7 +416,7 @@ export default function DashboardPage() {
           <Card className="lg:col-span-8">
             <CardHeader className="pb-2">
               <CardTitle className="text-base flex items-center gap-2">
-                <Shield className="h-4 w-4 text-red-500" /> {t("atRiskDeals")}
+                <Shield className="h-4 w-4 text-red-500" /> {t("atRiskDeals")} <InfoHint text={t("hintLeadFunnel")} size={12} />
                 <Badge variant="destructive" className="ml-auto text-xs">{atRiskDeals.length}</Badge>
               </CardTitle>
             </CardHeader>
@@ -440,7 +447,7 @@ export default function DashboardPage() {
         <Card className={atRiskDeals?.length > 0 ? "lg:col-span-4" : "lg:col-span-12"}>
           <CardHeader className="pb-2">
             <CardTitle className="text-base flex items-center gap-2">
-              <Clock className="h-4 w-4" /> {t("summary")}
+              <Clock className="h-4 w-4" /> {t("summary")} <InfoHint text={t("hintTaskCompletion")} size={12} />
             </CardTitle>
           </CardHeader>
           <CardContent>

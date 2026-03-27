@@ -276,6 +276,7 @@ export default function BillingPage() {
       <div>
         <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
         <p className="text-muted-foreground">{t("subtitle")}</p>
+        <p className="text-sm text-muted-foreground mt-1">{ts("hintBilling")}</p>
       </div>
 
       {/* Success message */}

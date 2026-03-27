@@ -6,10 +6,12 @@ import { Button } from "@/components/ui/button"
 import { ChevronUp, ChevronDown, Search, ChevronLeft, ChevronRight } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useTranslations } from "next-intl"
+import { InfoHint } from "@/components/info-hint"
 
 interface Column<T> {
   key: string
   label: string
+  hint?: string
   sortable?: boolean
   render?: (item: T, index?: number) => React.ReactNode
   className?: string
@@ -115,6 +117,7 @@ export function DataTable<T extends Record<string, unknown>>({
                 >
                   <div className="flex items-center gap-1">
                     {col.label}
+                    {col.hint && <InfoHint text={col.hint} size={12} />}
                     {col.sortable && sortCol === col.key && (
                       sortAsc ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />
                     )}
