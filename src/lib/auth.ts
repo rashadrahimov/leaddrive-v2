@@ -91,19 +91,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           if (err instanceof Error && (err.message === "2FA_REQUIRED" || err.message === "INVALID_2FA_CODE")) {
             throw err
           }
-          // Fallback to dev stub if DB not connected
-          if (parsed.data.email === "admin@leaddrive.com" && parsed.data.password === "admin123") {
-            return {
-              id: "dev-user-1",
-              email: "admin@leaddrive.com",
-              name: "Admin",
-              role: "admin",
-              organizationId: "dev-org-1",
-              organizationName: "Dev Organization",
-              plan: "enterprise",
-              needs2fa: false,
-            }
-          }
+          console.error("[Auth] Login error:", err)
           return null
         }
       },

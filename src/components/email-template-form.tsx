@@ -9,6 +9,7 @@ import { Select } from "@/components/ui/select"
 import { Dialog, DialogHeader, DialogTitle, DialogContent, DialogFooter } from "@/components/ui/dialog"
 import { Trash2, Eye, Code, Bold, Italic, Underline, List, ListOrdered, Link, X, Undo, Redo, AlignLeft, AlignCenter, AlignRight, Image } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { sanitizeRichHtml } from "@/lib/sanitize"
 
 interface EmailTemplateFormData {
   name: string
@@ -390,7 +391,7 @@ export function EmailTemplateForm({ open, onOpenChange, onSaved, initialData, or
                   <div
                     className="prose prose-sm max-w-none dark:prose-invert"
                     dangerouslySetInnerHTML={{
-                      __html: form.htmlBody
+                      __html: sanitizeRichHtml(form.htmlBody)
                         .replace(/\{\{client_name\}\}/g, '<span class="bg-yellow-100 dark:bg-yellow-900/30 px-1 rounded">Иван Иванов</span>')
                         .replace(/\{\{client_email\}\}/g, '<span class="bg-yellow-100 dark:bg-yellow-900/30 px-1 rounded">ivan@example.com</span>')
                         .replace(/\{\{company\}\}/g, '<span class="bg-yellow-100 dark:bg-yellow-900/30 px-1 rounded">Güven Technology</span>')

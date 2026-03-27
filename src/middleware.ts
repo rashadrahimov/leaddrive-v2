@@ -24,7 +24,7 @@ export default auth((req) => {
   }
 
   // Allow public API (web-to-lead, calendar feed, journey processor, webhooks)
-  if (pathname.startsWith("/api/v1/public/") || pathname.startsWith("/api/v1/calendar/feed/") || pathname === "/api/v1/journeys/process" || pathname.startsWith("/api/v1/webhooks/")) {
+  if (pathname.startsWith("/api/v1/public/") || pathname.startsWith("/api/v1/calendar/feed/") || pathname.startsWith("/api/v1/webhooks/") || pathname === "/api/v1/journeys/process") {
     return NextResponse.next()
   }
 

@@ -10,6 +10,7 @@ import { Mail, Send, Inbox, CheckCircle, AlertTriangle, RotateCcw, Search, Chevr
 import { cn } from "@/lib/utils"
 import { InfoHint } from "@/components/info-hint"
 import { PageDescription } from "@/components/page-description"
+import { sanitizeRichHtml } from "@/lib/sanitize"
 
 interface EmailLogEntry {
   id: string
@@ -243,7 +244,7 @@ export default function EmailLogPage() {
                       <div className="mt-3">
                         <div className="text-xs text-muted-foreground mb-2 font-medium">{t("messagePreview")}:</div>
                         <div className="border rounded-md bg-white dark:bg-gray-950 p-4 max-h-72 overflow-y-auto">
-                          <div dangerouslySetInnerHTML={{ __html: log.body }} className="text-sm prose prose-sm max-w-none" />
+                          <div dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(log.body || "") }} className="text-sm prose prose-sm max-w-none" />
                         </div>
                       </div>
                     ) : (

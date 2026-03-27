@@ -1,0 +1,191 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e20]:
+    - complementary [ref=e21]:
+      - generic [ref=e22]:
+        - link "LeadDrive CRM" [ref=e23] [cursor=pointer]:
+          - /url: /
+          - generic [ref=e24]:
+            - img [ref=e25]
+            - generic [ref=e31]:
+              - generic [ref=e32]: LeadDrive
+              - generic [ref=e33]: CRM
+        - button [ref=e34]:
+          - img [ref=e35]
+      - navigation [ref=e37]:
+        - generic [ref=e38]:
+          - generic [ref=e39]: CRM
+          - link "Dashboard" [ref=e40] [cursor=pointer]:
+            - /url: /
+            - img [ref=e42]
+            - generic [ref=e47]: Dashboard
+          - link "Компании" [ref=e48] [cursor=pointer]:
+            - /url: /companies
+            - img [ref=e50]
+            - generic [ref=e54]: Компании
+          - link "Контакты" [ref=e55] [cursor=pointer]:
+            - /url: /contacts
+            - img [ref=e57]
+            - generic [ref=e62]: Контакты
+          - link "Сделки" [ref=e63] [cursor=pointer]:
+            - /url: /deals
+            - img [ref=e65]
+            - generic [ref=e70]: Сделки
+          - link "Лиды" [ref=e71] [cursor=pointer]:
+            - /url: /leads
+            - img [ref=e73]
+            - generic [ref=e76]: Лиды
+          - link "Задачи" [ref=e77] [cursor=pointer]:
+            - /url: /tasks
+            - img [ref=e79]
+            - generic [ref=e82]: Задачи
+          - link "Контракты" [ref=e83] [cursor=pointer]:
+            - /url: /contracts
+            - img [ref=e85]
+            - generic [ref=e88]: Контракты
+          - link "Счета" [ref=e89] [cursor=pointer]:
+            - /url: /invoices
+            - img [ref=e91]
+            - generic [ref=e94]: Счета
+          - link "Продукты" [ref=e95] [cursor=pointer]:
+            - /url: /products
+            - img [ref=e97]
+            - generic [ref=e101]: Продукты
+          - link "Уведомления" [ref=e102] [cursor=pointer]:
+            - /url: /notifications
+            - img [ref=e104]
+            - generic [ref=e107]: Уведомления
+        - generic [ref=e108]:
+          - generic [ref=e109]: Маркетинг
+          - link "Кампании" [ref=e110] [cursor=pointer]:
+            - /url: /campaigns
+            - img [ref=e112]
+            - generic [ref=e115]: Кампании
+          - link "Сегменты" [ref=e116] [cursor=pointer]:
+            - /url: /segments
+            - img [ref=e118]
+            - generic [ref=e120]: Сегменты
+          - link "Email шаблоны" [ref=e121] [cursor=pointer]:
+            - /url: /email-templates
+            - img [ref=e123]
+            - generic [ref=e126]: Email шаблоны
+          - link "Email лог" [ref=e127] [cursor=pointer]:
+            - /url: /email-log
+            - img [ref=e129]
+            - generic [ref=e132]: Email лог
+          - link "ROI кампаний" [ref=e133] [cursor=pointer]:
+            - /url: /campaign-roi
+            - img [ref=e135]
+            - generic [ref=e138]: ROI кампаний
+          - link "AI скоринг" [ref=e139] [cursor=pointer]:
+            - /url: /ai-scoring
+            - img [ref=e141]
+            - generic [ref=e145]: AI скоринг
+          - link "Journeys" [ref=e146] [cursor=pointer]:
+            - /url: /journeys
+            - img [ref=e148]
+            - generic [ref=e152]: Journeys
+          - link "Мероприятия" [ref=e153] [cursor=pointer]:
+            - /url: /events
+            - img [ref=e155]
+            - generic [ref=e157]: Мероприятия
+        - generic [ref=e158]:
+          - generic [ref=e159]: Коммуникации
+          - link "Inbox" [ref=e160] [cursor=pointer]:
+            - /url: /inbox
+            - img [ref=e162]
+            - generic [ref=e164]: Inbox
+        - generic [ref=e165]:
+          - generic [ref=e166]: Поддержка
+          - link "Тикеты" [ref=e167] [cursor=pointer]:
+            - /url: /tickets
+            - img [ref=e169]
+            - generic [ref=e171]: Тикеты
+          - link "Рабочий стол агента" [ref=e172] [cursor=pointer]:
+            - /url: /support/agent-desktop
+            - img [ref=e174]
+            - generic [ref=e176]: Рабочий стол агента
+          - link "Календарь агента" [ref=e177] [cursor=pointer]:
+            - /url: /support/calendar
+            - img [ref=e179]
+            - generic [ref=e181]: Календарь агента
+          - link "База знаний" [ref=e182] [cursor=pointer]:
+            - /url: /knowledge-base
+            - img [ref=e184]
+            - generic [ref=e186]: База знаний
+        - generic [ref=e187]:
+          - generic [ref=e188]: Аналитика
+          - link "Прибыльность" [ref=e189] [cursor=pointer]:
+            - /url: /profitability
+            - img [ref=e191]
+            - generic [ref=e193]: Прибыльность
+          - link "Бюджетирование" [ref=e194] [cursor=pointer]:
+            - /url: /budgeting
+            - img [ref=e196]
+            - generic [ref=e199]: Бюджетирование
+          - link "Финансы" [ref=e200] [cursor=pointer]:
+            - /url: /finance
+            - img [ref=e202]
+            - generic [ref=e205]: Финансы
+          - link "Ценообразование" [ref=e206] [cursor=pointer]:
+            - /url: /pricing
+            - img [ref=e208]
+            - generic [ref=e210]: Ценообразование
+          - link "Отчёты" [ref=e211] [cursor=pointer]:
+            - /url: /reports
+            - img [ref=e213]
+            - generic [ref=e215]: Отчёты
+          - link "AI Центр" [ref=e216] [cursor=pointer]:
+            - /url: /ai-command-center
+            - img [ref=e218]
+            - generic [ref=e226]: AI Центр
+        - generic [ref=e227]:
+          - generic [ref=e228]: ERP
+          - link "Проекты" [ref=e229] [cursor=pointer]:
+            - /url: /projects
+            - img [ref=e231]
+            - generic [ref=e233]: Проекты
+        - generic [ref=e234]:
+          - generic [ref=e235]: Настройки
+          - link "Автоматизации" [ref=e236] [cursor=pointer]:
+            - /url: /settings/workflows
+            - img [ref=e238]
+            - generic [ref=e240]: Автоматизации
+          - link "Пользователи" [ref=e241] [cursor=pointer]:
+            - /url: /settings/users
+            - img [ref=e243]
+            - generic [ref=e248]: Пользователи
+          - link "SMTP" [ref=e249] [cursor=pointer]:
+            - /url: /settings/smtp-settings
+            - img [ref=e251]
+            - generic [ref=e254]: SMTP
+          - link "Настройки" [ref=e255] [cursor=pointer]:
+            - /url: /settings
+            - img [ref=e257]
+            - generic [ref=e260]: Настройки
+    - generic [ref=e261]:
+      - banner [ref=e262]:
+        - generic [ref=e263]:
+          - generic [ref=e264]: Güvən Technology LLC
+          - button "Поиск... K" [ref=e265] [cursor=pointer]:
+            - img [ref=e266]
+            - generic [ref=e269]: Поиск...
+            - generic [ref=e270]:
+              - img [ref=e271]
+              - text: K
+        - generic [ref=e273]:
+          - button [ref=e275]:
+            - img [ref=e276]
+          - button "Русский" [ref=e280]:
+            - img
+          - button "Toggle theme" [ref=e281]:
+            - img
+          - generic [ref=e282]:
+            - generic [ref=e283]: A
+            - generic [ref=e284]: Admin
+            - button "Выйти" [ref=e285]:
+              - img
+      - main [ref=e286]
+      - button [ref=e297]:
+        - img [ref=e298]
+  - region "Notifications alt+T"
+  - alert [ref=e19]

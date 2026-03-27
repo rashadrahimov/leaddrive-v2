@@ -1,4 +1,5 @@
 import { createHmac } from "crypto"
+import { isPrivateUrl } from "@/lib/url-validation"
 
 export type WebhookEvent =
   | "contact.created"
@@ -45,6 +46,12 @@ export async function dispatchWebhook(
       if (!webhook.active || !webhook.events.includes(event)) return
 
       try {
+        // SSRF protection: block requests to private/internal IPs
+        if (isPrivateUrl(webhook.url)) {
+          console.error(`Webhook ${webhook.id}: blocked SSRF attempt to private URL`)
+          return
+        }
+
         const signature = createHmac("sha256", webhook.secret)
           .update(JSON.stringify(webhookPayload))
           .digest("hex")

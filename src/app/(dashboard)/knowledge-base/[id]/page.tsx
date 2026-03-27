@@ -11,6 +11,7 @@ import { ArrowLeft, Pencil, Trash2, BookOpen, Eye, Clock, Tag, CheckCircle2 } fr
 import { ColorStatCard } from "@/components/color-stat-card"
 import { KbArticleForm } from "@/components/kb-article-form"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
+import { sanitizeRichHtml } from "@/lib/sanitize"
 
 const statusColors: Record<string, "default" | "secondary"> = {
   published: "default",
@@ -136,7 +137,7 @@ export default function KbArticleDetailPage() {
           {article.content ? (
             <div
               className="prose prose-sm dark:prose-invert max-w-none"
-              dangerouslySetInnerHTML={{ __html: article.content }}
+              dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(article.content) }}
             />
           ) : (
             <p className="text-sm text-muted-foreground">{tc("noData")}</p>

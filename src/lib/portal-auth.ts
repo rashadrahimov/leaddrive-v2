@@ -9,7 +9,10 @@ export interface PortalUser {
   email: string
 }
 
-const SECRET = new TextEncoder().encode(process.env.NEXTAUTH_SECRET || "portal-secret")
+if (!process.env.NEXTAUTH_SECRET) {
+  throw new Error("NEXTAUTH_SECRET environment variable is required")
+}
+const SECRET = new TextEncoder().encode(process.env.NEXTAUTH_SECRET)
 
 export async function createPortalToken(user: PortalUser): Promise<string> {
   return new SignJWT({ ...user })

@@ -45,7 +45,12 @@ export function tenantPrisma(organizationId: string) {
           return query(args)
         },
         async findUnique({ args, query }: any) {
-          return query(args)
+          const result = await query(args)
+          // Verify tenant isolation: reject if result belongs to a different org
+          if (result && "organizationId" in result && result.organizationId !== organizationId) {
+            return null
+          }
+          return result
         },
         async create({ args, query }: any) {
           if (args.data && typeof args.data === "object" && !Array.isArray(args.data)) {

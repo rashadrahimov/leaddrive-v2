@@ -2,12 +2,22 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { processEnrollmentStep } from "@/lib/journey-engine"
 
+const CRON_SECRET = process.env.CRON_SECRET
+
 /**
  * POST /api/v1/journeys/process
  * Process all pending journey enrollments where nextActionAt <= now.
- * Can be called by cron, webhook, or manually.
+ * Requires Authorization: Bearer <CRON_SECRET> header for security.
  */
 export async function POST(req: NextRequest) {
+  // Authenticate: require CRON_SECRET or valid session
+  const authHeader = req.headers.get("authorization")
+  const token = authHeader?.replace("Bearer ", "")
+
+  if (!CRON_SECRET || token !== CRON_SECRET) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  }
+
   try {
     const now = new Date()
 

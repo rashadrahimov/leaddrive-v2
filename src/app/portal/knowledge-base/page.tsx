@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Search, BookOpen, Eye, ArrowLeft } from "lucide-react"
+import { sanitizeRichHtml } from "@/lib/sanitize"
 
 interface KbArticle {
   id: string
@@ -78,7 +79,7 @@ export default function PortalKnowledgeBasePage() {
                 <Badge key={tag} variant="outline" className="text-xs">{tag}</Badge>
               ))}
             </div>
-            <div className="prose prose-sm max-w-none dark:prose-invert" dangerouslySetInnerHTML={{ __html: selectedArticle.content }} />
+            <div className="prose prose-sm max-w-none dark:prose-invert" dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(selectedArticle.content) }} />
           </CardContent>
         </Card>
       </div>

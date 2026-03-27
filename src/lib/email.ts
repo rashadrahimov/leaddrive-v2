@@ -1,5 +1,6 @@
 import nodemailer from "nodemailer"
 import { prisma } from "@/lib/prisma"
+import { isPrivateHost } from "@/lib/url-validation"
 
 interface SmtpConfig {
   smtpHost: string
@@ -50,6 +51,11 @@ async function getSmtpConfig(organizationId?: string): Promise<SmtpConfig | null
 }
 
 function createTransporter(config: SmtpConfig) {
+  // SSRF protection: block SMTP to private/internal hosts
+  if (isPrivateHost(config.smtpHost)) {
+    throw new Error("SMTP host points to a private/internal network — blocked for security")
+  }
+
   return nodemailer.createTransport({
     host: config.smtpHost,
     port: config.smtpPort,
@@ -58,7 +64,7 @@ function createTransporter(config: SmtpConfig) {
       user: config.smtpUser,
       pass: config.smtpPass,
     },
-    tls: config.smtpTls ? { rejectUnauthorized: false } : undefined,
+    tls: config.smtpTls ? { rejectUnauthorized: true } : undefined,
     connectionTimeout: 10000,
     greetingTimeout: 10000,
     socketTimeout: 15000,

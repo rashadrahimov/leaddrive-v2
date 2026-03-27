@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Brain, RefreshCw, ChevronDown, ChevronRight, AlertCircle } from "lucide-react"
 import { useAiAnalysis, useRefreshAiAnalysis } from "@/lib/cost-model/hooks"
+import { sanitizeRichHtml } from "@/lib/sanitize"
 
 interface AIObservationsProps {
   tab: string
@@ -159,7 +160,7 @@ export function AIObservations({ tab }: AIObservationsProps) {
             {/* Main analysis content */}
             <div
               className="prose prose-sm dark:prose-invert max-w-none"
-              dangerouslySetInnerHTML={{ __html: markdownToHtml(result.analysis) }}
+              dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(markdownToHtml(result.analysis)) }}
             />
 
             {/* Thinking section (collapsible) */}
