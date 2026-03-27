@@ -10,63 +10,53 @@ export async function POST(req: NextRequest) {
   const { year, planId } = await req.json()
   if (!year) return NextResponse.json({ error: "year required" }, { status: 400 })
 
+  // Clear old generated entries for this year before regenerating
+  await prisma.cashFlowEntry.deleteMany({
+    where: { organizationId: orgId, year, source: "budget_line" },
+  })
+
   let created = 0
 
-  // 1. From budget lines (planned expenses → outflows, planned revenue → inflows)
-  if (planId) {
+  // 1. From ALL budget plans for this year (not just one plan)
+  const plans = await prisma.budgetPlan.findMany({
+    where: { organizationId: orgId, year, isRolling: false },
+  })
+
+  for (const plan of plans) {
     const lines = await prisma.budgetLine.findMany({
-      where: { planId, organizationId: orgId },
+      where: { planId: plan.id, organizationId: orgId },
     })
 
-    const plan = await prisma.budgetPlan.findFirst({
-      where: { id: planId, organizationId: orgId },
-    })
+    // Determine months for this plan
+    const months: number[] = []
+    if (plan.periodType === "annual") {
+      for (let m = 1; m <= 12; m++) months.push(m)
+    } else if (plan.periodType === "quarterly" && plan.quarter) {
+      const startMonth = (plan.quarter - 1) * 3 + 1
+      for (let m = startMonth; m < startMonth + 3; m++) months.push(m)
+    } else if (plan.month) {
+      months.push(plan.month)
+    }
 
-    if (plan) {
-      // Determine months for this plan
-      const months: number[] = []
-      if (plan.periodType === "annual") {
-        for (let m = 1; m <= 12; m++) months.push(m)
-      } else if (plan.periodType === "quarterly" && plan.quarter) {
-        const startMonth = (plan.quarter - 1) * 3 + 1
-        for (let m = startMonth; m < startMonth + 3; m++) months.push(m)
-      } else if (plan.month) {
-        months.push(plan.month)
-      }
+    for (const line of lines) {
+      const monthlyAmount = line.plannedAmount / (months.length || 1)
+      const entryType = line.lineType === "revenue" ? "inflow" : "outflow"
 
-      for (const line of lines) {
-        const monthlyAmount = line.plannedAmount / (months.length || 1)
-        const entryType = line.lineType === "revenue" ? "inflow" : "outflow"
-
-        for (const m of months) {
-          // Check if entry already exists
-          const existing = await prisma.cashFlowEntry.findFirst({
-            where: {
-              organizationId: orgId,
-              year: plan.year,
-              month: m,
-              source: "budget_line",
-              sourceId: line.id,
-            },
-          })
-
-          if (!existing) {
-            await prisma.cashFlowEntry.create({
-              data: {
-                organizationId: orgId,
-                year: plan.year,
-                month: m,
-                entryType,
-                source: "budget_line",
-                sourceId: line.id,
-                amount: monthlyAmount,
-                description: `${line.category} (${line.lineType})`,
-                isProjected: true,
-              },
-            })
-            created++
-          }
-        }
+      for (const m of months) {
+        await prisma.cashFlowEntry.create({
+          data: {
+            organizationId: orgId,
+            year: plan.year,
+            month: m,
+            entryType,
+            source: "budget_line",
+            sourceId: line.id,
+            amount: monthlyAmount,
+            description: `${line.category} (${line.lineType})`,
+            isProjected: true,
+          },
+        })
+        created++
       }
     }
   }

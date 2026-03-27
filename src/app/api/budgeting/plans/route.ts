@@ -1,6 +1,23 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getOrgId } from "@/lib/api-auth"
 import { prisma } from "@/lib/prisma"
+import { loadAndCompute } from "@/lib/cost-model/db"
+
+const DEPT_CATEGORY_MAP: Record<string, string> = {
+  it: "Выручка — Daimi IT", infosec: "Выручка — InfoSec",
+  erp: "Выручка — ERP", grc: "Выручка — GRC", pm: "Выручка — PM",
+  helpdesk: "Выручка — HelpDesk", cloud: "Выручка — Cloud", waf: "Выручка — WAF",
+}
+
+function getPeriodMonths(periodType: string, quarter?: number | null, month?: number | null): number[] {
+  if (periodType === "annual") return [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+  if (periodType === "quarterly" && quarter) {
+    const start = (quarter - 1) * 3 + 1
+    return [start, start + 1, start + 2]
+  }
+  if (periodType === "monthly" && month) return [month]
+  return [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+}
 
 export async function GET(req: NextRequest) {
   const orgId = await getOrgId(req)
@@ -64,6 +81,73 @@ export async function POST(req: NextRequest) {
       notes: notes || null,
     },
   })
+
+  // Auto-populate: clone lines from existing plan + fill from sales forecast & cost model
+  try {
+    const planYear = Number(year)
+    const planMonths = getPeriodMonths(periodType, quarter ? Number(quarter) : null, month ? Number(month) : null)
+
+    // Clone budget line structure from any existing plan
+    const sourcePlan = await prisma.budgetPlan.findFirst({
+      where: { organizationId: orgId, id: { not: plan.id }, isRolling: false },
+      orderBy: { createdAt: "asc" },
+    })
+
+    if (sourcePlan) {
+      const sourceLines = await prisma.budgetLine.findMany({ where: { planId: sourcePlan.id } })
+      const costModel = await loadAndCompute(orgId)
+
+      // Load sales forecast for revenue (user's Excel forecast)
+      const salesForecasts = await prisma.salesForecast.findMany({
+        where: { organizationId: orgId, year: planYear, month: { in: planMonths } },
+        include: { budgetDept: { select: { key: true } } },
+      })
+
+      // Sum forecast by department key for the plan's months
+      const forecastByDept: Record<string, number> = {}
+      for (const sf of salesForecasts) {
+        const key = sf.budgetDept.key
+        forecastByDept[key] = (forecastByDept[key] || 0) + sf.amount
+      }
+
+      for (const sl of sourceLines) {
+        let plannedAmount = 0
+
+        if (sl.lineType === "revenue") {
+          // Revenue: from SalesForecast (user's Excel data)
+          for (const [deptKey, category] of Object.entries(DEPT_CATEGORY_MAP)) {
+            if (sl.category === category) {
+              plannedAmount = forecastByDept[deptKey] ?? 0
+              break
+            }
+          }
+        } else if (sl.costModelKey) {
+          // Expenses: from cost model × number of months
+          const parts = sl.costModelKey.split(".")
+          if (parts[0] === "serviceDetails" && parts.length === 3) {
+            const detail = costModel.serviceDetails[parts[1]]
+            if (detail && parts[2] in detail) {
+              plannedAmount = ((detail as any)[parts[2]] ?? 0) * planMonths.length
+            }
+          }
+        }
+
+        await prisma.budgetLine.create({
+          data: {
+            organizationId: orgId, planId: plan.id, category: sl.category,
+            department: sl.department, lineType: sl.lineType,
+            plannedAmount: Math.round(plannedAmount * 100) / 100,
+            costModelKey: sl.costModelKey,
+            isAutoActual: false, isAutoPlanned: false,
+            notes: sl.notes, sortOrder: sl.sortOrder,
+            lineSubtype: sl.lineSubtype, parentId: null,
+          },
+        })
+      }
+    }
+  } catch (e) {
+    console.error("Auto-populate plan error:", e)
+  }
 
   return NextResponse.json({ success: true, data: plan }, { status: 201 })
 }

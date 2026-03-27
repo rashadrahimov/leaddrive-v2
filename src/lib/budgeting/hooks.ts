@@ -851,6 +851,26 @@ export function useCloseRollingMonth() {
   })
 }
 
+export function useReopenRollingMonth() {
+  const orgId = useOrgId()
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (data: { planId: string; year: number; month: number }) => {
+      const res = await fetch("/api/budgeting/rolling", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", "x-organization-id": orgId },
+        body: JSON.stringify({ ...data, action: "reopen" }),
+      })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error || "API error")
+      return json
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["budgeting", "rolling"] })
+    },
+  })
+}
+
 // ─── F6: Cash Flow ────────────────────────────────────────────
 
 export function useCashFlow(year: number) {
@@ -858,7 +878,9 @@ export function useCashFlow(year: number) {
   return useQuery({
     queryKey: ["budgeting", "cash-flow", year],
     queryFn: async () => {
-      const res = await apiFetch(`/api/budgeting/cash-flow?year=${year}`, orgId)
+      const res = await fetch(`/api/budgeting/cash-flow?year=${year}`, {
+        headers: { "x-organization-id": orgId },
+      })
       const json = await res.json()
       if (!res.ok) throw new Error(json.error || "API error")
       return json as {
@@ -908,7 +930,9 @@ export function useCashFlowAlerts(year: number) {
   return useQuery({
     queryKey: ["budgeting", "cash-flow-alerts", year],
     queryFn: async () => {
-      const res = await apiFetch(`/api/budgeting/cash-flow/alerts?year=${year}`, orgId)
+      const res = await fetch(`/api/budgeting/cash-flow/alerts?year=${year}`, {
+        headers: { "x-organization-id": orgId },
+      })
       const json = await res.json()
       if (!res.ok) throw new Error(json.error || "API error")
       return json as Array<{

@@ -62,6 +62,7 @@ import {
   useRollingForecast,
   useAutoForecast,
   useCloseRollingMonth,
+  useReopenRollingMonth,
   useCashFlow,
   useCashFlowAlerts,
   useResolveCashFlowAlert,
@@ -151,19 +152,34 @@ function IntegrationsTab({ planId }: { planId: string }) {
 
 // ─── F4: Rolling Forecast Tab ─────────────────────────────────────────────────
 
-function RollingTab({ planId }: { planId: string }) {
-  const { data: rollingData } = useRollingForecast(planId)
+function RollingTab() {
+  const { data: plans = [] } = useBudgetPlans()
+  const rollingPlan = (plans as any[]).find((p) => p.isRolling)
+  const rollingPlanId = rollingPlan?.id || null
+  const { data: rollingData } = useRollingForecast(rollingPlanId)
   const autoForecast = useAutoForecast()
   const closeMonth = useCloseRollingMonth()
+  const reopenMonth = useReopenRollingMonth()
+
+  if (!rollingPlan) {
+    return (
+      <Card>
+        <CardContent className="py-12 text-center text-muted-foreground">
+          <CalendarRange className="h-12 w-12 mx-auto mb-3 opacity-30" />
+          <p className="font-medium text-lg mb-2">Скользящий прогноз</p>
+          <p className="text-sm">Скользящий план ещё не создан.</p>
+          <p className="text-sm mt-1">Создайте скользящий план на вкладке «Планы» (кнопка «Скользящий план»).</p>
+        </CardContent>
+      </Card>
+    )
+  }
 
   if (!rollingData || !rollingData.months.length) {
     return (
       <Card>
         <CardContent className="py-12 text-center text-muted-foreground">
           <CalendarRange className="h-12 w-12 mx-auto mb-3 opacity-30" />
-          <p className="font-medium text-lg mb-2">Скользящий прогноз</p>
-          <p className="text-sm">Текущий план не является скользящим.</p>
-          <p className="text-sm mt-1">Создайте скользящий план на вкладке «Планы» (кнопка «Скользящий план»).</p>
+          <p className="font-medium text-lg mb-2">Загрузка данных...</p>
         </CardContent>
       </Card>
     )
@@ -173,12 +189,15 @@ function RollingTab({ planId }: { planId: string }) {
     <div className="space-y-6">
       <BudgetRollingForecast
         months={rollingData.months}
-        totalActual={rollingData.totalActual}
-        totalForecast={rollingData.totalForecast}
-        onAutoForecast={() => autoForecast.mutate({ planId })}
+        totalRevenue={rollingData.revenue}
+        totalExpense={rollingData.expense}
+        totalMargin={rollingData.margin}
+        onAutoForecast={() => autoForecast.mutate({ planId: rollingPlanId! })}
         isForecasting={autoForecast.isPending}
-        onCloseMonth={(year, month) => closeMonth.mutate({ planId, year, month })}
+        onCloseMonth={(year, month) => closeMonth.mutate({ planId: rollingPlanId!, year, month })}
         isClosingMonth={closeMonth.isPending}
+        onReopenMonth={(year, month) => reopenMonth.mutate({ planId: rollingPlanId!, year, month })}
+        isReopeningMonth={reopenMonth.isPending}
       />
     </div>
   )
@@ -3656,7 +3675,11 @@ export default function BudgetingPage() {
           {plansLoading ? (
             <Loader2 className="h-4 w-4 animate-spin text-purple-500" />
           ) : plans.length > 0 ? (
-            <select value={resolvedPlanId} onChange={e => { setActivePlanId(e.target.value) }}
+            <select value={resolvedPlanId} onChange={e => {
+                setActivePlanId(e.target.value)
+                const selected = (plans as any[]).find(p => p.id === e.target.value)
+                if (selected?.isRolling) setActiveTab("rolling")
+              }}
               className="border border-border rounded-md px-3 py-1.5 text-sm bg-background min-w-[180px]">
               {plans.map(p => (
                 <option key={p.id} value={p.id}>{p.name} — {periodLabel(p, t)}</option>
@@ -3736,7 +3759,7 @@ export default function BudgetingPage() {
               <IntegrationsTab planId={resolvedPlanId} />
             </TabsContent>
             <TabsContent value="rolling">
-              <RollingTab planId={resolvedPlanId} />
+              <RollingTab />
             </TabsContent>
             <TabsContent value="cash-flow">
               <CashFlowTab />

@@ -5,7 +5,7 @@ import { useSession } from "next-auth/react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Loader2, Save, TrendingUp, ArrowLeft } from "lucide-react"
+import { Loader2, Save, TrendingUp, ArrowLeft, Download, Upload } from "lucide-react"
 import Link from "next/link"
 
 interface Department {
@@ -154,6 +154,43 @@ export default function SalesForecastPage() {
     }
   }
 
+  const handleExport = async () => {
+    try {
+      const res = await fetch(`/api/budgeting/sales-forecast/export?year=${year}`, { headers })
+      if (!res.ok) throw new Error("Export failed")
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement("a")
+      a.href = url
+      a.download = `sales-forecast-${year}.xlsx`
+      a.click()
+      URL.revokeObjectURL(url)
+    } catch (err) {
+      console.error("Export error:", err)
+    }
+  }
+
+  const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const formData = new FormData()
+    formData.append("file", file)
+    formData.append("year", String(year))
+    try {
+      const res = await fetch("/api/budgeting/sales-forecast/import", {
+        method: "POST",
+        headers: { "x-organization-id": orgId || "" },
+        body: formData,
+      })
+      if (res.ok) {
+        await fetchData()
+      }
+    } catch (err) {
+      console.error("Import error:", err)
+    }
+    e.target.value = ""
+  }
+
   if (loading) {
     return (
       <div className="flex justify-center py-20">
@@ -200,6 +237,17 @@ export default function SalesForecastPage() {
               <option key={y} value={y}>{y}</option>
             ))}
           </select>
+          <Button variant="outline" size="sm" onClick={handleExport}>
+            <Download className="h-4 w-4 mr-1" />
+            Excel
+          </Button>
+          <Button variant="outline" size="sm" asChild>
+            <label className="cursor-pointer">
+              <Upload className="h-4 w-4 mr-1" />
+              Импорт
+              <input type="file" accept=".xlsx,.xls" className="hidden" onChange={handleImport} />
+            </label>
+          </Button>
           <Button onClick={handleSave} disabled={saving}>
             {saving ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Save className="h-4 w-4 mr-1" />}
             {saved ? "Сохранено ✓" : "Сохранить"}

@@ -122,21 +122,48 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({ success: true, data: plan }, { status: 201 })
 }
 
-// PATCH — close a rolling forecast month (mark as actual)
+// PATCH — close or reopen a rolling forecast month
 export async function PATCH(req: NextRequest) {
   const orgId = await getOrgId(req)
   if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
-  const { planId, year, month } = await req.json()
+  const { planId, year, month, action = "close" } = await req.json()
   if (!planId || !year || !month) {
     return NextResponse.json({ error: "planId, year, month required" }, { status: 400 })
   }
 
-  // Verify plan belongs to org
   const plan = await prisma.budgetPlan.findFirst({
     where: { id: planId, organizationId: orgId, isRolling: true },
   })
   if (!plan) return NextResponse.json({ error: "Rolling plan not found" }, { status: 404 })
+
+  if (action === "reopen") {
+    // Reopen: set month back to forecast
+    const updated = await prisma.rollingForecastMonth.update({
+      where: { planId_year_month: { planId, year, month } },
+      data: { status: "forecast", lockedAt: null },
+    })
+
+    // Remove the last forecast month (reverse of close adding a month)
+    const allMonths = await prisma.rollingForecastMonth.findMany({
+      where: { planId, organizationId: orgId },
+      orderBy: [{ year: "asc" }, { month: "asc" }],
+    })
+    if (allMonths.length > 12) {
+      const lastMonth = allMonths[allMonths.length - 1]
+      if (lastMonth.status === "forecast") {
+        // Delete forecast entries for this month
+        await prisma.budgetForecastEntry.deleteMany({
+          where: { planId, year: lastMonth.year, month: lastMonth.month },
+        })
+        await prisma.rollingForecastMonth.delete({
+          where: { planId_year_month: { planId, year: lastMonth.year, month: lastMonth.month } },
+        })
+      }
+    }
+
+    return NextResponse.json({ success: true, data: updated })
+  }
 
   // Close the month
   const updated = await prisma.rollingForecastMonth.update({
@@ -154,7 +181,6 @@ export async function PATCH(req: NextRequest) {
   let nextMonth = last.month + 1
   if (nextMonth > 12) { nextMonth = 1; nextYear++ }
 
-  // Only add if this month doesn't already exist
   const exists = await prisma.rollingForecastMonth.findUnique({
     where: { planId_year_month: { planId, year: nextYear, month: nextMonth } },
   })
@@ -162,6 +188,24 @@ export async function PATCH(req: NextRequest) {
     await prisma.rollingForecastMonth.create({
       data: { organizationId: orgId, planId, year: nextYear, month: nextMonth, status: "forecast" },
     })
+
+    // Copy forecast entries from an existing month for the new month
+    const sampleForecasts = await prisma.budgetForecastEntry.findMany({
+      where: { planId, organizationId: orgId, year: allMonths[0].year, month: allMonths[0].month },
+    })
+    if (sampleForecasts.length > 0) {
+      await prisma.budgetForecastEntry.createMany({
+        data: sampleForecasts.map((f) => ({
+          organizationId: orgId,
+          planId,
+          year: nextYear,
+          month: nextMonth,
+          category: f.category,
+          lineType: f.lineType,
+          forecastAmount: f.forecastAmount,
+        })),
+      })
+    }
   }
 
   return NextResponse.json({ success: true, data: updated })
@@ -190,17 +234,18 @@ export async function GET(req: NextRequest) {
     where: { planId, organizationId: orgId },
   })
 
+  // Pull actuals from ALL plans in the org (not just rolling plan)
+  // so Q1/Q2 actuals automatically appear in rolling view
   const actuals = await prisma.budgetActual.findMany({
-    where: { planId, organizationId: orgId },
+    where: { organizationId: orgId },
   })
 
   const forecasts = await prisma.budgetForecastEntry.findMany({
     where: { planId, organizationId: orgId },
   })
 
-  // Build blended data per month
+  // Build blended data per month — separate revenue and expense
   const blended = months.map((m) => {
-    const isActual = m.status === "actual"
     const monthActuals = actuals.filter((a) => {
       if (!a.expenseDate) return false
       const d = new Date(a.expenseDate)
@@ -208,25 +253,38 @@ export async function GET(req: NextRequest) {
     })
     const monthForecasts = forecasts.filter((f) => f.year === m.year && f.month === m.month)
 
-    const actualTotal = monthActuals.reduce((s, a) => s + a.actualAmount, 0)
-    const forecastTotal = monthForecasts.reduce((s, f) => s + f.forecastAmount, 0)
+    const actualRevenue = monthActuals.filter(a => a.lineType === "revenue").reduce((s, a) => s + a.actualAmount, 0)
+    const actualExpense = monthActuals.filter(a => a.lineType === "expense").reduce((s, a) => s + a.actualAmount, 0)
+    const forecastRevenue = monthForecasts.filter(f => f.lineType === "revenue").reduce((s, f) => s + f.forecastAmount, 0)
+    const forecastExpense = monthForecasts.filter(f => f.lineType === "expense").reduce((s, f) => s + f.forecastAmount, 0)
+
+    const hasActuals = (actualRevenue + actualExpense) > 0
+    const revenue = hasActuals ? actualRevenue : forecastRevenue
+    const expense = hasActuals ? actualExpense : forecastExpense
+    const margin = revenue - expense
 
     return {
       year: m.year,
       month: m.month,
-      status: m.status,
+      status: hasActuals ? "actual" : m.status,
       lockedAt: m.lockedAt,
-      actualTotal: isActual ? actualTotal : 0,
-      forecastTotal: isActual ? 0 : forecastTotal,
-      total: isActual ? actualTotal : forecastTotal,
+      revenue,
+      expense,
+      margin,
+      total: margin,
     }
   })
+
+  const totals = blended.reduce((acc, m) => ({
+    revenue: acc.revenue + m.revenue,
+    expense: acc.expense + m.expense,
+    margin: acc.margin + m.margin,
+  }), { revenue: 0, expense: 0, margin: 0 })
 
   return NextResponse.json({
     plan,
     months: blended,
     lineCount: lines.length,
-    totalActual: blended.reduce((s, m) => s + m.actualTotal, 0),
-    totalForecast: blended.reduce((s, m) => s + m.forecastTotal, 0),
+    ...totals,
   })
 }
