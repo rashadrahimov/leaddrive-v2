@@ -557,9 +557,25 @@ export default function InvoiceDetailPage() {
   }
 
   function addChainStep() {
-    const config: any = {}
-    if (newStepType === "wait") config.days = 1
-    setChainSteps(prev => [...prev, { stepType: newStepType, stepOrder: prev.length + 1, config: { ...config, ...newStepConfig }, statsEntered: 0, statsCompleted: 0 }])
+    const defaults: Record<string, any> = {
+      wait: { days: 1, unit: "minutes" },
+      send_email: {
+        subject: "Ödəniş xatırlatması: Hesab-faktura {{invoice_number}}",
+        body: "Hörmətli {{recipient_name}},\n\nHesab-faktura {{invoice_number}} məbləği {{amount}} ödənişini xatırladırıq.\n\nÖdəniş tarixi: {{due_date}}\nQalıq məbləğ: {{balance_due}}\n\nXahiş edirik ən qısa zamanda ödəniş edin.\n\nHörmətlə",
+      },
+      sms: {
+        message: "Xatırlatma: Hesab-faktura {{invoice_number}} məbləği {{amount}} ödənilməyib. Qalıq: {{balance_due}}. Bizimlə əlaqə saxlayın.",
+      },
+      send_whatsapp: {
+        message: "Salam, {{recipient_name}}! Hesab-faktura {{invoice_number}} ({{amount}}) hələ ödənilməyib. Qalıq: {{balance_due}}. Son tarix: {{due_date}}.",
+      },
+      send_telegram: {
+        message: "Xatırlatma: Hesab-faktura {{invoice_number}} məbləği {{amount}} ödənilməyib. Qalıq: {{balance_due}}. Bizimlə əlaqə saxlayın.",
+      },
+    }
+    const defaultConfig = defaults[newStepType] || {}
+    const mergedConfig = { ...defaultConfig, ...newStepConfig }
+    setChainSteps(prev => [...prev, { stepType: newStepType, stepOrder: prev.length + 1, config: mergedConfig, statsEntered: 0, statsCompleted: 0 }])
     setAddStepOpen(false)
     setNewStepType("send_email")
     setNewStepConfig({})
