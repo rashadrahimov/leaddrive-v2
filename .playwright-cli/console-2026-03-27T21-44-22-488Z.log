@@ -1,0 +1,33 @@
+[    1715ms] [ERROR] p: FORMATTING_ERROR: The intl string context variable "current" was not provided to the string "Страница {current} из {total}"
+    at c (https://v2.leaddrivecrm.org/_next/static/chunks/3073ed4e47d4d993.js:3:4743)
+    at m (https://v2.leaddrivecrm.org/_next/static/chunks/3073ed4e47d4d993.js:3:5351)
+    at f (https://v2.leaddrivecrm.org/_next/static/chunks/3073ed4e47d4d993.js:3:5389)
+    at I (https://v2.leaddrivecrm.org/_next/static/chunks/83069e0db8652b9d.js:1:29730)
+    at av (https://v2.leaddrivecrm.org/_next/static/chunks/3707b5060c442959.js:1:63258)
+    at oY (https://v2.leaddrivecrm.org/_next/static/chunks/3707b5060c442959.js:1:83531)
+    at io (https://v2.leaddrivecrm.org/_next/static/chunks/3707b5060c442959.js:1:94963)
+    at sc (https://v2.leaddrivecrm.org/_next/static/chunks/3707b5060c442959.js:1:137984)
+    at https://v2.leaddrivecrm.org/_next/static/chunks/3707b5060c442959.js:1:137829
+    at ss (https://v2.leaddrivecrm.org/_next/static/chunks/3707b5060c442959.js:1:137837) @ https://v2.leaddrivecrm.org/_next/static/chunks/3073ed4e47d4d993.js:2
+[    2054ms] [ERROR] p: FORMATTING_ERROR: The intl string context variable "current" was not provided to the string "Страница {current} из {total}"
+    at c (https://v2.leaddrivecrm.org/_next/static/chunks/3073ed4e47d4d993.js:3:4743)
+    at m (https://v2.leaddrivecrm.org/_next/static/chunks/3073ed4e47d4d993.js:3:5351)
+    at f (https://v2.leaddrivecrm.org/_next/static/chunks/3073ed4e47d4d993.js:3:5389)
+    at I (https://v2.leaddrivecrm.org/_next/static/chunks/83069e0db8652b9d.js:1:29730)
+    at av (https://v2.leaddrivecrm.org/_next/static/chunks/3707b5060c442959.js:1:63258)
+    at oY (https://v2.leaddrivecrm.org/_next/static/chunks/3707b5060c442959.js:1:83531)
+    at io (https://v2.leaddrivecrm.org/_next/static/chunks/3707b5060c442959.js:1:94963)
+    at sc (https://v2.leaddrivecrm.org/_next/static/chunks/3707b5060c442959.js:1:137984)
+    at https://v2.leaddrivecrm.org/_next/static/chunks/3707b5060c442959.js:1:137829
+    at ss (https://v2.leaddrivecrm.org/_next/static/chunks/3707b5060c442959.js:1:137837) @ https://v2.leaddrivecrm.org/_next/static/chunks/3073ed4e47d4d993.js:2
+[    2404ms] [ERROR] p: FORMATTING_ERROR: The intl string context variable "current" was not provided to the string "Страница {current} из {total}"
+    at c (https://v2.leaddrivecrm.org/_next/static/chunks/3073ed4e47d4d993.js:3:4743)
+    at m (https://v2.leaddrivecrm.org/_next/static/chunks/3073ed4e47d4d993.js:3:5351)
+    at f (https://v2.leaddrivecrm.org/_next/static/chunks/3073ed4e47d4d993.js:3:5389)
+    at I (https://v2.leaddrivecrm.org/_next/static/chunks/83069e0db8652b9d.js:1:29730)
+    at av (https://v2.leaddrivecrm.org/_next/static/chunks/3707b5060c442959.js:1:63258)
+    at oY (https://v2.leaddrivecrm.org/_next/static/chunks/3707b5060c442959.js:1:83531)
+    at io (https://v2.leaddrivecrm.org/_next/static/chunks/3707b5060c442959.js:1:94963)
+    at sc (https://v2.leaddrivecrm.org/_next/static/chunks/3707b5060c442959.js:1:137984)
+    at https://v2.leaddrivecrm.org/_next/static/chunks/3707b5060c442959.js:1:137829
+    at ss (https://v2.leaddrivecrm.org/_next/static/chunks/3707b5060c442959.js:1:137837) @ https://v2.leaddrivecrm.org/_next/static/chunks/3073ed4e47d4d993.js:2

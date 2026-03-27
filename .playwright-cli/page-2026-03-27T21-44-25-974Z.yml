@@ -1,0 +1,833 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - complementary [ref=e3]:
+      - generic [ref=e4]:
+        - link "LeadDrive CRM" [ref=e5] [cursor=pointer]:
+          - /url: /
+          - generic [ref=e6]:
+            - img [ref=e7]
+            - generic [ref=e13]:
+              - generic [ref=e14]: LeadDrive
+              - generic [ref=e15]: CRM
+        - button [ref=e16]:
+          - img [ref=e17]
+      - navigation [ref=e19]:
+        - generic [ref=e20]:
+          - generic [ref=e21]: CRM
+          - link "Dashboard" [ref=e22] [cursor=pointer]:
+            - /url: /
+            - img [ref=e24]
+            - generic [ref=e29]: Dashboard
+          - link "Компании" [ref=e30] [cursor=pointer]:
+            - /url: /companies
+            - img [ref=e32]
+            - generic [ref=e36]: Компании
+          - link "Контакты" [ref=e37] [cursor=pointer]:
+            - /url: /contacts
+            - img [ref=e39]
+            - generic [ref=e44]: Контакты
+          - link "Сделки" [ref=e45] [cursor=pointer]:
+            - /url: /deals
+            - img [ref=e47]
+            - generic [ref=e52]: Сделки
+          - link "Лиды" [ref=e53] [cursor=pointer]:
+            - /url: /leads
+            - img [ref=e55]
+            - generic [ref=e58]: Лиды
+          - link "Задачи" [ref=e59] [cursor=pointer]:
+            - /url: /tasks
+            - img [ref=e61]
+            - generic [ref=e64]: Задачи
+          - link "Контракты" [ref=e65] [cursor=pointer]:
+            - /url: /contracts
+            - img [ref=e67]
+            - generic [ref=e70]: Контракты
+          - link "Счета" [ref=e71] [cursor=pointer]:
+            - /url: /invoices
+            - img [ref=e73]
+            - generic [ref=e76]: Счета
+          - link "Продукты" [ref=e77] [cursor=pointer]:
+            - /url: /products
+            - img [ref=e79]
+            - generic [ref=e83]: Продукты
+          - link "Уведомления" [ref=e84] [cursor=pointer]:
+            - /url: /notifications
+            - img [ref=e86]
+            - generic [ref=e89]: Уведомления
+        - generic [ref=e90]:
+          - generic [ref=e91]: Маркетинг
+          - link "Кампании" [ref=e92] [cursor=pointer]:
+            - /url: /campaigns
+            - img [ref=e94]
+            - generic [ref=e97]: Кампании
+          - link "Сегменты" [ref=e98] [cursor=pointer]:
+            - /url: /segments
+            - img [ref=e100]
+            - generic [ref=e102]: Сегменты
+          - link "Email шаблоны" [ref=e103] [cursor=pointer]:
+            - /url: /email-templates
+            - img [ref=e105]
+            - generic [ref=e108]: Email шаблоны
+          - link "Email лог" [ref=e109] [cursor=pointer]:
+            - /url: /email-log
+            - img [ref=e111]
+            - generic [ref=e114]: Email лог
+          - link "ROI кампаний" [ref=e115] [cursor=pointer]:
+            - /url: /campaign-roi
+            - img [ref=e117]
+            - generic [ref=e120]: ROI кампаний
+          - link "AI скоринг" [ref=e121] [cursor=pointer]:
+            - /url: /ai-scoring
+            - img [ref=e123]
+            - generic [ref=e127]: AI скоринг
+          - link "Journeys" [ref=e128] [cursor=pointer]:
+            - /url: /journeys
+            - img [ref=e130]
+            - generic [ref=e134]: Journeys
+          - link "Мероприятия" [ref=e135] [cursor=pointer]:
+            - /url: /events
+            - img [ref=e137]
+            - generic [ref=e139]: Мероприятия
+        - generic [ref=e140]:
+          - generic [ref=e141]: Коммуникации
+          - link "Inbox" [ref=e142] [cursor=pointer]:
+            - /url: /inbox
+            - img [ref=e144]
+            - generic [ref=e146]: Inbox
+        - generic [ref=e147]:
+          - generic [ref=e148]: Поддержка
+          - link "Тикеты" [ref=e149] [cursor=pointer]:
+            - /url: /tickets
+            - img [ref=e151]
+            - generic [ref=e153]: Тикеты
+          - link "Рабочий стол агента" [ref=e154] [cursor=pointer]:
+            - /url: /support/agent-desktop
+            - img [ref=e156]
+            - generic [ref=e158]: Рабочий стол агента
+          - link "Календарь агента" [ref=e159] [cursor=pointer]:
+            - /url: /support/calendar
+            - img [ref=e161]
+            - generic [ref=e163]: Календарь агента
+          - link "База знаний" [ref=e164] [cursor=pointer]:
+            - /url: /knowledge-base
+            - img [ref=e166]
+            - generic [ref=e168]: База знаний
+        - generic [ref=e169]:
+          - generic [ref=e170]: Аналитика
+          - link "Прибыльность" [ref=e171] [cursor=pointer]:
+            - /url: /profitability
+            - img [ref=e173]
+            - generic [ref=e175]: Прибыльность
+          - link "Бюджетирование" [ref=e176] [cursor=pointer]:
+            - /url: /budgeting
+            - img [ref=e178]
+            - generic [ref=e181]: Бюджетирование
+          - link "Финансы" [ref=e182] [cursor=pointer]:
+            - /url: /finance
+            - img [ref=e184]
+            - generic [ref=e187]: Финансы
+          - link "Ценообразование" [ref=e188] [cursor=pointer]:
+            - /url: /pricing
+            - img [ref=e190]
+            - generic [ref=e192]: Ценообразование
+          - link "Отчёты" [ref=e193] [cursor=pointer]:
+            - /url: /reports
+            - img [ref=e195]
+            - generic [ref=e197]: Отчёты
+          - link "AI Центр" [ref=e198] [cursor=pointer]:
+            - /url: /ai-command-center
+            - img [ref=e200]
+            - generic [ref=e208]: AI Центр
+        - generic [ref=e209]:
+          - generic [ref=e210]: ERP
+          - link "Проекты" [ref=e211] [cursor=pointer]:
+            - /url: /projects
+            - img [ref=e213]
+            - generic [ref=e215]: Проекты
+        - generic [ref=e216]:
+          - generic [ref=e217]: Настройки
+          - link "Автоматизации" [ref=e218] [cursor=pointer]:
+            - /url: /settings/workflows
+            - img [ref=e220]
+            - generic [ref=e222]: Автоматизации
+          - link "Пользователи" [ref=e223] [cursor=pointer]:
+            - /url: /settings/users
+            - img [ref=e225]
+            - generic [ref=e230]: Пользователи
+          - link "SMTP" [ref=e231] [cursor=pointer]:
+            - /url: /settings/smtp-settings
+            - img [ref=e233]
+            - generic [ref=e236]: SMTP
+          - link "Настройки" [ref=e237] [cursor=pointer]:
+            - /url: /settings
+            - img [ref=e239]
+            - generic [ref=e242]: Настройки
+    - generic [ref=e243]:
+      - banner [ref=e244]:
+        - generic [ref=e245]:
+          - generic [ref=e246]: Güvən Technology LLC
+          - button "Поиск... K" [ref=e247] [cursor=pointer]:
+            - img [ref=e248]
+            - generic [ref=e251]: Поиск...
+            - generic [ref=e252]:
+              - img [ref=e253]
+              - text: K
+        - generic [ref=e255]:
+          - button "3" [ref=e283]:
+            - img [ref=e258]
+            - generic [ref=e284]: "3"
+          - button "Русский" [ref=e262]:
+            - img
+          - button "Toggle theme" [ref=e263]:
+            - img
+          - generic [ref=e264]:
+            - generic [ref=e265]: A
+            - generic [ref=e266]: Admin
+            - button "Выйти" [ref=e267]:
+              - img
+      - main [ref=e268]:
+        - generic [ref=e269]:
+          - generic [ref=e285]:
+            - generic [ref=e286]:
+              - heading "Контакты" [level=1] [ref=e287]
+              - paragraph [ref=e288]: Управление базой контактов
+            - button "Добавить контакт" [ref=e289]:
+              - img
+              - text: Добавить контакт
+          - paragraph [ref=e290]: "База контактов: отслеживайте людей, их компании и историю коммуникаций"
+          - generic [ref=e291]:
+            - generic [ref=e292]:
+              - generic [ref=e293]:
+                - generic [ref=e294]:
+                  - text: Всего
+                  - img [ref=e296]
+                - img [ref=e299]
+              - generic [ref=e304]: "606"
+            - generic [ref=e305]:
+              - generic [ref=e306]:
+                - generic [ref=e307]:
+                  - text: Активные
+                  - img [ref=e309]
+                - img [ref=e312]
+              - generic [ref=e317]: "500"
+            - generic [ref=e318]:
+              - generic [ref=e319]:
+                - generic [ref=e320]: С email
+                - img [ref=e322]
+              - generic [ref=e325]: "500"
+            - generic [ref=e326]:
+              - generic [ref=e327]:
+                - generic [ref=e328]: С телефоном
+                - img [ref=e330]
+              - generic [ref=e332]: "476"
+          - generic [ref=e333]:
+            - generic [ref=e334]:
+              - img [ref=e335]
+              - textbox "Поиск контактов..." [ref=e338]
+            - generic [ref=e339]: 500 результатов
+            - combobox [ref=e341]:
+              - option "Имя А → Я" [selected]
+              - option "Имя Я → А"
+              - option "Компания"
+              - option "С email"
+              - option "Активные первые"
+          - table [ref=e343]:
+            - rowgroup [ref=e344]:
+              - row "Имя Компания Email Телефон Статус Портал" [ref=e345]:
+                - columnheader [ref=e346]:
+                  - button [ref=e347]:
+                    - img [ref=e348]
+                - columnheader "Имя" [ref=e350]:
+                  - generic [ref=e351]:
+                    - text: Имя
+                    - img [ref=e353]
+                - columnheader "Компания" [ref=e355]:
+                  - generic [ref=e356]:
+                    - text: Компания
+                    - img [ref=e358]
+                - columnheader "Email" [ref=e360]:
+                  - generic [ref=e361]:
+                    - text: Email
+                    - img [ref=e363]
+                - columnheader "Телефон" [ref=e365]:
+                  - generic [ref=e366]:
+                    - text: Телефон
+                    - img [ref=e368]
+                - columnheader "Статус" [ref=e370]
+                - columnheader "Портал" [ref=e371]:
+                  - generic [ref=e372]:
+                    - text: Портал
+                    - img [ref=e374]
+                - columnheader [ref=e376]
+            - rowgroup [ref=e377]:
+              - row "'A 'Elvin Abushev' Head of the Special Projects Department — elvin.abushev@zeytunpharma.az +994 50 377 83 38 Активные" [ref=e378] [cursor=pointer]:
+                - cell [ref=e379]:
+                  - button [ref=e380]:
+                    - img [ref=e381]
+                - cell "'A 'Elvin Abushev' Head of the Special Projects Department" [ref=e383]:
+                  - generic [ref=e384]:
+                    - generic [ref=e385]: "'A"
+                    - generic [ref=e386]:
+                      - generic [ref=e387]: "'Elvin Abushev'"
+                      - generic [ref=e388]: Head of the Special Projects Department
+                - cell "—" [ref=e389]
+                - cell "elvin.abushev@zeytunpharma.az" [ref=e390]:
+                  - generic [ref=e391]:
+                    - img [ref=e392]
+                    - text: elvin.abushev@zeytunpharma.az
+                - cell "+994 50 377 83 38" [ref=e395]:
+                  - generic [ref=e396]:
+                    - img [ref=e397]
+                    - text: +994 50 377 83 38
+                - cell "Активные" [ref=e399]:
+                  - generic [ref=e400]: Активные
+                - cell [ref=e401]
+                - cell [ref=e402]:
+                  - generic [ref=e403]:
+                    - button "Редактировать" [ref=e404]:
+                      - img [ref=e405]
+                    - button "Удалить" [ref=e408]:
+                      - img [ref=e409]
+              - row "'A 'Jalil Aliyev' Head of Sales — jalil@cubics.technology +994 50 250 47 55 Активные" [ref=e412] [cursor=pointer]:
+                - cell [ref=e413]:
+                  - button [ref=e414]:
+                    - img [ref=e415]
+                - cell "'A 'Jalil Aliyev' Head of Sales" [ref=e417]:
+                  - generic [ref=e418]:
+                    - generic [ref=e419]: "'A"
+                    - generic [ref=e420]:
+                      - generic [ref=e421]: "'Jalil Aliyev'"
+                      - generic [ref=e422]: Head of Sales
+                - cell "—" [ref=e423]
+                - cell "jalil@cubics.technology" [ref=e424]:
+                  - generic [ref=e425]:
+                    - img [ref=e426]
+                    - text: jalil@cubics.technology
+                - cell "+994 50 250 47 55" [ref=e429]:
+                  - generic [ref=e430]:
+                    - img [ref=e431]
+                    - text: +994 50 250 47 55
+                - cell "Активные" [ref=e433]:
+                  - generic [ref=e434]: Активные
+                - cell [ref=e435]
+                - cell [ref=e436]:
+                  - generic [ref=e437]:
+                    - button "Редактировать" [ref=e438]:
+                      - img [ref=e439]
+                    - button "Удалить" [ref=e442]:
+                      - img [ref=e443]
+              - row "'F 'Narmin F. Alizada' Group Internal Auditor — narmin.alizada@pmdgroup.az +994 12 505 05 00 (ext. 4035), +994 51 215 82 58 Активные" [ref=e446] [cursor=pointer]:
+                - cell [ref=e447]:
+                  - button [ref=e448]:
+                    - img [ref=e449]
+                - cell "'F 'Narmin F. Alizada' Group Internal Auditor" [ref=e451]:
+                  - generic [ref=e452]:
+                    - generic [ref=e453]: "'F"
+                    - generic [ref=e454]:
+                      - generic [ref=e455]: "'Narmin F. Alizada'"
+                      - generic [ref=e456]: Group Internal Auditor
+                - cell "—" [ref=e457]
+                - cell "narmin.alizada@pmdgroup.az" [ref=e458]:
+                  - generic [ref=e459]:
+                    - img [ref=e460]
+                    - text: narmin.alizada@pmdgroup.az
+                - cell "+994 12 505 05 00 (ext. 4035), +994 51 215 82 58" [ref=e463]:
+                  - generic [ref=e464]:
+                    - img [ref=e465]
+                    - text: +994 12 505 05 00 (ext. 4035), +994 51 215 82 58
+                - cell "Активные" [ref=e467]:
+                  - generic [ref=e468]: Активные
+                - cell [ref=e469]
+                - cell [ref=e470]:
+                  - generic [ref=e471]:
+                    - button "Редактировать" [ref=e472]:
+                      - img [ref=e473]
+                    - button "Удалить" [ref=e476]:
+                      - img [ref=e477]
+              - row "'E 'Rashad E. Valizada (GTC)' Lead Network Administrator — rashad.valizada@gtc.az +994 (55) 425 54 55 Активные" [ref=e480] [cursor=pointer]:
+                - cell [ref=e481]:
+                  - button [ref=e482]:
+                    - img [ref=e483]
+                - cell "'E 'Rashad E. Valizada (GTC)' Lead Network Administrator" [ref=e485]:
+                  - generic [ref=e486]:
+                    - generic [ref=e487]: "'E"
+                    - generic [ref=e488]:
+                      - generic [ref=e489]: "'Rashad E. Valizada (GTC)'"
+                      - generic [ref=e490]: Lead Network Administrator
+                - cell "—" [ref=e491]
+                - cell "rashad.valizada@gtc.az" [ref=e492]:
+                  - generic [ref=e493]:
+                    - img [ref=e494]
+                    - text: rashad.valizada@gtc.az
+                - cell "+994 (55) 425 54 55" [ref=e497]:
+                  - generic [ref=e498]:
+                    - img [ref=e499]
+                    - text: +994 (55) 425 54 55
+                - cell "Активные" [ref=e501]:
+                  - generic [ref=e502]: Активные
+                - cell [ref=e503]
+                - cell [ref=e504]:
+                  - generic [ref=e505]:
+                    - button "Редактировать" [ref=e506]:
+                      - img [ref=e507]
+                    - button "Удалить" [ref=e510]:
+                      - img [ref=e511]
+              - row "'K 'Rinat Khamidulin' Head of Service Operations & Platforms Reliability Unit — rinat.khamidulin@pasha-technology.com +994 55 900 19 36 Активные" [ref=e514] [cursor=pointer]:
+                - cell [ref=e515]:
+                  - button [ref=e516]:
+                    - img [ref=e517]
+                - cell "'K 'Rinat Khamidulin' Head of Service Operations & Platforms Reliability Unit" [ref=e519]:
+                  - generic [ref=e520]:
+                    - generic [ref=e521]: "'K"
+                    - generic [ref=e522]:
+                      - generic [ref=e523]: "'Rinat Khamidulin'"
+                      - generic [ref=e524]: Head of Service Operations & Platforms Reliability Unit
+                - cell "—" [ref=e525]
+                - cell "rinat.khamidulin@pasha-technology.com" [ref=e526]:
+                  - generic [ref=e527]:
+                    - img [ref=e528]
+                    - text: rinat.khamidulin@pasha-technology.com
+                - cell "+994 55 900 19 36" [ref=e531]:
+                  - generic [ref=e532]:
+                    - img [ref=e533]
+                    - text: +994 55 900 19 36
+                - cell "Активные" [ref=e535]:
+                  - generic [ref=e536]: Активные
+                - cell [ref=e537]
+                - cell [ref=e538]:
+                  - generic [ref=e539]:
+                    - button "Редактировать" [ref=e540]:
+                      - img [ref=e541]
+                    - button "Удалить" [ref=e544]:
+                      - img [ref=e545]
+              - row "AD Adalat D. Orujov (AFF) Production department director — adalat.orujov@azfish.az +99451 206 75 07 Активные" [ref=e548] [cursor=pointer]:
+                - cell [ref=e549]:
+                  - button [ref=e550]:
+                    - img [ref=e551]
+                - cell "AD Adalat D. Orujov (AFF) Production department director" [ref=e553]:
+                  - generic [ref=e554]:
+                    - generic [ref=e555]: AD
+                    - generic [ref=e556]:
+                      - generic [ref=e557]: Adalat D. Orujov (AFF)
+                      - generic [ref=e558]: Production department director
+                - cell "—" [ref=e559]
+                - cell "adalat.orujov@azfish.az" [ref=e560]:
+                  - generic [ref=e561]:
+                    - img [ref=e562]
+                    - text: adalat.orujov@azfish.az
+                - cell "+99451 206 75 07" [ref=e565]:
+                  - generic [ref=e566]:
+                    - img [ref=e567]
+                    - text: +99451 206 75 07
+                - cell "Активные" [ref=e569]:
+                  - generic [ref=e570]: Активные
+                - cell [ref=e571]
+                - cell [ref=e572]:
+                  - generic [ref=e573]:
+                    - button "Редактировать" [ref=e574]:
+                      - img [ref=e575]
+                    - button "Удалить" [ref=e578]:
+                      - img [ref=e579]
+              - row "AR Adalat R. Jafarov (ACH) Senior IT Specialist — adalat.jafarov@aghdamcityhotel.az +994 50 295 86 03 Активные" [ref=e582] [cursor=pointer]:
+                - cell [ref=e583]:
+                  - button [ref=e584]:
+                    - img [ref=e585]
+                - cell "AR Adalat R. Jafarov (ACH) Senior IT Specialist" [ref=e587]:
+                  - generic [ref=e588]:
+                    - generic [ref=e589]: AR
+                    - generic [ref=e590]:
+                      - generic [ref=e591]: Adalat R. Jafarov (ACH)
+                      - generic [ref=e592]: Senior IT Specialist
+                - cell "—" [ref=e593]
+                - cell "adalat.jafarov@aghdamcityhotel.az" [ref=e594]:
+                  - generic [ref=e595]:
+                    - img [ref=e596]
+                    - text: adalat.jafarov@aghdamcityhotel.az
+                - cell "+994 50 295 86 03" [ref=e599]:
+                  - generic [ref=e600]:
+                    - img [ref=e601]
+                    - text: +994 50 295 86 03
+                - cell "Активные" [ref=e603]:
+                  - generic [ref=e604]: Активные
+                - cell [ref=e605]
+                - cell [ref=e606]:
+                  - generic [ref=e607]:
+                    - button "Редактировать" [ref=e608]:
+                      - img [ref=e609]
+                    - button "Удалить" [ref=e612]:
+                      - img [ref=e613]
+              - row "AS Adem Sinan Altinsoy Solutions Engineer — aaltinsoy@paloaltonetworks.com +90 506 521 3939 Активные" [ref=e616] [cursor=pointer]:
+                - cell [ref=e617]:
+                  - button [ref=e618]:
+                    - img [ref=e619]
+                - cell "AS Adem Sinan Altinsoy Solutions Engineer" [ref=e621]:
+                  - generic [ref=e622]:
+                    - generic [ref=e623]: AS
+                    - generic [ref=e624]:
+                      - generic [ref=e625]: Adem Sinan Altinsoy
+                      - generic [ref=e626]: Solutions Engineer
+                - cell "—" [ref=e627]
+                - cell "aaltinsoy@paloaltonetworks.com" [ref=e628]:
+                  - generic [ref=e629]:
+                    - img [ref=e630]
+                    - text: aaltinsoy@paloaltonetworks.com
+                - cell "+90 506 521 3939" [ref=e633]:
+                  - generic [ref=e634]:
+                    - img [ref=e635]
+                    - text: +90 506 521 3939
+                - cell "Активные" [ref=e637]:
+                  - generic [ref=e638]: Активные
+                - cell [ref=e639]
+                - cell [ref=e640]:
+                  - generic [ref=e641]:
+                    - button "Редактировать" [ref=e642]:
+                      - img [ref=e643]
+                    - button "Удалить" [ref=e646]:
+                      - img [ref=e647]
+              - row "AH Afar Huseynov — — afar.huseynov@totalbeverage.group +994 50 290 88 18 Активные" [ref=e650] [cursor=pointer]:
+                - cell [ref=e651]:
+                  - button [ref=e652]:
+                    - img [ref=e653]
+                - cell "AH Afar Huseynov —" [ref=e655]:
+                  - generic [ref=e656]:
+                    - generic [ref=e657]: AH
+                    - generic [ref=e658]:
+                      - generic [ref=e659]: Afar Huseynov
+                      - generic [ref=e660]: —
+                - cell "—" [ref=e661]
+                - cell "afar.huseynov@totalbeverage.group" [ref=e662]:
+                  - generic [ref=e663]:
+                    - img [ref=e664]
+                    - text: afar.huseynov@totalbeverage.group
+                - cell "+994 50 290 88 18" [ref=e667]:
+                  - generic [ref=e668]:
+                    - img [ref=e669]
+                    - text: +994 50 290 88 18
+                - cell "Активные" [ref=e671]:
+                  - generic [ref=e672]: Активные
+                - cell [ref=e673]
+                - cell [ref=e674]:
+                  - generic [ref=e675]:
+                    - button "Редактировать" [ref=e676]:
+                      - img [ref=e677]
+                    - button "Удалить" [ref=e680]:
+                      - img [ref=e681]
+              - row "AF Afsana F. Rajabova Account Manager — afsana.rajabova@afigroup.az +994(10)236-67-83 Активные" [ref=e684] [cursor=pointer]:
+                - cell [ref=e685]:
+                  - button [ref=e686]:
+                    - img [ref=e687]
+                - cell "AF Afsana F. Rajabova Account Manager" [ref=e689]:
+                  - generic [ref=e690]:
+                    - generic [ref=e691]: AF
+                    - generic [ref=e692]:
+                      - generic [ref=e693]: Afsana F. Rajabova
+                      - generic [ref=e694]: Account Manager
+                - cell "—" [ref=e695]
+                - cell "afsana.rajabova@afigroup.az" [ref=e696]:
+                  - generic [ref=e697]:
+                    - img [ref=e698]
+                    - text: afsana.rajabova@afigroup.az
+                - cell "+994(10)236-67-83" [ref=e701]:
+                  - generic [ref=e702]:
+                    - img [ref=e703]
+                    - text: +994(10)236-67-83
+                - cell "Активные" [ref=e705]:
+                  - generic [ref=e706]: Активные
+                - cell [ref=e707]
+                - cell [ref=e708]:
+                  - generic [ref=e709]:
+                    - button "Редактировать" [ref=e710]:
+                      - img [ref=e711]
+                    - button "Удалить" [ref=e714]:
+                      - img [ref=e715]
+              - row "a aghamir.b@gentech.az Chief Executive Officer — aghamir.b@gentech.az +994 (12) 311 3066 ext. 100 Активные" [ref=e718] [cursor=pointer]:
+                - cell [ref=e719]:
+                  - button [ref=e720]:
+                    - img [ref=e721]
+                - cell "a aghamir.b@gentech.az Chief Executive Officer" [ref=e723]:
+                  - generic [ref=e724]:
+                    - generic [ref=e725]: a
+                    - generic [ref=e726]:
+                      - generic [ref=e727]: aghamir.b@gentech.az
+                      - generic [ref=e728]: Chief Executive Officer
+                - cell "—" [ref=e729]
+                - cell "aghamir.b@gentech.az" [ref=e730]:
+                  - generic [ref=e731]:
+                    - img [ref=e732]
+                    - text: aghamir.b@gentech.az
+                - cell "+994 (12) 311 3066 ext. 100" [ref=e735]:
+                  - generic [ref=e736]:
+                    - img [ref=e737]
+                    - text: +994 (12) 311 3066 ext. 100
+                - cell "Активные" [ref=e739]:
+                  - generic [ref=e740]: Активные
+                - cell [ref=e741]
+                - cell [ref=e742]:
+                  - generic [ref=e743]:
+                    - button "Редактировать" [ref=e744]:
+                      - img [ref=e745]
+                    - button "Удалить" [ref=e748]:
+                      - img [ref=e749]
+              - row "AB Agil Bayramov — — agilb@bakcell.com +994 55 5907677 Активные" [ref=e752] [cursor=pointer]:
+                - cell [ref=e753]:
+                  - button [ref=e754]:
+                    - img [ref=e755]
+                - cell "AB Agil Bayramov —" [ref=e757]:
+                  - generic [ref=e758]:
+                    - generic [ref=e759]: AB
+                    - generic [ref=e760]:
+                      - generic [ref=e761]: Agil Bayramov
+                      - generic [ref=e762]: —
+                - cell "—" [ref=e763]
+                - cell "agilb@bakcell.com" [ref=e764]:
+                  - generic [ref=e765]:
+                    - img [ref=e766]
+                    - text: agilb@bakcell.com
+                - cell "+994 55 5907677" [ref=e769]:
+                  - generic [ref=e770]:
+                    - img [ref=e771]
+                    - text: +994 55 5907677
+                - cell "Активные" [ref=e773]:
+                  - generic [ref=e774]: Активные
+                - cell [ref=e775]
+                - cell [ref=e776]:
+                  - generic [ref=e777]:
+                    - button "Редактировать" [ref=e778]:
+                      - img [ref=e779]
+                    - button "Удалить" [ref=e782]:
+                      - img [ref=e783]
+              - row "AK Agil K. Jabbarli (GTC) Leading Project Specialist — agil.jabbarli@gtc.az (+994 10) 239 78 10 Активные" [ref=e786] [cursor=pointer]:
+                - cell [ref=e787]:
+                  - button [ref=e788]:
+                    - img [ref=e789]
+                - cell "AK Agil K. Jabbarli (GTC) Leading Project Specialist" [ref=e791]:
+                  - generic [ref=e792]:
+                    - generic [ref=e793]: AK
+                    - generic [ref=e794]:
+                      - generic [ref=e795]: Agil K. Jabbarli (GTC)
+                      - generic [ref=e796]: Leading Project Specialist
+                - cell "—" [ref=e797]
+                - cell "agil.jabbarli@gtc.az" [ref=e798]:
+                  - generic [ref=e799]:
+                    - img [ref=e800]
+                    - text: agil.jabbarli@gtc.az
+                - cell "(+994 10) 239 78 10" [ref=e803]:
+                  - generic [ref=e804]:
+                    - img [ref=e805]
+                    - text: (+994 10) 239 78 10
+                - cell "Активные" [ref=e807]:
+                  - generic [ref=e808]: Активные
+                - cell [ref=e809]
+                - cell [ref=e810]:
+                  - generic [ref=e811]:
+                    - button "Редактировать" [ref=e812]:
+                      - img [ref=e813]
+                    - button "Удалить" [ref=e816]:
+                      - img [ref=e817]
+              - row "AK Agshin Karimov Head of Legal department — agshin.karimov@zeytunpharma.az +99412 404 7885 (300) Активные" [ref=e820] [cursor=pointer]:
+                - cell [ref=e821]:
+                  - button [ref=e822]:
+                    - img [ref=e823]
+                - cell "AK Agshin Karimov Head of Legal department" [ref=e825]:
+                  - generic [ref=e826]:
+                    - generic [ref=e827]: AK
+                    - generic [ref=e828]:
+                      - generic [ref=e829]: Agshin Karimov
+                      - generic [ref=e830]: Head of Legal department
+                - cell "—" [ref=e831]
+                - cell "agshin.karimov@zeytunpharma.az" [ref=e832]:
+                  - generic [ref=e833]:
+                    - img [ref=e834]
+                    - text: agshin.karimov@zeytunpharma.az
+                - cell "+99412 404 7885 (300)" [ref=e837]:
+                  - generic [ref=e838]:
+                    - img [ref=e839]
+                    - text: +99412 404 7885 (300)
+                - cell "Активные" [ref=e841]:
+                  - generic [ref=e842]: Активные
+                - cell [ref=e843]
+                - cell [ref=e844]:
+                  - generic [ref=e845]:
+                    - button "Редактировать" [ref=e846]:
+                      - img [ref=e847]
+                    - button "Удалить" [ref=e850]:
+                      - img [ref=e851]
+              - row "AV Agshin V. Najafov Network Specialist — agshin.najafov@pmdgroup.az +994 51 207 13 32 Активные" [ref=e854] [cursor=pointer]:
+                - cell [ref=e855]:
+                  - button [ref=e856]:
+                    - img [ref=e857]
+                - cell "AV Agshin V. Najafov Network Specialist" [ref=e859]:
+                  - generic [ref=e860]:
+                    - generic [ref=e861]: AV
+                    - generic [ref=e862]:
+                      - generic [ref=e863]: Agshin V. Najafov
+                      - generic [ref=e864]: Network Specialist
+                - cell "—" [ref=e865]
+                - cell "agshin.najafov@pmdgroup.az" [ref=e866]:
+                  - generic [ref=e867]:
+                    - img [ref=e868]
+                    - text: agshin.najafov@pmdgroup.az
+                - cell "+994 51 207 13 32" [ref=e871]:
+                  - generic [ref=e872]:
+                    - img [ref=e873]
+                    - text: +994 51 207 13 32
+                - cell "Активные" [ref=e875]:
+                  - generic [ref=e876]: Активные
+                - cell [ref=e877]
+                - cell [ref=e878]:
+                  - generic [ref=e879]:
+                    - button "Редактировать" [ref=e880]:
+                      - img [ref=e881]
+                    - button "Удалить" [ref=e884]:
+                      - img [ref=e885]
+              - row "AM Ahmed M. Mahmudov Təchizat Şöbəsi — ahmed.mahmudov@azertexnolayn.com (+994 50) 289 10 70 Активные" [ref=e888] [cursor=pointer]:
+                - cell [ref=e889]:
+                  - button [ref=e890]:
+                    - img [ref=e891]
+                - cell "AM Ahmed M. Mahmudov Təchizat Şöbəsi" [ref=e893]:
+                  - generic [ref=e894]:
+                    - generic [ref=e895]: AM
+                    - generic [ref=e896]:
+                      - generic [ref=e897]: Ahmed M. Mahmudov
+                      - generic [ref=e898]: Təchizat Şöbəsi
+                - cell "—" [ref=e899]
+                - cell "ahmed.mahmudov@azertexnolayn.com" [ref=e900]:
+                  - generic [ref=e901]:
+                    - img [ref=e902]
+                    - text: ahmed.mahmudov@azertexnolayn.com
+                - cell "(+994 50) 289 10 70" [ref=e905]:
+                  - generic [ref=e906]:
+                    - img [ref=e907]
+                    - text: (+994 50) 289 10 70
+                - cell "Активные" [ref=e909]:
+                  - generic [ref=e910]: Активные
+                - cell [ref=e911]
+                - cell [ref=e912]:
+                  - generic [ref=e913]:
+                    - button "Редактировать" [ref=e914]:
+                      - img [ref=e915]
+                    - button "Удалить" [ref=e918]:
+                      - img [ref=e919]
+              - row "AM Aida MIRZALIYEVA Direktor köməkçisi — aida.mirzaliyeva@atsfood.az (+99412) 489 83 81 / 82 / 83; (+99451) 280 92 02 Активные" [ref=e922] [cursor=pointer]:
+                - cell [ref=e923]:
+                  - button [ref=e924]:
+                    - img [ref=e925]
+                - cell "AM Aida MIRZALIYEVA Direktor köməkçisi" [ref=e927]:
+                  - generic [ref=e928]:
+                    - generic [ref=e929]: AM
+                    - generic [ref=e930]:
+                      - generic [ref=e931]: Aida MIRZALIYEVA
+                      - generic [ref=e932]: Direktor köməkçisi
+                - cell "—" [ref=e933]
+                - cell "aida.mirzaliyeva@atsfood.az" [ref=e934]:
+                  - generic [ref=e935]:
+                    - img [ref=e936]
+                    - text: aida.mirzaliyeva@atsfood.az
+                - cell "(+99412) 489 83 81 / 82 / 83; (+99451) 280 92 02" [ref=e939]:
+                  - generic [ref=e940]:
+                    - img [ref=e941]
+                    - text: (+99412) 489 83 81 / 82 / 83; (+99451) 280 92 02
+                - cell "Активные" [ref=e943]:
+                  - generic [ref=e944]: Активные
+                - cell [ref=e945]
+                - cell [ref=e946]:
+                  - generic [ref=e947]:
+                    - button "Редактировать" [ref=e948]:
+                      - img [ref=e949]
+                    - button "Удалить" [ref=e952]:
+                      - img [ref=e953]
+              - row "AK Aiten K. Jabrailova Senior Learning Advisor — aiten.jabrailova@synergia.az +994 12 504 05 54 (4720), +994 50 2358764 Активные" [ref=e956] [cursor=pointer]:
+                - cell [ref=e957]:
+                  - button [ref=e958]:
+                    - img [ref=e959]
+                - cell "AK Aiten K. Jabrailova Senior Learning Advisor" [ref=e961]:
+                  - generic [ref=e962]:
+                    - generic [ref=e963]: AK
+                    - generic [ref=e964]:
+                      - generic [ref=e965]: Aiten K. Jabrailova
+                      - generic [ref=e966]: Senior Learning Advisor
+                - cell "—" [ref=e967]
+                - cell "aiten.jabrailova@synergia.az" [ref=e968]:
+                  - generic [ref=e969]:
+                    - img [ref=e970]
+                    - text: aiten.jabrailova@synergia.az
+                - cell "+994 12 504 05 54 (4720), +994 50 2358764" [ref=e973]:
+                  - generic [ref=e974]:
+                    - img [ref=e975]
+                    - text: +994 12 504 05 54 (4720), +994 50 2358764
+                - cell "Активные" [ref=e977]:
+                  - generic [ref=e978]: Активные
+                - cell [ref=e979]
+                - cell [ref=e980]:
+                  - generic [ref=e981]:
+                    - button "Редактировать" [ref=e982]:
+                      - img [ref=e983]
+                    - button "Удалить" [ref=e986]:
+                      - img [ref=e987]
+              - row "AK Akbar K. Ibrahimov (AZM) İdarə Heyətinin Üzvü — akbar.ibrahimov@azmade.az +99450 287-30-15, +(99412) 504-05-00 (5403) Активные" [ref=e990] [cursor=pointer]:
+                - cell [ref=e991]:
+                  - button [ref=e992]:
+                    - img [ref=e993]
+                - cell "AK Akbar K. Ibrahimov (AZM) İdarə Heyətinin Üzvü" [ref=e995]:
+                  - generic [ref=e996]:
+                    - generic [ref=e997]: AK
+                    - generic [ref=e998]:
+                      - generic [ref=e999]: Akbar K. Ibrahimov (AZM)
+                      - generic [ref=e1000]: İdarə Heyətinin Üzvü
+                - cell "—" [ref=e1001]
+                - cell "akbar.ibrahimov@azmade.az" [ref=e1002]:
+                  - generic [ref=e1003]:
+                    - img [ref=e1004]
+                    - text: akbar.ibrahimov@azmade.az
+                - cell "+99450 287-30-15, +(99412) 504-05-00 (5403)" [ref=e1007]:
+                  - generic [ref=e1008]:
+                    - img [ref=e1009]
+                    - text: +99450 287-30-15, +(99412) 504-05-00 (5403)
+                - cell "Активные" [ref=e1011]:
+                  - generic [ref=e1012]: Активные
+                - cell [ref=e1013]
+                - cell [ref=e1014]:
+                  - generic [ref=e1015]:
+                    - button "Редактировать" [ref=e1016]:
+                      - img [ref=e1017]
+                    - button "Удалить" [ref=e1020]:
+                      - img [ref=e1021]
+              - row "AN AKBIS Nigar Nadjafova Business Consultant — nigarn@akbis.az +99455 525 05 81, +99412 480-16-03/33 ext. 109 Активные" [ref=e1024] [cursor=pointer]:
+                - cell [ref=e1025]:
+                  - button [ref=e1026]:
+                    - img [ref=e1027]
+                - cell "AN AKBIS Nigar Nadjafova Business Consultant" [ref=e1029]:
+                  - generic [ref=e1030]:
+                    - generic [ref=e1031]: AN
+                    - generic [ref=e1032]:
+                      - generic [ref=e1033]: AKBIS Nigar Nadjafova
+                      - generic [ref=e1034]: Business Consultant
+                - cell "—" [ref=e1035]
+                - cell "nigarn@akbis.az" [ref=e1036]:
+                  - generic [ref=e1037]:
+                    - img [ref=e1038]
+                    - text: nigarn@akbis.az
+                - cell "+99455 525 05 81, +99412 480-16-03/33 ext. 109" [ref=e1041]:
+                  - generic [ref=e1042]:
+                    - img [ref=e1043]
+                    - text: +99455 525 05 81, +99412 480-16-03/33 ext. 109
+                - cell "Активные" [ref=e1045]:
+                  - generic [ref=e1046]: Активные
+                - cell [ref=e1047]
+                - cell [ref=e1048]:
+                  - generic [ref=e1049]:
+                    - button "Редактировать" [ref=e1050]:
+                      - img [ref=e1051]
+                    - button "Удалить" [ref=e1054]:
+                      - img [ref=e1055]
+          - generic [ref=e1058]:
+            - generic [ref=e1059]: common.pageOf
+            - generic [ref=e1060]:
+              - button [disabled]:
+                - img
+              - button [ref=e1061]:
+                - img
+      - button [ref=e273]:
+        - img [ref=e274]
+  - region "Notifications alt+T"
+  - alert [ref=e282]
