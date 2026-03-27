@@ -965,6 +965,41 @@ export function useResolveCashFlowAlert() {
   })
 }
 
+// ─── ODDS Report ─────────────────────────────────────────────
+
+export function useODDSReport(year: number, compareYear?: number | null) {
+  const orgId = useOrgId()
+  return useQuery({
+    queryKey: ["budgeting", "odds", year, compareYear, orgId],
+    queryFn: async () => {
+      const url = `/api/budgeting/cash-flow/odds?year=${year}${compareYear ? `&compareYear=${compareYear}` : ""}`
+      const res = await fetch(url, { headers: { "x-organization-id": orgId } })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error || "API error")
+      return json.data
+    },
+    enabled: !!orgId,
+  })
+}
+
+// ─── Plan vs Fact ────────────────────────────────────────────
+
+export function usePlanFact(year: number) {
+  const orgId = useOrgId()
+  return useQuery({
+    queryKey: ["budgeting", "plan-fact", year, orgId],
+    queryFn: async () => {
+      const res = await fetch(`/api/budgeting/cash-flow/plan-fact?year=${year}`, {
+        headers: { "x-organization-id": orgId },
+      })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error || "API error")
+      return json.data
+    },
+    enabled: !!orgId,
+  })
+}
+
 export function useGenerateCashFlow() {
   const orgId = useOrgId()
   const qc = useQueryClient()

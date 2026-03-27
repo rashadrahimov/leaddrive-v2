@@ -92,6 +92,8 @@ import { BudgetRollingForecast } from "@/components/budget-rolling-forecast"
 import { BudgetCashFlowChart } from "@/components/budget-cash-flow-chart"
 import { BudgetCashFlowTable } from "@/components/budget-cash-flow-table"
 import { BudgetCashFlowAlerts } from "@/components/budget-cash-flow-alerts"
+import { BudgetODDSReport } from "@/components/budget-odds-report"
+import { BudgetPlanFactDashboard } from "@/components/budget-plan-fact-dashboard"
 import { BudgetWaterfallChart } from "@/components/budget-waterfall-chart"
 import { BudgetExecutionGauge } from "@/components/budget-execution-gauge"
 import { BudgetCategoryBars } from "@/components/budget-category-bars"
@@ -207,6 +209,7 @@ function RollingTab() {
 
 function CashFlowTab() {
   const [year] = useState(new Date().getFullYear())
+  const [subView, setSubView] = useState<"overview" | "odds" | "plan-fact">("overview")
   const { data: cashFlowData } = useCashFlow(year)
   const { data: alerts = [] } = useCashFlowAlerts(year)
   const resolveAlert = useResolveCashFlowAlert()
@@ -214,45 +217,75 @@ function CashFlowTab() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-end">
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() => generateCashFlow.mutate({ year })}
-          disabled={generateCashFlow.isPending}
-        >
-          {generateCashFlow.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Sparkles className="h-4 w-4 mr-1" />}
-          Сгенерировать из бюджета
-        </Button>
+      {/* Sub-view toggle */}
+      <div className="flex items-center justify-between">
+        <div className="flex gap-1 bg-muted rounded-lg p-1">
+          {[
+            { key: "overview" as const, label: "Cash Flow" },
+            { key: "odds" as const, label: "ODDS" },
+            { key: "plan-fact" as const, label: "Plan vs Fact" },
+          ].map(({ key, label }) => (
+            <button
+              key={key}
+              onClick={() => setSubView(key)}
+              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                subView === key
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+        {subView === "overview" && (
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => generateCashFlow.mutate({ year })}
+            disabled={generateCashFlow.isPending}
+          >
+            {generateCashFlow.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Sparkles className="h-4 w-4 mr-1" />}
+            Сгенерировать из бюджета
+          </Button>
+        )}
       </div>
 
-      {alerts.length > 0 && (
-        <BudgetCashFlowAlerts
-          alerts={alerts}
-          onResolve={(id) => resolveAlert.mutate(id)}
-        />
+      {/* Sub-views */}
+      {subView === "overview" && (
+        <>
+          {alerts.length > 0 && (
+            <BudgetCashFlowAlerts
+              alerts={alerts}
+              onResolve={(id) => resolveAlert.mutate(id)}
+            />
+          )}
+
+          {cashFlowData && cashFlowData.months.length > 0 ? (
+            <>
+              <BudgetCashFlowChart
+                months={cashFlowData.months}
+                year={cashFlowData.year}
+                totalInflows={cashFlowData.totalInflows}
+                totalOutflows={cashFlowData.totalOutflows}
+              />
+              <BudgetCashFlowTable months={cashFlowData.months} />
+            </>
+          ) : (
+            <Card>
+              <CardContent className="py-12 text-center text-muted-foreground">
+                <Banknote className="h-12 w-12 mx-auto mb-3 opacity-30" />
+                <p className="font-medium text-lg mb-2">Cash Flow Forecast</p>
+                <p className="text-sm">No cash flow data for {year}.</p>
+                <p className="text-sm mt-1">Click "Generate from Budget" to create entries from your budget plan.</p>
+              </CardContent>
+            </Card>
+          )}
+        </>
       )}
 
-      {cashFlowData && cashFlowData.months.length > 0 ? (
-        <>
-          <BudgetCashFlowChart
-            months={cashFlowData.months}
-            year={cashFlowData.year}
-            totalInflows={cashFlowData.totalInflows}
-            totalOutflows={cashFlowData.totalOutflows}
-          />
-          <BudgetCashFlowTable months={cashFlowData.months} />
-        </>
-      ) : (
-        <Card>
-          <CardContent className="py-12 text-center text-muted-foreground">
-            <Banknote className="h-12 w-12 mx-auto mb-3 opacity-30" />
-            <p className="font-medium text-lg mb-2">Cash Flow Forecast</p>
-            <p className="text-sm">No cash flow data for {year}.</p>
-            <p className="text-sm mt-1">Click "Generate from Budget" to create entries from your budget plan.</p>
-          </CardContent>
-        </Card>
-      )}
+      {subView === "odds" && <BudgetODDSReport year={year} />}
+      {subView === "plan-fact" && <BudgetPlanFactDashboard year={year} />}
     </div>
   )
 }

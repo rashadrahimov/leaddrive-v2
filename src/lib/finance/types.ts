@@ -1,0 +1,184 @@
+// Finance module types
+
+export interface FinanceKPI {
+  label: string
+  plan: number
+  fact: number
+  variance: number
+  variancePct: number
+}
+
+export interface AgingBucket {
+  label: string
+  amount: number
+  count: number
+}
+
+export interface FinanceAlert {
+  id: string
+  type: "overdue_invoice" | "low_cash" | "budget_overspend" | "upcoming_payment"
+  severity: "warning" | "critical" | "info"
+  message: string
+  link?: string
+  amount?: number
+}
+
+export interface MonthlyTrend {
+  month: number
+  year: number
+  label: string
+  revenue: number
+  expenses: number
+  net: number
+}
+
+export interface ExpenseBreakdown {
+  category: string
+  amount: number
+  pct: number
+  color: string
+}
+
+export interface FinanceDashboardData {
+  kpis: {
+    revenue: FinanceKPI
+    expenses: FinanceKPI
+    netProfit: { fact: number; prevMonth: number; changePct: number }
+    cashBalance: { current: number; projected: number }
+    arTotal: { amount: number; overdueAmount: number; overdueCount: number }
+    apTotal: { amount: number; overdueAmount: number; overdueCount: number }
+  }
+  revenueTrend: MonthlyTrend[]
+  expenseBreakdown: ExpenseBreakdown[]
+  arAging: AgingBucket[]
+  alerts: FinanceAlert[]
+  year: number
+}
+
+// Bill (A/P) types
+export interface Bill {
+  id: string
+  billNumber: string
+  vendorName: string
+  vendorId?: string | null
+  title: string
+  status: string
+  totalAmount: number
+  paidAmount: number
+  balanceDue: number
+  currency: string
+  issueDate: string
+  dueDate?: string | null
+  paidAt?: string | null
+  category?: string | null
+  notes?: string | null
+  createdAt: string
+  payments?: BillPayment[]
+}
+
+export interface BillPayment {
+  id: string
+  billId: string
+  amount: number
+  currency: string
+  paymentMethod: string
+  paymentDate: string
+  reference?: string | null
+  notes?: string | null
+}
+
+export interface CreateBillInput {
+  billNumber: string
+  vendorName: string
+  vendorId?: string
+  title: string
+  totalAmount: number
+  currency?: string
+  issueDate?: string
+  dueDate?: string
+  category?: string
+  notes?: string
+}
+
+export interface UpdateBillInput extends Partial<CreateBillInput> {
+  status?: string
+}
+
+// Fund types
+export interface Fund {
+  id: string
+  name: string
+  description?: string | null
+  targetAmount?: number | null
+  currentBalance: number
+  currency: string
+  color?: string | null
+  isActive: boolean
+  createdAt: string
+  transactions?: FundTransaction[]
+  rules?: FundRule[]
+}
+
+export interface FundTransaction {
+  id: string
+  fundId: string
+  type: string
+  amount: number
+  description?: string | null
+  relatedType?: string | null
+  relatedId?: string | null
+  createdAt: string
+}
+
+export interface FundRule {
+  id: string
+  fundId: string
+  name: string
+  triggerType: string
+  percentage?: number | null
+  fixedAmount?: number | null
+  isActive: boolean
+}
+
+export interface CreateFundInput {
+  name: string
+  description?: string
+  targetAmount?: number
+  currency?: string
+  color?: string
+}
+
+export interface CreateFundTransactionInput {
+  fundId: string
+  type: string
+  amount: number
+  description?: string
+}
+
+export interface CreateFundRuleInput {
+  fundId: string
+  name: string
+  triggerType: string
+  percentage?: number
+  fixedAmount?: number
+}
+
+// Receivables types
+export interface ReceivablesData {
+  total: number
+  overdueTotal: number
+  overdueCount: number
+  aging: AgingBucket[]
+  topDebtors: { companyName: string; companyId: string; amount: number; overdueAmount: number; invoiceCount: number }[]
+  overdueInvoices: { id: string; invoiceNumber: string; companyName: string; totalAmount: number; balanceDue: number; dueDate: string; daysOverdue: number }[]
+}
+
+// Payables stats
+export interface PayablesStats {
+  total: number
+  overdueTotal: number
+  overdueCount: number
+  aging: AgingBucket[]
+  topVendors: { vendorName: string; vendorId?: string; amount: number; billCount: number }[]
+  upcomingPayments: Bill[]
+}

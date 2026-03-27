@@ -61,6 +61,11 @@ model Organization {
   rollingForecastMonths  RollingForecastMonth[]
   cashFlowEntries        CashFlowEntry[]
   cashFlowAlerts         CashFlowAlert[]
+  bills                  Bill[]
+  billPayments           BillPayment[]
+  funds                  Fund[]
+  fundTransactions       FundTransaction[]
+  fundRules              FundRule[]
 
   @@map("organizations")
 }
@@ -189,6 +194,7 @@ model Company {
   pricingProfiles PricingProfile[]
   projects       Project[]
   tickets        Ticket[]
+  vendorBills    Bill[]   @relation("VendorBills")
 
   @@index([organizationId])
   @@map("companies")
@@ -1218,9 +1224,14 @@ model CashFlowEntry {
   description    String?
   paymentDate    DateTime?
   isProjected    Boolean  @default(true)
+  activityType   String   @default("operating") // "operating" | "investing" | "financing"
+  category       String?  // subcategory: "revenue", "salary", "capex", "loan_repayment"
+  counterpartyId String?  // optional link to Company
+  plannedAmount  Float?   // for plan vs fact comparison
   createdAt      DateTime @default(now())
 
   @@index([organizationId, year, month])
+  @@index([organizationId, activityType])
   @@map("cash_flow_entries")
 }
 
@@ -2088,4 +2099,120 @@ model ProjectTask {
   @@index([parentId])
   @@index([organizationId, assignedTo])
   @@map("project_tasks")
+}
+
+// ═══════════════════════════════════════════════════
+// FINANCE MODULE (A/P, Funds)
+// ═══════════════════════════════════════════════════
+
+model Bill {
+  id             String    @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  billNumber     String
+  vendorName     String
+  vendorId       String?
+  vendor         Company?  @relation("VendorBills", fields: [vendorId], references: [id], onDelete: SetNull)
+  title          String
+  status         String    @default("draft") // draft, pending, partially_paid, paid, overdue, cancelled
+  totalAmount    Float     @default(0)
+  paidAmount     Float     @default(0)
+  balanceDue     Float     @default(0)
+  currency       String    @default("AZN")
+  issueDate      DateTime  @default(now())
+  dueDate        DateTime?
+  paidAt         DateTime?
+  category       String?   // "rent", "software", "services", "equipment"
+  notes          String?
+  createdBy      String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  payments       BillPayment[]
+
+  @@unique([organizationId, billNumber])
+  @@index([organizationId])
+  @@index([organizationId, status])
+  @@index([organizationId, vendorId])
+  @@map("bills")
+}
+
+model BillPayment {
+  id             String   @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  billId         String
+  bill           Bill     @relation(fields: [billId], references: [id], onDelete: Cascade)
+  amount         Float
+  currency       String   @default("AZN")
+  paymentMethod  String   @default("bank_transfer")
+  paymentDate    DateTime @default(now())
+  reference      String?
+  notes          String?
+  createdBy      String?
+  createdAt      DateTime @default(now())
+
+  @@index([billId])
+  @@index([organizationId])
+  @@map("bill_payments")
+}
+
+model Fund {
+  id             String   @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  name           String   // "Tax Reserve", "Payroll Buffer", "Emergency", "Dividends"
+  description    String?
+  targetAmount   Float?
+  currentBalance Float    @default(0)
+  currency       String   @default("AZN")
+  color          String?
+  isActive       Boolean  @default(true)
+  createdBy      String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  transactions   FundTransaction[]
+  rules          FundRule[]
+
+  @@index([organizationId])
+  @@map("funds")
+}
+
+model FundTransaction {
+  id             String   @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  fundId         String
+  fund           Fund     @relation(fields: [fundId], references: [id], onDelete: Cascade)
+  type           String   // "deposit" | "withdrawal" | "transfer_in" | "transfer_out" | "auto_allocation"
+  amount         Float
+  description    String?
+  relatedType    String?  // "invoice_payment", "manual", "rule"
+  relatedId      String?
+  createdBy      String?
+  createdAt      DateTime @default(now())
+
+  @@index([organizationId])
+  @@index([fundId])
+  @@map("fund_transactions")
+}
+
+model FundRule {
+  id             String   @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  fundId         String
+  fund           Fund     @relation(fields: [fundId], references: [id], onDelete: Cascade)
+  name           String
+  triggerType    String   // "revenue_percentage" | "fixed_monthly" | "invoice_paid"
+  percentage     Float?   // for revenue_percentage: 0.10 = 10%
+  fixedAmount    Float?   // for fixed_monthly
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([organizationId])
+  @@index([fundId])
+  @@map("fund_rules")
 }
