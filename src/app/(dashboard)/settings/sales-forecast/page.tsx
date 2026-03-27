@@ -217,16 +217,15 @@ export default function SalesForecastPage() {
             Ежегодный прогноз доходов по сервисам. Хранится без НДС — при переключении показывается с НДС (18%).
           </p>
         </div>
-        <div className="flex items-center gap-3">
-          {/* VAT toggle */}
-          <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
+        <div className="flex items-center gap-2">
+          <label className="flex items-center gap-1.5 text-sm cursor-pointer select-none border rounded-md px-3 h-9 hover:bg-muted/50 transition-colors">
             <input
               type="checkbox"
               checked={showVat}
               onChange={(e) => setShowVat(e.target.checked)}
-              className="h-4 w-4 rounded border-gray-300"
+              className="h-3.5 w-3.5 rounded border-gray-300"
             />
-            С НДС (18%)
+            <span className="text-muted-foreground">С НДС</span>
           </label>
           <select
             className="h-9 rounded-md border border-input bg-background px-3 text-sm"
@@ -237,20 +236,17 @@ export default function SalesForecastPage() {
               <option key={y} value={y}>{y}</option>
             ))}
           </select>
-          <Button variant="outline" size="sm" onClick={handleExport}>
-            <Download className="h-4 w-4 mr-1" />
-            Excel
+          <div className="h-5 w-px bg-border" />
+          <Button variant="outline" size="icon" className="h-9 w-9" onClick={handleExport} title="Экспорт в Excel">
+            <Download className="h-4 w-4" />
           </Button>
-          <Button variant="outline" size="sm" asChild>
-            <label className="cursor-pointer">
-              <Upload className="h-4 w-4 mr-1" />
-              Импорт
-              <input type="file" accept=".xlsx,.xls" className="hidden" onChange={handleImport} />
-            </label>
+          <Button variant="outline" size="icon" className="h-9 w-9" onClick={() => document.getElementById("forecast-import")?.click()} title="Импорт из Excel">
+            <Upload className="h-4 w-4" />
           </Button>
-          <Button onClick={handleSave} disabled={saving}>
+          <input id="forecast-import" type="file" accept=".xlsx,.xls" className="hidden" onChange={handleImport} />
+          <Button onClick={handleSave} disabled={saving} size="sm">
             {saving ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Save className="h-4 w-4 mr-1" />}
-            {saved ? "Сохранено ✓" : "Сохранить"}
+            {saved ? "Сохранено" : "Сохранить"}
           </Button>
         </div>
       </div>
