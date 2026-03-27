@@ -30,8 +30,8 @@ export async function GET(req: NextRequest) {
         take: 5,
       }),
       prisma.lead.findMany({
-        where: { organizationId: orgId, OR: [{ firstName: { contains, mode } }, { lastName: { contains, mode } }, { company: { contains, mode } }] },
-        select: { id: true, firstName: true, lastName: true, company: true },
+        where: { organizationId: orgId, OR: [{ contactName: { contains, mode } }, { companyName: { contains, mode } }] },
+        select: { id: true, contactName: true, companyName: true },
         take: 5,
       }),
       prisma.task.findMany({
@@ -45,7 +45,7 @@ export async function GET(req: NextRequest) {
       ...companies.map(c => ({ id: c.id, type: "company" as const, name: c.name, subtitle: c.industry || "", href: `/companies/${c.id}` })),
       ...contacts.map(c => ({ id: c.id, type: "contact" as const, name: c.fullName, subtitle: c.company?.name || "", href: `/contacts/${c.id}` })),
       ...deals.map(d => ({ id: d.id, type: "deal" as const, name: d.name, subtitle: `${d.valueAmount} ${d.currency || "₼"}`, href: `/deals/${d.id}` })),
-      ...leads.map(l => ({ id: l.id, type: "lead" as const, name: `${l.firstName} ${l.lastName}`, subtitle: l.company || "", href: `/leads/${l.id}` })),
+      ...leads.map(l => ({ id: l.id, type: "lead" as const, name: l.contactName, subtitle: l.companyName || "", href: `/leads/${l.id}` })),
       ...tasks.map(t => ({ id: t.id, type: "task" as const, name: t.title, subtitle: t.priority, href: `/tasks/${t.id}` })),
     ]
 
