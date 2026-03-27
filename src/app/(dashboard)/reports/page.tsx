@@ -330,7 +330,7 @@ export default function ReportsPage() {
                   <div key={s.stage}>
                     <div className="flex justify-between text-xs mb-0.5">
                       <span>{stageLabels[s.stage] || s.stage}</span>
-                      <span className="font-medium">{s.count} \u00B7 {s.value.toLocaleString()} ₼</span>
+                      <span className="font-medium">{s.count} · {s.value.toLocaleString()} ₼</span>
                     </div>
                     <div className="h-2 bg-muted rounded-full overflow-hidden">
                       <div
