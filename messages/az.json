@@ -1209,6 +1209,7 @@
     "chainAddStepTitle": "Addım #{num} əlavə et",
     "chainAdd": "Əlavə et",
     "chainCancel": "Ləğv et",
+    "chainSaveFirst": "Əvvəlcə saxlayın",
     "chainSubjectLabel": "Mövzu",
     "chainSubjectPlaceholder": "Məktubun mövzusu...",
     "chainBodyLabel": "Məktubun mətni",

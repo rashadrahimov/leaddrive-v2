@@ -372,6 +372,7 @@ export default function InvoiceDetailPage() {
   const [chainError, setChainError] = useState("")
   const [chainSteps, setChainSteps] = useState<any[]>([])
   const [savingSteps, setSavingSteps] = useState(false)
+  const [unsavedChainChanges, setUnsavedChainChanges] = useState(false)
   const [addStepOpen, setAddStepOpen] = useState(false)
   const [newStepType, setNewStepType] = useState("send_email")
   const [newStepConfig, setNewStepConfig] = useState<any>({})
@@ -520,6 +521,7 @@ export default function InvoiceDetailPage() {
         }),
       })
       await fetchChain()
+      setUnsavedChainChanges(false)
     } catch {
       // ignore
     } finally {
@@ -577,6 +579,7 @@ export default function InvoiceDetailPage() {
     const defaultConfig = chainStepDefaults[newStepType] || {}
     const mergedConfig = { ...defaultConfig, ...newStepConfig }
     setChainSteps(prev => [...prev, { stepType: newStepType, stepOrder: prev.length + 1, config: mergedConfig, statsEntered: 0, statsCompleted: 0 }])
+    setUnsavedChainChanges(true)
     setAddStepOpen(false)
     setNewStepType("send_email")
     setNewStepConfig({})
@@ -584,6 +587,7 @@ export default function InvoiceDetailPage() {
 
   function removeChainStep(index: number) {
     setChainSteps(prev => prev.filter((_, i) => i !== index))
+    setUnsavedChainChanges(true)
   }
 
   // ---------- Actions ----------
@@ -1391,11 +1395,12 @@ export default function InvoiceDetailPage() {
                       <Button
                         size="sm"
                         onClick={handleStartChain}
-                        disabled={chainStarting || chainSteps.length === 0}
+                        disabled={chainStarting || chainSteps.length === 0 || unsavedChainChanges}
                         className="gap-1"
+                        title={unsavedChainChanges ? t("chainSaveFirst") : ""}
                       >
                         {chainStarting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
-                        {t("chainStart")}
+                        {unsavedChainChanges ? t("chainSaveFirst") : t("chainStart")}
                       </Button>
                     </>
                   )}

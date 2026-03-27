@@ -1211,6 +1211,7 @@
     "chainAddStepTitle": "Добавить шаг #{num}",
     "chainAdd": "Добавить",
     "chainCancel": "Отмена",
+    "chainSaveFirst": "Сначала сохраните",
     "chainSubjectLabel": "Тема",
     "chainSubjectPlaceholder": "Тема письма...",
     "chainBodyLabel": "Текст письма",

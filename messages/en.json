@@ -1211,6 +1211,7 @@
     "chainAddStepTitle": "Add step #{num}",
     "chainAdd": "Add",
     "chainCancel": "Cancel",
+    "chainSaveFirst": "Save first",
     "chainSubjectLabel": "Subject",
     "chainSubjectPlaceholder": "Email subject...",
     "chainBodyLabel": "Email body",
