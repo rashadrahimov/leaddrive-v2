@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
@@ -80,6 +80,20 @@ export default function DealsPage() {
     probability: d.probability,
   }))
 
+  const handleDealMove = useCallback(async (dealId: string, newStage: string) => {
+    // Optimistic update
+    setDeals(prev => prev.map(d => d.id === dealId ? { ...d, stage: newStage } : d))
+    try {
+      await fetch(`/api/v1/deals/${dealId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ stage: newStage }),
+      })
+    } catch {
+      fetchDeals() // Revert on error
+    }
+  }, [])
+
   const totalValue = deals.reduce((s, d) => s + d.valueAmount, 0)
   const wonDeals = deals.filter(d => d.stage === "WON")
   const wonValue = wonDeals.reduce((s, d) => s + d.valueAmount, 0)
@@ -125,6 +139,7 @@ export default function DealsPage() {
         stages={STAGES}
         deals={kanbanDeals}
         onDealClick={(deal) => router.push(`/deals/${deal.id}`)}
+        onDealMove={handleDealMove}
       />
 
       <DealForm open={formOpen} onOpenChange={setFormOpen} onSaved={fetchDeals} orgId={orgId} />

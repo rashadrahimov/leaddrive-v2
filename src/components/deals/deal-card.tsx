@@ -11,17 +11,23 @@ interface DealCardProps {
     probability: number
   }
   onClick?: () => void
+  onDragStart?: (e: React.DragEvent) => void
+  onDragEnd?: () => void
+  isDragging?: boolean
 }
 
-export function DealCard({ deal, onClick }: DealCardProps) {
+export function DealCard({ deal, onClick, onDragStart, onDragEnd, isDragging }: DealCardProps) {
   return (
     <div
       className={cn(
         "rounded-lg border bg-card p-2 shadow-sm transition-all hover:shadow-md",
-        onClick && "cursor-pointer"
+        onClick && "cursor-pointer",
+        isDragging && "opacity-50 ring-2 ring-primary"
       )}
       onClick={onClick}
       draggable
+      onDragStart={onDragStart}
+      onDragEnd={onDragEnd}
     >
       <p className="font-medium text-xs leading-tight truncate">{deal.name}</p>
       {deal.company && (

@@ -9,7 +9,8 @@ import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { ColorStatCard } from "@/components/color-stat-card"
 import { Select } from "@/components/ui/select"
-import { Users, Plus, Mail, Phone, Pencil, Trash2, Search, ChevronLeft, ChevronRight, CheckSquare, Square, MinusSquare } from "lucide-react"
+import { Users, Plus, Mail, Phone, Pencil, Trash2, Search, ChevronLeft, ChevronRight, CheckSquare, Square, MinusSquare, Globe, UserCheck, PhoneCall, Linkedin, AtSign, Upload } from "lucide-react"
+import { CsvImportDialog } from "@/components/csv-import-dialog"
 import { ContactForm } from "@/components/contact-form"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
 import { cn } from "@/lib/utils"
@@ -49,6 +50,7 @@ export default function ContactsPage() {
   const [search, setSearch] = useState("")
   const [page, setPage] = useState(1)
   const [selected, setSelected] = useState<Set<string>>(new Set())
+  const [importOpen, setImportOpen] = useState(false)
   const orgId = session?.user?.organizationId
   const pageSize = 20
 
@@ -196,7 +198,10 @@ export default function ContactsPage() {
           <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
           <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
         </div>
-        <Button onClick={handleAdd}><Plus className="h-4 w-4 mr-1" /> {t("addContact")}</Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setImportOpen(true)}><Upload className="h-4 w-4 mr-1" /> CSV Import</Button>
+          <Button onClick={handleAdd}><Plus className="h-4 w-4 mr-1" /> {t("addContact")}</Button>
+        </div>
       </div>
 
       <PageDescription text={t("pageDescription")} />
@@ -277,6 +282,7 @@ export default function ContactsPage() {
               <th className="px-4 py-3 text-left font-medium text-muted-foreground"><span className="inline-flex items-center gap-1">{t("colCompany")} <InfoHint text={t("hintColCompany")} size={12} /></span></th>
               <th className="px-4 py-3 text-left font-medium text-muted-foreground"><span className="inline-flex items-center gap-1">{t("colEmail")} <InfoHint text={t("hintColEmail")} size={12} /></span></th>
               <th className="px-4 py-3 text-left font-medium text-muted-foreground"><span className="inline-flex items-center gap-1">{t("colPhone")} <InfoHint text={t("hintColPhone")} size={12} /></span></th>
+              <th className="px-4 py-3 text-left font-medium text-muted-foreground">{t("colSource") || "Source"}</th>
               <th className="px-4 py-3 text-left font-medium text-muted-foreground">{t("colStatus")}</th>
               <th className="px-4 py-3 text-left font-medium text-muted-foreground"><span className="inline-flex items-center gap-1">{t("colPortal")} <InfoHint text={t("hintColPortal")} size={12} /></span></th>
               <th className="px-4 py-3 w-20"></th>
@@ -326,6 +332,25 @@ export default function ContactsPage() {
                       <Phone className="h-3 w-3" /> {item.phone}
                     </div>
                   ) : "—"}
+                </td>
+                <td className="px-4 py-3">
+                  {item.source ? (
+                    <span className={cn("inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-medium",
+                      item.source === "website" ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" :
+                      item.source === "referral" ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" :
+                      item.source === "cold_call" ? "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400" :
+                      item.source === "linkedin" ? "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400" :
+                      item.source === "email" ? "bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400" :
+                      "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300"
+                    )}>
+                      {item.source === "website" ? <Globe className="h-3 w-3" /> :
+                       item.source === "referral" ? <UserCheck className="h-3 w-3" /> :
+                       item.source === "cold_call" ? <PhoneCall className="h-3 w-3" /> :
+                       item.source === "linkedin" ? <Linkedin className="h-3 w-3" /> :
+                       item.source === "email" ? <AtSign className="h-3 w-3" /> : null}
+                      {item.source}
+                    </span>
+                  ) : <span className="text-muted-foreground text-xs">—</span>}
                 </td>
                 <td className="px-4 py-3">
                   <Badge variant={item.isActive ? "default" : "secondary"}>
@@ -389,6 +414,14 @@ export default function ContactsPage() {
         onConfirm={confirmBulkDelete}
         title={t("deleteContact")}
         itemName={t("contactsSelected", { count: selected.size })}
+      />
+
+      {/* CSV Import */}
+      <CsvImportDialog
+        open={importOpen}
+        onOpenChange={setImportOpen}
+        entityType="contacts"
+        onImported={fetchContacts}
       />
     </div>
   )

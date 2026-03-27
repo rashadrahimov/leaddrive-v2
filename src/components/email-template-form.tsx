@@ -57,7 +57,7 @@ export function EmailTemplateForm({ open, onOpenChange, onSaved, initialData, or
   })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState("")
-  const [activeTab, setActiveTab] = useState<"editor" | "preview">("editor")
+  const [activeTab, setActiveTab] = useState<"editor" | "preview" | "split">("editor")
   const editorRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -257,9 +257,47 @@ export function EmailTemplateForm({ open, onOpenChange, onSaved, initialData, or
                 >
                   👁 {t("tabPreview")}
                 </button>
+                <button
+                  type="button"
+                  className={cn(
+                    "px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors",
+                    activeTab === "split"
+                      ? "border-primary text-primary"
+                      : "border-transparent text-muted-foreground hover:text-foreground"
+                  )}
+                  onClick={() => setActiveTab("split")}
+                >
+                  ⬛ Split
+                </button>
               </div>
 
-              {activeTab === "editor" ? (
+              {activeTab === "split" ? (
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="border rounded-lg">
+                    <div className="px-3 py-1.5 border-b bg-muted/30 text-xs font-medium text-muted-foreground">HTML Editor</div>
+                    <textarea
+                      className="w-full h-[250px] p-3 text-xs font-mono resize-none bg-background focus:outline-none"
+                      value={form.htmlBody}
+                      onChange={e => update("htmlBody", e.target.value)}
+                    />
+                  </div>
+                  <div className="border rounded-lg">
+                    <div className="px-3 py-1.5 border-b bg-muted/30 text-xs font-medium text-muted-foreground">Live Preview</div>
+                    <div className="p-3 h-[250px] overflow-y-auto bg-white dark:bg-gray-950">
+                      <div
+                        className="prose prose-sm max-w-none dark:prose-invert"
+                        dangerouslySetInnerHTML={{
+                          __html: sanitizeRichHtml(form.htmlBody)
+                            .replace(/\{\{client_name\}\}/g, '<span class="bg-yellow-100 px-1 rounded">Иван Иванов</span>')
+                            .replace(/\{\{client_email\}\}/g, '<span class="bg-yellow-100 px-1 rounded">ivan@example.com</span>')
+                            .replace(/\{\{company\}\}/g, '<span class="bg-yellow-100 px-1 rounded">Güven Technology</span>')
+                            .replace(/\{\{(\w+)\}\}/g, '<span class="bg-yellow-100 px-1 rounded">{{$1}}</span>')
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              ) : activeTab === "editor" ? (
                 <div className="border rounded-b-lg">
                   {/* Toolbar */}
                   <div className="flex items-center gap-0.5 p-2 border-b bg-muted/30 flex-wrap">

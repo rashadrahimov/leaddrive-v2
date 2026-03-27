@@ -10,7 +10,7 @@ import { ArrowRight, Play, ChevronDown } from "lucide-react"
 const typingPhrases = [
   "Real marjanızı görün",
   "Süni intellektlə satış bağlayın",
-  "7 kanal, bir qutu",
+  "WhatsApp · Telegram · E-poçt — AI cavab",
   "Büdcə, proqnoz, mənfəət",
 ]
 
@@ -153,7 +153,23 @@ export function HeroSection() {
             <motion.div
               animate={{ y: [0, -8, 0] }}
               transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-              className="absolute -left-4 lg:-left-8 top-1/3 bg-white rounded-lg shadow-lg border border-gray-100 px-4 py-3 hidden lg:block"
+              className="absolute -left-4 lg:-left-8 top-1/4 bg-white rounded-lg shadow-lg border border-gray-100 px-4 py-3 hidden lg:block"
+            >
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
+                  <span className="text-green-600 text-lg">💬</span>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold text-gray-900">AI Rabitə</p>
+                  <p className="text-xs text-green-600 font-medium">WhatsApp · Telegram · E-poçt</p>
+                </div>
+              </div>
+            </motion.div>
+
+            <motion.div
+              animate={{ y: [0, 6, 0] }}
+              transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+              className="absolute -left-4 lg:-left-8 bottom-1/4 bg-white rounded-lg shadow-lg border border-gray-100 px-4 py-3 hidden lg:block"
             >
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">

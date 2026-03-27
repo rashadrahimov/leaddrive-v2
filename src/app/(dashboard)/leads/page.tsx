@@ -13,7 +13,7 @@ import { LeadItemModal } from "@/components/lead-item-modal"
 import {
   UserPlus, Plus, Search, Pencil, Trash2, ArrowRight,
   Brain, Phone, Mail, Building2, ArrowUpDown, ArrowUp, ArrowDown,
-  Flame, TrendingUp, CheckCircle,
+  Flame, TrendingUp, CheckCircle, LayoutGrid, List,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useTranslations } from "next-intl"
@@ -84,6 +84,7 @@ export default function LeadsPage() {
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [deleteName, setDeleteName] = useState("")
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null)
+  const [viewMode, setViewMode] = useState<"table" | "kanban">("table")
 
   const fetchLeads = async () => {
     try {
@@ -215,7 +216,7 @@ export default function LeadsPage() {
         ))}
       </div>
 
-      {/* Search + Sort */}
+      {/* Search + Sort + View Toggle */}
       <div className="flex gap-2">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -233,10 +234,91 @@ export default function LeadsPage() {
           <option value="name_desc">{t("sortNameDesc")}</option>
           <option value="newest">{t("sortNewest")}</option>
         </Select>
+        <div className="flex border rounded-lg overflow-hidden">
+          <Button variant={viewMode === "table" ? "default" : "ghost"} size="sm" className="rounded-none px-3" onClick={() => setViewMode("table")}>
+            <List className="h-4 w-4" />
+          </Button>
+          <Button variant={viewMode === "kanban" ? "default" : "ghost"} size="sm" className="rounded-none px-3" onClick={() => setViewMode("kanban")}>
+            <LayoutGrid className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
 
+      {/* Kanban View */}
+      {viewMode === "kanban" && (
+        <div className="grid grid-cols-5 gap-3">
+          {(["new", "contacted", "qualified", "converted", "lost"] as const).map(status => {
+            const statusLeads = filtered.filter(l => l.status === status)
+            const colors: Record<string, string> = {
+              new: "#3b82f6", contacted: "#f59e0b", qualified: "#8b5cf6", converted: "#22c55e", lost: "#ef4444",
+            }
+            return (
+              <div key={status} className="min-w-0">
+                <div className="mb-2 px-1 flex items-center gap-1.5">
+                  <div className="h-2.5 w-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: colors[status] }} />
+                  <span className="text-xs font-semibold truncate">{statusLabels[status] || status}</span>
+                  <span className="rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+                    {statusLeads.length}
+                  </span>
+                </div>
+                <div className={cn(
+                  "min-h-[200px] space-y-2 rounded-lg border-2 border-dashed p-1.5",
+                  status === "converted" ? "bg-green-50/50 dark:bg-green-900/10 border-transparent" :
+                  status === "lost" ? "bg-red-50/50 dark:bg-red-900/10 border-transparent" : "border-transparent"
+                )}>
+                  {statusLeads.map(lead => {
+                    const grade = getGrade(lead.score)
+                    return (
+                      <div
+                        key={lead.id}
+                        className="rounded-lg border bg-card p-2.5 shadow-sm hover:shadow-md cursor-pointer transition-all"
+                        onClick={() => router.push(`/leads/${lead.id}`)}
+                      >
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className={cn("inline-flex items-center justify-center w-6 h-6 rounded-full text-[10px] font-bold", grade.color)}>
+                            {grade.letter}
+                          </span>
+                          <span className="font-medium text-xs truncate flex-1">{lead.contactName}</span>
+                        </div>
+                        {lead.companyName && (
+                          <p className="text-[10px] text-muted-foreground truncate flex items-center gap-1">
+                            <Building2 className="h-2.5 w-2.5" /> {lead.companyName}
+                          </p>
+                        )}
+                        <div className="flex items-center justify-between mt-1.5">
+                          <span className="text-[10px] text-muted-foreground">{lead.score}/100</span>
+                          {lead.estimatedValue ? (
+                            <span className="text-xs font-semibold text-primary">${lead.estimatedValue.toLocaleString()}</span>
+                          ) : null}
+                        </div>
+                        <div className="flex gap-1 mt-1.5" onClick={e => e.stopPropagation()}>
+                          {lead.status !== "converted" && (
+                            <Button size="sm" variant="outline" className="h-6 px-1.5 text-[10px] text-green-600" onClick={() => setConvertLead(lead)}>
+                              <ArrowRight className="h-2.5 w-2.5" />
+                            </Button>
+                          )}
+                          <Button size="sm" variant="outline" className="h-6 px-1.5 text-[10px]" onClick={() => { setEditData(lead); setShowForm(true) }}>
+                            <Pencil className="h-2.5 w-2.5" />
+                          </Button>
+                          <Button size="sm" variant="ghost" className="h-6 px-1.5 text-[10px] text-red-500" onClick={() => { setDeleteId(lead.id); setDeleteName(lead.contactName) }}>
+                            <Trash2 className="h-2.5 w-2.5" />
+                          </Button>
+                        </div>
+                      </div>
+                    )
+                  })}
+                  {statusLeads.length === 0 && (
+                    <div className="flex h-[80px] items-center justify-center text-[10px] text-muted-foreground">—</div>
+                  )}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
+
       {/* Leads table */}
-      <div className="rounded-lg border bg-card overflow-hidden">
+      {viewMode === "table" && <div className="rounded-lg border bg-card overflow-hidden">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b bg-muted/50">
@@ -380,7 +462,7 @@ export default function LeadsPage() {
             })}
           </tbody>
         </table>
-      </div>
+      </div>}
 
       {/* Lead Form */}
       <LeadForm

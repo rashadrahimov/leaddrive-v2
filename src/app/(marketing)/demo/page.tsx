@@ -5,15 +5,82 @@ import { motion, AnimatePresence } from "framer-motion"
 import Link from "next/link"
 import { ShimmerButton } from "@/components/ui/shimmer-button"
 import {
-  ArrowRight, LayoutDashboard, Handshake, Building2, LineChart,
+  ArrowRight, LayoutDashboard, Handshake, Building2,
   Calculator, Inbox, Megaphone, Headphones, Briefcase, Settings,
   ChevronLeft, ChevronRight,
+  Brain, Mail, BarChart3, TrendingUp, Users, Wallet,
+  FileText, CalendarDays, ClipboardList, Monitor, Sparkles,
 } from "lucide-react"
 
 const screenshots = [
+  // === AI (первые 9) ===
+  {
+    id: "ai-scoring",
+    title: "AI Lid Reytinqi",
+    description: "Süni intellekt hər lidi A-dan F-ə qədər qiymətləndirir. Davranış, büdcə və uyğunluq əsasında avtomatik bal hesablayır.",
+    icon: Brain,
+    src: "/marketing/ai-lead-scoring.png",
+  },
+  {
+    id: "ai-email",
+    title: "AI Mətn Generasiyası",
+    description: "Claude ilə peşəkar e-poçt və mesaj yaradın — ton, mətn növü seçin, bir kliklə göndərin. WhatsApp, Telegram və e-poçt dəstəyi.",
+    icon: Mail,
+    src: "/marketing/ai-email-generation.png",
+  },
+  {
+    id: "ai-deal",
+    title: "AI Sövdələşmə Təhlili",
+    description: "Hər sövdələşmə üçün Next Best Offers — süni intellekt ən uyğun məhsul və xidmətləri tövsiyə edir.",
+    icon: Sparkles,
+    src: "/marketing/ai-deal-detail.png",
+  },
+  {
+    id: "ai-ticket",
+    title: "AI Tiket Cavabı",
+    description: "Dəstək tiketlərinə avtomatik cavab, xülasə və həll addımları — süni intellekt agentin işini 3x sürətləndirir.",
+    icon: Headphones,
+    src: "/marketing/ai-ticket-detail.png",
+  },
+  {
+    id: "ai-lead",
+    title: "AI Lid Detalları",
+    description: "Lidlər haqqında dərin təhlil: AI sentiment, tapşırıqlar, skorinq və şəxsiyyətləşdirilmiş e-poçt generasiyası bir ekranda.",
+    icon: Users,
+    src: "/marketing/ai-lead-detail.png",
+  },
+  {
+    id: "ai-contact",
+    title: "AI Kontakt Profili",
+    description: "Hər kontakt üçün AI analiz — əlaqə tarixçəsi, şirkət məlumatları, sövdələşmə tarixçəsi və növbəti addım tövsiyəsi.",
+    icon: Users,
+    src: "/marketing/ai-contact-detail.png",
+  },
+  {
+    id: "ai-profitability",
+    title: "AI Gəlirlilik Təhlili",
+    description: "Süni intellekt gəlirlilik göstəricilərini təhlil edir, trendləri müəyyən edir və optimallaşdırma təklifləri verir.",
+    icon: TrendingUp,
+    src: "/marketing/ai-profitability.png",
+  },
+  {
+    id: "ai-budgeting",
+    title: "AI Büdcə Narrativi",
+    description: "CFO səviyyəsində büdcə şərhləri — plan vs fakt, sapma analizi və proqnoz avtomatik yaradılır.",
+    icon: Calculator,
+    src: "/marketing/ai-budgeting.png",
+  },
+  {
+    id: "ai-assistant",
+    title: "AI Köməkçi Panel",
+    description: "İstənilən səhifədə üzən AI köməkçi — suallarınıza cavab verir, məlumat axtarır, hərəkətlər təklif edir.",
+    icon: Sparkles,
+    src: "/marketing/ai-assistant-panel.png",
+  },
+  // === CRM (11 modul) ===
   {
     id: "dashboard",
-    title: "İdarə paneli",
+    title: "İdarə Paneli",
     description: "Real vaxt KPI-lər, gəlir qrafikləri, pipeline funnel, ən son sövdələşmələr və tapşırıqlar — hamısı bir ekranda.",
     icon: LayoutDashboard,
     src: "/marketing/crm-dashboard.png",
@@ -26,6 +93,13 @@ const screenshots = [
     src: "/marketing/deals-pipeline.png",
   },
   {
+    id: "inbox",
+    title: "7 Kanallı Gələn Qutusu",
+    description: "E-poçt, SMS, Telegram, WhatsApp, Facebook, Instagram, VK — bütün mesajlar bir vahid gələn qutusunda. AI avtomatik cavab.",
+    icon: Inbox,
+    src: "/marketing/inbox-channels.png",
+  },
+  {
     id: "companies",
     title: "Şirkətlər",
     description: "360° müştəri görüntüsü: kontaktlar, sövdələşmələr, fakturalar, fəaliyyət xətti və gəlirlilik — hər şey bir kartda.",
@@ -33,25 +107,25 @@ const screenshots = [
     src: "/marketing/companies-list.png",
   },
   {
-    id: "profitability",
-    title: "Gəlirlilik təhlili",
-    description: "Xərc modeli mühərriki hər müştəri və xidmət üzrə real marjanı göstərir. 18 xərc kateqoriyası, süni intellekt təhlilləri.",
-    icon: LineChart,
-    src: "/marketing/analytics-profitability.png",
+    id: "finance",
+    title: "Maliyyə və Xəzinə",
+    description: "Nağd pul axını, hesab balansları, tranzaksiya tarixçəsi və maliyyə proqnozu — tam xəzinə idarəsi.",
+    icon: Wallet,
+    src: "/marketing/finance-treasury.png",
   },
   {
-    id: "budgeting",
-    title: "Büdcələşdirmə və P&L",
-    description: "Plan vs Fakt matriksi, kassa proqnozu, waterfall təhlili, versiya müqayisəsi və CFO səviyyəsində süni intellekt şərhləri.",
-    icon: Calculator,
-    src: "/marketing/budgeting-pnl.png",
+    id: "reports",
+    title: "Hesabatlar və Analitika",
+    description: "Satış performansı, kampaniya ROI, müştəri davranışı — interaktiv qrafiklər və cədvəllər ilə dərin analitika.",
+    icon: BarChart3,
+    src: "/marketing/reports-analytics.png",
   },
   {
-    id: "inbox",
-    title: "7 kanallı gələn qutusu",
-    description: "E-poçt, SMS, Telegram, WhatsApp, Facebook, Instagram, VK — bütün mesajlar bir vahid gələn qutusunda.",
-    icon: Inbox,
-    src: "/marketing/inbox-channels.png",
+    id: "invoices",
+    title: "Hesab-fakturalar",
+    description: "Faktura yaratma, göndərmə, ödəniş izləmə, PDF ixrac və valyuta dəstəyi ilə tam billing sistemi.",
+    icon: FileText,
+    src: "/marketing/invoices-billing.png",
   },
   {
     id: "campaigns",
@@ -62,31 +136,38 @@ const screenshots = [
   },
   {
     id: "support",
-    title: "Dəstək və Tiketlər",
-    description: "SLA siyasətləri, prioritet idarəsi, agent iş masası, bilik bazası və müştəri portalı.",
+    title: "Service Desk (SLA)",
+    description: "SLA siyasətləri, prioritet idarəsi, agent iş masası, bilik bazası və AI dəstəkli tiket həlli.",
     icon: Headphones,
     src: "/marketing/support-tickets.png",
   },
   {
-    id: "projects",
-    title: "Layihələr (ERP)",
-    description: "Mərhələlər, komanda üzvləri, büdcə izləməsi və tamamlanma faizi ilə layihə idarəsi.",
-    icon: Briefcase,
-    src: "/marketing/erp-projects.png",
+    id: "agent-desktop",
+    title: "Agent Masaüstü",
+    description: "Dəstək agentləri üçün birləşdirilmiş iş masası — tiketlər, müştəri tarixçəsi və AI tövsiyələr bir yerdə.",
+    icon: Monitor,
+    src: "/marketing/agent-desktop.png",
   },
   {
-    id: "settings",
-    title: "Platforma parametrləri",
-    description: "Rollar, iş axınları, xüsusi sahələr, valyutalar, audit jurnalı, API, webhooklar — tam konfiqurasiya.",
-    icon: Settings,
-    src: "/marketing/platform-settings.png",
+    id: "events",
+    title: "Tədbirlər",
+    description: "Biznes tədbirlərini planlaşdırın, dəvətnamələr göndərin, iştirakçıları izləyin və təqvimi idarə edin.",
+    icon: CalendarDays,
+    src: "/marketing/events-management.png",
   },
 ]
 
 export default function DemoPage() {
   const [active, setActive] = useState(0)
+  const [filter, setFilter] = useState<"all" | "ai" | "crm">("all")
   const current = screenshots[active]
   const Icon = current.icon
+
+  const filteredScreenshots = filter === "all"
+    ? screenshots
+    : filter === "ai"
+    ? screenshots.slice(0, 9)
+    : screenshots.slice(9)
 
   return (
     <div>
@@ -107,7 +188,7 @@ export default function DemoPage() {
             transition={{ duration: 0.5, delay: 0.1 }}
             className="mt-4 text-lg text-gray-600 max-w-2xl mx-auto"
           >
-            10 əsas modulu interaktiv şəkildə araşdırın. Hər ekran real məhsuldan götürülüb.
+            20+ modulu interaktiv şəkildə araşdırın. 9 AI-əsaslı funksiya + 11 əsas CRM modulu — hər ekran real məhsuldan.
           </motion.p>
         </div>
       </section>
@@ -115,16 +196,38 @@ export default function DemoPage() {
       {/* Gallery */}
       <section className="pb-20">
         <div className="mx-auto max-w-7xl px-4 lg:px-8">
+          {/* Category filter */}
+          <div className="flex justify-center gap-3 mb-6">
+            {[
+              { key: "all" as const, label: "Hamısı (20)" },
+              { key: "ai" as const, label: "🤖 AI Funksiyalar (9)" },
+              { key: "crm" as const, label: "📊 CRM Modulları (11)" },
+            ].map((f) => (
+              <button
+                key={f.key}
+                onClick={() => { setFilter(f.key); setActive(f.key === "crm" ? 9 : 0) }}
+                className={`px-5 py-2.5 rounded-full text-sm font-semibold transition-all ${
+                  filter === f.key
+                    ? "bg-slate-800 text-white shadow-lg"
+                    : "bg-white text-gray-600 hover:bg-gray-100 border border-gray-200"
+                }`}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
+
           {/* Tab navigation */}
           <div className="flex flex-wrap justify-center gap-2 mb-10">
-            {screenshots.map((s, i) => {
+            {filteredScreenshots.map((s) => {
               const TabIcon = s.icon
+              const globalIdx = screenshots.indexOf(s)
               return (
                 <button
                   key={s.id}
-                  onClick={() => setActive(i)}
+                  onClick={() => setActive(globalIdx)}
                   className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
-                    i === active
+                    globalIdx === active
                       ? "bg-orange-500 text-white shadow-lg shadow-orange-500/20"
                       : "bg-white text-gray-600 hover:bg-gray-100 border border-gray-200"
                   }`}
@@ -181,15 +284,25 @@ export default function DemoPage() {
               {/* Prev/Next */}
               <div className="flex items-center justify-between mt-6">
                 <button
-                  onClick={() => setActive((active - 1 + screenshots.length) % screenshots.length)}
+                  onClick={() => {
+                    const idxInFiltered = filteredScreenshots.indexOf(current)
+                    const prev = (idxInFiltered - 1 + filteredScreenshots.length) % filteredScreenshots.length
+                    setActive(screenshots.indexOf(filteredScreenshots[prev]))
+                  }}
                   className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-600 hover:text-slate-800 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
                 >
                   <ChevronLeft className="h-4 w-4" />
                   Əvvəlki
                 </button>
-                <span className="text-sm text-gray-400">{active + 1} / {screenshots.length}</span>
+                <span className="text-sm text-gray-400">
+                  {filteredScreenshots.indexOf(current) + 1} / {filteredScreenshots.length}
+                </span>
                 <button
-                  onClick={() => setActive((active + 1) % screenshots.length)}
+                  onClick={() => {
+                    const idxInFiltered = filteredScreenshots.indexOf(current)
+                    const next = (idxInFiltered + 1) % filteredScreenshots.length
+                    setActive(screenshots.indexOf(filteredScreenshots[next]))
+                  }}
                   className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-600 hover:text-slate-800 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
                 >
                   Növbəti

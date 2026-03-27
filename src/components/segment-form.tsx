@@ -9,8 +9,9 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogHeader, DialogTitle, DialogContent, DialogFooter } from "@/components/ui/dialog"
-import { X, Eye, Building2, LinkIcon, UserCircle, Tag, Calendar, Type, Mail, Phone, Zap, Archive, Loader2, Users, Check } from "lucide-react"
+import { X, Eye, Building2, LinkIcon, UserCircle, Tag, Calendar, Type, Mail, Phone, Zap, Archive, Loader2, Users, Check, GitBranch } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { SegmentConditionBuilder } from "@/components/segment-condition-builder"
 
 interface SegmentConditions {
   company: string
@@ -68,6 +69,7 @@ export function SegmentForm({ open, onOpenChange, onSaved, initialData, orgId }:
   const [error, setError] = useState("")
   const [previewCount, setPreviewCount] = useState<number | null>(null)
   const [previewing, setPreviewing] = useState(false)
+  const [advancedMode, setAdvancedMode] = useState(false)
 
   useEffect(() => {
     if (open) {
@@ -276,15 +278,26 @@ export function SegmentForm({ open, onOpenChange, onSaved, initialData, orgId }:
                     </Badge>
                   )}
                 </h3>
-                {activeConditionsCount > 0 && (
+                <div className="flex items-center gap-2">
                   <button
                     type="button"
-                    onClick={() => setConditions(emptyConditions)}
-                    className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                    onClick={() => setAdvancedMode(!advancedMode)}
+                    className={cn("flex items-center gap-1 text-xs px-2 py-0.5 rounded-full border transition-colors",
+                      advancedMode ? "bg-primary text-primary-foreground border-primary" : "text-muted-foreground hover:text-foreground border-muted"
+                    )}
                   >
-                    {t("resetAll")}
+                    <GitBranch className="h-3 w-3" /> {advancedMode ? "Advanced" : "Advanced"}
                   </button>
-                )}
+                  {activeConditionsCount > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setConditions(emptyConditions)}
+                      className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      {t("resetAll")}
+                    </button>
+                  )}
+                </div>
               </div>
 
               {/* Active conditions chips */}
@@ -320,8 +333,33 @@ export function SegmentForm({ open, onOpenChange, onSaved, initialData, orgId }:
                 </div>
               )}
 
+              {/* Advanced Condition Builder */}
+              {advancedMode && (
+                <SegmentConditionBuilder
+                  initialConditions={Object.entries(getCleanConditions()).map(([key, value]) => ({ field: key, operator: "contains", value: String(value) }))}
+                  onSave={(groups) => {
+                    // Convert advanced groups back to simple conditions for now
+                    const firstGroup = groups[0]
+                    if (firstGroup) {
+                      const newConds = { ...emptyConditions }
+                      firstGroup.conditions.forEach(c => {
+                        if (c.field in newConds) {
+                          if (typeof (newConds as any)[c.field] === "boolean") {
+                            (newConds as any)[c.field] = c.operator === "is_true"
+                          } else {
+                            (newConds as any)[c.field] = c.value
+                          }
+                        }
+                      })
+                      setConditions(newConds)
+                    }
+                    setAdvancedMode(false)
+                  }}
+                />
+              )}
+
               {/* Filter grid */}
-              <div className="rounded-lg border bg-muted/30 p-4 space-y-4">
+              {!advancedMode && <div className="rounded-lg border bg-muted/30 p-4 space-y-4">
                 {/* Row 1: Company + Source */}
                 <div className="grid grid-cols-2 gap-3">
                   <FilterField icon={Building2} label={t("condCompany")}>
@@ -408,7 +446,7 @@ export function SegmentForm({ open, onOpenChange, onSaved, initialData, orgId }:
                     label={t("condHasPhone")}
                   />
                 </div>
-              </div>
+              </div>}
             </div>
 
             {/* Preview result */}

@@ -2,9 +2,14 @@
 
 import { motion } from "framer-motion"
 import { SectionWrapper } from "./section-wrapper"
-import { Monitor, Smartphone, Globe } from "lucide-react"
+import { Monitor, Smartphone, Globe, MessageCircle } from "lucide-react"
 
 const showcaseItems = [
+  {
+    title: "AI ilə 7 Kanalda Ünsiyyət",
+    description: "WhatsApp, Telegram, E-poçt, SMS, Facebook, Instagram, VK — süni intellekt hər kanalda müştərilərə cavab verir və e-poçt generasiya edir.",
+    icon: MessageCircle,
+  },
   {
     title: "Güclü İdarə Paneli",
     description: "Real vaxt KPI-lər, gəlir qrafikləri, pipeline və süni intellekt risk xəbərdarlıqları — hamısı bir baxışda.",
@@ -25,7 +30,7 @@ const showcaseItems = [
 export function ScreenshotShowcase() {
   return (
     <SectionWrapper id="showcase" variant="gray">
-      <div className="grid lg:grid-cols-3 gap-8">
+      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
         {showcaseItems.map((item, i) => {
           const Icon = item.icon
           return (

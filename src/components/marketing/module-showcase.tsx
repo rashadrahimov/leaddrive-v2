@@ -78,8 +78,20 @@ export function ModuleShowcase() {
             </div>
           </div>
 
-          {/* Screenshot */}
-          <div className="bg-white rounded-xl border border-gray-200 shadow-lg overflow-hidden">
+          {/* Screenshot with browser frame */}
+          <div className="rounded-xl border border-gray-200 bg-white shadow-2xl shadow-gray-200/60 overflow-hidden">
+            <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-gray-50/80">
+              <div className="flex gap-1.5">
+                <div className="w-2.5 h-2.5 rounded-full bg-red-400" />
+                <div className="w-2.5 h-2.5 rounded-full bg-yellow-400" />
+                <div className="w-2.5 h-2.5 rounded-full bg-green-400" />
+              </div>
+              <div className="flex-1 mx-6">
+                <div className="bg-white rounded-md px-3 py-0.5 text-[10px] text-gray-400 border border-gray-200 max-w-[160px] mx-auto text-center">
+                  app.leaddrivecrm.org
+                </div>
+              </div>
+            </div>
             <img
               src={active.screenshot}
               alt={`${active.title} Module`}

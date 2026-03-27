@@ -17,7 +17,7 @@ import { OfferForm } from "@/components/offer-form"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
 import {
   ArrowLeft, Pencil, Trash2, FileCheck, DollarSign, Calendar, Clock, CheckCircle2,
-  Send, FileOutput, Building2, User, Hash, FileText, Package, Percent,
+  Send, FileOutput, Building2, User, Hash, FileText, Package, Percent, Download,
 } from "lucide-react"
 
 interface OfferItem {
@@ -241,6 +241,9 @@ export default function OfferDetailPage() {
               <FileOutput className="h-4 w-4 mr-1" /> {convertLoading ? "..." : tc("convertToInvoice") || "→ Invoice"}
             </Button>
           )}
+          <Button variant="outline" size="sm" onClick={() => window.open(`/api/v1/offers/${offer.id}/pdf`, "_blank")}>
+            <Download className="h-4 w-4 mr-1" /> PDF
+          </Button>
           <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
             <Pencil className="h-4 w-4 mr-1" /> {tc("edit")}
           </Button>

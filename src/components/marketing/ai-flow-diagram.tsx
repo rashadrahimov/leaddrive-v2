@@ -2,11 +2,11 @@
 
 import { motion } from "framer-motion"
 import { SectionWrapper } from "./section-wrapper"
-import { MessageSquare, Bot, LayoutDashboard, Lightbulb, ArrowRight } from "lucide-react"
+import { MessageSquare, Bot, LayoutDashboard, Lightbulb, ArrowRight, Mail, Phone, Send } from "lucide-react"
 
 const flowSteps = [
-  { icon: MessageSquare, label: "Müştəri", sublabel: "7 kanal", color: "#f59e0b" },
-  { icon: Bot, label: "Süni Zeka", sublabel: "Claude ilə", color: "#7c3aed" },
+  { icon: MessageSquare, label: "Müştəri", sublabel: "WhatsApp · Telegram · E-poçt · SMS · FB · IG · VK", color: "#f59e0b" },
+  { icon: Bot, label: "Süni Zeka", sublabel: "Claude ilə AI cavab", color: "#7c3aed" },
   { icon: LayoutDashboard, label: "CRM", sublabel: "Avto-zənginləşdirmə", color: "#F97316" },
   { icon: Lightbulb, label: "Təhlillər", sublabel: "Fəaliyyətə keçin", color: "#ef4444" },
 ]
@@ -32,10 +32,10 @@ export function AiFlowDiagram() {
           </p>
           <ul className="mt-6 space-y-3">
             {[
-              "Süni zeka agentləri 7 kanalda müştəri sorğularını idarə edir",
-              "Avtomatik lid skorinqi və kvalifikasiyası",
-              "Xərc modelinizdən gəlirlilik təhlilləri yaradılır",
-              "Dəqiq cavablar üçün bilik bazası inteqrasiyası",
+              "AI agentləri WhatsApp, Telegram və E-poçtda müştəri sorğularına avtomatik cavab verir",
+              "Avtomatik lid skorinqi (A-F) və kvalifikasiyası",
+              "AI ilə peşəkar e-poçt, mesaj və təklif generasiyası — bir kliklə göndərin",
+              "Xərc modelinizdən gəlirlilik və büdcə təhlilləri avtomatik yaradılır",
             ].map((item, i) => (
               <li key={i} className="flex items-start gap-3">
                 <div className="w-5 h-5 rounded-full bg-orange-500 flex items-center justify-center flex-shrink-0 mt-0.5">

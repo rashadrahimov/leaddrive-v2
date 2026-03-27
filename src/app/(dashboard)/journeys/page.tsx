@@ -20,6 +20,9 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { PageDescription } from "@/components/page-description"
+import dynamic from "next/dynamic"
+
+const JourneyFlowEditor = dynamic(() => import("@/components/journey-flow-editor").then(m => ({ default: m.JourneyFlowEditor })), { ssr: false })
 
 interface JourneyStep {
   id: string
@@ -97,6 +100,7 @@ export default function JourneysPage() {
   const [steps, setSteps] = useState<{ stepType: string; config: any }[]>([])
   const [savingSteps, setSavingSteps] = useState(false)
   const [addStepOpen, setAddStepOpen] = useState(false)
+  const [flowView, setFlowView] = useState(false)
   const [newStepType, setNewStepType] = useState("send_email")
   const [newStepConfig, setNewStepConfig] = useState<any>({})
   const [enrollOpen, setEnrollOpen] = useState<Journey | null>(null)
@@ -384,6 +388,14 @@ export default function JourneysPage() {
               <div className="flex items-center gap-2">
                 <Button
                   size="sm"
+                  variant={flowView ? "default" : "outline"}
+                  className="gap-1 text-xs h-7"
+                  onClick={() => setFlowView(!flowView)}
+                >
+                  <Workflow className="h-3 w-3" /> {flowView ? "List View" : "Visual Builder"}
+                </Button>
+                <Button
+                  size="sm"
                   variant="outline"
                   className="gap-1 text-xs h-7"
                   onClick={() => { setEnrollOpen(stepsJourney); setSelectedLead(null); setLeadSearch("") }}
@@ -397,6 +409,27 @@ export default function JourneysPage() {
             </div>
           </DialogHeader>
           <DialogContent className="max-h-[65vh] overflow-y-auto">
+            {/* Visual Flow Builder */}
+            {flowView && (
+              <JourneyFlowEditor
+                steps={stepsJourney?.steps?.map(s => ({ id: s.id, stepOrder: s.stepOrder, stepType: s.stepType, config: s.config })) || []}
+                onSave={async (newSteps) => {
+                  await fetch(`/api/v1/journeys/${stepsJourney!.id}`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      name: stepsJourney!.name,
+                      steps: newSteps,
+                    }),
+                  })
+                  setStepsJourney(null)
+                  setFlowView(false)
+                  fetchJourneys()
+                }}
+              />
+            )}
+            {/* Linear Steps View */}
+            {!flowView && <>
             {/* Trigger node */}
             <div className="flex items-center gap-3 mb-1">
               <div className="flex items-center justify-center w-9 h-9 rounded-full bg-purple-500 text-white shrink-0">
@@ -470,13 +503,16 @@ export default function JourneysPage() {
                 </button>
               </div>
             </div>
+          </>}
           </DialogContent>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setStepsJourney(null)}>Закрыть</Button>
-            <Button onClick={saveSteps} disabled={savingSteps} className="gap-1.5">
-              {savingSteps ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-              {savingSteps ? "Сохранение..." : "Сохранить шаги"}
-            </Button>
+            {!flowView && <>
+              <Button variant="outline" onClick={() => setStepsJourney(null)}>Закрыть</Button>
+              <Button onClick={saveSteps} disabled={savingSteps} className="gap-1.5">
+                {savingSteps ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                {savingSteps ? "Сохранение..." : "Сохранить шаги"}
+              </Button>
+            </>}
           </DialogFooter>
         </Dialog>
       )}

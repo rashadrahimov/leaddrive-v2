@@ -147,6 +147,16 @@ export default function InboxPage() {
 
   useEffect(() => { fetchInbox() }, [session, channelFilter])
 
+  // Auto-refresh polling every 15 seconds
+  const [isLive, setIsLive] = useState(true)
+  useEffect(() => {
+    if (!isLive) return
+    const interval = setInterval(() => {
+      fetchInbox()
+    }, 15000)
+    return () => clearInterval(interval)
+  }, [isLive, channelFilter])
+
   // Fetch contacts for compose picker
   useEffect(() => {
     if (showCompose && !contactsLoaded) {
@@ -353,9 +363,21 @@ export default function InboxPage() {
             <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
           </div>
         </div>
-        <Button className="gap-2" onClick={() => setShowCompose(true)}>
-          <Plus className="h-4 w-4" /> {t("newMessage")}
-        </Button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setIsLive(!isLive)}
+            className={cn(
+              "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border transition-colors",
+              isLive ? "bg-green-100 text-green-700 border-green-300 dark:bg-green-900/30 dark:text-green-400 dark:border-green-700" : "bg-muted text-muted-foreground border-muted"
+            )}
+          >
+            <span className={cn("h-2 w-2 rounded-full", isLive ? "bg-green-500 animate-pulse" : "bg-gray-400")} />
+            {isLive ? "Live" : "Paused"}
+          </button>
+          <Button className="gap-2" onClick={() => setShowCompose(true)}>
+            <Plus className="h-4 w-4" /> {t("newMessage")}
+          </Button>
+        </div>
       </div>
 
       <PageDescription text={t("pageDescription")} />
