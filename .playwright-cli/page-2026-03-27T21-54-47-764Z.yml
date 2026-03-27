@@ -1,0 +1,27 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e4]:
+    - generic [ref=e5]:
+      - generic [ref=e6]: LeadDrive CRM
+      - generic [ref=e7]: Войдите в свой аккаунт
+    - generic [ref=e8]:
+      - generic [ref=e9]:
+        - generic [ref=e20]: Неверный email или пароль
+        - generic [ref=e10]:
+          - text: Email
+          - textbox "Email" [ref=e11]:
+            - /placeholder: you@company.com
+            - text: admin@leaddrive.com
+        - generic [ref=e12]:
+          - text: Пароль
+          - textbox "Пароль" [ref=e13]:
+            - /placeholder: ••••••••
+            - text: password123
+      - generic [ref=e14]:
+        - button "Войти" [ref=e15]
+        - generic [ref=e16]:
+          - link "Забыли пароль?" [ref=e17] [cursor=pointer]:
+            - /url: /forgot-password
+          - link "Создать аккаунт" [ref=e18] [cursor=pointer]:
+            - /url: /register
+  - region "Notifications alt+T"
+  - alert [ref=e19]

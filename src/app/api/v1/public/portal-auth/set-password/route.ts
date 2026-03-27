@@ -97,6 +97,6 @@ export async function POST(req: NextRequest) {
       companyName: contact.company?.name || "",
     },
   })
-  res.cookies.set("portal-token", jwtToken, { httpOnly: true, path: "/", maxAge: 86400 * 7, sameSite: "lax" })
+  res.cookies.set("portal-token", jwtToken, { httpOnly: true, secure: true, path: "/", maxAge: 86400 * 7, sameSite: "lax" })
   return res
 }

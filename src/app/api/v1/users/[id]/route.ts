@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { prisma } from "@/lib/prisma"
-import { getOrgId } from "@/lib/api-auth"
+import { getOrgId, requireAuth, isAuthError } from "@/lib/api-auth"
 import bcrypt from "bcryptjs"
 
 const updateUserSchema = z.object({
@@ -39,8 +39,9 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 }
 
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const orgId = await getOrgId(req)
-  if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  const authResult = await requireAuth(req, "settings", "write")
+  if (isAuthError(authResult)) return authResult
+  const orgId = authResult.orgId
   const { id } = await params
 
   const body = await req.json()
@@ -100,8 +101,9 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 }
 
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const orgId = await getOrgId(req)
-  if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  const authResult = await requireAuth(req, "settings", "delete")
+  if (isAuthError(authResult)) return authResult
+  const orgId = authResult.orgId
   const { id } = await params
 
   try {
