@@ -3,7 +3,7 @@ import type { NextRequest } from "next/server"
 import { auth } from "@/lib/auth"
 import { canAccessModule } from "@/lib/plan-config"
 
-const publicPaths = ["/login", "/register", "/forgot-password", "/api/auth", "/portal"]
+const publicPaths = ["/login", "/register", "/forgot-password", "/api/auth", "/portal", "/home", "/pricing", "/features", "/demo", "/about", "/contact", "/blog", "/legal", "/landing"]
 
 export default auth((req) => {
   const { pathname } = req.nextUrl
@@ -28,8 +28,11 @@ export default auth((req) => {
     return NextResponse.next()
   }
 
-  // Check authentication
+  // Check authentication — unauthenticated root "/" goes to marketing homepage
   if (!req.auth) {
+    if (pathname === "/") {
+      return NextResponse.redirect(new URL("/home", req.url))
+    }
     const loginUrl = new URL("/login", req.url)
     loginUrl.searchParams.set("callbackUrl", pathname)
     return NextResponse.redirect(loginUrl)

@@ -13,6 +13,7 @@ import {
   PiggyBank, Plus, Trash2, Pencil, Loader2, TrendingUp, TrendingDown,
   CheckCircle, AlertCircle, BarChart2, DollarSign, CalendarRange, Link2,
   ChevronDown, ChevronRight, MessageSquare, Target, Brain, Sparkles, Settings2,
+  LayoutGrid, List, Banknote, FileSpreadsheet,
 } from "lucide-react"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
@@ -26,6 +27,7 @@ import { BUDGET_COLORS, ANIMATION, AXIS_TICK, GRID_STYLE, HBarGradient, VBarGrad
 import { BudgetChartTooltip } from "@/components/budget-chart-tooltip"
 import { BudgetBarLabel } from "@/components/budget-bar-label"
 import { BudgetChartLegend } from "@/components/budget-chart-legend"
+import { AnimatedNumber, fmtManat } from "@/components/animated-number"
 import {
   useBudgetPlans,
   useCreateBudgetPlan,
@@ -101,7 +103,6 @@ import { BudgetMarginSummary } from "@/components/budget-margin-summary"
 import { BudgetChangeHistory } from "@/components/budget-change-history"
 import { InfoHint } from "@/components/info-hint"
 import { BudgetMatrixGrid } from "@/components/budget-matrix-grid"
-import { LayoutGrid, List, Banknote, FileSpreadsheet } from "lucide-react"
 import { toast } from "sonner"
 
 const PIE_COLORS = BUDGET_COLORS.pie
@@ -954,8 +955,8 @@ function WorkspaceTab({ planId, onNavigateTab }: { planId: string; onNavigateTab
             <Badge variant="outline" title={t("hintBadgeChildCount")} className="ml-1 text-[10px] px-1.5 py-0">{children.length}</Badge>
           </div>
         </td>
-        <td className="px-2 py-2.5 text-right font-mono text-sm font-semibold">{fmt(groupTotal)}</td>
-        <td className="px-2 py-2.5 text-right font-mono text-sm font-semibold text-[#065f46] dark:text-[#6ee7b7]">{fmt(groupActual)}</td>
+        <td className="px-2 py-2.5 text-right font-mono text-sm font-semibold"><AnimatedNumber value={groupTotal} duration={500} formatter={fmt} /></td>
+        <td className="px-2 py-2.5 text-right font-mono text-sm font-semibold text-[#065f46] dark:text-[#6ee7b7]"><AnimatedNumber value={groupActual} duration={500} formatter={fmt} /></td>
         <td className="px-2 py-2.5 text-right text-sm font-semibold text-muted-foreground">
           {groupTotal > 0 ? `${(((groupTotal - groupActual) / groupTotal) * 100).toFixed(1)}%` : "—"}
         </td>
@@ -1110,8 +1111,8 @@ function WorkspaceTab({ planId, onNavigateTab }: { planId: string; onNavigateTab
         {sectionLines.map(l => [renderRow(l), renderExpand(l)])}
         <tr className="border-y-2 border-border bg-muted/50">
           <td className="px-3 py-2 font-bold text-sm" colSpan={2} title={t("hintSectionTotal")}>{t("totalLabel")} {title.toLowerCase()}</td>
-          <td className="px-2 py-2 text-right font-mono text-sm font-bold">{fmt(totPlanned)}</td>
-          <td className="px-2 py-2 text-right font-mono text-sm font-bold text-[#065f46] dark:text-[#6ee7b7]">{fmt(totActual)}</td>
+          <td className="px-2 py-2 text-right font-mono text-sm font-bold"><AnimatedNumber value={totPlanned} duration={500} formatter={fmt} /></td>
+          <td className="px-2 py-2 text-right font-mono text-sm font-bold text-[#065f46] dark:text-[#6ee7b7]"><AnimatedNumber value={totActual} duration={500} formatter={fmt} /></td>
           <td className="px-2 py-2 text-right font-mono text-sm font-bold">
             {totPlanned > 0 ? `${(((totPlanned - totActual) / totPlanned) * 100).toFixed(1)}%` : "—"}
           </td>
@@ -1170,8 +1171,8 @@ function WorkspaceTab({ planId, onNavigateTab }: { planId: string; onNavigateTab
                         <td colSpan={2} className="px-4 py-2">
                           <span className="text-[13px] font-bold text-slate-700 dark:text-slate-200 tracking-wide">{prefix}</span>
                         </td>
-                        <td className="px-2 py-2 text-right font-mono text-xs font-semibold text-slate-500 dark:text-slate-400">{fmt(grpPlanned)}</td>
-                        <td className="px-2 py-2 text-right font-mono text-xs font-semibold text-slate-500 dark:text-slate-400">{fmt(grpActual)}</td>
+                        <td className="px-2 py-2 text-right font-mono text-xs font-semibold text-slate-500 dark:text-slate-400"><AnimatedNumber value={grpPlanned} duration={400} formatter={fmt} /></td>
+                        <td className="px-2 py-2 text-right font-mono text-xs font-semibold text-slate-500 dark:text-slate-400"><AnimatedNumber value={grpActual} duration={400} formatter={fmt} /></td>
                         <td className="px-2 py-2 text-right font-mono text-xs font-semibold text-slate-500 dark:text-slate-400">{grpVar}</td>
                         <td />
                       </tr>
@@ -1231,8 +1232,8 @@ function WorkspaceTab({ planId, onNavigateTab }: { planId: string; onNavigateTab
         })()}
         <tr className="border-y-2 border-border bg-muted/50">
           <td className="px-3 py-2 font-bold text-sm" colSpan={2} title={t("hintSectionTotal")}>{t("totalLabel")} {title.toLowerCase()}</td>
-          <td className="px-2 py-2 text-right font-mono text-sm font-bold">{fmt(totPlanned)}</td>
-          <td className="px-2 py-2 text-right font-mono text-sm font-bold text-[#065f46] dark:text-[#6ee7b7]">{fmt(totActual)}</td>
+          <td className="px-2 py-2 text-right font-mono text-sm font-bold"><AnimatedNumber value={totPlanned} duration={500} formatter={fmt} /></td>
+          <td className="px-2 py-2 text-right font-mono text-sm font-bold text-[#065f46] dark:text-[#6ee7b7]"><AnimatedNumber value={totActual} duration={500} formatter={fmt} /></td>
           <td className="px-2 py-2 text-right font-mono text-sm font-bold">
             {totPlanned > 0 ? `${(((totPlanned - totActual) / totPlanned) * 100).toFixed(1)}%` : "—"}
           </td>
@@ -1332,9 +1333,9 @@ function WorkspaceTab({ planId, onNavigateTab }: { planId: string; onNavigateTab
     return top
   })()
 
-  // Total costs = COGS + OpEx for KPI display
-  const totalCostPlanned = totalExpensePlanned + totalCOGSPlanned
-  const totalCostActual = totalExpenseActual + totalCOGSActual
+  // Total costs = OpEx only (COGS allocates same costs by service, not additional)
+  const totalCostPlanned = totalExpensePlanned
+  const totalCostActual = totalExpenseActual
   // Expense execution: how much of total cost budget was spent
   const expExecPct = totalCostPlanned > 0 ? (totalCostActual / totalCostPlanned) * 100 : 0
   // Overspend alert
@@ -1618,8 +1619,8 @@ function WorkspaceTab({ planId, onNavigateTab }: { planId: string; onNavigateTab
                       <div className="font-bold text-sm">{t("grossProfit")}</div>
                       <div className="text-[10px] text-muted-foreground/60 font-normal">{t("hintGrossProfit")}</div>
                     </td>
-                    <td className="px-2 py-2 text-right font-mono text-sm font-bold">{fmt(totRevPlanned - totCOGSPlanned)}</td>
-                    <td className="px-2 py-2 text-right font-mono text-sm font-bold text-[#065f46] dark:text-[#6ee7b7]">{fmt(totRevActual - totCOGSActual)}</td>
+                    <td className="px-2 py-2 text-right font-mono text-sm font-bold"><AnimatedNumber value={totRevPlanned - totCOGSPlanned} duration={500} formatter={fmt} /></td>
+                    <td className="px-2 py-2 text-right font-mono text-sm font-bold text-[#065f46] dark:text-[#6ee7b7]"><AnimatedNumber value={totRevActual - totCOGSActual} duration={500} formatter={fmt} /></td>
                     <td colSpan={2} />
                   </tr>
                 )}
@@ -1633,8 +1634,8 @@ function WorkspaceTab({ planId, onNavigateTab }: { planId: string; onNavigateTab
                       <div className="font-bold text-sm">{t("operatingProfit")}</div>
                       <div className="text-[10px] text-muted-foreground/60 font-normal">{t("hintOperatingProfit")}</div>
                     </td>
-                    <td className="px-2 py-2 text-right font-mono text-sm font-bold">{fmt(totRevPlanned - totCOGSPlanned - totExpPlanned)}</td>
-                    <td className="px-2 py-2 text-right font-mono text-sm font-bold text-[#065f46] dark:text-[#6ee7b7]">{fmt(totRevActual - totCOGSActual - totExpActual)}</td>
+                    <td className="px-2 py-2 text-right font-mono text-sm font-bold"><AnimatedNumber value={totRevPlanned - totExpPlanned} duration={500} formatter={fmt} /></td>
+                    <td className="px-2 py-2 text-right font-mono text-sm font-bold text-[#065f46] dark:text-[#6ee7b7]"><AnimatedNumber value={totRevActual - totExpActual} duration={500} formatter={fmt} /></td>
                     <td colSpan={2} />
                   </tr>
                 )}
@@ -1760,8 +1761,9 @@ function OverviewTab({ planId }: { planId: string }) {
 
   const totalCOGSPlanned = analytics.totalCOGSPlanned ?? 0
   const totalCOGSActual = analytics.totalCOGSActual ?? 0
-  const totalCostPlanned = totalExpensePlanned + totalCOGSPlanned
-  const totalCostActual = totalExpenseActual + totalCOGSActual
+  // Total costs = OpEx only (COGS allocates same costs by service, not additional)
+  const totalCostPlanned = totalExpensePlanned
+  const totalCostActual = totalExpenseActual
   // Expense execution: <100% = under budget (green), 100-110% = warning, >110% = overspend (red)
   const expExecPct = totalCostPlanned > 0 ? (totalCostActual / totalCostPlanned) * 100 : 0
   const revExecPct = revenueExecutionPct || (totalRevenuePlanned > 0 ? (totalRevenueActual / totalRevenuePlanned) * 100 : 0)
@@ -2756,6 +2758,11 @@ function PLTab({ planId }: { planId: string }) {
   const cogsRows = leafRows.filter(c => c.lineType === "cogs")
   const expRows = leafRows.filter(c => c.lineType === "expense")
 
+  // Split expenses into Direct Costs (labor + tech_infra) and Indirect/Overhead (admin + risk + standalone)
+  const DIRECT_GROUPS = new Set(["Direct Labor Costs", "Technical Infrastructure"])
+  const directExpRows = expRows.filter(c => c.parentCategory && DIRECT_GROUPS.has(c.parentCategory))
+  const indirectExpRows = expRows.filter(c => !c.parentCategory || !DIRECT_GROUPS.has(c.parentCategory))
+
   const buildGrouped = (rows: typeof byCategory) => {
     const groups: { parent: string; children: typeof byCategory }[] = []
     const standalone: typeof byCategory = []
@@ -2775,9 +2782,9 @@ function PLTab({ planId }: { planId: string }) {
     return { groups, standalone }
   }
 
-  const expGrouped = buildGrouped(expRows)
   const revGrouped = buildGrouped(revRows)
-  const cogsGrouped = buildGrouped(cogsRows)
+  const directGrouped = buildGrouped(directExpRows)
+  const indirectGrouped = buildGrouped(indirectExpRows)
 
   const categoryCount = byCategory.length
   const sectionCount = sections.length
@@ -2787,23 +2794,21 @@ function PLTab({ planId }: { planId: string }) {
     setCollapsed(prev => {
       const ids = new Set(prev)
       ids.add("auto-revenue")
-      ids.add("auto-cogs")
-      ids.add("auto-expense")
+      ids.add("auto-direct")
+      ids.add("auto-indirect")
       return ids
     })
   }, [categoryCount, sectionCount])
 
   const toggleAll = () => {
     if (allExpanded) {
-      // Collapse all
       const ids = new Set<string>()
       ids.add("auto-revenue")
-      ids.add("auto-cogs")
-      ids.add("auto-expense")
+      ids.add("auto-direct")
+      ids.add("auto-indirect")
       setCollapsed(ids)
       setAllExpanded(false)
     } else {
-      // Expand all
       setCollapsed(new Set())
       setAllExpanded(true)
     }
@@ -2815,14 +2820,21 @@ function PLTab({ planId }: { planId: string }) {
 
   const totalRevenuePlanned = revRows.reduce((s, r) => s + r.planned, 0)
   const totalRevenueActual = revRows.reduce((s, r) => s + r.actual, 0)
-  const totalCOGSPlanned = cogsRows.reduce((s, r) => s + r.planned, 0)
-  const totalCOGSActual = cogsRows.reduce((s, r) => s + r.actual, 0)
-  const totalExpensePlanned = expRows.reduce((s, r) => s + r.planned, 0)
-  const totalExpenseActual = expRows.reduce((s, r) => s + r.actual, 0)
-  const grossProfitPlanned = totalRevenuePlanned - totalCOGSPlanned
-  const grossProfitActual = totalRevenueActual - totalCOGSActual
-  const opProfitPlanned = grossProfitPlanned - totalExpensePlanned
-  const opProfitActual = grossProfitActual - totalExpenseActual
+  // Direct costs: labor + tech infrastructure
+  const totalDirectPlanned = directExpRows.reduce((s, r) => s + r.planned, 0)
+  const totalDirectActual = directExpRows.reduce((s, r) => s + r.actual, 0)
+  // Indirect costs: admin overhead + risk + standalone expense lines
+  const totalIndirectPlanned = indirectExpRows.reduce((s, r) => s + r.planned, 0)
+  const totalIndirectActual = indirectExpRows.reduce((s, r) => s + r.actual, 0)
+  // Total all expenses (for KPI)
+  const totalExpensePlanned = totalDirectPlanned + totalIndirectPlanned
+  const totalExpenseActual = totalDirectActual + totalIndirectActual
+  // P&L: Gross Profit = Revenue - Direct Costs
+  const grossProfitPlanned = totalRevenuePlanned - totalDirectPlanned
+  const grossProfitActual = totalRevenueActual - totalDirectActual
+  // EBITDA = Gross Profit - Indirect Costs
+  const opProfitPlanned = grossProfitPlanned - totalIndirectPlanned
+  const opProfitActual = grossProfitActual - totalIndirectActual
 
   // Helpers for execution bars
   const execPct = (actual: number, planned: number) => planned > 0 ? Math.min(Math.round((actual / planned) * 100), 200) : 0
@@ -2863,11 +2875,11 @@ function PLTab({ planId }: { planId: string }) {
             ? <TrendingUp className="h-4 w-4 text-emerald-500" />
             : <TrendingDown className="h-4 w-4 text-red-500" />}
         </div>
-        <div className="text-lg font-bold font-mono">{fmt(actual)}</div>
+        <AnimatedNumber value={actual} className="text-lg font-bold font-mono" duration={900} />
         <div className="flex items-center gap-2 mt-1">
-          <span className="text-xs text-muted-foreground">/ {fmt(planned)}</span>
+          <span className="text-xs text-muted-foreground">/ <AnimatedNumber value={planned} duration={700} className="inline" /></span>
           <span className={`text-xs font-semibold ${isPositive ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>
-            {isPositive ? "+" : ""}{fmt(variance)}
+            <AnimatedNumber value={variance} duration={600} formatter={(n) => `${n >= 0 ? "+" : ""}${Math.round(n).toLocaleString()} ₼`} className="inline" />
           </span>
         </div>
         <div className="mt-2 flex items-center gap-2">
@@ -2917,13 +2929,11 @@ function PLTab({ planId }: { planId: string }) {
               <span className="text-[10px] font-mono opacity-70">{secExecPct}%</span>
             </div>
             <div className="flex gap-6 text-sm font-mono font-bold">
-              <span className="text-right min-w-[100px]">{fmt(secPlanned)}</span>
-              <span className={`text-right min-w-[100px] ${secActual >= 0 ? "" : "text-red-600 dark:text-red-400"}`}>
-                {fmt(secActual)}
-              </span>
-              <span className={`text-right min-w-[80px] text-xs self-center ${secVariance >= 0 ? "text-emerald-700 dark:text-emerald-300" : "text-red-600 dark:text-red-400"}`}>
-                {secVariance >= 0 ? "+" : ""}{fmt(secVariance)}
-              </span>
+              <AnimatedNumber value={secPlanned} className="text-right min-w-[100px]" duration={800} />
+              <AnimatedNumber value={secActual} className={`text-right min-w-[100px] ${secActual >= 0 ? "" : "text-red-600 dark:text-red-400"}`} duration={800} />
+              <AnimatedNumber value={secVariance} duration={600}
+                formatter={(n) => `${n >= 0 ? "+" : ""}${Math.round(n).toLocaleString()} ₼`}
+                className={`text-right min-w-[80px] text-xs self-center ${secVariance >= 0 ? "text-emerald-700 dark:text-emerald-300" : "text-red-600 dark:text-red-400"}`} />
             </div>
           </div>
         </div>
@@ -2960,9 +2970,9 @@ function PLTab({ planId }: { planId: string }) {
                               <Badge variant="outline" title={t("hintBadgeChildCount")} className="text-[10px] px-1 py-0">{g.children.length}</Badge>
                             </div>
                           </td>
-                          <td className="px-4 py-2.5 text-right font-mono text-sm font-bold">{fmt(gPlanned)}</td>
-                          <td className="px-4 py-2.5 text-right font-mono text-sm font-bold">{fmt(gForecast)}</td>
-                          <td className="px-4 py-2.5 text-right font-mono text-sm font-bold">{fmt(gActual)}</td>
+                          <td className="px-4 py-2.5 text-right font-mono text-sm font-bold"><AnimatedNumber value={gPlanned} duration={700} /></td>
+                          <td className="px-4 py-2.5 text-right font-mono text-sm font-bold"><AnimatedNumber value={gForecast} duration={700} /></td>
+                          <td className="px-4 py-2.5 text-right font-mono text-sm font-bold"><AnimatedNumber value={gActual} duration={700} /></td>
                           <td className="px-4 py-2.5 text-center">
                             <span className="inline-block bg-muted/80 rounded-full px-2 py-0.5 text-[10px] font-mono font-bold">{gPctOfTotal}%</span>
                           </td>
@@ -2971,7 +2981,7 @@ function PLTab({ planId }: { planId: string }) {
                               {gVariance >= 0
                                 ? <TrendingUp className="h-3 w-3" />
                                 : <TrendingDown className="h-3 w-3" />}
-                              {gVariance >= 0 ? "+" : ""}{fmt(gVariance)}
+                              <AnimatedNumber value={gVariance} duration={600} formatter={(n) => `${n >= 0 ? "+" : ""}${Math.round(n).toLocaleString()} ₼`} />
                             </div>
                           </td>
                         </tr>
@@ -2987,14 +2997,14 @@ function PLTab({ planId }: { planId: string }) {
                                   {row.category}
                                 </div>
                               </td>
-                              <td className="px-4 py-2 text-right font-mono text-sm">{fmt(row.planned)}</td>
-                              <td className="px-4 py-2 text-right font-mono text-sm text-purple-600 dark:text-purple-400">{fmt(row.forecast)}</td>
-                              <td className="px-4 py-2 text-right font-mono text-sm">{fmt(row.actual)}</td>
+                              <td className="px-4 py-2 text-right font-mono text-sm"><AnimatedNumber value={row.planned} duration={500} /></td>
+                              <td className="px-4 py-2 text-right font-mono text-sm text-purple-600 dark:text-purple-400"><AnimatedNumber value={row.forecast} duration={500} /></td>
+                              <td className="px-4 py-2 text-right font-mono text-sm"><AnimatedNumber value={row.actual} duration={500} /></td>
                               <td className="px-4 py-2 text-center">
                                 <ExecBar actual={row.actual} planned={row.planned} isExpense={isExpense} />
                               </td>
                               <td className={`px-4 py-2 text-right font-mono text-sm font-semibold ${row.variance >= 0 ? "text-emerald-700 dark:text-emerald-300" : "text-red-600 dark:text-red-400"}`}>
-                                {row.variance >= 0 ? "+" : ""}{fmt(row.variance)}
+                                <AnimatedNumber value={row.variance} duration={400} formatter={(n) => `${n >= 0 ? "+" : ""}${Math.round(n).toLocaleString()} ₼`} />
                               </td>
                             </tr>
                           )
@@ -3013,14 +3023,14 @@ function PLTab({ planId }: { planId: string }) {
                             {row.category}
                           </div>
                         </td>
-                        <td className="px-4 py-2 text-right font-mono text-sm">{fmt(row.planned)}</td>
-                        <td className="px-4 py-2 text-right font-mono text-sm text-purple-600 dark:text-purple-400">{fmt(row.forecast)}</td>
-                        <td className="px-4 py-2 text-right font-mono text-sm">{fmt(row.actual)}</td>
+                        <td className="px-4 py-2 text-right font-mono text-sm"><AnimatedNumber value={row.planned} duration={500} /></td>
+                        <td className="px-4 py-2 text-right font-mono text-sm text-purple-600 dark:text-purple-400"><AnimatedNumber value={row.forecast} duration={500} /></td>
+                        <td className="px-4 py-2 text-right font-mono text-sm"><AnimatedNumber value={row.actual} duration={500} /></td>
                         <td className="px-4 py-2 text-center">
                           <ExecBar actual={row.actual} planned={row.planned} isExpense={isExpense} />
                         </td>
                         <td className={`px-4 py-2 text-right font-mono text-sm font-semibold ${row.variance >= 0 ? "text-emerald-700 dark:text-emerald-300" : "text-red-600 dark:text-red-400"}`}>
-                          {row.variance >= 0 ? "+" : ""}{fmt(row.variance)}
+                          <AnimatedNumber value={row.variance} duration={400} formatter={(n) => `${n >= 0 ? "+" : ""}${Math.round(n).toLocaleString()} ₼`} />
                         </td>
                       </tr>
                     )
@@ -3038,14 +3048,14 @@ function PLTab({ planId }: { planId: string }) {
                           {row.category}
                         </div>
                       </td>
-                      <td className="px-4 py-2 text-right font-mono text-sm">{fmt(row.planned)}</td>
-                      <td className="px-4 py-2 text-right font-mono text-sm text-purple-600 dark:text-purple-400">{fmt(row.forecast)}</td>
-                      <td className="px-4 py-2 text-right font-mono text-sm">{fmt(row.actual)}</td>
+                      <td className="px-4 py-2 text-right font-mono text-sm"><AnimatedNumber value={row.planned} duration={500} /></td>
+                      <td className="px-4 py-2 text-right font-mono text-sm text-purple-600 dark:text-purple-400"><AnimatedNumber value={row.forecast} duration={500} /></td>
+                      <td className="px-4 py-2 text-right font-mono text-sm"><AnimatedNumber value={row.actual} duration={500} /></td>
                       <td className="px-4 py-2 text-center">
                         <ExecBar actual={row.actual} planned={row.planned} isExpense={isExpense} />
                       </td>
                       <td className={`px-4 py-2 text-right font-mono text-sm font-semibold ${row.variance >= 0 ? "text-emerald-700 dark:text-emerald-300" : "text-red-600 dark:text-red-400"}`}>
-                        {row.variance >= 0 ? "+" : ""}{fmt(row.variance)}
+                        <AnimatedNumber value={row.variance} duration={400} formatter={(n) => `${n >= 0 ? "+" : ""}${Math.round(n).toLocaleString()} ₼`} />
                       </td>
                     </tr>
                   )
@@ -3134,11 +3144,11 @@ function PLTab({ planId }: { planId: string }) {
         </Card>
       )}
 
-      {/* P&L Income Statement */}
+      {/* P&L Income Statement — no COGS (allocated costs shown in Profitability module) */}
       {renderSection(t("plRevenue"), revRows, "auto-revenue", <DollarSign className="h-4 w-4" />, "bg-blue-50/60 dark:bg-blue-950/20", false, 0, 0, false, revGrouped)}
-      {renderSection(t("sectionCOGS"), cogsRows, "auto-cogs", <Settings2 className="h-4 w-4" />, "bg-orange-50/60 dark:bg-orange-950/20", false, 0, 0, true, cogsGrouped)}
+      {renderSection("Прямые затраты", directExpRows, "auto-direct", <Settings2 className="h-4 w-4" />, "bg-orange-50/60 dark:bg-orange-950/20", false, 0, 0, true, directGrouped)}
 
-      {/* Gross Profit */}
+      {/* Gross Profit = Revenue - Direct Costs */}
       <div className="border-2 border-emerald-500/50 dark:border-emerald-600/50 rounded-xl overflow-hidden mb-3 bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/40 dark:to-teal-950/30">
         <div className="flex items-center justify-between px-5 py-4">
           <div className="flex items-center gap-3">
@@ -3155,16 +3165,18 @@ function PLTab({ planId }: { planId: string }) {
             </div>
           </div>
           <div className="flex items-center gap-6 font-mono font-bold text-base">
-            <span>{fmt(grossProfitPlanned)}</span>
-            <span className={grossProfitActual >= 0 ? "text-emerald-700 dark:text-emerald-300" : "text-red-600 dark:text-red-400"}>{fmt(grossProfitActual)}</span>
+            <AnimatedNumber value={grossProfitPlanned} duration={600} />
+            <span className={grossProfitActual >= 0 ? "text-emerald-700 dark:text-emerald-300" : "text-red-600 dark:text-red-400"}>
+              <AnimatedNumber value={grossProfitActual} duration={600} />
+            </span>
             <span className={`text-sm ${grossProfitActual - grossProfitPlanned >= 0 ? "text-emerald-600" : "text-red-500"}`}>
-              {grossProfitActual - grossProfitPlanned >= 0 ? "+" : ""}{fmt(grossProfitActual - grossProfitPlanned)}
+              <AnimatedNumber value={grossProfitActual - grossProfitPlanned} duration={400} formatter={(n) => `${n >= 0 ? "+" : ""}${Math.round(n).toLocaleString()} ₼`} />
             </span>
           </div>
         </div>
       </div>
 
-      {renderSection(t("plExpenses"), expRows, "auto-expense", <Banknote className="h-4 w-4" />, "bg-amber-50/60 dark:bg-amber-950/20", false, 0, 0, true, expGrouped)}
+      {renderSection("Накладные расходы", indirectExpRows, "auto-indirect", <Banknote className="h-4 w-4" />, "bg-amber-50/60 dark:bg-amber-950/20", false, 0, 0, true, indirectGrouped)}
 
       {/* EBITDA */}
       <div className="border-2 border-purple-400/50 dark:border-purple-500/50 rounded-xl overflow-hidden mb-3 bg-gradient-to-r from-slate-50 to-purple-50 dark:from-slate-900/40 dark:to-purple-950/30">
@@ -3183,10 +3195,12 @@ function PLTab({ planId }: { planId: string }) {
             </div>
           </div>
           <div className="flex items-center gap-6 font-mono font-bold text-base">
-            <span>{fmt(opProfitPlanned)}</span>
-            <span className={opProfitActual >= 0 ? "text-emerald-700 dark:text-emerald-300" : "text-red-600 dark:text-red-400"}>{fmt(opProfitActual)}</span>
+            <AnimatedNumber value={opProfitPlanned} duration={600} />
+            <span className={opProfitActual >= 0 ? "text-emerald-700 dark:text-emerald-300" : "text-red-600 dark:text-red-400"}>
+              <AnimatedNumber value={opProfitActual} duration={600} />
+            </span>
             <span className={`text-sm ${opProfitActual - opProfitPlanned >= 0 ? "text-emerald-600" : "text-red-500"}`}>
-              {opProfitActual - opProfitPlanned >= 0 ? "+" : ""}{fmt(opProfitActual - opProfitPlanned)}
+              <AnimatedNumber value={opProfitActual - opProfitPlanned} duration={400} formatter={(n) => `${n >= 0 ? "+" : ""}${Math.round(n).toLocaleString()} ₼`} />
             </span>
           </div>
         </div>
@@ -3241,7 +3255,7 @@ function PLTab({ planId }: { planId: string }) {
                             style={{ width: `${Math.max((item.value / maxVal) * 100, 2)}%`, backgroundColor: item.color }}
                           >
                             <span className="text-[10px] font-mono font-bold text-white drop-shadow-sm">
-                              {fmt(item.value)}
+                              <AnimatedNumber value={item.value} duration={500} />
                             </span>
                           </div>
                         </div>
@@ -3253,7 +3267,7 @@ function PLTab({ planId }: { planId: string }) {
                     <div className="text-center">
                       <p className="text-[10px] text-muted-foreground uppercase tracking-wide">{t("colVariance")}</p>
                       <p className={`font-bold font-mono text-sm ${row.variance >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-500"}`}>
-                        {row.variance >= 0 ? "+" : ""}{fmt(row.variance)}
+                        <AnimatedNumber value={row.variance} duration={400} formatter={(n) => `${n >= 0 ? "+" : ""}${Math.round(n).toLocaleString()} ₼`} />
                       </p>
                     </div>
                     <div className="text-center">
@@ -3410,8 +3424,8 @@ function ForecastTab({ planId }: { planId: string }) {
   const totalRevenue = getSectionTotal(revenueLines)
   const totalCogs = getSectionTotal(cogsLines)
   const totalExpense = getSectionTotal(expenseLines)
-  const totalGrossProfit = totalRevenue - totalCogs
-  const totalMargin = totalRevenue - totalCogs - totalExpense
+  const totalGrossProfit = totalRevenue - totalExpense  // Expenses already include all costs
+  const totalMargin = totalRevenue - totalExpense        // No COGS deduction (same costs as OpEx)
 
   // Inline edit handlers
   const startEdit = (category: string, lineType: string, month: number) => {
@@ -3491,7 +3505,7 @@ function ForecastTab({ planId }: { planId: string }) {
             </td>
           )
         })}
-        <td className="px-3 py-2 text-right font-mono text-sm font-bold min-w-[100px]">{fmt(rowTotal)}</td>
+        <td className="px-3 py-2 text-right font-mono text-sm font-bold min-w-[100px]"><AnimatedNumber value={rowTotal} duration={400} /></td>
       </tr>
     )
   }
@@ -3529,9 +3543,9 @@ function ForecastTab({ planId }: { planId: string }) {
             </div>
           </td>
           {months.map(m => (
-            <td key={m} className="px-2 py-2 text-right font-mono text-sm font-semibold">{fmt(getGroupColTotal(children, m))}</td>
+            <td key={m} className="px-2 py-2 text-right font-mono text-sm font-semibold"><AnimatedNumber value={getGroupColTotal(children, m)} duration={400} /></td>
           ))}
-          <td className="px-3 py-2 text-right font-mono text-sm font-bold">{fmt(getGroupRowTotal(children))}</td>
+          <td className="px-3 py-2 text-right font-mono text-sm font-bold"><AnimatedNumber value={getGroupRowTotal(children)} duration={500} /></td>
         </tr>
         {isOpen && children.map(child => renderRow(child))}
       </React.Fragment>
@@ -3582,9 +3596,9 @@ function ForecastTab({ planId }: { planId: string }) {
       <tr className="border-t-2 border-border bg-muted/30">
         <td className="px-3 py-1.5 font-bold text-xs sticky left-0 bg-muted/30 z-10" title={t("hintSectionTotal")}>{t("totalLabel")} {title.toLowerCase()}</td>
         {months.map(m => (
-          <td key={m} className="px-2 py-1.5 text-right font-mono text-xs font-bold">{fmt(getColTotal(lines, m))}</td>
+          <td key={m} className="px-2 py-1.5 text-right font-mono text-xs font-bold"><AnimatedNumber value={getColTotal(lines, m)} duration={400} /></td>
         ))}
-        <td className="px-3 py-1.5 text-right font-mono text-xs font-bold">{fmt(getSectionTotal(lines))}</td>
+        <td className="px-3 py-1.5 text-right font-mono text-xs font-bold"><AnimatedNumber value={getSectionTotal(lines)} duration={500} /></td>
       </tr>
     </>
   )
@@ -3612,14 +3626,15 @@ function ForecastTab({ planId }: { planId: string }) {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <ColorStatCard label={t("forecastRevenueTotal") || `${t("sectionRevenues")} (${t("colForecast").toLowerCase()})`} value={fmt(totalRevenue)} icon={<TrendingUp className="h-5 w-5" />} color="green" />
-        <ColorStatCard label={t("sectionCOGS")} value={fmt(totalCogs)} icon={<DollarSign className="h-5 w-5" />} color="amber" />
-        <ColorStatCard label={t("forecastExpenseTotal") || `${t("sectionExpenses")} (${t("colForecast").toLowerCase()})`} value={fmt(totalExpense)} icon={<BarChart2 className="h-5 w-5" />} color="red" />
+        <ColorStatCard label={t("forecastRevenueTotal") || `${t("sectionRevenues")} (${t("colForecast").toLowerCase()})`} value={fmt(totalRevenue)} icon={<TrendingUp className="h-5 w-5" />} color="green" animate />
+        <ColorStatCard label={t("sectionCOGS")} value={fmt(totalCogs)} icon={<DollarSign className="h-5 w-5" />} color="amber" animate />
+        <ColorStatCard label={t("forecastExpenseTotal") || `${t("sectionExpenses")} (${t("colForecast").toLowerCase()})`} value={fmt(totalExpense)} icon={<BarChart2 className="h-5 w-5" />} color="red" animate />
         <ColorStatCard
           label={t("operatingProfit")}
           value={fmt(totalMargin)}
           icon={totalMargin >= 0 ? <TrendingUp className="h-5 w-5" /> : <TrendingDown className="h-5 w-5" />}
           color={totalMargin >= 0 ? "teal" : "red"}
+          animate
         />
       </div>
 
@@ -3646,10 +3661,10 @@ function ForecastTab({ planId }: { planId: string }) {
                   <td className="px-3 py-2 font-bold text-sm sticky left-0 bg-emerald-50 dark:bg-emerald-900/10 z-10">{t("grossProfit")}</td>
                   {months.map(m => (
                     <td key={m} className="px-2 py-2 text-right font-mono text-sm font-bold">
-                      {fmt(getColTotal(revenueLines, m) - getColTotal(cogsLines, m))}
+                      <AnimatedNumber value={getColTotal(revenueLines, m) - getColTotal(expenseLines, m)} duration={500} />
                     </td>
                   ))}
-                  <td className="px-3 py-2 text-right font-mono text-sm font-bold">{fmt(totalGrossProfit)}</td>
+                  <td className="px-3 py-2 text-right font-mono text-sm font-bold"><AnimatedNumber value={totalGrossProfit} duration={600} /></td>
                 </tr>
 
                 {renderSection(t("sectionExpenses"), expenseLines, addingExpense, setAddingExpense, "expense")}
@@ -3659,10 +3674,10 @@ function ForecastTab({ planId }: { planId: string }) {
                   <td className="px-3 py-2 font-bold text-sm sticky left-0 bg-purple-50 dark:bg-purple-900/10 z-10">{t("operatingProfit")}</td>
                   {months.map(m => (
                     <td key={m} className="px-2 py-2 text-right font-mono text-sm font-bold">
-                      {fmt(getColTotal(revenueLines, m) - getColTotal(cogsLines, m) - getColTotal(expenseLines, m))}
+                      <AnimatedNumber value={getColTotal(revenueLines, m) - getColTotal(expenseLines, m)} duration={500} />
                     </td>
                   ))}
-                  <td className="px-3 py-2 text-right font-mono text-sm font-bold">{fmt(totalMargin)}</td>
+                  <td className="px-3 py-2 text-right font-mono text-sm font-bold"><AnimatedNumber value={totalMargin} duration={600} /></td>
                 </tr>
 
                 {/* Empty state */}

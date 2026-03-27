@@ -2183,7 +2183,13 @@
     "webhookMethod": "HTTP метод",
     "selectActionType": "Выберите тип действия",
     "actionConfig": "Настройки действия",
-    "whenPrefix": "Когда"
+    "whenPrefix": "Когда",
+    "tooltipActions": "Управление действиями",
+    "tooltipEditTrigger": "Редактировать триггер",
+    "tooltipToggleActive": "Включить/выключить",
+    "tooltipDelete": "Удалить процесс",
+    "actionAutoAssign": "Автоназначение",
+    "withCondition": "условие"
   },
   "billing": {
     "title": "Тарифы и подписка",

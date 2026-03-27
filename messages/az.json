@@ -2181,7 +2181,13 @@
     "webhookMethod": "HTTP metodu",
     "selectActionType": "Əməliyyat növünü seçin",
     "actionConfig": "Əməliyyat parametrləri",
-    "whenPrefix": "Nə vaxt"
+    "whenPrefix": "Nə vaxt",
+    "tooltipActions": "Hərəkətləri idarə et",
+    "tooltipEditTrigger": "Triggeri redaktə et",
+    "tooltipToggleActive": "Aktiv/deaktiv et",
+    "tooltipDelete": "Prosesi sil",
+    "actionAutoAssign": "Avtotəyinat",
+    "withCondition": "şərt"
   },
   "billing": {
     "title": "Tariflər və abunəlik",

@@ -2183,7 +2183,13 @@
     "webhookMethod": "HTTP method",
     "selectActionType": "Select action type",
     "actionConfig": "Action settings",
-    "whenPrefix": "When"
+    "whenPrefix": "When",
+    "tooltipActions": "Manage actions",
+    "tooltipEditTrigger": "Edit trigger",
+    "tooltipToggleActive": "Toggle active",
+    "tooltipDelete": "Delete workflow",
+    "actionAutoAssign": "Auto assign",
+    "withCondition": "condition"
   },
   "billing": {
     "title": "Plans & Subscription",
