@@ -556,24 +556,25 @@ export default function InvoiceDetailPage() {
     }
   }
 
+  const chainStepDefaults: Record<string, any> = {
+    wait: { days: 1, unit: "minutes" },
+    send_email: {
+      subject: "Ödəniş xatırlatması: Hesab-faktura {{invoice_number}}",
+      body: "Hörmətli {{recipient_name}},\n\nHesab-faktura {{invoice_number}} məbləği {{amount}} ödənişini xatırladırıq.\n\nÖdəniş tarixi: {{due_date}}\nQalıq məbləğ: {{balance_due}}\n\nXahiş edirik ən qısa zamanda ödəniş edin.\n\nHörmətlə",
+    },
+    sms: {
+      message: "Xatırlatma: Hesab-faktura {{invoice_number}} məbləği {{amount}} ödənilməyib. Qalıq: {{balance_due}}. Bizimlə əlaqə saxlayın.",
+    },
+    send_whatsapp: {
+      message: "Salam, {{recipient_name}}! Hesab-faktura {{invoice_number}} ({{amount}}) hələ ödənilməyib. Qalıq: {{balance_due}}. Son tarix: {{due_date}}.",
+    },
+    send_telegram: {
+      message: "Xatırlatma: Hesab-faktura {{invoice_number}} məbləği {{amount}} ödənilməyib. Qalıq: {{balance_due}}. Bizimlə əlaqə saxlayın.",
+    },
+  }
+
   function addChainStep() {
-    const defaults: Record<string, any> = {
-      wait: { days: 1, unit: "minutes" },
-      send_email: {
-        subject: "Ödəniş xatırlatması: Hesab-faktura {{invoice_number}}",
-        body: "Hörmətli {{recipient_name}},\n\nHesab-faktura {{invoice_number}} məbləği {{amount}} ödənişini xatırladırıq.\n\nÖdəniş tarixi: {{due_date}}\nQalıq məbləğ: {{balance_due}}\n\nXahiş edirik ən qısa zamanda ödəniş edin.\n\nHörmətlə",
-      },
-      sms: {
-        message: "Xatırlatma: Hesab-faktura {{invoice_number}} məbləği {{amount}} ödənilməyib. Qalıq: {{balance_due}}. Bizimlə əlaqə saxlayın.",
-      },
-      send_whatsapp: {
-        message: "Salam, {{recipient_name}}! Hesab-faktura {{invoice_number}} ({{amount}}) hələ ödənilməyib. Qalıq: {{balance_due}}. Son tarix: {{due_date}}.",
-      },
-      send_telegram: {
-        message: "Xatırlatma: Hesab-faktura {{invoice_number}} məbləği {{amount}} ödənilməyib. Qalıq: {{balance_due}}. Bizimlə əlaqə saxlayın.",
-      },
-    }
-    const defaultConfig = defaults[newStepType] || {}
+    const defaultConfig = chainStepDefaults[newStepType] || {}
     const mergedConfig = { ...defaultConfig, ...newStepConfig }
     setChainSteps(prev => [...prev, { stepType: newStepType, stepOrder: prev.length + 1, config: mergedConfig, statsEntered: 0, statsCompleted: 0 }])
     setAddStepOpen(false)
@@ -1505,7 +1506,7 @@ export default function InvoiceDetailPage() {
                           <Plus className="h-4 w-4" />
                         </div>
                         <button
-                          onClick={() => { setNewStepType("send_email"); setNewStepConfig({}); setAddStepOpen(true) }}
+                          onClick={() => { setNewStepType("send_email"); setNewStepConfig(chainStepDefaults["send_email"] || {}); setAddStepOpen(true) }}
                           className="flex-1 border-2 border-dashed rounded-lg px-4 py-3 text-sm text-muted-foreground hover:border-primary hover:text-primary transition-colors text-center"
                         >
                           {t("chainAddStep")}
@@ -1535,7 +1536,7 @@ export default function InvoiceDetailPage() {
                 return (
                   <button
                     key={st.value}
-                    onClick={() => { setNewStepType(st.value); setNewStepConfig({}) }}
+                    onClick={() => { setNewStepType(st.value); setNewStepConfig(chainStepDefaults[st.value] || {}) }}
                     className={`flex flex-col items-center gap-1.5 p-3 rounded-lg border-2 text-xs font-medium transition-all ${
                       selected
                         ? "border-primary bg-primary/5 text-primary"
