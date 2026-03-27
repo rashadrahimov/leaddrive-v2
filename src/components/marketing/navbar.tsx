@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils"
 
 const navLinks = [
   { href: "/features", label: "Xüsusiyyətlər" },
-  { href: "/pricing", label: "Qiymətlər" },
+  { href: "/plans", label: "Qiymətlər" },
   { href: "/demo", label: "Demo" },
   { href: "/about", label: "Haqqımızda" },
   { href: "/contact", label: "Əlaqə" },

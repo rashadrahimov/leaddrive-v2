@@ -87,7 +87,7 @@ export function PricingTeaser() {
 
       <div className="text-center mt-8">
         <Link
-          href="/pricing"
+          href="/plans"
           className="inline-flex items-center text-sm font-medium text-orange-500 hover:underline"
         >
           Bütün xüsusiyyətləri müqayisə et <ArrowRight className="ml-1 h-3.5 w-3.5" />

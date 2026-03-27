@@ -219,7 +219,7 @@ export default function DemoPage() {
               </ShimmerButton>
             </Link>
             <Link
-              href="/pricing"
+              href="/plans"
               className="inline-flex items-center gap-2 px-6 py-3.5 text-base font-semibold text-white border-2 border-white/30 rounded-[10px] hover:bg-white/10 transition-all"
             >
               Qiymətlərə bax

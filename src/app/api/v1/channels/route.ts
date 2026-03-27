@@ -25,6 +25,20 @@ export async function GET(req: NextRequest) {
     const channels = await prisma.channelConfig.findMany({
       where: { organizationId: orgId },
       orderBy: { createdAt: "desc" },
+      select: {
+        id: true,
+        channelType: true,
+        configName: true,
+        phoneNumber: true,
+        pageId: true,
+        appId: true,
+        webhookUrl: true,
+        isActive: true,
+        settings: true,
+        createdAt: true,
+        updatedAt: true,
+        // Exclude sensitive fields: botToken, apiKey, appSecret
+      },
     })
 
     return NextResponse.json({ success: true, data: channels })

@@ -4,7 +4,7 @@ import { Logo } from "@/components/logo"
 const footerLinks = {
   Məhsul: [
     { label: "Xüsusiyyətlər", href: "/features" },
-    { label: "Qiymətlər", href: "/pricing" },
+    { label: "Qiymətlər", href: "/plans" },
     { label: "Demo", href: "/demo" },
     { label: "İnteqrasiyalar", href: "/features/inbox" },
   ],

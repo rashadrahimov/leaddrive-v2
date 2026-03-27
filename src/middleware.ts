@@ -2,11 +2,27 @@ import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 import { auth } from "@/lib/auth"
 import { canAccessModule } from "@/lib/plan-config"
+import { checkRateLimit, RATE_LIMIT_CONFIG } from "@/lib/rate-limit"
 
-const publicPaths = ["/login", "/register", "/forgot-password", "/api/auth", "/portal", "/home", "/pricing", "/features", "/demo", "/about", "/contact", "/blog", "/legal", "/landing", "/marketing"]
+const publicPaths = ["/login", "/register", "/forgot-password", "/api/auth", "/api/v1/auth/register", "/portal", "/home", "/pricing", "/plans", "/features", "/demo", "/about", "/contact", "/blog", "/legal", "/landing", "/marketing"]
+
+// Paths that should be rate-limited more aggressively
+const RATE_LIMITED_PATHS = ["/api/auth", "/login", "/register", "/forgot-password"]
 
 export default auth((req) => {
   const { pathname } = req.nextUrl
+
+  // Rate limit auth-related endpoints
+  if (RATE_LIMITED_PATHS.some((p) => pathname.startsWith(p)) && req.method === "POST") {
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown"
+    const key = `auth:${ip}`
+    if (!checkRateLimit(key, RATE_LIMIT_CONFIG.public)) {
+      return NextResponse.json(
+        { error: "Too many requests. Please try again later." },
+        { status: 429 }
+      )
+    }
+  }
 
   // Allow public paths
   if (publicPaths.some((p) => pathname.startsWith(p))) {

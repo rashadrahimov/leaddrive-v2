@@ -1,0 +1,4 @@
+Total messages: 2 (Errors: 0, Warnings: 0)
+
+[VERBOSE] [DOM] Input elements should have autocomplete attributes (suggested: "current-password"): (More info: https://goo.gl/9p2vKq) %o @ https://v2.leaddrivecrm.org/login:0
+[VERBOSE] [DOM] Input elements should have autocomplete attributes (suggested: "current-password"): (More info: https://goo.gl/9p2vKq) %o @ https://v2.leaddrivecrm.org/login:0

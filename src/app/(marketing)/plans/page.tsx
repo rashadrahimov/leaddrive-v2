@@ -1,12 +1,12 @@
 "use client"
 
+import { Fragment, useState } from "react"
 import { motion } from "framer-motion"
 import Link from "next/link"
 import { plans, faqs } from "@/lib/marketing-data"
 import { Check, Minus, ArrowRight, ChevronDown } from "lucide-react"
 import { ShimmerButton } from "@/components/ui/shimmer-button"
 import { cn } from "@/lib/utils"
-import { useState } from "react"
 
 /* ─── full feature comparison matrix ─── */
 type FeatureRow = { label: string; starter: boolean; business: boolean; professional: boolean; enterprise: boolean }
@@ -199,8 +199,8 @@ export default function PricingPage() {
               </thead>
               <tbody>
                 {comparisonSections.map((section) => (
-                  <>
-                    <tr key={section.title} className="bg-gray-50/80">
+                  <Fragment key={section.title}>
+                    <tr className="bg-gray-50/80">
                       <td colSpan={5} className="py-3 px-6 text-sm font-bold text-slate-800">
                         {section.title}
                       </td>
@@ -219,7 +219,7 @@ export default function PricingPage() {
                         ))}
                       </tr>
                     ))}
-                  </>
+                  </Fragment>
                 ))}
               </tbody>
             </table>

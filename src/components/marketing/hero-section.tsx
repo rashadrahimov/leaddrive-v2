@@ -109,7 +109,7 @@ export function HeroSection() {
               Demo izlə
             </Link>
             <Link
-              href="/pricing"
+              href="/plans"
               className="text-base font-medium text-gray-500 hover:text-slate-800 transition-colors underline-offset-4 hover:underline"
             >
               Qiymətlərə bax
