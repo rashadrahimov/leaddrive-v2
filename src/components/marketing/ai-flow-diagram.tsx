@@ -5,10 +5,10 @@ import { SectionWrapper } from "./section-wrapper"
 import { MessageSquare, Bot, LayoutDashboard, Lightbulb, ArrowRight } from "lucide-react"
 
 const flowSteps = [
-  { icon: MessageSquare, label: "Customer", sublabel: "7 channels", color: "#f59e0b" },
-  { icon: Bot, label: "AI Agent", sublabel: "Claude-powered", color: "#7c3aed" },
-  { icon: LayoutDashboard, label: "CRM", sublabel: "Auto-enrich", color: "#F97316" },
-  { icon: Lightbulb, label: "Insights", sublabel: "Actionable", color: "#ef4444" },
+  { icon: MessageSquare, label: "Müştəri", sublabel: "7 kanal", color: "#f59e0b" },
+  { icon: Bot, label: "Süni Zeka", sublabel: "Claude ilə", color: "#7c3aed" },
+  { icon: LayoutDashboard, label: "CRM", sublabel: "Avto-zənginləşdirmə", color: "#F97316" },
+  { icon: Lightbulb, label: "Təhlillər", sublabel: "Fəaliyyətə keçin", color: "#ef4444" },
 ]
 
 export function AiFlowDiagram() {
@@ -23,19 +23,19 @@ export function AiFlowDiagram() {
           transition={{ duration: 0.5 }}
         >
           <h2 className="text-3xl lg:text-4xl font-bold text-white">
-            AI that works <span className="text-orange-400">for you</span>,
-            <br />not the other way around
+            <span className="text-orange-400">Sizin üçün</span> işləyən süni intellekt,
+            <br />əksinə deyil
           </h2>
           <p className="mt-6 text-slate-300 text-lg leading-relaxed">
-            Native Claude integration powers your customer service, lead scoring,
-            and business insights. Not a bolt-on. Not an add-on. It's core.
+            Daxili Claude inteqrasiyası müştəri xidmətinizi, lid skorinqinizi
+            və biznes təhlillərinizi gücləndirir. Əlavə deyil. Əsasdır.
           </p>
           <ul className="mt-6 space-y-3">
             {[
-              "AI agents handle customer queries across all 7 channels",
-              "Automatic lead scoring and qualification",
-              "Profitability insights generated from your cost model",
-              "Knowledge base integration for accurate answers",
+              "Süni zeka agentləri 7 kanalda müştəri sorğularını idarə edir",
+              "Avtomatik lid skorinqi və kvalifikasiyası",
+              "Xərc modelinizdən gəlirlilik təhlilləri yaradılır",
+              "Dəqiq cavablar üçün bilik bazası inteqrasiyası",
             ].map((item, i) => (
               <li key={i} className="flex items-start gap-3">
                 <div className="w-5 h-5 rounded-full bg-orange-500 flex items-center justify-center flex-shrink-0 mt-0.5">

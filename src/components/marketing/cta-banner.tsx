@@ -16,7 +16,7 @@ export function CtaBanner() {
           transition={{ duration: 0.5 }}
           className="text-3xl lg:text-5xl font-bold text-white"
         >
-          Ready to drive your leads?
+          Lidlərinizi idarə etməyə hazırsınız?
         </motion.h2>
         <motion.p
           initial={{ opacity: 0, y: 24 }}
@@ -25,8 +25,8 @@ export function CtaBanner() {
           transition={{ duration: 0.5, delay: 0.1 }}
           className="mt-4 text-lg text-white/80 max-w-xl mx-auto"
         >
-          Start your free trial today. No credit card required.
-          See your real margins in minutes.
+          Pulsuz sınaq dövrünüzü bu gün başladın. Kredit kartı tələb olunmur.
+          Real marjalarınızı dəqiqələr ərzində görün.
         </motion.p>
         <motion.div
           initial={{ opacity: 0, y: 24 }}
@@ -42,7 +42,7 @@ export function CtaBanner() {
               borderRadius="10px"
               className="text-base font-semibold px-8 py-3.5 border-white/30"
             >
-              Start Free Trial
+              Pulsuz sınaq başlat
               <ArrowRight className="ml-2 h-4 w-4" />
             </ShimmerButton>
           </Link>
@@ -50,7 +50,7 @@ export function CtaBanner() {
             href="/contact"
             className="inline-flex items-center gap-2 px-6 py-3.5 text-base font-semibold text-white border-2 border-white/30 rounded-[10px] hover:bg-white/10 transition-all"
           >
-            Talk to Sales
+            Satışla danışın
           </Link>
         </motion.div>
       </div>

@@ -9,11 +9,11 @@ import { Menu, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const navLinks = [
-  { href: "/features", label: "Features" },
-  { href: "/pricing", label: "Pricing" },
+  { href: "/features", label: "Xüsusiyyətlər" },
+  { href: "/pricing", label: "Qiymətlər" },
   { href: "/demo", label: "Demo" },
-  { href: "/about", label: "About" },
-  { href: "/contact", label: "Contact" },
+  { href: "/about", label: "Haqqımızda" },
+  { href: "/contact", label: "Əlaqə" },
 ]
 
 export function MarketingNavbar() {
@@ -62,7 +62,7 @@ export function MarketingNavbar() {
               href="/login"
               className="text-sm font-medium text-gray-600 hover:text-orange-500 transition-colors px-3 py-2"
             >
-              Sign In
+              Daxil ol
             </Link>
             <Link href="/register">
               <ShimmerButton
@@ -70,7 +70,7 @@ export function MarketingNavbar() {
                 borderRadius="8px"
                 className="text-sm font-semibold px-5 py-2.5"
               >
-                Start Free
+                Pulsuz başla
               </ShimmerButton>
             </Link>
           </div>
@@ -102,7 +102,7 @@ export function MarketingNavbar() {
                 href="/login"
                 className="text-center text-sm font-medium text-gray-600 hover:text-orange-500 py-2.5 border border-gray-200 rounded-lg"
               >
-                Sign In
+                Daxil ol
               </Link>
               <Link href="/register">
                 <ShimmerButton
@@ -110,7 +110,7 @@ export function MarketingNavbar() {
                   borderRadius="8px"
                   className="w-full text-sm font-semibold px-5 py-2.5"
                 >
-                  Start Free
+                  Pulsuz başla
                 </ShimmerButton>
               </Link>
             </div>

@@ -2,27 +2,27 @@ import Link from "next/link"
 import { Logo } from "@/components/logo"
 
 const footerLinks = {
-  Product: [
-    { label: "Features", href: "/features" },
-    { label: "Pricing", href: "/pricing" },
+  Məhsul: [
+    { label: "Xüsusiyyətlər", href: "/features" },
+    { label: "Qiymətlər", href: "/pricing" },
     { label: "Demo", href: "/demo" },
-    { label: "Integrations", href: "/features/inbox" },
+    { label: "İnteqrasiyalar", href: "/features/inbox" },
   ],
-  Solutions: [
-    { label: "Sales CRM", href: "/features/crm" },
-    { label: "Marketing Automation", href: "/features/marketing" },
-    { label: "Analytics & P&L", href: "/features/analytics" },
-    { label: "Support & Ticketing", href: "/features/support" },
-    { label: "AI Platform", href: "/features/ai" },
+  Həllər: [
+    { label: "Satış CRM", href: "/features/crm" },
+    { label: "Marketinq Avtomatlaşdırma", href: "/features/marketing" },
+    { label: "Analitika və P&L", href: "/features/analytics" },
+    { label: "Dəstək və Tiketlər", href: "/features/support" },
+    { label: "Süni Zeka Platforması", href: "/features/ai" },
   ],
-  Company: [
-    { label: "About", href: "/about" },
-    { label: "Contact", href: "/contact" },
-    { label: "Blog", href: "/blog" },
+  Şirkət: [
+    { label: "Haqqımızda", href: "/about" },
+    { label: "Əlaqə", href: "/contact" },
+    { label: "Bloq", href: "/blog" },
   ],
-  Legal: [
-    { label: "Privacy Policy", href: "/legal/privacy" },
-    { label: "Terms of Service", href: "/legal/terms" },
+  Hüquqi: [
+    { label: "Məxfilik Siyasəti", href: "/legal/privacy" },
+    { label: "İstifadə Şərtləri", href: "/legal/terms" },
   ],
 }
 
@@ -65,7 +65,7 @@ export function MarketingFooter() {
           <div className="col-span-2 md:col-span-1">
             <Logo size="md" sidebar />
             <p className="mt-4 text-sm text-slate-300 leading-relaxed">
-              AI-native CRM for companies that care about their margins.
+              Marjalarına əhəmiyyət verən şirkətlər üçün süni intellektli CRM.
             </p>
             <div className="flex items-center gap-3 mt-6">
               {socialLinks.map((s) => (
@@ -106,10 +106,10 @@ export function MarketingFooter() {
         {/* Bottom bar */}
         <div className="mt-12 pt-8 border-t border-white/10 flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-sm text-slate-400">
-            &copy; {new Date().getFullYear()} Güvən Technology LLC. All rights reserved.
+            &copy; {new Date().getFullYear()} Güvən Technology LLC. Bütün hüquqlar qorunur.
           </p>
           <p className="text-sm text-slate-400">
-            Baku, Azerbaijan
+            Bakı, Azərbaycan
           </p>
         </div>
       </div>

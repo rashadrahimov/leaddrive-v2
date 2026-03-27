@@ -17,17 +17,17 @@ export function ProblemSolution() {
     <SectionWrapper id="problem-solution" variant="white">
       <motion.div {...fadeInUp} className="text-center mb-16">
         <h2 className="text-3xl lg:text-4xl font-bold text-slate-800">
-          Stop guessing. Start <span className="text-orange-500">growing.</span>
+          Təxmin etməyi dayandırın. <span className="text-orange-500">Böyüməyə başlayın.</span>
         </h2>
         <p className="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">
-          Most CRMs track activities. LeadDrive tracks profitability.
+          Əksər CRM-lər fəaliyyəti izləyir. LeadDrive gəlirliliyi izləyir.
         </p>
       </motion.div>
 
       <div className="grid md:grid-cols-2 gap-12 lg:gap-16 items-start">
         {/* Pain points */}
         <div className="space-y-6">
-          <h3 className="text-sm font-semibold uppercase tracking-wider text-red-500 mb-4">The problem</h3>
+          <h3 className="text-sm font-semibold uppercase tracking-wider text-red-500 mb-4">Problem</h3>
           {painPoints.map((item, i) => {
             const Icon = item.icon
             return (
@@ -53,7 +53,7 @@ export function ProblemSolution() {
 
         {/* Solutions */}
         <div className="space-y-6">
-          <h3 className="text-sm font-semibold uppercase tracking-wider text-orange-500 mb-4">The LeadDrive way</h3>
+          <h3 className="text-sm font-semibold uppercase tracking-wider text-orange-500 mb-4">LeadDrive həlli</h3>
           {solutions.map((item, i) => {
             const Icon = item.icon
             return (

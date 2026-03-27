@@ -6,18 +6,18 @@ import { Monitor, Smartphone, Globe } from "lucide-react"
 
 const showcaseItems = [
   {
-    title: "Powerful Dashboard",
-    description: "Real-time KPIs, revenue charts, pipeline funnel, and AI-powered risk alerts — all at a glance.",
+    title: "Güclü İdarə Paneli",
+    description: "Real vaxt KPI-lər, gəlir qrafikləri, pipeline və süni intellekt risk xəbərdarlıqları — hamısı bir baxışda.",
     icon: Monitor,
   },
   {
-    title: "Works Everywhere",
-    description: "Fully responsive design. Use LeadDrive on desktop, tablet, or mobile — same powerful experience.",
+    title: "Hər Yerdə İşləyir",
+    description: "Tam responsiv dizayn. LeadDrive-ı masaüstü, planşet və ya mobildə istifadə edin — eyni güclü təcrübə.",
     icon: Smartphone,
   },
   {
-    title: "Multi-Language",
-    description: "Switch between English, Russian, and Azerbaijani instantly. Every label, every tooltip, every report.",
+    title: "Çoxdilli Dəstək",
+    description: "İngilis, Rus və Azərbaycan dilləri arasında dərhal keçid edin. Hər etiket, hər ipucu, hər hesabat.",
     icon: Globe,
   },
 ]

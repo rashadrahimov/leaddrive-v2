@@ -34,8 +34,8 @@ export function TestimonialCarousel() {
         className="text-center mb-12"
       >
         <h2 className="text-3xl lg:text-4xl font-bold text-slate-800">
-          Loved by teams that{" "}
-          <span className="text-orange-500">care about margins</span>
+          Marjalarına{" "}
+          <span className="text-orange-500">əhəmiyyət verən</span> komandalar seçir
         </h2>
       </motion.div>
 

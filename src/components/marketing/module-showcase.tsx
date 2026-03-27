@@ -21,11 +21,11 @@ export function ModuleShowcase() {
         className="text-center mb-12"
       >
         <h2 className="text-3xl lg:text-4xl font-bold text-slate-800">
-          Everything you need,{" "}
-          <span className="text-orange-500">nothing you don't</span>
+          Sizə lazım olan hər şey,{" "}
+          <span className="text-orange-500">artıq heç nə</span>
         </h2>
         <p className="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">
-          7 module groups. 63+ pages. One platform.
+          7 modul qrupu. 63+ səhifə. Bir platforma.
         </p>
       </motion.div>
 

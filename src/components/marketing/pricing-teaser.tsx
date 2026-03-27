@@ -18,11 +18,11 @@ export function PricingTeaser() {
         className="text-center mb-12"
       >
         <h2 className="text-3xl lg:text-4xl font-bold text-slate-800">
-          Plans that scale{" "}
-          <span className="text-orange-500">with you</span>
+          Sizinlə birlikdə{" "}
+          <span className="text-orange-500">böyüyən planlar</span>
         </h2>
         <p className="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">
-          Start free, upgrade when you're ready. No hidden fees.
+          Pulsuz başlayın, hazır olanda yüksəldin. Gizli ödənişlər yoxdur.
         </p>
       </motion.div>
 
@@ -44,7 +44,7 @@ export function PricingTeaser() {
             {plan.popular && (
               <div className="absolute -top-3 left-1/2 -translate-x-1/2">
                 <span className="bg-orange-500 text-white text-xs font-semibold px-3 py-1 rounded-full">
-                  Most Popular
+                  Ən Populyar
                 </span>
               </div>
             )}
@@ -53,7 +53,7 @@ export function PricingTeaser() {
             <p className="text-sm text-gray-500 mt-1 mb-4">{plan.tagline}</p>
 
             <div className="mb-6">
-              <span className="text-2xl font-bold text-slate-800">Contact Sales</span>
+              <span className="text-2xl font-bold text-slate-800">Satışla əlaqə</span>
             </div>
 
             <ul className="space-y-2.5 flex-1">
@@ -65,7 +65,7 @@ export function PricingTeaser() {
               ))}
               {plan.features.length > 6 && (
                 <li className="text-sm text-gray-400">
-                  + {plan.features.length - 6} more features
+                  + {plan.features.length - 6} daha çox xüsusiyyət
                 </li>
               )}
             </ul>
@@ -79,7 +79,7 @@ export function PricingTeaser() {
                   : "bg-orange-500/5 text-slate-800 hover:bg-orange-500/10"
               )}
             >
-              Get Started
+              Başla
             </Link>
           </motion.div>
         ))}
@@ -90,7 +90,7 @@ export function PricingTeaser() {
           href="/pricing"
           className="inline-flex items-center text-sm font-medium text-orange-500 hover:underline"
         >
-          Compare all features <ArrowRight className="ml-1 h-3.5 w-3.5" />
+          Bütün xüsusiyyətləri müqayisə et <ArrowRight className="ml-1 h-3.5 w-3.5" />
         </Link>
       </div>
     </SectionWrapper>

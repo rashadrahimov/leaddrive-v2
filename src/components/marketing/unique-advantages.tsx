@@ -18,11 +18,11 @@ export function UniqueAdvantages() {
         className="text-center mb-12"
       >
         <h2 className="text-3xl lg:text-4xl font-bold text-slate-800">
-          What makes LeadDrive{" "}
-          <span className="text-orange-500">unique</span>
+          LeadDrive-ı{" "}
+          <span className="text-orange-500">fərqli edən</span> nədir?
         </h2>
         <p className="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">
-          Features your current CRM doesn't have — and never will.
+          Mövcud CRM-inizdə olmayan — və heç vaxt olmayacaq xüsusiyyətlər.
         </p>
       </motion.div>
 
@@ -55,7 +55,7 @@ export function UniqueAdvantages() {
                     href={adv.href}
                     className="inline-flex items-center text-sm font-medium text-orange-500 hover:underline"
                   >
-                    Learn more <ArrowRight className="ml-1 h-3.5 w-3.5" />
+                    Ətraflı <ArrowRight className="ml-1 h-3.5 w-3.5" />
                   </Link>
                 </div>
               </MagicCard>

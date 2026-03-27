@@ -1,0 +1,7 @@
+[GET] https://v2.leaddrivecrm.org/api/v1/notifications
+[GET] https://v2.leaddrivecrm.org/api/auth/session
+[GET] https://v2.leaddrivecrm.org/favicon.ico?favicon.0b3bf435.ico
+[GET] https://v2.leaddrivecrm.org/journeys?_rsc=ovqpc
+[GET] https://v2.leaddrivecrm.org/ai-scoring?_rsc=ovqpc
+[GET] https://v2.leaddrivecrm.org/campaign-roi?_rsc=ovqpc
+[GET] https://v2.leaddrivecrm.org/email-log?_rsc=ovqpc

@@ -8,10 +8,10 @@ import { motion } from "framer-motion"
 import { ArrowRight, Play, ChevronDown } from "lucide-react"
 
 const typingPhrases = [
-  "See your real margins",
-  "Close deals with AI",
-  "7 channels, one inbox",
-  "Budget, forecast, profit",
+  "Real marjanızı görün",
+  "Süni intellektlə satış bağlayın",
+  "7 kanal, bir qutu",
+  "Büdcə, proqnoz, mənfəət",
 ]
 
 export function HeroSection() {
@@ -24,11 +24,11 @@ export function HeroSection() {
     let timeout: NodeJS.Timeout
 
     if (!isDeleting && displayed.length < phrase.length) {
-      timeout = setTimeout(() => setDisplayed(phrase.slice(0, displayed.length + 1)), 80)
+      timeout = setTimeout(() => setDisplayed(phrase.slice(0, displayed.length + 1)), 70)
     } else if (!isDeleting && displayed.length === phrase.length) {
-      timeout = setTimeout(() => setIsDeleting(true), 2000)
+      timeout = setTimeout(() => setIsDeleting(true), 1800)
     } else if (isDeleting && displayed.length > 0) {
-      timeout = setTimeout(() => setDisplayed(displayed.slice(0, -1)), 40)
+      timeout = setTimeout(() => setDisplayed(displayed.slice(0, -1)), 35)
     } else if (isDeleting && displayed.length === 0) {
       setIsDeleting(false)
       setPhraseIndex((prev) => (prev + 1) % typingPhrases.length)
@@ -52,7 +52,7 @@ export function HeroSection() {
           >
             <AnimatedGradientText className="mb-8">
               <span className="text-sm font-medium text-gray-700">
-                Trusted by growing companies worldwide
+                500+ şirkət artıq istifadə edir
               </span>
               <ArrowRight className="ml-2 h-3.5 w-3.5 text-gray-500" />
             </AnimatedGradientText>
@@ -65,7 +65,7 @@ export function HeroSection() {
             transition={{ duration: 0.6, delay: 0.1 }}
             className="text-4xl sm:text-5xl lg:text-7xl font-bold tracking-tight text-slate-800 leading-[1.1]"
           >
-            The CRM that shows
+            Sizə göstərən CRM:
             <br />
             <span className="text-orange-500 inline-block min-h-[1.2em]">
               {displayed}
@@ -80,8 +80,8 @@ export function HeroSection() {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="mt-6 text-lg lg:text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed"
           >
-            Sales, marketing, support, and financial analytics in one platform.
-            Know exactly which clients, services, and channels are profitable.
+            Satış, marketinq, dəstək və maliyyə analitikası bir platformada.
+            Hansı müştərilərin, xidmətlərin və kanalların gəlirli olduğunu dəqiq bilin.
           </motion.p>
 
           {/* CTAs */}
@@ -97,7 +97,7 @@ export function HeroSection() {
                 borderRadius="10px"
                 className="text-base font-semibold px-8 py-3.5"
               >
-                Start Free Trial
+                Pulsuz sınaq başlat
                 <ArrowRight className="ml-2 h-4 w-4" />
               </ShimmerButton>
             </Link>
@@ -106,13 +106,13 @@ export function HeroSection() {
               className="inline-flex items-center gap-2 px-6 py-3.5 text-base font-semibold text-slate-800 border-2 border-orange-500/20 rounded-[10px] hover:border-orange-500/40 hover:bg-orange-500/5 transition-all"
             >
               <Play className="h-4 w-4 fill-current" />
-              Watch Demo
+              Demo izlə
             </Link>
             <Link
               href="/pricing"
               className="text-base font-medium text-gray-500 hover:text-slate-800 transition-colors underline-offset-4 hover:underline"
             >
-              See Pricing
+              Qiymətlərə bax
             </Link>
           </motion.div>
         </div>
@@ -143,7 +143,7 @@ export function HeroSection() {
               {/* Dashboard screenshot */}
               <img
                 src="/marketing/crm-dashboard.png"
-                alt="LeadDrive CRM Dashboard"
+                alt="LeadDrive CRM İdarə Paneli"
                 className="w-full"
                 loading="eager"
               />
@@ -160,8 +160,8 @@ export function HeroSection() {
                   <span className="text-green-600 text-sm font-bold">+</span>
                 </div>
                 <div>
-                  <p className="text-xs font-semibold text-gray-900">Revenue</p>
-                  <p className="text-xs text-green-600 font-medium">+23% this month</p>
+                  <p className="text-xs font-semibold text-gray-900">Gəlir</p>
+                  <p className="text-xs text-green-600 font-medium">Bu ay +23%</p>
                 </div>
               </div>
             </motion.div>
@@ -176,8 +176,8 @@ export function HeroSection() {
                   <span className="text-orange-500 text-sm font-bold">AI</span>
                 </div>
                 <div>
-                  <p className="text-xs font-semibold text-gray-900">AI Agent</p>
-                  <p className="text-xs text-orange-500 font-medium">12 tasks automated</p>
+                  <p className="text-xs font-semibold text-gray-900">Süni Zeka</p>
+                  <p className="text-xs text-orange-500 font-medium">12 tapşırıq avtomatlaşdı</p>
                 </div>
               </div>
             </motion.div>
