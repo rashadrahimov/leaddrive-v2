@@ -202,53 +202,50 @@ export default function SalesForecastPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
+      <div className="space-y-1">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
             <Link href="/settings/budget-config" className="text-muted-foreground hover:text-foreground">
               <ArrowLeft className="h-4 w-4" />
             </Link>
-            <h1 className="text-2xl font-bold flex items-center gap-2">
-              <TrendingUp className="h-6 w-6" />
-              Прогноз продаж
-            </h1>
+            <TrendingUp className="h-5 w-5" />
+            <h1 className="text-xl font-bold">Прогноз продаж</h1>
           </div>
-          <p className="text-sm text-muted-foreground ml-6">
-            Ежегодный прогноз доходов по сервисам. Хранится без НДС — при переключении показывается с НДС (18%).
-          </p>
+          <div className="flex items-center gap-2">
+            <label className="flex items-center gap-1.5 text-xs cursor-pointer select-none text-muted-foreground">
+              <input
+                type="checkbox"
+                checked={showVat}
+                onChange={(e) => setShowVat(e.target.checked)}
+                className="h-3.5 w-3.5 rounded border-gray-300"
+              />
+              С НДС (18%)
+            </label>
+            <select
+              className="h-8 rounded-md border border-input bg-background px-2 text-sm"
+              value={year}
+              onChange={(e) => setYear(Number(e.target.value))}
+            >
+              {[2025, 2026, 2027, 2028].map((y) => (
+                <option key={y} value={y}>{y}</option>
+              ))}
+            </select>
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleExport} title="Экспорт в Excel">
+              <Download className="h-4 w-4" />
+            </Button>
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => document.getElementById("forecast-import")?.click()} title="Импорт из Excel">
+              <Upload className="h-4 w-4" />
+            </Button>
+            <input id="forecast-import" type="file" accept=".xlsx,.xls" className="hidden" onChange={handleImport} />
+            <Button onClick={handleSave} disabled={saving} size="sm" className="h-8">
+              {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <Save className="h-3.5 w-3.5 mr-1" />}
+              {saved ? "Сохранено" : "Сохранить"}
+            </Button>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <label className="flex items-center gap-1.5 text-sm cursor-pointer select-none border rounded-md px-3 h-9 hover:bg-muted/50 transition-colors">
-            <input
-              type="checkbox"
-              checked={showVat}
-              onChange={(e) => setShowVat(e.target.checked)}
-              className="h-3.5 w-3.5 rounded border-gray-300"
-            />
-            <span className="text-muted-foreground">С НДС</span>
-          </label>
-          <select
-            className="h-9 rounded-md border border-input bg-background px-3 text-sm"
-            value={year}
-            onChange={(e) => setYear(Number(e.target.value))}
-          >
-            {[2025, 2026, 2027, 2028].map((y) => (
-              <option key={y} value={y}>{y}</option>
-            ))}
-          </select>
-          <div className="h-5 w-px bg-border" />
-          <Button variant="outline" size="icon" className="h-9 w-9" onClick={handleExport} title="Экспорт в Excel">
-            <Download className="h-4 w-4" />
-          </Button>
-          <Button variant="outline" size="icon" className="h-9 w-9" onClick={() => document.getElementById("forecast-import")?.click()} title="Импорт из Excel">
-            <Upload className="h-4 w-4" />
-          </Button>
-          <input id="forecast-import" type="file" accept=".xlsx,.xls" className="hidden" onChange={handleImport} />
-          <Button onClick={handleSave} disabled={saving} size="sm">
-            {saving ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Save className="h-4 w-4 mr-1" />}
-            {saved ? "Сохранено" : "Сохранить"}
-          </Button>
-        </div>
+        <p className="text-xs text-muted-foreground ml-6">
+          Хранится без НДС — при переключении показывается с НДС (18%).
+        </p>
       </div>
 
       {/* Grid */}
