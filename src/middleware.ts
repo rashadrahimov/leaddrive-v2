@@ -7,7 +7,7 @@ import { checkRateLimit, RATE_LIMIT_CONFIG } from "@/lib/rate-limit"
 const publicPaths = ["/login", "/register", "/forgot-password", "/api/auth", "/api/v1/auth/register", "/portal", "/home", "/pricing", "/plans", "/features", "/demo", "/about", "/contact", "/blog", "/legal", "/landing", "/marketing"]
 
 // Paths that should be rate-limited more aggressively
-const RATE_LIMITED_PATHS = ["/api/auth", "/login", "/register", "/forgot-password"]
+const RATE_LIMITED_PATHS = ["/api/auth", "/login", "/register", "/forgot-password", "/api/v1/auth/reset-password", "/api/v1/auth/2fa", "/api/v1/auth/totp", "/api/v1/auth/verify-2fa"]
 
 export default auth((req) => {
   const { pathname } = req.nextUrl
@@ -102,7 +102,7 @@ export default auth((req) => {
   }
 
   // Plan-based feature gating — redirect to billing page if module not available
-  const plan = (session?.user as any)?.plan || "enterprise"
+  const plan = (session?.user as any)?.plan || "starter"
   if (!canAccessModule(plan, pathname)) {
     const billingUrl = new URL("/settings/billing", req.url)
     billingUrl.searchParams.set("upgrade", "true")

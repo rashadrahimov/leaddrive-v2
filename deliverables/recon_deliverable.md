@@ -1,671 +1,379 @@
-# Reconnaissance Deliverable: LeadDrive v2 CRM — Attack Surface Map
-
-**Date:** 2026-03-27
-**Target:** https://v2.leaddrivecrm.org
-**Analyst:** Reconnaissance Analysis Agent
-**Input:** `deliverables/code_analysis_deliverable.md` + Live browser exploration + Parallel source code analysis agents
-
----
+# Reconnaissance Deliverable: LeadDrive v2 CRM
 
 ## 0) HOW TO READ THIS
 
 This reconnaissance report provides a comprehensive map of the application's attack surface, with special emphasis on authorization and privilege escalation opportunities for the Authorization Analysis Specialist.
 
 **Key Sections for Authorization Analysis:**
-- **Section 4 (API Endpoint Inventory):** Contains authorization details for each endpoint — focus on "Required Role" and "Object ID Parameters" columns to identify IDOR candidates. Note that most endpoints use `getOrgId()` only (no role check), meaning **all 5 roles can access them**.
-- **Section 6.4 (Guards Directory):** Catalog of authorization controls — note that `auth:orgscoped` is the dominant guard (not role-based), meaning role-based controls are largely absent from API endpoints.
-- **Section 7 (Role & Privilege Architecture):** Complete role hierarchy and privilege mapping — the RBAC matrix is defined in code but enforced on <1% of endpoints.
+- **Section 4 (API Endpoint Inventory):** Contains authorization details for each endpoint — focus on "Required Role" and "Object ID Parameters" columns to identify IDOR candidates.
+- **Section 6.4 (Guards Directory):** Catalog of authorization controls — understand what each guard means before analyzing vulnerabilities.
+- **Section 7 (Role & Privilege Architecture):** Complete role hierarchy and privilege mapping — use this to understand the privilege lattice and identify escalation targets.
 - **Section 8 (Authorization Vulnerability Candidates):** Pre-prioritized lists of endpoints for horizontal, vertical, and context-based authorization testing.
 
-**How to Use the Network Mapping (Section 6):** The entity/flow mapping shows system boundaries and data sensitivity levels. Pay special attention to the `findUnique()` tenant isolation bypass — any endpoint backed by `findUnique()` skips organization scoping entirely.
+**How to Use the Network Mapping (Section 6):** The entity/flow mapping shows system boundaries and data sensitivity levels. Pay special attention to flows marked with authorization guards and entities handling PII/sensitive data.
 
-**Priority Order for Testing:** Start with Section 8.2's Vertical escalation candidates (settings/users endpoints with no role checks), then Section 8.1's Horizontal candidates (IDOR via `findUnique()` bypass), finally Section 8.3's workflow bypass candidates.
+**Priority Order for Testing:** Start with Section 8's High-priority horizontal candidates, then vertical escalation endpoints for each role level, finally context-based workflow bypasses.
 
 ---
 
 ## 1. Executive Summary
 
-LeadDrive v2 is a **multi-tenant SaaS CRM/ERP platform** serving sales, marketing, support, and financial operations. The application is built on Next.js 16 with a PostgreSQL database, Redis cache, and an auxiliary Python FastAPI compute microservice. The UI is primarily in Russian (indicating a Russian/Azerbaijani market), with over 239 API route handlers covering contact management, deal pipelines, invoicing, budgeting, AI-powered workflows, campaign management, and a customer-facing portal.
+LeadDrive v2 is a multi-tenant CRM platform serving Azerbaijani businesses. Written in **Next.js 16.1.7 (App Router) + React 19** with a **Python FastAPI sidecar** for analytics computation, it offers modules for lead management, invoicing, budgeting, knowledge base, customer portal, WhatsApp/Telegram/Facebook communication, and AI-powered features via Anthropic Claude integration.
 
-**Primary user-facing components constituting the attack surface:**
-1. **Main CRM Dashboard** — Authenticated multi-module SPA (contacts, deals, companies, invoices, campaigns, AI, etc.)
-2. **Customer Portal** — Separate authentication flow for end-customers to view invoices, tickets, and KB articles
-3. **Public Lead Capture** — Unauthenticated web-to-lead form
-4. **Webhook Receivers** — WhatsApp, Facebook/Instagram, Telegram, VKontakte integrations
-5. **Journey Processor** — Unauthenticated endpoint triggering automated email/SMS workflows
-6. **Admin Settings** — SMTP, roles/permissions, user management, channel configs
+The application is deployed on a single Hetzner VDS (`[REDACTED]`) behind Nginx (HTTP only — no TLS at proxy level) and fronted by Cloudflare. The attack surface is extensive: **150+ authenticated API endpoints**, **~20 unauthenticated API endpoints**, and a **publicly-accessible Python FastAPI service on port 8000** with zero authentication.
 
-**Critical architectural security gaps discovered:**
-- Hardcoded bypass credentials (`admin@leaddrive.com` / `admin123`) in NextAuth config
-- RBAC permission matrix defined but enforced on approximately 1% of API endpoints (only `src/app/api/v1/projects/route.ts` calls `requireAuth()`)
-- Multi-tenant isolation gap: `findUnique()` queries bypass organization scoping
-- No security headers (no CSP, HSTS, X-Frame-Options, etc.)
-- No rate limiting on any endpoint
-- SSRF via admin-configurable SMTP host/port and webhook URLs
+**Core Technology Stack:**
+- **Frontend:** Next.js 16.1.7 (App Router), React 19.2.3, TypeScript, shadcn/ui, Tailwind CSS
+- **Backend:** Node.js 20 Alpine, NextAuth v5 beta (JWT), Prisma 6.x ORM
+- **Database:** PostgreSQL 16 (via Prisma), Redis 7 (referenced but in-memory rate limiter used)
+- **Compute Sidecar:** Python 3.12 + FastAPI + uvicorn (`--reload` in production)
+- **Auth:** NextAuth v5.0.0-beta.30 (credentials-only, no OAuth/OIDC), TOTP 2FA via otplib
+- **AI:** Anthropic Claude SDK (claude-haiku-4-5 / claude-sonnet-4)
+- **i18n:** next-intl, three locales (az, ru, en)
+
+**Critical intelligence for downstream analysts:**
+1. `NEXTAUTH_SECRET` was using a weak default value — JWT forgery enables full impersonation of any user (FIXED: strong secret now set on production)
+2. Cross-tenant bypass via `x-organization-id` header on endpoints using `getOrgId()` — any authenticated user can access another org's data
+3. FastAPI compute sidecar exposed on `0.0.0.0:8000` with zero authentication
+4. Real client PII/financial data (IBANs, SWIFT codes, tax IDs) accessible unauthenticated at `/data/company_details.json`
+5. Default admin credentials are set via ADMIN_PASSWORD env var (previously hardcoded — FIXED)
 
 ---
 
 ## 2. Technology & Service Map
 
-- **Frontend:** Next.js 16.1.7 (App Router), React 19.2.3, TypeScript 5, Zustand 5.0.12 (state), TanStack Query 5.91.0 (data fetching), Radix UI (components), next-intl 4.8.3 (i18n), Zod 4.3.6 (validation)
-- **Backend:** Next.js API Routes (TypeScript), Prisma 6.19.2 ORM, bcryptjs 3.0.3, otplib 13.4.0 (TOTP), nodemailer 7.0.13, isomorphic-dompurify 3.5.1 (partial sanitization), jose (JWT for portal), Pino 10.3.1 (logging)
-- **Secondary Service:** Python 3.12 / FastAPI compute microservice (port 8000, internal only — cost model, AI analytics)
-- **Infrastructure:** Docker Compose deployment; PostgreSQL 16 (port 5432); Redis (port 6379, **no auth**); standalone Next.js (port 3000); no CDN config visible in repository
-- **Authentication Library:** NextAuth v5.0.0-beta.30 (beta release)
-- **External APIs:** Anthropic Claude API, WhatsApp Cloud API (graph.facebook.com/v21.0), Facebook/Instagram Graph API, Telegram Bot API, Twilio SMS
-
-**Identified Subdomains:**
-- `v2.leaddrivecrm.org` — Primary application (confirmed live)
-
-**Open Ports & Services (from code/docker-compose analysis):**
-- `:3000` — Next.js application (primary attack surface)
-- `:5432` — PostgreSQL (Docker, bound to 0.0.0.0 in dev with credentials `leaddrive:leaddrive`)
-- `:6379` — Redis (Docker, bound to 0.0.0.0, **no authentication**)
-- `:8000` — FastAPI compute service (Docker internal, dev `--reload` mode)
+- **Frontend:** Next.js 16.1.7 App Router, React 19.2.3, shadcn/ui, Tailwind CSS, next-intl (i18n: az/ru/en), Recharts, exceljs
+- **Backend:** Node.js 20 Alpine, NextAuth v5.0.0-beta.30 (credentials provider), Prisma 6.x ORM, bcryptjs (cost 12), jose (HS256 portal JWT), otplib (TOTP), nodemailer, isomorphic-dompurify, zod
+- **AI:** @anthropic-ai/sdk (Claude haiku/sonnet models)
+- **Infrastructure:** Hetzner VDS `[REDACTED]`, Nginx HTTP proxy (no TLS), Docker + docker-compose, Next.js container + Python FastAPI container + PostgreSQL container + Redis container; Cloudflare CDN fronting the domain
+- **Identified Subdomains:**
+  - `v2.leaddrivecrm.org` — primary target (this engagement)
+  - `app.leaddrivecrm.org` — referenced in landing page as "production dashboard" (separate V1 instance, out of scope)
+- **Open Ports & Services:**
+  - `:80` — Nginx HTTP reverse proxy (proxies to Next.js :3001/3000)
+  - `:443` — HTTPS via Cloudflare CDN
+  - `:8000` — Python FastAPI compute sidecar (**exposed on `0.0.0.0:8000`** — unauthenticated, potentially reachable externally depending on firewall)
+  - `:5432` — PostgreSQL (exposed on host port 5432 via docker-compose)
+  - `:6379` — Redis (no password, exposed on host port 6379 via docker-compose)
 
 ---
 
 ## 3. Authentication & Session Management Flow
 
-**Entry Points:**
-- `/login` — Primary CRM login (email + password + optional TOTP)
-- `/register` — New organization + admin user self-registration
-- `/forgot-password` — Password reset token request
-- `/reset-password?token=<hex>` — Password reset via token
-- `/login/verify-2fa` — TOTP/backup-code challenge (post-login)
-- `/login/setup-2fa` — Forced 2FA enrollment
-- `/portal` — Customer portal entry (separate auth system)
-- `/portal/set-password?token=<hex>` — Portal account activation
+- **Entry Points:**
+  - `/login` — Main app credentials form
+  - `/register` — Org + admin user creation
+  - `/forgot-password` — Email-based password reset
+  - `/login/verify-2fa` — TOTP verification (post-login)
+  - `/login/setup-2fa` — Forced 2FA enrollment
+  - `/portal/login` — Customer portal login
+  - `/portal/register` — Portal self-registration
 
-**Mechanism (Main Application):**
-1. User submits email + password to `POST /api/auth/signin` (NextAuth handler)
-2. NextAuth Credentials provider calls `authorize()` in `src/lib/auth.ts` (lines 23–109)
-3. `User.findFirst({ email, isActive: true })` lookup with organization relation
-4. bcrypt password verification (12 rounds)
-5. If TOTP enabled and no code provided → returns `{ needs2fa: true }`, middleware enforces redirect to `/login/verify-2fa`
-6. On success: `jwt()` callback adds `role`, `organizationId`, `plan`, `needs2fa`, `needsSetup2fa` claims
-7. NextAuth sets encrypted JWT session cookie: `__Secure-authjs.session-token` (httpOnly, secure in prod, sameSite=lax)
-8. Middleware (`src/middleware.ts`) injects `x-organization-id`, `x-user-id`, `x-user-role`, `x-locale` request headers on all subsequent requests
-9. API routes call `getOrgId(req)` or `requireAuth(req, module, action)` to authenticate
+- **Mechanism (Step-by-Step):**
+  1. User submits `{email, password, totpCode?}` to `POST /api/auth/[...nextauth]`
+  2. `src/lib/auth.ts` credentials provider: bcrypt.compare (cost 12), TOTP/backup-code verification if `user.totpEnabled`
+  3. If TOTP enabled and no code: throws `"2FA_REQUIRED"` error; frontend redirects to `/login/verify-2fa`
+  4. On success: NextAuth issues JWT signed with `NEXTAUTH_SECRET` (HS256), stored as `authjs.session-token` httpOnly cookie (sameSite=lax)
+  5. JWT payload: `{sub, email, name, role, organizationId, organizationName, plan, needs2fa, needsSetup2fa}`
+  6. Middleware (`src/middleware.ts`) validates JWT on every request, enforces 2FA completion via redirect, injects `x-organization-id`/`x-user-id`/`x-user-role` headers from JWT
+  7. API routes use `getOrgId()` or `requireAuth()` from `src/lib/api-auth.ts`
 
-**CRITICAL BACKDOOR:** `src/lib/auth.ts` lines 95–106 — if database is unreachable, credentials `admin@leaddrive.com` / `admin123` authenticate as admin with enterprise plan, bypassing 2FA entirely.
-
-**Code Pointers:**
-- `src/lib/auth.ts` — NextAuth config, authorize(), jwt/session callbacks
-- `src/lib/api-auth.ts` — `getOrgId()`, `requireAuth()`, `getSession()`
-- `src/middleware.ts` — Route protection, 2FA enforcement, header injection
-- `src/app/api/auth/[...nextauth]/route.ts` — NextAuth handler
-- `src/app/api/v1/auth/` — Registration, forgot-password, reset-password, TOTP endpoints
-- `src/lib/portal-auth.ts` — Portal JWT creation/validation
+- **Code Pointers:**
+  - `src/lib/auth.ts` — NextAuth config, JWT callback, credentials provider
+  - `src/middleware.ts` — Middleware enforcement, 2FA redirect, header injection
+  - `src/lib/api-auth.ts` — `getOrgId()`, `requireAuth()`, `getSession()`
+  - `src/app/api/auth/[...nextauth]/route.ts` — NextAuth handler
 
 ### 3.1 Role Assignment Process
 
-- **Role Determination:** Roles are read from the `User.role` database column at login time and embedded into the NextAuth JWT token claims. No dynamic role lookup occurs per-request.
-- **Default Role:** New admin users created at registration get `role: "admin"` (line 66 in `src/app/api/v1/auth/register/route.ts`). Additional users created by admins get the role specified at creation time, defaulting to `"viewer"`.
-- **Role Upgrade Path:** Admins can modify user roles via `PUT /api/v1/users/[id]` — **critically, this endpoint has NO role validation**, meaning any authenticated user can upgrade their own or others' roles.
-- **Code Implementation:** `src/lib/auth.ts` lines 77–88 (role from DB), lines 117–131 (JWT callback stores role claim)
+- **Role Determination:** First user of a new org gets `"admin"` (hardcoded in registration). Subsequent users are assigned a role by org admin via `PUT /api/v1/users/[id]`.
+- **Default Role:** `"admin"` for org registrants. No other role selectable at registration.
+- **Role Upgrade Path:** Admin-only via `PUT /api/v1/users/[id]` (requires `requireAuth(req, "settings", "write")`). No self-service. No external IdP.
+- **Code Implementation:** `src/app/api/v1/auth/register/route.ts` line 68; `src/app/api/v1/users/[id]/route.ts` lines 41-101
 
 ### 3.2 Privilege Storage & Validation
 
-- **Storage Location:** Roles stored in `User.role` column in PostgreSQL. At runtime, role is embedded in the NextAuth JWT token (encrypted, signed with `NEXTAUTH_SECRET`). Role is also injected into request headers as `x-user-role` by middleware.
-- **Validation Points:** `src/lib/api-auth.ts` `requireAuth()` function (lines 62–91) checks `checkPermission(role, module, action)`. However, only `src/app/api/v1/projects/route.ts` actually uses `requireAuth()` — all other endpoints use `getOrgId()` which only verifies org membership, not role.
-- **Cache/Session Persistence:** JWT sessions persist until NextAuth session expiry (default NextAuth v5 is 30 days). Roles are NOT re-fetched from DB per request — a role change in the database only takes effect when the user logs in again (or session is invalidated).
-- **Code Pointers:** `src/lib/permissions.ts` (full RBAC matrix), `src/lib/api-auth.ts` (enforcement functions), `src/middleware.ts` (header injection)
+- **Storage Location:** JWT claims (stateless). Role persisted in `User.role` in PostgreSQL. JWT refreshed by NextAuth JWT callback.
+- **Validation Points:**
+  - Middleware: role check for `/settings/*` pages (not API — redirect only)
+  - `requireAuth(req, module, action)`: calls `checkPermission(role, module, action)` against static RBAC matrix
+  - **GAP:** Many routes use only `getOrgId()` (org-isolation only, NO RBAC check) — settings, pipeline stages, cost model, budgeting, and other endpoints
+  - Pipeline stages POST reads `x-user-role` header (not JWT session) — bypassable if middleware is circumvented
+- **Cache/Session Persistence:** Stateless JWT. Plan defaults to `"enterprise"` if JWT `plan` claim is missing (`src/middleware.ts` line 105).
+- **Code Pointers:** `src/lib/permissions.ts` (RBAC matrix), `src/lib/api-auth.ts` (enforcement functions), `src/lib/plan-config.ts` (plan gating)
 
 ### 3.3 Role Switching & Impersonation
 
-- **Impersonation Features:** None discovered in the codebase.
-- **Role Switching:** No sudo mode or temporary privilege elevation mechanism exists.
-- **Audit Trail:** User management changes are logged to `AuditLog` via `logAudit()` in `src/lib/prisma.ts` (lines 73–85). However, role changes are not specifically flagged — they're captured as general user update events.
-- **Code Implementation:** N/A — no impersonation features exist.
+- **Impersonation Features:** None implemented.
+- **Role Switching:** No sudo mode or temporary elevation.
+- **Audit Trail:** `AuditLog` table records actions per org. Portal audit entries silently fail (schema mismatch). No dedicated role-change audit.
+- **Code Implementation:** N/A.
 
 ---
 
 ## 4. API Endpoint Inventory
 
-**Network Surface Focus:** All endpoints below are accessible through the deployed web application at https://v2.leaddrivecrm.org. Excluded: local-only CLI scripts, build tools, Telegram bridge standalone process.
-
-**IMPORTANT NOTE ON AUTH:** Most endpoints show `getOrgId` as the authorization mechanism. This means **only org membership is checked, not the user's role**. A `viewer` role user can perform `DELETE` operations on most endpoints because `getOrgId()` does not enforce RBAC. The RBAC matrix in `src/lib/permissions.ts` is defined but not enforced.
+**Network Surface Focus:** Only network-accessible endpoints are listed below.
 
 | Method | Endpoint Path | Required Role | Object ID Parameters | Authorization Mechanism | Description & Code Pointer |
-|---|---|---|---|---|---|
-| POST | `/api/auth/signin` | anon | None | None | NextAuth login. `src/app/api/auth/[...nextauth]/route.ts` |
-| GET | `/api/auth/session` | anon | None | None | NextAuth session check. `src/app/api/auth/[...nextauth]/route.ts` |
-| POST | `/api/v1/auth/register` | anon | None | None | New org+user registration. `src/app/api/v1/auth/register/route.ts` |
-| POST | `/api/v1/auth/forgot-password` | anon | None | None | Password reset request. `src/app/api/v1/auth/forgot-password/route.ts` |
-| POST | `/api/v1/auth/reset-password` | anon | None | None | Reset password with token. `src/app/api/v1/auth/reset-password/route.ts` |
-| POST | `/api/v1/auth/verify-2fa` | anon (partial session) | None | None | Verify TOTP after login. `src/app/api/v1/auth/verify-2fa/route.ts` |
-| GET/POST | `/api/v1/auth/2fa` | user | None | `getOrgId()` only | Enable/disable 2FA. `src/app/api/v1/auth/2fa/route.ts` |
-| POST | `/api/v1/auth/totp/setup` | user | None | `getOrgId()` only | Generate TOTP secret+QR. `src/app/api/v1/auth/totp/setup/route.ts` |
-| POST | `/api/v1/auth/totp/verify` | user | None | `getOrgId()` only | Enable TOTP after verification. `src/app/api/v1/auth/totp/verify/route.ts` |
-| GET | `/api/v1/auth/totp/status` | user | None | `getOrgId()` only | Check 2FA status. `src/app/api/v1/auth/totp/status/route.ts` |
-| POST | `/api/v1/auth/totp/disable` | user | None | `getOrgId()` only | Disable TOTP (requires password). `src/app/api/v1/auth/totp/disable/route.ts` |
+|--------|--------------|---------------|---------------------|------------------------|---------------------------|
+| POST | `/api/auth/[...nextauth]` | anon | None | None | NextAuth sign-in (credentials). `src/app/api/auth/[...nextauth]/route.ts` |
+| GET | `/api/auth/[...nextauth]` | anon | None | None | NextAuth session/CSRF/providers. Same file. |
+| POST | `/api/v1/auth/register` | anon | None | None | Register org + admin user. `src/app/api/v1/auth/register/route.ts` |
+| POST | `/api/v1/auth/forgot-password` | anon | None | None | Request password reset email. `src/app/api/v1/auth/forgot-password/route.ts` |
+| POST | `/api/v1/auth/reset-password` | anon | None | None | Consume reset token, set new password. `src/app/api/v1/auth/reset-password/route.ts` |
+| GET/POST | `/api/v1/auth/2fa` | user | None | Session (auth()) | 2FA status/setup/verify/disable. `src/app/api/v1/auth/2fa/route.ts` |
+| POST | `/api/v1/auth/verify-2fa` | user (partial) | None | Session (auth()) | Verify TOTP post-login. `src/app/api/v1/auth/verify-2fa/route.ts` |
+| POST | `/api/v1/auth/totp/setup` | user | None | Session | Generate TOTP QR + secret. `src/app/api/v1/auth/totp/setup/route.ts` |
+| POST | `/api/v1/auth/totp/verify` | user | None | Session | Activate TOTP + backup codes. `src/app/api/v1/auth/totp/verify/route.ts` |
+| POST | `/api/v1/auth/totp/disable` | user | None | Session + password | Disable TOTP. `src/app/api/v1/auth/totp/disable/route.ts` |
+| GET | `/api/v1/auth/totp/status` | user | None | Session | TOTP enrollment status. `src/app/api/v1/auth/totp/status/route.ts` |
 | POST | `/api/v1/public/leads` | anon | None | None (CORS: *) | Web-to-lead form. `src/app/api/v1/public/leads/route.ts` |
-| POST/DELETE | `/api/v1/public/portal-auth` | anon | None | None | Customer portal login/logout. `src/app/api/v1/public/portal-auth/route.ts` |
+| POST | `/api/v1/public/portal-auth` | anon | None | None | Portal login. `src/app/api/v1/public/portal-auth/route.ts` |
+| DELETE | `/api/v1/public/portal-auth` | anon | None | None | Portal logout. Same file. |
 | POST | `/api/v1/public/portal-auth/register` | anon | None | None | Portal self-registration. `src/app/api/v1/public/portal-auth/register/route.ts` |
-| GET/POST | `/api/v1/public/portal-auth/set-password` | anon (token) | None | Token-based | Set portal password. `src/app/api/v1/public/portal-auth/set-password/route.ts` |
-| GET/POST | `/api/v1/public/portal-chat` | anon | None | None (AI chat) | Customer AI support chat. `src/app/api/v1/public/portal-chat/route.ts` |
-| GET | `/api/v1/public/portal-kb` | anon | None | None | Public KB articles. `src/app/api/v1/public/portal-kb/route.ts` |
-| GET/POST | `/api/v1/public/portal-tickets` | anon (portal-token) | None | `portal-token` cookie | Customer ticket list/create. `src/app/api/v1/public/portal-tickets/route.ts` |
-| GET/PUT | `/api/v1/public/portal-tickets/[id]` | anon (portal-token) | id | `portal-token` cookie | Customer ticket detail. `src/app/api/v1/public/portal-tickets/[id]/route.ts` |
-| POST | `/api/v1/public/events/[id]/register` | anon | id | None | Event registration. `src/app/api/v1/public/events/[id]/register/route.ts` |
-| GET | `/api/v1/calendar/feed/[token]` | anon (token) | token | Calendar token in path | ICS calendar feed. `src/app/api/v1/calendar/feed/[token]/route.ts` |
-| GET/POST | `/api/v1/webhooks/whatsapp` | anon | None | WHATSAPP_VERIFY_TOKEN | WhatsApp webhook. `src/app/api/v1/webhooks/whatsapp/route.ts` |
-| GET/POST | `/api/v1/webhooks/facebook` | anon | None | FACEBOOK_VERIFY_TOKEN | Facebook/Instagram webhook. `src/app/api/v1/webhooks/facebook/route.ts` |
-| POST | `/api/v1/webhooks/telegram` | anon | None | Bot token query param | Telegram webhook. `src/app/api/v1/webhooks/telegram/route.ts` |
-| POST | `/api/v1/webhooks/vkontakte` | anon | None | VK token | VKontakte webhook. `src/app/api/v1/webhooks/vkontakte/route.ts` |
-| POST | `/api/v1/journeys/process` | anon | None | **NONE** | **Unauthenticated** journey runner — triggers email/SMS. `src/app/api/v1/journeys/process/route.ts` |
-| GET/POST | `/api/v1/contacts` | user (any role) | None | `getOrgId()` only | Contact list/create. `src/app/api/v1/contacts/route.ts` |
-| GET/PUT/DELETE | `/api/v1/contacts/[id]` | user (any role) | id | `getOrgId()` + `findFirst` w/orgId | Contact detail. `src/app/api/v1/contacts/[id]/route.ts` |
-| GET | `/api/v1/contacts/[id]/engagement` | user (any role) | id | `getOrgId()` only | Contact engagement data. `src/app/api/v1/contacts/[id]/engagement/route.ts` |
-| POST | `/api/v1/contacts/bulk-delete` | user (any role) | ids (array) | `getOrgId()` only | Bulk delete contacts. `src/app/api/v1/contacts/bulk-delete/route.ts` |
-| GET/POST | `/api/v1/companies` | user (any role) | None | `getOrgId()` only | Company list/create. `src/app/api/v1/companies/route.ts` |
-| GET/PUT/DELETE | `/api/v1/companies/[id]` | user (any role) | id | `getOrgId()` only | Company detail. `src/app/api/v1/companies/[id]/route.ts` |
-| GET | `/api/v1/companies/[id]/timeline` | user (any role) | id | `getOrgId()` only | Company timeline. `src/app/api/v1/companies/[id]/timeline/route.ts` |
-| GET/POST | `/api/v1/deals` | user (any role) | None | `getOrgId()` only | Deal list/create. `src/app/api/v1/deals/route.ts` |
-| GET/PUT/DELETE | `/api/v1/deals/[id]` | user (any role) | id | `getOrgId()` only | Deal detail. `src/app/api/v1/deals/[id]/route.ts` |
-| GET/POST/DELETE | `/api/v1/deals/[id]/contact-roles` | user (any role) | id | `getOrgId()` only | Deal contacts. `src/app/api/v1/deals/[id]/contact-roles/route.ts` |
-| GET/POST/DELETE | `/api/v1/deals/[id]/team` | user (any role) | id | `getOrgId()` only | Deal team members. |
-| GET/POST/DELETE | `/api/v1/deals/[id]/products` | user (any role) | id | `getOrgId()` only | Deal products. |
-| GET/POST | `/api/v1/deals/[id]/offers` | user (any role) | id | `getOrgId()` only | Deal offers. |
-| GET/POST | `/api/v1/leads` | user (any role) | None | `getOrgId()` only | Lead list/create. `src/app/api/v1/leads/route.ts` |
-| GET/PUT/DELETE | `/api/v1/leads/[id]` | user (any role) | id | `getOrgId()` only | Lead detail. `src/app/api/v1/leads/[id]/route.ts` |
-| POST | `/api/v1/leads/[id]/convert` | user (any role) | id | `getOrgId()` only | Convert lead to contact. |
-| GET/POST | `/api/v1/invoices` | user (any role) | None | `getOrgId()` only | Invoice list/create. `src/app/api/v1/invoices/route.ts` |
-| GET/PUT/DELETE | `/api/v1/invoices/[id]` | user (any role) | id | `getOrgId()` only | Invoice detail. `src/app/api/v1/invoices/[id]/route.ts` |
-| GET | `/api/v1/invoices/[id]/pdf` | user (any role) | id | `getOrgId()` only | PDF generation. |
-| POST | `/api/v1/invoices/[id]/send` | user (any role) | id | `getOrgId()` only | Send invoice email. |
-| GET/POST | `/api/v1/invoices/[id]/payments` | user (any role) | id | `getOrgId()` only | Payment records. |
-| GET/PUT/DELETE | `/api/v1/invoices/[id]/payments/[paymentId]` | user (any role) | id, paymentId | `getOrgId()` + **findUnique** (no orgId) | Payment detail — **IDOR risk via findUnique**. |
-| POST | `/api/v1/invoices/[id]/act` | user (any role) | id | `getOrgId()` only | Generate legal act document. `src/app/api/v1/invoices/[id]/act/route.ts` |
-| GET/POST | `/api/v1/invoices/[id]/duplicate` | user (any role) | id | `getOrgId()` only | Duplicate invoice. |
-| GET | `/api/v1/invoices/[id]/chain` | user (any role) | id | `getOrgId()` only | Invoice chain. |
-| GET/POST | `/api/v1/recurring-invoices` | user (any role) | None | `getOrgId()` only | Recurring invoices. |
-| GET/PUT/DELETE | `/api/v1/recurring-invoices/[id]` | user (any role) | id | `getOrgId()` only | Recurring invoice detail. |
-| POST | `/api/v1/recurring-invoices/generate` | user (any role) | None | `getOrgId()` only | Batch invoice generation. |
-| GET/POST | `/api/v1/offers` | user (any role) | None | `getOrgId()` only | Offer list/create. |
-| GET/PUT/DELETE | `/api/v1/offers/[id]` | user (any role) | id | `getOrgId()` only | Offer detail. |
-| POST | `/api/v1/offers/[id]/send` | user (any role) | id | `getOrgId()` only | Send offer email. `src/app/api/v1/offers/[id]/send/route.ts` |
-| GET/POST | `/api/v1/tasks` | user (any role) | None | `getOrgId()` only | Task list/create. |
-| GET/PUT/DELETE | `/api/v1/tasks/[id]` | user (any role) | id | `getOrgId()` only | Task detail. |
-| GET | `/api/v1/tasks/calendar` | user (any role) | None | `getOrgId()` only | Calendar view of tasks. |
-| GET/POST | `/api/v1/projects` | user (any role) | None | `requireAuth()` ✓ | Project list/create — **only endpoint with proper auth**. `src/app/api/v1/projects/route.ts` |
-| GET/PUT/DELETE | `/api/v1/projects/[id]` | user (any role) | id | `requireAuth()` ✓ | Project detail. |
-| GET/POST | `/api/v1/projects/[id]/members` | user (any role) | id | `requireAuth()` ✓ | Project members. |
-| GET/POST | `/api/v1/projects/[id]/tasks` | user (any role) | id | `requireAuth()` ✓ | Project tasks. |
-| GET/POST | `/api/v1/contracts` | user (any role) | None | `getOrgId()` only | Contract list/create. |
-| GET/PUT/DELETE | `/api/v1/contracts/[id]` | user (any role) | id | `getOrgId()` only | Contract detail. |
-| POST | `/api/v1/contracts/[id]/files` | user (any role) | id | `getOrgId()` only | File upload. `src/app/api/v1/contracts/[id]/files/route.ts` |
-| GET/DELETE | `/api/v1/contracts/[id]/files/[fileId]` | user (any role) | id, fileId | `getOrgId()` only | File detail/download. |
-| GET/POST | `/api/v1/tickets` | user (any role) | None | `getOrgId()` only | Ticket list/create. |
-| GET/PUT/DELETE | `/api/v1/tickets/[id]` | user (any role) | id | `getOrgId()` only | Ticket detail. |
-| GET/POST | `/api/v1/tickets/[id]/comments` | user (any role) | id | `getOrgId()` only | Ticket comments. |
-| POST | `/api/v1/tickets/ai` | user (any role) | None | `getOrgId()` only | AI ticket analysis. |
-| GET/POST | `/api/v1/campaigns` | user (any role) | None | `getOrgId()` only | Campaign list/create. |
-| GET/PUT/DELETE | `/api/v1/campaigns/[id]` | user (any role) | id | `getOrgId()` only | Campaign detail. |
-| POST | `/api/v1/campaigns/[id]/send` | user (any role) | id | `getOrgId()` only | Send mass email campaign. `src/app/api/v1/campaigns/[id]/send/route.ts` |
-| GET/POST | `/api/v1/segments` | user (any role) | None | `getOrgId()` only | Segment list/create. |
-| GET/PUT/DELETE | `/api/v1/segments/[id]` | user (any role) | id | `getOrgId()` only | Segment detail. |
-| POST | `/api/v1/segments/preview` | user (any role) | None | `getOrgId()` only | Preview segment contacts. |
-| GET/POST | `/api/v1/journeys` | user (any role) | None | `getOrgId()` only | Journey list/create. |
-| GET/PUT/DELETE | `/api/v1/journeys/[id]` | user (any role) | id | `getOrgId()` only | Journey detail. |
-| POST | `/api/v1/journeys/enroll` | user (any role) | None | `getOrgId()` only | Enroll contact in journey. |
-| GET/POST | `/api/v1/kb` | user (any role) | None | `getOrgId()` only | KB article list/create. |
-| GET/PUT/DELETE | `/api/v1/kb/[id]` | user (any role) | id | `getOrgId()` only | KB article detail. |
-| GET/POST | `/api/v1/events` | user (any role) | None | `getOrgId()` only | Event list/create. |
-| GET/PUT/DELETE | `/api/v1/events/[id]` | user (any role) | id | `getOrgId()` only | Event detail. |
-| GET/POST | `/api/v1/events/[id]/participants` | user (any role) | id | `getOrgId()` only | Event participants. |
-| GET | `/api/v1/inbox` | user (any role) | None | `getOrgId()` only | Inbox (messages). `src/app/api/v1/inbox/route.ts` |
-| GET/POST | `/api/v1/inbox/conversations` | user (any role) | None | `getOrgId()` only | Conversation list/create. |
-| GET/PUT | `/api/v1/inbox/conversations/[id]` | user (any role) | id | `getOrgId()` only | Conversation detail. |
-| GET/POST | `/api/v1/inbox/conversations/[id]/messages` | user (any role) | id | `getOrgId()` only | Conversation messages. |
-| GET | `/api/v1/email-log` | user (any role) | None | `getOrgId()` only | Email send history. |
-| GET/POST | `/api/v1/email-templates` | user (any role) | None | `getOrgId()` only | Email template list/create. |
-| GET/PUT/DELETE | `/api/v1/email-templates/[id]` | user (any role) | id | `getOrgId()` only | Email template detail. |
-| POST | `/api/v1/whatsapp/send` | user (any role) | None | `getOrgId()` only | Send WhatsApp message. |
-| POST | `/api/v1/whatsapp/test` | user (any role) | None | `getOrgId()` only | Test WhatsApp config. |
-| POST | `/api/v1/ai/chat` | user (any role) | None | `getOrgId()` only | CRM AI assistant. `src/app/api/v1/ai/chat/route.ts` |
-| POST | `/api/v1/ai/recommend` | user (any role) | None | `getOrgId()` only | AI recommendations. |
-| GET | `/api/v1/ai` | user (any role) | None | `getOrgId()` only | AI status. |
-| GET/POST | `/api/v1/ai-sessions` | user (any role) | None | `getOrgId()` only | AI session list/create. |
-| GET/PUT/DELETE | `/api/v1/ai-sessions/[id]` | user (any role) | id | `getOrgId()` only | AI session detail. |
-| GET/POST | `/api/v1/ai-configs` | user (any role) | None | `getOrgId()` only | AI config list/create. |
-| GET/PUT/DELETE | `/api/v1/ai-configs/[id]` | user (any role) | id | `getOrgId()` only | AI config detail. |
-| GET/POST | `/api/v1/ai-guardrails` | user (any role) | None | `getOrgId()` only | AI guardrails config. |
-| GET | `/api/v1/ai-observations` | user (any role) | None | `getOrgId()` only | AI analytics observations. |
-| GET/POST | `/api/v1/users` | user (any role) | None | `getOrgId()` only | User list/create. **No role check.** `src/app/api/v1/users/route.ts` |
-| GET/PUT/DELETE | `/api/v1/users/[id]` | user (any role) | id | `getOrgId()` only | User detail. **No role check — any user can modify roles!** `src/app/api/v1/users/[id]/route.ts` |
-| GET/POST | `/api/v1/settings/roles` | user (any role) | None | `getOrgId()` only | RBAC role config. **No admin check!** `src/app/api/v1/settings/roles/route.ts` |
-| GET/PUT | `/api/v1/settings/permissions` | user (any role) | None | `getOrgId()` only | Permission matrix. **No admin check!** `src/app/api/v1/settings/permissions/route.ts` |
-| GET/PUT | `/api/v1/settings/invoice` | user (any role) | None | `getOrgId()` only | Invoice settings. |
-| GET/PUT | `/api/v1/settings/smtp` | user (any role) | None | `getOrgId()` only | SMTP config (SSRF vector). `src/app/api/v1/settings/smtp/route.ts` |
-| POST | `/api/v1/settings/smtp/test` | user (any role) | None | `getOrgId()` only | Test SMTP config. |
-| GET/POST | `/api/v1/channels` | user (any role) | None | `getOrgId()` only | Channel config list. Returns API tokens! `src/app/api/v1/channels/route.ts` |
-| GET/PUT/DELETE | `/api/v1/channels/[id]` | user (any role) | id | `getOrgId()` only | Channel config detail. |
-| GET | `/api/v1/dashboard` | user (any role) | None | `getOrgId()` only | Dashboard data. |
-| GET | `/api/v1/dashboard/executive` | user (any role) | None | `getOrgId()` only | Executive dashboard. |
-| GET | `/api/v1/audit-log` | user (any role) | None | `getOrgId()` only | Audit log viewer. |
-| GET/POST | `/api/v1/currencies` | user (any role) | None | `getOrgId()` only | Currency list/create. |
-| GET/POST | `/api/v1/custom-fields` | user (any role) | None | `getOrgId()` only | Custom field definitions. |
-| GET/POST | `/api/v1/products` | user (any role) | None | `getOrgId()` only | Product catalog. |
-| GET/POST | `/api/v1/pipeline-stages` | user (any role) | None | `getOrgId()` only | Pipeline stage config. |
-| GET/POST | `/api/v1/sla-policies` | user (any role) | None | `getOrgId()` only | SLA policy config. |
-| GET | `/api/v1/search` | user (any role) | None | `getOrgId()` only | Global search. |
-| GET | `/api/v1/reports` | user (any role) | None | `getOrgId()` only | Reports. |
-| GET/POST | `/api/v1/portal-users` | user (any role) | None | `getOrgId()` only | Portal user management. |
-| GET | `/api/v1/notifications` | user (any role) | None | `getOrgId()` only | Notifications. |
-| GET | `/api/v1/organization/plan` | user (any role) | None | `getOrgId()` only | Org plan info. |
-| GET | `/api/budgeting/snapshot` | user (any role) | None | `getOrgId()` only | Budget snapshot — raw SQL query. `src/app/api/budgeting/snapshot/route.ts` |
-| POST | `/api/budgeting/ai-narrative` | user (any role) | None | `getOrgId()` only | AI budget narrative. |
-| GET | `/api/budgeting/export` | user (any role) | None | `getOrgId()` only | Budget data export. |
-| POST | `/api/budgeting/import-csv` | user (any role) | None | `getOrgId()` only | Bulk budget import. |
-| GET | `/api/cost-model/ai-analysis` | user (any role) | None | `getOrgId()` only | AI cost analysis. |
-| POST | `/api/cost-model/seed-clients` | user (any role) | None | `getOrgId()` only | Seed test data — dev stub. |
-| GET | `/api/v1/pricing/export` | user (any role) | None | `getOrgId()` only | Full pricing export. |
-| GET/POST | `/api/v1/webhooks` | user (any role) | None | `getOrgId()` only | Webhook config (SSRF vector). |
-| GET | `/api/health` | anon | None | None | Health check. |
+| GET/POST | `/api/v1/public/portal-auth/set-password` | anon | None | Invite token | Portal password setup. `src/app/api/v1/public/portal-auth/set-password/route.ts` |
+| GET/POST | `/api/v1/public/portal-tickets` | portal_user | contactId | portal-token cookie | Portal ticket CRUD. `src/app/api/v1/public/portal-tickets/route.ts` |
+| GET/PUT/DELETE/POST | `/api/v1/public/portal-tickets/[id]` | portal_user | ticket_id | portal-token cookie | Individual ticket operations. `src/app/api/v1/public/portal-tickets/[id]/route.ts` |
+| GET/POST | `/api/v1/public/portal-chat` | portal_user | None | portal-token cookie | AI chat for portal. `src/app/api/v1/public/portal-chat/route.ts` |
+| GET | `/api/v1/public/portal-kb` | portal_user | None | portal-token cookie | Knowledge base. `src/app/api/v1/public/portal-kb/route.ts` |
+| GET/POST | `/api/v1/public/events/[id]/register` | anon | event_id | None | Event self-registration. `src/app/api/v1/public/events/[id]/register/route.ts` |
+| GET | `/api/v1/calendar/feed/[token]` | anon | calendar_token | Token in URL | iCal feed (org-wide scope). `src/app/api/v1/calendar/feed/[token]/route.ts` |
+| POST | `/api/v1/journeys/process` | service | None | Bearer CRON_SECRET | Journey cron processor. `src/app/api/v1/journeys/process/route.ts` |
+| POST | `/api/v1/webhooks/whatsapp` | anon | None | No HMAC sig verification | WhatsApp message webhook. `src/app/api/v1/webhooks/whatsapp/route.ts` |
+| GET | `/api/v1/webhooks/whatsapp` | anon | None | Token query param | WhatsApp webhook verification. Same file. |
+| POST | `/api/v1/webhooks/facebook` | anon | None | No HMAC sig verification | Facebook message webhook. `src/app/api/v1/webhooks/facebook/route.ts` |
+| GET | `/api/v1/webhooks/facebook` | anon | None | Token query param | Facebook webhook verification. Same file. |
+| POST | `/api/v1/webhooks/telegram` | anon | None | Token in URL query | Telegram webhook. `src/app/api/v1/webhooks/telegram/route.ts` |
+| POST | `/api/v1/webhooks/vkontakte` | anon | None | group_id match | VK webhook. `src/app/api/v1/webhooks/vkontakte/route.ts` |
+| GET | `/api/v1/users` | user | None | getOrgId() only — **NO RBAC** | List org users. `src/app/api/v1/users/route.ts` |
+| GET | `/api/v1/users/[id]` | user | user_id | getOrgId() only — **NO RBAC** | Get user details. `src/app/api/v1/users/[id]/route.ts` lines 19-39 |
+| PUT | `/api/v1/users/[id]` | manager+ | user_id | requireAuth("settings","write") | Update user (role, 2FA, password). `src/app/api/v1/users/[id]/route.ts` lines 41-101 |
+| DELETE | `/api/v1/users/[id]` | admin | user_id | requireAuth("settings","delete") | Delete user. `src/app/api/v1/users/[id]/route.ts` lines 103-120 |
+| GET | `/api/v1/contacts` | user | None | getOrgId() | List contacts. `src/app/api/v1/contacts/route.ts` |
+| POST | `/api/v1/contacts` | user | None | getOrgId() | Create contact. Same file. |
+| GET | `/api/v1/contacts/[id]` | user | contact_id | getOrgId() | Get contact + activities. `src/app/api/v1/contacts/[id]/route.ts` |
+| PUT | `/api/v1/contacts/[id]` | user | contact_id | getOrgId() | Update contact. Same file. |
+| DELETE | `/api/v1/contacts/[id]` | user | contact_id | getOrgId() | Delete contact. Same file. |
+| POST | `/api/v1/contacts/bulk-delete` | user | contact_ids[] | getOrgId() | Bulk delete contacts. `src/app/api/v1/contacts/bulk-delete/route.ts` |
+| GET | `/api/v1/contacts/[id]/engagement` | user | contact_id | getOrgId() | Contact engagement metrics. |
+| GET | `/api/v1/companies` | user | None | getOrgId() | List companies. `src/app/api/v1/companies/route.ts` |
+| POST | `/api/v1/companies` | user | None | getOrgId() | Create company. Same file. |
+| GET | `/api/v1/companies/[id]` | user | company_id | getOrgId() | Get company + relations. `src/app/api/v1/companies/[id]/route.ts` |
+| PUT | `/api/v1/companies/[id]` | user | company_id | getOrgId() | Update company. Same file. |
+| DELETE | `/api/v1/companies/[id]` | user | company_id | getOrgId() | Delete company. Same file. |
+| GET | `/api/v1/companies/[id]/timeline` | user | company_id | getOrgId() | Company timeline. |
+| GET | `/api/v1/deals` | user | None | getOrgId() | List deals. `src/app/api/v1/deals/route.ts` |
+| POST | `/api/v1/deals` | user | None | getOrgId() | Create deal. Same file. |
+| GET | `/api/v1/deals/[id]` | user | deal_id | getOrgId() | Get deal. `src/app/api/v1/deals/[id]/route.ts` |
+| PUT | `/api/v1/deals/[id]` | user | deal_id | getOrgId() | Update deal. Same file. |
+| DELETE | `/api/v1/deals/[id]` | user | deal_id | getOrgId() | Delete deal. Same file. |
+| GET/POST | `/api/v1/deals/[id]/products` | user | deal_id | getOrgId() | Deal products. |
+| GET/POST | `/api/v1/deals/[id]/offers` | user | deal_id | getOrgId() | Deal offers. |
+| GET/POST/PUT/DELETE | `/api/v1/deals/[id]/team` | user | deal_id | getOrgId() | Deal team members. |
+| GET/POST/DELETE | `/api/v1/deals/[id]/contact-roles` | user | deal_id | getOrgId() | Deal contact roles. |
+| GET/POST/PUT | `/api/v1/deals/[id]/next-steps` | user | deal_id | getOrgId() | Deal next steps. |
+| POST | `/api/v1/deals/[id]/add-to-pricing` | user | deal_id | getOrgId() | Add deal to pricing. |
+| GET | `/api/v1/leads` | user | None | getOrgId() | List leads. `src/app/api/v1/leads/route.ts` |
+| POST | `/api/v1/leads` | user | None | getOrgId() | Create lead. Same file. |
+| GET | `/api/v1/leads/[id]` | user | lead_id | getOrgId() | Get lead. `src/app/api/v1/leads/[id]/route.ts` |
+| PUT | `/api/v1/leads/[id]` | user | lead_id | getOrgId() | Update lead. Same file. |
+| DELETE | `/api/v1/leads/[id]` | user | lead_id | getOrgId() | Delete lead. Same file. |
+| POST | `/api/v1/leads/[id]/convert` | user | lead_id | getOrgId() | Convert lead to contact/deal. |
+| GET | `/api/v1/invoices` | user | None | getOrgId() | List invoices. `src/app/api/v1/invoices/route.ts` |
+| POST | `/api/v1/invoices` | user | None | getOrgId() | Create invoice. Same file. |
+| GET | `/api/v1/invoices/[id]` | user | invoice_id | getOrgId() | Get invoice. `src/app/api/v1/invoices/[id]/route.ts` |
+| PUT | `/api/v1/invoices/[id]` | user | invoice_id | getOrgId() | Update invoice. Same file. |
+| DELETE | `/api/v1/invoices/[id]` | user | invoice_id | getOrgId() | Delete invoice. Same file. |
+| POST | `/api/v1/invoices/[id]/send` | user | invoice_id | getOrgId() | Send invoice via email (XSS sink). `src/app/api/v1/invoices/[id]/send/route.ts` |
+| GET | `/api/v1/invoices/[id]/pdf` | user | invoice_id | getOrgId() | Generate invoice PDF (XSS sink). `src/app/api/v1/invoices/[id]/pdf/route.ts` |
+| GET/POST | `/api/v1/invoices/[id]/act` | user | invoice_id | getOrgId() | Completion act HTML (XSS sink). `src/app/api/v1/invoices/[id]/act/route.ts` |
+| GET/POST | `/api/v1/invoices/[id]/payments` | user | invoice_id | getOrgId() | Invoice payments. |
+| GET/PUT/DELETE | `/api/v1/invoices/[id]/payments/[paymentId]` | user | invoice_id, payment_id | getOrgId() | Individual payment. |
+| POST | `/api/v1/invoices/[id]/duplicate` | user | invoice_id | getOrgId() | Duplicate invoice. |
+| GET | `/api/v1/invoices/[id]/chain` | user | invoice_id | getOrgId() | Invoice chain/history. |
+| POST | `/api/v1/invoices/from-offer` | user | None | getOrgId() | Create invoice from offer. |
+| GET | `/api/v1/invoices/next-number` | user | None | getOrgId() | Get next invoice number. |
+| GET | `/api/v1/invoices/overdue` | user | None | getOrgId() | List overdue invoices. |
+| GET | `/api/v1/invoices/stats` | user | None | getOrgId() | Invoice statistics. |
+| GET | `/api/v1/contracts` | user | None | getOrgId() | List contracts. `src/app/api/v1/contracts/route.ts` |
+| POST | `/api/v1/contracts` | user | None | getOrgId() | Create contract. Same file. |
+| GET | `/api/v1/contracts/[id]` | user | contract_id | getOrgId() | Get contract + history. `src/app/api/v1/contracts/[id]/route.ts` |
+| PUT | `/api/v1/contracts/[id]` | user | contract_id | getOrgId() | Update contract. Same file. |
+| DELETE | `/api/v1/contracts/[id]` | user | contract_id | getOrgId() | Delete contract. Same file. |
+| GET/POST | `/api/v1/contracts/[id]/files` | user | contract_id | getOrgId() | List/upload contract files. `src/app/api/v1/contracts/[id]/files/route.ts` |
+| GET/DELETE | `/api/v1/contracts/[id]/files/[fileId]` | user | contract_id, file_id | getOrgId() | Download/delete file. Same file. |
+| GET | `/api/v1/tickets` | user | None | getOrgId() | List tickets. `src/app/api/v1/tickets/route.ts` |
+| POST | `/api/v1/tickets` | user | None | getOrgId() | Create ticket. Same file. |
+| GET/PUT/DELETE | `/api/v1/tickets/[id]` | user | ticket_id | getOrgId() | Ticket CRUD. `src/app/api/v1/tickets/[id]/route.ts` |
+| GET/POST | `/api/v1/tickets/[id]/comments` | user | ticket_id | getOrgId() | Ticket comments. |
+| POST | `/api/v1/tickets/ai` | user | None | getOrgId() | AI ticket analysis. `src/app/api/v1/tickets/ai/route.ts` |
+| GET | `/api/v1/offers` | user | None | getOrgId() | List offers. `src/app/api/v1/offers/route.ts` |
+| POST | `/api/v1/offers` | user | None | getOrgId() | Create offer. Same file. |
+| GET/PUT/DELETE | `/api/v1/offers/[id]` | user | offer_id | getOrgId() | Offer CRUD. `src/app/api/v1/offers/[id]/route.ts` |
+| POST | `/api/v1/offers/[id]/send` | user | offer_id | getOrgId() | Send offer via email (XSS sink). `src/app/api/v1/offers/[id]/send/route.ts` |
+| GET | `/api/v1/tasks` | user | None | getOrgId() | List tasks. `src/app/api/v1/tasks/route.ts` |
+| POST | `/api/v1/tasks` | user | None | getOrgId() | Create task. Same file. |
+| GET/PUT/DELETE | `/api/v1/tasks/[id]` | user | task_id | getOrgId() | Task CRUD. `src/app/api/v1/tasks/[id]/route.ts` |
+| GET | `/api/v1/tasks/calendar` | user | None | getOrgId() | Calendar view of tasks. |
+| GET/POST | `/api/v1/inbox` | user | None | getOrgId() | Inbox/email send (XSS in body). `src/app/api/v1/inbox/route.ts` |
+| PATCH/DELETE | `/api/v1/inbox` | user | message_ids[] | getOrgId() | Bulk mark/delete messages. Same file. |
+| GET/POST | `/api/v1/inbox/conversations` | user | None | getOrgId() | Conversations. |
+| GET/PUT/DELETE | `/api/v1/inbox/conversations/[id]` | user | conversation_id | getOrgId() | Conversation CRUD. |
+| GET/POST | `/api/v1/inbox/conversations/[id]/messages` | user | conversation_id | getOrgId() | Messages. |
+| GET | `/api/v1/email-log` | user | None | getOrgId() | Email send log (contains reset URLs). `src/app/api/v1/email-log/route.ts` |
+| GET/POST | `/api/v1/email-templates` | user | None | getOrgId() | Email templates (raw HTML storage). `src/app/api/v1/email-templates/route.ts` |
+| GET/PUT/DELETE | `/api/v1/email-templates/[id]` | user | template_id | getOrgId() | Template CRUD. |
+| GET | `/api/v1/settings/smtp` | user | None | getOrgId() only — **NO RBAC** | Get SMTP config. `src/app/api/v1/settings/smtp/route.ts` |
+| PUT | `/api/v1/settings/smtp` | user | None | getOrgId() only — **NO RBAC** | Update SMTP config (SSRF vector). Same file. |
+| POST | `/api/v1/settings/smtp/test` | user | None | getOrgId() | Test SMTP (SSRF, no isPrivateHost check). `src/app/api/v1/settings/smtp/test/route.ts` |
+| GET | `/api/v1/settings/roles` | user | None | getOrgId() only — **NO RBAC** | List roles + permissions. `src/app/api/v1/settings/roles/route.ts` |
+| POST | `/api/v1/settings/roles` | user | None | getOrgId() only — **NO RBAC** | Create custom role. Same file. |
+| PUT | `/api/v1/settings/roles` | user | None | getOrgId() only — **NO RBAC** | Update roles/permissions. Same file. |
+| DELETE | `/api/v1/settings/roles` | user | None | getOrgId() only — **NO RBAC** | Delete custom role. Same file. |
+| GET/PUT | `/api/v1/settings/permissions` | user | None | getOrgId() only — **NO RBAC** | Permission matrix management. `src/app/api/v1/settings/permissions/route.ts` |
+| GET/PUT | `/api/v1/settings/invoice` | user | None | getOrgId() | Invoice settings. |
+| GET | `/api/v1/organization/plan` | user | None | getOrgId() | Org subscription plan. `src/app/api/v1/organization/plan/route.ts` |
+| GET | `/api/v1/channels` | user | None | getOrgId() | List channels (tokens excluded). `src/app/api/v1/channels/route.ts` |
+| POST | `/api/v1/channels` | user | None | getOrgId() | Create channel (SSRF: webhookUrl). Same file. |
+| GET | `/api/v1/channels/[id]` | user | channel_id | getOrgId() | Get channel **with full bot tokens/API keys**. `src/app/api/v1/channels/[id]/route.ts` |
+| PUT/DELETE | `/api/v1/channels/[id]` | user | channel_id | getOrgId() | Update/delete channel. Same file. |
+| POST | `/api/v1/whatsapp/send` | user | None | getOrgId() | Send WhatsApp message. `src/app/api/v1/whatsapp/send/route.ts` |
+| POST | `/api/v1/whatsapp/test` | user | None | getOrgId() | Test WhatsApp connection. |
+| GET/POST | `/api/v1/campaigns` | user | None | getOrgId() | Campaign CRUD. `src/app/api/v1/campaigns/route.ts` |
+| GET/PUT/DELETE | `/api/v1/campaigns/[id]` | user | campaign_id | getOrgId() | Campaign detail. |
+| POST | `/api/v1/campaigns/[id]/send` | user | campaign_id | getOrgId() | Send campaign emails. |
+| GET | `/api/v1/campaign-roi` | user | None | getOrgId() | Campaign ROI metrics. |
+| GET/POST | `/api/v1/workflows` | user | None | getOrgId() | Workflow CRUD. `src/app/api/v1/workflows/route.ts` |
+| GET/PUT/DELETE | `/api/v1/workflows/[id]` | user | workflow_id | getOrgId() | Workflow detail. |
+| GET/POST | `/api/v1/journeys` | user | None | getOrgId() | Journey automation CRUD. `src/app/api/v1/journeys/route.ts` |
+| GET/PUT/DELETE | `/api/v1/journeys/[id]` | user | journey_id | getOrgId() | Journey detail. |
+| POST | `/api/v1/journeys/enroll` | user | None | getOrgId() | Enroll contact in journey. |
+| GET/POST | `/api/v1/segments` | user | None | getOrgId() | Segment CRUD. `src/app/api/v1/segments/route.ts` |
+| GET/PUT/DELETE | `/api/v1/segments/[id]` | user | segment_id | getOrgId() | Segment detail. |
+| POST | `/api/v1/segments/preview` | user | None | getOrgId() | Preview segment. |
+| GET/POST | `/api/v1/kb` | user | None | getOrgId() | Knowledge base articles. `src/app/api/v1/kb/route.ts` |
+| GET/PUT/DELETE | `/api/v1/kb/[id]` | user | article_id | getOrgId() | KB article CRUD. |
+| GET/POST | `/api/v1/products` | user | None | getOrgId() | Product catalog. `src/app/api/v1/products/route.ts` |
+| GET/PUT/DELETE | `/api/v1/products/[id]` | user | product_id | getOrgId() | Product detail. |
+| GET/POST | `/api/v1/events` | user | None | getOrgId() | Events. `src/app/api/v1/events/route.ts` |
+| GET/PUT/DELETE | `/api/v1/events/[id]` | user | event_id | getOrgId() | Event detail. |
+| GET/POST | `/api/v1/events/[id]/participants` | user | event_id | getOrgId() | Event participants. |
+| GET/POST | `/api/v1/projects` | user | None | getOrgId() | Projects. `src/app/api/v1/projects/route.ts` |
+| GET/PUT/DELETE | `/api/v1/projects/[id]` | user | project_id | getOrgId() | Project detail. |
+| GET/POST | `/api/v1/projects/[id]/members` | user | project_id | getOrgId() | Project members. |
+| GET/POST | `/api/v1/projects/[id]/tasks` | user | project_id | getOrgId() | Project tasks. |
+| GET/POST | `/api/v1/ai-configs` | user | None | getOrgId() | AI configurations. `src/app/api/v1/ai-configs/route.ts` |
+| GET/PUT/DELETE | `/api/v1/ai-configs/[id]` | user | config_id | getOrgId() | AI config detail. |
+| GET/POST/PUT | `/api/v1/ai-guardrails` | user | None | getOrgId() | AI safety guardrails. |
+| GET | `/api/v1/ai-alerts` | user | None | getOrgId() | AI alerts. |
+| GET | `/api/v1/ai-interaction-logs` | user | None | getOrgId() | AI interaction logs (token costs). |
+| GET/POST | `/api/v1/ai-sessions` | user | None | getOrgId() | AI sessions. |
+| GET/PUT/DELETE | `/api/v1/ai-sessions/[id]` | user | session_id | getOrgId() | AI session detail. |
+| GET | `/api/v1/ai-sessions/stats` | user | None | getOrgId() | AI usage statistics. |
+| POST | `/api/v1/ai` | user | None | getOrgId() | AI actions (sentiment, tasks, text). `src/app/api/v1/ai/route.ts` |
+| POST | `/api/v1/ai/chat` | user | None | getOrgId() | AI chat. `src/app/api/v1/ai/chat/route.ts` |
+| POST | `/api/v1/ai/recommend` | user | None | getOrgId() | AI recommendations. |
+| GET/POST | `/api/v1/ai-observations` | user | None | getOrgId() | AI observations. |
+| GET/POST | `/api/v1/recurring-invoices` | user | None | getOrgId() | Recurring invoices. |
+| GET/PUT/DELETE | `/api/v1/recurring-invoices/[id]` | user | recurring_id | getOrgId() | Recurring invoice detail. |
+| POST | `/api/v1/recurring-invoices/generate` | user | None | getOrgId() | Generate from recurring. |
+| GET/POST | `/api/v1/pricing/profiles` | user | None | getOrgId() | Pricing profiles. |
+| GET/PUT/DELETE | `/api/v1/pricing/profiles/[id]` | user | profile_id | getOrgId() | Pricing profile detail. |
+| GET/POST | `/api/v1/pricing/profiles/[id]/services` | user | profile_id | getOrgId() | Profile services. |
+| GET/POST | `/api/v1/pricing/categories` | user | None | getOrgId() | Pricing categories. |
+| GET | `/api/v1/pricing/company/[code]` | user | company_code | getOrgId() | Company pricing. |
+| GET | `/api/v1/pricing/data` | user | None | getOrgId() | Pricing data export. |
+| GET | `/api/v1/pricing/export` | user | None | getOrgId() | Export pricing. |
+| GET/POST | `/api/v1/pricing/groups` | user | None | getOrgId() | Pricing groups. |
+| GET | `/api/v1/pricing/unit-types` | user | None | getOrgId() | Pricing unit types. |
+| GET/POST | `/api/v1/pricing/additional-sales` | user | None | getOrgId() | Additional sales. |
+| GET/PUT/DELETE | `/api/v1/pricing/additional-sales/[id]` | user | sale_id | getOrgId() | Additional sale detail. |
+| GET/POST | `/api/v1/price-changes` | user | None | getOrgId() | Price changes. |
+| POST | `/api/v1/price-changes/batch` | user | None | getOrgId() | Batch price changes. |
+| GET | `/api/v1/search` | user | None | getOrgId() | Global search. `src/app/api/v1/search/route.ts` |
+| GET | `/api/v1/dashboard` | user | None | getOrgId() | Dashboard data. |
+| GET | `/api/v1/dashboard/executive` | user | None | getOrgId() | Executive dashboard. |
+| GET/PUT | `/api/v1/dashboard/layout` | user | None | getOrgId() | Dashboard layout config. |
+| GET/PUT | `/api/v1/dashboard/widget-config` | user | None | getOrgId() | Widget configuration. |
+| GET | `/api/v1/reports` | user | None | getOrgId() | Reports. |
+| POST | `/api/v1/reports` | user | None | getOrgId() | Create report. |
+| GET | `/api/v1/audit-log` | user | None | getOrgId() | Audit trail. `src/app/api/v1/audit-log/route.ts` |
+| GET/POST | `/api/v1/activities` | user | None | getOrgId() | Activities. |
+| GET/POST | `/api/v1/custom-fields` | user | None | getOrgId() | Custom fields. |
+| GET/PUT/DELETE | `/api/v1/custom-fields/[id]` | user | field_id | getOrgId() | Custom field detail. |
+| GET/POST | `/api/v1/currencies` | user | None | getOrgId() | Currencies. |
+| GET/PUT/DELETE | `/api/v1/currencies/[id]` | user | currency_id | getOrgId() | Currency detail. |
+| GET/POST | `/api/v1/lead-scoring` | user | None | getOrgId() | Lead scoring rules. |
+| GET/POST | `/api/v1/sla-policies` | user | None | getOrgId() | SLA policies. |
+| GET/PUT/DELETE | `/api/v1/sla-policies/[id]` | user | policy_id | getOrgId() | SLA policy detail. |
+| GET/POST | `/api/v1/pipeline-stages` | user | None | getOrgId() (admin check via x-user-role header — bypassable) | Pipeline stages. `src/app/api/v1/pipeline-stages/route.ts` |
+| GET | `/api/v1/portal-users` | user | None | getOrgId() | Portal user management. |
+| POST | `/api/v1/portal-users` | user | None | getOrgId() | Create portal user. |
+| GET | `/api/v1/notifications` | user | None | getOrgId() | User notifications. |
+| GET/POST | `/api/v1/plan-requests` | user | None | getOrgId() | Plan upgrade requests (HTML injection in email). `src/app/api/v1/plan-requests/route.ts` |
+| GET | `/api/v1/calendar/token` | user | None | Session (header fallback — bypassable) | Calendar token. `src/app/api/v1/calendar/token/route.ts` |
+| POST | `/api/v1/calendar/generate-token` | user | None | Session (header fallback — bypassable) | Generate calendar token. |
+| GET/POST | `/api/v1/calendar/agent` | user | None | getOrgId() | Calendar agent. |
+| GET | `/api/v1/cost-model` | user | None | getOrgId() only — **NO RBAC** | Cost model overview (sensitive financial data). `src/app/api/v1/cost-model/route.ts` |
+| GET | `/api/v1/cost-model/clients` | user | None | getOrgId() | Client cost data. |
+| GET/POST | `/api/cost-model/employees` | user | None | getOrgId() | Employee cost records. `src/app/api/cost-model/employees/route.ts` |
+| GET/PUT/DELETE | `/api/cost-model/employees/[id]` | user | employee_id | getOrgId() | Employee record. |
+| GET/POST | `/api/cost-model/overhead` | user | None | getOrgId() | Overhead costs. |
+| GET/PUT/DELETE | `/api/cost-model/overhead/[id]` | user | overhead_id | getOrgId() | Overhead item. |
+| GET/PUT | `/api/cost-model/parameters` | user | None | getOrgId() | Cost model parameters. |
+| GET | `/api/cost-model/analytics` | user | None | getOrgId() | Cost analytics. |
+| GET | `/api/cost-model/ai-analysis` | user | None | getOrgId() | AI cost analysis. |
+| GET | `/api/cost-model/client-costs` | user | None | getOrgId() | Client-by-client costs. |
+| GET | `/api/cost-model/client-analytics/[id]` | user | client_id | getOrgId() | Single client analytics. |
+| GET | `/api/cost-model/client-services/[id]` | user | client_id | getOrgId() | Client services. |
+| GET/POST | `/api/cost-model/snapshots` | user | None | getOrgId() | Cost snapshots. |
+| GET | `/api/cost-model/snapshots/[month]` | user | month | getOrgId() | Monthly snapshot (YYYY-MM format). |
+| POST | `/api/cost-model/sync-pricing-services` | user | None | getOrgId() | Sync pricing services. |
+| GET | `/api/budgeting/plans` | user | None | getOrgId() | Budget plans. `src/app/api/budgeting/plans/route.ts` |
+| POST | `/api/budgeting/plans` | user | None | getOrgId() | Create budget plan. Same file. |
+| GET/PUT/DELETE | `/api/budgeting/plans/[id]` | user | plan_id | getOrgId() + approver logic | Budget plan detail. `src/app/api/budgeting/plans/[id]/route.ts` |
+| GET/POST | `/api/budgeting/plans/[id]/versions` | user | plan_id | getOrgId() | Plan versioning. |
+| GET/POST/DELETE | `/api/budgeting/plans/[id]/comments` | user | plan_id | getOrgId() | Plan comments. |
+| GET | `/api/budgeting/plans/[id]/diff` | user | plan_id | getOrgId() | Plan version diff. |
+| POST | `/api/budgeting/plans/[id]/apply-templates` | user | plan_id | getOrgId() | Apply templates to plan. |
+| GET | `/api/budgeting/lines` | user | None | getOrgId() | Budget lines. |
+| GET/PUT | `/api/budgeting/lines/[id]` | user | line_id | getOrgId() | Budget line detail. |
+| GET/POST | `/api/budgeting/actuals` | user | None | getOrgId() | Budget actuals. |
+| GET/PUT/DELETE | `/api/budgeting/actuals/[id]` | user | actual_id | getOrgId() | Actual record. |
+| GET/POST | `/api/budgeting/sections` | user | None | getOrgId() | Budget sections. |
+| GET/PUT/DELETE | `/api/budgeting/sections/[id]` | user | section_id | getOrgId() | Section detail. |
+| GET/POST | `/api/budgeting/departments` | user | None | getOrgId() | Departments. |
+| GET/POST | `/api/budgeting/cost-types` | user | None | getOrgId() | Cost types. |
+| GET/POST | `/api/budgeting/templates` | user | None | getOrgId() | Budget templates. |
+| GET/PUT/DELETE | `/api/budgeting/templates/[id]` | user | template_id | getOrgId() | Template detail. |
+| POST | `/api/budgeting/templates/seed` | user | None | getOrgId() | Seed default templates. |
+| GET | `/api/budgeting/cash-flow` | user | None | getOrgId() | Cash flow analysis. |
+| POST | `/api/budgeting/cash-flow/generate` | user | None | getOrgId() | Generate cash flow report. |
+| GET | `/api/budgeting/cash-flow/plan-fact` | user | None | getOrgId() | Plan vs fact comparison. |
+| GET | `/api/budgeting/analytics` | user | None | getOrgId() | Budget analytics. |
+| GET | `/api/budgeting/ai-narrative` | user | None | getOrgId() | AI-generated narrative. |
+| GET/POST | `/api/budgeting/sales-forecast` | user | None | getOrgId() | Sales forecast. |
+| POST | `/api/budgeting/sales-forecast/import` | user | None | getOrgId() | Import forecast from CSV. |
+| GET | `/api/budgeting/sales-forecast/export` | user | None | getOrgId() | Export forecast. |
+| GET/POST | `/api/budgeting/rolling` | user | None | getOrgId() | Rolling forecasts. |
+| POST | `/api/budgeting/rolling/auto-forecast` | user | None | getOrgId() | Auto-generate rolling forecast. |
+| POST | `/api/budgeting/import-csv` | user | None | getOrgId() | Import budget from CSV. |
+| GET | `/api/budgeting/export` | user | None | getOrgId() | Export budget. |
+| GET/POST | `/api/budgeting/exchange-rates` | user | None | getOrgId() | Exchange rates. |
+| GET | `/api/budgeting/snapshot` | user | None | getOrgId() | Budget snapshot (raw SQL). `src/app/api/budgeting/snapshot/route.ts` |
+| GET | `/api/budgeting/snapshot-actuals` | user | None | getOrgId() | Actuals snapshot. |
+| POST | `/api/budgeting/sync-actuals` | user | None | getOrgId() | Sync actuals. |
+| POST | `/api/budgeting/resolve-costs` | user | None | getOrgId() | Resolve cost model. |
+| GET | `/api/finance/dashboard` | user | None | getOrgId() | Finance dashboard. |
+| GET/POST | `/api/finance/funds` | user | None | getOrgId() | Funds management. |
+| GET/PUT/DELETE | `/api/finance/funds/[id]` | user | fund_id | getOrgId() | Fund detail. |
+| GET/POST | `/api/finance/funds/[id]/rules` | user | fund_id | getOrgId() | Fund rules. |
+| GET/POST | `/api/finance/funds/[id]/transactions` | user | fund_id | getOrgId() | Fund transactions. |
+| GET/POST | `/api/finance/payables` | user | None | getOrgId() | Payables. |
+| GET/PUT/DELETE | `/api/finance/payables/[id]` | user | payable_id | getOrgId() | Payable detail. |
+| GET/POST | `/api/finance/payables/[id]/payments` | user | payable_id | getOrgId() | Payable payments. |
+| GET | `/api/finance/payables/stats` | user | None | getOrgId() | Payables statistics. |
+| GET | `/api/finance/receivables` | user | None | getOrgId() | Receivables. |
 
 ---
-
-## 5. Potential Input Vectors for Vulnerability Analysis
-
-**Network Surface Focus:** Only input vectors accessible through the deployed web application's network interface.
-
-### URL Parameters (Query Strings)
-- `GET /api/v1/contacts?search=<string>` — `search` param used in `CONTAINS` DB query; no max length. `src/app/api/v1/contacts/route.ts`
-- `GET /api/v1/deals?search=<string>&stage=<string>&companyId=<id>` — `search` unvalidated; `stage` used as direct filter. `src/app/api/v1/deals/route.ts`
-- `GET /api/v1/companies?search=<string>&category=<string>` — `search` unvalidated. `src/app/api/v1/companies/route.ts`
-- `GET /api/v1/leads?search=<string>&status=<string>&includeConverted=<bool>` — `search` no length; `status` not enum-validated. `src/app/api/v1/leads/route.ts`
-- `GET /api/v1/invoices?search=<string>&status=<string>&dateFrom=<date>&dateTo=<date>` — `dateFrom`/`dateTo` parsed with `new Date()` without ISO validation. `src/app/api/v1/invoices/route.ts`
-- `GET /api/v1/tickets?status=<string>` — `status` not enum-validated. `src/app/api/v1/tickets/route.ts`
-- `GET /api/v1/calendar/feed/[token]` — `token` path param used to look up calendar feed via `findFirst`. `src/app/api/v1/calendar/feed/[token]/route.ts`
-- `GET /api/budgeting/snapshot?planId=<id>&at=<timestamp>` — Both params reach `prisma.$queryRaw` template literal. `src/app/api/budgeting/snapshot/route.ts` lines 16–30
-- `GET /api/v1/search?q=<string>` — Global search query string.
-- `GET /api/v1/public/portal-chat?sessionId=<uuid>` — Portal chat session ID; no format validation.
-- `GET /api/v1/public/portal-auth/set-password?token=<hex>` — Token used for contact lookup.
-- `GET /api/v1/webhooks/facebook?hub.verify_token=<token>&hub.challenge=<string>&hub.mode=<string>` — Webhook challenge verification. `src/app/api/v1/webhooks/facebook/route.ts`
-- `GET /api/v1/webhooks/whatsapp?hub.verify_token=<token>` — WhatsApp webhook verification.
-- `GET /api/v1/webhooks/telegram?token=<botToken>` — Telegram bot token in URL (log exposure risk). `src/app/api/v1/webhooks/telegram/route.ts`
-
-### POST Body Fields (JSON)
-
-**Authentication:**
-- `POST /api/v1/auth/register` → `{ name, companyName, email, password }` — `src/app/api/v1/auth/register/route.ts`
-- `POST /api/v1/auth/forgot-password` → `{ email }` — `src/app/api/v1/auth/forgot-password/route.ts`
-- `POST /api/v1/auth/reset-password` → `{ token, password }` — `src/app/api/v1/auth/reset-password/route.ts`
-- `POST /api/v1/auth/verify-2fa` → `{ code }` (TOTP or backup code) — `src/app/api/v1/auth/verify-2fa/route.ts`
-
-**CRM Core:**
-- `POST /api/v1/contacts` → `{ fullName, email, phone, position, companyId, source, tags[] }` — `src/app/api/v1/contacts/route.ts`
-- `PUT /api/v1/contacts/[id]` → `{ fullName, email, phone, phones[], position, companyId, source, tags[], isActive, portalAccessEnabled }` — `src/app/api/v1/contacts/[id]/route.ts`
-- `POST /api/v1/companies` → `{ name, industry, website, phone, email, address, city, country, description, status, slaPolicyId }` — `src/app/api/v1/companies/route.ts`
-- `POST /api/v1/deals` → `{ name, companyId, campaignId, stage, valueAmount, currency, probability, expectedClose, assignedTo, notes, tags[] }` — `src/app/api/v1/deals/route.ts`
-- `PUT /api/v1/deals/[id]` → `{ name, lostReason, customerNeed, salesChannel, notes, tags[], ... }` — `src/app/api/v1/deals/[id]/route.ts`
-- `POST /api/v1/leads` → `{ contactName, companyName, email, phone, source, status, priority, estimatedValue, notes }` — `src/app/api/v1/leads/route.ts`
-
-**Financial:**
-- `POST /api/v1/invoices` → `{ title, items[{name, description, quantity, unitPrice, discount, customFields}], notes, termsAndConditions, footerNote, signerName, signerTitle, customColumns[], recipientEmail, billingAddress, voen, contractNumber, ... }` — `src/app/api/v1/invoices/route.ts` — Many fields flow into HTML templates unescaped
-- `POST /api/v1/invoices/[id]/send` → `{ recipientEmail?, subject?, message? }` — triggers email send
-- `POST /api/v1/invoices/[id]/act` → generates HTML document; uses company data from DB — `src/app/api/v1/invoices/[id]/act/route.ts` line 120 (`companyLogoUrl` in `<img src>`)
-- `POST /api/v1/offers/[id]/send` → `{ recipientEmail, subject, message }` — `message` rendered with `.replace(/\n/g, "<br>")` without HTML escaping. `src/app/api/v1/offers/[id]/send/route.ts`
-
-**Settings (SSRF Vectors):**
-- `PUT /api/v1/settings/smtp` → `{ smtpHost, smtpPort, smtpUser, smtpPass, smtpTls, fromEmail, fromName }` — `smtpHost`/`smtpPort` reach `nodemailer.createTransport()` directly. `src/app/api/v1/settings/smtp/route.ts`
-- `POST /api/v1/settings/smtp/test` → triggers email send with current SMTP config — SSRF trigger
-- `POST /api/v1/webhooks` (webhook config) → `{ url, events[] }` — `url` reaches `fetch(webhook.url)` directly. `src/lib/webhooks.ts` line 52
-
-**AI Endpoints:**
-- `POST /api/v1/ai/chat` → `{ message, context{}, history[], locale }` — No length validation; message passed to Claude API. `src/app/api/v1/ai/chat/route.ts`
-- `POST /api/v1/public/portal-chat` → `{ message, sessionId }` — No length validation; message becomes AI prompt with user data interpolated. `src/app/api/v1/public/portal-chat/route.ts`
-- `POST /api/budgeting/ai-narrative` → budget data → Claude API
-
-**User/Settings Management:**
-- `POST /api/v1/users` → `{ name, email, password, role }` — `role` field flows directly to DB; no caller role check. `src/app/api/v1/users/route.ts`
-- `PUT /api/v1/users/[id]` → `{ name, email, role, department, require2fa, totpEnabled }` — `role` can be set to `"admin"` by any user. `src/app/api/v1/users/[id]/route.ts` line 68
-- `POST /api/v1/settings/roles` → `{ name, displayName, permissions{} }` — Any user can create custom roles. `src/app/api/v1/settings/roles/route.ts`
-- `PUT /api/v1/settings/permissions` → `{ permissions{} }` — Any user can rewrite permission matrix. `src/app/api/v1/settings/permissions/route.ts`
-
-**Content (XSS Vectors):**
-- `POST /api/v1/kb` → `{ title, content, category, isPublished }` — `content` is rich HTML, rendered via `dangerouslySetInnerHTML` without sanitization. `src/app/api/v1/kb/route.ts`
-- `PUT /api/v1/kb/[id]` → `{ content }` — same KB content XSS path
-- `POST /api/v1/email-templates` → `{ name, subject, htmlBody }` — `htmlBody` rendered in preview via `dangerouslySetInnerHTML`. `src/components/email-template-form.tsx` line 392
-
-**Public Forms:**
-- `POST /api/v1/public/leads` → `{ name, email, phone, company, message, source, org_slug }` — CORS `*`. `src/app/api/v1/public/leads/route.ts`
-- `POST /api/v1/public/portal-auth` → `{ email, password }` — Portal login; no rate limiting
-- `POST /api/v1/public/portal-auth/register` → `{ email }` — Portal registration
-- `POST /api/v1/public/portal-auth/set-password` → `{ token, password, confirmPassword }` — min password 6 chars
-- `POST /api/v1/public/events/[id]/register` → `{ name, email, phone, ... }` — Event registration; triggers email
-
-**File Uploads:**
-- `POST /api/v1/contracts/[id]/files` → multipart form `file` field — 10MB limit, MIME whitelist enforced, filename randomized. `src/app/api/v1/contracts/[id]/files/route.ts` lines 44–92
-
-**Budgeting/Finance (CSV Import):**
-- `POST /api/budgeting/import-csv` → CSV file upload — parsed and batch-imported to DB
-- `POST /api/budgeting/sales-forecast/import` → import file
-
-### HTTP Headers Consumed by the Application
-- `x-organization-id` — Used by `getOrgId()` as fast path to skip session lookup (`src/lib/api-auth.ts` line 42). **If middleware is bypassed, an attacker can forge org context.**
-- `x-user-id` — Injected by middleware; consumed in ticket comments (`src/app/api/v1/tickets/[id]/comments/route.ts`) — header-injected identity.
-- `x-user-role` — Injected by middleware; consumed by API routes for role-based display.
-- `x-locale` — Injected from `NEXT_LOCALE` cookie; used for i18n language selection.
-- `X-Forwarded-For` — Read from request headers for IP address in portal auth audit logging (`src/app/api/v1/public/portal-auth/route.ts`).
-- `Authorization: Bearer <token>` — Not used by main app (JWT in cookie), but present in FastAPI service.
-
-### Cookie Values
-- `__Secure-authjs.session-token` — Encrypted JWT (A256CBC-HS512, JWE); contains `role`, `organizationId`, `plan`, `needs2fa`. httpOnly, secure.
-- `__Host-authjs.csrf-token` — CSRF protection cookie for NextAuth form submissions. httpOnly.
-- `__Secure-authjs.callback-url` — Redirect URL after login. **Could be an open redirect vector if not validated.**
-- `portal-token` — HS256 JWT for customer portal; contains `contactId`, `organizationId`. httpOnly, sameSite=lax, **no explicit `secure` flag set** (`src/app/api/v1/public/portal-auth/route.ts` line 70).
-- `NEXT_LOCALE` — Language preference (not httpOnly); read as `x-locale` header by middleware.
-
----
-
-## 6. Network & Interaction Map
-
-### 6.1 Entities
-
-| Title | Type | Zone | Tech | Data | Notes |
-|---|---|---|---|---|---|
-| UserBrowser | Identity | Internet | Chrome/Firefox/Safari | Public | External attacker or authenticated user |
-| LeadDriveCRM | Service | App | Next.js 16/TypeScript | PII, Tokens, Secrets | Primary app server, port 3000 |
-| PostgreSQL-DB | DataStore | Data | PostgreSQL 16 / Prisma | PII, Tokens, Secrets | All CRM data, sessions, credentials |
-| Redis | DataStore | Data | Redis (no auth) | Tokens | Session cache; no authentication |
-| ComputeService | Service | App | Python 3.12 / FastAPI | PII | Cost model calculations; dev --reload mode |
-| AnthropicAPI | ThirdParty | ThirdParty | Claude API (HTTPS) | PII | AI chat, auto-reply, analytics |
-| WhatsAppAPI | ThirdParty | ThirdParty | Meta Graph API v21 (HTTPS) | PII | WhatsApp messaging |
-| FacebookAPI | ThirdParty | ThirdParty | Meta Graph API v20 (HTTPS) | Tokens | Facebook/Instagram messaging; **token in URL** |
-| TelegramAPI | ThirdParty | ThirdParty | Bot API (HTTPS) | PII | Telegram messaging |
-| TwilioAPI | ThirdParty | ThirdParty | Twilio REST API (HTTPS) | PII | SMS sending |
-| SMTPServer | ThirdParty | ThirdParty | Admin-configured SMTP | Secrets | Email sending; **host/port admin-controllable** |
-| PortalCustomer | Identity | Internet | Browser + portal-token cookie | PII | Customer portal users (separate auth) |
-| WebhookTarget | ExternAsset | Internet | Admin-configured URL | PII | Outbound webhooks; **URL admin-controllable** |
-| AttackerSMTP | ExternAsset | Internet | Arbitrary SMTP | Secrets | SSRF target via SMTP config |
-
-### 6.2 Entity Metadata
-
-| Title | Metadata Key: Value |
-|---|---|
-| LeadDriveCRM | Hosts: `https://v2.leaddrivecrm.org`; Endpoints: `/api/auth/*`, `/api/v1/*`, `/api/budgeting/*`, `/api/cost-model/*`, `/api/finance/*`; Auth: NextAuth JWT cookie (`__Secure-authjs.session-token`), portal-token cookie; Dependencies: PostgreSQL-DB, Redis, ComputeService, AnthropicAPI |
-| PostgreSQL-DB | Engine: `PostgreSQL 16`; Exposure: Docker `0.0.0.0:5432` (dev); Credentials: `leaddrive:leaddrive` (hardcoded in docker-compose); ORM: Prisma 6.19.2; TenantIsolation: Partial (findUnique bypass) |
-| Redis | Engine: Redis; Exposure: Docker `0.0.0.0:6379`; Auth: **None**; Use: Session caching |
-| ComputeService | Hosts: `http://localhost:8000` (internal); Mode: `--reload` (dev); Auth: **None**; Exposed via: `src/lib/compute.ts` path concatenation |
-| AnthropicAPI | URL: `https://api.anthropic.com`; Auth: Bearer token (`ANTHROPIC_API_KEY` env); Used in: AI chat, portal chat, observations, cost analysis |
-| PortalCustomer | Cookie: `portal-token` (HS256 JWT, 7 days, httpOnly, lax, **no secure flag**); Secret: `NEXTAUTH_SECRET` or fallback `"portal-secret"`; Claims: contactId, organizationId, companyId |
-| WebhookTarget | Config: stored in `Webhook.url`; Dispatch: `src/lib/webhooks.ts:52`; Validation: **NONE** on URL |
-| SMTPServer | Config: stored in `Organization.settings.smtp`; Transport: `nodemailer`; TLS: `rejectUnauthorized: false`; Validation: **NONE** on host |
-
-### 6.3 Flows (Connections)
-
-| FROM → TO | Channel | Path/Port | Guards | Touches |
-|---|---|---|---|---|
-| UserBrowser → LeadDriveCRM | HTTPS | `:443 /login` | None | Public |
-| UserBrowser → LeadDriveCRM | HTTPS | `:443 /api/v1/auth/register` | None | PII |
-| UserBrowser → LeadDriveCRM | HTTPS | `:443 /api/v1/public/*` | None | PII |
-| UserBrowser → LeadDriveCRM | HTTPS | `:443 /api/v1/journeys/process` | **None (unauthenticated)** | PII |
-| UserBrowser → LeadDriveCRM | HTTPS | `:443 /api/v1/webhooks/*` | webhook-token | Public |
-| UserBrowser → LeadDriveCRM | HTTPS | `:443 /api/v1/*` (most) | auth:orgscoped | PII |
-| UserBrowser → LeadDriveCRM | HTTPS | `:443 /api/v1/users/[id]` (PUT role) | auth:orgscoped (NO role check) | PII |
-| UserBrowser → LeadDriveCRM | HTTPS | `:443 /api/v1/settings/*` | auth:orgscoped (NO admin check) | Secrets |
-| PortalCustomer → LeadDriveCRM | HTTPS | `:443 /api/v1/public/portal-auth` | None | PII |
-| PortalCustomer → LeadDriveCRM | HTTPS | `:443 /api/v1/public/portal-*` | portal-token cookie | PII |
-| LeadDriveCRM → PostgreSQL-DB | TCP | `:5432` | vpc-only (Docker) | PII, Tokens, Secrets |
-| LeadDriveCRM → Redis | TCP | `:6379` | vpc-only (Docker), **no-auth** | Tokens |
-| LeadDriveCRM → ComputeService | HTTP | `:8000` | vpc-only (Docker), **no-auth** | PII |
-| LeadDriveCRM → AnthropicAPI | HTTPS | `:443 /v1/messages` | api-key:Bearer | PII |
-| LeadDriveCRM → WhatsAppAPI | HTTPS | `:443 /v21.0/...` | auth:bearer | PII |
-| LeadDriveCRM → FacebookAPI | HTTPS | `:443 /v20.0/...?access_token=XXX` | auth:**token-in-url** | Tokens |
-| LeadDriveCRM → TelegramAPI | HTTPS | `:443 /bot{token}/...` | auth:token-in-path | PII |
-| LeadDriveCRM → TwilioAPI | HTTPS | `:443 /2010-04-01/...` | auth:basic | PII |
-| LeadDriveCRM → SMTPServer | SMTP | `:{smtpPort}` (admin-configured) | **no-validation** | Secrets, PII |
-| LeadDriveCRM → WebhookTarget | HTTP/S | `:{any}` (admin-configured) | **no-validation** | PII |
-
-### 6.4 Guards Directory
-
-| Guard Name | Category | Statement |
-|---|---|---|
-| None | Auth | No authentication required. Route is fully public. |
-| auth:orgscoped | Auth | Requires valid NextAuth session; extracts `organizationId` from session or `x-organization-id` header. **Does NOT enforce role-based permissions** — all 5 roles pass this check. Implemented by `getOrgId()` in `src/lib/api-auth.ts` |
-| auth:rolechecked | Authorization | Requires valid session AND role/permission check via `requireAuth(req, module, action)`. **Only used in `src/app/api/v1/projects/route.ts`** |
-| auth:admin-ui-only | Authorization | Admin-only protection exists at UI middleware level (`src/middleware.ts` lines 83–86) for `/settings/*` UI routes. **API routes at `/api/v1/settings/*` are NOT protected by this guard.** |
-| portal-token | Auth | Requires valid `portal-token` JWT cookie (HS256, signed with `NEXTAUTH_SECRET` or fallback `"portal-secret"`). Verified in `src/lib/portal-auth.ts`. Scoped to a `contactId` + `organizationId`. |
-| webhook-token | Auth | Verify token compared to environment variable (`WHATSAPP_VERIFY_TOKEN`, `FACEBOOK_VERIFY_TOKEN`). Both have hardcoded fallback defaults. |
-| calendar-token | Auth | URL path `[token]` parameter compared against `calendarToken` in User table. Tokens never expire and cannot be revoked. |
-| ownership:org | Authorization | Auto-injected `organizationId` filter in Prisma `findMany`/`findFirst`/`update`/`delete` operations. **Does NOT apply to `findUnique()` queries.** Implemented in `src/lib/prisma.ts` lines 35–71. |
-| ownership:contact | ObjectOwnership | Portal endpoints verify `contactId` from JWT token against requested ticket's `contactId`. Partial — some portal endpoints may not check. |
-| vpc-only | Network | Service only reachable within Docker bridge network. PostgreSQL, Redis, ComputeService are nominally internal but exposed on 0.0.0.0 in dev configuration. |
-| no-validation | Network | Admin-configurable URL/host with no IP allowlist or private-IP blacklist. Applies to SMTP config and webhook URL dispatch. |
-| needs2fa | Auth | Middleware enforces redirect to 2FA verification if `session.user.needs2fa === true`. Applied in `src/middleware.ts` lines 41–60. |
-| plan:module | Authorization | Feature flag based on `Organization.plan`. Applied in middleware for UI routes only. `canAccessModule(plan, pathname)` function. |
-
----
-
-## 7. Role & Privilege Architecture
-
-### 7.1 Discovered Roles
-
-| Role Name | Privilege Level | Scope/Domain | Code Implementation |
-|---|---|---|---|
-| anon | 0 | Global | No authentication required (public endpoints, webhook receivers) |
-| portal_customer | 0.5 | Org-scoped | `portal-token` cookie; represents customer contacts. No CRM dashboard access. |
-| viewer | 1 | Org-scoped | Defined with wildcard `read` only in `src/lib/permissions.ts` lines 88–97. **But API endpoints don't enforce this — viewer can write/delete.** |
-| sales | 2 | Org-scoped | Read/write on CRM core; read-only on contracts/invoices; no profitability/budgeting. `src/lib/permissions.ts` lines 40–67 |
-| support | 2 | Org-scoped | Read/write on tickets/KB/contacts; read-only on deals/invoices. `src/lib/permissions.ts` lines 68–87 |
-| manager | 4 | Org-scoped | Read/write/delete/export on most modules; limited on settings/billing. `src/lib/permissions.ts` lines 14–39 |
-| admin | 10 | Org-scoped | Wildcard `["read", "write", "delete", "export", "admin"]` on all modules. `src/lib/permissions.ts` lines 8–13 |
-
-**CRITICAL NOTE:** Despite the above privilege levels being defined, **API enforcement is nearly absent**. The only enforced role distinction at the API level is:
-1. `getOrgId()` — verifies org membership (all roles pass)
-2. `requireAuth(req, module, action)` — only used in projects routes
-3. Middleware UI redirect — blocks non-admins from `/settings/*` UI (not API)
-
-### 7.2 Privilege Lattice
-
-```
-Privilege Ordering (→ means "can access resources of" — DEFINED, not enforced in API):
-anon → (public endpoints only)
-portal_customer → (portal-token endpoints only)
-viewer → sales → manager → admin
-viewer → support → manager → admin
-
-Parallel Isolation (|| means "not ordered relative to each other"):
-sales || support (both level 2, different module focus)
-
-API Reality (what is actually enforced):
-anon → portal_customer = viewer = sales = support = manager = admin
-(all authenticated roles have identical API access — only org membership checked)
-
-Role Escalation Path (CRITICAL):
-Any authenticated user → PUT /api/v1/users/[id] with { role: "admin" } → admin
-(src/app/api/v1/users/[id]/route.ts line 68: `if (parsed.data.role !== undefined) updateData.role = parsed.data.role`)
-```
-
-**Note:** No role switching, sudo mode, or impersonation features exist in the application.
-
-### 7.3 Role Entry Points
-
-| Role | Default Landing Page | Accessible Route Patterns | Authentication Method |
-|---|---|---|---|
-| anon | `/home` | `/home`, `/login`, `/register`, `/forgot-password`, `/portal`, `/events/[id]/register` | None |
-| portal_customer | `/portal` | `/portal/*` | `portal-token` cookie (JWT, 7 days) |
-| viewer | `/` (Dashboard) | All dashboard routes; all `/api/v1/*` (in practice — not enforced) | `__Secure-authjs.session-token` cookie |
-| sales | `/` (Dashboard) | All dashboard routes; intended: CRM core only | `__Secure-authjs.session-token` cookie |
-| support | `/` (Dashboard) | All dashboard routes; intended: tickets/KB only | `__Secure-authjs.session-token` cookie |
-| manager | `/` (Dashboard) | All dashboard routes | `__Secure-authjs.session-token` cookie |
-| admin | `/` (Dashboard) | All dashboard routes including `/settings/*` | `__Secure-authjs.session-token` cookie |
-
-### 7.4 Role-to-Code Mapping
-
-| Role | Middleware/Guards | Permission Checks | Storage Location |
-|---|---|---|---|
-| viewer | `getOrgId()` (org check only) | `checkPermission("viewer", module, "read")` — defined but not called by API routes | JWT claims `role` field + `User.role` in DB |
-| sales | `getOrgId()` (org check only) | `checkPermission("sales", ...)` — defined but not called | JWT claims `role` field + `User.role` in DB |
-| support | `getOrgId()` (org check only) | `checkPermission("support", ...)` — defined but not called | JWT claims `role` field + `User.role` in DB |
-| manager | `getOrgId()` (org check only) | `checkPermission("manager", ...)` — defined but not called | JWT claims `role` field + `User.role` in DB |
-| admin | `getOrgId()` (org check only) + UI middleware redirect for `/settings/*` | `checkPermission("admin", ...)` — wildcard, always true | JWT claims `role` field + `User.role` in DB |
-
----
-
-## 8. Authorization Vulnerability Candidates
-
-### 8.1 Horizontal Privilege Escalation Candidates
-
-| Priority | Endpoint Pattern | Object ID Parameter | Data Type | Sensitivity |
-|---|---|---|---|---|
-| **High** | `/api/v1/invoices/[id]/payments/[paymentId]` | paymentId | financial | Uses `findUnique({where:{id}})` — no org filter. Cross-tenant payment access. `src/app/api/v1/invoices/[id]/payments/[paymentId]/route.ts` line 19 |
-| **High** | `/api/v1/contacts/[id]` | id | PII | Uses `findFirst` with orgId — protected. But no role check means viewer can delete. |
-| **High** | `/api/v1/users/[id]` | id | user_data, credentials | Any org user can read/modify any other org user, including their role and 2FA settings. `src/app/api/v1/users/[id]/route.ts` |
-| **High** | `/api/v1/public/portal-tickets/[id]` | id | support_data | Portal ticket IDOR — any portal customer may access other customers' tickets if org isolation is weak. |
-| **Medium** | `/api/v1/deals/[id]` | id | financial | No ownership check — any org user (incl. viewer) can modify deals. |
-| **Medium** | `/api/v1/invoices/[id]` | id | financial | No ownership check — any org user can modify/delete invoices. |
-| **Medium** | `/api/v1/contracts/[id]/files/[fileId]` | id, fileId | documents | No ownership check on file within contract. |
-| **Medium** | `/api/v1/channels/[id]` | id | Tokens, Secrets | Returns plaintext API keys, bot tokens. Any org user can read channel secrets. `src/app/api/v1/channels/route.ts` |
-| **Low** | `/api/v1/tasks/[id]` | id | user_data | No assignment check — any user can modify any task. |
-| **Low** | `/api/v1/ai-sessions/[id]` | id | PII | AI conversation history accessible to any org member. |
-
-### 8.2 Vertical Privilege Escalation Candidates
-
-| Target Role | Endpoint Pattern | Functionality | Risk Level |
-|---|---|---|---|
-| admin | `PUT /api/v1/users/[id]` with `{ role: "admin" }` | **Direct role escalation** — any user can set their own role to admin. No role check on handler. `src/app/api/v1/users/[id]/route.ts` line 68 | **CRITICAL** |
-| admin | `PUT /api/v1/settings/permissions` | Rewrite the entire RBAC permission matrix for all roles. Any authenticated user. `src/app/api/v1/settings/permissions/route.ts` | **CRITICAL** |
-| admin | `POST /api/v1/settings/roles` | Create custom roles with arbitrary permissions. `src/app/api/v1/settings/roles/route.ts` | **CRITICAL** |
-| admin | `PUT /api/v1/settings/smtp` | Configure SMTP server (SSRF). No admin check. `src/app/api/v1/settings/smtp/route.ts` | **HIGH** |
-| admin | `POST /api/v1/users` | Create new users with `role: "admin"`. No role check on creator. `src/app/api/v1/users/route.ts` | **HIGH** |
-| admin | `PUT /api/v1/users/[id]` with `{ totpEnabled: false, require2fa: false }` | Disable another user's 2FA. No role check. `src/app/api/v1/users/[id]/route.ts` lines 76–84 | **HIGH** |
-| admin | `PUT /api/v1/settings/roles` | Modify existing roles' permissions. `src/app/api/v1/settings/roles/route.ts` | **HIGH** |
-| admin | `GET /api/v1/channels` | Retrieve all channel API tokens/secrets (WhatsApp, Telegram, etc.) — no role check. | **HIGH** |
-| admin | `GET /api/v1/audit-log` | View all org activity logs. No role check — viewer can access. | **MEDIUM** |
-| (cross-tenant) | `GET /api/v1/invoices/[id]/payments/[paymentId]` | Access payments from other organizations via `findUnique()` without org filter | **HIGH** |
-
-### 8.3 Context-Based Authorization Candidates
-
-| Workflow | Endpoint | Expected Prior State | Bypass Potential |
-|---|---|---|---|
-| 2FA Enforcement | `/api/v1/auth/verify-2fa` | Login completed, `needs2fa=true` in session | Direct API call to verify 2FA for any userId without knowing the session state |
-| Journey Enrollment | `POST /api/v1/journeys/process` | Should require auth + enrolled contacts | **Fully unauthenticated** — anyone can trigger journey processing to send bulk emails/SMS |
-| Portal Registration | `POST /api/v1/public/portal-auth/set-password` | Verification token sent via email | Brute-force short token space; token not rate-limited |
-| Password Reset | `POST /api/v1/auth/reset-password` | Reset token generated via forgot-password | Token is hex (64 chars) — secure, but no rate limiting on reset attempts |
-| Invoice Workflow | `POST /api/v1/invoices/[id]/send` | Invoice exists and is finalized | Any user can send any draft invoice to any email address |
-| Calendar Token | `GET /api/v1/calendar/feed/[token]` | Token issued to org user | Tokens never expire — perpetual access if token leaked |
-| Campaign Send | `POST /api/v1/campaigns/[id]/send` | Campaign prepared with recipients | Any authenticated user can trigger mass email send to all org contacts |
-| Recurring Invoice | `POST /api/v1/recurring-invoices/generate` | Should be triggered by scheduler | Any user can manually trigger batch invoice generation |
-| Segment Preview | `POST /api/v1/segments/preview` | Segment defined | Can preview and enumerate contact data across segments |
-| Journey Enroll | `POST /api/v1/journeys/enroll` | Contact exists | Any user can enroll any contact into any automated workflow |
-
----
-
-## 9. Injection Sources
-
-### SQL Injection
-
-**Source #1 — Budgeting Snapshot Raw SQL**
-- **File:** `src/app/api/budgeting/snapshot/route.ts`
-- **Lines:** 16–32
-- **User Input Variables:** `planId` (from `searchParams.get("planId")`), `at` (from `searchParams.get("at")`)
-- **Dangerous Sink:** `prisma.$queryRaw` template literal
-- **Data Flow:** `GET /api/budgeting/snapshot?planId=X&at=Y` → `planId = searchParams.get("planId")` → `atDate = at ? new Date(at) : new Date()` → `prisma.$queryRaw\`... WHERE "planId" = ${planId} AND ... AND "createdAt" <= ${atDate}\``
-- **Assessment:** Prisma's tagged template literal parameterizes values correctly — **not injectable via standard SQL injection**. However, the `new Date(at)` construction could fail unexpectedly with malformed input (potential error-based information disclosure).
-- **Network Accessible:** YES — authenticated endpoint
-
-### Command Injection
-- **None identified.** No `child_process`, `exec`, `spawn`, or shell commands found in network-accessible code paths.
-
-### Path Traversal / LFI
-
-**Source #2 — Legal File JSON Read (Static — Not Exploitable)**
-- **File:** `src/app/api/v1/pricing/export/route.ts`
-- **Lines:** 9, 58
-- **Assessment:** Path is hardcoded (`path.join(process.cwd(), "public", "data", "company_legal_names.json")`). Not user-controlled. **Not exploitable.**
-
-**Source #3 — Contract File Serving**
-- **File:** `src/app/api/v1/contracts/[id]/files/route.ts`
-- **Lines:** 71, 75
-- **User Input:** Original filename from upload; however file is saved with randomized UUID name.
-- **Assessment:** Filename randomized: `crypto.randomBytes(16).toString("hex") + ext`. **Not traversal-exploitable.** However, the `id` path parameter is used in the contract lookup — protected by org scope via `findFirst`.
-- **Network Accessible:** YES
-
-### Server-Side Template Injection (SSTI)
-
-**Source #4 — Campaign Email Template Rendering**
-- **File:** `src/lib/email.ts`
-- **Lines:** 173–179 (`renderTemplate()` function)
-- **User Input:** `campaign.htmlBody` (stored in DB), contact data (`contact.fullName`)
-- **Dangerous Sink:** `rendered.replace(new RegExp(\`\\{\\{${key}\\}\\}\`, "g"), value)` — simple string substitution
-- **Data Flow:** `POST /api/v1/campaigns/[id]/send` → load `campaign.htmlBody` from DB → `renderTemplate(htmlBody, { client_name: contact.fullName })` → send email via SMTP
-- **Assessment:** Simple regex string replacement — **not a full SSTI** (no expression evaluation). However, if `contact.fullName` contains `{{` patterns, could result in recursive/unintended substitution in edge cases. Primary risk is stored XSS in email rendering.
-- **Network Accessible:** YES — authenticated endpoint
-
-**Source #5 — Invoice HTML Template Generation (Unescaped Interpolation)**
-- **File:** `src/lib/invoice-html.ts`
-- **Lines:** 148–149, 176–180, 199, 233–234, 241–242, 303, 308
-- **User Input:** Company names, invoice item descriptions, signer names, custom messages — all from database (user-controlled CRM data)
-- **Dangerous Sink:** Direct string interpolation into HTML template: `` `${companyName}` ``, `` `${item.description}` ``, `` `${customMessage}` `` etc.
-- **Data Flow:** `GET /api/v1/invoices/[id]/pdf` or `POST /api/v1/invoices/[id]/act` → build invoice from DB data → `generateInvoiceHtml(invoice, org)` → HTML template string with unescaped user data → returned as HTML/PDF
-- **Assessment:** **HTML injection / stored XSS** — user-controlled values injected into HTML without escaping. Not evaluated as code server-side, but rendered in browser as HTML, enabling XSS.
-- **Network Accessible:** YES
-
-### XSS / HTML Injection Sinks (Stored XSS)
-
-**Sink #1 — Knowledge Base Article Content**
-- **File:** `src/app/(dashboard)/knowledge-base/[id]/page.tsx` line 139
-- `dangerouslySetInnerHTML={{ __html: article.content }}` — no sanitization
-- **Input:** `POST /api/v1/kb` → `content` field (rich HTML) → stored in DB → rendered unescaped
-- **Network Accessible:** YES — authenticated dashboard
-
-**Sink #2 — Customer Portal KB Display**
-- **File:** `src/app/portal/knowledge-base/page.tsx` line 81
-- `dangerouslySetInnerHTML={{ __html: selectedArticle.content }}` — no sanitization
-- **Input:** Same KB content flow as above — but rendered in **public-facing portal**
-- **Network Accessible:** YES — public portal
-
-**Sink #3 — Email Log Body Display**
-- **File:** `src/app/(dashboard)/email-log/page.tsx` line 246
-- `dangerouslySetInnerHTML={{ __html: log.body }}` — no sanitization
-- **Input:** Email HTML body stored when campaigns/invoices are sent
-- **Network Accessible:** YES — authenticated dashboard
-
-**Sink #4 — Email Template Preview**
-- **File:** `src/components/email-template-form.tsx` lines 81, 90, 134, 392–393
-- `dangerouslySetInnerHTML={{ __html: form.htmlBody.replace(...) }}` and `editorRef.current.innerHTML = ...`
-- **Input:** User-authored HTML template content
-- **Network Accessible:** YES — authenticated dashboard
-
-**Sink #5 — AI Observations (Custom Markdown Parser)**
-- **File:** `src/components/profitability/ai-observations.tsx` line 162
-- `dangerouslySetInnerHTML={{ __html: markdownToHtml(result.analysis) }}`
-- Custom `markdownToHtml()` (lines 22–56) uses unsanitized string interpolation: `` html += `<h4>${trimmed.slice(4)}</h4>` ``
-- **Input:** Claude AI API response (controllable via prompt injection)
-- **Network Accessible:** YES — authenticated dashboard
-
-**Sink #6 — Invoice Act Document (HTML Attribute Injection)**
-- **File:** `src/app/api/v1/invoices/[id]/act/route.ts` lines 120–121
-- `` `<img src="${companyLogoUrl}" alt="${companyName}" ...>` `` — `companyLogoUrl` can be `javascript:...` or data URI
-- **Input:** Org settings `companyLogoUrl` field
-- **Network Accessible:** YES — authenticated endpoint
-
-### Deserialization
-- **None identified** as high-risk. JSON.parse is used on DB data (not raw user input). `segment.conditions as any` casting (`src/app/api/v1/campaigns/[id]/send/route.ts` lines 49–50) is unsafe but only affects internal logic, not deserialization of user-supplied bytes.
-
-### SSRF Sinks
-
-**SSRF #1 — Webhook URL Dispatch (CRITICAL)**
-- **File:** `src/lib/webhooks.ts` line 52
-- **Sink:** `await fetch(webhook.url, { method: "POST", body: JSON.stringify(payload) })`
-- **Input Path:** `POST /api/v1/webhooks` → admin stores arbitrary URL → any CRM event triggers dispatch
-- **Control:** FULL URL control, no IP/protocol restriction
-- **Network Accessible:** YES — any CRM event (contact/deal/lead updates) triggers webhook
-
-**SSRF #2 — SMTP Host/Port (CRITICAL)**
-- **File:** `src/lib/email.ts` lines 14–34, 54–55
-- **Sink:** `nodemailer.createTransport({ host: config.smtpHost, port: config.smtpPort, ... })`
-- **Input Path:** `PUT /api/v1/settings/smtp` → stores arbitrary host/port → any email send uses it
-- **Control:** FULL host and port control, `rejectUnauthorized: false` (TLS bypass)
-- **Network Accessible:** YES — `POST /api/v1/settings/smtp/test` + any email send endpoint
-
-**SSRF #3 — Compute Service Path Concatenation (HIGH)**
-- **File:** `src/lib/compute.ts` line 7
-- **Sink:** `` await fetch(`${COMPUTE_URL}${path}`, { method: "POST" }) ``
-- **Input Path:** API route parameters appended to compute service base URL; no path validation
-- **Control:** PARTIAL (path segment only)
-- **Network Accessible:** YES — indirectly via cost model/AI endpoints

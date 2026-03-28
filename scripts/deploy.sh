@@ -4,11 +4,14 @@
 # Run from Mac: bash scripts/deploy.sh
 # ═══════════════════════════════════════════════════
 
-SERVER="178.156.249.177"
-SSH_USER="root"
+SERVER="${DEPLOY_SERVER:?Set DEPLOY_SERVER env var}"
+SSH_USER="${DEPLOY_SSH_USER:-root}"
 APP_DIR="/opt/leaddrive-v2"
-REPO="https://github.com/rashadrahimov/leaddrive-v2.git"
-DOMAIN="leaddrivecrm.org"
+REPO="${DEPLOY_REPO:?Set DEPLOY_REPO env var}"
+DOMAIN="${DEPLOY_DOMAIN:-leaddrivecrm.org}"
+DB_USER="${DB_USER:-postgres}"
+DB_PASS="${DB_PASS:?Set DB_PASS env var}"
+DB_NAME="${DB_NAME:-leaddrive_v2}"
 
 echo "🚀 LeadDrive CRM v2 — Deploying to $SERVER"
 echo ""
@@ -70,9 +73,9 @@ cd /opt/leaddrive-v2
 if [ ! -f .env ]; then
   cat > .env << 'EOF'
 # LeadDrive CRM v2 — Production
-DATABASE_URL="postgresql://hermes:hermes@localhost:5432/leaddrive_v2"
-NEXTAUTH_SECRET="leaddrive-v2-secret-change-me-in-production"
-NEXTAUTH_URL="http://leaddrivecrm.org"
+DATABASE_URL="${DATABASE_URL:?Set DATABASE_URL}"
+NEXTAUTH_SECRET="${NEXTAUTH_SECRET:?Set NEXTAUTH_SECRET}"
+NEXTAUTH_URL="${NEXTAUTH_URL:-http://leaddrivecrm.org}"
 NODE_ENV="production"
 EOF
   echo "   Created .env"
@@ -89,9 +92,9 @@ ssh "$SSH_USER@$SERVER" bash -s << 'REMOTE'
 set -e
 
 # Create v2 database if not exists (keeps v1 database intact)
-PGPASSWORD='hermes' psql -h localhost -U hermes -d postgres -tc \
-  "SELECT 1 FROM pg_database WHERE datname='leaddrive_v2'" | grep -q 1 || \
-  PGPASSWORD='hermes' psql -h localhost -U hermes -d postgres -c "CREATE DATABASE leaddrive_v2"
+PGPASSWORD="$DB_PASS" psql -h localhost -U "$DB_USER" -d postgres -tc \
+  "SELECT 1 FROM pg_database WHERE datname='$DB_NAME'" | grep -q 1 || \
+  PGPASSWORD="$DB_PASS" psql -h localhost -U "$DB_USER" -d postgres -c "CREATE DATABASE $DB_NAME"
 
 echo "   ✅ Database leaddrive_v2 ready"
 REMOTE
@@ -124,7 +127,7 @@ set -e
 cd /opt/leaddrive-v2
 
 # Check if data already imported
-COUNT=$(PGPASSWORD='hermes' psql -h localhost -U hermes -d leaddrive_v2 -t -A -c \
+COUNT=$(PGPASSWORD="$DB_PASS" psql -h localhost -U "$DB_USER" -d "$DB_NAME" -t -A -c \
   "SELECT count(*) FROM companies" 2>/dev/null || echo "0")
 
 if [ "$COUNT" -gt "0" ]; then
@@ -209,7 +212,7 @@ echo "✅ Deployment complete!"
 echo ""
 echo "   🌐 v2: http://v2.leaddrivecrm.org"
 echo "   🌐 Direct: http://$SERVER:3001"
-echo "   🔑 Login: admin@leaddrive.com / admin123"
+echo "   🔑 Login: see .env for credentials"
 echo ""
 echo "   v1 (unchanged): http://leaddrivecrm.org"
 echo ""

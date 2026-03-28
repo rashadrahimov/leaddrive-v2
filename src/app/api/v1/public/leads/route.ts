@@ -28,33 +28,7 @@ export async function POST(request: Request) {
     })
 
     if (!org) {
-      // Fallback: use first org
-      const firstOrg = await prisma.organization.findFirst()
-      if (!firstOrg) {
-        return NextResponse.json({ success: false, error: "Organization not found" }, { status: 404 })
-      }
-
-      const lead = await prisma.lead.create({
-        data: {
-          organizationId: firstOrg.id,
-          contactName: data.name,
-          email: data.email,
-          phone: data.phone,
-          companyName: data.company,
-          source: data.source,
-          status: "new",
-          priority: "medium",
-          notes: data.message,
-        },
-      })
-
-      return NextResponse.json({
-        success: true,
-        data: { id: lead.id, name: data.name, email: data.email, status: "new", message: "Lead submitted successfully" },
-      }, {
-        status: 201,
-        headers: { "Access-Control-Allow-Origin": "*" },
-      })
+      return NextResponse.json({ success: false, error: "Organization not found" }, { status: 404 })
     }
 
     const lead = await prisma.lead.create({

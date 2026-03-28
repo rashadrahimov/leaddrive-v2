@@ -30,7 +30,14 @@ export async function GET(
       where: { id, organizationId: orgId },
     })
     if (!channel) return NextResponse.json({ error: "Not found" }, { status: 404 })
-    return NextResponse.json({ success: true, data: channel })
+    // Mask sensitive fields
+    const masked = {
+      ...channel,
+      botToken: channel.botToken ? `****${channel.botToken.slice(-4)}` : null,
+      apiKey: channel.apiKey ? `****${channel.apiKey.slice(-4)}` : null,
+      appSecret: channel.appSecret ? `****${channel.appSecret.slice(-4)}` : null,
+    }
+    return NextResponse.json({ success: true, data: masked })
   } catch {
     return NextResponse.json({ error: "Not found" }, { status: 404 })
   }

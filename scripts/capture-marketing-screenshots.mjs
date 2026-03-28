@@ -7,48 +7,138 @@ const outDir = path.join(__dirname, "..", "public", "marketing");
 
 const BASE = "https://v2.leaddrivecrm.org";
 
+// FINAL 20: AI pages first, then best non-AI
 const pages = [
+  // --- AI PAGES (1-9) ---
+  { name: "ai-lead-scoring", path: "/lead-scoring" },
+  { name: "ai-lead-detail", path: "/leads", detail: true },
+  { name: "ai-ticket-detail", path: "/tickets", detail: true },
+  { name: "ai-deal-detail", path: "/deals", detail: true },
+  { name: "ai-contact-detail", path: "/contacts", detail: true },
+  { name: "ai-profitability", path: "/profitability" },
+  { name: "ai-budgeting", path: "/budgeting" },
+  { name: "ai-portal-chat", path: "/portal/chat", special: "portal" },
+  { name: "ai-assistant-panel", path: "/", special: "open-ai-panel" },
+  // --- NON-AI PAGES (10-20) ---
   { name: "crm-dashboard", path: "/" },
   { name: "deals-pipeline", path: "/deals" },
-  { name: "companies-list", path: "/companies" },
-  { name: "analytics-profitability", path: "/profitability" },
-  { name: "budgeting-pnl", path: "/budgeting" },
   { name: "inbox-channels", path: "/inbox" },
+  { name: "companies-list", path: "/companies" },
+  { name: "finance-treasury", path: "/finance" },
+  { name: "reports-analytics", path: "/reports" },
+  { name: "invoices-billing", path: "/invoices" },
   { name: "marketing-campaigns", path: "/campaigns" },
   { name: "support-tickets", path: "/tickets" },
-  { name: "erp-projects", path: "/projects" },
-  { name: "platform-settings", path: "/settings/users" },
+  { name: "agent-desktop", path: "/support/agent-desktop" },
+  { name: "events-management", path: "/events" },
 ];
 
 async function run() {
-  const browser = await chromium.launch({ headless: true });
+  const browser = await chromium.launch({ headless: true, channel: "chrome" });
   const context = await browser.newContext({
     viewport: { width: 1440, height: 900 },
+    deviceScaleFactor: 2, // Retina 2x for crisp screenshots
     colorScheme: "light",
+    ignoreHTTPSErrors: true,
   });
   const page = await context.newPage();
 
-  // Login first
+  // Set AZ locale
+  await context.addCookies([{
+    name: "NEXT_LOCALE",
+    value: "az",
+    domain: "v2.leaddrivecrm.org",
+    path: "/",
+  }]);
+
+  // Get CSRF token
+  console.log("Getting CSRF token...");
+  await page.goto(`${BASE}/api/auth/csrf`, { waitUntil: "domcontentloaded" });
+  const csrfBody = await page.textContent("body");
+  const csrfToken = JSON.parse(csrfBody).csrfToken;
+
+  // Login
   console.log("Logging in...");
-  await page.goto(`${BASE}/login`, { waitUntil: "networkidle" });
-  await page.fill('input[name="email"]', "admin@leaddrive.com");
-  await page.fill('input[name="password"]', "admin123");
-  await page.click('button[type="submit"]');
-  await page.waitForURL("**/", { timeout: 15000 });
-  console.log("Logged in!");
+  await page.evaluate(async ({ base, csrf }) => {
+    await fetch(`${base}/api/auth/callback/credentials`, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        email: "azar.alili@gtc.az",
+        password: process.env.ADMIN_PASSWORD || "changeme",
+        csrfToken: csrf,
+        callbackUrl: `${base}/`,
+        json: "true",
+      }),
+      redirect: "follow",
+    });
+  }, { base: BASE, csrf: csrfToken });
+
+  await page.goto(`${BASE}/`, { waitUntil: "domcontentloaded", timeout: 15000 });
+  await page.waitForTimeout(3000);
+
+  if (page.url().includes("/login")) {
+    console.error("Login failed!");
+    await browser.close();
+    return;
+  }
+  console.log("Logged in!\n");
 
   // Force light theme
-  await page.evaluate(() => {
-    localStorage.setItem("theme", "light");
-    document.documentElement.classList.remove("dark");
-    document.documentElement.classList.add("light");
-  });
+  await page.evaluate(() => localStorage.setItem("theme", "light"));
 
-  for (const { name, path: pagePath } of pages) {
-    console.log(`Capturing ${name} (${pagePath})...`);
-    await page.goto(`${BASE}${pagePath}`, { waitUntil: "networkidle", timeout: 30000 });
+  for (let i = 0; i < pages.length; i++) {
+    const { name, path: pagePath, detail, special } = pages[i];
+    console.log(`[${i + 1}/${pages.length}] ${name}...`);
 
-    // Force light theme on each page load
+    try {
+      if (special === "open-ai-panel") {
+        // Navigate to dashboard and open floating AI assistant
+        await page.goto(`${BASE}/`, { waitUntil: "domcontentloaded", timeout: 30000 });
+        await page.waitForTimeout(3000);
+        // Click the floating Brain button (bottom-right)
+        const fabButton = page.locator('button:has(svg.lucide-brain), [class*="fixed"][class*="bottom"]').last();
+        if (await fabButton.count() > 0) {
+          await fabButton.click();
+          await page.waitForTimeout(2000);
+        }
+      } else if (special === "portal") {
+        // Portal has different auth — just navigate and hope session works
+        await page.goto(`${BASE}${pagePath}`, { waitUntil: "domcontentloaded", timeout: 30000 });
+        await page.waitForTimeout(3000);
+      } else if (detail) {
+        // Navigate to list, then click first item to get detail page
+        await page.goto(`${BASE}${pagePath}`, { waitUntil: "domcontentloaded", timeout: 30000 });
+        await page.waitForTimeout(3000);
+
+        // Try to find and click first detail link
+        const detailLink = page.locator(`a[href*="${pagePath}/"]`).first();
+        if (await detailLink.count() > 0) {
+          await detailLink.click();
+          await page.waitForTimeout(3000);
+        } else {
+          // Try clickable rows
+          const row = page.locator("tr.cursor-pointer, [data-row-key], .cursor-grab").first();
+          if (await row.count() > 0) {
+            await row.click();
+            await page.waitForTimeout(3000);
+          }
+        }
+      } else {
+        await page.goto(`${BASE}${pagePath}`, { waitUntil: "domcontentloaded", timeout: 30000 });
+        await page.waitForTimeout(3000);
+      }
+    } catch (e) {
+      console.log(`  Navigation error: ${e.message}`);
+      await page.waitForTimeout(2000);
+    }
+
+    if (page.url().includes("/login")) {
+      console.log(`  SKIPPED (login redirect)`);
+      continue;
+    }
+
+    // Force light theme
     await page.evaluate(() => {
       localStorage.setItem("theme", "light");
       document.documentElement.classList.remove("dark");
@@ -56,25 +146,25 @@ async function run() {
       document.documentElement.style.colorScheme = "light";
     });
 
-    // Click theme toggle if still dark
-    const htmlClass = await page.evaluate(() => document.documentElement.className);
-    if (htmlClass.includes("dark")) {
-      const toggle = page.locator('button[title="Toggle theme"]');
-      if (await toggle.count() > 0) {
-        await toggle.click();
-        await page.waitForTimeout(500);
-      }
-    }
-
-    await page.waitForTimeout(1500); // Let charts/animations render
+    await page.waitForTimeout(2000);
 
     const filePath = path.join(outDir, `${name}.png`);
     await page.screenshot({ path: filePath, type: "png" });
-    console.log(`  Saved: ${filePath}`);
+    const url = page.url();
+    console.log(`  OK -> ${name}.png (${url})`);
+
+    // Close AI panel if opened
+    if (special === "open-ai-panel") {
+      const closeBtn = page.locator('button:has(svg.lucide-x)').first();
+      if (await closeBtn.count() > 0) {
+        await closeBtn.click();
+        await page.waitForTimeout(500);
+      }
+    }
   }
 
   await browser.close();
-  console.log("Done! All 10 screenshots captured.");
+  console.log(`\nDone! ${pages.length} screenshots captured in 2x retina.`);
 }
 
 run().catch(console.error);

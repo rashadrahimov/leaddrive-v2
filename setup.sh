@@ -58,7 +58,7 @@ echo "  Compute:  http://localhost:8000"
 echo "  Database: localhost:5432 (leaddrive/leaddrive)"
 echo "  Redis:    localhost:6379"
 echo ""
-echo "  Login: admin@leaddrive.com / admin123"
+echo "  Login: see .env for credentials"
 echo "═══════════════════════════════════════════════════"
 echo ""
 

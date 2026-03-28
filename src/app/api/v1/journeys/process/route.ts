@@ -14,7 +14,11 @@ export async function POST(req: NextRequest) {
   const authHeader = req.headers.get("authorization")
   const token = authHeader?.replace("Bearer ", "")
 
-  if (!CRON_SECRET || token !== CRON_SECRET) {
+  if (!CRON_SECRET) {
+    console.error("[Journey Process] CRON_SECRET not configured")
+    return NextResponse.json({ error: "Server misconfigured" }, { status: 500 })
+  }
+  if (token !== CRON_SECRET) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 

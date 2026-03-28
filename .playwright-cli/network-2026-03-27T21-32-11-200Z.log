@@ -1,6 +1,0 @@
-[GET] https://v2.leaddrivecrm.org/api/auth/session => [200] OK
-[GET] https://v2.leaddrivecrm.org/register?_rsc=17yrj => [200] OK
-[GET] https://v2.leaddrivecrm.org/forgot-password?_rsc=17yrj => [200] OK
-[GET] https://v2.leaddrivecrm.org/api/auth/session => [200] OK
-[GET] https://v2.leaddrivecrm.org/forgot-password?_rsc=to9i9 => [200] OK
-[GET] https://v2.leaddrivecrm.org/register?_rsc=to9i9 => [200] OK

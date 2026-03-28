@@ -176,10 +176,14 @@ export async function sendEmail({
   }
 }
 
+function escapeHtmlValue(str: string): string {
+  return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;")
+}
+
 export function renderTemplate(htmlBody: string, variables: Record<string, string>): string {
   let rendered = htmlBody
   for (const [key, value] of Object.entries(variables)) {
-    rendered = rendered.replace(new RegExp(`\\{\\{${key}\\}\\}`, "g"), value)
+    rendered = rendered.replaceAll(`{{${key}}}`, escapeHtmlValue(value))
   }
   return rendered
 }

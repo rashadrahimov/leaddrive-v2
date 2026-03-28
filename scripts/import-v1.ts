@@ -139,7 +139,7 @@ async function main() {
         organizationId: org.id,
         email: "admin@leaddrive.com",
         name: "Admin",
-        passwordHash: await bcrypt.hash("admin123", 12),
+        passwordHash: await bcrypt.hash(process.env.ADMIN_PASSWORD || "changeme", 12),
         role: "admin",
       },
     })
@@ -1042,7 +1042,7 @@ async function main() {
   console.log(`   - AI Sessions: ${v1Sessions.length} (+ ${msgCount} messages)`)
   console.log(`   - Audit Log: ${auditCount}`)
   console.log("")
-  console.log("   🔑 Login: admin@leaddrive.com / admin123")
+  console.log("   🔑 Login: admin@leaddrive.com (password set via ADMIN_PASSWORD env var)")
   console.log("   Or use your v1 credentials (passwords preserved)")
   console.log("═══════════════════════════════════════════════════")
 }

@@ -599,6 +599,7 @@
     "colCompany": "Company",
     "colEmail": "Email",
     "colPhone": "Phone",
+    "colSource": "Source",
     "colStatus": "Status",
     "colPortal": "Portal",
     "sortNameAsc": "Name A → Z",

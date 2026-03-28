@@ -59,9 +59,24 @@ export async function requireAuth(
   module?: Module | string,
   action?: Action
 ): Promise<AuthResult | NextResponse> {
-  const session = await getSession(req)
-  if (!session) {
+  const rawSession = await auth()
+  if (!rawSession?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  }
+
+  // SECURITY: Block API access if 2FA verification is pending
+  const needs2fa = (rawSession.user as any).needs2fa
+  const needsSetup2fa = (rawSession.user as any).needsSetup2fa
+  if (needs2fa || needsSetup2fa) {
+    return NextResponse.json({ error: "2FA verification required" }, { status: 403 })
+  }
+
+  const session: AuthResult = {
+    orgId: rawSession.user.organizationId || "",
+    userId: rawSession.user.id || "",
+    role: (rawSession.user.role || "viewer") as Role,
+    email: rawSession.user.email || "",
+    name: rawSession.user.name || "",
   }
 
   // Resolve module and action from request if not explicitly provided

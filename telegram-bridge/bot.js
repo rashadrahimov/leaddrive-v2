@@ -3,8 +3,9 @@ const { spawn, execSync } = require('child_process');
 const path = require('path');
 
 // === НАСТРОЙКИ ===
-const BOT_TOKEN = '8746765197:AAEbtWc1fEoApB2GM_Hsbtg6_gBvxugHeCk';
-const OWNER_ID = 1903991747;
+const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+const OWNER_ID = parseInt(process.env.TELEGRAM_OWNER_ID || '0');
+if (!BOT_TOKEN) { console.error('Set TELEGRAM_BOT_TOKEN env var'); process.exit(1); }
 const PROJECT_DIR = path.resolve(__dirname, '..');
 const MAX_MESSAGE_LENGTH = 4000;
 

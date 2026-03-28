@@ -18,7 +18,11 @@ export async function GET(req: NextRequest) {
   const token = req.nextUrl.searchParams.get("hub.verify_token")
   const challenge = req.nextUrl.searchParams.get("hub.challenge")
 
-  const verifyToken = process.env.WHATSAPP_VERIFY_TOKEN || "leaddrive-whatsapp-verify-2026"
+  const verifyToken = process.env.WHATSAPP_VERIFY_TOKEN
+  if (!verifyToken) {
+    console.error("[WA Webhook] WHATSAPP_VERIFY_TOKEN not set")
+    return NextResponse.json({ error: "Server misconfigured" }, { status: 500 })
+  }
 
   if (mode === "subscribe" && token === verifyToken) {
     console.log("[WA Webhook] Verification successful")

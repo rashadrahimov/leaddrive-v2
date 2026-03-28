@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { prisma } from "@/lib/prisma"
-import { getOrgId } from "@/lib/api-auth"
+import { getOrgId, getSession } from "@/lib/api-auth"
 
 const createAuditLogSchema = z.object({
   userId: z.string().optional(),
@@ -49,8 +49,12 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const orgId = await getOrgId(req)
-  if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  const session = await getSession(req)
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  const orgId = session.orgId
+  if (session.role !== "admin" && session.role !== "owner") {
+    return NextResponse.json({ error: "Admin access required" }, { status: 403 })
+  }
 
   const body = await req.json()
   const parsed = createAuditLogSchema.safeParse(body)

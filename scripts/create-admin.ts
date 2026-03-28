@@ -5,6 +5,12 @@ import bcrypt from "bcryptjs"
 const prisma = new PrismaClient()
 
 async function main() {
+  const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD
+  if (!ADMIN_PASSWORD) {
+    console.error("❌ Set ADMIN_PASSWORD env var")
+    process.exit(1)
+  }
+
   // Find the organization
   const org = await prisma.organization.findFirst({ where: { slug: "guven-technology" } })
   if (!org) {
@@ -13,27 +19,12 @@ async function main() {
   }
   console.log(`Organization: ${org.name} (${org.id})`)
 
+  const passwordHash = await bcrypt.hash(ADMIN_PASSWORD, 12)
+
   // Create or update admin user
-  const passwordHash = await bcrypt.hash("admin123", 12)
-
   const admin = await prisma.user.upsert({
-    where: { organizationId_email: { organizationId: org.id, email: "admin@leaddrive.com" } },
-    update: { passwordHash, role: "admin", isActive: true },
-    create: {
-      organizationId: org.id,
-      email: "admin@leaddrive.com",
-      name: "Admin",
-      passwordHash,
-      role: "admin",
-    },
-  })
-  console.log(`✅ Admin user: ${admin.email} (${admin.id})`)
-  console.log("   Password: admin123")
-
-  // Also reset password for rashadrahimsoy@gmail.com
-  const rashad = await prisma.user.upsert({
     where: { organizationId_email: { organizationId: org.id, email: "rashadrahimsoy@gmail.com" } },
-    update: { passwordHash: await bcrypt.hash("admin123", 12) },
+    update: { passwordHash, role: "admin", isActive: true },
     create: {
       organizationId: org.id,
       email: "rashadrahimsoy@gmail.com",
@@ -42,7 +33,7 @@ async function main() {
       role: "admin",
     },
   })
-  console.log(`✅ User: ${rashad.email} — password reset to admin123`)
+  console.log(`✅ Admin: ${admin.email} (${admin.id})`)
 }
 
 main()

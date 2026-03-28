@@ -1,6 +1,0 @@
-[GET] https://v2.leaddrivecrm.org/api/auth/session => [200] OK
-[GET] https://v2.leaddrivecrm.org/login?_rsc=1srdy => [200] OK
-[GET] https://v2.leaddrivecrm.org/api/auth/session => [200] OK
-[GET] https://v2.leaddrivecrm.org/login?_rsc=8rpmc => [200] OK
-[POST] https://v2.leaddrivecrm.org/api/v1/auth/forgot-password => [307] Temporary Redirect
-[POST] https://v2.leaddrivecrm.org/login?callbackUrl=%2Fapi%2Fv1%2Fauth%2Fforgot-password => [200] OK

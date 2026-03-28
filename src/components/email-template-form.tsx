@@ -287,11 +287,13 @@ export function EmailTemplateForm({ open, onOpenChange, onSaved, initialData, or
                       <div
                         className="prose prose-sm max-w-none dark:prose-invert"
                         dangerouslySetInnerHTML={{
-                          __html: sanitizeRichHtml(form.htmlBody)
-                            .replace(/\{\{client_name\}\}/g, '<span class="bg-yellow-100 px-1 rounded">Иван Иванов</span>')
-                            .replace(/\{\{client_email\}\}/g, '<span class="bg-yellow-100 px-1 rounded">ivan@example.com</span>')
-                            .replace(/\{\{company\}\}/g, '<span class="bg-yellow-100 px-1 rounded">Güven Technology</span>')
-                            .replace(/\{\{(\w+)\}\}/g, '<span class="bg-yellow-100 px-1 rounded">{{$1}}</span>')
+                          __html: sanitizeRichHtml(
+                            form.htmlBody
+                              .replace(/\{\{client_name\}\}/g, '<span class="bg-yellow-100 px-1 rounded">Иван Иванов</span>')
+                              .replace(/\{\{client_email\}\}/g, '<span class="bg-yellow-100 px-1 rounded">ivan@example.com</span>')
+                              .replace(/\{\{company\}\}/g, '<span class="bg-yellow-100 px-1 rounded">Güven Technology</span>')
+                              .replace(/\{\{(\w+)\}\}/g, '<span class="bg-yellow-100 px-1 rounded">{{$1}}</span>')
+                          )
                         }}
                       />
                     </div>
@@ -429,15 +431,17 @@ export function EmailTemplateForm({ open, onOpenChange, onSaved, initialData, or
                   <div
                     className="prose prose-sm max-w-none dark:prose-invert"
                     dangerouslySetInnerHTML={{
-                      __html: sanitizeRichHtml(form.htmlBody)
-                        .replace(/\{\{client_name\}\}/g, '<span class="bg-yellow-100 dark:bg-yellow-900/30 px-1 rounded">Иван Иванов</span>')
-                        .replace(/\{\{client_email\}\}/g, '<span class="bg-yellow-100 dark:bg-yellow-900/30 px-1 rounded">ivan@example.com</span>')
-                        .replace(/\{\{company\}\}/g, '<span class="bg-yellow-100 dark:bg-yellow-900/30 px-1 rounded">Güven Technology</span>')
-                        .replace(/\{\{service\}\}/g, '<span class="bg-yellow-100 dark:bg-yellow-900/30 px-1 rounded">CRM Service</span>')
-                        .replace(/\{\{date\}\}/g, '<span class="bg-yellow-100 dark:bg-yellow-900/30 px-1 rounded">19.03.2026</span>')
-                        .replace(/\{\{month\}\}/g, '<span class="bg-yellow-100 dark:bg-yellow-900/30 px-1 rounded">Март</span>')
-                        .replace(/\{\{year\}\}/g, '<span class="bg-yellow-100 dark:bg-yellow-900/30 px-1 rounded">2026</span>')
-                        .replace(/\{\{(\w+)\}\}/g, '<span class="bg-yellow-100 dark:bg-yellow-900/30 px-1 rounded">{{$1}}</span>')
+                      __html: sanitizeRichHtml(
+                        form.htmlBody
+                          .replace(/\{\{client_name\}\}/g, '<span class="bg-yellow-100 dark:bg-yellow-900/30 px-1 rounded">Иван Иванов</span>')
+                          .replace(/\{\{client_email\}\}/g, '<span class="bg-yellow-100 dark:bg-yellow-900/30 px-1 rounded">ivan@example.com</span>')
+                          .replace(/\{\{company\}\}/g, '<span class="bg-yellow-100 dark:bg-yellow-900/30 px-1 rounded">Güven Technology</span>')
+                          .replace(/\{\{service\}\}/g, '<span class="bg-yellow-100 dark:bg-yellow-900/30 px-1 rounded">CRM Service</span>')
+                          .replace(/\{\{date\}\}/g, '<span class="bg-yellow-100 dark:bg-yellow-900/30 px-1 rounded">19.03.2026</span>')
+                          .replace(/\{\{month\}\}/g, '<span class="bg-yellow-100 dark:bg-yellow-900/30 px-1 rounded">Март</span>')
+                          .replace(/\{\{year\}\}/g, '<span class="bg-yellow-100 dark:bg-yellow-900/30 px-1 rounded">2026</span>')
+                          .replace(/\{\{(\w+)\}\}/g, '<span class="bg-yellow-100 dark:bg-yellow-900/30 px-1 rounded">{{$1}}</span>')
+                      )
                     }}
                   />
                 </div>

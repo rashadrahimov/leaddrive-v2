@@ -20,6 +20,10 @@ interface AIObservationsProps {
  * - Lines starting with "###" → h4
  * - Lines starting with "##" → h3
  */
+function escapeHtml(str: string): string {
+  return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;")
+}
+
 function markdownToHtml(text: string): string {
   const lines = text.split("\n")
   let html = ""
@@ -30,19 +34,19 @@ function markdownToHtml(text: string): string {
 
     if (trimmed.startsWith("### ")) {
       if (inList) { html += "</ul>"; inList = false }
-      html += `<h4 class="font-semibold text-sm mt-3 mb-1">${trimmed.slice(4)}</h4>`
+      html += `<h4 class="font-semibold text-sm mt-3 mb-1">${escapeHtml(trimmed.slice(4))}</h4>`
     } else if (trimmed.startsWith("## ")) {
       if (inList) { html += "</ul>"; inList = false }
-      html += `<h3 class="font-bold text-base mt-4 mb-2">${trimmed.slice(3)}</h3>`
+      html += `<h3 class="font-bold text-base mt-4 mb-2">${escapeHtml(trimmed.slice(3))}</h3>`
     } else if (trimmed.startsWith("- ") || trimmed.startsWith("* ")) {
       if (!inList) { html += '<ul class="list-disc pl-5 space-y-1">'; inList = true }
-      html += `<li class="text-sm">${trimmed.slice(2)}</li>`
+      html += `<li class="text-sm">${escapeHtml(trimmed.slice(2))}</li>`
     } else if (trimmed === "") {
       if (inList) { html += "</ul>"; inList = false }
       html += "<br/>"
     } else {
       if (inList) { html += "</ul>"; inList = false }
-      html += `<p class="text-sm mb-1">${trimmed}</p>`
+      html += `<p class="text-sm mb-1">${escapeHtml(trimmed)}</p>`
     }
   }
 

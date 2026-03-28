@@ -18,6 +18,10 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   const { id } = await params
 
   try {
+    // Verify deal belongs to this org first
+    const deal = await prisma.deal.findFirst({ where: { id, organizationId: orgId }, select: { id: true } })
+    if (!deal) return NextResponse.json({ error: "Deal not found" }, { status: 404 })
+
     const roles = await prisma.dealContactRole.findMany({
       where: { dealId: id },
       orderBy: { createdAt: "asc" },
@@ -75,6 +79,10 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
   try {
     const { contactId } = await req.json()
     if (!contactId) return NextResponse.json({ error: "contactId required" }, { status: 400 })
+
+    // Verify deal belongs to this org
+    const deal = await prisma.deal.findFirst({ where: { id, organizationId: orgId }, select: { id: true } })
+    if (!deal) return NextResponse.json({ error: "Deal not found" }, { status: 404 })
 
     await prisma.dealContactRole.deleteMany({ where: { dealId: id, contactId } })
     return NextResponse.json({ success: true })

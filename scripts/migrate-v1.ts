@@ -7,7 +7,7 @@
  *   - v1 server accessible at V1_DATABASE_URL
  *
  * Usage:
- *   V1_DATABASE_URL="postgresql://hermes:hermes@178.156.249.177:5432/hermes_crm" npx tsx scripts/migrate-v1.ts
+ *   V1_DATABASE_URL="postgresql://<user>:<pass>@<host>:5432/<db>" npx tsx scripts/migrate-v1.ts
  *
  * What it does:
  *   1. Creates Güvən Technology organization
@@ -49,7 +49,7 @@ async function main() {
   // Step 2: Create admin user
   console.log("2️⃣ Creating admin user...")
   // const bcrypt = require("bcryptjs")
-  // const adminHash = await bcrypt.hash("admin123", 12)
+  // const adminHash = await bcrypt.hash(process.env.ADMIN_PASSWORD || "changeme", 12)
   // const admin = await v2.user.upsert({
   //   where: { organizationId_email: { organizationId: org.id, email: "rashadrahimsoy@gmail.com" } },
   //   update: {},

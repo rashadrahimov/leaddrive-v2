@@ -6,11 +6,11 @@
 # This is the most reliable method!
 # ═══════════════════════════════════════════════════
 
-V1_HOST="178.156.249.177"
-V1_SSH_USER="root"  # Change if different
-V1_DB="hermes_crm"
-V1_DB_USER="hermes"
-V1_DB_PASS="hermes"
+V1_HOST="${V1_HOST:?Set V1_HOST env var}"
+V1_SSH_USER="${V1_SSH_USER:-root}"
+V1_DB="${V1_DB:?Set V1_DB env var}"
+V1_DB_USER="${V1_DB_USER:?Set V1_DB_USER env var}"
+V1_DB_PASS="${V1_DB_PASS:?Set V1_DB_PASS env var}"
 
 EXPORT_DIR="./scripts/v1-data"
 

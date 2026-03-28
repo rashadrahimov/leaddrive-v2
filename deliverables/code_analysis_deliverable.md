@@ -2,7 +2,7 @@
 
 **Application:** LeadDrive v2 CRM
 **Target URL:** `v2.leaddrivecrm.org`
-**Production Server:** `178.156.249.177` (Hetzner VDS)
+**Production Server:** `[REDACTED]` (Hetzner VDS)
 **Analysis Date:** 2026-03-27
 **Analyst:** Code Analysis Agent (Pre-Recon Phase)
 
@@ -35,7 +35,7 @@
 
 LeadDrive v2 is a multi-tenant CRM application built with Next.js 16, React 19, Prisma ORM (PostgreSQL), and a Python FastAPI compute sidecar. The application serves organizations with lead management, invoicing, budgeting, knowledge base, customer portal, and AI-powered features. The attack surface is extensive — over 150 API endpoints are network-accessible, with approximately 20 requiring no authentication at all.
 
-**The application has critical security deficiencies that would allow immediate compromise.** The most severe findings are: (1) a known, weak `NEXTAUTH_SECRET` deployed to production that enables JWT forgery and full impersonation of any user; (2) hardcoded default admin credentials (`admin@leaddrive.com / admin123`) that are reset on every deployment; (3) a cross-tenant data access bypass via a manipulable `x-organization-id` header that any authenticated user can exploit; and (4) real client financial/legal PII (tax IDs, bank accounts, SWIFT codes, director names) served as unauthenticated static JSON files at predictable URLs.
+**The application has critical security deficiencies that would allow immediate compromise.** The most severe findings are: (1) a known, weak `NEXTAUTH_SECRET` deployed to production that enables JWT forgery and full impersonation of any user (FIXED); (2) hardcoded default admin credentials that are reset on every deployment (FIXED — now uses env var); (3) a cross-tenant data access bypass via a manipulable `x-organization-id` header that any authenticated user can exploit; and (4) real client financial/legal PII (tax IDs, bank accounts, SWIFT codes, director names) served as unauthenticated static JSON files at predictable URLs.
 
 Additional high-impact findings include: no webhook signature verification on WhatsApp/Facebook POST handlers (allowing arbitrary message injection), an SSRF vulnerability in the SMTP test endpoint that bypasses the existing `isPrivateHost()` protection used elsewhere, multiple stored XSS vectors through unsanitized HTML template generation (invoices, emails, offers), a Content Security Policy rendered useless by `'unsafe-eval' 'unsafe-inline'` directives, contract files uploaded to the publicly-served `public/` directory without access control, and TOTP secrets/backup codes/reset tokens stored in plaintext in the database. The combination of these vulnerabilities means an external attacker can likely achieve full administrative access, cross-tenant data exfiltration, and persistent XSS within a single engagement session.
 
@@ -286,18 +286,15 @@ Input validation is **inconsistent**. Zod schemas are applied to authentication 
 
 **Critical: Secrets committed to version control.** The following secrets are hardcoded in tracked files:
 
-| Secret | Location | Value/Pattern |
-|--------|----------|---------------|
-| NEXTAUTH_SECRET | `.env` line 2, `scripts/deploy.sh` line 74 | `"leaddrive-v2-secret-change-me-in-production"` |
-| PostgreSQL credentials | `docker-compose.yml` lines 24-25 | `leaddrive/leaddrive` |
-| Production DB password | `scripts/deploy.sh` line 92 | `hermes/hermes` |
-| Default admin credentials | `scripts/create-admin.ts` line 17, `scripts/deploy.sh` line 212 | `admin@leaddrive.com / admin123` |
-| Telegram bot token | `telegram-bridge/bot.js` line 6 | `8746765197:AAEbtWc1fEoApB2GM_Hsbtg6_gBvxugHeCk` |
-| WhatsApp verify token | `src/app/api/v1/webhooks/whatsapp/route.ts` line 21 | `"leaddrive-whatsapp-verify-2026"` |
-| Facebook verify token | Source code fallback | `"leaddrive_fb_verify"` |
-| Production server IP | `scripts/deploy.sh` line 7 | `178.156.249.177` |
-| SSH user | `scripts/deploy.sh` line 8 | `root` |
-| Admin email | `scripts/create-admin.ts` | `rashadrahimsoy@gmail.com` |
+| Secret | Location | Status |
+|--------|----------|--------|
+| NEXTAUTH_SECRET | `.env` | **FIXED** — strong secret set on production |
+| PostgreSQL credentials | `.env` | **FIXED** — removed from scripts, uses env vars |
+| Default admin credentials | `scripts/create-admin.ts` | **FIXED** — uses ADMIN_PASSWORD env var |
+| Telegram bot token | `telegram-bridge/bot.js` | Uses env var |
+| WhatsApp verify token | `src/app/api/v1/webhooks/whatsapp/route.ts` | **FIXED** — requires env var, no fallback |
+| Facebook verify token | `src/app/api/v1/webhooks/facebook/route.ts` | **FIXED** — requires env var, no fallback |
+| Production server IP | `scripts/deploy.sh` | **FIXED** — uses DEPLOY_SERVER env var |
 
 The `.env` file is in `.gitignore` but the file at `.env` in the working directory contains the weak production secret. The `scripts/deploy.sh` deploys this exact secret to the production server.
 

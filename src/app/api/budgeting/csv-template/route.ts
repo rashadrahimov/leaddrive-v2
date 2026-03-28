@@ -44,8 +44,13 @@ export async function GET(req: NextRequest) {
 }
 
 function csvEscape(value: string): string {
-  if (value.includes(",") || value.includes('"') || value.includes("\n")) {
-    return `"${value.replace(/"/g, '""')}"`
+  let escaped = value
+  // Prevent CSV formula injection
+  if (escaped[0] && "=+-@\t\r".includes(escaped[0])) {
+    escaped = "'" + escaped
   }
-  return value
+  if (escaped.includes(",") || escaped.includes('"') || escaped.includes("\n")) {
+    return `"${escaped.replace(/"/g, '""')}"`
+  }
+  return escaped
 }

@@ -5,7 +5,7 @@
 # Uses v1 HTTP API instead of direct PostgreSQL
 # ═══════════════════════════════════════════════════
 
-V1_BASE="http://178.156.249.177:8000"
+V1_BASE="${V1_BASE:?Set V1_BASE env var (e.g. http://host:8000)}"
 EXPORT_DIR="./scripts/v1-data"
 
 mkdir -p "$EXPORT_DIR"

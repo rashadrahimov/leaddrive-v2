@@ -5,11 +5,11 @@
 # Run on Mac: bash scripts/export-v1-remote.sh
 # ═══════════════════════════════════════════════════
 
-V1_HOST="178.156.249.177"
-V1_SSH_USER="root"
-V1_DB="hermes_crm"
-V1_DB_USER="hermes"
-V1_DB_PASS="hermes"
+V1_HOST="${V1_HOST:?Set V1_HOST env var}"
+V1_SSH_USER="${V1_SSH_USER:-root}"
+V1_DB="${V1_DB:?Set V1_DB env var}"
+V1_DB_USER="${V1_DB_USER:?Set V1_DB_USER env var}"
+V1_DB_PASS="${V1_DB_PASS:?Set V1_DB_PASS env var}"
 
 LOCAL_EXPORT_DIR="./scripts/v1-data"
 REMOTE_EXPORT_DIR="/tmp/crm_export"
@@ -23,11 +23,11 @@ echo ""
 # ─── Step 1: Create export script on server ───
 echo "📝 Uploading export script to server..."
 
-ssh -o StrictHostKeyChecking=no "$V1_SSH_USER@$V1_HOST" bash -s << 'REMOTE_SCRIPT'
+ssh -o StrictHostKeyChecking=no "$V1_SSH_USER@$V1_HOST" bash -s "$V1_DB_PASS" "$V1_DB_USER" "$V1_DB" << 'REMOTE_SCRIPT'
 #!/bin/bash
-export PGPASSWORD='hermes'
-DB_USER="hermes"
-DB_NAME="hermes_crm"
+export PGPASSWORD="$1"
+DB_USER="$2"
+DB_NAME="$3"
 EXPORT_DIR="/tmp/crm_export"
 
 rm -rf "$EXPORT_DIR"
