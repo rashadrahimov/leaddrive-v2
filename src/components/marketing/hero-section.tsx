@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useEffect } from "react"
+import { useState } from "react"
 import Link from "next/link"
 import { ArrowRight, Play, Sparkles, Shield } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -15,63 +15,92 @@ const heroScreens = [
   { id: "deal", label: "Sövdələşmə", url: "app.leaddrivecrm.org/deals" },
 ]
 
-/* ─── Scaled preview wrapper ─── */
-function ScaledPreview({ screenId, containerHeight }: { screenId: string; containerHeight: number }) {
-  // Render preview at native width, scale to fit container height
-  const renderWidth = 1000
-  const scale = containerHeight / 650 // target ~650px rendered height to fill well
-
-  return (
-    <div className="relative overflow-hidden" style={{ height: containerHeight }}>
-      <div
-        style={{
-          width: renderWidth,
-          transform: `scale(${scale})`,
-          transformOrigin: "top left",
-        }}
-      >
-        {screenId === "dashboard" && <DashboardPreview />}
-        {screenId === "invoices" && <InvoicePreview />}
-        {screenId === "deal" && <DealPreview />}
-      </div>
-    </div>
-  )
-}
-
-/* ─── Simple preview renderer (no scaling) ─── */
-function ScreenPreview({ screenId }: { screenId: string }) {
+/* ─── Render screen content ─── */
+function ScreenContent({ screenId }: { screenId: string }) {
   if (screenId === "dashboard") return <DashboardPreview />
   if (screenId === "invoices") return <InvoicePreview />
   if (screenId === "deal") return <DealPreview />
   return null
 }
 
+/* ─── Floating browser card ─── */
+function FloatingCard({
+  screen,
+  width,
+  height,
+  scale,
+  className,
+  style,
+  onClick,
+}: {
+  screen: typeof heroScreens[0]
+  width: number
+  height: number
+  scale: number
+  className?: string
+  style?: React.CSSProperties
+  onClick?: () => void
+}) {
+  return (
+    <div
+      onClick={onClick}
+      className={cn(
+        "absolute rounded-xl border border-slate-200/80 bg-white overflow-hidden shadow-2xl",
+        onClick && "cursor-pointer hover:shadow-3xl transition-shadow duration-300",
+        className
+      )}
+      style={{ width, height, ...style }}
+    >
+      {/* Browser chrome */}
+      <div className="flex items-center gap-1.5 px-2.5 py-1.5 border-b border-slate-200 bg-slate-50 flex-shrink-0">
+        <div className="flex gap-1">
+          <div className="w-2 h-2 rounded-full bg-red-400" />
+          <div className="w-2 h-2 rounded-full bg-yellow-400" />
+          <div className="w-2 h-2 rounded-full bg-green-400" />
+        </div>
+        <div className="flex-1 mx-2">
+          <div className="bg-white rounded px-2 py-0.5 text-[7px] text-slate-400 border border-slate-200 max-w-[160px] mx-auto text-center truncate">
+            {screen.url}
+          </div>
+        </div>
+      </div>
+
+      {/* Scaled content */}
+      <div className="overflow-hidden" style={{ height: height - 28 }}>
+        <div
+          style={{
+            width: 1000,
+            transform: `scale(${scale})`,
+            transformOrigin: "top left",
+          }}
+        >
+          <ScreenContent screenId={screen.id} />
+        </div>
+      </div>
+    </div>
+  )
+}
+
 /* ─── Main Hero ─── */
 export function HeroSection() {
-  const [activeIndex, setActiveIndex] = useState(1) // center = dashboard
-  const containerRef = useRef<HTMLDivElement>(null)
-  const [contentHeight, setContentHeight] = useState(420)
+  const [activeIndex, setActiveIndex] = useState(1)
 
-  useEffect(() => {
-    const update = () => {
-      // Content height = container height minus browser chrome (40px) minus bottom label (36px)
-      const h = containerRef.current?.clientHeight
-      if (h) setContentHeight(h - 76)
-    }
-    update()
-    window.addEventListener("resize", update)
-    return () => window.removeEventListener("resize", update)
-  }, [])
+  const getScreenOrder = () => {
+    const s = [...heroScreens]
+    if (activeIndex === 0) return [s[2], s[0], s[1]]
+    if (activeIndex === 2) return [s[1], s[2], s[0]]
+    return s
+  }
+
+  const ordered = getScreenOrder()
 
   return (
     <section className="relative bg-gradient-to-b from-white via-slate-50 to-white pt-20 pb-8 lg:pt-24 lg:pb-12 overflow-x-clip">
-      {/* Subtle accent blobs */}
       <div className="absolute top-1/4 -left-32 w-96 h-96 bg-orange-100/50 rounded-full blur-[128px]" />
       <div className="absolute bottom-1/4 -right-32 w-96 h-96 bg-red-100/40 rounded-full blur-[128px]" />
 
       <div className="relative mx-auto max-w-7xl px-4 lg:px-8 w-full">
         <div className="text-center max-w-4xl mx-auto stagger-children">
-          {/* AI-native badge */}
           <div>
             <span className="inline-flex items-center gap-2 rounded-full border border-orange-200 bg-orange-50 px-4 py-1.5 text-sm text-orange-700 font-medium">
               <Sparkles className="h-3.5 w-3.5" />
@@ -79,7 +108,6 @@ export function HeroSection() {
             </span>
           </div>
 
-          {/* Main headline */}
           <h1 className="mt-8 text-5xl sm:text-6xl lg:text-7xl font-bold tracking-tight leading-[1.08]">
             <span className="text-slate-900">Süni intellektli CRM.</span>
             <br />
@@ -88,13 +116,11 @@ export function HeroSection() {
             </span>
           </h1>
 
-          {/* Subtitle */}
           <p className="mt-6 text-lg lg:text-xl text-slate-500 max-w-2xl mx-auto leading-relaxed">
             AI lidləri skorlayır, e-poçt yazır, tiketləri cavablandırır.
             Siz qərar verirsiniz — Maestro AI icra edir.
           </p>
 
-          {/* CTAs */}
           <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link
               href="/demo"
@@ -112,7 +138,6 @@ export function HeroSection() {
             </Link>
           </div>
 
-          {/* Trust badges */}
           <div className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-slate-400">
             <span className="flex items-center gap-1.5">
               <Shield className="h-3.5 w-3.5 text-emerald-500" />
@@ -130,90 +155,73 @@ export function HeroSection() {
         </div>
       </div>
 
-      {/* ─── 3-Screen Horizontal Accordion (Creatio-style) ─── */}
+      {/* ─── Overlapping Cards Showcase (Creatio-style) ─── */}
       <div className="mt-10 lg:mt-14 relative animate-fade-in-up" style={{ animationDelay: "400ms" }}>
         <div className="absolute inset-x-0 top-8 bottom-0 mx-auto max-w-5xl bg-gradient-to-r from-orange-100/30 via-slate-100/30 to-red-100/30 rounded-3xl blur-2xl" />
 
-        {/* Desktop: horizontal accordion — fixed height */}
-        <div
-          ref={containerRef}
-          className="hidden lg:flex items-stretch relative mx-auto max-w-[1400px] px-6 gap-3"
-          style={{ height: 500 }}
-        >
-          {heroScreens.map((screen, i) => {
-            const isActive = i === activeIndex
+        {/* Desktop: overlapping cards */}
+        <div className="hidden lg:block relative mx-auto max-w-[1300px] px-4" style={{ height: 520 }}>
+          {/* Left card — behind, offset left */}
+          <FloatingCard
+            screen={ordered[0]}
+            width={420}
+            height={400}
+            scale={0.42}
+            onClick={() => {
+              const idx = heroScreens.findIndex(s => s.id === ordered[0].id)
+              setActiveIndex(idx)
+            }}
+            style={{
+              left: 0,
+              top: 60,
+              transform: "rotate(-2deg)",
+              zIndex: 10,
+            }}
+          />
 
-            return (
-              <div
-                key={screen.id}
-                onClick={() => !isActive && setActiveIndex(i)}
-                className={cn(
-                  "rounded-2xl border bg-white overflow-hidden transition-all duration-500 ease-out flex flex-col",
-                  isActive
-                    ? "flex-[6] border-slate-200 shadow-2xl shadow-slate-300/40"
-                    : "flex-[1] border-slate-200 shadow-lg shadow-slate-200/30 cursor-pointer hover:shadow-xl hover:flex-[1.3]"
-                )}
-              >
-                {/* Browser chrome */}
-                <div className="flex items-center gap-2 px-3 py-2 border-b border-slate-200 bg-slate-50 flex-shrink-0">
-                  <div className="flex gap-1.5">
-                    <div className="w-2.5 h-2.5 rounded-full bg-red-400" />
-                    <div className="w-2.5 h-2.5 rounded-full bg-yellow-400" />
-                    <div className="w-2.5 h-2.5 rounded-full bg-green-400" />
-                  </div>
-                  {isActive && (
-                    <div className="flex-1 mx-4 transition-opacity duration-300">
-                      <div className="bg-white rounded-md px-3 py-1 text-[10px] text-slate-400 border border-slate-200 max-w-[240px] mx-auto text-center truncate">
-                        {screen.url}
-                      </div>
-                    </div>
-                  )}
-                </div>
+          {/* Center card — on top, largest */}
+          <FloatingCard
+            screen={ordered[1]}
+            width={720}
+            height={480}
+            scale={0.72}
+            className="shadow-[0_25px_60px_-12px_rgba(0,0,0,0.2)]"
+            style={{
+              left: "50%",
+              top: 0,
+              transform: "translateX(-50%)",
+              zIndex: 20,
+            }}
+          />
 
-                {/* Content */}
-                <div className="flex-1 overflow-hidden relative">
-                  {isActive ? (
-                    <ScaledPreview screenId={screen.id} containerHeight={contentHeight} />
-                  ) : (
-                    /* Collapsed panel: scaled-down blurred preview with label overlay */
-                    <div className="absolute inset-0">
-                      {/* Tiny preview of the content */}
-                      <div
-                        className="opacity-30 blur-[0.5px]"
-                        style={{
-                          width: 1000,
-                          transform: "scale(0.12)",
-                          transformOrigin: "top left",
-                        }}
-                      >
-                        <ScreenPreview screenId={screen.id} />
-                      </div>
-                      {/* Semi-transparent overlay with label */}
-                      <div className="absolute inset-0 bg-white/50 flex items-center justify-center">
-                        <span
-                          className="text-sm font-semibold text-slate-500 whitespace-nowrap tracking-wide"
-                          style={{ writingMode: "vertical-rl", transform: "rotate(180deg)" }}
-                        >
-                          {screen.label}
-                        </span>
-                      </div>
-                    </div>
-                  )}
-                </div>
+          {/* Right card — behind, offset right */}
+          <FloatingCard
+            screen={ordered[2]}
+            width={420}
+            height={400}
+            scale={0.42}
+            onClick={() => {
+              const idx = heroScreens.findIndex(s => s.id === ordered[2].id)
+              setActiveIndex(idx)
+            }}
+            style={{
+              right: 0,
+              top: 40,
+              transform: "rotate(2deg)",
+              zIndex: 10,
+            }}
+          />
 
-                {/* Bottom label for active */}
-                {isActive && (
-                  <div className="flex-shrink-0 border-t border-slate-100 bg-slate-50 px-4 py-2 text-center">
-                    <span className="text-sm font-semibold text-slate-600">{screen.label}</span>
-                  </div>
-                )}
-              </div>
-            )
-          })}
+          {/* Labels under cards */}
+          <div className="absolute bottom-0 left-0 right-0 flex items-end justify-between px-16">
+            <p className="text-sm text-slate-400 font-medium w-[30%] text-center">{ordered[0].label}</p>
+            <p className="text-sm text-slate-600 font-semibold w-[40%] text-center">{ordered[1].label}</p>
+            <p className="text-sm text-slate-400 font-medium w-[30%] text-center">{ordered[2].label}</p>
+          </div>
         </div>
 
-        {/* Screen selector dots */}
-        <div className="hidden lg:flex items-center justify-center gap-2 mt-6">
+        {/* Dots */}
+        <div className="hidden lg:flex items-center justify-center gap-2 mt-4">
           {heroScreens.map((_, i) => (
             <button
               key={i}
@@ -228,7 +236,7 @@ export function HeroSection() {
           ))}
         </div>
 
-        {/* Mobile: single screen with tabs */}
+        {/* Mobile */}
         <div className="lg:hidden px-4">
           <div className="flex items-center justify-center gap-2 mb-4">
             {heroScreens.map((screen, i) => (
@@ -246,23 +254,24 @@ export function HeroSection() {
               </button>
             ))}
           </div>
-
           <div className="mx-auto max-w-lg">
-            <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-2xl">
-              <div className="flex items-center gap-2 px-3 py-2 border-b border-slate-200 bg-slate-50">
-                <div className="flex gap-1.5">
-                  <div className="w-2.5 h-2.5 rounded-full bg-red-400" />
-                  <div className="w-2.5 h-2.5 rounded-full bg-yellow-400" />
-                  <div className="w-2.5 h-2.5 rounded-full bg-green-400" />
+            <div className="rounded-xl border border-slate-200 bg-white overflow-hidden shadow-2xl" style={{ height: 380 }}>
+              <div className="flex items-center gap-1.5 px-2.5 py-1.5 border-b border-slate-200 bg-slate-50">
+                <div className="flex gap-1">
+                  <div className="w-2 h-2 rounded-full bg-red-400" />
+                  <div className="w-2 h-2 rounded-full bg-yellow-400" />
+                  <div className="w-2 h-2 rounded-full bg-green-400" />
                 </div>
-                <div className="flex-1 mx-4">
-                  <div className="bg-white rounded-md px-3 py-1 text-[10px] text-slate-400 border border-slate-200 max-w-[200px] mx-auto text-center truncate">
+                <div className="flex-1 mx-2">
+                  <div className="bg-white rounded px-2 py-0.5 text-[7px] text-slate-400 border border-slate-200 max-w-[160px] mx-auto text-center truncate">
                     {heroScreens[activeIndex].url}
                   </div>
                 </div>
               </div>
-              <div className="h-[350px] overflow-hidden">
-                <ScaledPreview screenId={heroScreens[activeIndex].id} containerHeight={350} />
+              <div className="overflow-hidden" style={{ height: 350 }}>
+                <div style={{ width: 1000, transform: "scale(0.48)", transformOrigin: "top left" }}>
+                  <ScreenContent screenId={heroScreens[activeIndex].id} />
+                </div>
               </div>
             </div>
           </div>

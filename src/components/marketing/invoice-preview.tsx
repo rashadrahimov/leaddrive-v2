@@ -2,11 +2,11 @@
 
 import {
   LayoutDashboard, Building2, UserCheck, Briefcase,
-  Target, FileText, Receipt, Headphones, Bot,
-  DollarSign, TrendingUp, Clock, CheckCircle2,
-  Search, Bell, Settings, Mail, Megaphone,
-  BarChart3, Inbox, Calendar, ArrowUpRight,
-  Filter, Download, Plus, ChevronDown, Eye,
+  Target, FileText, Receipt, DollarSign, TrendingUp,
+  Clock, CheckCircle2, Search, Bell, ArrowLeft,
+  Filter, Download, Plus, Mail, Send,
+  Megaphone, Inbox, FileDown, Eye, Printer,
+  Copy, MoreHorizontal, ArrowUpRight,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -24,35 +24,30 @@ const sidebarItems = [
   { icon: Inbox, label: "Gələn qutusu", active: false, section: "KOMMUNİKASİYA" },
 ]
 
-/* ── KPI data ── */
-const kpiCards = [
-  { label: "ÜMUMİ GƏLİR", value: "₼84,520", icon: DollarSign, color: "bg-emerald-500", trend: "+12%", sub: "6 ay" },
-  { label: "GÖZLƏYİR", value: "₼23,180", icon: Clock, color: "bg-orange-500", trend: "8 faktura", sub: "" },
-  { label: "ÖDƏNİLİB", value: "₼56,340", icon: CheckCircle2, color: "bg-blue-500", trend: "+18%", sub: "" },
-  { label: "GECİKMİŞ", value: "₼5,000", icon: TrendingUp, color: "bg-red-500", trend: "2 faktura", sub: "" },
-]
-
-/* ── Invoice data ── */
+/* ── Invoice list data ── */
 const invoices = [
-  { number: "INV-2026-001", client: "TechVision MMC", amount: "₼8,145", status: "Ödənilib", statusColor: "bg-emerald-100 text-emerald-700", date: "28/03/2026", method: "Bank" },
-  { number: "INV-2026-002", client: "AzərLogistik", amount: "₼12,800", status: "Gözləyir", statusColor: "bg-orange-100 text-orange-700", date: "25/03/2026", method: "Kart" },
-  { number: "INV-2026-003", client: "NeftGaz MMC", amount: "₼25,000", status: "Ödənilib", statusColor: "bg-emerald-100 text-emerald-700", date: "22/03/2026", method: "Bank" },
-  { number: "INV-2026-004", client: "BankTech", amount: "₼5,000", status: "Gecikmiş", statusColor: "bg-red-100 text-red-700", date: "15/03/2026", method: "—" },
-  { number: "INV-2026-005", client: "DevPort", amount: "₼9,605", status: "Ödənilib", statusColor: "bg-emerald-100 text-emerald-700", date: "12/03/2026", method: "Bank" },
-  { number: "INV-2026-006", client: "FinServ Group", amount: "₼6,575", status: "Gözləyir", statusColor: "bg-orange-100 text-orange-700", date: "10/03/2026", method: "Kart" },
-  { number: "INV-2026-007", client: "CloudAz", amount: "₼15,300", status: "Ödənilib", statusColor: "bg-emerald-100 text-emerald-700", date: "08/03/2026", method: "Bank" },
-  { number: "INV-2026-008", client: "DataPro", amount: "₼7,200", status: "Ödənilib", statusColor: "bg-emerald-100 text-emerald-700", date: "05/03/2026", method: "Bank" },
-  { number: "INV-2026-009", client: "LogiTech AZ", amount: "₼4,850", status: "Gözləyir", statusColor: "bg-orange-100 text-orange-700", date: "01/03/2026", method: "Kart" },
+  { number: "INV-2026-001", client: "TechVision MMC", amount: "₼8,145", status: "Ödənilib", statusColor: "bg-emerald-100 text-emerald-700", date: "28/03/2026" },
+  { number: "INV-2026-002", client: "AzərLogistik", amount: "₼12,800", status: "Gözləyir", statusColor: "bg-orange-100 text-orange-700", date: "25/03/2026" },
+  { number: "INV-2026-003", client: "NeftGaz MMC", amount: "₼25,000", status: "Ödənilib", statusColor: "bg-emerald-100 text-emerald-700", date: "22/03/2026" },
+  { number: "INV-2026-004", client: "BankTech", amount: "₼5,000", status: "Gecikmiş", statusColor: "bg-red-100 text-red-700", date: "15/03/2026" },
+  { number: "INV-2026-005", client: "DevPort", amount: "₼9,605", status: "Ödənilib", statusColor: "bg-emerald-100 text-emerald-700", date: "12/03/2026" },
+  { number: "INV-2026-006", client: "FinServ Group", amount: "₼6,575", status: "Gözləyir", statusColor: "bg-orange-100 text-orange-700", date: "10/03/2026" },
+  { number: "INV-2026-007", client: "CloudAz", amount: "₼15,300", status: "Ödənilib", statusColor: "bg-emerald-100 text-emerald-700", date: "08/03/2026" },
 ]
 
-/* ── Monthly revenue data ── */
-const months = [
-  { name: "Okt", amount: 42 },
-  { name: "Noy", amount: 58 },
-  { name: "Dek", amount: 71 },
-  { name: "Yan", amount: 63 },
-  { name: "Fev", amount: 76 },
-  { name: "Mar", amount: 85 },
+/* ── Invoice detail line items ── */
+const lineItems = [
+  { desc: "CRM Lisenziya — Enterprise (10 user)", qty: 10, price: "₼450", total: "₼4,500" },
+  { desc: "Tətbiq & konfiqurasiya xidməti", qty: 1, price: "₼2,500", total: "₼2,500" },
+  { desc: "Təlim proqramı (3 gün)", qty: 1, price: "₼800", total: "₼800" },
+  { desc: "İllik dəstək paketi", qty: 1, price: "₼345", total: "₼345" },
+]
+
+/* ── Payment stages ── */
+const paymentStages = [
+  { label: "Qaralama", done: true, active: false },
+  { label: "Göndərilib", done: true, active: true },
+  { label: "Ödənilib", done: false, active: false },
 ]
 
 export function InvoicePreview() {
@@ -77,7 +72,7 @@ export function InvoicePreview() {
               )}
               <div className={cn(
                 "flex items-center gap-1.5 px-2 py-[3px] rounded-md mb-[1px]",
-                item.active ? "bg-orange-500/20 text-orange-400" : "text-slate-400 hover:bg-slate-800"
+                item.active ? "bg-orange-500/20 text-orange-400" : "text-slate-400"
               )}>
                 <Icon className="w-2.5 h-2.5 flex-shrink-0" />
                 <span className="truncate">{item.label}</span>
@@ -98,154 +93,157 @@ export function InvoicePreview() {
           </div>
         </div>
 
-        <div className="p-3">
-          {/* Header */}
-          <div className="flex items-center justify-between mb-2">
-            <div>
-              <h2 className="text-[9px] font-bold text-slate-900">Hesab-fakturalar</h2>
-              <p className="text-[6px] text-slate-500">Fakturaları yaradın, göndərin və izləyin</p>
-            </div>
-            <div className="flex items-center gap-1">
-              <div className="bg-slate-100 rounded-md px-2 py-0.5 text-[6px] text-slate-600 flex items-center gap-0.5">
-                <Filter className="w-2 h-2" /> Filter
+        <div className="p-2.5">
+          {/* ── SECTION 1: Invoice List ── */}
+          <div className="mb-2">
+            <div className="flex items-center justify-between mb-1.5">
+              <div>
+                <h2 className="text-[9px] font-bold text-slate-900">Hesab-fakturalar</h2>
+                <p className="text-[5px] text-slate-500">Fakturaları yaradın, göndərin və izləyin</p>
               </div>
-              <div className="bg-slate-100 rounded-md px-2 py-0.5 text-[6px] text-slate-600 flex items-center gap-0.5">
-                <Download className="w-2 h-2" /> Export
-              </div>
-              <div className="bg-orange-500 rounded-md px-2 py-0.5 text-[6px] text-white font-medium flex items-center gap-0.5">
-                <Plus className="w-2 h-2" /> Yeni faktura
-              </div>
-            </div>
-          </div>
-
-          {/* KPI Cards */}
-          <div className="grid grid-cols-4 gap-1.5 mb-2.5">
-            {kpiCards.map((card, i) => {
-              const Icon = card.icon
-              return (
-                <div key={i} className={cn("rounded-lg p-1.5 text-white", card.color)}>
-                  <div className="flex items-center justify-between mb-0.5">
-                    <span className="text-[5px] font-medium opacity-80 uppercase">{card.label}</span>
-                    <Icon className="w-2 h-2 opacity-70" />
-                  </div>
-                  <div className="text-[9px] font-bold">{card.value}</div>
-                  <div className="text-[5px] opacity-70">{card.trend}</div>
+              <div className="flex items-center gap-1">
+                <div className="bg-slate-100 rounded-md px-1.5 py-0.5 text-[5px] text-slate-600 flex items-center gap-0.5">
+                  <Filter className="w-1.5 h-1.5" /> Filter
                 </div>
-              )
-            })}
-          </div>
-
-          {/* Payment progress */}
-          <div className="bg-white rounded-lg border border-slate-200 p-2 mb-2">
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-[6px] font-semibold text-slate-700">Ödəniş proqresi</span>
-              <span className="text-[6px] text-slate-500">₼56,340 / ₼84,520 <span className="text-emerald-600 font-medium">67%</span></span>
-            </div>
-            <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden flex gap-[1px]">
-              <div className="bg-emerald-500 rounded-full" style={{ width: "67%" }} />
-              <div className="bg-orange-400 rounded-full" style={{ width: "18%" }} />
-              <div className="bg-red-400 rounded-full" style={{ width: "6%" }} />
-            </div>
-            <div className="flex gap-3 mt-1">
-              <span className="flex items-center gap-0.5 text-[5px] text-slate-500"><span className="w-1 h-1 bg-emerald-500 rounded-full inline-block" /> Ödənilib</span>
-              <span className="flex items-center gap-0.5 text-[5px] text-slate-500"><span className="w-1 h-1 bg-orange-400 rounded-full inline-block" /> Gözləyir</span>
-              <span className="flex items-center gap-0.5 text-[5px] text-slate-500"><span className="w-1 h-1 bg-red-400 rounded-full inline-block" /> Gecikmiş</span>
-            </div>
-          </div>
-
-          {/* Two-column: Revenue chart + Invoice table */}
-          <div className="grid grid-cols-[1fr_2fr] gap-2 mb-2">
-            {/* Monthly revenue mini chart */}
-            <div className="bg-white rounded-lg border border-slate-200 p-2">
-              <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[6px] font-semibold text-slate-700">Aylıq gəlir (min ₼)</span>
-                <ArrowUpRight className="w-2 h-2 text-emerald-500" />
-              </div>
-              <div className="flex items-end gap-[3px] h-[50px]">
-                {months.map((m, i) => (
-                  <div key={i} className="flex-1 flex flex-col items-center gap-0.5">
-                    <div
-                      className={cn("w-full rounded-sm", i === months.length - 1 ? "bg-orange-500" : "bg-blue-400")}
-                      style={{ height: `${(m.amount / 85) * 40}px` }}
-                    />
-                    <span className="text-[4px] text-slate-400">{m.name}</span>
-                  </div>
-                ))}
-              </div>
-              <div className="mt-1.5 pt-1 border-t border-slate-100">
-                <div className="flex items-center justify-between">
-                  <span className="text-[5px] text-slate-500">Orta ödəniş müddəti</span>
-                  <span className="text-[6px] font-bold text-slate-700">14 gün</span>
+                <div className="bg-orange-500 rounded-md px-1.5 py-0.5 text-[5px] text-white font-medium flex items-center gap-0.5">
+                  <Plus className="w-1.5 h-1.5" /> Yeni faktura
                 </div>
-                <div className="flex items-center justify-between mt-0.5">
-                  <span className="text-[5px] text-slate-500">Təkrarlanan gəlir</span>
-                  <span className="text-[6px] font-bold text-emerald-600">₼32,400/ay</span>
-                </div>
+              </div>
+            </div>
+
+            {/* KPI Cards */}
+            <div className="grid grid-cols-4 gap-1 mb-1.5">
+              <div className="bg-emerald-500 text-white rounded-lg p-1.5">
+                <span className="text-[5px] opacity-80">ÜMUMİ GƏLİR</span>
+                <div className="text-[9px] font-bold">₼84,520</div>
+                <div className="text-[5px] opacity-70">+12%</div>
+              </div>
+              <div className="bg-orange-500 text-white rounded-lg p-1.5">
+                <span className="text-[5px] opacity-80">GÖZLƏYİR</span>
+                <div className="text-[9px] font-bold">₼23,180</div>
+                <div className="text-[5px] opacity-70">8 faktura</div>
+              </div>
+              <div className="bg-blue-500 text-white rounded-lg p-1.5">
+                <span className="text-[5px] opacity-80">ÖDƏNİLİB</span>
+                <div className="text-[9px] font-bold">₼56,340</div>
+                <div className="text-[5px] opacity-70">+18%</div>
+              </div>
+              <div className="bg-red-500 text-white rounded-lg p-1.5">
+                <span className="text-[5px] opacity-80">GECİKMİŞ</span>
+                <div className="text-[9px] font-bold">₼5,000</div>
+                <div className="text-[5px] opacity-70">2 faktura</div>
               </div>
             </div>
 
             {/* Invoice table */}
             <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
-              <div className="grid grid-cols-[1fr_1.2fr_0.7fr_0.7fr_0.5fr_0.6fr] gap-1 px-2 py-1 bg-slate-50 border-b border-slate-200 text-[5px] font-semibold text-slate-500 uppercase">
+              <div className="grid grid-cols-[1fr_1.2fr_0.7fr_0.7fr_0.6fr] gap-1 px-2 py-1 bg-slate-50 border-b border-slate-200 text-[5px] font-semibold text-slate-500 uppercase">
                 <span>Nömrə</span>
                 <span>Müştəri</span>
                 <span>Məbləğ</span>
                 <span>Tarix</span>
-                <span>Ödəniş</span>
                 <span>Status</span>
               </div>
               {invoices.map((inv, i) => (
                 <div key={i} className={cn(
-                  "grid grid-cols-[1fr_1.2fr_0.7fr_0.7fr_0.5fr_0.6fr] gap-1 px-2 py-[3px] text-[6px]",
+                  "grid grid-cols-[1fr_1.2fr_0.7fr_0.7fr_0.6fr] gap-1 px-2 py-[3px] text-[6px]",
                   i < invoices.length - 1 && "border-b border-slate-100"
                 )}>
                   <span className="text-blue-600 font-medium">{inv.number}</span>
                   <span className="text-slate-700 truncate">{inv.client}</span>
                   <span className="font-semibold text-slate-900">{inv.amount}</span>
                   <span className="text-slate-500">{inv.date}</span>
-                  <span className="text-slate-500">{inv.method}</span>
                   <span className={cn("px-1 py-[1px] rounded text-[5px] font-medium text-center", inv.statusColor)}>{inv.status}</span>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Bottom row: Upcoming payments + Recent activity */}
-          <div className="grid grid-cols-2 gap-2">
-            <div className="bg-white rounded-lg border border-slate-200 p-2">
-              <span className="text-[6px] font-semibold text-slate-700">Yaxınlaşan ödənişlər</span>
-              <div className="mt-1 space-y-1">
-                {[
-                  { client: "AzərLogistik", amount: "₼12,800", days: "3 gün" },
-                  { client: "FinServ Group", amount: "₼6,575", days: "5 gün" },
-                  { client: "LogiTech AZ", amount: "₼4,850", days: "12 gün" },
-                ].map((p, i) => (
-                  <div key={i} className="flex items-center justify-between py-[2px] border-b border-slate-50 last:border-0">
-                    <span className="text-[6px] text-slate-700">{p.client}</span>
-                    <div className="flex items-center gap-2">
-                      <span className="text-[6px] font-semibold text-slate-900">{p.amount}</span>
-                      <span className="text-[5px] text-orange-600 bg-orange-50 px-1 rounded">{p.days}</span>
-                    </div>
+          {/* ── Divider ── */}
+          <div className="border-t border-slate-200 pt-2">
+            {/* ── SECTION 2: Invoice Detail ── */}
+            <div className="flex items-center justify-between mb-1.5">
+              <div className="flex items-center gap-1.5">
+                <ArrowLeft className="w-2.5 h-2.5 text-slate-400" />
+                <div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[9px] font-bold text-slate-900">INV-2026-00001</span>
+                    <span className="bg-blue-100 text-blue-700 text-[5px] font-medium px-1 py-[1px] rounded">Göndərilib</span>
                   </div>
-                ))}
+                  <span className="text-[5px] text-slate-500">Zeytun Pharmaceuticals İT xidmət</span>
+                </div>
+              </div>
+              <div className="flex items-center gap-0.5">
+                <div className="bg-slate-100 rounded px-1.5 py-0.5 text-[5px] text-slate-600 flex items-center gap-0.5"><Eye className="w-1.5 h-1.5" /> Redaktə</div>
+                <div className="bg-blue-500 rounded px-1.5 py-0.5 text-[5px] text-white flex items-center gap-0.5"><Send className="w-1.5 h-1.5" /> Göndər</div>
+                <div className="bg-slate-100 rounded px-1.5 py-0.5 text-[5px] text-slate-600 flex items-center gap-0.5"><FileDown className="w-1.5 h-1.5" /> PDF</div>
+                <div className="bg-slate-100 rounded px-1.5 py-0.5 text-[5px] text-slate-600 flex items-center gap-0.5"><Copy className="w-1.5 h-1.5" /> Dublikat</div>
               </div>
             </div>
-            <div className="bg-white rounded-lg border border-slate-200 p-2">
-              <span className="text-[6px] font-semibold text-slate-700">Son fəaliyyət</span>
-              <div className="mt-1 space-y-1">
-                {[
-                  { text: "INV-001 ödənilib — TechVision", time: "2 saat əvvəl", icon: "✅" },
-                  { text: "Xatırlatma göndərildi — BankTech", time: "5 saat əvvəl", icon: "📧" },
-                  { text: "Yeni faktura yaradıldı — CloudAz", time: "1 gün əvvəl", icon: "📄" },
-                ].map((a, i) => (
-                  <div key={i} className="flex items-start gap-1 py-[2px] border-b border-slate-50 last:border-0">
-                    <span className="text-[6px]">{a.icon}</span>
-                    <div className="flex-1">
-                      <span className="text-[6px] text-slate-700">{a.text}</span>
-                      <span className="text-[5px] text-slate-400 ml-1">{a.time}</span>
-                    </div>
-                  </div>
-                ))}
+
+            {/* Payment stage stepper */}
+            <div className="flex gap-[1px] mb-2">
+              {paymentStages.map((stage, i) => (
+                <div key={i} className={cn(
+                  "flex-1 py-[3px] text-center text-[5px] font-medium",
+                  i === 0 ? "rounded-l-sm" : "",
+                  i === paymentStages.length - 1 ? "rounded-r-sm" : "",
+                  stage.done && !stage.active ? "bg-blue-500 text-white" :
+                  stage.active ? "bg-emerald-500 text-white" :
+                  "bg-slate-200 text-slate-500"
+                )}>
+                  {stage.label}
+                </div>
+              ))}
+            </div>
+
+            {/* Detail KPI row */}
+            <div className="grid grid-cols-5 gap-1 mb-2">
+              <div className="bg-white rounded border border-slate-200 p-1.5">
+                <span className="text-[5px] text-slate-500">Ara cəm (ƏDV-siz)</span>
+                <div className="text-[8px] font-bold text-slate-900">59,709.72 AZN</div>
+                <div className="text-[4px] text-slate-400">ƏDV (18%): 10,747.75</div>
+              </div>
+              <div className="bg-blue-50 rounded border border-blue-200 p-1.5">
+                <span className="text-[5px] text-slate-500">Ümumi məbləğ</span>
+                <div className="text-[8px] font-bold text-blue-700">70,457.47 AZN</div>
+              </div>
+              <div className="bg-white rounded border border-slate-200 p-1.5">
+                <span className="text-[5px] text-slate-500">Qalıq borc</span>
+                <div className="text-[8px] font-bold text-red-600">70,457.47 AZN</div>
+              </div>
+              <div className="bg-white rounded border border-slate-200 p-1.5">
+                <span className="text-[5px] text-slate-500">Ödənilib</span>
+                <div className="text-[8px] font-bold text-slate-900">0.00 AZN</div>
+              </div>
+              <div className="bg-white rounded border border-slate-200 p-1.5">
+                <span className="text-[5px] text-slate-500">Ödəniş günü</span>
+                <div className="text-[8px] font-bold text-slate-900">26 gün</div>
+              </div>
+            </div>
+
+            {/* Line items table */}
+            <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
+              <div className="grid grid-cols-[2fr_0.5fr_0.7fr_0.7fr] gap-1 px-2 py-1 bg-slate-50 border-b border-slate-200 text-[5px] font-semibold text-slate-500 uppercase">
+                <span>Təsvir</span>
+                <span>Say</span>
+                <span>Qiymət</span>
+                <span>Cəm</span>
+              </div>
+              {lineItems.map((item, i) => (
+                <div key={i} className={cn(
+                  "grid grid-cols-[2fr_0.5fr_0.7fr_0.7fr] gap-1 px-2 py-[3px] text-[6px]",
+                  i < lineItems.length - 1 && "border-b border-slate-100"
+                )}>
+                  <span className="text-slate-700">{item.desc}</span>
+                  <span className="text-slate-500 text-center">{item.qty}</span>
+                  <span className="text-slate-600">{item.price}</span>
+                  <span className="font-semibold text-slate-900">{item.total}</span>
+                </div>
+              ))}
+              <div className="grid grid-cols-[2fr_0.5fr_0.7fr_0.7fr] gap-1 px-2 py-1 bg-slate-50 border-t border-slate-200 text-[6px]">
+                <span className="font-bold text-slate-900 col-span-3 text-right">Cəmi:</span>
+                <span className="font-bold text-slate-900">₼8,145.00</span>
               </div>
             </div>
           </div>
