@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef, useEffect } from "react"
 import Link from "next/link"
 import { ArrowRight, Play, Sparkles, Shield } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -10,73 +10,30 @@ import { DealPreview } from "./deal-preview"
 
 /* ─── Hero screens data ─── */
 const heroScreens = [
-  {
-    id: "invoices",
-    label: "Hesab-fakturalar",
-    src: "/marketing/invoices-billing.png",
-    url: "app.leaddrivecrm.org/invoices",
-  },
-  {
-    id: "dashboard",
-    label: "İdarə paneli",
-    src: "", // uses DashboardPreview component
-    url: "app.leaddrivecrm.org/dashboard",
-  },
-  {
-    id: "deal",
-    label: "Sövdələşmə",
-    src: "/marketing/ai-deal-detail.png",
-    url: "app.leaddrivecrm.org/deals",
-  },
+  { id: "invoices", label: "Hesab-fakturalar", url: "app.leaddrivecrm.org/invoices" },
+  { id: "dashboard", label: "İdarə paneli", url: "app.leaddrivecrm.org/dashboard" },
+  { id: "deal", label: "Sövdələşmə", url: "app.leaddrivecrm.org/deals" },
 ]
 
-/* ─── Browser Frame ─── */
-function BrowserFrame({
-  screen,
-  isCenter,
-  onClick,
-  children,
-}: {
-  screen: typeof heroScreens[0]
-  isCenter: boolean
-  onClick?: () => void
-  children?: React.ReactNode
-}) {
-  return (
-    <div
-      onClick={onClick}
-      className={cn(
-        "rounded-2xl border bg-white overflow-hidden transition-all duration-500 ease-out",
-        isCenter
-          ? "border-slate-200 shadow-2xl shadow-slate-300/40"
-          : "border-slate-200 shadow-xl shadow-slate-200/30 cursor-pointer hover:shadow-2xl"
-      )}
-    >
-      {/* Browser chrome */}
-      <div className="flex items-center gap-2 px-4 py-2.5 border-b border-slate-200 bg-slate-50">
-        <div className="flex gap-1.5">
-          <div className="w-3 h-3 rounded-full bg-red-400" />
-          <div className="w-3 h-3 rounded-full bg-yellow-400" />
-          <div className="w-3 h-3 rounded-full bg-green-400" />
-        </div>
-        <div className="flex-1 mx-6">
-          <div className="bg-white rounded-md px-3 py-1 text-[10px] text-slate-400 border border-slate-200 max-w-[220px] mx-auto text-center truncate">
-            {screen.url}
-          </div>
-        </div>
-      </div>
+/* ─── Scaled preview wrapper ─── */
+function ScaledPreview({ screenId, containerHeight }: { screenId: string; containerHeight: number }) {
+  // Render preview at native width, scale to fit container height
+  const renderWidth = 1000
+  const scale = containerHeight / 650 // target ~650px rendered height to fill well
 
-      {/* Content */}
-      {children ? (
-        children
-      ) : (
-        <img
-          src={screen.src}
-          alt={screen.label}
-          className="w-full block"
-          loading="eager"
-        />
-      )}
+  return (
+    <div className="relative overflow-hidden" style={{ height: containerHeight }}>
+      <div
+        style={{
+          width: renderWidth,
+          transform: `scale(${scale})`,
+          transformOrigin: "top left",
+        }}
+      >
+        {screenId === "dashboard" && <DashboardPreview />}
+        {screenId === "invoices" && <InvoicePreview />}
+        {screenId === "deal" && <DealPreview />}
+      </div>
     </div>
   )
 }
@@ -84,23 +41,19 @@ function BrowserFrame({
 /* ─── Main Hero ─── */
 export function HeroSection() {
   const [activeIndex, setActiveIndex] = useState(1) // center = dashboard
+  const containerRef = useRef<HTMLDivElement>(null)
+  const [contentHeight, setContentHeight] = useState(420)
 
-  // Arrange screens: [left, center, right]
-  const getScreenOrder = () => {
-    const screens = [...heroScreens]
-    if (activeIndex === 0) return [screens[2], screens[0], screens[1]]
-    if (activeIndex === 2) return [screens[1], screens[2], screens[0]]
-    return screens
-  }
-
-  const ordered = getScreenOrder()
-
-  const getPreviewComponent = (screenId: string) => {
-    if (screenId === "dashboard") return <DashboardPreview />
-    if (screenId === "invoices") return <InvoicePreview />
-    if (screenId === "deal") return <DealPreview />
-    return null
-  }
+  useEffect(() => {
+    const update = () => {
+      // Content height = container height minus browser chrome (40px) minus bottom label (36px)
+      const h = containerRef.current?.clientHeight
+      if (h) setContentHeight(h - 76)
+    }
+    update()
+    window.addEventListener("resize", update)
+    return () => window.removeEventListener("resize", update)
+  }, [])
 
   return (
     <section className="relative bg-gradient-to-b from-white via-slate-50 to-white pt-20 pb-8 lg:pt-24 lg:pb-12 overflow-x-clip">
@@ -167,66 +120,81 @@ export function HeroSection() {
             </span>
           </div>
         </div>
-
       </div>
 
-      {/* ─── 3-Screen Showcase (Creatio-style) — FULL WIDTH ─── */}
+      {/* ─── 3-Screen Horizontal Accordion (Creatio-style) ─── */}
       <div className="mt-10 lg:mt-14 relative animate-fade-in-up" style={{ animationDelay: "400ms" }}>
-        {/* Subtle glow behind center */}
         <div className="absolute inset-x-0 top-8 bottom-0 mx-auto max-w-5xl bg-gradient-to-r from-orange-100/30 via-slate-100/30 to-red-100/30 rounded-3xl blur-2xl" />
 
-        {/* Desktop: 3 screens side by side — full viewport width */}
-        <div className="hidden lg:flex items-end justify-center relative mx-auto max-w-[1440px] px-2" style={{ perspective: "2400px" }}>
-          {/* Left screen */}
-          <div
-            className="w-[32%] flex-shrink-0 transition-all duration-500"
-            style={{ transform: "rotateY(3deg) translateX(16px)", transformOrigin: "right center" }}
-          >
-            <BrowserFrame
-              screen={ordered[0]}
-              isCenter={false}
-              onClick={() => {
-                const origIdx = heroScreens.findIndex(s => s.id === ordered[0].id)
-                setActiveIndex(origIdx)
-              }}
-            >
-              {getPreviewComponent(ordered[0].id)}
-            </BrowserFrame>
-            <p className="text-center mt-3 text-sm text-slate-400 font-medium">{ordered[0].label}</p>
-          </div>
+        {/* Desktop: horizontal accordion — fixed height */}
+        <div
+          ref={containerRef}
+          className="hidden lg:flex items-stretch relative mx-auto max-w-[1400px] px-6 gap-3"
+          style={{ height: 500 }}
+        >
+          {heroScreens.map((screen, i) => {
+            const isActive = i === activeIndex
 
-          {/* Center screen — largest, overlaps sides */}
-          <div className="w-[56%] flex-shrink-0 relative z-20 transition-all duration-500 -mx-6">
-            <BrowserFrame screen={ordered[1]} isCenter={true}>
-              {getPreviewComponent(ordered[1].id)}
-            </BrowserFrame>
-            <p className="text-center mt-3 text-sm text-slate-600 font-semibold">{ordered[1].label}</p>
-          </div>
+            return (
+              <div
+                key={screen.id}
+                onClick={() => !isActive && setActiveIndex(i)}
+                className={cn(
+                  "rounded-2xl border bg-white overflow-hidden transition-all duration-500 ease-out flex flex-col",
+                  isActive
+                    ? "flex-[6] border-slate-200 shadow-2xl shadow-slate-300/40"
+                    : "flex-[1] border-slate-200 shadow-lg shadow-slate-200/30 cursor-pointer hover:shadow-xl hover:flex-[1.3]"
+                )}
+              >
+                {/* Browser chrome */}
+                <div className="flex items-center gap-2 px-3 py-2 border-b border-slate-200 bg-slate-50 flex-shrink-0">
+                  <div className="flex gap-1.5">
+                    <div className="w-2.5 h-2.5 rounded-full bg-red-400" />
+                    <div className="w-2.5 h-2.5 rounded-full bg-yellow-400" />
+                    <div className="w-2.5 h-2.5 rounded-full bg-green-400" />
+                  </div>
+                  {isActive && (
+                    <div className="flex-1 mx-4 transition-opacity duration-300">
+                      <div className="bg-white rounded-md px-3 py-1 text-[10px] text-slate-400 border border-slate-200 max-w-[240px] mx-auto text-center truncate">
+                        {screen.url}
+                      </div>
+                    </div>
+                  )}
+                </div>
 
-          {/* Right screen */}
-          <div
-            className="w-[32%] flex-shrink-0 transition-all duration-500"
-            style={{ transform: "rotateY(-3deg) translateX(-16px)", transformOrigin: "left center" }}
-          >
-            <BrowserFrame
-              screen={ordered[2]}
-              isCenter={false}
-              onClick={() => {
-                const origIdx = heroScreens.findIndex(s => s.id === ordered[2].id)
-                setActiveIndex(origIdx)
-              }}
-            >
-              {getPreviewComponent(ordered[2].id)}
-            </BrowserFrame>
-            <p className="text-center mt-3 text-sm text-slate-400 font-medium">{ordered[2].label}</p>
-          </div>
+                {/* Content */}
+                <div className="flex-1 overflow-hidden relative">
+                  {isActive ? (
+                    <ScaledPreview screenId={screen.id} containerHeight={contentHeight} />
+                  ) : (
+                    /* Collapsed panel: vertical label */
+                    <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-b from-slate-50 to-white">
+                      <span
+                        className="text-sm font-semibold text-slate-400 whitespace-nowrap tracking-wide"
+                        style={{ writingMode: "vertical-rl", transform: "rotate(180deg)" }}
+                      >
+                        {screen.label}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Bottom label for active */}
+                {isActive && (
+                  <div className="flex-shrink-0 border-t border-slate-100 bg-slate-50 px-4 py-2 text-center">
+                    <span className="text-sm font-semibold text-slate-600">{screen.label}</span>
+                  </div>
+                )}
+              </div>
+            )
+          })}
         </div>
 
         {/* Screen selector dots */}
         <div className="hidden lg:flex items-center justify-center gap-2 mt-6">
-          {heroScreens.map((screen, i) => (
+          {heroScreens.map((_, i) => (
             <button
-              key={screen.id}
+              key={i}
               onClick={() => setActiveIndex(i)}
               className={cn(
                 "transition-all duration-300 rounded-full",
@@ -258,9 +226,23 @@ export function HeroSection() {
           </div>
 
           <div className="mx-auto max-w-lg">
-            <BrowserFrame screen={heroScreens[activeIndex]} isCenter={true}>
-              {getPreviewComponent(heroScreens[activeIndex].id)}
-            </BrowserFrame>
+            <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-2xl">
+              <div className="flex items-center gap-2 px-3 py-2 border-b border-slate-200 bg-slate-50">
+                <div className="flex gap-1.5">
+                  <div className="w-2.5 h-2.5 rounded-full bg-red-400" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-yellow-400" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-green-400" />
+                </div>
+                <div className="flex-1 mx-4">
+                  <div className="bg-white rounded-md px-3 py-1 text-[10px] text-slate-400 border border-slate-200 max-w-[200px] mx-auto text-center truncate">
+                    {heroScreens[activeIndex].url}
+                  </div>
+                </div>
+              </div>
+              <div className="h-[350px] overflow-hidden">
+                <ScaledPreview screenId={heroScreens[activeIndex].id} containerHeight={350} />
+              </div>
+            </div>
           </div>
         </div>
       </div>
