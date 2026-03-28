@@ -17,9 +17,14 @@ export async function register() {
     setInterval(async () => {
       try {
         const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000"
+        const cronSecret = process.env.CRON_SECRET
+        if (!cronSecret) return
         const res = await fetch(`${baseUrl}/api/v1/journeys/process`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${cronSecret}`,
+          },
         })
         const data = await res.json()
         if (data.processed > 0) {
