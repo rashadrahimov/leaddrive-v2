@@ -5,22 +5,38 @@ import { getOrgId } from "@/lib/api-auth"
 const ALL_ROLES = ["admin", "manager", "sales", "support", "viewer", "marketing", "finance", "hr"]
 
 const DEFAULT_WIDGETS: Record<string, { enabled: boolean; roles: string[] }> = {
+  // Row 0: KPI cards
   statCards: { enabled: true, roles: [...ALL_ROLES] },
-  revenueChart: { enabled: true, roles: [...ALL_ROLES] },
+  // Row 1: Pipeline + Revenue + Lead Sources
   dealPipeline: { enabled: true, roles: [...ALL_ROLES] },
-  forecast: { enabled: true, roles: [...ALL_ROLES] },
-  clientHealth: { enabled: true, roles: [...ALL_ROLES] },
-  activityFeed: { enabled: true, roles: [...ALL_ROLES] },
-  taskSummary: { enabled: true, roles: [...ALL_ROLES] },
-  ticketSummary: { enabled: true, roles: [...ALL_ROLES] },
-  leadFunnel: { enabled: true, roles: [...ALL_ROLES] },
-  leadSources: { enabled: true, roles: [...ALL_ROLES] },
   revenueTrend: { enabled: true, roles: [...ALL_ROLES] },
+  leadSources: { enabled: true, roles: [...ALL_ROLES] },
+  // Row 2: Deals + AI Scoring + Activity
   recentDeals: { enabled: true, roles: [...ALL_ROLES] },
   aiLeadScoring: { enabled: true, roles: [...ALL_ROLES] },
+  activityFeed: { enabled: true, roles: [...ALL_ROLES] },
+  // Row 3: Campaigns + Events + Weekly
   campaignStats: { enabled: true, roles: [...ALL_ROLES] },
   upcomingEvents: { enabled: true, roles: [...ALL_ROLES] },
   weeklyMetrics: { enabled: true, roles: [...ALL_ROLES] },
+  // Extra: available but off by default
+  revenueChart: { enabled: false, roles: [...ALL_ROLES] },
+  forecast: { enabled: false, roles: [...ALL_ROLES] },
+  clientHealth: { enabled: false, roles: [...ALL_ROLES] },
+  taskSummary: { enabled: false, roles: [...ALL_ROLES] },
+  ticketSummary: { enabled: false, roles: [...ALL_ROLES] },
+  leadFunnel: { enabled: false, roles: [...ALL_ROLES] },
+  // New additional widgets
+  invoiceStats: { enabled: false, roles: [...ALL_ROLES] },
+  campaignRoi: { enabled: false, roles: [...ALL_ROLES] },
+  dealConversion: { enabled: false, roles: [...ALL_ROLES] },
+  ticketSla: { enabled: false, roles: [...ALL_ROLES] },
+  leadFunnelDetailed: { enabled: false, roles: [...ALL_ROLES] },
+  revenueByClient: { enabled: false, roles: [...ALL_ROLES] },
+  profitMargin: { enabled: false, roles: [...ALL_ROLES] },
+  taskCompletion: { enabled: false, roles: [...ALL_ROLES] },
+  overdueInvoices: { enabled: false, roles: [...ALL_ROLES] },
+  teamPerformance: { enabled: false, roles: [...ALL_ROLES] },
 }
 
 export async function GET(req: NextRequest) {
