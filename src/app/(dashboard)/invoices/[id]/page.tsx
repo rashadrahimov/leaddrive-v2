@@ -1681,6 +1681,7 @@ export default function InvoiceDetailPage() {
                               field: sc.field,
                               operator: sc.operator,
                               value: sc.value,
+                              onTrue: newStepConfig.onTrue || "continue",
                               onFalse: newStepConfig.onFalse || "continue",
                             })}
                             className={`flex flex-col items-center gap-1 p-3 rounded-lg border-2 text-xs transition-all text-center ${
@@ -1696,6 +1697,17 @@ export default function InvoiceDetailPage() {
                         )
                       })}
                     </div>
+                  </div>
+                  <div className="p-3 bg-green-50/50 dark:bg-green-900/10 rounded-lg border border-green-200/50 dark:border-green-800/30">
+                    <Label className="text-xs font-medium text-green-700 dark:text-green-400 flex items-center gap-1.5 mb-2">
+                      ✓ Şərt uyğun gəlirsə:
+                    </Label>
+                    <Select
+                      value={newStepConfig.onTrue || "continue"}
+                      onChange={e => setNewStepConfig((c: any) => ({ ...c, onTrue: e.target.value }))}
+                    >
+                      {invoiceConditionActions.map(a => <option key={a.value} value={a.value}>{a.label}</option>)}
+                    </Select>
                   </div>
                   <div className="p-3 bg-red-50/50 dark:bg-red-900/10 rounded-lg border border-red-200/50 dark:border-red-800/30">
                     <Label className="text-xs font-medium text-red-700 dark:text-red-400 flex items-center gap-1.5 mb-2">

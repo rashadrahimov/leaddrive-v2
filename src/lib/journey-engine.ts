@@ -352,6 +352,7 @@ export async function processEnrollmentStep(enrollmentId: string, orgId: string)
         const operator = config.operator || "equals"
         const value = config.value || ""
         const onFalse = config.onFalse || "continue" // continue | skip_next | skip_2 | stop | restart
+        const onTrue = config.onTrue || "continue"
         let fieldValue = ""
 
         // Get field value — check invoice first, then lead/contact
@@ -384,7 +385,33 @@ export async function processEnrollmentStep(enrollmentId: string, orgId: string)
         }
 
         if (match) {
-          // Condition TRUE — continue to next step normally
+          // Condition TRUE — apply onTrue action
+          if (onTrue === "stop") {
+            await prisma.journeyEnrollment.update({
+              where: { id: enrollmentId },
+              data: { status: "completed", completedAt: new Date(), currentStepId: null, nextActionAt: null },
+            })
+            return {
+              stepId: currentStep.id, stepType: "condition", status: "completed",
+              message: `Condition TRUE → Journey stopped. ${field} ${operator} ${value || ""} (value: "${fieldValue}")`,
+            }
+          }
+          if (onTrue === "restart") {
+            const firstStep = journey.steps.find((s: any) => s.stepOrder === 1)
+            if (firstStep) {
+              await prisma.journeyStep.update({ where: { id: currentStep.id }, data: { statsCompleted: { increment: 1 } } })
+              await prisma.journeyEnrollment.update({
+                where: { id: enrollmentId },
+                data: { currentStepId: firstStep.id, nextActionAt: new Date() },
+              })
+              await prisma.journeyStep.update({ where: { id: firstStep.id }, data: { statsEntered: { increment: 1 } } })
+              return {
+                stepId: currentStep.id, stepType: "condition", status: "completed",
+                message: `Condition TRUE → Restarting from step 1. ${field} ${operator} ${value || ""} (value: "${fieldValue}")`,
+              }
+            }
+          }
+          // Default: continue to next step
           result = {
             stepId: currentStep.id,
             stepType: "condition",
