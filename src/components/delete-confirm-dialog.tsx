@@ -13,6 +13,9 @@ interface DeleteConfirmDialogProps {
   title?: string
   description?: string
   itemName?: string
+  confirmLabel?: string
+  confirmVariant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link"
+  loadingLabel?: string
 }
 
 export function DeleteConfirmDialog({
@@ -22,6 +25,9 @@ export function DeleteConfirmDialog({
   title,
   description,
   itemName,
+  confirmLabel,
+  confirmVariant = "destructive",
+  loadingLabel,
 }: DeleteConfirmDialogProps) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
@@ -62,8 +68,8 @@ export function DeleteConfirmDialog({
       </DialogContent>
       <DialogFooter>
         <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>{t("cancel")}</Button>
-        <Button variant="destructive" onClick={handleConfirm} disabled={loading}>
-          {loading ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />{t("deleting")}</> : t("delete")}
+        <Button variant={confirmVariant} onClick={handleConfirm} disabled={loading}>
+          {loading ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />{loadingLabel || t("deleting")}</> : (confirmLabel || t("delete"))}
         </Button>
       </DialogFooter>
     </Dialog>

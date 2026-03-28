@@ -148,10 +148,10 @@ export default function PortalUsersPage() {
 
   const filters: { key: FilterType; label: string }[] = [
     { key: "all", label: tc("all") },
-    { key: "enabled", label: "Access enabled" },
-    { key: "registered", label: "Registered" },
+    { key: "enabled", label: t("portalFilterEnabled") },
+    { key: "registered", label: t("portalFilterRegistered") },
     { key: "pending", label: tc("pending") },
-    { key: "disabled", label: "Disabled" },
+    { key: "disabled", label: t("portalFilterDisabled") },
   ]
 
   if (loading) {
@@ -175,10 +175,10 @@ export default function PortalUsersPage() {
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <ColorStatCard label="Contacts with email" value={stats.totalWithEmail} icon={<Users className="h-4 w-4" />} color="blue" />
-        <ColorStatCard label="Access enabled" value={stats.enabled} icon={<Shield className="h-4 w-4" />} color="green" />
-        <ColorStatCard label="Registered" value={stats.registered} icon={<UserCheck className="h-4 w-4" />} color="violet" />
-        <ColorStatCard label="Logins in 7 days" value={stats.recentLogins} icon={<Clock className="h-4 w-4" />} color="amber" />
+        <ColorStatCard label={t("portalContactsWithEmail")} value={stats.totalWithEmail} icon={<Users className="h-4 w-4" />} color="blue" />
+        <ColorStatCard label={t("portalAccessEnabled")} value={stats.enabled} icon={<Shield className="h-4 w-4" />} color="green" />
+        <ColorStatCard label={t("portalRegistered")} value={stats.registered} icon={<UserCheck className="h-4 w-4" />} color="violet" />
+        <ColorStatCard label={t("portalRecentLogins")} value={stats.recentLogins} icon={<Clock className="h-4 w-4" />} color="amber" />
       </div>
 
       <Card>
@@ -200,15 +200,15 @@ export default function PortalUsersPage() {
         <CardContent>
           {selected.size > 0 && (
             <div className="flex items-center gap-2 mb-4 p-2 bg-muted/50 rounded-lg">
-              <span className="text-sm text-muted-foreground">Selected: {selected.size}</span>
-              <Button size="sm" variant="outline" onClick={handleBulkEnable}><Shield className="h-3.5 w-3.5 mr-1" /> Enable access</Button>
-              <Button size="sm" variant="outline" onClick={handleBulkDisable}><ShieldOff className="h-3.5 w-3.5 mr-1" /> Disable</Button>
+              <span className="text-sm text-muted-foreground">{t("portalSelected", { count: selected.size })}</span>
+              <Button size="sm" variant="outline" onClick={handleBulkEnable}><Shield className="h-3.5 w-3.5 mr-1" /> {t("portalEnableAccess")}</Button>
+              <Button size="sm" variant="outline" onClick={handleBulkDisable}><ShieldOff className="h-3.5 w-3.5 mr-1" /> {t("portalDisableAccess")}</Button>
             </div>
           )}
 
           {contacts.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
-              {search ? tc("noResults") : "No contacts with email in organization"}
+              {search ? tc("noResults") : t("portalNoContacts")}
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -219,8 +219,8 @@ export default function PortalUsersPage() {
                     <th className="p-2 text-left font-medium">{tc("fullName")}</th>
                     <th className="p-2 text-left font-medium">{tc("email")}</th>
                     <th className="p-2 text-left font-medium">{tc("company")}</th>
-                    <th className="p-2 text-left font-medium">Portal Status</th>
-                    <th className="p-2 text-left font-medium">Last Login</th>
+                    <th className="p-2 text-left font-medium">{t("portalStatus")}</th>
+                    <th className="p-2 text-left font-medium">{t("portalLastLogin")}</th>
                     <th className="p-2 text-right font-medium">{tc("actions")}</th>
                   </tr>
                 </thead>
@@ -238,7 +238,7 @@ export default function PortalUsersPage() {
                           <button
                             onClick={() => handleToggleAccess(c)}
                             className="p-1.5 rounded hover:bg-muted"
-                            title={c.portalAccessEnabled ? "Disable access" : "Enable access"}
+                            title={c.portalAccessEnabled ? t("portalBtnDisable") : t("portalBtnEnable")}
                           >
                             {c.portalAccessEnabled
                               ? <ShieldOff className="h-3.5 w-3.5 text-red-500" />
@@ -249,7 +249,7 @@ export default function PortalUsersPage() {
                             <button
                               onClick={() => setResetDialog(c)}
                               className="p-1.5 rounded hover:bg-muted"
-                              title="Reset password"
+                              title={t("portalBtnResetPassword")}
                             >
                               <KeyRound className="h-3.5 w-3.5 text-orange-500" />
                             </button>
@@ -257,7 +257,7 @@ export default function PortalUsersPage() {
                           <button
                             onClick={() => setClearChatDialog(c)}
                             className="p-1.5 rounded hover:bg-muted"
-                            title="Clear AI chat history"
+                            title={t("portalBtnClearChat")}
                           >
                             <MessageSquareX className="h-3.5 w-3.5 text-purple-500" />
                           </button>
@@ -265,7 +265,7 @@ export default function PortalUsersPage() {
                             <button
                               onClick={() => setRemoveDialog(c)}
                               className="p-1.5 rounded hover:bg-muted"
-                              title="Remove from portal (will need to re-register)"
+                              title={t("portalBtnRemove")}
                             >
                               <UserMinus className="h-3.5 w-3.5 text-red-500" />
                             </button>
@@ -285,24 +285,30 @@ export default function PortalUsersPage() {
         open={!!resetDialog}
         onOpenChange={() => setResetDialog(null)}
         onConfirm={handleResetPassword}
-        title="Reset Password"
-        itemName={resetDialog?.fullName}
+        title={t("portalResetPasswordTitle")}
+        description={t("portalResetPasswordDesc")}
+        confirmLabel={t("portalResetPasswordBtn")}
+        confirmVariant="default"
+        loadingLabel={t("portalResetting")}
       />
 
       <DeleteConfirmDialog
         open={!!clearChatDialog}
         onOpenChange={() => setClearChatDialog(null)}
         onConfirm={handleClearChat}
-        title="Clear AI Chat History"
-        itemName={clearChatDialog?.fullName}
+        title={t("portalClearChatTitle")}
+        description={t("portalClearChatDesc")}
+        confirmLabel={t("portalClearChatBtn")}
+        loadingLabel={t("portalClearing")}
       />
 
       <DeleteConfirmDialog
         open={!!removeDialog}
         onOpenChange={() => setRemoveDialog(null)}
         onConfirm={handleRemoveFromPortal}
-        title="Remove from Portal"
-        itemName={removeDialog?.fullName}
+        title={t("portalRemoveTitle")}
+        description={t("portalRemoveDesc")}
+        confirmLabel={t("portalRemoveBtn")}
       />
     </div>
   )
