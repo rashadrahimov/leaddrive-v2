@@ -259,7 +259,7 @@ export async function processEnrollmentStep(enrollmentId: string, orgId: string)
         if (waChannel?.apiKey && waChannel?.phoneNumber && recipientPhone) {
           try {
             // Use approved template with positional parameters (v20.0 named vars)
-            const waRes = await fetch(`https://graph.facebook.com/v20.0/${waChannel.phoneNumber}/messages`, {
+            const waRes = await fetch(`https://graph.facebook.com/v21.0/${waChannel.phoneNumber}/messages`, {
               method: "POST",
               headers: {
                 "Authorization": `Bearer ${waChannel.apiKey}`,

@@ -76,80 +76,87 @@ export async function sendWhatsAppMessage({
     // Clean phone number: remove spaces, dashes, ensure starts with country code
     const cleanPhone = to.replace(/[\s\-\(\)]/g, "").replace(/^\+/, "")
 
-    const response = await fetch(
-      `https://graph.facebook.com/v21.0/${config.phoneNumberId}/messages`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${config.accessToken}`,
-          "Content-Type": "application/json",
+    // Check if we're within the 24h messaging window by looking at last inbound WA message
+    let useTemplate = true // Default to template (safe — always works)
+    if (organizationId) {
+      const lastInbound = await prisma.channelMessage.findFirst({
+        where: {
+          organizationId,
+          direction: "inbound",
+          from: { contains: cleanPhone.slice(-10) }, // Match last 10 digits
+          metadata: { path: ["channel"], equals: "whatsapp" },
         },
-        body: JSON.stringify({
-          messaging_product: "whatsapp",
-          recipient_type: "individual",
-          to: cleanPhone,
-          type: "text",
-          text: { body: message },
-        }),
-      }
-    )
+        orderBy: { createdAt: "desc" },
+        select: { createdAt: true },
+      }).catch(() => null)
 
-    const data = await response.json()
+      if (lastInbound) {
+        const hoursSinceLastInbound = (Date.now() - lastInbound.createdAt.getTime()) / (1000 * 60 * 60)
+        if (hoursSinceLastInbound < 23) { // 23h to be safe (not exactly 24)
+          useTemplate = false
+          console.log(`[WHATSAPP] Within 24h window (${hoursSinceLastInbound.toFixed(1)}h ago) — sending as text`)
+        } else {
+          console.log(`[WHATSAPP] Outside 24h window (${hoursSinceLastInbound.toFixed(1)}h ago) — using template`)
+        }
+      } else {
+        console.log(`[WHATSAPP] No inbound message found for ${cleanPhone} — using template`)
+      }
+    }
+
+    let response: Response
+    let data: any
+    let usedTemplate = false
+
+    if (useTemplate) {
+      // Send via crm_notification_ template (works outside 24h window)
+      response = await fetch(
+        `https://graph.facebook.com/v21.0/${config.phoneNumberId}/messages`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${config.accessToken}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            messaging_product: "whatsapp",
+            to: cleanPhone,
+            type: "template",
+            template: {
+              name: "crm_notification_",
+              language: { code: "en" },
+              components: [
+                { type: "body", parameters: [{ type: "text", text: message.slice(0, 1024) }] },
+              ],
+            },
+          }),
+        }
+      )
+      data = await response.json()
+      usedTemplate = true
+    } else {
+      // Within 24h window — send as free-form text
+      response = await fetch(
+        `https://graph.facebook.com/v21.0/${config.phoneNumberId}/messages`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${config.accessToken}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            messaging_product: "whatsapp",
+            recipient_type: "individual",
+            to: cleanPhone,
+            type: "text",
+            text: { body: message },
+          }),
+        }
+      )
+      data = await response.json()
+    }
 
     if (!response.ok) {
-      const errorCode = data?.error?.code
       const errorMsg = data?.error?.message || `HTTP ${response.status}`
-
-      // Re-engagement error (131047) — 24h window expired, retry with template
-      if (errorCode === 131047) {
-        console.log(`[WHATSAPP] 24h window expired for ${cleanPhone}, retrying with crm_notification_ template`)
-        const tplRes = await fetch(
-          `https://graph.facebook.com/v21.0/${config.phoneNumberId}/messages`,
-          {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${config.accessToken}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              messaging_product: "whatsapp",
-              to: cleanPhone,
-              type: "template",
-              template: {
-                name: "crm_notification_",
-                language: { code: "en" },
-                components: [
-                  { type: "body", parameters: [{ type: "text", text: message.slice(0, 1024) }] },
-                ],
-              },
-            }),
-          }
-        )
-        const tplData = await tplRes.json()
-        if (tplRes.ok && tplData?.messages?.[0]?.id) {
-          const tplMsgId = tplData.messages[0].id
-          if (organizationId) {
-            await prisma.channelMessage.create({
-              data: {
-                organizationId,
-                direction: "outbound",
-                from: config.phoneNumberId,
-                to: cleanPhone,
-                body: message,
-                status: "delivered",
-                externalId: tplMsgId,
-                metadata: { channel: "whatsapp", waMessageId: tplMsgId, template: "crm_notification_" },
-                contactId,
-              },
-            }).catch(() => {})
-          }
-          console.log(`[WHATSAPP] Sent via template to ${cleanPhone} | ID: ${tplMsgId}`)
-          return { success: true, messageId: tplMsgId }
-        }
-        const tplError = tplData?.error?.message || "Template send failed"
-        console.error(`[WHATSAPP] Template fallback also failed:`, tplError)
-      }
-
       console.error(`[WHATSAPP] Send failed:`, errorMsg)
 
       if (organizationId) {
@@ -183,13 +190,17 @@ export async function sendWhatsAppMessage({
           body: message,
           status: "delivered",
           externalId: messageId,
-          metadata: { channel: "whatsapp", waMessageId: messageId },
+          metadata: {
+            channel: "whatsapp",
+            waMessageId: messageId,
+            ...(usedTemplate ? { template: "crm_notification_" } : {}),
+          },
           contactId,
         },
       }).catch(() => {})
     }
 
-    console.log(`[WHATSAPP] Sent to ${cleanPhone} | ID: ${messageId}`)
+    console.log(`[WHATSAPP] Sent ${usedTemplate ? "via template" : "as text"} to ${cleanPhone} | ID: ${messageId}`)
     return { success: true, messageId }
   } catch (err: any) {
     console.error(`[WHATSAPP] Error:`, err.message)
