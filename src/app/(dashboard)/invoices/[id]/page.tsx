@@ -48,6 +48,7 @@ import {
   GitBranch,
   Plus,
   Loader2,
+  X,
 } from "lucide-react"
 
 // ---------- Types ----------
