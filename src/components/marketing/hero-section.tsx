@@ -60,16 +60,15 @@ function AutoScaledPanel({
   )
 }
 
-/* Position presets for the 3 slots */
+/* Position presets — all use `left` only (no `right`/`auto`) so CSS transitions work */
 const POSITIONS = {
-  left:   { left: "-2%",  right: "auto", width: "42%", zIndex: 1, height: 420 },
-  center: { left: "19%",  right: "auto", width: "62%", zIndex: 3, height: 520 },
-  right:  { left: "auto", right: "-2%",  width: "42%", zIndex: 1, height: 420 },
+  left:   { left: "-2%",  width: "42%", zIndex: 1, height: 420 },
+  center: { left: "19%",  width: "62%", zIndex: 3, height: 520 },
+  right:  { left: "60%",  width: "42%", zIndex: 1, height: 420 },
 } as const
 
 type Slot = "left" | "center" | "right"
 
-/* Each panel has an ID and always renders the same content */
 const PANELS = [
   { id: "invoices",  Component: InvoicePreview },
   { id: "dashboard", Component: DashboardPreview },
@@ -77,17 +76,15 @@ const PANELS = [
 ]
 
 /**
- * HeroPanels — three panels that smoothly animate between positions.
+ * HeroPanels — three panels that smoothly slide between positions.
  * Click a side panel → it slides to center, center slides to its spot.
  */
 function HeroPanels() {
   const wrapRef = useRef<HTMLDivElement>(null)
   const panelRefs = [useRef<HTMLDivElement>(null), useRef<HTMLDivElement>(null), useRef<HTMLDivElement>(null)]
   const [ready, setReady] = useState(false)
-  // Which slot each panel occupies: slots[0] = slot of panel 0, etc.
   const [slots, setSlots] = useState<Slot[]>(["left", "center", "right"])
 
-  // Apply wrap styles once
   useEffect(() => {
     const wrap = wrapRef.current
     if (!wrap) return
@@ -99,37 +96,34 @@ function HeroPanels() {
     setReady(true)
   }, [])
 
-  // Apply position styles to each panel whenever slots change
+  // Apply position styles whenever slots change
   useEffect(() => {
     panelRefs.forEach((ref, i) => {
       const el = ref.current
       if (!el) return
       const pos = POSITIONS[slots[i]]
+      const isCenter = slots[i] === "center"
       Object.assign(el.style, {
         position: "absolute",
         bottom: "0",
-        transition: "left 0.5s ease, right 0.5s ease, width 0.5s ease, z-index 0.3s ease",
+        transition: "left 0.5s ease, width 0.5s ease",
         left: pos.left,
-        right: pos.right,
         width: pos.width,
-        zIndex: String(pos.zIndex),
-        cursor: slots[i] === "center" ? "default" : "pointer",
+        zIndex: String(pos.zIndex), // no transition — instant z-index change
+        cursor: isCenter ? "default" : "pointer",
+        pointerEvents: "auto",
       })
     })
   }, [slots])
 
   const handleClick = (panelIndex: number) => {
+    if (slots[panelIndex] === "center") return
+    const centerIdx = slots.indexOf("center")
     const clickedSlot = slots[panelIndex]
-    if (clickedSlot === "center") return // already center
-
-    // Find which panel is in center
-    const centerPanelIndex = slots.indexOf("center")
-
-    // Swap: clicked panel goes to center, center panel goes to clicked's old slot
     setSlots(prev => {
       const next = [...prev] as Slot[]
       next[panelIndex] = "center"
-      next[centerPanelIndex] = clickedSlot
+      next[centerIdx] = clickedSlot
       return next
     })
   }
