@@ -17,7 +17,7 @@ function buildCsp(nonce: string) {
     `style-src 'self' 'nonce-${nonce}' 'unsafe-inline'`,
     "img-src 'self' data: blob: https:",
     "font-src 'self' data:",
-    "connect-src 'self' https:",
+    "connect-src 'self' https://v2.leaddrivecrm.org https://api.anthropic.com",
     "frame-ancestors 'none'",
   ].join("; ")
 }
@@ -41,7 +41,10 @@ const authMiddleware = auth((req) => {
 
   // Rate limit auth-related endpoints
   if (RATE_LIMITED_PATHS.some((p) => pathname.startsWith(p)) && req.method === "POST") {
-    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown"
+    // Prefer x-real-ip (set by Nginx), fallback to last x-forwarded-for entry (closest proxy)
+    const ip = req.headers.get("x-real-ip")?.trim()
+      || req.headers.get("x-forwarded-for")?.split(",").pop()?.trim()
+      || "unknown"
     const key = `auth:${ip}`
     if (!checkRateLimit(key, RATE_LIMIT_CONFIG.public)) {
       return withCspHeaders(
@@ -85,32 +88,8 @@ const authMiddleware = auth((req) => {
     return withCspHeaders(NextResponse.redirect(loginUrl), nonce)
   }
 
-  // 2FA enforcement
-  const session = req.auth as any
-  const twoFaAllowedPaths = ["/login/verify-2fa", "/login/setup-2fa"]
-  const twoFaAllowedApi = ["/api/v1/auth/verify-2fa", "/api/v1/auth/2fa", "/api/auth"]
-
-  // If user has TOTP enabled — must verify code
-  if (session?.user?.needs2fa === true) {
-    if (twoFaAllowedPaths.includes(pathname) || twoFaAllowedApi.some(p => pathname.startsWith(p))) {
-      const requestHeaders = new Headers(req.headers)
-      requestHeaders.set("x-nonce", nonce)
-      return withCspHeaders(NextResponse.next({ headers: requestHeaders }), nonce)
-    }
-    return withCspHeaders(NextResponse.redirect(new URL("/login/verify-2fa", req.url)), nonce)
-  }
-
-  // If admin required 2FA but user hasn't set it up yet — force setup
-  if (session?.user?.needsSetup2fa === true) {
-    if (twoFaAllowedPaths.includes(pathname) || twoFaAllowedApi.some(p => pathname.startsWith(p))) {
-      const requestHeaders = new Headers(req.headers)
-      requestHeaders.set("x-nonce", nonce)
-      return withCspHeaders(NextResponse.next({ headers: requestHeaders }), nonce)
-    }
-    return withCspHeaders(NextResponse.redirect(new URL("/login/setup-2fa", req.url)), nonce)
-  }
-
   // Inject organization context + nonce into headers for server components
+  const session = req.auth as any
   const headers = new Headers(req.headers)
   headers.set("x-nonce", nonce)
   const orgId = session?.user?.organizationId
