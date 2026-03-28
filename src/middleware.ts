@@ -9,49 +9,80 @@ const publicPaths = ["/login", "/register", "/forgot-password", "/api/auth", "/a
 // Paths that should be rate-limited more aggressively
 const RATE_LIMITED_PATHS = ["/api/auth", "/login", "/register", "/forgot-password", "/api/v1/auth/reset-password", "/api/v1/auth/2fa", "/api/v1/auth/totp", "/api/v1/auth/verify-2fa"]
 
-export default auth((req) => {
+// Generate CSP header with nonce
+function buildCsp(nonce: string) {
+  return [
+    "default-src 'self'",
+    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'`,
+    `style-src 'self' 'nonce-${nonce}' 'unsafe-inline'`,
+    "img-src 'self' data: blob: https:",
+    "font-src 'self' data:",
+    "connect-src 'self' https:",
+    "frame-ancestors 'none'",
+  ].join("; ")
+}
+
+// Apply CSP + nonce headers to any response
+function withCspHeaders(response: NextResponse, nonce: string): NextResponse {
+  response.headers.set("x-nonce", nonce)
+  response.headers.set("Content-Security-Policy", buildCsp(nonce))
+  response.headers.set("X-Frame-Options", "DENY")
+  response.headers.set("X-Content-Type-Options", "nosniff")
+  response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin")
+  response.headers.set("X-XSS-Protection", "1; mode=block")
+  response.headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=()")
+  response.headers.set("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
+  return response
+}
+
+const authMiddleware = auth((req) => {
   const { pathname } = req.nextUrl
+  const nonce = crypto.randomUUID()
 
   // Rate limit auth-related endpoints
   if (RATE_LIMITED_PATHS.some((p) => pathname.startsWith(p)) && req.method === "POST") {
     const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown"
     const key = `auth:${ip}`
     if (!checkRateLimit(key, RATE_LIMIT_CONFIG.public)) {
-      return NextResponse.json(
-        { error: "Too many requests. Please try again later." },
-        { status: 429 }
+      return withCspHeaders(
+        NextResponse.json({ error: "Too many requests. Please try again later." }, { status: 429 }),
+        nonce,
       )
     }
   }
 
   // Allow public paths
   if (publicPaths.some((p) => pathname.startsWith(p))) {
-    return NextResponse.next()
+    const requestHeaders = new Headers(req.headers)
+    requestHeaders.set("x-nonce", nonce)
+    return withCspHeaders(NextResponse.next({ headers: requestHeaders }), nonce)
   }
 
   // Allow health check
   if (pathname === "/api/health") {
-    return NextResponse.next()
+    return withCspHeaders(NextResponse.next(), nonce)
   }
 
   // Allow public event registration pages
   if (/^\/events\/[^/]+\/register/.test(pathname)) {
-    return NextResponse.next()
+    const requestHeaders = new Headers(req.headers)
+    requestHeaders.set("x-nonce", nonce)
+    return withCspHeaders(NextResponse.next({ headers: requestHeaders }), nonce)
   }
 
   // Allow public API (web-to-lead, calendar feed, journey processor, webhooks)
   if (pathname.startsWith("/api/v1/public/") || pathname.startsWith("/api/v1/calendar/feed/") || pathname.startsWith("/api/v1/webhooks/") || pathname === "/api/v1/journeys/process") {
-    return NextResponse.next()
+    return withCspHeaders(NextResponse.next(), nonce)
   }
 
   // Check authentication — unauthenticated root "/" goes to marketing homepage
   if (!req.auth) {
     if (pathname === "/") {
-      return NextResponse.redirect(new URL("/home", req.url))
+      return withCspHeaders(NextResponse.redirect(new URL("/home", req.url)), nonce)
     }
     const loginUrl = new URL("/login", req.url)
     loginUrl.searchParams.set("callbackUrl", pathname)
-    return NextResponse.redirect(loginUrl)
+    return withCspHeaders(NextResponse.redirect(loginUrl), nonce)
   }
 
   // 2FA enforcement
@@ -62,21 +93,26 @@ export default auth((req) => {
   // If user has TOTP enabled — must verify code
   if (session?.user?.needs2fa === true) {
     if (twoFaAllowedPaths.includes(pathname) || twoFaAllowedApi.some(p => pathname.startsWith(p))) {
-      return NextResponse.next()
+      const requestHeaders = new Headers(req.headers)
+      requestHeaders.set("x-nonce", nonce)
+      return withCspHeaders(NextResponse.next({ headers: requestHeaders }), nonce)
     }
-    return NextResponse.redirect(new URL("/login/verify-2fa", req.url))
+    return withCspHeaders(NextResponse.redirect(new URL("/login/verify-2fa", req.url)), nonce)
   }
 
   // If admin required 2FA but user hasn't set it up yet — force setup
   if (session?.user?.needsSetup2fa === true) {
     if (twoFaAllowedPaths.includes(pathname) || twoFaAllowedApi.some(p => pathname.startsWith(p))) {
-      return NextResponse.next()
+      const requestHeaders = new Headers(req.headers)
+      requestHeaders.set("x-nonce", nonce)
+      return withCspHeaders(NextResponse.next({ headers: requestHeaders }), nonce)
     }
-    return NextResponse.redirect(new URL("/login/setup-2fa", req.url))
+    return withCspHeaders(NextResponse.redirect(new URL("/login/setup-2fa", req.url)), nonce)
   }
 
-  // Inject organization context into headers for server components
+  // Inject organization context + nonce into headers for server components
   const headers = new Headers(req.headers)
+  headers.set("x-nonce", nonce)
   const orgId = session?.user?.organizationId
   const role = session?.user?.role
   const userId = session?.user?.id
@@ -98,7 +134,7 @@ export default auth((req) => {
 
   // Admin-only routes
   if (pathname.startsWith("/settings") && role !== "admin") {
-    return NextResponse.redirect(new URL("/", req.url))
+    return withCspHeaders(NextResponse.redirect(new URL("/", req.url)), nonce)
   }
 
   // Plan-based feature gating — redirect to billing page if module not available
@@ -106,11 +142,13 @@ export default auth((req) => {
   if (!canAccessModule(plan, pathname)) {
     const billingUrl = new URL("/settings/billing", req.url)
     billingUrl.searchParams.set("upgrade", "true")
-    return NextResponse.redirect(billingUrl)
+    return withCspHeaders(NextResponse.redirect(billingUrl), nonce)
   }
 
-  return NextResponse.next({ headers })
+  return withCspHeaders(NextResponse.next({ headers }), nonce)
 }) as unknown as (req: NextRequest) => NextResponse
+
+export default authMiddleware
 
 export const config = {
   matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
