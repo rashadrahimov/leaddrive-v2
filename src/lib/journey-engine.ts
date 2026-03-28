@@ -270,7 +270,7 @@ export async function processEnrollmentStep(enrollmentId: string, orgId: string)
                 to: recipientPhone,
                 type: "template",
                 template: {
-                  name: "invoice_payment_",
+                  name: "invoice_payment_reminder",
                   language: { code: "az" },
                   components: [
                     {

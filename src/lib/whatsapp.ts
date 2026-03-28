@@ -108,7 +108,8 @@ export async function sendWhatsAppMessage({
     let usedTemplate = false
 
     if (useTemplate) {
-      // Send via crm_notification_ template (works outside 24h window)
+      // Send via invoice_payment_reminder template (works outside 24h window)
+      // Uses named parameters: customer_name, invoice_number, amount, balance_due, due_date
       response = await fetch(
         `https://graph.facebook.com/v21.0/${config.phoneNumberId}/messages`,
         {
@@ -122,10 +123,16 @@ export async function sendWhatsAppMessage({
             to: cleanPhone,
             type: "template",
             template: {
-              name: "crm_notification_",
-              language: { code: "en" },
+              name: "invoice_payment_reminder",
+              language: { code: "az" },
               components: [
-                { type: "body", parameters: [{ type: "text", text: message.slice(0, 1024) }] },
+                { type: "body", parameters: [
+                  { type: "text", parameter_name: "customer_name", text: message.slice(0, 200) },
+                  { type: "text", parameter_name: "invoice_number", text: "-" },
+                  { type: "text", parameter_name: "amount", text: "-" },
+                  { type: "text", parameter_name: "balance_due", text: "-" },
+                  { type: "text", parameter_name: "due_date", text: "-" },
+                ] },
               ],
             },
           }),
