@@ -598,12 +598,13 @@ async function handleAiAutoReply(
       },
     }).catch(() => {})
 
-    // Send AI reply back via WhatsApp
+    // Send AI reply back via WhatsApp (forceText: customer just wrote, we're in 24h window)
     const result = await sendWhatsAppMessage({
       to: waPhone,
       message: aiReply,
       organizationId,
       contactId,
+      forceText: true,
     })
 
     console.log(`[WA AI] Reply to ${sanitizeLog(waPhone)}: ${sanitizeLog(aiReply.slice(0, 80))}... | ${result.success ? "OK" : sanitizeLog(String(result.error))}`)

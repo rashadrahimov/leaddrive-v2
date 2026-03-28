@@ -43,12 +43,14 @@ export async function sendWhatsAppMessage({
   organizationId,
   contactId,
   sentBy,
+  forceText,
 }: {
   to: string
   message: string
   organizationId?: string
   contactId?: string
   sentBy?: string
+  forceText?: boolean
 }) {
   const config = await getWhatsAppConfig(organizationId)
 
@@ -77,14 +79,14 @@ export async function sendWhatsAppMessage({
     const cleanPhone = to.replace(/[\s\-\(\)]/g, "").replace(/^\+/, "")
 
     // Check if we're within the 24h messaging window by looking at last inbound WA message
-    let useTemplate = true // Default to template (safe — always works)
-    if (organizationId) {
+    let useTemplate = forceText ? false : true // Default to template (safe — always works)
+    if (!forceText && organizationId) {
       const lastInbound = await prisma.channelMessage.findFirst({
         where: {
           organizationId,
           direction: "inbound",
-          from: { contains: cleanPhone.slice(-10) }, // Match last 10 digits
-          metadata: { path: ["channel"], equals: "whatsapp" },
+          channelType: "whatsapp",
+          metadata: { path: ["waPhone"], string_contains: cleanPhone.slice(-10) },
         },
         orderBy: { createdAt: "desc" },
         select: { createdAt: true },
