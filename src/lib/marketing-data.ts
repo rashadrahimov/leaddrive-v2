@@ -11,7 +11,7 @@ export const stats = [
   { value: 128, label: "Funksiya", suffix: "+" },
   { value: 16, label: "AI inteqrasiya", suffix: "" },
   { value: 7, label: "Kommunikasiya kanalı", suffix: "" },
-  { value: 63, label: "Səhifə", suffix: "+" },
+  { value: 500, label: "İstifadəçi şirkət", suffix: "+" },
 ]
 
 /* ────────────────────── PAIN / SOLUTION ────────────────────── */

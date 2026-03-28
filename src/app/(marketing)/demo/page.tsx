@@ -1,216 +1,249 @@
 "use client"
 
 import { useState } from "react"
-import { motion, AnimatePresence } from "framer-motion"
 import Link from "next/link"
-import { ShimmerButton } from "@/components/ui/shimmer-button"
+import { AnimateIn } from "@/components/marketing/animate-in"
+import { Particles } from "@/components/ui/particles"
 import {
-  ArrowRight, LayoutDashboard, Handshake, Building2,
-  Calculator, Inbox, Megaphone, Headphones, Briefcase, Settings,
+  ArrowRight, Send, Building2, User, Mail, Phone, MessageSquare,
+  Brain, Headphones, Sparkles, Users, TrendingUp, Calculator,
+  LayoutDashboard, Handshake, Inbox, Megaphone, Briefcase,
+  BarChart3, FileText, CalendarDays, Monitor, Wallet,
   ChevronLeft, ChevronRight,
-  Brain, Mail, BarChart3, TrendingUp, Users, Wallet,
-  FileText, CalendarDays, ClipboardList, Monitor, Sparkles,
 } from "lucide-react"
+import { cn } from "@/lib/utils"
 
+/* ── Demo request form ── */
+function DemoRequestForm() {
+  const [submitted, setSubmitted] = useState(false)
+  const [loading, setLoading] = useState(false)
+
+  if (submitted) {
+    return (
+      <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/5 p-8 text-center">
+        <div className="mx-auto w-12 h-12 rounded-full bg-emerald-500/10 flex items-center justify-center mb-4">
+          <Send className="h-5 w-5 text-emerald-400" />
+        </div>
+        <h3 className="text-lg font-semibold text-white">Sorğunuz qəbul edildi!</h3>
+        <p className="mt-2 text-sm text-slate-400">24 saat ərzində sizinlə əlaqə saxlayacağıq.</p>
+      </div>
+    )
+  }
+
+  return (
+    <form
+      onSubmit={async (e) => {
+        e.preventDefault()
+        setLoading(true)
+        const form = e.target as HTMLFormElement
+        const data = Object.fromEntries(new FormData(form))
+        try {
+          await fetch("/api/v1/demo-request", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data),
+          })
+        } catch {}
+        setSubmitted(true)
+      }}
+      className="space-y-4"
+    >
+      <div className="grid sm:grid-cols-2 gap-4">
+        <div>
+          <label className="block text-xs font-medium text-slate-400 mb-1.5">Ad, Soyad *</label>
+          <div className="relative">
+            <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-600" />
+            <input
+              required
+              name="name"
+              type="text"
+              placeholder="Adınız"
+              className="w-full rounded-xl border border-slate-800 bg-slate-900/50 pl-10 pr-4 py-2.5 text-sm text-white placeholder:text-slate-600 focus:border-violet-500/50 focus:outline-none focus:ring-1 focus:ring-violet-500/30 transition-colors"
+            />
+          </div>
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-slate-400 mb-1.5">Şirkət *</label>
+          <div className="relative">
+            <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-600" />
+            <input
+              required
+              name="company"
+              type="text"
+              placeholder="Şirkət adı"
+              className="w-full rounded-xl border border-slate-800 bg-slate-900/50 pl-10 pr-4 py-2.5 text-sm text-white placeholder:text-slate-600 focus:border-violet-500/50 focus:outline-none focus:ring-1 focus:ring-violet-500/30 transition-colors"
+            />
+          </div>
+        </div>
+      </div>
+      <div className="grid sm:grid-cols-2 gap-4">
+        <div>
+          <label className="block text-xs font-medium text-slate-400 mb-1.5">E-poçt *</label>
+          <div className="relative">
+            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-600" />
+            <input
+              required
+              name="email"
+              type="email"
+              placeholder="email@company.com"
+              className="w-full rounded-xl border border-slate-800 bg-slate-900/50 pl-10 pr-4 py-2.5 text-sm text-white placeholder:text-slate-600 focus:border-violet-500/50 focus:outline-none focus:ring-1 focus:ring-violet-500/30 transition-colors"
+            />
+          </div>
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-slate-400 mb-1.5">Telefon</label>
+          <div className="relative">
+            <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-600" />
+            <input
+              name="phone"
+              type="tel"
+              placeholder="+994 XX XXX XX XX"
+              className="w-full rounded-xl border border-slate-800 bg-slate-900/50 pl-10 pr-4 py-2.5 text-sm text-white placeholder:text-slate-600 focus:border-violet-500/50 focus:outline-none focus:ring-1 focus:ring-violet-500/30 transition-colors"
+            />
+          </div>
+        </div>
+      </div>
+      <div>
+        <label className="block text-xs font-medium text-slate-400 mb-1.5">Mesajınız</label>
+        <div className="relative">
+          <MessageSquare className="absolute left-3 top-3 h-4 w-4 text-slate-600" />
+          <textarea
+            name="message"
+            rows={3}
+            placeholder="Bizə nə barədə danışmaq istərdiniz?"
+            className="w-full rounded-xl border border-slate-800 bg-slate-900/50 pl-10 pr-4 py-2.5 text-sm text-white placeholder:text-slate-600 focus:border-violet-500/50 focus:outline-none focus:ring-1 focus:ring-violet-500/30 transition-colors resize-none"
+          />
+        </div>
+      </div>
+      <button
+        type="submit"
+        disabled={loading}
+        className="w-full group inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-violet-500/20 hover:shadow-violet-500/40 hover:from-violet-500 hover:to-indigo-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        {loading ? "Göndərilir..." : "Demo tələb et"}
+        {!loading && <ArrowRight className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" />}
+      </button>
+    </form>
+  )
+}
+
+/* ── Product gallery screenshots ── */
 const screenshots = [
-  // === AI (первые 9) ===
-  {
-    id: "ai-scoring",
-    title: "AI Lid Reytinqi",
-    description: "Süni intellekt hər lidi A-dan F-ə qədər qiymətləndirir. Davranış, büdcə və uyğunluq əsasında avtomatik bal hesablayır.",
-    icon: Brain,
-    src: "/marketing/ai-lead-scoring.png",
-  },
-  {
-    id: "ai-email",
-    title: "AI Mətn Generasiyası",
-    description: "Claude ilə peşəkar e-poçt və mesaj yaradın — ton, mətn növü seçin, bir kliklə göndərin. WhatsApp, Telegram və e-poçt dəstəyi.",
-    icon: Mail,
-    src: "/marketing/ai-email-generation.png",
-  },
-  {
-    id: "ai-deal",
-    title: "AI Sövdələşmə Təhlili",
-    description: "Hər sövdələşmə üçün Next Best Offers — süni intellekt ən uyğun məhsul və xidmətləri tövsiyə edir.",
-    icon: Sparkles,
-    src: "/marketing/ai-deal-detail.png",
-  },
-  {
-    id: "ai-ticket",
-    title: "AI Tiket Cavabı",
-    description: "Dəstək tiketlərinə avtomatik cavab, xülasə və həll addımları — süni intellekt agentin işini 3x sürətləndirir.",
-    icon: Headphones,
-    src: "/marketing/ai-ticket-detail.png",
-  },
-  {
-    id: "ai-lead",
-    title: "AI Lid Detalları",
-    description: "Lidlər haqqında dərin təhlil: AI sentiment, tapşırıqlar, skorinq və şəxsiyyətləşdirilmiş e-poçt generasiyası bir ekranda.",
-    icon: Users,
-    src: "/marketing/ai-lead-detail.png",
-  },
-  {
-    id: "ai-contact",
-    title: "AI Kontakt Profili",
-    description: "Hər kontakt üçün AI analiz — əlaqə tarixçəsi, şirkət məlumatları, sövdələşmə tarixçəsi və növbəti addım tövsiyəsi.",
-    icon: Users,
-    src: "/marketing/ai-contact-detail.png",
-  },
-  {
-    id: "ai-profitability",
-    title: "AI Gəlirlilik Təhlili",
-    description: "Süni intellekt gəlirlilik göstəricilərini təhlil edir, trendləri müəyyən edir və optimallaşdırma təklifləri verir.",
-    icon: TrendingUp,
-    src: "/marketing/ai-profitability.png",
-  },
-  {
-    id: "ai-budgeting",
-    title: "AI Büdcə Narrativi",
-    description: "CFO səviyyəsində büdcə şərhləri — plan vs fakt, sapma analizi və proqnoz avtomatik yaradılır.",
-    icon: Calculator,
-    src: "/marketing/ai-budgeting.png",
-  },
-  {
-    id: "ai-assistant",
-    title: "AI Köməkçi Panel",
-    description: "İstənilən səhifədə üzən AI köməkçi — suallarınıza cavab verir, məlumat axtarır, hərəkətlər təklif edir.",
-    icon: Sparkles,
-    src: "/marketing/ai-assistant-panel.png",
-  },
-  // === CRM (11 modul) ===
-  {
-    id: "dashboard",
-    title: "İdarə Paneli",
-    description: "Real vaxt KPI-lər, gəlir qrafikləri, pipeline funnel, ən son sövdələşmələr və tapşırıqlar — hamısı bir ekranda.",
-    icon: LayoutDashboard,
-    src: "/marketing/crm-dashboard.png",
-  },
-  {
-    id: "deals",
-    title: "Sövdələşmələr və Pipeline",
-    description: "Kanban lövhəsi ilə vizual pipeline idarəsi. Sövdələşmələri sürükləyin, mərhələləri izləyin, KPI kartları ilə performansı ölçün.",
-    icon: Handshake,
-    src: "/marketing/deals-pipeline.png",
-  },
-  {
-    id: "inbox",
-    title: "7 Kanallı Gələn Qutusu",
-    description: "E-poçt, SMS, Telegram, WhatsApp, Facebook, Instagram, VK — bütün mesajlar bir vahid gələn qutusunda. AI avtomatik cavab.",
-    icon: Inbox,
-    src: "/marketing/inbox-channels.png",
-  },
-  {
-    id: "companies",
-    title: "Şirkətlər",
-    description: "360° müştəri görüntüsü: kontaktlar, sövdələşmələr, fakturalar, fəaliyyət xətti və gəlirlilik — hər şey bir kartda.",
-    icon: Building2,
-    src: "/marketing/companies-list.png",
-  },
-  {
-    id: "finance",
-    title: "Maliyyə və Xəzinə",
-    description: "Nağd pul axını, hesab balansları, tranzaksiya tarixçəsi və maliyyə proqnozu — tam xəzinə idarəsi.",
-    icon: Wallet,
-    src: "/marketing/finance-treasury.png",
-  },
-  {
-    id: "reports",
-    title: "Hesabatlar və Analitika",
-    description: "Satış performansı, kampaniya ROI, müştəri davranışı — interaktiv qrafiklər və cədvəllər ilə dərin analitika.",
-    icon: BarChart3,
-    src: "/marketing/reports-analytics.png",
-  },
-  {
-    id: "invoices",
-    title: "Hesab-fakturalar",
-    description: "Faktura yaratma, göndərmə, ödəniş izləmə, PDF ixrac və valyuta dəstəyi ilə tam billing sistemi.",
-    icon: FileText,
-    src: "/marketing/invoices-billing.png",
-  },
-  {
-    id: "campaigns",
-    title: "Kampaniyalar",
-    description: "Vizual marşrut qurucusu, e-poçt ardıcıllıqları, seqmentlər və kampaniya ROI izləməsi.",
-    icon: Megaphone,
-    src: "/marketing/marketing-campaigns.png",
-  },
-  {
-    id: "support",
-    title: "Service Desk (SLA)",
-    description: "SLA siyasətləri, prioritet idarəsi, agent iş masası, bilik bazası və AI dəstəkli tiket həlli.",
-    icon: Headphones,
-    src: "/marketing/support-tickets.png",
-  },
-  {
-    id: "agent-desktop",
-    title: "Agent Masaüstü",
-    description: "Dəstək agentləri üçün birləşdirilmiş iş masası — tiketlər, müştəri tarixçəsi və AI tövsiyələr bir yerdə.",
-    icon: Monitor,
-    src: "/marketing/agent-desktop.png",
-  },
-  {
-    id: "events",
-    title: "Tədbirlər",
-    description: "Biznes tədbirlərini planlaşdırın, dəvətnamələr göndərin, iştirakçıları izləyin və təqvimi idarə edin.",
-    icon: CalendarDays,
-    src: "/marketing/events-management.png",
-  },
+  // AI (9)
+  { id: "ai-scoring", title: "AI Lid Reytinqi", description: "Hər lidi A-dan F-ə qədər avtomatik qiymətləndirir.", icon: Brain, src: "/marketing/ai-lead-scoring.png", category: "ai" },
+  { id: "ai-email", title: "AI Mətn Generasiyası", description: "Peşəkar e-poçt və mesaj yaradın — bir kliklə.", icon: Mail, src: "/marketing/ai-email-generation.png", category: "ai" },
+  { id: "ai-deal", title: "AI Sövdələşmə Təhlili", description: "Next Best Offers — ən uyğun məhsul tövsiyələri.", icon: Sparkles, src: "/marketing/ai-deal-detail.png", category: "ai" },
+  { id: "ai-ticket", title: "AI Tiket Cavabı", description: "Tiketlərə avtomatik cavab və həll addımları.", icon: Headphones, src: "/marketing/ai-ticket-detail.png", category: "ai" },
+  { id: "ai-lead", title: "AI Lid Detalları", description: "Dərin AI təhlil — sentiment, skorinq, tapşırıqlar.", icon: Users, src: "/marketing/ai-lead-detail.png", category: "ai" },
+  { id: "ai-contact", title: "AI Kontakt Profili", description: "AI analiz — əlaqə tarixçəsi və növbəti addımlar.", icon: Users, src: "/marketing/ai-contact-detail.png", category: "ai" },
+  { id: "ai-profitability", title: "AI Gəlirlilik", description: "Trendlər, optimallaşdırma təklifləri və proqnozlar.", icon: TrendingUp, src: "/marketing/ai-profitability.png", category: "ai" },
+  { id: "ai-budgeting", title: "AI Büdcə Narrativi", description: "CFO səviyyəsində büdcə şərhləri və proqnoz.", icon: Calculator, src: "/marketing/ai-budgeting.png", category: "ai" },
+  { id: "ai-assistant", title: "AI Köməkçi Panel", description: "Üzən AI köməkçi — suallar, axtarış, hərəkətlər.", icon: Sparkles, src: "/marketing/ai-assistant-panel.png", category: "ai" },
+  // CRM (11)
+  { id: "dashboard", title: "İdarə Paneli", description: "Real vaxt KPI-lər və pipeline funnel.", icon: LayoutDashboard, src: "/marketing/crm-dashboard.png", category: "crm" },
+  { id: "deals", title: "Sövdələşmələr", description: "Kanban lövhəsi ilə vizual pipeline idarəsi.", icon: Handshake, src: "/marketing/deals-pipeline.png", category: "crm" },
+  { id: "inbox", title: "7 Kanallı Inbox", description: "Bütün mesajlar bir vahid gələn qutusunda.", icon: Inbox, src: "/marketing/inbox-channels.png", category: "crm" },
+  { id: "companies", title: "Şirkətlər", description: "360° müştəri görüntüsü — kontaktlar, sövdələşmələr.", icon: Building2, src: "/marketing/companies-list.png", category: "crm" },
+  { id: "finance", title: "Maliyyə", description: "Nağd pul axını, balanslar, tranzaksiyalar.", icon: Wallet, src: "/marketing/finance-treasury.png", category: "crm" },
+  { id: "reports", title: "Hesabatlar", description: "İnteraktiv qrafiklər və dərin analitika.", icon: BarChart3, src: "/marketing/reports-analytics.png", category: "crm" },
+  { id: "invoices", title: "Fakturalar", description: "Yaratma, göndərmə, ödəniş izləmə, PDF.", icon: FileText, src: "/marketing/invoices-billing.png", category: "crm" },
+  { id: "campaigns", title: "Kampaniyalar", description: "Marşrut qurucusu və kampaniya ROI.", icon: Megaphone, src: "/marketing/marketing-campaigns.png", category: "crm" },
+  { id: "support", title: "Service Desk", description: "SLA, prioritet idarəsi, bilik bazası.", icon: Headphones, src: "/marketing/support-tickets.png", category: "crm" },
+  { id: "agent-desktop", title: "Agent Masaüstü", description: "Tiketlər, tarixçə, AI tövsiyələr bir yerdə.", icon: Monitor, src: "/marketing/agent-desktop.png", category: "crm" },
+  { id: "events", title: "Tədbirlər", description: "Planlaşdırma, dəvətnamə, iştirakçı izləmə.", icon: CalendarDays, src: "/marketing/events-management.png", category: "crm" },
 ]
 
 export default function DemoPage() {
   const [active, setActive] = useState(0)
   const [filter, setFilter] = useState<"all" | "ai" | "crm">("all")
-  const current = screenshots[active]
-  const Icon = current.icon
 
-  const filteredScreenshots = filter === "all"
+  const filtered = filter === "all"
     ? screenshots
-    : filter === "ai"
-    ? screenshots.slice(0, 9)
-    : screenshots.slice(9)
+    : screenshots.filter((s) => s.category === filter)
+
+  const currentFiltered = filtered[active] || filtered[0]
+  const Icon = currentFiltered.icon
 
   return (
     <div>
-      {/* Hero */}
-      <section className="bg-gradient-to-b from-white via-[hsl(210,30%,97%)] to-white pt-20 pb-12">
-        <div className="mx-auto max-w-5xl px-4 lg:px-8 text-center">
-          <motion.h1
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="text-4xl lg:text-5xl font-bold text-slate-800"
-          >
-            LeadDrive-ı <span className="text-orange-500">kəşf edin</span>
-          </motion.h1>
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.1 }}
-            className="mt-4 text-lg text-gray-600 max-w-2xl mx-auto"
-          >
-            20+ modulu interaktiv şəkildə araşdırın. 9 AI-əsaslı funksiya + 11 əsas CRM modulu — hər ekran real məhsuldan.
-          </motion.p>
+      {/* Hero with form */}
+      <section className="relative bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 pt-24 pb-20 overflow-hidden">
+        <Particles className="absolute inset-0" quantity={50} color="#8b5cf6" size={0.4} staticity={40} ease={80} />
+        <div className="absolute top-1/4 -left-32 w-96 h-96 bg-violet-600/15 rounded-full blur-[128px]" />
+        <div className="absolute bottom-1/4 -right-32 w-96 h-96 bg-cyan-500/10 rounded-full blur-[128px]" />
+
+        <div className="relative mx-auto max-w-7xl px-4 lg:px-8">
+          <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+            {/* Left: Text */}
+            <div className="stagger-children">
+              <div>
+                <span className="inline-flex items-center gap-2 rounded-full border border-violet-500/30 bg-violet-500/10 px-4 py-1.5 text-sm text-violet-300">
+                  <Sparkles className="h-3.5 w-3.5" />
+                  Canlı demo
+                </span>
+              </div>
+              <h1 className="mt-6 text-4xl lg:text-5xl font-bold tracking-tight text-white leading-tight">
+                LeadDrive CRM-i{" "}
+                <span className="bg-gradient-to-r from-violet-400 to-cyan-400 bg-clip-text text-transparent">
+                  kəşf edin
+                </span>
+              </h1>
+              <p className="mt-4 text-lg text-slate-400 leading-relaxed">
+                20+ modulu interaktiv şəkildə araşdırın. 9 AI funksiya + 11 CRM modulu — hər ekran real məhsuldan.
+              </p>
+
+              <div className="mt-8 space-y-3">
+                {[
+                  "30 dəqiqəlik canlı demo sessiyası",
+                  "Sizin sektora uyğunlaşdırılmış ssenari",
+                  "Texniki suallar üçün mühəndis iştirakı",
+                ].map((item) => (
+                  <div key={item} className="flex items-center gap-2.5">
+                    <div className="w-1.5 h-1.5 rounded-full bg-violet-400" />
+                    <span className="text-sm text-slate-300">{item}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Right: Form */}
+            <div>
+              <div className="rounded-2xl border border-slate-800 bg-slate-900/60 backdrop-blur-sm p-6 lg:p-8">
+                <h2 className="text-lg font-semibold text-white mb-1">Demo tələb et</h2>
+                <p className="text-sm text-slate-500 mb-6">Formu doldurun, 24 saat ərzində əlaqə saxlayacağıq.</p>
+                <DemoRequestForm />
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
-      {/* Gallery */}
-      <section className="pb-20">
+      {/* Product Gallery */}
+      <section className="bg-slate-950 py-20">
         <div className="mx-auto max-w-7xl px-4 lg:px-8">
+          <AnimateIn className="text-center mb-10">
+            <h2 className="text-3xl lg:text-4xl font-bold tracking-tight text-white">
+              Məhsul qalereyası
+            </h2>
+            <p className="mt-3 text-slate-400">Real ekranlar — real funksionallıq.</p>
+          </AnimateIn>
+
           {/* Category filter */}
-          <div className="flex justify-center gap-3 mb-6">
+          <div className="flex justify-center gap-2 mb-6">
             {[
               { key: "all" as const, label: "Hamısı (20)" },
-              { key: "ai" as const, label: "🤖 AI Funksiyalar (9)" },
-              { key: "crm" as const, label: "📊 CRM Modulları (11)" },
+              { key: "ai" as const, label: "AI Funksiyalar (9)" },
+              { key: "crm" as const, label: "CRM Modulları (11)" },
             ].map((f) => (
               <button
                 key={f.key}
-                onClick={() => { setFilter(f.key); setActive(f.key === "crm" ? 9 : 0) }}
-                className={`px-5 py-2.5 rounded-full text-sm font-semibold transition-all ${
+                onClick={() => { setFilter(f.key); setActive(0) }}
+                className={cn(
+                  "px-5 py-2.5 rounded-full text-sm font-medium transition-all",
                   filter === f.key
-                    ? "bg-slate-800 text-white shadow-lg"
-                    : "bg-white text-gray-600 hover:bg-gray-100 border border-gray-200"
-                }`}
+                    ? "bg-violet-600/20 text-violet-300 border border-violet-500/40"
+                    : "text-slate-500 hover:text-slate-300 border border-transparent hover:bg-slate-800/50"
+                )}
               >
                 {f.label}
               </button>
@@ -219,20 +252,20 @@ export default function DemoPage() {
 
           {/* Tab navigation */}
           <div className="flex flex-wrap justify-center gap-2 mb-10">
-            {filteredScreenshots.map((s) => {
+            {filtered.map((s, i) => {
               const TabIcon = s.icon
-              const globalIdx = screenshots.indexOf(s)
               return (
                 <button
                   key={s.id}
-                  onClick={() => setActive(globalIdx)}
-                  className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
-                    globalIdx === active
-                      ? "bg-orange-500 text-white shadow-lg shadow-orange-500/20"
-                      : "bg-white text-gray-600 hover:bg-gray-100 border border-gray-200"
-                  }`}
+                  onClick={() => setActive(i)}
+                  className={cn(
+                    "flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-medium transition-all",
+                    i === active
+                      ? "bg-violet-600/20 text-violet-300 border border-violet-500/40"
+                      : "text-slate-600 hover:text-slate-400 border border-transparent hover:bg-slate-800/30"
+                  )}
                 >
-                  <TabIcon className="h-4 w-4" />
+                  <TabIcon className="h-3.5 w-3.5" />
                   <span className="hidden sm:inline">{s.title}</span>
                 </button>
               )
@@ -240,100 +273,84 @@ export default function DemoPage() {
           </div>
 
           {/* Screenshot viewer */}
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={current.id}
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -12 }}
-              transition={{ duration: 0.3 }}
-            >
-              {/* Info bar */}
-              <div className="flex items-center gap-4 mb-6">
-                <div className="w-12 h-12 rounded-xl bg-orange-500/10 flex items-center justify-center flex-shrink-0">
-                  <Icon className="h-6 w-6 text-orange-500" />
-                </div>
-                <div>
-                  <h2 className="text-xl font-bold text-slate-800">{current.title}</h2>
-                  <p className="text-sm text-gray-600 mt-0.5">{current.description}</p>
-                </div>
+          <div key={currentFiltered.id} className="animate-fade-in-up">
+            {/* Info bar */}
+            <div className="flex items-center gap-4 mb-6">
+              <div className="w-12 h-12 rounded-xl bg-violet-500/10 border border-violet-500/20 flex items-center justify-center flex-shrink-0">
+                <Icon className="h-6 w-6 text-violet-400" />
               </div>
+              <div>
+                <h3 className="text-xl font-bold text-white">{currentFiltered.title}</h3>
+                <p className="text-sm text-slate-400 mt-0.5">{currentFiltered.description}</p>
+              </div>
+            </div>
 
-              {/* Browser frame */}
-              <div className="rounded-xl border border-gray-200 bg-white shadow-2xl shadow-gray-200/60 overflow-hidden">
-                <div className="flex items-center gap-2 px-4 py-3 border-b border-gray-100 bg-gray-50/80">
-                  <div className="flex gap-1.5">
-                    <div className="w-3 h-3 rounded-full bg-red-400" />
-                    <div className="w-3 h-3 rounded-full bg-yellow-400" />
-                    <div className="w-3 h-3 rounded-full bg-green-400" />
-                  </div>
-                  <div className="flex-1 mx-8">
-                    <div className="bg-white rounded-md px-3 py-1 text-xs text-gray-400 border border-gray-200 max-w-xs mx-auto text-center">
-                      app.leaddrivecrm.org
-                    </div>
+            {/* Browser frame */}
+            <div className="rounded-2xl border border-slate-700/50 bg-slate-900 shadow-2xl shadow-violet-500/5 overflow-hidden">
+              <div className="flex items-center gap-2 px-4 py-2.5 border-b border-slate-700/50 bg-slate-900/80">
+                <div className="flex gap-1.5">
+                  <div className="w-2.5 h-2.5 rounded-full bg-red-500/80" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/80" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-green-500/80" />
+                </div>
+                <div className="flex-1 mx-6">
+                  <div className="bg-slate-800 rounded-md px-3 py-0.5 text-[11px] text-slate-500 border border-slate-700 max-w-xs mx-auto text-center">
+                    app.leaddrivecrm.org
                   </div>
                 </div>
-                <img
-                  src={current.src}
-                  alt={current.title}
-                  className="w-full"
-                  loading="lazy"
-                />
               </div>
+              <img
+                src={currentFiltered.src}
+                alt={currentFiltered.title}
+                className="w-full"
+                loading="lazy"
+              />
+            </div>
 
-              {/* Prev/Next */}
-              <div className="flex items-center justify-between mt-6">
-                <button
-                  onClick={() => {
-                    const idxInFiltered = filteredScreenshots.indexOf(current)
-                    const prev = (idxInFiltered - 1 + filteredScreenshots.length) % filteredScreenshots.length
-                    setActive(screenshots.indexOf(filteredScreenshots[prev]))
-                  }}
-                  className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-600 hover:text-slate-800 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                  Əvvəlki
-                </button>
-                <span className="text-sm text-gray-400">
-                  {filteredScreenshots.indexOf(current) + 1} / {filteredScreenshots.length}
-                </span>
-                <button
-                  onClick={() => {
-                    const idxInFiltered = filteredScreenshots.indexOf(current)
-                    const next = (idxInFiltered + 1) % filteredScreenshots.length
-                    setActive(screenshots.indexOf(filteredScreenshots[next]))
-                  }}
-                  className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-600 hover:text-slate-800 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-                >
-                  Növbəti
-                  <ChevronRight className="h-4 w-4" />
-                </button>
-              </div>
-            </motion.div>
-          </AnimatePresence>
+            {/* Prev/Next */}
+            <div className="flex items-center justify-between mt-6">
+              <button
+                onClick={() => setActive((active - 1 + filtered.length) % filtered.length)}
+                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-400 hover:text-white border border-slate-800 rounded-lg hover:bg-slate-800/50 transition-colors"
+              >
+                <ChevronLeft className="h-4 w-4" />
+                Əvvəlki
+              </button>
+              <span className="text-sm text-slate-600">
+                {active + 1} / {filtered.length}
+              </span>
+              <button
+                onClick={() => setActive((active + 1) % filtered.length)}
+                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-400 hover:text-white border border-slate-800 rounded-lg hover:bg-slate-800/50 transition-colors"
+              >
+                Növbəti
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
         </div>
       </section>
 
       {/* CTA */}
-      <section className="bg-gradient-to-br from-[#F97316] to-[#FACC15] py-16">
-        <div className="mx-auto max-w-4xl px-4 lg:px-8 text-center">
-          <h2 className="text-3xl font-bold text-white">Hazırsınız?</h2>
-          <p className="mt-3 text-white/80">14 günlük pulsuz sınaq. Kredit kartı tələb olunmur.</p>
+      <section className="relative bg-gradient-to-b from-slate-950 via-indigo-950 to-slate-950 py-16 overflow-hidden">
+        <Particles className="absolute inset-0" quantity={30} color="#8b5cf6" size={0.3} staticity={50} ease={80} />
+        <div className="relative mx-auto max-w-4xl px-4 lg:px-8 text-center">
+          <h2 className="text-3xl font-bold text-white">
+            Hazırsınız?{" "}
+            <span className="bg-gradient-to-r from-violet-400 to-cyan-400 bg-clip-text text-transparent">Başlayaq.</span>
+          </h2>
+          <p className="mt-3 text-slate-400">14 günlük pulsuz sınaq. Kredit kartı tələb olunmur.</p>
           <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link href="/register">
-              <ShimmerButton
-                background="rgba(255,255,255,0.15)"
-                shimmerColor="rgba(255,255,255,0.4)"
-                borderRadius="10px"
-                className="text-base font-semibold px-8 py-3.5 border-white/30"
-              >
-                Pulsuz sınaq başlat
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </ShimmerButton>
+            <Link
+              href="/register"
+              className="group inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-violet-600 to-indigo-600 px-8 py-3.5 text-base font-semibold text-white shadow-lg shadow-violet-500/25 hover:shadow-violet-500/40 transition-all"
+            >
+              Pulsuz sınaq başlat
+              <ArrowRight className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
             </Link>
             <Link
               href="/plans"
-              className="inline-flex items-center gap-2 px-6 py-3.5 text-base font-semibold text-white border-2 border-white/30 rounded-[10px] hover:bg-white/10 transition-all"
+              className="inline-flex items-center gap-2 rounded-full border border-slate-700 bg-slate-800/50 px-6 py-3.5 text-base font-semibold text-slate-300 hover:bg-slate-700/50 hover:text-white transition-all"
             >
               Qiymətlərə bax
             </Link>
