@@ -25,7 +25,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     })
     return NextResponse.json({ success: true, data: payments })
   } catch (e) {
-    return NextResponse.json({ error: String(e) }, { status: 500 })
+    console.error(e)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
 
@@ -69,8 +70,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       newStatus = "partially_paid"
     }
 
-    await prisma.invoice.update({
-      where: { id },
+    await prisma.invoice.updateMany({
+      where: { id, organizationId: orgId },
       data: {
         paidAmount: newPaidAmount,
         balanceDue: Math.max(0, newBalanceDue),
@@ -98,6 +99,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
     return NextResponse.json({ success: true, data: payment }, { status: 201 })
   } catch (e) {
-    return NextResponse.json({ error: String(e) }, { status: 500 })
+    console.error(e)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

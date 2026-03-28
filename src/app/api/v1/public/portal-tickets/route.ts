@@ -12,6 +12,7 @@ export async function GET() {
       contactId: user.contactId,
     },
     orderBy: { createdAt: "desc" },
+    take: 100,
     select: {
       id: true,
       ticketNumber: true,

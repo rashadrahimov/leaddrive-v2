@@ -73,15 +73,56 @@ const authMiddleware = auth((req) => {
     return withCspHeaders(NextResponse.next({ headers: requestHeaders }), nonce)
   }
 
+  // Rate limit public API POST endpoints (these bypass auth but must not bypass rate limits)
+  if (pathname.startsWith("/api/v1/public/") && req.method === "POST") {
+    const ip = req.headers.get("x-real-ip")?.trim()
+      || req.headers.get("x-forwarded-for")?.split(",").pop()?.trim()
+      || "unknown"
+
+    // Stricter limit for AI chat (expensive)
+    if (pathname.includes("/portal-chat")) {
+      const key = `chat:${ip}`
+      if (!checkRateLimit(key, RATE_LIMIT_CONFIG.ai)) {
+        return withCspHeaders(
+          NextResponse.json({ error: "Too many requests. Please try again later." }, { status: 429 }),
+          nonce,
+        )
+      }
+    } else {
+      // General public endpoint limit (leads, events, demo-request, etc.)
+      const key = `public:${ip}`
+      if (!checkRateLimit(key, RATE_LIMIT_CONFIG.public)) {
+        return withCspHeaders(
+          NextResponse.json({ error: "Too many requests. Please try again later." }, { status: 429 }),
+          nonce,
+        )
+      }
+    }
+  }
+
+  // Rate limit public API GET endpoints (prevent enumeration)
+  if (pathname.startsWith("/api/v1/public/") && req.method === "GET") {
+    const ip = req.headers.get("x-real-ip")?.trim()
+      || req.headers.get("x-forwarded-for")?.split(",").pop()?.trim()
+      || "unknown"
+    const key = `pub-get:${ip}`
+    if (!checkRateLimit(key, RATE_LIMIT_CONFIG.api)) {
+      return withCspHeaders(
+        NextResponse.json({ error: "Too many requests" }, { status: 429 }),
+        nonce,
+      )
+    }
+  }
+
   // Allow public API (web-to-lead, calendar feed, journey processor, webhooks)
   if (pathname.startsWith("/api/v1/public/") || pathname.startsWith("/api/v1/calendar/feed/") || pathname.startsWith("/api/v1/webhooks/") || pathname === "/api/v1/journeys/process") {
     return withCspHeaders(NextResponse.next(), nonce)
   }
 
-  // Check authentication — unauthenticated root "/" goes to marketing homepage
+  // Check authentication — unauthenticated users go to login
   if (!req.auth) {
     if (pathname === "/") {
-      return withCspHeaders(NextResponse.redirect(new URL("/home", req.url)), nonce)
+      return withCspHeaders(NextResponse.redirect(new URL("/login", req.url)), nonce)
     }
     const loginUrl = new URL("/login", req.url)
     loginUrl.searchParams.set("callbackUrl", pathname)

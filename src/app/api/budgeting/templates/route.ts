@@ -1,6 +1,20 @@
 import { NextRequest, NextResponse } from "next/server"
+import { z, ZodError } from "zod"
 import { getOrgId } from "@/lib/api-auth"
 import { prisma } from "@/lib/prisma"
+
+const createTemplateSchema = z.object({
+  name: z.string().min(1).max(500),
+  description: z.string().max(2000).optional().nullable(),
+  lineType: z.string().max(50).optional(),
+  lineSubtype: z.string().max(50).optional().nullable(),
+  defaultAmount: z.number().min(0).max(999999999).optional(),
+  unitPrice: z.number().min(0).max(999999999).optional().nullable(),
+  unitCost: z.number().min(0).max(999999999).optional().nullable(),
+  quantity: z.number().min(0).max(999999999).optional().nullable(),
+  costModelKey: z.string().max(200).optional().nullable(),
+  department: z.string().max(200).optional().nullable(),
+}).strict()
 
 export async function GET(req: NextRequest) {
   const orgId = await getOrgId(req)
@@ -18,10 +32,24 @@ export async function POST(req: NextRequest) {
   const orgId = await getOrgId(req)
   if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
-  const body = await req.json()
-  const { name, description, lineType, lineSubtype, defaultAmount, unitPrice, unitCost, quantity, costModelKey, department } = body
+  let body
+  try {
+    body = await req.json()
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 })
+  }
 
-  if (!name?.trim()) return NextResponse.json({ error: "name required" }, { status: 400 })
+  let data
+  try {
+    data = createTemplateSchema.parse(body)
+  } catch (e) {
+    if (e instanceof ZodError) {
+      return NextResponse.json({ error: "Validation failed", details: e.flatten().fieldErrors }, { status: 400 })
+    }
+    return NextResponse.json({ error: "Invalid request" }, { status: 400 })
+  }
+
+  const { name, description, lineType, lineSubtype, defaultAmount, unitPrice, unitCost, quantity, costModelKey, department } = data
 
   const template = await prisma.budgetDirectionTemplate.create({
     data: {

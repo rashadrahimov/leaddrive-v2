@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { prisma, logAudit } from "@/lib/prisma"
-import { getOrgId } from "@/lib/api-auth"
+import { getOrgId, requireAuth, isAuthError } from "@/lib/api-auth"
 import { sendWhatsAppMessage } from "@/lib/whatsapp"
 import { executeWorkflows } from "@/lib/workflow-engine"
 
@@ -24,7 +24,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   try {
     const ticket = await prisma.ticket.findFirst({
       where: { id, organizationId: orgId },
-      include: { comments: { orderBy: { createdAt: "asc" } } },
+      include: { comments: { orderBy: { createdAt: "asc" } } },  // TicketComment has no organizationId — safe (FK-scoped child)
     })
 
     if (!ticket) return NextResponse.json({ error: "Ticket not found" }, { status: 404 })
@@ -73,8 +73,9 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 }
 
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const orgId = await getOrgId(req)
-  if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  const authResult = await requireAuth(req, "tickets", "write")
+  if (isAuthError(authResult)) return authResult
+  const orgId = authResult.orgId
   const { id } = await params
   const body = await req.json()
   const parsed = updateTicketSchema.safeParse(body)
@@ -107,7 +108,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 
     const updated = await prisma.ticket.findFirst({
       where: { id, organizationId: orgId },
-      include: { comments: { orderBy: { createdAt: "desc" } } },
+      include: { comments: { orderBy: { createdAt: "desc" } } },  // TicketComment has no organizationId — safe (FK-scoped child)
     })
 
     // Send WhatsApp notification on status change for WhatsApp tickets
@@ -126,13 +127,15 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 
     return NextResponse.json({ success: true, data: updated })
   } catch (e) {
-    return NextResponse.json({ error: String(e) }, { status: 500 })
+    console.error(e)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
 
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const orgId = await getOrgId(req)
-  if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  const authResult = await requireAuth(req, "tickets", "delete")
+  if (isAuthError(authResult)) return authResult
+  const orgId = authResult.orgId
   const { id } = await params
 
   try {
@@ -145,14 +148,16 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     logAudit(orgId, "delete", "ticket", id, existing?.subject || "")
     return NextResponse.json({ success: true, data: { deleted: id } })
   } catch (e) {
-    return NextResponse.json({ error: String(e) }, { status: 500 })
+    console.error(e)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
 
 // PATCH /api/v1/tickets/[id] — auto-assign to least loaded agent
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const orgId = await getOrgId(req)
-  if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  const authResult = await requireAuth(req, "tickets", "write")
+  if (isAuthError(authResult)) return authResult
+  const orgId = authResult.orgId
   const { id } = await params
 
   try {
@@ -191,8 +196,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     const sorted = users.sort((a: any, b: any) => (countMap[a.id] || 0) - (countMap[b.id] || 0))
     const leastLoaded = sorted[0]
 
-    await prisma.ticket.update({
-      where: { id },
+    await prisma.ticket.updateMany({
+      where: { id, organizationId: orgId },
       data: { assignedTo: leastLoaded.id },
     })
 
@@ -204,7 +209,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       },
     })
   } catch (e) {
-    return NextResponse.json({ error: String(e) }, { status: 500 })
+    console.error(e)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
 

@@ -1,9 +1,15 @@
 import { NextRequest, NextResponse } from "next/server"
+import { z, ZodError } from "zod"
 import { getOrgId } from "@/lib/api-auth"
 import { prisma } from "@/lib/prisma"
 import { loadAndCompute } from "@/lib/cost-model/db"
 import { resolveCostModelKey } from "@/lib/budgeting/cost-model-map"
 import Anthropic from "@anthropic-ai/sdk"
+
+const narrativeSchema = z.object({
+  planId: z.string().min(1).max(100),
+  threshold: z.number().min(0).max(100).optional(),
+}).strict()
 
 const MODEL = process.env.MANAGER_MODEL || "claude-sonnet-4-5-20250929"
 
@@ -11,10 +17,24 @@ export async function POST(req: NextRequest) {
   const orgId = await getOrgId(req)
   if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
-  const body = await req.json()
-  const { planId, threshold = 5 } = body
+  let body
+  try {
+    body = await req.json()
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 })
+  }
 
-  if (!planId) return NextResponse.json({ error: "planId required" }, { status: 400 })
+  let data
+  try {
+    data = narrativeSchema.parse(body)
+  } catch (e) {
+    if (e instanceof ZodError) {
+      return NextResponse.json({ error: "Validation failed", details: e.flatten().fieldErrors }, { status: 400 })
+    }
+    return NextResponse.json({ error: "Invalid request" }, { status: 400 })
+  }
+
+  const { planId, threshold = 5 } = data
 
   // Load analytics data
   const [plan, lines, actuals] = await Promise.all([

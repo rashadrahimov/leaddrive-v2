@@ -5,25 +5,43 @@ import { sendEmail } from "@/lib/email"
 
 // POST /api/v1/public/portal-auth/register — send verification email
 export async function POST(req: NextRequest) {
-  const { email } = await req.json()
+  let body
+  try {
+    body = await req.json()
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 })
+  }
+  const { email, organizationId, slug } = body
 
   if (!email) return NextResponse.json({ error: "Email обязателен" }, { status: 400 })
 
+  // SECURITY: Always return the same generic response to prevent email enumeration
+  const genericResponse = { success: true, message: "Если указанный email связан с аккаунтом, на него будет отправлена ссылка для подтверждения." }
+
+  // Resolve organization from slug or explicit ID
+  let orgId: string | null = null
+  if (organizationId) {
+    const org = await prisma.organization.findUnique({ where: { id: organizationId }, select: { id: true } })
+    orgId = org?.id ?? null
+  } else if (slug) {
+    const org = await prisma.organization.findFirst({ where: { slug }, select: { id: true } })
+    orgId = org?.id ?? null
+  }
+
+  // If no org resolved, return generic response (prevents org enumeration)
+  if (!orgId) {
+    return NextResponse.json(genericResponse)
+  }
+
+  // SECURITY: Scope email lookup to the resolved organization
   const contact = await prisma.contact.findFirst({
-    where: { email: email.toLowerCase().trim() },
+    where: { email: email.toLowerCase().trim(), organizationId: orgId },
     include: { organization: { select: { name: true } } },
   })
 
-  if (!contact) {
-    return NextResponse.json({ error: "Контакт с таким email не найден. Обратитесь к администратору." }, { status: 404 })
-  }
-
-  if (!contact.portalAccessEnabled) {
-    return NextResponse.json({ error: "Доступ к порталу не активирован. Обратитесь к администратору." }, { status: 403 })
-  }
-
-  if (contact.portalPasswordHash) {
-    return NextResponse.json({ error: "Аккаунт уже зарегистрирован. Войдите через страницу входа." }, { status: 409 })
+  // Return same generic message for all failure cases (prevents email enumeration)
+  if (!contact || !contact.portalAccessEnabled || contact.portalPasswordHash) {
+    return NextResponse.json(genericResponse)
   }
 
   // Generate verification token (32 bytes = 64 hex chars)
@@ -87,5 +105,5 @@ export async function POST(req: NextRequest) {
     })
   } catch { /* non-critical */ }
 
-  return NextResponse.json({ success: true, message: "Письмо с ссылкой для подтверждения отправлено" })
+  return NextResponse.json(genericResponse)
 }

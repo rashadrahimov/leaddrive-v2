@@ -1,14 +1,38 @@
 import { NextRequest, NextResponse } from "next/server"
+import { z, ZodError } from "zod"
 import { getOrgId } from "@/lib/api-auth"
 import { prisma } from "@/lib/prisma"
+
+const updateSectionSchema = z.object({
+  name: z.string().min(1).max(500).optional(),
+  sectionType: z.string().max(50).optional(),
+  sortOrder: z.number().int().min(0).max(999).optional(),
+})
 
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const orgId = await getOrgId(req)
   if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
   const { id } = await params
-  const body = await req.json()
-  const { name, sectionType, sortOrder } = body
+
+  let body
+  try {
+    body = await req.json()
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 })
+  }
+
+  let data
+  try {
+    data = updateSectionSchema.parse(body)
+  } catch (e) {
+    if (e instanceof ZodError) {
+      return NextResponse.json({ error: "Validation failed", details: e.flatten().fieldErrors }, { status: 400 })
+    }
+    return NextResponse.json({ error: "Invalid request" }, { status: 400 })
+  }
+
+  const { name, sectionType, sortOrder } = data
 
   const result = await prisma.budgetSection.updateMany({
     where: { id, organizationId: orgId },

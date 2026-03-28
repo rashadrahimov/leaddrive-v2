@@ -1,5 +1,16 @@
 import { prisma } from "@/lib/prisma"
 import { createNotification } from "@/lib/notifications"
+import { isPrivateUrl } from "@/lib/url-validation"
+
+// Whitelist of fields that workflow actions are allowed to update per entity type
+const SAFE_UPDATE_FIELDS: Record<string, Set<string>> = {
+  deal: new Set(["stage", "status", "assignedTo", "priority", "notes", "tags"]),
+  lead: new Set(["status", "priority", "assignedTo", "notes", "source", "tags"]),
+  ticket: new Set(["status", "priority", "assignedTo", "category", "notes", "tags"]),
+  task: new Set(["status", "priority", "assignedTo", "notes", "tags"]),
+  contact: new Set(["status", "notes", "tags"]),
+  company: new Set(["leadStatus", "notes", "tags"]),
+}
 
 // Normalize entity type: v1 uses plural "deals"/"leads", v2 uses singular "deal"/"lead"
 function normalizeEntityType(et: string): string {
@@ -140,6 +151,11 @@ async function executeAction(
 
     case "update_field":
       if (config.field && (config.value !== undefined)) {
+        const allowedFields = SAFE_UPDATE_FIELDS[entityType]
+        if (!allowedFields || !allowedFields.has(config.field)) {
+          console.error(`[Workflow] Blocked update of restricted field: ${entityType}.${config.field}`)
+          break
+        }
         try {
           const model = (prisma as any)[entityType]
           if (model) {
@@ -180,6 +196,10 @@ async function executeAction(
 
     case "webhook":
       if (config.url) {
+        if (isPrivateUrl(config.url)) {
+          console.error("[Workflow] Blocked webhook to private URL:", config.url)
+          break
+        }
         try {
           await fetch(config.url, {
             method: config.method || "POST",

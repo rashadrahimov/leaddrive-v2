@@ -25,8 +25,8 @@ const updateSchema = z.object({
   status: z.string().optional(),
   currency: z.string().optional(),
   discountType: z.enum(["percentage", "fixed"]).optional(),
-  discountValue: z.number().optional(),
-  taxRate: z.number().optional(),
+  discountValue: z.number().min(0).max(100).optional(),
+  taxRate: z.number().min(0).max(100).optional(),
   includeVat: z.boolean().optional(),
   voen: z.string().optional().nullable(),
   sellerVoen: z.string().optional().nullable(),
@@ -58,7 +58,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       where: { id, organizationId: orgId },
       include: {
         items: { orderBy: { sortOrder: "asc" } },
-        payments: { orderBy: { paymentDate: "desc" } },
+        payments: { where: { organizationId: orgId }, orderBy: { paymentDate: "desc" } },
         company: { select: { id: true, name: true, address: true, email: true, phone: true } },
         contact: { select: { id: true, fullName: true, email: true, phone: true } },
         deal: { select: { id: true, name: true } },
@@ -69,7 +69,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     if (!invoice) return NextResponse.json({ error: "Not found" }, { status: 404 })
     return NextResponse.json({ success: true, data: invoice })
   } catch (e) {
-    return NextResponse.json({ error: String(e) }, { status: 500 })
+    console.error(e)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
 
@@ -87,9 +88,14 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   try {
     const existing = await prisma.invoice.findFirst({
       where: { id, organizationId: orgId },
-      include: { payments: true },
+      include: { payments: { where: { organizationId: orgId } } },
     })
     if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 })
+
+    // Prevent modifying paid invoices (only status change allowed)
+    if (existing.status === "paid" && parsed.data.status !== "paid") {
+      return NextResponse.json({ error: "Cannot modify a paid invoice" }, { status: 400 })
+    }
 
     const d = parsed.data
     const { items, issueDate, dueDate, ...rest } = d
@@ -127,9 +133,12 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       updateData.balanceDue = calculateBalance(totals.totalAmount, existing.paidAmount)
     }
 
-    const invoice = await prisma.invoice.update({
-      where: { id },
+    await prisma.invoice.updateMany({
+      where: { id, organizationId: orgId },
       data: updateData,
+    })
+    const invoice = await prisma.invoice.findFirst({
+      where: { id, organizationId: orgId },
       include: {
         items: { orderBy: { sortOrder: "asc" } },
         company: { select: { id: true, name: true } },
@@ -138,7 +147,8 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 
     return NextResponse.json({ success: true, data: invoice })
   } catch (e) {
-    return NextResponse.json({ error: String(e) }, { status: 500 })
+    console.error(e)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
 
@@ -151,6 +161,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     await prisma.invoice.deleteMany({ where: { id, organizationId: orgId } })
     return NextResponse.json({ success: true })
   } catch (e) {
-    return NextResponse.json({ error: String(e) }, { status: 500 })
+    console.error(e)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

@@ -1,6 +1,12 @@
 import { prisma } from "@/lib/prisma"
 import { sendEmail } from "@/lib/email"
 
+// Whitelist of fields that journey steps are allowed to update per entity type
+const SAFE_UPDATE_FIELDS: Record<string, Set<string>> = {
+  lead: new Set(["status", "priority", "assignedTo", "notes", "source", "tags"]),
+  contact: new Set(["status", "notes", "tags"]),
+}
+
 interface StepResult {
   stepId: string
   stepType: string
@@ -102,19 +108,24 @@ export async function processEnrollmentStep(enrollmentId: string, orgId: string)
     }
   }
 
-  // Replace template variables
+  // Escape HTML special characters to prevent injection
+  function escHtml(s: unknown): string {
+    return String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;")
+  }
+
+  // Replace template variables (values are HTML-escaped to prevent injection)
   function replaceVars(text: string): string {
     return text
-      .replace(/\{\{contact_name\}\}/g, recipientName)
-      .replace(/\{\{recipient_name\}\}/g, recipientName)
-      .replace(/\{\{company_name\}\}/g, companyName)
-      .replace(/\{\{email\}\}/g, recipientEmail)
-      .replace(/\{\{phone\}\}/g, recipientPhone)
-      .replace(/\{\{invoice_number\}\}/g, invoiceNumber)
-      .replace(/\{\{amount\}\}/g, invoiceAmount)
-      .replace(/\{\{due_date\}\}/g, invoiceDueDate)
-      .replace(/\{\{balance_due\}\}/g, invoiceBalanceDue)
-      .replace(/\{\{invoice_url\}\}/g, invoicePdfUrl)
+      .replace(/\{\{contact_name\}\}/g, escHtml(recipientName))
+      .replace(/\{\{recipient_name\}\}/g, escHtml(recipientName))
+      .replace(/\{\{company_name\}\}/g, escHtml(companyName))
+      .replace(/\{\{email\}\}/g, escHtml(recipientEmail))
+      .replace(/\{\{phone\}\}/g, escHtml(recipientPhone))
+      .replace(/\{\{invoice_number\}\}/g, escHtml(invoiceNumber))
+      .replace(/\{\{amount\}\}/g, escHtml(invoiceAmount))
+      .replace(/\{\{due_date\}\}/g, escHtml(invoiceDueDate))
+      .replace(/\{\{balance_due\}\}/g, escHtml(invoiceBalanceDue))
+      .replace(/\{\{invoice_url\}\}/g, escHtml(invoicePdfUrl))
   }
 
   let result: StepResult
@@ -383,9 +394,21 @@ export async function processEnrollmentStep(enrollmentId: string, orgId: string)
       case "update_field": {
         const field = config.field || ""
         const newValue = config.value || ""
+        const entityType = leadId ? "lead" : contactId ? "contact" : ""
+        const allowedFields = entityType ? SAFE_UPDATE_FIELDS[entityType] : undefined
+        if (!allowedFields || !allowedFields.has(field)) {
+          console.error(`[Journey] Blocked update of restricted field: ${entityType || "unknown"}.${field}`)
+          result = { stepId: currentStep.id, stepType: "update_field", status: "skipped", message: `Blocked restricted field: ${field}` }
+          break
+        }
         if (leadId && field) {
           await prisma.lead.update({
             where: { id: leadId },
+            data: { [field]: newValue },
+          })
+        } else if (contactId && field) {
+          await prisma.contact.update({
+            where: { id: contactId },
             data: { [field]: newValue },
           })
         }

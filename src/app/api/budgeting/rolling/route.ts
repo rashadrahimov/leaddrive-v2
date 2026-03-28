@@ -1,7 +1,22 @@
 import { NextRequest, NextResponse } from "next/server"
+import { z, ZodError } from "zod"
 import { getOrgId } from "@/lib/api-auth"
 import { prisma } from "@/lib/prisma"
 import { loadAndCompute } from "@/lib/cost-model/db"
+
+const createRollingSchema = z.object({
+  name: z.string().min(1).max(500),
+  startYear: z.number().int().min(2020).max(2050),
+  startMonth: z.number().int().min(1).max(12),
+  rollingMonths: z.number().int().min(1).max(60).optional(),
+}).strict()
+
+const patchRollingSchema = z.object({
+  planId: z.string().min(1).max(100),
+  year: z.number().int().min(2020).max(2050),
+  month: z.number().int().min(1).max(12),
+  action: z.enum(["close", "reopen"]).optional(),
+}).strict()
 
 const SVC_REVENUE_MAP: Record<string, string> = {
   permanent_it: "Daimi IT", infosec: "InfoSec",
@@ -14,12 +29,24 @@ export async function POST(req: NextRequest) {
   const orgId = await getOrgId(req)
   if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
-  const body = await req.json()
-  const { name, startYear, startMonth, rollingMonths = 12 } = body
-
-  if (!name || !startYear || !startMonth) {
-    return NextResponse.json({ error: "name, startYear, startMonth required" }, { status: 400 })
+  let body
+  try {
+    body = await req.json()
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 })
   }
+
+  let data
+  try {
+    data = createRollingSchema.parse(body)
+  } catch (e) {
+    if (e instanceof ZodError) {
+      return NextResponse.json({ error: "Validation failed", details: e.flatten().fieldErrors }, { status: 400 })
+    }
+    return NextResponse.json({ error: "Invalid request" }, { status: 400 })
+  }
+
+  const { name, startYear, startMonth, rollingMonths = 12 } = data
 
   // Create rolling plan
   const plan = await prisma.budgetPlan.create({
@@ -148,10 +175,24 @@ export async function PATCH(req: NextRequest) {
   const orgId = await getOrgId(req)
   if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
-  const { planId, year, month, action = "close" } = await req.json()
-  if (!planId || !year || !month) {
-    return NextResponse.json({ error: "planId, year, month required" }, { status: 400 })
+  let patchBody
+  try {
+    patchBody = await req.json()
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 })
   }
+
+  let patchData
+  try {
+    patchData = patchRollingSchema.parse(patchBody)
+  } catch (e) {
+    if (e instanceof ZodError) {
+      return NextResponse.json({ error: "Validation failed", details: e.flatten().fieldErrors }, { status: 400 })
+    }
+    return NextResponse.json({ error: "Invalid request" }, { status: 400 })
+  }
+
+  const { planId, year, month, action = "close" } = patchData
 
   const plan = await prisma.budgetPlan.findFirst({
     where: { id: planId, organizationId: orgId, isRolling: true },

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { prisma } from "@/lib/prisma"
-import { getOrgId } from "@/lib/api-auth"
+import { getOrgId, requireAuth, isAuthError } from "@/lib/api-auth"
 
 const stageSchema = z.object({
   name: z.string().min(1).max(50),
@@ -39,11 +39,9 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const orgId = await getOrgId(req)
-  if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-
-  const role = req.headers.get("x-user-role")
-  if (role !== "admin") return NextResponse.json({ error: "Admin only" }, { status: 403 })
+  const authResult = await requireAuth(req, "settings", "write")
+  if (isAuthError(authResult)) return authResult
+  const orgId = authResult.orgId
 
   const body = await req.json()
   const parsed = stageSchema.safeParse(body)
@@ -67,6 +65,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true, data: stage }, { status: 201 })
   } catch (e) {
-    return NextResponse.json({ error: String(e) }, { status: 500 })
+    console.error(e)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

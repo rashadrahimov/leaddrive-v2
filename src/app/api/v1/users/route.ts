@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
-import { getOrgId } from "@/lib/api-auth"
+import { requireAuth, isAuthError } from "@/lib/api-auth"
 
 export async function GET(req: NextRequest) {
-  const orgId = await getOrgId(req)
-  if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  const authResult = await requireAuth(req, "settings", "read")
+  if (isAuthError(authResult)) return authResult
+  const orgId = authResult.orgId
 
   try {
     const users = await prisma.user.findMany({

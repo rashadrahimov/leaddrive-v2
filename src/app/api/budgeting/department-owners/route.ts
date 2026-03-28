@@ -1,6 +1,14 @@
 import { NextRequest, NextResponse } from "next/server"
+import { z, ZodError } from "zod"
 import { prisma } from "@/lib/prisma"
 import { getSession, isAuthError } from "@/lib/api-auth"
+
+const assignOwnerSchema = z.object({
+  departmentId: z.string().min(1).max(100),
+  userId: z.string().min(1).max(100),
+  canEdit: z.boolean().optional(),
+  canApprove: z.boolean().optional(),
+}).strict()
 
 // GET — list department owners for the org
 export async function GET(req: NextRequest) {
@@ -31,12 +39,24 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Only admin/manager can manage department owners" }, { status: 403 })
   }
 
-  const body = await req.json()
-  const { departmentId, userId, canEdit, canApprove } = body
-
-  if (!departmentId || !userId) {
-    return NextResponse.json({ error: "departmentId and userId are required" }, { status: 400 })
+  let body
+  try {
+    body = await req.json()
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 })
   }
+
+  let data
+  try {
+    data = assignOwnerSchema.parse(body)
+  } catch (e) {
+    if (e instanceof ZodError) {
+      return NextResponse.json({ error: "Validation failed", details: e.flatten().fieldErrors }, { status: 400 })
+    }
+    return NextResponse.json({ error: "Invalid request" }, { status: 400 })
+  }
+
+  const { departmentId, userId, canEdit, canApprove } = data
 
   const owner = await prisma.budgetDepartmentOwner.upsert({
     where: {

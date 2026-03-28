@@ -35,9 +35,10 @@ export async function GET(req: NextRequest, props: RouteParams) {
       where: { id, organizationId: orgId },
       include: {
         company: { select: { id: true, name: true } },
-        members: true,
-        milestones: { orderBy: { sortOrder: "asc" } },
+        members: { where: { organizationId: orgId } },
+        milestones: { where: { organizationId: orgId }, orderBy: { sortOrder: "asc" } },
         tasks: {
+          where: { organizationId: orgId },
           orderBy: { sortOrder: "asc" },
           include: {
             milestone: { select: { id: true, name: true, color: true } },
@@ -52,7 +53,8 @@ export async function GET(req: NextRequest, props: RouteParams) {
 
     return NextResponse.json({ success: true, data: project })
   } catch (e) {
-    return NextResponse.json({ error: String(e) }, { status: 500 })
+    console.error(e)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
 
@@ -90,7 +92,8 @@ export async function PUT(req: NextRequest, props: RouteParams) {
 
     return NextResponse.json({ success: true, data: project })
   } catch (e) {
-    return NextResponse.json({ error: String(e) }, { status: 500 })
+    console.error(e)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
 
@@ -106,6 +109,7 @@ export async function DELETE(req: NextRequest, props: RouteParams) {
     })
     return NextResponse.json({ success: true })
   } catch (e) {
-    return NextResponse.json({ error: String(e) }, { status: 500 })
+    console.error(e)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
-import { getOrgId } from "@/lib/api-auth"
+import { getOrgId, requireAuth, isAuthError } from "@/lib/api-auth"
 
 export interface RoleConfig {
   id: string
@@ -65,10 +65,11 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({ success: true, data: { roles, permissions } })
 }
 
-// POST — create a new role
+// POST — create a new role (admin only)
 export async function POST(req: NextRequest) {
-  const orgId = await getOrgId(req)
-  if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  const authResult = await requireAuth(req, "settings", "write")
+  if (isAuthError(authResult)) return authResult
+  const orgId = authResult.orgId
 
   try {
     const body = await req.json()
@@ -121,14 +122,16 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true, data: newRole })
   } catch (e: any) {
-    return NextResponse.json({ error: String(e) }, { status: 500 })
+    console.error("Roles POST error:", e)
+    return NextResponse.json({ error: "Failed to create role" }, { status: 500 })
   }
 }
 
-// PUT — update roles and permissions together
+// PUT — update roles and permissions together (admin only)
 export async function PUT(req: NextRequest) {
-  const orgId = await getOrgId(req)
-  if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  const authResult = await requireAuth(req, "settings", "write")
+  if (isAuthError(authResult)) return authResult
+  const orgId = authResult.orgId
 
   try {
     const body = await req.json()
@@ -159,14 +162,16 @@ export async function PUT(req: NextRequest) {
 
     return NextResponse.json({ success: true })
   } catch (e: any) {
-    return NextResponse.json({ error: String(e) }, { status: 500 })
+    console.error("Roles PUT error:", e)
+    return NextResponse.json({ error: "Failed to update roles" }, { status: 500 })
   }
 }
 
-// DELETE — delete a custom role
+// DELETE — delete a custom role (admin only)
 export async function DELETE(req: NextRequest) {
-  const orgId = await getOrgId(req)
-  if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  const authResult = await requireAuth(req, "settings", "delete")
+  if (isAuthError(authResult)) return authResult
+  const orgId = authResult.orgId
 
   try {
     const { searchParams } = new URL(req.url)
@@ -213,6 +218,7 @@ export async function DELETE(req: NextRequest) {
 
     return NextResponse.json({ success: true })
   } catch (e: any) {
-    return NextResponse.json({ error: String(e) }, { status: 500 })
+    console.error("Roles DELETE error:", e)
+    return NextResponse.json({ error: "Failed to delete role" }, { status: 500 })
   }
 }

@@ -12,7 +12,8 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ code
     include: {
       group: true,
       categories: {
-        include: { category: true, services: true },
+        where: { organizationId: orgId },
+        include: { category: true, services: { where: { organizationId: orgId } } },
       },
     },
   })
@@ -78,7 +79,8 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ code
     include: {
       group: true,
       categories: {
-        include: { category: true, services: { orderBy: { sortOrder: "asc" } } },
+        where: { organizationId: orgId },
+        include: { category: true, services: { where: { organizationId: orgId }, orderBy: { sortOrder: "asc" } } },
       },
     },
   })

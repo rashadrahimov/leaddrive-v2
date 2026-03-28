@@ -799,8 +799,8 @@ export async function GET(req: NextRequest) {
 
   const periodStr = plan.month ? `${plan.year}-${String(plan.month).padStart(2, "0")}` : plan.quarter ? `${plan.year}-Q${plan.quarter}` : `${plan.year}`
   // Sanitize filename: remove non-ASCII for the ASCII fallback, keep full name for UTF-8 version
-  const rawName = `budget_${plan.name.replace(/\s+/g, "_")}_${periodStr}.xlsx`
-  const asciiName = rawName.replace(/[^\x20-\x7E]/g, "_")
+  const rawName = `budget_${plan.name.replace(/[\s"\\\/\r\n]/g, "_")}_${periodStr}.xlsx`
+  const asciiName = rawName.replace(/[^\x20-\x7E]/g, "_").replace(/"/g, "_")
   const utf8Name = encodeURIComponent(rawName)
 
   return new NextResponse(buffer, {

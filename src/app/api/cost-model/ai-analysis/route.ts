@@ -9,7 +9,12 @@ export async function POST(req: NextRequest) {
     const orgId = await getOrgId(req)
     if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
-    const body = await req.json()
+    let body
+    try {
+      body = await req.json()
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON" }, { status: 400 })
+    }
     const tab = body.tab || "analytics"
     const lang = body.lang || "ru"
     const force = body.force === true
@@ -45,14 +50,14 @@ export async function POST(req: NextRequest) {
       data: { analysis, thinking, cached: false },
     })
   } catch (error: any) {
+    console.error("AI analysis error:", error)
     if (error.message === "ANTHROPIC_API_KEY not configured") {
-      return NextResponse.json({ error: error.message }, { status: 500 })
+      return NextResponse.json({ error: "AI service not configured" }, { status: 500 })
     }
     if (error.status) {
       // Anthropic API error
       return NextResponse.json({ error: "AI service unavailable" }, { status: 502 })
     }
-    console.error("AI analysis error:", error)
-    return NextResponse.json({ error: "Analysis error" }, { status: 500 })
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

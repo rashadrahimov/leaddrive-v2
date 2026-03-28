@@ -149,6 +149,7 @@ export async function POST(req: NextRequest) {
     }).catch(() => {})
     return NextResponse.json({ success: true, data: ticket }, { status: 201 })
   } catch (e) {
-    return NextResponse.json({ error: String(e) }, { status: 500 })
+    console.error(e)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

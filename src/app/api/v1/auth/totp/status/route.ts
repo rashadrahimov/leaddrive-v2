@@ -18,19 +18,19 @@ export async function GET() {
     return NextResponse.json({ error: "User not found" }, { status: 404 })
   }
 
-  let backupCodes: string[] = []
+  let hasBackupCodes = false
   try {
     const parsed = typeof user.backupCodes === "string"
       ? JSON.parse(user.backupCodes)
       : user.backupCodes
-    if (Array.isArray(parsed)) backupCodes = parsed
+    if (Array.isArray(parsed) && parsed.length > 0) hasBackupCodes = true
   } catch (err) { console.error(err) }
 
   return NextResponse.json({
     success: true,
     data: {
       totpEnabled: user.totpEnabled,
-      backupCodes,
+      hasBackupCodes,
     },
   })
 }

@@ -39,17 +39,22 @@ export async function POST(req: NextRequest) {
   // Generate backup codes
   const backupCodes = generateBackupCodes()
 
+  // SECURITY: Generate a server-side nonce so the frontend can securely
+  // clear needsSetup2fa via session.update() — the JWT callback verifies it.
+  const twoFactorNonce = crypto.randomBytes(32).toString("hex")
+
   // Enable 2FA
   await prisma.user.update({
     where: { id: userId },
     data: {
       totpEnabled: true,
       backupCodes: JSON.stringify(backupCodes),
+      twoFactorNonce,
     },
   })
 
   return NextResponse.json({
     success: true,
-    data: { backupCodes },
+    data: { backupCodes, twoFactorNonce },
   })
 }

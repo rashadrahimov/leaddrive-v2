@@ -13,13 +13,14 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       group: true,
       company: { select: { id: true, name: true } },
       categories: {
+        where: { organizationId: orgId },
         include: {
           category: true,
-          services: { orderBy: { sortOrder: "asc" } },
+          services: { where: { organizationId: orgId }, orderBy: { sortOrder: "asc" } },
         },
         orderBy: { category: { sortOrder: "asc" } },
       },
-      additionalSales: { orderBy: { createdAt: "desc" } },
+      additionalSales: { where: { organizationId: orgId }, orderBy: { createdAt: "desc" } },
     },
   })
 
@@ -53,8 +54,9 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     })
 
     return NextResponse.json({ success: true, data: profile })
-  } catch (e: any) {
-    return NextResponse.json({ error: e.message || "Failed to update profile" }, { status: 500 })
+  } catch (e) {
+    console.error(e)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
 

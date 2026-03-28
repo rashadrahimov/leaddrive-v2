@@ -44,8 +44,9 @@ async function sendInvoiceEmail(
     const smtpPort = Number(smtp?.smtpPort || smtp?.port) || 587
     const smtpUser = (smtp?.smtpUser || smtp?.user) as string | undefined
     const smtpPass = (smtp?.smtpPass || smtp?.pass) as string | undefined
-    const smtpFrom = (smtp?.fromEmail || smtp?.from || smtpUser) as string | undefined
-    const fromName = (smtp?.fromName as string) || (invoiceSettings.companyName as string) || org?.name || "LeadDrive"
+    const stripCrlf = (s: string) => s.replace(/[\r\n]/g, "")
+    const smtpFrom = stripCrlf(((smtp?.fromEmail || smtp?.from || smtpUser) as string) || "")
+    const fromName = stripCrlf((smtp?.fromName as string) || (invoiceSettings.companyName as string) || org?.name || "LeadDrive")
 
     if (!smtpHost) return { success: false, error: "SMTP not configured" }
 
@@ -94,7 +95,8 @@ async function sendInvoiceEmail(
 
     return { success: true }
   } catch (e) {
-    return { success: false, error: String(e) }
+    console.error("Send invoice email error:", e)
+    return { success: false, error: "Failed to send email" }
   }
 }
 
@@ -234,6 +236,7 @@ export async function POST(req: NextRequest) {
       },
     })
   } catch (e) {
-    return NextResponse.json({ error: String(e) }, { status: 500 })
+    console.error(e)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

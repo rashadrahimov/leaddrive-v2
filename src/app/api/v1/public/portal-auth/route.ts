@@ -5,15 +5,36 @@ import bcrypt from "bcryptjs"
 
 // POST /api/v1/public/portal-auth — login with email + password
 export async function POST(req: NextRequest) {
-  const { email, password } = await req.json()
+  let body
+  try {
+    body = await req.json()
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 })
+  }
+  const { email, password, organizationId, slug } = body
   if (!email) return NextResponse.json({ error: "Email обязателен" }, { status: 400 })
   if (!password) return NextResponse.json({ error: "Пароль обязателен" }, { status: 400 })
 
+  // Resolve organization from slug or explicit ID
+  let orgId: string | null = null
+  if (organizationId) {
+    const org = await prisma.organization.findUnique({ where: { id: organizationId }, select: { id: true } })
+    orgId = org?.id ?? null
+  } else if (slug) {
+    const org = await prisma.organization.findFirst({ where: { slug }, select: { id: true } })
+    orgId = org?.id ?? null
+  }
+
+  if (!orgId) {
+    return NextResponse.json({ error: "Неверные учётные данные" }, { status: 401 })
+  }
+
+  // SECURITY: Scope email lookup to the resolved organization
   const contact = await prisma.contact.findFirst({
-    where: { email },
+    where: { email: email.toLowerCase().trim(), organizationId: orgId },
     include: { company: true },
   })
-  if (!contact) return NextResponse.json({ error: "Контакт не найден" }, { status: 404 })
+  if (!contact) return NextResponse.json({ error: "Неверные учётные данные" }, { status: 401 })
 
   if (!contact.portalAccessEnabled) {
     return NextResponse.json({ error: "Доступ к порталу не активирован. Обратитесь к администратору." }, { status: 403 })

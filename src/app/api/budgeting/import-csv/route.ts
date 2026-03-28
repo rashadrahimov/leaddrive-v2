@@ -1,6 +1,14 @@
 import { NextRequest, NextResponse } from "next/server"
+import { z, ZodError } from "zod"
 import { getOrgId } from "@/lib/api-auth"
 import { prisma, logBudgetChange } from "@/lib/prisma"
+
+const importCsvSchema = z.object({
+  planId: z.string().min(1).max(100),
+  rows: z.array(z.record(z.unknown())).min(1),
+  integrationId: z.string().max(100).optional().nullable(),
+  fileName: z.string().max(500).optional(),
+}).strict()
 
 // POST — import CSV data as budget actuals
 // Accepts JSON array of rows: [{ category, department, amount, date, description, lineType }]
@@ -8,11 +16,28 @@ export async function POST(req: NextRequest) {
   const orgId = await getOrgId(req)
   if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
-  const body = await req.json()
-  const { planId, rows, integrationId, fileName } = body
+  let body
+  try {
+    body = await req.json()
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 })
+  }
 
-  if (!planId || !rows || !Array.isArray(rows)) {
-    return NextResponse.json({ error: "planId and rows[] are required" }, { status: 400 })
+  let data
+  try {
+    data = importCsvSchema.parse(body)
+  } catch (e) {
+    if (e instanceof ZodError) {
+      return NextResponse.json({ error: "Validation failed", details: e.flatten().fieldErrors }, { status: 400 })
+    }
+    return NextResponse.json({ error: "Invalid request" }, { status: 400 })
+  }
+
+  const { planId, rows, integrationId, fileName } = data
+
+  const MAX_ROWS = 50000
+  if (rows.length > MAX_ROWS) {
+    return NextResponse.json({ error: `Maximum ${MAX_ROWS} rows allowed` }, { status: 400 })
   }
 
   // Create import record
@@ -76,8 +101,9 @@ export async function POST(req: NextRequest) {
       })
       matched++
     } catch (err: any) {
+      console.error(`Import CSV row ${i + 1} error:`, err)
       unmatched++
-      errors.push({ row: i + 1, error: err.message?.substring(0, 100) || "Unknown error" })
+      errors.push({ row: i + 1, error: "Failed to process row" })
     }
   }
 

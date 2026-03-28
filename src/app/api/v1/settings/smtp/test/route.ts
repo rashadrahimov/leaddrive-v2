@@ -38,14 +38,16 @@ export async function POST(req: NextRequest) {
         user: smtp.smtpUser,
         pass: smtp.smtpPass,
       },
-      tls: smtp.smtpTls !== false ? { rejectUnauthorized: false } : undefined,
+      tls: smtp.smtpTls !== false ? {} : undefined,
       connectionTimeout: 10000,
       greetingTimeout: 10000,
       socketTimeout: 15000,
     })
 
-    const fromEmail = smtp.fromEmail || smtp.smtpUser
-    const fromName = smtp.fromName || org?.name || "LeadDrive CRM"
+    // Sanitize CRLF to prevent email header injection
+    const stripCrlf = (s: string) => s.replace(/[\r\n]/g, "")
+    const fromEmail = stripCrlf(smtp.fromEmail || smtp.smtpUser)
+    const fromName = stripCrlf(smtp.fromName || org?.name || "LeadDrive CRM")
 
     const info = await transporter.sendMail({
       from: `"${fromName}" <${fromEmail}>`,
@@ -81,7 +83,7 @@ export async function POST(req: NextRequest) {
     })
   } catch (e: any) {
     const msg = e.message || String(e)
-    let friendlyError = msg
+    let friendlyError = "SMTP connection failed. Check your settings."
     if (msg.includes("ECONNREFUSED")) friendlyError = "Не удалось подключиться к SMTP серверу. Проверьте хост и порт."
     else if (msg.includes("EAUTH") || msg.includes("535")) friendlyError = "Ошибка авторизации. Проверьте логин и пароль."
     else if (msg.includes("ETIMEDOUT")) friendlyError = "Таймаут подключения. Сервер не отвечает."

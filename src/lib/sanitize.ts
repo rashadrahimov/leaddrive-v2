@@ -19,7 +19,7 @@ export function sanitizeRichHtml(input: string): string {
       "div", "span", "font",
     ],
     ALLOWED_ATTR: [
-      "href", "src", "alt", "title", "class", "style",
+      "href", "src", "alt", "title",
       "target", "rel", "width", "height",
       "color", "size", "face",
     ],
@@ -29,6 +29,21 @@ export function sanitizeRichHtml(input: string): string {
 
 export function sanitizeText(input: string): string {
   return input.replace(/[<>]/g, "")
+}
+
+/** Sanitize user data before injecting into AI system prompts.
+ *  Strips newlines, control characters, and caps length to prevent prompt injection. */
+export function sanitizeForPrompt(input: string, maxLength = 100): string {
+  return input
+    .replace(/[\r\n\t]/g, " ")       // strip newlines/tabs
+    .replace(/[\x00-\x1f\x7f]/g, "") // strip control characters
+    .trim()
+    .slice(0, maxLength)
+}
+
+/** Strip newlines and ANSI escape codes from strings before logging */
+export function sanitizeLog(input: string): string {
+  return input.replace(/[\n\r]/g, " ").replace(/\x1b\[[0-9;]*m/g, "").substring(0, 1000)
 }
 
 // Common sanitized Zod schemas

@@ -1,6 +1,21 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getOrgId } from "@/lib/api-auth"
+import { z, ZodError } from "zod"
+import { requireAuth, isAuthError, getOrgId } from "@/lib/api-auth"
 import { prisma } from "@/lib/prisma"
+
+const updateBillSchema = z.object({
+  billNumber: z.string().max(50).optional(),
+  vendorName: z.string().min(1).max(200).optional(),
+  vendorId: z.string().max(100).optional().nullable(),
+  title: z.string().min(1).max(300).optional(),
+  totalAmount: z.union([z.string(), z.number().min(0).max(999999999)]).optional(),
+  currency: z.string().max(10).optional(),
+  issueDate: z.string().max(50).optional(),
+  dueDate: z.string().max(50).optional().nullable(),
+  category: z.string().max(100).optional().nullable(),
+  notes: z.string().max(2000).optional().nullable(),
+  status: z.string().max(50).optional(),
+})
 
 // GET — single bill
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -19,12 +34,32 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
 // PUT — update bill
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const orgId = await getOrgId(req)
-  if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  const authResult = await requireAuth(req, "finance", "write")
+  if (isAuthError(authResult)) return authResult
+  const orgId = authResult.orgId
   const { id } = await params
 
-  const body = await req.json()
-  const { billNumber, vendorName, vendorId, title, totalAmount, currency, issueDate, dueDate, category, notes, status } = body
+  const existing = await prisma.bill.findFirst({ where: { id, organizationId: orgId } })
+  if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 })
+
+  let body
+  try {
+    body = await req.json()
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 })
+  }
+
+  let data
+  try {
+    data = updateBillSchema.parse(body)
+  } catch (e) {
+    if (e instanceof ZodError) {
+      return NextResponse.json({ error: "Validation failed", details: e.flatten().fieldErrors }, { status: 400 })
+    }
+    return NextResponse.json({ error: "Invalid request" }, { status: 400 })
+  }
+
+  const { billNumber, vendorName, vendorId, title, totalAmount, currency, issueDate, dueDate, category, notes, status } = data
 
   const bill = await prisma.bill.update({
     where: { id },
@@ -48,9 +83,13 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 
 // DELETE — delete bill
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const orgId = await getOrgId(req)
-  if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  const authResult = await requireAuth(req, "finance", "delete")
+  if (isAuthError(authResult)) return authResult
+  const orgId = authResult.orgId
   const { id } = await params
+
+  const existing = await prisma.bill.findFirst({ where: { id, organizationId: orgId } })
+  if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 })
 
   await prisma.bill.delete({ where: { id } })
   return NextResponse.json({ data: { success: true } })

@@ -14,9 +14,10 @@ async function loadPricingDataFromDB(orgId: string) {
     include: {
       group: true,
       categories: {
+        where: { organizationId: orgId },
         include: {
           category: true,
-          services: { orderBy: { sortOrder: "asc" } },
+          services: { where: { organizationId: orgId }, orderBy: { sortOrder: "asc" } },
         },
       },
     },

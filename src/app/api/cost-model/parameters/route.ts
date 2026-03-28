@@ -1,7 +1,22 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getOrgId } from "@/lib/api-auth"
+import { z } from "zod"
+import { requireAuth, isAuthError, getOrgId } from "@/lib/api-auth"
 import { prisma } from "@/lib/prisma"
 import { writeCostModelLog, invalidateAiCache } from "@/lib/cost-model/db"
+
+const parametersSchema = z.object({
+  totalUsers: z.number().int().min(0).max(999999).nullish(),
+  totalEmployees: z.number().int().min(0).max(999999).optional(),
+  technicalStaff: z.number().int().min(0).max(999999).optional(),
+  backOfficeStaff: z.number().int().min(0).max(999999).optional(),
+  monthlyWorkHours: z.number().int().min(1).max(744).optional(),
+  vatRate: z.number().min(0).max(1).optional(),
+  employerTaxRate: z.number().min(0).max(1).optional(),
+  riskRate: z.number().min(0).max(1).optional(),
+  miscExpenseRate: z.number().min(0).max(1).optional(),
+  fixedOverheadRatio: z.number().min(0).max(1).optional(),
+  updatedBy: z.string().max(100).optional(),
+})
 
 export async function GET(req: NextRequest) {
   try {
@@ -21,28 +36,34 @@ export async function GET(req: NextRequest) {
 
 export async function PUT(req: NextRequest) {
   try {
-    const orgId = await getOrgId(req)
-    if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    const authResult = await requireAuth(req, "settings", "write")
+    if (isAuthError(authResult)) return authResult
+    const orgId = authResult.orgId
 
     const body = await req.json()
+    const parsed = parametersSchema.safeParse(body)
+    if (!parsed.success) {
+      return NextResponse.json({ error: "Validation failed", details: parsed.error.flatten().fieldErrors }, { status: 400 })
+    }
+    const validData = { ...parsed.data }
 
     const oldParams = await prisma.pricingParameters.findUnique({
       where: { organizationId: orgId },
     })
 
     // If totalUsers not manually set, recalculate from companies
-    if (body.totalUsers === undefined || body.totalUsers === null) {
+    if (validData.totalUsers === undefined || validData.totalUsers === null) {
       const agg = await prisma.company.aggregate({
         where: { organizationId: orgId, category: "client" },
         _sum: { userCount: true },
       })
-      body.totalUsers = agg._sum.userCount ?? oldParams?.totalUsers ?? 0
+      validData.totalUsers = agg._sum.userCount ?? oldParams?.totalUsers ?? 0
     }
 
     const updated = await prisma.pricingParameters.upsert({
       where: { organizationId: orgId },
-      update: { ...body, updatedAt: new Date() },
-      create: { organizationId: orgId, ...body },
+      update: { ...validData, updatedAt: new Date() },
+      create: { organizationId: orgId, ...validData },
     })
 
     await writeCostModelLog(orgId, "pricing_parameters", updated.id, "update", oldParams, updated)

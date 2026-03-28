@@ -247,3 +247,23 @@ SERVER:
 - Deploy: local build → rsync standalone → pm2 restart
 - DB: see .env for connection string
 2026-03-25 18:19 | DONE: Restructure expense lines in budgeting. Added parentId self-relation to BudgetLine (schema + migration). Updated types, API GET (nested children), POST/PUT (parentId). Created seed script with hardcoded production values (Admin Overhead 197,655 + Tech Infra 98,662 + Direct Labor 348,889 + Risk+Misc 26,395 = 671,601/mo). WorkspaceTab: collapsible group headers with colored dots, chevrons, sub-items indented, add sub-item form inline. Build passed.
+
+=== [2026-03-28 11:51] Security Audit #2 — 25 vulnerabilities fixed ===
+CRITICAL:
+- IDOR: Added findFirst guards to tasks, pricing profiles, additional-sales, payables, overhead, invoices, funds (all [id] routes now verify orgId before update/delete)
+- WhatsApp webhook: Added HMAC-SHA256 signature verification (X-Hub-Signature-256)
+- Telegram webhook: Added X-Telegram-Bot-Api-Secret-Token header verification
+
+HIGH:
+- Portal registration: Fixed email enumeration (all responses now return same generic 200)
+- AI prompt injection: Added sanitizeForPrompt() to portal-chat and WhatsApp AI (strips CRLF, control chars, caps length)
+- XSS email template editor: Added sanitizeRichHtml() to innerHTML assignments
+- e.message disclosure: Replaced all remaining instances in pricing/cost-model routes
+
+MEDIUM:
+- Pagination: Added take:50/100 to portal KB and ticket endpoints
+- Event email: Escaped event.name in HTML + subject CRLF
+- Rate limiter: Documented limitations, added MAX_STORE_SIZE cap + eviction
+
+Deployed to production: build OK, rsync, PM2 restart, health check 307
+

@@ -27,13 +27,14 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       where: { id, organizationId: orgId },
       include: {
         company: { select: { id: true, name: true } },
-        activities: { orderBy: { createdAt: "desc" }, take: 20 },
+        activities: { where: { organizationId: orgId }, orderBy: { createdAt: "desc" }, take: 20 },
       },
     })
     if (!contact) return NextResponse.json({ error: "Not found" }, { status: 404 })
     return NextResponse.json({ success: true, data: contact })
   } catch (e) {
-    return NextResponse.json({ success: false, error: String(e) }, { status: 500 })
+    console.error(e)
+    return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 })
   }
 }
 
@@ -53,7 +54,8 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     if (updated) executeWorkflows(orgId, "contact", "updated", updated).catch(() => {})
     return NextResponse.json({ success: true, data: updated })
   } catch (e) {
-    return NextResponse.json({ error: String(e) }, { status: 500 })
+    console.error(e)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
 
@@ -69,6 +71,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     logAudit(orgId, "delete", "contact", id, existing?.fullName || "")
     return NextResponse.json({ success: true, data: { deleted: id } })
   } catch (e) {
-    return NextResponse.json({ error: String(e) }, { status: 500 })
+    console.error(e)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

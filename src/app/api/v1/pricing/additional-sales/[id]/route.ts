@@ -59,8 +59,9 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     })
 
     return NextResponse.json({ success: true, data: sale })
-  } catch (e: any) {
-    return NextResponse.json({ error: e.message || "Failed to update additional sale" }, { status: 500 })
+  } catch (e) {
+    console.error(e)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
 

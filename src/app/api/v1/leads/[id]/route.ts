@@ -74,7 +74,8 @@ export async function PUT(
     }
     return NextResponse.json({ success: true, data: updated })
   } catch (e) {
-    return NextResponse.json({ error: String(e) }, { status: 500 })
+    console.error(e)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
 
@@ -93,6 +94,7 @@ export async function DELETE(
     logAudit(orgId, "delete", "lead", id, existing?.contactName || "")
     return NextResponse.json({ success: true, data: { deleted: id } })
   } catch (e) {
-    return NextResponse.json({ error: String(e) }, { status: 500 })
+    console.error(e)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

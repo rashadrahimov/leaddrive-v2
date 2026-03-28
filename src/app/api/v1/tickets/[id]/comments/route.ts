@@ -52,8 +52,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
   // Update firstResponseAt if this is the first staff response
   if (!ticket.firstResponseAt && !parsed.data.isInternal) {
-    await prisma.ticket.update({
-      where: { id: ticketId },
+    await prisma.ticket.updateMany({
+      where: { id: ticketId, organizationId: orgId },
       data: { firstResponseAt: new Date() },
     })
   }

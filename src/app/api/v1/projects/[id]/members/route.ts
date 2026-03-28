@@ -23,7 +23,8 @@ export async function GET(req: NextRequest, props: RouteParams) {
     })
     return NextResponse.json({ success: true, data: members })
   } catch (e) {
-    return NextResponse.json({ error: String(e) }, { status: 500 })
+    console.error(e)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
 
@@ -51,7 +52,8 @@ export async function POST(req: NextRequest, props: RouteParams) {
     if (String(e).includes("Unique constraint")) {
       return NextResponse.json({ error: "User is already a member" }, { status: 409 })
     }
-    return NextResponse.json({ error: String(e) }, { status: 500 })
+    console.error(e)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
 
@@ -73,6 +75,7 @@ export async function DELETE(req: NextRequest, props: RouteParams) {
     })
     return NextResponse.json({ success: true })
   } catch (e) {
-    return NextResponse.json({ error: String(e) }, { status: 500 })
+    console.error(e)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

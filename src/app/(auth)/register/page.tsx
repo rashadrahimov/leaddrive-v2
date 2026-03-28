@@ -69,7 +69,7 @@ export default function RegisterPage() {
           </div>
           <div className="space-y-2">
             <label htmlFor="password" className="text-sm font-medium">{t("password")}</label>
-            <Input id="password" type="password" placeholder="Min 6 characters" value={form.password} onChange={(e) => update("password", e.target.value)} required minLength={6} />
+            <Input id="password" type="password" placeholder="Min 8 characters" value={form.password} onChange={(e) => update("password", e.target.value)} required minLength={8} />
           </div>
         </CardContent>
         <CardFooter className="flex flex-col gap-3">

@@ -19,6 +19,11 @@ const ALLOWED_TYPES = [
   "text/csv",
 ]
 
+// Extension whitelist — prevents uploading executable or dangerous file types
+// even if the MIME type check is bypassed via content-type spoofing.
+// Files should be served with Content-Disposition: attachment to prevent inline execution.
+const SAFE_EXTENSIONS = new Set(['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx', '.png', '.jpg', '.jpeg', '.gif', '.webp', '.txt', '.csv', '.zip', '.rar'])
+
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -65,7 +70,12 @@ export async function POST(
       return NextResponse.json({ error: "File type not allowed" }, { status: 400 })
     }
 
-    const ext = path.extname(file.name) || ""
+    const ext = path.extname(file.name).toLowerCase()
+    if (!ext || !SAFE_EXTENSIONS.has(ext)) {
+      return NextResponse.json({ error: "File extension not allowed" }, { status: 400 })
+    }
+
+    // Use only the validated lowercase extension for the stored filename
     const uniqueName = `${crypto.randomBytes(16).toString("hex")}${ext}`
 
     const uploadDir = path.join(process.cwd(), "public", "uploads", "contracts")
@@ -87,6 +97,7 @@ export async function POST(
 
     return NextResponse.json({ success: true, data: record }, { status: 201 })
   } catch (e) {
-    return NextResponse.json({ error: String(e) }, { status: 500 })
+    console.error(e)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

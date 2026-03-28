@@ -13,9 +13,9 @@ const createSchema = z.object({
   location: z.string().optional(),
   isOnline: z.boolean().default(false),
   meetingUrl: z.string().optional(),
-  budget: z.number().default(0),
-  expectedRevenue: z.number().default(0),
-  maxParticipants: z.number().optional(),
+  budget: z.number().min(0).max(999999999).default(0),
+  expectedRevenue: z.number().min(0).max(999999999).default(0),
+  maxParticipants: z.number().int().min(1).max(100000).optional(),
   responsibleId: z.string().optional(),
   tags: z.array(z.string()).default([]),
 })
@@ -29,6 +29,9 @@ export async function GET(req: NextRequest) {
   const status = searchParams.get("status") || ""
   const page = parseInt(searchParams.get("page") || "1")
   const limit = parseInt(searchParams.get("limit") || "50")
+  if (isNaN(page) || isNaN(limit) || page < 1 || limit < 1 || limit > 200) {
+    return NextResponse.json({ error: "Invalid page or limit" }, { status: 400 })
+  }
 
   const where: any = { organizationId: orgId }
   if (search) where.name = { contains: search, mode: "insensitive" }

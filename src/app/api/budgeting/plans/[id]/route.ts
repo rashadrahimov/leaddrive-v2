@@ -1,9 +1,18 @@
 import { NextRequest, NextResponse } from "next/server"
+import { z, ZodError } from "zod"
 import { getOrgId, getSession } from "@/lib/api-auth"
 import { prisma } from "@/lib/prisma"
 import { createNotification } from "@/lib/notifications"
 import { loadAndCompute } from "@/lib/cost-model/db"
 import { computePlannedForLine, getPeriodMonths } from "@/lib/budgeting/cost-model-map"
+
+const updatePlanSchema = z.object({
+  name: z.string().min(1).max(500).optional(),
+  status: z.enum(["draft", "pending_approval", "approved", "rejected", "closed"]).optional(),
+  notes: z.string().max(2000).optional().nullable(),
+  rejectedReason: z.string().max(2000).optional().nullable(),
+  comment: z.string().max(2000).optional(),
+}).strict()
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const orgId = await getOrgId(req)
@@ -27,8 +36,25 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 
   const { orgId, userId, role, name: userName } = session
   const { id } = await params
-  const body = await req.json()
-  const { name, status, notes, rejectedReason } = body
+
+  let body
+  try {
+    body = await req.json()
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 })
+  }
+
+  let data
+  try {
+    data = updatePlanSchema.parse(body)
+  } catch (e) {
+    if (e instanceof ZodError) {
+      return NextResponse.json({ error: "Validation failed", details: e.flatten().fieldErrors }, { status: 400 })
+    }
+    return NextResponse.json({ error: "Invalid request" }, { status: 400 })
+  }
+
+  const { name, status, notes, rejectedReason } = data
 
   // ── Role-based approval checks ──
   if (status === "approved" || status === "rejected") {
@@ -85,11 +111,11 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   // ── Auto-create approval comment on status transitions ──
   if (status && updated) {
     const commentMap: Record<string, string> = {
-      pending_approval: body.comment || "Plan submitted for approval",
-      approved: body.comment || "Plan approved",
-      rejected: body.comment || rejectedReason || "Plan rejected",
-      closed: body.comment || "Plan closed",
-      draft: body.comment || "Plan reverted to draft",
+      pending_approval: data.comment || "Plan submitted for approval",
+      approved: data.comment || "Plan approved",
+      rejected: data.comment || rejectedReason || "Plan rejected",
+      closed: data.comment || "Plan closed",
+      draft: data.comment || "Plan reverted to draft",
     }
     if (commentMap[status]) {
       await prisma.budgetApprovalComment.create({

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
-import { getOrgId } from "@/lib/api-auth"
+import { requireAuth, isAuthError } from "@/lib/api-auth"
 import { unlink } from "fs/promises"
 import path from "path"
 
@@ -8,8 +8,9 @@ export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ id: string; fileId: string }> }
 ) {
-  const orgId = await getOrgId(req)
-  if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  const authResult = await requireAuth(req, "contracts", "delete")
+  if (isAuthError(authResult)) return authResult
+  const orgId = authResult.orgId
   const { id, fileId } = await params
 
   try {
@@ -18,8 +19,14 @@ export async function DELETE(
     })
     if (!file) return NextResponse.json({ error: "File not found" }, { status: 404 })
 
+    // Prevent path traversal — strip directory components and verify resolved path
+    const uploadsDir = path.resolve(process.cwd(), "public", "uploads", "contracts")
+    const filePath = path.resolve(uploadsDir, path.basename(file.fileName))
+    if (!filePath.startsWith(uploadsDir)) {
+      return NextResponse.json({ error: "Invalid file path" }, { status: 400 })
+    }
+
     // Delete from disk
-    const filePath = path.join(process.cwd(), "public", "uploads", "contracts", file.fileName)
     await unlink(filePath).catch(() => {})
 
     // Delete from DB
@@ -27,6 +34,7 @@ export async function DELETE(
 
     return NextResponse.json({ success: true, data: { deleted: fileId } })
   } catch (e) {
-    return NextResponse.json({ error: String(e) }, { status: 500 })
+    console.error(e)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

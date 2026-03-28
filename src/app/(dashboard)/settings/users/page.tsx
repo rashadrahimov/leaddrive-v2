@@ -167,7 +167,7 @@ function UserFormDialog({
               <Input
                 id="password" type="password" value={form.password}
                 onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
-                required={!isEdit} minLength={6} placeholder={isEdit ? "••••••" : ""}
+                required={!isEdit} minLength={8} placeholder={isEdit ? "••••••••" : ""}
               />
             </div>
             <div className="grid grid-cols-2 gap-3">

@@ -1,6 +1,27 @@
 import { NextRequest, NextResponse } from "next/server"
+import { z, ZodError } from "zod"
 import { getOrgId } from "@/lib/api-auth"
 import { prisma } from "@/lib/prisma"
+
+const createDeptSchema = z.object({
+  key: z.string().min(1).max(100),
+  label: z.string().min(1).max(200),
+  serviceKey: z.string().max(100).optional().nullable(),
+  hasRevenue: z.boolean().optional(),
+  color: z.string().max(20).optional().nullable(),
+  sortOrder: z.number().int().min(0).max(999).optional(),
+}).strict()
+
+const updateDeptSchema = z.object({
+  id: z.string().min(1).max(100),
+  key: z.string().min(1).max(100).optional(),
+  label: z.string().min(1).max(200).optional(),
+  serviceKey: z.string().max(100).optional().nullable(),
+  hasRevenue: z.boolean().optional(),
+  color: z.string().max(20).optional().nullable(),
+  sortOrder: z.number().int().min(0).max(999).optional(),
+  isActive: z.boolean().optional(),
+})
 
 export async function GET(req: NextRequest) {
   const orgId = await getOrgId(req)
@@ -20,12 +41,24 @@ export async function POST(req: NextRequest) {
   const orgId = await getOrgId(req)
   if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
-  const body = await req.json()
-  const { key, label, serviceKey, hasRevenue, color, sortOrder } = body
-
-  if (!key || !label) {
-    return NextResponse.json({ error: "key and label are required" }, { status: 400 })
+  let body
+  try {
+    body = await req.json()
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 })
   }
+
+  let data
+  try {
+    data = createDeptSchema.parse(body)
+  } catch (e) {
+    if (e instanceof ZodError) {
+      return NextResponse.json({ error: "Validation failed", details: e.flatten().fieldErrors }, { status: 400 })
+    }
+    return NextResponse.json({ error: "Invalid request" }, { status: 400 })
+  }
+
+  const { key, label, serviceKey, hasRevenue, color, sortOrder } = data
 
   const existing = await prisma.budgetDepartment.findUnique({
     where: { organizationId_key: { organizationId: orgId, key } },
@@ -53,10 +86,24 @@ export async function PUT(req: NextRequest) {
   const orgId = await getOrgId(req)
   if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
-  const body = await req.json()
-  const { id, ...updates } = body
+  let body
+  try {
+    body = await req.json()
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 })
+  }
 
-  if (!id) return NextResponse.json({ error: "id is required" }, { status: 400 })
+  let data
+  try {
+    data = updateDeptSchema.parse(body)
+  } catch (e) {
+    if (e instanceof ZodError) {
+      return NextResponse.json({ error: "Validation failed", details: e.flatten().fieldErrors }, { status: 400 })
+    }
+    return NextResponse.json({ error: "Invalid request" }, { status: 400 })
+  }
+
+  const { id, ...updates } = data
 
   const department = await prisma.budgetDepartment.update({
     where: { id, organizationId: orgId },

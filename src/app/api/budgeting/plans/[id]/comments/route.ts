@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from "next/server"
+import { z, ZodError } from "zod"
 import { prisma } from "@/lib/prisma"
 import { getSession } from "@/lib/api-auth"
+
+const commentSchema = z.object({
+  comment: z.string().min(1).max(2000),
+  status: z.string().max(50).optional(),
+}).strict()
 
 // GET — list approval comments for a plan
 export async function GET(
@@ -29,12 +35,25 @@ export async function POST(
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
   const { id: planId } = await params
-  const body = await req.json()
-  const { comment, status } = body
 
-  if (!comment) {
-    return NextResponse.json({ error: "comment is required" }, { status: 400 })
+  let body
+  try {
+    body = await req.json()
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 })
   }
+
+  let data
+  try {
+    data = commentSchema.parse(body)
+  } catch (e) {
+    if (e instanceof ZodError) {
+      return NextResponse.json({ error: "Validation failed", details: e.flatten().fieldErrors }, { status: 400 })
+    }
+    return NextResponse.json({ error: "Invalid request" }, { status: 400 })
+  }
+
+  const { comment, status } = data
 
   // Verify plan exists and belongs to org
   const plan = await prisma.budgetPlan.findFirst({

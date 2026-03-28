@@ -25,6 +25,9 @@ export async function GET(req: NextRequest) {
   const status = searchParams.get("status") || ""
   const page = parseInt(searchParams.get("page") || "1")
   const limit = parseInt(searchParams.get("limit") || "50")
+  if (isNaN(page) || isNaN(limit) || page < 1 || limit < 1 || limit > 200) {
+    return NextResponse.json({ error: "Invalid page or limit" }, { status: 400 })
+  }
 
   try {
     const where = {
@@ -83,6 +86,7 @@ export async function POST(req: NextRequest) {
     }).catch(() => {})
     return NextResponse.json({ success: true, data: task }, { status: 201 })
   } catch (e) {
-    return NextResponse.json({ error: String(e) }, { status: 500 })
+    console.error(e)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

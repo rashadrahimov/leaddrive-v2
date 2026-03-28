@@ -1,7 +1,17 @@
 import { NextRequest, NextResponse } from "next/server"
+import { z, ZodError } from "zod"
 import { getOrgId } from "@/lib/api-auth"
 import { prisma } from "@/lib/prisma"
 import { loadAndCompute } from "@/lib/cost-model/db"
+
+const createPlanSchema = z.object({
+  name: z.string().min(1).max(500),
+  periodType: z.enum(["monthly", "quarterly", "annual"]),
+  year: z.number().int().min(2020).max(2050),
+  month: z.number().int().min(1).max(12).optional().nullable(),
+  quarter: z.number().int().min(1).max(4).optional().nullable(),
+  notes: z.string().max(2000).optional().nullable(),
+}).strict()
 
 const DEPT_CATEGORY_MAP: Record<string, string> = {
   it: "Daimi IT", infosec: "InfoSec",
@@ -35,35 +45,33 @@ export async function POST(req: NextRequest) {
   const orgId = await getOrgId(req)
   if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
-  const body = await req.json()
-  const { name, periodType, year, month, quarter, notes } = body
-
-  if (!name || !periodType || !year) {
-    return NextResponse.json({ error: "name, periodType, year are required" }, { status: 400 })
+  let body
+  try {
+    body = await req.json()
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 })
   }
 
-  const y = Number(year)
-  if (y < 2020 || y > 2050) {
-    return NextResponse.json({ error: "Год должен быть от 2020 до 2050" }, { status: 400 })
+  let data
+  try {
+    data = createPlanSchema.parse(body)
+  } catch (e) {
+    if (e instanceof ZodError) {
+      return NextResponse.json({ error: "Validation failed", details: e.flatten().fieldErrors }, { status: 400 })
+    }
+    return NextResponse.json({ error: "Invalid request" }, { status: 400 })
   }
-  if (month && (Number(month) < 1 || Number(month) > 12)) {
-    return NextResponse.json({ error: "Месяц должен быть от 1 до 12" }, { status: 400 })
-  }
-  if (quarter && (Number(quarter) < 1 || Number(quarter) > 4)) {
-    return NextResponse.json({ error: "Квартал должен быть от 1 до 4" }, { status: 400 })
-  }
-  if (!["monthly", "quarterly", "annual"].includes(periodType)) {
-    return NextResponse.json({ error: "periodType должен быть monthly, quarterly или annual" }, { status: 400 })
-  }
+
+  const { name, periodType, year, month, quarter, notes } = data
 
   // Check for duplicate plan in same period
   const duplicate = await prisma.budgetPlan.findFirst({
     where: {
       organizationId: orgId,
       periodType,
-      year: Number(year),
-      ...(month ? { month: Number(month) } : {}),
-      ...(quarter ? { quarter: Number(quarter) } : {}),
+      year,
+      ...(month ? { month } : {}),
+      ...(quarter ? { quarter } : {}),
     },
   })
   if (duplicate) {
@@ -75,17 +83,17 @@ export async function POST(req: NextRequest) {
       organizationId: orgId,
       name,
       periodType,
-      year: Number(year),
-      month: month ? Number(month) : null,
-      quarter: quarter ? Number(quarter) : null,
+      year,
+      month: month ?? null,
+      quarter: quarter ?? null,
       notes: notes || null,
     },
   })
 
   // Auto-populate: clone lines from existing plan + fill from sales forecast & cost model
   try {
-    const planYear = Number(year)
-    const planMonths = getPeriodMonths(periodType, quarter ? Number(quarter) : null, month ? Number(month) : null)
+    const planYear = year
+    const planMonths = getPeriodMonths(periodType, quarter ?? null, month ?? null)
 
     // Clone budget line structure from any existing plan
     const sourcePlan = await prisma.budgetPlan.findFirst({

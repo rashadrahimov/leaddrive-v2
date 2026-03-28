@@ -15,6 +15,7 @@ export async function POST(req: NextRequest) {
     const count = await prisma.contact.count({ where })
     return NextResponse.json({ success: true, data: { count } })
   } catch (e) {
-    return NextResponse.json({ error: String(e) }, { status: 500 })
+    console.error(e)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

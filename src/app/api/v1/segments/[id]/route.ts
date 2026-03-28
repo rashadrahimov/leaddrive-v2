@@ -50,7 +50,8 @@ export async function PUT(
     const updated = await prisma.contactSegment.findFirst({ where: { id, organizationId: orgId } })
     return NextResponse.json({ success: true, data: updated })
   } catch (e) {
-    return NextResponse.json({ error: String(e) }, { status: 500 })
+    console.error(e)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
 
@@ -67,6 +68,7 @@ export async function DELETE(
     if (result.count === 0) return NextResponse.json({ error: "Not found" }, { status: 404 })
     return NextResponse.json({ success: true, data: { deleted: id } })
   } catch (e) {
-    return NextResponse.json({ error: String(e) }, { status: 500 })
+    console.error(e)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

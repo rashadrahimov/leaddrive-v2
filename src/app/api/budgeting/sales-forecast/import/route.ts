@@ -38,9 +38,14 @@ export async function POST(req: NextRequest) {
 
   const entries: Array<{ departmentId: string; month: number; amount: number }> = []
 
+  const MAX_ROWS = 50000
+  let rowCount = 0
+
   // Skip header row (row 1), read data rows
   ws.eachRow((row, rowNumber) => {
     if (rowNumber === 1) return // skip header
+    rowCount++
+    if (rowCount > MAX_ROWS) return // stop processing beyond limit
 
     const label = String(row.getCell(1).value || "").trim().toLowerCase()
     if (label === "итого" || label === "total" || !label) return // skip total row
@@ -55,6 +60,10 @@ export async function POST(req: NextRequest) {
       entries.push({ departmentId: deptId, month, amount })
     }
   })
+
+  if (rowCount > MAX_ROWS) {
+    return NextResponse.json({ error: `Maximum ${MAX_ROWS} rows allowed` }, { status: 400 })
+  }
 
   if (entries.length === 0) {
     return NextResponse.json({ error: "No valid data found in file" }, { status: 400 })

@@ -68,7 +68,7 @@ function SetPasswordContent() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (password.length < 6) { setError(t("minChars", { count: 6 })); return }
+    if (password.length < 8) { setError(t("minChars", { count: 8 })); return }
     if (password !== confirmPassword) { setError(t("passwordsMismatch")); return }
     setSaving(true)
     setError("")
@@ -159,9 +159,9 @@ function SetPasswordContent() {
                   type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={e => setPassword(e.target.value)}
-                  placeholder={t("minChars", { count: 6 })}
+                  placeholder={t("minChars", { count: 8 })}
                   required
-                  minLength={6}
+                  minLength={8}
                 />
                 <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}

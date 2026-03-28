@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { prisma } from "@/lib/prisma"
-import { getOrgId } from "@/lib/api-auth"
+import { getOrgId, requireAuth, isAuthError } from "@/lib/api-auth"
 
 const itemSchema = z.object({
   id: z.string().optional(),
@@ -55,8 +55,9 @@ export async function PUT(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const orgId = await getOrgId(req)
-  if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  const authResult = await requireAuth(req, "deals", "write")
+  if (isAuthError(authResult)) return authResult
+  const orgId = authResult.orgId
   const { id } = await params
   const body = await req.json()
   const parsed = updateOfferSchema.safeParse(body)
@@ -102,7 +103,8 @@ export async function PUT(
     })
     return NextResponse.json({ success: true, data: updated })
   } catch (e) {
-    return NextResponse.json({ error: String(e) }, { status: 500 })
+    console.error(e)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
 
@@ -110,8 +112,9 @@ export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const orgId = await getOrgId(req)
-  if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  const authResult = await requireAuth(req, "deals", "delete")
+  if (isAuthError(authResult)) return authResult
+  const orgId = authResult.orgId
   const { id } = await params
 
   try {
@@ -119,6 +122,7 @@ export async function DELETE(
     if (result.count === 0) return NextResponse.json({ error: "Not found" }, { status: 404 })
     return NextResponse.json({ success: true, data: { deleted: id } })
   } catch (e) {
-    return NextResponse.json({ error: String(e) }, { status: 500 })
+    console.error(e)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

@@ -7,7 +7,7 @@ import bcrypt from "bcryptjs"
 const updateUserSchema = z.object({
   name: z.string().min(1).max(200).optional(),
   email: z.string().email().optional(),
-  password: z.string().min(6).max(100).optional(),
+  password: z.string().min(8).max(100).optional(),
   role: z.enum(["admin", "manager", "agent", "viewer"]).optional(),
   phone: z.string().max(50).nullable().optional(),
   department: z.string().max(100).nullable().optional(),
@@ -34,7 +34,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 })
     return NextResponse.json({ success: true, data: user })
   } catch (e) {
-    return NextResponse.json({ error: String(e) }, { status: 500 })
+    console.error("Users API error:", e)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
 
@@ -71,7 +72,8 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     if (parsed.data.department !== undefined) updateData.department = parsed.data.department
     if (parsed.data.isActive !== undefined) updateData.isActive = parsed.data.isActive
     if (parsed.data.password) {
-      updateData.passwordHash = await bcrypt.hash(parsed.data.password, 10)
+      updateData.passwordHash = await bcrypt.hash(parsed.data.password, 12)
+      updateData.passwordChangedAt = new Date() // Invalidate existing sessions
     }
     // Admin can reset user's 2FA
     if (parsed.data.resetTotp === true) {
@@ -96,7 +98,8 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 
     return NextResponse.json({ success: true, data: user })
   } catch (e) {
-    return NextResponse.json({ error: String(e) }, { status: 500 })
+    console.error("Users API error:", e)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
 
@@ -115,6 +118,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     await prisma.user.delete({ where: { id } })
     return NextResponse.json({ success: true })
   } catch (e) {
-    return NextResponse.json({ error: String(e) }, { status: 500 })
+    console.error("Users API error:", e)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

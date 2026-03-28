@@ -10,7 +10,8 @@ async function loadPricingData(orgId: string) {
     include: {
       group: true,
       categories: {
-        include: { category: true, services: { orderBy: { sortOrder: "asc" } } },
+        where: { organizationId: orgId },
+        include: { category: true, services: { where: { organizationId: orgId }, orderBy: { sortOrder: "asc" } } },
       },
     },
   })

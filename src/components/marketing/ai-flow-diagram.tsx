@@ -5,15 +5,16 @@ import { SectionWrapper } from "./section-wrapper"
 import { AnimateIn } from "./animate-in"
 import { AnimatedBeam } from "@/components/ui/animated-beam"
 import { aiCapabilities } from "@/lib/marketing-data"
-import { Bot, Target, Mail, LineChart, BookOpen, MessageSquare } from "lucide-react"
+import { Bot, Target, Mail, LineChart, BookOpen, MessageSquare, ArrowRight } from "lucide-react"
 import { cn } from "@/lib/utils"
+import Link from "next/link"
 
 const beamNodes = [
-  { icon: MessageSquare, label: "Cavablar", color: "text-amber-400" },
-  { icon: Target, label: "Skorinq", color: "text-violet-400" },
-  { icon: Mail, label: "E-poçt", color: "text-cyan-400" },
-  { icon: LineChart, label: "Analitika", color: "text-emerald-400" },
-  { icon: BookOpen, label: "Bilik", color: "text-rose-400" },
+  { icon: MessageSquare, label: "Cavablar", color: "text-orange-500" },
+  { icon: Target, label: "Skorinq", color: "text-red-500" },
+  { icon: Mail, label: "E-poçt", color: "text-orange-600" },
+  { icon: LineChart, label: "Analitika", color: "text-red-400" },
+  { icon: BookOpen, label: "Bilik", color: "text-orange-400" },
 ]
 
 function AiBeamVisual() {
@@ -33,12 +34,12 @@ function AiBeamVisual() {
   return (
     <div ref={containerRef} className="relative flex items-center justify-center min-h-[320px]">
       {/* Center AI node with glow */}
-      <div className="absolute w-32 h-32 bg-violet-500/20 rounded-full blur-[60px]" />
+      <div className="absolute w-32 h-32 bg-orange-500/15 rounded-full blur-[60px]" />
       <div
         ref={centerRef}
-        className="relative z-10 flex h-20 w-20 items-center justify-center rounded-2xl border-2 border-violet-500/40 bg-slate-900 shadow-lg shadow-violet-500/20"
+        className="relative z-10 flex h-20 w-20 items-center justify-center rounded-2xl border-2 border-orange-300 bg-white shadow-lg shadow-orange-500/10"
       >
-        <Bot className="h-9 w-9 text-violet-400" />
+        <Bot className="h-9 w-9 text-orange-500" />
       </div>
 
       {/* Surrounding nodes */}
@@ -52,7 +53,7 @@ function AiBeamVisual() {
           <div
             key={i}
             ref={(el) => setNodeRef(el, i)}
-            className="absolute z-10 flex h-14 w-14 items-center justify-center rounded-xl border border-slate-700 bg-slate-800/80 backdrop-blur-sm shadow-lg shadow-slate-900/50"
+            className="absolute z-10 flex h-14 w-14 items-center justify-center rounded-xl border border-slate-200 bg-white shadow-md"
             style={{
               left: `calc(50% + ${Math.cos(angle) * radius}px - 28px)`,
               top: `calc(50% + ${Math.sin(angle) * radius}px - 28px)`,
@@ -82,10 +83,10 @@ function AiBeamVisual() {
             curvature={0}
             duration={3 + i * 0.5}
             delay={i * 0.4}
-            gradientStartColor="#8b5cf6"
-            gradientStopColor="#06b6d4"
-            pathColor="#334155"
-            pathOpacity={0.4}
+            gradientStartColor="#f97316"
+            gradientStopColor="#ef4444"
+            pathColor="#e2e8f0"
+            pathOpacity={0.5}
           />
         )
       })}
@@ -95,16 +96,19 @@ function AiBeamVisual() {
 
 export function AiFlowDiagram() {
   return (
-    <SectionWrapper id="ai" variant="gradient">
+    <SectionWrapper id="ai" variant="white">
       <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
         {/* Text */}
         <AnimateIn>
+          <span className="inline-flex items-center gap-2 rounded-full border border-orange-200 bg-orange-50 px-3 py-1 text-xs font-medium text-orange-700 mb-4">
+            16 AI inteqrasiya
+          </span>
           <h2 className="text-3xl lg:text-4xl font-bold tracking-tight">
-            <span className="bg-gradient-to-r from-violet-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent">Maestro AI</span>
+            <span className="bg-gradient-to-r from-orange-500 via-red-500 to-orange-600 bg-clip-text text-transparent">Maestro AI</span>
             <br />
-            <span className="text-white">sizin üçün işləyir</span>
+            <span className="text-slate-900">sizin üçün işləyir</span>
           </h2>
-          <p className="mt-4 text-lg text-slate-400 leading-relaxed">
+          <p className="mt-4 text-lg text-slate-500 leading-relaxed">
             Daxili Claude inteqrasiyası. Əlavə deyil — CRM-in əsasıdır.
             Siz yuxuya gedəndə belə işləyir.
           </p>
@@ -114,17 +118,25 @@ export function AiFlowDiagram() {
               const Icon = cap.icon
               return (
                 <li key={cap.title} className="flex items-start gap-3">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-500/10 border border-violet-500/20 flex-shrink-0 mt-0.5">
-                    <Icon className="h-4 w-4 text-violet-400" />
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-orange-50 border border-orange-200 flex-shrink-0 mt-0.5">
+                    <Icon className="h-4 w-4 text-orange-500" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-white">{cap.title}</p>
-                    <p className="text-sm text-slate-400">{cap.description}</p>
+                    <p className="text-sm font-medium text-slate-900">{cap.title}</p>
+                    <p className="text-sm text-slate-500">{cap.description}</p>
                   </div>
                 </li>
               )
             })}
           </ul>
+
+          <Link
+            href="/demo"
+            className="mt-8 group inline-flex items-center gap-2 text-sm font-medium text-orange-500 hover:text-orange-600 transition-colors"
+          >
+            AI funksiyalara baxın
+            <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" />
+          </Link>
         </AnimateIn>
 
         {/* Visual */}

@@ -49,8 +49,8 @@ export default function Verify2FAPage() {
         return
       }
 
-      // Update session to clear needs2fa flag
-      await update({ needs2fa: false })
+      // Update session to clear needs2fa flag — pass server-side nonce for verification
+      await update({ needs2fa: false, twoFactorNonce: json.data.twoFactorNonce })
 
       // Redirect to dashboard
       router.push("/")

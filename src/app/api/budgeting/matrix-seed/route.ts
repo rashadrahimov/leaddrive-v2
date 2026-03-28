@@ -1,7 +1,14 @@
 import { NextRequest, NextResponse } from "next/server"
+import { z, ZodError } from "zod"
 import { getOrgId } from "@/lib/api-auth"
 import { prisma } from "@/lib/prisma"
 import { resolvePatternForDept } from "@/lib/budgeting/cost-model-map"
+
+const matrixSeedSchema = z.object({
+  planId: z.string().min(1).max(100),
+  includeRevenue: z.boolean().optional(),
+  includeExpenses: z.boolean().optional(),
+}).strict()
 
 // ─── Operating Expense groups (OpEx) ────────────────────────────────────────
 const EXPENSE_GROUPS = [
@@ -71,10 +78,24 @@ export async function POST(req: NextRequest) {
   const orgId = await getOrgId(req)
   if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
-  const body = await req.json()
-  const { planId, includeRevenue = true, includeExpenses = true } = body
+  let body
+  try {
+    body = await req.json()
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 })
+  }
 
-  if (!planId) return NextResponse.json({ error: "planId required" }, { status: 400 })
+  let data
+  try {
+    data = matrixSeedSchema.parse(body)
+  } catch (e) {
+    if (e instanceof ZodError) {
+      return NextResponse.json({ error: "Validation failed", details: e.flatten().fieldErrors }, { status: 400 })
+    }
+    return NextResponse.json({ error: "Invalid request" }, { status: 400 })
+  }
+
+  const { planId, includeRevenue = true, includeExpenses = true } = data
 
   const plan = await prisma.budgetPlan.findFirst({ where: { id: planId, organizationId: orgId } })
   if (!plan) return NextResponse.json({ error: "Plan not found" }, { status: 404 })

@@ -45,6 +45,7 @@ export async function POST(req: NextRequest) {
     if (e.code === "P2002") {
       return NextResponse.json({ error: "Group with this name already exists" }, { status: 409 })
     }
-    return NextResponse.json({ error: e.message || "Failed to create group" }, { status: 500 })
+    console.error(e)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

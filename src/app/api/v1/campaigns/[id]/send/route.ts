@@ -102,6 +102,12 @@ export async function POST(
       contacts = [...allContacts, ...allLeads.map((l: any) => ({ id: l.id, email: l.email, fullName: l.contactName }))]
     }
 
+    // Limit batch size to prevent mass email abuse
+    const MAX_BATCH = 5000
+    if (contacts.length > MAX_BATCH) {
+      contacts = contacts.slice(0, MAX_BATCH)
+    }
+
     let sentCount = 0
     const errors: string[] = []
     for (const contact of contacts) {
@@ -153,6 +159,7 @@ export async function POST(
       data: { sent: sentCount, total: contacts.length, errors },
     })
   } catch (e) {
-    return NextResponse.json({ error: String(e) }, { status: 500 })
+    console.error(e)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

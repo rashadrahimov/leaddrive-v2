@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getOrgId } from "@/lib/api-auth"
 import { prisma } from "@/lib/prisma"
 import Anthropic from "@anthropic-ai/sdk"
+import { checkRateLimit, RATE_LIMIT_CONFIG } from "@/lib/rate-limit"
 
 // Unified AI endpoint for lead-related AI features
 // POST /api/v1/ai?action=sentiment|tasks|text
@@ -42,6 +43,11 @@ async function logAiCall(
 export async function POST(req: NextRequest) {
   const orgId = await getOrgId(req)
   if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+
+  const aiLimitKey = `ai:${orgId}`
+  if (!checkRateLimit(aiLimitKey, RATE_LIMIT_CONFIG.ai)) {
+    return NextResponse.json({ error: "Too many AI requests. Please try again later." }, { status: 429 })
+  }
 
   const body = await req.json()
   const { action, companyId, leadId, options, locale: reqLocale } = body
@@ -88,9 +94,9 @@ export async function POST(req: NextRequest) {
       const company = await prisma.company.findFirst({
         where: { id: companyId, organizationId: orgId },
         include: {
-          contacts: { take: 5 },
-          deals: { take: 5 },
-          activities: { take: 10, orderBy: { createdAt: "desc" } },
+          contacts: { where: { organizationId: orgId }, take: 5 },
+          deals: { where: { organizationId: orgId }, take: 5 },
+          activities: { where: { organizationId: orgId }, take: 10, orderBy: { createdAt: "desc" } },
         },
       })
       if (!company) return NextResponse.json({ error: "Company not found" }, { status: 404 })
@@ -140,7 +146,8 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: `Unknown action: ${action}` }, { status: 400 })
     }
   } catch (e) {
-    return NextResponse.json({ error: String(e) }, { status: 500 })
+    console.error(e)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
 

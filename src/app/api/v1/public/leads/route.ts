@@ -17,18 +17,14 @@ export async function POST(request: Request) {
     const body = await request.json()
     const data = WebLeadSchema.parse(body)
 
-    // Look up organization by slug (name match)
+    // Look up organization by slug only (exact match to prevent enumeration)
     const org = await prisma.organization.findFirst({
-      where: {
-        OR: [
-          { slug: data.org_slug },
-          { name: { contains: data.org_slug, mode: "insensitive" } },
-        ],
-      },
+      where: { slug: data.org_slug },
     })
 
     if (!org) {
-      return NextResponse.json({ success: false, error: "Organization not found" }, { status: 404 })
+      // Generic response to prevent organization enumeration
+      return NextResponse.json({ success: true, data: { message: "Lead submitted successfully" } }, { status: 201 })
     }
 
     const lead = await prisma.lead.create({

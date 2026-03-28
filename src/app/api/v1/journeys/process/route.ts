@@ -1,8 +1,14 @@
 import { NextRequest, NextResponse } from "next/server"
+import { timingSafeEqual } from "crypto"
 import { prisma } from "@/lib/prisma"
 import { processEnrollmentStep } from "@/lib/journey-engine"
 
 const CRON_SECRET = process.env.CRON_SECRET
+
+function safeCompare(a: string, b: string): boolean {
+  if (a.length !== b.length) return false
+  return timingSafeEqual(Buffer.from(a), Buffer.from(b))
+}
 
 /**
  * POST /api/v1/journeys/process
@@ -18,7 +24,7 @@ export async function POST(req: NextRequest) {
     console.error("[Journey Process] CRON_SECRET not configured")
     return NextResponse.json({ error: "Server misconfigured" }, { status: 500 })
   }
-  if (token !== CRON_SECRET) {
+  if (!token || !safeCompare(token, CRON_SECRET)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
@@ -52,8 +58,8 @@ export async function POST(req: NextRequest) {
       processed: results.length,
       results,
     })
-  } catch (e: any) {
+  } catch (e) {
     console.error("[Journey Process Error]", e)
-    return NextResponse.json({ error: e.message }, { status: 500 })
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

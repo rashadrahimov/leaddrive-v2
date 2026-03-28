@@ -51,6 +51,10 @@ export function getInvoiceLabels(lang: string): LabelSet {
   return LABELS[lang] || LABELS.az
 }
 
+function escHtml(str: unknown): string {
+  return String(str ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;")
+}
+
 export function generateInvoiceHtml(
   invoice: InvoiceData,
   orgName: string,
@@ -145,8 +149,8 @@ export function generateInvoiceHtml(
 <body>
 <div class="hdr-band">
   <div class="hdr-company">
-    ${companyName}
-    <small>${companyVoen ? 'VÖEN: ' + companyVoen : ''}${companyVoen && companyAddress ? ' · ' : ''}${companyAddress || ''}</small>
+    ${escHtml(companyName)}
+    <small>${companyVoen ? 'VÖEN: ' + escHtml(companyVoen) : ''}${companyVoen && companyAddress ? ' · ' : ''}${escHtml(companyAddress)}</small>
   </div>
   <div class="hdr-inv">
     <div class="title">${L.invoiceTitle}</div>
@@ -165,19 +169,19 @@ export function generateInvoiceHtml(
   <div class="party">
     <div class="party-hdr">${L.seller}</div>
     <div class="party-body">
-      <div class="pr"><span class="k">Ad:</span><span class="v">${companyName}</span></div>
-      <div class="pr"><span class="k">VÖEN:</span><span class="v">${companyVoen}</span></div>
-      ${companyAddress ? `<div class="pr"><span class="k">Ünvan:</span><span class="v">${companyAddress}</span></div>` : ''}
+      <div class="pr"><span class="k">Ad:</span><span class="v">${escHtml(companyName)}</span></div>
+      <div class="pr"><span class="k">VÖEN:</span><span class="v">${escHtml(companyVoen)}</span></div>
+      ${companyAddress ? `<div class="pr"><span class="k">Ünvan:</span><span class="v">${escHtml(companyAddress)}</span></div>` : ''}
     </div>
   </div>
   <div class="party">
     <div class="party-hdr">${L.buyer}</div>
     <div class="party-body">
-      <div class="pr"><span class="k">Ad:</span><span class="v">${clientCo?.name || '—'}</span></div>
-      ${clientVoen ? `<div class="pr"><span class="k">VÖEN:</span><span class="v">${clientVoen}</span></div>` : ''}
-      ${clientCo?.address ? `<div class="pr"><span class="k">Ünvan:</span><span class="v">${clientCo.address}</span></div>` : ''}
-      ${clientCo?.email ? `<div class="pr"><span class="k">${L.email}:</span><span class="v">${clientCo.email}</span></div>` : ''}
-      ${clientCo?.phone ? `<div class="pr"><span class="k">${L.phone}:</span><span class="v">${clientCo.phone}</span></div>` : ''}
+      <div class="pr"><span class="k">Ad:</span><span class="v">${escHtml(clientCo?.name || '—')}</span></div>
+      ${clientVoen ? `<div class="pr"><span class="k">VÖEN:</span><span class="v">${escHtml(clientVoen)}</span></div>` : ''}
+      ${clientCo?.address ? `<div class="pr"><span class="k">Ünvan:</span><span class="v">${escHtml(clientCo.address)}</span></div>` : ''}
+      ${clientCo?.email ? `<div class="pr"><span class="k">${L.email}:</span><span class="v">${escHtml(clientCo.email)}</span></div>` : ''}
+      ${clientCo?.phone ? `<div class="pr"><span class="k">${L.phone}:</span><span class="v">${escHtml(clientCo.phone)}</span></div>` : ''}
     </div>
   </div>
 </div>
@@ -196,7 +200,7 @@ export function generateInvoiceHtml(
     ${invoice.items.map((item, i) => `
     <tr>
       <td>${i + 1}</td>
-      <td>${item.name}${item.description ? `<br><span style="color:#999;font-size:9.5px">${item.description}</span>` : ''}</td>
+      <td>${escHtml(item.name)}${item.description ? `<br><span style="color:#999;font-size:9.5px">${escHtml(item.description)}</span>` : ''}</td>
       <td>${item.quantity}</td>
       <td>${formatMoney(item.unitPrice)} ${invoice.currency}</td>
       ${hasDiscounts ? `<td>${Number(item.discount) > 0 ? item.discount + '%' : '—'}</td>` : ''}
@@ -217,12 +221,12 @@ export function generateInvoiceHtml(
   <div class="bot-box">
     <div class="bot-hdr">${L.bank}</div>
     <div class="bot-body">
-      ${bankName ? `<div class="br"><span class="k">Bank:</span><span class="v">${bankName}</span></div>` : ''}
-      ${bankVoen ? `<div class="br"><span class="k">VÖEN:</span><span class="v">${bankVoen}</span></div>` : ''}
-      ${bankCode ? `<div class="br"><span class="k">Kod:</span><span class="v">${bankCode}</span></div>` : ''}
-      ${bankSwift ? `<div class="br"><span class="k">SWIFT:</span><span class="v">${bankSwift}</span></div>` : ''}
-      ${bankCorrAccount ? `<div class="br"><span class="k">M/H:</span><span class="v">${bankCorrAccount}</span></div>` : ''}
-      ${bankAccount ? `<div class="br"><span class="k">H/H:</span><span class="v">${bankAccount}</span></div>` : ''}
+      ${bankName ? `<div class="br"><span class="k">Bank:</span><span class="v">${escHtml(bankName)}</span></div>` : ''}
+      ${bankVoen ? `<div class="br"><span class="k">VÖEN:</span><span class="v">${escHtml(bankVoen)}</span></div>` : ''}
+      ${bankCode ? `<div class="br"><span class="k">Kod:</span><span class="v">${escHtml(bankCode)}</span></div>` : ''}
+      ${bankSwift ? `<div class="br"><span class="k">SWIFT:</span><span class="v">${escHtml(bankSwift)}</span></div>` : ''}
+      ${bankCorrAccount ? `<div class="br"><span class="k">M/H:</span><span class="v">${escHtml(bankCorrAccount)}</span></div>` : ''}
+      ${bankAccount ? `<div class="br"><span class="k">H/H:</span><span class="v">${escHtml(bankAccount)}</span></div>` : ''}
     </div>
   </div>
   <div class="bot-box">
@@ -230,16 +234,16 @@ export function generateInvoiceHtml(
     <div class="stamp-body">
       ${withStamp && companyStampUrl ? `<img src="${companyStampUrl}" class="stamp-img" alt="Stamp" />` : ''}
       <div class="sig-line"></div>
-      ${signerName ? `<div class="sig-name">${signerName}</div>` : ''}
-      ${signerTitle ? `<div class="sig-title">${signerTitle}</div>` : ''}
+      ${signerName ? `<div class="sig-name">${escHtml(signerName)}</div>` : ''}
+      ${signerTitle ? `<div class="sig-title">${escHtml(signerTitle)}</div>` : ''}
     </div>
   </div>
 </div>
 </div>
 ${terms || footerNote ? `
 <div class="footer">
-  ${terms ? `<strong>${L.terms}:</strong> ${terms}<br>` : ''}
-  ${footerNote || ''}
+  ${terms ? `<strong>${L.terms}:</strong> ${escHtml(terms)}<br>` : ''}
+  ${footerNote ? escHtml(footerNote) : ''}
 </div>` : ''}
 <button class="print-btn no-print" onclick="window.print()">🖨️ ${L.invoiceTitle}</button>
 </body>

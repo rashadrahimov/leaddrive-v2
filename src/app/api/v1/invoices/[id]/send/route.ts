@@ -41,8 +41,10 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     const smtpPort = Number(smtp?.smtpPort || smtp?.port) || 587
     const smtpUser = (smtp?.smtpUser || smtp?.user) as string | undefined
     const smtpPass = (smtp?.smtpPass || smtp?.pass) as string | undefined
-    const smtpFrom = (smtp?.fromEmail || smtp?.from || smtpUser) as string | undefined
-    const fromName = (smtp?.fromName as string) || (invoiceSettings.companyName as string) || org?.name || "LeadDrive"
+    // Sanitize CRLF to prevent email header injection
+    const stripCrlf = (s: string) => s.replace(/[\r\n]/g, "")
+    const smtpFrom = stripCrlf(((smtp?.fromEmail || smtp?.from || smtpUser) as string) || "")
+    const fromName = stripCrlf((smtp?.fromName as string) || (invoiceSettings.companyName as string) || org?.name || "LeadDrive")
 
     if (!smtpHost) {
       return NextResponse.json({ error: "SMTP not configured" }, { status: 400 })
@@ -93,8 +95,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       ],
     })
 
-    await prisma.invoice.update({
-      where: { id },
+    await prisma.invoice.updateMany({
+      where: { id, organizationId: orgId },
       data: {
         status: invoice.status === "draft" ? "sent" : invoice.status,
         sentAt: new Date(),
@@ -104,6 +106,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
     return NextResponse.json({ success: true })
   } catch (e) {
-    return NextResponse.json({ error: String(e) }, { status: 500 })
+    console.error(e)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

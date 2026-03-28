@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
+import { sanitizeLog } from "@/lib/sanitize"
 
 /**
  * Telegram Bot Webhook — receives incoming messages from Telegram.
@@ -10,6 +11,17 @@ export async function POST(req: NextRequest) {
     const botToken = req.nextUrl.searchParams.get("token")
     if (!botToken) {
       return NextResponse.json({ error: "Missing token" }, { status: 400 })
+    }
+
+    // SECURITY: Verify Telegram secret token header if configured
+    // (set via setWebhook's secret_token parameter → sent as X-Telegram-Bot-Api-Secret-Token)
+    const telegramSecret = process.env.TELEGRAM_WEBHOOK_SECRET
+    if (telegramSecret) {
+      const headerSecret = req.headers.get("x-telegram-bot-api-secret-token")
+      if (headerSecret !== telegramSecret) {
+        console.error("[TG Webhook] Invalid secret token — rejecting request")
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+      }
     }
 
     const body = await req.json()
@@ -29,7 +41,7 @@ export async function POST(req: NextRequest) {
     })
 
     if (!channelConfig) {
-      console.log(`[TG Webhook] No active config for bot token ending ...${botToken.slice(-6)}`)
+      console.log(`[TG Webhook] No active config for bot token ending ...${sanitizeLog(botToken.slice(-6))}`)
       return NextResponse.json({ ok: true })
     }
 

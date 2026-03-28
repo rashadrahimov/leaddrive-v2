@@ -14,12 +14,22 @@ interface RequestRecord {
   resetTime: number
 }
 
-// In-memory rate limiter (Redis for production)
+// TODO: Replace with Redis-backed rate limiter for production.
+// Current in-memory Map resets on PM2 restart and does not work across multiple instances.
+// Max entries capped at 10000 to prevent memory leak.
+const MAX_STORE_SIZE = 10000
 const requestStore = new Map<string, RequestRecord>()
 
 export function checkRateLimit(key: string, config: RateLimitConfig): boolean {
   const now = Date.now()
   const record = requestStore.get(key)
+
+  // Evict expired entries if store grows too large
+  if (requestStore.size > MAX_STORE_SIZE) {
+    for (const [k, v] of requestStore) {
+      if (now > v.resetTime) requestStore.delete(k)
+    }
+  }
 
   if (!record || now > record.resetTime) {
     requestStore.set(key, { count: 1, resetTime: now + config.windowMs })

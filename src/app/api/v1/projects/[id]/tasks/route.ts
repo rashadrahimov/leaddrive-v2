@@ -50,7 +50,8 @@ export async function GET(req: NextRequest, props: RouteParams) {
     })
     return NextResponse.json({ success: true, data: tasks })
   } catch (e) {
-    return NextResponse.json({ error: String(e) }, { status: 500 })
+    console.error(e)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
 
@@ -76,7 +77,8 @@ export async function POST(req: NextRequest, props: RouteParams) {
     })
     return NextResponse.json({ success: true, data: task }, { status: 201 })
   } catch (e) {
-    return NextResponse.json({ error: String(e) }, { status: 500 })
+    console.error(e)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
 
@@ -125,7 +127,8 @@ export async function PUT(req: NextRequest, props: RouteParams) {
 
     return NextResponse.json({ success: true, data: task })
   } catch (e) {
-    return NextResponse.json({ error: String(e) }, { status: 500 })
+    console.error(e)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
 
@@ -147,6 +150,7 @@ export async function DELETE(req: NextRequest, props: RouteParams) {
     })
     return NextResponse.json({ success: true })
   } catch (e) {
-    return NextResponse.json({ error: String(e) }, { status: 500 })
+    console.error(e)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

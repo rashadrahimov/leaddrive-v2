@@ -22,9 +22,16 @@ export default function WebToLeadPage() {
 
   const apiEndpoint = `${typeof window !== "undefined" ? window.location.origin : ""}/api/v1/public/leads`
 
+  // Escape HTML special characters to prevent code injection in embed code
+  const escapeHtml = (str: string) =>
+    str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;")
+
+  // Validate redirect URL — only allow http/https protocols
+  const safeRedirectUrl = redirectUrl && /^https?:\/\//i.test(redirectUrl.trim()) ? escapeHtml(redirectUrl.trim()) : ""
+
   const embedCode = `<!-- LeadDrive Web-to-Lead Form -->
 <form id="leaddrive-form" onsubmit="return submitLeadDriveForm(event)">
-  <h3>${formTitle}</h3>
+  <h3>${escapeHtml(formTitle)}</h3>
   <div>
     <label for="ld-name">Name *</label>
     <input type="text" id="ld-name" name="name" required />
@@ -45,7 +52,7 @@ export default function WebToLeadPage() {
     <label for="ld-message">Message</label>
     <textarea id="ld-message" name="message" rows="3"></textarea>
   </div>` : ""}
-  <button type="submit">${submitText}</button>
+  <button type="submit">${escapeHtml(submitText)}</button>
 </form>
 <script>
 async function submitLeadDriveForm(e) {
@@ -55,7 +62,7 @@ async function submitLeadDriveForm(e) {
     name: f.name.value,
     email: f.email.value,${showPhone ? "\n    phone: f.phone?.value || ''," : ""}${showCompany ? "\n    company: f.company?.value || ''," : ""}${showMessage ? "\n    message: f.message?.value || ''," : ""}
     source: "web_form",
-    org_slug: "${orgSlug}"
+    org_slug: "${escapeHtml(orgSlug)}"
   };
   try {
     const r = await fetch("${apiEndpoint}", {
@@ -64,7 +71,7 @@ async function submitLeadDriveForm(e) {
       body: JSON.stringify(data)
     });
     if (r.ok) {
-      ${redirectUrl ? `window.location.href = "${redirectUrl}";` : `alert("Thank you! We'll be in touch soon.");`}
+      ${safeRedirectUrl ? `window.location.href = "${safeRedirectUrl}";` : `alert("Thank you! We'll be in touch soon.");`}
       f.reset();
     } else {
       alert("Something went wrong. Please try again.");

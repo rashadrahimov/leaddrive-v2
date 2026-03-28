@@ -76,14 +76,17 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid code. Please try again." }, { status: 400 })
     }
 
+    // SECURITY: Generate a server-side nonce for secure session update
+    const twoFactorNonce = crypto.randomBytes(32).toString("hex")
+
     await prisma.user.update({
       where: { id: userId },
-      data: { totpEnabled: true },
+      data: { totpEnabled: true, twoFactorNonce },
     })
 
     return NextResponse.json({
       success: true,
-      data: { message: "2FA enabled successfully" },
+      data: { message: "2FA enabled successfully", twoFactorNonce },
     })
   }
 

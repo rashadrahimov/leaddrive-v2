@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { prisma } from "@/lib/prisma"
+import { sanitizeLog } from "@/lib/sanitize"
+
+function escHtml(s: unknown): string {
+  return String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;")
+}
 
 // Generate ICS calendar file content
 function generateICS(event: any): string {
@@ -55,9 +60,9 @@ async function sendConfirmationEmail(event: any, participantName: string, partic
     const endDate = event.endDate ? new Date(event.endDate).toLocaleString("ru-RU", { dateStyle: "long", timeStyle: "short" }) : ""
 
     await transport.sendMail({
-      from: smtp.fromEmail ? `${smtp.fromName || org?.name || ""} <${smtp.fromEmail}>` : smtp.smtpUser,
+      from: smtp.fromEmail ? `${(smtp.fromName || org?.name || "").replace(/[\r\n]/g, "")} <${smtp.fromEmail.replace(/[\r\n]/g, "")}>` : smtp.smtpUser,
       to: participantEmail,
-      subject: `Confirmed: ${event.name}`,
+      subject: `Confirmed: ${event.name.replace(/[\r\n]/g, "")}`,
       html: `<!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
@@ -70,12 +75,12 @@ async function sendConfirmationEmail(event: any, participantName: string, partic
   <tr><td style="background:#059669;padding:35px 40px;text-align:center;">
     <div style="font-size:40px;margin-bottom:10px;">&#10003;</div>
     <h1 style="margin:0;color:#fff;font-size:24px;font-weight:700;">You're Confirmed!</h1>
-    <p style="margin:8px 0 0;color:rgba(255,255,255,0.9);font-size:14px;">${event.name}</p>
+    <p style="margin:8px 0 0;color:rgba(255,255,255,0.9);font-size:14px;">${String(event.name).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}</p>
   </td></tr>
 
   <!-- Greeting -->
   <tr><td style="padding:25px 40px 10px;">
-    <p style="margin:0;font-size:15px;color:#1F2937;">Hello <strong>${participantName}</strong>,</p>
+    <p style="margin:0;font-size:15px;color:#1F2937;">Hello <strong>${escHtml(participantName)}</strong>,</p>
     <p style="margin:8px 0 0;font-size:14px;color:#4B5563;line-height:1.6;">
       Your attendance is confirmed! The event has been attached to this email — open the attachment to add it to your calendar automatically.
     </p>
@@ -95,13 +100,13 @@ async function sendConfirmationEmail(event: any, participantName: string, partic
           ${event.location ? `<tr><td style="padding:6px 0;border-top:1px solid #E2E8F0;">
             <table><tr>
               <td style="width:36px;vertical-align:middle;"><div style="width:32px;height:32px;background:#FEF2F2;border-radius:8px;text-align:center;line-height:32px;font-size:16px;">&#128205;</div></td>
-              <td style="padding-left:12px;"><div style="font-size:11px;color:#9CA3AF;text-transform:uppercase;font-weight:700;">Where</div><div style="font-size:14px;color:#1F2937;font-weight:600;">${event.location}</div></td>
+              <td style="padding-left:12px;"><div style="font-size:11px;color:#9CA3AF;text-transform:uppercase;font-weight:700;">Where</div><div style="font-size:14px;color:#1F2937;font-weight:600;">${escHtml(event.location)}</div></td>
             </tr></table>
           </td></tr>` : ""}
           ${event.isOnline && event.meetingUrl ? `<tr><td style="padding:6px 0;border-top:1px solid #E2E8F0;">
             <table><tr>
               <td style="width:36px;vertical-align:middle;"><div style="width:32px;height:32px;background:#F0FDF4;border-radius:8px;text-align:center;line-height:32px;font-size:16px;">&#128279;</div></td>
-              <td style="padding-left:12px;"><div style="font-size:11px;color:#9CA3AF;text-transform:uppercase;font-weight:700;">Join Online</div><div style="font-size:14px;"><a href="${event.meetingUrl}" style="color:#4F46E5;font-weight:600;">${event.meetingUrl}</a></div></td>
+              <td style="padding-left:12px;"><div style="font-size:11px;color:#9CA3AF;text-transform:uppercase;font-weight:700;">Join Online</div><div style="font-size:14px;"><a href="${event.meetingUrl}" style="color:#4F46E5;font-weight:600;">${escHtml(event.meetingUrl)}</a></div></td>
             </tr></table>
           </td></tr>` : ""}
         </table>
@@ -118,7 +123,7 @@ async function sendConfirmationEmail(event: any, participantName: string, partic
 
   <!-- Footer -->
   <tr><td style="padding:20px 40px 25px;text-align:center;border-top:1px solid #E5E7EB;">
-    <p style="margin:0;font-size:12px;color:#9CA3AF;">Sent by <strong style="color:#4F46E5;">${org?.name || "LeadDrive CRM"}</strong></p>
+    <p style="margin:0;font-size:12px;color:#9CA3AF;">Sent by <strong style="color:#4F46E5;">${escHtml(org?.name || "LeadDrive CRM")}</strong></p>
   </td></tr>
 
 </table>
@@ -131,9 +136,9 @@ async function sendConfirmationEmail(event: any, participantName: string, partic
         content: icsContent,
       },
     })
-    console.log(`[CONFIRM] Sent confirmation + .ics to ${participantEmail} for ${event.name}`)
+    console.log(`[CONFIRM] Sent confirmation + .ics to ${sanitizeLog(participantEmail)} for ${sanitizeLog(event.name)}`)
   } catch (e: any) {
-    console.error(`[CONFIRM] Failed to send to ${participantEmail}:`, e?.message)
+    console.error(`[CONFIRM] Failed to send to ${sanitizeLog(participantEmail)}:`, sanitizeLog(String(e?.message)))
   }
 }
 
@@ -217,23 +222,40 @@ export async function POST(
     where: { organizationId: event.organizationId, email: parsed.data.email },
   })
 
-  const participant = await prisma.eventParticipant.create({
-    data: {
-      eventId: id,
-      contactId: contact?.id,
-      companyId: contact?.companyId || undefined,
-      name: parsed.data.name,
-      email: parsed.data.email,
-      phone: parsed.data.phone || undefined,
-      role: parsed.data.role,
-      status: "confirmed",
-      source: "self_registered",
-      notes: parsed.data.company ? `Company: ${parsed.data.company}` : parsed.data.notes,
-    },
-  })
+  // Use transaction to prevent race condition on capacity check
+  let participant: any
+  try {
+    participant = await prisma.$transaction(async (tx) => {
+      // Re-check capacity inside transaction (serializable read)
+      const currentCount = await tx.eventParticipant.count({ where: { eventId: id } })
+      if (event.maxParticipants && currentCount >= event.maxParticipants) {
+        throw new Error("EVENT_FULL")
+      }
 
-  const count = await prisma.eventParticipant.count({ where: { eventId: id } })
-  await prisma.event.updateMany({ where: { id }, data: { registeredCount: count } })
+      const p = await tx.eventParticipant.create({
+        data: {
+          eventId: id,
+          contactId: contact?.id,
+          companyId: contact?.companyId || undefined,
+          name: parsed.data.name,
+          email: parsed.data.email,
+          phone: parsed.data.phone || undefined,
+          role: parsed.data.role,
+          status: "confirmed",
+          source: "self_registered",
+          notes: parsed.data.company ? `Company: ${parsed.data.company}` : parsed.data.notes,
+        },
+      })
+
+      await tx.event.updateMany({ where: { id }, data: { registeredCount: currentCount + 1 } })
+      return p
+    })
+  } catch (e: any) {
+    if (e.message === "EVENT_FULL") {
+      return NextResponse.json({ error: "Event is full" }, { status: 400 })
+    }
+    throw e
+  }
 
   // Send confirmation email with calendar
   sendConfirmationEmail(event, parsed.data.name, parsed.data.email)

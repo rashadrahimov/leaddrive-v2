@@ -82,7 +82,8 @@ export async function POST(req: NextRequest) {
     })
 
     return NextResponse.json({ success: true, data: sale }, { status: 201 })
-  } catch (e: any) {
-    return NextResponse.json({ error: e.message || "Failed to create additional sale" }, { status: 500 })
+  } catch (e) {
+    console.error(e)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

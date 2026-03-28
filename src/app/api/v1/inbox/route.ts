@@ -5,6 +5,10 @@ import { getOrgId } from "@/lib/api-auth"
 import { sendEmail } from "@/lib/email"
 import { sendWhatsAppMessage } from "@/lib/whatsapp"
 
+function escHtml(s: unknown): string {
+  return String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;")
+}
+
 export async function GET(req: NextRequest) {
   const orgId = await getOrgId(req)
   if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
@@ -317,7 +321,7 @@ export async function POST(req: NextRequest) {
         const result = await sendEmail({
           to,
           subject: subject || "Сообщение из LeadDrive CRM",
-          html: `<div style="font-family: Arial, sans-serif; line-height: 1.6;">${msgBody.replace(/\n/g, "<br>")}</div>`,
+          html: `<div style="font-family: Arial, sans-serif; line-height: 1.6;">${escHtml(msgBody).replace(/\n/g, "<br>")}</div>`,
           organizationId: orgId,
           contactId,
         })
@@ -453,7 +457,8 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true, data: message }, { status: 201 })
   } catch (e) {
-    return NextResponse.json({ error: String(e) }, { status: 500 })
+    console.error(e)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
 
@@ -480,7 +485,8 @@ export async function PATCH(req: NextRequest) {
     })
     return NextResponse.json({ success: true })
   } catch (e) {
-    return NextResponse.json({ error: String(e) }, { status: 500 })
+    console.error(e)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
 
@@ -505,6 +511,7 @@ export async function DELETE(req: NextRequest) {
     })
     return NextResponse.json({ success: true })
   } catch (e) {
-    return NextResponse.json({ error: String(e) }, { status: 500 })
+    console.error(e)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

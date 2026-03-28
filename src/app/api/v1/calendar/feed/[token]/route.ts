@@ -24,7 +24,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ toke
   })
 
   if (!user) {
-    return new NextResponse("Invalid calendar token", { status: 404 })
+    return new NextResponse("Unauthorized", { status: 401 })
   }
 
   const tasks = await prisma.task.findMany({

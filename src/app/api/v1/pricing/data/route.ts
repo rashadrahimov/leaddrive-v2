@@ -16,9 +16,10 @@ export async function GET(req: NextRequest) {
       include: {
         group: true,
         categories: {
+          where: { organizationId: orgId },
           include: {
             category: true,
-            services: { orderBy: { sortOrder: "asc" } },
+            services: { where: { organizationId: orgId }, orderBy: { sortOrder: "asc" } },
           },
         },
       },
@@ -51,8 +52,9 @@ export async function GET(req: NextRequest) {
     }
 
     return NextResponse.json({ success: true, data })
-  } catch (e: any) {
-    return NextResponse.json({ error: e.message || "Failed to load pricing data" }, { status: 500 })
+  } catch (e) {
+    console.error(e)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
 
@@ -72,7 +74,7 @@ export async function PUT(req: NextRequest) {
         where: { organizationId: orgId, companyCode },
         include: {
           categories: {
-            include: { category: true, services: true },
+            include: { category: true, services: { where: { organizationId: orgId } } },
           },
         },
       })
@@ -127,7 +129,8 @@ export async function PUT(req: NextRequest) {
     }
 
     return NextResponse.json({ success: true, data: { saved: true } })
-  } catch (e: any) {
-    return NextResponse.json({ error: e.message || "Failed to save" }, { status: 500 })
+  } catch (e) {
+    console.error(e)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

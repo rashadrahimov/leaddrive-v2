@@ -67,7 +67,7 @@ export async function GET(req: NextRequest) {
       },
     })
   } catch (e) {
-    const message = e instanceof Error ? e.message : "Cost model failed"
-    return NextResponse.json({ error: message }, { status: 500 })
+    console.error(e)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

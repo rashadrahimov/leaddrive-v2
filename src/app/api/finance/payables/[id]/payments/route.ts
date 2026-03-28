@@ -1,6 +1,16 @@
 import { NextRequest, NextResponse } from "next/server"
+import { z, ZodError } from "zod"
 import { getOrgId } from "@/lib/api-auth"
 import { prisma } from "@/lib/prisma"
+
+const createPaymentSchema = z.object({
+  amount: z.union([z.string().min(1), z.number().min(0).max(999999999)]),
+  paymentMethod: z.string().max(50).optional(),
+  paymentDate: z.string().max(50).optional(),
+  reference: z.string().max(200).optional().nullable(),
+  notes: z.string().max(2000).optional().nullable(),
+  currency: z.string().max(10).optional(),
+}).strict()
 
 // GET — list payments for a bill
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -22,12 +32,24 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   const { id: billId } = await params
 
-  const body = await req.json()
-  const { amount, paymentMethod, paymentDate, reference, notes, currency } = body
-
-  if (!amount) {
-    return NextResponse.json({ error: "amount required" }, { status: 400 })
+  let body
+  try {
+    body = await req.json()
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 })
   }
+
+  let data
+  try {
+    data = createPaymentSchema.parse(body)
+  } catch (e) {
+    if (e instanceof ZodError) {
+      return NextResponse.json({ error: "Validation failed", details: e.flatten().fieldErrors }, { status: 400 })
+    }
+    return NextResponse.json({ error: "Invalid request" }, { status: 400 })
+  }
+
+  const { amount, paymentMethod, paymentDate, reference, notes, currency } = data
 
   const paymentAmount = parseFloat(amount)
 

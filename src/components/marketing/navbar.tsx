@@ -8,10 +8,10 @@ import { Menu, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const navLinks = [
-  { href: "/features", label: "Xüsusiyyətlər" },
-  { href: "/plans", label: "Qiymətlər" },
+  { href: "/home#modules", label: "Modullar" },
+  { href: "/home#ai", label: "AI" },
+  { href: "/home#pricing", label: "Qiymətlər" },
   { href: "/demo", label: "Demo" },
-  { href: "/about", label: "Haqqımızda" },
   { href: "/contact", label: "Əlaqə" },
 ]
 
@@ -30,8 +30,8 @@ export function MarketingNavbar() {
       className={cn(
         "sticky top-0 z-50 w-full transition-all duration-300",
         scrolled
-          ? "bg-slate-950/90 backdrop-blur-xl shadow-lg shadow-slate-900/50 border-b border-slate-800"
-          : "bg-transparent"
+          ? "bg-white/95 backdrop-blur-xl shadow-sm border-b border-slate-200"
+          : "bg-white"
       )}
     >
       <div className="mx-auto max-w-7xl px-4 lg:px-8">
@@ -47,7 +47,7 @@ export function MarketingNavbar() {
               <Link
                 key={link.href}
                 href={link.href}
-                className="text-sm font-medium text-slate-400 hover:text-white transition-colors"
+                className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors"
               >
                 {link.label}
               </Link>
@@ -59,22 +59,22 @@ export function MarketingNavbar() {
             <LanguageSwitcher />
             <Link
               href="/login"
-              className="text-sm font-medium text-slate-400 hover:text-white transition-colors px-3 py-2"
+              className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors px-3 py-2"
             >
               Daxil ol
             </Link>
             <Link
-              href="/register"
-              className="rounded-full bg-gradient-to-r from-violet-600 to-indigo-600 px-5 py-2.5 text-sm font-semibold text-white hover:shadow-lg hover:shadow-violet-500/25 transition-all"
+              href="/demo"
+              className="rounded-full bg-orange-500 hover:bg-orange-600 px-5 py-2.5 text-sm font-semibold text-white transition-all shadow-sm"
             >
-              Pulsuz başla
+              Demo tələb et
             </Link>
           </div>
 
           {/* Mobile hamburger */}
           <button
             onClick={() => setMobileOpen(!mobileOpen)}
-            className="md:hidden p-2 text-slate-400 hover:text-white"
+            className="md:hidden p-2 text-slate-600 hover:text-slate-900"
           >
             {mobileOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
           </button>
@@ -82,29 +82,29 @@ export function MarketingNavbar() {
 
         {/* Mobile menu */}
         {mobileOpen && (
-          <div className="md:hidden border-t border-slate-800 py-4 space-y-1 animate-fade-in-up">
+          <div className="md:hidden border-t border-slate-200 py-4 space-y-1 animate-fade-in-up">
             {navLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
                 onClick={() => setMobileOpen(false)}
-                className="block px-3 py-2.5 text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800/50 rounded-lg"
+                className="block px-3 py-2.5 text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded-lg"
               >
                 {link.label}
               </Link>
             ))}
-            <div className="border-t border-slate-800 pt-3 mt-3 flex flex-col gap-2 px-3">
+            <div className="border-t border-slate-200 pt-3 mt-3 flex flex-col gap-2 px-3">
               <Link
                 href="/login"
-                className="text-center text-sm font-medium text-slate-400 hover:text-white py-2.5 border border-slate-700 rounded-full"
+                className="text-center text-sm font-medium text-slate-600 hover:text-slate-900 py-2.5 border border-slate-300 rounded-full"
               >
                 Daxil ol
               </Link>
               <Link
-                href="/register"
-                className="text-center rounded-full bg-gradient-to-r from-violet-600 to-indigo-600 text-sm font-semibold text-white px-5 py-2.5 hover:shadow-lg hover:shadow-violet-500/25 transition-all"
+                href="/demo"
+                className="text-center rounded-full bg-orange-500 text-sm font-semibold text-white px-5 py-2.5 hover:bg-orange-600 transition-all"
               >
-                Pulsuz başla
+                Demo tələb et
               </Link>
             </div>
           </div>

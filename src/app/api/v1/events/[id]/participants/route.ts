@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { prisma } from "@/lib/prisma"
-import { getOrgId } from "@/lib/api-auth"
+import { requireAuth, isAuthError, getOrgId } from "@/lib/api-auth"
+
+function escHtml(s: unknown): string {
+  return String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;")
+}
 
 const addSchema = z.object({
   contactId: z.string().optional(),
@@ -38,8 +42,9 @@ export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const orgId = await getOrgId(req)
-  if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  const authResult = await requireAuth(req, "events", "write")
+  if (isAuthError(authResult)) return authResult
+  const orgId = authResult.orgId
   const { id } = await params
 
   const event = await prisma.event.findFirst({ where: { id, organizationId: orgId } })
@@ -93,9 +98,14 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const orgId = await getOrgId(req)
-  if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  const authResult = await requireAuth(req, "events", "write")
+  if (isAuthError(authResult)) return authResult
+  const orgId = authResult.orgId
   const { id } = await params
+
+  // Verify event belongs to this org
+  const eventCheck = await prisma.event.findFirst({ where: { id, organizationId: orgId } })
+  if (!eventCheck) return NextResponse.json({ error: "Event not found" }, { status: 404 })
 
   const body = await req.json()
   const { participantId, action, participantIds } = body
@@ -145,18 +155,18 @@ export async function PATCH(
 
             if (template?.htmlBody) {
               html = template.htmlBody
-                .replace(/\{\{event_name\}\}/g, event.name)
+                .replace(/\{\{event_name\}\}/g, escHtml(event.name))
                 .replace(/\{\{event_date\}\}/g, new Date(event.startDate).toLocaleString("ru-RU"))
-                .replace(/\{\{event_location\}\}/g, event.location || "Online")
-                .replace(/\{\{event_description\}\}/g, event.description || "")
-                .replace(/\{\{participant_role\}\}/g, p.role || "attendee")
+                .replace(/\{\{event_location\}\}/g, escHtml(event.location || "Online"))
+                .replace(/\{\{event_description\}\}/g, escHtml(event.description || ""))
+                .replace(/\{\{participant_role\}\}/g, escHtml(p.role || "attendee"))
                 .replace(/\{\{confirm_url\}\}/g, registrationUrl)
-                .replace(/\{\{client_name\}\}/g, p.name)
-                .replace(/\{\{company_name\}\}/g, org?.name || "")
+                .replace(/\{\{client_name\}\}/g, escHtml(p.name))
+                .replace(/\{\{company_name\}\}/g, escHtml(org?.name || ""))
               subject = (template.subject || "Invitation: {{event_name}}")
-                .replace(/\{\{event_name\}\}/g, event.name)
+                .replace(/\{\{event_name\}\}/g, event.name.replace(/[\r\n]/g, ""))
             } else {
-              subject = `You're Invited: ${event.name}`
+              subject = `You're Invited: ${event.name.replace(/[\r\n]/g, "")}`
               const startDate = new Date(event.startDate).toLocaleString("ru-RU", { dateStyle: "long", timeStyle: "short" })
               const endDate = event.endDate ? new Date(event.endDate).toLocaleString("ru-RU", { dateStyle: "long", timeStyle: "short" }) : ""
               html = `<!DOCTYPE html>
@@ -166,11 +176,11 @@ export async function PATCH(
 <tr><td align="center">
 <table width="600" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.1);">
   <tr><td style="background:linear-gradient(135deg,#4F46E5,#7C3AED);padding:40px;text-align:center;">
-    <h1 style="margin:0;color:#fff;font-size:26px;font-weight:700;">${event.name}</h1>
-    <p style="margin:10px 0 0;color:rgba(255,255,255,0.85);font-size:14px;">${event.type || "Event"}</p>
+    <h1 style="margin:0;color:#fff;font-size:26px;font-weight:700;">${escHtml(event.name)}</h1>
+    <p style="margin:10px 0 0;color:rgba(255,255,255,0.85);font-size:14px;">${escHtml(event.type || "Event")}</p>
   </td></tr>
   <tr><td style="padding:30px 40px 10px;">
-    <p style="margin:0;font-size:15px;color:#1F2937;">Hello <strong>${p.name}</strong>,</p>
+    <p style="margin:0;font-size:15px;color:#1F2937;">Hello <strong>${escHtml(p.name)}</strong>,</p>
     <p style="margin:10px 0 0;font-size:14px;color:#4B5563;line-height:1.6;">
       You are invited to join us! Please confirm your attendance by clicking the button below.
     </p>
@@ -188,20 +198,20 @@ export async function PATCH(
           ${event.location ? `<tr><td style="padding:8px 0;border-top:1px solid #E2E8F0;">
             <table><tr>
               <td style="width:36px;vertical-align:middle;"><div style="width:32px;height:32px;background:#FEF2F2;border-radius:8px;text-align:center;line-height:32px;font-size:16px;">&#128205;</div></td>
-              <td style="padding-left:12px;"><div style="font-size:11px;color:#9CA3AF;text-transform:uppercase;font-weight:700;">Location</div><div style="font-size:14px;color:#1F2937;font-weight:600;">${event.location}</div></td>
+              <td style="padding-left:12px;"><div style="font-size:11px;color:#9CA3AF;text-transform:uppercase;font-weight:700;">Location</div><div style="font-size:14px;color:#1F2937;font-weight:600;">${escHtml(event.location)}</div></td>
             </tr></table>
           </td></tr>` : ""}
           ${event.isOnline && event.meetingUrl ? `<tr><td style="padding:8px 0;border-top:1px solid #E2E8F0;">
             <table><tr>
               <td style="width:36px;vertical-align:middle;"><div style="width:32px;height:32px;background:#F0FDF4;border-radius:8px;text-align:center;line-height:32px;font-size:16px;">&#128279;</div></td>
-              <td style="padding-left:12px;"><div style="font-size:11px;color:#9CA3AF;text-transform:uppercase;font-weight:700;">Join Online</div><div style="font-size:14px;"><a href="${event.meetingUrl}" style="color:#4F46E5;font-weight:600;">${event.meetingUrl}</a></div></td>
+              <td style="padding-left:12px;"><div style="font-size:11px;color:#9CA3AF;text-transform:uppercase;font-weight:700;">Join Online</div><div style="font-size:14px;"><a href="${event.meetingUrl}" style="color:#4F46E5;font-weight:600;">${escHtml(event.meetingUrl)}</a></div></td>
             </tr></table>
           </td></tr>` : ""}
         </table>
       </td></tr>
     </table>
   </td></tr>
-  ${event.description ? `<tr><td style="padding:5px 40px 15px;"><p style="margin:0;font-size:13px;color:#6B7280;line-height:1.5;background:#FEFCE8;border-radius:8px;padding:12px;border:1px solid #FDE68A;">${event.description.slice(0, 300)}</p></td></tr>` : ""}
+  ${event.description ? `<tr><td style="padding:5px 40px 15px;"><p style="margin:0;font-size:13px;color:#6B7280;line-height:1.5;background:#FEFCE8;border-radius:8px;padding:12px;border:1px solid #FDE68A;">${escHtml(event.description?.slice(0, 300))}</p></td></tr>` : ""}
   <tr><td style="padding:10px 40px 25px;text-align:center;">
     <a href="${registrationUrl}" style="display:inline-block;background:linear-gradient(135deg,#4F46E5,#7C3AED);color:#fff;padding:14px 40px;border-radius:10px;font-size:16px;font-weight:700;text-decoration:none;box-shadow:0 4px 12px rgba(79,70,229,0.4);">Confirm My Attendance</a>
   </td></tr>
@@ -209,7 +219,7 @@ export async function PATCH(
     <p style="margin:0;font-size:12px;color:#9CA3AF;">Or copy this link: <a href="${registrationUrl}" style="color:#4F46E5;">${registrationUrl}</a></p>
   </td></tr>
   <tr><td style="padding:20px 40px;text-align:center;border-top:1px solid #E5E7EB;">
-    <p style="margin:0;font-size:12px;color:#9CA3AF;">Sent by <strong style="color:#4F46E5;">${org?.name || "LeadDrive CRM"}</strong></p>
+    <p style="margin:0;font-size:12px;color:#9CA3AF;">Sent by <strong style="color:#4F46E5;">${escHtml(org?.name || "LeadDrive CRM")}</strong></p>
   </td></tr>
 </table>
 </td></tr></table>
@@ -217,7 +227,7 @@ export async function PATCH(
             }
 
             await transport.sendMail({
-              from: smtpSettings.fromEmail ? `${smtpSettings.fromName || ""} <${smtpSettings.fromEmail}>` : smtpSettings.smtpUser,
+              from: smtpSettings.fromEmail ? `${(smtpSettings.fromName || "").replace(/[\r\n]/g, "")} <${smtpSettings.fromEmail.replace(/[\r\n]/g, "")}>` : smtpSettings.smtpUser,
               to: p.email,
               subject,
               html,
@@ -247,6 +257,12 @@ export async function PATCH(
 
   // Single participant update (status, role, inviteStatus)
   if (participantId) {
+    // Verify participant belongs to this event (event already verified via orgId above)
+    const existingParticipant = await prisma.eventParticipant.findFirst({
+      where: { id: participantId, eventId: id },
+    })
+    if (!existingParticipant) return NextResponse.json({ error: "Participant not found" }, { status: 404 })
+
     const updateData: any = {}
     if (body.status) updateData.status = body.status
     if (body.role) updateData.role = body.role
@@ -276,18 +292,24 @@ export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const orgId = await getOrgId(req)
-  if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  const authResult = await requireAuth(req, "events", "delete")
+  if (isAuthError(authResult)) return authResult
+  const orgId = authResult.orgId
   const { id } = await params
 
   const { participantId } = await req.json()
   if (!participantId) return NextResponse.json({ error: "participantId required" }, { status: 400 })
 
-  try {
-    await prisma.eventParticipant.delete({ where: { id: participantId } })
-  } catch (e) {
-    return NextResponse.json({ error: "Participant not found" }, { status: 404 })
-  }
+  // Verify event belongs to org before deleting participant
+  const event = await prisma.event.findFirst({ where: { id, organizationId: orgId } })
+  if (!event) return NextResponse.json({ error: "Event not found" }, { status: 404 })
+
+  const participant = await prisma.eventParticipant.findFirst({
+    where: { id: participantId, eventId: id },
+  })
+  if (!participant) return NextResponse.json({ error: "Participant not found" }, { status: 404 })
+
+  await prisma.eventParticipant.delete({ where: { id: participantId } })
 
   const count = await prisma.eventParticipant.count({ where: { eventId: id } })
   const attendedCount = await prisma.eventParticipant.count({ where: { eventId: id, status: "attended" } })

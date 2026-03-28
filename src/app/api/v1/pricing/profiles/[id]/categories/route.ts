@@ -25,7 +25,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         categoryId,
         total: 0,
       },
-      include: { category: true, services: true },
+      include: { category: true, services: { where: { organizationId: orgId } } },
     })
 
     return NextResponse.json({ success: true, data: profileCategory }, { status: 201 })
@@ -33,7 +33,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     if (e.code === "P2002") {
       return NextResponse.json({ error: "This category already exists for this profile" }, { status: 409 })
     }
-    return NextResponse.json({ error: e.message || "Failed to add category" }, { status: 500 })
+    console.error(e)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
 

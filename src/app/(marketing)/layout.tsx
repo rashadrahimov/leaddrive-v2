@@ -40,7 +40,7 @@ export const metadata: Metadata = {
 
 export default function MarketingLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="dark min-h-screen bg-slate-950 text-white" style={{ colorScheme: "dark" }}>
+    <div className="min-h-screen bg-white text-slate-900" style={{ colorScheme: "light" }}>
       <MarketingNavbar />
       <main>{children}</main>
       <MarketingFooter />

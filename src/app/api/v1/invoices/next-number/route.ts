@@ -10,6 +10,7 @@ export async function GET(req: NextRequest) {
     const number = await generateInvoiceNumber(orgId)
     return NextResponse.json({ success: true, data: { number } })
   } catch (e) {
-    return NextResponse.json({ error: String(e) }, { status: 500 })
+    console.error(e)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

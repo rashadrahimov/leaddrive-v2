@@ -67,7 +67,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true, data: planRequest }, { status: 201 })
   } catch (e) {
     console.error("Plan request error:", e)
-    return NextResponse.json({ error: String(e) }, { status: 500 })
+    console.error(e)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
 
@@ -84,6 +85,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ success: true, data: requests })
   } catch (e) {
     console.error("Plan requests GET error:", e)
-    return NextResponse.json({ error: String(e) }, { status: 500 })
+    console.error(e)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

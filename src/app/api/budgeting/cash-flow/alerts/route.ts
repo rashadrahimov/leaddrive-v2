@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from "next/server"
+import { z, ZodError } from "zod"
 import { getOrgId } from "@/lib/api-auth"
 import { prisma } from "@/lib/prisma"
+
+const resolveAlertSchema = z.object({
+  alertId: z.string().min(1).max(100),
+}).strict()
 
 // GET — list active cash flow alerts
 export async function GET(req: NextRequest) {
@@ -22,8 +27,24 @@ export async function POST(req: NextRequest) {
   const orgId = await getOrgId(req)
   if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
-  const { alertId } = await req.json()
-  if (!alertId) return NextResponse.json({ error: "alertId required" }, { status: 400 })
+  let body
+  try {
+    body = await req.json()
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 })
+  }
+
+  let data
+  try {
+    data = resolveAlertSchema.parse(body)
+  } catch (e) {
+    if (e instanceof ZodError) {
+      return NextResponse.json({ error: "Validation failed", details: e.flatten().fieldErrors }, { status: 400 })
+    }
+    return NextResponse.json({ error: "Invalid request" }, { status: 400 })
+  }
+
+  const { alertId } = data
 
   await prisma.cashFlowAlert.updateMany({
     where: { id: alertId, organizationId: orgId },

@@ -1,6 +1,15 @@
 import { NextRequest, NextResponse } from "next/server"
+import { z } from "zod"
 import { getOrgId } from "@/lib/api-auth"
 import { prisma } from "@/lib/prisma"
+
+const profileSchema = z.object({
+  companyCode: z.string().min(1).max(100),
+  companyId: z.string().max(100).nullish(),
+  groupId: z.string().min(1).max(100),
+  monthlyTotal: z.number().min(0).max(999999999).optional(),
+  annualTotal: z.number().min(0).max(999999999).optional(),
+})
 
 export async function GET(req: NextRequest) {
   const orgId = await getOrgId(req)
@@ -26,9 +35,10 @@ export async function GET(req: NextRequest) {
         group: true,
         company: { select: { id: true, name: true } },
         categories: {
+          where: { organizationId: orgId },
           include: {
             category: true,
-            services: { orderBy: { sortOrder: "asc" } },
+            services: { where: { organizationId: orgId }, orderBy: { sortOrder: "asc" } },
           },
           orderBy: { category: { sortOrder: "asc" } },
         },
@@ -49,11 +59,11 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json()
-    const { companyCode, companyId, groupId, monthlyTotal, annualTotal } = body
-
-    if (!companyCode || !groupId) {
-      return NextResponse.json({ error: "companyCode and groupId are required" }, { status: 400 })
+    const parsed = profileSchema.safeParse(body)
+    if (!parsed.success) {
+      return NextResponse.json({ error: "Validation failed", details: parsed.error.flatten().fieldErrors }, { status: 400 })
     }
+    const { companyCode, companyId, groupId, monthlyTotal, annualTotal } = parsed.data
 
     const profile = await prisma.pricingProfile.create({
       data: {
@@ -72,6 +82,7 @@ export async function POST(req: NextRequest) {
     if (e.code === "P2002") {
       return NextResponse.json({ error: "Profile with this companyCode already exists" }, { status: 409 })
     }
-    return NextResponse.json({ error: e.message || "Failed to create profile" }, { status: 500 })
+    console.error(e)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

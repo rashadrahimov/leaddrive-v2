@@ -30,6 +30,7 @@ export async function POST(req: NextRequest) {
     if (e.name === "ZodError") {
       return NextResponse.json({ error: e.errors[0]?.message || "Validation error" }, { status: 400 })
     }
-    return NextResponse.json({ error: String(e) }, { status: 500 })
+    console.error(e)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

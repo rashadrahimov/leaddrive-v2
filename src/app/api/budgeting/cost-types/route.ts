@@ -1,6 +1,29 @@
 import { NextRequest, NextResponse } from "next/server"
+import { z, ZodError } from "zod"
 import { getOrgId } from "@/lib/api-auth"
 import { prisma } from "@/lib/prisma"
+
+const createCostTypeSchema = z.object({
+  key: z.string().min(1).max(100),
+  label: z.string().min(1).max(200),
+  costModelPattern: z.string().max(200).optional().nullable(),
+  isShared: z.boolean().optional(),
+  allocationMethod: z.string().max(50).optional().nullable(),
+  color: z.string().max(20).optional().nullable(),
+  sortOrder: z.number().int().min(0).max(999).optional(),
+}).strict()
+
+const updateCostTypeSchema = z.object({
+  id: z.string().min(1).max(100),
+  key: z.string().min(1).max(100).optional(),
+  label: z.string().min(1).max(200).optional(),
+  costModelPattern: z.string().max(200).optional().nullable(),
+  isShared: z.boolean().optional(),
+  allocationMethod: z.string().max(50).optional().nullable(),
+  color: z.string().max(20).optional().nullable(),
+  sortOrder: z.number().int().min(0).max(999).optional(),
+  isActive: z.boolean().optional(),
+})
 
 export async function GET(req: NextRequest) {
   const orgId = await getOrgId(req)
@@ -20,12 +43,24 @@ export async function POST(req: NextRequest) {
   const orgId = await getOrgId(req)
   if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
-  const body = await req.json()
-  const { key, label, costModelPattern, isShared, allocationMethod, color, sortOrder } = body
-
-  if (!key || !label) {
-    return NextResponse.json({ error: "key and label are required" }, { status: 400 })
+  let body
+  try {
+    body = await req.json()
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 })
   }
+
+  let data
+  try {
+    data = createCostTypeSchema.parse(body)
+  } catch (e) {
+    if (e instanceof ZodError) {
+      return NextResponse.json({ error: "Validation failed", details: e.flatten().fieldErrors }, { status: 400 })
+    }
+    return NextResponse.json({ error: "Invalid request" }, { status: 400 })
+  }
+
+  const { key, label, costModelPattern, isShared, allocationMethod, color, sortOrder } = data
 
   const existing = await prisma.budgetCostType.findUnique({
     where: { organizationId_key: { organizationId: orgId, key } },
@@ -54,10 +89,24 @@ export async function PUT(req: NextRequest) {
   const orgId = await getOrgId(req)
   if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
-  const body = await req.json()
-  const { id, ...updates } = body
+  let body
+  try {
+    body = await req.json()
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 })
+  }
 
-  if (!id) return NextResponse.json({ error: "id is required" }, { status: 400 })
+  let data
+  try {
+    data = updateCostTypeSchema.parse(body)
+  } catch (e) {
+    if (e instanceof ZodError) {
+      return NextResponse.json({ error: "Validation failed", details: e.flatten().fieldErrors }, { status: 400 })
+    }
+    return NextResponse.json({ error: "Invalid request" }, { status: 400 })
+  }
+
+  const { id, ...updates } = data
 
   const costType = await prisma.budgetCostType.update({
     where: { id, organizationId: orgId },

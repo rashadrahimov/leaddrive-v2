@@ -1,6 +1,15 @@
 import { NextRequest, NextResponse } from "next/server"
+import { z } from "zod"
 import { getOrgId } from "@/lib/api-auth"
 import { prisma } from "@/lib/prisma"
+
+const serviceSchema = z.object({
+  profileCategoryId: z.string().min(1).max(100),
+  name: z.string().min(1).max(300),
+  unit: z.string().max(100).optional(),
+  qty: z.number().int().min(0).max(999999).optional(),
+  price: z.number().min(0).max(999999999).optional(),
+})
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const orgId = await getOrgId(req)
@@ -12,11 +21,11 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
   try {
     const body = await req.json()
-    const { profileCategoryId, name, unit, qty, price } = body
-
-    if (!profileCategoryId || !name) {
-      return NextResponse.json({ error: "profileCategoryId and name are required" }, { status: 400 })
+    const parsed = serviceSchema.safeParse(body)
+    if (!parsed.success) {
+      return NextResponse.json({ error: "Validation failed", details: parsed.error.flatten().fieldErrors }, { status: 400 })
     }
+    const { profileCategoryId, name, unit, qty, price } = parsed.data
 
     const pc = await prisma.pricingProfileCategory.findFirst({
       where: { id: profileCategoryId, profileId, organizationId: orgId },
@@ -48,8 +57,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     await prisma.pricingProfileCategory.update({ where: { id: profileCategoryId }, data: { total: catTotal } })
 
     return NextResponse.json({ success: true, data: service }, { status: 201 })
-  } catch (e: any) {
-    return NextResponse.json({ error: e.message || "Failed to create service" }, { status: 500 })
+  } catch (e) {
+    console.error(e)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
 
@@ -90,8 +100,9 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     await prisma.pricingProfileCategory.update({ where: { id: existing.profileCategoryId }, data: { total: catTotal } })
 
     return NextResponse.json({ success: true, data: service })
-  } catch (e: any) {
-    return NextResponse.json({ error: e.message || "Failed to update service" }, { status: 500 })
+  } catch (e) {
+    console.error(e)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
 

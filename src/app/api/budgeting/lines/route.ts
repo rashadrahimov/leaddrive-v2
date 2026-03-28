@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
+import { z, ZodError } from "zod"
 import { getOrgId, getSession } from "@/lib/api-auth"
 import { prisma, logBudgetChange } from "@/lib/prisma"
 import { loadAndCompute } from "@/lib/cost-model/db"
@@ -6,6 +7,28 @@ import { getPeriodMonths, computePlannedForLine } from "@/lib/budgeting/cost-mod
 import { buildDeptFilter } from "@/lib/budgeting/department-access"
 import { processCurrencyFields } from "@/lib/budgeting/currency"
 import type { Role } from "@/lib/permissions"
+
+const createLineSchema = z.object({
+  plan_id: z.string().max(100).optional(),
+  planId: z.string().max(100).optional(),
+  category: z.string().min(1).max(500),
+  department: z.string().max(200).optional().nullable(),
+  line_type: z.string().max(50).optional(),
+  lineType: z.string().max(50).optional(),
+  lineSubtype: z.string().max(50).optional().nullable(),
+  planned_amount: z.number().min(0).max(999999999).optional(),
+  plannedAmount: z.number().min(0).max(999999999).optional(),
+  forecastAmount: z.number().min(0).max(999999999).optional().nullable(),
+  unitPrice: z.number().min(0).max(999999999).optional().nullable(),
+  unitCost: z.number().min(0).max(999999999).optional().nullable(),
+  quantity: z.number().min(0).max(999999999).optional().nullable(),
+  costModelKey: z.string().max(200).optional().nullable(),
+  isAutoActual: z.boolean().optional(),
+  notes: z.string().max(2000).optional().nullable(),
+  parentId: z.string().max(100).optional().nullable(),
+  currencyCode: z.string().max(10).optional().nullable(),
+  exchangeRate: z.number().min(0).max(999999999).optional().nullable(),
+})
 
 export async function GET(req: NextRequest) {
   const session = await getSession(req)
@@ -68,8 +91,24 @@ export async function POST(req: NextRequest) {
   const orgId = await getOrgId(req)
   if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
-  const body = await req.json()
-  const { plan_id, planId, category, department, line_type, lineType, lineSubtype, planned_amount, plannedAmount, forecastAmount, unitPrice, unitCost, quantity, costModelKey, isAutoActual, notes, parentId, currencyCode, exchangeRate } = body
+  let body
+  try {
+    body = await req.json()
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 })
+  }
+
+  let validatedBody
+  try {
+    validatedBody = createLineSchema.parse(body)
+  } catch (e) {
+    if (e instanceof ZodError) {
+      return NextResponse.json({ error: "Validation failed", details: e.flatten().fieldErrors }, { status: 400 })
+    }
+    return NextResponse.json({ error: "Invalid request" }, { status: 400 })
+  }
+
+  const { plan_id, planId, category, department, line_type, lineType, lineSubtype, planned_amount, plannedAmount, forecastAmount, unitPrice, unitCost, quantity, costModelKey, isAutoActual, notes, parentId, currencyCode, exchangeRate } = validatedBody
 
   const resolvedPlanId = planId || plan_id
   const resolvedLineType = lineType || line_type || "expense"

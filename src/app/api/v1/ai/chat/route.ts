@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getOrgId } from "@/lib/api-auth"
 import { prisma } from "@/lib/prisma"
 import Anthropic from "@anthropic-ai/sdk"
+import { checkRateLimit, RATE_LIMIT_CONFIG } from "@/lib/rate-limit"
 
 function getClient(): Anthropic | null {
   if (!process.env.ANTHROPIC_API_KEY) return null
@@ -11,6 +12,11 @@ function getClient(): Anthropic | null {
 export async function POST(req: NextRequest) {
   const orgId = await getOrgId(req)
   if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+
+  const aiLimitKey = `ai:${orgId}`
+  if (!checkRateLimit(aiLimitKey, RATE_LIMIT_CONFIG.ai)) {
+    return NextResponse.json({ error: "Too many AI requests. Please try again later." }, { status: 429 })
+  }
 
   const { message, context, history, locale } = await req.json()
   if (!message) return NextResponse.json({ error: "Message required" }, { status: 400 })

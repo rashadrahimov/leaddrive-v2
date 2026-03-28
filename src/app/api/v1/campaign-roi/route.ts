@@ -11,6 +11,7 @@ export async function GET(req: NextRequest) {
       where: { organizationId: orgId },
       include: {
         deals: {
+          where: { organizationId: orgId },
           select: {
             id: true,
             stage: true,
@@ -57,6 +58,7 @@ export async function GET(req: NextRequest) {
       },
     })
   } catch (e) {
-    return NextResponse.json({ error: String(e) }, { status: 500 })
+    console.error(e)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

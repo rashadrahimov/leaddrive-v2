@@ -39,14 +39,12 @@ function Counter({ value, suffix }: { value: number; suffix: string }) {
 
 export function StatsCounter() {
   return (
-    <section className="relative bg-slate-900/80 border-y border-slate-800 py-16">
-      <div className="absolute inset-0 bg-gradient-to-r from-violet-600/5 via-transparent to-cyan-500/5" />
-
+    <section className="relative bg-slate-50 py-16">
       <div className="relative mx-auto max-w-7xl px-4 lg:px-8">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
           {stats.map((stat, i) => (
             <AnimateIn key={stat.label} delay={i * 100}>
-              <div className="text-4xl lg:text-5xl font-bold tabular-nums bg-gradient-to-b from-white to-slate-400 bg-clip-text text-transparent">
+              <div className="text-4xl lg:text-5xl font-bold tabular-nums text-slate-900">
                 <Counter value={stat.value} suffix={stat.suffix} />
               </div>
               <div className="mt-2 text-sm text-slate-500">{stat.label}</div>

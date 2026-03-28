@@ -1,9 +1,26 @@
 import { NextRequest, NextResponse } from "next/server"
+import { z, ZodError } from "zod"
 import { getOrgId, getSession } from "@/lib/api-auth"
 import { prisma, logBudgetChange } from "@/lib/prisma"
 import { buildDeptFilter } from "@/lib/budgeting/department-access"
 import { processCurrencyFields } from "@/lib/budgeting/currency"
 import type { Role } from "@/lib/permissions"
+
+const createActualSchema = z.object({
+  plan_id: z.string().max(100).optional(),
+  planId: z.string().max(100).optional(),
+  category: z.string().min(1).max(500),
+  department: z.string().max(200).optional().nullable(),
+  line_type: z.string().max(50).optional(),
+  lineType: z.string().max(50).optional(),
+  actual_amount: z.number().min(0).max(999999999).optional(),
+  actualAmount: z.number().min(0).max(999999999).optional(),
+  expenseDate: z.string().max(50).optional().nullable(),
+  expense_date: z.string().max(50).optional().nullable(),
+  description: z.string().max(2000).optional().nullable(),
+  currencyCode: z.string().max(10).optional().nullable(),
+  exchangeRate: z.number().min(0).max(999999999).optional().nullable(),
+})
 
 export async function GET(req: NextRequest) {
   const session = await getSession(req)
@@ -28,8 +45,24 @@ export async function POST(req: NextRequest) {
   const orgId = await getOrgId(req)
   if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
-  const body = await req.json()
-  const { plan_id, planId, category, department, line_type, lineType, actual_amount, actualAmount, expenseDate, expense_date, description, currencyCode, exchangeRate } = body
+  let body
+  try {
+    body = await req.json()
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 })
+  }
+
+  let validatedBody
+  try {
+    validatedBody = createActualSchema.parse(body)
+  } catch (e) {
+    if (e instanceof ZodError) {
+      return NextResponse.json({ error: "Validation failed", details: e.flatten().fieldErrors }, { status: 400 })
+    }
+    return NextResponse.json({ error: "Invalid request" }, { status: 400 })
+  }
+
+  const { plan_id, planId, category, department, line_type, lineType, actual_amount, actualAmount, expenseDate, expense_date, description, currencyCode, exchangeRate } = validatedBody
 
   const resolvedPlanId = planId || plan_id
   const resolvedLineType = lineType || line_type || "expense"

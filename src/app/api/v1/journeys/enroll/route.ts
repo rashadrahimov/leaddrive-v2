@@ -88,7 +88,7 @@ export async function POST(req: NextRequest) {
     }, { status: 201 })
   } catch (e: any) {
     console.error("[Journey Enroll Error]", e)
-    return NextResponse.json({ error: e.message || String(e) }, { status: 500 })
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
 

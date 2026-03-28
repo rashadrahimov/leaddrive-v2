@@ -1,6 +1,26 @@
 import { NextRequest, NextResponse } from "next/server"
+import { z, ZodError } from "zod"
 import { getOrgId } from "@/lib/api-auth"
 import { prisma, logBudgetChange } from "@/lib/prisma"
+
+const forecastEntrySchema = z.object({
+  planId: z.string().min(1).max(100),
+  month: z.number().int().min(1).max(12),
+  year: z.number().int().min(2020).max(2050),
+  category: z.string().min(1).max(500),
+  lineType: z.string().max(50).optional(),
+  forecastAmount: z.number().min(0).max(999999999),
+})
+
+const forecastBodySchema = z.object({
+  entries: z.array(forecastEntrySchema).optional(),
+  planId: z.string().min(1).max(100).optional(),
+  month: z.number().int().min(1).max(12).optional(),
+  year: z.number().int().min(2020).max(2050).optional(),
+  category: z.string().min(1).max(500).optional(),
+  lineType: z.string().max(50).optional(),
+  forecastAmount: z.number().min(0).max(999999999).optional(),
+})
 
 export async function GET(req: NextRequest) {
   const orgId = await getOrgId(req)
@@ -21,10 +41,25 @@ export async function POST(req: NextRequest) {
   const orgId = await getOrgId(req)
   if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
-  const body = await req.json()
+  let body
+  try {
+    body = await req.json()
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 })
+  }
+
+  let data
+  try {
+    data = forecastBodySchema.parse(body)
+  } catch (e) {
+    if (e instanceof ZodError) {
+      return NextResponse.json({ error: "Validation failed", details: e.flatten().fieldErrors }, { status: 400 })
+    }
+    return NextResponse.json({ error: "Invalid request" }, { status: 400 })
+  }
 
   // Check plan is not approved (use first entry's planId)
-  const firstPlanId = Array.isArray(body.entries) ? body.entries[0]?.planId : body.planId
+  const firstPlanId = Array.isArray(data.entries) ? data.entries[0]?.planId : data.planId
   if (firstPlanId) {
     const plan = await prisma.budgetPlan.findFirst({ where: { id: firstPlanId, organizationId: orgId }, select: { status: true } })
     if (plan?.status === "approved") {
@@ -34,7 +69,7 @@ export async function POST(req: NextRequest) {
 
   // Supports bulk upsert: body.entries = [{ planId, month, year, category, lineType, forecastAmount }]
   const entries: Array<{ planId: string; month: number; year: number; category: string; lineType?: string; forecastAmount: number }> =
-    Array.isArray(body.entries) ? body.entries : [body]
+    Array.isArray(data.entries) ? data.entries : [data as any]
 
   const results = []
   for (const entry of entries) {

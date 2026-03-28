@@ -95,7 +95,8 @@ export async function GET(req: NextRequest) {
       data: { invoices, total, page, limit },
     })
   } catch (e) {
-    return NextResponse.json({ error: String(e) }, { status: 500 })
+    console.error(e)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
 
@@ -171,6 +172,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true, data: invoice }, { status: 201 })
   } catch (e) {
-    return NextResponse.json({ error: String(e) }, { status: 500 })
+    console.error(e)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

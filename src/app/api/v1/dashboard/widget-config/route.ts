@@ -65,7 +65,8 @@ export async function GET(req: NextRequest) {
       data: { widgets, roles: orgRoles.length > 0 ? orgRoles : ALL_ROLES },
     })
   } catch (e) {
-    return NextResponse.json({ error: String(e) }, { status: 500 })
+    console.error("Widget config GET error:", e)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
 
@@ -74,7 +75,12 @@ export async function PUT(req: NextRequest) {
   if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
   try {
-    const body = await req.json()
+    let body
+    try {
+      body = await req.json()
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON" }, { status: 400 })
+    }
     const { widgets } = body
 
     if (!widgets || typeof widgets !== "object") {
@@ -100,6 +106,7 @@ export async function PUT(req: NextRequest) {
 
     return NextResponse.json({ success: true })
   } catch (e) {
-    return NextResponse.json({ error: String(e) }, { status: 500 })
+    console.error("Widget config PUT error:", e)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

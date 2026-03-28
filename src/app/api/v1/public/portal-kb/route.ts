@@ -46,6 +46,7 @@ export async function GET(req: NextRequest) {
       status: "published",
     },
     orderBy: { createdAt: "desc" },
+    take: 50,
     select: {
       id: true,
       title: true,

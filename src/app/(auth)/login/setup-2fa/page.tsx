@@ -21,6 +21,7 @@ export default function Setup2FAPage() {
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [twoFactorNonce, setTwoFactorNonce] = useState("")
 
   // Redirect if user doesn't need setup
   useEffect(() => {
@@ -71,6 +72,10 @@ export default function Setup2FAPage() {
         return
       }
 
+      // Store server-side nonce for secure session update
+      if (json.data?.twoFactorNonce) {
+        setTwoFactorNonce(json.data.twoFactorNonce)
+      }
       setStep("done")
       setLoading(false)
     } catch {
@@ -80,8 +85,8 @@ export default function Setup2FAPage() {
   }
 
   async function handleFinish() {
-    // Clear needsSetup2fa from session
-    await update({ needsSetup2fa: false })
+    // Clear needsSetup2fa from session — pass server-side nonce for verification
+    await update({ needsSetup2fa: false, twoFactorNonce })
     router.push("/")
     router.refresh()
   }

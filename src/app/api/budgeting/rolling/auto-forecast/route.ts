@@ -1,14 +1,36 @@
 import { NextRequest, NextResponse } from "next/server"
+import { z, ZodError } from "zod"
 import { getOrgId } from "@/lib/api-auth"
 import { prisma } from "@/lib/prisma"
+
+const autoForecastSchema = z.object({
+  planId: z.string().min(1).max(100),
+  lookbackMonths: z.number().int().min(1).max(60).optional(),
+}).strict()
 
 // POST — auto-generate forecast based on linear trend from recent actuals
 export async function POST(req: NextRequest) {
   const orgId = await getOrgId(req)
   if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
-  const { planId, lookbackMonths = 6 } = await req.json()
-  if (!planId) return NextResponse.json({ error: "planId required" }, { status: 400 })
+  let body
+  try {
+    body = await req.json()
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 })
+  }
+
+  let data
+  try {
+    data = autoForecastSchema.parse(body)
+  } catch (e) {
+    if (e instanceof ZodError) {
+      return NextResponse.json({ error: "Validation failed", details: e.flatten().fieldErrors }, { status: 400 })
+    }
+    return NextResponse.json({ error: "Invalid request" }, { status: 400 })
+  }
+
+  const { planId, lookbackMonths = 6 } = data
 
   const plan = await prisma.budgetPlan.findFirst({
     where: { id: planId, organizationId: orgId },

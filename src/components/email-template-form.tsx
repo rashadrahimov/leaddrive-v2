@@ -79,7 +79,7 @@ export function EmailTemplateForm({ open, onOpenChange, onSaved, initialData, or
   const [editorInitialized, setEditorInitialized] = useState(false)
   useEffect(() => {
     if (open && activeTab === "editor" && editorRef.current && !editorInitialized) {
-      editorRef.current.innerHTML = form.htmlBody || ""
+      editorRef.current.innerHTML = sanitizeRichHtml(form.htmlBody || "")
       setEditorInitialized(true)
     }
     if (!open) setEditorInitialized(false)
@@ -88,7 +88,7 @@ export function EmailTemplateForm({ open, onOpenChange, onSaved, initialData, or
   // Re-initialize editor when switching back from preview
   useEffect(() => {
     if (activeTab === "editor" && editorRef.current) {
-      editorRef.current.innerHTML = form.htmlBody || ""
+      editorRef.current.innerHTML = sanitizeRichHtml(form.htmlBody || "")
     }
   }, [activeTab])
 

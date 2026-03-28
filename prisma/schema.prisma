@@ -102,6 +102,8 @@ model User {
   require2fa     Boolean   @default(false)
   backupCodes    Json      @default("[]")
   calendarToken  String?   @unique
+  twoFactorNonce    String?   // Server-side nonce for secure 2FA session update
+  passwordChangedAt DateTime? // Track password changes for session invalidation
   resetToken     String?
   resetTokenExp  DateTime?
   lastLogin      DateTime?

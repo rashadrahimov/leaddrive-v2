@@ -27,6 +27,7 @@ export async function GET(req: NextRequest) {
       prisma.deal.findMany({
         where: { organizationId: orgId, stage: "WON" },
         select: { valueAmount: true },
+        take: 10000,
       }),
       prisma.ticket.count({
         where: { organizationId: orgId, status: { in: ["new", "in_progress", "waiting"] } },
@@ -87,6 +88,7 @@ export async function GET(req: NextRequest) {
         id: true,
         name: true,
         contracts: {
+          where: { organizationId: orgId },
           select: { valueAmount: true },
         },
       },
@@ -125,6 +127,7 @@ export async function GET(req: NextRequest) {
     const contractsData = await prisma.contract.findMany({
       where: { organizationId: orgId },
       select: { valueAmount: true, status: true },
+      take: 10000,
     })
     const totalContractRevenue = contractsData
       .filter((c: { status: string; valueAmount: number | null }) => c.status === "active")
@@ -190,6 +193,7 @@ export async function GET(req: NextRequest) {
       },
     })
   } catch (e) {
-    return NextResponse.json({ error: String(e) }, { status: 500 })
+    console.error(e)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

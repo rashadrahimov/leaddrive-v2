@@ -172,7 +172,7 @@ export async function sendEmail({
       }).catch(() => {})
     }
 
-    return { success: false, error: err.message }
+    return { success: false, error: "Failed to send email" }
   }
 }
 

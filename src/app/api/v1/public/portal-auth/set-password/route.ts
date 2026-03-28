@@ -25,11 +25,17 @@ export async function GET(req: NextRequest) {
 
 // POST /api/v1/public/portal-auth/set-password — set password after verification
 export async function POST(req: NextRequest) {
-  const { token, password, confirmPassword } = await req.json()
+  let body
+  try {
+    body = await req.json()
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 })
+  }
+  const { token, password, confirmPassword } = body
 
   if (!token) return NextResponse.json({ error: "Токен не указан" }, { status: 400 })
-  if (!password || password.length < 6) {
-    return NextResponse.json({ error: "Пароль должен быть не менее 6 символов" }, { status: 400 })
+  if (!password || password.length < 8) {
+    return NextResponse.json({ error: "Пароль должен быть не менее 8 символов" }, { status: 400 })
   }
   if (password !== confirmPassword) {
     return NextResponse.json({ error: "Пароли не совпадают" }, { status: 400 })

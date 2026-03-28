@@ -1,16 +1,35 @@
 import { NextRequest, NextResponse } from "next/server"
+import { z, ZodError } from "zod"
 import { getOrgId } from "@/lib/api-auth"
 import { prisma } from "@/lib/prisma"
+
+const applyTemplatesSchema = z.object({
+  templateIds: z.array(z.string().min(1).max(100)).min(1).max(100),
+}).strict()
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const orgId = await getOrgId(req)
   if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   const { id: planId } = await params
 
-  const body = await req.json()
-  const { templateIds } = body as { templateIds: string[] }
+  let body
+  try {
+    body = await req.json()
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 })
+  }
 
-  if (!templateIds?.length) return NextResponse.json({ error: "templateIds required" }, { status: 400 })
+  let data
+  try {
+    data = applyTemplatesSchema.parse(body)
+  } catch (e) {
+    if (e instanceof ZodError) {
+      return NextResponse.json({ error: "Validation failed", details: e.flatten().fieldErrors }, { status: 400 })
+    }
+    return NextResponse.json({ error: "Invalid request" }, { status: 400 })
+  }
+
+  const { templateIds } = data
 
   // Verify plan exists
   const plan = await prisma.budgetPlan.findFirst({ where: { id: planId, organizationId: orgId } })

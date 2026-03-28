@@ -19,8 +19,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   })
 
   // Mark as read
-  await prisma.socialConversation.update({
-    where: { id },
+  await prisma.socialConversation.updateMany({
+    where: { id, organizationId: orgId },
     data: { unreadCount: 0 },
   })
 

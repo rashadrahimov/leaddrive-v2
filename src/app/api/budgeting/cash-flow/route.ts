@@ -1,6 +1,20 @@
 import { NextRequest, NextResponse } from "next/server"
+import { z, ZodError } from "zod"
 import { getOrgId } from "@/lib/api-auth"
 import { prisma } from "@/lib/prisma"
+
+const createCashFlowSchema = z.object({
+  year: z.number().int().min(2020).max(2050),
+  month: z.number().int().min(1).max(12),
+  entryType: z.enum(["inflow", "outflow"]),
+  amount: z.union([z.string().min(1), z.number().min(0).max(999999999)]),
+  description: z.string().max(500).optional().nullable(),
+  source: z.string().max(100).optional(),
+  sourceId: z.string().max(100).optional().nullable(),
+  paymentDate: z.string().max(50).optional().nullable(),
+  currencyCode: z.string().max(10).optional(),
+  isProjected: z.boolean().optional(),
+}).strict()
 
 // GET — get cash flow data for a year
 export async function GET(req: NextRequest) {
@@ -59,12 +73,24 @@ export async function POST(req: NextRequest) {
   const orgId = await getOrgId(req)
   if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
-  const body = await req.json()
-  const { year, month, entryType, amount, description, source, sourceId, paymentDate, currencyCode, isProjected } = body
-
-  if (!year || !month || !entryType || !amount) {
-    return NextResponse.json({ error: "year, month, entryType, amount required" }, { status: 400 })
+  let body
+  try {
+    body = await req.json()
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 })
   }
+
+  let data
+  try {
+    data = createCashFlowSchema.parse(body)
+  } catch (e) {
+    if (e instanceof ZodError) {
+      return NextResponse.json({ error: "Validation failed", details: e.flatten().fieldErrors }, { status: 400 })
+    }
+    return NextResponse.json({ error: "Invalid request" }, { status: 400 })
+  }
+
+  const { year, month, entryType, amount, description, source, sourceId, paymentDate, currencyCode, isProjected } = data
 
   const entry = await prisma.cashFlowEntry.create({
     data: {

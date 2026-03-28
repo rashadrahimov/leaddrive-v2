@@ -10,7 +10,7 @@ const updateDealSchema = z.object({
   companyId: z.string().nullable().optional(),
   campaignId: z.string().nullable().optional(),
   stage: z.string().optional(),
-  valueAmount: z.number().min(0).optional(),
+  valueAmount: z.number().min(0).max(999999999).optional(),
   currency: z.string().max(5).optional(),
   probability: z.number().min(0).max(100).optional(),
   expectedClose: z.string().nullable().optional(),
@@ -85,7 +85,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     return NextResponse.json({ success: true, data: { ...deal, teamMembers: enrichedTeam, contact, contactRoles: enrichedRoles } })
   } catch (e) {
     console.error("GET deal error:", e)
-    return NextResponse.json({ error: String(e) }, { status: 500 })
+    console.error(e)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
 
@@ -181,7 +182,8 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 
     return NextResponse.json({ success: true, data: updated })
   } catch (e) {
-    return NextResponse.json({ error: String(e) }, { status: 500 })
+    console.error(e)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
 
@@ -200,6 +202,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     logAudit(orgId, "delete", "deal", id, existing?.name || "")
     return NextResponse.json({ success: true, data: { deleted: id } })
   } catch (e) {
-    return NextResponse.json({ error: String(e) }, { status: 500 })
+    console.error(e)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

@@ -35,17 +35,18 @@ export async function GET(
     const company = await prisma.company.findFirst({
       where: { id, organizationId: orgId },
       include: {
-        contacts: { orderBy: { fullName: "asc" } },
-        deals: { orderBy: { createdAt: "desc" } },
-        contracts: { orderBy: { createdAt: "desc" } },
-        activities: { orderBy: { createdAt: "desc" }, take: 20 },
+        contacts: { where: { organizationId: orgId }, orderBy: { fullName: "asc" } },
+        deals: { where: { organizationId: orgId }, orderBy: { createdAt: "desc" } },
+        contracts: { where: { organizationId: orgId }, orderBy: { createdAt: "desc" } },
+        activities: { where: { organizationId: orgId }, orderBy: { createdAt: "desc" }, take: 20 },
         slaPolicy: { select: { id: true, name: true, priority: true, resolutionHours: true, firstResponseHours: true } },
       },
     })
     if (!company) return NextResponse.json({ error: "Not found" }, { status: 404 })
     return NextResponse.json({ success: true, data: company })
   } catch (e) {
-    return NextResponse.json({ success: false, error: String(e) }, { status: 500 })
+    console.error(e)
+    return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 })
   }
 }
 
@@ -70,7 +71,8 @@ export async function PUT(
     logAudit(orgId, "update", "company", id, updated?.name || "", { newValue: parsed.data })
     return NextResponse.json({ success: true, data: updated })
   } catch (e) {
-    return NextResponse.json({ error: String(e) }, { status: 500 })
+    console.error(e)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
 
@@ -89,6 +91,7 @@ export async function DELETE(
     logAudit(orgId, "delete", "company", id, existing?.name || "")
     return NextResponse.json({ success: true, data: { deleted: id } })
   } catch (e) {
-    return NextResponse.json({ error: String(e) }, { status: 500 })
+    console.error(e)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

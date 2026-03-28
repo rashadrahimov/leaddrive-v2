@@ -3,22 +3,22 @@ import { Logo } from "@/components/logo"
 
 const footerLinks = {
   Məhsul: [
-    { label: "Xüsusiyyətlər", href: "/features" },
-    { label: "Qiymətlər", href: "/plans" },
+    { label: "Modullar", href: "/#modules" },
+    { label: "Maestro AI", href: "/#ai" },
+    { label: "Qiymətlər", href: "/#pricing" },
     { label: "Demo", href: "/demo" },
-    { label: "İnteqrasiyalar", href: "/features/inbox" },
   ],
   Həllər: [
-    { label: "Satış CRM", href: "/features/crm" },
-    { label: "Marketinq Avtomatlaşdırma", href: "/features/marketing" },
-    { label: "Analitika və P&L", href: "/features/analytics" },
-    { label: "Dəstək və Tiketlər", href: "/features/support" },
-    { label: "Süni Zeka Platforması", href: "/features/ai" },
+    { label: "Satış CRM", href: "/demo#deals" },
+    { label: "Marketinq Avtomatlaşdırma", href: "/demo#campaigns" },
+    { label: "7 Kanallı Gələn Qutusu", href: "/demo#inbox" },
+    { label: "Dəstək və Tiketlər", href: "/demo#support" },
+    { label: "Maliyyə və Analitika", href: "/demo#finance" },
   ],
   Şirkət: [
     { label: "Haqqımızda", href: "/about" },
     { label: "Əlaqə", href: "/contact" },
-    { label: "Bloq", href: "/blog" },
+    { label: "FAQ", href: "/home#faq" },
   ],
   Hüquqi: [
     { label: "Məxfilik Siyasəti", href: "/legal/privacy" },
@@ -65,9 +65,13 @@ export function MarketingFooter() {
           <div className="col-span-2 md:col-span-1">
             <Logo size="md" sidebar />
             <p className="mt-4 text-sm text-slate-300 leading-relaxed">
-              Marjalarına əhəmiyyət verən şirkətlər üçün süni intellektli CRM.
+              AI-native CRM platforması — satış, marketinq, dəstək və analitika bir yerdə.
             </p>
-            <div className="flex items-center gap-3 mt-6">
+            <div className="mt-4 space-y-1.5 text-sm text-slate-400">
+              <p>📧 info@leaddrivecrm.org</p>
+              <p>📱 +994 10 531 30 65</p>
+            </div>
+            <div className="flex items-center gap-3 mt-4">
               {socialLinks.map((s) => (
                 <a
                   key={s.label}
@@ -89,7 +93,7 @@ export function MarketingFooter() {
               <h3 className="text-sm font-semibold text-white mb-4">{title}</h3>
               <ul className="space-y-2.5">
                 {links.map((link) => (
-                  <li key={link.href}>
+                  <li key={link.label}>
                     <Link
                       href={link.href}
                       className="text-sm text-slate-300 hover:text-white transition-colors"

@@ -10,12 +10,13 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   try {
     const recurring = await prisma.recurringInvoice.findFirst({
       where: { id, organizationId: orgId },
-      include: { items: true, invoices: { orderBy: { createdAt: "desc" }, take: 20 } },
+      include: { items: true, invoices: { where: { organizationId: orgId }, orderBy: { createdAt: "desc" }, take: 20 } },
     })
     if (!recurring) return NextResponse.json({ error: "Not found" }, { status: 404 })
     return NextResponse.json({ success: true, data: recurring })
   } catch (e) {
-    return NextResponse.json({ error: String(e) }, { status: 500 })
+    console.error(e)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
 
@@ -25,6 +26,9 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   const { id } = await params
 
   try {
+    const existing = await prisma.recurringInvoice.findFirst({ where: { id, organizationId: orgId } })
+    if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 })
+
     const body = await req.json()
     const { items, startDate, endDate, ...rest } = body
 
@@ -56,7 +60,8 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 
     return NextResponse.json({ success: true, data: recurring })
   } catch (e) {
-    return NextResponse.json({ error: String(e) }, { status: 500 })
+    console.error(e)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
 
@@ -69,6 +74,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     await prisma.recurringInvoice.deleteMany({ where: { id, organizationId: orgId } })
     return NextResponse.json({ success: true })
   } catch (e) {
-    return NextResponse.json({ error: String(e) }, { status: 500 })
+    console.error(e)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
