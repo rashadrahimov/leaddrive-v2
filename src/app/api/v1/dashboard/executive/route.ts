@@ -41,7 +41,6 @@ export async function GET(req: NextRequest) {
       contractsData,
       wonDealsAll,
       dealsForForecast,
-      atRiskDeals,
       activeLeadsCount,
       leadsBySource,
       topScoredLeads,
@@ -53,6 +52,7 @@ export async function GET(req: NextRequest) {
       slaResolvedOnTime,
       slaResolvedTotal,
       ticketsWithResponse,
+      atRiskDeals,
     ] = await Promise.all([
       // Companies
       prisma.company.count({ where: { organizationId: orgId, category: "client" } }),
@@ -126,14 +126,14 @@ export async function GET(req: NextRequest) {
       prisma.campaign.findMany({
         where: { organizationId: orgId, status: "active" },
         take: 4,
-        select: { id: true, name: true, sentCount: true, openRate: true, clickRate: true },
+        select: { id: true, name: true, totalSent: true, totalOpened: true, totalClicked: true, totalRecipients: true },
       }),
       // Upcoming events
       prisma.event.findMany({
         where: { organizationId: orgId, startDate: { gte: now } },
         orderBy: { startDate: "asc" },
         take: 3,
-        select: { id: true, name: true, startDate: true, type: true, _count: { select: { registrations: true } } },
+        select: { id: true, name: true, startDate: true, type: true, registeredCount: true },
       }),
       // Week leads (last 7 days)
       prisma.lead.findMany({
@@ -394,10 +394,12 @@ export async function GET(req: NextRequest) {
         },
         risks,
         campaigns: (activeCampaigns as any[]).map((c: any) => ({
-          id: c.id, name: c.name, sent: c.sentCount || 0, openRate: c.openRate || 0, clickRate: c.clickRate || 0,
+          id: c.id, name: c.name, sent: c.totalSent || 0,
+          openRate: c.totalRecipients > 0 ? Math.round((c.totalOpened / c.totalRecipients) * 100) : 0,
+          clickRate: c.totalRecipients > 0 ? Math.round((c.totalClicked / c.totalRecipients) * 100) : 0,
         })),
         events: (upcomingEvents as any[]).map((e: any) => ({
-          id: e.id, name: e.name, date: e.startDate, type: e.type, registered: e._count?.registrations || 0,
+          id: e.id, name: e.name, date: e.startDate, type: e.type, registered: e.registeredCount || 0,
         })),
         weeklyMetrics: {
           leadsPerDay,
