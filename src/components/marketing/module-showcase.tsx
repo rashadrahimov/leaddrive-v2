@@ -1,289 +1,274 @@
 "use client"
 
-import { useState, useEffect } from "react"
 import { SectionWrapper } from "./section-wrapper"
 import { AnimateIn } from "./animate-in"
-import { BorderBeam } from "@/components/ui/border-beam"
 import { cn } from "@/lib/utils"
+import Link from "next/link"
 import {
   Target, Megaphone, Inbox, Headphones, TrendingUp,
-  Brain, BarChart3, FolderKanban, Mail, ShieldCheck,
-  Users, Gauge, FileText, MessageSquare, Bot,
-  Sparkles, Zap, PieChart, Briefcase, Settings,
+  Brain, Briefcase, Settings, FolderKanban, Mail,
+  ShieldCheck, Users, Gauge, FileText, MessageSquare,
+  Bot, Sparkles, Zap, PieChart, BarChart3,
   CalendarDays, Route, Globe, BookOpen, Receipt,
+  ArrowRight, ChevronRight,
 } from "lucide-react"
 
+/* ─── Module data ─── */
 const modules = [
   {
     id: "crm",
-    label: "CRM & Satış",
-    icon: Target,
-    screenshot: "/marketing/deals-pipeline.png",
-    url: "deals",
-    description: "Liddən sövdələşmənin bağlanmasına qədər tam satış dövrü.",
+    tag: "CRM & SATIŞ",
+    tagColor: "text-violet-400",
+    headline: "Liddən sövdələşməyə — tam satış dövrü",
+    description: "Sürükle-burax Kanban pipeline, AI lid skorinqi, şirkət və kontakt profili, təkliflər və müqavilələr — satış komandanız üçün lazım olan hər şey bir platformada.",
     features: [
-      { icon: FolderKanban, text: "Pipeline — sürükle-burax Kanban lövhəsi" },
-      { icon: Users, text: "Şirkət və kontakt idarəsi" },
-      { icon: Gauge, text: "Lid skorinqi A–F (AI ilə)" },
-      { icon: FileText, text: "Təkliflər, müqavilələr, məhsullar" },
-      { icon: Zap, text: "Avtomatik tapşırıq və iş axınları" },
+      "Pipeline vizuallaşdırması — sürükle-burax Kanban lövhəsi",
+      "AI lid skorinqi — avtomatik A–F dərəcələndirmə",
+      "360° şirkət və kontakt profili",
+      "Təkliflər, müqavilələr və məhsul kataloqu",
+      "AI Next Best Action tövsiyələri",
+      "Avtomatik tapşırıq və iş axınları",
+    ],
+    screenshots: [
+      { src: "/marketing/deals-pipeline.png", alt: "Satış Pipeline" },
+      { src: "/marketing/ai-lead-scoring.png", alt: "AI Lid Skorinqi" },
     ],
   },
   {
     id: "marketing",
-    label: "Marketinq",
-    icon: Megaphone,
-    screenshot: "/marketing/marketing-campaigns.png",
-    url: "campaigns",
-    description: "Kampaniya yaradın, seqmentləyin, ROI-ni izləyin.",
+    tag: "MARKETİNQ",
+    tagColor: "text-pink-400",
+    headline: "Kampaniyalar, seqmentlər, ROI — hər şey ölçülür",
+    description: "E-poçt kampaniyaları, vizual marşrut qurucusu, dinamik seqmentasiya, tədbirlər idarəsi — marketinqi avtomatlaşdırın və hər kampaniyanın ROI-nu izləyin.",
     features: [
-      { icon: Mail, text: "E-poçt kampaniya meneceri" },
-      { icon: Users, text: "Müştəri seqmentasiyası" },
-      { icon: Route, text: "Marşrut qurucusu (journey builder)" },
-      { icon: BarChart3, text: "Kampaniya ROI hesabatları" },
-      { icon: FileText, text: "E-poçt şablonları kitabxanası" },
+      "E-poçt kampaniya meneceri — göndərmə, açılma, klik izləmə",
+      "Marşrut qurucusu — vizual çoxaddımlı avtomatlaşdırma",
+      "Müştəri seqmentasiyası — davranış əsaslı",
+      "Kampaniya ROI hesabatları — real vaxtda",
+      "Tədbirlər idarəsi — planlaşdırma, qeydiyyat, iştirak",
+      "E-poçt şablonları kitabxanası",
+    ],
+    screenshots: [
+      { src: "/marketing/marketing-campaigns.png", alt: "Kampaniyalar" },
+      { src: "/marketing/events-management.png", alt: "Tədbirlər" },
     ],
   },
   {
     id: "inbox",
-    label: "7 Kanal Inbox",
-    icon: Inbox,
-    screenshot: "/marketing/inbox-channels.png",
-    url: "inbox",
-    description: "WhatsApp, Telegram, E-poçt, SMS — vahid gələn qutusu.",
+    tag: "7 KANALLI GƏLƏN QUTUSU",
+    tagColor: "text-cyan-400",
+    headline: "7 kanal — bir qutu. Heç bir mesaj itirilmir",
+    description: "E-poçt, SMS, Telegram, WhatsApp, Facebook, Instagram, VK — bütün söhbətlər hər kontakt üzrə bir vahid gələn qutusunda birləşir. AI real vaxtda cavab təklif edir.",
     features: [
-      { icon: MessageSquare, text: "7 kanal — bir qutu" },
-      { icon: Bot, text: "AI avtomatik cavablar" },
-      { icon: Users, text: "Agent masaüstü — real vaxt" },
-      { icon: Zap, text: "Tiketə avtomatik çevirmə" },
-      { icon: ShieldCheck, text: "SMTP / WhatsApp Cloud API" },
+      "7 kanal — bir vahid gələn qutusu",
+      "AI avtomatik cavab təklifləri",
+      "Agent masaüstü — real vaxt KPI-lər",
+      "Mesajdan tiketə bir kliklə çevirmə",
+      "Kontakt tarixçəsi — bütün kanallar bir yerdə",
+      "SMTP, WhatsApp Cloud API, Telegram Bot inteqrasiyası",
+    ],
+    screenshots: [
+      { src: "/marketing/inbox-channels.png", alt: "Vahid Gələn Qutusu" },
+      { src: "/marketing/agent-desktop.png", alt: "Agent Desktop" },
     ],
   },
   {
     id: "support",
-    label: "Dəstək",
-    icon: Headphones,
-    screenshot: "/marketing/support-tickets.png",
-    url: "tickets",
-    description: "SLA, tiketlər, bilik bazası, müştəri portalı.",
+    tag: "DƏSTƏK & TİKETLƏR",
+    tagColor: "text-emerald-400",
+    headline: "SLA, AI cavab, bilik bazası — tam helpdesk",
+    description: "Tiket idarəsi, SLA siyasətləri, AI avtomatik cavablar, bilik bazası və müştəri özünə-xidmət portalı. Maestro AI tiketi oxuyur, bilik bazasından cavab tapır.",
     features: [
-      { icon: FileText, text: "Tiket idarəsi və SLA siyasətləri" },
-      { icon: Bot, text: "AI dəstək agenti — avtomatik həll" },
-      { icon: Sparkles, text: "Müştəri portalı + AI söhbət" },
-      { icon: BarChart3, text: "Cavab vaxtı analitikası" },
-      { icon: BookOpen, text: "Bilik bazası (Knowledge Base)" },
+      "Tiket idarəsi — prioritet, status, kateqoriya",
+      "SLA siyasətləri — avtomatik eskalasiya",
+      "AI dəstək agenti — bilik bazasından avtomatik cavab",
+      "Agent KPI-ləri və CSAT reytinqi",
+      "Müştəri portalı — özünə-xidmət + AI söhbət",
+      "Bilik bazası (Knowledge Base)",
+    ],
+    screenshots: [
+      { src: "/marketing/support-tickets.png", alt: "Tiketlər" },
+      { src: "/marketing/ai-ticket-detail.png", alt: "AI Tiket Cavabı" },
     ],
   },
   {
     id: "finance",
-    label: "Maliyyə",
-    icon: TrendingUp,
-    screenshot: "/marketing/analytics-profitability.png",
-    url: "profitability",
-    description: "Xərc modeli, büdcə, P&L, gəlirlilik — real marjalar.",
+    tag: "MALİYYƏ & ANALİTİKA",
+    tagColor: "text-amber-400",
+    headline: "Gəlirliliyi görün — hər müştəri, hər xidmət üzrə",
+    description: "Daxili xərc modeli mühərriki 18 kateqoriyada xərcləri izləyir. Büdcələşdirmə, P&L, dinamik qiymətləndirmə — daxili CFO kimi işləyir. Rəqiblərin heç birində yoxdur.",
     features: [
-      { icon: PieChart, text: "Xərc modeli mühərriki" },
-      { icon: BarChart3, text: "Büdcələşdirmə & P&L" },
-      { icon: Receipt, text: "Faktura və ödəniş izləməsi" },
-      { icon: TrendingUp, text: "Dinamik qiymətləndirmə" },
-      { icon: Gauge, text: "Layihə gəlirlilik analizi" },
+      "Xərc modeli mühərriki — 18 kateqoriyada bölgü",
+      "Büdcələşdirmə & P&L — plan vs fakt, icra faizi",
+      "Fakturalar və ödəniş izləməsi",
+      "Dinamik qiymətləndirmə mühərriki",
+      "Müştəri gəlirlilik analizi",
+      "AI maliyyə narrativi və proqnoz",
+    ],
+    screenshots: [
+      { src: "/marketing/analytics-profitability.png", alt: "Gəlirlilik Analizi" },
+      { src: "/marketing/budgeting-pnl.png", alt: "Büdcələşdirmə & P&L" },
     ],
   },
   {
     id: "erp",
-    label: "ERP & Layihələr",
-    icon: Briefcase,
-    screenshot: "/marketing/erp-projects.png",
-    url: "projects",
-    description: "Layihələr, komandalar, büdcə bölgüsü və tamamlanma.",
+    tag: "ERP & LAYİHƏLƏR",
+    tagColor: "text-blue-400",
+    headline: "Layihələr, komandalar, büdcə — tam nəzarət",
+    description: "Layihə mərhələləri, komanda üzvləri bölgüsü, büdcə izləməsi, tamamlanma analitikası. Hər layihə müştəri sövdələşməsinə bağlıdır — CRM gəlirlilik mühərriki ilə inteqrasiya.",
     features: [
-      { icon: FolderKanban, text: "Layihə mərhələləri" },
-      { icon: Users, text: "Komanda üzvləri bölgüsü" },
-      { icon: CalendarDays, text: "Təqvim və vaxt izləməsi" },
-      { icon: BarChart3, text: "Büdcə vs aktual izləmə" },
-      { icon: Gauge, text: "Tamamlanma % göstəricisi" },
+      "Layihə mərhələləri — vizual progress izləmə",
+      "Komanda üzvləri bölgüsü və rol idarəsi",
+      "Büdcə vs aktual izləmə — real vaxtda",
+      "Tapşırıq idarəsi — prioritet, deadline, icraçı",
+      "Tamamlanma % göstəricisi",
+      "CRM sövdələşmə inteqrasiyası",
+    ],
+    screenshots: [
+      { src: "/marketing/erp-projects.png", alt: "Layihələr" },
+      { src: "/marketing/tasks-management.png", alt: "Tapşırıqlar" },
     ],
   },
   {
     id: "platform",
-    label: "Platforma",
-    icon: Settings,
-    screenshot: "/marketing/platform-settings.png",
-    url: "settings",
-    description: "Rollar, iş axınları, xüsusi sahələr, audit jurnalı.",
+    tag: "PLATFORMA",
+    tagColor: "text-slate-300",
+    headline: "Korporativ konfiqurasiya — hər şey uyğunlaşdırılır",
+    description: "Rollar, iş axınları, xüsusi sahələr, audit jurnalı, çox dilli, Web-to-Lead, API — Enterprise SaaS arxitekturası. Multi-tenant izolyasiya — hər təşkilat tam izolə edilmiş mühitdə işləyir.",
     features: [
-      { icon: ShieldCheck, text: "Rollar və icazə sistemi" },
-      { icon: Zap, text: "İş axını avtomatlaşdırması" },
-      { icon: Globe, text: "Çox dilli platforma (AZ/RU/EN)" },
-      { icon: FileText, text: "Audit jurnalı" },
-      { icon: Settings, text: "Xüsusi sahələr və Web-to-Lead" },
+      "Rollar və icazə sistemi — dəqiq hüquq nəzarəti",
+      "İş axını avtomatlaşdırması — trigger → action",
+      "Xüsusi sahələr — istənilən modulda əlavə edin",
+      "Audit jurnalı — hər dəyişiklik qeydə alınır",
+      "Çox dilli platforma (AZ/RU/EN)",
+      "Web-to-Lead forma inteqrasiyası və API",
+    ],
+    screenshots: [
+      { src: "/marketing/platform-settings.png", alt: "Parametrlər" },
+      { src: "/marketing/companies-list.png", alt: "Şirkətlər" },
     ],
   },
   {
     id: "ai",
-    label: "Maestro AI",
-    icon: Brain,
-    screenshot: "/marketing/ai-command-center.png",
-    url: "ai",
-    description: "16 AI inteqrasiyası. CRM-in beyni.",
+    tag: "MAESTRO AI",
+    tagColor: "text-violet-300",
+    headline: "16 AI inteqrasiya. CRM-in beyni",
+    description: "Daxili Claude inteqrasiyası — lid skorinqi, e-poçt yaratma, tiket cavabı, gəlirlilik proqnozu, sentiment analizi. AI hər modulun içindədir — əlavə deyil, əsasdır.",
     features: [
-      { icon: Gauge, text: "Lid skorinqi — avtomatik A–F" },
-      { icon: Mail, text: "AI e-poçt generasiyası" },
-      { icon: Bot, text: "AI müştəri xidməti agenti" },
-      { icon: Sparkles, text: "Hiss təhlili (sentiment)" },
-      { icon: BarChart3, text: "AI gəlirlilik proqnozu" },
+      "Lid skorinqi — avtomatik A–F dərəcələndirmə",
+      "AI e-poçt generasiyası — bir kliklə peşəkar mesaj",
+      "AI müştəri xidməti agenti — avtomatik cavab",
+      "Hiss təhlili (sentiment analysis)",
+      "AI gəlirlilik proqnozu və narrativ",
+      "AI bilik bazası axtarışı — semantik",
+    ],
+    screenshots: [
+      { src: "/marketing/ai-assistant-panel.png", alt: "AI Köməkçi" },
+      { src: "/marketing/ai-lead-detail.png", alt: "AI Lid Analizi" },
     ],
   },
 ]
 
-export function ModuleShowcase() {
-  const [activeModule, setActiveModule] = useState(0)
-  const [imageLoaded, setImageLoaded] = useState(true)
-  const active = modules[activeModule]
-  const ActiveIcon = active.icon
-
-  // Preload adjacent module screenshots
-  useEffect(() => {
-    const preloadIndexes = [
-      (activeModule + 1) % modules.length,
-      (activeModule - 1 + modules.length) % modules.length,
-    ]
-    preloadIndexes.forEach((idx) => {
-      const img = new Image()
-      img.src = modules[idx].screenshot
-    })
-  }, [activeModule])
-
-  const handleModuleChange = (i: number) => {
-    if (i === activeModule) return
-    setImageLoaded(false)
-    setActiveModule(i)
-  }
+/* ─── Single module section (Creatio-style) ─── */
+function ModuleSection({ mod, index }: { mod: typeof modules[0]; index: number }) {
+  const isReversed = index % 2 !== 0
 
   return (
+    <AnimateIn>
+      <div className={cn(
+        "grid lg:grid-cols-2 gap-10 lg:gap-16 items-center",
+        index > 0 && "mt-24 lg:mt-32 pt-24 lg:pt-32 border-t border-slate-800/40"
+      )}>
+        {/* TEXT SIDE */}
+        <div className={cn(isReversed && "lg:order-2")}>
+          {/* Tag */}
+          <span className={cn("text-xs font-bold tracking-[0.2em] uppercase", mod.tagColor)}>
+            {mod.tag}
+          </span>
+
+          {/* Headline */}
+          <h3 className="mt-4 text-3xl lg:text-4xl font-bold text-white leading-tight">
+            {mod.headline}
+          </h3>
+
+          {/* Description */}
+          <p className="mt-4 text-base text-slate-400 leading-relaxed">
+            {mod.description}
+          </p>
+
+          {/* Features list — arrow style like Creatio */}
+          <ul className="mt-6 space-y-3">
+            {mod.features.map((feat) => (
+              <li key={feat} className="flex items-start gap-3 text-sm text-slate-300 leading-relaxed">
+                <ChevronRight className="w-4 h-4 text-violet-400 mt-0.5 flex-shrink-0" />
+                <span>{feat}</span>
+              </li>
+            ))}
+          </ul>
+
+          {/* CTA */}
+          <Link
+            href="/demo"
+            className="mt-8 inline-flex items-center gap-2 bg-violet-600 hover:bg-violet-500 text-white text-sm font-semibold px-6 py-3 rounded-full transition-colors"
+          >
+            Demo istəyin
+            <ArrowRight className="w-4 h-4" />
+          </Link>
+        </div>
+
+        {/* SCREENSHOTS SIDE — 2 large screenshots stacked */}
+        <div className={cn("space-y-4", isReversed && "lg:order-1")}>
+          {mod.screenshots.map((ss) => (
+            <div key={ss.src} className="rounded-xl overflow-hidden border border-slate-700/50 shadow-2xl shadow-black/30">
+              {/* Browser chrome */}
+              <div className="flex items-center gap-1.5 px-4 py-2 bg-slate-800 border-b border-slate-700/50">
+                <div className="flex gap-1.5">
+                  <div className="w-2.5 h-2.5 rounded-full bg-red-500/70" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/70" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-green-500/70" />
+                </div>
+                <div className="flex-1 mx-6">
+                  <div className="bg-slate-700/60 rounded-md px-3 py-1 text-[10px] text-slate-400 max-w-[240px] mx-auto text-center">
+                    app.leaddrivecrm.org/{mod.id}
+                  </div>
+                </div>
+              </div>
+              {/* Screenshot */}
+              <img
+                src={ss.src}
+                alt={ss.alt}
+                className="w-full block"
+                loading={index < 2 ? "eager" : "lazy"}
+              />
+              {/* Caption */}
+              <div className="px-4 py-2 bg-slate-800/80 border-t border-slate-700/50">
+                <span className="text-xs text-slate-400">{ss.alt}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </AnimateIn>
+  )
+}
+
+/* ─── Main export ─── */
+export function ModuleShowcase() {
+  return (
     <SectionWrapper id="modules" variant="dark">
-      <AnimateIn className="text-center mb-14">
-        <h2 className="text-3xl lg:text-4xl font-bold tracking-tight">
+      <AnimateIn className="text-center mb-16 lg:mb-24">
+        <h2 className="text-3xl lg:text-5xl font-bold tracking-tight">
           <span className="text-white">128 funksiya. </span>
           <span className="bg-gradient-to-r from-violet-400 to-cyan-400 bg-clip-text text-transparent">Bir platforma.</span>
         </h2>
-        <p className="mt-4 text-lg text-slate-400 max-w-2xl mx-auto">
-          Satış, marketinq, dəstək, maliyyə və AI — hamısı eyni ekosistemda.
+        <p className="mt-5 text-lg text-slate-400 max-w-2xl mx-auto">
+          Satış, marketinq, dəstək, maliyyə və AI — hamısı eyni ekosistemda. Aşağı sürüşdürün və kəşf edin.
         </p>
       </AnimateIn>
 
-      <div className="grid lg:grid-cols-[280px_1fr] gap-6 lg:gap-8">
-        {/* Left: Module tabs */}
-        <div className="flex lg:flex-col gap-2 overflow-x-auto lg:overflow-visible pb-2 lg:pb-0 scrollbar-thin">
-          {modules.map((mod, i) => {
-            const Icon = mod.icon
-            const isActive = activeModule === i
-            const isAi = mod.id === "ai"
-
-            return (
-              <button
-                key={mod.id}
-                onClick={() => handleModuleChange(i)}
-                className={cn(
-                  "flex items-center gap-3 rounded-xl px-4 py-3 text-left text-sm font-medium transition-all whitespace-nowrap lg:whitespace-normal min-w-fit",
-                  isActive
-                    ? isAi
-                      ? "bg-gradient-to-r from-violet-600/20 to-cyan-600/10 border border-violet-500/40 text-white shadow-lg shadow-violet-500/10"
-                      : "bg-slate-800/80 border border-slate-700 text-white"
-                    : "text-slate-500 hover:text-slate-300 hover:bg-slate-800/40 border border-transparent"
-                )}
-              >
-                <Icon className={cn(
-                  "h-5 w-5 flex-shrink-0",
-                  isActive
-                    ? isAi ? "text-violet-400" : "text-cyan-400"
-                    : "text-slate-600"
-                )} />
-                {mod.label}
-              </button>
-            )
-          })}
-        </div>
-
-        {/* Right: Screenshot + features */}
-        <div className="relative">
-          <div key={active.id} className="space-y-6 animate-fade-in-up">
-            {/* Module description */}
-            <div className="flex items-center gap-3 mb-2">
-              <div className={cn(
-                "flex h-10 w-10 items-center justify-center rounded-xl",
-                active.id === "ai" ? "bg-violet-500/20" : "bg-slate-800"
-              )}>
-                <ActiveIcon className={cn(
-                  "h-5 w-5",
-                  active.id === "ai" ? "text-violet-400" : "text-cyan-400"
-                )} />
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold text-white">{active.label}</h3>
-                <p className="text-sm text-slate-400">{active.description}</p>
-              </div>
-            </div>
-
-            {/* Screenshot */}
-            <div className="relative rounded-2xl border border-slate-700/50 bg-slate-900 shadow-2xl shadow-violet-500/5 overflow-hidden group">
-              {active.id === "ai" && <BorderBeam size={400} duration={10} colorFrom="#8b5cf6" colorTo="#06b6d4" />}
-
-              {/* Browser bar */}
-              <div className="flex items-center gap-2 px-4 py-2.5 border-b border-slate-700/50 bg-slate-900/80">
-                <div className="flex gap-1.5">
-                  <div className="w-2.5 h-2.5 rounded-full bg-red-500/80" />
-                  <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/80" />
-                  <div className="w-2.5 h-2.5 rounded-full bg-green-500/80" />
-                </div>
-                <div className="flex-1 mx-6">
-                  <div className="bg-slate-800 rounded-md px-3 py-0.5 text-[11px] text-slate-500 border border-slate-700 max-w-xs mx-auto text-center">
-                    app.leaddrivecrm.org/{active.url}
-                  </div>
-                </div>
-              </div>
-
-              <div className="overflow-hidden relative">
-                {/* Loading skeleton */}
-                {!imageLoaded && (
-                  <div className="absolute inset-0 bg-slate-800 animate-pulse flex items-center justify-center z-10">
-                    <div className="flex flex-col items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-slate-700 animate-pulse" />
-                      <div className="w-32 h-3 rounded bg-slate-700 animate-pulse" />
-                    </div>
-                  </div>
-                )}
-                <img
-                  src={active.screenshot}
-                  alt={`LeadDrive ${active.label}`}
-                  className={cn(
-                    "w-full transition-all duration-500 group-hover:scale-[1.02]",
-                    imageLoaded ? "opacity-100" : "opacity-0"
-                  )}
-                  loading="lazy"
-                  onLoad={() => setImageLoaded(true)}
-                />
-              </div>
-            </div>
-
-            {/* Feature pills */}
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {active.features.map((feat) => {
-                const FeatIcon = feat.icon
-                return (
-                  <div
-                    key={feat.text}
-                    className="flex items-center gap-2.5 rounded-xl border border-slate-800 bg-slate-900/50 px-4 py-3 text-sm hover:border-slate-700 card-hover"
-                  >
-                    <FeatIcon className="h-4 w-4 text-violet-400 flex-shrink-0" />
-                    <span className="text-slate-300">{feat.text}</span>
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-        </div>
-      </div>
+      {modules.map((mod, i) => (
+        <ModuleSection key={mod.id} mod={mod} index={i} />
+      ))}
     </SectionWrapper>
   )
 }
