@@ -18,7 +18,7 @@ const modules = [
   {
     id: "crm",
     tag: "CRM & SATIŞ",
-    tagColor: "text-violet-400",
+    tagColor: "text-orange-600",
     headline: "Liddən sövdələşməyə — tam satış dövrü",
     description: "Sürükle-burax Kanban pipeline, AI lid skorinqi, şirkət və kontakt profili, təkliflər və müqavilələr — satış komandanız üçün lazım olan hər şey bir platformada.",
     features: [
@@ -37,7 +37,7 @@ const modules = [
   {
     id: "marketing",
     tag: "MARKETİNQ",
-    tagColor: "text-pink-400",
+    tagColor: "text-red-500",
     headline: "Kampaniyalar, seqmentlər, ROI — hər şey ölçülür",
     description: "E-poçt kampaniyaları, vizual marşrut qurucusu, dinamik seqmentasiya, tədbirlər idarəsi — marketinqi avtomatlaşdırın və hər kampaniyanın ROI-nu izləyin.",
     features: [
@@ -56,7 +56,7 @@ const modules = [
   {
     id: "inbox",
     tag: "7 KANALLI GƏLƏN QUTUSU",
-    tagColor: "text-cyan-400",
+    tagColor: "text-orange-500",
     headline: "7 kanal — bir qutu. Heç bir mesaj itirilmir",
     description: "E-poçt, SMS, Telegram, WhatsApp, Facebook, Instagram, VK — bütün söhbətlər hər kontakt üzrə bir vahid gələn qutusunda birləşir. AI real vaxtda cavab təklif edir.",
     features: [
@@ -75,7 +75,7 @@ const modules = [
   {
     id: "support",
     tag: "DƏSTƏK & TİKETLƏR",
-    tagColor: "text-emerald-400",
+    tagColor: "text-red-600",
     headline: "SLA, AI cavab, bilik bazası — tam helpdesk",
     description: "Tiket idarəsi, SLA siyasətləri, AI avtomatik cavablar, bilik bazası və müştəri özünə-xidmət portalı. Maestro AI tiketi oxuyur, bilik bazasından cavab tapır.",
     features: [
@@ -94,7 +94,7 @@ const modules = [
   {
     id: "finance",
     tag: "MALİYYƏ & ANALİTİKA",
-    tagColor: "text-amber-400",
+    tagColor: "text-orange-600",
     headline: "Gəlirliliyi görün — hər müştəri, hər xidmət üzrə",
     description: "Daxili xərc modeli mühərriki 18 kateqoriyada xərcləri izləyir. Büdcələşdirmə, P&L, dinamik qiymətləndirmə — daxili CFO kimi işləyir. Rəqiblərin heç birində yoxdur.",
     features: [
@@ -113,7 +113,7 @@ const modules = [
   {
     id: "erp",
     tag: "ERP & LAYİHƏLƏR",
-    tagColor: "text-blue-400",
+    tagColor: "text-orange-500",
     headline: "Layihələr, komandalar, büdcə — tam nəzarət",
     description: "Layihə mərhələləri, komanda üzvləri bölgüsü, büdcə izləməsi, tamamlanma analitikası. Hər layihə müştəri sövdələşməsinə bağlıdır — CRM gəlirlilik mühərriki ilə inteqrasiya.",
     features: [
@@ -132,7 +132,7 @@ const modules = [
   {
     id: "platform",
     tag: "PLATFORMA",
-    tagColor: "text-slate-300",
+    tagColor: "text-red-500",
     headline: "Korporativ konfiqurasiya — hər şey uyğunlaşdırılır",
     description: "Rollar, iş axınları, xüsusi sahələr, audit jurnalı, çox dilli, Web-to-Lead, API — Enterprise SaaS arxitekturası. Multi-tenant izolyasiya — hər təşkilat tam izolə edilmiş mühitdə işləyir.",
     features: [
@@ -151,7 +151,7 @@ const modules = [
   {
     id: "ai",
     tag: "MAESTRO AI",
-    tagColor: "text-violet-300",
+    tagColor: "text-orange-600",
     headline: "16 AI inteqrasiya. CRM-in beyni",
     description: "Daxili Claude inteqrasiyası — lid skorinqi, e-poçt yaratma, tiket cavabı, gəlirlilik proqnozu, sentiment analizi. AI hər modulun içindədir — əlavə deyil, əsasdır.",
     features: [
@@ -169,7 +169,7 @@ const modules = [
   },
 ]
 
-/* ─── Single module section (Creatio-style) ─── */
+/* ─── Single module section (Creatio-style, light theme) ─── */
 function ModuleSection({ mod, index }: { mod: typeof modules[0]; index: number }) {
   const isReversed = index % 2 !== 0
 
@@ -177,7 +177,7 @@ function ModuleSection({ mod, index }: { mod: typeof modules[0]; index: number }
     <AnimateIn>
       <div className={cn(
         "grid lg:grid-cols-2 gap-10 lg:gap-16 items-center",
-        index > 0 && "mt-24 lg:mt-32 pt-24 lg:pt-32 border-t border-slate-800/40"
+        index > 0 && "mt-24 lg:mt-32 pt-24 lg:pt-32 border-t border-slate-200"
       )}>
         {/* TEXT SIDE */}
         <div className={cn(isReversed && "lg:order-2")}>
@@ -187,20 +187,20 @@ function ModuleSection({ mod, index }: { mod: typeof modules[0]; index: number }
           </span>
 
           {/* Headline */}
-          <h3 className="mt-4 text-3xl lg:text-4xl font-bold text-white leading-tight">
+          <h3 className="mt-4 text-3xl lg:text-4xl font-bold text-slate-900 leading-tight">
             {mod.headline}
           </h3>
 
           {/* Description */}
-          <p className="mt-4 text-base text-slate-400 leading-relaxed">
+          <p className="mt-4 text-base text-slate-500 leading-relaxed">
             {mod.description}
           </p>
 
-          {/* Features list — arrow style like Creatio */}
+          {/* Features list */}
           <ul className="mt-6 space-y-3">
             {mod.features.map((feat) => (
-              <li key={feat} className="flex items-start gap-3 text-sm text-slate-300 leading-relaxed">
-                <ChevronRight className="w-4 h-4 text-violet-400 mt-0.5 flex-shrink-0" />
+              <li key={feat} className="flex items-start gap-3 text-sm text-slate-700 leading-relaxed">
+                <ChevronRight className="w-4 h-4 text-orange-500 mt-0.5 flex-shrink-0" />
                 <span>{feat}</span>
               </li>
             ))}
@@ -209,7 +209,7 @@ function ModuleSection({ mod, index }: { mod: typeof modules[0]; index: number }
           {/* CTA */}
           <Link
             href="/demo"
-            className="mt-8 inline-flex items-center gap-2 bg-violet-600 hover:bg-violet-500 text-white text-sm font-semibold px-6 py-3 rounded-full transition-colors"
+            className="mt-8 inline-flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold px-6 py-3 rounded-full transition-colors"
           >
             Demo istəyin
             <ArrowRight className="w-4 h-4" />
@@ -219,16 +219,16 @@ function ModuleSection({ mod, index }: { mod: typeof modules[0]; index: number }
         {/* SCREENSHOTS SIDE — 2 large screenshots stacked */}
         <div className={cn("space-y-4", isReversed && "lg:order-1")}>
           {mod.screenshots.map((ss) => (
-            <div key={ss.src} className="rounded-xl overflow-hidden border border-slate-700/50 shadow-2xl shadow-black/30">
-              {/* Browser chrome */}
-              <div className="flex items-center gap-1.5 px-4 py-2 bg-slate-800 border-b border-slate-700/50">
+            <div key={ss.src} className="rounded-xl overflow-hidden border border-slate-200 shadow-lg shadow-slate-200/50">
+              {/* Browser chrome — light */}
+              <div className="flex items-center gap-1.5 px-4 py-2 bg-slate-100 border-b border-slate-200">
                 <div className="flex gap-1.5">
-                  <div className="w-2.5 h-2.5 rounded-full bg-red-500/70" />
-                  <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/70" />
-                  <div className="w-2.5 h-2.5 rounded-full bg-green-500/70" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-red-400" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-yellow-400" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-green-400" />
                 </div>
                 <div className="flex-1 mx-6">
-                  <div className="bg-slate-700/60 rounded-md px-3 py-1 text-[10px] text-slate-400 max-w-[240px] mx-auto text-center">
+                  <div className="bg-white rounded-md px-3 py-1 text-[10px] text-slate-400 border border-slate-200 max-w-[240px] mx-auto text-center">
                     app.leaddrivecrm.org/{mod.id}
                   </div>
                 </div>
@@ -241,8 +241,8 @@ function ModuleSection({ mod, index }: { mod: typeof modules[0]; index: number }
                 loading={index < 2 ? "eager" : "lazy"}
               />
               {/* Caption */}
-              <div className="px-4 py-2 bg-slate-800/80 border-t border-slate-700/50">
-                <span className="text-xs text-slate-400">{ss.alt}</span>
+              <div className="px-4 py-2 bg-slate-50 border-t border-slate-200">
+                <span className="text-xs text-slate-500">{ss.alt}</span>
               </div>
             </div>
           ))}
@@ -255,13 +255,13 @@ function ModuleSection({ mod, index }: { mod: typeof modules[0]; index: number }
 /* ─── Main export ─── */
 export function ModuleShowcase() {
   return (
-    <SectionWrapper id="modules" variant="dark">
+    <SectionWrapper id="modules" variant="white">
       <AnimateIn className="text-center mb-16 lg:mb-24">
         <h2 className="text-3xl lg:text-5xl font-bold tracking-tight">
-          <span className="text-white">128 funksiya. </span>
-          <span className="bg-gradient-to-r from-violet-400 to-cyan-400 bg-clip-text text-transparent">Bir platforma.</span>
+          <span className="text-slate-900">128 funksiya. </span>
+          <span className="bg-gradient-to-r from-orange-500 to-red-500 bg-clip-text text-transparent">Bir platforma.</span>
         </h2>
-        <p className="mt-5 text-lg text-slate-400 max-w-2xl mx-auto">
+        <p className="mt-5 text-lg text-slate-500 max-w-2xl mx-auto">
           Satış, marketinq, dəstək, maliyyə və AI — hamısı eyni ekosistemda. Aşağı sürüşdürün və kəşf edin.
         </p>
       </AnimateIn>
