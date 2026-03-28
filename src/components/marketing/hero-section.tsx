@@ -62,9 +62,9 @@ function AutoScaledPanel({
 
 /* Position presets — all use `left` only (no `right`/`auto`) so CSS transitions work */
 const POSITIONS = {
-  left:   { left: "-2%",  width: "42%", zIndex: 1, height: 420 },
-  center: { left: "19%",  width: "62%", zIndex: 3, height: 520 },
-  right:  { left: "60%",  width: "42%", zIndex: 1, height: 420 },
+  left:   { left: "-2%",  width: "42%", zIndex: 1, height: 440 },
+  center: { left: "17%",  width: "66%", zIndex: 3, height: 600 },
+  right:  { left: "60%",  width: "42%", zIndex: 1, height: 440 },
 } as const
 
 type Slot = "left" | "center" | "right"
@@ -90,7 +90,7 @@ function HeroPanels() {
     if (!wrap) return
     Object.assign(wrap.style, {
       position: "relative",
-      height: "520px",
+      height: "600px",
       display: "block",
     })
     setReady(true)
@@ -106,7 +106,7 @@ function HeroPanels() {
       Object.assign(el.style, {
         position: "absolute",
         bottom: "0",
-        transition: "left 0.5s ease, width 0.5s ease",
+        transition: "left 0.5s ease, width 0.5s ease, height 0.5s ease",
         left: pos.left,
         width: pos.width,
         zIndex: String(pos.zIndex), // no transition — instant z-index change

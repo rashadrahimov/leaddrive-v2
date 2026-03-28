@@ -3,247 +3,443 @@
 import {
   LayoutDashboard, Building2, UserCheck, Briefcase,
   Target, FileText, Receipt, DollarSign, TrendingUp,
-  Clock, CheckCircle2, Search, Bell, ArrowLeft,
-  Filter, Download, Plus, Mail, Send,
-  Megaphone, Inbox, FileDown, Eye, Printer,
-  Copy, MoreHorizontal, ArrowUpRight,
+  Clock, CheckCircle2, Search, Bell, ArrowUpRight,
+  Filter, Plus, Mail, Send, RefreshCw,
+  Megaphone, Inbox, Bot, Settings,
+  MessageSquare, Phone, Zap, CalendarClock,
+  Headphones, BarChart3, Users,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
-/* ── Sidebar items ── */
+/* ── Mini bar chart ── */
+function MiniBarChart({ data, color, height = "h-12" }: { data: number[]; color: string; height?: string }) {
+  const max = Math.max(...data)
+  return (
+    <div className={cn("flex items-end gap-[2px]", height)}>
+      {data.map((v, i) => (
+        <div
+          key={i}
+          className={cn("flex-1 rounded-t-sm min-w-[4px]", color)}
+          style={{ height: `${(v / max) * 100}%`, opacity: 0.45 + (v / max) * 0.55 }}
+        />
+      ))}
+    </div>
+  )
+}
+
+/* ── Mini line chart (SVG) ── */
+function MiniLineChart({ data, color, width = 200, height = 40 }: { data: number[]; color: string; width?: number; height?: number }) {
+  const max = Math.max(...data)
+  const min = Math.min(...data)
+  const range = max - min || 1
+  const points = data.map((v, i) => `${(i / (data.length - 1)) * width},${height - ((v - min) / range) * (height - 4)}`).join(" ")
+  return (
+    <svg width={width} height={height} className="overflow-visible">
+      <defs>
+        <linearGradient id={`lg-inv-${color.replace("#","")}`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={color} stopOpacity="0.3" />
+          <stop offset="100%" stopColor={color} stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      <polygon points={`0,${height} ${points} ${width},${height}`} fill={`url(#lg-inv-${color.replace("#","")})`} />
+      <polyline points={points} fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+/* ── Mini donut (SVG) ── */
+function MiniDonut({ segments, size = 48 }: { segments: { pct: number; color: string }[]; size?: number }) {
+  let offset = 0
+  const r = size / 2 - 6, c = 2 * Math.PI * r
+  return (
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="flex-shrink-0">
+      <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="#f1f5f9" strokeWidth="5" />
+      {segments.map((seg, i) => {
+        const dash = (seg.pct / 100) * c
+        const el = (
+          <circle key={i} cx={size/2} cy={size/2} r={r} fill="none" stroke={seg.color}
+            strokeWidth="5" strokeDasharray={`${dash} ${c - dash}`} strokeDashoffset={-offset}
+            strokeLinecap="round" transform={`rotate(-90 ${size/2} ${size/2})`} />
+        )
+        offset += dash
+        return el
+      })}
+    </svg>
+  )
+}
+
+/* ── Data ── */
+const revenueMonthly = [42, 55, 48, 62, 58, 71, 65, 78, 82, 91, 88, 98]
+const collectionsWeekly = [12, 18, 8, 22, 15, 25, 19]
+
 const sidebarItems = [
-  { icon: LayoutDashboard, label: "İdarə paneli", active: false, section: "CRM" },
-  { icon: Building2, label: "Şirkətlər", active: false },
-  { icon: UserCheck, label: "Kontaktlar", active: false },
-  { icon: Briefcase, label: "Sövdələşmələr", active: false },
-  { icon: Target, label: "Lidlər", active: false },
-  { icon: FileText, label: "Tapşırıqlar", active: false },
-  { icon: Receipt, label: "Hesab-fakturalar", active: true },
-  { icon: DollarSign, label: "Maliyyə", active: false },
-  { icon: Megaphone, label: "Kampaniyalar", active: false, section: "MARKETİNQ" },
-  { icon: Inbox, label: "Gələn qutusu", active: false, section: "KOMMUNİKASİYA" },
+  { icon: LayoutDashboard, label: "İdarə paneli", active: false },
+  { icon: Building2, label: "Şirkətlər" },
+  { icon: Users, label: "Kontaktlar" },
+  { icon: Target, label: "Sövdələşmələr" },
+  { icon: UserCheck, label: "Lidlər" },
+  { icon: Inbox, label: "Gələn qutusu" },
+  { icon: Megaphone, label: "Kampaniyalar" },
+  { icon: Headphones, label: "Tiketlər" },
+  { icon: BarChart3, label: "Hesabatlar" },
+  { icon: Receipt, label: "Maliyyə", active: true },
+  { icon: Bot, label: "AI Mərkəzi" },
+  { icon: Settings, label: "Parametrlər" },
 ]
 
-/* ── Invoice list data ── */
+/* ── Recurring invoice rules ── */
+const recurringRules = [
+  { client: "TechVision MMC", amount: "₼4,500/ay", cycle: "Aylıq", nextDate: "01/04/2026", status: "Aktiv", statusColor: "bg-emerald-50 text-emerald-700 border-emerald-200" },
+  { client: "NeftGaz MMC", amount: "₼8,200/ay", cycle: "Aylıq", nextDate: "01/04/2026", status: "Aktiv", statusColor: "bg-emerald-50 text-emerald-700 border-emerald-200" },
+  { client: "BankTech", amount: "₼2,800/rüb", cycle: "Rüblük", nextDate: "01/07/2026", status: "Aktiv", statusColor: "bg-emerald-50 text-emerald-700 border-emerald-200" },
+  { client: "CloudAz", amount: "₼6,000/ay", cycle: "Aylıq", nextDate: "01/04/2026", status: "Pauza", statusColor: "bg-amber-50 text-amber-700 border-amber-200" },
+]
+
+/* ── Payment notification rules ── */
+const notificationRules = [
+  { trigger: "Faktura yaradıldı", channels: ["email", "whatsapp"], delay: "Dərhal", active: true },
+  { trigger: "3 gün qalmış", channels: ["email", "sms"], delay: "Son tarixdən 3 gün əvvəl", active: true },
+  { trigger: "Son tarix keçdi", channels: ["email", "whatsapp", "sms"], delay: "Son tarix günü", active: true },
+  { trigger: "7 gün gecikmiş", channels: ["email", "phone"], delay: "Son tarixdən +7 gün", active: true },
+  { trigger: "30 gün gecikmiş", channels: ["email", "whatsapp", "sms", "phone"], delay: "Son tarixdən +30 gün", active: false },
+]
+
+const channelIcons: Record<string, typeof Mail> = {
+  email: Mail,
+  whatsapp: MessageSquare,
+  sms: Phone,
+  phone: Phone,
+}
+
+const channelColors: Record<string, string> = {
+  email: "bg-blue-100 text-blue-600",
+  whatsapp: "bg-emerald-100 text-emerald-600",
+  sms: "bg-violet-100 text-violet-600",
+  phone: "bg-amber-100 text-amber-600",
+}
+
+/* ── Recent invoices ── */
 const invoices = [
-  { number: "INV-2026-001", client: "TechVision MMC", amount: "₼8,145", status: "Ödənilib", statusColor: "bg-emerald-100 text-emerald-700", date: "28/03/2026" },
-  { number: "INV-2026-002", client: "AzərLogistik", amount: "₼12,800", status: "Gözləyir", statusColor: "bg-orange-100 text-orange-700", date: "25/03/2026" },
-  { number: "INV-2026-003", client: "NeftGaz MMC", amount: "₼25,000", status: "Ödənilib", statusColor: "bg-emerald-100 text-emerald-700", date: "22/03/2026" },
-  { number: "INV-2026-004", client: "BankTech", amount: "₼5,000", status: "Gecikmiş", statusColor: "bg-red-100 text-red-700", date: "15/03/2026" },
-  { number: "INV-2026-005", client: "DevPort", amount: "₼9,605", status: "Ödənilib", statusColor: "bg-emerald-100 text-emerald-700", date: "12/03/2026" },
-  { number: "INV-2026-006", client: "FinServ Group", amount: "₼6,575", status: "Gözləyir", statusColor: "bg-orange-100 text-orange-700", date: "10/03/2026" },
-  { number: "INV-2026-007", client: "CloudAz", amount: "₼15,300", status: "Ödənilib", statusColor: "bg-emerald-100 text-emerald-700", date: "08/03/2026" },
+  { number: "INV-2026-042", client: "TechVision MMC", amount: "₼8,145", status: "Ödənilib", statusColor: "bg-emerald-50 text-emerald-700 border-emerald-200", date: "28/03" },
+  { number: "INV-2026-041", client: "AzərLogistik", amount: "₼12,800", status: "Gözləyir", statusColor: "bg-amber-50 text-amber-700 border-amber-200", date: "25/03" },
+  { number: "INV-2026-040", client: "NeftGaz MMC", amount: "₼25,000", status: "Ödənilib", statusColor: "bg-emerald-50 text-emerald-700 border-emerald-200", date: "22/03" },
+  { number: "INV-2026-039", client: "BankTech", amount: "₼5,000", status: "Gecikmiş", statusColor: "bg-red-50 text-red-700 border-red-200", date: "15/03" },
+  { number: "INV-2026-038", client: "DevPort", amount: "₼9,605", status: "Ödənilib", statusColor: "bg-emerald-50 text-emerald-700 border-emerald-200", date: "12/03" },
 ]
 
-/* ── Invoice detail line items ── */
-const lineItems = [
-  { desc: "CRM Lisenziya — Enterprise (10 user)", qty: 10, price: "₼450", total: "₼4,500" },
-  { desc: "Tətbiq & konfiqurasiya xidməti", qty: 1, price: "₼2,500", total: "₼2,500" },
-  { desc: "Təlim proqramı (3 gün)", qty: 1, price: "₼800", total: "₼800" },
-  { desc: "İllik dəstək paketi", qty: 1, price: "₼345", total: "₼345" },
-]
-
-/* ── Payment stages ── */
-const paymentStages = [
-  { label: "Qaralama", done: true, active: false },
-  { label: "Göndərilib", done: true, active: true },
-  { label: "Ödənilib", done: false, active: false },
+/* ── Aging buckets ── */
+const agingBuckets = [
+  { label: "Cari", amount: "₼19,375", pct: 35, color: "bg-emerald-500" },
+  { label: "1-30 gün", amount: "₼12,800", pct: 23, color: "bg-blue-500" },
+  { label: "31-60 gün", amount: "₼8,200", pct: 15, color: "bg-amber-500" },
+  { label: "61-90 gün", amount: "₼5,000", pct: 9, color: "bg-orange-500" },
+  { label: "90+ gün", amount: "₼9,825", pct: 18, color: "bg-red-500" },
 ]
 
 export function InvoicePreview() {
   return (
-    <div className="flex text-[7px] leading-tight bg-slate-900 text-white select-none">
-      {/* Sidebar */}
-      <div className="w-[120px] flex-shrink-0 bg-slate-900 border-r border-slate-700/50 py-2 px-1.5 hidden sm:block">
-        <div className="flex items-center gap-1.5 px-2 mb-3">
-          <div className="w-3.5 h-3.5 bg-gradient-to-br from-orange-400 to-red-500 rounded-md" />
-          <span className="font-bold text-[7px] text-white/90">LeadDrive</span>
-        </div>
-        <div className="relative mb-2 px-1">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-2 h-2 text-slate-500" />
-          <div className="bg-slate-800 rounded-md py-1 pl-5 text-slate-500 text-[6px]">Axtar...</div>
-        </div>
-        {sidebarItems.map((item, i) => {
-          const Icon = item.icon
-          return (
-            <div key={i}>
-              {item.section && (
-                <div className="text-[5px] font-semibold text-slate-500 uppercase tracking-wider px-2 mt-2 mb-1">{item.section}</div>
-              )}
-              <div className={cn(
-                "flex items-center gap-1.5 px-2 py-[3px] rounded-md mb-[1px]",
-                item.active ? "bg-orange-500/20 text-orange-400" : "text-slate-400"
-              )}>
-                <Icon className="w-2.5 h-2.5 flex-shrink-0" />
-                <span className="truncate">{item.label}</span>
-              </div>
+    <div className="w-full bg-white rounded-xl overflow-hidden text-[11px] leading-tight select-none pointer-events-none shadow-inner">
+      {/* Top navigation bar */}
+      <div className="flex items-center justify-between px-3 py-1.5 bg-[#0f172a] text-white">
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1">
+            <div className="w-4 h-4 rounded bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center">
+              <Zap className="w-2.5 h-2.5 text-white" />
             </div>
-          )
-        })}
+            <span className="text-[10px] font-bold">LeadDrive</span>
+          </div>
+          <div className="flex items-center gap-0.5 bg-slate-800 rounded-md px-2 py-1">
+            <Search className="w-2.5 h-2.5 text-slate-400" />
+            <span className="text-[9px] text-slate-400 ml-1">Axtar...</span>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="relative">
+            <Bell className="w-3 h-3 text-slate-400" />
+            <div className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-red-500" />
+          </div>
+          <div className="w-5 h-5 rounded-full bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center text-[8px] font-bold">R</div>
+        </div>
       </div>
 
-      {/* Main content */}
-      <div className="flex-1 bg-slate-50 text-slate-900 overflow-hidden">
-        {/* Top bar */}
-        <div className="flex items-center justify-between px-3 py-1.5 bg-white border-b border-slate-200">
-          <span className="text-[8px] font-semibold text-slate-400">Güvən Technology LLC</span>
-          <div className="flex items-center gap-1.5">
-            <Bell className="w-2.5 h-2.5 text-slate-400" />
-            <div className="w-4 h-4 bg-gradient-to-br from-orange-400 to-red-500 rounded-full flex items-center justify-center text-[5px] font-bold text-white">R</div>
-          </div>
+      <div className="flex">
+        {/* Sidebar */}
+        <div className="flex flex-col w-[120px] bg-[#0f172a] text-white py-2 flex-shrink-0">
+          {sidebarItems.map((item) => (
+            <div key={item.label} className={cn(
+              "flex items-center gap-2 px-3 py-[5px] text-[9px] cursor-default transition-colors",
+              item.active ? "bg-orange-600/20 text-orange-300 border-l-2 border-orange-400" : "text-slate-400 border-l-2 border-transparent"
+            )}>
+              <item.icon className="w-3 h-3 flex-shrink-0" />
+              <span className="truncate">{item.label}</span>
+            </div>
+          ))}
         </div>
 
-        <div className="p-2.5">
-          {/* ── SECTION 1: Invoice List ── */}
-          <div className="mb-2">
-            <div className="flex items-center justify-between mb-1.5">
-              <div>
-                <h2 className="text-[9px] font-bold text-slate-900">Hesab-fakturalar</h2>
-                <p className="text-[5px] text-slate-500">Fakturaları yaradın, göndərin və izləyin</p>
-              </div>
-              <div className="flex items-center gap-1">
-                <div className="bg-slate-100 rounded-md px-1.5 py-0.5 text-[5px] text-slate-600 flex items-center gap-0.5">
-                  <Filter className="w-1.5 h-1.5" /> Filter
-                </div>
-                <div className="bg-orange-500 rounded-md px-1.5 py-0.5 text-[5px] text-white font-medium flex items-center gap-0.5">
-                  <Plus className="w-1.5 h-1.5" /> Yeni faktura
-                </div>
-              </div>
+        {/* Main content */}
+        <div className="flex-1 bg-slate-50 p-1.5 space-y-1 min-w-0">
+          {/* Page header */}
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-[13px] font-bold text-slate-800">Hesab-fakturalar</h2>
+              <p className="text-[8px] text-slate-400">Fakturaları yaradın, göndərin və izləyin</p>
             </div>
-
-            {/* KPI Cards */}
-            <div className="grid grid-cols-4 gap-1 mb-1.5">
-              <div className="bg-emerald-500 text-white rounded-lg p-1.5">
-                <span className="text-[5px] opacity-80">ÜMUMİ GƏLİR</span>
-                <div className="text-[9px] font-bold">₼84,520</div>
-                <div className="text-[5px] opacity-70">+12%</div>
-              </div>
-              <div className="bg-orange-500 text-white rounded-lg p-1.5">
-                <span className="text-[5px] opacity-80">GÖZLƏYİR</span>
-                <div className="text-[9px] font-bold">₼23,180</div>
-                <div className="text-[5px] opacity-70">8 faktura</div>
-              </div>
-              <div className="bg-blue-500 text-white rounded-lg p-1.5">
-                <span className="text-[5px] opacity-80">ÖDƏNİLİB</span>
-                <div className="text-[9px] font-bold">₼56,340</div>
-                <div className="text-[5px] opacity-70">+18%</div>
-              </div>
-              <div className="bg-red-500 text-white rounded-lg p-1.5">
-                <span className="text-[5px] opacity-80">GECİKMİŞ</span>
-                <div className="text-[9px] font-bold">₼5,000</div>
-                <div className="text-[5px] opacity-70">2 faktura</div>
-              </div>
-            </div>
-
-            {/* Invoice table */}
-            <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
-              <div className="grid grid-cols-[1fr_1.2fr_0.7fr_0.7fr_0.6fr] gap-1 px-2 py-1 bg-slate-50 border-b border-slate-200 text-[5px] font-semibold text-slate-500 uppercase">
-                <span>Nömrə</span>
-                <span>Müştəri</span>
-                <span>Məbləğ</span>
-                <span>Tarix</span>
-                <span>Status</span>
-              </div>
-              {invoices.map((inv, i) => (
-                <div key={i} className={cn(
-                  "grid grid-cols-[1fr_1.2fr_0.7fr_0.7fr_0.6fr] gap-1 px-2 py-[3px] text-[6px]",
-                  i < invoices.length - 1 && "border-b border-slate-100"
-                )}>
-                  <span className="text-blue-600 font-medium">{inv.number}</span>
-                  <span className="text-slate-700 truncate">{inv.client}</span>
-                  <span className="font-semibold text-slate-900">{inv.amount}</span>
-                  <span className="text-slate-500">{inv.date}</span>
-                  <span className={cn("px-1 py-[1px] rounded text-[5px] font-medium text-center", inv.statusColor)}>{inv.status}</span>
-                </div>
-              ))}
+            <div className="flex items-center gap-1">
+              <span className="text-[8px] px-2 py-0.5 rounded-md bg-slate-100 text-slate-500 border border-slate-200 flex items-center gap-0.5"><Filter className="w-2 h-2" /> Filter</span>
+              <span className="text-[8px] px-2 py-0.5 rounded-md bg-orange-500 text-white font-medium flex items-center gap-0.5"><Plus className="w-2 h-2" /> Yeni faktura</span>
             </div>
           </div>
 
-          {/* ── Divider ── */}
-          <div className="border-t border-slate-200 pt-2">
-            {/* ── SECTION 2: Invoice Detail ── */}
-            <div className="flex items-center justify-between mb-1.5">
-              <div className="flex items-center gap-1.5">
-                <ArrowLeft className="w-2.5 h-2.5 text-slate-400" />
-                <div>
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-[9px] font-bold text-slate-900">INV-2026-00001</span>
-                    <span className="bg-blue-100 text-blue-700 text-[5px] font-medium px-1 py-[1px] rounded">Göndərilib</span>
+          {/* KPI Row - 6 cards */}
+          <div className="grid grid-cols-6 gap-1">
+            {[
+              { label: "Ümumi gəlir", value: "₼247.8K", change: "+18%", icon: DollarSign, color: "text-emerald-600", bg: "bg-emerald-50 border-emerald-100" },
+              { label: "Gözləyir", value: "₼55.2K", change: "12 faktura", icon: Clock, color: "text-amber-600", bg: "bg-amber-50 border-amber-100" },
+              { label: "Ödənilib", value: "₼168.4K", change: "+24%", icon: CheckCircle2, color: "text-blue-600", bg: "bg-blue-50 border-blue-100" },
+              { label: "Gecikmiş", value: "₼24.2K", change: "4 faktura", icon: TrendingUp, color: "text-red-600", bg: "bg-red-50 border-red-100" },
+              { label: "Təkrarlanan", value: "₼21.5K/ay", change: "4 qayda", icon: RefreshCw, color: "text-violet-600", bg: "bg-violet-50 border-violet-100" },
+              { label: "Orta ödəniş", value: "18 gün", change: "-3 gün", icon: CalendarClock, color: "text-cyan-600", bg: "bg-cyan-50 border-cyan-100" },
+            ].map((kpi) => (
+              <div key={kpi.label} className="rounded-lg bg-white border border-slate-200 p-2 shadow-sm">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-[8px] text-slate-400 uppercase tracking-wider">{kpi.label}</span>
+                  <div className={cn("w-5 h-5 rounded flex items-center justify-center border", kpi.bg)}>
+                    <kpi.icon className={cn("w-2.5 h-2.5", kpi.color)} />
                   </div>
-                  <span className="text-[5px] text-slate-500">Zeytun Pharmaceuticals İT xidmət</span>
+                </div>
+                <div className="text-sm font-bold text-slate-900">{kpi.value}</div>
+                <div className="flex items-center gap-0.5 mt-0.5">
+                  <ArrowUpRight className="w-2 h-2 text-emerald-500" />
+                  <span className="text-[8px] text-emerald-600">{kpi.change}</span>
                 </div>
               </div>
-              <div className="flex items-center gap-0.5">
-                <div className="bg-slate-100 rounded px-1.5 py-0.5 text-[5px] text-slate-600 flex items-center gap-0.5"><Eye className="w-1.5 h-1.5" /> Redaktə</div>
-                <div className="bg-blue-500 rounded px-1.5 py-0.5 text-[5px] text-white flex items-center gap-0.5"><Send className="w-1.5 h-1.5" /> Göndər</div>
-                <div className="bg-slate-100 rounded px-1.5 py-0.5 text-[5px] text-slate-600 flex items-center gap-0.5"><FileDown className="w-1.5 h-1.5" /> PDF</div>
-                <div className="bg-slate-100 rounded px-1.5 py-0.5 text-[5px] text-slate-600 flex items-center gap-0.5"><Copy className="w-1.5 h-1.5" /> Dublikat</div>
+            ))}
+          </div>
+
+          {/* Row 2: Revenue Trend + Aging Analysis + Payment Status Donut */}
+          <div className="grid grid-cols-3 gap-1">
+            {/* Revenue trend */}
+            <div className="rounded-lg bg-white border border-slate-200 p-2 shadow-sm">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-[10px] font-semibold text-slate-700">Gəlir Trendi</span>
+                <span className="text-[8px] text-emerald-600 font-medium">↑ 28%</span>
+              </div>
+              <MiniLineChart data={revenueMonthly} color="#f97316" width={180} height={40} />
+              <div className="flex justify-between mt-1 text-[7px] text-slate-300">
+                {["Y","F","M","A","M","İ","İ","A","S","O","N","D"].map((m,i) => <span key={i}>{m}</span>)}
               </div>
             </div>
 
-            {/* Payment stage stepper */}
-            <div className="flex gap-[1px] mb-2">
-              {paymentStages.map((stage, i) => (
-                <div key={i} className={cn(
-                  "flex-1 py-[3px] text-center text-[5px] font-medium",
-                  i === 0 ? "rounded-l-sm" : "",
-                  i === paymentStages.length - 1 ? "rounded-r-sm" : "",
-                  stage.done && !stage.active ? "bg-blue-500 text-white" :
-                  stage.active ? "bg-emerald-500 text-white" :
-                  "bg-slate-200 text-slate-500"
-                )}>
-                  {stage.label}
+            {/* Debitor aging analysis */}
+            <div className="rounded-lg bg-white border border-slate-200 p-2 shadow-sm">
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-[10px] font-semibold text-slate-700">Debitor Borcu (Aging)</span>
+                <span className="text-[8px] text-slate-400">₼55.2K</span>
+              </div>
+              <div className="space-y-[5px]">
+                {agingBuckets.map((b) => (
+                  <div key={b.label} className="flex items-center gap-1">
+                    <span className="text-[8px] text-slate-400 w-12 truncate">{b.label}</span>
+                    <div className="flex-1 h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                      <div className={cn("h-full rounded-full", b.color)} style={{ width: `${b.pct}%` }} />
+                    </div>
+                    <span className="text-[8px] text-slate-600 w-10 text-right font-medium">{b.amount}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Payment status donut */}
+            <div className="rounded-lg bg-white border border-slate-200 p-2 shadow-sm">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-[10px] font-semibold text-slate-700">Ödəniş Statusu</span>
+                <span className="text-[8px] text-slate-400">42 faktura</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <MiniDonut size={48} segments={[
+                  { pct: 55, color: "#10b981" }, { pct: 25, color: "#f59e0b" },
+                  { pct: 12, color: "#ef4444" }, { pct: 8, color: "#6366f1" },
+                ]} />
+                <div className="space-y-[3px] flex-1">
+                  {[
+                    { l: "Ödənilib", p: "55%", c: "bg-emerald-500" },
+                    { l: "Gözləyir", p: "25%", c: "bg-amber-500" },
+                    { l: "Gecikmiş", p: "12%", c: "bg-red-500" },
+                    { l: "Qaralama", p: "8%", c: "bg-indigo-500" },
+                  ].map((s) => (
+                    <div key={s.l} className="flex items-center gap-1">
+                      <div className={cn("w-1.5 h-1.5 rounded-full", s.c)} />
+                      <span className="text-[8px] text-slate-500 flex-1">{s.l}</span>
+                      <span className="text-[8px] text-slate-400">{s.p}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Row 3: Recurring Invoices + Payment Notification Rules + Recent Invoices */}
+          <div className="grid grid-cols-3 gap-1">
+            {/* Recurring invoices (auto monthly) */}
+            <div className="rounded-lg bg-white border border-slate-200 p-2 shadow-sm">
+              <div className="flex items-center justify-between mb-1.5">
+                <div className="flex items-center gap-1">
+                  <RefreshCw className="w-3 h-3 text-violet-500" />
+                  <span className="text-[10px] font-semibold text-slate-700">Avto-fakturalar</span>
+                </div>
+                <span className="text-[8px] text-violet-600">+ Yeni</span>
+              </div>
+              <div className="space-y-[4px]">
+                {recurringRules.map((rule) => (
+                  <div key={rule.client} className="flex items-center gap-1 py-[3px]">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1">
+                        <span className="text-[9px] text-slate-700 font-medium truncate">{rule.client}</span>
+                        <span className={cn("text-[7px] px-1 py-0.5 rounded border font-medium", rule.statusColor)}>{rule.status}</span>
+                      </div>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <span className="text-[8px] font-semibold text-emerald-600">{rule.amount}</span>
+                        <span className="text-[7px] text-slate-400">{rule.cycle}</span>
+                        <span className="text-[7px] text-slate-400">→ {rule.nextDate}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Payment notification rules (multi-channel) */}
+            <div className="rounded-lg bg-white border border-slate-200 p-2 shadow-sm">
+              <div className="flex items-center justify-between mb-1.5">
+                <div className="flex items-center gap-1">
+                  <Send className="w-3 h-3 text-orange-500" />
+                  <span className="text-[10px] font-semibold text-slate-700">Ödəniş Xəbərdarlıqları</span>
+                </div>
+                <span className="text-[8px] text-orange-600">Qaydalar</span>
+              </div>
+              <div className="space-y-[4px]">
+                {notificationRules.map((rule) => (
+                  <div key={rule.trigger} className="flex items-center gap-1 py-[2px]">
+                    <div className={cn("w-1.5 h-1.5 rounded-full flex-shrink-0", rule.active ? "bg-emerald-500" : "bg-slate-300")} />
+                    <div className="flex-1 min-w-0">
+                      <span className="text-[9px] text-slate-700 font-medium block truncate">{rule.trigger}</span>
+                      <div className="flex items-center gap-0.5 mt-0.5">
+                        {rule.channels.map((ch) => {
+                          const Icon = channelIcons[ch]
+                          return (
+                            <div key={ch} className={cn("w-3.5 h-3.5 rounded flex items-center justify-center", channelColors[ch])}>
+                              <Icon className="w-2 h-2" />
+                            </div>
+                          )
+                        })}
+                        <span className="text-[7px] text-slate-400 ml-1">{rule.delay}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Recent invoices + Weekly collections */}
+            <div className="rounded-lg bg-white border border-slate-200 p-2 shadow-sm">
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-[10px] font-semibold text-slate-700">Son Fakturalar</span>
+                <span className="text-[8px] text-orange-600">Hamısı →</span>
+              </div>
+              <div className="space-y-[4px]">
+                {invoices.map((inv) => (
+                  <div key={inv.number} className="flex items-center gap-1 py-[2px]">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1">
+                        <span className="text-[9px] text-blue-600 font-medium">{inv.number}</span>
+                        <span className={cn("text-[7px] px-1 py-0.5 rounded border font-medium", inv.statusColor)}>{inv.status}</span>
+                      </div>
+                      <span className="text-[8px] text-slate-400">{inv.client}</span>
+                    </div>
+                    <span className="text-[9px] font-semibold text-slate-900 flex-shrink-0">{inv.amount}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Row 4: Collections chart + Flow diagram + Quick stats */}
+          <div className="grid grid-cols-3 gap-1">
+            {/* Weekly collections */}
+            <div className="rounded-lg bg-white border border-slate-200 p-2 shadow-sm">
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-[10px] font-semibold text-slate-700">Həftəlik Yığım</span>
+                <span className="text-[8px] font-semibold text-emerald-600">₼119.5K</span>
+              </div>
+              <MiniBarChart data={collectionsWeekly} color="bg-orange-400" height="h-8" />
+              <div className="grid grid-cols-3 gap-1 pt-1 mt-1 border-t border-slate-100">
+                <div className="text-center">
+                  <div className="text-[9px] font-bold text-slate-700">92%</div>
+                  <div className="text-[7px] text-slate-400">Yığım %</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-[9px] font-bold text-emerald-600">18 gün</div>
+                  <div className="text-[7px] text-slate-400">Ort. ödəniş</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-[9px] font-bold text-orange-600">₼21.5K</div>
+                  <div className="text-[7px] text-slate-400">Aylıq avto</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Financial flow */}
+            <div className="rounded-lg bg-white border border-slate-200 p-2 shadow-sm">
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-[10px] font-semibold text-slate-700">Maliyyə Axını</span>
+                <Zap className="w-3 h-3 text-orange-500" />
+              </div>
+              <div className="space-y-1">
+                {[
+                  { from: "Təklif", to: "Faktura", count: "8 bu ay", color: "bg-violet-100 text-violet-700" },
+                  { from: "Faktura", to: "Ödəniş", count: "24 bu ay", color: "bg-blue-100 text-blue-700" },
+                  { from: "Ödəniş", to: "Debitor", count: "₼168.4K", color: "bg-emerald-100 text-emerald-700" },
+                  { from: "Debitor", to: "Fond", count: "3 hesab", color: "bg-amber-100 text-amber-700" },
+                ].map((flow) => (
+                  <div key={flow.from} className="flex items-center gap-1">
+                    <span className={cn("text-[8px] px-1.5 py-0.5 rounded font-medium", flow.color)}>{flow.from}</span>
+                    <span className="text-[8px] text-slate-300">→</span>
+                    <span className={cn("text-[8px] px-1.5 py-0.5 rounded font-medium", flow.color)}>{flow.to}</span>
+                    <span className="text-[7px] text-slate-400 ml-auto">{flow.count}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Multi-currency + Quick actions */}
+            <div className="rounded-lg bg-white border border-slate-200 p-2 shadow-sm">
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-[10px] font-semibold text-slate-700">Multi-valyuta</span>
+                <DollarSign className="w-3 h-3 text-emerald-500" />
+              </div>
+              {[
+                { cur: "AZN", amount: "₼168,420", flag: "🇦🇿", change: "+18%" },
+                { cur: "USD", amount: "$45,200", flag: "🇺🇸", change: "+12%" },
+                { cur: "EUR", amount: "€12,800", flag: "🇪🇺", change: "+8%" },
+              ].map((c) => (
+                <div key={c.cur} className="flex items-center gap-1 py-[3px]">
+                  <span className="text-[10px]">{c.flag}</span>
+                  <div className="flex-1 min-w-0">
+                    <span className="text-[9px] text-slate-700 font-medium">{c.cur}</span>
+                  </div>
+                  <span className="text-[9px] font-semibold text-slate-900">{c.amount}</span>
+                  <span className="text-[7px] text-emerald-600">{c.change}</span>
                 </div>
               ))}
-            </div>
-
-            {/* Detail KPI row */}
-            <div className="grid grid-cols-5 gap-1 mb-2">
-              <div className="bg-white rounded border border-slate-200 p-1.5">
-                <span className="text-[5px] text-slate-500">Ara cəm (ƏDV-siz)</span>
-                <div className="text-[8px] font-bold text-slate-900">59,709.72 AZN</div>
-                <div className="text-[4px] text-slate-400">ƏDV (18%): 10,747.75</div>
-              </div>
-              <div className="bg-blue-50 rounded border border-blue-200 p-1.5">
-                <span className="text-[5px] text-slate-500">Ümumi məbləğ</span>
-                <div className="text-[8px] font-bold text-blue-700">70,457.47 AZN</div>
-              </div>
-              <div className="bg-white rounded border border-slate-200 p-1.5">
-                <span className="text-[5px] text-slate-500">Qalıq borc</span>
-                <div className="text-[8px] font-bold text-red-600">70,457.47 AZN</div>
-              </div>
-              <div className="bg-white rounded border border-slate-200 p-1.5">
-                <span className="text-[5px] text-slate-500">Ödənilib</span>
-                <div className="text-[8px] font-bold text-slate-900">0.00 AZN</div>
-              </div>
-              <div className="bg-white rounded border border-slate-200 p-1.5">
-                <span className="text-[5px] text-slate-500">Ödəniş günü</span>
-                <div className="text-[8px] font-bold text-slate-900">26 gün</div>
-              </div>
-            </div>
-
-            {/* Line items table */}
-            <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
-              <div className="grid grid-cols-[2fr_0.5fr_0.7fr_0.7fr] gap-1 px-2 py-1 bg-slate-50 border-b border-slate-200 text-[5px] font-semibold text-slate-500 uppercase">
-                <span>Təsvir</span>
-                <span>Say</span>
-                <span>Qiymət</span>
-                <span>Cəm</span>
-              </div>
-              {lineItems.map((item, i) => (
-                <div key={i} className={cn(
-                  "grid grid-cols-[2fr_0.5fr_0.7fr_0.7fr] gap-1 px-2 py-[3px] text-[6px]",
-                  i < lineItems.length - 1 && "border-b border-slate-100"
-                )}>
-                  <span className="text-slate-700">{item.desc}</span>
-                  <span className="text-slate-500 text-center">{item.qty}</span>
-                  <span className="text-slate-600">{item.price}</span>
-                  <span className="font-semibold text-slate-900">{item.total}</span>
+              <div className="mt-1.5 pt-1 border-t border-slate-100">
+                <div className="flex items-center justify-between">
+                  <span className="text-[8px] text-slate-500">Məzənnə</span>
+                  <span className="text-[8px] text-slate-600">1 USD = 1.70 AZN</span>
                 </div>
-              ))}
-              <div className="grid grid-cols-[2fr_0.5fr_0.7fr_0.7fr] gap-1 px-2 py-1 bg-slate-50 border-t border-slate-200 text-[6px]">
-                <span className="font-bold text-slate-900 col-span-3 text-right">Cəmi:</span>
-                <span className="font-bold text-slate-900">₼8,145.00</span>
+                <div className="flex items-center justify-between">
+                  <span className="text-[8px] text-slate-500">Yenilənmə</span>
+                  <span className="text-[8px] text-slate-400">Avtomatik</span>
+                </div>
               </div>
             </div>
           </div>
