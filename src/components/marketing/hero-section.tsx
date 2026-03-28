@@ -60,10 +60,16 @@ function AutoScaledPanel({
   )
 }
 
+/* Three screens that rotate */
+const screens = [
+  { id: "invoices", component: InvoicePreview },
+  { id: "dashboard", component: DashboardPreview },
+  { id: "deals", component: DealPreview },
+]
+
 /**
- * HeroPanels — uses useEffect to apply styles via JS
- * because Tailwind v4 CSS layers override both inline styles
- * and <style> tags for position/width properties.
+ * HeroPanels — clickable overlapping panels.
+ * Click a side panel → it becomes the center panel.
  */
 function HeroPanels() {
   const wrapRef = useRef<HTMLDivElement>(null)
@@ -71,6 +77,7 @@ function HeroPanels() {
   const centerRef = useRef<HTMLDivElement>(null)
   const rightRef = useRef<HTMLDivElement>(null)
   const [ready, setReady] = useState(false)
+  const [order, setOrder] = useState([0, 1, 2]) // [left, center, right] indices into screens
 
   useEffect(() => {
     const wrap = wrapRef.current
@@ -79,7 +86,6 @@ function HeroPanels() {
     const right = rightRef.current
     if (!wrap || !left || !center || !right) return
 
-    // Apply styles via JS to bypass Tailwind v4 CSS layer override
     Object.assign(wrap.style, {
       position: "relative",
       height: "520px",
@@ -91,6 +97,8 @@ function HeroPanels() {
       left: "-2%",
       bottom: "0",
       zIndex: "1",
+      cursor: "pointer",
+      transition: "transform 0.15s ease",
     })
     Object.assign(center.style, {
       position: "absolute",
@@ -105,9 +113,48 @@ function HeroPanels() {
       right: "-2%",
       bottom: "0",
       zIndex: "1",
+      cursor: "pointer",
+      transition: "transform 0.15s ease",
     })
+
+    // Hover effect on side panels
+    const addHover = (el: HTMLElement) => {
+      el.addEventListener("mouseenter", () => { el.style.transform = "scale(1.02)" })
+      el.addEventListener("mouseleave", () => { el.style.transform = "scale(1)" })
+    }
+    addHover(left)
+    addHover(right)
+
     setReady(true)
   }, [])
+
+  // Re-apply z-index and cursor after order changes
+  useEffect(() => {
+    const left = leftRef.current
+    const center = centerRef.current
+    const right = rightRef.current
+    if (!left || !center || !right) return
+    left.style.zIndex = "1"
+    left.style.cursor = "pointer"
+    center.style.zIndex = "3"
+    center.style.cursor = "default"
+    right.style.zIndex = "1"
+    right.style.cursor = "pointer"
+  }, [order])
+
+  const handleClickLeft = () => {
+    // Left becomes center: [right, left, center] → rotate
+    setOrder(([l, c, r]) => [r, l, c])
+  }
+
+  const handleClickRight = () => {
+    // Right becomes center: [center, right, left] → rotate
+    setOrder(([l, c, r]) => [c, r, l])
+  }
+
+  const LeftComponent = screens[order[0]].component
+  const CenterComponent = screens[order[1]].component
+  const RightComponent = screens[order[2]].component
 
   return (
     <div
@@ -115,19 +162,19 @@ function HeroPanels() {
       className="hidden lg:block"
       style={{ opacity: ready ? 1 : 0, transition: "opacity 0.3s" }}
     >
-      <div ref={leftRef}>
+      <div ref={leftRef} onClick={handleClickLeft}>
         <AutoScaledPanel height={420} baseWidth={750}>
-          <InvoicePreview />
+          <LeftComponent />
         </AutoScaledPanel>
       </div>
       <div ref={centerRef}>
         <AutoScaledPanel height={520} baseWidth={1000}>
-          <DashboardPreview />
+          <CenterComponent />
         </AutoScaledPanel>
       </div>
-      <div ref={rightRef}>
+      <div ref={rightRef} onClick={handleClickRight}>
         <AutoScaledPanel height={420} baseWidth={750}>
-          <DealPreview />
+          <RightComponent />
         </AutoScaledPanel>
       </div>
     </div>
