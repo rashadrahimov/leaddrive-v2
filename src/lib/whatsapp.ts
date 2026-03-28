@@ -97,7 +97,59 @@ export async function sendWhatsAppMessage({
     const data = await response.json()
 
     if (!response.ok) {
+      const errorCode = data?.error?.code
       const errorMsg = data?.error?.message || `HTTP ${response.status}`
+
+      // Re-engagement error (131047) — 24h window expired, retry with template
+      if (errorCode === 131047) {
+        console.log(`[WHATSAPP] 24h window expired for ${cleanPhone}, retrying with crm_notification_ template`)
+        const tplRes = await fetch(
+          `https://graph.facebook.com/v21.0/${config.phoneNumberId}/messages`,
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${config.accessToken}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              messaging_product: "whatsapp",
+              to: cleanPhone,
+              type: "template",
+              template: {
+                name: "crm_notification_",
+                language: { code: "en" },
+                components: [
+                  { type: "body", parameters: [{ type: "text", text: message.slice(0, 1024) }] },
+                ],
+              },
+            }),
+          }
+        )
+        const tplData = await tplRes.json()
+        if (tplRes.ok && tplData?.messages?.[0]?.id) {
+          const tplMsgId = tplData.messages[0].id
+          if (organizationId) {
+            await prisma.channelMessage.create({
+              data: {
+                organizationId,
+                direction: "outbound",
+                from: config.phoneNumberId,
+                to: cleanPhone,
+                body: message,
+                status: "delivered",
+                externalId: tplMsgId,
+                metadata: { channel: "whatsapp", waMessageId: tplMsgId, template: "crm_notification_" },
+                contactId,
+              },
+            }).catch(() => {})
+          }
+          console.log(`[WHATSAPP] Sent via template to ${cleanPhone} | ID: ${tplMsgId}`)
+          return { success: true, messageId: tplMsgId }
+        }
+        const tplError = tplData?.error?.message || "Template send failed"
+        console.error(`[WHATSAPP] Template fallback also failed:`, tplError)
+      }
+
       console.error(`[WHATSAPP] Send failed:`, errorMsg)
 
       if (organizationId) {
