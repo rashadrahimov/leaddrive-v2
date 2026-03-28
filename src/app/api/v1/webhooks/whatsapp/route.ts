@@ -537,9 +537,16 @@ async function handleAiAutoReply(
     })
 
     // Handle escalation — create ticket from WhatsApp chat
-    // Guard: don't create tickets from first exchange (AI shouldn't escalate immediately)
+    // Guard 1: need at least 3 full exchanges (6 messages) before ticket creation
     const messageCount = await prisma.aiChatMessage.count({ where: { sessionId: session.id } })
-    if ((shouldEscalate || shouldCreateTicket) && messageCount >= 4) {
+    // Guard 2: don't create duplicate tickets in same session
+    const existingTicket = await prisma.ticket.findFirst({
+      where: { organizationId, tags: { has: "whatsapp" }, contactId: contactId || undefined, status: { in: ["open", "in_progress"] } },
+      orderBy: { createdAt: "desc" },
+      select: { ticketNumber: true, createdAt: true },
+    })
+    const hasRecentTicket = existingTicket && (Date.now() - existingTicket.createdAt.getTime()) < 60 * 60 * 1000 // within 1h
+    if ((shouldEscalate || shouldCreateTicket) && messageCount >= 6 && !hasRecentTicket) {
       try {
         const chatMessages = await prisma.aiChatMessage.findMany({
           where: { sessionId: session.id },
