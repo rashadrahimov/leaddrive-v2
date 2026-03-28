@@ -12,22 +12,29 @@ jobs:
     timeout-minutes: 15
 
     steps:
+      - name: Setup build directory (match server path)
+        run: sudo mkdir -p /opt/leaddrive-v2
+
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          path: /opt/leaddrive-v2
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
 
       - name: Install dependencies
+        working-directory: /opt/leaddrive-v2
         run: npm install
 
       - name: Generate Prisma client
+        working-directory: /opt/leaddrive-v2
         run: npx prisma generate
 
       - name: Build (webpack for standalone)
+        working-directory: /opt/leaddrive-v2
         env:
           NEXTAUTH_SECRET: build-placeholder
           NEXTAUTH_URL: https://v2.leaddrivecrm.org
@@ -35,6 +42,7 @@ jobs:
         run: npx next build --webpack
 
       - name: Copy static files into standalone
+        working-directory: /opt/leaddrive-v2
         run: |
           cp -r .next/static .next/standalone/leaddrive-v2/.next/static 2>/dev/null || true
           cp -r .next/static .next/standalone/.next/static 2>/dev/null || true
@@ -47,27 +55,26 @@ jobs:
           ssh-keyscan -H ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts 2>/dev/null
 
       - name: Deploy standalone to server
+        working-directory: /opt/leaddrive-v2
         run: |
-          rsync -az \
+          rsync -az --delete \
             -e "ssh -i ~/.ssh/id_deploy" \
             .next/standalone/ \
             root@${{ secrets.SERVER_IP }}:/opt/leaddrive-v2/.next/standalone/
 
       - name: Deploy static files
+        working-directory: /opt/leaddrive-v2
         run: |
-          rsync -az \
+          rsync -az --delete \
             -e "ssh -i ~/.ssh/id_deploy" \
             .next/static/ \
             root@${{ secrets.SERVER_IP }}:/opt/leaddrive-v2/.next/static/
 
-      - name: Fix standalone structure + copy static + run migrations
+      - name: Copy static into standalone + run migrations
         run: |
           ssh -i ~/.ssh/id_deploy root@${{ secrets.SERVER_IP }} "\
-            if [ -d /opt/leaddrive-v2/.next/standalone/leaddrive-v2/.next ]; then \
-              cp -r /opt/leaddrive-v2/.next/standalone/leaddrive-v2/.next/* /opt/leaddrive-v2/.next/standalone/.next/ 2>/dev/null; \
-            fi && \
-            cp -r /opt/leaddrive-v2/.next/static /opt/leaddrive-v2/.next/standalone/.next/static 2>/dev/null; \
             cp -r /opt/leaddrive-v2/.next/static /opt/leaddrive-v2/.next/standalone/leaddrive-v2/.next/static 2>/dev/null; \
+            cp -r /opt/leaddrive-v2/.next/static /opt/leaddrive-v2/.next/standalone/.next/static 2>/dev/null; \
             cd /opt/leaddrive-v2 && git pull origin main && \
             npx prisma generate 2>&1 | tail -2 && \
             npx prisma migrate deploy 2>&1 | tail -2 || true"
