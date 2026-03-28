@@ -1,44 +1,13 @@
 "use client"
 
-import { useState } from "react"
 import Link from "next/link"
-import { ArrowRight, Play, Sparkles, LayoutDashboard, Target, Inbox, Shield } from "lucide-react"
+import { ArrowRight, Play, Sparkles, Shield } from "lucide-react"
 import { Particles } from "@/components/ui/particles"
-import { cn } from "@/lib/utils"
-
-const heroScreenshots = [
-  {
-    id: "dashboard",
-    label: "İdarə Paneli",
-    icon: LayoutDashboard,
-    image: "/marketing/crm-dashboard.png",
-    alt: "CRM Dashboard — KPI-lər, pipeline, satış qrafikləri",
-  },
-  {
-    id: "pipeline",
-    label: "Satış Pipeline",
-    icon: Target,
-    image: "/marketing/deals-pipeline.png",
-    alt: "Deals Pipeline — Kanban lövhəsi ilə satış idarəsi",
-  },
-  {
-    id: "inbox",
-    label: "7 Kanal Inbox",
-    icon: Inbox,
-    image: "/marketing/inbox-channels.png",
-    alt: "Unified Inbox — 7 kommunikasiya kanalı bir yerdə",
-  },
-]
+import { DashboardPreview } from "@/components/marketing/dashboard-preview"
 
 export function HeroSection() {
-  const [activeScreenshot, setActiveScreenshot] = useState(0)
-
   return (
-    <section className="relative min-h-[90vh] flex items-center overflow-hidden bg-gradient-to-b from-slate-950 via-slate-900 to-indigo-950 pt-20 pb-16 lg:pt-28 lg:pb-24">
-      {/* Preload hero images for instant tab switching */}
-      {heroScreenshots.map((s) => (
-        <link key={s.id} rel="preload" as="image" href={s.image} />
-      ))}
+    <section className="relative overflow-hidden bg-gradient-to-b from-slate-950 via-slate-900 to-indigo-950 pt-20 pb-8 lg:pt-24 lg:pb-12">
       {/* Particles background */}
       <Particles
         className="absolute inset-0"
@@ -114,32 +83,10 @@ export function HeroSection() {
           </div>
         </div>
 
-        {/* AI Screenshots showcase */}
-        <div className="mt-16 lg:mt-20 relative animate-fade-in-up" style={{ animationDelay: "400ms" }}>
-          {/* Screenshot tab switcher */}
-          <div className="flex justify-center gap-2 mb-6">
-            {heroScreenshots.map((item, i) => {
-              const Icon = item.icon
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => setActiveScreenshot(i)}
-                  className={cn(
-                    "inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-all",
-                    activeScreenshot === i
-                      ? "bg-violet-600/20 text-violet-300 border border-violet-500/40 shadow-lg shadow-violet-500/10"
-                      : "text-slate-500 hover:text-slate-300 border border-transparent"
-                  )}
-                >
-                  <Icon className="h-4 w-4" />
-                  {item.label}
-                </button>
-              )
-            })}
-          </div>
-
+        {/* Live Dashboard Preview */}
+        <div className="mt-10 lg:mt-14 relative animate-fade-in-up" style={{ animationDelay: "400ms" }}>
           <div className="relative mx-auto max-w-5xl">
-            {/* Glow behind screenshot */}
+            {/* Glow behind dashboard */}
             <div className="absolute -inset-4 bg-gradient-to-r from-violet-600/20 via-cyan-500/20 to-emerald-500/20 rounded-3xl blur-xl" />
 
             <div className="relative rounded-2xl border border-slate-700/50 bg-slate-900 shadow-2xl shadow-violet-500/10 overflow-hidden">
@@ -152,30 +99,13 @@ export function HeroSection() {
                 </div>
                 <div className="flex-1 mx-8">
                   <div className="bg-slate-800 rounded-md px-3 py-1 text-xs text-slate-500 border border-slate-700 max-w-xs mx-auto text-center">
-                    app.leaddrivecrm.org
+                    app.leaddrivecrm.org/dashboard
                   </div>
                 </div>
               </div>
 
-              {/* Screenshot with transition */}
-              <div className="relative">
-                {heroScreenshots.map((item, i) => (
-                  <img
-                    key={item.id}
-                    src={item.image}
-                    alt={item.alt}
-                    width={1200}
-                    height={720}
-                    className={cn(
-                      "w-full transition-opacity duration-500",
-                      activeScreenshot === i ? "opacity-100" : "opacity-0 absolute inset-0"
-                    )}
-                    loading={i === 0 ? "eager" : "lazy"}
-                    decoding={i === 0 ? "sync" : "async"}
-                    fetchPriority={i === 0 ? "high" : "low"}
-                  />
-                ))}
-              </div>
+              {/* Dashboard content */}
+              <DashboardPreview />
             </div>
           </div>
         </div>
