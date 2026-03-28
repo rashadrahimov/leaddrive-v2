@@ -38,6 +38,14 @@ function ScaledPreview({ screenId, containerHeight }: { screenId: string; contai
   )
 }
 
+/* ─── Simple preview renderer (no scaling) ─── */
+function ScreenPreview({ screenId }: { screenId: string }) {
+  if (screenId === "dashboard") return <DashboardPreview />
+  if (screenId === "invoices") return <InvoicePreview />
+  if (screenId === "deal") return <DealPreview />
+  return null
+}
+
 /* ─── Main Hero ─── */
 export function HeroSection() {
   const [activeIndex, setActiveIndex] = useState(1) // center = dashboard
@@ -167,14 +175,28 @@ export function HeroSection() {
                   {isActive ? (
                     <ScaledPreview screenId={screen.id} containerHeight={contentHeight} />
                   ) : (
-                    /* Collapsed panel: vertical label */
-                    <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-b from-slate-50 to-white">
-                      <span
-                        className="text-sm font-semibold text-slate-400 whitespace-nowrap tracking-wide"
-                        style={{ writingMode: "vertical-rl", transform: "rotate(180deg)" }}
+                    /* Collapsed panel: scaled-down blurred preview with label overlay */
+                    <div className="absolute inset-0">
+                      {/* Tiny preview of the content */}
+                      <div
+                        className="opacity-30 blur-[0.5px]"
+                        style={{
+                          width: 1000,
+                          transform: "scale(0.12)",
+                          transformOrigin: "top left",
+                        }}
                       >
-                        {screen.label}
-                      </span>
+                        <ScreenPreview screenId={screen.id} />
+                      </div>
+                      {/* Semi-transparent overlay with label */}
+                      <div className="absolute inset-0 bg-white/50 flex items-center justify-center">
+                        <span
+                          className="text-sm font-semibold text-slate-500 whitespace-nowrap tracking-wide"
+                          style={{ writingMode: "vertical-rl", transform: "rotate(180deg)" }}
+                        >
+                          {screen.label}
+                        </span>
+                      </div>
                     </div>
                   )}
                 </div>
