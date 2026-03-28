@@ -111,7 +111,7 @@ function HeroPanels() {
         width: pos.width,
         zIndex: String(pos.zIndex), // no transition — instant z-index change
         cursor: isCenter ? "default" : "pointer",
-        pointerEvents: "auto",
+        pointerEvents: isCenter ? "none" : "auto",
       })
     })
   }, [slots])

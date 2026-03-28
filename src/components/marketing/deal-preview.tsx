@@ -7,26 +7,10 @@ import {
   Shield, Zap, Phone, Mail, Calendar,
   MessageSquare, User, Tag, ChevronRight,
   Megaphone, Inbox, BarChart3, Settings,
-  Bot, Users, Headphones, Star,
-  XCircle, ArrowDownRight,
+  Bot, Users, Headphones,
+  XCircle,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
-
-/* ── Mini bar chart ── */
-function MiniBarChart({ data, color, height = "h-12" }: { data: number[]; color: string; height?: string }) {
-  const max = Math.max(...data)
-  return (
-    <div className={cn("flex items-end gap-[2px]", height)}>
-      {data.map((v, i) => (
-        <div
-          key={i}
-          className={cn("flex-1 rounded-t-sm min-w-[4px]", color)}
-          style={{ height: `${(v / max) * 100}%`, opacity: 0.45 + (v / max) * 0.55 }}
-        />
-      ))}
-    </div>
-  )
-}
 
 /* ── Mini line chart (SVG) ── */
 function MiniLineChart({ data, color, width = 200, height = 40 }: { data: number[]; color: string; width?: number; height?: number }) {
@@ -73,7 +57,6 @@ function MiniDonut({ segments, size = 48, label }: { segments: { pct: number; co
 /* ── Data ── */
 const dealVelocity = [14, 18, 12, 22, 16, 20, 15, 24, 19, 26, 21, 28]
 const revenueProjection = [45, 52, 48, 68, 72, 85, 78, 92, 88, 105, 98, 120]
-const dealsClosedWeekly = [3, 5, 2, 4, 6, 3, 5]
 
 const sidebarItems = [
   { icon: LayoutDashboard, label: "İdarə paneli" },
@@ -99,14 +82,6 @@ const pipelineStages = [
   { label: "Qazanıldı", count: 4, amount: "₼98.7K", pct: 50, color: "bg-emerald-500" },
 ]
 
-/* ── Top deals ── */
-const topDeals = [
-  { name: "ERP Tətbiqi", company: "NeftGaz MMC", value: "₼25,000", stage: "Təklif", color: "bg-cyan-500", confidence: 72, hot: true },
-  { name: "CRM Lisenziya", company: "BankTech", value: "₼18,500", stage: "Danışıq", color: "bg-teal-500", confidence: 85, hot: true },
-  { name: "Cloud Miqrasiya", company: "AzərLogistik", value: "₼12,800", stage: "Kvalifikasiya", color: "bg-blue-500", confidence: 45, hot: false },
-  { name: "Kibertəhlükəsizlik", company: "DevPort", value: "₼31,200", stage: "Lid", color: "bg-violet-500", confidence: 30, hot: false },
-  { name: "Data Analytics", company: "FinServ Group", value: "₼22,400", stage: "Təklif", color: "bg-cyan-500", confidence: 68, hot: true },
-]
 
 /* ── Win/Loss analysis ── */
 const winLossData = [
@@ -216,28 +191,31 @@ export function DealPreview() {
             ))}
           </div>
 
-          {/* Row 2: Pipeline Funnel + Revenue Projection + Win/Loss */}
+          {/* Row 2: Kanban Mini + Revenue Projection + Win/Loss */}
           <div className="grid grid-cols-3 gap-1">
-            {/* Pipeline funnel */}
+            {/* Mini Kanban columns */}
             <div className="rounded-lg bg-white border border-slate-200 p-2 shadow-sm">
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[10px] font-semibold text-slate-700">Satış Pipeline</span>
-                <span className="text-[8px] text-slate-400">₼285.5K</span>
+                <span className="text-[10px] font-semibold text-slate-700">Pipeline Kanban</span>
+                <span className="text-[8px] text-slate-400">26 sövdə</span>
               </div>
-              <div className="space-y-[5px]">
+              <div className="flex gap-[3px]">
                 {pipelineStages.map((s) => (
-                  <div key={s.label} className="flex items-center gap-1">
-                    <span className="text-[8px] text-slate-400 w-14 truncate">{s.label}</span>
-                    <div className="flex-1 h-2.5 bg-slate-100 rounded-full overflow-hidden">
-                      <div className={cn("h-full rounded-full", s.color)} style={{ width: `${s.pct}%` }} />
+                  <div key={s.label} className="flex-1 min-w-0">
+                    <div className="flex items-center gap-0.5 mb-0.5">
+                      <div className={cn("w-1 h-1 rounded-full", s.color)} />
+                      <span className="text-[7px] text-slate-500 truncate">{s.label}</span>
                     </div>
-                    <span className="text-[8px] text-slate-500 w-4 text-right">{s.count}</span>
+                    <div className="text-[8px] font-bold text-slate-700 mb-0.5">{s.amount}</div>
+                    {Array.from({ length: Math.min(s.count, 3) }).map((_, j) => (
+                      <div key={j} className="bg-slate-50 border border-slate-100 rounded p-0.5 mb-[2px]">
+                        <div className="w-full h-[3px] bg-slate-200 rounded" />
+                        <div className="w-2/3 h-[2px] bg-slate-100 rounded mt-[1px]" />
+                      </div>
+                    ))}
+                    <span className="text-[6px] text-slate-300">{s.count} sövdə</span>
                   </div>
                 ))}
-              </div>
-              <div className="mt-1.5 pt-1 border-t border-slate-100 flex justify-between">
-                <span className="text-[7px] text-slate-400">Ort. konversiya hər mərhələdə</span>
-                <span className="text-[8px] font-semibold text-emerald-600">68%</span>
               </div>
             </div>
 
@@ -291,34 +269,38 @@ export function DealPreview() {
 
           {/* Row 3: Top Deals + AI Predictions + Competitors */}
           <div className="grid grid-cols-3 gap-1">
-            {/* Top deals with confidence */}
+            {/* Engagement metrics */}
             <div className="rounded-lg bg-white border border-slate-200 p-2 shadow-sm">
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[10px] font-semibold text-slate-700">Top Sövdələşmələr</span>
-                <span className="text-[8px] text-violet-600">Hamısı →</span>
+                <span className="text-[10px] font-semibold text-slate-700">Kontakt Meşğulluğu</span>
+                <MessageSquare className="w-3 h-3 text-cyan-500" />
+              </div>
+              <div className="grid grid-cols-3 gap-1 mb-1.5">
+                {[
+                  { icon: Phone, label: "Zənglər", value: "47", color: "text-blue-600", bg: "bg-blue-50" },
+                  { icon: Mail, label: "E-poçt", value: "124", color: "text-violet-600", bg: "bg-violet-50" },
+                  { icon: Calendar, label: "Görüşlər", value: "18", color: "text-emerald-600", bg: "bg-emerald-50" },
+                ].map((m) => (
+                  <div key={m.label} className={cn("rounded p-1 text-center", m.bg)}>
+                    <m.icon className={cn("w-2.5 h-2.5 mx-auto mb-0.5", m.color)} />
+                    <div className={cn("text-[9px] font-bold", m.color)}>{m.value}</div>
+                    <div className="text-[7px] text-slate-500">{m.label}</div>
+                  </div>
+                ))}
               </div>
               <div className="space-y-[4px]">
-                {topDeals.map((d) => (
-                  <div key={d.name} className="flex items-center gap-1 py-[2px]">
-                    <div className={cn("w-1 h-5 rounded-full flex-shrink-0", d.color)} />
+                {[
+                  { name: "Kamran Əliyev", action: "Zəng — 15 dəq", time: "2 saat əvvəl", color: "text-blue-500" },
+                  { name: "Nigar Həsənova", action: "Email açıldı", time: "4 saat əvvəl", color: "text-violet-500" },
+                  { name: "Rəşad Məmmədov", action: "Görüş planlandı", time: "Dünən", color: "text-emerald-500" },
+                ].map((a) => (
+                  <div key={a.name} className="flex items-center gap-1 py-[2px]">
+                    <div className={cn("w-1 h-3 rounded-full", a.color.replace("text-", "bg-"))} />
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1">
-                        <span className="text-[9px] text-slate-700 font-medium truncate">{d.name}</span>
-                        {d.hot && <Star className="w-2 h-2 text-amber-400 fill-amber-400 flex-shrink-0" />}
-                      </div>
-                      <span className="text-[8px] text-slate-400">{d.company}</span>
+                      <span className="text-[8px] text-slate-700 font-medium block">{a.name}</span>
+                      <span className="text-[7px] text-slate-400">{a.action}</span>
                     </div>
-                    <div className="flex items-center gap-1 flex-shrink-0">
-                      <span className="text-[9px] font-semibold text-emerald-600">{d.value}</span>
-                      <div className={cn(
-                        "w-5 h-3.5 rounded flex items-center justify-center text-[7px] font-bold",
-                        d.confidence >= 70 ? "bg-emerald-50 text-emerald-700" :
-                        d.confidence >= 50 ? "bg-amber-50 text-amber-700" :
-                        "bg-red-50 text-red-700"
-                      )}>
-                        {d.confidence}%
-                      </div>
-                    </div>
+                    <span className="text-[7px] text-slate-300 flex-shrink-0">{a.time}</span>
                   </div>
                 ))}
               </div>
@@ -401,26 +383,32 @@ export function DealPreview() {
               </div>
             </div>
 
-            {/* Weekly closings */}
+            {/* Upcoming deal tasks */}
             <div className="rounded-lg bg-white border border-slate-200 p-2 shadow-sm">
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[10px] font-semibold text-slate-700">Həftəlik Bağlanma</span>
-                <span className="text-[8px] font-semibold text-emerald-600">28 sövdə</span>
+                <span className="text-[10px] font-semibold text-slate-700">Növbəti Addımlar</span>
+                <FileText className="w-3 h-3 text-orange-500" />
               </div>
-              <MiniBarChart data={dealsClosedWeekly} color="bg-emerald-400" height="h-8" />
-              <div className="grid grid-cols-3 gap-1 pt-1 mt-1 border-t border-slate-100">
-                <div className="text-center">
-                  <div className="text-[9px] font-bold text-slate-700">₼98.7K</div>
-                  <div className="text-[7px] text-slate-400">Qazanıldı</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-[9px] font-bold text-red-600">₼18.2K</div>
-                  <div className="text-[7px] text-slate-400">İtirildi</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-[9px] font-bold text-violet-600">5.4x</div>
-                  <div className="text-[7px] text-slate-400">Win ratio</div>
-                </div>
+              <div className="space-y-[4px]">
+                {[
+                  { task: "NeftGaz — Demo təqdimat", due: "Sabah", priority: "Yüksək", color: "bg-red-500" },
+                  { task: "BankTech — Təklif göndər", due: "30 Mar", priority: "Orta", color: "bg-amber-500" },
+                  { task: "FinServ — Texniki qiy.", due: "2 Apr", priority: "Yüksək", color: "bg-red-500" },
+                  { task: "DevPort — Follow-up zəng", due: "3 Apr", priority: "Aşağı", color: "bg-blue-500" },
+                ].map((t) => (
+                  <div key={t.task} className="flex items-center gap-1 py-[2px]">
+                    <div className={cn("w-1 h-3.5 rounded-full flex-shrink-0", t.color)} />
+                    <div className="flex-1 min-w-0">
+                      <span className="text-[8px] text-slate-700 font-medium block truncate">{t.task}</span>
+                      <span className="text-[7px] text-slate-400">{t.priority}</span>
+                    </div>
+                    <span className="text-[7px] text-slate-500 flex-shrink-0 font-medium">{t.due}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-1 pt-1 border-t border-slate-100 flex justify-between">
+                <span className="text-[7px] text-slate-400">Gecikmiş tapşırıqlar</span>
+                <span className="text-[8px] text-red-600 font-semibold">2</span>
               </div>
             </div>
 
