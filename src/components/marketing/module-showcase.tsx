@@ -13,6 +13,40 @@ import {
   ArrowRight, ChevronRight, Phone, Clock, Bell,
   Send, CheckCircle2, AlertTriangle, Smartphone,
 } from "lucide-react"
+import {
+  CrmPipelinePreview, CrmDealDetailPreview,
+  MarketingCampaignsPreview, MarketingLeadScoringPreview,
+  SupportTicketPreview,
+  FinanceProfitabilityPreview, FinanceBudgetPreview,
+  ErpProjectsPreview, ErpTasksPreview,
+  PlatformSettingsPreview, PlatformCompaniesPreview,
+  AiAssistantPreview, AiLeadDetailPreview,
+} from "./module-previews"
+import { InvoicePreview } from "./invoice-preview"
+
+/* ─── Module Browser Frame wrapper ─── */
+function ModuleBrowserFrame({ url, caption, children }: { url: string; caption: string; children: React.ReactNode }) {
+  return (
+    <div className="rounded-xl overflow-hidden border border-slate-200 shadow-lg shadow-slate-200/50">
+      <div className="flex items-center gap-1.5 px-4 py-2 bg-slate-100 border-b border-slate-200">
+        <div className="flex gap-1.5">
+          <div className="w-2.5 h-2.5 rounded-full bg-red-400" />
+          <div className="w-2.5 h-2.5 rounded-full bg-yellow-400" />
+          <div className="w-2.5 h-2.5 rounded-full bg-green-400" />
+        </div>
+        <div className="flex-1 mx-6">
+          <div className="bg-white rounded-md px-3 py-1 text-[10px] text-slate-400 border border-slate-200 max-w-[240px] mx-auto text-center">
+            {url}
+          </div>
+        </div>
+      </div>
+      {children}
+      <div className="px-4 py-2 bg-slate-50 border-t border-slate-200">
+        <span className="text-xs text-slate-500">{caption}</span>
+      </div>
+    </div>
+  )
+}
 
 /* ─── Module data ─── */
 const modules = [
@@ -739,95 +773,89 @@ function ModuleSection({ mod, index }: { mod: typeof modules[0]; index: number }
 
         {/* VISUALS SIDE */}
         <div className={cn("space-y-4", isReversed && "lg:order-1")}>
-          {/* Custom visuals */}
-          {(mod as any).customVisual === "inbox" ? (
+          {/* Code-based preview components per module */}
+          {mod.id === "crm" && (
+            <>
+              <ModuleBrowserFrame url="app.leaddrivecrm.org/deals" caption="Satış Pipeline — Kanban görünüşü">
+                <CrmPipelinePreview />
+              </ModuleBrowserFrame>
+              <ModuleBrowserFrame url="app.leaddrivecrm.org/deals/detail" caption="Sövdələşmə kartı — detallı baxış">
+                <CrmDealDetailPreview />
+              </ModuleBrowserFrame>
+            </>
+          )}
+          {mod.id === "marketing" && (
+            <>
+              <ModuleBrowserFrame url="app.leaddrivecrm.org/campaigns" caption="Kampaniyalar — göndərmə və izləmə">
+                <MarketingCampaignsPreview />
+              </ModuleBrowserFrame>
+              <ModuleBrowserFrame url="app.leaddrivecrm.org/ai-scoring" caption="AI Lid Skorinqi — A–F dərəcələndirmə">
+                <MarketingLeadScoringPreview />
+              </ModuleBrowserFrame>
+            </>
+          )}
+          {mod.id === "inbox" && (
             <>
               <InboxUnifiedVisual />
               <ChannelSourcesVisual />
             </>
-          ) : (mod as any).customVisual === "invoices" ? (
+          )}
+          {mod.id === "support" && (
             <>
-              {/* Screenshot */}
-              {mod.screenshots.map((ss) => (
-                <div key={ss.src} className="rounded-xl overflow-hidden border border-slate-200 shadow-lg shadow-slate-200/50">
-                  <div className="flex items-center gap-1.5 px-4 py-2 bg-slate-100 border-b border-slate-200">
-                    <div className="flex gap-1.5">
-                      <div className="w-2.5 h-2.5 rounded-full bg-red-400" />
-                      <div className="w-2.5 h-2.5 rounded-full bg-yellow-400" />
-                      <div className="w-2.5 h-2.5 rounded-full bg-green-400" />
-                    </div>
-                    <div className="flex-1 mx-6">
-                      <div className="bg-white rounded-md px-3 py-1 text-[10px] text-slate-400 border border-slate-200 max-w-[240px] mx-auto text-center">
-                        app.leaddrivecrm.org/invoices
-                      </div>
-                    </div>
-                  </div>
-                  <img src={ss.src} alt={ss.alt} className="w-full block" loading="lazy" />
-                  <div className="px-4 py-2 bg-slate-50 border-t border-slate-200">
-                    <span className="text-xs text-slate-500">{ss.alt}</span>
-                  </div>
-                </div>
-              ))}
-              {/* Auto-reminder timeline */}
-              <InvoiceReminderVisual />
-              {/* Phone mockups */}
-              <PhoneNotificationsVisual />
-            </>
-          ) : (mod as any).customVisual === "support" ? (
-            <>
-              {/* First: screenshot */}
-              {mod.screenshots.map((ss) => (
-                <div key={ss.src} className="rounded-xl overflow-hidden border border-slate-200 shadow-lg shadow-slate-200/50">
-                  <div className="flex items-center gap-1.5 px-4 py-2 bg-slate-100 border-b border-slate-200">
-                    <div className="flex gap-1.5">
-                      <div className="w-2.5 h-2.5 rounded-full bg-red-400" />
-                      <div className="w-2.5 h-2.5 rounded-full bg-yellow-400" />
-                      <div className="w-2.5 h-2.5 rounded-full bg-green-400" />
-                    </div>
-                    <div className="flex-1 mx-6">
-                      <div className="bg-white rounded-md px-3 py-1 text-[10px] text-slate-400 border border-slate-200 max-w-[240px] mx-auto text-center">
-                        app.leaddrivecrm.org/tickets
-                      </div>
-                    </div>
-                  </div>
-                  <img src={ss.src} alt={ss.alt} className="w-full block" loading="lazy" />
-                  <div className="px-4 py-2 bg-slate-50 border-t border-slate-200">
-                    <span className="text-xs text-slate-500">{ss.alt}</span>
-                  </div>
-                </div>
-              ))}
-              {/* Second: AI features visual */}
+              <ModuleBrowserFrame url="app.leaddrivecrm.org/tickets" caption="Tiket — AI cavab və SLA izləmə">
+                <SupportTicketPreview />
+              </ModuleBrowserFrame>
               <SupportAiVisual />
             </>
-          ) : (
-            mod.screenshots.map((ss) => (
-              <div key={ss.src} className="rounded-xl overflow-hidden border border-slate-200 shadow-lg shadow-slate-200/50">
-                {/* Browser chrome — light */}
-                <div className="flex items-center gap-1.5 px-4 py-2 bg-slate-100 border-b border-slate-200">
-                  <div className="flex gap-1.5">
-                    <div className="w-2.5 h-2.5 rounded-full bg-red-400" />
-                    <div className="w-2.5 h-2.5 rounded-full bg-yellow-400" />
-                    <div className="w-2.5 h-2.5 rounded-full bg-green-400" />
-                  </div>
-                  <div className="flex-1 mx-6">
-                    <div className="bg-white rounded-md px-3 py-1 text-[10px] text-slate-400 border border-slate-200 max-w-[240px] mx-auto text-center">
-                      app.leaddrivecrm.org/{mod.id}
-                    </div>
-                  </div>
-                </div>
-                {/* Screenshot */}
-                <img
-                  src={ss.src}
-                  alt={ss.alt}
-                  className="w-full block"
-                  loading={index < 2 ? "eager" : "lazy"}
-                />
-                {/* Caption */}
-                <div className="px-4 py-2 bg-slate-50 border-t border-slate-200">
-                  <span className="text-xs text-slate-500">{ss.alt}</span>
-                </div>
-              </div>
-            ))
+          )}
+          {mod.id === "finance" && (
+            <>
+              <ModuleBrowserFrame url="app.leaddrivecrm.org/profitability" caption="Gəlirlilik Analizi">
+                <FinanceProfitabilityPreview />
+              </ModuleBrowserFrame>
+              <ModuleBrowserFrame url="app.leaddrivecrm.org/budgeting" caption="Büdcələşdirmə & P&L">
+                <FinanceBudgetPreview />
+              </ModuleBrowserFrame>
+            </>
+          )}
+          {mod.id === "invoices" && (
+            <>
+              <ModuleBrowserFrame url="app.leaddrivecrm.org/invoices" caption="Hesab-fakturalar — siyahı və izləmə">
+                <InvoicePreview />
+              </ModuleBrowserFrame>
+              <InvoiceReminderVisual />
+              <PhoneNotificationsVisual />
+            </>
+          )}
+          {mod.id === "erp" && (
+            <>
+              <ModuleBrowserFrame url="app.leaddrivecrm.org/projects" caption="Layihələr">
+                <ErpProjectsPreview />
+              </ModuleBrowserFrame>
+              <ModuleBrowserFrame url="app.leaddrivecrm.org/tasks" caption="Tapşırıqlar">
+                <ErpTasksPreview />
+              </ModuleBrowserFrame>
+            </>
+          )}
+          {mod.id === "platform" && (
+            <>
+              <ModuleBrowserFrame url="app.leaddrivecrm.org/settings" caption="İdarə paneli — ümumi baxış">
+                <PlatformSettingsPreview />
+              </ModuleBrowserFrame>
+              <ModuleBrowserFrame url="app.leaddrivecrm.org/companies" caption="Şirkətlər grid — data idarəsi">
+                <PlatformCompaniesPreview />
+              </ModuleBrowserFrame>
+            </>
+          )}
+          {mod.id === "ai" && (
+            <>
+              <ModuleBrowserFrame url="app.leaddrivecrm.org/ai" caption="AI Köməkçi">
+                <AiAssistantPreview />
+              </ModuleBrowserFrame>
+              <ModuleBrowserFrame url="app.leaddrivecrm.org/leads/detail" caption="AI Lid Analizi">
+                <AiLeadDetailPreview />
+              </ModuleBrowserFrame>
+            </>
           )}
         </div>
       </div>
