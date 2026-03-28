@@ -67,24 +67,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.organizationName = user.organizationName
         token.plan = user.plan
       }
-      // SECURITY: Invalidate session if password was changed after token was issued.
-      // Only check DB every 60 seconds to avoid excessive queries.
-      const now = Date.now()
-      const lastPwCheck = (token._lastPwCheck as number) || 0
-      if (token.sub && token.iat && now - lastPwCheck > 60_000) {
-        token._lastPwCheck = now
-        const dbUser = await prisma.user.findUnique({
-          where: { id: token.sub },
-          select: { passwordChangedAt: true },
-        })
-        if (dbUser?.passwordChangedAt) {
-          const tokenIssuedAt = (token.iat as number) * 1000 // JWT iat is in seconds
-          if (dbUser.passwordChangedAt.getTime() > tokenIssuedAt) {
-            // Password was changed after this token was issued — force re-login
-            return {} as any // Empty token triggers sign-out
-          }
-        }
-      }
+      // NOTE: passwordChangedAt validation moved to API-level (api-auth.ts)
+      // because JWT callback runs on Edge runtime where Prisma is not available.
       return token
     },
     async session({ session, token }) {

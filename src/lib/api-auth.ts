@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "./auth"
+import { prisma } from "./prisma"
 import { checkPermission, resolveModuleFromPath, methodToAction, type Role, type Module, type Action } from "./permissions"
+
+// In-memory cache for passwordChangedAt checks (avoids DB query on every request)
+const pwCheckCache = new Map<string, { checkedAt: number; changedAt: number | null }>()
+const PW_CHECK_INTERVAL = 60_000 // 60 seconds
 
 interface AuthResult {
   orgId: string
@@ -77,6 +82,31 @@ export async function requireAuth(
     role: (rawSession.user.role || "viewer") as Role,
     email: rawSession.user.email || "",
     name: rawSession.user.name || "",
+  }
+
+  // SECURITY: Check if password was changed after JWT was issued (runs on Node.js, not Edge)
+  const tokenIat = (rawSession as any)?.token?.iat || (rawSession as any)?.iat
+  if (session.userId && tokenIat) {
+    try {
+      const now = Date.now()
+      const cached = pwCheckCache.get(session.userId)
+      let changedAt = cached?.changedAt ?? null
+
+      if (!cached || now - cached.checkedAt > PW_CHECK_INTERVAL) {
+        const dbUser = await prisma.user.findUnique({
+          where: { id: session.userId },
+          select: { passwordChangedAt: true },
+        })
+        changedAt = dbUser?.passwordChangedAt?.getTime() ?? null
+        pwCheckCache.set(session.userId, { checkedAt: now, changedAt })
+      }
+
+      if (changedAt && changedAt > tokenIat * 1000) {
+        return NextResponse.json({ error: "Session expired. Please log in again." }, { status: 401 })
+      }
+    } catch {
+      // Non-critical — don't block request on cache/DB failure
+    }
   }
 
   // Resolve module and action from request if not explicitly provided
