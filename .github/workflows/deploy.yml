@@ -28,6 +28,10 @@ jobs:
         run: npx prisma generate
 
       - name: Build (webpack for standalone)
+        env:
+          NEXTAUTH_SECRET: build-placeholder
+          NEXTAUTH_URL: https://v2.leaddrivecrm.org
+          DATABASE_URL: postgresql://placeholder:placeholder@localhost:5432/placeholder
         run: npx next build --webpack
 
       - name: Copy static files into standalone
