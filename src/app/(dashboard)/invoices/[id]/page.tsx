@@ -486,21 +486,14 @@ export default function InvoiceDetailPage() {
     return chainStepTypes.find(st => st.value === type) || chainStepTypes[0]
   }
 
-  // Invoice-specific condition scenarios
-  const invoiceConditionScenarios = [
-    { id: "invoice_unpaid", label: "Ödənilməyibsə", description: "Status = Göndərilib", icon: "💰", field: "invoice_status", operator: "equals", value: "sent" },
-    { id: "invoice_overdue", label: "Gecikibsə", description: "Status = Gecikmiş", icon: "⏰", field: "invoice_status", operator: "equals", value: "overdue" },
-    { id: "invoice_paid", label: "Ödənilib", description: "Status = Ödənilib", icon: "✅", field: "invoice_status", operator: "equals", value: "paid" },
-    { id: "has_email", label: "Email varsa", description: "Email boş deyil", icon: "📧", field: "email", operator: "not_empty", value: "" },
-    { id: "has_phone", label: "Telefon varsa", description: "Telefon boş deyil", icon: "📱", field: "phone", operator: "not_empty", value: "" },
-    { id: "balance_exists", label: "Qalıq varsa", description: "Qalıq > 0", icon: "💳", field: "balance_due", operator: "not_empty", value: "" },
-  ]
-  const invoiceConditionActions = [
-    { value: "continue", label: "Növbəti addıma keç" },
-    { value: "skip_next", label: "1 addımı keç" },
-    { value: "skip_2", label: "2 addımı keç" },
-    { value: "restart", label: "Əvvəldən başla (dövr)" },
-    { value: "stop", label: "Zənciri dayandır" },
+  // Invoice condition recipes — one click, no confusion
+  const invoiceConditionRecipes = [
+    { id: "unpaid_restart", label: "Ödənilməyibsə → təkrarla", description: "Ödəniş gəlməyibsə zənciri əvvəldən başla", icon: "🔄", field: "invoice_status", operator: "equals", value: "sent", onTrue: "restart", onFalse: "stop" },
+    { id: "paid_stop", label: "Ödənilibsə → dayandır", description: "Ödəniş gəlibsə zənciri dayandır", icon: "✅", field: "invoice_status", operator: "equals", value: "paid", onTrue: "stop", onFalse: "continue" },
+    { id: "overdue_restart", label: "Gecikibsə → təkrarla", description: "Gecikmiş ödəniş — zənciri təkrarla", icon: "⏰", field: "invoice_status", operator: "equals", value: "overdue", onTrue: "restart", onFalse: "stop" },
+    { id: "unpaid_continue", label: "Ödənilməyibsə → davam et", description: "Ödəniş gəlməyibsə növbəti addıma keç", icon: "➡️", field: "invoice_status", operator: "equals", value: "sent", onTrue: "continue", onFalse: "stop" },
+    { id: "has_email", label: "Email varsa → davam et", description: "Email boş deyilsə növbəti addıma keç", icon: "📧", field: "email", operator: "not_empty", value: "", onTrue: "continue", onFalse: "stop" },
+    { id: "has_phone", label: "Telefon varsa → davam et", description: "Telefon boş deyilsə növbəti addıma keç", icon: "📱", field: "phone", operator: "not_empty", value: "", onTrue: "continue", onFalse: "stop" },
   ]
 
   function getChainStepSummary(step: any): string {
@@ -512,8 +505,8 @@ export default function InvoiceDetailPage() {
       case "send_whatsapp":
       case "sms": return c.message ? c.message.slice(0, 50) : t("chainMessageLabel")
       case "condition": {
-        const sc = invoiceConditionScenarios.find(s => s.id === c._scenario)
-        if (sc) return sc.label
+        const recipe = invoiceConditionRecipes.find(r => r.id === c._recipe)
+        if (recipe) return recipe.label
         return c.field ? `${c.field} ${c.operator} ${c.value || ""}` : t("chainStepCondition")
       }
       default: return ""
@@ -1666,59 +1659,35 @@ export default function InvoiceDetailPage() {
                 </div>
               )}
               {newStepType === "condition" && (
-                <div className="space-y-4">
-                  <div>
-                    <Label className="text-xs text-muted-foreground mb-2 block">Yoxlanılacaq şərti seçin</Label>
-                    <div className="grid grid-cols-3 gap-2">
-                      {invoiceConditionScenarios.map(sc => {
-                        const isSelected = newStepConfig._scenario === sc.id
-                        return (
-                          <button
-                            key={sc.id}
-                            type="button"
-                            onClick={() => setNewStepConfig({
-                              _scenario: sc.id,
-                              field: sc.field,
-                              operator: sc.operator,
-                              value: sc.value,
-                              onTrue: newStepConfig.onTrue || "continue",
-                              onFalse: newStepConfig.onFalse || "continue",
-                            })}
-                            className={`flex flex-col items-center gap-1 p-3 rounded-lg border-2 text-xs transition-all text-center ${
-                              isSelected
-                                ? "border-primary bg-primary/5 text-primary shadow-sm"
-                                : "border-transparent bg-muted/40 text-muted-foreground hover:border-border hover:bg-muted/60"
-                            }`}
-                          >
-                            <span className="text-lg">{sc.icon}</span>
-                            <span className="font-medium leading-tight">{sc.label}</span>
-                            <span className="text-[10px] opacity-60">{sc.description}</span>
-                          </button>
-                        )
-                      })}
-                    </div>
-                  </div>
-                  <div className="p-3 bg-green-50/50 dark:bg-green-900/10 rounded-lg border border-green-200/50 dark:border-green-800/30">
-                    <Label className="text-xs font-medium text-green-700 dark:text-green-400 flex items-center gap-1.5 mb-2">
-                      ✓ Şərt uyğun gəlirsə:
-                    </Label>
-                    <Select
-                      value={newStepConfig.onTrue || "continue"}
-                      onChange={e => setNewStepConfig((c: any) => ({ ...c, onTrue: e.target.value }))}
-                    >
-                      {invoiceConditionActions.map(a => <option key={a.value} value={a.value}>{a.label}</option>)}
-                    </Select>
-                  </div>
-                  <div className="p-3 bg-red-50/50 dark:bg-red-900/10 rounded-lg border border-red-200/50 dark:border-red-800/30">
-                    <Label className="text-xs font-medium text-red-700 dark:text-red-400 flex items-center gap-1.5 mb-2">
-                      <X className="h-3.5 w-3.5" /> Şərt uyğun gəlmirsə:
-                    </Label>
-                    <Select
-                      value={newStepConfig.onFalse || "continue"}
-                      onChange={e => setNewStepConfig((c: any) => ({ ...c, onFalse: e.target.value }))}
-                    >
-                      {invoiceConditionActions.map(a => <option key={a.value} value={a.value}>{a.label}</option>)}
-                    </Select>
+                <div className="space-y-3">
+                  <Label className="text-xs text-muted-foreground mb-1 block">Nə etməli? Birini seçin:</Label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {invoiceConditionRecipes.map(recipe => {
+                      const isSelected = newStepConfig._recipe === recipe.id
+                      return (
+                        <button
+                          key={recipe.id}
+                          type="button"
+                          onClick={() => setNewStepConfig({
+                            _recipe: recipe.id,
+                            field: recipe.field,
+                            operator: recipe.operator,
+                            value: recipe.value,
+                            onTrue: recipe.onTrue,
+                            onFalse: recipe.onFalse,
+                          })}
+                          className={`flex flex-col items-center gap-1.5 p-3 rounded-lg border-2 text-xs transition-all text-center ${
+                            isSelected
+                              ? "border-primary bg-primary/5 text-primary shadow-sm"
+                              : "border-transparent bg-muted/40 text-muted-foreground hover:border-border hover:bg-muted/60"
+                          }`}
+                        >
+                          <span className="text-xl">{recipe.icon}</span>
+                          <span className="font-semibold leading-tight">{recipe.label}</span>
+                          <span className="text-[10px] opacity-60">{recipe.description}</span>
+                        </button>
+                      )
+                    })}
                   </div>
                 </div>
               )}
