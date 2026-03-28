@@ -60,101 +60,79 @@ function AutoScaledPanel({
   )
 }
 
-/* Three screens that rotate */
-const screens = [
-  { id: "invoices", component: InvoicePreview },
-  { id: "dashboard", component: DashboardPreview },
-  { id: "deals", component: DealPreview },
+/* Position presets for the 3 slots */
+const POSITIONS = {
+  left:   { left: "-2%",  right: "auto", width: "42%", zIndex: 1, height: 420 },
+  center: { left: "19%",  right: "auto", width: "62%", zIndex: 3, height: 520 },
+  right:  { left: "auto", right: "-2%",  width: "42%", zIndex: 1, height: 420 },
+} as const
+
+type Slot = "left" | "center" | "right"
+
+/* Each panel has an ID and always renders the same content */
+const PANELS = [
+  { id: "invoices",  Component: InvoicePreview },
+  { id: "dashboard", Component: DashboardPreview },
+  { id: "deals",     Component: DealPreview },
 ]
 
 /**
- * HeroPanels — clickable overlapping panels.
- * Click a side panel → it becomes the center panel.
+ * HeroPanels — three panels that smoothly animate between positions.
+ * Click a side panel → it slides to center, center slides to its spot.
  */
 function HeroPanels() {
   const wrapRef = useRef<HTMLDivElement>(null)
-  const leftRef = useRef<HTMLDivElement>(null)
-  const centerRef = useRef<HTMLDivElement>(null)
-  const rightRef = useRef<HTMLDivElement>(null)
+  const panelRefs = [useRef<HTMLDivElement>(null), useRef<HTMLDivElement>(null), useRef<HTMLDivElement>(null)]
   const [ready, setReady] = useState(false)
-  const [order, setOrder] = useState([0, 1, 2]) // [left, center, right] indices into screens
+  // Which slot each panel occupies: slots[0] = slot of panel 0, etc.
+  const [slots, setSlots] = useState<Slot[]>(["left", "center", "right"])
 
+  // Apply wrap styles once
   useEffect(() => {
     const wrap = wrapRef.current
-    const left = leftRef.current
-    const center = centerRef.current
-    const right = rightRef.current
-    if (!wrap || !left || !center || !right) return
-
+    if (!wrap) return
     Object.assign(wrap.style, {
       position: "relative",
       height: "520px",
       display: "block",
     })
-    Object.assign(left.style, {
-      position: "absolute",
-      width: "42%",
-      left: "-2%",
-      bottom: "0",
-      zIndex: "1",
-      cursor: "pointer",
-      transition: "transform 0.15s ease",
-    })
-    Object.assign(center.style, {
-      position: "absolute",
-      width: "62%",
-      left: "19%",
-      bottom: "0",
-      zIndex: "3",
-    })
-    Object.assign(right.style, {
-      position: "absolute",
-      width: "42%",
-      right: "-2%",
-      bottom: "0",
-      zIndex: "1",
-      cursor: "pointer",
-      transition: "transform 0.15s ease",
-    })
-
-    // Hover effect on side panels
-    const addHover = (el: HTMLElement) => {
-      el.addEventListener("mouseenter", () => { el.style.transform = "scale(1.02)" })
-      el.addEventListener("mouseleave", () => { el.style.transform = "scale(1)" })
-    }
-    addHover(left)
-    addHover(right)
-
     setReady(true)
   }, [])
 
-  // Re-apply z-index and cursor after order changes
+  // Apply position styles to each panel whenever slots change
   useEffect(() => {
-    const left = leftRef.current
-    const center = centerRef.current
-    const right = rightRef.current
-    if (!left || !center || !right) return
-    left.style.zIndex = "1"
-    left.style.cursor = "pointer"
-    center.style.zIndex = "3"
-    center.style.cursor = "default"
-    right.style.zIndex = "1"
-    right.style.cursor = "pointer"
-  }, [order])
+    panelRefs.forEach((ref, i) => {
+      const el = ref.current
+      if (!el) return
+      const pos = POSITIONS[slots[i]]
+      Object.assign(el.style, {
+        position: "absolute",
+        bottom: "0",
+        transition: "left 0.5s ease, right 0.5s ease, width 0.5s ease, z-index 0.3s ease",
+        left: pos.left,
+        right: pos.right,
+        width: pos.width,
+        zIndex: String(pos.zIndex),
+        cursor: slots[i] === "center" ? "default" : "pointer",
+      })
+    })
+  }, [slots])
 
-  const handleClickLeft = () => {
-    // Left becomes center: [right, left, center] → rotate
-    setOrder(([l, c, r]) => [r, l, c])
+  const handleClick = (panelIndex: number) => {
+    const clickedSlot = slots[panelIndex]
+    if (clickedSlot === "center") return // already center
+
+    // Find which panel is in center
+    const centerPanelIndex = slots.indexOf("center")
+
+    // Swap: clicked panel goes to center, center panel goes to clicked's old slot
+    setSlots(prev => {
+      const next = [...prev] as Slot[]
+      next[panelIndex] = "center"
+      next[centerPanelIndex] = clickedSlot
+      return next
+    })
   }
-
-  const handleClickRight = () => {
-    // Right becomes center: [center, right, left] → rotate
-    setOrder(([l, c, r]) => [c, r, l])
-  }
-
-  const LeftComponent = screens[order[0]].component
-  const CenterComponent = screens[order[1]].component
-  const RightComponent = screens[order[2]].component
 
   return (
     <div
@@ -162,21 +140,17 @@ function HeroPanels() {
       className="hidden lg:block"
       style={{ opacity: ready ? 1 : 0, transition: "opacity 0.3s" }}
     >
-      <div ref={leftRef} onClick={handleClickLeft}>
-        <AutoScaledPanel height={420} baseWidth={750}>
-          <LeftComponent />
-        </AutoScaledPanel>
-      </div>
-      <div ref={centerRef}>
-        <AutoScaledPanel height={520} baseWidth={1000}>
-          <CenterComponent />
-        </AutoScaledPanel>
-      </div>
-      <div ref={rightRef} onClick={handleClickRight}>
-        <AutoScaledPanel height={420} baseWidth={750}>
-          <RightComponent />
-        </AutoScaledPanel>
-      </div>
+      {PANELS.map((panel, i) => (
+        <div
+          key={panel.id}
+          ref={panelRefs[i]}
+          onClick={() => handleClick(i)}
+        >
+          <AutoScaledPanel height={POSITIONS[slots[i]].height} baseWidth={1000}>
+            <panel.Component />
+          </AutoScaledPanel>
+        </div>
+      ))}
     </div>
   )
 }
