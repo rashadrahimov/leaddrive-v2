@@ -42,6 +42,17 @@ export async function GET(req: NextRequest) {
       wonDealsAll,
       dealsForForecast,
       atRiskDeals,
+      activeLeadsCount,
+      leadsBySource,
+      topScoredLeads,
+      recentDealsList,
+      activeCampaigns,
+      upcomingEvents,
+      weekLeads,
+      weekTickets,
+      slaResolvedOnTime,
+      slaResolvedTotal,
+      ticketsWithResponse,
     ] = await Promise.all([
       // Companies
       prisma.company.count({ where: { organizationId: orgId, category: "client" } }),
@@ -92,6 +103,62 @@ export async function GET(req: NextRequest) {
       prisma.deal.findMany({
         where: { organizationId: orgId },
         select: { valueAmount: true, stage: true, createdAt: true, updatedAt: true },
+      }),
+      // Active leads
+      prisma.lead.count({ where: { organizationId: orgId, status: { notIn: ["converted", "lost"] } } }),
+      // Leads by source
+      prisma.lead.groupBy({ by: ["source"], where: { organizationId: orgId }, _count: true }),
+      // Top scored leads
+      prisma.lead.findMany({
+        where: { organizationId: orgId },
+        orderBy: { score: "desc" },
+        take: 5,
+        select: { id: true, contactName: true, companyName: true, score: true, source: true },
+      }),
+      // Recent deals
+      prisma.deal.findMany({
+        where: { organizationId: orgId },
+        orderBy: { createdAt: "desc" },
+        take: 5,
+        select: { id: true, name: true, valueAmount: true, currency: true, stage: true, company: { select: { name: true } } },
+      }),
+      // Active campaigns
+      prisma.campaign.findMany({
+        where: { organizationId: orgId, status: "active" },
+        take: 4,
+        select: { id: true, name: true, sentCount: true, openRate: true, clickRate: true },
+      }),
+      // Upcoming events
+      prisma.event.findMany({
+        where: { organizationId: orgId, startDate: { gte: now } },
+        orderBy: { startDate: "asc" },
+        take: 3,
+        select: { id: true, name: true, startDate: true, type: true, _count: { select: { registrations: true } } },
+      }),
+      // Week leads (last 7 days)
+      prisma.lead.findMany({
+        where: { organizationId: orgId, createdAt: { gte: new Date(now.getTime() - 7 * 86400000) } },
+        select: { createdAt: true },
+      }),
+      // Week tickets (last 7 days)
+      prisma.ticket.findMany({
+        where: { organizationId: orgId, createdAt: { gte: new Date(now.getTime() - 7 * 86400000) } },
+        select: { createdAt: true },
+      }),
+      // SLA resolved on time
+      prisma.ticket.count({
+        where: { organizationId: orgId, resolvedAt: { not: null }, slaDueAt: { not: null } },
+      }),
+      // SLA resolved total
+      prisma.ticket.count({
+        where: { organizationId: orgId, resolvedAt: { not: null } },
+      }),
+      // Tickets with first response
+      prisma.ticket.findMany({
+        where: { organizationId: orgId, firstResponseAt: { not: null } },
+        select: { createdAt: true, firstResponseAt: true },
+        take: 100,
+        orderBy: { createdAt: "desc" },
       }),
       // At-risk deals (low confidence, active)
       prisma.deal.findMany({
@@ -162,6 +229,36 @@ export async function GET(req: NextRequest) {
 
     if (risks.length === 0)
       risks.push({ severity: "ok", title: "Hər şey qaydasındadır", description: "Kritik problem aşkar edilmədi", metric: "✓" })
+
+    // Weekly metrics computation
+    const sevenDaysAgo = new Date(now.getTime() - 7 * 86400000)
+    const leadsPerDay = Array(7).fill(0)
+    const ticketsPerDay = Array(7).fill(0)
+    for (const l of weekLeads as any[]) {
+      const dayIdx = 6 - Math.floor((now.getTime() - new Date(l.createdAt).getTime()) / 86400000)
+      if (dayIdx >= 0 && dayIdx < 7) leadsPerDay[dayIdx]++
+    }
+    for (const t of weekTickets as any[]) {
+      const dayIdx = 6 - Math.floor((now.getTime() - new Date(t.createdAt).getTime()) / 86400000)
+      if (dayIdx >= 0 && dayIdx < 7) ticketsPerDay[dayIdx]++
+    }
+    const slaCompliance = (slaResolvedTotal as number) > 0
+      ? Math.round(((slaResolvedOnTime as number) / (slaResolvedTotal as number)) * 100)
+      : 0
+    const csatVal = csatAgg._avg.satisfactionRating || 0
+    let avgResponseHours = 0
+    const respTickets = ticketsWithResponse as any[]
+    if (respTickets.length > 0) {
+      const totalMs = respTickets.reduce((s: number, t: any) => {
+        return s + (new Date(t.firstResponseAt).getTime() - new Date(t.createdAt).getTime())
+      }, 0)
+      avgResponseHours = Math.round(totalMs / respTickets.length / 3600000)
+    }
+
+    // Pipeline conversion rate
+    const totalDealsEver = (dealsByStage as any[]).reduce((s: number, d: any) => s + d._count, 0)
+    const wonDealsCount2 = (dealsByStage as any[]).find((d: any) => d.stage === "WON")?._count || 0
+    const pipelineConversionRate = totalDealsEver > 0 ? Math.round((wonDealsCount2 / totalDealsEver) * 100) : 0
 
     const totalUsers = companiesAgg._sum.userCount || 0
 
@@ -247,6 +344,11 @@ export async function GET(req: NextRequest) {
           wonThisMonth,
           wonValue: wonValueAgg._sum.valueAmount || 0,
           lostThisMonth,
+          conversionRate: pipelineConversionRate,
+          recentDeals: (recentDealsList as any[]).map((d: any) => ({
+            id: d.id, name: d.name, valueAmount: d.valueAmount, currency: d.currency, stage: d.stage,
+            company: d.company,
+          })),
         },
         leads: {
           byTemperature: leadsByTemp.map((t: any) => ({
@@ -254,7 +356,10 @@ export async function GET(req: NextRequest) {
           })),
           funnel: leadFunnelData,
           total: totalLeadCount,
+          activeCount: activeLeadsCount,
           conversionRate: leadConversionRate,
+          bySource: leadsBySource,
+          topScored: topScoredLeads,
         },
         financialOverview: {
           wonDealsRevenue,
@@ -288,6 +393,19 @@ export async function GET(req: NextRequest) {
           count30d: activityCount30d,
         },
         risks,
+        campaigns: (activeCampaigns as any[]).map((c: any) => ({
+          id: c.id, name: c.name, sent: c.sentCount || 0, openRate: c.openRate || 0, clickRate: c.clickRate || 0,
+        })),
+        events: (upcomingEvents as any[]).map((e: any) => ({
+          id: e.id, name: e.name, date: e.startDate, type: e.type, registered: e._count?.registrations || 0,
+        })),
+        weeklyMetrics: {
+          leadsPerDay,
+          ticketsPerDay,
+          slaCompliance,
+          csat: csatVal,
+          avgResponseHours,
+        },
         atRiskDeals: atRiskList.slice(0, 5).map((d: any) => ({
           id: d.id, name: d.name, value: d.valueAmount, currency: d.currency,
           stage: d.stage, predictive: d.predictive, probability: d.probability,

@@ -14,6 +14,13 @@ const DEFAULT_WIDGETS: Record<string, { enabled: boolean; roles: string[] }> = {
   taskSummary: { enabled: true, roles: [...ALL_ROLES] },
   ticketSummary: { enabled: true, roles: [...ALL_ROLES] },
   leadFunnel: { enabled: true, roles: [...ALL_ROLES] },
+  leadSources: { enabled: true, roles: [...ALL_ROLES] },
+  revenueTrend: { enabled: true, roles: [...ALL_ROLES] },
+  recentDeals: { enabled: true, roles: [...ALL_ROLES] },
+  aiLeadScoring: { enabled: true, roles: [...ALL_ROLES] },
+  campaignStats: { enabled: true, roles: [...ALL_ROLES] },
+  upcomingEvents: { enabled: true, roles: [...ALL_ROLES] },
+  weeklyMetrics: { enabled: true, roles: [...ALL_ROLES] },
 }
 
 export async function GET(req: NextRequest) {
