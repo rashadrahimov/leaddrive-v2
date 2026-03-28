@@ -499,6 +499,7 @@ export default function InvoiceDetailPage() {
     { value: "continue", label: "Növbəti addıma keç" },
     { value: "skip_next", label: "1 addımı keç" },
     { value: "skip_2", label: "2 addımı keç" },
+    { value: "restart", label: "Əvvəldən başla (dövr)" },
     { value: "stop", label: "Zənciri dayandır" },
   ]
 

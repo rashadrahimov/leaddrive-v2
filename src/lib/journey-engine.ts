@@ -352,11 +352,23 @@ export async function processEnrollmentStep(enrollmentId: string, orgId: string)
         const field = config.field || ""
         const operator = config.operator || "equals"
         const value = config.value || ""
-        const onFalse = config.onFalse || "continue" // continue | skip_next | skip_2 | stop
+        const onFalse = config.onFalse || "continue" // continue | skip_next | skip_2 | stop | restart
         let fieldValue = ""
 
-        // Get field value from lead or contact
-        if (leadId) {
+        // Get field value — check invoice first, then lead/contact
+        if (field.startsWith("invoice_") || field === "balance_due") {
+          // Invoice-specific fields
+          if (invoiceId) {
+            const inv = await prisma.invoice.findUnique({
+              where: { id: invoiceId },
+              select: { status: true, balanceDue: true, totalAmount: true },
+            })
+            if (inv) {
+              if (field === "invoice_status") fieldValue = inv.status || ""
+              else if (field === "balance_due") fieldValue = String(inv.balanceDue || 0)
+            }
+          }
+        } else if (leadId) {
           const lead = await prisma.lead.findUnique({ where: { id: leadId } })
           if (lead) fieldValue = String((lead as any)[field] || "")
         } else if (contactId) {
@@ -393,6 +405,25 @@ export async function processEnrollmentStep(enrollmentId: string, orgId: string)
               stepType: "condition",
               status: "completed",
               message: `Condition FALSE → Journey stopped. ${field} ${operator} ${value || ""} (value: "${fieldValue}")`,
+            }
+          }
+
+          if (onFalse === "restart") {
+            // Restart from step 1 (loop)
+            const firstStep = journey.steps.find((s: any) => s.stepOrder === 1)
+            if (firstStep) {
+              await prisma.journeyStep.update({ where: { id: currentStep.id }, data: { statsCompleted: { increment: 1 } } })
+              await prisma.journeyEnrollment.update({
+                where: { id: enrollmentId },
+                data: { currentStepId: firstStep.id, nextActionAt: new Date() },
+              })
+              await prisma.journeyStep.update({ where: { id: firstStep.id }, data: { statsEntered: { increment: 1 } } })
+              return {
+                stepId: currentStep.id,
+                stepType: "condition",
+                status: "completed",
+                message: `Condition FALSE → Restarting from step 1. ${field} ${operator} ${value || ""} (value: "${fieldValue}")`,
+              }
             }
           }
 
