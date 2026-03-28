@@ -438,7 +438,16 @@ export default function InvoiceDetailPage() {
     setChainError("")
     try {
       const res = await fetch(`/api/v1/invoices/${invoiceId}/chain`, { headers })
+      if (res.redirected || res.url.includes("/login")) {
+        window.location.href = "/login"
+        return
+      }
       if (res.ok) {
+        const ct = res.headers.get("content-type") || ""
+        if (!ct.includes("application/json")) {
+          setChainError("Sessiya bitib. Səhifəni yeniləyin.")
+          return
+        }
         const json = await res.json()
         setChainData(json.data)
         if (json.data?.journey?.steps) {
@@ -497,6 +506,14 @@ export default function InvoiceDetailPage() {
         headers,
         body: JSON.stringify({ action: "setup" }),
       })
+      if (res.redirected || res.url.includes("/login")) {
+        window.location.href = "/login"
+        return
+      }
+      const ct = res.headers.get("content-type") || ""
+      if (!ct.includes("application/json")) {
+        throw new Error("Sessiya bitib. Səhifəni yeniləyin.")
+      }
       const json = await res.json()
       if (!res.ok) throw new Error(json.error || "Failed to setup chain")
       setChainData(json.data)
@@ -538,6 +555,14 @@ export default function InvoiceDetailPage() {
         headers,
         body: JSON.stringify({ action: "start" }),
       })
+      if (res.redirected || res.url.includes("/login")) {
+        window.location.href = "/login"
+        return
+      }
+      const ct = res.headers.get("content-type") || ""
+      if (!ct.includes("application/json")) {
+        throw new Error("Sessiya bitib. Səhifəni yeniləyin.")
+      }
       const json = await res.json()
       if (!res.ok) throw new Error(json.error || "Failed to start chain")
       await fetchChain()
