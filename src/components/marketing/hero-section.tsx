@@ -10,7 +10,6 @@ import { DealPreview } from "./deal-preview"
 /**
  * AutoScaledPanel — measures its own width and scales content to fit.
  * baseWidth controls the "design width" of the content inside.
- * Smaller baseWidth = larger rendered content (more readable).
  */
 function AutoScaledPanel({
   children,
@@ -61,16 +60,79 @@ function AutoScaledPanel({
   )
 }
 
-/* CSS for hero panels — avoids Tailwind v4 @layer position override bug */
-const heroPanelCSS = `
-  .hero-panels-wrap { display: none; position: relative; height: 520px; }
-  @media (min-width: 1024px) { .hero-panels-wrap { display: block; } }
-  .hero-p-left { position: absolute; width: 42%; left: -2%; bottom: 0; z-index: 1; }
-  .hero-p-center { position: absolute; width: 62%; left: 19%; bottom: 0; z-index: 3; }
-  .hero-p-right { position: absolute; width: 42%; right: -2%; bottom: 0; z-index: 1; }
-  .hero-mobile-wrap { display: block; padding: 0 1rem; }
-  @media (min-width: 1024px) { .hero-mobile-wrap { display: none; } }
-`
+/**
+ * HeroPanels — uses useEffect to apply styles via JS
+ * because Tailwind v4 CSS layers override both inline styles
+ * and <style> tags for position/width properties.
+ */
+function HeroPanels() {
+  const wrapRef = useRef<HTMLDivElement>(null)
+  const leftRef = useRef<HTMLDivElement>(null)
+  const centerRef = useRef<HTMLDivElement>(null)
+  const rightRef = useRef<HTMLDivElement>(null)
+  const [ready, setReady] = useState(false)
+
+  useEffect(() => {
+    const wrap = wrapRef.current
+    const left = leftRef.current
+    const center = centerRef.current
+    const right = rightRef.current
+    if (!wrap || !left || !center || !right) return
+
+    // Apply styles via JS to bypass Tailwind v4 CSS layer override
+    Object.assign(wrap.style, {
+      position: "relative",
+      height: "520px",
+      display: "block",
+    })
+    Object.assign(left.style, {
+      position: "absolute",
+      width: "42%",
+      left: "-2%",
+      bottom: "0",
+      zIndex: "1",
+    })
+    Object.assign(center.style, {
+      position: "absolute",
+      width: "62%",
+      left: "19%",
+      bottom: "0",
+      zIndex: "3",
+    })
+    Object.assign(right.style, {
+      position: "absolute",
+      width: "42%",
+      right: "-2%",
+      bottom: "0",
+      zIndex: "1",
+    })
+    setReady(true)
+  }, [])
+
+  return (
+    <div
+      ref={wrapRef}
+      className="hidden lg:block"
+      style={{ opacity: ready ? 1 : 0, transition: "opacity 0.3s" }}
+    >
+      <div ref={leftRef}>
+        <AutoScaledPanel height={420} baseWidth={750}>
+          <InvoicePreview />
+        </AutoScaledPanel>
+      </div>
+      <div ref={centerRef}>
+        <AutoScaledPanel height={520} baseWidth={1000}>
+          <DashboardPreview />
+        </AutoScaledPanel>
+      </div>
+      <div ref={rightRef}>
+        <AutoScaledPanel height={420} baseWidth={750}>
+          <DealPreview />
+        </AutoScaledPanel>
+      </div>
+    </div>
+  )
+}
 
 export function HeroSection() {
   return (
@@ -128,27 +190,11 @@ export function HeroSection() {
       </div>
 
       {/* ─── Creatio-style overlapping panels ─── */}
-      <style dangerouslySetInnerHTML={{ __html: heroPanelCSS }} />
       <div className="mt-12 lg:mt-16">
-        <div className="hero-panels-wrap">
-          <div className="hero-p-left">
-            <AutoScaledPanel height={420} baseWidth={750}>
-              <InvoicePreview />
-            </AutoScaledPanel>
-          </div>
-          <div className="hero-p-center">
-            <AutoScaledPanel height={520} baseWidth={1000}>
-              <DashboardPreview />
-            </AutoScaledPanel>
-          </div>
-          <div className="hero-p-right">
-            <AutoScaledPanel height={420} baseWidth={750}>
-              <DealPreview />
-            </AutoScaledPanel>
-          </div>
-        </div>
+        <HeroPanels />
 
-        <div className="hero-mobile-wrap">
+        {/* Mobile — single panel */}
+        <div className="lg:hidden px-4">
           <div className="mx-auto" style={{ maxWidth: 500 }}>
             <AutoScaledPanel height={380}>
               <DashboardPreview />
