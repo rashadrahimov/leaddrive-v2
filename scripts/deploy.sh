@@ -31,7 +31,7 @@ ok "Pushed"
 
 # ─── Step 3: Build on server ───
 step 3 "Building on server..."
-ssh -o ConnectTimeout=10 root@$SERVER "cd $APP_DIR && git pull origin main && npx prisma generate 2>&1 | tail -2 && NODE_OPTIONS='--max-old-space-size=1536' ./node_modules/.bin/next build --webpack 2>&1 | tail -5 && cp -r .next/static .next/standalone/.next/static 2>/dev/null; cp -r .next/static .next/standalone/leaddrive-v2/.next/static 2>/dev/null"
+ssh -o ConnectTimeout=10 root@$SERVER "cd $APP_DIR && git pull origin main && npx prisma generate 2>&1 | tail -2 && NODE_OPTIONS='--max-old-space-size=1536' ./node_modules/.bin/next build --webpack 2>&1 | tail -5 && cp -r .next/static .next/standalone/.next/static 2>/dev/null; cp -r .next/static .next/standalone/leaddrive-v2/.next/static 2>/dev/null; cp -r node_modules/.prisma .next/standalone/node_modules/.prisma 2>/dev/null; cp -r node_modules/@prisma .next/standalone/node_modules/@prisma 2>/dev/null"
 ok "Built"
 
 # ─── Step 4: Restart ───

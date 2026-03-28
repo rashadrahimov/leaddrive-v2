@@ -8,17 +8,18 @@ import { InvoicePreview } from "./invoice-preview"
 import { DealPreview } from "./deal-preview"
 
 /**
- * AutoScaledPanel — measures its own width and scales 1000px content to fit.
- * No browser chrome — just the raw UI panel with rounded corners and shadow.
+ * AutoScaledPanel — measures its own width and scales content to fit.
+ * baseWidth controls the "design width" of the content inside.
+ * Smaller baseWidth = larger rendered content (more readable).
  */
 function AutoScaledPanel({
   children,
   height,
-  className,
+  baseWidth = 1000,
 }: {
   children: React.ReactNode
   height: number
-  className?: string
+  baseWidth?: number
 }) {
   const ref = useRef<HTMLDivElement>(null)
   const [scale, setScale] = useState(0.5)
@@ -28,35 +29,48 @@ function AutoScaledPanel({
     if (!el) return
     const measure = () => {
       const w = el.offsetWidth
-      if (w > 0) setScale(w / 1000)
+      if (w > 0) setScale(w / baseWidth)
     }
     measure()
     const ro = new ResizeObserver(measure)
     ro.observe(el)
     return () => ro.disconnect()
-  }, [])
+  }, [baseWidth])
 
   return (
     <div
       ref={ref}
-      className={className}
       style={{
         height,
         borderRadius: 16,
         overflow: "hidden",
         boxShadow:
-          "0 25px 50px -12px rgba(0,0,0,0.25), 0 12px 24px -8px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,0,0,0.06)",
+          "0 25px 60px -10px rgba(0,0,0,0.3), 0 12px 28px -6px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.06)",
       }}
     >
       <div
-        className="origin-top-left"
-        style={{ width: 1000, transform: `scale(${scale})` }}
+        style={{
+          width: baseWidth,
+          transform: `scale(${scale})`,
+          transformOrigin: "top left",
+        }}
       >
         {children}
       </div>
     </div>
   )
 }
+
+/* CSS for hero panels — avoids Tailwind v4 @layer position override bug */
+const heroPanelCSS = `
+  .hero-panels-wrap { display: none; position: relative; height: 520px; }
+  @media (min-width: 1024px) { .hero-panels-wrap { display: block; } }
+  .hero-p-left { position: absolute; width: 42%; left: -2%; bottom: 0; z-index: 1; }
+  .hero-p-center { position: absolute; width: 62%; left: 19%; bottom: 0; z-index: 3; }
+  .hero-p-right { position: absolute; width: 42%; right: -2%; bottom: 0; z-index: 1; }
+  .hero-mobile-wrap { display: block; padding: 0 1rem; }
+  @media (min-width: 1024px) { .hero-mobile-wrap { display: none; } }
+`
 
 export function HeroSection() {
   return (
@@ -113,58 +127,28 @@ export function HeroSection() {
         </div>
       </div>
 
-      {/* ─── Creatio-exact: center 58%, sides 38%, overlap 20% ─── */}
-      <div className="mt-12 lg:mt-16 relative">
-        {/* Desktop — Creatio proportions: center dominates, sides peek from behind */}
-        <div className="hidden lg:block" style={{ height: 620, position: "relative" }}>
-          {/* Left panel — 38% width, starts ~3% from left edge, behind center */}
-          <div
-            style={{
-              position: "absolute",
-              width: "38%",
-              left: "3%",
-              bottom: 0,
-              zIndex: 1,
-            }}
-          >
-            <AutoScaledPanel height={560}>
+      {/* ─── Creatio-style overlapping panels ─── */}
+      <style dangerouslySetInnerHTML={{ __html: heroPanelCSS }} />
+      <div className="mt-12 lg:mt-16">
+        <div className="hero-panels-wrap">
+          <div className="hero-p-left">
+            <AutoScaledPanel height={420} baseWidth={750}>
               <InvoicePreview />
             </AutoScaledPanel>
           </div>
-
-          {/* Center panel — 58% width, centered, on top */}
-          <div
-            style={{
-              position: "absolute",
-              width: "58%",
-              left: "21%",
-              bottom: 0,
-              zIndex: 3,
-            }}
-          >
-            <AutoScaledPanel height={620}>
+          <div className="hero-p-center">
+            <AutoScaledPanel height={520} baseWidth={1000}>
               <DashboardPreview />
             </AutoScaledPanel>
           </div>
-
-          {/* Right panel — 38% width, ends ~3% from right edge, behind center */}
-          <div
-            style={{
-              position: "absolute",
-              width: "38%",
-              right: "3%",
-              bottom: 0,
-              zIndex: 1,
-            }}
-          >
-            <AutoScaledPanel height={560}>
+          <div className="hero-p-right">
+            <AutoScaledPanel height={420} baseWidth={750}>
               <DealPreview />
             </AutoScaledPanel>
           </div>
         </div>
 
-        {/* Mobile — single panel */}
-        <div className="lg:hidden px-4">
+        <div className="hero-mobile-wrap">
           <div className="mx-auto" style={{ maxWidth: 500 }}>
             <AutoScaledPanel height={380}>
               <DashboardPreview />

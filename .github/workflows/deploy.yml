@@ -29,6 +29,8 @@ jobs:
             NODE_OPTIONS='--max-old-space-size=1536' ./node_modules/.bin/next build --webpack 2>&1 | tail -10 && \
             cp -r .next/static .next/standalone/.next/static 2>/dev/null; \
             cp -r .next/static .next/standalone/leaddrive-v2/.next/static 2>/dev/null; \
+            cp -r node_modules/.prisma .next/standalone/node_modules/.prisma 2>/dev/null; \
+            cp -r node_modules/@prisma .next/standalone/node_modules/@prisma 2>/dev/null; \
             pm2 delete leaddrive-v2 2>/dev/null; \
             pm2 start /tmp/start-leaddrive.sh --name leaddrive-v2 && \
             sleep 3 && \
