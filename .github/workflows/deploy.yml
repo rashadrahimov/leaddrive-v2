@@ -7,46 +7,11 @@ on:
       - "**.md"
 
 jobs:
-  build-and-deploy:
+  deploy:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 10
 
     steps:
-      - name: Setup build directory (match server path)
-        run: sudo mkdir -p /opt/leaddrive-v2
-
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          path: /opt/leaddrive-v2
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-
-      - name: Install dependencies
-        working-directory: /opt/leaddrive-v2
-        run: npm install
-
-      - name: Generate Prisma client
-        working-directory: /opt/leaddrive-v2
-        run: npx prisma generate
-
-      - name: Build (webpack for standalone)
-        working-directory: /opt/leaddrive-v2
-        env:
-          NEXTAUTH_SECRET: build-placeholder
-          NEXTAUTH_URL: https://v2.leaddrivecrm.org
-          DATABASE_URL: postgresql://placeholder:placeholder@localhost:5432/placeholder
-        run: npx next build --webpack
-
-      - name: Copy static files into standalone
-        working-directory: /opt/leaddrive-v2
-        run: |
-          cp -r .next/static .next/standalone/leaddrive-v2/.next/static 2>/dev/null || true
-          cp -r .next/static .next/standalone/.next/static 2>/dev/null || true
-
       - name: Setup SSH
         run: |
           mkdir -p ~/.ssh
@@ -54,36 +19,17 @@ jobs:
           chmod 600 ~/.ssh/id_deploy
           ssh-keyscan -H ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts 2>/dev/null
 
-      - name: Deploy standalone to server
-        working-directory: /opt/leaddrive-v2
-        run: |
-          rsync -az --delete \
-            -e "ssh -i ~/.ssh/id_deploy" \
-            .next/standalone/ \
-            root@${{ secrets.SERVER_IP }}:/opt/leaddrive-v2/.next/standalone/
-
-      - name: Deploy static files
-        working-directory: /opt/leaddrive-v2
-        run: |
-          rsync -az --delete \
-            -e "ssh -i ~/.ssh/id_deploy" \
-            .next/static/ \
-            root@${{ secrets.SERVER_IP }}:/opt/leaddrive-v2/.next/static/
-
-      - name: Copy static into standalone + run migrations
+      - name: Deploy
         run: |
           ssh -i ~/.ssh/id_deploy root@${{ secrets.SERVER_IP }} "\
-            cp -r /opt/leaddrive-v2/.next/static /opt/leaddrive-v2/.next/standalone/leaddrive-v2/.next/static 2>/dev/null; \
-            cp -r /opt/leaddrive-v2/.next/static /opt/leaddrive-v2/.next/standalone/.next/static 2>/dev/null; \
-            cd /opt/leaddrive-v2 && git pull origin main && \
+            cd /opt/leaddrive-v2 && \
+            git pull origin main && \
             npx prisma generate 2>&1 | tail -2 && \
-            npx prisma migrate deploy 2>&1 | tail -2 || true"
-
-      - name: Restart PM2 + health check
-        run: |
-          ssh -i ~/.ssh/id_deploy root@${{ secrets.SERVER_IP }} "\
+            npx prisma migrate deploy 2>&1 | tail -2 || true && \
+            NODE_OPTIONS='--max-old-space-size=1536' ./node_modules/.bin/next build --webpack 2>&1 | tail -10 && \
+            cp -r .next/static .next/standalone/.next/static 2>/dev/null; \
+            cp -r .next/static .next/standalone/leaddrive-v2/.next/static 2>/dev/null; \
             pm2 delete leaddrive-v2 2>/dev/null; \
-            pm2 start /tmp/start-leaddrive.sh --name leaddrive-v2 && sleep 4 && \
-            HTTP=\$(curl -s -o /dev/null -w '%{http_code}' http://localhost:3001) && \
-            echo \"Health check: HTTP \$HTTP\" && \
-            [ \"\$HTTP\" != \"000\" ] || exit 1"
+            pm2 start /tmp/start-leaddrive.sh --name leaddrive-v2 && \
+            sleep 3 && \
+            curl -sf http://localhost:3001 -o /dev/null && echo 'Health check OK' || echo 'Health check FAILED'"
