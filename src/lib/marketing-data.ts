@@ -8,10 +8,10 @@ import {
 
 /* ────────────────────── STATS ────────────────────── */
 export const stats = [
-  { value: 500, label: "Müştəri", suffix: "+" },
-  { value: 12000, label: "İstifadəçi", suffix: "+" },
-  { value: 63, label: "Modul", suffix: "+" },
-  { value: 7, label: "Kanal", suffix: "" },
+  { value: 128, label: "Funksiya", suffix: "+" },
+  { value: 16, label: "AI inteqrasiya", suffix: "" },
+  { value: 7, label: "Kommunikasiya kanalı", suffix: "" },
+  { value: 63, label: "Səhifə", suffix: "+" },
 ]
 
 /* ────────────────────── PAIN / SOLUTION ────────────────────── */
@@ -271,6 +271,76 @@ export const testimonials = [
     company: "Nexus Konsaltinq",
     rating: 5,
   },
+]
+
+/* ────────────────────── FEATURE CARDS (Bento Grid) ────────────────────── */
+export type FeatureCard = {
+  id: string
+  title: string
+  description: string
+  icon: typeof BarChart3
+  features: string[]
+  colSpan?: number
+}
+
+export const featureCards: FeatureCard[] = [
+  {
+    id: "crm",
+    title: "CRM & Satış",
+    description: "Liddən sövdələşmənin bağlanmasına qədər tam satış dövrü. Pipeline, skorinq və tapşırıqlar.",
+    icon: Users,
+    features: ["Pipeline vizuallaşdırması", "Lid skorinqi (A–F)", "Sövdələşmə izləməsi", "Tapşırıqlar və Təqvim"],
+    colSpan: 2,
+  },
+  {
+    id: "marketing",
+    title: "Marketinq",
+    description: "Kampaniya avtomatlaşdırması, e-poçt ardıcıllıqları və ROI izləməsi.",
+    icon: Megaphone,
+    features: ["Kampaniya meneceri", "E-poçt şablonları", "Marşrut qurucusu", "Seqmentasiya"],
+    colSpan: 1,
+  },
+  {
+    id: "inbox",
+    title: "7-Kanal Gələn Qutusu",
+    description: "E-poçt, SMS, Telegram, WhatsApp, Facebook, Instagram, VK — vahid qutu.",
+    icon: Inbox,
+    features: ["Vahid gələn qutusu", "Real-vaxt mesajlaşma", "AI cavablar"],
+    colSpan: 1,
+  },
+  {
+    id: "support",
+    title: "Dəstək",
+    description: "SLA, tiketlər, bilik bazası və müştəri özünə-xidmət portalı.",
+    icon: Headphones,
+    features: ["Tiket idarəsi", "SLA siyasətləri", "Bilik bazası"],
+    colSpan: 1,
+  },
+  {
+    id: "finance",
+    title: "Maliyyə & Analitika",
+    description: "Xərc modeli, büdcələşdirmə, P&L və gəlirlilik analizi.",
+    icon: LineChart,
+    features: ["Xərc modeli mühərriki", "Büdcələşdirmə & P&L", "Dinamik qiymətləndirmə"],
+    colSpan: 1,
+  },
+  {
+    id: "ai",
+    title: "Maestro AI",
+    description: "Daxili süni intellekt: hiss təhlili, lid skorinqi, e-poçt yaratma, avtomatik cavablar və analitika.",
+    icon: Bot,
+    features: ["AI lid skorinqi", "AI e-poçt generasiyası", "AI müştəri xidməti", "AI analitika"],
+    colSpan: 3,
+  },
+]
+
+/* ────────────────────── AI CAPABILITIES ────────────────────── */
+export const aiCapabilities = [
+  { title: "Avtomatik cavablar", description: "WhatsApp, Telegram və E-poçtda müştəri sorğularına AI cavab", icon: MessageSquare },
+  { title: "Lid skorinqi", description: "Avtomatik A–F dərəcələndirmə və kvalifikasiya", icon: Target },
+  { title: "E-poçt generasiyası", description: "Peşəkar mesaj və təklif yaratma — bir kliklə", icon: Mail },
+  { title: "Gəlirlilik təhlili", description: "Xərc modelindən avtomatik büdcə və marja hesabatları", icon: LineChart },
+  { title: "Bilik bazası", description: "AI müştəri portalında sualları avtomatik cavablandırır", icon: BookOpen },
 ]
 
 /* ────────────────────── FAQ ────────────────────── */

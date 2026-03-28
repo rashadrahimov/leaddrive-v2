@@ -1,99 +1,136 @@
 "use client"
 
-import { motion } from "framer-motion"
+import { useRef, useState, useEffect, useCallback } from "react"
 import { SectionWrapper } from "./section-wrapper"
-import { MessageSquare, Bot, LayoutDashboard, Lightbulb, ArrowRight, Mail, Phone, Send } from "lucide-react"
+import { AnimateIn } from "./animate-in"
+import { AnimatedBeam } from "@/components/ui/animated-beam"
+import { aiCapabilities } from "@/lib/marketing-data"
+import { Bot, Target, Mail, LineChart, BookOpen, MessageSquare } from "lucide-react"
+import { cn } from "@/lib/utils"
 
-const flowSteps = [
-  { icon: MessageSquare, label: "Müştəri", sublabel: "WhatsApp · Telegram · E-poçt · SMS · FB · IG · VK", color: "#f59e0b" },
-  { icon: Bot, label: "Süni Zeka", sublabel: "Claude ilə AI cavab", color: "#7c3aed" },
-  { icon: LayoutDashboard, label: "CRM", sublabel: "Avto-zənginləşdirmə", color: "#F97316" },
-  { icon: Lightbulb, label: "Təhlillər", sublabel: "Fəaliyyətə keçin", color: "#ef4444" },
+const beamNodes = [
+  { icon: MessageSquare, label: "Cavablar", color: "text-amber-400" },
+  { icon: Target, label: "Skorinq", color: "text-violet-400" },
+  { icon: Mail, label: "E-poçt", color: "text-cyan-400" },
+  { icon: LineChart, label: "Analitika", color: "text-emerald-400" },
+  { icon: BookOpen, label: "Bilik", color: "text-rose-400" },
 ]
+
+function AiBeamVisual() {
+  const containerRef = useRef<HTMLDivElement>(null)
+  const centerRef = useRef<HTMLDivElement>(null)
+  const nodeRefs = useRef<(HTMLDivElement | null)[]>(new Array(beamNodes.length).fill(null))
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  const setNodeRef = useCallback((el: HTMLDivElement | null, i: number) => {
+    nodeRefs.current[i] = el
+  }, [])
+
+  return (
+    <div ref={containerRef} className="relative flex items-center justify-center min-h-[320px]">
+      {/* Center AI node with glow */}
+      <div className="absolute w-32 h-32 bg-violet-500/20 rounded-full blur-[60px]" />
+      <div
+        ref={centerRef}
+        className="relative z-10 flex h-20 w-20 items-center justify-center rounded-2xl border-2 border-violet-500/40 bg-slate-900 shadow-lg shadow-violet-500/20"
+      >
+        <Bot className="h-9 w-9 text-violet-400" />
+      </div>
+
+      {/* Surrounding nodes */}
+      {beamNodes.map((node, i) => {
+        const Icon = node.icon
+        const total = beamNodes.length
+        const angle = (i * 2 * Math.PI) / total - Math.PI / 2
+        const radius = 130
+
+        return (
+          <div
+            key={i}
+            ref={(el) => setNodeRef(el, i)}
+            className="absolute z-10 flex h-14 w-14 items-center justify-center rounded-xl border border-slate-700 bg-slate-800/80 backdrop-blur-sm shadow-lg shadow-slate-900/50"
+            style={{
+              left: `calc(50% + ${Math.cos(angle) * radius}px - 28px)`,
+              top: `calc(50% + ${Math.sin(angle) * radius}px - 28px)`,
+            }}
+          >
+            <div className="text-center">
+              <Icon className={cn("h-5 w-5 mx-auto", node.color)} />
+              <span className="text-[9px] font-medium text-slate-500 mt-0.5 block">{node.label}</span>
+            </div>
+          </div>
+        )
+      })}
+
+      {/* Animated beams */}
+      {mounted && beamNodes.map((_, i) => {
+        const fromEl = nodeRefs.current[i]
+        const centerEl = centerRef.current
+        const containerEl = containerRef.current
+        if (!fromEl || !centerEl || !containerEl) return null
+
+        return (
+          <AnimatedBeam
+            key={`beam-${i}`}
+            containerRef={containerRef as React.RefObject<HTMLElement>}
+            fromRef={{ current: fromEl } as React.RefObject<HTMLElement>}
+            toRef={centerRef as React.RefObject<HTMLElement>}
+            curvature={0}
+            duration={3 + i * 0.5}
+            delay={i * 0.4}
+            gradientStartColor="#8b5cf6"
+            gradientStopColor="#06b6d4"
+            pathColor="#334155"
+            pathOpacity={0.4}
+          />
+        )
+      })}
+    </div>
+  )
+}
 
 export function AiFlowDiagram() {
   return (
-    <SectionWrapper id="ai" variant="navy">
-      <div className="grid lg:grid-cols-2 gap-12 items-center">
+    <SectionWrapper id="ai" variant="gradient">
+      <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
         {/* Text */}
-        <motion.div
-          initial={{ opacity: 0, x: -24 }}
-          whileInView={{ opacity: 1, x: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5 }}
-        >
-          <h2 className="text-3xl lg:text-4xl font-bold text-white">
-            <span className="text-orange-400">Sizin üçün</span> işləyən süni intellekt,
-            <br />əksinə deyil
+        <AnimateIn>
+          <h2 className="text-3xl lg:text-4xl font-bold tracking-tight">
+            <span className="bg-gradient-to-r from-violet-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent">Maestro AI</span>
+            <br />
+            <span className="text-white">sizin üçün işləyir</span>
           </h2>
-          <p className="mt-6 text-slate-300 text-lg leading-relaxed">
-            Daxili Claude inteqrasiyası müştəri xidmətinizi, lid skorinqinizi
-            və biznes təhlillərinizi gücləndirir. Əlavə deyil. Əsasdır.
+          <p className="mt-4 text-lg text-slate-400 leading-relaxed">
+            Daxili Claude inteqrasiyası. Əlavə deyil — CRM-in əsasıdır.
+            Siz yuxuya gedəndə belə işləyir.
           </p>
-          <ul className="mt-6 space-y-3">
-            {[
-              "AI agentləri WhatsApp, Telegram və E-poçtda müştəri sorğularına avtomatik cavab verir",
-              "Avtomatik lid skorinqi (A-F) və kvalifikasiyası",
-              "AI ilə peşəkar e-poçt, mesaj və təklif generasiyası — bir kliklə göndərin",
-              "Xərc modelinizdən gəlirlilik və büdcə təhlilləri avtomatik yaradılır",
-            ].map((item, i) => (
-              <li key={i} className="flex items-start gap-3">
-                <div className="w-5 h-5 rounded-full bg-orange-500 flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                  </svg>
-                </div>
-                <span className="text-slate-300 text-sm">{item}</span>
-              </li>
-            ))}
-          </ul>
-        </motion.div>
 
-        {/* Flow diagram */}
-        <motion.div
-          initial={{ opacity: 0, x: 24 }}
-          whileInView={{ opacity: 1, x: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5 }}
-          className="flex flex-col items-center gap-4"
-        >
-          {flowSteps.map((step, i) => {
-            const Icon = step.icon
-            return (
-              <div key={i} className="flex flex-col items-center">
-                <motion.div
-                  initial={{ scale: 0 }}
-                  whileInView={{ scale: 1 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.3, delay: 0.2 + i * 0.15 }}
-                  className="relative"
-                >
-                  <div
-                    className="w-20 h-20 rounded-2xl flex items-center justify-center"
-                    style={{ backgroundColor: `${step.color}20`, border: `2px solid ${step.color}40` }}
-                  >
-                    <Icon className="h-8 w-8" style={{ color: step.color }} />
+          <ul className="mt-8 space-y-4">
+            {aiCapabilities.map((cap) => {
+              const Icon = cap.icon
+              return (
+                <li key={cap.title} className="flex items-start gap-3">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-500/10 border border-violet-500/20 flex-shrink-0 mt-0.5">
+                    <Icon className="h-4 w-4 text-violet-400" />
                   </div>
-                  <div className="text-center mt-2">
-                    <p className="text-sm font-semibold text-white">{step.label}</p>
-                    <p className="text-xs text-slate-400">{step.sublabel}</p>
+                  <div>
+                    <p className="text-sm font-medium text-white">{cap.title}</p>
+                    <p className="text-sm text-slate-400">{cap.description}</p>
                   </div>
-                </motion.div>
-                {i < flowSteps.length - 1 && (
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    whileInView={{ opacity: 1 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: 0.4 + i * 0.15 }}
-                    className="my-2"
-                  >
-                    <ArrowRight className="h-5 w-5 text-slate-500 rotate-90" />
-                  </motion.div>
-                )}
-              </div>
-            )
-          })}
-        </motion.div>
+                </li>
+              )
+            })}
+          </ul>
+        </AnimateIn>
+
+        {/* Visual */}
+        <AnimateIn delay={200}>
+          <AiBeamVisual />
+        </AnimateIn>
       </div>
     </SectionWrapper>
   )

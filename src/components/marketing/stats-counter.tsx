@@ -2,6 +2,7 @@
 
 import { useRef, useState, useEffect } from "react"
 import { stats } from "@/lib/marketing-data"
+import { AnimateIn } from "./animate-in"
 
 function useInView(ref: React.RefObject<HTMLElement | null>) {
   const [inView, setInView] = useState(false)
@@ -21,7 +22,6 @@ function Counter({ value, suffix }: { value: number; suffix: string }) {
 
   useEffect(() => {
     if (!inView) return
-    let start = 0
     const duration = 1200
     const startTime = performance.now()
     function tick(now: number) {
@@ -34,21 +34,23 @@ function Counter({ value, suffix }: { value: number; suffix: string }) {
     requestAnimationFrame(tick)
   }, [inView, value])
 
-  return <span ref={ref}>{count}{suffix}</span>
+  return <span ref={ref}>{count.toLocaleString()}{suffix}</span>
 }
 
 export function StatsCounter() {
   return (
-    <section className="bg-gradient-to-r from-[#F97316] to-[#FACC15] py-12">
-      <div className="mx-auto max-w-7xl px-4 lg:px-8">
+    <section className="relative bg-slate-900/80 border-y border-slate-800 py-16">
+      <div className="absolute inset-0 bg-gradient-to-r from-violet-600/5 via-transparent to-cyan-500/5" />
+
+      <div className="relative mx-auto max-w-7xl px-4 lg:px-8">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-          {stats.map((stat) => (
-            <div key={stat.label}>
-              <div className="text-3xl lg:text-4xl font-bold text-white">
+          {stats.map((stat, i) => (
+            <AnimateIn key={stat.label} delay={i * 100}>
+              <div className="text-4xl lg:text-5xl font-bold tabular-nums bg-gradient-to-b from-white to-slate-400 bg-clip-text text-transparent">
                 <Counter value={stat.value} suffix={stat.suffix} />
               </div>
-              <div className="mt-1 text-sm text-slate-300 font-medium">{stat.label}</div>
-            </div>
+              <div className="mt-2 text-sm text-slate-500">{stat.label}</div>
+            </AnimateIn>
           ))}
         </div>
       </div>

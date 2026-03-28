@@ -58,7 +58,7 @@ const socialLinks = [
 
 export function MarketingFooter() {
   return (
-    <footer className="bg-slate-900 text-white">
+    <footer className="bg-slate-950 text-white border-t border-slate-800">
       <div className="mx-auto max-w-7xl px-4 lg:px-8 py-16">
         <div className="grid grid-cols-2 md:grid-cols-5 gap-8 lg:gap-12">
           {/* Brand column */}
@@ -104,7 +104,7 @@ export function MarketingFooter() {
         </div>
 
         {/* Bottom bar */}
-        <div className="mt-12 pt-8 border-t border-white/10 flex flex-col md:flex-row items-center justify-between gap-4">
+        <div className="mt-12 pt-8 border-t border-slate-800 flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-sm text-slate-400">
             &copy; {new Date().getFullYear()} Güvən Technology LLC. Bütün hüquqlar qorunur.
           </p>

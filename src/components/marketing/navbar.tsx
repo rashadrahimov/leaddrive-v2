@@ -4,7 +4,6 @@ import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Logo } from "@/components/logo"
 import { LanguageSwitcher } from "@/components/language-switcher"
-import { ShimmerButton } from "@/components/ui/shimmer-button"
 import { Menu, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -31,7 +30,7 @@ export function MarketingNavbar() {
       className={cn(
         "sticky top-0 z-50 w-full transition-all duration-300",
         scrolled
-          ? "bg-white/95 backdrop-blur-md shadow-sm border-b border-gray-100"
+          ? "bg-slate-950/90 backdrop-blur-xl shadow-lg shadow-slate-900/50 border-b border-slate-800"
           : "bg-transparent"
       )}
     >
@@ -48,7 +47,7 @@ export function MarketingNavbar() {
               <Link
                 key={link.href}
                 href={link.href}
-                className="text-sm font-medium text-gray-600 hover:text-orange-500 transition-colors"
+                className="text-sm font-medium text-slate-400 hover:text-white transition-colors"
               >
                 {link.label}
               </Link>
@@ -60,25 +59,22 @@ export function MarketingNavbar() {
             <LanguageSwitcher />
             <Link
               href="/login"
-              className="text-sm font-medium text-gray-600 hover:text-orange-500 transition-colors px-3 py-2"
+              className="text-sm font-medium text-slate-400 hover:text-white transition-colors px-3 py-2"
             >
               Daxil ol
             </Link>
-            <Link href="/register">
-              <ShimmerButton
-                background="linear-gradient(135deg, #F97316, #FACC15)"
-                borderRadius="8px"
-                className="text-sm font-semibold px-5 py-2.5"
-              >
-                Pulsuz başla
-              </ShimmerButton>
+            <Link
+              href="/register"
+              className="rounded-full bg-gradient-to-r from-violet-600 to-indigo-600 px-5 py-2.5 text-sm font-semibold text-white hover:shadow-lg hover:shadow-violet-500/25 transition-all"
+            >
+              Pulsuz başla
             </Link>
           </div>
 
           {/* Mobile hamburger */}
           <button
             onClick={() => setMobileOpen(!mobileOpen)}
-            className="md:hidden p-2 text-gray-600 hover:text-orange-500"
+            className="md:hidden p-2 text-slate-400 hover:text-white"
           >
             {mobileOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
           </button>
@@ -86,32 +82,29 @@ export function MarketingNavbar() {
 
         {/* Mobile menu */}
         {mobileOpen && (
-          <div className="md:hidden border-t border-gray-100 py-4 space-y-1 animate-fade-in-up">
+          <div className="md:hidden border-t border-slate-800 py-4 space-y-1 animate-fade-in-up">
             {navLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
                 onClick={() => setMobileOpen(false)}
-                className="block px-3 py-2.5 text-sm font-medium text-gray-600 hover:text-orange-500 hover:bg-gray-50 rounded-lg"
+                className="block px-3 py-2.5 text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800/50 rounded-lg"
               >
                 {link.label}
               </Link>
             ))}
-            <div className="border-t border-gray-100 pt-3 mt-3 flex flex-col gap-2 px-3">
+            <div className="border-t border-slate-800 pt-3 mt-3 flex flex-col gap-2 px-3">
               <Link
                 href="/login"
-                className="text-center text-sm font-medium text-gray-600 hover:text-orange-500 py-2.5 border border-gray-200 rounded-lg"
+                className="text-center text-sm font-medium text-slate-400 hover:text-white py-2.5 border border-slate-700 rounded-full"
               >
                 Daxil ol
               </Link>
-              <Link href="/register">
-                <ShimmerButton
-                  background="linear-gradient(135deg, #F97316, #FACC15)"
-                  borderRadius="8px"
-                  className="w-full text-sm font-semibold px-5 py-2.5"
-                >
-                  Pulsuz başla
-                </ShimmerButton>
+              <Link
+                href="/register"
+                className="text-center rounded-full bg-gradient-to-r from-violet-600 to-indigo-600 text-sm font-semibold text-white px-5 py-2.5 hover:shadow-lg hover:shadow-violet-500/25 transition-all"
+              >
+                Pulsuz başla
               </Link>
             </div>
           </div>

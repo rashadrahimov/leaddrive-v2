@@ -192,3 +192,37 @@
 .animate-budget-flash-green { animation: budget-flash-green 1.5s ease-out; }
 .animate-budget-flash-red { animation: budget-flash-red 1.5s ease-out; }
 .animate-budget-flash-yellow { animation: budget-flash-yellow 1.5s ease-out; }
+
+/* ── Border Beam ── */
+@property --border-beam-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+@keyframes border-beam-spin {
+  from { --border-beam-angle: 0deg; }
+  to { --border-beam-angle: 360deg; }
+}
+
+/* ── Meteors ── */
+@keyframes meteor {
+  0% { transform: rotate(215deg) translateX(0); opacity: 1; }
+  70% { opacity: 1; }
+  100% { transform: rotate(215deg) translateX(-500px); opacity: 0; }
+}
+.animate-meteor { animation: meteor 5s linear infinite; }
+
+/* ── Scroll-triggered fade-in ── */
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-slide-up {
+  animation: slide-up 0.6s ease-out both;
+}
