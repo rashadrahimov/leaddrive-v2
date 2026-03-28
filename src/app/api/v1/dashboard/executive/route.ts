@@ -13,7 +13,6 @@ export async function GET(req: NextRequest) {
     const startOfWeek = new Date(now)
     startOfWeek.setDate(now.getDate() - now.getDay())
     const thirtyDaysAgo = new Date(now.getTime() - 30 * 86400000)
-    const sevenDaysAgo = new Date(now.getTime() - 7 * 86400000)
 
     const [
       companiesCount,
@@ -43,18 +42,6 @@ export async function GET(req: NextRequest) {
       wonDealsAll,
       dealsForForecast,
       atRiskDeals,
-      // New queries for dashboard redesign
-      activeLeadsCount,
-      leadsBySource,
-      topScoredLeads,
-      recentDealsList,
-      activeCampaigns,
-      upcomingEvents,
-      weekLeads,
-      weekTickets,
-      slaResolvedOnTime,
-      slaResolvedTotal,
-      ticketsWithResponse,
     ] = await Promise.all([
       // Companies
       prisma.company.count({ where: { organizationId: orgId, category: "client" } }),
@@ -115,73 +102,6 @@ export async function GET(req: NextRequest) {
           company: { select: { name: true } },
         },
         orderBy: { valueAmount: "desc" },
-      }),
-      // ── New: Active leads count
-      prisma.lead.count({ where: { organizationId: orgId, status: { notIn: ["converted", "lost"] } } }),
-      // ── New: Leads by source
-      prisma.lead.groupBy({ by: ["source"], where: { organizationId: orgId }, _count: true }),
-      // ── New: Top scored leads
-      prisma.lead.findMany({
-        where: { organizationId: orgId, score: { gt: 0 } },
-        orderBy: { score: "desc" },
-        take: 5,
-        select: { id: true, contactName: true, companyName: true, score: true, source: true },
-      }),
-      // ── New: Recent deals
-      prisma.deal.findMany({
-        where: { organizationId: orgId },
-        orderBy: { createdAt: "desc" },
-        take: 5,
-        select: {
-          id: true, name: true, valueAmount: true, currency: true, stage: true, createdAt: true,
-          company: { select: { name: true } },
-        },
-      }),
-      // ── New: Active campaigns
-      prisma.campaign.findMany({
-        where: { organizationId: orgId, status: "active" },
-        take: 4,
-        orderBy: { updatedAt: "desc" },
-        select: { id: true, name: true, totalSent: true, totalOpened: true, totalClicked: true, status: true },
-      }),
-      // ── New: Upcoming events
-      prisma.event.findMany({
-        where: { organizationId: orgId, startDate: { gte: now } },
-        orderBy: { startDate: "asc" },
-        take: 3,
-        select: { id: true, name: true, startDate: true, type: true, registeredCount: true },
-      }),
-      // ── New: Leads created in last 7 days (for weekly chart)
-      prisma.lead.findMany({
-        where: { organizationId: orgId, createdAt: { gte: sevenDaysAgo } },
-        select: { createdAt: true },
-      }),
-      // ── New: Tickets created in last 7 days (for weekly chart)
-      prisma.ticket.findMany({
-        where: { organizationId: orgId, createdAt: { gte: sevenDaysAgo } },
-        select: { createdAt: true },
-      }),
-      // ── New: SLA — tickets resolved before SLA deadline
-      prisma.ticket.count({
-        where: {
-          organizationId: orgId,
-          resolvedAt: { not: null },
-          slaDueAt: { not: null },
-        },
-      }),
-      // ── New: SLA — total resolved tickets with SLA
-      prisma.ticket.count({
-        where: {
-          organizationId: orgId,
-          resolvedAt: { not: null },
-        },
-      }),
-      // ── New: Tickets with first response (for avg response time)
-      prisma.ticket.findMany({
-        where: { organizationId: orgId, firstResponseAt: { not: null } },
-        select: { createdAt: true, firstResponseAt: true },
-        orderBy: { createdAt: "desc" },
-        take: 50,
       }),
     ])
 
@@ -296,33 +216,6 @@ export async function GET(req: NextRequest) {
       grc: "GRC", projects: "Проекты", helpdesk: "HelpDesk", cloud: "Облако",
     }
 
-    // ── New: Weekly metrics computation
-    const leadsPerDay: number[] = []
-    const ticketsPerDay: number[] = []
-    for (let i = 6; i >= 0; i--) {
-      const dayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i)
-      const dayEnd = new Date(dayStart.getTime() + 86400000)
-      leadsPerDay.push(weekLeads.filter((l: any) => {
-        const d = new Date(l.createdAt)
-        return d >= dayStart && d < dayEnd
-      }).length)
-      ticketsPerDay.push(weekTickets.filter((t: any) => {
-        const d = new Date(t.createdAt)
-        return d >= dayStart && d < dayEnd
-      }).length)
-    }
-    const slaCompliance = slaResolvedTotal > 0 ? Math.round((slaResolvedOnTime / slaResolvedTotal) * 100) : 100
-    const avgResponseHours = ticketsWithResponse.length > 0
-      ? Math.round(ticketsWithResponse.reduce((sum: number, t: any) => {
-          return sum + (new Date(t.firstResponseAt).getTime() - new Date(t.createdAt).getTime()) / 3600000
-        }, 0) / ticketsWithResponse.length * 10) / 10
-      : 0
-
-    // ── New: Pipeline conversion rate
-    const totalDealsAll = dealsByStage.reduce((s: number, d: any) => s + d._count, 0)
-    const wonDealsCount = dealsByStage.find((d: any) => d.stage === "WON")?._count || 0
-    const pipelineConversionRate = totalDealsAll > 0 ? Math.round((wonDealsCount / totalDealsAll) * 100) : 0
-
     return NextResponse.json({
       success: true,
       data: {
@@ -354,11 +247,6 @@ export async function GET(req: NextRequest) {
           wonThisMonth,
           wonValue: wonValueAgg._sum.valueAmount || 0,
           lostThisMonth,
-          conversionRate: pipelineConversionRate,
-          recentDeals: recentDealsList.map((d: any) => ({
-            id: d.id, name: d.name, value: d.valueAmount, currency: d.currency,
-            stage: d.stage, company: d.company?.name,
-          })),
         },
         leads: {
           byTemperature: leadsByTemp.map((t: any) => ({
@@ -366,14 +254,7 @@ export async function GET(req: NextRequest) {
           })),
           funnel: leadFunnelData,
           total: totalLeadCount,
-          activeCount: activeLeadsCount,
           conversionRate: leadConversionRate,
-          bySource: leadsBySource.map((s: any) => ({
-            source: s.source || "unknown", count: s._count,
-          })),
-          topScored: topScoredLeads.map((l: any) => ({
-            id: l.id, name: l.contactName, company: l.companyName, score: l.score, source: l.source,
-          })),
         },
         financialOverview: {
           wonDealsRevenue,
@@ -413,21 +294,6 @@ export async function GET(req: NextRequest) {
           confidence: d.confidenceLevel ?? 50, daysInFunnel: d.daysInFunnel,
           company: d.company?.name,
         })),
-        campaigns: activeCampaigns.map((c: any) => ({
-          id: c.id, name: c.name, sent: c.totalSent,
-          openRate: c.totalSent > 0 ? Math.round((c.totalOpened / c.totalSent) * 100) : 0,
-          clickRate: c.totalSent > 0 ? Math.round((c.totalClicked / c.totalSent) * 100) : 0,
-        })),
-        events: upcomingEvents.map((e: any) => ({
-          id: e.id, name: e.name, date: e.startDate, type: e.type, registered: e.registeredCount,
-        })),
-        weeklyMetrics: {
-          leadsPerDay,
-          ticketsPerDay,
-          slaCompliance,
-          csat: csatAgg._avg.satisfactionRating || 0,
-          avgResponseHours,
-        },
       },
     })
   } catch (e) {
