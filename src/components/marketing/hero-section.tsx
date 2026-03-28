@@ -2,31 +2,31 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { ArrowRight, Play, Sparkles, Brain, Mail, BarChart3 } from "lucide-react"
+import { ArrowRight, Play, Sparkles, LayoutDashboard, Target, Inbox, Shield } from "lucide-react"
 import { Particles } from "@/components/ui/particles"
 import { cn } from "@/lib/utils"
 
 const heroScreenshots = [
   {
-    id: "scoring",
-    label: "AI Skorinq",
-    icon: Brain,
-    image: "/marketing/ai-scoring-grades.png",
-    alt: "AI Lead Scoring — avtomatik A–F dərəcələndirmə",
+    id: "dashboard",
+    label: "İdarə Paneli",
+    icon: LayoutDashboard,
+    image: "/marketing/crm-dashboard.png",
+    alt: "CRM Dashboard — KPI-lər, pipeline, satış qrafikləri",
   },
   {
-    id: "email",
-    label: "AI E-poçt",
-    icon: Mail,
-    image: "/marketing/ai-email-generation.png",
-    alt: "AI Email Generation — bir kliklə peşəkar mesajlar",
+    id: "pipeline",
+    label: "Satış Pipeline",
+    icon: Target,
+    image: "/marketing/deals-pipeline.png",
+    alt: "Deals Pipeline — Kanban lövhəsi ilə satış idarəsi",
   },
   {
-    id: "analytics",
-    label: "AI Analitika",
-    icon: BarChart3,
-    image: "/marketing/ai-profitability.png",
-    alt: "AI Profitability Analytics — gəlirlilik təhlili",
+    id: "inbox",
+    label: "7 Kanal Inbox",
+    icon: Inbox,
+    image: "/marketing/inbox-channels.png",
+    alt: "Unified Inbox — 7 kommunikasiya kanalı bir yerdə",
   },
 ]
 
@@ -35,6 +35,10 @@ export function HeroSection() {
 
   return (
     <section className="relative min-h-[90vh] flex items-center overflow-hidden bg-gradient-to-b from-slate-950 via-slate-900 to-indigo-950 pt-20 pb-16 lg:pt-28 lg:pb-24">
+      {/* Preload hero images for instant tab switching */}
+      {heroScreenshots.map((s) => (
+        <link key={s.id} rel="preload" as="image" href={s.image} />
+      ))}
       {/* Particles background */}
       <Particles
         className="absolute inset-0"
@@ -79,7 +83,7 @@ export function HeroSection() {
           <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link
               href="/demo"
-              className="group inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-violet-600 to-indigo-600 px-8 py-3.5 text-base font-semibold text-white shadow-lg shadow-violet-500/25 hover:shadow-violet-500/40 hover:from-violet-500 hover:to-indigo-500 transition-all"
+              className="group inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-violet-600 to-indigo-600 px-8 py-3.5 text-base font-semibold text-white shadow-lg shadow-violet-500/25 hover:shadow-violet-500/40 hover:from-violet-500 hover:to-indigo-500 transition-all animate-pulse-glow"
             >
               Demo tələb et
               <ArrowRight className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
@@ -91,6 +95,22 @@ export function HeroSection() {
               <Play className="h-4 w-4" />
               Pulsuz sınaq başlat
             </Link>
+          </div>
+
+          {/* Trust badges */}
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-slate-500">
+            <span className="flex items-center gap-1.5">
+              <Shield className="h-3.5 w-3.5 text-emerald-500" />
+              14 gün pulsuz sınaq
+            </span>
+            <span className="flex items-center gap-1.5">
+              <Shield className="h-3.5 w-3.5 text-emerald-500" />
+              Kredit kartı tələb olunmur
+            </span>
+            <span className="flex items-center gap-1.5">
+              <Shield className="h-3.5 w-3.5 text-emerald-500" />
+              GDPR uyğun
+            </span>
           </div>
         </div>
 
@@ -144,15 +164,27 @@ export function HeroSection() {
                     key={item.id}
                     src={item.image}
                     alt={item.alt}
+                    width={1200}
+                    height={720}
                     className={cn(
                       "w-full transition-opacity duration-500",
                       activeScreenshot === i ? "opacity-100" : "opacity-0 absolute inset-0"
                     )}
                     loading={i === 0 ? "eager" : "lazy"}
+                    decoding={i === 0 ? "sync" : "async"}
+                    fetchPriority={i === 0 ? "high" : "low"}
                   />
                 ))}
               </div>
             </div>
+          </div>
+        </div>
+
+        {/* Scroll indicator */}
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 hidden lg:flex flex-col items-center gap-2">
+          <span className="text-[10px] uppercase tracking-widest text-slate-600">Aşağı sürüşdür</span>
+          <div className="w-5 h-8 rounded-full border border-slate-700 flex items-start justify-center p-1">
+            <div className="w-1 h-2 rounded-full bg-violet-500 animate-bounce" />
           </div>
         </div>
       </div>

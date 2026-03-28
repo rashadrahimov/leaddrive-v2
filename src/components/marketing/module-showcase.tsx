@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { SectionWrapper } from "./section-wrapper"
 import { AnimateIn } from "./animate-in"
 import { BorderBeam } from "@/components/ui/border-beam"
@@ -9,7 +9,8 @@ import {
   Target, Megaphone, Inbox, Headphones, TrendingUp,
   Brain, BarChart3, FolderKanban, Mail, ShieldCheck,
   Users, Gauge, FileText, MessageSquare, Bot,
-  Sparkles, Zap, PieChart
+  Sparkles, Zap, PieChart, Briefcase, Settings,
+  CalendarDays, Route, Globe, BookOpen, Receipt,
 } from "lucide-react"
 
 const modules = [
@@ -18,6 +19,7 @@ const modules = [
     label: "CRM & Satış",
     icon: Target,
     screenshot: "/marketing/deals-pipeline.png",
+    url: "deals",
     description: "Liddən sövdələşmənin bağlanmasına qədər tam satış dövrü.",
     features: [
       { icon: FolderKanban, text: "Pipeline — sürükle-burax Kanban lövhəsi" },
@@ -32,11 +34,12 @@ const modules = [
     label: "Marketinq",
     icon: Megaphone,
     screenshot: "/marketing/marketing-campaigns.png",
+    url: "campaigns",
     description: "Kampaniya yaradın, seqmentləyin, ROI-ni izləyin.",
     features: [
       { icon: Mail, text: "E-poçt kampaniya meneceri" },
       { icon: Users, text: "Müştəri seqmentasiyası" },
-      { icon: Zap, text: "Marşrut qurucusu (journey builder)" },
+      { icon: Route, text: "Marşrut qurucusu (journey builder)" },
       { icon: BarChart3, text: "Kampaniya ROI hesabatları" },
       { icon: FileText, text: "E-poçt şablonları kitabxanası" },
     ],
@@ -46,6 +49,7 @@ const modules = [
     label: "7 Kanal Inbox",
     icon: Inbox,
     screenshot: "/marketing/inbox-channels.png",
+    url: "inbox",
     description: "WhatsApp, Telegram, E-poçt, SMS — vahid gələn qutusu.",
     features: [
       { icon: MessageSquare, text: "7 kanal — bir qutu" },
@@ -60,13 +64,14 @@ const modules = [
     label: "Dəstək",
     icon: Headphones,
     screenshot: "/marketing/support-tickets.png",
+    url: "tickets",
     description: "SLA, tiketlər, bilik bazası, müştəri portalı.",
     features: [
       { icon: FileText, text: "Tiket idarəsi və SLA siyasətləri" },
       { icon: Bot, text: "AI dəstək agenti — avtomatik həll" },
       { icon: Sparkles, text: "Müştəri portalı + AI söhbət" },
       { icon: BarChart3, text: "Cavab vaxtı analitikası" },
-      { icon: Users, text: "Bilik bazası (Knowledge Base)" },
+      { icon: BookOpen, text: "Bilik bazası (Knowledge Base)" },
     ],
   },
   {
@@ -74,13 +79,44 @@ const modules = [
     label: "Maliyyə",
     icon: TrendingUp,
     screenshot: "/marketing/analytics-profitability.png",
+    url: "profitability",
     description: "Xərc modeli, büdcə, P&L, gəlirlilik — real marjalar.",
     features: [
       { icon: PieChart, text: "Xərc modeli mühərriki" },
       { icon: BarChart3, text: "Büdcələşdirmə & P&L" },
-      { icon: FileText, text: "Faktura və ödəniş izləməsi" },
+      { icon: Receipt, text: "Faktura və ödəniş izləməsi" },
       { icon: TrendingUp, text: "Dinamik qiymətləndirmə" },
       { icon: Gauge, text: "Layihə gəlirlilik analizi" },
+    ],
+  },
+  {
+    id: "erp",
+    label: "ERP & Layihələr",
+    icon: Briefcase,
+    screenshot: "/marketing/erp-projects.png",
+    url: "projects",
+    description: "Layihələr, komandalar, büdcə bölgüsü və tamamlanma.",
+    features: [
+      { icon: FolderKanban, text: "Layihə mərhələləri" },
+      { icon: Users, text: "Komanda üzvləri bölgüsü" },
+      { icon: CalendarDays, text: "Təqvim və vaxt izləməsi" },
+      { icon: BarChart3, text: "Büdcə vs aktual izləmə" },
+      { icon: Gauge, text: "Tamamlanma % göstəricisi" },
+    ],
+  },
+  {
+    id: "platform",
+    label: "Platforma",
+    icon: Settings,
+    screenshot: "/marketing/platform-settings.png",
+    url: "settings",
+    description: "Rollar, iş axınları, xüsusi sahələr, audit jurnalı.",
+    features: [
+      { icon: ShieldCheck, text: "Rollar və icazə sistemi" },
+      { icon: Zap, text: "İş axını avtomatlaşdırması" },
+      { icon: Globe, text: "Çox dilli platforma (AZ/RU/EN)" },
+      { icon: FileText, text: "Audit jurnalı" },
+      { icon: Settings, text: "Xüsusi sahələr və Web-to-Lead" },
     ],
   },
   {
@@ -88,6 +124,7 @@ const modules = [
     label: "Maestro AI",
     icon: Brain,
     screenshot: "/marketing/ai-command-center.png",
+    url: "ai",
     description: "16 AI inteqrasiyası. CRM-in beyni.",
     features: [
       { icon: Gauge, text: "Lid skorinqi — avtomatik A–F" },
@@ -101,8 +138,27 @@ const modules = [
 
 export function ModuleShowcase() {
   const [activeModule, setActiveModule] = useState(0)
+  const [imageLoaded, setImageLoaded] = useState(true)
   const active = modules[activeModule]
   const ActiveIcon = active.icon
+
+  // Preload adjacent module screenshots
+  useEffect(() => {
+    const preloadIndexes = [
+      (activeModule + 1) % modules.length,
+      (activeModule - 1 + modules.length) % modules.length,
+    ]
+    preloadIndexes.forEach((idx) => {
+      const img = new Image()
+      img.src = modules[idx].screenshot
+    })
+  }, [activeModule])
+
+  const handleModuleChange = (i: number) => {
+    if (i === activeModule) return
+    setImageLoaded(false)
+    setActiveModule(i)
+  }
 
   return (
     <SectionWrapper id="modules" variant="dark">
@@ -127,7 +183,7 @@ export function ModuleShowcase() {
             return (
               <button
                 key={mod.id}
-                onClick={() => setActiveModule(i)}
+                onClick={() => handleModuleChange(i)}
                 className={cn(
                   "flex items-center gap-3 rounded-xl px-4 py-3 text-left text-sm font-medium transition-all whitespace-nowrap lg:whitespace-normal min-w-fit",
                   isActive
@@ -170,7 +226,7 @@ export function ModuleShowcase() {
             </div>
 
             {/* Screenshot */}
-            <div className="relative rounded-2xl border border-slate-700/50 bg-slate-900 shadow-2xl shadow-violet-500/5 overflow-hidden">
+            <div className="relative rounded-2xl border border-slate-700/50 bg-slate-900 shadow-2xl shadow-violet-500/5 overflow-hidden group">
               {active.id === "ai" && <BorderBeam size={400} duration={10} colorFrom="#8b5cf6" colorTo="#06b6d4" />}
 
               {/* Browser bar */}
@@ -182,17 +238,32 @@ export function ModuleShowcase() {
                 </div>
                 <div className="flex-1 mx-6">
                   <div className="bg-slate-800 rounded-md px-3 py-0.5 text-[11px] text-slate-500 border border-slate-700 max-w-xs mx-auto text-center">
-                    app.leaddrivecrm.org/{active.id}
+                    app.leaddrivecrm.org/{active.url}
                   </div>
                 </div>
               </div>
 
-              <img
-                src={active.screenshot}
-                alt={`LeadDrive ${active.label}`}
-                className="w-full"
-                loading="lazy"
-              />
+              <div className="overflow-hidden relative">
+                {/* Loading skeleton */}
+                {!imageLoaded && (
+                  <div className="absolute inset-0 bg-slate-800 animate-pulse flex items-center justify-center z-10">
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-slate-700 animate-pulse" />
+                      <div className="w-32 h-3 rounded bg-slate-700 animate-pulse" />
+                    </div>
+                  </div>
+                )}
+                <img
+                  src={active.screenshot}
+                  alt={`LeadDrive ${active.label}`}
+                  className={cn(
+                    "w-full transition-all duration-500 group-hover:scale-[1.02]",
+                    imageLoaded ? "opacity-100" : "opacity-0"
+                  )}
+                  loading="lazy"
+                  onLoad={() => setImageLoaded(true)}
+                />
+              </div>
             </div>
 
             {/* Feature pills */}
@@ -202,7 +273,7 @@ export function ModuleShowcase() {
                 return (
                   <div
                     key={feat.text}
-                    className="flex items-center gap-2.5 rounded-xl border border-slate-800 bg-slate-900/50 px-4 py-3 text-sm"
+                    className="flex items-center gap-2.5 rounded-xl border border-slate-800 bg-slate-900/50 px-4 py-3 text-sm hover:border-slate-700 card-hover"
                   >
                     <FeatIcon className="h-4 w-4 text-violet-400 flex-shrink-0" />
                     <span className="text-slate-300">{feat.text}</span>
