@@ -352,27 +352,89 @@ export async function processEnrollmentStep(enrollmentId: string, orgId: string)
         const field = config.field || ""
         const operator = config.operator || "equals"
         const value = config.value || ""
+        const onFalse = config.onFalse || "continue" // continue | skip_next | skip_2 | stop
         let fieldValue = ""
 
+        // Get field value from lead or contact
         if (leadId) {
           const lead = await prisma.lead.findUnique({ where: { id: leadId } })
           if (lead) fieldValue = String((lead as any)[field] || "")
+        } else if (contactId) {
+          const contact = await prisma.contact.findUnique({ where: { id: contactId } })
+          if (contact) fieldValue = String((contact as any)[field] || "")
         }
 
         let match = false
         switch (operator) {
-          case "equals": match = fieldValue === value; break
-          case "not_equals": match = fieldValue !== value; break
-          case "contains": match = fieldValue.includes(value); break
+          case "equals": match = fieldValue.toLowerCase() === value.toLowerCase(); break
+          case "not_equals": match = fieldValue.toLowerCase() !== value.toLowerCase(); break
+          case "contains": match = fieldValue.toLowerCase().includes(value.toLowerCase()); break
           case "not_empty": match = fieldValue.length > 0; break
         }
 
-        // Condition doesn't block — it just logs and continues
-        result = {
-          stepId: currentStep.id,
-          stepType: "condition",
-          status: "completed",
-          message: `Condition: ${field} ${operator} ${value} → ${match ? "YES" : "NO"} (value: "${fieldValue}")`,
+        if (match) {
+          // Condition TRUE — continue to next step normally
+          result = {
+            stepId: currentStep.id,
+            stepType: "condition",
+            status: "completed",
+            message: `Condition TRUE: ${field} ${operator} ${value || ""} (value: "${fieldValue}")`,
+          }
+        } else {
+          // Condition FALSE — apply onFalse action
+          if (onFalse === "stop") {
+            // Stop the entire journey
+            await prisma.journeyEnrollment.update({
+              where: { id: enrollmentId },
+              data: { status: "completed", completedAt: new Date(), currentStepId: null, nextActionAt: null },
+            })
+            return {
+              stepId: currentStep.id,
+              stepType: "condition",
+              status: "completed",
+              message: `Condition FALSE → Journey stopped. ${field} ${operator} ${value || ""} (value: "${fieldValue}")`,
+            }
+          }
+
+          const skipCount = onFalse === "skip_2" ? 2 : onFalse === "skip_next" ? 1 : 0
+          if (skipCount > 0) {
+            // Skip N steps by advancing stepOrder
+            const targetOrder = currentStep.stepOrder + 1 + skipCount
+            const targetStep = journey.steps.find((s: any) => s.stepOrder >= targetOrder)
+            if (targetStep) {
+              await prisma.journeyStep.update({ where: { id: currentStep.id }, data: { statsCompleted: { increment: 1 } } })
+              await prisma.journeyEnrollment.update({
+                where: { id: enrollmentId },
+                data: { currentStepId: targetStep.id, nextActionAt: new Date() },
+              })
+              await prisma.journeyStep.update({ where: { id: targetStep.id }, data: { statsEntered: { increment: 1 } } })
+              return {
+                stepId: currentStep.id,
+                stepType: "condition",
+                status: "completed",
+                message: `Condition FALSE → Skipped ${skipCount} step(s). ${field} ${operator} ${value || ""} (value: "${fieldValue}")`,
+              }
+            }
+            // No more steps after skip — complete journey
+            await prisma.journeyEnrollment.update({
+              where: { id: enrollmentId },
+              data: { status: "completed", completedAt: new Date(), currentStepId: null, nextActionAt: null },
+            })
+            return {
+              stepId: currentStep.id,
+              stepType: "condition",
+              status: "completed",
+              message: `Condition FALSE → Skipped past end → Journey completed. ${field} ${operator} ${value || ""}`,
+            }
+          }
+
+          // Default: continue (same as TRUE)
+          result = {
+            stepId: currentStep.id,
+            stepType: "condition",
+            status: "completed",
+            message: `Condition FALSE (continue): ${field} ${operator} ${value || ""} (value: "${fieldValue}")`,
+          }
         }
         break
       }

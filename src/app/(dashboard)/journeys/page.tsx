@@ -61,7 +61,16 @@ function getStepSummary(step: { stepType: string; config: any }): string {
   switch (step.stepType) {
     case "send_email": return c.subject ? `Тема: ${c.subject}` : "Тема: (без темы)"
     case "wait": return `Ждать: ${c.days || 1} дн.`
-    case "condition": return c.field && c.operator && c.value ? `${c.field} ${c.operator} ${c.value}` : "? ? ?"
+    case "condition": {
+      const scenario = conditionScenarios.find(s => s.id === c._scenario)
+      if (scenario && scenario.id !== "custom") return scenario.label
+      if (c.field && c.operator) {
+        const fld = conditionFields.find(f => f.value === c.field)?.label || c.field
+        const op = conditionOperators.find(o => o.value === c.operator)?.label || c.operator
+        return c.operator === "not_empty" ? `${fld} ${op}` : `${fld} ${op} "${c.value}"`
+      }
+      return "Şərt"
+    }
     case "create_task": return c.title || "Новая задача"
     case "send_telegram": return c.message ? c.message.slice(0, 40) : "Telegram сообщение"
     case "send_whatsapp": return c.message ? c.message.slice(0, 40) : "WhatsApp сообщение"
@@ -71,19 +80,37 @@ function getStepSummary(step: { stepType: string; config: any }): string {
   }
 }
 
-// Condition fields for dropdown
+// Pre-built condition scenarios (intuitive for non-technical users)
+const conditionScenarios = [
+  { id: "lead_status_new", label: "Lid yeni olduqda", description: "Status = Yeni", icon: "🆕", field: "status", operator: "equals", value: "new" },
+  { id: "lead_status_qualified", label: "Lid uyğun olduqda", description: "Status = Uyğun", icon: "✅", field: "status", operator: "equals", value: "qualified" },
+  { id: "lead_status_lost", label: "Lid itirildiyi halda", description: "Status = İtirilmiş", icon: "❌", field: "status", operator: "equals", value: "lost" },
+  { id: "has_email", label: "Email varsa", description: "Email boş deyil", icon: "📧", field: "email", operator: "not_empty", value: "" },
+  { id: "has_phone", label: "Telefon varsa", description: "Telefon boş deyil", icon: "📱", field: "phone", operator: "not_empty", value: "" },
+  { id: "has_company", label: "Şirkət göstərilibsə", description: "Şirkət adı boş deyil", icon: "🏢", field: "companyName", operator: "not_empty", value: "" },
+  { id: "source_website", label: "Saytdan gəlib", description: "Mənbə = Website", icon: "🌐", field: "source", operator: "equals", value: "website" },
+  { id: "source_referral", label: "Tövsiyə ilə gəlib", description: "Mənbə = Tövsiyə", icon: "🤝", field: "source", operator: "equals", value: "referral" },
+  { id: "custom", label: "Öz şərtim", description: "Sahə və dəyəri əl ilə seçin", icon: "⚙️", field: "", operator: "equals", value: "" },
+]
+const conditionActions = [
+  { value: "continue", label: "Növbəti addıma keç" },
+  { value: "skip_next", label: "1 addımı keç" },
+  { value: "skip_2", label: "2 addımı keç" },
+  { value: "stop", label: "Zənciri dayandır" },
+]
 const conditionFields = [
-  { value: "lead_status", label: "Статус лида" },
-  { value: "source", label: "Источник" },
-  { value: "company_name", label: "Компания" },
+  { value: "status", label: "Status" },
+  { value: "source", label: "Mənbə" },
+  { value: "companyName", label: "Şirkət" },
   { value: "email", label: "Email" },
-  { value: "phone", label: "Телефон" },
+  { value: "phone", label: "Telefon" },
+  { value: "contactName", label: "Ad" },
 ]
 const conditionOperators = [
-  { value: "equals", label: "Равно" },
-  { value: "not_equals", label: "Не равно" },
-  { value: "contains", label: "Содержит" },
-  { value: "not_empty", label: "Не пусто" },
+  { value: "equals", label: "Bərabərdir" },
+  { value: "not_equals", label: "Bərabər deyil" },
+  { value: "contains", label: "Ehtiva edir" },
+  { value: "not_empty", label: "Boş deyil" },
 ]
 
 export default function JourneysPage() {
@@ -128,11 +155,11 @@ export default function JourneysPage() {
     { value: "send_email", label: t("stepEmail"), icon: Mail, color: "bg-blue-500", borderColor: "border-blue-200 bg-blue-50/50 dark:bg-blue-900/10" },
     { value: "sms", label: t("stepSms"), icon: Smartphone, color: "bg-gray-700", borderColor: "border-gray-200 bg-gray-50/50 dark:bg-gray-900/10" },
     { value: "wait", label: t("stepWait"), icon: Clock, color: "bg-yellow-500", borderColor: "border-yellow-200 bg-yellow-50/50 dark:bg-yellow-900/10" },
-    { value: "condition", label: "Условие", icon: GitBranch, color: "bg-pink-500", borderColor: "border-pink-200 bg-pink-50/50 dark:bg-pink-900/10" },
-    { value: "create_task", label: "Задача", icon: FileText, color: "bg-teal-500", borderColor: "border-teal-200 bg-teal-50/50 dark:bg-teal-900/10" },
+    { value: "condition", label: t("chainStepCondition"), icon: GitBranch, color: "bg-pink-500", borderColor: "border-pink-200 bg-pink-50/50 dark:bg-pink-900/10" },
+    { value: "create_task", label: "Tapşırıq", icon: FileText, color: "bg-teal-500", borderColor: "border-teal-200 bg-teal-50/50 dark:bg-teal-900/10" },
     { value: "send_telegram", label: "Telegram", icon: Send, color: "bg-sky-500", borderColor: "border-sky-200 bg-sky-50/50 dark:bg-sky-900/10" },
     { value: "send_whatsapp", label: "WhatsApp", icon: Heart, color: "bg-green-500", borderColor: "border-green-200 bg-green-50/50 dark:bg-green-900/10" },
-    { value: "update_field", label: "Обн. поле", icon: Settings, color: "bg-purple-500", borderColor: "border-purple-200 bg-purple-50/50 dark:bg-purple-900/10" },
+    { value: "update_field", label: "Sahəni yenilə", icon: Settings, color: "bg-purple-500", borderColor: "border-purple-200 bg-purple-50/50 dark:bg-purple-900/10" },
   ]
 
   const fetchJourneys = async () => {
@@ -609,34 +636,89 @@ export default function JourneysPage() {
             )}
 
             {newStepType === "condition" && (
-              <>
+              <div className="space-y-4">
+                {/* Scenario cards */}
                 <div>
-                  <Label className="text-xs text-muted-foreground">Поле для проверки</Label>
+                  <Label className="text-xs text-muted-foreground mb-2 block">Şərti seçin</Label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {conditionScenarios.map(sc => {
+                      const isSelected = newStepConfig._scenario === sc.id
+                      return (
+                        <button
+                          key={sc.id}
+                          type="button"
+                          onClick={() => setNewStepConfig({
+                            _scenario: sc.id,
+                            field: sc.field,
+                            operator: sc.operator,
+                            value: sc.value,
+                            onFalse: newStepConfig.onFalse || "continue",
+                          })}
+                          className={cn(
+                            "flex flex-col items-center gap-1 p-3 rounded-lg border-2 text-xs transition-all text-center",
+                            isSelected
+                              ? "border-primary bg-primary/5 text-primary shadow-sm"
+                              : "border-transparent bg-muted/40 text-muted-foreground hover:border-border hover:bg-muted/60"
+                          )}
+                        >
+                          <span className="text-lg">{sc.icon}</span>
+                          <span className="font-medium leading-tight">{sc.label}</span>
+                          <span className="text-[10px] opacity-60">{sc.description}</span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                {/* Custom fields (only show when "custom" scenario selected) */}
+                {newStepConfig._scenario === "custom" && (
+                  <div className="space-y-2 p-3 bg-muted/30 rounded-lg border">
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <Label className="text-[10px] text-muted-foreground">Sahə</Label>
+                        <Select
+                          value={newStepConfig.field || "status"}
+                          onChange={e => setNewStepConfig((c: any) => ({ ...c, field: e.target.value }))}
+                        >
+                          {conditionFields.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
+                        </Select>
+                      </div>
+                      <div>
+                        <Label className="text-[10px] text-muted-foreground">Operator</Label>
+                        <Select
+                          value={newStepConfig.operator || "equals"}
+                          onChange={e => setNewStepConfig((c: any) => ({ ...c, operator: e.target.value }))}
+                        >
+                          {conditionOperators.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                        </Select>
+                      </div>
+                    </div>
+                    {newStepConfig.operator !== "not_empty" && (
+                      <div>
+                        <Label className="text-[10px] text-muted-foreground">Dəyər</Label>
+                        <Input
+                          value={newStepConfig.value || ""}
+                          onChange={e => setNewStepConfig((c: any) => ({ ...c, value: e.target.value }))}
+                          placeholder="new, qualified, website..."
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* What to do if condition is FALSE */}
+                <div className="p-3 bg-red-50/50 dark:bg-red-900/10 rounded-lg border border-red-200/50 dark:border-red-800/30">
+                  <Label className="text-xs font-medium text-red-700 dark:text-red-400 flex items-center gap-1.5 mb-2">
+                    <X className="h-3.5 w-3.5" /> Şərt uyğun gəlmirsə:
+                  </Label>
                   <Select
-                    value={newStepConfig.field || "lead_status"}
-                    onChange={e => setNewStepConfig((c: any) => ({ ...c, field: e.target.value }))}
+                    value={newStepConfig.onFalse || "continue"}
+                    onChange={e => setNewStepConfig((c: any) => ({ ...c, onFalse: e.target.value }))}
                   >
-                    {conditionFields.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
+                    {conditionActions.map(a => <option key={a.value} value={a.value}>{a.label}</option>)}
                   </Select>
                 </div>
-                <div>
-                  <Label className="text-xs text-muted-foreground">Оператор</Label>
-                  <Select
-                    value={newStepConfig.operator || "equals"}
-                    onChange={e => setNewStepConfig((c: any) => ({ ...c, operator: e.target.value }))}
-                  >
-                    {conditionOperators.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                  </Select>
-                </div>
-                <div>
-                  <Label className="text-xs text-muted-foreground">Значение</Label>
-                  <Input
-                    value={newStepConfig.value || ""}
-                    onChange={e => setNewStepConfig((c: any) => ({ ...c, value: e.target.value }))}
-                    placeholder="new / referral / high"
-                  />
-                </div>
-              </>
+              </div>
             )}
 
             {newStepType === "create_task" && (
