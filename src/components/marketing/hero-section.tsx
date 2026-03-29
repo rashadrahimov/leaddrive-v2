@@ -161,20 +161,20 @@ export function HeroSection() {
         <div className="text-center max-w-4xl mx-auto">
           <span className="inline-flex items-center gap-2 rounded-full border border-orange-200 bg-orange-50 px-4 py-1.5 text-sm text-orange-700 font-medium">
             <Sparkles className="h-3.5 w-3.5" />
-            AI-native CRM — 16 süni intellekt inteqrasiyası
+            AI-native CRM — 16 AI inteqrasiya
           </span>
 
           <h1 className="mt-8 text-5xl sm:text-6xl lg:text-7xl font-bold tracking-tight leading-[1.08]">
-            <span className="text-slate-900">Süni intellektli CRM.</span>
+            <span className="text-slate-900">CRM artıq düşünür.</span>
             <br />
             <span className="bg-gradient-to-r from-orange-500 via-red-500 to-orange-600 bg-clip-text text-transparent">
-              Hər şey avtomatik.
+              Satışdan dəstəyə — AI ilə.
             </span>
           </h1>
 
           <p className="mt-6 text-lg lg:text-xl text-slate-500 max-w-2xl mx-auto leading-relaxed">
-            AI lidləri skorlayır, e-poçt yazır, tiketləri cavablandırır.
-            Siz qərar verirsiniz — Maestro AI icra edir.
+            AI müştəriləri qiymətləndirir, məktub yazır, müraciətlərə cavab verir.
+            Siz qərar verirsiniz — Da Vinci AI icra edir.
           </p>
 
           <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">

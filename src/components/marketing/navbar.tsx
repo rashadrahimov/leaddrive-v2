@@ -65,7 +65,7 @@ export function MarketingNavbar() {
             </Link>
             <Link
               href="/demo"
-              className="rounded-full bg-orange-500 hover:bg-orange-600 px-5 py-2.5 text-sm font-semibold text-white transition-all shadow-sm"
+              className="rounded-full bg-slate-900 hover:bg-slate-800 px-5 py-2.5 text-sm font-semibold text-white transition-all shadow-sm"
             >
               Demo tələb et
             </Link>
@@ -102,7 +102,7 @@ export function MarketingNavbar() {
               </Link>
               <Link
                 href="/demo"
-                className="text-center rounded-full bg-orange-500 text-sm font-semibold text-white px-5 py-2.5 hover:bg-orange-600 transition-all"
+                className="text-center rounded-full bg-slate-900 text-sm font-semibold text-white px-5 py-2.5 hover:bg-slate-800 transition-all"
               >
                 Demo tələb et
               </Link>

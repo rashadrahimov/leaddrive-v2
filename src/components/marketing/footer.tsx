@@ -4,7 +4,7 @@ import { Logo } from "@/components/logo"
 const footerLinks = {
   Məhsul: [
     { label: "Modullar", href: "/#modules" },
-    { label: "Maestro AI", href: "/#ai" },
+    { label: "Da Vinci AI", href: "/#ai" },
     { label: "Qiymətlər", href: "/#pricing" },
     { label: "Demo", href: "/demo" },
   ],
@@ -71,20 +71,7 @@ export function MarketingFooter() {
               <p>📧 info@leaddrivecrm.org</p>
               <p>📱 +994 10 531 30 65</p>
             </div>
-            <div className="flex items-center gap-3 mt-4">
-              {socialLinks.map((s) => (
-                <a
-                  key={s.label}
-                  href={s.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-slate-400 hover:text-white transition-colors"
-                  aria-label={s.label}
-                >
-                  {s.icon}
-                </a>
-              ))}
-            </div>
+            {/* Social links removed — will add when real accounts exist */}
           </div>
 
           {/* Link columns */}

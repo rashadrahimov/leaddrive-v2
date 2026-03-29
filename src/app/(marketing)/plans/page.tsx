@@ -166,7 +166,7 @@ export default function PricingPage() {
                       : "bg-orange-500/5 text-slate-800 hover:bg-orange-500/10"
                   )}
                 >
-                  {plan.id === "enterprise" ? "Satışla danışın" : "Pulsuz başla"}
+                  {plan.id === "enterprise" ? "Əlaqə saxlayın" : "Demo tələb et"}
                 </Link>
               </motion.div>
             ))}

@@ -1,88 +1,110 @@
 "use client"
 
-import { SectionWrapper } from "./section-wrapper"
 import { AnimateIn } from "./animate-in"
 import { testimonials } from "@/lib/marketing-data"
-import { Star } from "lucide-react"
+import { TrendingDown, Clock, Percent, ArrowUpRight } from "lucide-react"
 
-function StarRating({ rating }: { rating: number }) {
-  return (
-    <div className="flex gap-0.5">
-      {Array.from({ length: 5 }).map((_, i) => (
-        <Star
-          key={i}
-          className={`h-3.5 w-3.5 ${i < rating ? "text-orange-400 fill-orange-400" : "text-slate-200"}`}
-        />
-      ))}
-    </div>
-  )
-}
+/* Case-study style testimonials with key metric per card */
+const caseStudies = [
+  {
+    ...testimonials[0],
+    metric: "Mənfəət +34%",
+    metricLabel: "Xərc modeli ilk 3 ayda",
+    metricIcon: ArrowUpRight,
+    metricColor: "#10b981",
+  },
+  {
+    ...testimonials[1],
+    metric: "−60%",
+    metricLabel: "Cavab müddəti azalması",
+    metricIcon: Clock,
+    metricColor: "#06b6d4",
+  },
+  {
+    ...testimonials[2],
+    metric: "1 platforma",
+    metricLabel: "3 aləti əvəz etdi",
+    metricIcon: TrendingDown,
+    metricColor: "#8b5cf6",
+  },
+  {
+    ...testimonials[3],
+    metric: "40%",
+    metricLabel: "Tiketlər AI ilə həll olunur",
+    metricIcon: Percent,
+    metricColor: "#f97316",
+  },
+  {
+    ...testimonials[4],
+    metric: "0 Excel",
+    metricLabel: "Maliyyə hesabatları platformada",
+    metricIcon: ArrowUpRight,
+    metricColor: "#ef4444",
+  },
+  {
+    ...testimonials[5],
+    metric: "−45%",
+    metricLabel: "Gecikmiş ödəniş azalması",
+    metricIcon: TrendingDown,
+    metricColor: "#10b981",
+  },
+]
 
 export function TestimonialCarousel() {
-  const featured = testimonials.slice(0, 6)
-  const topRow = featured.slice(0, 3)
-  const bottomRow = featured.slice(3, 6)
-
   return (
-    <SectionWrapper id="testimonials" variant="white">
-      <AnimateIn className="text-center mb-14">
-        <h2 className="text-3xl lg:text-4xl font-bold tracking-tight text-slate-900">
-          Müştərilərimiz nə deyir
-        </h2>
-        <p className="mt-4 text-lg text-slate-500">
-          500+ şirkət artıq LeadDrive istifadə edir
-        </p>
-      </AnimateIn>
+    <section id="testimonials" className="relative bg-slate-50 py-20 lg:py-28">
+      <div className="mx-auto max-w-7xl px-4 lg:px-8">
+        <AnimateIn className="text-center mb-14">
+          <p className="text-sm font-medium text-slate-400 uppercase tracking-widest mb-3">
+            Müştəri nəticələri
+          </p>
+          <h2 className="text-3xl lg:text-4xl font-bold tracking-tight text-slate-900">
+            Real rəqəmlər, real şirkətlər
+          </h2>
+        </AnimateIn>
 
-      {/* Top row — 3 cards */}
-      <div className="grid md:grid-cols-3 gap-4 mb-4">
-        {topRow.map((t, i) => (
-          <AnimateIn
-            key={i}
-            delay={i * 80}
-            className="rounded-2xl border border-slate-200 bg-white p-6 lg:p-8 flex flex-col hover:border-slate-300 hover:shadow-md transition-all"
-          >
-            <StarRating rating={t.rating} />
-            <p className="mt-4 text-slate-600 text-sm leading-relaxed flex-1">
-              &ldquo;{t.quote}&rdquo;
-            </p>
-            <div className="mt-6 pt-6 border-t border-slate-100 flex items-center gap-3">
-              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center text-white text-xs font-bold">
-                {t.name.split(" ").map(n => n[0]).join("")}
-              </div>
-              <div>
-                <p className="font-medium text-slate-900 text-sm">{t.name}</p>
-                <p className="text-xs text-slate-500">{t.title}, {t.company}</p>
-              </div>
-            </div>
-          </AnimateIn>
-        ))}
-      </div>
+        {/* 3-column grid — top row has highlighted metrics */}
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+          {caseStudies.map((t, i) => {
+            const MetricIcon = t.metricIcon
+            return (
+              <AnimateIn key={i} delay={i * 70}>
+                <div className="group h-full rounded-2xl border border-slate-200/80 bg-white p-6 lg:p-7 flex flex-col hover:border-slate-300 hover:shadow-lg hover:shadow-slate-100/80 transition-all duration-300">
+                  {/* Metric highlight */}
+                  <div className="flex items-center gap-3 mb-5 pb-5 border-b border-slate-100">
+                    <div
+                      className="flex items-center justify-center w-10 h-10 rounded-xl shrink-0"
+                      style={{ backgroundColor: `${t.metricColor}12` }}
+                    >
+                      <MetricIcon className="w-5 h-5" style={{ color: t.metricColor }} />
+                    </div>
+                    <div>
+                      <div className="text-xl font-bold text-slate-900">{t.metric}</div>
+                      <div className="text-xs text-slate-400">{t.metricLabel}</div>
+                    </div>
+                  </div>
 
-      {/* Bottom row — 3 more cards */}
-      <div className="grid md:grid-cols-3 gap-4">
-        {bottomRow.map((t, i) => (
-          <AnimateIn
-            key={i + 3}
-            delay={(i + 3) * 80}
-            className="rounded-2xl border border-slate-200 bg-white p-6 lg:p-8 flex flex-col hover:border-slate-300 hover:shadow-md transition-all"
-          >
-            <StarRating rating={t.rating} />
-            <p className="mt-4 text-slate-600 text-sm leading-relaxed flex-1">
-              &ldquo;{t.quote}&rdquo;
-            </p>
-            <div className="mt-6 pt-6 border-t border-slate-100 flex items-center gap-3">
-              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center text-white text-xs font-bold">
-                {t.name.split(" ").map(n => n[0]).join("")}
-              </div>
-              <div>
-                <p className="font-medium text-slate-900 text-sm">{t.name}</p>
-                <p className="text-xs text-slate-500">{t.title}, {t.company}</p>
-              </div>
-            </div>
-          </AnimateIn>
-        ))}
+                  {/* Quote */}
+                  <p className="text-slate-600 text-sm leading-relaxed flex-1">
+                    &ldquo;{t.quote}&rdquo;
+                  </p>
+
+                  {/* Author */}
+                  <div className="mt-5 flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 text-xs font-semibold">
+                      {t.name.split(" ").map(n => n[0]).join("")}
+                    </div>
+                    <div>
+                      <p className="font-medium text-slate-800 text-sm">{t.name}</p>
+                      <p className="text-xs text-slate-400">{t.title}, {t.company}</p>
+                    </div>
+                  </div>
+                </div>
+              </AnimateIn>
+            )
+          })}
+        </div>
       </div>
-    </SectionWrapper>
+    </section>
   )
 }

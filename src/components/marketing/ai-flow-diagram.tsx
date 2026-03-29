@@ -1,149 +1,239 @@
 "use client"
 
-import { useRef, useState, useEffect, useCallback } from "react"
-import { SectionWrapper } from "./section-wrapper"
+import { useRef, useState, useEffect } from "react"
 import { AnimateIn } from "./animate-in"
-import { AnimatedBeam } from "@/components/ui/animated-beam"
 import { aiCapabilities } from "@/lib/marketing-data"
-import { Bot, Target, Mail, LineChart, BookOpen, MessageSquare, ArrowRight } from "lucide-react"
-import { cn } from "@/lib/utils"
+import {
+  Bot, ArrowRight, Sparkles, Send,
+  TrendingUp, Star, Mail, MessageSquare,
+  Zap, CheckCircle2,
+} from "lucide-react"
 import Link from "next/link"
 
-const beamNodes = [
-  { icon: MessageSquare, label: "Cavablar", color: "text-orange-500" },
-  { icon: Target, label: "Skorinq", color: "text-red-500" },
-  { icon: Mail, label: "E-poçt", color: "text-orange-600" },
-  { icon: LineChart, label: "Analitika", color: "text-red-400" },
-  { icon: BookOpen, label: "Bilik", color: "text-orange-400" },
-]
-
-function AiBeamVisual() {
-  const containerRef = useRef<HTMLDivElement>(null)
-  const centerRef = useRef<HTMLDivElement>(null)
-  const nodeRefs = useRef<(HTMLDivElement | null)[]>(new Array(beamNodes.length).fill(null))
-  const [mounted, setMounted] = useState(false)
-
-  useEffect(() => {
-    setMounted(true)
-  }, [])
-
-  const setNodeRef = useCallback((el: HTMLDivElement | null, i: number) => {
-    nodeRefs.current[i] = el
-  }, [])
-
+/* ── Fake AI Chat Preview ── */
+function AiChatPreview() {
   return (
-    <div ref={containerRef} className="relative flex items-center justify-center min-h-[320px]">
-      {/* Center AI node with glow */}
-      <div className="absolute w-32 h-32 bg-orange-500/15 rounded-full blur-[60px]" />
-      <div
-        ref={centerRef}
-        className="relative z-10 flex h-20 w-20 items-center justify-center rounded-2xl border-2 border-orange-300 bg-white shadow-lg shadow-orange-500/10"
-      >
-        <Bot className="h-9 w-9 text-orange-500" />
+    <div className="rounded-xl border border-slate-200 bg-white overflow-hidden shadow-lg shadow-slate-200/50">
+      {/* Chat header */}
+      <div className="flex items-center gap-2 px-4 py-3 border-b border-slate-100 bg-slate-50">
+        <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center">
+          <Bot className="w-3.5 h-3.5 text-white" />
+        </div>
+        <div>
+          <div className="text-xs font-semibold text-slate-800">Da Vinci AI</div>
+          <div className="text-[10px] text-emerald-500 flex items-center gap-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+            Aktiv
+          </div>
+        </div>
+        <div className="ml-auto flex items-center gap-1">
+          <span className="text-[9px] bg-orange-100 text-orange-600 px-1.5 py-0.5 rounded font-medium">AI</span>
+        </div>
       </div>
 
-      {/* Surrounding nodes */}
-      {beamNodes.map((node, i) => {
-        const Icon = node.icon
-        const total = beamNodes.length
-        const angle = (i * 2 * Math.PI) / total - Math.PI / 2
-        const radius = 130
-
-        return (
-          <div
-            key={i}
-            ref={(el) => setNodeRef(el, i)}
-            className="absolute z-10 flex h-14 w-14 items-center justify-center rounded-xl border border-slate-200 bg-white shadow-md"
-            style={{
-              left: `calc(50% + ${Math.cos(angle) * radius}px - 28px)`,
-              top: `calc(50% + ${Math.sin(angle) * radius}px - 28px)`,
-            }}
-          >
-            <div className="text-center">
-              <Icon className={cn("h-5 w-5 mx-auto", node.color)} />
-              <span className="text-[9px] font-medium text-slate-500 mt-0.5 block">{node.label}</span>
-            </div>
+      {/* Chat messages */}
+      <div className="p-3 space-y-3 text-xs" style={{ minHeight: 200 }}>
+        {/* User message */}
+        <div className="flex justify-end">
+          <div className="bg-slate-900 text-white rounded-xl rounded-br-sm px-3 py-2 max-w-[75%]">
+            Bu lid haqqında nə deyə bilərsən?
           </div>
-        )
-      })}
+        </div>
 
-      {/* Animated beams */}
-      {mounted && beamNodes.map((_, i) => {
-        const fromEl = nodeRefs.current[i]
-        const centerEl = centerRef.current
-        const containerEl = containerRef.current
-        if (!fromEl || !centerEl || !containerEl) return null
+        {/* AI response */}
+        <div className="flex gap-2">
+          <div className="w-5 h-5 rounded-md bg-orange-100 flex items-center justify-center shrink-0 mt-0.5">
+            <Sparkles className="w-3 h-3 text-orange-500" />
+          </div>
+          <div className="bg-slate-50 rounded-xl rounded-bl-sm px-3 py-2 max-w-[80%] space-y-2">
+            <p className="text-slate-700 leading-relaxed">
+              <span className="font-semibold text-slate-900">TechVision MMC</span> yüksək potensial lid kimi qiymətləndirildi:
+            </p>
+            {/* Scoring card */}
+            <div className="bg-white rounded-lg border border-slate-100 p-2 space-y-1.5">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] text-slate-500">Lid Skoru</span>
+                <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded">A — 87/100</span>
+              </div>
+              <div className="w-full bg-slate-100 rounded-full h-1.5">
+                <div className="bg-gradient-to-r from-orange-400 to-emerald-500 h-1.5 rounded-full" style={{ width: "87%" }} />
+              </div>
+              <div className="grid grid-cols-3 gap-1 text-[9px]">
+                <div className="text-center bg-slate-50 rounded p-1">
+                  <div className="font-semibold text-slate-700">Yüksək</div>
+                  <div className="text-slate-400">Uyğunluq</div>
+                </div>
+                <div className="text-center bg-slate-50 rounded p-1">
+                  <div className="font-semibold text-slate-700">4 əlaqə</div>
+                  <div className="text-slate-400">Fəallıq</div>
+                </div>
+                <div className="text-center bg-slate-50 rounded p-1">
+                  <div className="font-semibold text-emerald-600">$45K</div>
+                  <div className="text-slate-400">Potensial</div>
+                </div>
+              </div>
+            </div>
+            <p className="text-slate-600 leading-relaxed">
+              <span className="font-medium text-orange-600">Tövsiyə:</span> Bu həftə görüş təyin et. 72% ehtimalla bağlanacaq.
+            </p>
+          </div>
+        </div>
 
-        return (
-          <AnimatedBeam
-            key={`beam-${i}`}
-            containerRef={containerRef as React.RefObject<HTMLElement>}
-            fromRef={{ current: fromEl } as React.RefObject<HTMLElement>}
-            toRef={centerRef as React.RefObject<HTMLElement>}
-            curvature={0}
-            duration={3 + i * 0.5}
-            delay={i * 0.4}
-            gradientStartColor="#f97316"
-            gradientStopColor="#ef4444"
-            pathColor="#e2e8f0"
-            pathOpacity={0.5}
-          />
-        )
-      })}
+        {/* AI action buttons */}
+        <div className="flex gap-1.5 pl-7">
+          <button className="flex items-center gap-1 text-[10px] font-medium text-orange-600 bg-orange-50 border border-orange-200 rounded-lg px-2 py-1">
+            <Mail className="w-3 h-3" /> E-poçt yaz
+          </button>
+          <button className="flex items-center gap-1 text-[10px] font-medium text-slate-600 bg-slate-50 border border-slate-200 rounded-lg px-2 py-1">
+            <TrendingUp className="w-3 h-3" /> Proqnoz
+          </button>
+        </div>
+      </div>
+
+      {/* Input bar */}
+      <div className="px-3 py-2 border-t border-slate-100 flex items-center gap-2">
+        <input
+          type="text"
+          placeholder="Sual yazın..."
+          className="flex-1 text-xs text-slate-500 bg-transparent outline-none"
+          readOnly
+        />
+        <div className="w-6 h-6 rounded-md bg-slate-900 flex items-center justify-center">
+          <Send className="w-3 h-3 text-white" />
+        </div>
+      </div>
     </div>
+  )
+}
+
+/* ── AI Email Generation Preview ── */
+function AiEmailPreview() {
+  return (
+    <div className="rounded-xl border border-slate-200 bg-white overflow-hidden shadow-lg shadow-slate-200/50">
+      <div className="flex items-center gap-2 px-4 py-2.5 border-b border-slate-100 bg-slate-50">
+        <Mail className="w-3.5 h-3.5 text-slate-400" />
+        <span className="text-xs font-medium text-slate-700">AI E-poçt Generasiyası</span>
+        <span className="ml-auto text-[9px] bg-violet-100 text-violet-600 px-1.5 py-0.5 rounded font-medium flex items-center gap-0.5">
+          <Zap className="w-2.5 h-2.5" /> Auto
+        </span>
+      </div>
+      <div className="p-3 space-y-2 text-xs">
+        <div className="flex items-center gap-2 text-slate-500">
+          <span className="text-[10px] font-medium text-slate-400 w-10">Kimə:</span>
+          <span className="text-slate-700">info@techvision.az</span>
+        </div>
+        <div className="flex items-center gap-2 text-slate-500">
+          <span className="text-[10px] font-medium text-slate-400 w-10">Mövzu:</span>
+          <span className="text-slate-700">LeadDrive CRM — Şəxsi təklif</span>
+        </div>
+        <div className="border-t border-slate-100 pt-2 space-y-1.5 text-slate-600 leading-relaxed">
+          <p>Hörmətli Kamran bəy,</p>
+          <p>TechVision MMC-nin ERP ehtiyaclarını nəzərə alaraq, sizin üçün xüsusi Professional plan hazırladıq...</p>
+          <p className="text-slate-400 italic">✨ AI tərəfindən yaradıldı — 3 saniyə</p>
+        </div>
+        <div className="flex items-center gap-2 pt-1">
+          <div className="flex items-center gap-1 text-[10px] text-emerald-600">
+            <CheckCircle2 className="w-3 h-3" />
+            Ton: Peşəkar
+          </div>
+          <div className="flex items-center gap-1 text-[10px] text-emerald-600">
+            <CheckCircle2 className="w-3 h-3" />
+            Uzunluq: Optimal
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/* ── Floating AI Capability Badges ── */
+function AiCapabilityBadges() {
+  const badges = [
+    { label: "Hiss Təhlili", emoji: "😊", x: "5%", y: "8%" },
+    { label: "Lid Skorinq", emoji: "📊", x: "70%", y: "2%" },
+    { label: "Bilik Bazası", emoji: "📚", x: "80%", y: "45%" },
+    { label: "Auto-Tiket", emoji: "🎫", x: "2%", y: "55%" },
+  ]
+
+  return (
+    <>
+      {badges.map((b) => (
+        <div
+          key={b.label}
+          className="absolute bg-white/90 backdrop-blur border border-slate-100 rounded-lg px-2.5 py-1.5 shadow-md text-[10px] font-medium text-slate-600 flex items-center gap-1.5 z-10"
+          style={{ left: b.x, top: b.y }}
+        >
+          <span>{b.emoji}</span>
+          {b.label}
+        </div>
+      ))}
+    </>
   )
 }
 
 export function AiFlowDiagram() {
   return (
-    <SectionWrapper id="ai" variant="white">
-      <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-        {/* Text */}
-        <AnimateIn>
-          <span className="inline-flex items-center gap-2 rounded-full border border-orange-200 bg-orange-50 px-3 py-1 text-xs font-medium text-orange-700 mb-4">
-            16 AI inteqrasiya
-          </span>
-          <h2 className="text-3xl lg:text-4xl font-bold tracking-tight">
-            <span className="bg-gradient-to-r from-orange-500 via-red-500 to-orange-600 bg-clip-text text-transparent">Maestro AI</span>
-            <br />
-            <span className="text-slate-900">sizin üçün işləyir</span>
-          </h2>
-          <p className="mt-4 text-lg text-slate-500 leading-relaxed">
-            Daxili Claude inteqrasiyası. Əlavə deyil — CRM-in əsasıdır.
-            Siz yuxuya gedəndə belə işləyir.
-          </p>
+    <section id="ai" className="relative bg-slate-50 py-20 lg:py-28 overflow-hidden">
+      {/* Subtle bg accent */}
+      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-orange-50/60 rounded-full blur-[120px]" />
 
-          <ul className="mt-8 space-y-4">
-            {aiCapabilities.map((cap) => {
-              const Icon = cap.icon
-              return (
-                <li key={cap.title} className="flex items-start gap-3">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-orange-50 border border-orange-200 flex-shrink-0 mt-0.5">
-                    <Icon className="h-4 w-4 text-orange-500" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-slate-900">{cap.title}</p>
-                    <p className="text-sm text-slate-500">{cap.description}</p>
-                  </div>
-                </li>
-              )
-            })}
-          </ul>
+      <div className="relative mx-auto max-w-7xl px-4 lg:px-8">
+        <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+          {/* Text */}
+          <AnimateIn>
+            <span className="inline-flex items-center gap-2 rounded-full border border-orange-200 bg-white px-4 py-1.5 text-xs font-medium text-orange-700 mb-5">
+              <Bot className="h-3.5 w-3.5" />
+              16 AI inteqrasiya
+            </span>
 
-          <Link
-            href="/demo"
-            className="mt-8 group inline-flex items-center gap-2 text-sm font-medium text-orange-500 hover:text-orange-600 transition-colors"
-          >
-            AI funksiyalara baxın
-            <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" />
-          </Link>
-        </AnimateIn>
+            <h2 className="text-3xl lg:text-4xl font-bold tracking-tight text-slate-900">
+              <span className="bg-gradient-to-r from-orange-500 to-red-500 bg-clip-text text-transparent">Da Vinci AI</span>
+              {" "}hər yerdədir
+            </h2>
 
-        {/* Visual */}
-        <AnimateIn delay={200}>
-          <AiBeamVisual />
-        </AnimateIn>
+            <p className="mt-4 text-lg text-slate-500 leading-relaxed max-w-lg">
+              Daxili süni intellekt — əlavə deyil, platformanın əsasıdır.
+              Siz yuxuya gedəndə belə müştəriləri qiymətləndirir, müraciətlərə cavab verir, məktub yazır.
+            </p>
+
+            <ul className="mt-8 space-y-3.5">
+              {aiCapabilities.map((cap) => {
+                const Icon = cap.icon
+                return (
+                  <li key={cap.title} className="flex items-start gap-3">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-white border border-slate-200 shrink-0 mt-0.5 shadow-sm">
+                      <Icon className="h-4 w-4 text-orange-500" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-slate-900">{cap.title}</p>
+                      <p className="text-sm text-slate-500">{cap.description}</p>
+                    </div>
+                  </li>
+                )
+              })}
+            </ul>
+
+            <Link
+              href="/demo"
+              className="mt-8 group inline-flex items-center gap-2 rounded-full bg-slate-900 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-slate-900/10 hover:bg-slate-800 transition-all"
+            >
+              AI-ı sınayın
+              <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" />
+            </Link>
+          </AnimateIn>
+
+          {/* Product UI previews */}
+          <AnimateIn delay={150}>
+            <div className="relative">
+              <AiCapabilityBadges />
+              <div className="space-y-4">
+                <AiChatPreview />
+                <AiEmailPreview />
+              </div>
+            </div>
+          </AnimateIn>
+        </div>
       </div>
-    </SectionWrapper>
+    </section>
   )
 }

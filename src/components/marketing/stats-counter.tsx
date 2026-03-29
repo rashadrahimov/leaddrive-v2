@@ -1,14 +1,21 @@
 "use client"
 
 import { useRef, useState, useEffect } from "react"
-import { stats } from "@/lib/marketing-data"
 import { AnimateIn } from "./animate-in"
+import {
+  Brain, MessageSquare, TrendingUp, Shield,
+  ArrowUpRight, Zap, BarChart3, Users,
+} from "lucide-react"
 
+/* ── Animated counter ── */
 function useInView(ref: React.RefObject<HTMLElement | null>) {
   const [inView, setInView] = useState(false)
   useEffect(() => {
     if (!ref.current) return
-    const obs = new IntersectionObserver(([e]) => { if (e.isIntersecting) setInView(true) }, { threshold: 0.3 })
+    const obs = new IntersectionObserver(
+      ([e]) => { if (e.isIntersecting) setInView(true) },
+      { threshold: 0.3 },
+    )
     obs.observe(ref.current)
     return () => obs.disconnect()
   }, [ref])
@@ -22,7 +29,7 @@ function Counter({ value, suffix }: { value: number; suffix: string }) {
 
   useEffect(() => {
     if (!inView) return
-    const duration = 1200
+    const duration = 1400
     const startTime = performance.now()
     function tick(now: number) {
       const elapsed = now - startTime
@@ -37,19 +44,127 @@ function Counter({ value, suffix }: { value: number; suffix: string }) {
   return <span ref={ref}>{count.toLocaleString()}{suffix}</span>
 }
 
+/* ── Mini sparkline SVG ── */
+function Sparkline({ data, color }: { data: number[]; color: string }) {
+  const max = Math.max(...data)
+  const min = Math.min(...data)
+  const range = max - min || 1
+  const w = 80
+  const h = 28
+  const points = data
+    .map((v, i) => `${(i / (data.length - 1)) * w},${h - ((v - min) / range) * h}`)
+    .join(" ")
+
+  return (
+    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} className="shrink-0">
+      <polyline
+        points={points}
+        fill="none"
+        stroke={color}
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
+/* ── Metric cards data ── */
+const metrics = [
+  {
+    value: 128,
+    suffix: "+",
+    label: "Funksiya",
+    sublabel: "Bütün modullar daxil",
+    icon: BarChart3,
+    trend: "+12%",
+    color: "#f97316",
+    spark: [20, 35, 28, 45, 52, 60, 75, 82, 90, 100, 115, 128],
+  },
+  {
+    value: 16,
+    suffix: "",
+    label: "AI İnteqrasiya",
+    sublabel: "Da Vinci AI ilə",
+    icon: Brain,
+    trend: "+4 yeni",
+    color: "#8b5cf6",
+    spark: [4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16],
+  },
+  {
+    value: 7,
+    suffix: "",
+    label: "Rabitə kanalı",
+    sublabel: "Vahid gələn qutusu",
+    icon: MessageSquare,
+    trend: "Tam",
+    color: "#06b6d4",
+    spark: [2, 3, 3, 4, 5, 5, 6, 6, 7, 7, 7, 7],
+  },
+  {
+    value: 500,
+    suffix: "+",
+    label: "İstifadəçi",
+    sublabel: "və artmaqda",
+    icon: Users,
+    trend: "+23%",
+    color: "#10b981",
+    spark: [120, 160, 195, 230, 270, 310, 340, 380, 410, 440, 470, 500],
+  },
+]
+
 export function StatsCounter() {
   return (
-    <section className="relative bg-slate-50 py-16">
-      <div className="relative mx-auto max-w-7xl px-4 lg:px-8">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-          {stats.map((stat, i) => (
-            <AnimateIn key={stat.label} delay={i * 100}>
-              <div className="text-4xl lg:text-5xl font-bold tabular-nums text-slate-900">
-                <Counter value={stat.value} suffix={stat.suffix} />
-              </div>
-              <div className="mt-2 text-sm text-slate-500">{stat.label}</div>
-            </AnimateIn>
-          ))}
+    <section className="relative bg-white py-16 lg:py-20">
+      <div className="mx-auto max-w-7xl px-4 lg:px-8">
+        {/* Section micro-header */}
+        <AnimateIn>
+          <p className="text-center text-sm font-medium text-slate-400 uppercase tracking-widest mb-10">
+            Platforma rəqəmlərdə
+          </p>
+        </AnimateIn>
+
+        {/* Metric cards */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
+          {metrics.map((m, i) => {
+            const Icon = m.icon
+            return (
+              <AnimateIn key={m.label} delay={i * 80}>
+                <div className="group relative rounded-2xl border border-slate-100 bg-white p-5 lg:p-6 hover:border-slate-200 hover:shadow-lg hover:shadow-slate-100/80 transition-all duration-300">
+                  {/* Icon + trend */}
+                  <div className="flex items-center justify-between mb-4">
+                    <div
+                      className="flex items-center justify-center w-9 h-9 rounded-xl"
+                      style={{ backgroundColor: `${m.color}12` }}
+                    >
+                      <Icon className="w-4.5 h-4.5" style={{ color: m.color }} />
+                    </div>
+                    <span
+                      className="inline-flex items-center gap-0.5 text-xs font-medium rounded-full px-2 py-0.5"
+                      style={{ backgroundColor: `${m.color}10`, color: m.color }}
+                    >
+                      <ArrowUpRight className="w-3 h-3" />
+                      {m.trend}
+                    </span>
+                  </div>
+
+                  {/* Number */}
+                  <div className="text-3xl lg:text-4xl font-bold tabular-nums text-slate-900 leading-none">
+                    <Counter value={m.value} suffix={m.suffix} />
+                  </div>
+
+                  {/* Label */}
+                  <div className="mt-1.5 text-sm font-medium text-slate-700">{m.label}</div>
+                  <div className="text-xs text-slate-400">{m.sublabel}</div>
+
+                  {/* Sparkline */}
+                  <div className="mt-3 opacity-60 group-hover:opacity-100 transition-opacity">
+                    <Sparkline data={m.spark} color={m.color} />
+                  </div>
+                </div>
+              </AnimateIn>
+            )
+          })}
         </div>
       </div>
     </section>

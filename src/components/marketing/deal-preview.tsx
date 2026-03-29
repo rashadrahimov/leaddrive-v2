@@ -313,7 +313,7 @@ export function DealPreview() {
                   <Bot className="w-3 h-3 text-violet-500" />
                   <span className="text-[10px] font-semibold text-slate-700">AI Proqnoz</span>
                 </div>
-                <span className="text-[7px] px-1 py-0.5 rounded bg-violet-50 text-violet-600 border border-violet-200">Maestro</span>
+                <span className="text-[7px] px-1 py-0.5 rounded bg-violet-50 text-violet-600 border border-violet-200">Da Vinci</span>
               </div>
               <div className="space-y-[5px]">
                 {aiPredictions.map((p) => (

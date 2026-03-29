@@ -326,7 +326,7 @@ export const featureCards: FeatureCard[] = [
   },
   {
     id: "ai",
-    title: "Maestro AI",
+    title: "Da Vinci AI",
     description: "Daxili süni intellekt: hiss təhlili, lid skorinqi, e-poçt yaratma, avtomatik cavablar və analitika.",
     icon: Bot,
     features: ["AI lid skorinqi", "AI e-poçt generasiyası", "AI müştəri xidməti", "AI analitika"],

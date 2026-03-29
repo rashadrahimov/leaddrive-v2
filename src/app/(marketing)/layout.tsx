@@ -2,6 +2,7 @@ import { MarketingNavbar } from "@/components/marketing/navbar"
 import { MarketingFooter } from "@/components/marketing/footer"
 import { FloatingButtons } from "@/components/marketing/floating-buttons"
 import { CookieConsent } from "@/components/marketing/cookie-consent"
+import { GoogleAnalytics } from "@/components/marketing/google-analytics"
 import type { Metadata } from "next"
 
 export const metadata: Metadata = {
@@ -10,9 +11,9 @@ export const metadata: Metadata = {
     template: "%s | LeadDrive CRM",
   },
   description:
-    "Süni intellektli CRM platforması — satış, marketinq, 7 kanallı gələn qutusu, dəstək, maliyyə və analitika bir yerdə. 128+ funksiya, 16 AI inteqrasiya.",
+    "AI-güclu CRM platforması — satış, marketinq, 7 kanallı gələn qutusu, dəstək, maliyyə və analitika bir yerdə. 128+ funksiya, 16 AI inteqrasiya.",
   keywords: [
-    "CRM", "CRM Azerbaijan", "CRM Azərbaycan", "süni intellekt CRM",
+    "CRM", "CRM Azerbaijan", "CRM Azərbaycan", "AI CRM platforması",
     "AI CRM", "satış idarəsi", "lead management", "müştəri idarəsi",
     "marketing automation", "helpdesk", "SLA", "pipeline",
     "LeadDrive", "Güvən Technology",
@@ -46,6 +47,7 @@ export default function MarketingLayout({ children }: { children: React.ReactNod
       <MarketingFooter />
       <FloatingButtons />
       <CookieConsent />
+      <GoogleAnalytics />
     </div>
   )
 }
