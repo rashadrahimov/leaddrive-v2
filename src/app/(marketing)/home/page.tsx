@@ -1,5 +1,4 @@
 import { HeroSection } from "@/components/marketing/hero-section"
-import { ClientLogos } from "@/components/marketing/client-logos"
 import { StatsCounter } from "@/components/marketing/stats-counter"
 import { ModuleShowcase } from "@/components/marketing/module-showcase"
 import { AiFlowDiagram } from "@/components/marketing/ai-flow-diagram"
@@ -40,7 +39,7 @@ const jsonLd = {
   name: "LeadDrive CRM",
   applicationCategory: "BusinessApplication",
   operatingSystem: "Web",
-  description: "AI-native CRM platforması — satış, marketinq, dəstək, maliyyə və analitika bir yerdə.",
+  description: "İntellektual CRM platforması — satış, marketinq, dəstək, maliyyə və analitika bir yerdə.",
   offers: {
     "@type": "Offer",
     price: "0",
@@ -62,9 +61,9 @@ const jsonLd = {
     "7-Channel Unified Inbox",
     "Helpdesk & SLA",
     "Finance & Profitability",
-    "AI Lead Scoring",
-    "AI Email Generation",
-    "AI Customer Service Agent",
+    "Smart Lead Scoring",
+    "Smart Email Generation",
+    "Smart Customer Service Agent",
   ],
 }
 
@@ -84,7 +83,6 @@ export default function MarketingHomePage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
       />
       <HeroSection />
-      <ClientLogos />
       <StatsCounter />
       <ModuleShowcase />
       <AiFlowDiagram />

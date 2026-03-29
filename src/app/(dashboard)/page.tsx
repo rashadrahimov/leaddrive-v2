@@ -179,7 +179,7 @@ export default function DashboardPage() {
         {widgets.leadSources && <LeadSourcesDonut leadsBySource={leads.bySource} totalLeads={leads.activeCount || leads.total || 0} />}
       </div>
 
-      {/* ═══ Row 3: Recent Deals + AI Lead Scoring + Activity Feed ═══ */}
+      {/* ═══ Row 3: Recent Deals + Da Vinci Lead Scoring + Activity Feed ═══ */}
       <div className="grid lg:grid-cols-3 gap-4">
         {widgets.recentDeals && <RecentDeals deals={pipeline.recentDeals} />}
         {widgets.aiLeadScoring && <AiLeadScoring leads={leads.topScored} />}

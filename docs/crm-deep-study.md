@@ -28,12 +28,12 @@
 20. [Agent Desktop](#20-agent-desktop)
 21. [SLA Policies](#21-sla-policies)
 22. [Knowledge Base](#22-knowledge-base)
-23. [AI Command Center](#23-ai-command-center)
-24. [AI Ticket Copilot](#24-ai-ticket-copilot)
-25. [AI Lead Scoring](#25-ai-lead-scoring)
-26. [AI General Chat](#26-ai-general-chat)
-27. [AI Financial Analysis](#27-ai-financial-analysis)
-28. [AI Guardrails](#28-ai-guardrails)
+23. [Da Vinci Command Center](#23-ai-command-center)
+24. [Da Vinci Ticket Copilot](#24-ai-ticket-copilot)
+25. [Da Vinci Lead Scoring](#25-ai-lead-scoring)
+26. [Da Vinci General Chat](#26-ai-general-chat)
+27. [Da Vinci Financial Analysis](#27-ai-financial-analysis)
+28. [Da Vinci Guardrails](#28-ai-guardrails)
 29. [Profitability (Cost Model)](#29-profitability)
 30. [Budgeting](#30-budgeting)
 31. [Finance Module](#31-finance)
@@ -68,7 +68,7 @@
 | Total Clients | `Company.count` | Where `category = "client"` |
 | Open Tickets | `Ticket.count` | Where status IN [new, in_progress, waiting] |
 
-### AI Risk Alerts (5 types)
+### Da Vinci Risk Alerts (5 types)
 1. **Low Margin** — Trigger: `marginPct < 5%` AND `totalRevenue > 0`. Target: 15%
 2. **Unprofitable Clients** — Trigger: `lossClients > profitableClients * 0.5`
 3. **SLA Breached** — Trigger: tickets where `slaDueAt < now` AND status IN [new, in_progress, waiting]
@@ -160,7 +160,7 @@ LEAD(10%) → QUALIFIED(20%) → PROPOSAL(50%) → NEGOTIATION(75%) → WON(100%
 6. **Contact Roles** — influence (Low/Med/High), decision factors, loyalty (Detractor/Neutral/Promoter)
 7. **Invoices** — linked invoice status
 8. **Next Steps** — follow-ups, milestones
-9. **Next Best Offers** — AI recommendations via Claude API
+9. **Next Best Offers** — Da Vinci recommendations via Claude API
 
 ### Team Members
 - `DealTeamMember` junction: dealId, userId, role (owner/member)
@@ -185,7 +185,7 @@ new → contacted → qualified → converted / lost
 ### Scoring (0-100)
 - Grade: A(80-100), B(60-79), C(40-59), D(20-39), F(0-19)
 - `scoreDetails` JSON: factors, conversionProb, grade, reasoning, aiPowered flag
-- See [AI Lead Scoring](#25-ai-lead-scoring) for full details
+- See [Da Vinci Lead Scoring](#25-ai-lead-scoring) for full details
 
 ### Conversion Flow
 - POST `/api/v1/leads/{id}/convert`
@@ -464,7 +464,7 @@ Email, Telegram, SMS, WhatsApp, Facebook, Instagram, VKontakte
 - GET verification (hub.challenge)
 - Handles: text, image, video, audio, document, sticker, location
 - Status updates: sent → delivered → read
-- **AI Auto-Reply**: Claude responds, KB context, escalation detection ([ESCALATE] marker)
+- **Da Vinci Auto-Reply**: Claude responds, KB context, escalation detection ([ESCALATE] marker)
 - **Auto-Reopen Tickets**: closed tickets reopen within 7 days
 - **Session memory**: 1-hour conversation context
 
@@ -549,11 +549,11 @@ general, technical, billing, faq, onboarding, api, security, uncategorized
 ### Portal Integration
 - Only "published" articles shown to portal users
 - View counts tracked per article
-- Used in AI responses (KB context injection)
+- Used in Da Vinci responses (KB context injection)
 
 ---
 
-## 23. AI Command Center
+## 23. Da Vinci Command Center
 
 **Files:** `src/app/api/v1/ai-configs/route.ts`, `src/components/ai-config-form.tsx`
 
@@ -572,12 +572,12 @@ prompt: $0.00025/1K tokens, completion: $0.00125/1K tokens
 
 ---
 
-## 24. AI Ticket Copilot
+## 24. Da Vinci Ticket Copilot
 
 **Files:** `src/app/api/v1/tickets/ai/route.ts`
 
 ### Actions (3)
-1. **reply** — AI reply generation with KB context
+1. **reply** — Da Vinci reply generation with KB context
 2. **summary** — 2-3 sentence ticket summary
 3. **steps** — 3-5 concrete resolution steps
 
@@ -594,7 +594,7 @@ If no ANTHROPIC_API_KEY: static templates with KB article titles
 
 ---
 
-## 25. AI Lead Scoring
+## 25. Da Vinci Lead Scoring
 
 **Files:** `src/app/(dashboard)/ai-scoring/page.tsx`, `src/app/api/v1/lead-scoring/route.ts`
 
@@ -612,7 +612,7 @@ If no ANTHROPIC_API_KEY: static templates with KB article titles
 | Notes present | +5 |
 ConversionProb = score × 0.85
 
-### AI Scoring (Claude Sonnet)
+### Da Vinci Scoring (Claude Sonnet)
 - Context: lead fields + last 10 activities + 5 related deals
 - Output: score (0-100), conversionProb, factors breakdown, reasoning
 - Grade: A(80+), B(60+), C(40+), D(20+), F(0-19)
@@ -620,12 +620,12 @@ ConversionProb = score × 0.85
 ### UI
 - Grade distribution cards (A/B/C/D/F with counts)
 - Summary bar: avg score, avg conversion, total scored
-- "Claude AI" badge when AI-powered
+- "Da Vinci" badge when Da Vinci-powered
 - Per-lead re-score + batch re-score
 
 ---
 
-## 26. AI General Chat
+## 26. Da Vinci General Chat
 
 **Files:** `src/app/api/v1/ai/chat/route.ts`
 
@@ -641,7 +641,7 @@ message, context (page URL), history (previous messages), locale
 
 ---
 
-## 27. AI Financial Analysis
+## 27. Da Vinci Financial Analysis
 
 **Files:** `src/app/api/v1/ai-observations/route.ts`
 
@@ -653,7 +653,7 @@ JSON array: `[{ type: insight|warning|opportunity, title, description }]`
 
 ---
 
-## 28. AI Guardrails
+## 28. Da Vinci Guardrails
 
 **Files:** `src/app/api/v1/ai-guardrails/route.ts`
 
@@ -727,7 +727,7 @@ draft, pending_approval, approved, rejected, closed + amendment chains
 - **Approval Workflow**: multi-level via BudgetDepartmentOwner
 - **ODDS Report**: Optimistic/Realistic/Pessimistic 3-scenario sensitivity
 - **Cash Flow Alerts**: low cash balance warnings
-- **AI Narrative**: Claude-generated budget commentary
+- **Da Vinci Narrative**: Claude-generated budget commentary
 - **Department Access Control**: owners see only their data
 
 ### 45 API Endpoints
@@ -821,7 +821,7 @@ overdue_invoice, low_cash, budget_overspend, upcoming_payment
 ### Pages
 - **Tickets**: list, create, search, detail with comments
 - **Knowledge Base**: published articles, category browsing
-- **AI Chat**: Claude integration, auto-escalation to ticket, session tracking
+- **Da Vinci Chat**: Claude integration, auto-escalation to ticket, session tracking
 - **Chat Widget**: embedded in portal layout
 
 ### Public API
@@ -1057,8 +1057,8 @@ Analytics, Overhead, Employees, Parameters, Snapshots
 ### Pricing
 Data, Groups, Categories, Profiles, Services, Export/Import, Additional Sales
 
-### AI
-Sessions, Configs, Alerts, Guardrails, Chat, Observations, Lead Scoring, Ticket AI
+### Da Vinci
+Sessions, Configs, Alerts, Guardrails, Chat, Observations, Lead Scoring, Ticket Da Vinci
 
 ### Settings
 Users, Roles, Permissions, SMTP, Currencies, Custom Fields, Workflows, SLA, Channels, Dashboard Layout, Lead Rules, Billing
@@ -1070,14 +1070,14 @@ Users, Roles, Permissions, SMTP, Currencies, Custom Fields, Workflows, SLA, Chan
 1. **5-Stage Cost Model Engine** — per-client, per-service profitability (18 overhead categories, 7 departments)
 2. **13-Tab Budgeting** — P&L, Waterfall, Matrix, ODDS, Rolling Forecast, Cash Flow Alerts, Multi-level Approvals
 3. **7-Channel Inbox** — Email, SMS, Telegram, WhatsApp, Facebook, Instagram, VK in unified thread view
-4. **AI Copilot** — ticket reply/summary/steps with KB context, 3-language support
-5. **AI Lead Scoring** — Claude-powered with grade system (A-F), conversion probability, reasoning
+4. **Da Vinci Copilot** — ticket reply/summary/steps with KB context, 3-language support
+5. **Da Vinci Lead Scoring** — Claude-powered with grade system (A-F), conversion probability, reasoning
 6. **Invoice Chain Journeys** — automatic payment reminder sequences per invoice
 7. **Dynamic Pricing Engine** — interactive sliders, per-company profiles, multi-currency
 8. **Deal Stakeholder Mapping** — influence, decision factors, loyalty tracking per contact
-9. **Customer Portal** — self-service tickets, KB, AI chat with auto-escalation
+9. **Customer Portal** — self-service tickets, KB, Da Vinci chat with auto-escalation
 10. **Act Generation** — Azerbaijan-specific work completion documents
-11. **WhatsApp AI Auto-Reply** — with session memory, KB context, auto-ticket escalation
+11. **WhatsApp Da Vinci Auto-Reply** — with session memory, KB context, auto-ticket escalation
 12. **Custom Invoice Columns** — per-invoice dynamic line item fields
 13. **Web-to-Lead** — embeddable form generator with auto-contact creation
 14. **Calendar Integration** — iCalendar feed for external calendar subscriptions

@@ -83,7 +83,7 @@ const sidebarItems = [
   { icon: Headphones, label: "Tiketlər" },
   { icon: BarChart3, label: "Hesabatlar" },
   { icon: Receipt, label: "Maliyyə", active: true },
-  { icon: Bot, label: "AI Mərkəzi" },
+  { icon: Bot, label: "Da Vinci Mərkəzi" },
   { icon: Settings, label: "Parametrlər" },
 ]
 

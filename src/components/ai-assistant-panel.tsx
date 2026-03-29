@@ -14,24 +14,24 @@ interface Message {
 
 const UI_TEXT: Record<string, { title: string; subtitle: string; greeting: string; placeholder: string; suggestions: string[] }> = {
   en: {
-    title: "LeadDrive AI",
-    subtitle: "Powered by Claude",
+    title: "Da Vinci",
+    subtitle: "Da Vinci texnologiyası",
     greeting: "Ask me anything about your CRM data, deals, clients, or get help with analysis.",
-    placeholder: "Ask LeadDrive AI...",
+    placeholder: "Ask Da Vinci...",
     suggestions: ["Summarize my sales pipeline", "Which deals are at risk?", "Top clients by revenue"],
   },
   ru: {
-    title: "LeadDrive AI",
-    subtitle: "На базе Claude",
+    title: "Da Vinci",
+    subtitle: "Da Vinci",
     greeting: "Спроси меня о данных CRM, сделках, клиентах, или получи помощь с аналитикой.",
-    placeholder: "Спросить LeadDrive AI...",
+    placeholder: "Спросить Da Vinci...",
     suggestions: ["Сводка по воронке продаж", "Какие сделки под угрозой?", "Топ клиенты по выручке"],
   },
   az: {
-    title: "LeadDrive AI",
-    subtitle: "Claude əsasında",
+    title: "Da Vinci",
+    subtitle: "Da Vinci",
     greeting: "CRM məlumatları, sövdələşmələr, müştərilər haqqında soruş və ya analitikada kömək al.",
-    placeholder: "LeadDrive AI-dan soruş...",
+    placeholder: "Da Vinci-dan soruş...",
     suggestions: ["Proses axınını ümumiləşdir", "Hansı sövdələşmələr risk altındadır?", "Gəlirə görə ən yaxşı müştərilər"],
   },
 }

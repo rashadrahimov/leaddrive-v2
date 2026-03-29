@@ -65,7 +65,7 @@ export default function AboutPage() {
                 </div>
                 <h2 className="text-2xl font-bold text-white mb-4">Missiyamız</h2>
                 <p className="text-slate-400 leading-relaxed">
-                  Hər ölçüdə bizneslərə güclü, AI-dəstəkli alətlər təqdim etmək — satışdan dəstəyə,
+                  Hər ölçüdə bizneslərə güclü, Da Vinci-dəstəkli alətlər təqdim etmək — satışdan dəstəyə,
                   maliyyədən analitikaya qədər hər şeyi bir platformada birləşdirmək.
                 </p>
               </div>
@@ -77,7 +77,7 @@ export default function AboutPage() {
                 </div>
                 <h2 className="text-2xl font-bold text-white mb-4">Nə edirik</h2>
                 <p className="text-slate-400 leading-relaxed">
-                  LeadDrive CRM — 128+ funksiya, 16 AI inteqrasiya, 11 modul.
+                  LeadDrive CRM — 128+ funksiya, 16 Da Vinci inteqrasiya, 11 modul.
                   CRM, marketinq avtomatlaşdırması, dəstək, maliyyə və ERP — hamısı bir yerdə.
                 </p>
               </div>
@@ -97,7 +97,7 @@ export default function AboutPage() {
               { icon: Shield, title: "Təhlükəsizlik", desc: "Məlumatlarınız şifrələnmiş, izolə edilmiş mühitdə saxlanılır. GDPR uyğunluq." },
               { icon: Users, title: "Müştəri fokus", desc: "Hər qərar müştəri ehtiyaclarına əsaslanır. 24 saat dəstək." },
               { icon: Globe, title: "Yerli və qlobal", desc: "Azərbaycanda yaradılıb, qlobal standartlara uyğun. AZ/RU/EN dil dəstəyi." },
-              { icon: Zap, title: "İnnovasiya", desc: "Da Vinci AI ilə — AI platformanın əsasıdır, əlavə deyil." },
+              { icon: Zap, title: "İnnovasiya", desc: "Da Vinci ilə — intellekt platformanın əsasıdır, əlavə deyil." },
               { icon: Building2, title: "Şəffaflıq", desc: "Gizli ödənişlər yoxdur. Nə görürsünüz — onu alırsınız." },
               { icon: Target, title: "Nəticə", desc: "Müştərilərimiz ortalama 34% mənfəət artımı və 60% cavab müddəti azalması əldə edir." },
             ].map((v) => (

@@ -21,7 +21,7 @@ const WIDGET_META: Record<string, { label: string; description: string; icon: an
   revenueTrend:    { label: "Gəlir Trendi",             description: "12 aylıq gəlir area qrafiki",                                      icon: TrendingUp,   category: "main" },
   leadSources:     { label: "Lid Mənbələri",            description: "Mənbə üzrə lidlərin donut diaqramı",                                icon: PieChart,     category: "main" },
   recentDeals:     { label: "Son Sövdələşmələr",        description: "Son 5 sövdələşmə siyahısı",                                        icon: Handshake,    category: "main" },
-  aiLeadScoring:   { label: "AI Lid Skorinq",           description: "Ən yüksək skora malik 5 lid",                                      icon: Brain,        category: "main" },
+  aiLeadScoring:   { label: "Da Vinci Lid Skorinq",           description: "Ən yüksək skora malik 5 lid",                                      icon: Brain,        category: "main" },
   activityFeed:    { label: "Son Fəaliyyət",            description: "Son zənglər, e-poçtlar, görüşlər",                                  icon: Activity,     category: "main" },
   campaignStats:   { label: "Kampaniyalar",             description: "Aktiv kampaniyalar: göndərildi, açılma, klik",                      icon: Megaphone,    category: "main" },
   upcomingEvents:  { label: "Tədbirlər",                description: "Gələcək tədbirlər və qeydiyyat sayı",                               icon: Calendar,     category: "main" },

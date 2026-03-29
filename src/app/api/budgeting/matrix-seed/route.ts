@@ -20,7 +20,7 @@ const EXPENSE_GROUPS = [
       { label: "Mobil rabitə (1 nəfər/ay)", amount: 4110 },
       { label: "LMS Platforma (illik, ƏDV xaric)", amount: 4916.67 },
       { label: "Treninqlər (illik)", amount: 20833.33 },
-      { label: "AI Lisenziyaları (illik, ƏDV xaric)", amount: 373.67 },
+      { label: "Da Vinci Lisenziyaları (illik, ƏDV xaric)", amount: 373.67 },
       { label: "Maşın amortizasiyası (150k÷60 ay)", amount: 2500 },
       { label: "Maşın cari xərcləri", amount: 1200 },
       { label: "Laptop xərci", amount: 8500 },

@@ -87,7 +87,7 @@ export default function PortalChatPage() {
   return (
     <div className="h-[calc(100vh-140px)] flex flex-col">
       <div className="mb-4">
-        <h1 className="text-2xl font-bold">AI Support Chat</h1>
+        <h1 className="text-2xl font-bold">Da Vinci Dəstək</h1>
         <p className="text-muted-foreground text-sm">Ask questions or get help with your account</p>
       </div>
 
@@ -96,7 +96,7 @@ export default function PortalChatPage() {
           {messages.length === 0 && (
             <div className="text-center text-muted-foreground py-12">
               <Bot className="h-12 w-12 mx-auto mb-3 opacity-30" />
-              <p>Start a conversation with our AI support assistant</p>
+              <p>Start a conversation with our Da Vinci support assistant</p>
               <p className="text-xs mt-1">Ask about tickets, services, or general questions</p>
             </div>
           )}

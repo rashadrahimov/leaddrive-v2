@@ -30,7 +30,7 @@ const caseStudies = [
   {
     ...testimonials[3],
     metric: "40%",
-    metricLabel: "Tiketlər AI ilə həll olunur",
+    metricLabel: "Tiketlər Da Vinci ilə həll olunur",
     metricIcon: Percent,
     metricColor: "#f97316",
   },

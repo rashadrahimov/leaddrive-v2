@@ -4,7 +4,7 @@ import { getPortalUser } from "@/lib/portal-auth"
 import { sanitizeForPrompt } from "@/lib/sanitize"
 import Anthropic from "@anthropic-ai/sdk"
 
-const DEFAULT_SYSTEM_PROMPT = `Ты — AI-ассистент техподдержки LeadDrive CRM. Твоё имя "LeadDrive Support Pro".
+const DEFAULT_SYSTEM_PROMPT = `Ты — Da Vinci, интеллектуальный движок техподдержки LeadDrive CRM.
 
 ПРАВИЛА:
 1. ВСЕГДА отвечай на РУССКОМ языке, независимо от языка клиента. Это обязательное правило.
@@ -50,7 +50,7 @@ function buildToolsPrompt(toolsEnabled: string[]): string {
 // Default escalation rules (always active when escalation is enabled)
 const DEFAULT_ESCALATION_RULES = [
   "Клиент явно просит перевести на живого оператора или человека",
-  "AI не смог найти ответ в базе знаний и не может помочь клиенту",
+  "Da Vinci не смог найти ответ в базе знаний и не может помочь клиенту",
 ]
 
 function buildEscalationPrompt(escalationEnabled: boolean, escalationRules: string[]): string {
@@ -79,7 +79,7 @@ async function createEscalationTicket(
   try {
     // Generate unique ticket number
     const count = await prisma.ticket.count({ where: { organizationId } })
-    const ticketNumber = `AI-${String(count + 1).padStart(4, "0")}`
+    const ticketNumber = `DV-${String(count + 1).padStart(4, "0")}`
 
     // Get all chat messages from this session to copy into ticket
     const chatMessages = await prisma.aiChatMessage.findMany({
@@ -90,15 +90,15 @@ async function createEscalationTicket(
 
     // Build description with full chat history
     const chatHistory = chatMessages
-      .map((m: { role: string; content: string; createdAt: Date }) => `[${m.role === "user" ? "Клиент" : "AI"}] ${m.content}`)
+      .map((m: { role: string; content: string; createdAt: Date }) => `[${m.role === "user" ? "Клиент" : "Da Vinci"}] ${m.content}`)
       .join("\n\n")
 
     const ticket = await prisma.ticket.create({
       data: {
         organizationId,
         ticketNumber,
-        subject: `[AI Эскалация] ${userMessage.slice(0, 80)}`,
-        description: `Автоматически создан при эскалации из AI чата.\n\nСессия: ${sessionId}\n\n--- ИСТОРИЯ ЧАТА ---\n${chatHistory}`,
+        subject: `[Da Vinci Эскалация] ${userMessage.slice(0, 80)}`,
+        description: `Автоматически создан при эскалации из Da Vinci чата.\n\nСессия: ${sessionId}\n\n--- ИСТОРИЯ ЧАТА ---\n${chatHistory}`,
         priority: "high",
         status: "open",
         category: "ai_escalation",
@@ -115,7 +115,7 @@ async function createEscalationTicket(
         data: {
           ticketId: ticket.id,
           userId: null,
-          comment: `[${msg.role === "user" ? "Клиент" : "AI Bot"}] ${msg.content}`,
+          comment: `[${msg.role === "user" ? "Клиент" : "Da Vinci Bot"}] ${msg.content}`,
           isInternal: false,
         },
       })
@@ -133,7 +133,7 @@ async function createEscalationTicket(
   }
 }
 
-// Fetch real customer tickets for AI context
+// Fetch real customer tickets for Da Vinci context
 async function getCustomerTickets(organizationId: string, contactId: string | null): Promise<string> {
   if (!contactId) return "Тикеты клиента: нет данных."
   try {
@@ -153,7 +153,7 @@ async function getCustomerTickets(organizationId: string, contactId: string | nu
   }
 }
 
-// Fetch real customer contracts for AI context
+// Fetch real customer contracts for Da Vinci context
 async function getCustomerContracts(organizationId: string, companyId: string | null): Promise<string> {
   if (!companyId) return "Контракты: нет данных."
   try {
@@ -410,7 +410,7 @@ export async function POST(req: NextRequest) {
       // Append escalation configuration with rules
       systemPrompt += buildEscalationPrompt(escalationEnabled, escalationRules)
 
-      // Fetch real customer data for AI context (tickets, contracts)
+      // Fetch real customer data for Da Vinci context (tickets, contracts)
       const isTicketQuery = /тикет|ticket|tiket|обращен|заявк|статус/i.test(message)
       const isContractQuery = /контракт|contract|müqavilə|договор|условия/i.test(message)
 

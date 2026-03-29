@@ -26,7 +26,7 @@ export const MODULE_REGISTRY: Record<ModuleId, ModuleDefinition> = {
   workflows:        { name: "Workflows",        requires: ["core"] },
   profitability:    { name: "Profitability",    requires: ["core"] },
   budgeting:        { name: "Budgeting",        requires: ["core"] },
-  ai:               { name: "AI Suite",         requires: ["core"] },
+  ai:               { name: "Da Vinci Suite",         requires: ["core"] },
   reports:          { name: "Reports",          requires: ["core"] },
   currencies:       { name: "Multi-Currency",   requires: ["core"] },
   "custom-fields":  { name: "Custom Fields",    requires: ["core"] },

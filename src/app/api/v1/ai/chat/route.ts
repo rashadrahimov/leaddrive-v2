@@ -15,14 +15,14 @@ export async function POST(req: NextRequest) {
 
   const aiLimitKey = `ai:${orgId}`
   if (!checkRateLimit(aiLimitKey, RATE_LIMIT_CONFIG.ai)) {
-    return NextResponse.json({ error: "Too many AI requests. Please try again later." }, { status: 429 })
+    return NextResponse.json({ error: "Too many Da Vinci requests. Please try again later." }, { status: 429 })
   }
 
   const { message, context, history, locale } = await req.json()
   if (!message) return NextResponse.json({ error: "Message required" }, { status: 400 })
 
   const client = getClient()
-  if (!client) return NextResponse.json({ error: "AI not configured" }, { status: 503 })
+  if (!client) return NextResponse.json({ error: "Da Vinci not configured" }, { status: 503 })
 
   try {
     // Gather CRM context
@@ -57,7 +57,7 @@ export async function POST(req: NextRequest) {
     }
     const forceLang = langMap[locale || "ru"] || "Russian"
 
-    const systemPrompt = `You are LeadDrive AI — an intelligent CRM assistant for Güvən Technology LLC, an IT outsourcing company in Baku, Azerbaijan.
+    const systemPrompt = `You are Da Vinci — an intelligent CRM assistant for Güvən Technology LLC, an IT outsourcing company in Baku, Azerbaijan.
 
 CRITICAL RULE #1: You MUST always respond in ${forceLang}. This is non-negotiable regardless of what language the user writes in.
 
@@ -95,7 +95,7 @@ Rules:
 
     const reply = response.content[0]?.type === "text" ? response.content[0].text : "No response"
 
-    // Log AI interaction
+    // Log Da Vinci interaction
     try {
       await prisma.aiInteractionLog.create({
         data: {
@@ -113,7 +113,7 @@ Rules:
 
     return NextResponse.json({ success: true, data: { reply } })
   } catch (e) {
-    console.error("AI chat error:", e)
-    return NextResponse.json({ error: "AI request failed" }, { status: 500 })
+    console.error("Da Vinci chat error:", e)
+    return NextResponse.json({ error: "Da Vinci request failed" }, { status: 500 })
   }
 }

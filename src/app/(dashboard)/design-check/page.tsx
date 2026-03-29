@@ -312,7 +312,7 @@ export default function DesignCheckPage() {
             <CardContent className="space-y-4">
               <div className="rounded-lg border-2 border-dashed border-accent/30 bg-accent/5 p-8 text-center">
                 <Sparkles className="mx-auto size-12 text-accent/50 mb-4" />
-                <h3 className="text-lg font-semibold mb-2">AI Image Generation Ready</h3>
+                <h3 className="text-lg font-semibold mb-2">Da Vinci Image Generation Ready</h3>
                 <p className="text-sm text-muted-foreground max-w-md mx-auto mb-4">
                   Nano-Banana MCP подключен к Claude Code. Генерируйте макеты, иконки
                   и иллюстрации через Gemini 2.5 Flash прямо в сессии разработки.

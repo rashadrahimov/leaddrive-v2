@@ -9,7 +9,7 @@ import {
 /* ────────────────────── STATS ────────────────────── */
 export const stats = [
   { value: 128, label: "Funksiya", suffix: "+" },
-  { value: 16, label: "AI inteqrasiya", suffix: "" },
+  { value: 16, label: "Da Vinci inteqrasiya", suffix: "" },
   { value: 7, label: "Kommunikasiya kanalı", suffix: "" },
   { value: 500, label: "İstifadəçi şirkət", suffix: "+" },
 ]
@@ -41,12 +41,12 @@ export const solutions = [
   },
   {
     title: "Real marjanızı görün",
-    description: "Daxili xərc modeli mühərriki hər müştəri, hər xidmət üzrə gəlirliliyi AI təhlilləri ilə göstərir.",
+    description: "Daxili xərc modeli mühərriki hər müştəri, hər xidmət üzrə gəlirliliyi Da Vinci təhlilləri ilə göstərir.",
     icon: PieChart,
   },
   {
-    title: "AI işləyir",
-    description: "Daxili AI agentləri təqibləri, skorinqi, təhlilləri və müştəri xidmətini avtomatik idarə edir.",
+    title: "Da Vinci işləyir",
+    description: "Daxili Da Vinci agentləri təqibləri, skorinqi, təhlilləri və müştəri xidmətini avtomatik idarə edir.",
     icon: Brain,
   },
 ]
@@ -66,8 +66,8 @@ export const moduleGroups: ModuleGroup[] = [
     id: "crm",
     title: "CRM",
     icon: Users,
-    description: "Liddən sövdələşmənin bağlanmasına qədər tam satış dövrü idarəsi. Pipeline vizuallaşdırması, sövdələşmə izləməsi və AI ilə lid skorinqi.",
-    features: ["İdarə paneli və KPI-lər", "Şirkətlər və Kontaktlar", "Sövdələşmələr və Pipeline", "Lidlər və Skorinq", "AI Satış Köməkçisi", "Tapşırıqlar və Təqvim", "Müqavilələr və Fakturalar", "Məhsul kataloqu"],
+    description: "Liddən sövdələşmənin bağlanmasına qədər tam satış dövrü idarəsi. Pipeline vizuallaşdırması, sövdələşmə izləməsi və Da Vinci ilə lid skorinqi.",
+    features: ["İdarə paneli və KPI-lər", "Şirkətlər və Kontaktlar", "Sövdələşmələr və Pipeline", "Lidlər və Skorinq", "Da Vinci Satış Köməkçisi", "Tapşırıqlar və Təqvim", "Müqavilələr və Fakturalar", "Məhsul kataloqu"],
     screenshot: "/marketing/crm-dashboard.png",
   },
   {
@@ -75,7 +75,7 @@ export const moduleGroups: ModuleGroup[] = [
     title: "Marketinq",
     icon: Megaphone,
     description: "Çoxkanallı kampaniya avtomatlaşdırması: marşrut qurucusu, e-poçt ardıcıllıqları və ROI izləməsi.",
-    features: ["Kampaniya meneceri", "E-poçt şablonları", "Marşrut qurucusu", "Seqmentlər", "Tədbirlər", "AI Skorinq", "AI Kopyraytinq", "Kampaniya ROI"],
+    features: ["Kampaniya meneceri", "E-poçt şablonları", "Marşrut qurucusu", "Seqmentlər", "Tədbirlər", "Da Vinci Skorinq", "Da Vinci Kopyraytinq", "Kampaniya ROI"],
     screenshot: "/marketing/marketing-campaigns.png",
   },
   {
@@ -98,8 +98,8 @@ export const moduleGroups: ModuleGroup[] = [
     id: "analytics",
     title: "Analitika",
     icon: LineChart,
-    description: "Gəlirlilik mühərriki, büdcələşdirmə və P&L, maliyyə idarəsi, dinamik qiymətləndirmə və AI hesabatları.",
-    features: ["Xərc modeli mühərriki", "Büdcələşdirmə və P&L", "Maliyyə (Debitor, Kreditor, Fondlar)", "Dinamik qiymətləndirmə", "Hesabatlar", "AI təhlilləri"],
+    description: "Gəlirlilik mühərriki, büdcələşdirmə və P&L, maliyyə idarəsi, dinamik qiymətləndirmə və Da Vinci hesabatları.",
+    features: ["Xərc modeli mühərriki", "Büdcələşdirmə və P&L", "Maliyyə (Debitor, Kreditor, Fondlar)", "Dinamik qiymətləndirmə", "Hesabatlar", "Da Vinci təhlilləri"],
     screenshot: "/marketing/analytics-profitability.png",
   },
   {
@@ -124,13 +124,13 @@ export const moduleGroups: ModuleGroup[] = [
 export const advantages = [
   {
     title: "Xərc Modeli Mühərriki",
-    description: "Hər müştəri, hər xidmət üzrə gəlirliliyi görün. 18 kateqoriyada qaimə xərclərini izləyin. AI fəaliyyət planları təklif edir.",
+    description: "Hər müştəri, hər xidmət üzrə gəlirliliyi görün. 18 kateqoriyada qaimə xərclərini izləyin. Da Vinci fəaliyyət planları təklif edir.",
     icon: Calculator,
     color: "#F97316",
     href: "/features/analytics",
   },
   {
-    title: "AI Agent Platforması",
+    title: "Da Vinci Agent Platforması",
     description: "Daxili Claude inteqrasiyası: hiss təhlili, ağıllı tapşırıqlar, e-poçt yaratma, lid skorinqi və müştəri xidməti. Hər kartın içində — əlavə deyil.",
     icon: Bot,
     color: "#7c3aed",
@@ -201,7 +201,7 @@ export const plans: PlanTier[] = [
       "Fakturalar və Təkrarlanan",
       "E-poçt şablonları",
       "Tədbirlər və Seqmentlər",
-      "AI skorinqi",
+      "Da Vinci skorinqi",
       "Layihələr və ERP",
       "Hesabatlar",
       "50 istifadəçiyə qədər",
@@ -218,7 +218,7 @@ export const plans: PlanTier[] = [
       "Maliyyə (Debitor, Kreditor, Fondlar)",
       "Dinamik qiymətləndirmə mühərriki",
       "7 kanallı gələn qutusu",
-      "AI Komanda Mərkəzi",
+      "Da Vinci Komanda Mərkəzi",
       "Müştəri portalı",
       "Xüsusi sahələr və İş axınları",
       "Audit jurnalı",
@@ -251,7 +251,7 @@ export const testimonials = [
     rating: 5,
   },
   {
-    quote: "AI agenti dəstək tiketlərimizin 40%-ni avtomatik idarə edir. Xərc modeli isə marjalarımızın tam harada olduğunu göstərir.",
+    quote: "Da Vinci agenti dəstək tiketlərimizin 40%-ni avtomatik idarə edir. Xərc modeli isə marjalarımızın tam harada olduğunu göstərir.",
     name: "Nigar Kərimova",
     title: "Əməliyyat Meneceri",
     company: "İnnovasiya MSP",
@@ -305,7 +305,7 @@ export const featureCards: FeatureCard[] = [
     title: "7-Kanal Gələn Qutusu",
     description: "E-poçt, SMS, Telegram, WhatsApp, Facebook, Instagram, VK — vahid qutu.",
     icon: Inbox,
-    features: ["Vahid gələn qutusu", "Real-vaxt mesajlaşma", "AI cavablar"],
+    features: ["Vahid gələn qutusu", "Real-vaxt mesajlaşma", "Da Vinci cavablar"],
     colSpan: 1,
   },
   {
@@ -326,21 +326,21 @@ export const featureCards: FeatureCard[] = [
   },
   {
     id: "ai",
-    title: "Da Vinci AI",
-    description: "Daxili AI: hiss təhlili, lid skorinqi, e-poçt yaratma, avtomatik cavablar və analitika.",
+    title: "Da Vinci",
+    description: "Daxili Da Vinci: hiss təhlili, lid skorinqi, e-poçt yaratma, avtomatik cavablar və analitika.",
     icon: Bot,
-    features: ["AI lid skorinqi", "AI e-poçt generasiyası", "AI müştəri xidməti", "AI analitika"],
+    features: ["Da Vinci lid skorinqi", "Da Vinci e-poçt generasiyası", "Da Vinci müştəri xidməti", "Da Vinci analitika"],
     colSpan: 3,
   },
 ]
 
-/* ────────────────────── AI CAPABILITIES ────────────────────── */
+/* ────────────────────── Da Vinci CAPABILITIES ────────────────────── */
 export const aiCapabilities = [
-  { title: "Avtomatik cavablar", description: "WhatsApp, Telegram və E-poçtda müştəri sorğularına AI cavab", icon: MessageSquare },
+  { title: "Avtomatik cavablar", description: "WhatsApp, Telegram və E-poçtda müştəri sorğularına Da Vinci cavab", icon: MessageSquare },
   { title: "Lid skorinqi", description: "Avtomatik A–F dərəcələndirmə və kvalifikasiya", icon: Target },
   { title: "E-poçt generasiyası", description: "Peşəkar mesaj və təklif yaratma — bir kliklə", icon: Mail },
   { title: "Gəlirlilik təhlili", description: "Xərc modelindən avtomatik büdcə və marja hesabatları", icon: LineChart },
-  { title: "Bilik bazası", description: "AI müştəri portalında sualları avtomatik cavablandırır", icon: BookOpen },
+  { title: "Bilik bazası", description: "Da Vinci müştəri portalında sualları avtomatik cavablandırır", icon: BookOpen },
 ]
 
 /* ────────────────────── FAQ ────────────────────── */
@@ -351,7 +351,7 @@ export const faqs = [
   },
   {
     q: "LeadDrive Salesforce və ya HubSpot-dan nə ilə fərqlənir?",
-    a: "LeadDrive-da daxili xərc modeli mühərriki, gəlirlilik analitikası və büdcələşdirmə/P&L var — rəqiblərin ya olmayan, ya da əlavə pul tələb etdiyi xüsusiyyətlər. Üstəlik, AI agentlərimiz daxilidir, əlavə deyil.",
+    a: "LeadDrive-da daxili xərc modeli mühərriki, gəlirlilik analitikası və büdcələşdirmə/P&L var — rəqiblərin ya olmayan, ya da əlavə pul tələb etdiyi xüsusiyyətlər. Üstəlik, Da Vinci agentlərimiz daxilidir, əlavə deyil.",
   },
   {
     q: "Mövcud CRM-dən məlumat köçürə bilərəm?",

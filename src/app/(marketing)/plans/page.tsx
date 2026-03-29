@@ -67,12 +67,12 @@ const comparisonSections: { title: string; rows: FeatureRow[] }[] = [
     ],
   },
   {
-    title: "AI",
+    title: "Da Vinci",
     rows: [
-      { label: "AI skorinqi", starter: false, business: false, professional: true, enterprise: true },
-      { label: "AI Satış Köməkçisi", starter: false, business: false, professional: false, enterprise: true },
-      { label: "AI Komanda Mərkəzi", starter: false, business: false, professional: false, enterprise: true },
-      { label: "AI Dəstək Agenti", starter: false, business: false, professional: false, enterprise: true },
+      { label: "Da Vinci skorinqi", starter: false, business: false, professional: true, enterprise: true },
+      { label: "Da Vinci Satış Köməkçisi", starter: false, business: false, professional: false, enterprise: true },
+      { label: "Da Vinci Komanda Mərkəzi", starter: false, business: false, professional: false, enterprise: true },
+      { label: "Da Vinci Dəstək Agenti", starter: false, business: false, professional: false, enterprise: true },
     ],
   },
   {

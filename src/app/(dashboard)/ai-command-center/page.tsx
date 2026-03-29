@@ -744,11 +744,11 @@ export default function AICommandCenterPage() {
                       )}
                     </div>
 
-                    {/* AI Response */}
+                    {/* Da Vinci Response */}
                     <div className="rounded-lg bg-muted border p-3">
                       <div className="flex items-center gap-2 mb-1">
                         <Bot className="h-4 w-4 text-indigo-500" />
-                        <span className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 uppercase">Ответ AI</span>
+                        <span className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 uppercase">Ответ Da Vinci</span>
                         {selectedLog.isCopilot && <Badge className="text-[9px] bg-violet-100 text-violet-700">Copilot</Badge>}
                       </div>
                       <p className="text-sm whitespace-pre-wrap">{selectedLog.aiResponse}</p>
@@ -771,7 +771,7 @@ export default function AICommandCenterPage() {
                 <h3 className="text-lg font-semibold flex items-center gap-2">
                   <Settings2 className="h-5 w-5 text-indigo-500" /> Конфигурации агента
                 </h3>
-                <p className="text-sm text-gray-500">Настройте модель, инструменты и поведение AI-агента</p>
+                <p className="text-sm text-gray-500">Настройте модель, инструменты и поведение Da Vinci агента</p>
               </div>
               <Button onClick={() => { setEditData(undefined); setShowForm(true) }} className="bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 shadow-md">
                 <Sparkles className="h-4 w-4 mr-2" /> Новая конфигурация
@@ -940,11 +940,11 @@ export default function AICommandCenterPage() {
             </div>
           </div>
 
-          {/* AI Config Generator */}
+          {/* Da Vinci Config Generator */}
           <div className="rounded-xl bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 border border-purple-200 p-8 text-center space-y-4">
             <Sparkles className="h-8 w-8 mx-auto text-purple-400" />
             <h3 className="font-bold text-lg">Создать конфигурацию по описанию</h3>
-            <p className="text-sm text-gray-500">Опишите роль агента обычным текстом, и AI создаст конфигурацию автоматически</p>
+            <p className="text-sm text-gray-500">Опишите роль агента обычным текстом, и Da Vinci создаст конфигурацию автоматически</p>
             <div className="flex gap-3 max-w-xl mx-auto">
               <Input placeholder="Например: агент техподдержки, быстрые ответы, без сложных вопросов..." className="bg-white" />
               <Button className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 shadow-md flex-shrink-0">
@@ -1020,7 +1020,7 @@ export default function AICommandCenterPage() {
         open={!!deleteId}
         onOpenChange={(open) => { if (!open) setDeleteId(null) }}
         onConfirm={handleDelete}
-        title="Удалить AI агента"
+        title="Удалить Da Vinci агента"
         itemName={deleteName}
       />
     </div>

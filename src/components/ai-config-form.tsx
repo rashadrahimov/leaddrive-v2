@@ -66,7 +66,7 @@ const MODEL_OPTIONS = [
   },
 ]
 
-// Simplified tool groups — what the AI can DO
+// Simplified tool groups — what the Da Vinci can DO
 const TOOL_GROUPS = [
   {
     id: "crm_access",
@@ -109,7 +109,7 @@ const ESCALATION_PRESETS = [
     id: "kb_miss",
     labelKey: "escalKbMiss",
     descKey: "escalKbMissDesc",
-    prompt: "AI could not find an answer in the knowledge base and cannot help the customer",
+    prompt: "Da Vinci could not find an answer in the knowledge base and cannot help the customer",
     icon: BookOpen,
     color: "text-indigo-600 bg-indigo-50",
     alwaysOn: true,
@@ -142,7 +142,7 @@ const ESCALATION_PRESETS = [
     id: "complex_technical",
     labelKey: "escalComplexTechnical",
     descKey: "escalComplexTechnicalDesc",
-    prompt: "Technical problem is too complex for AI — requires an engineer or DevOps specialist",
+    prompt: "Technical problem is too complex for Da Vinci — requires an engineer or DevOps specialist",
     icon: Bug,
     color: "text-red-600 bg-red-50",
   },
@@ -317,7 +317,7 @@ export function AiConfigForm({ open, onOpenChange, onSaved, initialData, orgId }
               <Input
                 value={form.configName}
                 onChange={(e) => setForm(f => ({ ...f, configName: e.target.value }))}
-                placeholder="Support Pro, Sales Bot..."
+                placeholder="Support Pro, Sales Da Vinci..."
                 className="text-base h-12 rounded-xl"
               />
             </div>

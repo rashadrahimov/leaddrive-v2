@@ -131,7 +131,7 @@ export default function TicketDetailPage() {
   const [newAssignee, setNewAssignee] = useState("")
   const [updatingAssignee, setUpdatingAssignee] = useState(false)
 
-  // AI features
+  // Da Vinci features
   const [aiLoading, setAiLoading] = useState<string | null>(null) // "reply" | "summary" | "steps"
   const [aiResult, setAiResult] = useState<{ type: string; text: string } | null>(null)
   const [aiLang, setAiLang] = useState("ru") // "ru" | "az" | "en"
@@ -592,7 +592,7 @@ export default function TicketDetailPage() {
 
                   <div className="border-l h-6 mx-1" />
 
-                  {/* AI language selector */}
+                  {/* Da Vinci language selector */}
                   <select
                     value={aiLang}
                     onChange={e => setAiLang(e.target.value)}
@@ -603,7 +603,7 @@ export default function TicketDetailPage() {
                     <option value="en">EN</option>
                   </select>
 
-                  {/* AI buttons */}
+                  {/* Da Vinci buttons */}
                   <Button
                     variant="outline"
                     size="sm"
@@ -640,7 +640,7 @@ export default function TicketDetailPage() {
                   <p className="text-xs text-amber-600">{t("internalNoteHint")}</p>
                 )}
 
-                {/* AI Result display */}
+                {/* Da Vinci Result display */}
                 {aiResult && (
                   <div className="p-3 bg-muted/50 rounded-lg border">
                     <div className="flex items-center gap-2 mb-2">

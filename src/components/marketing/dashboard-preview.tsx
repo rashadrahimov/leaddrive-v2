@@ -116,7 +116,7 @@ const sidebarItems = [
   { icon: Headphones, label: "Tiketlər" },
   { icon: BarChart3, label: "Hesabatlar" },
   { icon: Receipt, label: "Maliyyə" },
-  { icon: Bot, label: "AI Mərkəzi" },
+  { icon: Bot, label: "Da Vinci Mərkəzi" },
   { icon: Settings, label: "Parametrlər" },
 ]
 
@@ -293,7 +293,7 @@ export function DashboardPreview() {
               <div className="flex items-center justify-between mb-1.5">
                 <div className="flex items-center gap-1">
                   <Bot className="w-3 h-3 text-violet-500" />
-                  <span className="text-[10px] font-semibold text-slate-700">AI Lid Skorinq</span>
+                  <span className="text-[10px] font-semibold text-slate-700">Da Vinci Lid Skorinq</span>
                 </div>
                 <span className="text-[8px] text-violet-600">Hamısı →</span>
               </div>

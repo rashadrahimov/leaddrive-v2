@@ -123,7 +123,7 @@ ${varianceLines || "Нет существенных отклонений"}
     const narrative = msg.content[0].type === "text" ? msg.content[0].text : ""
     return NextResponse.json({ success: true, data: { narrative } })
   } catch (e: any) {
-    console.error("AI narrative error:", e)
-    return NextResponse.json({ error: "AI service unavailable" }, { status: 503 })
+    console.error("Da Vinci narrative error:", e)
+    return NextResponse.json({ error: "Da Vinci service unavailable" }, { status: 503 })
   }
 }

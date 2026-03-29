@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef, useEffect, useState } from "react"
+import { useRef, useEffect, useLayoutEffect, useState } from "react"
 import Link from "next/link"
 import { ArrowRight, Sparkles, Shield } from "lucide-react"
 import { DashboardPreview } from "./dashboard-preview"
@@ -9,27 +9,25 @@ import { DealPreview } from "./deal-preview"
 import { CrmPipelinePreview, SupportTicketPreview, AiAssistantPreview } from "./module-previews"
 
 /**
- * AutoScaledPanel — measures its own width and scales content to fit.
- * baseWidth controls the "design width" of the content inside.
+ * AutoScaledPanel — measures its own width and uses CSS zoom to fit content.
+ * CSS zoom changes layout dimensions (unlike transform: scale).
  */
 function AutoScaledPanel({
   children,
-  height,
   baseWidth = 1000,
 }: {
   children: React.ReactNode
-  height: number
   baseWidth?: number
 }) {
-  const ref = useRef<HTMLDivElement>(null)
-  const [scale, setScale] = useState(0.5)
+  const outerRef = useRef<HTMLDivElement>(null)
+  const [zoom, setZoom] = useState<number | null>(null)
 
-  useEffect(() => {
-    const el = ref.current
+  useLayoutEffect(() => {
+    const el = outerRef.current
     if (!el) return
     const measure = () => {
       const w = el.offsetWidth
-      if (w > 0) setScale(w / baseWidth)
+      if (w > 0) setZoom(w / baseWidth)
     }
     measure()
     const ro = new ResizeObserver(measure)
@@ -39,9 +37,8 @@ function AutoScaledPanel({
 
   return (
     <div
-      ref={ref}
+      ref={outerRef}
       style={{
-        height,
         borderRadius: 16,
         overflow: "hidden",
         boxShadow:
@@ -51,8 +48,8 @@ function AutoScaledPanel({
       <div
         style={{
           width: baseWidth,
-          transform: `scale(${scale})`,
-          transformOrigin: "top left",
+          zoom: zoom ?? 0.5,
+          visibility: zoom !== null ? "visible" : "hidden",
         }}
       >
         {children}
@@ -61,11 +58,11 @@ function AutoScaledPanel({
   )
 }
 
-/* Position presets — all use `left` only (no `right`/`auto`) so CSS transitions work */
+/* Position presets */
 const POSITIONS = {
-  left:   { left: "-2%",  width: "42%", zIndex: 1, height: 440 },
-  center: { left: "17%",  width: "66%", zIndex: 3, height: 600 },
-  right:  { left: "60%",  width: "42%", zIndex: 1, height: 440 },
+  left:   { left: "0%",   width: "42%", zIndex: 1 },
+  center: { left: "18%",  width: "64%", zIndex: 3 },
+  right:  { left: "58%",  width: "42%", zIndex: 1 },
 } as const
 
 type Slot = "left" | "center" | "right"
@@ -85,58 +82,20 @@ const ALL_PANELS = [
  * Auto-rotates every 6 seconds.
  */
 function HeroPanels() {
-  const wrapRef = useRef<HTMLDivElement>(null)
-  const panelRefs = [useRef<HTMLDivElement>(null), useRef<HTMLDivElement>(null), useRef<HTMLDivElement>(null)]
-  const [ready, setReady] = useState(false)
   const [slots, setSlots] = useState<Slot[]>(["left", "center", "right"])
-  // Which 3 panels from ALL_PANELS are currently visible [leftIdx, centerIdx, rightIdx]
   const [visible, setVisible] = useState([0, 1, 2])
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
-
-  useEffect(() => {
-    const wrap = wrapRef.current
-    if (!wrap) return
-    Object.assign(wrap.style, {
-      position: "relative",
-      height: "600px",
-      display: "block",
-    })
-    setReady(true)
-  }, [])
-
-  // Apply position styles whenever slots change
-  useEffect(() => {
-    panelRefs.forEach((ref, i) => {
-      const el = ref.current
-      if (!el) return
-      const pos = POSITIONS[slots[i]]
-      const isCenter = slots[i] === "center"
-      Object.assign(el.style, {
-        position: "absolute",
-        bottom: "0",
-        transition: "left 0.5s ease, width 0.5s ease, height 0.5s ease",
-        left: pos.left,
-        width: pos.width,
-        zIndex: String(pos.zIndex),
-        cursor: isCenter ? "default" : "pointer",
-        pointerEvents: isCenter ? "none" : "auto",
-      })
-    })
-  }, [slots])
 
   // Auto-rotate: every 6s, bring in next panel from pool to center
   useEffect(() => {
     timerRef.current = setInterval(() => {
       setVisible(prev => {
         const usedSet = new Set(prev)
-        // Find first unused panel index
         let nextIdx = -1
         for (let i = 0; i < ALL_PANELS.length; i++) {
           if (!usedSet.has(i)) { nextIdx = i; break }
         }
         if (nextIdx === -1) nextIdx = (Math.max(...prev) + 1) % ALL_PANELS.length
-
-        // Replace the left panel with the new one, shift center→left, right→center
         return [prev[1], prev[2], nextIdx]
       })
       setSlots(["left", "center", "right"])
@@ -146,7 +105,6 @@ function HeroPanels() {
 
   const handleClick = (panelIndex: number) => {
     if (slots[panelIndex] === "center") return
-    // Reset auto-rotation timer
     if (timerRef.current) clearInterval(timerRef.current)
     const centerIdx = slots.indexOf("center")
     const clickedSlot = slots[panelIndex]
@@ -159,20 +117,29 @@ function HeroPanels() {
   }
 
   return (
-    <div
-      ref={wrapRef}
-      className="hidden lg:block"
-      style={{ opacity: ready ? 1 : 0, transition: "opacity 0.3s" }}
-    >
+    <div className="hidden lg:block relative" style={{ height: 620 }}>
       {[0, 1, 2].map((i) => {
         const panel = ALL_PANELS[visible[i]]
+        const pos = POSITIONS[slots[i]]
+        const isCenter = slots[i] === "center"
         return (
           <div
             key={`slot-${i}-${panel.id}`}
-            ref={panelRefs[i]}
             onClick={() => handleClick(i)}
+            style={{
+              position: "absolute",
+              bottom: 0,
+              left: pos.left,
+              width: pos.width,
+              zIndex: pos.zIndex,
+              cursor: isCenter ? "default" : "pointer",
+              pointerEvents: isCenter ? "none" : "auto",
+              opacity: isCenter ? 1 : 0.85,
+              filter: isCenter ? "none" : "saturate(0.85)",
+              transition: "left 0.5s ease, width 0.5s ease, opacity 0.5s ease, filter 0.5s ease",
+            }}
           >
-            <AutoScaledPanel height={POSITIONS[slots[i]].height} baseWidth={1000}>
+            <AutoScaledPanel baseWidth={1000}>
               <panel.Component />
             </AutoScaledPanel>
           </div>
@@ -194,20 +161,20 @@ export function HeroSection() {
         <div className="text-center max-w-4xl mx-auto">
           <span className="inline-flex items-center gap-2 rounded-full border border-orange-200 bg-orange-50 px-4 py-1.5 text-sm text-orange-700 font-medium">
             <Sparkles className="h-3.5 w-3.5" />
-            AI-native CRM — 16 AI inteqrasiya
+            İntellektual CRM — 16 ağıllı funksiya
           </span>
 
           <h1 className="mt-8 text-5xl sm:text-6xl lg:text-7xl font-bold tracking-tight leading-[1.08]">
             <span className="text-slate-900">CRM artıq düşünür.</span>
             <br />
             <span className="bg-gradient-to-r from-orange-500 via-red-500 to-orange-600 bg-clip-text text-transparent">
-              Satışdan dəstəyə — AI ilə.
+              Satışdan dəstəyə — Da Vinci ilə.
             </span>
           </h1>
 
           <p className="mt-6 text-lg lg:text-xl text-slate-500 max-w-2xl mx-auto leading-relaxed">
-            AI müştəriləri qiymətləndirir, məktub yazır, müraciətlərə cavab verir.
-            Siz qərar verirsiniz — Da Vinci AI icra edir.
+            Da Vinci müştəriləri qiymətləndirir, məktub yazır, müraciətlərə cavab verir.
+            Siz qərar verirsiniz — Da Vinci icra edir.
           </p>
 
           <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -244,7 +211,7 @@ export function HeroSection() {
         {/* Mobile — single panel */}
         <div className="lg:hidden px-4">
           <div className="mx-auto" style={{ maxWidth: 500 }}>
-            <AutoScaledPanel height={380}>
+            <AutoScaledPanel>
               <DashboardPreview />
             </AutoScaledPanel>
           </div>

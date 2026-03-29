@@ -30,7 +30,7 @@ const defaultSidebar: SidebarItem[] = [
   { icon: DollarSign, label: "Maliyyə" },
   { icon: Megaphone, label: "Kampaniyalar", section: "MARKETİNQ" },
   { icon: Headphones, label: "Tiketlər", section: "DƏSTƏK" },
-  { icon: Bot, label: "AI Mərkəzi", section: "AI" },
+  { icon: Bot, label: "Da Vinci Mərkəzi", section: "DA VINCI" },
   { icon: Settings, label: "Parametrlər" },
 ]
 
@@ -276,7 +276,7 @@ export function CrmDealDetailPreview() {
             </div>
           </div>
 
-          {/* AI Next Best Offers */}
+          {/* Da Vinci Next Best Offers */}
           <div className="bg-white rounded-lg border border-slate-200 p-1.5">
             <div className="flex items-center gap-1 mb-1">
               <Zap className="w-2 h-2 text-orange-500" />
@@ -397,14 +397,14 @@ const scoredLeads = [
 export function MarketingLeadScoringPreview() {
   return (
     <div className="flex text-[7px] leading-tight bg-slate-900 text-white min-h-[280px] select-none">
-      <Sidebar activeLabel="AI Mərkəzi" />
+      <Sidebar activeLabel="Da Vinci Mərkəzi" />
       <div className="flex-1 bg-slate-50 text-slate-900 overflow-hidden">
         <TopBar />
         <div className="p-2">
           <div className="flex items-center justify-between mb-1.5">
             <div>
-              <h2 className="text-[9px] font-bold text-slate-900">AI İdarəetmə Mərkəzi</h2>
-              <p className="text-[5px] text-slate-500">AI agentlər və konfiqurasiyaları idarə edin</p>
+              <h2 className="text-[9px] font-bold text-slate-900">Da Vinci İdarəetmə Mərkəzi</h2>
+              <p className="text-[5px] text-slate-500">Da Vinci agentlər və konfiqurasiyaları idarə edin</p>
             </div>
             <span className="bg-orange-500 rounded px-1.5 py-0.5 text-[5px] text-white font-medium">+ Yeni agent</span>
           </div>
@@ -483,7 +483,7 @@ export function SupportTicketPreview() {
             <div className="flex-1">
               <div className="flex items-center gap-1">
                 <span className="text-[9px] font-bold text-slate-900">[WhatsApp] Menecerə yönləndir</span>
-                <span className="text-[5px] text-slate-400">AI-4522</span>
+                <span className="text-[5px] text-slate-400">DV-4522</span>
               </div>
             </div>
           </div>
@@ -525,12 +525,12 @@ export function SupportTicketPreview() {
               <div className="text-[6px] font-bold text-slate-800 mb-0.5">[WhatsApp] Menecerə yönləndir</div>
               <div className="bg-slate-50 rounded p-1 border border-slate-100">
                 <div className="text-[5px] text-slate-400 mb-0.5">Müştəri mesajı:</div>
-                <div className="text-[5px] text-slate-700">Salam! LeadDrive AI-ə xoş gəldiniz. Sizə necə kömək edə bilər?</div>
+                <div className="text-[5px] text-slate-700">Salam! LeadDrive-a xoş gəldiniz. Sizə necə kömək edə bilər?</div>
               </div>
               <div className="bg-violet-50 rounded p-1 border border-violet-100">
                 <div className="flex items-center gap-0.5 mb-0.5">
                   <Bot className="w-2 h-2 text-violet-500" />
-                  <span className="text-[5px] text-violet-600 font-semibold">AI Təklif:</span>
+                  <span className="text-[5px] text-violet-600 font-semibold">Da Vinci Təklif:</span>
                 </div>
                 <div className="text-[5px] text-slate-700">Məsələni baxmaq üçün bir neçə sual: 1. Hansı xidmət? 2. Hansə müqavilə?</div>
               </div>
@@ -1113,7 +1113,7 @@ export function PlatformCompaniesPreview() {
 }
 
 /* ================================================================
-   12. AI ASSISTANT PREVIEW
+   12. DA VINCI ASSISTANT PREVIEW
    ================================================================ */
 
 export function AiAssistantPreview() {
@@ -1174,18 +1174,18 @@ export function AiAssistantPreview() {
             </div>
           </div>
 
-          {/* AI Assistant panel (right side) */}
+          {/* Da Vinci Assistant panel (right side) */}
           <div className="w-[120px] bg-gradient-to-b from-violet-600 to-blue-600 text-white p-2 flex flex-col">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-0.5">
                 <Sparkles className="w-2.5 h-2.5" />
-                <span className="text-[7px] font-bold">LeadDrive AI</span>
+                <span className="text-[7px] font-bold">Da Vinci</span>
               </div>
               <span className="text-[5px] opacity-60">Online</span>
             </div>
 
             <div className="flex-1 space-y-1.5">
-              {/* AI Icon */}
+              {/* Da Vinci Icon */}
               <div className="flex justify-center mb-1">
                 <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
                   <Brain className="w-4 h-4 text-white" />
@@ -1193,7 +1193,7 @@ export function AiAssistantPreview() {
               </div>
 
               <div className="text-[5px] text-center text-white/80 mb-1.5">
-                LeadDrive AI Assistant
+                Da Vinci Assistant
               </div>
               <div className="text-[4px] text-center text-white/60 mb-2">
                 CRM məlumatları, sövdələşmələr, müştərilər haqqında soruşun
@@ -1213,7 +1213,7 @@ export function AiAssistantPreview() {
 
             {/* Chat input */}
             <div className="mt-auto flex items-center gap-0.5 bg-white/10 rounded px-1 py-0.5 border border-white/20">
-              <span className="text-[5px] text-white/50 flex-1">LeadDrive AI-dən soruş...</span>
+              <span className="text-[5px] text-white/50 flex-1">Da Vinci-dən soruş...</span>
               <Send className="w-2 h-2 text-white/60" />
             </div>
           </div>
@@ -1224,7 +1224,7 @@ export function AiAssistantPreview() {
 }
 
 /* ================================================================
-   13. AI LEAD DETAIL PREVIEW
+   13. DA VINCI LEAD DETAIL PREVIEW
    ================================================================ */
 
 export function AiLeadDetailPreview() {
@@ -1264,7 +1264,7 @@ export function AiLeadDetailPreview() {
           {/* KPI row */}
           <div className="grid grid-cols-4 gap-1 mb-1.5">
             <div className="bg-blue-500 text-white rounded-lg p-1">
-              <span className="text-[4px] opacity-80">AI Bal / Dərəcə</span>
+              <span className="text-[4px] opacity-80">Da Vinci Bal / Dərəcə</span>
               <div className="text-[8px] font-bold">92/100 (A)</div>
             </div>
             <div className="bg-emerald-500 text-white rounded-lg p-1">
@@ -1283,7 +1283,7 @@ export function AiLeadDetailPreview() {
 
           {/* Tabs */}
           <div className="flex gap-0.5 mb-1.5">
-            {["Detallar", "Tarixçə", "Tapşırıqlar", "AI Mats", "AI Reyting"].map((t, i) => (
+            {["Detallar", "Tarixçə", "Tapşırıqlar", "Da Vinci", "Reyting"].map((t, i) => (
               <span key={i} className={cn("text-[5px] px-1.5 py-0.5 rounded", i === 0 ? "bg-blue-500 text-white" : "bg-slate-100 text-slate-500")}>{t}</span>
             ))}
           </div>

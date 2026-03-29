@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils"
 
 const navLinks = [
   { href: "/home#modules", label: "Modullar" },
-  { href: "/home#ai", label: "AI" },
+  { href: "/home#davinci", label: "Da Vinci" },
   { href: "/home#pricing", label: "Qiymətlər" },
   { href: "/demo", label: "Demo" },
   { href: "/contact", label: "Əlaqə" },

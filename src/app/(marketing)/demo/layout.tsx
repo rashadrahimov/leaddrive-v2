@@ -5,7 +5,7 @@ export const metadata: Metadata = {
   description: "LeadDrive CRM-in 128+ funksiyasını 14 gün pulsuz sınayın. Demo tələb edin — komandamız sizə kömək edəcək.",
   openGraph: {
     title: "Demo Tələb Et | LeadDrive CRM",
-    description: "128+ funksiya, 16 AI inteqrasiya. 14 gün pulsuz sınaq — kredit kartı tələb olunmur.",
+    description: "128+ funksiya, 16 Da Vinci inteqrasiya. 14 gün pulsuz sınaq — kredit kartı tələb olunmur.",
   },
 }
 

@@ -1,20 +1,21 @@
 import { MarketingNavbar } from "@/components/marketing/navbar"
 import { MarketingFooter } from "@/components/marketing/footer"
 import { FloatingButtons } from "@/components/marketing/floating-buttons"
-import { CookieConsent } from "@/components/marketing/cookie-consent"
+import { LiveChat } from "@/components/marketing/live-chat"
+
 import { GoogleAnalytics } from "@/components/marketing/google-analytics"
 import type { Metadata } from "next"
 
 export const metadata: Metadata = {
   title: {
-    default: "LeadDrive CRM — AI-native CRM Platforması",
+    default: "LeadDrive CRM — İntellektual CRM Platforması",
     template: "%s | LeadDrive CRM",
   },
   description:
-    "AI-güclu CRM platforması — satış, marketinq, 7 kanallı gələn qutusu, dəstək, maliyyə və analitika bir yerdə. 128+ funksiya, 16 AI inteqrasiya.",
+    "İntellektual CRM platforması — satış, marketinq, 7 kanallı gələn qutusu, dəstək, maliyyə və analitika bir yerdə. 128+ funksiya, 16 ağıllı funksiya.",
   keywords: [
-    "CRM", "CRM Azerbaijan", "CRM Azərbaycan", "AI CRM platforması",
-    "AI CRM", "satış idarəsi", "lead management", "müştəri idarəsi",
+    "CRM", "CRM Azerbaijan", "CRM Azərbaycan", "smart CRM platforması",
+    "Da Vinci CRM", "satış idarəsi", "lead management", "müştəri idarəsi",
     "marketing automation", "helpdesk", "SLA", "pipeline",
     "LeadDrive", "Güvən Technology",
   ],
@@ -23,14 +24,14 @@ export const metadata: Metadata = {
     type: "website",
     locale: "az_AZ",
     siteName: "LeadDrive CRM",
-    title: "LeadDrive CRM — AI-native CRM Platforması",
-    description: "128+ funksiya, 16 AI inteqrasiya. Satış, marketinq, dəstək və maliyyə bir platformada.",
+    title: "LeadDrive CRM — İntellektual CRM Platforması",
+    description: "128+ funksiya, 16 ağıllı funksiya. Satış, marketinq, dəstək və maliyyə bir platformada.",
     images: [{ url: "/marketing/crm-dashboard.png", width: 1200, height: 630, alt: "LeadDrive CRM Dashboard" }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "LeadDrive CRM — AI-native CRM Platforması",
-    description: "128+ funksiya, 16 AI inteqrasiya. Satış, marketinq, dəstək və maliyyə bir platformada.",
+    title: "LeadDrive CRM — İntellektual CRM Platforması",
+    description: "128+ funksiya, 16 ağıllı funksiya. Satış, marketinq, dəstək və maliyyə bir platformada.",
     images: ["/marketing/crm-dashboard.png"],
   },
   robots: {
@@ -46,7 +47,8 @@ export default function MarketingLayout({ children }: { children: React.ReactNod
       <main>{children}</main>
       <MarketingFooter />
       <FloatingButtons />
-      <CookieConsent />
+      <LiveChat />
+
       <GoogleAnalytics />
     </div>
   )

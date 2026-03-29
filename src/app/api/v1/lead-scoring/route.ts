@@ -34,7 +34,7 @@ function scoreLeadRuleBased(lead: any): { score: number; factors: Record<string,
 
   score = Math.min(score, 100)
   const conversionProb = Math.round(score * 0.85)
-  return { score, factors, conversionProb, reasoning: "Rule-based scoring (AI API key not configured)" }
+  return { score, factors, conversionProb, reasoning: "Rule-based scoring (Da Vinci not configured)" }
 }
 
 // AI-powered scoring with Claude
@@ -73,7 +73,7 @@ ${deals.length > 0
       max_tokens: 500,
       messages: [{
         role: "user",
-        content: `You are a CRM lead scoring AI for an IT outsourcing company. Analyze this lead and provide a quality score.
+        content: `You are a CRM lead scoring Da Vinci for an IT outsourcing company. Analyze this lead and provide a quality score.
 
 ${leadContext}
 
@@ -99,10 +99,10 @@ Respond ONLY with valid JSON (no markdown, no explanation outside JSON):
       score: Math.min(100, Math.max(0, parsed.score || 0)),
       factors: parsed.factors || {},
       conversionProb: Math.min(100, Math.max(0, parsed.conversionProb || 0)),
-      reasoning: parsed.reasoning || "AI analysis complete",
+      reasoning: parsed.reasoning || "Da Vinci analysis complete",
     }
   } catch (e) {
-    console.error("AI scoring failed, using rule-based fallback:", e)
+    console.error("Da Vinci scoring failed, using rule-based fallback:", e)
     return scoreLeadRuleBased(lead)
   }
 }
@@ -147,7 +147,7 @@ export async function GET(req: NextRequest) {
   })
 }
 
-// POST — score leads with AI (or rule-based fallback)
+// POST — score leads with Da Vinci (or rule-based fallback)
 export async function POST(req: NextRequest) {
   const orgId = await getOrgId(req)
   if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
@@ -175,7 +175,7 @@ export async function POST(req: NextRequest) {
     let result: { score: number; factors: Record<string, number>; conversionProb: number; reasoning: string }
 
     if (useAI && client) {
-      // Fetch related data for AI context
+      // Fetch related data for Da Vinci context
       const [activities, deals] = await Promise.all([
         prisma.activity.findMany({
           where: { organizationId: orgId, relatedType: "lead", relatedId: lead.id },

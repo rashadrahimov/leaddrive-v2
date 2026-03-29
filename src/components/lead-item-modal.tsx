@@ -103,7 +103,7 @@ export function LeadItemModal({ open, onOpenChange, lead, orgId, onSaved, onConv
   // Tasks state
   const [aiTasks, setAiTasks] = useState<any>(null)
 
-  // AI Text state
+  // Da Vinci Text state
   const [textType, setTextType] = useState("Email")
   const [tone, setTone] = useState("professional")
   const [instructions, setInstructions] = useState("")
@@ -210,7 +210,7 @@ export function LeadItemModal({ open, onOpenChange, lead, orgId, onSaved, onConv
     } catch (err) { console.error(err) } finally { setScoring(false) }
   }
 
-  // AI helper
+  // Da Vinci helper
   const callAI = async (action: string, options?: any) => {
     setAiLoading(true)
     try {
@@ -618,7 +618,7 @@ export function LeadItemModal({ open, onOpenChange, lead, orgId, onSaved, onConv
                 <div className="flex items-center gap-4 p-3 bg-muted/30 rounded-lg">
                   <div className="flex-1">
                     <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs text-muted-foreground">AI Score</span>
+                      <span className="text-xs text-muted-foreground">Da Vinci Score</span>
                       <span className="text-xs font-bold">{displayLead.score}/100</span>
                     </div>
                     <div className="h-2 bg-muted rounded-full overflow-hidden">
@@ -822,7 +822,7 @@ export function LeadItemModal({ open, onOpenChange, lead, orgId, onSaved, onConv
               </div>
             )}
 
-            {/* Tab: AI Text */}
+            {/* Tab: Da Vinci Text */}
             {activeTab === "aitext" && (
               <div className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -884,7 +884,7 @@ export function LeadItemModal({ open, onOpenChange, lead, orgId, onSaved, onConv
               </div>
             )}
 
-            {/* Tab: AI Scoring */}
+            {/* Tab: Da Vinci Scoring */}
             {activeTab === "ai" && (
               <div className="space-y-4">
                 <div className="flex items-center justify-between">

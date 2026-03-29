@@ -4,7 +4,7 @@ import { Logo } from "@/components/logo"
 const footerLinks = {
   Məhsul: [
     { label: "Modullar", href: "/#modules" },
-    { label: "Da Vinci AI", href: "/#ai" },
+    { label: "Da Vinci", href: "/#davinci" },
     { label: "Qiymətlər", href: "/#pricing" },
     { label: "Demo", href: "/demo" },
   ],
@@ -65,7 +65,7 @@ export function MarketingFooter() {
           <div className="col-span-2 md:col-span-1">
             <Logo size="md" sidebar />
             <p className="mt-4 text-sm text-slate-300 leading-relaxed">
-              AI-native CRM platforması — satış, marketinq, dəstək və analitika bir yerdə.
+              İntellektual CRM platforması — satış, marketinq, dəstək və analitika bir yerdə.
             </p>
             <div className="mt-4 space-y-1.5 text-sm text-slate-400">
               <p>📧 info@leaddrivecrm.org</p>

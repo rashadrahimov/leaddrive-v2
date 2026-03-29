@@ -76,11 +76,11 @@ Sovdelesme <-- Qiymet profili <-- Emeliyyat jurnali
 
 ## DESTEK VE SERVICE DESK (8 xususiyyet)
 
-| # | Xususiyyet | AI? | Unik. | Tesvir |
+| # | Xususiyyet | DV? | Unik. | Tesvir |
 |---|------------|-----|-------|--------|
 | 1 | Tiketler (Service Desk) | — | ★★★★☆ | Statuslar, prioritetler, teyinatlar ile tiketler |
 | 2 | Tiket serhleri (threading) | — | ★★★☆☆ | Komanda ici tiket musakiresi |
-| 3 | AI tiket agenti | Haiku 4.5 | ★★★★★ | Avto-cavab + xulase + KB-den problem helli |
+| 3 | Da Vinci tiket agenti | Haiku 4.5 | ★★★★★ | Avto-cavab + xulase + KB-den problem helli |
 | 4 | Agent masaustu | — | ★★★★☆ | Vahid ekran: tiket + musteri konteksti + chat |
 | 5 | Agent teqvimi | — | ★★★☆☆ | Novbe planlamasi, mvcudluq |
 | 6 | SLA siyasetleri | — | ★★★★☆ | Cavab vaxti, hell vaxti, pozulma eskalasiyasi |
@@ -91,9 +91,9 @@ Sovdelesme <-- Qiymet profili <-- Emeliyyat jurnali
 
 ## MUSTERI PORTALI — Ozunexidmet (6 xususiyyet)
 
-| # | Xususiyyet | AI? | Unik. | Tesvir |
+| # | Xususiyyet | DV? | Unik. | Tesvir |
 |---|------------|-----|-------|--------|
-| 1 | Portal AI chat | Sonnet 4.6 | ★★★★★ | 24/7 AI destek, avto-eskalasiya ile tikete |
+| 1 | Portal Da Vinci chat | Sonnet 4.6 | ★★★★★ | 24/7 Da Vinci destek, avto-eskalasiya ile tikete |
 | 2 | Portal giris/qeydiyyat | — | ★★★☆☆ | Musteri hesab yaradir |
 | 3 | Portal tiketleri | — | ★★★★☆ | Musteri oz tiketlerini gorur/yaradir |
 | 4 | Portal bilik bazasi | — | ★★★☆☆ | Musteri ozu cavab axtarir |
@@ -104,7 +104,7 @@ Sovdelesme <-- Qiymet profili <-- Emeliyyat jurnali
 
 ## KOMMUNIKASIYA / OMNIKANAL (4 xususiyyet)
 
-| # | Xususiyyet | AI? | Unik. | Tesvir |
+| # | Xususiyyet | DV? | Unik. | Tesvir |
 |---|------------|-----|-------|--------|
 | 1 | Vahid qutu (Inbox) | — | ★★★★☆ | Butun mesajlar bir yerde: email, chat, sosial |
 | 2 | Kanal konfiqurasiyasi | — | ★★★★☆ | Qosulma: Facebook, WhatsApp, Telegram, VK |
@@ -115,7 +115,7 @@ Sovdelesme <-- Qiymet profili <-- Emeliyyat jurnali
 
 ## MARKETINQ VE KAMPANIYALAR (13 xususiyyet)
 
-| # | Xususiyyet | AI? | Unik. | Tesvir |
+| # | Xususiyyet | DV? | Unik. | Tesvir |
 |---|------------|-----|-------|--------|
 | 1 | Kampaniyalar | — | ★★★☆☆ | Email kampaniyalarin yaradilmasi ve baslama |
 | 2 | Kampaniya axin redaktoru | — | ★★★★☆ | Vizual drag-and-drop zencir qurucu |
@@ -135,7 +135,7 @@ Sovdelesme <-- Qiymet profili <-- Emeliyyat jurnali
 
 ## SATISLAR / CRM OZEGI (29 xususiyyet)
 
-| # | Xususiyyet | AI? | Unik. | Tesvir |
+| # | Xususiyyet | DV? | Unik. | Tesvir |
 |---|------------|-----|-------|--------|
 | 1 | Sovdelesmeler + Kanban | — | ★★★☆☆ | Drag-and-drop pipeline |
 | 2 | Sovdelesme detali (9 tab) | — | ★★★★☆ | Tam sovdelesme kartocasi |
@@ -169,22 +169,22 @@ Sovdelesme <-- Qiymet profili <-- Emeliyyat jurnali
 
 ---
 
-## AI MUHERRIKI — MAESTRO (12 xususiyyet)
+## Da Vinci MUHERRIKI — MAESTRO (12 xususiyyet)
 
-| # | Xususiyyet | AI Modeli | Unik. | Tesvir |
+| # | Xususiyyet | Da Vinci Modeli | Unik. | Tesvir |
 |---|------------|-----------|-------|--------|
-| 1 | AI Idare Merkezi | Infra | ★★★★★ | Agent idaresi, modeller, promptlar, mehdudiyyetler |
-| 2 | AI Chat Komekcisi | Sonnet 4.6 | ★★★★★ | CRM-xeberdar chatbot panelde |
-| 3 | AI Lid Skorinqi | Sonnet 4.6 | ★★★★★ | Lid qiymetlendirmesi A-F izahla |
-| 4 | AI Tonallik Analizi | Haiku 4.5 | ★★★★★ | Positive/Neutral/Negative + trend + risk |
-| 5 | AI Agilli Tapsiriglar | Haiku 4.5 | ★★★★★ | Menecer ucun 4 tapsirig avto-generasiya |
-| 6 | AI Metn Generasiyasi | Haiku 4.5 | ★★★★☆ | 3 dilde ton ile Email/SMS |
-| 7 | AI Destek Agenti | Haiku 4.5 | ★★★★★ | Avto-cavablar + xulase + KB axtarisi |
-| 8 | AI Portal Destevi | Sonnet 4.6 | ★★★★★ | Eskalasiya ile 24/7 chat |
-| 9 | AI Qarsiliqli Elaqe Loqlari | Infra | ★★★★☆ | Tokenler, xerc, gecikmeni izleme |
-| 10 | AI Mehdudiyyetler | Infra | ★★★★☆ | Mezmun tehlukesizlik qaydalari |
-| 11 | AI Xeberdarliklar | Infra | ★★★☆☆ | AI davranisi haqqinda bildirisler |
-| 12 | AI Konfiqurasiya Formu | Infra | ★★★★☆ | Kodsuz agent qurma interfeysi |
+| 1 | Da Vinci Idare Merkezi | Infra | ★★★★★ | Agent idaresi, modeller, promptlar, mehdudiyyetler |
+| 2 | Da Vinci Chat Komekcisi | Sonnet 4.6 | ★★★★★ | CRM-xeberdar chatbot panelde |
+| 3 | Da Vinci Lid Skorinqi | Sonnet 4.6 | ★★★★★ | Lid qiymetlendirmesi A-F izahla |
+| 4 | Da Vinci Tonallik Analizi | Haiku 4.5 | ★★★★★ | Positive/Neutral/Negative + trend + risk |
+| 5 | Da Vinci Agilli Tapsiriglar | Haiku 4.5 | ★★★★★ | Menecer ucun 4 tapsirig avto-generasiya |
+| 6 | Da Vinci Metn Generasiyasi | Haiku 4.5 | ★★★★☆ | 3 dilde ton ile Email/SMS |
+| 7 | Da Vinci Destek Agenti | Haiku 4.5 | ★★★★★ | Avto-cavablar + xulase + KB axtarisi |
+| 8 | Da Vinci Portal Destevi | Sonnet 4.6 | ★★★★★ | Eskalasiya ile 24/7 chat |
+| 9 | Da Vinci Qarsiliqli Elaqe Loqlari | Infra | ★★★★☆ | Tokenler, xerc, gecikmeni izleme |
+| 10 | Da Vinci Mehdudiyyetler | Infra | ★★★★☆ | Mezmun tehlukesizlik qaydalari |
+| 11 | Da Vinci Xeberdarliklar | Infra | ★★★☆☆ | Da Vinci davranisi haqqinda bildirisler |
+| 12 | Da Vinci Konfiqurasiya Formu | Infra | ★★★★☆ | Kodsuz agent qurma interfeysi |
 
 ---
 
@@ -192,7 +192,7 @@ Sovdelesme <-- Qiymet profili <-- Emeliyyat jurnali
 
 ### Budceleme / FP&A (25 xususiyyet)
 
-| # | Xususiyyet | AI? | Unik. | Tesvir |
+| # | Xususiyyet | DV? | Unik. | Tesvir |
 |---|------------|-----|-------|--------|
 | 1 | Budce planlari | — | ★★★★☆ | Sobelere gore illik/rubluk budceler |
 | 2 | Budce matrisi | — | ★★★★☆ | Excel kimi daxiletme: sobeler x kateqoriyalar |
@@ -217,24 +217,24 @@ Sovdelesme <-- Qiymet profili <-- Emeliyyat jurnali
 | 21 | Kateqoriya mappinqi | — | ★★☆☆☆ | Muhasibat kateqoriyalarini budce setirleerine baglama |
 | 22 | CSV import/ixrac | — | ★★★☆☆ | Excel-den/Excel-e data migrasiyas |
 | 23 | Satis proqnozu inteqrasiyasi | — | ★★★★☆ | Pipeline -> Gelir Proqnozu -> Budce |
-| 24 | AI budce narrativi | Sonnet | ★★★★★ | AI yazir: "Gelir 12% artdi cunki..." |
+| 24 | Da Vinci budce narrativi | Sonnet | ★★★★★ | Da Vinci yazir: "Gelir 12% artdi cunki..." |
 | 25 | Budce parametrleri | — | ★★☆☆☆ | Tesdiq, sobeler, sablon qurmasi |
 
 ### Rentabellik (7 xususiyyet)
 
-| # | Xususiyyet | AI? | Unik. | Tesvir |
+| # | Xususiyyet | DV? | Unik. | Tesvir |
 |---|------------|-----|-------|--------|
 | 26 | Musteri rentabellivi | — | ★★★★★ | Butun xerclerden sonra her musteriden ne qeder qazaniriq |
 | 27 | Isci rentabellivi | — | ★★★★★ | Billable saatlar vs overhead, isci basina gelir |
 | 28 | Ustelik xerc bolusdurulmesi | — | ★★★★☆ | Kira, lisenziyalar -> musteri/layihe uzre |
 | 29 | Rentabellik parametrleri | — | ★★★★☆ | Xerc stavkalari, billinq stavkalari |
 | 30 | Rentabellik snapshotlari | — | ★★★★☆ | Muqayise: yanvar vs fevral vs mart |
-| 31 | AI rentabellik insaytlari | Haiku 4.5 | ★★★★★ | "Musteri X overhead 23% artimi sebebile ziyanli oldu" |
+| 31 | Da Vinci rentabellik insaytlari | Haiku 4.5 | ★★★★★ | "Musteri X overhead 23% artimi sebebile ziyanli oldu" |
 | 32 | Xerc-servis sinxronizasiyasi | — | ★★★★☆ | Xerc modeli -> qiymetlerin avto-yenilenmesi |
 
 ### Hesabatlar
 
-| # | Xususiyyet | AI? | Unik. | Tesvir |
+| # | Xususiyyet | DV? | Unik. | Tesvir |
 |---|------------|-----|-------|--------|
 | 33 | Xususi hesabatlar | — | ★★★☆☆ | Satislar, fealiyyet, semerelihk hesabatlari |
 | 34 | Kampaniya ROI | — | ★★★★☆ | Her kampaniya ucun ROI |
@@ -243,7 +243,7 @@ Sovdelesme <-- Qiymet profili <-- Emeliyyat jurnali
 
 ## ERP / LAYIHELER (3 xususiyyet)
 
-| # | Xususiyyet | AI? | Unik. | Tesvir |
+| # | Xususiyyet | DV? | Unik. | Tesvir |
 |---|------------|-----|-------|--------|
 | 1 | Layiheler | — | ★★★☆☆ | Layihe idaresi |
 | 2 | Layihe uzleri | — | ★★☆☆☆ | Layihe komandasi |
@@ -253,7 +253,7 @@ Sovdelesme <-- Qiymet profili <-- Emeliyyat jurnali
 
 ## PARAMETRLER VE PLATFORMA (17 xususiyyet)
 
-| # | Xususiyyet | AI? | Unik. | Tesvir |
+| # | Xususiyyet | DV? | Unik. | Tesvir |
 |---|------------|-----|-------|--------|
 | 1 | Idare paneli | — | ★★★☆☆ | KPI, qrafikleer, fealiyyet |
 | 2 | Bildirisler | — | ★★☆☆☆ | Bildiris merkezi |
@@ -281,24 +281,24 @@ Sovdelesme <-- Qiymet profili <-- Emeliyyat jurnali
 |------|----------|
 | **Starter** | Sirketler, Kontaktlar, Sovdelesmeler (Kanban + Detal), Lidler, Tapsiriglar, Mehsullar |
 | **Business** | + Tiketler, Bilik bazasi, Muqavileler, Agent masaustu, Teqvim, Rollar, SLA |
-| **Professional** | + Fakturalar, Kampaniyalar, Seqmentler, Sablonlar, Email jurnali, ROI, AI Skorinq, Yollar, Tedbirler, Hesabatlar, Avtomatlasdirmalar, Lid qaydalari, Web-to-Lead, Layiheler |
+| **Professional** | + Fakturalar, Kampaniyalar, Seqmentler, Sablonlar, Email jurnali, ROI, Da Vinci Skorinq, Yollar, Tedbirler, Hesabatlar, Avtomatlasdirmalar, Lid qaydalari, Web-to-Lead, Layiheler |
 | **Enterprise** | + Qiymetlendirme, Rentabellik, Budceleme, Maliyye, Inbox, Portal istifadecileri, SMTP, Xususi saheler, Panel parametrleri, Faktura parametrleri, Kanallar, Budce konfiq, Satis proqnozu |
-| **Her zaman pulsuz** | Panel, Parametrler, Billinq, Tehlukesizlik, Istifadeciler, Audit jurnali, Bildirisler, AI Merkezi |
+| **Her zaman pulsuz** | Panel, Parametrler, Billinq, Tehlukesizlik, Istifadeciler, Audit jurnali, Bildirisler, Da Vinci Merkezi |
 
 ---
 
 ## YEKUNLAR
 
-| Kateqoriya | Xususiyyet | AI ile |
+| Kateqoriya | Xususiyyet | Da Vinci ile |
 |------------|------------|--------|
 | Maliyye (operativ) | 32 | 1 alqo |
-| Destek ve Service Desk | 8 | 1 Claude |
-| Musteri portali | 6 | 1 Claude |
+| Destek ve Service Desk | 8 | 1 Da Vinci |
+| Musteri portali | 6 | 1 Da Vinci |
 | Kommunikasiya | 4 | — |
 | Marketinq ve kampaniyalar | 13 | — |
 | Satislar / CRM ozevi | 29 | 2 alqo |
-| AI muherriki (Maestro) | 12 | 8 Claude |
-| Analitika (Budce + Rent.) | 34 | 3 Claude |
+| Da Vinci muherriki (Maestro) | 12 | 8 Da Vinci |
+| Analitika (Budce + Rent.) | 34 | 3 Da Vinci |
 | ERP / Layiheler | 3 | — |
 | Parametrler ve platforma | 17 | — |
 | **CEMI** | **128** | **16 Claude + 3 alqo** |

@@ -20,14 +20,14 @@ function AiChatPreview() {
           <Bot className="w-3.5 h-3.5 text-white" />
         </div>
         <div>
-          <div className="text-xs font-semibold text-slate-800">Da Vinci AI</div>
+          <div className="text-xs font-semibold text-slate-800">Da Vinci</div>
           <div className="text-[10px] text-emerald-500 flex items-center gap-1">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
             Aktiv
           </div>
         </div>
         <div className="ml-auto flex items-center gap-1">
-          <span className="text-[9px] bg-orange-100 text-orange-600 px-1.5 py-0.5 rounded font-medium">AI</span>
+          <span className="text-[9px] bg-orange-100 text-orange-600 px-1.5 py-0.5 rounded font-medium">DV</span>
         </div>
       </div>
 
@@ -112,7 +112,7 @@ function AiEmailPreview() {
     <div className="rounded-xl border border-slate-200 bg-white overflow-hidden shadow-lg shadow-slate-200/50">
       <div className="flex items-center gap-2 px-4 py-2.5 border-b border-slate-100 bg-slate-50">
         <Mail className="w-3.5 h-3.5 text-slate-400" />
-        <span className="text-xs font-medium text-slate-700">AI E-poçt Generasiyası</span>
+        <span className="text-xs font-medium text-slate-700">Da Vinci E-poçt Generasiyası</span>
         <span className="ml-auto text-[9px] bg-violet-100 text-violet-600 px-1.5 py-0.5 rounded font-medium flex items-center gap-0.5">
           <Zap className="w-2.5 h-2.5" /> Auto
         </span>
@@ -129,7 +129,7 @@ function AiEmailPreview() {
         <div className="border-t border-slate-100 pt-2 space-y-1.5 text-slate-600 leading-relaxed">
           <p>Hörmətli Kamran bəy,</p>
           <p>TechVision MMC-nin ERP ehtiyaclarını nəzərə alaraq, sizin üçün xüsusi Professional plan hazırladıq...</p>
-          <p className="text-slate-400 italic">✨ AI tərəfindən yaradıldı — 3 saniyə</p>
+          <p className="text-slate-400 italic">✨ Da Vinci tərəfindən yaradıldı — 3 saniyə</p>
         </div>
         <div className="flex items-center gap-2 pt-1">
           <div className="flex items-center gap-1 text-[10px] text-emerald-600">
@@ -183,16 +183,16 @@ export function AiFlowDiagram() {
           <AnimateIn>
             <span className="inline-flex items-center gap-2 rounded-full border border-orange-200 bg-white px-4 py-1.5 text-xs font-medium text-orange-700 mb-5">
               <Bot className="h-3.5 w-3.5" />
-              16 AI inteqrasiya
+              16 ağıllı funksiya
             </span>
 
             <h2 className="text-3xl lg:text-4xl font-bold tracking-tight text-slate-900">
-              <span className="bg-gradient-to-r from-orange-500 to-red-500 bg-clip-text text-transparent">Da Vinci AI</span>
+              <span className="bg-gradient-to-r from-orange-500 to-red-500 bg-clip-text text-transparent">Da Vinci</span>
               {" "}hər yerdədir
             </h2>
 
             <p className="mt-4 text-lg text-slate-500 leading-relaxed max-w-lg">
-              Daxili AI — əlavə deyil, platformanın əsasıdır.
+              Da Vinci mühərriki — əlavə deyil, platformanın əsasıdır.
               Siz yuxuya gedəndə belə müştəriləri qiymətləndirir, müraciətlərə cavab verir, məktub yazır.
             </p>
 
@@ -217,7 +217,7 @@ export function AiFlowDiagram() {
               href="/demo"
               className="mt-8 group inline-flex items-center gap-2 rounded-full bg-slate-900 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-slate-900/10 hover:bg-slate-800 transition-all"
             >
-              AI-ı sınayın
+              Da Vinci-ni sınayın
               <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" />
             </Link>
           </AnimateIn>

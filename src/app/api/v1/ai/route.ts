@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma"
 import Anthropic from "@anthropic-ai/sdk"
 import { checkRateLimit, RATE_LIMIT_CONFIG } from "@/lib/rate-limit"
 
-// Unified AI endpoint for lead-related AI features
+// Unified Da Vinci endpoint for lead-related Da Vinci features
 // POST /api/v1/ai?action=sentiment|tasks|text
 
 function getClient(): Anthropic | null {
@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
 
   const aiLimitKey = `ai:${orgId}`
   if (!checkRateLimit(aiLimitKey, RATE_LIMIT_CONFIG.ai)) {
-    return NextResponse.json({ error: "Too many AI requests. Please try again later." }, { status: 429 })
+    return NextResponse.json({ error: "Too many Da Vinci requests. Please try again later." }, { status: 429 })
   }
 
   const body = await req.json()
@@ -163,7 +163,7 @@ async function handleSentiment(orgId: string, contextBlock: string, contextName:
       model: "claude-haiku-4-5-20251001",
       max_tokens: 1024,
       temperature: 0.3,
-      system: `You are an AI analyst for LeadDrive CRM. Analyze client data and provide a sentiment assessment. Respond ONLY with valid JSON, no markdown. All text content MUST be in ${langName}.`,
+      system: `You are an Da Vinci analyst for LeadDrive CRM. Analyze client data and provide a sentiment assessment. Respond ONLY with valid JSON, no markdown. All text content MUST be in ${langName}.`,
       messages: [{
         role: "user",
         content: `Analyze the sentiment of the relationship with the client based on data:\n\n${contextBlock}\n\nRespond with JSON (all text values in ${langName}):\n{"score": number 0-100, "sentiment": "POSITIVE"|"NEUTRAL"|"NEGATIVE", "emoji": "😊"|"😐"|"😟", "trend": "improving"|"stable"|"declining"|"unknown", "risk": "LOW"|"MEDIUM"|"HIGH", "confidence": number 0-100, "summary": "detailed analysis in ${langName} (2-3 sentences)"}`,
@@ -205,7 +205,7 @@ async function handleTasks(orgId: string, contextBlock: string, contextName: str
       model: "claude-haiku-4-5-20251001",
       max_tokens: 2048,
       temperature: 0.5,
-      system: `You are an AI assistant for LeadDrive CRM. Generate smart tasks for sales managers. Consider client context. Respond ONLY with valid JSON, no markdown. All text content MUST be in ${langName}.`,
+      system: `You are an Da Vinci assistant for LeadDrive CRM. Generate smart tasks for sales managers. Consider client context. Respond ONLY with valid JSON, no markdown. All text content MUST be in ${langName}.`,
       messages: [{
         role: "user",
         content: `Based on the client data, generate 4 tasks for the manager:\n\n${contextBlock}\n\nRespond with JSON (all text values in ${langName}):\n{"strategy": "brief strategy description (1-2 sentences)", "tasks": [{"title": "title", "description": "detailed description", "priority": "HIGH"|"MEDIUM"|"LOW", "type": "email"|"call"|"meeting"|"general", "dueDate": "YYYY-MM-DD", "reasoning": "why this task is important"}]}\n\nDates should start from ${new Date().toISOString().split("T")[0]}. All text content must be in ${langName}.`,
@@ -301,7 +301,7 @@ async function handleText(orgId: string, contextBlock: string, contextName: stri
       model: "claude-haiku-4-5-20251001",
       max_tokens: 1500,
       temperature: 0.7,
-      system: `You are an AI copywriter for LeadDrive CRM. Write professional texts for business communications. Respond ONLY with valid JSON, no markdown. Signature: Güvən Technology LLC. All text content MUST be in ${langName}.`,
+      system: `You are an Da Vinci copywriter for LeadDrive CRM. Write professional texts for business communications. Respond ONLY with valid JSON, no markdown. Signature: Güvən Technology LLC. All text content MUST be in ${langName}.`,
       messages: [{ role: "user", content: prompt }],
     })
 

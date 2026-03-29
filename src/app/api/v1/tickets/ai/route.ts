@@ -35,7 +35,7 @@ async function logAiInteraction(
       },
     })
   } catch (e) {
-    console.error("Failed to log AI interaction:", e)
+    console.error("Failed to log Da Vinci interaction:", e)
   }
 }
 
@@ -172,8 +172,8 @@ Comments:\n${commentsText || "No comments yet"}`
 
     return NextResponse.json({ error: "Unknown action. Use: reply, summary, steps" }, { status: 400 })
   } catch (e) {
-    console.error("Ticket AI error:", e)
-    return NextResponse.json({ error: "AI request failed" }, { status: 500 })
+    console.error("Ticket Da Vinci error:", e)
+    return NextResponse.json({ error: "Da Vinci request failed" }, { status: 500 })
   }
 }
 

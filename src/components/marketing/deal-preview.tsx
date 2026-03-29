@@ -69,7 +69,7 @@ const sidebarItems = [
   { icon: Headphones, label: "Tiketlər" },
   { icon: BarChart3, label: "Hesabatlar" },
   { icon: Receipt, label: "Maliyyə" },
-  { icon: Bot, label: "AI Mərkəzi" },
+  { icon: Bot, label: "Da Vinci Mərkəzi" },
   { icon: Settings, label: "Parametrlər" },
 ]
 
@@ -173,7 +173,7 @@ export function DealPreview() {
               { label: "Konversiya", value: "32.4%", change: "+5.1%", icon: TrendingUp, color: "text-violet-600", bg: "bg-violet-50 border-violet-100" },
               { label: "Ort. dövrü", value: "24 gün", change: "-3 gün", icon: Clock, color: "text-cyan-600", bg: "bg-cyan-50 border-cyan-100" },
               { label: "Ort. dəyər", value: "₼11.0K", change: "+8%", icon: Target, color: "text-amber-600", bg: "bg-amber-50 border-amber-100" },
-              { label: "AI Proqnoz", value: "₼142K", change: "Bu rüb", icon: Bot, color: "text-pink-600", bg: "bg-pink-50 border-pink-100" },
+              { label: "Da Vinci Proqnoz", value: "₼142K", change: "Bu rüb", icon: Bot, color: "text-pink-600", bg: "bg-pink-50 border-pink-100" },
             ].map((kpi) => (
               <div key={kpi.label} className="rounded-lg bg-white border border-slate-200 p-2 shadow-sm">
                 <div className="flex items-center justify-between mb-1">
@@ -311,7 +311,7 @@ export function DealPreview() {
               <div className="flex items-center justify-between mb-1.5">
                 <div className="flex items-center gap-1">
                   <Bot className="w-3 h-3 text-violet-500" />
-                  <span className="text-[10px] font-semibold text-slate-700">AI Proqnoz</span>
+                  <span className="text-[10px] font-semibold text-slate-700">Da Vinci Proqnoz</span>
                 </div>
                 <span className="text-[7px] px-1 py-0.5 rounded bg-violet-50 text-violet-600 border border-violet-200">Da Vinci</span>
               </div>

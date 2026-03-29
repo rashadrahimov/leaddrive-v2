@@ -85,7 +85,7 @@ export function AIObservations({ tab }: AIObservationsProps) {
       <CardHeader className="flex flex-row items-center justify-between pb-3">
         <CardTitle className="text-base flex items-center gap-2">
           <Brain className="h-4 w-4" />
-          AI Analiz
+          Da Vinci Analiz
           {result?.cached && (
             <Badge variant="outline" className="text-[10px] ml-1">
               Cached
@@ -96,7 +96,7 @@ export function AIObservations({ tab }: AIObservationsProps) {
           {!enabled && !result && (
             <Button variant="default" size="sm" onClick={handleAnalyze}>
               <Brain className="h-4 w-4 mr-1" />
-              AI Analiz
+              Da Vinci Analiz
             </Button>
           )}
           {(enabled || result) && (
@@ -118,8 +118,8 @@ export function AIObservations({ tab }: AIObservationsProps) {
         {!enabled && !result && !isLoading && (
           <div className="text-center py-8 text-muted-foreground text-sm">
             <Brain className="h-10 w-10 mx-auto mb-3 opacity-20" />
-            <p>AI analizi hələ başlamayıb.</p>
-            <p className="text-xs mt-1">Yuxarıdakı &quot;AI Analiz&quot; düyməsini sıxın.</p>
+            <p>Da Vinci analizi hələ başlamayıb.</p>
+            <p className="text-xs mt-1">Yuxarıdakı &quot;Da Vinci Analiz&quot; düyməsini sıxın.</p>
           </div>
         )}
 
@@ -130,7 +130,7 @@ export function AIObservations({ tab }: AIObservationsProps) {
               <Brain className="h-10 w-10 animate-pulse" />
               <div className="absolute -top-1 -right-1 h-3 w-3 bg-violet-500 rounded-full animate-ping" />
             </div>
-            <p className="font-medium">Claude düşünür... (30-60 san.)</p>
+            <p className="font-medium">Da Vinci düşünür... (30-60 san.)</p>
             <p className="text-xs mt-1 text-muted-foreground">
               Məlumatlar təhlil olunur, bir az gözləyin.
             </p>
@@ -191,7 +191,7 @@ export function AIObservations({ tab }: AIObservationsProps) {
 
             {/* Footer */}
             <p className="text-xs text-muted-foreground text-center pt-2 border-t">
-              Powered by Claude AI {result.cached ? "(cached)" : ""}
+              Da Vinci texnologiyası {result.cached ? "(cached)" : ""}
               {isRefreshing && " — yenilənir..."}
             </p>
           </div>

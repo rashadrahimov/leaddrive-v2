@@ -272,15 +272,15 @@ async function processMessages(
     // Check if customer has a closed/resolved WhatsApp ticket — auto-reopen
     if (contactId && msg.type === "text" && text.trim()) {
       const reopened = await tryReopenTicket(orgId, contactId, waId, text, senderName)
-      if (reopened) continue // Skip AI auto-reply if ticket was reopened
+      if (reopened) continue // Skip Da Vinci auto-reply if ticket was reopened
     }
 
-    // AI Auto-Reply: only for text messages
+    // Da Vinci Auto-Reply: only for text messages
     if (msg.type === "text" && text.trim()) {
       try {
         await handleAiAutoReply(orgId, waId, text, contactId, senderName)
       } catch (err) {
-        console.error(`[WA Webhook] AI auto-reply error:`, err)
+        console.error(`[WA Webhook] Da Vinci auto-reply error:`, err)
       }
     }
   }
@@ -349,9 +349,9 @@ async function tryReopenTicket(
   }
 }
 
-// ─── AI Auto-Reply for WhatsApp ───────────────────────────────────────────
+// ─── Da Vinci Auto-Reply for WhatsApp ───────────────────────────────────────────
 
-const WA_SYSTEM_PROMPT = `Ты — AI-ассистент компании, подключённый через WhatsApp. Твоё имя "LeadDrive AI".
+const WA_SYSTEM_PROMPT = `Ты — Da Vinci, интеллектуальный движок компании, подключённый через WhatsApp.
 
 ПРАВИЛА:
 1. Отвечай КРАТКО — это мессенджер, не портал. Максимум 2-3 предложения.
@@ -374,7 +374,7 @@ async function handleAiAutoReply(
   contactId: string | undefined,
   senderName: string,
 ) {
-  // Check if AI auto-reply is enabled for this org
+  // Check if Da Vinci auto-reply is enabled for this org
   const agentConfig = await prisma.aiAgentConfig.findFirst({
     where: { organizationId, isActive: true },
     orderBy: { updatedAt: "desc" },
@@ -386,7 +386,7 @@ async function handleAiAutoReply(
     return
   }
 
-  // Find or create AI chat session for this WhatsApp phone
+  // Find or create Da Vinci chat session for this WhatsApp phone
   // Use companyId field to store "wa:{phone}" as session identifier
   const waSessionKey = `wa:${waPhone}`
 
@@ -429,7 +429,7 @@ async function handleAiAutoReply(
     })
   }
 
-  // Save user message to AI session
+  // Save user message to Da Vinci session
   await prisma.aiChatMessage.create({
     data: {
       sessionId: session.id,
@@ -510,7 +510,7 @@ async function handleAiAutoReply(
       .join("")
 
     // Check for escalation/ticket markers BEFORE cleaning
-    // Only use explicit AI markers — no regex guessing (was too aggressive, created tickets on every message)
+    // Only use explicit Da Vinci markers — no regex guessing (was too aggressive, created tickets on every message)
     const shouldEscalate = rawReply.includes("[ESCALATE]")
     const shouldCreateTicket = rawReply.includes("[CREATE_TICKET]")
 
@@ -521,7 +521,7 @@ async function handleAiAutoReply(
 
     if (!aiReply) return
 
-    // Save AI response to session
+    // Save Da Vinci response to session
     await prisma.aiChatMessage.create({
       data: {
         sessionId: session.id,
@@ -555,11 +555,11 @@ async function handleAiAutoReply(
         })
 
         const chatHistory = chatMessages
-          .map((m: any) => `[${m.role === "user" ? "Клиент" : "AI"}] ${m.content}`)
+          .map((m: any) => `[${m.role === "user" ? "Клиент" : "Da Vinci"}] ${m.content}`)
           .join("\n\n")
 
         const ticketCount = await prisma.ticket.count({ where: { organizationId } })
-        const ticketNumber = `AI-${String(ticketCount + 1).padStart(4, "0")}`
+        const ticketNumber = `DV-${String(ticketCount + 1).padStart(4, "0")}`
 
         const ticket = await prisma.ticket.create({
           data: {
@@ -580,7 +580,7 @@ async function handleAiAutoReply(
           await prisma.ticketComment.create({
             data: {
               ticketId: ticket.id,
-              comment: `[${msg.role === "user" ? "Клиент (WhatsApp)" : "AI Bot"}] ${msg.content}`,
+              comment: `[${msg.role === "user" ? "Клиент (WhatsApp)" : "Da Vinci Bot"}] ${msg.content}`,
               isInternal: false,
             },
           })
@@ -616,7 +616,7 @@ async function handleAiAutoReply(
       },
     }).catch(() => {})
 
-    // Send AI reply back via WhatsApp (forceText: customer just wrote, we're in 24h window)
+    // Send Da Vinci reply back via WhatsApp (forceText: customer just wrote, we're in 24h window)
     const result = await sendWhatsAppMessage({
       to: waPhone,
       message: aiReply,

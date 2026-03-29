@@ -146,7 +146,7 @@ export default function AILeadScoringPage() {
               {t("subtitle")}
               {aiPowered && (
                 <Badge className="ml-2 bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">
-                  <Sparkles className="h-3 w-3 mr-1" /> Claude AI
+                  <Sparkles className="h-3 w-3 mr-1" /> Da Vinci
                 </Badge>
               )}
             </p>

@@ -84,8 +84,8 @@ const metrics = [
   {
     value: 16,
     suffix: "",
-    label: "AI İnteqrasiya",
-    sublabel: "Da Vinci AI ilə",
+    label: "Ağıllı funksiya",
+    sublabel: "Da Vinci ilə",
     icon: Brain,
     trend: "+4 yeni",
     color: "#8b5cf6",

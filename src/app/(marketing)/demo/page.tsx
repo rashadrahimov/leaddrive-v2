@@ -130,15 +130,15 @@ function DemoRequestForm() {
 /* ── Product gallery screenshots ── */
 const screenshots = [
   // AI (9)
-  { id: "ai-scoring", title: "AI Lid Reytinqi", description: "Hər lidi A-dan F-ə qədər avtomatik qiymətləndirir.", icon: Brain, src: "/marketing/ai-lead-scoring.png", category: "ai" },
-  { id: "ai-email", title: "AI Mətn Generasiyası", description: "Peşəkar e-poçt və mesaj yaradın — bir kliklə.", icon: Mail, src: "/marketing/ai-email-generation.png", category: "ai" },
-  { id: "ai-deal", title: "AI Sövdələşmə Təhlili", description: "Next Best Offers — ən uyğun məhsul tövsiyələri.", icon: Sparkles, src: "/marketing/ai-deal-detail.png", category: "ai" },
-  { id: "ai-ticket", title: "AI Tiket Cavabı", description: "Tiketlərə avtomatik cavab və həll addımları.", icon: Headphones, src: "/marketing/ai-ticket-detail.png", category: "ai" },
-  { id: "ai-lead", title: "AI Lid Detalları", description: "Dərin AI təhlil — sentiment, skorinq, tapşırıqlar.", icon: Users, src: "/marketing/ai-lead-detail.png", category: "ai" },
-  { id: "ai-contact", title: "AI Kontakt Profili", description: "AI analiz — əlaqə tarixçəsi və növbəti addımlar.", icon: Users, src: "/marketing/ai-contact-detail.png", category: "ai" },
-  { id: "ai-profitability", title: "AI Gəlirlilik", description: "Trendlər, optimallaşdırma təklifləri və proqnozlar.", icon: TrendingUp, src: "/marketing/ai-profitability.png", category: "ai" },
-  { id: "ai-budgeting", title: "AI Büdcə Narrativi", description: "CFO səviyyəsində büdcə şərhləri və proqnoz.", icon: Calculator, src: "/marketing/ai-budgeting.png", category: "ai" },
-  { id: "ai-assistant", title: "AI Köməkçi Panel", description: "Üzən AI köməkçi — suallar, axtarış, hərəkətlər.", icon: Sparkles, src: "/marketing/ai-assistant-panel.png", category: "ai" },
+  { id: "ai-scoring", title: "Da Vinci Lid Reytinqi", description: "Hər lidi A-dan F-ə qədər avtomatik qiymətləndirir.", icon: Brain, src: "/marketing/ai-lead-scoring.png", category: "davinci" },
+  { id: "ai-email", title: "Da Vinci Mətn Generasiyası", description: "Peşəkar e-poçt və mesaj yaradın — bir kliklə.", icon: Mail, src: "/marketing/ai-email-generation.png", category: "davinci" },
+  { id: "ai-deal", title: "Da Vinci Sövdələşmə Təhlili", description: "Next Best Offers — ən uyğun məhsul tövsiyələri.", icon: Sparkles, src: "/marketing/ai-deal-detail.png", category: "davinci" },
+  { id: "ai-ticket", title: "Da Vinci Tiket Cavabı", description: "Tiketlərə avtomatik cavab və həll addımları.", icon: Headphones, src: "/marketing/ai-ticket-detail.png", category: "davinci" },
+  { id: "ai-lead", title: "Da Vinci Lid Detalları", description: "Dərin təhlil — sentiment, skorinq, tapşırıqlar.", icon: Users, src: "/marketing/ai-lead-detail.png", category: "davinci" },
+  { id: "ai-contact", title: "Da Vinci Kontakt Profili", description: "Analiz — əlaqə tarixçəsi və növbəti addımlar.", icon: Users, src: "/marketing/ai-contact-detail.png", category: "davinci" },
+  { id: "ai-profitability", title: "Da Vinci Gəlirlilik", description: "Trendlər, optimallaşdırma təklifləri və proqnozlar.", icon: TrendingUp, src: "/marketing/ai-profitability.png", category: "davinci" },
+  { id: "ai-budgeting", title: "Da Vinci Büdcə Narrativi", description: "CFO səviyyəsində büdcə şərhləri və proqnoz.", icon: Calculator, src: "/marketing/ai-budgeting.png", category: "davinci" },
+  { id: "ai-assistant", title: "Da Vinci Köməkçi Panel", description: "Üzən köməkçi — suallar, axtarış, hərəkətlər.", icon: Sparkles, src: "/marketing/ai-assistant-panel.png", category: "davinci" },
   // CRM (11)
   { id: "dashboard", title: "İdarə Paneli", description: "Real vaxt KPI-lər və pipeline funnel.", icon: LayoutDashboard, src: "/marketing/crm-dashboard.png", category: "crm" },
   { id: "deals", title: "Sövdələşmələr", description: "Kanban lövhəsi ilə vizual pipeline idarəsi.", icon: Handshake, src: "/marketing/deals-pipeline.png", category: "crm" },
@@ -149,13 +149,13 @@ const screenshots = [
   { id: "invoices", title: "Fakturalar", description: "Yaratma, göndərmə, ödəniş izləmə, PDF.", icon: FileText, src: "/marketing/invoices-billing.png", category: "crm" },
   { id: "campaigns", title: "Kampaniyalar", description: "Marşrut qurucusu və kampaniya ROI.", icon: Megaphone, src: "/marketing/marketing-campaigns.png", category: "crm" },
   { id: "support", title: "Service Desk", description: "SLA, prioritet idarəsi, bilik bazası.", icon: Headphones, src: "/marketing/support-tickets.png", category: "crm" },
-  { id: "agent-desktop", title: "Agent Masaüstü", description: "Tiketlər, tarixçə, AI tövsiyələr bir yerdə.", icon: Monitor, src: "/marketing/agent-desktop.png", category: "crm" },
+  { id: "agent-desktop", title: "Agent Masaüstü", description: "Tiketlər, tarixçə, Da Vinci tövsiyələr bir yerdə.", icon: Monitor, src: "/marketing/agent-desktop.png", category: "crm" },
   { id: "events", title: "Tədbirlər", description: "Planlaşdırma, dəvətnamə, iştirakçı izləmə.", icon: CalendarDays, src: "/marketing/events-management.png", category: "crm" },
 ]
 
 export default function DemoPage() {
   const [active, setActive] = useState(0)
-  const [filter, setFilter] = useState<"all" | "ai" | "crm">("all")
+  const [filter, setFilter] = useState<"all" | "davinci" | "crm">("all")
 
   const filtered = filter === "all"
     ? screenshots
@@ -189,7 +189,7 @@ export default function DemoPage() {
                 </span>
               </h1>
               <p className="mt-4 text-lg text-slate-400 leading-relaxed">
-                20+ modulu interaktiv şəkildə araşdırın. 9 AI funksiya + 11 CRM modulu — hər ekran real məhsuldan.
+                20+ modulu interaktiv şəkildə araşdırın. 9 Da Vinci funksiya + 11 CRM modulu — hər ekran real məhsuldan.
               </p>
 
               <div className="mt-8 space-y-3">
@@ -232,7 +232,7 @@ export default function DemoPage() {
           <div className="flex justify-center gap-2 mb-6">
             {[
               { key: "all" as const, label: "Hamısı (20)" },
-              { key: "ai" as const, label: "AI Funksiyalar (9)" },
+              { key: "davinci" as const, label: "Da Vinci Funksiyalar (9)" },
               { key: "crm" as const, label: "CRM Modulları (11)" },
             ].map((f) => (
               <button

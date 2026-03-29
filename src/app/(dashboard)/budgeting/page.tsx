@@ -761,7 +761,7 @@ function WorkspaceTab({ planId, onNavigateTab }: { planId: string; onNavigateTab
     setNewActual({ amount: "", description: "", date: "" })
   }
 
-  // AI narrative
+  // Da Vinci narrative
   const handleAINarrative = async () => {
     setShowNarrative(true)
     try {
@@ -1534,7 +1534,7 @@ function WorkspaceTab({ planId, onNavigateTab }: { planId: string; onNavigateTab
         </Button>
       </div>
 
-      {/* AI Narrative */}
+      {/* Da Vinci Narrative */}
       {showNarrative && (
         <Card className="border-purple-200 dark:border-purple-800">
           <CardHeader className="pb-2">
@@ -1826,7 +1826,7 @@ function OverviewTab({ planId }: { planId: string }) {
         />
       </div>
 
-      {/* Action buttons: AI narrative + sync actuals + export */}
+      {/* Action buttons: Da Vinci narrative + sync actuals + export */}
       <div className="flex flex-wrap gap-2">
         <Button
           size="sm"
@@ -1854,7 +1854,7 @@ function OverviewTab({ planId }: { planId: string }) {
         </a>
       </div>
 
-      {/* AI Narrative Card */}
+      {/* Da Vinci Narrative Card */}
       {showNarrative && (
         <Card className="border-purple-200 dark:border-purple-800">
           <CardHeader className="pb-2">

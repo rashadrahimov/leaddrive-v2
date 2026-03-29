@@ -17,7 +17,7 @@ export function ClientLogos() {
       <div className="mx-auto max-w-7xl px-4 lg:px-8">
         <AnimateIn>
           <p className="text-center text-xs font-medium uppercase tracking-widest text-slate-400 mb-6">
-            İstifadəçilərimiz
+            İSTİFADƏÇİLƏR
           </p>
           <div className="flex flex-wrap items-center justify-center gap-x-10 gap-y-4">
             {clients.map((name) => (

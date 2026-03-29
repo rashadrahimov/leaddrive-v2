@@ -700,7 +700,7 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h4 className="font-medium text-sm flex items-center gap-1.5">
-                <Brain className="h-4 w-4 text-purple-500" /> AI Скоринг
+                <Brain className="h-4 w-4 text-purple-500" /> Da Vinci Скоринг
               </h4>
               <Button size="sm" variant="outline" className="gap-1 text-xs" onClick={async () => {
                 setScoring(true)
@@ -711,7 +711,7 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
                   }
                 } catch (err) { console.error(err) } finally { setScoring(false) }
               }} disabled={scoring}>
-                {scoring ? "Анализ..." : "Пересчитать с AI"}
+                {scoring ? "Анализ..." : "Пересчитать с Da Vinci"}
               </Button>
             </div>
 
@@ -739,7 +739,7 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
             {/* Score bar */}
             <div className="p-3 bg-muted/30 rounded-lg">
               <div className="flex items-center justify-between mb-1">
-                <span className="text-xs text-muted-foreground">AI Score</span>
+                <span className="text-xs text-muted-foreground">Da Vinci Score</span>
                 <span className="text-xs font-bold">{currentScore}/100</span>
               </div>
               <div className="h-2 bg-muted rounded-full overflow-hidden">

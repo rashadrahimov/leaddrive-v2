@@ -28,7 +28,7 @@ export function NextBestOffers({ dealId, orgId }: { dealId: string; orgId?: stri
 
   useEffect(() => {
     const headers: any = orgId ? { "x-organization-id": orgId } : {}
-    // Use AI recommend API with deal context
+    // Use Da Vinci recommend API with deal context
     fetch(`/api/v1/ai/recommend`, {
       method: "POST",
       headers: { "Content-Type": "application/json", ...headers },
@@ -157,7 +157,7 @@ export function NextBestOffers({ dealId, orgId }: { dealId: string; orgId?: stri
               <p className="text-sm text-muted-foreground leading-relaxed">{selected.description}</p>
             )}
 
-            {/* AI Reason */}
+            {/* Da Vinci Reason */}
             <div className="bg-indigo-50 border border-indigo-100 rounded-lg p-3">
               <div className="flex items-center gap-2 mb-1">
                 <Sparkles className="h-4 w-4 text-indigo-500" />

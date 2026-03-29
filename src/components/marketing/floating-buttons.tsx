@@ -27,17 +27,6 @@ export function FloatingButtons() {
         <ArrowUp className="h-4 w-4" />
       </button>
 
-      {/* WhatsApp */}
-      <a
-        href="https://wa.me/994105313065?text=Salam%2C%20LeadDrive%20CRM%20haqqında%20məlumat%20almaq%20istəyirəm"
-        target="_blank"
-        rel="noopener noreferrer"
-        className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500 text-white shadow-lg shadow-emerald-500/30 hover:bg-emerald-400 hover:shadow-emerald-500/50 transition-all animate-pulse-glow"
-        aria-label="WhatsApp ilə yazın"
-        style={{ "--tw-shadow-color": "rgba(16, 185, 129, 0.4)" } as React.CSSProperties}
-      >
-        <MessageCircle className="h-5 w-5" />
-      </a>
     </div>
   )
 }

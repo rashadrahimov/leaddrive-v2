@@ -126,7 +126,7 @@ export default function ContactDetailPage() {
   const id = params.id as string
   const orgId = session?.user?.organizationId
 
-  // AI Recommendations
+  // Da Vinci Recommendations
   const [recommendations, setRecommendations] = useState<any[]>([])
   const [loadingRecs, setLoadingRecs] = useState(false)
 
@@ -360,7 +360,7 @@ export default function ContactDetailPage() {
               }).finally(() => setLoadingRecs(false))
             }
           }}>
-            <Sparkles className="h-3 w-3 mr-1" /> AI Рекомендации
+            <Sparkles className="h-3 w-3 mr-1" /> Da Vinci Рекомендации
           </TabsTrigger>
         </TabsList>
 

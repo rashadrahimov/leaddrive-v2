@@ -8,7 +8,7 @@ const features = [
   { icon: Users, title: 'Lead Management', description: 'Capture and organize leads efficiently' },
   { icon: TrendingUp, title: 'Sales Pipeline', description: 'Track deals through every stage' },
   { icon: BarChart3, title: 'Analytics', description: 'Deep insights into your sales performance' },
-  { icon: Zap, title: 'AI Powered', description: 'Intelligent automation and predictions' },
+  { icon: Zap, title: 'Da Vinci Powered', description: 'Smart automation and predictions' },
 ];
 
 export default function LandingPage() {

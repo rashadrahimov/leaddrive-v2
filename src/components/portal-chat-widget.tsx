@@ -164,7 +164,7 @@ export function PortalChatWidget({ userName }: PortalChatWidgetProps) {
         const comments = data.comments || []
 
         // Check for operator comments (isAgent=true means operator)
-        const agentComments = comments.filter((c: { isAgent: boolean; comment: string }) => c.isAgent && !c.comment.startsWith("[Клиент]") && !c.comment.startsWith("[AI Bot]"))
+        const agentComments = comments.filter((c: { isAgent: boolean; comment: string }) => c.isAgent && !c.comment.startsWith("[Клиент]") && !c.comment.startsWith("[Da Vinci]"))
         if (agentComments.length > ticket.lastCommentCount) {
           const newComments = agentComments.slice(ticket.lastCommentCount)
           setMessages(prev => {
@@ -304,14 +304,14 @@ export function PortalChatWidget({ userName }: PortalChatWidgetProps) {
       const subject = userMessages[0]?.content?.slice(0, 100) || "Запрос из чата"
       const chatHistory = messages
         .filter(m => m.role !== "operator")
-        .map(m => `[${m.role === "user" ? "Клиент" : "AI"}] ${m.content}`).join("\n\n")
+        .map(m => `[${m.role === "user" ? "Клиент" : "Da Vinci"}] ${m.content}`).join("\n\n")
 
       const res = await fetch("/api/v1/public/portal-tickets", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           subject,
-          description: `Создано из AI чата.\n\n--- ИСТОРИЯ ЧАТА ---\n${chatHistory}`,
+          description: `Создано из Da Vinci чата.\n\n--- ИСТОРИЯ ЧАТА ---\n${chatHistory}`,
           category: "general",
         }),
       })
@@ -466,7 +466,7 @@ export function PortalChatWidget({ userName }: PortalChatWidgetProps) {
               <Bot className="h-5 w-5 text-white" />
             </div>
             <div className="flex-1">
-              <h3 className="text-white font-semibold text-sm">LeadDrive AI</h3>
+              <h3 className="text-white font-semibold text-sm">Da Vinci</h3>
               <div className="flex items-center gap-1.5">
                 <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
                 <span className="text-white/80 text-xs">Online</span>
@@ -500,7 +500,7 @@ export function PortalChatWidget({ userName }: PortalChatWidgetProps) {
                 <div>
                   <div className="bg-white rounded-lg rounded-tl-none p-3 shadow-sm border border-gray-100">
                     <p className="text-sm text-gray-800">
-                      Здравствуйте, <strong>{userName}</strong>! Я LeadDrive AI Assistant.
+                      Здравствуйте, <strong>{userName}</strong>! Я Da Vinci.
                     </p>
                     <p className="text-sm text-gray-800 mt-1">Чем могу помочь?</p>
                   </div>

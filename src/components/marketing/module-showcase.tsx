@@ -64,7 +64,7 @@ const sidebarItems = [
   { icon: Inbox, label: "Gələn Qutusu" },
   { icon: Headphones, label: "Tiketlər" },
   { icon: BarChart3, label: "Hesabatlar" },
-  { icon: Bot, label: "AI Mərkəzi" },
+  { icon: Bot, label: "Da Vinci Mərkəzi" },
   { icon: Settings, label: "Parametrlər" },
 ]
 
@@ -160,7 +160,7 @@ function CrmPreview() {
           { l: "Qazanıldı", v: "$3,500", grad: "from-teal-400 to-cyan-500" },
           { l: "İtirildi", v: "1", grad: "from-red-400 to-rose-500" },
           { l: "Ort. dövrü", v: "4 gün", grad: "from-orange-400 to-orange-500" },
-          { l: "AI Proqnoz", v: "$47,567", grad: "from-violet-500 to-purple-600" },
+          { l: "Da Vinci Proqnoz", v: "$47,567", grad: "from-violet-500 to-purple-600" },
         ].map(k => (
           <div key={k.l} className={cn("rounded-xl bg-gradient-to-br text-white p-1.5 shadow-sm", k.grad)}>
             <div className="flex items-center justify-between mb-0.5">
@@ -472,7 +472,7 @@ function InboxPreview() {
         {[
           { l: "Cəmi mesaj", v: "356", bg: "bg-blue-500" },
           { l: "Oxunmamış", v: "32", bg: "bg-red-500" },
-          { l: "AI cavab", v: "68%", bg: "bg-violet-500" },
+          { l: "Avtomatik cavab", v: "68%", bg: "bg-violet-500" },
           { l: "Ort. cavab", v: "2.4 dəq", bg: "bg-emerald-500" },
         ].map(s => (
           <div key={s.l} className={cn("rounded-lg p-1.5 text-white text-center", s.bg)}>
@@ -533,7 +533,7 @@ function InboxPreview() {
               <div className="bg-blue-50 rounded-lg rounded-bl-sm px-2 py-1 text-slate-600">E-poçtla da təklif göndərin zəhmət olmasa</div>
             </div>
             <div className="flex items-center gap-1 text-[7px] text-orange-500">
-              <Bot className="w-2.5 h-2.5" /> AI cavab hazırlanır...
+              <Bot className="w-2.5 h-2.5" /> Avtomatik cavab hazırlanır...
             </div>
           </div>
           {/* Input */}
@@ -583,9 +583,9 @@ function SupportScreen1() {
         </div>
         <div className="space-y-1">
           {[
-            { id: "AI-0021", subj: "Hesab girişi problemi", pr: "high", c: "#ef4444", agent: "Aysəl H.", sla: "6 dəq" },
+            { id: "Da Vinci 0021", subj: "Hesab girişi problemi", pr: "high", c: "#ef4444", agent: "Aysəl H.", sla: "6 dəq" },
             { id: "TK-0020", subj: "Faktura düzəlişi lazımdır", pr: "medium", c: "#f59e0b", agent: "Rüstəm Ə.", sla: "8 dəq" },
-            { id: "AI-0019", subj: "API inteqrasiya sualı", pr: "high", c: "#ef4444", agent: "AI Bot", sla: "—" },
+            { id: "Da Vinci 0019", subj: "API inteqrasiya sualı", pr: "high", c: "#ef4444", agent: "Da Vinci Bot", sla: "—" },
           ].map(t => (
             <div key={t.id} className="rounded border border-slate-100 px-1.5 py-1 text-[8px]">
               <div className="flex items-center gap-1">
@@ -654,7 +654,7 @@ function SupportScreen2() {
       </div>
       <div className="space-y-1.5 text-[8px] mb-2">
         <div className="flex items-start gap-1">
-          <span className="text-[6px] px-1 py-0.5 rounded text-white shrink-0 mt-0.5 bg-violet-500">AI</span>
+          <span className="text-[6px] px-1 py-0.5 rounded text-white shrink-0 mt-0.5 bg-violet-500">DV</span>
           <div className="bg-violet-50 rounded-lg rounded-bl-sm px-2 py-1 text-slate-600">Salam! 👋 CRM-iniz işləmir? Mən sizə kömək edəcəm. Konkret hata nədir?</div>
         </div>
         <div className="flex items-start gap-1">
@@ -662,7 +662,7 @@ function SupportScreen2() {
           <div className="bg-slate-50 rounded-lg rounded-bl-sm px-2 py-1 text-slate-600">Chrome istifadə edirəm, login olmaq olmur</div>
         </div>
         <div className="flex items-start gap-1">
-          <span className="text-[6px] px-1 py-0.5 rounded text-white shrink-0 mt-0.5 bg-violet-500">AI</span>
+          <span className="text-[6px] px-1 py-0.5 rounded text-white shrink-0 mt-0.5 bg-violet-500">DV</span>
           <div className="bg-violet-50 rounded-lg rounded-bl-sm px-2 py-1 text-slate-600">Chrome keşi təmizləyin, Caps Lock yoxlayın. Problemdir? Operatora bağlayım.</div>
         </div>
         <div className="flex items-center gap-1 text-[7px] text-orange-500 bg-orange-50 rounded px-2 py-1">
@@ -672,15 +672,15 @@ function SupportScreen2() {
       <div className="flex gap-1 mb-2 flex-wrap">
         {[
           { l: "Cavab ver", c: "bg-orange-400" }, { l: "Daxili qeyd", c: "bg-slate-200 !text-slate-600" },
-          { l: "AI Cavab", c: "bg-emerald-100 !text-emerald-700" }, { l: "Xülasə", c: "bg-blue-100 !text-blue-700" },
+          { l: "Avto Cavab", c: "bg-emerald-100 !text-emerald-700" }, { l: "Xülasə", c: "bg-blue-100 !text-blue-700" },
         ].map(b => (
           <span key={b.l} className={cn("text-[6px] px-1.5 py-0.5 rounded text-white font-medium", b.c)}>{b.l}</span>
         ))}
       </div>
       <div className="bg-emerald-50 rounded-lg border border-emerald-200 p-2 mb-2">
-        <div className="flex items-center gap-1 text-[9px] font-semibold text-emerald-700 mb-1"><Bot className="w-3 h-3" /> AI Xülasə</div>
+        <div className="flex items-center gap-1 text-[9px] font-semibold text-emerald-700 mb-1"><Bot className="w-3 h-3" /> Da Vinci Xülasə</div>
         <div className="text-[7px] text-emerald-600 leading-relaxed">
-          <strong>Problem:</strong> Müştəri Chrome-da login ola bilmir. <strong>Status:</strong> Həll olunub — AI ətraflı təşxis etdi, texniki komandaya eskalasiya, 4 saat SLA daxilində cavab verildi.
+          <strong>Problem:</strong> Müştəri Chrome-da login ola bilmir. <strong>Status:</strong> Həll olunub — Da Vinci ətraflı təşxis etdi, texniki komandaya eskalasiya, 4 saat SLA daxilində cavab verildi.
         </div>
       </div>
       <div className="grid grid-cols-2 gap-2 mb-2">
@@ -701,7 +701,7 @@ function SupportScreen2() {
         </div>
       </div>
       <div className="bg-violet-50 rounded-lg border border-violet-200 p-2">
-        <div className="text-[8px] font-semibold text-violet-700 mb-1">🤖 AI Asistent</div>
+        <div className="text-[8px] font-semibold text-violet-700 mb-1">🤖 Da Vinci Asistent</div>
         <div className="grid grid-cols-2 gap-0.5 text-[6px] text-violet-600">
           <div>✓ Auto-cavab</div><div>✓ Xülasə</div>
           <div>✓ Operator təyini</div><div>✓ SLA xatırlatma</div>
@@ -785,7 +785,7 @@ function SupportScreen3() {
           {[
             { id: "#1847", s: "Açıq", sc: "bg-blue-100 text-blue-700", t: "Login problemi", ag: "Nigar M.", ch: "WA", p: "Yüksək", pc: "text-red-500" },
             { id: "#1846", s: "Gözləmədə", sc: "bg-amber-100 text-amber-700", t: "Faktura düzəlişi", ag: "Kamran H.", ch: "Portal", p: "Orta", pc: "text-amber-500" },
-            { id: "#1845", s: "Həll edildi", sc: "bg-emerald-100 text-emerald-700", t: "API inteqrasiya", ag: "AI Bot", ch: "E-poçt", p: "Aşağı", pc: "text-slate-400" },
+            { id: "#1845", s: "Həll edildi", sc: "bg-emerald-100 text-emerald-700", t: "API inteqrasiya", ag: "Da Vinci Bot", ch: "E-poçt", p: "Aşağı", pc: "text-slate-400" },
             { id: "#1844", s: "Açıq", sc: "bg-blue-100 text-blue-700", t: "Hesab bloku", ag: "Nigar M.", ch: "TG", p: "Kritik", pc: "text-red-600" },
           ].map(t => (
             <div key={t.id} className="flex items-center gap-1 text-[6px]">
@@ -811,9 +811,9 @@ function SupportScreen3() {
           </div>
         </div>
 
-        {/* AI performance */}
+        {/* Da Vinci performance */}
         <div className="bg-white rounded-lg border border-slate-100 p-2">
-          <div className="text-[8px] font-semibold text-slate-700 mb-1">🤖 AI Performans</div>
+          <div className="text-[8px] font-semibold text-slate-700 mb-1">🤖 Da Vinci Performans</div>
           <div className="space-y-1 text-[7px]">
             <div className="flex items-center justify-between"><span className="text-slate-500">Auto-cavab</span><span className="font-semibold text-emerald-600">42%</span></div>
             <div className="flex items-center justify-between"><span className="text-slate-500">Xülasə dəqiqliyi</span><span className="font-semibold text-blue-600">94%</span></div>
@@ -852,16 +852,16 @@ const SUPPORT_PANELS = [
   { id: "agent-desktop", Component: SupportScreen3 },
 ]
 
-function SupportAutoScaledPanel({ children, height, baseWidth = 900 }: { children: React.ReactNode; height: number; baseWidth?: number }) {
-  const ref = useRef<HTMLDivElement>(null)
-  const [scale, setScale] = useState(0.5)
+function SupportAutoScaledPanel({ children, baseWidth = 900 }: { children: React.ReactNode; baseWidth?: number }) {
+  const outerRef = useRef<HTMLDivElement>(null)
+  const [zoom, setZoom] = useState<number | null>(null)
 
-  useEffect(() => {
-    const el = ref.current
+  useLayoutEffect(() => {
+    const el = outerRef.current
     if (!el) return
     const measure = () => {
       const w = el.offsetWidth
-      if (w > 0) setScale(w / baseWidth)
+      if (w > 0) setZoom(w / baseWidth)
     }
     measure()
     const ro = new ResizeObserver(measure)
@@ -871,15 +871,14 @@ function SupportAutoScaledPanel({ children, height, baseWidth = 900 }: { childre
 
   return (
     <div
-      ref={ref}
+      ref={outerRef}
       style={{
-        height,
         borderRadius: 12,
         overflow: "hidden",
         boxShadow: "0 25px 60px -10px rgba(0,0,0,0.2), 0 12px 28px -6px rgba(0,0,0,0.1), 0 0 0 1px rgba(0,0,0,0.05)",
       }}
     >
-      <div style={{ width: baseWidth, transform: `scale(${scale})`, transformOrigin: "top left" }}>
+      <div style={{ width: baseWidth, zoom: zoom ?? 0.5, visibility: zoom !== null ? "visible" : "hidden" }}>
         {children}
       </div>
     </div>
@@ -891,13 +890,23 @@ function SupportSlidingPanels() {
   const panelRefs = [useRef<HTMLDivElement>(null), useRef<HTMLDivElement>(null), useRef<HTMLDivElement>(null)]
   const scrollLockRef = useRef<number | null>(null)
   const [ready, setReady] = useState(false)
+  const [wrapHeight, setWrapHeight] = useState(620)
   const [slots, setSlots] = useState<SupportSlot[]>(["left", "center", "right"])
 
   useEffect(() => {
     const wrap = wrapRef.current
     if (!wrap) return
-    Object.assign(wrap.style, { position: "relative", height: `${SUPPORT_HEIGHT}px`, display: "block", overflowAnchor: "none" })
+    Object.assign(wrap.style, { position: "relative", display: "block", overflowAnchor: "none" })
     setReady(true)
+    // Measure tallest panel after render
+    const timer = setTimeout(() => {
+      let maxH = 0
+      panelRefs.forEach(ref => {
+        if (ref.current) maxH = Math.max(maxH, ref.current.offsetHeight)
+      })
+      if (maxH > 0) setWrapHeight(maxH)
+    }, 200)
+    return () => clearTimeout(timer)
   }, [])
 
   useLayoutEffect(() => {
@@ -942,11 +951,11 @@ function SupportSlidingPanels() {
     <div
       ref={wrapRef}
       className="hidden lg:block"
-      style={{ opacity: ready ? 1 : 0, transition: "opacity 0.3s" }}
+      style={{ opacity: ready ? 1 : 0, transition: "opacity 0.3s", height: wrapHeight }}
     >
       {SUPPORT_PANELS.map((panel, i) => (
         <div key={panel.id} ref={panelRefs[i]} onClick={(e) => handleClick(i, e)}>
-          <SupportAutoScaledPanel height={SUPPORT_HEIGHT} baseWidth={900}>
+          <SupportAutoScaledPanel baseWidth={900}>
             <panel.Component />
           </SupportAutoScaledPanel>
         </div>
@@ -969,7 +978,7 @@ function EventsPreview() {
   ]
   const events = [
     { id: "EV-014", name: "CRM Demo Day 2026", type: "Konfrans", typeIcon: "🎤", date: "12 Apr", loc: "Hilton Bakı", online: false, participants: 120, max: 150, budget: "₼8,500", status: "Qeydiyyat açıq", statusColor: "#8b5cf6" },
-    { id: "EV-013", name: "AI in Sales — Vebinar", type: "Vebinar", typeIcon: "🎥", date: "18 Apr", loc: "Zoom", online: true, participants: 87, max: 200, budget: "₼800", status: "Planlaşdırılıb", statusColor: "#3b82f6" },
+    { id: "EV-013", name: "Da Vinci in Sales — Vebinar", type: "Vebinar", typeIcon: "🎥", date: "18 Apr", loc: "Zoom", online: true, participants: 87, max: 200, budget: "₼800", status: "Planlaşdırılıb", statusColor: "#3b82f6" },
     { id: "EV-012", name: "LeadDrive Workshop", type: "Seminar", typeIcon: "🔧", date: "5 Mar", loc: "Ofis", online: false, participants: 24, max: 30, budget: "₼2,200", status: "Tamamlandı", statusColor: "#10b981" },
     { id: "EV-011", name: "Partner Networking", type: "Görüş", typeIcon: "☕", date: "28 Feb", loc: "Coworking", online: false, participants: 45, max: 50, budget: "₼3,100", status: "Tamamlandı", statusColor: "#10b981" },
   ]
@@ -1077,7 +1086,7 @@ function EventsPreview() {
           <div className="text-[8px] font-semibold text-slate-700 mb-1.5">📅 Tədbir Təqvimi</div>
           <div className="space-y-1 text-[7px]">
             <div className="flex items-center gap-1 bg-violet-50 rounded px-1.5 py-1"><span className="w-1.5 h-1.5 rounded-full bg-violet-500" /><div><div className="font-medium text-violet-700">12 Apr — CRM Demo Day</div><div className="text-[6px] text-slate-400">Hilton Bakı · 120 nəfər</div></div></div>
-            <div className="flex items-center gap-1 bg-blue-50 rounded px-1.5 py-1"><span className="w-1.5 h-1.5 rounded-full bg-blue-500" /><div><div className="font-medium text-blue-700">18 Apr — AI Vebinar</div><div className="text-[6px] text-slate-400">Online · 87 nəfər</div></div></div>
+            <div className="flex items-center gap-1 bg-blue-50 rounded px-1.5 py-1"><span className="w-1.5 h-1.5 rounded-full bg-blue-500" /><div><div className="font-medium text-blue-700">18 Apr — Da Vinci Vebinar</div><div className="text-[6px] text-slate-400">Online · 87 nəfər</div></div></div>
             <div className="flex items-center gap-1 bg-amber-50 rounded px-1.5 py-1"><span className="w-1.5 h-1.5 rounded-full bg-amber-500" /><div><div className="font-medium text-amber-700">25 Apr — Sərgi</div><div className="text-[6px] text-slate-400">Expo Center · 200 nəfər</div></div></div>
           </div>
         </div>
@@ -1359,7 +1368,7 @@ function SalesPipelinePreview() {
           { l: "KONVERSİYA", v: "32.4%", sub: "↗ +5.1%", sc: "text-emerald-500", icon: "📈" },
           { l: "ORT. DÖVRÜ", v: "24 gün", sub: "↗ -3 gün", sc: "text-emerald-500", icon: "⏱" },
           { l: "ORT. DƏYƏR", v: "₼11.0K", sub: "↗ +8%", sc: "text-emerald-500", icon: "💎" },
-          { l: "AI PROQNOZ", v: "₼142K", sub: "Bu rüb", sc: "text-blue-500", icon: "🤖" },
+          { l: "DA VİNCİ PROQNOZ", v: "₼142K", sub: "Bu rüb", sc: "text-blue-500", icon: "🤖" },
         ].map(k => (
           <div key={k.l} className="bg-white rounded-lg border border-slate-100 p-1.5">
             <div className="text-[5px] font-semibold text-slate-400 tracking-wider">{k.l}</div>
@@ -1473,10 +1482,10 @@ function SalesPipelinePreview() {
           </div>
         </div>
 
-        {/* AI Proqnoz */}
+        {/* Da Vinci Proqnoz */}
         <div className="bg-white rounded-lg border border-slate-100 p-2">
           <div className="flex items-center justify-between mb-1.5">
-            <div className="flex items-center gap-1"><span className="text-[6px]">🤖</span><span className="text-[8px] font-semibold text-slate-700">AI Proqnoz</span></div>
+            <div className="flex items-center gap-1"><span className="text-[6px]">🤖</span><span className="text-[8px] font-semibold text-slate-700">Da Vinci Proqnoz</span></div>
             <span className="text-[5px] bg-emerald-100 text-emerald-700 px-1 py-0.5 rounded font-medium">Da Vinci</span>
           </div>
           <div className="space-y-1.5">
@@ -1920,7 +1929,7 @@ function PlatformPreview() {
               { user: "Kamran", action: "Sövdələşmə yaratdı", time: "2 dəq əvvəl" },
               { user: "Nigar", action: "Kontakt redaktə etdi", time: "15 dəq əvvəl" },
               { user: "Admin", action: "Rol dəyişdirdi", time: "1 saat əvvəl" },
-              { user: "AI Bot", action: "Tiket cavabladı", time: "2 saat əvvəl" },
+              { user: "Da Vinci Bot", action: "Tiket cavabladı", time: "2 saat əvvəl" },
             ].map((l, i) => (
               <div key={i} className="flex items-center justify-between">
                 <span className="text-slate-600"><span className="font-medium">{l.user}</span> — {l.action}</span>
@@ -1960,8 +1969,8 @@ function PlatformPreview() {
 
 function AiPreview() {
   return (
-    <AppShell activeItem="AI Mərkəzi">
-      {/* Top KPI row — AI performance at a glance */}
+    <AppShell activeItem="Da Vinci Mərkəzi">
+      {/* Top KPI row — Da Vinci performance at a glance */}
       <div className="grid grid-cols-5 gap-1 mb-2">
         {[
           { label: "Müştəri qiymətləndirmə", value: "A — 87", icon: Target, color: "#10b981" },
@@ -1981,13 +1990,13 @@ function AiPreview() {
       </div>
 
       <div className="grid grid-cols-3 gap-1.5 mb-1.5">
-        {/* 1. AI Chat — müştəri qiymətlendirmə + tövsiyə */}
+        {/* 1. Da Vinci Chat — müştəri qiymətlendirmə + tövsiyə */}
         <div className="col-span-2 bg-white rounded-lg border border-slate-100 p-2">
           <div className="flex items-center gap-1.5 mb-1.5 pb-1 border-b border-slate-100">
             <div className="w-4 h-4 rounded-md bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center"><Bot className="w-2.5 h-2.5 text-white" /></div>
-            <div className="text-[8px] font-semibold text-slate-700">Da Vinci AI</div>
+            <div className="text-[8px] font-semibold text-slate-700">Da Vinci</div>
             <div className="text-[6px] text-emerald-500 flex items-center gap-0.5"><span className="w-1 h-1 rounded-full bg-emerald-400" />Aktiv</div>
-            <span className="ml-auto text-[5px] bg-orange-100 text-orange-600 px-1 py-0.5 rounded font-medium">AI</span>
+            <span className="ml-auto text-[5px] bg-orange-100 text-orange-600 px-1 py-0.5 rounded font-medium">DV</span>
           </div>
           <div className="space-y-1 text-[7px]">
             <div className="bg-slate-900 text-white rounded-lg rounded-br-sm px-2 py-1 max-w-[70%] ml-auto">Bu müştəri haqqında nə deyə bilərsən?</div>
@@ -2028,7 +2037,7 @@ function AiPreview() {
               </div>
             ))}
           </div>
-          <div className="mt-1.5 text-center text-[6px] text-slate-400">AI hər mesajı analiz edir</div>
+          <div className="mt-1.5 text-center text-[6px] text-slate-400">Da Vinci hər mesajı analiz edir</div>
         </div>
       </div>
 
@@ -2037,7 +2046,7 @@ function AiPreview() {
         <div className="bg-white rounded-lg border border-slate-100 p-2">
           <div className="flex items-center gap-1 mb-1.5">
             <Mail className="w-3 h-3 text-blue-500" />
-            <span className="text-[8px] font-semibold text-slate-700">AI Məktub</span>
+            <span className="text-[8px] font-semibold text-slate-700">Da Vinci Məktub</span>
             <span className="ml-auto text-[5px] bg-blue-100 text-blue-600 px-1 py-0.5 rounded font-medium flex items-center gap-0.5"><Zap className="w-2 h-2" />3 san</span>
           </div>
           <div className="text-[6px] text-slate-500 space-y-0.5 border-t border-slate-100 pt-1">
@@ -2047,7 +2056,7 @@ function AiPreview() {
           <div className="mt-1 bg-blue-50 rounded p-1.5 text-[6px] text-slate-600 leading-relaxed border border-blue-100">
             Hörmətli Kamran bəy,<br />
             TechVision MMC-nin ERP ehtiyaclarını nəzərə alaraq, Professional plan hazırladıq. Əlavə 15% endirim...<br />
-            <span className="text-orange-500 italic">✨ AI tərəfindən yaradıldı</span>
+            <span className="text-orange-500 italic">✨ Da Vinci tərəfindən yaradıldı</span>
           </div>
           <div className="flex items-center gap-1.5 mt-1">
             <span className="text-[5px] text-emerald-600 flex items-center gap-0.5"><CheckCircle2 className="w-2 h-2" />Ton: Peşəkar</span>
@@ -2059,7 +2068,7 @@ function AiPreview() {
         <div className="bg-white rounded-lg border border-slate-100 p-2">
           <div className="flex items-center gap-1 mb-1.5">
             <Headphones className="w-3 h-3 text-violet-500" />
-            <span className="text-[8px] font-semibold text-slate-700">AI Dəstək</span>
+            <span className="text-[8px] font-semibold text-slate-700">Da Vinci Dəstək</span>
           </div>
           <div className="space-y-1">
             <div className="bg-slate-50 rounded-lg p-1.5">
@@ -2072,7 +2081,7 @@ function AiPreview() {
             <div className="bg-violet-50 rounded-lg p-1.5 border border-violet-100">
               <div className="flex items-center gap-0.5 mb-0.5">
                 <Bot className="w-2.5 h-2.5 text-violet-500" />
-                <span className="text-[6px] font-semibold text-violet-700">AI cavab hazırladı:</span>
+                <span className="text-[6px] font-semibold text-violet-700">Da Vinci cavab hazırladı:</span>
               </div>
               <div className="text-[6px] text-slate-600">&ldquo;Salam! Şifrənizi sıfırlamaq üçün bu linkə keçin: [link]. 5 dəq ərzində yeni şifrə yaradın.&rdquo;</div>
               <div className="text-[5px] text-violet-500 mt-0.5">⚡ 2 saniyədə cavab · Bilik bazasından</div>
@@ -2089,7 +2098,7 @@ function AiPreview() {
         <div className="bg-white rounded-lg border border-slate-100 p-2">
           <div className="flex items-center gap-1 mb-1.5">
             <TrendingUp className="w-3 h-3 text-red-500" />
-            <span className="text-[8px] font-semibold text-slate-700">AI Təxmin</span>
+            <span className="text-[8px] font-semibold text-slate-700">Da Vinci Təxmin</span>
             <span className="ml-auto text-[5px] text-slate-400">72% dəqiqlik</span>
           </div>
           <div className="space-y-1">
@@ -2122,9 +2131,9 @@ function AiPreview() {
         <div className="bg-white rounded-lg border border-slate-100 p-2">
           <div className="flex items-center gap-1 mb-1">
             <CheckCircle2 className="w-3 h-3 text-amber-500" />
-            <span className="text-[8px] font-semibold text-slate-700">AI Tapşırıqlar</span>
+            <span className="text-[8px] font-semibold text-slate-700">Da Vinci Tapşırıqlar</span>
           </div>
-          <div className="text-[6px] text-slate-400 mb-1">AI söhbətlərdən avtomatik yaradır:</div>
+          <div className="text-[6px] text-slate-400 mb-1">Da Vinci söhbətlərdən avtomatik yaradır:</div>
           <div className="space-y-0.5">
             {[
               { t: "NeftGaz-a demo təqdimat hazırla", d: "Sabah 14:00", pr: "bg-red-100 text-red-700" },
@@ -2146,9 +2155,9 @@ function AiPreview() {
         <div className="bg-white rounded-lg border border-slate-100 p-2">
           <div className="flex items-center gap-1 mb-1">
             <FileText className="w-3 h-3 text-cyan-500" />
-            <span className="text-[8px] font-semibold text-slate-700">AI Bilik Bazası</span>
+            <span className="text-[8px] font-semibold text-slate-700">Da Vinci Bilik Bazası</span>
           </div>
-          <div className="text-[6px] text-slate-400 mb-1">Agent sual verir → AI cavab tapır:</div>
+          <div className="text-[6px] text-slate-400 mb-1">Agent sual verir → Da Vinci cavab tapır:</div>
           <div className="bg-cyan-50 rounded-lg p-1.5 border border-cyan-100 mb-1">
             <div className="text-[6px] text-slate-600 mb-0.5">🔍 <span className="italic">&ldquo;Faktura düzəlişi necə edilir?&rdquo;</span></div>
             <div className="text-[6px] text-cyan-700 font-medium">📄 Tapıldı: &ldquo;Faktura redaktəsi&rdquo; (98% uyğunluq)</div>
@@ -2169,9 +2178,9 @@ function AiPreview() {
           <div className="text-[5px] text-cyan-600 mt-1">⚡ Əməkdaşlar 3x sürətli cavab verir</div>
         </div>
 
-        {/* AI ümumi performans */}
+        {/* Da Vinci ümumi performans */}
         <div className="bg-white rounded-lg border border-slate-100 p-2">
-          <div className="text-[8px] font-semibold text-slate-700 mb-1.5">📊 AI Ümumi Performans</div>
+          <div className="text-[8px] font-semibold text-slate-700 mb-1.5">📊 Da Vinci Performans</div>
           <div className="space-y-1">
             {[
               { l: "Müraciətlərə avtomatik cavab", v: "42%", c: "#8b5cf6", bar: 42 },
@@ -2192,7 +2201,7 @@ function AiPreview() {
             ))}
           </div>
           <div className="mt-1.5 text-center bg-orange-50 rounded p-1 text-[6px] text-orange-700 border border-orange-100 font-medium">
-            🧠 16 AI imkanı aktiv
+            🧠 16 Da Vinci imkanı aktiv
           </div>
         </div>
       </div>
@@ -2205,39 +2214,39 @@ function AiPreview() {
    ══════════════════════════════════════════════════════ */
 
 const modules = [
-  /* 1 — Дифференциатор: AI */
+  /* 1 — Дифференциатор: Da Vinci */
   {
-    id: "ai", title: "Da Vinci AI — Sizin Görünməz Komandanız", color: "#f97316", icon: Bot,
-    description: "Siz yuxuya gedəndə belə Da Vinci müştəriləri qiymətləndirir, məktublar yazır, müraciətlərə cavab verir və hansı sövdələşmənin uğurlu olacağını bilir. 16 AI imkanı — əlavə deyil, platformanın beynidir.",
-    features: ["Ən perspektivli müştəriləri avtomatik seçir", "Şəxsi məktubları 3 saniyədə hazırlayır", "Müraciətlərə ilk cavabı AI verir — siz yalnız çətin olanlarla məşğul olursunuz", "Müştəri əhvalını anlıq təhlil edir", "Sövdələşmələrin nəticəsini 72% dəqiqliklə təxmin edir", "Tapşırıqları avtomatik yaradır — heç nə unudulmur", "Bilik bazasından cavab tapır — əməkdaşlar 3 dəfə sürətli işləyir"],
+    id: "davinci", title: "Da Vinci — Sizin Görünməz Komandanız", color: "#f97316", icon: Bot,
+    description: "Siz yuxuya gedəndə belə Da Vinci müştəriləri qiymətləndirir, məktublar yazır, müraciətlərə cavab verir və hansı sövdələşmənin uğurlu olacağını bilir. 16 imkan — əlavə deyil, platformanın beynidir.",
+    features: ["Ən perspektivli müştəriləri avtomatik seçir", "Şəxsi məktubları 3 saniyədə hazırlayır", "Müraciətlərə ilk cavabı Da Vinci verir — siz yalnız çətin olanlarla məşğul olursunuz", "Müştəri əhvalını anlıq təhlil edir", "Sövdələşmələrin nəticəsini 72% dəqiqliklə təxmin edir", "Tapşırıqları avtomatik yaradır — heç nə unudulmur", "Bilik bazasından cavab tapır — əməkdaşlar 3 dəfə sürətli işləyir"],
     Preview: AiPreview,
   },
   /* 2 — Деньги: Pipeline */
   {
     id: "sales-pipeline", title: "Satış Pipeline & Analitika", color: "#ef4444", icon: TrendingUp,
-    description: "Pipeline Kanban, gəlir proqnozu, qazanma/itirmə analizi, rəqib müqayisəsi, AI proqnoz və next best offers.",
-    features: ["Pipeline Kanban (5 mərhələ)", "Gəlir proqnozu & trend", "Qazanma / İtirmə analizi", "Rəqib Analizi", "AI Proqnoz (Da Vinci)", "Next Best Offers"],
+    description: "Pipeline Kanban, gəlir proqnozu, qazanma/itirmə analizi, rəqib müqayisəsi, Da Vinci proqnoz və next best offers.",
+    features: ["Pipeline Kanban (5 mərhələ)", "Gəlir proqnozu & trend", "Qazanma / İtirmə analizi", "Rəqib Analizi", "Da Vinci Proqnoz", "Next Best Offers"],
     Preview: SalesPipelinePreview,
   },
   /* 3 — Маркетинг */
   {
     id: "marketing", title: "Marketinq Avtomatlaşdırması", color: "#f97316", icon: Megaphone,
     description: "Çoxkanallı kampaniya idarəsi, e-poçt ardıcıllıqları, marşrut qurucusu və ROI izləmə.",
-    features: ["Kampaniya meneceri", "E-poçt şablonları", "Marşrut qurucusu", "Seqmentasiya", "Tədbirlər idarəsi", "AI Kopyraytinq"],
+    features: ["Kampaniya meneceri", "E-poçt şablonları", "Marşrut qurucusu", "Seqmentasiya", "Tədbirlər idarəsi", "Da Vinci Kopyraytinq"],
     Preview: MarketingPreview,
   },
   /* 4 — Базовый CRM */
   {
     id: "crm", title: "CRM & Satış", color: "#3b82f6", icon: Users,
-    description: "Liddən sövdələşmənin bağlanmasına qədər tam satış dövrü. AI lid skorinqi, pipeline vizuallaşdırması və sövdələşmə izləməsi.",
-    features: ["Pipeline vizuallaşdırması (Kanban)", "Lid skorinqi (A–F)", "Sövdələşmə izləməsi", "Şirkətlər və Kontaktlar", "Tapşırıqlar və Təqvim", "AI Satış Köməkçisi"],
+    description: "Liddən sövdələşmənin bağlanmasına qədər tam satış dövrü. Da Vinci lid skorinqi, pipeline vizuallaşdırması və sövdələşmə izləməsi.",
+    features: ["Pipeline vizuallaşdırması (Kanban)", "Lid skorinqi (A–F)", "Sövdələşmə izləməsi", "Şirkətlər və Kontaktlar", "Tapşırıqlar və Təqvim", "Da Vinci Satış Köməkçisi"],
     Preview: CrmPreview,
   },
   /* 5 — Визуальный wow (sliding panels) */
   {
     id: "support", title: "Dəstək & Helpdesk", color: "#8b5cf6", icon: Headphones,
-    description: "Service Desk + Agent Desktop, AI asistent (cavab, xülasə, eskalasiya, SLA), çoxkanallı dəstək (Portal, WhatsApp, Telegram), bilik bazası və müştəri portalı.",
-    features: ["Service Desk (Siyahı + Kanban)", "Agent Desktop & Təqvim", "AI auto-cavab & xülasə", "Çoxkanallı dəstək (WA, TG, Portal)", "SLA izləmə & xatırlatma", "Bilik bazası & Müştəri portalı", "CSAT & AI eskalasiya"],
+    description: "Service Desk + Agent Desktop, Da Vinci asistent (cavab, xülasə, eskalasiya, SLA), çoxkanallı dəstək (Portal, WhatsApp, Telegram), bilik bazası və müştəri portalı.",
+    features: ["Service Desk (Siyahı + Kanban)", "Agent Desktop & Təqvim", "Avtomatik cavab & xülasə", "Çoxkanallı dəstək (WA, TG, Portal)", "SLA izləmə & xatırlatma", "Bilik bazası & Müştəri portalı", "CSAT & Da Vinci eskalasiya"],
     Preview: SupportPreview,
     fullWidth: true,
   },
@@ -2245,14 +2254,14 @@ const modules = [
   {
     id: "finance", title: "Maliyyə & Analitika", color: "#10b981", icon: LineChart,
     description: "Xərc modeli mühərriki, büdcələmə, P&L, gəlirlilik analizi və dinamik qiymətləndirmə.",
-    features: ["Xərc modeli (18 kateqoriya)", "Büdcələşdirmə & P&L", "Müştəri gəlirliliyi", "Dinamik qiymətləndirmə", "Debitor / Kreditor", "AI maliyyə təhlilləri"],
+    features: ["Xərc modeli (18 kateqoriya)", "Büdcələşdirmə & P&L", "Müştəri gəlirliliyi", "Dinamik qiymətləndirmə", "Debitor / Kreditor", "Da Vinci maliyyə təhlilləri"],
     Preview: FinancePreview,
   },
   /* 7 — Fakturalar */
   {
     id: "invoices", title: "Fakturalar & Ödənişlər", color: "#ef4444", icon: Receipt,
     description: "Faktura yaratma, ödəniş izləmə, 4-kanallı avtomatik xatırlatmalar, təkrarlanan fakturalar və çox valyuta dəstəyi.",
-    features: ["Faktura generasiyası", "Ödəniş izləmə", "4-kanal xatırlatma (E-poçt, WA, SMS, Zəng)", "Təkrarlanan fakturalar", "Çox valyuta (AZN/USD/EUR)", "AI ödəniş proqnozu"],
+    features: ["Faktura generasiyası", "Ödəniş izləmə", "4-kanal xatırlatma (E-poçt, WA, SMS, Zəng)", "Təkrarlanan fakturalar", "Çox valyuta (AZN/USD/EUR)", "Da Vinci ödəniş proqnozu"],
     Preview: InvoicePreview,
   },
   /* 8 — ERP & Layihələr */
@@ -2266,7 +2275,7 @@ const modules = [
   {
     id: "inbox", title: "7-Kanal Vahid Gələn Qutusu", color: "#06b6d4", icon: MessageSquare,
     description: "E-poçt, SMS, Telegram, WhatsApp, Facebook, Instagram, VK — bütün mesajlar bir yerdə.",
-    features: ["Vahid gələn qutusu", "WhatsApp Business API", "Telegram Bot", "SMS göndərmə", "Facebook & Instagram", "AI avtomatik cavablar"],
+    features: ["Vahid gələn qutusu", "WhatsApp Business API", "Telegram Bot", "SMS göndərmə", "Facebook & Instagram", "Avtomatik cavablar"],
     Preview: InboxPreview,
   },
   /* 10 — Тедбирлер */
@@ -2296,7 +2305,7 @@ export function ModuleShowcase() {
         <AnimateIn className="text-center mb-16 lg:mb-20">
           <p className="text-sm font-medium text-slate-400 uppercase tracking-widest mb-3">128+ funksiya · 11 modul</p>
           <h2 className="text-3xl lg:text-4xl font-bold tracking-tight text-slate-900">Hər şey bir platformada</h2>
-          <p className="mt-4 text-lg text-slate-500 max-w-2xl mx-auto">CRM, marketinq, dəstək, maliyyə, ERP və AI — ayrı alətlərə ehtiyac yoxdur.</p>
+          <p className="mt-4 text-lg text-slate-500 max-w-2xl mx-auto">CRM, marketinq, dəstək, maliyyə və ERP — ayrı alətlərə ehtiyac yoxdur.</p>
         </AnimateIn>
 
         <div className="space-y-20 lg:space-y-28">

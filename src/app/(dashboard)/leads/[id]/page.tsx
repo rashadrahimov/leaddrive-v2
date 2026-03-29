@@ -83,7 +83,7 @@ export default function LeadDetailPage() {
   const [showConvert, setShowConvert] = useState(false)
   const [activeTab, setActiveTab] = useState("details")
 
-  // AI state
+  // Da Vinci state
   const [aiLoading, setAiLoading] = useState(false)
   const [sentiment, setSentiment] = useState<any>(null)
   const [aiTasks, setAiTasks] = useState<any>(null)
@@ -173,7 +173,7 @@ export default function LeadDetailPage() {
     router.push("/leads")
   }
 
-  // AI helper
+  // Da Vinci helper
   const callAI = async (action: string, options?: any) => {
     setAiLoading(true)
     try {
@@ -388,8 +388,8 @@ export default function LeadDetailPage() {
           { id: "details", label: t("modalDetails") || "Details" },
           { id: "sentiment", label: t("modalSentiment") || "Sentiment" },
           { id: "tasks", label: t("modalTasks") || "Tasks" },
-          { id: "aitext", label: t("modalAiText") || "AI Text" },
-          { id: "ai", label: t("modalAiScoring") || "AI Scoring" },
+          { id: "aitext", label: t("modalAiText") || "Da Vinci Text" },
+          { id: "ai", label: t("modalAiScoring") || "Da Vinci Scoring" },
         ].map(tab => (
           <button
             key={tab.id}
@@ -510,7 +510,7 @@ export default function LeadDetailPage() {
                 <Button onClick={async () => { const d = await callAI("sentiment"); if (d) setSentiment(d) }} disabled={aiLoading} className="gap-2">
                   {aiLoading ? (t("modalAnalyzing") || "Analyzing...") : (t("modalAnalyzeSentiment") || "Analyze Sentiment")}
                 </Button>
-                <p className="text-sm text-muted-foreground mt-3">{t("modalSentimentDesc") || "AI will analyze sentiment based on lead data and interactions"}</p>
+                <p className="text-sm text-muted-foreground mt-3">{t("modalSentimentDesc") || "Da Vinci will analyze sentiment based on lead data and interactions"}</p>
               </div>
             ) : (
               <div className="space-y-4">
@@ -564,7 +564,7 @@ export default function LeadDetailPage() {
                 <Button onClick={async () => { const d = await callAI("tasks"); if (d) setAiTasks(d) }} disabled={aiLoading} className="gap-2">
                   {aiLoading ? (t("modalGenerating") || "Generating...") : (t("modalGenerateTasks") || "Generate Tasks")}
                 </Button>
-                <p className="text-sm text-muted-foreground mt-3">{t("modalTasksDesc") || "AI will suggest next best actions for this lead"}</p>
+                <p className="text-sm text-muted-foreground mt-3">{t("modalTasksDesc") || "Da Vinci will suggest next best actions for this lead"}</p>
               </div>
             ) : (
               <div className="space-y-4">
@@ -599,7 +599,7 @@ export default function LeadDetailPage() {
         </Card>
       )}
 
-      {/* Tab: AI Text */}
+      {/* Tab: Da Vinci Text */}
       {activeTab === "aitext" && (
         <Card>
           <CardContent className="pt-6 space-y-4">
@@ -663,13 +663,13 @@ export default function LeadDetailPage() {
         </Card>
       )}
 
-      {/* Tab: AI Scoring */}
+      {/* Tab: Da Vinci Scoring */}
       {activeTab === "ai" && (
         <Card>
           <CardContent className="pt-6 space-y-4">
             <div className="flex items-center justify-between">
               <h4 className="font-medium text-sm flex items-center gap-1.5">
-                <Brain className="h-4 w-4 text-purple-500" /> {t("modalAiAnalysis") || "AI Analysis"}
+                <Brain className="h-4 w-4 text-purple-500" /> {t("modalAiAnalysis") || "Da Vinci Analysis"}
               </h4>
               <Button size="sm" variant="outline" className="gap-1 text-xs" onClick={scoreWithAI} disabled={scoring}>
                 {scoring ? (t("modalRecalculating") || "Recalculating...") : (t("modalRecalculate") || "Recalculate")}

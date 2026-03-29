@@ -87,7 +87,7 @@ export async function POST(req: NextRequest) {
       model: "claude-haiku-4-5-20251001",
       max_tokens: 1500,
       temperature: 0.4,
-      system: `Ты — AI-аналитик IT-аутсорсинговой компании. Анализируй финансовые данные и давай практичные наблюдения. Отвечай ТОЛЬКО валидным JSON без markdown.`,
+      system: `Ты — Da Vinci, аналитик IT-аутсорсинговой компании. Анализируй финансовые данные и давай практичные наблюдения. Отвечай ТОЛЬКО валидным JSON без markdown.`,
       messages: [{
         role: "user",
         content: `Данные компании:\n${dataContext}\n\n${tabPrompts[tab] || tabPrompts.analytics}\n\nОтветь JSON массивом:\n[{"type": "insight"|"warning"|"opportunity", "title": "краткий заголовок (3-5 слов)", "description": "описание на 1-2 предложения с конкретными цифрами из данных"}]`,
@@ -99,7 +99,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true, data: { observations } })
   } catch (error) {
-    console.error("AI observations error:", error)
+    console.error("Da Vinci observations error:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
