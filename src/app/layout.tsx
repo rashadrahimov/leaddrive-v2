@@ -11,6 +11,7 @@ export const metadata: Metadata = {
   description: "SaaS CRM for IT Outsourcing Companies",
   icons: {
     icon: [
+      { url: "/favicon.ico", sizes: "48x48", type: "image/x-icon" },
       { url: "/favicon.svg", type: "image/svg+xml" },
     ],
     apple: "/apple-touch-icon.png",
