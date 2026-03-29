@@ -2192,7 +2192,7 @@ function AiPreview() {
             ))}
           </div>
           <div className="mt-1.5 text-center bg-orange-50 rounded p-1 text-[6px] text-orange-700 border border-orange-100 font-medium">
-            🧠 16 süni zəka imkanı aktiv
+            🧠 16 AI imkanı aktiv
           </div>
         </div>
       </div>
@@ -2208,7 +2208,7 @@ const modules = [
   /* 1 — Дифференциатор: AI */
   {
     id: "ai", title: "Da Vinci AI — Sizin Görünməz Komandanız", color: "#f97316", icon: Bot,
-    description: "Siz yuxuya gedəndə belə Da Vinci müştəriləri qiymətləndirir, məktublar yazır, müraciətlərə cavab verir və hansı sövdələşmənin uğurlu olacağını bilir. 16 süni zəka imkanı — əlavə deyil, platformanın beynidir.",
+    description: "Siz yuxuya gedəndə belə Da Vinci müştəriləri qiymətləndirir, məktublar yazır, müraciətlərə cavab verir və hansı sövdələşmənin uğurlu olacağını bilir. 16 AI imkanı — əlavə deyil, platformanın beynidir.",
     features: ["Ən perspektivli müştəriləri avtomatik seçir", "Şəxsi məktubları 3 saniyədə hazırlayır", "Müraciətlərə ilk cavabı AI verir — siz yalnız çətin olanlarla məşğul olursunuz", "Müştəri əhvalını anlıq təhlil edir", "Sövdələşmələrin nəticəsini 72% dəqiqliklə təxmin edir", "Tapşırıqları avtomatik yaradır — heç nə unudulmur", "Bilik bazasından cavab tapır — əməkdaşlar 3 dəfə sürətli işləyir"],
     Preview: AiPreview,
   },

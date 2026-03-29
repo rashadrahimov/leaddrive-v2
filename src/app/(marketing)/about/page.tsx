@@ -97,7 +97,7 @@ export default function AboutPage() {
               { icon: Shield, title: "Təhlükəsizlik", desc: "Məlumatlarınız şifrələnmiş, izolə edilmiş mühitdə saxlanılır. GDPR uyğunluq." },
               { icon: Users, title: "Müştəri fokus", desc: "Hər qərar müştəri ehtiyaclarına əsaslanır. 24 saat dəstək." },
               { icon: Globe, title: "Yerli və qlobal", desc: "Azərbaycanda yaradılıb, qlobal standartlara uyğun. AZ/RU/EN dil dəstəyi." },
-              { icon: Zap, title: "İnnovasiya", desc: "Da Vinci AI ilə süni intellekt platformanın əsasıdır, əlavə deyil." },
+              { icon: Zap, title: "İnnovasiya", desc: "Da Vinci AI ilə — AI platformanın əsasıdır, əlavə deyil." },
               { icon: Building2, title: "Şəffaflıq", desc: "Gizli ödənişlər yoxdur. Nə görürsünüz — onu alırsınız." },
               { icon: Target, title: "Nəticə", desc: "Müştərilərimiz ortalama 34% mənfəət artımı və 60% cavab müddəti azalması əldə edir." },
             ].map((v) => (

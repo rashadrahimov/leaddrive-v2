@@ -7,6 +7,32 @@ import { PricingTeaser } from "@/components/marketing/pricing-teaser"
 import { TestimonialCarousel } from "@/components/marketing/testimonial-carousel"
 import { FaqSection } from "@/components/marketing/faq-section"
 import { CtaBanner } from "@/components/marketing/cta-banner"
+import { faqs } from "@/lib/marketing-data"
+
+const faqJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: faqs.map((f) => ({
+    "@type": "Question",
+    name: f.q,
+    acceptedAnswer: {
+      "@type": "Answer",
+      text: f.a,
+    },
+  })),
+}
+
+const breadcrumbJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  itemListElement: [
+    { "@type": "ListItem", position: 1, name: "Ana Səhifə", item: "https://leaddrive.cloud/home" },
+    { "@type": "ListItem", position: 2, name: "Modullar", item: "https://leaddrive.cloud/home#modules" },
+    { "@type": "ListItem", position: 3, name: "Qiymətlər", item: "https://leaddrive.cloud/plans" },
+    { "@type": "ListItem", position: 4, name: "Demo", item: "https://leaddrive.cloud/demo" },
+    { "@type": "ListItem", position: 5, name: "Əlaqə", item: "https://leaddrive.cloud/contact" },
+  ],
+}
 
 const jsonLd = {
   "@context": "https://schema.org",
@@ -48,6 +74,14 @@ export default function MarketingHomePage() {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
       />
       <HeroSection />
       <ClientLogos />

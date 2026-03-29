@@ -192,7 +192,7 @@ export function AiFlowDiagram() {
             </h2>
 
             <p className="mt-4 text-lg text-slate-500 leading-relaxed max-w-lg">
-              Daxili süni intellekt — əlavə deyil, platformanın əsasıdır.
+              Daxili AI — əlavə deyil, platformanın əsasıdır.
               Siz yuxuya gedəndə belə müştəriləri qiymətləndirir, müraciətlərə cavab verir, məktub yazır.
             </p>
 

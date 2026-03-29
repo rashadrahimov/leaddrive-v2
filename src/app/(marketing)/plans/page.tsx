@@ -67,12 +67,12 @@ const comparisonSections: { title: string; rows: FeatureRow[] }[] = [
     ],
   },
   {
-    title: "Süni Zeka",
+    title: "AI",
     rows: [
-      { label: "Süni Zeka skorinqi", starter: false, business: false, professional: true, enterprise: true },
-      { label: "Süni Zeka Satış Köməkçisi", starter: false, business: false, professional: false, enterprise: true },
-      { label: "Süni Zeka Komanda Mərkəzi", starter: false, business: false, professional: false, enterprise: true },
-      { label: "Süni Zeka Dəstək Agenti", starter: false, business: false, professional: false, enterprise: true },
+      { label: "AI skorinqi", starter: false, business: false, professional: true, enterprise: true },
+      { label: "AI Satış Köməkçisi", starter: false, business: false, professional: false, enterprise: true },
+      { label: "AI Komanda Mərkəzi", starter: false, business: false, professional: false, enterprise: true },
+      { label: "AI Dəstək Agenti", starter: false, business: false, professional: false, enterprise: true },
     ],
   },
   {

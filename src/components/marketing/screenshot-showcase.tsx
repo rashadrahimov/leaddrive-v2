@@ -7,12 +7,12 @@ import { Monitor, Smartphone, Globe, MessageCircle } from "lucide-react"
 const showcaseItems = [
   {
     title: "AI ilə 7 Kanalda Ünsiyyət",
-    description: "WhatsApp, Telegram, E-poçt, SMS, Facebook, Instagram, VK — süni intellekt hər kanalda müştərilərə cavab verir və e-poçt generasiya edir.",
+    description: "WhatsApp, Telegram, E-poçt, SMS, Facebook, Instagram, VK — AI hər kanalda müştərilərə cavab verir və e-poçt generasiya edir.",
     icon: MessageCircle,
   },
   {
     title: "Güclü İdarə Paneli",
-    description: "Real vaxt KPI-lər, gəlir qrafikləri, pipeline və süni intellekt risk xəbərdarlıqları — hamısı bir baxışda.",
+    description: "Real vaxt KPI-lər, gəlir qrafikləri, pipeline və AI risk xəbərdarlıqları — hamısı bir baxışda.",
     icon: Monitor,
   },
   {

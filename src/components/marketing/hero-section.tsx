@@ -6,6 +6,7 @@ import { ArrowRight, Sparkles, Shield } from "lucide-react"
 import { DashboardPreview } from "./dashboard-preview"
 import { InvoicePreview } from "./invoice-preview"
 import { DealPreview } from "./deal-preview"
+import { CrmPipelinePreview, SupportTicketPreview, AiAssistantPreview } from "./module-previews"
 
 /**
  * AutoScaledPanel — measures its own width and scales content to fit.
@@ -69,21 +70,28 @@ const POSITIONS = {
 
 type Slot = "left" | "center" | "right"
 
-const PANELS = [
+const ALL_PANELS = [
   { id: "invoices",  Component: InvoicePreview },
   { id: "dashboard", Component: DashboardPreview },
   { id: "deals",     Component: DealPreview },
+  { id: "crm",       Component: CrmPipelinePreview },
+  { id: "support",   Component: SupportTicketPreview },
+  { id: "ai",        Component: AiAssistantPreview },
 ]
 
 /**
- * HeroPanels — three panels that smoothly slide between positions.
+ * HeroPanels — three visible panels that rotate through a pool of 6.
  * Click a side panel → it slides to center, center slides to its spot.
+ * Auto-rotates every 6 seconds.
  */
 function HeroPanels() {
   const wrapRef = useRef<HTMLDivElement>(null)
   const panelRefs = [useRef<HTMLDivElement>(null), useRef<HTMLDivElement>(null), useRef<HTMLDivElement>(null)]
   const [ready, setReady] = useState(false)
   const [slots, setSlots] = useState<Slot[]>(["left", "center", "right"])
+  // Which 3 panels from ALL_PANELS are currently visible [leftIdx, centerIdx, rightIdx]
+  const [visible, setVisible] = useState([0, 1, 2])
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   useEffect(() => {
     const wrap = wrapRef.current
@@ -109,15 +117,37 @@ function HeroPanels() {
         transition: "left 0.5s ease, width 0.5s ease, height 0.5s ease",
         left: pos.left,
         width: pos.width,
-        zIndex: String(pos.zIndex), // no transition — instant z-index change
+        zIndex: String(pos.zIndex),
         cursor: isCenter ? "default" : "pointer",
         pointerEvents: isCenter ? "none" : "auto",
       })
     })
   }, [slots])
 
+  // Auto-rotate: every 6s, bring in next panel from pool to center
+  useEffect(() => {
+    timerRef.current = setInterval(() => {
+      setVisible(prev => {
+        const usedSet = new Set(prev)
+        // Find first unused panel index
+        let nextIdx = -1
+        for (let i = 0; i < ALL_PANELS.length; i++) {
+          if (!usedSet.has(i)) { nextIdx = i; break }
+        }
+        if (nextIdx === -1) nextIdx = (Math.max(...prev) + 1) % ALL_PANELS.length
+
+        // Replace the left panel with the new one, shift center→left, right→center
+        return [prev[1], prev[2], nextIdx]
+      })
+      setSlots(["left", "center", "right"])
+    }, 6000)
+    return () => { if (timerRef.current) clearInterval(timerRef.current) }
+  }, [])
+
   const handleClick = (panelIndex: number) => {
     if (slots[panelIndex] === "center") return
+    // Reset auto-rotation timer
+    if (timerRef.current) clearInterval(timerRef.current)
     const centerIdx = slots.indexOf("center")
     const clickedSlot = slots[panelIndex]
     setSlots(prev => {
@@ -134,17 +164,20 @@ function HeroPanels() {
       className="hidden lg:block"
       style={{ opacity: ready ? 1 : 0, transition: "opacity 0.3s" }}
     >
-      {PANELS.map((panel, i) => (
-        <div
-          key={panel.id}
-          ref={panelRefs[i]}
-          onClick={() => handleClick(i)}
-        >
-          <AutoScaledPanel height={POSITIONS[slots[i]].height} baseWidth={1000}>
-            <panel.Component />
-          </AutoScaledPanel>
-        </div>
-      ))}
+      {[0, 1, 2].map((i) => {
+        const panel = ALL_PANELS[visible[i]]
+        return (
+          <div
+            key={`slot-${i}-${panel.id}`}
+            ref={panelRefs[i]}
+            onClick={() => handleClick(i)}
+          >
+            <AutoScaledPanel height={POSITIONS[slots[i]].height} baseWidth={1000}>
+              <panel.Component />
+            </AutoScaledPanel>
+          </div>
+        )
+      })}
     </div>
   )
 }
