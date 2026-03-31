@@ -7,6 +7,7 @@ import { DashboardPreview } from "./dashboard-preview"
 import { InvoicePreview } from "./invoice-preview"
 import { DealPreview } from "./deal-preview"
 import { CrmPipelinePreview, SupportTicketPreview, AiAssistantPreview } from "./module-previews"
+import { CampaignsPreview } from "./campaigns-preview"
 
 /**
  * AutoScaledPanel — measures its own width and uses CSS zoom to fit content.
@@ -60,9 +61,9 @@ function AutoScaledPanel({
 
 /* Position presets */
 const POSITIONS = {
-  left:   { left: "0%",   width: "42%", zIndex: 1 },
+  left:   { left: "2%",   width: "40%", zIndex: 1 },
   center: { left: "18%",  width: "64%", zIndex: 3 },
-  right:  { left: "58%",  width: "42%", zIndex: 1 },
+  right:  { left: "58%",  width: "40%", zIndex: 1 },
 } as const
 
 type Slot = "left" | "center" | "right"
@@ -72,6 +73,7 @@ const ALL_PANELS = [
   { id: "dashboard", Component: DashboardPreview },
   { id: "deals",     Component: DealPreview },
   { id: "crm",       Component: CrmPipelinePreview },
+  { id: "campaigns", Component: CampaignsPreview },
   { id: "support",   Component: SupportTicketPreview },
   { id: "ai",        Component: AiAssistantPreview },
 ]
