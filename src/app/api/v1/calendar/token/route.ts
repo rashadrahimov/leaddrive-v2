@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
     select: { calendarToken: true },
   })
 
-  const baseUrl = process.env.NEXTAUTH_URL || "https://v2.leaddrivecrm.org"
+  const baseUrl = process.env.NEXTAUTH_URL || "https://app.leaddrivecrm.org"
 
   return NextResponse.json({
     success: true,

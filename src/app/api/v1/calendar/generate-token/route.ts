@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
     data: { calendarToken: token },
   })
 
-  const baseUrl = process.env.NEXTAUTH_URL || "https://v2.leaddrivecrm.org"
+  const baseUrl = process.env.NEXTAUTH_URL || "https://app.leaddrivecrm.org"
 
   return NextResponse.json({
     success: true,

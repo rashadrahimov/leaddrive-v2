@@ -4,7 +4,7 @@ import { sanitizeLog } from "@/lib/sanitize"
 
 /**
  * Telegram Bot Webhook — receives incoming messages from Telegram.
- * Set webhook via: https://api.telegram.org/bot<TOKEN>/setWebhook?url=https://v2.leaddrivecrm.org/api/v1/webhooks/telegram?token=<TOKEN>
+ * Set webhook via: https://api.telegram.org/bot<TOKEN>/setWebhook?url=https://app.leaddrivecrm.org/api/v1/webhooks/telegram?token=<TOKEN>
  */
 export async function POST(req: NextRequest) {
   try {

@@ -41,5 +41,5 @@ ok "Done"
 
 echo ""
 echo -e "${GREEN}═══════════════════════════════════════${NC}"
-echo -e "${GREEN}  Deployed! https://v2.leaddrivecrm.org${NC}"
+echo -e "${GREEN}  Deployed! https://app.leaddrivecrm.org${NC}"
 echo -e "${GREEN}═══════════════════════════════════════${NC}"

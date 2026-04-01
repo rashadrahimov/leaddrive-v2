@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
+import { APP_URL } from "@/lib/domains"
 import { AnimateIn } from "@/components/marketing/animate-in"
 import { Particles } from "@/components/ui/particles"
 import {
@@ -341,13 +342,13 @@ export default function DemoPage() {
           </h2>
           <p className="mt-3 text-slate-400">14 günlük pulsuz sınaq. Kredit kartı tələb olunmur.</p>
           <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link
-              href="/register"
+            <a
+              href={`${APP_URL}/register`}
               className="group inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-violet-600 to-indigo-600 px-8 py-3.5 text-base font-semibold text-white shadow-lg shadow-violet-500/25 hover:shadow-violet-500/40 transition-all"
             >
               Pulsuz sınaq başlat
               <ArrowRight className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
-            </Link>
+            </a>
             <Link
               href="/plans"
               className="inline-flex items-center gap-2 rounded-full border border-slate-700 bg-slate-800/50 px-6 py-3.5 text-base font-semibold text-slate-300 hover:bg-slate-700/50 hover:text-white transition-all"

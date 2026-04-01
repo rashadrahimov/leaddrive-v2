@@ -1097,7 +1097,7 @@ function EventsPreview() {
           <div className="space-y-1 text-[7px]">
             <div className="bg-emerald-50 border border-emerald-200 rounded px-1.5 py-1">
               <div className="text-[6px] text-emerald-600 font-medium">Açıq link</div>
-              <div className="text-[7px] text-emerald-700 font-mono truncate">leaddrive.cloud/r/ev014</div>
+              <div className="text-[7px] text-emerald-700 font-mono truncate">leaddrivecrm.org/r/ev014</div>
             </div>
             <div className="flex items-center gap-1 text-[7px] text-slate-500">
               <span className="text-[6px] bg-blue-100 text-blue-700 px-1 py-0.5 rounded">📧 Dəvət</span>

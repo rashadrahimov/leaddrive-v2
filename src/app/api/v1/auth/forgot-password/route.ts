@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
     data: { resetToken, resetTokenExp },
   })
 
-  const baseUrl = process.env.NEXTAUTH_URL || "https://v2.leaddrivecrm.org"
+  const baseUrl = process.env.NEXTAUTH_URL || "https://app.leaddrivecrm.org"
   const resetUrl = `${baseUrl}/reset-password?token=${resetToken}`
 
   await sendEmail({

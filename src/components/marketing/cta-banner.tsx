@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { ArrowRight, Sparkles } from "lucide-react"
 import { AnimateIn } from "./animate-in"
+import { APP_URL } from "@/lib/domains"
 
 export function CtaBanner() {
   return (
@@ -42,12 +43,12 @@ export function CtaBanner() {
               Demo tələb et
               <ArrowRight className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
             </Link>
-            <Link
-              href="/register"
+            <a
+              href={`${APP_URL}/register`}
               className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-8 py-4 text-base font-semibold text-slate-700 hover:border-slate-300 hover:bg-slate-50 transition-all"
             >
               Pulsuz sınaq başlat
-            </Link>
+            </a>
           </div>
         </AnimateIn>
       </div>

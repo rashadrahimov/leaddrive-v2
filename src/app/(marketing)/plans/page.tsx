@@ -3,6 +3,7 @@
 import { Fragment, useState } from "react"
 import { motion } from "framer-motion"
 import Link from "next/link"
+import { APP_URL } from "@/lib/domains"
 import { plans, faqs } from "@/lib/marketing-data"
 import { Check, Minus, ArrowRight, ChevronDown } from "lucide-react"
 import { ShimmerButton } from "@/components/ui/shimmer-button"
@@ -265,7 +266,7 @@ export default function PricingPage() {
           <h2 className="text-3xl font-bold text-white">14 günlük pulsuz sınaq</h2>
           <p className="mt-3 text-white/80">Kredit kartı tələb olunmur. Dəqiqələr ərzində başlayın.</p>
           <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link href="/register">
+            <a href={`${APP_URL}/register`}>
               <ShimmerButton
                 background="rgba(255,255,255,0.15)"
                 shimmerColor="rgba(255,255,255,0.4)"
@@ -275,7 +276,7 @@ export default function PricingPage() {
                 Pulsuz sınaq başlat
                 <ArrowRight className="ml-2 h-4 w-4" />
               </ShimmerButton>
-            </Link>
+            </a>
             <Link
               href="/contact"
               className="inline-flex items-center gap-2 px-6 py-3.5 text-base font-semibold text-white border-2 border-white/30 rounded-[10px] hover:bg-white/10 transition-all"

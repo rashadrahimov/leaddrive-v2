@@ -25,11 +25,11 @@ const breadcrumbJsonLd = {
   "@context": "https://schema.org",
   "@type": "BreadcrumbList",
   itemListElement: [
-    { "@type": "ListItem", position: 1, name: "Ana Səhifə", item: "https://leaddrive.cloud/home" },
-    { "@type": "ListItem", position: 2, name: "Modullar", item: "https://leaddrive.cloud/home#modules" },
-    { "@type": "ListItem", position: 3, name: "Qiymətlər", item: "https://leaddrive.cloud/plans" },
-    { "@type": "ListItem", position: 4, name: "Demo", item: "https://leaddrive.cloud/demo" },
-    { "@type": "ListItem", position: 5, name: "Əlaqə", item: "https://leaddrive.cloud/contact" },
+    { "@type": "ListItem", position: 1, name: "Ana Səhifə", item: "https://leaddrivecrm.org/home" },
+    { "@type": "ListItem", position: 2, name: "Modullar", item: "https://leaddrivecrm.org/home#modules" },
+    { "@type": "ListItem", position: 3, name: "Qiymətlər", item: "https://leaddrivecrm.org/plans" },
+    { "@type": "ListItem", position: 4, name: "Demo", item: "https://leaddrivecrm.org/demo" },
+    { "@type": "ListItem", position: 5, name: "Əlaqə", item: "https://leaddrivecrm.org/contact" },
   ],
 }
 

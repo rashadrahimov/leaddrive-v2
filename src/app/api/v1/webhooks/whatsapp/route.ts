@@ -9,7 +9,7 @@ import { createHmac, timingSafeEqual } from "crypto"
  * WhatsApp Cloud API Webhook
  *
  * Setup in Meta App Dashboard → WhatsApp → Configuration:
- *   Callback URL: https://v2.leaddrivecrm.org/api/v1/webhooks/whatsapp
+ *   Callback URL: https://app.leaddrivecrm.org/api/v1/webhooks/whatsapp
  *   Verify Token: (value of WHATSAPP_VERIFY_TOKEN env var)
  *   Subscribe to: messages
  */

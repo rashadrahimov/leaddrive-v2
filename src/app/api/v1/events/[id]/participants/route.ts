@@ -144,7 +144,7 @@ export async function PATCH(
           auth: { user: smtpSettings.smtpUser, pass: smtpSettings.smtpPass },
         })
 
-        const registrationUrl = `${process.env.NEXTAUTH_URL || "https://v2.leaddrivecrm.org"}/events/${id}/register`
+        const registrationUrl = `${process.env.NEXTAUTH_URL || "https://app.leaddrivecrm.org"}/events/${id}/register`
 
         for (const p of participants) {
           if (!p.email) continue

@@ -1,6 +1,12 @@
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 
+const APP_HOST = "app.leaddrivecrm.org"
+const MARKETING_HOST = "leaddrivecrm.org"
+
+const CRM_PATHS = ["/login", "/register", "/dashboard", "/settings", "/portal", "/forgot-password", "/reset-password", "/admin"]
+const MARKETING_PATHS = ["/home", "/plans", "/demo", "/contact", "/about", "/legal", "/landing"]
+
 function buildCsp(nonce: string) {
   return [
     "default-src 'self'",
@@ -14,6 +20,32 @@ function buildCsp(nonce: string) {
 }
 
 export function middleware(req: NextRequest) {
+  const host = req.headers.get("host")?.replace(/:\d+$/, "") || ""
+  const pathname = req.nextUrl.pathname
+
+  // Marketing domain: redirect CRM routes to app subdomain
+  if (host === MARKETING_HOST || host === `www.${MARKETING_HOST}`) {
+    if (CRM_PATHS.some(p => pathname === p || pathname.startsWith(p + "/"))) {
+      return NextResponse.redirect(
+        new URL(`https://${APP_HOST}${pathname}${req.nextUrl.search}`, req.url)
+      )
+    }
+  }
+
+  // App domain: redirect marketing routes to main domain
+  if (host === APP_HOST) {
+    if (MARKETING_PATHS.some(p => pathname === p || pathname.startsWith(p + "/"))) {
+      return NextResponse.redirect(
+        new URL(`https://${MARKETING_HOST}${pathname}${req.nextUrl.search}`, req.url)
+      )
+    }
+    // Root on app domain → dashboard
+    if (pathname === "/") {
+      return NextResponse.redirect(new URL(`https://${APP_HOST}/dashboard`, req.url))
+    }
+  }
+
+  // Security headers
   const nonce = crypto.randomUUID()
   const response = NextResponse.next({
     headers: new Headers(req.headers),

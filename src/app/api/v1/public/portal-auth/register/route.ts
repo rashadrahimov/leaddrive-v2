@@ -57,7 +57,7 @@ export async function POST(req: NextRequest) {
   })
 
   // Build verification URL
-  const baseUrl = process.env.NEXTAUTH_URL || "https://v2.leaddrivecrm.org"
+  const baseUrl = process.env.NEXTAUTH_URL || "https://app.leaddrivecrm.org"
   const verifyUrl = `${baseUrl}/portal/set-password?token=${token}`
 
   // Send verification email

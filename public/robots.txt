@@ -1,7 +1,7 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://leaddrive.cloud/sitemap.xml
+Sitemap: https://leaddrivecrm.org/sitemap.xml
 
 # Disallow admin/dashboard areas
 Disallow: /api/

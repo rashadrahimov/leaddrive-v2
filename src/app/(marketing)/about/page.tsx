@@ -16,8 +16,8 @@ const organizationJsonLd = {
   "@context": "https://schema.org",
   "@type": "Organization",
   name: "Güvən Technology LLC",
-  url: "https://leaddrive.cloud",
-  logo: "https://leaddrive.cloud/apple-touch-icon.png",
+  url: "https://leaddrivecrm.org",
+  logo: "https://leaddrivecrm.org/apple-touch-icon.png",
   contactPoint: {
     "@type": "ContactPoint",
     telephone: "+994-10-531-30-65",

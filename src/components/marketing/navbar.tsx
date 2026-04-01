@@ -6,6 +6,7 @@ import { Logo } from "@/components/logo"
 import { LanguageSwitcher } from "@/components/language-switcher"
 import { Menu, X } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { APP_URL } from "@/lib/domains"
 
 const navLinks = [
   { href: "/home#modules", label: "Modullar" },
@@ -57,12 +58,12 @@ export function MarketingNavbar() {
           {/* Right side */}
           <div className="hidden md:flex items-center gap-3">
             <LanguageSwitcher />
-            <Link
-              href="/login"
+            <a
+              href={`${APP_URL}/login`}
               className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors px-3 py-2"
             >
               Daxil ol
-            </Link>
+            </a>
             <Link
               href="/demo"
               className="rounded-full bg-slate-900 hover:bg-slate-800 px-5 py-2.5 text-sm font-semibold text-white transition-all shadow-sm"
@@ -94,12 +95,12 @@ export function MarketingNavbar() {
               </Link>
             ))}
             <div className="border-t border-slate-200 pt-3 mt-3 flex flex-col gap-2 px-3">
-              <Link
-                href="/login"
+              <a
+                href={`${APP_URL}/login`}
                 className="text-center text-sm font-medium text-slate-600 hover:text-slate-900 py-2.5 border border-slate-300 rounded-full"
               >
                 Daxil ol
-              </Link>
+              </a>
               <Link
                 href="/demo"
                 className="text-center rounded-full bg-slate-900 text-sm font-semibold text-white px-5 py-2.5 hover:bg-slate-800 transition-all"
