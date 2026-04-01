@@ -32,6 +32,7 @@ function AutoScaledPanel({
     <div
       ref={outerRef}
       style={{
+        width: "100%",
         borderRadius: 16,
         overflow: "hidden",
         boxShadow:
