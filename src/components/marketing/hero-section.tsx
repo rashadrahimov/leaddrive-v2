@@ -31,6 +31,8 @@ function ScaledPanel({ children, baseWidth = 1000 }: { children: React.ReactNode
     return () => ro.disconnect()
   }, [baseWidth])
 
+  const ready = scale > 0
+
   return (
     <div
       ref={wrapRef}
@@ -38,20 +40,16 @@ function ScaledPanel({ children, baseWidth = 1000 }: { children: React.ReactNode
         width: "100%",
         borderRadius: 16,
         overflow: "hidden",
-        boxShadow: scale > 0 ? "0 25px 60px -10px rgba(0,0,0,0.3), 0 12px 28px -6px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.06)" : "none",
-        visibility: scale > 0 ? "visible" : "hidden",
-        position: "relative",
+        boxShadow: ready ? "0 25px 60px -10px rgba(0,0,0,0.3), 0 12px 28px -6px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.06)" : "none",
+        maxHeight: ready ? undefined : 0,
       }}
     >
       <div
         ref={innerRef}
         style={{
           width: baseWidth,
-          transform: scale > 0 ? `scale(${scale})` : "scale(0.001)",
+          transform: ready ? `scale(${scale})` : `scale(${1 / baseWidth})`,
           transformOrigin: "top left",
-          opacity: scale > 0 ? 1 : 0,
-          transition: "opacity 0.4s ease",
-          position: scale > 0 ? "relative" : "absolute",
         }}
       >
         {children}
