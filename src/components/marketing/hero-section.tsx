@@ -39,17 +39,19 @@ function ScaledPanel({ children, baseWidth = 1000 }: { children: React.ReactNode
         borderRadius: 16,
         overflow: "hidden",
         boxShadow: scale > 0 ? "0 25px 60px -10px rgba(0,0,0,0.3), 0 12px 28px -6px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.06)" : "none",
-        height: scale > 0 ? undefined : 0,
+        visibility: scale > 0 ? "visible" : "hidden",
+        position: "relative",
       }}
     >
       <div
         ref={innerRef}
         style={{
           width: baseWidth,
-          transform: scale > 0 ? `scale(${scale})` : "scale(0.5)",
+          transform: scale > 0 ? `scale(${scale})` : "scale(0.001)",
           transformOrigin: "top left",
           opacity: scale > 0 ? 1 : 0,
           transition: "opacity 0.4s ease",
+          position: scale > 0 ? "relative" : "absolute",
         }}
       >
         {children}
