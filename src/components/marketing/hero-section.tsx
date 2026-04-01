@@ -3,7 +3,7 @@
 import { useRef, useLayoutEffect, useState } from "react"
 import Link from "next/link"
 import { ArrowRight, Sparkles, Shield } from "lucide-react"
-import { CrmPipelinePreview } from "./module-previews"
+import { DealPreview } from "./deal-preview"
 
 function AutoScaledPanel({
   children,
@@ -111,7 +111,7 @@ export function HeroSection() {
       <div className="mt-12 lg:mt-16 px-4 lg:px-8">
         <div className="mx-auto" style={{ maxWidth: 1100 }}>
           <AutoScaledPanel baseWidth={1000}>
-            <CrmPipelinePreview />
+            <DealPreview />
           </AutoScaledPanel>
         </div>
       </div>
