@@ -39,9 +39,9 @@ export function middleware(req: NextRequest) {
         new URL(`https://${MARKETING_HOST}${pathname}${req.nextUrl.search}`, req.url)
       )
     }
-    // /dashboard → / (dashboard page lives at root via route group)
-    if (pathname === "/dashboard") {
-      return NextResponse.rewrite(new URL("/", req.url))
+    // Root on app domain → dashboard
+    if (pathname === "/") {
+      return NextResponse.redirect(new URL(`https://${APP_HOST}/dashboard`, req.url))
     }
   }
 
