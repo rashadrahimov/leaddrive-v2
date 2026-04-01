@@ -1,7 +1,56 @@
 "use client"
 
+import { useRef, useLayoutEffect, useState } from "react"
 import Link from "next/link"
 import { ArrowRight, Sparkles, Shield } from "lucide-react"
+import { CrmPipelinePreview } from "./module-previews"
+
+function AutoScaledPanel({
+  children,
+  baseWidth = 1000,
+}: {
+  children: React.ReactNode
+  baseWidth?: number
+}) {
+  const outerRef = useRef<HTMLDivElement>(null)
+  const [zoom, setZoom] = useState<number | null>(null)
+
+  useLayoutEffect(() => {
+    const el = outerRef.current
+    if (!el) return
+    const measure = () => {
+      const w = el.offsetWidth
+      if (w > 0) setZoom(w / baseWidth)
+    }
+    measure()
+    const ro = new ResizeObserver(measure)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [baseWidth])
+
+  return (
+    <div
+      ref={outerRef}
+      style={{
+        borderRadius: 16,
+        overflow: "hidden",
+        boxShadow:
+          "0 25px 60px -10px rgba(0,0,0,0.3), 0 12px 28px -6px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.06)",
+      }}
+    >
+      <div
+        style={{
+          width: baseWidth,
+          zoom: zoom ?? 0.5,
+          opacity: zoom !== null ? 1 : 0,
+          transition: "opacity 0.4s ease",
+        }}
+      >
+        {children}
+      </div>
+    </div>
+  )
+}
 
 export function HeroSection() {
   return (
@@ -55,6 +104,15 @@ export function HeroSection() {
               GDPR uyğun
             </span>
           </div>
+        </div>
+      </div>
+
+      {/* Single large CRM preview */}
+      <div className="mt-12 lg:mt-16 px-4 lg:px-8">
+        <div className="mx-auto" style={{ maxWidth: 1100 }}>
+          <AutoScaledPanel baseWidth={1000}>
+            <CrmPipelinePreview />
+          </AutoScaledPanel>
         </div>
       </div>
     </section>
