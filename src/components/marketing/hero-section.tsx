@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef, useEffect, useLayoutEffect, useState } from "react"
+import { useRef, useLayoutEffect, useState } from "react"
 import Link from "next/link"
 import { ArrowRight, Sparkles, Shield } from "lucide-react"
 import { DashboardPreview } from "./dashboard-preview"
@@ -50,7 +50,8 @@ function AutoScaledPanel({
         style={{
           width: baseWidth,
           zoom: zoom ?? 0.5,
-          visibility: zoom !== null ? "visible" : "hidden",
+          opacity: zoom !== null ? 1 : 0,
+          transition: "opacity 0.4s ease",
         }}
       >
         {children}
@@ -85,29 +86,17 @@ const ALL_PANELS = [
  */
 function HeroPanels() {
   const [slots, setSlots] = useState<Slot[]>(["left", "center", "right"])
-  const [visible, setVisible] = useState([0, 1, 2])
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const [visible] = useState([0, 1, 2])
+  const [ready, setReady] = useState(false)
 
-  // Auto-rotate: every 6s, bring in next panel from pool to center
-  useEffect(() => {
-    timerRef.current = setInterval(() => {
-      setVisible(prev => {
-        const usedSet = new Set(prev)
-        let nextIdx = -1
-        for (let i = 0; i < ALL_PANELS.length; i++) {
-          if (!usedSet.has(i)) { nextIdx = i; break }
-        }
-        if (nextIdx === -1) nextIdx = (Math.max(...prev) + 1) % ALL_PANELS.length
-        return [prev[1], prev[2], nextIdx]
-      })
-      setSlots(["left", "center", "right"])
-    }, 6000)
-    return () => { if (timerRef.current) clearInterval(timerRef.current) }
+  useLayoutEffect(() => {
+    // Wait one frame so all AutoScaledPanels have calculated their zoom
+    const id = requestAnimationFrame(() => setReady(true))
+    return () => cancelAnimationFrame(id)
   }, [])
 
   const handleClick = (panelIndex: number) => {
     if (slots[panelIndex] === "center") return
-    if (timerRef.current) clearInterval(timerRef.current)
     const centerIdx = slots.indexOf("center")
     const clickedSlot = slots[panelIndex]
     setSlots(prev => {
@@ -119,7 +108,14 @@ function HeroPanels() {
   }
 
   return (
-    <div className="hidden lg:block relative" style={{ height: 620 }}>
+    <div
+      className="hidden lg:block relative"
+      style={{
+        height: 620,
+        opacity: ready ? 1 : 0,
+        transition: "opacity 0.5s ease",
+      }}
+    >
       {[0, 1, 2].map((i) => {
         const panel = ALL_PANELS[visible[i]]
         const pos = POSITIONS[slots[i]]
@@ -210,7 +206,7 @@ export function HeroSection() {
       <div className="mt-12 lg:mt-16">
         <HeroPanels />
 
-        {/* Mobile — single panel */}
+        {/* Mobile — single panel (AutoScaledPanel handles its own fade-in) */}
         <div className="lg:hidden px-4">
           <div className="mx-auto" style={{ maxWidth: 500 }}>
             <AutoScaledPanel>
