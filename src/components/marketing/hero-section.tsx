@@ -3,9 +3,12 @@
 import { useRef, useEffect, useState } from "react"
 import Link from "next/link"
 import { ArrowRight, Sparkles, Shield } from "lucide-react"
+import { DashboardPreview } from "./dashboard-preview"
+import { InvoicePreview } from "./invoice-preview"
 import { DealPreview } from "./deal-preview"
 
-function ScaledPreview({ children, baseWidth = 1000 }: { children: React.ReactNode; baseWidth?: number }) {
+/* ── ScaledPanel: uses transform:scale (not CSS zoom) ── */
+function ScaledPanel({ children, baseWidth = 1000 }: { children: React.ReactNode; baseWidth?: number }) {
   const wrapRef = useRef<HTMLDivElement>(null)
   const innerRef = useRef<HTMLDivElement>(null)
   const [scale, setScale] = useState(0)
@@ -14,13 +17,11 @@ function ScaledPreview({ children, baseWidth = 1000 }: { children: React.ReactNo
     const wrap = wrapRef.current
     const inner = innerRef.current
     if (!wrap || !inner) return
-
     const measure = () => {
       const w = wrap.offsetWidth
       if (w > 0) {
         const s = w / baseWidth
         setScale(s)
-        // Set wrapper height to match scaled content
         wrap.style.height = `${inner.offsetHeight * s}px`
       }
     }
@@ -37,7 +38,6 @@ function ScaledPreview({ children, baseWidth = 1000 }: { children: React.ReactNo
         width: "100%",
         borderRadius: 16,
         overflow: "hidden",
-        position: "relative",
         boxShadow: "0 25px 60px -10px rgba(0,0,0,0.3), 0 12px 28px -6px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.06)",
       }}
     >
@@ -57,14 +57,82 @@ function ScaledPreview({ children, baseWidth = 1000 }: { children: React.ReactNo
   )
 }
 
+/* ── Position presets (Creatio-style) ── */
+const POSITIONS = {
+  left:   { left: "2%",  width: "40%", zIndex: 1 },
+  center: { left: "18%", width: "64%", zIndex: 3 },
+  right:  { left: "58%", width: "40%", zIndex: 1 },
+} as const
+
+type Slot = "left" | "center" | "right"
+
+const PANELS = [
+  { id: "dashboard", Component: DashboardPreview },
+  { id: "deals",     Component: DealPreview },
+  { id: "invoices",  Component: InvoicePreview },
+]
+
+function HeroPanels() {
+  const [slots, setSlots] = useState<Slot[]>(["left", "center", "right"])
+  const [ready, setReady] = useState(false)
+
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setReady(true))
+    return () => cancelAnimationFrame(id)
+  }, [])
+
+  const handleClick = (i: number) => {
+    if (slots[i] === "center") return
+    const centerIdx = slots.indexOf("center")
+    setSlots(prev => {
+      const next = [...prev] as Slot[]
+      next[i] = "center"
+      next[centerIdx] = prev[i]
+      return next
+    })
+  }
+
+  return (
+    <div
+      className="hidden lg:block relative"
+      style={{ height: 620, opacity: ready ? 1 : 0, transition: "opacity 0.5s ease" }}
+    >
+      {PANELS.map((panel, i) => {
+        const pos = POSITIONS[slots[i]]
+        const isCenter = slots[i] === "center"
+        return (
+          <div
+            key={panel.id}
+            onClick={() => handleClick(i)}
+            style={{
+              position: "absolute",
+              bottom: 0,
+              left: pos.left,
+              width: pos.width,
+              zIndex: pos.zIndex,
+              cursor: isCenter ? "default" : "pointer",
+              pointerEvents: isCenter ? "none" : "auto",
+              opacity: isCenter ? 1 : 0.85,
+              filter: isCenter ? "none" : "saturate(0.85)",
+              transition: "left 0.5s ease, width 0.5s ease, opacity 0.5s ease, filter 0.5s ease",
+            }}
+          >
+            <ScaledPanel baseWidth={1000}>
+              <panel.Component />
+            </ScaledPanel>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
 export function HeroSection() {
   return (
     <section className="relative bg-gradient-to-b from-white via-slate-50 to-white pt-20 pb-8 lg:pt-24 lg:pb-12 overflow-x-clip">
-      {/* Subtle background blurs */}
       <div className="absolute top-1/4 -left-32 w-96 h-96 bg-orange-100/50 rounded-full blur-[128px]" />
       <div className="absolute bottom-1/4 -right-32 w-96 h-96 bg-red-100/40 rounded-full blur-[128px]" />
 
-      {/* Text content */}
       <div className="relative mx-auto max-w-7xl px-4 lg:px-8 w-full">
         <div className="text-center max-w-4xl mx-auto">
           <span className="inline-flex items-center gap-2 rounded-full border border-orange-200 bg-orange-50 px-4 py-1.5 text-sm text-orange-700 font-medium">
@@ -112,12 +180,17 @@ export function HeroSection() {
         </div>
       </div>
 
-      {/* Single large CRM preview */}
-      <div className="mt-12 lg:mt-16 px-4 lg:px-8">
-        <div className="mx-auto" style={{ maxWidth: 1100 }}>
-          <ScaledPreview baseWidth={1000}>
-            <DealPreview />
-          </ScaledPreview>
+      {/* Creatio-style 3-panel hero */}
+      <div className="mt-12 lg:mt-16">
+        <HeroPanels />
+
+        {/* Mobile — single panel */}
+        <div className="lg:hidden px-4">
+          <div className="mx-auto" style={{ maxWidth: 500 }}>
+            <ScaledPanel baseWidth={1000}>
+              <DealPreview />
+            </ScaledPanel>
+          </div>
         </div>
       </div>
     </section>
