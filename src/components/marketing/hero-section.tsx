@@ -38,7 +38,8 @@ function ScaledPanel({ children, baseWidth = 1000 }: { children: React.ReactNode
         width: "100%",
         borderRadius: 16,
         overflow: "hidden",
-        boxShadow: "0 25px 60px -10px rgba(0,0,0,0.3), 0 12px 28px -6px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.06)",
+        boxShadow: scale > 0 ? "0 25px 60px -10px rgba(0,0,0,0.3), 0 12px 28px -6px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.06)" : "none",
+        height: scale > 0 ? undefined : 0,
       }}
     >
       <div
