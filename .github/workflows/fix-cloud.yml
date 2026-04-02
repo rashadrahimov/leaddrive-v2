@@ -1,0 +1,42 @@
+name: Fix Cloud
+
+on:
+  workflow_dispatch:
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_deploy
+          chmod 600 ~/.ssh/id_deploy
+          ssh-keyscan -H ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts 2>/dev/null
+
+      - name: Debug and fix
+        run: |
+          ssh -i ~/.ssh/id_deploy root@${{ secrets.SERVER_IP }} 'bash -s' << 'ENDSCRIPT'
+          echo "=== leaddrive-cloud error logs ==="
+          pm2 logs leaddrive-cloud --lines 30 --nostream 2>&1
+
+          echo "=== leaddrive-cloud .env ==="
+          cat /opt/leaddrive-cloud/.env 2>/dev/null
+
+          echo "=== Check standalone dir ==="
+          ls /opt/leaddrive-cloud/.next/standalone/ 2>/dev/null | head -10
+
+          echo "=== Check .env in standalone ==="
+          cat /opt/leaddrive-cloud/.next/standalone/.env 2>/dev/null
+
+          echo "=== Restart leaddrive-cloud ==="
+          pm2 delete leaddrive-cloud 2>/dev/null
+          cd /opt/leaddrive-cloud/.next/standalone
+          PORT=3002 pm2 start server.js --name leaddrive-cloud 2>&1 | tail -5
+          sleep 5
+          pm2 logs leaddrive-cloud --lines 15 --nostream 2>&1
+          curl -sI http://localhost:3002/ 2>&1 | head -5
+          pm2 save 2>/dev/null
+          echo "=== DONE ==="
+          ENDSCRIPT
