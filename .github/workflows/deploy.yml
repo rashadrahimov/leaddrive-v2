@@ -1,11 +1,15 @@
 name: Deploy to Production
 
 on:
-  workflow_dispatch:
   push:
     branches: [main]
-    paths-ignore:
-      - "**.md"
+
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
+env:
+  NODE_VERSION: "20"
 
 jobs:
   deploy:
@@ -13,34 +17,105 @@ jobs:
     timeout-minutes: 15
 
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Cache node_modules
+        uses: actions/cache@v4
+        id: cache-deps
+        with:
+          path: node_modules
+          key: deps-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            deps-${{ runner.os }}-
+
+      - name: Cache Next.js build
+        uses: actions/cache@v4
+        with:
+          path: .next/cache
+          key: nextjs-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-${{ hashFiles('src/**', 'messages/**') }}
+          restore-keys: |
+            nextjs-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-
+            nextjs-${{ runner.os }}-
+
+      - name: Install dependencies
+        if: steps.cache-deps.outputs.cache-hit != 'true'
+        run: npm ci
+
+      - name: Generate Prisma client
+        run: npx prisma generate
+
+      - name: Build Next.js (standalone + webpack)
+        run: npx next build --webpack
+        env:
+          NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
+          NEXTAUTH_URL: ${{ secrets.NEXTAUTH_URL }}
+
+      - name: Verify standalone build
+        run: |
+          test -f .next/standalone/server.js || { echo "::error::server.js missing"; exit 1; }
+          test -d .next/static || { echo "::error::.next/static missing"; exit 1; }
+          CSS_COUNT=$(find .next/static -name '*.css' | wc -l)
+          JS_COUNT=$(find .next/static -name '*.js' | wc -l)
+          echo "CSS files: $CSS_COUNT, JS files: $JS_COUNT"
+          [ "$CSS_COUNT" -gt 0 ] || { echo "::error::No CSS files in build"; exit 1; }
+          [ "$JS_COUNT" -gt 0 ] || { echo "::error::No JS files in build"; exit 1; }
+
+      - name: Assemble standalone bundle
+        run: |
+          # Copy static into standalone
+          mkdir -p .next/standalone/.next
+          cp -r .next/static .next/standalone/.next/static
+
+          # Copy Prisma client
+          mkdir -p .next/standalone/node_modules
+          cp -r node_modules/.prisma .next/standalone/node_modules/.prisma
+          cp -r node_modules/@prisma .next/standalone/node_modules/@prisma
+
+          # Copy public assets
+          cp -r public .next/standalone/public
+
+          # Copy Prisma schema + migrations for migrate deploy
+          cp -r prisma .next/standalone/prisma
+
+          # Copy PM2 config
+          cp ecosystem.config.cjs .next/standalone/ecosystem.config.cjs
+
+      - name: Create deployment tarball
+        run: |
+          cd .next/standalone
+          tar -czf /tmp/leaddrive-deploy.tar.gz .
+          SIZE=$(ls -lh /tmp/leaddrive-deploy.tar.gz | awk '{print $5}')
+          echo "::notice::Tarball size: $SIZE"
+
       - name: Setup SSH
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_deploy
-          chmod 600 ~/.ssh/id_deploy
-          ssh-keyscan -H ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts 2>/dev/null
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts 2>/dev/null
 
-      - name: Deploy and SSL
+      - name: Upload to server
         run: |
-          sleep 60
-          ssh -i ~/.ssh/id_deploy root@${{ secrets.SERVER_IP }} << 'ENDSSH'
-            set -e
+          scp -o ConnectTimeout=30 -i ~/.ssh/deploy_key \
+            /tmp/leaddrive-deploy.tar.gz \
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/tmp/leaddrive-deploy.tar.gz
 
-            # Restart leaddrive-v2
-            cd /opt/leaddrive-v2
-            pm2 restart leaddrive-v2 2>/dev/null || PORT=3001 pm2 start npm --name leaddrive-v2 -- start
-            sleep 5
-            curl -sf http://localhost:3001 -o /dev/null && echo 'v2 OK' || echo 'v2 FAILED'
+          scp -o ConnectTimeout=30 -i ~/.ssh/deploy_key \
+            scripts/server-deploy.sh \
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/tmp/server-deploy.sh
 
-            # SSL for app subdomain - certbot standalone mode to avoid nginx conflicts
-            certbot certonly --standalone -d app.leaddrivecrm.org --non-interactive --agree-tos --email admin@leaddrivecrm.org --http-01-port 8888 2>&1 | tail -5 || true
+      - name: Deploy on server
+        run: |
+          ssh -o ConnectTimeout=30 -o ServerAliveInterval=15 -i ~/.ssh/deploy_key \
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
+            "bash /tmp/server-deploy.sh"
 
-            # Try nginx plugin
-            certbot --nginx -d app.leaddrivecrm.org --non-interactive --agree-tos --email admin@leaddrivecrm.org --redirect 2>&1 | tail -5 || echo "nginx certbot failed"
-
-            nginx -s reload 2>/dev/null || true
-
-            echo "=== Final ==="
-            curl -skI https://app.leaddrivecrm.org/ | head -3
-            pm2 save
-          ENDSSH
+      - name: Cleanup SSH key
+        if: always()
+        run: rm -f ~/.ssh/deploy_key
