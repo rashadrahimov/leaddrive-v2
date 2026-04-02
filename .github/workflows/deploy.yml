@@ -22,17 +22,33 @@ jobs:
 
       - name: Deploy
         run: |
-          ssh -i ~/.ssh/id_deploy root@${{ secrets.SERVER_IP }} "\
-            cd /opt/leaddrive-v2 && \
-            git pull origin main && \
-            npx prisma generate 2>&1 | tail -2 && \
-            npx prisma migrate deploy 2>&1 | tail -2 || true && \
-            NODE_OPTIONS='--max-old-space-size=1536' ./node_modules/.bin/next build --webpack 2>&1 | tail -10 && \
-            cp -r .next/static .next/standalone/.next/static 2>/dev/null; \
-            cp -r .next/static .next/standalone/leaddrive-v2/.next/static 2>/dev/null; \
-            cp -r node_modules/.prisma .next/standalone/node_modules/.prisma 2>/dev/null; \
-            cp -r node_modules/@prisma .next/standalone/node_modules/@prisma 2>/dev/null; \
-            pm2 delete leaddrive-v2 2>/dev/null; \
-            pm2 start /tmp/start-leaddrive.sh --name leaddrive-v2 && \
-            sleep 3 && \
-            curl -sf http://localhost:3001 -o /dev/null && echo 'Health check OK' || echo 'Health check FAILED'"
+          ssh -i ~/.ssh/id_deploy root@${{ secrets.SERVER_IP }} << 'ENDSSH'
+            cd /opt/leaddrive-v2
+
+            # Force pull latest code
+            git fetch origin main
+            git reset --hard origin/main
+
+            # Install deps if needed
+            npm ci --prefer-offline 2>&1 | tail -3
+
+            # Generate prisma & run migrations
+            npx prisma generate 2>&1 | tail -2
+            npx prisma migrate deploy 2>&1 | tail -2 || true
+
+            # Build
+            NODE_OPTIONS='--max-old-space-size=1536' npx next build 2>&1 | tail -10
+
+            # Stop old process
+            pm2 delete leaddrive-v2 2>/dev/null || true
+            fuser -k 3001/tcp 2>/dev/null || true
+            sleep 2
+
+            # Start with PM2
+            cd /opt/leaddrive-v2
+            PORT=3001 pm2 start npm --name leaddrive-v2 -- start
+
+            sleep 3
+            curl -sf http://localhost:3001 -o /dev/null && echo 'Health check OK' || echo 'Health check FAILED'
+            pm2 save
+          ENDSSH
