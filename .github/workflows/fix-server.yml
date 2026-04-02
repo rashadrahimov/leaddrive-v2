@@ -1,0 +1,43 @@
+name: Fix Server
+
+on:
+  workflow_dispatch:
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_deploy
+          chmod 600 ~/.ssh/id_deploy
+          ssh-keyscan -H ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts 2>/dev/null
+
+      - name: Fix server
+        run: |
+          ssh -i ~/.ssh/id_deploy root@${{ secrets.SERVER_IP }} bash -s << 'SCRIPT'
+          echo "=== Stopping crashing Docker container ==="
+          docker stop leaddrive-v2 2>/dev/null && docker rm leaddrive-v2 2>/dev/null || echo "Container not found"
+
+          echo "=== Check what is on port 3001 ==="
+          ss -tlnp | grep 3001
+
+          echo "=== Fix nginx - update leaddrivecrm.org to proxy to 3001 ==="
+          sed -i 's|proxy_pass http://127.0.0.1:3002;|proxy_pass http://127.0.0.1:3001;|g' /etc/nginx/sites-enabled/leaddrivecrm.org
+
+          echo "=== Test nginx config ==="
+          nginx -t 2>&1
+
+          echo "=== Reload nginx ==="
+          systemctl reload nginx
+
+          echo "=== Check table names in leaddrive_v2 ==="
+          sudo -u postgres psql -d leaddrive_v2 -c "SELECT tablename FROM pg_tables WHERE schemaname='public' ORDER BY tablename;" 2>&1
+
+          echo "=== Test curl to localhost:3001 ==="
+          curl -sI http://localhost:3001 2>&1 | head -5
+
+          echo "=== DONE ==="
+          SCRIPT
