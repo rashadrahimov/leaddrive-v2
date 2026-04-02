@@ -17,27 +17,34 @@ jobs:
 
       - name: Debug
         run: |
-          ssh -i ~/.ssh/id_deploy root@${{ secrets.SERVER_IP }} 'bash -s' << 'SCRIPT'
-          echo "=== All nginx configs ==="
-          grep -rn "default_server\|server_name\|listen " /etc/nginx/sites-enabled/ 2>&1
-          echo ""
-          echo "=== nginx.conf includes ==="
-          grep -n "include\|default_server\|server_name" /etc/nginx/nginx.conf 2>&1
-          echo ""
-          echo "=== Default config? ==="
-          cat /etc/nginx/sites-enabled/default 2>/dev/null || echo "No default"
-          echo ""
-          echo "=== Test with explicit Host header ==="
-          curl -sI -H "Host: app.leaddrivecrm.org" http://127.0.0.1/ 2>&1 | head -5
-          echo ""
-          echo "=== Test direct to 3001 ==="
-          curl -sI http://127.0.0.1:3001/ 2>&1 | head -3
-          echo ""
-          echo "=== Firewall rules ==="
-          iptables -L INPUT -n 2>&1 | head -20 || echo "No iptables"
-          ufw status 2>&1 || echo "No ufw"
-          echo ""
-          echo "=== Check if port 80 is truly open externally ==="
-          curl -sI http://leaddrivecrm.org 2>&1 | head -3
+          ssh -i ~/.ssh/id_deploy root@${{ secrets.SERVER_IP }} 'bash -s' << 'ENDSCRIPT'
+          echo "=== All enabled sites ==="
+          ls -la /etc/nginx/sites-enabled/
+
+          echo "=== leaddrivecrm.org config ==="
+          cat -n /etc/nginx/sites-available/leaddrivecrm.org
+
+          echo "=== All server blocks with leaddrivecrm ==="
+          grep -rn "server_name.*leaddrivecrm" /etc/nginx/sites-enabled/ 2>/dev/null
+
+          echo "=== Default and return blocks ==="
+          grep -rn "default_server\|return 404" /etc/nginx/sites-enabled/ 2>/dev/null
+
+          echo "=== PM2 list ==="
+          pm2 list
+
+          echo "=== Start leaddrive-v2 if missing ==="
+          if ! pm2 describe leaddrive-v2 > /dev/null 2>&1; then
+            echo "Starting leaddrive-v2..."
+            cd /opt/leaddrive-v2
+            PORT=3001 pm2 start npm --name leaddrive-v2 -- start 2>&1 | tail -3
+            sleep 3
+            pm2 save 2>/dev/null
+          fi
+
+          echo "=== Ports ==="
+          curl -sI http://localhost:3001/ 2>&1 | head -3
+          curl -sI http://localhost:3002/ 2>&1 | head -3
+
           echo "=== DONE ==="
-          SCRIPT
+          ENDSCRIPT
