@@ -1,0 +1,42 @@
+name: Fix Domains Final
+
+on:
+  workflow_dispatch:
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_deploy
+          chmod 600 ~/.ssh/id_deploy
+          ssh-keyscan -H ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts 2>/dev/null
+
+      - name: Fix domains
+        run: |
+          ssh -i ~/.ssh/id_deploy root@${{ secrets.SERVER_IP }} 'bash -s' << 'ENDSCRIPT'
+          echo "=== Check what runs on 3001 and 3002 ==="
+          curl -sI http://127.0.0.1:3001/ 2>&1 | head -3
+          curl -sI http://127.0.0.1:3002/ 2>&1 | head -3
+          echo ""
+          echo "=== Check PM2 and processes ==="
+          pm2 list 2>&1
+          echo ""
+          echo "=== Check .env for both ==="
+          echo "--- leaddrive-v2 ---"
+          grep -E "NEXTAUTH_URL|PORT" /opt/leaddrive-v2/.env 2>/dev/null
+          echo "--- leaddrive-cloud ---"
+          grep -E "NEXTAUTH_URL|PORT" /opt/leaddrive-cloud/.env 2>/dev/null
+          echo ""
+          echo "=== What process is on 3002? ==="
+          ss -tlnp | grep 3002
+          echo "=== What process is on 3001? ==="
+          ss -tlnp | grep 3001
+          echo ""
+          echo "=== leaddrive-cloud dir ==="
+          ls /opt/leaddrive-cloud/ 2>/dev/null | head -20 || echo "No leaddrive-cloud dir"
+          echo "=== DONE ==="
+          ENDSCRIPT
