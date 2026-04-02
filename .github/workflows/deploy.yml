@@ -20,39 +20,16 @@ jobs:
           chmod 600 ~/.ssh/id_deploy
           ssh-keyscan -H ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts 2>/dev/null
 
-      - name: Deploy
+      - name: Setup Nginx and SSL
         run: |
           ssh -i ~/.ssh/id_deploy root@${{ secrets.SERVER_IP }} << 'ENDSSH'
             set -e
-            cd /opt/leaddrive-v2
-
-            echo "=== Pulling latest code ==="
-            git fetch origin main
-            git reset --hard origin/main
-            echo "Current commit: $(git log --oneline -1)"
-
-            echo "=== Clearing build cache ==="
-            rm -rf .next
-
-            echo "=== Installing dependencies ==="
-            npm ci --prefer-offline 2>&1 | tail -3
-
-            echo "=== Prisma ==="
-            npx prisma generate 2>&1 | tail -2
-            npx prisma migrate deploy 2>&1 | tail -2 || true
-
-            echo "=== Building ==="
-            NODE_OPTIONS='--max-old-space-size=1536' npx next build 2>&1 | tail -15
-
-            echo "=== Restarting ==="
-            pm2 delete leaddrive-v2 2>/dev/null || true
-            fuser -k 3001/tcp 2>/dev/null || true
-            sleep 2
-
-            cd /opt/leaddrive-v2
-            PORT=3001 pm2 start npm --name leaddrive-v2 -- start
-
-            sleep 5
-            curl -sf http://localhost:3001 -o /dev/null && echo 'Health check OK' || echo 'Health check FAILED'
-            pm2 save
+            echo "=== Reload nginx ==="
+            nginx -t && nginx -s reload
+            echo "=== Get SSL for app.leaddrivecrm.org ==="
+            certbot --nginx -d app.leaddrivecrm.org --non-interactive --agree-tos --email admin@leaddrivecrm.org --redirect 2>&1 | tail -10 || echo "Certbot attempt 1 failed"
+            echo "=== Verify ==="
+            curl -sI https://leaddrivecrm.org/ | head -3
+            curl -sI https://app.leaddrivecrm.org/ 2>&1 | head -3
+            pm2 list
           ENDSSH
