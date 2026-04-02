@@ -1,4 +1,4 @@
-name: Fix Nginx Domains
+name: Fix Nginx
 
 on:
   workflow_dispatch:
@@ -6,7 +6,7 @@ on:
 jobs:
   fix:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 3
     steps:
       - name: Setup SSH
         run: |
@@ -15,39 +15,33 @@ jobs:
           chmod 600 ~/.ssh/id_deploy
           ssh-keyscan -H ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts 2>/dev/null
 
-      - name: Fix Nginx
+      - name: Fix nginx configs
         run: |
-          ssh -i ~/.ssh/id_deploy root@${{ secrets.SERVER_IP }} bash -s << 'SCRIPT'
-          echo "=== Current nginx sites ==="
-          ls -la /etc/nginx/sites-enabled/
-          echo ""
+          ssh -i ~/.ssh/id_deploy root@${{ secrets.SERVER_IP }} 'bash -s' << 'ENDSCRIPT'
+          echo "=== Update leaddrivecrm.org config: add root redirect to /home ==="
+          printf 'server {\n    listen 80;\n    server_name leaddrivecrm.org www.leaddrivecrm.org;\n    return 301 https://$host$request_uri;\n}\n\nserver {\n    listen 443 ssl;\n    server_name leaddrivecrm.org www.leaddrivecrm.org;\n\n    ssl_certificate /etc/letsencrypt/live/leaddrivecrm.org/fullchain.pem;\n    ssl_certificate_key /etc/letsencrypt/live/leaddrivecrm.org/privkey.pem;\n    include /etc/letsencrypt/options-ssl-nginx.conf;\n    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;\n\n    location = / {\n        return 302 /home;\n    }\n\n    location / {\n        proxy_pass http://127.0.0.1:3002;\n        proxy_http_version 1.1;\n        proxy_set_header Upgrade $http_upgrade;\n        proxy_set_header Connection "upgrade";\n        proxy_set_header Host $host;\n        proxy_set_header X-Real-IP $remote_addr;\n        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\n        proxy_set_header X-Forwarded-Proto $scheme;\n        proxy_cache_bypass $http_upgrade;\n        proxy_read_timeout 86400;\n        client_max_body_size 50M;\n    }\n}\n' > /etc/nginx/sites-available/leaddrivecrm.org
 
-          echo "=== Check if app.leaddrivecrm.org config exists ==="
-          cat /etc/nginx/sites-enabled/app.leaddrivecrm* 2>/dev/null || echo "No app.leaddrivecrm config found"
-          echo ""
+          ln -sf /etc/nginx/sites-available/leaddrivecrm.org /etc/nginx/sites-enabled/leaddrivecrm.org
 
-          echo "=== Current leaddrivecrm.org config ==="
-          cat /etc/nginx/sites-enabled/leaddrivecrm.org
-          echo ""
+          echo "=== Test nginx config ==="
+          nginx -t 2>&1
 
-          echo "=== Check DNS for app.leaddrivecrm.org ==="
-          dig +short app.leaddrivecrm.org 2>/dev/null || host app.leaddrivecrm.org 2>/dev/null || echo "dig/host not available"
-          echo ""
+          echo "=== Reload ==="
+          systemctl reload nginx
 
-          echo "=== Check what was on port 3002 (original landing page?) ==="
-          ss -tlnp | grep 3002 || echo "Nothing on port 3002"
-          echo ""
+          echo "=== Update leaddrive-v2 NEXTAUTH_URL ==="
+          sed -i 's|NEXTAUTH_URL=.*|NEXTAUTH_URL="https://app.leaddrivecrm.org"|' /opt/leaddrive-v2/.env
+          grep NEXTAUTH_URL /opt/leaddrive-v2/.env
 
-          echo "=== Check leaddrive-cloud PM2 config ==="
-          cat /opt/leaddrive-cloud/ecosystem.config.js 2>/dev/null || cat /opt/leaddrive-cloud/package.json 2>/dev/null | head -20 || echo "No leaddrive-cloud config"
-          echo ""
+          echo "=== Restart leaddrive-v2 with new env ==="
+          pm2 restart leaddrive-v2 2>&1 | tail -3
+          sleep 3
 
-          echo "=== Check all SSL certs ==="
-          ls /etc/letsencrypt/live/ 2>/dev/null
-          echo ""
-
-          echo "=== Check if there's a cert for app.leaddrivecrm.org ==="
-          ls /etc/letsencrypt/live/app.leaddrivecrm.org/ 2>/dev/null || echo "No cert for app.leaddrivecrm.org"
-
+          echo "=== Test leaddrivecrm.org ==="
+          curl -sI https://leaddrivecrm.org 2>&1 | head -5
+          echo "---"
+          curl -sI https://leaddrivecrm.org/home 2>&1 | head -3
+          echo "---"
+          curl -sI https://v2.leaddrivecrm.org 2>&1 | head -3
           echo "=== DONE ==="
-          SCRIPT
+          ENDSCRIPT
