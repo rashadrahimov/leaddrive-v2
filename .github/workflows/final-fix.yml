@@ -1,0 +1,70 @@
+name: Final Fix
+
+on:
+  workflow_dispatch:
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_deploy
+          chmod 600 ~/.ssh/id_deploy
+          ssh-keyscan -H ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts 2>/dev/null
+
+      - name: Write correct config
+        run: |
+          ssh -i ~/.ssh/id_deploy root@${{ secrets.SERVER_IP }} 'bash -s' << 'ENDSCRIPT'
+          cat > /etc/nginx/sites-available/leaddrive-v2 << 'ENDNGINX'
+          server {
+              listen 80;
+              server_name v2.leaddrivecrm.org app.leaddrivecrm.org;
+              return 301 https://$host$request_uri;
+          }
+
+          server {
+              listen 443 ssl;
+              server_name v2.leaddrivecrm.org app.leaddrivecrm.org;
+
+              ssl_certificate /etc/letsencrypt/live/v2.leaddrivecrm.org/fullchain.pem;
+              ssl_certificate_key /etc/letsencrypt/live/v2.leaddrivecrm.org/privkey.pem;
+              include /etc/letsencrypt/options-ssl-nginx.conf;
+              ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
+
+              location /marketing/ {
+                  alias /opt/leaddrive-v2/public/marketing/;
+                  expires 30d;
+                  add_header Cache-Control "public, immutable";
+              }
+
+              location / {
+                  proxy_pass http://127.0.0.1:3001;
+                  proxy_http_version 1.1;
+                  proxy_set_header Upgrade $http_upgrade;
+                  proxy_set_header Connection 'upgrade';
+                  proxy_set_header Host $host;
+                  proxy_set_header X-Real-IP $remote_addr;
+                  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                  proxy_set_header X-Forwarded-Proto $scheme;
+                  proxy_cache_bypass $http_upgrade;
+                  proxy_read_timeout 86400;
+                  client_max_body_size 50M;
+                  proxy_buffer_size 128k;
+                  proxy_buffers 4 256k;
+                  proxy_busy_buffers_size 256k;
+              }
+          }
+          ENDNGINX
+
+          nginx -t 2>&1
+          systemctl reload nginx
+
+          echo "=== HTTP test ==="
+          curl -sI -H "Host: app.leaddrivecrm.org" http://127.0.0.1/ 2>&1 | head -3
+          echo "=== HTTPS test ==="
+          curl -sI -H "Host: app.leaddrivecrm.org" https://127.0.0.1/ -k 2>&1 | head -3
+          echo "=== DONE ==="
+          ENDSCRIPT
