@@ -10,11 +10,11 @@ const MARKETING_PATHS = ["/home", "/plans", "/demo", "/contact", "/about", "/leg
 function buildCsp(nonce: string) {
   return [
     "default-src 'self'",
-    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' https://www.googletagmanager.com`,
+    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'`,
     `style-src 'self' 'nonce-${nonce}' 'unsafe-inline'`,
     "img-src 'self' data: blob: https:",
     "font-src 'self' data:",
-    "connect-src 'self' https://www.google-analytics.com https://www.googletagmanager.com",
+    "connect-src 'self' https://leaddrivecrm.org https://api.anthropic.com",
     "frame-ancestors 'none'",
   ].join("; ")
 }
@@ -22,11 +22,6 @@ function buildCsp(nonce: string) {
 export function middleware(req: NextRequest) {
   const host = req.headers.get("host")?.replace(/:\d+$/, "") || ""
   const pathname = req.nextUrl.pathname
-
-  // Marketing domain (leaddrivecrm.org): root → show landing page at /home
-  if ((host === MARKETING_HOST || host === `www.${MARKETING_HOST}`) && pathname === "/") {
-    return NextResponse.rewrite(new URL("/home", req.url))
-  }
 
   // Marketing domain: redirect CRM routes to app subdomain
   if (host === MARKETING_HOST || host === `www.${MARKETING_HOST}`) {
@@ -43,10 +38,6 @@ export function middleware(req: NextRequest) {
       return NextResponse.redirect(
         new URL(`https://${MARKETING_HOST}${pathname}${req.nextUrl.search}`, req.url)
       )
-    }
-    // Root on app domain → login
-    if (pathname === "/") {
-      return NextResponse.redirect(new URL("/login", req.url))
     }
   }
 
@@ -67,5 +58,5 @@ export function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|api/auth).*)"],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|api).*)"],
 }
