@@ -53,7 +53,7 @@ set -a
 source "$APP_DIR/.env" 2>/dev/null || true
 set +a
 
-npx prisma migrate deploy 2>&1 || {
+npx prisma migrate deploy --schema="$APP_DIR/prisma/schema.prisma" 2>&1 || {
   log "WARNING: prisma migrate returned non-zero (may be OK if no pending migrations)"
 }
 
@@ -61,14 +61,37 @@ npx prisma migrate deploy 2>&1 || {
 log "Updating PM2 config..."
 cp "$APP_DIR/.next/standalone/ecosystem.config.cjs" "$APP_DIR/ecosystem.config.cjs" 2>/dev/null || true
 
-# ── Step 5: Restart PM2 ───────────────────────────────────
-log "Restarting PM2..."
+# ── Step 5: Stop old process, restart PM2 ─────────────────
+log "Stopping old processes..."
 cd "$APP_DIR"
-pm2 restart ecosystem.config.cjs --update-env 2>/dev/null || \
-  pm2 start ecosystem.config.cjs 2>/dev/null || {
-    log "FATAL: PM2 start/restart failed"
-    exit 1
-  }
+
+# Delete existing PM2 process (ignore errors if not found)
+pm2 delete "$PM2_PROCESS" 2>/dev/null || true
+
+# Kill ANY process holding port 3001 (orphan from previous deploys)
+fuser -k 3001/tcp 2>/dev/null || true
+sleep 2
+
+# Double-check port is free
+if ss -tlnp | grep -q ":3001 "; then
+  log "WARNING: port 3001 still occupied, force killing..."
+  fuser -k -9 3001/tcp 2>/dev/null || true
+  sleep 2
+fi
+
+log "Starting PM2..."
+# Source .env so PM2 inherits all environment variables
+set -a
+source "$APP_DIR/.env" 2>/dev/null || true
+set +a
+
+pm2 start ecosystem.config.cjs 2>/dev/null || {
+  log "FATAL: PM2 start failed"
+  exit 1
+}
+
+# Save PM2 state for reboot persistence
+pm2 save 2>/dev/null || true
 
 # ── Step 6: Health check (3 retries) ──────────────────────
 log "Health check (waiting for startup)..."
