@@ -23,6 +23,11 @@ export function middleware(req: NextRequest) {
   const host = req.headers.get("host")?.replace(/:\d+$/, "") || ""
   const pathname = req.nextUrl.pathname
 
+  // Marketing domain: root → /home
+  if ((host === MARKETING_HOST || host === `www.${MARKETING_HOST}`) && pathname === "/") {
+    return NextResponse.redirect(new URL("/home", req.url))
+  }
+
   // Marketing domain: redirect CRM routes to app subdomain
   if (host === MARKETING_HOST || host === `www.${MARKETING_HOST}`) {
     if (CRM_PATHS.some(p => pathname === p || pathname.startsWith(p + "/"))) {
@@ -39,9 +44,9 @@ export function middleware(req: NextRequest) {
         new URL(`https://${MARKETING_HOST}${pathname}${req.nextUrl.search}`, req.url)
       )
     }
-    // Root on app domain → dashboard
+    // Root on app domain → login
     if (pathname === "/") {
-      return NextResponse.redirect(new URL(`https://${APP_HOST}/dashboard`, req.url))
+      return NextResponse.redirect(new URL("/login", req.url))
     }
   }
 
