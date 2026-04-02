@@ -19,22 +19,24 @@ jobs:
       - name: Diagnose
         run: |
           ssh -i ~/.ssh/id_deploy root@${{ secrets.SERVER_IP }} << 'ENDSSH'
-            echo "=== Git status ==="
-            cd /opt/leaddrive-v2
-            git log --oneline -3
+            echo "=== Nginx: leaddrivecrm.org config ==="
+            cat /etc/nginx/sites-enabled/leaddrivecrm.org 2>/dev/null || echo "not found"
             echo ""
-            echo "=== middleware.ts content ==="
-            cat src/middleware.ts
+            echo "=== Nginx: app.leaddrivecrm.org config ==="
+            cat /etc/nginx/sites-enabled/app.leaddrivecrm.org 2>/dev/null || echo "not found"
             echo ""
-            echo "=== Nginx config ==="
-            nginx -T 2>&1 | grep -A 30 "leaddrivecrm"
+            echo "=== What is on port 3001 ==="
+            curl -sI http://localhost:3001/ 2>&1 | head -5
             echo ""
-            echo "=== PM2 status ==="
+            echo "=== What is on port 3002 ==="
+            curl -sI http://localhost:3002/ 2>&1 | head -5
+            echo ""
+            echo "=== PM2 list ==="
             pm2 list
             echo ""
-            echo "=== .next/server/middleware-manifest.json ==="
-            cat .next/server/middleware-manifest.json 2>/dev/null | head -20
+            echo "=== Git log ==="
+            cd /opt/leaddrive-v2 && git log --oneline -3
             echo ""
-            echo "=== Check if another middleware exists ==="
-            find /opt/leaddrive-v2 -name "middleware.*" -not -path "*/node_modules/*" -not -path "*/.next/*"
+            echo "=== Server middleware on disk ==="
+            head -5 /opt/leaddrive-v2/src/middleware.ts
           ENDSSH
