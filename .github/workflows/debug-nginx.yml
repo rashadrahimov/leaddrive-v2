@@ -15,23 +15,24 @@ jobs:
           chmod 600 ~/.ssh/id_deploy
           ssh-keyscan -H ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts 2>/dev/null
 
-      - name: Debug from server
+      - name: Debug
         run: |
           ssh -i ~/.ssh/id_deploy root@${{ secrets.SERVER_IP }} 'bash -s' << 'ENDSCRIPT'
-          echo "=== Test from server itself ==="
-          curl -sSI --resolve leaddrivecrm.org:443:127.0.0.1 https://leaddrivecrm.org/ 2>&1 | head -10
+          echo "=== What listens on 443? ==="
+          ss -tlnp | grep 443
 
-          echo "=== Test port 3002 directly ==="
-          curl -sSI http://127.0.0.1:3002/ 2>&1 | head -5
+          echo "=== Docker containers? ==="
+          docker ps 2>/dev/null || echo "No docker"
 
-          echo "=== Check fanumsec config ==="
-          cat /etc/nginx/sites-available/fanumsec
+          echo "=== iptables NAT rules? ==="
+          iptables -t nat -L -n 2>/dev/null | head -30
 
-          echo "=== Check nginx.conf for include directives ==="
-          grep -E "include|default" /etc/nginx/nginx.conf 2>/dev/null
+          echo "=== nginx listen addresses ==="
+          grep -rn "listen.*443" /etc/nginx/sites-enabled/ 2>/dev/null
+          grep -rn "listen.*443" /etc/nginx/sites-available/ 2>/dev/null
 
-          echo "=== Check if there are conf.d configs ==="
-          ls /etc/nginx/conf.d/ 2>/dev/null
+          echo "=== Test external IP directly ==="
+          curl -sSI --resolve leaddrivecrm.org:443:46.224.171.53 https://leaddrivecrm.org/ 2>&1 | head -5
 
           echo "=== DONE ==="
           ENDSCRIPT
