@@ -15,15 +15,11 @@ jobs:
           chmod 600 ~/.ssh/id_deploy
           ssh-keyscan -H ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts 2>/dev/null
 
-      - name: Fix port conflict and restart
+      - name: Fix all services
         run: |
           ssh -i ~/.ssh/id_deploy root@${{ secrets.SERVER_IP }} 'bash -s' << 'ENDSCRIPT'
-          echo "=== What is on port 3002? ==="
-          ss -tlnp | grep 3002
-          lsof -i :3002 2>/dev/null || fuser 3002/tcp 2>/dev/null
-
           echo "=== Stop ALL pm2 processes ==="
-          pm2 stop all 2>&1 | tail -5
+          pm2 stop all 2>&1 | tail -3
 
           echo "=== Kill anything on 3001 and 3002 ==="
           fuser -k 3001/tcp 2>/dev/null || true
@@ -37,15 +33,19 @@ jobs:
           pm2 delete leaddrive-cloud 2>/dev/null || true
           pm2 delete leaddrive-v2 2>/dev/null || true
 
+          echo "=== Update leaddrive-v2 .env ==="
+          sed -i 's|NEXTAUTH_URL=.*|NEXTAUTH_URL="https://app.leaddrivecrm.org"|' /opt/leaddrive-v2/.env
+          grep NEXTAUTH_URL /opt/leaddrive-v2/.env
+
           echo "=== Start leaddrive-v2 on 3001 ==="
           cd /opt/leaddrive-v2
           if [ -d .next/standalone ]; then
             cd .next/standalone
+            cp /opt/leaddrive-v2/.env .env 2>/dev/null
             PORT=3001 pm2 start server.js --name leaddrive-v2 2>&1 | tail -3
           else
             PORT=3001 pm2 start npm --name leaddrive-v2 -- start 2>&1 | tail -3
           fi
-
           sleep 3
           echo "=== Test 3001 ==="
           curl -sI http://localhost:3001/ 2>&1 | head -3
@@ -53,19 +53,24 @@ jobs:
           echo "=== Start leaddrive-cloud on 3002 ==="
           cd /opt/leaddrive-cloud/.next/standalone
           PORT=3002 pm2 start server.js --name leaddrive-cloud 2>&1 | tail -3
-
           sleep 3
           echo "=== Test 3002 ==="
-          curl -sI http://localhost:3002/ 2>&1 | head -3
+          curl -sI http://localhost:3002/ 2>&1 | head -5
+
+          echo "=== Start other services ==="
+          pm2 start brandbook 2>/dev/null || true
+          pm2 start fanumsec 2>/dev/null || true
 
           echo "=== Final PM2 ==="
           pm2 list
           pm2 save 2>/dev/null
 
-          echo "=== Start other stopped processes ==="
-          pm2 start brandbook 2>/dev/null || true
-          pm2 start fanumsec 2>/dev/null || true
-          pm2 save 2>/dev/null
+          echo "=== External tests ==="
+          curl -sI https://leaddrivecrm.org/ 2>&1 | head -5
+          echo "---"
+          curl -sI https://leaddrivecrm.org/home 2>&1 | head -3
+          echo "---"
+          curl -sI https://v2.leaddrivecrm.org/ 2>&1 | head -3
 
           echo "=== DONE ==="
           ENDSCRIPT
