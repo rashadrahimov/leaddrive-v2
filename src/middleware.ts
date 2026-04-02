@@ -1,3 +1,4 @@
+import { auth } from "@/lib/auth"
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 
@@ -6,6 +7,7 @@ const MARKETING_HOST = "leaddrivecrm.org"
 
 const CRM_PATHS = ["/login", "/register", "/dashboard", "/settings", "/portal", "/forgot-password", "/reset-password", "/admin"]
 const MARKETING_PATHS = ["/home", "/plans", "/demo", "/contact", "/about", "/legal", "/landing"]
+const PUBLIC_PATHS = ["/home", "/plans", "/demo", "/contact", "/about", "/legal", "/landing", "/login", "/register", "/forgot-password", "/reset-password"]
 
 function buildCsp(nonce: string) {
   return [
@@ -19,7 +21,7 @@ function buildCsp(nonce: string) {
   ].join("; ")
 }
 
-export function middleware(req: NextRequest) {
+export default auth((req) => {
   const host = req.headers.get("host")?.replace(/:\d+$/, "") || ""
   const pathname = req.nextUrl.pathname
 
@@ -50,11 +52,14 @@ export function middleware(req: NextRequest) {
     }
   }
 
+  // Auth check: require login for non-public paths on app domain
+  if (host === APP_HOST && !PUBLIC_PATHS.some(p => pathname === p || pathname.startsWith(p + "/")) && !req.auth) {
+    return NextResponse.redirect(new URL("/login", req.url))
+  }
+
   // Security headers
   const nonce = crypto.randomUUID()
-  const response = NextResponse.next({
-    headers: new Headers(req.headers),
-  })
+  const response = NextResponse.next()
 
   response.headers.set("x-nonce", nonce)
   response.headers.set("Content-Security-Policy", buildCsp(nonce))
@@ -66,8 +71,8 @@ export function middleware(req: NextRequest) {
   response.headers.set("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
 
   return response
-}
+})
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|api/auth).*)"],
 }
