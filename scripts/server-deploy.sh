@@ -93,14 +93,18 @@ pm2 start ecosystem.config.cjs 2>/dev/null || {
 # Save PM2 state for reboot persistence
 pm2 save 2>/dev/null || true
 
-# ── Step 6: Health check (3 retries) ──────────────────────
+# ── Step 6: Health check (5 retries, longer warmup) ──────
 log "Health check (waiting for startup)..."
+sleep 15
+
+# Warm up the app — first requests to Next.js 16 standalone can 500
+curl -s -o /dev/null --max-time 10 "$HEALTH_URL/login" 2>/dev/null || true
 sleep 5
 
 HEALTHY=false
-for i in 1 2 3; do
-  log "Health check attempt $i/3..."
-  HTTP_CODE=$(curl -s -o /dev/null -w '%{http_code}' --max-time 10 "$HEALTH_URL" 2>/dev/null || echo "000")
+for i in 1 2 3 4 5; do
+  log "Health check attempt $i/5..."
+  HTTP_CODE=$(curl -s -o /dev/null -w '%{http_code}' --max-time 10 "$HEALTH_URL/login" 2>/dev/null || echo "000")
 
   if [ "$HTTP_CODE" = "200" ] || [ "$HTTP_CODE" = "307" ]; then
     # Page responds — now verify CSS actually loads
@@ -121,7 +125,7 @@ for i in 1 2 3; do
     log "Page returned $HTTP_CODE (expected 200 or 307)"
   fi
 
-  [ "$i" -lt 3 ] && sleep 5
+  [ "$i" -lt 5 ] && sleep 8
 done
 
 # ── Step 7: Rollback if unhealthy ──────────────────────────
