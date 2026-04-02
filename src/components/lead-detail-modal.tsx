@@ -241,10 +241,10 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
   const tabs = [
     { id: "details", label: "Детали" },
     { id: "activity", label: "Активность" },
-    { id: "sentiment", label: t("tabSentiment") },
-    { id: "tasks", label: t("tabTasks") },
-    { id: "aitext", label: t("tabAiText") },
-    { id: "ai", label: t("tabAiScoring") },
+    { id: "sentiment", label: t("modalSentiment") },
+    { id: "tasks", label: t("modalTasks") },
+    { id: "aitext", label: t("modalAiText") },
+    { id: "ai", label: t("modalAiScoring") },
   ]
 
   return (
@@ -554,9 +554,9 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
             {!sentiment ? (
               <div className="text-center py-4">
                 <Button onClick={async () => { const d = await callAI("sentiment"); if (d) setSentiment(d) }} disabled={aiLoading} className="gap-2">
-                  {aiLoading ? t("analyzing") : t("analyzeSentiment")}
+                  {aiLoading ? t("modalAnalyzing") : t("modalAnalyzeSentiment")}
                 </Button>
-                <p className="text-sm text-muted-foreground mt-2">{t("sentimentDesc")}</p>
+                <p className="text-sm text-muted-foreground mt-2">{t("modalSentimentDesc")}</p>
               </div>
             ) : (
               <div className="space-y-4">
@@ -602,9 +602,9 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
             {!aiTasks ? (
               <div className="text-center py-4">
                 <Button onClick={async () => { const d = await callAI("tasks"); if (d) setAiTasks(d) }} disabled={aiLoading} className="gap-2">
-                  {aiLoading ? t("analyzing") : t("generateTasks")}
+                  {aiLoading ? t("modalAnalyzing") : t("modalGenerateTasks")}
                 </Button>
-                <p className="text-sm text-muted-foreground mt-2">{t("sentimentDesc")}</p>
+                <p className="text-sm text-muted-foreground mt-2">{t("modalSentimentDesc")}</p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -628,7 +628,7 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
                 ))}
                 <div className="flex gap-2 justify-center">
                   <Button size="sm" className="gap-1"><CheckCircle className="h-3 w-3" /> Создать все задачи</Button>
-                  <Button size="sm" variant="outline" onClick={async () => { const d = await callAI("tasks"); if (d) setAiTasks(d) }} className="gap-1"><RefreshCw className="h-3 w-3" /> {t("regenerate")}</Button>
+                  <Button size="sm" variant="outline" onClick={async () => { const d = await callAI("tasks"); if (d) setAiTasks(d) }} className="gap-1"><RefreshCw className="h-3 w-3" /> {t("modalRegenerate")}</Button>
                 </div>
               </div>
             )}
@@ -661,7 +661,7 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
               <Textarea value={instructions} onChange={e => setInstructions(e.target.value)} rows={2} placeholder="Например: упомянуть скидку 10%, предложить демо..." />
             </div>
             <Button onClick={async () => { const d = await callAI("text", { textType, tone, instructions }); if (d) { setGeneratedText(d); setEmailSent(false) } }} disabled={aiLoading} className="w-full gap-2">
-              {aiLoading ? t("analyzing") : t("generateText")}
+              {aiLoading ? t("modalAnalyzing") : t("modalGenerateText")}
             </Button>
 
             {generatedText && (
@@ -684,7 +684,7 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
                     <Send className="h-3 w-3" /> {emailSent ? "✅ Отправлено" : emailSending ? "Отправляем..." : "Отправить email"}
                   </Button>
                   <Button size="sm" variant="outline" onClick={async () => { const d = await callAI("text", { textType, tone, instructions }); if (d) { setGeneratedText(d); setEmailSent(false) } }} className="gap-1">
-                    <RefreshCw className="h-3 w-3" /> {t("regenerate")}
+                    <RefreshCw className="h-3 w-3" /> {t("modalRegenerate")}
                   </Button>
                 </div>
                 {emailError && (
