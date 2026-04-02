@@ -1,0 +1,37 @@
+name: Fix Landing
+
+on:
+  workflow_dispatch:
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_deploy
+          chmod 600 ~/.ssh/id_deploy
+          ssh-keyscan -H ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts 2>/dev/null
+
+      - name: Fix landing
+        run: |
+          ssh -i ~/.ssh/id_deploy root@${{ secrets.SERVER_IP }} 'bash -s' << 'ENDSCRIPT'
+          echo "=== Nginx status ==="
+          systemctl status nginx --no-pager 2>&1 | head -10
+          echo ""
+          echo "=== Current leaddrivecrm.org config ==="
+          cat /etc/nginx/sites-enabled/leaddrivecrm.org
+          echo ""
+          echo "=== Port 3002 status ==="
+          ss -tlnp | grep 3002
+          echo ""
+          echo "=== Test leaddrivecrm.org ==="
+          curl -sI -H "Host: leaddrivecrm.org" http://127.0.0.1/ 2>&1 | head -5
+          curl -sI -H "Host: leaddrivecrm.org" https://127.0.0.1/ -k 2>&1 | head -5
+          echo ""
+          echo "=== Test app.leaddrivecrm.org ==="
+          curl -sI -H "Host: app.leaddrivecrm.org" https://127.0.0.1/ -k 2>&1 | head -3
+          echo "=== DONE ==="
+          ENDSCRIPT
