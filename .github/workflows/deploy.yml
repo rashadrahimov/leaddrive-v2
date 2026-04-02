@@ -10,7 +10,7 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
 
     steps:
       - name: Setup SSH
@@ -23,32 +23,36 @@ jobs:
       - name: Deploy
         run: |
           ssh -i ~/.ssh/id_deploy root@${{ secrets.SERVER_IP }} << 'ENDSSH'
+            set -e
             cd /opt/leaddrive-v2
 
-            # Force pull latest code
+            echo "=== Pulling latest code ==="
             git fetch origin main
             git reset --hard origin/main
+            echo "Current commit: $(git log --oneline -1)"
 
-            # Install deps if needed
+            echo "=== Clearing build cache ==="
+            rm -rf .next
+
+            echo "=== Installing dependencies ==="
             npm ci --prefer-offline 2>&1 | tail -3
 
-            # Generate prisma & run migrations
+            echo "=== Prisma ==="
             npx prisma generate 2>&1 | tail -2
             npx prisma migrate deploy 2>&1 | tail -2 || true
 
-            # Build
-            NODE_OPTIONS='--max-old-space-size=1536' npx next build 2>&1 | tail -10
+            echo "=== Building ==="
+            NODE_OPTIONS='--max-old-space-size=1536' npx next build 2>&1 | tail -15
 
-            # Stop old process
+            echo "=== Restarting ==="
             pm2 delete leaddrive-v2 2>/dev/null || true
             fuser -k 3001/tcp 2>/dev/null || true
             sleep 2
 
-            # Start with PM2
             cd /opt/leaddrive-v2
             PORT=3001 pm2 start npm --name leaddrive-v2 -- start
 
-            sleep 3
+            sleep 5
             curl -sf http://localhost:3001 -o /dev/null && echo 'Health check OK' || echo 'Health check FAILED'
             pm2 save
           ENDSSH
