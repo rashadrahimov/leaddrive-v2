@@ -18,31 +18,40 @@ jobs:
       - name: Fix nginx configs
         run: |
           ssh -i ~/.ssh/id_deploy root@${{ secrets.SERVER_IP }} 'bash -s' << 'ENDSCRIPT'
-          echo "=== Update leaddrivecrm.org config: use rewrite for root ==="
-          printf 'server {\n    listen 80;\n    server_name leaddrivecrm.org www.leaddrivecrm.org;\n    return 301 https://$host$request_uri;\n}\n\nserver {\n    listen 443 ssl;\n    server_name leaddrivecrm.org www.leaddrivecrm.org;\n\n    ssl_certificate /etc/letsencrypt/live/leaddrivecrm.org/fullchain.pem;\n    ssl_certificate_key /etc/letsencrypt/live/leaddrivecrm.org/privkey.pem;\n    include /etc/letsencrypt/options-ssl-nginx.conf;\n    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;\n\n    rewrite ^/$ /home redirect;\n\n    location / {\n        proxy_pass http://127.0.0.1:3002;\n        proxy_http_version 1.1;\n        proxy_set_header Upgrade $http_upgrade;\n        proxy_set_header Connection "upgrade";\n        proxy_set_header Host $host;\n        proxy_set_header X-Real-IP $remote_addr;\n        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\n        proxy_set_header X-Forwarded-Proto $scheme;\n        proxy_cache_bypass $http_upgrade;\n        proxy_read_timeout 86400;\n        client_max_body_size 50M;\n    }\n}\n' > /etc/nginx/sites-available/leaddrivecrm.org
+          echo "=== Remove ALL symlinks and copy as real files ==="
+          cd /etc/nginx/sites-enabled
 
-          ln -sf /etc/nginx/sites-available/leaddrivecrm.org /etc/nginx/sites-enabled/leaddrivecrm.org
+          # Remove symlinks and copy actual files
+          for f in leaddrive-v2 leaddrivecrm.org leaddrive.cloud; do
+            if [ -L "$f" ]; then
+              target=$(readlink -f "$f")
+              rm "$f"
+              cp "$target" "$f"
+              echo "Converted symlink $f -> real file"
+            fi
+          done
+
+          ls -la /etc/nginx/sites-enabled/
+
+          echo "=== Verify leaddrivecrm.org is real file with correct content ==="
+          head -20 /etc/nginx/sites-enabled/leaddrivecrm.org
+
+          echo "=== Check all server_name lines now ==="
+          grep -rn "server_name" /etc/nginx/sites-enabled/
 
           echo "=== Test nginx config ==="
           nginx -t 2>&1
 
-          echo "=== Restart nginx (full restart, not reload) ==="
+          echo "=== Restart nginx ==="
           systemctl restart nginx
 
-          echo "=== Verify config ==="
-          cat -n /etc/nginx/sites-available/leaddrivecrm.org
-
-          echo "=== Test leaddrivecrm.org ==="
+          echo "=== Test external ==="
           sleep 2
-          curl -sI https://leaddrivecrm.org 2>&1 | head -5
+          curl -sI https://leaddrivecrm.org/ 2>&1 | head -5
           echo "---"
           curl -sI https://leaddrivecrm.org/home 2>&1 | head -3
+          echo "---"
+          curl -sI https://v2.leaddrivecrm.org/ 2>&1 | head -3
 
-          echo "=== Ensure leaddrive-v2 running ==="
-          if ! pm2 describe leaddrive-v2 > /dev/null 2>&1; then
-            cd /opt/leaddrive-v2 && PORT=3001 pm2 start npm --name leaddrive-v2 -- start 2>&1 | tail -3
-            sleep 3
-            pm2 save 2>/dev/null
-          fi
           echo "=== DONE ==="
           ENDSCRIPT
