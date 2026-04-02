@@ -1,0 +1,55 @@
+name: Check Status
+
+on:
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_deploy
+          chmod 600 ~/.ssh/id_deploy
+          ssh-keyscan -H ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts 2>/dev/null
+
+      - name: Check and fix
+        run: |
+          ssh -i ~/.ssh/id_deploy root@${{ secrets.SERVER_IP }} 'bash -s' << 'ENDSCRIPT'
+          echo "=== PM2 list ==="
+          pm2 list
+
+          echo "=== Port 3001 ==="
+          curl -sI http://localhost:3001/ 2>&1 | head -3
+          echo "=== Port 3002 ==="
+          curl -sI http://localhost:3002/ 2>&1 | head -3
+
+          echo "=== Check if leaddrive-v2 needs restart ==="
+          if ! pm2 describe leaddrive-v2 > /dev/null 2>&1; then
+            echo "leaddrive-v2 not in PM2, checking start script..."
+            if [ -f /tmp/start-leaddrive.sh ]; then
+              echo "Found start script:"
+              cat /tmp/start-leaddrive.sh
+              pm2 start /tmp/start-leaddrive.sh --name leaddrive-v2 2>&1 | tail -5
+            elif [ -d /opt/leaddrive-v2/.next/standalone ]; then
+              echo "Starting standalone..."
+              cd /opt/leaddrive-v2/.next/standalone
+              PORT=3001 pm2 start server.js --name leaddrive-v2 2>&1 | tail -5
+            else
+              echo "Starting with next start..."
+              cd /opt/leaddrive-v2
+              PORT=3001 pm2 start npm --name leaddrive-v2 -- start 2>&1 | tail -5
+            fi
+            sleep 3
+            curl -sI http://localhost:3001/ 2>&1 | head -3
+            pm2 save 2>/dev/null
+          else
+            echo "leaddrive-v2 is running"
+          fi
+
+          echo "=== Final PM2 ==="
+          pm2 list
+          echo "=== DONE ==="
+          ENDSCRIPT
