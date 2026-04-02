@@ -1,0 +1,53 @@
+name: Fix Nginx Domains
+
+on:
+  workflow_dispatch:
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_deploy
+          chmod 600 ~/.ssh/id_deploy
+          ssh-keyscan -H ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts 2>/dev/null
+
+      - name: Fix Nginx
+        run: |
+          ssh -i ~/.ssh/id_deploy root@${{ secrets.SERVER_IP }} bash -s << 'SCRIPT'
+          echo "=== Current nginx sites ==="
+          ls -la /etc/nginx/sites-enabled/
+          echo ""
+
+          echo "=== Check if app.leaddrivecrm.org config exists ==="
+          cat /etc/nginx/sites-enabled/app.leaddrivecrm* 2>/dev/null || echo "No app.leaddrivecrm config found"
+          echo ""
+
+          echo "=== Current leaddrivecrm.org config ==="
+          cat /etc/nginx/sites-enabled/leaddrivecrm.org
+          echo ""
+
+          echo "=== Check DNS for app.leaddrivecrm.org ==="
+          dig +short app.leaddrivecrm.org 2>/dev/null || host app.leaddrivecrm.org 2>/dev/null || echo "dig/host not available"
+          echo ""
+
+          echo "=== Check what was on port 3002 (original landing page?) ==="
+          ss -tlnp | grep 3002 || echo "Nothing on port 3002"
+          echo ""
+
+          echo "=== Check leaddrive-cloud PM2 config ==="
+          cat /opt/leaddrive-cloud/ecosystem.config.js 2>/dev/null || cat /opt/leaddrive-cloud/package.json 2>/dev/null | head -20 || echo "No leaddrive-cloud config"
+          echo ""
+
+          echo "=== Check all SSL certs ==="
+          ls /etc/letsencrypt/live/ 2>/dev/null
+          echo ""
+
+          echo "=== Check if there's a cert for app.leaddrivecrm.org ==="
+          ls /etc/letsencrypt/live/app.leaddrivecrm.org/ 2>/dev/null || echo "No cert for app.leaddrivecrm.org"
+
+          echo "=== DONE ==="
+          SCRIPT
