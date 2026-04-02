@@ -7,6 +7,7 @@ jobs:
   diagnose:
     runs-on: ubuntu-latest
     timeout-minutes: 5
+
     steps:
       - name: Setup SSH
         run: |
@@ -17,35 +18,23 @@ jobs:
 
       - name: Diagnose
         run: |
-          ssh -i ~/.ssh/id_deploy root@${{ secrets.SERVER_IP }} bash -s << 'SCRIPT'
-          echo "=== HOSTNAME ==="
-          hostname
-          echo "=== UPTIME ==="
-          uptime
-          echo "=== DISK ==="
-          df -h /
-          echo "=== POSTGRESQL STATUS ==="
-          systemctl status postgresql --no-pager 2>/dev/null || echo "PostgreSQL systemd not found"
-          echo "=== POSTGRESQL RUNNING ==="
-          pg_isready 2>/dev/null || echo "pg_isready not available"
-          echo "=== DOCKER ==="
-          docker ps 2>/dev/null || echo "Docker not running"
-          echo "=== PM2 ==="
-          pm2 list 2>/dev/null || echo "PM2 not found"
-          echo "=== .ENV DATABASE_URL ==="
-          grep DATABASE_URL /opt/leaddrive-v2/.env 2>/dev/null || echo ".env not found"
-          echo "=== POSTGRESQL DATABASES ==="
-          sudo -u postgres psql -l 2>/dev/null || psql -U postgres -l 2>/dev/null || echo "Cannot list databases"
-          echo "=== POSTGRESQL TABLE COUNT ==="
-          sudo -u postgres psql -d leaddrive -c "SELECT schemaname, count(*) FROM pg_tables GROUP BY schemaname;" 2>/dev/null || echo "Cannot query tables"
-          echo "=== KEY TABLE ROW COUNTS ==="
-          sudo -u postgres psql -d leaddrive -c "SELECT 'companies' as tbl, count(*) FROM \"Company\" UNION ALL SELECT 'contacts', count(*) FROM \"Contact\" UNION ALL SELECT 'deals', count(*) FROM \"Deal\" UNION ALL SELECT 'users', count(*) FROM \"User\";" 2>/dev/null || echo "Cannot count rows"
-          echo "=== LISTENING PORTS ==="
-          ss -tlnp | grep -E '3001|5432|80|443'
-          echo "=== NGINX/CADDY ==="
-          systemctl status nginx --no-pager 2>/dev/null || echo "Nginx not found"
-          systemctl status caddy --no-pager 2>/dev/null || echo "Caddy not found"
-          echo "=== AUTHORIZED KEYS ==="
-          cat ~/.ssh/authorized_keys 2>/dev/null | wc -l
-          echo "=== DONE ==="
-          SCRIPT
+          ssh -i ~/.ssh/id_deploy root@${{ secrets.SERVER_IP }} << 'ENDSSH'
+            echo "=== Git status ==="
+            cd /opt/leaddrive-v2
+            git log --oneline -3
+            echo ""
+            echo "=== middleware.ts content ==="
+            cat src/middleware.ts
+            echo ""
+            echo "=== Nginx config ==="
+            nginx -T 2>&1 | grep -A 30 "leaddrivecrm"
+            echo ""
+            echo "=== PM2 status ==="
+            pm2 list
+            echo ""
+            echo "=== .next/server/middleware-manifest.json ==="
+            cat .next/server/middleware-manifest.json 2>/dev/null | head -20
+            echo ""
+            echo "=== Check if another middleware exists ==="
+            find /opt/leaddrive-v2 -name "middleware.*" -not -path "*/node_modules/*" -not -path "*/.next/*"
+          ENDSSH
