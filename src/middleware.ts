@@ -1,4 +1,3 @@
-import { auth } from "@/lib/auth"
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 
@@ -7,7 +6,6 @@ const MARKETING_HOST = "leaddrivecrm.org"
 
 const CRM_PATHS = ["/login", "/register", "/dashboard", "/settings", "/portal", "/forgot-password", "/reset-password", "/admin"]
 const MARKETING_PATHS = ["/home", "/plans", "/demo", "/contact", "/about", "/legal", "/landing"]
-const PUBLIC_PATHS = ["/home", "/plans", "/demo", "/contact", "/about", "/legal", "/landing", "/login", "/register", "/forgot-password", "/reset-password"]
 
 function buildCsp(nonce: string) {
   return [
@@ -21,13 +19,13 @@ function buildCsp(nonce: string) {
   ].join("; ")
 }
 
-export default auth((req) => {
+export function middleware(req: NextRequest) {
   const host = req.headers.get("host")?.replace(/:\d+$/, "") || ""
   const pathname = req.nextUrl.pathname
 
-  // Marketing domain: root → /home
+  // Marketing domain (leaddrivecrm.org): root → show landing page at /home
   if ((host === MARKETING_HOST || host === `www.${MARKETING_HOST}`) && pathname === "/") {
-    return NextResponse.redirect(new URL("/home", req.url))
+    return NextResponse.rewrite(new URL("/home", req.url))
   }
 
   // Marketing domain: redirect CRM routes to app subdomain
@@ -52,11 +50,6 @@ export default auth((req) => {
     }
   }
 
-  // Auth check: require login for non-public paths on app domain
-  if (host === APP_HOST && !PUBLIC_PATHS.some(p => pathname === p || pathname.startsWith(p + "/")) && !req.auth) {
-    return NextResponse.redirect(new URL("/login", req.url))
-  }
-
   // Security headers
   const nonce = crypto.randomUUID()
   const response = NextResponse.next()
@@ -71,7 +64,7 @@ export default auth((req) => {
   response.headers.set("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
 
   return response
-})
+}
 
 export const config = {
   matcher: ["/((?!_next/static|_next/image|favicon.ico|api/auth).*)"],
