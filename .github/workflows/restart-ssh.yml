@@ -1,0 +1,31 @@
+name: Restart SSH
+
+on:
+  workflow_dispatch:
+
+jobs:
+  restart:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_deploy
+          chmod 600 ~/.ssh/id_deploy
+          ssh-keyscan -H ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts 2>/dev/null
+
+      - name: Restart SSH and verify
+        run: |
+          ssh -i ~/.ssh/id_deploy root@${{ secrets.SERVER_IP }} bash -s << 'SCRIPT'
+          echo "=== Before restart ==="
+          ls -la /root/.ssh/authorized_keys
+          md5sum /root/.ssh/authorized_keys
+          echo "=== SSH config ==="
+          grep -v "^#" /etc/ssh/sshd_config | grep -v "^$"
+          echo "=== Restarting ssh service ==="
+          systemctl restart ssh || systemctl restart sshd || echo "Neither ssh nor sshd found"
+          echo "=== SSH service status ==="
+          systemctl status ssh --no-pager 2>/dev/null || systemctl status sshd --no-pager 2>/dev/null
+          echo "Done"
+          SCRIPT
