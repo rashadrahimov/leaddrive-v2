@@ -634,12 +634,12 @@ export default function LeadDetailPage() {
                 {generatedText.subject && (
                   <div>
                     <Label className="text-xs text-primary uppercase">{t("modalSubject") || "Subject"}</Label>
-                    <Input value={generatedText.subject} readOnly className="mt-1 bg-background" />
+                    <Input value={generatedText.subject} onChange={(e: any) => setGeneratedText({ ...generatedText, subject: e.target.value })} className="mt-1 bg-background" />
                   </div>
                 )}
                 <div>
                   <Label className="text-xs uppercase">{t("modalText") || "Text"}</Label>
-                  <Textarea value={generatedText.body} rows={8} className="mt-1 bg-background" readOnly />
+                  <Textarea value={generatedText.body} rows={8} onChange={(e: any) => setGeneratedText({ ...generatedText, body: e.target.value })} className="mt-1 bg-background" />
                 </div>
                 <div className="flex gap-2 justify-end">
                   <Button size="sm" variant="outline" onClick={() => navigator.clipboard.writeText(generatedText.body)} className="gap-1">

@@ -669,12 +669,12 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
                 {generatedText.subject && (
                   <div>
                     <Label className="text-xs text-primary">ТЕМА / SUBJECT</Label>
-                    <Input value={generatedText.subject} readOnly className="mt-1" />
+                    <Input value={generatedText.subject} onChange={(e: any) => setGeneratedText({ ...generatedText, subject: e.target.value })} className="mt-1" />
                   </div>
                 )}
                 <div>
                   <Label className="text-xs">ТЕКСТ ПИСЬМА</Label>
-                  <Textarea value={generatedText.body} rows={6} className="mt-1" readOnly />
+                  <Textarea value={generatedText.body} rows={6} onChange={(e: any) => setGeneratedText({ ...generatedText, body: e.target.value })} className="mt-1" />
                 </div>
                 <div className="flex gap-2 justify-center">
                   <Button size="sm" variant="outline" onClick={() => navigator.clipboard.writeText(generatedText.body)} className="gap-1">
