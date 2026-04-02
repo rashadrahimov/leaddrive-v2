@@ -1,0 +1,43 @@
+name: Debug Nginx
+
+on:
+  workflow_dispatch:
+
+jobs:
+  debug:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_deploy
+          chmod 600 ~/.ssh/id_deploy
+          ssh-keyscan -H ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts 2>/dev/null
+
+      - name: Debug
+        run: |
+          ssh -i ~/.ssh/id_deploy root@${{ secrets.SERVER_IP }} 'bash -s' << 'SCRIPT'
+          echo "=== All nginx configs ==="
+          grep -rn "default_server\|server_name\|listen " /etc/nginx/sites-enabled/ 2>&1
+          echo ""
+          echo "=== nginx.conf includes ==="
+          grep -n "include\|default_server\|server_name" /etc/nginx/nginx.conf 2>&1
+          echo ""
+          echo "=== Default config? ==="
+          cat /etc/nginx/sites-enabled/default 2>/dev/null || echo "No default"
+          echo ""
+          echo "=== Test with explicit Host header ==="
+          curl -sI -H "Host: app.leaddrivecrm.org" http://127.0.0.1/ 2>&1 | head -5
+          echo ""
+          echo "=== Test direct to 3001 ==="
+          curl -sI http://127.0.0.1:3001/ 2>&1 | head -3
+          echo ""
+          echo "=== Firewall rules ==="
+          iptables -L INPUT -n 2>&1 | head -20 || echo "No iptables"
+          ufw status 2>&1 || echo "No ufw"
+          echo ""
+          echo "=== Check if port 80 is truly open externally ==="
+          curl -sI http://leaddrivecrm.org 2>&1 | head -3
+          echo "=== DONE ==="
+          SCRIPT
