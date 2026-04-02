@@ -18,30 +18,31 @@ jobs:
       - name: Fix nginx configs
         run: |
           ssh -i ~/.ssh/id_deploy root@${{ secrets.SERVER_IP }} 'bash -s' << 'ENDSCRIPT'
-          echo "=== Update leaddrivecrm.org config: add root redirect to /home ==="
-          printf 'server {\n    listen 80;\n    server_name leaddrivecrm.org www.leaddrivecrm.org;\n    return 301 https://$host$request_uri;\n}\n\nserver {\n    listen 443 ssl;\n    server_name leaddrivecrm.org www.leaddrivecrm.org;\n\n    ssl_certificate /etc/letsencrypt/live/leaddrivecrm.org/fullchain.pem;\n    ssl_certificate_key /etc/letsencrypt/live/leaddrivecrm.org/privkey.pem;\n    include /etc/letsencrypt/options-ssl-nginx.conf;\n    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;\n\n    location = / {\n        return 302 /home;\n    }\n\n    location / {\n        proxy_pass http://127.0.0.1:3002;\n        proxy_http_version 1.1;\n        proxy_set_header Upgrade $http_upgrade;\n        proxy_set_header Connection "upgrade";\n        proxy_set_header Host $host;\n        proxy_set_header X-Real-IP $remote_addr;\n        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\n        proxy_set_header X-Forwarded-Proto $scheme;\n        proxy_cache_bypass $http_upgrade;\n        proxy_read_timeout 86400;\n        client_max_body_size 50M;\n    }\n}\n' > /etc/nginx/sites-available/leaddrivecrm.org
+          echo "=== Update leaddrivecrm.org config: use rewrite for root ==="
+          printf 'server {\n    listen 80;\n    server_name leaddrivecrm.org www.leaddrivecrm.org;\n    return 301 https://$host$request_uri;\n}\n\nserver {\n    listen 443 ssl;\n    server_name leaddrivecrm.org www.leaddrivecrm.org;\n\n    ssl_certificate /etc/letsencrypt/live/leaddrivecrm.org/fullchain.pem;\n    ssl_certificate_key /etc/letsencrypt/live/leaddrivecrm.org/privkey.pem;\n    include /etc/letsencrypt/options-ssl-nginx.conf;\n    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;\n\n    rewrite ^/$ /home redirect;\n\n    location / {\n        proxy_pass http://127.0.0.1:3002;\n        proxy_http_version 1.1;\n        proxy_set_header Upgrade $http_upgrade;\n        proxy_set_header Connection "upgrade";\n        proxy_set_header Host $host;\n        proxy_set_header X-Real-IP $remote_addr;\n        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\n        proxy_set_header X-Forwarded-Proto $scheme;\n        proxy_cache_bypass $http_upgrade;\n        proxy_read_timeout 86400;\n        client_max_body_size 50M;\n    }\n}\n' > /etc/nginx/sites-available/leaddrivecrm.org
 
           ln -sf /etc/nginx/sites-available/leaddrivecrm.org /etc/nginx/sites-enabled/leaddrivecrm.org
 
           echo "=== Test nginx config ==="
           nginx -t 2>&1
 
-          echo "=== Reload ==="
-          systemctl reload nginx
+          echo "=== Restart nginx (full restart, not reload) ==="
+          systemctl restart nginx
 
-          echo "=== Update leaddrive-v2 NEXTAUTH_URL ==="
-          sed -i 's|NEXTAUTH_URL=.*|NEXTAUTH_URL="https://app.leaddrivecrm.org"|' /opt/leaddrive-v2/.env
-          grep NEXTAUTH_URL /opt/leaddrive-v2/.env
-
-          echo "=== Restart leaddrive-v2 with new env ==="
-          pm2 restart leaddrive-v2 2>&1 | tail -3
-          sleep 3
+          echo "=== Verify config ==="
+          cat -n /etc/nginx/sites-available/leaddrivecrm.org
 
           echo "=== Test leaddrivecrm.org ==="
+          sleep 2
           curl -sI https://leaddrivecrm.org 2>&1 | head -5
           echo "---"
           curl -sI https://leaddrivecrm.org/home 2>&1 | head -3
-          echo "---"
-          curl -sI https://v2.leaddrivecrm.org 2>&1 | head -3
+
+          echo "=== Ensure leaddrive-v2 running ==="
+          if ! pm2 describe leaddrive-v2 > /dev/null 2>&1; then
+            cd /opt/leaddrive-v2 && PORT=3001 pm2 start npm --name leaddrive-v2 -- start 2>&1 | tail -3
+            sleep 3
+            pm2 save 2>/dev/null
+          fi
           echo "=== DONE ==="
           ENDSCRIPT
