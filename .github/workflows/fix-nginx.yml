@@ -6,7 +6,8 @@ on:
 jobs:
   fix:
     runs-on: ubuntu-latest
-    timeout-minutes: 3
+    timeout-minutes: 5
+
     steps:
       - name: Setup SSH
         run: |
@@ -15,43 +16,42 @@ jobs:
           chmod 600 ~/.ssh/id_deploy
           ssh-keyscan -H ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts 2>/dev/null
 
-      - name: Fix nginx configs
+      - name: Fix Nginx and SSL
         run: |
-          ssh -i ~/.ssh/id_deploy root@${{ secrets.SERVER_IP }} 'bash -s' << 'ENDSCRIPT'
-          echo "=== Remove ALL symlinks and copy as real files ==="
-          cd /etc/nginx/sites-enabled
+          ssh -i ~/.ssh/id_deploy root@${{ secrets.SERVER_IP }} << 'ENDSSH'
+            set -e
 
-          # Remove symlinks and copy actual files
-          for f in leaddrive-v2 leaddrivecrm.org leaddrive.cloud; do
-            if [ -L "$f" ]; then
-              target=$(readlink -f "$f")
-              rm "$f"
-              cp "$target" "$f"
-              echo "Converted symlink $f -> real file"
-            fi
-          done
+            echo "=== Creating app.leaddrivecrm.org nginx config ==="
+            cat > /etc/nginx/sites-available/app.leaddrivecrm.org << 'NGINX'
+            server {
+                listen 80;
+                server_name app.leaddrivecrm.org;
 
-          ls -la /etc/nginx/sites-enabled/
+                location / {
+                    proxy_pass http://127.0.0.1:3001;
+                    proxy_http_version 1.1;
+                    proxy_set_header Upgrade $http_upgrade;
+                    proxy_set_header Connection "upgrade";
+                    proxy_set_header Host $host;
+                    proxy_set_header X-Real-IP $remote_addr;
+                    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                    proxy_set_header X-Forwarded-Proto $scheme;
+                    proxy_cache_bypass $http_upgrade;
+                    proxy_read_timeout 86400;
+                    client_max_body_size 50M;
+                }
+            }
+          NGINX
 
-          echo "=== Verify leaddrivecrm.org is real file with correct content ==="
-          head -20 /etc/nginx/sites-enabled/leaddrivecrm.org
+            ln -sf /etc/nginx/sites-available/app.leaddrivecrm.org /etc/nginx/sites-enabled/
+            nginx -t && nginx -s reload
+            echo "Nginx reloaded"
 
-          echo "=== Check all server_name lines now ==="
-          grep -rn "server_name" /etc/nginx/sites-enabled/
+            echo "=== Getting SSL cert for app.leaddrivecrm.org ==="
+            certbot --nginx -d app.leaddrivecrm.org --non-interactive --agree-tos --email admin@leaddrivecrm.org 2>&1 | tail -10
+            echo "SSL done"
 
-          echo "=== Test nginx config ==="
-          nginx -t 2>&1
-
-          echo "=== Restart nginx ==="
-          systemctl restart nginx
-
-          echo "=== Test external ==="
-          sleep 2
-          curl -sI https://leaddrivecrm.org/ 2>&1 | head -5
-          echo "---"
-          curl -sI https://leaddrivecrm.org/home 2>&1 | head -3
-          echo "---"
-          curl -sI https://v2.leaddrivecrm.org/ 2>&1 | head -3
-
-          echo "=== DONE ==="
-          ENDSCRIPT
+            echo "=== Verify ==="
+            curl -sI http://localhost:3001/ | head -3
+            curl -skI https://app.leaddrivecrm.org/ | head -5
+          ENDSSH
