@@ -20,34 +20,27 @@ jobs:
           chmod 600 ~/.ssh/id_deploy
           ssh-keyscan -H ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts 2>/dev/null
 
-      - name: Deploy
+      - name: Deploy and SSL
         run: |
+          sleep 60
           ssh -i ~/.ssh/id_deploy root@${{ secrets.SERVER_IP }} << 'ENDSSH'
             set -e
+
+            # Restart leaddrive-v2
             cd /opt/leaddrive-v2
-            git fetch origin main
-            git reset --hard origin/main
-            echo "Commit: $(git log --oneline -1)"
-
-            rm -rf .next
-            npm ci --prefer-offline 2>&1 | tail -3
-            npx prisma generate 2>&1 | tail -2
-            npx prisma migrate deploy 2>&1 | tail -2 || true
-            NODE_OPTIONS='--max-old-space-size=1536' npx next build 2>&1 | tail -10
-
-            pm2 delete leaddrive-v2 2>/dev/null || true
-            fuser -k 3001/tcp 2>/dev/null || true
-            sleep 2
-            PORT=3001 pm2 start npm --name leaddrive-v2 -- start
+            pm2 restart leaddrive-v2 2>/dev/null || PORT=3001 pm2 start npm --name leaddrive-v2 -- start
             sleep 5
-            curl -sf http://localhost:3001 -o /dev/null && echo 'Health check OK' || echo 'Health check FAILED'
-            pm2 save
+            curl -sf http://localhost:3001 -o /dev/null && echo 'v2 OK' || echo 'v2 FAILED'
 
-            # Get SSL for app subdomain
-            nginx -s reload
-            certbot --nginx -d app.leaddrivecrm.org --non-interactive --agree-tos --email admin@leaddrivecrm.org --redirect 2>&1 | tail -5 || echo "SSL failed"
-            
+            # SSL for app subdomain - certbot standalone mode to avoid nginx conflicts
+            certbot certonly --standalone -d app.leaddrivecrm.org --non-interactive --agree-tos --email admin@leaddrivecrm.org --http-01-port 8888 2>&1 | tail -5 || true
+
+            # Try nginx plugin
+            certbot --nginx -d app.leaddrivecrm.org --non-interactive --agree-tos --email admin@leaddrivecrm.org --redirect 2>&1 | tail -5 || echo "nginx certbot failed"
+
+            nginx -s reload 2>/dev/null || true
+
             echo "=== Final ==="
-            curl -sI https://leaddrivecrm.org/ | head -3
             curl -skI https://app.leaddrivecrm.org/ | head -3
+            pm2 save
           ENDSSH
