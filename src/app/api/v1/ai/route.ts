@@ -170,7 +170,8 @@ async function handleSentiment(orgId: string, contextBlock: string, contextName:
       }],
     })
 
-    const text = response.content.filter(b => b.type === "text").map(b => b.text).join("")
+    let text = response.content.filter(b => b.type === "text").map(b => b.text).join("")
+    text = text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim()
     const data = JSON.parse(text)
     await logAiCall(orgId, `[sentiment] ${contextName}`, text.slice(0, 500), Date.now() - t0, "claude-haiku-4-5-20251001", response.usage)
     return NextResponse.json({ success: true, data })
@@ -212,7 +213,8 @@ async function handleTasks(orgId: string, contextBlock: string, contextName: str
       }],
     })
 
-    const text = response.content.filter(b => b.type === "text").map(b => b.text).join("")
+    let text = response.content.filter(b => b.type === "text").map(b => b.text).join("")
+    text = text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim()
     const data = JSON.parse(text)
     await logAiCall(orgId, `[tasks] ${contextName}`, text.slice(0, 500), Date.now() - t0, "claude-haiku-4-5-20251001", response.usage)
     return NextResponse.json({ success: true, data })
@@ -293,8 +295,8 @@ async function handleText(orgId: string, contextBlock: string, contextName: stri
 
   try {
     const prompt = textType === "Email"
-      ? `Write a business email for ${contactName} from ${contextName}.\nTone: ${tone}.\n${instructions ? `Additional instructions: ${instructions}\n` : ""}\nClient context:\n${contextBlock}\n\nRespond with JSON (all text values in ${langName}):\n{"subject": "email subject", "body": "email body", "textType": "Email", "tone": "${tone}"}`
-      : `Write an SMS message for ${contactName} from ${contextName}.\nTone: ${tone}.\n${instructions ? `Instructions: ${instructions}\n` : ""}\nContext:\n${contextBlock}\n\nRespond with JSON (all text values in ${langName}):\n{"subject": "", "body": "SMS text (up to 160 chars)", "textType": "SMS", "tone": "${tone}"}`
+      ? `Write a business email for ${contactName} from ${contextName}.\nTone: ${tone}.\n${instructions ? `IMPORTANT — the user wants you to naturally weave this idea into the email (do NOT copy-paste it literally, rephrase it elegantly and make it part of the message flow): "${instructions}"\n` : ""}\nClient context:\n${contextBlock}\n\nRespond with JSON (all text values in ${langName}):\n{"subject": "email subject", "body": "email body", "textType": "Email", "tone": "${tone}"}`
+      : `Write an SMS message for ${contactName} from ${contextName}.\nTone: ${tone}.\n${instructions ? `IMPORTANT — naturally include this idea (rephrase elegantly, don't copy literally): "${instructions}"\n` : ""}\nContext:\n${contextBlock}\n\nRespond with JSON (all text values in ${langName}):\n{"subject": "", "body": "SMS text (up to 160 chars)", "textType": "SMS", "tone": "${tone}"}`
 
     const t0 = Date.now()
     const response = await client.messages.create({
@@ -305,7 +307,9 @@ async function handleText(orgId: string, contextBlock: string, contextName: stri
       messages: [{ role: "user", content: prompt }],
     })
 
-    const text = response.content.filter(b => b.type === "text").map(b => b.text).join("")
+    let text = response.content.filter(b => b.type === "text").map(b => b.text).join("")
+    // Strip markdown code fences if Claude wraps response in ```json ... ```
+    text = text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim()
     const data = JSON.parse(text)
     await logAiCall(orgId, `[text-${textType}] ${contextName}`, text.slice(0, 500), Date.now() - t0, "claude-haiku-4-5-20251001", response.usage)
     return NextResponse.json({ success: true, data })
@@ -319,17 +323,17 @@ function textFallback(textType: string, tone: string, instructions: string, cont
   const fb: Record<string, { subject: string; body: string; sms: string }> = {
     Russian: {
       subject: "Деловое предложение от нашей компании",
-      body: `Уважаемый(ая) ${contactName},\n\nНадеюсь, что это письмо застает вас в добром здравии.\n\nМы с интересом следим за деятельностью ${contextName} и были бы рады установить деловые отношения. Наша компания предоставляет решения${industry ? ` в области ${industry}` : ""}.\n\n${instructions ? `${instructions}\n\n` : ""}С уважением,\nGüvən Technology LLC`,
+      body: `Уважаемый(ая) ${contactName},\n\nНадеюсь, что это письмо застает вас в добром здравии.\n\nМы с интересом следим за деятельностью ${contextName} и были бы рады установить деловые отношения. Наша компания предоставляет решения${industry ? ` в области ${industry}` : ""}.${instructions ? `\n\nТакже хотим отметить: ${instructions}.` : ""}\n\nС уважением,\nGüvən Technology LLC`,
       sms: `Здравствуйте, ${contactName}! Güvən Technology предлагает сотрудничество${industry ? ` в сфере ${industry}` : ""}. Удобно перезвонить? ${instructions || ""}`,
     },
     Azerbaijani: {
       subject: "Şirkətimizdən işgüzar təklif",
-      body: `Hörmətli ${contactName},\n\nÜmid edirik ki, bu məktub sizi yaxşı vəziyyətdə tapır.\n\n${contextName} şirkətinin fəaliyyətini maraqla izləyirik və işgüzar əlaqələr qurmaqdan məmnun olarıq. Şirkətimiz ${industry ? `${industry} sahəsində ` : ""}həllər təqdim edir.\n\n${instructions ? `${instructions}\n\n` : ""}Hörmətlə,\nGüvən Technology LLC`,
+      body: `Hörmətli ${contactName},\n\nÜmid edirik ki, bu məktub sizi yaxşı vəziyyətdə tapır.\n\n${contextName} şirkətinin fəaliyyətini maraqla izləyirik və işgüzar əlaqələr qurmaqdan məmnun olarıq. Şirkətimiz ${industry ? `${industry} sahəsində ` : ""}həllər təqdim edir.${instructions ? `\n\nHəmçinin qeyd etmək istərdik: ${instructions}.` : ""}\n\nHörmətlə,\nGüvən Technology LLC`,
       sms: `Salam, ${contactName}! Güvən Technology ${industry ? `${industry} sahəsində ` : ""}əməkdaşlıq təklif edir. Geri zəng etmək münasibdir? ${instructions || ""}`,
     },
     English: {
       subject: "Business proposal from our company",
-      body: `Dear ${contactName},\n\nI hope this email finds you well.\n\nWe have been following ${contextName}'s activities with great interest and would be glad to establish a business relationship. Our company provides solutions${industry ? ` in ${industry}` : ""}.\n\n${instructions ? `${instructions}\n\n` : ""}Best regards,\nGüvən Technology LLC`,
+      body: `Dear ${contactName},\n\nI hope this email finds you well.\n\nWe have been following ${contextName}'s activities with great interest and would be glad to establish a business relationship. Our company provides solutions${industry ? ` in ${industry}` : ""}.${instructions ? `\n\nWe would also like to mention: ${instructions}.` : ""}\n\nBest regards,\nGüvən Technology LLC`,
       sms: `Hello, ${contactName}! Güvən Technology offers collaboration${industry ? ` in ${industry}` : ""}. Good time to call back? ${instructions || ""}`,
     },
   }
