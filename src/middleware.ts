@@ -147,9 +147,9 @@ const authMiddleware = auth((req) => {
     return withCspHeaders(NextResponse.redirect(loginUrl), nonce)
   }
 
-  // Redirect root to a named dashboard route to avoid Next.js 16 standalone InvariantError on "/"
+  // Redirect root to dashboard to avoid Next.js 16 standalone InvariantError on "/"
   if (pathname === "/") {
-    return withCspHeaders(NextResponse.redirect(new URL("/companies", req.url)), nonce)
+    return withCspHeaders(NextResponse.redirect(new URL("/dashboard", req.url)), nonce)
   }
 
   // Inject organization context + nonce into headers for server components

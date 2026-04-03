@@ -26,7 +26,7 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { module: "core", href: "/", icon: LayoutDashboard, tKey: "dashboard", group: "CRM" },
+  { module: "core", href: "/dashboard", icon: LayoutDashboard, tKey: "dashboard", group: "CRM" },
   { module: "core", href: "/companies", icon: Building2, tKey: "companies", group: "CRM" },
   { module: "core", href: "/contacts", icon: Users, tKey: "contacts", group: "CRM" },
   { module: "deals", href: "/deals", icon: Handshake, tKey: "deals", group: "CRM" },
