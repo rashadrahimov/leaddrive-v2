@@ -40,6 +40,7 @@ model Organization {
   offers      Offer[]
   activities  Activity[]
   webhooks    Webhook[]
+  apiKeys     ApiKey[]
   auditLogs   AuditLog[]
 
   planRequests PlanRequest[]
@@ -133,6 +134,24 @@ model Webhook {
   createdAt      DateTime @default(now())
 
   @@map("webhooks")
+}
+
+model ApiKey {
+  id             String    @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  name           String
+  keyHash        String
+  keyPrefix      String    // first 8 chars for display "ld_abc12..."
+  scopes         String[]  // ["read:companies", "write:deals", "read:contacts"]
+  lastUsedAt     DateTime?
+  expiresAt      DateTime?
+  isActive       Boolean   @default(true)
+  createdBy      String
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@map("api_keys")
 }
 
 model AuditLog {

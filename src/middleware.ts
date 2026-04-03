@@ -132,6 +132,11 @@ const authMiddleware = auth((req) => {
     return withCspHeaders(NextResponse.next(), nonce)
   }
 
+  // Allow API key authenticated requests (Bearer ld_...) — auth checked in api-auth.ts
+  if (pathname.startsWith("/api/") && req.headers.get("authorization")?.startsWith("Bearer ld_")) {
+    return withCspHeaders(NextResponse.next(), nonce)
+  }
+
   // Check authentication — unauthenticated users go to login
   if (!req.auth) {
     if (pathname === "/") {

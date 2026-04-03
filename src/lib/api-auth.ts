@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { auth } from "./auth"
 import { prisma } from "./prisma"
 import { checkPermission, resolveModuleFromPath, methodToAction, type Role, type Module, type Action } from "./permissions"
+import crypto from "crypto"
 
 // In-memory cache for passwordChangedAt checks (avoids DB query on every request)
 const pwCheckCache = new Map<string, { checkedAt: number; changedAt: number | null }>()
@@ -38,13 +39,50 @@ export async function getSession(req: NextRequest): Promise<AuthResult | null> {
 }
 
 /**
- * Get organizationId from authenticated session.
- * SECURITY: Uses session JWT only — ignores x-organization-id header
- * to prevent cross-tenant data access via header injection.
+ * Authenticate via API key (Authorization: Bearer ld_...).
+ * Returns AuthResult if valid, null otherwise.
+ * Updates lastUsedAt on successful auth.
+ */
+async function getApiKeyAuth(req: NextRequest): Promise<(AuthResult & { scopes: string[] }) | null> {
+  const authHeader = req.headers.get("authorization")
+  if (!authHeader?.startsWith("Bearer ld_")) return null
+
+  const rawKey = authHeader.slice(7) // Remove "Bearer "
+  const keyHash = crypto.createHash("sha256").update(rawKey).digest("hex")
+
+  try {
+    const apiKey = await prisma.apiKey.findFirst({
+      where: { keyHash, isActive: true },
+      include: { organization: true },
+    })
+    if (!apiKey) return null
+    if (apiKey.expiresAt && apiKey.expiresAt < new Date()) return null
+
+    // Update lastUsedAt (non-blocking)
+    prisma.apiKey.update({ where: { id: apiKey.id }, data: { lastUsedAt: new Date() } }).catch(() => {})
+
+    return {
+      orgId: apiKey.organizationId,
+      userId: apiKey.createdBy,
+      role: "admin" as Role,
+      email: "",
+      name: `API Key: ${apiKey.name}`,
+      scopes: apiKey.scopes,
+    }
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Get organizationId from authenticated session or API key.
  */
 export async function getOrgId(req: NextRequest): Promise<string | null> {
   const session = await getSession(req)
-  return session?.orgId || null
+  if (session?.orgId) return session.orgId
+
+  const apiKeyAuth = await getApiKeyAuth(req)
+  return apiKeyAuth?.orgId || null
 }
 
 /**
@@ -64,8 +102,23 @@ export async function requireAuth(
   module?: Module | string,
   action?: Action
 ): Promise<AuthResult | NextResponse> {
+  // Try session auth first, then API key
   const rawSession = await auth()
   if (!rawSession?.user) {
+    // Fallback to API key auth
+    const apiKeyAuth = await getApiKeyAuth(req)
+    if (apiKeyAuth) {
+      // Check scope permission for API key
+      const resolvedModule = module || resolveModuleFromPath(new URL(req.url).pathname)
+      const resolvedAction = action || methodToAction(req.method)
+      if (resolvedModule) {
+        const requiredScope = `${resolvedAction === "read" ? "read" : "write"}:${resolvedModule}`
+        if (!apiKeyAuth.scopes.includes(requiredScope) && !apiKeyAuth.scopes.includes(`write:${resolvedModule}`)) {
+          return NextResponse.json({ error: "Forbidden", message: `API key missing scope: ${requiredScope}` }, { status: 403 })
+        }
+      }
+      return apiKeyAuth
+    }
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 

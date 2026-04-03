@@ -5,7 +5,9 @@ import { useTranslations } from "next-intl"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Shield, ShieldCheck, ShieldOff, Copy, Check, Loader2, ArrowLeft, Smartphone } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Shield, ShieldCheck, ShieldOff, Copy, Check, Loader2, ArrowLeft, Smartphone, Key, Plus, Trash2, Eye, EyeOff } from "lucide-react"
 import Link from "next/link"
 
 export default function SecuritySettingsPage() {
@@ -22,6 +24,22 @@ export default function SecuritySettingsPage() {
   const [processing, setProcessing] = useState(false)
   const [copied, setCopied] = useState(false)
 
+  // API Keys state
+  const [apiKeys, setApiKeys] = useState<any[]>([])
+  const [showNewKey, setShowNewKey] = useState(false)
+  const [newKeyName, setNewKeyName] = useState("")
+  const [newKeyScopes, setNewKeyScopes] = useState<string[]>(["read:companies", "read:contacts", "read:deals"])
+  const [newKeyExpiry, setNewKeyExpiry] = useState("90")
+  const [generatedKey, setGeneratedKey] = useState("")
+  const [keyCopied, setKeyCopied] = useState(false)
+  const [keyLoading, setKeyLoading] = useState(false)
+
+  const fetchApiKeys = () => {
+    fetch("/api/v1/api-keys").then(r => r.json()).then(j => {
+      if (j.success) setApiKeys(j.data)
+    })
+  }
+
   useEffect(() => {
     fetch("/api/v1/auth/2fa")
       .then(r => r.json())
@@ -29,6 +47,7 @@ export default function SecuritySettingsPage() {
         if (j.success) setEnabled(j.data.enabled)
       })
       .finally(() => setLoading(false))
+    fetchApiKeys()
   }, [])
 
   const handleSetup = async () => {
@@ -305,6 +324,155 @@ export default function SecuritySettingsPage() {
           </CardContent>
         </Card>
       )}
+      {/* ═══ API Keys Section ═══ */}
+      <div className="border-t pt-6 mt-6">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-xl bg-amber-100 flex items-center justify-center">
+              <Key className="h-5 w-5 text-amber-600" />
+            </div>
+            <div>
+              <h2 className="text-lg font-bold">API Keys</h2>
+              <p className="text-sm text-muted-foreground">Manage API keys for external integrations</p>
+            </div>
+          </div>
+          <Button onClick={() => { setShowNewKey(true); setGeneratedKey(""); setNewKeyName("") }} className="gap-2">
+            <Plus className="h-4 w-4" /> New API Key
+          </Button>
+        </div>
+
+        {/* Generate new key form */}
+        {showNewKey && (
+          <Card className="border-amber-200 bg-amber-50/50 mb-4">
+            <CardContent className="p-4 space-y-3">
+              {generatedKey ? (
+                <div className="space-y-3">
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                    <p className="text-sm font-semibold text-green-800 mb-1">Key created! Copy it now — it won't be shown again.</p>
+                    <div className="flex items-center gap-2 mt-2">
+                      <code className="text-xs font-mono bg-white rounded px-2 py-1.5 flex-1 overflow-hidden text-ellipsis border">
+                        {generatedKey}
+                      </code>
+                      <Button variant="outline" size="sm" onClick={() => {
+                        navigator.clipboard.writeText(generatedKey)
+                        setKeyCopied(true)
+                        setTimeout(() => setKeyCopied(false), 2000)
+                      }}>
+                        {keyCopied ? <Check className="h-3.5 w-3.5 text-green-500" /> : <Copy className="h-3.5 w-3.5" />}
+                      </Button>
+                    </div>
+                  </div>
+                  <Button variant="outline" onClick={() => { setShowNewKey(false); setGeneratedKey("") }} className="w-full">
+                    Done
+                  </Button>
+                </div>
+              ) : (
+                <>
+                  <div>
+                    <Label className="text-xs">Key Name</Label>
+                    <Input value={newKeyName} onChange={(e: any) => setNewKeyName(e.target.value)} placeholder="e.g. My Integration" className="mt-1" />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Scopes</Label>
+                    <div className="flex flex-wrap gap-1.5 mt-1">
+                      {["read:companies", "write:companies", "read:contacts", "write:contacts", "read:deals", "write:deals", "read:leads", "write:leads", "read:invoices", "write:invoices", "read:tasks", "write:tasks"].map(scope => (
+                        <button
+                          key={scope}
+                          onClick={() => setNewKeyScopes(prev => prev.includes(scope) ? prev.filter(s => s !== scope) : [...prev, scope])}
+                          className={`text-xs px-2 py-1 rounded-full border transition-colors ${newKeyScopes.includes(scope) ? "bg-primary text-primary-foreground border-primary" : "bg-muted/50 hover:bg-muted"}`}
+                        >
+                          {scope}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <Label className="text-xs">Expires in</Label>
+                    <select value={newKeyExpiry} onChange={(e: any) => setNewKeyExpiry(e.target.value)} className="mt-1 w-full border rounded-md p-2 text-sm">
+                      <option value="30">30 days</option>
+                      <option value="90">90 days</option>
+                      <option value="365">1 year</option>
+                      <option value="">Never</option>
+                    </select>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button variant="outline" onClick={() => setShowNewKey(false)}>Cancel</Button>
+                    <Button
+                      disabled={!newKeyName || newKeyScopes.length === 0 || keyLoading}
+                      onClick={async () => {
+                        setKeyLoading(true)
+                        try {
+                          const res = await fetch("/api/v1/api-keys", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ name: newKeyName, scopes: newKeyScopes, expiresInDays: newKeyExpiry ? parseInt(newKeyExpiry) : null }),
+                          })
+                          const json = await res.json()
+                          if (json.success) {
+                            setGeneratedKey(json.data.key)
+                            fetchApiKeys()
+                          }
+                        } catch {} finally { setKeyLoading(false) }
+                      }}
+                      className="flex-1 gap-2"
+                    >
+                      {keyLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Key className="h-4 w-4" />}
+                      Generate Key
+                    </Button>
+                  </div>
+                </>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Existing keys list */}
+        {apiKeys.length === 0 && !showNewKey ? (
+          <Card className="border-dashed">
+            <CardContent className="p-8 text-center text-muted-foreground">
+              <Key className="h-8 w-8 mx-auto mb-2 opacity-30" />
+              <p className="text-sm">No API keys yet. Create one to integrate with external systems.</p>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="space-y-2">
+            {apiKeys.map(key => (
+              <Card key={key.id} className={!key.isActive ? "opacity-50" : ""}>
+                <CardContent className="p-4 flex items-center justify-between">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium text-sm">{key.name}</span>
+                      <Badge variant={key.isActive ? "default" : "secondary"} className="text-[10px]">
+                        {key.isActive ? "Active" : "Revoked"}
+                      </Badge>
+                    </div>
+                    <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
+                      <code className="bg-muted rounded px-1.5 py-0.5">{key.keyPrefix}...</code>
+                      <span>{key.scopes?.length || 0} scopes</span>
+                      {key.expiresAt && <span>Expires: {new Date(key.expiresAt).toLocaleDateString()}</span>}
+                      {key.lastUsedAt && <span>Last used: {new Date(key.lastUsedAt).toLocaleDateString()}</span>}
+                    </div>
+                  </div>
+                  {key.isActive && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                      onClick={async () => {
+                        if (!confirm("Revoke this API key? This cannot be undone.")) return
+                        await fetch(`/api/v1/api-keys/${key.id}`, { method: "DELETE" })
+                        fetchApiKeys()
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   )
 }
