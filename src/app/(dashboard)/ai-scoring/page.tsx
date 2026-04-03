@@ -264,7 +264,7 @@ export default function AILeadScoringPage() {
                       onClick={() => scoreOne(lead.id)}
                     >
                       {scoringId === lead.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <RefreshCw className="h-3 w-3" />}
-                      Пересчитать
+                      {t("recalculate")}
                     </Button>
                   </td>
                 </tr>
