@@ -76,13 +76,26 @@ async function getApiKeyAuth(req: NextRequest): Promise<(AuthResult & { scopes: 
 
 /**
  * Get organizationId from authenticated session or API key.
+ * For API key: also validates scopes against the request method and path.
  */
 export async function getOrgId(req: NextRequest): Promise<string | null> {
   const session = await getSession(req)
   if (session?.orgId) return session.orgId
 
   const apiKeyAuth = await getApiKeyAuth(req)
-  return apiKeyAuth?.orgId || null
+  if (!apiKeyAuth) return null
+
+  // Enforce scope check for API key requests
+  const resolvedModule = resolveModuleFromPath(new URL(req.url).pathname)
+  const resolvedAction = methodToAction(req.method)
+  if (resolvedModule) {
+    const requiredScope = `${resolvedAction === "read" ? "read" : "write"}:${resolvedModule}`
+    if (!apiKeyAuth.scopes.includes(requiredScope) && !apiKeyAuth.scopes.includes(`write:${resolvedModule}`)) {
+      return null // Deny — missing scope
+    }
+  }
+
+  return apiKeyAuth.orgId
 }
 
 /**
