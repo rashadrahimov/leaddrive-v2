@@ -41,8 +41,12 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     let dbInfo = null
     try { dbInfo = await prisma.$queryRawUnsafe(`SELECT current_database(), current_schema(), current_user`) } catch {}
     let tables = null
-    try { tables = await prisma.$queryRawUnsafe(`SELECT table_name FROM information_schema.tables WHERE table_schema='public' AND table_name LIKE '%competitor%'`) } catch {}
-    return NextResponse.json({ error: e?.message || "Internal server error", _db: dbInfo, _tables: tables }, { status: 500 })
+    try { tables = await prisma.$queryRawUnsafe(`SELECT table_name FROM information_schema.tables WHERE table_schema='public' ORDER BY table_name`) } catch (te: any) { tables = te?.message }
+    let pgTables = null
+    try { pgTables = await prisma.$queryRawUnsafe(`SELECT tablename FROM pg_tables WHERE schemaname='public' AND tablename LIKE '%deal%' ORDER BY tablename`) } catch (pe: any) { pgTables = pe?.message }
+    let tableCount = null
+    try { tableCount = await prisma.$queryRawUnsafe(`SELECT COUNT(*)::int as cnt FROM pg_tables WHERE schemaname='public'`) } catch {}
+    return NextResponse.json({ error: e?.message || "Internal server error", _db: dbInfo, _tables: tables, _pgTables: pgTables, _tableCount: tableCount }, { status: 500 })
   }
 }
 
