@@ -1,7 +1,6 @@
 "use client"
 
 import { Fragment, useState } from "react"
-import { motion } from "framer-motion"
 import Link from "next/link"
 import { APP_URL } from "@/lib/domains"
 import { plans, faqs } from "@/lib/marketing-data"
@@ -102,22 +101,12 @@ export default function PricingPage() {
       {/* Hero */}
       <section className="bg-gradient-to-b from-white via-[#F3F4F7] to-white pt-20 pb-16">
         <div className="mx-auto max-w-5xl px-4 lg:px-8 text-center">
-          <motion.h1
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="text-4xl lg:text-5xl font-bold text-[#001E3C]"
-          >
+          <h1 className="text-4xl lg:text-5xl font-bold text-[#001E3C]">
             Şəffaf <span className="text-[#0176D3]">qiymətlər</span>
-          </motion.h1>
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.1 }}
-            className="mt-4 text-lg text-[#001E3C]/60 max-w-2xl mx-auto"
-          >
+          </h1>
+          <p className="mt-4 text-lg text-[#001E3C]/60 max-w-2xl mx-auto">
             Pulsuz sınaq ilə başlayın. Gizli ödənişlər yoxdur. İstədiyiniz zaman yüksəldin.
-          </motion.p>
+          </p>
         </div>
       </section>
 
@@ -126,11 +115,8 @@ export default function PricingPage() {
         <div className="mx-auto max-w-6xl px-4 lg:px-8">
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {plans.map((plan, i) => (
-              <motion.div
+              <div
                 key={plan.id}
-                initial={{ opacity: 0, y: 24 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: i * 0.08 }}
                 className={cn(
                   "relative rounded-xl border p-6 flex flex-col bg-white",
                   plan.popular
@@ -169,7 +155,7 @@ export default function PricingPage() {
                 >
                   {plan.id === "enterprise" ? "Əlaqə saxlayın" : "Demo tələb et"}
                 </Link>
-              </motion.div>
+              </div>
             ))}
           </div>
         </div>
