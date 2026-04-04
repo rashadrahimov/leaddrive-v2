@@ -130,6 +130,8 @@ export default function InboxPage() {
   const [contactsLoaded, setContactsLoaded] = useState(false)
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const messagesContainerRef = useRef<HTMLDivElement>(null)
+  const userScrolledUpRef = useRef(false)
 
   const fetchInbox = async () => {
     try {
@@ -179,19 +181,32 @@ export default function InboxPage() {
     }
   }, [showCompose])
 
-  const prevMsgCountRef = useRef(0)
+  // Detect if user scrolled up — suppress auto-scroll while reading history
+  useEffect(() => {
+    const container = messagesContainerRef.current
+    if (!container) return
+    const handleScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = container
+      // "At bottom" = within 80px of the end
+      userScrolledUpRef.current = scrollHeight - scrollTop - clientHeight > 80
+    }
+    container.addEventListener("scroll", handleScroll)
+    return () => container.removeEventListener("scroll", handleScroll)
+  }, [selected])
+
   const prevSelectedRef = useRef<number | null>(null)
   useEffect(() => {
     if (selected === null) return
-    const convo = filtered[selected]
-    const msgCount = convo?.messages?.length || 0
     const switchedConvo = prevSelectedRef.current !== selected
-    // Scroll only when: switching conversation, or new messages arrived
-    if (switchedConvo || msgCount > prevMsgCountRef.current) {
+    if (switchedConvo) {
+      // Always scroll to bottom when switching conversations
+      userScrolledUpRef.current = false
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+    } else if (!userScrolledUpRef.current) {
+      // Only auto-scroll if user hasn't scrolled up
       messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
     }
     prevSelectedRef.current = selected
-    prevMsgCountRef.current = msgCount
   }, [selected, conversations])
 
   /* -- Reply -- */
@@ -550,7 +565,7 @@ export default function InboxPage() {
               </div>
 
               {/* Messages */}
-              <div className="flex-1 overflow-y-auto p-4 space-y-3">
+              <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 space-y-3">
                 {selectedConvo.messages.slice().reverse().map(msg => (
                   <div key={msg.id} className={cn("flex", msg.direction === "outbound" ? "justify-end" : "justify-start")}>
                     <div className={cn(
