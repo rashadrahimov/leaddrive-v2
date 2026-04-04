@@ -36,11 +36,17 @@ export function QuickActionBar({ dealId, orgId, onActivityAdded, onTaskAdded, la
     if (!text.trim()) return
     setSubmitting(true)
     try {
-      if (activeType === "note") {
-        await fetch(`/api/v1/deals/${dealId}/activities`, {
+      if (activeType === "note" || activeType === "email") {
+        await fetch("/api/v1/activities", {
           method: "POST",
           headers,
-          body: JSON.stringify({ type: "note", subject: text.trim(), description: "" }),
+          body: JSON.stringify({
+            type: activeType,
+            subject: text.trim(),
+            description: "",
+            relatedType: "deal",
+            relatedId: dealId,
+          }),
         })
         onActivityAdded?.()
       } else if (activeType === "task") {
@@ -50,13 +56,6 @@ export function QuickActionBar({ dealId, orgId, onActivityAdded, onTaskAdded, la
           body: JSON.stringify({ title: text.trim() }),
         })
         onTaskAdded?.()
-      } else if (activeType === "email") {
-        await fetch(`/api/v1/deals/${dealId}/activities`, {
-          method: "POST",
-          headers,
-          body: JSON.stringify({ type: "email", subject: text.trim(), description: "" }),
-        })
-        onActivityAdded?.()
       }
       setText("")
     } finally {

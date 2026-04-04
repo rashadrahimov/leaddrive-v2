@@ -149,17 +149,27 @@ export function DealSidebar({ deal, orgId, offersCount, invoicesCount, onEdit, f
           count={offersCount}
           defaultOpen={offersCount > 0}
         >
-          <p className="text-xs text-muted-foreground">{offersCount > 0 ? `${offersCount} ${t("offers").toLowerCase()}` : tc("noData")}</p>
+          <div className="space-y-1.5">
+            {offersCount > 0 && <p className="text-xs text-muted-foreground">{offersCount} {t("offers").toLowerCase()}</p>}
+            <a href={`/offers?dealId=${deal.id}`} className="inline-flex items-center gap-1 text-xs text-primary hover:underline">
+              <FileText className="h-3 w-3" /> {tc("viewAll")}
+            </a>
+          </div>
         </AccordionItem>
 
         {/* Invoices */}
         <AccordionItem
-          title="Счета"
+          title={tc("invoicesTitle")}
           icon={<Receipt className="h-3.5 w-3.5" />}
           count={invoicesCount}
           defaultOpen={invoicesCount > 0}
         >
-          <p className="text-xs text-muted-foreground">{invoicesCount > 0 ? `${invoicesCount}` : tc("noData")}</p>
+          <div className="space-y-1.5">
+            {invoicesCount > 0 && <p className="text-xs text-muted-foreground">{invoicesCount}</p>}
+            <a href={`/invoices?dealId=${deal.id}`} className="inline-flex items-center gap-1 text-xs text-primary hover:underline">
+              <Receipt className="h-3 w-3" /> {tc("viewAll")}
+            </a>
+          </div>
         </AccordionItem>
 
         {/* Team */}
@@ -169,21 +179,37 @@ export function DealSidebar({ deal, orgId, offersCount, invoicesCount, onEdit, f
           count={deal.teamMembers?.length || 0}
           defaultOpen={(deal.teamMembers?.length || 0) > 0}
         >
-          {deal.teamMembers?.length > 0 ? (
-            <div className="space-y-1.5">
-              {deal.teamMembers.map(m => (
-                <div key={m.id} className="flex items-center gap-2 py-1">
+          <div className="space-y-1.5">
+            {deal.teamMembers?.length > 0 ? (
+              deal.teamMembers.map(m => (
+                <div key={m.id} className="flex items-center gap-2 py-1 group">
                   <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-semibold flex-shrink-0">
                     {(m.user.name || m.user.email || "?")[0].toUpperCase()}
                   </div>
                   <span className="text-xs truncate flex-1">{m.user.name || m.user.email}</span>
                   <Badge variant="outline" className="text-[10px] h-4 px-1.5">{m.role}</Badge>
+                  <button
+                    className="h-5 w-5 rounded flex items-center justify-center text-muted-foreground hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={async () => {
+                      await fetch(`/api/v1/deals/${deal.id}/team`, {
+                        method: "DELETE",
+                        headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": orgId } : {}) },
+                        body: JSON.stringify({ userId: m.userId }),
+                      })
+                      fetchDeal()
+                    }}
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
                 </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-xs text-muted-foreground">{tc("noTeamMembers")}</p>
-          )}
+              ))
+            ) : (
+              <p className="text-xs text-muted-foreground">{tc("noTeamMembers")}</p>
+            )}
+            <Button variant="outline" size="sm" className="w-full gap-1 h-7 text-[10px]" onClick={() => onEdit()}>
+              <Plus className="h-3 w-3" /> {tc("addMember")}
+            </Button>
+          </div>
         </AccordionItem>
 
         {/* Contact Roles */}
@@ -193,23 +219,40 @@ export function DealSidebar({ deal, orgId, offersCount, invoicesCount, onEdit, f
           count={deal.contactRoles?.length || 0}
           defaultOpen={(deal.contactRoles?.length || 0) > 0}
         >
-          {deal.contactRoles?.length > 0 ? (
-            <div className="space-y-1.5">
-              {deal.contactRoles.map(cr => (
-                <div key={cr.id} className="flex items-center gap-2 py-1">
+          <div className="space-y-1.5">
+            {deal.contactRoles?.length > 0 ? (
+              deal.contactRoles.map(cr => (
+                <div key={cr.id} className="flex items-center gap-2 py-1 group">
                   <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-semibold flex-shrink-0">
                     {(cr.contact.fullName || "?")[0]}
                   </div>
                   <div className="flex-1 min-w-0">
                     <span className="text-xs font-medium truncate block">{cr.contact.fullName}</span>
+                    {cr.contact.position && <span className="text-[10px] text-muted-foreground truncate block">{cr.contact.position}</span>}
                   </div>
                   <Badge variant="outline" className="text-[10px] h-4 px-1.5">{cr.role}</Badge>
+                  <button
+                    className="h-5 w-5 rounded flex items-center justify-center text-muted-foreground hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={async () => {
+                      await fetch(`/api/v1/deals/${deal.id}/contact-roles`, {
+                        method: "DELETE",
+                        headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": orgId } : {}) },
+                        body: JSON.stringify({ contactId: cr.contactId }),
+                      })
+                      fetchDeal()
+                    }}
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
                 </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-xs text-muted-foreground">{tc("noContactRoles")}</p>
-          )}
+              ))
+            ) : (
+              <p className="text-xs text-muted-foreground">{tc("noContactRoles")}</p>
+            )}
+            <Button variant="outline" size="sm" className="w-full gap-1 h-7 text-[10px]" onClick={() => onEdit()}>
+              <Plus className="h-3 w-3" /> {tc("addContactRole")}
+            </Button>
+          </div>
         </AccordionItem>
 
         {/* Competitors */}

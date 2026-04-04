@@ -331,7 +331,7 @@ export default function LeadsPage() {
                     return (
                       <div
                         key={lead.id}
-                        className="rounded-lg border bg-card p-2.5 shadow-sm hover:shadow-md cursor-pointer transition-all"
+                        className="rounded-lg border bg-card p-2.5 hover:shadow-sm cursor-pointer transition-all"
                         onClick={() => router.push(`/leads/${lead.id}`)}
                       >
                         <div className="flex items-center gap-2 mb-1">

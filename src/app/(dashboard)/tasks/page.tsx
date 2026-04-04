@@ -668,7 +668,7 @@ export default function TasksPage() {
               </div>
               <div className="space-y-2 min-h-[200px] rounded-lg border-2 border-dashed border-transparent p-2 hover:border-muted-foreground/20">
                 {filtered.filter(t => status === "pending" ? (t.status === "pending" || t.status === "todo") : t.status === status).map(task => (
-                  <div key={task.id} className="rounded-lg border bg-card p-3 shadow-sm cursor-pointer hover:shadow-md transition-shadow" onClick={() => router.push(`/tasks/${task.id}`)}>
+                  <div key={task.id} className="rounded-lg border bg-card p-3 cursor-pointer hover:shadow-sm transition-shadow" onClick={() => router.push(`/tasks/${task.id}`)}>
                     <div className="flex items-center gap-2 mb-1">
                       <button
                         onClick={(e) => { e.stopPropagation(); toggleComplete(task) }}

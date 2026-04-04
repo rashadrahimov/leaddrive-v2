@@ -310,7 +310,7 @@ export default function TicketsPage() {
               </div>
               <div className="space-y-2 min-h-[200px] rounded-lg border-2 border-dashed border-transparent p-2 hover:border-muted-foreground/20">
                 {tickets.filter(t => t.status === status).map(ticket => (
-                  <div key={ticket.id} className="rounded-lg border bg-card p-3 shadow-sm cursor-pointer hover:shadow-md transition-shadow" onClick={() => router.push(`/tickets/${ticket.id}`)}>
+                  <div key={ticket.id} className="rounded-lg border bg-card p-3 cursor-pointer hover:shadow-sm transition-shadow" onClick={() => router.push(`/tickets/${ticket.id}`)}>
                     <div className="flex items-center justify-between mb-1">
                       <span className="font-mono text-[10px] text-muted-foreground">{ticket.ticketNumber}</span>
                       <span className={cn("px-1.5 py-0.5 rounded text-[10px] font-medium", priorityColors[ticket.priority])}>{ticket.priority}</span>
