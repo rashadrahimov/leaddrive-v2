@@ -2,10 +2,6 @@ import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { prisma } from "@/lib/prisma"
 import { getOrgId } from "@/lib/api-auth"
-import { PrismaClient } from "@prisma/client"
-
-// Direct PrismaClient to bypass potential singleton schema issues
-const directPrisma = new PrismaClient()
 
 const addSchema = z.object({
   name: z.string().min(1),
@@ -26,49 +22,16 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     const deal = await prisma.deal.findFirst({ where: { id, organizationId: orgId }, select: { id: true } })
     if (!deal) return NextResponse.json({ error: "Deal not found" }, { status: 404 })
 
-    // Debug: try with direct PrismaClient first
-    let directResult: any = null
-    let directError: string | null = null
-    let singletonError: string | null = null
+    // Use raw SQL to bypass Prisma query engine schema issue
+    const competitors = await prisma.$queryRawUnsafe(
+      `SELECT id, "dealId", name, product, strengths, weaknesses, price, threat, notes, "createdAt"
+       FROM deal_competitors
+       WHERE "dealId" = $1
+       ORDER BY "createdAt" ASC`,
+      id
+    )
 
-    try {
-      directResult = await directPrisma.dealCompetitor.findMany({
-        where: { dealId: id },
-        orderBy: { createdAt: "asc" },
-      })
-    } catch (e: any) {
-      directError = e?.message || String(e)
-    }
-
-    let singletonResult: any = null
-    try {
-      singletonResult = await prisma.dealCompetitor.findMany({
-        where: { dealId: id },
-        orderBy: { createdAt: "asc" },
-      })
-    } catch (e: any) {
-      singletonError = e?.message || String(e)
-    }
-
-    // Return diagnostic info
-    if (directResult && !singletonResult) {
-      // Direct client works, singleton doesn't — use direct result
-      return NextResponse.json({
-        success: true,
-        data: directResult,
-        _debug: { usedDirect: true, singletonError: singletonError?.substring(0, 200) },
-      })
-    }
-
-    if (singletonResult) {
-      return NextResponse.json({ success: true, data: singletonResult })
-    }
-
-    return NextResponse.json({
-      error: "Both clients failed",
-      directError: directError?.substring(0, 200),
-      singletonError: singletonError?.substring(0, 200),
-    }, { status: 500 })
+    return NextResponse.json({ success: true, data: competitors })
   } catch (e: any) {
     console.error("[competitors GET]", e?.message || e)
     return NextResponse.json({ error: e?.message || "Internal server error" }, { status: 500 })
@@ -88,12 +51,18 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     if (!deal) return NextResponse.json({ error: "Deal not found" }, { status: 404 })
 
     const { name, product, strengths, weaknesses, price, threat } = parsed.data
-    const competitor = await prisma.dealCompetitor.upsert({
-      where: { dealId_name: { dealId: id, name } },
-      create: { dealId: id, name, product: product || null, strengths: strengths || null, weaknesses: weaknesses || null, price: price || null, threat, notes: null },
-      update: { product: product || null, strengths: strengths || null, weaknesses: weaknesses || null, price: price || null, threat },
-    })
 
+    // Use raw SQL upsert to bypass Prisma query engine schema issue
+    const result = await prisma.$queryRawUnsafe(
+      `INSERT INTO deal_competitors ("id", "dealId", name, product, strengths, weaknesses, price, threat, notes, "createdAt")
+       VALUES (gen_random_uuid()::text, $1, $2, $3, $4, $5, $6, $7, NULL, NOW())
+       ON CONFLICT ("dealId", name)
+       DO UPDATE SET product = $3, strengths = $4, weaknesses = $5, price = $6, threat = $7
+       RETURNING *`,
+      id, name, product || null, strengths || null, weaknesses || null, price || null, threat
+    )
+
+    const competitor = Array.isArray(result) ? result[0] : result
     return NextResponse.json({ success: true, data: competitor })
   } catch (e: any) {
     console.error("[competitors POST]", e?.message || e)
@@ -113,7 +82,8 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     const deal = await prisma.deal.findFirst({ where: { id, organizationId: orgId }, select: { id: true } })
     if (!deal) return NextResponse.json({ error: "Deal not found" }, { status: 404 })
 
-    await prisma.dealCompetitor.delete({ where: { id: competitorId } })
+    // Use raw SQL to bypass Prisma query engine schema issue
+    await prisma.$queryRawUnsafe(`DELETE FROM deal_competitors WHERE id = $1`, competitorId)
     return NextResponse.json({ success: true })
   } catch (e: any) {
     console.error("[competitors DELETE]", e?.message || e)
