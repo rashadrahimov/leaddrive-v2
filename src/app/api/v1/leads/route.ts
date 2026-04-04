@@ -4,6 +4,7 @@ import { prisma, logAudit } from "@/lib/prisma"
 import { getOrgId } from "@/lib/api-auth"
 import { executeWorkflows } from "@/lib/workflow-engine"
 import { createNotification } from "@/lib/notifications"
+import { applyLeadAssignmentRules } from "@/lib/lead-assignment"
 
 const createLeadSchema = z.object({
   contactName: z.string().min(1).max(200),
@@ -81,6 +82,7 @@ export async function POST(req: NextRequest) {
       },
     })
     logAudit(orgId, "create", "lead", lead.id, lead.contactName)
+    applyLeadAssignmentRules(orgId, lead).catch(() => {})
     executeWorkflows(orgId, "lead", "created", lead).catch(() => {})
     createNotification({
       organizationId: orgId,

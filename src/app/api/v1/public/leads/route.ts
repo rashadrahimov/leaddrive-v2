@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { z } from "zod"
 import { prisma } from "@/lib/prisma"
+import { applyLeadAssignmentRules } from "@/lib/lead-assignment"
 
 const WebLeadSchema = z.object({
   name: z.string().min(1).max(200),
@@ -40,6 +41,8 @@ export async function POST(request: Request) {
         notes: data.message,
       },
     })
+
+    applyLeadAssignmentRules(org.id, lead).catch(() => {})
 
     return NextResponse.json({
       success: true,
