@@ -8,20 +8,20 @@ export function RisksBanner({ risks }: { risks: any[] }) {
   if (active.length === 0) return null
 
   return (
-    <div className="flex gap-3 overflow-x-auto pb-1">
+    <div className="grid grid-cols-2 gap-2 xl:grid-cols-4">
       {active.map((r: any, i: number) => (
         <div
           key={i}
-          className={`flex items-center gap-2.5 px-4 py-2.5 rounded-lg border-l-4 bg-white dark:bg-card border shrink-0 ${
+          className={`flex items-center gap-2 px-3 py-2 rounded-lg border-l-4 bg-white dark:bg-card border min-w-0 ${
             r.severity === "critical" ? "border-l-red-500" : "border-l-amber-500"
           }`}
         >
-          <AlertTriangle className={`h-4 w-4 shrink-0 ${r.severity === "critical" ? "text-red-500" : "text-amber-500"}`} />
-          <div>
-            <span className="text-sm font-medium">{r.title}</span>
-            <span className="text-xs text-muted-foreground ml-2">{r.description}</span>
+          <AlertTriangle className={`h-3.5 w-3.5 shrink-0 ${r.severity === "critical" ? "text-red-500" : "text-amber-500"}`} />
+          <div className="min-w-0 flex-1">
+            <div className="text-xs font-medium truncate">{r.title}</div>
+            <div className="text-[10px] text-muted-foreground truncate">{r.description}</div>
           </div>
-          <Badge variant={r.severity === "critical" ? "destructive" : "secondary"} className="text-xs shrink-0 ml-2">
+          <Badge variant={r.severity === "critical" ? "destructive" : "secondary"} className="text-[10px] shrink-0 ml-1">
             {r.metric}
           </Badge>
         </div>
