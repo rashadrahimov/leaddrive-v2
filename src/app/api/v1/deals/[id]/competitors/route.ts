@@ -22,19 +22,27 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     const deal = await prisma.deal.findFirst({ where: { id, organizationId: orgId }, select: { id: true } })
     if (!deal) return NextResponse.json({ error: "Deal not found" }, { status: 404 })
 
-    // Use raw SQL to bypass Prisma query engine schema issue
+    // Debug: check which DB we're connected to
+    const dbCheck = await prisma.$queryRawUnsafe(
+      `SELECT current_database(), current_schema(), current_user`
+    )
+
     const competitors = await prisma.$queryRawUnsafe(
       `SELECT id, "dealId", name, product, strengths, weaknesses, price, threat, notes, "createdAt"
-       FROM deal_competitors
+       FROM public.deal_competitors
        WHERE "dealId" = $1
        ORDER BY "createdAt" ASC`,
       id
     )
 
-    return NextResponse.json({ success: true, data: competitors })
+    return NextResponse.json({ success: true, data: competitors, _db: dbCheck })
   } catch (e: any) {
-    console.error("[competitors GET]", e?.message || e)
-    return NextResponse.json({ error: e?.message || "Internal server error" }, { status: 500 })
+    // Try to get DB info even on error
+    let dbInfo = null
+    try { dbInfo = await prisma.$queryRawUnsafe(`SELECT current_database(), current_schema(), current_user`) } catch {}
+    let tables = null
+    try { tables = await prisma.$queryRawUnsafe(`SELECT table_name FROM information_schema.tables WHERE table_schema='public' AND table_name LIKE '%competitor%'`) } catch {}
+    return NextResponse.json({ error: e?.message || "Internal server error", _db: dbInfo, _tables: tables }, { status: 500 })
   }
 }
 
