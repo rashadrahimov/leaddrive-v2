@@ -267,6 +267,8 @@
     "actTypeTask": "Задача",
     "actTypeComment": "Комментарий",
     "actTypeAll": "Все",
+    "actSubjectPlaceholder": "Тема",
+    "actDescPlaceholder": "Описание (необязательно)",
     "competitor": "Конкурент",
     "product": "Продукт",
     "strengths": "Сильные стороны",

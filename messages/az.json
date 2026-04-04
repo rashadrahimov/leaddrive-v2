@@ -267,6 +267,8 @@
     "actTypeTask": "Tapşırıq",
     "actTypeComment": "Şərh",
     "actTypeAll": "Hamısı",
+    "actSubjectPlaceholder": "Mövzu",
+    "actDescPlaceholder": "Təsvir (istəyə bağlı)",
     "competitor": "Rəqib",
     "product": "Məhsul",
     "strengths": "Güclü tərəflər",

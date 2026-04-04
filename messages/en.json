@@ -267,6 +267,8 @@
     "actTypeTask": "Task",
     "actTypeComment": "Comment",
     "actTypeAll": "All",
+    "actSubjectPlaceholder": "Subject",
+    "actDescPlaceholder": "Description (optional)",
     "competitor": "Competitor",
     "product": "Product",
     "strengths": "Strengths",

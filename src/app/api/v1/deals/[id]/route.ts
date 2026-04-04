@@ -162,6 +162,52 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       oldValue: Object.keys(oldValue).length > 0 ? oldValue : undefined,
       newValue: Object.keys(newValue).length > 0 ? newValue : parsed.data,
     })
+
+    // Auto-track activity for important changes
+    const activityEntries: { type: string; subject: string; description?: string }[] = []
+    if (parsed.data.stage && existing?.stage !== parsed.data.stage) {
+      activityEntries.push({
+        type: "note",
+        subject: `Stage: ${existing?.stage} → ${parsed.data.stage}`,
+        description: parsed.data.stage === "WON"
+          ? `Deal "${updated?.name}" won!`
+          : parsed.data.stage === "LOST"
+          ? `Deal "${updated?.name}" lost. ${parsed.data.lostReason ? `Reason: ${parsed.data.lostReason}` : ""}`
+          : `Deal "${updated?.name}" moved to ${parsed.data.stage}`,
+      })
+    }
+    if (parsed.data.valueAmount !== undefined && existing?.valueAmount !== parsed.data.valueAmount) {
+      activityEntries.push({
+        type: "note",
+        subject: `Value: ${existing?.valueAmount?.toLocaleString()} → ${parsed.data.valueAmount.toLocaleString()}`,
+      })
+    }
+    if (parsed.data.assignedTo && existing?.assignedTo !== parsed.data.assignedTo) {
+      activityEntries.push({
+        type: "note",
+        subject: `Assigned to changed`,
+      })
+    }
+    if (activityEntries.length > 0) {
+      // Get userId from session if available
+      const { auth } = await import("@/lib/auth")
+      const session = await auth()
+      const userId = (session?.user as any)?.id || null
+      prisma.activity.createMany({
+        data: activityEntries.map(entry => ({
+          organizationId: orgId,
+          type: entry.type,
+          subject: entry.subject,
+          description: entry.description,
+          relatedType: "deal",
+          relatedId: id,
+          companyId: updated?.companyId || null,
+          contactId: updated?.contactId || null,
+          createdBy: userId,
+        })),
+      }).catch(() => {})
+    }
+
     // Trigger workflows for updates
     if (updated) {
       const triggerEvent = parsed.data.stage ? "stage_changed" : "updated"

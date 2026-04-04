@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { prisma } from "@/lib/prisma"
-import { getOrgId } from "@/lib/api-auth"
+import { getOrgId, requireAuth } from "@/lib/api-auth"
 
 const createActivitySchema = z.object({
   type: z.string().min(1),
@@ -11,6 +11,7 @@ const createActivitySchema = z.object({
   companyId: z.string().optional(),
   relatedType: z.string().optional(),
   relatedId: z.string().optional(),
+  scheduledAt: z.string().optional(),
 })
 
 export async function GET(req: NextRequest) {
@@ -42,15 +43,30 @@ export async function GET(req: NextRequest) {
       },
     })
 
-    return NextResponse.json({ success: true, data: { activities } })
+    // Resolve createdBy user names
+    const userIds = [...new Set(activities.map(a => a.createdBy).filter(Boolean))] as string[]
+    const users = userIds.length > 0
+      ? await prisma.user.findMany({
+          where: { id: { in: userIds }, organizationId: orgId },
+          select: { id: true, name: true },
+        })
+      : []
+    const userMap = Object.fromEntries(users.map(u => [u.id, u.name]))
+
+    const enriched = activities.map(a => ({
+      ...a,
+      createdByName: a.createdBy ? userMap[a.createdBy] || null : null,
+    }))
+
+    return NextResponse.json({ success: true, data: { activities: enriched } })
   } catch {
     return NextResponse.json({ success: true, data: { activities: [] } })
   }
 }
 
 export async function POST(req: NextRequest) {
-  const orgId = await getOrgId(req)
-  if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  const auth = await requireAuth(req)
+  if (auth instanceof NextResponse) return auth
 
   const body = await req.json()
   const parsed = createActivitySchema.safeParse(body)
@@ -59,8 +75,10 @@ export async function POST(req: NextRequest) {
   try {
     const activity = await prisma.activity.create({
       data: {
-        organizationId: orgId,
+        organizationId: auth.orgId,
+        createdBy: auth.userId,
         ...parsed.data,
+        ...(parsed.data.scheduledAt ? { scheduledAt: new Date(parsed.data.scheduledAt) } : {}),
       },
     })
     return NextResponse.json({ success: true, data: activity }, { status: 201 })
