@@ -15,23 +15,17 @@ export function KpiCard({ title, value, sub, icon, color }: {
   title: string; value: string | number; sub?: string; icon: React.ReactNode; color: string
 }) {
   return (
-    <div
-      className="relative overflow-hidden rounded-xl border shadow-sm hover:shadow-md transition-all duration-300"
-      style={{
-        background: `linear-gradient(135deg, ${color}08 0%, ${color}18 100%)`,
-        borderColor: `${color}20`,
-      }}
-    >
-      <div className="absolute top-0 left-0 right-0 h-[3px] rounded-t-xl" style={{ backgroundColor: color }} />
-      <div className="relative p-4 pt-5">
-        <div className="flex justify-between items-start">
-          <div className="min-w-0">
+    <div className="rounded-xl border bg-card p-4 hover:shadow-sm transition-all duration-200">
+      <div className="flex justify-between items-start">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2 mb-1">
+            <div className="h-2 w-2 rounded-full" style={{ backgroundColor: color }} />
             <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide leading-tight">{title}</p>
-            <p className="text-2xl font-bold mt-1 tabular-nums leading-none"><AnimatedNumber value={value} /></p>
-            {sub && <p className="text-[11px] text-muted-foreground mt-1 leading-tight">{sub}</p>}
           </div>
-          <div className="p-2.5 rounded-xl shrink-0 ml-2" style={{ color, backgroundColor: `${color}12` }}>{icon}</div>
+          <p className="text-2xl font-bold tabular-nums leading-none tracking-tight"><AnimatedNumber value={value} /></p>
+          {sub && <p className="text-[11px] text-muted-foreground mt-1.5 leading-tight">{sub}</p>}
         </div>
+        <div className="p-2 rounded-lg shrink-0 ml-2" style={{ color, backgroundColor: `${color}15` }}>{icon}</div>
       </div>
     </div>
   )

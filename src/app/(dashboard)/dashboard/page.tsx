@@ -123,7 +123,7 @@ export default function DashboardPage() {
 
       {/* ═══ Row 1: 6 KPIs ═══ */}
       {widgets.statCards && (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 stagger-children">
           <KpiCard
             title="GƏLİR"
             value={`₼${fmt(financial.monthlyRevenue)}`}

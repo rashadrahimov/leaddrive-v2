@@ -14,6 +14,7 @@ const STARTER_MODULES = [
   "/tasks",
   "/leads",
   "/products",
+  "/settings/pipelines",
 ] as const
 
 const BUSINESS_MODULES = [
