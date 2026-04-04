@@ -75,6 +75,47 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   }
 }
 
+const updateRoleSchema = z.object({
+  contactId: z.string().min(1),
+  role: z.string().optional(),
+  influence: z.string().optional(),
+  decisionFactor: z.string().optional(),
+  loyalty: z.string().optional(),
+  isPrimary: z.boolean().optional(),
+  cashbackType: z.enum(["percent", "fixed"]).nullable().optional(),
+  cashbackValue: z.number().min(0).max(999999).nullable().optional(),
+})
+
+export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const orgId = await getOrgId(req)
+  if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  const { id } = await params
+  const body = await req.json()
+  const parsed = updateRoleSchema.safeParse(body)
+  if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 })
+
+  try {
+    const deal = await prisma.deal.findFirst({ where: { id, organizationId: orgId }, select: { id: true } })
+    if (!deal) return NextResponse.json({ error: "Deal not found" }, { status: 404 })
+
+    const existing = await prisma.dealContactRole.findUnique({
+      where: { dealId_contactId: { dealId: id, contactId: parsed.data.contactId } },
+    })
+    if (!existing) return NextResponse.json({ error: "Contact role not found" }, { status: 404 })
+
+    const { contactId, ...updateData } = parsed.data
+    const updated = await prisma.dealContactRole.update({
+      where: { dealId_contactId: { dealId: id, contactId } },
+      data: updateData,
+    })
+
+    return NextResponse.json({ success: true, data: updated })
+  } catch (e) {
+    console.error(e)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+  }
+}
+
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const orgId = await getOrgId(req)
   if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })

@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input"
 import {
   ArrowLeft, Pencil, Trash2, Building2, User, Calendar, DollarSign,
   Clock, TrendingUp, Target, Users, Swords, MessageSquare, MessageCircle,
-  CheckCircle2, AlertCircle, Tag, Plus, X, Phone, Mail, Search, Loader2
+  CheckCircle2, AlertCircle, Tag, Plus, X, Phone, Mail, Search, Loader2, Check
 } from "lucide-react"
 import { ColorStatCard } from "@/components/color-stat-card"
 import { DealForm } from "@/components/deal-form"
@@ -98,6 +98,8 @@ function ContactRolesPanel({ deal, dealId, orgId, fetchDeal, tc, t }: {
   const [cashbackType, setCashbackType] = useState<string | null>(null)
   const [cashbackValue, setCashbackValue] = useState<string>("")
   const [submitting, setSubmitting] = useState(false)
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editData, setEditData] = useState<{ role: string; influence: string; loyalty: string; cashbackType: string | null; cashbackValue: string }>({ role: "", influence: "", loyalty: "", cashbackType: null, cashbackValue: "" })
 
   const headers: any = orgId ? { "x-organization-id": orgId } : {}
 
@@ -136,6 +138,37 @@ function ContactRolesPanel({ deal, dealId, orgId, fetchDeal, tc, t }: {
       setLoyalty("Neutral")
       setCashbackType(null)
       setCashbackValue("")
+      fetchDeal()
+    } finally { setSubmitting(false) }
+  }
+
+  const startEdit = (cr: ContactRole) => {
+    setEditingId(cr.id)
+    setEditData({
+      role: cr.role,
+      influence: cr.influence || "Medium",
+      loyalty: cr.loyalty || "Neutral",
+      cashbackType: cr.cashbackType || null,
+      cashbackValue: cr.cashbackValue != null ? String(cr.cashbackValue) : "",
+    })
+  }
+
+  const handleSaveEdit = async (cr: ContactRole) => {
+    setSubmitting(true)
+    try {
+      await fetch(`/api/v1/deals/${dealId}/contact-roles`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", ...headers },
+        body: JSON.stringify({
+          contactId: cr.contactId,
+          role: editData.role,
+          influence: editData.influence,
+          loyalty: editData.loyalty,
+          cashbackType: editData.cashbackType || null,
+          cashbackValue: editData.cashbackValue ? parseFloat(editData.cashbackValue) : null,
+        }),
+      })
+      setEditingId(null)
       fetchDeal()
     } finally { setSubmitting(false) }
   }
@@ -288,7 +321,9 @@ function ContactRolesPanel({ deal, dealId, orgId, fetchDeal, tc, t }: {
                 </tr>
               </thead>
               <tbody>
-                {deal.contactRoles.map(cr => (
+                {deal.contactRoles.map(cr => {
+                  const isEditing = editingId === cr.id
+                  return (
                   <tr key={cr.id} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
                     <td className="p-3">
                       <div>
@@ -296,20 +331,51 @@ function ContactRolesPanel({ deal, dealId, orgId, fetchDeal, tc, t }: {
                         <p className="text-xs text-muted-foreground">{cr.contact.position || cr.contact.email || ""}</p>
                       </div>
                     </td>
-                    <td className="p-3"><Badge variant="outline" className="text-xs">{cr.role}</Badge></td>
                     <td className="p-3">
-                      <Badge className={`text-xs ${cr.influence === "High" ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400" : cr.influence === "Low" ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" : "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"}`}>
-                        {cr.influence}
-                      </Badge>
+                      {isEditing ? (
+                        <select value={editData.role} onChange={e => setEditData({ ...editData, role: e.target.value })} className="h-8 rounded-md border bg-background px-1.5 text-xs w-full min-w-[110px]">
+                          {ROLE_OPTIONS.map(r => <option key={r} value={r}>{r}</option>)}
+                        </select>
+                      ) : (
+                        <Badge variant="outline" className="text-xs">{cr.role}</Badge>
+                      )}
+                    </td>
+                    <td className="p-3">
+                      {isEditing ? (
+                        <select value={editData.influence} onChange={e => setEditData({ ...editData, influence: e.target.value })} className="h-8 rounded-md border bg-background px-1.5 text-xs w-full">
+                          {INFLUENCE_OPTIONS.map(i => <option key={i} value={i}>{i}</option>)}
+                        </select>
+                      ) : (
+                        <Badge className={`text-xs ${cr.influence === "High" ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400" : cr.influence === "Low" ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" : "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"}`}>
+                          {cr.influence}
+                        </Badge>
+                      )}
                     </td>
                     <td className="p-3 text-muted-foreground">{cr.decisionFactor}</td>
                     <td className="p-3">
-                      <Badge className={`text-xs ${cr.loyalty?.includes("Supportive") ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" : cr.loyalty?.includes("Opponent") ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400" : "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300"}`}>
-                        {cr.loyalty}
-                      </Badge>
+                      {isEditing ? (
+                        <select value={editData.loyalty} onChange={e => setEditData({ ...editData, loyalty: e.target.value })} className="h-8 rounded-md border bg-background px-1.5 text-xs w-full">
+                          {LOYALTY_OPTIONS.map(l => <option key={l} value={l}>{l}</option>)}
+                        </select>
+                      ) : (
+                        <Badge className={`text-xs ${cr.loyalty?.includes("Supportive") ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" : cr.loyalty?.includes("Opponent") ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400" : "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300"}`}>
+                          {cr.loyalty}
+                        </Badge>
+                      )}
                     </td>
                     <td className="p-3">
-                      {cr.cashbackType && cr.cashbackValue != null ? (
+                      {isEditing ? (
+                        <div className="flex items-center gap-1">
+                          <select value={editData.cashbackType || ""} onChange={e => setEditData({ ...editData, cashbackType: e.target.value || null, cashbackValue: e.target.value ? editData.cashbackValue : "" })} className="h-8 rounded-md border bg-background px-1.5 text-xs min-w-[70px]">
+                            <option value="">—</option>
+                            <option value="percent">%</option>
+                            <option value="fixed">$</option>
+                          </select>
+                          {editData.cashbackType && (
+                            <input type="number" min="0" value={editData.cashbackValue} onChange={e => setEditData({ ...editData, cashbackValue: e.target.value })} className="h-8 w-20 rounded-md border bg-background px-1.5 text-xs" placeholder="0" />
+                          )}
+                        </div>
+                      ) : cr.cashbackType && cr.cashbackValue != null ? (
                         <Badge className="text-xs bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
                           {cr.cashbackType === "percent" ? `${cr.cashbackValue}%` : `$${cr.cashbackValue}`}
                         </Badge>
@@ -318,22 +384,39 @@ function ContactRolesPanel({ deal, dealId, orgId, fetchDeal, tc, t }: {
                       )}
                     </td>
                     <td className="p-3">
-                      <Button
-                        variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-red-500"
-                        onClick={async () => {
-                          await fetch(`/api/v1/deals/${dealId}/contact-roles`, {
-                            method: "DELETE",
-                            headers: { "Content-Type": "application/json", ...headers },
-                            body: JSON.stringify({ contactId: cr.contactId }),
-                          })
-                          fetchDeal()
-                        }}
-                      >
-                        <X className="h-3.5 w-3.5" />
-                      </Button>
+                      {isEditing ? (
+                        <div className="flex items-center gap-0.5">
+                          <Button variant="ghost" size="icon" className="h-7 w-7 text-green-600 hover:text-green-700" disabled={submitting} onClick={() => handleSaveEdit(cr)}>
+                            {submitting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground" onClick={() => setEditingId(null)}>
+                            <X className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-0.5">
+                          <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-primary" onClick={() => startEdit(cr)}>
+                            <Pencil className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button
+                            variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-red-500"
+                            onClick={async () => {
+                              await fetch(`/api/v1/deals/${dealId}/contact-roles`, {
+                                method: "DELETE",
+                                headers: { "Content-Type": "application/json", ...headers },
+                                body: JSON.stringify({ contactId: cr.contactId }),
+                              })
+                              fetchDeal()
+                            }}
+                          >
+                            <X className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                      )}
                     </td>
                   </tr>
-                ))}
+                  )
+                })}
               </tbody>
             </table>
           </div>
