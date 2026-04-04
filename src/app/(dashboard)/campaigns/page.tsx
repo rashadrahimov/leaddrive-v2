@@ -9,10 +9,11 @@ import { ColorStatCard } from "@/components/color-stat-card"
 import { CampaignForm } from "@/components/campaign-form"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
 import { Input } from "@/components/ui/input"
-import { Plus, Mail, Users, Send, Pencil, Trash2, Search, Megaphone } from "lucide-react"
+import { Plus, Mail, Users, Send, Pencil, Trash2, Search, Megaphone, BarChart3, List } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
 import { PageDescription } from "@/components/page-description"
+import { CampaignsAnalytics } from "@/components/campaigns/campaigns-analytics"
 
 interface Campaign {
   id: string
@@ -52,6 +53,7 @@ const typeIcons: Record<string, string> = {
 export default function CampaignsPage() {
   const { data: session } = useSession()
   const t = useTranslations("campaigns")
+  const tc = useTranslations("common")
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
@@ -60,6 +62,7 @@ export default function CampaignsPage() {
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [deleteName, setDeleteName] = useState("")
   const [search, setSearch] = useState("")
+  const [tab, setTab] = useState<"analytics" | "list">("analytics")
   const orgId = session?.user?.organizationId
 
   const statusLabels: Record<string, string> = {
@@ -151,14 +154,37 @@ export default function CampaignsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
-          <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
+          <p className="text-sm text-muted-foreground">{total} {t("title").toLowerCase()}</p>
         </div>
-        <Button onClick={() => { setEditData(undefined); setShowForm(true) }}>
-          <Plus className="h-4 w-4 mr-1" /> {t("newCampaign")}
-        </Button>
+        <div className="flex items-center gap-2">
+          {/* Tab switcher */}
+          <div className="flex items-center rounded-lg border bg-muted/50 p-0.5">
+            <button
+              onClick={() => setTab("analytics")}
+              className={cn(
+                "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+                tab === "analytics" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <BarChart3 className="h-4 w-4" />
+              {tc("analytics")}
+            </button>
+            <button
+              onClick={() => setTab("list")}
+              className={cn(
+                "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+                tab === "list" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <List className="h-4 w-4" />
+              {tc("list")}
+            </button>
+          </div>
+          <Button onClick={() => { setEditData(undefined); setShowForm(true) }}>
+            <Plus className="h-4 w-4 mr-1" /> {t("newCampaign")}
+          </Button>
+        </div>
       </div>
-
-      <PageDescription text={t("pageDescription")} />
 
       {/* Stats — 5 status cards */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
@@ -169,71 +195,77 @@ export default function CampaignsPage() {
         <ColorStatCard label={t("statusCancelled")} value={statusCounts.cancelled} icon={<Megaphone className="h-4 w-4" />} color="red" />
       </div>
 
-      {/* Search */}
-      <div className="relative max-w-md">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder={t("searchPlaceholder")}
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          className="pl-9"
-        />
-      </div>
-
-      {/* Campaign cards */}
-      <div className="space-y-3">
-        {filtered.length === 0 ? (
-          <div className="text-center py-12 text-muted-foreground">
-            {campaigns.length === 0 ? t("noCampaigns") : t("noResults")}
+      {tab === "analytics" ? (
+        <CampaignsAnalytics campaigns={campaigns} />
+      ) : (
+        <>
+          {/* Search */}
+          <div className="relative max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder={t("searchPlaceholder")}
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="pl-9"
+            />
           </div>
-        ) : (
-          filtered.map(campaign => (
-            <div
-              key={campaign.id}
-              className="border rounded-lg p-4 hover:shadow-sm transition-shadow cursor-pointer bg-card"
-              onClick={() => { setEditData(campaign); setShowForm(true) }}
-            >
-              <div className="flex items-start justify-between">
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-base">{campaign.name}</h3>
-                  {campaign.description && (
-                    <p className="text-sm text-muted-foreground mt-0.5 line-clamp-2">{campaign.description}</p>
-                  )}
-                  <div className="flex items-center gap-3 mt-2 text-sm">
-                    <span className={cn("font-medium", statusColors[campaign.status] || "text-gray-500")}>
-                      {statusLabels[campaign.status] || campaign.status}
-                    </span>
-                    <span className="text-muted-foreground flex items-center gap-1">
-                      {typeIcons[campaign.type] || "📧"} {campaign.type === "sms" ? "SMS" : "Email"}
-                    </span>
-                    <span className="text-muted-foreground flex items-center gap-1">
-                      <Users className="h-3.5 w-3.5" /> {campaign.totalRecipients}
-                    </span>
-                    {campaign.totalSent > 0 && (
-                      <span className="text-muted-foreground flex items-center gap-1">
-                        <Send className="h-3.5 w-3.5" /> {campaign.totalSent}
-                      </span>
-                    )}
+
+          {/* Campaign cards */}
+          <div className="space-y-3">
+            {filtered.length === 0 ? (
+              <div className="text-center py-12 text-muted-foreground">
+                {campaigns.length === 0 ? t("noCampaigns") : t("noResults")}
+              </div>
+            ) : (
+              filtered.map(campaign => (
+                <div
+                  key={campaign.id}
+                  className="border rounded-lg p-4 hover:shadow-sm transition-shadow cursor-pointer bg-card"
+                  onClick={() => { setEditData(campaign); setShowForm(true) }}
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-base">{campaign.name}</h3>
+                      {campaign.description && (
+                        <p className="text-sm text-muted-foreground mt-0.5 line-clamp-2">{campaign.description}</p>
+                      )}
+                      <div className="flex items-center gap-3 mt-2 text-sm">
+                        <span className={cn("font-medium", statusColors[campaign.status] || "text-gray-500")}>
+                          {statusLabels[campaign.status] || campaign.status}
+                        </span>
+                        <span className="text-muted-foreground flex items-center gap-1">
+                          {typeIcons[campaign.type] || "📧"} {campaign.type === "sms" ? "SMS" : "Email"}
+                        </span>
+                        <span className="text-muted-foreground flex items-center gap-1">
+                          <Users className="h-3.5 w-3.5" /> {campaign.totalRecipients}
+                        </span>
+                        {campaign.totalSent > 0 && (
+                          <span className="text-muted-foreground flex items-center gap-1">
+                            <Send className="h-3.5 w-3.5" /> {campaign.totalSent}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="text-right shrink-0 ml-4">
+                      {campaign.status === "sent" ? (
+                        <div>
+                          <div className="text-lg font-bold text-green-600">{campaign.totalSent}/{campaign.totalRecipients}</div>
+                          <div className="text-xs text-muted-foreground">{t("sent")}</div>
+                        </div>
+                      ) : campaign.budget ? (
+                        <div>
+                          <div className="text-lg font-bold">{campaign.budget.toLocaleString()}</div>
+                          <div className="text-xs text-muted-foreground">{t("budget")}</div>
+                        </div>
+                      ) : null}
+                    </div>
                   </div>
                 </div>
-                <div className="text-right shrink-0 ml-4">
-                  {campaign.status === "sent" ? (
-                    <div>
-                      <div className="text-lg font-bold text-green-600">{campaign.totalSent}/{campaign.totalRecipients}</div>
-                      <div className="text-xs text-muted-foreground">{t("sent")}</div>
-                    </div>
-                  ) : campaign.budget ? (
-                    <div>
-                      <div className="text-lg font-bold">{campaign.budget.toLocaleString()}</div>
-                      <div className="text-xs text-muted-foreground">{t("budget")}</div>
-                    </div>
-                  ) : null}
-                </div>
-              </div>
-            </div>
-          ))
-        )}
-      </div>
+              ))
+            )}
+          </div>
+        </>
+      )}
 
       <CampaignForm
         open={showForm}
@@ -249,7 +281,6 @@ export default function CampaignsPage() {
         orgId={orgId}
         onSend={editData ? () => handleSend(editData) : undefined}
         onCreatedAndSend={async (campaignId: string) => {
-          // Fetch the newly created campaign and send it
           try {
             const res = await fetch(`/api/v1/campaigns/${campaignId}`, {
               headers: orgId ? { "x-organization-id": String(orgId) } : {},

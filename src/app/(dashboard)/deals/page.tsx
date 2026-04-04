@@ -8,9 +8,11 @@ import { Button } from "@/components/ui/button"
 import { ColorStatCard } from "@/components/color-stat-card"
 import { KanbanBoard } from "@/components/deals/kanban-board"
 import { Select } from "@/components/ui/select"
-import { Handshake, Plus, TrendingUp, TrendingDown } from "lucide-react"
+import { Handshake, Plus, TrendingUp, TrendingDown, BarChart3, Columns3 } from "lucide-react"
 import { DealForm } from "@/components/deal-form"
 import { PageDescription } from "@/components/page-description"
+import { DealsAnalytics } from "@/components/deals/deals-analytics"
+import { cn } from "@/lib/utils"
 
 interface Deal {
   id: string
@@ -35,6 +37,7 @@ export default function DealsPage() {
   const [loading, setLoading] = useState(true)
   const [formOpen, setFormOpen] = useState(false)
   const [sortBy, setSortBy] = useState("newest")
+  const [tab, setTab] = useState<"analytics" | "kanban">("analytics")
   const orgId = session?.user?.organizationId
 
   const STAGES = [
@@ -81,7 +84,6 @@ export default function DealsPage() {
   }))
 
   const handleDealMove = useCallback(async (dealId: string, newStage: string) => {
-    // Optimistic update
     setDeals(prev => prev.map(d => d.id === dealId ? { ...d, stage: newStage } : d))
     try {
       await fetch(`/api/v1/deals/${dealId}`, {
@@ -90,13 +92,14 @@ export default function DealsPage() {
         body: JSON.stringify({ stage: newStage }),
       })
     } catch {
-      fetchDeals() // Revert on error
+      fetchDeals()
     }
   }, [])
 
   const totalValue = deals.reduce((s, d) => s + d.valueAmount, 0)
   const wonDeals = deals.filter(d => d.stage === "WON")
   const wonValue = wonDeals.reduce((s, d) => s + d.valueAmount, 0)
+  const lostCount = deals.filter(d => d.stage === "LOST").length
 
   if (loading) {
     return (
@@ -114,33 +117,77 @@ export default function DealsPage() {
           <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
           <p className="text-sm text-muted-foreground">{t("totalDeals", { count: deals.length })}</p>
         </div>
-        <div className="flex gap-2">
-          <Select value={sortBy} onChange={e => setSortBy(e.target.value)} className="w-[180px]">
-            <option value="newest">{t("sortNewest")}</option>
-            <option value="oldest">{t("sortOldest")}</option>
-            <option value="value_desc">{t("sortAmountDesc")}</option>
-            <option value="value_asc">{t("sortAmountAsc")}</option>
-            <option value="name">{t("sortNameAsc")}</option>
-          </Select>
+        <div className="flex items-center gap-2">
+          {/* Tab switcher */}
+          <div className="flex items-center rounded-lg border bg-muted/50 p-0.5">
+            <button
+              onClick={() => setTab("analytics")}
+              className={cn(
+                "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+                tab === "analytics" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <BarChart3 className="h-4 w-4" />
+              {tc("analytics")}
+            </button>
+            <button
+              onClick={() => setTab("kanban")}
+              className={cn(
+                "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+                tab === "kanban" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <Columns3 className="h-4 w-4" />
+              {tc("kanban")}
+            </button>
+          </div>
+          {tab === "kanban" && (
+            <Select value={sortBy} onChange={e => setSortBy(e.target.value)} className="w-[180px]">
+              <option value="newest">{t("sortNewest")}</option>
+              <option value="oldest">{t("sortOldest")}</option>
+              <option value="value_desc">{t("sortAmountDesc")}</option>
+              <option value="value_asc">{t("sortAmountAsc")}</option>
+              <option value="name">{t("sortNameAsc")}</option>
+            </Select>
+          )}
           <Button onClick={() => setFormOpen(true)}><Plus className="h-4 w-4 mr-1" /> {t("newDeal")}</Button>
         </div>
       </div>
 
-      <PageDescription text={t("pageDescription")} />
+      {tab === "analytics" ? (
+        <DealsAnalytics
+          deals={deals.map(d => ({
+            id: d.id,
+            title: d.name,
+            value: d.valueAmount,
+            stage: d.stage,
+            probability: d.probability,
+            company: d.company ? { name: d.company.name } : undefined,
+            expectedCloseDate: d.expectedClose || undefined,
+            createdAt: d.createdAt,
+          }))}
+          pipelineValue={totalValue}
+          wonValue={wonValue}
+          lostCount={lostCount}
+          wonCount={wonDeals.length}
+        />
+      ) : (
+        <>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <ColorStatCard label={t("statTotal")} value={deals.length} icon={<Handshake className="h-4 w-4" />} color="blue" hint={t("hintTotalDeals")} />
+            <ColorStatCard label={t("statPipelineValue")} value={`${totalValue.toLocaleString()} ₼`} icon={<TrendingUp className="h-4 w-4" />} color="green" hint={t("hintPipelineValue")} />
+            <ColorStatCard label={t("statWon")} value={`${wonValue.toLocaleString()} ₼`} icon={<TrendingUp className="h-4 w-4" />} color="teal" hint={t("hintWonValue")} />
+            <ColorStatCard label={t("statLost")} value={lostCount} icon={<TrendingDown className="h-4 w-4" />} color="red" hint={t("hintLostCount")} />
+          </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <ColorStatCard label={t("statTotal")} value={deals.length} icon={<Handshake className="h-4 w-4" />} color="blue" hint={t("hintTotalDeals")} />
-        <ColorStatCard label={t("statPipelineValue")} value={`${totalValue.toLocaleString()} ₼`} icon={<TrendingUp className="h-4 w-4" />} color="green" hint={t("hintPipelineValue")} />
-        <ColorStatCard label={t("statWon")} value={`${wonValue.toLocaleString()} ₼`} icon={<TrendingUp className="h-4 w-4" />} color="teal" hint={t("hintWonValue")} />
-        <ColorStatCard label={t("statLost")} value={deals.filter(d => d.stage === "LOST").length} icon={<TrendingDown className="h-4 w-4" />} color="red" hint={t("hintLostCount")} />
-      </div>
-
-      <KanbanBoard
-        stages={STAGES}
-        deals={kanbanDeals}
-        onDealClick={(deal) => router.push(`/deals/${deal.id}`)}
-        onDealMove={handleDealMove}
-      />
+          <KanbanBoard
+            stages={STAGES}
+            deals={kanbanDeals}
+            onDealClick={(deal) => router.push(`/deals/${deal.id}`)}
+            onDealMove={handleDealMove}
+          />
+        </>
+      )}
 
       <DealForm open={formOpen} onOpenChange={setFormOpen} onSaved={fetchDeals} orgId={orgId} />
     </div>

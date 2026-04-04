@@ -8,14 +8,16 @@ import { ColorStatCard } from "@/components/color-stat-card"
 import { DataTable } from "@/components/data-table"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
 import { PageDescription } from "@/components/page-description"
+import { InvoicesAnalytics } from "@/components/invoices/invoices-analytics"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Select } from "@/components/ui/select"
-import { Plus, DollarSign, Clock, AlertTriangle, CheckCircle, Eye, Pencil, Trash2, Download, CalendarDays, TrendingUp, Send, FileText, BarChart3, XCircle, RefreshCw } from "lucide-react"
+import { Plus, DollarSign, Clock, AlertTriangle, CheckCircle, Eye, Pencil, Trash2, Download, CalendarDays, TrendingUp, Send, FileText, BarChart3, XCircle, RefreshCw, List } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { cn } from "@/lib/utils"
 
 interface Invoice {
   id: string
@@ -82,6 +84,7 @@ export default function InvoicesPage() {
   const [invoices, setInvoices] = useState<Invoice[]>([])
   const [loading, setLoading] = useState(true)
   const [statusFilter, setStatusFilter] = useState<string>("")
+  const [tab, setTab] = useState<"analytics" | "list">("analytics")
   const [stats, setStats] = useState<InvoiceStats>({
     totalInvoiced: 0, totalPaid: 0, totalOutstanding: 0, totalOverdue: 0, currency: "AZN",
     totalCount: 0, draftCount: 0, sentCount: 0, paidCount: 0, overdueCount: 0,
@@ -304,6 +307,29 @@ export default function InvoicesPage() {
           <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
         </div>
         <div className="flex items-center gap-2">
+          {/* Tab switcher */}
+          <div className="flex items-center rounded-lg border bg-muted/50 p-0.5">
+            <button
+              onClick={() => setTab("analytics")}
+              className={cn(
+                "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+                tab === "analytics" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <BarChart3 className="h-4 w-4" />
+              {tc("analytics")}
+            </button>
+            <button
+              onClick={() => setTab("list")}
+              className={cn(
+                "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+                tab === "list" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <List className="h-4 w-4" />
+              {tc("list")}
+            </button>
+          </div>
           <Button variant="outline" onClick={() => router.push("/invoices/recurring")}>
             <RefreshCw className="h-4 w-4 mr-1" /> {t("recurringInvoices")}
           </Button>
@@ -346,87 +372,114 @@ export default function InvoicesPage() {
         />
       </div>
 
-      {/* Row 2 — Detailed analytics (clickable filters) */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-        {[
-          { icon: <CalendarDays className="h-3.5 w-3.5" />, label: t("thisMonth"), value: `${stats.thisMonthCount}`, sub: `${stats.thisMonthAmount.toLocaleString()} ${stats.currency}`, filter: null },
-          { icon: <TrendingUp className="h-3.5 w-3.5" />, label: t("thisYear"), value: `${stats.thisYearCount}`, sub: `${stats.thisYearAmount.toLocaleString()} ${stats.currency}`, filter: null },
-          { icon: <Send className="h-3.5 w-3.5" />, label: t("statSentCount"), value: `${stats.sentCount}`, sub: `${stats.totalCount} ${t("ofTotal")}`, filter: "sent" },
-          { icon: <FileText className="h-3.5 w-3.5" />, label: t("statDrafts"), value: `${stats.draftCount}`, sub: t("notSent"), filter: "draft" },
-          { icon: <BarChart3 className="h-3.5 w-3.5" />, label: t("statAvgInvoice"), value: `${Math.round(stats.avgAmount).toLocaleString()}`, sub: stats.currency, filter: null },
-          { icon: <XCircle className="h-3.5 w-3.5" />, label: t("statPartialCancel"), value: `${stats.partiallyPaidCount} / ${stats.cancelledCount}`, sub: t("partialCancelSub"), filter: "partially_paid" },
-        ].map(({ icon, label, value, sub, filter }) => (
-          <div
-            key={label}
-            onClick={() => filter && setStatusFilter(prev => prev === filter ? "" : filter)}
-            className={`rounded-lg border bg-card p-3 space-y-1 transition-all ${filter ? "cursor-pointer hover:border-primary hover:shadow-sm" : ""} ${filter && statusFilter === filter ? "border-primary bg-primary/5 shadow-sm" : ""}`}
-          >
-            <div className="flex items-center gap-1.5 text-muted-foreground">
-              {icon}
-              <span className="text-xs font-medium">{label}</span>
-              {filter && statusFilter === filter && <span className="ml-auto text-xs text-primary font-medium">✕</span>}
+      {tab === "analytics" ? (
+        <>
+          {/* Row 2 — Detailed analytics (clickable filters) */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+            {[
+              { icon: <CalendarDays className="h-3.5 w-3.5" />, label: t("thisMonth"), value: `${stats.thisMonthCount}`, sub: `${stats.thisMonthAmount.toLocaleString()} ${stats.currency}`, filter: null },
+              { icon: <TrendingUp className="h-3.5 w-3.5" />, label: t("thisYear"), value: `${stats.thisYearCount}`, sub: `${stats.thisYearAmount.toLocaleString()} ${stats.currency}`, filter: null },
+              { icon: <Send className="h-3.5 w-3.5" />, label: t("statSentCount"), value: `${stats.sentCount}`, sub: `${stats.totalCount} ${t("ofTotal")}`, filter: "sent" },
+              { icon: <FileText className="h-3.5 w-3.5" />, label: t("statDrafts"), value: `${stats.draftCount}`, sub: t("notSent"), filter: "draft" },
+              { icon: <BarChart3 className="h-3.5 w-3.5" />, label: t("statAvgInvoice"), value: `${Math.round(stats.avgAmount).toLocaleString()}`, sub: stats.currency, filter: null },
+              { icon: <XCircle className="h-3.5 w-3.5" />, label: t("statPartialCancel"), value: `${stats.partiallyPaidCount} / ${stats.cancelledCount}`, sub: t("partialCancelSub"), filter: "partially_paid" },
+            ].map(({ icon, label, value, sub, filter }) => (
+              <div
+                key={label}
+                onClick={() => filter && setStatusFilter(prev => prev === filter ? "" : filter)}
+                className={`rounded-lg border bg-card p-3 space-y-1 transition-all ${filter ? "cursor-pointer hover:border-primary hover:shadow-sm" : ""} ${filter && statusFilter === filter ? "border-primary bg-primary/5 shadow-sm" : ""}`}
+              >
+                <div className="flex items-center gap-1.5 text-muted-foreground">
+                  {icon}
+                  <span className="text-xs font-medium">{label}</span>
+                  {filter && statusFilter === filter && <span className="ml-auto text-xs text-primary font-medium">✕</span>}
+                </div>
+                <p className="text-lg font-bold">{value} <span className="text-xs font-normal text-muted-foreground">{t("invoiceShort")}</span></p>
+                <p className="text-xs text-muted-foreground">{sub}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* Payment progress bar */}
+          {stats.totalInvoiced > 0 && (
+            <div className="rounded-lg border bg-card px-4 py-3 space-y-2">
+              <div className="flex items-center justify-between text-sm">
+                <span className="font-medium">{t("paymentProgress")}</span>
+                <span className="text-muted-foreground">
+                  {stats.totalPaid.toLocaleString()} / {stats.totalInvoiced.toLocaleString()} {stats.currency}
+                  {" "}·{" "}
+                  <span className="font-semibold text-green-600">{Math.round((stats.totalPaid / stats.totalInvoiced) * 100)}%</span>
+                </span>
+              </div>
+              <div className="h-2 rounded-full bg-muted overflow-hidden">
+                <div
+                  className="h-full rounded-full bg-green-500 transition-all duration-500"
+                  style={{ width: `${Math.min((stats.totalPaid / stats.totalInvoiced) * 100, 100)}%` }}
+                />
+              </div>
+              <div className="flex gap-4 text-xs text-muted-foreground">
+                <span className="flex items-center gap-1"><span className="inline-block w-2 h-2 rounded-full bg-green-500" />{t("status.paid")}: {stats.paidCount} {t("invoiceShort")}</span>
+                <span className="flex items-center gap-1"><span className="inline-block w-2 h-2 rounded-full bg-orange-400" />{t("waiting")}: {stats.sentCount} {t("invoiceShort")}</span>
+                <span className="flex items-center gap-1"><span className="inline-block w-2 h-2 rounded-full bg-red-500" />{t("status.overdue")}: {stats.overdueCount} {t("invoiceShort")}</span>
+                <span className="flex items-center gap-1"><span className="inline-block w-2 h-2 rounded-full bg-yellow-400" />{t("status.partially_paid")}: {stats.partiallyPaidCount} {t("invoiceShort")}</span>
+              </div>
             </div>
-            <p className="text-lg font-bold">{value} <span className="text-xs font-normal text-muted-foreground">{t("invoiceShort")}</span></p>
-            <p className="text-xs text-muted-foreground">{sub}</p>
-          </div>
-        ))}
-      </div>
+          )}
 
-      {/* Payment progress bar */}
-      {stats.totalInvoiced > 0 && (
-        <div className="rounded-lg border bg-card px-4 py-3 space-y-2">
-          <div className="flex items-center justify-between text-sm">
-            <span className="font-medium">{t("paymentProgress")}</span>
-            <span className="text-muted-foreground">
-              {stats.totalPaid.toLocaleString()} / {stats.totalInvoiced.toLocaleString()} {stats.currency}
-              {" "}·{" "}
-              <span className="font-semibold text-green-600">{Math.round((stats.totalPaid / stats.totalInvoiced) * 100)}%</span>
-            </span>
+          {/* Analytics charts */}
+          <InvoicesAnalytics
+            invoices={invoices.map(inv => ({
+              id: inv.id,
+              invoiceNumber: inv.invoiceNumber,
+              title: inv.title,
+              amount: inv.totalAmount || 0,
+              status: inv.status,
+              currency: inv.currency,
+              dueDate: inv.dueDate,
+              company: inv.company ? { name: inv.company.name } : undefined,
+              createdAt: inv.createdAt,
+            }))}
+            stats={{
+              totalInvoiced: stats.totalInvoiced,
+              totalPaid: stats.totalPaid,
+              totalOutstanding: stats.totalOutstanding,
+              totalOverdue: stats.totalOverdue,
+            }}
+          />
+        </>
+      ) : (
+        <>
+          <div className="flex items-center gap-4">
+            <Select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="w-[200px]"
+            >
+              <option value="">{t("statusAll")}</option>
+              <option value="draft">{t("status.draft")}</option>
+              <option value="sent">{t("status.sent")}</option>
+              <option value="paid">{t("status.paid")}</option>
+              <option value="overdue">{t("status.overdue")}</option>
+              <option value="partially_paid">{t("status.partially_paid")}</option>
+              <option value="cancelled">{t("status.cancelled")}</option>
+            </Select>
           </div>
-          <div className="h-2 rounded-full bg-muted overflow-hidden">
-            <div
-              className="h-full rounded-full bg-green-500 transition-all duration-500"
-              style={{ width: `${Math.min((stats.totalPaid / stats.totalInvoiced) * 100, 100)}%` }}
-            />
-          </div>
-          <div className="flex gap-4 text-xs text-muted-foreground">
-            <span className="flex items-center gap-1"><span className="inline-block w-2 h-2 rounded-full bg-green-500" />{t("status.paid")}: {stats.paidCount} {t("invoiceShort")}</span>
-            <span className="flex items-center gap-1"><span className="inline-block w-2 h-2 rounded-full bg-orange-400" />{t("waiting")}: {stats.sentCount} {t("invoiceShort")}</span>
-            <span className="flex items-center gap-1"><span className="inline-block w-2 h-2 rounded-full bg-red-500" />{t("status.overdue")}: {stats.overdueCount} {t("invoiceShort")}</span>
-            <span className="flex items-center gap-1"><span className="inline-block w-2 h-2 rounded-full bg-yellow-400" />{t("status.partially_paid")}: {stats.partiallyPaidCount} {t("invoiceShort")}</span>
-          </div>
-        </div>
+
+          <DataTable
+            columns={columns}
+            data={invoices}
+            searchPlaceholder={t("searchPlaceholder")}
+            searchKey="invoiceNumber"
+            onRowClick={(item: any) => router.push(`/invoices/${item.id}`)}
+            rowClassName={(item: any) => {
+              if (item.status === "overdue") return "bg-red-50/60 dark:bg-red-950/20"
+              if (item.status === "paid") return "bg-green-50/60 dark:bg-green-950/20"
+              if (item.status === "partially_paid") return "bg-yellow-50/60 dark:bg-yellow-950/20"
+              return ""
+            }}
+          />
+        </>
       )}
-
-      <div className="flex items-center gap-4">
-        <Select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          className="w-[200px]"
-        >
-          <option value="">{t("statusAll")}</option>
-          <option value="draft">{t("status.draft")}</option>
-          <option value="sent">{t("status.sent")}</option>
-          <option value="paid">{t("status.paid")}</option>
-          <option value="overdue">{t("status.overdue")}</option>
-          <option value="partially_paid">{t("status.partially_paid")}</option>
-          <option value="cancelled">{t("status.cancelled")}</option>
-        </Select>
-      </div>
-
-      <DataTable
-        columns={columns}
-        data={invoices}
-        searchPlaceholder={t("searchPlaceholder")}
-        searchKey="invoiceNumber"
-        onRowClick={(item: any) => router.push(`/invoices/${item.id}`)}
-        rowClassName={(item: any) => {
-          if (item.status === "overdue") return "bg-red-50/60 dark:bg-red-950/20"
-          if (item.status === "paid") return "bg-green-50/60 dark:bg-green-950/20"
-          if (item.status === "partially_paid") return "bg-yellow-50/60 dark:bg-yellow-950/20"
-          return ""
-        }}
-      />
 
       <DeleteConfirmDialog
         open={!!deleteId}
