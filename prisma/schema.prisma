@@ -523,8 +523,27 @@ model PipelineStage {
   isActive       Boolean  @default(true)
   createdAt      DateTime @default(now())
 
+  validationRules StageValidationRule[]
+
   @@index([organizationId])
   @@map("pipeline_stages")
+}
+
+model StageValidationRule {
+  id              String        @id @default(cuid())
+  organizationId  String
+  pipelineStageId String
+  stage           PipelineStage @relation(fields: [pipelineStageId], references: [id], onDelete: Cascade)
+  fieldName       String        // "valueAmount", "contactId", "notes", "expectedClose"
+  ruleType        String        // "required", "min_value", "file_attached", "task_completed"
+  ruleValue       String?       // e.g. "1000" for min_value
+  errorMessage    String        // Human-readable error
+  isActive        Boolean       @default(true)
+  createdAt       DateTime      @default(now())
+
+  @@index([organizationId])
+  @@index([pipelineStageId])
+  @@map("stage_validation_rules")
 }
 
 // ═══════════════════════════════════════════════════

@@ -26,7 +26,9 @@ interface Deal {
   notes: string | null
   expectedClose: string | null
   createdAt: string
+  stageChangedAt: string | null
   company: { id: string; name: string } | null
+  nextTask?: { id: string; title: string; dueDate: string | null; status: string } | null
 }
 
 export default function DealsPage() {
@@ -114,6 +116,8 @@ export default function DealsPage() {
     stage: d.stage,
     assignedTo: d.assignedTo || "",
     probability: d.probability,
+    stageChangedAt: d.stageChangedAt,
+    nextTask: d.nextTask || null,
   }))
 
   const handleDealMove = useCallback(async (dealId: string, newStage: string) => {
@@ -267,6 +271,14 @@ export default function DealsPage() {
             deals={kanbanDeals}
             onDealClick={(deal) => router.push(`/deals/${deal.id}`)}
             onDealMove={handleDealMove}
+            onQuickAddTask={async (dealId, title) => {
+              await fetch(`/api/v1/deals/${dealId}/next-steps`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": String(orgId) } : {}) },
+                body: JSON.stringify({ title }),
+              })
+              fetchDeals()
+            }}
           />
         </>
       )}

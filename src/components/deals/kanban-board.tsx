@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useCallback } from "react"
+import { motion } from "framer-motion"
 import { DealCard } from "./deal-card"
 import { cn } from "@/lib/utils"
 import { InfoHint } from "@/components/info-hint"
@@ -21,6 +22,8 @@ interface Deal {
   stage: string
   assignedTo?: string
   probability: number
+  stageChangedAt?: string | null
+  nextTask?: { id: string; title: string; dueDate: string | null; status: string } | null
 }
 
 interface KanbanBoardProps {
@@ -28,9 +31,11 @@ interface KanbanBoardProps {
   deals: Deal[]
   onDealClick?: (deal: Deal) => void
   onDealMove?: (dealId: string, newStage: string) => void
+  onQuickAddTask?: (dealId: string, title: string) => Promise<void>
+  rottingDays?: number
 }
 
-export function KanbanBoard({ stages, deals, onDealClick, onDealMove }: KanbanBoardProps) {
+export function KanbanBoard({ stages, deals, onDealClick, onDealMove, onQuickAddTask, rottingDays = 14 }: KanbanBoardProps) {
   const [dragDealId, setDragDealId] = useState<string | null>(null)
   const [dropTarget, setDropTarget] = useState<string | null>(null)
 
@@ -69,38 +74,49 @@ export function KanbanBoard({ stages, deals, onDealClick, onDealMove }: KanbanBo
   }, [])
 
   return (
-    <div className="grid grid-cols-6 gap-2 w-full">
-      {stages.map((stage) => {
+    <div className="grid grid-cols-6 gap-3 w-full">
+      {stages.map((stage, stageIdx) => {
         const stageDeals = deals.filter((d) => d.stage === stage.name)
         const total = stageDeals.reduce((s, d) => s + d.valueAmount, 0)
         const isDropping = dropTarget === stage.name
 
         return (
-          <div key={stage.name} className="min-w-0">
-            {/* Stage header */}
-            <div className="mb-2 px-1">
-              <div className="flex items-center gap-1.5">
-                <div className="h-2.5 w-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: stage.color }} />
+          <motion.div
+            key={stage.name}
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: stageIdx * 0.05, duration: 0.25 }}
+            className="min-w-0"
+          >
+            {/* Stage header — Ramp style with dots */}
+            <div className="mb-2.5 px-0.5">
+              <div className="flex items-center gap-2">
+                <div
+                  className="h-2 w-2 rounded-full flex-shrink-0"
+                  style={{ backgroundColor: stage.color }}
+                />
                 <span className="text-xs font-semibold truncate">{stage.displayName}</span>
                 {stage.hint && <InfoHint text={stage.hint} size={12} />}
-                <span className="rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground flex-shrink-0">
+                <span className="text-xs text-muted-foreground font-medium ml-auto tabular-nums">
                   {stageDeals.length}
                 </span>
               </div>
               {total > 0 && (
-                <p className="text-[10px] text-muted-foreground mt-0.5 pl-4">
+                <p className="text-[11px] text-muted-foreground mt-0.5 pl-4 tabular-nums">
                   {total.toLocaleString()} ₼
                 </p>
               )}
             </div>
 
-            {/* Stage column */}
+            {/* Stage column — clean, no heavy borders */}
             <div
               className={cn(
-                "min-h-[200px] space-y-2 rounded-lg border-2 border-dashed p-1.5 transition-colors",
-                isDropping ? "border-primary/50 bg-primary/5" : "border-transparent hover:border-muted-foreground/20",
-                !isDropping && stage.name === "WON" && "bg-green-50/50 dark:bg-green-900/10",
-                !isDropping && stage.name === "LOST" && "bg-red-50/50 dark:bg-red-900/10",
+                "min-h-[200px] space-y-2 rounded-xl p-2 transition-all duration-200",
+                isDropping
+                  ? "bg-primary/5 ring-2 ring-primary/30 ring-dashed"
+                  : "bg-muted/20 hover:bg-muted/30",
+                !isDropping && stage.name === "WON" && "bg-green-50/30 dark:bg-green-950/10",
+                !isDropping && stage.name === "LOST" && "bg-red-50/30 dark:bg-red-950/10",
               )}
               onDragOver={(e) => handleDragOver(e, stage.name)}
               onDragLeave={handleDragLeave}
@@ -114,16 +130,18 @@ export function KanbanBoard({ stages, deals, onDealClick, onDealMove }: KanbanBo
                   onDragStart={(e) => handleDragStart(e, deal.id)}
                   onDragEnd={handleDragEnd}
                   isDragging={dragDealId === deal.id}
+                  rottingDays={rottingDays}
+                  onQuickAddTask={onQuickAddTask}
                 />
               ))}
 
               {stageDeals.length === 0 && (
-                <div className="flex h-[80px] items-center justify-center text-[10px] text-muted-foreground">
+                <div className="flex h-[80px] items-center justify-center text-[11px] text-muted-foreground/50">
                   No deals
                 </div>
               )}
             </div>
-          </div>
+          </motion.div>
         )
       })}
     </div>

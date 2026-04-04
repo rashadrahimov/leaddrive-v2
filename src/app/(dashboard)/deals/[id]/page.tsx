@@ -4,26 +4,21 @@ import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
 import { useTranslations } from "next-intl"
+import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Input } from "@/components/ui/input"
+import { MotionPage, MotionCard } from "@/components/ui/motion"
 import {
-  ArrowLeft, Pencil, Trash2, Building2, User, Calendar, DollarSign,
-  Clock, TrendingUp, Target, Users, Swords, MessageSquare, MessageCircle,
-  CheckCircle2, AlertCircle, Tag, Plus, X, Phone, Mail, Search, Loader2, Check
+  ArrowLeft, Pencil, Trash2, AlertCircle, Tag, Plus, X,
+  CheckCircle2, Clock, Loader2,
 } from "lucide-react"
-import { ColorStatCard } from "@/components/color-stat-card"
 import { DealForm } from "@/components/deal-form"
-import { EngagementTab } from "@/components/deals/engagement-tab"
-import { NextBestOffers } from "@/components/deals/next-best-offers"
-import { ActivityTimeline } from "@/components/deals/activity-timeline"
-import { DealHistory } from "@/components/deals/deal-history"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
-import { InfoHint } from "@/components/info-hint"
-import { OffersTab } from "@/components/deals/offers-tab"
-import { InvoicesTab } from "@/components/deals/invoices-tab"
+import { StageProgress } from "@/components/deals/stage-progress"
+import { QuickActionBar } from "@/components/deals/quick-action-bar"
+import { DealSidebar } from "@/components/deals/deal-sidebar"
+import { ActivityTimeline } from "@/components/deals/activity-timeline"
+import { StageValidationDialog } from "@/components/deals/stage-validation-dialog"
 
 const STAGE_STYLES = [
   { key: "LEAD",        color: "#6366f1", bg: "bg-indigo-500" },
@@ -33,26 +28,6 @@ const STAGE_STYLES = [
   { key: "WON",         color: "#22c55e", bg: "bg-green-500" },
   { key: "LOST",        color: "#ef4444", bg: "bg-red-500" },
 ]
-
-interface TeamMember {
-  id: string
-  userId: string
-  role: string
-  user: { id: string; name: string | null; email: string; avatar: string | null; role: string | null }
-}
-
-interface ContactRole {
-  id: string
-  contactId: string
-  role: string
-  influence: string
-  decisionFactor: string
-  loyalty: string
-  isPrimary: boolean
-  cashbackType: string | null
-  cashbackValue: number | null
-  contact: { id: string; fullName: string; position: string | null; email: string | null; phone: string | null }
-}
 
 interface Deal {
   id: string
@@ -76,628 +51,21 @@ interface Deal {
   company: { id: string; name: string } | null
   campaign: { id: string; name: string } | null
   contact: { id: string; fullName: string; position: string | null; email: string | null; phone: string | null; avatar: string | null } | null
-  teamMembers: TeamMember[]
-  contactRoles: ContactRole[]
+  teamMembers: Array<{
+    id: string; userId: string; role: string
+    user: { id: string; name: string | null; email: string; avatar: string | null; role: string | null }
+  }>
+  contactRoles: Array<{
+    id: string; contactId: string; role: string; influence: string; decisionFactor: string; loyalty: string
+    isPrimary: boolean; cashbackType: string | null; cashbackValue: number | null
+    contact: { id: string; fullName: string; position: string | null; email: string | null; phone: string | null }
+  }>
 }
 
-const ROLE_OPTIONS = ["Decision Maker", "Influencer", "Champion", "Evaluator", "User", "Blocker", "Contact Person"]
-const INFLUENCE_OPTIONS = ["High", "Medium", "Low"]
-const LOYALTY_OPTIONS = ["Supportive", "Neutral", "Opponent"]
-
-const ROLE_I18N: Record<string, string> = { "Decision Maker": "roleDecisionMaker", "Influencer": "roleInfluencer", "Champion": "roleChampion", "Evaluator": "roleEvaluator", "User": "roleUser", "Blocker": "roleBlocker", "Contact Person": "roleContactPerson" }
-const INFLUENCE_I18N: Record<string, string> = { "High": "influenceHigh", "Medium": "influenceMedium", "Low": "influenceLow" }
-const LOYALTY_I18N: Record<string, string> = { "Supportive": "loyaltySupportive", "Neutral": "loyaltyNeutral", "Opponent": "loyaltyOpponent" }
-
-function ContactRolesPanel({ deal, dealId, orgId, fetchDeal, tc, t }: {
-  deal: Deal; dealId: string; orgId?: string; fetchDeal: () => void; tc: any; t: any
-}) {
-  const [showForm, setShowForm] = useState(false)
-  const [search, setSearch] = useState("")
-  const [searchResults, setSearchResults] = useState<any[]>([])
-  const [searching, setSearching] = useState(false)
-  const [selectedContact, setSelectedContact] = useState<any>(null)
-  const [role, setRole] = useState("contact_person")
-  const [influence, setInfluence] = useState("Medium")
-  const [loyalty, setLoyalty] = useState("Neutral")
-  const [cashbackType, setCashbackType] = useState<string | null>(null)
-  const [cashbackValue, setCashbackValue] = useState<string>("")
-  const [submitting, setSubmitting] = useState(false)
-  const [editingId, setEditingId] = useState<string | null>(null)
-  const [editData, setEditData] = useState<{ role: string; influence: string; loyalty: string; cashbackType: string | null; cashbackValue: string }>({ role: "", influence: "", loyalty: "", cashbackType: null, cashbackValue: "" })
-
-  const headers: any = orgId ? { "x-organization-id": orgId } : {}
-
-  const searchContacts = async (q: string) => {
-    if (q.length < 2) { setSearchResults([]); return }
-    setSearching(true)
-    try {
-      const res = await fetch(`/api/v1/contacts?search=${encodeURIComponent(q)}&limit=10`, { headers })
-      const json = await res.json()
-      const contacts = json.data?.contacts || []
-      const existing = new Set((deal.contactRoles || []).map(cr => cr.contactId))
-      setSearchResults(contacts.filter((c: any) => !existing.has(c.id)))
-    } catch { setSearchResults([]) }
-    finally { setSearching(false) }
-  }
-
-  const handleAdd = async () => {
-    if (!selectedContact) return
-    setSubmitting(true)
-    try {
-      await fetch(`/api/v1/deals/${dealId}/contact-roles`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", ...headers },
-        body: JSON.stringify({
-          contactId: selectedContact.id, role, influence, loyalty,
-          cashbackType: cashbackType || null,
-          cashbackValue: cashbackValue ? parseFloat(cashbackValue) : null,
-        }),
-      })
-      setShowForm(false)
-      setSelectedContact(null)
-      setSearch("")
-      setSearchResults([])
-      setRole("Contact Person")
-      setInfluence("Medium")
-      setLoyalty("Neutral")
-      setCashbackType(null)
-      setCashbackValue("")
-      fetchDeal()
-    } finally { setSubmitting(false) }
-  }
-
-  const startEdit = (cr: ContactRole) => {
-    setEditingId(cr.id)
-    setEditData({
-      role: cr.role,
-      influence: cr.influence || "Medium",
-      loyalty: cr.loyalty || "Neutral",
-      cashbackType: cr.cashbackType || null,
-      cashbackValue: cr.cashbackValue != null ? String(cr.cashbackValue) : "",
-    })
-  }
-
-  const handleSaveEdit = async (cr: ContactRole) => {
-    setSubmitting(true)
-    try {
-      await fetch(`/api/v1/deals/${dealId}/contact-roles`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json", ...headers },
-        body: JSON.stringify({
-          contactId: cr.contactId,
-          role: editData.role,
-          influence: editData.influence,
-          loyalty: editData.loyalty,
-          cashbackType: editData.cashbackType || null,
-          cashbackValue: editData.cashbackValue ? parseFloat(editData.cashbackValue) : null,
-        }),
-      })
-      setEditingId(null)
-      fetchDeal()
-    } finally { setSubmitting(false) }
-  }
-
-  return (
-    <Card className="shadow-sm border-none bg-card">
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2 text-base">
-            <Users className="h-4 w-4 text-muted-foreground" /> {t("contactRoles")} <InfoHint text="People involved in this deal and their roles in the decision-making process" size={12} />
-          </CardTitle>
-          <Button size="sm" variant={showForm ? "outline" : "default"} onClick={() => { setShowForm(!showForm); setSelectedContact(null); setSearch(""); setSearchResults([]) }} className="gap-1">
-            {showForm ? <X className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
-            {showForm ? tc("cancel") : tc("addContactRole")}
-          </Button>
-        </div>
-      </CardHeader>
-      <CardContent>
-        {/* Add form */}
-        {showForm && (
-          <div className="rounded-lg border bg-muted/30 p-4 mb-4 space-y-3">
-            {!selectedContact ? (
-              <div className="space-y-2">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder={tc("searchContacts")}
-                    value={search}
-                    onChange={e => { setSearch(e.target.value); searchContacts(e.target.value) }}
-                    className="pl-9"
-                    autoFocus
-                  />
-                  {searching && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />}
-                </div>
-                {searchResults.length > 0 && (
-                  <div className="border rounded-lg max-h-48 overflow-y-auto">
-                    {searchResults.map((c: any) => (
-                      <button
-                        key={c.id}
-                        onClick={() => { setSelectedContact(c); setSearchResults([]) }}
-                        className="w-full flex items-center gap-3 p-2.5 hover:bg-muted/50 text-left transition-colors border-b last:border-0"
-                      >
-                        <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-medium text-primary">
-                          {(c.fullName || "?")[0]}
-                        </div>
-                        <div className="min-w-0">
-                          <p className="text-sm font-medium truncate">{c.fullName}</p>
-                          <p className="text-xs text-muted-foreground truncate">{c.position || c.email || ""}</p>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                )}
-                {search.length >= 2 && !searching && searchResults.length === 0 && (
-                  <p className="text-xs text-muted-foreground text-center py-2">{tc("noResults")}</p>
-                )}
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {/* Selected contact */}
-                <div className="flex items-center gap-3 p-2 rounded-lg bg-background border">
-                  <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center text-sm font-medium text-primary">
-                    {(selectedContact.fullName || "?")[0]}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium">{selectedContact.fullName}</p>
-                    <p className="text-xs text-muted-foreground">{selectedContact.position || selectedContact.email || ""}</p>
-                  </div>
-                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setSelectedContact(null); setSearch("") }}>
-                    <X className="h-3.5 w-3.5" />
-                  </Button>
-                </div>
-                {/* Role selectors */}
-                <div className="grid grid-cols-3 gap-3">
-                  <div>
-                    <label className="text-xs font-medium text-muted-foreground mb-1 block">{tc("role")}</label>
-                    <select value={role} onChange={e => setRole(e.target.value)} className="w-full h-9 rounded-md border bg-background px-2 text-sm">
-                      {ROLE_OPTIONS.map(r => <option key={r} value={r}>{tc(ROLE_I18N[r] || r)}</option>)}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-xs font-medium text-muted-foreground mb-1 block">{tc("influence")}</label>
-                    <select value={influence} onChange={e => setInfluence(e.target.value)} className="w-full h-9 rounded-md border bg-background px-2 text-sm">
-                      {INFLUENCE_OPTIONS.map(i => <option key={i} value={i}>{tc(INFLUENCE_I18N[i] || i)}</option>)}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-xs font-medium text-muted-foreground mb-1 block">{tc("loyalty")}</label>
-                    <select value={loyalty} onChange={e => setLoyalty(e.target.value)} className="w-full h-9 rounded-md border bg-background px-2 text-sm">
-                      {LOYALTY_OPTIONS.map(l => <option key={l} value={l}>{tc(LOYALTY_I18N[l] || l)}</option>)}
-                    </select>
-                  </div>
-                </div>
-                {/* Cashback */}
-                <div>
-                  <label className="text-xs font-medium text-muted-foreground mb-1 block">{tc("cashback")}</label>
-                  <div className="flex items-center gap-2">
-                    <select
-                      value={cashbackType || ""}
-                      onChange={e => setCashbackType(e.target.value || null)}
-                      className="h-9 rounded-md border bg-background px-2 text-sm min-w-[120px]"
-                    >
-                      <option value="">{tc("noCashback")}</option>
-                      <option value="percent">%</option>
-                      <option value="fixed">{tc("fixedAmount")}</option>
-                    </select>
-                    {cashbackType && (
-                      <div className="relative flex-1">
-                        <Input
-                          type="number"
-                          min="0"
-                          max={cashbackType === "percent" ? "100" : "999999"}
-                          step={cashbackType === "percent" ? "0.5" : "1"}
-                          placeholder={cashbackType === "percent" ? "5" : "500"}
-                          value={cashbackValue}
-                          onChange={e => setCashbackValue(e.target.value)}
-                          className="pr-8"
-                        />
-                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
-                          {cashbackType === "percent" ? "%" : "$"}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-                <div className="flex justify-end">
-                  <Button size="sm" onClick={handleAdd} disabled={submitting} className="gap-1.5">
-                    {submitting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Plus className="h-3.5 w-3.5" />}
-                    {tc("add")}
-                  </Button>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Table */}
-        {(deal.contactRoles || []).length > 0 ? (
-          <div className="overflow-x-auto rounded-lg border">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="bg-muted/50 border-b">
-                  <th className="text-left p-3 font-medium text-muted-foreground">{tc("contact")}</th>
-                  <th className="text-left p-3 font-medium text-muted-foreground">{tc("role")}</th>
-                  <th className="text-left p-3 font-medium text-muted-foreground">{tc("influence")}</th>
-                  <th className="text-left p-3 font-medium text-muted-foreground">{tc("decisionFactor")}</th>
-                  <th className="text-left p-3 font-medium text-muted-foreground">{tc("loyalty")}</th>
-                  <th className="text-left p-3 font-medium text-muted-foreground">{tc("cashback")}</th>
-                  <th className="p-3 w-8" />
-                </tr>
-              </thead>
-              <tbody>
-                {deal.contactRoles.map(cr => {
-                  const isEditing = editingId === cr.id
-                  return (
-                  <tr key={cr.id} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
-                    <td className="p-3">
-                      <div>
-                        <p className="font-medium">{cr.contact.fullName}</p>
-                        <p className="text-xs text-muted-foreground">{cr.contact.position || cr.contact.email || ""}</p>
-                      </div>
-                    </td>
-                    <td className="p-3">
-                      {isEditing ? (
-                        <select value={editData.role} onChange={e => setEditData({ ...editData, role: e.target.value })} className="h-8 rounded-md border bg-background px-1.5 text-xs w-full min-w-[110px]">
-                          {ROLE_OPTIONS.map(r => <option key={r} value={r}>{tc(ROLE_I18N[r] || r)}</option>)}
-                        </select>
-                      ) : (
-                        <Badge variant="outline" className="text-xs">{tc(ROLE_I18N[cr.role] || cr.role)}</Badge>
-                      )}
-                    </td>
-                    <td className="p-3">
-                      {isEditing ? (
-                        <select value={editData.influence} onChange={e => setEditData({ ...editData, influence: e.target.value })} className="h-8 rounded-md border bg-background px-1.5 text-xs w-full">
-                          {INFLUENCE_OPTIONS.map(i => <option key={i} value={i}>{tc(INFLUENCE_I18N[i] || i)}</option>)}
-                        </select>
-                      ) : (
-                        <Badge className={`text-xs ${cr.influence === "High" ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400" : cr.influence === "Low" ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" : "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"}`}>
-                          {tc(INFLUENCE_I18N[cr.influence] || cr.influence)}
-                        </Badge>
-                      )}
-                    </td>
-                    <td className="p-3 text-muted-foreground">{cr.decisionFactor}</td>
-                    <td className="p-3">
-                      {isEditing ? (
-                        <select value={editData.loyalty} onChange={e => setEditData({ ...editData, loyalty: e.target.value })} className="h-8 rounded-md border bg-background px-1.5 text-xs w-full">
-                          {LOYALTY_OPTIONS.map(l => <option key={l} value={l}>{tc(LOYALTY_I18N[l] || l)}</option>)}
-                        </select>
-                      ) : (
-                        <Badge className={`text-xs ${cr.loyalty?.includes("Supportive") ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" : cr.loyalty?.includes("Opponent") ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400" : "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300"}`}>
-                          {tc(LOYALTY_I18N[cr.loyalty] || cr.loyalty)}
-                        </Badge>
-                      )}
-                    </td>
-                    <td className="p-3">
-                      {isEditing ? (
-                        <div className="flex items-center gap-1">
-                          <select value={editData.cashbackType || ""} onChange={e => setEditData({ ...editData, cashbackType: e.target.value || null, cashbackValue: e.target.value ? editData.cashbackValue : "" })} className="h-8 rounded-md border bg-background px-1.5 text-xs min-w-[70px]">
-                            <option value="">—</option>
-                            <option value="percent">%</option>
-                            <option value="fixed">$</option>
-                          </select>
-                          {editData.cashbackType && (
-                            <input type="number" min="0" value={editData.cashbackValue} onChange={e => setEditData({ ...editData, cashbackValue: e.target.value })} className="h-8 w-20 rounded-md border bg-background px-1.5 text-xs" placeholder="0" />
-                          )}
-                        </div>
-                      ) : cr.cashbackType && cr.cashbackValue != null ? (
-                        <Badge className="text-xs bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
-                          {cr.cashbackType === "percent" ? `${cr.cashbackValue}%` : `$${cr.cashbackValue}`}
-                        </Badge>
-                      ) : (
-                        <span className="text-xs text-muted-foreground">—</span>
-                      )}
-                    </td>
-                    <td className="p-3">
-                      {isEditing ? (
-                        <div className="flex items-center gap-0.5">
-                          <Button variant="ghost" size="icon" className="h-7 w-7 text-green-600 hover:text-green-700" disabled={submitting} onClick={() => handleSaveEdit(cr)}>
-                            {submitting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
-                          </Button>
-                          <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground" onClick={() => setEditingId(null)}>
-                            <X className="h-3.5 w-3.5" />
-                          </Button>
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-0.5">
-                          <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-primary" onClick={() => startEdit(cr)}>
-                            <Pencil className="h-3.5 w-3.5" />
-                          </Button>
-                          <Button
-                            variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-red-500"
-                            onClick={async () => {
-                              await fetch(`/api/v1/deals/${dealId}/contact-roles`, {
-                                method: "DELETE",
-                                headers: { "Content-Type": "application/json", ...headers },
-                                body: JSON.stringify({ contactId: cr.contactId }),
-                              })
-                              fetchDeal()
-                            }}
-                          >
-                            <X className="h-3.5 w-3.5" />
-                          </Button>
-                        </div>
-                      )}
-                    </td>
-                  </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          !showForm && (
-            <div className="flex flex-col items-center justify-center py-8 text-center border-2 border-dashed border-muted rounded-xl">
-              <Users className="h-8 w-8 text-muted-foreground/40 mb-2" />
-              <p className="text-sm text-muted-foreground">{tc("noContactRoles")}</p>
-            </div>
-          )
-        )}
-      </CardContent>
-    </Card>
-  )
-}
-
-function DealPipelineStages({ currentStage, stageLabels }: { currentStage: string; stageLabels: Record<string, string> }) {
-  const isLost = currentStage === "LOST"
-  const stages = STAGE_STYLES.map(s => ({ ...s, label: stageLabels[s.key] || s.key }))
-  const activeStages = isLost ? stages : stages.filter(s => s.key !== "LOST")
-  const currentIdx = activeStages.findIndex(s => s.key === currentStage)
-
-  return (
-    <div className="flex items-center gap-0 w-full overflow-x-auto pb-1">
-      {activeStages.map((stage, idx) => {
-        const isActive = stage.key === currentStage
-        const isDone = !isLost && idx < currentIdx
-        const isUpcoming = !isActive && !isDone
-
-        return (
-          <div key={stage.key} className="flex items-center flex-1 min-w-0">
-            {/* Chevron segment */}
-            <div
-              className={`
-                relative flex items-center justify-center h-9 flex-1 min-w-0 px-3
-                text-xs font-semibold transition-all select-none
-                ${isActive
-                  ? "text-white shadow-sm"
-                  : isDone
-                  ? "text-white/90"
-                  : "text-muted-foreground bg-muted/40 dark:bg-muted/20"
-                }
-              `}
-              style={{
-                background: isActive
-                  ? stage.color
-                  : isDone
-                  ? stage.color + "99"
-                  : undefined,
-                clipPath: idx === 0
-                  ? "polygon(0 0, calc(100% - 10px) 0, 100% 50%, calc(100% - 10px) 100%, 0 100%)"
-                  : idx === activeStages.length - 1
-                  ? "polygon(0 0, 100% 0, 100% 100%, 0 100%, 10px 50%)"
-                  : "polygon(0 0, calc(100% - 10px) 0, 100% 50%, calc(100% - 10px) 100%, 0 100%, 10px 50%)",
-              }}
-            >
-              <span className="truncate">{stage.label}</span>
-              {isDone && <CheckCircle2 className="h-3 w-3 ml-1 flex-shrink-0 opacity-70" />}
-            </div>
-          </div>
-        )
-      })}
-    </div>
-  )
-}
-
-function DealKpiCards({ deal, labels }: { deal: Deal; labels: { daysInFunnel: string; daysAtStage: string; dealValue: string; confidenceLevel: string; hintDaysInFunnel?: string; hintDaysAtStage?: string; hintDealValue?: string; hintConfidence?: string } }) {
-  const daysInFunnel = Math.floor(
-    (Date.now() - new Date(deal.createdAt).getTime()) / 86400000
-  )
-  const daysAtStage = deal.stageChangedAt
-    ? Math.floor((Date.now() - new Date(deal.stageChangedAt).getTime()) / 86400000)
-    : daysInFunnel
-  const confidence = deal.confidenceLevel ?? 50
-  const confBg = confidence >= 70
-    ? "bg-green-500 shadow-green-500/30"
-    : confidence >= 40
-    ? "bg-amber-500 shadow-amber-500/30"
-    : "bg-orange-500 shadow-orange-500/30"
-
-  return (
-    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-      <ColorStatCard
-        label={labels.daysInFunnel}
-        value={daysInFunnel}
-        icon={<Clock className="h-4 w-4" />}
-        color="blue"
-        hint={labels.hintDaysInFunnel}
-      />
-      <ColorStatCard
-        label={labels.daysAtStage}
-        value={daysAtStage}
-        icon={<Clock className="h-4 w-4" />}
-        color="indigo"
-        hint={labels.hintDaysAtStage}
-      />
-      <ColorStatCard
-        label={labels.dealValue}
-        value={`${deal.valueAmount.toLocaleString()} ${deal.currency}`}
-        icon={<DollarSign className="h-4 w-4" />}
-        color="teal"
-        hint={labels.hintDealValue}
-      />
-      <ColorStatCard
-        label={labels.confidenceLevel}
-        value={`${confidence}%`}
-        icon={<TrendingUp className="h-4 w-4" />}
-        bgClass={confBg}
-        hint={labels.hintConfidence}
-      />
-    </div>
-  )
-}
-
-function ProbabilityBar({ probability, label }: { probability: number; label: string }) {
-  const color =
-    probability >= 70 ? "bg-green-500" :
-    probability >= 40 ? "bg-amber-500" : "bg-red-400"
-
-  return (
-    <div className="space-y-1.5">
-      <div className="flex justify-between text-sm">
-        <span className="text-muted-foreground font-medium">{label}</span>
-        <span className="font-semibold">{probability}%</span>
-      </div>
-      <div className="h-2.5 bg-muted rounded-full overflow-hidden">
-        <div
-          className={`h-full ${color} rounded-full transition-all duration-500`}
-          style={{ width: `${probability}%` }}
-        />
-      </div>
-    </div>
-  )
-}
-
-function CompetitorsSection({ dealId, orgId, labels }: { dealId: string; orgId?: string; labels: { noCompetitors: string; addCompetitor: string; competitorName: string; theirProduct: string; theirStrengths: string; theirWeaknesses: string; theirPrice: string; add: string; cancel: string; competitor: string; product: string; strengths: string; weaknesses: string; price: string } }) {
-  const [competitors, setCompetitors] = useState<Array<{
-    id: string; name: string; product: string; strengths: string; weaknesses: string; price: string
-  }>>([])
-  const [adding, setAdding] = useState(false)
-  const [form, setForm] = useState({ name: "", product: "", strengths: "", weaknesses: "", price: "" })
-
-  const addCompetitor = () => {
-    if (!form.name) return
-    setCompetitors(prev => [...prev, { id: Date.now().toString(), ...form }])
-    setForm({ name: "", product: "", strengths: "", weaknesses: "", price: "" })
-    setAdding(false)
-  }
-
-  if (competitors.length === 0 && !adding) {
-    return (
-      <div className="flex flex-col items-center justify-center py-8 text-center border-2 border-dashed border-muted rounded-xl">
-        <Swords className="h-8 w-8 text-muted-foreground/40 mb-2" />
-        <p className="text-sm text-muted-foreground">{labels.noCompetitors}</p>
-        <Button variant="outline" size="sm" className="mt-3" onClick={() => setAdding(true)}>
-          <Plus className="h-3.5 w-3.5 mr-1" /> {labels.addCompetitor}
-        </Button>
-      </div>
-    )
-  }
-
-  return (
-    <div className="space-y-3">
-      <div className="overflow-x-auto rounded-lg border">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="bg-muted/50 border-b">
-              <th className="text-left p-3 font-medium text-muted-foreground">{labels.competitor}</th>
-              <th className="text-left p-3 font-medium text-muted-foreground">{labels.product}</th>
-              <th className="text-left p-3 font-medium text-muted-foreground">{labels.price}</th>
-              <th className="text-left p-3 font-medium text-muted-foreground">{labels.strengths}</th>
-              <th className="text-left p-3 font-medium text-muted-foreground">{labels.weaknesses}</th>
-              <th className="p-3 w-8" />
-            </tr>
-          </thead>
-          <tbody>
-            {competitors.map((c) => (
-              <tr key={c.id} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
-                <td className="p-3 font-medium">{c.name}</td>
-                <td className="p-3 text-muted-foreground">{c.product || "—"}</td>
-                <td className="p-3 text-muted-foreground">{c.price || "—"}</td>
-                <td className="p-3">
-                  {c.strengths ? (
-                    <span className="inline-flex items-center gap-1 text-green-600 text-xs">
-                      <CheckCircle2 className="h-3.5 w-3.5" /> {c.strengths}
-                    </span>
-                  ) : "—"}
-                </td>
-                <td className="p-3">
-                  {c.weaknesses ? (
-                    <span className="inline-flex items-center gap-1 text-red-500 text-xs">
-                      <AlertCircle className="h-3.5 w-3.5" /> {c.weaknesses}
-                    </span>
-                  ) : "—"}
-                </td>
-                <td className="p-3">
-                  <Button
-                    variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-red-500"
-                    onClick={() => setCompetitors(prev => prev.filter(x => x.id !== c.id))}
-                  >
-                    <X className="h-3.5 w-3.5" />
-                  </Button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {adding ? (
-        <div className="p-4 bg-muted/40 rounded-xl border space-y-3">
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-xs font-medium text-muted-foreground mb-1 block">{labels.competitorName} *</label>
-              <input
-                className="w-full h-8 border rounded-lg px-3 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/30"
-                placeholder="e.g. Salesforce"
-                value={form.name}
-                onChange={e => setForm({ ...form, name: e.target.value })}
-              />
-            </div>
-            <div>
-              <label className="text-xs font-medium text-muted-foreground mb-1 block">{labels.theirProduct}</label>
-              <input
-                className="w-full h-8 border rounded-lg px-3 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/30"
-                placeholder="e.g. Sales Cloud"
-                value={form.product}
-                onChange={e => setForm({ ...form, product: e.target.value })}
-              />
-            </div>
-            <div>
-              <label className="text-xs font-medium text-muted-foreground mb-1 block">{labels.theirPrice}</label>
-              <input
-                className="w-full h-8 border rounded-lg px-3 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/30"
-                placeholder="e.g. $5,000"
-                value={form.price}
-                onChange={e => setForm({ ...form, price: e.target.value })}
-              />
-            </div>
-            <div>
-              <label className="text-xs font-medium text-muted-foreground mb-1 block">{labels.theirStrengths}</label>
-              <input
-                className="w-full h-8 border rounded-lg px-3 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/30"
-                placeholder="e.g. Brand recognition"
-                value={form.strengths}
-                onChange={e => setForm({ ...form, strengths: e.target.value })}
-              />
-            </div>
-            <div>
-              <label className="text-xs font-medium text-muted-foreground mb-1 block">{labels.theirWeaknesses}</label>
-              <input
-                className="w-full h-8 border rounded-lg px-3 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/30"
-                placeholder="e.g. High price"
-                value={form.weaknesses}
-                onChange={e => setForm({ ...form, weaknesses: e.target.value })}
-              />
-            </div>
-          </div>
-          <div className="flex gap-2">
-            <Button size="sm" onClick={addCompetitor} disabled={!form.name}>
-              <Plus className="h-3.5 w-3.5 mr-1" /> {labels.add}
-            </Button>
-            <Button size="sm" variant="ghost" onClick={() => setAdding(false)}>{labels.cancel}</Button>
-          </div>
-        </div>
-      ) : (
-        <Button variant="outline" size="sm" onClick={() => setAdding(true)}>
-          <Plus className="h-3.5 w-3.5 mr-1" /> {labels.addCompetitor}
-        </Button>
-      )}
-    </div>
-  )
-}
-
+// ── Tags Input ──
 function TagsInput({ tags, onChange, addTagLabel }: { tags: string[]; onChange: (tags: string[]) => void; addTagLabel: string }) {
   const [input, setInput] = useState("")
-  const TAG_COLORS = ["bg-blue-100 text-blue-700", "bg-green-100 text-green-700", "bg-purple-100 text-purple-700", "bg-amber-100 text-amber-700", "bg-red-100 text-red-700"]
+  const TAG_COLORS = ["bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400", "bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-400", "bg-purple-50 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400", "bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"]
 
   const addTag = () => {
     const trimmed = input.trim()
@@ -706,32 +74,120 @@ function TagsInput({ tags, onChange, addTagLabel }: { tags: string[]; onChange: 
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
+    <div className="flex flex-wrap items-center gap-1.5">
       {tags.map((tag, i) => (
-        <span
-          key={tag}
-          className={`inline-flex items-center gap-1 text-xs font-medium px-2.5 py-0.5 rounded-full ${TAG_COLORS[i % TAG_COLORS.length]}`}
-        >
+        <span key={tag} className={`inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full ${TAG_COLORS[i % TAG_COLORS.length]}`}>
           {tag}
-          <button onClick={() => onChange(tags.filter(t => t !== tag))} className="hover:opacity-70 ml-0.5">
-            <X className="h-3 w-3" />
+          <button onClick={() => onChange(tags.filter(t => t !== tag))} className="hover:opacity-70">
+            <X className="h-2.5 w-2.5" />
           </button>
         </span>
       ))}
-      <div className="flex items-center gap-1">
+      <input
+        className="h-5 w-20 border rounded-full px-2 text-[11px] bg-background focus:outline-none focus:ring-2 focus:ring-ring/30"
+        placeholder={`+ ${addTagLabel}`}
+        value={input}
+        onChange={e => setInput(e.target.value)}
+        onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); addTag() } }}
+        onBlur={addTag}
+      />
+    </div>
+  )
+}
+
+// ── Next Steps widget ──
+function NextStepsWidget({ dealId, orgId, steps, fetchSteps }: {
+  dealId: string; orgId?: string
+  steps: Array<{ id: string; title: string; status: string; dueDate: string | null; completedAt: string | null }>
+  fetchSteps: () => void
+}) {
+  const tc = useTranslations("common")
+  const [newTitle, setNewTitle] = useState("")
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    ...(orgId ? { "x-organization-id": orgId } : {}),
+  }
+
+  const pending = steps.filter(s => s.status !== "completed")
+  const completed = steps.filter(s => s.status === "completed")
+
+  const completeStep = async (stepId: string) => {
+    await fetch(`/api/v1/deals/${dealId}/next-steps`, {
+      method: "PUT", headers,
+      body: JSON.stringify({ taskId: stepId, status: "completed" }),
+    })
+    fetchSteps()
+  }
+
+  const addStep = async () => {
+    if (!newTitle.trim()) return
+    await fetch(`/api/v1/deals/${dealId}/next-steps`, {
+      method: "POST", headers,
+      body: JSON.stringify({ title: newTitle.trim() }),
+    })
+    setNewTitle("")
+    fetchSteps()
+  }
+
+  return (
+    <div className="rounded-xl border bg-card p-4 space-y-2">
+      <div className="flex items-center gap-2 mb-1">
+        <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
+        <span className="text-sm font-semibold">{tc("nextSteps")}</span>
+        <span className="text-xs text-muted-foreground bg-muted rounded-full px-2 py-0.5">{pending.length}</span>
+      </div>
+
+      {pending.map(step => (
+        <motion.div
+          key={step.id}
+          initial={{ opacity: 0, x: -8 }}
+          animate={{ opacity: 1, x: 0 }}
+          className="flex items-center gap-2.5 py-1.5"
+        >
+          <button
+            className="h-4.5 w-4.5 rounded-full border-2 border-border hover:border-primary hover:bg-primary/10 flex-shrink-0 transition-colors"
+            onClick={() => completeStep(step.id)}
+          />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm truncate">{step.title}</p>
+            {step.dueDate && (
+              <p className="text-[11px] text-muted-foreground flex items-center gap-1">
+                <Clock className="h-3 w-3" />
+                {new Date(step.dueDate).toLocaleDateString("az-AZ")}
+              </p>
+            )}
+          </div>
+        </motion.div>
+      ))}
+
+      {completed.length > 0 && (
+        <div className="pt-1.5 space-y-0.5">
+          {completed.slice(0, 3).map(step => (
+            <div key={step.id} className="flex items-center gap-2.5 py-1 opacity-40">
+              <CheckCircle2 className="h-3.5 w-3.5 text-green-500 flex-shrink-0" />
+              <p className="text-xs line-through truncate">{step.title}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div className="flex gap-2 pt-1">
         <input
-          className="h-6 w-24 border rounded-full px-2.5 text-xs bg-background focus:outline-none focus:ring-2 focus:ring-primary/30"
-          placeholder={`+ ${addTagLabel}`}
-          value={input}
-          onChange={e => setInput(e.target.value)}
-          onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); addTag() } }}
-          onBlur={addTag}
+          className="flex-1 h-8 border rounded-lg px-2.5 text-xs bg-background focus:outline-none focus:ring-2 focus:ring-ring/30"
+          placeholder={tc("addNextStep")}
+          value={newTitle}
+          onChange={e => setNewTitle(e.target.value)}
+          onKeyDown={e => { if (e.key === "Enter") addStep() }}
         />
+        <Button size="sm" variant="outline" disabled={!newTitle.trim()} onClick={addStep} className="h-8 px-2.5">
+          <Plus className="h-3.5 w-3.5" />
+        </Button>
       </div>
     </div>
   )
 }
 
+// ── Main page ──
 export default function DealDetailPage() {
   const t = useTranslations("deals")
   const tc = useTranslations("common")
@@ -744,12 +200,10 @@ export default function DealDetailPage() {
   const [loading, setLoading] = useState(true)
   const [editOpen, setEditOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
-  const [orgUsers, setOrgUsers] = useState<Array<{ id: string; name: string | null; email: string }>>([])
-  const [addingMember, setAddingMember] = useState(false)
-  const [selectedUserId, setSelectedUserId] = useState("")
-  const [selectedRole, setSelectedRole] = useState("member")
   const [nextSteps, setNextSteps] = useState<Array<{ id: string; title: string; status: string; dueDate: string | null; completedAt: string | null }>>([])
-  const [newStepTitle, setNewStepTitle] = useState("")
+  const [timelineKey, setTimelineKey] = useState(0)
+  const [validationErrors, setValidationErrors] = useState<Array<{ field: string; message: string }>>([])
+  const [validationStage, setValidationStage] = useState<string>("")
 
   const stageLabels: Record<string, string> = {
     LEAD: t("stageLead"),
@@ -761,99 +215,76 @@ export default function DealDetailPage() {
   }
 
   const STAGES = STAGE_STYLES.map(s => ({ ...s, label: stageLabels[s.key] || s.key }))
+  const headers: Record<string, string> = orgId ? { "x-organization-id": orgId } : {}
 
   const fetchDeal = async () => {
     try {
-      const res = await fetch(`/api/v1/deals/${id}`, {
-        headers: orgId ? { "x-organization-id": orgId } : {},
-      })
+      const res = await fetch(`/api/v1/deals/${id}`, { headers })
       const json = await res.json()
       if (json.success) setDeal(json.data)
-    } catch (err) {
-      console.error(err)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const fetchOrgUsers = async () => {
-    try {
-      const res = await fetch("/api/v1/users", {
-        headers: orgId ? { "x-organization-id": orgId } : {},
-      })
-      const json = await res.json()
-      if (json.success) setOrgUsers(json.data || [])
     } catch (err) { console.error(err) }
+    finally { setLoading(false) }
   }
 
   const fetchNextSteps = async () => {
     try {
-      const res = await fetch(`/api/v1/deals/${id}/next-steps`, {
-        headers: orgId ? { "x-organization-id": orgId } : {},
-      })
+      const res = await fetch(`/api/v1/deals/${id}/next-steps`, { headers })
       const json = await res.json()
       if (json.success) setNextSteps(json.data || [])
     } catch (err) { console.error(err) }
   }
 
-  useEffect(() => { if (session) { fetchDeal(); fetchOrgUsers(); fetchNextSteps() } }, [session, id])
+  useEffect(() => { if (session) { fetchDeal(); fetchNextSteps() } }, [session, id])
 
   const saveTags = async (newTags: string[]) => {
     if (!deal) return
     try {
       await fetch(`/api/v1/deals/${id}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": orgId } : {}) },
+        headers: { "Content-Type": "application/json", ...headers },
         body: JSON.stringify({ tags: newTags }),
       })
       setDeal({ ...deal, tags: newTags })
     } catch (err) { console.error(err) }
   }
 
-  const addTeamMember = async () => {
-    if (!selectedUserId) return
+  const handleStageChange = async (newStage: string) => {
+    if (!deal || deal.stage === newStage) return
     try {
-      const res = await fetch(`/api/v1/deals/${id}/team`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": orgId } : {}) },
-        body: JSON.stringify({ userId: selectedUserId, role: selectedRole }),
+      const res = await fetch(`/api/v1/deals/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", ...headers },
+        body: JSON.stringify({ stage: newStage }),
       })
       if (res.ok) {
         fetchDeal()
-        setAddingMember(false)
-        setSelectedUserId("")
-        setSelectedRole("member")
+      } else if (res.status === 422) {
+        const json = await res.json()
+        if (json.validationErrors) {
+          setValidationErrors(json.validationErrors)
+          setValidationStage(newStage)
+        }
       }
-    } catch (err) { console.error(err) }
-  }
-
-  const removeTeamMember = async (userId: string) => {
-    try {
-      await fetch(`/api/v1/deals/${id}/team`, {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": orgId } : {}) },
-        body: JSON.stringify({ userId }),
-      })
-      fetchDeal()
     } catch (err) { console.error(err) }
   }
 
   const handleDelete = async () => {
     const res = await fetch(`/api/v1/deals/${id}`, {
-      method: "DELETE",
-      headers: orgId ? { "x-organization-id": orgId } : {},
+      method: "DELETE", headers,
     })
     if (res.ok) router.push("/deals")
     else throw new Error("Failed to delete")
   }
 
+  // ── Loading state ──
   if (loading) {
     return (
       <div className="space-y-4 animate-pulse">
         <div className="h-8 w-48 bg-muted rounded" />
         <div className="h-10 bg-muted rounded-xl" />
-        <div className="grid grid-cols-4 gap-3">
-          {[0,1,2,3].map(i => <div key={i} className="h-20 bg-muted rounded-xl" />)}
+        <div className="grid grid-cols-3 gap-4">
+          <div className="h-96 bg-muted rounded-xl" />
+          <div className="col-span-2 h-96 bg-muted rounded-xl" />
         </div>
       </div>
     )
@@ -874,452 +305,93 @@ export default function DealDetailPage() {
   const stageInfo = STAGES.find(s => s.key === deal.stage)
 
   return (
-    <div className="space-y-6 pb-12">
+    <MotionPage className="space-y-4 pb-12">
       {/* ── Header ── */}
       <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" onClick={() => router.push("/deals")} className="h-8 w-8 text-[#1e3a5f] hover:text-[#0ea5a0] dark:text-white">
+        <Button variant="ghost" size="icon" onClick={() => router.push("/deals")} className="h-8 w-8">
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <h1 className="text-xl font-bold tracking-tight truncate">{deal.name}</h1>
-            <Badge
-              className="text-white font-medium"
-              style={{ backgroundColor: stageInfo?.color }}
-            >
+            <h1 className="text-lg font-bold tracking-tight truncate">{deal.name}</h1>
+            <Badge className="text-white text-[11px]" style={{ backgroundColor: stageInfo?.color }}>
               {stageInfo?.label ?? deal.stage}
             </Badge>
           </div>
-          {deal.company && (
-            <p className="text-sm text-muted-foreground flex items-center gap-1 mt-0.5">
-              <Building2 className="h-3.5 w-3.5" /> {deal.company.name}
-            </p>
-          )}
+          {/* Tags inline */}
+          <div className="flex items-center gap-1.5 mt-1">
+            <Tag className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+            <TagsInput tags={deal.tags || []} onChange={saveTags} addTagLabel={t("addTag")} />
+          </div>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
-          <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
-            <Pencil className="h-3.5 w-3.5 mr-1.5" /> {t("editDeal")}
+          <Button variant="outline" size="sm" onClick={() => setEditOpen(true)} className="gap-1.5">
+            <Pencil className="h-3.5 w-3.5" /> {t("editDeal")}
           </Button>
           <Button
             variant="outline" size="sm"
             className="text-red-500 hover:text-red-600 hover:border-red-300"
             onClick={() => setDeleteOpen(true)}
           >
-            <Trash2 className="h-3.5 w-3.5 mr-1.5" /> {t("deleteDealBtn")}
+            <Trash2 className="h-3.5 w-3.5" />
           </Button>
         </div>
       </div>
 
-      {/* ── Tags ── */}
-      <div className="flex items-center gap-2">
-        <Tag className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-        <TagsInput tags={deal.tags || []} onChange={saveTags} addTagLabel={t("addTag")} />
-      </div>
+      {/* ── Stage Progress Bar (chevrons) ── */}
+      <StageProgress
+        stages={STAGES}
+        currentStage={deal.stage}
+        onStageClick={handleStageChange}
+      />
 
-      {/* ── Pipeline stages ── */}
-      <DealPipelineStages currentStage={deal.stage} stageLabels={stageLabels} />
-
-      {/* ── KPI Cards ── */}
-      <DealKpiCards deal={deal} labels={{ daysInFunnel: t("daysInFunnel"), daysAtStage: t("daysAtStage"), dealValue: t("dealValue"), confidenceLevel: t("confidenceLevel"), hintDaysInFunnel: t("hintDaysInFunnel"), hintDaysAtStage: t("hintDaysAtStage"), hintDealValue: t("hintDealValue"), hintConfidence: t("hintConfidence") }} />
-
-      {/* ── Win probability + Confidence ── */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Card className="border-none shadow-sm bg-card">
-          <CardContent className="pt-5 pb-5">
-            <ProbabilityBar probability={deal.probability} label={t("winProbability")} />
-          </CardContent>
-        </Card>
-        <Card className="border-none shadow-sm bg-card">
-          <CardContent className="pt-5 pb-5 space-y-2">
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground font-medium">{t("confidenceLevel")}</span>
-              <span className="font-semibold">{deal.confidenceLevel ?? 50}%</span>
-            </div>
-            <input
-              type="range" min="0" max="100" step="5"
-              value={deal.confidenceLevel ?? 50}
-              onChange={async (e) => {
-                const val = parseInt(e.target.value)
-                setDeal({ ...deal, confidenceLevel: val })
-                await fetch(`/api/v1/deals/${id}`, {
-                  method: "PUT",
-                  headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": orgId } : {}) },
-                  body: JSON.stringify({ confidenceLevel: val }),
-                })
-              }}
-              className="w-full h-2 bg-muted rounded-full appearance-none cursor-pointer accent-primary"
+      {/* ── TWO-COLUMN LAYOUT ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-4">
+        {/* LEFT: Data sidebar */}
+        <div className="space-y-4">
+          <div className="rounded-xl border bg-card overflow-hidden">
+            <DealSidebar
+              deal={deal}
+              orgId={orgId}
+              offersCount={0}
+              invoicesCount={0}
+              onEdit={() => setEditOpen(true)}
+              fetchDeal={fetchDeal}
             />
-            <div className="flex justify-between text-[10px] text-muted-foreground">
-              <span>0</span><span>50</span><span>100</span>
-            </div>
-            {/* Predictive Scoring */}
-            <div className="flex items-center justify-between pt-2 border-t mt-3">
-              <span className="text-sm text-muted-foreground font-medium">{t("predictiveScoring")}</span>
-              <div className="flex items-center gap-1.5">
-                <span className="text-sm font-bold text-primary">
-                  {Math.min(99, Math.round((deal.confidenceLevel ?? 50) * 0.85 + (deal.probability || 50) * 0.15))}%
-                </span>
-                <TrendingUp className="h-3.5 w-3.5 text-primary" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* ── Next Best Offers ── */}
-      <NextBestOffers dealId={id} orgId={orgId} />
-
-      {/* ── Tabs ── */}
-      <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList className="bg-muted/60 p-1 h-auto flex-wrap">
-          <TabsTrigger value="overview" className="rounded-md text-sm">{t("overview")}</TabsTrigger>
-          <TabsTrigger value="activity" className="rounded-md text-sm">{tc("activity")}</TabsTrigger>
-          <TabsTrigger value="contact-roles" className="rounded-md text-sm">{t("contactRoles")}</TabsTrigger>
-          <TabsTrigger value="competitors" className="rounded-md text-sm">{t("competitors")}</TabsTrigger>
-          <TabsTrigger value="team" className="rounded-md text-sm">{t("team")}</TabsTrigger>
-          <TabsTrigger value="offers" className="rounded-md text-sm">{t("offers")}</TabsTrigger>
-          <TabsTrigger value="invoices" className="rounded-md text-sm">{t("invoices")}</TabsTrigger>
-          <TabsTrigger value="engagement" className="rounded-md text-sm">{t("engagement")}</TabsTrigger>
-          <TabsTrigger value="history" className="rounded-md text-sm">{t("history")}</TabsTrigger>
-        </TabsList>
-
-        {/* Overview */}
-        <TabsContent value="overview" className="space-y-4">
-          {/* Contact person card */}
-          {deal.contact && (
-            <Card className="shadow-sm border-none bg-gradient-to-r from-indigo-50/50 to-purple-50/50 dark:from-indigo-950/20 dark:to-purple-950/20">
-              <CardContent className="pt-5 pb-5">
-                <div className="flex items-center gap-4">
-                  <div className="h-14 w-14 rounded-full bg-indigo-500/10 flex items-center justify-center text-xl font-bold text-indigo-600 flex-shrink-0">
-                    {deal.contact.fullName.split(" ").map(n => n[0]).join("").slice(0, 2)}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-base font-semibold">{deal.contact.fullName}</p>
-                    {deal.contact.position && <p className="text-sm text-muted-foreground">{deal.contact.position}</p>}
-                    {deal.contact.phone && <p className="text-xs text-muted-foreground mt-0.5">{deal.contact.phone}</p>}
-                    {deal.contact.email && <p className="text-xs text-muted-foreground">{deal.contact.email}</p>}
-                    {/* Communication action buttons */}
-                    <div className="flex items-center gap-2 mt-2">
-                      {deal.contact.phone && (
-                        <a href={`tel:${deal.contact.phone}`} title={tc("call")} className="h-8 w-8 rounded-full bg-green-500 hover:bg-green-600 flex items-center justify-center transition-colors shadow-sm">
-                          <Phone className="h-3.5 w-3.5 text-white" />
-                        </a>
-                      )}
-                      {deal.contact.email && (
-                        <a href={`mailto:${deal.contact.email}`} title={tc("email")} className="h-8 w-8 rounded-full bg-orange-500 hover:bg-orange-600 flex items-center justify-center transition-colors shadow-sm">
-                          <Mail className="h-3.5 w-3.5 text-white" />
-                        </a>
-                      )}
-                      {deal.contact.phone && (
-                        <a href={`https://wa.me/${deal.contact.phone.replace(/[^0-9]/g, "")}`} target="_blank" title="WhatsApp" className="h-8 w-8 rounded-full bg-emerald-500 hover:bg-emerald-600 flex items-center justify-center transition-colors shadow-sm">
-                          <MessageSquare className="h-3.5 w-3.5 text-white" />
-                        </a>
-                      )}
-                      <button title={tc("chat")} className="h-8 w-8 rounded-full bg-blue-500 hover:bg-blue-600 flex items-center justify-center transition-colors shadow-sm">
-                        <MessageCircle className="h-3.5 w-3.5 text-white" />
-                      </button>
-                    </div>
-                  </div>
-                  <Badge variant="outline" className="flex-shrink-0 text-xs">{tc("contactPerson")}</Badge>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Deal info */}
-            <Card className="shadow-sm border-none bg-card">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
-                  {t("dealInfo")} <InfoHint text="Key details about this deal: value, assignment, dates, and related entities" size={12} />
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {[
-                  { icon: <DollarSign className="h-4 w-4 text-muted-foreground" />, label: t("dealValue"), value: `${deal.valueAmount.toLocaleString()} ${deal.currency}` },
-                  { icon: <User className="h-4 w-4 text-muted-foreground" />, label: t("assignedTo"), value: deal.assignedTo || tc("unassigned") },
-                  { icon: <Calendar className="h-4 w-4 text-muted-foreground" />, label: t("expectedClose"), value: deal.expectedClose ? new Date(deal.expectedClose).toLocaleDateString("az-AZ") : "—" },
-                  { icon: <Clock className="h-4 w-4 text-muted-foreground" />, label: tc("created"), value: new Date(deal.createdAt).toLocaleDateString("az-AZ") },
-                  { icon: <Building2 className="h-4 w-4 text-muted-foreground" />, label: t("company"), value: deal.company?.name || "—" },
-                  { icon: <Target className="h-4 w-4 text-muted-foreground" />, label: t("campaign"), value: deal.campaign?.name || "—" },
-                  { icon: <Target className="h-4 w-4 text-muted-foreground" />, label: t("customerNeed"), value: deal.customerNeed || "—" },
-                  { icon: <Target className="h-4 w-4 text-muted-foreground" />, label: t("salesChannel"), value: deal.salesChannel || "—" },
-                ].map(({ icon, label, value }) => (
-                  <div key={label} className="flex items-center gap-3">
-                    {icon}
-                    <span className="text-sm text-muted-foreground w-28 flex-shrink-0">{label}</span>
-                    <span className="text-sm font-medium truncate">{value}</span>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-
-            {/* Notes */}
-            <Card className="shadow-sm border-none bg-card">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-                  {t("notes")}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {deal.notes ? (
-                  <p className="text-sm leading-relaxed whitespace-pre-wrap">{deal.notes}</p>
-                ) : (
-                  <p className="text-sm text-muted-foreground italic">{tc("noNotesYet")}</p>
-                )}
-                {deal.lostReason && (
-                  <>
-                    <hr className="my-3 border-border" />
-                    <div className="flex items-start gap-2">
-                      <AlertCircle className="h-4 w-4 text-red-500 mt-0.5 flex-shrink-0" />
-                      <div>
-                        <p className="text-xs font-medium text-red-500 mb-0.5">{tc("lostReason")}</p>
-                        <p className="text-sm">{deal.lostReason}</p>
-                      </div>
-                    </div>
-                  </>
-                )}
-              </CardContent>
-            </Card>
           </div>
-        </TabsContent>
 
-        {/* Activity */}
-        <TabsContent value="activity">
-          <ActivityTimeline dealId={id} orgId={orgId} />
-        </TabsContent>
-
-        {/* Contact Roles */}
-        <TabsContent value="contact-roles">
-          <ContactRolesPanel deal={deal} dealId={id} orgId={orgId} fetchDeal={fetchDeal} tc={tc} t={t} />
-        </TabsContent>
-
-        {/* Competitors */}
-        <TabsContent value="competitors">
-          <Card className="shadow-sm border-none bg-card">
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-base">
-                <Swords className="h-4 w-4 text-muted-foreground" /> {t("competitors")}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <CompetitorsSection
-                dealId={deal.id}
-                orgId={orgId}
-                labels={{
-                  noCompetitors: tc("noCompetitors"),
-                  addCompetitor: tc("addCompetitor"),
-                  competitorName: tc("competitorName"),
-                  theirProduct: tc("theirProduct"),
-                  theirStrengths: tc("theirStrengths"),
-                  theirWeaknesses: tc("theirWeaknesses"),
-                  theirPrice: tc("theirPrice"),
-                  add: tc("add"),
-                  cancel: tc("cancel"),
-                  competitor: tc("competitor"),
-                  product: tc("product"),
-                  price: tc("price"),
-                  strengths: tc("strengths"),
-                  weaknesses: tc("weaknesses"),
-                }}
-              />
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Team */}
-        <TabsContent value="team">
-          <Card className="shadow-sm border-none bg-card">
-            <CardContent className="pt-6 space-y-4">
-              {(deal.teamMembers || []).length > 0 ? (
-                <div className="space-y-2">
-                  {deal.teamMembers.map(member => {
-                    const ROLE_COLORS: Record<string, string> = {
-                      owner: "bg-amber-100 text-amber-700",
-                      member: "bg-blue-100 text-blue-700",
-                      support: "bg-green-100 text-green-700",
-                    }
-                    return (
-                      <div key={member.id} className="flex items-center gap-3 p-3 rounded-lg border hover:bg-muted/30 transition-colors">
-                        <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center text-sm font-semibold flex-shrink-0">
-                          {(member.user.name || member.user.email || "?")[0].toUpperCase()}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium truncate">{member.user.name || member.user.email}</p>
-                          <p className="text-xs text-muted-foreground truncate">{member.user.email}</p>
-                        </div>
-                        <Badge className={`text-xs ${ROLE_COLORS[member.role] || ROLE_COLORS.member}`}>
-                          {member.role}
-                        </Badge>
-                        <Button
-                          variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-red-500"
-                          onClick={() => removeTeamMember(member.userId)}
-                        >
-                          <X className="h-3.5 w-3.5" />
-                        </Button>
-                      </div>
-                    )
-                  })}
-                </div>
-              ) : !addingMember ? (
-                <div className="flex flex-col items-center justify-center py-10 text-center">
-                  <Users className="h-10 w-10 text-muted-foreground/30 mb-3" />
-                  <p className="text-sm font-medium text-muted-foreground">{tc("noTeamMembers")}</p>
-                  <p className="text-xs text-muted-foreground/60 mt-1">{tc("addTeamMembersHint")}</p>
-                </div>
-              ) : null}
-
-              {addingMember ? (
-                <div className="p-4 bg-muted/40 rounded-xl border space-y-3">
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="text-xs font-medium text-muted-foreground mb-1 block">{tc("user")}</label>
-                      <select
-                        className="w-full h-9 border rounded-lg px-3 text-sm bg-background"
-                        value={selectedUserId}
-                        onChange={e => setSelectedUserId(e.target.value)}
-                      >
-                        <option value="">{tc("selectUser")}</option>
-                        {orgUsers
-                          .filter(u => !deal.teamMembers?.some(m => m.userId === u.id))
-                          .map(u => (
-                            <option key={u.id} value={u.id}>{u.name || u.email}</option>
-                          ))}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="text-xs font-medium text-muted-foreground mb-1 block">{tc("role")}</label>
-                      <select
-                        className="w-full h-9 border rounded-lg px-3 text-sm bg-background"
-                        value={selectedRole}
-                        onChange={e => setSelectedRole(e.target.value)}
-                      >
-                        <option value="owner">{tc("owner")}</option>
-                        <option value="member">{tc("member")}</option>
-                        <option value="support">{tc("support")}</option>
-                      </select>
-                    </div>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button size="sm" onClick={addTeamMember} disabled={!selectedUserId}>
-                      <Plus className="h-3.5 w-3.5 mr-1" /> {tc("add")}
-                    </Button>
-                    <Button size="sm" variant="ghost" onClick={() => setAddingMember(false)}>{tc("cancel")}</Button>
-                  </div>
-                </div>
-              ) : (
-                <Button variant="outline" size="sm" onClick={() => setAddingMember(true)}>
-                  <Plus className="h-3.5 w-3.5 mr-1" /> {tc("addMember")}
-                </Button>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Offers */}
-        <TabsContent value="offers">
-          <OffersTab
+          {/* Next Steps */}
+          <NextStepsWidget
             dealId={id}
             orgId={orgId}
-            companyId={deal.company?.id}
-            contactId={deal.contactId}
-            contactEmail={deal.contact?.email}
-            currency={deal.currency}
-            valueAmount={deal.valueAmount}
+            steps={nextSteps}
+            fetchSteps={fetchNextSteps}
           />
-        </TabsContent>
+        </div>
 
-        <TabsContent value="invoices">
-          <InvoicesTab dealId={id} orgId={orgId || ""} />
-        </TabsContent>
+        {/* RIGHT: Timeline feed */}
+        <div className="space-y-4">
+          {/* Quick Action Bar — always visible at top */}
+          <QuickActionBar
+            dealId={id}
+            orgId={orgId}
+            onActivityAdded={() => setTimelineKey(k => k + 1)}
+            onTaskAdded={fetchNextSteps}
+            labels={{
+              placeholder: tc("whatIsNext"),
+              note: tc("actTypeNote"),
+              task: tc("actTypeTask"),
+              email: tc("actTypeEmail"),
+              send: tc("send"),
+            }}
+          />
 
-        {/* Engagement */}
-        <TabsContent value="engagement">
-          <EngagementTab dealId={id} orgId={orgId} />
-        </TabsContent>
-
-        {/* History */}
-        <TabsContent value="history">
-          <DealHistory dealId={id} orgId={orgId} deal={deal} />
-        </TabsContent>
-      </Tabs>
-
-      {/* ── Next Steps ── */}
-      <Card className="border-none shadow-sm bg-card">
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-base">
-            <CheckCircle2 className="h-4 w-4 text-muted-foreground" /> {tc("nextSteps")}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2">
-          {nextSteps.filter(s => s.status !== "completed").map(step => (
-            <div key={step.id} className="flex items-center gap-3 p-2.5 rounded-lg border hover:bg-muted/30 transition-colors">
-              <button
-                className="h-5 w-5 rounded-full border-2 border-primary/40 hover:border-primary hover:bg-primary/10 flex-shrink-0 transition-colors"
-                onClick={async () => {
-                  await fetch(`/api/v1/deals/${id}/next-steps`, {
-                    method: "PUT",
-                    headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": orgId } : {}) },
-                    body: JSON.stringify({ taskId: step.id, status: "completed" }),
-                  })
-                  fetchNextSteps()
-                }}
-              />
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">{step.title}</p>
-                {step.dueDate && (
-                  <p className="text-xs text-muted-foreground">{new Date(step.dueDate).toLocaleDateString("az-AZ")}</p>
-                )}
-              </div>
-            </div>
-          ))}
-
-          {nextSteps.filter(s => s.status === "completed").length > 0 && (
-            <div className="pt-2 space-y-1">
-              <p className="text-xs text-muted-foreground font-medium">{tc("completed")}</p>
-              {nextSteps.filter(s => s.status === "completed").map(step => (
-                <div key={step.id} className="flex items-center gap-3 p-2 rounded-lg opacity-50">
-                  <CheckCircle2 className="h-4 w-4 text-green-500 flex-shrink-0" />
-                  <p className="text-sm line-through truncate">{step.title}</p>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Add new step */}
-          <div className="flex gap-2 pt-2">
-            <input
-              className="flex-1 h-9 border rounded-lg px-3 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/30"
-              placeholder={tc("addNextStep")}
-              value={newStepTitle}
-              onChange={e => setNewStepTitle(e.target.value)}
-              onKeyDown={async e => {
-                if (e.key === "Enter" && newStepTitle.trim()) {
-                  await fetch(`/api/v1/deals/${id}/next-steps`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": orgId } : {}) },
-                    body: JSON.stringify({ title: newStepTitle.trim() }),
-                  })
-                  setNewStepTitle("")
-                  fetchNextSteps()
-                }
-              }}
-            />
-            <Button size="sm" disabled={!newStepTitle.trim()} onClick={async () => {
-              if (!newStepTitle.trim()) return
-              await fetch(`/api/v1/deals/${id}/next-steps`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": orgId } : {}) },
-                body: JSON.stringify({ title: newStepTitle.trim() }),
-              })
-              setNewStepTitle("")
-              fetchNextSteps()
-            }}>
-              <Plus className="h-3.5 w-3.5 mr-1" /> {tc("add")}
-            </Button>
+          {/* Unified Timeline */}
+          <div className="rounded-xl border bg-card p-4">
+            <ActivityTimeline key={timelineKey} dealId={id} orgId={orgId} />
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* ── Modals ── */}
       <DealForm
@@ -1346,6 +418,14 @@ export default function DealDetailPage() {
         title={t("deleteDeal")}
         itemName={deal.name}
       />
-    </div>
+      <StageValidationDialog
+        open={validationErrors.length > 0}
+        onClose={() => setValidationErrors([])}
+        errors={validationErrors}
+        targetStage={validationStage}
+        stageLabel={stageLabels[validationStage] || validationStage}
+        stageColor={STAGES.find(s => s.key === validationStage)?.color || "#6366f1"}
+      />
+    </MotionPage>
   )
 }

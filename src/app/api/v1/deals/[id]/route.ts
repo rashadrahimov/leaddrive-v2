@@ -102,6 +102,60 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 })
 
   try {
+    // ── STAGE VALIDATION RULES ──
+    if (parsed.data.stage) {
+      // Find PipelineStage matching the target stage name
+      const targetPipelineStage = await prisma.pipelineStage.findFirst({
+        where: { organizationId: orgId, name: parsed.data.stage, isActive: true },
+        include: { validationRules: { where: { isActive: true } } },
+      })
+
+      if (targetPipelineStage && targetPipelineStage.validationRules.length > 0) {
+        // Load current deal data to check against rules
+        const currentDeal = await prisma.deal.findFirst({
+          where: { id, organizationId: orgId },
+        })
+
+        if (currentDeal) {
+          const errors: { field: string; message: string }[] = []
+
+          for (const rule of targetPipelineStage.validationRules) {
+            const fieldValue = (currentDeal as any)[rule.fieldName]
+
+            switch (rule.ruleType) {
+              case "required":
+                if (!fieldValue && fieldValue !== 0) {
+                  errors.push({ field: rule.fieldName, message: rule.errorMessage })
+                }
+                break
+              case "min_value":
+                if (typeof fieldValue === "number" && rule.ruleValue && fieldValue < parseFloat(rule.ruleValue)) {
+                  errors.push({ field: rule.fieldName, message: rule.errorMessage })
+                }
+                break
+              case "task_completed": {
+                const completedTasks = await prisma.task.count({
+                  where: { relatedId: id, status: "completed", organizationId: orgId },
+                })
+                if (completedTasks === 0) {
+                  errors.push({ field: rule.fieldName, message: rule.errorMessage })
+                }
+                break
+              }
+            }
+          }
+
+          if (errors.length > 0) {
+            return NextResponse.json({
+              success: false,
+              error: "Stage transition blocked by validation rules",
+              validationErrors: errors,
+            }, { status: 422 })
+          }
+        }
+      }
+    }
+
     // Auto-set probability when stage changes (if not explicitly provided)
     const STAGE_PROBABILITY: Record<string, number> = {
       LEAD: 10, QUALIFIED: 25, PROPOSAL: 50, NEGOTIATION: 75, WON: 100, LOST: 0,

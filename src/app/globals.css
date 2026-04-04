@@ -4,26 +4,27 @@
 
 @layer base {
   :root {
-    --background: 210 20% 98%;
-    --foreground: 207 53% 15%;
+    /* Ramp/Notion-inspired clean palette */
+    --background: 0 0% 100%;
+    --foreground: 220 13% 13%;
     --card: 0 0% 100%;
-    --card-foreground: 207 53% 15%;
+    --card-foreground: 220 13% 13%;
     --popover: 0 0% 100%;
-    --popover-foreground: 207 53% 15%;
+    --popover-foreground: 220 13% 13%;
     --primary: 207 53% 24.5%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 210 25% 94%;
-    --secondary-foreground: 207 53% 15%;
-    --muted: 210 25% 94%;
-    --muted-foreground: 215 16% 47%;
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 220 13% 13%;
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 9% 46%;
     --accent: 175 86% 33%;
     --accent-foreground: 0 0% 100%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 100%;
-    --border: 214 25% 88%;
-    --input: 214 25% 88%;
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
     --ring: 175 86% 33%;
-    --radius: 0.5rem;
+    --radius: 0.625rem;
 
     /* Sidebar (always dark) */
     --sidebar-bg: 207 53% 16%;
@@ -32,27 +33,30 @@
 
     /* Glassmorphism */
     --glass-blur: 12px;
+
+    /* Status dots */
+    --status-dot-size: 8px;
   }
 
   .dark {
-    --background: 210 40% 7%;
-    --foreground: 210 20% 92%;
-    --card: 210 35% 10%;
-    --card-foreground: 210 20% 92%;
-    --popover: 210 35% 10%;
-    --popover-foreground: 210 20% 92%;
+    --background: 220 14% 8%;
+    --foreground: 220 14% 92%;
+    --card: 220 14% 11%;
+    --card-foreground: 220 14% 92%;
+    --popover: 220 14% 11%;
+    --popover-foreground: 220 14% 92%;
     --primary: 175 70% 42%;
-    --primary-foreground: 210 40% 7%;
-    --secondary: 210 30% 14%;
-    --secondary-foreground: 210 20% 92%;
-    --muted: 210 30% 14%;
-    --muted-foreground: 215 20% 65%;
+    --primary-foreground: 220 14% 8%;
+    --secondary: 220 14% 15%;
+    --secondary-foreground: 220 14% 92%;
+    --muted: 220 14% 15%;
+    --muted-foreground: 220 9% 60%;
     --accent: 175 60% 30%;
-    --accent-foreground: 210 20% 92%;
+    --accent-foreground: 220 14% 92%;
     --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 20% 92%;
-    --border: 210 25% 18%;
-    --input: 210 25% 18%;
+    --destructive-foreground: 220 14% 92%;
+    --border: 220 14% 18%;
+    --input: 220 14% 18%;
     --ring: 175 70% 42%;
   }
 }
@@ -77,7 +81,7 @@
   --color-border: hsl(var(--border));
   --color-input: hsl(var(--input));
   --color-ring: hsl(var(--ring));
-  --radius: 0.5rem;
+  --radius: 0.625rem;
   --font-sans: "Inter", "Arial", sans-serif;
   --font-mono: "JetBrains Mono", monospace;
   --animate-shimmer-slide: shimmer-slide var(--speed) ease-in-out infinite alternate;
