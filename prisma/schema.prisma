@@ -301,6 +301,7 @@ model Deal {
 
   teamMembers    DealTeamMember[]
   contactRoles   DealContactRole[]
+  competitors    DealCompetitor[]
   offers         Offer[]
   invoices       Invoice[]
 
@@ -327,6 +328,24 @@ model DealContactRole {
   @@unique([dealId, contactId])
   @@index([dealId])
   @@map("deal_contact_roles")
+}
+
+model DealCompetitor {
+  id          String   @id @default(cuid())
+  dealId      String
+  deal        Deal     @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  name        String
+  product     String?
+  strengths   String?
+  weaknesses  String?
+  price       String?
+  threat      String   @default("Medium") // High, Medium, Low
+  notes       String?
+  createdAt   DateTime @default(now())
+
+  @@unique([dealId, name])
+  @@index([dealId])
+  @@map("deal_competitors")
 }
 
 model DealTeamMember {

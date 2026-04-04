@@ -293,11 +293,84 @@ function AddContactRoleForm({ dealId, orgId, onDone }: { dealId: string; orgId?:
   )
 }
 
+// ── Inline Add Competitor Form ──
+function AddCompetitorForm({ dealId, orgId, onDone }: { dealId: string; orgId?: string; onDone: () => void }) {
+  const tc = useTranslations("common")
+  const [name, setName] = useState("")
+  const [product, setProduct] = useState("")
+  const [strengths, setStrengths] = useState("")
+  const [weaknesses, setWeaknesses] = useState("")
+  const [price, setPrice] = useState("")
+  const [threat, setThreat] = useState("Medium")
+  const [saving, setSaving] = useState(false)
+
+  const handleSave = async () => {
+    if (!name.trim()) return
+    setSaving(true)
+    try {
+      await fetch(`/api/v1/deals/${dealId}/competitors`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": orgId } : {}) },
+        body: JSON.stringify({
+          name: name.trim(),
+          product: product || undefined,
+          strengths: strengths || undefined,
+          weaknesses: weaknesses || undefined,
+          price: price || undefined,
+          threat,
+        }),
+      })
+      onDone()
+    } catch { } finally { setSaving(false) }
+  }
+
+  return (
+    <div className="space-y-2 pt-1">
+      <Input placeholder={tc("competitorName")} value={name} onChange={e => setName(e.target.value)} className="h-7 text-xs" />
+      <Input placeholder={tc("theirProduct")} value={product} onChange={e => setProduct(e.target.value)} className="h-7 text-xs" />
+      <div className="grid grid-cols-2 gap-1.5">
+        <Input placeholder={tc("theirStrengths")} value={strengths} onChange={e => setStrengths(e.target.value)} className="h-7 text-xs" />
+        <Input placeholder={tc("theirWeaknesses")} value={weaknesses} onChange={e => setWeaknesses(e.target.value)} className="h-7 text-xs" />
+      </div>
+      <div className="grid grid-cols-2 gap-1.5">
+        <Input placeholder={tc("theirPrice")} value={price} onChange={e => setPrice(e.target.value)} className="h-7 text-xs" />
+        <Select value={threat} onChange={e => setThreat(e.target.value)} className="h-7 text-xs">
+          <option value="High">{tc("high")}</option>
+          <option value="Medium">{tc("medium")}</option>
+          <option value="Low">{tc("low")}</option>
+        </Select>
+      </div>
+      <Button size="sm" className="w-full h-7 text-[10px]" onClick={handleSave} disabled={!name.trim() || saving}>
+        {saving ? <Loader2 className="h-3 w-3 animate-spin" /> : tc("save")}
+      </Button>
+    </div>
+  )
+}
+
+const THREAT_COLORS: Record<string, string> = {
+  High: "text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20",
+  Medium: "text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20",
+  Low: "text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20",
+}
+
 export function DealSidebar({ deal, orgId, offersCount, invoicesCount, onEdit, fetchDeal }: DealSidebarProps) {
   const t = useTranslations("deals")
   const tc = useTranslations("common")
   const [showAddMember, setShowAddMember] = useState(false)
   const [showAddRole, setShowAddRole] = useState(false)
+  const [showAddCompetitor, setShowAddCompetitor] = useState(false)
+  const [competitors, setCompetitors] = useState<Array<{ id: string; name: string; product?: string; strengths?: string; weaknesses?: string; price?: string; threat: string }>>([])
+
+  const fetchCompetitors = () => {
+    fetch(`/api/v1/deals/${deal.id}/competitors`, {
+      headers: orgId ? { "x-organization-id": orgId } : {},
+    })
+      .then(r => r.json())
+      .then(j => { if (j.success) setCompetitors(j.data) })
+      .catch(() => {})
+  }
+
+  useEffect(() => { fetchCompetitors() }, [deal.id])
 
   return (
     <MotionCard className="space-y-0">
@@ -533,9 +606,64 @@ export function DealSidebar({ deal, orgId, offersCount, invoicesCount, onEdit, f
         <AccordionItem
           title={t("competitors")}
           icon={<Swords className="h-3.5 w-3.5" />}
-          count={0}
+          count={competitors.length}
+          defaultOpen={competitors.length > 0}
         >
-          <p className="text-xs text-muted-foreground">{tc("noCompetitors")}</p>
+          <div className="space-y-1.5">
+            {competitors.length > 0 ? (
+              competitors.map(comp => (
+                <div key={comp.id} className="py-1.5 group">
+                  <div className="flex items-center gap-2">
+                    <div className="h-6 w-6 rounded-full bg-orange-100 dark:bg-orange-900/20 flex items-center justify-center text-[10px] font-semibold text-orange-600 dark:text-orange-400 flex-shrink-0">
+                      {comp.name[0]}
+                    </div>
+                    <span className="text-xs font-medium truncate flex-1">{comp.name}</span>
+                    <Badge variant="outline" className={`text-[10px] h-4 px-1.5 border-0 ${THREAT_COLORS[comp.threat] || ""}`}>
+                      {comp.threat}
+                    </Badge>
+                    <button
+                      className="h-5 w-5 rounded flex items-center justify-center text-muted-foreground hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 opacity-0 group-hover:opacity-100 transition-opacity"
+                      onClick={async () => {
+                        await fetch(`/api/v1/deals/${deal.id}/competitors`, {
+                          method: "DELETE",
+                          headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": orgId } : {}) },
+                          body: JSON.stringify({ competitorId: comp.id }),
+                        })
+                        fetchCompetitors()
+                      }}
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                  {(comp.product || comp.price) && (
+                    <div className="ml-8 mt-0.5 flex items-center gap-2 text-[10px] text-muted-foreground">
+                      {comp.product && <span>{comp.product}</span>}
+                      {comp.product && comp.price && <span>·</span>}
+                      {comp.price && <span>{comp.price}</span>}
+                    </div>
+                  )}
+                </div>
+              ))
+            ) : (
+              <p className="text-xs text-muted-foreground">{tc("noCompetitors")}</p>
+            )}
+
+            {showAddCompetitor ? (
+              <div className="border rounded-lg p-2 bg-muted/30">
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-[10px] font-semibold">{tc("addCompetitor")}</span>
+                  <button onClick={() => setShowAddCompetitor(false)} className="p-0.5 rounded hover:bg-muted">
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
+                <AddCompetitorForm dealId={deal.id} orgId={orgId} onDone={() => { setShowAddCompetitor(false); fetchCompetitors() }} />
+              </div>
+            ) : (
+              <Button variant="outline" size="sm" className="w-full gap-1 h-7 text-[10px]" onClick={() => setShowAddCompetitor(true)}>
+                <Plus className="h-3 w-3" /> {tc("addCompetitor")}
+              </Button>
+            )}
+          </div>
         </AccordionItem>
       </div>
     </MotionCard>
