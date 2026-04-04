@@ -11,8 +11,13 @@
 let PrismaClientClass: any
 
 try {
-  PrismaClientClass = require("@prisma/client").PrismaClient
-} catch {
+  const mod = require("@prisma/client")
+  PrismaClientClass = mod.PrismaClient
+  if (!PrismaClientClass) {
+    console.error("[prisma.ts] PrismaClient is undefined in @prisma/client, keys:", Object.keys(mod).slice(0, 10))
+  }
+} catch (err: any) {
+  console.error("[prisma.ts] Failed to load @prisma/client:", err?.message)
   // PrismaClient not generated yet — provide stub for build
   PrismaClientClass = class StubPrismaClient {
     $extends() { return this }
@@ -21,7 +26,14 @@ try {
 
 const globalForPrisma = globalThis as unknown as { prisma: InstanceType<typeof PrismaClientClass> }
 
-const basePrisma = globalForPrisma.prisma ?? new PrismaClientClass()
+let basePrisma: any
+if (globalForPrisma.prisma) {
+  basePrisma = globalForPrisma.prisma
+  console.log("[prisma.ts] Reusing existing globalThis.prisma, has dealCompetitor:", "dealCompetitor" in basePrisma)
+} else {
+  basePrisma = new PrismaClientClass({ log: process.env.NODE_ENV === "production" ? ["error", "warn"] : ["query", "error", "warn"] })
+  console.log("[prisma.ts] Created new PrismaClient, has dealCompetitor:", "dealCompetitor" in basePrisma)
+}
 
 if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = basePrisma
 
