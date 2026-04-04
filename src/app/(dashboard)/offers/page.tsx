@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState, useMemo } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { useSession } from "next-auth/react"
 import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
@@ -44,6 +44,8 @@ export default function OffersPage() {
   const t = useTranslations("offers")
   const tc = useTranslations("common")
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const dealIdFilter = searchParams.get("dealId")
   const [offers, setOffers] = useState<Offer[]>([])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
@@ -56,9 +58,10 @@ export default function OffersPage() {
 
   const fetchOffers = async () => {
     try {
-      const url = statusFilter !== "all"
+      let url = statusFilter !== "all"
         ? `/api/v1/offers?limit=500&status=${statusFilter}`
         : "/api/v1/offers?limit=500"
+      if (dealIdFilter) url += `&dealId=${dealIdFilter}`
       const res = await fetch(url, {
         headers: orgId ? { "x-organization-id": String(orgId) } : {},
       })

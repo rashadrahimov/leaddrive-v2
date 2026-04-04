@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { useSession } from "next-auth/react"
 import { useTranslations } from "next-intl"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { ColorStatCard } from "@/components/color-stat-card"
 import { DataTable } from "@/components/data-table"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
@@ -81,6 +81,8 @@ export default function InvoicesPage() {
   const t = useTranslations("invoices")
   const tc = useTranslations("common")
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const dealIdFilter = searchParams.get("dealId")
   const [invoices, setInvoices] = useState<Invoice[]>([])
   const [loading, setLoading] = useState(true)
   const [statusFilter, setStatusFilter] = useState<string>("")
@@ -113,7 +115,7 @@ export default function InvoicesPage() {
     setLoading(true)
     try {
       const res = await fetch(
-        `/api/v1/invoices?limit=500${statusFilter ? `&status=${statusFilter}` : ""}`,
+        `/api/v1/invoices?limit=500${statusFilter ? `&status=${statusFilter}` : ""}${dealIdFilter ? `&dealId=${dealIdFilter}` : ""}`,
         {
           headers: orgId ? { "x-organization-id": String(orgId) } : {},
         }
