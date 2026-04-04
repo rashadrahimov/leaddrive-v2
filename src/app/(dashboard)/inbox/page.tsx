@@ -130,8 +130,6 @@ export default function InboxPage() {
   const [contactsLoaded, setContactsLoaded] = useState(false)
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
-  const messagesContainerRef = useRef<HTMLDivElement>(null)
-  const userScrolledUpRef = useRef(false)
 
   const fetchInbox = async () => {
     try {
@@ -181,52 +179,11 @@ export default function InboxPage() {
     }
   }, [showCompose])
 
-  // Track user scroll intent via wheel/touch (immune to React re-render scroll events)
-  useEffect(() => {
-    const container = messagesContainerRef.current
-    if (!container) return
-    const markScrolledUp = () => { userScrolledUpRef.current = true }
-    const checkIfBackAtBottom = () => {
-      const { scrollTop, scrollHeight, clientHeight } = container
-      if (scrollHeight - scrollTop - clientHeight < 80) {
-        userScrolledUpRef.current = false
-      }
-    }
-    // wheel up → user is reading history
-    const handleWheel = (e: WheelEvent) => {
-      if (e.deltaY < 0) markScrolledUp()
-      else requestAnimationFrame(checkIfBackAtBottom)
-    }
-    // touch scroll detection
-    let touchStartY = 0
-    const handleTouchStart = (e: TouchEvent) => { touchStartY = e.touches[0].clientY }
-    const handleTouchMove = (e: TouchEvent) => {
-      if (e.touches[0].clientY > touchStartY) markScrolledUp() // finger moved down = scroll up
-      else requestAnimationFrame(checkIfBackAtBottom)
-    }
-    container.addEventListener("wheel", handleWheel, { passive: true })
-    container.addEventListener("touchstart", handleTouchStart, { passive: true })
-    container.addEventListener("touchmove", handleTouchMove, { passive: true })
-    return () => {
-      container.removeEventListener("wheel", handleWheel)
-      container.removeEventListener("touchstart", handleTouchStart)
-      container.removeEventListener("touchmove", handleTouchMove)
-    }
-  }, [selected])
-
-  // Auto-scroll: only on conversation switch or if user is at bottom
-  const prevSelectedRef = useRef<number | null>(null)
+  // Scroll to bottom ONLY when switching conversations — polling never triggers scroll
   useEffect(() => {
     if (selected === null) return
-    const switchedConvo = prevSelectedRef.current !== selected
-    if (switchedConvo) {
-      userScrolledUpRef.current = false
-      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
-    } else if (!userScrolledUpRef.current) {
-      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
-    }
-    prevSelectedRef.current = selected
-  }, [selected, conversations])
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+  }, [selected])
 
   /* -- Reply -- */
   const handleSendReply = async () => {
@@ -278,7 +235,9 @@ export default function InboxPage() {
         }),
       })
       setReplyText("")
-      fetchInbox()
+      await fetchInbox()
+      // Scroll to bottom after sending
+      setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }), 100)
     } catch (err) { console.error(err) } finally { setSending(false) }
   }
 
@@ -584,7 +543,7 @@ export default function InboxPage() {
               </div>
 
               {/* Messages */}
-              <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 space-y-3">
+              <div className="flex-1 overflow-y-auto p-4 space-y-3">
                 {selectedConvo.messages.slice().reverse().map(msg => (
                   <div key={msg.id} className={cn("flex", msg.direction === "outbound" ? "justify-end" : "justify-start")}>
                     <div className={cn(
