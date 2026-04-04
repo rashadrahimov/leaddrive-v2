@@ -15,7 +15,7 @@ import {
 import { DealForm } from "@/components/deal-form"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
 import { StageProgress } from "@/components/deals/stage-progress"
-import { QuickActionBar } from "@/components/deals/quick-action-bar"
+import { QuickActionBar, type DealContact } from "@/components/deals/quick-action-bar"
 import { DealSidebar } from "@/components/deals/deal-sidebar"
 import { ActivityTimeline } from "@/components/deals/activity-timeline"
 import { StageValidationDialog } from "@/components/deals/stage-validation-dialog"
@@ -460,6 +460,18 @@ export default function DealDetailPage() {
           <QuickActionBar
             dealId={id}
             orgId={orgId}
+            contacts={(() => {
+              const map = new Map<string, DealContact>()
+              // Add contact roles
+              deal.contactRoles?.forEach(cr => {
+                if (cr.contact) map.set(cr.contactId, { id: cr.contactId, fullName: cr.contact.fullName, email: cr.contact.email, isPrimary: cr.isPrimary })
+              })
+              // Add primary contact if not already in roles
+              if (deal.contact && !map.has(deal.contact.id)) {
+                map.set(deal.contact.id, { id: deal.contact.id, fullName: deal.contact.fullName, email: deal.contact.email, isPrimary: true })
+              }
+              return Array.from(map.values())
+            })()}
             onActivityAdded={() => setTimelineKey(k => k + 1)}
             onTaskAdded={fetchNextSteps}
             labels={{

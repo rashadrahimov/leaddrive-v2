@@ -18,6 +18,7 @@ interface TimelineItem {
   description?: string
   date: string
   author?: string
+  contactName?: string
 }
 
 const TYPE_CONFIG: Record<string, { icon: any; bg: string; text: string; labelKey: string }> = {
@@ -59,6 +60,7 @@ export function ActivityTimeline({ dealId, orgId }: { dealId: string; orgId?: st
             description: a.description,
             date: a.scheduledAt || a.createdAt,
             author: a.createdByName,
+            contactName: a.contact?.fullName,
           })
         })
         timeline.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
@@ -218,9 +220,14 @@ export function ActivityTimeline({ dealId, orgId }: { dealId: string; orgId?: st
                         </span>
                         {item.author && <span className="text-xs text-muted-foreground ml-auto">{item.author}</span>}
                       </div>
+                      {item.type === "email" && item.contactName && (
+                        <p className="text-xs text-muted-foreground mb-1">
+                          → {item.contactName}
+                        </p>
+                      )}
                       <p className="text-sm font-medium">{item.subject}</p>
                       {item.description && (
-                        <p className="text-xs text-muted-foreground mt-1 line-clamp-3">{item.description}</p>
+                        <p className="text-xs text-muted-foreground mt-1 line-clamp-3 whitespace-pre-line">{item.description}</p>
                       )}
                     </div>
                   </div>
