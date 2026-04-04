@@ -1,4 +1,4 @@
-import type { Metadata } from "next"
+import type { Metadata, Viewport } from "next"
 import { headers } from "next/headers"
 import { NextIntlClientProvider } from "next-intl"
 import { getMessages } from "next-intl/server"
@@ -9,6 +9,7 @@ import "./globals.css"
 export const metadata: Metadata = {
   title: "LeadDrive CRM",
   description: "SaaS CRM for IT Outsourcing Companies",
+  manifest: "/manifest.json",
   icons: {
     icon: [
       { url: "/favicon.ico", sizes: "48x48", type: "image/x-icon" },
@@ -16,9 +17,18 @@ export const metadata: Metadata = {
     ],
     apple: "/apple-touch-icon.png",
   },
-  other: {
-    "theme-color": "#0f172a",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "LeadDrive CRM",
   },
+}
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  themeColor: "#001E3C",
 }
 
 export default async function RootLayout({
@@ -38,6 +48,7 @@ export default async function RootLayout({
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       </head>
       <body className="font-sans antialiased" nonce={nonce}>
+        {/* @ts-expect-error nonce prop supported at runtime */}
         <NextIntlClientProvider messages={messages} nonce={nonce}>
           <Providers>{children}</Providers>
           <Toaster richColors position="top-right" />
