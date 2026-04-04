@@ -13,7 +13,7 @@ import { LeadItemModal } from "@/components/lead-item-modal"
 import {
   UserPlus, Plus, Search, Pencil, Trash2, ArrowRight,
   Brain, Phone, Mail, Building2, ArrowUpDown, ArrowUp, ArrowDown,
-  Flame, TrendingUp, CheckCircle, LayoutGrid, List, BarChart3,
+  Flame, TrendingUp, CheckCircle, LayoutGrid, List, BarChart3, Columns3,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useTranslations } from "next-intl"
@@ -85,7 +85,8 @@ export default function LeadsPage() {
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [deleteName, setDeleteName] = useState("")
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null)
-  const [viewMode, setViewMode] = useState<"table" | "kanban" | "analytics">("table")
+  const [tab, setTab] = useState<"analytics" | "workspace">("analytics")
+  const [viewMode, setViewMode] = useState<"table" | "kanban">("table")
 
   const fetchLeads = async () => {
     try {
@@ -181,75 +182,37 @@ export default function LeadsPage() {
             </p>
           </div>
         </div>
-        <Button onClick={() => { setEditData(undefined); setShowForm(true) }} className="gap-2">
-          <Plus className="h-4 w-4" /> {t("newLead")}
-        </Button>
-      </div>
-
-      <PageDescription text={t("pageDescription")} />
-
-      {/* Stat cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <ColorStatCard label={t("title")} value={leads.length} icon={<UserPlus className="h-4 w-4" />} color="blue" hint={t("hintTotalLeads")} />
-        <ColorStatCard label={t("hotLeads")} value={hotLeads} icon={<Flame className="h-4 w-4" />} color="orange" hint={t("hintHotLeads")} />
-        <ColorStatCard label={t("avgScore")} value={`${avgScore}/100`} icon={<TrendingUp className="h-4 w-4" />} color="indigo" hint={t("hintColScore")} />
-        <ColorStatCard label={t("statusConverted")} value={statusCounts.converted || 0} icon={<CheckCircle className="h-4 w-4" />} color="green" />
-      </div>
-
-      {/* Status filter tabs */}
-      <div className="flex flex-wrap gap-2">
-        <Button
-          variant={statusFilter === "all" ? "default" : "outline"}
-          size="sm"
-          onClick={() => setStatusFilter("all")}
-        >
-          {t("all")} ({leads.length})
-        </Button>
-        {Object.entries(statusLabels).map(([key, label]) => (
-          <Button
-            key={key}
-            variant={statusFilter === key ? "default" : "outline"}
-            size="sm"
-            onClick={() => setStatusFilter(key)}
-          >
-            {label} ({statusCounts[key] || 0})
-          </Button>
-        ))}
-      </div>
-
-      {/* Search + Sort + View Toggle */}
-      <div className="flex gap-2">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder={t("searchPlaceholder")}
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            className="pl-9"
-          />
-        </div>
-        <Select value={sortBy} onChange={e => setSortBy(e.target.value)} className="w-[180px]">
-          <option value="score_desc">{t("sortScoreDesc")}</option>
-          <option value="score_asc">{t("sortScoreAsc")}</option>
-          <option value="name_asc">{t("sortNameAsc")}</option>
-          <option value="name_desc">{t("sortNameDesc")}</option>
-          <option value="newest">{t("sortNewest")}</option>
-        </Select>
-        <div className="flex border rounded-lg overflow-hidden">
-          <Button variant={viewMode === "table" ? "default" : "ghost"} size="sm" className="rounded-none px-3" onClick={() => setViewMode("table")}>
-            <List className="h-4 w-4" />
-          </Button>
-          <Button variant={viewMode === "kanban" ? "default" : "ghost"} size="sm" className="rounded-none px-3" onClick={() => setViewMode("kanban")}>
-            <LayoutGrid className="h-4 w-4" />
-          </Button>
-          <Button variant={viewMode === "analytics" ? "default" : "ghost"} size="sm" className="rounded-none px-3" onClick={() => setViewMode("analytics")}>
-            <BarChart3 className="h-4 w-4" />
+        <div className="flex items-center gap-2">
+          {/* Tab switcher */}
+          <div className="flex items-center rounded-lg border bg-muted/50 p-0.5">
+            <button
+              onClick={() => setTab("analytics")}
+              className={cn(
+                "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+                tab === "analytics" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <BarChart3 className="h-4 w-4" />
+              {tc("analytics")}
+            </button>
+            <button
+              onClick={() => setTab("workspace")}
+              className={cn(
+                "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+                tab === "workspace" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <Columns3 className="h-4 w-4" />
+              {tc("list")}
+            </button>
+          </div>
+          <Button onClick={() => { setEditData(undefined); setShowForm(true) }} className="gap-2">
+            <Plus className="h-4 w-4" /> {t("newLead")}
           </Button>
         </div>
       </div>
 
-      {/* Analytics View */}
-      {viewMode === "analytics" && (
+      {tab === "analytics" ? (
         <LeadsAnalytics
           leads={leads}
           labels={{
@@ -280,7 +243,66 @@ export default function LeadsPage() {
             pipelineValue: t("analyticsPipelineValue"),
           }}
         />
-      )}
+      ) : (
+        <>
+          <PageDescription text={t("pageDescription")} />
+
+          {/* Stat cards */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <ColorStatCard label={t("title")} value={leads.length} icon={<UserPlus className="h-4 w-4" />} color="blue" hint={t("hintTotalLeads")} />
+            <ColorStatCard label={t("hotLeads")} value={hotLeads} icon={<Flame className="h-4 w-4" />} color="orange" hint={t("hintHotLeads")} />
+            <ColorStatCard label={t("avgScore")} value={`${avgScore}/100`} icon={<TrendingUp className="h-4 w-4" />} color="indigo" hint={t("hintColScore")} />
+            <ColorStatCard label={t("statusConverted")} value={statusCounts.converted || 0} icon={<CheckCircle className="h-4 w-4" />} color="green" />
+          </div>
+
+          {/* Status filter tabs */}
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant={statusFilter === "all" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setStatusFilter("all")}
+            >
+              {t("all")} ({leads.length})
+            </Button>
+            {Object.entries(statusLabels).map(([key, label]) => (
+              <Button
+                key={key}
+                variant={statusFilter === key ? "default" : "outline"}
+                size="sm"
+                onClick={() => setStatusFilter(key)}
+              >
+                {label} ({statusCounts[key] || 0})
+              </Button>
+            ))}
+          </div>
+
+          {/* Search + Sort + View Toggle */}
+          <div className="flex gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder={t("searchPlaceholder")}
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+            <Select value={sortBy} onChange={e => setSortBy(e.target.value)} className="w-[180px]">
+              <option value="score_desc">{t("sortScoreDesc")}</option>
+              <option value="score_asc">{t("sortScoreAsc")}</option>
+              <option value="name_asc">{t("sortNameAsc")}</option>
+              <option value="name_desc">{t("sortNameDesc")}</option>
+              <option value="newest">{t("sortNewest")}</option>
+            </Select>
+            <div className="flex border rounded-lg overflow-hidden">
+              <Button variant={viewMode === "table" ? "default" : "ghost"} size="sm" className="rounded-none px-3" onClick={() => setViewMode("table")}>
+                <List className="h-4 w-4" />
+              </Button>
+              <Button variant={viewMode === "kanban" ? "default" : "ghost"} size="sm" className="rounded-none px-3" onClick={() => setViewMode("kanban")}>
+                <LayoutGrid className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
 
       {/* Kanban View */}
       {viewMode === "kanban" && (
@@ -501,6 +523,8 @@ export default function LeadsPage() {
           </tbody>
         </table>
       </div>}
+        </>
+      )}
 
       {/* Lead Form */}
       <LeadForm
