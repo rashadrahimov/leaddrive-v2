@@ -81,6 +81,7 @@ model Organization {
   mtmSettings            MtmSetting[]
   mtmNotifications       MtmNotification[]
   mtmAuditLogs           MtmAuditLog[]
+  leadAssignmentRules    LeadAssignmentRule[]
 
   @@map("organizations")
 }
@@ -2737,4 +2738,23 @@ model MtmAuditLog {
   @@index([agentId])
   @@index([createdAt])
   @@map("mtm_audit_logs")
+}
+
+// Lead Assignment Rules — automated lead routing
+model LeadAssignmentRule {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  name           String
+  description    String?
+  method         String       @default("condition") // "round_robin" | "condition"
+  isActive       Boolean      @default(true)
+  priority       Int          @default(50)
+  conditions     Json         @default("[]") // [{field, operator, value}]
+  assignees      Json         @default("[]") // string[]
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@index([organizationId])
+  @@map("lead_assignment_rules")
 }
