@@ -19,7 +19,7 @@ export function RisksBanner({ risks }: { risks: any[] }) {
           <AlertTriangle className={`h-3.5 w-3.5 shrink-0 ${r.severity === "critical" ? "text-red-500" : "text-amber-500"}`} />
           <div className="min-w-0 flex-1">
             <div className="text-xs font-medium truncate">{r.title}</div>
-            <div className="text-[10px] text-muted-foreground truncate">{r.description}</div>
+            <div className="text-[10px] text-muted-foreground leading-tight">{r.description}</div>
           </div>
           <Badge variant={r.severity === "critical" ? "destructive" : "secondary"} className="text-[10px] shrink-0 ml-1">
             {r.metric}
