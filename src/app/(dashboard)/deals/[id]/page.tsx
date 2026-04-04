@@ -556,17 +556,17 @@ function ProbabilityBar({ probability, label }: { probability: number; label: st
   )
 }
 
-function CompetitorsSection({ dealId, orgId, labels }: { dealId: string; orgId?: string; labels: { noCompetitors: string; addCompetitor: string; competitorName: string; theirProduct: string; theirStrengths: string; theirWeaknesses: string; add: string; cancel: string; competitor: string; product: string; strengths: string; weaknesses: string } }) {
+function CompetitorsSection({ dealId, orgId, labels }: { dealId: string; orgId?: string; labels: { noCompetitors: string; addCompetitor: string; competitorName: string; theirProduct: string; theirStrengths: string; theirWeaknesses: string; theirPrice: string; add: string; cancel: string; competitor: string; product: string; strengths: string; weaknesses: string; price: string } }) {
   const [competitors, setCompetitors] = useState<Array<{
-    id: string; name: string; product: string; strengths: string; weaknesses: string
+    id: string; name: string; product: string; strengths: string; weaknesses: string; price: string
   }>>([])
   const [adding, setAdding] = useState(false)
-  const [form, setForm] = useState({ name: "", product: "", strengths: "", weaknesses: "" })
+  const [form, setForm] = useState({ name: "", product: "", strengths: "", weaknesses: "", price: "" })
 
   const addCompetitor = () => {
     if (!form.name) return
     setCompetitors(prev => [...prev, { id: Date.now().toString(), ...form }])
-    setForm({ name: "", product: "", strengths: "", weaknesses: "" })
+    setForm({ name: "", product: "", strengths: "", weaknesses: "", price: "" })
     setAdding(false)
   }
 
@@ -590,6 +590,7 @@ function CompetitorsSection({ dealId, orgId, labels }: { dealId: string; orgId?:
             <tr className="bg-muted/50 border-b">
               <th className="text-left p-3 font-medium text-muted-foreground">{labels.competitor}</th>
               <th className="text-left p-3 font-medium text-muted-foreground">{labels.product}</th>
+              <th className="text-left p-3 font-medium text-muted-foreground">{labels.price}</th>
               <th className="text-left p-3 font-medium text-muted-foreground">{labels.strengths}</th>
               <th className="text-left p-3 font-medium text-muted-foreground">{labels.weaknesses}</th>
               <th className="p-3 w-8" />
@@ -600,6 +601,7 @@ function CompetitorsSection({ dealId, orgId, labels }: { dealId: string; orgId?:
               <tr key={c.id} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
                 <td className="p-3 font-medium">{c.name}</td>
                 <td className="p-3 text-muted-foreground">{c.product || "—"}</td>
+                <td className="p-3 text-muted-foreground">{c.price || "—"}</td>
                 <td className="p-3">
                   {c.strengths ? (
                     <span className="inline-flex items-center gap-1 text-green-600 text-xs">
@@ -647,6 +649,15 @@ function CompetitorsSection({ dealId, orgId, labels }: { dealId: string; orgId?:
                 placeholder="e.g. Sales Cloud"
                 value={form.product}
                 onChange={e => setForm({ ...form, product: e.target.value })}
+              />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">{labels.theirPrice}</label>
+              <input
+                className="w-full h-8 border rounded-lg px-3 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/30"
+                placeholder="e.g. $5,000"
+                value={form.price}
+                onChange={e => setForm({ ...form, price: e.target.value })}
               />
             </div>
             <div>
@@ -1102,10 +1113,12 @@ export default function DealDetailPage() {
                   theirProduct: tc("theirProduct"),
                   theirStrengths: tc("theirStrengths"),
                   theirWeaknesses: tc("theirWeaknesses"),
+                  theirPrice: tc("theirPrice"),
                   add: tc("add"),
                   cancel: tc("cancel"),
                   competitor: tc("competitor"),
                   product: tc("product"),
+                  price: tc("price"),
                   strengths: tc("strengths"),
                   weaknesses: tc("weaknesses"),
                 }}
