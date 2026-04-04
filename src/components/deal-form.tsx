@@ -106,8 +106,8 @@ export function DealForm({ open, onOpenChange, onSaved, initialData, orgId, pipe
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogHeader><DialogTitle>{isEdit ? t("editDeal") : t("newDeal")}</DialogTitle></DialogHeader>
-      <form onSubmit={handleSubmit}>
-        <DialogContent>
+      <DialogContent>
+        <form id="deal-form" onSubmit={handleSubmit}>
           {error && <div className="text-sm text-red-500 bg-red-50 dark:bg-red-900/20 p-2 rounded mb-3">{error}</div>}
           <div className="grid gap-4">
             <div>
@@ -170,12 +170,12 @@ export function DealForm({ open, onOpenChange, onSaved, initialData, orgId, pipe
               <Textarea id="notes" value={form.notes} onChange={e => update("notes", e.target.value)} rows={3} />
             </div>
           </div>
-        </DialogContent>
-        <DialogFooter>
-          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>{tc("cancel")}</Button>
-          <Button type="submit" disabled={saving}>{saving ? tc("saving") : isEdit ? tc("update") : tc("create")}</Button>
-        </DialogFooter>
-      </form>
+        </form>
+      </DialogContent>
+      <DialogFooter>
+        <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>{tc("cancel")}</Button>
+        <Button type="submit" form="deal-form" disabled={saving}>{saving ? tc("saving") : isEdit ? tc("update") : tc("create")}</Button>
+      </DialogFooter>
     </Dialog>
   )
 }
