@@ -83,10 +83,9 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     }))
 
     return NextResponse.json({ success: true, data: { ...deal, teamMembers: enrichedTeam, contact, contactRoles: enrichedRoles } })
-  } catch (e) {
+  } catch (e: any) {
     console.error("GET deal error:", e)
-    console.error(e)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    return NextResponse.json({ error: "Internal server error", debug: e?.message || String(e) }, { status: 500 })
   }
 }
 
