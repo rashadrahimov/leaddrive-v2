@@ -256,7 +256,7 @@ export default function TicketsPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 stagger-children">
         <ColorStatCard label={t("statTotal")} value={tickets.length} icon={<Ticket className="h-4 w-4" />} color="blue" hint={t("hintTotalTickets")} />
         <ColorStatCard label={t("statOpen")} value={openCount} icon={<Clock className="h-4 w-4" />} color="amber" hint={t("hintFirstResponseRate")} />
         <ColorStatCard label={t("statUnassigned")} value={unassignedCount} icon={<UserX className="h-4 w-4" />} color="orange" />

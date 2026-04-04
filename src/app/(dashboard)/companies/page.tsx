@@ -143,7 +143,7 @@ export default function CompaniesPage() {
       </div>
       <PageDescription text={t("pageDescription")} />
 
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 stagger-children">
         <ColorStatCard label={t("statTotal")} value={total} icon={<Building2 className="h-4 w-4" />} color="blue" hint={t("hintCompaniesCount")} />
         <ColorStatCard label={t("statActive")} value={activeCount} icon={<Building2 className="h-4 w-4" />} color="green" hint={t("hintActiveClients")} />
         <ColorStatCard label={t("statContacts")} value={totalContacts} icon={<Users className="h-4 w-4" />} color="violet" hint={t("hintTotalContacts")} />

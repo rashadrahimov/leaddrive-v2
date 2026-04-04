@@ -248,7 +248,7 @@ export default function LeadsPage() {
           <PageDescription text={t("pageDescription")} />
 
           {/* Stat cards */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 stagger-children">
             <ColorStatCard label={t("title")} value={leads.length} icon={<UserPlus className="h-4 w-4" />} color="blue" hint={t("hintTotalLeads")} />
             <ColorStatCard label={t("hotLeads")} value={hotLeads} icon={<Flame className="h-4 w-4" />} color="orange" hint={t("hintHotLeads")} />
             <ColorStatCard label={t("avgScore")} value={`${avgScore}/100`} icon={<TrendingUp className="h-4 w-4" />} color="indigo" hint={t("hintColScore")} />

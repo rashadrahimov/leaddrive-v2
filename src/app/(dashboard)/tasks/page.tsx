@@ -606,7 +606,7 @@ export default function TasksPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 stagger-children">
         <ColorStatCard label={t("statAll")} value={tasks.length} icon={<CheckSquare className="h-4 w-4" />} color="blue" hint={t("hintTotalTasks")} />
         <ColorStatCard label={t("statCompleted")} value={completed} icon={<CheckSquare className="h-4 w-4" />} color="green" hint={t("hintCompletedWeek")} />
         <ColorStatCard label={t("statOverdue")} value={overdue} icon={<AlertTriangle className="h-4 w-4" />} color="red" hint={t("hintOverdueTasks")} />

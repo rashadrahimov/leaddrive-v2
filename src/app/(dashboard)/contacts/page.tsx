@@ -206,7 +206,7 @@ export default function ContactsPage() {
 
       <PageDescription text={t("pageDescription")} />
 
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 stagger-children">
         <ColorStatCard label={t("statTotal")} value={total} icon={<Users className="h-4 w-4" />} color="blue" hint={t("hintTotalContacts")} />
         <ColorStatCard label={t("statActive")} value={contacts.filter(c => c.isActive).length} icon={<Users className="h-4 w-4" />} color="green" hint={t("hintActiveContacts")} />
         <ColorStatCard label={t("statWithEmail")} value={contacts.filter(c => c.email).length} icon={<Mail className="h-4 w-4" />} color="violet" />
