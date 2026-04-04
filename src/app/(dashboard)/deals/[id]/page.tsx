@@ -84,6 +84,10 @@ const ROLE_OPTIONS = ["Decision Maker", "Influencer", "Champion", "Evaluator", "
 const INFLUENCE_OPTIONS = ["High", "Medium", "Low"]
 const LOYALTY_OPTIONS = ["Supportive", "Neutral", "Opponent"]
 
+const ROLE_I18N: Record<string, string> = { "Decision Maker": "roleDecisionMaker", "Influencer": "roleInfluencer", "Champion": "roleChampion", "Evaluator": "roleEvaluator", "User": "roleUser", "Blocker": "roleBlocker", "Contact Person": "roleContactPerson" }
+const INFLUENCE_I18N: Record<string, string> = { "High": "influenceHigh", "Medium": "influenceMedium", "Low": "influenceLow" }
+const LOYALTY_I18N: Record<string, string> = { "Supportive": "loyaltySupportive", "Neutral": "loyaltyNeutral", "Opponent": "loyaltyOpponent" }
+
 function ContactRolesPanel({ deal, dealId, orgId, fetchDeal, tc, t }: {
   deal: Deal; dealId: string; orgId?: string; fetchDeal: () => void; tc: any; t: any
 }) {
@@ -246,19 +250,19 @@ function ContactRolesPanel({ deal, dealId, orgId, fetchDeal, tc, t }: {
                   <div>
                     <label className="text-xs font-medium text-muted-foreground mb-1 block">{tc("role")}</label>
                     <select value={role} onChange={e => setRole(e.target.value)} className="w-full h-9 rounded-md border bg-background px-2 text-sm">
-                      {ROLE_OPTIONS.map(r => <option key={r} value={r}>{r}</option>)}
+                      {ROLE_OPTIONS.map(r => <option key={r} value={r}>{tc(ROLE_I18N[r] || r)}</option>)}
                     </select>
                   </div>
                   <div>
                     <label className="text-xs font-medium text-muted-foreground mb-1 block">{tc("influence")}</label>
                     <select value={influence} onChange={e => setInfluence(e.target.value)} className="w-full h-9 rounded-md border bg-background px-2 text-sm">
-                      {INFLUENCE_OPTIONS.map(i => <option key={i} value={i}>{i}</option>)}
+                      {INFLUENCE_OPTIONS.map(i => <option key={i} value={i}>{tc(INFLUENCE_I18N[i] || i)}</option>)}
                     </select>
                   </div>
                   <div>
                     <label className="text-xs font-medium text-muted-foreground mb-1 block">{tc("loyalty")}</label>
                     <select value={loyalty} onChange={e => setLoyalty(e.target.value)} className="w-full h-9 rounded-md border bg-background px-2 text-sm">
-                      {LOYALTY_OPTIONS.map(l => <option key={l} value={l}>{l}</option>)}
+                      {LOYALTY_OPTIONS.map(l => <option key={l} value={l}>{tc(LOYALTY_I18N[l] || l)}</option>)}
                     </select>
                   </div>
                 </div>
@@ -334,20 +338,20 @@ function ContactRolesPanel({ deal, dealId, orgId, fetchDeal, tc, t }: {
                     <td className="p-3">
                       {isEditing ? (
                         <select value={editData.role} onChange={e => setEditData({ ...editData, role: e.target.value })} className="h-8 rounded-md border bg-background px-1.5 text-xs w-full min-w-[110px]">
-                          {ROLE_OPTIONS.map(r => <option key={r} value={r}>{r}</option>)}
+                          {ROLE_OPTIONS.map(r => <option key={r} value={r}>{tc(ROLE_I18N[r] || r)}</option>)}
                         </select>
                       ) : (
-                        <Badge variant="outline" className="text-xs">{cr.role}</Badge>
+                        <Badge variant="outline" className="text-xs">{tc(ROLE_I18N[cr.role] || cr.role)}</Badge>
                       )}
                     </td>
                     <td className="p-3">
                       {isEditing ? (
                         <select value={editData.influence} onChange={e => setEditData({ ...editData, influence: e.target.value })} className="h-8 rounded-md border bg-background px-1.5 text-xs w-full">
-                          {INFLUENCE_OPTIONS.map(i => <option key={i} value={i}>{i}</option>)}
+                          {INFLUENCE_OPTIONS.map(i => <option key={i} value={i}>{tc(INFLUENCE_I18N[i] || i)}</option>)}
                         </select>
                       ) : (
                         <Badge className={`text-xs ${cr.influence === "High" ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400" : cr.influence === "Low" ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" : "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"}`}>
-                          {cr.influence}
+                          {tc(INFLUENCE_I18N[cr.influence] || cr.influence)}
                         </Badge>
                       )}
                     </td>
@@ -355,11 +359,11 @@ function ContactRolesPanel({ deal, dealId, orgId, fetchDeal, tc, t }: {
                     <td className="p-3">
                       {isEditing ? (
                         <select value={editData.loyalty} onChange={e => setEditData({ ...editData, loyalty: e.target.value })} className="h-8 rounded-md border bg-background px-1.5 text-xs w-full">
-                          {LOYALTY_OPTIONS.map(l => <option key={l} value={l}>{l}</option>)}
+                          {LOYALTY_OPTIONS.map(l => <option key={l} value={l}>{tc(LOYALTY_I18N[l] || l)}</option>)}
                         </select>
                       ) : (
                         <Badge className={`text-xs ${cr.loyalty?.includes("Supportive") ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" : cr.loyalty?.includes("Opponent") ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400" : "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300"}`}>
-                          {cr.loyalty}
+                          {tc(LOYALTY_I18N[cr.loyalty] || cr.loyalty)}
                         </Badge>
                       )}
                     </td>
