@@ -60,6 +60,17 @@ const ENTERPRISE_MODULES = [
   "/settings/channels",
   "/settings/budget-config",
   "/settings/sales-forecast",
+  "/mtm",
+  "/mtm/map",
+  "/mtm/routes",
+  "/mtm/visits",
+  "/mtm/tasks",
+  "/mtm/customers",
+  "/mtm/photos",
+  "/mtm/alerts",
+  "/mtm/orders",
+  "/mtm/agents",
+  "/mtm/settings",
 ] as const
 
 export const PLAN_MODULES: Record<string, readonly string[]> = {
