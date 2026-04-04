@@ -28,9 +28,9 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     })
 
     return NextResponse.json({ success: true, data: competitors })
-  } catch (e) {
-    console.error(e)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+  } catch (e: any) {
+    console.error("[competitors GET]", e?.message || e)
+    return NextResponse.json({ error: e?.message || "Internal server error" }, { status: 500 })
   }
 }
 
@@ -74,8 +74,8 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
 
     await prisma.dealCompetitor.delete({ where: { id: competitorId } })
     return NextResponse.json({ success: true })
-  } catch (e) {
-    console.error(e)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+  } catch (e: any) {
+    console.error("[competitors DELETE]", e?.message || e)
+    return NextResponse.json({ error: e?.message || "Internal server error" }, { status: 500 })
   }
 }
