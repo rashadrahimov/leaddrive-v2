@@ -568,17 +568,20 @@ export function DealSidebar({ deal, orgId, offersCount, invoicesCount, onEdit, f
           <div className="space-y-1.5">
             {deal.contactRoles?.length > 0 ? (
               deal.contactRoles.map(cr => (
-                <div key={cr.id} className="py-1.5 group border-b border-border/50 last:border-0">
-                  <div className="flex items-center gap-2">
-                    <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-semibold flex-shrink-0">
+                <div key={cr.id} className="rounded-lg border bg-muted/30 p-2.5 group">
+                  <div className="flex items-start gap-2">
+                    <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center text-[11px] font-semibold flex-shrink-0 mt-0.5">
                       {(cr.contact.fullName || "?")[0]}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <span className="text-xs font-medium truncate block">{cr.contact.fullName}</span>
-                      {cr.contact.position && <span className="text-[10px] text-muted-foreground truncate block">{cr.contact.position}</span>}
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-xs font-semibold truncate">{cr.contact.fullName}</span>
+                        <Badge variant="outline" className="text-[9px] h-3.5 px-1 font-medium">{cr.role}</Badge>
+                      </div>
+                      {cr.contact.position && <p className="text-[10px] text-muted-foreground">{cr.contact.position}</p>}
                     </div>
                     <button
-                      className="h-5 w-5 rounded flex items-center justify-center text-muted-foreground hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 opacity-0 group-hover:opacity-100 transition-opacity"
+                      className="h-5 w-5 rounded flex items-center justify-center text-muted-foreground hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
                       onClick={async () => {
                         await fetch(`/api/v1/deals/${deal.id}/contact-roles`, {
                           method: "DELETE",
@@ -591,19 +594,23 @@ export function DealSidebar({ deal, orgId, offersCount, invoicesCount, onEdit, f
                       <X className="h-3 w-3" />
                     </button>
                   </div>
-                  <div className="ml-8 mt-1 flex flex-wrap items-center gap-1">
-                    <Badge variant="outline" className="text-[10px] h-4 px-1.5">{cr.role}</Badge>
-                    {(cr as any).influence && <Badge variant="outline" className="text-[10px] h-4 px-1.5">{tc("influence")}: {(cr as any).influence}</Badge>}
-                    {(cr as any).loyalty && <Badge variant="outline" className="text-[10px] h-4 px-1.5">{tc("loyalty")}: {(cr as any).loyalty}</Badge>}
+                  <div className="mt-1.5 ml-9 space-y-0.5 text-[10px]">
+                    {(cr as any).influence && (
+                      <div className="flex"><span className="text-muted-foreground w-16">{tc("influence")}</span><span className="font-medium">{(cr as any).influence}</span></div>
+                    )}
+                    {(cr as any).loyalty && (
+                      <div className="flex"><span className="text-muted-foreground w-16">{tc("loyalty")}</span><span className="font-medium">{(cr as any).loyalty}</span></div>
+                    )}
                     {cr.cashbackType && cr.cashbackValue != null && (
-                      <Badge variant="outline" className="text-[10px] h-4 px-1.5 border-green-200 text-green-600 dark:text-green-400">
-                        {tc("cashback")}: {cr.cashbackType === "percent" ? `${cr.cashbackValue}%` : `${cr.cashbackValue} ₼`}
-                      </Badge>
+                      <div className="flex"><span className="text-muted-foreground w-16">{tc("cashback")}</span><span className="font-medium text-green-600 dark:text-green-400">{cr.cashbackType === "percent" ? `${cr.cashbackValue}%` : `${cr.cashbackValue} ₼`}</span></div>
+                    )}
+                    {cr.contact.email && (
+                      <div className="flex"><span className="text-muted-foreground w-16">Email</span><a href={`mailto:${cr.contact.email}`} className="font-medium text-primary hover:underline truncate">{cr.contact.email}</a></div>
+                    )}
+                    {cr.contact.phone && (
+                      <div className="flex"><span className="text-muted-foreground w-16">{tc("phone")}</span><a href={`tel:${cr.contact.phone}`} className="font-medium">{cr.contact.phone}</a></div>
                     )}
                   </div>
-                  {cr.contact.email && (
-                    <div className="ml-8 mt-0.5 text-[10px] text-muted-foreground">{cr.contact.email}</div>
-                  )}
                 </div>
               ))
             ) : (

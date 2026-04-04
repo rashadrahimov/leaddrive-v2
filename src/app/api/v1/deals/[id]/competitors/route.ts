@@ -46,16 +46,17 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     const deal = await prisma.deal.findFirst({ where: { id, organizationId: orgId }, select: { id: true } })
     if (!deal) return NextResponse.json({ error: "Deal not found" }, { status: 404 })
 
+    const { name, product, strengths, weaknesses, price, threat } = parsed.data
     const competitor = await prisma.dealCompetitor.upsert({
-      where: { dealId_name: { dealId: id, name: parsed.data.name } },
-      create: { dealId: id, ...parsed.data },
-      update: parsed.data,
+      where: { dealId_name: { dealId: id, name } },
+      create: { dealId: id, name, product: product || null, strengths: strengths || null, weaknesses: weaknesses || null, price: price || null, threat, notes: null },
+      update: { product: product || null, strengths: strengths || null, weaknesses: weaknesses || null, price: price || null, threat },
     })
 
     return NextResponse.json({ success: true, data: competitor })
-  } catch (e) {
-    console.error(e)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+  } catch (e: any) {
+    console.error("[competitors POST]", e?.message || e)
+    return NextResponse.json({ error: e?.message || "Internal server error" }, { status: 500 })
   }
 }
 
