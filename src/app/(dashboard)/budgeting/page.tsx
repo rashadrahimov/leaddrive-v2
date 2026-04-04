@@ -616,6 +616,8 @@ function WorkspaceTab({ planId, onNavigateTab }: { planId: string; onNavigateTab
   const [filterText, setFilterText] = useState("")
   const [filterType, setFilterType] = useState<"all" | "expense" | "revenue">("all")
   const [showMaterialOnly, setShowMaterialOnly] = useState(false)
+  const [materialityPct, setMaterialityPct] = useState(5)
+  const [materialityAbs, setMaterialityAbs] = useState(500)
   const [narrative, setNarrative] = useState<string | null>(null)
   const [showNarrative, setShowNarrative] = useState(false)
   // Drill-down sheet for fact values
@@ -669,9 +671,9 @@ function WorkspaceTab({ planId, onNavigateTab }: { planId: string; onNavigateTab
   // Materiality check helper — used for opacity in table rows
   const isMaterial = (l: BudgetLine): boolean => {
     const factValue = l.isAutoActual ? (autoActualMap.get(l.category) ?? 0) : (actualsByCat.get(`${l.category}||${l.lineType}`)?.total ?? 0)
-    const varianceAbs = Math.abs(l.plannedAmount - factValue)
-    const variancePctVal = l.plannedAmount > 0 ? (varianceAbs / l.plannedAmount) * 100 : 0
-    return variancePctVal >= 5 || varianceAbs >= 500
+    const varianceAbsVal = Math.abs(l.plannedAmount - factValue)
+    const variancePctVal = l.plannedAmount > 0 ? (varianceAbsVal / l.plannedAmount) * 100 : 0
+    return variancePctVal >= materialityPct || varianceAbsVal >= materialityAbs
   }
 
   const expenseLines = filteredLines.filter((l: BudgetLine) => l.lineType === "expense")
@@ -1528,6 +1530,16 @@ function WorkspaceTab({ planId, onNavigateTab }: { planId: string; onNavigateTab
           onClick={() => setShowMaterialOnly(!showMaterialOnly)} title={t("hintFilterMaterial")}>
           {t("filterMaterial")}
         </Button>
+        {showMaterialOnly && (
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <span>≥</span>
+            <Input type="number" value={materialityPct} onChange={e => setMaterialityPct(Number(e.target.value))} className="h-7 w-14 text-xs text-right" />
+            <span>%</span>
+            <span>{t("or") || "или"}</span>
+            <Input type="number" value={materialityAbs} onChange={e => setMaterialityAbs(Number(e.target.value))} className="h-7 w-20 text-xs text-right" />
+            <span>₼</span>
+          </div>
+        )}
         <Button size="sm" variant={compactNumbers ? "default" : "outline"} className="h-8 text-xs font-mono"
           onClick={() => setCompactNumbers(!compactNumbers)} title="Сокращённый формат чисел (K/M)">
           {compactNumbers ? "1.2M" : "1,234"}
@@ -2740,6 +2752,15 @@ function PLTab({ planId }: { planId: string }) {
   const [newSectionType, setNewSectionType] = useState("expense")
   const [drilldown, setDrilldown] = useState<string | null>(null)
   const [allExpanded, setAllExpanded] = useState(false)
+  const [plShowMaterialOnly, setPlShowMaterialOnly] = useState(false)
+  const [plMaterialityPct, setPlMaterialityPct] = useState(5)
+  const [plMaterialityAbs, setPlMaterialityAbs] = useState(500)
+
+  const isPlMaterial = (row: { planned: number; actual: number }) => {
+    const varianceAbsVal = Math.abs(row.planned - row.actual)
+    const variancePctVal = row.planned > 0 ? (varianceAbsVal / row.planned) * 100 : 0
+    return variancePctVal >= plMaterialityPct || varianceAbsVal >= plMaterialityAbs
+  }
 
   const toggleCollapse = (id: string) => {
     setCollapsed(prev => {
@@ -2914,8 +2935,16 @@ function PLTab({ planId }: { planId: string }) {
     )
   }
 
-  const renderSection = (title: string, rows: typeof byCategory, sectionId: string, sectionIcon: React.ReactNode, sectionColor: string, isCalculated = false, calcPlanned = 0, calcActual = 0, isExpense = false, grouped?: { groups: { parent: string; children: typeof byCategory }[]; standalone: typeof byCategory }) => {
+  const renderSection = (title: string, rawRows: typeof byCategory, sectionId: string, sectionIcon: React.ReactNode, sectionColor: string, isCalculated = false, calcPlanned = 0, calcActual = 0, isExpense = false, rawGrouped?: { groups: { parent: string; children: typeof byCategory }[]; standalone: typeof byCategory }) => {
     const isCollapsed = collapsed.has(sectionId)
+    // Apply materiality filter if enabled
+    const rows = plShowMaterialOnly ? rawRows.filter(r => isPlMaterial(r)) : rawRows
+    const grouped = rawGrouped ? {
+      groups: (plShowMaterialOnly
+        ? rawGrouped.groups.map(g => ({ ...g, children: g.children.filter(r => isPlMaterial(r)) })).filter(g => g.children.length > 0)
+        : rawGrouped.groups),
+      standalone: plShowMaterialOnly ? rawGrouped.standalone.filter(r => isPlMaterial(r)) : rawGrouped.standalone,
+    } : rawGrouped
     const secPlanned = isCalculated ? calcPlanned : rows.reduce((s, r) => s + r.planned, 0)
     const secActual = isCalculated ? calcActual : rows.reduce((s, r) => s + r.actual, 0)
     const secVariance = isExpense ? secPlanned - secActual : secActual - secPlanned
@@ -3161,6 +3190,24 @@ function PLTab({ planId }: { planId: string }) {
           </div>
         </Card>
       )}
+
+      {/* Materiality filter */}
+      <div className="flex flex-wrap items-center gap-3 text-sm mb-3">
+        <Button size="sm" variant={plShowMaterialOnly ? "default" : "outline"} className="h-8 text-xs"
+          onClick={() => setPlShowMaterialOnly(!plShowMaterialOnly)}>
+          {t("filterMaterial")}
+        </Button>
+        {plShowMaterialOnly && (
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <span>≥</span>
+            <Input type="number" value={plMaterialityPct} onChange={e => setPlMaterialityPct(Number(e.target.value))} className="h-7 w-14 text-xs text-right" />
+            <span>%</span>
+            <span>{t("or") || "или"}</span>
+            <Input type="number" value={plMaterialityAbs} onChange={e => setPlMaterialityAbs(Number(e.target.value))} className="h-7 w-20 text-xs text-right" />
+            <span>₼</span>
+          </div>
+        )}
+      </div>
 
       {/* P&L Income Statement — no COGS (allocated costs shown in Profitability module) */}
       {renderSection(t("plRevenue"), revRows, "auto-revenue", <DollarSign className="h-4 w-4" />, "bg-primary/[0.04]", false, 0, 0, false, revGrouped)}
