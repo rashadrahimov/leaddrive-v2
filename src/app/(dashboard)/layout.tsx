@@ -7,6 +7,7 @@ import { Header } from "@/components/header"
 import { ThemeProvider } from "@/components/theme-provider"
 import { CommandSearch } from "@/components/command-search"
 import { AiAssistantPanel } from "@/components/ai-assistant-panel"
+import { MotionPage } from "@/components/ui/motion"
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -32,8 +33,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               orgName={user?.organizationName || "LeadDrive CRM"}
               userName={user?.name || "User"}
             />
-            <main className="flex-1 overflow-y-auto bg-background p-6 relative animate-fade-in-up">
-              {children}
+            <main className="flex-1 overflow-y-auto bg-background p-6 relative">
+              <MotionPage>{children}</MotionPage>
             </main>
             <CommandSearch />
             <AiAssistantPanel />

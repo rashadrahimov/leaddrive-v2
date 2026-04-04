@@ -75,29 +75,29 @@ const navItems: NavItem[] = [
   { module: "core", href: "/settings", icon: Settings, tKey: "settings", group: "Settings" },
 ]
 
-/* Colored icon circle backgrounds per group — Salesforce-like object icons */
+/* Ramp/Notion style — light sidebar with colored accent dots */
 const GROUP_ICON_BG: Record<string, string> = {
-  CRM: "bg-teal-500 text-white",
-  Marketing: "bg-orange-500 text-white",
-  Communication: "bg-blue-500 text-white",
-  Support: "bg-emerald-500 text-white",
-  Finance: "bg-amber-500 text-white",
-  Analytics: "bg-purple-500 text-white",
-  ERP: "bg-indigo-500 text-white",
-  "Route & Field": "bg-cyan-500 text-white",
-  Settings: "bg-slate-500 text-white",
+  CRM: "bg-teal-100 text-teal-600 dark:bg-teal-500/20 dark:text-teal-400",
+  Marketing: "bg-orange-100 text-orange-600 dark:bg-orange-500/20 dark:text-orange-400",
+  Communication: "bg-blue-100 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400",
+  Support: "bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400",
+  Finance: "bg-amber-100 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400",
+  Analytics: "bg-purple-100 text-purple-600 dark:bg-purple-500/20 dark:text-purple-400",
+  ERP: "bg-indigo-100 text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-400",
+  "Route & Field": "bg-cyan-100 text-cyan-600 dark:bg-cyan-500/20 dark:text-cyan-400",
+  Settings: "bg-slate-100 text-slate-600 dark:bg-slate-500/20 dark:text-slate-400",
 }
 
 const GROUP_LABEL_COLORS: Record<string, string> = {
-  CRM: "text-teal-400",
-  Marketing: "text-orange-400",
-  Communication: "text-blue-400",
-  Support: "text-emerald-400",
-  Finance: "text-amber-400",
-  Analytics: "text-purple-400",
-  ERP: "text-indigo-400",
-  "Route & Field": "text-cyan-400",
-  Settings: "text-slate-400",
+  CRM: "text-teal-600 dark:text-teal-400",
+  Marketing: "text-orange-600 dark:text-orange-400",
+  Communication: "text-blue-600 dark:text-blue-400",
+  Support: "text-emerald-600 dark:text-emerald-400",
+  Finance: "text-amber-600 dark:text-amber-400",
+  Analytics: "text-purple-600 dark:text-purple-400",
+  ERP: "text-indigo-600 dark:text-indigo-400",
+  "Route & Field": "text-cyan-600 dark:text-cyan-400",
+  Settings: "text-slate-500 dark:text-slate-400",
 }
 
 const GROUP_ACTIVE_BG: Record<string, string> = {
@@ -151,48 +151,48 @@ export function Sidebar({ org }: SidebarProps) {
   return (
     <aside
       className={cn(
-        "flex flex-col border-r border-white/10 bg-[#1a3050] transition-all duration-200",
+        "flex flex-col border-r border-border bg-card transition-all duration-200",
         collapsed ? "w-16" : "w-64"
       )}
     >
       {/* Logo header */}
-      <div className="flex h-14 items-center justify-between border-b border-white/10 px-4">
+      <div className="flex h-14 items-center justify-between border-b border-border px-4">
         <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
           <Logo collapsed={collapsed} size="sm" sidebar />
         </Link>
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className="rounded-md p-1.5 text-white/50 hover:bg-white/10 hover:text-white/80 transition-colors"
+          className="rounded-lg p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
         >
           <ChevronLeft className={cn("h-4 w-4 transition-transform", collapsed && "rotate-180")} />
         </button>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto p-2">
+      <nav className="flex-1 overflow-y-auto p-2 sidebar-scroll">
         {groups.map((group, groupIndex) => (
           <div
             key={group}
             className={cn(
-              groupIndex > 0 && "border-t border-white/[0.06] pt-3 mt-3"
+              groupIndex > 0 && "border-t border-border pt-3 mt-3"
             )}
           >
             {!collapsed ? (
               <div className={cn(
                 "mb-1.5 px-3 text-[10px] font-bold uppercase tracking-widest",
-                GROUP_LABEL_COLORS[group] || "text-white/40"
+                GROUP_LABEL_COLORS[group] || "text-muted-foreground"
               )}>
                 {t(`groups.${group}`)}
               </div>
             ) : (
-              groupIndex > 0 && <hr className="border-white/[0.06] mx-3 my-1" />
+              groupIndex > 0 && <hr className="border-border mx-3 my-1" />
             )}
             {accessibleItems
               .filter((item) => item.group === group)
               .map((item) => {
                 const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href))
                 const Icon = item.icon
-                const iconBg = GROUP_ICON_BG[group] || "bg-slate-500 text-white"
+                const iconBg = GROUP_ICON_BG[group] || "bg-slate-100 text-slate-600"
                 const activeBg = GROUP_ACTIVE_BG[group] || "bg-muted text-foreground"
                 const activeBar = GROUP_ACTIVE_BAR[group] || "before:bg-teal-500"
                 return (
@@ -202,14 +202,14 @@ export function Sidebar({ org }: SidebarProps) {
                     className={cn(
                       "relative flex items-center gap-3 rounded-lg px-3 py-1.5 text-sm transition-all duration-150",
                       isActive
-                        ? cn("font-medium before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:h-5 before:w-[3px] before:rounded-r", activeBar, "bg-white/10 text-white")
-                        : "text-white/60 hover:bg-white/[0.06] hover:text-white/90"
+                        ? cn("font-medium before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:h-5 before:w-[3px] before:rounded-r", activeBar, activeBg)
+                        : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
                     )}
                     title={collapsed ? t(item.tKey) : undefined}
                   >
                     <div className={cn(
                       "flex h-6 w-6 items-center justify-center rounded-md shrink-0 transition-all",
-                      isActive ? iconBg : "bg-white/[0.08] text-white/60"
+                      isActive ? iconBg : "bg-muted text-muted-foreground"
                     )}>
                       <Icon className="h-3.5 w-3.5" />
                     </div>
