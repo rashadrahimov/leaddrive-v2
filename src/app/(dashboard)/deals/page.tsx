@@ -8,11 +8,12 @@ import { Button } from "@/components/ui/button"
 import { ColorStatCard } from "@/components/color-stat-card"
 import { KanbanBoard } from "@/components/deals/kanban-board"
 import { Select } from "@/components/ui/select"
-import { Handshake, Plus, TrendingUp, TrendingDown, BarChart3, Columns3 } from "lucide-react"
+import { Handshake, Plus, TrendingUp, TrendingDown, BarChart3, Columns3, Sparkles, X, Loader2 } from "lucide-react"
 import { DealForm } from "@/components/deal-form"
 import { PageDescription } from "@/components/page-description"
 import { DealsAnalytics } from "@/components/deals/deals-analytics"
 import { cn } from "@/lib/utils"
+import { useLocale } from "next-intl"
 
 interface Deal {
   id: string
@@ -31,6 +32,7 @@ interface Deal {
 export default function DealsPage() {
   const t = useTranslations("deals")
   const tc = useTranslations("common")
+  const locale = useLocale()
   const { data: session } = useSession()
   const router = useRouter()
   const [deals, setDeals] = useState<Deal[]>([])
@@ -38,6 +40,10 @@ export default function DealsPage() {
   const [formOpen, setFormOpen] = useState(false)
   const [sortBy, setSortBy] = useState("newest")
   const [tab, setTab] = useState<"analytics" | "kanban">("analytics")
+  const [aiOpen, setAiOpen] = useState(false)
+  const [aiLoading, setAiLoading] = useState(false)
+  const [aiResult, setAiResult] = useState<string | null>(null)
+  const [aiError, setAiError] = useState<string | null>(null)
   const orgId = session?.user?.organizationId
 
   const STAGES = [
@@ -60,6 +66,33 @@ export default function DealsPage() {
   }
 
   useEffect(() => { fetchDeals() }, [session])
+
+  const runAiAnalysis = async () => {
+    setAiLoading(true)
+    setAiError(null)
+    setAiResult(null)
+    setAiOpen(true)
+    try {
+      const res = await fetch("/api/v1/deals/ai-analysis", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(orgId ? { "x-organization-id": String(orgId) } : {}),
+        },
+        body: JSON.stringify({ lang: locale }),
+      })
+      const json = await res.json()
+      if (json.success) {
+        setAiResult(json.data.analysis)
+      } else {
+        setAiError(json.error || "Analysis failed")
+      }
+    } catch {
+      setAiError("Network error")
+    } finally {
+      setAiLoading(false)
+    }
+  }
 
   const sortedDeals = [...deals].sort((a, b) => {
     switch (sortBy) {
@@ -150,6 +183,10 @@ export default function DealsPage() {
               <option value="name">{t("sortNameAsc")}</option>
             </Select>
           )}
+          <Button variant="outline" onClick={runAiAnalysis} disabled={aiLoading || deals.length === 0} className="gap-1.5">
+            {aiLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+            Da Vinci
+          </Button>
           <Button onClick={() => setFormOpen(true)}><Plus className="h-4 w-4 mr-1" /> {t("newDeal")}</Button>
         </div>
       </div>
@@ -190,6 +227,43 @@ export default function DealsPage() {
       )}
 
       <DealForm open={formOpen} onOpenChange={setFormOpen} onSaved={fetchDeals} orgId={orgId} />
+
+      {/* Da Vinci AI Analysis Modal */}
+      {aiOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setAiOpen(false)}>
+          <div className="relative w-full max-w-2xl max-h-[80vh] mx-4 rounded-xl border bg-card shadow-2xl flex flex-col" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-5 py-4 border-b">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 rounded-lg bg-gradient-to-br from-violet-500 to-indigo-600">
+                  <Sparkles className="h-4 w-4 text-white" />
+                </div>
+                <h3 className="font-semibold">Da Vinci — {t("title")}</h3>
+              </div>
+              <button onClick={() => setAiOpen(false)} className="p-1 rounded-md hover:bg-muted transition-colors">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto px-5 py-4">
+              {aiLoading && (
+                <div className="flex flex-col items-center justify-center py-16 gap-3">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                  <p className="text-sm text-muted-foreground">{tc("loading")}...</p>
+                </div>
+              )}
+              {aiError && (
+                <div className="rounded-lg border border-red-200 bg-red-50 dark:bg-red-900/20 dark:border-red-800 p-4 text-sm text-red-700 dark:text-red-400">
+                  {aiError}
+                </div>
+              )}
+              {aiResult && (
+                <div className="prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap text-sm leading-relaxed">
+                  {aiResult}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
