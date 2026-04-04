@@ -11,7 +11,7 @@ import { ColorStatCard } from "@/components/color-stat-card"
 import { InfoHint } from "@/components/info-hint"
 import { PageDescription } from "@/components/page-description"
 import { TicketForm } from "@/components/ticket-form"
-import { Ticket, Plus, Clock, AlertTriangle, CheckCircle, Pencil, Trash2, UserX } from "lucide-react"
+import { Ticket, Plus, Clock, AlertTriangle, CheckCircle, Pencil, Trash2, UserX, ShieldAlert } from "lucide-react"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
 import { cn } from "@/lib/utils"
 
@@ -28,6 +28,7 @@ interface TicketData {
   slaFirstResponseDueAt: string
   slaPolicyName: string
   firstResponseAt: string
+  escalationLevel: number
 }
 
 type ViewMode = "list" | "kanban"
@@ -75,6 +76,7 @@ export default function TicketsPage() {
   const [editData, setEditData] = useState<Record<string, any> | undefined>()
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [deleteItem, setDeleteItem] = useState<TicketData | null>(null)
+  const [escalatedFilter, setEscalatedFilter] = useState(false)
   const orgId = session?.user?.organizationId
 
   const statusLabels: Record<string, string> = {
@@ -192,6 +194,25 @@ export default function TicketsPage() {
       },
     },
     {
+      key: "escalationLevel", label: "Escalation", sortable: true,
+      render: (item: any) => {
+        if (!item.escalationLevel || item.escalationLevel === 0) return <span className="text-xs text-muted-foreground">—</span>
+        const levelColors: Record<number, string> = {
+          1: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400",
+          2: "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400",
+          3: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400",
+          4: "bg-red-200 text-red-900 dark:bg-red-900/50 dark:text-red-300",
+          5: "bg-red-300 text-red-950 dark:bg-red-900/70 dark:text-red-200",
+        }
+        return (
+          <Badge className={levelColors[item.escalationLevel] || levelColors[3]}>
+            <ShieldAlert className="h-3 w-3 mr-1" />
+            L{item.escalationLevel}
+          </Badge>
+        )
+      },
+    },
+    {
       key: "firstResponseAt", label: t("colResponse"), sortable: true,
       render: (item: any) => {
         if (!item.firstResponseAt) return <span className="text-xs text-muted-foreground">—</span>
@@ -224,6 +245,7 @@ export default function TicketsPage() {
   const breachedCount = tickets.filter(t => isSlaBreached(t.slaDueAt) && !["resolved", "closed"].includes(t.status)).length
   const resolvedCount = tickets.filter(t => t.status === "resolved").length
   const unassignedCount = tickets.filter(t => !t.assignedTo).length
+  const escalatedCount = tickets.filter(t => t.escalationLevel > 0 && !["resolved", "closed"].includes(t.status)).length
 
   if (loading) {
     return (
@@ -266,6 +288,20 @@ export default function TicketsPage() {
 
       {/* Status filter tabs */}
       <div className="flex items-center gap-2 flex-wrap">
+        {escalatedCount > 0 && (
+          <button
+            onClick={() => setEscalatedFilter(!escalatedFilter)}
+            className={cn(
+              "px-3 py-1.5 text-sm rounded-full border transition-colors flex items-center gap-1",
+              escalatedFilter
+                ? "bg-red-500 text-white border-red-500"
+                : "bg-background hover:bg-red-50 dark:hover:bg-red-900/20 border-border text-red-600"
+            )}
+          >
+            <ShieldAlert className="h-3.5 w-3.5" />
+            Escalated ({escalatedCount})
+          </button>
+        )}
         {[
           { key: "all", label: tc("all"), count: tickets.length },
           { key: "new", label: t("statusNew"), count: tickets.filter(t => t.status === "new").length },
@@ -293,7 +329,11 @@ export default function TicketsPage() {
       {view === "list" && (
         <DataTable
           columns={columns}
-          data={statusFilter === "all" ? tickets : tickets.filter(t => t.status === statusFilter)}
+          data={(() => {
+            let filtered = statusFilter === "all" ? tickets : tickets.filter(t => t.status === statusFilter)
+            if (escalatedFilter) filtered = filtered.filter(t => t.escalationLevel > 0)
+            return filtered
+          })()}
           searchPlaceholder={t("searchPlaceholder")}
           searchKey="subject"
           onRowClick={(item) => router.push(`/tickets/${item.id}`)}
