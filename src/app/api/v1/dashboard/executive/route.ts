@@ -122,11 +122,12 @@ export async function GET(req: NextRequest) {
         take: 5,
         select: { id: true, name: true, valueAmount: true, currency: true, stage: true, company: { select: { name: true } } },
       }),
-      // Active campaigns
+      // Recent campaigns (any status)
       prisma.campaign.findMany({
-        where: { organizationId: orgId, status: "active" },
+        where: { organizationId: orgId },
+        orderBy: { createdAt: "desc" },
         take: 4,
-        select: { id: true, name: true, totalSent: true, totalOpened: true, totalClicked: true, totalRecipients: true },
+        select: { id: true, name: true, status: true, totalSent: true, totalOpened: true, totalClicked: true, totalRecipients: true },
       }),
       // Upcoming events
       prisma.event.findMany({
@@ -394,7 +395,7 @@ export async function GET(req: NextRequest) {
         },
         risks,
         campaigns: (activeCampaigns as any[]).map((c: any) => ({
-          id: c.id, name: c.name, sent: c.totalSent || 0,
+          id: c.id, name: c.name, status: c.status || "draft", sent: c.totalSent || 0,
           openRate: c.totalRecipients > 0 ? Math.round((c.totalOpened / c.totalRecipients) * 100) : 0,
           clickRate: c.totalRecipients > 0 ? Math.round((c.totalClicked / c.totalRecipients) * 100) : 0,
         })),
