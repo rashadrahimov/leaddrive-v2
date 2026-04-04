@@ -14,7 +14,7 @@ export function Dialog({ open, onOpenChange, children }: DialogProps) {
     <div className="fixed inset-0 z-50">
       <div className="fixed inset-0 bg-black/50" onClick={() => onOpenChange(false)} />
       <div className="fixed inset-0 flex items-center justify-center p-4">
-        <div className="relative bg-background rounded-lg shadow-lg w-full max-w-lg max-h-[85vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+        <div className="relative bg-background rounded-lg shadow-lg w-full max-w-lg max-h-[85vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
           {children}
         </div>
       </div>
@@ -23,7 +23,7 @@ export function Dialog({ open, onOpenChange, children }: DialogProps) {
 }
 
 export function DialogContent({ children, className = "" }: { children: React.ReactNode; className?: string }) {
-  return <div className={`p-6 ${className}`}>{children}</div>
+  return <div className={`p-6 overflow-y-auto flex-1 ${className}`}>{children}</div>
 }
 
 export function DialogHeader({ children, className = "" }: { children: React.ReactNode; className?: string }) {
@@ -39,5 +39,5 @@ export function DialogDescription({ children, className = "" }: { children: Reac
 }
 
 export function DialogFooter({ children, className = "" }: { children: React.ReactNode; className?: string }) {
-  return <div className={`px-6 pb-6 pt-2 flex justify-end gap-2 ${className}`}>{children}</div>
+  return <div className={`px-6 pb-6 pt-3 flex justify-end gap-2 border-t flex-shrink-0 ${className}`}>{children}</div>
 }

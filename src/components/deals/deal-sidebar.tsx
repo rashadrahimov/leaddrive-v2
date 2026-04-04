@@ -1,17 +1,18 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useTranslations } from "next-intl"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { AccordionItem } from "@/components/ui/accordion"
 import { MotionCard } from "@/components/ui/motion"
+import { Select } from "@/components/ui/select"
+import { Input } from "@/components/ui/input"
 import {
   Phone, Mail, MessageSquare, Building2, User, Calendar, DollarSign,
   Clock, Target, FileText, Receipt, Users, Swords, Package, Plus, X,
   Pencil, Loader2, Check, Search,
 } from "lucide-react"
-import { Input } from "@/components/ui/input"
 
 interface Deal {
   id: string
@@ -41,6 +42,7 @@ interface Deal {
   }>
   contactRoles: Array<{
     id: string; contactId: string; role: string; influence: string; loyalty: string; isPrimary: boolean
+    cashbackType?: string | null; cashbackValue?: number | null
     contact: { id: string; fullName: string; position: string | null; email: string | null; phone: string | null }
   }>
 }
@@ -54,9 +56,248 @@ interface DealSidebarProps {
   fetchDeal: () => void
 }
 
+// ── Inline Add Team Member Form ──
+function AddTeamMemberForm({ dealId, orgId, onDone }: { dealId: string; orgId?: string; onDone: () => void }) {
+  const tc = useTranslations("common")
+  const [users, setUsers] = useState<Array<{ id: string; name: string | null; email: string }>>([])
+  const [search, setSearch] = useState("")
+  const [selectedUserId, setSelectedUserId] = useState("")
+  const [role, setRole] = useState("member")
+  const [saving, setSaving] = useState(false)
+  const [loadingUsers, setLoadingUsers] = useState(true)
+
+  useEffect(() => {
+    fetch("/api/v1/users?limit=100", {
+      headers: orgId ? { "x-organization-id": orgId } : {},
+    })
+      .then(r => r.json())
+      .then(j => {
+        if (j.success) setUsers(j.data?.users || j.data || [])
+      })
+      .catch(() => {})
+      .finally(() => setLoadingUsers(false))
+  }, [orgId])
+
+  const filteredUsers = users.filter(u => {
+    if (!search) return true
+    const s = search.toLowerCase()
+    return (u.name || "").toLowerCase().includes(s) || u.email.toLowerCase().includes(s)
+  })
+
+  const handleSave = async () => {
+    if (!selectedUserId) return
+    setSaving(true)
+    try {
+      await fetch(`/api/v1/deals/${dealId}/team`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": orgId } : {}) },
+        body: JSON.stringify({ userId: selectedUserId, role }),
+      })
+      onDone()
+    } catch { } finally { setSaving(false) }
+  }
+
+  return (
+    <div className="space-y-2 pt-1">
+      {loadingUsers ? (
+        <div className="flex items-center gap-2 text-xs text-muted-foreground py-2">
+          <Loader2 className="h-3 w-3 animate-spin" /> {tc("loading")}
+        </div>
+      ) : (
+        <>
+          <Input
+            placeholder={tc("search")}
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            className="h-7 text-xs"
+          />
+          <div className="max-h-28 overflow-y-auto border rounded-lg divide-y">
+            {filteredUsers.length === 0 ? (
+              <p className="text-xs text-muted-foreground p-2">{tc("noResults")}</p>
+            ) : (
+              filteredUsers.map(u => (
+                <button
+                  key={u.id}
+                  onClick={() => setSelectedUserId(u.id)}
+                  className={`w-full flex items-center gap-2 px-2 py-1.5 text-left hover:bg-muted/50 transition-colors ${selectedUserId === u.id ? "bg-primary/10" : ""}`}
+                >
+                  <div className="h-5 w-5 rounded-full bg-primary/10 flex items-center justify-center text-[9px] font-semibold flex-shrink-0">
+                    {(u.name || u.email || "?")[0].toUpperCase()}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <span className="text-xs truncate block">{u.name || u.email}</span>
+                  </div>
+                  {selectedUserId === u.id && <Check className="h-3 w-3 text-primary flex-shrink-0" />}
+                </button>
+              ))
+            )}
+          </div>
+          <Select value={role} onChange={e => setRole(e.target.value)} className="h-7 text-xs">
+            <option value="member">{tc("member")}</option>
+            <option value="owner">{tc("owner")}</option>
+            <option value="support">{tc("support")}</option>
+          </Select>
+          <div className="flex gap-1.5">
+            <Button size="sm" className="flex-1 h-7 text-[10px]" onClick={handleSave} disabled={!selectedUserId || saving}>
+              {saving ? <Loader2 className="h-3 w-3 animate-spin" /> : tc("save")}
+            </Button>
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
+
+// ── Inline Add Contact Role Form ──
+function AddContactRoleForm({ dealId, orgId, onDone }: { dealId: string; orgId?: string; onDone: () => void }) {
+  const tc = useTranslations("common")
+  const [contacts, setContacts] = useState<Array<{ id: string; fullName: string; position: string | null; email: string | null }>>([])
+  const [search, setSearch] = useState("")
+  const [selectedContactId, setSelectedContactId] = useState("")
+  const [role, setRole] = useState("contact_person")
+  const [influence, setInfluence] = useState("Medium")
+  const [loyalty, setLoyalty] = useState("Neutral")
+  const [cashbackType, setCashbackType] = useState<string>("")
+  const [cashbackValue, setCashbackValue] = useState("")
+  const [saving, setSaving] = useState(false)
+  const [loadingContacts, setLoadingContacts] = useState(true)
+
+  useEffect(() => {
+    fetch("/api/v1/contacts?limit=200", {
+      headers: orgId ? { "x-organization-id": orgId } : {},
+    })
+      .then(r => r.json())
+      .then(j => {
+        if (j.success) setContacts(j.data?.contacts || j.data || [])
+      })
+      .catch(() => {})
+      .finally(() => setLoadingContacts(false))
+  }, [orgId])
+
+  const filteredContacts = contacts.filter(c => {
+    if (!search) return true
+    const s = search.toLowerCase()
+    return c.fullName.toLowerCase().includes(s) || (c.email || "").toLowerCase().includes(s)
+  })
+
+  const handleSave = async () => {
+    if (!selectedContactId) return
+    setSaving(true)
+    try {
+      await fetch(`/api/v1/deals/${dealId}/contact-roles`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": orgId } : {}) },
+        body: JSON.stringify({
+          contactId: selectedContactId,
+          role,
+          influence,
+          loyalty,
+          isPrimary: false,
+          cashbackType: cashbackType || null,
+          cashbackValue: cashbackValue ? Number(cashbackValue) : null,
+        }),
+      })
+      onDone()
+    } catch { } finally { setSaving(false) }
+  }
+
+  return (
+    <div className="space-y-2 pt-1">
+      {loadingContacts ? (
+        <div className="flex items-center gap-2 text-xs text-muted-foreground py-2">
+          <Loader2 className="h-3 w-3 animate-spin" /> {tc("loading")}
+        </div>
+      ) : (
+        <>
+          <Input
+            placeholder={tc("searchContacts")}
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            className="h-7 text-xs"
+          />
+          <div className="max-h-28 overflow-y-auto border rounded-lg divide-y">
+            {filteredContacts.length === 0 ? (
+              <p className="text-xs text-muted-foreground p-2">{tc("noResults")}</p>
+            ) : (
+              filteredContacts.map(c => (
+                <button
+                  key={c.id}
+                  onClick={() => setSelectedContactId(c.id)}
+                  className={`w-full flex items-center gap-2 px-2 py-1.5 text-left hover:bg-muted/50 transition-colors ${selectedContactId === c.id ? "bg-primary/10" : ""}`}
+                >
+                  <div className="h-5 w-5 rounded-full bg-primary/10 flex items-center justify-center text-[9px] font-semibold flex-shrink-0">
+                    {(c.fullName || "?")[0]}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <span className="text-xs font-medium truncate block">{c.fullName}</span>
+                    {c.position && <span className="text-[10px] text-muted-foreground truncate block">{c.position}</span>}
+                  </div>
+                  {selectedContactId === c.id && <Check className="h-3 w-3 text-primary flex-shrink-0" />}
+                </button>
+              ))
+            )}
+          </div>
+
+          {/* Role */}
+          <Select value={role} onChange={e => setRole(e.target.value)} className="h-7 text-xs">
+            <option value="contact_person">{tc("roleContactPerson")}</option>
+            <option value="decision_maker">{tc("roleDecisionMaker")}</option>
+            <option value="influencer">{tc("roleInfluencer")}</option>
+            <option value="champion">{tc("roleChampion")}</option>
+            <option value="evaluator">{tc("roleEvaluator")}</option>
+            <option value="user">{tc("roleUser")}</option>
+            <option value="blocker">{tc("roleBlocker")}</option>
+          </Select>
+
+          {/* Influence */}
+          <Select value={influence} onChange={e => setInfluence(e.target.value)} className="h-7 text-xs">
+            <option value="High">{tc("influenceHigh")}</option>
+            <option value="Medium">{tc("influenceMedium")}</option>
+            <option value="Low">{tc("influenceLow")}</option>
+          </Select>
+
+          {/* Loyalty */}
+          <Select value={loyalty} onChange={e => setLoyalty(e.target.value)} className="h-7 text-xs">
+            <option value="Supportive">{tc("loyaltySupportive")}</option>
+            <option value="Neutral">{tc("loyaltyNeutral")}</option>
+            <option value="Opponent">{tc("loyaltyOpponent")}</option>
+          </Select>
+
+          {/* Cashback */}
+          <div className="space-y-1">
+            <p className="text-[10px] font-medium text-muted-foreground">{tc("cashback")}</p>
+            <div className="flex gap-1.5">
+              <Select value={cashbackType} onChange={e => setCashbackType(e.target.value)} className="h-7 text-xs flex-1">
+                <option value="">{tc("noCashback")}</option>
+                <option value="percent">%</option>
+                <option value="fixed">{tc("fixedAmount")}</option>
+              </Select>
+              {cashbackType && (
+                <Input
+                  type="number"
+                  placeholder={cashbackType === "percent" ? "%" : tc("amount")}
+                  value={cashbackValue}
+                  onChange={e => setCashbackValue(e.target.value)}
+                  className="h-7 text-xs w-20"
+                />
+              )}
+            </div>
+          </div>
+
+          <Button size="sm" className="w-full h-7 text-[10px]" onClick={handleSave} disabled={!selectedContactId || saving}>
+            {saving ? <Loader2 className="h-3 w-3 animate-spin" /> : tc("save")}
+          </Button>
+        </>
+      )}
+    </div>
+  )
+}
+
 export function DealSidebar({ deal, orgId, offersCount, invoicesCount, onEdit, fetchDeal }: DealSidebarProps) {
   const t = useTranslations("deals")
   const tc = useTranslations("common")
+  const [showAddMember, setShowAddMember] = useState(false)
+  const [showAddRole, setShowAddRole] = useState(false)
 
   return (
     <MotionCard className="space-y-0">
@@ -206,9 +447,22 @@ export function DealSidebar({ deal, orgId, offersCount, invoicesCount, onEdit, f
             ) : (
               <p className="text-xs text-muted-foreground">{tc("noTeamMembers")}</p>
             )}
-            <Button variant="outline" size="sm" className="w-full gap-1 h-7 text-[10px]" onClick={() => onEdit()}>
-              <Plus className="h-3 w-3" /> {tc("addMember")}
-            </Button>
+
+            {showAddMember ? (
+              <div className="border rounded-lg p-2 bg-muted/30">
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-[10px] font-semibold">{tc("addMember")}</span>
+                  <button onClick={() => setShowAddMember(false)} className="p-0.5 rounded hover:bg-muted">
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
+                <AddTeamMemberForm dealId={deal.id} orgId={orgId} onDone={() => { setShowAddMember(false); fetchDeal() }} />
+              </div>
+            ) : (
+              <Button variant="outline" size="sm" className="w-full gap-1 h-7 text-[10px]" onClick={() => setShowAddMember(true)}>
+                <Plus className="h-3 w-3" /> {tc("addMember")}
+              </Button>
+            )}
           </div>
         </AccordionItem>
 
@@ -228,7 +482,14 @@ export function DealSidebar({ deal, orgId, offersCount, invoicesCount, onEdit, f
                   </div>
                   <div className="flex-1 min-w-0">
                     <span className="text-xs font-medium truncate block">{cr.contact.fullName}</span>
-                    {cr.contact.position && <span className="text-[10px] text-muted-foreground truncate block">{cr.contact.position}</span>}
+                    <div className="flex items-center gap-1">
+                      {cr.contact.position && <span className="text-[10px] text-muted-foreground truncate">{cr.contact.position}</span>}
+                      {cr.cashbackType && cr.cashbackValue != null && (
+                        <span className="text-[10px] text-green-600 dark:text-green-400 font-medium">
+                          · {tc("cashback")}: {cr.cashbackType === "percent" ? `${cr.cashbackValue}%` : `${cr.cashbackValue} ₼`}
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <Badge variant="outline" className="text-[10px] h-4 px-1.5">{cr.role}</Badge>
                   <button
@@ -249,9 +510,22 @@ export function DealSidebar({ deal, orgId, offersCount, invoicesCount, onEdit, f
             ) : (
               <p className="text-xs text-muted-foreground">{tc("noContactRoles")}</p>
             )}
-            <Button variant="outline" size="sm" className="w-full gap-1 h-7 text-[10px]" onClick={() => onEdit()}>
-              <Plus className="h-3 w-3" /> {tc("addContactRole")}
-            </Button>
+
+            {showAddRole ? (
+              <div className="border rounded-lg p-2 bg-muted/30">
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-[10px] font-semibold">{tc("addContactRole")}</span>
+                  <button onClick={() => setShowAddRole(false)} className="p-0.5 rounded hover:bg-muted">
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
+                <AddContactRoleForm dealId={deal.id} orgId={orgId} onDone={() => { setShowAddRole(false); fetchDeal() }} />
+              </div>
+            ) : (
+              <Button variant="outline" size="sm" className="w-full gap-1 h-7 text-[10px]" onClick={() => setShowAddRole(true)}>
+                <Plus className="h-3 w-3" /> {tc("addContactRole")}
+              </Button>
+            )}
           </div>
         </AccordionItem>
 

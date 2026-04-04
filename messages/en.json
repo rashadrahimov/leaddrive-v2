@@ -325,7 +325,8 @@
     "call": "Call",
     "contactPerson": "Contact person",
     "created": "Created",
-    "saved": "Saved"
+    "saved": "Saved",
+    "viewAll": "View all"
   },
   "leads": {
     "title": "Leads",
