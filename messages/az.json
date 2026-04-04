@@ -455,7 +455,18 @@
     "hintColPriority": "Potensial dəyər və təcililiyə əsaslanan prioritet səviyyəsi",
     "hintColScore": "Lid qiymətləndirmə qaydalarına əsaslanan rəqəmsal bal (0-100)",
     "hintColTemperature": "Vizual göstərici: 🔥 İsti, 🟡 Ilıq, 🔵 Soyuq",
-    "modalTasksCreated": "Tapşırıqlar yaradıldı"
+    "modalTasksCreated": "Tapşırıqlar yaradıldı",
+    "analyticsConversionRate": "Konversiya dərəcəsi",
+    "analyticsAvgDays": "Ort. gün",
+    "analyticsStatusDist": "Status paylanması",
+    "analyticsScoreDist": "Bal paylanması",
+    "analyticsSourceBreakdown": "Mənbə paylanması",
+    "analyticsPriorityBreakdown": "Prioritet paylanması",
+    "analyticsTopLeads": "Top lidlər",
+    "analyticsConvProb": "Konversiya ehtimalı",
+    "analyticsLeadsByMonth": "Aylıq lidlər",
+    "analyticsPipelineValue": "Boru kəməri dəyəri",
+    "analyticsConvFunnel": "Konversiya hunisi"
   },
   "companies": {
     "title": "Şirkətlər",

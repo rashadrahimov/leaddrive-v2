@@ -13,13 +13,14 @@ import { LeadItemModal } from "@/components/lead-item-modal"
 import {
   UserPlus, Plus, Search, Pencil, Trash2, ArrowRight,
   Brain, Phone, Mail, Building2, ArrowUpDown, ArrowUp, ArrowDown,
-  Flame, TrendingUp, CheckCircle, LayoutGrid, List,
+  Flame, TrendingUp, CheckCircle, LayoutGrid, List, BarChart3,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useTranslations } from "next-intl"
 import { ColorStatCard } from "@/components/color-stat-card"
 import { InfoHint } from "@/components/info-hint"
 import { PageDescription } from "@/components/page-description"
+import { LeadsAnalytics } from "@/components/leads/leads-analytics"
 
 interface Lead {
   id: string
@@ -84,7 +85,7 @@ export default function LeadsPage() {
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [deleteName, setDeleteName] = useState("")
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null)
-  const [viewMode, setViewMode] = useState<"table" | "kanban">("table")
+  const [viewMode, setViewMode] = useState<"table" | "kanban" | "analytics">("table")
 
   const fetchLeads = async () => {
     try {
@@ -241,8 +242,45 @@ export default function LeadsPage() {
           <Button variant={viewMode === "kanban" ? "default" : "ghost"} size="sm" className="rounded-none px-3" onClick={() => setViewMode("kanban")}>
             <LayoutGrid className="h-4 w-4" />
           </Button>
+          <Button variant={viewMode === "analytics" ? "default" : "ghost"} size="sm" className="rounded-none px-3" onClick={() => setViewMode("analytics")}>
+            <BarChart3 className="h-4 w-4" />
+          </Button>
         </div>
       </div>
+
+      {/* Analytics View */}
+      {viewMode === "analytics" && (
+        <LeadsAnalytics
+          leads={leads}
+          labels={{
+            totalLeads: t("title"),
+            hotLeads: t("hotLeads"),
+            avgScore: t("avgScore"),
+            converted: t("statusConverted"),
+            lost: t("statusLost"),
+            conversionRate: t("analyticsConversionRate"),
+            avgDaysToConvert: t("analyticsAvgDays"),
+            statusDistribution: t("analyticsStatusDist"),
+            scoreDistribution: t("analyticsScoreDist"),
+            sourceBreakdown: t("analyticsSourceBreakdown"),
+            priorityBreakdown: t("analyticsPriorityBreakdown"),
+            topLeads: t("analyticsTopLeads"),
+            conversionFunnel: t("analyticsConvFunnel"),
+            conversionProbability: t("analyticsConvProb"),
+            score: t("colScore"),
+            estimatedValue: t("modalEstimatedValue"),
+            noData: t("noLeads"),
+            new: t("statusNew"),
+            contacted: t("statusContacted"),
+            qualified: t("statusQualified"),
+            high: t("priorityHigh"),
+            medium: t("priorityMedium"),
+            low: t("priorityLow"),
+            leadsByMonth: t("analyticsLeadsByMonth"),
+            pipelineValue: t("analyticsPipelineValue"),
+          }}
+        />
+      )}
 
       {/* Kanban View */}
       {viewMode === "kanban" && (

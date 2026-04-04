@@ -456,7 +456,18 @@
     "hintColPriority": "Priority level based on potential value and urgency",
     "hintColScore": "Numerical score (0-100) based on lead scoring rules",
     "hintColTemperature": "Visual indicator: 🔥 Hot, 🟡 Warm, 🔵 Cold",
-    "modalTasksCreated": "Tasks created"
+    "modalTasksCreated": "Tasks created",
+    "analyticsConversionRate": "Conversion Rate",
+    "analyticsAvgDays": "Avg Days",
+    "analyticsStatusDist": "Status Distribution",
+    "analyticsScoreDist": "Score Distribution",
+    "analyticsSourceBreakdown": "Source Breakdown",
+    "analyticsPriorityBreakdown": "Priority Breakdown",
+    "analyticsTopLeads": "Top Leads",
+    "analyticsConvProb": "Conversion Probability",
+    "analyticsLeadsByMonth": "Leads by Month",
+    "analyticsPipelineValue": "Pipeline Value",
+    "analyticsConvFunnel": "Conversion Funnel"
   },
   "companies": {
     "title": "Companies",

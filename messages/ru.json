@@ -456,7 +456,18 @@
     "hintColPriority": "Приоритет на основе потенциальной ценности и срочности",
     "hintColScore": "Числовая оценка (0-100) на основе правил скоринга",
     "hintColTemperature": "Визуальный индикатор: 🔥 Горячий, 🟡 Тёплый, 🔵 Холодный",
-    "modalTasksCreated": "Задачи созданы"
+    "modalTasksCreated": "Задачи созданы",
+    "analyticsConversionRate": "Конверсия",
+    "analyticsAvgDays": "Ср. дней",
+    "analyticsStatusDist": "Распределение по статусам",
+    "analyticsScoreDist": "Распределение по баллам",
+    "analyticsSourceBreakdown": "Источники лидов",
+    "analyticsPriorityBreakdown": "Распределение по приоритету",
+    "analyticsTopLeads": "Топ лидов",
+    "analyticsConvProb": "Вероятность конверсии",
+    "analyticsLeadsByMonth": "Лиды по месяцам",
+    "analyticsPipelineValue": "Стоимость воронки",
+    "analyticsConvFunnel": "Воронка конверсии"
   },
   "companies": {
     "title": "Компании",
