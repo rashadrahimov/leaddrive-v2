@@ -17,17 +17,17 @@ const sizes = {
 export function Logo({ collapsed = false, size = "md", sidebar = false, className = "" }: LogoProps) {
   const s = sizes[size]
 
-  // Sidebar logo: navy text in light, white text in dark (for navy bg)
-  // Normal logo: always navy text
+  // Sidebar logo: always white text (dark navy sidebar)
+  // Normal logo: navy text in light, white in dark
   const textClass = sidebar
-    ? "text-[#1e3a5f] dark:text-white"
-    : "text-[#1e3a5f]"
+    ? "text-white"
+    : "text-[#1e3a5f] dark:text-white"
   const crmClass = sidebar
-    ? "text-slate-500 dark:text-slate-400 border-slate-300 dark:border-white/20"
-    : "text-slate-500 border-slate-300"
+    ? "text-white/50 border-white/20"
+    : "text-slate-500 dark:text-slate-400 border-slate-300 dark:border-white/20"
   // SVG strokes for chevrons
-  const chevronStroke1 = sidebar ? "stroke-[#1e3a5f] dark:stroke-white/60" : "stroke-[#1e3a5f]"
-  const chevronStroke2 = sidebar ? "stroke-[#1e3a5f] dark:stroke-white/80" : "stroke-[#1e3a5f]"
+  const chevronStroke1 = sidebar ? "stroke-white/60" : "stroke-[#1e3a5f] dark:stroke-white/60"
+  const chevronStroke2 = sidebar ? "stroke-white/80" : "stroke-[#1e3a5f] dark:stroke-white/80"
 
   return (
     <div className={`flex items-center gap-2 ${className}`}>
@@ -55,20 +55,20 @@ export function Logo({ collapsed = false, size = "md", sidebar = false, classNam
         />
         <path
           d="M20 36L30 14L40 36"
-          stroke="#0ea5a0"
+          stroke="#0176D3"
           strokeWidth="4"
           strokeLinecap="round"
           strokeLinejoin="round"
         />
         <path
           d="M30 14L50 6"
-          stroke="#0ea5a0"
+          stroke="#0176D3"
           strokeWidth="4"
           strokeLinecap="round"
         />
         <path
           d="M42 4L50 6L48 14"
-          stroke="#0ea5a0"
+          stroke="#0176D3"
           strokeWidth="3.5"
           strokeLinecap="round"
           strokeLinejoin="round"

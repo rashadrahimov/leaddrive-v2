@@ -75,53 +75,41 @@ const navItems: NavItem[] = [
   { module: "core", href: "/settings", icon: Settings, tKey: "settings", group: "Settings" },
 ]
 
-/* Ramp/Notion style — light sidebar with colored accent dots */
-const GROUP_ICON_BG: Record<string, string> = {
-  CRM: "bg-teal-100 text-teal-600 dark:bg-teal-500/20 dark:text-teal-400",
-  Marketing: "bg-orange-100 text-orange-600 dark:bg-orange-500/20 dark:text-orange-400",
-  Communication: "bg-blue-100 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400",
-  Support: "bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400",
-  Finance: "bg-amber-100 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400",
-  Analytics: "bg-purple-100 text-purple-600 dark:bg-purple-500/20 dark:text-purple-400",
-  ERP: "bg-indigo-100 text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-400",
-  "Route & Field": "bg-cyan-100 text-cyan-600 dark:bg-cyan-500/20 dark:text-cyan-400",
-  Settings: "bg-slate-100 text-slate-600 dark:bg-slate-500/20 dark:text-slate-400",
+/* Salesforce Agentforce — dark navy sidebar with subtle accent colors */
+const GROUP_ICON_COLOR: Record<string, string> = {
+  CRM: "text-sky-400",
+  Marketing: "text-orange-400",
+  Communication: "text-blue-300",
+  Support: "text-emerald-400",
+  Finance: "text-amber-400",
+  Analytics: "text-purple-400",
+  ERP: "text-indigo-400",
+  "Route & Field": "text-cyan-400",
+  Settings: "text-slate-400",
 }
 
 const GROUP_LABEL_COLORS: Record<string, string> = {
-  CRM: "text-teal-600 dark:text-teal-400",
-  Marketing: "text-orange-600 dark:text-orange-400",
-  Communication: "text-blue-600 dark:text-blue-400",
-  Support: "text-emerald-600 dark:text-emerald-400",
-  Finance: "text-amber-600 dark:text-amber-400",
-  Analytics: "text-purple-600 dark:text-purple-400",
-  ERP: "text-indigo-600 dark:text-indigo-400",
-  "Route & Field": "text-cyan-600 dark:text-cyan-400",
-  Settings: "text-slate-500 dark:text-slate-400",
-}
-
-const GROUP_ACTIVE_BG: Record<string, string> = {
-  CRM: "bg-teal-50 dark:bg-teal-500/10 text-teal-700 dark:text-teal-300",
-  Marketing: "bg-orange-50 dark:bg-orange-500/10 text-orange-700 dark:text-orange-300",
-  Communication: "bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300",
-  Support: "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300",
-  Finance: "bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300",
-  Analytics: "bg-purple-50 dark:bg-purple-500/10 text-purple-700 dark:text-purple-300",
-  ERP: "bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-300",
-  "Route & Field": "bg-cyan-50 dark:bg-cyan-500/10 text-cyan-700 dark:text-cyan-300",
-  Settings: "bg-slate-100 dark:bg-slate-500/10 text-slate-700 dark:text-slate-300",
+  CRM: "text-sky-400/70",
+  Marketing: "text-orange-400/70",
+  Communication: "text-blue-300/70",
+  Support: "text-emerald-400/70",
+  Finance: "text-amber-400/70",
+  Analytics: "text-purple-400/70",
+  ERP: "text-indigo-400/70",
+  "Route & Field": "text-cyan-400/70",
+  Settings: "text-slate-400/70",
 }
 
 const GROUP_ACTIVE_BAR: Record<string, string> = {
-  CRM: "before:bg-teal-500",
-  Marketing: "before:bg-orange-500",
-  Communication: "before:bg-blue-500",
-  Support: "before:bg-emerald-500",
-  Finance: "before:bg-amber-500",
-  Analytics: "before:bg-purple-500",
-  ERP: "before:bg-indigo-500",
-  "Route & Field": "before:bg-cyan-500",
-  Settings: "before:bg-slate-500",
+  CRM: "before:bg-sky-400",
+  Marketing: "before:bg-orange-400",
+  Communication: "before:bg-blue-300",
+  Support: "before:bg-emerald-400",
+  Finance: "before:bg-amber-400",
+  Analytics: "before:bg-purple-400",
+  ERP: "before:bg-indigo-400",
+  "Route & Field": "before:bg-cyan-400",
+  Settings: "before:bg-slate-400",
 }
 
 interface SidebarProps {
@@ -151,18 +139,18 @@ export function Sidebar({ org }: SidebarProps) {
   return (
     <aside
       className={cn(
-        "flex flex-col border-r border-border bg-card transition-all duration-200",
+        "flex flex-col bg-sidebar-bg transition-all duration-200",
         collapsed ? "w-16" : "w-64"
       )}
     >
       {/* Logo header */}
-      <div className="flex h-14 items-center justify-between border-b border-border px-4">
+      <div className="flex h-14 items-center justify-between border-b border-white/10 px-4">
         <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
           <Logo collapsed={collapsed} size="sm" sidebar />
         </Link>
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className="rounded-lg p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+          className="rounded-lg p-1.5 text-white/50 hover:bg-white/10 hover:text-white transition-colors"
         >
           <ChevronLeft className={cn("h-4 w-4 transition-transform", collapsed && "rotate-180")} />
         </button>
@@ -174,27 +162,26 @@ export function Sidebar({ org }: SidebarProps) {
           <div
             key={group}
             className={cn(
-              groupIndex > 0 && "border-t border-border pt-3 mt-3"
+              groupIndex > 0 && "border-t border-white/[0.06] pt-3 mt-3"
             )}
           >
             {!collapsed ? (
               <div className={cn(
                 "mb-1.5 px-3 text-[10px] font-bold uppercase tracking-widest",
-                GROUP_LABEL_COLORS[group] || "text-muted-foreground"
+                GROUP_LABEL_COLORS[group] || "text-white/40"
               )}>
                 {t(`groups.${group}`)}
               </div>
             ) : (
-              groupIndex > 0 && <hr className="border-border mx-3 my-1" />
+              groupIndex > 0 && <hr className="border-white/[0.06] mx-3 my-1" />
             )}
             {accessibleItems
               .filter((item) => item.group === group)
               .map((item) => {
                 const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href))
                 const Icon = item.icon
-                const iconBg = GROUP_ICON_BG[group] || "bg-slate-100 text-slate-600"
-                const activeBg = GROUP_ACTIVE_BG[group] || "bg-muted text-foreground"
-                const activeBar = GROUP_ACTIVE_BAR[group] || "before:bg-teal-500"
+                const iconColor = GROUP_ICON_COLOR[group] || "text-slate-400"
+                const activeBar = GROUP_ACTIVE_BAR[group] || "before:bg-sky-400"
                 return (
                   <Link
                     key={item.href}
@@ -202,14 +189,14 @@ export function Sidebar({ org }: SidebarProps) {
                     className={cn(
                       "relative flex items-center gap-3 rounded-lg px-3 py-1.5 text-sm transition-all duration-150",
                       isActive
-                        ? cn("font-medium before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:h-5 before:w-[3px] before:rounded-r", activeBar, activeBg)
-                        : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                        ? cn("font-medium text-white bg-white/[0.08] before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:h-5 before:w-[3px] before:rounded-r", activeBar)
+                        : "text-white/60 hover:bg-white/[0.06] hover:text-white/90"
                     )}
                     title={collapsed ? t(item.tKey) : undefined}
                   >
                     <div className={cn(
                       "flex h-6 w-6 items-center justify-center rounded-md shrink-0 transition-all",
-                      isActive ? iconBg : "bg-muted text-muted-foreground"
+                      isActive ? iconColor : "text-white/40"
                     )}>
                       <Icon className="h-3.5 w-3.5" />
                     </div>

@@ -81,10 +81,10 @@ export function AIObservations({ tab }: AIObservationsProps) {
   const result = refreshMutation.data || data
 
   return (
-    <Card>
+    <Card className="ai-accent">
       <CardHeader className="flex flex-row items-center justify-between pb-3">
         <CardTitle className="text-base flex items-center gap-2">
-          <Brain className="h-4 w-4" />
+          <Brain className="h-4 w-4 text-[hsl(var(--ai-from))]" />
           Da Vinci Analiz
           {result?.cached && (
             <Badge variant="outline" className="text-[10px] ml-1">

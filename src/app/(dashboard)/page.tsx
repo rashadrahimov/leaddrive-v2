@@ -91,7 +91,7 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="space-y-4">
+      <div className="space-y-6">
         <div className="h-8 w-64 bg-muted rounded animate-pulse" />
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
           {[1,2,3,4,5,6].map(i => <div key={i} className="h-24 bg-muted rounded-xl animate-pulse" />)}
@@ -108,7 +108,7 @@ export default function DashboardPage() {
   const { financial, pipeline, leads, operations, activity, risks, forecast, campaigns, events, weeklyMetrics } = data
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {/* ═══ Header ═══ */}
       <div className="flex items-center justify-between">
         <div>

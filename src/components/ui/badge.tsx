@@ -14,7 +14,8 @@ const badgeVariants = cva(
         success: "border-transparent bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400",
         warning: "border-transparent bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400",
         info: "border-transparent bg-sky-100 text-sky-800 dark:bg-sky-900/30 dark:text-sky-400",
-        brand: "border-transparent bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-400",
+        brand: "border-transparent bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary",
+        ai: "border-transparent bg-gradient-to-r from-[hsl(var(--ai-from))]/10 to-[hsl(var(--ai-to))]/10 text-[hsl(var(--ai-from))] dark:from-[hsl(var(--ai-from))]/20 dark:to-[hsl(var(--ai-to))]/20",
       },
     },
     defaultVariants: {

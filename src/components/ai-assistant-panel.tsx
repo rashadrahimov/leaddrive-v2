@@ -108,7 +108,7 @@ export function AiAssistantPanel() {
       {!open && (
         <button
           onClick={() => setOpen(true)}
-          className="fixed bottom-6 right-6 z-50 h-14 w-14 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-200 flex items-center justify-center group"
+          className="fixed bottom-6 right-6 z-50 h-14 w-14 rounded-full bg-gradient-to-br from-[hsl(var(--ai-from))] to-[hsl(var(--ai-to))] text-white shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-200 flex items-center justify-center group"
         >
           <Brain className="h-6 w-6 group-hover:scale-110 transition-transform" />
         </button>
@@ -116,9 +116,9 @@ export function AiAssistantPanel() {
 
       {/* Panel */}
       {open && (
-        <div className="fixed right-0 top-0 bottom-0 z-50 w-[380px] bg-background border-l shadow-2xl flex flex-col animate-in slide-in-from-right duration-200">
-          {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3 border-b bg-gradient-to-r from-indigo-500 to-purple-600 text-white">
+        <div className="fixed right-0 top-0 bottom-0 z-50 w-[380px] bg-card/80 backdrop-blur-xl border-l border-border/40 shadow-2xl flex flex-col animate-in slide-in-from-right duration-200">
+          {/* Header — AI gradient */}
+          <div className="flex items-center justify-between px-4 py-3 border-b bg-gradient-to-r from-[hsl(var(--ai-from))] to-[hsl(var(--ai-to))] text-white">
             <div className="flex items-center gap-2">
               <div className="h-8 w-8 rounded-full bg-white/20 flex items-center justify-center">
                 <Bot className="h-5 w-5" />
@@ -146,8 +146,8 @@ export function AiAssistantPanel() {
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
             {messages.length === 0 && (
               <div className="flex flex-col items-center justify-center h-full text-center px-6">
-                <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/30 dark:to-purple-900/30 flex items-center justify-center mb-4">
-                  <Sparkles className="h-8 w-8 text-indigo-500" />
+                <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-[hsl(var(--ai-from))]/10 to-[hsl(var(--ai-to))]/10 flex items-center justify-center mb-4">
+                  <Sparkles className="h-8 w-8 text-[hsl(var(--ai-from))]" />
                 </div>
                 <h4 className="text-sm font-semibold mb-1">{t.title} Assistant</h4>
                 <p className="text-xs text-muted-foreground mb-4">{t.greeting}</p>
@@ -184,7 +184,7 @@ export function AiAssistantPanel() {
               <div className="flex justify-start">
                 <div className="bg-muted rounded-2xl rounded-bl-md px-4 py-3">
                   <div className="flex items-center gap-2">
-                    <Loader2 className="h-4 w-4 animate-spin text-indigo-500" />
+                    <Loader2 className="h-4 w-4 animate-spin text-[hsl(var(--ai-from))]" />
                     <span className="text-xs text-muted-foreground">Thinking...</span>
                   </div>
                 </div>
@@ -208,7 +208,7 @@ export function AiAssistantPanel() {
               />
               <Button
                 size="icon"
-                className="h-10 w-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700"
+                className="h-10 w-10 rounded-full bg-gradient-to-br from-[hsl(var(--ai-from))] to-[hsl(var(--ai-to))] hover:opacity-90"
                 onClick={sendMessage}
                 disabled={loading || !input.trim()}
               >

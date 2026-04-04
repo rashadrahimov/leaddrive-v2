@@ -19,15 +19,15 @@ export function Header({ orgName = "Organization", userName = "User" }: HeaderPr
   const { theme, setTheme } = useTheme()
 
   return (
-    <header className="flex h-14 items-center justify-between border-b border-border/60 bg-card px-6">
+    <header className="flex h-14 items-center justify-between border-b border-border/40 bg-card px-6 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
       <div className="flex items-center gap-4">
-        <span className="text-sm font-medium text-muted-foreground">{orgName}</span>
+        <span className="text-sm font-semibold text-foreground">{orgName}</span>
 
-        {/* Visible search bar */}
-        <button className="flex items-center gap-2 rounded-lg bg-muted/50 px-3 py-1.5 text-sm text-muted-foreground hover:bg-muted transition-colors cursor-pointer">
+        {/* Visible search bar — pill style */}
+        <button className="flex items-center gap-2 rounded-full bg-muted/60 px-4 py-1.5 text-sm text-muted-foreground hover:bg-muted transition-colors cursor-pointer">
           <Search className="h-3.5 w-3.5" />
           <span className="hidden sm:inline">{t("search")}</span>
-          <kbd className="hidden sm:inline-flex items-center gap-0.5 rounded border border-border/60 bg-background px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+          <kbd className="hidden sm:inline-flex items-center gap-0.5 rounded-full border border-border/60 bg-background px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
             <Command className="h-2.5 w-2.5" />K
           </kbd>
         </button>

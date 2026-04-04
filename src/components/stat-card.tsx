@@ -21,8 +21,8 @@ const ACCENT_HEX: Record<string, string> = {
   violet: "#8b5cf6",
   indigo: "#6366f1",
   orange: "#f97316",
-  teal: "#0ea5a0",
-  navy: "#1e3a5f",
+  teal: "#0176D3",
+  navy: "#001E3C",
 }
 
 const ACCENT_ICON_BG: Record<string, string> = {
@@ -33,8 +33,8 @@ const ACCENT_ICON_BG: Record<string, string> = {
   violet: "bg-violet-500/10 text-violet-500",
   indigo: "bg-indigo-500/10 text-indigo-500",
   orange: "bg-orange-500/10 text-orange-500",
-  teal: "bg-teal-500/10 text-teal-500",
-  navy: "bg-[#1e3a5f]/10 text-[#1e3a5f]",
+  teal: "bg-primary/10 text-primary",
+  navy: "bg-[#001E3C]/10 text-[#001E3C]",
 }
 
 const TREND_ICONS: Record<string, string> = {
@@ -58,8 +58,8 @@ function AnimatedValue({ value }: { value: string | number }) {
 }
 
 export function StatCard({ title, value, description, icon, trend, className, accentColor }: StatCardProps) {
-  const glowColor = accentColor ? ACCENT_HEX[accentColor] : "#0ea5a0"
-  const iconBg = accentColor ? ACCENT_ICON_BG[accentColor] : "bg-teal-500/10 text-teal-500"
+  const glowColor = accentColor ? ACCENT_HEX[accentColor] : "#0176D3"
+  const iconBg = accentColor ? ACCENT_ICON_BG[accentColor] : "bg-primary/10 text-primary"
 
   return (
     <div className={cn(

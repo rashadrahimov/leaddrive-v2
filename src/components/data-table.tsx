@@ -101,15 +101,15 @@ export function DataTable<T extends Record<string, unknown>>({
         <span className="text-sm text-muted-foreground">{t("results", { count: filtered.length })}</span>
       </div>
 
-      <div className="rounded-xl border border-border/60 bg-card/80 backdrop-blur-sm overflow-hidden shadow-sm">
+      <div className="rounded-xl border border-border/50 bg-card overflow-hidden shadow-[0_1px_3px_rgba(0,0,0,0.05)]">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b bg-[#1e3a5f]/[0.04] dark:bg-white/[0.04]">
+            <tr className="border-b border-border/40 bg-primary/[0.03] dark:bg-white/[0.03]">
               {columns.map((col) => (
                 <th
                   key={col.key}
                   className={cn(
-                    "px-4 py-3 text-left font-medium text-muted-foreground",
+                    "px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground",
                     col.sortable && "cursor-pointer select-none hover:text-foreground",
                     col.className
                   )}
@@ -131,15 +131,14 @@ export function DataTable<T extends Record<string, unknown>>({
               <tr
                 key={String(item.id || i)}
                 className={cn(
-                  "border-b transition-colors hover:bg-[#0ea5a0]/[0.04] dark:hover:bg-[#0ea5a0]/[0.08]",
-                  i % 2 === 1 && "bg-muted/20",
+                  "border-b border-border/30 transition-colors hover:bg-primary/[0.03] dark:hover:bg-white/[0.04]",
                   onRowClick && "cursor-pointer",
                   rowClassName?.(item)
                 )}
                 onClick={() => onRowClick?.(item)}
               >
                 {columns.map((col) => (
-                  <td key={col.key} className={cn("px-4 py-3", col.className)}>
+                  <td key={col.key} className={cn("px-5 py-3.5", col.className)}>
                     {col.render ? col.render(item, globalOffset + i) : String(item[col.key] ?? "—")}
                   </td>
                 ))}
@@ -147,7 +146,7 @@ export function DataTable<T extends Record<string, unknown>>({
             ))}
             {paginated.length === 0 && (
               <tr>
-                <td colSpan={columns.length} className="px-4 py-8 text-center text-muted-foreground">
+                <td colSpan={columns.length} className="px-5 py-10 text-center text-muted-foreground">
                   {t("noData")}
                 </td>
               </tr>

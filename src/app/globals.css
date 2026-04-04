@@ -4,32 +4,38 @@
 
 @layer base {
   :root {
-    /* Ramp/Notion-inspired clean palette */
-    --background: 0 0% 100%;
-    --foreground: 220 13% 13%;
-    --card: 0 0% 100%;
-    --card-foreground: 220 13% 13%;
+    /* Salesforce Agentforce-inspired palette */
+    --background: 228 20% 96%;          /* #F3F4F7 — light gray workspace */
+    --foreground: 213 27% 14%;          /* #1A2332 — deep dark text */
+    --card: 0 0% 100%;                  /* #FFFFFF — pure white cards */
+    --card-foreground: 213 27% 14%;
     --popover: 0 0% 100%;
-    --popover-foreground: 220 13% 13%;
-    --primary: 207 53% 24.5%;
+    --popover-foreground: 213 27% 14%;
+    --primary: 210 96% 41%;             /* #0176D3 — Salesforce Blue */
     --primary-foreground: 0 0% 100%;
-    --secondary: 220 14% 96%;
-    --secondary-foreground: 220 13% 13%;
-    --muted: 220 14% 96%;
-    --muted-foreground: 220 9% 46%;
-    --accent: 175 86% 33%;
+    --secondary: 228 20% 96%;           /* #F3F4F7 */
+    --secondary-foreground: 213 27% 14%;
+    --muted: 228 16% 94%;              /* #ECEDF1 */
+    --muted-foreground: 215 13% 44%;   /* #5F6B7A */
+    --accent: 265 48% 55%;             /* #7D55C7 — AI lavender */
     --accent-foreground: 0 0% 100%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 100%;
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 175 86% 33%;
+    --border: 220 13% 92%;             /* #EAEAEA */
+    --input: 220 13% 92%;
+    --ring: 210 96% 41%;               /* Salesforce Blue for focus rings */
     --radius: 0.625rem;
 
-    /* Sidebar (always dark) */
-    --sidebar-bg: 207 53% 16%;
+    /* Sidebar — deep navy */
+    --sidebar-bg: 210 100% 12%;        /* #001E3C */
     --sidebar-text: 210 20% 75%;
     --sidebar-text-active: 0 0% 100%;
+    --sidebar-hover: 210 60% 18%;      /* lighter navy for hover */
+    --sidebar-active: 210 70% 22%;     /* active item bg */
+
+    /* AI accent colors */
+    --ai-from: 265 48% 55%;           /* #7D55C7 */
+    --ai-to: 261 100% 71%;            /* #9B6CFF */
 
     /* Glassmorphism */
     --glass-blur: 12px;
@@ -39,25 +45,31 @@
   }
 
   .dark {
-    --background: 220 14% 8%;
-    --foreground: 220 14% 92%;
-    --card: 220 14% 11%;
-    --card-foreground: 220 14% 92%;
-    --popover: 220 14% 11%;
-    --popover-foreground: 220 14% 92%;
-    --primary: 175 70% 42%;
-    --primary-foreground: 220 14% 8%;
-    --secondary: 220 14% 15%;
-    --secondary-foreground: 220 14% 92%;
-    --muted: 220 14% 15%;
-    --muted-foreground: 220 9% 60%;
-    --accent: 175 60% 30%;
-    --accent-foreground: 220 14% 92%;
+    --background: 215 28% 8%;          /* Deep dark background */
+    --foreground: 210 20% 92%;
+    --card: 215 25% 12%;
+    --card-foreground: 210 20% 92%;
+    --popover: 215 25% 12%;
+    --popover-foreground: 210 20% 92%;
+    --primary: 210 96% 50%;            /* Brighter Salesforce Blue */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 215 25% 16%;
+    --secondary-foreground: 210 20% 92%;
+    --muted: 215 25% 16%;
+    --muted-foreground: 215 13% 55%;
+    --accent: 265 60% 60%;            /* Lighter AI purple for dark */
+    --accent-foreground: 0 0% 100%;
     --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 220 14% 92%;
-    --border: 220 14% 18%;
-    --input: 220 14% 18%;
-    --ring: 175 70% 42%;
+    --destructive-foreground: 210 20% 92%;
+    --border: 215 25% 20%;
+    --input: 215 25% 20%;
+    --ring: 210 96% 50%;
+
+    --sidebar-bg: 215 40% 8%;
+    --sidebar-hover: 215 35% 14%;
+    --sidebar-active: 215 40% 18%;
+    --ai-from: 265 55% 62%;
+    --ai-to: 261 100% 75%;
   }
 }
 
@@ -76,6 +88,11 @@
   --color-muted-foreground: hsl(var(--muted-foreground));
   --color-accent: hsl(var(--accent));
   --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-sidebar-bg: hsl(var(--sidebar-bg));
+  --color-sidebar-hover: hsl(var(--sidebar-hover));
+  --color-sidebar-active: hsl(var(--sidebar-active));
+  --color-ai-from: hsl(var(--ai-from));
+  --color-ai-to: hsl(var(--ai-to));
   --color-destructive: hsl(var(--destructive));
   --color-destructive-foreground: hsl(var(--destructive-foreground));
   --color-border: hsl(var(--border));
@@ -123,6 +140,7 @@
   body {
     @apply bg-background text-foreground;
     font-family: var(--font-sans);
+    line-height: 1.5;
   }
 }
 
@@ -237,7 +255,7 @@
 /* ── Gradient divider ── */
 .gradient-divider {
   height: 1px;
-  background: linear-gradient(to right, transparent, #8b5cf6, #06b6d4, transparent);
+  background: linear-gradient(to right, transparent, #7D55C7, #9B6CFF, transparent);
   opacity: 0.3;
 }
 
@@ -256,5 +274,23 @@
 }
 .card-hover:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+}
+
+/* ── AI accent border (left glow) ── */
+.ai-accent {
+  border-left: 3px solid hsl(var(--ai-to));
+}
+
+/* ── AI glow effect ── */
+.ai-glow {
+  box-shadow: 0 0 12px 2px hsl(var(--ai-from) / 0.15);
+}
+
+/* ── Glassmorphism panel ── */
+.glass-panel {
+  background: hsl(var(--card) / 0.8);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid hsl(var(--border) / 0.4);
 }

@@ -137,8 +137,8 @@ export default function AILeadScoringPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-primary/10 rounded-lg">
-            <Brain className="h-6 w-6 text-primary" />
+          <div className="p-2.5 bg-gradient-to-br from-[hsl(var(--ai-from))]/10 to-[hsl(var(--ai-to))]/10 rounded-lg">
+            <Brain className="h-6 w-6 text-[hsl(var(--ai-from))]" />
           </div>
           <div>
             <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>

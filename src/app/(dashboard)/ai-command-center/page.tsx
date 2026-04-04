@@ -301,7 +301,7 @@ export default function AICommandCenterPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg">
+          <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-[hsl(var(--ai-from))] to-[hsl(var(--ai-to))] flex items-center justify-center shadow-lg ai-glow">
             <BrainCircuit className="h-7 w-7 text-white" />
           </div>
           <div>
@@ -326,7 +326,7 @@ export default function AICommandCenterPage() {
           className={cn(
             "py-3.5 text-sm font-semibold transition-all flex items-center justify-center gap-2",
             activeTab === "dashboard"
-              ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-inner"
+              ? "bg-gradient-to-r from-[hsl(var(--ai-from))] to-[hsl(var(--ai-to))] text-white shadow-inner"
               : "bg-white hover:bg-gray-50 text-gray-600"
           )}
         >
@@ -337,7 +337,7 @@ export default function AICommandCenterPage() {
           className={cn(
             "py-3.5 text-sm font-semibold transition-all flex items-center justify-center gap-2",
             activeTab === "constructor"
-              ? "bg-gradient-to-r from-violet-500 to-purple-600 text-white shadow-inner"
+              ? "bg-gradient-to-r from-[hsl(var(--ai-from))] to-[hsl(var(--ai-to))] text-white shadow-inner"
               : "bg-white hover:bg-gray-50 text-gray-600"
           )}
         >
@@ -789,7 +789,7 @@ export default function AICommandCenterPage() {
                       <div className="flex items-center gap-3">
                         <div className={cn(
                           "h-12 w-12 rounded-xl flex items-center justify-center",
-                          agent.isActive ? "bg-gradient-to-br from-blue-500 to-indigo-600" : "bg-gray-200"
+                          agent.isActive ? "bg-gradient-to-br from-[hsl(var(--ai-from))] to-[hsl(var(--ai-to))]" : "bg-gray-200"
                         )}>
                           {agent.isActive
                             ? <BrainCircuit className="h-6 w-6 text-white" />
@@ -947,7 +947,7 @@ export default function AICommandCenterPage() {
             <p className="text-sm text-gray-500">Опишите роль агента обычным текстом, и Da Vinci создаст конфигурацию автоматически</p>
             <div className="flex gap-3 max-w-xl mx-auto">
               <Input placeholder="Например: агент техподдержки, быстрые ответы, без сложных вопросов..." className="bg-white" />
-              <Button className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 shadow-md flex-shrink-0">
+              <Button className="bg-gradient-to-r from-[hsl(var(--ai-from))] to-[hsl(var(--ai-to))] hover:opacity-90 shadow-md flex-shrink-0">
                 <Sparkles className="h-4 w-4 mr-1" /> Создать
               </Button>
             </div>

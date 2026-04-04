@@ -21,13 +21,15 @@ export function AiLeadScoring({ leads }: { leads: any[] }) {
   const t = useTranslations("dashboard")
 
   return (
-    <div className="rounded-lg bg-white dark:bg-card border border-slate-200 dark:border-border shadow-sm p-3">
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center gap-1.5">
-          <Brain className="h-4 w-4 text-violet-500" />
+    <div className="rounded-xl bg-card border border-border/60 shadow-[0_1px_3px_rgba(0,0,0,0.05)] p-4 ai-accent">
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <div className="h-7 w-7 rounded-lg bg-gradient-to-br from-[hsl(var(--ai-from))]/10 to-[hsl(var(--ai-to))]/10 flex items-center justify-center">
+            <Brain className="h-3.5 w-3.5 text-[hsl(var(--ai-from))]" />
+          </div>
           <span className="text-sm font-semibold">{t("aiLeadScoring")}</span>
         </div>
-        <a href="/leads" className="text-[10px] text-violet-600 hover:underline">{t("viewAll")} →</a>
+        <a href="/leads" className="text-[10px] text-[hsl(var(--ai-from))] hover:underline">{t("viewAll")} →</a>
       </div>
       {leads && leads.length > 0 ? (
         <div className="space-y-1.5">
