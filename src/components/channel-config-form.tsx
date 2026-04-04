@@ -41,6 +41,7 @@ const channelTypes = [
   { value: "sms", label: "SMS", icon: Smartphone, color: "text-gray-600", bgColor: "bg-gray-100 dark:bg-gray-900/30", borderActive: "border-gray-500 bg-gray-50 dark:bg-gray-900/20" },
   { value: "facebook", label: "Facebook", icon: MessageSquare, color: "text-blue-700", bgColor: "bg-blue-100 dark:bg-blue-900/30", borderActive: "border-blue-600 bg-blue-50 dark:bg-blue-900/20" },
   { value: "instagram", label: "Instagram", icon: MessageSquare, color: "text-pink-600", bgColor: "bg-pink-100 dark:bg-pink-900/30", borderActive: "border-pink-500 bg-pink-50 dark:bg-pink-900/20" },
+  { value: "tiktok", label: "TikTok", icon: MessageSquare, color: "text-gray-800 dark:text-gray-200", bgColor: "bg-gray-100 dark:bg-gray-800/30", borderActive: "border-gray-700 bg-gray-50 dark:bg-gray-800/20" },
 ]
 
 export function ChannelConfigForm({ open, onOpenChange, onSaved, initialData, orgId }: ChannelConfigFormProps) {
@@ -167,7 +168,7 @@ export function ChannelConfigForm({ open, onOpenChange, onSaved, initialData, or
             {/* Channel type */}
             <div>
               <Label className="text-sm font-medium">{tf("channelType")}</Label>
-              <div className="grid grid-cols-4 gap-2 mt-1.5 sm:grid-cols-7">
+              <div className="grid grid-cols-4 gap-2 mt-1.5 sm:grid-cols-7 lg:grid-cols-7">
                 {channelTypes.map(ct => {
                   const Icon = ct.icon
                   const selected = form.channelType === ct.value
@@ -344,6 +345,72 @@ export function ChannelConfigForm({ open, onOpenChange, onSaved, initialData, or
                   />
                   <p className="text-xs text-muted-foreground mt-1">
                     {tf("twilioPhoneHint")}
+                  </p>
+                </div>
+              </>
+            )}
+
+            {form.channelType === "tiktok" && (
+              <>
+                <div className="bg-gray-50 dark:bg-gray-900/20 border border-gray-200 dark:border-gray-700 rounded-lg p-3">
+                  <p className="text-xs text-gray-700 dark:text-gray-300 font-medium mb-1">TikTok for Business API</p>
+                  <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">
+                    Webhook URL: <code className="font-mono bg-gray-100 dark:bg-gray-800/40 px-1 rounded">
+                      {typeof window !== "undefined" ? window.location.origin : ""}/api/v1/webhooks/tiktok
+                    </code>
+                  </p>
+                  <p className="text-xs text-gray-600 dark:text-gray-400">
+                    Configure at developers.tiktok.com → App → Webhooks
+                  </p>
+                </div>
+                <div>
+                  <Label htmlFor="apiKey" className="text-sm font-medium">Access Token *</Label>
+                  <Input
+                    id="apiKey"
+                    type="password"
+                    value={form.apiKey}
+                    onChange={(e) => update("apiKey", e.target.value)}
+                    placeholder="act.xxxxxxxx..."
+                    className="mt-1.5 font-mono text-sm"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Server Access Token from TikTok for Business
+                  </p>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label htmlFor="appId" className="text-sm font-medium">App ID</Label>
+                    <Input
+                      id="appId"
+                      value={form.appId}
+                      onChange={(e) => update("appId", e.target.value)}
+                      placeholder="1234567890"
+                      className="mt-1.5 font-mono text-sm"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="appSecret" className="text-sm font-medium">App Secret</Label>
+                    <Input
+                      id="appSecret"
+                      type="password"
+                      value={form.appSecret}
+                      onChange={(e) => update("appSecret", e.target.value)}
+                      placeholder="App secret for webhook verification"
+                      className="mt-1.5 font-mono text-sm"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <Label htmlFor="pageId" className="text-sm font-medium">Business Account ID *</Label>
+                  <Input
+                    id="pageId"
+                    value={form.pageId}
+                    onChange={(e) => update("pageId", e.target.value)}
+                    placeholder="TikTok Business Account ID"
+                    className="mt-1.5 font-mono text-sm"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Found in TikTok for Business dashboard
                   </p>
                 </div>
               </>

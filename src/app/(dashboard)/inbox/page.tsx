@@ -64,6 +64,7 @@ const channelIcon = (ch: string) => {
     case "facebook": return <MessageSquare className="h-3.5 w-3.5" />
     case "instagram": return <MessageSquare className="h-3.5 w-3.5" />
     case "vkontakte": return <MessageSquare className="h-3.5 w-3.5" />
+    case "tiktok": return <MessageSquare className="h-3.5 w-3.5" />
     default: return <MessageSquare className="h-3.5 w-3.5" />
   }
 }
@@ -77,6 +78,7 @@ const channelColor = (ch: string) => {
     case "facebook": return "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300"
     case "instagram": return "bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-400"
     case "vkontakte": return "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400"
+    case "tiktok": return "bg-gray-100 text-gray-900 dark:bg-gray-800/30 dark:text-gray-300"
     default: return "bg-gray-100 text-gray-700"
   }
 }
@@ -90,11 +92,12 @@ const channelLabel = (ch: string) => {
     case "facebook": return "Facebook"
     case "instagram": return "Instagram"
     case "vkontakte": return "VKontakte"
+    case "tiktok": return "TikTok"
     default: return ch
   }
 }
 
-const CHANNELS = ["all", "email", "telegram", "sms", "whatsapp", "facebook", "instagram"] as const
+const CHANNELS = ["all", "email", "telegram", "sms", "whatsapp", "facebook", "instagram", "tiktok"] as const
 
 /* -- Page -- */
 export default function InboxPage() {
@@ -603,6 +606,7 @@ export default function InboxPage() {
                     <option value="whatsapp">WhatsApp</option>
                     <option value="facebook">Facebook</option>
                     <option value="instagram">Instagram</option>
+                    <option value="tiktok">TikTok</option>
                   </Select>
                   <Input
                     placeholder={t("writeMessage")}
@@ -700,6 +704,7 @@ export default function InboxPage() {
                 <option value="whatsapp">WhatsApp</option>
                 <option value="facebook">Facebook</option>
                 <option value="instagram">Instagram</option>
+                <option value="tiktok">TikTok</option>
                 <option value="vkontakte">VKontakte</option>
               </Select>
             </div>

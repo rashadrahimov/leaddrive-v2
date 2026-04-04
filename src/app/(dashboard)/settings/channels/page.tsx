@@ -30,6 +30,9 @@ const channelMeta: Record<string, { label: string; icon: any; color: string; bgC
   telegram: { label: "Telegram", icon: Send, color: "text-sky-600", bgColor: "bg-sky-100 dark:bg-sky-900/30" },
   whatsapp: { label: "WhatsApp", icon: MessageSquare, color: "text-green-600", bgColor: "bg-green-100 dark:bg-green-900/30" },
   sms: { label: "SMS", icon: Smartphone, color: "text-gray-600", bgColor: "bg-gray-100 dark:bg-gray-900/30" },
+  facebook: { label: "Facebook", icon: MessageSquare, color: "text-blue-700", bgColor: "bg-blue-100 dark:bg-blue-900/30" },
+  instagram: { label: "Instagram", icon: MessageSquare, color: "text-pink-600", bgColor: "bg-pink-100 dark:bg-pink-900/30" },
+  tiktok: { label: "TikTok", icon: MessageSquare, color: "text-gray-800 dark:text-gray-200", bgColor: "bg-gray-100 dark:bg-gray-800/30" },
 }
 
 export default function ChannelsPage() {
