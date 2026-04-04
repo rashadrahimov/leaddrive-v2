@@ -10,6 +10,7 @@ const createDealSchema = z.object({
   companyId: z.string().optional(),
   campaignId: z.string().optional(),
   stage: z.string().optional(),
+  pipelineId: z.string().optional(),
   valueAmount: z.number().min(0).max(999999999).optional(),
   currency: z.string().max(5).optional(),
   probability: z.number().min(0).max(100).optional(),
@@ -34,11 +35,13 @@ export async function GET(req: NextRequest) {
 
   try {
     const companyId = searchParams.get("companyId")
+    const pipelineId = searchParams.get("pipelineId")
     const where = {
       organizationId: orgId,
       ...(search ? { name: { contains: search, mode: "insensitive" as const } } : {}),
       ...(stage ? { stage } : {}),
       ...(companyId ? { companyId } : {}),
+      ...(pipelineId ? { pipelineId } : {}),
     }
 
     const [deals, total] = await Promise.all([
@@ -72,16 +75,37 @@ export async function POST(req: NextRequest) {
   }
 
   try {
+    // Resolve pipelineId: use provided or fallback to default
+    let pipelineId = parsed.data.pipelineId || null
+    if (!pipelineId) {
+      const defaultPipeline = await prisma.pipeline.findFirst({
+        where: { organizationId: orgId, isDefault: true },
+        select: { id: true },
+      })
+      pipelineId = defaultPipeline?.id || null
+    }
+
+    // Get probability from pipeline stage if not explicitly set
+    let probability = parsed.data.probability
+    if (probability === undefined && pipelineId) {
+      const stageData = await prisma.pipelineStage.findFirst({
+        where: { pipelineId, name: parsed.data.stage || "LEAD" },
+        select: { probability: true },
+      })
+      probability = stageData?.probability ?? 10
+    }
+
     const deal = await prisma.deal.create({
       data: {
         organizationId: orgId,
         name: parsed.data.name,
         companyId: parsed.data.companyId || null,
         campaignId: parsed.data.campaignId || null,
+        pipelineId,
         stage: parsed.data.stage || "LEAD",
         valueAmount: parsed.data.valueAmount || 0,
         currency: parsed.data.currency || "AZN",
-        probability: parsed.data.probability || ({ LEAD: 10, QUALIFIED: 20, PROPOSAL: 50, NEGOTIATION: 70, CONTRACT: 85, WON: 100, LOST: 0 }[parsed.data.stage || "LEAD"] ?? 10),
+        probability: probability ?? 10,
         expectedClose: parsed.data.expectedClose ? new Date(parsed.data.expectedClose) : null,
         assignedTo: parsed.data.assignedTo,
         notes: parsed.data.notes,

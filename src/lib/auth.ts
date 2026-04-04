@@ -52,6 +52,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             organizationId: user.organizationId,
             organizationName: user.organization.name,
             plan: user.organization.plan,
+            // 2FA flags
+            needs2fa: user.totpEnabled ? true : undefined,
+            needsSetup2fa: (user.require2fa && !user.totpEnabled) ? true : undefined,
           }
         } catch (err) {
           console.error("[Auth] Login error:", err)
@@ -113,7 +116,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       }
       return true // Credentials — handled by authorize
     },
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session: updateData }) {
       if (user) {
         const dbUser = await prisma.user.findFirst({
           where: { email: token.email! },
@@ -125,9 +128,15 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           token.organizationName = dbUser.organization?.name || ""
           token.plan = dbUser.organization?.plan || "starter"
         }
+        // Propagate 2FA flags from authorize return
+        if ((user as any).needs2fa) token.needs2fa = true
+        if ((user as any).needsSetup2fa) token.needsSetup2fa = true
       }
-      // NOTE: passwordChangedAt validation moved to API-level (api-auth.ts)
-      // because JWT callback runs on Edge runtime where Prisma is not available.
+      // Handle session.update() calls from 2FA verify/setup pages
+      if (trigger === "update" && updateData) {
+        if (updateData.needs2fa === false) token.needs2fa = undefined
+        if (updateData.needsSetup2fa === false) token.needsSetup2fa = undefined
+      }
       return token
     },
     async session({ session, token }) {
@@ -140,6 +149,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           organizationId: token.organizationId as string,
           organizationName: token.organizationName as string,
           plan: token.plan as string,
+          needs2fa: token.needs2fa as boolean | undefined,
+          needsSetup2fa: token.needsSetup2fa as boolean | undefined,
         },
       }
     },

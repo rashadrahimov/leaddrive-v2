@@ -46,20 +46,35 @@ export default function DealsPage() {
   const [aiLoading, setAiLoading] = useState(false)
   const [aiResult, setAiResult] = useState<string | null>(null)
   const [aiError, setAiError] = useState<string | null>(null)
+  const [pipelines, setPipelines] = useState<any[]>([])
+  const [selectedPipelineId, setSelectedPipelineId] = useState<string>("")
   const orgId = session?.user?.organizationId
 
-  const STAGES = [
-    { name: "LEAD", displayName: t("stageLead"), color: "#6366f1", hint: t("hintStageLead") },
-    { name: "QUALIFIED", displayName: t("stageQualified"), color: "#3b82f6", hint: t("hintStageQualified") },
-    { name: "PROPOSAL", displayName: t("stageProposal"), color: "#f59e0b", hint: t("hintStageProposal") },
-    { name: "NEGOTIATION", displayName: t("stageNegotiation"), color: "#f97316", hint: t("hintStageNegotiation") },
-    { name: "WON", displayName: t("stageWon"), color: "#22c55e", hint: t("hintStageWon") },
-    { name: "LOST", displayName: t("stageLost"), color: "#ef4444", hint: t("hintStageLost") },
-  ]
+  const selectedPipeline = pipelines.find(p => p.id === selectedPipelineId)
+  const STAGES = (selectedPipeline?.stages || []).map((s: any) => ({
+    name: s.name,
+    displayName: s.displayName,
+    color: s.color,
+    hint: "",
+  }))
 
-  const fetchDeals = async () => {
+  const fetchPipelines = async () => {
     try {
-      const res = await fetch("/api/v1/deals?limit=200", {
+      const res = await fetch("/api/v1/pipelines")
+      const json = await res.json()
+      if (json.success && json.data.length > 0) {
+        setPipelines(json.data)
+        const def = json.data.find((p: any) => p.isDefault) || json.data[0]
+        setSelectedPipelineId(def.id)
+      }
+    } catch {}
+  }
+
+  const fetchDeals = async (pipelineId?: string) => {
+    try {
+      const pid = pipelineId || selectedPipelineId
+      const url = pid ? `/api/v1/deals?limit=200&pipelineId=${pid}` : "/api/v1/deals?limit=200"
+      const res = await fetch(url, {
         headers: orgId ? { "x-organization-id": String(orgId) } : {},
       })
       const json = await res.json()
@@ -67,7 +82,8 @@ export default function DealsPage() {
     } catch (err) { console.error(err) } finally { setLoading(false) }
   }
 
-  useEffect(() => { fetchDeals() }, [session])
+  useEffect(() => { fetchPipelines() }, [session])
+  useEffect(() => { if (selectedPipelineId) fetchDeals(selectedPipelineId) }, [selectedPipelineId])
 
   const runAiAnalysis = async () => {
     setAiLoading(true)
@@ -178,6 +194,17 @@ export default function DealsPage() {
               {tc("kanban")}
             </button>
           </div>
+          {pipelines.length > 1 && (
+            <Select
+              value={selectedPipelineId}
+              onChange={e => setSelectedPipelineId(e.target.value)}
+              className="w-[180px]"
+            >
+              {pipelines.map(p => (
+                <option key={p.id} value={p.id}>{p.name}{p.isDefault ? " ★" : ""}</option>
+              ))}
+            </Select>
+          )}
           {tab === "kanban" && (
             <Select value={sortBy} onChange={e => setSortBy(e.target.value)} className="w-[180px]">
               <option value="newest">{t("sortNewest")}</option>
@@ -283,7 +310,7 @@ export default function DealsPage() {
         </>
       )}
 
-      <DealForm open={formOpen} onOpenChange={setFormOpen} onSaved={fetchDeals} orgId={orgId} />
+      <DealForm open={formOpen} onOpenChange={setFormOpen} onSaved={() => fetchDeals()} orgId={orgId} pipelineId={selectedPipelineId} />
 
     </div>
   )

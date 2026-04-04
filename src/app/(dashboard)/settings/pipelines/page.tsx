@@ -45,15 +45,28 @@ const RULE_TYPE_OPTIONS = [
   { value: "task_completed", label: "At least 1 task completed" },
 ]
 
+interface Pipeline {
+  id: string
+  name: string
+  isDefault: boolean
+  isActive: boolean
+  _count?: { deals: number }
+  stages: PipelineStage[]
+}
+
 export default function PipelinesSettingsPage() {
   const { data: session } = useSession()
   const orgId = session?.user?.organizationId ? String(session.user.organizationId) : undefined
 
+  const [pipelines, setPipelines] = useState<Pipeline[]>([])
+  const [selectedPipelineId, setSelectedPipelineId] = useState<string>("")
   const [stages, setStages] = useState<PipelineStage[]>([])
   const [loading, setLoading] = useState(true)
   const [expandedStage, setExpandedStage] = useState<string | null>(null)
   const [rules, setRules] = useState<Record<string, ValidationRule[]>>({})
   const [rulesLoading, setRulesLoading] = useState<string | null>(null)
+  const [newPipelineName, setNewPipelineName] = useState("")
+  const [creatingPipeline, setCreatingPipeline] = useState(false)
 
   // Add rule form
   const [addingFor, setAddingFor] = useState<string | null>(null)
@@ -65,13 +78,81 @@ export default function PipelinesSettingsPage() {
 
   const headers: Record<string, string> = orgId ? { "x-organization-id": orgId } : {}
 
-  const fetchStages = async () => {
+  const fetchPipelines = async () => {
     try {
-      const res = await fetch("/api/v1/pipeline-stages", { headers })
+      const res = await fetch("/api/v1/pipelines", { headers })
       const json = await res.json()
-      if (json.success) setStages(json.data)
+      if (json.success && json.data.length > 0) {
+        setPipelines(json.data)
+        const def = json.data.find((p: any) => p.isDefault) || json.data[0]
+        setSelectedPipelineId(def.id)
+        setStages(def.stages || [])
+      }
     } catch (err) { console.error(err) }
     finally { setLoading(false) }
+  }
+
+  const selectPipeline = (pipelineId: string) => {
+    setSelectedPipelineId(pipelineId)
+    const p = pipelines.find(p => p.id === pipelineId)
+    if (p) setStages(p.stages || [])
+    setExpandedStage(null)
+  }
+
+  const createPipeline = async () => {
+    if (!newPipelineName.trim()) return
+    setCreatingPipeline(true)
+    try {
+      const res = await fetch("/api/v1/pipelines", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...headers },
+        body: JSON.stringify({
+          name: newPipelineName.trim(),
+          stages: [
+            { name: "LEAD", displayName: "Lead", color: "#6366f1", probability: 10, sortOrder: 1 },
+            { name: "QUALIFIED", displayName: "Qualified", color: "#3b82f6", probability: 25, sortOrder: 2 },
+            { name: "PROPOSAL", displayName: "Proposal", color: "#f59e0b", probability: 50, sortOrder: 3 },
+            { name: "NEGOTIATION", displayName: "Negotiation", color: "#f97316", probability: 75, sortOrder: 4 },
+            { name: "WON", displayName: "Won", color: "#22c55e", probability: 100, sortOrder: 5, isWon: true },
+            { name: "LOST", displayName: "Lost", color: "#ef4444", probability: 0, sortOrder: 6, isLost: true },
+          ],
+        }),
+      })
+      const json = await res.json()
+      if (json.success) {
+        setNewPipelineName("")
+        fetchPipelines()
+      }
+    } catch {} finally { setCreatingPipeline(false) }
+  }
+
+  const deletePipeline = async (pipelineId: string) => {
+    if (!confirm("Delete this pipeline? This cannot be undone.")) return
+    try {
+      const res = await fetch(`/api/v1/pipelines/${pipelineId}`, {
+        method: "DELETE",
+        headers,
+      })
+      const json = await res.json()
+      if (!json.success) { alert(json.error); return }
+      fetchPipelines()
+    } catch {}
+  }
+
+  const setDefault = async (pipelineId: string) => {
+    try {
+      await fetch(`/api/v1/pipelines/${pipelineId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", ...headers },
+        body: JSON.stringify({ isDefault: true }),
+      })
+      fetchPipelines()
+    } catch {}
+  }
+
+  const fetchStages = async () => {
+    // Deprecated — use fetchPipelines instead
+    fetchPipelines()
   }
 
   const fetchRules = async (stageId: string) => {
@@ -84,7 +165,7 @@ export default function PipelinesSettingsPage() {
     finally { setRulesLoading(null) }
   }
 
-  useEffect(() => { if (session) fetchStages() }, [session])
+  useEffect(() => { if (session) fetchPipelines() }, [session])
 
   const toggleStage = (stageId: string) => {
     if (expandedStage === stageId) {
@@ -142,11 +223,67 @@ export default function PipelinesSettingsPage() {
       <div>
         <h1 className="text-lg font-bold tracking-tight flex items-center gap-2">
           <Settings2 className="h-5 w-5 text-muted-foreground" />
-          Pipeline Stages & Validation Rules
+          Pipelines & Stages
         </h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Configure transition rules for each stage. Deals cannot move to a stage unless all rules pass.
+          Manage sales pipelines and configure validation rules for each stage.
         </p>
+      </div>
+
+      {/* Pipeline tabs */}
+      <div className="space-y-3">
+        <div className="flex items-center gap-2 flex-wrap">
+          {pipelines.map(p => (
+            <button
+              key={p.id}
+              onClick={() => selectPipeline(p.id)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors border ${
+                selectedPipelineId === p.id
+                  ? "bg-primary text-primary-foreground border-primary"
+                  : "bg-muted/50 hover:bg-muted border-transparent"
+              }`}
+            >
+              {p.name}
+              {p.isDefault && <span className="text-[10px] opacity-70">★</span>}
+              <span className="text-[10px] opacity-60">({p._count?.deals || 0})</span>
+            </button>
+          ))}
+        </div>
+
+        {/* Pipeline actions */}
+        {selectedPipelineId && (() => {
+          const p = pipelines.find(p => p.id === selectedPipelineId)
+          if (!p) return null
+          return (
+            <div className="flex items-center gap-2 text-xs">
+              {!p.isDefault && (
+                <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => setDefault(p.id)}>
+                  Set as default
+                </Button>
+              )}
+              {!p.isDefault && (p._count?.deals || 0) === 0 && (
+                <Button variant="outline" size="sm" className="h-7 text-xs text-red-500 hover:text-red-700" onClick={() => deletePipeline(p.id)}>
+                  <Trash2 className="h-3 w-3 mr-1" /> Delete
+                </Button>
+              )}
+            </div>
+          )
+        })()}
+
+        {/* Create new pipeline */}
+        <div className="flex items-center gap-2">
+          <input
+            value={newPipelineName}
+            onChange={e => setNewPipelineName(e.target.value)}
+            placeholder="New pipeline name..."
+            className="h-8 rounded-lg border bg-background px-3 text-xs w-48"
+            onKeyDown={e => e.key === "Enter" && createPipeline()}
+          />
+          <Button size="sm" className="h-8 text-xs" onClick={createPipeline} disabled={creatingPipeline || !newPipelineName.trim()}>
+            {creatingPipeline ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Plus className="h-3 w-3 mr-1" />}
+            Add Pipeline
+          </Button>
+        </div>
       </div>
 
       <div className="space-y-2">

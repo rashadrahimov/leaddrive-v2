@@ -21,7 +21,7 @@ import { ActivityTimeline } from "@/components/deals/activity-timeline"
 import { StageValidationDialog } from "@/components/deals/stage-validation-dialog"
 import { StageChecklistDialog } from "@/components/deals/stage-checklist-dialog"
 
-const STAGE_STYLES = [
+const FALLBACK_STAGE_STYLES = [
   { key: "LEAD",        color: "#6366f1", bg: "bg-indigo-500" },
   { key: "QUALIFIED",   color: "#3b82f6", bg: "bg-blue-500" },
   { key: "PROPOSAL",    color: "#f59e0b", bg: "bg-amber-500" },
@@ -34,6 +34,7 @@ interface Deal {
   id: string
   name: string
   stage: string
+  pipelineId: string | null
   valueAmount: number
   currency: string
   probability: number
@@ -212,15 +213,22 @@ export default function DealDetailPage() {
   const [checklistLoading, setChecklistLoading] = useState(false)
   const [checklistTarget, setChecklistTarget] = useState<string>("")
   const [stageChanging, setStageChanging] = useState(false)
+  const [pipelineStages, setPipelineStages] = useState<any[]>([])
 
-  const stageLabels: Record<string, string> = {
-    LEAD: t("stageLead"),
-    QUALIFIED: t("stageQualified"),
-    PROPOSAL: t("stageProposal"),
-    NEGOTIATION: t("stageNegotiation"),
-    WON: t("stageWon"),
-    LOST: t("stageLost"),
-  }
+  const stageLabels: Record<string, string> = pipelineStages.length > 0
+    ? Object.fromEntries(pipelineStages.map(s => [s.name, s.displayName]))
+    : {
+        LEAD: t("stageLead"),
+        QUALIFIED: t("stageQualified"),
+        PROPOSAL: t("stageProposal"),
+        NEGOTIATION: t("stageNegotiation"),
+        WON: t("stageWon"),
+        LOST: t("stageLost"),
+      }
+
+  const STAGE_STYLES = pipelineStages.length > 0
+    ? pipelineStages.map(s => ({ key: s.name, color: s.color, bg: `bg-[${s.color}]` }))
+    : FALLBACK_STAGE_STYLES
 
   const STAGES = STAGE_STYLES.map(s => ({ ...s, label: stageLabels[s.key] || s.key }))
   const headers: Record<string, string> = orgId ? { "x-organization-id": orgId } : {}
@@ -255,7 +263,19 @@ export default function DealDetailPage() {
     } catch { /* ok */ }
   }
 
+  const fetchPipelineStages = async (pipelineId?: string) => {
+    if (!pipelineId) return
+    try {
+      const res = await fetch(`/api/v1/pipelines/${pipelineId}`, { headers })
+      const json = await res.json()
+      if (json.success && json.data.stages) {
+        setPipelineStages(json.data.stages)
+      }
+    } catch {}
+  }
+
   useEffect(() => { if (session) { fetchDeal(); fetchNextSteps(); fetchCounts() } }, [session, id])
+  useEffect(() => { if (deal?.pipelineId) fetchPipelineStages(deal.pipelineId) }, [deal?.pipelineId])
 
   const saveTags = async (newTags: string[]) => {
     if (!deal) return

@@ -11,6 +11,7 @@ const stageSchema = z.object({
   sortOrder: z.number().optional(),
   isWon: z.boolean().optional(),
   isLost: z.boolean().optional(),
+  pipelineId: z.string().optional(),
 })
 
 export async function GET(req: NextRequest) {
@@ -18,8 +19,12 @@ export async function GET(req: NextRequest) {
   if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
   try {
+    const pipelineId = req.nextUrl.searchParams.get("pipelineId")
+    const where: any = { organizationId: orgId }
+    if (pipelineId) where.pipelineId = pipelineId
+
     const stages = await prisma.pipelineStage.findMany({
-      where: { organizationId: orgId },
+      where,
       orderBy: { sortOrder: "asc" },
     })
 
@@ -53,6 +58,7 @@ export async function POST(req: NextRequest) {
     const stage = await prisma.pipelineStage.create({
       data: {
         organizationId: orgId,
+        pipelineId: parsed.data.pipelineId || null,
         name: parsed.data.name,
         displayName: parsed.data.displayName,
         color: parsed.data.color || "#6366f1",

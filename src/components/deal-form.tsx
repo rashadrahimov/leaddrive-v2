@@ -15,9 +15,10 @@ interface DealFormProps {
   onSaved: () => void
   initialData?: Record<string, any>
   orgId?: string
+  pipelineId?: string
 }
 
-export function DealForm({ open, onOpenChange, onSaved, initialData, orgId }: DealFormProps) {
+export function DealForm({ open, onOpenChange, onSaved, initialData, orgId, pipelineId }: DealFormProps) {
   const t = useTranslations("forms")
   const tc = useTranslations("common")
   const isEdit = !!initialData?.id
@@ -78,6 +79,7 @@ export function DealForm({ open, onOpenChange, onSaved, initialData, orgId }: De
         name: form.name,
         companyId: form.companyId || undefined,
         campaignId: form.campaignId || undefined,
+        pipelineId: pipelineId || undefined,
         stage: form.stage,
         valueAmount: parseFloat(form.valueAmount) || 0,
         currency: form.currency,

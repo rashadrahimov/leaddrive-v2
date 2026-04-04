@@ -4,7 +4,7 @@ import { auth } from "@/lib/auth"
 import { canAccessModule } from "@/lib/plan-config"
 import { checkRateLimit, RATE_LIMIT_CONFIG } from "@/lib/rate-limit"
 
-const publicPaths = ["/login", "/register", "/forgot-password", "/api/auth", "/api/v1/auth/register", "/api/v1/settings/auth-methods", "/portal", "/home", "/pricing", "/plans", "/features", "/demo", "/about", "/contact", "/blog", "/legal", "/landing", "/marketing"]
+const publicPaths = ["/login", "/register", "/forgot-password", "/reset-password", "/api/auth", "/api/v1/auth/register", "/api/v1/settings/auth-methods", "/portal", "/home", "/pricing", "/plans", "/features", "/demo", "/about", "/contact", "/blog", "/legal", "/landing", "/marketing"]
 
 // Paths that should be rate-limited more aggressively
 const RATE_LIMITED_PATHS = ["/api/auth", "/login", "/register", "/forgot-password", "/api/v1/auth/reset-password", "/api/v1/auth/2fa", "/api/v1/auth/totp", "/api/v1/auth/verify-2fa"]
@@ -145,6 +145,15 @@ const authMiddleware = auth((req) => {
     const loginUrl = new URL("/login", req.url)
     loginUrl.searchParams.set("callbackUrl", pathname)
     return withCspHeaders(NextResponse.redirect(loginUrl), nonce)
+  }
+
+  // 2FA enforcement — redirect to verify/setup if needed
+  const session2fa = req.auth as any
+  if (session2fa?.user?.needs2fa && !pathname.startsWith("/login/verify-2fa") && !pathname.startsWith("/api/")) {
+    return withCspHeaders(NextResponse.redirect(new URL("/login/verify-2fa", req.url)), nonce)
+  }
+  if (session2fa?.user?.needsSetup2fa && !pathname.startsWith("/login/setup-2fa") && !pathname.startsWith("/api/")) {
+    return withCspHeaders(NextResponse.redirect(new URL("/login/setup-2fa", req.url)), nonce)
   }
 
   // Redirect root to dashboard to avoid Next.js 16 standalone InvariantError on "/"

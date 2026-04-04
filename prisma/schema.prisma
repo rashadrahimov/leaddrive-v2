@@ -67,6 +67,7 @@ model Organization {
   funds                  Fund[]
   fundTransactions       FundTransaction[]
   fundRules              FundRule[]
+  pipelines              Pipeline[]
 
   // MTM (Mobile Team Management) relations
   mtmAgents              MtmAgent[]
@@ -303,6 +304,8 @@ model Deal {
   campaignId     String?
   campaign       Campaign? @relation(fields: [campaignId], references: [id], onDelete: SetNull)
   contactId      String?
+  pipelineId     String?
+  pipeline       Pipeline? @relation(fields: [pipelineId], references: [id])
   name           String
   customerNeed   String?
   salesChannel   String?
@@ -330,6 +333,7 @@ model Deal {
   @@index([organizationId])
   @@index([organizationId, stage])
   @@index([campaignId])
+  @@index([pipelineId])
   @@map("deals")
 }
 
@@ -548,25 +552,45 @@ model Activity {
 }
 
 // ═══════════════════════════════════════════════════
-// PIPELINE STAGES (customizable per org)
+// PIPELINES & STAGES (customizable per org)
 // ═══════════════════════════════════════════════════
 
-model PipelineStage {
-  id             String   @id @default(cuid())
+model Pipeline {
+  id             String          @id @default(cuid())
   organizationId String
+  organization   Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  name           String
+  isDefault      Boolean         @default(false)
+  isActive       Boolean         @default(true)
+  sortOrder      Int             @default(0)
+  createdAt      DateTime        @default(now())
+
+  stages         PipelineStage[]
+  deals          Deal[]
+
+  @@index([organizationId])
+  @@map("pipelines")
+}
+
+model PipelineStage {
+  id             String    @id @default(cuid())
+  organizationId String
+  pipelineId     String?
+  pipeline       Pipeline? @relation(fields: [pipelineId], references: [id], onDelete: Cascade)
   name           String
   displayName    String
-  color          String   @default("#6366f1")
-  probability    Int      @default(0)
-  sortOrder      Int      @default(0)
-  isWon          Boolean  @default(false)
-  isLost         Boolean  @default(false)
-  isActive       Boolean  @default(true)
-  createdAt      DateTime @default(now())
+  color          String    @default("#6366f1")
+  probability    Int       @default(0)
+  sortOrder      Int       @default(0)
+  isWon          Boolean   @default(false)
+  isLost         Boolean   @default(false)
+  isActive       Boolean   @default(true)
+  createdAt      DateTime  @default(now())
 
   validationRules StageValidationRule[]
 
   @@index([organizationId])
+  @@index([pipelineId])
   @@map("pipeline_stages")
 }
 
