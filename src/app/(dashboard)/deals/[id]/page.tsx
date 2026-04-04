@@ -19,6 +19,7 @@ import { QuickActionBar } from "@/components/deals/quick-action-bar"
 import { DealSidebar } from "@/components/deals/deal-sidebar"
 import { ActivityTimeline } from "@/components/deals/activity-timeline"
 import { StageValidationDialog } from "@/components/deals/stage-validation-dialog"
+import { StageChecklistDialog } from "@/components/deals/stage-checklist-dialog"
 
 const STAGE_STYLES = [
   { key: "LEAD",        color: "#6366f1", bg: "bg-indigo-500" },
@@ -202,8 +203,15 @@ export default function DealDetailPage() {
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [nextSteps, setNextSteps] = useState<Array<{ id: string; title: string; status: string; dueDate: string | null; completedAt: string | null }>>([])
   const [timelineKey, setTimelineKey] = useState(0)
+  const [offersCount, setOffersCount] = useState(0)
+  const [invoicesCount, setInvoicesCount] = useState(0)
   const [validationErrors, setValidationErrors] = useState<Array<{ field: string; message: string }>>([])
   const [validationStage, setValidationStage] = useState<string>("")
+  const [checklistOpen, setChecklistOpen] = useState(false)
+  const [checklistItems, setChecklistItems] = useState<Array<{ field: string; message: string; passed: boolean }>>([])
+  const [checklistLoading, setChecklistLoading] = useState(false)
+  const [checklistTarget, setChecklistTarget] = useState<string>("")
+  const [stageChanging, setStageChanging] = useState(false)
 
   const stageLabels: Record<string, string> = {
     LEAD: t("stageLead"),
@@ -234,7 +242,20 @@ export default function DealDetailPage() {
     } catch (err) { console.error(err) }
   }
 
-  useEffect(() => { if (session) { fetchDeal(); fetchNextSteps() } }, [session, id])
+  const fetchCounts = async () => {
+    try {
+      const [offersRes, invoicesRes] = await Promise.all([
+        fetch(`/api/v1/deals/${id}/offers`, { headers }),
+        fetch(`/api/v1/invoices?dealId=${id}&limit=1`, { headers }),
+      ])
+      const offersJson = await offersRes.json()
+      const invoicesJson = await invoicesRes.json()
+      setOffersCount(Array.isArray(offersJson.data) ? offersJson.data.length : offersJson.data?.offers?.length || 0)
+      setInvoicesCount(Array.isArray(invoicesJson.data) ? invoicesJson.data.length : invoicesJson.data?.total || 0)
+    } catch { /* ok */ }
+  }
+
+  useEffect(() => { if (session) { fetchDeal(); fetchNextSteps(); fetchCounts() } }, [session, id])
 
   const saveTags = async (newTags: string[]) => {
     if (!deal) return
@@ -248,24 +269,68 @@ export default function DealDetailPage() {
     } catch (err) { console.error(err) }
   }
 
-  const handleStageChange = async (newStage: string) => {
+  const handleStageClick = async (newStage: string) => {
     if (!deal || deal.stage === newStage) return
+    setChecklistTarget(newStage)
+    setChecklistLoading(true)
+    setChecklistOpen(true)
+
+    // Fetch validation rules for target stage and check them client-side
+    try {
+      const res = await fetch(`/api/v1/pipeline-stages?target=${newStage}`, { headers })
+      const json = await res.json()
+      const stages = json.data || []
+      const targetStage = stages.find((s: any) => s.name === newStage)
+
+      if (targetStage?.id) {
+        const rulesRes = await fetch(`/api/v1/pipeline-stages/${targetStage.id}/rules`, { headers })
+        const rulesJson = await rulesRes.json()
+        const rules = rulesJson.data || []
+
+        if (rules.length === 0) {
+          setChecklistItems([])
+        } else {
+          const items = rules.map((rule: any) => {
+            const fieldValue = (deal as any)[rule.fieldName]
+            let passed = false
+            switch (rule.ruleType) {
+              case "required": passed = !!fieldValue || fieldValue === 0; break
+              case "min_value": passed = typeof fieldValue === "number" && rule.ruleValue ? fieldValue >= parseFloat(rule.ruleValue) : false; break
+              default: passed = true
+            }
+            return { field: rule.fieldName, message: rule.errorMessage, passed }
+          })
+          setChecklistItems(items)
+        }
+      } else {
+        setChecklistItems([])
+      }
+    } catch { setChecklistItems([]) }
+    finally { setChecklistLoading(false) }
+  }
+
+  const confirmStageChange = async () => {
+    if (!deal || !checklistTarget) return
+    setStageChanging(true)
     try {
       const res = await fetch(`/api/v1/deals/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json", ...headers },
-        body: JSON.stringify({ stage: newStage }),
+        body: JSON.stringify({ stage: checklistTarget }),
       })
       if (res.ok) {
+        setChecklistOpen(false)
         fetchDeal()
       } else if (res.status === 422) {
         const json = await res.json()
         if (json.validationErrors) {
+          setChecklistOpen(false)
           setValidationErrors(json.validationErrors)
-          setValidationStage(newStage)
+          setValidationStage(checklistTarget)
         }
       }
     } catch (err) { console.error(err) }
+    finally { setStageChanging(false) }
   }
 
   const handleDelete = async () => {
@@ -342,7 +407,7 @@ export default function DealDetailPage() {
       <StageProgress
         stages={STAGES}
         currentStage={deal.stage}
-        onStageClick={handleStageChange}
+        onStageClick={handleStageClick}
       />
 
       {/* ── TWO-COLUMN LAYOUT ── */}
@@ -353,8 +418,8 @@ export default function DealDetailPage() {
             <DealSidebar
               deal={deal}
               orgId={orgId}
-              offersCount={0}
-              invoicesCount={0}
+              offersCount={offersCount}
+              invoicesCount={invoicesCount}
               onEdit={() => setEditOpen(true)}
               fetchDeal={fetchDeal}
             />
@@ -417,6 +482,16 @@ export default function DealDetailPage() {
         onConfirm={handleDelete}
         title={t("deleteDeal")}
         itemName={deal.name}
+      />
+      <StageChecklistDialog
+        open={checklistOpen}
+        onClose={() => setChecklistOpen(false)}
+        onConfirm={confirmStageChange}
+        confirming={stageChanging}
+        targetStageLabel={stageLabels[checklistTarget] || checklistTarget}
+        targetStageColor={STAGES.find(s => s.key === checklistTarget)?.color || "#6366f1"}
+        items={checklistItems}
+        loading={checklistLoading}
       />
       <StageValidationDialog
         open={validationErrors.length > 0}

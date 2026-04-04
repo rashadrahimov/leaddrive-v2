@@ -12,7 +12,7 @@ import {
   Settings, ChevronLeft, DollarSign, Target, Send,
   TrendingUp, Filter, Workflow, Server, Bell, CalendarDays, Headphones, Package,
   Lock, PiggyBank, FolderKanban, Wallet, MapPin, Route, Camera, AlertTriangle,
-  ClipboardList, ShoppingCart, UserCog,
+  ClipboardList, ShoppingCart, UserCog, GitBranch,
 } from "lucide-react"
 import { useState } from "react"
 import { Logo } from "@/components/logo"
@@ -68,6 +68,7 @@ const navItems: NavItem[] = [
   { module: "mtm", href: "/mtm/orders", icon: ShoppingCart, tKey: "mtmOrders", group: "Route & Field" },
   { module: "mtm", href: "/mtm/agents", icon: UserCog, tKey: "mtmAgents", group: "Route & Field" },
   { module: "mtm", href: "/mtm/settings", icon: Settings, tKey: "mtmSettings", group: "Route & Field" },
+  { module: "core", href: "/settings/pipelines", icon: GitBranch, tKey: "pipelines", group: "Settings" },
   { module: "workflows", href: "/settings/workflows", icon: Zap, tKey: "workflows", group: "Settings" },
   { module: "core", href: "/settings/users", icon: Users, tKey: "users", group: "Settings" },
   { module: "core", href: "/settings/smtp-settings", icon: Server, tKey: "smtp", group: "Settings" },
