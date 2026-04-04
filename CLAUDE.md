@@ -99,7 +99,7 @@ bash scripts/deploy.sh
 6. Рестартует PM2 + health check
 
 ### ВАЖНО: Deploy правила
-- Сервер: `178.156.249.177`, SSH: `root@178.156.249.177`
+- Сервер: `46.224.171.53`, SSH: `root@46.224.171.53`
 - PM2 запускает `.next/standalone/server.js` через `/tmp/start-leaddrive.sh`
 - Start script: `source .env → cd .next/standalone → node server.js`
 - Next.js 16 Turbopack НЕ создаёт standalone → билд на сервере с `--webpack` флагом
@@ -110,13 +110,13 @@ bash scripts/deploy.sh
 ### Ручной деплой (если скрипт не работает):
 ```bash
 git push origin main
-ssh root@178.156.249.177 "cd /opt/leaddrive-v2 && git pull origin main && npx prisma generate && npx next build --webpack && cp -r .next/static .next/standalone/leaddrive-v2/.next/static && pm2 restart leaddrive-v2"
+ssh -i ~/.ssh/id_ed25519 root@46.224.171.53 "cd /opt/leaddrive-v2 && git pull origin main && npx prisma generate && npx next build --webpack && cp -r .next/static .next/standalone/leaddrive-v2/.next/static && pm2 restart leaddrive-v2"
 ```
 
 ### Проверка:
 ```bash
-ssh root@178.156.249.177 "pm2 status && curl -s -o /dev/null -w '%{http_code}' http://localhost:3001"
-ssh root@178.156.249.177 "pm2 logs leaddrive-v2 --lines 20 --nostream"
+ssh -i ~/.ssh/id_ed25519 root@46.224.171.53 "pm2 status && curl -s -o /dev/null -w '%{http_code}' http://localhost:3001"
+ssh -i ~/.ssh/id_ed25519 root@46.224.171.53 "pm2 logs leaddrive-v2 --lines 20 --nostream"
 ```
 
 ## Dev Commands
