@@ -515,12 +515,12 @@ export function DealSidebar({ deal, orgId, offersCount, invoicesCount, onEdit, f
           <div className="space-y-1.5">
             {deal.teamMembers?.length > 0 ? (
               deal.teamMembers.map(m => (
-                <div key={m.id} className="flex items-center gap-2 py-1 group">
-                  <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-semibold flex-shrink-0">
+                <div key={m.id} className="flex items-center gap-2.5 py-1.5 group">
+                  <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center text-xs font-semibold flex-shrink-0">
                     {(m.user.name || m.user.email || "?")[0].toUpperCase()}
                   </div>
-                  <span className="text-xs truncate flex-1">{m.user.name || m.user.email}</span>
-                  <Badge variant="outline" className="text-[10px] h-4 px-1.5">{m.role}</Badge>
+                  <span className="text-sm truncate flex-1">{m.user.name || m.user.email}</span>
+                  <Badge variant="outline" className="text-xs h-5 px-2">{m.role}</Badge>
                   <button
                     className="h-5 w-5 rounded flex items-center justify-center text-muted-foreground hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 opacity-0 group-hover:opacity-100 transition-opacity"
                     onClick={async () => {
@@ -568,17 +568,17 @@ export function DealSidebar({ deal, orgId, offersCount, invoicesCount, onEdit, f
           <div className="space-y-1.5">
             {deal.contactRoles?.length > 0 ? (
               deal.contactRoles.map(cr => (
-                <div key={cr.id} className="rounded-lg border bg-muted/30 p-2.5 group">
-                  <div className="flex items-start gap-2">
-                    <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center text-[11px] font-semibold flex-shrink-0 mt-0.5">
+                <div key={cr.id} className="rounded-lg border bg-muted/30 p-3 group">
+                  <div className="flex items-start gap-2.5">
+                    <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-semibold flex-shrink-0 mt-0.5">
                       {(cr.contact.fullName || "?")[0]}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5">
-                        <span className="text-xs font-semibold truncate">{cr.contact.fullName}</span>
-                        <Badge variant="outline" className="text-[9px] h-3.5 px-1 font-medium">{cr.role}</Badge>
+                        <span className="text-sm font-semibold truncate">{cr.contact.fullName}</span>
+                        <Badge variant="outline" className="text-[10px] h-4 px-1.5 font-medium">{cr.role}</Badge>
                       </div>
-                      {cr.contact.position && <p className="text-[10px] text-muted-foreground">{cr.contact.position}</p>}
+                      {cr.contact.position && <p className="text-xs text-muted-foreground">{cr.contact.position}</p>}
                     </div>
                     <button
                       className="h-5 w-5 rounded flex items-center justify-center text-muted-foreground hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
@@ -594,21 +594,21 @@ export function DealSidebar({ deal, orgId, offersCount, invoicesCount, onEdit, f
                       <X className="h-3 w-3" />
                     </button>
                   </div>
-                  <div className="mt-1.5 ml-9 space-y-0.5 text-[10px]">
+                  <div className="mt-2 ml-10 space-y-1 text-xs">
                     {(cr as any).influence && (
-                      <div className="flex"><span className="text-muted-foreground w-16">{tc("influence")}</span><span className="font-medium">{(cr as any).influence}</span></div>
+                      <div className="flex"><span className="text-muted-foreground w-20">{tc("influence")}</span><span className="font-medium">{(cr as any).influence}</span></div>
                     )}
                     {(cr as any).loyalty && (
-                      <div className="flex"><span className="text-muted-foreground w-16">{tc("loyalty")}</span><span className="font-medium">{(cr as any).loyalty}</span></div>
+                      <div className="flex"><span className="text-muted-foreground w-20">{tc("loyalty")}</span><span className="font-medium">{(cr as any).loyalty}</span></div>
                     )}
                     {cr.cashbackType && cr.cashbackValue != null && (
-                      <div className="flex"><span className="text-muted-foreground w-16">{tc("cashback")}</span><span className="font-medium text-green-600 dark:text-green-400">{cr.cashbackType === "percent" ? `${cr.cashbackValue}%` : `${cr.cashbackValue} ₼`}</span></div>
+                      <div className="flex"><span className="text-muted-foreground w-20">{tc("cashback")}</span><span className="font-semibold text-green-600 dark:text-green-400">{cr.cashbackType === "percent" ? `${cr.cashbackValue}%` : `${cr.cashbackValue} ₼`}</span></div>
                     )}
                     {cr.contact.email && (
-                      <div className="flex"><span className="text-muted-foreground w-16">Email</span><a href={`mailto:${cr.contact.email}`} className="font-medium text-primary hover:underline truncate">{cr.contact.email}</a></div>
+                      <div className="flex"><span className="text-muted-foreground w-20">Email</span><a href={`mailto:${cr.contact.email}`} className="font-medium text-primary hover:underline truncate">{cr.contact.email}</a></div>
                     )}
                     {cr.contact.phone && (
-                      <div className="flex"><span className="text-muted-foreground w-16">{tc("phone")}</span><a href={`tel:${cr.contact.phone}`} className="font-medium">{cr.contact.phone}</a></div>
+                      <div className="flex"><span className="text-muted-foreground w-20">{tc("phone")}</span><a href={`tel:${cr.contact.phone}`} className="font-medium">{cr.contact.phone}</a></div>
                     )}
                   </div>
                 </div>
