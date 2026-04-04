@@ -6,12 +6,13 @@ import { useTranslations } from "next-intl"
 import { ColorStatCard } from "@/components/color-stat-card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Mail, Send, Inbox, CheckCircle, AlertTriangle, RotateCcw, Search, ChevronDown, ChevronUp, ArrowUpRight, ArrowDownLeft, Filter, RefreshCw, BarChart3, List } from "lucide-react"
+import { Mail, Send, Inbox, CheckCircle, AlertTriangle, RotateCcw, Search, ChevronDown, ChevronUp, ArrowUpRight, ArrowDownLeft, Filter, RefreshCw, BarChart3, List, Sparkles, Loader2, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { InfoHint } from "@/components/info-hint"
 import { PageDescription } from "@/components/page-description"
 import { sanitizeRichHtml } from "@/lib/sanitize"
 import { EmailAnalytics } from "@/components/email-log/email-analytics"
+import { useLocale } from "next-intl"
 
 interface EmailLogEntry {
   id: string
@@ -51,6 +52,7 @@ export default function EmailLogPage() {
   const { data: session } = useSession()
   const t = useTranslations("emailLog")
   const tc = useTranslations("common")
+  const locale = useLocale()
   const orgId = session?.user?.organizationId
 
   const statusLabels: Record<string, string> = {
@@ -69,6 +71,10 @@ export default function EmailLogPage() {
   const [filterDirection, setFilterDirection] = useState("")
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [tab, setTab] = useState<"analytics" | "list">("analytics")
+  const [aiOpen, setAiOpen] = useState(false)
+  const [aiLoading, setAiLoading] = useState(false)
+  const [aiResult, setAiResult] = useState<string | null>(null)
+  const [aiError, setAiError] = useState<string | null>(null)
   const [page, setPage] = useState(1)
   const [total, setTotal] = useState(0)
   const limit = 30
@@ -96,6 +102,33 @@ export default function EmailLogPage() {
   }, [orgId, page, search, filterStatus, filterDirection])
 
   useEffect(() => { fetchLogs() }, [fetchLogs])
+
+  const runAiAnalysis = async () => {
+    setAiLoading(true)
+    setAiError(null)
+    setAiResult(null)
+    setAiOpen(true)
+    try {
+      const res = await fetch("/api/v1/email-log/ai-analysis", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(orgId ? { "x-organization-id": String(orgId) } : {}),
+        },
+        body: JSON.stringify({ lang: locale }),
+      })
+      const json = await res.json()
+      if (json.success) {
+        setAiResult(json.data.analysis)
+      } else {
+        setAiError(json.error || "Analysis failed")
+      }
+    } catch {
+      setAiError("Network error")
+    } finally {
+      setAiLoading(false)
+    }
+  }
 
   const totalPages = Math.ceil(total / limit)
 
@@ -136,6 +169,55 @@ export default function EmailLogPage() {
           </Button>
         </div>
       </div>
+
+      {/* Da Vinci AI button */}
+      <div className="flex flex-wrap gap-2">
+        <Button
+          size="sm"
+          onClick={runAiAnalysis}
+          disabled={aiLoading || stats.total === 0}
+          className="relative overflow-hidden bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 hover:from-violet-500 hover:via-purple-500 hover:to-indigo-500 text-white border-0 shadow-md shadow-purple-500/25 hover:shadow-lg hover:shadow-purple-500/40 transition-all duration-300 hover:scale-[1.03] active:scale-[0.97]"
+        >
+          {aiLoading ? (
+            <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
+          ) : (
+            <span className="relative mr-1.5 flex h-4 w-4 items-center justify-center">
+              <Sparkles className="h-4 w-4 animate-pulse" />
+            </span>
+          )}
+          Da Vinci {tc("analytics").toLowerCase()}
+        </Button>
+      </div>
+
+      {/* Da Vinci AI Analysis Card */}
+      {aiOpen && (
+        <div className="rounded-xl border border-purple-200 dark:border-purple-800 bg-card p-5">
+          <div className="flex justify-between items-center mb-3">
+            <div className="flex items-center gap-2">
+              <div className="p-1.5 rounded-lg bg-gradient-to-br from-violet-500 to-indigo-600">
+                <Sparkles className="h-4 w-4 text-white" />
+              </div>
+              <h3 className="text-sm font-semibold">Da Vinci — {t("title")}</h3>
+            </div>
+            <button onClick={() => { setAiOpen(false); setAiResult(null) }} className="p-1 rounded-md hover:bg-muted transition-colors">
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+          {aiLoading && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin" /> {tc("loading")}...
+            </div>
+          )}
+          {aiError && (
+            <div className="rounded-lg border border-red-200 bg-red-50 dark:bg-red-900/20 dark:border-red-800 p-4 text-sm text-red-700 dark:text-red-400">
+              {aiError}
+            </div>
+          )}
+          {aiResult && (
+            <div className="text-sm whitespace-pre-wrap leading-relaxed">{aiResult}</div>
+          )}
+        </div>
+      )}
 
       {tab === "analytics" ? (
         <EmailAnalytics
