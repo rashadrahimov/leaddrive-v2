@@ -4,6 +4,7 @@ import { prisma, logAudit } from "@/lib/prisma"
 import { getOrgId } from "@/lib/api-auth"
 import { executeWorkflows } from "@/lib/workflow-engine"
 import { createNotification } from "@/lib/notifications"
+import { autoAssignTicket } from "@/lib/auto-assign"
 
 const createTicketSchema = z.object({
   subject: z.string().min(1).max(300),
@@ -136,6 +137,16 @@ export async function POST(req: NextRequest) {
         ...(slaPolicyName ? { slaPolicyName } : {}),
       },
     })
+    // Auto-assign via skill-based routing if no explicit assignee
+    if (!parsed.data.assignedTo) {
+      const assignResult = await autoAssignTicket(ticket.id, orgId, ticket.category)
+      if (assignResult.assigned && assignResult.agentId) {
+        // Re-fetch to get updated assignedTo
+        const updated = await prisma.ticket.findFirst({ where: { id: ticket.id } })
+        if (updated) Object.assign(ticket, updated)
+      }
+    }
+
     logAudit(orgId, "create", "ticket", ticket.id, ticket.subject)
     executeWorkflows(orgId, "ticket", "created", ticket).catch(() => {})
     createNotification({

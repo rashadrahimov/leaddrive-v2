@@ -126,6 +126,9 @@ model User {
   lastLogin      DateTime?
   loginCount     Int       @default(0)
   isActive       Boolean   @default(true)
+  skills         String[]  @default([])
+  maxTickets     Int       @default(20)
+  isAvailable    Boolean   @default(true)
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 
@@ -769,9 +772,11 @@ model Ticket {
   closedAt       DateTime?
   satisfactionRating Int?
   satisfactionComment String?
-  tags           String[]  @default([])
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  tags              String[]  @default([])
+  escalationLevel   Int       @default(0)
+  lastEscalatedAt   DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
 
   comments       TicketComment[]
 
@@ -791,6 +796,37 @@ model TicketComment {
   createdAt      DateTime @default(now())
 
   @@map("ticket_comments")
+}
+
+model TicketQueue {
+  id             String   @id @default(cuid())
+  organizationId String
+  name           String
+  skills         String[]
+  priority       Int      @default(0)
+  autoAssign     Boolean  @default(true)
+  assignMethod   String   @default("least_loaded") // "least_loaded" | "round_robin"
+  lastAssignedTo String?
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+
+  @@index([organizationId])
+  @@map("ticket_queues")
+}
+
+model EscalationRule {
+  id              String   @id @default(cuid())
+  organizationId  String
+  name            String
+  triggerType     String   // "first_response_breach" | "resolution_breach" | "resolution_warning"
+  triggerMinutes  Int      @default(0)
+  level           Int      @default(1)
+  actions         Json     // [{"type":"notify","target":"manager"}, {"type":"increase_priority"}]
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+
+  @@index([organizationId])
+  @@map("escalation_rules")
 }
 
 model SlaPolicy {

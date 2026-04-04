@@ -30,6 +30,9 @@ interface User {
   loginCount: number
   totpEnabled: boolean
   require2fa: boolean
+  skills: string[]
+  maxTickets: number
+  isAvailable: boolean
   createdAt: string
 }
 
@@ -70,6 +73,8 @@ interface UserFormData {
   phone: string
   department: string
   isActive: boolean
+  skills: string
+  maxTickets: number
 }
 
 function UserFormDialog({
@@ -86,6 +91,7 @@ function UserFormDialog({
   const [form, setForm] = useState<UserFormData>({
     name: "", email: "", password: "", role: "viewer",
     phone: "", department: "", isActive: true,
+    skills: "", maxTickets: 20,
   })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState("")
@@ -100,6 +106,8 @@ function UserFormDialog({
         phone: editUser?.phone || "",
         department: editUser?.department || "",
         isActive: editUser?.isActive ?? true,
+        skills: editUser?.skills?.join(", ") || "",
+        maxTickets: editUser?.maxTickets || 20,
       })
       setError("")
     }
@@ -111,6 +119,7 @@ function UserFormDialog({
     setError("")
 
     try {
+      const skills = form.skills.split(",").map(s => s.trim()).filter(Boolean)
       const payload: Record<string, any> = {
         name: form.name,
         email: form.email,
@@ -118,6 +127,8 @@ function UserFormDialog({
         phone: form.phone || null,
         department: form.department || null,
         isActive: form.isActive,
+        skills,
+        maxTickets: form.maxTickets,
       }
       if (!isEdit) {
         payload.password = form.password
@@ -187,6 +198,27 @@ function UserFormDialog({
             <div>
               <Label htmlFor="phone">Телефон</Label>
               <Input id="phone" value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} />
+            </div>
+            <div>
+              <Label htmlFor="skills">Skills (comma-separated)</Label>
+              <Input
+                id="skills"
+                value={form.skills}
+                onChange={e => setForm(f => ({ ...f, skills: e.target.value }))}
+                placeholder="e.g. technical, billing, general"
+              />
+              <p className="text-xs text-muted-foreground mt-1">Used for skill-based ticket routing</p>
+            </div>
+            <div>
+              <Label htmlFor="maxTickets">Max Concurrent Tickets</Label>
+              <Input
+                id="maxTickets"
+                type="number"
+                min={1}
+                max={100}
+                value={form.maxTickets}
+                onChange={e => setForm(f => ({ ...f, maxTickets: parseInt(e.target.value) || 20 }))}
+              />
             </div>
             <div className="flex items-center gap-2">
               <input
@@ -307,6 +339,50 @@ export default function UsersSettingsPage() {
       key: "department", label: "Отдел", sortable: true,
       render: (item: User) => (
         <span className="text-sm">{item.department || "—"}</span>
+      ),
+    },
+    {
+      key: "skills", label: "Skills",
+      render: (item: User) => (
+        <div className="flex flex-wrap gap-1">
+          {item.skills && item.skills.length > 0 ? (
+            item.skills.map((s) => (
+              <Badge key={s} variant="outline" className="text-xs">{s}</Badge>
+            ))
+          ) : (
+            <span className="text-xs text-muted-foreground">—</span>
+          )}
+        </div>
+      ),
+    },
+    {
+      key: "maxTickets", label: "Max",
+      render: (item: User) => (
+        <span className="text-sm font-mono">{item.maxTickets || 20}</span>
+      ),
+    },
+    {
+      key: "isAvailable", label: "Available",
+      render: (item: User) => (
+        <button
+          type="button"
+          className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${
+            item.isAvailable ? "bg-green-500" : "bg-muted-foreground/40"
+          }`}
+          onClick={async (e) => {
+            e.stopPropagation()
+            await fetch(`/api/v1/users/${item.id}`, {
+              method: "PUT",
+              headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": String(orgId) } : {}) },
+              body: JSON.stringify({ isAvailable: !item.isAvailable }),
+            })
+            fetchUsers()
+          }}
+        >
+          <span className={`pointer-events-none inline-block h-4 w-4 rounded-full bg-white shadow transform transition-transform ${
+            item.isAvailable ? "translate-x-4" : "translate-x-0"
+          }`} />
+        </button>
       ),
     },
     {

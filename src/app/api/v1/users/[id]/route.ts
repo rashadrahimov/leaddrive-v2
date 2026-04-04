@@ -14,6 +14,9 @@ const updateUserSchema = z.object({
   isActive: z.boolean().optional(),
   resetTotp: z.boolean().optional(),
   require2fa: z.boolean().optional(),
+  skills: z.array(z.string()).optional(),
+  maxTickets: z.number().int().min(1).max(100).optional(),
+  isAvailable: z.boolean().optional(),
 })
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -28,6 +31,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
         id: true, name: true, email: true, role: true,
         phone: true, department: true, isActive: true,
         lastLogin: true, loginCount: true, totpEnabled: true,
+        skills: true, maxTickets: true, isAvailable: true,
         createdAt: true, updatedAt: true,
       },
     })
@@ -86,13 +90,18 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     if (parsed.data.require2fa !== undefined) {
       updateData.require2fa = parsed.data.require2fa
     }
+    // Skill-based routing fields
+    if (parsed.data.skills !== undefined) updateData.skills = parsed.data.skills
+    if (parsed.data.maxTickets !== undefined) updateData.maxTickets = parsed.data.maxTickets
+    if (parsed.data.isAvailable !== undefined) updateData.isAvailable = parsed.data.isAvailable
 
     const user = await prisma.user.update({
       where: { id },
       data: updateData,
       select: {
         id: true, name: true, email: true, role: true,
-        phone: true, department: true, isActive: true, totpEnabled: true, require2fa: true, createdAt: true,
+        phone: true, department: true, isActive: true, totpEnabled: true, require2fa: true,
+        skills: true, maxTickets: true, isAvailable: true, createdAt: true,
       },
     })
 

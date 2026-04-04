@@ -4,6 +4,7 @@ import { prisma, logAudit } from "@/lib/prisma"
 import { getOrgId, requireAuth, isAuthError } from "@/lib/api-auth"
 import { sendWhatsAppMessage } from "@/lib/whatsapp"
 import { executeWorkflows } from "@/lib/workflow-engine"
+import { autoAssignTicket } from "@/lib/auto-assign"
 
 const updateTicketSchema = z.object({
   subject: z.string().min(1).max(300).optional(),
@@ -153,7 +154,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
   }
 }
 
-// PATCH /api/v1/tickets/[id] — auto-assign to least loaded agent
+// PATCH /api/v1/tickets/[id] — auto-assign via skill-based routing
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const authResult = await requireAuth(req, "tickets", "write")
   if (isAuthError(authResult)) return authResult
@@ -166,46 +167,18 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     })
     if (!ticket) return NextResponse.json({ error: "Ticket not found" }, { status: 404 })
 
-    // Find agents in this org
-    const users = await prisma.user.findMany({
-      where: { organizationId: orgId, role: { in: ["admin", "manager", "agent"] } },
-      select: { id: true, name: true, email: true },
-    })
+    const result = await autoAssignTicket(ticket.id, orgId, ticket.category)
 
-    if (users.length === 0) {
+    if (!result.assigned) {
       return NextResponse.json({ error: "No available agents" }, { status: 400 })
     }
-
-    // Count open tickets per user
-    const openTickets = await prisma.ticket.groupBy({
-      by: ["assignedTo"],
-      where: {
-        organizationId: orgId,
-        status: { notIn: ["closed", "resolved"] },
-        assignedTo: { not: null },
-      },
-      _count: { id: true },
-    })
-
-    const countMap: Record<string, number> = {}
-    for (const row of openTickets) {
-      if (row.assignedTo) countMap[row.assignedTo] = row._count.id
-    }
-
-    // Sort by ticket count ascending — least loaded first
-    const sorted = users.sort((a: any, b: any) => (countMap[a.id] || 0) - (countMap[b.id] || 0))
-    const leastLoaded = sorted[0]
-
-    await prisma.ticket.updateMany({
-      where: { id, organizationId: orgId },
-      data: { assignedTo: leastLoaded.id },
-    })
 
     return NextResponse.json({
       success: true,
       data: {
-        assignedTo: leastLoaded.id,
-        assigneeName: leastLoaded.name || leastLoaded.email,
+        assignedTo: result.agentId,
+        assigneeName: result.agentName,
+        queueName: result.queueName,
       },
     })
   } catch (e) {

@@ -62,6 +62,43 @@ export default function AgentDesktopPage() {
   const orgId = session?.user?.organizationId
   const [stats, setStats] = useState<AgentStats | null>(null)
   const [loading, setLoading] = useState(true)
+  const [isAvailable, setIsAvailable] = useState(true)
+  const [togglingAvail, setTogglingAvail] = useState(false)
+
+  // Fetch current user availability
+  useEffect(() => {
+    if (!session?.user?.id) return
+    const headers: any = orgId ? { "x-organization-id": String(orgId) } : {}
+    fetch(`/api/v1/users/${session.user.id}`, { headers })
+      .then(r => r.json())
+      .then(json => {
+        if (json.success && json.data) {
+          setIsAvailable(json.data.isAvailable ?? true)
+        }
+      })
+      .catch(() => {})
+  }, [session])
+
+  const toggleAvailability = async () => {
+    if (!session?.user?.id || togglingAvail) return
+    setTogglingAvail(true)
+    try {
+      const headers: any = {
+        "Content-Type": "application/json",
+        ...(orgId ? { "x-organization-id": String(orgId) } : {}),
+      }
+      const res = await fetch(`/api/v1/users/${session.user.id}`, {
+        method: "PUT",
+        headers,
+        body: JSON.stringify({ isAvailable: !isAvailable }),
+      })
+      if (res.ok) setIsAvailable(!isAvailable)
+    } catch {
+      // ignore
+    } finally {
+      setTogglingAvail(false)
+    }
+  }
 
   useEffect(() => {
     if (!session) return
@@ -157,13 +194,32 @@ export default function AgentDesktopPage() {
   return (
     <div className="space-y-6 pb-12">
       {/* Header */}
-      <div className="flex items-center gap-3">
-        <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
-          <Headphones className="h-5 w-5 text-primary" />
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
+            <Headphones className="h-5 w-5 text-primary" />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold">Agent Desktop</h1>
+            <p className="text-sm text-muted-foreground">Support dashboard &mdash; {session?.user?.name}</p>
+          </div>
         </div>
-        <div>
-          <h1 className="text-xl font-bold">Agent Desktop</h1>
-          <p className="text-sm text-muted-foreground">Support dashboard &mdash; {session?.user?.name}</p>
+        <div className="flex items-center gap-3">
+          <span className={`text-sm font-medium ${isAvailable ? "text-green-600" : "text-muted-foreground"}`}>
+            {isAvailable ? "Available" : "Unavailable"}
+          </span>
+          <button
+            type="button"
+            disabled={togglingAvail}
+            onClick={toggleAvailability}
+            className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${
+              isAvailable ? "bg-green-500" : "bg-muted-foreground/40"
+            } ${togglingAvail ? "opacity-50" : ""}`}
+          >
+            <span className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transform transition-transform ${
+              isAvailable ? "translate-x-5" : "translate-x-0"
+            }`} />
+          </button>
         </div>
       </div>
 
