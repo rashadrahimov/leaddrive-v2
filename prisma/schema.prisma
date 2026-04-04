@@ -1135,6 +1135,22 @@ model AiGuardrail {
   @@map("ai_guardrails")
 }
 
+model AiPendingAction {
+  id             String    @id @default(cuid())
+  organizationId String
+  userId         String
+  toolName       String
+  toolInput      Json
+  status         String    @default("pending") // pending, approved, rejected, expired
+  createdAt      DateTime  @default(now())
+  expiresAt      DateTime
+  resolvedAt     DateTime?
+  resolvedBy     String?
+
+  @@index([organizationId, status])
+  @@map("ai_pending_actions")
+}
+
 model ChannelConfig {
   id             String   @id @default(cuid())
   organizationId String
