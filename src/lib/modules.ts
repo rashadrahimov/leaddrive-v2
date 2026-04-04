@@ -2,7 +2,7 @@ export type ModuleId =
   | "core" | "deals" | "leads" | "tasks" | "contracts" | "invoices"
   | "tickets" | "knowledge-base" | "portal" | "campaigns" | "omnichannel"
   | "journeys" | "workflows" | "profitability" | "budgeting" | "ai" | "reports"
-  | "currencies" | "custom-fields" | "events" | "projects"
+  | "currencies" | "custom-fields" | "events" | "projects" | "mtm"
 
 interface ModuleDefinition {
   name: string
@@ -32,6 +32,7 @@ export const MODULE_REGISTRY: Record<ModuleId, ModuleDefinition> = {
   "custom-fields":  { name: "Custom Fields",    requires: ["core"] },
   events:           { name: "Events",           requires: ["core"] },
   projects:         { name: "Projects",         requires: ["tasks"] },
+  mtm:              { name: "Field Teams (MTM)", requires: ["core"] },
 }
 
 export const PLANS = {

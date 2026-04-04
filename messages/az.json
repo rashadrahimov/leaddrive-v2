@@ -34,6 +34,17 @@
     "agentCalendar": "Agent təqvimi",
     "settings": "Parametrlər",
     "projects": "Layihələr",
+    "mtmDashboard": "MTM Panel",
+    "mtmMap": "Canlı Xəritə",
+    "mtmRoutes": "Marşrutlar",
+    "mtmVisits": "Vizitlər",
+    "mtmTasks": "Tapşırıqlar",
+    "mtmCustomers": "Müştərilər",
+    "mtmPhotos": "Fotolar",
+    "mtmAlerts": "Xəbərdarlıqlar",
+    "mtmOrders": "Sifarişlər",
+    "mtmAgents": "Agentlər",
+    "mtmSettings": "MTM Parametrlər",
     "groups": {
       "CRM": "CRM",
       "Marketing": "Marketinq",
@@ -42,6 +53,7 @@
       "Finance": "Maliyyə",
       "Analytics": "Analitika",
       "ERP": "ERP",
+      "Field Teams": "Sahə Komandaları",
       "Settings": "Parametrlər"
     }
   },

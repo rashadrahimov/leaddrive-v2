@@ -11,7 +11,8 @@ import {
   Ticket, BookOpen, BarChart3, Mail, MessageSquare, Zap,
   Settings, ChevronLeft, DollarSign, Target, Send,
   TrendingUp, Filter, Workflow, Server, Bell, CalendarDays, Headphones, Package,
-  Lock, PiggyBank, FolderKanban, Wallet,
+  Lock, PiggyBank, FolderKanban, Wallet, MapPin, Route, Camera, AlertTriangle,
+  ClipboardList, ShoppingCart, UserCog,
 } from "lucide-react"
 import { useState } from "react"
 import { Logo } from "@/components/logo"
@@ -56,6 +57,17 @@ const navItems: NavItem[] = [
   { module: "reports", href: "/reports", icon: BarChart3, tKey: "reports", group: "Analytics" },
   { module: "ai", href: "/ai-command-center", icon: Brain, tKey: "aiCenter", group: "Analytics" },
   { module: "projects", href: "/projects", icon: FolderKanban, tKey: "projects", group: "ERP" },
+  { module: "mtm", href: "/mtm", icon: MapPin, tKey: "mtmDashboard", group: "Field Teams" },
+  { module: "mtm", href: "/mtm/map", icon: MapPin, tKey: "mtmMap", group: "Field Teams" },
+  { module: "mtm", href: "/mtm/routes", icon: Route, tKey: "mtmRoutes", group: "Field Teams" },
+  { module: "mtm", href: "/mtm/visits", icon: CheckSquare, tKey: "mtmVisits", group: "Field Teams" },
+  { module: "mtm", href: "/mtm/tasks", icon: ClipboardList, tKey: "mtmTasks", group: "Field Teams" },
+  { module: "mtm", href: "/mtm/customers", icon: Building2, tKey: "mtmCustomers", group: "Field Teams" },
+  { module: "mtm", href: "/mtm/photos", icon: Camera, tKey: "mtmPhotos", group: "Field Teams" },
+  { module: "mtm", href: "/mtm/alerts", icon: AlertTriangle, tKey: "mtmAlerts", group: "Field Teams" },
+  { module: "mtm", href: "/mtm/orders", icon: ShoppingCart, tKey: "mtmOrders", group: "Field Teams" },
+  { module: "mtm", href: "/mtm/agents", icon: UserCog, tKey: "mtmAgents", group: "Field Teams" },
+  { module: "mtm", href: "/mtm/settings", icon: Settings, tKey: "mtmSettings", group: "Field Teams" },
   { module: "workflows", href: "/settings/workflows", icon: Zap, tKey: "workflows", group: "Settings" },
   { module: "core", href: "/settings/users", icon: Users, tKey: "users", group: "Settings" },
   { module: "core", href: "/settings/smtp-settings", icon: Server, tKey: "smtp", group: "Settings" },
@@ -71,6 +83,7 @@ const GROUP_ICON_BG: Record<string, string> = {
   Finance: "bg-amber-500 text-white",
   Analytics: "bg-purple-500 text-white",
   ERP: "bg-indigo-500 text-white",
+  "Field Teams": "bg-cyan-500 text-white",
   Settings: "bg-slate-500 text-white",
 }
 
@@ -82,6 +95,7 @@ const GROUP_LABEL_COLORS: Record<string, string> = {
   Finance: "text-amber-400",
   Analytics: "text-purple-400",
   ERP: "text-indigo-400",
+  "Field Teams": "text-cyan-400",
   Settings: "text-slate-400",
 }
 
@@ -93,6 +107,7 @@ const GROUP_ACTIVE_BG: Record<string, string> = {
   Finance: "bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300",
   Analytics: "bg-purple-50 dark:bg-purple-500/10 text-purple-700 dark:text-purple-300",
   ERP: "bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-300",
+  "Field Teams": "bg-cyan-50 dark:bg-cyan-500/10 text-cyan-700 dark:text-cyan-300",
   Settings: "bg-slate-100 dark:bg-slate-500/10 text-slate-700 dark:text-slate-300",
 }
 
@@ -104,6 +119,7 @@ const GROUP_ACTIVE_BAR: Record<string, string> = {
   Finance: "before:bg-amber-500",
   Analytics: "before:bg-purple-500",
   ERP: "before:bg-indigo-500",
+  "Field Teams": "before:bg-cyan-500",
   Settings: "before:bg-slate-500",
 }
 

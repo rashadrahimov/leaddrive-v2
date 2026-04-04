@@ -34,6 +34,17 @@
     "agentCalendar": "Agent Calendar",
     "settings": "Settings",
     "projects": "Projects",
+    "mtmDashboard": "MTM Dashboard",
+    "mtmMap": "Live Map",
+    "mtmRoutes": "Routes",
+    "mtmVisits": "Visits",
+    "mtmTasks": "Field Tasks",
+    "mtmCustomers": "Field Customers",
+    "mtmPhotos": "Photos",
+    "mtmAlerts": "Alerts",
+    "mtmOrders": "Orders",
+    "mtmAgents": "Agents",
+    "mtmSettings": "MTM Settings",
     "groups": {
       "CRM": "CRM",
       "Marketing": "Marketing",
@@ -42,6 +53,7 @@
       "Finance": "Finance",
       "Analytics": "Analytics",
       "ERP": "ERP",
+      "Field Teams": "Field Teams",
       "Settings": "Settings"
     }
   },

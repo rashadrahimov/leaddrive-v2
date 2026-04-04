@@ -34,6 +34,17 @@
     "agentCalendar": "Календарь агента",
     "settings": "Настройки",
     "projects": "Проекты",
+    "mtmDashboard": "MTM Панель",
+    "mtmMap": "Живая карта",
+    "mtmRoutes": "Маршруты",
+    "mtmVisits": "Визиты",
+    "mtmTasks": "Полевые задачи",
+    "mtmCustomers": "Полевые клиенты",
+    "mtmPhotos": "Фотографии",
+    "mtmAlerts": "Оповещения",
+    "mtmOrders": "Заказы",
+    "mtmAgents": "Агенты",
+    "mtmSettings": "Настройки MTM",
     "groups": {
       "CRM": "CRM",
       "Marketing": "Маркетинг",
@@ -42,6 +53,7 @@
       "Finance": "Финансы",
       "Analytics": "Аналитика",
       "ERP": "ERP",
+      "Field Teams": "Полевые команды",
       "Settings": "Настройки"
     }
   },

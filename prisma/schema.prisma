@@ -68,6 +68,20 @@ model Organization {
   fundTransactions       FundTransaction[]
   fundRules              FundRule[]
 
+  // MTM (Mobile Team Management) relations
+  mtmAgents              MtmAgent[]
+  mtmCustomers           MtmCustomer[]
+  mtmRoutes              MtmRoute[]
+  mtmVisits              MtmVisit[]
+  mtmTasks               MtmTask[]
+  mtmPhotos              MtmPhoto[]
+  mtmAlerts              MtmAlert[]
+  mtmAgentLocations      MtmAgentLocation[]
+  mtmOrders              MtmOrder[]
+  mtmSettings            MtmSetting[]
+  mtmNotifications       MtmNotification[]
+  mtmAuditLogs           MtmAuditLog[]
+
   @@map("organizations")
 }
 
@@ -114,6 +128,7 @@ model User {
   updatedAt      DateTime  @updatedAt
 
   budgetDeptOwnership BudgetDepartmentOwner[]
+  mtmAgents           MtmAgent[]
 
   @@unique([organizationId, email])
   @@map("users")
@@ -2238,4 +2253,429 @@ model FundRule {
   @@index([organizationId])
   @@index([fundId])
   @@map("fund_rules")
+}
+
+// ============================================================
+// MTM (Mobile Team Management) Models
+// ============================================================
+
+enum MtmAgentRole {
+  ADMIN
+  MANAGER
+  AGENT
+}
+
+enum MtmAgentStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+enum MtmCustomerCategory {
+  A
+  B
+  C
+  D
+}
+
+enum MtmCustomerStatus {
+  ACTIVE
+  INACTIVE
+  PROSPECT
+}
+
+enum MtmRouteStatus {
+  PLANNED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum MtmPointStatus {
+  PENDING
+  VISITED
+  SKIPPED
+}
+
+enum MtmVisitStatus {
+  CHECKED_IN
+  CHECKED_OUT
+  CANCELLED
+}
+
+enum MtmTaskStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  OVERDUE
+}
+
+enum MtmTaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum MtmPhotoStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum MtmAlertType {
+  GPS_ANOMALY
+  LATE_START
+  MISSED_VISIT
+  LONG_BREAK
+  GPS_SPOOFING
+  OUT_OF_ZONE
+  LOW_BATTERY
+  OVERTIME
+}
+
+enum MtmAlertCategory {
+  WARNING
+  CRITICAL
+  INFO
+}
+
+enum MtmOrderStatus {
+  DRAFT
+  CONFIRMED
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+// MTM Agent — field agents linked to CRM users
+model MtmAgent {
+  id             String         @id @default(cuid())
+  organizationId String
+  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  userId         String?        // link to CRM User if exists
+  user           User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
+  name           String
+  email          String?
+  phone          String?
+  role           MtmAgentRole   @default(AGENT)
+  status         MtmAgentStatus @default(ACTIVE)
+  avatar         String?
+  teamId         String?
+  managerId      String?
+  manager        MtmAgent?      @relation("AgentManager", fields: [managerId], references: [id])
+  subordinates   MtmAgent[]     @relation("AgentManager")
+  isOnline       Boolean        @default(false)
+  lastSeenAt     DateTime?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  routes         MtmRoute[]
+  visits         MtmVisit[]
+  tasks          MtmTask[]
+  photos         MtmPhoto[]
+  alerts         MtmAlert[]
+  locations      MtmAgentLocation[]
+  orders         MtmOrder[]
+  notifications  MtmNotification[]
+
+  @@unique([organizationId, email])
+  @@index([organizationId])
+  @@index([userId])
+  @@index([managerId])
+  @@map("mtm_agents")
+}
+
+// MTM Customer — field customers (stores, pharmacies, outlets)
+model MtmCustomer {
+  id             String              @id @default(cuid())
+  organizationId String
+  organization   Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  code           String?
+  name           String
+  category       MtmCustomerCategory @default(B)
+  status         MtmCustomerStatus   @default(ACTIVE)
+  address        String?
+  city           String?
+  district       String?
+  latitude       Float?
+  longitude      Float?
+  phone          String?
+  contactPerson  String?
+  notes          String?
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+
+  routePoints    MtmRoutePoint[]
+  visits         MtmVisit[]
+  tasks          MtmTask[]
+  orders         MtmOrder[]
+
+  @@unique([organizationId, code])
+  @@index([organizationId])
+  @@map("mtm_customers")
+}
+
+// MTM Route — daily route plan for agent
+model MtmRoute {
+  id             String         @id @default(cuid())
+  organizationId String
+  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  agentId        String
+  agent          MtmAgent       @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  date           DateTime       @db.Date
+  name           String?
+  status         MtmRouteStatus @default(PLANNED)
+  totalPoints    Int            @default(0)
+  visitedPoints  Int            @default(0)
+  startedAt      DateTime?
+  completedAt    DateTime?
+  notes          String?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  points         MtmRoutePoint[]
+
+  @@index([organizationId])
+  @@index([agentId])
+  @@index([date])
+  @@map("mtm_routes")
+}
+
+// MTM Route Point — single stop in a route
+model MtmRoutePoint {
+  id          String         @id @default(cuid())
+  routeId     String
+  route       MtmRoute       @relation(fields: [routeId], references: [id], onDelete: Cascade)
+  customerId  String
+  customer    MtmCustomer    @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  orderIndex  Int            @default(0)
+  status      MtmPointStatus @default(PENDING)
+  plannedTime DateTime?
+  visitedAt   DateTime?
+  notes       String?
+
+  @@index([routeId])
+  @@index([customerId])
+  @@map("mtm_route_points")
+}
+
+// MTM Visit — actual visit to a customer
+model MtmVisit {
+  id              String         @id @default(cuid())
+  organizationId  String
+  organization    Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  agentId         String
+  agent           MtmAgent       @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  customerId      String
+  customer        MtmCustomer    @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  status          MtmVisitStatus @default(CHECKED_IN)
+  checkInAt       DateTime       @default(now())
+  checkOutAt      DateTime?
+  checkInLat      Float?
+  checkInLng      Float?
+  checkOutLat     Float?
+  checkOutLng     Float?
+  duration        Int?           // minutes
+  notes           String?
+  tasksCompleted  Int            @default(0)
+  tasksTotal      Int            @default(0)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  photos          MtmPhoto[]
+  tasks           MtmTask[]
+  orders          MtmOrder[]
+
+  @@index([organizationId])
+  @@index([agentId])
+  @@index([customerId])
+  @@index([checkInAt])
+  @@map("mtm_visits")
+}
+
+// MTM Task — task assigned to agent
+model MtmTask {
+  id             String          @id @default(cuid())
+  organizationId String
+  organization   Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  agentId        String
+  agent          MtmAgent        @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  customerId     String?
+  customer       MtmCustomer?    @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  visitId        String?
+  visit          MtmVisit?       @relation(fields: [visitId], references: [id], onDelete: SetNull)
+  title          String
+  description    String?
+  status         MtmTaskStatus   @default(PENDING)
+  priority       MtmTaskPriority @default(MEDIUM)
+  dueDate        DateTime?
+  completedAt    DateTime?
+  result         String?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  @@index([organizationId])
+  @@index([agentId])
+  @@index([customerId])
+  @@index([visitId])
+  @@map("mtm_tasks")
+}
+
+// MTM Photo — visit photos with review
+model MtmPhoto {
+  id             String         @id @default(cuid())
+  organizationId String
+  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  agentId        String
+  agent          MtmAgent       @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  visitId        String?
+  visit          MtmVisit?      @relation(fields: [visitId], references: [id], onDelete: SetNull)
+  url            String
+  thumbnailUrl   String?
+  category       String?        // shelf, display, promo, receipt
+  status         MtmPhotoStatus @default(PENDING)
+  hasWatermark   Boolean        @default(false)
+  latitude       Float?
+  longitude      Float?
+  reviewedBy     String?
+  reviewedAt     DateTime?
+  reviewNote     String?
+  likes          Int            @default(0)
+  dislikes       Int            @default(0)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  @@index([organizationId])
+  @@index([agentId])
+  @@index([visitId])
+  @@map("mtm_photos")
+}
+
+// MTM Alert — system alerts for anomalies
+model MtmAlert {
+  id             String           @id @default(cuid())
+  organizationId String
+  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  agentId        String
+  agent          MtmAgent         @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  type           MtmAlertType
+  category       MtmAlertCategory @default(WARNING)
+  title          String
+  description    String?
+  isResolved     Boolean          @default(false)
+  resolvedAt     DateTime?
+  resolvedBy     String?
+  metadata       Json?
+  createdAt      DateTime         @default(now())
+
+  @@index([organizationId])
+  @@index([agentId])
+  @@index([createdAt])
+  @@map("mtm_alerts")
+}
+
+// MTM Agent Location — GPS tracking data
+model MtmAgentLocation {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  agentId        String
+  agent          MtmAgent     @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  latitude       Float
+  longitude      Float
+  accuracy       Float?
+  speed          Float?
+  heading        Float?
+  altitude       Float?
+  battery        Float?
+  isMoving       Boolean      @default(false)
+  recordedAt     DateTime     @default(now())
+
+  @@index([organizationId])
+  @@index([agentId])
+  @@index([recordedAt])
+  @@map("mtm_agent_locations")
+}
+
+// MTM Order — orders placed during visits
+model MtmOrder {
+  id             String         @id @default(cuid())
+  organizationId String
+  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  agentId        String
+  agent          MtmAgent       @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  customerId     String
+  customer       MtmCustomer    @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  visitId        String?
+  visit          MtmVisit?      @relation(fields: [visitId], references: [id], onDelete: SetNull)
+  orderNumber    String?
+  status         MtmOrderStatus @default(DRAFT)
+  items          Json           @default("[]")
+  totalAmount    Float          @default(0)
+  notes          String?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  @@index([organizationId])
+  @@index([agentId])
+  @@index([customerId])
+  @@map("mtm_orders")
+}
+
+// MTM Setting — organization-level MTM settings
+model MtmSetting {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  key            String
+  value          Json
+  description    String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@unique([organizationId, key])
+  @@map("mtm_settings")
+}
+
+// MTM Notification — notifications for agents/managers
+model MtmNotification {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  agentId        String
+  agent          MtmAgent     @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  title          String
+  body           String?
+  type           String       @default("info") // info, warning, alert, task
+  isRead         Boolean      @default(false)
+  metadata       Json?
+  createdAt      DateTime     @default(now())
+
+  @@index([organizationId])
+  @@index([agentId])
+  @@index([createdAt])
+  @@map("mtm_notifications")
+}
+
+// MTM Audit Log — MTM-specific audit trail
+model MtmAuditLog {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  agentId        String?
+  action         String
+  entity         String
+  entityId       String?
+  oldData        Json?
+  newData        Json?
+  ipAddress      String?
+  userAgent      String?
+  createdAt      DateTime     @default(now())
+
+  @@index([organizationId])
+  @@index([agentId])
+  @@index([createdAt])
+  @@map("mtm_audit_logs")
 }
