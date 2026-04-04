@@ -22,20 +22,40 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     const deal = await prisma.deal.findFirst({ where: { id, organizationId: orgId }, select: { id: true } })
     if (!deal) return NextResponse.json({ error: "Deal not found" }, { status: 404 })
 
-    // Debug: check which DB we're connected to
-    const dbCheck = await prisma.$queryRawUnsafe(
-      `SELECT current_database(), current_schema(), current_user`
+    // Debug: check pg_class for the table
+    const pgClass = await prisma.$queryRawUnsafe(
+      `SELECT relname, relkind FROM pg_class WHERE relname = 'deal_competitors'`
     )
+
+    // Try to create table if it doesn't exist
+    if (!pgClass || (pgClass as any[]).length === 0) {
+      await prisma.$executeRawUnsafe(`
+        CREATE TABLE IF NOT EXISTS deal_competitors (
+          id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+          "dealId" TEXT NOT NULL REFERENCES deals(id) ON DELETE CASCADE,
+          name TEXT NOT NULL,
+          product TEXT,
+          strengths TEXT,
+          weaknesses TEXT,
+          price TEXT,
+          threat TEXT NOT NULL DEFAULT 'Medium',
+          notes TEXT,
+          "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          UNIQUE("dealId", name)
+        )
+      `)
+      await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS deal_competitors_dealid_idx ON deal_competitors("dealId")`)
+    }
 
     const competitors = await prisma.$queryRawUnsafe(
       `SELECT id, "dealId", name, product, strengths, weaknesses, price, threat, notes, "createdAt"
-       FROM public.deal_competitors
+       FROM deal_competitors
        WHERE "dealId" = $1
        ORDER BY "createdAt" ASC`,
       id
     )
 
-    return NextResponse.json({ success: true, data: competitors, _db: dbCheck })
+    return NextResponse.json({ success: true, data: competitors })
   } catch (e: any) {
     // Try to get DB info even on error
     let dbInfo = null
