@@ -6,11 +6,12 @@ import { useTranslations } from "next-intl"
 import { ColorStatCard } from "@/components/color-stat-card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Mail, Send, Inbox, CheckCircle, AlertTriangle, RotateCcw, Search, ChevronDown, ChevronUp, ArrowUpRight, ArrowDownLeft, Filter, RefreshCw } from "lucide-react"
+import { Mail, Send, Inbox, CheckCircle, AlertTriangle, RotateCcw, Search, ChevronDown, ChevronUp, ArrowUpRight, ArrowDownLeft, Filter, RefreshCw, BarChart3, List } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { InfoHint } from "@/components/info-hint"
 import { PageDescription } from "@/components/page-description"
 import { sanitizeRichHtml } from "@/lib/sanitize"
+import { EmailAnalytics } from "@/components/email-log/email-analytics"
 
 interface EmailLogEntry {
   id: string
@@ -67,6 +68,7 @@ export default function EmailLogPage() {
   const [filterStatus, setFilterStatus] = useState("")
   const [filterDirection, setFilterDirection] = useState("")
   const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [tab, setTab] = useState<"analytics" | "list">("analytics")
   const [page, setPage] = useState(1)
   const [total, setTotal] = useState(0)
   const limit = 30
@@ -105,11 +107,60 @@ export default function EmailLogPage() {
           <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
           <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
         </div>
-        <Button variant="outline" size="sm" onClick={fetchLogs} className="gap-1">
-          <RefreshCw className="h-4 w-4" /> {tc("refresh")}
-        </Button>
+        <div className="flex items-center gap-2">
+          {/* Tab switcher */}
+          <div className="flex items-center rounded-lg border bg-muted/50 p-0.5">
+            <button
+              onClick={() => setTab("analytics")}
+              className={cn(
+                "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+                tab === "analytics" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <BarChart3 className="h-4 w-4" />
+              {tc("analytics")}
+            </button>
+            <button
+              onClick={() => setTab("list")}
+              className={cn(
+                "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+                tab === "list" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <List className="h-4 w-4" />
+              {tc("list")}
+            </button>
+          </div>
+          <Button variant="outline" size="sm" onClick={fetchLogs} className="gap-1">
+            <RefreshCw className="h-4 w-4" /> {tc("refresh")}
+          </Button>
+        </div>
       </div>
 
+      {tab === "analytics" ? (
+        <EmailAnalytics
+          logs={logs}
+          stats={stats}
+          labels={{
+            total: t("total"),
+            outbound: t("outbound"),
+            inbound: t("inbound"),
+            sent: t("sent"),
+            failed: t("failed"),
+            bounced: t("bounced"),
+            pending: t("statusPending"),
+            deliveryRate: t("deliveryRate"),
+            statusDistribution: t("statusDistribution"),
+            directionBreakdown: t("directionBreakdown"),
+            emailsByMonth: t("emailsByMonth"),
+            topRecipients: t("topRecipients"),
+            topSenders: t("topSenders"),
+            campaignEmails: t("campaignEmails"),
+            noData: t("noEmails"),
+          }}
+        />
+      ) : (
+      <>
       <PageDescription text={t("pageDescription")} />
 
       {/* Stats */}
@@ -274,6 +325,8 @@ export default function EmailLogPage() {
             </Button>
           </div>
         </div>
+      )}
+      </>
       )}
     </div>
   )

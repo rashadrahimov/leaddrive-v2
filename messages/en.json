@@ -2235,7 +2235,14 @@
     "hintInbound": "Emails received from external senders",
     "hintSentCount": "Successfully delivered emails",
     "hintFailedCount": "Emails that failed to deliver",
-    "hintColStatus": "Delivery status: Pending, Sent, Delivered, Failed, Bounced"
+    "hintColStatus": "Delivery status: Pending, Sent, Delivered, Failed, Bounced",
+    "deliveryRate": "Delivery Rate",
+    "statusDistribution": "Status Distribution",
+    "directionBreakdown": "Direction Breakdown",
+    "emailsByMonth": "Emails by Month",
+    "topRecipients": "Top Recipients",
+    "topSenders": "Top Senders",
+    "campaignEmails": "Campaign Emails"
   },
   "journeys": {
     "title": "Customer Journeys",

@@ -2233,7 +2233,14 @@
     "hintInbound": "Xarici göndərənlərdən alınmış e-poçtlar",
     "hintSentCount": "Uğurla çatdırılmış e-poçtlar",
     "hintFailedCount": "Çatdırılması uğursuz olan e-poçtlar",
-    "hintColStatus": "Çatdırılma statusu: Gözləyir, Göndərilib, Çatdırılıb, Uğursuz, Geri qaytarılıb"
+    "hintColStatus": "Çatdırılma statusu: Gözləyir, Göndərilib, Çatdırılıb, Uğursuz, Geri qaytarılıb",
+    "deliveryRate": "Çatdırılma dərəcəsi",
+    "statusDistribution": "Status paylanması",
+    "directionBreakdown": "İstiqamət paylanması",
+    "emailsByMonth": "Aylıq e-poçtlar",
+    "topRecipients": "Ən çox alıcılar",
+    "topSenders": "Ən çox göndərənlər",
+    "campaignEmails": "Kampaniya e-poçtları"
   },
   "journeys": {
     "title": "Müştəri Zəncirləri",
