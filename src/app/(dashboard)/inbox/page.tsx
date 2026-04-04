@@ -179,14 +179,19 @@ export default function InboxPage() {
     }
   }, [showCompose])
 
-  // Auto-poll every 5 seconds for new messages
+  const prevMsgCountRef = useRef(0)
+  const prevSelectedRef = useRef<number | null>(null)
   useEffect(() => {
-    const interval = setInterval(() => { fetchInbox() }, 5000)
-    return () => clearInterval(interval)
-  }, [session, channelFilter])
-
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+    if (selected === null) return
+    const convo = filtered[selected]
+    const msgCount = convo?.messages?.length || 0
+    const switchedConvo = prevSelectedRef.current !== selected
+    // Scroll only when: switching conversation, or new messages arrived
+    if (switchedConvo || msgCount > prevMsgCountRef.current) {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+    }
+    prevSelectedRef.current = selected
+    prevMsgCountRef.current = msgCount
   }, [selected, conversations])
 
   /* -- Reply -- */
