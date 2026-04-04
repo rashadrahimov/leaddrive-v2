@@ -53,7 +53,7 @@ function MiniDonut({ segments, size = 48 }: { segments: { pct: number; color: st
   const r = size / 2 - 6, c = 2 * Math.PI * r
   return (
     <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="flex-shrink-0">
-      <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="#f1f5f9" strokeWidth="5" />
+      <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="#E8E9ED" strokeWidth="5" />
       {segments.map((seg, i) => {
         const dash = (seg.pct / 100) * c
         const el = (
@@ -132,7 +132,7 @@ const agingBuckets = [
   { label: "Cari", amount: "₼19,375", pct: 35, color: "bg-emerald-500" },
   { label: "1-30 gün", amount: "₼12,800", pct: 23, color: "bg-blue-500" },
   { label: "31-60 gün", amount: "₼8,200", pct: 15, color: "bg-amber-500" },
-  { label: "61-90 gün", amount: "₼5,000", pct: 9, color: "bg-orange-500" },
+  { label: "61-90 gün", amount: "₼5,000", pct: 9, color: "bg-[#0176D3]" },
   { label: "90+ gün", amount: "₼9,825", pct: 18, color: "bg-red-500" },
 ]
 
@@ -143,22 +143,22 @@ export function InvoicePreview() {
       <div className="flex items-center justify-between px-3 py-1.5 bg-[#0f172a] text-white">
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1">
-            <div className="w-4 h-4 rounded bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center">
+            <div className="w-4 h-4 rounded bg-gradient-to-br from-[#0176D3] to-[#0176D3] flex items-center justify-center">
               <Zap className="w-2.5 h-2.5 text-white" />
             </div>
             <span className="text-[10px] font-bold">LeadDrive</span>
           </div>
-          <div className="flex items-center gap-0.5 bg-slate-800 rounded-md px-2 py-1">
-            <Search className="w-2.5 h-2.5 text-slate-400" />
-            <span className="text-[9px] text-slate-400 ml-1">Axtar...</span>
+          <div className="flex items-center gap-0.5 bg-[#001E3C]/60 rounded-md px-2 py-1">
+            <Search className="w-2.5 h-2.5 text-[#001E3C]/40" />
+            <span className="text-[9px] text-[#001E3C]/40 ml-1">Axtar...</span>
           </div>
         </div>
         <div className="flex items-center gap-2">
           <div className="relative">
-            <Bell className="w-3 h-3 text-slate-400" />
+            <Bell className="w-3 h-3 text-[#001E3C]/40" />
             <div className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-red-500" />
           </div>
-          <div className="w-5 h-5 rounded-full bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center text-[8px] font-bold">R</div>
+          <div className="w-5 h-5 rounded-full bg-gradient-to-br from-[#0176D3] to-[#0176D3] flex items-center justify-center text-[8px] font-bold">R</div>
         </div>
       </div>
 
@@ -168,7 +168,7 @@ export function InvoicePreview() {
           {sidebarItems.map((item) => (
             <div key={item.label} className={cn(
               "flex items-center gap-2 px-3 py-[5px] text-[9px] cursor-default transition-colors",
-              item.active ? "bg-orange-600/20 text-orange-300 border-l-2 border-orange-400" : "text-slate-400 border-l-2 border-transparent"
+              item.active ? "bg-[#0176D3]/20 text-[#0176D3] border-l-2 border-[#0176D3]" : "text-[#001E3C]/40 border-l-2 border-transparent"
             )}>
               <item.icon className="w-3 h-3 flex-shrink-0" />
               <span className="truncate">{item.label}</span>
@@ -177,16 +177,16 @@ export function InvoicePreview() {
         </div>
 
         {/* Main content */}
-        <div className="flex-1 bg-slate-50 p-1.5 space-y-1 min-w-0">
+        <div className="flex-1 bg-[#F3F4F7] p-1.5 space-y-1 min-w-0">
           {/* Page header */}
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-[13px] font-bold text-slate-800">Hesab-fakturalar</h2>
-              <p className="text-[8px] text-slate-400">Fakturaları yaradın, göndərin və izləyin</p>
+              <h2 className="text-[13px] font-bold text-[#001E3C]">Hesab-fakturalar</h2>
+              <p className="text-[8px] text-[#001E3C]/40">Fakturaları yaradın, göndərin və izləyin</p>
             </div>
             <div className="flex items-center gap-1">
-              <span className="text-[8px] px-2 py-0.5 rounded-md bg-slate-100 text-slate-500 border border-slate-200 flex items-center gap-0.5"><Filter className="w-2 h-2" /> Filter</span>
-              <span className="text-[8px] px-2 py-0.5 rounded-md bg-orange-500 text-white font-medium flex items-center gap-0.5"><Plus className="w-2 h-2" /> Yeni faktura</span>
+              <span className="text-[8px] px-2 py-0.5 rounded-md bg-[#F3F4F7] text-[#001E3C]/60 border border-[#001E3C]/10 flex items-center gap-0.5"><Filter className="w-2 h-2" /> Filter</span>
+              <span className="text-[8px] px-2 py-0.5 rounded-md bg-[#0176D3] text-white font-medium flex items-center gap-0.5"><Plus className="w-2 h-2" /> Yeni faktura</span>
             </div>
           </div>
 
@@ -200,14 +200,14 @@ export function InvoicePreview() {
               { label: "Təkrarlanan", value: "₼21.5K/ay", change: "4 qayda", icon: RefreshCw, color: "text-violet-600", bg: "bg-violet-50 border-violet-100" },
               { label: "Orta ödəniş", value: "18 gün", change: "-3 gün", icon: CalendarClock, color: "text-cyan-600", bg: "bg-cyan-50 border-cyan-100" },
             ].map((kpi) => (
-              <div key={kpi.label} className="rounded-lg bg-white border border-slate-200 p-2 shadow-sm">
+              <div key={kpi.label} className="rounded-lg bg-white border border-[#001E3C]/10 p-2 shadow-sm">
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-[8px] text-slate-400 uppercase tracking-wider">{kpi.label}</span>
+                  <span className="text-[8px] text-[#001E3C]/40 uppercase tracking-wider">{kpi.label}</span>
                   <div className={cn("w-5 h-5 rounded flex items-center justify-center border", kpi.bg)}>
                     <kpi.icon className={cn("w-2.5 h-2.5", kpi.color)} />
                   </div>
                 </div>
-                <div className="text-sm font-bold text-slate-900">{kpi.value}</div>
+                <div className="text-sm font-bold text-[#001E3C]">{kpi.value}</div>
                 <div className="flex items-center gap-0.5 mt-0.5">
                   <ArrowUpRight className="w-2 h-2 text-emerald-500" />
                   <span className="text-[8px] text-emerald-600">{kpi.change}</span>
@@ -219,41 +219,41 @@ export function InvoicePreview() {
           {/* Row 2: Revenue Trend + Aging Analysis + Payment Status Donut */}
           <div className="grid grid-cols-3 gap-1">
             {/* Revenue trend */}
-            <div className="rounded-lg bg-white border border-slate-200 p-2 shadow-sm">
+            <div className="rounded-lg bg-white border border-[#001E3C]/10 p-2 shadow-sm">
               <div className="flex items-center justify-between mb-1">
-                <span className="text-[10px] font-semibold text-slate-700">Gəlir Trendi</span>
+                <span className="text-[10px] font-semibold text-[#001E3C]/80">Gəlir Trendi</span>
                 <span className="text-[8px] text-emerald-600 font-medium">↑ 28%</span>
               </div>
               <MiniLineChart data={revenueMonthly} color="#f97316" width={180} height={40} />
-              <div className="flex justify-between mt-1 text-[7px] text-slate-300">
+              <div className="flex justify-between mt-1 text-[7px] text-[#001E3C]/25">
                 {["Y","F","M","A","M","İ","İ","A","S","O","N","D"].map((m,i) => <span key={i}>{m}</span>)}
               </div>
             </div>
 
             {/* Debitor aging analysis */}
-            <div className="rounded-lg bg-white border border-slate-200 p-2 shadow-sm">
+            <div className="rounded-lg bg-white border border-[#001E3C]/10 p-2 shadow-sm">
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[10px] font-semibold text-slate-700">Debitor Borcu (Aging)</span>
-                <span className="text-[8px] text-slate-400">₼55.2K</span>
+                <span className="text-[10px] font-semibold text-[#001E3C]/80">Debitor Borcu (Aging)</span>
+                <span className="text-[8px] text-[#001E3C]/40">₼55.2K</span>
               </div>
               <div className="space-y-[5px]">
                 {agingBuckets.map((b) => (
                   <div key={b.label} className="flex items-center gap-1">
-                    <span className="text-[8px] text-slate-400 w-12 truncate">{b.label}</span>
-                    <div className="flex-1 h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                    <span className="text-[8px] text-[#001E3C]/40 w-12 truncate">{b.label}</span>
+                    <div className="flex-1 h-2.5 bg-[#F3F4F7] rounded-full overflow-hidden">
                       <div className={cn("h-full rounded-full", b.color)} style={{ width: `${b.pct}%` }} />
                     </div>
-                    <span className="text-[8px] text-slate-600 w-10 text-right font-medium">{b.amount}</span>
+                    <span className="text-[8px] text-[#001E3C]/60 w-10 text-right font-medium">{b.amount}</span>
                   </div>
                 ))}
               </div>
             </div>
 
             {/* Payment status donut */}
-            <div className="rounded-lg bg-white border border-slate-200 p-2 shadow-sm">
+            <div className="rounded-lg bg-white border border-[#001E3C]/10 p-2 shadow-sm">
               <div className="flex items-center justify-between mb-1">
-                <span className="text-[10px] font-semibold text-slate-700">Ödəniş Statusu</span>
-                <span className="text-[8px] text-slate-400">42 faktura</span>
+                <span className="text-[10px] font-semibold text-[#001E3C]/80">Ödəniş Statusu</span>
+                <span className="text-[8px] text-[#001E3C]/40">42 faktura</span>
               </div>
               <div className="flex items-center gap-2">
                 <MiniDonut size={48} segments={[
@@ -269,8 +269,8 @@ export function InvoicePreview() {
                   ].map((s) => (
                     <div key={s.l} className="flex items-center gap-1">
                       <div className={cn("w-1.5 h-1.5 rounded-full", s.c)} />
-                      <span className="text-[8px] text-slate-500 flex-1">{s.l}</span>
-                      <span className="text-[8px] text-slate-400">{s.p}</span>
+                      <span className="text-[8px] text-[#001E3C]/60 flex-1">{s.l}</span>
+                      <span className="text-[8px] text-[#001E3C]/40">{s.p}</span>
                     </div>
                   ))}
                 </div>
@@ -281,11 +281,11 @@ export function InvoicePreview() {
           {/* Row 3: Recurring Invoices + Payment Notification Rules + Recent Invoices */}
           <div className="grid grid-cols-3 gap-1">
             {/* Recurring invoices (auto monthly) */}
-            <div className="rounded-lg bg-white border border-slate-200 p-2 shadow-sm">
+            <div className="rounded-lg bg-white border border-[#001E3C]/10 p-2 shadow-sm">
               <div className="flex items-center justify-between mb-1.5">
                 <div className="flex items-center gap-1">
                   <RefreshCw className="w-3 h-3 text-violet-500" />
-                  <span className="text-[10px] font-semibold text-slate-700">Avto-fakturalar</span>
+                  <span className="text-[10px] font-semibold text-[#001E3C]/80">Avto-fakturalar</span>
                 </div>
                 <span className="text-[8px] text-violet-600">+ Yeni</span>
               </div>
@@ -294,13 +294,13 @@ export function InvoicePreview() {
                   <div key={rule.client} className="flex items-center gap-1 py-[3px]">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1">
-                        <span className="text-[9px] text-slate-700 font-medium truncate">{rule.client}</span>
+                        <span className="text-[9px] text-[#001E3C]/80 font-medium truncate">{rule.client}</span>
                         <span className={cn("text-[7px] px-1 py-0.5 rounded border font-medium", rule.statusColor)}>{rule.status}</span>
                       </div>
                       <div className="flex items-center gap-2 mt-0.5">
                         <span className="text-[8px] font-semibold text-emerald-600">{rule.amount}</span>
-                        <span className="text-[7px] text-slate-400">{rule.cycle}</span>
-                        <span className="text-[7px] text-slate-400">→ {rule.nextDate}</span>
+                        <span className="text-[7px] text-[#001E3C]/40">{rule.cycle}</span>
+                        <span className="text-[7px] text-[#001E3C]/40">→ {rule.nextDate}</span>
                       </div>
                     </div>
                   </div>
@@ -309,20 +309,20 @@ export function InvoicePreview() {
             </div>
 
             {/* Payment notification rules (multi-channel) */}
-            <div className="rounded-lg bg-white border border-slate-200 p-2 shadow-sm">
+            <div className="rounded-lg bg-white border border-[#001E3C]/10 p-2 shadow-sm">
               <div className="flex items-center justify-between mb-1.5">
                 <div className="flex items-center gap-1">
-                  <Send className="w-3 h-3 text-orange-500" />
-                  <span className="text-[10px] font-semibold text-slate-700">Ödəniş Xəbərdarlıqları</span>
+                  <Send className="w-3 h-3 text-[#0176D3]" />
+                  <span className="text-[10px] font-semibold text-[#001E3C]/80">Ödəniş Xəbərdarlıqları</span>
                 </div>
-                <span className="text-[8px] text-orange-600">Qaydalar</span>
+                <span className="text-[8px] text-[#0176D3]">Qaydalar</span>
               </div>
               <div className="space-y-[4px]">
                 {notificationRules.map((rule) => (
                   <div key={rule.trigger} className="flex items-center gap-1 py-[2px]">
-                    <div className={cn("w-1.5 h-1.5 rounded-full flex-shrink-0", rule.active ? "bg-emerald-500" : "bg-slate-300")} />
+                    <div className={cn("w-1.5 h-1.5 rounded-full flex-shrink-0", rule.active ? "bg-emerald-500" : "bg-[#001E3C]/25")} />
                     <div className="flex-1 min-w-0">
-                      <span className="text-[9px] text-slate-700 font-medium block truncate">{rule.trigger}</span>
+                      <span className="text-[9px] text-[#001E3C]/80 font-medium block truncate">{rule.trigger}</span>
                       <div className="flex items-center gap-0.5 mt-0.5">
                         {rule.channels.map((ch) => {
                           const Icon = channelIcons[ch]
@@ -332,7 +332,7 @@ export function InvoicePreview() {
                             </div>
                           )
                         })}
-                        <span className="text-[7px] text-slate-400 ml-1">{rule.delay}</span>
+                        <span className="text-[7px] text-[#001E3C]/40 ml-1">{rule.delay}</span>
                       </div>
                     </div>
                   </div>
@@ -341,10 +341,10 @@ export function InvoicePreview() {
             </div>
 
             {/* Recent invoices + Weekly collections */}
-            <div className="rounded-lg bg-white border border-slate-200 p-2 shadow-sm">
+            <div className="rounded-lg bg-white border border-[#001E3C]/10 p-2 shadow-sm">
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[10px] font-semibold text-slate-700">Son Fakturalar</span>
-                <span className="text-[8px] text-orange-600">Hamısı →</span>
+                <span className="text-[10px] font-semibold text-[#001E3C]/80">Son Fakturalar</span>
+                <span className="text-[8px] text-[#0176D3]">Hamısı →</span>
               </div>
               <div className="space-y-[4px]">
                 {invoices.map((inv) => (
@@ -354,9 +354,9 @@ export function InvoicePreview() {
                         <span className="text-[9px] text-blue-600 font-medium">{inv.number}</span>
                         <span className={cn("text-[7px] px-1 py-0.5 rounded border font-medium", inv.statusColor)}>{inv.status}</span>
                       </div>
-                      <span className="text-[8px] text-slate-400">{inv.client}</span>
+                      <span className="text-[8px] text-[#001E3C]/40">{inv.client}</span>
                     </div>
-                    <span className="text-[9px] font-semibold text-slate-900 flex-shrink-0">{inv.amount}</span>
+                    <span className="text-[9px] font-semibold text-[#001E3C] flex-shrink-0">{inv.amount}</span>
                   </div>
                 ))}
               </div>
@@ -366,33 +366,33 @@ export function InvoicePreview() {
           {/* Row 4: Collections chart + Flow diagram + Quick stats */}
           <div className="grid grid-cols-3 gap-1">
             {/* Weekly collections */}
-            <div className="rounded-lg bg-white border border-slate-200 p-2 shadow-sm">
+            <div className="rounded-lg bg-white border border-[#001E3C]/10 p-2 shadow-sm">
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[10px] font-semibold text-slate-700">Həftəlik Yığım</span>
+                <span className="text-[10px] font-semibold text-[#001E3C]/80">Həftəlik Yığım</span>
                 <span className="text-[8px] font-semibold text-emerald-600">₼119.5K</span>
               </div>
-              <MiniBarChart data={collectionsWeekly} color="bg-orange-400" height="h-8" />
-              <div className="grid grid-cols-3 gap-1 pt-1 mt-1 border-t border-slate-100">
+              <MiniBarChart data={collectionsWeekly} color="bg-[#0176D3]" height="h-8" />
+              <div className="grid grid-cols-3 gap-1 pt-1 mt-1 border-t border-[#001E3C]/8">
                 <div className="text-center">
-                  <div className="text-[9px] font-bold text-slate-700">92%</div>
-                  <div className="text-[7px] text-slate-400">Yığım %</div>
+                  <div className="text-[9px] font-bold text-[#001E3C]/80">92%</div>
+                  <div className="text-[7px] text-[#001E3C]/40">Yığım %</div>
                 </div>
                 <div className="text-center">
                   <div className="text-[9px] font-bold text-emerald-600">18 gün</div>
-                  <div className="text-[7px] text-slate-400">Ort. ödəniş</div>
+                  <div className="text-[7px] text-[#001E3C]/40">Ort. ödəniş</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-[9px] font-bold text-orange-600">₼21.5K</div>
-                  <div className="text-[7px] text-slate-400">Aylıq avto</div>
+                  <div className="text-[9px] font-bold text-[#0176D3]">₼21.5K</div>
+                  <div className="text-[7px] text-[#001E3C]/40">Aylıq avto</div>
                 </div>
               </div>
             </div>
 
             {/* Financial flow */}
-            <div className="rounded-lg bg-white border border-slate-200 p-2 shadow-sm">
+            <div className="rounded-lg bg-white border border-[#001E3C]/10 p-2 shadow-sm">
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[10px] font-semibold text-slate-700">Maliyyə Axını</span>
-                <Zap className="w-3 h-3 text-orange-500" />
+                <span className="text-[10px] font-semibold text-[#001E3C]/80">Maliyyə Axını</span>
+                <Zap className="w-3 h-3 text-[#0176D3]" />
               </div>
               <div className="space-y-1">
                 {[
@@ -403,18 +403,18 @@ export function InvoicePreview() {
                 ].map((flow) => (
                   <div key={flow.from} className="flex items-center gap-1">
                     <span className={cn("text-[8px] px-1.5 py-0.5 rounded font-medium", flow.color)}>{flow.from}</span>
-                    <span className="text-[8px] text-slate-300">→</span>
+                    <span className="text-[8px] text-[#001E3C]/25">→</span>
                     <span className={cn("text-[8px] px-1.5 py-0.5 rounded font-medium", flow.color)}>{flow.to}</span>
-                    <span className="text-[7px] text-slate-400 ml-auto">{flow.count}</span>
+                    <span className="text-[7px] text-[#001E3C]/40 ml-auto">{flow.count}</span>
                   </div>
                 ))}
               </div>
             </div>
 
             {/* Multi-currency + Quick actions */}
-            <div className="rounded-lg bg-white border border-slate-200 p-2 shadow-sm">
+            <div className="rounded-lg bg-white border border-[#001E3C]/10 p-2 shadow-sm">
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[10px] font-semibold text-slate-700">Multi-valyuta</span>
+                <span className="text-[10px] font-semibold text-[#001E3C]/80">Multi-valyuta</span>
                 <DollarSign className="w-3 h-3 text-emerald-500" />
               </div>
               {[
@@ -425,20 +425,20 @@ export function InvoicePreview() {
                 <div key={c.cur} className="flex items-center gap-1 py-[3px]">
                   <span className="text-[10px]">{c.flag}</span>
                   <div className="flex-1 min-w-0">
-                    <span className="text-[9px] text-slate-700 font-medium">{c.cur}</span>
+                    <span className="text-[9px] text-[#001E3C]/80 font-medium">{c.cur}</span>
                   </div>
-                  <span className="text-[9px] font-semibold text-slate-900">{c.amount}</span>
+                  <span className="text-[9px] font-semibold text-[#001E3C]">{c.amount}</span>
                   <span className="text-[7px] text-emerald-600">{c.change}</span>
                 </div>
               ))}
-              <div className="mt-1.5 pt-1 border-t border-slate-100">
+              <div className="mt-1.5 pt-1 border-t border-[#001E3C]/8">
                 <div className="flex items-center justify-between">
-                  <span className="text-[8px] text-slate-500">Məzənnə</span>
-                  <span className="text-[8px] text-slate-600">1 USD = 1.70 AZN</span>
+                  <span className="text-[8px] text-[#001E3C]/60">Məzənnə</span>
+                  <span className="text-[8px] text-[#001E3C]/60">1 USD = 1.70 AZN</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-[8px] text-slate-500">Yenilənmə</span>
-                  <span className="text-[8px] text-slate-400">Avtomatik</span>
+                  <span className="text-[8px] text-[#001E3C]/60">Yenilənmə</span>
+                  <span className="text-[8px] text-[#001E3C]/40">Avtomatik</span>
                 </div>
               </div>
             </div>

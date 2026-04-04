@@ -100,21 +100,21 @@ export default function PricingPage() {
   return (
     <div>
       {/* Hero */}
-      <section className="bg-gradient-to-b from-white via-[hsl(210,30%,97%)] to-white pt-20 pb-16">
+      <section className="bg-gradient-to-b from-white via-[#F3F4F7] to-white pt-20 pb-16">
         <div className="mx-auto max-w-5xl px-4 lg:px-8 text-center">
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="text-4xl lg:text-5xl font-bold text-slate-800"
+            className="text-4xl lg:text-5xl font-bold text-[#001E3C]"
           >
-            Şəffaf <span className="text-orange-500">qiymətlər</span>
+            Şəffaf <span className="text-[#0176D3]">qiymətlər</span>
           </motion.h1>
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.1 }}
-            className="mt-4 text-lg text-gray-600 max-w-2xl mx-auto"
+            className="mt-4 text-lg text-[#001E3C]/60 max-w-2xl mx-auto"
           >
             Pulsuz sınaq ilə başlayın. Gizli ödənişlər yoxdur. İstədiyiniz zaman yüksəldin.
           </motion.p>
@@ -134,37 +134,37 @@ export default function PricingPage() {
                 className={cn(
                   "relative rounded-xl border p-6 flex flex-col bg-white",
                   plan.popular
-                    ? "border-orange-500 shadow-lg shadow-orange-500/10 ring-1 ring-orange-500"
-                    : "border-gray-200"
+                    ? "border-[#0176D3] shadow-lg shadow-[#0176D3]/10 ring-1 ring-[#0176D3]"
+                    : "border-[#001E3C]/10"
                 )}
               >
                 {plan.popular && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                    <span className="bg-orange-500 text-white text-xs font-semibold px-3 py-1 rounded-full">
+                    <span className="bg-[#0176D3] text-white text-xs font-semibold px-3 py-1 rounded-full">
                       Ən Populyar
                     </span>
                   </div>
                 )}
-                <h3 className="text-lg font-bold text-slate-800">{plan.name}</h3>
-                <p className="text-sm text-gray-500 mt-1 mb-4">{plan.tagline}</p>
+                <h3 className="text-lg font-bold text-[#001E3C]">{plan.name}</h3>
+                <p className="text-sm text-[#001E3C]/60 mt-1 mb-4">{plan.tagline}</p>
                 <div className="mb-6">
-                  <span className="text-2xl font-bold text-slate-800">Satışla əlaqə</span>
+                  <span className="text-2xl font-bold text-[#001E3C]">Satışla əlaqə</span>
                 </div>
                 <ul className="space-y-2 flex-1">
                   {plan.features.map((f) => (
                     <li key={f} className="flex items-start gap-2">
-                      <Check className="h-4 w-4 text-orange-500 mt-0.5 flex-shrink-0" />
-                      <span className="text-sm text-gray-700">{f}</span>
+                      <Check className="h-4 w-4 text-[#0176D3] mt-0.5 flex-shrink-0" />
+                      <span className="text-sm text-[#001E3C]/80">{f}</span>
                     </li>
                   ))}
                 </ul>
                 <Link
                   href="/contact"
                   className={cn(
-                    "mt-6 block text-center py-2.5 px-4 rounded-lg text-sm font-semibold transition-colors",
+                    "mt-6 block text-center py-2.5 px-4 rounded-full text-sm font-semibold transition-colors",
                     plan.popular
-                      ? "bg-orange-500 text-white hover:bg-orange-600"
-                      : "bg-orange-500/5 text-slate-800 hover:bg-orange-500/10"
+                      ? "bg-[#0176D3] text-white hover:bg-[#0176D3]/90"
+                      : "bg-[#0176D3]/5 text-[#001E3C] hover:bg-[#0176D3]/10"
                   )}
                 >
                   {plan.id === "enterprise" ? "Əlaqə saxlayın" : "Demo tələb et"}
@@ -176,23 +176,23 @@ export default function PricingPage() {
       </section>
 
       {/* Comparison table */}
-      <section className="bg-[hsl(210,20%,97%)] py-20">
+      <section className="bg-[#F3F4F7] py-20">
         <div className="mx-auto max-w-6xl px-4 lg:px-8">
-          <h2 className="text-3xl font-bold text-slate-800 text-center mb-12">
-            Bütün xüsusiyyətləri <span className="text-orange-500">müqayisə edin</span>
+          <h2 className="text-3xl font-bold text-[#001E3C] text-center mb-12">
+            Bütün xüsusiyyətləri <span className="text-[#0176D3]">müqayisə edin</span>
           </h2>
 
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-x-auto">
+          <div className="bg-white rounded-xl border border-[#001E3C]/10 shadow-sm overflow-x-auto">
             <table className="w-full min-w-[640px]">
               {/* Header */}
               <thead>
-                <tr className="border-b border-gray-200">
-                  <th className="text-left py-4 px-6 text-sm font-medium text-gray-500 w-[40%]">Xüsusiyyət</th>
+                <tr className="border-b border-[#001E3C]/10">
+                  <th className="text-left py-4 px-6 text-sm font-medium text-[#001E3C]/60 w-[40%]">Xüsusiyyət</th>
                   {planNames.map((name, i) => (
                     <th key={name} className="py-4 px-4 text-center">
                       <span className={cn(
                         "text-sm font-bold",
-                        i === 2 ? "text-orange-500" : "text-slate-800"
+                        i === 2 ? "text-[#0176D3]" : "text-[#001E3C]"
                       )}>{name}</span>
                     </th>
                   ))}
@@ -201,20 +201,20 @@ export default function PricingPage() {
               <tbody>
                 {comparisonSections.map((section) => (
                   <Fragment key={section.title}>
-                    <tr className="bg-gray-50/80">
-                      <td colSpan={5} className="py-3 px-6 text-sm font-bold text-slate-800">
+                    <tr className="bg-[#F3F4F7]/60">
+                      <td colSpan={5} className="py-3 px-6 text-sm font-bold text-[#001E3C]">
                         {section.title}
                       </td>
                     </tr>
                     {section.rows.map((row) => (
-                      <tr key={row.label} className="border-b border-gray-100 last:border-0">
-                        <td className="py-3 px-6 text-sm text-gray-700">{row.label}</td>
+                      <tr key={row.label} className="border-b border-[#001E3C]/5 last:border-0">
+                        <td className="py-3 px-6 text-sm text-[#001E3C]/80">{row.label}</td>
                         {planKeys.map((key) => (
                           <td key={key} className="py-3 px-4 text-center">
                             {row[key] ? (
-                              <Check className="h-4 w-4 text-orange-500 mx-auto" />
+                              <Check className="h-4 w-4 text-[#0176D3] mx-auto" />
                             ) : (
-                              <Minus className="h-4 w-4 text-gray-300 mx-auto" />
+                              <Minus className="h-4 w-4 text-[#001E3C]/20 mx-auto" />
                             )}
                           </td>
                         ))}
@@ -231,27 +231,27 @@ export default function PricingPage() {
       {/* FAQ */}
       <section className="py-20">
         <div className="mx-auto max-w-3xl px-4 lg:px-8">
-          <h2 className="text-3xl font-bold text-slate-800 text-center mb-12">
-            Tez-tez verilən <span className="text-orange-500">suallar</span>
+          <h2 className="text-3xl font-bold text-[#001E3C] text-center mb-12">
+            Tez-tez verilən <span className="text-[#0176D3]">suallar</span>
           </h2>
           <div className="space-y-3">
             {faqs.map((faq, i) => (
-              <div key={i} className="border border-gray-200 rounded-lg bg-white overflow-hidden">
+              <div key={i} className="border border-[#001E3C]/10 rounded-lg bg-white overflow-hidden">
                 <button
                   onClick={() => setOpenFaq(openFaq === i ? null : i)}
                   className="w-full flex items-center justify-between px-6 py-4 text-left"
                 >
-                  <span className="text-sm font-semibold text-slate-800">{faq.q}</span>
+                  <span className="text-sm font-semibold text-[#001E3C]">{faq.q}</span>
                   <ChevronDown
                     className={cn(
-                      "h-4 w-4 text-gray-400 transition-transform flex-shrink-0 ml-4",
+                      "h-4 w-4 text-[#001E3C]/40 transition-transform flex-shrink-0 ml-4",
                       openFaq === i && "rotate-180"
                     )}
                   />
                 </button>
                 {openFaq === i && (
                   <div className="px-6 pb-4">
-                    <p className="text-sm text-gray-600 leading-relaxed">{faq.a}</p>
+                    <p className="text-sm text-[#001E3C]/60 leading-relaxed">{faq.a}</p>
                   </div>
                 )}
               </div>
@@ -261,7 +261,7 @@ export default function PricingPage() {
       </section>
 
       {/* CTA */}
-      <section className="bg-gradient-to-br from-[#F97316] to-[#FACC15] py-16">
+      <section className="bg-gradient-to-br from-[#0176D3] to-[#014486] py-16">
         <div className="mx-auto max-w-4xl px-4 lg:px-8 text-center">
           <h2 className="text-3xl font-bold text-white">14 günlük pulsuz sınaq</h2>
           <p className="mt-3 text-white/80">Kredit kartı tələb olunmur. Dəqiqələr ərzində başlayın.</p>
@@ -270,7 +270,7 @@ export default function PricingPage() {
               <ShimmerButton
                 background="rgba(255,255,255,0.15)"
                 shimmerColor="rgba(255,255,255,0.4)"
-                borderRadius="10px"
+                borderRadius="9999px"
                 className="text-base font-semibold px-8 py-3.5 border-white/30"
               >
                 Pulsuz sınaq başlat
@@ -279,7 +279,7 @@ export default function PricingPage() {
             </a>
             <Link
               href="/contact"
-              className="inline-flex items-center gap-2 px-6 py-3.5 text-base font-semibold text-white border-2 border-white/30 rounded-[10px] hover:bg-white/10 transition-all"
+              className="inline-flex items-center gap-2 px-6 py-3.5 text-base font-semibold text-white border-2 border-white/30 rounded-full hover:bg-white/10 transition-all"
             >
               Satışla danışın
             </Link>

@@ -40,13 +40,13 @@ export function ScreenshotShowcase() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.4, delay: i * 0.1 }}
-              className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm hover:shadow-md transition-shadow"
+              className="bg-white rounded-xl p-6 border border-[#001E3C]/10 shadow-[0_1px_3px_rgba(0,0,0,0.05)] hover:shadow-md transition-shadow"
             >
-              <div className="w-12 h-12 rounded-xl bg-orange-500/5 flex items-center justify-center mb-4">
-                <Icon className="h-6 w-6 text-slate-800" />
+              <div className="w-12 h-12 rounded-xl bg-[#0176D3]/5 flex items-center justify-center mb-4">
+                <Icon className="h-6 w-6 text-[#001E3C]" />
               </div>
-              <h3 className="font-bold text-slate-800 text-lg mb-2">{item.title}</h3>
-              <p className="text-sm text-gray-600 leading-relaxed">{item.description}</p>
+              <h3 className="font-bold text-[#001E3C] text-lg mb-2">{item.title}</h3>
+              <p className="text-sm text-[#001E3C]/60 leading-relaxed">{item.description}</p>
             </motion.div>
           )
         })}

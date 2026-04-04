@@ -11,15 +11,15 @@ function FaqItem({ q, a, defaultOpen = false }: { q: string; a: string; defaultO
   const [open, setOpen] = useState(defaultOpen)
 
   return (
-    <div className="border-b border-slate-200">
+    <div className="border-b border-[#001E3C]/10">
       <button
         onClick={() => setOpen(!open)}
         className="flex w-full items-center justify-between py-5 text-left"
       >
-        <span className="text-sm font-medium text-slate-900 pr-4">{q}</span>
+        <span className="text-sm font-medium text-[#001E3C] pr-4">{q}</span>
         <ChevronDown
           className={cn(
-            "h-4 w-4 text-slate-400 flex-shrink-0 transition-transform duration-200",
+            "h-4 w-4 text-[#001E3C]/40 flex-shrink-0 transition-transform duration-200",
             open && "rotate-180"
           )}
         />
@@ -30,7 +30,7 @@ function FaqItem({ q, a, defaultOpen = false }: { q: string; a: string; defaultO
           open ? "max-h-48 pb-5" : "max-h-0"
         )}
       >
-        <p className="text-sm text-slate-500 leading-relaxed">{a}</p>
+        <p className="text-sm text-[#001E3C]/60 leading-relaxed">{a}</p>
       </div>
     </div>
   )
@@ -40,10 +40,10 @@ export function FaqSection() {
   return (
     <SectionWrapper id="faq" variant="white" narrow>
       <AnimateIn className="text-center mb-12">
-        <h2 className="text-3xl lg:text-4xl font-bold tracking-tight text-slate-900">
+        <h2 className="text-3xl lg:text-4xl font-bold tracking-tight text-[#001E3C]">
           Tez-tez verilən suallar
         </h2>
-        <p className="mt-4 text-lg text-slate-500">
+        <p className="mt-4 text-lg text-[#001E3C]/60">
           Cavab tapa bilmirsinizsə, bizimlə əlaqə saxlayın.
         </p>
       </AnimateIn>

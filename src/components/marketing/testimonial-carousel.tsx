@@ -52,13 +52,13 @@ const caseStudies = [
 
 export function TestimonialCarousel() {
   return (
-    <section id="testimonials" className="relative bg-slate-50 py-20 lg:py-28">
+    <section id="testimonials" className="relative bg-[#F3F4F7] py-20 lg:py-28">
       <div className="mx-auto max-w-7xl px-4 lg:px-8">
         <AnimateIn className="text-center mb-14">
-          <p className="text-sm font-medium text-slate-400 uppercase tracking-widest mb-3">
+          <p className="text-sm font-medium text-[#001E3C]/40 uppercase tracking-widest mb-3">
             Müştəri nəticələri
           </p>
-          <h2 className="text-3xl lg:text-4xl font-bold tracking-tight text-slate-900">
+          <h2 className="text-3xl lg:text-4xl font-bold tracking-tight text-[#001E3C]">
             Real rəqəmlər, real şirkətlər
           </h2>
         </AnimateIn>
@@ -69,9 +69,9 @@ export function TestimonialCarousel() {
             const MetricIcon = t.metricIcon
             return (
               <AnimateIn key={i} delay={i * 70}>
-                <div className="group h-full rounded-2xl border border-slate-200/80 bg-white p-6 lg:p-7 flex flex-col hover:border-slate-300 hover:shadow-lg hover:shadow-slate-100/80 transition-all duration-300">
+                <div className="group h-full rounded-2xl border border-[#001E3C]/10 bg-white p-6 lg:p-7 flex flex-col hover:border-[#001E3C]/15 hover:shadow-lg hover:shadow-[#001E3C]/5 transition-all duration-300 shadow-[0_1px_3px_rgba(0,0,0,0.05)]">
                   {/* Metric highlight */}
-                  <div className="flex items-center gap-3 mb-5 pb-5 border-b border-slate-100">
+                  <div className="flex items-center gap-3 mb-5 pb-5 border-b border-[#001E3C]/10">
                     <div
                       className="flex items-center justify-center w-10 h-10 rounded-xl shrink-0"
                       style={{ backgroundColor: `${t.metricColor}12` }}
@@ -79,24 +79,24 @@ export function TestimonialCarousel() {
                       <MetricIcon className="w-5 h-5" style={{ color: t.metricColor }} />
                     </div>
                     <div>
-                      <div className="text-xl font-bold text-slate-900">{t.metric}</div>
-                      <div className="text-xs text-slate-400">{t.metricLabel}</div>
+                      <div className="text-xl font-bold text-[#001E3C]">{t.metric}</div>
+                      <div className="text-xs text-[#001E3C]/40">{t.metricLabel}</div>
                     </div>
                   </div>
 
                   {/* Quote */}
-                  <p className="text-slate-600 text-sm leading-relaxed flex-1">
+                  <p className="text-[#001E3C]/60 text-sm leading-relaxed flex-1">
                     &ldquo;{t.quote}&rdquo;
                   </p>
 
                   {/* Author */}
                   <div className="mt-5 flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 text-xs font-semibold">
+                    <div className="w-8 h-8 rounded-full bg-[#F3F4F7] flex items-center justify-center text-[#001E3C]/60 text-xs font-semibold">
                       {t.name.split(" ").map(n => n[0]).join("")}
                     </div>
                     <div>
-                      <p className="font-medium text-slate-800 text-sm">{t.name}</p>
-                      <p className="text-xs text-slate-400">{t.title}, {t.company}</p>
+                      <p className="font-medium text-[#001E3C] text-sm">{t.name}</p>
+                      <p className="text-xs text-[#001E3C]/40">{t.title}, {t.company}</p>
                     </div>
                   </div>
                 </div>

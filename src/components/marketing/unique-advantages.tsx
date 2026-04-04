@@ -17,11 +17,11 @@ export function UniqueAdvantages() {
         transition={{ duration: 0.5 }}
         className="text-center mb-12"
       >
-        <h2 className="text-3xl lg:text-4xl font-bold text-slate-800">
+        <h2 className="text-3xl lg:text-4xl font-bold text-[#001E3C]">
           LeadDrive-ı{" "}
-          <span className="text-orange-500">fərqli edən</span> nədir?
+          <span className="text-[#0176D3]">fərqli edən</span> nədir?
         </h2>
-        <p className="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">
+        <p className="mt-4 text-lg text-[#001E3C]/60 max-w-2xl mx-auto">
           Mövcud CRM-inizdə olmayan — və heç vaxt olmayacaq xüsusiyyətlər.
         </p>
       </motion.div>
@@ -40,7 +40,7 @@ export function UniqueAdvantages() {
               <MagicCard
                 gradientColor={`${adv.color}20`}
                 gradientOpacity={0.5}
-                className="bg-white border-gray-200 h-full"
+                className="bg-white border-[#001E3C]/10 h-full"
               >
                 <div className="p-6">
                   <div
@@ -49,11 +49,11 @@ export function UniqueAdvantages() {
                   >
                     <Icon className="h-6 w-6" style={{ color: adv.color }} />
                   </div>
-                  <h3 className="font-bold text-slate-800 text-lg mb-2">{adv.title}</h3>
-                  <p className="text-sm text-gray-600 leading-relaxed mb-4">{adv.description}</p>
+                  <h3 className="font-bold text-[#001E3C] text-lg mb-2">{adv.title}</h3>
+                  <p className="text-sm text-[#001E3C]/60 leading-relaxed mb-4">{adv.description}</p>
                   <Link
                     href={adv.href}
-                    className="inline-flex items-center text-sm font-medium text-orange-500 hover:underline"
+                    className="inline-flex items-center text-sm font-medium text-[#0176D3] hover:underline"
                   >
                     Ətraflı <ArrowRight className="ml-1 h-3.5 w-3.5" />
                   </Link>

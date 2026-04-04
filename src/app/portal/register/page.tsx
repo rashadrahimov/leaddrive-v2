@@ -39,9 +39,9 @@ export default function PortalRegisterPage() {
   if (sent) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <Card className="w-full max-w-md">
+        <Card className="w-full max-w-md shadow-[0_1px_3px_rgba(0,0,0,0.05)]">
           <CardContent className="py-10 text-center">
-            <Mail className="h-12 w-12 text-blue-500 mx-auto mb-3" />
+            <Mail className="h-12 w-12 text-primary mx-auto mb-3" />
             <h2 className="text-xl font-semibold mb-2">{t("checkEmail")}</h2>
             <p className="text-sm text-muted-foreground mb-1">
               {t("emailSent")} <strong>{email}</strong>
@@ -63,19 +63,19 @@ export default function PortalRegisterPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
-      <Card className="w-full max-w-md">
+      <Card className="w-full max-w-md shadow-[0_1px_3px_rgba(0,0,0,0.05)]">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl">{t("registerTitle")}</CardTitle>
           <p className="text-sm text-muted-foreground">{t("registerSubtitle")}</p>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
-            {error && <div className="text-sm text-red-500 bg-red-50 dark:bg-red-900/20 p-2 rounded">{error}</div>}
+            {error && <div className="text-sm text-destructive bg-destructive/10 p-2 rounded-lg">{error}</div>}
             <div>
               <label className="text-sm font-medium">Email</label>
               <Input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="your@company.com" className="mt-1" required />
             </div>
-            <Button type="submit" className="w-full" disabled={loading}>
+            <Button type="submit" className="w-full rounded-full" disabled={loading}>
               {loading ? "..." : t("sendLink")}
             </Button>
           </form>

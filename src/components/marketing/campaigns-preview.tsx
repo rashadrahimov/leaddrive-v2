@@ -26,8 +26,8 @@ const sidebarItems = [
 
 /* ── Status cards ── */
 const statusCards = [
-  { label: "QARALAMA", count: 3, color: "bg-slate-500" },
-  { label: "PLANLAŞDIRILIR", count: 2, color: "bg-orange-500" },
+  { label: "QARALAMA", count: 3, color: "bg-[#F3F4F7]0" },
+  { label: "PLANLAŞDIRILIR", count: 2, color: "bg-[#0176D3]" },
   { label: "GÖNDƏRİLİR", count: 1, color: "bg-blue-500" },
   { label: "GÖNDƏRİLİB", count: 5, color: "bg-emerald-500" },
   { label: "LƏĞV EDİLİB", count: 0, color: "bg-red-500" },
@@ -38,8 +38,8 @@ const kpiMetrics = [
   { icon: Send, value: "2,450", label: "GÖNDƏRİLİB", color: "text-blue-600" },
   { icon: Eye, value: "24.5%", label: "AÇILMA DƏRƏCƏSİ", color: "text-emerald-600" },
   { icon: MousePointer, value: "3.8%", label: "KLİK DƏRƏCƏSİ", color: "text-violet-600" },
-  { icon: TrendingUp, value: "1.2%", label: "BOUNCE", color: "text-orange-600" },
-  { icon: DollarSign, value: "$12.5k", label: "BÜDCƏ", color: "text-slate-700" },
+  { icon: TrendingUp, value: "1.2%", label: "BOUNCE", color: "text-[#0176D3]" },
+  { icon: DollarSign, value: "$12.5k", label: "BÜDCƏ", color: "text-[#001E3C]/80" },
   { icon: Zap, value: "+285%", label: "ROI", color: "text-emerald-600" },
 ]
 
@@ -60,27 +60,27 @@ const funnelData = [
 
 export function CampaignsPreview() {
   return (
-    <div className="flex text-[7px] leading-tight bg-slate-900 text-white select-none">
+    <div className="flex text-[7px] leading-tight bg-[#001E3C] text-white select-none">
       {/* Sidebar */}
-      <div className="w-[120px] flex-shrink-0 bg-slate-900 border-r border-slate-700/50 py-2 px-1.5 hidden sm:block">
+      <div className="w-[120px] flex-shrink-0 bg-[#001E3C] border-r border-[#001E3C]/20 py-2 px-1.5 hidden sm:block">
         <div className="flex items-center gap-1.5 px-2 mb-3">
-          <div className="w-3.5 h-3.5 bg-gradient-to-br from-orange-400 to-red-500 rounded-md" />
+          <div className="w-3.5 h-3.5 bg-gradient-to-br from-[#0176D3] to-[#0176D3] rounded-md" />
           <span className="font-bold text-[7px] text-white/90">LeadDrive</span>
         </div>
         <div className="relative mb-2 px-1">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-2 h-2 text-slate-500" />
-          <div className="bg-slate-800 rounded-md py-1 pl-5 text-slate-500 text-[6px]">Axtar...</div>
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-2 h-2 text-[#001E3C]/60" />
+          <div className="bg-[#001E3C]/60 rounded-md py-1 pl-5 text-[#001E3C]/60 text-[6px]">Axtar...</div>
         </div>
         {sidebarItems.map((item, i) => {
           const Icon = item.icon
           return (
             <div key={i}>
               {item.section && (
-                <div className="text-[5px] font-semibold text-slate-500 uppercase tracking-wider px-2 mt-2 mb-1">{item.section}</div>
+                <div className="text-[5px] font-semibold text-[#001E3C]/60 uppercase tracking-wider px-2 mt-2 mb-1">{item.section}</div>
               )}
               <div className={cn(
                 "flex items-center gap-1.5 px-2 py-[3px] rounded-md mb-[1px]",
-                item.active ? "bg-orange-500/20 text-orange-400" : "text-slate-400"
+                item.active ? "bg-[#0176D3]/20 text-[#0176D3]" : "text-[#001E3C]/40"
               )}>
                 <Icon className="w-2.5 h-2.5 flex-shrink-0" />
                 <span className="truncate">{item.label}</span>
@@ -91,13 +91,13 @@ export function CampaignsPreview() {
       </div>
 
       {/* Main content */}
-      <div className="flex-1 bg-slate-50 text-slate-900 overflow-hidden">
+      <div className="flex-1 bg-[#F3F4F7] text-[#001E3C] overflow-hidden">
         {/* Top bar */}
-        <div className="flex items-center justify-between px-3 py-1.5 bg-white border-b border-slate-200">
-          <span className="text-[8px] font-medium text-slate-400">Nexora Solutions LLC</span>
+        <div className="flex items-center justify-between px-3 py-1.5 bg-white border-b border-[#001E3C]/10">
+          <span className="text-[8px] font-medium text-[#001E3C]/40">Nexora Solutions LLC</span>
           <div className="flex items-center gap-1.5">
-            <Bell className="w-2.5 h-2.5 text-slate-400" />
-            <div className="w-4 h-4 bg-gradient-to-br from-orange-400 to-red-500 rounded-full flex items-center justify-center text-[5px] font-bold text-white">A</div>
+            <Bell className="w-2.5 h-2.5 text-[#001E3C]/40" />
+            <div className="w-4 h-4 bg-gradient-to-br from-[#0176D3] to-[#0176D3] rounded-full flex items-center justify-center text-[5px] font-bold text-white">A</div>
           </div>
         </div>
 
@@ -105,16 +105,16 @@ export function CampaignsPreview() {
           {/* Header */}
           <div className="flex items-center justify-between mb-2">
             <div>
-              <h2 className="text-[10px] font-bold text-slate-900">Kampaniyalar</h2>
-              <p className="text-[5px] text-slate-500">Email və SMS kampaniyalarını yaradın və göndərin</p>
+              <h2 className="text-[10px] font-bold text-[#001E3C]">Kampaniyalar</h2>
+              <p className="text-[5px] text-[#001E3C]/60">Email və SMS kampaniyalarını yaradın və göndərin</p>
             </div>
-            <div className="bg-orange-500 rounded-md px-2 py-0.5 text-[6px] text-white font-medium">+ Yeni kampaniya</div>
+            <div className="bg-[#0176D3] rounded-md px-2 py-0.5 text-[6px] text-white font-medium">+ Yeni kampaniya</div>
           </div>
 
           {/* Tabs */}
-          <div className="flex gap-3 mb-2 border-b border-slate-200 pb-1">
-            <span className="text-[6px] font-semibold text-slate-900 border-b-2 border-blue-500 pb-0.5">Analitika</span>
-            <span className="text-[6px] text-slate-400">Siyahı</span>
+          <div className="flex gap-3 mb-2 border-b border-[#001E3C]/10 pb-1">
+            <span className="text-[6px] font-semibold text-[#001E3C] border-b-2 border-blue-500 pb-0.5">Analitika</span>
+            <span className="text-[6px] text-[#001E3C]/40">Siyahı</span>
           </div>
 
           {/* Status cards */}
@@ -135,10 +135,10 @@ export function CampaignsPreview() {
             {kpiMetrics.map((kpi, i) => {
               const Icon = kpi.icon
               return (
-                <div key={i} className="bg-white rounded-lg border border-slate-200 p-1.5 text-center">
+                <div key={i} className="bg-white rounded-lg border border-[#001E3C]/10 p-1.5 text-center">
                   <Icon className={cn("w-2.5 h-2.5 mx-auto mb-0.5", kpi.color)} />
                   <div className={cn("text-[9px] font-bold", kpi.color)}>{kpi.value}</div>
-                  <div className="text-[4px] text-slate-400 uppercase tracking-wider mt-0.5">{kpi.label}</div>
+                  <div className="text-[4px] text-[#001E3C]/40 uppercase tracking-wider mt-0.5">{kpi.label}</div>
                 </div>
               )
             })}
@@ -147,10 +147,10 @@ export function CampaignsPreview() {
           {/* Three columns: Trend + Funnel + Top Campaigns */}
           <div className="grid grid-cols-3 gap-1.5">
             {/* Monthly trend */}
-            <div className="bg-white rounded-lg border border-slate-200 p-2">
+            <div className="bg-white rounded-lg border border-[#001E3C]/10 p-2">
               <div className="flex items-center gap-1 mb-1.5">
                 <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
-                <span className="text-[6px] font-semibold text-slate-700 uppercase">Aylıq göndərmə trendi</span>
+                <span className="text-[6px] font-semibold text-[#001E3C]/80 uppercase">Aylıq göndərmə trendi</span>
               </div>
               {/* Simple bar chart */}
               <div className="flex items-end gap-[2px] h-[40px]">
@@ -163,28 +163,28 @@ export function CampaignsPreview() {
                 ))}
               </div>
               <div className="flex justify-between mt-1">
-                <span className="text-[4px] text-slate-400">Yan</span>
-                <span className="text-[4px] text-slate-400">Mar</span>
-                <span className="text-[4px] text-slate-400">İyn</span>
-                <span className="text-[4px] text-slate-400">Sen</span>
-                <span className="text-[4px] text-slate-400">Dek</span>
+                <span className="text-[4px] text-[#001E3C]/40">Yan</span>
+                <span className="text-[4px] text-[#001E3C]/40">Mar</span>
+                <span className="text-[4px] text-[#001E3C]/40">İyn</span>
+                <span className="text-[4px] text-[#001E3C]/40">Sen</span>
+                <span className="text-[4px] text-[#001E3C]/40">Dek</span>
               </div>
             </div>
 
             {/* Delivery funnel */}
-            <div className="bg-white rounded-lg border border-slate-200 p-2">
+            <div className="bg-white rounded-lg border border-[#001E3C]/10 p-2">
               <div className="flex items-center gap-1 mb-1.5">
                 <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                <span className="text-[6px] font-semibold text-slate-700 uppercase">Çatdırılma hunisi</span>
+                <span className="text-[6px] font-semibold text-[#001E3C]/80 uppercase">Çatdırılma hunisi</span>
               </div>
               <div className="space-y-1.5">
                 {funnelData.map((item, i) => (
                   <div key={i}>
                     <div className="flex justify-between mb-0.5">
-                      <span className="text-[5px] text-slate-600">{item.label}</span>
-                      <span className="text-[5px] font-medium text-slate-800">{item.value} <span className="text-slate-400">{item.pct}</span></span>
+                      <span className="text-[5px] text-[#001E3C]/60">{item.label}</span>
+                      <span className="text-[5px] font-medium text-[#001E3C]">{item.value} <span className="text-[#001E3C]/40">{item.pct}</span></span>
                     </div>
-                    <div className="h-1 bg-slate-100 rounded-full overflow-hidden">
+                    <div className="h-1 bg-[#F3F4F7] rounded-full overflow-hidden">
                       <div className="h-full bg-blue-500 rounded-full" style={{ width: item.width }} />
                     </div>
                   </div>
@@ -193,29 +193,29 @@ export function CampaignsPreview() {
             </div>
 
             {/* Top campaigns */}
-            <div className="bg-white rounded-lg border border-slate-200 p-2">
+            <div className="bg-white rounded-lg border border-[#001E3C]/10 p-2">
               <div className="flex items-center gap-1 mb-1.5">
-                <div className="w-1.5 h-1.5 rounded-full bg-orange-500" />
-                <span className="text-[6px] font-semibold text-slate-700 uppercase">Ən yaxşı kampaniyalar</span>
+                <div className="w-1.5 h-1.5 rounded-full bg-[#0176D3]" />
+                <span className="text-[6px] font-semibold text-[#001E3C]/80 uppercase">Ən yaxşı kampaniyalar</span>
               </div>
               <div className="space-y-1">
                 {topCampaigns.map((c, i) => (
-                  <div key={i} className="flex items-center gap-1.5 p-1 rounded bg-slate-50 border border-slate-100">
+                  <div key={i} className="flex items-center gap-1.5 p-1 rounded bg-[#F3F4F7] border border-[#001E3C]/8">
                     <div className={cn(
                       "w-4 h-4 rounded-full flex items-center justify-center text-[5px] font-bold text-white flex-shrink-0",
-                      i === 0 ? "bg-orange-500" : i === 1 ? "bg-emerald-500" : "bg-blue-500"
+                      i === 0 ? "bg-[#0176D3]" : i === 1 ? "bg-emerald-500" : "bg-blue-500"
                     )}>
                       {i + 1}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="text-[6px] font-semibold text-slate-900">{c.name}</div>
-                      <div className="text-[4px] text-slate-500">{c.sent}</div>
+                      <div className="text-[6px] font-semibold text-[#001E3C]">{c.name}</div>
+                      <div className="text-[4px] text-[#001E3C]/60">{c.sent}</div>
                     </div>
                     <div className="text-right flex-shrink-0">
                       <div className="text-[5px] font-medium text-emerald-600">{c.openRate} açılma</div>
                       <div className="text-[4px] text-blue-500">{c.clickRate} klik</div>
                     </div>
-                    <div className="bg-slate-200 rounded px-1 py-[1px] text-[4px] text-slate-600 flex-shrink-0">{c.type}</div>
+                    <div className="bg-[#001E3C]/10 rounded px-1 py-[1px] text-[4px] text-[#001E3C]/60 flex-shrink-0">{c.type}</div>
                   </div>
                 ))}
               </div>

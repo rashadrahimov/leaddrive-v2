@@ -132,14 +132,14 @@ export function DashboardPreview() {
             </div>
             <span className="text-[10px] font-bold">LeadDrive</span>
           </div>
-          <div className="flex items-center gap-0.5 bg-slate-800 rounded-md px-2 py-1">
-            <Search className="w-2.5 h-2.5 text-slate-400" />
-            <span className="text-[9px] text-slate-400 ml-1">Axtar...</span>
+          <div className="flex items-center gap-0.5 bg-[#001E3C]/60 rounded-md px-2 py-1">
+            <Search className="w-2.5 h-2.5 text-[#001E3C]/40" />
+            <span className="text-[9px] text-[#001E3C]/40 ml-1">Axtar...</span>
           </div>
         </div>
         <div className="flex items-center gap-2">
           <div className="relative">
-            <Bell className="w-3 h-3 text-slate-400" />
+            <Bell className="w-3 h-3 text-[#001E3C]/40" />
             <div className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-red-500" />
           </div>
           <div className="w-5 h-5 rounded-full bg-gradient-to-br from-violet-400 to-cyan-400 flex items-center justify-center text-[8px] font-bold">R</div>
@@ -152,7 +152,7 @@ export function DashboardPreview() {
           {sidebarItems.map((item) => (
             <div key={item.label} className={cn(
               "flex items-center gap-2 px-3 py-[5px] text-[9px] cursor-default transition-colors",
-              item.active ? "bg-violet-600/20 text-violet-300 border-l-2 border-violet-400" : "text-slate-400 border-l-2 border-transparent"
+              item.active ? "bg-violet-600/20 text-violet-300 border-l-2 border-violet-400" : "text-[#001E3C]/40 border-l-2 border-transparent"
             )}>
               <item.icon className="w-3 h-3 flex-shrink-0" />
               <span className="truncate">{item.label}</span>
@@ -161,16 +161,16 @@ export function DashboardPreview() {
         </div>
 
         {/* Main content */}
-        <div className="flex-1 bg-slate-50 p-1.5 space-y-1 min-w-0">
+        <div className="flex-1 bg-[#F3F4F7] p-1.5 space-y-1 min-w-0">
           {/* Page header */}
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-[13px] font-bold text-slate-800">İdarə Paneli</h2>
-              <p className="text-[8px] text-slate-400">28 Mart 2026, Şənbə • Son yenilənmə: 2 dəq əvvəl</p>
+              <h2 className="text-[13px] font-bold text-[#001E3C]">İdarə Paneli</h2>
+              <p className="text-[8px] text-[#001E3C]/40">28 Mart 2026, Şənbə • Son yenilənmə: 2 dəq əvvəl</p>
             </div>
             <div className="flex items-center gap-1">
-              <span className="text-[8px] px-2 py-0.5 rounded-md bg-slate-100 text-slate-500 border border-slate-200">Bu ay</span>
-              <ChevronDown className="w-2.5 h-2.5 text-slate-400" />
+              <span className="text-[8px] px-2 py-0.5 rounded-md bg-[#F3F4F7] text-[#001E3C]/60 border border-[#001E3C]/10">Bu ay</span>
+              <ChevronDown className="w-2.5 h-2.5 text-[#001E3C]/40" />
             </div>
           </div>
 
@@ -184,14 +184,14 @@ export function DashboardPreview() {
               { label: "Tiketlər", value: "15", change: "2h orta", icon: Headphones, color: "text-blue-600", bg: "bg-blue-50 border-blue-100" },
               { label: "Kampaniyalar", value: "4", change: "68% açılma", icon: Megaphone, color: "text-pink-600", bg: "bg-pink-50 border-pink-100" },
             ].map((kpi) => (
-              <div key={kpi.label} className="rounded-lg bg-white border border-slate-200 p-2 shadow-sm">
+              <div key={kpi.label} className="rounded-lg bg-white border border-[#001E3C]/10 p-2 shadow-sm">
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-[8px] text-slate-400 uppercase tracking-wider">{kpi.label}</span>
+                  <span className="text-[8px] text-[#001E3C]/40 uppercase tracking-wider">{kpi.label}</span>
                   <div className={cn("w-5 h-5 rounded flex items-center justify-center border", kpi.bg)}>
                     <kpi.icon className={cn("w-2.5 h-2.5", kpi.color)} />
                   </div>
                 </div>
-                <div className="text-sm font-bold text-slate-900">{kpi.value}</div>
+                <div className="text-sm font-bold text-[#001E3C]">{kpi.value}</div>
                 <div className="flex items-center gap-0.5 mt-0.5">
                   <ArrowUpRight className="w-2 h-2 text-emerald-500" />
                   <span className="text-[8px] text-emerald-600">{kpi.change}</span>
@@ -203,41 +203,41 @@ export function DashboardPreview() {
           {/* Row 2: Pipeline + Revenue + Lead Sources */}
           <div className="grid grid-cols-3 gap-1">
             {/* Pipeline */}
-            <div className="rounded-lg bg-white border border-slate-200 p-2 shadow-sm">
+            <div className="rounded-lg bg-white border border-[#001E3C]/10 p-2 shadow-sm">
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[10px] font-semibold text-slate-700">Satış Pipeline</span>
-                <span className="text-[8px] text-slate-400">₼384K</span>
+                <span className="text-[10px] font-semibold text-[#001E3C]/80">Satış Pipeline</span>
+                <span className="text-[8px] text-[#001E3C]/40">₼384K</span>
               </div>
               <div className="space-y-[5px]">
                 {pipelineStages.map((s) => (
                   <div key={s.label} className="flex items-center gap-1">
-                    <span className="text-[8px] text-slate-400 w-14 truncate">{s.label}</span>
-                    <div className="flex-1 h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                    <span className="text-[8px] text-[#001E3C]/40 w-14 truncate">{s.label}</span>
+                    <div className="flex-1 h-2.5 bg-[#F3F4F7] rounded-full overflow-hidden">
                       <div className={cn("h-full rounded-full", s.color)} style={{ width: `${s.pct}%` }} />
                     </div>
-                    <span className="text-[8px] text-slate-500 w-4 text-right">{s.count}</span>
+                    <span className="text-[8px] text-[#001E3C]/60 w-4 text-right">{s.count}</span>
                   </div>
                 ))}
               </div>
             </div>
 
             {/* Revenue trend */}
-            <div className="rounded-lg bg-white border border-slate-200 p-2 shadow-sm">
+            <div className="rounded-lg bg-white border border-[#001E3C]/10 p-2 shadow-sm">
               <div className="flex items-center justify-between mb-1">
-                <span className="text-[10px] font-semibold text-slate-700">Gəlir Trendi</span>
+                <span className="text-[10px] font-semibold text-[#001E3C]/80">Gəlir Trendi</span>
                 <span className="text-[8px] text-emerald-600 font-medium">↑ 28%</span>
               </div>
               <MiniLineChart data={revenueMonthly} color="#8b5cf6" width={180} height={45} />
-              <div className="flex justify-between mt-1 text-[7px] text-slate-300">
+              <div className="flex justify-between mt-1 text-[7px] text-[#001E3C]/25">
                 {["Y","F","M","A","M","İ","İ","A","S","O","N","D"].map((m,i) => <span key={i}>{m}</span>)}
               </div>
             </div>
 
             {/* Lead sources donut */}
-            <div className="rounded-lg bg-white border border-slate-200 p-2 shadow-sm">
+            <div className="rounded-lg bg-white border border-[#001E3C]/10 p-2 shadow-sm">
               <div className="flex items-center justify-between mb-1">
-                <span className="text-[10px] font-semibold text-slate-700">Lid Mənbələri</span>
-                <span className="text-[8px] text-slate-400">142</span>
+                <span className="text-[10px] font-semibold text-[#001E3C]/80">Lid Mənbələri</span>
+                <span className="text-[8px] text-[#001E3C]/40">142</span>
               </div>
               <div className="flex items-center gap-2">
                 <MiniDonut size={48} segments={[
@@ -254,8 +254,8 @@ export function DashboardPreview() {
                   ].map((s) => (
                     <div key={s.l} className="flex items-center gap-1">
                       <div className={cn("w-1.5 h-1.5 rounded-full", s.c)} />
-                      <span className="text-[8px] text-slate-500 flex-1">{s.l}</span>
-                      <span className="text-[8px] text-slate-400">{s.p}</span>
+                      <span className="text-[8px] text-[#001E3C]/60 flex-1">{s.l}</span>
+                      <span className="text-[8px] text-[#001E3C]/40">{s.p}</span>
                     </div>
                   ))}
                 </div>
@@ -266,9 +266,9 @@ export function DashboardPreview() {
           {/* Row 3: Deals + Leads + Activity */}
           <div className="grid grid-cols-3 gap-1">
             {/* Recent Deals */}
-            <div className="rounded-lg bg-white border border-slate-200 p-2 shadow-sm">
+            <div className="rounded-lg bg-white border border-[#001E3C]/10 p-2 shadow-sm">
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[10px] font-semibold text-slate-700">Son Sövdələşmələr</span>
+                <span className="text-[10px] font-semibold text-[#001E3C]/80">Son Sövdələşmələr</span>
                 <span className="text-[8px] text-violet-600">Hamısı →</span>
               </div>
               <div className="space-y-[4px]">
@@ -277,10 +277,10 @@ export function DashboardPreview() {
                     <div className={cn("w-1 h-5 rounded-full flex-shrink-0", d.color)} />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1">
-                        <span className="text-[9px] text-slate-700 font-medium truncate">{d.name}</span>
+                        <span className="text-[9px] text-[#001E3C]/80 font-medium truncate">{d.name}</span>
                         {d.hot && <Star className="w-2 h-2 text-amber-400 fill-amber-400 flex-shrink-0" />}
                       </div>
-                      <span className="text-[8px] text-slate-400">{d.company}</span>
+                      <span className="text-[8px] text-[#001E3C]/40">{d.company}</span>
                     </div>
                     <span className="text-[9px] font-semibold text-emerald-600 flex-shrink-0">{d.value}</span>
                   </div>
@@ -289,11 +289,11 @@ export function DashboardPreview() {
             </div>
 
             {/* Top Leads with AI scoring */}
-            <div className="rounded-lg bg-white border border-slate-200 p-2 shadow-sm">
+            <div className="rounded-lg bg-white border border-[#001E3C]/10 p-2 shadow-sm">
               <div className="flex items-center justify-between mb-1.5">
                 <div className="flex items-center gap-1">
                   <Bot className="w-3 h-3 text-violet-500" />
-                  <span className="text-[10px] font-semibold text-slate-700">Da Vinci Lid Skorinq</span>
+                  <span className="text-[10px] font-semibold text-[#001E3C]/80">Da Vinci Lid Skorinq</span>
                 </div>
                 <span className="text-[8px] text-violet-600">Hamısı →</span>
               </div>
@@ -304,8 +304,8 @@ export function DashboardPreview() {
                       {l.score}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <span className="text-[9px] text-slate-700 font-medium truncate block">{l.name}</span>
-                      <span className="text-[8px] text-slate-400">{l.company}</span>
+                      <span className="text-[9px] text-[#001E3C]/80 font-medium truncate block">{l.name}</span>
+                      <span className="text-[8px] text-[#001E3C]/40">{l.company}</span>
                     </div>
                   </div>
                 ))}
@@ -313,18 +313,18 @@ export function DashboardPreview() {
             </div>
 
             {/* Activity feed */}
-            <div className="rounded-lg bg-white border border-slate-200 p-2 shadow-sm">
+            <div className="rounded-lg bg-white border border-[#001E3C]/10 p-2 shadow-sm">
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[10px] font-semibold text-slate-700">Son Fəaliyyət</span>
-                <Clock className="w-3 h-3 text-slate-400" />
+                <span className="text-[10px] font-semibold text-[#001E3C]/80">Son Fəaliyyət</span>
+                <Clock className="w-3 h-3 text-[#001E3C]/40" />
               </div>
               <div className="space-y-[4px]">
                 {activities.map((a) => (
                   <div key={a.text} className="flex items-start gap-1 py-[2px]">
                     <a.icon className={cn("w-3 h-3 mt-[1px] flex-shrink-0", a.color)} />
                     <div className="flex-1 min-w-0">
-                      <span className="text-[9px] text-slate-600 block truncate">{a.text}</span>
-                      <span className="text-[7px] text-slate-300">{a.time}</span>
+                      <span className="text-[9px] text-[#001E3C]/60 block truncate">{a.text}</span>
+                      <span className="text-[7px] text-[#001E3C]/25">{a.time}</span>
                     </div>
                   </div>
                 ))}
@@ -335,9 +335,9 @@ export function DashboardPreview() {
           {/* Row 4: Marketing + Events + Weekly Charts */}
           <div className="grid grid-cols-3 gap-1">
             {/* Marketing campaigns */}
-            <div className="rounded-lg bg-white border border-slate-200 p-2 shadow-sm">
+            <div className="rounded-lg bg-white border border-[#001E3C]/10 p-2 shadow-sm">
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[10px] font-semibold text-slate-700">Kampaniyalar</span>
+                <span className="text-[10px] font-semibold text-[#001E3C]/80">Kampaniyalar</span>
                 <Megaphone className="w-3 h-3 text-violet-500" />
               </div>
               {[
@@ -346,7 +346,7 @@ export function DashboardPreview() {
               ].map((c) => (
                 <div key={c.name} className="mb-1.5 last:mb-0">
                   <div className="flex items-center justify-between mb-0.5">
-                    <span className="text-[9px] text-slate-700 font-medium">{c.name}</span>
+                    <span className="text-[9px] text-[#001E3C]/80 font-medium">{c.name}</span>
                     <span className="text-[7px] px-1 py-0.5 rounded bg-emerald-50 text-emerald-600 border border-emerald-200">Aktiv</span>
                   </div>
                   <div className="grid grid-cols-3 gap-1">
@@ -355,9 +355,9 @@ export function DashboardPreview() {
                       { v: c.open, l: "Açılma" },
                       { v: c.click, l: "Klik" },
                     ].map((m) => (
-                      <div key={m.l} className="text-center p-0.5 rounded bg-slate-50 border border-slate-100">
-                        <div className="text-[9px] font-semibold text-slate-700">{m.v}</div>
-                        <div className="text-[7px] text-slate-400">{m.l}</div>
+                      <div key={m.l} className="text-center p-0.5 rounded bg-[#F3F4F7] border border-[#001E3C]/8">
+                        <div className="text-[9px] font-semibold text-[#001E3C]/80">{m.v}</div>
+                        <div className="text-[7px] text-[#001E3C]/40">{m.l}</div>
                       </div>
                     ))}
                   </div>
@@ -366,9 +366,9 @@ export function DashboardPreview() {
             </div>
 
             {/* Events */}
-            <div className="rounded-lg bg-white border border-slate-200 p-2 shadow-sm">
+            <div className="rounded-lg bg-white border border-[#001E3C]/10 p-2 shadow-sm">
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[10px] font-semibold text-slate-700">Tədbirlər</span>
+                <span className="text-[10px] font-semibold text-[#001E3C]/80">Tədbirlər</span>
                 <Calendar className="w-3 h-3 text-violet-500" />
               </div>
               {[
@@ -382,8 +382,8 @@ export function DashboardPreview() {
                     <span className="text-[9px] font-bold text-violet-700 leading-none">{e.date.split(" ")[1]}</span>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <span className="text-[9px] text-slate-700 font-medium truncate block">{e.title}</span>
-                    <span className="text-[7px] text-slate-400">{e.type} • {e.att} nəfər</span>
+                    <span className="text-[9px] text-[#001E3C]/80 font-medium truncate block">{e.title}</span>
+                    <span className="text-[7px] text-[#001E3C]/40">{e.type} • {e.att} nəfər</span>
                   </div>
                   <CheckCircle2 className="w-3 h-3 text-emerald-500 flex-shrink-0" />
                 </div>
@@ -391,38 +391,38 @@ export function DashboardPreview() {
             </div>
 
             {/* Weekly mini charts */}
-            <div className="rounded-lg bg-white border border-slate-200 p-2 shadow-sm">
+            <div className="rounded-lg bg-white border border-[#001E3C]/10 p-2 shadow-sm">
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[10px] font-semibold text-slate-700">Həftəlik</span>
-                <BarChart3 className="w-3 h-3 text-slate-400" />
+                <span className="text-[10px] font-semibold text-[#001E3C]/80">Həftəlik</span>
+                <BarChart3 className="w-3 h-3 text-[#001E3C]/40" />
               </div>
               <div className="space-y-2">
                 <div>
                   <div className="flex items-center justify-between mb-0.5">
-                    <span className="text-[8px] text-slate-400">Yeni lidlər</span>
+                    <span className="text-[8px] text-[#001E3C]/40">Yeni lidlər</span>
                     <span className="text-[8px] font-semibold text-violet-600">165</span>
                   </div>
                   <MiniBarChart data={leadsWeekly} color="bg-violet-400" height="h-6" />
                 </div>
                 <div>
                   <div className="flex items-center justify-between mb-0.5">
-                    <span className="text-[8px] text-slate-400">Tiketlər</span>
+                    <span className="text-[8px] text-[#001E3C]/40">Tiketlər</span>
                     <span className="text-[8px] font-semibold text-cyan-600">75</span>
                   </div>
                   <MiniBarChart data={ticketsDaily} color="bg-cyan-400" height="h-6" />
                 </div>
-                <div className="grid grid-cols-3 gap-1 pt-1 border-t border-slate-100">
+                <div className="grid grid-cols-3 gap-1 pt-1 border-t border-[#001E3C]/8">
                   <div className="text-center">
-                    <div className="text-[9px] font-bold text-slate-700">94%</div>
-                    <div className="text-[7px] text-slate-400">SLA</div>
+                    <div className="text-[9px] font-bold text-[#001E3C]/80">94%</div>
+                    <div className="text-[7px] text-[#001E3C]/40">SLA</div>
                   </div>
                   <div className="text-center">
                     <div className="text-[9px] font-bold text-emerald-600">4.7</div>
-                    <div className="text-[7px] text-slate-400">CSAT</div>
+                    <div className="text-[7px] text-[#001E3C]/40">CSAT</div>
                   </div>
                   <div className="text-center">
                     <div className="text-[9px] font-bold text-violet-600">2.1h</div>
-                    <div className="text-[7px] text-slate-400">Ort. cavab</div>
+                    <div className="text-[7px] text-[#001E3C]/40">Ort. cavab</div>
                   </div>
                 </div>
               </div>

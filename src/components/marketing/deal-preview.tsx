@@ -38,7 +38,7 @@ function MiniDonut({ segments, size = 48, label }: { segments: { pct: number; co
   const r = size / 2 - 6, c = 2 * Math.PI * r
   return (
     <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="flex-shrink-0">
-      <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="#f1f5f9" strokeWidth="5" />
+      <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="#E8E9ED" strokeWidth="5" />
       {segments.map((seg, i) => {
         const dash = (seg.pct / 100) * c
         const el = (
@@ -49,7 +49,7 @@ function MiniDonut({ segments, size = 48, label }: { segments: { pct: number; co
         offset += dash
         return el
       })}
-      {label && <text x={size/2} y={size/2+3} textAnchor="middle" className="text-[8px] font-bold fill-slate-700">{label}</text>}
+      {label && <text x={size/2} y={size/2+3} textAnchor="middle" className="text-[8px] font-bold fill-[#001E3C]/80">{label}</text>}
     </svg>
   )
 }
@@ -118,22 +118,22 @@ export function DealPreview() {
       <div className="flex items-center justify-between px-3 py-1.5 bg-[#0f172a] text-white">
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1">
-            <div className="w-4 h-4 rounded bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center">
+            <div className="w-4 h-4 rounded bg-gradient-to-br from-[#0176D3] to-[#0176D3] flex items-center justify-center">
               <Zap className="w-2.5 h-2.5 text-white" />
             </div>
             <span className="text-[10px] font-bold">LeadDrive</span>
           </div>
-          <div className="flex items-center gap-0.5 bg-slate-800 rounded-md px-2 py-1">
-            <Search className="w-2.5 h-2.5 text-slate-400" />
-            <span className="text-[9px] text-slate-400 ml-1">Axtar...</span>
+          <div className="flex items-center gap-0.5 bg-[#001E3C]/60 rounded-md px-2 py-1">
+            <Search className="w-2.5 h-2.5 text-[#001E3C]/40" />
+            <span className="text-[9px] text-[#001E3C]/40 ml-1">Axtar...</span>
           </div>
         </div>
         <div className="flex items-center gap-2">
           <div className="relative">
-            <Bell className="w-3 h-3 text-slate-400" />
+            <Bell className="w-3 h-3 text-[#001E3C]/40" />
             <div className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-red-500" />
           </div>
-          <div className="w-5 h-5 rounded-full bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center text-[8px] font-bold">R</div>
+          <div className="w-5 h-5 rounded-full bg-gradient-to-br from-[#0176D3] to-[#0176D3] flex items-center justify-center text-[8px] font-bold">R</div>
         </div>
       </div>
 
@@ -143,7 +143,7 @@ export function DealPreview() {
           {sidebarItems.map((item) => (
             <div key={item.label} className={cn(
               "flex items-center gap-2 px-3 py-[5px] text-[9px] cursor-default transition-colors",
-              item.active ? "bg-orange-600/20 text-orange-300 border-l-2 border-orange-400" : "text-slate-400 border-l-2 border-transparent"
+              item.active ? "bg-[#0176D3]/20 text-[#0176D3] border-l-2 border-[#0176D3]" : "text-[#001E3C]/40 border-l-2 border-transparent"
             )}>
               <item.icon className="w-3 h-3 flex-shrink-0" />
               <span className="truncate">{item.label}</span>
@@ -152,16 +152,16 @@ export function DealPreview() {
         </div>
 
         {/* Main content */}
-        <div className="flex-1 bg-slate-50 p-1.5 space-y-1 min-w-0">
+        <div className="flex-1 bg-[#F3F4F7] p-1.5 space-y-1 min-w-0">
           {/* Page header */}
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-[13px] font-bold text-slate-800">Satış Pipeline & Analitika</h2>
-              <p className="text-[8px] text-slate-400">26 sövdələşmə • ₼285.5K huni dəyəri</p>
+              <h2 className="text-[13px] font-bold text-[#001E3C]">Satış Pipeline & Analitika</h2>
+              <p className="text-[8px] text-[#001E3C]/40">26 sövdələşmə • ₼285.5K huni dəyəri</p>
             </div>
             <div className="flex items-center gap-1">
-              <span className="text-[8px] px-2 py-0.5 rounded-md bg-slate-100 text-slate-500 border border-slate-200">Bu rüb</span>
-              <span className="text-[8px] px-2 py-0.5 rounded-md bg-orange-500 text-white font-medium">+ Yeni sövdələşmə</span>
+              <span className="text-[8px] px-2 py-0.5 rounded-md bg-[#F3F4F7] text-[#001E3C]/60 border border-[#001E3C]/10">Bu rüb</span>
+              <span className="text-[8px] px-2 py-0.5 rounded-md bg-[#0176D3] text-white font-medium">+ Yeni sövdələşmə</span>
             </div>
           </div>
 
@@ -175,14 +175,14 @@ export function DealPreview() {
               { label: "Ort. dəyər", value: "₼11.0K", change: "+8%", icon: Target, color: "text-amber-600", bg: "bg-amber-50 border-amber-100" },
               { label: "Da Vinci Proqnoz", value: "₼142K", change: "Bu rüb", icon: Bot, color: "text-pink-600", bg: "bg-pink-50 border-pink-100" },
             ].map((kpi) => (
-              <div key={kpi.label} className="rounded-lg bg-white border border-slate-200 p-2 shadow-sm">
+              <div key={kpi.label} className="rounded-lg bg-white border border-[#001E3C]/10 p-2 shadow-sm">
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-[8px] text-slate-400 uppercase tracking-wider">{kpi.label}</span>
+                  <span className="text-[8px] text-[#001E3C]/40 uppercase tracking-wider">{kpi.label}</span>
                   <div className={cn("w-5 h-5 rounded flex items-center justify-center border", kpi.bg)}>
                     <kpi.icon className={cn("w-2.5 h-2.5", kpi.color)} />
                   </div>
                 </div>
-                <div className="text-sm font-bold text-slate-900">{kpi.value}</div>
+                <div className="text-sm font-bold text-[#001E3C]">{kpi.value}</div>
                 <div className="flex items-center gap-0.5 mt-0.5">
                   <ArrowUpRight className="w-2 h-2 text-emerald-500" />
                   <span className="text-[8px] text-emerald-600">{kpi.change}</span>
@@ -194,52 +194,52 @@ export function DealPreview() {
           {/* Row 2: Kanban Mini + Revenue Projection + Win/Loss */}
           <div className="grid grid-cols-3 gap-1">
             {/* Mini Kanban columns */}
-            <div className="rounded-lg bg-white border border-slate-200 p-2 shadow-sm">
+            <div className="rounded-lg bg-white border border-[#001E3C]/10 p-2 shadow-sm">
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[10px] font-semibold text-slate-700">Pipeline Kanban</span>
-                <span className="text-[8px] text-slate-400">26 sövdə</span>
+                <span className="text-[10px] font-semibold text-[#001E3C]/80">Pipeline Kanban</span>
+                <span className="text-[8px] text-[#001E3C]/40">26 sövdə</span>
               </div>
               <div className="flex gap-[3px]">
                 {pipelineStages.map((s) => (
                   <div key={s.label} className="flex-1 min-w-0">
                     <div className="flex items-center gap-0.5 mb-0.5">
                       <div className={cn("w-1 h-1 rounded-full", s.color)} />
-                      <span className="text-[7px] text-slate-500 truncate">{s.label}</span>
+                      <span className="text-[7px] text-[#001E3C]/60 truncate">{s.label}</span>
                     </div>
-                    <div className="text-[8px] font-bold text-slate-700 mb-0.5">{s.amount}</div>
+                    <div className="text-[8px] font-bold text-[#001E3C]/80 mb-0.5">{s.amount}</div>
                     {Array.from({ length: Math.min(s.count, 3) }).map((_, j) => (
-                      <div key={j} className="bg-slate-50 border border-slate-100 rounded p-0.5 mb-[2px]">
-                        <div className="w-full h-[3px] bg-slate-200 rounded" />
-                        <div className="w-2/3 h-[2px] bg-slate-100 rounded mt-[1px]" />
+                      <div key={j} className="bg-[#F3F4F7] border border-[#001E3C]/8 rounded p-0.5 mb-[2px]">
+                        <div className="w-full h-[3px] bg-[#001E3C]/10 rounded" />
+                        <div className="w-2/3 h-[2px] bg-[#F3F4F7] rounded mt-[1px]" />
                       </div>
                     ))}
-                    <span className="text-[6px] text-slate-300">{s.count} sövdə</span>
+                    <span className="text-[6px] text-[#001E3C]/25">{s.count} sövdə</span>
                   </div>
                 ))}
               </div>
             </div>
 
             {/* Revenue projection */}
-            <div className="rounded-lg bg-white border border-slate-200 p-2 shadow-sm">
+            <div className="rounded-lg bg-white border border-[#001E3C]/10 p-2 shadow-sm">
               <div className="flex items-center justify-between mb-1">
-                <span className="text-[10px] font-semibold text-slate-700">Gəlir Proqnozu</span>
+                <span className="text-[10px] font-semibold text-[#001E3C]/80">Gəlir Proqnozu</span>
                 <span className="text-[8px] text-emerald-600 font-medium">↑ 32%</span>
               </div>
               <MiniLineChart data={revenueProjection} color="#8b5cf6" width={180} height={40} />
-              <div className="flex justify-between mt-1 text-[7px] text-slate-300">
+              <div className="flex justify-between mt-1 text-[7px] text-[#001E3C]/25">
                 {["Y","F","M","A","M","İ","İ","A","S","O","N","D"].map((m,i) => <span key={i}>{m}</span>)}
               </div>
-              <div className="mt-1 pt-1 border-t border-slate-100 flex justify-between">
-                <span className="text-[7px] text-slate-400">Çatdırılacaq (proqnoz)</span>
+              <div className="mt-1 pt-1 border-t border-[#001E3C]/8 flex justify-between">
+                <span className="text-[7px] text-[#001E3C]/40">Çatdırılacaq (proqnoz)</span>
                 <span className="text-[8px] font-bold text-violet-600">₼420K</span>
               </div>
             </div>
 
             {/* Win/Loss donut + analysis */}
-            <div className="rounded-lg bg-white border border-slate-200 p-2 shadow-sm">
+            <div className="rounded-lg bg-white border border-[#001E3C]/10 p-2 shadow-sm">
               <div className="flex items-center justify-between mb-1">
-                <span className="text-[10px] font-semibold text-slate-700">Qazanma / İtirmə</span>
-                <span className="text-[8px] text-slate-400">Bu rüb</span>
+                <span className="text-[10px] font-semibold text-[#001E3C]/80">Qazanma / İtirmə</span>
+                <span className="text-[8px] text-[#001E3C]/40">Bu rüb</span>
               </div>
               <div className="flex items-center gap-2">
                 <MiniDonut size={48} segments={[
@@ -249,19 +249,19 @@ export function DealPreview() {
                   {[
                     { l: "Qazanıldı", v: "12", c: "bg-emerald-500", pct: "65%" },
                     { l: "İtirildi", v: "4", c: "bg-red-500", pct: "20%" },
-                    { l: "Davam edir", v: "10", c: "bg-slate-400", pct: "—" },
+                    { l: "Davam edir", v: "10", c: "bg-[#001E3C]/30", pct: "—" },
                   ].map((s) => (
                     <div key={s.l} className="flex items-center gap-1">
                       <div className={cn("w-1.5 h-1.5 rounded-full", s.c)} />
-                      <span className="text-[8px] text-slate-500 flex-1">{s.l}</span>
-                      <span className="text-[8px] font-medium text-slate-700">{s.v}</span>
-                      <span className="text-[7px] text-slate-400">{s.pct}</span>
+                      <span className="text-[8px] text-[#001E3C]/60 flex-1">{s.l}</span>
+                      <span className="text-[8px] font-medium text-[#001E3C]/80">{s.v}</span>
+                      <span className="text-[7px] text-[#001E3C]/40">{s.pct}</span>
                     </div>
                   ))}
                 </div>
               </div>
-              <div className="mt-1 pt-1 border-t border-slate-100 flex justify-between">
-                <span className="text-[7px] text-slate-400">İtirmə səbəbi #1</span>
+              <div className="mt-1 pt-1 border-t border-[#001E3C]/8 flex justify-between">
+                <span className="text-[7px] text-[#001E3C]/40">İtirmə səbəbi #1</span>
                 <span className="text-[8px] text-red-600">Qiymət (45%)</span>
               </div>
             </div>
@@ -270,9 +270,9 @@ export function DealPreview() {
           {/* Row 3: Top Deals + AI Predictions + Competitors */}
           <div className="grid grid-cols-3 gap-1">
             {/* Engagement metrics */}
-            <div className="rounded-lg bg-white border border-slate-200 p-2 shadow-sm">
+            <div className="rounded-lg bg-white border border-[#001E3C]/10 p-2 shadow-sm">
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[10px] font-semibold text-slate-700">Kontakt Meşğulluğu</span>
+                <span className="text-[10px] font-semibold text-[#001E3C]/80">Kontakt Meşğulluğu</span>
                 <MessageSquare className="w-3 h-3 text-cyan-500" />
               </div>
               <div className="grid grid-cols-3 gap-1 mb-1.5">
@@ -284,7 +284,7 @@ export function DealPreview() {
                   <div key={m.label} className={cn("rounded p-1 text-center", m.bg)}>
                     <m.icon className={cn("w-2.5 h-2.5 mx-auto mb-0.5", m.color)} />
                     <div className={cn("text-[9px] font-bold", m.color)}>{m.value}</div>
-                    <div className="text-[7px] text-slate-500">{m.label}</div>
+                    <div className="text-[7px] text-[#001E3C]/60">{m.label}</div>
                   </div>
                 ))}
               </div>
@@ -297,61 +297,61 @@ export function DealPreview() {
                   <div key={a.name} className="flex items-center gap-1 py-[2px]">
                     <div className={cn("w-1 h-3 rounded-full", a.color.replace("text-", "bg-"))} />
                     <div className="flex-1 min-w-0">
-                      <span className="text-[8px] text-slate-700 font-medium block">{a.name}</span>
-                      <span className="text-[7px] text-slate-400">{a.action}</span>
+                      <span className="text-[8px] text-[#001E3C]/80 font-medium block">{a.name}</span>
+                      <span className="text-[7px] text-[#001E3C]/40">{a.action}</span>
                     </div>
-                    <span className="text-[7px] text-slate-300 flex-shrink-0">{a.time}</span>
+                    <span className="text-[7px] text-[#001E3C]/25 flex-shrink-0">{a.time}</span>
                   </div>
                 ))}
               </div>
             </div>
 
             {/* AI Predictions */}
-            <div className="rounded-lg bg-white border border-slate-200 p-2 shadow-sm">
+            <div className="rounded-lg bg-white border border-[#001E3C]/10 p-2 shadow-sm">
               <div className="flex items-center justify-between mb-1.5">
                 <div className="flex items-center gap-1">
                   <Bot className="w-3 h-3 text-violet-500" />
-                  <span className="text-[10px] font-semibold text-slate-700">Da Vinci Proqnoz</span>
+                  <span className="text-[10px] font-semibold text-[#001E3C]/80">Da Vinci Proqnoz</span>
                 </div>
                 <span className="text-[7px] px-1 py-0.5 rounded bg-violet-50 text-violet-600 border border-violet-200">Da Vinci</span>
               </div>
               <div className="space-y-[5px]">
                 {aiPredictions.map((p) => (
-                  <div key={p.deal} className="p-1 rounded bg-slate-50 border border-slate-100">
+                  <div key={p.deal} className="p-1 rounded bg-[#F3F4F7] border border-[#001E3C]/8">
                     <div className="flex items-center gap-1 mb-0.5">
                       <p.icon className={cn("w-2.5 h-2.5 flex-shrink-0", p.color)} />
-                      <span className="text-[9px] font-medium text-slate-700">{p.deal}</span>
+                      <span className="text-[9px] font-medium text-[#001E3C]/80">{p.deal}</span>
                       <span className={cn("text-[7px] ml-auto font-bold", p.color)}>{p.confidence}%</span>
                     </div>
-                    <span className="text-[7px] text-slate-500 block truncate">{p.reason}</span>
+                    <span className="text-[7px] text-[#001E3C]/60 block truncate">{p.reason}</span>
                   </div>
                 ))}
               </div>
             </div>
 
             {/* Competitors + Contact Roles */}
-            <div className="rounded-lg bg-white border border-slate-200 p-2 shadow-sm">
+            <div className="rounded-lg bg-white border border-[#001E3C]/10 p-2 shadow-sm">
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[10px] font-semibold text-slate-700">Rəqib Analizi</span>
-                <Shield className="w-3 h-3 text-orange-500" />
+                <span className="text-[10px] font-semibold text-[#001E3C]/80">Rəqib Analizi</span>
+                <Shield className="w-3 h-3 text-[#0176D3]" />
               </div>
               <div className="space-y-[4px] mb-1.5">
                 {competitors.map((c) => (
                   <div key={c.name} className="flex items-center gap-1 py-[2px]">
-                    <span className="text-[9px] text-slate-700 font-medium flex-1">{c.name}</span>
-                    <span className="text-[8px] text-slate-500">{c.deals} sövdə</span>
+                    <span className="text-[9px] text-[#001E3C]/80 font-medium flex-1">{c.name}</span>
+                    <span className="text-[8px] text-[#001E3C]/60">{c.deals} sövdə</span>
                     <span className={cn("text-[7px] px-1 py-0.5 rounded border font-medium", c.color)}>{c.threat}</span>
                   </div>
                 ))}
               </div>
-              <div className="pt-1 border-t border-slate-100">
-                <span className="text-[8px] font-semibold text-slate-600 block mb-1">Kontakt Rolları</span>
+              <div className="pt-1 border-t border-[#001E3C]/8">
+                <span className="text-[8px] font-semibold text-[#001E3C]/60 block mb-1">Kontakt Rolları</span>
                 {contactRoles.map((c) => (
                   <div key={c.name} className="flex items-center gap-1 py-[2px]">
                     <div className={cn("w-1 h-3.5 rounded-full flex-shrink-0", c.color)} />
-                    <span className="text-[8px] text-slate-700 flex-1">{c.name}</span>
-                    <span className="text-[7px] text-slate-400">{c.role}</span>
-                    <span className="text-[7px] font-semibold text-slate-600">{c.loyalty}%</span>
+                    <span className="text-[8px] text-[#001E3C]/80 flex-1">{c.name}</span>
+                    <span className="text-[7px] text-[#001E3C]/40">{c.role}</span>
+                    <span className="text-[7px] font-semibold text-[#001E3C]/60">{c.loyalty}%</span>
                   </div>
                 ))}
               </div>
@@ -361,33 +361,33 @@ export function DealPreview() {
           {/* Row 4: Deal velocity + Weekly closings + Next Best Offers */}
           <div className="grid grid-cols-3 gap-1">
             {/* Deal velocity */}
-            <div className="rounded-lg bg-white border border-slate-200 p-2 shadow-sm">
+            <div className="rounded-lg bg-white border border-[#001E3C]/10 p-2 shadow-sm">
               <div className="flex items-center justify-between mb-1">
-                <span className="text-[10px] font-semibold text-slate-700">Sövdələşmə Sürəti</span>
+                <span className="text-[10px] font-semibold text-[#001E3C]/80">Sövdələşmə Sürəti</span>
                 <span className="text-[8px] text-emerald-600 font-medium">↑ 15%</span>
               </div>
               <MiniLineChart data={dealVelocity} color="#06b6d4" width={180} height={35} />
-              <div className="grid grid-cols-3 gap-1 pt-1 mt-1 border-t border-slate-100">
+              <div className="grid grid-cols-3 gap-1 pt-1 mt-1 border-t border-[#001E3C]/8">
                 <div className="text-center">
-                  <div className="text-[9px] font-bold text-slate-700">24 gün</div>
-                  <div className="text-[7px] text-slate-400">Ort. dövrü</div>
+                  <div className="text-[9px] font-bold text-[#001E3C]/80">24 gün</div>
+                  <div className="text-[7px] text-[#001E3C]/40">Ort. dövrü</div>
                 </div>
                 <div className="text-center">
                   <div className="text-[9px] font-bold text-emerald-600">12 gün</div>
-                  <div className="text-[7px] text-slate-400">Ən sürətli</div>
+                  <div className="text-[7px] text-[#001E3C]/40">Ən sürətli</div>
                 </div>
                 <div className="text-center">
                   <div className="text-[9px] font-bold text-amber-600">45 gün</div>
-                  <div className="text-[7px] text-slate-400">Ən yavaş</div>
+                  <div className="text-[7px] text-[#001E3C]/40">Ən yavaş</div>
                 </div>
               </div>
             </div>
 
             {/* Upcoming deal tasks */}
-            <div className="rounded-lg bg-white border border-slate-200 p-2 shadow-sm">
+            <div className="rounded-lg bg-white border border-[#001E3C]/10 p-2 shadow-sm">
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[10px] font-semibold text-slate-700">Növbəti Addımlar</span>
-                <FileText className="w-3 h-3 text-orange-500" />
+                <span className="text-[10px] font-semibold text-[#001E3C]/80">Növbəti Addımlar</span>
+                <FileText className="w-3 h-3 text-[#0176D3]" />
               </div>
               <div className="space-y-[4px]">
                 {[
@@ -399,39 +399,39 @@ export function DealPreview() {
                   <div key={t.task} className="flex items-center gap-1 py-[2px]">
                     <div className={cn("w-1 h-3.5 rounded-full flex-shrink-0", t.color)} />
                     <div className="flex-1 min-w-0">
-                      <span className="text-[8px] text-slate-700 font-medium block truncate">{t.task}</span>
-                      <span className="text-[7px] text-slate-400">{t.priority}</span>
+                      <span className="text-[8px] text-[#001E3C]/80 font-medium block truncate">{t.task}</span>
+                      <span className="text-[7px] text-[#001E3C]/40">{t.priority}</span>
                     </div>
-                    <span className="text-[7px] text-slate-500 flex-shrink-0 font-medium">{t.due}</span>
+                    <span className="text-[7px] text-[#001E3C]/60 flex-shrink-0 font-medium">{t.due}</span>
                   </div>
                 ))}
               </div>
-              <div className="mt-1 pt-1 border-t border-slate-100 flex justify-between">
-                <span className="text-[7px] text-slate-400">Gecikmiş tapşırıqlar</span>
+              <div className="mt-1 pt-1 border-t border-[#001E3C]/8 flex justify-between">
+                <span className="text-[7px] text-[#001E3C]/40">Gecikmiş tapşırıqlar</span>
                 <span className="text-[8px] text-red-600 font-semibold">2</span>
               </div>
             </div>
 
             {/* Next Best Offers */}
-            <div className="rounded-lg bg-white border border-slate-200 p-2 shadow-sm">
+            <div className="rounded-lg bg-white border border-[#001E3C]/10 p-2 shadow-sm">
               <div className="flex items-center justify-between mb-1.5">
                 <div className="flex items-center gap-1">
-                  <Zap className="w-3 h-3 text-orange-500" />
-                  <span className="text-[10px] font-semibold text-slate-700">Next Best Offers</span>
+                  <Zap className="w-3 h-3 text-[#0176D3]" />
+                  <span className="text-[10px] font-semibold text-[#001E3C]/80">Next Best Offers</span>
                 </div>
               </div>
               {[
                 { name: "Cloud Migration", client: "NeftGaz", match: 96, price: "₼8,000", color: "from-violet-500 to-blue-500" },
                 { name: "Cybersecurity Suite", client: "BankTech", match: 88, price: "₼3,600", color: "from-emerald-500 to-teal-500" },
-                { name: "Data Analytics Pro", client: "FinServ", match: 72, price: "₼15,000", color: "from-orange-500 to-red-500" },
+                { name: "Data Analytics Pro", client: "FinServ", match: 72, price: "₼15,000", color: "from-[#0176D3] to-[#7D55C7]" },
               ].map((offer) => (
-                <div key={offer.name} className="flex items-center gap-1 p-1 rounded bg-slate-50 border border-slate-100 mb-[3px]">
+                <div key={offer.name} className="flex items-center gap-1 p-1 rounded bg-[#F3F4F7] border border-[#001E3C]/8 mb-[3px]">
                   <div className={cn("w-4 h-4 rounded flex items-center justify-center flex-shrink-0 bg-gradient-to-br", offer.color)}>
                     <Shield className="w-2 h-2 text-white" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <span className="text-[8px] font-medium text-slate-700 block truncate">{offer.name}</span>
-                    <span className="text-[7px] text-slate-400">{offer.client} • {offer.price}</span>
+                    <span className="text-[8px] font-medium text-[#001E3C]/80 block truncate">{offer.name}</span>
+                    <span className="text-[7px] text-[#001E3C]/40">{offer.client} • {offer.price}</span>
                   </div>
                   <div className={cn(
                     "w-6 h-4 rounded flex items-center justify-center text-[7px] font-bold flex-shrink-0",

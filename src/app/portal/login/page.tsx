@@ -43,14 +43,14 @@ export default function PortalLoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
-      <Card className="w-full max-w-md">
+      <Card className="w-full max-w-md shadow-[0_1px_3px_rgba(0,0,0,0.05)]">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl">{t("loginTitle")}</CardTitle>
           <p className="text-sm text-muted-foreground">{t("loginSubtitle")}</p>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleLogin} className="space-y-4">
-            {error && <div className="text-sm text-red-500 bg-red-50 dark:bg-red-900/20 p-2 rounded">{error}</div>}
+            {error && <div className="text-sm text-destructive bg-destructive/10 p-2 rounded-lg">{error}</div>}
             <div>
               <label className="text-sm font-medium">Email</label>
               <Input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="your@company.com" className="mt-1" required />
@@ -70,7 +70,7 @@ export default function PortalLoginPage() {
                 </button>
               </div>
             </div>
-            <Button type="submit" className="w-full" disabled={loading}>
+            <Button type="submit" className="w-full rounded-full" disabled={loading}>
               {loading ? "..." : "Sign in"}
             </Button>
           </form>

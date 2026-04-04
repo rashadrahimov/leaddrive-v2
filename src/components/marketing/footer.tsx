@@ -58,16 +58,16 @@ const socialLinks = [
 
 export function MarketingFooter() {
   return (
-    <footer className="bg-slate-950 text-white border-t border-slate-800">
+    <footer className="bg-[#001E3C] text-white border-t border-white/10">
       <div className="mx-auto max-w-7xl px-4 lg:px-8 py-16">
         <div className="grid grid-cols-2 md:grid-cols-5 gap-8 lg:gap-12">
           {/* Brand column */}
           <div className="col-span-2 md:col-span-1">
             <Logo size="md" sidebar />
-            <p className="mt-4 text-sm text-slate-300 leading-relaxed">
+            <p className="mt-4 text-sm text-white/70 leading-relaxed">
               İntellektual CRM platforması — satış, marketinq, dəstək və analitika bir yerdə.
             </p>
-            <div className="mt-4 space-y-1.5 text-sm text-slate-400">
+            <div className="mt-4 space-y-1.5 text-sm text-white/50">
               <p>📧 info@leaddrivecrm.org</p>
               <p>📱 +994 10 531 30 65</p>
             </div>
@@ -83,7 +83,7 @@ export function MarketingFooter() {
                   <li key={link.label}>
                     <Link
                       href={link.href}
-                      className="text-sm text-slate-300 hover:text-white transition-colors"
+                      className="text-sm text-white/70 hover:text-white transition-colors"
                     >
                       {link.label}
                     </Link>
@@ -95,11 +95,11 @@ export function MarketingFooter() {
         </div>
 
         {/* Bottom bar */}
-        <div className="mt-12 pt-8 border-t border-slate-800 flex flex-col md:flex-row items-center justify-between gap-4">
-          <p className="text-sm text-slate-400">
+        <div className="mt-12 pt-8 border-t border-white/10 flex flex-col md:flex-row items-center justify-between gap-4">
+          <p className="text-sm text-white/50">
             &copy; {new Date().getFullYear()} Güvən Technology LLC. Bütün hüquqlar qorunur.
           </p>
-          <p className="text-sm text-slate-400">
+          <p className="text-sm text-white/50">
             Bakı, Azərbaycan
           </p>
         </div>

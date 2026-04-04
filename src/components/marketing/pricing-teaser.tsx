@@ -11,13 +11,13 @@ export function PricingTeaser() {
     <section id="pricing" className="relative bg-white py-20 lg:py-28">
       <div className="mx-auto max-w-7xl px-4 lg:px-8">
         <AnimateIn className="text-center mb-14">
-          <p className="text-sm font-medium text-slate-400 uppercase tracking-widest mb-3">
+          <p className="text-sm font-medium text-[#001E3C]/40 uppercase tracking-widest mb-3">
             Qiymətlər
           </p>
-          <h2 className="text-3xl lg:text-4xl font-bold tracking-tight text-slate-900">
+          <h2 className="text-3xl lg:text-4xl font-bold tracking-tight text-[#001E3C]">
             Sizinlə birlikdə böyüyən planlar
           </h2>
-          <p className="mt-4 text-lg text-slate-500 max-w-xl mx-auto">
+          <p className="mt-4 text-lg text-[#001E3C]/60 max-w-xl mx-auto">
             Pulsuz başlayın, hazır olanda yüksəldin. Gizli ödənişlər yoxdur.
           </p>
         </AnimateIn>
@@ -32,22 +32,22 @@ export function PricingTeaser() {
                 className={cn(
                   "relative h-full rounded-2xl border p-6 lg:p-7 flex flex-col transition-all duration-300",
                   plan.popular
-                    ? "border-slate-900 bg-white ring-1 ring-slate-900 shadow-xl shadow-slate-200/50 lg:scale-[1.03]"
-                    : "border-slate-200 bg-white hover:border-slate-300 hover:shadow-lg hover:shadow-slate-100/80"
+                    ? "border-[#0176D3] bg-white ring-1 ring-[#0176D3] shadow-xl shadow-[#0176D3]/10 lg:scale-[1.03]"
+                    : "border-[#001E3C]/10 bg-white hover:border-[#001E3C]/15 hover:shadow-lg hover:shadow-[#001E3C]/5"
                 )}
               >
                 {/* Popular badge */}
                 {plan.popular && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-xs font-semibold px-4 py-1 rounded-full">
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#0176D3] text-white text-xs font-semibold px-4 py-1 rounded-full">
                     Ən populyar
                   </div>
                 )}
 
-                <h3 className="text-lg font-semibold text-slate-900">{plan.name}</h3>
-                <p className="text-sm text-slate-500 mt-1 mb-6">{plan.tagline}</p>
+                <h3 className="text-lg font-semibold text-[#001E3C]">{plan.name}</h3>
+                <p className="text-sm text-[#001E3C]/60 mt-1 mb-6">{plan.tagline}</p>
 
                 <div className="mb-6">
-                  <span className="text-base font-medium text-slate-700">Satışla əlaqə</span>
+                  <span className="text-base font-medium text-[#001E3C]">Satışla əlaqə</span>
                 </div>
 
                 <ul className="space-y-2.5 flex-1">
@@ -55,13 +55,13 @@ export function PricingTeaser() {
                     <li key={feature} className="flex items-start gap-2">
                       <Check className={cn(
                         "h-4 w-4 mt-0.5 shrink-0",
-                        plan.popular ? "text-slate-900" : "text-orange-500"
+                        plan.popular ? "text-[#0176D3]" : "text-[#0176D3]"
                       )} />
-                      <span className="text-sm text-slate-600">{feature}</span>
+                      <span className="text-sm text-[#001E3C]/60">{feature}</span>
                     </li>
                   ))}
                   {plan.features.length > 6 && (
-                    <li className="text-xs text-slate-400 pl-6">
+                    <li className="text-xs text-[#001E3C]/40 pl-6">
                       + {plan.features.length - 6} daha çox
                     </li>
                   )}
@@ -72,8 +72,8 @@ export function PricingTeaser() {
                   className={cn(
                     "mt-8 block text-center py-3 px-4 rounded-full text-sm font-semibold transition-all duration-200",
                     plan.popular
-                      ? "bg-slate-900 text-white hover:bg-slate-800 shadow-lg shadow-slate-900/10"
-                      : "border border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300"
+                      ? "bg-[#0176D3] text-white hover:bg-[#0176D3]/90 shadow-lg shadow-[#0176D3]/10"
+                      : "border border-[#001E3C]/10 text-[#001E3C] hover:bg-[#F3F4F7] hover:border-[#001E3C]/15"
                   )}
                 >
                   {plan.popular ? "Demo tələb et" : "Başla"}
@@ -86,7 +86,7 @@ export function PricingTeaser() {
         <AnimateIn delay={400} className="text-center mt-10">
           <Link
             href="/plans"
-            className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-400 hover:text-slate-600 transition-colors"
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-[#001E3C]/40 hover:text-[#001E3C]/60 transition-colors"
           >
             Bütün xüsusiyyətləri müqayisə et <ArrowRight className="h-3.5 w-3.5" />
           </Link>

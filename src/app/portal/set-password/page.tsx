@@ -13,7 +13,7 @@ export default function SetPasswordPage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <Card className="w-full max-w-md">
+        <Card className="w-full max-w-md shadow-[0_1px_3px_rgba(0,0,0,0.05)]">
           <CardContent className="py-10 text-center">
             <Loader2 className="h-10 w-10 text-primary mx-auto mb-3 animate-spin" />
             <p className="text-sm text-muted-foreground">Loading...</p>
@@ -95,7 +95,7 @@ function SetPasswordContent() {
   if (verifying) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <Card className="w-full max-w-md">
+        <Card className="w-full max-w-md shadow-[0_1px_3px_rgba(0,0,0,0.05)]">
           <CardContent className="py-10 text-center">
             <Loader2 className="h-10 w-10 text-primary mx-auto mb-3 animate-spin" />
             <p className="text-sm text-muted-foreground">Loading...</p>
@@ -108,9 +108,9 @@ function SetPasswordContent() {
   if (!valid) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <Card className="w-full max-w-md">
+        <Card className="w-full max-w-md shadow-[0_1px_3px_rgba(0,0,0,0.05)]">
           <CardContent className="py-10 text-center">
-            <XCircle className="h-12 w-12 text-red-500 mx-auto mb-3" />
+            <XCircle className="h-12 w-12 text-destructive mx-auto mb-3" />
             <h2 className="text-xl font-semibold mb-2">{t("invalidLink")}</h2>
             <p className="text-sm text-muted-foreground mb-4">{tokenError}</p>
             <Link href="/portal/register" className="text-sm text-primary hover:underline">
@@ -125,9 +125,9 @@ function SetPasswordContent() {
   if (success) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <Card className="w-full max-w-md">
+        <Card className="w-full max-w-md shadow-[0_1px_3px_rgba(0,0,0,0.05)]">
           <CardContent className="py-10 text-center">
-            <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-3" />
+            <CheckCircle className="h-12 w-12 text-primary mx-auto mb-3" />
             <h2 className="text-xl font-semibold mb-1">{t("registrationComplete")}</h2>
             <p className="text-sm text-muted-foreground">{t("redirecting")}</p>
           </CardContent>
@@ -138,7 +138,7 @@ function SetPasswordContent() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
-      <Card className="w-full max-w-md">
+      <Card className="w-full max-w-md shadow-[0_1px_3px_rgba(0,0,0,0.05)]">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl">{t("createPassword")}</CardTitle>
           <p className="text-sm text-muted-foreground">
@@ -147,7 +147,7 @@ function SetPasswordContent() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
-            {error && <div className="text-sm text-red-500 bg-red-50 dark:bg-red-900/20 p-2 rounded">{error}</div>}
+            {error && <div className="text-sm text-destructive bg-destructive/10 p-2 rounded-lg">{error}</div>}
             <div>
               <label className="text-sm font-medium">Email</label>
               <Input type="email" value={contactEmail} disabled className="mt-1 bg-muted" />
@@ -179,10 +179,10 @@ function SetPasswordContent() {
                 required
               />
               {confirmPassword && password !== confirmPassword && (
-                <p className="text-xs text-red-500 mt-1">{t("passwordsMismatch")}</p>
+                <p className="text-xs text-destructive mt-1">{t("passwordsMismatch")}</p>
               )}
             </div>
-            <Button type="submit" className="w-full" disabled={saving}>
+            <Button type="submit" className="w-full rounded-full" disabled={saving}>
               {saving ? t("savingPassword") : t("createPasswordBtn")}
             </Button>
           </form>

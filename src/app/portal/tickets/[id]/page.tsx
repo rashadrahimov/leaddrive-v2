@@ -179,7 +179,7 @@ export default function PortalTicketDetailPage() {
         </CardHeader>
         {ticket.description && (
           <CardContent className="pt-0">
-            <div className="p-3 bg-muted/50 rounded-lg">
+            <div className="p-3 bg-muted/50 rounded-lg border border-border">
               <p className="text-sm whitespace-pre-wrap">{ticket.description}</p>
             </div>
           </CardContent>
@@ -202,15 +202,15 @@ export default function PortalTicketDetailPage() {
             <div key={comment.id} className={`flex gap-3 ${comment.isAgent ? "" : "flex-row-reverse"}`}>
               <div className={`h-8 w-8 rounded-full flex items-center justify-center text-xs font-medium flex-shrink-0 ${
                 comment.isAgent
-                  ? "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300"
-                  : "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300"
+                  ? "bg-[hsl(var(--ai-from))]/10 text-[hsl(var(--ai-from))]"
+                  : "bg-primary/10 text-primary"
               }`}>
                 {comment.isAgent ? <Headphones className="h-4 w-4" /> : <User className="h-4 w-4" />}
               </div>
               <div className={`max-w-[80%] ${comment.isAgent ? "" : "text-right"}`}>
-                <div className={`inline-block p-3 rounded-lg text-sm ${
+                <div className={`inline-block p-3 rounded-lg text-sm shadow-[0_1px_3px_rgba(0,0,0,0.05)] ${
                   comment.isAgent
-                    ? "bg-muted text-foreground"
+                    ? "bg-card border border-border text-foreground"
                     : "bg-primary text-primary-foreground"
                 }`}>
                   <p className="whitespace-pre-wrap">{comment.comment}</p>
@@ -268,7 +268,7 @@ export default function PortalTicketDetailPage() {
 
       {/* CSAT Rating */}
       {canRate && (
-        <Card className="border-yellow-200 dark:border-yellow-800">
+        <Card className="border-[hsl(var(--ai-from))]/20">
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
               <Star className="h-4 w-4 text-yellow-500" /> Rate support quality
@@ -306,7 +306,7 @@ export default function PortalTicketDetailPage() {
             <Button
               onClick={handleSubmitCsat}
               disabled={csatRating === 0 || csatSending}
-              className="bg-yellow-500 hover:bg-yellow-600 text-white"
+              className="rounded-full"
             >
               {csatSending ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Star className="h-4 w-4 mr-1" />}
               Submit rating
@@ -317,7 +317,7 @@ export default function PortalTicketDetailPage() {
 
       {/* Already rated */}
       {csatSent && ticket.satisfactionRating && (
-        <Card className="border-green-200 dark:border-green-800">
+        <Card className="border-primary/20">
           <CardContent className="py-4">
             <div className="flex items-center gap-2">
               <span className="text-sm text-muted-foreground">Your rating:</span>

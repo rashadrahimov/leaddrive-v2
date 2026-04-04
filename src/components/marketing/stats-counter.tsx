@@ -119,7 +119,7 @@ export function StatsCounter() {
       <div className="mx-auto max-w-7xl px-4 lg:px-8">
         {/* Section micro-header */}
         <AnimateIn>
-          <p className="text-center text-sm font-medium text-slate-400 uppercase tracking-widest mb-10">
+          <p className="text-center text-sm font-medium text-[#001E3C]/40 uppercase tracking-widest mb-10">
             Platforma rəqəmlərdə
           </p>
         </AnimateIn>
@@ -130,7 +130,7 @@ export function StatsCounter() {
             const Icon = m.icon
             return (
               <AnimateIn key={m.label} delay={i * 80}>
-                <div className="group relative rounded-2xl border border-slate-100 bg-white p-5 lg:p-6 hover:border-slate-200 hover:shadow-lg hover:shadow-slate-100/80 transition-all duration-300">
+                <div className="group relative rounded-2xl border border-[#001E3C]/10 bg-white p-5 lg:p-6 hover:border-[#001E3C]/15 hover:shadow-lg hover:shadow-[#001E3C]/5 transition-all duration-300 shadow-[0_1px_3px_rgba(0,0,0,0.05)]">
                   {/* Icon + trend */}
                   <div className="flex items-center justify-between mb-4">
                     <div
@@ -149,13 +149,13 @@ export function StatsCounter() {
                   </div>
 
                   {/* Number */}
-                  <div className="text-3xl lg:text-4xl font-bold tabular-nums text-slate-900 leading-none">
+                  <div className="text-3xl lg:text-4xl font-bold tabular-nums text-[#001E3C] leading-none">
                     <Counter value={m.value} suffix={m.suffix} />
                   </div>
 
                   {/* Label */}
-                  <div className="mt-1.5 text-sm font-medium text-slate-700">{m.label}</div>
-                  <div className="text-xs text-slate-400">{m.sublabel}</div>
+                  <div className="mt-1.5 text-sm font-medium text-[#001E3C]">{m.label}</div>
+                  <div className="text-xs text-[#001E3C]/40">{m.sublabel}</div>
 
                   {/* Sparkline */}
                   <div className="mt-3 opacity-60 group-hover:opacity-100 transition-opacity">

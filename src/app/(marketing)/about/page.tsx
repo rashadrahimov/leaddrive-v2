@@ -34,7 +34,7 @@ const organizationJsonLd = {
 
 export default function AboutPage() {
   return (
-    <div className="min-h-screen bg-slate-950">
+    <div className="min-h-screen bg-white">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
@@ -43,10 +43,10 @@ export default function AboutPage() {
       <section className="relative pt-32 pb-16 text-center">
         <div className="mx-auto max-w-3xl px-4">
           <AnimateIn>
-            <h1 className="text-4xl sm:text-5xl font-bold text-white tracking-tight">
+            <h1 className="text-4xl sm:text-5xl font-bold text-[#001E3C] tracking-tight">
               Haqqımızda
             </h1>
-            <p className="mt-4 text-lg text-slate-400 leading-relaxed">
+            <p className="mt-4 text-lg text-[#001E3C]/60 leading-relaxed">
               Güvən Technology LLC — Bakıda yerləşən texnologiya şirkəti.
               Biznesin rəqəmsal transformasiyasını sürətləndiririk.
             </p>
@@ -59,24 +59,24 @@ export default function AboutPage() {
         <div className="mx-auto max-w-6xl px-4 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <AnimateIn delay={0.1}>
-              <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-8">
-                <div className="rounded-lg bg-orange-500/10 w-12 h-12 flex items-center justify-center mb-4">
-                  <Target className="h-6 w-6 text-orange-400" />
+              <div className="rounded-2xl border border-[#001E3C]/10 bg-[#F3F4F7] p-8">
+                <div className="rounded-lg bg-[#0176D3]/10 w-12 h-12 flex items-center justify-center mb-4">
+                  <Target className="h-6 w-6 text-[#0176D3]" />
                 </div>
-                <h2 className="text-2xl font-bold text-white mb-4">Missiyamız</h2>
-                <p className="text-slate-400 leading-relaxed">
+                <h2 className="text-2xl font-bold text-[#001E3C] mb-4">Missiyamız</h2>
+                <p className="text-[#001E3C]/60 leading-relaxed">
                   Hər ölçüdə bizneslərə güclü, Da Vinci-dəstəkli alətlər təqdim etmək — satışdan dəstəyə,
                   maliyyədən analitikaya qədər hər şeyi bir platformada birləşdirmək.
                 </p>
               </div>
             </AnimateIn>
             <AnimateIn delay={0.2}>
-              <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-8">
-                <div className="rounded-lg bg-orange-500/10 w-12 h-12 flex items-center justify-center mb-4">
-                  <Zap className="h-6 w-6 text-orange-400" />
+              <div className="rounded-2xl border border-[#001E3C]/10 bg-[#F3F4F7] p-8">
+                <div className="rounded-lg bg-[#0176D3]/10 w-12 h-12 flex items-center justify-center mb-4">
+                  <Zap className="h-6 w-6 text-[#0176D3]" />
                 </div>
-                <h2 className="text-2xl font-bold text-white mb-4">Nə edirik</h2>
-                <p className="text-slate-400 leading-relaxed">
+                <h2 className="text-2xl font-bold text-[#001E3C] mb-4">Nə edirik</h2>
+                <p className="text-[#001E3C]/60 leading-relaxed">
                   LeadDrive CRM — 128+ funksiya, 16 Da Vinci inteqrasiya, 11 modul.
                   CRM, marketinq avtomatlaşdırması, dəstək, maliyyə və ERP — hamısı bir yerdə.
                 </p>
@@ -90,7 +90,7 @@ export default function AboutPage() {
       <section className="pb-24">
         <div className="mx-auto max-w-6xl px-4 lg:px-8">
           <AnimateIn>
-            <h2 className="text-2xl font-bold text-white text-center mb-12">Dəyərlərimiz</h2>
+            <h2 className="text-2xl font-bold text-[#001E3C] text-center mb-12">Dəyərlərimiz</h2>
           </AnimateIn>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {[
@@ -102,10 +102,10 @@ export default function AboutPage() {
               { icon: Target, title: "Nəticə", desc: "Müştərilərimiz ortalama 34% mənfəət artımı və 60% cavab müddəti azalması əldə edir." },
             ].map((v) => (
               <AnimateIn key={v.title} delay={0.1}>
-                <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6 h-full">
-                  <v.icon className="h-6 w-6 text-orange-400 mb-3" />
-                  <h3 className="text-lg font-semibold text-white mb-2">{v.title}</h3>
-                  <p className="text-sm text-slate-400 leading-relaxed">{v.desc}</p>
+                <div className="rounded-2xl border border-[#001E3C]/10 bg-[#F3F4F7] p-6 h-full">
+                  <v.icon className="h-6 w-6 text-[#0176D3] mb-3" />
+                  <h3 className="text-lg font-semibold text-[#001E3C] mb-2">{v.title}</h3>
+                  <p className="text-sm text-[#001E3C]/60 leading-relaxed">{v.desc}</p>
                 </div>
               </AnimateIn>
             ))}
@@ -117,18 +117,18 @@ export default function AboutPage() {
       <section className="pb-24">
         <div className="mx-auto max-w-3xl px-4 text-center">
           <AnimateIn>
-            <h2 className="text-3xl font-bold text-white mb-4">Bizimlə əlaqə saxlayın</h2>
-            <p className="text-slate-400 mb-8">Suallarınız var? Komandamız kömək etməyə hazırdır.</p>
+            <h2 className="text-3xl font-bold text-[#001E3C] mb-4">Bizimlə əlaqə saxlayın</h2>
+            <p className="text-[#001E3C]/60 mb-8">Suallarınız var? Komandamız kömək etməyə hazırdır.</p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link
                 href="/contact"
-                className="rounded-full bg-orange-500 hover:bg-orange-600 px-8 py-3 text-sm font-semibold text-white transition-colors"
+                className="rounded-full bg-[#0176D3] hover:bg-[#0176D3]/90 px-8 py-3 text-sm font-semibold text-white transition-colors"
               >
                 Əlaqə saxlayın
               </Link>
               <Link
                 href="/demo"
-                className="rounded-full border border-slate-700 hover:border-slate-500 px-8 py-3 text-sm font-semibold text-white transition-colors"
+                className="rounded-full border border-[#001E3C]/10 hover:border-[#001E3C]/20 px-8 py-3 text-sm font-semibold text-[#001E3C] transition-colors"
               >
                 Demo tələb edin
               </Link>

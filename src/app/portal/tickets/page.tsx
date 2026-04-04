@@ -106,7 +106,7 @@ export default function PortalTicketsPage() {
           <h1 className="text-2xl font-bold">{t("myTickets")}</h1>
           <p className="text-muted-foreground text-sm mt-1">{tickets.length} ticket{tickets.length !== 1 ? "s" : ""}</p>
         </div>
-        <Button onClick={() => setShowForm(!showForm)}>
+        <Button onClick={() => setShowForm(!showForm)} className="rounded-full">
           <Plus className="h-4 w-4 mr-1" /> {t("newTicket")}
         </Button>
       </div>
@@ -115,7 +115,7 @@ export default function PortalTicketsPage() {
         <Card>
           <CardContent className="pt-4">
             <form onSubmit={handleCreate} className="space-y-4">
-              {error && <div className="text-sm text-red-500 bg-red-50 dark:bg-red-900/20 p-2 rounded">{error}</div>}
+              {error && <div className="text-sm text-destructive bg-destructive/10 p-2 rounded-lg">{error}</div>}
               <div>
                 <label className="text-sm font-medium">Subject *</label>
                 <Input value={subject} onChange={e => setSubject(e.target.value)} placeholder={t("describeIssue")} required className="mt-1" />
@@ -134,7 +134,7 @@ export default function PortalTicketsPage() {
                 <Textarea value={description} onChange={e => setDescription(e.target.value)} placeholder={t("provideDetails")} rows={4} className="mt-1" />
               </div>
               <div className="flex gap-2">
-                <Button type="submit" disabled={saving}>{saving ? t("creating") : t("submitTicket")}</Button>
+                <Button type="submit" disabled={saving} className="rounded-full">{saving ? t("creating") : t("submitTicket")}</Button>
                 <Button type="button" variant="outline" onClick={() => setShowForm(false)}>Cancel</Button>
               </div>
             </form>

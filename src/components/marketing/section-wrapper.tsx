@@ -17,17 +17,17 @@ export function SectionWrapper({
 }: SectionWrapperProps) {
   const bg: Record<string, string> = {
     dark: "bg-white",
-    darker: "bg-slate-50",
-    gradient: "bg-gradient-to-b from-white via-slate-50 to-white",
+    darker: "bg-[#F3F4F7]",
+    gradient: "bg-gradient-to-b from-white via-[#F3F4F7] to-white",
     white: "bg-white",
-    gray: "bg-slate-50",
-    navy: "bg-slate-900",
+    gray: "bg-[#F3F4F7]",
+    navy: "bg-[#001E3C]",
   }
 
   const isLight = variant !== "navy"
 
   return (
-    <section id={id} className={cn("py-24 lg:py-32", isLight ? "text-slate-900" : "text-white", bg[variant], className)}>
+    <section id={id} className={cn("py-24 lg:py-32", isLight ? "text-[#001E3C]" : "text-white", bg[variant], className)}>
       <div className={cn("mx-auto px-4 lg:px-8", narrow ? "max-w-5xl" : "max-w-7xl")}>
         {children}
       </div>

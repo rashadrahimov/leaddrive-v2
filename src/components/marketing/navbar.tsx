@@ -31,7 +31,7 @@ export function MarketingNavbar() {
       className={cn(
         "sticky top-0 z-50 w-full transition-all duration-300",
         scrolled
-          ? "bg-white/95 backdrop-blur-xl shadow-sm border-b border-slate-200"
+          ? "bg-white/95 backdrop-blur-xl shadow-sm border-b border-[#001E3C]/10"
           : "bg-white"
       )}
     >
@@ -48,7 +48,7 @@ export function MarketingNavbar() {
               <Link
                 key={link.href}
                 href={link.href}
-                className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors"
+                className="text-sm font-medium text-[#001E3C]/60 hover:text-[#001E3C] transition-colors"
               >
                 {link.label}
               </Link>
@@ -60,13 +60,13 @@ export function MarketingNavbar() {
             <LanguageSwitcher />
             <a
               href={`${APP_URL}/login`}
-              className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors px-3 py-2"
+              className="text-sm font-medium text-[#001E3C]/60 hover:text-[#001E3C] transition-colors px-3 py-2"
             >
               Daxil ol
             </a>
             <Link
               href="/demo"
-              className="rounded-full bg-slate-900 hover:bg-slate-800 px-5 py-2.5 text-sm font-semibold text-white transition-all shadow-sm"
+              className="rounded-full bg-[#0176D3] hover:bg-[#0176D3]/90 px-5 py-2.5 text-sm font-semibold text-white transition-all shadow-sm"
             >
               Demo tələb et
             </Link>
@@ -75,7 +75,7 @@ export function MarketingNavbar() {
           {/* Mobile hamburger */}
           <button
             onClick={() => setMobileOpen(!mobileOpen)}
-            className="md:hidden p-2 text-slate-600 hover:text-slate-900"
+            className="md:hidden p-2 text-[#001E3C]/60 hover:text-[#001E3C]"
           >
             {mobileOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
           </button>
@@ -83,27 +83,27 @@ export function MarketingNavbar() {
 
         {/* Mobile menu */}
         {mobileOpen && (
-          <div className="md:hidden border-t border-slate-200 py-4 space-y-1 animate-fade-in-up">
+          <div className="md:hidden border-t border-[#001E3C]/10 py-4 space-y-1 animate-fade-in-up">
             {navLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
                 onClick={() => setMobileOpen(false)}
-                className="block px-3 py-2.5 text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded-lg"
+                className="block px-3 py-2.5 text-sm font-medium text-[#001E3C]/60 hover:text-[#001E3C] hover:bg-[#001E3C]/5 rounded-lg"
               >
                 {link.label}
               </Link>
             ))}
-            <div className="border-t border-slate-200 pt-3 mt-3 flex flex-col gap-2 px-3">
+            <div className="border-t border-[#001E3C]/10 pt-3 mt-3 flex flex-col gap-2 px-3">
               <a
                 href={`${APP_URL}/login`}
-                className="text-center text-sm font-medium text-slate-600 hover:text-slate-900 py-2.5 border border-slate-300 rounded-full"
+                className="text-center text-sm font-medium text-[#001E3C]/60 hover:text-[#001E3C] py-2.5 border border-[#001E3C]/10 rounded-full"
               >
                 Daxil ol
               </a>
               <Link
                 href="/demo"
-                className="text-center rounded-full bg-slate-900 text-sm font-semibold text-white px-5 py-2.5 hover:bg-slate-800 transition-all"
+                className="text-center rounded-full bg-[#0176D3] text-sm font-semibold text-white px-5 py-2.5 hover:bg-[#0176D3]/90 transition-all"
               >
                 Demo tələb et
               </Link>

@@ -95,7 +95,7 @@ export default function PortalChatPage() {
         <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-4">
           {messages.length === 0 && (
             <div className="text-center text-muted-foreground py-12">
-              <Bot className="h-12 w-12 mx-auto mb-3 opacity-30" />
+              <Bot className="h-12 w-12 mx-auto mb-3 text-[hsl(var(--ai-from))]/30" />
               <p>Start a conversation with our Da Vinci support assistant</p>
               <p className="text-xs mt-1">Ask about tickets, services, or general questions</p>
             </div>
@@ -103,13 +103,13 @@ export default function PortalChatPage() {
           {messages.map(msg => (
             <div key={msg.id} className={`flex gap-3 ${msg.role === "user" ? "justify-end" : ""}`}>
               {msg.role === "assistant" && (
-                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                  <Bot className="h-4 w-4 text-primary" />
+                <div className="w-8 h-8 rounded-full bg-[hsl(var(--ai-from))]/10 flex items-center justify-center flex-shrink-0">
+                  <Bot className="h-4 w-4 text-[hsl(var(--ai-from))]" />
                 </div>
               )}
               <div className="max-w-[70%]">
-                <div className={`rounded-lg p-3 ${
-                  msg.role === "user" ? "bg-primary text-primary-foreground" : "bg-muted"
+                <div className={`rounded-lg p-3 shadow-[0_1px_3px_rgba(0,0,0,0.05)] ${
+                  msg.role === "user" ? "bg-primary text-primary-foreground" : "bg-card border border-border"
                 }`}>
                   <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
                   <p className={`text-[10px] mt-1 ${msg.role === "user" ? "opacity-70" : "text-muted-foreground"}`}>
@@ -117,12 +117,12 @@ export default function PortalChatPage() {
                   </p>
                 </div>
                 {msg.escalated && msg.escalationTicketId && (
-                  <div className="mt-2 p-2.5 rounded-lg bg-red-50 border border-red-200">
-                    <p className="text-xs font-medium text-red-700 mb-1">Escalated to agent</p>
+                  <div className="mt-2 p-2.5 rounded-lg bg-destructive/10 border border-destructive/20">
+                    <p className="text-xs font-medium text-destructive mb-1">Escalated to agent</p>
                     <Button
                       variant="outline"
                       size="sm"
-                      className="border-red-300 text-red-600 hover:bg-red-100"
+                      className="border-destructive/30 text-destructive hover:bg-destructive/10"
                       onClick={() => router.push(`/portal/tickets/${msg.escalationTicketId}`)}
                     >
                       <TicketPlus className="h-3.5 w-3.5 mr-1" /> Ticket {msg.escalationTicketNumber || `#${msg.escalationTicketId?.slice(0, 8)}`}
@@ -133,7 +133,7 @@ export default function PortalChatPage() {
                   <Button
                     variant="outline"
                     size="sm"
-                    className="mt-2 border-orange-300 text-orange-600 hover:bg-orange-50"
+                    className="mt-2 border-primary/30 text-primary hover:bg-primary/10 rounded-full"
                     onClick={() => router.push("/portal/tickets")}
                   >
                     <TicketPlus className="h-3.5 w-3.5 mr-1" /> {t("newTicket")}
@@ -141,18 +141,18 @@ export default function PortalChatPage() {
                 )}
               </div>
               {msg.role === "user" && (
-                <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
-                  <User className="h-4 w-4" />
+                <div className="w-8 h-8 rounded-full bg-primary/15 flex items-center justify-center flex-shrink-0">
+                  <User className="h-4 w-4 text-primary" />
                 </div>
               )}
             </div>
           ))}
           {sending && (
             <div className="flex gap-3">
-              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                <Bot className="h-4 w-4 text-primary animate-pulse" />
+              <div className="w-8 h-8 rounded-full bg-[hsl(var(--ai-from))]/10 flex items-center justify-center">
+                <Bot className="h-4 w-4 text-[hsl(var(--ai-from))] animate-pulse" />
               </div>
-              <div className="bg-muted rounded-lg p-3">
+              <div className="bg-card border border-border rounded-lg p-3 shadow-[0_1px_3px_rgba(0,0,0,0.05)]">
                 <p className="text-sm text-muted-foreground">Typing...</p>
               </div>
             </div>
@@ -167,7 +167,7 @@ export default function PortalChatPage() {
               placeholder="Type your message..."
               disabled={sending}
             />
-            <Button onClick={handleSend} disabled={sending || !input.trim()} size="icon">
+            <Button onClick={handleSend} disabled={sending || !input.trim()} size="icon" className="rounded-full">
               <Send className="h-4 w-4" />
             </Button>
           </div>

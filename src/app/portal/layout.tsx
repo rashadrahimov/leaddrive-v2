@@ -45,7 +45,7 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b bg-card">
+      <header className="border-b border-border bg-card shadow-[0_1px_3px_rgba(0,0,0,0.05)]">
         <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between">
           <div className="flex items-center gap-6">
             <span className="text-lg font-bold text-primary">{t("title")}</span>
@@ -61,7 +61,7 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
           <div className="flex items-center gap-3">
             <span className="text-sm text-muted-foreground">{user?.fullName || ""}</span>
             <span className="text-xs text-muted-foreground">{user?.companyName || ""}</span>
-            <button onClick={handleLogout} className="text-muted-foreground hover:text-foreground">
+            <button onClick={handleLogout} className="text-muted-foreground hover:text-foreground transition-colors">
               <LogOut className="h-4 w-4" />
             </button>
           </div>

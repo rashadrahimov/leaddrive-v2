@@ -398,11 +398,11 @@ export function PortalChatWidget({ userName }: PortalChatWidgetProps) {
       <div key={msg.id} className={`flex gap-2.5 ${isUser ? "justify-end" : ""}`}>
         {!isUser && (
           <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${
-            isOperator ? "bg-green-100" : "bg-indigo-100"
+            isOperator ? "bg-primary/10" : "bg-[hsl(var(--ai-from))]/10"
           }`}>
             {isOperator
-              ? <Headphones className="h-3.5 w-3.5 text-green-600" />
-              : <Bot className="h-3.5 w-3.5 text-indigo-600" />
+              ? <Headphones className="h-3.5 w-3.5 text-primary" />
+              : <Bot className="h-3.5 w-3.5 text-[hsl(var(--ai-from))]" />
             }
           </div>
         )}
@@ -410,22 +410,22 @@ export function PortalChatWidget({ userName }: PortalChatWidgetProps) {
           {/* Status update message */}
           {msg.ticketStatus && StatusIcon && (
             <div className="flex items-center gap-1.5 mb-1">
-              <StatusIcon className="h-3 w-3 text-blue-500" />
-              <span className="text-[10px] font-medium text-blue-600">Обновление статуса</span>
+              <StatusIcon className="h-3 w-3 text-primary" />
+              <span className="text-[10px] font-medium text-primary">Обновление статуса</span>
             </div>
           )}
           {/* Operator label */}
           {isOperator && (
-            <p className="text-[10px] font-medium text-green-600 mb-0.5">Оператор</p>
+            <p className="text-[10px] font-medium text-primary mb-0.5">Оператор</p>
           )}
-          <div className={`rounded-lg p-3 shadow-sm ${
+          <div className={`rounded-lg p-3 shadow-[0_1px_3px_rgba(0,0,0,0.05)] ${
             isUser
-              ? "bg-blue-500 text-white rounded-tr-none"
+              ? "bg-primary text-primary-foreground rounded-tr-none"
               : isOperator
-                ? "bg-green-50 border border-green-200 rounded-tl-none"
+                ? "bg-primary/5 border border-primary/20 rounded-tl-none"
                 : msg.ticketStatus
-                  ? "bg-blue-50 border border-blue-200 rounded-tl-none"
-                  : "bg-background border border-border rounded-tl-none"
+                  ? "bg-primary/5 border border-primary/20 rounded-tl-none"
+                  : "bg-card border border-border rounded-tl-none"
           }`}>
             <p className={`text-sm whitespace-pre-wrap ${isUser ? "" : "text-foreground"}`}>{msg.content}</p>
           </div>
@@ -433,9 +433,9 @@ export function PortalChatWidget({ userName }: PortalChatWidgetProps) {
             {formatTime(msg.createdAt)}
           </p>
           {msg.escalated && msg.escalationTicketId && (
-            <div className="mt-1.5 p-2 rounded-lg bg-red-50 border border-red-200">
-              <p className="text-[10px] font-medium text-red-700 mb-1">Разговор передан оператору</p>
-              <div className="inline-flex items-center gap-1 text-xs text-red-600 border border-red-300 rounded-full px-2.5 py-0.5">
+            <div className="mt-1.5 p-2 rounded-lg bg-destructive/10 border border-destructive/20">
+              <p className="text-[10px] font-medium text-destructive mb-1">Разговор передан оператору</p>
+              <div className="inline-flex items-center gap-1 text-xs text-destructive border border-destructive/30 rounded-full px-2.5 py-0.5">
                 <TicketPlus className="h-3 w-3" /> Тикет {msg.escalationTicketNumber || `#${msg.escalationTicketId?.slice(0, 8)}`}
                 {(() => {
                   const t = trackedTickets.find(tk => tk.id === msg.escalationTicketId)
@@ -447,8 +447,8 @@ export function PortalChatWidget({ userName }: PortalChatWidgetProps) {
           )}
         </div>
         {isUser && (
-          <div className="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-            <User className="h-3.5 w-3.5 text-blue-600" />
+          <div className="w-7 h-7 rounded-full bg-primary/15 flex items-center justify-center flex-shrink-0 mt-0.5">
+            <User className="h-3.5 w-3.5 text-primary" />
           </div>
         )}
       </div>
@@ -461,7 +461,7 @@ export function PortalChatWidget({ userName }: PortalChatWidgetProps) {
       {open && (
         <div className="fixed bottom-20 right-5 w-[380px] h-[520px] bg-background rounded-2xl shadow-2xl border border-border flex flex-col z-50 overflow-hidden">
           {/* Header */}
-          <div className="bg-gradient-to-r from-indigo-600 to-blue-500 px-4 py-3 flex items-center gap-3">
+          <div className="bg-gradient-to-r from-[hsl(var(--ai-from))] to-[hsl(var(--ai-to))] px-4 py-3 flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
               <Bot className="h-5 w-5 text-white" />
             </div>
@@ -490,15 +490,15 @@ export function PortalChatWidget({ userName }: PortalChatWidgetProps) {
           </div>
 
           {/* Messages */}
-          <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-3 bg-muted/50">
+          <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-3 bg-background">
             {/* Welcome message */}
             {messages.length === 0 && (
               <div className="flex gap-2.5">
-                <div className="w-7 h-7 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <Bot className="h-3.5 w-3.5 text-indigo-600" />
+                <div className="w-7 h-7 rounded-full bg-[hsl(var(--ai-from))]/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <Bot className="h-3.5 w-3.5 text-[hsl(var(--ai-from))]" />
                 </div>
                 <div>
-                  <div className="bg-background rounded-lg rounded-tl-none p-3 shadow-sm border border-border">
+                  <div className="bg-card rounded-lg rounded-tl-none p-3 shadow-[0_1px_3px_rgba(0,0,0,0.05)] border border-border">
                     <p className="text-sm text-foreground">
                       Здравствуйте, <strong>{userName}</strong>! Я Da Vinci.
                     </p>
@@ -514,12 +514,12 @@ export function PortalChatWidget({ userName }: PortalChatWidgetProps) {
             {/* Typing indicator */}
             {sending && (
               <div className="flex gap-2.5">
-                <div className="w-7 h-7 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">
-                  <Bot className="h-3.5 w-3.5 text-indigo-600" />
+                <div className="w-7 h-7 rounded-full bg-[hsl(var(--ai-from))]/10 flex items-center justify-center flex-shrink-0">
+                  <Bot className="h-3.5 w-3.5 text-[hsl(var(--ai-from))]" />
                 </div>
-                <div className="bg-background rounded-lg rounded-tl-none p-3 shadow-sm border border-border">
+                <div className="bg-card rounded-lg rounded-tl-none p-3 shadow-[0_1px_3px_rgba(0,0,0,0.05)] border border-border">
                   <div className="flex items-center gap-1.5">
-                    <Loader2 className="h-3.5 w-3.5 text-indigo-500 animate-spin" />
+                    <Loader2 className="h-3.5 w-3.5 text-[hsl(var(--ai-from))] animate-spin" />
                     <span className="text-xs text-muted-foreground">Думает...</span>
                   </div>
                 </div>
@@ -529,11 +529,11 @@ export function PortalChatWidget({ userName }: PortalChatWidgetProps) {
             {/* CSAT rating inline */}
             {csatTicketId && (
               <div className="flex gap-2.5">
-                <div className="w-7 h-7 rounded-full bg-yellow-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <Star className="h-3.5 w-3.5 text-yellow-600" />
+                <div className="w-7 h-7 rounded-full bg-accent/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <Star className="h-3.5 w-3.5 text-accent" />
                 </div>
-                <div className="bg-yellow-50 border border-yellow-200 rounded-lg rounded-tl-none p-3 shadow-sm">
-                  <p className="text-xs font-medium text-yellow-800 mb-2">Оцените качество поддержки</p>
+                <div className="bg-accent/5 border border-accent/20 rounded-lg rounded-tl-none p-3 shadow-[0_1px_3px_rgba(0,0,0,0.05)]">
+                  <p className="text-xs font-medium text-foreground mb-2">Оцените качество поддержки</p>
                   <div className="flex items-center gap-0.5 mb-2">
                     {[1, 2, 3, 4, 5].map(i => (
                       <button
@@ -551,7 +551,7 @@ export function PortalChatWidget({ userName }: PortalChatWidgetProps) {
                       </button>
                     ))}
                     {csatRating > 0 && (
-                      <span className="ml-1 text-[10px] text-yellow-700">
+                      <span className="ml-1 text-[10px] text-muted-foreground">
                         {csatRating === 1 ? "Ужасно" : csatRating === 2 ? "Плохо" : csatRating === 3 ? "Нормально" : csatRating === 4 ? "Хорошо" : "Отлично!"}
                       </span>
                     )}
@@ -560,7 +560,7 @@ export function PortalChatWidget({ userName }: PortalChatWidgetProps) {
                     <button
                       onClick={handleSubmitCsat}
                       disabled={csatSending}
-                      className="text-xs bg-yellow-500 text-white rounded-full px-3 py-1 hover:bg-yellow-600 disabled:opacity-50"
+                      className="text-xs bg-primary text-primary-foreground rounded-full px-3 py-1 hover:bg-primary/90 disabled:opacity-50 transition-colors"
                     >
                       {csatSending ? "Отправка..." : "Отправить оценку"}
                     </button>
@@ -604,12 +604,12 @@ export function PortalChatWidget({ userName }: PortalChatWidgetProps) {
                 onKeyDown={e => e.key === "Enter" && handleSend()}
                 placeholder="Напишите сообщение..."
                 disabled={sending}
-                className="flex-1 text-sm text-foreground rounded-full border border-border bg-muted/50 px-4 py-2.5 outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400 disabled:opacity-50 transition-colors placeholder:text-muted-foreground"
+                className="flex-1 text-sm text-foreground rounded-full border border-border bg-muted/50 px-4 py-2.5 outline-none focus:border-ring focus:ring-1 focus:ring-ring disabled:opacity-50 transition-colors placeholder:text-muted-foreground"
               />
               <button
                 onClick={() => handleSend()}
                 disabled={sending || !input.trim()}
-                className="w-9 h-9 rounded-full bg-blue-500 hover:bg-blue-600 disabled:opacity-40 flex items-center justify-center transition-colors"
+                className="w-9 h-9 rounded-full bg-primary hover:bg-primary/90 disabled:opacity-40 flex items-center justify-center transition-colors"
               >
                 <Send className="h-4 w-4 text-white" />
               </button>
@@ -621,7 +621,7 @@ export function PortalChatWidget({ userName }: PortalChatWidgetProps) {
       {/* Toggle button */}
       <button
         onClick={() => setOpen(!open)}
-        className="fixed bottom-5 right-5 w-14 h-14 rounded-full bg-blue-500 hover:bg-blue-600 shadow-lg flex items-center justify-center z-50 transition-all hover:scale-105"
+        className="fixed bottom-5 right-5 w-14 h-14 rounded-full bg-primary hover:bg-primary/90 shadow-lg flex items-center justify-center z-50 transition-all hover:scale-105"
       >
         {open ? (
           <X className="h-6 w-6 text-white" />

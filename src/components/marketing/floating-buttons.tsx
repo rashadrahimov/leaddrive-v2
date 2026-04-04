@@ -19,7 +19,7 @@ export function FloatingButtons() {
       <button
         onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
         className={cn(
-          "flex h-11 w-11 items-center justify-center rounded-full border border-slate-700 bg-slate-900/90 backdrop-blur-sm text-slate-400 hover:text-white hover:border-slate-600 shadow-lg transition-all duration-300",
+          "flex h-11 w-11 items-center justify-center rounded-full border border-white/20 bg-[#001E3C]/90 backdrop-blur-sm text-white/60 hover:text-white hover:border-white/40 shadow-lg transition-all duration-300",
           showTop ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4 pointer-events-none"
         )}
         aria-label="Yuxarı qayıt"
