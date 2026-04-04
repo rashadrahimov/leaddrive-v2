@@ -181,29 +181,48 @@ export default function InboxPage() {
     }
   }, [showCompose])
 
-  // Detect if user scrolled up — suppress auto-scroll while reading history
+  // Track user scroll intent via wheel/touch (immune to React re-render scroll events)
   useEffect(() => {
     const container = messagesContainerRef.current
     if (!container) return
-    const handleScroll = () => {
+    const markScrolledUp = () => { userScrolledUpRef.current = true }
+    const checkIfBackAtBottom = () => {
       const { scrollTop, scrollHeight, clientHeight } = container
-      // "At bottom" = within 80px of the end
-      userScrolledUpRef.current = scrollHeight - scrollTop - clientHeight > 80
+      if (scrollHeight - scrollTop - clientHeight < 80) {
+        userScrolledUpRef.current = false
+      }
     }
-    container.addEventListener("scroll", handleScroll)
-    return () => container.removeEventListener("scroll", handleScroll)
+    // wheel up → user is reading history
+    const handleWheel = (e: WheelEvent) => {
+      if (e.deltaY < 0) markScrolledUp()
+      else requestAnimationFrame(checkIfBackAtBottom)
+    }
+    // touch scroll detection
+    let touchStartY = 0
+    const handleTouchStart = (e: TouchEvent) => { touchStartY = e.touches[0].clientY }
+    const handleTouchMove = (e: TouchEvent) => {
+      if (e.touches[0].clientY > touchStartY) markScrolledUp() // finger moved down = scroll up
+      else requestAnimationFrame(checkIfBackAtBottom)
+    }
+    container.addEventListener("wheel", handleWheel, { passive: true })
+    container.addEventListener("touchstart", handleTouchStart, { passive: true })
+    container.addEventListener("touchmove", handleTouchMove, { passive: true })
+    return () => {
+      container.removeEventListener("wheel", handleWheel)
+      container.removeEventListener("touchstart", handleTouchStart)
+      container.removeEventListener("touchmove", handleTouchMove)
+    }
   }, [selected])
 
+  // Auto-scroll: only on conversation switch or if user is at bottom
   const prevSelectedRef = useRef<number | null>(null)
   useEffect(() => {
     if (selected === null) return
     const switchedConvo = prevSelectedRef.current !== selected
     if (switchedConvo) {
-      // Always scroll to bottom when switching conversations
       userScrolledUpRef.current = false
       messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
     } else if (!userScrolledUpRef.current) {
-      // Only auto-scroll if user hasn't scrolled up
       messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
     }
     prevSelectedRef.current = selected
