@@ -32,7 +32,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               orgName={user?.organizationName || "LeadDrive CRM"}
               userName={user?.name || "User"}
             />
-            <main className="flex-1 overflow-y-auto bg-muted/30 p-6 relative">
+            <main className="flex-1 overflow-y-auto bg-background p-6 relative">
               {children}
             </main>
             <CommandSearch />

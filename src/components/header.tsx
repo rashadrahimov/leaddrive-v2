@@ -49,7 +49,7 @@ export function Header({ orgName = "Organization", userName = "User" }: HeaderPr
         </Button>
 
         <div className="ml-2 flex items-center gap-2 border-l border-border/40 pl-4">
-          <div className="h-8 w-8 rounded-full bg-gradient-to-br from-[#1e3a5f] to-[#0ea5a0] flex items-center justify-center text-xs font-medium text-white shadow-sm">
+          <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-xs font-medium text-primary-foreground">
             {userName.charAt(0).toUpperCase()}
           </div>
           <span className="text-sm font-medium hidden md:block">{userName}</span>

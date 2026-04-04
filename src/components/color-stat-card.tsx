@@ -5,15 +5,15 @@ import { type ReactNode, useState, useEffect, useRef } from "react"
 import { InfoHint } from "@/components/info-hint"
 
 const colorMap = {
-  blue:   { bg: "bg-blue-500",   shadow: "shadow-blue-500/30" },
-  green:  { bg: "bg-green-500",  shadow: "shadow-green-500/30" },
-  violet: { bg: "bg-violet-500", shadow: "shadow-violet-500/30" },
-  orange: { bg: "bg-orange-500", shadow: "shadow-orange-500/30" },
-  red:    { bg: "bg-red-500",    shadow: "shadow-red-500/30" },
-  amber:  { bg: "bg-amber-500",  shadow: "shadow-amber-500/30" },
-  teal:   { bg: "bg-teal-500",   shadow: "shadow-teal-500/30" },
-  indigo: { bg: "bg-indigo-500", shadow: "shadow-indigo-500/30" },
-  slate:  { bg: "bg-slate-500",  shadow: "shadow-slate-500/30" },
+  blue:   { dot: "bg-blue-500",   text: "text-blue-600 dark:text-blue-400",   light: "bg-blue-50 dark:bg-blue-950/20" },
+  green:  { dot: "bg-green-500",  text: "text-green-600 dark:text-green-400", light: "bg-green-50 dark:bg-green-950/20" },
+  violet: { dot: "bg-violet-500", text: "text-violet-600 dark:text-violet-400", light: "bg-violet-50 dark:bg-violet-950/20" },
+  orange: { dot: "bg-orange-500", text: "text-orange-600 dark:text-orange-400", light: "bg-orange-50 dark:bg-orange-950/20" },
+  red:    { dot: "bg-red-500",    text: "text-red-600 dark:text-red-400",     light: "bg-red-50 dark:bg-red-950/20" },
+  amber:  { dot: "bg-amber-500",  text: "text-amber-600 dark:text-amber-400", light: "bg-amber-50 dark:bg-amber-950/20" },
+  teal:   { dot: "bg-teal-500",   text: "text-teal-600 dark:text-teal-400",   light: "bg-teal-50 dark:bg-teal-950/20" },
+  indigo: { dot: "bg-indigo-500", text: "text-indigo-600 dark:text-indigo-400", light: "bg-indigo-50 dark:bg-indigo-950/20" },
+  slate:  { dot: "bg-slate-500",  text: "text-slate-600 dark:text-slate-400", light: "bg-slate-50 dark:bg-slate-950/20" },
 }
 
 function useCountUp(target: number, duration = 800) {
@@ -31,7 +31,6 @@ function useCountUp(target: number, duration = 800) {
     const step = (now: number) => {
       const elapsed = now - startTime
       const progress = Math.min(elapsed / duration, 1)
-      // ease-out cubic
       const eased = 1 - Math.pow(1 - progress, 3)
       setValue(Math.round(from + (target - from) * eased))
       if (progress < 1) raf = requestAnimationFrame(step)
@@ -44,11 +43,9 @@ function useCountUp(target: number, duration = 800) {
   return value
 }
 
-/** Extract numeric value from formatted string like "1,125,853 ₼", "645k ₼", or "168%" */
 function extractNumber(val: string | number): number | null {
   if (typeof val === "number") return val
   const str = String(val)
-  // Match number with optional compact unit (k/M/B)
   const m = str.match(/([-]?[\d,]+(?:\.\d+)?)\s*([kKMB]?)/)
   if (!m) return null
   const num = parseFloat(m[1].replace(/,/g, ""))
@@ -60,14 +57,11 @@ function extractNumber(val: string | number): number | null {
   return num
 }
 
-/** Rebuild formatted string with animated number */
 function animateValue(original: string | number, animated: number): string {
   if (typeof original === "number") return String(animated)
-  // Replace the numeric part with animated value, keep suffix/prefix
   const str = String(original)
   const match = str.match(/^([^0-9-]*)([-]?[\d,]+(?:\.\d+)?)(\s*[kKMB])(.*$)/)
   if (match) {
-    // Compact format with unit (k/M/B) — preserve unit in output
     const [, prefix, , unitWithSpace, suffix] = match
     const unit = unitWithSpace.trim()
     if (unit === "k" || unit === "K") {
@@ -80,7 +74,6 @@ function animateValue(original: string | number, animated: number): string {
       return prefix + (animated / 1_000_000_000).toFixed(1) + unitWithSpace + suffix
     }
   }
-  // Standard format — use original regex that preserves spacing in suffix
   const stdMatch = str.match(/^([^0-9-]*)([-]?[\d,]+)(.*$)/)
   if (!stdMatch) return str
   const [, stdPrefix, , stdSuffix] = stdMatch
@@ -95,11 +88,8 @@ interface ColorStatCardProps {
   className?: string
   bgClass?: string
   subValue?: string
-  /** Breakdown lines shown below main value: [{label, value}] */
   lines?: { label: string; value: string }[]
-  /** Tooltip hint shown as info icon next to the label */
   hint?: string
-  /** Enable count-up animation */
   animate?: boolean
 }
 
@@ -115,7 +105,7 @@ export function ColorStatCard({
   hint,
   animate = false,
 }: ColorStatCardProps) {
-  const { bg, shadow } = colorMap[color]
+  const colors = colorMap[color]
   const numericTarget = extractNumber(value)
   const animatedNum = useCountUp(animate && numericTarget !== null ? numericTarget : 0, 900)
   const displayValue = animate && numericTarget !== null ? animateValue(value, animatedNum) : value
@@ -123,29 +113,34 @@ export function ColorStatCard({
   return (
     <div
       className={cn(
-        "rounded-xl p-4 text-white shadow-md flex flex-col gap-1 transition-transform duration-200 hover:scale-[1.02]",
-        bgClass ?? bg,
-        !bgClass && shadow,
+        "rounded-xl border border-border bg-card p-4 flex flex-col gap-1.5 transition-all duration-200 hover:shadow-sm",
         className
       )}
     >
       <div className="flex items-center justify-between">
-        <span className="text-xs font-medium opacity-80 flex items-center gap-1">
-          {label}
-          {hint && <InfoHint text={hint} size={12} className="opacity-70 hover:opacity-100 [&_svg]:text-white/60 [&_svg:hover]:text-white" />}
-        </span>
-        <span className="opacity-70">{icon}</span>
+        <div className="flex items-center gap-2">
+          <div className={cn("h-2 w-2 rounded-full", colors.dot)} />
+          <span className="text-xs font-medium text-muted-foreground">
+            {label}
+          </span>
+          {hint && <InfoHint text={hint} size={12} />}
+        </div>
+        <div className={cn("h-8 w-8 rounded-lg flex items-center justify-center", colors.light)}>
+          <span className={colors.text}>{icon}</span>
+        </div>
       </div>
-      <span className="text-2xl font-bold leading-tight">{displayValue}</span>
+      <span className={cn("text-2xl font-bold leading-tight tracking-tight text-foreground")}>
+        {displayValue}
+      </span>
       {subValue && (
-        <span className="text-xs opacity-70 mt-0.5">{subValue}</span>
+        <span className="text-xs text-muted-foreground">{subValue}</span>
       )}
       {lines && lines.length > 0 && (
-        <div className="mt-1 space-y-0.5 border-t border-white/20 pt-1.5">
+        <div className="mt-1 space-y-0.5 border-t border-border pt-1.5">
           {lines.map((line, i) => (
-            <div key={i} className="flex justify-between text-xs opacity-80">
+            <div key={i} className="flex justify-between text-xs text-muted-foreground">
               <span>{line.label}</span>
-              <span className="font-medium">{line.value}</span>
+              <span className="font-medium text-foreground">{line.value}</span>
             </div>
           ))}
         </div>
