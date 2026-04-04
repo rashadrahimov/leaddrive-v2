@@ -84,17 +84,21 @@ function AddTeamMemberForm({ dealId, orgId, onDone }: { dealId: string; orgId?: 
     return (u.name || "").toLowerCase().includes(s) || u.email.toLowerCase().includes(s)
   })
 
+  const [error, setError] = useState("")
+
   const handleSave = async () => {
     if (!selectedUserId) return
     setSaving(true)
+    setError("")
     try {
-      await fetch(`/api/v1/deals/${dealId}/team`, {
+      const res = await fetch(`/api/v1/deals/${dealId}/team`, {
         method: "POST",
         headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": orgId } : {}) },
         body: JSON.stringify({ userId: selectedUserId, role }),
       })
+      if (!res.ok) { const j = await res.json().catch(() => ({})); setError(j.error || `Error ${res.status}`); return }
       onDone()
-    } catch { } finally { setSaving(false) }
+    } catch { setError("Network error") } finally { setSaving(false) }
   }
 
   return (
@@ -138,6 +142,7 @@ function AddTeamMemberForm({ dealId, orgId, onDone }: { dealId: string; orgId?: 
             <option value="support">{tc("support")}</option>
           </Select>
           <div className="flex gap-1.5">
+            {error && <p className="text-[10px] text-red-500 col-span-full">{error}</p>}
             <Button size="sm" className="flex-1 h-7 text-[10px]" onClick={handleSave} disabled={!selectedUserId || saving}>
               {saving ? <Loader2 className="h-3 w-3 animate-spin" /> : tc("save")}
             </Button>
@@ -180,11 +185,14 @@ function AddContactRoleForm({ dealId, orgId, onDone }: { dealId: string; orgId?:
     return c.fullName.toLowerCase().includes(s) || (c.email || "").toLowerCase().includes(s)
   })
 
+  const [error, setError] = useState("")
+
   const handleSave = async () => {
     if (!selectedContactId) return
     setSaving(true)
+    setError("")
     try {
-      await fetch(`/api/v1/deals/${dealId}/contact-roles`, {
+      const res = await fetch(`/api/v1/deals/${dealId}/contact-roles`, {
         method: "POST",
         headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": orgId } : {}) },
         body: JSON.stringify({
@@ -197,8 +205,9 @@ function AddContactRoleForm({ dealId, orgId, onDone }: { dealId: string; orgId?:
           cashbackValue: cashbackValue ? Number(cashbackValue) : null,
         }),
       })
+      if (!res.ok) { const j = await res.json().catch(() => ({})); setError(j.error || `Error ${res.status}`); return }
       onDone()
-    } catch { } finally { setSaving(false) }
+    } catch { setError("Network error") } finally { setSaving(false) }
   }
 
   return (
@@ -284,6 +293,7 @@ function AddContactRoleForm({ dealId, orgId, onDone }: { dealId: string; orgId?:
             </div>
           </div>
 
+          {error && <p className="text-[10px] text-red-500">{error}</p>}
           <Button size="sm" className="w-full h-7 text-[10px]" onClick={handleSave} disabled={!selectedContactId || saving}>
             {saving ? <Loader2 className="h-3 w-3 animate-spin" /> : tc("save")}
           </Button>
@@ -304,11 +314,14 @@ function AddCompetitorForm({ dealId, orgId, onDone }: { dealId: string; orgId?: 
   const [threat, setThreat] = useState("Medium")
   const [saving, setSaving] = useState(false)
 
+  const [error, setError] = useState("")
+
   const handleSave = async () => {
     if (!name.trim()) return
     setSaving(true)
+    setError("")
     try {
-      await fetch(`/api/v1/deals/${dealId}/competitors`, {
+      const res = await fetch(`/api/v1/deals/${dealId}/competitors`, {
         method: "POST",
         headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": orgId } : {}) },
         body: JSON.stringify({
@@ -320,8 +333,13 @@ function AddCompetitorForm({ dealId, orgId, onDone }: { dealId: string; orgId?: 
           threat,
         }),
       })
+      if (!res.ok) {
+        const json = await res.json().catch(() => ({}))
+        setError(json.error || `Error ${res.status}`)
+        return
+      }
       onDone()
-    } catch { } finally { setSaving(false) }
+    } catch { setError("Network error") } finally { setSaving(false) }
   }
 
   return (
@@ -340,6 +358,7 @@ function AddCompetitorForm({ dealId, orgId, onDone }: { dealId: string; orgId?: 
           <option value="Low">{tc("low")}</option>
         </Select>
       </div>
+      {error && <p className="text-[10px] text-red-500">{error}</p>}
       <Button size="sm" className="w-full h-7 text-[10px]" onClick={handleSave} disabled={!name.trim() || saving}>
         {saving ? <Loader2 className="h-3 w-3 animate-spin" /> : tc("save")}
       </Button>
