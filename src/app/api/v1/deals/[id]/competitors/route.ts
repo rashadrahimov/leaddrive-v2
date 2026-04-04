@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { prisma } from "@/lib/prisma"
 import { getOrgId } from "@/lib/api-auth"
+import { PrismaClient } from "@prisma/client"
+
+// Direct PrismaClient to bypass potential singleton schema issues
+const directPrisma = new PrismaClient()
 
 const addSchema = z.object({
   name: z.string().min(1),
@@ -22,20 +26,49 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     const deal = await prisma.deal.findFirst({ where: { id, organizationId: orgId }, select: { id: true } })
     if (!deal) return NextResponse.json({ error: "Deal not found" }, { status: 404 })
 
-    // Debug: try raw SQL first to verify DB access
+    // Debug: try with direct PrismaClient first
+    let directResult: any = null
+    let directError: string | null = null
+    let singletonError: string | null = null
+
     try {
-      const rawTest = await prisma.$queryRawUnsafe(`SELECT COUNT(*) as cnt FROM deal_competitors WHERE "dealId" = $1`, id)
-      console.log("[competitors GET] raw SQL works, count:", rawTest)
-    } catch (rawErr: any) {
-      console.error("[competitors GET] raw SQL failed:", rawErr?.message)
+      directResult = await directPrisma.dealCompetitor.findMany({
+        where: { dealId: id },
+        orderBy: { createdAt: "asc" },
+      })
+    } catch (e: any) {
+      directError = e?.message || String(e)
     }
 
-    const competitors = await prisma.dealCompetitor.findMany({
-      where: { dealId: id },
-      orderBy: { createdAt: "asc" },
-    })
+    let singletonResult: any = null
+    try {
+      singletonResult = await prisma.dealCompetitor.findMany({
+        where: { dealId: id },
+        orderBy: { createdAt: "asc" },
+      })
+    } catch (e: any) {
+      singletonError = e?.message || String(e)
+    }
 
-    return NextResponse.json({ success: true, data: competitors })
+    // Return diagnostic info
+    if (directResult && !singletonResult) {
+      // Direct client works, singleton doesn't — use direct result
+      return NextResponse.json({
+        success: true,
+        data: directResult,
+        _debug: { usedDirect: true, singletonError: singletonError?.substring(0, 200) },
+      })
+    }
+
+    if (singletonResult) {
+      return NextResponse.json({ success: true, data: singletonResult })
+    }
+
+    return NextResponse.json({
+      error: "Both clients failed",
+      directError: directError?.substring(0, 200),
+      singletonError: singletonError?.substring(0, 200),
+    }, { status: 500 })
   } catch (e: any) {
     console.error("[competitors GET]", e?.message || e)
     return NextResponse.json({ error: e?.message || "Internal server error" }, { status: 500 })
