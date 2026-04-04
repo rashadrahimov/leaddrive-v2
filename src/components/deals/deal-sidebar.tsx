@@ -97,7 +97,7 @@ export function DealSidebar({ deal, orgId, offersCount, invoicesCount, onEdit, f
 
       {/* ── Deal Value + Stage (hero) ── */}
       <div className="p-4 border-b border-border">
-        <div className="text-2xl font-bold tracking-tight">
+        <div className="text-2xl font-bold tabular-nums tracking-tight">
           {deal.valueAmount.toLocaleString()} {deal.currency}
         </div>
         <div className="flex items-center gap-2 mt-1">

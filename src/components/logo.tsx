@@ -21,13 +21,13 @@ export function Logo({ collapsed = false, size = "md", sidebar = false, classNam
   // Normal logo: navy text in light, white in dark
   const textClass = sidebar
     ? "text-white"
-    : "text-[#1e3a5f] dark:text-white"
+    : "text-foreground dark:text-white"
   const crmClass = sidebar
     ? "text-white/50 border-white/20"
     : "text-slate-500 dark:text-slate-400 border-slate-300 dark:border-white/20"
   // SVG strokes for chevrons
-  const chevronStroke1 = sidebar ? "stroke-white/60" : "stroke-[#1e3a5f] dark:stroke-white/60"
-  const chevronStroke2 = sidebar ? "stroke-white/80" : "stroke-[#1e3a5f] dark:stroke-white/80"
+  const chevronStroke1 = sidebar ? "stroke-white/60" : "stroke-foreground dark:stroke-white/60"
+  const chevronStroke2 = sidebar ? "stroke-white/80" : "stroke-foreground dark:stroke-white/80"
 
   return (
     <div className={`flex items-center gap-2 ${className}`}>

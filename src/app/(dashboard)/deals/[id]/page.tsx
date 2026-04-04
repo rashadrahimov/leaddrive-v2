@@ -344,7 +344,7 @@ export default function DealDetailPage() {
   // ── Loading state ──
   if (loading) {
     return (
-      <div className="space-y-4 animate-pulse">
+      <div className="space-y-6 animate-pulse">
         <div className="h-8 w-48 bg-muted rounded" />
         <div className="h-10 bg-muted rounded-xl" />
         <div className="grid grid-cols-3 gap-4">
@@ -370,7 +370,7 @@ export default function DealDetailPage() {
   const stageInfo = STAGES.find(s => s.key === deal.stage)
 
   return (
-    <MotionPage className="space-y-4 pb-12">
+    <MotionPage className="space-y-6 pb-12">
       {/* ── Header ── */}
       <div className="flex items-center gap-3">
         <Button variant="ghost" size="icon" onClick={() => router.push("/deals")} className="h-8 w-8">

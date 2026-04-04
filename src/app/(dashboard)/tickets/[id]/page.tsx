@@ -366,7 +366,7 @@ export default function TicketDetailPage() {
               </Button>
               <Button
                 size="sm" variant="outline"
-                className="border-blue-300 text-blue-600 hover:bg-blue-50"
+                className="border-primary/30 text-primary hover:bg-primary/5"
                 onClick={handleAssignToMe}
                 disabled={updatingAssignee}
               >
@@ -418,7 +418,7 @@ export default function TicketDetailPage() {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className="bg-blue-500 text-white rounded-xl p-4 flex flex-col gap-1 shadow-sm">
+        <div className="bg-primary text-primary-foreground rounded-xl p-4 flex flex-col gap-1 shadow-sm">
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium opacity-80">Days open</span>
             <Clock className="h-4 w-4 opacity-80" />
@@ -433,7 +433,7 @@ export default function TicketDetailPage() {
           {ticket.slaPolicyName && <span className="text-[10px] font-medium opacity-70">{ticket.slaPolicyName}</span>}
           <span className="text-lg font-bold leading-tight font-mono">{sla.text}</span>
         </div>
-        <div className={`${hasFirstResponse ? "bg-green-500" : slaFirstResponse.breached ? "bg-red-500" : slaFirstResponse.urgent ? "bg-amber-500" : "bg-indigo-500"} text-white rounded-xl p-4 flex flex-col gap-1 shadow-sm`}>
+        <div className={`${hasFirstResponse ? "bg-green-500" : slaFirstResponse.breached ? "bg-red-500" : slaFirstResponse.urgent ? "bg-amber-500" : "bg-primary"} text-white rounded-xl p-4 flex flex-col gap-1 shadow-sm`}>
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium opacity-80">{t("slaFirstResponse")}</span>
             <Send className="h-4 w-4 opacity-80" />
@@ -619,7 +619,7 @@ export default function TicketDetailPage() {
                     size="sm"
                     onClick={() => handleAiAction("summary")}
                     disabled={aiLoading !== null}
-                    className="border-blue-300 text-blue-700 hover:bg-blue-50 dark:border-blue-700 dark:text-blue-400 dark:hover:bg-blue-950"
+                    className="border-[hsl(var(--ai-from))]/30 text-[hsl(var(--ai-from))] hover:bg-[hsl(var(--ai-from))]/5"
                   >
                     {aiLoading === "summary" ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <FileText className="h-3.5 w-3.5 mr-1" />}
                     {t("aiSummary")}

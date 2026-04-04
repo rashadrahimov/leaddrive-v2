@@ -151,15 +151,15 @@ export function EmployeesTab() {
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
           <CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Total Headcount</CardTitle></CardHeader>
-          <CardContent><p className="text-2xl font-bold">{totalHeadcount}</p></CardContent>
+          <CardContent><p className="text-2xl font-bold tabular-nums tracking-tight">{totalHeadcount}</p></CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Total Labor Cost/mo</CardTitle></CardHeader>
-          <CardContent><p className="text-2xl font-bold">{Math.round(totalLaborCost).toLocaleString()} ₼</p></CardContent>
+          <CardContent><p className="text-2xl font-bold tabular-nums tracking-tight">{Math.round(totalLaborCost).toLocaleString()} ₼</p></CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Departments</CardTitle></CardHeader>
-          <CardContent><p className="text-2xl font-bold">{deptSummary.length}</p></CardContent>
+          <CardContent><p className="text-2xl font-bold tabular-nums tracking-tight">{deptSummary.length}</p></CardContent>
         </Card>
       </div>
 

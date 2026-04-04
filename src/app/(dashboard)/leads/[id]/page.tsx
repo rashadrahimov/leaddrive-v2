@@ -677,10 +677,10 @@ export default function LeadDetailPage() {
             </div>
 
             {lead.scoreDetails?.reasoning && (
-              <div className="p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-800">
+              <div className="p-4 bg-[hsl(var(--ai-from))]/5 rounded-lg border border-[hsl(var(--ai-from))]/20 ai-accent">
                 <div className="flex items-start gap-2">
-                  <Sparkles className="h-4 w-4 text-purple-500 shrink-0 mt-0.5" />
-                  <p className="text-sm text-purple-900 dark:text-purple-200 leading-relaxed">{lead.scoreDetails.reasoning}</p>
+                  <Sparkles className="h-4 w-4 text-[hsl(var(--ai-from))] shrink-0 mt-0.5" />
+                  <p className="text-sm text-foreground leading-relaxed">{lead.scoreDetails.reasoning}</p>
                 </div>
               </div>
             )}

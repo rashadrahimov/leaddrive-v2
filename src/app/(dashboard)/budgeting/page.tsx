@@ -1486,7 +1486,7 @@ function WorkspaceTab({ planId, onNavigateTab }: { planId: string; onNavigateTab
           title={t("hintBtnAiAnalysis")}
           onClick={handleAINarrative}
           disabled={aiNarrative.isPending}
-          className="relative overflow-hidden bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 hover:from-violet-500 hover:via-purple-500 hover:to-indigo-500 text-white border-0 shadow-md shadow-purple-500/25 hover:shadow-lg hover:shadow-purple-500/40 transition-all duration-300 hover:scale-[1.03] active:scale-[0.97]"
+          className="relative overflow-hidden bg-gradient-to-r from-[hsl(var(--ai-from))] to-[hsl(var(--ai-to))] hover:opacity-90 text-white border-0 shadow-md shadow-[hsl(var(--ai-from))]/25 hover:shadow-lg hover:shadow-[hsl(var(--ai-from))]/40 transition-all duration-300 hover:scale-[1.03] active:scale-[0.97]"
         >
           {aiNarrative.isPending ? (
             <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
@@ -1536,10 +1536,10 @@ function WorkspaceTab({ planId, onNavigateTab }: { planId: string; onNavigateTab
 
       {/* Da Vinci Narrative */}
       {showNarrative && (
-        <Card className="border-purple-200 dark:border-purple-800">
+        <Card className="border-[hsl(var(--ai-from))]/20 ai-accent">
           <CardHeader className="pb-2">
             <div className="flex justify-between items-center">
-              <CardTitle className="text-sm flex items-center gap-2"><AlertCircle className="h-4 w-4 text-purple-600" /> {t("aiAnalysisTitle")}</CardTitle>
+              <CardTitle className="text-sm flex items-center gap-2"><AlertCircle className="h-4 w-4 text-[hsl(var(--ai-from))]" /> {t("aiAnalysisTitle")}</CardTitle>
               <Button size="sm" variant="ghost" onClick={() => { setShowNarrative(false); setNarrative(null) }}>✕</Button>
             </div>
           </CardHeader>
@@ -1832,7 +1832,7 @@ function OverviewTab({ planId }: { planId: string }) {
           size="sm"
           onClick={handleAINarrative}
           disabled={aiNarrative.isPending}
-          className="relative overflow-hidden bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 hover:from-violet-500 hover:via-purple-500 hover:to-indigo-500 text-white border-0 shadow-md shadow-purple-500/25 hover:shadow-lg hover:shadow-purple-500/40 transition-all duration-300 hover:scale-[1.03] active:scale-[0.97]"
+          className="relative overflow-hidden bg-gradient-to-r from-[hsl(var(--ai-from))] to-[hsl(var(--ai-to))] hover:opacity-90 text-white border-0 shadow-md shadow-[hsl(var(--ai-from))]/25 hover:shadow-lg hover:shadow-[hsl(var(--ai-from))]/40 transition-all duration-300 hover:scale-[1.03] active:scale-[0.97]"
         >
           {aiNarrative.isPending ? (
             <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
@@ -1856,11 +1856,11 @@ function OverviewTab({ planId }: { planId: string }) {
 
       {/* Da Vinci Narrative Card */}
       {showNarrative && (
-        <Card className="border-purple-200 dark:border-purple-800">
+        <Card className="border-[hsl(var(--ai-from))]/20 ai-accent">
           <CardHeader className="pb-2">
             <div className="flex justify-between items-center">
               <CardTitle className="text-sm flex items-center gap-2">
-                <AlertCircle className="h-4 w-4 text-purple-600" /> {t("aiAnalysisTitle")}
+                <AlertCircle className="h-4 w-4 text-[hsl(var(--ai-from))]" /> {t("aiAnalysisTitle")}
               </CardTitle>
               <Button size="sm" variant="ghost" onClick={() => { setShowNarrative(false); setNarrative(null) }}>✕</Button>
             </div>

@@ -116,7 +116,7 @@ export default function SegmentsPage() {
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -140,8 +140,8 @@ export default function SegmentsPage() {
           )}
         >
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-blue-50 dark:bg-blue-900/20">
-              <Filter className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+            <div className="p-2 rounded-lg bg-primary/10">
+              <Filter className="h-4 w-4 text-primary" />
             </div>
             <div>
               <p className="text-xl font-bold">{segments.length}</p>
@@ -305,7 +305,7 @@ export default function SegmentsPage() {
                       {chips.slice(0, 4).map(chip => (
                         <span
                           key={chip.key}
-                          className="text-[11px] bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 px-2 py-0.5 rounded-full"
+                          className="text-[11px] bg-[hsl(var(--ai-to))]/5 text-[hsl(var(--ai-to))] px-2 py-0.5 rounded-full"
                         >
                           {chip.label}
                         </span>

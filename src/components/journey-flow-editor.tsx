@@ -285,7 +285,7 @@ export function JourneyFlowEditor({ steps, onSave }: JourneyFlowEditorProps) {
               const d = n.data as JourneyNodeData
               const map: Record<string, string> = {
                 trigger: "#3b82f6", send_email: "#22c55e", wait: "#f59e0b",
-                condition: "#f97316", create_task: "#14b8a6", send_telegram: "#0ea5e9",
+                condition: "#f97316", create_task: "#0176D3", send_telegram: "#0176D3",
                 send_whatsapp: "#10b981", sms: "#8b5cf6",
               }
               return map[d.type] || "#94a3b8"

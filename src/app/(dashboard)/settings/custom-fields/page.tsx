@@ -281,7 +281,7 @@ export default function DashboardSettingsPage() {
 
   if (loading) {
     return (
-      <div className="space-y-4">
+      <div className="space-y-6">
         <div className="h-8 w-64 bg-muted rounded animate-pulse" />
         {[1, 2, 3].map(i => <div key={i} className="h-40 bg-muted rounded-xl animate-pulse" />)}
       </div>

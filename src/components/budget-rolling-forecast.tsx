@@ -78,7 +78,7 @@ export function BudgetRollingForecast({
           </span>
           <div className="flex gap-2">
             {onAutoForecast && (
-              <Button size="sm" variant="outline" onClick={onAutoForecast} disabled={isForecasting}>
+              <Button size="sm" variant="outline" onClick={onAutoForecast} disabled={isForecasting} className="ai-glow">
                 {isForecasting ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Sparkles className="h-4 w-4 mr-1" />}
                 Авто-прогноз
               </Button>

@@ -22,7 +22,7 @@ export default function FinancePage() {
   const [activeTab, setActiveTab] = useState(initialTab)
 
   return (
-    <div className="flex-1 space-y-4 p-4 md:p-6">
+    <div className="flex-1 space-y-6 p-4 md:p-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold tracking-tight">Финансы</h1>
       </div>

@@ -138,10 +138,10 @@ export default function CompanyDetailPage() {
   const daysAsClient = Math.floor((Date.now() - new Date(company.createdAt).getTime()) / 86400000)
 
   const kpiCards = [
-    { label: t("kpiContacts"), value: company.contacts?.length || 0, bg: "bg-blue-500", icon: <Users className="h-4 w-4 opacity-80" /> },
-    { label: t("kpiActiveDeals"), value: activeDeals.length, bg: "bg-indigo-500", icon: <Handshake className="h-4 w-4 opacity-80" /> },
+    { label: t("kpiContacts"), value: company.contacts?.length || 0, bg: "bg-primary", icon: <Users className="h-4 w-4 opacity-80" /> },
+    { label: t("kpiActiveDeals"), value: activeDeals.length, bg: "bg-[hsl(var(--ai-from))]", icon: <Handshake className="h-4 w-4 opacity-80" /> },
     { label: t("kpiPipeline"), value: `${pipelineValue.toLocaleString()} ₼`, bg: "bg-green-500", icon: <TrendingUp className="h-4 w-4 opacity-80" /> },
-    { label: t("kpiDaysAsClient"), value: daysAsClient, bg: "bg-violet-500", icon: <Clock className="h-4 w-4 opacity-80" /> },
+    { label: t("kpiDaysAsClient"), value: daysAsClient, bg: "bg-[hsl(var(--ai-to))]", icon: <Clock className="h-4 w-4 opacity-80" /> },
   ]
 
   return (

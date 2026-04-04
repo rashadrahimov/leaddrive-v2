@@ -39,7 +39,7 @@ export function FinanceKpiCard({ title, value, plan, sub, icon, color, variance,
         <div className="flex justify-between items-start">
           <div className="min-w-0">
             <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide leading-tight">{title}</p>
-            <p className="text-2xl font-bold mt-1 tabular-nums leading-none">
+            <p className="text-2xl font-bold mt-1 tabular-nums tracking-tight leading-none">
               {fmt(value)} <span className="text-xs font-normal text-muted-foreground">{currency}</span>
             </p>
             {plan !== undefined && plan > 0 && (

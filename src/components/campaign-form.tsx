@@ -293,15 +293,15 @@ export function CampaignForm({ open, onOpenChange, onSaved, initialData, orgId, 
           {/* Stats row */}
           <div className="grid grid-cols-3 gap-3 mb-4">
             <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-3 text-center">
-              <div className="text-2xl font-bold text-green-600">{initialData?.totalSent ?? Number(form.totalRecipients)}</div>
+              <div className="text-2xl font-bold tabular-nums tracking-tight text-green-600">{initialData?.totalSent ?? Number(form.totalRecipients)}</div>
               <div className="text-xs text-muted-foreground">{t("sent")}</div>
             </div>
-            <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 text-center">
-              <div className="text-2xl font-bold text-blue-600">{initialData?.totalOpened ?? 0}</div>
+            <div className="bg-primary/5 rounded-lg p-3 text-center">
+              <div className="text-2xl font-bold tabular-nums tracking-tight text-primary">{initialData?.totalOpened ?? 0}</div>
               <div className="text-xs text-muted-foreground">{tc("open")}</div>
             </div>
-            <div className="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-3 text-center">
-              <div className="text-2xl font-bold text-purple-600">{initialData?.totalClicked ?? 0}</div>
+            <div className="bg-[hsl(var(--ai-from))]/5 rounded-lg p-3 text-center">
+              <div className="text-2xl font-bold tabular-nums tracking-tight text-[hsl(var(--ai-from))]">{initialData?.totalClicked ?? 0}</div>
               <div className="text-xs text-muted-foreground">{tc("total")}</div>
             </div>
           </div>

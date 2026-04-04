@@ -115,16 +115,16 @@ export function ClientsTab() {
       <div className="grid gap-4 md:grid-cols-4">
         <Card>
           <CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Cəm Maya</CardTitle></CardHeader>
-          <CardContent><p className="text-2xl font-bold">{fmt(totalCost)}</p></CardContent>
+          <CardContent><p className="text-2xl font-bold tabular-nums tracking-tight">{fmt(totalCost)}</p></CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Cəm Gəlir</CardTitle></CardHeader>
-          <CardContent><p className="text-2xl font-bold">{fmt(totalRevenue)}</p></CardContent>
+          <CardContent><p className="text-2xl font-bold tabular-nums tracking-tight">{fmt(totalRevenue)}</p></CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Cəm Balans</CardTitle></CardHeader>
           <CardContent>
-            <p className={`text-2xl font-bold ${totalBalance >= 0 ? "text-green-600" : "text-red-600"}`}>
+            <p className={`text-2xl font-bold tabular-nums tracking-tight ${totalBalance >= 0 ? "text-green-600" : "text-red-600"}`}>
               {fmt(totalBalance)}
             </p>
           </CardContent>
@@ -132,7 +132,7 @@ export function ClientsTab() {
         <Card>
           <CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Müştərilər</CardTitle></CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold">{clients.length}</p>
+            <p className="text-2xl font-bold tabular-nums tracking-tight">{clients.length}</p>
             <p className="text-xs text-muted-foreground">
               <span className="text-green-600">Mənfəətli: {profitable}</span> / <span className="text-red-600">Zərərli: {lossCount}</span>
             </p>

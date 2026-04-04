@@ -88,7 +88,7 @@ export function NextBestOffers({ dealId, orgId }: { dealId: string; orgId?: stri
 
   return (
     <>
-      <Card className="border-none shadow-sm">
+      <Card className="border-none shadow-sm ai-accent">
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-semibold flex items-center gap-2">
             <Sparkles className="h-4 w-4 text-amber-500" />

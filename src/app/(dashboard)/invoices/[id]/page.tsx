@@ -798,7 +798,7 @@ export default function InvoiceDetailPage() {
   // ---------- Render ----------
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex items-center gap-3">
@@ -1468,11 +1468,11 @@ export default function InvoiceDetailPage() {
                 <CardContent className="pt-4">
                   {/* Trigger node */}
                   <div className="flex items-center gap-3 mb-1">
-                    <div className="flex items-center justify-center w-9 h-9 rounded-full bg-purple-500 text-white flex-shrink-0">
+                    <div className="flex items-center justify-center w-9 h-9 rounded-full bg-[hsl(var(--ai-from))] text-white flex-shrink-0">
                       <Send className="h-4 w-4" />
                     </div>
-                    <div className="flex-1 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-700 rounded-lg px-4 py-3">
-                      <span className="font-semibold text-sm text-purple-800 dark:text-purple-200">
+                    <div className="flex-1 bg-[hsl(var(--ai-from))]/5 border border-[hsl(var(--ai-from))]/20 rounded-lg px-4 py-3">
+                      <span className="font-semibold text-sm text-[hsl(var(--ai-from))]">
                         {t("chainTrigger")}
                       </span>
                     </div>

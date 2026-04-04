@@ -239,7 +239,7 @@ export function CampaignFlowEditor({ flowData, onSave, readOnly = false }: Campa
               const d = n.data as FlowNodeData
               const map: Record<string, string> = {
                 audience: "#3b82f6", email: "#22c55e", sms: "#8b5cf6",
-                wait: "#f59e0b", condition: "#f97316", split: "#ec4899", action: "#14b8a6",
+                wait: "#f59e0b", condition: "#f97316", split: "#ec4899", action: "#0176D3",
               }
               return map[d.type] || "#94a3b8"
             }}

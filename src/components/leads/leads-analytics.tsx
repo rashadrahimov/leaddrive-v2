@@ -182,11 +182,11 @@ export function LeadsAnalytics({ leads, labels }: LeadsAnalyticsProps) {
       {/* ── KPI Cards ────────────────────────────────────────────── */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
         {[
-          { label: labels.totalLeads, value: stats.total, icon: UserPlus, color: "from-blue-500 to-blue-600", sub: `${stats.active} active` },
+          { label: labels.totalLeads, value: stats.total, icon: UserPlus, color: "from-primary to-primary/80", sub: `${stats.active} active` },
           { label: labels.hotLeads, value: stats.hotLeads, icon: Flame, color: "from-orange-500 to-red-500", sub: `score >= 80` },
           { label: labels.conversionRate, value: `${stats.conversionRate}%`, icon: Target, color: "from-emerald-500 to-green-600", sub: `${stats.converted} converted` },
-          { label: labels.avgScore, value: `${stats.avgScore}`, icon: TrendingUp, color: "from-indigo-500 to-violet-600", sub: `/100` },
-          { label: labels.pipelineValue, value: fmtCurrency(stats.pipelineValue), icon: Zap, color: "from-cyan-500 to-teal-600", sub: `${stats.active} leads` },
+          { label: labels.avgScore, value: `${stats.avgScore}`, icon: TrendingUp, color: "from-[hsl(var(--ai-from))] to-[hsl(var(--ai-to))]", sub: `/100` },
+          { label: labels.pipelineValue, value: fmtCurrency(stats.pipelineValue), icon: Zap, color: "from-primary/80 to-primary", sub: `${stats.active} leads` },
           { label: labels.avgDaysToConvert, value: leads.length > 0 ? `${Math.round(leads.filter(l => l.status !== "converted").reduce((s, l) => s + daysBetween(l.createdAt, new Date().toISOString()), 0) / Math.max(1, leads.filter(l => l.status !== "converted").length))}` : "—", icon: Clock, color: "from-pink-500 to-rose-600", sub: "days avg" },
         ].map((kpi, i) => (
           <div key={i} className="relative overflow-hidden rounded-xl bg-gradient-to-br text-white p-4" style={{ backgroundImage: `linear-gradient(135deg, var(--tw-gradient-from), var(--tw-gradient-to))` }}>
@@ -196,7 +196,7 @@ export function LeadsAnalytics({ leads, labels }: LeadsAnalyticsProps) {
                 <span className="text-xs font-medium text-white/80 truncate">{kpi.label}</span>
                 <kpi.icon className="h-4 w-4 text-white/60" />
               </div>
-              <p className="text-2xl font-bold">{kpi.value}</p>
+              <p className="text-2xl font-bold tabular-nums tracking-tight">{kpi.value}</p>
               <p className="text-[11px] text-white/70 mt-0.5">{kpi.sub}</p>
             </div>
           </div>

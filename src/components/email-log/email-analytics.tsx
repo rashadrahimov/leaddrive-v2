@@ -123,9 +123,9 @@ export function EmailAnalytics({ logs, stats, labels }: EmailAnalyticsProps) {
       {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
         {[
-          { label: labels.total, value: stats.total, icon: Mail, color: "from-blue-500 to-blue-600", sub: `${stats.outbound} out / ${stats.inbound} in` },
-          { label: labels.outbound, value: stats.outbound, icon: Send, color: "from-violet-500 to-purple-600", sub: `${computed.deliveryRate}% delivered` },
-          { label: labels.inbound, value: stats.inbound, icon: Inbox, color: "from-indigo-500 to-blue-600", sub: "received" },
+          { label: labels.total, value: stats.total, icon: Mail, color: "from-primary to-primary/80", sub: `${stats.outbound} out / ${stats.inbound} in` },
+          { label: labels.outbound, value: stats.outbound, icon: Send, color: "from-[hsl(var(--ai-from))] to-[hsl(var(--ai-to))]", sub: `${computed.deliveryRate}% delivered` },
+          { label: labels.inbound, value: stats.inbound, icon: Inbox, color: "from-primary/80 to-primary", sub: "received" },
           { label: labels.sent, value: stats.sent, icon: CheckCircle, color: "from-emerald-500 to-green-600", sub: `${computed.deliveryRate}% rate` },
           { label: labels.failed, value: stats.failed, icon: AlertTriangle, color: "from-red-500 to-rose-600", sub: `${computed.failRate}% fail rate` },
           { label: labels.bounced, value: stats.bounced, icon: RotateCcw, color: "from-orange-500 to-amber-600", sub: "bounced back" },
@@ -137,7 +137,7 @@ export function EmailAnalytics({ logs, stats, labels }: EmailAnalyticsProps) {
                 <span className="text-xs font-medium text-white/80 truncate">{kpi.label}</span>
                 <kpi.icon className="h-4 w-4 text-white/60" />
               </div>
-              <p className="text-2xl font-bold">{kpi.value}</p>
+              <p className="text-2xl font-bold tabular-nums tracking-tight">{kpi.value}</p>
               <p className="text-[11px] text-white/70 mt-0.5">{kpi.sub}</p>
             </div>
           </div>
@@ -197,7 +197,7 @@ export function EmailAnalytics({ logs, stats, labels }: EmailAnalyticsProps) {
             />
             <div className="ml-4 space-y-3">
               {[
-                { label: labels.outbound, count: stats.outbound, color: "bg-violet-500" },
+                { label: labels.outbound, count: stats.outbound, color: "bg-[hsl(var(--ai-from))]" },
                 { label: labels.inbound, count: stats.inbound, color: "bg-blue-500" },
               ].map(p => (
                 <div key={p.label} className="flex items-center gap-2">
@@ -227,7 +227,7 @@ export function EmailAnalytics({ logs, stats, labels }: EmailAnalyticsProps) {
             />
             <div className="ml-4 space-y-3">
               {[
-                { label: labels.campaignEmails, count: computed.campaignCount, color: "bg-violet-500" },
+                { label: labels.campaignEmails, count: computed.campaignCount, color: "bg-[hsl(var(--ai-from))]" },
                 { label: "Manual", count: computed.manualCount, color: "bg-gray-500" },
               ].map(p => (
                 <div key={p.label} className="flex items-center gap-2">
@@ -295,7 +295,7 @@ export function EmailAnalytics({ logs, stats, labels }: EmailAnalyticsProps) {
                       <span className="text-xs text-muted-foreground font-semibold">{count}</span>
                     </div>
                     <div className="h-2 rounded-full bg-muted overflow-hidden">
-                      <div className="h-full rounded-full bg-violet-500 transition-all" style={{ width: `${pct}%` }} />
+                      <div className="h-full rounded-full bg-[hsl(var(--ai-from))] transition-all" style={{ width: `${pct}%` }} />
                     </div>
                   </div>
                 )

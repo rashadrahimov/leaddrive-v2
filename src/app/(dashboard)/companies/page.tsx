@@ -39,7 +39,7 @@ interface Company {
 
 const statusColors: Record<string, string> = {
   active: "bg-green-100 text-green-700",
-  prospect: "bg-blue-100 text-blue-700",
+  prospect: "bg-primary/10 text-primary",
   inactive: "bg-gray-100 text-gray-500",
 }
 
@@ -245,7 +245,7 @@ export default function CompaniesPage() {
                     </>
                   )}
                   {company.slaPolicy && (
-                    <span className="text-xs bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 px-1.5 py-0.5 rounded font-medium">
+                    <span className="text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded font-medium">
                       SLA: {company.slaPolicy.name}
                     </span>
                   )}

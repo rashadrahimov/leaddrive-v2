@@ -729,7 +729,7 @@ export function LeadItemModal({ open, onOpenChange, lead, orgId, onSaved, onConv
 
             {/* Tab: Sentiment */}
             {activeTab === "sentiment" && (
-              <div className="space-y-4">
+              <div className="space-y-4 ai-accent rounded-lg p-4">
                 {!sentiment ? (
                   <div className="text-center py-8">
                     <Brain className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
@@ -781,7 +781,7 @@ export function LeadItemModal({ open, onOpenChange, lead, orgId, onSaved, onConv
 
             {/* Tab: Tasks */}
             {activeTab === "tasks" && (
-              <div className="space-y-4">
+              <div className="space-y-4 ai-accent rounded-lg p-4">
                 {!aiTasks ? (
                   <div className="text-center py-8">
                     <Sparkles className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
@@ -886,7 +886,7 @@ export function LeadItemModal({ open, onOpenChange, lead, orgId, onSaved, onConv
 
             {/* Tab: Da Vinci Scoring */}
             {activeTab === "ai" && (
-              <div className="space-y-4">
+              <div className="space-y-4 ai-accent rounded-lg p-4">
                 <div className="flex items-center justify-between">
                   <h4 className="font-medium text-sm flex items-center gap-1.5">
                     <Brain className="h-4 w-4 text-purple-500" /> {t("modalAiAnalysis")}
@@ -897,10 +897,10 @@ export function LeadItemModal({ open, onOpenChange, lead, orgId, onSaved, onConv
                 </div>
 
                 {reasoning && (
-                  <div className="p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-800">
+                  <div className="p-4 bg-[hsl(var(--ai-from))]/5 rounded-lg border border-[hsl(var(--ai-from))]/20 ai-accent">
                     <div className="flex items-start gap-2">
-                      <Sparkles className="h-4 w-4 text-purple-500 shrink-0 mt-0.5" />
-                      <p className="text-sm text-purple-900 dark:text-purple-200 leading-relaxed">{reasoning}</p>
+                      <Sparkles className="h-4 w-4 text-[hsl(var(--ai-from))] shrink-0 mt-0.5" />
+                      <p className="text-sm text-foreground leading-relaxed">{reasoning}</p>
                     </div>
                   </div>
                 )}

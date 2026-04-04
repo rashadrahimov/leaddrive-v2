@@ -156,7 +156,7 @@ export function OverheadTab() {
             <CardTitle className="text-sm text-muted-foreground">Admin Overhead</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold">{adminTotal.toLocaleString("en", { minimumFractionDigits: 2 })} ₼</p>
+            <p className="text-2xl font-bold tabular-nums tracking-tight">{adminTotal.toLocaleString("en", { minimumFractionDigits: 2 })} ₼</p>
           </CardContent>
         </Card>
         <Card>
@@ -164,7 +164,7 @@ export function OverheadTab() {
             <CardTitle className="text-sm text-muted-foreground">Tech Infrastructure</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold">{techTotal.toLocaleString("en", { minimumFractionDigits: 2 })} ₼</p>
+            <p className="text-2xl font-bold tabular-nums tracking-tight">{techTotal.toLocaleString("en", { minimumFractionDigits: 2 })} ₼</p>
           </CardContent>
         </Card>
         <Card>
@@ -172,7 +172,7 @@ export function OverheadTab() {
             <CardTitle className="text-sm text-muted-foreground">Total Overhead</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold">{grandTotal.toLocaleString("en", { minimumFractionDigits: 2 })} ₼</p>
+            <p className="text-2xl font-bold tabular-nums tracking-tight">{grandTotal.toLocaleString("en", { minimumFractionDigits: 2 })} ₼</p>
           </CardContent>
         </Card>
       </div>

@@ -169,7 +169,7 @@ export function BudgetMatrixGrid({
       </div>
 
       {/* Matrix table */}
-      <div className="overflow-x-auto rounded-xl border bg-white dark:bg-slate-900">
+      <div className="overflow-x-auto rounded-xl border bg-card">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b bg-muted/50">
@@ -195,7 +195,7 @@ export function BudgetMatrixGrid({
             {/* Non-shared cost types — one row per type, cells per dept */}
             {perDeptCostTypes.map((ct) => (
               <tr key={ct.key} className="border-b hover:bg-muted/30 transition-colors">
-                <td className="sticky left-0 z-10 bg-white dark:bg-slate-900 px-3 py-1.5 font-medium text-xs">
+                <td className="sticky left-0 z-10 bg-card px-3 py-1.5 font-medium text-xs">
                   <div className="flex items-center gap-1.5">
                     {ct.color && (
                       <span className="w-2 h-2 rounded-full" style={{ backgroundColor: ct.color }} />
@@ -220,7 +220,7 @@ export function BudgetMatrixGrid({
             {/* Shared cost types */}
             {sharedCostTypes.map((ct) => (
               <tr key={ct.key} className="border-b hover:bg-muted/30 transition-colors">
-                <td className="sticky left-0 z-10 bg-white dark:bg-slate-900 px-3 py-1.5 font-medium text-xs">
+                <td className="sticky left-0 z-10 bg-card px-3 py-1.5 font-medium text-xs">
                   <div className="flex items-center gap-1.5">
                     {ct.color && (
                       <span className="w-2 h-2 rounded-full" style={{ backgroundColor: ct.color }} />
@@ -259,7 +259,7 @@ export function BudgetMatrixGrid({
             {revenueCells.length > 0 && (
               <>
                 <tr className="border-b hover:bg-green-50/50 dark:hover:bg-green-900/10 transition-colors">
-                  <td className="sticky left-0 z-10 bg-white dark:bg-slate-900 px-3 py-1.5 font-medium text-xs text-green-700 dark:text-green-400">
+                  <td className="sticky left-0 z-10 bg-card px-3 py-1.5 font-medium text-xs text-green-700 dark:text-green-400">
                     {t("matrixRevenue")}
                   </td>
                   {activeDepts.map((d) => {

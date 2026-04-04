@@ -174,7 +174,7 @@ export default function LeadScoringPage() {
             {tai("subtitle")}
           </p>
         </div>
-        <Button onClick={scoreAll} disabled={scoring || loading}>
+        <Button onClick={scoreAll} disabled={scoring || loading} className="ai-glow">
           {scoring ? (
             <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
           ) : (
@@ -262,7 +262,7 @@ export default function LeadScoringPage() {
       </div>
 
       {/* Results Table */}
-      <Card>
+      <Card className="ai-accent">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Brain className="h-5 w-5" />
