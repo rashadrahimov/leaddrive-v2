@@ -223,6 +223,36 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
           entityType: "deal",
           entityId: id,
         }).catch(() => {})
+
+        // Cashback notifications when deal is WON
+        if (parsed.data.stage === "WON") {
+          const rolesWithCashback = await prisma.dealContactRole.findMany({
+            where: { dealId: id, cashbackValue: { not: null } },
+          })
+          if (rolesWithCashback.length > 0) {
+            const contactIds = rolesWithCashback.map(r => r.contactId)
+            const contacts = await prisma.contact.findMany({
+              where: { id: { in: contactIds } },
+              select: { id: true, fullName: true },
+            })
+            const contactMap = Object.fromEntries(contacts.map(c => [c.id, c.fullName]))
+
+            for (const r of rolesWithCashback) {
+              const name = contactMap[r.contactId] || "Контакт"
+              const amount = r.cashbackType === "percent"
+                ? `${r.cashbackValue}% от суммы сделки`
+                : `$${r.cashbackValue}`
+              createNotification({
+                organizationId: orgId,
+                type: "warning",
+                title: "💰 Кэшбек к выплате",
+                message: `Сделка «${updated.name}» выиграна — выплатить кэшбек ${amount} контакту ${name}`,
+                entityType: "deal",
+                entityId: id,
+              }).catch(() => {})
+            }
+          }
+        }
       }
     }
 

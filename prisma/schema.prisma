@@ -305,6 +305,8 @@ model DealContactRole {
   decisionFactor String   @default("Ease of Use")
   loyalty        String   @default("Neutral")
   isPrimary      Boolean  @default(false)
+  cashbackType   String?  // "percent" or "fixed"
+  cashbackValue  Float?   // percentage (e.g. 5.0) or fixed amount
   createdAt      DateTime @default(now())
 
   @@unique([dealId, contactId])

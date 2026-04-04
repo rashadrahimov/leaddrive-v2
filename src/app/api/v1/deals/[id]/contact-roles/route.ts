@@ -10,6 +10,8 @@ const addRoleSchema = z.object({
   decisionFactor: z.string().default("Ease of Use"),
   loyalty: z.string().default("Neutral"),
   isPrimary: z.boolean().default(false),
+  cashbackType: z.enum(["percent", "fixed"]).nullable().optional(),
+  cashbackValue: z.number().min(0).max(999999).nullable().optional(),
 })
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -63,7 +65,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     const role = await prisma.dealContactRole.upsert({
       where: { dealId_contactId: { dealId: id, contactId: parsed.data.contactId } },
       create: { dealId: id, ...parsed.data },
-      update: { role: parsed.data.role, influence: parsed.data.influence, decisionFactor: parsed.data.decisionFactor, loyalty: parsed.data.loyalty, isPrimary: parsed.data.isPrimary },
+      update: { role: parsed.data.role, influence: parsed.data.influence, decisionFactor: parsed.data.decisionFactor, loyalty: parsed.data.loyalty, isPrimary: parsed.data.isPrimary, cashbackType: parsed.data.cashbackType ?? null, cashbackValue: parsed.data.cashbackValue ?? null },
     })
 
     return NextResponse.json({ success: true, data: role })

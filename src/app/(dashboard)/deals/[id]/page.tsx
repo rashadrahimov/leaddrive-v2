@@ -49,6 +49,8 @@ interface ContactRole {
   decisionFactor: string
   loyalty: string
   isPrimary: boolean
+  cashbackType: string | null
+  cashbackValue: number | null
   contact: { id: string; fullName: string; position: string | null; email: string | null; phone: string | null }
 }
 
@@ -93,6 +95,8 @@ function ContactRolesPanel({ deal, dealId, orgId, fetchDeal, tc, t }: {
   const [role, setRole] = useState("contact_person")
   const [influence, setInfluence] = useState("Medium")
   const [loyalty, setLoyalty] = useState("Neutral")
+  const [cashbackType, setCashbackType] = useState<string | null>(null)
+  const [cashbackValue, setCashbackValue] = useState<string>("")
   const [submitting, setSubmitting] = useState(false)
 
   const headers: any = orgId ? { "x-organization-id": orgId } : {}
@@ -117,7 +121,11 @@ function ContactRolesPanel({ deal, dealId, orgId, fetchDeal, tc, t }: {
       await fetch(`/api/v1/deals/${dealId}/contact-roles`, {
         method: "POST",
         headers: { "Content-Type": "application/json", ...headers },
-        body: JSON.stringify({ contactId: selectedContact.id, role, influence, loyalty }),
+        body: JSON.stringify({
+          contactId: selectedContact.id, role, influence, loyalty,
+          cashbackType: cashbackType || null,
+          cashbackValue: cashbackValue ? parseFloat(cashbackValue) : null,
+        }),
       })
       setShowForm(false)
       setSelectedContact(null)
@@ -126,6 +134,8 @@ function ContactRolesPanel({ deal, dealId, orgId, fetchDeal, tc, t }: {
       setRole("contact_person")
       setInfluence("Medium")
       setLoyalty("Neutral")
+      setCashbackType(null)
+      setCashbackValue("")
       fetchDeal()
     } finally { setSubmitting(false) }
   }
@@ -219,6 +229,38 @@ function ContactRolesPanel({ deal, dealId, orgId, fetchDeal, tc, t }: {
                     </select>
                   </div>
                 </div>
+                {/* Cashback */}
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground mb-1 block">{tc("cashback")}</label>
+                  <div className="flex items-center gap-2">
+                    <select
+                      value={cashbackType || ""}
+                      onChange={e => setCashbackType(e.target.value || null)}
+                      className="h-9 rounded-md border bg-background px-2 text-sm min-w-[120px]"
+                    >
+                      <option value="">{tc("noCashback")}</option>
+                      <option value="percent">%</option>
+                      <option value="fixed">{tc("fixedAmount")}</option>
+                    </select>
+                    {cashbackType && (
+                      <div className="relative flex-1">
+                        <Input
+                          type="number"
+                          min="0"
+                          max={cashbackType === "percent" ? "100" : "999999"}
+                          step={cashbackType === "percent" ? "0.5" : "1"}
+                          placeholder={cashbackType === "percent" ? "5" : "500"}
+                          value={cashbackValue}
+                          onChange={e => setCashbackValue(e.target.value)}
+                          className="pr-8"
+                        />
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
+                          {cashbackType === "percent" ? "%" : "$"}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
                 <div className="flex justify-end">
                   <Button size="sm" onClick={handleAdd} disabled={submitting} className="gap-1.5">
                     {submitting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Plus className="h-3.5 w-3.5" />}
@@ -241,6 +283,7 @@ function ContactRolesPanel({ deal, dealId, orgId, fetchDeal, tc, t }: {
                   <th className="text-left p-3 font-medium text-muted-foreground">{tc("influence")}</th>
                   <th className="text-left p-3 font-medium text-muted-foreground">{tc("decisionFactor")}</th>
                   <th className="text-left p-3 font-medium text-muted-foreground">{tc("loyalty")}</th>
+                  <th className="text-left p-3 font-medium text-muted-foreground">{tc("cashback")}</th>
                   <th className="p-3 w-8" />
                 </tr>
               </thead>
@@ -264,6 +307,15 @@ function ContactRolesPanel({ deal, dealId, orgId, fetchDeal, tc, t }: {
                       <Badge className={`text-xs ${cr.loyalty?.includes("Supportive") ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" : cr.loyalty?.includes("Opponent") ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400" : "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300"}`}>
                         {cr.loyalty}
                       </Badge>
+                    </td>
+                    <td className="p-3">
+                      {cr.cashbackType && cr.cashbackValue != null ? (
+                        <Badge className="text-xs bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
+                          {cr.cashbackType === "percent" ? `${cr.cashbackValue}%` : `$${cr.cashbackValue}`}
+                        </Badge>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">—</span>
+                      )}
                     </td>
                     <td className="p-3">
                       <Button
