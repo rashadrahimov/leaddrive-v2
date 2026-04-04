@@ -22,6 +22,14 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     const deal = await prisma.deal.findFirst({ where: { id, organizationId: orgId }, select: { id: true } })
     if (!deal) return NextResponse.json({ error: "Deal not found" }, { status: 404 })
 
+    // Debug: try raw SQL first to verify DB access
+    try {
+      const rawTest = await prisma.$queryRawUnsafe(`SELECT COUNT(*) as cnt FROM deal_competitors WHERE "dealId" = $1`, id)
+      console.log("[competitors GET] raw SQL works, count:", rawTest)
+    } catch (rawErr: any) {
+      console.error("[competitors GET] raw SQL failed:", rawErr?.message)
+    }
+
     const competitors = await prisma.dealCompetitor.findMany({
       where: { dealId: id },
       orderBy: { createdAt: "asc" },
