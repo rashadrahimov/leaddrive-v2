@@ -28,7 +28,6 @@ const dealInclude = {
   company: { select: { id: true, name: true } },
   campaign: { select: { id: true, name: true } },
   teamMembers: true,
-  contactRoles: true,
 }
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -68,8 +67,14 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       })
     }
 
+    // Load contact roles separately
+    const contactRoles = await prisma.dealContactRole.findMany({
+      where: { dealId: id },
+      orderBy: { createdAt: "asc" },
+    })
+
     // Enrich contact roles with contact info
-    const roleContactIds = deal.contactRoles.map((r: any) => r.contactId)
+    const roleContactIds = contactRoles.map((r: any) => r.contactId)
     const roleContacts = roleContactIds.length > 0
       ? await prisma.contact.findMany({
           where: { id: { in: roleContactIds } },
@@ -77,14 +82,15 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
         })
       : []
     const roleContactMap = Object.fromEntries(roleContacts.map((c: any) => [c.id, c]))
-    const enrichedRoles = deal.contactRoles.map((r: any) => ({
+    const enrichedRoles = contactRoles.map((r: any) => ({
       ...r,
       contact: roleContactMap[r.contactId] || { id: r.contactId, fullName: "Unknown", position: null, email: null, phone: null },
     }))
 
     return NextResponse.json({ success: true, data: { ...deal, teamMembers: enrichedTeam, contact, contactRoles: enrichedRoles } })
-  } catch (e: any) {
-    return NextResponse.json({ error: "Internal server error", _d: e?.message?.substring(0, 200) }, { status: 500 })
+  } catch (e) {
+    console.error("GET deal error:", e)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
 
