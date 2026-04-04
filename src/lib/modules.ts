@@ -53,6 +53,7 @@ export const PLANS = {
       "core", "deals", "leads", "tasks", "contracts", "invoices", "tickets",
       "knowledge-base", "campaigns", "omnichannel", "reports",
       "workflows", "currencies", "events", "projects",
+      "budgeting", "profitability",
     ] as ModuleId[],
     limits: { users: 25, contacts: 10000 },
     price: 29,

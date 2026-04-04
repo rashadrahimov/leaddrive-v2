@@ -30,6 +30,10 @@ const BUSINESS_MODULES = [
 const PROFESSIONAL_MODULES = [
   ...BUSINESS_MODULES,
   "/invoices",
+  "/finance",
+  "/budgeting",
+  "/profitability",
+  "/pricing",
   "/campaigns",
   "/segments",
   "/email-templates",
@@ -47,10 +51,6 @@ const PROFESSIONAL_MODULES = [
 
 const ENTERPRISE_MODULES = [
   ...PROFESSIONAL_MODULES,
-  "/pricing",
-  "/profitability",
-  "/budgeting",
-  "/finance",
   "/inbox",
   "/settings/portal-users",
   "/settings/smtp-settings",
