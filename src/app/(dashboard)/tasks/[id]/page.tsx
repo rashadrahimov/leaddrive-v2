@@ -265,7 +265,7 @@ export default function TaskDetailPage() {
           <span className="text-lg font-bold leading-tight">{dueDateInfo.text}</span>
           {task.dueDate && <span className="text-[10px] opacity-70">{formatDateShort(task.dueDate)}</span>}
         </div>
-        <div className={`${task.priority === "urgent" ? "bg-red-500" : task.priority === "high" ? "bg-orange-500" : "bg-slate-500"} text-white rounded-xl p-4 flex flex-col gap-1 shadow-sm`}>
+        <div className={`${task.priority === "urgent" ? "bg-red-500" : task.priority === "high" ? "bg-orange-500" : "bg-muted-foreground/50"} text-white rounded-xl p-4 flex flex-col gap-1 shadow-sm`}>
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium opacity-80">{t("colPriority")}</span>
             <AlertTriangle className="h-4 w-4 opacity-80" />

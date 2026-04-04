@@ -127,7 +127,7 @@ const TOOL_COLORS: Record<string, string> = {
 
 function getToolColor(tool: string): string {
   const key = Object.keys(TOOL_COLORS).find(k => tool.toLowerCase().includes(k))
-  return key ? TOOL_COLORS[key] : "bg-gray-50 text-gray-700 border-gray-200"
+  return key ? TOOL_COLORS[key] : "bg-muted text-foreground/70 border-border"
 }
 
 function timeAgo(dateStr: string): string {
@@ -369,7 +369,7 @@ export default function AICommandCenterPage() {
               <div className="flex items-center justify-between">
                 <div className="flex-1">
                   <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1">{t("deflectionRate")} <InfoHint text={t("hintDeflectionRate")} size={12} /></p>
-                  <p className={cn("text-3xl font-bold mt-1", deflectionRate > 50 ? "text-green-600" : deflectionRate > 20 ? "text-amber-500" : "text-gray-900")}>
+                  <p className={cn("text-3xl font-bold mt-1", deflectionRate > 50 ? "text-green-600" : deflectionRate > 20 ? "text-amber-500" : "text-foreground")}>
                     {deflectionRate.toFixed(1)}%
                   </p>
                   <div className="mt-2 h-2 bg-muted rounded-full overflow-hidden">
@@ -460,7 +460,7 @@ export default function AICommandCenterPage() {
               </div>
               <div>
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t("avgLatency")}</p>
-                <p className="text-2xl font-bold">{stats?.avgLatency || 0}<span className="text-sm font-normal text-gray-400">s</span></p>
+                <p className="text-2xl font-bold">{stats?.avgLatency || 0}<span className="text-sm font-normal text-muted-foreground">s</span></p>
               </div>
             </div>
 
@@ -482,7 +482,7 @@ export default function AICommandCenterPage() {
               </div>
               <div>
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t("qualityScore")}</p>
-                <p className="text-2xl font-bold">{stats?.qualityScore || 0}<span className="text-sm font-normal text-gray-400">/10</span></p>
+                <p className="text-2xl font-bold">{stats?.qualityScore || 0}<span className="text-sm font-normal text-muted-foreground">/10</span></p>
               </div>
             </div>
           </div>
@@ -567,7 +567,7 @@ export default function AICommandCenterPage() {
                 const llmTime = log.latencyMs ? log.latencyMs - kbTime : 0
 
                 return (
-                  <div key={log.id} className="hover:bg-muted/50 dark:hover:bg-gray-900/50 transition-colors">
+                  <div key={log.id} className="hover:bg-muted/50 transition-colors">
                     {/* Compact row */}
                     <div className="p-4 cursor-pointer flex items-center gap-4" onClick={() => setSelectedLog(isSelected ? null : log)}>
                       <span className="text-xs text-muted-foreground font-mono w-8 shrink-0">#{logsTotal - idx}</span>
@@ -789,11 +789,11 @@ export default function AICommandCenterPage() {
                       <div className="flex items-center gap-3">
                         <div className={cn(
                           "h-12 w-12 rounded-xl flex items-center justify-center",
-                          agent.isActive ? "bg-gradient-to-br from-[hsl(var(--ai-from))] to-[hsl(var(--ai-to))]" : "bg-gray-200"
+                          agent.isActive ? "bg-gradient-to-br from-[hsl(var(--ai-from))] to-[hsl(var(--ai-to))]" : "bg-muted"
                         )}>
                           {agent.isActive
                             ? <BrainCircuit className="h-6 w-6 text-white" />
-                            : <Zap className="h-6 w-6 text-gray-400" />
+                            : <Zap className="h-6 w-6 text-muted-foreground" />
                           }
                         </div>
                         <div>
@@ -820,25 +820,25 @@ export default function AICommandCenterPage() {
                     <div className="flex flex-wrap gap-2">
                       <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-orange-50 border border-orange-200 text-sm">
                         <span className="text-orange-500">🔥</span>
-                        <span className="text-gray-700">Max {agent.maxTokens || 2048} токенов</span>
+                        <span className="text-foreground/70">Max {agent.maxTokens || 2048} токенов</span>
                       </div>
                       <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/5 border border-primary/20 text-sm">
                         <Settings2 className="h-3.5 w-3.5 text-primary" />
                         <span className="text-foreground/70">{tools.length} инструментов</span>
                       </div>
                       <div className={cn("flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-sm",
-                        agent.escalationEnabled !== false ? "bg-red-50 border-red-200" : "bg-gray-50 border-gray-200"
+                        agent.escalationEnabled !== false ? "bg-red-50 border-red-200" : "bg-muted border-border"
                       )}>
                         <span>{agent.escalationEnabled !== false ? "🔴" : "⚪"}</span>
-                        <span className="text-gray-700">Эскалация: {agent.escalationEnabled !== false ? "вкл" : "выкл"}</span>
+                        <span className="text-foreground/70">Эскалация: {agent.escalationEnabled !== false ? "вкл" : "выкл"}</span>
                       </div>
                       <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-sm">
                         <span>📚</span>
-                        <span className="text-gray-700">KB: {agent.kbEnabled ? "вкл" : "выкл"}</span>
+                        <span className="text-foreground/70">KB: {agent.kbEnabled ? "вкл" : "выкл"}</span>
                       </div>
                       <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[hsl(var(--ai-to))]/5 border border-[hsl(var(--ai-to))]/20 text-sm">
                         <span>🌡️</span>
-                        <span className="text-gray-700">{agent.temperature ?? 0.7}</span>
+                        <span className="text-foreground/70">{agent.temperature ?? 0.7}</span>
                       </div>
                     </div>
 

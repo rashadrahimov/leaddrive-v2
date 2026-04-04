@@ -7,7 +7,7 @@ const activityIcons: Record<string, { icon: typeof Activity; color: string }> = 
   call: { icon: Phone, color: "text-blue-500" },
   email: { icon: Mail, color: "text-cyan-500" },
   meeting: { icon: Users, color: "text-violet-500" },
-  note: { icon: FileText, color: "text-slate-500" },
+  note: { icon: FileText, color: "text-muted-foreground" },
   task: { icon: CheckCircle2, color: "text-emerald-500" },
   deal: { icon: Target, color: "text-violet-500" },
   ticket: { icon: Ticket, color: "text-amber-500" },
@@ -17,7 +17,7 @@ export function ActivityFeed({ activities, timeAgo }: { activities: any[]; timeA
   const t = useTranslations("dashboard")
 
   return (
-    <div className="rounded-lg bg-white dark:bg-card border border-slate-200 dark:border-border shadow-sm p-3">
+    <div className="rounded-lg bg-card border border-border shadow-sm p-3">
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-1.5">
           <Activity className="h-4 w-4 text-amber-500" />
@@ -27,7 +27,7 @@ export function ActivityFeed({ activities, timeAgo }: { activities: any[]; timeA
       {activities && activities.length > 0 ? (
         <div className="space-y-1.5">
           {activities.slice(0, 5).map((a: any) => {
-            const act = activityIcons[a.type] || { icon: Activity, color: "text-slate-400" }
+            const act = activityIcons[a.type] || { icon: Activity, color: "text-muted-foreground" }
             const Icon = act.icon
             return (
               <div key={a.id} className="flex items-start gap-1.5">

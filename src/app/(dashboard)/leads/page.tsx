@@ -48,7 +48,7 @@ const statusColors: Record<string, string> = {
 }
 
 const priorityColors: Record<string, string> = {
-  low: "text-gray-500", medium: "text-yellow-600", high: "text-red-600",
+  low: "text-muted-foreground", medium: "text-yellow-600", high: "text-red-600",
 }
 
 function getGrade(score: number): { letter: string; color: string } {
@@ -480,7 +480,7 @@ export default function LeadsPage() {
                     {lead.source ? sourceLabels[lead.source] || lead.source : "—"}
                   </td>
                   <td className="px-3 py-3">
-                    <span className={cn("text-xs px-2 py-0.5 rounded-full font-medium", statusColors[lead.status] || "bg-gray-100")}>
+                    <span className={cn("text-xs px-2 py-0.5 rounded-full font-medium", statusColors[lead.status] || "bg-muted")}>
                       {statusLabels[lead.status] || lead.status}
                     </span>
                   </td>

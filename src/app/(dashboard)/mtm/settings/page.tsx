@@ -89,7 +89,7 @@ export default function MtmSettingsPage() {
                       <button
                         onClick={() => updateSetting(item.key, !settings[item.key])}
                         className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
-                          settings[item.key] ? "bg-cyan-500" : "bg-slate-300"
+                          settings[item.key] ? "bg-cyan-500" : "bg-muted-foreground/30"
                         }`}
                       >
                         <span className={`inline-block h-3.5 w-3.5 rounded-full bg-white transition-transform ${

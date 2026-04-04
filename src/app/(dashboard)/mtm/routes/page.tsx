@@ -7,7 +7,7 @@ import { Route, MapPin, User, CheckCircle2, Clock, XCircle } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 
 const statusBadge: Record<string, { label: string; className: string }> = {
-  PLANNED: { label: "Planned", className: "bg-slate-100 text-slate-700" },
+  PLANNED: { label: "Planned", className: "bg-muted text-foreground/70" },
   IN_PROGRESS: { label: "In Progress", className: "bg-blue-100 text-blue-700" },
   COMPLETED: { label: "Completed", className: "bg-green-100 text-green-700" },
   CANCELLED: { label: "Cancelled", className: "bg-red-100 text-red-600" },
@@ -61,7 +61,7 @@ export default function MtmRoutesPage() {
                       <span key={p.id} className={`text-[10px] px-1.5 py-0.5 rounded border ${
                         p.status === "VISITED" ? "bg-green-50 border-green-200 text-green-700" :
                         p.status === "SKIPPED" ? "bg-red-50 border-red-200 text-red-600" :
-                        "bg-slate-50 border-slate-200 text-slate-600"
+                        "bg-muted/50 border-border text-muted-foreground"
                       }`}>
                         {i + 1}. {p.customer?.name || "—"}
                       </span>

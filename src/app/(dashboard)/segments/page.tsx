@@ -170,12 +170,12 @@ export default function SegmentsPage() {
           onClick={() => setTypeFilter(typeFilter === "static" ? "all" : "static")}
           className={cn(
             "rounded-lg border p-4 text-left transition-all hover:shadow-sm",
-            typeFilter === "static" ? "border-gray-400 bg-gray-50/50 dark:bg-gray-900/10 ring-1 ring-gray-400/20" : "bg-card"
+            typeFilter === "static" ? "border-foreground/30 bg-muted/50 ring-1 ring-foreground/10" : "bg-card"
           )}
         >
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-gray-100 dark:bg-gray-800">
-              <Archive className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+            <div className="p-2 rounded-lg bg-muted">
+              <Archive className="h-4 w-4 text-muted-foreground" />
             </div>
             <div>
               <p className="text-xl font-bold">{staticCount}</p>
@@ -235,7 +235,7 @@ export default function SegmentsPage() {
                 {/* Top color accent */}
                 <div className={cn(
                   "absolute top-0 left-0 right-0 h-0.5",
-                  segment.isDynamic ? "bg-green-500" : "bg-gray-300 dark:bg-gray-600"
+                  segment.isDynamic ? "bg-green-500" : "bg-muted-foreground/30"
                 )} />
 
                 <div className="p-4">
@@ -292,7 +292,7 @@ export default function SegmentsPage() {
                       <div
                         className={cn(
                           "h-full rounded-full transition-all",
-                          segment.isDynamic ? "bg-green-500" : "bg-gray-400"
+                          segment.isDynamic ? "bg-green-500" : "bg-muted-foreground/40"
                         )}
                         style={{ width: `${Math.max(percentage, 1)}%` }}
                       />

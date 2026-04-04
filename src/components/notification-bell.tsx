@@ -105,7 +105,7 @@ export function NotificationBell() {
                     className={`px-4 py-3 border-b last:border-0 hover:bg-muted/50 transition-colors ${!n.isRead ? "bg-muted/30" : ""}`}
                   >
                     <div className="flex items-start gap-2">
-                      <div className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${typeColors[n.type] || "bg-gray-500"}`} />
+                      <div className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${typeColors[n.type] || "bg-muted-foreground/50"}`} />
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium">{n.title}</p>
                         <p className="text-xs text-muted-foreground truncate">{n.message}</p>

@@ -6,7 +6,7 @@ import { PageDescription } from "@/components/page-description"
 import { ShoppingCart } from "lucide-react"
 
 const statusColors: Record<string, string> = {
-  DRAFT: "bg-slate-100 text-slate-600",
+  DRAFT: "bg-muted text-muted-foreground",
   CONFIRMED: "bg-blue-100 text-blue-700",
   SHIPPED: "bg-amber-100 text-amber-700",
   DELIVERED: "bg-green-100 text-green-700",

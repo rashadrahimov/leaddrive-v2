@@ -488,7 +488,7 @@ export default function ReportsPage() {
                   <div key={`h-${i}`} className="flex-1 flex flex-col items-center gap-0.5">
                     <span className="text-[8px] text-muted-foreground">{(val / 1000).toFixed(0)}k</span>
                     <div className="w-full bg-muted rounded-t overflow-hidden" style={{ height: "72px" }}>
-                      <div className="w-full bg-gray-400/60 rounded-t transition-all" style={{ height: `${heightPct}%`, marginTop: `${100 - heightPct}%` }} />
+                      <div className="w-full bg-muted-foreground/40 rounded-t transition-all" style={{ height: `${heightPct}%`, marginTop: `${100 - heightPct}%` }} />
                     </div>
                   </div>
                 )
@@ -515,7 +515,7 @@ export default function ReportsPage() {
               ))}
             </div>
             <div className="flex items-center gap-4 mt-3 text-[10px]">
-              <span className="flex items-center gap-1"><span className="w-3 h-2 bg-gray-400/60 rounded" /> Actual</span>
+              <span className="flex items-center gap-1"><span className="w-3 h-2 bg-muted-foreground/40 rounded" /> Actual</span>
               <span className="flex items-center gap-1"><span className="w-3 h-2 bg-primary/70 rounded border-t border-dashed border-primary" /> Forecast</span>
               <span className="ml-auto text-muted-foreground">6m total: {(totalForecast / 1000).toFixed(0)}k ₼</span>
             </div>

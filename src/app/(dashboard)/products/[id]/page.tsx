@@ -144,10 +144,10 @@ export default function ProductDetailPage() {
         <div className="flex-1 min-w-0">
           <h1 className="text-xl font-bold">{product.name}</h1>
           <div className="flex items-center gap-2 mt-0.5">
-            <Badge className={`${categoryColors[product.category] || "bg-gray-500"} text-white`}>
+            <Badge className={`${categoryColors[product.category] || "bg-muted-foreground/50"} text-white`}>
               {product.category}
             </Badge>
-            <Badge className={product.isActive ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"}>
+            <Badge className={product.isActive ? "bg-green-100 text-green-700" : "bg-muted text-muted-foreground"}>
               {product.isActive ? tc("active") : tc("inactive")}
             </Badge>
           </div>

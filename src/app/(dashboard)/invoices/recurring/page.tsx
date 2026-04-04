@@ -417,7 +417,7 @@ export default function RecurringInvoicesPage() {
             </div>
             <div className="max-h-48 overflow-y-auto space-y-1">
               {generateReport.map((r, i) => (
-                <div key={i} className={`flex justify-between py-1.5 px-3 rounded-lg text-xs ${r.status === "sent" ? "bg-green-100 text-green-800" : r.status === "send_failed" ? "bg-red-100 text-red-800" : "bg-white"}`}>
+                <div key={i} className={`flex justify-between py-1.5 px-3 rounded-lg text-xs ${r.status === "sent" ? "bg-green-100 text-green-800" : r.status === "send_failed" ? "bg-red-100 text-red-800" : "bg-card"}`}>
                   <span className="font-medium">{r.invoiceNumber} — {r.company || "?"}</span>
                   <span>{r.status === "sent" ? t("statusSent") : r.status === "send_failed" ? (t("statusSendFailed") + ": " + (r.error || "").slice(0, 40)) : t("statusDraft")}</span>
                 </div>

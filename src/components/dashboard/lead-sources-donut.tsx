@@ -33,7 +33,7 @@ export function LeadSourcesDonut({ leadsBySource, totalLeads }: { leadsBySource:
   }))
 
   return (
-    <div className="rounded-lg bg-white dark:bg-card border border-slate-200 dark:border-border shadow-sm p-3">
+    <div className="rounded-lg bg-card border border-border shadow-sm p-3">
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-1.5">
           <Users className="h-4 w-4 text-violet-500" />
@@ -46,7 +46,7 @@ export function LeadSourcesDonut({ leadsBySource, totalLeads }: { leadsBySource:
           {segments.length > 0 ? (
             <MiniDonut segments={segments} size={80} />
           ) : (
-            <div className="w-20 h-20 rounded-full border-8 border-slate-200 dark:border-slate-700" />
+            <div className="w-20 h-20 rounded-full border-8 border-border" />
           )}
         </div>
         <div className="flex-1 space-y-1">

@@ -39,7 +39,7 @@ const STEPS = [
 ]
 
 const STATUS_COLORS: Record<string, string> = {
-  draft: "bg-gray-100 text-gray-800",
+  draft: "bg-muted text-foreground",
   pending_approval: "bg-yellow-100 text-yellow-800",
   approved: "bg-green-100 text-green-800",
   rejected: "bg-red-100 text-red-800",
@@ -78,7 +78,7 @@ export function BudgetApprovalWorkflow({ plan, userRole }: Props) {
       <CardHeader className="pb-3">
         <CardTitle className="text-base flex items-center justify-between">
           <span>Согласование</span>
-          <Badge className={STATUS_COLORS[plan.status] || "bg-gray-100"}>
+          <Badge className={STATUS_COLORS[plan.status] || "bg-muted"}>
             {plan.status === "pending_approval" ? "На согласовании" : plan.status === "draft" ? "Черновик" : plan.status === "approved" ? "Утверждён" : plan.status === "rejected" ? "Отклонён" : plan.status === "closed" ? "Закрыт" : plan.status}
           </Badge>
         </CardTitle>

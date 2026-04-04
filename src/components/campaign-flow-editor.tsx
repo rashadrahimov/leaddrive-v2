@@ -49,7 +49,7 @@ const NODE_DEFS: { type: FlowNodeType; label: string; icon: any; color: string; 
 ]
 
 const STATUS_RING: Record<string, string> = {
-  pending: "ring-gray-300",
+  pending: "ring-border",
   active: "ring-blue-500 ring-2 animate-pulse",
   completed: "ring-green-500 ring-2",
   error: "ring-red-500 ring-2",
@@ -72,18 +72,18 @@ function FlowNode({ data, selected }: { data: FlowNodeData; selected?: boolean }
       <Handle type="target" position={Position.Top} className="!w-3 !h-3 !bg-gray-400 !border-white !border-2" />
 
       <div className="flex items-center gap-2">
-        <div className={cn("h-8 w-8 rounded-lg flex items-center justify-center bg-white shadow-sm", def.color)}>
+        <div className={cn("h-8 w-8 rounded-lg flex items-center justify-center bg-card shadow-sm", def.color)}>
           <Icon className="h-4 w-4" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-xs font-semibold text-gray-700 truncate">{data.label}</p>
-          <p className="text-[10px] text-gray-500 capitalize">{data.type}</p>
+          <p className="text-xs font-semibold text-foreground/80 truncate">{data.label}</p>
+          <p className="text-[10px] text-muted-foreground capitalize">{data.type}</p>
         </div>
         {status === "completed" && <CheckCircle2 className="h-4 w-4 text-green-500 flex-shrink-0" />}
       </div>
 
       {data.config?.description && (
-        <p className="text-[10px] text-gray-500 mt-1.5 line-clamp-2">{data.config.description}</p>
+        <p className="text-[10px] text-muted-foreground mt-1.5 line-clamp-2">{data.config.description}</p>
       )}
 
       {isCondition ? (
@@ -181,10 +181,10 @@ export function CampaignFlowEditor({ flowData, onSave, readOnly = false }: Campa
   }, [])
 
   return (
-    <div className="flex flex-col h-[600px] rounded-xl border bg-white overflow-hidden">
+    <div className="flex flex-col h-[600px] rounded-xl border bg-card overflow-hidden">
       {/* Toolbar */}
       {!readOnly && (
-        <div className="flex items-center gap-1.5 px-3 py-2 border-b bg-gray-50/80 flex-wrap">
+        <div className="flex items-center gap-1.5 px-3 py-2 border-b bg-muted/80 flex-wrap">
           <span className="text-xs font-semibold text-muted-foreground mr-2">Add:</span>
           {NODE_DEFS.map(def => {
             const Icon = def.icon
@@ -231,7 +231,7 @@ export function CampaignFlowEditor({ flowData, onSave, readOnly = false }: Campa
           proOptions={{ hideAttribution: true }}
         >
           <Background gap={20} size={1} color="#e2e8f0" />
-          <Controls showInteractive={false} className="!bg-white !shadow-md !border !rounded-lg" />
+          <Controls showInteractive={false} className="!bg-card !shadow-md !border !rounded-lg" />
           <MiniMap
             className="!bg-gray-50 !border !rounded-lg !shadow-sm"
             maskColor="rgba(0,0,0,0.05)"
@@ -246,7 +246,7 @@ export function CampaignFlowEditor({ flowData, onSave, readOnly = false }: Campa
           />
           {readOnly && (
             <Panel position="top-right">
-              <Badge variant="outline" className="bg-white shadow-sm text-xs">
+              <Badge variant="outline" className="bg-card shadow-sm text-xs">
                 <Play className="h-3 w-3 mr-1" /> Preview Mode
               </Badge>
             </Panel>

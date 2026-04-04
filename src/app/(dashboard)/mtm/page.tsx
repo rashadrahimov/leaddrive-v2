@@ -103,7 +103,7 @@ export default function MtmDashboardPage() {
                       <span className={`text-xs px-2 py-0.5 rounded-full ${
                         v.status === "CHECKED_OUT" ? "bg-green-100 text-green-700" :
                         v.status === "CHECKED_IN" ? "bg-blue-100 text-blue-700" :
-                        "bg-slate-100 text-slate-600"
+                        "bg-muted text-muted-foreground"
                       }`}>{v.status}</span>
                     </td>
                     <td className="py-2 text-muted-foreground">{new Date(v.checkInAt).toLocaleTimeString()}</td>

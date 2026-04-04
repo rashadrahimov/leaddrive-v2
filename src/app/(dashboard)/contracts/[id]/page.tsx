@@ -110,7 +110,7 @@ export default function ContractDetailPage() {
         const daysLeft = contract.endDate
           ? Math.floor((new Date(contract.endDate).getTime() - Date.now()) / 86400000)
           : null
-        const endBg = daysLeft === null ? "bg-slate-400 shadow-slate-400/30"
+        const endBg = daysLeft === null ? "bg-muted-foreground/40 shadow-muted-foreground/30"
           : daysLeft < 0 ? "bg-red-500 shadow-red-500/30"
           : daysLeft < 30 ? "bg-amber-500 shadow-amber-500/30"
           : "bg-orange-500 shadow-orange-500/30"

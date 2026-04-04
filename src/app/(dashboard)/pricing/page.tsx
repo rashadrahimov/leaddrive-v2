@@ -53,11 +53,11 @@ function AdjSlider({ value, onChange, label, count, datePicker, dateValue, onDat
           step={1}
           value={value}
           onChange={(e) => onChange(parseInt(e.target.value))}
-          className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+          className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer accent-blue-600"
           style={{ direction: "ltr" }}
         />
         <div className="absolute top-1/2 -translate-y-1/2 pointer-events-none" style={{ left: "50%" }}>
-          <div className="w-0.5 h-4 bg-gray-500 rounded" />
+          <div className="w-0.5 h-4 bg-muted-foreground/50 rounded" />
         </div>
       </div>
       <div className="flex justify-between text-xs text-muted-foreground">
@@ -416,7 +416,7 @@ export default function PricingPage() {
               <Download className="h-4 w-4 mr-1" /> Экспорт в Excel
             </Button>
             {exportOpen && (
-              <div className="absolute right-0 top-full mt-2 z-50 bg-white border rounded-lg shadow-lg p-4 w-72 space-y-3">
+              <div className="absolute right-0 top-full mt-2 z-50 bg-card border rounded-lg shadow-lg p-4 w-72 space-y-3">
                 <div>
                   <label className="text-xs font-medium text-muted-foreground">Шаблон</label>
                   <select
@@ -1168,7 +1168,7 @@ export default function PricingPage() {
                             <td className="py-2 pr-4">
                               {sale.status === "active" && <Badge variant="outline" className="text-green-600 border-green-300">Активна</Badge>}
                               {sale.status === "cancelled" && <Badge variant="outline" className="text-red-600 border-red-300">Отменена</Badge>}
-                              {sale.status === "completed" && <Badge variant="outline" className="text-gray-600 border-gray-300">Завершена</Badge>}
+                              {sale.status === "completed" && <Badge variant="outline" className="text-muted-foreground border-border">Завершена</Badge>}
                             </td>
                             <td className="py-2">
                               <button

@@ -167,7 +167,7 @@ export function EmailTemplateForm({ open, onOpenChange, onSaved, initialData, or
                   "text-xs px-3 py-1 rounded-full border transition-colors",
                   form.isActive
                     ? "bg-green-50 text-green-700 border-green-300 dark:bg-green-900/20 dark:text-green-400"
-                    : "bg-gray-50 text-gray-500 border-gray-300 dark:bg-gray-800 dark:text-gray-400"
+                    : "bg-muted text-muted-foreground border-border"
                 )}
                 onClick={() => update("isActive", !form.isActive)}
               >
@@ -283,7 +283,7 @@ export function EmailTemplateForm({ open, onOpenChange, onSaved, initialData, or
                   </div>
                   <div className="border rounded-lg">
                     <div className="px-3 py-1.5 border-b bg-muted/30 text-xs font-medium text-muted-foreground">Live Preview</div>
-                    <div className="p-3 h-[250px] overflow-y-auto bg-white dark:bg-gray-950">
+                    <div className="p-3 h-[250px] overflow-y-auto bg-card">
                       <div
                         className="prose prose-sm max-w-none dark:prose-invert"
                         dangerouslySetInnerHTML={{
@@ -427,7 +427,7 @@ export function EmailTemplateForm({ open, onOpenChange, onSaved, initialData, or
                 </div>
               ) : (
                 /* Preview tab */
-                <div className="border rounded-b-lg p-4 min-h-[200px] max-h-[400px] overflow-y-auto bg-white dark:bg-gray-950">
+                <div className="border rounded-b-lg p-4 min-h-[200px] max-h-[400px] overflow-y-auto bg-card">
                   <div
                     className="prose prose-sm max-w-none dark:prose-invert"
                     dangerouslySetInnerHTML={{

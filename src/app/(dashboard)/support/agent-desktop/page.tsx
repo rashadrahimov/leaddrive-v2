@@ -151,7 +151,7 @@ export default function AgentDesktopPage() {
     in_progress: "bg-amber-100 text-amber-700",
     waiting: "bg-purple-100 text-purple-700",
     resolved: "bg-green-100 text-green-700",
-    closed: "bg-gray-100 text-gray-600",
+    closed: "bg-muted text-muted-foreground",
   }
 
   return (
@@ -263,12 +263,12 @@ export default function AgentDesktopPage() {
                         </td>
                         <td className="p-2">
                           <div className="flex items-center gap-1.5">
-                            <div className={`h-2 w-2 rounded-full ${PRIORITY_COLORS[t.priority] || "bg-gray-300"}`} />
+                            <div className={`h-2 w-2 rounded-full ${PRIORITY_COLORS[t.priority] || "bg-muted-foreground/30"}`} />
                             <span className="text-xs capitalize">{t.priority || "medium"}</span>
                           </div>
                         </td>
                         <td className="p-2">
-                          <Badge className={STATUS_BADGE[t.status] || "bg-gray-100"} variant="outline">
+                          <Badge className={STATUS_BADGE[t.status] || "bg-muted"} variant="outline">
                             {t.status?.replace(/_/g, " ")}
                           </Badge>
                         </td>
@@ -311,7 +311,7 @@ export default function AgentDesktopPage() {
                       <td className="p-2">
                         <span className={`inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold ${
                           i === 0 ? "bg-yellow-100 text-yellow-700" :
-                          i === 1 ? "bg-gray-100 text-gray-600" :
+                          i === 1 ? "bg-muted text-muted-foreground" :
                           i === 2 ? "bg-amber-100 text-amber-700" : "bg-muted text-muted-foreground"
                         }`}>
                           {i + 1}

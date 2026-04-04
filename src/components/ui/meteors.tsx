@@ -16,7 +16,7 @@ export function Meteors({ number = 20, className }: MeteorsProps) {
         <span
           key={i}
           className={cn(
-            "pointer-events-none absolute left-1/2 top-1/2 h-0.5 w-0.5 rotate-[215deg] animate-meteor rounded-full bg-slate-500 shadow-[0_0_0_1px_#ffffff10]",
+            "pointer-events-none absolute left-1/2 top-1/2 h-0.5 w-0.5 rotate-[215deg] animate-meteor rounded-full bg-muted-foreground/50 shadow-[0_0_0_1px_#ffffff10]",
             className
           )}
           style={{
@@ -26,7 +26,7 @@ export function Meteors({ number = 20, className }: MeteorsProps) {
             animationDuration: `${Math.floor(Math.random() * 8 + 2)}s`,
           }}
         >
-          <span className="absolute top-1/2 -z-10 h-px w-[50px] -translate-y-1/2 bg-gradient-to-r from-slate-500 to-transparent" />
+          <span className="absolute top-1/2 -z-10 h-px w-[50px] -translate-y-1/2 bg-gradient-to-r from-muted-foreground/50 to-transparent" />
         </span>
       ))}
     </>

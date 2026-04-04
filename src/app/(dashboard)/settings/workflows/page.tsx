@@ -58,7 +58,7 @@ const actionColors: Record<string, string> = {
   create_task: "text-teal-500",
   update_field: "text-purple-500",
   send_notification: "text-orange-500", notify: "text-orange-500",
-  webhook: "text-slate-500",
+  webhook: "text-muted-foreground",
   auto_assign: "text-indigo-500", assign_to: "text-indigo-500",
 }
 
@@ -67,7 +67,7 @@ const actionBgColors: Record<string, string> = {
   create_task: "bg-teal-50 text-teal-700 border-teal-200",
   update_field: "bg-purple-50 text-purple-700 border-purple-200",
   send_notification: "bg-orange-50 text-orange-700 border-orange-200", notify: "bg-orange-50 text-orange-700 border-orange-200",
-  webhook: "bg-slate-50 text-slate-700 border-slate-200",
+  webhook: "bg-muted/50 text-foreground/70 border-border",
   auto_assign: "bg-indigo-50 text-indigo-700 border-indigo-200", assign_to: "bg-indigo-50 text-indigo-700 border-indigo-200",
 }
 

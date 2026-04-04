@@ -13,7 +13,7 @@ const roleColors: Record<string, string> = {
 
 const statusColors: Record<string, string> = {
   ACTIVE: "bg-green-100 text-green-700",
-  INACTIVE: "bg-slate-100 text-slate-600",
+  INACTIVE: "bg-muted text-muted-foreground",
   SUSPENDED: "bg-red-100 text-red-600",
 }
 
@@ -51,7 +51,7 @@ export default function MtmAgentsPage() {
                     {agent.name}
                     <span className={`relative flex h-2 w-2`}>
                       <span className={`absolute inline-flex h-full w-full rounded-full ${agent.isOnline ? "bg-green-400 animate-ping opacity-75" : ""}`}></span>
-                      <span className={`relative inline-flex rounded-full h-2 w-2 ${agent.isOnline ? "bg-green-500" : "bg-slate-300"}`}></span>
+                      <span className={`relative inline-flex rounded-full h-2 w-2 ${agent.isOnline ? "bg-green-500" : "bg-muted-foreground/30"}`}></span>
                     </span>
                   </div>
                   <div className="text-xs text-muted-foreground">{agent.email || agent.phone || "—"}</div>

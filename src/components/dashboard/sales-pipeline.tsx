@@ -23,7 +23,7 @@ export function SalesPipeline({ pipeline }: { pipeline: any }) {
   const stages = pipeline?.stages || []
 
   return (
-    <div className="rounded-lg bg-white dark:bg-card border border-slate-200 dark:border-border shadow-sm p-3">
+    <div className="rounded-lg bg-card border border-border shadow-sm p-3">
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-1.5">
           <Target className="h-4 w-4 text-blue-500" />
@@ -40,7 +40,7 @@ export function SalesPipeline({ pipeline }: { pipeline: any }) {
           return (
             <div key={stage} className="flex items-center gap-2">
               <span className="text-[10px] w-[72px] text-muted-foreground truncate">{stageLabels[stage] || stage}</span>
-              <div className="flex-1 h-5 bg-slate-100 dark:bg-slate-800 rounded overflow-hidden">
+              <div className="flex-1 h-5 bg-muted rounded overflow-hidden">
                 <div
                   className="h-full rounded flex items-center px-1.5"
                   style={{ width: `${width}%`, backgroundColor: stageColors[stage] }}
@@ -53,7 +53,7 @@ export function SalesPipeline({ pipeline }: { pipeline: any }) {
           )
         })}
       </div>
-      <div className="grid grid-cols-3 gap-1 pt-2 mt-2 border-t border-slate-100 dark:border-slate-800 text-center">
+      <div className="grid grid-cols-3 gap-1 pt-2 mt-2 border-t border-border text-center">
         <div>
           <div className="text-sm font-bold text-emerald-600">{pipeline?.wonThisMonth || 0}</div>
           <div className="text-[8px] text-muted-foreground">{t("won")}</div>

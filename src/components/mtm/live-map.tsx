@@ -57,12 +57,12 @@ export default function MtmLiveMap({ agents }: Props) {
           <Popup>
             <div className="text-sm">
               <div className="font-semibold">{agent.name}</div>
-              <div className="text-xs text-gray-500">
+              <div className="text-xs text-muted-foreground">
                 {agent.isOnline ? "Online" : "Offline"}
                 {agent.speed ? ` | ${agent.speed.toFixed(1)} km/h` : ""}
                 {agent.battery ? ` | ${agent.battery}%` : ""}
               </div>
-              <div className="text-[10px] text-gray-400 mt-1">
+              <div className="text-[10px] text-muted-foreground mt-1">
                 Last update: {new Date(agent.recordedAt).toLocaleTimeString()}
               </div>
             </div>

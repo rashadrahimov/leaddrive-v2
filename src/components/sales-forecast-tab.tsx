@@ -169,7 +169,7 @@ export function SalesForecastTab() {
               type="checkbox"
               checked={showVat}
               onChange={(e) => setShowVat(e.target.checked)}
-              className="h-4 w-4 rounded border-gray-300"
+              className="h-4 w-4 rounded border-border"
             />
             С НДС (18%)
           </label>

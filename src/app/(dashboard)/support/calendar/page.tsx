@@ -322,7 +322,7 @@ export default function AgentCalendarPage() {
                               {/* Priority dot */}
                               {item.priority && (
                                 <div className="flex items-center gap-1 mt-0.5">
-                                  <div className={`h-1.5 w-1.5 rounded-full ${PRIORITY_COLORS[item.priority] || "bg-gray-400"}`} />
+                                  <div className={`h-1.5 w-1.5 rounded-full ${PRIORITY_COLORS[item.priority] || "bg-muted-foreground/40"}`} />
                                   <span className="text-[10px] text-muted-foreground capitalize">{item.priority}</span>
                                 </div>
                               )}
@@ -479,7 +479,7 @@ export default function AgentCalendarPage() {
                               <p className="text-xs text-muted-foreground">{time} · {config.label}</p>
                             </div>
                             {item.priority && (
-                              <div className={`h-2 w-2 rounded-full ${PRIORITY_COLORS[item.priority] || "bg-gray-400"}`} />
+                              <div className={`h-2 w-2 rounded-full ${PRIORITY_COLORS[item.priority] || "bg-muted-foreground/40"}`} />
                             )}
                           </div>
                         )

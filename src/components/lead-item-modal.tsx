@@ -324,7 +324,7 @@ export function LeadItemModal({ open, onOpenChange, lead, orgId, onSaved, onConv
                         <Building2 className="h-3.5 w-3.5" /> {displayLead.companyName}
                       </span>
                     )}
-                    <Badge className={cn("text-white text-[10px]", statusColors[displayLead.status] || "bg-gray-500")}>
+                    <Badge className={cn("text-white text-[10px]", statusColors[displayLead.status] || "bg-muted-foreground/50")}>
                       {statusLabels[displayLead.status] || displayLead.status}
                     </Badge>
                     <Badge variant="outline" className="text-[10px]">
@@ -431,7 +431,7 @@ export function LeadItemModal({ open, onOpenChange, lead, orgId, onSaved, onConv
                           )}
                         >
                           <span className={cn("w-2 h-2 rounded-full shrink-0",
-                            p === "low" ? "bg-gray-400" : p === "medium" ? "bg-yellow-500" : "bg-red-500"
+                            p === "low" ? "bg-muted-foreground/40" : p === "medium" ? "bg-yellow-500" : "bg-red-500"
                           )} />
                           {priorityLabels[p]}
                         </button>

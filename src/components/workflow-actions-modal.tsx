@@ -46,7 +46,7 @@ export function WorkflowActionsModal({ workflow, onClose, onSaved, orgId }: Work
     { value: "create_task", label: t("actionCreateTask"), icon: CheckSquare, color: "bg-teal-500", borderColor: "border-teal-200 bg-teal-50/50" },
     { value: "update_field", label: t("actionUpdateField"), icon: Edit3, color: "bg-purple-500", borderColor: "border-purple-200 bg-purple-50/50" },
     { value: "send_notification", label: t("actionNotification"), icon: Bell, color: "bg-orange-500", borderColor: "border-orange-200 bg-orange-50/50" },
-    { value: "webhook", label: t("actionWebhook"), icon: Globe, color: "bg-slate-500", borderColor: "border-slate-200 bg-slate-50/50" },
+    { value: "webhook", label: t("actionWebhook"), icon: Globe, color: "bg-muted-foreground/50", borderColor: "border-border bg-muted/50" },
     { value: "auto_assign", label: t("actionAutoAssign"), icon: UserPlus, color: "bg-indigo-500", borderColor: "border-indigo-200 bg-indigo-50/50" },
   ]
 

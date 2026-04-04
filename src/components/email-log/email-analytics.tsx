@@ -228,7 +228,7 @@ export function EmailAnalytics({ logs, stats, labels }: EmailAnalyticsProps) {
             <div className="ml-4 space-y-3">
               {[
                 { label: labels.campaignEmails, count: computed.campaignCount, color: "bg-[hsl(var(--ai-from))]" },
-                { label: "Manual", count: computed.manualCount, color: "bg-gray-500" },
+                { label: "Manual", count: computed.manualCount, color: "bg-muted-foreground/50" },
               ].map(p => (
                 <div key={p.label} className="flex items-center gap-2">
                   <div className={cn("h-2.5 w-2.5 rounded-full", p.color)} />

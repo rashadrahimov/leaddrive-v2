@@ -33,11 +33,11 @@ const PARTICIPANT_STATUS_STYLE: Record<string, string> = {
   confirmed: "bg-green-100 text-green-700",
   attended: "bg-emerald-100 text-emerald-700",
   cancelled: "bg-red-100 text-red-700",
-  no_show: "bg-gray-100 text-gray-700",
+  no_show: "bg-muted text-foreground/70",
 }
 
 const ROLE_STYLE: Record<string, string> = {
-  attendee: "bg-gray-100 text-gray-600",
+  attendee: "bg-muted text-muted-foreground",
   speaker: "bg-purple-100 text-purple-700",
   sponsor: "bg-amber-100 text-amber-700",
   organizer: "bg-blue-100 text-blue-700",
@@ -634,7 +634,7 @@ export default function EventDetailPage() {
                         </td>
                         <td className="p-3">
                           <select
-                            className={`text-xs font-medium border-0 rounded-full px-2 py-0.5 cursor-pointer ${ROLE_STYLE[p.role] || "bg-gray-100 text-gray-600"}`}
+                            className={`text-xs font-medium border-0 rounded-full px-2 py-0.5 cursor-pointer ${ROLE_STYLE[p.role] || "bg-muted text-muted-foreground"}`}
                             value={p.role}
                             onChange={e => updateParticipantField(p.id, "role", e.target.value)}
                           >

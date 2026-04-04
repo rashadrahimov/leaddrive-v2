@@ -46,7 +46,7 @@ interface Journey {
 }
 
 const statusColors: Record<string, string> = {
-  draft: "bg-gray-100 text-gray-600 border-gray-200",
+  draft: "bg-muted text-muted-foreground border-border",
   active: "bg-green-100 text-green-700 border-green-200",
   paused: "bg-yellow-100 text-yellow-700 border-yellow-200",
   completed: "bg-blue-100 text-blue-700 border-blue-200",
@@ -154,7 +154,7 @@ export default function JourneysPage() {
   }
   const stepTypes = [
     { value: "send_email", label: t("stepEmail"), icon: Mail, color: "bg-blue-500", borderColor: "border-blue-200 bg-blue-50/50 dark:bg-blue-900/10" },
-    { value: "sms", label: t("stepSms"), icon: Smartphone, color: "bg-gray-700", borderColor: "border-gray-200 bg-gray-50/50 dark:bg-gray-900/10" },
+    { value: "sms", label: t("stepSms"), icon: Smartphone, color: "bg-muted-foreground", borderColor: "border-border bg-muted/50" },
     { value: "wait", label: t("stepWait"), icon: Clock, color: "bg-yellow-500", borderColor: "border-yellow-200 bg-yellow-50/50 dark:bg-yellow-900/10" },
     { value: "condition", label: t("chainStepCondition"), icon: GitBranch, color: "bg-pink-500", borderColor: "border-pink-200 bg-pink-50/50 dark:bg-pink-900/10" },
     { value: "create_task", label: "Tapşırıq", icon: FileText, color: "bg-teal-500", borderColor: "border-teal-200 bg-teal-50/50 dark:bg-teal-900/10" },
@@ -873,7 +873,7 @@ export default function JourneysPage() {
                         lead.status === "new" ? "bg-blue-100 text-blue-700" :
                         lead.status === "qualified" ? "bg-green-100 text-green-700" :
                         lead.status === "contacted" ? "bg-yellow-100 text-yellow-700" :
-                        "bg-gray-100 text-gray-600"
+                        "bg-muted text-muted-foreground"
                       )}>
                         {lead.status === "new" ? "Новый" :
                          lead.status === "qualified" ? "Квалифицирован" :

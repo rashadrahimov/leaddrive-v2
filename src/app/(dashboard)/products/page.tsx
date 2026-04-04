@@ -154,7 +154,7 @@ export default function ProductsPage() {
     {
       key: "category", label: t("colCategory"), sortable: true, hint: t("hintColCategory"),
       render: (item: any) => (
-        <Badge className={cn("text-xs", categoryColors[item.category] || "bg-gray-100 text-gray-800")}>
+        <Badge className={cn("text-xs", categoryColors[item.category] || "bg-muted text-foreground")}>
           {item.category}
         </Badge>
       ),
@@ -181,7 +181,7 @@ export default function ProductsPage() {
     {
       key: "isActive", label: t("colStatus"), sortable: true, hint: t("hintColActive"),
       render: (item: any) => (
-        <Badge className={item.isActive ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"}>
+        <Badge className={item.isActive ? "bg-green-100 text-green-700" : "bg-muted text-muted-foreground"}>
           {item.isActive ? tc("active") : tc("inactive")}
         </Badge>
       ),

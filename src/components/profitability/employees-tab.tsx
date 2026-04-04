@@ -32,7 +32,7 @@ function calcTotal(net: number, count: number): number {
 const DEPARTMENTS = ["BackOffice", "IT", "InfoSec", "HelpDesk", "ERP", "GRC", "PM"]
 
 const DEPT_COLORS: Record<string, string> = {
-  BackOffice: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300",
+  BackOffice: "bg-muted text-foreground",
   IT: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300",
   InfoSec: "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300",
   HelpDesk: "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300",

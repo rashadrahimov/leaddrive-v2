@@ -7,7 +7,7 @@ export function CampaignStats({ campaigns }: { campaigns: any[] }) {
   const t = useTranslations("dashboard")
 
   return (
-    <div className="rounded-lg bg-white dark:bg-card border border-slate-200 dark:border-border shadow-sm p-3">
+    <div className="rounded-lg bg-card border border-border shadow-sm p-3">
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-1.5">
           <Megaphone className="h-4 w-4 text-pink-500" />
@@ -25,7 +25,7 @@ export function CampaignStats({ campaigns }: { campaigns: any[] }) {
                   c.status === "active" ? "bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-800"
                   : c.status === "sent" ? "bg-blue-50 text-blue-600 border-blue-200 dark:bg-blue-950/30 dark:text-blue-400 dark:border-blue-800"
                   : c.status === "sending" ? "bg-amber-50 text-amber-600 border-amber-200 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-800"
-                  : "bg-slate-50 text-slate-600 border-slate-200 dark:bg-slate-800/30 dark:text-slate-400 dark:border-slate-700"
+                  : "bg-muted/50 text-muted-foreground border-border"
                 }`}>
                   {c.status === "active" ? t("active") : c.status === "sent" ? t("sent") : c.status === "sending" ? t("sending") : c.status || "draft"}
                 </span>
@@ -36,7 +36,7 @@ export function CampaignStats({ campaigns }: { campaigns: any[] }) {
                   { v: `${c.openRate || 0}%`, l: t("openRate") },
                   { v: `${c.clickRate || 0}%`, l: t("clickRate") },
                 ].map((m) => (
-                  <div key={m.l} className="text-center p-1 rounded bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700">
+                  <div key={m.l} className="text-center p-1 rounded bg-muted/50 border border-border">
                     <div className="text-xs font-semibold">{m.v}</div>
                     <div className="text-[8px] text-muted-foreground">{m.l}</div>
                   </div>

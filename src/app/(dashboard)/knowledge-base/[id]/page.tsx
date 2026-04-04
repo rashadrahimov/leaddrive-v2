@@ -125,7 +125,7 @@ export default function KbArticleDetailPage() {
           label={tc("status")}
           value={article.status}
           icon={<CheckCircle2 className="h-4 w-4" />}
-          bgClass={article.status === "published" ? "bg-green-500 shadow-green-500/30" : "bg-slate-400 shadow-slate-400/30"}
+          bgClass={article.status === "published" ? "bg-green-500 shadow-green-500/30" : "bg-muted-foreground/40 shadow-muted-foreground/30"}
         />
       </div>
 

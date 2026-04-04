@@ -19,7 +19,7 @@ interface FilePreviewProps {
 function getFileIcon(mimeType: string) {
   if (mimeType.startsWith("image/")) return <ImageIcon className="h-4 w-4 text-green-600" />
   if (mimeType === "application/pdf") return <FileText className="h-4 w-4 text-red-600" />
-  return <File className="h-4 w-4 text-gray-600" />
+  return <File className="h-4 w-4 text-muted-foreground" />
 }
 
 function isPreviewable(mimeType: string): boolean {

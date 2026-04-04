@@ -289,7 +289,7 @@ export default function EmailLogPage() {
                           </span>
                         )}
                         <span className="font-semibold text-sm truncate">{log.subject || t("noSubject")}</span>
-                        <span className={cn("text-xs px-2 py-0.5 rounded-full font-medium", statusColors[log.status] || "bg-gray-100 text-gray-600")}>
+                        <span className={cn("text-xs px-2 py-0.5 rounded-full font-medium", statusColors[log.status] || "bg-muted text-muted-foreground")}>
                           {statusLabels[log.status] || log.status}
                         </span>
                       </div>
@@ -326,7 +326,7 @@ export default function EmailLogPage() {
                     {log.body ? (
                       <div className="mt-3">
                         <div className="text-xs text-muted-foreground mb-2 font-medium">{t("messagePreview")}:</div>
-                        <div className="border rounded-md bg-white dark:bg-gray-950 p-4 max-h-72 overflow-y-auto">
+                        <div className="border rounded-md bg-card p-4 max-h-72 overflow-y-auto">
                           <div dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(log.body || "") }} className="text-sm prose prose-sm max-w-none" />
                         </div>
                       </div>

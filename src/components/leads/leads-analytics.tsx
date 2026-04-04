@@ -270,7 +270,7 @@ export function LeadsAnalytics({ leads, labels }: LeadsAnalyticsProps) {
                 .sort(([, a], [, b]) => b - a)
                 .map(([src, count]) => {
                   const Icon = SOURCE_ICONS[src] || Globe
-                  const color = SOURCE_COLORS[src] || "bg-gray-500"
+                  const color = SOURCE_COLORS[src] || "bg-muted-foreground/50"
                   const pct = stats.total > 0 ? (count / stats.total) * 100 : 0
                   return (
                     <div key={src}>
@@ -333,7 +333,7 @@ export function LeadsAnalytics({ leads, labels }: LeadsAnalyticsProps) {
               {[
                 { label: labels.high, count: stats.priorityCounts.high, color: "bg-red-500" },
                 { label: labels.medium, count: stats.priorityCounts.medium, color: "bg-amber-500" },
-                { label: labels.low, count: stats.priorityCounts.low, color: "bg-gray-500" },
+                { label: labels.low, count: stats.priorityCounts.low, color: "bg-muted-foreground/50" },
               ].map(p => (
                 <div key={p.label} className="flex items-center gap-2">
                   <div className={cn("h-2.5 w-2.5 rounded-full", p.color)} />

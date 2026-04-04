@@ -312,7 +312,7 @@ export default function ContactDetailPage() {
           : null
         const confColor = contact.isActive
           ? "bg-green-500 shadow-green-500/30"
-          : "bg-slate-400 shadow-slate-400/30"
+          : "bg-muted-foreground/40 shadow-muted-foreground/30"
         return (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <ColorStatCard
@@ -447,7 +447,7 @@ export default function ContactDetailPage() {
                       <div className={`h-8 w-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
                         i === 0 ? "bg-yellow-100 text-yellow-600" :
                         i === 1 ? "bg-blue-100 text-blue-600" :
-                        "bg-gray-100 text-gray-600"
+                        "bg-muted text-muted-foreground"
                       }`}>
                         <Star className="h-4 w-4" />
                       </div>
@@ -458,7 +458,7 @@ export default function ContactDetailPage() {
                           <Badge className={`text-[10px] ${
                             rec.score > 70 ? "bg-green-100 text-green-700" :
                             rec.score > 50 ? "bg-blue-100 text-blue-700" :
-                            "bg-gray-100 text-gray-600"
+                            "bg-muted text-muted-foreground"
                           }`}>
                             {rec.score}% match
                           </Badge>

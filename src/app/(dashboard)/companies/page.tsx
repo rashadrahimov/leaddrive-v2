@@ -40,7 +40,7 @@ interface Company {
 const statusColors: Record<string, string> = {
   active: "bg-green-100 text-green-700",
   prospect: "bg-primary/10 text-primary",
-  inactive: "bg-gray-100 text-gray-500",
+  inactive: "bg-muted text-muted-foreground",
 }
 
 export default function CompaniesPage() {
@@ -209,7 +209,7 @@ export default function CompaniesPage() {
                     </div>
                     <h3 className="font-bold text-sm truncate">{company.name}</h3>
                   </div>
-                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium flex-shrink-0 ${statusColors[company.status] || "bg-gray-100"}`}>
+                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium flex-shrink-0 ${statusColors[company.status] || "bg-muted"}`}>
                     {statusLabels[company.status] || company.status}
                   </span>
                 </div>

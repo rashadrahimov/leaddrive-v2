@@ -114,9 +114,9 @@ function PreviewClientHealth() {
         <div className="text-sm font-bold text-red-600">3</div>
         <div className="text-[8px] text-red-600">Zərərli</div>
       </div>
-      <div className="flex-1 text-center p-1.5 rounded bg-slate-50 border border-slate-200/50">
-        <div className="text-sm font-bold text-slate-500">5</div>
-        <div className="text-[8px] text-slate-500">Məlumat yox</div>
+      <div className="flex-1 text-center p-1.5 rounded bg-muted/50 border border-border/50">
+        <div className="text-sm font-bold text-muted-foreground">5</div>
+        <div className="text-[8px] text-muted-foreground">Məlumat yox</div>
       </div>
     </div>
   )

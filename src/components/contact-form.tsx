@@ -122,7 +122,7 @@ export function ContactForm({ open, onOpenChange, onSaved, initialData, orgId }:
                 id="portalAccess"
                 checked={form.portalAccessEnabled}
                 onChange={e => setForm(f => ({ ...f, portalAccessEnabled: e.target.checked }))}
-                className="h-4 w-4 rounded border-gray-300"
+                className="h-4 w-4 rounded border-border"
               />
               <Label htmlFor="portalAccess" className="text-sm font-normal cursor-pointer">
                 {tc("portalAccess")}

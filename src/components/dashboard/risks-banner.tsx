@@ -12,7 +12,7 @@ export function RisksBanner({ risks }: { risks: any[] }) {
       {active.map((r: any, i: number) => (
         <div
           key={i}
-          className={`flex items-center gap-2 px-3 py-2 rounded-lg border-l-4 bg-white dark:bg-card border min-w-0 ${
+          className={`flex items-center gap-2 px-3 py-2 rounded-lg border-l-4 bg-card border border-border min-w-0 ${
             r.severity === "critical" ? "border-l-red-500" : "border-l-amber-500"
           }`}
         >

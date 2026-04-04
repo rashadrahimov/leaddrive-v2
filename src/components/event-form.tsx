@@ -19,7 +19,7 @@ const TYPE_OPTIONS = [
   { value: "workshop", icon: Wrench, color: "bg-amber-100 text-amber-600 border-amber-300" },
   { value: "meetup", icon: Coffee, color: "bg-green-100 text-green-600 border-green-300" },
   { value: "exhibition", icon: Building2, color: "bg-pink-100 text-pink-600 border-pink-300" },
-  { value: "other", icon: HelpCircle, color: "bg-gray-100 text-gray-600 border-gray-300" },
+  { value: "other", icon: HelpCircle, color: "bg-muted text-muted-foreground border-border" },
 ]
 
 interface EventFormProps {

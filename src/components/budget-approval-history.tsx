@@ -22,8 +22,8 @@ const STATUS_COLORS: Record<string, string> = {
   review: "bg-blue-100 text-blue-800",
   approved: "bg-green-100 text-green-800",
   rejected: "bg-red-100 text-red-800",
-  comment: "bg-gray-100 text-gray-800",
-  draft: "bg-gray-100 text-gray-800",
+  comment: "bg-muted text-foreground",
+  draft: "bg-muted text-foreground",
   closed: "bg-blue-100 text-blue-800",
 }
 
@@ -33,8 +33,8 @@ const DOT_COLORS: Record<string, string> = {
   review: "bg-blue-400",
   approved: "bg-green-400",
   rejected: "bg-red-400",
-  comment: "bg-gray-400",
-  draft: "bg-gray-400",
+  comment: "bg-muted-foreground/40",
+  draft: "bg-muted-foreground/40",
   closed: "bg-blue-400",
 }
 
@@ -83,7 +83,7 @@ export function BudgetApprovalHistory({ planId }: Props) {
           <div className="space-y-4">
             {comments.map((c) => {
               const Icon = STATUS_ICONS[c.status] || MessageSquare
-              const dotColor = DOT_COLORS[c.status] || "bg-gray-400"
+              const dotColor = DOT_COLORS[c.status] || "bg-muted-foreground/40"
 
               return (
                 <div key={c.id} className="relative pl-7">

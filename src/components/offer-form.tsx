@@ -490,7 +490,7 @@ export function OfferForm({ open, onOpenChange, onSaved, initialData, orgId, dea
                 </div>
                 <div className="flex items-center gap-3">
                   <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" checked={includeVat} onChange={(e) => setIncludeVat(e.target.checked)} className="rounded border-gray-300" />
+                    <input type="checkbox" checked={includeVat} onChange={(e) => setIncludeVat(e.target.checked)} className="rounded border-border" />
                     <span className="text-sm">НДС 18%</span>
                   </label>
                   <div className="flex items-center gap-2">

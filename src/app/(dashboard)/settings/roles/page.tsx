@@ -43,7 +43,7 @@ const COLOR_OPTIONS = [
   { id: "indigo", label: "Indigo", bg: "bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-300" },
   { id: "teal", label: "Teal", bg: "bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-300" },
   { id: "orange", label: "Orange", bg: "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300" },
-  { id: "slate", label: "Slate", bg: "bg-slate-100 text-slate-800 dark:bg-slate-900 dark:text-slate-300" },
+  { id: "slate", label: "Slate", bg: "bg-muted text-foreground" },
 ]
 
 function getColorBg(color: string): string {

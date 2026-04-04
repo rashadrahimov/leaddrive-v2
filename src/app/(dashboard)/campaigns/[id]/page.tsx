@@ -24,7 +24,7 @@ const CampaignFlowEditor = dynamic(
 )
 
 const STATUS_STYLES: Record<string, string> = {
-  draft: "bg-gray-100 text-gray-700",
+  draft: "bg-muted text-foreground/70",
   scheduled: "bg-blue-100 text-blue-700",
   sending: "bg-amber-100 text-amber-700",
   sent: "bg-green-100 text-green-700",

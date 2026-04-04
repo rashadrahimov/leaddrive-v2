@@ -18,7 +18,7 @@ interface HistoryEntry {
 }
 
 const STAGE_COLORS: Record<string, string> = {
-  LEAD: "bg-slate-100 text-slate-700",
+  LEAD: "bg-muted text-foreground/70",
   QUALIFIED: "bg-blue-100 text-blue-700",
   PROPOSAL: "bg-violet-100 text-violet-700",
   NEGOTIATION: "bg-amber-100 text-amber-700",
@@ -106,9 +106,9 @@ export function DealHistory({ dealId, orgId, deal }: { dealId: string; orgId?: s
         detail: e.userName ? tc("by", { name: e.userName }) : "",
         richDetail: (
           <div className="flex items-center gap-2 mt-1 flex-wrap">
-            {fromStage && <Badge className={`text-xs ${STAGE_COLORS[fromStage] || "bg-gray-100 text-gray-700"}`}>{stageLabel(fromStage)}</Badge>}
+            {fromStage && <Badge className={`text-xs ${STAGE_COLORS[fromStage] || "bg-muted text-foreground/70"}`}>{stageLabel(fromStage)}</Badge>}
             {fromStage && <ArrowRight className="h-3 w-3 text-muted-foreground" />}
-            {toStage && <Badge className={`text-xs ${STAGE_COLORS[toStage] || "bg-gray-100 text-gray-700"}`}>{stageLabel(toStage)}</Badge>}
+            {toStage && <Badge className={`text-xs ${STAGE_COLORS[toStage] || "bg-muted text-foreground/70"}`}>{stageLabel(toStage)}</Badge>}
             {e.userName && <span className="text-xs text-muted-foreground ml-1">{tc("by", { name: e.userName })}</span>}
           </div>
         ),
@@ -212,8 +212,8 @@ export function DealHistory({ dealId, orgId, deal }: { dealId: string; orgId?: s
       id: e.id,
       date: e.createdAt,
       icon: Clock,
-      bg: "bg-gray-100",
-      iconText: "text-gray-600",
+      bg: "bg-muted",
+      iconText: "text-muted-foreground",
       title: legacyLabels[action] || action.replace(/_/g, " "),
       detail: e.userName ? tc("by", { name: e.userName }) : "",
     })

@@ -186,7 +186,7 @@ export default function DashboardSettingsPage() {
                     className={`p-3.5 cursor-pointer transition-all hover:shadow-md border-2 ${
                       enabled
                         ? "border-violet-200 dark:border-violet-800 bg-violet-50/50 dark:bg-violet-950/20"
-                        : "border-transparent hover:border-slate-200 dark:hover:border-slate-700"
+                        : "border-transparent hover:border-border"
                     }`}
                     onClick={() => toggle(key)}
                   >
@@ -194,7 +194,7 @@ export default function DashboardSettingsPage() {
                       <div className={`p-2 rounded-lg ${
                         enabled
                           ? "bg-violet-100 text-violet-600 dark:bg-violet-900/40 dark:text-violet-400"
-                          : "bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500"
+                          : "bg-muted text-muted-foreground"
                       }`}>
                         <Icon className="h-4 w-4" />
                       </div>

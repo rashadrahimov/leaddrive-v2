@@ -38,7 +38,7 @@ interface Project {
 }
 
 const statusColors: Record<string, string> = {
-  planning: "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300",
+  planning: "bg-muted text-foreground/70",
   active: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
   on_hold: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
   completed: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
@@ -46,7 +46,7 @@ const statusColors: Record<string, string> = {
 }
 
 const priorityColors: Record<string, string> = {
-  low: "bg-gray-100 text-gray-600",
+  low: "bg-muted text-muted-foreground",
   medium: "bg-blue-100 text-blue-700",
   high: "bg-orange-100 text-orange-700",
   critical: "bg-red-100 text-red-700",

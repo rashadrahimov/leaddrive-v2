@@ -340,7 +340,7 @@ export function CampaignsAnalytics({ campaigns }: CampaignsAnalyticsProps) {
                       i === 0
                         ? "bg-amber-500/15 text-amber-500"
                         : i === 1
-                          ? "bg-gray-400/15 text-gray-400"
+                          ? "bg-muted-foreground/15 text-muted-foreground"
                           : "bg-orange-400/15 text-orange-400"
                     )}
                   >
@@ -430,7 +430,7 @@ export function CampaignsAnalytics({ campaigns }: CampaignsAnalyticsProps) {
                   <span
                     className={cn(
                       "w-1.5 h-1.5 rounded-full flex-shrink-0",
-                      auto.status === "active" ? "bg-emerald-500" : "bg-gray-400"
+                      auto.status === "active" ? "bg-emerald-500" : "bg-muted-foreground/40"
                     )}
                   />
                   <span className="text-muted-foreground truncate">{auto.name}</span>

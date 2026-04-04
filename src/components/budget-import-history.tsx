@@ -32,7 +32,7 @@ const STATUS_COLOR: Record<string, string> = {
   completed: "text-green-600",
   failed: "text-red-600",
   processing: "text-yellow-600",
-  pending: "text-gray-600",
+  pending: "text-muted-foreground",
 }
 
 export function BudgetImportHistory({ imports, isLoading }: Props) {
@@ -52,7 +52,7 @@ export function BudgetImportHistory({ imports, isLoading }: Props) {
         <div className="space-y-2">
           {imports.map((imp) => {
             const Icon = STATUS_ICON[imp.status] || AlertCircle
-            const color = STATUS_COLOR[imp.status] || "text-gray-600"
+            const color = STATUS_COLOR[imp.status] || "text-muted-foreground"
             return (
               <div key={imp.id} className="flex items-center justify-between p-2.5 rounded-lg border">
                 <div className="flex items-center gap-3">

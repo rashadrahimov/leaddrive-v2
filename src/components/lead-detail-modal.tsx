@@ -50,7 +50,7 @@ const statusLabels: Record<string, string> = {
 
 const statusColors: Record<string, string> = {
   new: "bg-blue-500", contacted: "bg-yellow-500", qualified: "bg-purple-500",
-  converted: "bg-green-500", rejected: "bg-gray-400", cancelled: "bg-red-500",
+  converted: "bg-green-500", rejected: "bg-muted-foreground/40", cancelled: "bg-red-500",
 }
 
 function getGrade(score: number): { letter: string; color: string } {

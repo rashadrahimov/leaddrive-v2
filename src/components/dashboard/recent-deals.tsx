@@ -4,7 +4,7 @@ import { useTranslations } from "next-intl"
 import { Handshake, Star } from "lucide-react"
 
 const stageColors: Record<string, string> = {
-  LEAD: "text-slate-500", QUALIFIED: "text-blue-500", PROPOSAL: "text-violet-500",
+  LEAD: "text-muted-foreground", QUALIFIED: "text-blue-500", PROPOSAL: "text-violet-500",
   NEGOTIATION: "text-amber-500", WON: "text-emerald-500", LOST: "text-red-500",
 }
 
@@ -12,7 +12,7 @@ export function RecentDeals({ deals }: { deals: any[] }) {
   const t = useTranslations("dashboard")
 
   return (
-    <div className="rounded-lg bg-white dark:bg-card border border-slate-200 dark:border-border shadow-sm p-3">
+    <div className="rounded-lg bg-card border border-border shadow-sm p-3">
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-1.5">
           <Handshake className="h-4 w-4 text-blue-500" />

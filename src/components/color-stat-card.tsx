@@ -13,7 +13,7 @@ const colorMap = {
   amber:  { dot: "bg-amber-500",  text: "text-amber-600 dark:text-amber-400", light: "bg-amber-50 dark:bg-amber-950/20" },
   teal:   { dot: "bg-teal-500",   text: "text-teal-600 dark:text-teal-400",   light: "bg-teal-50 dark:bg-teal-950/20" },
   indigo: { dot: "bg-indigo-500", text: "text-indigo-600 dark:text-indigo-400", light: "bg-indigo-50 dark:bg-indigo-950/20" },
-  slate:  { dot: "bg-slate-500",  text: "text-slate-600 dark:text-slate-400", light: "bg-slate-50 dark:bg-slate-950/20" },
+  slate:  { dot: "bg-muted-foreground/50",  text: "text-muted-foreground", light: "bg-muted/50" },
 }
 
 function useCountUp(target: number, duration = 800) {

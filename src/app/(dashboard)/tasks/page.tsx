@@ -322,7 +322,7 @@ function TaskCalendar({ tasks, orgId }: { tasks: Task[]; orgId?: string }) {
                           ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
                           : task.priority === "high" || task.priority === "urgent"
                             ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
-                            : "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                            : "bg-muted text-foreground/70"
                       )}
                       title={`${task.title} — ${priorityLabels[task.priority] || task.priority}`}
                     >

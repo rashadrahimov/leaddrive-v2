@@ -26,7 +26,7 @@ const TYPE_CONFIG: Record<string, { icon: any; bg: string; text: string; labelKe
   meeting: { icon: Users, bg: "bg-violet-100 dark:bg-violet-900/30", text: "text-violet-600 dark:text-violet-400", labelKey: "actTypeMeeting" },
   note: { icon: FileText, bg: "bg-amber-100 dark:bg-amber-900/30", text: "text-amber-600 dark:text-amber-400", labelKey: "actTypeNote" },
   task: { icon: CheckSquare, bg: "bg-orange-100 dark:bg-orange-900/30", text: "text-orange-600 dark:text-orange-400", labelKey: "actTypeTask" },
-  comment: { icon: MessageSquare, bg: "bg-gray-100 dark:bg-gray-800/50", text: "text-gray-600 dark:text-gray-400", labelKey: "actTypeComment" },
+  comment: { icon: MessageSquare, bg: "bg-muted", text: "text-muted-foreground", labelKey: "actTypeComment" },
 }
 
 const ACTIVITY_TYPES = ["call", "email", "meeting", "note", "task"] as const

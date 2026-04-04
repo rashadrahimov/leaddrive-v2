@@ -115,7 +115,7 @@ function statusBadge(status: string, t: (key: string) => string) {
   if (status === "pending_approval") return <Badge title={t("hintStatusPending")} className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">{t("statusPending")}</Badge>
   if (status === "approved") return <Badge title={t("hintStatusApproved")} className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">{t("statusApproved")}</Badge>
   if (status === "rejected") return <Badge title={t("hintStatusRejected")} className="bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">{t("statusRejected")}</Badge>
-  if (status === "closed") return <Badge title={t("hintStatusClosed")} className="bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400">{t("statusClosed")}</Badge>
+  if (status === "closed") return <Badge title={t("hintStatusClosed")} className="bg-muted text-muted-foreground">{t("statusClosed")}</Badge>
   return <Badge title={t("hintStatusDraft")} className="bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400">{t("statusDraft")}</Badge>
 }
 
@@ -822,12 +822,12 @@ function WorkspaceTab({ planId, onNavigateTab }: { planId: string; onNavigateTab
             {line.isAutoActual ? (
               <>
                 <button type="button"
-                  className="font-mono text-sm cursor-pointer px-1 rounded hover:underline text-blue-600 dark:text-blue-400"
+                  className="font-mono text-sm cursor-pointer px-1 rounded hover:underline text-primary"
                   onClick={() => setDrillDownLine(line)}
                   title={t("drillDownTitle")}>
                   {fmt(factValue)}
                 </button>
-                <Badge title={t("hintBadgeAuto")} className="text-[9px] bg-blue-100 text-blue-700 dark:bg-blue-900/30 px-1">{t("badgeAuto")}</Badge>
+                <Badge title={t("hintBadgeAuto")} className="text-[9px] bg-primary/10 text-primary px-1">{t("badgeAuto")}</Badge>
               </>
             ) : (
               <button type="button"
@@ -846,7 +846,7 @@ function WorkspaceTab({ planId, onNavigateTab }: { planId: string; onNavigateTab
         <td className={`px-2 py-2 text-right font-mono text-sm font-bold ${variance >= 0 ? "text-[#065f46] dark:text-[#6ee7b7]" : "text-red-500"}`}>
           <div className="flex items-center justify-end gap-1">
             <button type="button"
-              className={`p-0.5 rounded hover:bg-muted ${line.notes ? "text-blue-500" : "text-muted-foreground/40 hover:text-muted-foreground"}`}
+              className={`p-0.5 rounded hover:bg-muted ${line.notes ? "text-primary" : "text-muted-foreground/40 hover:text-muted-foreground"}`}
               title={line.notes || t("varianceNoteTitle")}
               onClick={() => { setVarianceNoteLine(line); setVarianceNoteText(line.notes || "") }}>
               <MessageSquare className="h-3.5 w-3.5" />
@@ -906,7 +906,7 @@ function WorkspaceTab({ planId, onNavigateTab }: { planId: string; onNavigateTab
   // Group colors by notes tag
   const GROUP_COLORS: Record<string, string> = {
     "group:admin":      "bg-violet-500",
-    "group:tech_infra": "bg-blue-500",
+    "group:tech_infra": "bg-primary",
     "group:labor":      "bg-emerald-500",
     "group:risk":       "bg-amber-500",
   }
@@ -929,7 +929,7 @@ function WorkspaceTab({ planId, onNavigateTab }: { planId: string; onNavigateTab
   // Render a group header row (collapsible)
   const renderGroupHeader = (line: BudgetLine) => {
     const groupTag = line.notes ?? ""
-    const colorClass = GROUP_COLORS[groupTag] ?? "bg-slate-400"
+    const colorClass = GROUP_COLORS[groupTag] ?? "bg-muted-foreground/40"
     const children = line.children ?? []
     const groupTotal = children.reduce((s, c) => s + c.plannedAmount, 0)
     // If parent group has isAutoActual, use parent's auto-actual (e.g. adminOverhead, techInfraTotal)
@@ -1025,13 +1025,13 @@ function WorkspaceTab({ planId, onNavigateTab }: { planId: string; onNavigateTab
           <td className="px-2 py-1.5 text-right">
             <div className="flex items-center justify-end gap-1">
               <button type="button"
-                className={`font-mono text-sm cursor-pointer px-1 rounded hover:underline ${child.isAutoActual ? "text-blue-600 dark:text-blue-400" : "text-[#065f46] dark:text-[#6ee7b7]"}`}
+                className={`font-mono text-sm cursor-pointer px-1 rounded hover:underline ${child.isAutoActual ? "text-primary" : "text-[#065f46] dark:text-[#6ee7b7]"}`}
                 onClick={() => setDrillDownLine(child)}
                 title={t("drillDownTitle")}>
                 {fmt(factValue)}
               </button>
               {child.isAutoActual && (
-                <Badge title={t("hintBadgeAuto")} className="text-[9px] bg-blue-100 text-blue-700 dark:bg-blue-900/30 px-1">{t("badgeAuto")}</Badge>
+                <Badge title={t("hintBadgeAuto")} className="text-[9px] bg-primary/10 text-primary px-1">{t("badgeAuto")}</Badge>
               )}
               {!child.isAutoActual && (
                 <button type="button" className="text-muted-foreground hover:text-foreground"
@@ -1044,7 +1044,7 @@ function WorkspaceTab({ planId, onNavigateTab }: { planId: string; onNavigateTab
           <td className={`px-2 py-1.5 text-right font-mono text-xs font-bold ${variance >= 0 ? "text-[#065f46] dark:text-[#6ee7b7]" : "text-red-500"}`}>
             <div className="flex items-center justify-end gap-1">
               <button type="button"
-                className={`p-0.5 rounded hover:bg-muted ${noteText ? "text-blue-500" : "text-muted-foreground/40 hover:text-muted-foreground"}`}
+                className={`p-0.5 rounded hover:bg-muted ${noteText ? "text-primary" : "text-muted-foreground/40 hover:text-muted-foreground"}`}
                 title={noteText || t("varianceNoteTitle")}
                 onClick={() => { setVarianceNoteLine(child); setVarianceNoteText(child.notes || "") }}>
                 <MessageSquare className="h-3 w-3" />
@@ -1174,13 +1174,13 @@ function WorkspaceTab({ planId, onNavigateTab }: { planId: string; onNavigateTab
                   const grpVar = grpPlanned > 0 ? ((grpPlanned - grpActual) / grpPlanned * 100).toFixed(1) + "%" : "—"
                   return (
                     <React.Fragment key={`grp-${prefix}`}>
-                      <tr className="bg-slate-100 dark:bg-slate-800/60 border-t-2 border-slate-300 dark:border-slate-600">
+                      <tr className="bg-muted border-t-2 border-border">
                         <td colSpan={2} className="px-4 py-2">
-                          <span className="text-[13px] font-bold text-slate-700 dark:text-slate-200 tracking-wide">{prefix}</span>
+                          <span className="text-[13px] font-bold text-foreground/70 tracking-wide">{prefix}</span>
                         </td>
-                        <td className="px-2 py-2 text-right font-mono text-xs font-semibold text-slate-500 dark:text-slate-400"><AnimatedNumber value={grpPlanned} duration={400} formatter={fmt} /></td>
-                        <td className="px-2 py-2 text-right font-mono text-xs font-semibold text-slate-500 dark:text-slate-400"><AnimatedNumber value={grpActual} duration={400} formatter={fmt} /></td>
-                        <td className="px-2 py-2 text-right font-mono text-xs font-semibold text-slate-500 dark:text-slate-400">{grpVar}</td>
+                        <td className="px-2 py-2 text-right font-mono text-xs font-semibold text-muted-foreground"><AnimatedNumber value={grpPlanned} duration={400} formatter={fmt} /></td>
+                        <td className="px-2 py-2 text-right font-mono text-xs font-semibold text-muted-foreground"><AnimatedNumber value={grpActual} duration={400} formatter={fmt} /></td>
+                        <td className="px-2 py-2 text-right font-mono text-xs font-semibold text-muted-foreground">{grpVar}</td>
                         <td />
                       </tr>
                       {groupLines.map(l => {
@@ -1664,7 +1664,7 @@ function WorkspaceTab({ planId, onNavigateTab }: { planId: string; onNavigateTab
           <div className="mt-4 space-y-3">
             {drillDownLine?.isAutoActual ? (
               <div className="space-y-2">
-                <Badge className="bg-blue-100 text-blue-700 dark:bg-blue-900/30">{t("costModelSource")}</Badge>
+                <Badge className="bg-primary/10 text-primary">{t("costModelSource")}</Badge>
                 <div className="text-sm text-muted-foreground">{t("costModelKey")}: <code className="bg-muted px-1 rounded">{drillDownLine.costModelKey || "—"}</code></div>
                 <div className="text-lg font-mono font-bold">{fmt(autoActualMap.get(drillDownLine.category) ?? 0)}</div>
               </div>
@@ -2161,12 +2161,12 @@ function LinesTab({ planId }: { planId: string }) {
                           <td className="px-4 py-2 text-right font-mono text-purple-600 dark:text-purple-400">
                             {line.forecastAmount != null ? fmt(line.forecastAmount) : <span className="text-muted-foreground text-xs">{t("placeholderForecastShort")}</span>}
                           </td>
-                          <td className="px-4 py-2 text-xs text-blue-600 dark:text-blue-400">
+                          <td className="px-4 py-2 text-xs text-primary">
                             {line.costModelKey ? <span title={line.costModelKey} className="flex items-center gap-1"><Link2 className="h-3 w-3" />{line.costModelKey.split(".").pop()}</span> : "—"}
                           </td>
                           <td className="px-4 py-2 text-center">
                             {line.isAutoActual
-                              ? <Badge className="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 text-xs">{t("badgeAutoLabel")}</Badge>
+                              ? <Badge className="bg-primary/10 text-primary text-xs">{t("badgeAutoLabel")}</Badge>
                               : <span className="text-muted-foreground text-xs">{t("badgeManual")}</span>}
                           </td>
                           <td className="px-4 py-2 text-center">
@@ -2289,7 +2289,7 @@ function ActualsTab({ planId }: { planId: string }) {
                           <td className="px-4 py-2 text-center">
                             <div className="flex gap-1 justify-center">
                               <button onClick={() => startEdit(actual)}
-                                className="p-1 rounded hover:bg-blue-50 dark:hover:bg-blue-900/20 text-muted-foreground hover:text-blue-600">
+                                className="p-1 rounded hover:bg-primary/5 text-muted-foreground hover:text-primary">
                                 <Pencil className="h-3.5 w-3.5" />
                               </button>
                               <button onClick={() => deleteActual.mutate({ id: actual.id, planId })}
@@ -3007,11 +3007,11 @@ function PLTab({ planId }: { planId: string }) {
                           const rowPct = gPlanned > 0 ? Math.round((row.planned / gPlanned) * 100) : 0
                           const isActive = drilldown === row.category
                           return (
-                            <tr key={i} className={`border-t border-border/20 cursor-pointer transition-colors ${isActive ? "bg-blue-50 dark:bg-blue-950/30" : "hover:bg-muted/20"}`}
+                            <tr key={i} className={`border-t border-border/20 cursor-pointer transition-colors ${isActive ? "bg-primary/5" : "hover:bg-muted/20"}`}
                               onClick={() => setDrilldown(isActive ? null : row.category)}>
                               <td className="px-4 py-2 pl-10">
                                 <div className="flex items-center gap-2 text-muted-foreground">
-                                  <span className={`w-1.5 h-1.5 rounded-full ${isActive ? "bg-blue-500" : "bg-muted-foreground/30"}`} />
+                                  <span className={`w-1.5 h-1.5 rounded-full ${isActive ? "bg-primary" : "bg-muted-foreground/30"}`} />
                                   {row.category}
                                 </div>
                               </td>
@@ -3033,11 +3033,11 @@ function PLTab({ planId }: { planId: string }) {
                   {grouped.standalone.map((row, i) => {
                     const isActive = drilldown === row.category
                     return (
-                      <tr key={`s-${i}`} className={`border-t border-border/30 cursor-pointer transition-colors ${isActive ? "bg-blue-50 dark:bg-blue-950/30" : "hover:bg-muted/20"}`}
+                      <tr key={`s-${i}`} className={`border-t border-border/30 cursor-pointer transition-colors ${isActive ? "bg-primary/5" : "hover:bg-muted/20"}`}
                         onClick={() => setDrilldown(isActive ? null : row.category)}>
                         <td className="px-4 py-2">
                           <div className="flex items-center gap-2">
-                            <span className={`w-1.5 h-1.5 rounded-full ${isActive ? "bg-blue-500" : "bg-muted-foreground/30"}`} />
+                            <span className={`w-1.5 h-1.5 rounded-full ${isActive ? "bg-primary" : "bg-muted-foreground/30"}`} />
                             {row.category}
                           </div>
                         </td>
@@ -3058,11 +3058,11 @@ function PLTab({ planId }: { planId: string }) {
                 rows.map((row, i) => {
                   const isActive = drilldown === row.category
                   return (
-                    <tr key={i} className={`border-t border-border/30 cursor-pointer transition-colors ${isActive ? "bg-blue-50 dark:bg-blue-950/30" : "hover:bg-muted/20"}`}
+                    <tr key={i} className={`border-t border-border/30 cursor-pointer transition-colors ${isActive ? "bg-primary/5" : "hover:bg-muted/20"}`}
                       onClick={() => setDrilldown(isActive ? null : row.category)}>
                       <td className="px-4 py-2">
                         <div className="flex items-center gap-2">
-                          <span className={`w-1.5 h-1.5 rounded-full ${isActive ? "bg-blue-500" : "bg-muted-foreground/30"}`} />
+                          <span className={`w-1.5 h-1.5 rounded-full ${isActive ? "bg-primary" : "bg-muted-foreground/30"}`} />
                           {row.category}
                         </div>
                       </td>
@@ -3094,8 +3094,8 @@ function PLTab({ planId }: { planId: string }) {
           title={t("plRevenue")}
           planned={totalRevenuePlanned}
           actual={totalRevenueActual}
-          icon={<DollarSign className="h-4 w-4 text-blue-500" />}
-          color="border-blue-200 dark:border-blue-800 bg-blue-50/50 dark:bg-blue-950/20"
+          icon={<DollarSign className="h-4 w-4 text-primary" />}
+          color="border-primary/20 bg-primary/[0.04]"
         />
         <KPICard
           title={t("grossProfit")}
@@ -3163,7 +3163,7 @@ function PLTab({ planId }: { planId: string }) {
       )}
 
       {/* P&L Income Statement — no COGS (allocated costs shown in Profitability module) */}
-      {renderSection(t("plRevenue"), revRows, "auto-revenue", <DollarSign className="h-4 w-4" />, "bg-blue-50/60 dark:bg-blue-950/20", false, 0, 0, false, revGrouped)}
+      {renderSection(t("plRevenue"), revRows, "auto-revenue", <DollarSign className="h-4 w-4" />, "bg-primary/[0.04]", false, 0, 0, false, revGrouped)}
       {renderSection("Прямые затраты", directExpRows, "auto-direct", <Settings2 className="h-4 w-4" />, "bg-orange-50/60 dark:bg-orange-950/20", false, 0, 0, true, directGrouped)}
 
       {/* Gross Profit = Revenue - Direct Costs */}
@@ -3197,7 +3197,7 @@ function PLTab({ planId }: { planId: string }) {
       {renderSection("Накладные расходы", indirectExpRows, "auto-indirect", <Banknote className="h-4 w-4" />, "bg-amber-50/60 dark:bg-amber-950/20", false, 0, 0, true, indirectGrouped)}
 
       {/* EBITDA */}
-      <div className={`border-2 rounded-xl overflow-hidden mb-3 ${opProfitActual < 0 ? "border-red-400/50 dark:border-red-500/50 bg-gradient-to-r from-red-50 to-rose-50 dark:from-red-950/40 dark:to-rose-950/30" : "border-purple-400/50 dark:border-purple-500/50 bg-gradient-to-r from-slate-50 to-purple-50 dark:from-slate-900/40 dark:to-purple-950/30"}`}>
+      <div className={`border-2 rounded-xl overflow-hidden mb-3 ${opProfitActual < 0 ? "border-red-400/50 dark:border-red-500/50 bg-gradient-to-r from-red-50 to-rose-50 dark:from-red-950/40 dark:to-rose-950/30" : "border-purple-400/50 dark:border-purple-500/50 bg-gradient-to-r from-muted/50 to-purple-50 dark:from-purple-950/30 dark:to-purple-950/30"}`}>
         <div className="flex items-center justify-between px-5 py-4">
           <div className="flex items-center gap-3">
             <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${opProfitActual < 0 ? "bg-red-100 dark:bg-red-900/50" : "bg-purple-100 dark:bg-purple-900/50"}`}>
@@ -3239,10 +3239,10 @@ function PLTab({ planId }: { planId: string }) {
 
       {/* Drill-down panel */}
       {drilldown && (
-        <Card className="border-blue-300 dark:border-blue-700 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/20 shadow-lg">
+        <Card className="border-primary/20 bg-primary/[0.04] shadow-lg">
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-sm text-blue-700 dark:text-blue-300 flex items-center gap-2">
+              <CardTitle className="text-sm text-primary flex items-center gap-2">
                 <BarChart2 className="h-4 w-4" />
                 {drilldown}
               </CardTitle>
@@ -3538,7 +3538,7 @@ function ForecastTab({ planId }: { planId: string }) {
   const renderGroupHeaderRow = (line: BudgetLine) => {
     const children = line.children ?? []
     const groupTag = line.notes ?? ""
-    const colorClass = GROUP_COLORS[groupTag] ?? "bg-slate-400"
+    const colorClass = GROUP_COLORS[groupTag] ?? "bg-muted-foreground/40"
     const isOpen = expandedGroups.has(groupTag.replace("group:", ""))
     const toggleGroup = () => {
       const key = groupTag.replace("group:", "")

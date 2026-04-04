@@ -78,8 +78,8 @@ const channelColor = (ch: string) => {
     case "facebook": return "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300"
     case "instagram": return "bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-400"
     case "vkontakte": return "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400"
-    case "tiktok": return "bg-gray-100 text-gray-900 dark:bg-gray-800/30 dark:text-gray-300"
-    default: return "bg-gray-100 text-gray-700"
+    case "tiktok": return "bg-muted text-foreground"
+    default: return "bg-muted text-foreground/70"
   }
 }
 
@@ -372,7 +372,7 @@ export default function InboxPage() {
               isLive ? "bg-green-100 text-green-700 border-green-300 dark:bg-green-900/30 dark:text-green-400 dark:border-green-700" : "bg-muted text-muted-foreground border-muted"
             )}
           >
-            <span className={cn("h-2 w-2 rounded-full", isLive ? "bg-green-500 animate-pulse" : "bg-gray-400")} />
+            <span className={cn("h-2 w-2 rounded-full", isLive ? "bg-green-500 animate-pulse" : "bg-muted-foreground/40")} />
             {isLive ? "Live" : "Paused"}
           </button>
           <Button className="gap-2" onClick={() => setShowCompose(true)}>

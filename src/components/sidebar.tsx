@@ -85,7 +85,7 @@ const GROUP_ICON_COLOR: Record<string, string> = {
   Analytics: "text-purple-400",
   ERP: "text-indigo-400",
   "Route & Field": "text-cyan-400",
-  Settings: "text-slate-400",
+  Settings: "text-muted-foreground",
 }
 
 const GROUP_LABEL_COLORS: Record<string, string> = {
@@ -97,7 +97,7 @@ const GROUP_LABEL_COLORS: Record<string, string> = {
   Analytics: "text-purple-400/70",
   ERP: "text-indigo-400/70",
   "Route & Field": "text-cyan-400/70",
-  Settings: "text-slate-400/70",
+  Settings: "text-muted-foreground/70",
 }
 
 const GROUP_ACTIVE_BAR: Record<string, string> = {
@@ -109,7 +109,7 @@ const GROUP_ACTIVE_BAR: Record<string, string> = {
   Analytics: "before:bg-purple-400",
   ERP: "before:bg-indigo-400",
   "Route & Field": "before:bg-cyan-400",
-  Settings: "before:bg-slate-400",
+  Settings: "before:bg-muted-foreground",
 }
 
 interface SidebarProps {
@@ -180,7 +180,7 @@ export function Sidebar({ org }: SidebarProps) {
               .map((item) => {
                 const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href))
                 const Icon = item.icon
-                const iconColor = GROUP_ICON_COLOR[group] || "text-slate-400"
+                const iconColor = GROUP_ICON_COLOR[group] || "text-muted-foreground"
                 const activeBar = GROUP_ACTIVE_BAR[group] || "before:bg-sky-400"
                 return (
                   <Link

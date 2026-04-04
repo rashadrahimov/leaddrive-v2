@@ -228,7 +228,7 @@ export default function EmailTemplatesPage() {
                 <div className="flex items-start justify-between mb-1">
                   <h3 className="font-semibold text-sm line-clamp-1">{template.name}</h3>
                   <div className="flex items-center gap-1 shrink-0 ml-2">
-                    <span className={cn("w-2 h-2 rounded-full", isActive ? "bg-green-500" : "bg-gray-300")} />
+                    <span className={cn("w-2 h-2 rounded-full", isActive ? "bg-green-500" : "bg-muted-foreground/30")} />
                     <span className="text-xs">{langFlags[lang]}</span>
                   </div>
                 </div>
@@ -245,7 +245,7 @@ export default function EmailTemplatesPage() {
                   <div className="flex items-center gap-2">
                     <span className={cn(
                       "text-[10px] px-1.5 py-0.5 rounded font-medium",
-                      isActive ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"
+                      isActive ? "bg-green-100 text-green-700" : "bg-muted text-muted-foreground"
                     )}>
                       {isActive ? t("active") : t("inactive")}
                     </span>

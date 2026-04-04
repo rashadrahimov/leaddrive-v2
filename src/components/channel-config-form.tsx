@@ -38,10 +38,10 @@ const channelTypes = [
   { value: "email", label: "Email", icon: Mail, color: "text-blue-600", bgColor: "bg-blue-100 dark:bg-blue-900/30", borderActive: "border-blue-500 bg-blue-50 dark:bg-blue-900/20" },
   { value: "telegram", label: "Telegram", icon: Send, color: "text-sky-600", bgColor: "bg-sky-100 dark:bg-sky-900/30", borderActive: "border-sky-500 bg-sky-50 dark:bg-sky-900/20" },
   { value: "whatsapp", label: "WhatsApp", icon: MessageSquare, color: "text-green-600", bgColor: "bg-green-100 dark:bg-green-900/30", borderActive: "border-green-500 bg-green-50 dark:bg-green-900/20" },
-  { value: "sms", label: "SMS", icon: Smartphone, color: "text-gray-600", bgColor: "bg-gray-100 dark:bg-gray-900/30", borderActive: "border-gray-500 bg-gray-50 dark:bg-gray-900/20" },
+  { value: "sms", label: "SMS", icon: Smartphone, color: "text-muted-foreground", bgColor: "bg-muted", borderActive: "border-border bg-muted/50" },
   { value: "facebook", label: "Facebook", icon: MessageSquare, color: "text-blue-700", bgColor: "bg-blue-100 dark:bg-blue-900/30", borderActive: "border-blue-600 bg-blue-50 dark:bg-blue-900/20" },
   { value: "instagram", label: "Instagram", icon: MessageSquare, color: "text-pink-600", bgColor: "bg-pink-100 dark:bg-pink-900/30", borderActive: "border-pink-500 bg-pink-50 dark:bg-pink-900/20" },
-  { value: "tiktok", label: "TikTok", icon: MessageSquare, color: "text-gray-800 dark:text-gray-200", bgColor: "bg-gray-100 dark:bg-gray-800/30", borderActive: "border-gray-700 bg-gray-50 dark:bg-gray-800/20" },
+  { value: "tiktok", label: "TikTok", icon: MessageSquare, color: "text-foreground", bgColor: "bg-muted", borderActive: "border-border bg-muted/50" },
 ]
 
 export function ChannelConfigForm({ open, onOpenChange, onSaved, initialData, orgId }: ChannelConfigFormProps) {
@@ -352,14 +352,14 @@ export function ChannelConfigForm({ open, onOpenChange, onSaved, initialData, or
 
             {form.channelType === "tiktok" && (
               <>
-                <div className="bg-gray-50 dark:bg-gray-900/20 border border-gray-200 dark:border-gray-700 rounded-lg p-3">
-                  <p className="text-xs text-gray-700 dark:text-gray-300 font-medium mb-1">TikTok for Business API</p>
-                  <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">
-                    Webhook URL: <code className="font-mono bg-gray-100 dark:bg-gray-800/40 px-1 rounded">
+                <div className="bg-muted/50 border border-border rounded-lg p-3">
+                  <p className="text-xs text-foreground/70 font-medium mb-1">TikTok for Business API</p>
+                  <p className="text-xs text-muted-foreground mb-1">
+                    Webhook URL: <code className="font-mono bg-muted px-1 rounded">
                       {typeof window !== "undefined" ? window.location.origin : ""}/api/v1/webhooks/tiktok
                     </code>
                   </p>
-                  <p className="text-xs text-gray-600 dark:text-gray-400">
+                  <p className="text-xs text-muted-foreground">
                     Configure at developers.tiktok.com → App → Webhooks
                   </p>
                 </div>

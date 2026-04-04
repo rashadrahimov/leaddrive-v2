@@ -27,7 +27,7 @@ interface Props {
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  draft: "bg-gray-100 text-gray-800",
+  draft: "bg-muted text-foreground",
   pending_approval: "bg-yellow-100 text-yellow-800",
   approved: "bg-green-100 text-green-800",
   rejected: "bg-red-100 text-red-800",
@@ -92,7 +92,7 @@ export function BudgetVersionHistory({
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Badge className={`text-[10px] ${STATUS_COLORS[v.status] || "bg-gray-100"}`}>
+                  <Badge className={`text-[10px] ${STATUS_COLORS[v.status] || "bg-muted"}`}>
                     {v.status}
                   </Badge>
                   {i > 0 && (

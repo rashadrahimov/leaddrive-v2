@@ -32,7 +32,7 @@ const STATUS_STYLES: Record<string, { bg: string; text: string; label: string }>
   added: { bg: "bg-green-50", text: "text-green-700", label: "Added" },
   removed: { bg: "bg-red-50", text: "text-red-700", label: "Removed" },
   changed: { bg: "bg-yellow-50", text: "text-yellow-700", label: "Changed" },
-  unchanged: { bg: "bg-white", text: "text-muted-foreground", label: "Same" },
+  unchanged: { bg: "bg-card", text: "text-muted-foreground", label: "Same" },
 }
 
 function fmt(n: number): string {

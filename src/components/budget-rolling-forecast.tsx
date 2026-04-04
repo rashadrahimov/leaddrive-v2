@@ -126,7 +126,7 @@ export function BudgetRollingForecast({
               <div
                 key={`${m.year}-${m.month}`}
                 className={`p-2 rounded-lg border text-center text-xs transition-colors
-                  ${isActual ? "bg-blue-50 dark:bg-blue-900/20 border-blue-200" : "bg-white dark:bg-gray-900 border-border"}`}
+                  ${isActual ? "bg-blue-50 dark:bg-blue-900/20 border-blue-200" : "bg-card border-border"}`}
               >
                 <div className="font-medium text-[10px] text-muted-foreground">
                   {MONTH_NAMES[m.month - 1]}
@@ -137,7 +137,7 @@ export function BudgetRollingForecast({
                 <div className={`font-bold text-xs ${m.margin >= 0 ? "text-blue-700 dark:text-blue-300" : "text-orange-600"}`}>
                   {fmt(m.margin)}
                 </div>
-                <Badge className={`text-[8px] mt-1 ${isActual ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-600"}`}>
+                <Badge className={`text-[8px] mt-1 ${isActual ? "bg-blue-100 text-blue-700" : "bg-muted text-muted-foreground"}`}>
                   {isActual ? "ФАКТ" : "ПР"}
                 </Badge>
                 {isActual && i === lastActualIdx && onReopenMonth && (

@@ -52,7 +52,7 @@ const COLOR_MAP: Record<string, string> = {
   indigo: "bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-300",
   teal: "bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-300",
   orange: "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300",
-  slate: "bg-slate-100 text-slate-800 dark:bg-slate-900 dark:text-slate-300",
+  slate: "bg-muted text-foreground",
 }
 
 const ROLE_ICONS: Record<string, React.ReactNode> = {

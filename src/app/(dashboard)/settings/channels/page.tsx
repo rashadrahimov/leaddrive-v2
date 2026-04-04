@@ -29,10 +29,10 @@ const channelMeta: Record<string, { label: string; icon: any; color: string; bgC
   email: { label: "Email", icon: Mail, color: "text-blue-600", bgColor: "bg-blue-100 dark:bg-blue-900/30" },
   telegram: { label: "Telegram", icon: Send, color: "text-sky-600", bgColor: "bg-sky-100 dark:bg-sky-900/30" },
   whatsapp: { label: "WhatsApp", icon: MessageSquare, color: "text-green-600", bgColor: "bg-green-100 dark:bg-green-900/30" },
-  sms: { label: "SMS", icon: Smartphone, color: "text-gray-600", bgColor: "bg-gray-100 dark:bg-gray-900/30" },
+  sms: { label: "SMS", icon: Smartphone, color: "text-muted-foreground", bgColor: "bg-muted" },
   facebook: { label: "Facebook", icon: MessageSquare, color: "text-blue-700", bgColor: "bg-blue-100 dark:bg-blue-900/30" },
   instagram: { label: "Instagram", icon: MessageSquare, color: "text-pink-600", bgColor: "bg-pink-100 dark:bg-pink-900/30" },
-  tiktok: { label: "TikTok", icon: MessageSquare, color: "text-gray-800 dark:text-gray-200", bgColor: "bg-gray-100 dark:bg-gray-800/30" },
+  tiktok: { label: "TikTok", icon: MessageSquare, color: "text-foreground", bgColor: "bg-muted" },
 }
 
 export default function ChannelsPage() {
@@ -143,7 +143,7 @@ export default function ChannelsPage() {
         </div>
         <div className="border rounded-lg p-4 bg-card">
           <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
-            <div className="h-2 w-2 rounded-full bg-gray-400" /> {tc("inactive")}
+            <div className="h-2 w-2 rounded-full bg-muted-foreground/40" /> {tc("inactive")}
           </div>
           <p className="text-2xl font-bold text-muted-foreground">{channels.length - activeCount}</p>
         </div>
@@ -207,12 +207,12 @@ export default function ChannelsPage() {
                         "text-[10px] shrink-0",
                         channel.isActive
                           ? "border-green-200 bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400"
-                          : "border-gray-200 bg-gray-50 text-gray-500"
+                          : "border-border bg-muted/50 text-muted-foreground"
                       )}
                     >
                       <span className={cn(
                         "inline-block w-1.5 h-1.5 rounded-full mr-1",
-                        channel.isActive ? "bg-green-500" : "bg-gray-400"
+                        channel.isActive ? "bg-green-500" : "bg-muted-foreground/40"
                       )} />
                       {channel.isActive ? tc("active") : tc("inactive")}
                     </Badge>

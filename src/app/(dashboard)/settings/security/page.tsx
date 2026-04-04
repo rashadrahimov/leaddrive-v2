@@ -204,7 +204,7 @@ export default function SecuritySettingsPage() {
             </p>
 
             <div className="flex justify-center">
-              <div className="bg-white p-4 rounded-xl shadow-inner border">
+              <div className="bg-card p-4 rounded-xl shadow-inner border">
                 {qrCode && <img src={qrCode} alt="2FA QR Code" className="w-48 h-48" />}
               </div>
             </div>
@@ -350,7 +350,7 @@ export default function SecuritySettingsPage() {
                   <div className="bg-green-50 border border-green-200 rounded-lg p-3">
                     <p className="text-sm font-semibold text-green-800 mb-1">Key created! Copy it now — it won't be shown again.</p>
                     <div className="flex items-center gap-2 mt-2">
-                      <code className="text-xs font-mono bg-white rounded px-2 py-1.5 flex-1 overflow-hidden text-ellipsis border">
+                      <code className="text-xs font-mono bg-card rounded px-2 py-1.5 flex-1 overflow-hidden text-ellipsis border">
                         {generatedKey}
                       </code>
                       <Button variant="outline" size="sm" onClick={() => {

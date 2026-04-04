@@ -56,7 +56,7 @@ interface CampaignFormProps {
 type RecipientMode = "all" | "contacts" | "leads" | "segment" | "source" | "manual"
 
 const statusColors: Record<string, string> = {
-  draft: "bg-gray-50 text-gray-600 border-gray-200",
+  draft: "bg-muted text-muted-foreground border-border",
   scheduled: "bg-amber-50 text-amber-600 border-amber-200",
   sending: "bg-blue-50 text-blue-600 border-blue-200",
   sent: "bg-green-50 text-green-600 border-green-200",

@@ -290,7 +290,7 @@ export function AiConfigForm({ open, onOpenChange, onSaved, initialData, orgId }
 
   return (
     <div className="fixed inset-0 z-50 bg-black/40 flex items-start justify-center overflow-y-auto py-8">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl mx-4 animate-in fade-in slide-in-from-bottom-4">
+      <div className="bg-card rounded-2xl shadow-2xl w-full max-w-3xl mx-4 animate-in fade-in slide-in-from-bottom-4">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b">
           <div className="flex items-center gap-3">
@@ -299,11 +299,11 @@ export function AiConfigForm({ open, onOpenChange, onSaved, initialData, orgId }
             </div>
             <div>
               <h2 className="text-xl font-bold">{isEdit ? tf("editAiAgent") : tf("newAiAgent")}</h2>
-              <p className="text-sm text-gray-500">{t("configureAgentDesc")}</p>
+              <p className="text-sm text-muted-foreground">{t("configureAgentDesc")}</p>
             </div>
           </div>
-          <button onClick={() => onOpenChange(false)} className="h-10 w-10 rounded-full hover:bg-gray-100 flex items-center justify-center transition">
-            <X className="h-5 w-5 text-gray-400" />
+          <button onClick={() => onOpenChange(false)} className="h-10 w-10 rounded-full hover:bg-muted flex items-center justify-center transition">
+            <X className="h-5 w-5 text-muted-foreground" />
           </button>
         </div>
 
@@ -313,7 +313,7 @@ export function AiConfigForm({ open, onOpenChange, onSaved, initialData, orgId }
           {/* ── Row 1: Name + Active toggle ── */}
           <div className="flex gap-4 items-end">
             <div className="flex-1">
-              <label className="text-sm font-semibold text-gray-700 mb-2 block">{t("agentName")}</label>
+              <label className="text-sm font-semibold text-foreground/70 mb-2 block">{t("agentName")}</label>
               <Input
                 value={form.configName}
                 onChange={(e) => setForm(f => ({ ...f, configName: e.target.value }))}
@@ -324,14 +324,14 @@ export function AiConfigForm({ open, onOpenChange, onSaved, initialData, orgId }
             <label className="flex items-center gap-3 cursor-pointer pb-2">
               <div className={cn(
                 "relative w-12 h-7 rounded-full transition-colors",
-                form.isActive ? "bg-green-500" : "bg-gray-300"
+                form.isActive ? "bg-green-500" : "bg-muted-foreground/30"
               )} onClick={() => setForm(f => ({ ...f, isActive: !f.isActive }))}>
                 <div className={cn(
                   "absolute top-0.5 h-6 w-6 rounded-full bg-white shadow transition-transform",
                   form.isActive ? "translate-x-[22px]" : "translate-x-0.5"
                 )} />
               </div>
-              <span className={cn("text-sm font-semibold", form.isActive ? "text-green-600" : "text-gray-400")}>
+              <span className={cn("text-sm font-semibold", form.isActive ? "text-green-600" : "text-muted-foreground")}>
                 {form.isActive ? t("active") : t("inactive")}
               </span>
             </label>
@@ -353,7 +353,7 @@ export function AiConfigForm({ open, onOpenChange, onSaved, initialData, orgId }
                     onClick={() => setForm(f => ({ ...f, model: model.id }))}
                     className={cn(
                       "w-full flex items-center gap-4 p-3.5 rounded-xl border-2 transition-all text-left",
-                      isSelected ? model.bgSelected + " shadow-sm" : "border-gray-100 hover:border-gray-200"
+                      isSelected ? model.bgSelected + " shadow-sm" : "border-border hover:border-border"
                     )}
                   >
                     <div className={cn("h-10 w-10 rounded-lg bg-gradient-to-br flex items-center justify-center flex-shrink-0", model.color)}>
@@ -364,9 +364,9 @@ export function AiConfigForm({ open, onOpenChange, onSaved, initialData, orgId }
                         <span className="font-semibold text-sm">{model.name}</span>
                         {isSelected && <span className="text-[10px] font-bold text-blue-600 bg-blue-100 px-2 py-0.5 rounded-full">{t("selected")}</span>}
                       </div>
-                      <p className="text-xs text-gray-500">{t(model.descKey as any)}</p>
+                      <p className="text-xs text-muted-foreground">{t(model.descKey as any)}</p>
                     </div>
-                    <span className="text-[11px] text-gray-400 flex-shrink-0">{model.price}</span>
+                    <span className="text-[11px] text-muted-foreground flex-shrink-0">{model.price}</span>
                   </button>
                 )
               })}
@@ -382,48 +382,48 @@ export function AiConfigForm({ open, onOpenChange, onSaved, initialData, orgId }
               {/* Max Tokens */}
               <div>
                 <div className="flex justify-between mb-1.5">
-                  <span className="text-xs font-medium text-gray-600">{t("responseLength")}</span>
+                  <span className="text-xs font-medium text-muted-foreground">{t("responseLength")}</span>
                   <span className="text-sm font-bold text-blue-600">{form.maxTokens}</span>
                 </div>
                 <input
                   type="range" min={256} max={4096} step={256}
                   value={form.maxTokens}
                   onChange={(e) => setForm(f => ({ ...f, maxTokens: Number(e.target.value) }))}
-                  className="w-full h-2 bg-gray-200 rounded-full appearance-none cursor-pointer accent-blue-500"
+                  className="w-full h-2 bg-muted rounded-full appearance-none cursor-pointer accent-blue-500"
                 />
-                <div className="flex justify-between text-[10px] text-gray-400 mt-0.5">
+                <div className="flex justify-between text-[10px] text-muted-foreground mt-0.5">
                   <span>{t("short")}</span><span>{t("detailed")}</span>
                 </div>
               </div>
               {/* Temperature */}
               <div>
                 <div className="flex justify-between mb-1.5">
-                  <span className="text-xs font-medium text-gray-600">{t("creativity")}</span>
+                  <span className="text-xs font-medium text-muted-foreground">{t("creativity")}</span>
                   <span className="text-sm font-bold text-blue-600">{form.temperature}</span>
                 </div>
                 <input
                   type="range" min={0} max={2} step={0.1}
                   value={form.temperature}
                   onChange={(e) => setForm(f => ({ ...f, temperature: Number(e.target.value) }))}
-                  className="w-full h-2 bg-gray-200 rounded-full appearance-none cursor-pointer accent-blue-500"
+                  className="w-full h-2 bg-muted rounded-full appearance-none cursor-pointer accent-blue-500"
                 />
-                <div className="flex justify-between text-[10px] text-gray-400 mt-0.5">
+                <div className="flex justify-between text-[10px] text-muted-foreground mt-0.5">
                   <span>{t("precise")}</span><span>{t("creative")}</span>
                 </div>
               </div>
               {/* KB Articles */}
               <div>
                 <div className="flex justify-between mb-1.5">
-                  <span className="text-xs font-medium text-gray-600">{t("kbArticles")}</span>
+                  <span className="text-xs font-medium text-muted-foreground">{t("kbArticles")}</span>
                   <span className="text-sm font-bold text-blue-600">{form.kbMaxArticles}</span>
                 </div>
                 <input
                   type="range" min={1} max={10} step={1}
                   value={form.kbMaxArticles}
                   onChange={(e) => setForm(f => ({ ...f, kbMaxArticles: Number(e.target.value) }))}
-                  className="w-full h-2 bg-gray-200 rounded-full appearance-none cursor-pointer accent-blue-500"
+                  className="w-full h-2 bg-muted rounded-full appearance-none cursor-pointer accent-blue-500"
                 />
-                <div className="flex justify-between text-[10px] text-gray-400 mt-0.5">
+                <div className="flex justify-between text-[10px] text-muted-foreground mt-0.5">
                   <span>1</span><span>10</span>
                 </div>
               </div>
@@ -435,7 +435,7 @@ export function AiConfigForm({ open, onOpenChange, onSaved, initialData, orgId }
             <h3 className="font-semibold mb-1 flex items-center gap-2">
               <span className="text-sm">&#128295;</span> {t("agentCapabilities")}
             </h3>
-            <p className="text-xs text-gray-500 mb-3">{t("agentCapabilitiesDesc")}</p>
+            <p className="text-xs text-muted-foreground mb-3">{t("agentCapabilitiesDesc")}</p>
 
             <div className="space-y-2.5">
               {TOOL_GROUPS.map(group => {
@@ -448,12 +448,12 @@ export function AiConfigForm({ open, onOpenChange, onSaved, initialData, orgId }
                     onClick={() => toggleGroup(group)}
                     className={cn(
                       "w-full flex items-center gap-3.5 p-3.5 rounded-xl border-2 transition-all text-left",
-                      enabled ? "border-blue-300 bg-blue-50/60 shadow-sm" : "border-gray-100 hover:border-gray-200"
+                      enabled ? "border-blue-300 bg-blue-50/60 shadow-sm" : "border-border hover:border-border"
                     )}
                   >
                     <div className={cn(
                       "relative w-11 h-6 rounded-full transition-colors flex-shrink-0",
-                      enabled ? "bg-blue-500" : "bg-gray-300"
+                      enabled ? "bg-blue-500" : "bg-muted-foreground/30"
                     )}>
                       <div className={cn(
                         "absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform",
@@ -465,7 +465,7 @@ export function AiConfigForm({ open, onOpenChange, onSaved, initialData, orgId }
                     </div>
                     <div className="min-w-0">
                       <p className="font-medium text-sm">{t(group.nameKey as any)}</p>
-                      <p className="text-[11px] text-gray-500">{t(group.descKey as any)}</p>
+                      <p className="text-[11px] text-muted-foreground">{t(group.descKey as any)}</p>
                     </div>
                   </button>
                 )
@@ -482,19 +482,19 @@ export function AiConfigForm({ open, onOpenChange, onSaved, initialData, orgId }
               <label className="flex items-center gap-2 cursor-pointer">
                 <div className={cn(
                   "relative w-11 h-6 rounded-full transition-colors",
-                  form.escalationEnabled ? "bg-red-500" : "bg-gray-300"
+                  form.escalationEnabled ? "bg-red-500" : "bg-muted-foreground/30"
                 )} onClick={() => setForm(f => ({ ...f, escalationEnabled: !f.escalationEnabled }))}>
                   <div className={cn(
                     "absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform",
                     form.escalationEnabled ? "translate-x-[22px]" : "translate-x-0.5"
                   )} />
                 </div>
-                <span className={cn("text-xs font-medium", form.escalationEnabled ? "text-red-600" : "text-gray-400")}>
+                <span className={cn("text-xs font-medium", form.escalationEnabled ? "text-red-600" : "text-muted-foreground")}>
                   {form.escalationEnabled ? t("escalationEnabled") : t("escalationDisabled")}
                 </span>
               </label>
             </div>
-            <p className="text-xs text-gray-500 mb-3">
+            <p className="text-xs text-muted-foreground mb-3">
               {t("escalationDesc")}
             </p>
 
@@ -510,14 +510,14 @@ export function AiConfigForm({ open, onOpenChange, onSaved, initialData, orgId }
                       onClick={() => toggleRule(preset)}
                       className={cn(
                         "w-full flex items-center gap-3 p-3 rounded-xl border transition-all text-left",
-                        enabled ? "border-red-200 bg-red-50/60" : "border-gray-100 hover:border-gray-200",
+                        enabled ? "border-red-200 bg-red-50/60" : "border-border hover:border-border",
                         preset.alwaysOn && "opacity-90 cursor-default"
                       )}
                     >
                       {/* Checkbox */}
                       <div className={cn(
                         "w-5 h-5 rounded flex items-center justify-center flex-shrink-0 border-2 transition-colors",
-                        enabled ? "bg-red-500 border-red-500" : "border-gray-300 bg-white",
+                        enabled ? "bg-red-500 border-red-500" : "border-border bg-card",
                         preset.alwaysOn && "bg-red-400 border-red-400"
                       )}>
                         {enabled && (
@@ -536,7 +536,7 @@ export function AiConfigForm({ open, onOpenChange, onSaved, initialData, orgId }
                             <span className="text-[9px] font-bold text-red-600 bg-red-100 px-1.5 py-0.5 rounded-full">{t("alwaysOn")}</span>
                           )}
                         </div>
-                        <p className="text-[11px] text-gray-500">{t(preset.descKey as any)}</p>
+                        <p className="text-[11px] text-muted-foreground">{t(preset.descKey as any)}</p>
                       </div>
                     </button>
                   )
@@ -552,7 +552,7 @@ export function AiConfigForm({ open, onOpenChange, onSaved, initialData, orgId }
                             <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                           </svg>
                         </div>
-                        <p className="text-sm text-gray-700 flex-1">{rule}</p>
+                        <p className="text-sm text-foreground/70 flex-1">{rule}</p>
                         <button
                           type="button"
                           onClick={() => removeCustomRule(rule)}
@@ -593,9 +593,9 @@ export function AiConfigForm({ open, onOpenChange, onSaved, initialData, orgId }
           <div>
             <h3 className="font-semibold mb-1 flex items-center gap-2">
               <MessageCircle className="h-4 w-4 text-violet-500" /> {t("systemPrompt")}
-              <span className="text-[10px] text-gray-400 font-normal">({t("optional")})</span>
+              <span className="text-[10px] text-muted-foreground font-normal">({t("optional")})</span>
             </h3>
-            <p className="text-xs text-gray-500 mb-2">{t("systemPromptDesc")}</p>
+            <p className="text-xs text-muted-foreground mb-2">{t("systemPromptDesc")}</p>
             <Textarea
               value={form.systemPrompt}
               onChange={(e) => setForm(f => ({ ...f, systemPrompt: e.target.value }))}
@@ -607,7 +607,7 @@ export function AiConfigForm({ open, onOpenChange, onSaved, initialData, orgId }
 
           {/* ── Notes ── */}
           <div>
-            <label className="text-sm font-semibold text-gray-700 mb-2 block">{t("notes")}</label>
+            <label className="text-sm font-semibold text-foreground/70 mb-2 block">{t("notes")}</label>
             <Textarea
               value={form.notes}
               onChange={(e) => setForm(f => ({ ...f, notes: e.target.value }))}
@@ -619,7 +619,7 @@ export function AiConfigForm({ open, onOpenChange, onSaved, initialData, orgId }
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between p-6 border-t bg-gray-50/50 rounded-b-2xl">
+        <div className="flex items-center justify-between p-6 border-t bg-muted/50 rounded-b-2xl">
           <Button variant="outline" onClick={() => onOpenChange(false)} className="rounded-xl px-6">
             {t("cancel")}
           </Button>

@@ -53,7 +53,7 @@ interface Contract {
 }
 
 const statusColors: Record<string, string> = {
-  draft: "bg-gray-100 text-gray-600",
+  draft: "bg-muted text-muted-foreground",
   sent: "bg-blue-100 text-blue-700",
   signed: "bg-indigo-100 text-indigo-700",
   active: "bg-green-100 text-green-700",
@@ -292,7 +292,7 @@ export default function ContractsPage() {
     {
       key: "status", label: t("status"), sortable: true, hint: t("hintColStatus"),
       render: (item: any) => (
-        <span className={cn("text-xs px-2 py-0.5 rounded-full font-medium", statusColors[item.status] || "bg-gray-100")}>
+        <span className={cn("text-xs px-2 py-0.5 rounded-full font-medium", statusColors[item.status] || "bg-muted")}>
           {statusLabels[item.status] || item.status}
         </span>
       ),

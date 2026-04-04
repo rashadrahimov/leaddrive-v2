@@ -121,13 +121,13 @@ interface Invoice {
 // ---------- Status helpers ----------
 
 const STATUS_STYLES: Record<string, string> = {
-  draft: "bg-gray-100 text-gray-800",
+  draft: "bg-muted text-foreground",
   sent: "bg-blue-100 text-blue-800",
   viewed: "bg-indigo-100 text-indigo-800",
   partially_paid: "bg-yellow-100 text-yellow-800",
   paid: "bg-green-100 text-green-800",
   overdue: "bg-red-100 text-red-800",
-  cancelled: "bg-gray-100 text-gray-500 line-through",
+  cancelled: "bg-muted text-muted-foreground line-through",
   refunded: "bg-purple-100 text-purple-800",
 }
 
@@ -475,7 +475,7 @@ export default function InvoiceDetailPage() {
 
   const chainStepTypes = [
     { value: "send_email", label: t("chainStepEmail"), icon: Mail, color: "bg-blue-500", borderColor: "border-blue-200 bg-blue-50/50 dark:bg-blue-900/10" },
-    { value: "sms", label: t("chainStepSms"), icon: Smartphone, color: "bg-gray-700", borderColor: "border-gray-200 bg-gray-50/50 dark:bg-gray-900/10" },
+    { value: "sms", label: t("chainStepSms"), icon: Smartphone, color: "bg-muted-foreground", borderColor: "border-border bg-muted/50" },
     { value: "wait", label: t("chainStepWait"), icon: Clock, color: "bg-yellow-500", borderColor: "border-yellow-200 bg-yellow-50/50 dark:bg-yellow-900/10" },
     { value: "send_telegram", label: t("chainStepTelegram"), icon: Send, color: "bg-sky-500", borderColor: "border-sky-200 bg-sky-50/50 dark:bg-sky-900/10" },
     { value: "send_whatsapp", label: t("chainStepWhatsapp"), icon: Heart, color: "bg-green-500", borderColor: "border-green-200 bg-green-50/50 dark:bg-green-900/10" },

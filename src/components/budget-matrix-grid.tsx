@@ -135,7 +135,7 @@ export function BudgetMatrixGrid({
 
   if (isEmpty) {
     return (
-      <div className="rounded-xl border bg-white p-8 text-center text-muted-foreground dark:bg-slate-900">
+      <div className="rounded-xl border bg-card p-8 text-center text-muted-foreground">
         <p className="text-lg font-medium mb-2">{t("matrixEmpty")}</p>
         <p className="text-sm">
           {t("matrixEmptyHint")}

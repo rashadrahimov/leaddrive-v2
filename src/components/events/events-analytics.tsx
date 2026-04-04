@@ -108,16 +108,16 @@ function formatShortDate(dateStr: string): string {
 
 const STATUS_MAP: Record<string, { label: string; className: string }> = {
   open: { label: "Qeydiyyat aciq", className: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" },
-  planned: { label: "Planlasdirilib", className: "bg-blue-500/10 text-blue-400 border-blue-500/20" },
-  completed: { label: "Tamamlandi", className: "bg-zinc-500/10 text-zinc-400 border-zinc-500/20" },
+  planned: { label: "Planlasdirilib", className: "bg-primary/10 text-primary border-primary/20" },
+  completed: { label: "Tamamlandi", className: "bg-muted text-muted-foreground border-border" },
   cancelled: { label: "Legv edildi", className: "bg-red-500/10 text-red-400 border-red-500/20" },
 }
 
 const ROLE_STYLES: Record<string, string> = {
-  Speaker: "bg-violet-500/10 text-violet-400 border-violet-500/20",
-  Organizer: "bg-blue-500/10 text-blue-400 border-blue-500/20",
+  Speaker: "bg-[hsl(var(--ai-from))]/10 text-[hsl(var(--ai-from))] border-[hsl(var(--ai-from))]/20",
+  Organizer: "bg-primary/10 text-primary border-primary/20",
   VIP: "bg-amber-500/10 text-amber-400 border-amber-500/20",
-  Attendee: "bg-zinc-500/10 text-zinc-400 border-zinc-500/20",
+  Attendee: "bg-muted text-muted-foreground border-border",
   Sponsor: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
 }
 
@@ -131,8 +131,8 @@ const ROLE_ICONS: Record<string, React.ReactNode> = {
 
 const CALENDAR_DOT_COLORS: Record<string, string> = {
   open: "bg-emerald-400",
-  planned: "bg-blue-400",
-  completed: "bg-zinc-400",
+  planned: "bg-primary",
+  completed: "bg-muted-foreground/40",
 }
 
 // ─── Component ──────────────────────────────────────────────────────────────
@@ -347,7 +347,7 @@ export function EventsAnalytics({ events }: EventsAnalyticsProps) {
             {MOCK_CALENDAR.map((item) => (
               <div key={item.id} className="flex items-center gap-2.5 py-1.5 px-2 rounded-lg hover:bg-muted/50 transition-colors">
                 {/* Colored dot */}
-                <div className={cn("shrink-0 w-2.5 h-2.5 rounded-full", CALENDAR_DOT_COLORS[item.status] ?? "bg-zinc-400")} />
+                <div className={cn("shrink-0 w-2.5 h-2.5 rounded-full", CALENDAR_DOT_COLORS[item.status] ?? "bg-muted-foreground/40")} />
                 {/* Info */}
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-medium truncate">{item.name}</p>

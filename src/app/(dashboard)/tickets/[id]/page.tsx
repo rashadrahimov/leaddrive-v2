@@ -59,7 +59,7 @@ const STATUS_STYLES: Record<string, { className: string }> = {
   in_progress: { className: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300" },
   waiting: { className: "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300" },
   resolved: { className: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300" },
-  closed: { className: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300" },
+  closed: { className: "bg-muted text-foreground" },
 }
 
 const STATUS_PIPELINE = ["new", "open", "in_progress", "waiting", "resolved", "closed"]
@@ -69,7 +69,7 @@ const STATUS_PIPELINE_COLORS: Record<string, string> = {
   in_progress: "bg-yellow-500",
   waiting: "bg-purple-500",
   resolved: "bg-green-500",
-  closed: "bg-gray-500",
+  closed: "bg-muted-foreground/50",
 }
 
 const PRIORITY_STYLES: Record<string, { className: string }> = {
@@ -451,7 +451,7 @@ export default function TicketDetailPage() {
             <span className="text-lg font-bold leading-tight font-mono">{slaFirstResponse.text}</span>
           )}
         </div>
-        <div className={`${ticket.priority === "critical" ? "bg-red-500" : ticket.priority === "high" ? "bg-orange-500" : "bg-slate-500"} text-white rounded-xl p-4 flex flex-col gap-1 shadow-sm`}>
+        <div className={`${ticket.priority === "critical" ? "bg-red-500" : ticket.priority === "high" ? "bg-orange-500" : "bg-muted-foreground/50"} text-white rounded-xl p-4 flex flex-col gap-1 shadow-sm`}>
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium opacity-80">{t("priorityLabel")}</span>
             <AlertTriangle className="h-4 w-4 opacity-80" />

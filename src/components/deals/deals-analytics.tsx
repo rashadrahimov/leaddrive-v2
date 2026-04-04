@@ -299,7 +299,7 @@ export function DealsAnalytics({ deals, pipelineValue, wonValue, lostCount, wonC
                   </div>
                   <div className="h-2 rounded-full bg-muted/50 overflow-hidden">
                     <div
-                      className={cn("h-full rounded-full transition-all", info?.color ?? "bg-gray-400")}
+                      className={cn("h-full rounded-full transition-all", info?.color ?? "bg-muted-foreground/40")}
                       style={{ width: `${Math.max(pct, 2)}%` }}
                     />
                   </div>
