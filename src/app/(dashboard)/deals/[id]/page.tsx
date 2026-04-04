@@ -8,10 +8,11 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Input } from "@/components/ui/input"
 import {
   ArrowLeft, Pencil, Trash2, Building2, User, Calendar, DollarSign,
   Clock, TrendingUp, Target, Users, Swords, MessageSquare, MessageCircle,
-  CheckCircle2, AlertCircle, Tag, Plus, X, Phone, Mail
+  CheckCircle2, AlertCircle, Tag, Plus, X, Phone, Mail, Search, Loader2
 } from "lucide-react"
 import { ColorStatCard } from "@/components/color-stat-card"
 import { DealForm } from "@/components/deal-form"
@@ -75,6 +76,226 @@ interface Deal {
   contact: { id: string; fullName: string; position: string | null; email: string | null; phone: string | null; avatar: string | null } | null
   teamMembers: TeamMember[]
   contactRoles: ContactRole[]
+}
+
+const ROLE_OPTIONS = ["Decision Maker", "Influencer", "Champion", "Evaluator", "User", "Blocker", "contact_person"]
+const INFLUENCE_OPTIONS = ["High", "Medium", "Low"]
+const LOYALTY_OPTIONS = ["Supportive", "Neutral", "Opponent"]
+
+function ContactRolesPanel({ deal, dealId, orgId, fetchDeal, tc, t }: {
+  deal: Deal; dealId: string; orgId?: string; fetchDeal: () => void; tc: any; t: any
+}) {
+  const [showForm, setShowForm] = useState(false)
+  const [search, setSearch] = useState("")
+  const [searchResults, setSearchResults] = useState<any[]>([])
+  const [searching, setSearching] = useState(false)
+  const [selectedContact, setSelectedContact] = useState<any>(null)
+  const [role, setRole] = useState("contact_person")
+  const [influence, setInfluence] = useState("Medium")
+  const [loyalty, setLoyalty] = useState("Neutral")
+  const [submitting, setSubmitting] = useState(false)
+
+  const headers: any = orgId ? { "x-organization-id": orgId } : {}
+
+  const searchContacts = async (q: string) => {
+    if (q.length < 2) { setSearchResults([]); return }
+    setSearching(true)
+    try {
+      const res = await fetch(`/api/v1/contacts?search=${encodeURIComponent(q)}&limit=10`, { headers })
+      const json = await res.json()
+      const contacts = json.data?.contacts || []
+      const existing = new Set((deal.contactRoles || []).map(cr => cr.contactId))
+      setSearchResults(contacts.filter((c: any) => !existing.has(c.id)))
+    } catch { setSearchResults([]) }
+    finally { setSearching(false) }
+  }
+
+  const handleAdd = async () => {
+    if (!selectedContact) return
+    setSubmitting(true)
+    try {
+      await fetch(`/api/v1/deals/${dealId}/contact-roles`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...headers },
+        body: JSON.stringify({ contactId: selectedContact.id, role, influence, loyalty }),
+      })
+      setShowForm(false)
+      setSelectedContact(null)
+      setSearch("")
+      setSearchResults([])
+      setRole("contact_person")
+      setInfluence("Medium")
+      setLoyalty("Neutral")
+      fetchDeal()
+    } finally { setSubmitting(false) }
+  }
+
+  return (
+    <Card className="shadow-sm border-none bg-card">
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Users className="h-4 w-4 text-muted-foreground" /> {t("contactRoles")} <InfoHint text="People involved in this deal and their roles in the decision-making process" size={12} />
+          </CardTitle>
+          <Button size="sm" variant={showForm ? "outline" : "default"} onClick={() => { setShowForm(!showForm); setSelectedContact(null); setSearch(""); setSearchResults([]) }} className="gap-1">
+            {showForm ? <X className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
+            {showForm ? tc("cancel") : tc("addContactRole")}
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent>
+        {/* Add form */}
+        {showForm && (
+          <div className="rounded-lg border bg-muted/30 p-4 mb-4 space-y-3">
+            {!selectedContact ? (
+              <div className="space-y-2">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder={tc("searchContacts")}
+                    value={search}
+                    onChange={e => { setSearch(e.target.value); searchContacts(e.target.value) }}
+                    className="pl-9"
+                    autoFocus
+                  />
+                  {searching && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />}
+                </div>
+                {searchResults.length > 0 && (
+                  <div className="border rounded-lg max-h-48 overflow-y-auto">
+                    {searchResults.map((c: any) => (
+                      <button
+                        key={c.id}
+                        onClick={() => { setSelectedContact(c); setSearchResults([]) }}
+                        className="w-full flex items-center gap-3 p-2.5 hover:bg-muted/50 text-left transition-colors border-b last:border-0"
+                      >
+                        <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-medium text-primary">
+                          {(c.fullName || "?")[0]}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium truncate">{c.fullName}</p>
+                          <p className="text-xs text-muted-foreground truncate">{c.position || c.email || ""}</p>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {search.length >= 2 && !searching && searchResults.length === 0 && (
+                  <p className="text-xs text-muted-foreground text-center py-2">{tc("noResults")}</p>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {/* Selected contact */}
+                <div className="flex items-center gap-3 p-2 rounded-lg bg-background border">
+                  <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center text-sm font-medium text-primary">
+                    {(selectedContact.fullName || "?")[0]}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium">{selectedContact.fullName}</p>
+                    <p className="text-xs text-muted-foreground">{selectedContact.position || selectedContact.email || ""}</p>
+                  </div>
+                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setSelectedContact(null); setSearch("") }}>
+                    <X className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+                {/* Role selectors */}
+                <div className="grid grid-cols-3 gap-3">
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground mb-1 block">{tc("role")}</label>
+                    <select value={role} onChange={e => setRole(e.target.value)} className="w-full h-9 rounded-md border bg-background px-2 text-sm">
+                      {ROLE_OPTIONS.map(r => <option key={r} value={r}>{r}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground mb-1 block">{tc("influence")}</label>
+                    <select value={influence} onChange={e => setInfluence(e.target.value)} className="w-full h-9 rounded-md border bg-background px-2 text-sm">
+                      {INFLUENCE_OPTIONS.map(i => <option key={i} value={i}>{i}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground mb-1 block">{tc("loyalty")}</label>
+                    <select value={loyalty} onChange={e => setLoyalty(e.target.value)} className="w-full h-9 rounded-md border bg-background px-2 text-sm">
+                      {LOYALTY_OPTIONS.map(l => <option key={l} value={l}>{l}</option>)}
+                    </select>
+                  </div>
+                </div>
+                <div className="flex justify-end">
+                  <Button size="sm" onClick={handleAdd} disabled={submitting} className="gap-1.5">
+                    {submitting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Plus className="h-3.5 w-3.5" />}
+                    {tc("add")}
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Table */}
+        {(deal.contactRoles || []).length > 0 ? (
+          <div className="overflow-x-auto rounded-lg border">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-muted/50 border-b">
+                  <th className="text-left p-3 font-medium text-muted-foreground">{tc("contact")}</th>
+                  <th className="text-left p-3 font-medium text-muted-foreground">{tc("role")}</th>
+                  <th className="text-left p-3 font-medium text-muted-foreground">{tc("influence")}</th>
+                  <th className="text-left p-3 font-medium text-muted-foreground">{tc("decisionFactor")}</th>
+                  <th className="text-left p-3 font-medium text-muted-foreground">{tc("loyalty")}</th>
+                  <th className="p-3 w-8" />
+                </tr>
+              </thead>
+              <tbody>
+                {deal.contactRoles.map(cr => (
+                  <tr key={cr.id} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
+                    <td className="p-3">
+                      <div>
+                        <p className="font-medium">{cr.contact.fullName}</p>
+                        <p className="text-xs text-muted-foreground">{cr.contact.position || cr.contact.email || ""}</p>
+                      </div>
+                    </td>
+                    <td className="p-3"><Badge variant="outline" className="text-xs">{cr.role}</Badge></td>
+                    <td className="p-3">
+                      <Badge className={`text-xs ${cr.influence === "High" ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400" : cr.influence === "Low" ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" : "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"}`}>
+                        {cr.influence}
+                      </Badge>
+                    </td>
+                    <td className="p-3 text-muted-foreground">{cr.decisionFactor}</td>
+                    <td className="p-3">
+                      <Badge className={`text-xs ${cr.loyalty?.includes("Supportive") ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" : cr.loyalty?.includes("Opponent") ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400" : "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300"}`}>
+                        {cr.loyalty}
+                      </Badge>
+                    </td>
+                    <td className="p-3">
+                      <Button
+                        variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-red-500"
+                        onClick={async () => {
+                          await fetch(`/api/v1/deals/${dealId}/contact-roles`, {
+                            method: "DELETE",
+                            headers: { "Content-Type": "application/json", ...headers },
+                            body: JSON.stringify({ contactId: cr.contactId }),
+                          })
+                          fetchDeal()
+                        }}
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          !showForm && (
+            <div className="flex flex-col items-center justify-center py-8 text-center border-2 border-dashed border-muted rounded-xl">
+              <Users className="h-8 w-8 text-muted-foreground/40 mb-2" />
+              <p className="text-sm text-muted-foreground">{tc("noContactRoles")}</p>
+            </div>
+          )
+        )}
+      </CardContent>
+    </Card>
+  )
 }
 
 function DealPipelineStages({ currentStage, stageLabels }: { currentStage: string; stageLabels: Record<string, string> }) {
@@ -720,98 +941,7 @@ export default function DealDetailPage() {
 
         {/* Contact Roles */}
         <TabsContent value="contact-roles">
-          <Card className="shadow-sm border-none bg-card">
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-base">
-                <Users className="h-4 w-4 text-muted-foreground" /> {t("contactRoles")} <InfoHint text="People involved in this deal and their roles in the decision-making process" size={12} />
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {(deal.contactRoles || []).length > 0 ? (
-                <div className="overflow-x-auto rounded-lg border">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="bg-muted/50 border-b">
-                        <th className="text-left p-3 font-medium text-muted-foreground">{tc("contact")}</th>
-                        <th className="text-left p-3 font-medium text-muted-foreground">{tc("role")}</th>
-                        <th className="text-left p-3 font-medium text-muted-foreground">{tc("influence")}</th>
-                        <th className="text-left p-3 font-medium text-muted-foreground">{tc("decisionFactor")}</th>
-                        <th className="text-left p-3 font-medium text-muted-foreground">{tc("loyalty")}</th>
-                        <th className="p-3 w-8" />
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {deal.contactRoles.map(cr => (
-                        <tr key={cr.id} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
-                          <td className="p-3">
-                            <div>
-                              <p className="font-medium">{cr.contact.fullName}</p>
-                              <p className="text-xs text-muted-foreground">{cr.contact.position || cr.contact.email || ""}</p>
-                            </div>
-                          </td>
-                          <td className="p-3"><Badge variant="outline" className="text-xs">{cr.role}</Badge></td>
-                          <td className="p-3">
-                            <Badge className={`text-xs ${cr.influence === "High" ? "bg-red-100 text-red-700" : cr.influence === "Low" ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"}`}>
-                              {cr.influence}
-                            </Badge>
-                          </td>
-                          <td className="p-3 text-muted-foreground">{cr.decisionFactor}</td>
-                          <td className="p-3">
-                            <Badge className={`text-xs ${cr.loyalty?.includes("Supportive") ? "bg-green-100 text-green-700" : cr.loyalty?.includes("Opponent") ? "bg-red-100 text-red-700" : "bg-gray-100 text-gray-700"}`}>
-                              {cr.loyalty}
-                            </Badge>
-                          </td>
-                          <td className="p-3">
-                            <Button
-                              variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-red-500"
-                              onClick={async () => {
-                                await fetch(`/api/v1/deals/${id}/contact-roles`, {
-                                  method: "DELETE",
-                                  headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": orgId } : {}) },
-                                  body: JSON.stringify({ contactId: cr.contactId }),
-                                })
-                                fetchDeal()
-                              }}
-                            >
-                              <X className="h-3.5 w-3.5" />
-                            </Button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center py-8 text-center border-2 border-dashed border-muted rounded-xl">
-                  <Users className="h-8 w-8 text-muted-foreground/40 mb-2" />
-                  <p className="text-sm text-muted-foreground">{tc("noContactRoles")}</p>
-                </div>
-              )}
-              <Button variant="outline" size="sm" className="mt-3" onClick={async () => {
-                // Add first available contact from company
-                if (!deal.company) return
-                try {
-                  const res = await fetch(`/api/v1/contacts?companyId=${deal.company.id}&limit=10`, {
-                    headers: orgId ? { "x-organization-id": orgId } : {},
-                  })
-                  const json = await res.json()
-                  const contacts = json.data?.contacts || []
-                  const existing = new Set((deal.contactRoles || []).map((cr: ContactRole) => cr.contactId))
-                  const available = contacts.filter((c: any) => !existing.has(c.id))
-                  if (available.length > 0) {
-                    await fetch(`/api/v1/deals/${id}/contact-roles`, {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": orgId } : {}) },
-                      body: JSON.stringify({ contactId: available[0].id }),
-                    })
-                    fetchDeal()
-                  }
-                } catch (err) { console.error(err) }
-              }}>
-                <Plus className="h-3.5 w-3.5 mr-1" /> {tc("addContactRole")}
-              </Button>
-            </CardContent>
-          </Card>
+          <ContactRolesPanel deal={deal} dealId={id} orgId={orgId} fetchDeal={fetchDeal} tc={tc} t={t} />
         </TabsContent>
 
         {/* Competitors */}
