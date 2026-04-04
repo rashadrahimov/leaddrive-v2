@@ -1,12 +1,15 @@
 "use client"
 
-import { useState, useMemo, useEffect } from "react"
+import { useState, useMemo, useEffect, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
-import { StickyNote, ListTodo, Mail, Send, Loader2, ChevronDown, AlertCircle, Check } from "lucide-react"
+import { StickyNote, ListTodo, Mail, Send, Loader2, ChevronDown, AlertCircle, Check, Paperclip, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 type ActionType = "note" | "task" | "email"
+
+const MAX_FILES = 3
+const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
 
 export interface DealContact {
   id: string
@@ -30,14 +33,22 @@ interface QuickActionBarProps {
   }
 }
 
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+}
+
 export function QuickActionBar({ dealId, orgId, contacts = [], onActivityAdded, onTaskAdded, labels }: QuickActionBarProps) {
   const [activeType, setActiveType] = useState<ActionType>("note")
   const [text, setText] = useState("")
   const [emailSubject, setEmailSubject] = useState("")
   const [emailBody, setEmailBody] = useState("")
+  const [attachments, setAttachments] = useState<File[]>([])
   const [submitting, setSubmitting] = useState(false)
   const [showContactPicker, setShowContactPicker] = useState(false)
   const [sendResult, setSendResult] = useState<{ success: boolean; message: string } | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Filter contacts with email
   const emailContacts = useMemo(() => contacts.filter(c => c.email), [contacts])
@@ -55,8 +66,28 @@ export function QuickActionBar({ dealId, orgId, contacts = [], onActivityAdded, 
   const selectedContact = emailContacts.find(c => c.id === selectedContactId) || null
 
   const headers: Record<string, string> = {
-    "Content-Type": "application/json",
     ...(orgId ? { "x-organization-id": orgId } : {}),
+  }
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || [])
+    const remaining = MAX_FILES - attachments.length
+    const toAdd = files.slice(0, remaining)
+
+    for (const f of toAdd) {
+      if (f.size > MAX_FILE_SIZE) {
+        setSendResult({ success: false, message: `"${f.name}" превышает 10MB` })
+        return
+      }
+    }
+
+    setAttachments(prev => [...prev, ...toAdd])
+    // Reset input so same file can be re-selected
+    if (fileInputRef.current) fileInputRef.current.value = ""
+  }
+
+  const removeAttachment = (index: number) => {
+    setAttachments(prev => prev.filter((_, i) => i !== index))
   }
 
   const handleSubmit = async () => {
@@ -65,25 +96,33 @@ export function QuickActionBar({ dealId, orgId, contacts = [], onActivityAdded, 
     try {
       if (activeType === "email") {
         if (!selectedContact?.email || !emailSubject.trim() || !emailBody.trim()) return
+
+        // Build FormData for file upload support
+        const fd = new FormData()
+        fd.append("contactId", selectedContact.id)
+        fd.append("subject", emailSubject.trim())
+        fd.append("body", emailBody.trim())
+        for (const file of attachments) {
+          fd.append("files", file)
+        }
+
         const res = await fetch(`/api/v1/deals/${dealId}/send-email`, {
           method: "POST",
-          headers,
-          body: JSON.stringify({
-            contactId: selectedContact.id,
-            subject: emailSubject.trim(),
-            body: emailBody.trim(),
-          }),
+          headers, // no Content-Type — browser sets multipart boundary
+          body: fd,
         })
         const json = await res.json()
         if (json.success) {
+          const attachInfo = json.attachmentCount > 0 ? ` (${json.attachmentCount} вложений)` : ""
           setSendResult({
             success: json.emailSent,
             message: json.emailSent
-              ? `Отправлено → ${json.recipientEmail}`
+              ? `Отправлено → ${json.recipientEmail}${attachInfo}`
               : `Записано (SMTP: ${json.emailError || "не настроен"})`,
           })
           setEmailSubject("")
           setEmailBody("")
+          setAttachments([])
           onActivityAdded?.()
         } else {
           setSendResult({ success: false, message: json.error || "Ошибка" })
@@ -92,7 +131,7 @@ export function QuickActionBar({ dealId, orgId, contacts = [], onActivityAdded, 
         if (!text.trim()) return
         await fetch("/api/v1/activities", {
           method: "POST",
-          headers,
+          headers: { "Content-Type": "application/json", ...headers },
           body: JSON.stringify({
             type: "note",
             subject: text.trim(),
@@ -107,7 +146,7 @@ export function QuickActionBar({ dealId, orgId, contacts = [], onActivityAdded, 
         if (!text.trim()) return
         await fetch(`/api/v1/deals/${dealId}/next-steps`, {
           method: "POST",
-          headers,
+          headers: { "Content-Type": "application/json", ...headers },
           body: JSON.stringify({ title: text.trim() }),
         })
         setText("")
@@ -236,8 +275,53 @@ export function QuickActionBar({ dealId, orgId, contacts = [], onActivityAdded, 
                   onChange={e => setEmailBody(e.target.value)}
                 />
 
-                {/* Send button + result */}
+                {/* Attachments */}
+                {attachments.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5">
+                    {attachments.map((file, i) => (
+                      <div
+                        key={`${file.name}-${i}`}
+                        className="flex items-center gap-1.5 bg-muted/60 rounded-md px-2 py-1 text-xs"
+                      >
+                        <Paperclip className="h-3 w-3 text-muted-foreground shrink-0" />
+                        <span className="truncate max-w-[140px]">{file.name}</span>
+                        <span className="text-muted-foreground shrink-0">({formatFileSize(file.size)})</span>
+                        <button
+                          onClick={() => removeAttachment(i)}
+                          className="text-muted-foreground hover:text-destructive transition-colors"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Hidden file input */}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  multiple
+                  className="hidden"
+                  accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.png,.jpg,.jpeg,.webp,.txt,.csv,.zip,.rar"
+                  onChange={handleFileSelect}
+                />
+
+                {/* Actions row: attach + result + send */}
                 <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={attachments.length >= MAX_FILES}
+                    className={cn(
+                      "flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors px-1.5 py-1 rounded",
+                      attachments.length >= MAX_FILES && "opacity-40 cursor-not-allowed"
+                    )}
+                    title={attachments.length >= MAX_FILES ? `Макс. ${MAX_FILES} файлов` : "Прикрепить файл"}
+                  >
+                    <Paperclip className="h-3.5 w-3.5" />
+                    <span>{attachments.length > 0 ? `${attachments.length}/${MAX_FILES}` : "Прикрепить"}</span>
+                  </button>
+
                   {sendResult && (
                     <div className={cn(
                       "flex items-center gap-1.5 text-xs px-2 py-1 rounded-md",

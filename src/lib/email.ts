@@ -80,6 +80,7 @@ export async function sendEmail({
   templateId,
   contactId,
   sentBy,
+  attachments,
 }: {
   to: string
   subject: string
@@ -89,6 +90,7 @@ export async function sendEmail({
   templateId?: string
   contactId?: string
   sentBy?: string
+  attachments?: { filename: string; path: string }[]
 }) {
   const config = await getSmtpConfig(organizationId)
   const fromEmail = config?.fromEmail || "noreply@leaddrivecrm.org"
@@ -128,6 +130,7 @@ export async function sendEmail({
       to,
       subject,
       html,
+      ...(attachments?.length ? { attachments } : {}),
     })
 
     // Log success
