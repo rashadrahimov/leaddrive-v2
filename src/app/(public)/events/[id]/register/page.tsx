@@ -52,8 +52,8 @@ export default function EventRegistrationPage() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 flex items-center justify-center">
         <div className="animate-pulse text-center">
-          <div className="h-8 w-48 bg-gray-200 rounded mx-auto mb-4" />
-          <div className="h-4 w-32 bg-gray-200 rounded mx-auto" />
+          <div className="h-8 w-48 bg-muted rounded mx-auto mb-4" />
+          <div className="h-4 w-32 bg-muted rounded mx-auto" />
         </div>
       </div>
     )
@@ -64,8 +64,8 @@ export default function EventRegistrationPage() {
       <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-orange-50 flex items-center justify-center">
         <div className="text-center">
           <div className="text-6xl mb-4">😕</div>
-          <h1 className="text-2xl font-bold text-gray-800">Event Not Found</h1>
-          <p className="text-gray-500 mt-2">This event doesn't exist or has been removed.</p>
+          <h1 className="text-2xl font-bold text-foreground">Event Not Found</h1>
+          <p className="text-muted-foreground mt-2">This event doesn't exist or has been removed.</p>
         </div>
       </div>
     )
@@ -76,15 +76,15 @@ export default function EventRegistrationPage() {
       <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50 flex items-center justify-center p-4">
         <div className="max-w-md w-full text-center">
           <div className="text-7xl mb-6">🎉</div>
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">Attendance Confirmed!</h1>
-          <p className="text-gray-600 mb-6">
+          <h1 className="text-3xl font-bold text-foreground mb-2">Attendance Confirmed!</h1>
+          <p className="text-muted-foreground mb-6">
             Thank you! Your attendance for <strong>{event.name}</strong> is confirmed. See you there!
           </p>
-          <div className="bg-white rounded-2xl shadow-lg p-6 text-left space-y-3">
+          <div className="bg-card rounded-2xl shadow-lg p-6 text-left space-y-3">
             <div className="flex items-center gap-3">
               <span className="text-2xl">📅</span>
               <div>
-                <p className="text-xs text-gray-500 uppercase">Date</p>
+                <p className="text-xs text-muted-foreground uppercase">Date</p>
                 <p className="font-semibold">{new Date(event.startDate).toLocaleString(undefined, { dateStyle: "long", timeStyle: "short" })}</p>
               </div>
             </div>
@@ -92,7 +92,7 @@ export default function EventRegistrationPage() {
               <div className="flex items-center gap-3">
                 <span className="text-2xl">📍</span>
                 <div>
-                  <p className="text-xs text-gray-500 uppercase">Location</p>
+                  <p className="text-xs text-muted-foreground uppercase">Location</p>
                   <p className="font-semibold">{event.location}</p>
                 </div>
               </div>
@@ -101,7 +101,7 @@ export default function EventRegistrationPage() {
               <div className="flex items-center gap-3">
                 <span className="text-2xl">🔗</span>
                 <div>
-                  <p className="text-xs text-gray-500 uppercase">Join Online</p>
+                  <p className="text-xs text-muted-foreground uppercase">Join Online</p>
                   <a href={event.meetingUrl} className="font-semibold text-indigo-600 hover:underline" target="_blank">{event.meetingUrl}</a>
                 </div>
               </div>
@@ -147,61 +147,61 @@ export default function EventRegistrationPage() {
         <div className="grid md:grid-cols-5 gap-6">
           {/* Registration Form */}
           <div className="md:col-span-3">
-            <div className="bg-white rounded-2xl shadow-xl p-6 md:p-8">
-              <h2 className="text-xl font-bold text-gray-800 mb-1">Register Now</h2>
-              <p className="text-sm text-gray-500 mb-6">Fill in your details to secure your spot</p>
+            <div className="bg-card rounded-2xl shadow-xl p-6 md:p-8">
+              <h2 className="text-xl font-bold text-foreground mb-1">Register Now</h2>
+              <p className="text-sm text-muted-foreground mb-6">Fill in your details to secure your spot</p>
 
               {!canRegister ? (
                 <div className="text-center py-8">
                   <div className="text-5xl mb-4">{event.isFull ? "😔" : "🔒"}</div>
-                  <h3 className="text-lg font-bold text-gray-700">
+                  <h3 className="text-lg font-bold text-foreground/70">
                     {event.isFull ? "Event is Full" : "Registration Closed"}
                   </h3>
-                  <p className="text-gray-500 text-sm mt-1">
+                  <p className="text-muted-foreground text-sm mt-1">
                     {event.isFull ? "All spots have been taken." : "Registration is not available at this time."}
                   </p>
                 </div>
               ) : (
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
+                    <label className="block text-sm font-medium text-foreground/70 mb-1">Full Name *</label>
                     <input
                       type="text" required value={form.name} onChange={e => set("name", e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all text-sm"
+                      className="w-full px-4 py-3 border border-border rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all text-sm"
                       placeholder="Your full name"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Email Address *</label>
+                    <label className="block text-sm font-medium text-foreground/70 mb-1">Email Address *</label>
                     <input
                       type="email" required value={form.email} onChange={e => set("email", e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all text-sm"
+                      className="w-full px-4 py-3 border border-border rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all text-sm"
                       placeholder="you@company.com"
                     />
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                      <label className="block text-sm font-medium text-foreground/70 mb-1">Phone</label>
                       <input
                         type="tel" value={form.phone} onChange={e => set("phone", e.target.value)}
-                        className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all text-sm"
+                        className="w-full px-4 py-3 border border-border rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all text-sm"
                         placeholder="+994..."
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Company</label>
+                      <label className="block text-sm font-medium text-foreground/70 mb-1">Company</label>
                       <input
                         type="text" value={form.company} onChange={e => set("company", e.target.value)}
-                        className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all text-sm"
+                        className="w-full px-4 py-3 border border-border rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all text-sm"
                         placeholder="Your company"
                       />
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Notes (optional)</label>
+                    <label className="block text-sm font-medium text-foreground/70 mb-1">Notes (optional)</label>
                     <textarea
                       value={form.notes} onChange={e => set("notes", e.target.value)} rows={2}
-                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all text-sm resize-none"
+                      className="w-full px-4 py-3 border border-border rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all text-sm resize-none"
                       placeholder="Dietary requirements, accessibility needs..."
                     />
                   </div>
@@ -225,16 +225,16 @@ export default function EventRegistrationPage() {
 
           {/* Event Info Sidebar */}
           <div className="md:col-span-2 space-y-4">
-            <div className="bg-white rounded-2xl shadow-lg p-5">
-              <h3 className="font-bold text-gray-800 mb-3">Event Details</h3>
+            <div className="bg-card rounded-2xl shadow-lg p-5">
+              <h3 className="font-bold text-foreground mb-3">Event Details</h3>
               <div className="space-y-3 text-sm">
                 <div className="flex gap-3">
                   <span className="text-lg">📅</span>
                   <div>
-                    <p className="text-gray-500 text-xs">Date & Time</p>
+                    <p className="text-muted-foreground text-xs">Date & Time</p>
                     <p className="font-medium">{new Date(event.startDate).toLocaleString(undefined, { dateStyle: "long", timeStyle: "short" })}</p>
                     {event.endDate && (
-                      <p className="text-gray-500 text-xs mt-0.5">
+                      <p className="text-muted-foreground text-xs mt-0.5">
                         to {new Date(event.endDate).toLocaleString(undefined, { dateStyle: "long", timeStyle: "short" })}
                       </p>
                     )}
@@ -244,7 +244,7 @@ export default function EventRegistrationPage() {
                   <div className="flex gap-3">
                     <span className="text-lg">📍</span>
                     <div>
-                      <p className="text-gray-500 text-xs">Location</p>
+                      <p className="text-muted-foreground text-xs">Location</p>
                       <p className="font-medium">{event.location}</p>
                     </div>
                   </div>
@@ -253,7 +253,7 @@ export default function EventRegistrationPage() {
                   <div className="flex gap-3">
                     <span className="text-lg">🌐</span>
                     <div>
-                      <p className="text-gray-500 text-xs">Format</p>
+                      <p className="text-muted-foreground text-xs">Format</p>
                       <p className="font-medium">Online Event</p>
                     </div>
                   </div>
@@ -261,7 +261,7 @@ export default function EventRegistrationPage() {
                 <div className="flex gap-3">
                   <span className="text-lg">👥</span>
                   <div>
-                    <p className="text-gray-500 text-xs">Registered</p>
+                    <p className="text-muted-foreground text-xs">Registered</p>
                     <p className="font-medium">
                       {event.registeredCount} participants
                       {event.maxParticipants ? ` / ${event.maxParticipants} max` : ""}
@@ -272,16 +272,16 @@ export default function EventRegistrationPage() {
             </div>
 
             {event.description && (
-              <div className="bg-white rounded-2xl shadow-lg p-5">
-                <h3 className="font-bold text-gray-800 mb-2">About</h3>
-                <p className="text-sm text-gray-600 whitespace-pre-wrap">{event.description}</p>
+              <div className="bg-card rounded-2xl shadow-lg p-5">
+                <h3 className="font-bold text-foreground mb-2">About</h3>
+                <p className="text-sm text-muted-foreground whitespace-pre-wrap">{event.description}</p>
               </div>
             )}
 
             {event.tags?.length > 0 && (
               <div className="flex flex-wrap gap-2">
                 {event.tags.map((tag: string) => (
-                  <span key={tag} className="bg-white shadow-sm px-3 py-1 rounded-full text-xs font-medium text-gray-600">
+                  <span key={tag} className="bg-card shadow-sm px-3 py-1 rounded-full text-xs font-medium text-muted-foreground">
                     #{tag}
                   </span>
                 ))}
@@ -291,7 +291,7 @@ export default function EventRegistrationPage() {
         </div>
 
         {/* Footer */}
-        <div className="text-center py-8 text-xs text-gray-400">
+        <div className="text-center py-8 text-xs text-muted-foreground">
           Powered by LeadDrive CRM
         </div>
       </div>

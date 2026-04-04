@@ -487,7 +487,7 @@ export default function CompanyDetailPage() {
                             <td className="py-2 pr-4 text-right font-mono font-medium">{sale.total?.toLocaleString("ru-RU", { maximumFractionDigits: 2 })} ₼</td>
                             <td className="py-2 pr-4 text-xs">{sale.effectiveDate ? new Date(sale.effectiveDate).toLocaleDateString("ru-RU") : "—"}</td>
                             <td className="py-2">
-                              <Badge variant="outline" className={sale.status === "active" ? "text-green-600 border-green-300" : "text-gray-600 border-gray-300"}>
+                              <Badge variant="outline" className={sale.status === "active" ? "text-green-600 border-green-300" : "text-muted-foreground border-border"}>
                                 {sale.status === "active" ? t("saleActive") : sale.status === "cancelled" ? t("saleCancelled") : t("saleCompleted")}
                               </Badge>
                             </td>

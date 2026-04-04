@@ -501,7 +501,7 @@ export default function EventDetailPage() {
           </div>
 
           {inviteResult && (
-            <div className="flex items-center gap-2 p-2.5 rounded-lg bg-blue-50 text-blue-700 text-sm">
+            <div className="flex items-center gap-2 p-2.5 rounded-lg bg-primary/5 text-primary text-sm">
               <MailCheck className="h-4 w-4" />
               {inviteResult}
               <button onClick={() => setInviteResult(null)} className="ml-auto"><X className="h-3.5 w-3.5" /></button>
@@ -660,7 +660,7 @@ export default function EventDetailPage() {
                               {p.email && (
                                 <button
                                   onClick={() => sendInviteToOne(p.id)}
-                                  className="text-[10px] text-blue-500 hover:text-blue-700 hover:underline"
+                                  className="text-[10px] text-primary hover:text-primary/80 hover:underline"
                                   title="Resend invitation"
                                 >
                                   Resend
@@ -670,7 +670,7 @@ export default function EventDetailPage() {
                           ) : (
                             <button
                               onClick={() => sendInviteToOne(p.id)}
-                              className="flex items-center gap-1 text-xs text-blue-500 hover:text-blue-700 transition-colors font-medium"
+                              className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors font-medium"
                               title={p.email ? "Send invitation" : "No email"}
                               disabled={!p.email}
                             >

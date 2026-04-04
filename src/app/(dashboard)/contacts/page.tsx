@@ -216,12 +216,12 @@ export default function ContactsPage() {
       {/* Selection action bar */}
       {selected.size > 0 && (
         <div className="flex items-center gap-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg px-4 py-2.5">
-          <CheckSquare className="h-4 w-4 text-blue-600" />
-          <span className="text-sm font-medium text-blue-700 dark:text-blue-300">
+          <CheckSquare className="h-4 w-4 text-primary" />
+          <span className="text-sm font-medium text-primary dark:text-primary">
             {t("selected", { count: selected.size, total: filtered.length })}
           </span>
           {!allFilteredSelected && (
-            <button onClick={selectAllFiltered} className="text-sm text-blue-600 hover:text-blue-800 underline">
+            <button onClick={selectAllFiltered} className="text-sm text-primary hover:text-primary/80 underline">
               {t("selectAll", { count: filtered.length })}
             </button>
           )}
@@ -341,7 +341,7 @@ export default function ContactsPage() {
                       item.source === "cold_call" ? "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400" :
                       item.source === "linkedin" ? "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400" :
                       item.source === "email" ? "bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400" :
-                      "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300"
+                      "bg-muted text-foreground/70"
                     )}>
                       {item.source === "website" ? <Globe className="h-3 w-3" /> :
                        item.source === "referral" ? <UserCheck className="h-3 w-3" /> :

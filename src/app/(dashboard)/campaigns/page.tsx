@@ -38,7 +38,7 @@ interface Campaign {
 }
 
 const statusColors: Record<string, string> = {
-  draft: "text-gray-500",
+  draft: "text-muted-foreground",
   scheduled: "text-amber-500",
   sending: "text-blue-500",
   sent: "text-green-600",
@@ -230,7 +230,7 @@ export default function CampaignsPage() {
                         <p className="text-sm text-muted-foreground mt-0.5 line-clamp-2">{campaign.description}</p>
                       )}
                       <div className="flex items-center gap-3 mt-2 text-sm">
-                        <span className={cn("font-medium", statusColors[campaign.status] || "text-gray-500")}>
+                        <span className={cn("font-medium", statusColors[campaign.status] || "text-muted-foreground")}>
                           {statusLabels[campaign.status] || campaign.status}
                         </span>
                         <span className="text-muted-foreground flex items-center gap-1">

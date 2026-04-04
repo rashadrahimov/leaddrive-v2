@@ -2,11 +2,11 @@ import Link from "next/link"
 
 export default function NotFound() {
   return (
-    <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+    <div className="min-h-screen bg-background flex items-center justify-center">
       <div className="text-center px-4">
         <h1 className="text-8xl font-bold text-orange-500">404</h1>
-        <h2 className="mt-4 text-2xl font-semibold text-white">Səhifə tapılmadı</h2>
-        <p className="mt-2 text-slate-400">Axtardığınız səhifə mövcud deyil və ya köçürülüb.</p>
+        <h2 className="mt-4 text-2xl font-semibold text-foreground">Səhifə tapılmadı</h2>
+        <p className="mt-2 text-muted-foreground">Axtardığınız səhifə mövcud deyil və ya köçürülüb.</p>
         <div className="mt-8 flex items-center justify-center gap-4">
           <Link
             href="/home"
@@ -16,7 +16,7 @@ export default function NotFound() {
           </Link>
           <Link
             href="/contact"
-            className="rounded-full border border-slate-700 hover:border-slate-500 px-6 py-2.5 text-sm font-semibold text-white transition-colors"
+            className="rounded-full border border-border hover:border-foreground/50 px-6 py-2.5 text-sm font-semibold text-foreground transition-colors"
           >
             Əlaqə
           </Link>

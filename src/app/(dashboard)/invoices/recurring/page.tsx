@@ -442,7 +442,7 @@ export default function RecurringInvoicesPage() {
               type="checkbox"
               checked={selectedIds.size === filteredRules.length && filteredRules.length > 0}
               onChange={toggleSelectAll}
-              className="h-4 w-4 rounded border-gray-300 accent-cyan-600"
+              className="h-4 w-4 rounded border-border accent-cyan-600"
             />
             <span className="text-xs text-muted-foreground">Hamısı ({filteredRules.length})</span>
           </label>
@@ -672,7 +672,7 @@ export default function RecurringInvoicesPage() {
                     onChange={(e) =>
                       setForm((f) => ({ ...f, includeVat: e.target.checked }))
                     }
-                    className="rounded border-gray-300"
+                    className="rounded border-border"
                   />
                   {t("includeVat")}
                 </Label>

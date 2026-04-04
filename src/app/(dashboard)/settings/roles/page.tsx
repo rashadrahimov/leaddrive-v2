@@ -35,7 +35,7 @@ const COLOR_OPTIONS = [
   { id: "red", label: "Red", bg: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300" },
   { id: "blue", label: "Blue", bg: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300" },
   { id: "purple", label: "Purple", bg: "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300" },
-  { id: "gray", label: "Gray", bg: "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300" },
+  { id: "gray", label: "Gray", bg: "bg-muted text-foreground" },
   { id: "emerald", label: "Green", bg: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-300" },
   { id: "pink", label: "Pink", bg: "bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-300" },
   { id: "amber", label: "Amber", bg: "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300" },
@@ -63,7 +63,7 @@ const ACCESS_STYLES: Record<AccessLevel, { icon: typeof Check; className: string
   full: { icon: Check,   className: "text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/40" },
   edit: { icon: Pencil,  className: "text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/40" },
   view: { icon: EyeIcon, className: "text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 hover:bg-amber-100 dark:hover:bg-amber-900/40" },
-  none: { icon: X,       className: "text-gray-400 dark:text-gray-600 bg-gray-50 dark:bg-gray-800/40 hover:bg-gray-100 dark:hover:bg-gray-700/40" },
+  none: { icon: X,       className: "text-muted-foreground bg-muted hover:bg-muted/80" },
 }
 
 type PermissionMatrix = Record<string, Record<string, AccessLevel>>

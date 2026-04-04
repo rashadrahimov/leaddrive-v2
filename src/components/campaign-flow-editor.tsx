@@ -69,7 +69,7 @@ function FlowNode({ data, selected }: { data: FlowNodeData; selected?: boolean }
       selected && "ring-2 ring-primary",
       status && STATUS_RING[status],
     )}>
-      <Handle type="target" position={Position.Top} className="!w-3 !h-3 !bg-gray-400 !border-white !border-2" />
+      <Handle type="target" position={Position.Top} className="!w-3 !h-3 !bg-muted-foreground !border-white !border-2" />
 
       <div className="flex items-center gap-2">
         <div className={cn("h-8 w-8 rounded-lg flex items-center justify-center bg-card shadow-sm", def.color)}>
@@ -96,7 +96,7 @@ function FlowNode({ data, selected }: { data: FlowNodeData; selected?: boolean }
           </div>
         </>
       ) : (
-        <Handle type="source" position={Position.Bottom} className="!w-3 !h-3 !bg-gray-400 !border-white !border-2" />
+        <Handle type="source" position={Position.Bottom} className="!w-3 !h-3 !bg-muted-foreground !border-white !border-2" />
       )}
     </div>
   )
@@ -233,7 +233,7 @@ export function CampaignFlowEditor({ flowData, onSave, readOnly = false }: Campa
           <Background gap={20} size={1} color="#e2e8f0" />
           <Controls showInteractive={false} className="!bg-card !shadow-md !border !rounded-lg" />
           <MiniMap
-            className="!bg-gray-50 !border !rounded-lg !shadow-sm"
+            className="!bg-muted !border !rounded-lg !shadow-sm"
             maskColor="rgba(0,0,0,0.05)"
             nodeColor={(n: Node) => {
               const d = n.data as FlowNodeData

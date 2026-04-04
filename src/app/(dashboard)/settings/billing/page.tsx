@@ -292,8 +292,8 @@ export default function BillingPage() {
 
       {/* Payment note */}
       <div className="flex items-center gap-3 rounded-lg border border-blue-200 bg-blue-50 p-4">
-        <Info className="h-5 w-5 text-blue-600 flex-shrink-0" />
-        <p className="text-sm text-blue-800">{t("paymentNote")}</p>
+        <Info className="h-5 w-5 text-primary flex-shrink-0" />
+        <p className="text-sm text-primary/80">{t("paymentNote")}</p>
       </div>
 
       {/* Plan cards grid */}

@@ -152,7 +152,7 @@ function CostBreakdown({ data }: { data: any }) {
           <span>{t("totalCostF")}</span>
           <span className="font-mono tabular-nums">{fmt(data.grandTotalF)}</span>
         </div>
-        <div className="flex justify-between font-semibold text-blue-600">
+        <div className="flex justify-between font-semibold text-primary">
           <span>{t("fullServiceCostG")}</span>
           <span className="font-mono tabular-nums">{fmt(data.grandTotalG)}</span>
         </div>

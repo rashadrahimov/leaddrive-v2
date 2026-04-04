@@ -1291,7 +1291,7 @@ export default function InvoiceDetailPage() {
                 if (invoice?.sentAt) {
                   items.push({
                     id: "sent",
-                    icon: <Send className="h-3.5 w-3.5 text-blue-500" />,
+                    icon: <Send className="h-3.5 w-3.5 text-primary" />,
                     label: t("activitySent"),
                     detail: invoice.recipientEmail || undefined,
                     date: invoice.sentAt,

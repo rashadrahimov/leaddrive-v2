@@ -38,7 +38,7 @@ const STATUS_PIPELINE_COLORS: Record<string, string> = {
   pending: "bg-blue-500",
   in_progress: "bg-yellow-500",
   completed: "bg-green-500",
-  cancelled: "bg-gray-500",
+  cancelled: "bg-muted-foreground",
 }
 
 const STATUS_STYLES: Record<string, { className: string }> = {
@@ -46,7 +46,7 @@ const STATUS_STYLES: Record<string, { className: string }> = {
   todo: { className: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300" },
   in_progress: { className: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300" },
   completed: { className: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300" },
-  cancelled: { className: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300" },
+  cancelled: { className: "bg-muted text-foreground" },
 }
 
 const PRIORITY_STYLES: Record<string, { className: string }> = {

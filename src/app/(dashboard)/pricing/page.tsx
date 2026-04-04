@@ -560,7 +560,7 @@ export default function PricingPage() {
                   if (comps.length === 0) return null
                   return (
                     <div key={group} className="space-y-2">
-                      <div className="text-xs font-semibold text-blue-600 mt-2">{group} ({comps.length})</div>
+                      <div className="text-xs font-semibold text-primary mt-2">{group} ({comps.length})</div>
                       {comps.map(([code]) => (
                         <AdjSlider
                           key={code}
@@ -781,7 +781,7 @@ export default function PricingPage() {
                   if (comps.length === 0) return null
                   return (
                     <div key={group}>
-                      <div className="text-xs font-semibold text-blue-600 px-3 py-1.5 bg-blue-50 sticky top-0">
+                      <div className="text-xs font-semibold text-primary px-3 py-1.5 bg-primary/5 sticky top-0">
                         {group} ({comps.length})
                       </div>
                       {comps.map(([code, info]) => (
@@ -1338,7 +1338,7 @@ function CompanyEditor({ code, data, onSave, onDelete, saving, expandedCats, set
           <button onClick={onDelete} className="text-red-400 hover:text-red-600">
             <Trash2 className="h-4 w-4" />
           </button>
-          {saving && <Loader2 className="h-4 w-4 animate-spin text-blue-500" />}
+          {saving && <Loader2 className="h-4 w-4 animate-spin text-primary" />}
         </div>
         <div className="text-right">
           <div className="text-sm text-muted-foreground">Итого Ежемесячно</div>
@@ -1387,7 +1387,7 @@ function CompanyEditor({ code, data, onSave, onDelete, saving, expandedCats, set
                   </span>
                   <button
                     onClick={(e) => { e.stopPropagation(); setAddingServiceCat(addingServiceCat === cat ? null : cat); setExpandedCats(new Set([...expandedCats, cat])) }}
-                    className="text-blue-500 hover:text-blue-700 p-1"
+                    className="text-primary hover:text-primary/80 p-1"
                     title="Добавить услугу"
                   >
                     <Plus className="h-3.5 w-3.5" />
@@ -1459,7 +1459,7 @@ function CompanyEditor({ code, data, onSave, onDelete, saving, expandedCats, set
                   {/* Add service form */}
                   {addingServiceCat === cat && (
                     <div ref={addSvcFormRef} className="mt-2 p-3 bg-blue-50 rounded-lg space-y-2 border border-blue-200">
-                      <div className="text-xs font-semibold text-blue-700">Новая услуга</div>
+                      <div className="text-xs font-semibold text-primary">Новая услуга</div>
                       <div className="grid grid-cols-[1fr_120px_70px_90px] gap-2">
                         <input
                           type="text"

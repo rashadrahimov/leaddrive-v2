@@ -300,7 +300,7 @@ export default function EmailLogPage() {
                       <div className="flex flex-wrap items-center gap-x-6 gap-y-1 text-xs text-muted-foreground mt-1">
                         <span>{tc("date")}: {new Date(log.createdAt).toLocaleString()}</span>
                         {log.sentBy && <span>{t("sentBy")}: {log.sentBy}</span>}
-                        {log.campaignId && <span className="text-blue-500">{t("campaign")}</span>}
+                        {log.campaignId && <span className="text-primary">{t("campaign")}</span>}
                       </div>
                     </div>
                     <div className="flex items-center gap-3 shrink-0">

@@ -723,7 +723,7 @@ export default function AICommandCenterPage() {
                         </div>
                         <div className="mt-2 flex items-center gap-4 text-xs text-muted-foreground">
                           <span>Итерация: <strong>1</strong></span>
-                          <span>Вход: <strong className="text-blue-600 dark:text-blue-400">{selectedLog.promptTokens ?? 0} token</strong></span>
+                          <span>Вход: <strong className="text-primary dark:text-primary">{selectedLog.promptTokens ?? 0} token</strong></span>
                           <span>Выход: <strong className="text-amber-600 dark:text-amber-400">{selectedLog.completionTokens ?? 0} token</strong></span>
                         </div>
                       </div>

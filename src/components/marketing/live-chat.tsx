@@ -124,9 +124,9 @@ export function LiveChat() {
 
       {/* Chat panel */}
       {open && (
-        <div className="fixed bottom-6 right-6 z-50 w-[360px] max-h-[520px] flex flex-col rounded-2xl shadow-2xl border border-slate-700 overflow-hidden bg-slate-900">
+        <div className="fixed bottom-6 right-6 z-50 w-[360px] max-h-[520px] flex flex-col rounded-2xl shadow-2xl border border-[#001E3C]/30 overflow-hidden bg-[#001E3C]">
           {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3 bg-slate-800 border-b border-slate-700">
+          <div className="flex items-center justify-between px-4 py-3 bg-[#001E3C]/80 border-b border-[#001E3C]/30">
             <div className="flex items-center gap-3">
               <div className="h-9 w-9 rounded-full bg-orange-500 flex items-center justify-center">
                 <MessageCircle className="h-4 w-4 text-white" />
@@ -138,7 +138,7 @@ export function LiveChat() {
             </div>
             <button
               onClick={() => setOpen(false)}
-              className="text-slate-400 hover:text-white transition-colors"
+              className="text-[#001E3C]/40 hover:text-white transition-colors"
             >
               <X className="h-5 w-5" />
             </button>
@@ -147,7 +147,7 @@ export function LiveChat() {
           {/* Messages */}
           <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3 min-h-[300px] max-h-[360px]">
             {messages.length === 0 && (
-              <div className="text-center text-slate-500 text-sm mt-8">
+              <div className="text-center text-white/50 text-sm mt-8">
                 <p className="mb-1">Salam! 👋</p>
                 <p>Necə kömək edə bilərik?</p>
               </div>
@@ -161,7 +161,7 @@ export function LiveChat() {
                   className={`max-w-[80%] rounded-2xl px-3.5 py-2 text-sm leading-relaxed ${
                     msg.from === "visitor"
                       ? "bg-orange-500 text-white rounded-br-sm"
-                      : "bg-slate-700 text-slate-100 rounded-bl-sm"
+                      : "bg-[#001E3C]/70 text-white/90 rounded-bl-sm"
                   }`}
                 >
                   {msg.text}
@@ -172,7 +172,7 @@ export function LiveChat() {
           </div>
 
           {/* Input */}
-          <div className="px-3 py-3 border-t border-slate-700 bg-slate-800">
+          <div className="px-3 py-3 border-t border-[#001E3C]/30 bg-[#001E3C]/80">
             <div className="flex items-center gap-2">
               <input
                 type="text"
@@ -180,7 +180,7 @@ export function LiveChat() {
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder="Mesajınızı yazın..."
-                className="flex-1 bg-slate-700 border border-slate-600 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-slate-400 outline-none focus:border-orange-500 transition-colors"
+                className="flex-1 bg-[#001E3C]/70 border border-[#001E3C]/40 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-white/40 outline-none focus:border-orange-500 transition-colors"
               />
               <button
                 onClick={handleSend}

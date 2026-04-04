@@ -44,7 +44,7 @@ const COLOR_MAP: Record<string, string> = {
   red: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300",
   blue: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300",
   purple: "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300",
-  gray: "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300",
+  gray: "bg-muted text-foreground",
   emerald: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-300",
   pink: "bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-300",
   amber: "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300",
@@ -192,7 +192,7 @@ function UserFormDialog({
               <input
                 type="checkbox" id="isActive" checked={form.isActive}
                 onChange={e => setForm(f => ({ ...f, isActive: e.target.checked }))}
-                className="h-4 w-4 rounded border-gray-300"
+                className="h-4 w-4 rounded border-border"
               />
               <Label htmlFor="isActive" className="mb-0 cursor-pointer">Активен</Label>
             </div>
@@ -315,7 +315,7 @@ export default function UsersSettingsPage() {
         <Badge
           className={`cursor-pointer ${item.isActive
             ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300"
-            : "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400"
+            : "bg-muted text-muted-foreground"
           }`}
           onClick={() => handleToggleActive(item)}
         >
@@ -345,7 +345,7 @@ export default function UsersSettingsPage() {
           <button
             type="button"
             className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${
-              item.require2fa || item.totpEnabled ? "bg-green-500" : "bg-gray-300"
+              item.require2fa || item.totpEnabled ? "bg-green-500" : "bg-muted-foreground/40"
             }`}
             onClick={async (e) => {
               e.stopPropagation()
