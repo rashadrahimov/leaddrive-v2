@@ -80,7 +80,7 @@ interface Deal {
   contactRoles: ContactRole[]
 }
 
-const ROLE_OPTIONS = ["Decision Maker", "Influencer", "Champion", "Evaluator", "User", "Blocker", "contact_person"]
+const ROLE_OPTIONS = ["Decision Maker", "Influencer", "Champion", "Evaluator", "User", "Blocker", "Contact Person"]
 const INFLUENCE_OPTIONS = ["High", "Medium", "Low"]
 const LOYALTY_OPTIONS = ["Supportive", "Neutral", "Opponent"]
 
@@ -131,7 +131,7 @@ function ContactRolesPanel({ deal, dealId, orgId, fetchDeal, tc, t }: {
       setSelectedContact(null)
       setSearch("")
       setSearchResults([])
-      setRole("contact_person")
+      setRole("Contact Person")
       setInfluence("Medium")
       setLoyalty("Neutral")
       setCashbackType(null)
