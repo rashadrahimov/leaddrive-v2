@@ -1,14 +1,19 @@
 import NextAuth from "next-auth"
 import Credentials from "next-auth/providers/credentials"
+import Google from "next-auth/providers/google"
+import MicrosoftEntraId from "next-auth/providers/microsoft-entra-id"
+import { PrismaAdapter } from "@auth/prisma-adapter"
 import { z } from "zod"
 import { prisma } from "./prisma"
 import bcrypt from "bcryptjs"
+
 const loginSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8),
 })
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
+  adapter: PrismaAdapter(prisma),
   providers: [
     Credentials({
       name: "credentials",
@@ -54,6 +59,17 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         }
       },
     }),
+    Google({
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      allowDangerousEmailAccountLinking: true,
+    }),
+    MicrosoftEntraId({
+      clientId: process.env.MICROSOFT_CLIENT_ID!,
+      clientSecret: process.env.MICROSOFT_CLIENT_SECRET!,
+      tenantId: process.env.MICROSOFT_TENANT_ID || "common",
+      allowDangerousEmailAccountLinking: true,
+    }),
   ],
   session: { strategy: "jwt", maxAge: 8 * 60 * 60 }, // 8 hours
   pages: {
@@ -72,12 +88,43 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     },
   },
   callbacks: {
-    async jwt({ token, user, trigger, session }) {
+    async signIn({ user, account }) {
+      if (account?.provider === "google" || account?.provider === "microsoft-entra-id") {
+        // Find or create user + organization for OAuth
+        const existing = await prisma.user.findFirst({
+          where: { email: user.email! },
+        })
+        if (!existing) {
+          // First OAuth login — create org + user
+          const org = await prisma.organization.create({
+            data: { name: `${user.name}'s Organization`, plan: "starter" },
+          })
+          await prisma.user.create({
+            data: {
+              email: user.email!,
+              name: user.name || user.email!.split("@")[0],
+              role: "admin",
+              organizationId: org.id,
+              passwordHash: "", // OAuth user — no password
+            },
+          })
+        }
+        return true
+      }
+      return true // Credentials — handled by authorize
+    },
+    async jwt({ token, user }) {
       if (user) {
-        token.role = user.role
-        token.organizationId = user.organizationId
-        token.organizationName = user.organizationName
-        token.plan = user.plan
+        const dbUser = await prisma.user.findFirst({
+          where: { email: token.email! },
+          include: { organization: true },
+        })
+        if (dbUser) {
+          token.role = dbUser.role
+          token.organizationId = dbUser.organizationId
+          token.organizationName = dbUser.organization?.name || ""
+          token.plan = dbUser.organization?.plan || "starter"
+        }
       }
       // NOTE: passwordChangedAt validation moved to API-level (api-auth.ts)
       // because JWT callback runs on Edge runtime where Prisma is not available.

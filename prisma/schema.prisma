@@ -129,9 +129,30 @@ model User {
 
   budgetDeptOwnership BudgetDepartmentOwner[]
   mtmAgents           MtmAgent[]
+  accounts            Account[]
 
   @@unique([organizationId, email])
   @@map("users")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type              String  // "oauth" | "credentials"
+  provider          String  // "google" | "microsoft-entra-id" | "credentials"
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+  @@map("accounts")
 }
 
 // ═══════════════════════════════════════════════════
