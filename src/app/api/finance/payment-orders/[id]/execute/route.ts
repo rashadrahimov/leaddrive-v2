@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getOrgId } from "@/lib/api-auth"
 import { prisma } from "@/lib/prisma"
+import { notifyPaymentOrderExecuted } from "@/lib/finance/telegram-notify"
 
 // POST — approved → executed (creates BillPayment + RegistryEntry in transaction)
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -69,6 +70,15 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     })
 
     return updated
+  })
+
+  // Send Telegram notification
+  await notifyPaymentOrderExecuted({
+    orderNumber: order.orderNumber,
+    counterpartyName: order.counterpartyName,
+    amount: order.amount,
+    currency: order.currency,
+    purpose: order.purpose,
   })
 
   return NextResponse.json({ data: result })

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getOrgId } from "@/lib/api-auth"
 import { prisma } from "@/lib/prisma"
+import { notifyPaymentOrderPending } from "@/lib/finance/telegram-notify"
 
 // POST — draft → pending_approval
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -15,6 +16,15 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   const updated = await prisma.paymentOrder.update({
     where: { id },
     data: { status: "pending_approval" },
+  })
+
+  // Notify via Telegram
+  await notifyPaymentOrderPending({
+    orderNumber: order.orderNumber,
+    counterpartyName: order.counterpartyName,
+    amount: order.amount,
+    currency: order.currency,
+    purpose: order.purpose,
   })
 
   return NextResponse.json({ data: updated })

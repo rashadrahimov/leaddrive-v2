@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { z, ZodError } from "zod"
 import { getOrgId } from "@/lib/api-auth"
 import { prisma } from "@/lib/prisma"
+import { notifyBillPaymentRecorded } from "@/lib/finance/telegram-notify"
 
 const createPaymentSchema = z.object({
   amount: z.union([z.string().min(1), z.number().min(0).max(999999999)]),
@@ -100,6 +101,16 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         paymentDate: paymentDate ? new Date(paymentDate) : new Date(),
         description: `Оплата по счёту ${bill.billNumber}`,
       },
+    })
+
+    // Send Telegram notification
+    const remaining = Math.max(0, bill.totalAmount - (bill.paidAmount + paymentAmount))
+    await notifyBillPaymentRecorded({
+      billNumber: bill.billNumber,
+      vendorName: bill.vendorName,
+      paymentAmount,
+      remainingBalance: remaining,
+      currency: currency || "AZN",
     })
   }
 
