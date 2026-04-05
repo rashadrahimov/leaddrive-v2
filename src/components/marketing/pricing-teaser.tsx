@@ -6,8 +6,10 @@ import { AnimateIn } from "./animate-in"
 import { plans } from "@/lib/marketing-data"
 import { Check, ArrowRight } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useTranslations } from "next-intl"
 
 export function PricingTeaser() {
+  const t = useTranslations("marketing.pricing")
   const [billing, setBilling] = useState<"monthly" | "annual">("monthly")
   const isAnnual = billing === "annual"
   // Show only the 4 main plans (not Enterprise 50+)
@@ -18,13 +20,13 @@ export function PricingTeaser() {
       <div className="mx-auto max-w-7xl px-4 lg:px-8">
         <AnimateIn className="text-center mb-14">
           <p className="text-sm font-medium text-[#001E3C]/40 uppercase tracking-widest mb-3">
-            Qiymətlər
+            {t("sectionTitle")}
           </p>
           <h2 className="text-3xl lg:text-4xl font-bold tracking-tight text-[#001E3C]">
-            Sizinlə birlikdə böyüyən planlar
+            {t("sectionSubtitle")}
           </h2>
           <p className="mt-4 text-lg text-[#001E3C]/60 max-w-xl mx-auto">
-            Pulsuz başlayın, hazır olanda yüksəldin. Gizli ödənişlər yoxdur.
+            {t("sectionDescription")}
           </p>
 
           {/* Billing toggle */}
@@ -38,7 +40,7 @@ export function PricingTeaser() {
                   : "text-[#001E3C]/50 hover:text-[#001E3C]"
               )}
             >
-              Aylıq
+              {t("monthly")}
             </button>
             <button
               onClick={() => setBilling("annual")}
@@ -49,7 +51,7 @@ export function PricingTeaser() {
                   : "text-[#001E3C]/50 hover:text-[#001E3C]"
               )}
             >
-              İllik
+              {t("annual")}
               <span className="text-[10px] font-bold bg-green-50 text-green-600 px-1.5 py-0.5 rounded-full">
                 -10%
               </span>
@@ -73,12 +75,12 @@ export function PricingTeaser() {
                 >
                   {plan.popular && (
                     <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#0176D3] text-white text-xs font-semibold px-4 py-1 rounded-full">
-                      Ən populyar
+                      {t("popular")}
                     </div>
                   )}
 
-                  <h3 className="text-lg font-semibold text-[#001E3C]">{plan.name}</h3>
-                  <p className="text-sm text-[#001E3C]/60 mt-1 mb-5">{plan.tagline}</p>
+                  <h3 className="text-lg font-semibold text-[#001E3C]">{t(`${plan.id}.name`)}</h3>
+                  <p className="text-sm text-[#001E3C]/60 mt-1 mb-5">{t(`${plan.id}.tagline`)}</p>
 
                   {/* Price — per-user */}
                   <div className="mb-1">
@@ -87,7 +89,7 @@ export function PricingTeaser() {
                         <span className="text-sm text-[#001E3C]/30 line-through">{plan.pricePerUser}</span>
                       )}
                       <span className="text-2xl font-semibold text-[#001E3C]">{perUser}</span>
-                      <span className="text-xs text-[#001E3C]/40">AZN / istifadəçi / ay</span>
+                      <span className="text-xs text-[#001E3C]/40">AZN / {t("perUser")}</span>
                     </div>
                   </div>
                   {plan.maxUsers !== null && perUser !== null && (
@@ -119,7 +121,7 @@ export function PricingTeaser() {
                         : "border border-[#001E3C]/10 text-[#001E3C] hover:bg-[#F3F4F7] hover:border-[#001E3C]/15"
                     )}
                   >
-                    {plan.popular ? "Demo tələb et" : "Başla"}
+                    {plan.popular ? t("requestDemo") : t("start")}
                   </Link>
                 </div>
               </AnimateIn>
@@ -132,7 +134,7 @@ export function PricingTeaser() {
             href="/plans"
             className="inline-flex items-center gap-1.5 text-sm font-medium text-[#001E3C]/40 hover:text-[#001E3C]/60 transition-colors"
           >
-            Bütün xüsusiyyətləri müqayisə et <ArrowRight className="h-3.5 w-3.5" />
+            {t("compareAll")} <ArrowRight className="h-3.5 w-3.5" />
           </Link>
         </AnimateIn>
       </div>

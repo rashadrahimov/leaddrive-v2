@@ -1,16 +1,9 @@
+"use client"
+
 import { AnimateIn } from "@/components/marketing/animate-in"
 import Link from "next/link"
 import { Building2, Target, Users, Globe, Zap, Shield } from "lucide-react"
-import type { Metadata } from "next"
-
-export const metadata: Metadata = {
-  title: "Haqqımızda",
-  description: "Güvən Technology LLC — Bakıda yerləşən texnologiya şirkəti. LeadDrive CRM-in yaradıcıları.",
-  openGraph: {
-    title: "Haqqımızda | LeadDrive CRM",
-    description: "Güvən Technology LLC — Bakıda yerləşən texnologiya şirkəti.",
-  },
-}
+import { useTranslations } from "next-intl"
 
 const organizationJsonLd = {
   "@context": "https://schema.org",
@@ -33,6 +26,9 @@ const organizationJsonLd = {
 }
 
 export default function AboutPage() {
+  const t = useTranslations("marketing.about")
+  const tContact = useTranslations("marketing.contact")
+  const tNav = useTranslations("marketing.nav")
   return (
     <div className="min-h-screen bg-white">
       <script
@@ -44,11 +40,10 @@ export default function AboutPage() {
         <div className="mx-auto max-w-3xl px-4">
           <AnimateIn>
             <h1 className="text-4xl sm:text-5xl font-bold text-[#001E3C] tracking-tight">
-              Haqqımızda
+              {t("title")}
             </h1>
             <p className="mt-4 text-lg text-[#001E3C]/60 leading-relaxed">
-              Güvən Technology LLC — Bakıda yerləşən texnologiya şirkəti.
-              Biznesin rəqəmsal transformasiyasını sürətləndiririk.
+              {t("subtitle")}
             </p>
           </AnimateIn>
         </div>
@@ -117,20 +112,20 @@ export default function AboutPage() {
       <section className="pb-24">
         <div className="mx-auto max-w-3xl px-4 text-center">
           <AnimateIn>
-            <h2 className="text-3xl font-bold text-[#001E3C] mb-4">Bizimlə əlaqə saxlayın</h2>
-            <p className="text-[#001E3C]/60 mb-8">Suallarınız var? Komandamız kömək etməyə hazırdır.</p>
+            <h2 className="text-3xl font-bold text-[#001E3C] mb-4">{tContact("title")}</h2>
+            <p className="text-[#001E3C]/60 mb-8">{tContact("subtitle")}</p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link
                 href="/contact"
                 className="rounded-full bg-[#0176D3] hover:bg-[#0176D3]/90 px-8 py-3 text-sm font-semibold text-white transition-colors"
               >
-                Əlaqə saxlayın
+                {tContact("title")}
               </Link>
               <Link
                 href="/demo"
                 className="rounded-full border border-[#001E3C]/10 hover:border-[#001E3C]/20 px-8 py-3 text-sm font-semibold text-[#001E3C] transition-colors"
               >
-                Demo tələb edin
+                {tNav("cta")}
               </Link>
             </div>
           </AnimateIn>
