@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select } from "@/components/ui/select"
-import { Dialog, DialogHeader, DialogTitle, DialogContent, DialogFooter } from "@/components/ui/dialog"
+import { DialogHeader, DialogTitle, DialogContent, DialogFooter } from "@/components/ui/dialog"
 import { Trash2, Eye, Code, Bold, Italic, Underline, List, ListOrdered, Link, X, Undo, Redo, AlignLeft, AlignCenter, AlignRight, Image, Paintbrush, FileCode } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { sanitizeRichHtml } from "@/lib/sanitize"
@@ -185,8 +185,22 @@ export function EmailTemplateForm({ open, onOpenChange, onSaved, initialData, or
     }
   }
 
+  // Use fullscreen dialog for visual editor mode
+  const isFullscreen = form.editorType === "visual"
+
+  if (!open) return null
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <div className="fixed inset-0 z-50">
+      <div className="fixed inset-0 bg-black/50" onClick={() => onOpenChange(false)} />
+      <div className="fixed inset-0 flex items-center justify-center p-4">
+        <div
+          className={cn(
+            "relative bg-background rounded-lg shadow-lg overflow-hidden flex flex-col",
+            isFullscreen ? "w-full h-full max-w-[95vw] max-h-[95vh]" : "w-full max-w-lg max-h-[85vh]"
+          )}
+          onClick={e => e.stopPropagation()}
+        >
       <DialogHeader>
         <div className="flex items-center justify-between">
           <DialogTitle>{isEdit ? tf("editEmailTemplate") : tf("newEmailTemplate")}</DialogTitle>
@@ -216,7 +230,7 @@ export function EmailTemplateForm({ open, onOpenChange, onSaved, initialData, or
         </div>
       </DialogHeader>
       <form onSubmit={handleSubmit}>
-        <DialogContent className="max-h-[75vh] overflow-y-auto">
+        <DialogContent className="overflow-y-auto flex-1">
           {error && <div className="text-sm text-red-500 bg-red-50 dark:bg-red-900/20 p-2 rounded mb-3">{error}</div>}
           <div className="grid gap-4">
             {/* Name + Category */}
@@ -551,6 +565,8 @@ export function EmailTemplateForm({ open, onOpenChange, onSaved, initialData, or
           </Button>
         </DialogFooter>
       </form>
-    </Dialog>
+        </div>
+      </div>
+    </div>
   )
 }
