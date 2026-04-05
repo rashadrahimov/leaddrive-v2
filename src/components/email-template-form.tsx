@@ -229,12 +229,12 @@ export function EmailTemplateForm({ open, onOpenChange, onSaved, initialData, or
           </div>
         </div>
       </DialogHeader>
-      <form onSubmit={handleSubmit}>
-        <DialogContent className="overflow-y-auto flex-1">
+      <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
+        <DialogContent className="overflow-y-auto flex-1 min-h-0">
           {error && <div className="text-sm text-red-500 bg-red-50 dark:bg-red-900/20 p-2 rounded mb-3">{error}</div>}
-          <div className="grid gap-4">
-            {/* Name + Category */}
-            <div className="grid grid-cols-2 gap-3">
+          <div className="grid gap-3">
+            {/* Name + Category — compact row in visual mode */}
+            <div className={cn("grid gap-3", isFullscreen ? "grid-cols-4" : "grid-cols-2")}>
               <div>
                 <Label className="text-xs uppercase text-muted-foreground">{tc("name")}</Label>
                 <Input value={form.name} onChange={(e) => update("name", e.target.value)} required />
@@ -251,10 +251,27 @@ export function EmailTemplateForm({ open, onOpenChange, onSaved, initialData, or
                   <option value="proposal">{t("catProposal")}</option>
                 </Select>
               </div>
+              {/* Subject + Language inline in fullscreen mode */}
+              {isFullscreen && (
+                <>
+                  <div>
+                    <Label className="text-xs uppercase text-muted-foreground">{tc("subject")}</Label>
+                    <Input value={form.subject} onChange={(e) => update("subject", e.target.value)} required />
+                  </div>
+                  <div>
+                    <Label className="text-xs uppercase text-muted-foreground">{tc("language")}</Label>
+                    <Select value={form.language} onChange={(e) => update("language", e.target.value)}>
+                      <option value="ru">🇷🇺 RU</option>
+                      <option value="az">🇦🇿 AZ</option>
+                      <option value="en">🇬🇧 EN</option>
+                    </Select>
+                  </div>
+                </>
+              )}
             </div>
 
-            {/* Subject + Language */}
-            <div className="grid grid-cols-3 gap-3">
+            {/* Subject + Language — hidden in fullscreen visual mode (moved to top row) */}
+            <div className={cn("grid grid-cols-3 gap-3", isFullscreen && "hidden")}>
               <div className="col-span-2">
                 <Label className="text-xs uppercase text-muted-foreground">{tc("subject")}</Label>
                 <Input value={form.subject} onChange={(e) => update("subject", e.target.value)} required />
