@@ -73,6 +73,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     const result = await prisma.contact.deleteMany({ where: { id, organizationId: orgId } })
     if (result.count === 0) return NextResponse.json({ error: "Not found" }, { status: 404 })
     logAudit(orgId, "delete", "contact", id, existing?.fullName || "")
+    fireWebhooks(orgId, "contact.deleted", { id, fullName: existing?.fullName }).catch(() => {})
     return NextResponse.json({ success: true, data: { deleted: id } })
   } catch (e) {
     console.error(e)

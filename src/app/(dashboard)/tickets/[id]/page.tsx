@@ -142,11 +142,12 @@ export default function TicketDetailPage() {
   const commentRef = useRef<HTMLTextAreaElement>(null)
   const [siblings, setSiblings] = useState<{ prev: any | null; next: any | null }>({ prev: null, next: null })
   const [customerContext, setCustomerContext] = useState<any>(null)
-  const [showContext, setShowContext] = useState(false)
+  const [showContext, setShowContext] = useState(true)
   const [macros, setMacros] = useState<any[]>([])
   const [handleTimer, setHandleTimer] = useState(0)
   const handleTimerValueRef = useRef(0)
   const [showShortcuts, setShowShortcuts] = useState(false)
+  const [showMacrosMenu, setShowMacrosMenu] = useState(false)
   const timerRef = useRef<NodeJS.Timeout | null>(null)
   const orgId = session?.user?.organizationId
   const headers = orgId ? { "x-organization-id": String(orgId) } : {}
@@ -289,6 +290,7 @@ export default function TicketDetailPage() {
     onPrevTicket: () => { if (siblings.prev) router.push(`/tickets/${siblings.prev.id}`) },
     onNextTicket: () => { if (siblings.next) router.push(`/tickets/${siblings.next.id}`) },
     onCopyNumber: () => { if (ticket?.ticketNumber) navigator.clipboard.writeText(ticket.ticketNumber) },
+    onToggleShortcuts: () => setShowShortcuts(s => !s),
     macros: macros.filter((m: any) => m.isActive).map((m: any) => ({
       execute: () => {
         fetch(`/api/v1/ticket-macros/${m.id}/apply`, {
@@ -500,30 +502,36 @@ export default function TicketDetailPage() {
               </Button>
             </>
           )}
-          {/* Macros dropdown */}
+          {/* Macros dropdown — click toggle */}
           {macros.filter((m: any) => m.isActive).length > 0 && (
-            <div className="relative group">
-              <Button size="sm" variant="outline">
+            <div className="relative">
+              <Button size="sm" variant="outline" onClick={() => setShowMacrosMenu(!showMacrosMenu)}>
                 <Zap className="h-3.5 w-3.5 mr-1" /> Macros
               </Button>
-              <div className="absolute right-0 top-full mt-1 bg-card border rounded-lg shadow-lg p-1 min-w-[200px] hidden group-hover:block z-10">
-                {macros.filter((m: any) => m.isActive).map((m: any, idx: number) => (
-                  <button
-                    key={m.id}
-                    className="w-full text-left px-3 py-1.5 text-sm rounded hover:bg-muted flex items-center justify-between"
-                    onClick={() => {
-                      fetch(`/api/v1/ticket-macros/${m.id}/apply`, {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json", ...headers },
-                        body: JSON.stringify({ ticketId }),
-                      }).then(() => fetchTicket()).catch(() => {})
-                    }}
-                  >
-                    <span>{m.name}</span>
-                    {m.shortcutKey && <kbd className="text-[10px] bg-muted px-1 rounded ml-2">{m.shortcutKey}</kbd>}
-                  </button>
-                ))}
-              </div>
+              {showMacrosMenu && (
+                <>
+                  <div className="fixed inset-0 z-10" onClick={() => setShowMacrosMenu(false)} />
+                  <div className="absolute right-0 top-full mt-1 bg-card border rounded-lg shadow-lg p-1 min-w-[200px] z-20">
+                    {macros.filter((m: any) => m.isActive).map((m: any) => (
+                      <button
+                        key={m.id}
+                        className="w-full text-left px-3 py-1.5 text-sm rounded hover:bg-muted flex items-center justify-between"
+                        onClick={() => {
+                          setShowMacrosMenu(false)
+                          fetch(`/api/v1/ticket-macros/${m.id}/apply`, {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json", ...headers },
+                            body: JSON.stringify({ ticketId }),
+                          }).then(() => fetchTicket()).catch(() => {})
+                        }}
+                      >
+                        <span>{m.name}</span>
+                        {m.shortcutKey && <kbd className="text-[10px] bg-muted px-1 rounded ml-2">{m.shortcutKey}</kbd>}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
             </div>
           )}
           {/* Customer 360 toggle */}

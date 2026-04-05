@@ -11,6 +11,7 @@ interface ShortcutActions {
   onNextTicket?: () => void
   onPrevTicket?: () => void
   onCopyNumber?: () => void
+  onToggleShortcuts?: () => void
   macros?: Array<{ execute: () => void }>
 }
 
@@ -41,6 +42,13 @@ export function useTicketShortcuts(actions: ShortcutActions) {
         target.blur()
         e.preventDefault()
       }
+      return
+    }
+
+    // "?" without Alt — toggle shortcuts help
+    if (e.key === "?" && !e.altKey && !e.ctrlKey && !e.metaKey) {
+      e.preventDefault()
+      actions.onToggleShortcuts?.()
       return
     }
 

@@ -219,7 +219,7 @@ export default function ContactsPage() {
         const hot = contacts.filter(c => (c.engagementScore ?? 0) >= 50).length
         const warm = contacts.filter(c => { const s = c.engagementScore ?? 0; return s >= 20 && s < 50 }).length
         const cold = contacts.filter(c => (c.engagementScore ?? 0) < 20).length
-        return (hot > 0 || warm > 0) ? (
+        return (
           <div className="flex items-center gap-4 px-4 py-2.5 bg-muted/30 rounded-lg border text-sm">
             <span className="text-muted-foreground font-medium">Engagement:</span>
             <span className="flex items-center gap-1.5">
@@ -232,7 +232,7 @@ export default function ContactsPage() {
               <span className="w-2.5 h-2.5 rounded-full bg-blue-400" /> Cold ({cold})
             </span>
           </div>
-        ) : null
+        )
       })()}
 
       {/* Selection action bar */}
@@ -305,6 +305,7 @@ export default function ContactsPage() {
               <th className="px-4 py-3 text-left font-medium text-muted-foreground"><span className="inline-flex items-center gap-1">{t("colEmail")} <InfoHint text={t("hintColEmail")} size={12} /></span></th>
               <th className="px-4 py-3 text-left font-medium text-muted-foreground"><span className="inline-flex items-center gap-1">{t("colPhone")} <InfoHint text={t("hintColPhone")} size={12} /></span></th>
               <th className="px-4 py-3 text-left font-medium text-muted-foreground">{t("colSource") || "Source"}</th>
+              <th className="px-4 py-3 text-center font-medium text-muted-foreground">Score</th>
               <th className="px-4 py-3 text-left font-medium text-muted-foreground">{t("colStatus")}</th>
               <th className="px-4 py-3 text-left font-medium text-muted-foreground"><span className="inline-flex items-center gap-1">{t("colPortal")} <InfoHint text={t("hintColPortal")} size={12} /></span></th>
               <th className="px-4 py-3 w-20"></th>
@@ -373,6 +374,15 @@ export default function ContactsPage() {
                       {item.source}
                     </span>
                   ) : <span className="text-muted-foreground text-xs">—</span>}
+                </td>
+                <td className="px-4 py-3 text-center">
+                  {(() => {
+                    const score = item.engagementScore ?? 0
+                    const color = score >= 50 ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                      : score >= 20 ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+                      : "bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400"
+                    return <span className={cn("text-xs font-medium px-1.5 py-0.5 rounded-full", color)}>{score}</span>
+                  })()}
                 </td>
                 <td className="px-4 py-3">
                   <Badge variant={item.isActive ? "default" : "secondary"}>

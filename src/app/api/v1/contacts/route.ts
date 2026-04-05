@@ -5,6 +5,7 @@ import { getOrgId } from "@/lib/api-auth"
 import { executeWorkflows } from "@/lib/workflow-engine"
 import { createNotification } from "@/lib/notifications"
 import { fireWebhooks } from "@/lib/webhooks"
+import { trackContactEvent } from "@/lib/contact-events"
 
 const createContactSchema = z.object({
   fullName: z.string().min(1).max(200),
@@ -71,6 +72,9 @@ export async function POST(req: NextRequest) {
       entityId: contact.id,
     }).catch(() => {})
     fireWebhooks(orgId, "contact.created", { id: contact.id, fullName: contact.fullName, email: contact.email }).catch(() => {})
+    if (contact.source === "portal" || contact.source === "form" || contact.source === "website") {
+      trackContactEvent(orgId, contact.id, "form_submitted", { source: contact.source }).catch(() => {})
+    }
     return NextResponse.json({ success: true, data: contact }, { status: 201 })
   } catch (e) {
     console.error(e)

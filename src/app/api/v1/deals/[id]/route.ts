@@ -337,6 +337,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
 
     if (result.count === 0) return NextResponse.json({ error: "Deal not found" }, { status: 404 })
     logAudit(orgId, "delete", "deal", id, existing?.name || "")
+    fireWebhooks(orgId, "deal.deleted", { id, name: existing?.name }).catch(() => {})
     return NextResponse.json({ success: true, data: { deleted: id } })
   } catch (e) {
     console.error(e)

@@ -345,6 +345,11 @@ export default function CampaignDetailPage() {
           status: campaign.status || "draft", subject: campaign.subject || "",
           totalRecipients: campaign.totalRecipients || 0, budget: campaign.budget || 0,
           scheduledAt: campaign.scheduledAt ? new Date(campaign.scheduledAt).toISOString().split("T")[0] : "",
+          recipientMode: campaign.recipientMode, segmentId: campaign.segmentId,
+          recipientIds: campaign.recipientIds, recipientSource: campaign.recipientSource,
+          isAbTest: campaign.isAbTest, abTestType: campaign.abTestType,
+          testPercentage: campaign.testPercentage, testDurationHours: campaign.testDurationHours,
+          winnerCriteria: campaign.winnerCriteria,
         }}
       />
       <DeleteConfirmDialog open={deleteOpen} onOpenChange={setDeleteOpen} onConfirm={handleDelete} title={t("deleteCampaign")} itemName={campaign.name} />

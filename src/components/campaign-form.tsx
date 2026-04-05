@@ -46,7 +46,7 @@ interface CampaignFormProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   onSaved: () => void
-  initialData?: Partial<CampaignFormData> & { id?: string; sentAt?: string; totalSent?: number; totalOpened?: number; totalClicked?: number; recipientMode?: string; recipientIds?: string[]; recipientSource?: string }
+  initialData?: Partial<CampaignFormData> & { id?: string; sentAt?: string; totalSent?: number; totalOpened?: number; totalClicked?: number; recipientMode?: string; recipientIds?: string[]; recipientSource?: string; isAbTest?: boolean; abTestType?: string; testPercentage?: number; testDurationHours?: number; winnerCriteria?: string }
   orgId?: string
   onSend?: () => void
   onDelete?: () => void
@@ -179,6 +179,38 @@ export function CampaignForm({ open, onOpenChange, onSaved, initialData, orgId, 
           ? new Set(initialData!.recipientIds as string[])
           : new Set()
       )
+      // Restore A/B test state
+      setIsAbTest(!!initialData?.isAbTest)
+      setAbTestType(initialData?.abTestType || "subject")
+      setTestPercentage(initialData?.testPercentage ?? 20)
+      setTestDurationHours(initialData?.testDurationHours ?? 4)
+      setWinnerCriteria(initialData?.winnerCriteria || "open_rate")
+      // Load existing variants for editing
+      if (initialData?.id && initialData?.isAbTest && orgId) {
+        fetch(`/api/v1/campaigns/${initialData.id}/variants`, {
+          headers: { "x-organization-id": String(orgId) },
+        }).then(r => r.json()).then(j => {
+          if (j.success && j.data?.length > 0) {
+            setVariants(j.data.map((v: any) => ({
+              id: v.id,
+              name: v.name,
+              subject: v.subject || "",
+              templateId: v.templateId || "",
+              percentage: v.percentage || 50,
+            })))
+          } else {
+            setVariants([
+              { name: "Variant A", subject: "", templateId: "", percentage: 50 },
+              { name: "Variant B", subject: "", templateId: "", percentage: 50 },
+            ])
+          }
+        }).catch(() => {})
+      } else {
+        setVariants([
+          { name: "Variant A", subject: "", templateId: "", percentage: 50 },
+          { name: "Variant B", subject: "", templateId: "", percentage: 50 },
+        ])
+      }
     }
   }, [open, initialData])
 
@@ -226,20 +258,22 @@ export function CampaignForm({ open, onOpenChange, onSaved, initialData, orgId, 
       // Save A/B test variants if enabled
       const campaignId = json.data?.id || initialData?.id
       if (isAbTest && campaignId && variants.length >= 2) {
-        for (const v of variants) {
-          await fetch(`/api/v1/campaigns/${campaignId}/variants`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              ...(orgId ? { "x-organization-id": orgId } : {}),
-            },
-            body: JSON.stringify({
-              name: v.name,
-              subject: v.subject || undefined,
-              templateId: v.templateId || undefined,
-              percentage: v.percentage,
-            }),
-          }).catch(() => {})
+        for (const v of variants as any[]) {
+          if (v.id) {
+            // Update existing variant
+            await fetch(`/api/v1/campaigns/${campaignId}/variants/${v.id}`, {
+              method: "PUT",
+              headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": orgId } : {}) },
+              body: JSON.stringify({ name: v.name, subject: v.subject || undefined, templateId: v.templateId || undefined, percentage: v.percentage }),
+            }).catch(() => {})
+          } else {
+            // Create new variant
+            await fetch(`/api/v1/campaigns/${campaignId}/variants`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": orgId } : {}) },
+              body: JSON.stringify({ name: v.name, subject: v.subject || undefined, templateId: v.templateId || undefined, percentage: v.percentage }),
+            }).catch(() => {})
+          }
         }
       }
 

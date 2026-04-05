@@ -96,6 +96,7 @@ export async function DELETE(
     const result = await prisma.lead.deleteMany({ where: { id, organizationId: orgId } })
     if (result.count === 0) return NextResponse.json({ error: "Not found" }, { status: 404 })
     logAudit(orgId, "delete", "lead", id, existing?.contactName || "")
+    fireWebhooks(orgId, "lead.deleted", { id, contactName: existing?.contactName }).catch(() => {})
     return NextResponse.json({ success: true, data: { deleted: id } })
   } catch (e) {
     console.error(e)
