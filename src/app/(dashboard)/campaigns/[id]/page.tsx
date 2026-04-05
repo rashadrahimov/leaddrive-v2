@@ -116,13 +116,41 @@ export default function CampaignDetailPage() {
             <div>
               <h1 className="text-xl font-bold truncate">{campaign.name}</h1>
               <div className="flex items-center gap-2">
-                <Badge className={STATUS_STYLES[campaign.status] || ""}>{campaign.status}</Badge>
+                <Badge className={STATUS_STYLES[campaign.status] || ""}>{
+                  campaign.status === "draft" ? t("statusDraft") :
+                  campaign.status === "scheduled" ? t("statusScheduled") :
+                  campaign.status === "sending" ? t("statusSending") :
+                  campaign.status === "sent" ? t("statusSent") :
+                  campaign.status === "ab_testing" ? tab("results") :
+                  campaign.status === "cancelled" ? t("statusCancelled") :
+                  campaign.status
+                }</Badge>
                 <Badge variant="outline" className="text-xs">{campaign.type}</Badge>
               </div>
             </div>
           </div>
         </div>
         <div className="flex gap-2">
+          {(campaign.status === "draft" || campaign.status === "scheduled") && (
+            <Button size="sm" onClick={async () => {
+              if (!confirm(t("confirmSend") || "Kampaniyanı göndərmək istəyirsiniz?")) return
+              try {
+                const res = await fetch(`/api/v1/campaigns/${campaign.id}/send`, {
+                  method: "POST",
+                  headers: orgId ? { "x-organization-id": String(orgId) } : {},
+                })
+                const json = await res.json()
+                if (json.success) {
+                  alert(`${t("sent")}: ${json.data?.sent || 0} / ${json.data?.total || 0}`)
+                  fetchCampaign()
+                } else {
+                  alert(json.error || "Error")
+                }
+              } catch { alert("Error") }
+            }}>
+              <Mail className="h-3.5 w-3.5 mr-1" /> {t("sendCampaign") || "Kampaniyanı göndər"}
+            </Button>
+          )}
           <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
             <Pencil className="h-3.5 w-3.5 mr-1" /> {tc("edit")}
           </Button>
@@ -175,7 +203,7 @@ export default function CampaignDetailPage() {
       {/* Tabs */}
       <Tabs defaultValue="results" className="space-y-4">
         <TabsList className="bg-muted/60 p-1 h-auto">
-          <TabsTrigger value="results" className="rounded-md text-sm">{tc("results")}</TabsTrigger>
+          <TabsTrigger value="results" className="rounded-md text-sm">{tc("results", { count: totalSent })}</TabsTrigger>
           <TabsTrigger value="flow" className="rounded-md text-sm">Flow</TabsTrigger>
           <TabsTrigger value="details" className="rounded-md text-sm">{tc("details")}</TabsTrigger>
           {campaign.isAbTest && <TabsTrigger value="ab-test" className="rounded-md text-sm">{tab("results")}</TabsTrigger>}
