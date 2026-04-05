@@ -135,6 +135,7 @@ model User {
   budgetDeptOwnership BudgetDepartmentOwner[]
   mtmAgents           MtmAgent[]
   accounts            Account[]
+  quotas              SalesQuota[]
 
   @@unique([organizationId, email])
   @@map("users")
@@ -2833,4 +2834,21 @@ model LeadAssignmentRule {
 
   @@index([organizationId])
   @@map("lead_assignment_rules")
+}
+
+model SalesQuota {
+  id             String   @id @default(cuid())
+  organizationId String
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  year           Int
+  quarter        Int      // 1-4
+  amount         Float    @default(0)
+  currency       String   @default("AZN")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([organizationId, userId, year, quarter])
+  @@index([organizationId])
+  @@map("sales_quotas")
 }

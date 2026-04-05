@@ -48,6 +48,7 @@ export default function DealsPage() {
   const [aiError, setAiError] = useState<string | null>(null)
   const [pipelines, setPipelines] = useState<any[]>([])
   const [selectedPipelineId, setSelectedPipelineId] = useState<string>("")
+  const [pipelineSummary, setPipelineSummary] = useState<{ total: number; weighted: number; byStage: any[] } | null>(null)
   const orgId = session?.user?.organizationId
 
   const selectedPipeline = pipelines.find(p => p.id === selectedPipelineId)
@@ -78,7 +79,10 @@ export default function DealsPage() {
         headers: orgId ? { "x-organization-id": String(orgId) } : {},
       })
       const json = await res.json()
-      if (json.success) setDeals(json.data.deals)
+      if (json.success) {
+        setDeals(json.data.deals)
+        if (json.data.pipelineSummary) setPipelineSummary(json.data.pipelineSummary)
+      }
     } catch (err) { console.error(err) } finally { setLoading(false) }
   }
 
@@ -292,6 +296,52 @@ export default function DealsPage() {
             <ColorStatCard label={t("statWon")} value={`${wonValue.toLocaleString()} ₼`} icon={<TrendingUp className="h-4 w-4" />} color="teal" hint={t("hintWonValue")} />
             <ColorStatCard label={t("statLost")} value={lostCount} icon={<TrendingDown className="h-4 w-4" />} color="red" hint={t("hintLostCount")} />
           </div>
+
+          {/* Weighted Pipeline Bar */}
+          {pipelineSummary && pipelineSummary.total > 0 && (
+            <div className="rounded-lg border bg-card p-3">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-4">
+                  <div>
+                    <span className="text-[10px] text-muted-foreground uppercase">Воронка</span>
+                    <p className="text-sm font-bold">{pipelineSummary.total.toLocaleString()} ₼</p>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-muted-foreground uppercase">Взвешенная</span>
+                    <p className="text-sm font-bold text-primary">{pipelineSummary.weighted.toLocaleString()} ₼</p>
+                  </div>
+                </div>
+              </div>
+              <div className="flex h-3 rounded-full overflow-hidden bg-muted gap-0.5">
+                {pipelineSummary.byStage.map((s: any) => {
+                  const pct = pipelineSummary.total > 0 ? (s.value / pipelineSummary.total) * 100 : 0
+                  const stageInfo = STAGES.find((st: any) => st.key === s.name)
+                  return (
+                    <div
+                      key={s.name}
+                      className="h-full rounded-sm transition-all"
+                      style={{
+                        width: `${Math.max(pct, 2)}%`,
+                        backgroundColor: stageInfo?.color || "#6366f1",
+                      }}
+                      title={`${stageInfo?.label || s.name}: ${s.value.toLocaleString()} ₼ (взвеш. ${s.weighted.toLocaleString()} ₼)`}
+                    />
+                  )
+                })}
+              </div>
+              <div className="flex flex-wrap gap-x-3 gap-y-1 mt-1.5">
+                {pipelineSummary.byStage.map((s: any) => {
+                  const stageInfo = STAGES.find((st: any) => st.key === s.name)
+                  return (
+                    <div key={s.name} className="flex items-center gap-1">
+                      <div className="h-2 w-2 rounded-sm" style={{ backgroundColor: stageInfo?.color || "#6366f1" }} />
+                      <span className="text-[9px] text-muted-foreground">{stageInfo?.label || s.name} ({s.count})</span>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
 
           <KanbanBoard
             stages={STAGES}

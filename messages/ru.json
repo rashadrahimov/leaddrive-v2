@@ -33,6 +33,8 @@
     "events": "Мероприятия",
     "agentDesktop": "Рабочий стол агента",
     "agentCalendar": "Календарь агента",
+    "forecast": "Прогноз",
+    "quotas": "Квоты",
     "settings": "Настройки",
     "projects": "Проекты",
     "mtmDashboard": "MTM Панель",

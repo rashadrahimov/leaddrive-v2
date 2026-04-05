@@ -54,6 +54,7 @@ const navItems: NavItem[] = [
   { module: "budgeting", href: "/budgeting", icon: PiggyBank, tKey: "budgeting", group: "Finance" },
   { module: "profitability", href: "/profitability", icon: Calculator, tKey: "profitability", group: "Finance" },
   { module: "profitability", href: "/pricing", icon: DollarSign, tKey: "pricing", group: "Finance" },
+  { module: "deals", href: "/forecast", icon: TrendingUp, tKey: "forecast", group: "Analytics" },
   { module: "reports", href: "/reports", icon: BarChart3, tKey: "reports", group: "Analytics" },
   { module: "ai", href: "/ai-command-center", icon: Brain, tKey: "aiCenter", group: "Analytics" },
   { module: "projects", href: "/projects", icon: FolderKanban, tKey: "projects", group: "ERP" },
@@ -72,6 +73,7 @@ const navItems: NavItem[] = [
   { module: "workflows", href: "/settings/workflows", icon: Zap, tKey: "workflows", group: "Settings" },
   { module: "core", href: "/settings/users", icon: Users, tKey: "users", group: "Settings" },
   { module: "core", href: "/settings/smtp-settings", icon: Server, tKey: "smtp", group: "Settings" },
+  { module: "deals", href: "/settings/quotas", icon: Target, tKey: "quotas", group: "Settings" },
   { module: "core", href: "/settings", icon: Settings, tKey: "settings", group: "Settings" },
 ]
 

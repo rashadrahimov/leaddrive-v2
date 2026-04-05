@@ -58,7 +58,31 @@ export async function GET(req: NextRequest) {
       prisma.deal.count({ where }),
     ])
 
-    return NextResponse.json({ success: true, data: { deals, total, page, limit } })
+    // Weighted pipeline summary
+    const activeDeals = deals.filter((d: any) => !["WON", "LOST"].includes(d.stage))
+    const totalPipeline = activeDeals.reduce((s: number, d: any) => s + (d.valueAmount || 0), 0)
+    const weightedPipeline = activeDeals.reduce((s: number, d: any) => s + (d.valueAmount || 0) * ((d.probability || 0) / 100), 0)
+
+    // Group by stage
+    const stageMap: Record<string, { count: number; value: number; weighted: number }> = {}
+    for (const d of activeDeals) {
+      if (!stageMap[d.stage]) stageMap[d.stage] = { count: 0, value: 0, weighted: 0 }
+      stageMap[d.stage].count++
+      stageMap[d.stage].value += d.valueAmount || 0
+      stageMap[d.stage].weighted += (d.valueAmount || 0) * ((d.probability || 0) / 100)
+    }
+
+    const pipelineSummary = {
+      total: totalPipeline,
+      weighted: Math.round(weightedPipeline),
+      byStage: Object.entries(stageMap).map(([name, data]) => ({
+        name,
+        ...data,
+        weighted: Math.round(data.weighted),
+      })),
+    }
+
+    return NextResponse.json({ success: true, data: { deals, total, page, limit, pipelineSummary } })
   } catch {
     return NextResponse.json({ success: true, data: { deals: [], total: 0, page, limit } })
   }

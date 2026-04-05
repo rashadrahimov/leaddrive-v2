@@ -33,6 +33,8 @@
     "events": "Events",
     "agentDesktop": "Agent Desktop",
     "agentCalendar": "Agent Calendar",
+    "forecast": "Forecast",
+    "quotas": "Quotas",
     "settings": "Settings",
     "projects": "Projects",
     "mtmDashboard": "MTM Dashboard",
