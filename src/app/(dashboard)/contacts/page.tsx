@@ -30,6 +30,7 @@ interface Contact {
   portalAccessEnabled: boolean
   portalPasswordHash: string | null
   company: { id: string; name: string } | null
+  engagementScore?: number
 }
 
 export default function ContactsPage() {
@@ -212,6 +213,27 @@ export default function ContactsPage() {
         <ColorStatCard label={t("statWithEmail")} value={contacts.filter(c => c.email).length} icon={<Mail className="h-4 w-4" />} color="violet" />
         <ColorStatCard label={t("statWithPhone")} value={contacts.filter(c => c.phone).length} icon={<Phone className="h-4 w-4" />} color="orange" />
       </div>
+
+      {/* Engagement Overview */}
+      {contacts.length > 0 && (() => {
+        const hot = contacts.filter(c => (c.engagementScore ?? 0) >= 50).length
+        const warm = contacts.filter(c => { const s = c.engagementScore ?? 0; return s >= 20 && s < 50 }).length
+        const cold = contacts.filter(c => (c.engagementScore ?? 0) < 20).length
+        return (hot > 0 || warm > 0) ? (
+          <div className="flex items-center gap-4 px-4 py-2.5 bg-muted/30 rounded-lg border text-sm">
+            <span className="text-muted-foreground font-medium">Engagement:</span>
+            <span className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-red-500" /> Hot ({hot})
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-amber-500" /> Warm ({warm})
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-blue-400" /> Cold ({cold})
+            </span>
+          </div>
+        ) : null
+      })()}
 
       {/* Selection action bar */}
       {selected.size > 0 && (

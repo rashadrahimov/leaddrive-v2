@@ -4,6 +4,7 @@ import { prisma, logAudit } from "@/lib/prisma"
 import { getOrgId } from "@/lib/api-auth"
 import { executeWorkflows } from "@/lib/workflow-engine"
 import { createNotification } from "@/lib/notifications"
+import { fireWebhooks } from "@/lib/webhooks"
 
 const updateDealSchema = z.object({
   name: z.string().min(1).max(200).optional(),
@@ -287,12 +288,12 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
             where: { dealId: id, cashbackValue: { not: null } },
           })
           if (rolesWithCashback.length > 0) {
-            const contactIds = rolesWithCashback.map(r => r.contactId)
+            const contactIds = rolesWithCashback.map((r: any) => r.contactId)
             const contacts = await prisma.contact.findMany({
               where: { id: { in: contactIds } },
               select: { id: true, fullName: true },
             })
-            const contactMap = Object.fromEntries(contacts.map(c => [c.id, c.fullName]))
+            const contactMap = Object.fromEntries(contacts.map((c: any) => [c.id, c.fullName]))
 
             for (const r of rolesWithCashback) {
               const name = contactMap[r.contactId] || "Контакт"
@@ -313,6 +314,9 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       }
     }
 
+    if (updated) {
+      fireWebhooks(orgId, "deal.updated", { id: updated.id, name: updated.name, stage: updated.stage, status: updated.status }).catch(() => {})
+    }
     return NextResponse.json({ success: true, data: updated })
   } catch (e) {
     console.error(e)

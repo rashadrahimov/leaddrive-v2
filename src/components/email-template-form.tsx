@@ -10,7 +10,7 @@ import { Dialog, DialogHeader, DialogTitle, DialogContent, DialogFooter } from "
 import { Trash2, Eye, Code, Bold, Italic, Underline, List, ListOrdered, Link, X, Undo, Redo, AlignLeft, AlignCenter, AlignRight, Image, Paintbrush, FileCode } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { sanitizeRichHtml } from "@/lib/sanitize"
-import { EmailVisualEditor } from "@/components/email-visual-editor"
+import { EmailVisualEditor, type EmailVisualEditorHandle } from "@/components/email-visual-editor"
 
 interface EmailTemplateFormData {
   name: string
@@ -60,6 +60,7 @@ export function EmailTemplateForm({ open, onOpenChange, onSaved, initialData, or
     designJson: null,
     editorType: "html",
   })
+  const visualEditorRef = useRef<EmailVisualEditorHandle>(null)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState("")
   const [activeTab, setActiveTab] = useState<"editor" | "preview" | "split">("editor")
@@ -106,11 +107,16 @@ export function EmailTemplateForm({ open, onOpenChange, onSaved, initialData, or
       return
     }
 
-    // For visual editor, trigger export to get latest HTML before saving
-    if (form.editorType === "visual") {
-      window.dispatchEvent(new Event("unlayer-export"))
-      // Give a small delay for export callback
-      await new Promise(resolve => setTimeout(resolve, 300))
+    // For visual editor, export HTML reliably via ref
+    if (form.editorType === "visual" && visualEditorRef.current) {
+      try {
+        const { design, html } = await visualEditorRef.current.exportHtml()
+        form.designJson = design
+        form.htmlBody = html
+      } catch {
+        setError("Failed to export design from visual editor")
+        return
+      }
     }
 
     setSaving(true)
@@ -287,6 +293,7 @@ export function EmailTemplateForm({ open, onOpenChange, onSaved, initialData, or
 
               {form.editorType === "visual" ? (
                 <EmailVisualEditor
+                  ref={visualEditorRef}
                   designJson={form.designJson}
                   onExport={(design, html) => {
                     setForm(f => ({ ...f, designJson: design, htmlBody: html }))

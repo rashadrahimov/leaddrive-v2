@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { createNotification } from "@/lib/notifications"
+import { sendEmail, renderTemplate } from "@/lib/email"
 
 /**
  * A/B Test Winner Selection Cron
  * Called every 15 minutes by external cron
  * Selects winners for A/B test campaigns where test duration has elapsed
+ * Then sends the winner variant to the holdout group
  */
 export async function POST(req: NextRequest) {
   const cronSecret = req.headers.get("x-cron-secret") || req.headers.get("authorization")?.replace("Bearer ", "")
@@ -14,7 +16,6 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    // Find campaigns in ab_testing status where test duration has elapsed
     const campaigns = await prisma.campaign.findMany({
       where: {
         isAbTest: true,
@@ -58,14 +59,66 @@ export async function POST(req: NextRequest) {
         data: { isWinner: true },
       })
 
+      // Send winner content to holdout group
+      let holdoutSent = 0
+      const holdoutIds = campaign.holdoutIds as string[] | null
+      if (holdoutIds && holdoutIds.length > 0) {
+        // Load holdout contacts
+        const contacts = await prisma.contact.findMany({
+          where: { id: { in: holdoutIds }, email: { not: null } },
+          select: { id: true, email: true, fullName: true },
+        })
+
+        // Load winner template
+        let winnerHtml = ""
+        if (winner.htmlBody) {
+          winnerHtml = winner.htmlBody
+        } else if (winner.templateId) {
+          const tmpl = await prisma.emailTemplate.findFirst({ where: { id: winner.templateId } })
+          if (tmpl?.htmlBody) winnerHtml = tmpl.htmlBody
+        } else if (campaign.templateId) {
+          const tmpl = await prisma.emailTemplate.findFirst({ where: { id: campaign.templateId } })
+          if (tmpl?.htmlBody) winnerHtml = tmpl.htmlBody
+        }
+        if (!winnerHtml) winnerHtml = `<p>${campaign.subject || campaign.name}</p>`
+
+        for (const contact of contacts) {
+          if (!contact.email) continue
+          const rendered = renderTemplate(winnerHtml, {
+            client_name: contact.fullName,
+            manager_name: "LeadDrive Team",
+          })
+          const result = await sendEmail({
+            to: contact.email,
+            subject: winner.subject ?? campaign.subject ?? campaign.name,
+            html: rendered,
+            organizationId: campaign.organizationId,
+            campaignId: campaign.id,
+            templateId: winner.templateId ?? campaign.templateId ?? undefined,
+            contactId: contact.id,
+            variantId: winner.id,
+          })
+          if (result.success) holdoutSent++
+        }
+      }
+
       // Update campaign
       await prisma.campaign.update({
         where: { id: campaign.id },
         data: {
           winnerSelectedAt: new Date(),
           status: "sent",
+          totalSent: { increment: holdoutSent },
         },
       })
+
+      // Update winner variant sent count
+      if (holdoutSent > 0) {
+        await prisma.campaignVariant.update({
+          where: { id: winner.id },
+          data: { totalSent: { increment: holdoutSent } },
+        })
+      }
 
       // Notify campaign creator
       if (campaign.createdBy) {
@@ -74,7 +127,7 @@ export async function POST(req: NextRequest) {
           userId: campaign.createdBy,
           type: "success",
           title: "A/B Test Winner Selected",
-          message: `Campaign "${campaign.name}": ${winner.name} won with ${criteria === "click_rate" ? `${(winner.clickRate * 100).toFixed(1)}% CTR` : `${(winner.openRate * 100).toFixed(1)}% open rate`}`,
+          message: `Campaign "${campaign.name}": ${winner.name} won with ${criteria === "click_rate" ? `${(winner.clickRate * 100).toFixed(1)}% CTR` : `${(winner.openRate * 100).toFixed(1)}% open rate`}. Sent to ${holdoutSent} remaining contacts.`,
           entityType: "campaign",
           entityId: campaign.id,
         }).catch(() => {})

@@ -128,16 +128,62 @@ export async function sendEmail({
     const transporter = createTransporter(config)
     const fromStr = config.fromName ? `"${config.fromName}" <${config.fromEmail}>` : config.fromEmail
 
+    // Create log first to get ID for tracking pixel
+    let logId: string | undefined
+    if (organizationId && campaignId) {
+      try {
+        const log = await prisma.emailLog.create({
+          data: {
+            organizationId,
+            direction: "outbound",
+            fromEmail: config.fromEmail,
+            toEmail: to,
+            subject,
+            body: html,
+            status: "pending",
+            campaignId,
+            templateId,
+            contactId,
+            variantId,
+            sentBy,
+          },
+        })
+        logId = log.id
+      } catch {}
+    }
+
+    // Inject tracking pixel and rewrite links for campaign emails
+    let finalHtml = html
+    if (logId && campaignId) {
+      const baseUrl = process.env.NEXTAUTH_URL || "https://app.leaddrivecrm.org"
+      // Inject open tracking pixel before </body> or at the end
+      const trackingPixel = `<img src="${baseUrl}/api/v1/tracking/open?logId=${logId}" width="1" height="1" style="display:none" alt="" />`
+      if (finalHtml.includes("</body>")) {
+        finalHtml = finalHtml.replace("</body>", `${trackingPixel}</body>`)
+      } else {
+        finalHtml += trackingPixel
+      }
+      // Rewrite links for click tracking (only http/https links in href)
+      finalHtml = finalHtml.replace(/href="(https?:\/\/[^"]+)"/g, (match, url) => {
+        return `href="${baseUrl}/api/v1/tracking/click?logId=${logId}&url=${encodeURIComponent(url)}"`
+      })
+    }
+
     const info = await transporter.sendMail({
       from: fromStr,
       to,
       subject,
-      html,
+      html: finalHtml,
       ...(attachments?.length ? { attachments } : {}),
     })
 
-    // Log success
-    if (organizationId) {
+    // Update log with success
+    if (logId) {
+      await prisma.emailLog.update({
+        where: { id: logId },
+        data: { status: "sent", messageId: info.messageId },
+      }).catch(() => {})
+    } else if (organizationId) {
       await prisma.emailLog.create({
         data: {
           organizationId,

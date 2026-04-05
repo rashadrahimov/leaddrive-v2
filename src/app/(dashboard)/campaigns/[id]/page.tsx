@@ -31,6 +31,7 @@ const STATUS_STYLES: Record<string, string> = {
   completed: "bg-green-100 text-green-700",
   paused: "bg-orange-100 text-orange-700",
   cancelled: "bg-red-100 text-red-700",
+  ab_testing: "bg-purple-100 text-purple-700",
 }
 
 export default function CampaignDetailPage() {
@@ -40,6 +41,7 @@ export default function CampaignDetailPage() {
   const router = useRouter()
   const { data: session } = useSession()
   const [campaign, setCampaign] = useState<any>(null)
+  const [variants, setVariants] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [editOpen, setEditOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
@@ -51,7 +53,17 @@ export default function CampaignDetailPage() {
         headers: orgId ? { "x-organization-id": String(orgId) } : {},
       })
       const json = await res.json()
-      if (json.success && json.data) setCampaign(json.data)
+      if (json.success && json.data) {
+        setCampaign(json.data)
+        // Fetch variants if A/B test
+        if (json.data.isAbTest) {
+          fetch(`/api/v1/campaigns/${params.id}/variants`, {
+            headers: orgId ? { "x-organization-id": String(orgId) } : {},
+          }).then(r => r.json()).then(vj => {
+            if (vj.success) setVariants(vj.data || [])
+          }).catch(() => {})
+        }
+      }
     } catch (err) { console.error(err) } finally { setLoading(false) }
   }
 
@@ -165,6 +177,7 @@ export default function CampaignDetailPage() {
           <TabsTrigger value="results" className="rounded-md text-sm">{tc("results")}</TabsTrigger>
           <TabsTrigger value="flow" className="rounded-md text-sm">Flow</TabsTrigger>
           <TabsTrigger value="details" className="rounded-md text-sm">{tc("details")}</TabsTrigger>
+          {campaign.isAbTest && <TabsTrigger value="ab-test" className="rounded-md text-sm">A/B Test</TabsTrigger>}
         </TabsList>
 
         <TabsContent value="results" className="space-y-4">
@@ -260,6 +273,69 @@ export default function CampaignDetailPage() {
             </CardContent>
           </Card>
         </TabsContent>
+
+        {/* A/B Test Results Tab */}
+        {campaign.isAbTest && (
+          <TabsContent value="ab-test" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">A/B Test Results</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {variants.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-4">No variants configured</p>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead className="bg-muted/50">
+                        <tr>
+                          <th className="text-left px-4 py-2 font-medium">Variant</th>
+                          <th className="text-left px-4 py-2 font-medium">Subject</th>
+                          <th className="text-right px-4 py-2 font-medium">Sent</th>
+                          <th className="text-right px-4 py-2 font-medium">Opened</th>
+                          <th className="text-right px-4 py-2 font-medium">Open Rate</th>
+                          <th className="text-right px-4 py-2 font-medium">Clicked</th>
+                          <th className="text-right px-4 py-2 font-medium">CTR</th>
+                          <th className="text-center px-4 py-2 font-medium">Winner</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {variants.map((v: any) => {
+                          const openRate = v.totalSent > 0 ? (v.totalOpened / v.totalSent * 100).toFixed(1) : "0.0"
+                          const ctr = v.totalSent > 0 ? (v.totalClicked / v.totalSent * 100).toFixed(1) : "0.0"
+                          return (
+                            <tr key={v.id} className={`border-t ${v.isWinner ? "bg-green-50 dark:bg-green-900/10" : ""}`}>
+                              <td className="px-4 py-3 font-medium">{v.name}</td>
+                              <td className="px-4 py-3 text-muted-foreground max-w-[200px] truncate">{v.subject || campaign.subject || "—"}</td>
+                              <td className="px-4 py-3 text-right">{v.totalSent}</td>
+                              <td className="px-4 py-3 text-right">{v.totalOpened}</td>
+                              <td className="px-4 py-3 text-right font-medium">{openRate}%</td>
+                              <td className="px-4 py-3 text-right">{v.totalClicked}</td>
+                              <td className="px-4 py-3 text-right font-medium">{ctr}%</td>
+                              <td className="px-4 py-3 text-center">
+                                {v.isWinner && <Badge className="bg-green-100 text-green-700">Winner</Badge>}
+                              </td>
+                            </tr>
+                          )
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+                {campaign.winnerSelectedAt && (
+                  <p className="text-xs text-muted-foreground mt-3">
+                    Winner selected at {new Date(campaign.winnerSelectedAt).toLocaleString("ru-RU")}
+                  </p>
+                )}
+                {campaign.status === "ab_testing" && !campaign.winnerSelectedAt && (
+                  <p className="text-xs text-amber-600 mt-3">
+                    Test in progress. Winner will be selected after {campaign.testDurationHours || 4} hours.
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        )}
       </Tabs>
 
       <CampaignForm

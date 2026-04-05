@@ -145,6 +145,7 @@ export default function TicketDetailPage() {
   const [showContext, setShowContext] = useState(false)
   const [macros, setMacros] = useState<any[]>([])
   const [handleTimer, setHandleTimer] = useState(0)
+  const handleTimerValueRef = useRef(0)
   const [showShortcuts, setShowShortcuts] = useState(false)
   const timerRef = useRef<NodeJS.Timeout | null>(null)
   const orgId = session?.user?.organizationId
@@ -223,17 +224,36 @@ export default function TicketDetailPage() {
     fetch("/api/v1/ticket-macros", { headers }).then(r => r.json()).then(j => {
       if (j.success) setMacros(j.data || [])
     }).catch(() => {})
-    // Handle timer
-    setHandleTimer(0)
-    timerRef.current = setInterval(() => setHandleTimer(t => t + 1), 1000)
+    // Handle timer — load existing value from ticket data, use ref for save-on-unmount
+    const loadAndStartTimer = async () => {
+      try {
+        const res = await fetch(`/api/v1/tickets/${ticketId}`, { headers })
+        const json = await res.json()
+        if (json.success && json.data?.handleTimeSeconds) {
+          setHandleTimer(json.data.handleTimeSeconds)
+          handleTimerValueRef.current = json.data.handleTimeSeconds
+        }
+      } catch {}
+      timerRef.current = setInterval(() => {
+        setHandleTimer(t => {
+          const next = t + 1
+          handleTimerValueRef.current = next
+          return next
+        })
+      }, 1000)
+    }
+    loadAndStartTimer()
     return () => {
       if (timerRef.current) clearInterval(timerRef.current)
-      // Save handle time on unmount
-      fetch(`/api/v1/tickets/${ticketId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json", ...headers },
-        body: JSON.stringify({ handleTimeSeconds: handleTimer }),
-      }).catch(() => {})
+      // Save handle time on unmount using ref (avoids stale closure)
+      const finalTime = handleTimerValueRef.current
+      if (finalTime > 0) {
+        fetch(`/api/v1/tickets/${ticketId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json", ...headers },
+          body: JSON.stringify({ handleTimeSeconds: finalTime }),
+        }).catch(() => {})
+      }
     }
   }, [ticketId])
 

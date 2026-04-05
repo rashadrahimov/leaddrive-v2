@@ -3,6 +3,7 @@ import { z } from "zod"
 import { prisma, logAudit } from "@/lib/prisma"
 import { getOrgId } from "@/lib/api-auth"
 import { executeWorkflows } from "@/lib/workflow-engine"
+import { fireWebhooks } from "@/lib/webhooks"
 
 const updateContactSchema = z.object({
   fullName: z.string().min(1).max(200).optional(),
@@ -51,7 +52,10 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     if (result.count === 0) return NextResponse.json({ error: "Not found" }, { status: 404 })
     const updated = await prisma.contact.findFirst({ where: { id, organizationId: orgId } })
     logAudit(orgId, "update", "contact", id, updated?.fullName || "", { newValue: parsed.data })
-    if (updated) executeWorkflows(orgId, "contact", "updated", updated).catch(() => {})
+    if (updated) {
+      executeWorkflows(orgId, "contact", "updated", updated).catch(() => {})
+      fireWebhooks(orgId, "contact.updated", { id: updated.id, fullName: updated.fullName, email: updated.email }).catch(() => {})
+    }
     return NextResponse.json({ success: true, data: updated })
   } catch (e) {
     console.error(e)

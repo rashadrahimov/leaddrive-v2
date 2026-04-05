@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma"
 import { getOrgId } from "@/lib/api-auth"
 import { sendEmail, renderTemplate } from "@/lib/email"
 import { createNotification } from "@/lib/notifications"
+import { trackContactEvent } from "@/lib/contact-events"
 
 export async function POST(
   req: NextRequest,
@@ -164,7 +165,10 @@ export async function POST(
             contactId: contact.id,
             variantId: variant.id,
           })
-          if (result.success) sentCount++
+          if (result.success) {
+            sentCount++
+            trackContactEvent(orgId, contact.id, "email_sent", { campaignId: campaign.id, variantId: variant.id }).catch(() => {})
+          }
           else if (errors.length < 3) errors.push(`${contact.email}: ${result.error}`)
         }
 
@@ -207,6 +211,7 @@ export async function POST(
         })
         if (result.success) {
           sentCount++
+          trackContactEvent(orgId, contact.id, "email_sent", { campaignId: campaign.id }).catch(() => {})
         } else if (errors.length < 3) {
           errors.push(`${contact.email}: ${result.error}`)
         }

@@ -1,9 +1,9 @@
 "use client"
 
-import { useRef, useCallback, useEffect, useState } from "react"
+import { useRef, useCallback, useEffect, useState, useImperativeHandle, forwardRef } from "react"
 import dynamic from "next/dynamic"
 import { Button } from "@/components/ui/button"
-import { Monitor, Smartphone } from "lucide-react"
+import { Monitor, Smartphone, Download } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 // Unlayer must be loaded client-side only
@@ -32,88 +32,103 @@ const MERGE_TAGS = {
   year: { name: "Year", value: "{{year}}" },
 }
 
+export interface EmailVisualEditorHandle {
+  exportHtml: () => Promise<{ design: any; html: string }>
+}
+
 interface Props {
   designJson?: any | null
   onExport: (design: any, html: string) => void
 }
 
-export function EmailVisualEditor({ designJson, onExport }: Props) {
-  const editorRef = useRef<any>(null)
-  const [ready, setReady] = useState(false)
-  const [previewMode, setPreviewMode] = useState<"desktop" | "mobile">("desktop")
+export const EmailVisualEditor = forwardRef<EmailVisualEditorHandle, Props>(
+  function EmailVisualEditor({ designJson, onExport }, ref) {
+    const editorRef = useRef<any>(null)
+    const [ready, setReady] = useState(false)
+    const [previewMode, setPreviewMode] = useState<"desktop" | "mobile">("desktop")
 
-  const onReady = useCallback((unlayer: any) => {
-    editorRef.current = unlayer
+    const onReady = useCallback((unlayer: any) => {
+      editorRef.current = unlayer
 
-    if (designJson) {
-      unlayer.loadDesign(designJson)
-    }
+      if (designJson) {
+        unlayer.loadDesign(designJson)
+      }
 
-    unlayer.setMergeTags(MERGE_TAGS)
-    setReady(true)
-  }, [designJson])
+      unlayer.setMergeTags(MERGE_TAGS)
+      setReady(true)
+    }, [designJson])
 
-  const exportHtml = useCallback(() => {
-    if (!editorRef.current) return
-    editorRef.current.exportHtml((data: any) => {
-      const { design, html } = data
-      onExport(design, html)
-    })
-  }, [onExport])
+    // Promise-based export — reliable, no setTimeout hacks
+    const exportHtmlAsync = useCallback((): Promise<{ design: any; html: string }> => {
+      return new Promise((resolve, reject) => {
+        if (!editorRef.current) {
+          reject(new Error("Editor not ready"))
+          return
+        }
+        editorRef.current.exportHtml((data: any) => {
+          const { design, html } = data
+          onExport(design, html)
+          resolve({ design, html })
+        })
+      })
+    }, [onExport])
 
-  // Expose export via a custom event for parent to trigger
-  useEffect(() => {
-    const handler = () => exportHtml()
-    window.addEventListener("unlayer-export", handler)
-    return () => window.removeEventListener("unlayer-export", handler)
-  }, [exportHtml])
+    // Expose exportHtml via ref for parent components
+    useImperativeHandle(ref, () => ({
+      exportHtml: exportHtmlAsync,
+    }), [exportHtmlAsync])
 
-  const togglePreview = (mode: "desktop" | "mobile") => {
-    setPreviewMode(mode)
-    if (editorRef.current) {
-      if (mode === "mobile") {
-        editorRef.current.setAppearance({ panels: { tools: { dock: "left" } } })
+    // Also listen for custom event (backward compat)
+    useEffect(() => {
+      const handler = () => { exportHtmlAsync().catch(() => {}) }
+      window.addEventListener("unlayer-export", handler)
+      return () => window.removeEventListener("unlayer-export", handler)
+    }, [exportHtmlAsync])
+
+    const togglePreview = (mode: "desktop" | "mobile") => {
+      setPreviewMode(mode)
+      if (editorRef.current) {
+        // Use Unlayer's native preview API
+        editorRef.current.showPreview(mode)
       }
     }
-  }
 
-  return (
-    <div className="border rounded-lg overflow-hidden">
-      {/* Preview toggle toolbar */}
-      <div className="flex items-center justify-between px-3 py-2 border-b bg-muted/30">
-        <span className="text-xs font-medium text-muted-foreground">Visual Email Editor</span>
-        <div className="flex items-center gap-1">
-          <button
-            type="button"
-            onClick={() => togglePreview("desktop")}
-            className={cn(
-              "p-1.5 rounded transition-colors",
-              previewMode === "desktop" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted"
-            )}
-            title="Desktop preview"
-          >
-            <Monitor className="h-4 w-4" />
-          </button>
-          <button
-            type="button"
-            onClick={() => togglePreview("mobile")}
-            className={cn(
-              "p-1.5 rounded transition-colors",
-              previewMode === "mobile" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted"
-            )}
-            title="Mobile preview"
-          >
-            <Smartphone className="h-4 w-4" />
-          </button>
-          <span className="w-px h-5 bg-border mx-1" />
-          <Button type="button" size="sm" variant="outline" onClick={exportHtml} disabled={!ready}>
-            Export HTML
-          </Button>
+    return (
+      <div className="border rounded-lg overflow-hidden">
+        {/* Preview toggle toolbar */}
+        <div className="flex items-center justify-between px-3 py-2 border-b bg-muted/30">
+          <span className="text-xs font-medium text-muted-foreground">Visual Email Editor</span>
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => togglePreview("desktop")}
+              className={cn(
+                "p-1.5 rounded transition-colors",
+                previewMode === "desktop" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted"
+              )}
+              title="Desktop preview"
+            >
+              <Monitor className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => togglePreview("mobile")}
+              className={cn(
+                "p-1.5 rounded transition-colors",
+                previewMode === "mobile" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted"
+              )}
+              title="Mobile preview"
+            >
+              <Smartphone className="h-4 w-4" />
+            </button>
+            <span className="w-px h-5 bg-border mx-1" />
+            <Button type="button" size="sm" variant="outline" onClick={() => exportHtmlAsync().catch(() => {})} disabled={!ready}>
+              <Download className="h-3.5 w-3.5 mr-1" /> Export HTML
+            </Button>
+          </div>
         </div>
-      </div>
 
-      {/* Editor */}
-      <div style={{ width: previewMode === "mobile" ? "375px" : "100%", margin: previewMode === "mobile" ? "0 auto" : undefined, transition: "width 0.3s" }}>
+        {/* Editor */}
         <EmailEditor
           onReady={onReady}
           minHeight={600}
@@ -132,6 +147,6 @@ export function EmailVisualEditor({ designJson, onExport }: Props) {
           }}
         />
       </div>
-    </div>
-  )
-}
+    )
+  }
+)

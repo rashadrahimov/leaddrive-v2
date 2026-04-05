@@ -3,6 +3,7 @@ import { z } from "zod"
 import { prisma, logAudit } from "@/lib/prisma"
 import { getOrgId } from "@/lib/api-auth"
 import { executeWorkflows } from "@/lib/workflow-engine"
+import { fireWebhooks } from "@/lib/webhooks"
 import { createNotification } from "@/lib/notifications"
 
 const updateLeadSchema = z.object({
@@ -71,6 +72,9 @@ export async function PUT(
           entityId: id,
         }).catch(() => {})
       }
+    }
+    if (updated) {
+      fireWebhooks(orgId, "lead.updated", { id: updated.id, contactName: updated.contactName }).catch(() => {})
     }
     return NextResponse.json({ success: true, data: updated })
   } catch (e) {

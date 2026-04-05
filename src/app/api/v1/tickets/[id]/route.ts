@@ -5,6 +5,7 @@ import { getOrgId, requireAuth, isAuthError } from "@/lib/api-auth"
 import { sendWhatsAppMessage } from "@/lib/whatsapp"
 import { executeWorkflows } from "@/lib/workflow-engine"
 import { autoAssignTicket } from "@/lib/auto-assign"
+import { fireWebhooks } from "@/lib/webhooks"
 
 const updateTicketSchema = z.object({
   subject: z.string().min(1).max(300).optional(),
@@ -124,6 +125,8 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     if (updated) {
       const triggerEvent = parsed.data.status ? "status_changed" : "updated"
       executeWorkflows(orgId, "ticket", triggerEvent, updated).catch(() => {})
+      const webhookEvent = updated.status === "resolved" ? "ticket.resolved" : "ticket.updated"
+      fireWebhooks(orgId, webhookEvent, { id: updated.id, ticketNumber: updated.ticketNumber, subject: updated.subject, status: updated.status }).catch(() => {})
     }
 
     return NextResponse.json({ success: true, data: updated })
