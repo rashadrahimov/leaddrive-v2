@@ -7,16 +7,22 @@ import { LanguageSwitcher } from "@/components/language-switcher"
 import { Menu, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { APP_URL } from "@/lib/domains"
+import { useTranslations } from "next-intl"
 
-const navLinks = [
-  { href: "/home#modules", label: "Modullar" },
-  { href: "/home#davinci", label: "Da Vinci" },
-  { href: "/home#pricing", label: "Qiymətlər" },
-  { href: "/demo", label: "Demo" },
-  { href: "/contact", label: "Əlaqə" },
-]
+function useNavLinks() {
+  const t = useTranslations("marketing.nav")
+  return [
+    { href: "/home#modules", label: t("modules") },
+    { href: "/home#davinci", label: t("davinci") },
+    { href: "/home#pricing", label: t("pricing") },
+    { href: "/demo", label: t("demo") },
+    { href: "/contact", label: t("contact") },
+  ]
+}
 
 export function MarketingNavbar() {
+  const t = useTranslations("marketing.nav")
+  const navLinks = useNavLinks()
   const [scrolled, setScrolled] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
 
@@ -62,13 +68,13 @@ export function MarketingNavbar() {
               href={`${APP_URL}/login`}
               className="text-sm font-medium text-[#001E3C]/60 hover:text-[#001E3C] transition-colors px-3 py-2"
             >
-              Daxil ol
+              {t("login")}
             </a>
             <Link
               href="/demo"
               className="rounded-full bg-[#0176D3] hover:bg-[#0176D3]/90 px-5 py-2.5 text-sm font-semibold text-white transition-all shadow-sm"
             >
-              Demo tələb et
+              {t("cta")}
             </Link>
           </div>
 
@@ -99,13 +105,13 @@ export function MarketingNavbar() {
                 href={`${APP_URL}/login`}
                 className="text-center text-sm font-medium text-[#001E3C]/60 hover:text-[#001E3C] py-2.5 border border-[#001E3C]/10 rounded-full"
               >
-                Daxil ol
+                {t("login")}
               </a>
               <Link
                 href="/demo"
                 className="text-center rounded-full bg-[#0176D3] text-sm font-semibold text-white px-5 py-2.5 hover:bg-[#0176D3]/90 transition-all"
               >
-                Demo tələb et
+                {t("cta")}
               </Link>
             </div>
           </div>

@@ -3340,5 +3340,155 @@
     "ticketCreated": "Tiket yaradıldı",
     "meetingScheduled": "Görüş planlaşdırıldı",
     "callLogged": "Zəng qeyd edildi"
+  },
+  "marketing": {
+    "nav": {
+      "modules": "Modullar",
+      "davinci": "Da Vinci",
+      "pricing": "Qiymətlər",
+      "demo": "Demo",
+      "contact": "Əlaqə",
+      "login": "Daxil ol",
+      "cta": "Demo tələb et"
+    },
+    "hero": {
+      "badge": "İntellektual CRM — 16 ağıllı funksiya",
+      "title1": "CRM artıq düşünür.",
+      "title2": "Satışdan dəstəyə — Da Vinci ilə.",
+      "description": "Da Vinci müştəriləri qiymətləndirir, məktub yazır, müraciətlərə cavab verir. Siz qərar verirsiniz — Da Vinci icra edir.",
+      "cta": "Demo tələb et",
+      "trial": "14 gün pulsuz sınaq",
+      "noCard": "Kredit kartı tələb olunmur",
+      "gdpr": "GDPR uyğun"
+    },
+    "stats": {
+      "features": "Funksiya",
+      "aiIntegrations": "Ağıllı funksiya",
+      "aiDesc": "Da Vinci ilə",
+      "channels": "Rabitə kanalı",
+      "channelsDesc": "Vahid gələn qutusu",
+      "users": "İstifadəçi",
+      "usersDesc": "və artmaqda"
+    },
+    "statsBar": {
+      "featuresCount": "128+ funksiya · 11 modul",
+      "title": "Hər şey bir platformada",
+      "description": "CRM, marketinq, dəstək, maliyyə və ERP — ayrı alətlərə ehtiyac yoxdur."
+    },
+    "modules": {
+      "sectionLabel": "Bütün modulları kəşf et",
+      "crm": { "title": "CRM & Satış", "description": "Liddən sövdələşmənin bağlanmasına qədər tam satış dövrü. Da Vinci lid skorinqi, pipeline vizuallaşdırması və sövdələşmə izləməsi." },
+      "marketing": { "title": "Marketinq Avtomatlaşdırması", "description": "Çoxkanallı kampaniya idarəsi, e-poçt ardıcıllıqları, marşrut qurucusu və ROI izləmə." },
+      "communication": { "title": "7-Kanal Vahid Gələn Qutusu", "description": "E-poçt, SMS, Telegram, WhatsApp, Facebook, Instagram, VK — bütün mesajlar bir yerdə." },
+      "support": { "title": "Dəstək & Helpdesk", "description": "Service Desk + Agent Desktop, Da Vinci asistent, çoxkanallı dəstək, bilik bazası və müştəri portalı." },
+      "analytics": { "title": "Maliyyə & Analitika", "description": "Xərc modeli mühərriki, büdcələmə, P&L, gəlirlilik analizi və dinamik qiymətləndirmə." },
+      "erp": { "title": "ERP & Layihə İdarəsi", "description": "Layihə mərhələləri, komanda bölgüsü, büdcə izləməsi, tamamlanma analitikası." },
+      "platform": { "title": "Platforma & Konfiqurasiya", "description": "Rollar, iş axınları, xüsusi sahələr, audit jurnalı, çox dilli, Web-to-Lead, API." }
+    },
+    "davinci": {
+      "sectionTitle": "16 ağıllı funksiya",
+      "sectionSubtitle": "Da Vinci hər yerdədir",
+      "sectionDescription": "Da Vinci mühərriki — əlavə deyil, platformanın əsasıdır.",
+      "autoResponses": "Avtomatik cavablar",
+      "autoResponsesDesc": "WhatsApp, Telegram və E-poçtda müştəri sorğularına Da Vinci cavab",
+      "leadScoring": "Lid skorinqi",
+      "leadScoringDesc": "Avtomatik A–F dərəcələndirmə və kvalifikasiya",
+      "emailGeneration": "E-poçt generasiyası",
+      "emailGenerationDesc": "Peşəkar mesaj və təklif yaratma — bir kliklə",
+      "profitability": "Gəlirlilik təhlili",
+      "profitabilityDesc": "Xərc modelindən avtomatik büdcə və marja hesabatları",
+      "knowledgeBase": "Bilik bazası",
+      "knowledgeBaseDesc": "Da Vinci müştəri portalında sualları avtomatik cavablandırır",
+      "tryDavinci": "Da Vinci-ni sınayın"
+    },
+    "pricing": {
+      "sectionTitle": "Qiymətlər",
+      "sectionSubtitle": "Sizinlə birlikdə böyüyən planlar",
+      "sectionDescription": "Pulsuz başlayın, hazır olanda yüksəldin. Gizli ödənişlər yoxdur.",
+      "monthly": "Aylıq",
+      "annual": "İllik",
+      "annualDiscount": "-10%",
+      "perUser": "istifadəçi / ay",
+      "popular": "Ən populyar",
+      "start": "Başla",
+      "requestDemo": "Demo tələb et",
+      "compareAll": "Bütün xüsusiyyətləri müqayisə et",
+      "starter": { "name": "Starter", "tagline": "Kiçik komandalar üçün başlanğıc" },
+      "business": { "name": "Business", "tagline": "Böyüyən satış komandaları üçün" },
+      "professional": { "name": "Professional", "tagline": "Marketinq və satış komandaları üçün" },
+      "enterprise": { "name": "Enterprise", "tagline": "Məlumata əsaslanan təşkilatlar üçün" },
+      "custom": { "name": "Enterprise 50+", "tagline": "50+ istifadəçi üçün fərdi həll" }
+    },
+    "testimonials": {
+      "sectionTitle": "Müştəri nəticələri",
+      "sectionSubtitle": "Real rəqəmlər, real şirkətlər"
+    },
+    "faq": {
+      "sectionTitle": "Tez-tez verilən suallar",
+      "sectionSubtitle": "Cavab tapa bilmirsinizsə, bizimlə əlaqə saxlayın.",
+      "q1": "Pulsuz sınaq mövcuddur?",
+      "a1": "Bəli! İstənilən planda 14 günlük pulsuz sınaq ilə başlayın. Kredit kartı tələb olunmur.",
+      "q2": "LeadDrive Salesforce və ya HubSpot-dan nə ilə fərqlənir?",
+      "a2": "LeadDrive-da daxili xərc modeli mühərriki, gəlirlilik analitikası və büdcələşdirmə/P&L var — rəqiblərin ya olmayan, ya da əlavə pul tələb etdiyi xüsusiyyətlər. Üstəlik, Da Vinci agentlərimiz daxilidir, əlavə deyil.",
+      "q3": "Mövcud CRM-dən məlumat köçürə bilərəm?",
+      "a3": "Mütləq. CSV/Excel idxalını dəstəkləyirik və populyar CRM-lər üçün miqrasiya skriptlərimiz var. Komandamız mürəkkəb miqrasiyalarda kömək edə bilər.",
+      "q4": "Hansı dillər dəstəklənir?",
+      "a4": "Platforma Azərbaycan, Rus və İngilis dillərini dəstəkləyir. Daha çox dil yol xəritəsindədir.",
+      "q5": "Məlumatlarım təhlükəsizdir?",
+      "a5": "Bəli. Tam şifrələmə ilə PostgreSQL, rol əsaslı giriş nəzarəti, 2FA, audit jurnalı və hər təşkilat üçün tam məlumat izolyasiyası istifadə edirik.",
+      "q6": "CRM-i öz sektoruma uyğunlaşdıra bilərəm?",
+      "a6": "Bəli. Xüsusi sahələr, iş axını avtomatlaşdırması, konfiqurasiya edilə bilən idarə panelləri və dinamik qiymətləndirmə LeadDrive-ı istənilən biznes modelinə uyğunlaşdırmağa imkan verir.",
+      "q7": "Yerli quraşdırma təklif edirsiniz?",
+      "a7": "Hazırda bulud yerləşdirməsi təklif edirik. Enterprise müştərilər üçün yerli quraşdırma variantları mövcuddur — satış komandamızla əlaqə saxlayın.",
+      "q8": "7 kanallı gələn qutusu necə işləyir?",
+      "a8": "E-poçt, SMS, Telegram, WhatsApp, Facebook, Instagram və VK hesablarınızı qoşun. Bütün mesajlar hər kontakt üzrə söhbət silsiləsi ilə bir vahid gələn qutusunda görünür."
+    },
+    "cta": {
+      "trial": "14 gün pulsuz — kredit kartı yoxdur",
+      "title": "Satışınızı gücləndirməyə hazırsınız?",
+      "description": "500+ şirkət artıq LeadDrive ilə satış, dəstək və maliyyəni bir platformada idarə edir.",
+      "requestDemo": "Demo tələb et",
+      "startTrial": "Pulsuz sınaq başlat"
+    },
+    "footer": {
+      "description": "İntellektual CRM platforması — satış, marketinq, dəstək və analitika bir yerdə.",
+      "product": "Məhsul",
+      "solutions": "Həllər",
+      "company": "Şirkət",
+      "legal": "Hüquqi",
+      "about": "Haqqımızda",
+      "faq": "FAQ",
+      "privacy": "Məxfilik Siyasəti",
+      "terms": "İstifadə Şərtləri",
+      "salesCrm": "Satış CRM",
+      "marketingAutomation": "Marketinq Avtomatlaşdırma",
+      "inbox7ch": "7 Kanallı Gələn Qutusu",
+      "supportTickets": "Dəstək və Tiketlər",
+      "financeAnalytics": "Maliyyə və Analitika",
+      "allRights": "Bütün hüquqlar qorunur.",
+      "location": "Bakı, Azərbaycan"
+    },
+    "contact": {
+      "title": "Bizimlə əlaqə saxlayın",
+      "subtitle": "Sualınız var? Komandamız sizə kömək etməyə hazırdır.",
+      "info": "Əlaqə məlumatları",
+      "form": "Mesaj göndərin",
+      "name": "Ad Soyad",
+      "email": "E-poçt",
+      "company": "Şirkət",
+      "phone": "Telefon",
+      "message": "Mesaj",
+      "send": "Göndər",
+      "success": "Mesajınız göndərildi!",
+      "error": "Xəta baş verdi. Yenidən cəhd edin."
+    },
+    "about": {
+      "title": "Haqqımızda",
+      "subtitle": "Güvən Technology LLC — Bakı, Azərbaycandan dünyaya texnologiya həlləri."
+    },
+    "meta": {
+      "title": "LeadDrive CRM — İntellektual CRM Platforması",
+      "description": "İntellektual CRM platforması — satış, marketinq, dəstək, maliyyə və analitika bir yerdə."
+    }
   }
 }

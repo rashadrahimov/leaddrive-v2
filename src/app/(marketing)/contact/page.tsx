@@ -3,8 +3,10 @@
 import { useState } from "react"
 import { AnimateIn } from "@/components/marketing/animate-in"
 import { Mail, Phone, MapPin, Send, Building2, Clock } from "lucide-react"
+import { useTranslations } from "next-intl"
 
 export default function ContactPage() {
+  const t = useTranslations("marketing.contact")
   const [submitted, setSubmitted] = useState(false)
   const [loading, setLoading] = useState(false)
 
@@ -15,10 +17,10 @@ export default function ContactPage() {
         <div className="mx-auto max-w-3xl px-4">
           <AnimateIn>
             <h1 className="text-4xl sm:text-5xl font-bold text-[#001E3C] tracking-tight">
-              Bizimlə əlaqə saxlayın
+              {t("title")}
             </h1>
             <p className="mt-4 text-lg text-[#001E3C]/60">
-              Suallarınız var? Komandamız 24 saat ərzində cavab verir.
+              {t("subtitle")}
             </p>
           </AnimateIn>
         </div>
@@ -32,14 +34,14 @@ export default function ContactPage() {
             <div className="lg:col-span-2 space-y-8">
               <AnimateIn delay={0.1}>
                 <div className="rounded-2xl border border-[#001E3C]/10 bg-[#F3F4F7] p-8 space-y-6">
-                  <h2 className="text-lg font-semibold text-[#001E3C]">Əlaqə məlumatları</h2>
+                  <h2 className="text-lg font-semibold text-[#001E3C]">{t("info")}</h2>
                   <div className="space-y-5">
                     <div className="flex items-start gap-4">
                       <div className="mt-1 rounded-lg bg-[#0176D3]/10 p-2">
                         <Mail className="h-5 w-5 text-[#0176D3]" />
                       </div>
                       <div>
-                        <p className="text-sm font-medium text-[#001E3C]">E-poçt</p>
+                        <p className="text-sm font-medium text-[#001E3C]">{t("email")}</p>
                         <a href="mailto:info@leaddrivecrm.org" className="text-sm text-[#001E3C]/60 hover:text-[#0176D3] transition-colors">
                           info@leaddrivecrm.org
                         </a>
@@ -50,7 +52,7 @@ export default function ContactPage() {
                         <Phone className="h-5 w-5 text-[#0176D3]" />
                       </div>
                       <div>
-                        <p className="text-sm font-medium text-[#001E3C]">Telefon</p>
+                        <p className="text-sm font-medium text-[#001E3C]">{t("phone")}</p>
                         <a href="tel:+994105313065" className="text-sm text-[#001E3C]/60 hover:text-[#0176D3] transition-colors">
                           +994 10 531 30 65
                         </a>
@@ -104,12 +106,12 @@ export default function ContactPage() {
                       <div className="mx-auto w-14 h-14 rounded-full bg-emerald-500/10 flex items-center justify-center mb-4">
                         <Send className="h-6 w-6 text-emerald-500" />
                       </div>
-                      <h3 className="text-xl font-semibold text-[#001E3C]">Mesajınız göndərildi!</h3>
-                      <p className="mt-2 text-[#001E3C]/60">24 saat ərzində sizinlə əlaqə saxlayacağıq.</p>
+                      <h3 className="text-xl font-semibold text-[#001E3C]">{t("success")}</h3>
+                      <p className="mt-2 text-[#001E3C]/60">{t("subtitle")}</p>
                     </div>
                   ) : (
                     <>
-                      <h2 className="text-lg font-semibold text-[#001E3C] mb-6">Mesaj göndərin</h2>
+                      <h2 className="text-lg font-semibold text-[#001E3C] mb-6">{t("form")}</h2>
                       <form
                         onSubmit={async (e) => {
                           e.preventDefault()
@@ -129,7 +131,7 @@ export default function ContactPage() {
                       >
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <div>
-                            <label className="block text-sm font-medium text-[#001E3C] mb-1.5">Ad, Soyad *</label>
+                            <label className="block text-sm font-medium text-[#001E3C] mb-1.5">{t("name")} *</label>
                             <input
                               name="name"
                               required
@@ -138,7 +140,7 @@ export default function ContactPage() {
                             />
                           </div>
                           <div>
-                            <label className="block text-sm font-medium text-[#001E3C] mb-1.5">Şirkət</label>
+                            <label className="block text-sm font-medium text-[#001E3C] mb-1.5">{t("company")}</label>
                             <input
                               name="company"
                               className="w-full rounded-lg border border-[#001E3C]/10 bg-white px-4 py-2.5 text-sm text-[#001E3C] placeholder-[#001E3C]/40 focus:border-[#0176D3] focus:outline-none focus:ring-1 focus:ring-[#0176D3]/20"
@@ -148,7 +150,7 @@ export default function ContactPage() {
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <div>
-                            <label className="block text-sm font-medium text-[#001E3C] mb-1.5">E-poçt *</label>
+                            <label className="block text-sm font-medium text-[#001E3C] mb-1.5">{t("email")} *</label>
                             <input
                               name="email"
                               type="email"
@@ -158,7 +160,7 @@ export default function ContactPage() {
                             />
                           </div>
                           <div>
-                            <label className="block text-sm font-medium text-[#001E3C] mb-1.5">Telefon</label>
+                            <label className="block text-sm font-medium text-[#001E3C] mb-1.5">{t("phone")}</label>
                             <input
                               name="phone"
                               type="tel"
@@ -168,7 +170,7 @@ export default function ContactPage() {
                           </div>
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-[#001E3C] mb-1.5">Mesajınız *</label>
+                          <label className="block text-sm font-medium text-[#001E3C] mb-1.5">{t("message")} *</label>
                           <textarea
                             name="message"
                             required
@@ -187,7 +189,7 @@ export default function ContactPage() {
                           ) : (
                             <>
                               <Send className="h-4 w-4" />
-                              Göndər
+                              {t("send")}
                             </>
                           )}
                         </button>

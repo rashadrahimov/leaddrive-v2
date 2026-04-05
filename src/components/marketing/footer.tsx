@@ -1,29 +1,35 @@
+"use client"
+
 import Link from "next/link"
 import { Logo } from "@/components/logo"
+import { useTranslations } from "next-intl"
 
-const footerLinks = {
-  Məhsul: [
-    { label: "Modullar", href: "/#modules" },
-    { label: "Da Vinci", href: "/#davinci" },
-    { label: "Qiymətlər", href: "/#pricing" },
-    { label: "Demo", href: "/demo" },
-  ],
-  Həllər: [
-    { label: "Satış CRM", href: "/demo#deals" },
-    { label: "Marketinq Avtomatlaşdırma", href: "/demo#campaigns" },
-    { label: "7 Kanallı Gələn Qutusu", href: "/demo#inbox" },
-    { label: "Dəstək və Tiketlər", href: "/demo#support" },
-    { label: "Maliyyə və Analitika", href: "/demo#finance" },
-  ],
-  Şirkət: [
-    { label: "Haqqımızda", href: "/about" },
-    { label: "Əlaqə", href: "/contact" },
-    { label: "FAQ", href: "/home#faq" },
-  ],
-  Hüquqi: [
-    { label: "Məxfilik Siyasəti", href: "/legal/privacy" },
-    { label: "İstifadə Şərtləri", href: "/legal/terms" },
-  ],
+function useFooterLinks() {
+  const t = useTranslations("marketing")
+  return {
+    [t("footer.product")]: [
+      { label: t("nav.modules"), href: "/#modules" },
+      { label: "Da Vinci", href: "/#davinci" },
+      { label: t("nav.pricing"), href: "/#pricing" },
+      { label: t("nav.demo"), href: "/demo" },
+    ],
+    [t("footer.solutions")]: [
+      { label: t("footer.salesCrm"), href: "/demo#deals" },
+      { label: t("footer.marketingAutomation"), href: "/demo#campaigns" },
+      { label: t("footer.inbox7ch"), href: "/demo#inbox" },
+      { label: t("footer.supportTickets"), href: "/demo#support" },
+      { label: t("footer.financeAnalytics"), href: "/demo#finance" },
+    ],
+    [t("footer.company")]: [
+      { label: t("footer.about"), href: "/about" },
+      { label: t("nav.contact"), href: "/contact" },
+      { label: t("footer.faq"), href: "/home#faq" },
+    ],
+    [t("footer.legal")]: [
+      { label: t("footer.privacy"), href: "/legal/privacy" },
+      { label: t("footer.terms"), href: "/legal/terms" },
+    ],
+  }
 }
 
 const socialLinks = [
@@ -57,6 +63,9 @@ const socialLinks = [
 ]
 
 export function MarketingFooter() {
+  const t = useTranslations("marketing.footer")
+  const footerLinks = useFooterLinks()
+
   return (
     <footer className="bg-[#001E3C] text-white border-t border-white/10">
       <div className="mx-auto max-w-7xl px-4 lg:px-8 py-16">
@@ -65,7 +74,7 @@ export function MarketingFooter() {
           <div className="col-span-2 md:col-span-1">
             <Logo size="md" sidebar />
             <p className="mt-4 text-sm text-white/70 leading-relaxed">
-              İntellektual CRM platforması — satış, marketinq, dəstək və analitika bir yerdə.
+              {t("description")}
             </p>
             <div className="mt-4 space-y-1.5 text-sm text-white/50">
               <p>📧 info@leaddrivecrm.org</p>
@@ -97,10 +106,10 @@ export function MarketingFooter() {
         {/* Bottom bar */}
         <div className="mt-12 pt-8 border-t border-white/10 flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-sm text-white/50">
-            &copy; {new Date().getFullYear()} Güvən Technology LLC. Bütün hüquqlar qorunur.
+            &copy; {new Date().getFullYear()} Güvən Technology LLC. {t("allRights")}
           </p>
           <p className="text-sm text-white/50">
-            Bakı, Azərbaycan
+            {t("location")}
           </p>
         </div>
       </div>

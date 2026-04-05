@@ -3344,5 +3344,155 @@
     "ticketCreated": "Ticket Created",
     "meetingScheduled": "Meeting Scheduled",
     "callLogged": "Call Logged"
+  },
+  "marketing": {
+    "nav": {
+      "modules": "Modules",
+      "davinci": "Da Vinci",
+      "pricing": "Pricing",
+      "demo": "Demo",
+      "contact": "Contact",
+      "login": "Sign In",
+      "cta": "Request Demo"
+    },
+    "hero": {
+      "badge": "Intelligent CRM — 16 Smart Features",
+      "title1": "CRM that thinks.",
+      "title2": "From sales to support — with Da Vinci.",
+      "description": "Da Vinci scores leads, writes emails, responds to inquiries. You make decisions — Da Vinci executes.",
+      "cta": "Request Demo",
+      "trial": "14-day free trial",
+      "noCard": "No credit card required",
+      "gdpr": "GDPR compliant"
+    },
+    "stats": {
+      "features": "Feature",
+      "aiIntegrations": "Smart Feature",
+      "aiDesc": "Powered by Da Vinci",
+      "channels": "Communication Channel",
+      "channelsDesc": "Unified inbox",
+      "users": "User",
+      "usersDesc": "and growing"
+    },
+    "statsBar": {
+      "featuresCount": "128+ features · 11 modules",
+      "title": "Everything on one platform",
+      "description": "CRM, marketing, support, finance and ERP — no need for separate tools."
+    },
+    "modules": {
+      "sectionLabel": "Explore all modules",
+      "crm": { "title": "CRM & Sales", "description": "Full sales cycle from lead to closed deal. Da Vinci lead scoring, pipeline visualization and deal tracking." },
+      "marketing": { "title": "Marketing Automation", "description": "Multi-channel campaign management, email sequences, journey builder and ROI tracking." },
+      "communication": { "title": "7-Channel Unified Inbox", "description": "Email, SMS, Telegram, WhatsApp, Facebook, Instagram, VK — all messages in one place." },
+      "support": { "title": "Support & Helpdesk", "description": "Service Desk + Agent Desktop, Da Vinci assistant, multi-channel support, knowledge base and customer portal." },
+      "analytics": { "title": "Finance & Analytics", "description": "Cost model engine, budgeting, P&L, profitability analysis and dynamic pricing." },
+      "erp": { "title": "ERP & Project Management", "description": "Project stages, team allocation, budget tracking, completion analytics." },
+      "platform": { "title": "Platform & Configuration", "description": "Roles, workflows, custom fields, audit log, multilingual, Web-to-Lead, API." }
+    },
+    "davinci": {
+      "sectionTitle": "16 Smart Features",
+      "sectionSubtitle": "Da Vinci is everywhere",
+      "sectionDescription": "The Da Vinci engine is not an add-on — it's the core of the platform.",
+      "autoResponses": "Auto Responses",
+      "autoResponsesDesc": "Da Vinci responds to customer inquiries on WhatsApp, Telegram and Email",
+      "leadScoring": "Lead Scoring",
+      "leadScoringDesc": "Automatic A–F grading and qualification",
+      "emailGeneration": "Email Generation",
+      "emailGenerationDesc": "Create professional messages and proposals — in one click",
+      "profitability": "Profitability Analysis",
+      "profitabilityDesc": "Automatic budget and margin reports from the cost model",
+      "knowledgeBase": "Knowledge Base",
+      "knowledgeBaseDesc": "Da Vinci automatically answers questions in the customer portal",
+      "tryDavinci": "Try Da Vinci"
+    },
+    "pricing": {
+      "sectionTitle": "Pricing",
+      "sectionSubtitle": "Plans that grow with you",
+      "sectionDescription": "Start free, upgrade when ready. No hidden fees.",
+      "monthly": "Monthly",
+      "annual": "Annual",
+      "annualDiscount": "-10%",
+      "perUser": "user / month",
+      "popular": "Most Popular",
+      "start": "Get Started",
+      "requestDemo": "Request Demo",
+      "compareAll": "Compare all features",
+      "starter": { "name": "Starter", "tagline": "For small teams getting started" },
+      "business": { "name": "Business", "tagline": "For growing sales teams" },
+      "professional": { "name": "Professional", "tagline": "For marketing and sales teams" },
+      "enterprise": { "name": "Enterprise", "tagline": "For data-driven organizations" },
+      "custom": { "name": "Enterprise 50+", "tagline": "Custom solution for 50+ users" }
+    },
+    "testimonials": {
+      "sectionTitle": "Customer Results",
+      "sectionSubtitle": "Real numbers, real companies"
+    },
+    "faq": {
+      "sectionTitle": "Frequently Asked Questions",
+      "sectionSubtitle": "Can't find an answer? Contact us.",
+      "q1": "Is there a free trial?",
+      "a1": "Yes! Start with a 14-day free trial on any plan. No credit card required.",
+      "q2": "How is LeadDrive different from Salesforce or HubSpot?",
+      "a2": "LeadDrive includes a built-in cost model engine, profitability analytics and budgeting/P&L — features competitors either lack or charge extra for. Plus, our Da Vinci agents are built-in, not add-ons.",
+      "q3": "Can I migrate data from another CRM?",
+      "a3": "Absolutely. We support CSV/Excel import and have migration scripts for popular CRMs. Our team can assist with complex migrations.",
+      "q4": "What languages are supported?",
+      "a4": "The platform supports Azerbaijani, Russian and English. More languages are on the roadmap.",
+      "q5": "Is my data secure?",
+      "a5": "Yes. We use PostgreSQL with full encryption, role-based access control, 2FA, audit logging and complete data isolation for each organization.",
+      "q6": "Can I customize the CRM for my industry?",
+      "a6": "Yes. Custom fields, workflow automation, configurable dashboards and dynamic pricing allow you to adapt LeadDrive to any business model.",
+      "q7": "Do you offer on-premise deployment?",
+      "a7": "Currently we offer cloud deployment. On-premise options are available for Enterprise customers — contact our sales team.",
+      "q8": "How does the 7-channel inbox work?",
+      "a8": "Connect your Email, SMS, Telegram, WhatsApp, Facebook, Instagram and VK accounts. All messages appear in a unified inbox with conversation threads per contact."
+    },
+    "cta": {
+      "trial": "14 days free — no card required",
+      "title": "Ready to supercharge your sales?",
+      "description": "500+ companies already manage sales, support and finance on one platform with LeadDrive.",
+      "requestDemo": "Request Demo",
+      "startTrial": "Start Free Trial"
+    },
+    "footer": {
+      "description": "Intelligent CRM platform — sales, marketing, support and analytics in one place.",
+      "product": "Product",
+      "solutions": "Solutions",
+      "company": "Company",
+      "legal": "Legal",
+      "about": "About Us",
+      "faq": "FAQ",
+      "privacy": "Privacy Policy",
+      "terms": "Terms of Service",
+      "salesCrm": "Sales CRM",
+      "marketingAutomation": "Marketing Automation",
+      "inbox7ch": "7-Channel Inbox",
+      "supportTickets": "Support & Tickets",
+      "financeAnalytics": "Finance & Analytics",
+      "allRights": "All rights reserved.",
+      "location": "Baku, Azerbaijan"
+    },
+    "contact": {
+      "title": "Get in Touch",
+      "subtitle": "Have questions? Our team is ready to help.",
+      "info": "Contact Information",
+      "form": "Send a Message",
+      "name": "Full Name",
+      "email": "Email",
+      "company": "Company",
+      "phone": "Phone",
+      "message": "Message",
+      "send": "Send",
+      "success": "Message sent successfully!",
+      "error": "An error occurred. Please try again."
+    },
+    "about": {
+      "title": "About Us",
+      "subtitle": "Güvən Technology LLC — technology solutions from Baku, Azerbaijan to the world."
+    },
+    "meta": {
+      "title": "LeadDrive CRM — Intelligent CRM Platform",
+      "description": "Intelligent CRM platform — sales, marketing, support, finance and analytics in one place."
+    }
   }
 }

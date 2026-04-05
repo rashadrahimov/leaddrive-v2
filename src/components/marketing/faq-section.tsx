@@ -3,9 +3,9 @@
 import { useState } from "react"
 import { SectionWrapper } from "./section-wrapper"
 import { AnimateIn } from "./animate-in"
-import { faqs } from "@/lib/marketing-data"
 import { ChevronDown } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useTranslations } from "next-intl"
 
 function FaqItem({ q, a, defaultOpen = false }: { q: string; a: string; defaultOpen?: boolean }) {
   const [open, setOpen] = useState(defaultOpen)
@@ -36,22 +36,26 @@ function FaqItem({ q, a, defaultOpen = false }: { q: string; a: string; defaultO
   )
 }
 
+const FAQ_KEYS = ["q1", "q2", "q3", "q4", "q5", "q6", "q7", "q8"] as const
+
 export function FaqSection() {
+  const t = useTranslations("marketing.faq")
+
   return (
     <SectionWrapper id="faq" variant="white" narrow>
       <AnimateIn className="text-center mb-12">
         <h2 className="text-3xl lg:text-4xl font-bold tracking-tight text-[#001E3C]">
-          Tez-tez verilən suallar
+          {t("sectionTitle")}
         </h2>
         <p className="mt-4 text-lg text-[#001E3C]/60">
-          Cavab tapa bilmirsinizsə, bizimlə əlaqə saxlayın.
+          {t("sectionSubtitle")}
         </p>
       </AnimateIn>
 
       <div className="max-w-3xl mx-auto">
-        {faqs.map((faq, i) => (
-          <AnimateIn key={i} delay={i * 40}>
-            <FaqItem q={faq.q} a={faq.a} defaultOpen={i === 0} />
+        {FAQ_KEYS.map((key, i) => (
+          <AnimateIn key={key} delay={i * 40}>
+            <FaqItem q={t(key)} a={t(`a${i + 1}`)} defaultOpen={i === 0} />
           </AnimateIn>
         ))}
       </div>
