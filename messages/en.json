@@ -1070,6 +1070,7 @@
     "statusSent": "Sent",
     "statusCancelled": "Cancelled",
     "statusAbTesting": "A/B Testing",
+    "bounceRate": "Bounce rate",
     "sent": "Sent",
     "budget": "Budget",
     "sendCampaign": "Send Campaign",
@@ -2301,7 +2302,17 @@
     "exportHtml": "Export HTML",
     "startFromTemplate": "From template",
     "templateLibrary": "Template Library",
-    "templateLibraryHint": "Choose a pre-built template to get started"
+    "templateLibraryHint": "Choose a pre-built template to get started",
+    "mergeClientName": "Client Name",
+    "mergeClientEmail": "Client Email",
+    "mergeCompany": "Company",
+    "mergeService": "Service",
+    "mergeNewServices": "New Services",
+    "mergeImprovements": "Improvements",
+    "mergeUpcoming": "Upcoming",
+    "mergeDate": "Date",
+    "mergeMonth": "Month",
+    "mergeYear": "Year"
   },
   "emailLog": {
     "title": "Email Log",
@@ -3230,7 +3241,9 @@
     "billing": "billing",
     "technical": "technical",
     "onboarding": "onboarding",
-    "sales": "sales"
+    "sales": "sales",
+    "placeholderName": "Quick Close",
+    "placeholderDesc": "Optional description"
   },
   "customer360": {
     "title": "Customer 360",

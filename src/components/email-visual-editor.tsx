@@ -40,10 +40,11 @@ interface Props {
   designJson?: any | null
   onExport: (design: any, html: string) => void
   labels?: { title?: string; exportHtml?: string; loading?: string }
+  mergeTagNames?: Record<string, string>
 }
 
 export const EmailVisualEditor = forwardRef<EmailVisualEditorHandle, Props>(
-  function EmailVisualEditor({ designJson, onExport, labels }, ref) {
+  function EmailVisualEditor({ designJson, onExport, labels, mergeTagNames }, ref) {
     const editorRef = useRef<any>(null)
     const [ready, setReady] = useState(false)
     const [previewMode, setPreviewMode] = useState<"desktop" | "mobile">("desktop")
@@ -55,9 +56,14 @@ export const EmailVisualEditor = forwardRef<EmailVisualEditorHandle, Props>(
         unlayer.loadDesign(designJson)
       }
 
-      unlayer.setMergeTags(MERGE_TAGS)
+      // Build merge tags with optional translated names
+      const tags: Record<string, any> = {}
+      for (const [key, val] of Object.entries(MERGE_TAGS)) {
+        tags[key] = { ...val, name: mergeTagNames?.[key] || val.name }
+      }
+      unlayer.setMergeTags(tags)
       setReady(true)
-    }, [designJson])
+    }, [designJson, mergeTagNames])
 
     // Promise-based export — reliable, no setTimeout hacks
     const exportHtmlAsync = useCallback((): Promise<{ design: any; html: string }> => {

@@ -323,7 +323,7 @@ export default function IntegrationsPage() {
           <div className="grid gap-4">
             <div>
               <Label>{t("slackName")}</Label>
-              <Input placeholder="Sales Notifications" value={slackName} onChange={e => setSlackName(e.target.value)} />
+              <Input placeholder={t("slackName")} value={slackName} onChange={e => setSlackName(e.target.value)} />
             </div>
             <div>
               <Label>{t("slackWebhookUrl")}</Label>

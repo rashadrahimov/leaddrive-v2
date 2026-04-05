@@ -208,7 +208,7 @@ export default function MacrosSettingsPage() {
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label>Name</Label>
-                <Input value={name} onChange={e => setName(e.target.value)} placeholder="Quick Close" />
+                <Input value={name} onChange={e => setName(e.target.value)} placeholder={t("placeholderName")} />
               </div>
               <div>
                 <Label>Category</Label>
@@ -219,7 +219,7 @@ export default function MacrosSettingsPage() {
             </div>
             <div>
               <Label>Description</Label>
-              <Input value={description} onChange={e => setDescription(e.target.value)} placeholder="Optional description" />
+              <Input value={description} onChange={e => setDescription(e.target.value)} placeholder={t("placeholderDesc")} />
             </div>
             <div>
               <Label>Shortcut Key</Label>

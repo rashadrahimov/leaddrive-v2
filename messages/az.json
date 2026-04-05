@@ -1065,6 +1065,7 @@
     "statusSent": "Göndərildi",
     "statusCancelled": "Ləğv edildi",
     "statusAbTesting": "A/B Test",
+    "bounceRate": "Geri dönmə",
     "sent": "Göndərildi",
     "budget": "Büdcə",
     "sendCampaign": "Kampaniyanı göndər",
@@ -2296,7 +2297,17 @@
     "exportHtml": "HTML ixrac et",
     "startFromTemplate": "Şablondan",
     "templateLibrary": "Şablon kitabxanası",
-    "templateLibraryHint": "İşə başlamaq üçün hazır şablon seçin"
+    "templateLibraryHint": "İşə başlamaq üçün hazır şablon seçin",
+    "mergeClientName": "Müştəri adı",
+    "mergeClientEmail": "Müştəri emaili",
+    "mergeCompany": "Şirkət",
+    "mergeService": "Xidmət",
+    "mergeNewServices": "Yeni xidmətlər",
+    "mergeImprovements": "Təkmilləşdirmələr",
+    "mergeUpcoming": "Gələcək",
+    "mergeDate": "Tarix",
+    "mergeMonth": "Ay",
+    "mergeYear": "İl"
   },
   "emailLog": {
     "title": "Email Jurnalı",
@@ -3225,7 +3236,9 @@
     "billing": "hesablaşma",
     "technical": "texniki",
     "onboarding": "onborninq",
-    "sales": "satış"
+    "sales": "satış",
+    "placeholderName": "Sürətli bağlama",
+    "placeholderDesc": "İstəyə bağlı təsvir"
   },
   "customer360": {
     "title": "Müştəri 360",

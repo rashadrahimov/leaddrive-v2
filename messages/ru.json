@@ -1070,6 +1070,7 @@
     "statusSent": "Отправлена",
     "statusCancelled": "Отменена",
     "statusAbTesting": "A/B Тест",
+    "bounceRate": "Отказы",
     "sent": "Отправлено",
     "budget": "Бюджет",
     "sendCampaign": "Отправить кампанию",
@@ -2301,7 +2302,17 @@
     "exportHtml": "Экспорт HTML",
     "startFromTemplate": "Из шаблона",
     "templateLibrary": "Библиотека шаблонов",
-    "templateLibraryHint": "Выберите готовый шаблон для начала работы"
+    "templateLibraryHint": "Выберите готовый шаблон для начала работы",
+    "mergeClientName": "Имя клиента",
+    "mergeClientEmail": "Email клиента",
+    "mergeCompany": "Компания",
+    "mergeService": "Услуга",
+    "mergeNewServices": "Новые услуги",
+    "mergeImprovements": "Улучшения",
+    "mergeUpcoming": "Предстоящие",
+    "mergeDate": "Дата",
+    "mergeMonth": "Месяц",
+    "mergeYear": "Год"
   },
   "emailLog": {
     "title": "Журнал email",
@@ -3230,7 +3241,9 @@
     "billing": "биллинг",
     "technical": "технические",
     "onboarding": "онбординг",
-    "sales": "продажи"
+    "sales": "продажи",
+    "placeholderName": "Быстрое закрытие",
+    "placeholderDesc": "Необязательное описание"
   },
   "customer360": {
     "title": "Клиент 360",

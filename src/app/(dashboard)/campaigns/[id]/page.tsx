@@ -75,7 +75,7 @@ export default function CampaignDetailPage() {
       method: "DELETE",
       headers: orgId ? { "x-organization-id": String(orgId) } : {},
     })
-    if (!res.ok) throw new Error("Failed to delete")
+    if (!res.ok) throw new Error(tc("failedToSave"))
     router.push("/campaigns")
   }
 
@@ -189,9 +189,9 @@ export default function CampaignDetailPage() {
               </CardHeader>
               <CardContent className="space-y-3">
                 {[
-                  { label: "Open rate", pct: openRate, color: "bg-blue-500" },
-                  { label: "Click rate", pct: clickRate, color: "bg-green-500" },
-                  { label: "Bounce rate", pct: bounceRate, color: "bg-red-400" },
+                  { label: tab("openRate"), pct: openRate, color: "bg-blue-500" },
+                  { label: tab("clickRate"), pct: clickRate, color: "bg-green-500" },
+                  { label: t("bounceRate") || "Bounce rate", pct: bounceRate, color: "bg-red-400" },
                 ].map(r => (
                   <div key={r.label}>
                     <div className="flex justify-between text-sm mb-1">

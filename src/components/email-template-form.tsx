@@ -299,6 +299,18 @@ export function EmailTemplateForm({ open, onOpenChange, onSaved, initialData, or
                     setForm(f => ({ ...f, designJson: design, htmlBody: html }))
                   }}
                   labels={{ title: t("visualEditor"), exportHtml: t("exportHtml") }}
+                  mergeTagNames={{
+                    client_name: t("mergeClientName"),
+                    client_email: t("mergeClientEmail"),
+                    company: t("mergeCompany"),
+                    service: t("mergeService"),
+                    new_services: t("mergeNewServices"),
+                    improvements: t("mergeImprovements"),
+                    upcoming: t("mergeUpcoming"),
+                    date: t("mergeDate"),
+                    month: t("mergeMonth"),
+                    year: t("mergeYear"),
+                  }}
                 />
               ) : (
               <>

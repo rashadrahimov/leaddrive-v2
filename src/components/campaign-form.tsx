@@ -201,15 +201,15 @@ export function CampaignForm({ open, onOpenChange, onSaved, initialData, orgId, 
             })))
           } else {
             setVariants([
-              { name: "Variant A", subject: "", templateId: "", percentage: 50 },
-              { name: "Variant B", subject: "", templateId: "", percentage: 50 },
+              { name: `${tab("variant")} A`, subject: "", templateId: "", percentage: 50 },
+              { name: `${tab("variant")} B`, subject: "", templateId: "", percentage: 50 },
             ])
           }
         }).catch(() => {})
       } else {
         setVariants([
-          { name: "Variant A", subject: "", templateId: "", percentage: 50 },
-          { name: "Variant B", subject: "", templateId: "", percentage: 50 },
+          { name: `${tab("variant")} A`, subject: "", templateId: "", percentage: 50 },
+          { name: `${tab("variant")} B`, subject: "", templateId: "", percentage: 50 },
         ])
       }
     }
