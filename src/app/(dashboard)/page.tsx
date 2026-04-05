@@ -110,34 +110,17 @@ export default function DashboardPage() {
 
   const { financial, pipeline, leads, operations, activity, risks, forecast, campaigns, events, weeklyMetrics } = data
 
-  // Adaptive grid: use inline style for dynamic column count
-  function gridStyle(count: number) {
-    return { gridTemplateColumns: `repeat(${Math.min(count, 3)}, minmax(0, 1fr))` }
-  }
-
-  // Row 2 widgets
-  const row2 = [
+  // All widgets in a single flow — 3 per row, no gaps when disabled
+  const allWidgets = [
     widgets.dealPipeline && <SalesPipeline key="pipeline" pipeline={pipeline} />,
     widgets.revenueTrend && <RevenueTrend key="revenue" forecast={forecast} />,
     widgets.leadSources && <LeadSourcesDonut key="sources" leadsBySource={leads.bySource} totalLeads={leads.activeCount || leads.total || 0} />,
-  ].filter(Boolean)
-
-  // Row 3 widgets
-  const row3 = [
     widgets.recentDeals && <RecentDeals key="deals" deals={pipeline.recentDeals} />,
     widgets.aiLeadScoring && <AiLeadScoring key="scoring" leads={leads.topScored} />,
     widgets.activityFeed && <ActivityFeed key="activity" activities={activity.recent} timeAgo={timeAgo} />,
-  ].filter(Boolean)
-
-  // Row 4 widgets
-  const row4 = [
     widgets.campaignStats && <CampaignStats key="campaigns" campaigns={campaigns} />,
     widgets.upcomingEvents && <UpcomingEvents key="events" events={events} />,
     widgets.weeklyMetrics && <WeeklyMetrics key="weekly" metrics={weeklyMetrics} />,
-  ].filter(Boolean)
-
-  // Row 5 widgets
-  const row5 = [
     widgets.recommendedActions && <RecommendedActions key="actions" />,
     widgets.churnRisk && <ChurnRiskWidget key="churn" />,
   ].filter(Boolean)
@@ -207,24 +190,9 @@ export default function DashboardPage() {
       {/* ═══ Risks Banner ═══ */}
       {risks && <RisksBanner risks={risks} />}
 
-      {/* ═══ Row 2: Pipeline + Revenue Trend + Lead Sources ═══ */}
-      {row2.length > 0 && (
-        <div className="grid gap-4" style={gridStyle(row2.length)}>{row2}</div>
-      )}
-
-      {/* ═══ Row 3: Recent Deals + Da Vinci Lead Scoring + Activity Feed ═══ */}
-      {row3.length > 0 && (
-        <div className="grid gap-4" style={gridStyle(row3.length)}>{row3}</div>
-      )}
-
-      {/* ═══ Row 4: Campaigns + Events + Weekly Metrics ═══ */}
-      {row4.length > 0 && (
-        <div className="grid gap-4" style={gridStyle(row4.length)}>{row4}</div>
-      )}
-
-      {/* ═══ Row 5: AI Insights ═══ */}
-      {row5.length > 0 && (
-        <div className="grid gap-4" style={gridStyle(row5.length)}>{row5}</div>
+      {/* ═══ All widgets in 3-column flow ═══ */}
+      {allWidgets.length > 0 && (
+        <div className="grid lg:grid-cols-3 md:grid-cols-2 gap-4">{allWidgets}</div>
       )}
     </div>
   )
