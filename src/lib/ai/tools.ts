@@ -14,7 +14,7 @@ export const TOOL_META: Record<string, ToolMeta> = {
   create_task: { riskLevel: "low", category: "tasks", requiresApproval: false },
   update_deal_stage: { riskLevel: "medium", category: "deals", requiresApproval: false },
   create_ticket: { riskLevel: "medium", category: "tickets", requiresApproval: false },
-  create_deal: { riskLevel: "medium", category: "deals", requiresApproval: false },
+  create_deal: { riskLevel: "high", category: "deals", requiresApproval: true },
   send_email: { riskLevel: "high", category: "email", requiresApproval: true },
   update_contact: { riskLevel: "high", category: "contacts", requiresApproval: true },
 }

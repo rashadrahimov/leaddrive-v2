@@ -58,14 +58,21 @@ export async function GET(req: NextRequest) {
       prisma.deal.count({ where }),
     ])
 
-    // Weighted pipeline summary
-    const activeDeals = deals.filter((d: any) => !["WON", "LOST"].includes(d.stage))
-    const totalPipeline = activeDeals.reduce((s: number, d: any) => s + (d.valueAmount || 0), 0)
-    const weightedPipeline = activeDeals.reduce((s: number, d: any) => s + (d.valueAmount || 0) * ((d.probability || 0) / 100), 0)
+    // Weighted pipeline summary — computed from ALL org deals, not just paginated page
+    const allActiveDeals = await prisma.deal.findMany({
+      where: {
+        organizationId: orgId,
+        stage: { notIn: ["WON", "LOST"] },
+        ...(pipelineId ? { pipelineId } : {}),
+      },
+      select: { stage: true, valueAmount: true, probability: true },
+    })
+    const totalPipeline = allActiveDeals.reduce((s: number, d: any) => s + (d.valueAmount || 0), 0)
+    const weightedPipeline = allActiveDeals.reduce((s: number, d: any) => s + (d.valueAmount || 0) * ((d.probability || 0) / 100), 0)
 
     // Group by stage
     const stageMap: Record<string, { count: number; value: number; weighted: number }> = {}
-    for (const d of activeDeals) {
+    for (const d of allActiveDeals) {
       if (!stageMap[d.stage]) stageMap[d.stage] = { count: 0, value: 0, weighted: 0 }
       stageMap[d.stage].count++
       stageMap[d.stage].value += d.valueAmount || 0
