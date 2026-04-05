@@ -120,6 +120,32 @@ export async function generateNextBestActions(
     }
   }
 
+  // 2b. Deals ready for next stage (>3 activities in current stage)
+  for (const deal of userDeals) {
+    const stageActivities = await prisma.activity.count({
+      where: {
+        organizationId: orgId,
+        relatedType: "deal",
+        relatedId: deal.id,
+        createdAt: deal.stageChangedAt ? { gte: deal.stageChangedAt } : undefined,
+      },
+    })
+    if (stageActivities >= 3 && deal.stageChangedAt) {
+      const daysInStage = daysSince(deal.stageChangedAt)
+      if (daysInStage > 5) {
+        actions.push({
+          type: "update_stage",
+          title: `Продвинуть "${deal.name}" на следующую стадию`,
+          reason: `${stageActivities} активностей в стадии ${deal.stage}, ${daysInStage} дн. Готово к переходу.`,
+          priority: "medium",
+          entityType: "deal",
+          entityId: deal.id,
+          entityName: deal.name,
+        })
+      }
+    }
+  }
+
   // 3. Overdue tasks
   const overdueTasks = await prisma.task.findMany({
     where: {
@@ -150,22 +176,55 @@ export async function generateNextBestActions(
     where: {
       organizationId: orgId,
       status: { in: ["new", "in_progress", "waiting"] },
-      priority: { in: ["high", "critical"] },
     },
-    select: { id: true, subject: true, priority: true, ticketNumber: true, createdAt: true },
-    take: 5,
+    select: {
+      id: true, subject: true, priority: true, ticketNumber: true,
+      createdAt: true, slaFirstResponseDueAt: true, slaPolicyName: true,
+    },
+    take: 10,
     orderBy: { createdAt: "asc" },
   })
 
   for (const ticket of urgentTickets) {
     const age = daysSince(ticket.createdAt)
-    if (age > 1) {
+
+    // SLA-based: check if approaching first response deadline
+    if (ticket.slaFirstResponseDueAt) {
+      const hoursToSla = (new Date(ticket.slaFirstResponseDueAt).getTime() - now.getTime()) / 3600000
+      if (hoursToSla > 0 && hoursToSla <= 2) {
+        actions.push({
+          type: "task",
+          title: `SLA: ${ticket.ticketNumber} — ${ticket.subject}`,
+          reason: `SLA первого ответа через ${Math.round(hoursToSla * 60)} мин. (${ticket.slaPolicyName || "стандартный"})`,
+          priority: "high",
+          entityType: "deal",
+          entityId: ticket.id,
+          entityName: ticket.subject,
+        })
+        continue
+      }
+      if (hoursToSla <= 0) {
+        actions.push({
+          type: "task",
+          title: `SLA нарушен: ${ticket.ticketNumber}`,
+          reason: `Превышено SLA первого ответа на ${Math.abs(Math.round(hoursToSla))} ч. Срочно!`,
+          priority: "high",
+          entityType: "deal",
+          entityId: ticket.id,
+          entityName: ticket.subject,
+        })
+        continue
+      }
+    }
+
+    // Fallback: priority-based urgency
+    if ((ticket.priority === "critical" && age >= 1) || (ticket.priority === "high" && age >= 2)) {
       actions.push({
         type: "task",
         title: `Тикет ${ticket.ticketNumber}: ${ticket.subject}`,
         reason: `Приоритет ${ticket.priority}, открыт ${age} дн. Требует внимания.`,
         priority: ticket.priority === "critical" ? "high" : "medium",
-        entityType: "deal", // fallback
+        entityType: "deal",
         entityId: ticket.id,
         entityName: ticket.subject,
       })

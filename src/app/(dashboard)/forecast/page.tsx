@@ -27,6 +27,7 @@ export default function ForecastPage() {
   const t = useTranslations("common")
   const [forecast, setForecast] = useState<any[]>([])
   const [quotas, setQuotas] = useState<QuotaRow[]>([])
+  const [pipelineData, setPipelineData] = useState<{ name: string; total: number; weighted: number; count: number }[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedQuarter, setSelectedQuarter] = useState(() => Math.ceil((new Date().getMonth() + 1) / 3))
   const year = new Date().getFullYear()
@@ -35,10 +36,27 @@ export default function ForecastPage() {
     Promise.all([
       fetch("/api/v1/analytics/forecast?months=6").then(r => r.json()),
       fetch(`/api/v1/sales-quotas?year=${year}`).then(r => r.json()),
+      fetch("/api/v1/pipelines").then(r => r.json()),
+      fetch("/api/v1/deals?limit=200").then(r => r.json()),
     ])
-      .then(([f, q]) => {
+      .then(([f, q, p, d]) => {
         if (f.success) setForecast(f.data)
         if (q.success) setQuotas(q.data)
+        // Compute per-pipeline weighted values
+        if (p.success && d.success) {
+          const pipelines = p.data || []
+          const deals = (d.data?.deals || []).filter((deal: any) => !["WON", "LOST"].includes(deal.stage))
+          const result = pipelines.map((pl: any) => {
+            const plDeals = deals.filter((deal: any) => deal.pipelineId === pl.id)
+            return {
+              name: pl.name,
+              count: plDeals.length,
+              total: plDeals.reduce((s: number, d: any) => s + (d.valueAmount || 0), 0),
+              weighted: Math.round(plDeals.reduce((s: number, d: any) => s + (d.valueAmount || 0) * ((d.probability || 0) / 100), 0)),
+            }
+          }).filter((pl: any) => pl.count > 0)
+          setPipelineData(result)
+        }
       })
       .catch(() => {})
       .finally(() => setLoading(false))
@@ -194,6 +212,39 @@ export default function ForecastPage() {
                 </div>
               )
             })}
+          </div>
+        </MotionCard>
+      )}
+
+      {/* By Pipeline */}
+      {pipelineData.length > 0 && (
+        <MotionCard className="p-4 rounded-xl border bg-card">
+          <h3 className="text-sm font-semibold mb-3">По воронкам</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {pipelineData.map(pl => (
+              <div key={pl.name} className="rounded-lg border p-3 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold">{pl.name}</span>
+                  <span className="text-[10px] text-muted-foreground">{pl.count} сделок</span>
+                </div>
+                <div>
+                  <div className="flex items-center justify-between mb-0.5">
+                    <span className="text-[10px] text-muted-foreground">Всего</span>
+                    <span className="text-xs font-medium">{fmtCurrency(pl.total)}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] text-muted-foreground">Взвешенная</span>
+                    <span className="text-xs font-bold text-primary">{fmtCurrency(pl.weighted)}</span>
+                  </div>
+                </div>
+                <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                  <div
+                    className="h-full rounded-full bg-primary/60"
+                    style={{ width: `${pl.total > 0 ? Math.round((pl.weighted / pl.total) * 100) : 0}%` }}
+                  />
+                </div>
+              </div>
+            ))}
           </div>
         </MotionCard>
       )}

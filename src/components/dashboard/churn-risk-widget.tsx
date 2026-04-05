@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useTranslations } from "next-intl"
-import { AlertTriangle } from "lucide-react"
+import { AlertTriangle, Plus, Loader2 } from "lucide-react"
 import Link from "next/link"
 
 interface ChurnItem {
@@ -17,6 +17,7 @@ export function ChurnRiskWidget() {
   const t = useTranslations("dashboard")
   const [data, setData] = useState<ChurnItem[]>([])
   const [loading, setLoading] = useState(true)
+  const [creatingTask, setCreatingTask] = useState<string | null>(null)
 
   useEffect(() => {
     fetch("/api/v1/analytics/churn-risk?limit=5")
@@ -25,6 +26,25 @@ export function ChurnRiskWidget() {
       .catch(() => {})
       .finally(() => setLoading(false))
   }, [])
+
+  const handleCreateCheckin = async (item: ChurnItem) => {
+    setCreatingTask(item.companyId)
+    try {
+      await fetch("/api/v1/tasks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: `Check-in: ${item.companyName}`,
+          description: `Риск оттока: ${item.riskScore}%. Факторы: ${item.factors.join(", ")}`,
+          priority: item.riskScore >= 60 ? "high" : "medium",
+          relatedType: "company",
+          relatedId: item.companyId,
+          dueDate: new Date(Date.now() + 3 * 86400000).toISOString(),
+        }),
+      })
+    } catch {}
+    setCreatingTask(null)
+  }
 
   return (
     <div className="rounded-lg bg-card border border-border shadow-sm p-3">
@@ -63,6 +83,17 @@ export function ChurnRiskWidget() {
                 }`}>
                   {item.riskScore}
                 </span>
+                <button
+                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleCreateCheckin(item) }}
+                  className="h-5 w-5 rounded flex items-center justify-center hover:bg-primary/10 text-muted-foreground hover:text-primary transition-colors"
+                  title="Создать задачу check-in"
+                >
+                  {creatingTask === item.companyId ? (
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                  ) : (
+                    <Plus className="h-3 w-3" />
+                  )}
+                </button>
               </div>
             </Link>
           ))}

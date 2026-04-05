@@ -33,6 +33,8 @@ export default function QuotaSettingsPage() {
   const [users, setUsers] = useState<UserOption[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editAmount, setEditAmount] = useState("")
   const [year, setYear] = useState(new Date().getFullYear())
 
   // New quota form
@@ -75,6 +77,22 @@ export default function QuotaSettingsPage() {
 
   const handleDelete = async (id: string) => {
     await fetch(`/api/v1/sales-quotas/${id}`, { method: "DELETE" })
+    fetchData()
+  }
+
+  const handleInlineEdit = (q: QuotaRow) => {
+    setEditingId(q.id)
+    setEditAmount(String(q.amount))
+  }
+
+  const handleInlineSave = async (id: string) => {
+    if (!editAmount) return
+    await fetch(`/api/v1/sales-quotas/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ amount: parseFloat(editAmount) }),
+    })
+    setEditingId(null)
     fetchData()
   }
 
@@ -177,7 +195,30 @@ export default function QuotaSettingsPage() {
                 <tr key={q.id} className="border-b last:border-0 hover:bg-muted/20 transition-colors">
                   <td className="px-4 py-2.5 text-xs font-medium">{q.user.name || q.user.email}</td>
                   <td className="px-3 py-2.5 text-xs text-center">Q{q.quarter}</td>
-                  <td className="px-3 py-2.5 text-xs text-right">{fmtCurrency(q.amount)}</td>
+                  <td className="px-3 py-2.5 text-xs text-right">
+                    {editingId === q.id ? (
+                      <input
+                        autoFocus
+                        type="number"
+                        value={editAmount}
+                        onChange={e => setEditAmount(e.target.value)}
+                        onKeyDown={e => {
+                          if (e.key === "Enter") handleInlineSave(q.id)
+                          if (e.key === "Escape") setEditingId(null)
+                        }}
+                        onBlur={() => handleInlineSave(q.id)}
+                        className="h-6 w-24 text-right border rounded px-1 text-xs bg-background"
+                      />
+                    ) : (
+                      <span
+                        onClick={() => handleInlineEdit(q)}
+                        className="cursor-pointer hover:text-primary hover:underline transition-colors"
+                        title="Нажмите для редактирования"
+                      >
+                        {fmtCurrency(q.amount)}
+                      </span>
+                    )}
+                  </td>
                   <td className="px-3 py-2.5 text-xs text-right">{fmtCurrency(q.actual)}</td>
                   <td className="px-3 py-2.5 text-xs text-right">
                     <span className={`font-semibold ${

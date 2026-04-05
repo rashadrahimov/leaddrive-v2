@@ -11,6 +11,7 @@ import {
   Ticket, FilePlus, FileText, FolderOpen,
   BookOpen, MessageCircle, ShieldAlert, Plus, Trash2,
   AlertTriangle, HeartHandshake, DollarSign, Repeat, Bug, Clock,
+  StickyNote, Activity, CheckSquare, ArrowUpRight, Handshake, Mail, UserCog,
 } from "lucide-react"
 
 interface AiConfigFormData {
@@ -91,6 +92,46 @@ const TOOL_GROUPS = [
     icon: BookOpen,
     color: "bg-indigo-100 text-indigo-600",
     tools: ["kb_search"],
+  },
+  {
+    id: "crm_notes",
+    nameKey: "toolCrmNotes",
+    descKey: "toolCrmNotesDesc",
+    icon: StickyNote,
+    color: "bg-amber-100 text-amber-600",
+    tools: ["add_note", "log_activity"],
+  },
+  {
+    id: "crm_tasks",
+    nameKey: "toolCrmTasks",
+    descKey: "toolCrmTasksDesc",
+    icon: CheckSquare,
+    color: "bg-teal-100 text-teal-600",
+    tools: ["create_task"],
+  },
+  {
+    id: "crm_deals",
+    nameKey: "toolCrmDeals",
+    descKey: "toolCrmDealsDesc",
+    icon: Handshake,
+    color: "bg-purple-100 text-purple-600",
+    tools: ["create_deal", "update_deal_stage"],
+  },
+  {
+    id: "crm_email",
+    nameKey: "toolCrmEmail",
+    descKey: "toolCrmEmailDesc",
+    icon: Mail,
+    color: "bg-red-100 text-red-600",
+    tools: ["send_email"],
+  },
+  {
+    id: "crm_contacts",
+    nameKey: "toolCrmContacts",
+    descKey: "toolCrmContactsDesc",
+    icon: UserCog,
+    color: "bg-rose-100 text-rose-600",
+    tools: ["update_contact"],
   },
 ]
 

@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Target, Phone, Mail, CheckSquare, ArrowUpRight, Loader2 } from "lucide-react"
+import { Target, Phone, Mail, CheckSquare, ArrowUpRight, Loader2, Play } from "lucide-react"
 import Link from "next/link"
 
 interface NextAction {
@@ -42,6 +42,7 @@ function getEntityLink(type: string, id: string): string {
 export function RecommendedActions() {
   const [actions, setActions] = useState<NextAction[]>([])
   const [loading, setLoading] = useState(true)
+  const [executing, setExecuting] = useState<number | null>(null)
 
   useEffect(() => {
     fetch("/api/v1/ai/next-actions?limit=5")
@@ -50,6 +51,43 @@ export function RecommendedActions() {
       .catch(() => {})
       .finally(() => setLoading(false))
   }, [])
+
+  const handleQuickAction = async (action: NextAction, idx: number) => {
+    setExecuting(idx)
+    try {
+      if (action.type === "call" || action.type === "email") {
+        // Log activity
+        await fetch("/api/v1/activities", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            type: action.type === "call" ? "call" : "email",
+            subject: action.title,
+            description: action.reason,
+            relatedType: action.entityType,
+            relatedId: action.entityId,
+          }),
+        })
+      } else if (action.type === "task") {
+        // Create task
+        await fetch("/api/v1/tasks", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            title: action.title,
+            description: action.reason,
+            priority: action.priority,
+            relatedType: action.entityType,
+            relatedId: action.entityId,
+            dueDate: new Date(Date.now() + 86400000).toISOString(),
+          }),
+        })
+      }
+      // Remove executed action from list
+      setActions(prev => prev.filter((_, i) => i !== idx))
+    } catch {}
+    setExecuting(null)
+  }
 
   return (
     <div className="rounded-lg bg-card border border-border shadow-sm p-3">
@@ -89,6 +127,17 @@ export function RecommendedActions() {
                   </div>
                   <p className="text-[10px] text-muted-foreground mt-0.5 line-clamp-1">{action.reason}</p>
                 </div>
+                <button
+                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleQuickAction(action, idx) }}
+                  className="h-6 w-6 rounded-md flex items-center justify-center shrink-0 hover:bg-primary/10 text-muted-foreground hover:text-primary transition-colors"
+                  title={action.type === "call" ? "Записать звонок" : action.type === "email" ? "Записать email" : "Создать задачу"}
+                >
+                  {executing === idx ? (
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                  ) : (
+                    <Play className="h-3 w-3" />
+                  )}
+                </button>
               </Link>
             )
           })}

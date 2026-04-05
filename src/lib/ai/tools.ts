@@ -148,6 +148,7 @@ export const CRM_TOOLS: Tool[] = [
 ]
 
 export function getEnabledTools(toolsEnabled: string[]): Tool[] {
-  if (!toolsEnabled.length) return CRM_TOOLS // all tools if no filter
+  if (!toolsEnabled.length) return [] // no tools enabled = no tools
+  if (toolsEnabled.includes("*")) return CRM_TOOLS // wildcard = all tools
   return CRM_TOOLS.filter(t => toolsEnabled.includes(t.name))
 }
