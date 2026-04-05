@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
+import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Select } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
@@ -70,7 +71,11 @@ function parseConditions(raw: any[]): ConditionGroup[] {
 }
 
 export function SegmentConditionBuilder({ initialConditions, onSave }: SegmentConditionBuilderProps) {
+  const tcb = useTranslations("conditionBuilder")
   const [groups, setGroups] = useState<ConditionGroup[]>(() => parseConditions(initialConditions || []))
+
+  const fields = useMemo(() => FIELDS.map(f => ({ ...f, label: tcb(`field_${f.value}` as any) || f.label })), [tcb])
+  const operators = useMemo(() => OPERATORS.map(o => ({ ...o, label: tcb(`op_${o.value}` as any) || o.label })), [tcb])
 
   const addGroup = () => {
     setGroups(prev => [...prev, { logic: "AND", conditions: [{ field: "company", operator: "contains", value: "" }] }])
@@ -102,14 +107,14 @@ export function SegmentConditionBuilder({ initialConditions, onSave }: SegmentCo
     <div className="space-y-4">
       <div className="flex items-center gap-2 mb-2">
         <GitBranch className="h-4 w-4 text-primary" />
-        <span className="text-sm font-semibold">Condition Builder</span>
+        <span className="text-sm font-semibold">{tcb("title")}</span>
       </div>
 
       {groups.map((group, gi) => (
         <div key={gi} className={cn("rounded-lg border-2 p-4 space-y-3", GROUP_COLORS[gi % GROUP_COLORS.length])}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className="text-xs font-medium text-muted-foreground">Group {gi + 1}</span>
+              <span className="text-xs font-medium text-muted-foreground">{tcb("group")} {gi + 1}</span>
               <button
                 onClick={() => toggleLogic(gi)}
                 className={cn(
@@ -130,16 +135,16 @@ export function SegmentConditionBuilder({ initialConditions, onSave }: SegmentCo
           {group.conditions.map((cond, ci) => (
             <div key={ci} className="flex items-center gap-2">
               <Select value={cond.field} onChange={e => updateCondition(gi, ci, { field: e.target.value })} className="w-[140px] h-8 text-xs">
-                {FIELDS.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
+                {fields.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
               </Select>
               <Select value={cond.operator} onChange={e => updateCondition(gi, ci, { operator: e.target.value })} className="w-[130px] h-8 text-xs">
-                {OPERATORS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                {operators.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
               </Select>
               {!noValueOperators.includes(cond.operator) && (
                 <Input
                   value={cond.value}
                   onChange={e => updateCondition(gi, ci, { value: e.target.value })}
-                  placeholder="Value..."
+                  placeholder={tcb("valuePlaceholder")}
                   className="flex-1 h-8 text-xs"
                 />
               )}
@@ -157,22 +162,22 @@ export function SegmentConditionBuilder({ initialConditions, onSave }: SegmentCo
           ))}
 
           <Button variant="outline" size="sm" className="h-7 text-xs gap-1" onClick={() => addCondition(gi)}>
-            <Plus className="h-3 w-3" /> Add Condition
+            <Plus className="h-3 w-3" /> {tcb("addCondition")}
           </Button>
         </div>
       ))}
 
       {groups.length > 1 && (
-        <div className="text-center text-xs font-bold text-muted-foreground">— OR between groups —</div>
+        <div className="text-center text-xs font-bold text-muted-foreground">— OR —</div>
       )}
 
       <div className="flex gap-2">
         <Button variant="outline" size="sm" className="gap-1" onClick={addGroup}>
-          <Plus className="h-3 w-3" /> Add Group
+          <Plus className="h-3 w-3" /> {tcb("addGroup")}
         </Button>
         <div className="flex-1" />
         <Button size="sm" onClick={() => onSave(groups)}>
-          Save Conditions
+          {tcb("saveConditions")}
         </Button>
       </div>
     </div>
