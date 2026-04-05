@@ -22,6 +22,8 @@ import type {
   PaymentRegistryFilters,
   CreatePaymentOrderInput,
   UpdatePaymentOrderInput,
+  BankAccount,
+  CreateBankAccountInput,
 } from "./types"
 
 function useOrgId() {
@@ -442,6 +444,59 @@ export function useExecutePaymentOrder() {
       qc.invalidateQueries({ queryKey: ["finance", "payables"] })
       qc.invalidateQueries({ queryKey: ["finance", "payables-stats"] })
       qc.invalidateQueries({ queryKey: ["finance", "dashboard"] })
+    },
+  })
+}
+
+// ─── Bank Accounts ─────────────────────────────────────────────────────
+
+export function useBankAccounts() {
+  const orgId = useOrgId()
+  return useQuery({
+    queryKey: ["finance", "bank-accounts", orgId],
+    queryFn: () => apiFetch<BankAccount[]>("/api/finance/bank-accounts", orgId),
+    enabled: !!orgId,
+  })
+}
+
+export function useCreateBankAccount() {
+  const orgId = useOrgId()
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (input: CreateBankAccountInput) =>
+      apiFetch<BankAccount>("/api/finance/bank-accounts", orgId, {
+        method: "POST",
+        body: JSON.stringify(input),
+      }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["finance", "bank-accounts"] })
+    },
+  })
+}
+
+export function useUpdateBankAccount() {
+  const orgId = useOrgId()
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, ...input }: Partial<CreateBankAccountInput> & { id: string }) =>
+      apiFetch<BankAccount>(`/api/finance/bank-accounts/${id}`, orgId, {
+        method: "PUT",
+        body: JSON.stringify(input),
+      }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["finance", "bank-accounts"] })
+    },
+  })
+}
+
+export function useDeleteBankAccount() {
+  const orgId = useOrgId()
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) =>
+      apiFetch<void>(`/api/finance/bank-accounts/${id}`, orgId, { method: "DELETE" }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["finance", "bank-accounts"] })
     },
   })
 }

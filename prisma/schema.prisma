@@ -69,6 +69,7 @@ model Organization {
   fundRules              FundRule[]
   paymentRegistryEntries PaymentRegistryEntry[]
   paymentOrders          PaymentOrder[]
+  bankAccounts           BankAccount[]
   pipelines              Pipeline[]
   ticketMacros           TicketMacro[]
 
@@ -86,6 +87,11 @@ model Organization {
   mtmNotifications       MtmNotification[]
   mtmAuditLogs           MtmAuditLog[]
   leadAssignmentRules    LeadAssignmentRule[]
+  fieldPermissions       FieldPermission[]
+  sharingRules           SharingRule[]
+  savedReports           SavedReport[]
+  landingPages           LandingPage[]
+  callLogs               CallLog[]
 
   @@map("organizations")
 }
@@ -299,6 +305,7 @@ model Contact {
   invoices       Invoice[]
   tickets        Ticket[]
   events         ContactEvent[]
+  callLogs       CallLog[]
 
   @@index([organizationId])
   @@index([organizationId, companyId])
@@ -1041,6 +1048,12 @@ model Journey {
   activeCount    Int      @default(0)
   completedCount Int      @default(0)
   conversionCount Int     @default(0)
+  // Goal tracking (Phase 4)
+  goalType         String?   // "deal_created" | "ticket_resolved" | "status_change" | "custom"
+  goalConditions   Json?     // { field: "status", value: "converted" }
+  goalTarget       Int?      // Target conversion count
+  exitOnGoal       Boolean   @default(true)
+  maxEnrollmentDays Int?     // Auto-exit after N days
   createdBy      String?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
@@ -1056,14 +1069,19 @@ model JourneyStep {
   journeyId      String
   journey        Journey  @relation(fields: [journeyId], references: [id], onDelete: Cascade)
   stepOrder      Int
-  stepType       String
+  stepType       String   // send_email, sms, wait, condition, create_task, send_telegram, send_whatsapp, update_field, ab_split, goal_check, webhook
   config         Json?
-  yesNextStep    Int?
-  noNextStep     Int?
+  yesNextStep    Int?     // Legacy (unused)
+  noNextStep     Int?     // Legacy (unused)
+  // Branching by step ID (Phase 4)
+  yesNextStepId  String?  // ID of next step for true/default path
+  noNextStepId   String?  // ID of next step for false path
+  splitPaths     Json?    // A/B split: [{ percentage: 50, nextStepId: "..." }]
   statsEntered   Int      @default(0)
   statsCompleted Int      @default(0)
   createdAt      DateTime @default(now())
 
+  @@index([journeyId])
   @@map("journey_steps")
 }
 
@@ -1079,6 +1097,9 @@ model JourneyEnrollment {
   nextActionAt   DateTime?
   enrolledAt     DateTime  @default(now())
   completedAt    DateTime?
+  // Goal tracking (Phase 4)
+  goalReachedAt  DateTime?
+  exitReason     String?   // "completed" | "goal_reached" | "max_days" | "manual" | "condition_exit"
 
   @@index([organizationId])
   @@index([invoiceId])
@@ -1125,6 +1146,14 @@ model AiAgentConfig {
   isActive          Boolean   @default(false)
   version           Int       @default(1)
   notes             String?
+  // Multi-agent orchestration (Phase 4)
+  agentType        String    @default("general")  // "sales", "support", "marketing", "analyst", "general"
+  department       String?
+  priority         Int       @default(0)     // Higher = preferred
+  handoffTargets   String[]  @default([])    // Agent config IDs this can handoff to
+  intents          String[]  @default([])    // Intents: "sales_inquiry", "pricing", "demo_request"
+  greeting         String?
+  maxToolRounds    Int       @default(5)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
@@ -1191,6 +1220,8 @@ model AiInteractionLog {
   kbArticlesUsed   String[] @default([])
   qualityScore     Float?
   isCopilot        Boolean  @default(false)
+  agentConfigId    String?
+  agentType        String?
   createdAt        DateTime @default(now())
 
   @@index([organizationId])
@@ -2473,6 +2504,31 @@ model FundRule {
 }
 
 // ============================================================
+// Bank Accounts
+// ============================================================
+
+model BankAccount {
+  id             String   @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  accountName    String
+  accountNumber  String?
+  bankName       String
+  bankCode       String?
+  swiftCode      String?
+  currency       String   @default("AZN")
+  isDefault      Boolean  @default(false)
+  isActive       Boolean  @default(true)
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([organizationId])
+  @@map("bank_accounts")
+}
+
+// ============================================================
 // Payment Registry & Payment Orders
 // ============================================================
 
@@ -3003,4 +3059,183 @@ model SalesQuota {
   @@unique([organizationId, userId, year, quarter])
   @@index([organizationId])
   @@map("sales_quotas")
+}
+
+// ═══════════════════════════════════════════════════
+// PHASE 4: ENTERPRISE FEATURES
+// ═══════════════════════════════════════════════════
+
+// --- Task 1: Field-Level Permissions + Sharing Rules ---
+
+model FieldPermission {
+  id             String   @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  roleId         String        // "admin", "manager", "sales", "support", "viewer", or custom role ID
+  entityType     String        // "company", "contact", "deal", "lead", "ticket"
+  fieldName      String        // "phone", "email", "revenue", etc.
+  access         String        // "visible" | "editable" | "hidden"
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([organizationId, roleId, entityType, fieldName])
+  @@index([organizationId, roleId, entityType])
+  @@map("field_permissions")
+}
+
+model SharingRule {
+  id             String   @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  entityType     String        // "deal", "lead", "company", "contact"
+  name           String
+  description    String?
+  ruleType       String        // "owner" | "role" | "team" | "all"
+  sourceRole     String?       // Role whose records are shared
+  targetRole     String?       // Role who gets access
+  accessLevel    String        // "read" | "readwrite"
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+
+  @@index([organizationId, entityType])
+  @@map("sharing_rules")
+}
+
+// --- Task 3: Multi-Agent Orchestration ---
+
+model AgentHandoff {
+  id             String    @id @default(cuid())
+  organizationId String
+  sessionId      String    // AI session ID
+  fromAgentId    String    // AiAgentConfig ID
+  toAgentId      String    // AiAgentConfig ID
+  reason         String
+  context        Json      // Conversation summary for target agent
+  status         String    @default("pending") // pending, accepted, completed
+  createdAt      DateTime  @default(now())
+  resolvedAt     DateTime?
+
+  @@index([organizationId, sessionId])
+  @@map("agent_handoffs")
+}
+
+// --- Task 4: VoIP Integration ---
+
+model CallLog {
+  id             String    @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  callSid        String?   @unique  // Twilio Call SID
+  direction      String    // "outbound" | "inbound"
+  fromNumber     String
+  toNumber       String
+  status         String    @default("initiated")  // initiated, ringing, in-progress, completed, busy, no-answer, failed
+  duration       Int?      // seconds
+  recordingUrl   String?
+  transcription  String?   @db.Text
+  contactId      String?
+  contact        Contact?  @relation(fields: [contactId], references: [id])
+  companyId      String?
+  dealId         String?
+  userId         String?   // Agent who made/received the call
+  activityId     String?   // Linked Activity record
+  notes          String?   @db.Text
+  startedAt      DateTime?
+  endedAt        DateTime?
+  createdAt      DateTime  @default(now())
+
+  @@index([organizationId, contactId])
+  @@index([callSid])
+  @@map("call_logs")
+}
+
+// --- Task 5: Custom Report Builder ---
+
+model SavedReport {
+  id             String   @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  name           String
+  description    String?
+  entityType     String          // "deals", "contacts", "companies", "leads", "tickets", "tasks", "activities"
+  columns        Json            // [{ field: "name", label: "Name" }, { field: "value", aggregate: "sum" }]
+  filters        Json    @default("[]")  // [{ field: "status", op: "eq", value: "won" }]
+  groupBy        String?
+  sortBy         String?
+  sortOrder      String  @default("desc")
+  chartType      String? @default("table")  // "table", "bar", "line", "pie", "area", "funnel"
+  chartConfig    Json?
+  isShared       Boolean @default(false)
+  createdBy      String
+  scheduleFreq   String?         // "daily", "weekly", "monthly", null = no schedule
+  scheduleEmails String[] @default([])
+  lastRunAt      DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([organizationId])
+  @@map("saved_reports")
+}
+
+// --- Task 6: Landing Page Builder ---
+
+model LandingPage {
+  id             String   @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  name           String
+  slug           String
+  description    String?
+  gjsData        Json?            // GrapesJS project data
+  htmlContent    String?  @db.Text
+  cssContent     String?  @db.Text
+  formConfig     Json?            // { fields: [...], successMessage, redirectUrl }
+  status         String   @default("draft")  // "draft" | "published" | "archived"
+  publishedAt    DateTime?
+  totalViews     Int      @default(0)
+  totalSubmissions Int    @default(0)
+  metaTitle      String?
+  metaDescription String?
+  ogImage        String?
+  createdBy      String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  pageViews      PageView[]
+  formSubmissions FormSubmission[]
+
+  @@unique([organizationId, slug])
+  @@index([organizationId])
+  @@map("landing_pages")
+}
+
+model PageView {
+  id             String   @id @default(cuid())
+  landingPageId  String
+  landingPage    LandingPage @relation(fields: [landingPageId], references: [id], onDelete: Cascade)
+  visitorIp      String?
+  userAgent      String?
+  referrer       String?
+  utmSource      String?
+  utmMedium      String?
+  utmCampaign    String?
+  createdAt      DateTime @default(now())
+
+  @@index([landingPageId, createdAt])
+  @@map("page_views")
+}
+
+model FormSubmission {
+  id             String   @id @default(cuid())
+  organizationId String
+  landingPageId  String?
+  landingPage    LandingPage? @relation(fields: [landingPageId], references: [id])
+  formData       Json
+  leadId         String?
+  source         String?
+  ipAddress      String?
+  createdAt      DateTime @default(now())
+
+  @@index([organizationId, landingPageId])
+  @@map("form_submissions")
 }

@@ -19,7 +19,7 @@ export function ARDashboard() {
   if (error) return <div className="p-8 text-center text-red-500">Ошибка: {(error as Error).message}</div>
   if (!data) return <div className="p-8 text-center text-muted-foreground">Нет данных</div>
 
-  const AGING_COLORS = ["#22c55e", "#f59e0b", "#f97316", "#ef4444"]
+  const AGING_COLORS = ["#3b82f6", "#22c55e", "#f59e0b", "#f97316", "#ef4444"] // Текущие, 1-30, 31-60, 61-90, 90+
 
   return (
     <div className="space-y-6">
@@ -43,10 +43,10 @@ export function ARDashboard() {
                   <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
                   <XAxis dataKey="label" tick={{ fontSize: 11 }} />
                   <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => fmt(v)} />
-                  <Tooltip formatter={(value: number) => [`${fmt(value)} AZN`, "Сумма"]} />
+                  <Tooltip formatter={((value: number) => [`${fmt(value)} AZN`, "Сумма"]) as any} />
                   <Bar dataKey="amount" radius={[6, 6, 0, 0]}>
                     {data.aging.map((_, i) => (
-                      <Cell key={i} fill={AGING_COLORS[i]} />
+                      <Cell key={i} fill={AGING_COLORS[i % AGING_COLORS.length]} />
                     ))}
                   </Bar>
                 </BarChart>

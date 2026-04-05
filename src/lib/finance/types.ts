@@ -260,6 +260,30 @@ export interface CreatePaymentOrderInput {
 
 export interface UpdatePaymentOrderInput extends Partial<CreatePaymentOrderInput> {}
 
+// Bank Account types
+export interface BankAccount {
+  id: string
+  accountName: string
+  accountNumber?: string | null
+  bankName: string
+  bankCode?: string | null
+  swiftCode?: string | null
+  currency: string
+  isDefault: boolean
+  isActive: boolean
+  createdAt: string
+}
+
+export interface CreateBankAccountInput {
+  accountName: string
+  bankName: string
+  accountNumber?: string
+  bankCode?: string
+  swiftCode?: string
+  currency?: string
+  isDefault?: boolean
+}
+
 export interface PaymentOrdersStats {
   totalDraft: number
   totalPending: number

@@ -34,5 +34,39 @@ export async function register() {
         console.error("[Journey Cron] Error:", err.message)
       }
     }, INTERVAL_MS)
+
+    // Finance deadline checker — runs every 6 hours, first run 5 min after start
+    if (!globalObj.__financeDeadlineCronStarted) {
+      globalObj.__financeDeadlineCronStarted = true
+      const FINANCE_INTERVAL = 6 * 60 * 60 * 1000 // 6 hours
+      const FINANCE_FIRST_RUN = 5 * 60 * 1000 // 5 min after start
+
+      const runFinanceCheck = async () => {
+        try {
+          const { PrismaClient } = require("@prisma/client")
+          const prisma = new PrismaClient()
+          const orgs = await prisma.organization.findMany({ select: { id: true } })
+
+          for (const org of orgs) {
+            const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000"
+            await fetch(`${baseUrl}/api/finance/payment-orders/check-deadlines`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json", "x-organization-id": org.id },
+            })
+          }
+          await prisma.$disconnect()
+          console.log(`[Finance Cron] Checked deadlines for ${orgs.length} org(s)`)
+        } catch (err: any) {
+          console.error("[Finance Cron] Error:", err.message)
+        }
+      }
+
+      setTimeout(() => {
+        runFinanceCheck()
+        setInterval(runFinanceCheck, FINANCE_INTERVAL)
+      }, FINANCE_FIRST_RUN)
+
+      console.log("[Finance Cron] Starting deadline checker — every 6h (first run in 5min)")
+    }
   }
 }

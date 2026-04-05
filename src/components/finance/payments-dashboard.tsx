@@ -14,6 +14,7 @@ import {
   usePayables,
 } from "@/lib/finance/hooks"
 import { FinanceKpiCard } from "./finance-kpi-card"
+import { BankAccountsManager } from "./bank-accounts"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -26,7 +27,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select } from "@/components/ui/select"
 import {
-  ArrowDownLeft, ArrowUpRight, Activity, Clock, Plus, Send, Check, X, Play, Trash2, FileText,
+  ArrowDownLeft, ArrowUpRight, Activity, Clock, Plus, Send, Check, X, Play, Trash2, FileText, Building2,
 } from "lucide-react"
 import type { PaymentRegistryFilters, PaymentOrder, CreatePaymentOrderInput } from "@/lib/finance/types"
 
@@ -134,6 +135,10 @@ export function PaymentsDashboard() {
           <TabsTrigger value="registry" className="gap-1.5">
             <Activity className="w-4 h-4" />
             Реестр платежей
+          </TabsTrigger>
+          <TabsTrigger value="bank-accounts" className="gap-1.5">
+            <Building2 className="w-4 h-4" />
+            Банковские счета
           </TabsTrigger>
         </TabsList>
 
@@ -307,6 +312,11 @@ export function PaymentsDashboard() {
               </CardContent>
             </Card>
           )}
+        </TabsContent>
+
+        {/* Bank Accounts */}
+        <TabsContent value="bank-accounts">
+          <BankAccountsManager />
         </TabsContent>
       </Tabs>
 
