@@ -60,12 +60,11 @@ export const WallpaperContext = createContext<WallpaperContextValue>({
 export function WallpaperProvider({ children }: { children: ReactNode }) {
   const [wallpaper, setWallpaperState] = useState<string | null>(null)
 
-  // Read from localStorage on mount
+  // Read from localStorage on mount (don't set data-wallpaper — DashboardWallpaper handles that)
   useEffect(() => {
     const saved = localStorage.getItem(STORAGE_KEY)
     if (saved && WALLPAPERS.some((w) => w.id === saved)) {
       setWallpaperState(saved)
-      document.documentElement.setAttribute("data-wallpaper", saved)
     }
   }, [])
 
@@ -73,7 +72,6 @@ export function WallpaperProvider({ children }: { children: ReactNode }) {
     setWallpaperState(id)
     if (id) {
       localStorage.setItem(STORAGE_KEY, id)
-      document.documentElement.setAttribute("data-wallpaper", id)
     } else {
       localStorage.removeItem(STORAGE_KEY)
       document.documentElement.removeAttribute("data-wallpaper")
