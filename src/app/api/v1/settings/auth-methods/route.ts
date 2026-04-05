@@ -32,6 +32,8 @@ export async function GET(req: NextRequest) {
     data: {
       google: googleConfigured && googleEnabled,
       microsoft: microsoftConfigured && microsoftEnabled,
+      googleConfigured,
+      microsoftConfigured,
     },
   })
 }
