@@ -8,6 +8,8 @@ import { ThemeProvider } from "@/components/theme-provider"
 import { CommandSearch } from "@/components/command-search"
 import { AiAssistantPanel } from "@/components/ai-assistant-panel"
 import { MotionPage } from "@/components/ui/motion"
+import { WallpaperProvider } from "@/contexts/wallpaper-context"
+import { VideoBackground } from "@/components/video-background"
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -25,22 +27,25 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <ThemeProvider>
-      <QueryClientProvider client={queryClient}>
-        <div className="flex h-screen">
-          <Sidebar org={org} />
-          <div className="flex flex-1 flex-col overflow-hidden">
-            <Header
-              orgName={user?.organizationName || "LeadDrive CRM"}
-              userName={user?.name || "User"}
-            />
-            <main className="flex-1 overflow-y-auto bg-background p-8 relative">
-              <MotionPage>{children}</MotionPage>
-            </main>
-            <CommandSearch />
-            <AiAssistantPanel />
+      <WallpaperProvider>
+        <QueryClientProvider client={queryClient}>
+          <VideoBackground />
+          <div className="relative z-[2] flex h-screen">
+            <Sidebar org={org} />
+            <div className="flex flex-1 flex-col overflow-hidden">
+              <Header
+                orgName={user?.organizationName || "LeadDrive CRM"}
+                userName={user?.name || "User"}
+              />
+              <main className="flex-1 overflow-y-auto bg-background p-8 relative">
+                <MotionPage>{children}</MotionPage>
+              </main>
+              <CommandSearch />
+              <AiAssistantPanel />
+            </div>
           </div>
-        </div>
-      </QueryClientProvider>
+        </QueryClientProvider>
+      </WallpaperProvider>
     </ThemeProvider>
   )
 }

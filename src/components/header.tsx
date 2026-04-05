@@ -6,6 +6,7 @@ import { Sun, Moon, Search, LogOut, Command } from "lucide-react"
 import { signOut } from "next-auth/react"
 import { NotificationBell } from "@/components/notification-bell"
 import { LanguageSwitcher } from "@/components/language-switcher"
+import { WallpaperSelector } from "@/components/wallpaper-selector"
 import { useTranslations } from "next-intl"
 
 interface HeaderProps {
@@ -19,7 +20,7 @@ export function Header({ orgName = "Organization", userName = "User" }: HeaderPr
   const { theme, setTheme } = useTheme()
 
   return (
-    <header className="flex h-14 items-center justify-between border-b border-border/40 bg-card px-6 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+    <header className="flex h-14 items-center justify-between border-b border-border/40 bg-card backdrop-blur-xl px-6 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
       <div className="flex items-center gap-4">
         <span className="text-sm font-semibold text-foreground">{orgName}</span>
 
@@ -37,6 +38,8 @@ export function Header({ orgName = "Organization", userName = "User" }: HeaderPr
         <NotificationBell />
 
         <LanguageSwitcher />
+
+        <WallpaperSelector />
 
         <Button
           variant="ghost"

@@ -141,7 +141,7 @@ export function Sidebar({ org }: SidebarProps) {
   return (
     <aside
       className={cn(
-        "flex flex-col bg-sidebar-bg transition-all duration-200",
+        "flex flex-col bg-sidebar-bg backdrop-blur-xl transition-all duration-200",
         collapsed ? "w-16" : "w-64"
       )}
     >

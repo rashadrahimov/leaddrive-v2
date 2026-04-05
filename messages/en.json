@@ -134,6 +134,8 @@
     "export": "Export",
     "import": "Import",
     "refresh": "Refresh",
+    "wallpaper": "Wallpaper",
+    "off": "Off",
     "view": "View",
     "details": "Details",
     "pageOf": "Page {current} of {total}",

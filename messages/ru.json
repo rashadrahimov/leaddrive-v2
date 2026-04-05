@@ -134,6 +134,8 @@
     "export": "Экспорт",
     "import": "Импорт",
     "refresh": "Обновить",
+    "wallpaper": "Обои",
+    "off": "Выкл",
     "view": "Просмотр",
     "details": "Детали",
     "pageOf": "Страница {current} из {total}",
