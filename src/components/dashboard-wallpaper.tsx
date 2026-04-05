@@ -16,11 +16,9 @@ export function DashboardWallpaper() {
   useEffect(() => {
     if (isWallpaperActive && wallpaperDef) {
       document.documentElement.setAttribute("data-wallpaper", wallpaperDef.id)
-      document.documentElement.classList.add("dark")
     }
     return () => {
       document.documentElement.removeAttribute("data-wallpaper")
-      // Keep dark mode when leaving dashboard — smooth transition
     }
   }, [isWallpaperActive, wallpaperDef])
 
