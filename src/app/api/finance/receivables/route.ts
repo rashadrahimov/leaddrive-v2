@@ -26,9 +26,10 @@ export async function GET(req: NextRequest) {
     orderBy: { dueDate: "asc" },
   })
 
-  // Aging buckets
+  // Aging buckets (days overdue past due date)
   const aging = [
-    { label: "0-30 дн", amount: 0, count: 0 },
+    { label: "Текущие", amount: 0, count: 0 },
+    { label: "1-30 дн", amount: 0, count: 0 },
     { label: "31-60 дн", amount: 0, count: 0 },
     { label: "61-90 дн", amount: 0, count: 0 },
     { label: "90+ дн", amount: 0, count: 0 },
@@ -41,30 +42,37 @@ export async function GET(req: NextRequest) {
   let overdueTotal = 0
   let overdueCount = 0
 
-  invoices.forEach((inv) => {
+  invoices.forEach((inv: typeof invoices[number]) => {
     const balance = inv.balanceDue || 0
     total += balance
 
-    // Aging
+    // Aging — based on days past due date
     if (inv.dueDate) {
-      const days = Math.max(0, Math.floor((now.getTime() - new Date(inv.dueDate).getTime()) / 86400000))
-      const bucket = days <= 30 ? 0 : days <= 60 ? 1 : days <= 90 ? 2 : 3
-      aging[bucket].amount += balance
-      aging[bucket].count += 1
+      const daysOverdue = Math.floor((now.getTime() - new Date(inv.dueDate).getTime()) / 86400000)
 
-      // Overdue
-      if (new Date(inv.dueDate) < now && balance > 0) {
-        overdueTotal += balance
-        overdueCount += 1
-        overdueList.push({
-          id: inv.id,
-          invoiceNumber: inv.invoiceNumber,
-          companyName: inv.company?.name || "Unknown",
-          totalAmount: inv.totalAmount,
-          balanceDue: balance,
-          dueDate: inv.dueDate,
-          daysOverdue: days,
-        })
+      if (daysOverdue <= 0) {
+        // Not yet due — current
+        aging[0].amount += balance
+        aging[0].count += 1
+      } else {
+        // Past due — distribute into overdue buckets
+        const bucket = daysOverdue <= 30 ? 1 : daysOverdue <= 60 ? 2 : daysOverdue <= 90 ? 3 : 4
+        aging[bucket].amount += balance
+        aging[bucket].count += 1
+
+        if (balance > 0) {
+          overdueTotal += balance
+          overdueCount += 1
+          overdueList.push({
+            id: inv.id,
+            invoiceNumber: inv.invoiceNumber,
+            companyName: inv.company?.name || "Unknown",
+            totalAmount: inv.totalAmount,
+            balanceDue: balance,
+            dueDate: inv.dueDate,
+            daysOverdue,
+          })
+        }
       }
     }
 

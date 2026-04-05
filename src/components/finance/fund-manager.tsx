@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { useFunds, useCreateFund, useDeleteFund, useFundTransactions, useCreateFundTransaction, useFundRules, useCreateFundRule, useDeleteFundRule } from "@/lib/finance/hooks"
+import { useFunds, useCreateFund, useDeleteFund, useFundTransactions, useCreateFundTransaction, useFundRules, useCreateFundRule, useDeleteFundRule, useFinanceDashboard } from "@/lib/finance/hooks"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Progress } from "@/components/ui/progress"
-import { Plus, Trash2, ArrowDownToLine, ArrowUpFromLine, History, Settings2, PiggyBank } from "lucide-react"
+import { Plus, Trash2, ArrowDownToLine, ArrowUpFromLine, History, Settings2, PiggyBank, AlertTriangle } from "lucide-react"
 import type { Fund } from "@/lib/finance/types"
 
 function fmt(n: number): string {
@@ -20,6 +20,7 @@ const FUND_COLORS = ["#3b82f6", "#22c55e", "#f59e0b", "#ef4444", "#8b5cf6", "#ec
 
 export function FundManager() {
   const { data: funds, isLoading } = useFunds()
+  const { data: dashboard } = useFinanceDashboard(new Date().getFullYear())
   const createFund = useCreateFund()
   const deleteFund = useDeleteFund()
   const [showCreate, setShowCreate] = useState(false)
@@ -30,6 +31,9 @@ export function FundManager() {
   if (isLoading) return <div className="p-8 text-center text-muted-foreground">Загрузка фондов...</div>
 
   const totalBalance = (funds || []).reduce((s, f) => s + f.currentBalance, 0)
+  const cashBalance = dashboard?.kpis?.cashBalance?.current || 0
+  const fundCoverage = cashBalance > 0 ? Math.round((cashBalance / totalBalance) * 100) : 0
+  const isFundOverCash = totalBalance > 0 && cashBalance < totalBalance
 
   return (
     <div className="space-y-6">
@@ -43,6 +47,19 @@ export function FundManager() {
           <Plus className="w-4 h-4 mr-1" /> Новый фонд
         </Button>
       </div>
+
+      {/* Fund Coverage Warning */}
+      {isFundOverCash && (
+        <div className="flex items-center gap-3 p-4 rounded-lg border border-amber-200 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-800">
+          <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0" />
+          <div className="text-sm">
+            <p className="font-medium text-amber-800 dark:text-amber-400">Фонды не обеспечены полностью</p>
+            <p className="text-amber-700 dark:text-amber-500">
+              Зарезервировано {fmt(totalBalance)} AZN, но доступно только {fmt(cashBalance)} AZN — обеспеченность {fundCoverage}%
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Fund Cards */}
       {funds && funds.length > 0 ? (

@@ -80,6 +80,25 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       },
     })
 
+    // Create payment registry entry for audit trail
+    const companyName = invoice.recipientName || "Unknown"
+    await prisma.paymentRegistryEntry.create({
+      data: {
+        organizationId: orgId,
+        direction: "incoming",
+        amount: d.amount,
+        currency: d.currency,
+        counterpartyName: companyName,
+        counterpartyId: invoice.companyId,
+        sourceType: "invoice_payment",
+        sourceId: payment.id,
+        invoiceId: id,
+        category: "revenue",
+        paymentDate: d.paymentDate ? new Date(d.paymentDate) : new Date(),
+        description: `Оплата по инвойсу ${invoice.invoiceNumber}`,
+      },
+    })
+
     // Auto-stop communication chain when invoice is fully paid
     if (newBalanceDue <= 0) {
       const activeChain = await prisma.journeyEnrollment.findFirst({

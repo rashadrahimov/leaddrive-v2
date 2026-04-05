@@ -2,6 +2,14 @@ import { NextRequest, NextResponse } from "next/server"
 import { getOrgId } from "@/lib/api-auth"
 import { prisma } from "@/lib/prisma"
 
+type BudgetLineRow = { lineType: string; plannedAmount: number | null; forecastAmount: number | null; category: string | null; department: string | null }
+type BudgetActualRow = { lineType: string; actualAmount: number | null; category: string | null; department: string | null; expenseDate: Date | null }
+type InvoiceRow = { id: string; invoiceNumber: string | null; totalAmount: number; balanceDue: number | null; dueDate: Date | null; status: string; companyId: string | null }
+type BillRow = { id: string; totalAmount: number; balanceDue: number | null; dueDate: Date | null; status: string }
+type CashFlowRow = { month: number; entryType: string; amount: number }
+type SalesForecastRow = { month: number; amount: number | null }
+type FundRow = { currentBalance: number }
+
 const MONTH_NAMES = ["Yan", "Fev", "Mar", "Apr", "May", "İyn", "İyl", "Avq", "Sen", "Okt", "Noy", "Dek"]
 const EXPENSE_COLORS = ["#ef4444", "#f59e0b", "#3b82f6", "#8b5cf6", "#ec4899", "#14b8a6", "#64748b"]
 
@@ -12,6 +20,18 @@ export async function GET(req: NextRequest) {
   const year = parseInt(req.nextUrl.searchParams.get("year") || new Date().getFullYear().toString())
   const now = new Date()
   const currentMonth = now.getMonth() + 1
+
+  // Auto-update overdue statuses on dashboard load
+  await Promise.all([
+    prisma.bill.updateMany({
+      where: { organizationId: orgId, dueDate: { lt: now }, status: { in: ["pending", "partially_paid"] }, balanceDue: { gt: 0 } },
+      data: { status: "overdue" },
+    }),
+    prisma.invoice.updateMany({
+      where: { organizationId: orgId, dueDate: { lt: now }, status: { in: ["sent", "viewed", "partially_paid"] }, balanceDue: { gt: 0 } },
+      data: { status: "overdue" },
+    }),
+  ])
 
   // Run all queries in parallel
   const [
@@ -72,52 +92,52 @@ export async function GET(req: NextRequest) {
   // === KPIs ===
 
   // Revenue plan vs fact
-  const revenuePlan = budgetLines
-    .filter((l) => l.lineType === "revenue")
-    .reduce((s, l) => s + (l.plannedAmount || 0), 0)
-  const revenueFact = budgetActuals
-    .filter((a) => a.lineType === "revenue")
-    .reduce((s, a) => s + (a.actualAmount || 0), 0)
+  const revenuePlan = (budgetLines as BudgetLineRow[])
+    .filter((l: BudgetLineRow) => l.lineType === "revenue")
+    .reduce((s: number, l: BudgetLineRow) => s + (l.plannedAmount || 0), 0)
+  const revenueFact = (budgetActuals as BudgetActualRow[])
+    .filter((a: BudgetActualRow) => a.lineType === "revenue")
+    .reduce((s: number, a: BudgetActualRow) => s + (a.actualAmount || 0), 0)
 
   // Expense plan vs fact
-  const expensePlan = budgetLines
-    .filter((l) => l.lineType === "expense" || l.lineType === "cogs")
-    .reduce((s, l) => s + (l.plannedAmount || 0), 0)
-  const expenseFact = budgetActuals
-    .filter((a) => a.lineType === "expense" || a.lineType === "cogs")
-    .reduce((s, a) => s + (a.actualAmount || 0), 0)
+  const expensePlan = (budgetLines as BudgetLineRow[])
+    .filter((l: BudgetLineRow) => l.lineType === "expense" || l.lineType === "cogs")
+    .reduce((s: number, l: BudgetLineRow) => s + (l.plannedAmount || 0), 0)
+  const expenseFact = (budgetActuals as BudgetActualRow[])
+    .filter((a: BudgetActualRow) => a.lineType === "expense" || a.lineType === "cogs")
+    .reduce((s: number, a: BudgetActualRow) => s + (a.actualAmount || 0), 0)
 
   // Net profit
   const netProfit = revenueFact - expenseFact
 
   // Cash balance
-  const totalInflows = cashFlowEntries.filter((e) => e.entryType === "inflow").reduce((s, e) => s + e.amount, 0)
-  const totalOutflows = cashFlowEntries.filter((e) => e.entryType === "outflow").reduce((s, e) => s + e.amount, 0)
+  const totalInflows = (cashFlowEntries as CashFlowRow[]).filter((e: CashFlowRow) => e.entryType === "inflow").reduce((s: number, e: CashFlowRow) => s + e.amount, 0)
+  const totalOutflows = (cashFlowEntries as CashFlowRow[]).filter((e: CashFlowRow) => e.entryType === "outflow").reduce((s: number, e: CashFlowRow) => s + e.amount, 0)
   const cashBalance = totalInflows - totalOutflows
 
   // A/R
-  const arTotal = invoices.reduce((s, i) => s + (i.balanceDue || 0), 0)
-  const overdueInvoices = invoices.filter((i) => i.status === "overdue" || (i.dueDate && new Date(i.dueDate) < now))
-  const arOverdue = overdueInvoices.reduce((s, i) => s + (i.balanceDue || 0), 0)
+  const arTotal = (invoices as InvoiceRow[]).reduce((s: number, i: InvoiceRow) => s + (i.balanceDue || 0), 0)
+  const overdueInvoices = (invoices as InvoiceRow[]).filter((i: InvoiceRow) => i.status === "overdue" || (i.dueDate && new Date(i.dueDate) < now))
+  const arOverdue = overdueInvoices.reduce((s: number, i: InvoiceRow) => s + (i.balanceDue || 0), 0)
 
   // A/P
-  const apTotal = bills.reduce((s, b) => s + (b.balanceDue || 0), 0)
-  const overdueBills = bills.filter((b) => b.status === "overdue" || (b.dueDate && new Date(b.dueDate) < now))
-  const apOverdue = overdueBills.reduce((s, b) => s + (b.balanceDue || 0), 0)
+  const apTotal = (bills as BillRow[]).reduce((s: number, b: BillRow) => s + (b.balanceDue || 0), 0)
+  const overdueBills = (bills as BillRow[]).filter((b: BillRow) => b.status === "overdue" || (b.dueDate && new Date(b.dueDate) < now))
+  const apOverdue = overdueBills.reduce((s: number, b: BillRow) => s + (b.balanceDue || 0), 0)
 
   // === Revenue Trend (12 months) ===
   const revenueTrend = []
   for (let m = 1; m <= 12; m++) {
-    const monthRevenue = budgetActuals
-      .filter((a) => a.lineType === "revenue" && a.expenseDate && new Date(a.expenseDate).getMonth() + 1 === m)
-      .reduce((s, a) => s + (a.actualAmount || 0), 0)
-    const monthExpense = budgetActuals
-      .filter((a) => (a.lineType === "expense" || a.lineType === "cogs") && a.expenseDate && new Date(a.expenseDate).getMonth() + 1 === m)
-      .reduce((s, a) => s + (a.actualAmount || 0), 0)
+    const monthRevenue = (budgetActuals as BudgetActualRow[])
+      .filter((a: BudgetActualRow) => a.lineType === "revenue" && a.expenseDate && new Date(a.expenseDate).getMonth() + 1 === m)
+      .reduce((s: number, a: BudgetActualRow) => s + (a.actualAmount || 0), 0)
+    const monthExpense = (budgetActuals as BudgetActualRow[])
+      .filter((a: BudgetActualRow) => (a.lineType === "expense" || a.lineType === "cogs") && a.expenseDate && new Date(a.expenseDate).getMonth() + 1 === m)
+      .reduce((s: number, a: BudgetActualRow) => s + (a.actualAmount || 0), 0)
     // Fallback to sales forecast for revenue if no actuals
-    const forecastRevenue = salesForecasts
-      .filter((f) => f.month === m)
-      .reduce((s, f) => s + (f.amount || 0), 0)
+    const forecastRevenue = (salesForecasts as SalesForecastRow[])
+      .filter((f: SalesForecastRow) => f.month === m)
+      .reduce((s: number, f: SalesForecastRow) => s + (f.amount || 0), 0)
 
     revenueTrend.push({
       month: m,
@@ -131,9 +151,9 @@ export async function GET(req: NextRequest) {
 
   // === Expense Breakdown ===
   const categoryMap: Record<string, number> = {}
-  budgetActuals
-    .filter((a) => a.lineType === "expense" || a.lineType === "cogs")
-    .forEach((a) => {
+  ;(budgetActuals as BudgetActualRow[])
+    .filter((a: BudgetActualRow) => a.lineType === "expense" || a.lineType === "cogs")
+    .forEach((a: BudgetActualRow) => {
       const cat = a.category || a.department || "Other"
       categoryMap[cat] = (categoryMap[cat] || 0) + (a.actualAmount || 0)
     })
@@ -162,7 +182,7 @@ export async function GET(req: NextRequest) {
     { label: "61-90", amount: 0, count: 0 },
     { label: "90+", amount: 0, count: 0 },
   ]
-  invoices.forEach((inv) => {
+  ;(invoices as InvoiceRow[]).forEach((inv: InvoiceRow) => {
     if (!inv.dueDate) return
     const days = Math.max(0, Math.floor((now.getTime() - new Date(inv.dueDate).getTime()) / 86400000))
     const bucket = days <= 30 ? 0 : days <= 60 ? 1 : days <= 90 ? 2 : 3
@@ -211,6 +231,19 @@ export async function GET(req: NextRequest) {
       message: `${overdueBills.length} просроченных платежей — ${fmt(apOverdue)} AZN`,
       link: "/finance?tab=payables",
       amount: apOverdue,
+    })
+  }
+  // Fund coverage alert
+  const totalFundBalance = (funds as FundRow[]).reduce((s: number, f: FundRow) => s + (f.currentBalance || 0), 0)
+  if (totalFundBalance > 0 && cashBalance < totalFundBalance) {
+    const coverage = Math.round((cashBalance / totalFundBalance) * 100)
+    alerts.push({
+      id: "fund-coverage",
+      type: "low_cash",
+      severity: coverage < 50 ? "critical" : "warning",
+      message: `Фонды обеспечены на ${coverage}% — зарезервировано ${fmt(totalFundBalance)} AZN, доступно ${fmt(cashBalance)} AZN`,
+      link: "/finance?tab=funds",
+      amount: totalFundBalance - cashBalance,
     })
   }
 

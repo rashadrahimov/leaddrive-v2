@@ -51,7 +51,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
   const { amount, paymentMethod, paymentDate, reference, notes, currency } = data
 
-  const paymentAmount = parseFloat(amount)
+  const paymentAmount = parseFloat(String(amount))
 
   // Create payment
   const payment = await prisma.billPayment.create({
@@ -81,6 +81,24 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         balanceDue: newBalance,
         status: newStatus,
         ...(newBalance <= 0 ? { paidAt: new Date() } : {}),
+      },
+    })
+
+    // Create payment registry entry for audit trail
+    await prisma.paymentRegistryEntry.create({
+      data: {
+        organizationId: orgId,
+        direction: "outgoing",
+        amount: paymentAmount,
+        currency: currency || "AZN",
+        counterpartyName: bill.vendorName,
+        counterpartyId: bill.vendorId,
+        sourceType: "bill_payment",
+        sourceId: payment.id,
+        billId,
+        category: bill.category || "vendor_payment",
+        paymentDate: paymentDate ? new Date(paymentDate) : new Date(),
+        description: `Оплата по счёту ${bill.billNumber}`,
       },
     })
   }

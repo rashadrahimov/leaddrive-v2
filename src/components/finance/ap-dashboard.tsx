@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { usePayables, usePayablesStats, useCreateBill, useDeleteBill, useCreateBillPayment } from "@/lib/finance/hooks"
+import { usePayables, usePayablesStats, useCreateBill, useUpdateBill, useDeleteBill, useCreateBillPayment } from "@/lib/finance/hooks"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label"
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Cell,
 } from "recharts"
-import { Plus, DollarSign, AlertTriangle, Clock, CreditCard, Trash2 } from "lucide-react"
+import { Plus, DollarSign, AlertTriangle, Clock, CreditCard, Trash2, ArrowRight } from "lucide-react"
 import type { Bill } from "@/lib/finance/types"
 
 function fmt(n: number): string {
@@ -33,6 +33,7 @@ export function APDashboard() {
   const { data: bills, isLoading: billsLoading } = usePayables()
   const { data: stats, isLoading: statsLoading } = usePayablesStats()
   const createBill = useCreateBill()
+  const updateBill = useUpdateBill()
   const deleteBill = useDeleteBill()
   const createPayment = useCreateBillPayment()
   const [showCreate, setShowCreate] = useState(false)
@@ -71,7 +72,7 @@ export function APDashboard() {
                   <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
                   <XAxis dataKey="label" tick={{ fontSize: 11 }} />
                   <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => fmt(v)} />
-                  <Tooltip formatter={(value: number) => [`${fmt(value)} AZN`, "Сумма"]} />
+                  <Tooltip formatter={((value: number) => [`${fmt(value)} AZN`, "Сумма"]) as any} />
                   <Bar dataKey="amount" radius={[6, 6, 0, 0]}>
                     {stats.aging.map((_, i) => (
                       <Cell key={i} fill={AGING_COLORS[i]} />
@@ -132,8 +133,10 @@ export function APDashboard() {
                   </tr>
                 </thead>
                 <tbody>
-                  {bills.map((bill: Bill) => (
-                    <tr key={bill.id} className="border-b last:border-0 hover:bg-muted/50">
+                  {bills.map((bill: Bill) => {
+                    const isOverdue = bill.status === "overdue" || (bill.dueDate && new Date(bill.dueDate) < new Date() && bill.balanceDue > 0 && !["paid", "cancelled"].includes(bill.status))
+                    return (
+                    <tr key={bill.id} className={`border-b last:border-0 hover:bg-muted/50 ${isOverdue ? "bg-red-50/50 dark:bg-red-950/20" : ""}`}>
                       <td className="py-2 px-2 font-medium">{bill.billNumber}</td>
                       <td className="py-2 px-2">{bill.vendorName}</td>
                       <td className="py-2 px-2">{bill.title}</td>
@@ -149,6 +152,11 @@ export function APDashboard() {
                       </td>
                       <td className="py-2 px-2 text-right">
                         <div className="flex gap-1 justify-end">
+                          {bill.status === "draft" && (
+                            <Button size="sm" variant="outline" className="h-7 text-xs text-blue-700" onClick={() => updateBill.mutate({ id: bill.id, status: "pending" })}>
+                              <ArrowRight className="w-3 h-3 mr-1" /> В работу
+                            </Button>
+                          )}
                           {bill.status !== "paid" && bill.status !== "cancelled" && (
                             <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => setShowPayment(bill.id)}>
                               <DollarSign className="w-3 h-3 mr-1" /> Оплатить
@@ -160,7 +168,8 @@ export function APDashboard() {
                         </div>
                       </td>
                     </tr>
-                  ))}
+                    )
+                  })}
                 </tbody>
               </table>
             </div>
