@@ -136,21 +136,31 @@ export default function LoginPage() {
                   </Button>
                 )}
                 {authMethods.google && isWebView && (
-                  <div className="rounded-lg border border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-800 p-3 text-center space-y-2">
-                    <p className="text-xs text-amber-800 dark:text-amber-300 font-medium">
-                      Google не поддерживает вход из встроенного браузера
+                  <div className="rounded-lg border border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-800 p-3 space-y-2">
+                    <p className="text-xs text-amber-800 dark:text-amber-300 font-medium text-center">
+                      Google вход недоступен из встроенного браузера
+                    </p>
+                    <p className="text-[11px] text-amber-700 dark:text-amber-400 text-center">
+                      Откройте в Safari или Chrome:
                     </p>
                     <button
                       type="button"
                       onClick={() => {
-                        // Try to open in external browser
-                        const url = window.location.href
-                        window.open(url, "_system") || window.open(url, "_blank")
+                        navigator.clipboard.writeText(window.location.origin + "/login")
+                          .then(() => {
+                            const btn = document.getElementById("copy-link-btn")
+                            if (btn) btn.textContent = "Скопировано!"
+                            setTimeout(() => { if (btn) btn.textContent = "Скопировать ссылку" }, 2000)
+                          })
                       }}
-                      className="text-xs text-primary underline hover:no-underline"
+                      id="copy-link-btn"
+                      className="w-full text-xs font-medium py-2 px-3 rounded-md bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300 hover:bg-amber-200 transition-colors"
                     >
-                      Открыть в браузере (Safari / Chrome)
+                      Скопировать ссылку
                     </button>
+                    <p className="text-[10px] text-amber-600 dark:text-amber-500 text-center">
+                      или войдите по email/паролю выше
+                    </p>
                   </div>
                 )}
                 {authMethods.microsoft && (
