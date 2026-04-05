@@ -13,7 +13,7 @@ const EmailEditor = dynamic(() => import("react-email-editor").then(mod => mod.d
     <div className="flex items-center justify-center h-[600px] border rounded-lg bg-muted/30">
       <div className="text-center">
         <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full mx-auto mb-3" />
-        <p className="text-sm text-muted-foreground">Loading...</p>
+        <p className="text-sm text-muted-foreground">...</p>
       </div>
     </div>
   ),
@@ -113,7 +113,7 @@ export const EmailVisualEditor = forwardRef<EmailVisualEditorHandle, Props>(
                 "p-1.5 rounded transition-colors",
                 previewMode === "desktop" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted"
               )}
-              title="Desktop preview"
+              title="Desktop"
             >
               <Monitor className="h-4 w-4" />
             </button>
@@ -124,7 +124,7 @@ export const EmailVisualEditor = forwardRef<EmailVisualEditorHandle, Props>(
                 "p-1.5 rounded transition-colors",
                 previewMode === "mobile" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted"
               )}
-              title="Mobile preview"
+              title="Mobile"
             >
               <Smartphone className="h-4 w-4" />
             </button>
