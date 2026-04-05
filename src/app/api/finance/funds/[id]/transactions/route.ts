@@ -47,7 +47,35 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
   const { type, amount, description } = data
 
-  const txAmount = parseFloat(amount)
+  const txAmount = parseFloat(String(amount))
+
+  // Validate withdrawal doesn't exceed fund balance
+  if (type === "withdrawal" || type === "transfer_out") {
+    const fund = await prisma.fund.findFirst({ where: { id: fundId, organizationId: orgId } })
+    if (!fund) return NextResponse.json({ error: "Fund not found" }, { status: 404 })
+    if (txAmount > fund.currentBalance) {
+      return NextResponse.json({
+        error: `Недостаточно средств в фонде. Баланс: ${fund.currentBalance.toLocaleString("ru-RU")} ${fund.currency}, запрошено: ${txAmount.toLocaleString("ru-RU")} ${fund.currency}`,
+      }, { status: 400 })
+    }
+  }
+
+  // Warn (in response) if deposit makes total funds exceed cash balance
+  let warning: string | undefined
+  if (type === "deposit" || type === "transfer_in" || type === "auto_allocation") {
+    const [allFunds, cashFlowEntries] = await Promise.all([
+      prisma.fund.findMany({ where: { organizationId: orgId, isActive: true }, select: { currentBalance: true } }),
+      prisma.cashFlowEntry.findMany({ where: { organizationId: orgId }, select: { entryType: true, amount: true } }),
+    ])
+    const totalFunds = allFunds.reduce((s, f) => s + f.currentBalance, 0) + txAmount
+    const totalInflows = cashFlowEntries.filter((e) => e.entryType === "inflow").reduce((s, e) => s + e.amount, 0)
+    const totalOutflows = cashFlowEntries.filter((e) => e.entryType === "outflow").reduce((s, e) => s + e.amount, 0)
+    const cashBalance = totalInflows - totalOutflows
+    if (totalFunds > cashBalance && cashBalance > 0) {
+      const coverage = Math.round((cashBalance / totalFunds) * 100)
+      warning = `Внимание: после пополнения фонды (${totalFunds.toLocaleString("ru-RU")} AZN) превысят остаток ДС (${cashBalance.toLocaleString("ru-RU")} AZN). Обеспеченность: ${coverage}%`
+    }
+  }
 
   const transaction = await prisma.fundTransaction.create({
     data: {
@@ -70,5 +98,5 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     data: { currentBalance: { increment: balanceChange } },
   })
 
-  return NextResponse.json({ data: transaction }, { status: 201 })
+  return NextResponse.json({ data: transaction, ...(warning ? { warning } : {}) }, { status: 201 })
 }

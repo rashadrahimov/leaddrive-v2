@@ -183,12 +183,25 @@ function TransactionDialog({ fundId, onClose }: { fundId: string; onClose: () =>
   const [type, setType] = useState("deposit")
   const [amount, setAmount] = useState("")
   const [desc, setDesc] = useState("")
+  const [txWarning, setTxWarning] = useState("")
+  const [txError, setTxError] = useState("")
 
   const handleAdd = () => {
     if (!amount) return
+    setTxWarning("")
+    setTxError("")
     createTx.mutate(
       { fundId, type, amount: parseFloat(amount), description: desc || undefined },
-      { onSuccess: () => { setAmount(""); setDesc("") } }
+      {
+        onSuccess: (_data: any) => {
+          setAmount("")
+          setDesc("")
+          if (_data?.warning) setTxWarning(_data.warning)
+        },
+        onError: (err: any) => {
+          setTxError(err?.message || "Ошибка")
+        },
+      }
     )
   }
 
@@ -211,6 +224,18 @@ function TransactionDialog({ fundId, onClose }: { fundId: string; onClose: () =>
           </div>
           <Input value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="Описание (необязательно)" />
         </div>
+
+        {txError && (
+          <div className="p-3 rounded-lg border border-red-200 bg-red-50 dark:bg-red-950/30 text-sm text-red-700 dark:text-red-400">
+            {txError}
+          </div>
+        )}
+        {txWarning && (
+          <div className="flex items-start gap-2 p-3 rounded-lg border border-amber-200 bg-amber-50 dark:bg-amber-950/30">
+            <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+            <p className="text-sm text-amber-700 dark:text-amber-400">{txWarning}</p>
+          </div>
+        )}
 
         {/* Transaction history */}
         <div className="max-h-[300px] overflow-y-auto space-y-1">
