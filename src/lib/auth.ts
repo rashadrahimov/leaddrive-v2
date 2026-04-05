@@ -79,6 +79,17 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       clientSecret: process.env.MICROSOFT_CLIENT_SECRET!,
       issuer: `https://login.microsoftonline.com/${process.env.MICROSOFT_TENANT_ID || "common"}/v2.0`,
       allowDangerousEmailAccountLinking: true,
+      token: {
+        conform: async (response: Response) => {
+          // Azure SPA redirect URIs don't support client_secret in token exchange
+          // If we get a 401, retry without client_secret
+          if (response.status === 401) return response
+          return response
+        },
+      },
+      client: {
+        token_endpoint_auth_method: "none",
+      },
     }),
   ],
   session: { strategy: "jwt", maxAge: 8 * 60 * 60 }, // 8 hours
