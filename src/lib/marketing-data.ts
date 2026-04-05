@@ -159,6 +159,14 @@ export type PlanTier = {
   tagline: string
   popular?: boolean
   features: string[]
+  /** Total monthly cost in AZN (null = negotiable) */
+  price: number | null
+  /** Effective per-user price in AZN (null = negotiable) */
+  pricePerUser: number | null
+  /** Max users included */
+  maxUsers: number | null
+  /** Discount label */
+  discount?: string
 }
 
 export const plans: PlanTier[] = [
@@ -166,6 +174,9 @@ export const plans: PlanTier[] = [
     id: "starter",
     name: "Starter",
     tagline: "Kiçik komandalar üçün başlanğıc",
+    price: 550,
+    pricePerUser: 110,
+    maxUsers: 5,
     features: [
       "Şirkətlər və Kontaktlar",
       "Sövdələşmələr və Pipeline",
@@ -179,6 +190,10 @@ export const plans: PlanTier[] = [
     id: "business",
     name: "Business",
     tagline: "Böyüyən satış komandaları üçün",
+    price: 990,
+    pricePerUser: 99,
+    maxUsers: 10,
+    discount: "10% endirim",
     features: [
       "Starter-in bütün xüsusiyyətləri",
       "Tiketlər və SLA",
@@ -186,7 +201,7 @@ export const plans: PlanTier[] = [
       "Müqavilələr",
       "Agent iş masası",
       "Rollar və İcazələr",
-      "20 istifadəçiyə qədər",
+      "10 istifadəçiyə qədər",
     ],
   },
   {
@@ -194,6 +209,10 @@ export const plans: PlanTier[] = [
     name: "Professional",
     tagline: "Marketinq və satış komandaları üçün",
     popular: true,
+    price: 2200,
+    pricePerUser: 88,
+    maxUsers: 25,
+    discount: "20% endirim",
     features: [
       "Business-in bütün xüsusiyyətləri",
       "Kampaniya avtomatlaşdırması",
@@ -204,13 +223,17 @@ export const plans: PlanTier[] = [
       "Da Vinci skorinqi",
       "Layihələr və ERP",
       "Hesabatlar",
-      "50 istifadəçiyə qədər",
+      "25 istifadəçiyə qədər",
     ],
   },
   {
     id: "enterprise",
     name: "Enterprise",
     tagline: "Məlumata əsaslanan təşkilatlar üçün",
+    price: 3850,
+    pricePerUser: 77,
+    maxUsers: 50,
+    discount: "30% endirim",
     features: [
       "Professional-ın bütün xüsusiyyətləri",
       "Xərc modeli və Gəlirlilik",
@@ -222,6 +245,22 @@ export const plans: PlanTier[] = [
       "Müştəri portalı",
       "Xüsusi sahələr və İş axınları",
       "Audit jurnalı",
+      "50 istifadəçiyə qədər",
+    ],
+  },
+  {
+    id: "custom",
+    name: "Enterprise 50+",
+    tagline: "50+ istifadəçi üçün fərdi həll",
+    price: null,
+    pricePerUser: null,
+    maxUsers: null,
+    discount: "Yüksək həcm",
+    features: [
+      "Enterprise-ın bütün xüsusiyyətləri",
+      "Fərdi qiymət danışığı",
+      "Ayrılmış texniki dəstək",
+      "SLA prioritet xidmət",
       "Limitsiz istifadəçi",
     ],
   },

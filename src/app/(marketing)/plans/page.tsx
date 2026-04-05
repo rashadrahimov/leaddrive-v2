@@ -9,7 +9,7 @@ import { ShimmerButton } from "@/components/ui/shimmer-button"
 import { cn } from "@/lib/utils"
 
 /* ─── full feature comparison matrix ─── */
-type FeatureRow = { label: string; starter: boolean; business: boolean; professional: boolean; enterprise: boolean }
+type FeatureRow = { label: string; starter: boolean; business: boolean; professional: boolean; enterprise: boolean; custom?: boolean }
 
 const comparisonSections: { title: string; rows: FeatureRow[] }[] = [
   {
@@ -90,8 +90,8 @@ const comparisonSections: { title: string; rows: FeatureRow[] }[] = [
   },
 ]
 
-const planNames = ["Starter", "Business", "Professional", "Enterprise"] as const
-const planKeys = ["starter", "business", "professional", "enterprise"] as const
+const planNames = ["Starter", "Business", "Professional", "Enterprise", "50+"] as const
+const planKeys = ["starter", "business", "professional", "enterprise", "custom"] as const
 
 export default function PricingPage() {
   const [openFaq, setOpenFaq] = useState<number | null>(null)
@@ -113,8 +113,8 @@ export default function PricingPage() {
       {/* Plan cards */}
       <section className="pb-16 -mt-4">
         <div className="mx-auto max-w-6xl px-4 lg:px-8">
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {plans.map((plan, i) => (
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
+            {plans.map((plan) => (
               <div
                 key={plan.id}
                 className={cn(
@@ -131,11 +131,32 @@ export default function PricingPage() {
                     </span>
                   </div>
                 )}
+                {plan.discount && (
+                  <div className="mb-2">
+                    <span className="text-xs font-semibold text-green-600 bg-green-50 px-2 py-0.5 rounded-full">
+                      {plan.discount}
+                    </span>
+                  </div>
+                )}
                 <h3 className="text-lg font-bold text-[#001E3C]">{plan.name}</h3>
                 <p className="text-sm text-[#001E3C]/60 mt-1 mb-4">{plan.tagline}</p>
-                <div className="mb-6">
-                  <span className="text-2xl font-bold text-[#001E3C]">Satışla əlaqə</span>
+                <div className="mb-2">
+                  {plan.price !== null ? (
+                    <>
+                      <span className="text-3xl font-bold text-[#001E3C]">{plan.price.toLocaleString()}</span>
+                      <span className="text-sm text-[#001E3C]/60 ml-1">AZN/ay</span>
+                    </>
+                  ) : (
+                    <span className="text-2xl font-bold text-[#001E3C]">Fərdi qiymət</span>
+                  )}
                 </div>
+                {plan.pricePerUser !== null ? (
+                  <p className="text-sm text-[#001E3C]/50 mb-4">
+                    İstifadəçi başına <span className="font-semibold text-[#001E3C]/70">{plan.pricePerUser} AZN</span>
+                  </p>
+                ) : (
+                  <p className="text-sm text-[#001E3C]/50 mb-4">Danışıqla müəyyən edilir</p>
+                )}
                 <ul className="space-y-2 flex-1">
                   {plan.features.map((f) => (
                     <li key={f} className="flex items-start gap-2">
@@ -153,7 +174,7 @@ export default function PricingPage() {
                       : "bg-[#0176D3]/5 text-[#001E3C] hover:bg-[#0176D3]/10"
                   )}
                 >
-                  {plan.id === "enterprise" ? "Əlaqə saxlayın" : "Demo tələb et"}
+                  {plan.id === "custom" ? "Əlaqə saxlayın" : "Demo tələb et"}
                 </Link>
               </div>
             ))}
@@ -173,7 +194,7 @@ export default function PricingPage() {
               {/* Header */}
               <thead>
                 <tr className="border-b border-[#001E3C]/10">
-                  <th className="text-left py-4 px-6 text-sm font-medium text-[#001E3C]/60 w-[40%]">Xüsusiyyət</th>
+                  <th className="text-left py-4 px-6 text-sm font-medium text-[#001E3C]/60 w-[30%]">Xüsusiyyət</th>
                   {planNames.map((name, i) => (
                     <th key={name} className="py-4 px-4 text-center">
                       <span className={cn(
@@ -188,22 +209,26 @@ export default function PricingPage() {
                 {comparisonSections.map((section) => (
                   <Fragment key={section.title}>
                     <tr className="bg-[#F3F4F7]/60">
-                      <td colSpan={5} className="py-3 px-6 text-sm font-bold text-[#001E3C]">
+                      <td colSpan={6} className="py-3 px-6 text-sm font-bold text-[#001E3C]">
                         {section.title}
                       </td>
                     </tr>
                     {section.rows.map((row) => (
                       <tr key={row.label} className="border-b border-[#001E3C]/5 last:border-0">
                         <td className="py-3 px-6 text-sm text-[#001E3C]/80">{row.label}</td>
-                        {planKeys.map((key) => (
-                          <td key={key} className="py-3 px-4 text-center">
-                            {row[key] ? (
-                              <Check className="h-4 w-4 text-[#0176D3] mx-auto" />
-                            ) : (
-                              <Minus className="h-4 w-4 text-[#001E3C]/20 mx-auto" />
-                            )}
-                          </td>
-                        ))}
+                        {planKeys.map((key) => {
+                          // custom (50+) inherits enterprise features
+                          const value = key === "custom" ? (row.custom ?? row.enterprise) : row[key]
+                          return (
+                            <td key={key} className="py-3 px-4 text-center">
+                              {value ? (
+                                <Check className="h-4 w-4 text-[#0176D3] mx-auto" />
+                              ) : (
+                                <Minus className="h-4 w-4 text-[#001E3C]/20 mx-auto" />
+                              )}
+                            </td>
+                          )
+                        })}
                       </tr>
                     ))}
                   </Fragment>
