@@ -163,10 +163,10 @@ export type PlanTier = {
   price: number | null
   /** Effective per-user price in AZN (null = negotiable) */
   pricePerUser: number | null
+  /** Per-user price with annual billing (20% off, null = negotiable) */
+  pricePerUserAnnual: number | null
   /** Max users included */
   maxUsers: number | null
-  /** Discount label */
-  discount?: string
 }
 
 export const plans: PlanTier[] = [
@@ -176,6 +176,7 @@ export const plans: PlanTier[] = [
     tagline: "Kiçik komandalar üçün başlanğıc",
     price: 550,
     pricePerUser: 110,
+    pricePerUserAnnual: 88,
     maxUsers: 5,
     features: [
       "Şirkətlər və Kontaktlar",
@@ -192,8 +193,8 @@ export const plans: PlanTier[] = [
     tagline: "Böyüyən satış komandaları üçün",
     price: 990,
     pricePerUser: 99,
+    pricePerUserAnnual: 79,
     maxUsers: 10,
-    discount: "10% endirim",
     features: [
       "Starter-in bütün xüsusiyyətləri",
       "Tiketlər və SLA",
@@ -211,8 +212,8 @@ export const plans: PlanTier[] = [
     popular: true,
     price: 2200,
     pricePerUser: 88,
+    pricePerUserAnnual: 70,
     maxUsers: 25,
-    discount: "20% endirim",
     features: [
       "Business-in bütün xüsusiyyətləri",
       "Kampaniya avtomatlaşdırması",
@@ -232,8 +233,8 @@ export const plans: PlanTier[] = [
     tagline: "Məlumata əsaslanan təşkilatlar üçün",
     price: 3850,
     pricePerUser: 77,
+    pricePerUserAnnual: 62,
     maxUsers: 50,
-    discount: "30% endirim",
     features: [
       "Professional-ın bütün xüsusiyyətləri",
       "Xərc modeli və Gəlirlilik",
@@ -254,8 +255,8 @@ export const plans: PlanTier[] = [
     tagline: "50+ istifadəçi üçün fərdi həll",
     price: null,
     pricePerUser: null,
+    pricePerUserAnnual: null,
     maxUsers: null,
-    discount: "Yüksək həcm",
     features: [
       "Enterprise-ın bütün xüsusiyyətləri",
       "Fərdi qiymət danışığı",

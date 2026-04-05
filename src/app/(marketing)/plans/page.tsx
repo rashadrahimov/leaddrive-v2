@@ -95,6 +95,8 @@ const planKeys = ["starter", "business", "professional", "enterprise", "custom"]
 
 export default function PricingPage() {
   const [openFaq, setOpenFaq] = useState<number | null>(null)
+  const [billing, setBilling] = useState<"monthly" | "annual">("monthly")
+  const isAnnual = billing === "annual"
 
   return (
     <div>
@@ -107,6 +109,40 @@ export default function PricingPage() {
           <p className="mt-4 text-lg text-[#001E3C]/60 max-w-2xl mx-auto">
             Pulsuz sınaq ilə başlayın. Gizli ödənişlər yoxdur. İstədiyiniz zaman yüksəldin.
           </p>
+
+          {/* Billing toggle */}
+          <div className="mt-8 inline-flex items-center gap-3 bg-white rounded-full border border-[#001E3C]/10 p-1 shadow-sm">
+            <button
+              onClick={() => setBilling("monthly")}
+              className={cn(
+                "px-5 py-2 rounded-full text-sm font-medium transition-all",
+                !isAnnual
+                  ? "bg-[#0176D3] text-white shadow-sm"
+                  : "text-[#001E3C]/60 hover:text-[#001E3C]"
+              )}
+            >
+              Aylıq
+            </button>
+            <button
+              onClick={() => setBilling("annual")}
+              className={cn(
+                "px-5 py-2 rounded-full text-sm font-medium transition-all flex items-center gap-2",
+                isAnnual
+                  ? "bg-[#0176D3] text-white shadow-sm"
+                  : "text-[#001E3C]/60 hover:text-[#001E3C]"
+              )}
+            >
+              İllik
+              <span className={cn(
+                "text-[10px] font-bold px-1.5 py-0.5 rounded-full",
+                isAnnual
+                  ? "bg-white/20 text-white"
+                  : "bg-green-50 text-green-600"
+              )}>
+                -20%
+              </span>
+            </button>
+          </div>
         </div>
       </section>
 
@@ -114,70 +150,78 @@ export default function PricingPage() {
       <section className="pb-16 -mt-4">
         <div className="mx-auto max-w-6xl px-4 lg:px-8">
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
-            {plans.map((plan) => (
-              <div
-                key={plan.id}
-                className={cn(
-                  "relative rounded-xl border p-6 flex flex-col bg-white",
-                  plan.popular
-                    ? "border-[#0176D3] shadow-lg shadow-[#0176D3]/10 ring-1 ring-[#0176D3]"
-                    : "border-[#001E3C]/10"
-                )}
-              >
-                {plan.popular && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                    <span className="bg-[#0176D3] text-white text-xs font-semibold px-3 py-1 rounded-full">
-                      Ən Populyar
-                    </span>
-                  </div>
-                )}
-                {plan.discount && (
-                  <div className="mb-2">
-                    <span className="text-xs font-semibold text-green-600 bg-green-50 px-2 py-0.5 rounded-full">
-                      {plan.discount}
-                    </span>
-                  </div>
-                )}
-                <h3 className="text-lg font-bold text-[#001E3C]">{plan.name}</h3>
-                <p className="text-sm text-[#001E3C]/60 mt-1 mb-4">{plan.tagline}</p>
-                <div className="mb-2">
-                  {plan.price !== null ? (
-                    <>
-                      <span className="text-3xl font-bold text-[#001E3C]">{plan.price.toLocaleString()}</span>
-                      <span className="text-sm text-[#001E3C]/60 ml-1">AZN/ay</span>
-                    </>
-                  ) : (
-                    <span className="text-2xl font-bold text-[#001E3C]">Fərdi qiymət</span>
-                  )}
-                </div>
-                {plan.pricePerUser !== null ? (
-                  <p className="text-sm text-[#001E3C]/50 mb-4">
-                    İstifadəçi başına <span className="font-semibold text-[#001E3C]/70">{plan.pricePerUser} AZN</span>
-                  </p>
-                ) : (
-                  <p className="text-sm text-[#001E3C]/50 mb-4">Danışıqla müəyyən edilir</p>
-                )}
-                <ul className="space-y-2 flex-1">
-                  {plan.features.map((f) => (
-                    <li key={f} className="flex items-start gap-2">
-                      <Check className="h-4 w-4 text-[#0176D3] mt-0.5 flex-shrink-0" />
-                      <span className="text-sm text-[#001E3C]/80">{f}</span>
-                    </li>
-                  ))}
-                </ul>
-                <Link
-                  href="/contact"
+            {plans.map((plan) => {
+              const perUser = isAnnual ? plan.pricePerUserAnnual : plan.pricePerUser
+              const total = perUser !== null && plan.maxUsers !== null
+                ? perUser * plan.maxUsers
+                : null
+
+              return (
+                <div
+                  key={plan.id}
                   className={cn(
-                    "mt-6 block text-center py-2.5 px-4 rounded-full text-sm font-semibold transition-colors",
+                    "relative rounded-xl border p-6 flex flex-col bg-white",
                     plan.popular
-                      ? "bg-[#0176D3] text-white hover:bg-[#0176D3]/90"
-                      : "bg-[#0176D3]/5 text-[#001E3C] hover:bg-[#0176D3]/10"
+                      ? "border-[#0176D3] shadow-lg shadow-[#0176D3]/10 ring-1 ring-[#0176D3]"
+                      : "border-[#001E3C]/10"
                   )}
                 >
-                  {plan.id === "custom" ? "Əlaqə saxlayın" : "Demo tələb et"}
-                </Link>
-              </div>
-            ))}
+                  {plan.popular && (
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                      <span className="bg-[#0176D3] text-white text-xs font-semibold px-3 py-1 rounded-full">
+                        Ən Populyar
+                      </span>
+                    </div>
+                  )}
+                  <h3 className="text-lg font-bold text-[#001E3C]">{plan.name}</h3>
+                  <p className="text-sm text-[#001E3C]/60 mt-1 mb-4">{plan.tagline}</p>
+
+                  {/* Price — per-user focused */}
+                  <div className="mb-1">
+                    {perUser !== null ? (
+                      <div className="flex items-baseline gap-1.5">
+                        {isAnnual && plan.pricePerUser !== null && (
+                          <span className="text-base text-[#001E3C]/30 line-through">{plan.pricePerUser}</span>
+                        )}
+                        <span className="text-2xl font-semibold text-[#001E3C]">{perUser}</span>
+                        <span className="text-xs text-[#001E3C]/40">AZN / istifadəçi / ay</span>
+                      </div>
+                    ) : (
+                      <span className="text-lg font-semibold text-[#001E3C]">Fərdi qiymət</span>
+                    )}
+                  </div>
+
+                  {/* Total cost — subtle */}
+                  {total !== null && plan.maxUsers !== null ? (
+                    <p className="text-xs text-[#001E3C]/40 mb-4">
+                      {plan.maxUsers} istifadəçi: {total.toLocaleString()} AZN/ay
+                    </p>
+                  ) : (
+                    <p className="text-xs text-[#001E3C]/40 mb-4">Danışıqla müəyyən edilir</p>
+                  )}
+
+                  <ul className="space-y-2 flex-1">
+                    {plan.features.map((f) => (
+                      <li key={f} className="flex items-start gap-2">
+                        <Check className="h-4 w-4 text-[#0176D3] mt-0.5 flex-shrink-0" />
+                        <span className="text-sm text-[#001E3C]/80">{f}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <Link
+                    href="/contact"
+                    className={cn(
+                      "mt-6 block text-center py-2.5 px-4 rounded-full text-sm font-semibold transition-colors",
+                      plan.popular
+                        ? "bg-[#0176D3] text-white hover:bg-[#0176D3]/90"
+                        : "bg-[#0176D3]/5 text-[#001E3C] hover:bg-[#0176D3]/10"
+                    )}
+                  >
+                    {plan.id === "custom" ? "Əlaqə saxlayın" : "Demo tələb et"}
+                  </Link>
+                </div>
+              )
+            })}
           </div>
         </div>
       </section>
