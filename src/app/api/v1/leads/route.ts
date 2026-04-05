@@ -5,6 +5,7 @@ import { getOrgId } from "@/lib/api-auth"
 import { executeWorkflows } from "@/lib/workflow-engine"
 import { createNotification } from "@/lib/notifications"
 import { applyLeadAssignmentRules } from "@/lib/lead-assignment"
+import { fireWebhooks } from "@/lib/webhooks"
 
 const createLeadSchema = z.object({
   contactName: z.string().min(1).max(200),
@@ -92,6 +93,7 @@ export async function POST(req: NextRequest) {
       entityType: "lead",
       entityId: lead.id,
     }).catch(() => {})
+    fireWebhooks(orgId, "lead.created", { id: lead.id, contactName: lead.contactName, companyName: lead.companyName }).catch(() => {})
     return NextResponse.json({ success: true, data: lead }, { status: 201 })
   } catch (e) {
     console.error(e)

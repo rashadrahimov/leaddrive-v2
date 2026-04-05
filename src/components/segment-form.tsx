@@ -23,6 +23,14 @@ interface SegmentConditions {
   name: string
   hasEmail: boolean
   hasPhone: boolean
+  // Behavioral conditions
+  engagementScoreMin: string
+  engagementScoreMax: string
+  engagementTier: string
+  lastActivityAfter: string
+  lastActivityBefore: string
+  inactiveDays: string
+  hasEventType: string
 }
 
 const emptyConditions: SegmentConditions = {
@@ -35,6 +43,13 @@ const emptyConditions: SegmentConditions = {
   name: "",
   hasEmail: false,
   hasPhone: false,
+  engagementScoreMin: "",
+  engagementScoreMax: "",
+  engagementTier: "",
+  lastActivityAfter: "",
+  lastActivityBefore: "",
+  inactiveDays: "",
+  hasEventType: "",
 }
 
 interface SegmentFormProps {
@@ -114,6 +129,13 @@ export function SegmentForm({ open, onOpenChange, onSaved, initialData, orgId }:
     if (conditions.name.trim()) count++
     if (conditions.hasEmail) count++
     if (conditions.hasPhone) count++
+    if (conditions.engagementScoreMin) count++
+    if (conditions.engagementScoreMax) count++
+    if (conditions.engagementTier) count++
+    if (conditions.lastActivityAfter) count++
+    if (conditions.lastActivityBefore) count++
+    if (conditions.inactiveDays) count++
+    if (conditions.hasEventType) count++
     return count
   }, [conditions])
 
@@ -128,6 +150,14 @@ export function SegmentForm({ open, onOpenChange, onSaved, initialData, orgId }:
     if (conditions.name.trim()) clean.name = conditions.name.trim()
     if (conditions.hasEmail) clean.hasEmail = true
     if (conditions.hasPhone) clean.hasPhone = true
+    // Behavioral conditions
+    if (conditions.engagementScoreMin) clean.engagementScoreMin = conditions.engagementScoreMin
+    if (conditions.engagementScoreMax) clean.engagementScoreMax = conditions.engagementScoreMax
+    if (conditions.engagementTier) clean.engagementTier = conditions.engagementTier
+    if (conditions.lastActivityAfter) clean.lastActivityAfter = conditions.lastActivityAfter
+    if (conditions.lastActivityBefore) clean.lastActivityBefore = conditions.lastActivityBefore
+    if (conditions.inactiveDays) clean.inactiveDays = conditions.inactiveDays
+    if (conditions.hasEventType) clean.hasEventType = conditions.hasEventType
     return clean
   }
 
@@ -447,6 +477,69 @@ export function SegmentForm({ open, onOpenChange, onSaved, initialData, orgId }:
                   />
                 </div>
               </div>}
+            </div>
+
+            {/* Behavioral Conditions */}
+            <div className="border rounded-lg p-3 bg-amber-50/50 dark:bg-amber-950/10">
+              <h4 className="text-xs font-semibold text-amber-700 dark:text-amber-400 mb-3 uppercase">Behavioral Filters</h4>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-xs text-muted-foreground">Engagement Score Min</Label>
+                  <Input
+                    type="number" min={0} max={100}
+                    value={conditions.engagementScoreMin}
+                    onChange={e => setConditions({ ...conditions, engagementScoreMin: e.target.value })}
+                    placeholder="0"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground">Engagement Score Max</Label>
+                  <Input
+                    type="number" min={0} max={100}
+                    value={conditions.engagementScoreMax}
+                    onChange={e => setConditions({ ...conditions, engagementScoreMax: e.target.value })}
+                    placeholder="100"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground">Engagement Tier</Label>
+                  <Select value={conditions.engagementTier} onChange={e => setConditions({ ...conditions, engagementTier: e.target.value })}>
+                    <option value="">Any</option>
+                    <option value="hot">Hot (50+)</option>
+                    <option value="warm">Warm (20-49)</option>
+                    <option value="cold">Cold (&lt;20)</option>
+                  </Select>
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground">Inactive for (days)</Label>
+                  <Input
+                    type="number" min={1}
+                    value={conditions.inactiveDays}
+                    onChange={e => setConditions({ ...conditions, inactiveDays: e.target.value })}
+                    placeholder="e.g. 30"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground">Last Activity After</Label>
+                  <Input
+                    type="date"
+                    value={conditions.lastActivityAfter}
+                    onChange={e => setConditions({ ...conditions, lastActivityAfter: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground">Has Event Type</Label>
+                  <Select value={conditions.hasEventType} onChange={e => setConditions({ ...conditions, hasEventType: e.target.value })}>
+                    <option value="">Any</option>
+                    <option value="email_opened">Email Opened</option>
+                    <option value="email_clicked">Email Clicked</option>
+                    <option value="deal_created">Deal Created</option>
+                    <option value="ticket_created">Ticket Created</option>
+                    <option value="meeting_scheduled">Meeting Scheduled</option>
+                    <option value="call_logged">Call Logged</option>
+                  </Select>
+                </div>
+              </div>
             </div>
 
             {/* Preview result */}

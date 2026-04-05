@@ -7,7 +7,7 @@ const createCampaignSchema = z.object({
   name: z.string().min(1).max(255),
   description: z.string().optional(),
   type: z.enum(["email", "sms"]).optional(),
-  status: z.enum(["draft", "scheduled", "sending", "sent", "cancelled"]).optional(),
+  status: z.enum(["draft", "scheduled", "sending", "sent", "cancelled", "ab_testing"]).optional(),
   subject: z.string().optional(),
   templateId: z.string().optional(),
   segmentId: z.string().optional(),
@@ -17,6 +17,11 @@ const createCampaignSchema = z.object({
   scheduledAt: z.string().optional(),
   totalRecipients: z.number().optional(),
   budget: z.number().optional(),
+  isAbTest: z.boolean().optional(),
+  abTestType: z.string().optional(),
+  testPercentage: z.number().int().min(10).max(50).optional(),
+  testDurationHours: z.number().int().min(1).max(48).optional(),
+  winnerCriteria: z.enum(["open_rate", "click_rate"]).optional(),
 })
 
 export async function GET(req: NextRequest) {

@@ -109,6 +109,16 @@ export function CampaignForm({ open, onOpenChange, onSaved, initialData, orgId, 
   const [selectedSource, setSelectedSource] = useState("")
   const [selectedSegmentId, setSelectedSegmentId] = useState("")
   const [leadsCount, setLeadsCount] = useState(0)
+  // A/B test state
+  const [isAbTest, setIsAbTest] = useState(false)
+  const [abTestType, setAbTestType] = useState("subject")
+  const [testPercentage, setTestPercentage] = useState(20)
+  const [testDurationHours, setTestDurationHours] = useState(4)
+  const [winnerCriteria, setWinnerCriteria] = useState("open_rate")
+  const [variants, setVariants] = useState<Array<{ name: string; subject: string; templateId: string; percentage: number }>>([
+    { name: "Variant A", subject: "", templateId: "", percentage: 50 },
+    { name: "Variant B", subject: "", templateId: "", percentage: 50 },
+  ])
 
   // Load templates, segments and contacts
   useEffect(() => {
@@ -196,6 +206,11 @@ export function CampaignForm({ open, onOpenChange, onSaved, initialData, orgId, 
         scheduledAt: form.scheduledAt ? new Date(form.scheduledAt).toISOString() : undefined,
         totalRecipients: finalRecipients,
         budget: form.budget ? Number(form.budget) : undefined,
+        isAbTest,
+        abTestType: isAbTest ? abTestType : undefined,
+        testPercentage: isAbTest ? testPercentage : undefined,
+        testDurationHours: isAbTest ? testDurationHours : undefined,
+        winnerCriteria: isAbTest ? winnerCriteria : undefined,
       }
       const res = await fetch(url, {
         method: isEdit ? "PUT" : "POST",
@@ -207,6 +222,27 @@ export function CampaignForm({ open, onOpenChange, onSaved, initialData, orgId, 
       })
       const json = await res.json()
       if (!res.ok) throw new Error(json.error || tc("failedToSave"))
+
+      // Save A/B test variants if enabled
+      const campaignId = json.data?.id || initialData?.id
+      if (isAbTest && campaignId && variants.length >= 2) {
+        for (const v of variants) {
+          await fetch(`/api/v1/campaigns/${campaignId}/variants`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              ...(orgId ? { "x-organization-id": orgId } : {}),
+            },
+            body: JSON.stringify({
+              name: v.name,
+              subject: v.subject || undefined,
+              templateId: v.templateId || undefined,
+              percentage: v.percentage,
+            }),
+          }).catch(() => {})
+        }
+      }
+
       onSaved()
       if (sendAfterSave && !isEdit && json.data?.id && onCreatedAndSend) {
         onCreatedAndSend(json.data.id)
@@ -448,6 +484,81 @@ export function CampaignForm({ open, onOpenChange, onSaved, initialData, orgId, 
             <div>
               <Label className="text-xs text-muted-foreground">{t("budget")}</Label>
               <Input type="number" step="0.01" value={form.budget} onChange={(e) => update("budget", e.target.value)} placeholder="0" />
+            </div>
+
+            {/* A/B Test Section */}
+            <div className="border rounded-lg p-3">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" checked={isAbTest} onChange={e => setIsAbTest(e.target.checked)} className="rounded" />
+                <span className="text-sm font-medium">Enable A/B Test</span>
+              </label>
+              {isAbTest && (
+                <div className="mt-3 space-y-3">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label className="text-xs text-muted-foreground">Test Type</Label>
+                      <Select value={abTestType} onChange={e => setAbTestType(e.target.value)}>
+                        <option value="subject">Subject Line</option>
+                        <option value="content">Content</option>
+                        <option value="send_time">Send Time</option>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label className="text-xs text-muted-foreground">Winner Criteria</Label>
+                      <Select value={winnerCriteria} onChange={e => setWinnerCriteria(e.target.value)}>
+                        <option value="open_rate">Open Rate</option>
+                        <option value="click_rate">Click Rate</option>
+                      </Select>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label className="text-xs text-muted-foreground">Test Audience: {testPercentage}%</Label>
+                      <input type="range" min={10} max={50} value={testPercentage} onChange={e => setTestPercentage(Number(e.target.value))} className="w-full" />
+                    </div>
+                    <div>
+                      <Label className="text-xs text-muted-foreground">Test Duration</Label>
+                      <Select value={String(testDurationHours)} onChange={e => setTestDurationHours(Number(e.target.value))}>
+                        <option value="1">1 hour</option>
+                        <option value="2">2 hours</option>
+                        <option value="4">4 hours</option>
+                        <option value="8">8 hours</option>
+                        <option value="24">24 hours</option>
+                      </Select>
+                    </div>
+                  </div>
+                  {/* Variants */}
+                  <div className="space-y-2">
+                    {variants.map((v, i) => (
+                      <div key={i} className="border rounded p-2 bg-muted/30">
+                        <div className="flex items-center justify-between mb-1.5">
+                          <span className="text-xs font-semibold">{v.name}</span>
+                          <span className="text-xs text-muted-foreground">{v.percentage}%</span>
+                        </div>
+                        <Input
+                          placeholder="Subject line for this variant..."
+                          value={v.subject}
+                          onChange={e => {
+                            const next = [...variants]
+                            next[i] = { ...next[i], subject: e.target.value }
+                            setVariants(next)
+                          }}
+                          className="text-sm h-8"
+                        />
+                      </div>
+                    ))}
+                    {variants.length < 4 && (
+                      <button
+                        type="button"
+                        onClick={() => setVariants([...variants, { name: `Variant ${String.fromCharCode(65 + variants.length)}`, subject: "", templateId: "", percentage: Math.floor(100 / (variants.length + 1)) }])}
+                        className="text-xs text-primary hover:underline"
+                      >
+                        + Add Variant
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* ── Recipients — simple dropdown like v1 ── */}

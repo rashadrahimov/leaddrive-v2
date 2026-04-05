@@ -5,6 +5,8 @@ import { getOrgId } from "@/lib/api-auth"
 import { executeWorkflows } from "@/lib/workflow-engine"
 import { createNotification } from "@/lib/notifications"
 import { autoAssignTicket } from "@/lib/auto-assign"
+import { fireWebhooks } from "@/lib/webhooks"
+import { trackContactEvent } from "@/lib/contact-events"
 
 const createTicketSchema = z.object({
   subject: z.string().min(1).max(300),
@@ -158,6 +160,8 @@ export async function POST(req: NextRequest) {
       entityType: "ticket",
       entityId: ticket.id,
     }).catch(() => {})
+    fireWebhooks(orgId, "ticket.created", { id: ticket.id, ticketNumber: ticket.ticketNumber, subject: ticket.subject, priority: ticket.priority }).catch(() => {})
+    if (ticket.contactId) trackContactEvent(orgId, ticket.contactId, "ticket_created", { ticketId: ticket.id }).catch(() => {})
     return NextResponse.json({ success: true, data: ticket }, { status: 201 })
   } catch (e) {
     console.error(e)

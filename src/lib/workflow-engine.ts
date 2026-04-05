@@ -1,6 +1,8 @@
 import { prisma } from "@/lib/prisma"
 import { createNotification } from "@/lib/notifications"
 import { isPrivateUrl } from "@/lib/url-validation"
+import { fireWebhooks } from "@/lib/webhooks"
+import { sendSlackNotification, formatGenericNotification } from "@/lib/slack"
 
 // Whitelist of fields that workflow actions are allowed to update per entity type
 const SAFE_UPDATE_FIELDS: Record<string, Set<string>> = {
@@ -195,6 +197,13 @@ async function executeAction(
       break
 
     case "webhook":
+      // Fire registered webhooks for this event
+      await fireWebhooks(orgId, `${entityType}.${"updated"}`, {
+        entityType,
+        entityId: entity.id,
+        ...entity,
+      }).catch(() => {})
+      // Also fire custom URL if specified in workflow config
       if (config.url) {
         if (isPrivateUrl(config.url)) {
           console.error("[Workflow] Blocked webhook to private URL:", config.url)
@@ -216,6 +225,23 @@ async function executeAction(
         }
       }
       break
+
+    case "slack_notify": {
+      const slackConfigs = await prisma.channelConfig.findMany({
+        where: { organizationId: orgId, channelType: "slack", isActive: true },
+      })
+      const message = formatGenericNotification(
+        entityType,
+        config.message || `${entityType} ${"updated"}`,
+        { id: entity.id, name: entity.name || entity.subject || entity.fullName || "" }
+      )
+      for (const cfg of slackConfigs) {
+        if (cfg.webhookUrl) {
+          sendSlackNotification(cfg.webhookUrl, message).catch(() => {})
+        }
+      }
+      break
+    }
 
     default:
       console.warn(`Unknown workflow action type: ${action.actionType}`)

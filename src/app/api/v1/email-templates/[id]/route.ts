@@ -12,6 +12,9 @@ const updateTemplateSchema = z.object({
   variables: z.string().optional(),
   language: z.string().optional(),
   isActive: z.boolean().optional(),
+  designJson: z.any().optional(),
+  editorType: z.enum(["html", "visual"]).optional(),
+  thumbnailUrl: z.string().optional(),
 })
 
 export async function GET(

@@ -110,38 +110,119 @@ export async function POST(
 
     let sentCount = 0
     const errors: string[] = []
-    for (const contact of contacts) {
-      if (!contact.email) continue
-      const rendered = renderTemplate(htmlBody, {
-        client_name: contact.fullName,
-        manager_name: "LeadDrive Team",
-      })
-      const result = await sendEmail({
-        to: contact.email,
-        subject: campaign.subject || campaign.name,
-        html: rendered,
-        organizationId: orgId,
-        campaignId: campaign.id,
-        templateId: campaign.templateId || undefined,
-        contactId: contact.id,
-      })
-      if (result.success) {
-        sentCount++
-      } else if (errors.length < 3) {
-        errors.push(`${contact.email}: ${result.error}`)
-      }
-    }
 
-    // Update campaign stats
-    await prisma.campaign.update({
-      where: { id },
-      data: {
-        status: sentCount > 0 ? "sent" : "draft",
-        sentAt: sentCount > 0 ? new Date() : undefined,
-        totalSent: sentCount,
-        totalRecipients: contacts.length,
-      },
-    })
+    // Check if A/B test
+    const variants = campaign.isAbTest
+      ? await prisma.campaignVariant.findMany({ where: { campaignId: id }, orderBy: { createdAt: "asc" } })
+      : []
+
+    if (campaign.isAbTest && variants.length >= 2) {
+      // === A/B TEST MODE ===
+      const testPct = campaign.testPercentage ?? 20
+      const testSize = Math.max(2, Math.floor(contacts.length * testPct / 100))
+
+      // Shuffle contacts
+      for (let i = contacts.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [contacts[i], contacts[j]] = [contacts[j], contacts[i]]
+      }
+
+      const testContacts = contacts.slice(0, testSize)
+      const holdoutContacts = contacts.slice(testSize)
+
+      // Distribute test contacts among variants by percentage
+      const totalPct = variants.reduce((sum, v) => sum + v.percentage, 0) || 100
+      let offset = 0
+
+      for (const variant of variants) {
+        const variantSize = Math.max(1, Math.floor(testContacts.length * variant.percentage / totalPct))
+        const variantContacts = testContacts.slice(offset, offset + variantSize)
+        offset += variantSize
+
+        // Load variant template if specified
+        let variantHtml = htmlBody
+        if (variant.htmlBody) {
+          variantHtml = variant.htmlBody
+        } else if (variant.templateId) {
+          const vTemplate = await prisma.emailTemplate.findFirst({ where: { id: variant.templateId, organizationId: orgId } })
+          if (vTemplate?.htmlBody) variantHtml = vTemplate.htmlBody
+        }
+
+        for (const contact of variantContacts) {
+          if (!contact.email) continue
+          const rendered = renderTemplate(variantHtml, {
+            client_name: contact.fullName,
+            manager_name: "LeadDrive Team",
+          })
+          const result = await sendEmail({
+            to: contact.email,
+            subject: variant.subject ?? campaign.subject ?? campaign.name,
+            html: rendered,
+            organizationId: orgId,
+            campaignId: campaign.id,
+            templateId: variant.templateId ?? campaign.templateId ?? undefined,
+            contactId: contact.id,
+            variantId: variant.id,
+          })
+          if (result.success) sentCount++
+          else if (errors.length < 3) errors.push(`${contact.email}: ${result.error}`)
+        }
+
+        // Update variant stats
+        await prisma.campaignVariant.update({
+          where: { id: variant.id },
+          data: { totalSent: variantContacts.length },
+        })
+      }
+
+      // Store holdout contact IDs for later winner send
+      const holdoutIds = holdoutContacts.map(c => c.id)
+
+      await prisma.campaign.update({
+        where: { id },
+        data: {
+          status: "ab_testing",
+          sentAt: new Date(),
+          totalSent: sentCount,
+          totalRecipients: contacts.length,
+          holdoutIds: holdoutIds,
+        },
+      })
+    } else {
+      // === NORMAL MODE ===
+      for (const contact of contacts) {
+        if (!contact.email) continue
+        const rendered = renderTemplate(htmlBody, {
+          client_name: contact.fullName,
+          manager_name: "LeadDrive Team",
+        })
+        const result = await sendEmail({
+          to: contact.email,
+          subject: campaign.subject || campaign.name,
+          html: rendered,
+          organizationId: orgId,
+          campaignId: campaign.id,
+          templateId: campaign.templateId || undefined,
+          contactId: contact.id,
+        })
+        if (result.success) {
+          sentCount++
+        } else if (errors.length < 3) {
+          errors.push(`${contact.email}: ${result.error}`)
+        }
+      }
+
+      // Update campaign stats
+      await prisma.campaign.update({
+        where: { id },
+        data: {
+          status: sentCount > 0 ? "sent" : "draft",
+          sentAt: sentCount > 0 ? new Date() : undefined,
+          totalSent: sentCount,
+          totalRecipients: contacts.length,
+        },
+      })
+    }
 
     // Notify org about campaign sent
     createNotification({

@@ -7,10 +7,11 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { EmailTemplateForm } from "@/components/email-template-form"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
-import { Plus, Search } from "lucide-react"
+import { Plus, Search, LayoutTemplate, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { InfoHint } from "@/components/info-hint"
 import { PageDescription } from "@/components/page-description"
+import { EMAIL_TEMPLATE_LIBRARY, type LibraryTemplate } from "@/lib/email-templates-library"
 
 interface EmailTemplate {
   id: string
@@ -22,6 +23,8 @@ interface EmailTemplate {
   variables?: string[]
   language?: string
   isActive?: boolean
+  designJson?: any
+  editorType?: string
   createdAt: string
 }
 
@@ -54,6 +57,7 @@ export default function EmailTemplatesPage() {
   const [search, setSearch] = useState("")
   const [filterLang, setFilterLang] = useState("all")
   const [filterCategory, setFilterCategory] = useState("all")
+  const [showLibrary, setShowLibrary] = useState(false)
   const orgId = session?.user?.organizationId
 
   const categoryLabels: Record<string, string> = {
@@ -127,9 +131,14 @@ export default function EmailTemplatesPage() {
           <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
           <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
         </div>
-        <Button onClick={() => { setEditData(undefined); setShowForm(true) }}>
-          <Plus className="h-4 w-4 mr-1" /> {t("newTemplate")}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={() => setShowLibrary(true)}>
+            <LayoutTemplate className="h-4 w-4 mr-1" /> Start from template
+          </Button>
+          <Button onClick={() => { setEditData(undefined); setShowForm(true) }}>
+            <Plus className="h-4 w-4 mr-1" /> {t("newTemplate")}
+          </Button>
+        </div>
       </div>
 
       <PageDescription text={t("pageDescription")} />
@@ -278,6 +287,56 @@ export default function EmailTemplatesPage() {
         title={t("deleteTemplate")}
         itemName={deleteName}
       />
+
+      {/* Template Library Modal */}
+      {showLibrary && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" onClick={() => setShowLibrary(false)}>
+          <div className="bg-card rounded-xl shadow-xl max-w-3xl w-full max-h-[80vh] overflow-hidden" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-6 py-4 border-b">
+              <div>
+                <h2 className="text-lg font-semibold">Template Library</h2>
+                <p className="text-sm text-muted-foreground">Choose a pre-built template to get started</p>
+              </div>
+              <button onClick={() => setShowLibrary(false)} className="p-1.5 rounded-md hover:bg-muted">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="p-6 overflow-y-auto max-h-[60vh]">
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {EMAIL_TEMPLATE_LIBRARY.map(tmpl => (
+                  <div
+                    key={tmpl.id}
+                    className="border rounded-lg p-4 hover:shadow-md hover:border-primary/50 transition-all cursor-pointer group"
+                    onClick={() => {
+                      setEditData({
+                        id: "",
+                        name: tmpl.name,
+                        subject: "",
+                        htmlBody: "",
+                        category: tmpl.category,
+                        designJson: tmpl.designJson,
+                        editorType: "visual",
+                        createdAt: "",
+                      } as any)
+                      setShowLibrary(false)
+                      setShowForm(true)
+                    }}
+                  >
+                    <div className="h-20 rounded bg-gradient-to-br from-primary/5 to-primary/10 flex items-center justify-center mb-3 group-hover:from-primary/10 group-hover:to-primary/20 transition-colors">
+                      <LayoutTemplate className="h-8 w-8 text-primary/40 group-hover:text-primary/60" />
+                    </div>
+                    <h3 className="font-medium text-sm">{tmpl.name}</h3>
+                    <p className="text-xs text-muted-foreground mt-1">{tmpl.description}</p>
+                    <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full mt-2 inline-block">
+                      {categoryIcons[tmpl.category]} {categoryLabels[tmpl.category] || tmpl.category}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

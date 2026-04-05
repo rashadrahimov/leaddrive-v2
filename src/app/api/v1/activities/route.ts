@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { prisma } from "@/lib/prisma"
 import { getOrgId, requireAuth } from "@/lib/api-auth"
+import { trackContactEvent } from "@/lib/contact-events"
 
 const createActivitySchema = z.object({
   type: z.string().min(1),
@@ -44,16 +45,16 @@ export async function GET(req: NextRequest) {
     })
 
     // Resolve createdBy user names
-    const userIds = [...new Set(activities.map(a => a.createdBy).filter(Boolean))] as string[]
+    const userIds = [...new Set(activities.map((a: any) => a.createdBy).filter(Boolean))] as string[]
     const users = userIds.length > 0
       ? await prisma.user.findMany({
           where: { id: { in: userIds }, organizationId: orgId },
           select: { id: true, name: true },
         })
       : []
-    const userMap = Object.fromEntries(users.map(u => [u.id, u.name]))
+    const userMap = Object.fromEntries(users.map((u: any) => [u.id, u.name]))
 
-    const enriched = activities.map(a => ({
+    const enriched = activities.map((a: any) => ({
       ...a,
       createdByName: a.createdBy ? userMap[a.createdBy] || null : null,
     }))
@@ -81,6 +82,13 @@ export async function POST(req: NextRequest) {
         ...(parsed.data.scheduledAt ? { scheduledAt: new Date(parsed.data.scheduledAt) } : {}),
       },
     })
+    // Track contact event for engagement scoring
+    if (activity.contactId) {
+      const eventType = activity.type === "meeting" ? "meeting_scheduled"
+        : activity.type === "call" ? "call_logged"
+        : "note_added"
+      trackContactEvent(auth.orgId, activity.contactId, eventType, { activityId: activity.id, type: activity.type }).catch(() => {})
+    }
     return NextResponse.json({ success: true, data: activity }, { status: 201 })
   } catch (e) {
     console.error(e)

@@ -6,12 +6,15 @@ import { getOrgId } from "@/lib/api-auth"
 const createTemplateSchema = z.object({
   name: z.string().min(1).max(255),
   subject: z.string().min(1).max(500),
-  htmlBody: z.string().min(1),
+  htmlBody: z.string().optional().default(""),
   textBody: z.string().optional(),
   category: z.string().optional(),
   variables: z.string().optional(),
   language: z.string().optional(),
   isActive: z.boolean().optional(),
+  designJson: z.any().optional(),
+  editorType: z.enum(["html", "visual"]).optional(),
+  thumbnailUrl: z.string().optional(),
 })
 
 export async function GET(req: NextRequest) {

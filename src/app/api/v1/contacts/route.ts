@@ -4,6 +4,7 @@ import { prisma, logAudit } from "@/lib/prisma"
 import { getOrgId } from "@/lib/api-auth"
 import { executeWorkflows } from "@/lib/workflow-engine"
 import { createNotification } from "@/lib/notifications"
+import { fireWebhooks } from "@/lib/webhooks"
 
 const createContactSchema = z.object({
   fullName: z.string().min(1).max(200),
@@ -69,6 +70,7 @@ export async function POST(req: NextRequest) {
       entityType: "contact",
       entityId: contact.id,
     }).catch(() => {})
+    fireWebhooks(orgId, "contact.created", { id: contact.id, fullName: contact.fullName, email: contact.email }).catch(() => {})
     return NextResponse.json({ success: true, data: contact }, { status: 201 })
   } catch (e) {
     console.error(e)

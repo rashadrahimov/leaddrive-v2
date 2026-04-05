@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { ChevronRight, CreditCard, Users, Radio, Zap, LayoutDashboard, Globe, Lock, FileText, Clock, Shield, FileSpreadsheet } from "lucide-react"
+import { ChevronRight, CreditCard, Users, Radio, Zap, LayoutDashboard, Globe, Lock, FileText, Clock, Shield, FileSpreadsheet, Plug, Keyboard } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { InfoHint } from "@/components/info-hint"
 import { PageDescription } from "@/components/page-description"
@@ -24,6 +24,8 @@ export default function SettingsPage() {
     { icon: Shield, title: t("portalUsers"), description: t("portalUsersDesc"), href: "/settings/portal-users", hint: t("hintPortalUsers") },
     { icon: Lock, title: t("security"), description: t("securityDesc"), href: "/settings/security", hint: t("hintSecurity") },
     { icon: FileText, title: t("auditLog"), description: t("auditLogDesc"), href: "/settings/audit-log", hint: t("hintAuditLog") },
+    { icon: Plug, title: "Integrations", description: "Webhooks, Google Calendar, Slack, Zapier", href: "/settings/integrations", hint: "Configure external integrations" },
+    { icon: Keyboard, title: "Macros", description: "Ticket response macros and shortcuts", href: "/settings/macros", hint: "Manage ticket macros" },
   ]
 
   return (

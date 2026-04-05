@@ -79,6 +79,7 @@ export async function sendEmail({
   campaignId,
   templateId,
   contactId,
+  variantId,
   sentBy,
   attachments,
 }: {
@@ -89,6 +90,7 @@ export async function sendEmail({
   campaignId?: string
   templateId?: string
   contactId?: string
+  variantId?: string
   sentBy?: string
   attachments?: { filename: string; path: string }[]
 }) {
@@ -113,6 +115,7 @@ export async function sendEmail({
           campaignId,
           templateId,
           contactId,
+          variantId,
           sentBy,
         },
       }).catch(() => {})
@@ -148,6 +151,7 @@ export async function sendEmail({
           campaignId,
           templateId,
           contactId,
+          variantId,
           sentBy,
         },
       }).catch(() => {})
@@ -170,6 +174,7 @@ export async function sendEmail({
           campaignId,
           templateId,
           contactId,
+          variantId,
           sentBy,
         },
       }).catch(() => {})

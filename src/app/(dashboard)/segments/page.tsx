@@ -51,6 +51,16 @@ export default function SegmentsPage() {
     createdBefore: t("condBefore"),
     hasEmail: t("condHasEmail"),
     hasPhone: t("condHasPhone"),
+    // Behavioral conditions
+    engagementScoreMin: "Engagement >=",
+    engagementScoreMax: "Engagement <=",
+    engagementTier: "Engagement Tier",
+    lastActivityAfter: "Active After",
+    lastActivityBefore: "Active Before",
+    inactiveDays: "Inactive Days",
+    hasEventType: "Has Event",
+    openedCampaign: "Opened Campaign",
+    clickedCampaign: "Clicked Campaign",
   }
 
   const [segments, setSegments] = useState<Segment[]>([])

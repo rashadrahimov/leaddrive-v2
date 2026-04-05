@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback, useRef } from "react"
-import { useParams } from "next/navigation"
+import { useParams, useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
 import { useTranslations } from "next-intl"
 import Link from "next/link"
@@ -10,8 +10,9 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Select } from "@/components/ui/select"
-import { ArrowLeft, Clock, Send, Lock, Star, Loader2, Bot, FileText, Zap, UserCheck, RefreshCw, AlertTriangle, UserPlus, BookOpen } from "lucide-react"
+import { ArrowLeft, ArrowRight, Clock, Send, Lock, Star, Loader2, Bot, FileText, Zap, UserCheck, RefreshCw, AlertTriangle, UserPlus, BookOpen, ChevronLeft, ChevronRight, Keyboard, Timer, Play } from "lucide-react"
 import { InfoHint } from "@/components/info-hint"
+import { useTicketShortcuts, TICKET_SHORTCUTS } from "@/hooks/use-ticket-shortcuts"
 
 interface TicketData {
   id: string
@@ -136,6 +137,19 @@ export default function TicketDetailPage() {
   const [aiResult, setAiResult] = useState<{ type: string; text: string } | null>(null)
   const [aiLang, setAiLang] = useState("ru") // "ru" | "az" | "en"
 
+  // Agent Desktop v2 features
+  const router = useRouter()
+  const commentRef = useRef<HTMLTextAreaElement>(null)
+  const [siblings, setSiblings] = useState<{ prev: any | null; next: any | null }>({ prev: null, next: null })
+  const [customerContext, setCustomerContext] = useState<any>(null)
+  const [showContext, setShowContext] = useState(false)
+  const [macros, setMacros] = useState<any[]>([])
+  const [handleTimer, setHandleTimer] = useState(0)
+  const [showShortcuts, setShowShortcuts] = useState(false)
+  const timerRef = useRef<NodeJS.Timeout | null>(null)
+  const orgId = session?.user?.organizationId
+  const headers = orgId ? { "x-organization-id": String(orgId) } : {}
+
   const STATUS_LABELS: Record<string, string> = {
     new: t("statusNew"),
     open: t("statusOpen"),
@@ -197,6 +211,74 @@ export default function TicketDetailPage() {
     const interval = setInterval(() => setTick(t => t + 1), 1000)
     return () => clearInterval(interval)
   }, [])
+
+  // Fetch siblings, macros, and start handle timer
+  useEffect(() => {
+    if (!ticketId) return
+    // Siblings
+    fetch(`/api/v1/tickets/${ticketId}/siblings`, { headers }).then(r => r.json()).then(j => {
+      if (j.success) setSiblings(j.data)
+    }).catch(() => {})
+    // Macros
+    fetch("/api/v1/ticket-macros", { headers }).then(r => r.json()).then(j => {
+      if (j.success) setMacros(j.data || [])
+    }).catch(() => {})
+    // Handle timer
+    setHandleTimer(0)
+    timerRef.current = setInterval(() => setHandleTimer(t => t + 1), 1000)
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current)
+      // Save handle time on unmount
+      fetch(`/api/v1/tickets/${ticketId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", ...headers },
+        body: JSON.stringify({ handleTimeSeconds: handleTimer }),
+      }).catch(() => {})
+    }
+  }, [ticketId])
+
+  // Fetch Customer 360 context when toggled
+  useEffect(() => {
+    if (showContext && !customerContext && ticketId) {
+      fetch(`/api/v1/tickets/${ticketId}/context`, { headers }).then(r => r.json()).then(j => {
+        if (j.success) setCustomerContext(j.data)
+      }).catch(() => {})
+    }
+  }, [showContext, ticketId])
+
+  // Keyboard shortcuts
+  useTicketShortcuts({
+    onReply: () => { setIsInternal(false); commentRef.current?.focus() },
+    onInternalNote: () => { setIsInternal(true); commentRef.current?.focus() },
+    onAssignToMe: () => {
+      if (session?.user?.id) {
+        fetch(`/api/v1/tickets/${ticketId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json", ...headers },
+          body: JSON.stringify({ assignedTo: session.user.id }),
+        }).then(() => fetchTicket()).catch(() => {})
+      }
+    },
+    onClose: () => {
+      fetch(`/api/v1/tickets/${ticketId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", ...headers },
+        body: JSON.stringify({ status: "closed" }),
+      }).then(() => fetchTicket()).catch(() => {})
+    },
+    onPrevTicket: () => { if (siblings.prev) router.push(`/tickets/${siblings.prev.id}`) },
+    onNextTicket: () => { if (siblings.next) router.push(`/tickets/${siblings.next.id}`) },
+    onCopyNumber: () => { if (ticket?.ticketNumber) navigator.clipboard.writeText(ticket.ticketNumber) },
+    macros: macros.filter((m: any) => m.isActive).map((m: any) => ({
+      execute: () => {
+        fetch(`/api/v1/ticket-macros/${m.id}/apply`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", ...headers },
+          body: JSON.stringify({ ticketId }),
+        }).then(() => fetchTicket()).catch(() => {})
+      },
+    })),
+  })
 
   const handleSendComment = async () => {
     if (!newComment.trim() || sending) return
@@ -337,15 +419,39 @@ export default function TicketDetailPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {/* Header with navigation */}
       <div className="flex items-center gap-3 flex-wrap">
         <Link href="/tickets">
           <Button variant="ghost" size="icon" className="h-8 w-8"><ArrowLeft className="h-4 w-4" /></Button>
         </Link>
+        {/* Prev/Next navigation */}
+        <div className="flex items-center gap-1">
+          <Button
+            variant="ghost" size="icon" className="h-7 w-7"
+            disabled={!siblings.prev}
+            onClick={() => siblings.prev && router.push(`/tickets/${siblings.prev.id}`)}
+            title={siblings.prev ? `${siblings.prev.ticketNumber}: ${siblings.prev.subject}` : "No previous ticket"}
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost" size="icon" className="h-7 w-7"
+            disabled={!siblings.next}
+            onClick={() => siblings.next && router.push(`/tickets/${siblings.next.id}`)}
+            title={siblings.next ? `${siblings.next.ticketNumber}: ${siblings.next.subject}` : "No next ticket"}
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <h1 className="text-lg font-bold truncate">{ticket.subject}</h1>
             <span className="text-xs text-muted-foreground font-mono">{ticket.ticketNumber}</span>
+            {/* Handle timer */}
+            <span className="text-xs text-muted-foreground flex items-center gap-1">
+              <Timer className="h-3 w-3" />
+              {Math.floor(handleTimer / 60)}:{(handleTimer % 60).toString().padStart(2, "0")}
+            </span>
           </div>
           <div className="flex items-center gap-2 mt-1">
             <Badge className={statusStyle.className}>{STATUS_LABELS[ticket.status] || ticket.status}</Badge>
@@ -374,8 +480,120 @@ export default function TicketDetailPage() {
               </Button>
             </>
           )}
+          {/* Macros dropdown */}
+          {macros.filter((m: any) => m.isActive).length > 0 && (
+            <div className="relative group">
+              <Button size="sm" variant="outline">
+                <Zap className="h-3.5 w-3.5 mr-1" /> Macros
+              </Button>
+              <div className="absolute right-0 top-full mt-1 bg-card border rounded-lg shadow-lg p-1 min-w-[200px] hidden group-hover:block z-10">
+                {macros.filter((m: any) => m.isActive).map((m: any, idx: number) => (
+                  <button
+                    key={m.id}
+                    className="w-full text-left px-3 py-1.5 text-sm rounded hover:bg-muted flex items-center justify-between"
+                    onClick={() => {
+                      fetch(`/api/v1/ticket-macros/${m.id}/apply`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json", ...headers },
+                        body: JSON.stringify({ ticketId }),
+                      }).then(() => fetchTicket()).catch(() => {})
+                    }}
+                  >
+                    <span>{m.name}</span>
+                    {m.shortcutKey && <kbd className="text-[10px] bg-muted px-1 rounded ml-2">{m.shortcutKey}</kbd>}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+          {/* Customer 360 toggle */}
+          <Button size="sm" variant={showContext ? "default" : "outline"} onClick={() => setShowContext(!showContext)}>
+            <UserCheck className="h-3.5 w-3.5 mr-1" /> 360
+          </Button>
+          {/* Shortcuts help */}
+          <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setShowShortcuts(!showShortcuts)} title="Keyboard shortcuts">
+            <Keyboard className="h-4 w-4" />
+          </Button>
         </div>
       </div>
+
+      {/* Shortcuts help panel */}
+      {showShortcuts && (
+        <div className="border rounded-lg p-3 bg-muted/30">
+          <h3 className="text-xs font-semibold mb-2">Keyboard Shortcuts</h3>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-1">
+            {TICKET_SHORTCUTS.map(s => (
+              <div key={s.keys} className="flex items-center gap-2 text-xs">
+                <kbd className="px-1.5 py-0.5 bg-card rounded border text-[10px] font-mono">{s.keys}</kbd>
+                <span className="text-muted-foreground">{s.description}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Customer 360 Context Panel */}
+      {showContext && customerContext && (
+        <Card>
+          <CardHeader className="py-3">
+            <CardTitle className="text-sm">Customer 360</CardTitle>
+          </CardHeader>
+          <CardContent className="grid md:grid-cols-3 gap-4 text-sm">
+            {/* Contact & Company */}
+            <div>
+              <h4 className="font-semibold text-xs text-muted-foreground uppercase mb-2">Contact</h4>
+              {customerContext.contact ? (
+                <div className="space-y-1">
+                  <p className="font-medium">{customerContext.contact.fullName}</p>
+                  <p className="text-xs text-muted-foreground">{customerContext.contact.position}</p>
+                  <p className="text-xs">{customerContext.contact.email}</p>
+                  <p className="text-xs">{customerContext.contact.phone}</p>
+                </div>
+              ) : <p className="text-xs text-muted-foreground">No contact linked</p>}
+              {customerContext.company && (
+                <div className="mt-3">
+                  <h4 className="font-semibold text-xs text-muted-foreground uppercase mb-1">Company</h4>
+                  <p className="font-medium">{customerContext.company.name}</p>
+                  <p className="text-xs text-muted-foreground">{customerContext.company.industry}</p>
+                  <p className="text-xs">LTV: ${(customerContext.lifetimeValue || 0).toLocaleString()}</p>
+                </div>
+              )}
+            </div>
+            {/* Recent Tickets */}
+            <div>
+              <h4 className="font-semibold text-xs text-muted-foreground uppercase mb-2">Recent Tickets ({customerContext.recentTickets?.length || 0})</h4>
+              <div className="space-y-1.5">
+                {(customerContext.recentTickets || []).map((t: any) => (
+                  <Link key={t.id} href={`/tickets/${t.id}`} className="block text-xs hover:underline">
+                    <span className="font-mono">{t.ticketNumber}</span> {t.subject}
+                    <Badge className="ml-1 text-[10px] px-1">{t.status}</Badge>
+                  </Link>
+                ))}
+              </div>
+              {customerContext.openDeals?.length > 0 && (
+                <>
+                  <h4 className="font-semibold text-xs text-muted-foreground uppercase mt-3 mb-1">Open Deals ({customerContext.openDeals.length})</h4>
+                  {customerContext.openDeals.map((d: any) => (
+                    <p key={d.id} className="text-xs">{d.name} — ${d.valueAmount?.toLocaleString()} ({d.stage})</p>
+                  ))}
+                </>
+              )}
+            </div>
+            {/* Recent Activity */}
+            <div>
+              <h4 className="font-semibold text-xs text-muted-foreground uppercase mb-2">Recent Activity</h4>
+              <div className="space-y-1.5">
+                {(customerContext.recentActivity || []).map((a: any) => (
+                  <p key={a.id} className="text-xs">
+                    <span className="capitalize font-medium">{a.type}</span>: {a.subject}
+                    <span className="text-muted-foreground ml-1">{formatDate(a.createdAt)}</span>
+                  </p>
+                ))}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Status Pipeline */}
       <div className="flex gap-0 rounded-xl overflow-hidden border">
@@ -562,6 +780,7 @@ export default function TicketDetailPage() {
               {/* Comment input area */}
               <div className="border-t pt-4 space-y-3">
                 <Textarea
+                  ref={commentRef}
                   value={newComment}
                   onChange={e => setNewComment(e.target.value)}
                   placeholder={isInternal ? t("internalNotePlaceholder") : t("replyPlaceholder")}

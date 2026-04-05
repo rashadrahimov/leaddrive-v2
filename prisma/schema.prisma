@@ -68,6 +68,7 @@ model Organization {
   fundTransactions       FundTransaction[]
   fundRules              FundRule[]
   pipelines              Pipeline[]
+  ticketMacros           TicketMacro[]
 
   // MTM (Mobile Team Management) relations
   mtmAgents              MtmAgent[]
@@ -280,6 +281,8 @@ model Contact {
   tags           String[] @default([])
   isActive       Boolean  @default(true)
   lastContactAt  DateTime?
+  engagementScore Int      @default(0)
+  lastActivityAt  DateTime?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
@@ -293,10 +296,28 @@ model Contact {
   activities     Activity[]
   invoices       Invoice[]
   tickets        Ticket[]
+  events         ContactEvent[]
 
   @@index([organizationId])
   @@index([organizationId, companyId])
   @@map("contacts")
+}
+
+model ContactEvent {
+  id             String   @id @default(cuid())
+  organizationId String
+  contactId      String
+  contact        Contact  @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  eventType      String
+  eventData      Json?
+  source         String?
+  score          Int      @default(0)
+  createdAt      DateTime @default(now())
+
+  @@index([organizationId, contactId])
+  @@index([organizationId, eventType, createdAt])
+  @@index([contactId, eventType])
+  @@map("contact_events")
 }
 
 model Deal {
@@ -776,6 +797,7 @@ model Ticket {
   tags              String[]  @default([])
   escalationLevel   Int       @default(0)
   lastEscalatedAt   DateTime?
+  handleTimeSeconds Int       @default(0)
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 
@@ -785,6 +807,26 @@ model Ticket {
   @@index([organizationId, status])
   @@index([organizationId, assignedTo])
   @@map("tickets")
+}
+
+model TicketMacro {
+  id             String   @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  name           String
+  description    String?
+  category       String   @default("general")
+  actions        Json
+  shortcutKey    String?
+  usageCount     Int      @default(0)
+  isActive       Boolean  @default(true)
+  sortOrder      Int      @default(0)
+  createdBy      String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([organizationId])
+  @@map("ticket_macros")
 }
 
 model TicketComment {
@@ -906,13 +948,42 @@ model Campaign {
   budget         Float     @default(0)
   actualCost     Float     @default(0)
   flowData       Json?
+  isAbTest          Boolean   @default(false)
+  abTestType        String?
+  testPercentage    Int?      @default(20)
+  testDurationHours Int?      @default(4)
+  winnerCriteria    String?   @default("open_rate")
+  winnerSelectedAt  DateTime?
+  holdoutIds        Json?
   createdBy      String?
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
   deals          Deal[]
+  variants       CampaignVariant[]
 
   @@index([organizationId])
   @@map("campaigns")
+}
+
+model CampaignVariant {
+  id           String   @id @default(cuid())
+  campaignId   String
+  campaign     Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  name         String
+  subject      String?
+  templateId   String?
+  htmlBody     String?  @db.Text
+  designJson   Json?
+  percentage   Int      @default(50)
+  totalSent    Int      @default(0)
+  totalOpened  Int      @default(0)
+  totalClicked Int      @default(0)
+  totalBounced Int      @default(0)
+  isWinner     Boolean  @default(false)
+  createdAt    DateTime @default(now())
+
+  @@index([campaignId])
+  @@map("campaign_variants")
 }
 
 model EmailTemplate {
@@ -920,8 +991,11 @@ model EmailTemplate {
   organizationId String
   name           String
   subject        String?
-  htmlBody       String?
-  textBody       String?
+  htmlBody       String?  @db.Text
+  textBody       String?  @db.Text
+  designJson     Json?
+  editorType     String   @default("html")
+  thumbnailUrl   String?
   variables      String[] @default([])
   category       String   @default("general")
   language       String   @default("ru")
@@ -1213,18 +1287,22 @@ model EmailLog {
   toEmail        String
   subject        String?
   body           String?
-  status         String   @default("sent") // pending, sent, delivered, failed, bounced
+  status         String   @default("sent") // pending, sent, delivered, failed, bounced, opened, clicked
   errorMessage   String?
   campaignId     String?
   templateId     String?
   contactId      String?
+  variantId      String?
   sentBy         String?
   messageId      String?
+  openedAt       DateTime?
+  clickedAt      DateTime?
   createdAt      DateTime @default(now())
 
   @@index([organizationId])
   @@index([organizationId, status])
   @@index([organizationId, contactId])
+  @@index([variantId])
   @@map("email_logs")
 }
 

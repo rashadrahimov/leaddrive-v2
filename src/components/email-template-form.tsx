@@ -7,9 +7,10 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select } from "@/components/ui/select"
 import { Dialog, DialogHeader, DialogTitle, DialogContent, DialogFooter } from "@/components/ui/dialog"
-import { Trash2, Eye, Code, Bold, Italic, Underline, List, ListOrdered, Link, X, Undo, Redo, AlignLeft, AlignCenter, AlignRight, Image } from "lucide-react"
+import { Trash2, Eye, Code, Bold, Italic, Underline, List, ListOrdered, Link, X, Undo, Redo, AlignLeft, AlignCenter, AlignRight, Image, Paintbrush, FileCode } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { sanitizeRichHtml } from "@/lib/sanitize"
+import { EmailVisualEditor } from "@/components/email-visual-editor"
 
 interface EmailTemplateFormData {
   name: string
@@ -18,6 +19,8 @@ interface EmailTemplateFormData {
   category: string
   language: string
   isActive: boolean
+  designJson: any | null
+  editorType: "html" | "visual"
 }
 
 interface EmailTemplateFormProps {
@@ -54,6 +57,8 @@ export function EmailTemplateForm({ open, onOpenChange, onSaved, initialData, or
     category: "general",
     language: "ru",
     isActive: true,
+    designJson: null,
+    editorType: "html",
   })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState("")
@@ -69,6 +74,8 @@ export function EmailTemplateForm({ open, onOpenChange, onSaved, initialData, or
         category: initialData?.category || "general",
         language: initialData?.language || "ru",
         isActive: initialData?.isActive !== false,
+        designJson: initialData?.designJson || null,
+        editorType: initialData?.editorType || "html",
       })
       setError("")
       setActiveTab("editor")
@@ -98,18 +105,36 @@ export function EmailTemplateForm({ open, onOpenChange, onSaved, initialData, or
       setError(t("errorNameSubject") || "Name and subject are required")
       return
     }
+
+    // For visual editor, trigger export to get latest HTML before saving
+    if (form.editorType === "visual") {
+      window.dispatchEvent(new Event("unlayer-export"))
+      // Give a small delay for export callback
+      await new Promise(resolve => setTimeout(resolve, 300))
+    }
+
     setSaving(true)
     setError("")
 
     try {
       const url = isEdit ? `/api/v1/email-templates/${initialData!.id}` : "/api/v1/email-templates"
+      const payload = {
+        name: form.name,
+        subject: form.subject,
+        htmlBody: form.htmlBody,
+        category: form.category,
+        language: form.language,
+        isActive: form.isActive,
+        designJson: form.designJson,
+        editorType: form.editorType,
+      }
       const res = await fetch(url, {
         method: isEdit ? "PUT" : "POST",
         headers: {
           "Content-Type": "application/json",
           ...(orgId ? { "x-organization-id": orgId } : {}),
         },
-        body: JSON.stringify(form),
+        body: JSON.stringify(payload),
       })
       const json = await res.json()
       if (!res.ok) throw new Error(json.error || tc("failedToSave"))
@@ -224,9 +249,51 @@ export function EmailTemplateForm({ open, onOpenChange, onSaved, initialData, or
               </div>
             </div>
 
-            {/* Body editor */}
+            {/* Editor type toggle */}
             <div>
-              <Label className="text-xs uppercase text-muted-foreground">{tc("content")}</Label>
+              <Label className="text-xs uppercase text-muted-foreground mb-2 block">{tc("content")}</Label>
+              <div className="flex items-center gap-2 mb-3">
+                <button
+                  type="button"
+                  onClick={() => update("editorType", "visual")}
+                  className={cn(
+                    "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors border",
+                    form.editorType === "visual"
+                      ? "bg-primary text-primary-foreground border-primary"
+                      : "bg-background text-muted-foreground border-border hover:bg-muted"
+                  )}
+                >
+                  <Paintbrush className="h-3.5 w-3.5" /> Visual Editor
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (form.editorType === "visual" && form.designJson) {
+                      // Export HTML from visual editor before switching
+                      window.dispatchEvent(new Event("unlayer-export"))
+                    }
+                    update("editorType", "html")
+                  }}
+                  className={cn(
+                    "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors border",
+                    form.editorType === "html"
+                      ? "bg-primary text-primary-foreground border-primary"
+                      : "bg-background text-muted-foreground border-border hover:bg-muted"
+                  )}
+                >
+                  <FileCode className="h-3.5 w-3.5" /> HTML Editor
+                </button>
+              </div>
+
+              {form.editorType === "visual" ? (
+                <EmailVisualEditor
+                  designJson={form.designJson}
+                  onExport={(design, html) => {
+                    setForm(f => ({ ...f, designJson: design, htmlBody: html }))
+                  }}
+                />
+              ) : (
+              <>
               <p className="text-xs text-muted-foreground mb-2">
                 {t("editorHint")}
               </p>
@@ -445,6 +512,8 @@ export function EmailTemplateForm({ open, onOpenChange, onSaved, initialData, or
                     }}
                   />
                 </div>
+              )}
+              </>
               )}
             </div>
           </div>

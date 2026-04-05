@@ -18,6 +18,11 @@ const updateCampaignSchema = z.object({
   totalRecipients: z.number().optional(),
   budget: z.number().optional(),
   flowData: z.any().optional(),
+  isAbTest: z.boolean().optional(),
+  abTestType: z.string().optional(),
+  testPercentage: z.number().int().min(10).max(50).optional(),
+  testDurationHours: z.number().int().min(1).max(48).optional(),
+  winnerCriteria: z.enum(["open_rate", "click_rate"]).optional(),
 })
 
 export async function GET(

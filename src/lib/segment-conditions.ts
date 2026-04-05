@@ -6,6 +6,8 @@ export function buildContactWhere(orgId: string, conditions: Record<string, any>
   const where: any = { organizationId: orgId }
   const AND: any[] = []
 
+  // === FIELD-BASED CONDITIONS ===
+
   if (conditions.company?.trim()) {
     AND.push({ company: { name: { contains: conditions.company, mode: "insensitive" } } })
   }
@@ -34,6 +36,89 @@ export function buildContactWhere(orgId: string, conditions: Record<string, any>
   if (conditions.hasPhone || conditions.has_phone) {
     AND.push({ phone: { not: null } })
     AND.push({ NOT: { phone: "" } })
+  }
+
+  // === BEHAVIORAL CONDITIONS ===
+
+  // Engagement score range
+  if (conditions.engagementScoreMin != null) {
+    AND.push({ engagementScore: { gte: parseInt(conditions.engagementScoreMin) } })
+  }
+  if (conditions.engagementScoreMax != null) {
+    AND.push({ engagementScore: { lte: parseInt(conditions.engagementScoreMax) } })
+  }
+
+  // Engagement tier shorthand
+  if (conditions.engagementTier) {
+    switch (conditions.engagementTier) {
+      case "hot":
+        AND.push({ engagementScore: { gte: 50 } })
+        break
+      case "warm":
+        AND.push({ engagementScore: { gte: 20, lt: 50 } })
+        break
+      case "cold":
+        AND.push({ engagementScore: { lt: 20 } })
+        break
+    }
+  }
+
+  // Last activity date range
+  if (conditions.lastActivityAfter) {
+    AND.push({ lastActivityAt: { gte: new Date(conditions.lastActivityAfter) } })
+  }
+  if (conditions.lastActivityBefore) {
+    AND.push({ lastActivityAt: { lte: new Date(conditions.lastActivityBefore) } })
+  }
+
+  // Inactive for N days
+  if (conditions.inactiveDays || conditions.noActivityDays) {
+    const days = parseInt(conditions.inactiveDays || conditions.noActivityDays)
+    const cutoff = new Date(Date.now() - days * 86400000)
+    AND.push({
+      OR: [
+        { lastActivityAt: null },
+        { lastActivityAt: { lt: cutoff } },
+      ],
+    })
+  }
+
+  // Has specific event type
+  if (conditions.hasEventType) {
+    AND.push({
+      events: {
+        some: {
+          eventType: conditions.hasEventType,
+          ...(conditions.hasEventAfter
+            ? { createdAt: { gte: new Date(conditions.hasEventAfter) } }
+            : {}),
+        },
+      },
+    })
+  }
+
+  // Opened specific campaign
+  if (conditions.openedCampaign) {
+    AND.push({
+      events: {
+        some: {
+          eventType: "email_opened",
+          eventData: { path: ["campaignId"], equals: conditions.openedCampaign },
+        },
+      },
+    })
+  }
+
+  // Clicked specific campaign
+  if (conditions.clickedCampaign) {
+    AND.push({
+      events: {
+        some: {
+          eventType: "email_clicked",
+          eventData: { path: ["campaignId"], equals: conditions.clickedCampaign },
+        },
+      },
+    })
   }
 
   if (AND.length > 0) where.AND = AND
