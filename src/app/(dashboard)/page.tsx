@@ -17,6 +17,7 @@ import { ActivityFeed } from "@/components/dashboard/activity-feed"
 import { CampaignStats } from "@/components/dashboard/campaign-stats"
 import { UpcomingEvents } from "@/components/dashboard/upcoming-events"
 import { WeeklyMetrics } from "@/components/dashboard/weekly-metrics"
+import { ChurnRiskWidget } from "@/components/dashboard/churn-risk-widget"
 
 function fmt(n: number): string {
   if (n >= 1000000) return `${(n / 1000).toFixed(0)}K`
@@ -191,6 +192,11 @@ export default function DashboardPage() {
         {widgets.campaignStats && <CampaignStats campaigns={campaigns} />}
         {widgets.upcomingEvents && <UpcomingEvents events={events} />}
         {widgets.weeklyMetrics && <WeeklyMetrics metrics={weeklyMetrics} />}
+      </div>
+
+      {/* ═══ Row 5: Churn Risk ═══ */}
+      <div className="grid lg:grid-cols-3 gap-4">
+        <ChurnRiskWidget />
       </div>
     </div>
   )

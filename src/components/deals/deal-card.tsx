@@ -111,9 +111,21 @@ export function DealCard({ deal, onClick, onDragStart, onDragEnd, isDragging, ro
         </div>
 
         <div className="flex items-center justify-between mt-1.5 pl-4">
-          <span className="text-xs font-semibold text-primary">
-            {deal.valueAmount ? `${deal.valueAmount.toLocaleString()} ${deal.currency}` : `0 ${deal.currency}`}
-          </span>
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs font-semibold text-primary">
+              {deal.valueAmount ? `${deal.valueAmount.toLocaleString()} ${deal.currency}` : `0 ${deal.currency}`}
+            </span>
+            {deal.probability > 0 && (
+              <span className={cn(
+                "text-[9px] font-semibold px-1 py-0.5 rounded",
+                deal.probability >= 70 ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" :
+                deal.probability >= 40 ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400" :
+                "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+              )}>
+                {deal.probability}%
+              </span>
+            )}
+          </div>
           {deal.assignedTo && (
             <div className="flex h-5 w-5 items-center justify-center rounded-full bg-muted text-[10px] font-medium flex-shrink-0">
               {deal.assignedTo.charAt(0)}

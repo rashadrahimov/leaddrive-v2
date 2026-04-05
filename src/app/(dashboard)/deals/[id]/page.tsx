@@ -97,6 +97,101 @@ function TagsInput({ tags, onChange, addTagLabel }: { tags: string[]; onChange: 
   )
 }
 
+// ── AI Prediction Card ──
+function AiPredictionCard({ dealId }: { dealId: string }) {
+  const [pred, setPred] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+
+  const fetchPrediction = () => {
+    setLoading(true)
+    fetch(`/api/v1/analytics/deal-prediction?dealId=${dealId}`)
+      .then(r => r.json())
+      .then(j => { if (j.success) setPred(j.data) })
+      .catch(() => {})
+      .finally(() => setLoading(false))
+  }
+
+  useEffect(() => { fetchPrediction() }, [dealId])
+
+  if (loading) {
+    return (
+      <div className="rounded-xl border bg-card p-4">
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          AI прогноз...
+        </div>
+      </div>
+    )
+  }
+
+  if (!pred) return null
+
+  const probColor = pred.winProbability >= 70 ? "text-emerald-600" : pred.winProbability >= 40 ? "text-amber-600" : "text-red-600"
+  const probBg = pred.winProbability >= 70 ? "bg-emerald-500" : pred.winProbability >= 40 ? "bg-amber-500" : "bg-red-500"
+
+  return (
+    <div className="rounded-xl border bg-card p-4 space-y-3">
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">AI Прогноз</span>
+        <button
+          onClick={fetchPrediction}
+          className="text-[10px] text-primary hover:underline"
+        >
+          Обновить
+        </button>
+      </div>
+
+      {/* Probability */}
+      <div className="flex items-center gap-3">
+        <div className="relative h-12 w-12">
+          <svg className="h-12 w-12 -rotate-90" viewBox="0 0 36 36">
+            <circle cx="18" cy="18" r="16" fill="none" stroke="currentColor" strokeWidth="3" className="text-muted/30" />
+            <circle
+              cx="18" cy="18" r="16" fill="none" strokeWidth="3"
+              className={probBg.replace("bg-", "text-")}
+              strokeDasharray={`${pred.winProbability} ${100 - pred.winProbability}`}
+              strokeLinecap="round"
+            />
+          </svg>
+          <span className={`absolute inset-0 flex items-center justify-center text-xs font-bold ${probColor}`}>
+            {pred.winProbability}%
+          </span>
+        </div>
+        <div>
+          <p className="text-sm font-semibold">Вероятность выигрыша</p>
+          <p className="text-[10px] text-muted-foreground">
+            Уверенность: {pred.confidence}%
+          </p>
+        </div>
+      </div>
+
+      {/* Risk factors */}
+      {pred.riskFactors?.length > 0 && (
+        <div>
+          <p className="text-[10px] font-medium text-red-600 mb-1">Риски:</p>
+          {pred.riskFactors.map((f: string, i: number) => (
+            <p key={i} className="text-[10px] text-muted-foreground flex items-center gap-1">
+              <span className="h-1 w-1 rounded-full bg-red-400 shrink-0" /> {f}
+            </p>
+          ))}
+        </div>
+      )}
+
+      {/* Positive factors */}
+      {pred.positiveFactors?.length > 0 && (
+        <div>
+          <p className="text-[10px] font-medium text-emerald-600 mb-1">Сильные стороны:</p>
+          {pred.positiveFactors.map((f: string, i: number) => (
+            <p key={i} className="text-[10px] text-muted-foreground flex items-center gap-1">
+              <span className="h-1 w-1 rounded-full bg-emerald-400 shrink-0" /> {f}
+            </p>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ── Next Steps widget ──
 function NextStepsWidget({ dealId, orgId, steps, fetchSteps }: {
   dealId: string; orgId?: string
@@ -444,6 +539,9 @@ export default function DealDetailPage() {
               fetchDeal={fetchDeal}
             />
           </div>
+
+          {/* AI Prediction */}
+          <AiPredictionCard dealId={id} />
 
           {/* Next Steps */}
           <NextStepsWidget

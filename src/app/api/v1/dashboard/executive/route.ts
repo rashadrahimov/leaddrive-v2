@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { getOrgId } from "@/lib/api-auth"
 import { loadAndCompute } from "@/lib/cost-model/db"
+import { generateRevenueForecast } from "@/lib/ai/predictive"
 
 export async function GET(req: NextRequest) {
   const orgId = await getOrgId(req)
@@ -284,29 +285,8 @@ export async function GET(req: NextRequest) {
     const convertedLeads = leadsByStatus.find((l: any) => l.status === "converted")?._count || 0
     const leadConversionRate = totalLeadCount > 0 ? Math.round((convertedLeads / totalLeadCount) * 100) : 0
 
-    // Sales forecast — last 6 months actual + next 6 projected
-    const forecast: { month: string; actual: number; projected: number }[] = []
-    for (let i = 5; i >= 0; i--) {
-      const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
-      const label = d.toLocaleDateString("ru", { month: "short" })
-      const monthDeals = dealsForForecast.filter((deal: any) => {
-        const dd = new Date(deal.updatedAt)
-        return dd.getFullYear() === d.getFullYear() && dd.getMonth() === d.getMonth() && deal.stage === "WON"
-      })
-      const actual = monthDeals.reduce((s: number, deal: any) => s + (deal.valueAmount || 0), 0)
-      forecast.push({ month: label, actual, projected: 0 })
-    }
-    // Average last 3 months for projection base
-    const last3 = forecast.slice(-3).map(f => f.actual)
-    const avgMonthly = last3.reduce((a, b) => a + b, 0) / Math.max(1, last3.filter(v => v > 0).length || 1)
-    // Add pipeline value distributed over next 6 months
-    const pipelineVal = pipelineAgg._sum.valueAmount || 0
-    const pipelineMonthly = pipelineVal / 6
-    for (let i = 1; i <= 6; i++) {
-      const d = new Date(now.getFullYear(), now.getMonth() + i, 1)
-      const label = d.toLocaleDateString("ru", { month: "short" })
-      forecast.push({ month: label, actual: 0, projected: Math.round(avgMonthly + pipelineMonthly * (1 - i * 0.1)) })
-    }
+    // Sales forecast — committed / bestCase / pipeline using predictive engine
+    const forecast = await generateRevenueForecast(orgId, 6)
 
     // Service labels
     const serviceLabels: Record<string, string> = {

@@ -9,7 +9,10 @@ export function RevenueTrend({ forecast }: { forecast: any[] }) {
 
   const chartData = (forecast || []).map(f => ({
     ...f,
-    value: f.actual || f.projected || 0,
+    // Backward compat: if only projected exists, treat as pipeline
+    committed: f.committed ?? 0,
+    bestCase: f.bestCase ?? 0,
+    pipeline: f.pipeline ?? f.projected ?? 0,
   }))
 
   const lastActual = chartData.filter(d => d.actual > 0)
@@ -34,16 +37,28 @@ export function RevenueTrend({ forecast }: { forecast: any[] }) {
         <ResponsiveContainer width="100%" height={160}>
           <AreaChart data={chartData} margin={{ top: 5, right: 5, bottom: 0, left: 0 }}>
             <defs>
-              <linearGradient id="revGrad" x1="0" y1="0" x2="0" y2="1">
+              <linearGradient id="revGradActual" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
                 <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+              </linearGradient>
+              <linearGradient id="revGradCommitted" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.15} />
+                <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
               </linearGradient>
             </defs>
             <XAxis dataKey="month" tick={{ fontSize: 9 }} tickLine={false} axisLine={false} />
             <YAxis hide />
-            <Tooltip formatter={(v: number) => [`₼${v.toLocaleString()}`, ""]} labelStyle={{ fontSize: 11 }} />
-            <Area type="monotone" dataKey="actual" stroke="#10b981" fill="url(#revGrad)" strokeWidth={2} />
-            <Area type="monotone" dataKey="projected" stroke="#3b82f6" fill="none" strokeWidth={1.5} strokeDasharray="4 4" />
+            <Tooltip
+              formatter={((v: number, name: string) => {
+                const labels: Record<string, string> = { actual: "Факт", committed: "Подтвержд.", bestCase: "Лучший", pipeline: "Воронка" }
+                return [`₼${v.toLocaleString()}`, labels[name] || name]
+              }) as any}
+              labelStyle={{ fontSize: 11 }}
+            />
+            <Area type="monotone" dataKey="actual" stroke="#10b981" fill="url(#revGradActual)" strokeWidth={2} />
+            <Area type="monotone" dataKey="committed" stroke="#3b82f6" fill="url(#revGradCommitted)" strokeWidth={1.5} />
+            <Area type="monotone" dataKey="bestCase" stroke="#8b5cf6" fill="none" strokeWidth={1.5} strokeDasharray="4 4" />
+            <Area type="monotone" dataKey="pipeline" stroke="#94a3b8" fill="none" strokeWidth={1} strokeDasharray="2 2" />
           </AreaChart>
         </ResponsiveContainer>
       ) : (

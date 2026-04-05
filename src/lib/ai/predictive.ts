@@ -1,0 +1,315 @@
+import { prisma } from "@/lib/prisma"
+
+// ── Deal Win Probability ──
+
+export interface DealPrediction {
+  winProbability: number
+  expectedCloseDate: Date | null
+  riskFactors: string[]
+  positiveFactors: string[]
+  confidence: number
+}
+
+function daysSince(date: Date | null | undefined): number {
+  if (!date) return 999
+  return Math.floor((Date.now() - new Date(date).getTime()) / 86400000)
+}
+
+export async function predictDealWin(dealId: string, orgId: string): Promise<DealPrediction> {
+  const deal = await prisma.deal.findFirst({
+    where: { id: dealId, organizationId: orgId },
+    include: {
+      pipeline: { include: { stages: true } },
+    },
+  })
+  if (!deal) {
+    return { winProbability: 0, expectedCloseDate: null, riskFactors: ["Сделка не найдена"], positiveFactors: [], confidence: 0 }
+  }
+
+  const activities = await prisma.activity.findMany({
+    where: { organizationId: orgId, relatedType: "deal", relatedId: dealId },
+    orderBy: { createdAt: "desc" },
+  })
+
+  // Stage probability
+  const stageProbability = deal.pipeline?.stages?.find((s: any) => s.name === deal.stage)?.probability || deal.probability || 0
+
+  // Activity metrics
+  const lastActivityDate = activities[0]?.createdAt || null
+  const daysSinceLastActivity = daysSince(lastActivityDate)
+  const activityCount = activities.length
+  const dealAge = daysSince(deal.createdAt)
+
+  // Historical data
+  const historicalDeals = await prisma.deal.findMany({
+    where: { organizationId: orgId, stage: { in: ["WON", "LOST"] } },
+    select: { stage: true, valueAmount: true, probability: true },
+  })
+  const wonCount = historicalDeals.filter(d => d.stage === "WON").length
+  const totalClosed = historicalDeals.length
+
+  // Heuristic scoring
+  let score = stageProbability
+
+  // Activity engagement
+  if (daysSinceLastActivity > 30) score -= 25
+  else if (daysSinceLastActivity > 14) score -= 15
+  else if (daysSinceLastActivity <= 3) score += 5
+
+  if (activityCount > 10) score += 10
+  else if (activityCount > 5) score += 5
+  else if (activityCount < 2) score -= 10
+
+  // Deal age penalty
+  if (dealAge > 180) score -= 20
+  else if (dealAge > 90) score -= 10
+
+  // Expected close date
+  if (deal.expectedClose) {
+    const daysToClose = daysSince(deal.expectedClose) * -1
+    if (daysToClose < 0) score -= 10 // overdue
+  }
+
+  // Historical calibration
+  if (totalClosed > 10) {
+    const historicalWinRate = (wonCount / totalClosed) * 100
+    score = score * 0.7 + historicalWinRate * 0.3
+  }
+
+  score = Math.max(0, Math.min(100, Math.round(score)))
+
+  // Risk factors
+  const riskFactors: string[] = []
+  if (daysSinceLastActivity > 14) riskFactors.push(`Нет активности ${daysSinceLastActivity} дней`)
+  if (dealAge > 90) riskFactors.push(`Сделка открыта ${dealAge} дней`)
+  if (activityCount < 3) riskFactors.push("Мало взаимодействий")
+  if (deal.expectedClose && new Date(deal.expectedClose) < new Date()) riskFactors.push("Просрочена ожидаемая дата закрытия")
+
+  const positiveFactors: string[] = []
+  if (activityCount > 5) positiveFactors.push(`${activityCount} взаимодействий`)
+  if (daysSinceLastActivity <= 3) positiveFactors.push("Недавняя активность")
+  if (stageProbability >= 70) positiveFactors.push(`Стадия с высокой вероятностью (${stageProbability}%)`)
+
+  const confidence = totalClosed > 20 ? 80 : totalClosed > 5 ? 50 : 30
+
+  return {
+    winProbability: score,
+    expectedCloseDate: deal.expectedClose,
+    riskFactors,
+    positiveFactors,
+    confidence,
+  }
+}
+
+// ── Revenue Forecast ──
+
+export interface ForecastData {
+  month: string
+  committed: number
+  bestCase: number
+  pipeline: number
+  actual: number
+}
+
+export async function generateRevenueForecast(orgId: string, months: number = 6): Promise<ForecastData[]> {
+  const now = new Date()
+  const forecast: ForecastData[] = []
+
+  // Past 6 months: actual revenue
+  for (let i = 5; i >= 0; i--) {
+    const monthStart = new Date(now.getFullYear(), now.getMonth() - i, 1)
+    const monthEnd = new Date(now.getFullYear(), now.getMonth() - i + 1, 0, 23, 59, 59)
+    const monthLabel = monthStart.toLocaleDateString("ru", { month: "short" })
+
+    const wonDeals = await prisma.deal.findMany({
+      where: {
+        organizationId: orgId,
+        stage: "WON",
+        updatedAt: { gte: monthStart, lte: monthEnd },
+      },
+      select: { valueAmount: true },
+    })
+    const actual = wonDeals.reduce((s, d) => s + (d.valueAmount || 0), 0)
+
+    // Past months: actual = committed = bestCase = pipeline
+    forecast.push({ month: monthLabel, actual, committed: actual, bestCase: actual, pipeline: actual })
+  }
+
+  // Future months: forecasted
+  for (let i = 0; i < months; i++) {
+    const monthStart = new Date(now.getFullYear(), now.getMonth() + i, 1)
+    const monthEnd = new Date(now.getFullYear(), now.getMonth() + i + 1, 0, 23, 59, 59)
+    const monthLabel = monthStart.toLocaleDateString("ru", { month: "short" })
+
+    // Committed: deals already WON or probability >= 90
+    const committedDeals = await prisma.deal.findMany({
+      where: {
+        organizationId: orgId,
+        expectedClose: { gte: monthStart, lte: monthEnd },
+        OR: [{ stage: "WON" }, { probability: { gte: 90 } }],
+      },
+      select: { valueAmount: true },
+    })
+    const committed = committedDeals.reduce((s, d) => s + (d.valueAmount || 0), 0)
+
+    // Best case: committed + deals with probability >= 70
+    const bestCaseDeals = await prisma.deal.findMany({
+      where: {
+        organizationId: orgId,
+        expectedClose: { gte: monthStart, lte: monthEnd },
+        probability: { gte: 70 },
+        stage: { notIn: ["WON", "LOST"] },
+      },
+      select: { valueAmount: true },
+    })
+    const bestCase = committed + bestCaseDeals.reduce((s, d) => s + (d.valueAmount || 0), 0)
+
+    // Pipeline: all active deals weighted by probability
+    const pipelineDeals = await prisma.deal.findMany({
+      where: {
+        organizationId: orgId,
+        expectedClose: { gte: monthStart, lte: monthEnd },
+        stage: { notIn: ["WON", "LOST"] },
+      },
+      select: { valueAmount: true, probability: true },
+    })
+    const pipelineWeighted = pipelineDeals.reduce(
+      (s, d) => s + (d.valueAmount || 0) * ((d.probability || 0) / 100), 0
+    )
+
+    // Actual: paid invoices this month
+    let actual = 0
+    try {
+      const invoices = await prisma.invoice.findMany({
+        where: {
+          organizationId: orgId,
+          status: "paid",
+          paidAt: { gte: monthStart, lte: monthEnd },
+        },
+        select: { totalAmount: true },
+      })
+      actual = invoices.reduce((s, inv) => s + (inv.totalAmount || 0), 0)
+    } catch { /* invoice model might not have all fields */ }
+
+    forecast.push({
+      month: monthLabel,
+      committed,
+      bestCase,
+      pipeline: committed + pipelineWeighted,
+      actual,
+    })
+  }
+
+  return forecast
+}
+
+// ── Churn Risk ──
+
+export interface ChurnRisk {
+  companyId: string
+  companyName: string
+  riskScore: number
+  factors: string[]
+  lastActivity: Date | null
+}
+
+export async function calculateChurnRisk(orgId: string): Promise<ChurnRisk[]> {
+  const companies = await prisma.company.findMany({
+    where: { organizationId: orgId },
+    select: {
+      id: true,
+      name: true,
+      activities: { orderBy: { createdAt: "desc" as const }, take: 1, select: { createdAt: true } },
+      tickets: { where: { status: { notIn: ["closed", "resolved"] } }, select: { id: true } },
+      deals: { where: { stage: { notIn: ["WON", "LOST"] } }, select: { id: true } },
+    },
+  })
+
+  const results: ChurnRisk[] = []
+
+  for (const company of companies) {
+    let risk = 0
+    const factors: string[] = []
+    const lastActivity = company.activities[0]?.createdAt || null
+    const days = daysSince(lastActivity)
+
+    if (days > 60) { risk += 40; factors.push(`Нет активности ${days} дней`) }
+    else if (days > 30) { risk += 20; factors.push(`Нет активности ${days} дней`) }
+
+    if (company.tickets.length > 3) { risk += 20; factors.push(`${company.tickets.length} открытых тикетов`) }
+    if (company.deals.length === 0) { risk += 15; factors.push("Нет активных сделок") }
+
+    if (risk > 20) {
+      results.push({
+        companyId: company.id,
+        companyName: company.name,
+        riskScore: Math.min(100, risk),
+        factors,
+        lastActivity,
+      })
+    }
+  }
+
+  return results.sort((a, b) => b.riskScore - a.riskScore)
+}
+
+// ── Deal Velocity ──
+
+export interface StageVelocity {
+  stage: string
+  avgDays: number
+  dealCount: number
+}
+
+export interface VelocityAnalysis {
+  stages: StageVelocity[]
+  bottleneck: string | null
+  avgCycleDays: number
+}
+
+export async function dealVelocityAnalysis(orgId: string): Promise<VelocityAnalysis> {
+  // Get won deals with stage change history via activities
+  const wonDeals = await prisma.deal.findMany({
+    where: { organizationId: orgId, stage: "WON" },
+    select: { id: true, createdAt: true, updatedAt: true, stage: true },
+  })
+
+  // Get pipeline stages
+  const pipelines = await prisma.pipeline.findMany({
+    where: { organizationId: orgId },
+    include: { stages: { orderBy: { sortOrder: "asc" } } },
+  })
+
+  const allStages = pipelines.flatMap(p => p.stages.map((s: any) => s.name))
+  const uniqueStages = [...new Set(allStages)]
+
+  // Simple velocity: average cycle time
+  const cycleTimes = wonDeals.map(d => {
+    return Math.floor((new Date(d.updatedAt).getTime() - new Date(d.createdAt).getTime()) / 86400000)
+  })
+  const avgCycleDays = cycleTimes.length > 0
+    ? Math.round(cycleTimes.reduce((a, b) => a + b, 0) / cycleTimes.length)
+    : 0
+
+  // Stage-level analysis using current active deals
+  const activeDeals = await prisma.deal.findMany({
+    where: { organizationId: orgId, stage: { notIn: ["WON", "LOST"] } },
+    select: { stage: true, stageChangedAt: true, createdAt: true },
+  })
+
+  const stageData: StageVelocity[] = uniqueStages
+    .filter(s => s !== "WON" && s !== "LOST")
+    .map(stage => {
+      const dealsInStage = activeDeals.filter(d => d.stage === stage)
+      const avgDays = dealsInStage.length > 0
+        ? Math.round(dealsInStage.reduce((s, d) => s + daysSince(d.stageChangedAt || d.createdAt), 0) / dealsInStage.length)
+        : 0
+      return { stage, avgDays, dealCount: dealsInStage.length }
+    })
+
+  const bottleneck = stageData.length > 0
+    ? stageData.reduce((max, s) => s.avgDays > max.avgDays ? s : max, stageData[0]).stage
+    : null
+
+  return { stages: stageData, bottleneck, avgCycleDays }
+}
