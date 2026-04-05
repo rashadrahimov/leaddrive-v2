@@ -110,11 +110,9 @@ export default function DashboardPage() {
 
   const { financial, pipeline, leads, operations, activity, risks, forecast, campaigns, events, weeklyMetrics } = data
 
-  // Adaptive grid: fill space when widgets are disabled
-  function gridCols(count: number) {
-    if (count >= 3) return "lg:grid-cols-3"
-    if (count === 2) return "lg:grid-cols-2"
-    return "lg:grid-cols-1"
+  // Adaptive grid: use inline style for dynamic column count
+  function gridStyle(count: number) {
+    return { gridTemplateColumns: `repeat(${Math.min(count, 3)}, minmax(0, 1fr))` }
   }
 
   // Row 2 widgets
@@ -211,22 +209,22 @@ export default function DashboardPage() {
 
       {/* ═══ Row 2: Pipeline + Revenue Trend + Lead Sources ═══ */}
       {row2.length > 0 && (
-        <div className={`grid ${gridCols(row2.length)} gap-4`}>{row2}</div>
+        <div className="grid gap-4" style={gridStyle(row2.length)}>{row2}</div>
       )}
 
       {/* ═══ Row 3: Recent Deals + Da Vinci Lead Scoring + Activity Feed ═══ */}
       {row3.length > 0 && (
-        <div className={`grid ${gridCols(row3.length)} gap-4`}>{row3}</div>
+        <div className="grid gap-4" style={gridStyle(row3.length)}>{row3}</div>
       )}
 
       {/* ═══ Row 4: Campaigns + Events + Weekly Metrics ═══ */}
       {row4.length > 0 && (
-        <div className={`grid ${gridCols(row4.length)} gap-4`}>{row4}</div>
+        <div className="grid gap-4" style={gridStyle(row4.length)}>{row4}</div>
       )}
 
       {/* ═══ Row 5: AI Insights ═══ */}
       {row5.length > 0 && (
-        <div className={`grid ${gridCols(row5.length)} gap-4`}>{row5}</div>
+        <div className="grid gap-4" style={gridStyle(row5.length)}>{row5}</div>
       )}
     </div>
   )
