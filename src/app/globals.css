@@ -141,6 +141,7 @@
     @apply bg-background text-foreground;
     font-family: var(--font-sans);
     line-height: 1.5;
+    transition: background-color 0.5s ease, color 0.4s ease;
   }
 }
 
@@ -326,6 +327,11 @@ html[data-wallpaper] {
 html[data-wallpaper] body,
 html[data-wallpaper] main {
   background-color: transparent !important;
+}
+
+/* Smooth transition when entering/leaving wallpaper mode */
+.bg-card, .bg-sidebar-bg, .bg-popover, main, header {
+  transition: background-color 0.5s ease, color 0.4s ease, border-color 0.4s ease;
 }
 
 html[data-wallpaper] .bg-card {
