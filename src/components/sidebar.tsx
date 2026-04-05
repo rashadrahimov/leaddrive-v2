@@ -12,7 +12,7 @@ import {
   Settings, ChevronLeft, DollarSign, Target, Send,
   TrendingUp, Filter, Workflow, Server, Bell, CalendarDays, Headphones, Package,
   Lock, PiggyBank, FolderKanban, Wallet, MapPin, Route, Camera, AlertTriangle,
-  ClipboardList, ShoppingCart, UserCog, GitBranch,
+  ClipboardList, ShoppingCart, UserCog, GitBranch, Plug, Keyboard,
 } from "lucide-react"
 import { useState } from "react"
 import { Logo } from "@/components/logo"
@@ -75,6 +75,8 @@ const navItems: NavItem[] = [
   { module: "core", href: "/settings/users", icon: Users, tKey: "users", group: "Settings" },
   { module: "core", href: "/settings/smtp-settings", icon: Server, tKey: "smtp", group: "Settings" },
   { module: "deals", href: "/settings/quotas", icon: Target, tKey: "quotas", group: "Settings" },
+  { module: "core", href: "/settings/integrations", icon: Plug, tKey: "integrations", group: "Settings" },
+  { module: "core", href: "/settings/macros", icon: Keyboard, tKey: "macros", group: "Settings" },
   { module: "core", href: "/settings", icon: Settings, tKey: "settings", group: "Settings" },
 ]
 

@@ -322,6 +322,37 @@ export default function CampaignDetailPage() {
                     </table>
                   </div>
                 )}
+                {/* Visual bar chart comparison */}
+                {variants.length >= 2 && (
+                  <div className="mt-4 space-y-3">
+                    <h4 className="text-xs font-semibold text-muted-foreground uppercase">Performance Comparison</h4>
+                    {variants.map((v: any) => {
+                      const openRate = v.totalSent > 0 ? (v.totalOpened / v.totalSent * 100) : 0
+                      const ctr = v.totalSent > 0 ? (v.totalClicked / v.totalSent * 100) : 0
+                      return (
+                        <div key={v.id} className="space-y-1.5">
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="font-medium">{v.name} {v.isWinner && "★"}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] text-muted-foreground w-14">Open</span>
+                            <div className="flex-1 h-4 bg-muted rounded-full overflow-hidden">
+                              <div className="h-full bg-blue-500 rounded-full transition-all" style={{ width: `${Math.min(100, openRate)}%` }} />
+                            </div>
+                            <span className="text-xs font-mono w-12 text-right">{openRate.toFixed(1)}%</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] text-muted-foreground w-14">CTR</span>
+                            <div className="flex-1 h-4 bg-muted rounded-full overflow-hidden">
+                              <div className="h-full bg-green-500 rounded-full transition-all" style={{ width: `${Math.min(100, ctr)}%` }} />
+                            </div>
+                            <span className="text-xs font-mono w-12 text-right">{ctr.toFixed(1)}%</span>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
                 {campaign.winnerSelectedAt && (
                   <p className="text-xs text-muted-foreground mt-3">
                     Winner selected at {new Date(campaign.winnerSelectedAt).toLocaleString("ru-RU")}

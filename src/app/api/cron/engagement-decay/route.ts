@@ -1,10 +1,15 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
+import { recalculateEngagementScore } from "@/lib/contact-events"
 
 /**
  * Engagement Score Decay Cron
- * Called weekly. Decays scores for contacts inactive for 7+ days.
- * - Inactive 7+ days: -10% per run
+ * Called weekly. Recalculates scores with time-decay for all contacts with score > 0.
+ * Uses recalculateEngagementScore() which applies:
+ * - Full weight for events 0-30 days old
+ * - 50% weight for events 30-60 days old
+ * - 25% weight for events 60-90 days old
+ * - Events older than 90 days are ignored
  */
 export async function POST(req: NextRequest) {
   const cronSecret = req.headers.get("x-cron-secret") || req.headers.get("authorization")?.replace("Bearer ", "")
@@ -13,35 +18,24 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const sevenDaysAgo = new Date(Date.now() - 7 * 86400000)
-
-    // Find contacts with score > 0 and no activity in last 7 days
-    const staleContacts = await prisma.contact.findMany({
-      where: {
-        engagementScore: { gt: 0 },
-        OR: [
-          { lastActivityAt: null },
-          { lastActivityAt: { lt: sevenDaysAgo } },
-        ],
-      },
+    // Find all contacts with engagement score > 0
+    const contacts = await prisma.contact.findMany({
+      where: { engagementScore: { gt: 0 } },
       select: { id: true, engagementScore: true },
     })
 
-    let decayedCount = 0
-    for (const contact of staleContacts) {
-      const newScore = Math.max(0, Math.floor(contact.engagementScore * 0.9))
-      if (newScore !== contact.engagementScore) {
-        await prisma.contact.update({
-          where: { id: contact.id },
-          data: { engagementScore: newScore },
-        })
-        decayedCount++
-      }
+    let recalculated = 0
+    let decayed = 0
+
+    for (const contact of contacts) {
+      const newScore = await recalculateEngagementScore(contact.id)
+      recalculated++
+      if (newScore < contact.engagementScore) decayed++
     }
 
     return NextResponse.json({
       success: true,
-      data: { decayed: decayedCount, checked: staleContacts.length },
+      data: { recalculated, decayed, total: contacts.length },
     })
   } catch (error) {
     console.error("[Cron] Engagement decay error:", error)

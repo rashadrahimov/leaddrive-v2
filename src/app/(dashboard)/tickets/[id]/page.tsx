@@ -143,6 +143,7 @@ export default function TicketDetailPage() {
   const [siblings, setSiblings] = useState<{ prev: any | null; next: any | null }>({ prev: null, next: null })
   const [customerContext, setCustomerContext] = useState<any>(null)
   const [showContext, setShowContext] = useState(true)
+  const [context360Collapsed, setContext360Collapsed] = useState(false)
   const [macros, setMacros] = useState<any[]>([])
   const [handleTimer, setHandleTimer] = useState(0)
   const handleTimerValueRef = useRef(0)
@@ -280,7 +281,7 @@ export default function TicketDetailPage() {
         }).then(() => fetchTicket()).catch(() => {})
       }
     },
-    onEscalate: () => { handleEscalate() },
+    onEscalate: () => { if (ticket?.priority !== "critical") handleEscalate() },
     onClose: () => {
       fetch(`/api/v1/tickets/${ticketId}`, {
         method: "PUT",
@@ -901,13 +902,16 @@ export default function TicketDetailPage() {
 
         {/* Sidebar */}
         <div className="space-y-4">
-          {/* Customer 360 Context */}
+          {/* Customer 360 Context — collapsible */}
           {showContext && customerContext && (
             <Card>
-              <CardHeader className="py-3">
-                <CardTitle className="text-sm">Customer 360</CardTitle>
+              <CardHeader className="py-3 cursor-pointer" onClick={() => setContext360Collapsed(c => !c)}>
+                <CardTitle className="text-sm flex items-center justify-between">
+                  Customer 360
+                  <span className="text-muted-foreground text-xs">{context360Collapsed ? "+" : "−"}</span>
+                </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4 text-sm">
+              {!context360Collapsed && <CardContent className="space-y-4 text-sm">
                 {/* Contact */}
                 <div>
                   <h4 className="font-semibold text-xs text-muted-foreground uppercase mb-1.5">Contact</h4>
@@ -961,7 +965,7 @@ export default function TicketDetailPage() {
                     ))}
                   </div>
                 </div>
-              </CardContent>
+              </CardContent>}
             </Card>
           )}
 

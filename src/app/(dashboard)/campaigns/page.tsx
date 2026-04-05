@@ -71,6 +71,7 @@ export default function CampaignsPage() {
     sending: t("statusSending"),
     sent: t("statusSent"),
     cancelled: t("statusCancelled"),
+    ab_testing: t("statusAbTesting"),
   }
 
   const fetchCampaigns = async () => {
