@@ -133,7 +133,7 @@ export default function EmailTemplatesPage() {
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" onClick={() => setShowLibrary(true)}>
-            <LayoutTemplate className="h-4 w-4 mr-1" /> Start from template
+            <LayoutTemplate className="h-4 w-4 mr-1" /> {t("startFromTemplate")}
           </Button>
           <Button onClick={() => { setEditData(undefined); setShowForm(true) }}>
             <Plus className="h-4 w-4 mr-1" /> {t("newTemplate")}
@@ -294,8 +294,8 @@ export default function EmailTemplatesPage() {
           <div className="bg-card rounded-xl shadow-xl max-w-3xl w-full max-h-[80vh] overflow-hidden" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between px-6 py-4 border-b">
               <div>
-                <h2 className="text-lg font-semibold">Template Library</h2>
-                <p className="text-sm text-muted-foreground">Choose a pre-built template to get started</p>
+                <h2 className="text-lg font-semibold">{t("templateLibrary")}</h2>
+                <p className="text-sm text-muted-foreground">{t("templateLibraryHint")}</p>
               </div>
               <button onClick={() => setShowLibrary(false)} className="p-1.5 rounded-md hover:bg-muted">
                 <X className="h-5 w-5" />

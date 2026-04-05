@@ -24,8 +24,8 @@ export default function SettingsPage() {
     { icon: Shield, title: t("portalUsers"), description: t("portalUsersDesc"), href: "/settings/portal-users", hint: t("hintPortalUsers") },
     { icon: Lock, title: t("security"), description: t("securityDesc"), href: "/settings/security", hint: t("hintSecurity") },
     { icon: FileText, title: t("auditLog"), description: t("auditLogDesc"), href: "/settings/audit-log", hint: t("hintAuditLog") },
-    { icon: Plug, title: "Integrations", description: "Webhooks, Google Calendar, Slack, Zapier", href: "/settings/integrations", hint: "Configure external integrations" },
-    { icon: Keyboard, title: "Macros", description: "Ticket response macros and shortcuts", href: "/settings/macros", hint: "Manage ticket macros" },
+    { icon: Plug, title: t("integrationsTitle"), description: t("integrationsDesc"), href: "/settings/integrations", hint: t("integrationsHint") },
+    { icon: Keyboard, title: t("macrosTitle"), description: t("macrosDesc"), href: "/settings/macros", hint: t("macrosHint") },
   ]
 
   return (

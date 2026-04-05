@@ -269,7 +269,7 @@ export function EmailTemplateForm({ open, onOpenChange, onSaved, initialData, or
                       : "bg-background text-muted-foreground border-border hover:bg-muted"
                   )}
                 >
-                  <Paintbrush className="h-3.5 w-3.5" /> Visual Editor
+                  <Paintbrush className="h-3.5 w-3.5" /> {t("visualEditor")}
                 </button>
                 <button
                   type="button"
@@ -287,7 +287,7 @@ export function EmailTemplateForm({ open, onOpenChange, onSaved, initialData, or
                       : "bg-background text-muted-foreground border-border hover:bg-muted"
                   )}
                 >
-                  <FileCode className="h-3.5 w-3.5" /> HTML Editor
+                  <FileCode className="h-3.5 w-3.5" /> {t("htmlEditor")}
                 </button>
               </div>
 
@@ -348,7 +348,7 @@ export function EmailTemplateForm({ open, onOpenChange, onSaved, initialData, or
               {activeTab === "split" ? (
                 <div className="grid grid-cols-2 gap-3">
                   <div className="border rounded-lg">
-                    <div className="px-3 py-1.5 border-b bg-muted/30 text-xs font-medium text-muted-foreground">HTML Editor</div>
+                    <div className="px-3 py-1.5 border-b bg-muted/30 text-xs font-medium text-muted-foreground">{t("htmlEditor")}</div>
                     <textarea
                       className="w-full h-[250px] p-3 text-xs font-mono resize-none bg-background focus:outline-none"
                       value={form.htmlBody}

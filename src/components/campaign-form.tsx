@@ -68,6 +68,7 @@ export function CampaignForm({ open, onOpenChange, onSaved, initialData, orgId, 
   const tf = useTranslations("forms")
   const tc = useTranslations("common")
   const ts = useTranslations("segments")
+  const tab = useTranslations("abTest")
 
   const sourceOptions = [
     { value: "website", label: ts("sourceWebsite") },
@@ -524,40 +525,40 @@ export function CampaignForm({ open, onOpenChange, onSaved, initialData, orgId, 
             <div className="border rounded-lg p-3">
               <label className="flex items-center gap-2 cursor-pointer">
                 <input type="checkbox" checked={isAbTest} onChange={e => setIsAbTest(e.target.checked)} className="rounded" />
-                <span className="text-sm font-medium">Enable A/B Test</span>
+                <span className="text-sm font-medium">{tab("enableAbTest")}</span>
               </label>
               {isAbTest && (
                 <div className="mt-3 space-y-3">
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <Label className="text-xs text-muted-foreground">Test Type</Label>
+                      <Label className="text-xs text-muted-foreground">{tab("testType")}</Label>
                       <Select value={abTestType} onChange={e => setAbTestType(e.target.value)}>
-                        <option value="subject">Subject Line</option>
-                        <option value="content">Content</option>
-                        <option value="send_time">Send Time</option>
+                        <option value="subject">{tab("subjectLine")}</option>
+                        <option value="content">{tab("content")}</option>
+                        <option value="send_time">{tab("sendTime")}</option>
                       </Select>
                     </div>
                     <div>
-                      <Label className="text-xs text-muted-foreground">Winner Criteria</Label>
+                      <Label className="text-xs text-muted-foreground">{tab("winnerCriteria")}</Label>
                       <Select value={winnerCriteria} onChange={e => setWinnerCriteria(e.target.value)}>
-                        <option value="open_rate">Open Rate</option>
-                        <option value="click_rate">Click Rate</option>
+                        <option value="open_rate">{tab("openRate")}</option>
+                        <option value="click_rate">{tab("clickRate")}</option>
                       </Select>
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <Label className="text-xs text-muted-foreground">Test Audience: {testPercentage}%</Label>
+                      <Label className="text-xs text-muted-foreground">{tab("testAudience")}: {testPercentage}%</Label>
                       <input type="range" min={10} max={50} value={testPercentage} onChange={e => setTestPercentage(Number(e.target.value))} className="w-full" />
                     </div>
                     <div>
-                      <Label className="text-xs text-muted-foreground">Test Duration</Label>
+                      <Label className="text-xs text-muted-foreground">{tab("testDuration")}</Label>
                       <Select value={String(testDurationHours)} onChange={e => setTestDurationHours(Number(e.target.value))}>
-                        <option value="1">1 hour</option>
-                        <option value="2">2 hours</option>
-                        <option value="4">4 hours</option>
-                        <option value="8">8 hours</option>
-                        <option value="24">24 hours</option>
+                        <option value="1">1 {tab("hours")}</option>
+                        <option value="2">2 {tab("hours")}</option>
+                        <option value="4">4 {tab("hours")}</option>
+                        <option value="8">8 {tab("hours")}</option>
+                        <option value="24">24 {tab("hours")}</option>
                       </Select>
                     </div>
                   </div>
@@ -570,7 +571,7 @@ export function CampaignForm({ open, onOpenChange, onSaved, initialData, orgId, 
                           <span className="text-xs text-muted-foreground">{v.percentage}%</span>
                         </div>
                         <Input
-                          placeholder="Subject line for this variant..."
+                          placeholder={`${tab("subjectLine")}...`}
                           value={v.subject}
                           onChange={e => {
                             const next = [...variants]
@@ -584,10 +585,10 @@ export function CampaignForm({ open, onOpenChange, onSaved, initialData, orgId, 
                     {variants.length < 4 && (
                       <button
                         type="button"
-                        onClick={() => setVariants([...variants, { name: `Variant ${String.fromCharCode(65 + variants.length)}`, subject: "", templateId: "", percentage: Math.floor(100 / (variants.length + 1)) }])}
+                        onClick={() => setVariants([...variants, { name: `${tab("variant")} ${String.fromCharCode(65 + variants.length)}`, subject: "", templateId: "", percentage: Math.floor(100 / (variants.length + 1)) }])}
                         className="text-xs text-primary hover:underline"
                       >
-                        + Add Variant
+                        {tab("addVariant")}
                       </button>
                     )}
                   </div>

@@ -37,6 +37,7 @@ const STATUS_STYLES: Record<string, string> = {
 export default function CampaignDetailPage() {
   const t = useTranslations("campaigns")
   const tc = useTranslations("common")
+  const tab = useTranslations("abTest")
   const params = useParams()
   const router = useRouter()
   const { data: session } = useSession()
@@ -177,7 +178,7 @@ export default function CampaignDetailPage() {
           <TabsTrigger value="results" className="rounded-md text-sm">{tc("results")}</TabsTrigger>
           <TabsTrigger value="flow" className="rounded-md text-sm">Flow</TabsTrigger>
           <TabsTrigger value="details" className="rounded-md text-sm">{tc("details")}</TabsTrigger>
-          {campaign.isAbTest && <TabsTrigger value="ab-test" className="rounded-md text-sm">A/B Test</TabsTrigger>}
+          {campaign.isAbTest && <TabsTrigger value="ab-test" className="rounded-md text-sm">{tab("results")}</TabsTrigger>}
         </TabsList>
 
         <TabsContent value="results" className="space-y-4">
@@ -279,24 +280,24 @@ export default function CampaignDetailPage() {
           <TabsContent value="ab-test" className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle className="text-base">A/B Test Results</CardTitle>
+                <CardTitle className="text-base">{tab("results")}</CardTitle>
               </CardHeader>
               <CardContent>
                 {variants.length === 0 ? (
-                  <p className="text-sm text-muted-foreground text-center py-4">No variants configured</p>
+                  <p className="text-sm text-muted-foreground text-center py-4">{tab("noVariants")}</p>
                 ) : (
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                       <thead className="bg-muted/50">
                         <tr>
-                          <th className="text-left px-4 py-2 font-medium">Variant</th>
-                          <th className="text-left px-4 py-2 font-medium">Subject</th>
-                          <th className="text-right px-4 py-2 font-medium">Sent</th>
-                          <th className="text-right px-4 py-2 font-medium">Opened</th>
-                          <th className="text-right px-4 py-2 font-medium">Open Rate</th>
-                          <th className="text-right px-4 py-2 font-medium">Clicked</th>
-                          <th className="text-right px-4 py-2 font-medium">CTR</th>
-                          <th className="text-center px-4 py-2 font-medium">Winner</th>
+                          <th className="text-left px-4 py-2 font-medium">{tab("variant")}</th>
+                          <th className="text-left px-4 py-2 font-medium">{tab("subject")}</th>
+                          <th className="text-right px-4 py-2 font-medium">{tab("sent")}</th>
+                          <th className="text-right px-4 py-2 font-medium">{tab("opened")}</th>
+                          <th className="text-right px-4 py-2 font-medium">{tab("openRate")}</th>
+                          <th className="text-right px-4 py-2 font-medium">{tab("clicked")}</th>
+                          <th className="text-right px-4 py-2 font-medium">{tab("ctr")}</th>
+                          <th className="text-center px-4 py-2 font-medium">{tab("winner")}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -313,7 +314,7 @@ export default function CampaignDetailPage() {
                               <td className="px-4 py-3 text-right">{v.totalClicked}</td>
                               <td className="px-4 py-3 text-right font-medium">{ctr}%</td>
                               <td className="px-4 py-3 text-center">
-                                {v.isWinner && <Badge className="bg-green-100 text-green-700">Winner</Badge>}
+                                {v.isWinner && <Badge className="bg-green-100 text-green-700">{tab("winner")}</Badge>}
                               </td>
                             </tr>
                           )
@@ -325,7 +326,7 @@ export default function CampaignDetailPage() {
                 {/* Visual bar chart comparison */}
                 {variants.length >= 2 && (
                   <div className="mt-4 space-y-3">
-                    <h4 className="text-xs font-semibold text-muted-foreground uppercase">Performance Comparison</h4>
+                    <h4 className="text-xs font-semibold text-muted-foreground uppercase">{tab("performanceComparison")}</h4>
                     {variants.map((v: any) => {
                       const openRate = v.totalSent > 0 ? (v.totalOpened / v.totalSent * 100) : 0
                       const ctr = v.totalSent > 0 ? (v.totalClicked / v.totalSent * 100) : 0
@@ -355,12 +356,12 @@ export default function CampaignDetailPage() {
                 )}
                 {campaign.winnerSelectedAt && (
                   <p className="text-xs text-muted-foreground mt-3">
-                    Winner selected at {new Date(campaign.winnerSelectedAt).toLocaleString("ru-RU")}
+                    {tab("winnerSelected")}: {new Date(campaign.winnerSelectedAt).toLocaleString("ru-RU")}
                   </p>
                 )}
                 {campaign.status === "ab_testing" && !campaign.winnerSelectedAt && (
                   <p className="text-xs text-amber-600 mt-3">
-                    Test in progress. Winner will be selected after {campaign.testDurationHours || 4} hours.
+                    {tab("testInProgress")} {campaign.testDurationHours || 4} {tab("hours")}.
                   </p>
                 )}
               </CardContent>

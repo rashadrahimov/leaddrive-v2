@@ -108,6 +108,8 @@ function getInitials(str: string | null): string {
 export default function TicketDetailPage() {
   const t = useTranslations("tickets")
   const tc = useTranslations("common")
+  const t360 = useTranslations("customer360")
+  const tsk = useTranslations("ticketShortcuts")
   const params = useParams()
   const { data: session } = useSession()
   const ticketId = params.id as string
@@ -510,7 +512,7 @@ export default function TicketDetailPage() {
           {macros.filter((m: any) => m.isActive).length > 0 && (
             <div className="relative">
               <Button size="sm" variant="outline" onClick={() => setShowMacrosMenu(!showMacrosMenu)}>
-                <Zap className="h-3.5 w-3.5 mr-1" /> Macros
+                <Zap className="h-3.5 w-3.5 mr-1" /> {tc("macros") || "Macros"}
               </Button>
               {showMacrosMenu && (
                 <>
@@ -552,7 +554,7 @@ export default function TicketDetailPage() {
       {/* Shortcuts help panel */}
       {showShortcuts && (
         <div className="border rounded-lg p-3 bg-muted/30">
-          <h3 className="text-xs font-semibold mb-2">Keyboard Shortcuts</h3>
+          <h3 className="text-xs font-semibold mb-2">{tsk("title")}</h3>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-1">
             {TICKET_SHORTCUTS.map(s => (
               <div key={s.keys} className="flex items-center gap-2 text-xs">
@@ -907,14 +909,14 @@ export default function TicketDetailPage() {
             <Card>
               <CardHeader className="py-3 cursor-pointer" onClick={() => setContext360Collapsed(c => !c)}>
                 <CardTitle className="text-sm flex items-center justify-between">
-                  Customer 360
+                  {t360("title")}
                   <span className="text-muted-foreground text-xs">{context360Collapsed ? "+" : "−"}</span>
                 </CardTitle>
               </CardHeader>
               {!context360Collapsed && <CardContent className="space-y-4 text-sm">
                 {/* Contact */}
                 <div>
-                  <h4 className="font-semibold text-xs text-muted-foreground uppercase mb-1.5">Contact</h4>
+                  <h4 className="font-semibold text-xs text-muted-foreground uppercase mb-1.5">{t360("contact")}</h4>
                   {customerContext.contact ? (
                     <div className="space-y-0.5">
                       <p className="font-medium">{customerContext.contact.fullName}</p>
@@ -922,20 +924,20 @@ export default function TicketDetailPage() {
                       <p className="text-xs">{customerContext.contact.email}</p>
                       <p className="text-xs">{customerContext.contact.phone}</p>
                     </div>
-                  ) : <p className="text-xs text-muted-foreground">No contact linked</p>}
+                  ) : <p className="text-xs text-muted-foreground">{t360("noContact")}</p>}
                 </div>
                 {/* Company */}
                 {customerContext.company && (
                   <div>
-                    <h4 className="font-semibold text-xs text-muted-foreground uppercase mb-1.5">Company</h4>
+                    <h4 className="font-semibold text-xs text-muted-foreground uppercase mb-1.5">{t360("company")}</h4>
                     <p className="font-medium">{customerContext.company.name}</p>
                     <p className="text-xs text-muted-foreground">{customerContext.company.industry}</p>
-                    <p className="text-xs">LTV: ${(customerContext.lifetimeValue || 0).toLocaleString()}</p>
+                    <p className="text-xs">{t360("ltv")}: ${(customerContext.lifetimeValue || 0).toLocaleString()}</p>
                   </div>
                 )}
                 {/* Recent Tickets */}
                 <div>
-                  <h4 className="font-semibold text-xs text-muted-foreground uppercase mb-1.5">Recent Tickets ({customerContext.recentTickets?.length || 0})</h4>
+                  <h4 className="font-semibold text-xs text-muted-foreground uppercase mb-1.5">{t360("recentTickets")} ({customerContext.recentTickets?.length || 0})</h4>
                   <div className="space-y-1">
                     {(customerContext.recentTickets || []).map((rt: any) => (
                       <Link key={rt.id} href={`/tickets/${rt.id}`} className="block text-xs hover:underline truncate">
@@ -948,7 +950,7 @@ export default function TicketDetailPage() {
                 {/* Open Deals */}
                 {customerContext.openDeals?.length > 0 && (
                   <div>
-                    <h4 className="font-semibold text-xs text-muted-foreground uppercase mb-1.5">Open Deals ({customerContext.openDeals.length})</h4>
+                    <h4 className="font-semibold text-xs text-muted-foreground uppercase mb-1.5">{t360("openDeals")} ({customerContext.openDeals.length})</h4>
                     {customerContext.openDeals.map((d: any) => (
                       <p key={d.id} className="text-xs">{d.name} — ${d.valueAmount?.toLocaleString()} ({d.stage})</p>
                     ))}
@@ -956,7 +958,7 @@ export default function TicketDetailPage() {
                 )}
                 {/* Recent Activity */}
                 <div>
-                  <h4 className="font-semibold text-xs text-muted-foreground uppercase mb-1.5">Recent Activity</h4>
+                  <h4 className="font-semibold text-xs text-muted-foreground uppercase mb-1.5">{t360("recentActivity")}</h4>
                   <div className="space-y-1">
                     {(customerContext.recentActivity || []).slice(0, 5).map((act: any) => (
                       <p key={act.id} className="text-xs truncate">

@@ -95,6 +95,7 @@ function getDueDateCountdown(dueDate: string | null): { text: string; overdue: b
 export default function TaskDetailPage() {
   const t = useTranslations("tasks")
   const tc = useTranslations("common")
+  const tab = useTranslations("abTest")
   const params = useParams()
   const router = useRouter()
   const { data: session } = useSession()
@@ -246,7 +247,7 @@ export default function TaskDetailPage() {
                 finally { setSyncing(false) }
               }}
             >
-              <Calendar className="h-3.5 w-3.5 mr-1.5" /> {syncing ? "Syncing..." : "Sync to Calendar"}
+              <Calendar className="h-3.5 w-3.5 mr-1.5" /> {syncing ? tab("syncing") : tab("syncToCalendar")}
             </Button>
           )}
         </div>
