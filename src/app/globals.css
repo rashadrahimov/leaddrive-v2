@@ -377,6 +377,36 @@ html[data-wallpaper] .shadow-\[0_1px_3px_rgba\(0\,0\,0\,0\.04\)\] {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2) !important;
 }
 
+/* Wallpaper: keep buttons visible and opaque */
+html[data-wallpaper] .bg-primary {
+  background-color: hsl(210 96% 45%) !important;
+}
+
+html[data-wallpaper] .bg-destructive {
+  background-color: hsl(0 84% 55%) !important;
+}
+
+html[data-wallpaper] button.bg-primary,
+html[data-wallpaper] button.bg-destructive,
+html[data-wallpaper] a.bg-primary {
+  backdrop-filter: none !important;
+}
+
+/* Wallpaper: input fields need solid dark background */
+html[data-wallpaper] input,
+html[data-wallpaper] select,
+html[data-wallpaper] textarea {
+  background-color: hsl(215 25% 12% / 0.85) !important;
+  color: hsl(0 0% 95%) !important;
+  border-color: hsl(0 0% 100% / 0.2) !important;
+}
+
+/* Wallpaper: dialog/modal overlay */
+html[data-wallpaper] [role="dialog"],
+html[data-wallpaper] .bg-card\/80 {
+  background-color: hsl(215 25% 12% / 0.90) !important;
+}
+
 /* Abstract gradient wallpaper (CSS-only, 0KB) */
 @keyframes wallpaper-gradient-shift {
   0% { background-position: 0% 50%; }
