@@ -158,10 +158,10 @@ function UserFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogHeader>
-        <DialogTitle>{isEdit ? "Редактировать пользователя" : "Добавить пользователя"}</DialogTitle>
-      </DialogHeader>
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} className="flex flex-col max-h-[85vh]">
+        <DialogHeader>
+          <DialogTitle>{isEdit ? "Редактировать пользователя" : "Добавить пользователя"}</DialogTitle>
+        </DialogHeader>
         <DialogContent>
           {error && <div className="text-sm text-red-500 bg-red-50 dark:bg-red-900/20 p-2 rounded mb-3">{error}</div>}
           <div className="grid gap-4">
