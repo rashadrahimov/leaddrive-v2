@@ -58,7 +58,13 @@ export function LanguageSwitcher() {
       </Button>
 
       {open && (
-        <div className="absolute right-0 top-10 z-50 min-w-[140px] rounded-md border bg-popover shadow-md">
+        <div
+          className="fixed z-[9999] min-w-[140px] rounded-md border bg-popover shadow-lg"
+          style={{
+            top: ref.current ? ref.current.getBoundingClientRect().bottom + 4 : 0,
+            right: ref.current ? window.innerWidth - ref.current.getBoundingClientRect().right : 0,
+          }}
+        >
           {LANGUAGES.map((lang) => (
             <button
               key={lang.code}
