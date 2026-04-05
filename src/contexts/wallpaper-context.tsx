@@ -23,14 +23,14 @@ export const WALLPAPERS: WallpaperDef[] = [
     label: "Night City",
     labelRu: "Ночной город",
     type: "video",
-    src: "/wallpapers/night-city.mp4",
+    src: "/wallpapers/night-city.mp4?v=2",
   },
   {
     id: "ocean",
     label: "Ocean Beach",
     labelRu: "Океан",
     type: "video",
-    src: "/wallpapers/ocean.mp4",
+    src: "/wallpapers/ocean.mp4?v=2",
   },
   {
     id: "autumn-forest",
