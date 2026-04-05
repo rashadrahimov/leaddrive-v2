@@ -58,11 +58,8 @@ export default function AboutPage() {
                 <div className="rounded-lg bg-[#0176D3]/10 w-12 h-12 flex items-center justify-center mb-4">
                   <Target className="h-6 w-6 text-[#0176D3]" />
                 </div>
-                <h2 className="text-2xl font-bold text-[#001E3C] mb-4">Missiyamız</h2>
-                <p className="text-[#001E3C]/60 leading-relaxed">
-                  Hər ölçüdə bizneslərə güclü, Da Vinci-dəstəkli alətlər təqdim etmək — satışdan dəstəyə,
-                  maliyyədən analitikaya qədər hər şeyi bir platformada birləşdirmək.
-                </p>
+                <h2 className="text-2xl font-bold text-[#001E3C] mb-4">{t("missionTitle")}</h2>
+                <p className="text-[#001E3C]/60 leading-relaxed">{t("missionDesc")}</p>
               </div>
             </AnimateIn>
             <AnimateIn delay={0.2}>
@@ -70,11 +67,8 @@ export default function AboutPage() {
                 <div className="rounded-lg bg-[#0176D3]/10 w-12 h-12 flex items-center justify-center mb-4">
                   <Zap className="h-6 w-6 text-[#0176D3]" />
                 </div>
-                <h2 className="text-2xl font-bold text-[#001E3C] mb-4">Nə edirik</h2>
-                <p className="text-[#001E3C]/60 leading-relaxed">
-                  LeadDrive CRM — 128+ funksiya, 16 Da Vinci inteqrasiya, 11 modul.
-                  CRM, marketinq avtomatlaşdırması, dəstək, maliyyə və ERP — hamısı bir yerdə.
-                </p>
+                <h2 className="text-2xl font-bold text-[#001E3C] mb-4">{t("whatWeDoTitle")}</h2>
+                <p className="text-[#001E3C]/60 leading-relaxed">{t("whatWeDoDesc")}</p>
               </div>
             </AnimateIn>
           </div>
@@ -85,16 +79,16 @@ export default function AboutPage() {
       <section className="pb-24">
         <div className="mx-auto max-w-6xl px-4 lg:px-8">
           <AnimateIn>
-            <h2 className="text-2xl font-bold text-[#001E3C] text-center mb-12">Dəyərlərimiz</h2>
+            <h2 className="text-2xl font-bold text-[#001E3C] text-center mb-12">{t("valuesTitle")}</h2>
           </AnimateIn>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {[
-              { icon: Shield, title: "Təhlükəsizlik", desc: "Məlumatlarınız şifrələnmiş, izolə edilmiş mühitdə saxlanılır. GDPR uyğunluq." },
-              { icon: Users, title: "Müştəri fokus", desc: "Hər qərar müştəri ehtiyaclarına əsaslanır. 24 saat dəstək." },
-              { icon: Globe, title: "Yerli və qlobal", desc: "Azərbaycanda yaradılıb, qlobal standartlara uyğun. AZ/RU/EN dil dəstəyi." },
-              { icon: Zap, title: "İnnovasiya", desc: "Da Vinci ilə — intellekt platformanın əsasıdır, əlavə deyil." },
-              { icon: Building2, title: "Şəffaflıq", desc: "Gizli ödənişlər yoxdur. Nə görürsünüz — onu alırsınız." },
-              { icon: Target, title: "Nəticə", desc: "Müştərilərimiz ortalama 34% mənfəət artımı və 60% cavab müddəti azalması əldə edir." },
+              { icon: Shield, title: t("val_security"), desc: t("val_security_desc") },
+              { icon: Users, title: t("val_customer"), desc: t("val_customer_desc") },
+              { icon: Globe, title: t("val_global"), desc: t("val_global_desc") },
+              { icon: Zap, title: t("val_innovation"), desc: t("val_innovation_desc") },
+              { icon: Building2, title: t("val_transparency"), desc: t("val_transparency_desc") },
+              { icon: Target, title: t("val_results"), desc: t("val_results_desc") },
             ].map((v) => (
               <AnimateIn key={v.title} delay={0.1}>
                 <div className="rounded-2xl border border-[#001E3C]/10 bg-[#F3F4F7] p-6 h-full">

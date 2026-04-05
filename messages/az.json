@@ -3570,7 +3570,24 @@
     },
     "about": {
       "title": "Haqqımızda",
-      "subtitle": "Güvən Technology LLC — Bakı, Azərbaycandan dünyaya texnologiya həlləri."
+      "subtitle": "Güvən Technology LLC — Bakıda yerləşən texnologiya şirkəti. Biznesin rəqəmsal transformasiyasını sürətləndiririk.",
+      "missionTitle": "Missiyamız",
+      "missionDesc": "Hər ölçüdə bizneslərə güclü, Da Vinci-dəstəkli alətlər təqdim etmək — satışdan dəstəyə, maliyyədən analitikaya qədər hər şeyi bir platformada birləşdirmək.",
+      "whatWeDoTitle": "Nə edirik",
+      "whatWeDoDesc": "LeadDrive CRM — 128+ funksiya, 16 Da Vinci inteqrasiya, 11 modul. CRM, marketinq avtomatlaşdırması, dəstək, maliyyə və ERP — hamısı bir yerdə.",
+      "valuesTitle": "Dəyərlərimiz",
+      "val_security": "Təhlükəsizlik",
+      "val_security_desc": "Məlumatlarınız şifrələnmiş, izolə edilmiş mühitdə saxlanılır. GDPR uyğunluq.",
+      "val_customer": "Müştəri fokus",
+      "val_customer_desc": "Hər qərar müştəri ehtiyaclarına əsaslanır. 24 saat dəstək.",
+      "val_global": "Yerli və qlobal",
+      "val_global_desc": "Azərbaycanda yaradılıb, qlobal standartlara uyğun. AZ/RU/EN dil dəstəyi.",
+      "val_innovation": "İnnovasiya",
+      "val_innovation_desc": "Da Vinci ilə — intellekt platformanın əsasıdır, əlavə deyil.",
+      "val_transparency": "Şəffaflıq",
+      "val_transparency_desc": "Gizli ödənişlər yoxdur. Nə görürsünüz — onu alırsınız.",
+      "val_results": "Nəticə",
+      "val_results_desc": "Müştərilərimiz ortalama 34% mənfəət artımı və 60% cavab müddəti azalması əldə edir."
     },
     "meta": {
       "title": "LeadDrive CRM — İntellektual CRM Platforması",

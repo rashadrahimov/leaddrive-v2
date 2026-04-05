@@ -3574,7 +3574,24 @@
     },
     "about": {
       "title": "About Us",
-      "subtitle": "Güvən Technology LLC — technology solutions from Baku, Azerbaijan to the world."
+      "subtitle": "Güvən Technology LLC — a technology company based in Baku. Accelerating digital transformation for businesses.",
+      "missionTitle": "Our Mission",
+      "missionDesc": "Empower businesses of any size with powerful Da Vinci-backed tools — uniting sales, support, finance and analytics on one platform.",
+      "whatWeDoTitle": "What We Do",
+      "whatWeDoDesc": "LeadDrive CRM — 128+ features, 16 Da Vinci integrations, 11 modules. CRM, marketing automation, support, finance and ERP — all in one.",
+      "valuesTitle": "Our Values",
+      "val_security": "Security",
+      "val_security_desc": "Your data is stored in an encrypted, isolated environment. GDPR compliant.",
+      "val_customer": "Customer Focus",
+      "val_customer_desc": "Every decision is based on customer needs. 24/7 support.",
+      "val_global": "Local & Global",
+      "val_global_desc": "Built in Azerbaijan, meets global standards. AZ/RU/EN language support.",
+      "val_innovation": "Innovation",
+      "val_innovation_desc": "With Da Vinci — intelligence is the platform's core, not an add-on.",
+      "val_transparency": "Transparency",
+      "val_transparency_desc": "No hidden fees. What you see is what you get.",
+      "val_results": "Results",
+      "val_results_desc": "Our clients average 34% profit growth and 60% response time reduction."
     },
     "meta": {
       "title": "LeadDrive CRM — Intelligent CRM Platform",
