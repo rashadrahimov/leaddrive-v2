@@ -182,3 +182,89 @@ export interface PayablesStats {
   topVendors: { vendorName: string; vendorId?: string; amount: number; billCount: number }[]
   upcomingPayments: Bill[]
 }
+
+// Payment Registry types
+export type PaymentDirection = "incoming" | "outgoing"
+export type PaymentSourceType = "bill_payment" | "invoice_payment" | "fund_transaction" | "payment_order"
+
+export interface PaymentRegistryEntry {
+  id: string
+  direction: PaymentDirection
+  amount: number
+  currency: string
+  counterpartyName: string
+  counterpartyId?: string | null
+  sourceType: PaymentSourceType
+  sourceId: string
+  billId?: string | null
+  invoiceId?: string | null
+  fundId?: string | null
+  category?: string | null
+  paymentDate: string
+  description?: string | null
+  createdBy?: string | null
+  createdAt: string
+}
+
+export interface PaymentRegistryFilters {
+  direction?: PaymentDirection
+  dateFrom?: string
+  dateTo?: string
+  category?: string
+  counterparty?: string
+  sourceType?: PaymentSourceType
+}
+
+export interface PaymentRegistryStats {
+  totalIncoming: number
+  totalOutgoing: number
+  netFlow: number
+  pendingOrdersCount: number
+}
+
+// Payment Order types
+export type PaymentOrderStatus = "draft" | "pending_approval" | "approved" | "executed" | "rejected" | "cancelled"
+
+export interface PaymentOrder {
+  id: string
+  orderNumber: string
+  counterpartyName: string
+  counterpartyId?: string | null
+  billId?: string | null
+  amount: number
+  currency: string
+  purpose: string
+  paymentMethod: string
+  bankDetails?: string | null
+  status: PaymentOrderStatus
+  createdBy?: string | null
+  approvedBy?: string | null
+  approvedAt?: string | null
+  executedAt?: string | null
+  rejectedAt?: string | null
+  rejectionReason?: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+export interface CreatePaymentOrderInput {
+  counterpartyName: string
+  amount: number
+  purpose: string
+  counterpartyId?: string
+  billId?: string
+  currency?: string
+  paymentMethod?: string
+  bankDetails?: string
+}
+
+export interface UpdatePaymentOrderInput extends Partial<CreatePaymentOrderInput> {}
+
+export interface PaymentOrdersStats {
+  totalDraft: number
+  totalPending: number
+  totalApproved: number
+  totalExecuted: number
+  totalAmount: number
+  executedAmount: number
+}

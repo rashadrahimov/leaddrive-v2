@@ -15,6 +15,13 @@ import type {
   CreateFundInput,
   CreateFundTransactionInput,
   CreateFundRuleInput,
+  PaymentOrder,
+  PaymentOrdersStats,
+  PaymentRegistryEntry,
+  PaymentRegistryStats,
+  PaymentRegistryFilters,
+  CreatePaymentOrderInput,
+  UpdatePaymentOrderInput,
 } from "./types"
 
 function useOrgId() {
@@ -285,6 +292,156 @@ export function useDeleteFundRule() {
       }),
     onSuccess: (_data, vars) => {
       qc.invalidateQueries({ queryKey: ["finance", "fund-rules", vars.fundId, orgId] })
+    },
+  })
+}
+
+// ─── Payment Registry ──────────────────────────────────────────────────────
+
+export function usePaymentRegistry(filters?: PaymentRegistryFilters) {
+  const orgId = useOrgId()
+  const qs = new URLSearchParams()
+  if (filters?.direction) qs.set("direction", filters.direction)
+  if (filters?.dateFrom) qs.set("dateFrom", filters.dateFrom)
+  if (filters?.dateTo) qs.set("dateTo", filters.dateTo)
+  if (filters?.category) qs.set("category", filters.category)
+  if (filters?.counterparty) qs.set("counterparty", filters.counterparty)
+  if (filters?.sourceType) qs.set("sourceType", filters.sourceType)
+  const query = qs.toString()
+  return useQuery({
+    queryKey: ["finance", "registry", orgId, query],
+    queryFn: async () => {
+      const res = await fetch(`/api/finance/registry${query ? `?${query}` : ""}`, {
+        headers: { "Content-Type": "application/json", "x-organization-id": orgId },
+      })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error || "API error")
+      return json as { data: PaymentRegistryEntry[]; stats: PaymentRegistryStats; total: number }
+    },
+    enabled: !!orgId,
+  })
+}
+
+// ─── Payment Orders ────────────────────────────────────────────────────────
+
+export function usePaymentOrders(status?: string) {
+  const orgId = useOrgId()
+  return useQuery({
+    queryKey: ["finance", "payment-orders", orgId, status],
+    queryFn: () => apiFetch<PaymentOrder[]>(`/api/finance/payment-orders${status ? `?status=${status}` : ""}`, orgId),
+    enabled: !!orgId,
+  })
+}
+
+export function usePaymentOrdersStats() {
+  const orgId = useOrgId()
+  return useQuery({
+    queryKey: ["finance", "payment-orders-stats", orgId],
+    queryFn: () => apiFetch<PaymentOrdersStats>("/api/finance/payment-orders/stats", orgId),
+    enabled: !!orgId,
+  })
+}
+
+export function useCreatePaymentOrder() {
+  const orgId = useOrgId()
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (input: CreatePaymentOrderInput) =>
+      apiFetch<PaymentOrder>("/api/finance/payment-orders", orgId, {
+        method: "POST",
+        body: JSON.stringify(input),
+      }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["finance", "payment-orders"] })
+      qc.invalidateQueries({ queryKey: ["finance", "payment-orders-stats"] })
+    },
+  })
+}
+
+export function useUpdatePaymentOrder() {
+  const orgId = useOrgId()
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, ...input }: UpdatePaymentOrderInput & { id: string }) =>
+      apiFetch<PaymentOrder>(`/api/finance/payment-orders/${id}`, orgId, {
+        method: "PUT",
+        body: JSON.stringify(input),
+      }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["finance", "payment-orders"] })
+      qc.invalidateQueries({ queryKey: ["finance", "payment-orders-stats"] })
+    },
+  })
+}
+
+export function useDeletePaymentOrder() {
+  const orgId = useOrgId()
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) =>
+      apiFetch<void>(`/api/finance/payment-orders/${id}`, orgId, { method: "DELETE" }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["finance", "payment-orders"] })
+      qc.invalidateQueries({ queryKey: ["finance", "payment-orders-stats"] })
+    },
+  })
+}
+
+export function useSubmitPaymentOrder() {
+  const orgId = useOrgId()
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) =>
+      apiFetch<PaymentOrder>(`/api/finance/payment-orders/${id}/submit`, orgId, { method: "POST" }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["finance", "payment-orders"] })
+      qc.invalidateQueries({ queryKey: ["finance", "payment-orders-stats"] })
+    },
+  })
+}
+
+export function useApprovePaymentOrder() {
+  const orgId = useOrgId()
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) =>
+      apiFetch<PaymentOrder>(`/api/finance/payment-orders/${id}/approve`, orgId, { method: "POST" }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["finance", "payment-orders"] })
+      qc.invalidateQueries({ queryKey: ["finance", "payment-orders-stats"] })
+    },
+  })
+}
+
+export function useRejectPaymentOrder() {
+  const orgId = useOrgId()
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, reason }: { id: string; reason: string }) =>
+      apiFetch<PaymentOrder>(`/api/finance/payment-orders/${id}/reject`, orgId, {
+        method: "POST",
+        body: JSON.stringify({ reason }),
+      }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["finance", "payment-orders"] })
+      qc.invalidateQueries({ queryKey: ["finance", "payment-orders-stats"] })
+    },
+  })
+}
+
+export function useExecutePaymentOrder() {
+  const orgId = useOrgId()
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) =>
+      apiFetch<PaymentOrder>(`/api/finance/payment-orders/${id}/execute`, orgId, { method: "POST" }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["finance", "payment-orders"] })
+      qc.invalidateQueries({ queryKey: ["finance", "payment-orders-stats"] })
+      qc.invalidateQueries({ queryKey: ["finance", "registry"] })
+      qc.invalidateQueries({ queryKey: ["finance", "payables"] })
+      qc.invalidateQueries({ queryKey: ["finance", "payables-stats"] })
+      qc.invalidateQueries({ queryKey: ["finance", "dashboard"] })
     },
   })
 }

@@ -67,6 +67,8 @@ model Organization {
   funds                  Fund[]
   fundTransactions       FundTransaction[]
   fundRules              FundRule[]
+  paymentRegistryEntries PaymentRegistryEntry[]
+  paymentOrders          PaymentOrder[]
   pipelines              Pipeline[]
   ticketMacros           TicketMacro[]
 
@@ -2468,6 +2470,78 @@ model FundRule {
   @@index([organizationId])
   @@index([fundId])
   @@map("fund_rules")
+}
+
+// ============================================================
+// Payment Registry & Payment Orders
+// ============================================================
+
+model PaymentRegistryEntry {
+  id               String   @id @default(cuid())
+  organizationId   String
+  organization     Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  direction        String   // "incoming" | "outgoing"
+  amount           Float
+  currency         String   @default("AZN")
+
+  counterpartyName String
+  counterpartyId   String?
+
+  sourceType       String   // "bill_payment" | "invoice_payment" | "fund_transaction" | "payment_order"
+  sourceId         String
+
+  billId           String?
+  invoiceId        String?
+  fundId           String?
+
+  category         String?  // "vendor_payment" | "revenue" | "fund_allocation" | "manual"
+  paymentDate      DateTime
+  description      String?
+
+  createdBy        String?
+  createdAt        DateTime @default(now())
+
+  @@index([organizationId])
+  @@index([organizationId, direction])
+  @@index([organizationId, paymentDate])
+  @@index([organizationId, sourceType, sourceId])
+  @@map("payment_registry_entries")
+}
+
+model PaymentOrder {
+  id               String    @id @default(cuid())
+  organizationId   String
+  organization     Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  orderNumber      String
+  counterpartyName String
+  counterpartyId   String?
+
+  billId           String?
+  amount           Float
+  currency         String    @default("AZN")
+
+  purpose          String
+  paymentMethod    String    @default("bank_transfer")
+  bankDetails      String?
+
+  status           String    @default("draft") // "draft" | "pending_approval" | "approved" | "executed" | "rejected" | "cancelled"
+
+  createdBy        String?
+  approvedBy       String?
+  approvedAt       DateTime?
+  executedAt       DateTime?
+  rejectedAt       DateTime?
+  rejectionReason  String?
+
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@unique([organizationId, orderNumber])
+  @@index([organizationId])
+  @@index([organizationId, status])
+  @@map("payment_orders")
 }
 
 // ============================================================

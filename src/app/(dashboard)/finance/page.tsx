@@ -7,13 +7,15 @@ import { FinanceDashboard } from "@/components/finance/finance-dashboard"
 import { ARDashboard } from "@/components/finance/ar-dashboard"
 import { APDashboard } from "@/components/finance/ap-dashboard"
 import { FundManager } from "@/components/finance/fund-manager"
-import { LayoutDashboard, FileText, CreditCard, PiggyBank } from "lucide-react"
+import { PaymentsDashboard } from "@/components/finance/payments-dashboard"
+import { LayoutDashboard, FileText, CreditCard, PiggyBank, Banknote } from "lucide-react"
 
 const TABS = [
   { value: "overview", label: "Обзор", icon: LayoutDashboard },
   { value: "receivables", label: "Дебиторка (A/R)", icon: FileText },
   { value: "payables", label: "Кредиторка (A/P)", icon: CreditCard },
   { value: "funds", label: "Фонды", icon: PiggyBank },
+  { value: "payments", label: "Платежи", icon: Banknote },
 ] as const
 
 export default function FinancePage() {
@@ -51,6 +53,10 @@ export default function FinancePage() {
 
         <TabsContent value="funds">
           <FundManager />
+        </TabsContent>
+
+        <TabsContent value="payments">
+          <PaymentsDashboard />
         </TabsContent>
       </Tabs>
     </div>
