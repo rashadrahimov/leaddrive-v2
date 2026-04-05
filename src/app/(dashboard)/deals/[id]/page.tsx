@@ -100,13 +100,23 @@ function TagsInput({ tags, onChange, addTagLabel }: { tags: string[]; onChange: 
 // ── AI Prediction Card ──
 function AiPredictionCard({ dealId }: { dealId: string }) {
   const [pred, setPred] = useState<any>(null)
+  const [nextActions, setNextActions] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
   const fetchPrediction = () => {
     setLoading(true)
-    fetch(`/api/v1/analytics/deal-prediction?dealId=${dealId}`)
-      .then(r => r.json())
-      .then(j => { if (j.success) setPred(j.data) })
+    Promise.all([
+      fetch(`/api/v1/analytics/deal-prediction?dealId=${dealId}`).then(r => r.json()),
+      fetch(`/api/v1/ai/next-actions?limit=3`).then(r => r.json()),
+    ])
+      .then(([p, a]) => {
+        if (p.success) setPred(p.data)
+        if (a.success) {
+          // Filter actions related to this deal
+          const dealActions = a.data.filter((act: any) => act.entityId === dealId)
+          setNextActions(dealActions.length > 0 ? dealActions : a.data.slice(0, 2))
+        }
+      })
       .catch(() => {})
       .finally(() => setLoading(false))
   }
@@ -185,6 +195,24 @@ function AiPredictionCard({ dealId }: { dealId: string }) {
             <p key={i} className="text-[10px] text-muted-foreground flex items-center gap-1">
               <span className="h-1 w-1 rounded-full bg-emerald-400 shrink-0" /> {f}
             </p>
+          ))}
+        </div>
+      )}
+
+      {/* Next best actions */}
+      {nextActions.length > 0 && (
+        <div className="border-t pt-2">
+          <p className="text-[10px] font-medium text-primary mb-1">Рекомендации:</p>
+          {nextActions.map((action: any, i: number) => (
+            <div key={i} className="flex items-start gap-1.5 mb-1">
+              <span className={`h-1.5 w-1.5 rounded-full mt-1 shrink-0 ${
+                action.priority === "high" ? "bg-red-500" : action.priority === "medium" ? "bg-amber-500" : "bg-blue-500"
+              }`} />
+              <div>
+                <p className="text-[10px] font-medium">{action.title}</p>
+                <p className="text-[9px] text-muted-foreground">{action.reason}</p>
+              </div>
+            </div>
           ))}
         </div>
       )}

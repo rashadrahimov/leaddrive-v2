@@ -18,6 +18,7 @@ import { CampaignStats } from "@/components/dashboard/campaign-stats"
 import { UpcomingEvents } from "@/components/dashboard/upcoming-events"
 import { WeeklyMetrics } from "@/components/dashboard/weekly-metrics"
 import { ChurnRiskWidget } from "@/components/dashboard/churn-risk-widget"
+import { RecommendedActions } from "@/components/dashboard/recommended-actions"
 
 function fmt(n: number): string {
   if (n >= 1000000) return `${(n / 1000).toFixed(0)}K`
@@ -194,8 +195,9 @@ export default function DashboardPage() {
         {widgets.weeklyMetrics && <WeeklyMetrics metrics={weeklyMetrics} />}
       </div>
 
-      {/* ═══ Row 5: Churn Risk ═══ */}
+      {/* ═══ Row 5: AI Insights ═══ */}
       <div className="grid lg:grid-cols-3 gap-4">
+        <RecommendedActions />
         <ChurnRiskWidget />
       </div>
     </div>

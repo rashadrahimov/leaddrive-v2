@@ -5,6 +5,8 @@ import Anthropic from "@anthropic-ai/sdk"
 import { checkRateLimit, RATE_LIMIT_CONFIG } from "@/lib/rate-limit"
 import { CRM_TOOLS, TOOL_META, getEnabledTools } from "@/lib/ai/tools"
 import { executeTool } from "@/lib/ai/tool-executor"
+import { predictDealWin } from "@/lib/ai/predictive"
+import { generateNextBestActions } from "@/lib/ai/next-best-action"
 
 function getClient(): Anthropic | null {
   if (!process.env.ANTHROPIC_API_KEY) return null
@@ -68,6 +70,22 @@ export async function POST(req: NextRequest) {
     })
     const tools = getEnabledTools(agentConfig?.toolsEnabled || [])
 
+    // Context enrichment: deal prediction + next actions when on deal page
+    let aiInsightsContext = ""
+    const dealPageMatch = context?.url?.match(/\/deals\/([^/]+)/)
+    if (dealPageMatch) {
+      try {
+        const [prediction, nextActions] = await Promise.all([
+          predictDealWin(dealPageMatch[1], orgId),
+          generateNextBestActions(orgId, userId, 3),
+        ])
+        aiInsightsContext = `\n\nAI Insights for current deal:
+- Win Probability: ${prediction.winProbability}% (confidence: ${prediction.confidence}%)
+- Risk Factors: ${prediction.riskFactors.join(", ") || "none"}
+- Recommended Actions: ${nextActions.map(a => a.title).join("; ") || "none"}`
+      } catch { /* ignore enrichment errors */ }
+    }
+
     const systemPrompt = `You are Da Vinci — an intelligent CRM assistant for Güvən Technology LLC, an IT outsourcing company in Baku, Azerbaijan.
 
 CRITICAL RULE #1: You MUST always respond in ${forceLang}. This is non-negotiable regardless of what language the user writes in.
@@ -88,7 +106,8 @@ Rules:
 - Format numbers with locale formatting
 - You have CRM tools available. Use them when the user asks to create tasks, log activities, update deals, etc.
 - For high-risk actions (sending emails, updating contacts), inform the user that approval will be required
-- Always confirm what you did after executing a tool`
+- Always confirm what you did after executing a tool
+- Use AI insights context below to proactively suggest relevant actions${aiInsightsContext}`
 
     const messages: Anthropic.MessageParam[] = [
       ...(history || []).map((h: any) => ({
