@@ -18,7 +18,8 @@ function buildCsp(nonce: string, allowSameOriginFrame = false) {
     "img-src 'self' data: blob: https:",
     "media-src 'self'",
     "font-src 'self' data:",
-    `connect-src 'self' ${process.env.NEXTAUTH_URL || "https://app.leaddrivecrm.org"} https://leaddrivecrm.org https://api.anthropic.com`,
+    `connect-src 'self' ${process.env.NEXTAUTH_URL || "https://app.leaddrivecrm.org"} https://leaddrivecrm.org https://api.anthropic.com https://accounts.google.com https://login.microsoftonline.com`,
+    "form-action 'self' https://accounts.google.com https://login.microsoftonline.com",
     allowSameOriginFrame ? "frame-ancestors 'self'" : "frame-ancestors 'none'",
   ].join("; ")
 }
