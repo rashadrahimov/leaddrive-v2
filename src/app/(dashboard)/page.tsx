@@ -32,15 +32,8 @@ export default function DashboardPage() {
   const tc = useTranslations("common")
   const [data, setData] = useState<any>(null)
   const [loading, setLoading] = useState(true)
-  const [widgets, setWidgets] = useState<Record<string, boolean>>({
-    statCards: true, dealPipeline: true, revenueTrend: true, leadSources: true,
-    recentDeals: true, aiLeadScoring: true, activityFeed: true,
-    campaignStats: true, upcomingEvents: true, weeklyMetrics: true,
-    recommendedActions: true, churnRisk: true,
-    // Legacy
-    revenueChart: true, forecast: true, clientHealth: true, taskSummary: true,
-    ticketSummary: true, leadFunnel: true,
-  })
+  const [widgets, setWidgets] = useState<Record<string, boolean>>({})
+  const [widgetsLoaded, setWidgetsLoaded] = useState(false)
 
   useEffect(() => {
     const orgId = session?.user?.organizationId
@@ -51,15 +44,21 @@ export default function DashboardPage() {
     })
       .then(r => r.json())
       .then(j => {
-        if (j.success && j.data?.widgets) {
-          const w: Record<string, boolean> = {}
-          for (const [key, val] of Object.entries(j.data.widgets) as [string, any][]) {
-            w[key] = val.enabled && (val.roles?.length === 0 || val.roles?.includes(userRole))
-          }
-          setWidgets(prev => ({ ...prev, ...w }))
+        const defaults: Record<string, boolean> = {
+          statCards: true, dealPipeline: true, revenueTrend: true, leadSources: true,
+          recentDeals: true, aiLeadScoring: true, activityFeed: true,
+          campaignStats: true, upcomingEvents: true, weeklyMetrics: true,
+          recommendedActions: true, churnRisk: true,
         }
+        if (j.success && j.data?.widgets) {
+          for (const [key, val] of Object.entries(j.data.widgets) as [string, any][]) {
+            defaults[key] = val.enabled && (val.roles?.length === 0 || val.roles?.includes(userRole))
+          }
+        }
+        setWidgets(defaults)
+        setWidgetsLoaded(true)
       })
-      .catch(() => {})
+      .catch(() => { setWidgetsLoaded(true) })
   }, [session])
 
   function timeAgo(d: string): string {
@@ -106,7 +105,7 @@ export default function DashboardPage() {
     )
   }
 
-  if (!data) return <div className="py-20 text-center text-muted-foreground">{t("noData")}</div>
+  if (!data || !widgetsLoaded) return <div className="py-20 text-center text-muted-foreground">{t("noData")}</div>
 
   const { financial, pipeline, leads, operations, activity, risks, forecast, campaigns, events, weeklyMetrics } = data
 
