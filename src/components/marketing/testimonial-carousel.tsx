@@ -3,6 +3,7 @@
 import { AnimateIn } from "./animate-in"
 import { testimonials } from "@/lib/marketing-data"
 import { TrendingDown, Clock, Percent, ArrowUpRight } from "lucide-react"
+import { useTranslations } from "next-intl"
 
 /* Case-study style testimonials with key metric per card */
 const caseStudies = [
@@ -51,15 +52,16 @@ const caseStudies = [
 ]
 
 export function TestimonialCarousel() {
+  const t = useTranslations("marketing.testimonials")
   return (
     <section id="testimonials" className="relative bg-[#F3F4F7] py-20 lg:py-28">
       <div className="mx-auto max-w-7xl px-4 lg:px-8">
         <AnimateIn className="text-center mb-14">
           <p className="text-sm font-medium text-[#001E3C]/40 uppercase tracking-widest mb-3">
-            Müştəri nəticələri
+            {t("sectionTitle")}
           </p>
           <h2 className="text-3xl lg:text-4xl font-bold tracking-tight text-[#001E3C]">
-            Real rəqəmlər, real şirkətlər
+            {t("sectionSubtitle")}
           </h2>
         </AnimateIn>
 

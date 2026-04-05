@@ -6,6 +6,7 @@ import {
   Brain, MessageSquare, TrendingUp, Shield,
   ArrowUpRight, Zap, BarChart3, Users,
 } from "lucide-react"
+import { useTranslations } from "next-intl"
 
 /* ── Animated counter ── */
 function useInView(ref: React.RefObject<HTMLElement | null>) {
@@ -69,58 +70,42 @@ function Sparkline({ data, color }: { data: number[]; color: string }) {
   )
 }
 
-/* ── Metric cards data ── */
-const metrics = [
-  {
-    value: 128,
-    suffix: "+",
-    label: "Funksiya",
-    sublabel: "Bütün modullar daxil",
-    icon: BarChart3,
-    trend: "+12%",
-    color: "#f97316",
-    spark: [20, 35, 28, 45, 52, 60, 75, 82, 90, 100, 115, 128],
-  },
-  {
-    value: 16,
-    suffix: "",
-    label: "Ağıllı funksiya",
-    sublabel: "Da Vinci ilə",
-    icon: Brain,
-    trend: "+4 yeni",
-    color: "#8b5cf6",
-    spark: [4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16],
-  },
-  {
-    value: 7,
-    suffix: "",
-    label: "Rabitə kanalı",
-    sublabel: "Vahid gələn qutusu",
-    icon: MessageSquare,
-    trend: "Tam",
-    color: "#06b6d4",
-    spark: [2, 3, 3, 4, 5, 5, 6, 6, 7, 7, 7, 7],
-  },
-  {
-    value: 500,
-    suffix: "+",
-    label: "İstifadəçi",
-    sublabel: "və artmaqda",
-    icon: Users,
-    trend: "+23%",
-    color: "#10b981",
-    spark: [120, 160, 195, 230, 270, 310, 340, 380, 410, 440, 470, 500],
-  },
-]
+function useMetrics() {
+  const t = useTranslations("marketing.stats")
+  return [
+    {
+      value: 128, suffix: "+", label: t("features"), sublabel: "128+ · 11",
+      icon: BarChart3, trend: "+12%", color: "#f97316",
+      spark: [20, 35, 28, 45, 52, 60, 75, 82, 90, 100, 115, 128],
+    },
+    {
+      value: 16, suffix: "", label: t("aiIntegrations"), sublabel: t("aiDesc"),
+      icon: Brain, trend: "+4", color: "#8b5cf6",
+      spark: [4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16],
+    },
+    {
+      value: 7, suffix: "", label: t("channels"), sublabel: t("channelsDesc"),
+      icon: MessageSquare, trend: "7/7", color: "#06b6d4",
+      spark: [2, 3, 3, 4, 5, 5, 6, 6, 7, 7, 7, 7],
+    },
+    {
+      value: 500, suffix: "+", label: t("users"), sublabel: t("usersDesc"),
+      icon: Users, trend: "+23%", color: "#10b981",
+      spark: [120, 160, 195, 230, 270, 310, 340, 380, 410, 440, 470, 500],
+    },
+  ]
+}
 
 export function StatsCounter() {
+  const metrics = useMetrics()
+  const tBar = useTranslations("marketing.statsBar")
   return (
     <section className="relative bg-white py-16 lg:py-20">
       <div className="mx-auto max-w-7xl px-4 lg:px-8">
         {/* Section micro-header */}
         <AnimateIn>
           <p className="text-center text-sm font-medium text-[#001E3C]/40 uppercase tracking-widest mb-10">
-            Platforma rəqəmlərdə
+            {tBar("featuresCount")}
           </p>
         </AnimateIn>
 

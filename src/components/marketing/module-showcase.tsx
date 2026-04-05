@@ -1,6 +1,7 @@
 "use client"
 
 import { useRef, useState, useEffect, useLayoutEffect } from "react"
+import { useTranslations } from "next-intl"
 import { AnimateIn } from "./animate-in"
 import {
   Users, Megaphone, MessageSquare, Headphones,
@@ -2299,13 +2300,15 @@ const modules = [
    ══════════════════════════════════════════════════════ */
 
 export function ModuleShowcase() {
+  const t = useTranslations("marketing.statsBar")
+  const tMod = useTranslations("marketing.modules")
   return (
     <section id="modules" className="relative bg-white py-20 lg:py-28">
       <div className="mx-auto max-w-7xl px-4 lg:px-8">
         <AnimateIn className="text-center mb-16 lg:mb-20">
-          <p className="text-sm font-medium text-[#001E3C]/40 uppercase tracking-widest mb-3">128+ funksiya · 11 modul</p>
-          <h2 className="text-3xl lg:text-4xl font-bold tracking-tight text-[#001E3C]">Hər şey bir platformada</h2>
-          <p className="mt-4 text-lg text-[#001E3C]/60 max-w-2xl mx-auto">CRM, marketinq, dəstək, maliyyə və ERP — ayrı alətlərə ehtiyac yoxdur.</p>
+          <p className="text-sm font-medium text-[#001E3C]/40 uppercase tracking-widest mb-3">{t("featuresCount")}</p>
+          <h2 className="text-3xl lg:text-4xl font-bold tracking-tight text-[#001E3C]">{t("title")}</h2>
+          <p className="mt-4 text-lg text-[#001E3C]/60 max-w-2xl mx-auto">{t("description")}</p>
         </AnimateIn>
 
         <div className="space-y-20 lg:space-y-28">
@@ -2374,7 +2377,7 @@ export function ModuleShowcase() {
 
         <AnimateIn delay={200} className="text-center mt-16">
           <Link href="/modules" className="group inline-flex items-center gap-2 rounded-full border border-[#001E3C]/10 px-6 py-3 text-sm font-medium text-[#001E3C]/60 hover:bg-[#F3F4F7] hover:border-[#001E3C]/20 transition-all">
-            Bütün modulları kəşf et <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" />
+            {tMod("sectionLabel")} <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" />
           </Link>
         </AnimateIn>
       </div>
