@@ -53,7 +53,9 @@ export default function DealsPage() {
 
   const selectedPipeline = pipelines.find(p => p.id === selectedPipelineId)
   const STAGES = (selectedPipeline?.stages || []).map((s: any) => ({
+    key: s.name,
     name: s.name,
+    label: s.displayName || s.name,
     displayName: s.displayName,
     color: s.color,
     hint: "",
