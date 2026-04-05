@@ -7,15 +7,20 @@ export function VideoBackground() {
   const { wallpaperDef, isWallpaperActive } = useWallpaper()
   const videoRef = useRef<HTMLVideoElement>(null)
 
-  // Pause video when tab is hidden, resume when visible
+  // Fix React muted prop bug + autoplay + visibility handling
   useEffect(() => {
     const video = videoRef.current
     if (!video) return
+
+    // React doesn't render muted attribute correctly — set it manually
+    video.muted = true
+    video.play().catch(() => {})
 
     const handleVisibility = () => {
       if (document.hidden) {
         video.pause()
       } else {
+        video.muted = true
         video.play().catch(() => {})
       }
     }
