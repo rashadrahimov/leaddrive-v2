@@ -29,14 +29,14 @@ interface TicketMacro {
   sortOrder: number
 }
 
-const ACTION_TYPES = [
-  { value: "set_status", label: "Set Status" },
-  { value: "set_priority", label: "Set Priority" },
-  { value: "add_comment", label: "Add Reply" },
-  { value: "add_internal_note", label: "Add Internal Note" },
-  { value: "add_tag", label: "Add Tag" },
-  { value: "remove_tag", label: "Remove Tag" },
-  { value: "set_assignee", label: "Set Assignee" },
+const ACTION_TYPE_KEYS = [
+  { value: "set_status", tKey: "setStatus" },
+  { value: "set_priority", tKey: "setPriority" },
+  { value: "add_comment", tKey: "addReply" },
+  { value: "add_internal_note", tKey: "addInternalNote" },
+  { value: "add_tag", tKey: "addTag" },
+  { value: "remove_tag", tKey: "removeTag" },
+  { value: "set_assignee", tKey: "setAssignee" },
 ]
 
 const CATEGORIES = ["general", "billing", "technical", "onboarding", "sales"]
@@ -44,6 +44,7 @@ const CATEGORIES = ["general", "billing", "technical", "onboarding", "sales"]
 export default function MacrosSettingsPage() {
   const { data: session } = useSession()
   const t = useTranslations("macrosPage")
+  const tc = useTranslations("common")
   const orgId = session?.user?.organizationId
   const headers = orgId ? { "x-organization-id": String(orgId) } : {}
 
@@ -182,7 +183,7 @@ export default function MacrosSettingsPage() {
                       onClick={e => { e.stopPropagation(); toggleActive(macro.id, !macro.isActive) }}
                       className={cn("text-xs px-2 py-0.5 rounded-full border", macro.isActive ? "bg-green-50 text-green-600 border-green-200" : "bg-muted text-muted-foreground")}
                     >
-                      {macro.isActive ? "Active" : "Inactive"}
+                      {macro.isActive ? tc("active") : tc("inactive")}
                     </button>
                   </td>
                   <td className="px-4 py-3 text-right">
@@ -239,7 +240,7 @@ export default function MacrosSettingsPage() {
                       next[i] = { ...next[i], type: e.target.value }
                       setActions(next)
                     }} className="w-40 shrink-0">
-                      {ACTION_TYPES.map(at => <option key={at.value} value={at.value}>{at.label}</option>)}
+                      {ACTION_TYPE_KEYS.map(at => <option key={at.value} value={at.value}>{t(at.tKey as any)}</option>)}
                     </Select>
                     <Input
                       value={action.value}
@@ -266,7 +267,7 @@ export default function MacrosSettingsPage() {
           </div>
         </DialogContent>
         <DialogFooter>
-          <Button variant="outline" onClick={() => { setShowForm(false); resetForm() }}>Cancel</Button>
+          <Button variant="outline" onClick={() => { setShowForm(false); resetForm() }}>{tc("cancel")}</Button>
           <Button onClick={handleSave} disabled={!name.trim()}>
             {editId ? t("saveChanges") : t("createMacro")}
           </Button>

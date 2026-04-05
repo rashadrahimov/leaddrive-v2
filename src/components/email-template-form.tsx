@@ -298,6 +298,7 @@ export function EmailTemplateForm({ open, onOpenChange, onSaved, initialData, or
                   onExport={(design, html) => {
                     setForm(f => ({ ...f, designJson: design, htmlBody: html }))
                   }}
+                  labels={{ title: t("visualEditor"), exportHtml: t("exportHtml") }}
                 />
               ) : (
               <>

@@ -117,8 +117,8 @@ export function CampaignForm({ open, onOpenChange, onSaved, initialData, orgId, 
   const [testDurationHours, setTestDurationHours] = useState(4)
   const [winnerCriteria, setWinnerCriteria] = useState("open_rate")
   const [variants, setVariants] = useState<Array<{ name: string; subject: string; templateId: string; percentage: number }>>([
-    { name: "Variant A", subject: "", templateId: "", percentage: 50 },
-    { name: "Variant B", subject: "", templateId: "", percentage: 50 },
+    { name: "Variant A", subject: "", templateId: "", percentage: 50 },  // default names, overridden by translations at render
+    { name: "Variant B", subject: "", templateId: "", percentage: 50 },  // default names, overridden by translations at render
   ])
 
   // Load templates, segments and contacts

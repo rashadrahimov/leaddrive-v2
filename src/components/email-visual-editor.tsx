@@ -13,7 +13,7 @@ const EmailEditor = dynamic(() => import("react-email-editor").then(mod => mod.d
     <div className="flex items-center justify-center h-[600px] border rounded-lg bg-muted/30">
       <div className="text-center">
         <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full mx-auto mb-3" />
-        <p className="text-sm text-muted-foreground">Loading editor...</p>
+        <p className="text-sm text-muted-foreground">Loading...</p>
       </div>
     </div>
   ),
@@ -39,10 +39,11 @@ export interface EmailVisualEditorHandle {
 interface Props {
   designJson?: any | null
   onExport: (design: any, html: string) => void
+  labels?: { title?: string; exportHtml?: string; loading?: string }
 }
 
 export const EmailVisualEditor = forwardRef<EmailVisualEditorHandle, Props>(
-  function EmailVisualEditor({ designJson, onExport }, ref) {
+  function EmailVisualEditor({ designJson, onExport, labels }, ref) {
     const editorRef = useRef<any>(null)
     const [ready, setReady] = useState(false)
     const [previewMode, setPreviewMode] = useState<"desktop" | "mobile">("desktop")
@@ -97,7 +98,7 @@ export const EmailVisualEditor = forwardRef<EmailVisualEditorHandle, Props>(
       <div className="border rounded-lg overflow-hidden">
         {/* Preview toggle toolbar */}
         <div className="flex items-center justify-between px-3 py-2 border-b bg-muted/30">
-          <span className="text-xs font-medium text-muted-foreground">Visual Email Editor</span>
+          <span className="text-xs font-medium text-muted-foreground">{labels?.title || "Visual Email Editor"}</span>
           <div className="flex items-center gap-1">
             <button
               type="button"
@@ -123,7 +124,7 @@ export const EmailVisualEditor = forwardRef<EmailVisualEditorHandle, Props>(
             </button>
             <span className="w-px h-5 bg-border mx-1" />
             <Button type="button" size="sm" variant="outline" onClick={() => exportHtmlAsync().catch(() => {})} disabled={!ready}>
-              <Download className="h-3.5 w-3.5 mr-1" /> Export HTML
+              <Download className="h-3.5 w-3.5 mr-1" /> {labels?.exportHtml || "Export HTML"}
             </Button>
           </div>
         </div>

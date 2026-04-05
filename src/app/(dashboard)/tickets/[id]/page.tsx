@@ -456,7 +456,7 @@ export default function TicketDetailPage() {
             variant="ghost" size="icon" className="h-7 w-7"
             disabled={!siblings.prev}
             onClick={() => siblings.prev && router.push(`/tickets/${siblings.prev.id}`)}
-            title={siblings.prev ? `${siblings.prev.ticketNumber}: ${siblings.prev.subject}` : "No previous ticket"}
+            title={siblings.prev ? `${siblings.prev.ticketNumber}: ${siblings.prev.subject}` : ""}
           >
             <ChevronLeft className="h-4 w-4" />
           </Button>
@@ -464,7 +464,7 @@ export default function TicketDetailPage() {
             variant="ghost" size="icon" className="h-7 w-7"
             disabled={!siblings.next}
             onClick={() => siblings.next && router.push(`/tickets/${siblings.next.id}`)}
-            title={siblings.next ? `${siblings.next.ticketNumber}: ${siblings.next.subject}` : "No next ticket"}
+            title={siblings.next ? `${siblings.next.ticketNumber}: ${siblings.next.subject}` : ""}
           >
             <ChevronRight className="h-4 w-4" />
           </Button>
@@ -545,7 +545,7 @@ export default function TicketDetailPage() {
             <UserCheck className="h-3.5 w-3.5 mr-1" /> 360
           </Button>
           {/* Shortcuts help */}
-          <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setShowShortcuts(!showShortcuts)} title="Keyboard shortcuts">
+          <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setShowShortcuts(!showShortcuts)} title={tsk("title")}>
             <Keyboard className="h-4 w-4" />
           </Button>
         </div>
