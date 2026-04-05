@@ -40,11 +40,10 @@ export function VideoBackground() {
         muted
         playsInline
         preload="auto"
+        src={wallpaperDef.src}
         className="h-full w-full object-cover"
         key={wallpaperDef.id}
-      >
-        <source src={wallpaperDef.src} type="video/mp4" />
-      </video>
+      />
 {/* No scrim — maximum brightness */}
     </div>
   )
