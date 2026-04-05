@@ -28,22 +28,18 @@ export function VideoBackground() {
 
   return (
     <div className="fixed inset-0 z-0 pointer-events-none">
-      {wallpaperDef.type === "video" && wallpaperDef.src ? (
-        <video
-          ref={videoRef}
-          autoPlay
-          loop
-          muted
-          playsInline
-          preload="auto"
-          className="h-full w-full object-cover"
-          key={wallpaperDef.id}
-        >
-          <source src={wallpaperDef.src} type="video/mp4" />
-        </video>
-      ) : (
-        <div className="h-full w-full wallpaper-abstract-gradient" />
-      )}
+      <video
+        ref={videoRef}
+        autoPlay
+        loop
+        muted
+        playsInline
+        preload="auto"
+        className="h-full w-full object-cover"
+        key={wallpaperDef.id}
+      >
+        <source src={wallpaperDef.src} type="video/mp4" />
+      </video>
       {/* Minimal scrim — keep video bright */}
       <div className="absolute inset-0 bg-black/5" />
     </div>

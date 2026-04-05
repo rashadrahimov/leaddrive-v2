@@ -6,10 +6,8 @@ export interface WallpaperDef {
   id: string
   label: string
   labelRu: string
-  type: "video" | "css"
-  src?: string
-  /** CSS gradient used as thumbnail in selector */
-  thumbGradient: string
+  type: "video"
+  src: string
 }
 
 export const WALLPAPERS: WallpaperDef[] = [
@@ -19,7 +17,6 @@ export const WALLPAPERS: WallpaperDef[] = [
     labelRu: "Альпийские горы",
     type: "video",
     src: "/wallpapers/alpine.mp4",
-    thumbGradient: "linear-gradient(135deg, #4ade80 0%, #22d3ee 40%, #3b82f6 70%, #f0f9ff 100%)",
   },
   {
     id: "night-city",
@@ -27,7 +24,6 @@ export const WALLPAPERS: WallpaperDef[] = [
     labelRu: "Ночной город",
     type: "video",
     src: "/wallpapers/night-city.mp4",
-    thumbGradient: "linear-gradient(135deg, #0f172a 0%, #1e1b4b 30%, #f59e0b 60%, #1e293b 100%)",
   },
   {
     id: "ocean",
@@ -35,14 +31,13 @@ export const WALLPAPERS: WallpaperDef[] = [
     labelRu: "Океан",
     type: "video",
     src: "/wallpapers/ocean.mp4",
-    thumbGradient: "linear-gradient(135deg, #0ea5e9 0%, #06b6d4 40%, #155e75 70%, #f0fdfa 100%)",
   },
   {
-    id: "abstract-gradient",
-    label: "Abstract Gradient",
-    labelRu: "Абстрактный градиент",
-    type: "css",
-    thumbGradient: "linear-gradient(-45deg, #0f172a, #1e1b4b, #172554, #0c4a6e)",
+    id: "autumn-forest",
+    label: "Autumn Forest",
+    labelRu: "Осенний лес",
+    type: "video",
+    src: "/wallpapers/autumn-forest.mp4",
   },
 ]
 

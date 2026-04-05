@@ -53,9 +53,14 @@ export function WallpaperSelector() {
                   : "border-transparent hover:border-border"
               )}
             >
-              <div
-                className="aspect-[5/3] w-full rounded-md"
-                style={{ background: w.thumbGradient }}
+              <video
+                src={w.src}
+                muted
+                playsInline
+                preload="metadata"
+                className="aspect-[5/3] w-full rounded-md object-cover"
+                onMouseEnter={(e) => e.currentTarget.play().catch(() => {})}
+                onMouseLeave={(e) => { e.currentTarget.pause(); e.currentTarget.currentTime = 0; }}
               />
               <p className="mt-1 text-[10px] font-medium text-center pb-1">
                 {w.labelRu}
