@@ -81,8 +81,8 @@ const authMiddleware = auth((req) => {
     if (pathname === "/") {
       return withCspHeaders(NextResponse.redirect(new URL("https://leaddrivecrm.org/home")), nonce)
     }
-    // On marketing domain: allow marketing paths + static assets
-    if (isMarketingPath(pathname) || pathname.startsWith("/api/") || pathname.startsWith("/_next/")) {
+    // On marketing domain: allow marketing paths + static assets + sw.js
+    if (isMarketingPath(pathname) || pathname.startsWith("/api/") || pathname.startsWith("/_next/") || pathname === "/sw.js") {
       // Let it through — will be handled by publicPaths check below
     } else {
       // Non-marketing paths (dashboard, auth, etc.) → redirect to app subdomain
