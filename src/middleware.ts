@@ -6,6 +6,25 @@ import { checkRateLimit, RATE_LIMIT_CONFIG } from "@/lib/rate-limit"
 
 const publicPaths = ["/login", "/register", "/forgot-password", "/reset-password", "/api/auth", "/api/v1/auth/register", "/api/v1/settings/auth-methods", "/portal", "/home", "/pricing", "/plans", "/features", "/demo", "/about", "/contact", "/blog", "/legal", "/landing", "/marketing"]
 
+// Marketing-only paths served on leaddrivecrm.org
+const marketingPaths = ["/home", "/pricing", "/plans", "/features", "/demo", "/about", "/contact", "/blog", "/legal", "/landing", "/marketing"]
+
+// Hostnames for domain-based routing
+const MARKETING_HOSTS = ["leaddrivecrm.org", "www.leaddrivecrm.org"]
+const APP_HOSTS = ["app.leaddrivecrm.org", "www.app.leaddrivecrm.org"]
+
+function isMarketingHost(host: string): boolean {
+  return MARKETING_HOSTS.includes(host)
+}
+
+function isAppHost(host: string): boolean {
+  return APP_HOSTS.includes(host)
+}
+
+function isMarketingPath(pathname: string): boolean {
+  return marketingPaths.some((p) => pathname === p || pathname.startsWith(p + "/"))
+}
+
 // Paths that should be rate-limited more aggressively
 const RATE_LIMITED_PATHS = ["/api/auth", "/login", "/register", "/forgot-password", "/api/v1/auth/reset-password", "/api/v1/auth/2fa", "/api/v1/auth/totp", "/api/v1/auth/verify-2fa"]
 
@@ -53,6 +72,34 @@ function withCspHeaders(response: NextResponse, nonce: string, allowSameOriginFr
 const authMiddleware = auth((req) => {
   const { pathname } = req.nextUrl
   const nonce = crypto.randomUUID()
+  const host = req.headers.get("host")?.replace(/:\d+$/, "") || ""
+
+  // Domain-based routing: leaddrivecrm.org serves marketing, app.leaddrivecrm.org serves CRM
+  // Note: inside auth() callback, req.url uses NEXTAUTH_URL as base, so we build URLs explicitly
+  if (isMarketingHost(host)) {
+    // On marketing domain: "/" → /home
+    if (pathname === "/") {
+      return withCspHeaders(NextResponse.redirect(new URL("https://leaddrivecrm.org/home")), nonce)
+    }
+    // On marketing domain: allow marketing paths + static assets
+    if (isMarketingPath(pathname) || pathname.startsWith("/api/") || pathname.startsWith("/_next/")) {
+      // Let it through — will be handled by publicPaths check below
+    } else {
+      // Non-marketing paths (dashboard, auth, etc.) → redirect to app subdomain
+      const appUrl = new URL(`https://app.leaddrivecrm.org${pathname}`)
+      appUrl.search = req.nextUrl.search
+      return withCspHeaders(NextResponse.redirect(appUrl), nonce)
+    }
+  }
+
+  if (isAppHost(host)) {
+    // On app domain: marketing paths → redirect to marketing domain
+    if (isMarketingPath(pathname)) {
+      const marketingUrl = new URL(`https://leaddrivecrm.org${pathname}`)
+      marketingUrl.search = req.nextUrl.search
+      return withCspHeaders(NextResponse.redirect(marketingUrl), nonce)
+    }
+  }
 
   // Rate limit auth-related endpoints
   if (RATE_LIMITED_PATHS.some((p) => pathname.startsWith(p)) && req.method === "POST") {
