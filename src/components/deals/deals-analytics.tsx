@@ -1,6 +1,7 @@
 "use client"
 
 import { useMemo } from "react"
+import { useTranslations } from "next-intl"
 import { cn } from "@/lib/utils"
 import { MiniLineChart, MiniDonut } from "@/components/charts/mini-charts"
 import {
@@ -82,29 +83,29 @@ const STAGE_MAP: Record<string, { label: string; color: string; bgColor: string 
 // ── Mock data ───────────────────────────────────────────────────────────
 
 const MOCK_COMPETITORS = [
-  { name: "TechStar Solutions", deals: 5, threat: "Y\u00FCks\u0259k" as const },
-  { name: "Digital Wave", deals: 3, threat: "Orta" as const },
-  { name: "CloudBase Inc.", deals: 2, threat: "A\u015Fa\u011F\u0131" as const },
-  { name: "NextGen IT", deals: 4, threat: "Y\u00FCks\u0259k" as const },
+  { name: "TechStar Solutions", deals: 5, threat: "high" as const },
+  { name: "Digital Wave", deals: 3, threat: "medium" as const },
+  { name: "CloudBase Inc.", deals: 2, threat: "low" as const },
+  { name: "NextGen IT", deals: 4, threat: "high" as const },
 ]
 
 const MOCK_CONTACT_ROLES = [
-  { role: "Q\u0259rar ver\u0259n", count: 8 },
-  { role: "T\u0259sir ed\u0259n", count: 12 },
-  { role: "\u0130stifad\u0259\u00E7i", count: 6 },
+  { roleKey: "decisionMaker", count: 8 },
+  { roleKey: "influencer", count: 12 },
+  { roleKey: "user", count: 6 },
 ]
 
 const MOCK_NEXT_STEPS = [
-  { task: "TechStar il\u0259 demo g\u00F6r\u00FC\u015F\u00FC", date: "5 Apr", priority: "Y\u00FCks\u0259k" as const },
-  { task: "Qiym\u0259t t\u0259klifi haz\u0131rla", date: "7 Apr", priority: "Orta" as const },
-  { task: "M\u00FCqavil\u0259 layih\u0259si g\u00F6nd\u0259r", date: "8 Apr", priority: "Y\u00FCks\u0259k" as const },
-  { task: "Follow-up z\u0259ng et", date: "10 Apr", priority: "A\u015Fa\u011F\u0131" as const },
+  { task: "TechStar demo", date: "5 Apr", priority: "high" as const },
+  { task: "Price proposal", date: "7 Apr", priority: "medium" as const },
+  { task: "Contract draft", date: "8 Apr", priority: "high" as const },
+  { task: "Follow-up call", date: "10 Apr", priority: "low" as const },
 ]
 
 const MOCK_RECENT_ACTIVITY = [
-  { type: "call" as const, text: "Az\u0259r Telekom il\u0259 z\u0259ng", time: "2 saat \u0259vv\u0259l" },
-  { type: "email" as const, text: "T\u0259klif g\u00F6nd\u0259rildi", time: "5 saat \u0259vv\u0259l" },
-  { type: "meeting" as const, text: "Demo g\u00F6r\u00FC\u015F\u00FC tamamland\u0131", time: "d\u00FCn\u0259n" },
+  { type: "call" as const, textKey: "callLog", timeKey: "timeAgo2h" },
+  { type: "email" as const, textKey: "emailSent", timeKey: "timeAgo5h" },
+  { type: "meeting" as const, textKey: "meetingDone", timeKey: "timeAgoYesterday" },
 ]
 
 const MOCK_NBO = [
@@ -117,20 +118,22 @@ const MOCK_NBO = [
 const FORECAST_DATA = [42, 55, 48, 72, 68, 85, 95, 110, 98, 125, 132, 142]
 
 const THREAT_COLORS: Record<string, string> = {
-  "Y\u00FCks\u0259k": "bg-red-500/15 text-red-500",
-  Orta: "bg-amber-500/15 text-amber-500",
-  "A\u015Fa\u011F\u0131": "bg-emerald-500/15 text-emerald-500",
+  high: "bg-red-500/15 text-red-500",
+  medium: "bg-amber-500/15 text-amber-500",
+  low: "bg-emerald-500/15 text-emerald-500",
 }
 
 const PRIORITY_COLORS: Record<string, string> = {
-  "Y\u00FCks\u0259k": "bg-red-500/15 text-red-400",
-  Orta: "bg-amber-500/15 text-amber-400",
-  "A\u015Fa\u011F\u0131": "bg-blue-500/15 text-blue-400",
+  high: "bg-red-500/15 text-red-400",
+  medium: "bg-amber-500/15 text-amber-400",
+  low: "bg-blue-500/15 text-blue-400",
 }
 
 // ── Component ───────────────────────────────────────────────────────────
 
 export function DealsAnalytics({ deals, pipelineValue, wonValue, lostCount, wonCount }: DealsAnalyticsProps) {
+  const t = useTranslations("dealsAnalytics")
+  const months = t("monthsShort").split(",")
   const analytics = useMemo(() => {
     const activeDeals = deals.filter((d) => d.stage !== "WON" && d.stage !== "LOST")
     const totalClosed = wonCount + lostCount
@@ -180,7 +183,7 @@ export function DealsAnalytics({ deals, pipelineValue, wonValue, lostCount, wonC
 
   const kpis = [
     {
-      label: "Huni d\u0259y\u0259ri",
+      label: t("pipelineValue"),
       value: fmtCurrency(pipelineValue),
       change: "+22%",
       up: true,
@@ -188,16 +191,16 @@ export function DealsAnalytics({ deals, pipelineValue, wonValue, lostCount, wonC
       iconBg: "bg-violet-500/15 text-violet-500",
     },
     {
-      label: "Qazan\u0131ld\u0131",
+      label: t("won"),
       value: fmtCurrency(wonValue),
-      sub: `${wonCount} s\u00F6vd\u0259`,
+      sub: `${wonCount} ${t("deals")}`,
       change: null,
       up: true,
       icon: Trophy,
       iconBg: "bg-emerald-500/15 text-emerald-500",
     },
     {
-      label: "Konversiya",
+      label: t("conversion"),
       value: `${analytics.conversionRate.toFixed(1)}%`,
       change: "+5.1%",
       up: true,
@@ -205,15 +208,15 @@ export function DealsAnalytics({ deals, pipelineValue, wonValue, lostCount, wonC
       iconBg: "bg-blue-500/15 text-blue-500",
     },
     {
-      label: "Ort. d\u00F6vr\u00FC",
-      value: `${analytics.avgCycle} g\u00FCn`,
-      change: "-3 g\u00FCn",
+      label: t("avgCycle"),
+      value: `${analytics.avgCycle} ${t("days")}`,
+      change: `-3 ${t("days")}`,
       up: true,
       icon: Clock,
       iconBg: "bg-amber-500/15 text-amber-500",
     },
     {
-      label: "Ort. d\u0259y\u0259r",
+      label: t("avgValue"),
       value: fmtCurrency(analytics.avgValue),
       change: "+8%",
       up: true,
@@ -221,7 +224,7 @@ export function DealsAnalytics({ deals, pipelineValue, wonValue, lostCount, wonC
       iconBg: "bg-cyan-500/15 text-cyan-500",
     },
     {
-      label: "Da Vinci proqnoz",
+      label: t("aiForecast"),
       value: fmtCurrency(analytics.forecastValue || 142_000),
       change: null,
       up: true,
@@ -278,8 +281,8 @@ export function DealsAnalytics({ deals, pipelineValue, wonValue, lostCount, wonC
         {/* Pipeline Kanban */}
         <div className="bg-card rounded-xl border p-5">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold">Pipeline Kanban</h3>
-            <span className="text-xs text-muted-foreground">{analytics.totalDeals} s{"\u00F6"}vd{"\u0259"}</span>
+            <h3 className="text-sm font-semibold">{t("pipelineKanban")}</h3>
+            <span className="text-xs text-muted-foreground">{analytics.totalDeals} {t("deals")}</span>
           </div>
           <div className="space-y-2.5">
             {stageOrder.map((stage) => {
@@ -329,19 +332,18 @@ export function DealsAnalytics({ deals, pipelineValue, wonValue, lostCount, wonC
         {/* Revenue Forecast */}
         <div className="bg-card rounded-xl border p-5">
           <div className="flex items-center justify-between mb-1">
-            <h3 className="text-sm font-semibold">G{"\u0259"}lir Proqnozu</h3>
+            <h3 className="text-sm font-semibold">{t("revenueForecast")}</h3>
             <Sparkles className="w-4 h-4 text-fuchsia-400" />
           </div>
           <p className="text-xs text-muted-foreground mb-3">
-            {"\u00C7"}atd{"\u0131"}r{"\u0131"}lacaq (proqnoz){" "}
+            {t("expectedForecast")}{" "}
             <span className="font-semibold text-foreground">{"\u20BC"}420K</span>
           </p>
           <div className="mb-3">
             <MiniLineChart data={FORECAST_DATA} color="stroke-fuchsia-400" />
           </div>
           <div className="flex items-center gap-4 text-xs text-muted-foreground">
-            {["Yan", "Fev", "Mar", "Apr", "May", "\u0130yn", "\u0130yl", "Avq", "Sen", "Okt", "Noy", "Dek"].map(
-              (m, i) => (
+            {months.map((m, i) => (
                 <span key={m} className={cn("flex-1 text-center", i > 8 && "text-fuchsia-400/60")}>
                   {i % 3 === 0 ? m : ""}
                 </span>
@@ -351,28 +353,28 @@ export function DealsAnalytics({ deals, pipelineValue, wonValue, lostCount, wonC
           <div className="mt-4 grid grid-cols-3 gap-2 text-center">
             <div>
               <div className="text-lg font-bold">{"\u20BC"}285K</div>
-              <div className="text-[10px] text-muted-foreground">Cari</div>
+              <div className="text-[10px] text-muted-foreground">{t("current")}</div>
             </div>
             <div>
               <div className="text-lg font-bold text-fuchsia-400">{"\u20BC"}420K</div>
-              <div className="text-[10px] text-muted-foreground">Proqnoz</div>
+              <div className="text-[10px] text-muted-foreground">{t("forecast")}</div>
             </div>
             <div>
               <div className="text-lg font-bold text-emerald-400">+47%</div>
-              <div className="text-[10px] text-muted-foreground">Art{"\u0131"}m</div>
+              <div className="text-[10px] text-muted-foreground">{t("growth")}</div>
             </div>
           </div>
         </div>
 
         {/* Win/Loss */}
         <div className="bg-card rounded-xl border p-5">
-          <h3 className="text-sm font-semibold mb-4">Qazanma / {"\u0130"}tirm{"\u0259"}</h3>
+          <h3 className="text-sm font-semibold mb-4">{t("winLoss")}</h3>
           <div className="flex items-center gap-5">
             <MiniDonut segments={donutSegments} size={80} />
             <div className="space-y-2 flex-1 text-sm">
               <div className="flex items-center gap-2">
                 <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
-                <span className="text-muted-foreground">Qazan{"\u0131"}ld{"\u0131"}</span>
+                <span className="text-muted-foreground">{t("wonLabel")}</span>
                 <span className="ml-auto font-semibold">{wonCount}</span>
                 <span className="text-xs text-muted-foreground">
                   ({totalWLO > 0 ? Math.round((wonCount / totalWLO) * 100) : 0}%)
@@ -380,7 +382,7 @@ export function DealsAnalytics({ deals, pipelineValue, wonValue, lostCount, wonC
               </div>
               <div className="flex items-center gap-2">
                 <span className="w-2.5 h-2.5 rounded-full bg-red-500" />
-                <span className="text-muted-foreground">{"\u0130"}tirildi</span>
+                <span className="text-muted-foreground">{t("lostLabel")}</span>
                 <span className="ml-auto font-semibold">{lostCount}</span>
                 <span className="text-xs text-muted-foreground">
                   ({totalWLO > 0 ? Math.round((lostCount / totalWLO) * 100) : 0}%)
@@ -388,7 +390,7 @@ export function DealsAnalytics({ deals, pipelineValue, wonValue, lostCount, wonC
               </div>
               <div className="flex items-center gap-2">
                 <span className="w-2.5 h-2.5 rounded-full bg-indigo-500" />
-                <span className="text-muted-foreground">Davam edir</span>
+                <span className="text-muted-foreground">{t("ongoing")}</span>
                 <span className="ml-auto font-semibold">{ongoing}</span>
               </div>
             </div>
@@ -396,8 +398,8 @@ export function DealsAnalytics({ deals, pipelineValue, wonValue, lostCount, wonC
           <div className="mt-4 p-3 rounded-lg bg-red-500/10 border border-red-500/20">
             <div className="flex items-center gap-2 text-xs">
               <AlertTriangle className="w-3.5 h-3.5 text-red-400" />
-              <span className="text-red-400 font-medium">{"\u0130"}tirm{"\u0259"} s{"\u0259"}b{"\u0259"}bi #1:</span>
-              <span className="text-muted-foreground">Qiym{"\u0259"}t (45%)</span>
+              <span className="text-red-400 font-medium">{t("lossReason")}</span>
+              <span className="text-muted-foreground">{t("lossReasonPrice")}</span>
             </div>
           </div>
         </div>
@@ -407,7 +409,7 @@ export function DealsAnalytics({ deals, pipelineValue, wonValue, lostCount, wonC
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Contact Activity */}
         <div className="bg-card rounded-xl border p-5">
-          <h3 className="text-sm font-semibold mb-4">Kontakt M{"\u0259"}{"\u015F"}{"q"}ullu{"\u011F"}u</h3>
+          <h3 className="text-sm font-semibold mb-4">{t("contactActivity")}</h3>
           <div className="grid grid-cols-3 gap-3 mb-4">
             {[
               { icon: Phone, label: "Z{\\u0259}ngl{\\u0259}r", value: 47, color: "text-blue-400 bg-blue-500/15" },
@@ -420,7 +422,7 @@ export function DealsAnalytics({ deals, pipelineValue, wonValue, lostCount, wonC
                 </div>
                 <div className="text-lg font-bold">{item.value}</div>
                 <div className="text-[10px] text-muted-foreground">
-                  {i === 0 ? "Z\u0259ngl\u0259r" : i === 1 ? "E-po\u00E7t" : "G\u00F6r\u00FC\u015Fl\u0259r"}
+                  {i === 0 ? t("calls") : i === 1 ? t("emails") : t("meetings")}
                 </div>
               </div>
             ))}
@@ -440,8 +442,8 @@ export function DealsAnalytics({ deals, pipelineValue, wonValue, lostCount, wonC
                     <Users className="w-3 h-3 text-violet-400" />
                   )}
                 </div>
-                <span className="flex-1 truncate">{a.text}</span>
-                <span className="text-muted-foreground whitespace-nowrap">{a.time}</span>
+                <span className="flex-1 truncate">{t(a.textKey as any)}</span>
+                <span className="text-muted-foreground whitespace-nowrap">{t(a.timeKey as any)}</span>
               </div>
             ))}
           </div>
@@ -451,7 +453,7 @@ export function DealsAnalytics({ deals, pipelineValue, wonValue, lostCount, wonC
         <div className="bg-card rounded-xl border p-5">
           <div className="flex items-center gap-2 mb-4">
             <Brain className="w-4 h-4 text-fuchsia-400" />
-            <h3 className="text-sm font-semibold">Da Vinci Proqnoz</h3>
+            <h3 className="text-sm font-semibold">{t("aiPredict")}</h3>
           </div>
           <div className="space-y-2.5">
             {analytics.topDeals.length > 0 ? (
@@ -526,26 +528,26 @@ export function DealsAnalytics({ deals, pipelineValue, wonValue, lostCount, wonC
         <div className="bg-card rounded-xl border p-5">
           <div className="flex items-center gap-2 mb-4">
             <Shield className="w-4 h-4 text-orange-400" />
-            <h3 className="text-sm font-semibold">R{"\u0259"}qib Analizi</h3>
+            <h3 className="text-sm font-semibold">{t("competitorAnalysis")}</h3>
           </div>
           <div className="space-y-2 mb-5">
             {MOCK_COMPETITORS.map((c, i) => (
               <div key={i} className="flex items-center gap-2 text-xs">
                 <span className="flex-1 truncate font-medium">{c.name}</span>
-                <span className="text-muted-foreground">{c.deals} s{"\u00F6"}vd{"\u0259"}</span>
+                <span className="text-muted-foreground">{c.deals} {t("deals")}</span>
                 <span className={cn("px-2 py-0.5 rounded-full text-[10px] font-medium", THREAT_COLORS[c.threat])}>
-                  {c.threat}
+                  {t(c.threat as any)}
                 </span>
               </div>
             ))}
           </div>
           <div className="border-t pt-3">
-            <h4 className="text-xs font-semibold text-muted-foreground mb-2">Kontakt Rollar{"\u0131"}</h4>
+            <h4 className="text-xs font-semibold text-muted-foreground mb-2">{t("contactRoles")}</h4>
             <div className="flex gap-2">
               {MOCK_CONTACT_ROLES.map((r, i) => (
                 <div key={i} className="flex-1 text-center p-2 rounded-lg bg-muted/40">
                   <div className="text-sm font-bold">{r.count}</div>
-                  <div className="text-[10px] text-muted-foreground">{r.role}</div>
+                  <div className="text-[10px] text-muted-foreground">{t(r.roleKey as any)}</div>
                 </div>
               ))}
             </div>
@@ -558,7 +560,7 @@ export function DealsAnalytics({ deals, pipelineValue, wonValue, lostCount, wonC
         {/* Deal Velocity */}
         <div className="bg-card rounded-xl border p-5">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold">S{"\u00F6"}vd{"\u0259"}l{"\u0259"}{"\u015F"}m{"\u0259"} S{"\u00FC"}r{"\u0259"}ti</h3>
+            <h3 className="text-sm font-semibold">{t("dealVelocity")}</h3>
             <span className="flex items-center gap-1 text-xs font-medium text-emerald-400 bg-emerald-500/15 px-2 py-0.5 rounded-full">
               <TrendingUp className="w-3 h-3" />
               15%
@@ -566,14 +568,14 @@ export function DealsAnalytics({ deals, pipelineValue, wonValue, lostCount, wonC
           </div>
           <div className="space-y-4">
             {[
-              { label: "Ort. d\u00F6vr\u00FC", value: `${analytics.avgCycle} g\u00FCn`, pct: (analytics.avgCycle / (analytics.slowestCycle || 45)) * 100, color: "bg-blue-500" },
-              { label: "\u0018n s\u00FCr\u0259tli", value: `${analytics.fastestCycle} g\u00FCn`, pct: (analytics.fastestCycle / (analytics.slowestCycle || 45)) * 100, color: "bg-emerald-500" },
-              { label: "\u0018n yava\u015F", value: `${analytics.slowestCycle} g\u00FCn`, pct: 100, color: "bg-red-500" },
+              { label: t("avgCycleLabel"), value: `${analytics.avgCycle} ${t("days")}`, pct: (analytics.avgCycle / (analytics.slowestCycle || 45)) * 100, color: "bg-blue-500" },
+              { label: t("fastest"), value: `${analytics.fastestCycle} ${t("days")}`, pct: (analytics.fastestCycle / (analytics.slowestCycle || 45)) * 100, color: "bg-emerald-500" },
+              { label: t("slowest"), value: `${analytics.slowestCycle} ${t("days")}`, pct: 100, color: "bg-red-500" },
             ].map((item, i) => (
               <div key={i}>
                 <div className="flex items-center justify-between text-xs mb-1">
                   <span className="text-muted-foreground">
-                    {i === 0 ? "Ort. d\u00F6vr\u00FC" : i === 1 ? "\u018En s\u00FCr\u0259tli" : "\u018En yava\u015F"}
+                    {i === 0 ? t("avgCycleLabel") : i === 1 ? t("fastest") : t("slowest")}
                   </span>
                   <span className="font-medium">{item.value}</span>
                 </div>
@@ -589,8 +591,8 @@ export function DealsAnalytics({ deals, pipelineValue, wonValue, lostCount, wonC
           <div className="mt-4 p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
             <div className="flex items-center gap-2 text-xs">
               <Activity className="w-3.5 h-3.5 text-blue-400" />
-              <span className="text-blue-400 font-medium">Trend:</span>
-              <span className="text-muted-foreground">S{"\u00FC"}r{"\u0259"}t son 30 g{"\u00FC"}nd{"\u0259"} 15% artd{"\u0131"}</span>
+              <span className="text-blue-400 font-medium">{t("trend")}</span>
+              <span className="text-muted-foreground">{t("trendText")}</span>
             </div>
           </div>
         </div>
@@ -599,7 +601,7 @@ export function DealsAnalytics({ deals, pipelineValue, wonValue, lostCount, wonC
         <div className="bg-card rounded-xl border p-5">
           <div className="flex items-center gap-2 mb-4">
             <Target className="w-4 h-4 text-amber-400" />
-            <h3 className="text-sm font-semibold">N{"\u00F6"}vb{"\u0259"}ti Add{"\u0131"}mlar</h3>
+            <h3 className="text-sm font-semibold">{t("nextSteps")}</h3>
           </div>
           <div className="space-y-2.5">
             {MOCK_NEXT_STEPS.map((step, i) => (
@@ -615,7 +617,7 @@ export function DealsAnalytics({ deals, pipelineValue, wonValue, lostCount, wonC
                   </div>
                 </div>
                 <span className={cn("px-2 py-0.5 rounded-full text-[10px] font-medium flex-shrink-0", PRIORITY_COLORS[step.priority])}>
-                  {step.priority}
+                  {t(step.priority as any)}
                 </span>
               </div>
             ))}
@@ -626,7 +628,7 @@ export function DealsAnalytics({ deals, pipelineValue, wonValue, lostCount, wonC
         <div className="bg-card rounded-xl border p-5">
           <div className="flex items-center gap-2 mb-4">
             <Package className="w-4 h-4 text-cyan-400" />
-            <h3 className="text-sm font-semibold">Next Best Offers</h3>
+            <h3 className="text-sm font-semibold">{t("nextBestOffers")}</h3>
           </div>
           <div className="space-y-3">
             {MOCK_NBO.map((offer, i) => (
@@ -652,7 +654,7 @@ export function DealsAnalytics({ deals, pipelineValue, wonValue, lostCount, wonC
                 <div className="flex-1 min-w-0">
                   <div className="text-xs font-medium truncate">{offer.name}</div>
                   <div className="text-[10px] text-muted-foreground">
-                    Uy{"\u011F"}unluq: {offer.match >= 85 ? "\u00C7ox y\u00FCks\u0259k" : offer.match >= 70 ? "Y\u00FCks\u0259k" : "Orta"}
+                    {t("matchLabel")} {offer.match >= 85 ? t("matchVeryHigh") : offer.match >= 70 ? t("matchHigh") : t("matchMedium")}
                   </div>
                 </div>
                 <Zap className={cn(
@@ -665,8 +667,8 @@ export function DealsAnalytics({ deals, pipelineValue, wonValue, lostCount, wonC
           <div className="mt-4 p-3 rounded-lg bg-cyan-500/10 border border-cyan-500/20">
             <div className="flex items-center gap-2 text-xs">
               <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
-              <span className="text-cyan-400 font-medium">AI t{"\u0259"}klif:</span>
-              <span className="text-muted-foreground">4 uy{"\u011F"}un m{"\u0259"}hsul tap{"\u0131"}ld{"\u0131"}</span>
+              <span className="text-cyan-400 font-medium">{t("aiSuggestion")}</span>
+              <span className="text-muted-foreground">{t("aiSuggestionText")}</span>
             </div>
           </div>
         </div>
