@@ -63,6 +63,7 @@ interface SegmentFormProps {
 export function SegmentForm({ open, onOpenChange, onSaved, initialData, orgId }: SegmentFormProps) {
   const t = useTranslations("segments")
   const tc = useTranslations("common")
+  const tb = useTranslations("behavioralFilters")
   const isEdit = !!initialData?.id
 
   const sourceOptions = [
@@ -481,62 +482,43 @@ export function SegmentForm({ open, onOpenChange, onSaved, initialData, orgId }:
 
             {/* Behavioral Conditions */}
             <div className="border rounded-lg p-3 bg-amber-50/50 dark:bg-amber-950/10">
-              <h4 className="text-xs font-semibold text-amber-700 dark:text-amber-400 mb-3 uppercase">Behavioral Filters</h4>
+              <h4 className="text-xs font-semibold text-amber-700 dark:text-amber-400 mb-3 uppercase">{tb("title")}</h4>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label className="text-xs text-muted-foreground">Engagement Score Min</Label>
-                  <Input
-                    type="number" min={0} max={100}
-                    value={conditions.engagementScoreMin}
-                    onChange={e => setConditions({ ...conditions, engagementScoreMin: e.target.value })}
-                    placeholder="0"
-                  />
+                  <Label className="text-xs text-muted-foreground">{tb("engagementScoreMin")}</Label>
+                  <Input type="number" min={0} max={100} value={conditions.engagementScoreMin} onChange={e => setConditions({ ...conditions, engagementScoreMin: e.target.value })} placeholder="0" />
                 </div>
                 <div>
-                  <Label className="text-xs text-muted-foreground">Engagement Score Max</Label>
-                  <Input
-                    type="number" min={0} max={100}
-                    value={conditions.engagementScoreMax}
-                    onChange={e => setConditions({ ...conditions, engagementScoreMax: e.target.value })}
-                    placeholder="100"
-                  />
+                  <Label className="text-xs text-muted-foreground">{tb("engagementScoreMax")}</Label>
+                  <Input type="number" min={0} max={100} value={conditions.engagementScoreMax} onChange={e => setConditions({ ...conditions, engagementScoreMax: e.target.value })} placeholder="100" />
                 </div>
                 <div>
-                  <Label className="text-xs text-muted-foreground">Engagement Tier</Label>
+                  <Label className="text-xs text-muted-foreground">{tb("engagementTier")}</Label>
                   <Select value={conditions.engagementTier} onChange={e => setConditions({ ...conditions, engagementTier: e.target.value })}>
-                    <option value="">Any</option>
-                    <option value="hot">Hot (50+)</option>
-                    <option value="warm">Warm (20-49)</option>
-                    <option value="cold">Cold (&lt;20)</option>
+                    <option value="">{tb("any")}</option>
+                    <option value="hot">{tb("hot")}</option>
+                    <option value="warm">{tb("warm")}</option>
+                    <option value="cold">{tb("cold")}</option>
                   </Select>
                 </div>
                 <div>
-                  <Label className="text-xs text-muted-foreground">Inactive for (days)</Label>
-                  <Input
-                    type="number" min={1}
-                    value={conditions.inactiveDays}
-                    onChange={e => setConditions({ ...conditions, inactiveDays: e.target.value })}
-                    placeholder="e.g. 30"
-                  />
+                  <Label className="text-xs text-muted-foreground">{tb("inactiveDays")}</Label>
+                  <Input type="number" min={1} value={conditions.inactiveDays} onChange={e => setConditions({ ...conditions, inactiveDays: e.target.value })} placeholder="30" />
                 </div>
                 <div>
-                  <Label className="text-xs text-muted-foreground">Last Activity After</Label>
-                  <Input
-                    type="date"
-                    value={conditions.lastActivityAfter}
-                    onChange={e => setConditions({ ...conditions, lastActivityAfter: e.target.value })}
-                  />
+                  <Label className="text-xs text-muted-foreground">{tb("lastActivityAfter")}</Label>
+                  <Input type="date" value={conditions.lastActivityAfter} onChange={e => setConditions({ ...conditions, lastActivityAfter: e.target.value })} />
                 </div>
                 <div>
-                  <Label className="text-xs text-muted-foreground">Has Event Type</Label>
+                  <Label className="text-xs text-muted-foreground">{tb("hasEventType")}</Label>
                   <Select value={conditions.hasEventType} onChange={e => setConditions({ ...conditions, hasEventType: e.target.value })}>
-                    <option value="">Any</option>
-                    <option value="email_opened">Email Opened</option>
-                    <option value="email_clicked">Email Clicked</option>
-                    <option value="deal_created">Deal Created</option>
-                    <option value="ticket_created">Ticket Created</option>
-                    <option value="meeting_scheduled">Meeting Scheduled</option>
-                    <option value="call_logged">Call Logged</option>
+                    <option value="">{tb("any")}</option>
+                    <option value="email_opened">{tb("emailOpened")}</option>
+                    <option value="email_clicked">{tb("emailClicked")}</option>
+                    <option value="deal_created">{tb("dealCreated")}</option>
+                    <option value="ticket_created">{tb("ticketCreated")}</option>
+                    <option value="meeting_scheduled">{tb("meetingScheduled")}</option>
+                    <option value="call_logged">{tb("callLogged")}</option>
                   </Select>
                 </div>
               </div>

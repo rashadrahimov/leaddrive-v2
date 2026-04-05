@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useSession } from "next-auth/react"
+import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -42,6 +43,7 @@ const CATEGORIES = ["general", "billing", "technical", "onboarding", "sales"]
 
 export default function MacrosSettingsPage() {
   const { data: session } = useSession()
+  const t = useTranslations("macrosPage")
   const orgId = session?.user?.organizationId
   const headers = orgId ? { "x-organization-id": String(orgId) } : {}
 
@@ -130,12 +132,12 @@ export default function MacrosSettingsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Ticket Macros</h1>
-          <p className="text-muted-foreground">Predefined actions for quick ticket responses</p>
-          <PageDescription text="Create macros to automate common ticket actions like setting status, adding replies, and assigning tags. Use keyboard shortcuts (Alt+1-9) to apply them instantly." />
+          <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
+          <p className="text-muted-foreground">{t("subtitle")}</p>
+          <PageDescription text={t("description")} />
         </div>
         <Button onClick={() => { resetForm(); setShowForm(true) }}>
-          <Plus className="h-4 w-4 mr-1" /> New Macro
+          <Plus className="h-4 w-4 mr-1" /> {t("newMacro")}
         </Button>
       </div>
 
@@ -146,7 +148,7 @@ export default function MacrosSettingsPage() {
       ) : macros.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground">
           <Zap className="h-12 w-12 mx-auto mb-3 opacity-30" />
-          <p>No macros yet. Create one to speed up ticket handling.</p>
+          <p>{t("noMacros")}</p>
         </div>
       ) : (
         <div className="border rounded-lg overflow-hidden">
@@ -198,7 +200,7 @@ export default function MacrosSettingsPage() {
       {/* Macro Form Dialog */}
       <Dialog open={showForm} onOpenChange={v => { setShowForm(v); if (!v) resetForm() }}>
         <DialogHeader>
-          <DialogTitle>{editId ? "Edit Macro" : "New Macro"}</DialogTitle>
+          <DialogTitle>{editId ? t("editMacro") : t("newMacro")}</DialogTitle>
         </DialogHeader>
         <DialogContent className="max-h-[70vh] overflow-y-auto">
           <div className="grid gap-4">
@@ -266,7 +268,7 @@ export default function MacrosSettingsPage() {
         <DialogFooter>
           <Button variant="outline" onClick={() => { setShowForm(false); resetForm() }}>Cancel</Button>
           <Button onClick={handleSave} disabled={!name.trim()}>
-            {editId ? "Save Changes" : "Create Macro"}
+            {editId ? t("saveChanges") : t("createMacro")}
           </Button>
         </DialogFooter>
       </Dialog>

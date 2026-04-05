@@ -38,6 +38,7 @@ export default function ContactsPage() {
   const { data: session } = useSession()
   const t = useTranslations("contacts")
   const tc = useTranslations("common")
+  const te = useTranslations("engagement")
   const [contacts, setContacts] = useState<Contact[]>([])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
@@ -221,15 +222,15 @@ export default function ContactsPage() {
         const cold = contacts.filter(c => (c.engagementScore ?? 0) < 20).length
         return (
           <div className="flex items-center gap-4 px-4 py-2.5 bg-muted/30 rounded-lg border text-sm">
-            <span className="text-muted-foreground font-medium">Engagement:</span>
+            <span className="text-muted-foreground font-medium">{te("title")}:</span>
             <span className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-red-500" /> Hot ({hot})
+              <span className="w-2.5 h-2.5 rounded-full bg-red-500" /> {te("hot")} ({hot})
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-amber-500" /> Warm ({warm})
+              <span className="w-2.5 h-2.5 rounded-full bg-amber-500" /> {te("warm")} ({warm})
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-blue-400" /> Cold ({cold})
+              <span className="w-2.5 h-2.5 rounded-full bg-blue-400" /> {te("cold")} ({cold})
             </span>
           </div>
         )

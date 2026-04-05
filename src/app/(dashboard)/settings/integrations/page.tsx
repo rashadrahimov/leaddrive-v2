@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useSession } from "next-auth/react"
+import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -37,6 +38,7 @@ const WEBHOOK_EVENTS = [
 
 export default function IntegrationsPage() {
   const { data: session } = useSession()
+  const t = useTranslations("integrationsPage")
   const orgId = session?.user?.organizationId
 
   // Webhooks
@@ -129,7 +131,7 @@ export default function IntegrationsPage() {
       body: JSON.stringify({ action: "test", webhookUrl }),
     })
     const json = await res.json()
-    setSlackTestResult(json.success ? "Test sent!" : "Failed")
+    setSlackTestResult(json.success ? t("testSent") : t("testFailed"))
     setTimeout(() => setSlackTestResult(null), 3000)
   }
 
@@ -141,9 +143,9 @@ export default function IntegrationsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Integrations</h1>
-        <p className="text-muted-foreground">Connect external services to your CRM</p>
-        <PageDescription text="Manage webhooks for Zapier/custom integrations, Google Calendar sync, and Slack notifications." />
+        <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
+        <p className="text-muted-foreground">{t("subtitle")}</p>
+        <PageDescription text={t("description")} />
       </div>
 
       {/* Integration cards grid */}
@@ -151,29 +153,29 @@ export default function IntegrationsPage() {
         <Card>
           <CardContent className="pt-6 text-center">
             <Webhook className="h-8 w-8 mx-auto mb-2 text-orange-500" />
-            <h3 className="font-semibold">Webhooks</h3>
+            <h3 className="font-semibold">{t("webhooks")}</h3>
             <p className="text-sm text-muted-foreground">{webhooks.filter(w => w.isActive).length} active</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6 text-center">
             <Calendar className="h-8 w-8 mx-auto mb-2 text-blue-500" />
-            <h3 className="font-semibold">Google Calendar</h3>
-            <p className="text-sm text-muted-foreground">Via Google OAuth</p>
+            <h3 className="font-semibold">{t("googleCalendar")}</h3>
+            <p className="text-sm text-muted-foreground">{t("viaGoogleOAuth")}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6 text-center">
             <MessageSquare className="h-8 w-8 mx-auto mb-2 text-purple-500" />
-            <h3 className="font-semibold">Slack</h3>
+            <h3 className="font-semibold">{t("slack")}</h3>
             <p className="text-sm text-muted-foreground">{slackConfigs.length} configured</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6 text-center">
             <Zap className="h-8 w-8 mx-auto mb-2 text-yellow-500" />
-            <h3 className="font-semibold">Zapier</h3>
-            <p className="text-sm text-muted-foreground">Use webhook URLs</p>
+            <h3 className="font-semibold">{t("zapier")}</h3>
+            <p className="text-sm text-muted-foreground">{t("useWebhookUrls")}</p>
           </CardContent>
         </Card>
       </div>
@@ -185,12 +187,12 @@ export default function IntegrationsPage() {
             <Webhook className="h-5 w-5 text-orange-500" /> Webhooks
           </CardTitle>
           <Button size="sm" onClick={() => setShowWebhookForm(true)}>
-            <Plus className="h-4 w-4 mr-1" /> Add Webhook
+            <Plus className="h-4 w-4 mr-1" /> {t("addWebhook")}
           </Button>
         </CardHeader>
         <CardContent>
           {webhooks.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-4">No webhooks configured. Add one to start receiving events.</p>
+            <p className="text-sm text-muted-foreground text-center py-4">{t("noWebhooks")}</p>
           ) : (
             <div className="space-y-3">
               {webhooks.map(wh => (
@@ -227,12 +229,12 @@ export default function IntegrationsPage() {
             <MessageSquare className="h-5 w-5 text-purple-500" /> Slack
           </CardTitle>
           <Button size="sm" onClick={() => setShowSlackForm(true)}>
-            <Plus className="h-4 w-4 mr-1" /> Add Slack Webhook
+            <Plus className="h-4 w-4 mr-1" /> {t("addSlackWebhook")}
           </Button>
         </CardHeader>
         <CardContent>
           {slackConfigs.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-4">No Slack integrations. Add an incoming webhook URL to start.</p>
+            <p className="text-sm text-muted-foreground text-center py-4">{t("noSlack")}</p>
           ) : (
             <div className="space-y-3">
               {slackConfigs.map(cfg => (
@@ -243,7 +245,7 @@ export default function IntegrationsPage() {
                   </div>
                   <div className="flex items-center gap-2">
                     {slackTestResult && <span className="text-xs text-green-600">{slackTestResult}</span>}
-                    <Button size="sm" variant="outline" onClick={() => testSlack(cfg.webhookUrl)}>Test</Button>
+                    <Button size="sm" variant="outline" onClick={() => testSlack(cfg.webhookUrl)}>{t("test")}</Button>
                     <Button size="icon" variant="ghost" onClick={() => deleteSlack(cfg.id)} className="h-7 w-7 text-red-500">
                       <Trash2 className="h-3.5 w-3.5" />
                     </Button>
@@ -258,16 +260,16 @@ export default function IntegrationsPage() {
       {/* Webhook Form Dialog */}
       <Dialog open={showWebhookForm} onOpenChange={setShowWebhookForm}>
         <DialogHeader>
-          <DialogTitle>Add Webhook</DialogTitle>
+          <DialogTitle>{t("addWebhook")}</DialogTitle>
         </DialogHeader>
         <DialogContent>
           <div className="grid gap-4">
             <div>
-              <Label>Webhook URL</Label>
+              <Label>{t("webhookUrl")}</Label>
               <Input placeholder="https://hooks.zapier.com/..." value={webhookUrl} onChange={e => setWebhookUrl(e.target.value)} />
             </div>
             <div>
-              <Label>Events</Label>
+              <Label>{t("events")}</Label>
               <div className="grid grid-cols-2 gap-2 mt-2">
                 {WEBHOOK_EVENTS.map(ev => (
                   <label key={ev} className="flex items-center gap-2 text-sm">
@@ -288,18 +290,18 @@ export default function IntegrationsPage() {
           </div>
         </DialogContent>
         <DialogFooter>
-          <Button variant="outline" onClick={() => setShowWebhookForm(false)}>Cancel</Button>
-          <Button onClick={createWebhook} disabled={!webhookUrl || webhookEvents.length === 0}>Create Webhook</Button>
+          <Button variant="outline" onClick={() => setShowWebhookForm(false)}>{t("cancel")}</Button>
+          <Button onClick={createWebhook} disabled={!webhookUrl || webhookEvents.length === 0}>{t("createWebhook")}</Button>
         </DialogFooter>
       </Dialog>
 
       {/* Secret Display Dialog */}
       <Dialog open={showSecret} onOpenChange={setShowSecret}>
         <DialogHeader>
-          <DialogTitle>Webhook Secret</DialogTitle>
+          <DialogTitle>{t("webhookSecret")}</DialogTitle>
         </DialogHeader>
         <DialogContent>
-          <p className="text-sm text-muted-foreground mb-3">Save this secret — it won't be shown again. Use it to verify webhook signatures.</p>
+          <p className="text-sm text-muted-foreground mb-3">{t("webhookSecretHint")}</p>
           <div className="flex items-center gap-2 p-3 bg-muted rounded-lg">
             <code className="text-xs font-mono flex-1 break-all">{newSecret}</code>
             <Button size="icon" variant="ghost" onClick={() => { navigator.clipboard.writeText(newSecret) }} className="h-7 w-7">
@@ -308,31 +310,31 @@ export default function IntegrationsPage() {
           </div>
         </DialogContent>
         <DialogFooter>
-          <Button onClick={() => setShowSecret(false)}>Done</Button>
+          <Button onClick={() => setShowSecret(false)}>{t("done")}</Button>
         </DialogFooter>
       </Dialog>
 
       {/* Slack Form Dialog */}
       <Dialog open={showSlackForm} onOpenChange={setShowSlackForm}>
         <DialogHeader>
-          <DialogTitle>Add Slack Integration</DialogTitle>
+          <DialogTitle>{t("addSlackWebhook")}</DialogTitle>
         </DialogHeader>
         <DialogContent>
           <div className="grid gap-4">
             <div>
-              <Label>Name</Label>
+              <Label>{t("slackName")}</Label>
               <Input placeholder="Sales Notifications" value={slackName} onChange={e => setSlackName(e.target.value)} />
             </div>
             <div>
-              <Label>Slack Incoming Webhook URL</Label>
+              <Label>{t("slackWebhookUrl")}</Label>
               <Input placeholder="https://hooks.slack.com/services/..." value={slackWebhookUrl} onChange={e => setSlackWebhookUrl(e.target.value)} />
-              <p className="text-xs text-muted-foreground mt-1">Create an incoming webhook in your Slack workspace settings.</p>
+              <p className="text-xs text-muted-foreground mt-1">{t("slackHint")}</p>
             </div>
           </div>
         </DialogContent>
         <DialogFooter>
-          <Button variant="outline" onClick={() => setShowSlackForm(false)}>Cancel</Button>
-          <Button onClick={createSlack} disabled={!slackName || !slackWebhookUrl}>Add Integration</Button>
+          <Button variant="outline" onClick={() => setShowSlackForm(false)}>{t("cancel")}</Button>
+          <Button onClick={createSlack} disabled={!slackName || !slackWebhookUrl}>{t("addIntegration")}</Button>
         </DialogFooter>
       </Dialog>
     </div>
