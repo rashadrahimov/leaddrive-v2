@@ -139,7 +139,7 @@ export default function PricingPage() {
                   ? "bg-white/20 text-white"
                   : "bg-green-50 text-green-600"
               )}>
-                -20%
+                -10%
               </span>
             </button>
           </div>

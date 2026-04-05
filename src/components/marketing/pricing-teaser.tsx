@@ -51,7 +51,7 @@ export function PricingTeaser() {
             >
               İllik
               <span className="text-[10px] font-bold bg-green-50 text-green-600 px-1.5 py-0.5 rounded-full">
-                -20%
+                -10%
               </span>
             </button>
           </div>
