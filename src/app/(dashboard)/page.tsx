@@ -190,10 +190,14 @@ export default function DashboardPage() {
       {/* ═══ Risks Banner ═══ */}
       {risks && <RisksBanner risks={risks} />}
 
-      {/* ═══ All widgets — 3 per row, auto-fill remaining space ═══ */}
+      {/* ═══ All widgets — flex wrap, max 3 per row, fill remaining space ═══ */}
       {allWidgets.length > 0 && (
-        <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 350px), 1fr))' }}>
-          {allWidgets}
+        <div className="flex flex-wrap gap-4">
+          {allWidgets.map((widget, i) => (
+            <div key={i} className="min-w-0" style={{ flex: '1 1 calc(33.333% - 1rem)', maxWidth: '100%' }}>
+              {widget}
+            </div>
+          ))}
         </div>
       )}
     </div>
