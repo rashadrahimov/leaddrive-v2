@@ -3,6 +3,7 @@
 import { Globe } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useEffect, useRef, useState } from "react"
+import { createPortal } from "react-dom"
 
 const LANGUAGES = [
   { code: "ru", label: "Русский" },
@@ -23,7 +24,9 @@ function getLocaleFromCookie(): string {
 export function LanguageSwitcher() {
   const [open, setOpen] = useState(false)
   const [current, setCurrent] = useState("ru")
+  const [pos, setPos] = useState({ top: 0, right: 0 })
   const ref = useRef<HTMLDivElement>(null)
+  const dropdownRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     setCurrent(getLocaleFromCookie())
@@ -31,13 +34,27 @@ export function LanguageSwitcher() {
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
+      if (
+        ref.current && !ref.current.contains(e.target as Node) &&
+        dropdownRef.current && !dropdownRef.current.contains(e.target as Node)
+      ) {
         setOpen(false)
       }
     }
     document.addEventListener("mousedown", handleClick)
     return () => document.removeEventListener("mousedown", handleClick)
   }, [])
+
+  function toggleOpen() {
+    if (!open && ref.current) {
+      const rect = ref.current.getBoundingClientRect()
+      setPos({
+        top: rect.bottom + 6,
+        right: window.innerWidth - rect.right,
+      })
+    }
+    setOpen(!open)
+  }
 
   function switchLocale(locale: string) {
     document.cookie = `NEXT_LOCALE=${locale};path=/;max-age=${365 * 24 * 60 * 60}`
@@ -51,19 +68,17 @@ export function LanguageSwitcher() {
       <Button
         variant="ghost"
         size="icon"
-        onClick={() => setOpen(!open)}
+        onClick={toggleOpen}
         title={currentLang.label}
       >
         <Globe className="h-4 w-4" />
       </Button>
 
-      {open && (
+      {open && typeof document !== "undefined" && createPortal(
         <div
-          className="fixed z-[9999] min-w-[140px] rounded-md border bg-popover shadow-lg"
-          style={{
-            top: ref.current ? ref.current.getBoundingClientRect().bottom + 4 : 0,
-            right: ref.current ? window.innerWidth - ref.current.getBoundingClientRect().right : 0,
-          }}
+          ref={dropdownRef}
+          className="fixed z-[9999] min-w-[140px] rounded-md border bg-popover shadow-lg animate-in fade-in slide-in-from-top-1 duration-150"
+          style={{ top: pos.top, right: pos.right }}
         >
           {LANGUAGES.map((lang) => (
             <button
@@ -76,7 +91,8 @@ export function LanguageSwitcher() {
               {lang.label}
             </button>
           ))}
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   )
