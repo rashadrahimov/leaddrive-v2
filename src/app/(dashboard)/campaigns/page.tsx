@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
 import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
@@ -51,6 +52,7 @@ const typeIcons: Record<string, string> = {
 }
 
 export default function CampaignsPage() {
+  const router = useRouter()
   const { data: session } = useSession()
   const t = useTranslations("campaigns")
   const tc = useTranslations("common")
@@ -222,7 +224,7 @@ export default function CampaignsPage() {
                 <div
                   key={campaign.id}
                   className="border rounded-lg p-4 hover:shadow-sm transition-shadow cursor-pointer bg-card"
-                  onClick={() => { setEditData(campaign); setShowForm(true) }}
+                  onClick={() => router.push(`/campaigns/${campaign.id}`)}
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1 min-w-0">
