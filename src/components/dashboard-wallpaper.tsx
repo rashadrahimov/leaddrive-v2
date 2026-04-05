@@ -6,7 +6,9 @@ import { VideoBackground } from "@/components/video-background"
 
 /**
  * Renders wallpaper ONLY on dashboard page.
- * Sets data-wallpaper on mount, removes on unmount (when navigating away).
+ * Sets data-wallpaper on mount.
+ * On unmount (navigating away): removes data-wallpaper but forces dark mode
+ * so the transition is smooth (dark with video → dark without video).
  */
 export function DashboardWallpaper() {
   const { wallpaperDef, isWallpaperActive } = useWallpaper()
@@ -14,9 +16,11 @@ export function DashboardWallpaper() {
   useEffect(() => {
     if (isWallpaperActive && wallpaperDef) {
       document.documentElement.setAttribute("data-wallpaper", wallpaperDef.id)
+      document.documentElement.classList.add("dark")
     }
     return () => {
       document.documentElement.removeAttribute("data-wallpaper")
+      // Keep dark mode when leaving dashboard — smooth transition
     }
   }, [isWallpaperActive, wallpaperDef])
 
