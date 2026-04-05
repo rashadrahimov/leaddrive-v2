@@ -111,7 +111,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       paymentAmount,
       remainingBalance: remaining,
       currency: currency || "AZN",
-    })
+    }, orgId)
   }
 
   return NextResponse.json({ data: payment }, { status: 201 })

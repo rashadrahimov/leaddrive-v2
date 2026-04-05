@@ -79,7 +79,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     amount: order.amount,
     currency: order.currency,
     purpose: order.purpose,
-  })
+  }, orgId)
 
   return NextResponse.json({ data: result })
 }

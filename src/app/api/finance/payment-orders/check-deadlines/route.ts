@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getOrgId } from "@/lib/api-auth"
 import { prisma } from "@/lib/prisma"
-import { notifyOverdueBills, notifyOverdueInvoices, notifyUpcomingDeadlines } from "@/lib/finance/telegram-notify"
+import { notifyOverdueBills, notifyOverdueInvoices, notifyUpcomingDeadlines, getAdvanceDays } from "@/lib/finance/telegram-notify"
 
 // POST — check and update overdue bills and invoices + send Telegram notifications
 export async function POST(req: NextRequest) {
@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
   if (newOverdueBills.length > 0) {
     await notifyOverdueBills(newOverdueBills.map((b) => ({
       billNumber: b.billNumber, vendorName: b.vendorName, amount: b.balanceDue, dueDate: b.dueDate!,
-    })))
+    })), orgId)
   }
   if (newOverdueInvoices.length > 0) {
     await notifyOverdueInvoices(newOverdueInvoices.map((inv) => ({
@@ -55,11 +55,12 @@ export async function POST(req: NextRequest) {
       companyName: inv.company?.name || inv.recipientName || "Unknown",
       amount: inv.balanceDue || 0,
       dueDate: inv.dueDate!,
-    })))
+    })), orgId)
   }
 
-  // Check upcoming deadlines (7 days) and notify
-  const deadline = new Date(now.getTime() + 7 * 86400000)
+  // Check upcoming deadlines (from settings) and notify
+  const advanceDays = await getAdvanceDays(orgId)
+  const deadline = new Date(now.getTime() + advanceDays * 86400000)
   const [upcomingBills, upcomingInvoices] = await Promise.all([
     prisma.bill.findMany({
       where: { organizationId: orgId, dueDate: { gte: now, lte: deadline }, status: { notIn: ["paid", "cancelled", "overdue"] }, balanceDue: { gt: 0 } },
@@ -82,7 +83,8 @@ export async function POST(req: NextRequest) {
         amount: inv.balanceDue || 0,
         dueDate: inv.dueDate!,
       })),
-      7,
+      advanceDays,
+      orgId,
     )
   }
 
