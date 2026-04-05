@@ -11,7 +11,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 export default function RegisterPage() {
   const router = useRouter()
   const t = useTranslations("auth")
-  const [form, setForm] = useState({ name: "", company: "", email: "", password: "" })
+  const [form, setForm] = useState({ name: "", companyName: "", email: "", password: "" })
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
 
@@ -61,7 +61,7 @@ export default function RegisterPage() {
           </div>
           <div className="space-y-2">
             <label htmlFor="company" className="text-sm font-medium">{t("companyName")}</label>
-            <Input id="company" placeholder="Acme Inc." value={form.company} onChange={(e) => update("company", e.target.value)} required />
+            <Input id="company" placeholder="Acme Inc." value={form.companyName} onChange={(e) => update("companyName", e.target.value)} required />
           </div>
           <div className="space-y-2">
             <label htmlFor="email" className="text-sm font-medium">{t("email")}</label>

@@ -10,14 +10,14 @@ export async function POST(req: NextRequest) {
     // Validation
     if (!email || !password || !name || !companyName) {
       return NextResponse.json(
-        { error: "All fields are required: email, password, name, companyName" },
+        { error: "Все поля обязательны: email, пароль, имя, название компании" },
         { status: 400 }
       )
     }
 
     if (password.length < 8) {
       return NextResponse.json(
-        { error: "Password must be at least 8 characters" },
+        { error: "Пароль должен быть минимум 8 символов" },
         { status: 400 }
       )
     }
@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
     const existingUser = await prisma.user.findFirst({ where: { email } })
     if (existingUser) {
       return NextResponse.json(
-        { error: "Email already registered" },
+        { error: "Этот email уже зарегистрирован" },
         { status: 409 }
       )
     }
