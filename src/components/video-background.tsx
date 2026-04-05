@@ -44,8 +44,8 @@ export function VideoBackground() {
       ) : (
         <div className="h-full w-full wallpaper-abstract-gradient" />
       )}
-      {/* Light scrim for text readability */}
-      <div className="absolute inset-0 bg-black/10" />
+      {/* Minimal scrim — keep video bright */}
+      <div className="absolute inset-0 bg-black/5" />
     </div>
   )
 }

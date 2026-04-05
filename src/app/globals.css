@@ -329,11 +329,11 @@ html[data-wallpaper] main {
 }
 
 html[data-wallpaper] .bg-card {
-  background-color: hsl(210 20% 12% / 0.78) !important;
+  background-color: hsl(210 20% 15% / 0.50) !important;
 }
 
 html[data-wallpaper] .bg-popover {
-  background-color: hsl(215 25% 10% / 0.75) !important;
+  background-color: hsl(215 25% 10% / 0.60) !important;
 }
 
 html[data-wallpaper] .bg-muted,
@@ -351,7 +351,7 @@ html[data-wallpaper] .bg-background {
 }
 
 html[data-wallpaper] .bg-sidebar-bg {
-  background-color: hsl(215 40% 8% / 0.80) !important;
+  background-color: hsl(215 40% 8% / 0.55) !important;
 }
 
 html[data-wallpaper] .border-border\/60,
