@@ -17,12 +17,18 @@ export default function LoginPage() {
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
   const [authMethods, setAuthMethods] = useState<{ google: boolean; microsoft: boolean }>({ google: false, microsoft: false })
+  const [isWebView, setIsWebView] = useState(false)
 
   useEffect(() => {
     fetch("/api/v1/settings/auth-methods")
       .then(r => r.json())
       .then(j => { if (j.success) setAuthMethods(j.data) })
       .catch(() => {})
+    // Detect embedded WebView browsers (Messenger, Instagram, etc.)
+    const ua = navigator.userAgent || ""
+    const webview = /FBAN|FBAV|Instagram|Line\/|Twitter|Snapchat|BytedanceWebview|MicroMessenger|WeChat/i.test(ua)
+      || (/wv\)/.test(ua) && /Android/.test(ua))
+    setIsWebView(webview)
   }, [])
 
   async function handleSubmit(e: React.FormEvent) {
@@ -104,7 +110,7 @@ export default function LoginPage() {
               </div>
 
               <div className="grid gap-2 w-full">
-                {authMethods.google && (
+                {authMethods.google && !isWebView && (
                   <Button
                     type="button"
                     variant="outline"
@@ -119,6 +125,24 @@ export default function LoginPage() {
                     </svg>
                     {t("signInWithGoogle") || "Войти через Google"}
                   </Button>
+                )}
+                {authMethods.google && isWebView && (
+                  <div className="rounded-lg border border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-800 p-3 text-center space-y-2">
+                    <p className="text-xs text-amber-800 dark:text-amber-300 font-medium">
+                      Google не поддерживает вход из встроенного браузера
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        // Try to open in external browser
+                        const url = window.location.href
+                        window.open(url, "_system") || window.open(url, "_blank")
+                      }}
+                      className="text-xs text-primary underline hover:no-underline"
+                    >
+                      Открыть в браузере (Safari / Chrome)
+                    </button>
+                  </div>
                 )}
                 {authMethods.microsoft && (
                   <Button
