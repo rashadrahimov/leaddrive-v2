@@ -190,10 +190,22 @@ export default function DashboardPage() {
       {/* ═══ Risks Banner ═══ */}
       {risks && <RisksBanner risks={risks} />}
 
-      {/* ═══ All widgets in 3-column flow ═══ */}
-      {allWidgets.length > 0 && (
-        <div className="grid lg:grid-cols-3 md:grid-cols-2 gap-4">{allWidgets}</div>
-      )}
+      {/* ═══ All widgets in 3-column flow — last row fills remaining space ═══ */}
+      {allWidgets.length > 0 && (() => {
+        const remainder = allWidgets.length % 3
+        const fullRows = remainder === 0 ? allWidgets : allWidgets.slice(0, -remainder)
+        const lastRow = remainder === 0 ? [] : allWidgets.slice(-remainder)
+        return (
+          <>
+            {fullRows.length > 0 && (
+              <div className="grid lg:grid-cols-3 md:grid-cols-2 gap-4">{fullRows}</div>
+            )}
+            {lastRow.length > 0 && (
+              <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${lastRow.length}, minmax(0, 1fr))` }}>{lastRow}</div>
+            )}
+          </>
+        )
+      })()}
     </div>
   )
 }
