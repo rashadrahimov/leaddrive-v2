@@ -16,6 +16,7 @@ function buildCsp(nonce: string, allowSameOriginFrame = false) {
     `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'`,
     `style-src 'self' 'nonce-${nonce}' 'unsafe-inline'`,
     "img-src 'self' data: blob: https:",
+    "media-src 'self'",
     "font-src 'self' data:",
     `connect-src 'self' ${process.env.NEXTAUTH_URL || "https://app.leaddrivecrm.org"} https://leaddrivecrm.org https://api.anthropic.com`,
     allowSameOriginFrame ? "frame-ancestors 'self'" : "frame-ancestors 'none'",
