@@ -199,27 +199,35 @@ function UserFormDialog({
               <Label htmlFor="phone">Телефон</Label>
               <Input id="phone" value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} />
             </div>
-            <div>
-              <Label htmlFor="skills">Skills (comma-separated)</Label>
-              <Input
-                id="skills"
-                value={form.skills}
-                onChange={e => setForm(f => ({ ...f, skills: e.target.value }))}
-                placeholder="e.g. technical, billing, general"
-              />
-              <p className="text-xs text-muted-foreground mt-1">Used for skill-based ticket routing</p>
-            </div>
-            <div>
-              <Label htmlFor="maxTickets">Max Concurrent Tickets</Label>
-              <Input
-                id="maxTickets"
-                type="number"
-                min={1}
-                max={100}
-                value={form.maxTickets}
-                onChange={e => setForm(f => ({ ...f, maxTickets: parseInt(e.target.value) || 20 }))}
-              />
-            </div>
+            {/* Support agent settings — only shown when editing */}
+            {isEdit && (
+              <>
+                <div className="border-t pt-3 mt-1">
+                  <p className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wider">Настройки поддержки</p>
+                </div>
+                <div>
+                  <Label htmlFor="skills">Навыки (через запятую)</Label>
+                  <Input
+                    id="skills"
+                    value={form.skills}
+                    onChange={e => setForm(f => ({ ...f, skills: e.target.value }))}
+                    placeholder="техподдержка, биллинг, общие"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">Для автоматической маршрутизации тикетов</p>
+                </div>
+                <div>
+                  <Label htmlFor="maxTickets">Макс. тикетов одновременно</Label>
+                  <Input
+                    id="maxTickets"
+                    type="number"
+                    min={1}
+                    max={100}
+                    value={form.maxTickets}
+                    onChange={e => setForm(f => ({ ...f, maxTickets: parseInt(e.target.value) || 20 }))}
+                  />
+                </div>
+              </>
+            )}
             <div className="flex items-center gap-2">
               <input
                 type="checkbox" id="isActive" checked={form.isActive}
@@ -342,7 +350,7 @@ export default function UsersSettingsPage() {
       ),
     },
     {
-      key: "skills", label: "Skills",
+      key: "skills", label: "Навыки",
       render: (item: User) => (
         <div className="flex flex-wrap gap-1">
           {item.skills && item.skills.length > 0 ? (
