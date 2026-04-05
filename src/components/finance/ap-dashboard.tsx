@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label"
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Cell,
 } from "recharts"
-import { Plus, DollarSign, AlertTriangle, Clock, CreditCard, Trash2, ArrowRight } from "lucide-react"
+import { Plus, DollarSign, AlertTriangle, Clock, CreditCard, Trash2, ArrowRight, CheckSquare, XCircle } from "lucide-react"
 import type { Bill } from "@/lib/finance/types"
 
 function fmt(n: number): string {
@@ -38,8 +38,37 @@ export function APDashboard() {
   const createPayment = useCreateBillPayment()
   const [showCreate, setShowCreate] = useState(false)
   const [showPayment, setShowPayment] = useState<string | null>(null)
+  const [selected, setSelected] = useState<Set<string>>(new Set())
 
   if (billsLoading || statsLoading) return <div className="p-8 text-center text-muted-foreground">Загрузка кредиторки...</div>
+
+  const toggleSelect = (id: string) => {
+    setSelected((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id); else next.add(id)
+      return next
+    })
+  }
+  const toggleAll = () => {
+    if (!bills) return
+    if (selected.size === bills.length) setSelected(new Set())
+    else setSelected(new Set(bills.map((b: Bill) => b.id)))
+  }
+  const clearSelection = () => setSelected(new Set())
+
+  const bulkUpdateStatus = (status: string) => {
+    selected.forEach((id) => updateBill.mutate({ id, status }))
+    clearSelection()
+  }
+  const bulkDelete = () => {
+    if (!confirm(`Удалить ${selected.size} счёт(ов)?`)) return
+    selected.forEach((id) => deleteBill.mutate(id))
+    clearSelection()
+  }
+
+  const selectedBills = bills?.filter((b: Bill) => selected.has(b.id)) || []
+  const canBulkPending = selectedBills.some((b: Bill) => b.status === "draft" || b.status === "overdue")
+  const canBulkCancel = selectedBills.some((b: Bill) => !["paid", "cancelled"].includes(b.status))
 
   const AGING_COLORS = ["#22c55e", "#f59e0b", "#f97316", "#ef4444"]
 
@@ -114,6 +143,33 @@ export function APDashboard() {
         </Card>
       </div>
 
+      {/* Bulk Actions Bar */}
+      {selected.size > 0 && (
+        <div className="flex items-center gap-3 p-3 rounded-lg border border-blue-200 bg-blue-50 dark:bg-blue-950/30 dark:border-blue-800">
+          <span className="text-sm font-medium text-blue-800 dark:text-blue-300">
+            Выбрано: {selected.size}
+          </span>
+          <div className="flex gap-2 ml-auto">
+            {canBulkPending && (
+              <Button size="sm" variant="outline" className="h-7 text-xs text-blue-700" onClick={() => bulkUpdateStatus("pending")}>
+                <ArrowRight className="w-3 h-3 mr-1" /> В работу
+              </Button>
+            )}
+            {canBulkCancel && (
+              <Button size="sm" variant="outline" className="h-7 text-xs text-amber-700" onClick={() => bulkUpdateStatus("cancelled")}>
+                <XCircle className="w-3 h-3 mr-1" /> Отменить
+              </Button>
+            )}
+            <Button size="sm" variant="outline" className="h-7 text-xs text-red-700" onClick={bulkDelete}>
+              <Trash2 className="w-3 h-3 mr-1" /> Удалить
+            </Button>
+            <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={clearSelection}>
+              Снять выбор
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* Bills Table */}
       <Card>
         <CardContent className="pt-4">
@@ -122,6 +178,9 @@ export function APDashboard() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b text-left">
+                    <th className="py-2 px-2 w-8">
+                      <input type="checkbox" checked={bills.length > 0 && selected.size === bills.length} onChange={toggleAll} className="rounded border-border" />
+                    </th>
                     <th className="py-2 px-2 font-medium text-muted-foreground">Счёт №</th>
                     <th className="py-2 px-2 font-medium text-muted-foreground">Поставщик</th>
                     <th className="py-2 px-2 font-medium text-muted-foreground">Название</th>
@@ -136,7 +195,10 @@ export function APDashboard() {
                   {bills.map((bill: Bill) => {
                     const isOverdue = bill.status === "overdue" || (bill.dueDate && new Date(bill.dueDate) < new Date() && bill.balanceDue > 0 && !["paid", "cancelled"].includes(bill.status))
                     return (
-                    <tr key={bill.id} className={`border-b last:border-0 hover:bg-muted/50 ${isOverdue ? "bg-red-50/50 dark:bg-red-950/20" : ""}`}>
+                    <tr key={bill.id} className={`border-b last:border-0 hover:bg-muted/50 ${isOverdue ? "bg-red-50/50 dark:bg-red-950/20" : ""} ${selected.has(bill.id) ? "bg-blue-50/50 dark:bg-blue-950/20" : ""}`}>
+                      <td className="py-2 px-2">
+                        <input type="checkbox" checked={selected.has(bill.id)} onChange={() => toggleSelect(bill.id)} className="rounded border-border" />
+                      </td>
                       <td className="py-2 px-2 font-medium">{bill.billNumber}</td>
                       <td className="py-2 px-2">{bill.vendorName}</td>
                       <td className="py-2 px-2">{bill.title}</td>
