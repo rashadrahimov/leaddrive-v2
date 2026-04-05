@@ -94,20 +94,20 @@ export function PricingTeaser() {
                   </div>
                   {plan.maxUsers !== null && perUser !== null && (
                     <p className="text-xs text-[#001E3C]/35 mb-6">
-                      {plan.maxUsers} istifadəçi: {(perUser * plan.maxUsers).toLocaleString()} AZN/ay
+                      {plan.maxUsers} {t("perUser").split(" ")[0]}: {(perUser * plan.maxUsers).toLocaleString()} AZN/{t("monthly").toLowerCase().slice(0, 3)}
                     </p>
                   )}
 
                   <ul className="space-y-2.5 flex-1">
-                    {plan.features.slice(0, 6).map((feature) => (
-                      <li key={feature} className="flex items-start gap-2">
+                    {plan.features.slice(0, 6).map((featureKey) => (
+                      <li key={featureKey} className="flex items-start gap-2">
                         <Check className="h-4 w-4 mt-0.5 shrink-0 text-[#0176D3]" />
-                        <span className="text-sm text-[#001E3C]/60">{feature}</span>
+                        <span className="text-sm text-[#001E3C]/60">{t(`features.${featureKey}`)}</span>
                       </li>
                     ))}
                     {plan.features.length > 6 && (
                       <li className="text-xs text-[#001E3C]/40 pl-6">
-                        + {plan.features.length - 6} daha çox
+                        + {plan.features.length - 6}
                       </li>
                     )}
                   </ul>

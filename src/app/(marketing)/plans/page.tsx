@@ -7,6 +7,7 @@ import { plans, faqs } from "@/lib/marketing-data"
 import { Check, Minus, ArrowRight, ChevronDown } from "lucide-react"
 import { ShimmerButton } from "@/components/ui/shimmer-button"
 import { cn } from "@/lib/utils"
+import { useTranslations } from "next-intl"
 
 /* ─── full feature comparison matrix ─── */
 type FeatureRow = { label: string; starter: boolean; business: boolean; professional: boolean; enterprise: boolean; custom?: boolean }
@@ -94,6 +95,7 @@ const planNames = ["Starter", "Business", "Professional", "Enterprise", "50+"] a
 const planKeys = ["starter", "business", "professional", "enterprise", "custom"] as const
 
 export default function PricingPage() {
+  const tp = useTranslations("marketing.pricing")
   const [openFaq, setOpenFaq] = useState<number | null>(null)
   const [billing, setBilling] = useState<"monthly" | "annual">("monthly")
   const isAnnual = billing === "annual"
@@ -201,10 +203,10 @@ export default function PricingPage() {
                   )}
 
                   <ul className="space-y-2 flex-1">
-                    {plan.features.map((f) => (
-                      <li key={f} className="flex items-start gap-2">
+                    {plan.features.map((fKey) => (
+                      <li key={fKey} className="flex items-start gap-2">
                         <Check className="h-4 w-4 text-[#0176D3] mt-0.5 flex-shrink-0" />
-                        <span className="text-sm text-[#001E3C]/80">{f}</span>
+                        <span className="text-sm text-[#001E3C]/80">{tp(`features.${fKey}`)}</span>
                       </li>
                     ))}
                   </ul>
