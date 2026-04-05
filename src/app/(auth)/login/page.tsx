@@ -26,18 +26,12 @@ export default function LoginPage() {
   const [error, setError] = useState(oauthError ? (OAUTH_ERRORS[oauthError] || OAUTH_ERRORS.Default) : "")
   const [loading, setLoading] = useState(false)
   const [authMethods, setAuthMethods] = useState<{ google: boolean; microsoft: boolean }>({ google: false, microsoft: false })
-  const [isWebView, setIsWebView] = useState(false)
 
   useEffect(() => {
     fetch("/api/v1/settings/auth-methods")
       .then(r => r.json())
       .then(j => { if (j.success) setAuthMethods(j.data) })
       .catch(() => {})
-    // Detect embedded WebView browsers (Messenger, Instagram, etc.)
-    const ua = navigator.userAgent || ""
-    const webview = /FBAN|FBAV|Instagram|Line\/|Twitter|Snapchat|BytedanceWebview|MicroMessenger|WeChat/i.test(ua)
-      || (/wv\)/.test(ua) && /Android/.test(ua))
-    setIsWebView(webview)
   }, [])
 
   async function handleSubmit(e: React.FormEvent) {
@@ -119,7 +113,7 @@ export default function LoginPage() {
               </div>
 
               <div className="grid gap-2 w-full">
-                {authMethods.google && !isWebView && (
+                {authMethods.google && (
                   <Button
                     type="button"
                     variant="outline"
@@ -134,34 +128,6 @@ export default function LoginPage() {
                     </svg>
                     {t("signInWithGoogle") || "Войти через Google"}
                   </Button>
-                )}
-                {authMethods.google && isWebView && (
-                  <div className="rounded-lg border border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-800 p-3 space-y-2">
-                    <p className="text-xs text-amber-800 dark:text-amber-300 font-medium text-center">
-                      Google вход недоступен из встроенного браузера
-                    </p>
-                    <p className="text-[11px] text-amber-700 dark:text-amber-400 text-center">
-                      Откройте в Safari или Chrome:
-                    </p>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        navigator.clipboard.writeText(window.location.origin + "/login")
-                          .then(() => {
-                            const btn = document.getElementById("copy-link-btn")
-                            if (btn) btn.textContent = "Скопировано!"
-                            setTimeout(() => { if (btn) btn.textContent = "Скопировать ссылку" }, 2000)
-                          })
-                      }}
-                      id="copy-link-btn"
-                      className="w-full text-xs font-medium py-2 px-3 rounded-md bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300 hover:bg-amber-200 transition-colors"
-                    >
-                      Скопировать ссылку
-                    </button>
-                    <p className="text-[10px] text-amber-600 dark:text-amber-500 text-center">
-                      или войдите по email/паролю выше
-                    </p>
-                  </div>
                 )}
                 {authMethods.microsoft && (
                   <Button
