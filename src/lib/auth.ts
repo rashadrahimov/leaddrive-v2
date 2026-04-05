@@ -70,13 +70,14 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     MicrosoftEntraId({
       clientId: process.env.MICROSOFT_CLIENT_ID!,
       clientSecret: process.env.MICROSOFT_CLIENT_SECRET!,
-      tenantId: process.env.MICROSOFT_TENANT_ID || "common",
+      issuer: `https://login.microsoftonline.com/${process.env.MICROSOFT_TENANT_ID || "common"}/v2.0`,
       allowDangerousEmailAccountLinking: true,
     }),
   ],
   session: { strategy: "jwt", maxAge: 8 * 60 * 60 }, // 8 hours
   pages: {
     signIn: "/login",
+    error: "/login",
   },
   cookies: {
     sessionToken: {

@@ -2,19 +2,28 @@
 
 import { useState, useEffect } from "react"
 import { signIn } from "next-auth/react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 
+const OAUTH_ERRORS: Record<string, string> = {
+  OAuthAccountNotLinked: "Этот email уже зарегистрирован другим способом. Войдите по email/паролю.",
+  AccessDenied: "Доступ запрещён. Попробуйте войти по email/паролю или откройте сайт в обычном браузере (Safari/Chrome).",
+  OAuthCallbackError: "Ошибка авторизации. Попробуйте ещё раз.",
+  Default: "Ошибка входа. Попробуйте другой способ.",
+}
+
 export default function LoginPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const t = useTranslations("auth")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
-  const [error, setError] = useState("")
+  const oauthError = searchParams.get("error")
+  const [error, setError] = useState(oauthError ? (OAUTH_ERRORS[oauthError] || OAUTH_ERRORS.Default) : "")
   const [loading, setLoading] = useState(false)
   const [authMethods, setAuthMethods] = useState<{ google: boolean; microsoft: boolean }>({ google: false, microsoft: false })
   const [isWebView, setIsWebView] = useState(false)
