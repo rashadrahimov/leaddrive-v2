@@ -109,21 +109,6 @@ export default function DashboardPage() {
 
   const { financial, pipeline, leads, operations, activity, risks, forecast, campaigns, events, weeklyMetrics } = data
 
-  // All widgets in a single flow — 3 per row, no gaps when disabled
-  const allWidgets = [
-    widgets.dealPipeline && <SalesPipeline key="pipeline" pipeline={pipeline} />,
-    widgets.revenueTrend && <RevenueTrend key="revenue" forecast={forecast} />,
-    widgets.leadSources && <LeadSourcesDonut key="sources" leadsBySource={leads.bySource} totalLeads={leads.activeCount || leads.total || 0} />,
-    widgets.recentDeals && <RecentDeals key="deals" deals={pipeline.recentDeals} />,
-    widgets.aiLeadScoring && <AiLeadScoring key="scoring" leads={leads.topScored} />,
-    widgets.activityFeed && <ActivityFeed key="activity" activities={activity.recent} timeAgo={timeAgo} />,
-    widgets.campaignStats && <CampaignStats key="campaigns" campaigns={campaigns} />,
-    widgets.upcomingEvents && <UpcomingEvents key="events" events={events} />,
-    widgets.weeklyMetrics && <WeeklyMetrics key="weekly" metrics={weeklyMetrics} />,
-    widgets.recommendedActions && <RecommendedActions key="actions" />,
-    widgets.churnRisk && <ChurnRiskWidget key="churn" />,
-  ].filter(Boolean)
-
   return (
     <div className="space-y-6">
       {/* ═══ Header ═══ */}
@@ -189,16 +174,32 @@ export default function DashboardPage() {
       {/* ═══ Risks Banner ═══ */}
       {risks && <RisksBanner risks={risks} />}
 
-      {/* ═══ All widgets — flex wrap, max 3 per row, fill remaining space ═══ */}
-      {allWidgets.length > 0 && (
-        <div className="flex flex-wrap gap-4">
-          {allWidgets.map((widget, i) => (
-            <div key={i} className="min-w-0" style={{ flex: '1 1 calc(33.333% - 1rem)', maxWidth: '100%' }}>
-              {widget}
-            </div>
-          ))}
-        </div>
-      )}
+      {/* ═══ Row 2: Pipeline + Revenue Trend + Lead Sources ═══ */}
+      <div className="grid lg:grid-cols-3 gap-4">
+        {widgets.dealPipeline && <SalesPipeline pipeline={pipeline} />}
+        {widgets.revenueTrend && <RevenueTrend forecast={forecast} />}
+        {widgets.leadSources && <LeadSourcesDonut leadsBySource={leads.bySource} totalLeads={leads.activeCount || leads.total || 0} />}
+      </div>
+
+      {/* ═══ Row 3: Recent Deals + Da Vinci Lead Scoring + Activity Feed ═══ */}
+      <div className="grid lg:grid-cols-3 gap-4">
+        {widgets.recentDeals && <RecentDeals deals={pipeline.recentDeals} />}
+        {widgets.aiLeadScoring && <AiLeadScoring leads={leads.topScored} />}
+        {widgets.activityFeed && <ActivityFeed activities={activity.recent} timeAgo={timeAgo} />}
+      </div>
+
+      {/* ═══ Row 4: Campaigns + Events + Weekly Metrics ═══ */}
+      <div className="grid lg:grid-cols-3 gap-4">
+        {widgets.campaignStats && <CampaignStats campaigns={campaigns} />}
+        {widgets.upcomingEvents && <UpcomingEvents events={events} />}
+        {widgets.weeklyMetrics && <WeeklyMetrics metrics={weeklyMetrics} />}
+      </div>
+
+      {/* ═══ Row 5: AI Insights ═══ */}
+      <div className="grid lg:grid-cols-3 gap-4">
+        {widgets.recommendedActions && <RecommendedActions />}
+        {widgets.churnRisk && <ChurnRiskWidget />}
+      </div>
     </div>
   )
 }
