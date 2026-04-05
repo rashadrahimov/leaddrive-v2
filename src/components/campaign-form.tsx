@@ -570,16 +570,49 @@ export function CampaignForm({ open, onOpenChange, onSaved, initialData, orgId, 
                           <span className="text-xs font-semibold">{v.name}</span>
                           <span className="text-xs text-muted-foreground">{v.percentage}%</span>
                         </div>
-                        <Input
-                          placeholder={`${tab("subjectLine")}...`}
-                          value={v.subject}
-                          onChange={e => {
-                            const next = [...variants]
-                            next[i] = { ...next[i], subject: e.target.value }
-                            setVariants(next)
-                          }}
-                          className="text-sm h-8"
-                        />
+                        {/* Subject line — for subject and content test types */}
+                        {(abTestType === "subject" || abTestType === "content") && (
+                          <Input
+                            placeholder={`${tab("subjectLine")}...`}
+                            value={v.subject}
+                            onChange={e => {
+                              const next = [...variants]
+                              next[i] = { ...next[i], subject: e.target.value }
+                              setVariants(next)
+                            }}
+                            className="text-sm h-8"
+                          />
+                        )}
+                        {/* Template selector — for content test type */}
+                        {abTestType === "content" && (
+                          <Select
+                            value={v.templateId}
+                            onChange={e => {
+                              const next = [...variants]
+                              next[i] = { ...next[i], templateId: e.target.value }
+                              setVariants(next)
+                            }}
+                            className="text-sm h-8 mt-1.5"
+                          >
+                            <option value="">— {tab("content")}: {t("selectTemplate") || "Şablon seçin"} —</option>
+                            {templates.map(tmpl => (
+                              <option key={tmpl.id} value={tmpl.id}>{tmpl.name}</option>
+                            ))}
+                          </Select>
+                        )}
+                        {/* Send time — for send_time test type */}
+                        {abTestType === "send_time" && (
+                          <Input
+                            type="datetime-local"
+                            value={(v as any).sendTime || ""}
+                            onChange={e => {
+                              const next = [...variants] as any[]
+                              next[i] = { ...next[i], sendTime: e.target.value }
+                              setVariants(next)
+                            }}
+                            className="text-sm h-8"
+                          />
+                        )}
                       </div>
                     ))}
                     {variants.length < 4 && (
