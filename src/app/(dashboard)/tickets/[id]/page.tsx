@@ -280,6 +280,7 @@ export default function TicketDetailPage() {
         }).then(() => fetchTicket()).catch(() => {})
       }
     },
+    onEscalate: () => { handleEscalate() },
     onClose: () => {
       fetch(`/api/v1/tickets/${ticketId}`, {
         method: "PUT",
@@ -472,7 +473,9 @@ export default function TicketDetailPage() {
             {/* Handle timer */}
             <span className="text-xs text-muted-foreground flex items-center gap-1">
               <Timer className="h-3 w-3" />
-              {Math.floor(handleTimer / 60)}:{(handleTimer % 60).toString().padStart(2, "0")}
+              {handleTimer >= 3600
+                ? `${Math.floor(handleTimer / 3600)}h ${Math.floor((handleTimer % 3600) / 60)}m`
+                : `${Math.floor(handleTimer / 60)}m ${(handleTimer % 60).toString().padStart(2, "0")}s`}
             </span>
           </div>
           <div className="flex items-center gap-2 mt-1">
@@ -560,68 +563,7 @@ export default function TicketDetailPage() {
         </div>
       )}
 
-      {/* Customer 360 Context Panel */}
-      {showContext && customerContext && (
-        <Card>
-          <CardHeader className="py-3">
-            <CardTitle className="text-sm">Customer 360</CardTitle>
-          </CardHeader>
-          <CardContent className="grid md:grid-cols-3 gap-4 text-sm">
-            {/* Contact & Company */}
-            <div>
-              <h4 className="font-semibold text-xs text-muted-foreground uppercase mb-2">Contact</h4>
-              {customerContext.contact ? (
-                <div className="space-y-1">
-                  <p className="font-medium">{customerContext.contact.fullName}</p>
-                  <p className="text-xs text-muted-foreground">{customerContext.contact.position}</p>
-                  <p className="text-xs">{customerContext.contact.email}</p>
-                  <p className="text-xs">{customerContext.contact.phone}</p>
-                </div>
-              ) : <p className="text-xs text-muted-foreground">No contact linked</p>}
-              {customerContext.company && (
-                <div className="mt-3">
-                  <h4 className="font-semibold text-xs text-muted-foreground uppercase mb-1">Company</h4>
-                  <p className="font-medium">{customerContext.company.name}</p>
-                  <p className="text-xs text-muted-foreground">{customerContext.company.industry}</p>
-                  <p className="text-xs">LTV: ${(customerContext.lifetimeValue || 0).toLocaleString()}</p>
-                </div>
-              )}
-            </div>
-            {/* Recent Tickets */}
-            <div>
-              <h4 className="font-semibold text-xs text-muted-foreground uppercase mb-2">Recent Tickets ({customerContext.recentTickets?.length || 0})</h4>
-              <div className="space-y-1.5">
-                {(customerContext.recentTickets || []).map((t: any) => (
-                  <Link key={t.id} href={`/tickets/${t.id}`} className="block text-xs hover:underline">
-                    <span className="font-mono">{t.ticketNumber}</span> {t.subject}
-                    <Badge className="ml-1 text-[10px] px-1">{t.status}</Badge>
-                  </Link>
-                ))}
-              </div>
-              {customerContext.openDeals?.length > 0 && (
-                <>
-                  <h4 className="font-semibold text-xs text-muted-foreground uppercase mt-3 mb-1">Open Deals ({customerContext.openDeals.length})</h4>
-                  {customerContext.openDeals.map((d: any) => (
-                    <p key={d.id} className="text-xs">{d.name} — ${d.valueAmount?.toLocaleString()} ({d.stage})</p>
-                  ))}
-                </>
-              )}
-            </div>
-            {/* Recent Activity */}
-            <div>
-              <h4 className="font-semibold text-xs text-muted-foreground uppercase mb-2">Recent Activity</h4>
-              <div className="space-y-1.5">
-                {(customerContext.recentActivity || []).map((a: any) => (
-                  <p key={a.id} className="text-xs">
-                    <span className="capitalize font-medium">{a.type}</span>: {a.subject}
-                    <span className="text-muted-foreground ml-1">{formatDate(a.createdAt)}</span>
-                  </p>
-                ))}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      {/* Customer 360 moved to sidebar below */}
 
       {/* Status Pipeline */}
       <div className="flex gap-0 rounded-xl overflow-hidden border">
@@ -959,6 +901,70 @@ export default function TicketDetailPage() {
 
         {/* Sidebar */}
         <div className="space-y-4">
+          {/* Customer 360 Context */}
+          {showContext && customerContext && (
+            <Card>
+              <CardHeader className="py-3">
+                <CardTitle className="text-sm">Customer 360</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4 text-sm">
+                {/* Contact */}
+                <div>
+                  <h4 className="font-semibold text-xs text-muted-foreground uppercase mb-1.5">Contact</h4>
+                  {customerContext.contact ? (
+                    <div className="space-y-0.5">
+                      <p className="font-medium">{customerContext.contact.fullName}</p>
+                      <p className="text-xs text-muted-foreground">{customerContext.contact.position}</p>
+                      <p className="text-xs">{customerContext.contact.email}</p>
+                      <p className="text-xs">{customerContext.contact.phone}</p>
+                    </div>
+                  ) : <p className="text-xs text-muted-foreground">No contact linked</p>}
+                </div>
+                {/* Company */}
+                {customerContext.company && (
+                  <div>
+                    <h4 className="font-semibold text-xs text-muted-foreground uppercase mb-1.5">Company</h4>
+                    <p className="font-medium">{customerContext.company.name}</p>
+                    <p className="text-xs text-muted-foreground">{customerContext.company.industry}</p>
+                    <p className="text-xs">LTV: ${(customerContext.lifetimeValue || 0).toLocaleString()}</p>
+                  </div>
+                )}
+                {/* Recent Tickets */}
+                <div>
+                  <h4 className="font-semibold text-xs text-muted-foreground uppercase mb-1.5">Recent Tickets ({customerContext.recentTickets?.length || 0})</h4>
+                  <div className="space-y-1">
+                    {(customerContext.recentTickets || []).map((rt: any) => (
+                      <Link key={rt.id} href={`/tickets/${rt.id}`} className="block text-xs hover:underline truncate">
+                        <span className="font-mono">{rt.ticketNumber}</span> {rt.subject}
+                        <Badge className="ml-1 text-[10px] px-1">{rt.status}</Badge>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+                {/* Open Deals */}
+                {customerContext.openDeals?.length > 0 && (
+                  <div>
+                    <h4 className="font-semibold text-xs text-muted-foreground uppercase mb-1.5">Open Deals ({customerContext.openDeals.length})</h4>
+                    {customerContext.openDeals.map((d: any) => (
+                      <p key={d.id} className="text-xs">{d.name} — ${d.valueAmount?.toLocaleString()} ({d.stage})</p>
+                    ))}
+                  </div>
+                )}
+                {/* Recent Activity */}
+                <div>
+                  <h4 className="font-semibold text-xs text-muted-foreground uppercase mb-1.5">Recent Activity</h4>
+                  <div className="space-y-1">
+                    {(customerContext.recentActivity || []).slice(0, 5).map((act: any) => (
+                      <p key={act.id} className="text-xs truncate">
+                        <span className="capitalize font-medium">{act.type}</span>: {act.subject}
+                      </p>
+                    ))}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           <Card>
             <CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-1">{t("detailsCard")} <InfoHint text={t("hintColSubject")} size={12} /></CardTitle></CardHeader>
             <CardContent className="space-y-3 text-sm">

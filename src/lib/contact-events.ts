@@ -24,25 +24,32 @@ export async function trackContactEvent(
   const score = SCORE_WEIGHTS[eventType] ?? 1
 
   try {
-    await prisma.$transaction([
-      prisma.contactEvent.create({
-        data: {
-          organizationId: orgId,
-          contactId,
-          eventType,
-          eventData: eventData ?? {},
-          source: source ?? "system",
-          score,
-        },
-      }),
-      prisma.contact.update({
-        where: { id: contactId },
-        data: {
-          engagementScore: { increment: score },
-          lastActivityAt: new Date(),
-        },
-      }),
-    ])
+    await prisma.contactEvent.create({
+      data: {
+        organizationId: orgId,
+        contactId,
+        eventType,
+        eventData: eventData ?? {},
+        source: source ?? "system",
+        score,
+      },
+    })
+
+    // Increment score but cap at 100
+    const contact = await prisma.contact.findUnique({
+      where: { id: contactId },
+      select: { engagementScore: true },
+    })
+    const currentScore = contact?.engagementScore ?? 0
+    const newScore = Math.min(100, currentScore + score)
+
+    await prisma.contact.update({
+      where: { id: contactId },
+      data: {
+        engagementScore: newScore,
+        lastActivityAt: new Date(),
+      },
+    })
   } catch (error) {
     console.error("[ContactEvents] Failed to track event:", error)
   }

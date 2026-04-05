@@ -6,6 +6,7 @@ import { executeWorkflows } from "@/lib/workflow-engine"
 import { createNotification } from "@/lib/notifications"
 import { fireWebhooks } from "@/lib/webhooks"
 import { trackContactEvent } from "@/lib/contact-events"
+import { sendSlackNotification, formatDealNotification } from "@/lib/slack"
 
 const createDealSchema = z.object({
   name: z.string().min(1).max(200),
@@ -160,6 +161,13 @@ export async function POST(req: NextRequest) {
     }).catch(() => {})
     fireWebhooks(orgId, "deal.created", { id: deal.id, name: deal.name, valueAmount: deal.valueAmount, stage: deal.stage }).catch(() => {})
     if (deal.contactId) trackContactEvent(orgId, deal.contactId, "deal_created", { dealId: deal.id, name: deal.name }).catch(() => {})
+    // Auto Slack notification
+    prisma.channelConfig.findMany({ where: { organizationId: orgId, channelType: "slack", isActive: true } }).then(configs => {
+      const msg = formatDealNotification({ name: deal.name, value: deal.valueAmount, stage: deal.stage })
+      for (const cfg of configs) {
+        if (cfg.webhookUrl) sendSlackNotification(cfg.webhookUrl, msg).catch(() => {})
+      }
+    }).catch(() => {})
     return NextResponse.json({ success: true, data: deal }, { status: 201 })
   } catch (e) {
     console.error(e)

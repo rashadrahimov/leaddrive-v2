@@ -3,9 +3,8 @@ import { prisma } from "@/lib/prisma"
 
 /**
  * Engagement Score Decay Cron
- * Called daily. Decays scores for inactive contacts.
- * - Inactive 30-90 days: -10% per run
- * - Inactive 90+ days: set to 0
+ * Called weekly. Decays scores for contacts inactive for 7+ days.
+ * - Inactive 7+ days: -10% per run
  */
 export async function POST(req: NextRequest) {
   const cronSecret = req.headers.get("x-cron-secret") || req.headers.get("authorization")?.replace("Bearer ", "")
@@ -14,26 +13,16 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const thirtyDaysAgo = new Date(Date.now() - 30 * 86400000)
-    const ninetyDaysAgo = new Date(Date.now() - 90 * 86400000)
+    const sevenDaysAgo = new Date(Date.now() - 7 * 86400000)
 
-    // Zero out contacts inactive for 90+ days
-    const zeroed = await prisma.contact.updateMany({
+    // Find contacts with score > 0 and no activity in last 7 days
+    const staleContacts = await prisma.contact.findMany({
       where: {
         engagementScore: { gt: 0 },
         OR: [
           { lastActivityAt: null },
-          { lastActivityAt: { lt: ninetyDaysAgo } },
+          { lastActivityAt: { lt: sevenDaysAgo } },
         ],
-      },
-      data: { engagementScore: 0 },
-    })
-
-    // Decay by 10% for contacts inactive 30-90 days
-    const staleContacts = await prisma.contact.findMany({
-      where: {
-        engagementScore: { gt: 0 },
-        lastActivityAt: { gte: ninetyDaysAgo, lt: thirtyDaysAgo },
       },
       select: { id: true, engagementScore: true },
     })
@@ -52,7 +41,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      data: { zeroed: zeroed.count, decayed: decayedCount },
+      data: { decayed: decayedCount, checked: staleContacts.length },
     })
   } catch (error) {
     console.error("[Cron] Engagement decay error:", error)

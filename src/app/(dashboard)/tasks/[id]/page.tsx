@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge"
 import { TaskForm } from "@/components/task-form"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
 import {
-  ArrowLeft, Clock, CalendarDays, AlertTriangle, User,
+  ArrowLeft, Clock, CalendarDays, AlertTriangle, User, Calendar,
   Pencil, Trash2, Loader2, CheckCircle2, FileText, ExternalLink,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -102,6 +102,7 @@ export default function TaskDetailPage() {
   const orgId = session?.user?.organizationId
 
   const [task, setTask] = useState<TaskData | null>(null)
+  const [syncing, setSyncing] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const [updatingStatus, setUpdatingStatus] = useState(false)
@@ -218,6 +219,36 @@ export default function TaskDetailPage() {
           <Button size="sm" variant="outline" className="text-red-600 border-red-300 hover:bg-red-50 dark:hover:bg-red-900/20" onClick={() => setDeleteOpen(true)}>
             <Trash2 className="h-3.5 w-3.5 mr-1.5" /> {tc("delete")}
           </Button>
+          {task?.dueDate && (
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={syncing}
+              onClick={async () => {
+                setSyncing(true)
+                try {
+                  const res = await fetch("/api/v1/integrations/google-calendar", {
+                    method: "POST",
+                    headers: {
+                      "Content-Type": "application/json",
+                      ...(orgId ? { "x-organization-id": String(orgId) } : {}),
+                    },
+                    body: JSON.stringify({
+                      summary: task.title,
+                      description: task.description || "",
+                      startTime: task.dueDate,
+                    }),
+                  })
+                  const json = await res.json()
+                  if (json.success) alert("Synced to Google Calendar!")
+                  else alert(json.error || "Failed to sync")
+                } catch { alert("Failed to sync to Google Calendar") }
+                finally { setSyncing(false) }
+              }}
+            >
+              <Calendar className="h-3.5 w-3.5 mr-1.5" /> {syncing ? "Syncing..." : "Sync to Calendar"}
+            </Button>
+          )}
         </div>
       </div>
 

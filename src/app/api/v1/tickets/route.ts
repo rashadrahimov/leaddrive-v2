@@ -7,6 +7,7 @@ import { createNotification } from "@/lib/notifications"
 import { autoAssignTicket } from "@/lib/auto-assign"
 import { fireWebhooks } from "@/lib/webhooks"
 import { trackContactEvent } from "@/lib/contact-events"
+import { sendSlackNotification, formatTicketNotification } from "@/lib/slack"
 
 const createTicketSchema = z.object({
   subject: z.string().min(1).max(300),
@@ -162,6 +163,13 @@ export async function POST(req: NextRequest) {
     }).catch(() => {})
     fireWebhooks(orgId, "ticket.created", { id: ticket.id, ticketNumber: ticket.ticketNumber, subject: ticket.subject, priority: ticket.priority }).catch(() => {})
     if (ticket.contactId) trackContactEvent(orgId, ticket.contactId, "ticket_created", { ticketId: ticket.id }).catch(() => {})
+    // Auto Slack notification
+    prisma.channelConfig.findMany({ where: { organizationId: orgId, channelType: "slack", isActive: true } }).then(configs => {
+      const msg = formatTicketNotification({ ticketNumber: ticket.ticketNumber, subject: ticket.subject, priority: ticket.priority, status: ticket.status })
+      for (const cfg of configs) {
+        if (cfg.webhookUrl) sendSlackNotification(cfg.webhookUrl, msg).catch(() => {})
+      }
+    }).catch(() => {})
     return NextResponse.json({ success: true, data: ticket }, { status: 201 })
   } catch (e) {
     console.error(e)

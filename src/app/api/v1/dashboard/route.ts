@@ -27,6 +27,13 @@ export async function GET(req: NextRequest) {
       prisma.task.count({ where: { organizationId: orgId, status: { not: "completed" }, dueDate: { lt: new Date() } } }),
       prisma.activity.findMany({ where: { organizationId: orgId }, orderBy: { createdAt: "desc" }, take: 10, include: { contact: { select: { fullName: true } }, company: { select: { name: true } } } }),
       prisma.task.findMany({ where: { organizationId: orgId, status: { not: "completed" } }, orderBy: { dueDate: "asc" }, take: 5 }),
+    ]) as any[]
+
+    // Engagement stats
+    const [engagementHot, engagementWarm, engagementCold] = await Promise.all([
+      prisma.contact.count({ where: { organizationId: orgId, engagementScore: { gte: 50 } } }),
+      prisma.contact.count({ where: { organizationId: orgId, engagementScore: { gte: 20, lt: 50 } } }),
+      prisma.contact.count({ where: { organizationId: orgId, engagementScore: { lt: 20 } } }),
     ])
 
     // Revenue by month (last 6 months)
@@ -57,6 +64,9 @@ export async function GET(req: NextRequest) {
         revenueByMonth,
         recentActivities,
         myTasks,
+        engagementHot,
+        engagementWarm,
+        engagementCold,
       },
     })
   } catch (err) {

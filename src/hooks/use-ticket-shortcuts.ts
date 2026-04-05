@@ -21,15 +21,15 @@ export interface ShortcutDef {
 }
 
 export const TICKET_SHORTCUTS: ShortcutDef[] = [
-  { keys: "Alt+R", description: "Reply" },
-  { keys: "Alt+N", description: "Internal Note" },
-  { keys: "Alt+A", description: "Assign to Me" },
-  { keys: "Alt+E", description: "Escalate" },
-  { keys: "Alt+X", description: "Close Ticket" },
-  { keys: "Alt+[", description: "Previous Ticket" },
-  { keys: "Alt+]", description: "Next Ticket" },
-  { keys: "Alt+C", description: "Copy Ticket #" },
-  { keys: "Alt+1-9", description: "Apply Macro" },
+  { keys: "R", description: "Reply" },
+  { keys: "N", description: "Internal Note" },
+  { keys: "A", description: "Assign to Me" },
+  { keys: "E", description: "Escalate" },
+  { keys: "X", description: "Close Ticket" },
+  { keys: "J / →", description: "Next Ticket" },
+  { keys: "K / ←", description: "Previous Ticket" },
+  { keys: "C", description: "Copy Ticket #" },
+  { keys: "Ctrl+1-9", description: "Apply Macro" },
   { keys: "?", description: "Toggle Shortcuts" },
 ]
 
@@ -45,16 +45,27 @@ export function useTicketShortcuts(actions: ShortcutActions) {
       return
     }
 
-    // "?" without Alt — toggle shortcuts help
-    if (e.key === "?" && !e.altKey && !e.ctrlKey && !e.metaKey) {
+    // "?" — toggle shortcuts help (works without modifiers)
+    if (e.key === "?" && !e.ctrlKey && !e.metaKey && !e.altKey) {
       e.preventDefault()
       actions.onToggleShortcuts?.()
       return
     }
 
-    if (!e.altKey) return
+    // Ctrl+1 through Ctrl+9 — apply macro
+    if (e.ctrlKey && !e.altKey && !e.metaKey && e.key >= "1" && e.key <= "9") {
+      const idx = parseInt(e.key) - 1
+      if (actions.macros?.[idx]) {
+        e.preventDefault()
+        actions.macros[idx].execute()
+      }
+      return
+    }
 
-    switch (e.key) {
+    // Bare key shortcuts (no Ctrl, no Alt, no Meta)
+    if (e.ctrlKey || e.altKey || e.metaKey) return
+
+    switch (e.key.toLowerCase()) {
       case "r":
         e.preventDefault()
         actions.onReply?.()
@@ -75,27 +86,20 @@ export function useTicketShortcuts(actions: ShortcutActions) {
         e.preventDefault()
         actions.onClose?.()
         break
-      case "[":
-        e.preventDefault()
-        actions.onPrevTicket?.()
-        break
-      case "]":
+      case "j":
+      case "arrowright":
         e.preventDefault()
         actions.onNextTicket?.()
+        break
+      case "k":
+      case "arrowleft":
+        e.preventDefault()
+        actions.onPrevTicket?.()
         break
       case "c":
         e.preventDefault()
         actions.onCopyNumber?.()
         break
-      default:
-        // Alt+1 through Alt+9 for macros
-        if (e.key >= "1" && e.key <= "9") {
-          const idx = parseInt(e.key) - 1
-          if (actions.macros?.[idx]) {
-            e.preventDefault()
-            actions.macros[idx].execute()
-          }
-        }
     }
   }, [actions])
 

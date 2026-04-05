@@ -199,6 +199,44 @@ export default function DashboardPage() {
       <div className="grid lg:grid-cols-3 gap-4">
         {widgets.recommendedActions && <RecommendedActions />}
         {widgets.churnRisk && <ChurnRiskWidget />}
+        {/* Engagement Overview */}
+        {data && (
+          <div className="border rounded-xl p-4 bg-card">
+            <h3 className="text-sm font-semibold mb-3">Engagement Overview</h3>
+            {(() => {
+              const hot = data.engagementHot ?? 0
+              const warm = data.engagementWarm ?? 0
+              const cold = data.engagementCold ?? 0
+              const total = hot + warm + cold
+              if (total === 0) return <p className="text-xs text-muted-foreground">No engagement data yet</p>
+              return (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs w-12 text-muted-foreground">Hot</span>
+                    <div className="flex-1 h-5 bg-muted rounded-full overflow-hidden">
+                      <div className="h-full bg-red-500 rounded-full" style={{ width: `${total > 0 ? (hot / total * 100) : 0}%` }} />
+                    </div>
+                    <span className="text-xs font-medium w-10 text-right">{hot}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs w-12 text-muted-foreground">Warm</span>
+                    <div className="flex-1 h-5 bg-muted rounded-full overflow-hidden">
+                      <div className="h-full bg-amber-500 rounded-full" style={{ width: `${total > 0 ? (warm / total * 100) : 0}%` }} />
+                    </div>
+                    <span className="text-xs font-medium w-10 text-right">{warm}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs w-12 text-muted-foreground">Cold</span>
+                    <div className="flex-1 h-5 bg-muted rounded-full overflow-hidden">
+                      <div className="h-full bg-blue-400 rounded-full" style={{ width: `${total > 0 ? (cold / total * 100) : 0}%` }} />
+                    </div>
+                    <span className="text-xs font-medium w-10 text-right">{cold}</span>
+                  </div>
+                </div>
+              )
+            })()}
+          </div>
+        )}
       </div>
     </div>
   )
