@@ -109,6 +109,40 @@ export default function DashboardPage() {
 
   const { financial, pipeline, leads, operations, activity, risks, forecast, campaigns, events, weeklyMetrics } = data
 
+  // Adaptive grid: fill space when widgets are disabled
+  function gridCols(count: number) {
+    if (count >= 3) return "lg:grid-cols-3"
+    if (count === 2) return "lg:grid-cols-2"
+    return "lg:grid-cols-1"
+  }
+
+  // Row 2 widgets
+  const row2 = [
+    widgets.dealPipeline && <SalesPipeline key="pipeline" pipeline={pipeline} />,
+    widgets.revenueTrend && <RevenueTrend key="revenue" forecast={forecast} />,
+    widgets.leadSources && <LeadSourcesDonut key="sources" leadsBySource={leads.bySource} totalLeads={leads.activeCount || leads.total || 0} />,
+  ].filter(Boolean)
+
+  // Row 3 widgets
+  const row3 = [
+    widgets.recentDeals && <RecentDeals key="deals" deals={pipeline.recentDeals} />,
+    widgets.aiLeadScoring && <AiLeadScoring key="scoring" leads={leads.topScored} />,
+    widgets.activityFeed && <ActivityFeed key="activity" activities={activity.recent} timeAgo={timeAgo} />,
+  ].filter(Boolean)
+
+  // Row 4 widgets
+  const row4 = [
+    widgets.campaignStats && <CampaignStats key="campaigns" campaigns={campaigns} />,
+    widgets.upcomingEvents && <UpcomingEvents key="events" events={events} />,
+    widgets.weeklyMetrics && <WeeklyMetrics key="weekly" metrics={weeklyMetrics} />,
+  ].filter(Boolean)
+
+  // Row 5 widgets (always shown)
+  const row5 = [
+    <RecommendedActions key="actions" />,
+    <ChurnRiskWidget key="churn" />,
+  ]
+
   return (
     <div className="space-y-6">
       {/* ═══ Header ═══ */}
@@ -175,31 +209,22 @@ export default function DashboardPage() {
       {risks && <RisksBanner risks={risks} />}
 
       {/* ═══ Row 2: Pipeline + Revenue Trend + Lead Sources ═══ */}
-      <div className="grid lg:grid-cols-3 gap-4">
-        {widgets.dealPipeline && <SalesPipeline pipeline={pipeline} />}
-        {widgets.revenueTrend && <RevenueTrend forecast={forecast} />}
-        {widgets.leadSources && <LeadSourcesDonut leadsBySource={leads.bySource} totalLeads={leads.activeCount || leads.total || 0} />}
-      </div>
+      {row2.length > 0 && (
+        <div className={`grid ${gridCols(row2.length)} gap-4`}>{row2}</div>
+      )}
 
       {/* ═══ Row 3: Recent Deals + Da Vinci Lead Scoring + Activity Feed ═══ */}
-      <div className="grid lg:grid-cols-3 gap-4">
-        {widgets.recentDeals && <RecentDeals deals={pipeline.recentDeals} />}
-        {widgets.aiLeadScoring && <AiLeadScoring leads={leads.topScored} />}
-        {widgets.activityFeed && <ActivityFeed activities={activity.recent} timeAgo={timeAgo} />}
-      </div>
+      {row3.length > 0 && (
+        <div className={`grid ${gridCols(row3.length)} gap-4`}>{row3}</div>
+      )}
 
       {/* ═══ Row 4: Campaigns + Events + Weekly Metrics ═══ */}
-      <div className="grid lg:grid-cols-3 gap-4">
-        {widgets.campaignStats && <CampaignStats campaigns={campaigns} />}
-        {widgets.upcomingEvents && <UpcomingEvents events={events} />}
-        {widgets.weeklyMetrics && <WeeklyMetrics metrics={weeklyMetrics} />}
-      </div>
+      {row4.length > 0 && (
+        <div className={`grid ${gridCols(row4.length)} gap-4`}>{row4}</div>
+      )}
 
       {/* ═══ Row 5: AI Insights ═══ */}
-      <div className="grid lg:grid-cols-3 gap-4">
-        <RecommendedActions />
-        <ChurnRiskWidget />
-      </div>
+      <div className={`grid ${gridCols(row5.length)} gap-4`}>{row5}</div>
     </div>
   )
 }
