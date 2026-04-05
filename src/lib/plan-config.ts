@@ -59,6 +59,7 @@ const ENTERPRISE_MODULES = [
   "/settings/custom-fields",
   "/settings/dashboard",
   "/settings/invoice-settings",
+  "/settings/finance-notifications",
   "/settings/channels",
   "/settings/budget-config",
   "/settings/sales-forecast",
