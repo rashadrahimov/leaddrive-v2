@@ -40,8 +40,7 @@ export function VideoBackground() {
       >
         <source src={wallpaperDef.src} type="video/mp4" />
       </video>
-      {/* Minimal scrim — keep video bright */}
-      <div className="absolute inset-0 bg-black/5" />
+{/* No scrim — maximum brightness */}
     </div>
   )
 }
