@@ -36,6 +36,7 @@ export default function DashboardPage() {
     statCards: true, dealPipeline: true, revenueTrend: true, leadSources: true,
     recentDeals: true, aiLeadScoring: true, activityFeed: true,
     campaignStats: true, upcomingEvents: true, weeklyMetrics: true,
+    recommendedActions: true, churnRisk: true,
     // Legacy
     revenueChart: true, forecast: true, clientHealth: true, taskSummary: true,
     ticketSummary: true, leadFunnel: true,
@@ -137,11 +138,11 @@ export default function DashboardPage() {
     widgets.weeklyMetrics && <WeeklyMetrics key="weekly" metrics={weeklyMetrics} />,
   ].filter(Boolean)
 
-  // Row 5 widgets (always shown)
+  // Row 5 widgets
   const row5 = [
-    <RecommendedActions key="actions" />,
-    <ChurnRiskWidget key="churn" />,
-  ]
+    widgets.recommendedActions && <RecommendedActions key="actions" />,
+    widgets.churnRisk && <ChurnRiskWidget key="churn" />,
+  ].filter(Boolean)
 
   return (
     <div className="space-y-6">
@@ -224,7 +225,9 @@ export default function DashboardPage() {
       )}
 
       {/* ═══ Row 5: AI Insights ═══ */}
-      <div className={`grid ${gridCols(row5.length)} gap-4`}>{row5}</div>
+      {row5.length > 0 && (
+        <div className={`grid ${gridCols(row5.length)} gap-4`}>{row5}</div>
+      )}
     </div>
   )
 }

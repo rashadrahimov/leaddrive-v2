@@ -26,6 +26,8 @@ const WIDGET_META: Record<string, { label: string; description: string; icon: an
   campaignStats:   { label: "Kampaniyalar",             description: "Aktiv kampaniyalar: göndərildi, açılma, klik",                      icon: Megaphone,    category: "main" },
   upcomingEvents:  { label: "Tədbirlər",                description: "Gələcək tədbirlər və qeydiyyat sayı",                               icon: Calendar,     category: "main" },
   weeklyMetrics:   { label: "Həftəlik Metriklər",       description: "7 günlük lidlər/tiketlər + SLA/CSAT",                               icon: BarChart,     category: "main" },
+  recommendedActions: { label: "Tövsiyə olunan hərəkətlər", description: "AI tərəfindən növbəti addımlar",                                    icon: Brain,        category: "main" },
+  churnRisk:       { label: "İtirilmə riski",             description: "Risk altında olan müştərilər",                                       icon: Shield,       category: "main" },
 
   // Finance
   revenueChart:    { label: "Xidmətlər üzrə Gəlir",    description: "Xidmət növləri üzrə gəlir paylanması",                              icon: DollarSign,   category: "finance" },
