@@ -4213,6 +4213,26 @@
     "cnameRecord": "CNAME Yazısı",
     "host": "Host",
     "pointsTo": "Yönləndirilir",
-    "waitDns": "DNS dəyişiklikləri 48 saata qədər vaxt ala bilər"
+    "waitDns": "DNS dəyişiklikləri 48 saata qədər vaxt ala bilər",
+    "howItWorks": "Xüsusi Domenlər Necə İşləyir",
+    "step1Title": "Domeninizi Əlavə Edin",
+    "step1Desc": "Açılış səhifələri üçün istifadə etmək istədiyiniz alt domen və ya domeni daxil edin (məs. landing.sirketiniz.com). Biz onu sistemdə qeydiyyata alacağıq.",
+    "step2Title": "DNS-i Konfiqurasiya Edin",
+    "step2Desc": "DNS provayderinizə daxil olun və domeninizi serverimizə yönləndirən CNAME yazısı əlavə edin:",
+    "step3Title": "Yoxlayın və İşə Salın",
+    "step3Desc": "'DNS yoxla' düyməsinə basın və biz yazını yoxlayacağıq. Təsdiqləndikdən sonra SSL sertifikatı avtomatik verilir və açılış səhifələriniz öz domeninizdə yayımlanır.",
+    "recordType": "Yazı Növü",
+    "hostLabel": "Host / Ad",
+    "yourSubdomain": "alt domeniniz",
+    "valueLabel": "Dəyər / Hədəf",
+    "copied": "Buferə kopyalandı!",
+    "dnsNote": "DNS yayılması 48 saata qədər vaxt ala bilər. Yoxlama uğursuz olarsa, gözləyin və yenidən cəhd edin.",
+    "exampleTitle": "Nümunə Quraşdırma",
+    "exampleDesc": "Şirkət domeniniz yourcompany.com-dursa və landing.yourcompany.com-da açılış səhifələri istəyirsinizsə:",
+    "exampleResult": "DNS yayılmasından sonra landing.yourcompany.com ziyarətçiləri dərc edilmiş açılış səhifələrinizi görəcək.",
+    "yourDomains": "Domenləriniz",
+    "description": "Müştərilərinizin ümumi URL əvəzinə öz brendli domeninizdə açılış səhifələrinə daxil olmasına imkan verin.",
+    "addDomainDesc": "Qoşmaq istədiyiniz domen və ya alt domeni daxil edin. DNS provayderinizdə CNAME yazısı əlavə etməlisiniz.",
+    "domainHint": "Alt domen istifadə edin, məsələn landing.sirketiniz.com və ya pages.sirketiniz.com"
   }
 }

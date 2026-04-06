@@ -4220,6 +4220,26 @@
     "cnameRecord": "CNAME Record",
     "host": "Host",
     "pointsTo": "Points to",
-    "waitDns": "DNS changes may take up to 48 hours to propagate"
+    "waitDns": "DNS changes may take up to 48 hours to propagate",
+    "howItWorks": "How Custom Domains Work",
+    "step1Title": "Add Your Domain",
+    "step1Desc": "Enter the subdomain or domain you want to use for your landing pages (e.g. landing.yourcompany.com). We'll register it in the system.",
+    "step2Title": "Configure DNS",
+    "step2Desc": "Go to your DNS provider and add a CNAME record pointing your domain to our server:",
+    "step3Title": "Verify & Go Live",
+    "step3Desc": "Click 'Verify DNS' and we'll check the record. Once verified, SSL is issued automatically and your landing pages go live on your domain.",
+    "recordType": "Record Type",
+    "hostLabel": "Host / Name",
+    "yourSubdomain": "your subdomain",
+    "valueLabel": "Value / Target",
+    "copied": "Copied to clipboard!",
+    "dnsNote": "DNS propagation can take up to 48 hours. If verification fails, wait and try again.",
+    "exampleTitle": "Example Setup",
+    "exampleDesc": "If your company domain is yourcompany.com and you want landing pages on landing.yourcompany.com:",
+    "exampleResult": "After DNS propagation, visitors to landing.yourcompany.com will see your published landing pages.",
+    "yourDomains": "Your Domains",
+    "description": "Let your customers access landing pages on your own branded domain instead of a generic URL.",
+    "addDomainDesc": "Enter the domain or subdomain you want to connect. You will need to add a CNAME record in your DNS provider.",
+    "domainHint": "Use a subdomain like landing.yourcompany.com or pages.yourcompany.com"
   }
 }
