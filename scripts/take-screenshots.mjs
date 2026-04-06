@@ -14,41 +14,40 @@ async function main() {
   const browser = await puppeteer.launch({
     executablePath: CHROME_PATH,
     headless: "new",
-    args: ["--no-sandbox", "--window-size=1440,900"],
-    defaultViewport: { width: 1440, height: 900, deviceScaleFactor: 2 },
+    args: ["--no-sandbox", "--window-size=1920,1080"],
+    defaultViewport: { width: 1920, height: 1080, deviceScaleFactor: 2 },
   })
 
   const page = await browser.newPage()
 
-  // Login via NextAuth credentials API directly
-  console.log("Logging in via NextAuth API...")
+  // Login via form submission
+  console.log("Logging in via form...")
+  await page.goto(`${BASE_URL}/login`, { waitUntil: "networkidle2", timeout: 15000 })
+  await delay(2000)
 
-  // 1) Get CSRF token
-  await page.goto(`${BASE_URL}/api/auth/csrf`, { waitUntil: "networkidle2", timeout: 15000 })
-  const csrfJson = await page.evaluate(() => document.body.innerText)
-  const { csrfToken } = JSON.parse(csrfJson)
-  console.log("CSRF token obtained")
+  // Fill email & password
+  await page.type('input[name="email"], input[type="email"]', EMAIL, { delay: 50 })
+  await page.type('input[name="password"], input[type="password"]', PASSWORD, { delay: 50 })
+  console.log("Credentials filled")
 
-  // 2) POST credentials to NextAuth
-  const loginResult = await page.evaluate(async (csrf, email, pass, baseUrl) => {
-    const res = await fetch(`${baseUrl}/api/auth/callback/credentials`, {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams({
-        csrfToken: csrf,
-        email: email,
-        password: pass,
-        redirect: "false",
-        json: "true",
-      }),
-      credentials: "include",
-    })
-    return { status: res.status, url: res.url, ok: res.ok }
-  }, csrfToken, EMAIL, PASSWORD, BASE_URL)
+  // Click submit and wait for navigation
+  await Promise.all([
+    page.waitForNavigation({ waitUntil: "networkidle2", timeout: 20000 }).catch(() => {}),
+    page.click('button[type="submit"]'),
+  ])
+  await delay(3000)
+  console.log("Login form submitted")
 
-  console.log("Login result:", loginResult)
+  // 3) Set locale to Azerbaijani
+  await page.setCookie({
+    name: "NEXT_LOCALE",
+    value: "az",
+    domain: "localhost",
+    path: "/",
+  })
+  console.log("Locale set to: az")
 
-  // 3) Navigate to dashboard
+  // 4) Navigate to dashboard
   await page.goto(`${BASE_URL}/dashboard`, { waitUntil: "networkidle2", timeout: 15000 })
   await delay(3000)
   console.log("Current URL:", page.url())

@@ -61,16 +61,16 @@ const statusColors: Record<string, string> = {
 }
 
 const statusLabels: Record<string, string> = {
-  paid: "\u00d6d\u0259nildi",
-  sent: "G\u00f6nd\u0259rildi",
-  overdue: "Gecikmi\u015f",
-  partial: "Qism\u0259n",
+  paid: "Ödənilib",
+  sent: "Göndərilib",
+  overdue: "Gecikmiş",
+  partial: "Qismən",
   draft: "Qaralama",
-  cancelled: "L\u0259\u011fv",
+  cancelled: "Ləğv",
 }
 
 const agingColors = ["bg-emerald-500", "bg-blue-500", "bg-yellow-500", "bg-orange-500", "bg-red-500"]
-const agingLabels = ["0-30 g\u00fcn", "31-60 g\u00fcn", "61-90 g\u00fcn", "91-120 g\u00fcn", "120+ g\u00fcn"]
+const agingLabels = ["0-30 gün", "31-60 gün", "61-90 gün", "91-120 gün", "120+ gün"]
 
 // --- Component ---
 
@@ -157,11 +157,11 @@ export function InvoicesAnalytics({ invoices, stats }: InvoicesAnalyticsProps) {
   // Auto-invoices mock
   const autoInvoices = useMemo(
     () => [
-      { company: "TechCorp Solutions", frequency: "Ayl\u0131q", next: "15 Apr 2026", amount: "$2,400" },
-      { company: "DataFlow Inc.", frequency: "Ayl\u0131q", next: "01 May 2026", amount: "$3,800" },
-      { company: "CloudNet Systems", frequency: "R\u00fcbl\u00fck", next: "01 Jul 2026", amount: "$12,000" },
-      { company: "AI Dynamics", frequency: "Ayl\u0131q", next: "20 Apr 2026", amount: "$1,600" },
-      { company: "SecureStack Ltd", frequency: "\u0130llik", next: "01 Jan 2027", amount: "$28,000" },
+      { company: "TechCorp Solutions", frequency: "Aylıq", next: "15 Apr 2026", amount: "$2,400" },
+      { company: "DataFlow Inc.", frequency: "Aylıq", next: "01 May 2026", amount: "$3,800" },
+      { company: "CloudNet Systems", frequency: "Rüblük", next: "01 Jul 2026", amount: "$12,000" },
+      { company: "AI Dynamics", frequency: "Aylıq", next: "20 Apr 2026", amount: "$1,600" },
+      { company: "SecureStack Ltd", frequency: "İllik", next: "01 Jan 2027", amount: "$28,000" },
     ],
     []
   )
@@ -208,7 +208,7 @@ export function InvoicesAnalytics({ invoices, stats }: InvoicesAnalyticsProps) {
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
-              <h3 className="text-sm font-semibold">G&#601;lir Trendi</h3>
+              <h3 className="text-sm font-semibold">Gəlir Trendi</h3>
             </div>
             <span
               className={cn(
@@ -226,10 +226,10 @@ export function InvoicesAnalytics({ invoices, stats }: InvoicesAnalyticsProps) {
             <RevenueTrendChart data={monthlyRevenue} />
           </div>
           <div className="flex justify-between mt-3 text-xs text-muted-foreground">
-            {["Yan", "Fev", "Mar", "Apr", "May", "\u0130yn", "\u0130yl", "Avq", "Sen", "Okt", "Noy", "Dek"]
+            {["Yan", "Fev", "Mar", "Apr", "May", "İyn", "İyl", "Avq", "Sen", "Okt", "Noy", "Dek"]
               .slice(new Date().getMonth() + 1)
               .concat(
-                ["Yan", "Fev", "Mar", "Apr", "May", "\u0130yn", "\u0130yl", "Avq", "Sen", "Okt", "Noy", "Dek"].slice(
+                ["Yan", "Fev", "Mar", "Apr", "May", "İyn", "İyl", "Avq", "Sen", "Okt", "Noy", "Dek"].slice(
                   0,
                   new Date().getMonth() + 1
                 )
@@ -245,7 +245,7 @@ export function InvoicesAnalytics({ invoices, stats }: InvoicesAnalyticsProps) {
         <div className="bg-card text-card-foreground border rounded-xl p-5">
           <div className="flex items-center gap-2 mb-4">
             <PieChart className="h-4 w-4 text-muted-foreground" />
-            <h3 className="text-sm font-semibold">\u00d6d&#601;ni\u015f Statusu</h3>
+            <h3 className="text-sm font-semibold">Ödəniş Statusu</h3>
           </div>
           <div className="flex items-center gap-6">
             <div className="relative">
@@ -281,7 +281,7 @@ export function InvoicesAnalytics({ invoices, stats }: InvoicesAnalyticsProps) {
               <h3 className="text-sm font-semibold">Debitor Borcu</h3>
             </div>
             <span className="text-xs text-muted-foreground">
-              \u00dcmumi: {formatAmount(agingTotal)}
+              Ümumi: {formatAmount(agingTotal)}
             </span>
           </div>
           <div className="space-y-3">
@@ -311,7 +311,7 @@ export function InvoicesAnalytics({ invoices, stats }: InvoicesAnalyticsProps) {
         <div className="bg-card text-card-foreground border rounded-xl p-5">
           <div className="flex items-center gap-2 mb-4">
             <CalendarClock className="h-4 w-4 text-muted-foreground" />
-            <h3 className="text-sm font-semibold">H&#601;ft&#601;lik Y\u0131\u011f\u0131m</h3>
+            <h3 className="text-sm font-semibold">Həftəlik Yığım</h3>
           </div>
           <MiniBarChart data={weeklyCollection} color="bg-violet-500" height="h-24" />
           <div className="flex justify-between mt-1 text-[10px] text-muted-foreground mb-3">
@@ -322,15 +322,15 @@ export function InvoicesAnalytics({ invoices, stats }: InvoicesAnalyticsProps) {
           <div className="grid grid-cols-3 gap-2 pt-3 border-t">
             <div className="text-center">
               <p className="text-lg font-bold">{collectionRate}%</p>
-              <p className="text-[10px] text-muted-foreground">Y\u0131\u011f\u0131m faizi</p>
+              <p className="text-[10px] text-muted-foreground">Yığım faizi</p>
             </div>
             <div className="text-center">
               <p className="text-lg font-bold">{avgPayDays}</p>
-              <p className="text-[10px] text-muted-foreground">Ort. \u00f6d&#601;m&#601; g\u00fcn\u00fc</p>
+              <p className="text-[10px] text-muted-foreground">Ort. ödəmə günü</p>
             </div>
             <div className="text-center">
               <p className="text-lg font-bold">{monthlyInvoiceAvg}</p>
-              <p className="text-[10px] text-muted-foreground">Ayl\u0131q faktura</p>
+              <p className="text-[10px] text-muted-foreground">Aylıq faktura</p>
             </div>
           </div>
         </div>
@@ -358,7 +358,7 @@ export function InvoicesAnalytics({ invoices, stats }: InvoicesAnalyticsProps) {
                 <div className="min-w-0 flex-1">
                   <p className="font-medium truncate">{item.company}</p>
                   <p className="text-muted-foreground">
-                    {item.frequency} &middot; N\u00f6vb&#601;ti: {item.next}
+                    {item.frequency} · Növbəti: {item.next}
                   </p>
                 </div>
                 <span className="font-semibold ml-3 shrink-0">{item.amount}</span>
@@ -371,7 +371,7 @@ export function InvoicesAnalytics({ invoices, stats }: InvoicesAnalyticsProps) {
         <div className="bg-card text-card-foreground border rounded-xl p-5">
           <div className="flex items-center gap-2 mb-4">
             <Coins className="h-4 w-4 text-muted-foreground" />
-            <h3 className="text-sm font-semibold">Valyuta \u00fczr&#601;</h3>
+            <h3 className="text-sm font-semibold">Valyuta üzrə</h3>
           </div>
           <div className="space-y-4">
             {displayCurrency.map((c) => (
@@ -384,7 +384,7 @@ export function InvoicesAnalytics({ invoices, stats }: InvoicesAnalyticsProps) {
                       {c.total.toLocaleString()}
                     </span>
                   </span>
-                  <span className="text-muted-foreground">{c.pct}% \u00f6d&#601;nildi</span>
+                  <span className="text-muted-foreground">{c.pct}% ödənilib</span>
                 </div>
                 <div className="h-3 bg-muted/30 rounded-full overflow-hidden">
                   <div
@@ -394,11 +394,11 @@ export function InvoicesAnalytics({ invoices, stats }: InvoicesAnalyticsProps) {
                 </div>
                 <div className="flex justify-between text-[10px] text-muted-foreground mt-1">
                   <span>
-                    \u00d6d&#601;nildi: {c.symbol}
+                    Ödənilib: {c.symbol}
                     {c.paid.toLocaleString()}
                   </span>
                   <span>
-                    Qal\u0131q: {c.symbol}
+                    Qalıq: {c.symbol}
                     {(c.total - c.paid).toLocaleString()}
                   </span>
                 </div>
