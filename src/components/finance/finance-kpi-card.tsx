@@ -6,6 +6,7 @@ interface FinanceKpiCardProps {
   title: string
   value: number
   plan?: number
+  planLabel?: string
   sub?: string
   icon: React.ReactNode
   color: string
@@ -21,7 +22,7 @@ function fmt(n: number): string {
   return n.toLocaleString("ru-RU", { maximumFractionDigits: 0 })
 }
 
-export function FinanceKpiCard({ title, value, plan, sub, icon, color, variance, variancePct, currency = "AZN", invertVariance }: FinanceKpiCardProps) {
+export function FinanceKpiCard({ title, value, plan, planLabel, sub, icon, color, variance, variancePct, currency = "AZN", invertVariance }: FinanceKpiCardProps) {
   const isPositive = invertVariance ? (variancePct ?? 0) <= 0 : (variancePct ?? 0) >= 0
   const varianceColor = variancePct === 0 || variancePct === undefined ? "text-muted-foreground" : isPositive ? "text-green-600" : "text-red-600"
   const VarianceIcon = variancePct === 0 || variancePct === undefined ? Minus : isPositive ? TrendingUp : TrendingDown
@@ -44,7 +45,7 @@ export function FinanceKpiCard({ title, value, plan, sub, icon, color, variance,
             </p>
             {plan !== undefined && plan > 0 && (
               <div className="flex items-center gap-1.5 mt-1.5">
-                <span className="text-[10px] text-muted-foreground">План: {fmt(plan)}</span>
+                <span className="text-[10px] text-muted-foreground">{planLabel || "Plan"}: {fmt(plan)}</span>
                 {variancePct !== undefined && (
                   <span className={`inline-flex items-center gap-0.5 text-[10px] font-medium ${varianceColor}`}>
                     <VarianceIcon className="w-3 h-3" />

@@ -58,6 +58,7 @@ export function FinanceDashboard() {
           title={t("revenue")}
           value={kpis.revenue.fact}
           plan={kpis.revenue.plan}
+          planLabel={t("plan")}
           variancePct={kpis.revenue.variancePct}
           icon={<TrendingUp className="w-5 h-5" />}
           color="#22c55e"
@@ -66,6 +67,7 @@ export function FinanceDashboard() {
           title={t("expenses")}
           value={kpis.expenses.fact}
           plan={kpis.expenses.plan}
+          planLabel={t("plan")}
           variancePct={kpis.expenses.variancePct}
           icon={<TrendingDown className="w-5 h-5" />}
           color="#ef4444"

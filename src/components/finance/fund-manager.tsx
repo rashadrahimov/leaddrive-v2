@@ -268,6 +268,9 @@ function TransactionDialog({ fundId, onClose }: { fundId: string; onClose: () =>
             !isLoading && <p className="text-sm text-muted-foreground text-center py-4">{t("txEmpty")}</p>
           )}
         </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>{t("cancel")}</Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   )
@@ -347,6 +350,9 @@ function RulesDialog({ fundId, onClose }: { fundId: string; onClose: () => void 
             !isLoading && <p className="text-sm text-muted-foreground text-center py-4">{t("rulesEmpty")}</p>
           )}
         </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>{t("cancel")}</Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   )

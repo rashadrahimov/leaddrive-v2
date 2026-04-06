@@ -40,7 +40,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     data = createTransactionSchema.parse(body)
   } catch (e) {
     if (e instanceof ZodError) {
-      return NextResponse.json({ error: "Validation failed", details: e.flatten().fieldErrors }, { status: 400 })
+      return NextResponse.json({ error: "Invalid data: " + e.issues.map((i: any) => i.message).join(", "), details: e.flatten().fieldErrors }, { status: 400 })
     }
     return NextResponse.json({ error: "Invalid request" }, { status: 400 })
   }
@@ -67,9 +67,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       prisma.fund.findMany({ where: { organizationId: orgId, isActive: true }, select: { currentBalance: true } }),
       prisma.cashFlowEntry.findMany({ where: { organizationId: orgId }, select: { entryType: true, amount: true } }),
     ])
-    const totalFunds = allFunds.reduce((s, f) => s + f.currentBalance, 0) + txAmount
-    const totalInflows = cashFlowEntries.filter((e) => e.entryType === "inflow").reduce((s, e) => s + e.amount, 0)
-    const totalOutflows = cashFlowEntries.filter((e) => e.entryType === "outflow").reduce((s, e) => s + e.amount, 0)
+    const totalFunds = allFunds.reduce((s: number, f: any) => s + f.currentBalance, 0) + txAmount
+    const totalInflows = cashFlowEntries.filter((e: any) => e.entryType === "inflow").reduce((s: number, e: any) => s + e.amount, 0)
+    const totalOutflows = cashFlowEntries.filter((e: any) => e.entryType === "outflow").reduce((s: number, e: any) => s + e.amount, 0)
     const cashBalance = totalInflows - totalOutflows
     if (totalFunds > cashBalance && cashBalance > 0) {
       const coverage = Math.round((cashBalance / totalFunds) * 100)
