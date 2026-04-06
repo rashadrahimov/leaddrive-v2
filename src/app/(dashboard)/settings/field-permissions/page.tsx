@@ -201,8 +201,8 @@ export default function FieldPermissionsPage() {
   return (
     <div className="space-y-6">
       <PageDescription
-        title="Field Permissions"
-        description="Control visibility and editability of fields per role. Admin always has full access."
+        title={t("fieldPermissions.title")}
+        description={t("fieldPermissions.description")}
       />
 
       {/* Permission Matrix */}
@@ -221,11 +221,11 @@ export default function FieldPermissionsPage() {
             {hasChanges && (
               <>
                 <Button variant="outline" size="sm" onClick={() => setChanges({})}>
-                  <RotateCcw className="h-4 w-4 mr-1" /> Reset Defaults
+                  <RotateCcw className="h-4 w-4 mr-1" /> {t("fieldPermissions.resetDefaults")}
                 </Button>
                 <Button size="sm" onClick={handleSave} disabled={saving}>
                   {saving ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Save className="h-4 w-4 mr-1" />}
-                  Save
+                  {t("fieldPermissions.save")}
                 </Button>
               </>
             )}
@@ -239,7 +239,7 @@ export default function FieldPermissionsPage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b">
-                    <th className="text-left py-2 px-3 font-medium">Field</th>
+                    <th className="text-left py-2 px-3 font-medium">{t("fieldPermissions.field")}</th>
                     {ROLES.map(role => (
                       <th key={role} className="text-center py-2 px-2 font-medium capitalize">{role}</th>
                     ))}
@@ -251,7 +251,7 @@ export default function FieldPermissionsPage() {
                       <td className="py-2 px-3">
                         <span>{field.label}</span>
                         {field.sensitive && (
-                          <Badge variant="outline" className="ml-2 text-xs">sensitive</Badge>
+                          <Badge variant="outline" className="ml-2 text-xs">{t("fieldPermissions.sensitive")}</Badge>
                         )}
                       </td>
                       {ROLES.map(role => {
@@ -283,18 +283,18 @@ export default function FieldPermissionsPage() {
       {/* Sharing Rules */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between pb-4">
-          <CardTitle>Sharing Rules</CardTitle>
+          <CardTitle>{t("fieldPermissions.sharingRules")}</CardTitle>
           <Button size="sm" onClick={() => {
             setEditingRule(null)
             setRuleForm({ entityType: "deal", name: "", description: "", ruleType: "role", sourceRole: "", targetRole: "", accessLevel: "read" })
             setRuleDialogOpen(true)
           }}>
-            <Plus className="h-4 w-4 mr-1" /> New Rule
+            <Plus className="h-4 w-4 mr-1" /> {t("fieldPermissions.newRule")}
           </Button>
         </CardHeader>
         <CardContent>
           {rules.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-4 text-center">No sharing rules configured. By default, users see only their own records.</p>
+            <p className="text-sm text-muted-foreground py-4 text-center">{t("fieldPermissions.noRules")}</p>
           ) : (
             <div className="space-y-3">
               {rules.map(rule => (
@@ -302,7 +302,7 @@ export default function FieldPermissionsPage() {
                   <div>
                     <div className="font-medium">{rule.name}</div>
                     <div className="text-sm text-muted-foreground">
-                      {rule.entityType} | {rule.ruleType === "all" ? "All users" : `${rule.sourceRole || "—"} → ${rule.targetRole || "—"}`} | {rule.accessLevel}
+                      {rule.entityType} | {rule.ruleType === "all" ? t("fieldPermissions.allUsers") : `${rule.sourceRole || "—"} → ${rule.targetRole || "—"}`} | {rule.accessLevel}
                     </div>
                     {rule.description && <div className="text-xs text-muted-foreground mt-1">{rule.description}</div>}
                   </div>
@@ -336,66 +336,74 @@ export default function FieldPermissionsPage() {
       <Dialog open={ruleDialogOpen} onOpenChange={setRuleDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{editingRule ? "Edit Sharing Rule" : "New Sharing Rule"}</DialogTitle>
+            <DialogTitle>{editingRule ? t("fieldPermissions.editRule") : t("fieldPermissions.newSharingRule")}</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label>Name</Label>
-              <Input value={ruleForm.name} onChange={e => setRuleForm(p => ({ ...p, name: e.target.value }))} />
+            <div className="grid gap-1.5">
+              <Label>{t("fieldPermissions.ruleName")}</Label>
+              <Input value={ruleForm.name} onChange={e => setRuleForm(p => ({ ...p, name: e.target.value }))} placeholder={t("fieldPermissions.ruleNamePlaceholder")} />
+              <p className="text-xs text-muted-foreground">{t("fieldPermissions.ruleNameHint")}</p>
             </div>
-            <div className="grid gap-2">
-              <Label>Entity Type</Label>
+            <div className="grid gap-1.5">
+              <Label>{t("fieldPermissions.entityType")}</Label>
               <Select value={ruleForm.entityType} onChange={e => setRuleForm(p => ({ ...p, entityType: e.target.value }))}>
                   {ENTITY_TYPES.map(et => (
                     <option key={et.value} value={et.value}>{et.label}</option>
                   ))}
               </Select>
+              <p className="text-xs text-muted-foreground">{t("fieldPermissions.entityTypeHint")}</p>
             </div>
-            <div className="grid gap-2">
-              <Label>Rule Type</Label>
+            <div className="grid gap-1.5">
+              <Label>{t("fieldPermissions.ruleType")}</Label>
               <Select value={ruleForm.ruleType} onChange={e => setRuleForm(p => ({ ...p, ruleType: e.target.value }))}>
-                  <option value="owner">Owner Only</option>
-                  <option value="role">Role → Role</option>
-                  <option value="all">All Users</option>
+                  <option value="owner">{t("fieldPermissions.ruleTypeOwner")}</option>
+                  <option value="role">{t("fieldPermissions.ruleTypeRole")}</option>
+                  <option value="all">{t("fieldPermissions.ruleTypeAll")}</option>
               </Select>
+              <p className="text-xs text-muted-foreground">{t("fieldPermissions.ruleTypeHint")}</p>
             </div>
             {ruleForm.ruleType === "role" && (
               <>
-                <div className="grid gap-2">
-                  <Label>Source Role (whose records)</Label>
+                <div className="grid gap-1.5">
+                  <Label>{t("fieldPermissions.sourceRole")}</Label>
+                  <p className="text-xs text-muted-foreground -mt-1">{t("fieldPermissions.sourceRoleDesc")}</p>
                   <Select value={ruleForm.sourceRole} onChange={e => setRuleForm(p => ({ ...p, sourceRole: e.target.value }))}>
-                      <option value="">Select...</option>
+                      <option value="">{t("fieldPermissions.selectRole")}</option>
                       {ROLES.filter(r => r !== "admin").map(r => (
                         <option key={r} value={r}>{r}</option>
                       ))}
                   </Select>
+                  <p className="text-xs text-muted-foreground">{t("fieldPermissions.sourceRoleHint")}</p>
                 </div>
-                <div className="grid gap-2">
-                  <Label>Target Role (who gets access)</Label>
+                <div className="grid gap-1.5">
+                  <Label>{t("fieldPermissions.targetRole")}</Label>
+                  <p className="text-xs text-muted-foreground -mt-1">{t("fieldPermissions.targetRoleDesc")}</p>
                   <Select value={ruleForm.targetRole} onChange={e => setRuleForm(p => ({ ...p, targetRole: e.target.value }))}>
-                      <option value="">Select...</option>
+                      <option value="">{t("fieldPermissions.selectRole")}</option>
                       {ROLES.filter(r => r !== "admin").map(r => (
                         <option key={r} value={r}>{r}</option>
                       ))}
                   </Select>
+                  <p className="text-xs text-muted-foreground">{t("fieldPermissions.targetRoleHint")}</p>
                 </div>
               </>
             )}
-            <div className="grid gap-2">
-              <Label>Access Level</Label>
+            <div className="grid gap-1.5">
+              <Label>{t("fieldPermissions.accessLevel")}</Label>
               <Select value={ruleForm.accessLevel} onChange={e => setRuleForm(p => ({ ...p, accessLevel: e.target.value }))}>
-                  <option value="read">Read Only</option>
-                  <option value="readwrite">Read & Write</option>
+                  <option value="read">{t("fieldPermissions.accessRead")}</option>
+                  <option value="readwrite">{t("fieldPermissions.accessReadWrite")}</option>
               </Select>
+              <p className="text-xs text-muted-foreground">{t("fieldPermissions.accessLevelHint")}</p>
             </div>
-            <div className="grid gap-2">
-              <Label>Description</Label>
-              <Input value={ruleForm.description} onChange={e => setRuleForm(p => ({ ...p, description: e.target.value }))} placeholder="Optional description" />
+            <div className="grid gap-1.5">
+              <Label>{t("fieldPermissions.ruleDescription")}</Label>
+              <Input value={ruleForm.description} onChange={e => setRuleForm(p => ({ ...p, description: e.target.value }))} placeholder={t("fieldPermissions.ruleDescriptionPlaceholder")} />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setRuleDialogOpen(false)}>Cancel</Button>
-            <Button onClick={handleSaveRule} disabled={!ruleForm.name}>Save</Button>
+            <Button variant="outline" onClick={() => setRuleDialogOpen(false)}>{t("fieldPermissions.cancel")}</Button>
+            <Button onClick={handleSaveRule} disabled={!ruleForm.name}>{t("fieldPermissions.save")}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -404,8 +412,8 @@ export default function FieldPermissionsPage() {
         open={!!deleteRuleId}
         onOpenChange={() => setDeleteRuleId(null)}
         onConfirm={handleDeleteRule}
-        title="Delete Sharing Rule"
-        description="Are you sure you want to delete this sharing rule?"
+        title={t("fieldPermissions.deleteRule")}
+        description={t("fieldPermissions.deleteRuleConfirm")}
       />
     </div>
   )
