@@ -206,6 +206,8 @@ export default function ReportBuilderPage() {
   const [exportDialogOpen, setExportDialogOpen] = useState(false)
   const [reportName, setReportName] = useState("")
   const [editingReportId, setEditingReportId] = useState<string | null>(null)
+  const [scheduleFreq, setScheduleFreq] = useState("")
+  const [scheduleEmails, setScheduleEmails] = useState("")
 
   const debounceRef = useRef<NodeJS.Timeout | null>(null)
 
@@ -313,7 +315,9 @@ export default function ReportBuilderPage() {
     if (!reportName.trim()) return
     setSaving(true)
     try {
-      const body = { name: reportName, config: buildConfig(), id: editingReportId }
+      const body: any = { name: reportName, config: buildConfig(), id: editingReportId }
+      if (scheduleFreq) body.scheduleFreq = scheduleFreq
+      if (scheduleEmails.trim()) body.scheduleEmails = scheduleEmails.split(",").map((e: string) => e.trim()).filter(Boolean)
       const res = await fetch("/api/v1/reports/builder", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -355,6 +359,8 @@ export default function ReportBuilderPage() {
       setChartType(c.chartType)
       setEditingReportId(report.id)
       setReportName(report.name)
+      setScheduleFreq((report as any).scheduleFreq || "")
+      setScheduleEmails(((report as any).scheduleEmails || []).join(", "))
     }, 50)
   }
 
@@ -895,6 +901,35 @@ export default function ReportBuilderPage() {
               <Badge variant="outline">
                 {CHART_TYPES.find((c) => c.value === chartType)?.label}
               </Badge>
+            </div>
+            {/* Schedule section */}
+            <div className="border-t pt-3 mt-1 space-y-2">
+              <p className="text-xs font-medium text-muted-foreground">Email Schedule (optional)</p>
+              <div>
+                <Label htmlFor="schedule-freq" className="text-xs">Frequency</Label>
+                <Select
+                  value={scheduleFreq}
+                  onChange={(e) => setScheduleFreq(e.target.value)}
+                  className="mt-1 h-8 text-xs"
+                >
+                  <option value="">No schedule</option>
+                  <option value="daily">Daily</option>
+                  <option value="weekly">Weekly</option>
+                  <option value="monthly">Monthly</option>
+                </Select>
+              </div>
+              {scheduleFreq && (
+                <div>
+                  <Label htmlFor="schedule-emails" className="text-xs">Recipients (comma-separated)</Label>
+                  <Input
+                    id="schedule-emails"
+                    placeholder="user@example.com, team@company.com"
+                    value={scheduleEmails}
+                    onChange={(e) => setScheduleEmails(e.target.value)}
+                    className="mt-1 h-8 text-xs"
+                  />
+                </div>
+              )}
             </div>
           </div>
           <DialogFooter>

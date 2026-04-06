@@ -13,6 +13,7 @@ import {
   Clock, Target, FileText, Receipt, Users, Swords, Package, Plus, X,
   Pencil, Loader2, Check, Search,
 } from "lucide-react"
+import { useFieldPermissions } from "@/hooks/use-field-permissions"
 
 interface Deal {
   id: string
@@ -375,6 +376,7 @@ const THREAT_COLORS: Record<string, string> = {
 export function DealSidebar({ deal, orgId, offersCount, invoicesCount, onEdit, fetchDeal }: DealSidebarProps) {
   const t = useTranslations("deals")
   const tc = useTranslations("common")
+  const { isVisible } = useFieldPermissions("deal")
   const [showAddMember, setShowAddMember] = useState(false)
   const [showAddRole, setShowAddRole] = useState(false)
   const [showAddCompetitor, setShowAddCompetitor] = useState(false)
@@ -429,28 +431,30 @@ export function DealSidebar({ deal, orgId, offersCount, invoicesCount, onEdit, f
       )}
 
       {/* ── Deal Value + Stage (hero) ── */}
-      <div className="p-4 border-b border-border">
-        <div className="text-2xl font-bold tabular-nums tracking-tight">
-          {deal.valueAmount.toLocaleString()} {deal.currency}
+      {isVisible("valueAmount") && (
+        <div className="p-4 border-b border-border">
+          <div className="text-2xl font-bold tabular-nums tracking-tight">
+            {deal.valueAmount.toLocaleString()} {deal.currency}
+          </div>
+          <div className="flex items-center gap-2 mt-1">
+            {isVisible("probability") && <span className="text-xs text-muted-foreground">{t("winProbability")}: {deal.probability}%</span>}
+            {isVisible("probability") && <span className="text-xs text-muted-foreground">·</span>}
+            <span className="text-xs text-muted-foreground">{t("confidenceLevel")}: {deal.confidenceLevel ?? 50}%</span>
+          </div>
         </div>
-        <div className="flex items-center gap-2 mt-1">
-          <span className="text-xs text-muted-foreground">{t("winProbability")}: {deal.probability}%</span>
-          <span className="text-xs text-muted-foreground">·</span>
-          <span className="text-xs text-muted-foreground">{t("confidenceLevel")}: {deal.confidenceLevel ?? 50}%</span>
-        </div>
-      </div>
+      )}
 
       {/* ── Key Info ── */}
       <div className="p-4 border-b border-border space-y-2.5">
         {[
-          { icon: Building2, label: t("company"), value: deal.company?.name },
-          { icon: User, label: t("assignedTo"), value: deal.assignedTo },
-          { icon: Calendar, label: t("expectedClose"), value: deal.expectedClose ? new Date(deal.expectedClose).toLocaleDateString("az-AZ") : null },
-          { icon: Clock, label: tc("created"), value: new Date(deal.createdAt).toLocaleDateString("az-AZ") },
-          { icon: Target, label: t("campaign"), value: deal.campaign?.name },
-          { icon: Target, label: t("customerNeed"), value: deal.customerNeed },
-          { icon: Target, label: t("salesChannel"), value: deal.salesChannel },
-        ].filter(item => item.value).map(({ icon: Icon, label, value }) => (
+          { icon: Building2, label: t("company"), value: deal.company?.name, field: "name" },
+          { icon: User, label: t("assignedTo"), value: deal.assignedTo, field: "assignedTo" },
+          { icon: Calendar, label: t("expectedClose"), value: deal.expectedClose ? new Date(deal.expectedClose).toLocaleDateString("az-AZ") : null, field: "expectedClose" },
+          { icon: Clock, label: tc("created"), value: new Date(deal.createdAt).toLocaleDateString("az-AZ"), field: "createdAt" },
+          { icon: Target, label: t("campaign"), value: deal.campaign?.name, field: "campaign" },
+          { icon: Target, label: t("customerNeed"), value: deal.customerNeed, field: "customerNeed" },
+          { icon: Target, label: t("salesChannel"), value: deal.salesChannel, field: "salesChannel" },
+        ].filter(item => item.value && isVisible(item.field)).map(({ icon: Icon, label, value }) => (
           <div key={label} className="flex items-center gap-2.5">
             <Icon className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
             <span className="text-xs text-muted-foreground w-24 flex-shrink-0">{label}</span>
@@ -460,7 +464,7 @@ export function DealSidebar({ deal, orgId, offersCount, invoicesCount, onEdit, f
       </div>
 
       {/* ── Notes ── */}
-      {deal.notes && (
+      {deal.notes && isVisible("notes") && (
         <div className="p-4 border-b border-border">
           <p className="text-xs font-medium text-muted-foreground mb-1.5">{t("notes")}</p>
           <p className="text-xs leading-relaxed whitespace-pre-wrap">{deal.notes}</p>

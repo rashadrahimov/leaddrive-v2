@@ -59,6 +59,44 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 })
   }
 
+  // Normalize: frontend sends { name, config: { entity, columns, ... }, scheduleFreq, scheduleEmails }
+  // API expects flat { name, entityType, columns, ... }
+  if (body.config && typeof body.config === "object") {
+    const cfg = body.config
+    body.entityType = body.entityType || cfg.entityType || cfg.entity
+    body.columns = body.columns || cfg.columns
+    body.filters = body.filters || cfg.filters
+    body.groupBy = body.groupBy || cfg.groupBy || null
+    body.sortBy = body.sortBy || cfg.sortBy || null
+    body.sortOrder = body.sortOrder || cfg.sortOrder || "desc"
+    body.chartType = body.chartType || cfg.chartType || "table"
+  }
+  // Accept "entity" as alias for "entityType"
+  if (!body.entityType && body.entity) body.entityType = body.entity
+
+  // Handle update (if id provided, use PUT logic)
+  if (body.id) {
+    const updateData: any = {}
+    if (body.name) updateData.name = body.name
+    if (body.entityType) updateData.entityType = body.entityType
+    if (body.columns) updateData.columns = body.columns
+    if (body.filters) updateData.filters = body.filters
+    if (body.groupBy !== undefined) updateData.groupBy = body.groupBy || null
+    if (body.sortBy !== undefined) updateData.sortBy = body.sortBy || null
+    if (body.sortOrder) updateData.sortOrder = body.sortOrder
+    if (body.chartType) updateData.chartType = body.chartType
+    if (body.scheduleFreq !== undefined) updateData.scheduleFreq = body.scheduleFreq || null
+    if (body.scheduleEmails) updateData.scheduleEmails = body.scheduleEmails
+
+    const updated = await prisma.savedReport.updateMany({
+      where: { id: body.id, organizationId: orgId },
+      data: updateData,
+    })
+    if (updated.count === 0) return NextResponse.json({ error: "Report not found" }, { status: 404 })
+    const report = await prisma.savedReport.findUnique({ where: { id: body.id } })
+    return NextResponse.json(report)
+  }
+
   let data
   try {
     data = createReportSchema.parse(body)

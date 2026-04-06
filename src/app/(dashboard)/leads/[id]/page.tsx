@@ -24,6 +24,7 @@ import {
 import { useLocale } from "next-intl"
 import { cn } from "@/lib/utils"
 import { InfoHint } from "@/components/info-hint"
+import { useFieldPermissions } from "@/hooks/use-field-permissions"
 
 interface Lead {
   id: string
@@ -96,6 +97,7 @@ export default function LeadDetailPage() {
   const [emailError, setEmailError] = useState("")
   const [scoring, setScoring] = useState(false)
 
+  const { isVisible, isEditable } = useFieldPermissions("lead")
   const id = params.id as string
   const orgId = session?.user?.organizationId
   const locale = useLocale()
@@ -367,12 +369,14 @@ export default function LeadDetailPage() {
           icon={<Calendar className="h-4 w-4" />}
           color="blue"
         />
-        <ColorStatCard
-          label={t("modalEstimatedValue")}
-          value={lead.estimatedValue ? `$${lead.estimatedValue.toLocaleString()}` : "---"}
-          icon={<DollarSign className="h-4 w-4" />}
-          color="green"
-        />
+        {isVisible("estimatedValue") && (
+          <ColorStatCard
+            label={t("modalEstimatedValue")}
+            value={lead.estimatedValue ? `$${lead.estimatedValue.toLocaleString()}` : "---"}
+            icon={<DollarSign className="h-4 w-4" />}
+            color="green"
+          />
+        )}
         <ColorStatCard
           label={t("modalPriority")}
           value={priorityLabels[lead.priority] || lead.priority}
@@ -427,28 +431,32 @@ export default function LeadDetailPage() {
               <span className="text-muted-foreground">{t("modalCompany")}:</span>
               <span className="font-medium">{lead.companyName || "---"}</span>
             </div>
-            <div className="flex items-center gap-2">
-              <Mail className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-              <span className="text-muted-foreground">{tc("email")}:</span>
-              {lead.email ? (
-                <a href={`mailto:${lead.email}`} className="font-medium text-primary hover:underline">
-                  {lead.email}
-                </a>
-              ) : (
-                <span className="text-muted-foreground">---</span>
-              )}
-            </div>
-            <div className="flex items-center gap-2">
-              <Phone className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-              <span className="text-muted-foreground">{t("modalPhone")}:</span>
-              {lead.phone ? (
-                <a href={`tel:${lead.phone}`} className="font-medium text-primary hover:underline">
-                  {lead.phone}
-                </a>
-              ) : (
-                <span className="text-muted-foreground">---</span>
-              )}
-            </div>
+            {isVisible("email") && (
+              <div className="flex items-center gap-2">
+                <Mail className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                <span className="text-muted-foreground">{tc("email")}:</span>
+                {lead.email ? (
+                  <a href={`mailto:${lead.email}`} className="font-medium text-primary hover:underline">
+                    {lead.email}
+                  </a>
+                ) : (
+                  <span className="text-muted-foreground">---</span>
+                )}
+              </div>
+            )}
+            {isVisible("phone") && (
+              <div className="flex items-center gap-2">
+                <Phone className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                <span className="text-muted-foreground">{t("modalPhone")}:</span>
+                {lead.phone ? (
+                  <a href={`tel:${lead.phone}`} className="font-medium text-primary hover:underline">
+                    {lead.phone}
+                  </a>
+                ) : (
+                  <span className="text-muted-foreground">---</span>
+                )}
+              </div>
+            )}
             <div className="flex items-center gap-2">
               <Globe className="h-4 w-4 text-muted-foreground flex-shrink-0" />
               <span className="text-muted-foreground">{t("modalSource")}:</span>

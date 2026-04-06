@@ -20,6 +20,7 @@ import { DealSidebar } from "@/components/deals/deal-sidebar"
 import { ActivityTimeline } from "@/components/deals/activity-timeline"
 import { StageValidationDialog } from "@/components/deals/stage-validation-dialog"
 import { StageChecklistDialog } from "@/components/deals/stage-checklist-dialog"
+import { useFieldPermissions } from "@/hooks/use-field-permissions"
 
 const FALLBACK_STAGE_STYLES = [
   { key: "LEAD",        color: "#6366f1", bg: "bg-indigo-500" },
@@ -321,6 +322,7 @@ export default function DealDetailPage() {
   const { data: session } = useSession()
   const orgId = session?.user?.organizationId ? String(session.user.organizationId) : undefined
 
+  const { isVisible, isEditable } = useFieldPermissions("deal")
   const [deal, setDeal] = useState<Deal | null>(null)
   const [loading, setLoading] = useState(true)
   const [editOpen, setEditOpen] = useState(false)

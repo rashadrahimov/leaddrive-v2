@@ -89,7 +89,9 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   const role = session?.role || "admin"
   const { id } = await params
   const body = await req.json()
-  const parsed = updateTicketSchema.safeParse(body)
+  const preFieldPerms = await getFieldPermissions(orgId, role, "ticket")
+  const filteredBody = filterWritableFields(body, preFieldPerms, role)
+  const parsed = updateTicketSchema.safeParse(filteredBody)
   if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 })
 
   try {
