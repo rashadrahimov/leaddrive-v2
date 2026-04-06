@@ -1,8 +1,9 @@
 "use client"
 
 import { motion, AnimatePresence } from "framer-motion"
-import { CheckCircle2, XCircle, AlertTriangle, X } from "lucide-react"
+import { XCircle, AlertTriangle, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { useTranslations } from "next-intl"
 
 interface ValidationError {
   field: string
@@ -26,6 +27,8 @@ export function StageValidationDialog({
   stageLabel,
   stageColor,
 }: StageValidationDialogProps) {
+  const t = useTranslations("deals")
+
   if (!open) return null
 
   return (
@@ -56,9 +59,9 @@ export function StageValidationDialog({
                 <div className="flex items-center gap-2.5">
                   <AlertTriangle className="h-5 w-5 text-amber-500" />
                   <div>
-                    <p className="text-sm font-semibold">Stage Transition Blocked</p>
+                    <p className="text-sm font-semibold">{t("stageTransitionBlocked")}</p>
                     <p className="text-xs text-muted-foreground">
-                      Requirements for <span className="font-medium" style={{ color: stageColor }}>{stageLabel}</span>
+                      {t("requirementsFor")} <span className="font-medium" style={{ color: stageColor }}>{stageLabel}</span>
                     </p>
                   </div>
                 </div>
@@ -81,7 +84,7 @@ export function StageValidationDialog({
                     <div>
                       <p className="text-sm font-medium text-red-700 dark:text-red-400">{err.message}</p>
                       <p className="text-xs text-red-500/70 dark:text-red-400/60 mt-0.5">
-                        Field: {err.field}
+                        {t("fieldLabel")}: {err.field}
                       </p>
                     </div>
                   </motion.div>
@@ -91,7 +94,7 @@ export function StageValidationDialog({
               {/* Footer */}
               <div className="p-4 border-t bg-muted/20">
                 <Button onClick={onClose} variant="outline" className="w-full">
-                  Understood
+                  {t("understood")}
                 </Button>
               </div>
             </div>

@@ -100,6 +100,8 @@ function TagsInput({ tags, onChange, addTagLabel }: { tags: string[]; onChange: 
 
 // ── AI Prediction Card ──
 function AiPredictionCard({ dealId }: { dealId: string }) {
+  const t = useTranslations("deals")
+  const tc = useTranslations("common")
   const [pred, setPred] = useState<any>(null)
   const [nextActions, setNextActions] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
@@ -122,6 +124,22 @@ function AiPredictionCard({ dealId }: { dealId: string }) {
       .finally(() => setLoading(false))
   }
 
+  // Translate a prediction factor { key, params } to localized string
+  const translateFactor = (f: any): string => {
+    if (typeof f === "string") return f // legacy string format
+    const factorKeys: Record<string, string> = {
+      dealNotFound: t("factorDealNotFound"),
+      noActivityDays: t("factorNoActivityDays", { days: f.params?.days ?? 0 }),
+      dealOpenDays: t("factorDealOpenDays", { days: f.params?.days ?? 0 }),
+      fewInteractions: t("factorFewInteractions"),
+      overdueCloseDate: t("factorOverdueCloseDate"),
+      interactionsCount: t("factorInteractionsCount", { count: f.params?.count ?? 0 }),
+      recentActivity: t("factorRecentActivity"),
+      highProbabilityStage: t("factorHighProbabilityStage", { probability: f.params?.probability ?? 0 }),
+    }
+    return factorKeys[f.key] || f.key
+  }
+
   useEffect(() => { fetchPrediction() }, [dealId])
 
   if (loading) {
@@ -129,7 +147,7 @@ function AiPredictionCard({ dealId }: { dealId: string }) {
       <div className="rounded-xl border bg-card p-4">
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <Loader2 className="h-3.5 w-3.5 animate-spin" />
-          AI прогноз...
+          {t("aiPredictionLoading")}
         </div>
       </div>
     )
@@ -143,12 +161,12 @@ function AiPredictionCard({ dealId }: { dealId: string }) {
   return (
     <div className="rounded-xl border bg-card p-4 space-y-3">
       <div className="flex items-center justify-between">
-        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">AI Прогноз</span>
+        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t("aiPrediction")}</span>
         <button
           onClick={fetchPrediction}
-          className="text-[10px] text-primary hover:underline"
+          className="text-xs text-primary hover:underline"
         >
-          Обновить
+          {tc("refresh")}
         </button>
       </div>
 
@@ -169,9 +187,9 @@ function AiPredictionCard({ dealId }: { dealId: string }) {
           </span>
         </div>
         <div>
-          <p className="text-sm font-semibold">Вероятность выигрыша</p>
-          <p className="text-[10px] text-muted-foreground">
-            Уверенность: {pred.confidence}%
+          <p className="text-sm font-semibold">{t("winProbabilityFull")}</p>
+          <p className="text-xs text-muted-foreground">
+            {t("confidenceLabel", { value: pred.confidence })}
           </p>
         </div>
       </div>
@@ -179,10 +197,10 @@ function AiPredictionCard({ dealId }: { dealId: string }) {
       {/* Risk factors */}
       {pred.riskFactors?.length > 0 && (
         <div>
-          <p className="text-[10px] font-medium text-red-600 mb-1">Риски:</p>
-          {pred.riskFactors.map((f: string, i: number) => (
-            <p key={i} className="text-[10px] text-muted-foreground flex items-center gap-1">
-              <span className="h-1 w-1 rounded-full bg-red-400 shrink-0" /> {f}
+          <p className="text-xs font-medium text-red-600 mb-1">{t("risksTitle")}</p>
+          {pred.riskFactors.map((f: any, i: number) => (
+            <p key={i} className="text-xs text-muted-foreground flex items-center gap-1">
+              <span className="h-1 w-1 rounded-full bg-red-400 shrink-0" /> {translateFactor(f)}
             </p>
           ))}
         </div>
@@ -191,10 +209,10 @@ function AiPredictionCard({ dealId }: { dealId: string }) {
       {/* Positive factors */}
       {pred.positiveFactors?.length > 0 && (
         <div>
-          <p className="text-[10px] font-medium text-emerald-600 mb-1">Сильные стороны:</p>
-          {pred.positiveFactors.map((f: string, i: number) => (
-            <p key={i} className="text-[10px] text-muted-foreground flex items-center gap-1">
-              <span className="h-1 w-1 rounded-full bg-emerald-400 shrink-0" /> {f}
+          <p className="text-xs font-medium text-emerald-600 mb-1">{t("positiveFactorsTitle")}</p>
+          {pred.positiveFactors.map((f: any, i: number) => (
+            <p key={i} className="text-xs text-muted-foreground flex items-center gap-1">
+              <span className="h-1 w-1 rounded-full bg-emerald-400 shrink-0" /> {translateFactor(f)}
             </p>
           ))}
         </div>
@@ -203,15 +221,15 @@ function AiPredictionCard({ dealId }: { dealId: string }) {
       {/* Next best actions */}
       {nextActions.length > 0 && (
         <div className="border-t pt-2">
-          <p className="text-[10px] font-medium text-primary mb-1">Рекомендации:</p>
+          <p className="text-xs font-medium text-primary mb-1">{t("recommendationsTitle")}</p>
           {nextActions.map((action: any, i: number) => (
             <div key={i} className="flex items-start gap-1.5 mb-1">
               <span className={`h-1.5 w-1.5 rounded-full mt-1 shrink-0 ${
                 action.priority === "high" ? "bg-red-500" : action.priority === "medium" ? "bg-amber-500" : "bg-blue-500"
               }`} />
               <div>
-                <p className="text-[10px] font-medium">{action.title}</p>
-                <p className="text-[9px] text-muted-foreground">{action.reason}</p>
+                <p className="text-xs font-medium">{action.title}</p>
+                <p className="text-[10px] text-muted-foreground">{action.reason}</p>
               </div>
             </div>
           ))}
@@ -340,16 +358,17 @@ export default function DealDetailPage() {
   const [stageChanging, setStageChanging] = useState(false)
   const [pipelineStages, setPipelineStages] = useState<any[]>([])
 
+  const stageTranslations: Record<string, string> = {
+    LEAD: t("stageLead"),
+    QUALIFIED: t("stageQualified"),
+    PROPOSAL: t("stageProposal"),
+    NEGOTIATION: t("stageNegotiation"),
+    WON: t("stageWon"),
+    LOST: t("stageLost"),
+  }
   const stageLabels: Record<string, string> = pipelineStages.length > 0
-    ? Object.fromEntries(pipelineStages.map(s => [s.name, s.displayName]))
-    : {
-        LEAD: t("stageLead"),
-        QUALIFIED: t("stageQualified"),
-        PROPOSAL: t("stageProposal"),
-        NEGOTIATION: t("stageNegotiation"),
-        WON: t("stageWon"),
-        LOST: t("stageLost"),
-      }
+    ? Object.fromEntries(pipelineStages.map(s => [s.name, stageTranslations[s.name] || s.displayName]))
+    : stageTranslations
 
   const STAGE_STYLES = pipelineStages.length > 0
     ? pipelineStages.map(s => ({ key: s.name, color: s.color, bg: `bg-[${s.color}]` }))

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { CheckCircle2, XCircle, ArrowRight, X, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { useTranslations } from "next-intl"
 
 interface ChecklistItem {
   field: string
@@ -32,6 +33,8 @@ export function StageChecklistDialog({
   items,
   loading,
 }: StageChecklistDialogProps) {
+  const t = useTranslations("deals")
+  const tc = useTranslations("common")
   const allPassed = items.length === 0 || items.every(i => i.passed)
 
   if (!open) return null
@@ -61,9 +64,9 @@ export function StageChecklistDialog({
                 <div className="flex items-center gap-2.5">
                   <ArrowRight className="h-5 w-5 text-muted-foreground" />
                   <div>
-                    <p className="text-sm font-semibold">Move to stage</p>
+                    <p className="text-sm font-semibold">{t("moveToStage")}</p>
                     <p className="text-xs text-muted-foreground">
-                      Requirements for <span className="font-medium" style={{ color: targetStageColor }}>{targetStageLabel}</span>
+                      {t("requirementsFor")} <span className="font-medium" style={{ color: targetStageColor }}>{targetStageLabel}</span>
                     </p>
                   </div>
                 </div>
@@ -81,7 +84,7 @@ export function StageChecklistDialog({
                 ) : items.length === 0 ? (
                   <div className="text-center py-4">
                     <CheckCircle2 className="h-8 w-8 text-green-500 mx-auto mb-2" />
-                    <p className="text-sm text-muted-foreground">No requirements. Ready to move.</p>
+                    <p className="text-sm text-muted-foreground">{t("noRequirementsReady")}</p>
                   </div>
                 ) : (
                   items.map((item, i) => (
@@ -111,7 +114,7 @@ export function StageChecklistDialog({
 
               {/* Footer */}
               <div className="p-4 border-t bg-muted/20 flex gap-2">
-                <Button variant="outline" onClick={onClose} className="flex-1">Cancel</Button>
+                <Button variant="outline" onClick={onClose} className="flex-1">{tc("cancel")}</Button>
                 <Button
                   onClick={onConfirm}
                   disabled={!allPassed || confirming}
@@ -119,7 +122,7 @@ export function StageChecklistDialog({
                   style={allPassed ? { backgroundColor: targetStageColor } : undefined}
                 >
                   {confirming ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ArrowRight className="h-3.5 w-3.5" />}
-                  {allPassed ? "Move" : "Fix issues first"}
+                  {allPassed ? t("move") : t("fixIssuesFirst")}
                 </Button>
               </div>
             </div>

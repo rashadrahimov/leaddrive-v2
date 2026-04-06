@@ -547,7 +547,7 @@ export function DealSidebar({ deal, orgId, offersCount, invoicesCount, onEdit, f
             {showAddMember ? (
               <div className="border rounded-lg p-2 bg-muted/30">
                 <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-[10px] font-semibold">{tc("addMember")}</span>
+                  <span className="text-xs font-semibold">{tc("addMember")}</span>
                   <button onClick={() => setShowAddMember(false)} className="p-0.5 rounded hover:bg-muted">
                     <X className="h-3 w-3" />
                   </button>
@@ -555,7 +555,7 @@ export function DealSidebar({ deal, orgId, offersCount, invoicesCount, onEdit, f
                 <AddTeamMemberForm dealId={deal.id} orgId={orgId} onDone={() => { setShowAddMember(false); fetchDeal() }} />
               </div>
             ) : (
-              <Button variant="outline" size="sm" className="w-full gap-1 h-7 text-[10px]" onClick={() => setShowAddMember(true)}>
+              <Button variant="outline" size="sm" className="w-full gap-1 h-7 text-xs" onClick={() => setShowAddMember(true)}>
                 <Plus className="h-3 w-3" /> {tc("addMember")}
               </Button>
             )}
@@ -580,9 +580,9 @@ export function DealSidebar({ deal, orgId, offersCount, invoicesCount, onEdit, f
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5">
                         <span className="text-sm font-semibold truncate">{cr.contact.fullName}</span>
-                        <Badge variant="outline" className="text-[10px] h-4 px-1.5 font-medium">{cr.role}</Badge>
+                        <Badge variant="outline" className="text-xs h-5 px-1.5 font-medium">{cr.role}</Badge>
                       </div>
-                      {cr.contact.position && <p className="text-xs text-muted-foreground">{cr.contact.position}</p>}
+                      {cr.contact.position && <p className="text-sm text-muted-foreground">{cr.contact.position}</p>}
                     </div>
                     <button
                       className="h-5 w-5 rounded flex items-center justify-center text-muted-foreground hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
@@ -598,7 +598,7 @@ export function DealSidebar({ deal, orgId, offersCount, invoicesCount, onEdit, f
                       <X className="h-3 w-3" />
                     </button>
                   </div>
-                  <div className="mt-2 ml-10 space-y-1 text-xs">
+                  <div className="mt-2 ml-10 space-y-1 text-sm">
                     {(cr as any).influence && (
                       <div className="flex"><span className="text-muted-foreground w-20">{tc("influence")}</span><span className="font-medium">{(cr as any).influence}</span></div>
                     )}
@@ -624,7 +624,7 @@ export function DealSidebar({ deal, orgId, offersCount, invoicesCount, onEdit, f
             {showAddRole ? (
               <div className="border rounded-lg p-2 bg-muted/30">
                 <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-[10px] font-semibold">{tc("addContactRole")}</span>
+                  <span className="text-xs font-semibold">{tc("addContactRole")}</span>
                   <button onClick={() => setShowAddRole(false)} className="p-0.5 rounded hover:bg-muted">
                     <X className="h-3 w-3" />
                   </button>
@@ -632,7 +632,7 @@ export function DealSidebar({ deal, orgId, offersCount, invoicesCount, onEdit, f
                 <AddContactRoleForm dealId={deal.id} orgId={orgId} onDone={() => { setShowAddRole(false); fetchDeal() }} />
               </div>
             ) : (
-              <Button variant="outline" size="sm" className="w-full gap-1 h-7 text-[10px]" onClick={() => setShowAddRole(true)}>
+              <Button variant="outline" size="sm" className="w-full gap-1 h-7 text-xs" onClick={() => setShowAddRole(true)}>
                 <Plus className="h-3 w-3" /> {tc("addContactRole")}
               </Button>
             )}
@@ -649,13 +649,13 @@ export function DealSidebar({ deal, orgId, offersCount, invoicesCount, onEdit, f
           <div className="space-y-1.5">
             {competitors.length > 0 ? (
               competitors.map(comp => (
-                <div key={comp.id} className="py-1.5 group">
-                  <div className="flex items-center gap-2">
-                    <div className="h-6 w-6 rounded-full bg-orange-100 dark:bg-orange-900/20 flex items-center justify-center text-[10px] font-semibold text-orange-600 dark:text-orange-400 flex-shrink-0">
+                <div key={comp.id} className="rounded-lg border bg-muted/30 p-3 group">
+                  <div className="flex items-center gap-2.5">
+                    <div className="h-7 w-7 rounded-full bg-orange-100 dark:bg-orange-900/20 flex items-center justify-center text-xs font-semibold text-orange-600 dark:text-orange-400 flex-shrink-0">
                       {comp.name[0]}
                     </div>
-                    <span className="text-xs font-medium truncate flex-1">{comp.name}</span>
-                    <Badge variant="outline" className={`text-[10px] h-4 px-1.5 border-0 ${THREAT_COLORS[comp.threat] || ""}`}>
+                    <span className="text-sm font-medium truncate flex-1">{comp.name}</span>
+                    <Badge variant="outline" className={`text-xs h-5 px-1.5 border-0 ${THREAT_COLORS[comp.threat] || ""}`}>
                       {comp.threat}
                     </Badge>
                     <button
@@ -672,13 +672,20 @@ export function DealSidebar({ deal, orgId, offersCount, invoicesCount, onEdit, f
                       <X className="h-3 w-3" />
                     </button>
                   </div>
-                  {(comp.product || comp.price) && (
-                    <div className="ml-8 mt-0.5 flex items-center gap-2 text-[10px] text-muted-foreground">
-                      {comp.product && <span>{comp.product}</span>}
-                      {comp.product && comp.price && <span>·</span>}
-                      {comp.price && <span>{comp.price}</span>}
-                    </div>
-                  )}
+                  <div className="mt-2 ml-9 space-y-1 text-sm">
+                    {comp.product && (
+                      <div className="flex"><span className="text-muted-foreground w-24 flex-shrink-0">{tc("theirProduct")}</span><span className="font-medium">{comp.product}</span></div>
+                    )}
+                    {comp.price && (
+                      <div className="flex"><span className="text-muted-foreground w-24 flex-shrink-0">{tc("theirPrice")}</span><span className="font-medium">{comp.price}</span></div>
+                    )}
+                    {comp.strengths && (
+                      <div className="flex"><span className="text-muted-foreground w-24 flex-shrink-0">{tc("theirStrengths")}</span><span className="font-medium text-green-600 dark:text-green-400">{comp.strengths}</span></div>
+                    )}
+                    {comp.weaknesses && (
+                      <div className="flex"><span className="text-muted-foreground w-24 flex-shrink-0">{tc("theirWeaknesses")}</span><span className="font-medium text-red-600 dark:text-red-400">{comp.weaknesses}</span></div>
+                    )}
+                  </div>
                 </div>
               ))
             ) : (
@@ -688,7 +695,7 @@ export function DealSidebar({ deal, orgId, offersCount, invoicesCount, onEdit, f
             {showAddCompetitor ? (
               <div className="border rounded-lg p-2 bg-muted/30">
                 <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-[10px] font-semibold">{tc("addCompetitor")}</span>
+                  <span className="text-xs font-semibold">{tc("addCompetitor")}</span>
                   <button onClick={() => setShowAddCompetitor(false)} className="p-0.5 rounded hover:bg-muted">
                     <X className="h-3 w-3" />
                   </button>
@@ -696,7 +703,7 @@ export function DealSidebar({ deal, orgId, offersCount, invoicesCount, onEdit, f
                 <AddCompetitorForm dealId={deal.id} orgId={orgId} onDone={() => { setShowAddCompetitor(false); fetchCompetitors() }} />
               </div>
             ) : (
-              <Button variant="outline" size="sm" className="w-full gap-1 h-7 text-[10px]" onClick={() => setShowAddCompetitor(true)}>
+              <Button variant="outline" size="sm" className="w-full gap-1 h-7 text-xs" onClick={() => setShowAddCompetitor(true)}>
                 <Plus className="h-3 w-3" /> {tc("addCompetitor")}
               </Button>
             )}

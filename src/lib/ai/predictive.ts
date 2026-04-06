@@ -2,11 +2,16 @@ import { prisma } from "@/lib/prisma"
 
 // ── Deal Win Probability ──
 
+export interface PredictionFactor {
+  key: string
+  params?: Record<string, string | number>
+}
+
 export interface DealPrediction {
   winProbability: number
   expectedCloseDate: Date | null
-  riskFactors: string[]
-  positiveFactors: string[]
+  riskFactors: PredictionFactor[]
+  positiveFactors: PredictionFactor[]
   confidence: number
 }
 
@@ -23,7 +28,7 @@ export async function predictDealWin(dealId: string, orgId: string): Promise<Dea
     },
   })
   if (!deal) {
-    return { winProbability: 0, expectedCloseDate: null, riskFactors: ["Сделка не найдена"], positiveFactors: [], confidence: 0 }
+    return { winProbability: 0, expectedCloseDate: null, riskFactors: [{ key: "dealNotFound" }], positiveFactors: [], confidence: 0 }
   }
 
   const activities = await prisma.activity.findMany({
@@ -79,16 +84,16 @@ export async function predictDealWin(dealId: string, orgId: string): Promise<Dea
   score = Math.max(0, Math.min(100, Math.round(score)))
 
   // Risk factors
-  const riskFactors: string[] = []
-  if (daysSinceLastActivity > 14) riskFactors.push(`Нет активности ${daysSinceLastActivity} дней`)
-  if (dealAge > 90) riskFactors.push(`Сделка открыта ${dealAge} дней`)
-  if (activityCount < 3) riskFactors.push("Мало взаимодействий")
-  if (deal.expectedClose && new Date(deal.expectedClose) < new Date()) riskFactors.push("Просрочена ожидаемая дата закрытия")
+  const riskFactors: PredictionFactor[] = []
+  if (daysSinceLastActivity > 14) riskFactors.push({ key: "noActivityDays", params: { days: daysSinceLastActivity } })
+  if (dealAge > 90) riskFactors.push({ key: "dealOpenDays", params: { days: dealAge } })
+  if (activityCount < 3) riskFactors.push({ key: "fewInteractions" })
+  if (deal.expectedClose && new Date(deal.expectedClose) < new Date()) riskFactors.push({ key: "overdueCloseDate" })
 
-  const positiveFactors: string[] = []
-  if (activityCount > 5) positiveFactors.push(`${activityCount} взаимодействий`)
-  if (daysSinceLastActivity <= 3) positiveFactors.push("Недавняя активность")
-  if (stageProbability >= 70) positiveFactors.push(`Стадия с высокой вероятностью (${stageProbability}%)`)
+  const positiveFactors: PredictionFactor[] = []
+  if (activityCount > 5) positiveFactors.push({ key: "interactionsCount", params: { count: activityCount } })
+  if (daysSinceLastActivity <= 3) positiveFactors.push({ key: "recentActivity" })
+  if (stageProbability >= 70) positiveFactors.push({ key: "highProbabilityStage", params: { probability: stageProbability } })
 
   const confidence = totalClosed > 20 ? 80 : totalClosed > 5 ? 50 : 30
 
