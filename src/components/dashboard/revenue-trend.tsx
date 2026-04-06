@@ -50,7 +50,7 @@ export function RevenueTrend({ forecast }: { forecast: any[] }) {
             <YAxis hide />
             <Tooltip
               formatter={((v: number, name: string) => {
-                const labels: Record<string, string> = { actual: "Факт", committed: "Подтвержд.", bestCase: "Лучший", pipeline: "Воронка" }
+                const labels: Record<string, string> = { actual: t("chartActual"), committed: t("chartCommitted"), bestCase: t("chartBestCase"), pipeline: t("chartPipeline") }
                 return [`₼${v.toLocaleString()}`, labels[name] || name]
               }) as any}
               labelStyle={{ fontSize: 11 }}

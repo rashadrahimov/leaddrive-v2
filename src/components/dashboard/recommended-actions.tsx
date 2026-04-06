@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { useTranslations } from "next-intl"
 import { Target, Phone, Mail, CheckSquare, ArrowUpRight, Loader2, Play } from "lucide-react"
 import Link from "next/link"
 
@@ -40,6 +41,7 @@ function getEntityLink(type: string, id: string): string {
 }
 
 export function RecommendedActions() {
+  const t = useTranslations("dashboard")
   const [actions, setActions] = useState<NextAction[]>([])
   const [loading, setLoading] = useState(true)
   const [executing, setExecuting] = useState<number | null>(null)
@@ -93,7 +95,7 @@ export function RecommendedActions() {
     <div className="rounded-lg bg-card border border-border shadow-sm p-3">
       <div className="flex items-center gap-1.5 mb-2">
         <Target className="h-4 w-4 text-primary" />
-        <span className="text-sm font-semibold">Рекомендуемые действия</span>
+        <span className="text-sm font-semibold">{t("recommendedActions")}</span>
       </div>
 
       {loading ? (
@@ -102,7 +104,7 @@ export function RecommendedActions() {
         </div>
       ) : actions.length === 0 ? (
         <div className="h-[140px] flex items-center justify-center text-xs text-muted-foreground">
-          Нет рекомендаций
+          {t("noRecommendations")}
         </div>
       ) : (
         <div className="space-y-1.5">
@@ -130,7 +132,7 @@ export function RecommendedActions() {
                 <button
                   onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleQuickAction(action, idx) }}
                   className="h-6 w-6 rounded-md flex items-center justify-center shrink-0 hover:bg-primary/10 text-muted-foreground hover:text-primary transition-colors"
-                  title={action.type === "call" ? "Записать звонок" : action.type === "email" ? "Записать email" : "Создать задачу"}
+                  title={action.type === "call" ? t("logCall") : action.type === "email" ? t("logEmail") : t("createTask")}
                 >
                   {executing === idx ? (
                     <Loader2 className="h-3 w-3 animate-spin" />

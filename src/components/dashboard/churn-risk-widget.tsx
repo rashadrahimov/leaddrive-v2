@@ -35,7 +35,7 @@ export function ChurnRiskWidget() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           title: `Check-in: ${item.companyName}`,
-          description: `Риск оттока: ${item.riskScore}%. Факторы: ${item.factors.join(", ")}`,
+          description: t("churnTaskDesc", { score: item.riskScore, factors: item.factors.join(", ") }),
           priority: item.riskScore >= 60 ? "high" : "medium",
           relatedType: "company",
           relatedId: item.companyId,
@@ -50,13 +50,13 @@ export function ChurnRiskWidget() {
     <div className="rounded-lg bg-card border border-border shadow-sm p-3">
       <div className="flex items-center gap-1.5 mb-2">
         <AlertTriangle className="h-4 w-4 text-amber-500" />
-        <span className="text-sm font-semibold">Риск оттока</span>
+        <span className="text-sm font-semibold">{t("churnRisk")}</span>
       </div>
 
       {loading ? (
-        <div className="h-[120px] flex items-center justify-center text-xs text-muted-foreground">Загрузка...</div>
+        <div className="h-[120px] flex items-center justify-center text-xs text-muted-foreground">{t("loading")}</div>
       ) : data.length === 0 ? (
-        <div className="h-[120px] flex items-center justify-center text-xs text-muted-foreground">Нет данных</div>
+        <div className="h-[120px] flex items-center justify-center text-xs text-muted-foreground">{t("noData")}</div>
       ) : (
         <div className="space-y-2">
           {data.map(item => (
@@ -86,7 +86,7 @@ export function ChurnRiskWidget() {
                 <button
                   onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleCreateCheckin(item) }}
                   className="h-5 w-5 rounded flex items-center justify-center hover:bg-primary/10 text-muted-foreground hover:text-primary transition-colors"
-                  title="Создать задачу check-in"
+                  title={t("churnCreateCheckin")}
                 >
                   {creatingTask === item.companyId ? (
                     <Loader2 className="h-3 w-3 animate-spin" />

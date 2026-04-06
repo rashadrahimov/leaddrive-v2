@@ -21,7 +21,7 @@ export function AiLeadScoring({ leads }: { leads: any[] }) {
   const t = useTranslations("dashboard")
 
   return (
-    <div className="rounded-xl bg-card border border-border/60 shadow-[0_1px_3px_rgba(0,0,0,0.05)] p-4 ai-accent">
+    <div className="rounded-xl p-4 ai-card shadow-[0_1px_3px_rgba(0,0,0,0.05)]">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <div className="h-7 w-7 rounded-lg bg-gradient-to-br from-[hsl(var(--ai-from))]/10 to-[hsl(var(--ai-to))]/10 flex items-center justify-center">
