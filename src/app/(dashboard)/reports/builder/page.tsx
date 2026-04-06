@@ -189,6 +189,24 @@ interface PreviewData {
 
 export default function ReportBuilderPage() {
   const tr = useTranslations("reportBuilder")
+
+  // Translated operators and chart types
+  const operators = [
+    { value: "eq", label: tr("opEquals") },
+    { value: "neq", label: tr("opNotEquals") },
+    { value: "gt", label: tr("opGreaterThan") },
+    { value: "lt", label: tr("opLessThan") },
+    { value: "contains", label: tr("opContains") },
+    { value: "in", label: tr("opIn") },
+    { value: "between", label: tr("opBetween") },
+  ]
+  const chartTypes = [
+    { value: "bar", label: tr("chartBar") },
+    { value: "line", label: tr("chartLine") },
+    { value: "pie", label: tr("chartPie") },
+    { value: "area", label: tr("chartArea") },
+  ]
+
   // -- Config state --
   const [entity, setEntity] = useState("deals")
   const [columns, setColumns] = useState<string[]>(["name", "valueAmount", "stage"])
@@ -644,7 +662,7 @@ export default function ReportBuilderPage() {
                           updateFilter(filter.id, { operator: e.target.value })
                         }
                       >
-                        {OPERATORS.map((op) => (
+                        {operators.map((op) => (
                           <option key={op.value} value={op.value}>
                             {op.label}
                           </option>
@@ -731,7 +749,7 @@ export default function ReportBuilderPage() {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-3 gap-1.5">
-                {CHART_TYPES.map((ct) => (
+                {chartTypes.map((ct) => (
                   <button
                     key={ct.value}
                     type="button"
@@ -851,7 +869,7 @@ export default function ReportBuilderPage() {
                     {ENTITY_OPTIONS.find((e) => e.value === entity)?.label}
                   </Badge>
                   <Badge variant="outline" className="text-xs">
-                    {CHART_TYPES.find((c) => c.value === chartType)?.label}
+                    {chartTypes.find((c) => c.value === chartType)?.label}
                   </Badge>
                 </div>
               </div>
@@ -901,7 +919,7 @@ export default function ReportBuilderPage() {
               <Badge variant="outline">{columns.length} {tr("columnsLower")}</Badge>
               <Badge variant="outline">{filters.length} {tr("filtersLower")}</Badge>
               <Badge variant="outline">
-                {CHART_TYPES.find((c) => c.value === chartType)?.label}
+                {chartTypes.find((c) => c.value === chartType)?.label}
               </Badge>
             </div>
             {/* Schedule section */}

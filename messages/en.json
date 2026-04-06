@@ -4008,7 +4008,18 @@
     "dataTable": "Data Table",
     "rows": "rows",
     "csvDesc": "Comma-separated values",
-    "xlsxDesc": "XLSX spreadsheet"
+    "xlsxDesc": "XLSX spreadsheet",
+    "opEquals": "Equals",
+    "opNotEquals": "Not Equals",
+    "opGreaterThan": "Greater Than",
+    "opLessThan": "Less Than",
+    "opContains": "Contains",
+    "opIn": "In",
+    "opBetween": "Between",
+    "chartBar": "Bar Chart",
+    "chartLine": "Line Chart",
+    "chartPie": "Pie Chart",
+    "chartArea": "Area Chart"
   },
   "ticketNotification": {
     "newTicket": "New ticket: {ticketNumber}",

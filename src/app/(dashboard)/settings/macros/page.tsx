@@ -207,31 +207,31 @@ export default function MacrosSettingsPage() {
           <div className="grid gap-4">
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label>Name</Label>
+                <Label>{t("name")}</Label>
                 <Input value={name} onChange={e => setName(e.target.value)} placeholder={t("placeholderName")} />
               </div>
               <div>
-                <Label>Category</Label>
+                <Label>{t("category")}</Label>
                 <Select value={category} onChange={e => setCategory(e.target.value)}>
-                  {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                  {CATEGORIES.map(c => <option key={c} value={c}>{t(c as any)}</option>)}
                 </Select>
               </div>
             </div>
             <div>
-              <Label>Description</Label>
+              <Label>{t("description2")}</Label>
               <Input value={description} onChange={e => setDescription(e.target.value)} placeholder={t("placeholderDesc")} />
             </div>
             <div>
-              <Label>Shortcut Key</Label>
+              <Label>{t("shortcutKey")}</Label>
               <Select value={shortcutKey} onChange={e => setShortcutKey(e.target.value)}>
-                <option value="">None</option>
+                <option value="">{t("none")}</option>
                 {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(n => (
                   <option key={n} value={`Alt+${n}`}>Alt+{n}</option>
                 ))}
               </Select>
             </div>
             <div>
-              <Label>Actions</Label>
+              <Label>{t("actions")}</Label>
               <div className="space-y-2 mt-2">
                 {actions.map((action, i) => (
                   <div key={i} className="flex items-start gap-2">
@@ -260,7 +260,7 @@ export default function MacrosSettingsPage() {
                   </div>
                 ))}
                 <button type="button" onClick={() => setActions([...actions, { type: "add_comment", value: "" }])} className="text-xs text-primary hover:underline">
-                  + Add Action
+                  {t("addAction")}
                 </button>
               </div>
             </div>

@@ -4008,7 +4008,18 @@
     "dataTable": "Таблица данных",
     "rows": "строк",
     "csvDesc": "Значения, разделённые запятыми",
-    "xlsxDesc": "Таблица XLSX"
+    "xlsxDesc": "Таблица XLSX",
+    "opEquals": "Равно",
+    "opNotEquals": "Не равно",
+    "opGreaterThan": "Больше",
+    "opLessThan": "Меньше",
+    "opContains": "Содержит",
+    "opIn": "Входит в",
+    "opBetween": "Между",
+    "chartBar": "Столбчатая",
+    "chartLine": "Линейная",
+    "chartPie": "Круговая",
+    "chartArea": "Площадная"
   },
   "ticketNotification": {
     "newTicket": "Новый тикет: {ticketNumber}",

@@ -4001,7 +4001,18 @@
     "dataTable": "Məlumat cədvəli",
     "rows": "sətir",
     "csvDesc": "Vergüllə ayrılmış dəyərlər",
-    "xlsxDesc": "XLSX cədvəli"
+    "xlsxDesc": "XLSX cədvəli",
+    "opEquals": "Bərabərdir",
+    "opNotEquals": "Bərabər deyil",
+    "opGreaterThan": "Böyükdür",
+    "opLessThan": "Kiçikdir",
+    "opContains": "Ehtiva edir",
+    "opIn": "Daxildir",
+    "opBetween": "Arasında",
+    "chartBar": "Sütun qrafik",
+    "chartLine": "Xətt qrafik",
+    "chartPie": "Dairə qrafik",
+    "chartArea": "Sahə qrafik"
   },
   "ticketNotification": {
     "newTicket": "Yeni tiket: {ticketNumber}",
