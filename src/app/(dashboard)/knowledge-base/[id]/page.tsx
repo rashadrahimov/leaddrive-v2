@@ -33,7 +33,7 @@ export default function KbArticleDetailPage() {
   const fetchArticle = async () => {
     try {
       const res = await fetch(`/api/v1/kb/${params.id}`, {
-        headers: orgId ? { "x-organization-id": String(orgId) } : {},
+        headers: orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>,
       })
       const json = await res.json()
       if (json.success && json.data) setArticle(json.data)
@@ -49,7 +49,7 @@ export default function KbArticleDetailPage() {
   const handleDelete = async () => {
     const res = await fetch(`/api/v1/kb/${params.id}`, {
       method: "DELETE",
-      headers: orgId ? { "x-organization-id": String(orgId) } : {},
+      headers: orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>,
     })
     const json = await res.json()
     if (!json.success) throw new Error(json.error || "Failed to delete")

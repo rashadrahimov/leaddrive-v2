@@ -65,7 +65,7 @@ export default function EventsPage() {
       if (search) qs.set("search", search)
       if (statusFilter) qs.set("status", statusFilter)
       const res = await fetch(`/api/v1/events?${qs}`, {
-        headers: orgId ? { "x-organization-id": String(orgId) } : {},
+        headers: orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>,
       })
       const json = await res.json()
       if (json.success) {
@@ -81,7 +81,7 @@ export default function EventsPage() {
     if (!deleteEvent) return
     await fetch(`/api/v1/events/${deleteEvent.id}`, {
       method: "DELETE",
-      headers: orgId ? { "x-organization-id": String(orgId) } : {},
+      headers: orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>,
     })
     setDeleteEvent(null)
     fetchEvents()

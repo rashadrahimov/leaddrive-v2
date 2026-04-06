@@ -13,7 +13,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   if (!order) return NextResponse.json({ error: "Not found" }, { status: 404 })
   if (order.status !== "approved") return NextResponse.json({ error: "Only approved orders can be executed" }, { status: 400 })
 
-  const result = await prisma.$transaction(async (tx) => {
+  const result = await prisma.$transaction(async (tx: any) => {
     // 1. Mark order as executed
     const updated = await tx.paymentOrder.update({
       where: { id },

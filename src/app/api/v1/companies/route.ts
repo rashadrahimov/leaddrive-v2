@@ -65,7 +65,7 @@ export async function GET(req: NextRequest) {
 
     // Apply field-level permissions
     const fieldPerms = await getFieldPermissions(orgId, role, "company")
-    const filteredCompanies = companies.map(c => filterEntityFields(c, fieldPerms, role))
+    const filteredCompanies = companies.map((c: any) => filterEntityFields(c, fieldPerms, role))
 
     const totalUsers = agg._sum.userCount || 0
     const totalContacts = await prisma.contact.count({ where: { organizationId: orgId } })

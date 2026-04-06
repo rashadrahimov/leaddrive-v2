@@ -77,7 +77,7 @@ export function CompanyForm({ open, onOpenChange, onSaved, initialData, orgId }:
       setError("")
       // Fetch SLA policies
       fetch("/api/v1/sla-policies", {
-        headers: orgId ? { "x-organization-id": orgId } : {},
+        headers: orgId ? { "x-organization-id": orgId } : {} as Record<string, string>,
       })
         .then(r => r.json())
         .then(json => {
@@ -98,7 +98,7 @@ export function CompanyForm({ open, onOpenChange, onSaved, initialData, orgId }:
         method: isEdit ? "PUT" : "POST",
         headers: {
           "Content-Type": "application/json",
-          ...(orgId ? { "x-organization-id": orgId } : {}),
+          ...(orgId ? { "x-organization-id": orgId } : {} as Record<string, string>),
         },
         body: JSON.stringify(form),
       })

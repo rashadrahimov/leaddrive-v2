@@ -126,7 +126,7 @@ export default function ContractsPage() {
   const fetchContracts = async () => {
     try {
       const res = await fetch("/api/v1/contracts?limit=500", {
-        headers: orgId ? { "x-organization-id": String(orgId) } : {},
+        headers: orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>,
       })
       const json = await res.json()
       if (json.success) {
@@ -145,10 +145,10 @@ export default function ContractsPage() {
     try {
       const [contractRes, filesRes] = await Promise.all([
         fetch(`/api/v1/contracts/${contract.id}`, {
-          headers: orgId ? { "x-organization-id": String(orgId) } : {},
+          headers: orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>,
         }),
         fetch(`/api/v1/contracts/${contract.id}/files`, {
-          headers: orgId ? { "x-organization-id": String(orgId) } : {},
+          headers: orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>,
         }),
       ])
       const contractJson = await contractRes.json()
@@ -167,7 +167,7 @@ export default function ContractsPage() {
       formData.append("file", file)
       const res = await fetch(`/api/v1/contracts/${detailContract.id}/files`, {
         method: "POST",
-        headers: orgId ? { "x-organization-id": String(orgId) } : {},
+        headers: orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>,
         body: formData,
       })
       const json = await res.json()
@@ -186,7 +186,7 @@ export default function ContractsPage() {
     try {
       await fetch(`/api/v1/contracts/${detailContract.id}/files/${fileId}`, {
         method: "DELETE",
-        headers: orgId ? { "x-organization-id": String(orgId) } : {},
+        headers: orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>,
       })
       setDetailFiles(prev => prev.filter(f => f.id !== fileId))
     } catch (err) { console.error(err) }
@@ -202,7 +202,7 @@ export default function ContractsPage() {
     if (!deleteId) return
     const res = await fetch(`/api/v1/contracts/${deleteId}`, {
       method: "DELETE",
-      headers: orgId ? { "x-organization-id": String(orgId) } : {},
+      headers: orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>,
     })
     if (!res.ok) throw new Error("Failed to delete")
     fetchContracts()

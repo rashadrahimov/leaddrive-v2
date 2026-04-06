@@ -146,7 +146,7 @@ export default function InvoiceSettingsPage() {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          ...(orgId ? { "x-organization-id": String(orgId) } : {}),
+          ...(orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>),
         },
         body: JSON.stringify({ ...settings, emailTemplates }),
       })

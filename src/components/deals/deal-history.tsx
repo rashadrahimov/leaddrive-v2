@@ -32,7 +32,7 @@ export function DealHistory({ dealId, orgId, deal }: { dealId: string; orgId?: s
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const headers: any = orgId ? { "x-organization-id": orgId } : {}
+    const headers: any = orgId ? { "x-organization-id": orgId } : {} as Record<string, string>
     fetch(`/api/v1/audit-log?entityType=deal&entityId=${dealId}&limit=100`, { headers })
       .then(r => r.json())
       .then(j => { if (j.success) setEntries(j.data?.logs || j.data || []) })

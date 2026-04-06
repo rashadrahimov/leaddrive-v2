@@ -108,7 +108,7 @@ function RuleFormDialog({
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          ...(orgId ? { "x-organization-id": orgId } : {}),
+          ...(orgId ? { "x-organization-id": orgId } : {} as Record<string, string>),
         },
         body: JSON.stringify({
           name: form.name,
@@ -257,7 +257,7 @@ export default function EscalationSettingsPage() {
   const fetchRules = async () => {
     try {
       const res = await fetch("/api/v1/escalation-rules", {
-        headers: orgId ? { "x-organization-id": String(orgId) } : {},
+        headers: orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>,
       })
       const json = await res.json()
       if (json.success) setRules(json.data)
@@ -277,7 +277,7 @@ export default function EscalationSettingsPage() {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
-        ...(orgId ? { "x-organization-id": String(orgId) } : {}),
+        ...(orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>),
       },
       body: JSON.stringify({ isActive: !rule.isActive }),
     })
@@ -288,7 +288,7 @@ export default function EscalationSettingsPage() {
     if (!deleteItem) return
     const res = await fetch(`/api/v1/escalation-rules/${deleteItem.id}`, {
       method: "DELETE",
-      headers: orgId ? { "x-organization-id": String(orgId) } : {},
+      headers: orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>,
     })
     if (!res.ok) throw new Error((await res.json()).error || "Failed to delete")
     fetchRules()

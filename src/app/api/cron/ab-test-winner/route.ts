@@ -39,13 +39,13 @@ export async function POST(req: NextRequest) {
       // Select winner based on criteria
       const criteria = campaign.winnerCriteria ?? "open_rate"
 
-      const variantStats = campaign.variants.map(v => ({
+      const variantStats = campaign.variants.map((v: any) => ({
         ...v,
         openRate: v.totalSent > 0 ? v.totalOpened / v.totalSent : 0,
         clickRate: v.totalSent > 0 ? v.totalClicked / v.totalSent : 0,
       }))
 
-      const sorted = variantStats.sort((a, b) =>
+      const sorted = variantStats.sort((a: any, b: any) =>
         criteria === "click_rate"
           ? b.clickRate - a.clickRate
           : b.openRate - a.openRate

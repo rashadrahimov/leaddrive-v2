@@ -132,7 +132,7 @@ export async function POST(
       const holdoutContacts = contacts.slice(testSize)
 
       // Distribute test contacts among variants by percentage
-      const totalPct = variants.reduce((sum, v) => sum + v.percentage, 0) || 100
+      const totalPct = variants.reduce((sum: number, v: any) => sum + v.percentage, 0) || 100
       let offset = 0
 
       for (const variant of variants) {

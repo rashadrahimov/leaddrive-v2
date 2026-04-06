@@ -79,7 +79,7 @@ export default function KnowledgeBasePage() {
   const fetchArticles = async () => {
     try {
       const res = await fetch("/api/v1/kb?limit=500", {
-        headers: orgId ? { "x-organization-id": String(orgId) } : {},
+        headers: orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>,
       })
       const json = await res.json()
       if (json.success) {
@@ -95,7 +95,7 @@ export default function KnowledgeBasePage() {
     if (!deleteId) return
     const res = await fetch(`/api/v1/kb/${deleteId}`, {
       method: "DELETE",
-      headers: orgId ? { "x-organization-id": String(orgId) } : {},
+      headers: orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>,
     })
     if (!res.ok) throw new Error("Failed to delete")
     fetchArticles()

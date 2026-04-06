@@ -43,7 +43,7 @@ export async function fireWebhooks(
       },
     })
 
-    const matching = webhooks.filter(wh => wh.events.includes(event))
+    const matching = webhooks.filter((wh: any) => wh.events.includes(event))
     if (matching.length === 0) return
 
     const webhookPayload: WebhookPayload = {
@@ -64,6 +64,9 @@ export async function fireWebhooks(
   }
 }
 
+const MAX_RETRIES = 3
+const BACKOFF_BASE_MS = 1000 // 1s, 4s, 16s
+
 async function dispatchSingleWebhook(
   url: string,
   secret: string,
@@ -78,18 +81,43 @@ async function dispatchSingleWebhook(
   const body = JSON.stringify(payload)
   const signature = createHmac("sha256", secret).update(body).digest("hex")
 
-  const response = await fetch(url, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Webhook-Signature": signature,
-      "X-Webhook-Event": payload.event,
-    },
-    body,
-    signal: AbortSignal.timeout(10000),
-  })
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Webhook-Signature": signature,
+          "X-Webhook-Event": payload.event,
+          "X-Webhook-Attempt": String(attempt + 1),
+        },
+        body,
+        signal: AbortSignal.timeout(10000),
+      })
 
-  if (!response.ok) {
-    console.error(`[Webhooks] ${url} responded with ${response.status}`)
+      if (response.ok) return // Success
+
+      // Don't retry 4xx client errors (except 429 Too Many Requests)
+      if (response.status >= 400 && response.status < 500 && response.status !== 429) {
+        console.error(`[Webhooks] ${url} responded ${response.status} — not retrying`)
+        return
+      }
+
+      if (attempt < MAX_RETRIES) {
+        const delay = BACKOFF_BASE_MS * Math.pow(4, attempt) // 1s, 4s, 16s
+        console.warn(`[Webhooks] ${url} responded ${response.status} — retry ${attempt + 1}/${MAX_RETRIES} in ${delay}ms`)
+        await new Promise(r => setTimeout(r, delay))
+      } else {
+        console.error(`[Webhooks] ${url} failed after ${MAX_RETRIES + 1} attempts (last: ${response.status})`)
+      }
+    } catch (err) {
+      if (attempt < MAX_RETRIES) {
+        const delay = BACKOFF_BASE_MS * Math.pow(4, attempt)
+        console.warn(`[Webhooks] ${url} error — retry ${attempt + 1}/${MAX_RETRIES} in ${delay}ms:`, err)
+        await new Promise(r => setTimeout(r, delay))
+      } else {
+        console.error(`[Webhooks] ${url} failed after ${MAX_RETRIES + 1} attempts:`, err)
+      }
+    }
   }
 }

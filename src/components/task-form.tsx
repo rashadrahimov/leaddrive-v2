@@ -52,7 +52,7 @@ export function TaskForm({ open, onOpenChange, onSaved, initialData, orgId }: Ta
       const url = isEdit ? `/api/v1/tasks/${initialData!.id}` : "/api/v1/tasks"
       const res = await fetch(url, {
         method: isEdit ? "PUT" : "POST",
-        headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": orgId } : {}) },
+        headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": orgId } : {} as Record<string, string>) },
         body: JSON.stringify({ ...form, dueDate: form.dueDate || undefined }),
       })
       if (!res.ok) throw new Error((await res.json()).error || "Failed")

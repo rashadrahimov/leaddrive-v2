@@ -109,7 +109,7 @@ export function JourneyForm({ open, onOpenChange, onSaved, initialData, orgId }:
         method: isEdit ? "PUT" : "POST",
         headers: {
           "Content-Type": "application/json",
-          ...(orgId ? { "x-organization-id": String(orgId) } : {}),
+          ...(orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>),
         },
         body: JSON.stringify(payload),
       })

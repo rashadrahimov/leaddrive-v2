@@ -58,7 +58,7 @@ export async function POST(
         break
       }
       case "remove_tag": {
-        const filtered = (ticket.tags || []).filter(t => t !== action.value)
+        const filtered = (ticket.tags || []).filter((t: string) => t !== action.value)
         await prisma.ticket.update({ where: { id: ticketId }, data: { tags: filtered } })
         break
       }

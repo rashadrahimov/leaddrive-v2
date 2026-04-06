@@ -55,7 +55,7 @@ export default function AILeadScoringPage() {
   const fetchLeads = async () => {
     try {
       const res = await fetch("/api/v1/lead-scoring", {
-        headers: orgId ? { "x-organization-id": String(orgId) } : {},
+        headers: orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>,
       })
       const json = await res.json()
       if (json.success) setLeads(json.data.leads)
@@ -71,7 +71,7 @@ export default function AILeadScoringPage() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          ...(orgId ? { "x-organization-id": String(orgId) } : {}),
+          ...(orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>),
         },
         body: JSON.stringify({}),
       })
@@ -88,7 +88,7 @@ export default function AILeadScoringPage() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          ...(orgId ? { "x-organization-id": String(orgId) } : {}),
+          ...(orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>),
         },
         body: JSON.stringify({ leadId }),
       })

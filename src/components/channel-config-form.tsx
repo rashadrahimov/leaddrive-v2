@@ -103,7 +103,7 @@ export function ChannelConfigForm({ open, onOpenChange, onSaved, initialData, or
         method: isEdit ? "PUT" : "POST",
         headers: {
           "Content-Type": "application/json",
-          ...(orgId ? { "x-organization-id": String(orgId) } : {}),
+          ...(orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>),
         },
         body: JSON.stringify({
           configName: form.configName,

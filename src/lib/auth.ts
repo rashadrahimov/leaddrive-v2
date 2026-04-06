@@ -65,7 +65,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-      allowDangerousEmailAccountLinking: true,
+      allowDangerousEmailAccountLinking: false,
       authorization: {
         params: {
           scope: "openid email profile https://www.googleapis.com/auth/calendar.events",
@@ -78,7 +78,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       clientId: process.env.MICROSOFT_CLIENT_ID!,
       clientSecret: process.env.MICROSOFT_CLIENT_SECRET!,
       issuer: `https://login.microsoftonline.com/${process.env.MICROSOFT_TENANT_ID || "common"}/v2.0`,
-      allowDangerousEmailAccountLinking: true,
+      allowDangerousEmailAccountLinking: false,
       token: {
         conform: async (response: Response) => {
           // Azure SPA redirect URIs don't support client_secret in token exchange

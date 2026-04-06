@@ -69,7 +69,7 @@ function AddTeamMemberForm({ dealId, orgId, onDone }: { dealId: string; orgId?: 
 
   useEffect(() => {
     fetch("/api/v1/users?limit=100", {
-      headers: orgId ? { "x-organization-id": orgId } : {},
+      headers: orgId ? { "x-organization-id": orgId } : {} as Record<string, string>,
     })
       .then(r => r.json())
       .then(j => {
@@ -94,7 +94,7 @@ function AddTeamMemberForm({ dealId, orgId, onDone }: { dealId: string; orgId?: 
     try {
       const res = await fetch(`/api/v1/deals/${dealId}/team`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": orgId } : {}) },
+        headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": orgId } : {} as Record<string, string>) },
         body: JSON.stringify({ userId: selectedUserId, role }),
       })
       if (!res.ok) { const j = await res.json().catch(() => ({})); setError(j.error || `Error ${res.status}`); return }
@@ -170,7 +170,7 @@ function AddContactRoleForm({ dealId, orgId, onDone }: { dealId: string; orgId?:
 
   useEffect(() => {
     fetch("/api/v1/contacts?limit=200", {
-      headers: orgId ? { "x-organization-id": orgId } : {},
+      headers: orgId ? { "x-organization-id": orgId } : {} as Record<string, string>,
     })
       .then(r => r.json())
       .then(j => {
@@ -195,7 +195,7 @@ function AddContactRoleForm({ dealId, orgId, onDone }: { dealId: string; orgId?:
     try {
       const res = await fetch(`/api/v1/deals/${dealId}/contact-roles`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": orgId } : {}) },
+        headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": orgId } : {} as Record<string, string>) },
         body: JSON.stringify({
           contactId: selectedContactId,
           role,
@@ -324,7 +324,7 @@ function AddCompetitorForm({ dealId, orgId, onDone }: { dealId: string; orgId?: 
     try {
       const res = await fetch(`/api/v1/deals/${dealId}/competitors`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": orgId } : {}) },
+        headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": orgId } : {} as Record<string, string>) },
         body: JSON.stringify({
           name: name.trim(),
           product: product || undefined,
@@ -384,7 +384,7 @@ export function DealSidebar({ deal, orgId, offersCount, invoicesCount, onEdit, f
 
   const fetchCompetitors = () => {
     fetch(`/api/v1/deals/${deal.id}/competitors`, {
-      headers: orgId ? { "x-organization-id": orgId } : {},
+      headers: orgId ? { "x-organization-id": orgId } : {} as Record<string, string>,
     })
       .then(r => r.json())
       .then(j => { if (j.success) setCompetitors(j.data) })
@@ -530,7 +530,7 @@ export function DealSidebar({ deal, orgId, offersCount, invoicesCount, onEdit, f
                     onClick={async () => {
                       await fetch(`/api/v1/deals/${deal.id}/team`, {
                         method: "DELETE",
-                        headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": orgId } : {}) },
+                        headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": orgId } : {} as Record<string, string>) },
                         body: JSON.stringify({ userId: m.userId }),
                       })
                       fetchDeal()
@@ -589,7 +589,7 @@ export function DealSidebar({ deal, orgId, offersCount, invoicesCount, onEdit, f
                       onClick={async () => {
                         await fetch(`/api/v1/deals/${deal.id}/contact-roles`, {
                           method: "DELETE",
-                          headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": orgId } : {}) },
+                          headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": orgId } : {} as Record<string, string>) },
                           body: JSON.stringify({ contactId: cr.contactId }),
                         })
                         fetchDeal()
@@ -663,7 +663,7 @@ export function DealSidebar({ deal, orgId, offersCount, invoicesCount, onEdit, f
                       onClick={async () => {
                         await fetch(`/api/v1/deals/${deal.id}/competitors`, {
                           method: "DELETE",
-                          headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": orgId } : {}) },
+                          headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": orgId } : {} as Record<string, string>) },
                           body: JSON.stringify({ competitorId: comp.id }),
                         })
                         fetchCompetitors()

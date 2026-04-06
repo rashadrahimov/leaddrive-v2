@@ -207,7 +207,7 @@ async function executeSendEmail(input: any, orgId: string, userId: string): Prom
   if (!result.success) {
     return { success: false, error: result.error || "Email sending failed" }
   }
-  logAudit(orgId, "ai_action", "send_email", result.emailLogId || "", `AI: email to ${input.to}`)
+  logAudit(orgId, "ai_action", "send_email", (result as any).emailLogId || "", `AI: email to ${input.to}`)
   return { success: true, data: { to: input.to, subject: input.subject } }
 }
 

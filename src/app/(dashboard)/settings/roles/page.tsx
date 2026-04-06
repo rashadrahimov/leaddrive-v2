@@ -142,7 +142,7 @@ export default function RolesSettingsPage() {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          ...(orgId ? { "x-organization-id": String(orgId) } : {}),
+          ...(orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>),
         },
         body: JSON.stringify({ roles, permissions }),
       })
@@ -176,7 +176,7 @@ export default function RolesSettingsPage() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          ...(orgId ? { "x-organization-id": String(orgId) } : {}),
+          ...(orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>),
         },
         body: JSON.stringify({ name: newRoleName.trim(), color: newRoleColor }),
       })
@@ -199,7 +199,7 @@ export default function RolesSettingsPage() {
     if (!deleteRoleId) return
     const res = await fetch(`/api/v1/settings/roles?id=${deleteRoleId}`, {
       method: "DELETE",
-      headers: orgId ? { "x-organization-id": String(orgId) } : {},
+      headers: orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>,
     })
     if (!res.ok) {
       const json = await res.json()

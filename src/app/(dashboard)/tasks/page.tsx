@@ -235,7 +235,7 @@ function TaskCalendar({ tasks, orgId }: { tasks: Task[]; orgId?: string }) {
   const fetchCalendar = useCallback(async () => {
     try {
       const res = await fetch(`/api/v1/tasks/calendar?month=${calMonth + 1}&year=${calYear}`, {
-        headers: orgId ? { "x-organization-id": String(orgId) } : {},
+        headers: orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>,
       })
       const json = await res.json()
       if (json.success) setCalTasks(json.data.tasks)
@@ -380,7 +380,7 @@ export default function TasksPage() {
   async function fetchTasks() {
     try {
       const res = await fetch("/api/v1/tasks?limit=200", {
-        headers: orgId ? { "x-organization-id": String(orgId) } : {},
+        headers: orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>,
       })
       const json = await res.json()
       if (json.success) {
@@ -404,7 +404,7 @@ export default function TasksPage() {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
-          ...(orgId ? { "x-organization-id": String(orgId) } : {}),
+          ...(orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>),
         },
         body: JSON.stringify({ status: newStatus }),
       })
@@ -431,7 +431,7 @@ export default function TasksPage() {
     if (!deleteItem) return
     const res = await fetch(`/api/v1/tasks/${deleteItem.id}`, {
       method: "DELETE",
-      headers: orgId ? { "x-organization-id": String(orgId) } : {},
+      headers: orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>,
     })
     if (!res.ok) throw new Error((await res.json()).error || "Failed to delete")
     fetchTasks()

@@ -85,7 +85,7 @@ export function EventForm({ open, onOpenChange, onSaved, orgId, initialData }: E
       const url = isEdit ? `/api/v1/events/${initialData.id}` : "/api/v1/events"
       const res = await fetch(url, {
         method: isEdit ? "PUT" : "POST",
-        headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": String(orgId) } : {}) },
+        headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>) },
         body: JSON.stringify({
           ...form,
           budget: Number(form.budget) || 0,

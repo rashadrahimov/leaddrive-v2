@@ -380,7 +380,7 @@ export default function InvoiceDetailPage() {
 
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
-    ...(orgId ? { "x-organization-id": String(orgId) } : {}),
+    ...(orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>),
   }
 
   const fetchInvoice = useCallback(async () => {

@@ -249,7 +249,7 @@ export function CampaignForm({ open, onOpenChange, onSaved, initialData, orgId, 
         method: isEdit ? "PUT" : "POST",
         headers: {
           "Content-Type": "application/json",
-          ...(orgId ? { "x-organization-id": orgId } : {}),
+          ...(orgId ? { "x-organization-id": orgId } : {} as Record<string, string>),
         },
         body: JSON.stringify(payload),
       })
@@ -264,14 +264,14 @@ export function CampaignForm({ open, onOpenChange, onSaved, initialData, orgId, 
             // Update existing variant
             await fetch(`/api/v1/campaigns/${campaignId}/variants/${v.id}`, {
               method: "PUT",
-              headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": orgId } : {}) },
+              headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": orgId } : {} as Record<string, string>) },
               body: JSON.stringify({ name: v.name, subject: v.subject || undefined, templateId: v.templateId || undefined, percentage: v.percentage }),
             }).catch(() => {})
           } else {
             // Create new variant
             await fetch(`/api/v1/campaigns/${campaignId}/variants`, {
               method: "POST",
-              headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": orgId } : {}) },
+              headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": orgId } : {} as Record<string, string>) },
               body: JSON.stringify({ name: v.name, subject: v.subject || undefined, templateId: v.templateId || undefined, percentage: v.percentage }),
             }).catch(() => {})
           }

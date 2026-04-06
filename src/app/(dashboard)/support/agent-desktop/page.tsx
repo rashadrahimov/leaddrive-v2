@@ -68,7 +68,7 @@ export default function AgentDesktopPage() {
   // Fetch current user availability
   useEffect(() => {
     if (!session?.user?.id) return
-    const headers: any = orgId ? { "x-organization-id": String(orgId) } : {}
+    const headers: any = orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>
     fetch(`/api/v1/users/${session.user.id}`, { headers })
       .then(r => r.json())
       .then(json => {
@@ -85,7 +85,7 @@ export default function AgentDesktopPage() {
     try {
       const headers: any = {
         "Content-Type": "application/json",
-        ...(orgId ? { "x-organization-id": String(orgId) } : {}),
+        ...(orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>),
       }
       const res = await fetch(`/api/v1/users/${session.user.id}`, {
         method: "PUT",
@@ -102,7 +102,7 @@ export default function AgentDesktopPage() {
 
   useEffect(() => {
     if (!session) return
-    const headers: any = orgId ? { "x-organization-id": String(orgId) } : {}
+    const headers: any = orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>
 
     Promise.all([
       fetch("/api/v1/tickets?limit=100", { headers }).then(r => r.json()),

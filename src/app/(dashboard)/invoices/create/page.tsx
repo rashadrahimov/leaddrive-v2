@@ -128,7 +128,7 @@ export default function CreateInvoicePage() {
   const [showNotes, setShowNotes] = useState(false)
   const [showAdvanced, setShowAdvanced] = useState(false)
 
-  const headers: Record<string, string> = orgId ? { "x-organization-id": String(orgId) } : {}
+  const headers: Record<string, string> = orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>
 
   // Close dropdowns when clicking outside
   useEffect(() => {

@@ -15,12 +15,12 @@ export async function GET(req: NextRequest) {
 
   // Extract numbers from order numbers (ПП-001 → 1, ПП-012 → 12)
   const numbers = orders
-    .map((o) => {
+    .map((o: any) => {
       const match = o.orderNumber.match(/(\d+)$/)
       return match ? parseInt(match[1]) : null
     })
-    .filter((n): n is number => n !== null)
-    .sort((a, b) => a - b)
+    .filter((n: any): n is number => n !== null)
+    .sort((a: number, b: number) => a - b)
 
   if (numbers.length === 0) {
     return NextResponse.json({ data: { gaps: [], totalOrders: 0, lastNumber: 0 } })

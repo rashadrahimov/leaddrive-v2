@@ -75,7 +75,7 @@ export function CustomFieldForm({ open, onOpenChange, onSaved, initialData, orgI
         method: isEdit ? "PUT" : "POST",
         headers: {
           "Content-Type": "application/json",
-          ...(orgId ? { "x-organization-id": orgId } : {}),
+          ...(orgId ? { "x-organization-id": orgId } : {} as Record<string, string>),
         },
         body: JSON.stringify({
           fieldName: form.fieldName,

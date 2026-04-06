@@ -99,7 +99,7 @@ export async function GET(req: NextRequest) {
     }
 
     const fieldPerms = await getFieldPermissions(orgId, role, "deal")
-    const filteredDeals = deals.map(d => filterEntityFields(d, fieldPerms, role))
+    const filteredDeals = deals.map((d: any) => filterEntityFields(d, fieldPerms, role))
 
     return NextResponse.json({ success: true, data: { deals: filteredDeals, total, page, limit, pipelineSummary } })
   } catch {
@@ -175,7 +175,7 @@ export async function POST(req: NextRequest) {
     fireWebhooks(orgId, "deal.created", { id: deal.id, name: deal.name, valueAmount: deal.valueAmount, stage: deal.stage }).catch(() => {})
     if (deal.contactId) trackContactEvent(orgId, deal.contactId, "deal_created", { dealId: deal.id, name: deal.name }).catch(() => {})
     // Auto Slack notification
-    prisma.channelConfig.findMany({ where: { organizationId: orgId, channelType: "slack", isActive: true } }).then(configs => {
+    prisma.channelConfig.findMany({ where: { organizationId: orgId, channelType: "slack", isActive: true } }).then((configs: any) => {
       const msg = formatDealNotification({ name: deal.name, value: deal.valueAmount, stage: deal.stage })
       for (const cfg of configs) {
         if (cfg.webhookUrl) sendSlackNotification(cfg.webhookUrl, msg).catch(() => {})

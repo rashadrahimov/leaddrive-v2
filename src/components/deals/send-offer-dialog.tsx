@@ -45,7 +45,7 @@ export function SendOfferDialog({
 
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
-    ...(orgId ? { "x-organization-id": orgId } : {}),
+    ...(orgId ? { "x-organization-id": orgId } : {} as Record<string, string>),
   }
 
   const handleSend = async () => {

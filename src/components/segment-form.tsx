@@ -107,6 +107,13 @@ export function SegmentForm({ open, onOpenChange, onSaved, initialData, orgId }:
           name: c.name || "",
           hasEmail: !!c.hasEmail || !!c.has_email,
           hasPhone: !!c.hasPhone || !!c.has_phone,
+          engagementScoreMin: c.engagementScoreMin || "",
+          engagementScoreMax: c.engagementScoreMax || "",
+          engagementTier: c.engagementTier || "",
+          lastActivityAfter: c.lastActivityAfter || "",
+          lastActivityBefore: c.lastActivityBefore || "",
+          inactiveDays: c.inactiveDays || "",
+          hasEventType: c.hasEventType || "",
         })
       } else {
         setConditions(emptyConditions)
@@ -169,7 +176,7 @@ export function SegmentForm({ open, onOpenChange, onSaved, initialData, orgId }:
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          ...(orgId ? { "x-organization-id": String(orgId) } : {}),
+          ...(orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>),
         },
         body: JSON.stringify({ conditions: getCleanConditions() }),
       })
@@ -200,7 +207,7 @@ export function SegmentForm({ open, onOpenChange, onSaved, initialData, orgId }:
         method: isEdit ? "PUT" : "POST",
         headers: {
           "Content-Type": "application/json",
-          ...(orgId ? { "x-organization-id": String(orgId) } : {}),
+          ...(orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>),
         },
         body: JSON.stringify(payload),
       })

@@ -78,7 +78,7 @@ export default function SmtpSettingsPage() {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          ...(orgId ? { "x-organization-id": String(orgId) } : {}),
+          ...(orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>),
         },
         body: JSON.stringify({
           smtpHost,
@@ -110,7 +110,7 @@ export default function SmtpSettingsPage() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          ...(orgId ? { "x-organization-id": String(orgId) } : {}),
+          ...(orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>),
         },
         body: JSON.stringify({ email: testEmail }),
       })

@@ -182,7 +182,7 @@ export default function AICommandCenterPage() {
   const orgId = session?.user?.organizationId
 
   const hdrs = (): Record<string, string> =>
-    orgId ? { "x-organization-id": String(orgId) } : {}
+    orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>
 
   const fetchData = async () => {
     try {

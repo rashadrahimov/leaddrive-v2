@@ -104,6 +104,9 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     const oldStatus = original.status
 
     const fieldPerms = await getFieldPermissions(orgId, role, "ticket")
+    // Increment escalationLevel when priority is changed to critical
+    const isEscalation = parsed.data.priority === "critical" && original.priority !== "critical"
+
     const updateData = {
       ...(parsed.data.subject && { subject: parsed.data.subject }),
       ...(parsed.data.description !== undefined && { description: parsed.data.description }),
@@ -115,6 +118,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       ...(parsed.data.category && { category: parsed.data.category }),
       ...(parsed.data.status === "resolved" && { resolvedAt: new Date() }),
       ...(parsed.data.status === "closed" && { closedAt: new Date() }),
+      ...(isEscalation && { escalationLevel: (original.escalationLevel || 0) + 1, lastEscalatedAt: new Date() }),
     }
     const filteredUpdateData = filterWritableFields(updateData, fieldPerms, role)
 

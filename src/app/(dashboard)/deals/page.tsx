@@ -78,7 +78,7 @@ export default function DealsPage() {
       const pid = pipelineId || selectedPipelineId
       const url = pid ? `/api/v1/deals?limit=200&pipelineId=${pid}` : "/api/v1/deals?limit=200"
       const res = await fetch(url, {
-        headers: orgId ? { "x-organization-id": String(orgId) } : {},
+        headers: orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>,
       })
       const json = await res.json()
       if (json.success) {
@@ -101,7 +101,7 @@ export default function DealsPage() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          ...(orgId ? { "x-organization-id": String(orgId) } : {}),
+          ...(orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>),
         },
         body: JSON.stringify({ lang: locale }),
       })
@@ -353,7 +353,7 @@ export default function DealsPage() {
             onQuickAddTask={async (dealId, title) => {
               await fetch(`/api/v1/deals/${dealId}/next-steps`, {
                 method: "POST",
-                headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": String(orgId) } : {}) },
+                headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>) },
                 body: JSON.stringify({ title }),
               })
               fetchDeals()

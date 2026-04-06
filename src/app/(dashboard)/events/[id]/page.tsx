@@ -83,7 +83,7 @@ export default function EventDetailPage() {
 
   const fetchEvent = async () => {
     try {
-      const h: any = orgId ? { "x-organization-id": String(orgId) } : {}
+      const h: any = orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>
       const res = await fetch(`/api/v1/events/${params.id}?_t=${Date.now()}`, {
         headers: h,
         cache: "no-store",

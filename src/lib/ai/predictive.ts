@@ -45,7 +45,7 @@ export async function predictDealWin(dealId: string, orgId: string): Promise<Dea
     where: { organizationId: orgId, stage: { in: ["WON", "LOST"] } },
     select: { stage: true, valueAmount: true, probability: true },
   })
-  const wonCount = historicalDeals.filter(d => d.stage === "WON").length
+  const wonCount = historicalDeals.filter((d: any) => d.stage === "WON").length
   const totalClosed = historicalDeals.length
 
   // Heuristic scoring
@@ -129,7 +129,7 @@ export async function generateRevenueForecast(orgId: string, months: number = 6)
       },
       select: { valueAmount: true },
     })
-    const actual = wonDeals.reduce((s, d) => s + (d.valueAmount || 0), 0)
+    const actual = wonDeals.reduce((s: number, d: any) => s + (d.valueAmount || 0), 0)
 
     // Past months: actual = committed = bestCase = pipeline
     forecast.push({ month: monthLabel, actual, committed: actual, bestCase: actual, pipeline: actual })
@@ -150,7 +150,7 @@ export async function generateRevenueForecast(orgId: string, months: number = 6)
       },
       select: { valueAmount: true },
     })
-    const committed = committedDeals.reduce((s, d) => s + (d.valueAmount || 0), 0)
+    const committed = committedDeals.reduce((s: number, d: any) => s + (d.valueAmount || 0), 0)
 
     // Best case: committed + deals with probability >= 70
     const bestCaseDeals = await prisma.deal.findMany({
@@ -162,7 +162,7 @@ export async function generateRevenueForecast(orgId: string, months: number = 6)
       },
       select: { valueAmount: true },
     })
-    const bestCase = committed + bestCaseDeals.reduce((s, d) => s + (d.valueAmount || 0), 0)
+    const bestCase = committed + bestCaseDeals.reduce((s: number, d: any) => s + (d.valueAmount || 0), 0)
 
     // Pipeline: all active deals weighted by probability
     const pipelineDeals = await prisma.deal.findMany({
@@ -174,7 +174,7 @@ export async function generateRevenueForecast(orgId: string, months: number = 6)
       select: { valueAmount: true, probability: true },
     })
     const pipelineWeighted = pipelineDeals.reduce(
-      (s, d) => s + (d.valueAmount || 0) * ((d.probability || 0) / 100), 0
+      (s: number, d: any) => s + (d.valueAmount || 0) * ((d.probability || 0) / 100), 0
     )
 
     // Actual: paid invoices this month
@@ -188,7 +188,7 @@ export async function generateRevenueForecast(orgId: string, months: number = 6)
         },
         select: { totalAmount: true },
       })
-      actual = invoices.reduce((s, inv) => s + (inv.totalAmount || 0), 0)
+      actual = invoices.reduce((s: number, inv: any) => s + (inv.totalAmount || 0), 0)
     } catch { /* invoice model might not have all fields */ }
 
     forecast.push({
@@ -280,15 +280,15 @@ export async function dealVelocityAnalysis(orgId: string): Promise<VelocityAnaly
     include: { stages: { orderBy: { sortOrder: "asc" } } },
   })
 
-  const allStages = pipelines.flatMap(p => p.stages.map((s: any) => s.name))
-  const uniqueStages = [...new Set(allStages)]
+  const allStages = pipelines.flatMap((p: any) => p.stages.map((s: any) => s.name))
+  const uniqueStages: string[] = [...new Set(allStages as string[])]
 
   // Simple velocity: average cycle time
-  const cycleTimes = wonDeals.map(d => {
+  const cycleTimes = wonDeals.map((d: any) => {
     return Math.floor((new Date(d.updatedAt).getTime() - new Date(d.createdAt).getTime()) / 86400000)
   })
   const avgCycleDays = cycleTimes.length > 0
-    ? Math.round(cycleTimes.reduce((a, b) => a + b, 0) / cycleTimes.length)
+    ? Math.round(cycleTimes.reduce((a: number, b: number) => a + b, 0) / cycleTimes.length)
     : 0
 
   // Stage-level analysis using current active deals
@@ -298,11 +298,11 @@ export async function dealVelocityAnalysis(orgId: string): Promise<VelocityAnaly
   })
 
   const stageData: StageVelocity[] = uniqueStages
-    .filter(s => s !== "WON" && s !== "LOST")
-    .map(stage => {
-      const dealsInStage = activeDeals.filter(d => d.stage === stage)
+    .filter((s: string) => s !== "WON" && s !== "LOST")
+    .map((stage: string) => {
+      const dealsInStage = activeDeals.filter((d: any) => d.stage === stage)
       const avgDays = dealsInStage.length > 0
-        ? Math.round(dealsInStage.reduce((s, d) => s + daysSince(d.stageChangedAt || d.createdAt), 0) / dealsInStage.length)
+        ? Math.round(dealsInStage.reduce((s: number, d: any) => s + daysSince(d.stageChangedAt || d.createdAt), 0) / dealsInStage.length)
         : 0
       return { stage, avgDays, dealCount: dealsInStage.length }
     })

@@ -63,7 +63,7 @@ export default function OffersPage() {
         : "/api/v1/offers?limit=500"
       if (dealIdFilter) url += `&dealId=${dealIdFilter}`
       const res = await fetch(url, {
-        headers: orgId ? { "x-organization-id": String(orgId) } : {},
+        headers: orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>,
       })
       const json = await res.json()
       if (json.success) {
@@ -85,7 +85,7 @@ export default function OffersPage() {
     if (!deleteId) return
     const res = await fetch(`/api/v1/offers/${deleteId}`, {
       method: "DELETE",
-      headers: orgId ? { "x-organization-id": String(orgId) } : {},
+      headers: orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>,
     })
     if (!res.ok) throw new Error("Failed to delete")
     fetchOffers()

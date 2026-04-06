@@ -251,7 +251,7 @@ export default function JourneysPage() {
   const fetchJourneys = async () => {
     try {
       const res = await fetch("/api/v1/journeys?limit=500", {
-        headers: orgId ? { "x-organization-id": String(orgId) } : {},
+        headers: orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>,
       })
       const json = await res.json()
       if (json.success) setJourneys(json.data.journeys)
@@ -277,7 +277,7 @@ export default function JourneysPage() {
     if (!deleteId) return
     await fetch(`/api/v1/journeys/${deleteId}`, {
       method: "DELETE",
-      headers: orgId ? { "x-organization-id": String(orgId) } : {},
+      headers: orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>,
     })
     fetchJourneys()
   }
@@ -288,7 +288,7 @@ export default function JourneysPage() {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
-        ...(orgId ? { "x-organization-id": String(orgId) } : {}),
+        ...(orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>),
       },
       body: JSON.stringify({ name: journey.name, status: newStatus }),
     })
@@ -326,7 +326,7 @@ export default function JourneysPage() {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          ...(orgId ? { "x-organization-id": String(orgId) } : {}),
+          ...(orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>),
         },
         body: JSON.stringify({
           name: stepsJourney.name,
@@ -342,7 +342,7 @@ export default function JourneysPage() {
     setLeadsLoading(true)
     try {
       const res = await fetch("/api/v1/leads?limit=500", {
-        headers: orgId ? { "x-organization-id": String(orgId) } : {},
+        headers: orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>,
       })
       const json = await res.json()
       if (json.success) setLeads(json.data.leads || [])
@@ -372,7 +372,7 @@ export default function JourneysPage() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          ...(orgId ? { "x-organization-id": String(orgId) } : {}),
+          ...(orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>),
         },
         body: JSON.stringify({ journeyId: enrollOpen.id, leadId: selectedLead.id }),
       })

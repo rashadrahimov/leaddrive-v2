@@ -74,7 +74,7 @@ function QueueFormDialog({
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          ...(orgId ? { "x-organization-id": orgId } : {}),
+          ...(orgId ? { "x-organization-id": orgId } : {} as Record<string, string>),
         },
         body: JSON.stringify({
           name: form.name,
@@ -199,7 +199,7 @@ export default function TicketQueuesPage() {
   const fetchQueues = async () => {
     try {
       const res = await fetch("/api/v1/ticket-queues", {
-        headers: orgId ? { "x-organization-id": String(orgId) } : {},
+        headers: orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>,
       })
       const json = await res.json()
       if (json.success) setQueues(json.data)
@@ -219,7 +219,7 @@ export default function TicketQueuesPage() {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
-        ...(orgId ? { "x-organization-id": String(orgId) } : {}),
+        ...(orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>),
       },
       body: JSON.stringify({ isActive: !queue.isActive }),
     })
@@ -230,7 +230,7 @@ export default function TicketQueuesPage() {
     if (!deleteItem) return
     const res = await fetch(`/api/v1/ticket-queues/${deleteItem.id}`, {
       method: "DELETE",
-      headers: orgId ? { "x-organization-id": String(orgId) } : {},
+      headers: orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>,
     })
     if (!res.ok) throw new Error((await res.json()).error || "Failed to delete")
     fetchQueues()

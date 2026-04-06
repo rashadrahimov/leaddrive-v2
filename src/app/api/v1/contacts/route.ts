@@ -53,7 +53,7 @@ export async function GET(req: NextRequest) {
     ])
 
     const fieldPerms = await getFieldPermissions(orgId, role, "contact")
-    const filteredContacts = contacts.map(c => filterEntityFields(c, fieldPerms, role))
+    const filteredContacts = contacts.map((c: any) => filterEntityFields(c, fieldPerms, role))
 
     return NextResponse.json({ success: true, data: { contacts: filteredContacts, total, page, limit } })
   } catch {

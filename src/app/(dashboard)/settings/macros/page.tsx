@@ -46,7 +46,7 @@ export default function MacrosSettingsPage() {
   const t = useTranslations("macrosPage")
   const tc = useTranslations("common")
   const orgId = session?.user?.organizationId
-  const headers = orgId ? { "x-organization-id": String(orgId) } : {}
+  const headers = orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>
 
   const [macros, setMacros] = useState<TicketMacro[]>([])
   const [loading, setLoading] = useState(true)

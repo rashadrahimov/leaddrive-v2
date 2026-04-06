@@ -51,7 +51,7 @@ export default function CampaignDetailPage() {
   const fetchCampaign = async () => {
     try {
       const res = await fetch(`/api/v1/campaigns/${params.id}`, {
-        headers: orgId ? { "x-organization-id": String(orgId) } : {},
+        headers: orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>,
       })
       const json = await res.json()
       if (json.success && json.data) {
@@ -59,7 +59,7 @@ export default function CampaignDetailPage() {
         // Fetch variants if A/B test
         if (json.data.isAbTest) {
           fetch(`/api/v1/campaigns/${params.id}/variants`, {
-            headers: orgId ? { "x-organization-id": String(orgId) } : {},
+            headers: orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>,
           }).then(r => r.json()).then(vj => {
             if (vj.success) setVariants(vj.data || [])
           }).catch(() => {})
@@ -73,7 +73,7 @@ export default function CampaignDetailPage() {
   const handleDelete = async () => {
     const res = await fetch(`/api/v1/campaigns/${params.id}`, {
       method: "DELETE",
-      headers: orgId ? { "x-organization-id": String(orgId) } : {},
+      headers: orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>,
     })
     if (!res.ok) throw new Error(tc("failedToSave"))
     router.push("/campaigns")
@@ -137,7 +137,7 @@ export default function CampaignDetailPage() {
               try {
                 const res = await fetch(`/api/v1/campaigns/${campaign.id}/send`, {
                   method: "POST",
-                  headers: orgId ? { "x-organization-id": String(orgId) } : {},
+                  headers: orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>,
                 })
                 const json = await res.json()
                 if (json.success) {
@@ -264,7 +264,7 @@ export default function CampaignDetailPage() {
                 method: "PUT",
                 headers: {
                   "Content-Type": "application/json",
-                  ...(orgId ? { "x-organization-id": String(orgId) } : {}),
+                  ...(orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>),
                 },
                 body: JSON.stringify({ flowData: data }),
               })

@@ -80,7 +80,7 @@ export default function DashboardPage() {
       try {
         const orgId = session?.user?.organizationId
         const res = await fetch("/api/v1/dashboard/executive", {
-          headers: orgId ? { "x-organization-id": String(orgId) } : {},
+          headers: orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>,
         })
         const json = await res.json()
         if (json.success) setData(json.data)

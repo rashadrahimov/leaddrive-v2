@@ -153,7 +153,7 @@ export default function TicketDetailPage() {
   const [showMacrosMenu, setShowMacrosMenu] = useState(false)
   const timerRef = useRef<NodeJS.Timeout | null>(null)
   const orgId = session?.user?.organizationId
-  const headers = orgId ? { "x-organization-id": String(orgId) } : {}
+  const headers = orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>
 
   const STATUS_LABELS: Record<string, string> = {
     new: t("statusNew"),

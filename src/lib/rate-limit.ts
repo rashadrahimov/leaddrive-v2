@@ -9,38 +9,65 @@ export const RATE_LIMIT_CONFIG = {
   public: { maxRequests: 10, windowMs: 60000 } as RateLimitConfig,
 }
 
-interface RequestRecord {
-  count: number
-  resetTime: number
-}
+// Sliding window rate limiter — stores timestamps of recent requests per key.
+// More accurate than fixed-window counters and resistant to burst-at-boundary attacks.
+// In-memory only — resets on restart. For multi-instance setups, migrate to Redis.
 
-// TODO: Replace with Redis-backed rate limiter for production.
-// Current in-memory Map resets on PM2 restart and does not work across multiple instances.
-// Max entries capped at 10000 to prevent memory leak.
-const MAX_STORE_SIZE = 10000
-const requestStore = new Map<string, RequestRecord>()
+const MAX_KEYS = 10000
+const requestStore = new Map<string, number[]>()
+
+// Periodic cleanup every 60s — remove expired entries
+if (typeof setInterval !== "undefined") {
+  setInterval(() => {
+    const now = Date.now()
+    for (const [key, timestamps] of requestStore) {
+      // Keep only timestamps within the largest window (60s)
+      const filtered = timestamps.filter(t => now - t < 60000)
+      if (filtered.length === 0) {
+        requestStore.delete(key)
+      } else {
+        requestStore.set(key, filtered)
+      }
+    }
+  }, 60000)
+}
 
 export function checkRateLimit(key: string, config: RateLimitConfig): boolean {
   const now = Date.now()
-  const record = requestStore.get(key)
+  const windowStart = now - config.windowMs
 
-  // Evict expired entries if store grows too large
-  if (requestStore.size > MAX_STORE_SIZE) {
-    for (const [k, v] of requestStore) {
-      if (now > v.resetTime) requestStore.delete(k)
+  // Evict oldest keys if store grows too large (LRU-like: delete least recently used)
+  if (requestStore.size > MAX_KEYS) {
+    let oldest = Infinity
+    let oldestKey = ""
+    for (const [k, timestamps] of requestStore) {
+      const last = timestamps[timestamps.length - 1] || 0
+      if (last < oldest) {
+        oldest = last
+        oldestKey = k
+      }
     }
+    if (oldestKey) requestStore.delete(oldestKey)
   }
 
-  if (!record || now > record.resetTime) {
-    requestStore.set(key, { count: 1, resetTime: now + config.windowMs })
+  let timestamps = requestStore.get(key)
+
+  if (!timestamps) {
+    requestStore.set(key, [now])
     return true
   }
 
-  if (record.count < config.maxRequests) {
-    record.count++
+  // Remove timestamps outside the sliding window
+  timestamps = timestamps.filter(t => t > windowStart)
+
+  if (timestamps.length < config.maxRequests) {
+    timestamps.push(now)
+    requestStore.set(key, timestamps)
     return true
   }
 
+  // Over limit — update stored timestamps (cleaned) but don't add new one
+  requestStore.set(key, timestamps)
   return false
 }
 
@@ -48,10 +75,12 @@ export function getRateLimitRemaining(
   key: string,
   config: RateLimitConfig
 ): number {
-  const record = requestStore.get(key)
-  if (!record || Date.now() > record.resetTime) return config.maxRequests
+  const timestamps = requestStore.get(key)
+  if (!timestamps) return config.maxRequests
 
-  return Math.max(0, config.maxRequests - record.count)
+  const windowStart = Date.now() - config.windowMs
+  const active = timestamps.filter(t => t > windowStart).length
+  return Math.max(0, config.maxRequests - active)
 }
 
 export function resetRateLimit(key: string): void {

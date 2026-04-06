@@ -59,7 +59,7 @@ export default function ContactsPage() {
   const fetchContacts = async () => {
     try {
       const res = await fetch("/api/v1/contacts?limit=500", {
-        headers: orgId ? { "x-organization-id": String(orgId) } : {},
+        headers: orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>,
       })
       const json = await res.json()
       if (json.success) {
@@ -93,7 +93,7 @@ export default function ContactsPage() {
     if (!deleteItem) return
     const res = await fetch(`/api/v1/contacts/${deleteItem.id}`, {
       method: "DELETE",
-      headers: orgId ? { "x-organization-id": String(orgId) } : {},
+      headers: orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>,
     })
     if (!res.ok) throw new Error((await res.json()).error || "Failed to delete")
     setSelected(prev => { const next = new Set(prev); next.delete(deleteItem.id); return next })
@@ -109,7 +109,7 @@ export default function ContactsPage() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          ...(orgId ? { "x-organization-id": String(orgId) } : {}),
+          ...(orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>),
         },
         body: JSON.stringify({ ids }),
       })

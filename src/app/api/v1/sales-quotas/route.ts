@@ -40,7 +40,7 @@ export async function GET(req: NextRequest) {
     actualsByUserQuarter[key] = (actualsByUserQuarter[key] || 0) + (d.valueAmount || 0)
   }
 
-  const data = quotas.map(q => ({
+  const data = quotas.map((q: any) => ({
     ...q,
     actual: actualsByUserQuarter[`${q.userId}_${q.quarter}`] || 0,
     attainment: q.amount > 0

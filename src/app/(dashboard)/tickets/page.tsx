@@ -91,7 +91,7 @@ export default function TicketsPage() {
   async function fetchTickets() {
     try {
       const res = await fetch("/api/v1/tickets?limit=200", {
-        headers: orgId ? { "x-organization-id": String(orgId) } : {},
+        headers: orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>,
       })
       const json = await res.json()
       if (json.success) {
@@ -133,7 +133,7 @@ export default function TicketsPage() {
     if (!deleteItem) return
     const res = await fetch(`/api/v1/tickets/${deleteItem.id}`, {
       method: "DELETE",
-      headers: orgId ? { "x-organization-id": String(orgId) } : {},
+      headers: orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>,
     })
     if (!res.ok) throw new Error((await res.json()).error || "Failed to delete")
     fetchTickets()

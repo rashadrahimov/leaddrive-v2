@@ -36,7 +36,7 @@ export default function CurrenciesPage() {
   const fetchCurrencies = async () => {
     try {
       const res = await fetch("/api/v1/currencies", {
-        headers: orgId ? { "x-organization-id": String(orgId) } : {},
+        headers: orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>,
       })
       if (res.ok) {
         const result = await res.json()
@@ -51,7 +51,7 @@ export default function CurrenciesPage() {
     if (!deleteId) return
     const res = await fetch(`/api/v1/currencies/${deleteId}`, {
       method: "DELETE",
-      headers: orgId ? { "x-organization-id": String(orgId) } : {},
+      headers: orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>,
     })
     if (!res.ok) throw new Error("Failed to delete")
     fetchCurrencies()

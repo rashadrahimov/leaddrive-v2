@@ -141,7 +141,7 @@ function UserFormDialog({
         method: isEdit ? "PUT" : "POST",
         headers: {
           "Content-Type": "application/json",
-          ...(orgId ? { "x-organization-id": orgId } : {}),
+          ...(orgId ? { "x-organization-id": orgId } : {} as Record<string, string>),
         },
         body: JSON.stringify(payload),
       })
@@ -262,7 +262,7 @@ export default function UsersSettingsPage() {
   const orgId = session?.user?.organizationId
 
   const fetchData = async () => {
-    const headers: Record<string, string> = orgId ? { "x-organization-id": String(orgId) } : {}
+    const headers: Record<string, string> = orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>
     try {
       const [usersRes, rolesRes] = await Promise.all([
         fetch("/api/v1/users", { headers }),
@@ -282,7 +282,7 @@ export default function UsersSettingsPage() {
   const fetchUsers = async () => {
     try {
       const res = await fetch("/api/v1/users", {
-        headers: orgId ? { "x-organization-id": String(orgId) } : {},
+        headers: orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>,
       })
       if (res.ok) {
         const result = await res.json()
@@ -297,7 +297,7 @@ export default function UsersSettingsPage() {
     if (!deleteId) return
     const res = await fetch(`/api/v1/users/${deleteId}`, {
       method: "DELETE",
-      headers: orgId ? { "x-organization-id": String(orgId) } : {},
+      headers: orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>,
     })
     if (!res.ok) {
       const json = await res.json()
@@ -311,7 +311,7 @@ export default function UsersSettingsPage() {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
-        ...(orgId ? { "x-organization-id": String(orgId) } : {}),
+        ...(orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>),
       },
       body: JSON.stringify({ isActive: !user.isActive }),
     })
@@ -381,7 +381,7 @@ export default function UsersSettingsPage() {
             e.stopPropagation()
             await fetch(`/api/v1/users/${item.id}`, {
               method: "PUT",
-              headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": String(orgId) } : {}) },
+              headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>) },
               body: JSON.stringify({ isAvailable: !item.isAvailable }),
             })
             fetchUsers()
@@ -438,14 +438,14 @@ export default function UsersSettingsPage() {
                 if (!confirm("Сбросить 2FA для этого пользователя?")) return
                 await fetch(`/api/v1/users/${item.id}`, {
                   method: "PUT",
-                  headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": String(orgId) } : {}) },
+                  headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>) },
                   body: JSON.stringify({ resetTotp: true }),
                 })
               } else {
                 // Toggle require2fa
                 await fetch(`/api/v1/users/${item.id}`, {
                   method: "PUT",
-                  headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": String(orgId) } : {}) },
+                  headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>) },
                   body: JSON.stringify({ require2fa: !(item.require2fa || item.totpEnabled) }),
                 })
               }

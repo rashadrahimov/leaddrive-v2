@@ -76,7 +76,7 @@ export default function PipelinesSettingsPage() {
   const [newErrorMsg, setNewErrorMsg] = useState("")
   const [saving, setSaving] = useState(false)
 
-  const headers: Record<string, string> = orgId ? { "x-organization-id": orgId } : {}
+  const headers: Record<string, string> = orgId ? { "x-organization-id": orgId } : {} as Record<string, string>
 
   const fetchPipelines = async () => {
     try {

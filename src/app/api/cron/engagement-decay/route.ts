@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
       if (contacts.length === 0) break
 
       // Get all events for this batch of contacts in one query
-      const contactIds = contacts.map(c => c.id)
+      const contactIds = contacts.map((c: any) => c.id)
       const events = await prisma.contactEvent.findMany({
         where: {
           contactId: { in: contactIds },

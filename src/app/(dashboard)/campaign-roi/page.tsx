@@ -45,7 +45,7 @@ export default function CampaignROIPage() {
 
   useEffect(() => {
     fetch("/api/v1/campaign-roi", {
-      headers: orgId ? { "x-organization-id": String(orgId) } : {},
+      headers: orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>,
     })
       .then(r => r.json())
       .then(j => {

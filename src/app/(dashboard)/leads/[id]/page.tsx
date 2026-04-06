@@ -127,7 +127,7 @@ export default function LeadDetailPage() {
   const fetchLead = async () => {
     try {
       const res = await fetch(`/api/v1/leads/${id}`, {
-        headers: orgId ? { "x-organization-id": String(orgId) } : {},
+        headers: orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>,
       })
       const json = await res.json()
       if (json.success) {
@@ -152,7 +152,7 @@ export default function LeadDetailPage() {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          ...(orgId ? { "x-organization-id": String(orgId) } : {}),
+          ...(orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>),
         },
         body: JSON.stringify({ status: newStatus }),
       })
@@ -170,7 +170,7 @@ export default function LeadDetailPage() {
   const handleDelete = async () => {
     await fetch(`/api/v1/leads/${id}`, {
       method: "DELETE",
-      headers: orgId ? { "x-organization-id": String(orgId) } : {},
+      headers: orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>,
     })
     router.push("/leads")
   }
@@ -181,7 +181,7 @@ export default function LeadDetailPage() {
     try {
       const res = await fetch("/api/v1/ai", {
         method: "POST",
-        headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": String(orgId) } : {}) },
+        headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>) },
         body: JSON.stringify({ action, leadId: id, options, locale }),
       })
       const json = await res.json()
@@ -197,7 +197,7 @@ export default function LeadDetailPage() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          ...(orgId ? { "x-organization-id": String(orgId) } : {}),
+          ...(orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>),
         },
         body: JSON.stringify({ leadId: id }),
       })
@@ -212,7 +212,7 @@ export default function LeadDetailPage() {
     try {
       const res = await fetch("/api/v1/inbox", {
         method: "POST",
-        headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": String(orgId) } : {}) },
+        headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>) },
         body: JSON.stringify({ channel: "email", to: lead.email, subject: generatedText.subject, body: generatedText.body }),
       })
       const json = await res.json()

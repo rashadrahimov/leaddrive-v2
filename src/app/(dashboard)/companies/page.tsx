@@ -67,7 +67,7 @@ export default function CompaniesPage() {
   const fetchCompanies = async () => {
     try {
       const res = await fetch("/api/v1/companies?category=client&limit=500", {
-        headers: orgId ? { "x-organization-id": String(orgId) } : {},
+        headers: orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>,
       })
       const json = await res.json()
       if (json.success) {
@@ -106,7 +106,7 @@ export default function CompaniesPage() {
     if (!deleteItem) return
     const res = await fetch(`/api/v1/companies/${deleteItem.id}`, {
       method: "DELETE",
-      headers: orgId ? { "x-organization-id": String(orgId) } : {},
+      headers: orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>,
     })
     if (!res.ok) throw new Error((await res.json()).error || "Failed to delete")
     fetchCompanies()

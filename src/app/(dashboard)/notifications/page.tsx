@@ -55,7 +55,7 @@ export default function NotificationsPage() {
   const fetchNotifications = async () => {
     try {
       const res = await fetch("/api/v1/notifications", {
-        headers: orgId ? { "x-organization-id": String(orgId) } : {},
+        headers: orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>,
       })
       const json = await res.json()
       if (json.success) {
@@ -73,7 +73,7 @@ export default function NotificationsPage() {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
-          ...(orgId ? { "x-organization-id": String(orgId) } : {}),
+          ...(orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>),
         },
         body: JSON.stringify({ markAll: true }),
       })
@@ -87,7 +87,7 @@ export default function NotificationsPage() {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
-          ...(orgId ? { "x-organization-id": String(orgId) } : {}),
+          ...(orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>),
         },
         body: JSON.stringify({ ids: [id] }),
       })

@@ -61,7 +61,7 @@ export function CurrencyForm({ open, onOpenChange, onSaved, initialData, orgId }
         method: isEdit ? "PUT" : "POST",
         headers: {
           "Content-Type": "application/json",
-          ...(orgId ? { "x-organization-id": orgId } : {}),
+          ...(orgId ? { "x-organization-id": orgId } : {} as Record<string, string>),
         },
         body: JSON.stringify(form),
       })

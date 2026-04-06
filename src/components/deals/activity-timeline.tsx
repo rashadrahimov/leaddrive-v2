@@ -43,7 +43,7 @@ export function ActivityTimeline({ dealId, orgId }: { dealId: string; orgId?: st
   const [formDescription, setFormDescription] = useState("")
   const [submitting, setSubmitting] = useState(false)
 
-  const headers: any = orgId ? { "x-organization-id": orgId } : {}
+  const headers: any = orgId ? { "x-organization-id": orgId } : {} as Record<string, string>
 
   const fetchActivities = () => {
     setLoading(true)

@@ -128,7 +128,7 @@ export default function TaskDetailPage() {
   const fetchTask = useCallback(async () => {
     try {
       const res = await fetch(`/api/v1/tasks/${taskId}`, {
-        headers: orgId ? { "x-organization-id": String(orgId) } : {},
+        headers: orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>,
       })
       const json = await res.json()
       if (json.success) {
@@ -153,7 +153,7 @@ export default function TaskDetailPage() {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
-          ...(orgId ? { "x-organization-id": String(orgId) } : {}),
+          ...(orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>),
         },
         body: JSON.stringify({ status: newStatus }),
       })
@@ -164,7 +164,7 @@ export default function TaskDetailPage() {
   const handleDelete = async () => {
     const res = await fetch(`/api/v1/tasks/${taskId}`, {
       method: "DELETE",
-      headers: orgId ? { "x-organization-id": String(orgId) } : {},
+      headers: orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>,
     })
     if (!res.ok) throw new Error((await res.json()).error || "Failed to delete")
     router.push("/tasks")
@@ -232,7 +232,7 @@ export default function TaskDetailPage() {
                     method: "POST",
                     headers: {
                       "Content-Type": "application/json",
-                      ...(orgId ? { "x-organization-id": String(orgId) } : {}),
+                      ...(orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>),
                     },
                     body: JSON.stringify({
                       summary: task.title,

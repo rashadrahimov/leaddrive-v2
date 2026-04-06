@@ -25,7 +25,7 @@ export function EngagementTab({ dealId, orgId }: { dealId: string; orgId?: strin
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const headers: any = orgId ? { "x-organization-id": orgId } : {}
+    const headers: any = orgId ? { "x-organization-id": orgId } : {} as Record<string, string>
     fetch(`/api/v1/deals/${dealId}/engagement`, { headers })
       .then(r => r.json())
       .then(j => { if (j.success) setData(j.data) })

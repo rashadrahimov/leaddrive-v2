@@ -45,12 +45,12 @@ export async function POST(req: NextRequest) {
 
   // Send Telegram notifications for newly overdue items
   if (newOverdueBills.length > 0) {
-    await notifyOverdueBills(newOverdueBills.map((b) => ({
+    await notifyOverdueBills(newOverdueBills.map((b: any) => ({
       billNumber: b.billNumber, vendorName: b.vendorName, amount: b.balanceDue, dueDate: b.dueDate!,
     })), orgId)
   }
   if (newOverdueInvoices.length > 0) {
-    await notifyOverdueInvoices(newOverdueInvoices.map((inv) => ({
+    await notifyOverdueInvoices(newOverdueInvoices.map((inv: any) => ({
       invoiceNumber: inv.invoiceNumber || "N/A",
       companyName: inv.company?.name || inv.recipientName || "Unknown",
       amount: inv.balanceDue || 0,
@@ -76,8 +76,8 @@ export async function POST(req: NextRequest) {
 
   if (upcomingBills.length > 0 || upcomingInvoices.length > 0) {
     await notifyUpcomingDeadlines(
-      upcomingBills.map((b) => ({ billNumber: b.billNumber, vendorName: b.vendorName, amount: b.balanceDue, dueDate: b.dueDate! })),
-      upcomingInvoices.map((inv) => ({
+      upcomingBills.map((b: any) => ({ billNumber: b.billNumber, vendorName: b.vendorName, amount: b.balanceDue, dueDate: b.dueDate! })),
+      upcomingInvoices.map((inv: any) => ({
         invoiceNumber: inv.invoiceNumber || "N/A",
         companyName: inv.company?.name || inv.recipientName || "Unknown",
         amount: inv.balanceDue || 0,

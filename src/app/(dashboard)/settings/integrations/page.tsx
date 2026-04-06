@@ -56,7 +56,7 @@ export default function IntegrationsPage() {
   const [slackWebhookUrl, setSlackWebhookUrl] = useState("")
   const [slackTestResult, setSlackTestResult] = useState<string | null>(null)
 
-  const headers = orgId ? { "x-organization-id": String(orgId) } : {}
+  const headers = orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>
 
   const fetchWebhooks = async () => {
     try {

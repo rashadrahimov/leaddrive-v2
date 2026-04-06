@@ -83,7 +83,7 @@ export default function EditInvoicePage() {
   const [showProductDropdown, setShowProductDropdown] = useState(false)
   const [showNotes, setShowNotes] = useState(false)
 
-  const headers: Record<string, string> = orgId ? { "x-organization-id": String(orgId) } : {}
+  const headers: Record<string, string> = orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>
 
   // Load invoice data
   useEffect(() => {
@@ -225,7 +225,7 @@ export default function EditInvoicePage() {
       }
       const res = await fetch(`/api/v1/invoices/${invoiceId}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": String(orgId) } : {}) },
+        headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>) },
         body: JSON.stringify(payload),
       })
       if (!res.ok) {

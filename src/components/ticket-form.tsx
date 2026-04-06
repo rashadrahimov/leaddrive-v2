@@ -104,7 +104,7 @@ export function TicketForm({ open, onOpenChange, onSaved, initialData, orgId }: 
 
       const res = await fetch(url, {
         method: isEdit ? "PUT" : "POST",
-        headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": orgId } : {}) },
+        headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": orgId } : {} as Record<string, string>) },
         body: JSON.stringify(payload),
       })
       if (!res.ok) throw new Error((await res.json()).error || "Failed")

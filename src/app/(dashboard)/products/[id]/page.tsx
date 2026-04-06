@@ -58,13 +58,13 @@ export default function ProductDetailPage() {
 
   const headers = (): any => ({
     "Content-Type": "application/json",
-    ...(orgId ? { "x-organization-id": String(orgId) } : {}),
+    ...(orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>),
   })
 
   async function fetchProduct() {
     try {
       const res = await fetch(`/api/v1/products/${id}`, {
-        headers: orgId ? { "x-organization-id": String(orgId) } : {},
+        headers: orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>,
       })
       const json = await res.json()
       if (json.success) {

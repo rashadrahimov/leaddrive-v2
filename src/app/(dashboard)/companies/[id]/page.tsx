@@ -91,7 +91,7 @@ export default function CompanyDetailPage() {
   const fetchCompany = async () => {
     try {
       const res = await fetch(`/api/v1/companies/${params.id}`, {
-        headers: orgId ? { "x-organization-id": String(orgId) } : {},
+        headers: orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>,
       })
       const json = await res.json()
       if (json.success && json.data) setCompany(json.data)
@@ -254,7 +254,7 @@ export default function CompanyDetailPage() {
                     isVisible("employeeCount") ? ["Employees", company.employeeCount?.toString() || "—"] : null,
                     isVisible("country") ? [tc("country"), company.country || "—"] : null,
                     isVisible("annualRevenue") ? ["Annual revenue", company.annualRevenue ? `${company.annualRevenue.toLocaleString()} ₼` : "—"] : null,
-                  ].filter(Boolean).map(([label, value]) => (
+                  ].filter(Boolean).map(([label, value]: any) => (
                     <div key={label}>
                       <span className="text-xs text-muted-foreground">{label}</span>
                       <p className="font-medium text-sm mt-0.5">{value}</p>

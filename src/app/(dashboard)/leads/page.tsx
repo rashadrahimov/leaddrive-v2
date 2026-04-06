@@ -91,7 +91,7 @@ export default function LeadsPage() {
   const fetchLeads = async () => {
     try {
       const res = await fetch("/api/v1/leads?limit=500&includeConverted=true", {
-        headers: orgId ? { "x-organization-id": String(orgId) } : {},
+        headers: orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>,
       })
       const json = await res.json()
       if (json.success) setLeads(json.data.leads || [])
@@ -104,7 +104,7 @@ export default function LeadsPage() {
     if (!deleteId) return
     await fetch(`/api/v1/leads/${deleteId}`, {
       method: "DELETE",
-      headers: orgId ? { "x-organization-id": String(orgId) } : {},
+      headers: orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>,
     })
     fetchLeads()
   }

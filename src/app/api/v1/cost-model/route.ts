@@ -7,7 +7,7 @@ export async function GET(req: NextRequest) {
   if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
   try {
-    const [params, overhead, employees, services, companies] = await Promise.all([
+    const [params, overhead, employees, services, companies, wonDeals] = await Promise.all([
       prisma.pricingParameters.findUnique({ where: { organizationId: orgId } }),
       prisma.overheadCost.findMany({ where: { organizationId: orgId }, orderBy: { sortOrder: "asc" } }),
       prisma.costEmployee.findMany({ where: { organizationId: orgId } }),
@@ -15,6 +15,11 @@ export async function GET(req: NextRequest) {
       prisma.company.findMany({
         where: { organizationId: orgId, status: "active" },
         select: { id: true, name: true, userCount: true, costCode: true },
+      }),
+      prisma.deal.groupBy({
+        by: ["companyId"],
+        where: { organizationId: orgId, stage: "won", companyId: { not: null } },
+        _sum: { value: true },
       }),
     ])
 
@@ -55,8 +60,8 @@ export async function GET(req: NextRequest) {
           totalEmployeeCost: Math.round(totalEmployeeCost * 100) / 100,
           margin: Math.round((totalRevenue - totalCost) * 100) / 100,
           marginPct: totalCost > 0 ? Math.round((totalRevenue - totalCost) / totalCost * 10000) / 100 : 0,
-          profitableClients: 0, // TODO: per-client calc
-          lossClients: 0,
+          profitableClients: wonDeals.filter((d: any) => (d._sum.value || 0) > 0).length,
+          lossClients: companies.length - wonDeals.filter((d: any) => (d._sum.value || 0) > 0).length,
         },
         overhead,
         employees,

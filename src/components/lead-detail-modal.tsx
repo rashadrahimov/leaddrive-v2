@@ -114,7 +114,7 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
       setShowAllContacts(false)
       // Load full company data with contacts and deals
       fetch(`/api/v1/companies/${company.id}`, {
-        headers: orgId ? { "x-organization-id": orgId } : {},
+        headers: orgId ? { "x-organization-id": orgId } : {} as Record<string, string>,
       }).then(r => r.json()).then(json => {
         if (json.success && json.data) {
           setFullData(json.data)
@@ -131,7 +131,7 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
     try {
       const res = await fetch("/api/v1/ai", {
         method: "POST",
-        headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": orgId } : {}) },
+        headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": orgId } : {} as Record<string, string>) },
         body: JSON.stringify({ action, companyId: company.id, options, locale }),
       })
       const json = await res.json()
@@ -144,11 +144,11 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
   const updateField = async (fields: Record<string, any>) => {
     await fetch(`/api/v1/companies/${company.id}`, {
       method: "PUT",
-      headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": orgId } : {}) },
+      headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": orgId } : {} as Record<string, string>) },
       body: JSON.stringify(fields),
     })
     // Reload full data
-    const res = await fetch(`/api/v1/companies/${company.id}`, { headers: orgId ? { "x-organization-id": orgId } : {} })
+    const res = await fetch(`/api/v1/companies/${company.id}`, { headers: orgId ? { "x-organization-id": orgId } : {} as Record<string, string> })
     const json = await res.json()
     if (json.success && json.data) setFullData(json.data)
     onSaved?.()
@@ -172,7 +172,7 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
   const loadActivities = async () => {
     try {
       const res = await fetch(`/api/v1/activities?companyId=${company.id}`, {
-        headers: orgId ? { "x-organization-id": orgId } : {},
+        headers: orgId ? { "x-organization-id": orgId } : {} as Record<string, string>,
       })
       const json = await res.json()
       if (json.success) setActivities(json.data.activities || [])
@@ -185,7 +185,7 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
     try {
       const res = await fetch("/api/v1/activities", {
         method: "POST",
-        headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": orgId } : {}) },
+        headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": orgId } : {} as Record<string, string>) },
         body: JSON.stringify({
           type: activityType,
           subject: activitySubject,
@@ -216,7 +216,7 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
     try {
       const res = await fetch("/api/v1/inbox", {
         method: "POST",
-        headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": orgId } : {}) },
+        headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": orgId } : {} as Record<string, string>) },
         body: JSON.stringify({
           to: firstContact.email,
           body: generatedText.body,
@@ -414,9 +414,9 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
                         </button>
                         <button onClick={async () => {
                           if (!confirm(`Удалить контакт ${c.fullName}?`)) return
-                          await fetch(`/api/v1/contacts/${c.id}`, { method: "DELETE", headers: orgId ? { "x-organization-id": orgId } : {} })
+                          await fetch(`/api/v1/contacts/${c.id}`, { method: "DELETE", headers: orgId ? { "x-organization-id": orgId } : {} as Record<string, string> })
                           // Reload full data
-                          const res = await fetch(`/api/v1/companies/${company.id}`, { headers: orgId ? { "x-organization-id": orgId } : {} })
+                          const res = await fetch(`/api/v1/companies/${company.id}`, { headers: orgId ? { "x-organization-id": orgId } : {} as Record<string, string> })
                           const json = await res.json()
                           if (json.success) setFullData(json.data)
                           onSaved?.()
@@ -792,7 +792,7 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
           <Button variant="outline" size="sm" className="gap-1 text-red-700 border-red-200 hover:bg-red-50"
             onClick={async () => {
               if (!confirm(`Удалить ${company.name}? Необратимо.`)) return
-              await fetch(`/api/v1/companies/${company.id}`, { method: "DELETE", headers: orgId ? { "x-organization-id": orgId } : {} })
+              await fetch(`/api/v1/companies/${company.id}`, { method: "DELETE", headers: orgId ? { "x-organization-id": orgId } : {} as Record<string, string> })
               onOpenChange(false)
               onSaved?.()
             }}>

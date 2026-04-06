@@ -78,10 +78,10 @@ export default function SegmentsPage() {
     try {
       const [segRes, contactRes] = await Promise.all([
         fetch("/api/v1/segments?limit=500", {
-          headers: orgId ? { "x-organization-id": String(orgId) } : {},
+          headers: orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>,
         }),
         fetch("/api/v1/contacts?limit=1", {
-          headers: orgId ? { "x-organization-id": String(orgId) } : {},
+          headers: orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>,
         }),
       ])
       const segJson = await segRes.json()
@@ -97,7 +97,7 @@ export default function SegmentsPage() {
     if (!deleteId) return
     await fetch(`/api/v1/segments/${deleteId}`, {
       method: "DELETE",
-      headers: orgId ? { "x-organization-id": String(orgId) } : {},
+      headers: orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>,
     })
     fetchSegments()
   }

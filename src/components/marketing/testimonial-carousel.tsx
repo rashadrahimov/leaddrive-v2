@@ -49,9 +49,9 @@ export function TestimonialCarousel() {
                   <div className="flex items-center gap-3 mb-5 pb-5 border-b border-[#001E3C]/10">
                     <div
                       className="flex items-center justify-center w-10 h-10 rounded-xl shrink-0"
-                      style={{ backgroundColor: `${t.metricColor}12` }}
+                      style={{ backgroundColor: `${cs.metricColor}12` }}
                     >
-                      <MetricIcon className="w-5 h-5" style={{ color: t.metricColor }} />
+                      <MetricIcon className="w-5 h-5" style={{ color: cs.metricColor }} />
                     </div>
                     <div>
                       <div className="text-xl font-bold text-[#001E3C]">{cs.metric}</div>

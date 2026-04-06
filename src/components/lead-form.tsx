@@ -60,7 +60,7 @@ export function LeadForm({ open, onOpenChange, onSaved, initialData, orgId }: Le
       const url = isEdit ? `/api/v1/leads/${initialData!.id}` : "/api/v1/leads"
       const res = await fetch(url, {
         method: isEdit ? "PUT" : "POST",
-        headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": orgId } : {}) },
+        headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": orgId } : {} as Record<string, string>) },
         body: JSON.stringify({ ...form, estimatedValue: parseFloat(form.estimatedValue) || undefined }),
       })
       if (!res.ok) throw new Error((await res.json()).error || "Failed")

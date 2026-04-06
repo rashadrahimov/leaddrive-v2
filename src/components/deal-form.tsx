@@ -90,7 +90,7 @@ export function DealForm({ open, onOpenChange, onSaved, initialData, orgId, pipe
       const url = isEdit ? `/api/v1/deals/${initialData!.id}` : "/api/v1/deals"
       const res = await fetch(url, {
         method: isEdit ? "PUT" : "POST",
-        headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": orgId } : {}) },
+        headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": orgId } : {} as Record<string, string>) },
         body: JSON.stringify(payload),
       })
       const json = await res.json()

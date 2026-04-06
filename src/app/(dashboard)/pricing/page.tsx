@@ -142,7 +142,7 @@ export default function PricingPage() {
   const [wonDealsLoading, setWonDealsLoading] = useState(false)
   const [addingDealId, setAddingDealId] = useState<string | null>(null)
 
-  const headers = orgId ? { "x-organization-id": String(orgId) } : {}
+  const headers = orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>
 
   const fetchData = useCallback(async () => {
     try {

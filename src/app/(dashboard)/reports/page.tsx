@@ -202,7 +202,7 @@ export default function ReportsPage() {
     async function fetchReports() {
       try {
         const res = await fetch("/api/v1/reports", {
-          headers: orgId ? { "x-organization-id": String(orgId) } : {},
+          headers: orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>,
         })
         const json = await res.json()
         if (json.success) setData(json.data)

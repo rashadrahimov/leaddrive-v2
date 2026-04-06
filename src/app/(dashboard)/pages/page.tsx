@@ -433,7 +433,7 @@ export default function PagesListPage() {
                                   color: "hsl(var(--popover-foreground))",
                                   fontSize: 12,
                                 }}
-                                labelFormatter={(v: string) => v}
+                                labelFormatter={(v: any) => String(v)}
                               />
                               <Area
                                 type="monotone"

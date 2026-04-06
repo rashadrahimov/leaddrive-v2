@@ -252,7 +252,7 @@ export function OfferForm({ open, onOpenChange, onSaved, initialData, orgId, dea
         method,
         headers: {
           "Content-Type": "application/json",
-          ...(orgId ? { "x-organization-id": orgId } : {}),
+          ...(orgId ? { "x-organization-id": orgId } : {} as Record<string, string>),
         },
         body: JSON.stringify(payload),
       })

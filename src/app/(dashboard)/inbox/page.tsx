@@ -141,7 +141,7 @@ export default function InboxPage() {
     try {
       const params = channelFilter !== "all" ? `?channel=${channelFilter}` : ""
       const res = await fetch(`/api/v1/inbox${params}`, {
-        headers: orgId ? { "x-organization-id": String(orgId) } : {},
+        headers: orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>,
       })
       const json = await res.json()
       if (json.success) {
@@ -167,7 +167,7 @@ export default function InboxPage() {
   useEffect(() => {
     if (showCompose && !contactsLoaded) {
       fetch("/api/v1/contacts?limit=500", {
-        headers: orgId ? { "x-organization-id": String(orgId) } : {},
+        headers: orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>,
       })
         .then(r => r.json())
         .then(json => {
@@ -231,7 +231,7 @@ export default function InboxPage() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          ...(orgId ? { "x-organization-id": String(orgId) } : {}),
+          ...(orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>),
         },
         body: JSON.stringify({
           to,
@@ -256,7 +256,7 @@ export default function InboxPage() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          ...(orgId ? { "x-organization-id": String(orgId) } : {}),
+          ...(orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>),
         },
         body: JSON.stringify({
           to: composeTo,
@@ -289,7 +289,7 @@ export default function InboxPage() {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
-          ...(orgId ? { "x-organization-id": String(orgId) } : {}),
+          ...(orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>),
         },
         body: JSON.stringify({ messageIds: unreadIds }),
       })
@@ -306,7 +306,7 @@ export default function InboxPage() {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
-          ...(orgId ? { "x-organization-id": String(orgId) } : {}),
+          ...(orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>),
         },
         body: JSON.stringify({ messageIds: ids }),
       })

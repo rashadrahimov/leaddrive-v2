@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { prisma, logAudit } from "@/lib/prisma"
-import { getOrgId, requireAuth, isAuthError } from "@/lib/api-auth"
+import { getOrgId, getSession, requireAuth, isAuthError } from "@/lib/api-auth"
 import { executeWorkflows } from "@/lib/workflow-engine"
 import { createNotification } from "@/lib/notifications"
+import { getFieldPermissions, filterEntityFields, filterWritableFields } from "@/lib/field-filter"
 
 const updateTaskSchema = z.object({
   title: z.string().min(1).max(300).optional(),
@@ -17,13 +18,18 @@ const updateTaskSchema = z.object({
 })
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const orgId = await getOrgId(req)
+  const session = await getSession(req)
+  const orgId = session?.orgId || await getOrgId(req)
   if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  const role = session?.role || "admin"
   const { id } = await params
 
   const task = await prisma.task.findFirst({ where: { id, organizationId: orgId } })
   if (!task) return NextResponse.json({ error: "Not found" }, { status: 404 })
-  return NextResponse.json({ success: true, data: task })
+
+  const fieldPerms = await getFieldPermissions(orgId, role, "task")
+  const filteredTask = filterEntityFields(task, fieldPerms, role)
+  return NextResponse.json({ success: true, data: filteredTask })
 }
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -35,8 +41,12 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   const existing = await prisma.task.findFirst({ where: { id, organizationId: orgId } })
   if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 })
 
+  const session = await getSession(req)
+  const role = session?.role || "admin"
   const body = await req.json()
-  const parsed = updateTaskSchema.safeParse(body)
+  const fieldPerms = await getFieldPermissions(orgId, role, "task")
+  const filteredBody = filterWritableFields(body, fieldPerms, role)
+  const parsed = updateTaskSchema.safeParse(filteredBody)
   if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 })
 
   try {

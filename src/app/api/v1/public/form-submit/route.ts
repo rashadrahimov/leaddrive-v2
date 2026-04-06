@@ -23,7 +23,7 @@ const formSubmitSchema = z.object({
   email: z.string().email().optional(),
   phone: z.string().max(50).optional(),
   company: z.string().max(200).optional(),
-  formData: z.record(z.any()).optional(),
+  formData: z.record(z.string(), z.any()).optional(),
 }).passthrough().refine(data => data.orgId || data.organizationId, {
   message: "orgId or organizationId is required",
 })

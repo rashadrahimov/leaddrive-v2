@@ -42,7 +42,7 @@ export default function LeadRulesPage() {
 
   const headers = useCallback(() => ({
     "Content-Type": "application/json",
-    ...(orgId ? { "x-organization-id": String(orgId) } : {}),
+    ...(orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>),
   }), [orgId])
 
   const loadRules = useCallback(async () => {

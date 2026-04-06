@@ -61,7 +61,7 @@ export default function ChannelsPage() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          ...(orgId ? { "x-organization-id": String(orgId) } : {}),
+          ...(orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>),
         },
         body: JSON.stringify({ to: testPhone }),
       })
@@ -80,7 +80,7 @@ export default function ChannelsPage() {
   const fetchChannels = async () => {
     try {
       const res = await fetch("/api/v1/channels", {
-        headers: orgId ? { "x-organization-id": String(orgId) } : {},
+        headers: orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>,
       })
       if (res.ok) {
         const result = await res.json()
@@ -95,7 +95,7 @@ export default function ChannelsPage() {
     if (!deleteId) return
     await fetch(`/api/v1/channels/${deleteId}`, {
       method: "DELETE",
-      headers: orgId ? { "x-organization-id": String(orgId) } : {},
+      headers: orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>,
     })
     fetchChannels()
   }

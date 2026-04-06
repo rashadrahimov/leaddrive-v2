@@ -99,12 +99,12 @@ export default function InvoicesPage() {
   const [editForm, setEditForm] = useState({ title: "", issueDate: "", dueDate: "", paymentTerms: "", currency: "", notes: "" })
   const [editLoading, setEditLoading] = useState(false)
   const orgId = (session?.user as { organizationId?: string })?.organizationId
-  const headers: Record<string, string> = { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": String(orgId) } : {}) }
+  const headers: Record<string, string> = { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>) }
 
   const fetchStats = async () => {
     try {
       const res = await fetch("/api/v1/invoices/stats", {
-        headers: orgId ? { "x-organization-id": String(orgId) } : {},
+        headers: orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>,
       })
       const json = await res.json()
       if (json.success) setStats(json.data)
@@ -117,7 +117,7 @@ export default function InvoicesPage() {
       const res = await fetch(
         `/api/v1/invoices?limit=500${statusFilter ? `&status=${statusFilter}` : ""}${dealIdFilter ? `&dealId=${dealIdFilter}` : ""}`,
         {
-          headers: orgId ? { "x-organization-id": String(orgId) } : {},
+          headers: orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>,
         }
       )
       const json = await res.json()
@@ -140,7 +140,7 @@ export default function InvoicesPage() {
     if (!deleteId) return
     const res = await fetch(`/api/v1/invoices/${deleteId}`, {
       method: "DELETE",
-      headers: orgId ? { "x-organization-id": String(orgId) } : {},
+      headers: orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>,
     })
     if (!res.ok) throw new Error("Failed to delete")
     fetchInvoices()

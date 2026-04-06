@@ -7,7 +7,8 @@ import { Monitor, Smartphone, Download } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 // Unlayer must be loaded client-side only
-const EmailEditor = dynamic(() => import("react-email-editor").then(mod => mod.default), {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const EmailEditor: any = dynamic(() => import("react-email-editor").then(mod => mod.default) as any, {
   ssr: false,
   loading: () => (
     <div className="flex items-center justify-center h-[600px] border rounded-lg bg-muted/30">

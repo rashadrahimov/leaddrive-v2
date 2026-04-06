@@ -44,7 +44,7 @@ export function LeadConvertDialog({ open, onOpenChange, onConverted, lead, orgId
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          ...(orgId ? { "x-organization-id": orgId } : {}),
+          ...(orgId ? { "x-organization-id": orgId } : {} as Record<string, string>),
         },
         body: JSON.stringify({
           dealTitle,

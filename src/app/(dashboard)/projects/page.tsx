@@ -101,7 +101,7 @@ export default function ProjectsPage() {
   const fetchProjects = useCallback(async () => {
     try {
       const res = await fetch("/api/v1/projects?limit=500", {
-        headers: orgId ? { "x-organization-id": String(orgId) } : {},
+        headers: orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>,
       })
       const json = await res.json()
       if (json.success) {
@@ -165,7 +165,7 @@ export default function ProjectsPage() {
         method,
         headers: {
           "Content-Type": "application/json",
-          ...(orgId ? { "x-organization-id": String(orgId) } : {}),
+          ...(orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>),
         },
         body: JSON.stringify(payload),
       })
@@ -182,7 +182,7 @@ export default function ProjectsPage() {
     if (!deleteId) return
     const res = await fetch(`/api/v1/projects/${deleteId}`, {
       method: "DELETE",
-      headers: orgId ? { "x-organization-id": String(orgId) } : {},
+      headers: orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>,
     })
     if (!res.ok) throw new Error("Failed to delete")
     fetchProjects()

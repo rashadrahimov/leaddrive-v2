@@ -96,7 +96,7 @@ async function sendToChannels(
             take: 5,
           })
           await prisma.notification.createMany({
-            data: users.map((u) => ({
+            data: users.map((u: any) => ({
               organizationId: orgId!,
               userId: u.id,
               type: "finance",

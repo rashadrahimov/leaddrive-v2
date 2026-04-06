@@ -231,7 +231,7 @@ function NextStepsWidget({ dealId, orgId, steps, fetchSteps }: {
   const [newTitle, setNewTitle] = useState("")
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
-    ...(orgId ? { "x-organization-id": orgId } : {}),
+    ...(orgId ? { "x-organization-id": orgId } : {} as Record<string, string>),
   }
 
   const pending = steps.filter(s => s.status !== "completed")
@@ -356,7 +356,7 @@ export default function DealDetailPage() {
     : FALLBACK_STAGE_STYLES
 
   const STAGES = STAGE_STYLES.map(s => ({ ...s, label: stageLabels[s.key] || s.key }))
-  const headers: Record<string, string> = orgId ? { "x-organization-id": orgId } : {}
+  const headers: Record<string, string> = orgId ? { "x-organization-id": orgId } : {} as Record<string, string>
 
   const fetchDeal = async () => {
     try {

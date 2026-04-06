@@ -3,6 +3,7 @@ import { createNotification } from "@/lib/notifications"
 import { isPrivateUrl } from "@/lib/url-validation"
 import { fireWebhooks } from "@/lib/webhooks"
 import { sendSlackNotification, formatGenericNotification } from "@/lib/slack"
+import { sendEmail } from "@/lib/email"
 
 // Whitelist of fields that workflow actions are allowed to update per entity type
 const SAFE_UPDATE_FIELDS: Record<string, Set<string>> = {
@@ -191,10 +192,21 @@ async function executeAction(
       break
     }
 
-    case "send_email":
-      // TODO: integrate with SMTP when configured
-      console.log(`[Workflow] send_email action — template: ${config.template || "none"}, subject: ${config.subject || "none"}, entity: ${entity.id}`)
+    case "send_email": {
+      const recipientEmail = config.to || (entity as any).email || (entity as any).contactEmail
+      if (recipientEmail) {
+        await sendEmail({
+          to: recipientEmail,
+          subject: config.subject || `[LeadDrive] Notification for ${entityType} #${entity.id}`,
+          html: config.body || config.template || `<p>Workflow notification for ${entityType}.</p>`,
+          organizationId: orgId,
+          templateId: config.templateId,
+        }).catch(err => console.error(`[Workflow] send_email failed:`, err))
+      } else {
+        console.warn(`[Workflow] send_email skipped — no recipient for ${entityType} ${entity.id}`)
+      }
       break
+    }
 
     case "webhook":
       // Fire registered webhooks for this event

@@ -74,7 +74,7 @@ export default function ProductsPage() {
 
   async function fetchProducts() {
     try {
-      const res = await fetch("/api/v1/products", { headers: orgId ? { "x-organization-id": String(orgId) } : {} })
+      const res = await fetch("/api/v1/products", { headers: orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string> })
       const json = await res.json()
       if (json.success) setProducts(json.data || [])
     } catch (err) { console.error(err) } finally { setLoading(false) }

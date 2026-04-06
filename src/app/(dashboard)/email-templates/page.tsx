@@ -73,7 +73,7 @@ export default function EmailTemplatesPage() {
   const fetchTemplates = async () => {
     try {
       const res = await fetch("/api/v1/email-templates?limit=500", {
-        headers: orgId ? { "x-organization-id": String(orgId) } : {},
+        headers: orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>,
       })
       const json = await res.json()
       if (json.success) setTemplates(json.data.templates)
@@ -86,7 +86,7 @@ export default function EmailTemplatesPage() {
     if (!deleteId) return
     await fetch(`/api/v1/email-templates/${deleteId}`, {
       method: "DELETE",
-      headers: orgId ? { "x-organization-id": String(orgId) } : {},
+      headers: orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>,
     })
     fetchTemplates()
   }

@@ -66,7 +66,7 @@ export function QuickActionBar({ dealId, orgId, contacts = [], onActivityAdded, 
   const selectedContact = emailContacts.find(c => c.id === selectedContactId) || null
 
   const headers: Record<string, string> = {
-    ...(orgId ? { "x-organization-id": orgId } : {}),
+    ...(orgId ? { "x-organization-id": orgId } : {} as Record<string, string>),
   }
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {

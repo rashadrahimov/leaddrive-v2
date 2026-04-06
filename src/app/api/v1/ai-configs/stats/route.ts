@@ -42,8 +42,8 @@ export async function GET(req: NextRequest) {
     })
 
     // Map stats to agents
-    const agentMetrics = agents.map(agent => {
-      const stats = agentStats.find(s => s.agentConfigId === agent.id)
+    const agentMetrics = agents.map((agent: any) => {
+      const stats = agentStats.find((s: any) => s.agentConfigId === agent.id)
       return {
         id: agent.id,
         configName: agent.configName,
@@ -59,8 +59,8 @@ export async function GET(req: NextRequest) {
     })
 
     // Enrich handoffs with agent names
-    const agentMap = Object.fromEntries(agents.map(a => [a.id, a.configName]))
-    const enrichedHandoffs = handoffs.map(h => ({
+    const agentMap = Object.fromEntries(agents.map((a: any) => [a.id, a.configName]))
+    const enrichedHandoffs = handoffs.map((h: any) => ({
       ...h,
       fromAgentName: agentMap[h.fromAgentId] || h.fromAgentId,
       toAgentName: agentMap[h.toAgentId] || h.toAgentId,
@@ -71,7 +71,7 @@ export async function GET(req: NextRequest) {
       data: {
         agents: agentMetrics,
         handoffs: enrichedHandoffs,
-        intentDistribution: intentLogs.map(l => ({
+        intentDistribution: intentLogs.map((l: any) => ({
           agentType: l.agentType || "unknown",
           count: l._count.id,
         })),

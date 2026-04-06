@@ -37,7 +37,7 @@ export async function applyRecordFilter(
           where: { organizationId: orgId, role: rule.sourceRole },
           select: { id: true },
         })
-        const sourceIds = sourceUsers.map(u => u.id)
+        const sourceIds = sourceUsers.map((u: any) => u.id)
         orConditions.push({
           OR: [
             { assignedTo: { in: sourceIds } },

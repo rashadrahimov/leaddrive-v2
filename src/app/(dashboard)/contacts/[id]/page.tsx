@@ -65,7 +65,7 @@ function ContactEngagementInner({ contactId, orgId }: { contactId: string; orgId
   const [data, setData] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   useEffect(() => {
-    const headers: any = orgId ? { "x-organization-id": orgId } : {}
+    const headers: any = orgId ? { "x-organization-id": orgId } : {} as Record<string, string>
     fetch(`/api/v1/contacts/${contactId}/engagement`, { headers })
       .then(r => r.json())
       .then(j => { if (j.success) setData(j.data) })
@@ -159,7 +159,7 @@ export default function ContactDetailPage() {
   const fetchContact = async () => {
     try {
       const res = await fetch(`/api/v1/contacts/${id}`, {
-        headers: orgId ? { "x-organization-id": String(orgId) } : {},
+        headers: orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>,
       })
       const json = await res.json()
       if (json.success) {
@@ -190,7 +190,7 @@ export default function ContactDetailPage() {
     setShowEdit(true)
     // Fetch companies for dropdown
     fetch("/api/v1/companies?limit=500", {
-      headers: orgId ? { "x-organization-id": String(orgId) } : {},
+      headers: orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>,
     })
       .then(r => r.json())
       .then(json => {
@@ -207,7 +207,7 @@ export default function ContactDetailPage() {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          ...(orgId ? { "x-organization-id": String(orgId) } : {}),
+          ...(orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>),
         },
         body: JSON.stringify({
           fullName: editData.fullName,
@@ -382,7 +382,7 @@ export default function ContactDetailPage() {
               setLoadingRecs(true)
               fetch("/api/v1/ai/recommend", {
                 method: "POST",
-                headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": String(orgId) } : {}) },
+                headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>) },
                 body: JSON.stringify({ contactId: id }),
               }).then(r => r.json()).then(json => {
                 if (json.success) setRecommendations(json.data.recommendations || [])

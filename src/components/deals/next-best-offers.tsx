@@ -27,7 +27,7 @@ export function NextBestOffers({ dealId, orgId }: { dealId: string; orgId?: stri
   const [adding, setAdding] = useState(false)
 
   useEffect(() => {
-    const headers: any = orgId ? { "x-organization-id": orgId } : {}
+    const headers: any = orgId ? { "x-organization-id": orgId } : {} as Record<string, string>
     // Use Da Vinci recommend API with deal context
     fetch(`/api/v1/ai/recommend`, {
       method: "POST",
@@ -73,7 +73,7 @@ export function NextBestOffers({ dealId, orgId }: { dealId: string; orgId?: stri
   const handleAddToDeal = async (product: Product) => {
     setAdding(true)
     try {
-      const headers: any = { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": orgId } : {}) }
+      const headers: any = { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": orgId } : {} as Record<string, string>) }
       await fetch(`/api/v1/deals/${dealId}/products`, {
         method: "POST",
         headers,

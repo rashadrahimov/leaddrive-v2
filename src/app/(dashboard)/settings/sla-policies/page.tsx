@@ -49,7 +49,7 @@ export default function SlaPoliciesPage() {
   const fetchPolicies = async () => {
     try {
       const res = await fetch("/api/v1/sla-policies", {
-        headers: orgId ? { "x-organization-id": String(orgId) } : {},
+        headers: orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>,
       })
       if (res.ok) {
         const result = await res.json()
@@ -64,7 +64,7 @@ export default function SlaPoliciesPage() {
     if (!deleteId) return
     const res = await fetch(`/api/v1/sla-policies/${deleteId}`, {
       method: "DELETE",
-      headers: orgId ? { "x-organization-id": String(orgId) } : {},
+      headers: orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>,
     })
     if (!res.ok) throw new Error("Failed to delete")
     fetchPolicies()

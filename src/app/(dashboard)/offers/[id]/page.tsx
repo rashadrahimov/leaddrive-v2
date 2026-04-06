@@ -65,7 +65,7 @@ export default function OfferDetailPage() {
   const fetchOffer = async () => {
     try {
       const res = await fetch(`/api/v1/offers/${params.id}`, {
-        headers: orgId ? { "x-organization-id": String(orgId) } : {},
+        headers: orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>,
       })
       const json = await res.json()
       if (json.success && json.data) {
@@ -94,7 +94,7 @@ export default function OfferDetailPage() {
   const handleDelete = async () => {
     const res = await fetch(`/api/v1/offers/${params.id}`, {
       method: "DELETE",
-      headers: orgId ? { "x-organization-id": String(orgId) } : {},
+      headers: orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>,
     })
     const json = await res.json()
     if (!json.success) throw new Error(json.error || "Failed to delete")
@@ -112,7 +112,7 @@ export default function OfferDetailPage() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          ...(orgId ? { "x-organization-id": String(orgId) } : {}),
+          ...(orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>),
         },
         body: JSON.stringify({
           recipientEmail: sendEmail,
@@ -140,7 +140,7 @@ export default function OfferDetailPage() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          ...(orgId ? { "x-organization-id": String(orgId) } : {}),
+          ...(orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>),
         },
         body: JSON.stringify({ offerId: params.id }),
       })

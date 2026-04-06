@@ -150,7 +150,7 @@ export function LeadItemModal({ open, onOpenChange, lead, orgId, onSaved, onConv
   const reloadLead = async () => {
     try {
       const res = await fetch(`/api/v1/leads/${lead.id}`, {
-        headers: orgId ? { "x-organization-id": String(orgId) } : {},
+        headers: orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>,
       })
       const json = await res.json()
       if (json.success && json.data) {
@@ -164,7 +164,7 @@ export function LeadItemModal({ open, onOpenChange, lead, orgId, onSaved, onConv
     try {
       await fetch(`/api/v1/leads/${lead.id}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": String(orgId) } : {}) },
+        headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>) },
         body: JSON.stringify(fields),
       })
       await reloadLead()
@@ -201,7 +201,7 @@ export function LeadItemModal({ open, onOpenChange, lead, orgId, onSaved, onConv
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          ...(orgId ? { "x-organization-id": String(orgId) } : {}),
+          ...(orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>),
         },
         body: JSON.stringify({ leadId: lead.id }),
       })
@@ -216,7 +216,7 @@ export function LeadItemModal({ open, onOpenChange, lead, orgId, onSaved, onConv
     try {
       const res = await fetch("/api/v1/ai", {
         method: "POST",
-        headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": String(orgId) } : {}) },
+        headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>) },
         body: JSON.stringify({ action, leadId: lead.id, options, locale }),
       })
       const json = await res.json()
@@ -229,7 +229,7 @@ export function LeadItemModal({ open, onOpenChange, lead, orgId, onSaved, onConv
   const loadActivities = async () => {
     try {
       const res = await fetch(`/api/v1/activities?relatedType=lead&relatedId=${lead.id}`, {
-        headers: orgId ? { "x-organization-id": String(orgId) } : {},
+        headers: orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>,
       })
       const json = await res.json()
       if (json.success) setActivities(json.data.activities || [])
@@ -242,7 +242,7 @@ export function LeadItemModal({ open, onOpenChange, lead, orgId, onSaved, onConv
     try {
       const res = await fetch("/api/v1/activities", {
         method: "POST",
-        headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": String(orgId) } : {}) },
+        headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>) },
         body: JSON.stringify({
           type: activityType,
           subject: activitySubject,
@@ -269,7 +269,7 @@ export function LeadItemModal({ open, onOpenChange, lead, orgId, onSaved, onConv
     try {
       const res = await fetch("/api/v1/inbox", {
         method: "POST",
-        headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": String(orgId) } : {}) },
+        headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>) },
         body: JSON.stringify({
           to: displayLead.email,
           body: generatedText.body,
@@ -650,7 +650,7 @@ export function LeadItemModal({ open, onOpenChange, lead, orgId, onSaved, onConv
                   <Button variant="outline" size="sm" className="gap-1 text-red-700 border-red-200 hover:bg-red-50 dark:border-red-800 dark:hover:bg-red-950"
                     onClick={async () => {
                       if (!confirm(t("modalConfirmDelete", { name: displayLead.contactName }))) return
-                      await fetch(`/api/v1/leads/${lead.id}`, { method: "DELETE", headers: orgId ? { "x-organization-id": String(orgId) } : {} })
+                      await fetch(`/api/v1/leads/${lead.id}`, { method: "DELETE", headers: orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string> })
                       onOpenChange(false)
                       onSaved?.()
                     }}>

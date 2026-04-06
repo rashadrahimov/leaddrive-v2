@@ -83,7 +83,7 @@ export function OffersTab({
   const [sendOffer, setSendOffer] = useState<Offer | null>(null)
   const [deleteOffer, setDeleteOffer] = useState<Offer | null>(null)
 
-  const headers: Record<string, string> = orgId ? { "x-organization-id": orgId } : {}
+  const headers: Record<string, string> = orgId ? { "x-organization-id": orgId } : {} as Record<string, string>
 
   const loadOffers = () => {
     setLoading(true)

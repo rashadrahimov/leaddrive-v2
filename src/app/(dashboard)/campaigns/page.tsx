@@ -79,7 +79,7 @@ export default function CampaignsPage() {
   const fetchCampaigns = async () => {
     try {
       const res = await fetch("/api/v1/campaigns?limit=500", {
-        headers: orgId ? { "x-organization-id": String(orgId) } : {},
+        headers: orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>,
       })
       const json = await res.json()
       if (json.success) {
@@ -95,7 +95,7 @@ export default function CampaignsPage() {
     if (!deleteId) return
     await fetch(`/api/v1/campaigns/${deleteId}`, {
       method: "DELETE",
-      headers: orgId ? { "x-organization-id": String(orgId) } : {},
+      headers: orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>,
     })
     fetchCampaigns()
   }
@@ -105,7 +105,7 @@ export default function CampaignsPage() {
     try {
       const res = await fetch(`/api/v1/campaigns/${campaign.id}/send`, {
         method: "POST",
-        headers: orgId ? { "x-organization-id": String(orgId) } : {},
+        headers: orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>,
       })
       const json = await res.json()
       if (!res.ok) {
@@ -286,7 +286,7 @@ export default function CampaignsPage() {
         onCreatedAndSend={async (campaignId: string) => {
           try {
             const res = await fetch(`/api/v1/campaigns/${campaignId}`, {
-              headers: orgId ? { "x-organization-id": String(orgId) } : {},
+              headers: orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>,
             })
             const json = await res.json()
             if (json.success && json.data) {

@@ -25,6 +25,7 @@ export default function GrapesEditor({ pageId }: GrapesEditorProps) {
 
     async function init() {
       // Load CSS dynamically
+      // @ts-ignore — CSS import has no type declarations
       await import("grapesjs/dist/css/grapes.min.css")
       const grapesjs = (await import("grapesjs")).default
 

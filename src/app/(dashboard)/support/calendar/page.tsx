@@ -90,7 +90,7 @@ export default function AgentCalendarPage() {
   const fetchData = useCallback(async () => {
     if (!session) return
     setLoading(true)
-    const headers: any = orgId ? { "x-organization-id": String(orgId) } : {}
+    const headers: any = orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>
     const from = formatDate(weekDates[0])
     const to = formatDate(weekDates[6])
 

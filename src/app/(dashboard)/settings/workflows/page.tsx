@@ -123,7 +123,7 @@ export default function WorkflowsPage() {
   const fetchWorkflows = async () => {
     try {
       const res = await fetch("/api/v1/workflows", {
-        headers: orgId ? { "x-organization-id": String(orgId) } : {},
+        headers: orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>,
       })
       if (res.ok) {
         const result = await res.json()
@@ -138,7 +138,7 @@ export default function WorkflowsPage() {
     if (!deleteId) return
     await fetch(`/api/v1/workflows/${deleteId}`, {
       method: "DELETE",
-      headers: orgId ? { "x-organization-id": String(orgId) } : {},
+      headers: orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>,
     })
     fetchWorkflows()
   }
@@ -148,7 +148,7 @@ export default function WorkflowsPage() {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
-        ...(orgId ? { "x-organization-id": String(orgId) } : {}),
+        ...(orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>),
       },
       body: JSON.stringify({ isActive: !wf.isActive }),
     })
