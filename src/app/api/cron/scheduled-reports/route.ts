@@ -4,6 +4,9 @@ import { executeReport } from "@/lib/report-engine"
 import { sendEmail } from "@/lib/email"
 import ExcelJS from "exceljs"
 import crypto from "crypto"
+import { writeFileSync, unlinkSync } from "fs"
+
+export const runtime = "nodejs"
 
 export async function POST(req: NextRequest) {
   // Verify CRON_SECRET
@@ -61,8 +64,7 @@ export async function POST(req: NextRequest) {
 
         const buffer = Buffer.from(await workbook.xlsx.writeBuffer())
         const tmpPath = `/tmp/${report.name.replace(/[^a-z0-9]/gi, "_")}_${Date.now()}.xlsx`
-        const fs = require("fs")
-        fs.writeFileSync(tmpPath, buffer)
+        writeFileSync(tmpPath, buffer)
 
         for (const email of report.scheduleEmails) {
           await sendEmail({
@@ -75,7 +77,7 @@ export async function POST(req: NextRequest) {
         }
 
         // Cleanup
-        try { fs.unlinkSync(tmpPath) } catch { /* ignore */ }
+        try { unlinkSync(tmpPath) } catch { /* ignore */ }
 
         await prisma.savedReport.update({
           where: { id: report.id },

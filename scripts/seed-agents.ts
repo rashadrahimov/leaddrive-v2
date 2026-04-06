@@ -7,14 +7,14 @@ async function main() {
   const orgs = await prisma.organization.findMany({ select: { id: true } })
 
   for (const org of orgs) {
-    // Check if agents already exist
-    const existing = await prisma.aiAgentConfig.count({ where: { organizationId: org.id } })
-    if (existing > 0) {
-      console.log(`Org ${org.id} already has ${existing} agents, skipping`)
-      continue
-    }
+    // Check which agent types already exist
+    const existingAgents = await prisma.aiAgentConfig.findMany({
+      where: { organizationId: org.id },
+      select: { agentType: true },
+    })
+    const existingTypes = new Set(existingAgents.map((a: any) => a.agentType))
 
-    const agents = [
+    const allAgents = [
       {
         organizationId: org.id,
         configName: "Sales Agent",
@@ -65,10 +65,16 @@ async function main() {
       },
     ]
 
-    for (const agent of agents) {
+    const agentsToCreate = allAgents.filter(a => !existingTypes.has(a.agentType))
+    if (agentsToCreate.length === 0) {
+      console.log(`Org ${org.id} already has all 4 agent types, skipping`)
+      continue
+    }
+
+    for (const agent of agentsToCreate) {
       await prisma.aiAgentConfig.create({ data: agent })
     }
-    console.log(`Created 4 default agents for org ${org.id}`)
+    console.log(`Created ${agentsToCreate.length} missing agents for org ${org.id} (had ${existingTypes.size}/4)`)
   }
 }
 
