@@ -43,10 +43,7 @@ interface LeadDetailModalProps {
   onSaved?: () => void
 }
 
-const statusLabels: Record<string, string> = {
-  new: "Новый", contacted: "Связались", qualified: "Квалифицирован",
-  converted: "Конвертирован", rejected: "Не подходит", cancelled: "Аннулирован",
-}
+// statusLabels defined inside component with translations
 
 const statusColors: Record<string, string> = {
   new: "bg-blue-500", contacted: "bg-yellow-500", qualified: "bg-purple-500",
@@ -65,6 +62,12 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
   const router = useRouter()
   const t = useTranslations("leads")
   const locale = useLocale()
+
+  const statusLabels: Record<string, string> = {
+    new: t("ldmStatusNew"), contacted: t("ldmStatusContacted"), qualified: t("ldmStatusQualified"),
+    converted: t("ldmStatusConverted"), rejected: t("ldmStatusRejected"), cancelled: t("ldmStatusCancelled"),
+  }
+
   const [activeTab, setActiveTab] = useState("details")
   const [aiLoading, setAiLoading] = useState(false)
 
@@ -88,7 +91,7 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
 
   // AI Text state
   const [textType, setTextType] = useState("Email")
-  const [tone, setTone] = useState("Профессиональный")
+  const [tone, setTone] = useState("professional")
   const [instructions, setInstructions] = useState("")
   const [generatedText, setGeneratedText] = useState<any>(null)
   const [emailSending, setEmailSending] = useState(false)
@@ -200,17 +203,17 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
         setActivityDesc("")
         loadActivities()
       } else {
-        toast.error("Ошибка сохранения: " + (json.error || "Неизвестная ошибка"))
+        toast.error(t("ldmSaveError") + ": " + (json.error || ""))
       }
     } catch (e) {
-      toast.error("Ошибка: " + e)
+      toast.error(t("ldmNetworkError"))
     } finally { setActivitySaving(false) }
   }
 
   const sendGeneratedEmail = async () => {
     if (!generatedText) return
     const firstContact = (fullData?.contacts || company.contacts)?.[0]
-    if (!firstContact?.email) { toast.error("Нет email контакта для отправки"); return }
+    if (!firstContact?.email) { toast.error(t("ldmNoEmailForSend")); return }
     setEmailSending(true)
     setEmailError("")
     try {
@@ -228,9 +231,9 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
       if (json.success) {
         setEmailSent(true)
       } else {
-        setEmailError(json.error || "Ошибка отправки")
+        setEmailError(json.error || t("ldmSendError"))
       }
-    } catch { setEmailError("Ошибка сети") } finally { setEmailSending(false) }
+    } catch { setEmailError(t("ldmNetworkError")) } finally { setEmailSending(false) }
   }
 
   const currentScore = fullData?.leadScore ?? company.leadScore ?? 0
@@ -239,8 +242,8 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
   const convProb = Math.round(currentScore * 0.85)
 
   const tabs = [
-    { id: "details", label: "Детали" },
-    { id: "activity", label: "Активность" },
+    { id: "details", label: t("modalDetails") },
+    { id: "activity", label: t("modalActivity") },
     { id: "sentiment", label: t("modalSentiment") },
     { id: "tasks", label: t("modalTasks") },
     { id: "aitext", label: t("modalAiText") },
@@ -288,7 +291,7 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
           <div className="space-y-4">
             {/* Quick status change */}
             <div>
-              <p className="text-xs text-muted-foreground mb-2">Статус в воронке:</p>
+              <p className="text-xs text-muted-foreground mb-2">{t("ldmFunnelStatus")}</p>
               <div className="grid grid-cols-3 gap-1.5">
                 {(["new", "contacted", "qualified", "converted", "rejected", "cancelled"] as const).map(s => (
                   <button
@@ -308,44 +311,44 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
 
             {/* Info grid — all fields clickable to edit */}
             <div className="grid grid-cols-2 gap-2 text-sm">
-              <div className="p-2 bg-muted/30 rounded cursor-pointer hover:bg-muted/50 group" onClick={() => editField("Email", "email", fullData?.email || company.email)}>
-                <span className="text-[10px] text-muted-foreground block">Email <Pencil className="h-2 w-2 inline opacity-0 group-hover:opacity-100" /></span>
+              <div className="p-2 bg-muted/30 rounded cursor-pointer hover:bg-muted/50 group" onClick={() => editField(t("ldmEmail"), "email", fullData?.email || company.email)}>
+                <span className="text-[10px] text-muted-foreground block">{t("ldmEmail")} <Pencil className="h-2 w-2 inline opacity-0 group-hover:opacity-100" /></span>
                 <span className="text-xs">{fullData?.email || company.email || "—"}</span>
               </div>
-              <div className="p-2 bg-muted/30 rounded cursor-pointer hover:bg-muted/50 group" onClick={() => editField("Телефон", "phone", fullData?.phone || company.phone)}>
-                <span className="text-[10px] text-muted-foreground block">Телефон <Pencil className="h-2 w-2 inline opacity-0 group-hover:opacity-100" /></span>
+              <div className="p-2 bg-muted/30 rounded cursor-pointer hover:bg-muted/50 group" onClick={() => editField(t("ldmPhone"), "phone", fullData?.phone || company.phone)}>
+                <span className="text-[10px] text-muted-foreground block">{t("ldmPhone")} <Pencil className="h-2 w-2 inline opacity-0 group-hover:opacity-100" /></span>
                 <span className="text-xs">{fullData?.phone || company.phone || "—"}</span>
               </div>
-              <div className="p-2 bg-muted/30 rounded cursor-pointer hover:bg-muted/50 group" onClick={() => editField("Сайт", "website", fullData?.website || company.website)}>
-                <span className="text-[10px] text-muted-foreground block">Сайт <Pencil className="h-2 w-2 inline opacity-0 group-hover:opacity-100" /></span>
+              <div className="p-2 bg-muted/30 rounded cursor-pointer hover:bg-muted/50 group" onClick={() => editField(t("ldmWebsite"), "website", fullData?.website || company.website)}>
+                <span className="text-[10px] text-muted-foreground block">{t("ldmWebsite")} <Pencil className="h-2 w-2 inline opacity-0 group-hover:opacity-100" /></span>
                 <span className="text-xs">{fullData?.website || company.website || "—"}</span>
               </div>
-              <div className="p-2 bg-muted/30 rounded cursor-pointer hover:bg-muted/50 group" onClick={() => editField("Отрасль", "industry", fullData?.industry || company.industry)}>
-                <span className="text-[10px] text-muted-foreground block">Отрасль <Pencil className="h-2 w-2 inline opacity-0 group-hover:opacity-100" /></span>
+              <div className="p-2 bg-muted/30 rounded cursor-pointer hover:bg-muted/50 group" onClick={() => editField(t("ldmIndustry"), "industry", fullData?.industry || company.industry)}>
+                <span className="text-[10px] text-muted-foreground block">{t("ldmIndustry")} <Pencil className="h-2 w-2 inline opacity-0 group-hover:opacity-100" /></span>
                 <span className="text-xs">{fullData?.industry || company.industry || "—"}</span>
               </div>
-              <div className="p-2 bg-muted/30 rounded cursor-pointer hover:bg-muted/50 group" onClick={() => editField("Оценочная цена (₼)", "annualRevenue", fullData?.annualRevenue || company.annualRevenue, true)}>
-                <span className="text-[10px] text-muted-foreground block">Оценочная цена <Pencil className="h-2 w-2 inline opacity-0 group-hover:opacity-100" /></span>
+              <div className="p-2 bg-muted/30 rounded cursor-pointer hover:bg-muted/50 group" onClick={() => editField(`${t("ldmEstimatedValue")} (₼)`, "annualRevenue", fullData?.annualRevenue || company.annualRevenue, true)}>
+                <span className="text-[10px] text-muted-foreground block">{t("ldmEstimatedValue")} <Pencil className="h-2 w-2 inline opacity-0 group-hover:opacity-100" /></span>
                 <span className="text-xs">{(fullData?.annualRevenue || company.annualRevenue) ? `${(fullData?.annualRevenue || company.annualRevenue).toLocaleString()} ₼` : "—"}</span>
               </div>
-              <div className="p-2 bg-muted/30 rounded cursor-pointer hover:bg-muted/50 group" onClick={() => editField("Пользователей", "userCount", fullData?.userCount ?? company.userCount, true)}>
-                <span className="text-[10px] text-muted-foreground block">Пользователей <Pencil className="h-2 w-2 inline opacity-0 group-hover:opacity-100" /></span>
+              <div className="p-2 bg-muted/30 rounded cursor-pointer hover:bg-muted/50 group" onClick={() => editField(t("ldmUsers"), "userCount", fullData?.userCount ?? company.userCount, true)}>
+                <span className="text-[10px] text-muted-foreground block">{t("ldmUsers")} <Pencil className="h-2 w-2 inline opacity-0 group-hover:opacity-100" /></span>
                 <span className="text-xs">{fullData?.userCount ?? company.userCount ?? 0}</span>
               </div>
               <div className="p-2 bg-muted/30 rounded">
-                <span className="text-[10px] text-muted-foreground block">Дата создания</span>
+                <span className="text-[10px] text-muted-foreground block">{t("ldmCreated")}</span>
                 <span className="text-xs">{(fullData?.createdAt || company.createdAt) ? new Date(fullData?.createdAt || company.createdAt).toLocaleDateString() : "—"}</span>
               </div>
               <div className="p-2 bg-muted/30 rounded">
-                <span className="text-[10px] text-muted-foreground block">Дней в базе</span>
-                <span className="text-xs">{(fullData?.createdAt || company.createdAt) ? `${Math.floor((Date.now() - new Date(fullData?.createdAt || company.createdAt).getTime()) / 86400000)} дн.` : "—"}</span>
+                <span className="text-[10px] text-muted-foreground block">{t("ldmDaysInBase")}</span>
+                <span className="text-xs">{(fullData?.createdAt || company.createdAt) ? `${Math.floor((Date.now() - new Date(fullData?.createdAt || company.createdAt).getTime()) / 86400000)} ${t("ldmDays")}` : "—"}</span>
               </div>
               <div className="p-2 bg-muted/30 rounded">
                 <span className="text-[10px] text-muted-foreground block">SLA</span>
                 <span className="text-xs">
                   {(fullData as any)?.slaPolicy ? (
                     <span className="text-blue-600 dark:text-blue-400 font-medium">{(fullData as any).slaPolicy.name}</span>
-                  ) : "По умолчанию"}
+                  ) : t("ldmSlaDefault")}
                 </span>
               </div>
               <div className="p-2 bg-muted/30 rounded cursor-pointer hover:bg-muted/50 group" onClick={() => editField("Score", "leadScore", fullData?.leadScore ?? company.leadScore, true)}>
@@ -355,7 +358,7 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
                 </span>
               </div>
               <div className="p-2 bg-muted/30 rounded">
-                <span className="text-[10px] text-muted-foreground block">Контакты</span>
+                <span className="text-[10px] text-muted-foreground block">{t("ldmContacts")}</span>
                 <span className="text-xs">{fullData?.contacts?.length || company._count?.contacts || 0}</span>
               </div>
             </div>
@@ -363,19 +366,19 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
             {/* FIX #2: About section */}
             <div>
               <div className="flex items-center justify-between mb-1">
-                <h4 className="font-medium text-sm">О компании</h4>
+                <h4 className="font-medium text-sm">{t("ldmAboutCompany")}</h4>
                 <Button variant="ghost" size="sm" className="h-6 text-xs" onClick={() => setEditingAbout(!editingAbout)}>
-                  <Pencil className="h-3 w-3 mr-1" /> {editingAbout ? "Отмена" : "Изменить"}
+                  <Pencil className="h-3 w-3 mr-1" /> {editingAbout ? t("ldmEditCancel") : t("ldmEdit")}
                 </Button>
               </div>
               {editingAbout ? (
                 <div className="space-y-2">
-                  <Textarea value={aboutText} onChange={e => setAboutText(e.target.value)} rows={3} placeholder="Описание компании, заметки..." />
-                  <Button size="sm" onClick={saveAbout}>Сохранить</Button>
+                  <Textarea value={aboutText} onChange={e => setAboutText(e.target.value)} rows={3} />
+                  <Button size="sm" onClick={saveAbout}>{t("ldmSave")}</Button>
                 </div>
               ) : (
                 <p className="text-sm text-muted-foreground bg-muted/30 p-2 rounded min-h-[40px]">
-                  {company.description || aboutText || "Нет описания. Нажмите 'Изменить' чтобы добавить."}
+                  {company.description || aboutText || t("ldmNoDescription")}
                 </p>
               )}
             </div>
@@ -383,13 +386,13 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
             {/* Contacts with add/edit/delete */}
             <div>
               <div className="flex items-center justify-between mb-2">
-                <h4 className="font-medium text-sm">Ключевые люди ({fullData?.contacts?.length || company._count?.contacts || 0})</h4>
+                <h4 className="font-medium text-sm">{t("ldmKeyPeople")} ({fullData?.contacts?.length || company._count?.contacts || 0})</h4>
                 <div className="flex gap-1">
                   <Button variant="outline" size="sm" className="h-6 text-xs gap-1" onClick={() => { onOpenChange(false); router.push(`/contacts?new=1&companyId=${company.id}`) }}>
-                    <Plus className="h-3 w-3" /> Добавить
+                    <Plus className="h-3 w-3" /> {t("ldmAdd")}
                   </Button>
                   <Button variant="ghost" size="sm" className="h-6 text-xs" onClick={() => { onOpenChange(false); router.push(`/companies/${company.id}`) }}>
-                    Все →
+                    {t("ldmAll")}
                   </Button>
                 </div>
               </div>
@@ -409,18 +412,18 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
                         </div>
                       </div>
                       <div className="flex gap-0.5 ml-2 flex-shrink-0">
-                        <button onClick={() => { onOpenChange(false); router.push(`/contacts/${c.id}`) }} className="p-1 rounded hover:bg-muted" title="Изменить">
+                        <button onClick={() => { onOpenChange(false); router.push(`/contacts/${c.id}`) }} className="p-1 rounded hover:bg-muted" title={t("ldmEdit")}>
                           <Pencil className="h-3 w-3 text-muted-foreground" />
                         </button>
                         <button onClick={async () => {
-                          if (!confirm(`Удалить контакт ${c.fullName}?`)) return
+                          if (!confirm(t("ldmConfirmDeleteContact", { name: c.fullName }))) return
                           await fetch(`/api/v1/contacts/${c.id}`, { method: "DELETE", headers: orgId ? { "x-organization-id": orgId } : {} as Record<string, string> })
                           // Reload full data
                           const res = await fetch(`/api/v1/companies/${company.id}`, { headers: orgId ? { "x-organization-id": orgId } : {} as Record<string, string> })
                           const json = await res.json()
                           if (json.success) setFullData(json.data)
                           onSaved?.()
-                        }} className="p-1 rounded hover:bg-red-50" title="Удалить">
+                        }} className="p-1 rounded hover:bg-red-50" title={t("ldmDelete")}>
                           <Trash2 className="h-3 w-3 text-muted-foreground hover:text-red-500" />
                         </button>
                       </div>
@@ -431,7 +434,7 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
                       onClick={() => setShowAllContacts(true)}
                       className="w-full text-xs text-center text-primary hover:underline py-1"
                     >
-                      + ещё {(fullData?.contacts || company.contacts).length - 5} контактов — показать все
+                      {t("ldmShowMore", { count: (fullData?.contacts || company.contacts).length - 5 })}
                     </button>
                   )}
                   {showAllContacts && (fullData?.contacts || company.contacts).length > 5 && (
@@ -439,16 +442,16 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
                       onClick={() => setShowAllContacts(false)}
                       className="w-full text-xs text-center text-muted-foreground hover:underline py-1"
                     >
-                      Свернуть
+                      {t("ldmCollapse")}
                     </button>
                   )}
                 </div>
-              ) : <p className="text-xs text-muted-foreground">Нет контактов. Нажмите "Добавить" чтобы создать.</p>}
+              ) : <p className="text-xs text-muted-foreground">{t("ldmNoContacts")}</p>}
             </div>
 
             {/* Deals */}
             <div>
-              <h4 className="font-medium text-sm mb-1">Сделки ({(fullData?.deals || company.deals)?.length || 0})</h4>
+              <h4 className="font-medium text-sm mb-1">{t("ldmDeals")} ({(fullData?.deals || company.deals)?.length || 0})</h4>
               {(fullData?.deals || company.deals) && (fullData?.deals || company.deals).length > 0 ? (
                 (fullData?.deals || company.deals).map((d: any) => (
                   <div key={d.id} className="flex justify-between text-xs p-2 bg-muted/30 rounded mb-1">
@@ -459,12 +462,12 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
                     </div>
                   </div>
                 ))
-              ) : <p className="text-xs text-muted-foreground">Нет сделок</p>}
+              ) : <p className="text-xs text-muted-foreground">{t("ldmNoDeals")}</p>}
             </div>
 
             {/* Contracts */}
             <div>
-              <h4 className="font-medium text-sm mb-1">Контракты ({fullData?.contracts?.length || 0})</h4>
+              <h4 className="font-medium text-sm mb-1">{t("ldmContracts")} ({fullData?.contracts?.length || 0})</h4>
               {fullData?.contracts && fullData.contracts.length > 0 ? (
                 fullData.contracts.map((c: any) => (
                   <div key={c.id} className="flex justify-between items-center text-xs p-2 bg-muted/30 rounded mb-1">
@@ -480,7 +483,7 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
                     </div>
                   </div>
                 ))
-              ) : <p className="text-xs text-muted-foreground">Нет контрактов</p>}
+              ) : <p className="text-xs text-muted-foreground">{t("ldmNoContracts")}</p>}
             </div>
           </div>
         )}
@@ -489,7 +492,7 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
         {activeTab === "activity" && (
           <div className="space-y-4">
             <Button size="sm" className="gap-1" onClick={() => { setShowActivityForm(!showActivityForm); if (!activities.length) loadActivities() }}>
-              <Plus className="h-3 w-3" /> Записать
+              <Plus className="h-3 w-3" /> {t("ldmRecord")}
             </Button>
 
             {showActivityForm && (
@@ -497,28 +500,28 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
                 <CardContent className="pt-3 pb-3 space-y-3">
                   <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <Label className="text-xs">Тип</Label>
+                      <Label className="text-xs">{t("ldmActType")}</Label>
                       <Select value={activityType} onChange={e => setActivityType(e.target.value)}>
-                        <option value="note">📝 Заметка</option>
-                        <option value="call">📞 Звонок</option>
-                        <option value="email">📧 Email</option>
-                        <option value="meeting">🤝 Встреча</option>
+                        <option value="note">📝 {t("ldmActNote")}</option>
+                        <option value="call">📞 {t("ldmActCall")}</option>
+                        <option value="email">📧 {t("ldmActEmail")}</option>
+                        <option value="meeting">🤝 {t("ldmActMeeting")}</option>
                       </Select>
                     </div>
                     <div>
-                      <Label className="text-xs">Тема *</Label>
-                      <Input value={activitySubject} onChange={e => setActivitySubject(e.target.value)} placeholder="Тема активности" />
+                      <Label className="text-xs">{t("ldmActSubject")}</Label>
+                      <Input value={activitySubject} onChange={e => setActivitySubject(e.target.value)} placeholder={t("ldmActSubjectPlaceholder")} />
                     </div>
                   </div>
                   <div>
-                    <Label className="text-xs">Описание</Label>
-                    <Textarea value={activityDesc} onChange={e => setActivityDesc(e.target.value)} rows={2} placeholder="Детали..." />
+                    <Label className="text-xs">{t("ldmActDescription")}</Label>
+                    <Textarea value={activityDesc} onChange={e => setActivityDesc(e.target.value)} rows={2} placeholder={t("ldmActDetailsPlaceholder")} />
                   </div>
                   <div className="flex gap-2">
                     <Button size="sm" onClick={saveActivity} disabled={activitySaving || !activitySubject.trim()}>
-                      {activitySaving ? "Сохраняем..." : "Сохранить"}
+                      {activitySaving ? t("ldmActSaving") : t("ldmSave")}
                     </Button>
-                    <Button size="sm" variant="outline" onClick={() => setShowActivityForm(false)}>Отмена</Button>
+                    <Button size="sm" variant="outline" onClick={() => setShowActivityForm(false)}>{t("ldmEditCancel")}</Button>
                   </div>
                 </CardContent>
               </Card>
@@ -540,9 +543,9 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
               </div>
             ) : !showActivityForm ? (
               <div className="text-center py-6 text-muted-foreground">
-                <p className="text-sm">Нет записанных активностей</p>
-                <p className="text-xs mt-1">Нажмите "Записать" чтобы добавить</p>
-                <Button size="sm" variant="link" className="mt-2" onClick={loadActivities}>Обновить</Button>
+                <p className="text-sm">{t("ldmNoActivities")}</p>
+                <p className="text-xs mt-1">{t("ldmNoActivitiesHint")}</p>
+                <Button size="sm" variant="link" className="mt-2" onClick={loadActivities}>{t("ldmRefresh")}</Button>
               </div>
             ) : null}
           </div>
@@ -588,7 +591,7 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
                   </CardContent></Card>
                 </div>
                 <div className="bg-muted/50 p-3 rounded-lg">
-                  <p className="text-[10px] font-medium text-muted-foreground mb-1">РЕЗЮМЕ</p>
+                  <p className="text-[10px] font-medium text-muted-foreground mb-1">{t("ldmSummary")}</p>
                   <p className="text-sm">{sentiment.summary}</p>
                 </div>
               </div>
@@ -627,7 +630,7 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
                   </Card>
                 ))}
                 <div className="flex gap-2 justify-center">
-                  <Button size="sm" className="gap-1"><CheckCircle className="h-3 w-3" /> Создать все задачи</Button>
+                  <Button size="sm" className="gap-1"><CheckCircle className="h-3 w-3" /> {t("ldmCreateAllTasks")}</Button>
                   <Button size="sm" variant="outline" onClick={async () => { const d = await callAI("tasks"); if (d) setAiTasks(d) }} className="gap-1"><RefreshCw className="h-3 w-3" /> {t("modalRegenerate")}</Button>
                 </div>
               </div>
@@ -640,25 +643,25 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className="text-xs">Тип текста</Label>
+                <Label className="text-xs">{t("ldmTextType")}</Label>
                 <Select value={textType} onChange={e => setTextType(e.target.value)}>
                   <option value="Email">📧 Email</option>
                   <option value="SMS">📱 SMS</option>
                 </Select>
               </div>
               <div>
-                <Label className="text-xs">Тон</Label>
+                <Label className="text-xs">{t("ldmTone")}</Label>
                 <Select value={tone} onChange={e => setTone(e.target.value)}>
-                  <option value="Профессиональный">🏢 Профессиональный</option>
-                  <option value="Дружелюбный">😊 Дружелюбный</option>
-                  <option value="Формальный">📋 Формальный</option>
-                  <option value="Убедительный">💪 Убедительный</option>
+                  <option value="professional">🏢 {t("ldmToneProfessional")}</option>
+                  <option value="friendly">😊 {t("ldmToneFriendly")}</option>
+                  <option value="formal">📋 {t("ldmToneFormal")}</option>
+                  <option value="persuasive">💪 {t("ldmTonePersuasive")}</option>
                 </Select>
               </div>
             </div>
             <div>
-              <Label className="text-xs">Дополнительные инструкции</Label>
-              <Textarea value={instructions} onChange={e => setInstructions(e.target.value)} rows={2} placeholder="Например: упомянуть скидку 10%, предложить демо..." />
+              <Label className="text-xs">{t("ldmInstructions")}</Label>
+              <Textarea value={instructions} onChange={e => setInstructions(e.target.value)} rows={2} placeholder={t("ldmInstructionsPlaceholder")} />
             </div>
             <Button onClick={async () => { const d = await callAI("text", { textType, tone, instructions }); if (d) { setGeneratedText(d); setEmailSent(false) } }} disabled={aiLoading} className="w-full gap-2">
               {aiLoading ? t("modalAnalyzing") : t("modalGenerateText")}
@@ -668,20 +671,20 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
               <div className="space-y-3">
                 {generatedText.subject && (
                   <div>
-                    <Label className="text-xs text-primary">ТЕМА / SUBJECT</Label>
+                    <Label className="text-xs text-primary">{t("ldmSubject")}</Label>
                     <Input value={generatedText.subject} onChange={(e: any) => setGeneratedText({ ...generatedText, subject: e.target.value })} className="mt-1" />
                   </div>
                 )}
                 <div>
-                  <Label className="text-xs">ТЕКСТ ПИСЬМА</Label>
+                  <Label className="text-xs">{t("ldmEmailText")}</Label>
                   <Textarea value={generatedText.body} rows={6} onChange={(e: any) => setGeneratedText({ ...generatedText, body: e.target.value })} className="mt-1" />
                 </div>
                 <div className="flex gap-2 justify-center">
                   <Button size="sm" variant="outline" onClick={() => navigator.clipboard.writeText(generatedText.body)} className="gap-1">
-                    <Copy className="h-3 w-3" /> Копировать
+                    <Copy className="h-3 w-3" /> {t("ldmCopy")}
                   </Button>
                   <Button size="sm" onClick={sendGeneratedEmail} disabled={emailSending || emailSent} className="gap-1">
-                    <Send className="h-3 w-3" /> {emailSent ? "✅ Отправлено" : emailSending ? "Отправляем..." : "Отправить email"}
+                    <Send className="h-3 w-3" /> {emailSent ? `✅ ${t("ldmEmailSent")}` : emailSending ? t("ldmEmailSending") : t("ldmSendEmail")}
                   </Button>
                   <Button size="sm" variant="outline" onClick={async () => { const d = await callAI("text", { textType, tone, instructions }); if (d) { setGeneratedText(d); setEmailSent(false) } }} className="gap-1">
                     <RefreshCw className="h-3 w-3" /> {t("modalRegenerate")}
@@ -700,7 +703,7 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h4 className="font-medium text-sm flex items-center gap-1.5">
-                <Brain className="h-4 w-4 text-purple-500" /> Da Vinci Скоринг
+                <Brain className="h-4 w-4 text-purple-500" /> {t("ldmDaVinciScoring")}
               </h4>
               <Button size="sm" variant="outline" className="gap-1 text-xs" onClick={async () => {
                 setScoring(true)
@@ -711,7 +714,7 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
                   }
                 } catch (err) { console.error(err) } finally { setScoring(false) }
               }} disabled={scoring}>
-                {scoring ? "Анализ..." : "Пересчитать с Da Vinci"}
+                {scoring ? t("ldmRecalculating") : t("ldmRecalculate")}
               </Button>
             </div>
 
@@ -728,11 +731,11 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
                 <div className={cn("text-2xl font-bold", temp === "hot" ? "text-red-500" : temp === "warm" ? "text-orange-500" : "text-blue-500")}>
                   {(temp || "cold").toUpperCase()}
                 </div>
-                <p className="text-[10px] text-muted-foreground mt-1">Температура</p>
+                <p className="text-[10px] text-muted-foreground mt-1">{t("ldmTemperature")}</p>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-primary">{convProb}%</div>
-                <p className="text-[10px] text-muted-foreground mt-1">Конверсия</p>
+                <p className="text-[10px] text-muted-foreground mt-1">{t("ldmConversion")}</p>
               </div>
             </div>
 
@@ -755,17 +758,17 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
                 <div className={cn("text-3xl font-bold", grade.color.replace("bg-", "text-").replace(" text-white", ""))}>
                   {grade.letter}
                 </div>
-                <div className="text-xs text-muted-foreground mt-1">Грейд</div>
+                <div className="text-xs text-muted-foreground mt-1">{t("ldmGrade")}</div>
               </CardContent></Card>
               <Card><CardContent className="pt-4 pb-4">
                 <div className="text-3xl font-bold text-primary">{currentScore}</div>
-                <div className="text-xs text-muted-foreground mt-1">Балл</div>
+                <div className="text-xs text-muted-foreground mt-1">{t("ldmPoints")}</div>
               </CardContent></Card>
               <Card><CardContent className="pt-4 pb-4">
                 <div className={cn("text-3xl font-bold", convProb >= 50 ? "text-green-600" : convProb >= 30 ? "text-yellow-600" : "text-red-500")}>
                   {convProb}%
                 </div>
-                <div className="text-xs text-muted-foreground mt-1">Вероятность</div>
+                <div className="text-xs text-muted-foreground mt-1">{t("ldmProbability")}</div>
               </CardContent></Card>
             </div>
           </div>
@@ -775,28 +778,28 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
         <div className="grid grid-cols-2 gap-2 mt-4 pt-4 border-t">
           <Button variant="outline" size="sm" className="gap-1 text-green-700 border-green-200 hover:bg-green-50"
             onClick={() => { onOpenChange(false); router.push(`/contracts?search=${encodeURIComponent(company.name)}`) }}>
-            <FileText className="h-3 w-3" /> Контракты
+            <FileText className="h-3 w-3" /> {t("ldmContractsBtn")}
           </Button>
           <Button variant="outline" size="sm" className="gap-1 text-blue-700 border-blue-200 hover:bg-blue-50"
             onClick={() => { onOpenChange(false); router.push(`/companies/${company.id}`) }}>
-            <Pencil className="h-3 w-3" /> Редактировать
+            <Pencil className="h-3 w-3" /> {t("ldmEditBtn")}
           </Button>
           <Button variant="outline" size="sm" className="gap-1 text-orange-700 border-orange-200 hover:bg-orange-50"
             onClick={async () => {
-              if (!confirm(`Деактивировать ${company.name}?`)) return
+              if (!confirm(t("ldmConfirmDeactivate", { name: company.name }))) return
               await changeStatus("cancelled")
               onOpenChange(false)
             }}>
-            <Ban className="h-3 w-3" /> Деактивировать
+            <Ban className="h-3 w-3" /> {t("ldmDeactivate")}
           </Button>
           <Button variant="outline" size="sm" className="gap-1 text-red-700 border-red-200 hover:bg-red-50"
             onClick={async () => {
-              if (!confirm(`Удалить ${company.name}? Необратимо.`)) return
+              if (!confirm(t("ldmConfirmDelete", { name: company.name }))) return
               await fetch(`/api/v1/companies/${company.id}`, { method: "DELETE", headers: orgId ? { "x-organization-id": orgId } : {} as Record<string, string> })
               onOpenChange(false)
               onSaved?.()
             }}>
-            <Trash2 className="h-3 w-3" /> Удалить
+            <Trash2 className="h-3 w-3" /> {t("ldmDelete")}
           </Button>
         </div>
       </DialogContent>
