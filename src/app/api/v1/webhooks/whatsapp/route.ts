@@ -270,7 +270,8 @@ async function processMessages(
     console.log(`[WA Webhook] Inbound from ${sanitizeLog(waId)} (${sanitizeLog(senderName)}): ${sanitizeLog(text.slice(0, 50))}`)
 
     // Check if customer has a closed/resolved WhatsApp ticket — auto-reopen
-    if (contactId && msg.type === "text" && text.trim()) {
+    // Note: try even without contactId — fallback search by phone number inside
+    if (msg.type === "text" && text.trim()) {
       const reopened = await tryReopenTicket(orgId, contactId, waId, text, senderName)
       if (reopened) continue // Skip Da Vinci auto-reply if ticket was reopened
     }
@@ -290,24 +291,59 @@ async function processMessages(
 
 async function tryReopenTicket(
   orgId: string,
-  contactId: string,
+  contactId: string | undefined,
   waPhone: string,
   userMessage: string,
   senderName: string,
 ): Promise<boolean> {
   try {
-    // Find most recent closed/resolved ticket with whatsapp tag for this contact
-    const ticket = await prisma.ticket.findFirst({
-      where: {
-        organizationId: orgId,
-        contactId,
-        status: { in: ["closed", "resolved"] },
-        tags: { has: "whatsapp" },
-      },
-      orderBy: { updatedAt: "desc" },
-    })
+    // Find most recent closed/resolved ticket with whatsapp tag
+    // Strategy: first by contactId, then fallback by phone in ticket comments/description
+    let ticket = null
 
-    if (!ticket) return false
+    if (contactId) {
+      ticket = await prisma.ticket.findFirst({
+        where: {
+          organizationId: orgId,
+          contactId,
+          status: { in: ["closed", "resolved"] },
+          tags: { has: "whatsapp" },
+        },
+        orderBy: { updatedAt: "desc" },
+      })
+    }
+
+    // Fallback: find ticket by phone number in contact record
+    if (!ticket) {
+      const phoneVariants = [waPhone, `+${waPhone}`]
+      const contactByPhone = await prisma.contact.findFirst({
+        where: {
+          organizationId: orgId,
+          OR: [
+            { phone: { in: phoneVariants } },
+            ...phoneVariants.map(p => ({ phone: { contains: p.slice(-9) } })),
+          ],
+        },
+        select: { id: true },
+      })
+
+      if (contactByPhone) {
+        ticket = await prisma.ticket.findFirst({
+          where: {
+            organizationId: orgId,
+            contactId: contactByPhone.id,
+            status: { in: ["closed", "resolved"] },
+            tags: { has: "whatsapp" },
+          },
+          orderBy: { updatedAt: "desc" },
+        })
+      }
+    }
+
+    if (!ticket) {
+      console.log(`[WA Reopen] No closed/resolved whatsapp ticket found for ${sanitizeLog(waPhone)}`)
+      return false
+    }
 
     // Only reopen if closed within last 7 days
     const closedAt = ticket.closedAt || ticket.resolvedAt || ticket.updatedAt
@@ -338,7 +374,7 @@ async function tryReopenTicket(
       to: waPhone,
       message: `Sorğunuz (${ticket.ticketNumber}) yenidən açıldı. Menecer tezliklə sizinlə əlaqə saxlayacaq.`,
       organizationId: orgId,
-      contactId,
+      contactId: contactId || ticket.contactId || undefined,
     })
 
     console.log(`[WA Reopen] Ticket ${sanitizeLog(ticket.ticketNumber)} reopened by ${sanitizeLog(senderName)} (${sanitizeLog(waPhone)})`)
@@ -365,7 +401,8 @@ const WA_SYSTEM_PROMPT = `Ты — Da Vinci, интеллектуальный д
 9. Если клиент ЯВНО просит менеджера/оператора/человека (например "menecerə yönləndir", "оператор", "хочу менеджера") — добавь [ESCALATE] в ответ.
 10. Если клиент подтверждает перевод ("Bəli", "Да", "Yes" на твой вопрос о менеджере) — тоже добавь [ESCALATE].
 11. Если клиент ЯВНО просит создать тикет — добавь [CREATE_TICKET] в ответ.
-12. ВАЖНО: НЕ здоровайся повторно! Если в истории чата уже есть сообщения — продолжай разговор БЕЗ приветствия. "Salam" только в ПЕРВОМ сообщении.`
+12. ВАЖНО: НЕ здоровайся повторно! Если в истории чата уже есть сообщения — продолжай разговор БЕЗ приветствия. "Salam" только в ПЕРВОМ сообщении.
+13. ВАЖНО: Ты НЕ МОЖЕШЬ выполнять действия с тикетами (открывать, закрывать, переоткрывать, менять статус). Если клиент недоволен решением тикета — скажи что передаёшь обращение менеджеру и добавь [ESCALATE]. НИКОГДА не говори клиенту что ты "открыл тикет", "переоткрыл тикет" или "изменил статус" — у тебя нет такой возможности.`
 
 async function handleAiAutoReply(
   organizationId: string,
