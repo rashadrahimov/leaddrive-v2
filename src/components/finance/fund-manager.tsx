@@ -148,6 +148,7 @@ export function FundManager() {
 }
 
 function CreateFundDialog({ open, onClose, onCreate }: { open: boolean; onClose: () => void; onCreate: any }) {
+  const t = useTranslations("finance.funds")
   const [form, setForm] = useState({ name: "", description: "", targetAmount: "", color: "#3b82f6" })
 
   const handleSubmit = () => {
@@ -161,18 +162,18 @@ function CreateFundDialog({ open, onClose, onCreate }: { open: boolean; onClose:
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent>
-        <DialogHeader><DialogTitle>Новый фонд</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>{t("createTitle")}</DialogTitle></DialogHeader>
         <div className="grid gap-3">
-          <div><Label>Название *</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Налоговый резерв" /></div>
-          <div><Label>Описание</Label><Input value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Резерв на квартальные налоги" /></div>
+          <div><Label>{t("fundName")} *</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder={t("fundNamePlaceholder")} /></div>
+          <div><Label>{t("description")}</Label><Input value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></div>
           <div className="grid grid-cols-2 gap-3">
-            <div><Label>Целевая сумма</Label><Input type="number" value={form.targetAmount} onChange={(e) => setForm({ ...form, targetAmount: e.target.value })} placeholder="50000" /></div>
-            <div><Label>Цвет</Label><Input type="color" value={form.color} onChange={(e) => setForm({ ...form, color: e.target.value })} /></div>
+            <div><Label>{t("targetAmount")}</Label><Input type="number" value={form.targetAmount} onChange={(e) => setForm({ ...form, targetAmount: e.target.value })} placeholder="50000" /></div>
+            <div><Label>{t("color")}</Label><Input type="color" value={form.color} onChange={(e) => setForm({ ...form, color: e.target.value })} /></div>
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Отмена</Button>
-          <Button onClick={handleSubmit} disabled={onCreate.isPending}>{onCreate.isPending ? "Создаётся..." : "Создать фонд"}</Button>
+          <Button variant="outline" onClick={onClose}>{t("cancel")}</Button>
+          <Button onClick={handleSubmit} disabled={onCreate.isPending}>{onCreate.isPending ? t("creating") : t("create")}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -180,6 +181,7 @@ function CreateFundDialog({ open, onClose, onCreate }: { open: boolean; onClose:
 }
 
 function TransactionDialog({ fundId, onClose }: { fundId: string; onClose: () => void }) {
+  const t = useTranslations("finance.funds")
   const { data: transactions, isLoading } = useFundTransactions(fundId)
   const createTx = useCreateFundTransaction()
   const [type, setType] = useState("deposit")
@@ -210,21 +212,21 @@ function TransactionDialog({ fundId, onClose }: { fundId: string; onClose: () =>
   return (
     <Dialog open onOpenChange={onClose}>
       <DialogContent className="max-w-md">
-        <DialogHeader><DialogTitle>Транзакции фонда</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>{t("txTitle")}</DialogTitle></DialogHeader>
 
         {/* Add transaction form */}
         <div className="grid gap-2 p-3 bg-muted/50 rounded-lg">
           <div className="flex gap-2">
             <select value={type} onChange={(e) => setType(e.target.value)} className="h-9 rounded-md border border-input bg-background px-2 text-sm">
-              <option value="deposit">Внесение</option>
-              <option value="withdrawal">Списание</option>
+              <option value="deposit">{t("txDeposit")}</option>
+              <option value="withdrawal">{t("txWithdrawal")}</option>
             </select>
-            <Input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="Сумма" className="flex-1" />
+            <Input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder={t("txAmount")} className="flex-1" />
             <Button size="sm" onClick={handleAdd} disabled={createTx.isPending}>
               {type === "deposit" ? <ArrowDownToLine className="w-4 h-4" /> : <ArrowUpFromLine className="w-4 h-4" />}
             </Button>
           </div>
-          <Input value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="Описание (необязательно)" />
+          <Input value={desc} onChange={(e) => setDesc(e.target.value)} placeholder={t("txDescription")} />
         </div>
 
         {txError && (
@@ -241,7 +243,7 @@ function TransactionDialog({ fundId, onClose }: { fundId: string; onClose: () =>
 
         {/* Transaction history */}
         <div className="max-h-[300px] overflow-y-auto space-y-1">
-          {isLoading && <p className="text-sm text-muted-foreground text-center py-4">Загрузка...</p>}
+          {isLoading && <p className="text-sm text-muted-foreground text-center py-4">{t("loading")}</p>}
           {transactions && transactions.length > 0 ? transactions.map((tx) => (
             <div key={tx.id} className="flex items-center justify-between py-2 px-1 border-b last:border-0">
               <div className="flex items-center gap-2">
@@ -263,7 +265,7 @@ function TransactionDialog({ fundId, onClose }: { fundId: string; onClose: () =>
               </div>
             </div>
           )) : (
-            !isLoading && <p className="text-sm text-muted-foreground text-center py-4">Нет транзакций</p>
+            !isLoading && <p className="text-sm text-muted-foreground text-center py-4">{t("txEmpty")}</p>
           )}
         </div>
       </DialogContent>
@@ -272,6 +274,7 @@ function TransactionDialog({ fundId, onClose }: { fundId: string; onClose: () =>
 }
 
 function RulesDialog({ fundId, onClose }: { fundId: string; onClose: () => void }) {
+  const t = useTranslations("finance.funds")
   const { data: rules, isLoading } = useFundRules(fundId)
   const createRule = useCreateFundRule()
   const deleteRule = useDeleteFundRule()
@@ -297,16 +300,16 @@ function RulesDialog({ fundId, onClose }: { fundId: string; onClose: () => void 
   return (
     <Dialog open onOpenChange={onClose}>
       <DialogContent className="max-w-md">
-        <DialogHeader><DialogTitle>Правила авто-распределения</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>{t("rulesTitle")}</DialogTitle></DialogHeader>
 
         {/* Add rule form */}
         <div className="grid gap-2 p-3 bg-muted/50 rounded-lg">
-          <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Название правила" />
+          <Input value={name} onChange={(e) => setName(e.target.value)} placeholder={t("ruleName")} />
           <div className="flex gap-2">
             <select value={trigger} onChange={(e) => setTrigger(e.target.value)} className="h-9 rounded-md border border-input bg-background px-2 text-sm flex-1">
-              <option value="revenue_percentage">% от выручки</option>
-              <option value="fixed_monthly">Фикс. ежемесячно</option>
-              <option value="invoice_paid">При оплате счёта</option>
+              <option value="revenue_percentage">{t("ruleRevenue")}</option>
+              <option value="fixed_monthly">{t("ruleFixed")}</option>
+              <option value="invoice_paid">{t("ruleInvoice")}</option>
             </select>
             {trigger === "revenue_percentage" && (
               <Input type="number" value={pct} onChange={(e) => setPct(e.target.value)} placeholder="%" className="w-20" />
@@ -320,20 +323,20 @@ function RulesDialog({ fundId, onClose }: { fundId: string; onClose: () => void 
 
         {/* Rules list */}
         <div className="space-y-1">
-          {isLoading && <p className="text-sm text-muted-foreground text-center py-4">Loading...</p>}
+          {isLoading && <p className="text-sm text-muted-foreground text-center py-4">{t("loading")}</p>}
           {rules && rules.length > 0 ? rules.map((rule) => (
             <div key={rule.id} className="flex items-center justify-between py-2 px-1 border-b last:border-0">
               <div>
                 <p className="text-sm font-medium">{rule.name}</p>
                 <p className="text-xs text-muted-foreground">
-                  {rule.triggerType === "revenue_percentage" && `${((rule.percentage || 0) * 100).toFixed(0)}% от выручки`}
-                  {rule.triggerType === "fixed_monthly" && `${fmt(rule.fixedAmount || 0)} AZN/мес`}
-                  {rule.triggerType === "invoice_paid" && "При каждой оплате счёта"}
+                  {rule.triggerType === "revenue_percentage" && `${((rule.percentage || 0) * 100).toFixed(0)}% ${t("ruleRevenue")}`}
+                  {rule.triggerType === "fixed_monthly" && `${fmt(rule.fixedAmount || 0)} AZN/${t("ruleFixed")}`}
+                  {rule.triggerType === "invoice_paid" && t("ruleInvoice")}
                 </p>
               </div>
               <div className="flex items-center gap-2">
                 <Badge variant={rule.isActive ? "default" : "secondary"} className="text-[10px]">
-                  {rule.isActive ? "Активно" : "Неактивно"}
+                  {rule.isActive ? "Active" : "Inactive"}
                 </Badge>
                 <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-red-500" onClick={() => deleteRule.mutate({ id: rule.id, fundId })}>
                   <Trash2 className="w-3 h-3" />
@@ -341,7 +344,7 @@ function RulesDialog({ fundId, onClose }: { fundId: string; onClose: () => void 
               </div>
             </div>
           )) : (
-            !isLoading && <p className="text-sm text-muted-foreground text-center py-4">Нет правил</p>
+            !isLoading && <p className="text-sm text-muted-foreground text-center py-4">{t("rulesEmpty")}</p>
           )}
         </div>
       </DialogContent>

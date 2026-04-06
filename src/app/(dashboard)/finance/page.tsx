@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useSearchParams } from "next/navigation"
+import { useTranslations } from "next-intl"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { FinanceDashboard } from "@/components/finance/finance-dashboard"
 import { ARDashboard } from "@/components/finance/ar-dashboard"
@@ -10,23 +11,25 @@ import { FundManager } from "@/components/finance/fund-manager"
 import { PaymentsDashboard } from "@/components/finance/payments-dashboard"
 import { LayoutDashboard, FileText, CreditCard, PiggyBank, Banknote } from "lucide-react"
 
-const TABS = [
-  { value: "overview", label: "Обзор", icon: LayoutDashboard },
-  { value: "receivables", label: "Дебиторка (A/R)", icon: FileText },
-  { value: "payables", label: "Кредиторка (A/P)", icon: CreditCard },
-  { value: "funds", label: "Фонды", icon: PiggyBank },
-  { value: "payments", label: "Платежи", icon: Banknote },
-] as const
-
 export default function FinancePage() {
+  const t = useTranslations("finance.dash")
+  const tc = useTranslations("common")
   const searchParams = useSearchParams()
   const initialTab = searchParams.get("tab") || "overview"
   const [activeTab, setActiveTab] = useState(initialTab)
 
+  const TABS = [
+    { value: "overview", label: t("tabOverview"), icon: LayoutDashboard },
+    { value: "receivables", label: t("tabAR"), icon: FileText },
+    { value: "payables", label: t("tabAP"), icon: CreditCard },
+    { value: "funds", label: t("tabFunds"), icon: PiggyBank },
+    { value: "payments", label: t("tabPayments"), icon: Banknote },
+  ] as const
+
   return (
     <div className="flex-1 space-y-6 p-4 md:p-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold tracking-tight">Финансы</h1>
+        <h1 className="text-2xl font-bold tracking-tight">{tc("finance")}</h1>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">

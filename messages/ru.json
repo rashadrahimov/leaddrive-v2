@@ -3262,7 +3262,12 @@
       "noExpenseData": "Нет данных по расходам",
       "noAgingData": "Нет данных по дебиторке",
       "loading": "Загрузка финансов...",
-      "error": "Ошибка"
+      "error": "Ошибка",
+      "tabOverview": "Обзор",
+      "tabAR": "Дебиторка (A/R)",
+      "tabAP": "Кредиторка (A/P)",
+      "tabFunds": "Фонды",
+      "tabPayments": "Платежи"
     },
     "ap": {
       "totalPayables": "Всего кредиторка",

@@ -94,7 +94,7 @@ export function APDashboard() {
         {/* Aging Chart */}
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-semibold">Анализ по срокам</CardTitle>
+            <CardTitle className="text-sm font-semibold">{t("agingTitle")}</CardTitle>
           </CardHeader>
           <CardContent>
             {stats?.aging?.some((b) => b.amount > 0) ? (
@@ -112,7 +112,7 @@ export function APDashboard() {
                 </BarChart>
               </ResponsiveContainer>
             ) : (
-              <div className="h-[220px] flex items-center justify-center text-sm text-muted-foreground">Нет данных</div>
+              <div className="h-[220px] flex items-center justify-center text-sm text-muted-foreground">{t("noData")}</div>
             )}
           </CardContent>
         </Card>
@@ -120,7 +120,7 @@ export function APDashboard() {
         {/* Top Vendors */}
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-semibold">Крупнейшие поставщики</CardTitle>
+            <CardTitle className="text-sm font-semibold">{t("topVendors")}</CardTitle>
           </CardHeader>
           <CardContent>
             {stats?.topVendors && stats.topVendors.length > 0 ? (
@@ -139,7 +139,7 @@ export function APDashboard() {
                 ))}
               </div>
             ) : (
-              <div className="h-[220px] flex items-center justify-center text-sm text-muted-foreground">Нет поставщиков</div>
+              <div className="h-[220px] flex items-center justify-center text-sm text-muted-foreground">{t("noVendors")}</div>
             )}
           </CardContent>
         </Card>
@@ -183,13 +183,13 @@ export function APDashboard() {
                     <th className="py-2 px-2 w-8">
                       <input type="checkbox" checked={bills.length > 0 && selected.size === bills.length} onChange={toggleAll} className="rounded border-border" />
                     </th>
-                    <th className="py-2 px-2 font-medium text-muted-foreground">Счёт №</th>
-                    <th className="py-2 px-2 font-medium text-muted-foreground">Поставщик</th>
-                    <th className="py-2 px-2 font-medium text-muted-foreground">Название</th>
-                    <th className="py-2 px-2 font-medium text-muted-foreground">Статус</th>
-                    <th className="py-2 px-2 font-medium text-muted-foreground text-right">Сумма</th>
-                    <th className="py-2 px-2 font-medium text-muted-foreground text-right">Остаток</th>
-                    <th className="py-2 px-2 font-medium text-muted-foreground text-right">Срок</th>
+                    <th className="py-2 px-2 font-medium text-muted-foreground">{t("colBillNumber")}</th>
+                    <th className="py-2 px-2 font-medium text-muted-foreground">{t("colVendor")}</th>
+                    <th className="py-2 px-2 font-medium text-muted-foreground">{t("colTitle")}</th>
+                    <th className="py-2 px-2 font-medium text-muted-foreground">{t("colStatus")}</th>
+                    <th className="py-2 px-2 font-medium text-muted-foreground text-right">{t("colAmount")}</th>
+                    <th className="py-2 px-2 font-medium text-muted-foreground text-right">{t("colBalance")}</th>
+                    <th className="py-2 px-2 font-medium text-muted-foreground text-right">{t("colDueDate")}</th>
                     <th className="py-2 px-2"></th>
                   </tr>
                 </thead>
@@ -255,6 +255,7 @@ export function APDashboard() {
 }
 
 function CreateBillDialog({ open, onClose, onCreate }: { open: boolean; onClose: () => void; onCreate: any }) {
+  const t = useTranslations("finance.ap")
   const [form, setForm] = useState({ billNumber: "", vendorName: "", title: "", totalAmount: "", dueDate: "", category: "" })
 
   const handleSubmit = () => {
@@ -268,20 +269,20 @@ function CreateBillDialog({ open, onClose, onCreate }: { open: boolean; onClose:
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent>
-        <DialogHeader><DialogTitle>Новый счёт</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>{t("newBillTitle")}</DialogTitle></DialogHeader>
         <div className="grid gap-3">
-          <div><Label>Номер счёта *</Label><Input value={form.billNumber} onChange={(e) => setForm({ ...form, billNumber: e.target.value })} placeholder="BILL-001" /></div>
-          <div><Label>Поставщик *</Label><Input value={form.vendorName} onChange={(e) => setForm({ ...form, vendorName: e.target.value })} placeholder="ООО Пример" /></div>
-          <div><Label>Название *</Label><Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Аренда офиса Март 2026" /></div>
+          <div><Label>{t("billNumber")} *</Label><Input value={form.billNumber} onChange={(e) => setForm({ ...form, billNumber: e.target.value })} placeholder="BILL-001" /></div>
+          <div><Label>{t("vendor")} *</Label><Input value={form.vendorName} onChange={(e) => setForm({ ...form, vendorName: e.target.value })} /></div>
+          <div><Label>{t("billTitle")} *</Label><Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></div>
           <div className="grid grid-cols-2 gap-3">
-            <div><Label>Сумма (AZN) *</Label><Input type="number" value={form.totalAmount} onChange={(e) => setForm({ ...form, totalAmount: e.target.value })} placeholder="5000" /></div>
-            <div><Label>Срок оплаты</Label><Input type="date" value={form.dueDate} onChange={(e) => setForm({ ...form, dueDate: e.target.value })} /></div>
+            <div><Label>{t("amount")} *</Label><Input type="number" value={form.totalAmount} onChange={(e) => setForm({ ...form, totalAmount: e.target.value })} placeholder="5000" /></div>
+            <div><Label>{t("dueDate")}</Label><Input type="date" value={form.dueDate} onChange={(e) => setForm({ ...form, dueDate: e.target.value })} /></div>
           </div>
-          <div><Label>Категория</Label><Input value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} placeholder="аренда, ПО, услуги..." /></div>
+          <div><Label>{t("category")}</Label><Input value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} placeholder={t("categoryPlaceholder")} /></div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Отмена</Button>
-          <Button onClick={handleSubmit} disabled={onCreate.isPending}>{onCreate.isPending ? "Создаётся..." : "Создать счёт"}</Button>
+          <Button variant="outline" onClick={onClose}>{t("cancel")}</Button>
+          <Button onClick={handleSubmit} disabled={onCreate.isPending}>{onCreate.isPending ? t("creating") : t("createBill")}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -289,6 +290,7 @@ function CreateBillDialog({ open, onClose, onCreate }: { open: boolean; onClose:
 }
 
 function AddPaymentDialog({ billId, onClose, onPay }: { billId: string; onClose: () => void; onPay: any }) {
+  const t = useTranslations("finance.ap")
   const [amount, setAmount] = useState("")
   const [ref, setRef] = useState("")
 
@@ -303,14 +305,14 @@ function AddPaymentDialog({ billId, onClose, onPay }: { billId: string; onClose:
   return (
     <Dialog open onOpenChange={onClose}>
       <DialogContent>
-        <DialogHeader><DialogTitle>Добавить оплату</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>{t("addPayment")}</DialogTitle></DialogHeader>
         <div className="grid gap-3">
-          <div><Label>Сумма (AZN) *</Label><Input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="1000" /></div>
-          <div><Label>Основание</Label><Input value={ref} onChange={(e) => setRef(e.target.value)} placeholder="Банковский перевод №..." /></div>
+          <div><Label>{t("paymentAmount")} *</Label><Input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="1000" /></div>
+          <div><Label>{t("paymentReference")}</Label><Input value={ref} onChange={(e) => setRef(e.target.value)} placeholder={t("paymentRefPlaceholder")} /></div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Отмена</Button>
-          <Button onClick={handleSubmit} disabled={onPay.isPending}>{onPay.isPending ? "Оплата..." : "Записать оплату"}</Button>
+          <Button variant="outline" onClick={onClose}>{t("cancel")}</Button>
+          <Button onClick={handleSubmit} disabled={onPay.isPending}>{onPay.isPending ? t("paying") : t("recordPayment")}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

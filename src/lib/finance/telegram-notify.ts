@@ -86,7 +86,7 @@ async function sendToChannels(
       (async () => {
         try {
           const admins = await prisma.user.findMany({
-            where: { organizationId: orgId, role: { in: ["admin", "owner"] } },
+            where: { organizationId: orgId, role: "admin" },
             select: { id: true },
           })
           // Fallback: if no admins found, get all users

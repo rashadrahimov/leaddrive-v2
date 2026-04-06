@@ -3262,7 +3262,12 @@
       "noExpenseData": "No expense data",
       "noAgingData": "No receivables aging data",
       "loading": "Loading financials...",
-      "error": "Error"
+      "error": "Error",
+      "tabOverview": "Overview",
+      "tabAR": "Receivables (A/R)",
+      "tabAP": "Payables (A/P)",
+      "tabFunds": "Funds",
+      "tabPayments": "Payments"
     },
     "ap": {
       "totalPayables": "Total Payables",

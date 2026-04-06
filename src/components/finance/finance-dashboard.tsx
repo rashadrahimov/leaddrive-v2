@@ -113,7 +113,7 @@ export function FinanceDashboard() {
                 <XAxis dataKey="label" tick={{ fontSize: 11 }} />
                 <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => v >= 1000 ? `${(v / 1000).toFixed(0)}K` : v} />
                 <Tooltip
-                  formatter={((value: number, name: string) => [fmt(value) + " AZN", name === "revenue" ? "Выручка" : name === "expenses" ? "Расходы" : "Нетто"]) as any}
+                  formatter={((value: number, name: string) => [fmt(value) + " AZN", name === "revenue" ? t("revenue") : name === "expenses" ? t("expenses") : t("netProfit")]) as any}
                   labelFormatter={(label) => `${label} ${year}`}
                 />
                 <Bar dataKey="revenue" fill="#22c55e" opacity={0.8} radius={[4, 4, 0, 0]} name="revenue" />
@@ -163,7 +163,7 @@ export function FinanceDashboard() {
                 </div>
               </>
             ) : (
-              <div className="h-[200px] flex items-center justify-center text-sm text-muted-foreground">Нет данных по расходам</div>
+              <div className="h-[200px] flex items-center justify-center text-sm text-muted-foreground">{t("noExpenseData")}</div>
             )}
           </CardContent>
         </Card>
@@ -191,7 +191,7 @@ export function FinanceDashboard() {
                 </BarChart>
               </ResponsiveContainer>
             ) : (
-              <div className="h-[220px] flex items-center justify-center text-sm text-muted-foreground">Нет данных по дебиторке</div>
+              <div className="h-[220px] flex items-center justify-center text-sm text-muted-foreground">{t("noAgingData")}</div>
             )}
           </CardContent>
         </Card>
@@ -203,17 +203,17 @@ export function FinanceDashboard() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              <SummaryRow label="Выручка (план)" value={kpis.revenue.plan} color="#22c55e" />
-              <SummaryRow label="Выручка (факт)" value={kpis.revenue.fact} color="#16a34a" />
-              <SummaryRow label="Расходы (план)" value={kpis.expenses.plan} color="#f59e0b" />
-              <SummaryRow label="Расходы (факт)" value={kpis.expenses.fact} color="#ef4444" />
+              <SummaryRow label={t("revenuePlan")} value={kpis.revenue.plan} color="#22c55e" />
+              <SummaryRow label={t("revenueFact")} value={kpis.revenue.fact} color="#16a34a" />
+              <SummaryRow label={t("expensesPlan")} value={kpis.expenses.plan} color="#f59e0b" />
+              <SummaryRow label={t("expensesFact")} value={kpis.expenses.fact} color="#ef4444" />
               <div className="border-t pt-2" />
-              <SummaryRow label="Чистая прибыль" value={kpis.netProfit.fact} color={kpis.netProfit.fact >= 0 ? "#22c55e" : "#ef4444"} bold />
-              <SummaryRow label="Остаток ДС" value={kpis.cashBalance.current} color="#3b82f6" bold />
+              <SummaryRow label={t("netProfitLabel")} value={kpis.netProfit.fact} color={kpis.netProfit.fact >= 0 ? "#22c55e" : "#ef4444"} bold />
+              <SummaryRow label={t("cashBalanceLabel")} value={kpis.cashBalance.current} color="#3b82f6" bold />
               <div className="border-t pt-2" />
-              <SummaryRow label="Дебиторка (A/R)" value={kpis.arTotal.amount} color="#f59e0b" />
-              <SummaryRow label="Кредиторка (A/P)" value={kpis.apTotal.amount} color="#8b5cf6" />
-              <SummaryRow label="Нетто-позиция (A/R − A/P)" value={kpis.arTotal.amount - kpis.apTotal.amount} color="#3b82f6" bold />
+              <SummaryRow label={t("arLabel")} value={kpis.arTotal.amount} color="#f59e0b" />
+              <SummaryRow label={t("apLabel")} value={kpis.apTotal.amount} color="#8b5cf6" />
+              <SummaryRow label={t("netPosition")} value={kpis.arTotal.amount - kpis.apTotal.amount} color="#3b82f6" bold />
             </div>
           </CardContent>
         </Card>

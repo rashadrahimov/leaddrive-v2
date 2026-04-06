@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import { useTranslations } from "next-intl"
 import { AlertTriangle, AlertCircle, Info, ArrowRight } from "lucide-react"
 import type { FinanceAlert } from "@/lib/finance/types"
 
@@ -11,11 +12,12 @@ const SEVERITY_STYLES: Record<string, { bg: string; border: string; icon: React.
 }
 
 export function FinanceAlerts({ alerts }: { alerts: FinanceAlert[] }) {
+  const t = useTranslations("finance.dash")
   if (!alerts || alerts.length === 0) return null
 
   return (
     <div className="space-y-2">
-      <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Оповещения</h3>
+      <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">{t("alerts")}</h3>
       {alerts.map((alert) => {
         const style = SEVERITY_STYLES[alert.severity] || SEVERITY_STYLES.info
         const Icon = style.icon
@@ -25,7 +27,7 @@ export function FinanceAlerts({ alerts }: { alerts: FinanceAlert[] }) {
             <span className="text-sm flex-1">{alert.message}</span>
             {alert.link && (
               <Link href={alert.link} className="text-xs font-medium text-primary hover:underline inline-flex items-center gap-1">
-                Открыть <ArrowRight className="w-3 h-3" />
+                {t("openLink")} <ArrowRight className="w-3 h-3" />
               </Link>
             )}
           </div>
