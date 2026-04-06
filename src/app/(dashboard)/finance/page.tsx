@@ -13,7 +13,7 @@ import { LayoutDashboard, FileText, CreditCard, PiggyBank, Banknote } from "luci
 
 export default function FinancePage() {
   const t = useTranslations("finance.dash")
-  const tc = useTranslations("common")
+  const tn = useTranslations("nav")
   const searchParams = useSearchParams()
   const initialTab = searchParams.get("tab") || "overview"
   const [activeTab, setActiveTab] = useState(initialTab)
@@ -29,7 +29,7 @@ export default function FinancePage() {
   return (
     <div className="flex-1 space-y-6 p-4 md:p-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold tracking-tight">{tc("finance")}</h1>
+        <h1 className="text-2xl font-bold tracking-tight">{tn("finance")}</h1>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
