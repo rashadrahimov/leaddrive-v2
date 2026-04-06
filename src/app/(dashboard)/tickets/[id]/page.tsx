@@ -129,6 +129,13 @@ export default function TicketDetailPage() {
   const [newStatus, setNewStatus] = useState("")
   const [updatingStatus, setUpdatingStatus] = useState(false)
 
+  // Inline edit subject/description
+  const [editingSubject, setEditingSubject] = useState(false)
+  const [editSubject, setEditSubject] = useState("")
+  const [editingDesc, setEditingDesc] = useState(false)
+  const [editDesc, setEditDesc] = useState("")
+  const [savingEdit, setSavingEdit] = useState(false)
+
   // Inline reassign
   const [users, setUsers] = useState<UserOption[]>([])
   const [newAssignee, setNewAssignee] = useState("")
@@ -334,6 +341,23 @@ export default function TicketDetailPage() {
       })
       if (res.ok) fetchTicket()
     } catch { /* ignore */ } finally { setUpdatingStatus(false) }
+  }
+
+  const handleSaveSubjectDesc = async (field: "subject" | "description", value: string) => {
+    if (!ticket) return
+    setSavingEdit(true)
+    try {
+      const res = await fetch(`/api/v1/tickets/${ticketId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ [field]: value }),
+      })
+      if (res.ok) {
+        fetchTicket()
+        if (field === "subject") setEditingSubject(false)
+        if (field === "description") setEditingDesc(false)
+      }
+    } catch { /* ignore */ } finally { setSavingEdit(false) }
   }
 
   const handleReassign = async () => {
@@ -698,7 +722,32 @@ export default function TicketDetailPage() {
           {/* Ticket info */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-xl">{ticket.subject}</CardTitle>
+              {editingSubject ? (
+                <div className="flex items-center gap-2">
+                  <input
+                    className="text-xl font-semibold bg-transparent border-b border-primary outline-none flex-1"
+                    value={editSubject}
+                    onChange={e => setEditSubject(e.target.value)}
+                    autoFocus
+                    onKeyDown={e => {
+                      if (e.key === "Enter") handleSaveSubjectDesc("subject", editSubject)
+                      if (e.key === "Escape") setEditingSubject(false)
+                    }}
+                  />
+                  <Button size="sm" onClick={() => handleSaveSubjectDesc("subject", editSubject)} disabled={savingEdit}>
+                    {savingEdit ? <Loader2 className="h-3 w-3 animate-spin" /> : tc("save")}
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={() => setEditingSubject(false)}>{tc("cancel")}</Button>
+                </div>
+              ) : (
+                <CardTitle
+                  className="text-xl cursor-pointer hover:text-primary transition-colors"
+                  onClick={() => { setEditSubject(ticket.subject); setEditingSubject(true) }}
+                  title={tc("clickToEdit")}
+                >
+                  {ticket.subject}
+                </CardTitle>
+              )}
               <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
                 <span>{t("companyLabel")}: <strong>{(ticket as any).companyName || "—"}</strong></span>
                 <span>{t("assignedLabel")}: <strong>{(ticket as any).assigneeName || t("notAssigned")}</strong></span>
@@ -707,9 +756,29 @@ export default function TicketDetailPage() {
                 <span>{t("priorityLabel")}: <strong>{PRIORITY_LABELS[ticket.priority] || ticket.priority}</strong></span>
                 <span>{t("categoryLabel")}: <strong>{ticket.category}</strong></span>
               </div>
-              {ticket.description && (
-                <div className="mt-3 p-3 bg-muted/50 rounded-lg">
-                  <p className="text-sm whitespace-pre-wrap">{ticket.description}</p>
+              {editingDesc ? (
+                <div className="mt-3 space-y-2">
+                  <Textarea
+                    value={editDesc}
+                    onChange={e => setEditDesc(e.target.value)}
+                    rows={4}
+                    autoFocus
+                    onKeyDown={e => { if (e.key === "Escape") setEditingDesc(false) }}
+                  />
+                  <div className="flex gap-2">
+                    <Button size="sm" onClick={() => handleSaveSubjectDesc("description", editDesc)} disabled={savingEdit}>
+                      {savingEdit ? <Loader2 className="h-3 w-3 animate-spin" /> : tc("save")}
+                    </Button>
+                    <Button size="sm" variant="ghost" onClick={() => setEditingDesc(false)}>{tc("cancel")}</Button>
+                  </div>
+                </div>
+              ) : (
+                <div
+                  className="mt-3 p-3 bg-muted/50 rounded-lg cursor-pointer hover:bg-muted/70 transition-colors"
+                  onClick={() => { setEditDesc(ticket.description || ""); setEditingDesc(true) }}
+                  title={tc("clickToEdit")}
+                >
+                  <p className="text-sm whitespace-pre-wrap">{ticket.description || tc("noDescription")}</p>
                 </div>
               )}
             </CardHeader>

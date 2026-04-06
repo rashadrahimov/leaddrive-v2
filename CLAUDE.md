@@ -76,18 +76,18 @@ SaaS multi-tenant CRM для IT-аутсорсинговых компаний. �
 15. **Phase 4 Enterprise**: Field permissions, multi-agent AI, journey branching, VoIP (Twilio), landing pages
 
 ### What's NOT DONE YET ❌
-1. **Production data import**: v2 DB on server needs import:
-   ```bash
-   ssh $SSH_USER@$SERVER "cd /opt/leaddrive-v2 && npx tsx scripts/import-v1.ts && npx tsx scripts/create-admin.ts"
-   ```
-2. **SSL**: Need to run `certbot --nginx -d leaddrivecrm.org -d app.leaddrivecrm.org`
-3. **TypeScript strict mode**: `ignoreBuildErrors: true` in next.config.ts (workaround)
+_(Nothing critical — all major features and infrastructure are complete)_
+
+### Notes
+- **Production DB**: Imported (76 companies, 608 contacts, 13 deals, 22 tickets, 4 users)
+- **SSL**: Certificates active until July 2026 (auto-renew via certbot)
+- **TypeScript**: 0 errors (`tsc --noEmit` clean), `ignoreBuildErrors: true` kept only for prerender-without-DB builds
+- **Tests**: 134 tests in 11 files (Vitest) — rate-limit, webhooks, auto-assign, workflow-engine
+- **Error tracking**: Sentry integrated (set SENTRY_DSN in .env)
+- **PM2**: leaddrive-v2 process running on port 3001
 
 ### Partially Done ⚠️
-1. **Email campaigns**: SMTP configured, `sendEmail()` works, templates exist — but no compose UI for mass campaigns
-2. **Portal**: Auth + tickets + KB structure works — chat and KB need full QA verification
-3. **Ticket escalationLevel**: Field exists in schema + UI column, but value never incremented (always shows "—")
-4. **Ticket detail inline edit**: Status/assignee/priority editable inline, but subject/description only via list page dialog
+1. **Portal**: Auth + tickets + KB structure works — chat and KB need full QA verification
 
 ## Key Files
 - `prisma/schema.prisma` — 41 models
