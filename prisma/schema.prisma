@@ -91,6 +91,7 @@ model Organization {
   sharingRules           SharingRule[]
   savedReports           SavedReport[]
   landingPages           LandingPage[]
+  customDomains          CustomDomain[]
   callLogs               CallLog[]
 
   @@map("organizations")
@@ -3242,4 +3243,22 @@ model FormSubmission {
 
   @@index([organizationId, landingPageId])
   @@map("form_submissions")
+}
+
+model CustomDomain {
+  id             String   @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  domain         String   @unique
+  status         String   @default("pending") // pending | dns_verified | ssl_active | error
+  dnsVerifiedAt  DateTime?
+  sslIssuedAt    DateTime?
+  lastCheckedAt  DateTime?
+  errorMessage   String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([organizationId])
+  @@index([domain])
+  @@map("custom_domains")
 }

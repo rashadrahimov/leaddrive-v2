@@ -4,7 +4,7 @@ import { auth } from "@/lib/auth"
 import { canAccessModule } from "@/lib/plan-config"
 import { checkRateLimit, RATE_LIMIT_CONFIG } from "@/lib/rate-limit"
 
-const publicPaths = ["/login", "/register", "/forgot-password", "/reset-password", "/api/auth", "/api/v1/auth/register", "/api/v1/settings/auth-methods", "/portal", "/home", "/pricing", "/plans", "/features", "/demo", "/about", "/contact", "/blog", "/legal", "/landing", "/marketing", "/p"]
+const publicPaths = ["/login", "/register", "/forgot-password", "/reset-password", "/api/auth", "/api/v1/auth/register", "/api/v1/settings/auth-methods", "/portal", "/home", "/pricing", "/plans", "/features", "/demo", "/about", "/contact", "/blog", "/legal", "/landing", "/marketing", "/p", "/_custom-domain"]
 
 // Marketing-only paths served on leaddrivecrm.org
 const marketingPaths = ["/home", "/pricing", "/plans", "/features", "/demo", "/about", "/contact", "/blog", "/legal", "/landing", "/marketing"]
@@ -74,6 +74,31 @@ const authMiddleware = auth((req) => {
   const { pathname } = req.nextUrl
   const nonce = crypto.randomUUID()
   const host = req.headers.get("host")?.replace(/:\d+$/, "") || ""
+
+  // Custom domain routing: if not a known host, rewrite to custom domain handler
+  const isLocalhost = host === "localhost" || host.startsWith("127.") || host.includes("localhost:")
+  if (!isMarketingHost(host) && !isAppHost(host) && !isLocalhost && host) {
+    // API paths and static assets should be handled normally
+    if (pathname.startsWith("/api/") || pathname.startsWith("/_next/") || pathname === "/sw.js") {
+      return withCspHeaders(NextResponse.next(), nonce)
+    }
+
+    // Rewrite to custom domain handler
+    const url = req.nextUrl.clone()
+    const slug = pathname === "/" ? "" : pathname.replace(/^\//, "")
+    url.pathname = "/_custom-domain"
+    url.searchParams.set("host", host)
+    url.searchParams.set("slug", slug)
+
+    const requestHeaders = new Headers(req.headers)
+    requestHeaders.set("x-nonce", nonce)
+    requestHeaders.set("x-custom-domain", host)
+
+    return withCspHeaders(
+      NextResponse.rewrite(url, { headers: requestHeaders }),
+      nonce
+    )
+  }
 
   // Domain-based routing: leaddrivecrm.org serves marketing, app.leaddrivecrm.org serves CRM
   // Note: inside auth() callback, req.url uses NEXTAUTH_URL as base, so we build URLs explicitly
