@@ -453,14 +453,14 @@ export function DealsAnalytics({ deals, pipelineValue, wonValue, lostCount, wonC
         <div className="bg-card rounded-xl border p-5">
           <div className="flex items-center gap-2 mb-4">
             <Brain className="w-4 h-4 text-fuchsia-400" />
-            <h3 className="text-sm font-semibold">{t("aiPredict")}</h3>
+            <h3 className="text-base font-semibold">{t("aiPredict")}</h3>
           </div>
-          <div className="space-y-2.5">
+          <div className="space-y-3">
             {analytics.topDeals.length > 0 ? (
               analytics.topDeals.map((deal) => (
                 <div key={deal.id} className="flex items-center gap-3 group">
-                  <div className="relative w-9 h-9 flex-shrink-0">
-                    <svg viewBox="0 0 36 36" className="w-9 h-9 -rotate-90">
+                  <div className="relative w-10 h-10 flex-shrink-0">
+                    <svg viewBox="0 0 36 36" className="w-10 h-10 -rotate-90">
                       <circle cx="18" cy="18" r="14" fill="none" stroke="currentColor" className="text-muted/30" strokeWidth="4" />
                       <circle
                         cx="18" cy="18" r="14" fill="none"
@@ -473,30 +473,30 @@ export function DealsAnalytics({ deals, pipelineValue, wonValue, lostCount, wonC
                         strokeLinecap="round"
                       />
                     </svg>
-                    <span className="absolute inset-0 flex items-center justify-center text-[9px] font-bold">
+                    <span className="absolute inset-0 flex items-center justify-center text-[10px] font-bold">
                       {deal.probability ?? 50}%
                     </span>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="text-xs font-medium truncate">{deal.title}</div>
-                    <div className="text-[10px] text-muted-foreground truncate">
+                    <div className="text-sm font-medium truncate">{deal.title}</div>
+                    <div className="text-xs text-muted-foreground truncate">
                       {deal.company?.name ?? "N/A"} &middot; {fmtCurrency(deal.value)}
                     </div>
                   </div>
-                  <ChevronRight className="w-3.5 h-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <ChevronRight className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
                 </div>
               ))
             ) : (
               [
-                { title: "ERP M\u00FCqavil\u0259si", company: "AzTech", value: 45000, prob: 85 },
-                { title: "CRM Lisenziya", company: "BakuSoft", value: 32000, prob: 72 },
-                { title: "Bulud Miqrasiya", company: "Caspian IT", value: 28000, prob: 60 },
-                { title: "Mobiliz\u0259 Layih\u0259", company: "DigiWave", value: 18000, prob: 45 },
-                { title: "Kibersec Audit", company: "ShieldTech", value: 15000, prob: 35 },
+                { titleKey: "demoErp", company: "AzTech", value: 45000, prob: 85 },
+                { titleKey: "demoCrm", company: "BakuSoft", value: 32000, prob: 72 },
+                { titleKey: "demoCloud", company: "Caspian IT", value: 28000, prob: 60 },
+                { titleKey: "demoMobile", company: "DigiWave", value: 18000, prob: 45 },
+                { titleKey: "demoCyber", company: "ShieldTech", value: 15000, prob: 35 },
               ].map((d, i) => (
                 <div key={i} className="flex items-center gap-3">
-                  <div className="relative w-9 h-9 flex-shrink-0">
-                    <svg viewBox="0 0 36 36" className="w-9 h-9 -rotate-90">
+                  <div className="relative w-10 h-10 flex-shrink-0">
+                    <svg viewBox="0 0 36 36" className="w-10 h-10 -rotate-90">
                       <circle cx="18" cy="18" r="14" fill="none" stroke="currentColor" className="text-muted/30" strokeWidth="4" />
                       <circle
                         cx="18" cy="18" r="14" fill="none"
@@ -508,13 +508,13 @@ export function DealsAnalytics({ deals, pipelineValue, wonValue, lostCount, wonC
                         strokeLinecap="round"
                       />
                     </svg>
-                    <span className="absolute inset-0 flex items-center justify-center text-[9px] font-bold">
+                    <span className="absolute inset-0 flex items-center justify-center text-[10px] font-bold">
                       {d.prob}%
                     </span>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="text-xs font-medium truncate">{d.title}</div>
-                    <div className="text-[10px] text-muted-foreground">
+                    <div className="text-sm font-medium truncate">{t(d.titleKey)}</div>
+                    <div className="text-xs text-muted-foreground">
                       {d.company} &middot; {fmtCurrency(d.value)}
                     </div>
                   </div>

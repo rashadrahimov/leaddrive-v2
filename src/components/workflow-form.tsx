@@ -158,7 +158,7 @@ export function WorkflowForm({ open, onOpenChange, onSaved, initialData, orgId }
       <DialogHeader>
         <DialogTitle>{isEdit ? t("editWorkflow") : t("newWorkflow")}</DialogTitle>
       </DialogHeader>
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0 overflow-hidden">
         <DialogContent className="max-h-[70vh] overflow-y-auto">
           {error && <div className="text-sm text-red-500 bg-red-50 dark:bg-red-900/20 p-2 rounded mb-3">{error}</div>}
           <div className="grid gap-4">

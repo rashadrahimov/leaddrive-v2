@@ -158,22 +158,26 @@ function AiPredictionCard({ dealId }: { dealId: string }) {
   const probColor = pred.winProbability >= 70 ? "text-emerald-600" : pred.winProbability >= 40 ? "text-amber-600" : "text-red-600"
   const probBg = pred.winProbability >= 70 ? "bg-emerald-500" : pred.winProbability >= 40 ? "bg-amber-500" : "bg-red-500"
 
+  const translateAction = (key: string, params: Record<string, string | number> = {}) => {
+    try { return t(key, params) } catch { return key }
+  }
+
   return (
-    <div className="rounded-xl border bg-card p-4 space-y-3">
+    <div className="rounded-xl border bg-card p-5 space-y-4">
       <div className="flex items-center justify-between">
-        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t("aiPrediction")}</span>
+        <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">{t("aiPrediction")}</span>
         <button
           onClick={fetchPrediction}
-          className="text-xs text-primary hover:underline"
+          className="text-sm text-primary hover:underline"
         >
           {tc("refresh")}
         </button>
       </div>
 
       {/* Probability */}
-      <div className="flex items-center gap-3">
-        <div className="relative h-12 w-12">
-          <svg className="h-12 w-12 -rotate-90" viewBox="0 0 36 36">
+      <div className="flex items-center gap-4">
+        <div className="relative h-14 w-14">
+          <svg className="h-14 w-14 -rotate-90" viewBox="0 0 36 36">
             <circle cx="18" cy="18" r="16" fill="none" stroke="currentColor" strokeWidth="3" className="text-muted/30" />
             <circle
               cx="18" cy="18" r="16" fill="none" strokeWidth="3"
@@ -182,13 +186,13 @@ function AiPredictionCard({ dealId }: { dealId: string }) {
               strokeLinecap="round"
             />
           </svg>
-          <span className={`absolute inset-0 flex items-center justify-center text-xs font-bold ${probColor}`}>
+          <span className={`absolute inset-0 flex items-center justify-center text-sm font-bold ${probColor}`}>
             {pred.winProbability}%
           </span>
         </div>
         <div>
-          <p className="text-sm font-semibold">{t("winProbabilityFull")}</p>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-base font-semibold">{t("winProbabilityFull")}</p>
+          <p className="text-sm text-muted-foreground">
             {t("confidenceLabel", { value: pred.confidence })}
           </p>
         </div>
@@ -197,10 +201,10 @@ function AiPredictionCard({ dealId }: { dealId: string }) {
       {/* Risk factors */}
       {pred.riskFactors?.length > 0 && (
         <div>
-          <p className="text-xs font-medium text-red-600 mb-1">{t("risksTitle")}</p>
+          <p className="text-sm font-medium text-red-600 mb-1">{t("risksTitle")}</p>
           {pred.riskFactors.map((f: any, i: number) => (
-            <p key={i} className="text-xs text-muted-foreground flex items-center gap-1">
-              <span className="h-1 w-1 rounded-full bg-red-400 shrink-0" /> {translateFactor(f)}
+            <p key={i} className="text-sm text-muted-foreground flex items-center gap-1.5">
+              <span className="h-1.5 w-1.5 rounded-full bg-red-400 shrink-0" /> {translateFactor(f)}
             </p>
           ))}
         </div>
@@ -209,10 +213,10 @@ function AiPredictionCard({ dealId }: { dealId: string }) {
       {/* Positive factors */}
       {pred.positiveFactors?.length > 0 && (
         <div>
-          <p className="text-xs font-medium text-emerald-600 mb-1">{t("positiveFactorsTitle")}</p>
+          <p className="text-sm font-medium text-emerald-600 mb-1">{t("positiveFactorsTitle")}</p>
           {pred.positiveFactors.map((f: any, i: number) => (
-            <p key={i} className="text-xs text-muted-foreground flex items-center gap-1">
-              <span className="h-1 w-1 rounded-full bg-emerald-400 shrink-0" /> {translateFactor(f)}
+            <p key={i} className="text-sm text-muted-foreground flex items-center gap-1.5">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 shrink-0" /> {translateFactor(f)}
             </p>
           ))}
         </div>
@@ -220,16 +224,16 @@ function AiPredictionCard({ dealId }: { dealId: string }) {
 
       {/* Next best actions */}
       {nextActions.length > 0 && (
-        <div className="border-t pt-2">
-          <p className="text-xs font-medium text-primary mb-1">{t("recommendationsTitle")}</p>
+        <div className="border-t pt-3">
+          <p className="text-sm font-medium text-primary mb-2">{t("recommendationsTitle")}</p>
           {nextActions.map((action: any, i: number) => (
-            <div key={i} className="flex items-start gap-1.5 mb-1">
-              <span className={`h-1.5 w-1.5 rounded-full mt-1 shrink-0 ${
+            <div key={i} className="flex items-start gap-2 mb-1.5">
+              <span className={`h-2 w-2 rounded-full mt-1.5 shrink-0 ${
                 action.priority === "high" ? "bg-red-500" : action.priority === "medium" ? "bg-amber-500" : "bg-blue-500"
               }`} />
               <div>
-                <p className="text-xs font-medium">{action.title}</p>
-                <p className="text-[10px] text-muted-foreground">{action.reason}</p>
+                <p className="text-sm font-medium">{action.titleKey ? translateAction(action.titleKey, action.titleParams) : action.title}</p>
+                <p className="text-xs text-muted-foreground">{action.reasonKey ? translateAction(action.reasonKey, action.reasonParams) : action.reason}</p>
               </div>
             </div>
           ))}

@@ -123,7 +123,7 @@ export function ContractForm({ open, onOpenChange, onSaved, initialData, orgId }
       <DialogHeader>
         <DialogTitle>{isEdit ? t("editContract") : t("newContract")}</DialogTitle>
       </DialogHeader>
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0 overflow-hidden">
         <DialogContent>
           {error && <div className="text-sm text-red-500 bg-red-50 dark:bg-red-900/20 p-2 rounded mb-3">{error}</div>}
           <div className="grid gap-4">

@@ -131,7 +131,7 @@ export function JourneyForm({ open, onOpenChange, onSaved, initialData, orgId }:
       <DialogHeader>
         <DialogTitle>{isEdit ? tf("editJourney") : tf("newJourney")}</DialogTitle>
       </DialogHeader>
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0 overflow-hidden">
         <DialogContent>
           {error && (
             <div className="text-sm text-red-600 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-3 rounded-lg mb-4">

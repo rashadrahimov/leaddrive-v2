@@ -272,7 +272,7 @@ export function OfferForm({ open, onOpenChange, onSaved, initialData, orgId, dea
       <DialogHeader>
         <DialogTitle>{isEdit ? t("edit") : t("new")}</DialogTitle>
       </DialogHeader>
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0 overflow-hidden">
         <DialogContent className="max-h-[80vh] overflow-y-auto">
           {error && <div className="text-sm text-red-500 bg-red-50 dark:bg-red-900/20 p-2 rounded mb-3">{error}</div>}
 
