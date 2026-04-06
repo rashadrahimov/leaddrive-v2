@@ -2163,6 +2163,8 @@
     "newEmailTemplate": "Новый шаблон",
     "editJourney": "Редактировать цепочку",
     "newJourney": "Новая цепочка",
+    "editAiAgent": "Редактировать агента",
+    "newAiAgent": "Новый агент",
     "estValue": "Ожидаемая сумма",
     "newSlaPolicy": "Новая SLA политика",
     "editSlaPolicy": "Редактировать SLA политику",
@@ -2430,7 +2432,25 @@
     "hintTotalJourneys": "Общее количество путей клиента",
     "hintActiveJourneys": "Пути, которые сейчас работают и обрабатывают контакты",
     "hintTotalEntries": "Общее число контактов, вошедших во все пути",
-    "hintCompletionRate": "Процент контактов, прошедших полный путь"
+    "hintCompletionRate": "Процент контактов, прошедших полный путь",
+    "trigger": "Триггер",
+    "maxEnrollmentDays": "Макс. дней участия",
+    "maxEnrollmentDaysPlaceholder": "напр. 30 (авто-выход через N дней)",
+    "goalTracking": "Отслеживание целей",
+    "goalType": "Тип цели",
+    "noGoal": "Без цели",
+    "goalDealCreated": "Создана сделка",
+    "goalStatusChange": "Изменение статуса",
+    "goalTicketResolved": "Тикет решён",
+    "targetStatusValue": "Целевое значение статуса",
+    "targetStatusPlaceholder": "напр. converted, qualified",
+    "goalTarget": "Цель (конверсии)",
+    "goalTargetPlaceholder": "напр. 100",
+    "exitOnGoal": "Выход при достижении цели",
+    "steps": "Шаги",
+    "edit": "Редактировать",
+    "enrollLead": "Записать лида",
+    "pause": "Пауза"
   },
   "workflows": {
     "title": "Рабочие процессы",
@@ -3949,5 +3969,9 @@
     "rows": "строк",
     "csvDesc": "Значения, разделённые запятыми",
     "xlsxDesc": "Таблица XLSX"
+  },
+  "ticketNotification": {
+    "newTicket": "Новый тикет: {ticketNumber}",
+    "view": "Открыть"
   }
 }

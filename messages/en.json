@@ -2163,6 +2163,8 @@
     "newEmailTemplate": "New Template",
     "editJourney": "Edit Journey",
     "newJourney": "New Journey",
+    "editAiAgent": "Edit AI Agent",
+    "newAiAgent": "New AI Agent",
     "estValue": "Estimated Value",
     "newSlaPolicy": "New SLA Policy",
     "editSlaPolicy": "Edit SLA Policy",
@@ -2430,7 +2432,25 @@
     "hintTotalJourneys": "Total number of customer journeys",
     "hintActiveJourneys": "Journeys currently running and processing contacts",
     "hintTotalEntries": "Total contacts that entered all journeys",
-    "hintCompletionRate": "Percentage of contacts who completed the full journey"
+    "hintCompletionRate": "Percentage of contacts who completed the full journey",
+    "trigger": "Trigger",
+    "maxEnrollmentDays": "Max Enrollment Days",
+    "maxEnrollmentDaysPlaceholder": "e.g. 30 (auto-exit after N days)",
+    "goalTracking": "Goal Tracking",
+    "goalType": "Goal Type",
+    "noGoal": "No goal",
+    "goalDealCreated": "Deal Created",
+    "goalStatusChange": "Status Change",
+    "goalTicketResolved": "Ticket Resolved",
+    "targetStatusValue": "Target Status Value",
+    "targetStatusPlaceholder": "e.g. converted, qualified",
+    "goalTarget": "Goal Target (conversions)",
+    "goalTargetPlaceholder": "e.g. 100",
+    "exitOnGoal": "Exit on goal reached",
+    "steps": "Steps",
+    "edit": "Edit",
+    "enrollLead": "Enroll Lead",
+    "pause": "Pause"
   },
   "workflows": {
     "title": "Workflows",
@@ -3949,5 +3969,9 @@
     "rows": "rows",
     "csvDesc": "Comma-separated values",
     "xlsxDesc": "XLSX spreadsheet"
+  },
+  "ticketNotification": {
+    "newTicket": "New ticket: {ticketNumber}",
+    "view": "View"
   }
 }

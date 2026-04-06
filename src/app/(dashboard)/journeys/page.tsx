@@ -490,13 +490,13 @@ export default function JourneysPage() {
               </div>
               <div className="flex items-center gap-1.5 shrink-0">
                 <Button size="sm" variant="outline" className="gap-1 text-xs h-8" onClick={() => openSteps(journey)}>
-                  <Eye className="h-3 w-3" /> Шаги
+                  <Eye className="h-3 w-3" /> {t("steps")}
                 </Button>
                 <Button size="sm" variant="outline" className="gap-1 text-xs h-8" onClick={() => { setEditData(journey); setShowForm(true) }}>
-                  <Pencil className="h-3 w-3" /> Редактировать
+                  <Pencil className="h-3 w-3" /> {t("edit")}
                 </Button>
                 <Button size="sm" variant="outline" className="gap-1 text-xs h-8" onClick={() => { setEnrollOpen(journey); setSelectedLead(null); setLeadSearch("") }}>
-                  <UserPlus className="h-3 w-3" /> Записать лида
+                  <UserPlus className="h-3 w-3" /> {t("enrollLead")}
                 </Button>
                 <Button
                   size="sm"
@@ -505,7 +505,7 @@ export default function JourneysPage() {
                   onClick={() => toggleStatus(journey)}
                 >
                   {journey.status === "active" ? <Pause className="h-3 w-3" /> : <Play className="h-3 w-3" />}
-                  {journey.status === "active" ? "Пауза" : "Запустить"}
+                  {journey.status === "active" ? t("pause") : t("statusActive")}
                 </Button>
                 <Button
                   size="sm"
@@ -550,7 +550,7 @@ export default function JourneysPage() {
                   className="gap-1 text-xs h-7"
                   onClick={() => { setEnrollOpen(stepsJourney); setSelectedLead(null); setLeadSearch("") }}
                 >
-                  <UserPlus className="h-3 w-3" /> Записать лида
+                  <UserPlus className="h-3 w-3" /> {t("enrollLead")}
                 </Button>
                 <button onClick={() => setStepsJourney(null)} className="p-1 rounded hover:bg-muted">
                   <X className="h-5 w-5 text-muted-foreground" />
@@ -619,7 +619,7 @@ export default function JourneysPage() {
                               setAddStepOpen(true)
                             }}
                             className="p-1 rounded hover:bg-muted text-muted-foreground"
-                            title="Редактировать"
+                            title={t("edit")}
                           >
                             <Pencil className="h-3 w-3" />
                           </button>
@@ -927,11 +927,11 @@ export default function JourneysPage() {
       {/* ===== ENROLL LEAD DIALOG ===== */}
       <Dialog open={!!enrollOpen} onOpenChange={open => { if (!open) { setEnrollOpen(null); setSelectedLead(null); setLeadSearch("") } }}>
         <DialogHeader>
-          <DialogTitle>Записать лида в цепочку</DialogTitle>
+          <DialogTitle>{t("enrollLead")}</DialogTitle>
         </DialogHeader>
         <DialogContent>
           <p className="text-sm text-muted-foreground mb-3">
-            Цепочка: <strong>{enrollOpen?.name}</strong>
+            {t("title")}: <strong>{enrollOpen?.name}</strong>
           </p>
 
           {/* Selected lead chip */}

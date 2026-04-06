@@ -2156,6 +2156,8 @@
     "newEmailTemplate": "Yeni şablon",
     "editJourney": "Zənciri redaktə et",
     "newJourney": "Yeni zəncir",
+    "editAiAgent": "Agenti redaktə et",
+    "newAiAgent": "Yeni agent",
     "estValue": "Gözlənilən məbləğ",
     "newSlaPolicy": "Yeni SLA siyasəti",
     "editSlaPolicy": "SLA siyasətini redaktə et",
@@ -2423,7 +2425,25 @@
     "hintTotalJourneys": "Ümumi müştəri yollarının sayı",
     "hintActiveJourneys": "Hal-hazırda işləyən və əlaqələri emal edən yollar",
     "hintTotalEntries": "Bütün yollara daxil olan ümumi əlaqə sayı",
-    "hintCompletionRate": "Tam yolu tamamlayan əlaqələrin faizi"
+    "hintCompletionRate": "Tam yolu tamamlayan əlaqələrin faizi",
+    "trigger": "Tetikleyici",
+    "maxEnrollmentDays": "Maksimum qeydiyyat günləri",
+    "maxEnrollmentDaysPlaceholder": "məs. 30 (N gündən sonra avtomatik çıxış)",
+    "goalTracking": "Hədəf izləmə",
+    "goalType": "Hədəf növü",
+    "noGoal": "Hədəf yoxdur",
+    "goalDealCreated": "Sövdələşmə yaradıldı",
+    "goalStatusChange": "Status dəyişikliyi",
+    "goalTicketResolved": "Tiket həll edildi",
+    "targetStatusValue": "Hədəf status dəyəri",
+    "targetStatusPlaceholder": "məs. converted, qualified",
+    "goalTarget": "Hədəf (konversiyalar)",
+    "goalTargetPlaceholder": "məs. 100",
+    "exitOnGoal": "Hədəfə çatdıqda çıxış",
+    "steps": "Addımlar",
+    "edit": "Redaktə et",
+    "enrollLead": "Lidi qeyd et",
+    "pause": "Dayandır"
   },
   "workflows": {
     "title": "İş Axınları",
@@ -3942,5 +3962,9 @@
     "rows": "sətir",
     "csvDesc": "Vergüllə ayrılmış dəyərlər",
     "xlsxDesc": "XLSX cədvəli"
+  },
+  "ticketNotification": {
+    "newTicket": "Yeni tiket: {ticketNumber}",
+    "view": "Bax"
   }
 }

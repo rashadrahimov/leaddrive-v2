@@ -183,7 +183,7 @@ export function JourneyForm({ open, onOpenChange, onSaved, initialData, orgId }:
 
             {/* Max enrollment days */}
             <div>
-              <Label htmlFor="maxDays" className="text-sm font-medium">Max Enrollment Days</Label>
+              <Label htmlFor="maxDays" className="text-sm font-medium">{t("maxEnrollmentDays")}</Label>
               <Input
                 id="maxDays"
                 type="number"
@@ -191,7 +191,7 @@ export function JourneyForm({ open, onOpenChange, onSaved, initialData, orgId }:
                 max={365}
                 value={form.maxEnrollmentDays}
                 onChange={(e) => update("maxEnrollmentDays", e.target.value)}
-                placeholder="e.g. 30 (auto-exit after N days)"
+                placeholder={t("maxEnrollmentDaysPlaceholder")}
                 className="mt-1.5"
               />
             </div>
@@ -204,7 +204,7 @@ export function JourneyForm({ open, onOpenChange, onSaved, initialData, orgId }:
                 onClick={() => setShowGoals(!showGoals)}
               >
                 <Target className="h-4 w-4" />
-                Goal Tracking
+                {t("goalTracking")}
                 <span className="ml-auto text-xs text-muted-foreground">
                   {showGoals ? "▾" : "▸"}
                 </span>
@@ -213,26 +213,26 @@ export function JourneyForm({ open, onOpenChange, onSaved, initialData, orgId }:
               {showGoals && (
                 <div className="mt-3 space-y-3">
                   <div>
-                    <Label className="text-sm font-medium">Goal Type</Label>
+                    <Label className="text-sm font-medium">{t("goalType")}</Label>
                     <Select
                       value={form.goalType}
                       onChange={(e) => update("goalType", e.target.value)}
                       className="mt-1.5"
                     >
-                      <option value="">No goal</option>
-                      <option value="deal_created">Deal Created</option>
-                      <option value="status_change">Status Change</option>
-                      <option value="ticket_resolved">Ticket Resolved</option>
+                      <option value="">{t("noGoal")}</option>
+                      <option value="deal_created">{t("goalDealCreated")}</option>
+                      <option value="status_change">{t("goalStatusChange")}</option>
+                      <option value="ticket_resolved">{t("goalTicketResolved")}</option>
                     </Select>
                   </div>
 
                   {form.goalType === "status_change" && (
                     <div>
-                      <Label className="text-sm font-medium">Target Status Value</Label>
+                      <Label className="text-sm font-medium">{t("targetStatusValue")}</Label>
                       <Input
                         value={form.goalConditions.value || ""}
                         onChange={(e) => update("goalConditions", { ...form.goalConditions, value: e.target.value })}
-                        placeholder="e.g. converted, qualified"
+                        placeholder={t("targetStatusPlaceholder")}
                         className="mt-1.5"
                       />
                     </div>
@@ -240,13 +240,13 @@ export function JourneyForm({ open, onOpenChange, onSaved, initialData, orgId }:
 
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <Label className="text-sm font-medium">Goal Target (conversions)</Label>
+                      <Label className="text-sm font-medium">{t("goalTarget")}</Label>
                       <Input
                         type="number"
                         min={1}
                         value={form.goalTarget}
                         onChange={(e) => update("goalTarget", e.target.value)}
-                        placeholder="e.g. 100"
+                        placeholder={t("goalTargetPlaceholder")}
                         className="mt-1.5"
                       />
                     </div>
@@ -258,7 +258,7 @@ export function JourneyForm({ open, onOpenChange, onSaved, initialData, orgId }:
                           onChange={(e) => update("exitOnGoal", e.target.checked)}
                           className="rounded"
                         />
-                        Exit on goal reached
+                        {t("exitOnGoal")}
                       </label>
                     </div>
                   </div>
