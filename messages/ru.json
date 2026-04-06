@@ -3359,6 +3359,7 @@
       "ruleAdd": "Добавить",
       "rulesEmpty": "Нет правил",
       "confirmDelete": "Удалить фонд «{name}»?",
+      "active": "Активно",
       "inactive": "Неактивен",
       "targetLabel": "Цель:",
       "rulesCount": "{count} правил(о) авто-распределения",

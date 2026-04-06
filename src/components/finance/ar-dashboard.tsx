@@ -21,7 +21,7 @@ export function ARDashboard() {
   if (error) return <div className="p-8 text-center text-red-500">{t("error")}: {(error as Error).message}</div>
   if (!data) return <div className="p-8 text-center text-muted-foreground">{t("noData")}</div>
 
-  const AGING_COLORS = ["#3b82f6", "#22c55e", "#f59e0b", "#f97316", "#ef4444"] // Текущие, 1-30, 31-60, 61-90, 90+
+  const AGING_COLORS = ["#3b82f6", "#22c55e", "#f59e0b", "#f97316", "#ef4444"]
 
   return (
     <div className="space-y-6">

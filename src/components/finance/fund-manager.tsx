@@ -336,7 +336,7 @@ function RulesDialog({ fundId, onClose }: { fundId: string; onClose: () => void 
               </div>
               <div className="flex items-center gap-2">
                 <Badge variant={rule.isActive ? "default" : "secondary"} className="text-[10px]">
-                  {rule.isActive ? "Active" : "Inactive"}
+                  {rule.isActive ? t("active") : t("inactive")}
                 </Badge>
                 <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-red-500" onClick={() => deleteRule.mutate({ id: rule.id, fundId })}>
                   <Trash2 className="w-3 h-3" />

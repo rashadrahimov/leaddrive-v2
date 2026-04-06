@@ -3359,6 +3359,7 @@
       "ruleAdd": "Add",
       "rulesEmpty": "No rules",
       "confirmDelete": "Delete fund \"{name}\"?",
+      "active": "Active",
       "inactive": "Inactive",
       "targetLabel": "Target:",
       "rulesCount": "{count} auto-allocation rule(s)",
