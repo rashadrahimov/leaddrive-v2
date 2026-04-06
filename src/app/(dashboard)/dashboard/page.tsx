@@ -21,7 +21,7 @@ import { WeeklyMetrics } from "@/components/dashboard/weekly-metrics"
 function fmt(n: number): string {
   if (n >= 1000000) return `${(n / 1000).toFixed(0)}K`
   if (n >= 1000) return `${(n / 1000).toFixed(1)}K`.replace(".0K", "K")
-  return n.toLocaleString("ru-RU", { maximumFractionDigits: 0 })
+  return n.toLocaleString("en", { maximumFractionDigits: 0 })
 }
 
 export default function DashboardPage() {
@@ -62,10 +62,10 @@ export default function DashboardPage() {
   function timeAgo(d: string): string {
     const diff = Date.now() - new Date(d).getTime()
     const m = Math.floor(diff / 60000)
-    if (m < 60) return `${m} dəq əvvəl`
+    if (m < 60) return t("minAgo", { m })
     const h = Math.floor(m / 60)
-    if (h < 24) return `${h} saat əvvəl`
-    return `${Math.floor(h / 24)} gün əvvəl`
+    if (h < 24) return t("hoursAgo", { h })
+    return t("daysAgo", { d: Math.floor(h / 24) })
   }
 
   function getGreeting(): string {
@@ -112,11 +112,11 @@ export default function DashboardPage() {
       {/* ═══ Header ═══ */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold tracking-tight">İdarə Paneli</h1>
+          <h1 className="text-xl font-bold tracking-tight">{t("title")}</h1>
           <p className="text-xs text-muted-foreground">
-            {new Date().toLocaleDateString("az", { day: "numeric", month: "long", year: "numeric", weekday: "long" })}
-            {" · Son yenilənmə: "}
-            {new Date().toLocaleTimeString("az", { hour: "2-digit", minute: "2-digit" })}
+            {new Date().toLocaleDateString(undefined, { day: "numeric", month: "long", year: "numeric", weekday: "long" })}
+            {` · ${t("lastUpdated")}: `}
+            {new Date().toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })}
           </p>
         </div>
       </div>
@@ -125,44 +125,44 @@ export default function DashboardPage() {
       {widgets.statCards && (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 stagger-children">
           <KpiCard
-            title="GƏLİR"
+            title={t("kpiRevenue")}
             value={`₼${fmt(financial.monthlyRevenue)}`}
             sub={financial.marginPct > 0 ? `↗ +${financial.marginPct.toFixed(0)}%` : undefined}
             icon={<DollarSign className="h-5 w-5" />}
             color="#22c55e"
           />
           <KpiCard
-            title="LİDLƏR"
+            title={t("kpiLeads")}
             value={leads.activeCount || leads.total || 0}
             sub={leads.activeCount > 0 ? `↗ +${leads.activeCount}` : undefined}
             icon={<Users className="h-5 w-5" />}
             color="#8b5cf6"
           />
           <KpiCard
-            title="SÖVDƏLƏŞMƏLƏR"
+            title={t("kpiDeals")}
             value={pipeline.deals || 0}
             sub={`↗ ₼${fmt(pipeline.wonValue || 0)}`}
             icon={<Handshake className="h-5 w-5" />}
             color="#3b82f6"
           />
           <KpiCard
-            title="KONVERSİYA"
+            title={t("kpiConversion")}
             value={`${pipeline.conversionRate || leads.conversionRate || 0}%`}
             sub={pipeline.conversionRate > 0 ? `↗ +${(pipeline.conversionRate * 0.1).toFixed(1)}%` : undefined}
             icon={<TrendingUp className="h-5 w-5" />}
             color="#f59e0b"
           />
           <KpiCard
-            title="TİKETLƏR"
+            title={t("kpiTickets")}
             value={operations.openTickets || 0}
-            sub={operations.slaBreached > 0 ? `↗ ${operations.slaBreached} SLA` : "↗ 2h orta"}
+            sub={operations.slaBreached > 0 ? `↗ ${t("slaBreaches", { count: operations.slaBreached })}` : `↗ ${t("avgTime")}`}
             icon={<Ticket className="h-5 w-5" />}
             color="#06b6d4"
           />
           <KpiCard
-            title="KAMPANİYALAR"
+            title={t("kpiCampaigns")}
             value={campaigns?.length || 0}
-            sub={campaigns?.length > 0 ? `↗ ${campaigns[0]?.openRate || 0}% açılma` : undefined}
+            sub={campaigns?.length > 0 ? `↗ ${t("openRateSub", { rate: campaigns[0]?.openRate || 0 })}` : undefined}
             icon={<Megaphone className="h-5 w-5" />}
             color="#ec4899"
           />

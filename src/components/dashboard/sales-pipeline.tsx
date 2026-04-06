@@ -7,9 +7,9 @@ const stageColors: Record<string, string> = {
   LEAD: "#94a3b8", QUALIFIED: "#3b82f6", PROPOSAL: "#8b5cf6",
   NEGOTIATION: "#f59e0b", WON: "#22c55e", LOST: "#ef4444",
 }
-const stageLabels: Record<string, string> = {
-  LEAD: "Yeni", QUALIFIED: "Kvalifikasiya", PROPOSAL: "Təklif",
-  NEGOTIATION: "Danışıq", WON: "Qazanıldı", LOST: "İtirildi",
+const stageKeys: Record<string, string> = {
+  LEAD: "stageLead", QUALIFIED: "stageQualified", PROPOSAL: "stageProposal",
+  NEGOTIATION: "stageNegotiation", WON: "stageWon", LOST: "stageLost",
 }
 
 function fmt(n: number): string {
@@ -19,6 +19,7 @@ function fmt(n: number): string {
 
 export function SalesPipeline({ pipeline }: { pipeline: any }) {
   const t = useTranslations("dashboard")
+  const td = useTranslations("deals")
   const stageOrder = ["LEAD", "QUALIFIED", "PROPOSAL", "NEGOTIATION", "WON"]
   const stages = pipeline?.stages || []
 
@@ -39,7 +40,7 @@ export function SalesPipeline({ pipeline }: { pipeline: any }) {
           const width = Math.max((s.count / maxCount) * 100, 12)
           return (
             <div key={stage} className="flex items-center gap-2">
-              <span className="text-[10px] w-[72px] text-muted-foreground truncate">{stageLabels[stage] || stage}</span>
+              <span className="text-[10px] w-[72px] text-muted-foreground truncate">{stageKeys[stage] ? td(stageKeys[stage]) : stage}</span>
               <div className="flex-1 h-5 bg-muted rounded overflow-hidden">
                 <div
                   className="h-full rounded flex items-center px-1.5"

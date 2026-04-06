@@ -198,16 +198,16 @@ export async function GET(req: NextRequest) {
       }))
     } catch (err) { console.error(err) }
 
-    // Risks
-    const risks: { severity: string; title: string; description: string; metric: string }[] = []
+    // Risks — return keys for i18n, frontend translates
+    const risks: { severity: string; titleKey: string; descKey: string; descParams?: Record<string, string | number>; metric: string }[] = []
     if (costSummary.marginPct < 5 && costSummary.totalRevenue > 0)
-      risks.push({ severity: "critical", title: "Aşağı marja", description: `Marjinallıq ${costSummary.marginPct.toFixed(1)}% — hədəf 15%-dən aşağı`, metric: `${costSummary.marginPct.toFixed(1)}%` })
+      risks.push({ severity: "critical", titleKey: "riskLowMargin", descKey: "riskLowMarginDesc", descParams: { pct: costSummary.marginPct.toFixed(1) }, metric: `${costSummary.marginPct.toFixed(1)}%` })
     if (costSummary.lossClients > costSummary.profitableClients * 0.5)
-      risks.push({ severity: "warning", title: "Zərərli müştərilər", description: `${costSummary.profitableClients + costSummary.lossClients} müştəridən ${costSummary.lossClients} zərərli`, metric: `${costSummary.lossClients}` })
+      risks.push({ severity: "warning", titleKey: "riskUnprofitableClients", descKey: "riskUnprofitableClientsDesc", descParams: { total: costSummary.profitableClients + costSummary.lossClients, count: costSummary.lossClients }, metric: `${costSummary.lossClients}` })
     if (slaBreached > 0)
-      risks.push({ severity: "critical", title: "SLA pozulub", description: `${slaBreached} biletdə SLA müddəti bitib`, metric: `${slaBreached}` })
+      risks.push({ severity: "critical", titleKey: "riskSlaBreach", descKey: "riskSlaBreachDesc", descParams: { count: slaBreached }, metric: `${slaBreached}` })
     if (overdueTasks > 3)
-      risks.push({ severity: "warning", title: "Gecikmiş tapşırıqlar", description: `${overdueTasks} tapşırıq gecikib`, metric: `${overdueTasks}` })
+      risks.push({ severity: "warning", titleKey: "riskOverdueTasks", descKey: "riskOverdueTasksDesc", descParams: { count: overdueTasks }, metric: `${overdueTasks}` })
     // At-risk deals (predictive score < 40%)
     const STAGE_PROBABILITY: Record<string, number> = {
       LEAD: 10, QUALIFIED: 20, PROPOSAL: 50, NEGOTIATION: 70, CONTRACT: 85,
@@ -224,13 +224,14 @@ export async function GET(req: NextRequest) {
     if (atRiskList.length > 0)
       risks.push({
         severity: "warning",
-        title: "Risk altında müqavilələr",
-        description: `${atRiskList.length} müqavilənin proqnoz skoru 40%-dən aşağıdır`,
+        titleKey: "riskAtRiskDeals",
+        descKey: "riskAtRiskDealsDesc",
+        descParams: { count: atRiskList.length },
         metric: `${atRiskList.length}`,
       })
 
     if (risks.length === 0)
-      risks.push({ severity: "ok", title: "Hər şey qaydasındadır", description: "Kritik problem aşkar edilmədi", metric: "✓" })
+      risks.push({ severity: "ok", titleKey: "riskAllGood", descKey: "riskAllGoodDesc", metric: "✓" })
 
     // Weekly metrics computation
     const sevenDaysAgo = new Date(now.getTime() - 7 * 86400000)

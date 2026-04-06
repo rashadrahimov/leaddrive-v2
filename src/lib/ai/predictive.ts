@@ -124,7 +124,7 @@ export async function generateRevenueForecast(orgId: string, months: number = 6)
   for (let i = 5; i >= 0; i--) {
     const monthStart = new Date(now.getFullYear(), now.getMonth() - i, 1)
     const monthEnd = new Date(now.getFullYear(), now.getMonth() - i + 1, 0, 23, 59, 59)
-    const monthLabel = monthStart.toLocaleDateString("ru", { month: "short" })
+    const monthLabel = monthStart.toLocaleDateString("en", { month: "short" })
 
     const wonDeals = await prisma.deal.findMany({
       where: {
@@ -144,7 +144,7 @@ export async function generateRevenueForecast(orgId: string, months: number = 6)
   for (let i = 0; i < months; i++) {
     const monthStart = new Date(now.getFullYear(), now.getMonth() + i, 1)
     const monthEnd = new Date(now.getFullYear(), now.getMonth() + i + 1, 0, 23, 59, 59)
-    const monthLabel = monthStart.toLocaleDateString("ru", { month: "short" })
+    const monthLabel = monthStart.toLocaleDateString("en", { month: "short" })
 
     // Committed: deals already WON or probability >= 90
     const committedDeals = await prisma.deal.findMany({

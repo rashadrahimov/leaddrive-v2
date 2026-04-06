@@ -3,13 +3,13 @@
 import { useTranslations } from "next-intl"
 import { Calendar, CheckCircle2 } from "lucide-react"
 
-const typeLabels: Record<string, string> = {
-  conference: "Konfrans",
-  webinar: "Webinar",
-  workshop: "Təlim",
-  meetup: "Görüş",
-  exhibition: "Sərgi",
-  other: "Digər",
+const typeKeys: Record<string, string> = {
+  conference: "eventConference",
+  webinar: "eventWebinar",
+  workshop: "eventWorkshop",
+  meetup: "eventMeetup",
+  exhibition: "eventExhibition",
+  other: "eventOther",
 }
 
 export function UpcomingEvents({ events }: { events: any[] }) {
@@ -27,7 +27,7 @@ export function UpcomingEvents({ events }: { events: any[] }) {
         <div className="space-y-1.5">
           {events.map((e: any) => {
             const d = new Date(e.date)
-            const month = d.toLocaleDateString("az", { month: "short" }).replace(".", "")
+            const month = d.toLocaleDateString(undefined, { month: "short" }).replace(".", "")
             const day = d.getDate()
             return (
               <div key={e.id} className="flex items-center gap-2 py-0.5">
@@ -38,7 +38,7 @@ export function UpcomingEvents({ events }: { events: any[] }) {
                 <div className="flex-1 min-w-0">
                   <span className="text-xs font-medium truncate block">{e.name}</span>
                   <span className="text-[10px] text-muted-foreground">
-                    {typeLabels[e.type] || e.type} · {e.registered} nəfər
+                    {typeKeys[e.type] ? t(typeKeys[e.type]) : e.type} · {t("eventRegistered", { count: e.registered })}
                   </span>
                 </div>
                 <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />

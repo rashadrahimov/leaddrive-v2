@@ -13,14 +13,14 @@ const SOURCE_COLORS: Record<string, string> = {
   event: "#ec4899",
   other: "#6366f1",
 }
-const SOURCE_LABELS: Record<string, string> = {
-  website: "Web sayt",
-  linkedin: "LinkedIn",
-  referral: "Referral",
-  campaign: "Kampaniya",
-  cold_call: "Soyuq zəng",
-  event: "Tədbir",
-  other: "Digər",
+const SOURCE_KEYS: Record<string, string> = {
+  website: "sourceWebsite",
+  linkedin: "sourceLinkedin",
+  referral: "sourceReferral",
+  campaign: "sourceCampaign",
+  cold_call: "sourceColdCall",
+  event: "sourceEvent",
+  other: "sourceOther",
 }
 
 export function LeadSourcesDonut({ leadsBySource, totalLeads }: { leadsBySource: any[]; totalLeads: number }) {
@@ -55,7 +55,7 @@ export function LeadSourcesDonut({ leadsBySource, totalLeads }: { leadsBySource:
             return (
               <div key={s.source} className="flex items-center gap-1.5 text-[10px]">
                 <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: SOURCE_COLORS[s.source] || SOURCE_COLORS.other }} />
-                <span className="text-muted-foreground flex-1 truncate">{SOURCE_LABELS[s.source] || s.source}</span>
+                <span className="text-muted-foreground flex-1 truncate">{SOURCE_KEYS[s.source] ? t(SOURCE_KEYS[s.source]) : s.source}</span>
                 <span className="font-semibold">{pct}%</span>
               </div>
             )
