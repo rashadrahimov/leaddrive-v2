@@ -557,11 +557,11 @@ export default function ReportBuilderPage() {
       </div>
 
       {/* Main layout: left config + right preview */}
-      <div className="flex gap-4 items-start" style={{ minHeight: "calc(100vh - 200px)" }}>
+      <div className="flex gap-4 items-start">
         {/* ============== LEFT PANEL ============== */}
         <div
-          className="w-[350px] shrink-0 space-y-4 overflow-y-auto pr-1 sticky top-4"
-          style={{ maxHeight: "calc(100vh - 120px)" }}
+          className="w-[350px] shrink-0 space-y-4 overflow-y-auto pr-1 pb-8 sticky top-4 scrollbar-thin"
+          style={{ maxHeight: "calc(100vh - 80px)" }}
         >
           {/* Entity Selector */}
           <Card>
