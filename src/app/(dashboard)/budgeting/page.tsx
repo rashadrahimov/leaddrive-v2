@@ -1548,7 +1548,7 @@ function WorkspaceTab({ planId, onNavigateTab }: { planId: string; onNavigateTab
 
       {/* Da Vinci Narrative */}
       {showNarrative && (
-        <Card className="border-[hsl(var(--ai-from))]/20 ai-accent">
+        <Card className="border-[hsl(var(--ai-from))]/20 ai-gradient-border">
           <CardHeader className="pb-2">
             <div className="flex justify-between items-center">
               <CardTitle className="text-sm flex items-center gap-2"><AlertCircle className="h-4 w-4 text-[hsl(var(--ai-from))]" /> {t("aiAnalysisTitle")}</CardTitle>
@@ -1868,7 +1868,7 @@ function OverviewTab({ planId }: { planId: string }) {
 
       {/* Da Vinci Narrative Card */}
       {showNarrative && (
-        <Card className="border-[hsl(var(--ai-from))]/20 ai-accent">
+        <Card className="border-[hsl(var(--ai-from))]/20 ai-gradient-border">
           <CardHeader className="pb-2">
             <div className="flex justify-between items-center">
               <CardTitle className="text-sm flex items-center gap-2">

@@ -2,8 +2,10 @@ import { prisma } from "@/lib/prisma"
 
 export interface NextAction {
   type: "call" | "email" | "meeting" | "task" | "update_stage" | "send_offer"
-  title: string
-  reason: string
+  titleKey: string
+  titleParams: Record<string, string | number>
+  reasonKey: string
+  reasonParams: Record<string, string | number>
   priority: "high" | "medium" | "low"
   entityType: "deal" | "contact" | "lead" | "company"
   entityId: string
@@ -53,8 +55,10 @@ export async function generateNextBestActions(
     if (days > 14) {
       actions.push({
         type: "call",
-        title: `Позвонить по сделке "${deal.name}"`,
-        reason: `Нет активности ${days} дней. Сделка может быть потеряна.`,
+        titleKey: "nbaCallDeal",
+        titleParams: { name: deal.name },
+        reasonKey: "nbaNoActivityDays",
+        reasonParams: { days },
         priority: "high",
         entityType: "deal",
         entityId: deal.id,
@@ -63,8 +67,10 @@ export async function generateNextBestActions(
     } else if (days > 7) {
       actions.push({
         type: "email",
-        title: `Follow-up по "${deal.name}"`,
-        reason: `${days} дней без контакта. Отправьте email чтобы поддержать momentum.`,
+        titleKey: "nbaFollowUp",
+        titleParams: { name: deal.name },
+        reasonKey: "nbaFollowUpReason",
+        reasonParams: { days },
         priority: "medium",
         entityType: "deal",
         entityId: deal.id,
@@ -78,8 +84,10 @@ export async function generateNextBestActions(
       if (daysToClose >= 0 && daysToClose <= 7 && days > 3) {
         actions.push({
           type: "call",
-          title: `Сделка "${deal.name}" закрывается через ${daysToClose} дн.`,
-          reason: `Ожидаемая дата закрытия ${new Date(deal.expectedClose).toLocaleDateString("ru")}. Необходим контакт.`,
+          titleKey: "nbaDealClosingSoon",
+          titleParams: { name: deal.name, days: daysToClose },
+          reasonKey: "nbaDealClosingSoonReason",
+          reasonParams: { date: new Date(deal.expectedClose).toISOString().slice(0, 10) },
           priority: "high",
           entityType: "deal",
           entityId: deal.id,
@@ -110,8 +118,10 @@ export async function generateNextBestActions(
     if (days > 3) {
       actions.push({
         type: "call",
-        title: `Горячий лид: ${lead.contactName}`,
-        reason: `Score ${lead.score}/100, но нет контакта ${days} дней. Конвертируйте пока горячий.`,
+        titleKey: "nbaHotLead",
+        titleParams: { name: lead.contactName || lead.email || "Unknown" },
+        reasonKey: "nbaHotLeadReason",
+        reasonParams: { score: lead.score || 0, days },
         priority: "high",
         entityType: "lead",
         entityId: lead.id,
@@ -135,8 +145,10 @@ export async function generateNextBestActions(
       if (daysInStage > 5) {
         actions.push({
           type: "update_stage",
-          title: `Продвинуть "${deal.name}" на следующую стадию`,
-          reason: `${stageActivities} активностей в стадии ${deal.stage}, ${daysInStage} дн. Готово к переходу.`,
+          titleKey: "nbaAdvanceStage",
+          titleParams: { name: deal.name },
+          reasonKey: "nbaAdvanceStageReason",
+          reasonParams: { activities: stageActivities, stage: deal.stage, days: daysInStage },
           priority: "medium",
           entityType: "deal",
           entityId: deal.id,
@@ -162,8 +174,10 @@ export async function generateNextBestActions(
     const overdueDays = task.dueDate ? daysSince(task.dueDate) : 0
     actions.push({
       type: "task",
-      title: `Просроченная задача: ${task.title}`,
-      reason: `Просрочено на ${overdueDays} дн. Выполните или перенесите.`,
+      titleKey: "nbaOverdueTask",
+      titleParams: { title: task.title },
+      reasonKey: "nbaOverdueTaskReason",
+      reasonParams: { days: overdueDays },
       priority: overdueDays > 3 ? "high" : "medium",
       entityType: (task.relatedType as any) || "deal",
       entityId: task.relatedId || task.id,
@@ -194,8 +208,10 @@ export async function generateNextBestActions(
       if (hoursToSla > 0 && hoursToSla <= 2) {
         actions.push({
           type: "task",
-          title: `SLA: ${ticket.ticketNumber} — ${ticket.subject}`,
-          reason: `SLA первого ответа через ${Math.round(hoursToSla * 60)} мин. (${ticket.slaPolicyName || "стандартный"})`,
+          titleKey: "nbaSlaApproaching",
+          titleParams: { number: ticket.ticketNumber || "", subject: ticket.subject },
+          reasonKey: "nbaSlaApproachingReason",
+          reasonParams: { minutes: Math.round(hoursToSla * 60), policy: ticket.slaPolicyName || "standard" },
           priority: "high",
           entityType: "deal",
           entityId: ticket.id,
@@ -206,8 +222,10 @@ export async function generateNextBestActions(
       if (hoursToSla <= 0) {
         actions.push({
           type: "task",
-          title: `SLA нарушен: ${ticket.ticketNumber}`,
-          reason: `Превышено SLA первого ответа на ${Math.abs(Math.round(hoursToSla))} ч. Срочно!`,
+          titleKey: "nbaSlaBreached",
+          titleParams: { number: ticket.ticketNumber || "" },
+          reasonKey: "nbaSlaBreachedReason",
+          reasonParams: { hours: Math.abs(Math.round(hoursToSla)) },
           priority: "high",
           entityType: "deal",
           entityId: ticket.id,
@@ -221,8 +239,10 @@ export async function generateNextBestActions(
     if ((ticket.priority === "critical" && age >= 1) || (ticket.priority === "high" && age >= 2)) {
       actions.push({
         type: "task",
-        title: `Тикет ${ticket.ticketNumber}: ${ticket.subject}`,
-        reason: `Приоритет ${ticket.priority}, открыт ${age} дн. Требует внимания.`,
+        titleKey: "nbaTicketAttention",
+        titleParams: { number: ticket.ticketNumber || "", subject: ticket.subject },
+        reasonKey: "nbaTicketAttentionReason",
+        reasonParams: { priority: ticket.priority, days: age },
         priority: ticket.priority === "critical" ? "high" : "medium",
         entityType: "deal",
         entityId: ticket.id,

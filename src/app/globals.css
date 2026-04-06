@@ -285,7 +285,13 @@
 
 /* ── AI glow effect ── */
 .ai-glow {
-  box-shadow: 0 0 12px 2px hsl(var(--ai-from) / 0.15);
+  box-shadow: 0 0 16px 4px hsl(var(--ai-from) / 0.18),
+              0 0 4px 1px hsl(var(--ai-to) / 0.10);
+  transition: box-shadow 0.3s ease;
+}
+.ai-glow:hover {
+  box-shadow: 0 0 24px 6px hsl(var(--ai-from) / 0.25),
+              0 0 8px 2px hsl(var(--ai-to) / 0.15);
 }
 
 /* ── Glassmorphism panel ── */
@@ -294,6 +300,51 @@
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   border: 1px solid hsl(var(--border) / 0.4);
+}
+
+/* ── AI card — glassmorphism + accent + glow combo ── */
+.ai-card {
+  background: hsl(var(--card) / 0.85);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid hsl(var(--border) / 0.4);
+  border-left: 3px solid hsl(var(--ai-to));
+  box-shadow: 0 0 16px 4px hsl(var(--ai-from) / 0.12);
+  transition: box-shadow 0.3s ease, transform 0.2s ease;
+}
+.ai-card:hover {
+  box-shadow: 0 0 24px 6px hsl(var(--ai-from) / 0.20);
+  transform: translateY(-1px);
+}
+
+/* ── AI gradient border (purple left border via ::before) ── */
+.ai-gradient-border {
+  position: relative;
+  overflow: hidden;
+}
+.ai-gradient-border::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: linear-gradient(180deg, hsl(var(--ai-from)), hsl(var(--ai-to)));
+  border-radius: 0 2px 2px 0;
+}
+
+/* ── AI pulse dot for status indicators ── */
+.ai-pulse-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: hsl(var(--ai-from));
+  animation: ai-pulse 2s ease-in-out infinite;
+}
+@keyframes ai-pulse {
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 hsl(var(--ai-from) / 0.4); }
+  50% { opacity: 0.8; box-shadow: 0 0 0 6px hsl(var(--ai-from) / 0); }
 }
 
 /* ── Live Wallpaper Mode ── */

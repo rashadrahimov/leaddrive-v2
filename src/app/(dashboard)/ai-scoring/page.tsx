@@ -135,9 +135,9 @@ export default function AILeadScoringPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between rounded-xl p-4 ai-card">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-gradient-to-br from-[hsl(var(--ai-from))]/10 to-[hsl(var(--ai-to))]/10 rounded-lg">
+          <div className="p-2.5 bg-gradient-to-br from-[hsl(var(--ai-from))]/10 to-[hsl(var(--ai-to))]/10 rounded-lg ai-glow">
             <Brain className="h-6 w-6 text-[hsl(var(--ai-from))]" />
           </div>
           <div>
@@ -145,14 +145,14 @@ export default function AILeadScoringPage() {
             <p className="text-sm text-muted-foreground">
               {t("subtitle")}
               {aiPowered && (
-                <Badge className="ml-2 bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">
+                <Badge variant="ai" className="ml-2">
                   <Sparkles className="h-3 w-3 mr-1" /> Da Vinci
                 </Badge>
               )}
             </p>
           </div>
         </div>
-        <Button onClick={scoreAll} disabled={scoring} className="gap-2">
+        <Button onClick={scoreAll} disabled={scoring} className="gap-2 ai-glow">
           {scoring ? <Loader2 className="h-4 w-4 animate-spin" /> : <Brain className="h-4 w-4" />}
           {scoring ? tc("loading") : t("newAgent")}
         </Button>

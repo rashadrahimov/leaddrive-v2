@@ -459,7 +459,7 @@ export function PortalChatWidget({ userName }: PortalChatWidgetProps) {
     <>
       {/* Chat popup */}
       {open && (
-        <div className="fixed bottom-20 right-5 w-[380px] h-[520px] bg-background rounded-2xl shadow-2xl border border-border flex flex-col z-50 overflow-hidden">
+        <div className="fixed bottom-20 right-5 w-[380px] h-[520px] glass-panel rounded-2xl shadow-2xl flex flex-col z-50 overflow-hidden">
           {/* Header */}
           <div className="bg-gradient-to-r from-[hsl(var(--ai-from))] to-[hsl(var(--ai-to))] px-4 py-3 flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">

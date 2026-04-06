@@ -341,6 +341,7 @@ export default function AICommandCenterPage() {
             <div className="h-2.5 w-2.5 rounded-full bg-green-500 animate-pulse" />
             <span className="text-sm font-medium text-green-700">Агент онлайн</span>
           </div>
+          <span className="ai-pulse-dot" title="AI Active" />
         </div>
       </div>
 
@@ -459,7 +460,7 @@ export default function AICommandCenterPage() {
             </div>
 
             {/* Total messages */}
-            <div className="rounded-xl border bg-card p-5 shadow-sm flex items-center gap-4">
+            <div className="rounded-xl border bg-card p-5 shadow-sm flex items-center gap-4 ai-gradient-border">
               <div className="h-12 w-12 rounded-full bg-[hsl(var(--ai-from))]/10 flex items-center justify-center flex-shrink-0">
                 <Activity className="h-5 w-5 text-[hsl(var(--ai-from))]" />
               </div>
@@ -470,7 +471,7 @@ export default function AICommandCenterPage() {
             </div>
 
             {/* Escalations */}
-            <div className="rounded-xl border bg-card p-5 shadow-sm flex items-center gap-4">
+            <div className="rounded-xl border bg-card p-5 shadow-sm flex items-center gap-4 ai-gradient-border">
               <div className="h-12 w-12 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
                 <AlertTriangle className="h-5 w-5 text-red-500" />
               </div>
@@ -481,7 +482,7 @@ export default function AICommandCenterPage() {
             </div>
 
             {/* Avg latency */}
-            <div className="rounded-xl border bg-card p-5 shadow-sm flex items-center gap-4">
+            <div className="rounded-xl border bg-card p-5 shadow-sm flex items-center gap-4 ai-gradient-border">
               <div className="h-12 w-12 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
                 <Clock className="h-5 w-5 text-amber-600" />
               </div>
@@ -492,7 +493,7 @@ export default function AICommandCenterPage() {
             </div>
 
             {/* Total cost */}
-            <div className="rounded-xl border bg-card p-5 shadow-sm flex items-center gap-4">
+            <div className="rounded-xl border bg-card p-5 shadow-sm flex items-center gap-4 ai-gradient-border">
               <div className="h-12 w-12 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
                 <DollarSign className="h-5 w-5 text-green-600" />
               </div>
@@ -503,7 +504,7 @@ export default function AICommandCenterPage() {
             </div>
 
             {/* Quality */}
-            <div className="rounded-xl border bg-card p-5 shadow-sm flex items-center gap-4">
+            <div className="rounded-xl border bg-card p-5 shadow-sm flex items-center gap-4 ai-gradient-border">
               <div className="h-12 w-12 rounded-full bg-[hsl(var(--ai-to))]/10 flex items-center justify-center flex-shrink-0">
                 <Gauge className="h-5 w-5 text-[hsl(var(--ai-to))]" />
               </div>
@@ -810,7 +811,7 @@ export default function AICommandCenterPage() {
                 const ml = getModelLabel(agent.model)
                 const tools = agent.toolsEnabled || []
                 return (
-                  <div key={agent.id} className="rounded-xl border bg-card p-6 shadow-sm space-y-4">
+                  <div key={agent.id} className="rounded-xl p-6 shadow-sm space-y-4 ai-card">
                     {/* Header */}
                     <div className="flex items-start justify-between">
                       <div className="flex items-center gap-3">
@@ -1064,7 +1065,7 @@ export default function AICommandCenterPage() {
           </div>
 
           {/* Da Vinci Config Generator */}
-          <div className="rounded-xl bg-gradient-to-br from-[hsl(var(--ai-from))]/5 to-[hsl(var(--ai-to))]/5 border border-[hsl(var(--ai-to))]/20 p-8 text-center space-y-4">
+          <div className="rounded-xl bg-gradient-to-br from-[hsl(var(--ai-from))]/5 to-[hsl(var(--ai-to))]/5 border border-[hsl(var(--ai-to))]/20 p-8 text-center space-y-4 ai-glow">
             <Sparkles className="h-8 w-8 mx-auto text-[hsl(var(--ai-to))]" />
             <h3 className="font-bold text-lg">Создать конфигурацию по описанию</h3>
             <p className="text-sm text-muted-foreground">Опишите роль агента обычным текстом, и Da Vinci создаст конфигурацию автоматически</p>
