@@ -305,11 +305,11 @@ export default function DealsPage() {
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-4">
                   <div>
-                    <span className="text-[10px] text-muted-foreground uppercase">Воронка</span>
+                    <span className="text-[10px] text-muted-foreground uppercase">{t("pipelineBar")}</span>
                     <p className="text-sm font-bold">{pipelineSummary.total.toLocaleString()} ₼</p>
                   </div>
                   <div>
-                    <span className="text-[10px] text-muted-foreground uppercase">Взвешенная</span>
+                    <span className="text-[10px] text-muted-foreground uppercase">{t("weightedBar")}</span>
                     <p className="text-sm font-bold text-primary">{pipelineSummary.weighted.toLocaleString()} ₼</p>
                   </div>
                 </div>
@@ -326,7 +326,7 @@ export default function DealsPage() {
                         width: `${Math.max(pct, 2)}%`,
                         backgroundColor: stageInfo?.color || "#6366f1",
                       }}
-                      title={`${stageInfo?.label || s.name}: ${s.value.toLocaleString()} ₼ (взвеш. ${s.weighted.toLocaleString()} ₼)`}
+                      title={`${stageInfo?.label || s.name}: ${s.value.toLocaleString()} ₼ (${t("weightedTooltip")} ${s.weighted.toLocaleString()} ₼)`}
                     />
                   )
                 })}
