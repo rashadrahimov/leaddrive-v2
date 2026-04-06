@@ -1,6 +1,7 @@
 "use client"
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { useTranslations } from "next-intl"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Select } from "@/components/ui/select"
@@ -187,6 +188,7 @@ interface PreviewData {
 // ---------------------------------------------------------------------------
 
 export default function ReportBuilderPage() {
+  const tr = useTranslations("reportBuilder")
   // -- Config state --
   const [entity, setEntity] = useState("deals")
   const [columns, setColumns] = useState<string[]>(["name", "valueAmount", "stage"])
@@ -399,7 +401,7 @@ export default function ReportBuilderPage() {
           {loading ? (
             <Loader2 className="h-6 w-6 animate-spin" />
           ) : (
-            "No data to display. Adjust your configuration and run a preview."
+            tr("noData")
           )}
         </div>
       )
@@ -519,8 +521,8 @@ export default function ReportBuilderPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Report Builder</h1>
-          <PageDescription text="Create custom reports with filters, grouping, and visualizations." />
+          <h1 className="text-2xl font-bold tracking-tight">{tr("title")}</h1>
+          <PageDescription text={tr("subtitle")} />
         </div>
         <div className="flex items-center gap-2">
           <Button
@@ -530,11 +532,11 @@ export default function ReportBuilderPage() {
             disabled={!previewData || previewData.rows.length === 0}
           >
             <Download className="h-4 w-4 mr-1" />
-            Export
+            {tr("export")}
           </Button>
           <Button size="sm" onClick={() => setSaveDialogOpen(true)}>
             <Save className="h-4 w-4 mr-1" />
-            Save Report
+            {tr("saveReport")}
           </Button>
         </div>
       </div>
@@ -549,7 +551,7 @@ export default function ReportBuilderPage() {
           {/* Entity Selector */}
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium">Entity</CardTitle>
+              <CardTitle className="text-sm font-medium">{tr("entity")}</CardTitle>
             </CardHeader>
             <CardContent>
               <Select
@@ -569,9 +571,9 @@ export default function ReportBuilderPage() {
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium">
-                Columns{" "}
+                {tr("columns")}{" "}
                 <span className="text-muted-foreground font-normal">
-                  ({columns.length} selected)
+                  ({columns.length} {tr("selected")})
                 </span>
               </CardTitle>
             </CardHeader>
@@ -603,16 +605,16 @@ export default function ReportBuilderPage() {
           <Card>
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-sm font-medium">Filters</CardTitle>
+                <CardTitle className="text-sm font-medium">{tr("filters")}</CardTitle>
                 <Button variant="ghost" size="sm" className="h-7 px-2" onClick={addFilter}>
                   <Plus className="h-3.5 w-3.5 mr-1" />
-                  Add
+                  {tr("add")}
                 </Button>
               </div>
             </CardHeader>
             <CardContent>
               {filters.length === 0 && (
-                <p className="text-xs text-muted-foreground">No filters applied.</p>
+                <p className="text-xs text-muted-foreground">{tr("noFilters")}</p>
               )}
               <div className="space-y-2">
                 {filters.map((filter) => (
@@ -652,7 +654,7 @@ export default function ReportBuilderPage() {
                     {/* Value */}
                     <Input
                       className="h-8 text-xs flex-1 min-w-0"
-                      placeholder="Value"
+                      placeholder={tr("valuePlaceholder")}
                       value={filter.value}
                       onChange={(e) =>
                         updateFilter(filter.id, { value: e.target.value })
@@ -676,14 +678,14 @@ export default function ReportBuilderPage() {
           {/* Group By */}
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium">Group By</CardTitle>
+              <CardTitle className="text-sm font-medium">{tr("groupBy")}</CardTitle>
             </CardHeader>
             <CardContent>
               <Select
                 value={groupBy}
                 onChange={(e) => setGroupBy(e.target.value)}
               >
-                <option value="">None</option>
+                <option value="">{tr("none")}</option>
                 {fields.map((f) => (
                   <option key={f.name} value={f.name}>
                     {f.label}
@@ -696,14 +698,14 @@ export default function ReportBuilderPage() {
           {/* Sort By */}
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium">Sort By</CardTitle>
+              <CardTitle className="text-sm font-medium">{tr("sortBy")}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
               <Select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
               >
-                <option value="">None</option>
+                <option value="">{tr("none")}</option>
                 {fields.map((f) => (
                   <option key={f.name} value={f.name}>
                     {f.label}
@@ -715,8 +717,8 @@ export default function ReportBuilderPage() {
                   value={sortOrder}
                   onChange={(e) => setSortOrder(e.target.value as "asc" | "desc")}
                 >
-                  <option value="asc">Ascending</option>
-                  <option value="desc">Descending</option>
+                  <option value="asc">{tr("ascending")}</option>
+                  <option value="desc">{tr("descending")}</option>
                 </Select>
               )}
             </CardContent>
@@ -725,7 +727,7 @@ export default function ReportBuilderPage() {
           {/* Chart Type */}
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium">Chart Type</CardTitle>
+              <CardTitle className="text-sm font-medium">{tr("chartType")}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-3 gap-1.5">
@@ -751,7 +753,7 @@ export default function ReportBuilderPage() {
           <Card>
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-sm font-medium">Saved Reports</CardTitle>
+                <CardTitle className="text-sm font-medium">{tr("savedReports")}</CardTitle>
                 {savedReportsLoading && (
                   <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
                 )}
@@ -759,7 +761,7 @@ export default function ReportBuilderPage() {
             </CardHeader>
             <CardContent>
               {savedReports.length === 0 && !savedReportsLoading && (
-                <p className="text-xs text-muted-foreground">No saved reports yet.</p>
+                <p className="text-xs text-muted-foreground">{tr("noSavedReports")}</p>
               )}
               <div className="space-y-1.5">
                 {savedReports.map((r) => (
@@ -790,7 +792,7 @@ export default function ReportBuilderPage() {
           <div className="grid grid-cols-3 gap-3">
             <Card>
               <CardContent className="pt-4 pb-3 px-4">
-                <div className="text-xs text-muted-foreground">Total Records</div>
+                <div className="text-xs text-muted-foreground">{tr("totalRecords")}</div>
                 <div className="text-2xl font-bold">
                   {loading ? (
                     <Loader2 className="h-5 w-5 animate-spin" />
@@ -819,13 +821,13 @@ export default function ReportBuilderPage() {
               <>
                 <Card>
                   <CardContent className="pt-4 pb-3 px-4">
-                    <div className="text-xs text-muted-foreground">Columns</div>
+                    <div className="text-xs text-muted-foreground">{tr("columns")}</div>
                     <div className="text-2xl font-bold">{columns.length}</div>
                   </CardContent>
                 </Card>
                 <Card>
                   <CardContent className="pt-4 pb-3 px-4">
-                    <div className="text-xs text-muted-foreground">Filters</div>
+                    <div className="text-xs text-muted-foreground">{tr("filters")}</div>
                     <div className="text-2xl font-bold">{filters.length}</div>
                   </CardContent>
                 </Card>
@@ -839,7 +841,7 @@ export default function ReportBuilderPage() {
               <div className="flex items-center justify-between">
                 <CardTitle className="text-sm font-medium flex items-center gap-2">
                   <BarChart3 className="h-4 w-4" />
-                  Preview
+                  {tr("preview")}
                   {loading && (
                     <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
                   )}
@@ -862,7 +864,7 @@ export default function ReportBuilderPage() {
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm font-medium">
-                  Data Table ({previewData.rows.length} rows)
+                  {tr("dataTable")} ({previewData.rows.length} {tr("rows")})
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -878,12 +880,12 @@ export default function ReportBuilderPage() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {editingReportId ? "Update Report" : "Save Report"}
+              {editingReportId ? tr("updateReport") : tr("saveReport")}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-3 py-2">
             <div>
-              <Label htmlFor="report-name">Report Name</Label>
+              <Label htmlFor="report-name">{tr("reportName")}</Label>
               <Input
                 id="report-name"
                 placeholder="e.g. Monthly Deals Overview"
@@ -896,31 +898,31 @@ export default function ReportBuilderPage() {
               <Badge variant="outline">
                 {ENTITY_OPTIONS.find((e) => e.value === entity)?.label}
               </Badge>
-              <Badge variant="outline">{columns.length} columns</Badge>
-              <Badge variant="outline">{filters.length} filters</Badge>
+              <Badge variant="outline">{columns.length} {tr("columnsLower")}</Badge>
+              <Badge variant="outline">{filters.length} {tr("filtersLower")}</Badge>
               <Badge variant="outline">
                 {CHART_TYPES.find((c) => c.value === chartType)?.label}
               </Badge>
             </div>
             {/* Schedule section */}
             <div className="border-t pt-3 mt-1 space-y-2">
-              <p className="text-xs font-medium text-muted-foreground">Email Schedule (optional)</p>
+              <p className="text-xs font-medium text-muted-foreground">{tr("emailSchedule")}</p>
               <div>
-                <Label htmlFor="schedule-freq" className="text-xs">Frequency</Label>
+                <Label htmlFor="schedule-freq" className="text-xs">{tr("frequency")}</Label>
                 <Select
                   value={scheduleFreq}
                   onChange={(e) => setScheduleFreq(e.target.value)}
                   className="mt-1 h-8 text-xs"
                 >
-                  <option value="">No schedule</option>
-                  <option value="daily">Daily</option>
-                  <option value="weekly">Weekly</option>
-                  <option value="monthly">Monthly</option>
+                  <option value="">{tr("noSchedule")}</option>
+                  <option value="daily">{tr("daily")}</option>
+                  <option value="weekly">{tr("weekly")}</option>
+                  <option value="monthly">{tr("monthly")}</option>
                 </Select>
               </div>
               {scheduleFreq && (
                 <div>
-                  <Label htmlFor="schedule-emails" className="text-xs">Recipients (comma-separated)</Label>
+                  <Label htmlFor="schedule-emails" className="text-xs">{tr("recipients")}</Label>
                   <Input
                     id="schedule-emails"
                     placeholder="user@example.com, team@company.com"
@@ -934,11 +936,11 @@ export default function ReportBuilderPage() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setSaveDialogOpen(false)}>
-              Cancel
+              {tr("cancel")}
             </Button>
             <Button onClick={handleSave} disabled={saving || !reportName.trim()}>
               {saving && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}
-              {editingReportId ? "Update" : "Save"}
+              {editingReportId ? tr("update") : tr("save")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -948,7 +950,7 @@ export default function ReportBuilderPage() {
       <Dialog open={exportDialogOpen} onOpenChange={setExportDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Export Report</DialogTitle>
+            <DialogTitle>{tr("exportReport")}</DialogTitle>
           </DialogHeader>
           <div className="grid grid-cols-2 gap-3 py-4">
             <button
@@ -959,7 +961,7 @@ export default function ReportBuilderPage() {
               <FileSpreadsheet className="h-8 w-8 text-green-600" />
               <span className="text-sm font-medium">CSV</span>
               <span className="text-xs text-muted-foreground">
-                Comma-separated values
+                {tr("csvDesc")}
               </span>
             </button>
             <button
@@ -969,7 +971,7 @@ export default function ReportBuilderPage() {
             >
               <FileSpreadsheet className="h-8 w-8 text-blue-600" />
               <span className="text-sm font-medium">Excel</span>
-              <span className="text-xs text-muted-foreground">XLSX spreadsheet</span>
+              <span className="text-xs text-muted-foreground">{tr("xlsxDesc")}</span>
             </button>
           </div>
         </DialogContent>
