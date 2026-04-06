@@ -3,6 +3,7 @@
 import { useRef, useState, useEffect } from "react"
 import { AnimateIn } from "./animate-in"
 import { aiCapabilities } from "@/lib/marketing-data"
+import { useTranslations } from "next-intl"
 import {
   Bot, ArrowRight, Sparkles, Send,
   TrendingUp, Star, Mail, MessageSquare,
@@ -172,6 +173,7 @@ function AiCapabilityBadges() {
 }
 
 export function AiFlowDiagram() {
+  const t = useTranslations("marketing.davinci")
   return (
     <section id="ai" className="relative bg-[#F3F4F7] py-20 lg:py-28 overflow-hidden">
       {/* Subtle bg accent */}
@@ -183,30 +185,34 @@ export function AiFlowDiagram() {
           <AnimateIn>
             <span className="inline-flex items-center gap-2 rounded-full border border-[#0176D3]/20 bg-white px-4 py-1.5 text-xs font-medium text-[#0176D3] mb-5">
               <Bot className="h-3.5 w-3.5" />
-              16 ağıllı funksiya
+              {t("sectionTitle")}
             </span>
 
             <h2 className="text-3xl lg:text-4xl font-bold tracking-tight text-[#001E3C]">
-              <span className="bg-gradient-to-r from-[#7D55C7] to-[#9B6CFF] bg-clip-text text-transparent">Da Vinci</span>
-              {" "}hər yerdədir
+              {t("sectionSubtitle")}
             </h2>
 
             <p className="mt-4 text-lg text-[#001E3C]/60 leading-relaxed max-w-lg">
-              Da Vinci mühərriki — əlavə deyil, platformanın əsasıdır.
-              Siz yuxuya gedəndə belə müştəriləri qiymətləndirir, müraciətlərə cavab verir, məktub yazır.
+              {t("sectionDescription")}
             </p>
 
             <ul className="mt-8 space-y-3.5">
-              {aiCapabilities.map((cap) => {
-                const Icon = cap.icon
+              {[
+                { key: "autoResponses", icon: aiCapabilities[0]?.icon },
+                { key: "leadScoring", icon: aiCapabilities[1]?.icon },
+                { key: "emailGeneration", icon: aiCapabilities[2]?.icon },
+                { key: "profitability", icon: aiCapabilities[3]?.icon },
+                { key: "knowledgeBase", icon: aiCapabilities[4]?.icon },
+              ].map((cap) => {
+                const Icon = cap.icon || Bot
                 return (
-                  <li key={cap.title} className="flex items-start gap-3">
+                  <li key={cap.key} className="flex items-start gap-3">
                     <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-white border border-[#001E3C]/10 shrink-0 mt-0.5 shadow-sm">
                       <Icon className="h-4 w-4 text-[#0176D3]" />
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-[#001E3C]">{cap.title}</p>
-                      <p className="text-sm text-[#001E3C]/60">{cap.description}</p>
+                      <p className="text-sm font-medium text-[#001E3C]">{t(cap.key)}</p>
+                      <p className="text-sm text-[#001E3C]/60">{t(`${cap.key}Desc`)}</p>
                     </div>
                   </li>
                 )
@@ -217,7 +223,7 @@ export function AiFlowDiagram() {
               href="/demo"
               className="mt-8 group inline-flex items-center gap-2 rounded-full bg-[#001E3C] px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-[#001E3C]/10 hover:bg-[#001E3C]/60 transition-all"
             >
-              Da Vinci-ni sınayın
+              {t("tryDavinci")}
               <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" />
             </Link>
           </AnimateIn>

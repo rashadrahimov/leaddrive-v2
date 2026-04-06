@@ -4,7 +4,7 @@ import { auth } from "@/lib/auth"
 import { canAccessModule } from "@/lib/plan-config"
 import { checkRateLimit, RATE_LIMIT_CONFIG } from "@/lib/rate-limit"
 
-const publicPaths = ["/login", "/register", "/forgot-password", "/reset-password", "/api/auth", "/api/v1/auth/register", "/api/v1/settings/auth-methods", "/portal", "/home", "/pricing", "/plans", "/features", "/demo", "/about", "/contact", "/blog", "/legal", "/landing", "/marketing"]
+const publicPaths = ["/login", "/register", "/forgot-password", "/reset-password", "/api/auth", "/api/v1/auth/register", "/api/v1/settings/auth-methods", "/portal", "/home", "/pricing", "/plans", "/features", "/demo", "/about", "/contact", "/blog", "/legal", "/landing", "/marketing", "/p"]
 
 // Marketing-only paths served on leaddrivecrm.org
 const marketingPaths = ["/home", "/pricing", "/plans", "/features", "/demo", "/about", "/contact", "/blog", "/legal", "/landing", "/marketing"]
@@ -121,6 +121,11 @@ const authMiddleware = auth((req) => {
   if (publicPaths.some((p) => pathname.startsWith(p))) {
     const requestHeaders = new Headers(req.headers)
     requestHeaders.set("x-nonce", nonce)
+    // Inject locale for i18n on public/marketing pages
+    const localeCookie = req.cookies.get("NEXT_LOCALE")?.value
+    if (localeCookie) {
+      requestHeaders.set("x-locale", localeCookie)
+    }
     return withCspHeaders(NextResponse.next({ headers: requestHeaders }), nonce)
   }
 
@@ -178,7 +183,7 @@ const authMiddleware = auth((req) => {
   }
 
   // Allow public API (web-to-lead, calendar feed, journey processor, webhooks)
-  if (pathname.startsWith("/api/v1/public/") || pathname.startsWith("/api/v1/calendar/feed/") || pathname.startsWith("/api/v1/webhooks/") || pathname === "/api/v1/journeys/process") {
+  if (pathname.startsWith("/api/v1/public/") || pathname.startsWith("/api/v1/calendar/feed/") || pathname.startsWith("/api/v1/webhooks/") || pathname === "/api/v1/journeys/process" || pathname.startsWith("/api/v1/calls/webhook") || pathname.startsWith("/api/v1/calls/twiml") || pathname === "/api/cron/scheduled-reports") {
     return withCspHeaders(NextResponse.next(), nonce)
   }
 
