@@ -12,81 +12,82 @@ import { useTranslations } from "next-intl"
 /* ─── full feature comparison matrix ─── */
 type FeatureRow = { label: string; starter: boolean; business: boolean; professional: boolean; enterprise: boolean; custom?: boolean }
 
-const comparisonSections: { title: string; rows: FeatureRow[] }[] = [
+type CompareRow = { key: string; starter: boolean; business: boolean; professional: boolean; enterprise: boolean }
+const comparisonData: { titleKey: string; rows: CompareRow[] }[] = [
   {
-    title: "Satış və CRM",
+    titleKey: "sales_crm",
     rows: [
-      { label: "İdarə paneli və KPI-lər", starter: true, business: true, professional: true, enterprise: true },
-      { label: "Şirkətlər və Kontaktlar", starter: true, business: true, professional: true, enterprise: true },
-      { label: "Sövdələşmələr və Pipeline", starter: true, business: true, professional: true, enterprise: true },
-      { label: "Lidlər və Skorinq", starter: true, business: true, professional: true, enterprise: true },
-      { label: "Tapşırıqlar və Təqvim", starter: true, business: true, professional: true, enterprise: true },
-      { label: "Məhsul kataloqu", starter: true, business: true, professional: true, enterprise: true },
-      { label: "Müqavilələr", starter: false, business: true, professional: true, enterprise: true },
-      { label: "Fakturalar və Ödənişlər", starter: false, business: false, professional: true, enterprise: true },
-      { label: "Təkliflər (Offer→Faktura)", starter: false, business: false, professional: true, enterprise: true },
+      { key: "dashboard_kpi", starter: true, business: true, professional: true, enterprise: true },
+      { key: "companies_contacts", starter: true, business: true, professional: true, enterprise: true },
+      { key: "deals_pipeline", starter: true, business: true, professional: true, enterprise: true },
+      { key: "leads_scoring", starter: true, business: true, professional: true, enterprise: true },
+      { key: "tasks_calendar", starter: true, business: true, professional: true, enterprise: true },
+      { key: "product_catalog", starter: true, business: true, professional: true, enterprise: true },
+      { key: "contracts", starter: false, business: true, professional: true, enterprise: true },
+      { key: "invoices_payments", starter: false, business: false, professional: true, enterprise: true },
+      { key: "offers", starter: false, business: false, professional: true, enterprise: true },
     ],
   },
   {
-    title: "Marketinq",
+    titleKey: "mkt",
     rows: [
-      { label: "Kampaniya meneceri", starter: false, business: false, professional: true, enterprise: true },
-      { label: "E-poçt şablonları", starter: false, business: false, professional: true, enterprise: true },
-      { label: "Marşrut qurucusu (Flow Editor)", starter: false, business: false, professional: true, enterprise: true },
-      { label: "Seqmentlər", starter: false, business: false, professional: true, enterprise: true },
-      { label: "Tədbirlər və Qeydiyyat", starter: false, business: false, professional: true, enterprise: true },
-      { label: "Kampaniya ROI", starter: false, business: false, professional: true, enterprise: true },
+      { key: "campaign_manager", starter: false, business: false, professional: true, enterprise: true },
+      { key: "email_templates", starter: false, business: false, professional: true, enterprise: true },
+      { key: "flow_editor", starter: false, business: false, professional: true, enterprise: true },
+      { key: "segments", starter: false, business: false, professional: true, enterprise: true },
+      { key: "events_reg", starter: false, business: false, professional: true, enterprise: true },
+      { key: "campaign_roi", starter: false, business: false, professional: true, enterprise: true },
     ],
   },
   {
-    title: "Dəstək",
+    titleKey: "support",
     rows: [
-      { label: "Tiket idarəsi", starter: false, business: true, professional: true, enterprise: true },
-      { label: "SLA siyasətləri", starter: false, business: true, professional: true, enterprise: true },
-      { label: "Agent iş masası", starter: false, business: true, professional: true, enterprise: true },
-      { label: "Bilik bazası", starter: false, business: true, professional: true, enterprise: true },
-      { label: "Müştəri portalı", starter: false, business: false, professional: false, enterprise: true },
+      { key: "ticket_mgmt", starter: false, business: true, professional: true, enterprise: true },
+      { key: "sla", starter: false, business: true, professional: true, enterprise: true },
+      { key: "agent_desktop", starter: false, business: true, professional: true, enterprise: true },
+      { key: "kb", starter: false, business: true, professional: true, enterprise: true },
+      { key: "portal", starter: false, business: false, professional: false, enterprise: true },
     ],
   },
   {
-    title: "Rabitə",
+    titleKey: "comm",
     rows: [
-      { label: "E-poçt inteqrasiyası", starter: true, business: true, professional: true, enterprise: true },
-      { label: "7 kanallı gələn qutusu", starter: false, business: false, professional: false, enterprise: true },
-      { label: "SMTP konfiqurasiyası", starter: false, business: false, professional: false, enterprise: true },
+      { key: "email_integration", starter: true, business: true, professional: true, enterprise: true },
+      { key: "inbox_7ch", starter: false, business: false, professional: false, enterprise: true },
+      { key: "smtp", starter: false, business: false, professional: false, enterprise: true },
     ],
   },
   {
-    title: "Analitika və Maliyyə",
+    titleKey: "analytics_finance",
     rows: [
-      { label: "Hesabatlar", starter: false, business: false, professional: true, enterprise: true },
-      { label: "Xərc modeli mühərriki", starter: false, business: false, professional: false, enterprise: true },
-      { label: "Gəlirlilik təhlili", starter: false, business: false, professional: false, enterprise: true },
-      { label: "Büdcələşdirmə və P&L", starter: false, business: false, professional: false, enterprise: true },
-      { label: "Maliyyə (Debitor, Kreditor, Fondlar)", starter: false, business: false, professional: false, enterprise: true },
-      { label: "Dinamik qiymətləndirmə", starter: false, business: false, professional: false, enterprise: true },
+      { key: "reports", starter: false, business: false, professional: true, enterprise: true },
+      { key: "cost_engine", starter: false, business: false, professional: false, enterprise: true },
+      { key: "profitability", starter: false, business: false, professional: false, enterprise: true },
+      { key: "budgeting_pl", starter: false, business: false, professional: false, enterprise: true },
+      { key: "finance_full", starter: false, business: false, professional: false, enterprise: true },
+      { key: "dynamic_pricing", starter: false, business: false, professional: false, enterprise: true },
     ],
   },
   {
-    title: "Da Vinci",
+    titleKey: "davinci",
     rows: [
-      { label: "Da Vinci skorinqi", starter: false, business: false, professional: true, enterprise: true },
-      { label: "Da Vinci Satış Köməkçisi", starter: false, business: false, professional: false, enterprise: true },
-      { label: "Da Vinci Komanda Mərkəzi", starter: false, business: false, professional: false, enterprise: true },
-      { label: "Da Vinci Dəstək Agenti", starter: false, business: false, professional: false, enterprise: true },
+      { key: "dv_scoring", starter: false, business: false, professional: true, enterprise: true },
+      { key: "dv_sales", starter: false, business: false, professional: false, enterprise: true },
+      { key: "dv_center", starter: false, business: false, professional: false, enterprise: true },
+      { key: "dv_support", starter: false, business: false, professional: false, enterprise: true },
     ],
   },
   {
-    title: "Platforma",
+    titleKey: "platform",
     rows: [
-      { label: "Rollar və İcazələr", starter: false, business: true, professional: true, enterprise: true },
-      { label: "İş axınları", starter: false, business: false, professional: true, enterprise: true },
-      { label: "Xüsusi sahələr", starter: false, business: false, professional: false, enterprise: true },
-      { label: "Audit jurnalı", starter: false, business: false, professional: false, enterprise: true },
-      { label: "API və Webhooklar", starter: false, business: false, professional: false, enterprise: true },
-      { label: "Layihələr (ERP)", starter: false, business: false, professional: true, enterprise: true },
-      { label: "3 dil (AZ/RU/EN)", starter: true, business: true, professional: true, enterprise: true },
-      { label: "Qaranlıq rejim", starter: true, business: true, professional: true, enterprise: true },
+      { key: "roles", starter: false, business: true, professional: true, enterprise: true },
+      { key: "workflows", starter: false, business: false, professional: true, enterprise: true },
+      { key: "custom_fields", starter: false, business: false, professional: false, enterprise: true },
+      { key: "audit", starter: false, business: false, professional: false, enterprise: true },
+      { key: "api", starter: false, business: false, professional: false, enterprise: true },
+      { key: "erp", starter: false, business: false, professional: true, enterprise: true },
+      { key: "languages", starter: true, business: true, professional: true, enterprise: true },
+      { key: "dark_mode", starter: true, business: true, professional: true, enterprise: true },
     ],
   },
 ]
@@ -96,6 +97,8 @@ const planKeys = ["starter", "business", "professional", "enterprise", "custom"]
 
 export default function PricingPage() {
   const tp = useTranslations("marketing.pricing")
+  const tc = useTranslations("marketing.pricing.compare")
+  const tf = useTranslations("marketing.pricing.features")
   const [openFaq, setOpenFaq] = useState<number | null>(null)
   const [billing, setBilling] = useState<"monthly" | "annual">("monthly")
   const isAnnual = billing === "annual"
@@ -106,10 +109,10 @@ export default function PricingPage() {
       <section className="bg-gradient-to-b from-white via-[#F3F4F7] to-white pt-20 pb-16">
         <div className="mx-auto max-w-5xl px-4 lg:px-8 text-center">
           <h1 className="text-4xl lg:text-5xl font-bold text-[#001E3C]">
-            Şəffaf <span className="text-[#0176D3]">qiymətlər</span>
+            {tp("sectionTitle")}
           </h1>
           <p className="mt-4 text-lg text-[#001E3C]/60 max-w-2xl mx-auto">
-            Pulsuz sınaq ilə başlayın. Gizli ödənişlər yoxdur. İstədiyiniz zaman yüksəldin.
+            {tp("sectionDescription")}
           </p>
 
           {/* Billing toggle */}
@@ -123,7 +126,7 @@ export default function PricingPage() {
                   : "text-[#001E3C]/60 hover:text-[#001E3C]"
               )}
             >
-              Aylıq
+              {tp("monthly")}
             </button>
             <button
               onClick={() => setBilling("annual")}
@@ -134,7 +137,7 @@ export default function PricingPage() {
                   : "text-[#001E3C]/60 hover:text-[#001E3C]"
               )}
             >
-              İllik
+              {tp("annual")}
               <span className={cn(
                 "text-[10px] font-bold px-1.5 py-0.5 rounded-full",
                 isAnnual
@@ -171,12 +174,12 @@ export default function PricingPage() {
                   {plan.popular && (
                     <div className="absolute -top-3 left-1/2 -translate-x-1/2">
                       <span className="bg-[#0176D3] text-white text-xs font-semibold px-3 py-1 rounded-full">
-                        Ən Populyar
+                        {tp("popular")}
                       </span>
                     </div>
                   )}
-                  <h3 className="text-lg font-bold text-[#001E3C]">{plan.name}</h3>
-                  <p className="text-sm text-[#001E3C]/60 mt-1 mb-4">{plan.tagline}</p>
+                  <h3 className="text-lg font-bold text-[#001E3C]">{tp(`${plan.id}.name`)}</h3>
+                  <p className="text-sm text-[#001E3C]/60 mt-1 mb-4">{tp(`${plan.id}.tagline`)}</p>
 
                   {/* Price — per-user focused */}
                   <div className="mb-1">
@@ -186,20 +189,20 @@ export default function PricingPage() {
                           <span className="text-base text-[#001E3C]/30 line-through">{plan.pricePerUser}</span>
                         )}
                         <span className="text-2xl font-semibold text-[#001E3C]">{perUser}</span>
-                        <span className="text-xs text-[#001E3C]/40">AZN / istifadəçi / ay</span>
+                        <span className="text-xs text-[#001E3C]/40">AZN / {tp("perUser")}</span>
                       </div>
                     ) : (
-                      <span className="text-lg font-semibold text-[#001E3C]">Fərdi qiymət</span>
+                      <span className="text-lg font-semibold text-[#001E3C]">{tp("custom.tagline")}</span>
                     )}
                   </div>
 
                   {/* Total cost — subtle */}
                   {total !== null && plan.maxUsers !== null ? (
                     <p className="text-xs text-[#001E3C]/40 mb-4">
-                      {plan.maxUsers} istifadəçi: {total.toLocaleString()} AZN/ay
+                      {plan.maxUsers} {tp("perUser").split("/")[0]}: {total.toLocaleString()} AZN
                     </p>
                   ) : (
-                    <p className="text-xs text-[#001E3C]/40 mb-4">Danışıqla müəyyən edilir</p>
+                    <p className="text-xs text-[#001E3C]/40 mb-4">&nbsp;</p>
                   )}
 
                   <ul className="space-y-2 flex-1">
@@ -219,7 +222,7 @@ export default function PricingPage() {
                         : "bg-[#0176D3]/5 text-[#001E3C] hover:bg-[#0176D3]/10"
                     )}
                   >
-                    {plan.id === "custom" ? "Əlaqə saxlayın" : "Demo tələb et"}
+                    {plan.popular ? tp("requestDemo") : tp("start")}
                   </Link>
                 </div>
               )
@@ -232,7 +235,7 @@ export default function PricingPage() {
       <section className="bg-[#F3F4F7] py-20">
         <div className="mx-auto max-w-6xl px-4 lg:px-8">
           <h2 className="text-3xl font-bold text-[#001E3C] text-center mb-12">
-            Bütün xüsusiyyətləri <span className="text-[#0176D3]">müqayisə edin</span>
+            {tp("compareAll")}
           </h2>
 
           <div className="bg-white rounded-xl border border-[#001E3C]/10 shadow-sm overflow-x-auto">
@@ -240,7 +243,7 @@ export default function PricingPage() {
               {/* Header */}
               <thead>
                 <tr className="border-b border-[#001E3C]/10">
-                  <th className="text-left py-4 px-6 text-sm font-medium text-[#001E3C]/60 w-[30%]">Xüsusiyyət</th>
+                  <th className="text-left py-4 px-6 text-sm font-medium text-[#001E3C]/60 w-[30%]">&nbsp;</th>
                   {planNames.map((name, i) => (
                     <th key={name} className="py-4 px-4 text-center">
                       <span className={cn(
@@ -252,19 +255,21 @@ export default function PricingPage() {
                 </tr>
               </thead>
               <tbody>
-                {comparisonSections.map((section) => (
-                  <Fragment key={section.title}>
+                {comparisonData.map((section) => (
+                  <Fragment key={section.titleKey}>
                     <tr className="bg-[#F3F4F7]/60">
                       <td colSpan={6} className="py-3 px-6 text-sm font-bold text-[#001E3C]">
-                        {section.title}
+                        {tc(section.titleKey)}
                       </td>
                     </tr>
-                    {section.rows.map((row) => (
-                      <tr key={row.label} className="border-b border-[#001E3C]/5 last:border-0">
-                        <td className="py-3 px-6 text-sm text-[#001E3C]/80">{row.label}</td>
+                    {section.rows.map((row) => {
+                      // Try compare namespace first, fallback to features namespace
+                      const label = tc.has(row.key) ? tc(row.key) : (tf.has(row.key) ? tf(row.key) : row.key)
+                      return (
+                      <tr key={row.key} className="border-b border-[#001E3C]/5 last:border-0">
+                        <td className="py-3 px-6 text-sm text-[#001E3C]/80">{label}</td>
                         {planKeys.map((key) => {
-                          // custom (50+) inherits enterprise features
-                          const value = key === "custom" ? (row.custom ?? row.enterprise) : row[key]
+                          const value = key === "custom" ? row.enterprise : row[key as keyof CompareRow]
                           return (
                             <td key={key} className="py-3 px-4 text-center">
                               {value ? (
@@ -276,7 +281,8 @@ export default function PricingPage() {
                           )
                         })}
                       </tr>
-                    ))}
+                      )
+                    })}
                   </Fragment>
                 ))}
               </tbody>
