@@ -45,98 +45,72 @@ import {
 } from "recharts"
 
 // ---------------------------------------------------------------------------
-// Entity field definitions (inline, mirrors server-side config)
+// Entity field definitions — label keys mapped to translation keys
 // ---------------------------------------------------------------------------
 
-const ENTITY_FIELDS: Record<string, { name: string; label: string; type: string }[]> = {
+const ENTITY_FIELD_DEFS: Record<string, { name: string; tKey: string; type: string }[]> = {
   deals: [
-    { name: "name", label: "Deal Name", type: "string" },
-    { name: "valueAmount", label: "Value", type: "number" },
-    { name: "stage", label: "Stage", type: "string" },
-    { name: "probability", label: "Probability", type: "number" },
-    { name: "expectedClose", label: "Expected Close", type: "date" },
-    { name: "assignedTo", label: "Assigned To", type: "string" },
-    { name: "createdAt", label: "Created", type: "date" },
-    { name: "company.name", label: "Company Name", type: "string" },
+    { name: "name", tKey: "fieldDealName", type: "string" },
+    { name: "valueAmount", tKey: "fieldValue", type: "number" },
+    { name: "stage", tKey: "fieldStage", type: "string" },
+    { name: "probability", tKey: "fieldProbability", type: "number" },
+    { name: "expectedClose", tKey: "fieldExpectedClose", type: "date" },
+    { name: "assignedTo", tKey: "fieldAssignedTo", type: "string" },
+    { name: "createdAt", tKey: "fieldCreated", type: "date" },
+    { name: "company.name", tKey: "fieldCompanyName", type: "string" },
   ],
   contacts: [
-    { name: "fullName", label: "Full Name", type: "string" },
-    { name: "email", label: "Email", type: "string" },
-    { name: "position", label: "Position", type: "string" },
-    { name: "engagementScore", label: "Engagement", type: "number" },
-    { name: "source", label: "Source", type: "string" },
-    { name: "createdAt", label: "Created", type: "date" },
-    { name: "company.name", label: "Company Name", type: "string" },
+    { name: "fullName", tKey: "fieldFullName", type: "string" },
+    { name: "email", tKey: "fieldEmail", type: "string" },
+    { name: "position", tKey: "fieldPosition", type: "string" },
+    { name: "engagementScore", tKey: "fieldEngagement", type: "number" },
+    { name: "source", tKey: "fieldSource", type: "string" },
+    { name: "createdAt", tKey: "fieldCreated", type: "date" },
+    { name: "company.name", tKey: "fieldCompanyName", type: "string" },
   ],
   companies: [
-    { name: "name", label: "Company Name", type: "string" },
-    { name: "industry", label: "Industry", type: "string" },
-    { name: "status", label: "Status", type: "string" },
-    { name: "annualRevenue", label: "Revenue", type: "number" },
-    { name: "employeeCount", label: "Employees", type: "number" },
-    { name: "createdAt", label: "Created", type: "date" },
+    { name: "name", tKey: "fieldCompanyName", type: "string" },
+    { name: "industry", tKey: "fieldIndustry", type: "string" },
+    { name: "status", tKey: "fieldStatus", type: "string" },
+    { name: "annualRevenue", tKey: "fieldRevenue", type: "number" },
+    { name: "employeeCount", tKey: "fieldEmployees", type: "number" },
+    { name: "createdAt", tKey: "fieldCreated", type: "date" },
   ],
   leads: [
-    { name: "contactName", label: "Lead Name", type: "string" },
-    { name: "companyName", label: "Company", type: "string" },
-    { name: "source", label: "Source", type: "string" },
-    { name: "status", label: "Status", type: "string" },
-    { name: "estimatedValue", label: "Est. Value", type: "number" },
-    { name: "score", label: "Score", type: "number" },
-    { name: "createdAt", label: "Created", type: "date" },
+    { name: "contactName", tKey: "fieldLeadName", type: "string" },
+    { name: "companyName", tKey: "fieldCompany", type: "string" },
+    { name: "source", tKey: "fieldSource", type: "string" },
+    { name: "status", tKey: "fieldStatus", type: "string" },
+    { name: "estimatedValue", tKey: "fieldEstValue", type: "number" },
+    { name: "score", tKey: "fieldScore", type: "number" },
+    { name: "createdAt", tKey: "fieldCreated", type: "date" },
   ],
   tickets: [
-    { name: "ticketNumber", label: "Ticket #", type: "string" },
-    { name: "subject", label: "Subject", type: "string" },
-    { name: "priority", label: "Priority", type: "string" },
-    { name: "status", label: "Status", type: "string" },
-    { name: "category", label: "Category", type: "string" },
-    { name: "createdAt", label: "Created", type: "date" },
-    { name: "contact.fullName", label: "Contact Name", type: "string" },
+    { name: "ticketNumber", tKey: "fieldTicketNumber", type: "string" },
+    { name: "subject", tKey: "fieldSubject", type: "string" },
+    { name: "priority", tKey: "fieldPriority", type: "string" },
+    { name: "status", tKey: "fieldStatus", type: "string" },
+    { name: "category", tKey: "fieldCategory", type: "string" },
+    { name: "createdAt", tKey: "fieldCreated", type: "date" },
+    { name: "contact.fullName", tKey: "fieldContactName", type: "string" },
   ],
   tasks: [
-    { name: "title", label: "Title", type: "string" },
-    { name: "status", label: "Status", type: "string" },
-    { name: "priority", label: "Priority", type: "string" },
-    { name: "dueDate", label: "Due Date", type: "date" },
-    { name: "createdAt", label: "Created", type: "date" },
+    { name: "title", tKey: "fieldTitle", type: "string" },
+    { name: "status", tKey: "fieldStatus", type: "string" },
+    { name: "priority", tKey: "fieldPriority", type: "string" },
+    { name: "dueDate", tKey: "fieldDueDate", type: "date" },
+    { name: "createdAt", tKey: "fieldCreated", type: "date" },
   ],
   activities: [
-    { name: "type", label: "Type", type: "string" },
-    { name: "subject", label: "Subject", type: "string" },
-    { name: "createdAt", label: "Created", type: "date" },
-    { name: "contact.fullName", label: "Contact", type: "string" },
-    { name: "company.name", label: "Company", type: "string" },
+    { name: "type", tKey: "fieldType", type: "string" },
+    { name: "subject", tKey: "fieldSubject", type: "string" },
+    { name: "createdAt", tKey: "fieldCreated", type: "date" },
+    { name: "contact.fullName", tKey: "fieldContact", type: "string" },
+    { name: "company.name", tKey: "fieldCompany", type: "string" },
   ],
 }
 
-const ENTITY_OPTIONS = [
-  { value: "deals", label: "Deals" },
-  { value: "contacts", label: "Contacts" },
-  { value: "companies", label: "Companies" },
-  { value: "leads", label: "Leads" },
-  { value: "tickets", label: "Tickets" },
-  { value: "tasks", label: "Tasks" },
-  { value: "activities", label: "Activities" },
-]
-
-const CHART_TYPES = [
-  { value: "table", label: "Table" },
-  { value: "bar", label: "Bar Chart" },
-  { value: "line", label: "Line Chart" },
-  { value: "pie", label: "Pie Chart" },
-  { value: "area", label: "Area Chart" },
-]
-
-const OPERATORS = [
-  { value: "eq", label: "Equals" },
-  { value: "neq", label: "Not Equals" },
-  { value: "gt", label: "Greater Than" },
-  { value: "lt", label: "Less Than" },
-  { value: "contains", label: "Contains" },
-  { value: "in", label: "In" },
-  { value: "between", label: "Between" },
-]
+const ENTITY_KEYS = ["deals", "contacts", "companies", "leads", "tickets", "tasks", "activities"] as const
 
 const CHART_COLORS = [
   "hsl(var(--chart-1))",
@@ -190,7 +164,7 @@ interface PreviewData {
 export default function ReportBuilderPage() {
   const tr = useTranslations("reportBuilder")
 
-  // Translated operators and chart types
+  // Translated operators, chart types, entities
   const operators = [
     { value: "eq", label: tr("opEquals") },
     { value: "neq", label: tr("opNotEquals") },
@@ -201,11 +175,29 @@ export default function ReportBuilderPage() {
     { value: "between", label: tr("opBetween") },
   ]
   const chartTypes = [
+    { value: "table", label: tr("chartTable") },
     { value: "bar", label: tr("chartBar") },
     { value: "line", label: tr("chartLine") },
     { value: "pie", label: tr("chartPie") },
     { value: "area", label: tr("chartArea") },
   ]
+  const entityOptions = ENTITY_KEYS.map(key => ({
+    value: key,
+    label: tr(`entity${key.charAt(0).toUpperCase() + key.slice(1)}` as any),
+  }))
+
+  // Build translated field labels
+  const ENTITY_FIELDS = useMemo(() => {
+    const result: Record<string, { name: string; label: string; type: string }[]> = {}
+    for (const [entityKey, fieldDefs] of Object.entries(ENTITY_FIELD_DEFS)) {
+      result[entityKey] = fieldDefs.map(f => ({
+        name: f.name,
+        label: tr(f.tKey as any),
+        type: f.type,
+      }))
+    }
+    return result
+  }, [tr])
 
   // -- Config state --
   const [entity, setEntity] = useState("deals")
@@ -231,7 +223,7 @@ export default function ReportBuilderPage() {
 
   const debounceRef = useRef<NodeJS.Timeout | null>(null)
 
-  const fields = useMemo(() => ENTITY_FIELDS[entity] || [], [entity])
+  const fields = useMemo(() => ENTITY_FIELDS[entity] || [], [entity, ENTITY_FIELDS])
 
   // When entity changes, reset columns to first 3 fields
   useEffect(() => {
@@ -240,7 +232,7 @@ export default function ReportBuilderPage() {
     setGroupBy("")
     setSortBy("")
     setFilters([])
-  }, [entity])
+  }, [entity, ENTITY_FIELDS])
 
   // -- Build config object --
   const buildConfig = useCallback(
@@ -262,10 +254,15 @@ export default function ReportBuilderPage() {
     debounceRef.current = setTimeout(async () => {
       setLoading(true)
       try {
+        // Skip filters with empty values to avoid matching nothing
+        const cleanConfig = {
+          ...cfg,
+          filters: cfg.filters.filter(f => f.value.trim() !== ""),
+        }
         const res = await fetch("/api/v1/reports/builder/preview", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(cfg),
+          body: JSON.stringify(cleanConfig),
         })
         if (res.ok) {
           const data = await res.json()
@@ -560,11 +557,11 @@ export default function ReportBuilderPage() {
       </div>
 
       {/* Main layout: left config + right preview */}
-      <div className="flex gap-4" style={{ minHeight: "calc(100vh - 200px)" }}>
+      <div className="flex gap-4 items-start" style={{ minHeight: "calc(100vh - 200px)" }}>
         {/* ============== LEFT PANEL ============== */}
         <div
-          className="w-[350px] shrink-0 space-y-4 overflow-y-auto pr-1"
-          style={{ maxHeight: "calc(100vh - 200px)" }}
+          className="w-[350px] shrink-0 space-y-4 overflow-y-auto pr-1 sticky top-4"
+          style={{ maxHeight: "calc(100vh - 120px)" }}
         >
           {/* Entity Selector */}
           <Card>
@@ -576,7 +573,7 @@ export default function ReportBuilderPage() {
                 value={entity}
                 onChange={(e) => setEntity(e.target.value)}
               >
-                {ENTITY_OPTIONS.map((ent) => (
+                {entityOptions.map((ent) => (
                   <option key={ent.value} value={ent.value}>
                     {ent.label}
                   </option>
@@ -866,7 +863,7 @@ export default function ReportBuilderPage() {
                 </CardTitle>
                 <div className="flex items-center gap-1.5">
                   <Badge variant="outline" className="text-xs">
-                    {ENTITY_OPTIONS.find((e) => e.value === entity)?.label}
+                    {entityOptions.find((e) => e.value === entity)?.label}
                   </Badge>
                   <Badge variant="outline" className="text-xs">
                     {chartTypes.find((c) => c.value === chartType)?.label}
@@ -914,7 +911,7 @@ export default function ReportBuilderPage() {
             </div>
             <div className="flex flex-wrap gap-1.5">
               <Badge variant="outline">
-                {ENTITY_OPTIONS.find((e) => e.value === entity)?.label}
+                {entityOptions.find((e) => e.value === entity)?.label}
               </Badge>
               <Badge variant="outline">{columns.length} {tr("columnsLower")}</Badge>
               <Badge variant="outline">{filters.length} {tr("filtersLower")}</Badge>
