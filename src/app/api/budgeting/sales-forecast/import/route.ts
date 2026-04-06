@@ -29,7 +29,8 @@ export async function POST(req: NextRequest) {
 
   const arrayBuffer = await file.arrayBuffer()
   const wb = new ExcelJS.Workbook()
-  await wb.xlsx.load(Buffer.from(arrayBuffer))
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await wb.xlsx.load(Buffer.from(arrayBuffer) as any)
 
   const ws = wb.worksheets[0]
   if (!ws) {

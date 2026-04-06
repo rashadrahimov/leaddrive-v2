@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { prisma, logAudit } from "@/lib/prisma"
 import { getOrgId } from "@/lib/api-auth"
+import { getSession } from "@/lib/api-auth"
+import { getFieldPermissions, filterEntityFields, filterWritableFields } from "@/lib/field-filter"
+import { applyRecordFilter } from "@/lib/sharing-rules"
 import { executeWorkflows } from "@/lib/workflow-engine"
 import { createNotification } from "@/lib/notifications"
 import { fireWebhooks } from "@/lib/webhooks"
@@ -24,8 +27,10 @@ const createDealSchema = z.object({
 })
 
 export async function GET(req: NextRequest) {
-  const orgId = await getOrgId(req)
+  const session = await getSession(req)
+  const orgId = session?.orgId || await getOrgId(req)
   if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  const role = session?.role || "admin"
 
   const { searchParams } = new URL(req.url)
   const search = searchParams.get("search") || ""
@@ -39,13 +44,14 @@ export async function GET(req: NextRequest) {
   try {
     const companyId = searchParams.get("companyId")
     const pipelineId = searchParams.get("pipelineId")
-    const where = {
+    let where: any = {
       organizationId: orgId,
       ...(search ? { name: { contains: search, mode: "insensitive" as const } } : {}),
       ...(stage ? { stage } : {}),
       ...(companyId ? { companyId } : {}),
       ...(pipelineId ? { pipelineId } : {}),
     }
+    where = await applyRecordFilter(orgId, session?.userId || "", role, "deal", where)
 
     const [deals, total] = await Promise.all([
       prisma.deal.findMany({
@@ -92,18 +98,24 @@ export async function GET(req: NextRequest) {
       })),
     }
 
-    return NextResponse.json({ success: true, data: { deals, total, page, limit, pipelineSummary } })
+    const fieldPerms = await getFieldPermissions(orgId, role, "deal")
+    const filteredDeals = deals.map(d => filterEntityFields(d, fieldPerms, role))
+
+    return NextResponse.json({ success: true, data: { deals: filteredDeals, total, page, limit, pipelineSummary } })
   } catch {
     return NextResponse.json({ success: true, data: { deals: [], total: 0, page, limit } })
   }
 }
 
 export async function POST(req: NextRequest) {
-  const orgId = await getOrgId(req)
+  const session = await getSession(req)
+  const orgId = session?.orgId || await getOrgId(req)
   if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  const role = session?.role || "admin"
 
   const body = await req.json()
-  const parsed = createDealSchema.safeParse(body)
+  const filtered = await filterWritableFields(orgId, role, "deal", body)
+  const parsed = createDealSchema.safeParse(filtered)
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 })
   }

@@ -12,7 +12,7 @@ import {
   Settings, ChevronLeft, DollarSign, Target, Send,
   TrendingUp, Filter, Workflow, Server, Bell, CalendarDays, Headphones, Package,
   Lock, PiggyBank, FolderKanban, Wallet, MapPin, Route, Camera, AlertTriangle,
-  ClipboardList, ShoppingCart, UserCog, GitBranch, Plug, Keyboard,
+  ClipboardList, ShoppingCart, UserCog, GitBranch, Plug, Keyboard, Shield, Phone,
 } from "lucide-react"
 import { useState } from "react"
 import { Logo } from "@/components/logo"
@@ -44,6 +44,7 @@ const navItems: NavItem[] = [
   { module: "leads", href: "/ai-scoring", icon: Target, tKey: "aiScoring", group: "Marketing" },
   { module: "leads", href: "/journeys", icon: Workflow, tKey: "journeys", group: "Marketing" },
   { module: "events", href: "/events", icon: CalendarDays, tKey: "events", group: "Marketing" },
+  { module: "campaigns", href: "/pages", icon: FileText, tKey: "landingPages", group: "Marketing" },
   { module: "omnichannel", href: "/inbox", icon: MessageSquare, tKey: "inbox", group: "Communication" },
   { module: "tickets", href: "/tickets", icon: Ticket, tKey: "tickets", group: "Support" },
   { module: "tickets", href: "/support/agent-desktop", icon: Headphones, tKey: "agentDesktop", group: "Support" },
@@ -56,6 +57,7 @@ const navItems: NavItem[] = [
   { module: "profitability", href: "/pricing", icon: DollarSign, tKey: "pricing", group: "Finance" },
   { module: "deals", href: "/forecast", icon: TrendingUp, tKey: "forecast", group: "Analytics" },
   { module: "reports", href: "/reports", icon: BarChart3, tKey: "reports", group: "Analytics" },
+  { module: "reports", href: "/reports/builder", icon: FileSpreadsheet, tKey: "reportBuilder", group: "Analytics" },
   { module: "ai", href: "/ai-command-center", icon: Brain, tKey: "aiCenter", group: "Analytics" },
   { module: "projects", href: "/projects", icon: FolderKanban, tKey: "projects", group: "ERP" },
   { module: "mtm", href: "/mtm", icon: MapPin, tKey: "mtmDashboard", group: "Route & Field" },
@@ -77,6 +79,8 @@ const navItems: NavItem[] = [
   { module: "deals", href: "/settings/quotas", icon: Target, tKey: "quotas", group: "Settings" },
   { module: "core", href: "/settings/integrations", icon: Plug, tKey: "integrations", group: "Settings" },
   { module: "core", href: "/settings/macros", icon: Keyboard, tKey: "macros", group: "Settings" },
+  { module: "core", href: "/settings/field-permissions", icon: Shield, tKey: "fieldPermissions", group: "Settings" },
+  { module: "core", href: "/settings/voip", icon: Phone, tKey: "voip", group: "Settings" },
   { module: "core", href: "/settings", icon: Settings, tKey: "settings", group: "Settings" },
 ]
 

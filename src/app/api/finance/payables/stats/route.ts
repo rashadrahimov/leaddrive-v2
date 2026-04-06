@@ -32,7 +32,7 @@ export async function GET(req: NextRequest) {
   let overdueCount = 0
   const vendorMap: Record<string, { vendorName: string; vendorId?: string; amount: number; billCount: number }> = {}
 
-  bills.forEach((bill) => {
+  bills.forEach((bill: typeof bills[number]) => {
     const balance = bill.balanceDue || 0
     total += balance
 
@@ -60,7 +60,7 @@ export async function GET(req: NextRequest) {
 
   // Upcoming payments (next 7 days)
   const sevenDays = new Date(now.getTime() + 7 * 86400000)
-  const upcomingPayments = bills.filter((b) => b.dueDate && new Date(b.dueDate) >= now && new Date(b.dueDate) <= sevenDays)
+  const upcomingPayments = bills.filter((b: typeof bills[number]) => b.dueDate && new Date(b.dueDate) >= now && new Date(b.dueDate) <= sevenDays)
 
   return NextResponse.json({
     data: {

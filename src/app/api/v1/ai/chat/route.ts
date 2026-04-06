@@ -3,10 +3,11 @@ import { getSession } from "@/lib/api-auth"
 import { prisma } from "@/lib/prisma"
 import Anthropic from "@anthropic-ai/sdk"
 import { checkRateLimit, RATE_LIMIT_CONFIG } from "@/lib/rate-limit"
-import { CRM_TOOLS, TOOL_META, getEnabledTools } from "@/lib/ai/tools"
+import { CRM_TOOLS, TOOL_META, getEnabledTools, getEnabledToolsForAgent } from "@/lib/ai/tools"
 import { executeTool } from "@/lib/ai/tool-executor"
 import { predictDealWin } from "@/lib/ai/predictive"
 import { generateNextBestActions } from "@/lib/ai/next-best-action"
+import { routeToAgent } from "@/lib/ai/agent-router"
 
 function getClient(): Anthropic | null {
   if (!process.env.ANTHROPIC_API_KEY) return null
@@ -25,7 +26,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Too many Da Vinci requests. Please try again later." }, { status: 429 })
   }
 
-  const { message, context, history, locale } = await req.json()
+  const { message, context, history, locale, previousAgentId, sessionId } = await req.json()
   if (!message) return NextResponse.json({ error: "Message required" }, { status: 400 })
 
   const client = getClient()
@@ -64,11 +65,29 @@ export async function POST(req: NextRequest) {
     }
     const forceLang = langMap[locale || "ru"] || "Russian"
 
-    // Load agent config for tools
-    const agentConfig = await prisma.aiAgentConfig.findFirst({
-      where: { organizationId: orgId, isActive: true },
-    })
-    const tools = getEnabledTools(agentConfig?.toolsEnabled || [])
+    // Multi-agent routing: classify intent and find best agent
+    const { agent: agentConfig, intent, confidence, isHandoff } = await routeToAgent(
+      orgId, message, previousAgentId
+    )
+
+    // Record handoff if agent changed
+    if (isHandoff && previousAgentId && agentConfig) {
+      try {
+        await prisma.agentHandoff.create({
+          data: {
+            organizationId: orgId,
+            sessionId: sessionId ?? crypto.randomUUID(),
+            fromAgentId: previousAgentId,
+            toAgentId: agentConfig.id,
+            reason: `Intent: ${intent} (confidence: ${confidence})`,
+            context: { lastMessages: (history || []).slice(-3) },
+          },
+        })
+      } catch { /* ignore handoff logging errors */ }
+    }
+
+    // Get tools filtered by agent type
+    const tools = agentConfig ? getEnabledToolsForAgent(agentConfig) : getEnabledTools([])
 
     // Context enrichment: deal prediction + next actions when on deal page
     let aiInsightsContext = ""
@@ -86,7 +105,9 @@ export async function POST(req: NextRequest) {
       } catch { /* ignore enrichment errors */ }
     }
 
-    const systemPrompt = `You are Da Vinci — an intelligent CRM assistant for Güvən Technology LLC, an IT outsourcing company in Baku, Azerbaijan.
+    const agentName = agentConfig?.configName || "Da Vinci"
+    const agentSystemPrompt = agentConfig?.systemPrompt ? `${agentConfig.systemPrompt}\n\n` : ""
+    const systemPrompt = `${agentSystemPrompt}You are ${agentName} — an intelligent CRM assistant (type: ${agentConfig?.agentType || "general"}) for Güvən Technology LLC, an IT outsourcing company in Baku, Azerbaijan.
 
 CRITICAL RULE #1: You MUST always respond in ${forceLang}. This is non-negotiable regardless of what language the user writes in.
 
@@ -126,7 +147,8 @@ Rules:
 
     // Multi-turn tool use loop
     let currentMessages = [...messages]
-    for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
+    const maxRounds = agentConfig?.maxToolRounds || MAX_TOOL_ROUNDS
+    for (let round = 0; round < maxRounds; round++) {
       const response = await client.messages.create({
         model: agentConfig?.model || "claude-sonnet-4-20250514",
         max_tokens: agentConfig?.maxTokens || 1024,
@@ -242,6 +264,8 @@ Rules:
           completionTokens: totalOutputTokens,
           costUsd: (totalInputTokens * 0.003 + totalOutputTokens * 0.015) / 1000,
           toolsCalled,
+          agentConfigId: agentConfig?.id,
+          agentType: agentConfig?.agentType,
         },
       })
     } catch (err) { console.error(err) }
@@ -251,6 +275,10 @@ Rules:
       data: {
         reply: textReply,
         actions: allActions.length > 0 ? allActions : undefined,
+        agentId: agentConfig?.id,
+        agentName: agentConfig?.configName,
+        agentType: agentConfig?.agentType,
+        intent,
       },
     })
   } catch (e) {

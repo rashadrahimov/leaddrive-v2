@@ -7,6 +7,7 @@ const updateSchema = z.object({
   counterpartyName: z.string().min(1).max(200).optional(),
   counterpartyId: z.string().max(100).optional().nullable(),
   billId: z.string().max(100).optional().nullable(),
+  bankAccountId: z.string().max(100).optional().nullable(),
   amount: z.union([z.string().min(1), z.number().min(0.01)]).optional(),
   currency: z.string().max(10).optional(),
   purpose: z.string().min(1).max(2000).optional(),
@@ -55,6 +56,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   if (data.counterpartyName !== undefined) updateData.counterpartyName = data.counterpartyName
   if (data.counterpartyId !== undefined) updateData.counterpartyId = data.counterpartyId
   if (data.billId !== undefined) updateData.billId = data.billId
+  if (data.bankAccountId !== undefined) updateData.bankAccountId = data.bankAccountId
   if (data.amount !== undefined) updateData.amount = parseFloat(String(data.amount))
   if (data.currency !== undefined) updateData.currency = data.currency
   if (data.purpose !== undefined) updateData.purpose = data.purpose

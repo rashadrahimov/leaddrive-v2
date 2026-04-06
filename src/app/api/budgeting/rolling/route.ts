@@ -83,8 +83,8 @@ export async function POST(req: NextRequest) {
     const sourceLines = await prisma.budgetLine.findMany({ where: { planId: sourcePlan.id } })
 
     // Clone parent lines first, then children with mapped parentId
-    const parentLines = sourceLines.filter(sl => !sl.parentId)
-    const childLines = sourceLines.filter(sl => sl.parentId)
+    const parentLines = sourceLines.filter((sl: any) => !sl.parentId)
+    const childLines = sourceLines.filter((sl: any) => sl.parentId)
     const idMapping = new Map<string, string>()
 
     for (const sl of parentLines) {
@@ -257,7 +257,7 @@ export async function PATCH(req: NextRequest) {
     })
     if (sampleForecasts.length > 0) {
       await prisma.budgetForecastEntry.createMany({
-        data: sampleForecasts.map((f) => ({
+        data: sampleForecasts.map((f: any) => ({
           organizationId: orgId,
           planId,
           year: nextYear,
@@ -307,18 +307,18 @@ export async function GET(req: NextRequest) {
   })
 
   // Build blended data per month — separate revenue and expense
-  const blended = months.map((m) => {
-    const monthActuals = actuals.filter((a) => {
+  const blended = months.map((m: any) => {
+    const monthActuals = actuals.filter((a: any) => {
       if (!a.expenseDate) return false
       const d = new Date(a.expenseDate)
       return d.getFullYear() === m.year && d.getMonth() + 1 === m.month
     })
-    const monthForecasts = forecasts.filter((f) => f.year === m.year && f.month === m.month)
+    const monthForecasts = forecasts.filter((f: any) => f.year === m.year && f.month === m.month)
 
-    const actualRevenue = monthActuals.filter(a => a.lineType === "revenue").reduce((s, a) => s + a.actualAmount, 0)
-    const actualExpense = monthActuals.filter(a => a.lineType === "expense").reduce((s, a) => s + a.actualAmount, 0)
-    const forecastRevenue = monthForecasts.filter(f => f.lineType === "revenue").reduce((s, f) => s + f.forecastAmount, 0)
-    const forecastExpense = monthForecasts.filter(f => f.lineType === "expense").reduce((s, f) => s + f.forecastAmount, 0)
+    const actualRevenue = monthActuals.filter((a: any) => a.lineType === "revenue").reduce((s: number, a: any) => s + a.actualAmount, 0)
+    const actualExpense = monthActuals.filter((a: any) => a.lineType === "expense").reduce((s: number, a: any) => s + a.actualAmount, 0)
+    const forecastRevenue = monthForecasts.filter((f: any) => f.lineType === "revenue").reduce((s: number, f: any) => s + f.forecastAmount, 0)
+    const forecastExpense = monthForecasts.filter((f: any) => f.lineType === "expense").reduce((s: number, f: any) => s + f.forecastAmount, 0)
 
     const hasActuals = (actualRevenue + actualExpense) > 0
     const revenue = hasActuals ? actualRevenue : forecastRevenue
@@ -337,7 +337,7 @@ export async function GET(req: NextRequest) {
     }
   })
 
-  const totals = blended.reduce((acc, m) => ({
+  const totals = blended.reduce((acc: { revenue: number; expense: number; margin: number }, m: any) => ({
     revenue: acc.revenue + m.revenue,
     expense: acc.expense + m.expense,
     margin: acc.margin + m.margin,

@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
-import { getOrgId } from "@/lib/api-auth"
+import { getSession } from "@/lib/api-auth"
 
 export async function GET(req: NextRequest) {
-  const ctx = await getOrgId(req)
-  if (!ctx.userId) {
+  const ctx = await getSession(req)
+  if (!ctx?.userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
@@ -22,8 +22,8 @@ export async function GET(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
-  const ctx = await getOrgId(req)
-  if (!ctx.userId) {
+  const ctx = await getSession(req)
+  if (!ctx?.userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 

@@ -6,8 +6,8 @@ import { prisma } from "@/lib/prisma"
 const createIntegrationSchema = z.object({
   provider: z.string().min(1).max(100),
   name: z.string().min(1).max(200),
-  config: z.record(z.unknown()).optional(),
-  categoryMapping: z.record(z.unknown()).optional(),
+  config: z.record(z.string(), z.unknown()).optional(),
+  categoryMapping: z.record(z.string(), z.unknown()).optional(),
 }).strict()
 
 const deleteIntegrationSchema = z.object({

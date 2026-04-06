@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { prisma, logAudit } from "@/lib/prisma"
-import { getOrgId } from "@/lib/api-auth"
+import { getOrgId, getSession } from "@/lib/api-auth"
+import { getFieldPermissions, filterEntityFields, filterWritableFields } from "@/lib/field-filter"
+import { applyRecordFilter } from "@/lib/sharing-rules"
 import { executeWorkflows } from "@/lib/workflow-engine"
 import { createNotification } from "@/lib/notifications"
 import { applyLeadAssignmentRules } from "@/lib/lead-assignment"
@@ -20,8 +22,10 @@ const createLeadSchema = z.object({
 })
 
 export async function GET(req: NextRequest) {
-  const orgId = await getOrgId(req)
+  const session = await getSession(req)
+  const orgId = session?.orgId || await getOrgId(req)
   if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  const role = session?.role || "admin"
 
   const { searchParams } = new URL(req.url)
   const search = searchParams.get("search") || ""
@@ -32,7 +36,7 @@ export async function GET(req: NextRequest) {
   const includeConverted = searchParams.get("includeConverted") === "true"
 
   try {
-    const where: any = {
+    let where: any = {
       organizationId: orgId,
       ...(search ? {
         OR: [
@@ -44,6 +48,8 @@ export async function GET(req: NextRequest) {
       ...(status ? { status } : includeConverted ? {} : { status: { not: "converted" } }),
     }
 
+    where = await applyRecordFilter(orgId, session?.userId || "", role, "lead", where)
+
     const [leads, total] = await Promise.all([
       prisma.lead.findMany({
         where,
@@ -54,32 +60,38 @@ export async function GET(req: NextRequest) {
       prisma.lead.count({ where }),
     ])
 
-    return NextResponse.json({ success: true, data: { leads, total, page, limit } })
+    const fieldPerms = await getFieldPermissions(orgId, role, "lead")
+    const filteredLeads = leads.map(l => filterEntityFields(l, fieldPerms, role))
+
+    return NextResponse.json({ success: true, data: { leads: filteredLeads, total, page, limit } })
   } catch {
     return NextResponse.json({ success: true, data: { leads: [], total: 0, page, limit } })
   }
 }
 
 export async function POST(req: NextRequest) {
-  const orgId = await getOrgId(req)
+  const session = await getSession(req)
+  const orgId = session?.orgId || await getOrgId(req)
   if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  const role = session?.role || "admin"
   const body = await req.json()
   const parsed = createLeadSchema.safeParse(body)
   if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 })
 
   try {
+    const writableData = filterWritableFields(parsed.data, await getFieldPermissions(orgId, role, "lead"), role)
     const lead = await prisma.lead.create({
       data: {
         organizationId: orgId,
-        contactName: parsed.data.contactName,
-        companyName: parsed.data.companyName,
-        email: parsed.data.email || null,
-        phone: parsed.data.phone,
-        source: parsed.data.source,
-        status: parsed.data.status || "new",
-        priority: parsed.data.priority || "medium",
-        estimatedValue: parsed.data.estimatedValue,
-        notes: parsed.data.notes,
+        contactName: writableData.contactName ?? parsed.data.contactName,
+        companyName: writableData.companyName ?? parsed.data.companyName,
+        email: writableData.email || parsed.data.email || null,
+        phone: writableData.phone ?? parsed.data.phone,
+        source: writableData.source ?? parsed.data.source,
+        status: writableData.status || parsed.data.status || "new",
+        priority: writableData.priority || parsed.data.priority || "medium",
+        estimatedValue: writableData.estimatedValue ?? parsed.data.estimatedValue,
+        notes: writableData.notes ?? parsed.data.notes,
       },
     })
     logAudit(orgId, "create", "lead", lead.id, lead.contactName)

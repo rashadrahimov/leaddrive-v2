@@ -64,7 +64,7 @@ export async function POST(req: NextRequest) {
     data: {
       organizationId: orgId,
       currencyCode,
-      rate: parseFloat(rate),
+      rate: parseFloat(String(rate)),
       rateDate: rateDate ? new Date(rateDate) : new Date(),
     },
   })
@@ -72,7 +72,7 @@ export async function POST(req: NextRequest) {
   // Also update the Currency table's exchangeRate for convenience
   await prisma.currency.updateMany({
     where: { organizationId: orgId, code: currencyCode },
-    data: { exchangeRate: parseFloat(rate) },
+    data: { exchangeRate: parseFloat(String(rate)) },
   })
 
   return NextResponse.json(entry, { status: 201 })

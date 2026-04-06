@@ -563,10 +563,12 @@ export function useBudgetVersions(planId: string | null) {
   return useQuery({
     queryKey: ["budgeting", "versions", planId],
     queryFn: async () => {
-      const res = await apiFetch(`/api/budgeting/plans/${planId}/versions`, orgId)
+      const res = await fetch(`/api/budgeting/plans/${planId}/versions`, {
+        headers: { "Content-Type": "application/json", "x-organization-id": orgId },
+      })
       const json = await res.json()
       if (!res.ok) throw new Error(json.error || "API error")
-      return json as Array<{
+      return json.data as Array<{
         id: string
         name: string
         status: string
@@ -607,13 +609,13 @@ export function useBudgetDiff(planIdA: string | null, planIdB: string | null) {
   return useQuery({
     queryKey: ["budgeting", "diff", planIdA, planIdB],
     queryFn: async () => {
-      const res = await apiFetch(
+      const res = await fetch(
         `/api/budgeting/plans/${planIdA}/diff?compareWith=${planIdB}`,
-        orgId,
+        { headers: { "Content-Type": "application/json", "x-organization-id": orgId } },
       )
       const json = await res.json()
       if (!res.ok) throw new Error(json.error || "API error")
-      return json as {
+      return json.data as {
         planA: string
         planB: string
         totalChanges: number
@@ -642,10 +644,12 @@ export function useExchangeRates(currencyCode?: string) {
   return useQuery({
     queryKey: ["budgeting", "exchange-rates", currencyCode || "all"],
     queryFn: async () => {
-      const res = await apiFetch(url, orgId)
+      const res = await fetch(url, {
+        headers: { "Content-Type": "application/json", "x-organization-id": orgId },
+      })
       const json = await res.json()
       if (!res.ok) throw new Error(json.error || "API error")
-      return json as {
+      return json.data as {
         rates: Array<{
           id: string
           currencyCode: string
@@ -693,10 +697,12 @@ export function useAccountingIntegrations() {
   return useQuery({
     queryKey: ["budgeting", "integrations"],
     queryFn: async () => {
-      const res = await apiFetch("/api/budgeting/integrations", orgId)
+      const res = await fetch("/api/budgeting/integrations", {
+        headers: { "Content-Type": "application/json", "x-organization-id": orgId },
+      })
       const json = await res.json()
       if (!res.ok) throw new Error(json.error || "API error")
-      return json as any[]
+      return json.data as any[]
     },
     enabled: !!orgId,
   })
@@ -750,10 +756,12 @@ export function useImportHistory(planId?: string) {
   return useQuery({
     queryKey: ["budgeting", "import-history", planId || "all"],
     queryFn: async () => {
-      const res = await apiFetch(url, orgId)
+      const res = await fetch(url, {
+        headers: { "Content-Type": "application/json", "x-organization-id": orgId },
+      })
       const json = await res.json()
       if (!res.ok) throw new Error(json.error || "API error")
-      return json as any[]
+      return json.data as any[]
     },
     enabled: !!orgId,
   })
@@ -801,10 +809,16 @@ export function useRollingForecast(planId: string | null) {
           actualTotal: number
           forecastTotal: number
           total: number
+          revenue: number
+          expense: number
+          margin: number
         }>
         lineCount: number
         totalActual: number
         totalForecast: number
+        revenue: number
+        expense: number
+        margin: number
       }
     },
     enabled: !!orgId && !!planId,

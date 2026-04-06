@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { prisma, logAudit } from "@/lib/prisma"
-import { getOrgId } from "@/lib/api-auth"
+import { getOrgId, getSession } from "@/lib/api-auth"
+import { getFieldPermissions, filterEntityFields, filterWritableFields } from "@/lib/field-filter"
 
 const updateCompanySchema = z.object({
   name: z.string().min(1).max(200).optional(),
@@ -27,8 +28,10 @@ export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const orgId = await getOrgId(req)
+  const session = await getSession(req)
+  const orgId = session?.orgId || await getOrgId(req)
   if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  const role = session?.role || "admin"
   const { id } = await params
 
   try {
@@ -43,7 +46,9 @@ export async function GET(
       },
     })
     if (!company) return NextResponse.json({ error: "Not found" }, { status: 404 })
-    return NextResponse.json({ success: true, data: company })
+    const fieldPerms = await getFieldPermissions(orgId, role, "company")
+    const filtered = filterEntityFields(company, fieldPerms, role)
+    return NextResponse.json({ success: true, data: filtered })
   } catch (e) {
     console.error(e)
     return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 })
@@ -54,17 +59,21 @@ export async function PUT(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const orgId = await getOrgId(req)
+  const session = await getSession(req)
+  const orgId = session?.orgId || await getOrgId(req)
   if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  const role = session?.role || "admin"
   const { id } = await params
   const body = await req.json()
   const parsed = updateCompanySchema.safeParse(body)
   if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 })
 
   try {
+    const fieldPerms = await getFieldPermissions(orgId, role, "company")
+    const allowedData = filterWritableFields(parsed.data || body, fieldPerms, role)
     const company = await prisma.company.updateMany({
       where: { id, organizationId: orgId },
-      data: parsed.data,
+      data: allowedData,
     })
     if (company.count === 0) return NextResponse.json({ error: "Not found" }, { status: 404 })
     const updated = await prisma.company.findFirst({ where: { id, organizationId: orgId } })

@@ -15,6 +15,8 @@ import { Dialog, DialogHeader, DialogTitle, DialogContent, DialogFooter } from "
 import { ArrowLeft, Mail, Phone, Building2, Pencil, Calendar, MessageSquare, Plus, X, Loader2, Sparkles, Star, DollarSign, Activity, Tag, CheckCircle2, Clock } from "lucide-react"
 import { ColorStatCard } from "@/components/color-stat-card"
 import { InfoHint } from "@/components/info-hint"
+import { useFieldPermissions } from "@/hooks/use-field-permissions"
+import { ClickToCallButton } from "@/components/call-widget"
 
 interface Activity {
   id: string
@@ -125,10 +127,25 @@ export default function ContactDetailPage() {
   const [loading, setLoading] = useState(true)
   const id = params.id as string
   const orgId = session?.user?.organizationId
+  const { isVisible, isEditable } = useFieldPermissions("contact")
 
   // Da Vinci Recommendations
   const [recommendations, setRecommendations] = useState<any[]>([])
   const [loadingRecs, setLoadingRecs] = useState(false)
+
+  // Call History
+  const [callHistory, setCallHistory] = useState<any[]>([])
+  const [callsLoading, setCallsLoading] = useState(false)
+
+  const loadCallHistory = async () => {
+    setCallsLoading(true)
+    try {
+      const res = await fetch(`/api/v1/calls?contactId=${id}&limit=20`)
+      const json = await res.json()
+      if (json.success) setCallHistory(json.data || [])
+    } catch { /* ignore */ }
+    finally { setCallsLoading(false) }
+  }
 
   // Edit dialog
   const [showEdit, setShowEdit] = useState(false)
@@ -271,31 +288,42 @@ export default function ContactDetailPage() {
                   </>
                 )}
               </div>
-              {contact.email && <p className="text-xs text-muted-foreground mt-0.5">{contact.email}</p>}
-              {contact.phone && <p className="text-xs text-muted-foreground">{contact.phone}</p>}
+              {isVisible("email") && contact.email && <p className="text-xs text-muted-foreground mt-0.5">{contact.email}</p>}
+              {isVisible("phone") && contact.phone && <p className="text-xs text-muted-foreground">{contact.phone}</p>}
+              {/* Additional phones */}
+              {isVisible("phone") && contact.phones?.filter(p => p.trim()).length > 0 && (
+                <div className="flex flex-wrap items-center gap-2 mt-0.5">
+                  {contact.phones.filter(p => p.trim()).map((p, i) => (
+                    <div key={i} className="flex items-center gap-1">
+                      <span className="text-xs text-muted-foreground">{p}</span>
+                      <ClickToCallButton phone={p} contactId={contact.id} contactName={contact.fullName} />
+                    </div>
+                  ))}
+                </div>
+              )}
               {/* Communication action buttons */}
               <div className="flex items-center gap-2 mt-2">
-                {contact.phone && (
-                  <a href={`tel:${contact.phone}`} title={t("call")} className="h-8 w-8 rounded-full bg-green-500 hover:bg-green-600 flex items-center justify-center transition-colors shadow-sm">
-                    <Phone className="h-3.5 w-3.5 text-white" />
-                  </a>
+                {isVisible("phone") && contact.phone && (
+                  <ClickToCallButton phone={contact.phone!} contactId={contact.id} contactName={contact.fullName} />
                 )}
-                {contact.email && (
+                {isVisible("email") && contact.email && (
                   <a href={`mailto:${contact.email}`} title={tc("email")} className="h-8 w-8 rounded-full bg-orange-500 hover:bg-orange-600 flex items-center justify-center transition-colors shadow-sm">
                     <Mail className="h-3.5 w-3.5 text-white" />
                   </a>
                 )}
-                {contact.phone && (
+                {isVisible("phone") && contact.phone && (
                   <a href={`https://wa.me/${contact.phone.replace(/[^0-9]/g, "")}`} target="_blank" title="WhatsApp" className="h-8 w-8 rounded-full bg-emerald-500 hover:bg-emerald-600 flex items-center justify-center transition-colors shadow-sm">
                     <MessageSquare className="h-3.5 w-3.5 text-white" />
                   </a>
                 )}
               </div>
+              {isVisible("tags") && (
               <div className="mt-1 flex gap-1">
                 {contact.tags.map(tag => (
                   <Badge key={tag} variant="secondary" className="text-xs">{tag}</Badge>
                 ))}
               </div>
+              )}
             </div>
           </div>
         </div>
@@ -348,6 +376,7 @@ export default function ContactDetailPage() {
           <TabsTrigger value="activities">{t("tabActivities")} ({contact.activities?.length || 0})</TabsTrigger>
           <TabsTrigger value="info">{t("tabOverview")}</TabsTrigger>
           <TabsTrigger value="engagement">{t("tabEngagement")}</TabsTrigger>
+          <TabsTrigger value="calls" onClick={() => { if (callHistory.length === 0 && !callsLoading) loadCallHistory() }}>Calls</TabsTrigger>
           <TabsTrigger value="recommendations" onClick={() => {
             if (recommendations.length === 0 && !loadingRecs) {
               setLoadingRecs(true)
@@ -484,6 +513,59 @@ export default function ContactDetailPage() {
         <TabsContent value="engagement">
           <ContactEngagement contactId={id} orgId={orgId ? String(orgId) : undefined} />
         </TabsContent>
+
+        {/* Call History */}
+        <TabsContent value="calls">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Call History</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {callsLoading ? (
+                <div className="flex justify-center py-8"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
+              ) : callHistory.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-6">No calls recorded yet</p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b text-left">
+                        <th className="py-2 px-2 font-medium">Date</th>
+                        <th className="py-2 px-2 font-medium">Direction</th>
+                        <th className="py-2 px-2 font-medium">Duration</th>
+                        <th className="py-2 px-2 font-medium">Status</th>
+                        <th className="py-2 px-2 font-medium">Number</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {callHistory.map((call: any) => (
+                        <tr key={call.id} className="border-b hover:bg-muted/50">
+                          <td className="py-2 px-2 text-muted-foreground">
+                            {new Date(call.createdAt).toLocaleString("ru-RU", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+                          </td>
+                          <td className="py-2 px-2">
+                            <Badge variant={call.direction === "outbound" ? "default" : "secondary"} className="text-xs">
+                              {call.direction === "outbound" ? "Outbound" : "Inbound"}
+                            </Badge>
+                          </td>
+                          <td className="py-2 px-2">
+                            {call.duration ? `${Math.floor(call.duration / 60)}:${String(call.duration % 60).padStart(2, "0")}` : "—"}
+                          </td>
+                          <td className="py-2 px-2">
+                            <span className={`text-xs font-medium ${call.status === "completed" ? "text-green-600" : call.status === "failed" || call.status === "no-answer" ? "text-red-500" : "text-muted-foreground"}`}>
+                              {call.status}
+                            </span>
+                          </td>
+                          <td className="py-2 px-2 text-muted-foreground">{call.direction === "outbound" ? call.toNumber : call.fromNumber}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
 
       {/* ── Edit Dialog ── */}
@@ -499,11 +581,11 @@ export default function ContactDetailPage() {
             </div>
             <div>
               <Label className="text-sm font-medium">{tc("email")}</Label>
-              <Input value={editData.email} onChange={e => setEditData(d => ({ ...d, email: e.target.value }))} className="mt-1" />
+              <Input value={editData.email} onChange={e => setEditData(d => ({ ...d, email: e.target.value }))} disabled={!isEditable("email")} className="mt-1" />
             </div>
             <div>
               <Label className="text-sm font-medium">{tc("phone")}</Label>
-              <Input value={editData.phone} onChange={e => setEditData(d => ({ ...d, phone: e.target.value }))} placeholder="+994..." className="mt-1" />
+              <Input value={editData.phone} onChange={e => setEditData(d => ({ ...d, phone: e.target.value }))} disabled={!isEditable("phone")} placeholder="+994..." className="mt-1" />
             </div>
             <div>
               <div className="flex items-center justify-between mb-1">
@@ -523,11 +605,11 @@ export default function ContactDetailPage() {
             </div>
             <div>
               <Label className="text-sm font-medium">{tc("position")}</Label>
-              <Input value={editData.position} onChange={e => setEditData(d => ({ ...d, position: e.target.value }))} className="mt-1" />
+              <Input value={editData.position} onChange={e => setEditData(d => ({ ...d, position: e.target.value }))} disabled={!isEditable("position")} className="mt-1" />
             </div>
             <div>
               <Label className="text-sm font-medium">Department</Label>
-              <Input value={editData.department} onChange={e => setEditData(d => ({ ...d, department: e.target.value }))} className="mt-1" />
+              <Input value={editData.department} onChange={e => setEditData(d => ({ ...d, department: e.target.value }))} disabled={!isEditable("department")} className="mt-1" />
             </div>
             <div>
               <Label className="text-sm font-medium">{tc("company")}</Label>
@@ -538,7 +620,7 @@ export default function ContactDetailPage() {
             </div>
             <div>
               <Label className="text-sm font-medium">{tc("source")}</Label>
-              <Input value={editData.source} onChange={e => setEditData(d => ({ ...d, source: e.target.value }))} className="mt-1" />
+              <Input value={editData.source} onChange={e => setEditData(d => ({ ...d, source: e.target.value }))} disabled={!isEditable("source")} className="mt-1" />
             </div>
           </div>
         </DialogContent>

@@ -92,8 +92,8 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     data: {
       ...(name !== undefined && { name }),
       ...(triggerType !== undefined && { triggerType }),
-      ...(percentage !== undefined && { percentage: percentage ? parseFloat(percentage) : null }),
-      ...(fixedAmount !== undefined && { fixedAmount: fixedAmount ? parseFloat(fixedAmount) : null }),
+      ...(percentage !== undefined && { percentage: percentage ? parseFloat(String(percentage)) : null }),
+      ...(fixedAmount !== undefined && { fixedAmount: fixedAmount ? parseFloat(String(fixedAmount)) : null }),
       ...(isActive !== undefined && { isActive }),
     },
   })

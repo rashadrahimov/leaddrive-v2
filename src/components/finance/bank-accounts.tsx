@@ -1,8 +1,9 @@
 "use client"
 
 import { useState } from "react"
+import { useTranslations } from "next-intl"
 import { useBankAccounts, useCreateBankAccount, useUpdateBankAccount, useDeleteBankAccount } from "@/lib/finance/hooks"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
@@ -12,6 +13,7 @@ import { Plus, Trash2, Edit2, Building2, Star } from "lucide-react"
 import type { BankAccount, CreateBankAccountInput } from "@/lib/finance/types"
 
 export function BankAccountsManager() {
+  const t = useTranslations("finance.ba")
   const { data: accounts, isLoading } = useBankAccounts()
   const createAccount = useCreateBankAccount()
   const updateAccount = useUpdateBankAccount()
@@ -19,7 +21,7 @@ export function BankAccountsManager() {
   const [showCreate, setShowCreate] = useState(false)
   const [editId, setEditId] = useState<string | null>(null)
 
-  if (isLoading) return <div className="p-8 text-center text-muted-foreground">Загрузка...</div>
+  if (isLoading) return <div className="p-8 text-center text-muted-foreground">{t("loading")}</div>
 
   const editingAccount = editId ? accounts?.find((a: BankAccount) => a.id === editId) : null
 
@@ -27,11 +29,11 @@ export function BankAccountsManager() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-semibold">Банковские счета</h3>
-          <p className="text-sm text-muted-foreground">Управление банковскими счетами организации</p>
+          <h3 className="text-lg font-semibold">{t("title")}</h3>
+          <p className="text-sm text-muted-foreground">{t("description")}</p>
         </div>
         <Button size="sm" onClick={() => setShowCreate(true)}>
-          <Plus className="w-4 h-4 mr-1" /> Добавить счёт
+          <Plus className="w-4 h-4 mr-1" /> {t("addAccount")}
         </Button>
       </div>
 
@@ -54,11 +56,11 @@ export function BankAccountsManager() {
                   <div className="flex items-center gap-1">
                     {acc.isDefault && (
                       <Badge variant="secondary" className="text-[10px] bg-amber-100 text-amber-700">
-                        <Star className="w-3 h-3 mr-0.5" /> По умолчанию
+                        <Star className="w-3 h-3 mr-0.5" /> {t("isDefault")}
                       </Badge>
                     )}
                     {!acc.isActive && (
-                      <Badge variant="secondary" className="text-[10px]">Неактивен</Badge>
+                      <Badge variant="secondary" className="text-[10px]">{t("inactive")}</Badge>
                     )}
                   </div>
                 </div>
@@ -66,24 +68,24 @@ export function BankAccountsManager() {
                 <div className="grid grid-cols-2 gap-2 text-sm">
                   {acc.accountNumber && (
                     <div>
-                      <p className="text-xs text-muted-foreground">Номер счёта</p>
+                      <p className="text-xs text-muted-foreground">{t("accountNumber")}</p>
                       <p className="font-mono text-xs">{acc.accountNumber}</p>
                     </div>
                   )}
                   {acc.bankCode && (
                     <div>
-                      <p className="text-xs text-muted-foreground">Код банка</p>
+                      <p className="text-xs text-muted-foreground">{t("bankCode")}</p>
                       <p className="font-mono text-xs">{acc.bankCode}</p>
                     </div>
                   )}
                   {acc.swiftCode && (
                     <div>
-                      <p className="text-xs text-muted-foreground">SWIFT</p>
+                      <p className="text-xs text-muted-foreground">{t("swift")}</p>
                       <p className="font-mono text-xs">{acc.swiftCode}</p>
                     </div>
                   )}
                   <div>
-                    <p className="text-xs text-muted-foreground">Валюта</p>
+                    <p className="text-xs text-muted-foreground">{t("currency")}</p>
                     <p className="text-xs font-medium">{acc.currency}</p>
                   </div>
                 </div>
@@ -91,13 +93,13 @@ export function BankAccountsManager() {
                 <div className="flex gap-1 pt-1 border-t">
                   {!acc.isDefault && acc.isActive && (
                     <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => updateAccount.mutate({ id: acc.id, isDefault: true })}>
-                      <Star className="w-3 h-3 mr-1" /> По умолчанию
+                      <Star className="w-3 h-3 mr-1" /> {t("setDefault")}
                     </Button>
                   )}
                   <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setEditId(acc.id)}>
-                    <Edit2 className="w-3 h-3 mr-1" /> Изменить
+                    <Edit2 className="w-3 h-3 mr-1" /> {t("edit")}
                   </Button>
-                  <Button size="sm" variant="ghost" className="h-7 text-xs text-red-500" onClick={() => { if (confirm("Удалить этот банковский счёт?")) deleteAccount.mutate(acc.id) }}>
+                  <Button size="sm" variant="ghost" className="h-7 text-xs text-red-500" onClick={() => { if (confirm(t("confirmDelete"))) deleteAccount.mutate(acc.id) }}>
                     <Trash2 className="w-3 h-3" />
                   </Button>
                 </div>
@@ -109,28 +111,26 @@ export function BankAccountsManager() {
         <Card>
           <CardContent className="py-12 text-center text-muted-foreground">
             <Building2 className="w-10 h-10 mx-auto mb-3 opacity-30" />
-            <p className="text-sm">Банковских счетов пока нет</p>
+            <p className="text-sm">{t("empty")}</p>
           </CardContent>
         </Card>
       )}
 
-      {/* Create Dialog */}
       <BankAccountDialog
         open={showCreate}
         onClose={() => setShowCreate(false)}
         onSave={(input) => createAccount.mutate(input, { onSuccess: () => setShowCreate(false) })}
         isPending={createAccount.isPending}
-        title="Новый банковский счёт"
+        isEdit={false}
       />
 
-      {/* Edit Dialog */}
       {editingAccount && (
         <BankAccountDialog
           open={!!editId}
           onClose={() => setEditId(null)}
           onSave={(input) => updateAccount.mutate({ id: editId!, ...input }, { onSuccess: () => setEditId(null) })}
           isPending={updateAccount.isPending}
-          title="Редактировать банковский счёт"
+          isEdit={true}
           initial={editingAccount}
         />
       )}
@@ -138,12 +138,13 @@ export function BankAccountsManager() {
   )
 }
 
-function BankAccountDialog({ open, onClose, onSave, isPending, title, initial }: {
+function BankAccountDialog({ open, onClose, onSave, isPending, isEdit, initial }: {
   open: boolean; onClose: () => void
   onSave: (input: CreateBankAccountInput) => void
-  isPending: boolean; title: string
+  isPending: boolean; isEdit: boolean
   initial?: BankAccount
 }) {
+  const t = useTranslations("finance.ba")
   const [form, setForm] = useState({
     accountName: initial?.accountName || "",
     accountNumber: initial?.accountNumber || "",
@@ -170,45 +171,47 @@ function BankAccountDialog({ open, onClose, onSave, isPending, title, initial }:
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
-        <DialogHeader><DialogTitle>{title}</DialogTitle></DialogHeader>
+        <DialogHeader>
+          <DialogTitle>{isEdit ? t("editTitle") : t("newAccount")}</DialogTitle>
+        </DialogHeader>
         <div className="grid gap-3">
           <div>
-            <Label className="text-xs">Название счёта *</Label>
-            <Input value={form.accountName} onChange={(e) => setForm({ ...form, accountName: e.target.value })} placeholder="напр. Основной расчётный счёт" />
+            <Label className="text-xs">{t("accountName")} *</Label>
+            <Input value={form.accountName} onChange={(e) => setForm({ ...form, accountName: e.target.value })} placeholder={t("accountNamePlaceholder")} />
           </div>
           <div>
-            <Label className="text-xs">Банк *</Label>
-            <Input value={form.bankName} onChange={(e) => setForm({ ...form, bankName: e.target.value })} placeholder="напр. Kapital Bank" />
+            <Label className="text-xs">{t("bankName")} *</Label>
+            <Input value={form.bankName} onChange={(e) => setForm({ ...form, bankName: e.target.value })} placeholder={t("bankNamePlaceholder")} />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label className="text-xs">Номер счёта</Label>
+              <Label className="text-xs">{t("accountNumber")}</Label>
               <Input value={form.accountNumber} onChange={(e) => setForm({ ...form, accountNumber: e.target.value })} placeholder="AZ..." className="font-mono" />
             </div>
             <div>
-              <Label className="text-xs">Код банка</Label>
+              <Label className="text-xs">{t("bankCode")}</Label>
               <Input value={form.bankCode} onChange={(e) => setForm({ ...form, bankCode: e.target.value })} placeholder="505037" />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label className="text-xs">SWIFT</Label>
+              <Label className="text-xs">{t("swift")}</Label>
               <Input value={form.swiftCode} onChange={(e) => setForm({ ...form, swiftCode: e.target.value })} placeholder="AIIBAZ2X" />
             </div>
             <div>
-              <Label className="text-xs">Валюта</Label>
+              <Label className="text-xs">{t("currency")}</Label>
               <Input value={form.currency} onChange={(e) => setForm({ ...form, currency: e.target.value })} placeholder="AZN" />
             </div>
           </div>
           <label className="flex items-center gap-2 cursor-pointer">
             <input type="checkbox" checked={form.isDefault} onChange={(e) => setForm({ ...form, isDefault: e.target.checked })} className="rounded border-border" />
-            <span className="text-sm">Счёт по умолчанию</span>
+            <span className="text-sm">{t("isDefault")}</span>
           </label>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Отмена</Button>
+          <Button variant="outline" onClick={onClose}>{t("cancel")}</Button>
           <Button onClick={handleSubmit} disabled={isPending || !form.accountName || !form.bankName}>
-            {isPending ? "Сохранение..." : "Сохранить"}
+            {isPending ? t("saving") : t("save")}
           </Button>
         </DialogFooter>
       </DialogContent>

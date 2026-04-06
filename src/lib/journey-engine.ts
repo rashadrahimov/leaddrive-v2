@@ -535,6 +535,91 @@ export async function processEnrollmentStep(enrollmentId: string, orgId: string)
         break
       }
 
+      case "ab_split": {
+        // A/B split: random routing by percentages
+        const paths = (currentStep as any).splitPaths as { percentage: number; nextStepId: string }[] | null
+        if (!paths || paths.length === 0) {
+          result = { stepId: currentStep.id, stepType: "ab_split", status: "skipped", message: "No split paths configured" }
+          break
+        }
+        const rand = Math.random() * 100
+        let cumulative = 0
+        let selectedPath = paths[paths.length - 1]
+        for (const path of paths) {
+          cumulative += path.percentage
+          if (rand <= cumulative) { selectedPath = path; break }
+        }
+        // Navigate directly to the selected path step
+        if (selectedPath.nextStepId) {
+          const targetStep = journey.steps.find((s: any) => s.id === selectedPath.nextStepId)
+          if (targetStep) {
+            await prisma.journeyStep.update({ where: { id: currentStep.id }, data: { statsCompleted: { increment: 1 } } })
+            await prisma.journeyEnrollment.update({
+              where: { id: enrollmentId },
+              data: { currentStepId: targetStep.id, nextActionAt: new Date() },
+            })
+            await prisma.journeyStep.update({ where: { id: targetStep.id }, data: { statsEntered: { increment: 1 } } })
+            return await processEnrollmentStep(enrollmentId, orgId)
+          }
+        }
+        result = { stepId: currentStep.id, stepType: "ab_split", status: "completed", message: `A/B split: routed to path` }
+        break
+      }
+
+      case "goal_check": {
+        // Check goal condition — if met, complete enrollment
+        const goalField = config.field || ""
+        const goalValue = config.value || ""
+        let goalMet = false
+
+        if (leadId) {
+          const lead = await prisma.lead.findUnique({ where: { id: leadId } })
+          if (lead) goalMet = String((lead as any)[goalField] || "") === goalValue
+        } else if (contactId) {
+          const contact = await prisma.contact.findUnique({ where: { id: contactId } })
+          if (contact) goalMet = String((contact as any)[goalField] || "") === goalValue
+        }
+
+        if (goalMet) {
+          await prisma.journeyEnrollment.update({
+            where: { id: enrollmentId },
+            data: { status: "completed", exitReason: "goal_reached", goalReachedAt: new Date(), completedAt: new Date() },
+          })
+          await prisma.journey.update({
+            where: { id: enrollment.journeyId },
+            data: { conversionCount: { increment: 1 }, activeCount: { decrement: 1 } },
+          })
+          return { stepId: currentStep.id, stepType: "goal_check", status: "completed", message: `Goal reached: ${goalField} = ${goalValue}` }
+        }
+        result = { stepId: currentStep.id, stepType: "goal_check", status: "completed", message: `Goal not met: ${goalField} ≠ ${goalValue}` }
+        break
+      }
+
+      case "webhook": {
+        // Fire-and-forget HTTP POST
+        const url = config.url || ""
+        if (!url) {
+          result = { stepId: currentStep.id, stepType: "webhook", status: "skipped", message: "No webhook URL configured" }
+          break
+        }
+        try {
+          await fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              enrollmentId, journeyId: enrollment.journeyId,
+              contactId, leadId, stepId: currentStep.id,
+              recipientName, recipientEmail,
+            }),
+            signal: AbortSignal.timeout(10000),
+          })
+          result = { stepId: currentStep.id, stepType: "webhook", status: "completed", message: `Webhook sent to ${url}` }
+        } catch (webhookErr: any) {
+          result = { stepId: currentStep.id, stepType: "webhook", status: "completed", message: `Webhook error: ${webhookErr.message}` }
+        }
+        break
+      }
+
       default:
         result = { stepId: currentStep.id, stepType: currentStep.stepType, status: "skipped", message: `Unknown step type: ${currentStep.stepType}` }
     }
@@ -545,8 +630,29 @@ export async function processEnrollmentStep(enrollmentId: string, orgId: string)
       data: { statsCompleted: { increment: 1 } },
     })
 
-    // Move to next step
-    const nextStep = journey.steps.find((s: any) => s.stepOrder === currentStep.stepOrder + 1)
+    // Get next step using branching (Phase 4) or fallback to stepOrder
+    let nextStep: any = null
+
+    // For condition steps: use yes/no branching based on the result
+    if (currentStep.stepType === "condition" || currentStep.stepType === "goal_check") {
+      const conditionPassed = result.message.includes("TRUE") || result.message.includes("Goal reached") || result.message.includes("Met")
+      const nextStepId = conditionPassed
+        ? (currentStep as any).yesNextStepId
+        : (currentStep as any).noNextStepId
+      if (nextStepId) {
+        nextStep = journey.steps.find((s: any) => s.id === nextStepId)
+      }
+    }
+
+    // For regular steps: follow yesNextStepId (default path)
+    if (!nextStep && (currentStep as any).yesNextStepId) {
+      nextStep = journey.steps.find((s: any) => s.id === (currentStep as any).yesNextStepId)
+    }
+
+    // Fallback: stepOrder + 1 (backward compatibility)
+    if (!nextStep) {
+      nextStep = journey.steps.find((s: any) => s.stepOrder === currentStep.stepOrder + 1)
+    }
 
     if (nextStep) {
       await prisma.journeyEnrollment.update({
@@ -562,10 +668,10 @@ export async function processEnrollmentStep(enrollmentId: string, orgId: string)
       const nextResult = await processEnrollmentStep(enrollmentId, orgId)
       return nextResult
     } else {
-      // Journey completed
+      // Journey completed — no more steps
       await prisma.journeyEnrollment.update({
         where: { id: enrollmentId },
-        data: { status: "completed", completedAt: new Date(), currentStepId: null },
+        data: { status: "completed", completedAt: new Date(), currentStepId: null, exitReason: "completed" },
       })
       await prisma.journey.update({
         where: { id: enrollment.journeyId },

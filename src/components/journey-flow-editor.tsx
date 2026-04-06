@@ -22,11 +22,12 @@ import { Button } from "@/components/ui/button"
 import {
   Mail, Clock, GitBranch, Plus, Save, Trash2,
   MessageSquare, Bell, CheckCircle2, Smartphone, UserPlus,
+  Split, Target, Globe,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 /* ───── types ───── */
-export type JourneyNodeType = "trigger" | "send_email" | "wait" | "condition" | "create_task" | "send_telegram" | "send_whatsapp" | "sms"
+export type JourneyNodeType = "trigger" | "send_email" | "wait" | "condition" | "create_task" | "send_telegram" | "send_whatsapp" | "sms" | "ab_split" | "goal_check" | "webhook"
 
 export interface JourneyNodeData {
   label: string
@@ -44,6 +45,9 @@ const NODE_DEFS: { type: JourneyNodeType; label: string; icon: any; color: strin
   { type: "send_telegram", label: "Telegram", icon: MessageSquare, color: "text-sky-600", bg: "bg-sky-50 border-sky-300" },
   { type: "send_whatsapp", label: "WhatsApp", icon: Smartphone, color: "text-emerald-600", bg: "bg-emerald-50 border-emerald-300" },
   { type: "sms", label: "SMS", icon: Bell, color: "text-violet-600", bg: "bg-violet-50 border-violet-300" },
+  { type: "ab_split", label: "A/B Split", icon: Split, color: "text-orange-600", bg: "bg-orange-50 border-orange-300" },
+  { type: "goal_check", label: "Goal Check", icon: Target, color: "text-purple-600", bg: "bg-purple-50 border-purple-300" },
+  { type: "webhook", label: "Webhook", icon: Globe, color: "text-teal-600", bg: "bg-teal-50 border-teal-300" },
 ]
 
 /* ───── custom node ───── */
@@ -52,11 +56,17 @@ function JourneyNode({ data, selected }: { data: JourneyNodeData; selected?: boo
   const Icon = def.icon
   const isCondition = data.type === "condition"
   const isTrigger = data.type === "trigger"
+  const isAbSplit = data.type === "ab_split"
+  const isGoalCheck = data.type === "goal_check"
+  const isWebhook = data.type === "webhook"
+
+  const splitCount = Math.min(Math.max(data.config?.splitCount ?? 2, 2), 4)
 
   return (
     <div className={cn(
       "relative rounded-xl border-2 px-4 py-3 shadow-md min-w-[160px] transition-all",
       def.bg,
+      isGoalCheck && "border-dashed",
       selected && "ring-2 ring-primary",
     )}>
       {!isTrigger && (
@@ -79,6 +89,12 @@ function JourneyNode({ data, selected }: { data: JourneyNodeData; selected?: boo
       {data.config?.days && (
         <p className="text-[10px] text-muted-foreground mt-1.5">Wait: {data.config.days} days</p>
       )}
+      {isWebhook && data.config?.url && (
+        <p className="text-[10px] text-muted-foreground mt-1.5 line-clamp-1 font-mono">URL: {data.config.url}</p>
+      )}
+      {isGoalCheck && data.config?.goalName && (
+        <p className="text-[10px] text-purple-600 mt-1.5 font-medium line-clamp-1">{data.config.goalName}</p>
+      )}
 
       {isCondition ? (
         <>
@@ -87,6 +103,44 @@ function JourneyNode({ data, selected }: { data: JourneyNodeData; selected?: boo
           <div className="flex justify-between px-2 mt-1">
             <span className="text-[9px] text-green-600 font-medium">Yes</span>
             <span className="text-[9px] text-red-600 font-medium">No</span>
+          </div>
+        </>
+      ) : isAbSplit ? (
+        <>
+          {Array.from({ length: splitCount }, (_, i) => {
+            const pct = ((i + 1) / (splitCount + 1)) * 100
+            const colors = ["!bg-blue-500", "!bg-orange-500", "!bg-green-500", "!bg-pink-500"]
+            const labels = ["A", "B", "C", "D"]
+            return (
+              <Handle
+                key={`split-${i}`}
+                type="source"
+                position={Position.Bottom}
+                id={`split-${i}`}
+                className={cn("!w-3 !h-3 !border-white !border-2", colors[i])}
+                style={{ left: `${pct}%` }}
+              />
+            )
+          })}
+          <div className="flex justify-around px-1 mt-1">
+            {Array.from({ length: splitCount }, (_, i) => {
+              const labels = ["A", "B", "C", "D"]
+              const pctValue = data.config?.splitPaths?.[i]?.percentage
+              return (
+                <span key={i} className="text-[9px] text-orange-600 font-medium">
+                  {labels[i]}{pctValue ? ` ${pctValue}%` : ""}
+                </span>
+              )
+            })}
+          </div>
+        </>
+      ) : isGoalCheck ? (
+        <>
+          <Handle type="source" position={Position.Bottom} id="yes" className="!w-3 !h-3 !bg-green-500 !border-white !border-2" style={{ left: "30%" }} />
+          <Handle type="source" position={Position.Bottom} id="no" className="!w-3 !h-3 !bg-red-500 !border-white !border-2" style={{ left: "70%" }} />
+          <div className="flex justify-between px-2 mt-1">
+            <span className="text-[9px] text-green-600 font-medium">Met</span>
+            <span className="text-[9px] text-red-600 font-medium">Not met</span>
           </div>
         </>
       ) : (
@@ -101,6 +155,25 @@ const nodeTypes: NodeTypes = {
 }
 
 /* ───── helpers: convert steps ↔ nodes ───── */
+const DEFAULT_EDGE_STYLE = { stroke: "#94a3b8", strokeWidth: 2 }
+const YES_EDGE_STYLE = { stroke: "#22c55e", strokeWidth: 2 }
+const NO_EDGE_STYLE = { stroke: "#ef4444", strokeWidth: 2 }
+const SPLIT_COLORS = ["#3b82f6", "#f97316", "#22c55e", "#ec4899"]
+
+function makeEdge(id: string, source: string, target: string, opts?: { sourceHandle?: string; label?: string; style?: Record<string, any>; labelStyle?: Record<string, any> }): Edge {
+  return {
+    id,
+    source,
+    target,
+    type: "smoothstep",
+    animated: true,
+    style: opts?.style ?? DEFAULT_EDGE_STYLE,
+    markerEnd: { type: MarkerType.ArrowClosed, color: (opts?.style?.stroke as string) ?? "#94a3b8" },
+    ...(opts?.sourceHandle ? { sourceHandle: opts.sourceHandle } : {}),
+    ...(opts?.label ? { label: opts.label, labelStyle: opts.labelStyle ?? { fontWeight: 600, fontSize: 10 } } : {}),
+  }
+}
+
 export function stepsToFlow(steps: any[]): { nodes: Node[]; edges: Edge[] } {
   if (!steps?.length) {
     return {
@@ -109,12 +182,16 @@ export function stepsToFlow(steps: any[]): { nodes: Node[]; edges: Edge[] } {
     }
   }
 
+  const sorted = [...steps].sort((a, b) => a.stepOrder - b.stepOrder)
+  const stepMap = new Map<string, any>()
+  sorted.forEach(s => stepMap.set(String(s.id), s))
+
   const nodes: Node[] = [
     { id: "trigger-1", type: "journeyNode", position: { x: 250, y: 50 }, data: { label: "Entry Trigger", type: "trigger" } as JourneyNodeData },
   ]
   const edges: Edge[] = []
 
-  steps.sort((a, b) => a.stepOrder - b.stepOrder).forEach((step, i) => {
+  sorted.forEach((step, i) => {
     const nodeId = `step-${step.id || i}`
     nodes.push({
       id: nodeId,
@@ -126,53 +203,150 @@ export function stepsToFlow(steps: any[]): { nodes: Node[]; edges: Edge[] } {
         config: step.config || {},
       } as JourneyNodeData,
     })
-
-    const sourceId = i === 0 ? "trigger-1" : `step-${steps[i - 1].id || (i - 1)}`
-    edges.push({
-      id: `e-${sourceId}-${nodeId}`,
-      source: sourceId,
-      target: nodeId,
-      type: "smoothstep",
-      animated: true,
-      style: { stroke: "#94a3b8", strokeWidth: 2 },
-      markerEnd: { type: MarkerType.ArrowClosed, color: "#94a3b8" },
-    })
   })
+
+  // Check if steps use new ID-based linking
+  const hasIdLinks = sorted.some(s => s.yesNextStepId || s.noNextStepId || s.splitPaths)
+
+  if (hasIdLinks) {
+    // First step connects from trigger
+    if (sorted.length > 0) {
+      const firstNodeId = `step-${sorted[0].id || 0}`
+      edges.push(makeEdge(`e-trigger-1-${firstNodeId}`, "trigger-1", firstNodeId))
+    }
+
+    sorted.forEach((step, i) => {
+      const nodeId = `step-${step.id || i}`
+      const isBranching = step.stepType === "condition" || step.stepType === "goal_check"
+
+      if (isBranching) {
+        if (step.yesNextStepId) {
+          const targetId = `step-${step.yesNextStepId}`
+          edges.push(makeEdge(`e-${nodeId}-yes-${targetId}`, nodeId, targetId, {
+            sourceHandle: "yes",
+            label: step.stepType === "goal_check" ? "Met" : "Yes",
+            style: YES_EDGE_STYLE,
+            labelStyle: { fontWeight: 600, fontSize: 10, fill: "#22c55e" },
+          }))
+        }
+        if (step.noNextStepId) {
+          const targetId = `step-${step.noNextStepId}`
+          edges.push(makeEdge(`e-${nodeId}-no-${targetId}`, nodeId, targetId, {
+            sourceHandle: "no",
+            label: step.stepType === "goal_check" ? "Not met" : "No",
+            style: NO_EDGE_STYLE,
+            labelStyle: { fontWeight: 600, fontSize: 10, fill: "#ef4444" },
+          }))
+        }
+      } else if (step.stepType === "ab_split" && step.splitPaths?.length) {
+        step.splitPaths.forEach((sp: any, si: number) => {
+          if (sp.nextStepId) {
+            const targetId = `step-${sp.nextStepId}`
+            const labels = ["A", "B", "C", "D"]
+            edges.push(makeEdge(`e-${nodeId}-split${si}-${targetId}`, nodeId, targetId, {
+              sourceHandle: `split-${si}`,
+              label: `${labels[si]}${sp.percentage ? ` ${sp.percentage}%` : ""}`,
+              style: { stroke: SPLIT_COLORS[si], strokeWidth: 2 },
+              labelStyle: { fontWeight: 600, fontSize: 10, fill: SPLIT_COLORS[si] },
+            }))
+          }
+        })
+      } else {
+        // Regular node with yesNextStepId as single forward link
+        if (step.yesNextStepId) {
+          const targetId = `step-${step.yesNextStepId}`
+          edges.push(makeEdge(`e-${nodeId}-${targetId}`, nodeId, targetId))
+        }
+      }
+    })
+  } else {
+    // Backward-compat: chain nodes by stepOrder
+    sorted.forEach((step, i) => {
+      const nodeId = `step-${step.id || i}`
+      const sourceId = i === 0 ? "trigger-1" : `step-${sorted[i - 1].id || (i - 1)}`
+      edges.push(makeEdge(`e-${sourceId}-${nodeId}`, sourceId, nodeId))
+    })
+  }
 
   return { nodes, edges }
 }
 
 export function flowToSteps(nodes: Node[], edges: Edge[]): any[] {
-  // Topological sort from trigger node
-  const adjacency: Record<string, string[]> = {}
+  // Build outgoing edges map per node
+  const outgoing: Record<string, Edge[]> = {}
   edges.forEach(e => {
-    if (!adjacency[e.source]) adjacency[e.source] = []
-    adjacency[e.source].push(e.target)
+    if (!outgoing[e.source]) outgoing[e.source] = []
+    outgoing[e.source].push(e)
   })
 
+  // BFS from trigger to compute stepOrder
+  const bfsOrder: string[] = []
   const visited = new Set<string>()
-  const ordered: string[] = []
+  const queue = ["trigger-1"]
+  visited.add("trigger-1")
 
-  function dfs(nodeId: string) {
-    if (visited.has(nodeId)) return
-    visited.add(nodeId)
-    ordered.push(nodeId)
-    ;(adjacency[nodeId] || []).forEach(dfs)
+  while (queue.length) {
+    const curr = queue.shift()!
+    if (curr !== "trigger-1") bfsOrder.push(curr)
+    const outs = outgoing[curr] || []
+    for (const e of outs) {
+      if (!visited.has(e.target)) {
+        visited.add(e.target)
+        queue.push(e.target)
+      }
+    }
   }
 
-  dfs("trigger-1")
+  // Also pick up any orphan nodes not reached by BFS
+  nodes.forEach(n => {
+    if (n.id !== "trigger-1" && !visited.has(n.id)) {
+      bfsOrder.push(n.id)
+    }
+  })
 
-  return ordered
-    .filter(id => id !== "trigger-1")
-    .map((id, i) => {
-      const node = nodes.find(n => n.id === id)
+  // Extract step ID from node ID (step-{id} -> {id})
+  function stepIdFromNodeId(nodeId: string): string {
+    return nodeId.replace(/^step-/, "")
+  }
+
+  return bfsOrder
+    .map((nodeId, i) => {
+      const node = nodes.find(n => n.id === nodeId)
       if (!node) return null
       const data = node.data as JourneyNodeData
-      return {
+      const outs = outgoing[nodeId] || []
+      const isBranching = data.type === "condition" || data.type === "goal_check"
+
+      const step: Record<string, any> = {
+        id: stepIdFromNodeId(nodeId),
         stepOrder: i + 1,
         stepType: data.type,
         config: data.config || {},
       }
+
+      if (isBranching) {
+        const yesEdge = outs.find(e => e.sourceHandle === "yes")
+        const noEdge = outs.find(e => e.sourceHandle === "no")
+        if (yesEdge) step.yesNextStepId = stepIdFromNodeId(yesEdge.target)
+        if (noEdge) step.noNextStepId = stepIdFromNodeId(noEdge.target)
+      } else if (data.type === "ab_split") {
+        const splitEdges = outs
+          .filter(e => e.sourceHandle?.startsWith("split-"))
+          .sort((a, b) => (a.sourceHandle || "").localeCompare(b.sourceHandle || ""))
+        if (splitEdges.length) {
+          step.splitPaths = splitEdges.map((e, si) => ({
+            nextStepId: stepIdFromNodeId(e.target),
+            percentage: data.config?.splitPaths?.[si]?.percentage,
+          }))
+        }
+      } else {
+        // Regular node: single outgoing edge
+        if (outs.length > 0) {
+          step.yesNextStepId = stepIdFromNodeId(outs[0].target)
+        }
+      }
+
+      return step
     })
     .filter(Boolean)
 }
@@ -192,14 +366,42 @@ export function JourneyFlowEditor({ steps, onSave }: JourneyFlowEditorProps) {
   const idCounter = useRef(nodes.length + 1)
 
   const onConnect = useCallback((connection: Connection) => {
+    // Determine edge style based on source node type and handle
+    const sourceNode = nodes.find(n => n.id === connection.source)
+    const sourceData = sourceNode?.data as JourneyNodeData | undefined
+    const isBranching = sourceData?.type === "condition" || sourceData?.type === "goal_check"
+    const isAbSplit = sourceData?.type === "ab_split"
+    const handle = connection.sourceHandle
+
+    let style = DEFAULT_EDGE_STYLE
+    let label: string | undefined
+    let labelStyle: Record<string, any> | undefined
+
+    if (isBranching && handle === "yes") {
+      style = YES_EDGE_STYLE
+      label = sourceData?.type === "goal_check" ? "Met" : "Yes"
+      labelStyle = { fontWeight: 600, fontSize: 10, fill: "#22c55e" }
+    } else if (isBranching && handle === "no") {
+      style = NO_EDGE_STYLE
+      label = sourceData?.type === "goal_check" ? "Not met" : "No"
+      labelStyle = { fontWeight: 600, fontSize: 10, fill: "#ef4444" }
+    } else if (isAbSplit && handle?.startsWith("split-")) {
+      const idx = parseInt(handle.replace("split-", ""), 10)
+      const labels = ["A", "B", "C", "D"]
+      style = { stroke: SPLIT_COLORS[idx] || "#94a3b8", strokeWidth: 2 }
+      label = labels[idx]
+      labelStyle = { fontWeight: 600, fontSize: 10, fill: SPLIT_COLORS[idx] || "#94a3b8" }
+    }
+
     setEdges(eds => addEdge({
       ...connection,
       type: "smoothstep",
       animated: true,
-      style: { stroke: "#94a3b8", strokeWidth: 2 },
-      markerEnd: { type: MarkerType.ArrowClosed, color: "#94a3b8" },
+      style,
+      markerEnd: { type: MarkerType.ArrowClosed, color: style.stroke as string },
+      ...(label ? { label, labelStyle } : {}),
     }, eds))
-  }, [setEdges])
+  }, [setEdges, nodes])
 
   const addNode = useCallback((type: JourneyNodeType) => {
     const def = NODE_DEFS.find(d => d.type === type)!
@@ -287,6 +489,7 @@ export function JourneyFlowEditor({ steps, onSave }: JourneyFlowEditorProps) {
                 trigger: "#3b82f6", send_email: "#22c55e", wait: "#f59e0b",
                 condition: "#f97316", create_task: "#0176D3", send_telegram: "#0176D3",
                 send_whatsapp: "#10b981", sms: "#8b5cf6",
+                ab_split: "#f97316", goal_check: "#a855f7", webhook: "#14b8a6",
               }
               return map[d.type] || "#94a3b8"
             }}

@@ -65,9 +65,8 @@ export function BudgetApprovalWorkflow({ plan, userRole }: Props) {
     updatePlan.mutate({
       id: plan.id,
       status: newStatus as any,
-      comment: comment || undefined,
       ...extra,
-    })
+    } as any)
     setComment("")
     setRejectReason("")
     setShowRejectDialog(false)

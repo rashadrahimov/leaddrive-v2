@@ -65,6 +65,7 @@ const channelIcon = (ch: string) => {
     case "instagram": return <MessageSquare className="h-3.5 w-3.5" />
     case "vkontakte": return <MessageSquare className="h-3.5 w-3.5" />
     case "tiktok": return <MessageSquare className="h-3.5 w-3.5" />
+    case "voip": return <Phone className="h-3.5 w-3.5" />
     default: return <MessageSquare className="h-3.5 w-3.5" />
   }
 }
@@ -79,6 +80,7 @@ const channelColor = (ch: string) => {
     case "instagram": return "bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-400"
     case "vkontakte": return "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400"
     case "tiktok": return "bg-muted text-foreground"
+    case "voip": return "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
     default: return "bg-muted text-foreground/70"
   }
 }
@@ -93,11 +95,12 @@ const channelLabel = (ch: string) => {
     case "instagram": return "Instagram"
     case "vkontakte": return "VKontakte"
     case "tiktok": return "TikTok"
+    case "voip": return "VoIP"
     default: return ch
   }
 }
 
-const CHANNELS = ["all", "email", "telegram", "sms", "whatsapp", "facebook", "instagram", "tiktok"] as const
+const CHANNELS = ["all", "email", "telegram", "sms", "whatsapp", "facebook", "instagram", "tiktok", "voip"] as const
 
 /* -- Page -- */
 export default function InboxPage() {
@@ -496,8 +499,18 @@ export default function InboxPage() {
               ))
             ) : (
               <div className="p-8 text-center text-muted-foreground text-sm">
-                <MessageSquare className="h-8 w-8 mx-auto mb-2 opacity-30" />
-                {conversations.length === 0 ? t("noMessages") : t("noConversations")}
+                {channelFilter === "voip" ? (
+                  <>
+                    <Phone className="h-8 w-8 mx-auto mb-2 opacity-30" />
+                    <p className="font-medium">VoIP / Call Logs</p>
+                    <p className="text-xs mt-1">Call logs are available in Contacts &rarr; Calls tab</p>
+                  </>
+                ) : (
+                  <>
+                    <MessageSquare className="h-8 w-8 mx-auto mb-2 opacity-30" />
+                    {conversations.length === 0 ? t("noMessages") : t("noConversations")}
+                  </>
+                )}
               </div>
             )}
           </div>

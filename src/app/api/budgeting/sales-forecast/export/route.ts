@@ -49,7 +49,7 @@ export async function GET(req: NextRequest) {
   // Total row
   const totalValues = MONTHS.map((_, i) => {
     const m = i + 1
-    return departments.reduce((s, d) => s + (lookup[d.id]?.[m] || 0), 0)
+    return departments.reduce((s: number, d: any) => s + (lookup[d.id]?.[m] || 0), 0)
   })
   const grandTotal = totalValues.reduce((s, v) => s + v, 0)
   const totalRow = ws.addRow(["ИТОГО", ...totalValues, grandTotal])

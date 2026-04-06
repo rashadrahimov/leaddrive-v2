@@ -185,7 +185,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
         await createNotification({
           organizationId: orgId,
           userId: user.id,
-          type: typeMap[status] || "info",
+          type: (typeMap[status] || "info") as "info" | "warning" | "error" | "success",
           title: titleMap[status],
           message: `Plan "${updated.name}" — ${titleMap[status].toLowerCase()}`,
           entityType: "budget_plan",

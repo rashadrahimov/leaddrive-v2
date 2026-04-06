@@ -5,7 +5,7 @@ import { prisma, logBudgetChange } from "@/lib/prisma"
 
 const importCsvSchema = z.object({
   planId: z.string().min(1).max(100),
-  rows: z.array(z.record(z.unknown())).min(1),
+  rows: z.array(z.record(z.string(), z.unknown())).min(1),
   integrationId: z.string().max(100).optional().nullable(),
   fileName: z.string().max(500).optional(),
 }).strict()
@@ -69,9 +69,9 @@ export async function POST(req: NextRequest) {
   }
 
   for (let i = 0; i < rows.length; i++) {
-    const row = rows[i]
+    const row = rows[i] as Record<string, any>
     try {
-      const rawCategory = row.category || row.Category || row.account || row.Account || ""
+      const rawCategory: string = row.category || row.Category || row.account || row.Account || ""
       const category = categoryMapping[rawCategory] || rawCategory
 
       if (!category) {

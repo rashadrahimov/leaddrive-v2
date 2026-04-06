@@ -162,6 +162,9 @@ export default function AICommandCenterPage() {
   const [selectedSession, setSelectedSession] = useState<string | null>(null)
   const [sessionMessages, setSessionMessages] = useState<ChatMessage[]>([])
   const [sessionLoading, setSessionLoading] = useState(false)
+  const [handoffs, setHandoffs] = useState<any[]>([])
+  const [intentDistribution, setIntentDistribution] = useState<any[]>([])
+  const [agentMetrics, setAgentMetrics] = useState<Record<string, any>>({})
 
   // Constructor state
   const [newGuardrailName, setNewGuardrailName] = useState("")
@@ -195,6 +198,22 @@ export default function AICommandCenterPage() {
         setLogsTotal(logsRes.data?.total || 0)
       }
       if (guardrailsRes.success) setGuardrails(guardrailsRes.data?.guardrails || [])
+
+      // Fetch handoffs and intent distribution
+      fetch("/api/v1/ai-configs/stats", { headers: hdrs() })
+        .then(r => r.json())
+        .then(data => {
+          if (data.success) {
+            setHandoffs(data.data?.handoffs || [])
+            setIntentDistribution(data.data?.intentDistribution || [])
+            const metricsMap: Record<string, any> = {}
+            for (const a of (data.data?.agents || [])) {
+              metricsMap[a.id] = a
+            }
+            setAgentMetrics(metricsMap)
+          }
+        })
+        .catch(() => {})
     } catch (err) { console.error(err) } finally { setLoading(false) }
   }
 
@@ -853,6 +872,24 @@ export default function AICommandCenterPage() {
                       </div>
                     )}
 
+                    {/* Per-agent metrics */}
+                    {agentMetrics[agent.id] && (
+                      <div className="flex items-center gap-3 mt-2 pt-2 border-t text-xs text-muted-foreground">
+                        <span className="flex items-center gap-1">
+                          <MessageSquare className="h-3 w-3" />
+                          {agentMetrics[agent.id].totalInteractions} msgs
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <DollarSign className="h-3 w-3" />
+                          ${agentMetrics[agent.id].totalCost?.toFixed(4)}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Timer className="h-3 w-3" />
+                          {agentMetrics[agent.id].avgLatencyMs}ms avg
+                        </span>
+                      </div>
+                    )}
+
                     {/* Action buttons */}
                     <div className="flex gap-2 pt-1">
                       <Button
@@ -894,6 +931,66 @@ export default function AICommandCenterPage() {
               )}
             </div>
           </div>
+
+          {/* Handoff Log */}
+          <Card className="border-none shadow-sm bg-card">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
+                <Activity className="h-4 w-4" /> Agent Handoffs
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {handoffs.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-4">No handoffs recorded yet</p>
+              ) : (
+                <div className="space-y-2">
+                  {handoffs.map((h: any) => (
+                    <div key={h.id} className="flex items-center justify-between p-2 rounded-lg bg-muted/50 text-sm">
+                      <div>
+                        <span className="font-medium">{h.fromAgentName}</span>
+                        <span className="text-muted-foreground mx-2">&rarr;</span>
+                        <span className="font-medium">{h.toAgentName}</span>
+                      </div>
+                      <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                        <span>{h.reason}</span>
+                        <span>{new Date(h.createdAt).toLocaleString()}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Intent Distribution */}
+          <Card className="border-none shadow-sm bg-card">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
+                <BrainCircuit className="h-4 w-4" /> Intent Distribution
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {intentDistribution.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-4">No intent data yet</p>
+              ) : (
+                <div className="space-y-2">
+                  {intentDistribution.map((item: any, i: number) => {
+                    const total = intentDistribution.reduce((s: number, x: any) => s + x.count, 0)
+                    const pct = total > 0 ? Math.round((item.count / total) * 100) : 0
+                    return (
+                      <div key={i} className="flex items-center gap-3">
+                        <span className="text-sm font-medium w-24 capitalize">{item.agentType}</span>
+                        <div className="flex-1 h-6 bg-muted rounded-full overflow-hidden">
+                          <div className="h-full bg-primary/60 rounded-full" style={{ width: `${pct}%` }} />
+                        </div>
+                        <span className="text-sm text-muted-foreground w-16 text-right">{item.count} ({pct}%)</span>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
           {/* Guardrails — Rules & Restrictions */}
           <div className="rounded-xl border bg-card shadow-sm">

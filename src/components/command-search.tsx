@@ -23,7 +23,7 @@ export function CommandSearch() {
   const [loading, setLoading] = useState(false)
   const [selectedIndex, setSelectedIndex] = useState(0)
   const router = useRouter()
-  const debounceRef = useRef<ReturnType<typeof setTimeout>>()
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined)
 
   const search = useCallback(async (q: string) => {
     if (q.length < 2) { setResults([]); return }

@@ -42,11 +42,11 @@ export async function GET(req: NextRequest) {
     ])
 
     const results = [
-      ...companies.map(c => ({ id: c.id, type: "company" as const, name: c.name, subtitle: c.industry || "", href: `/companies/${c.id}` })),
-      ...contacts.map(c => ({ id: c.id, type: "contact" as const, name: c.fullName, subtitle: c.company?.name || "", href: `/contacts/${c.id}` })),
-      ...deals.map(d => ({ id: d.id, type: "deal" as const, name: d.name, subtitle: `${d.valueAmount} ${d.currency || "₼"}`, href: `/deals/${d.id}` })),
-      ...leads.map(l => ({ id: l.id, type: "lead" as const, name: l.contactName, subtitle: l.companyName || "", href: `/leads/${l.id}` })),
-      ...tasks.map(t => ({ id: t.id, type: "task" as const, name: t.title, subtitle: t.priority, href: `/tasks/${t.id}` })),
+      ...companies.map((c: any) => ({ id: c.id, type: "company" as const, name: c.name, subtitle: c.industry || "", href: `/companies/${c.id}` })),
+      ...contacts.map((c: any) => ({ id: c.id, type: "contact" as const, name: c.fullName, subtitle: c.company?.name || "", href: `/contacts/${c.id}` })),
+      ...deals.map((d: any) => ({ id: d.id, type: "deal" as const, name: d.name, subtitle: `${d.valueAmount} ${d.currency || "₼"}`, href: `/deals/${d.id}` })),
+      ...leads.map((l: any) => ({ id: l.id, type: "lead" as const, name: l.contactName, subtitle: l.companyName || "", href: `/leads/${l.id}` })),
+      ...tasks.map((t: any) => ({ id: t.id, type: "task" as const, name: t.title, subtitle: t.priority, href: `/tasks/${t.id}` })),
     ]
 
     return NextResponse.json({ success: true, data: results })

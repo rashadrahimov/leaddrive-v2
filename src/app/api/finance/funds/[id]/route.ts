@@ -59,7 +59,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     data: {
       ...(name !== undefined && { name }),
       ...(description !== undefined && { description }),
-      ...(targetAmount !== undefined && { targetAmount: targetAmount ? parseFloat(targetAmount) : null }),
+      ...(targetAmount !== undefined && { targetAmount: targetAmount ? parseFloat(String(targetAmount)) : null }),
       ...(currency !== undefined && { currency }),
       ...(color !== undefined && { color }),
       ...(isActive !== undefined && { isActive }),

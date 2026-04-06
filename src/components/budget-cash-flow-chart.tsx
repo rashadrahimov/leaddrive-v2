@@ -72,10 +72,10 @@ export function BudgetCashFlowChart({ months, year, totalInflows, totalOutflows 
               <XAxis dataKey="name" tick={{ fontSize: 11 }} />
               <YAxis tick={{ fontSize: 11 }} tickFormatter={fmt} />
               <Tooltip
-                formatter={(value: number, name: string) => [
+                formatter={((value: number, name: string) => [
                   fmt(Math.abs(value)),
                   name === "outflows" ? "Расходы" : name === "inflows" ? "Приходы" : "Баланс",
-                ]}
+                ]) as any}
               />
               <Legend />
               <Bar dataKey="inflows" fill="#22c55e" name="Приходы" radius={[2, 2, 0, 0]} />

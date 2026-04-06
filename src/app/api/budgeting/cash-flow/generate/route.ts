@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { z, ZodError } from "zod"
 import { getOrgId } from "@/lib/api-auth"
 import { prisma } from "@/lib/prisma"
+import type { CashFlowEntry } from "@prisma/client"
 
 const generateSchema = z.object({
   year: z.number().int().min(2020).max(2050),
@@ -134,9 +135,9 @@ export async function POST(req: NextRequest) {
 
   let balance = 0
   for (let m = 1; m <= 12; m++) {
-    const monthEntries = entries.filter((e) => e.month === m)
-    const inflows = monthEntries.filter((e) => e.entryType === "inflow").reduce((s, e) => s + e.amount, 0)
-    const outflows = monthEntries.filter((e) => e.entryType === "outflow").reduce((s, e) => s + e.amount, 0)
+    const monthEntries = entries.filter((e: CashFlowEntry) => e.month === m)
+    const inflows = monthEntries.filter((e: CashFlowEntry) => e.entryType === "inflow").reduce((s: number, e: CashFlowEntry) => s + e.amount, 0)
+    const outflows = monthEntries.filter((e: CashFlowEntry) => e.entryType === "outflow").reduce((s: number, e: CashFlowEntry) => s + e.amount, 0)
     balance = balance + inflows - outflows
 
     if (balance < 0) {

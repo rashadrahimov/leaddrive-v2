@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useTranslations } from "next-intl"
 import {
   usePaymentRegistry,
   usePaymentOrders,
@@ -46,36 +47,13 @@ const STATUS_COLORS: Record<string, string> = {
   cancelled: "bg-muted text-muted-foreground",
 }
 
-const STATUS_LABELS: Record<string, string> = {
-  draft: "Черновик",
-  pending_approval: "На согласовании",
-  approved: "Одобрено",
-  executed: "Исполнено",
-  rejected: "Отклонено",
-  cancelled: "Отменено",
-}
-
-const DIRECTION_BADGE: Record<string, { label: string; color: string }> = {
-  incoming: { label: "Входящий", color: "bg-green-100 text-green-700" },
-  outgoing: { label: "Исходящий", color: "bg-red-100 text-red-700" },
-}
-
-const CATEGORY_LABELS: Record<string, string> = {
-  vendor_payment: "Оплата поставщику",
-  revenue: "Доход",
-  fund_allocation: "Фонд",
-  manual: "Ручной",
-}
-
-const METHOD_LABELS: Record<string, string> = {
-  bank_transfer: "Банковский перевод",
-  cash: "Наличные",
-  card: "Карта",
-  check: "Чек",
-  other: "Другое",
+const DIRECTION_COLORS: Record<string, string> = {
+  incoming: "bg-green-100 text-green-700",
+  outgoing: "bg-red-100 text-red-700",
 }
 
 export function PaymentsDashboard() {
+  const t = useTranslations("finance.pod")
   const [subTab, setSubTab] = useState("orders")
   const [filters, setFilters] = useState<PaymentRegistryFilters>({})
   const [registryPage, setRegistryPage] = useState(1)
@@ -105,25 +83,25 @@ export function PaymentsDashboard() {
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <FinanceKpiCard
-          title="Входящие платежи"
+          title={t("incomingPayments")}
           value={registryStats?.totalIncoming || 0}
           icon={<ArrowDownLeft className="w-5 h-5" />}
           color="#22c55e"
         />
         <FinanceKpiCard
-          title="Исходящие платежи"
+          title={t("outgoingPayments")}
           value={registryStats?.totalOutgoing || 0}
           icon={<ArrowUpRight className="w-5 h-5" />}
           color="#8b5cf6"
         />
         <FinanceKpiCard
-          title="Чистый поток"
+          title={t("netFlow")}
           value={registryStats?.netFlow || 0}
           icon={<Activity className="w-5 h-5" />}
           color="#3b82f6"
         />
         <FinanceKpiCard
-          title="Ожидают исполнения"
+          title={t("pendingExecution")}
           value={registryStats?.pendingOrdersCount || 0}
           icon={<Clock className="w-5 h-5" />}
           color="#f59e0b"
@@ -136,31 +114,31 @@ export function PaymentsDashboard() {
         <TabsList>
           <TabsTrigger value="orders" className="gap-1.5">
             <FileText className="w-4 h-4" />
-            Платёжные поручения
+            {t("orders")}
           </TabsTrigger>
           <TabsTrigger value="registry" className="gap-1.5">
             <Activity className="w-4 h-4" />
-            Реестр платежей
+            {t("registry")}
           </TabsTrigger>
           <TabsTrigger value="bank-accounts" className="gap-1.5">
             <Building2 className="w-4 h-4" />
-            Банковские счета
+            {t("accountShort")}
           </TabsTrigger>
         </TabsList>
 
         {/* Payment Orders */}
         <TabsContent value="orders" className="space-y-4">
           <div className="flex justify-between items-center">
-            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Платёжные поручения</h3>
+            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">{t("orders")}</h3>
             <Button size="sm" onClick={() => setShowCreate(true)}>
-              <Plus className="w-4 h-4 mr-1" /> Новое поручение
+              <Plus className="w-4 h-4 mr-1" /> {t("newOrder")}
             </Button>
           </div>
 
           {ordersLoading ? (
-            <div className="p-8 text-center text-muted-foreground">Загрузка...</div>
+            <div className="p-8 text-center text-muted-foreground">{t("loading")}</div>
           ) : !orders?.length ? (
-            <Card><CardContent className="p-8 text-center text-muted-foreground">Поручений пока нет</CardContent></Card>
+            <Card><CardContent className="p-8 text-center text-muted-foreground">{t("empty")}</CardContent></Card>
           ) : (
             <Card>
               <CardContent className="p-0">
@@ -168,14 +146,14 @@ export function PaymentsDashboard() {
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b bg-muted/30">
-                        <th className="text-left p-3 font-medium">№</th>
-                        <th className="text-left p-3 font-medium">Контрагент</th>
-                        <th className="text-right p-3 font-medium">Сумма</th>
-                        <th className="text-left p-3 font-medium">Назначение</th>
-                        <th className="text-left p-3 font-medium">Метод</th>
-                        <th className="text-center p-3 font-medium">Статус</th>
-                        <th className="text-left p-3 font-medium">Создано</th>
-                        <th className="text-right p-3 font-medium">Действия</th>
+                        <th className="text-left p-3 font-medium">{t("orderNumber")}</th>
+                        <th className="text-left p-3 font-medium">{t("colCounterparty")}</th>
+                        <th className="text-right p-3 font-medium">{t("colAmount")}</th>
+                        <th className="text-left p-3 font-medium">{t("purpose")}</th>
+                        <th className="text-left p-3 font-medium">{t("method")}</th>
+                        <th className="text-center p-3 font-medium">{t("colStatus")}</th>
+                        <th className="text-left p-3 font-medium">{t("colCreated")}</th>
+                        <th className="text-right p-3 font-medium">{t("colActions")}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -185,10 +163,10 @@ export function PaymentsDashboard() {
                           <td className="p-3">{o.counterpartyName}</td>
                           <td className="p-3 text-right font-medium tabular-nums">{fmt(o.amount)} {o.currency}</td>
                           <td className="p-3 max-w-[200px] truncate text-muted-foreground">{o.purpose}</td>
-                          <td className="p-3 text-xs">{METHOD_LABELS[o.paymentMethod] || o.paymentMethod}</td>
+                          <td className="p-3 text-xs">{{ bank_transfer: t("methodBankTransfer"), cash: t("methodCash"), card: t("methodCard") }[o.paymentMethod] || o.paymentMethod}</td>
                           <td className="p-3 text-center">
                             <Badge variant="secondary" className={`text-[10px] ${STATUS_COLORS[o.status] || ""}`}>
-                              {STATUS_LABELS[o.status] || o.status}
+                              {{ draft: t("statusDraft"), pending_approval: t("statusPending"), approved: t("statusApproved"), executed: t("statusExecuted"), rejected: t("statusRejected"), cancelled: t("statusCancelled") }[o.status] || o.status}
                             </Badge>
                           </td>
                           <td className="p-3 text-xs text-muted-foreground">{new Date(o.createdAt).toLocaleDateString("ru-RU")}</td>
@@ -197,10 +175,10 @@ export function PaymentsDashboard() {
                               {o.status === "draft" && (
                                 <>
                                   <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setEditOrderId(o.id)}>
-                                    <Edit2 className="w-3 h-3 mr-1" /> Изменить
+                                    <Edit2 className="w-3 h-3 mr-1" /> {t("edit")}
                                   </Button>
                                   <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => submitOrder.mutate(o.id)}>
-                                    <Send className="w-3 h-3 mr-1" /> На согласование
+                                    <Send className="w-3 h-3 mr-1" /> {t("submit")}
                                   </Button>
                                   <Button size="sm" variant="ghost" className="h-7 text-xs text-destructive" onClick={() => deleteOrder.mutate(o.id)}>
                                     <Trash2 className="w-3 h-3" />
@@ -210,16 +188,16 @@ export function PaymentsDashboard() {
                               {o.status === "pending_approval" && (
                                 <>
                                   <Button size="sm" variant="outline" className="h-7 text-xs text-green-700" onClick={() => approveOrder.mutate(o.id)}>
-                                    <Check className="w-3 h-3 mr-1" /> Одобрить
+                                    <Check className="w-3 h-3 mr-1" /> {t("approveBtn")}
                                   </Button>
                                   <Button size="sm" variant="outline" className="h-7 text-xs text-red-700" onClick={() => { setShowReject(o.id); setRejectReason("") }}>
-                                    <X className="w-3 h-3 mr-1" /> Отклонить
+                                    <X className="w-3 h-3 mr-1" /> {t("rejectBtn")}
                                   </Button>
                                 </>
                               )}
                               {o.status === "approved" && (
                                 <Button size="sm" variant="outline" className="h-7 text-xs text-blue-700" onClick={() => executeOrder.mutate(o.id)}>
-                                  <Play className="w-3 h-3 mr-1" /> Исполнить
+                                  <Play className="w-3 h-3 mr-1" /> {t("executeBtn")}
                                 </Button>
                               )}
                               {o.status === "rejected" && o.rejectionReason && (
@@ -241,40 +219,40 @@ export function PaymentsDashboard() {
         <TabsContent value="registry" className="space-y-4">
           <div className="flex flex-wrap gap-3 items-end">
             <div>
-              <Label className="text-xs">Направление</Label>
+              <Label className="text-xs">{t("filterDirection")}</Label>
               <Select className="w-[140px] h-8" value={filters.direction || "all"} onChange={(e) => setFilters((p) => ({ ...p, direction: e.target.value === "all" ? undefined : e.target.value as any }))}>
-                <option value="all">Все</option>
-                <option value="incoming">Входящие</option>
-                <option value="outgoing">Исходящие</option>
+                <option value="all">{t("directionAll")}</option>
+                <option value="incoming">{t("directionIncoming")}</option>
+                <option value="outgoing">{t("directionOutgoing")}</option>
               </Select>
             </div>
             <div>
-              <Label className="text-xs">Категория</Label>
+              <Label className="text-xs">{t("filterCategory")}</Label>
               <Select className="w-[180px] h-8" value={filters.category || "all"} onChange={(e) => setFilters((p) => ({ ...p, category: e.target.value === "all" ? undefined : e.target.value }))}>
-                <option value="all">Все</option>
-                <option value="vendor_payment">Оплата поставщику</option>
-                <option value="revenue">Доход</option>
-                <option value="fund_allocation">Фонд</option>
+                <option value="all">{t("categoryAll")}</option>
+                <option value="vendor_payment">{t("categoryVendor")}</option>
+                <option value="revenue">{t("categoryRevenue")}</option>
+                <option value="fund_allocation">{t("categoryFund")}</option>
               </Select>
             </div>
             <div>
-              <Label className="text-xs">С</Label>
+              <Label className="text-xs">{t("filterFrom")}</Label>
               <Input type="date" className="h-8 w-[140px]" value={filters.dateFrom || ""} onChange={(e) => setFilters((p) => ({ ...p, dateFrom: e.target.value || undefined }))} />
             </div>
             <div>
-              <Label className="text-xs">По</Label>
+              <Label className="text-xs">{t("filterTo")}</Label>
               <Input type="date" className="h-8 w-[140px]" value={filters.dateTo || ""} onChange={(e) => setFilters((p) => ({ ...p, dateTo: e.target.value || undefined }))} />
             </div>
             <div>
-              <Label className="text-xs">Контрагент</Label>
-              <Input className="h-8 w-[160px]" placeholder="Поиск..." value={filters.counterparty || ""} onChange={(e) => setFilters((p) => ({ ...p, counterparty: e.target.value || undefined }))} />
+              <Label className="text-xs">{t("filterCounterparty")}</Label>
+              <Input className="h-8 w-[160px]" placeholder={t("filterSearch")} value={filters.counterparty || ""} onChange={(e) => setFilters((p) => ({ ...p, counterparty: e.target.value || undefined }))} />
             </div>
           </div>
 
           {registryLoading ? (
-            <div className="p-8 text-center text-muted-foreground">Загрузка реестра...</div>
+            <div className="p-8 text-center text-muted-foreground">{t("loading")}</div>
           ) : !registryData?.data?.length ? (
-            <Card><CardContent className="p-8 text-center text-muted-foreground">Записей в реестре нет</CardContent></Card>
+            <Card><CardContent className="p-8 text-center text-muted-foreground">{t("registryEmpty")}</CardContent></Card>
           ) : (
             <Card>
               <CardContent className="p-0">
@@ -282,23 +260,24 @@ export function PaymentsDashboard() {
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b bg-muted/30">
-                        <th className="text-left p-3 font-medium">Дата</th>
-                        <th className="text-center p-3 font-medium">Направление</th>
-                        <th className="text-left p-3 font-medium">Контрагент</th>
-                        <th className="text-left p-3 font-medium">Категория</th>
-                        <th className="text-right p-3 font-medium">Сумма</th>
-                        <th className="text-left p-3 font-medium">Источник</th>
-                        <th className="text-left p-3 font-medium">Описание</th>
+                        <th className="text-left p-3 font-medium">{t("colDate")}</th>
+                        <th className="text-center p-3 font-medium">{t("colDirection")}</th>
+                        <th className="text-left p-3 font-medium">{t("colCounterparty")}</th>
+                        <th className="text-left p-3 font-medium">{t("colCategory")}</th>
+                        <th className="text-right p-3 font-medium">{t("colAmount")}</th>
+                        <th className="text-left p-3 font-medium">{t("colSource")}</th>
+                        <th className="text-left p-3 font-medium">{t("colDescription")}</th>
                       </tr>
                     </thead>
                     <tbody>
                       {registryData.data.map((e) => {
-                        const dir = DIRECTION_BADGE[e.direction] || { label: e.direction, color: "" }
+                        const dirLabel = e.direction === "incoming" ? t("directionIncoming") : t("directionOutgoing")
+                        const dirColor = DIRECTION_COLORS[e.direction] || ""
                         return (
                           <tr key={e.id} className="border-b last:border-0 hover:bg-muted/20 transition-colors">
                             <td className="p-3 text-xs">{new Date(e.paymentDate).toLocaleDateString("ru-RU")}</td>
                             <td className="p-3 text-center">
-                              <Badge variant="secondary" className={`text-[10px] ${dir.color}`}>{dir.label}</Badge>
+                              <Badge variant="secondary" className={`text-[10px] ${dirColor}`}>{dirLabel}</Badge>
                             </td>
                             <td className="p-3">{e.counterpartyName}</td>
                             <td className="p-3 text-xs text-muted-foreground">{CATEGORY_LABELS[e.category || ""] || e.category || "—"}</td>
@@ -454,13 +433,14 @@ function CreateOrderDialog({
     onCreate({
       counterpartyName: form.counterpartyName,
       billId: form.billId || undefined,
+      bankAccountId: form.bankAccountId || undefined,
       amount: parseFloat(form.amount),
       currency: form.currency,
       purpose: form.purpose,
       paymentMethod: form.paymentMethod,
       bankDetails: form.bankDetails || undefined,
     })
-    setForm({ counterpartyName: "", billId: "", amount: "", currency: "AZN", purpose: "", paymentMethod: "bank_transfer", bankDetails: "" })
+    setForm({ counterpartyName: "", billId: "", bankAccountId: "", amount: "", currency: "AZN", purpose: "", paymentMethod: "bank_transfer", bankDetails: "" })
   }
 
   return (

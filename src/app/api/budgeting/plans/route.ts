@@ -119,8 +119,8 @@ export async function POST(req: NextRequest) {
       }
 
       // Clone parent lines first, then children with mapped parentId
-      const parentLines = sourceLines.filter(sl => !sl.parentId)
-      const childLines = sourceLines.filter(sl => sl.parentId)
+      const parentLines = sourceLines.filter((sl: any) => !sl.parentId)
+      const childLines = sourceLines.filter((sl: any) => sl.parentId)
       const idMapping = new Map<string, string>() // oldId → newId
 
       for (const sl of parentLines) {

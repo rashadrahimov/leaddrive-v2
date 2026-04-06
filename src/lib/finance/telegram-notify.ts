@@ -80,20 +80,36 @@ async function sendToChannels(
     )
   }
 
-  // In-App notification
+  // In-App notification — create for all admin users in org
   if (category.channels.includes("inApp") && orgId) {
     promises.push(
-      prisma.notification.create({
-        data: {
-          organizationId: orgId,
-          userId: "", // org-wide notification
-          type: "finance",
-          title: inAppTitle,
-          message: inAppMessage,
-          entityType: entityType || "finance",
-          entityId: entityId || "",
-        },
-      }).catch((e) => console.error("[Finance InApp]", e))
+      (async () => {
+        try {
+          const admins = await prisma.user.findMany({
+            where: { organizationId: orgId, role: { in: ["admin", "owner"] } },
+            select: { id: true },
+          })
+          // Fallback: if no admins found, get all users
+          const users = admins.length > 0 ? admins : await prisma.user.findMany({
+            where: { organizationId: orgId },
+            select: { id: true },
+            take: 5,
+          })
+          await prisma.notification.createMany({
+            data: users.map((u) => ({
+              organizationId: orgId!,
+              userId: u.id,
+              type: "finance",
+              title: inAppTitle,
+              message: inAppMessage,
+              entityType: entityType || "finance",
+              entityId: entityId || "",
+            })),
+          })
+        } catch (e) {
+          console.error("[Finance InApp]", e)
+        }
+      })()
     )
   }
 

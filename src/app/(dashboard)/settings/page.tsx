@@ -19,7 +19,7 @@ export default function SettingsPage() {
     { icon: Zap, title: t("workflows"), description: t("workflowsDesc"), href: "/settings/workflows", hint: t("hintWorkflows") },
     { icon: LayoutDashboard, title: t("dashboardSettings"), description: t("dashboardSettingsDesc"), href: "/settings/custom-fields", hint: t("hintDashboardSettings") },
     { icon: FileSpreadsheet, title: t("invoiceSettings"), description: t("invoiceSettingsDesc"), href: "/settings/invoice-settings", hint: t("hintInvoiceSettings") },
-    { icon: Bell, title: "Уведомления об оплатах", description: "Telegram, Email и In-App уведомления о платежах", href: "/settings/finance-notifications", hint: "Настройте каналы и сроки финансовых уведомлений" },
+    { icon: Bell, title: t("financeNotifications"), description: t("financeNotificationsDesc"), href: "/settings/finance-notifications", hint: t("hintFinanceNotifications") },
     { icon: Globe, title: t("currencies"), description: t("currenciesDesc"), href: "/settings/currencies", hint: t("hintCurrencies") },
     { icon: Clock, title: t("slaPolicies"), description: t("slaPoliciesDesc"), href: "/settings/sla-policies", hint: t("hintSla") },
     { icon: Shield, title: t("portalUsers"), description: t("portalUsersDesc"), href: "/settings/portal-users", hint: t("hintPortalUsers") },

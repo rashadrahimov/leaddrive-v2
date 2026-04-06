@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { prisma, logAudit } from "@/lib/prisma"
 import { getOrgId } from "@/lib/api-auth"
+import { getSession } from "@/lib/api-auth"
+import { getFieldPermissions, filterEntityFields, filterWritableFields } from "@/lib/field-filter"
+import { applyRecordFilter } from "@/lib/sharing-rules"
 import { executeWorkflows } from "@/lib/workflow-engine"
 import { createNotification } from "@/lib/notifications"
 import { fireWebhooks } from "@/lib/webhooks"
@@ -18,8 +21,10 @@ const createContactSchema = z.object({
 })
 
 export async function GET(req: NextRequest) {
-  const orgId = await getOrgId(req)
+  const session = await getSession(req)
+  const orgId = session?.orgId || await getOrgId(req)
   if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  const role = session?.role || "admin"
 
   const { searchParams } = new URL(req.url)
   const search = searchParams.get("search") || ""
@@ -28,11 +33,13 @@ export async function GET(req: NextRequest) {
   const limit = parseInt(searchParams.get("limit") || "50")
 
   try {
-    const where = {
+    let where: any = {
       organizationId: orgId,
       ...(search ? { fullName: { contains: search, mode: "insensitive" as const } } : {}),
       ...(companyId ? { companyId } : {}),
     }
+
+    where = await applyRecordFilter(orgId, session?.userId || "", role, "contact", where)
 
     const [contacts, total] = await Promise.all([
       prisma.contact.findMany({
@@ -45,22 +52,28 @@ export async function GET(req: NextRequest) {
       prisma.contact.count({ where }),
     ])
 
-    return NextResponse.json({ success: true, data: { contacts, total, page, limit } })
+    const fieldPerms = await getFieldPermissions(orgId, role, "contact")
+    const filteredContacts = contacts.map(c => filterEntityFields(c, fieldPerms, role))
+
+    return NextResponse.json({ success: true, data: { contacts: filteredContacts, total, page, limit } })
   } catch {
     return NextResponse.json({ success: true, data: { contacts: [], total: 0, page, limit } })
   }
 }
 
 export async function POST(req: NextRequest) {
-  const orgId = await getOrgId(req)
+  const session = await getSession(req)
+  const orgId = session?.orgId || await getOrgId(req)
   if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  const role = session?.role || "admin"
 
   const body = await req.json()
   const parsed = createContactSchema.safeParse(body)
   if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 })
 
   try {
-    const contact = await prisma.contact.create({ data: { organizationId: orgId, ...parsed.data } })
+    const writableData = filterWritableFields(parsed.data, await getFieldPermissions(orgId, role, "contact"), role)
+    const contact = await prisma.contact.create({ data: { organizationId: orgId, ...writableData } })
     logAudit(orgId, "create", "contact", contact.id, contact.fullName)
     executeWorkflows(orgId, "contact", "created", contact).catch(() => {})
     createNotification({

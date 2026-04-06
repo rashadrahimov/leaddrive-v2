@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { prisma, logAudit } from "@/lib/prisma"
-import { getOrgId, requireAuth, isAuthError } from "@/lib/api-auth"
+import { getOrgId, getSession, requireAuth, isAuthError } from "@/lib/api-auth"
+import { getFieldPermissions, filterEntityFields, filterWritableFields } from "@/lib/field-filter"
 import { sendWhatsAppMessage } from "@/lib/whatsapp"
 import { executeWorkflows } from "@/lib/workflow-engine"
 import { autoAssignTicket } from "@/lib/auto-assign"
@@ -19,8 +20,10 @@ const updateTicketSchema = z.object({
 })
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const orgId = await getOrgId(req)
+  const session = await getSession(req)
+  const orgId = session?.orgId || await getOrgId(req)
   if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  const role = session?.role || "admin"
   const { id } = await params
 
   try {
@@ -59,15 +62,19 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       userName: c.userId ? userMap[c.userId] || "Support" : contactName,
     }))
 
+    const fieldPerms = await getFieldPermissions(orgId, role, "ticket")
+    const enrichedTicket = {
+      ...ticket,
+      comments: enrichedComments,
+      assigneeName: ticket.assignedTo ? userMap[ticket.assignedTo] || ticket.assignedTo : null,
+      companyName: company?.name || null,
+      contactName: contactName !== "Клиент" ? contactName : null,
+    }
+    const filteredTicket = filterEntityFields(enrichedTicket, fieldPerms, role)
+
     return NextResponse.json({
       success: true,
-      data: {
-        ...ticket,
-        comments: enrichedComments,
-        assigneeName: ticket.assignedTo ? userMap[ticket.assignedTo] || ticket.assignedTo : null,
-        companyName: company?.name || null,
-        contactName: contactName !== "Клиент" ? contactName : null,
-      },
+      data: filteredTicket,
     })
   } catch {
     return NextResponse.json({ error: "Failed to fetch ticket" }, { status: 500 })
@@ -78,6 +85,8 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   const authResult = await requireAuth(req, "tickets", "write")
   if (isAuthError(authResult)) return authResult
   const orgId = authResult.orgId
+  const session = await getSession(req)
+  const role = session?.role || "admin"
   const { id } = await params
   const body = await req.json()
   const parsed = updateTicketSchema.safeParse(body)
@@ -92,20 +101,24 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 
     const oldStatus = original.status
 
+    const fieldPerms = await getFieldPermissions(orgId, role, "ticket")
+    const updateData = {
+      ...(parsed.data.subject && { subject: parsed.data.subject }),
+      ...(parsed.data.description !== undefined && { description: parsed.data.description }),
+      ...(parsed.data.priority && { priority: parsed.data.priority }),
+      ...(parsed.data.status && { status: parsed.data.status }),
+      ...(parsed.data.assignedTo !== undefined && { assignedTo: parsed.data.assignedTo || null }),
+      ...(parsed.data.contactId !== undefined && { contactId: parsed.data.contactId || null }),
+      ...(parsed.data.companyId !== undefined && { companyId: parsed.data.companyId || null }),
+      ...(parsed.data.category && { category: parsed.data.category }),
+      ...(parsed.data.status === "resolved" && { resolvedAt: new Date() }),
+      ...(parsed.data.status === "closed" && { closedAt: new Date() }),
+    }
+    const filteredUpdateData = filterWritableFields(updateData, fieldPerms, role)
+
     await prisma.ticket.updateMany({
       where: { id, organizationId: orgId },
-      data: {
-        ...(parsed.data.subject && { subject: parsed.data.subject }),
-        ...(parsed.data.description !== undefined && { description: parsed.data.description }),
-        ...(parsed.data.priority && { priority: parsed.data.priority }),
-        ...(parsed.data.status && { status: parsed.data.status }),
-        ...(parsed.data.assignedTo !== undefined && { assignedTo: parsed.data.assignedTo || null }),
-        ...(parsed.data.contactId !== undefined && { contactId: parsed.data.contactId || null }),
-        ...(parsed.data.companyId !== undefined && { companyId: parsed.data.companyId || null }),
-        ...(parsed.data.category && { category: parsed.data.category }),
-        ...(parsed.data.status === "resolved" && { resolvedAt: new Date() }),
-        ...(parsed.data.status === "closed" && { closedAt: new Date() }),
-      },
+      data: filteredUpdateData,
     })
 
     const updated = await prisma.ticket.findFirst({

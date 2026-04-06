@@ -16,6 +16,8 @@ import {
 import { ColorStatCard } from "@/components/color-stat-card"
 import { InfoHint } from "@/components/info-hint"
 import { CompanyForm } from "@/components/company-form"
+import { useFieldPermissions } from "@/hooks/use-field-permissions"
+import { ClickToCallButton } from "@/components/call-widget"
 
 interface CompanyDetail {
   id: string
@@ -81,7 +83,10 @@ export default function CompanyDetailPage() {
   const [expandedPricingCats, setExpandedPricingCats] = useState<Set<string>>(new Set())
   const [timeline, setTimeline] = useState<TimelineEntry[]>([])
   const [timelineLoading, setTimelineLoading] = useState(false)
+  const [callHistory, setCallHistory] = useState<any[]>([])
+  const [callsLoading, setCallsLoading] = useState(false)
   const orgId = session?.user?.organizationId
+  const { isVisible, isEditable } = useFieldPermissions("company")
 
   const fetchCompany = async () => {
     try {
@@ -120,6 +125,16 @@ export default function CompanyDetailPage() {
       const json = await res.json()
       if (json.success) setTimeline(json.data.timeline)
     } catch (err) { console.error(err) } finally { setTimelineLoading(false) }
+  }
+
+  const loadCallHistory = async () => {
+    setCallsLoading(true)
+    try {
+      const res = await fetch(`/api/v1/calls?companyId=${params.id}&limit=20`)
+      const json = await res.json()
+      if (json.success) setCallHistory(json.data || [])
+    } catch { /* ignore */ }
+    finally { setCallsLoading(false) }
   }
 
   useEffect(() => { if (params.id) fetchCompany() }, [params.id, session])
@@ -180,22 +195,31 @@ export default function CompanyDetailPage() {
 
       {/* Contact info row */}
       <div className="grid gap-3 sm:grid-cols-4">
-        <Card className="border-none shadow-sm bg-card"><CardContent className="flex items-center gap-2.5 pt-4 pb-4">
-          <Globe className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-          {company.website
-            ? <a href={company.website} className="text-sm text-primary hover:underline truncate" target="_blank">{company.website.replace(/^https?:\/\//, "")}</a>
-            : <span className="text-sm text-muted-foreground">—</span>}
-        </CardContent></Card>
-        <Card className="border-none shadow-sm bg-card"><CardContent className="flex items-center gap-2.5 pt-4 pb-4">
-          <Phone className="h-4 w-4 text-muted-foreground flex-shrink-0" /><span className="text-sm truncate">{company.phone || "—"}</span>
-        </CardContent></Card>
-        <Card className="border-none shadow-sm bg-card"><CardContent className="flex items-center gap-2.5 pt-4 pb-4">
-          <Mail className="h-4 w-4 text-muted-foreground flex-shrink-0" /><span className="text-sm truncate">{company.email || "—"}</span>
-        </CardContent></Card>
-        <Card className="border-none shadow-sm bg-card"><CardContent className="flex items-center gap-2.5 pt-4 pb-4">
-          <MapPin className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-          <span className="text-sm truncate">{[company.city, company.country].filter(Boolean).join(", ") || "—"}</span>
-        </CardContent></Card>
+        {isVisible("website") && (
+          <Card className="border-none shadow-sm bg-card"><CardContent className="flex items-center gap-2.5 pt-4 pb-4">
+            <Globe className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+            {company.website
+              ? <a href={company.website} className="text-sm text-primary hover:underline truncate" target="_blank">{company.website.replace(/^https?:\/\//, "")}</a>
+              : <span className="text-sm text-muted-foreground">—</span>}
+          </CardContent></Card>
+        )}
+        {isVisible("phone") && (
+          <Card className="border-none shadow-sm bg-card"><CardContent className="flex items-center gap-2.5 pt-4 pb-4">
+            <Phone className="h-4 w-4 text-muted-foreground flex-shrink-0" /><span className="text-sm truncate">{company.phone || "—"}</span>
+            {company.phone && <ClickToCallButton phone={company.phone} contactName={company.name} />}
+          </CardContent></Card>
+        )}
+        {isVisible("email") && (
+          <Card className="border-none shadow-sm bg-card"><CardContent className="flex items-center gap-2.5 pt-4 pb-4">
+            <Mail className="h-4 w-4 text-muted-foreground flex-shrink-0" /><span className="text-sm truncate">{company.email || "—"}</span>
+          </CardContent></Card>
+        )}
+        {isVisible("address") && (
+          <Card className="border-none shadow-sm bg-card"><CardContent className="flex items-center gap-2.5 pt-4 pb-4">
+            <MapPin className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+            <span className="text-sm truncate">{[company.city, company.country].filter(Boolean).join(", ") || "—"}</span>
+          </CardContent></Card>
+        )}
       </div>
 
       {/* Tabs */}
@@ -205,6 +229,9 @@ export default function CompanyDetailPage() {
           <TabsTrigger value="contacts" className="rounded-md text-sm">{t("tabContacts")} ({company.contacts?.length || 0}) <InfoHint text={t("hintTabContacts")} size={12} className="ml-1" /></TabsTrigger>
           <TabsTrigger value="deals" className="rounded-md text-sm">{t("tabDeals")} ({company.deals?.length || 0}) <InfoHint text={t("hintTabDeals")} size={12} className="ml-1" /></TabsTrigger>
           <TabsTrigger value="timeline" className="rounded-md text-sm">{t("tabTimeline")} <InfoHint text={t("hintTabTimeline")} size={12} className="ml-1" /></TabsTrigger>
+          <TabsTrigger value="calls" className="rounded-md text-sm" onClick={() => { if (callHistory.length === 0 && !callsLoading) loadCallHistory() }}>
+            <Phone className="h-3.5 w-3.5 mr-1" /> Calls
+          </TabsTrigger>
           <TabsTrigger value="pricing" className="rounded-md text-sm">
             <DollarSign className="h-3.5 w-3.5 mr-1" />{t("tabPricing")} <InfoHint text={t("hintTabPricing")} size={12} className="ml-1" />
           </TabsTrigger>
@@ -218,14 +245,16 @@ export default function CompanyDetailPage() {
                 <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">{t("about")}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3 text-sm">
-                <p className="text-muted-foreground">{company.description || t("noDescription")}</p>
+                {isVisible("description") && (
+                  <p className="text-muted-foreground">{company.description || t("noDescription")}</p>
+                )}
                 <div className="grid grid-cols-2 gap-3 pt-1">
                   {[
-                    [tc("industry"), company.industry || "—"],
-                    ["Employees", company.employeeCount?.toString() || "—"],
-                    [tc("country"), company.country || "—"],
-                    ["Annual revenue", company.annualRevenue ? `${company.annualRevenue.toLocaleString()} ₼` : "—"],
-                  ].map(([label, value]) => (
+                    isVisible("industry") ? [tc("industry"), company.industry || "—"] : null,
+                    isVisible("employeeCount") ? ["Employees", company.employeeCount?.toString() || "—"] : null,
+                    isVisible("country") ? [tc("country"), company.country || "—"] : null,
+                    isVisible("annualRevenue") ? ["Annual revenue", company.annualRevenue ? `${company.annualRevenue.toLocaleString()} ₼` : "—"] : null,
+                  ].filter(Boolean).map(([label, value]) => (
                     <div key={label}>
                       <span className="text-xs text-muted-foreground">{label}</span>
                       <p className="font-medium text-sm mt-0.5">{value}</p>
@@ -370,6 +399,45 @@ export default function CompanyDetailPage() {
                       </div>
                     ))}
                   </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Calls */}
+        <TabsContent value="calls">
+          <Card className="border-none shadow-sm bg-card">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-semibold">Call History</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {callsLoading ? (
+                <div className="flex justify-center py-8"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
+              ) : callHistory.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-6">No calls recorded</p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead><tr className="border-b text-left">
+                      <th className="py-2 px-2 font-medium">Date</th>
+                      <th className="py-2 px-2 font-medium">Direction</th>
+                      <th className="py-2 px-2 font-medium">Duration</th>
+                      <th className="py-2 px-2 font-medium">Status</th>
+                      <th className="py-2 px-2 font-medium">Contact</th>
+                    </tr></thead>
+                    <tbody>
+                      {callHistory.map((call: any) => (
+                        <tr key={call.id} className="border-b hover:bg-muted/50">
+                          <td className="py-2 px-2 text-muted-foreground">{new Date(call.createdAt).toLocaleString("ru-RU", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</td>
+                          <td className="py-2 px-2"><Badge variant={call.direction === "outbound" ? "default" : "secondary"} className="text-xs">{call.direction}</Badge></td>
+                          <td className="py-2 px-2">{call.duration ? `${Math.floor(call.duration / 60)}:${String(call.duration % 60).padStart(2, "0")}` : "—"}</td>
+                          <td className="py-2 px-2"><span className={`text-xs font-medium ${call.status === "completed" ? "text-green-600" : call.status === "failed" || call.status === "no-answer" ? "text-red-500" : "text-muted-foreground"}`}>{call.status}</span></td>
+                          <td className="py-2 px-2 text-muted-foreground">{call.contact?.fullName || "—"}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               )}
             </CardContent>

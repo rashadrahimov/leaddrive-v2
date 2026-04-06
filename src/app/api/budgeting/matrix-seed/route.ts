@@ -181,7 +181,7 @@ export async function POST(req: NextRequest) {
   }
 
   // Create COGS + Revenue lines, then expense groups with parent-child
-  const created = await prisma.$transaction(async (tx) => {
+  const created = await prisma.$transaction(async (tx: any) => {
     // 1. Create COGS + Revenue lines
     const flatLines = await Promise.all(
       linesToCreate.map((data) => tx.budgetLine.create({ data }))

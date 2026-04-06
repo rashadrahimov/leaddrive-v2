@@ -6,7 +6,7 @@ import { prisma } from "@/lib/prisma"
 const channelSchema = z.array(z.enum(["inApp", "email", "telegram"])).default(["telegram"])
 
 const notifSettingsSchema = z.object({
-  recipientEmail: z.string().email().max(200).optional().default(""),
+  recipientEmail: z.union([z.literal(""), z.string().email().max(200)]).default(""),
   overdue: z.object({
     enabled: z.boolean().default(true),
     channels: channelSchema,

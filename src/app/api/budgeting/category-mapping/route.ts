@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma"
 
 const categoryMappingSchema = z.object({
   integrationId: z.string().min(1).max(100),
-  mapping: z.record(z.string().max(500)),
+  mapping: z.record(z.string(), z.string().max(500)),
 }).strict()
 
 // GET — get category mapping for an integration

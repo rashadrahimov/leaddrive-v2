@@ -22,7 +22,7 @@ export async function getUserDepartments(
   })
 
   return {
-    departmentIds: owners.map((o) => o.departmentId),
+    departmentIds: owners.map((o: { departmentId: string }) => o.departmentId),
     isFullAccess: false,
   }
 }

@@ -231,6 +231,7 @@ export interface PaymentOrder {
   counterpartyName: string
   counterpartyId?: string | null
   billId?: string | null
+  bankAccountId?: string | null
   amount: number
   currency: string
   purpose: string
@@ -253,6 +254,7 @@ export interface CreatePaymentOrderInput {
   purpose: string
   counterpartyId?: string
   billId?: string
+  bankAccountId?: string
   currency?: string
   paymentMethod?: string
   bankDetails?: string

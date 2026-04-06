@@ -1902,7 +1902,7 @@ function OverviewTab({ planId }: { planId: string }) {
               totalActual={totalActual}
               totalVariance={totalVariance}
               yearEndProjection={yearEndProjection}
-              onBarClick={() => onNavigateTab?.("pl")}
+              onBarClick={() => {}}
             />
           </CardContent>
         </Card>

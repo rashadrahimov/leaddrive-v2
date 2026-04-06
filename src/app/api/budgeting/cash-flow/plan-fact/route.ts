@@ -43,23 +43,23 @@ export async function GET(req: NextRequest) {
   for (let m = 1; m <= 12; m++) {
     // Revenue plan: from SalesForecast
     const revenuePlan = salesForecasts
-      .filter((f) => f.month === m)
-      .reduce((s, f) => s + (f.amount || 0), 0)
+      .filter((f: typeof salesForecasts[number]) => f.month === m)
+      .reduce((s: number, f: typeof salesForecasts[number]) => s + (f.amount || 0), 0)
 
     // Revenue fact: from BudgetActual
     const revenueFact = budgetActuals
-      .filter((a) => a.lineType === "revenue" && a.expenseDate && new Date(a.expenseDate).getMonth() + 1 === m)
-      .reduce((s, a) => s + (a.actualAmount || 0), 0)
+      .filter((a: typeof budgetActuals[number]) => a.lineType === "revenue" && a.expenseDate && new Date(a.expenseDate).getMonth() + 1 === m)
+      .reduce((s: number, a: typeof budgetActuals[number]) => s + (a.actualAmount || 0), 0)
 
     // Expense plan: from ExpenseForecast
     const expensePlan = expenseForecasts
-      .filter((f) => f.month === m)
-      .reduce((s, f) => s + (f.amount || 0), 0)
+      .filter((f: typeof expenseForecasts[number]) => f.month === m)
+      .reduce((s: number, f: typeof expenseForecasts[number]) => s + (f.amount || 0), 0)
 
     // Expense fact: from BudgetActual
     const expenseFact = budgetActuals
-      .filter((a) => (a.lineType === "expense" || a.lineType === "cogs") && a.expenseDate && new Date(a.expenseDate).getMonth() + 1 === m)
-      .reduce((s, a) => s + (a.actualAmount || 0), 0)
+      .filter((a: typeof budgetActuals[number]) => (a.lineType === "expense" || a.lineType === "cogs") && a.expenseDate && new Date(a.expenseDate).getMonth() + 1 === m)
+      .reduce((s: number, a: typeof budgetActuals[number]) => s + (a.actualAmount || 0), 0)
 
     const netPlan = revenuePlan - expensePlan
     const netFact = revenueFact - expenseFact

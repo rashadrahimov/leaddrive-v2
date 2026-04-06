@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { prisma, logAudit } from "@/lib/prisma"
-import { getOrgId } from "@/lib/api-auth"
+import { getOrgId, getSession } from "@/lib/api-auth"
 import { createNotification } from "@/lib/notifications"
+import { getFieldPermissions, filterEntityFields, filterWritableFields } from "@/lib/field-filter"
+import { applyRecordFilter } from "@/lib/sharing-rules"
 
 const createCompanySchema = z.object({
   name: z.string().min(1).max(200),
@@ -19,8 +21,10 @@ const createCompanySchema = z.object({
 })
 
 export async function GET(req: NextRequest) {
-  const orgId = await getOrgId(req)
+  const session = await getSession(req)
+  const orgId = session?.orgId || await getOrgId(req)
   if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  const role = session?.role || "admin"
 
   const { searchParams } = new URL(req.url)
   const search = searchParams.get("search") || ""
@@ -29,11 +33,14 @@ export async function GET(req: NextRequest) {
   const category = searchParams.get("category") // client, partner, prospect, all
 
   try {
-    const where = {
+    let where: any = {
       organizationId: orgId,
       ...(search ? { name: { contains: search, mode: "insensitive" as const } } : {}),
       ...(category && category !== "all" ? { category } : { category: { not: "partner" } }),
     }
+
+    // Apply record-level sharing rules
+    where = await applyRecordFilter(orgId, session?.userId || "", role, "company", where)
 
     const baseWhere = { organizationId: orgId, category: { not: "partner" } }
 
@@ -56,12 +63,16 @@ export async function GET(req: NextRequest) {
       }),
     ])
 
+    // Apply field-level permissions
+    const fieldPerms = await getFieldPermissions(orgId, role, "company")
+    const filteredCompanies = companies.map(c => filterEntityFields(c, fieldPerms, role))
+
     const totalUsers = agg._sum.userCount || 0
     const totalContacts = await prisma.contact.count({ where: { organizationId: orgId } })
 
     return NextResponse.json({
       success: true,
-      data: { companies, total, page, limit, search, totalUsers, totalContacts },
+      data: { companies: filteredCompanies, total, page, limit, search, totalUsers, totalContacts },
     })
   } catch (e) {
     console.error("Companies API error:", e)
@@ -70,8 +81,10 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const orgId = await getOrgId(req)
+  const session = await getSession(req)
+  const orgId = session?.orgId || await getOrgId(req)
   if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  const role = session?.role || "admin"
 
   const body = await req.json()
   const parsed = createCompanySchema.safeParse(body)
@@ -80,8 +93,12 @@ export async function POST(req: NextRequest) {
   }
 
   try {
+    // Filter writable fields
+    const fieldPerms = await getFieldPermissions(orgId, role, "company")
+    const allowedData = filterWritableFields(parsed.data, fieldPerms, role)
+
     const company = await prisma.company.create({
-      data: { organizationId: orgId, ...parsed.data },
+      data: { organizationId: orgId, ...allowedData },
     })
     logAudit(orgId, "create", "company", company.id, company.name)
     createNotification({

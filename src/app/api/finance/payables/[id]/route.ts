@@ -68,7 +68,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       ...(vendorName !== undefined && { vendorName }),
       ...(vendorId !== undefined && { vendorId }),
       ...(title !== undefined && { title }),
-      ...(totalAmount !== undefined && { totalAmount: parseFloat(totalAmount), balanceDue: parseFloat(totalAmount) }),
+      ...(totalAmount !== undefined && { totalAmount: parseFloat(String(totalAmount)), balanceDue: parseFloat(String(totalAmount)) }),
       ...(currency !== undefined && { currency }),
       ...(issueDate !== undefined && { issueDate: new Date(issueDate) }),
       ...(dueDate !== undefined && { dueDate: dueDate ? new Date(dueDate) : null }),

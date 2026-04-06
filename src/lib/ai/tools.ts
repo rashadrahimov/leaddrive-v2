@@ -152,3 +152,22 @@ export function getEnabledTools(toolsEnabled: string[]): Tool[] {
   if (toolsEnabled.includes("*")) return CRM_TOOLS // wildcard = all tools
   return CRM_TOOLS.filter(t => toolsEnabled.includes(t.name))
 }
+
+// Agent type → default tool sets for multi-agent orchestration
+const AGENT_TOOL_SETS: Record<string, string[]> = {
+  sales: ["create_deal", "update_deal_stage", "log_activity", "add_note", "send_email", "create_task"],
+  support: ["create_ticket", "add_note", "log_activity", "create_task"],
+  marketing: ["log_activity", "add_note", "create_task"],
+  analyst: ["add_note"],
+  general: ["add_note", "log_activity", "create_task"],
+}
+
+export function getEnabledToolsForAgent(config: { toolsEnabled?: string[]; agentType?: string }): Tool[] {
+  // If agent has explicit tools configured, use those
+  if (config.toolsEnabled?.length) {
+    return getEnabledTools(config.toolsEnabled)
+  }
+  // Otherwise use default set for agent type
+  const allowedNames = AGENT_TOOL_SETS[config.agentType || "general"] ?? AGENT_TOOL_SETS.general
+  return CRM_TOOLS.filter(t => allowedNames.includes(t.name))
+}

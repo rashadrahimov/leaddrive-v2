@@ -41,16 +41,16 @@ export async function POST(req: NextRequest) {
 
   // Compute stats
   const total = logs.length
-  const outbound = logs.filter(l => l.direction === "outbound").length
-  const inbound = logs.filter(l => l.direction === "inbound").length
-  const sent = logs.filter(l => l.status === "sent" || l.status === "delivered").length
-  const failed = logs.filter(l => l.status === "failed").length
-  const bounced = logs.filter(l => l.status === "bounced").length
+  const outbound = logs.filter((l: any) => l.direction === "outbound").length
+  const inbound = logs.filter((l: any) => l.direction === "inbound").length
+  const sent = logs.filter((l: any) => l.status === "sent" || l.status === "delivered").length
+  const failed = logs.filter((l: any) => l.status === "failed").length
+  const bounced = logs.filter((l: any) => l.status === "bounced").length
   const deliveryRate = outbound > 0 ? Math.round((sent / outbound) * 100) : 0
 
   // Top recipients
   const recipientMap: Record<string, number> = {}
-  logs.filter(l => l.direction === "outbound").forEach(l => {
+  logs.filter((l: any) => l.direction === "outbound").forEach((l: any) => {
     recipientMap[l.toEmail] = (recipientMap[l.toEmail] || 0) + 1
   })
   const topRecipients = Object.entries(recipientMap)
@@ -60,20 +60,20 @@ export async function POST(req: NextRequest) {
     .join("\n")
 
   // Campaign stats
-  const campaignCount = logs.filter(l => l.campaignId).length
+  const campaignCount = logs.filter((l: any) => l.campaignId).length
 
   // Failed emails details
   const failedEmails = logs
-    .filter(l => l.status === "failed" || l.status === "bounced")
+    .filter((l: any) => l.status === "failed" || l.status === "bounced")
     .slice(0, 10)
-    .map(l => `  - To: ${l.toEmail}, Subject: "${l.subject || "(no subject)"}", Error: ${l.errorMessage || "unknown"}, Date: ${new Date(l.createdAt).toLocaleDateString()}`)
+    .map((l: any) => `  - To: ${l.toEmail}, Subject: "${l.subject || "(no subject)"}", Error: ${l.errorMessage || "unknown"}, Date: ${new Date(l.createdAt).toLocaleDateString()}`)
     .join("\n")
 
   // Recent activity (last 7 days)
   const weekAgo = new Date(Date.now() - 7 * 86400000)
-  const recentLogs = logs.filter(l => new Date(l.createdAt) >= weekAgo)
-  const recentSent = recentLogs.filter(l => l.status === "sent" || l.status === "delivered").length
-  const recentFailed = recentLogs.filter(l => l.status === "failed" || l.status === "bounced").length
+  const recentLogs = logs.filter((l: any) => new Date(l.createdAt) >= weekAgo)
+  const recentSent = recentLogs.filter((l: any) => l.status === "sent" || l.status === "delivered").length
+  const recentFailed = recentLogs.filter((l: any) => l.status === "failed" || l.status === "bounced").length
 
   const prompt = `You are Da Vinci, an AI email analytics assistant for an IT outsourcing company CRM.
 

@@ -58,7 +58,7 @@ export default function BudgetConfigPage() {
   const [deptForm, setDeptForm] = useState({ key: "", label: "", serviceKey: "", hasRevenue: true, color: "#3B82F6" })
   const [saving, setSaving] = useState(false)
 
-  const headers = orgId ? { "x-organization-id": String(orgId), "Content-Type": "application/json" } : { "Content-Type": "application/json" }
+  const headers: Record<string, string> = orgId ? { "x-organization-id": String(orgId), "Content-Type": "application/json" } : { "Content-Type": "application/json" }
 
   const fetchData = async () => {
     try {

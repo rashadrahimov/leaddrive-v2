@@ -22,13 +22,13 @@ export async function GET(req: NextRequest) {
   })
 
   // Resolve user names
-  const userIds = [...new Set(changes.map(c => c.userId).filter(Boolean))] as string[]
+  const userIds = [...new Set(changes.map((c: any) => c.userId).filter(Boolean))] as string[]
   const users = userIds.length > 0
     ? await prisma.user.findMany({ where: { id: { in: userIds } }, select: { id: true, name: true } })
     : []
-  const userMap = new Map(users.map(u => [u.id, u.name || "Unknown"]))
+  const userMap = new Map(users.map((u: { id: string; name: string | null }) => [u.id, u.name || "Unknown"]))
 
-  const items = changes.map(c => ({
+  const items = changes.map((c: any) => ({
     id: c.id,
     action: c.action,
     entityType: c.entityType,

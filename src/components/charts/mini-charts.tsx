@@ -32,19 +32,25 @@ export function MiniLineChart({ data, color = "stroke-emerald-400" }: { data: nu
   )
 }
 
-export function MiniDonut({ segments, size = 48 }: { segments: { pct: number; color: string }[]; size?: number }) {
+export function MiniDonut({ segments, size = 48, thickness = 8 }: { segments: { pct?: number; value?: number; color: string }[]; size?: number; thickness?: number }) {
   const r = 18
   const circumference = 2 * Math.PI * r
+  // If segments use `value` instead of `pct`, auto-calculate percentages
+  const totalValue = segments.reduce((sum, s) => sum + (s.value || 0), 0)
+  const resolvedSegments = segments.map(s => ({
+    pct: s.pct ?? (totalValue > 0 ? ((s.value || 0) / totalValue) * 100 : 0),
+    color: s.color,
+  }))
   let offset = 0
   return (
     <svg width={size} height={size} viewBox="0 0 48 48">
-      {segments.map((s, i) => {
+      {resolvedSegments.map((s, i) => {
         const dash = (s.pct / 100) * circumference
         const el = (
           <circle
             key={i}
             cx="24" cy="24" r={r}
-            fill="none" strokeWidth="8"
+            fill="none" strokeWidth={thickness}
             stroke={s.color}
             strokeDasharray={`${dash} ${circumference - dash}`}
             strokeDashoffset={-offset}

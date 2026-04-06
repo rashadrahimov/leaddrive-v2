@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { prisma, logAudit } from "@/lib/prisma"
 import { getOrgId } from "@/lib/api-auth"
+import { getSession } from "@/lib/api-auth"
+import { getFieldPermissions, filterEntityFields, filterWritableFields } from "@/lib/field-filter"
+import { applyRecordFilter } from "@/lib/sharing-rules"
 import { executeWorkflows } from "@/lib/workflow-engine"
 import { fireWebhooks } from "@/lib/webhooks"
 
@@ -19,8 +22,10 @@ const updateContactSchema = z.object({
 })
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const orgId = await getOrgId(req)
+  const session = await getSession(req)
+  const orgId = session?.orgId || await getOrgId(req)
   if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  const role = session?.role || "admin"
   const { id } = await params
 
   try {
@@ -32,7 +37,9 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       },
     })
     if (!contact) return NextResponse.json({ error: "Not found" }, { status: 404 })
-    return NextResponse.json({ success: true, data: contact })
+    const fieldPerms = await getFieldPermissions(orgId, role, "contact")
+    const filtered = filterEntityFields(contact, fieldPerms, role)
+    return NextResponse.json({ success: true, data: filtered })
   } catch (e) {
     console.error(e)
     return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 })
@@ -40,15 +47,18 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 }
 
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const orgId = await getOrgId(req)
+  const session = await getSession(req)
+  const orgId = session?.orgId || await getOrgId(req)
   if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  const role = session?.role || "admin"
   const { id } = await params
   const body = await req.json()
   const parsed = updateContactSchema.safeParse(body)
   if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 })
 
   try {
-    const result = await prisma.contact.updateMany({ where: { id, organizationId: orgId }, data: parsed.data })
+    const writableData = filterWritableFields(parsed.data, await getFieldPermissions(orgId, role, "contact"), role)
+    const result = await prisma.contact.updateMany({ where: { id, organizationId: orgId }, data: writableData })
     if (result.count === 0) return NextResponse.json({ error: "Not found" }, { status: 404 })
     const updated = await prisma.contact.findFirst({ where: { id, organizationId: orgId } })
     logAudit(orgId, "update", "contact", id, updated?.fullName || "", { newValue: parsed.data })

@@ -69,16 +69,16 @@ export async function POST(req: NextRequest) {
     .join("\n")
 
   const topDeals = deals
-    .filter(d => d.stage !== "LOST")
-    .sort((a, b) => (b.valueAmount || 0) - (a.valueAmount || 0))
+    .filter((d: any) => d.stage !== "LOST")
+    .sort((a: any, b: any) => (b.valueAmount || 0) - (a.valueAmount || 0))
     .slice(0, 10)
-    .map(d => `  - "${d.name}" (${d.company?.name || "no company"}) — ${(d.valueAmount || 0).toLocaleString()} ${d.currency || "AZN"}, stage: ${d.stage}, prob: ${d.probability || 0}%${d.expectedCloseDate ? `, close: ${new Date(d.expectedCloseDate).toLocaleDateString()}` : ""}`)
+    .map((d: any) => `  - "${d.name}" (${d.company?.name || "no company"}) — ${(d.valueAmount || 0).toLocaleString()} ${d.currency || "AZN"}, stage: ${d.stage}, prob: ${d.probability || 0}%${d.expectedCloseDate ? `, close: ${new Date(d.expectedCloseDate).toLocaleDateString()}` : ""}`)
     .join("\n")
 
   const recentLost = deals
-    .filter(d => d.stage === "LOST")
+    .filter((d: any) => d.stage === "LOST")
     .slice(0, 5)
-    .map(d => `  - "${d.name}" (${d.company?.name || "no company"}) — ${(d.valueAmount || 0).toLocaleString()} ${d.currency || "AZN"}`)
+    .map((d: any) => `  - "${d.name}" (${d.company?.name || "no company"}) — ${(d.valueAmount || 0).toLocaleString()} ${d.currency || "AZN"}`)
     .join("\n")
 
   const prompt = `You are Da Vinci, an AI sales pipeline analyst for an IT outsourcing company CRM.

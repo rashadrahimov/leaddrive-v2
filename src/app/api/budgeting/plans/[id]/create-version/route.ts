@@ -22,7 +22,7 @@ export async function POST(
 
   // Snapshot current plan state
   const snapshot = {
-    lines: plan.lines.map((l) => ({
+    lines: plan.lines.map((l: any) => ({
       category: l.category,
       department: l.department,
       lineType: l.lineType,

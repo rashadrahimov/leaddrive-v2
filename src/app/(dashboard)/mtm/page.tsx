@@ -45,31 +45,31 @@ export default function MtmDashboardPage() {
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <ColorStatCard
-          title="Active Agents"
+          label="Active Agents"
           value={data?.activeAgents ?? 0}
-          subtitle={`${data?.totalAgents ?? 0} total`}
-          icon={Users}
-          color="cyan"
+          subValue={`${data?.totalAgents ?? 0} total`}
+          icon={<Users className="h-4 w-4" />}
+          color="teal"
         />
         <ColorStatCard
-          title="Today's Routes"
+          label="Today's Routes"
           value={data?.todayRoutes ?? 0}
-          subtitle={`${data?.routeCompletion ?? 0}% completed`}
-          icon={Route}
+          subValue={`${data?.routeCompletion ?? 0}% completed`}
+          icon={<Route className="h-4 w-4" />}
           color="blue"
         />
         <ColorStatCard
-          title="Today's Visits"
+          label="Today's Visits"
           value={data?.todayVisits ?? 0}
-          subtitle={`${data?.totalCustomers ?? 0} customers`}
-          icon={CheckSquare}
+          subValue={`${data?.totalCustomers ?? 0} customers`}
+          icon={<CheckSquare className="h-4 w-4" />}
           color="green"
         />
         <ColorStatCard
-          title="Pending Tasks"
+          label="Pending Tasks"
           value={data?.pendingTasks ?? 0}
-          subtitle={`${data?.unresolvedAlerts ?? 0} alerts`}
-          icon={ClipboardList}
+          subValue={`${data?.unresolvedAlerts ?? 0} alerts`}
+          icon={<ClipboardList className="h-4 w-4" />}
           color="amber"
         />
       </div>

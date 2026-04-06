@@ -42,6 +42,12 @@ interface Journey {
   entryCount: number
   activeCount: number
   completedCount: number
+  conversionCount?: number
+  goalType?: string
+  goalTarget?: number
+  goalConditions?: any
+  exitOnGoal?: boolean
+  maxEnrollmentDays?: number
   steps?: JourneyStep[]
 }
 
@@ -114,6 +120,83 @@ const conditionOperators = [
   { value: "not_empty", label: "Boş deyil" },
 ]
 
+// Enrollment Management Table component
+function EnrollmentTable({ journeyId }: { journeyId: string }) {
+  const [enrollments, setEnrollments] = useState<any[]>([])
+  const [loading, setLoading] = useState(false)
+  const [loaded, setLoaded] = useState(false)
+
+  const load = async () => {
+    setLoading(true)
+    try {
+      const res = await fetch(`/api/v1/journeys/enroll?journeyId=${journeyId}`)
+      const json = await res.json()
+      if (json.success) setEnrollments(json.data || [])
+    } catch { /* ignore */ }
+    finally { setLoading(false); setLoaded(true) }
+  }
+
+  useEffect(() => { load() }, [journeyId])
+
+  const handleAction = async (enrollmentId: string, action: "pause" | "resume" | "cancel") => {
+    try {
+      await fetch(`/api/v1/journeys/enrollments/${enrollmentId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action }),
+      })
+      load()
+    } catch { /* ignore */ }
+  }
+
+  if (!loaded && loading) return <div className="py-4 text-center"><Loader2 className="h-4 w-4 animate-spin mx-auto" /></div>
+  if (enrollments.length === 0) return null
+
+  const statusColors: Record<string, string> = {
+    active: "bg-green-100 text-green-700",
+    paused: "bg-yellow-100 text-yellow-700",
+    completed: "bg-muted text-muted-foreground",
+  }
+
+  return (
+    <div className="mt-4 border-t pt-4">
+      <h4 className="text-sm font-semibold mb-3 flex items-center gap-1.5">
+        <Users className="h-4 w-4" /> Enrollments ({enrollments.length})
+      </h4>
+      <div className="space-y-2 max-h-48 overflow-y-auto">
+        {enrollments.map((e: any) => (
+          <div key={e.id} className="flex items-center justify-between p-2 rounded-lg bg-muted/50 text-sm">
+            <div className="flex items-center gap-2">
+              <Badge className={`text-[10px] ${statusColors[e.status] || "bg-muted"}`}>{e.status}</Badge>
+              <span className="text-xs text-muted-foreground">
+                {e.leadId ? `Lead: ${e.leadId.slice(0, 8)}...` : e.contactId ? `Contact: ${e.contactId.slice(0, 8)}...` : "—"}
+              </span>
+              {e.exitReason && <span className="text-[10px] text-muted-foreground">({e.exitReason})</span>}
+            </div>
+            <div className="flex items-center gap-1">
+              {e.status === "active" && (
+                <Button size="sm" variant="ghost" className="h-6 text-[10px] px-2" onClick={() => handleAction(e.id, "pause")}>
+                  <Pause className="h-3 w-3 mr-0.5" /> Pause
+                </Button>
+              )}
+              {e.status === "paused" && (
+                <Button size="sm" variant="ghost" className="h-6 text-[10px] px-2" onClick={() => handleAction(e.id, "resume")}>
+                  <Play className="h-3 w-3 mr-0.5" /> Resume
+                </Button>
+              )}
+              {(e.status === "active" || e.status === "paused") && (
+                <Button size="sm" variant="ghost" className="h-6 text-[10px] px-2 text-red-500 hover:text-red-600" onClick={() => handleAction(e.id, "cancel")}>
+                  <X className="h-3 w-3 mr-0.5" /> Cancel
+                </Button>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 export default function JourneysPage() {
   const { data: session } = useSession()
   const t = useTranslations("journeys")
@@ -138,6 +221,8 @@ export default function JourneysPage() {
   const [leadsLoading, setLeadsLoading] = useState(false)
   const [leadSearch, setLeadSearch] = useState("")
   const [selectedLead, setSelectedLead] = useState<{ id: string; contactName: string; email?: string; companyName?: string } | null>(null)
+  const [exitReasonCounts, setExitReasonCounts] = useState<Record<string, number>>({})
+  const [enrollmentStatusCounts, setEnrollmentStatusCounts] = useState<Record<string, number>>({ active: 0, paused: 0, completed: 0 })
   const orgId = session?.user?.organizationId
 
   const statusLabels: Record<string, string> = {
@@ -170,6 +255,19 @@ export default function JourneysPage() {
       })
       const json = await res.json()
       if (json.success) setJourneys(json.data.journeys)
+      // Fetch enrollment exit reason counts
+      fetch("/api/v1/journeys/enroll").then(r => r.json()).then(json => {
+        if (json.success) {
+          const counts: Record<string, number> = {}
+          const sCounts: Record<string, number> = { active: 0, paused: 0, completed: 0 }
+          for (const e of (json.data || [])) {
+            if (e.exitReason) counts[e.exitReason] = (counts[e.exitReason] || 0) + 1
+            if (e.status) sCounts[e.status] = (sCounts[e.status] || 0) + 1
+          }
+          setExitReasonCounts(counts)
+          setEnrollmentStatusCounts(sCounts)
+        }
+      }).catch(() => {})
     } catch (err) { console.error(err) } finally { setLoading(false) }
   }
 
@@ -332,6 +430,18 @@ export default function JourneysPage() {
         <ColorStatCard label={t("statCompleted")} value={`${conversionRate}%`} icon={<Target className="h-4 w-4" />} color="teal" hint={t("hintCompletionRate")} />
       </div>
 
+      {/* Exit Reason Breakdown */}
+      {Object.keys(exitReasonCounts).length > 0 && (
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-xs text-muted-foreground font-medium">Exit reasons:</span>
+          {Object.entries(exitReasonCounts).map(([reason, count]) => (
+            <Badge key={reason} variant="outline" className="text-xs">
+              {reason}: {count}
+            </Badge>
+          ))}
+        </div>
+      )}
+
       {/* Journey cards */}
       <div className="space-y-3">
         {journeys.length === 0 ? (
@@ -367,6 +477,15 @@ export default function JourneysPage() {
                   <span className="flex items-center gap-1">
                     <CheckCircle className="h-3 w-3 text-green-500" /> Завершили: {journey.completedCount}
                   </span>
+                  {journey.goalTarget && journey.goalTarget > 0 && (
+                    <div className="flex items-center gap-1 text-xs">
+                      <Target className="h-3 w-3 text-green-500" />
+                      <span>Goal: {journey.conversionCount || 0}/{journey.goalTarget}</span>
+                      <div className="w-16 h-1.5 bg-muted rounded-full overflow-hidden ml-1">
+                        <div className="h-full bg-green-500 rounded-full" style={{ width: `${Math.min(100, ((journey.conversionCount || 0) / journey.goalTarget) * 100)}%` }} />
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
               <div className="flex items-center gap-1.5 shrink-0">
@@ -411,6 +530,9 @@ export default function JourneysPage() {
                 <DialogTitle>{stepsJourney.name}</DialogTitle>
                 <p className="text-xs text-muted-foreground mt-0.5">
                   Статус: {statusLabels[stepsJourney.status]} · Триггер: {triggerLabels[stepsJourney.triggerType]}
+                  {stepsJourney.goalType && (
+                    <span> · Goal: {stepsJourney.goalType} ({stepsJourney.conversionCount || 0}/{stepsJourney.goalTarget || "∞"})</span>
+                  )}
                 </p>
               </div>
               <div className="flex items-center gap-2">
@@ -532,6 +654,11 @@ export default function JourneysPage() {
               </div>
             </div>
           </>}
+
+          {/* Enrollments Management */}
+          {!flowView && (
+            <EnrollmentTable journeyId={stepsJourney.id} />
+          )}
           </DialogContent>
           <DialogFooter>
             {!flowView && <>

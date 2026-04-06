@@ -225,7 +225,7 @@ export async function POST(
   // Use transaction to prevent race condition on capacity check
   let participant: any
   try {
-    participant = await prisma.$transaction(async (tx) => {
+    participant = await prisma.$transaction(async (tx: any) => {
       // Re-check capacity inside transaction (serializable read)
       const currentCount = await tx.eventParticipant.count({ where: { eventId: id } })
       if (event.maxParticipants && currentCount >= event.maxParticipants) {

@@ -33,8 +33,8 @@ export async function GET(req: NextRequest) {
     })
 
     const agentLocations = agents
-      .filter((a) => a.locations.length > 0)
-      .map((a) => ({
+      .filter((a: any) => a.locations.length > 0)
+      .map((a: any) => ({
         agentId: a.id,
         name: a.name,
         isOnline: a.isOnline,

@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
 
   // Build CSV rows — one row per budget line with example data
   const header = "category,department,amount,date,description,lineType"
-  const rows = lines.map((l) => {
+  const rows = lines.map((l: any) => {
     const cat = csvEscape(l.category)
     const dept = csvEscape(l.department || "")
     const type = l.lineType || "expense"

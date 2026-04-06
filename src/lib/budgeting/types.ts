@@ -98,9 +98,29 @@ export interface BudgetAnalytics {
   totalCOGSActual: number
   grossProfit: number
   grossProfitActual: number
+  marginForecast: number
   byCategory: BudgetCategoryRow[]
   byDepartment: BudgetDepartmentRow[]
   costModelTotal: number
+  matrix?: {
+    costTypes: Array<{ key: string; label: string; isShared: boolean; color: string | null }>
+    departments: Array<{ key: string; label: string; hasRevenue: boolean; color: string | null }>
+    cells: Array<{
+      costTypeKey: string
+      costTypeLabel: string
+      departmentKey: string | null
+      departmentLabel: string | null
+      planned: number
+      actual: number
+      forecast: number
+      variance: number
+      variancePct: number
+      lineType: string
+    }>
+    rowTotals: Record<string, { planned: number; actual: number; forecast: number; variance: number }>
+    colTotals: Record<string, { planned: number; actual: number; forecast: number; variance: number }>
+    grandTotal: { planned: number; actual: number; forecast: number; variance: number }
+  }
 }
 
 export interface CreateBudgetPlanInput {

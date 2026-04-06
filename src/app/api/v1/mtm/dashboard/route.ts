@@ -53,7 +53,7 @@ export async function GET(req: NextRequest) {
         totalCustomers,
         pendingTasks,
         unresolvedAlerts,
-        recentVisits: recentVisits.map((v) => ({
+        recentVisits: recentVisits.map((v: any) => ({
           id: v.id,
           agent: v.agent.name,
           customer: v.customer.name,

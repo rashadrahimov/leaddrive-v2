@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getOrgId } from "@/lib/api-auth"
 import { prisma } from "@/lib/prisma"
+import type { CashFlowEntry } from "@prisma/client"
 
 const MONTH_NAMES = ["Yan", "Fev", "Mar", "Apr", "May", "İyn", "İyl", "Avq", "Sen", "Okt", "Noy", "Dek"]
 
@@ -33,42 +34,42 @@ export async function GET(req: NextRequest) {
   }
 
   const sections = activities.map((activity) => {
-    const activityEntries = entries.filter((e) => (e.activityType || "operating") === activity)
-    const inflows = activityEntries.filter((e) => e.entryType === "inflow")
-    const outflows = activityEntries.filter((e) => e.entryType === "outflow")
+    const activityEntries = entries.filter((e: CashFlowEntry) => (e.activityType || "operating") === activity)
+    const inflows = activityEntries.filter((e: CashFlowEntry) => e.entryType === "inflow")
+    const outflows = activityEntries.filter((e: CashFlowEntry) => e.entryType === "outflow")
 
     // Group by category
     const inflowByCategory: Record<string, number> = {}
-    inflows.forEach((e) => {
+    inflows.forEach((e: CashFlowEntry) => {
       const cat = e.category || e.source || "Other"
       inflowByCategory[cat] = (inflowByCategory[cat] || 0) + e.amount
     })
 
     const outflowByCategory: Record<string, number> = {}
-    outflows.forEach((e) => {
+    outflows.forEach((e: CashFlowEntry) => {
       const cat = e.category || e.source || "Other"
       outflowByCategory[cat] = (outflowByCategory[cat] || 0) + e.amount
     })
 
-    const totalInflow = inflows.reduce((s, e) => s + e.amount, 0)
-    const totalOutflow = outflows.reduce((s, e) => s + e.amount, 0)
+    const totalInflow = inflows.reduce((s: number, e: CashFlowEntry) => s + e.amount, 0)
+    const totalOutflow = outflows.reduce((s: number, e: CashFlowEntry) => s + e.amount, 0)
     const net = totalInflow - totalOutflow
 
     // Compare year
     let compareNet = 0
     if (compareYear) {
-      const compEntries = compareEntries.filter((e) => (e.activityType || "operating") === activity)
-      const compIn = compEntries.filter((e) => e.entryType === "inflow").reduce((s, e) => s + e.amount, 0)
-      const compOut = compEntries.filter((e) => e.entryType === "outflow").reduce((s, e) => s + e.amount, 0)
+      const compEntries = compareEntries.filter((e: CashFlowEntry) => (e.activityType || "operating") === activity)
+      const compIn = compEntries.filter((e: CashFlowEntry) => e.entryType === "inflow").reduce((s: number, e: CashFlowEntry) => s + e.amount, 0)
+      const compOut = compEntries.filter((e: CashFlowEntry) => e.entryType === "outflow").reduce((s: number, e: CashFlowEntry) => s + e.amount, 0)
       compareNet = compIn - compOut
     }
 
     // Monthly breakdown
     const monthly = []
     for (let m = 1; m <= 12; m++) {
-      const monthEntries = activityEntries.filter((e) => e.month === m)
-      const mIn = monthEntries.filter((e) => e.entryType === "inflow").reduce((s, e) => s + e.amount, 0)
-      const mOut = monthEntries.filter((e) => e.entryType === "outflow").reduce((s, e) => s + e.amount, 0)
+      const monthEntries = activityEntries.filter((e: CashFlowEntry) => e.month === m)
+      const mIn = monthEntries.filter((e: CashFlowEntry) => e.entryType === "inflow").reduce((s: number, e: CashFlowEntry) => s + e.amount, 0)
+      const mOut = monthEntries.filter((e: CashFlowEntry) => e.entryType === "outflow").reduce((s: number, e: CashFlowEntry) => s + e.amount, 0)
       monthly.push({ month: m, label: MONTH_NAMES[m - 1], inflow: mIn, outflow: mOut, net: mIn - mOut })
     }
 

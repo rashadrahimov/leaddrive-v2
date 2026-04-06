@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useSession } from "next-auth/react"
+import { useTranslations } from "next-intl"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -30,21 +31,27 @@ const DEFAULTS: Settings = {
   billPayments: { enabled: true, channels: ["telegram"] },
 }
 
-const CHANNELS = [
-  { key: "telegram", label: "Telegram", desc: "Отправлять уведомление в Telegram" },
-  { key: "inApp", label: "В приложении", desc: "Показывать в центре уведомлений" },
-  { key: "email", label: "Email", desc: "Отправлять email-уведомление" },
-]
-
-const DAY_OPTIONS = [1, 3, 7, 14]
-
 export default function FinanceNotificationsPage() {
+  const t = useTranslations("finance.notif")
   const { data: session } = useSession()
   const orgId = (session?.user as any)?.organizationId || ""
   const [settings, setSettings] = useState<Settings>(DEFAULTS)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
+
+  const CHANNELS = [
+    { key: "telegram", label: t("telegram"), desc: t("telegramDesc") },
+    { key: "inApp", label: t("inApp"), desc: t("inAppDesc") },
+    { key: "email", label: t("email"), desc: t("emailDesc") },
+  ]
+
+  const DAY_OPTIONS = [
+    { value: 1, label: t("oneDay") },
+    { value: 3, label: t("threeDays") },
+    { value: 7, label: t("sevenDays") },
+    { value: 14, label: t("fourteenDays") },
+  ]
 
   useEffect(() => {
     if (!orgId) return
@@ -69,14 +76,14 @@ export default function FinanceNotificationsPage() {
     setTimeout(() => setSaved(false), 3000)
   }
 
-  const toggleEnabled = (key: keyof Settings) => {
+  const toggleEnabled = (key: keyof Omit<Settings, "recipientEmail">) => {
     setSettings((prev) => ({
       ...prev,
       [key]: { ...prev[key], enabled: !prev[key].enabled },
     }))
   }
 
-  const toggleChannel = (key: keyof Settings, channel: string) => {
+  const toggleChannel = (key: keyof Omit<Settings, "recipientEmail">, channel: string) => {
     setSettings((prev) => {
       const cat = prev[key]
       const channels = cat.channels.includes(channel)
@@ -93,18 +100,18 @@ export default function FinanceNotificationsPage() {
     }))
   }
 
-  if (loading) return <div className="p-8 text-center text-muted-foreground">Загрузка...</div>
+  if (loading) return <div className="p-8 text-center text-muted-foreground">{t("enabled") === "Включено" ? "Загрузка..." : "Loading..."}</div>
 
   return (
     <div className="flex-1 space-y-6 p-4 md:p-6 max-w-3xl">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Уведомления об оплатах</h1>
-          <p className="text-sm text-muted-foreground mt-1">Настройте когда и куда приходят финансовые уведомления</p>
+          <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
+          <p className="text-sm text-muted-foreground mt-1">{t("description")}</p>
         </div>
         <Button onClick={handleSave} disabled={saving}>
           {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
-          {saved ? "Сохранено!" : "Сохранить"}
+          {saved ? t("saved") : t("save")}
         </Button>
       </div>
 
@@ -112,13 +119,13 @@ export default function FinanceNotificationsPage() {
       <Card>
         <CardContent className="pt-5">
           <div className="space-y-2">
-            <Label className="text-sm font-medium">Email для уведомлений</Label>
-            <p className="text-xs text-muted-foreground">На этот адрес будут приходить финансовые уведомления (если включен канал Email)</p>
+            <Label className="text-sm font-medium">{t("recipientEmail")}</Label>
+            <p className="text-xs text-muted-foreground">{t("recipientEmailDesc")}</p>
             <Input
               type="email"
               value={settings.recipientEmail}
               onChange={(e) => setSettings((prev) => ({ ...prev, recipientEmail: e.target.value }))}
-              placeholder="finance@company.com"
+              placeholder={t("recipientEmailPlaceholder")}
               className="max-w-md"
             />
           </div>
@@ -127,9 +134,10 @@ export default function FinanceNotificationsPage() {
 
       {/* Overdue */}
       <NotifSection
-        title="Просроченные оплаты"
-        desc="Получать уведомления о просроченных платежах"
+        title={t("overduePayments")}
+        desc={t("overdueDesc")}
         category={settings.overdue}
+        channels={CHANNELS}
         onToggle={() => toggleEnabled("overdue")}
         onToggleChannel={(ch) => toggleChannel("overdue", ch)}
       />
@@ -141,8 +149,8 @@ export default function FinanceNotificationsPage() {
             <div className="flex items-center gap-3">
               <Bell className="w-5 h-5 text-amber-600" />
               <div>
-                <CardTitle className="text-base">Предварительное уведомление</CardTitle>
-                <p className="text-sm text-muted-foreground">Уведомлять о приближающихся дедлайнах</p>
+                <CardTitle className="text-base">{t("advanceWarning")}</CardTitle>
+                <p className="text-sm text-muted-foreground">{t("advanceDesc")}</p>
               </div>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
@@ -154,40 +162,36 @@ export default function FinanceNotificationsPage() {
         {settings.advance.enabled && (
           <CardContent className="space-y-4">
             <div>
-              <Label className="text-xs font-medium text-muted-foreground">Дней до дедлайна</Label>
+              <Label className="text-xs font-medium text-muted-foreground">{t("daysBeforeDeadline")}</Label>
               <div className="flex gap-2 mt-2">
-                {DAY_OPTIONS.map((d) => (
-                  <Button
-                    key={d}
-                    size="sm"
-                    variant={settings.advance.daysBeforeDeadline === d ? "default" : "outline"}
-                    className="h-8"
-                    onClick={() => setDays(d)}
-                  >
-                    {d} {d === 1 ? "день" : d < 5 ? "дня" : "дней"}
+                {DAY_OPTIONS.map(({ value, label }) => (
+                  <Button key={value} size="sm" variant={settings.advance.daysBeforeDeadline === value ? "default" : "outline"} className="h-8" onClick={() => setDays(value)}>
+                    {label}
                   </Button>
                 ))}
               </div>
             </div>
-            <ChannelToggles channels={settings.advance.channels} onToggle={(ch) => toggleChannel("advance", ch)} />
+            <ChannelToggles channels={settings.advance.channels} channelList={CHANNELS} onToggle={(ch) => toggleChannel("advance", ch)} label={t("deliveryChannels")} />
           </CardContent>
         )}
       </Card>
 
       {/* Payment Orders */}
       <NotifSection
-        title="Платёжные поручения"
-        desc="Уведомления при отправке на согласование и исполнении"
+        title={t("paymentOrders")}
+        desc={t("paymentOrdersDesc")}
         category={settings.paymentOrders}
+        channels={CHANNELS}
         onToggle={() => toggleEnabled("paymentOrders")}
         onToggleChannel={(ch) => toggleChannel("paymentOrders", ch)}
       />
 
       {/* Bill Payments */}
       <NotifSection
-        title="Оплата счетов"
-        desc="Уведомления при записи оплаты по счёту"
+        title={t("billPayments")}
+        desc={t("billPaymentsDesc")}
         category={settings.billPayments}
+        channels={CHANNELS}
         onToggle={() => toggleEnabled("billPayments")}
         onToggleChannel={(ch) => toggleChannel("billPayments", ch)}
       />
@@ -195,10 +199,12 @@ export default function FinanceNotificationsPage() {
   )
 }
 
-function NotifSection({ title, desc, category, onToggle, onToggleChannel }: {
+function NotifSection({ title, desc, category, channels, onToggle, onToggleChannel }: {
   title: string; desc: string; category: NotifCategory
+  channels: { key: string; label: string; desc: string }[]
   onToggle: () => void; onToggleChannel: (ch: string) => void
 }) {
+  const t = useTranslations("finance.notif")
   return (
     <Card>
       <CardHeader className="pb-3">
@@ -218,19 +224,22 @@ function NotifSection({ title, desc, category, onToggle, onToggleChannel }: {
       </CardHeader>
       {category.enabled && (
         <CardContent>
-          <ChannelToggles channels={category.channels} onToggle={onToggleChannel} />
+          <ChannelToggles channels={category.channels} channelList={channels} onToggle={onToggleChannel} label={t("deliveryChannels")} />
         </CardContent>
       )}
     </Card>
   )
 }
 
-function ChannelToggles({ channels, onToggle }: { channels: string[]; onToggle: (ch: string) => void }) {
+function ChannelToggles({ channels, channelList, onToggle, label }: {
+  channels: string[]; channelList: { key: string; label: string; desc: string }[]
+  onToggle: (ch: string) => void; label: string
+}) {
   return (
     <div>
-      <Label className="text-xs font-medium text-muted-foreground">Каналы доставки</Label>
+      <Label className="text-xs font-medium text-muted-foreground">{label}</Label>
       <div className="space-y-2 mt-2">
-        {CHANNELS.map(({ key, label, desc }) => (
+        {channelList.map(({ key, label, desc }) => (
           <label key={key} className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/30 cursor-pointer transition-colors">
             <div>
               <p className="text-sm font-medium">{label}</p>
