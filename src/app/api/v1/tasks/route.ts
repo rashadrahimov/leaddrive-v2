@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { prisma, logAudit } from "@/lib/prisma"
-import { getOrgId } from "@/lib/api-auth"
+import { getOrgId, getSession } from "@/lib/api-auth"
 import { executeWorkflows } from "@/lib/workflow-engine"
 import { createNotification } from "@/lib/notifications"
+import { getFieldPermissions, filterEntityFields, filterWritableFields } from "@/lib/field-filter"
+import { applyRecordFilter } from "@/lib/sharing-rules"
 
 const createTaskSchema = z.object({
   title: z.string().min(1).max(300),
@@ -17,8 +19,10 @@ const createTaskSchema = z.object({
 })
 
 export async function GET(req: NextRequest) {
-  const orgId = await getOrgId(req)
+  const session = await getSession(req)
+  const orgId = session?.orgId || await getOrgId(req)
   if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  const role = session?.role || "admin"
 
   const { searchParams } = new URL(req.url)
   const assignedTo = searchParams.get("assignedTo") || ""
@@ -30,11 +34,12 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const where = {
+    let where: any = {
       organizationId: orgId,
       ...(assignedTo ? { assignedTo } : {}),
       ...(status ? { status } : {}),
     }
+    where = await applyRecordFilter(orgId, session?.userId || "", role, "task", where)
 
     const [tasks, total] = await Promise.all([
       prisma.task.findMany({
@@ -46,7 +51,10 @@ export async function GET(req: NextRequest) {
       prisma.task.count({ where }),
     ])
 
-    return NextResponse.json({ success: true, data: { tasks, total, page, limit } })
+    const fieldPerms = await getFieldPermissions(orgId, role, "task")
+    const filteredTasks = tasks.map((t: any) => filterEntityFields(t, fieldPerms, role))
+
+    return NextResponse.json({ success: true, data: { tasks: filteredTasks, total, page, limit } })
   } catch {
     return NextResponse.json({ success: true, data: { tasks: [], total: 0, page, limit } })
   }

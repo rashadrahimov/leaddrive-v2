@@ -35,6 +35,14 @@ interface AgentConfig {
   isActive: boolean
   version: number
   notes: string | null
+  // Multi-agent orchestration
+  agentType?: string
+  department?: string
+  priority?: number
+  handoffTargets?: string[]
+  intents?: string[]
+  greeting?: string
+  maxToolRounds?: number
 }
 
 interface ChatSession {
@@ -837,6 +845,24 @@ export default function AICommandCenterPage() {
 
                     {/* Metrics chips */}
                     <div className="flex flex-wrap gap-2">
+                      {agent.agentType && agent.agentType !== "general" && (
+                        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-violet-50 border border-violet-200 text-sm">
+                          <Bot className="h-3.5 w-3.5 text-violet-500" />
+                          <span className="text-foreground/70 capitalize">{agent.agentType}</span>
+                        </div>
+                      )}
+                      {agent.intents && agent.intents.length > 0 && (
+                        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-50 border border-amber-200 text-sm">
+                          <span>🎯</span>
+                          <span className="text-foreground/70">{agent.intents.length} intents</span>
+                        </div>
+                      )}
+                      {(agent.priority ?? 0) > 0 && (
+                        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-50 border border-blue-200 text-sm">
+                          <span>⚡</span>
+                          <span className="text-foreground/70">Priority: {agent.priority}</span>
+                        </div>
+                      )}
                       <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-orange-50 border border-orange-200 text-sm">
                         <span className="text-orange-500">🔥</span>
                         <span className="text-foreground/70">Max {agent.maxTokens || 2048} токенов</span>

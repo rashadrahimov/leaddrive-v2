@@ -7,6 +7,9 @@ const stepSchema = z.object({
   stepType: z.string(),
   stepOrder: z.number().int(),
   config: z.any().default({}),
+  yesNextStepId: z.string().nullable().optional(),
+  noNextStepId: z.string().nullable().optional(),
+  splitPaths: z.any().nullable().optional(),
 })
 
 const updateJourneySchema = z.object({
@@ -75,6 +78,9 @@ export async function PUT(
             stepType: s.stepType,
             stepOrder: s.stepOrder,
             config: s.config || {},
+            yesNextStepId: s.yesNextStepId || null,
+            noNextStepId: s.noNextStepId || null,
+            splitPaths: s.splitPaths || null,
           })),
         })
       }

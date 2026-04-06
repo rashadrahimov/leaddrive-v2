@@ -16,6 +16,14 @@ const createConfigSchema = z.object({
   kbMaxArticles: z.number().optional(),
   isActive: z.boolean().optional(),
   notes: z.string().optional(),
+  // Multi-agent orchestration fields
+  agentType: z.enum(["sales", "support", "marketing", "analyst", "general"]).optional(),
+  department: z.string().max(100).optional(),
+  priority: z.number().int().optional(),
+  handoffTargets: z.array(z.string()).optional(),
+  intents: z.array(z.string()).optional(),
+  greeting: z.string().max(1000).optional(),
+  maxToolRounds: z.number().int().optional(),
 })
 
 function normalizeToolsEnabled(data: any): any {

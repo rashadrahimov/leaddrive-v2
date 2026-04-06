@@ -13,9 +13,16 @@ export async function getFieldPermissions(
   const cached = permissionCache.get(cacheKey)
   if (cached && cached.expiresAt > Date.now()) return cached.data
 
-  const permissions = await prisma.fieldPermission.findMany({
-    where: { organizationId: orgId, roleId, entityType },
-  })
+  let permissions: any[] = []
+  try {
+    permissions = await prisma.fieldPermission.findMany({
+      where: { organizationId: orgId, roleId, entityType },
+    })
+  } catch {
+    // Table may not exist yet — return empty (no restrictions)
+    permissionCache.set(cacheKey, { data: {}, expiresAt: Date.now() + CACHE_TTL })
+    return {}
+  }
 
   const map: Record<string, string> = {}
   for (const p of permissions) {

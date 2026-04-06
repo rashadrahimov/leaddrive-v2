@@ -35,53 +35,74 @@ SaaS multi-tenant CRM для IT-аутсорсинговых компаний. �
 - Repo: `rashadrahimov/leaddrive-v2`
 - Branch: `main`
 
-## Current State (March 19, 2026)
+## Current State (April 6, 2026)
 
 ### What's DONE ✅
-1. **Full scaffold**: 43 pages, 27 API routes, 41 Prisma models, 820-line schema
-2. **v1 data migration**: 51 tables exported from v1 via SSH, imported into v2
-   - 241 companies, 577 contacts, 12 deals, 17 leads, 20 tasks
-   - 16 tickets, 27 KB articles, 33 email templates, 9 AI sessions
-   - 2000 audit log entries, cost model data (overhead, employees, pricing)
-3. **All pages connected to real Prisma data** (no more mocks):
+1. **Full scaffold**: 60+ pages, 50+ API routes, 41 Prisma models
+2. **v1 data migration**: Script ready (`scripts/import-v1.ts`, 1052 lines, 29 data categories)
+3. **All pages connected to real Prisma data**:
    - Dashboard, Companies, Contacts, Deals, Leads, Tasks
    - Contracts, Offers, Tickets, KB, Campaigns
    - Segments, Journeys, Inbox, Reports, AI Center
    - Settings: Currencies, Custom Fields, Workflows, SLA, Channels, Audit Log
    - Profitability (cost model analytics)
-4. **CRUD forms**: Company, Contact, Deal, Lead, Ticket, Task (dialog modals)
-5. **Detail pages**: Company (with tabs), Contact (with company link)
-6. **Auth**: Login (real DB), Register (creates org + user + defaults), SessionProvider
-7. **Middleware**: Protects dashboard routes, injects orgId, role-based access
-8. **Deployment**: PM2 + Nginx on Hetzner, DNS configured
+   - Finance: Invoices, A/P Bills, Bank Accounts, Payment Orders, Aging
+4. **Full CRUD + Edit + Delete** on all entities:
+   - Company, Contact, Deal, Lead, Ticket, Task — dialog modals with edit/create
+   - `DeleteConfirmDialog` component on all pages
+5. **Detail pages**: Company, Contact, Deal, Lead, Ticket, Task (with tabs, timelines, comments)
+6. **Auth**: Login, Register, 2FA (TOTP setup/verify/disable), Forgot/Reset password
+7. **Middleware**: Protects dashboard routes, injects orgId, role-based access, field-level permissions
+8. **Deployment**: PM2 + Nginx on Hetzner, DNS configured, GitHub Actions auto-deploy on push
+9. **i18n**: Full 3-language support (EN/RU/AZ) via next-intl on all pages
+10. **AI Integration (Da Vinci)**:
+    - 12 AI endpoints (chat, ticket suggestions, deal analysis, budget narrative, cost analysis)
+    - Multi-agent orchestration with 3-tier fallback and agent routing
+    - WhatsApp auto-reply with escalation, KB context, session management
+    - Lead scoring, email analytics, financial observations
+11. **WhatsApp Integration**:
+    - Inbound/outbound messaging via Meta Cloud API
+    - Auto-reopen closed tickets on customer reply (with phone fallback)
+    - Da Vinci auto-reply with escalation guards
+    - 24-hour messaging window detection + template fallback
+12. **Tickets System**:
+    - Full CRUD, status pipeline (new→open→in_progress→waiting→resolved→closed)
+    - SLA tracking with live countdown, breach warnings
+    - Auto-assignment (skill-based routing, least-loaded/round-robin)
+    - Ticket macros (7 action types)
+    - Kanban + list views, comments (public/internal), escalation
+13. **Portal**: Customer self-service (auth, tickets, KB, Da Vinci chat, CSAT ratings)
+14. **Finance Module**: Invoices, A/P, bank accounts, payment orders, aging analysis, multi-channel notifications
+15. **Phase 4 Enterprise**: Field permissions, multi-agent AI, journey branching, VoIP (Twilio), landing pages
 
 ### What's NOT DONE YET ❌
-1. **Production data import**: v2 DB on server is EMPTY — need to run:
+1. **Production data import**: v2 DB on server needs import:
    ```bash
    ssh $SSH_USER@$SERVER "cd /opt/leaddrive-v2 && npx tsx scripts/import-v1.ts && npx tsx scripts/create-admin.ts"
    ```
 2. **SSL**: Need to run `certbot --nginx -d leaddrivecrm.org -d app.leaddrivecrm.org`
-3. **2FA (TOTP)**: Setup/verify/disable flow (M0.5)
-4. **Forgot password**: Email flow (M0.6)
-5. **Edit forms**: Company edit works, but Contact/Deal/Lead/Ticket/Task need edit mode
-6. **Delete functionality**: API routes have DELETE methods but no UI confirmation
-7. **Pricing page**: Static mock, needs connection to cost model
-8. **Email sending**: SMTP integration for campaigns, notifications
-9. **AI integration**: Claude API calls for AI agents (base service exists in Python compute)
-10. **Portal**: Customer self-service portal (separate layout exists)
-11. **TypeScript strict mode**: `ignoreBuildErrors: true` in next.config.ts (workaround)
+3. **TypeScript strict mode**: `ignoreBuildErrors: true` in next.config.ts (workaround)
+
+### Partially Done ⚠️
+1. **Email campaigns**: SMTP configured, `sendEmail()` works, templates exist — but no compose UI for mass campaigns
+2. **Portal**: Auth + tickets + KB structure works — chat and KB need full QA verification
+3. **Ticket escalationLevel**: Field exists in schema + UI column, but value never incremented (always shows "—")
+4. **Ticket detail inline edit**: Status/assignee/priority editable inline, but subject/description only via list page dialog
 
 ## Key Files
-- `prisma/schema.prisma` — 41 models, 820 lines
+- `prisma/schema.prisma` — 41 models
 - `src/lib/auth.ts` — NextAuth config with Prisma + bcrypt
 - `src/lib/api-auth.ts` — getOrgId helper (header or session)
 - `src/lib/prisma.ts` — Prisma singleton + tenantPrisma
+- `src/lib/whatsapp.ts` — WhatsApp API client (send messages, templates)
+- `src/lib/auto-assign.ts` — Skill-based ticket routing
+- `src/lib/email.ts` — Email sending via nodemailer
 - `src/middleware.ts` — Auth guard + org context injection
 - `src/app/layout.tsx` — Root layout with SessionProvider
+- `src/app/api/v1/webhooks/whatsapp/route.ts` — WhatsApp webhook + Da Vinci auto-reply
 - `scripts/import-v1.ts` — Full v1→v2 data import (29 sections)
 - `scripts/create-admin.ts` — Creates admin user with known password
 - `scripts/deploy.sh` — Full deployment script (SSH → server)
-- `scripts/export-v1-remote.sh` — Exports v1 data via SSH
 
 ## Deploy Commands
 

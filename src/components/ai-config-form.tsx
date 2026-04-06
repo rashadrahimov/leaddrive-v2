@@ -27,7 +27,28 @@ interface AiConfigFormData {
   kbMaxArticles: number
   isActive: boolean
   notes: string
+  // Multi-agent orchestration
+  agentType: string
+  department: string
+  priority: number
+  handoffTargets: string[]
+  intents: string[]
+  greeting: string
+  maxToolRounds: number
 }
+
+const AGENT_TYPES = [
+  { id: "general", label: "General", desc: "Default multi-purpose agent" },
+  { id: "sales", label: "Sales", desc: "Handles sales inquiries, pricing, deals" },
+  { id: "support", label: "Support", desc: "Handles support tickets, issues" },
+  { id: "marketing", label: "Marketing", desc: "Marketing campaigns, content" },
+  { id: "analyst", label: "Analyst", desc: "Data analysis, reports, insights" },
+]
+
+const INTENT_OPTIONS = [
+  "sales_inquiry", "pricing", "support_request", "billing_question",
+  "marketing_info", "data_analysis", "general",
+]
 
 interface AiConfigFormProps {
   open: boolean
@@ -226,6 +247,13 @@ export function AiConfigForm({ open, onOpenChange, onSaved, initialData, orgId }
     kbMaxArticles: Number(initialData?.kbMaxArticles) || 5,
     isActive: initialData?.isActive ?? true,
     notes: initialData?.notes || "",
+    agentType: initialData?.agentType || "general",
+    department: initialData?.department || "",
+    priority: Number(initialData?.priority) || 0,
+    handoffTargets: Array.isArray(initialData?.handoffTargets) ? initialData.handoffTargets : [],
+    intents: Array.isArray(initialData?.intents) ? initialData.intents : [],
+    greeting: initialData?.greeting || "",
+    maxToolRounds: Number(initialData?.maxToolRounds) || 5,
   })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState("")
@@ -246,6 +274,13 @@ export function AiConfigForm({ open, onOpenChange, onSaved, initialData, orgId }
         kbMaxArticles: Number(initialData?.kbMaxArticles) || 5,
         isActive: initialData?.isActive ?? true,
         notes: initialData?.notes || "",
+        agentType: initialData?.agentType || "general",
+        department: initialData?.department || "",
+        priority: Number(initialData?.priority) || 0,
+        handoffTargets: Array.isArray(initialData?.handoffTargets) ? initialData.handoffTargets : [],
+        intents: Array.isArray(initialData?.intents) ? initialData.intents : [],
+        greeting: initialData?.greeting || "",
+        maxToolRounds: Number(initialData?.maxToolRounds) || 5,
       })
       setError("")
       setCustomRule("")
@@ -628,6 +663,123 @@ export function AiConfigForm({ open, onOpenChange, onSaved, initialData, orgId }
                 </div>
               </div>
             )}
+          </div>
+
+          {/* ── Multi-Agent Orchestration ── */}
+          <div>
+            <h3 className="font-semibold mb-3 flex items-center gap-2">
+              <ArrowUpRight className="h-4 w-4 text-orange-500" /> Agent Orchestration
+            </h3>
+            <div className="space-y-4">
+              {/* Agent Type */}
+              <div>
+                <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Agent Type</label>
+                <div className="grid grid-cols-5 gap-2">
+                  {AGENT_TYPES.map(at => (
+                    <button
+                      key={at.id}
+                      type="button"
+                      onClick={() => setForm(f => ({ ...f, agentType: at.id }))}
+                      className={cn(
+                        "p-2 rounded-xl border-2 text-center transition-all",
+                        form.agentType === at.id
+                          ? "border-orange-400 bg-orange-50/60 shadow-sm"
+                          : "border-border hover:border-orange-200"
+                      )}
+                    >
+                      <p className="text-xs font-semibold">{at.label}</p>
+                      <p className="text-[10px] text-muted-foreground">{at.desc}</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-4">
+                {/* Department */}
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground mb-1 block">Department</label>
+                  <Input
+                    value={form.department}
+                    onChange={(e) => setForm(f => ({ ...f, department: e.target.value }))}
+                    placeholder="Sales, Support..."
+                    className="h-10 rounded-xl text-sm"
+                  />
+                </div>
+                {/* Priority */}
+                <div>
+                  <div className="flex justify-between mb-1">
+                    <span className="text-xs font-medium text-muted-foreground">Priority</span>
+                    <span className="text-sm font-bold text-orange-600">{form.priority}</span>
+                  </div>
+                  <input
+                    type="range" min={0} max={10} step={1}
+                    value={form.priority}
+                    onChange={(e) => setForm(f => ({ ...f, priority: Number(e.target.value) }))}
+                    className="w-full h-2 bg-muted rounded-full appearance-none cursor-pointer accent-orange-500"
+                  />
+                  <div className="flex justify-between text-[10px] text-muted-foreground mt-0.5">
+                    <span>Low</span><span>High</span>
+                  </div>
+                </div>
+                {/* Max Tool Rounds */}
+                <div>
+                  <div className="flex justify-between mb-1">
+                    <span className="text-xs font-medium text-muted-foreground">Max Tool Rounds</span>
+                    <span className="text-sm font-bold text-orange-600">{form.maxToolRounds}</span>
+                  </div>
+                  <input
+                    type="range" min={1} max={15} step={1}
+                    value={form.maxToolRounds}
+                    onChange={(e) => setForm(f => ({ ...f, maxToolRounds: Number(e.target.value) }))}
+                    className="w-full h-2 bg-muted rounded-full appearance-none cursor-pointer accent-orange-500"
+                  />
+                  <div className="flex justify-between text-[10px] text-muted-foreground mt-0.5">
+                    <span>1</span><span>15</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Intents */}
+              <div>
+                <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Handled Intents</label>
+                <div className="flex flex-wrap gap-2">
+                  {INTENT_OPTIONS.map(intent => {
+                    const active = form.intents.includes(intent)
+                    return (
+                      <button
+                        key={intent}
+                        type="button"
+                        onClick={() => setForm(f => ({
+                          ...f,
+                          intents: active
+                            ? f.intents.filter(i => i !== intent)
+                            : [...f.intents, intent],
+                        }))}
+                        className={cn(
+                          "px-3 py-1.5 rounded-lg text-xs font-medium border transition-all",
+                          active
+                            ? "bg-orange-100 text-orange-700 border-orange-300"
+                            : "bg-muted/50 text-muted-foreground border-border hover:border-orange-200"
+                        )}
+                      >
+                        {intent.replace(/_/g, " ")}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {/* Greeting */}
+              <div>
+                <label className="text-xs font-medium text-muted-foreground mb-1 block">Custom Greeting</label>
+                <Input
+                  value={form.greeting}
+                  onChange={(e) => setForm(f => ({ ...f, greeting: e.target.value }))}
+                  placeholder="Hello! I'm your sales assistant..."
+                  className="h-10 rounded-xl text-sm"
+                />
+              </div>
+            </div>
           </div>
 
           {/* ── System Prompt ── */}
