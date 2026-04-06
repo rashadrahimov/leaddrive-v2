@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma"
 const channelSchema = z.array(z.enum(["inApp", "email", "telegram"])).default(["telegram"])
 
 const notifSettingsSchema = z.object({
+  recipientEmail: z.string().email().max(200).optional().default(""),
   overdue: z.object({
     enabled: z.boolean().default(true),
     channels: channelSchema,
@@ -23,11 +24,12 @@ const notifSettingsSchema = z.object({
     enabled: z.boolean().default(true),
     channels: channelSchema,
   }).default({ enabled: true, channels: ["telegram"] }),
-}).strict()
+})
 
 export type FinanceNotifSettings = z.infer<typeof notifSettingsSchema>
 
 const DEFAULTS: FinanceNotifSettings = {
+  recipientEmail: "",
   overdue: { enabled: true, channels: ["telegram"] },
   advance: { enabled: true, channels: ["telegram"], daysBeforeDeadline: 7 },
   paymentOrders: { enabled: true, channels: ["telegram"] },

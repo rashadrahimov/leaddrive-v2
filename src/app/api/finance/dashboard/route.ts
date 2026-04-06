@@ -175,17 +175,18 @@ export async function GET(req: NextRequest) {
     expenseBreakdown.push({ category: "Other", amount: otherAmount, pct: Math.round((otherAmount / totalExp) * 100), color: "#94a3b8" })
   }
 
-  // === A/R Aging ===
+  // === A/R Aging (by days past due date) ===
   const agingBuckets = [
-    { label: "0-30", amount: 0, count: 0 },
+    { label: "Текущие", amount: 0, count: 0 },
+    { label: "1-30", amount: 0, count: 0 },
     { label: "31-60", amount: 0, count: 0 },
     { label: "61-90", amount: 0, count: 0 },
     { label: "90+", amount: 0, count: 0 },
   ]
   ;(invoices as InvoiceRow[]).forEach((inv: InvoiceRow) => {
     if (!inv.dueDate) return
-    const days = Math.max(0, Math.floor((now.getTime() - new Date(inv.dueDate).getTime()) / 86400000))
-    const bucket = days <= 30 ? 0 : days <= 60 ? 1 : days <= 90 ? 2 : 3
+    const daysOverdue = Math.floor((now.getTime() - new Date(inv.dueDate).getTime()) / 86400000)
+    const bucket = daysOverdue <= 0 ? 0 : daysOverdue <= 30 ? 1 : daysOverdue <= 60 ? 2 : daysOverdue <= 90 ? 3 : 4
     agingBuckets[bucket].amount += inv.balanceDue || 0
     agingBuckets[bucket].count += 1
   })

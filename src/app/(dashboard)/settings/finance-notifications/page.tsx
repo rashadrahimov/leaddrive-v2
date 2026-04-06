@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { useSession } from "next-auth/react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Bell, Save, Loader2 } from "lucide-react"
@@ -14,6 +15,7 @@ interface NotifCategory {
 }
 
 interface Settings {
+  recipientEmail: string
   overdue: NotifCategory
   advance: NotifCategory & { daysBeforeDeadline: number }
   paymentOrders: NotifCategory
@@ -21,6 +23,7 @@ interface Settings {
 }
 
 const DEFAULTS: Settings = {
+  recipientEmail: "",
   overdue: { enabled: true, channels: ["telegram"] },
   advance: { enabled: true, channels: ["telegram"], daysBeforeDeadline: 7 },
   paymentOrders: { enabled: true, channels: ["telegram"] },
@@ -104,6 +107,23 @@ export default function FinanceNotificationsPage() {
           {saved ? "Сохранено!" : "Сохранить"}
         </Button>
       </div>
+
+      {/* Recipient Email */}
+      <Card>
+        <CardContent className="pt-5">
+          <div className="space-y-2">
+            <Label className="text-sm font-medium">Email для уведомлений</Label>
+            <p className="text-xs text-muted-foreground">На этот адрес будут приходить финансовые уведомления (если включен канал Email)</p>
+            <Input
+              type="email"
+              value={settings.recipientEmail}
+              onChange={(e) => setSettings((prev) => ({ ...prev, recipientEmail: e.target.value }))}
+              placeholder="finance@company.com"
+              className="max-w-md"
+            />
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Overdue */}
       <NotifSection

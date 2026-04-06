@@ -11,7 +11,9 @@ import {
   useApprovePaymentOrder,
   useRejectPaymentOrder,
   useExecutePaymentOrder,
+  useUpdatePaymentOrder,
   usePayables,
+  useBankAccounts,
 } from "@/lib/finance/hooks"
 import { FinanceKpiCard } from "./finance-kpi-card"
 import { BankAccountsManager } from "./bank-accounts"
@@ -27,7 +29,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select } from "@/components/ui/select"
 import {
-  ArrowDownLeft, ArrowUpRight, Activity, Clock, Plus, Send, Check, X, Play, Trash2, FileText, Building2,
+  ArrowDownLeft, ArrowUpRight, Activity, Clock, Plus, Send, Check, X, Play, Trash2, FileText, Building2, Edit2,
 } from "lucide-react"
 import type { PaymentRegistryFilters, PaymentOrder, CreatePaymentOrderInput } from "@/lib/finance/types"
 
@@ -76,14 +78,17 @@ const METHOD_LABELS: Record<string, string> = {
 export function PaymentsDashboard() {
   const [subTab, setSubTab] = useState("orders")
   const [filters, setFilters] = useState<PaymentRegistryFilters>({})
+  const [registryPage, setRegistryPage] = useState(1)
   const [showCreate, setShowCreate] = useState(false)
+  const [editOrderId, setEditOrderId] = useState<string | null>(null)
   const [showReject, setShowReject] = useState<string | null>(null)
   const [rejectReason, setRejectReason] = useState("")
 
-  const { data: registryData, isLoading: registryLoading } = usePaymentRegistry(filters)
+  const { data: registryData, isLoading: registryLoading } = usePaymentRegistry(filters, registryPage)
   const { data: orders, isLoading: ordersLoading } = usePaymentOrders()
   const { data: stats } = usePaymentOrdersStats()
   const { data: bills } = usePayables()
+  const { data: bankAccounts } = useBankAccounts()
 
   const createOrder = useCreatePaymentOrder()
   const deleteOrder = useDeletePaymentOrder()
@@ -91,6 +96,7 @@ export function PaymentsDashboard() {
   const approveOrder = useApprovePaymentOrder()
   const rejectOrder = useRejectPaymentOrder()
   const executeOrder = useExecutePaymentOrder()
+  const updateOrder = useUpdatePaymentOrder()
 
   const registryStats = registryData?.stats
 
@@ -190,6 +196,9 @@ export function PaymentsDashboard() {
                             <div className="flex justify-end gap-1">
                               {o.status === "draft" && (
                                 <>
+                                  <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setEditOrderId(o.id)}>
+                                    <Edit2 className="w-3 h-3 mr-1" /> Изменить
+                                  </Button>
                                   <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => submitOrder.mutate(o.id)}>
                                     <Send className="w-3 h-3 mr-1" /> На согласование
                                   </Button>
@@ -304,9 +313,19 @@ export function PaymentsDashboard() {
                     </tbody>
                   </table>
                 </div>
-                {registryData.total > registryData.data.length && (
-                  <div className="p-3 text-center text-xs text-muted-foreground border-t">
-                    Показано {registryData.data.length} из {registryData.total}
+                {registryData.total > 50 && (
+                  <div className="flex items-center justify-between p-3 border-t">
+                    <span className="text-xs text-muted-foreground">
+                      Показано {(registryPage - 1) * 50 + 1}–{Math.min(registryPage * 50, registryData.total)} из {registryData.total}
+                    </span>
+                    <div className="flex gap-2">
+                      <Button size="sm" variant="outline" className="h-7 text-xs" disabled={registryPage <= 1} onClick={() => setRegistryPage((p) => p - 1)}>
+                        Назад
+                      </Button>
+                      <Button size="sm" variant="outline" className="h-7 text-xs" disabled={registryPage * 50 >= registryData.total} onClick={() => setRegistryPage((p) => p + 1)}>
+                        Вперёд
+                      </Button>
+                    </div>
                   </div>
                 )}
               </CardContent>
@@ -328,8 +347,28 @@ export function PaymentsDashboard() {
           createOrder.mutate(input, { onSuccess: () => setShowCreate(false) })
         }}
         bills={bills || []}
+        bankAccounts={bankAccounts || []}
         isPending={createOrder.isPending}
       />
+
+      {/* Edit Order Dialog */}
+      {editOrderId && (() => {
+        const editOrder = orders?.find((o: PaymentOrder) => o.id === editOrderId)
+        if (!editOrder) return null
+        return (
+          <CreateOrderDialog
+            open={!!editOrderId}
+            onClose={() => setEditOrderId(null)}
+            onCreate={(input) => {
+              updateOrder.mutate({ id: editOrderId, ...input }, { onSuccess: () => setEditOrderId(null) })
+            }}
+            bills={bills || []}
+            bankAccounts={bankAccounts || []}
+            isPending={updateOrder.isPending}
+            initialData={editOrder}
+          />
+        )
+      })()}
 
       {/* Reject Dialog */}
       <Dialog open={!!showReject} onOpenChange={() => setShowReject(null)}>
@@ -369,22 +408,25 @@ export function PaymentsDashboard() {
 // ─── Create Order Dialog ──────────────────────────────────────────────────
 
 function CreateOrderDialog({
-  open, onClose, onCreate, bills, isPending,
+  open, onClose, onCreate, bills, bankAccounts, isPending, initialData,
 }: {
   open: boolean
   onClose: () => void
   onCreate: (input: CreatePaymentOrderInput) => void
   bills: any[]
+  bankAccounts: any[]
   isPending: boolean
+  initialData?: PaymentOrder
 }) {
   const [form, setForm] = useState({
-    counterpartyName: "",
-    billId: "",
-    amount: "",
-    currency: "AZN",
-    purpose: "",
-    paymentMethod: "bank_transfer",
-    bankDetails: "",
+    counterpartyName: initialData?.counterpartyName || "",
+    billId: initialData?.billId || "",
+    bankAccountId: "",
+    amount: initialData ? String(initialData.amount) : "",
+    currency: initialData?.currency || "AZN",
+    purpose: initialData?.purpose || "",
+    paymentMethod: initialData?.paymentMethod || "bank_transfer",
+    bankDetails: initialData?.bankDetails || "",
   })
 
   const unpaidBills = bills.filter((b) => b.status !== "paid" && b.status !== "cancelled")
@@ -425,7 +467,7 @@ function CreateOrderDialog({
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Новое платёжное поручение</DialogTitle>
+          <DialogTitle>{initialData ? "Редактировать поручение" : "Новое платёжное поручение"}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
           {unpaidBills.length > 0 && (
@@ -472,6 +514,17 @@ function CreateOrderDialog({
                 <option value="card">Карта</option>
               </Select>
             </div>
+            {bankAccounts.length > 0 && (
+              <div>
+                <Label className="text-xs">Банковский счёт</Label>
+                <Select className="h-9" value={form.bankAccountId || "none"} onChange={(e) => setForm((f) => ({ ...f, bankAccountId: e.target.value === "none" ? "" : e.target.value }))}>
+                  <option value="none">— Не выбран —</option>
+                  {bankAccounts.filter((a: any) => a.isActive).map((a: any) => (
+                    <option key={a.id} value={a.id}>{a.accountName} ({a.bankName})</option>
+                  ))}
+                </Select>
+              </div>
+            )}
           </div>
           <div>
             <Label className="text-xs">Банковские реквизиты</Label>
@@ -481,7 +534,7 @@ function CreateOrderDialog({
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Отмена</Button>
           <Button onClick={handleSubmit} disabled={isPending || !form.counterpartyName || !form.amount || !form.purpose}>
-            {isPending ? "Создание..." : "Создать"}
+            {isPending ? "Сохранение..." : initialData ? "Сохранить" : "Создать"}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -45,17 +45,47 @@ export async function register() {
         try {
           const { PrismaClient } = require("@prisma/client")
           const prisma = new PrismaClient()
+          const now = new Date()
           const orgs = await prisma.organization.findMany({ select: { id: true } })
 
+          let totalBills = 0
+          let totalInvoices = 0
+
           for (const org of orgs) {
-            const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000"
-            await fetch(`${baseUrl}/api/finance/payment-orders/check-deadlines`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json", "x-organization-id": org.id },
-            })
+            // Auto-update overdue statuses directly via Prisma (bypasses middleware)
+            const [bills, invoices] = await Promise.all([
+              prisma.bill.updateMany({
+                where: { organizationId: org.id, dueDate: { lt: now }, status: { in: ["pending", "partially_paid"] }, balanceDue: { gt: 0 } },
+                data: { status: "overdue" },
+              }),
+              prisma.invoice.updateMany({
+                where: { organizationId: org.id, dueDate: { lt: now }, status: { in: ["sent", "viewed", "partially_paid"] }, balanceDue: { gt: 0 } },
+                data: { status: "overdue" },
+              }),
+            ])
+            totalBills += bills.count
+            totalInvoices += invoices.count
+
+            // Send Telegram notifications if any new overdue found
+            if (bills.count > 0 || invoices.count > 0) {
+              const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN
+              const CHAT_ID = process.env.TELEGRAM_FINANCE_CHAT_ID
+              if (BOT_TOKEN && CHAT_ID) {
+                const text = `🔴 <b>[Авто-проверка] Новые просрочки</b>\n\nСчетов к оплате: ${bills.count}\nИнвойсов: ${invoices.count}\n\n📎 <a href="https://app.leaddrivecrm.org/finance">Открыть финансы</a>`
+                await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ chat_id: CHAT_ID, text, parse_mode: "HTML" }),
+                }).catch(() => {})
+              }
+            }
           }
           await prisma.$disconnect()
-          console.log(`[Finance Cron] Checked deadlines for ${orgs.length} org(s)`)
+          if (totalBills > 0 || totalInvoices > 0) {
+            console.log(`[Finance Cron] Updated ${totalBills} overdue bills, ${totalInvoices} overdue invoices`)
+          } else {
+            console.log(`[Finance Cron] No new overdue items`)
+          }
         } catch (err: any) {
           console.error("[Finance Cron] Error:", err.message)
         }

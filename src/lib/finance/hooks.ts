@@ -300,7 +300,7 @@ export function useDeleteFundRule() {
 
 // ─── Payment Registry ──────────────────────────────────────────────────────
 
-export function usePaymentRegistry(filters?: PaymentRegistryFilters) {
+export function usePaymentRegistry(filters?: PaymentRegistryFilters, page = 1) {
   const orgId = useOrgId()
   const qs = new URLSearchParams()
   if (filters?.direction) qs.set("direction", filters.direction)
@@ -309,6 +309,7 @@ export function usePaymentRegistry(filters?: PaymentRegistryFilters) {
   if (filters?.category) qs.set("category", filters.category)
   if (filters?.counterparty) qs.set("counterparty", filters.counterparty)
   if (filters?.sourceType) qs.set("sourceType", filters.sourceType)
+  if (page > 1) qs.set("page", String(page))
   const query = qs.toString()
   return useQuery({
     queryKey: ["finance", "registry", orgId, query],

@@ -111,7 +111,7 @@ export function FinanceDashboard() {
                 <XAxis dataKey="label" tick={{ fontSize: 11 }} />
                 <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => v >= 1000 ? `${(v / 1000).toFixed(0)}K` : v} />
                 <Tooltip
-                  formatter={(value: number, name: string) => [fmt(value) + " AZN", name === "revenue" ? "Выручка" : name === "expenses" ? "Расходы" : "Нетто"]}
+                  formatter={((value: number, name: string) => [fmt(value) + " AZN", name === "revenue" ? "Выручка" : name === "expenses" ? "Расходы" : "Нетто"]) as any}
                   labelFormatter={(label) => `${label} ${year}`}
                 />
                 <Bar dataKey="revenue" fill="#22c55e" opacity={0.8} radius={[4, 4, 0, 0]} name="revenue" />
@@ -145,7 +145,7 @@ export function FinanceDashboard() {
                         <Cell key={i} fill={entry.color} />
                       ))}
                     </Pie>
-                    <Tooltip formatter={(value: number) => fmt(value) + " AZN"} />
+                    <Tooltip formatter={((value: number) => fmt(value) + " AZN") as any} />
                   </PieChart>
                 </ResponsiveContainer>
                 <div className="space-y-1 mt-2">
@@ -180,10 +180,10 @@ export function FinanceDashboard() {
                   <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
                   <XAxis type="number" tick={{ fontSize: 11 }} tickFormatter={(v) => fmt(v)} />
                   <YAxis type="category" dataKey="label" tick={{ fontSize: 11 }} width={50} />
-                  <Tooltip formatter={(value: number) => fmt(value) + " AZN"} />
+                  <Tooltip formatter={((value: number) => fmt(value) + " AZN") as any} />
                   <Bar dataKey="amount" radius={[0, 4, 4, 0]}>
                     {arAging.map((_, i) => (
-                      <Cell key={i} fill={["#22c55e", "#f59e0b", "#f97316", "#ef4444"][i]} />
+                      <Cell key={i} fill={["#3b82f6", "#22c55e", "#f59e0b", "#f97316", "#ef4444"][i % 5]} />
                     ))}
                   </Bar>
                 </BarChart>

@@ -2575,6 +2575,7 @@ model PaymentOrder {
   counterpartyId   String?
 
   billId           String?
+  bankAccountId    String?
   amount           Float
   currency         String    @default("AZN")
 
