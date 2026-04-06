@@ -113,14 +113,18 @@ const ENTITY_FIELD_DEFS: Record<string, { name: string; tKey: string; type: stri
 const ENTITY_KEYS = ["deals", "contacts", "companies", "leads", "tickets", "tasks", "activities"] as const
 
 const CHART_COLORS = [
-  "hsl(var(--chart-1))",
-  "hsl(var(--chart-2))",
-  "hsl(var(--chart-3))",
-  "hsl(var(--chart-4))",
-  "hsl(var(--chart-5))",
-  "#6366f1",
-  "#f59e0b",
-  "#10b981",
+  "#6366f1", // indigo
+  "#06b6d4", // cyan
+  "#f59e0b", // amber
+  "#10b981", // emerald
+  "#ec4899", // pink
+  "#8b5cf6", // violet
+  "#f97316", // orange
+  "#14b8a6", // teal
+  "#e11d48", // rose
+  "#3b82f6", // blue
+  "#84cc16", // lime
+  "#a855f7", // purple
 ]
 
 // ---------------------------------------------------------------------------
@@ -436,10 +440,42 @@ export default function ReportBuilderPage() {
       }) ?? columns[0]
     const categoryCol = groupBy || columns.find((c) => c !== numericCol) || columns[0]
 
-    const chartData = rows.map((row) => ({
-      name: String(row[categoryCol] ?? "N/A"),
+    // Truncate long names for chart labels
+    const truncate = (s: string, max = 20) => s.length > max ? s.slice(0, max) + "…" : s
+
+    // Build chart data with truncated names and full name for tooltip
+    let chartData = rows.map((row) => ({
+      name: truncate(String(row[categoryCol] ?? "N/A")),
+      fullName: String(row[categoryCol] ?? "N/A"),
       value: Number(row[numericCol] ?? 0),
     }))
+
+    // Sort by value for line/area charts (ascending for a meaningful curve)
+    if (chartType === "line" || chartType === "area") {
+      chartData = [...chartData].sort((a, b) => a.value - b.value)
+    }
+    // Sort by value descending for bar charts (biggest first)
+    if (chartType === "bar") {
+      chartData = [...chartData].sort((a, b) => b.value - a.value)
+    }
+
+    // For pie chart: aggregate by category (sum values for same category)
+    if (chartType === "pie") {
+      const aggregated = new Map<string, { fullName: string; value: number }>()
+      for (const d of chartData) {
+        const existing = aggregated.get(d.name)
+        if (existing) {
+          existing.value += d.value
+        } else {
+          aggregated.set(d.name, { fullName: d.fullName, value: d.value })
+        }
+      }
+      chartData = Array.from(aggregated.entries()).map(([name, data]) => ({
+        name,
+        fullName: data.fullName,
+        value: data.value,
+      })).sort((a, b) => b.value - a.value)
+    }
 
     const tooltipStyle = {
       backgroundColor: "hsl(var(--popover))",
@@ -448,15 +484,38 @@ export default function ReportBuilderPage() {
       color: "hsl(var(--popover-foreground))",
     }
 
+    // Custom tooltip that shows full name
+    const CustomTooltip = ({ active, payload }: any) => {
+      if (!active || !payload?.length) return null
+      const data = payload[0].payload
+      return (
+        <div style={tooltipStyle} className="px-3 py-2 shadow-lg">
+          <p className="text-xs font-medium">{data.fullName}</p>
+          <p className="text-sm font-bold">{Number(data.value).toLocaleString()}</p>
+        </div>
+      )
+    }
+
+    // Shared XAxis props for better readability
+    const xAxisProps = {
+      dataKey: "name" as const,
+      className: "text-xs",
+      angle: chartData.length > 6 ? -35 : 0,
+      textAnchor: (chartData.length > 6 ? "end" : "middle") as string,
+      height: chartData.length > 6 ? 80 : 30,
+      interval: 0 as number,
+      tick: { fontSize: 11 },
+    }
+
     if (chartType === "bar") {
       return (
-        <ResponsiveContainer width="100%" height={350}>
-          <BarChart data={chartData}>
+        <ResponsiveContainer width="100%" height={400}>
+          <BarChart data={chartData} margin={{ bottom: chartData.length > 6 ? 20 : 5 }}>
             <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-            <XAxis dataKey="name" className="text-xs" />
-            <YAxis className="text-xs" />
-            <Tooltip contentStyle={tooltipStyle} />
-            <Bar dataKey="value" fill="hsl(var(--chart-1))" radius={[4, 4, 0, 0]} />
+            <XAxis {...xAxisProps} />
+            <YAxis className="text-xs" tick={{ fontSize: 11 }} />
+            <Tooltip content={<CustomTooltip />} />
+            <Bar dataKey="value" fill="#6366f1" radius={[4, 4, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
       )
@@ -464,18 +523,19 @@ export default function ReportBuilderPage() {
 
     if (chartType === "line") {
       return (
-        <ResponsiveContainer width="100%" height={350}>
-          <LineChart data={chartData}>
+        <ResponsiveContainer width="100%" height={400}>
+          <LineChart data={chartData} margin={{ bottom: chartData.length > 6 ? 20 : 5 }}>
             <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-            <XAxis dataKey="name" className="text-xs" />
-            <YAxis className="text-xs" />
-            <Tooltip contentStyle={tooltipStyle} />
+            <XAxis {...xAxisProps} />
+            <YAxis className="text-xs" tick={{ fontSize: 11 }} />
+            <Tooltip content={<CustomTooltip />} />
             <Line
               type="monotone"
               dataKey="value"
-              stroke="hsl(var(--chart-1))"
+              stroke="#6366f1"
               strokeWidth={2}
-              dot={{ r: 4 }}
+              dot={{ r: 4, fill: "#6366f1" }}
+              activeDot={{ r: 6 }}
             />
           </LineChart>
         </ResponsiveContainer>
@@ -484,18 +544,18 @@ export default function ReportBuilderPage() {
 
     if (chartType === "area") {
       return (
-        <ResponsiveContainer width="100%" height={350}>
-          <AreaChart data={chartData}>
+        <ResponsiveContainer width="100%" height={400}>
+          <AreaChart data={chartData} margin={{ bottom: chartData.length > 6 ? 20 : 5 }}>
             <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-            <XAxis dataKey="name" className="text-xs" />
-            <YAxis className="text-xs" />
-            <Tooltip contentStyle={tooltipStyle} />
+            <XAxis {...xAxisProps} />
+            <YAxis className="text-xs" tick={{ fontSize: 11 }} />
+            <Tooltip content={<CustomTooltip />} />
             <Area
               type="monotone"
               dataKey="value"
-              stroke="hsl(var(--chart-1))"
-              fill="hsl(var(--chart-1))"
-              fillOpacity={0.2}
+              stroke="#6366f1"
+              fill="#6366f1"
+              fillOpacity={0.15}
               strokeWidth={2}
             />
           </AreaChart>
@@ -505,15 +565,17 @@ export default function ReportBuilderPage() {
 
     if (chartType === "pie") {
       return (
-        <ResponsiveContainer width="100%" height={350}>
+        <ResponsiveContainer width="100%" height={400}>
           <PieChart>
             <Pie
               data={chartData}
               cx="50%"
               cy="50%"
-              outerRadius={120}
+              outerRadius={140}
+              innerRadius={50}
               dataKey="value"
               nameKey="name"
+              paddingAngle={2}
               label={({ name, percent }: { name?: string; percent?: number }) =>
                 `${name ?? ""} ${((percent ?? 0) * 100).toFixed(0)}%`
               }
@@ -522,7 +584,7 @@ export default function ReportBuilderPage() {
                 <Cell key={idx} fill={CHART_COLORS[idx % CHART_COLORS.length]} />
               ))}
             </Pie>
-            <Tooltip contentStyle={tooltipStyle} />
+            <Tooltip content={<CustomTooltip />} />
           </PieChart>
         </ResponsiveContainer>
       )
