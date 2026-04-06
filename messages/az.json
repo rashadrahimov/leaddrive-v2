@@ -4157,5 +4157,22 @@
     "toastFailedUpdateStatus": "Statusu yeniləmək mümkün olmadı",
     "toastPageDeleted": "Səhifə silindi",
     "toastFailedDelete": "Səhifəni silmək mümkün olmadı"
+  },
+  "pageEditor": {
+    "blocks": "Bloklar",
+    "dragHint": "Blokları kətana sürükləyin",
+    "styles": "Stillər",
+    "layers": "Qatlar",
+    "save": "Saxla",
+    "saved": "Saxlanıldı",
+    "saveFailed": "Səhifəni saxlamaq mümkün olmadı",
+    "publish": "Dərc et",
+    "published": "Səhifə dərc olundu!",
+    "publishFailed": "Səhifəni dərc etmək mümkün olmadı",
+    "preview": "Önizləmə",
+    "undo": "Geri al",
+    "redo": "İrəli al",
+    "live": "Aktiv",
+    "draft": "Qaralama"
   }
 }

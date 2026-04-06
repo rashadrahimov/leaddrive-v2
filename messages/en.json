@@ -4164,5 +4164,22 @@
     "toastFailedUpdateStatus": "Failed to update status",
     "toastPageDeleted": "Page deleted",
     "toastFailedDelete": "Failed to delete page"
+  },
+  "pageEditor": {
+    "blocks": "Blocks",
+    "dragHint": "Drag blocks onto the canvas",
+    "styles": "Styles",
+    "layers": "Layers",
+    "save": "Save",
+    "saved": "Saved",
+    "saveFailed": "Failed to save page",
+    "publish": "Publish",
+    "published": "Page published!",
+    "publishFailed": "Failed to publish page",
+    "preview": "Preview",
+    "undo": "Undo",
+    "redo": "Redo",
+    "live": "Live",
+    "draft": "Draft"
   }
 }
