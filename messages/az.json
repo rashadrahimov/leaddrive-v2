@@ -3224,6 +3224,8 @@
       "paymentRefPlaceholder": "Bank köçürməsi №...",
       "recordPayment": "Ödənişi qeyd et",
       "paying": "Ödənilir...",
+      "tooltipAmount": "Məbləğ",
+      "billCount": "{count} hesab",
       "loading": "Kreditor yüklənir..."
     },
     "ar": {
@@ -3240,6 +3242,9 @@
       "colBalance": "Qalıq",
       "colDaysOverdue": "Gecikmə günləri",
       "overdue": "gecikmiş",
+      "invoiceCount": "{count} faktura",
+      "amount": "Məbləğ",
+      "daysAbbr": "gün",
       "loading": "Debitor yüklənir...",
       "error": "Xəta"
     },
@@ -3277,6 +3282,10 @@
       "ruleAdd": "Əlavə et",
       "rulesEmpty": "Qayda yoxdur",
       "confirmDelete": "«{name}» fondu silinsin?",
+      "inactive": "Qeyri-aktiv",
+      "targetLabel": "Hədəf:",
+      "rulesCount": "{count} avto-bölgü qaydası",
+      "errorFallback": "Xəta",
       "loading": "Fondlar yüklənir..."
     }
   },

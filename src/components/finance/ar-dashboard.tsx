@@ -45,7 +45,7 @@ export function ARDashboard() {
                   <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
                   <XAxis dataKey="label" tick={{ fontSize: 11 }} />
                   <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => fmt(v)} />
-                  <Tooltip formatter={((value: number) => [`${fmt(value)} AZN`, "Сумма"]) as any} />
+                  <Tooltip formatter={((value: number) => [`${fmt(value)} AZN`, t("amount")]) as any} />
                   <Bar dataKey="amount" radius={[6, 6, 0, 0]}>
                     {data.aging.map((_, i) => (
                       <Cell key={i} fill={AGING_COLORS[i % AGING_COLORS.length]} />
@@ -75,14 +75,14 @@ export function ARDashboard() {
                       <span className="text-xs font-bold text-muted-foreground w-5">{i + 1}</span>
                       <div>
                         <p className="text-sm font-medium">{d.companyName}</p>
-                        <p className="text-xs text-muted-foreground">{d.invoiceCount} счёт(ов)</p>
+                        <p className="text-xs text-muted-foreground">{t("invoiceCount", { count: d.invoiceCount })}</p>
                       </div>
                     </div>
                     <div className="text-right">
                       <p className="text-sm font-bold tabular-nums">{fmt(d.amount)} AZN</p>
                       {d.overdueAmount > 0 && (
                         <Badge variant="destructive" className="text-[10px] px-1.5 py-0">
-                          {fmt(d.overdueAmount)} просрочено
+                          {fmt(d.overdueAmount)} {t("overdue")}
                         </Badge>
                       )}
                     </div>
@@ -125,7 +125,7 @@ export function ARDashboard() {
                       <td className="py-2 px-2 text-right font-bold tabular-nums text-red-600">{fmt(inv.balanceDue)} AZN</td>
                       <td className="py-2 px-2 text-right">
                         <Badge variant={inv.daysOverdue > 60 ? "destructive" : "secondary"} className="text-xs">
-                          {inv.daysOverdue} дн
+                          {inv.daysOverdue} {t("daysAbbr")}
                         </Badge>
                       </td>
                     </tr>

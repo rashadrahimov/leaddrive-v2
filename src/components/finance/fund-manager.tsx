@@ -79,7 +79,7 @@ export function FundManager() {
                       <PiggyBank className="w-4 h-4" style={{ color }} />
                       {fund.name}
                     </CardTitle>
-                    {!fund.isActive && <Badge variant="secondary" className="text-[10px]">Неактивен</Badge>}
+                    {!fund.isActive && <Badge variant="secondary" className="text-[10px]">{t("inactive")}</Badge>}
                   </div>
                   {fund.description && <p className="text-xs text-muted-foreground">{fund.description}</p>}
                 </CardHeader>
@@ -94,7 +94,7 @@ export function FundManager() {
                     {fund.targetAmount && (
                       <>
                         <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                          <span>Цель: {fmt(fund.targetAmount)}</span>
+                          <span>{t("targetLabel")} {fmt(fund.targetAmount)}</span>
                           <span>{pct}%</span>
                         </div>
                         <Progress value={pct || 0} className="h-2 mt-1" />
@@ -104,7 +104,7 @@ export function FundManager() {
 
                   {/* Rules count */}
                   {fund.rules && fund.rules.length > 0 && (
-                    <p className="text-xs text-muted-foreground">{fund.rules.length} правил(о) авто-распределения</p>
+                    <p className="text-xs text-muted-foreground">{t("rulesCount", { count: fund.rules.length })}</p>
                   )}
 
                   {/* Actions */}
@@ -115,7 +115,7 @@ export function FundManager() {
                     <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => { setSelectedFund(fund.id); setShowRules(true) }}>
                       <Settings2 className="w-3 h-3" />
                     </Button>
-                    <Button size="sm" variant="ghost" className="h-7 text-xs text-red-500" onClick={() => { if (confirm(`Удалить фонд «${fund.name}»?`)) deleteFund.mutate(fund.id) }}>
+                    <Button size="sm" variant="ghost" className="h-7 text-xs text-red-500" onClick={() => { if (confirm(t("confirmDelete", { name: fund.name }))) deleteFund.mutate(fund.id) }}>
                       <Trash2 className="w-3 h-3" />
                     </Button>
                   </div>
@@ -203,7 +203,7 @@ function TransactionDialog({ fundId, onClose }: { fundId: string; onClose: () =>
           if (_data?.warning) setTxWarning(_data.warning)
         },
         onError: (err: any) => {
-          setTxError(err?.message || "Ошибка")
+          setTxError(err?.message || t("errorFallback"))
         },
       }
     )

@@ -3133,7 +3133,8 @@
       "telegram": "Telegram",
       "telegramDesc": "Отправлять уведомление в Telegram",
       "threeDays": "3 дня",
-      "title": "Уведомления об оплатах"
+      "title": "Уведомления об оплатах",
+      "loading": "Загрузка..."
     },
     "pod": {
       "accountShort": "Счёт",
@@ -3230,7 +3231,9 @@
       "colCreated": "Создано",
       "colActions": "Действия",
       "prev": "Назад",
-      "next": "Вперёд"
+      "next": "Вперёд",
+      "pagination": "Показано {from}–{to} из {total}",
+      "paymentPurpose": "Оплата по счёту {billNumber}"
     },
     "dash": {
       "title": "Финансовый обзор",
@@ -3318,6 +3321,8 @@
       "paymentRefPlaceholder": "Банковский перевод №...",
       "recordPayment": "Записать оплату",
       "paying": "Оплата...",
+      "tooltipAmount": "Сумма",
+      "billCount": "{count} счёт(ов)",
       "loading": "Загрузка кредиторки..."
     },
     "funds": {
@@ -3354,6 +3359,10 @@
       "ruleAdd": "Добавить",
       "rulesEmpty": "Нет правил",
       "confirmDelete": "Удалить фонд «{name}»?",
+      "inactive": "Неактивен",
+      "targetLabel": "Цель:",
+      "rulesCount": "{count} правил(о) авто-распределения",
+      "errorFallback": "Ошибка",
       "loading": "Загрузка фондов..."
     },
     "ar": {
@@ -3370,6 +3379,9 @@
       "colBalance": "Остаток",
       "colDaysOverdue": "Дней просрочки",
       "overdue": "просрочено",
+      "invoiceCount": "{count} счёт(ов)",
+      "amount": "Сумма",
+      "daysAbbr": "дн",
       "loading": "Загрузка дебиторки...",
       "error": "Ошибка"
     }

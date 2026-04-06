@@ -3133,7 +3133,8 @@
       "telegram": "Telegram",
       "telegramDesc": "Send Telegram notification",
       "threeDays": "3 days",
-      "title": "Payment Notifications"
+      "title": "Payment Notifications",
+      "loading": "Loading..."
     },
     "pod": {
       "accountShort": "Account",
@@ -3230,7 +3231,9 @@
       "colCreated": "Created",
       "colActions": "Actions",
       "prev": "Previous",
-      "next": "Next"
+      "next": "Next",
+      "pagination": "Showing {from}–{to} of {total}",
+      "paymentPurpose": "Payment for bill {billNumber}"
     },
     "dash": {
       "title": "Financial Overview",
@@ -3318,6 +3321,8 @@
       "paymentRefPlaceholder": "Bank transfer #...",
       "recordPayment": "Record payment",
       "paying": "Processing...",
+      "tooltipAmount": "Amount",
+      "billCount": "{count} bill(s)",
       "loading": "Loading payables..."
     },
     "funds": {
@@ -3354,6 +3359,10 @@
       "ruleAdd": "Add",
       "rulesEmpty": "No rules",
       "confirmDelete": "Delete fund \"{name}\"?",
+      "inactive": "Inactive",
+      "targetLabel": "Target:",
+      "rulesCount": "{count} auto-allocation rule(s)",
+      "errorFallback": "Error",
       "loading": "Loading funds..."
     },
     "ar": {
@@ -3370,6 +3379,9 @@
       "colBalance": "Balance",
       "colDaysOverdue": "Days Overdue",
       "overdue": "overdue",
+      "invoiceCount": "{count} invoice(s)",
+      "amount": "Amount",
+      "daysAbbr": "d",
       "loading": "Loading receivables...",
       "error": "Error"
     }

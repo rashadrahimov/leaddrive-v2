@@ -103,7 +103,7 @@ export function APDashboard() {
                   <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
                   <XAxis dataKey="label" tick={{ fontSize: 11 }} />
                   <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => fmt(v)} />
-                  <Tooltip formatter={((value: number) => [`${fmt(value)} AZN`, "Сумма"]) as any} />
+                  <Tooltip formatter={((value: number) => [`${fmt(value)} AZN`, t("tooltipAmount")]) as any} />
                   <Bar dataKey="amount" radius={[6, 6, 0, 0]}>
                     {stats.aging.map((_, i) => (
                       <Cell key={i} fill={AGING_COLORS[i]} />
@@ -131,7 +131,7 @@ export function APDashboard() {
                       <span className="text-xs font-bold text-muted-foreground w-5">{i + 1}</span>
                       <div>
                         <p className="text-sm font-medium">{v.vendorName}</p>
-                        <p className="text-xs text-muted-foreground">{v.billCount} счёт(ов)</p>
+                        <p className="text-xs text-muted-foreground">{t("billCount", { count: v.billCount })}</p>
                       </div>
                     </div>
                     <p className="text-sm font-bold tabular-nums">{fmt(v.amount)} AZN</p>

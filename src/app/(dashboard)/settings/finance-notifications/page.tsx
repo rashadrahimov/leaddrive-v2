@@ -100,7 +100,7 @@ export default function FinanceNotificationsPage() {
     }))
   }
 
-  if (loading) return <div className="p-8 text-center text-muted-foreground">{t("enabled") === "Включено" ? "Загрузка..." : "Loading..."}</div>
+  if (loading) return <div className="p-8 text-center text-muted-foreground">{t("loading")}</div>
 
   return (
     <div className="flex-1 space-y-6 p-4 md:p-6 max-w-3xl">

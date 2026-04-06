@@ -295,7 +295,7 @@ export function PaymentsDashboard() {
                 {registryData.total > 50 && (
                   <div className="flex items-center justify-between p-3 border-t">
                     <span className="text-xs text-muted-foreground">
-                      Показано {(registryPage - 1) * 50 + 1}–{Math.min(registryPage * 50, registryData.total)} из {registryData.total}
+                      {t("pagination", { from: (registryPage - 1) * 50 + 1, to: Math.min(registryPage * 50, registryData.total), total: registryData.total })}
                     </span>
                     <div className="flex gap-2">
                       <Button size="sm" variant="outline" className="h-7 text-xs" disabled={registryPage <= 1} onClick={() => setRegistryPage((p) => p - 1)}>
@@ -424,7 +424,7 @@ function CreateOrderDialog({
         counterpartyName: bill.vendorName,
         amount: String(bill.balanceDue),
         currency: bill.currency,
-        purpose: `Оплата по счёту ${bill.billNumber}`,
+        purpose: t("paymentPurpose", { billNumber: bill.billNumber }),
       }))
     }
   }
