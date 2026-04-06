@@ -10,7 +10,9 @@ import { CommandSearch } from "@/components/command-search"
 import { AiAssistantPanel } from "@/components/ai-assistant-panel"
 import { MotionPage } from "@/components/ui/motion"
 import { WallpaperProvider } from "@/contexts/wallpaper-context"
+import { TicketBadgeProvider } from "@/contexts/ticket-badge-context"
 import { DashboardWallpaper } from "@/components/dashboard-wallpaper"
+import { TicketNotifier } from "@/components/ticket-notifier"
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -33,6 +35,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     <ThemeProvider>
       <WallpaperProvider>
         <QueryClientProvider client={queryClient}>
+          <TicketBadgeProvider>
           {isDashboard && <DashboardWallpaper />}
           <div className="relative z-[2] flex h-screen">
             <Sidebar org={org} />
@@ -48,6 +51,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <AiAssistantPanel />
             </div>
           </div>
+          <TicketNotifier />
+          </TicketBadgeProvider>
         </QueryClientProvider>
       </WallpaperProvider>
     </ThemeProvider>

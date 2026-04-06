@@ -17,6 +17,7 @@ import {
 import { useState } from "react"
 import { Logo } from "@/components/logo"
 import { useTranslations } from "next-intl"
+import { useTicketBadge } from "@/contexts/ticket-badge-context"
 
 interface NavItem {
   module: ModuleId
@@ -129,6 +130,7 @@ export function Sidebar({ org }: SidebarProps) {
   const pathname = usePathname()
   const [collapsed, setCollapsed] = useState(false)
   const t = useTranslations("nav")
+  const { newTicketCount } = useTicketBadge()
 
   const plan = org.plan || "enterprise"
 
@@ -204,10 +206,15 @@ export function Sidebar({ org }: SidebarProps) {
                     title={collapsed ? t(item.tKey) : undefined}
                   >
                     <div className={cn(
-                      "flex h-6 w-6 items-center justify-center rounded-md shrink-0 transition-all",
+                      "relative flex h-6 w-6 items-center justify-center rounded-md shrink-0 transition-all",
                       isActive ? iconColor : "text-white/40"
                     )}>
                       <Icon className="h-3.5 w-3.5" />
+                      {item.href === "/tickets" && newTicketCount > 0 && (
+                        <span className="absolute -top-1.5 -right-1.5 h-4 min-w-[16px] rounded-full bg-red-500 text-white text-[10px] flex items-center justify-center font-bold px-1">
+                          {newTicketCount > 99 ? "99+" : newTicketCount}
+                        </span>
+                      )}
                     </div>
                     {!collapsed && <span>{t(item.tKey)}</span>}
                   </Link>
