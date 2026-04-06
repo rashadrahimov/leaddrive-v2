@@ -4061,7 +4061,8 @@
     "fieldCompleted": "Tamamlandı",
     "fieldDescription": "Təsvir",
     "fieldCreatedBy": "Yaradan",
-    "fieldCurrency": "Valyuta"
+    "fieldCurrency": "Valyuta",
+    "other": "Digər"
   },
   "ticketNotification": {
     "newTicket": "Yeni tiket: {ticketNumber}",

@@ -432,49 +432,67 @@ export default function ReportBuilderPage() {
       return renderDataTable(rows, columns, fieldLabel)
     }
 
-    // For charts, use groupBy field as category axis and first numeric column as value
+    // ----- Smart data preparation for charts -----
     const numericCol =
       columns.find((c) => {
         const f = fields.find((fd) => fd.name === c)
         return f?.type === "number"
       }) ?? columns[0]
-    const categoryCol = groupBy || columns.find((c) => c !== numericCol) || columns[0]
 
-    // Truncate long names for chart labels
-    const truncate = (s: string, max = 20) => s.length > max ? s.slice(0, max) + "…" : s
+    // For pie/bar without groupBy: auto-group by first string column (e.g. stage)
+    const stringCols = columns.filter((c) => {
+      const f = fields.find((fd) => fd.name === c)
+      return f?.type === "string" && c !== numericCol
+    })
+    const shouldAutoGroup = !groupBy && (chartType === "pie" || rows.length > 10)
+    const categoryCol = groupBy || (shouldAutoGroup ? stringCols[0] : undefined) || columns.find((c) => c !== numericCol) || columns[0]
 
-    // Build chart data with truncated names and full name for tooltip
-    let chartData = rows.map((row) => ({
-      name: truncate(String(row[categoryCol] ?? "N/A")),
-      fullName: String(row[categoryCol] ?? "N/A"),
-      value: Number(row[numericCol] ?? 0),
-    }))
+    const truncate = (s: string, max = 18) => s.length > max ? s.slice(0, max) + "…" : s
 
-    // Sort by value for line/area charts (ascending for a meaningful curve)
-    if (chartType === "line" || chartType === "area") {
-      chartData = [...chartData].sort((a, b) => a.value - b.value)
-    }
-    // Sort by value descending for bar charts (biggest first)
-    if (chartType === "bar") {
-      chartData = [...chartData].sort((a, b) => b.value - a.value)
-    }
-
-    // For pie chart: aggregate by category (sum values for same category)
-    if (chartType === "pie") {
-      const aggregated = new Map<string, { fullName: string; value: number }>()
-      for (const d of chartData) {
-        const existing = aggregated.get(d.name)
-        if (existing) {
-          existing.value += d.value
-        } else {
-          aggregated.set(d.name, { fullName: d.fullName, value: d.value })
-        }
+    // Aggregate data by category (always for pie, auto for many rows)
+    const buildAggregatedData = () => {
+      const aggregated = new Map<string, number>()
+      for (const row of rows) {
+        const key = String(row[categoryCol] ?? "N/A")
+        aggregated.set(key, (aggregated.get(key) ?? 0) + Number(row[numericCol] ?? 0))
       }
-      chartData = Array.from(aggregated.entries()).map(([name, data]) => ({
-        name,
-        fullName: data.fullName,
-        value: data.value,
-      })).sort((a, b) => b.value - a.value)
+      return Array.from(aggregated.entries())
+        .map(([key, val]) => ({ name: truncate(key), fullName: key, value: val }))
+        .sort((a, b) => b.value - a.value)
+    }
+
+    // Raw data (one entry per row)
+    const buildRawData = () =>
+      rows.map((row) => ({
+        name: truncate(String(row[categoryCol] ?? "N/A")),
+        fullName: String(row[categoryCol] ?? "N/A"),
+        value: Number(row[numericCol] ?? 0),
+      }))
+
+    let chartData: { name: string; fullName: string; value: number }[]
+
+    if (chartType === "pie") {
+      // Pie always aggregates + limits to 8 slices
+      chartData = buildAggregatedData()
+      if (chartData.length > 8) {
+        const top = chartData.slice(0, 7)
+        const otherValue = chartData.slice(7).reduce((sum, d) => sum + d.value, 0)
+        top.push({ name: tr("other" as any) || "Digər", fullName: tr("other" as any) || "Digər", value: otherValue })
+        chartData = top
+      }
+    } else if (shouldAutoGroup) {
+      chartData = buildAggregatedData()
+    } else {
+      chartData = buildRawData()
+    }
+
+    // Sort: bar desc, line/area asc
+    if (chartType === "bar") chartData = [...chartData].sort((a, b) => b.value - a.value)
+    if (chartType === "line" || chartType === "area") chartData = [...chartData].sort((a, b) => a.value - b.value)
+
+    // Limit bar/line/area to 15 items max for readability
+    if (chartType !== "pie" && chartData.length > 15) {
+      chartData = chartData.slice(0, 15)
     }
 
     const tooltipStyle = {
@@ -484,7 +502,6 @@ export default function ReportBuilderPage() {
       color: "hsl(var(--popover-foreground))",
     }
 
-    // Custom tooltip that shows full name
     const CustomTooltip = ({ active, payload }: any) => {
       if (!active || !payload?.length) return null
       const data = payload[0].payload
@@ -496,26 +513,30 @@ export default function ReportBuilderPage() {
       )
     }
 
-    // Shared XAxis props for better readability
+    const needsAngle = chartData.length > 5
     const xAxisProps = {
       dataKey: "name" as const,
       className: "text-xs",
-      angle: chartData.length > 6 ? -35 : 0,
-      textAnchor: (chartData.length > 6 ? "end" : "middle") as string,
-      height: chartData.length > 6 ? 80 : 30,
+      angle: needsAngle ? -40 : 0,
+      textAnchor: (needsAngle ? "end" : "middle") as string,
+      height: needsAngle ? 90 : 35,
       interval: 0 as number,
-      tick: { fontSize: 11 },
+      tick: { fontSize: 10 },
     }
 
     if (chartType === "bar") {
       return (
         <ResponsiveContainer width="100%" height={400}>
-          <BarChart data={chartData} margin={{ bottom: chartData.length > 6 ? 20 : 5 }}>
+          <BarChart data={chartData} margin={{ bottom: needsAngle ? 10 : 5, left: 10, right: 10 }}>
             <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
             <XAxis {...xAxisProps} />
-            <YAxis className="text-xs" tick={{ fontSize: 11 }} />
+            <YAxis className="text-xs" tick={{ fontSize: 10 }} />
             <Tooltip content={<CustomTooltip />} />
-            <Bar dataKey="value" fill="#6366f1" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="value" radius={[6, 6, 0, 0]}>
+              {chartData.map((_, idx) => (
+                <Cell key={idx} fill={CHART_COLORS[idx % CHART_COLORS.length]} />
+              ))}
+            </Bar>
           </BarChart>
         </ResponsiveContainer>
       )
@@ -524,18 +545,18 @@ export default function ReportBuilderPage() {
     if (chartType === "line") {
       return (
         <ResponsiveContainer width="100%" height={400}>
-          <LineChart data={chartData} margin={{ bottom: chartData.length > 6 ? 20 : 5 }}>
+          <LineChart data={chartData} margin={{ bottom: needsAngle ? 10 : 5, left: 10, right: 10 }}>
             <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
             <XAxis {...xAxisProps} />
-            <YAxis className="text-xs" tick={{ fontSize: 11 }} />
+            <YAxis className="text-xs" tick={{ fontSize: 10 }} />
             <Tooltip content={<CustomTooltip />} />
             <Line
               type="monotone"
               dataKey="value"
               stroke="#6366f1"
-              strokeWidth={2}
-              dot={{ r: 4, fill: "#6366f1" }}
-              activeDot={{ r: 6 }}
+              strokeWidth={2.5}
+              dot={{ r: 5, fill: "#6366f1", stroke: "#fff", strokeWidth: 2 }}
+              activeDot={{ r: 7, fill: "#6366f1" }}
             />
           </LineChart>
         </ResponsiveContainer>
@@ -545,18 +566,23 @@ export default function ReportBuilderPage() {
     if (chartType === "area") {
       return (
         <ResponsiveContainer width="100%" height={400}>
-          <AreaChart data={chartData} margin={{ bottom: chartData.length > 6 ? 20 : 5 }}>
+          <AreaChart data={chartData} margin={{ bottom: needsAngle ? 10 : 5, left: 10, right: 10 }}>
+            <defs>
+              <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#6366f1" stopOpacity={0.3} />
+                <stop offset="100%" stopColor="#6366f1" stopOpacity={0.02} />
+              </linearGradient>
+            </defs>
             <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
             <XAxis {...xAxisProps} />
-            <YAxis className="text-xs" tick={{ fontSize: 11 }} />
+            <YAxis className="text-xs" tick={{ fontSize: 10 }} />
             <Tooltip content={<CustomTooltip />} />
             <Area
               type="monotone"
               dataKey="value"
               stroke="#6366f1"
-              fill="#6366f1"
-              fillOpacity={0.15}
-              strokeWidth={2}
+              fill="url(#areaGradient)"
+              strokeWidth={2.5}
             />
           </AreaChart>
         </ResponsiveContainer>
@@ -564,6 +590,7 @@ export default function ReportBuilderPage() {
     }
 
     if (chartType === "pie") {
+      const total = chartData.reduce((s, d) => s + d.value, 0)
       return (
         <ResponsiveContainer width="100%" height={400}>
           <PieChart>
@@ -571,14 +598,17 @@ export default function ReportBuilderPage() {
               data={chartData}
               cx="50%"
               cy="50%"
-              outerRadius={140}
-              innerRadius={50}
+              outerRadius={150}
+              innerRadius={60}
               dataKey="value"
               nameKey="name"
-              paddingAngle={2}
-              label={({ name, percent }: { name?: string; percent?: number }) =>
-                `${name ?? ""} ${((percent ?? 0) * 100).toFixed(0)}%`
-              }
+              paddingAngle={3}
+              label={({ name, percent }: { name?: string; percent?: number }) => {
+                const p = (percent ?? 0) * 100
+                if (p < 4) return "" // hide tiny slices
+                return `${name ?? ""} ${p.toFixed(0)}%`
+              }}
+              labelLine={({ percent }: { percent?: number }) => (percent ?? 0) * 100 >= 4}
             >
               {chartData.map((_, idx) => (
                 <Cell key={idx} fill={CHART_COLORS[idx % CHART_COLORS.length]} />

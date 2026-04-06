@@ -4068,7 +4068,8 @@
     "fieldCompleted": "Completed",
     "fieldDescription": "Description",
     "fieldCreatedBy": "Created By",
-    "fieldCurrency": "Currency"
+    "fieldCurrency": "Currency",
+    "other": "Other"
   },
   "ticketNotification": {
     "newTicket": "New ticket: {ticketNumber}",

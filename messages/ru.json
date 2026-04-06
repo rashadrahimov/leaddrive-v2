@@ -4068,7 +4068,8 @@
     "fieldCompleted": "Завершено",
     "fieldDescription": "Описание",
     "fieldCreatedBy": "Создал",
-    "fieldCurrency": "Валюта"
+    "fieldCurrency": "Валюта",
+    "other": "Прочие"
   },
   "ticketNotification": {
     "newTicket": "Новый тикет: {ticketNumber}",
