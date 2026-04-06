@@ -389,7 +389,7 @@ export default function ContactDetailPage() {
               }).finally(() => setLoadingRecs(false))
             }
           }}>
-            <Sparkles className="h-3 w-3 mr-1" /> Da Vinci Рекомендации
+            <Sparkles className="h-3 w-3 mr-1" /> {t("daVinciRecommendations")}
           </TabsTrigger>
         </TabsList>
 
@@ -461,13 +461,13 @@ export default function ContactDetailPage() {
             <CardContent className="pt-6">
               {loadingRecs ? (
                 <div className="flex items-center justify-center py-8 gap-2 text-muted-foreground">
-                  <Loader2 className="h-4 w-4 animate-spin" /> Загрузка рекомендаций...
+                  <Loader2 className="h-4 w-4 animate-spin" /> {t("loadingRecommendations")}
                 </div>
               ) : recommendations.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   <Sparkles className="h-8 w-8 mx-auto mb-2 opacity-30" />
-                  <p className="text-sm">Нет продуктов для рекомендации</p>
-                  <p className="text-xs">Добавьте продукты в каталог через API</p>
+                  <p className="text-sm">{t("noProductsForRecommendation")}</p>
+                  <p className="text-xs">{t("addProductsHint")}</p>
                 </div>
               ) : (
                 <div className="space-y-3">

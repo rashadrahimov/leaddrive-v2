@@ -864,7 +864,11 @@
     "hintColPosition": "Job title or role at the company",
     "hintColCompany": "Company the contact is associated with",
     "hintColSource": "How this contact was acquired (website, referral, event, etc.)",
-    "hintColPortal": "Whether this contact can log into the client portal"
+    "hintColPortal": "Whether this contact can log into the client portal",
+    "daVinciRecommendations": "Da Vinci Recommendations",
+    "loadingRecommendations": "Loading recommendations...",
+    "noProductsForRecommendation": "No products for recommendation",
+    "addProductsHint": "Add products to the catalog via API"
   },
   "deals": {
     "title": "Sales Pipeline",
@@ -983,7 +987,10 @@
     "nbaSlaBreached": "SLA breached: {number}",
     "nbaSlaBreachedReason": "First response SLA exceeded by {hours} hrs. Urgent!",
     "nbaTicketAttention": "Ticket {number}: {subject}",
-    "nbaTicketAttentionReason": "Priority {priority}, open {days} days. Needs attention."
+    "nbaTicketAttentionReason": "Priority {priority}, open {days} days. Needs attention.",
+    "pipelineBar": "Pipeline",
+    "weightedBar": "Weighted",
+    "weightedTooltip": "weighted"
   },
   "tasks": {
     "title": "Tasks",
@@ -1708,9 +1715,6 @@
     "revenueWon": "Revenue (won)",
     "monthlyContracts": "Monthly (contracts)",
     "pipelineTotal": "Pipeline (total)",
-    "pipelineBar": "Pipeline",
-    "weightedBar": "Weighted",
-    "weightedTooltip": "weighted",
     "totalContracts": "Total contracts",
     "activeContracts": "Active",
     "dealsPipeline": "Deals Pipeline",

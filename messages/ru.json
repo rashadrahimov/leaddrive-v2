@@ -864,7 +864,11 @@
     "hintColPosition": "Должность или роль в компании",
     "hintColCompany": "Компания, к которой привязан контакт",
     "hintColSource": "Источник привлечения контакта (сайт, рекомендация, мероприятие и т.д.)",
-    "hintColPortal": "Может ли контакт входить в клиентский портал"
+    "hintColPortal": "Может ли контакт входить в клиентский портал",
+    "daVinciRecommendations": "Da Vinci Рекомендации",
+    "loadingRecommendations": "Загрузка рекомендаций...",
+    "noProductsForRecommendation": "Нет продуктов для рекомендации",
+    "addProductsHint": "Добавьте продукты в каталог через API"
   },
   "deals": {
     "title": "Воронка продаж",
@@ -983,7 +987,10 @@
     "nbaSlaBreached": "SLA нарушен: {number}",
     "nbaSlaBreachedReason": "Превышено SLA первого ответа на {hours} ч. Срочно!",
     "nbaTicketAttention": "Тикет {number}: {subject}",
-    "nbaTicketAttentionReason": "Приоритет {priority}, открыт {days} дн. Требует внимания."
+    "nbaTicketAttentionReason": "Приоритет {priority}, открыт {days} дн. Требует внимания.",
+    "pipelineBar": "Воронка",
+    "weightedBar": "Взвешенная",
+    "weightedTooltip": "взвеш."
   },
   "tasks": {
     "title": "Задачи",
@@ -1708,9 +1715,6 @@
     "revenueWon": "Доход (выигранные)",
     "monthlyContracts": "Ежемесячный (контракты)",
     "pipelineTotal": "Воронка (общая)",
-    "pipelineBar": "Воронка",
-    "weightedBar": "Взвешенная",
-    "weightedTooltip": "взвеш.",
     "totalContracts": "Контрактов всего",
     "activeContracts": "Активных",
     "dealsPipeline": "Воронка сделок",

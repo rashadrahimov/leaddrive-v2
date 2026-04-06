@@ -860,7 +860,11 @@
     "hintColPosition": "Şirkətdəki vəzifəsi və ya rolu",
     "hintColCompany": "Əlaqənin aid olduğu şirkət",
     "hintColSource": "Bu əlaqənin necə əldə edildiyi (sayt, tövsiyə, tədbir və s.)",
-    "hintColPortal": "Bu əlaqənin müştəri portalına daxil ola bilib-bilməyəcəyi"
+    "hintColPortal": "Bu əlaqənin müştəri portalına daxil ola bilib-bilməyəcəyi",
+    "daVinciRecommendations": "Da Vinci Tövsiyələr",
+    "loadingRecommendations": "Tövsiyələr yüklənir...",
+    "noProductsForRecommendation": "Tövsiyə üçün məhsul yoxdur",
+    "addProductsHint": "API vasitəsilə kataloqa məhsul əlavə edin"
   },
   "deals": {
     "title": "Satış pipeline",
@@ -979,7 +983,10 @@
     "nbaSlaBreached": "SLA pozuldu: {number}",
     "nbaSlaBreachedReason": "SLA ilk cavab {hours} saat keçib. Təcili!",
     "nbaTicketAttention": "Tiket {number}: {subject}",
-    "nbaTicketAttentionReason": "Prioritet {priority}, {days} gündür açıqdır. Diqqət tələb edir."
+    "nbaTicketAttentionReason": "Prioritet {priority}, {days} gündür açıqdır. Diqqət tələb edir.",
+    "pipelineBar": "Huni",
+    "weightedBar": "Çəkili",
+    "weightedTooltip": "çəkili"
   },
   "tasks": {
     "title": "Tapşırıqlar",
@@ -1704,9 +1711,6 @@
     "revenueWon": "Gəlir (qazanılmış)",
     "monthlyContracts": "Aylıq (kontraktlar)",
     "pipelineTotal": "Huni (ümumi)",
-    "pipelineBar": "Huni",
-    "weightedBar": "Çəkili",
-    "weightedTooltip": "çəkili",
     "totalContracts": "Cəmi kontraktlar",
     "activeContracts": "Aktiv",
     "dealsPipeline": "Sövdələşmə pipeline",
