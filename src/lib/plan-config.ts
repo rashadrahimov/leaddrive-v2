@@ -63,6 +63,12 @@ const ENTERPRISE_MODULES = [
   "/settings/channels",
   "/settings/budget-config",
   "/settings/sales-forecast",
+  // Phase 4: Enterprise features
+  "/settings/field-permissions",
+  "/settings/voip",
+  "/pages",
+  "/reports/builder",
+  // MTM
   "/mtm",
   "/mtm/map",
   "/mtm/routes",
