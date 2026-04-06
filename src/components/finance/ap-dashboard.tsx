@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useTranslations } from "next-intl"
 import { usePayables, usePayablesStats, useCreateBill, useUpdateBill, useDeleteBill, useCreateBillPayment } from "@/lib/finance/hooks"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -30,6 +31,7 @@ const STATUS_COLORS: Record<string, string> = {
 }
 
 export function APDashboard() {
+  const t = useTranslations("finance.ap")
   const { data: bills, isLoading: billsLoading } = usePayables()
   const { data: stats, isLoading: statsLoading } = usePayablesStats()
   const createBill = useCreateBill()
@@ -40,7 +42,7 @@ export function APDashboard() {
   const [showPayment, setShowPayment] = useState<string | null>(null)
   const [selected, setSelected] = useState<Set<string>>(new Set())
 
-  if (billsLoading || statsLoading) return <div className="p-8 text-center text-muted-foreground">Загрузка кредиторки...</div>
+  if (billsLoading || statsLoading) return <div className="p-8 text-center text-muted-foreground">{t("loading")}</div>
 
   const toggleSelect = (id: string) => {
     setSelected((prev) => {
@@ -61,7 +63,7 @@ export function APDashboard() {
     clearSelection()
   }
   const bulkDelete = () => {
-    if (!confirm(`Удалить ${selected.size} счёт(ов)?`)) return
+    if (!confirm(t("confirmBulkDelete", { count: selected.size }))) return
     selected.forEach((id) => deleteBill.mutate(id))
     clearSelection()
   }
@@ -76,15 +78,15 @@ export function APDashboard() {
     <div className="space-y-6">
       {/* Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <SummaryCard title="Всего кредиторка" value={`${fmt(stats?.total || 0)} AZN`} icon={<CreditCard className="w-5 h-5" />} color="#8b5cf6" />
-        <SummaryCard title="Просрочено" value={`${fmt(stats?.overdueTotal || 0)} AZN`} icon={<AlertTriangle className="w-5 h-5" />} color="#ef4444" />
-        <SummaryCard title="Просроченных счетов" value={String(stats?.overdueCount || 0)} icon={<Clock className="w-5 h-5" />} color="#f59e0b" />
+        <SummaryCard title={t("totalPayables")} value={`${fmt(stats?.total || 0)} AZN`} icon={<CreditCard className="w-5 h-5" />} color="#8b5cf6" />
+        <SummaryCard title={t("overdueTotal")} value={`${fmt(stats?.overdueTotal || 0)} AZN`} icon={<AlertTriangle className="w-5 h-5" />} color="#ef4444" />
+        <SummaryCard title={t("overdueCount")} value={String(stats?.overdueCount || 0)} icon={<Clock className="w-5 h-5" />} color="#f59e0b" />
       </div>
 
       <div className="flex justify-between items-center">
-        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Счета к оплате</h3>
+        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">{t("billsTitle")}</h3>
         <Button size="sm" onClick={() => setShowCreate(true)}>
-          <Plus className="w-4 h-4 mr-1" /> Новый счёт
+          <Plus className="w-4 h-4 mr-1" /> {t("newBill")}
         </Button>
       </div>
 
@@ -147,24 +149,24 @@ export function APDashboard() {
       {selected.size > 0 && (
         <div className="flex items-center gap-3 p-3 rounded-lg border border-blue-200 bg-blue-50 dark:bg-blue-950/30 dark:border-blue-800">
           <span className="text-sm font-medium text-blue-800 dark:text-blue-300">
-            Выбрано: {selected.size}
+            {t("selected", { count: selected.size })}
           </span>
           <div className="flex gap-2 ml-auto">
             {canBulkPending && (
               <Button size="sm" variant="outline" className="h-7 text-xs text-blue-700" onClick={() => bulkUpdateStatus("pending")}>
-                <ArrowRight className="w-3 h-3 mr-1" /> В работу
+                <ArrowRight className="w-3 h-3 mr-1" /> {t("toWork")}
               </Button>
             )}
             {canBulkCancel && (
               <Button size="sm" variant="outline" className="h-7 text-xs text-amber-700" onClick={() => bulkUpdateStatus("cancelled")}>
-                <XCircle className="w-3 h-3 mr-1" /> Отменить
+                <XCircle className="w-3 h-3 mr-1" /> {t("bulkCancel")}
               </Button>
             )}
             <Button size="sm" variant="outline" className="h-7 text-xs text-red-700" onClick={bulkDelete}>
-              <Trash2 className="w-3 h-3 mr-1" /> Удалить
+              <Trash2 className="w-3 h-3 mr-1" /> {t("bulkDelete")}
             </Button>
             <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={clearSelection}>
-              Снять выбор
+              {t("bulkDeselect")}
             </Button>
           </div>
         </div>
@@ -204,7 +206,7 @@ export function APDashboard() {
                       <td className="py-2 px-2">{bill.title}</td>
                       <td className="py-2 px-2">
                         <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_COLORS[bill.status] || ""}`}>
-                          {{ draft: "Черновик", pending: "Ожидает", partially_paid: "Частично", paid: "Оплачен", overdue: "Просрочен", cancelled: "Отменён" }[bill.status] || bill.status}
+                          {{ draft: t("statusDraft"), pending: t("statusPending"), partially_paid: t("statusPartial"), paid: t("statusPaid"), overdue: t("statusOverdue"), cancelled: t("statusCancelled") }[bill.status] || bill.status}
                         </span>
                       </td>
                       <td className="py-2 px-2 text-right tabular-nums">{fmt(bill.totalAmount)}</td>
@@ -216,15 +218,15 @@ export function APDashboard() {
                         <div className="flex gap-1 justify-end">
                           {bill.status === "draft" && (
                             <Button size="sm" variant="outline" className="h-7 text-xs text-blue-700" onClick={() => updateBill.mutate({ id: bill.id, status: "pending" })}>
-                              <ArrowRight className="w-3 h-3 mr-1" /> В работу
+                              <ArrowRight className="w-3 h-3 mr-1" /> {t("toWork")}
                             </Button>
                           )}
                           {bill.status !== "paid" && bill.status !== "cancelled" && (
                             <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => setShowPayment(bill.id)}>
-                              <DollarSign className="w-3 h-3 mr-1" /> Оплатить
+                              <DollarSign className="w-3 h-3 mr-1" /> {t("pay")}
                             </Button>
                           )}
-                          <Button size="sm" variant="ghost" className="h-7 text-xs text-red-500" onClick={() => { if (confirm("Удалить этот счёт?")) deleteBill.mutate(bill.id) }}>
+                          <Button size="sm" variant="ghost" className="h-7 text-xs text-red-500" onClick={() => { if (confirm(t("confirmDelete"))) deleteBill.mutate(bill.id) }}>
                             <Trash2 className="w-3 h-3" />
                           </Button>
                         </div>
@@ -236,7 +238,7 @@ export function APDashboard() {
               </table>
             </div>
           ) : (
-            <div className="py-12 text-center text-muted-foreground text-sm">Нет счетов. Нажмите «Новый счёт» чтобы создать.</div>
+            <div className="py-12 text-center text-muted-foreground text-sm">{t("noBills")}</div>
           )}
         </CardContent>
       </Card>

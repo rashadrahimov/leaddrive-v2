@@ -280,7 +280,7 @@ export function PaymentsDashboard() {
                               <Badge variant="secondary" className={`text-[10px] ${dirColor}`}>{dirLabel}</Badge>
                             </td>
                             <td className="p-3">{e.counterpartyName}</td>
-                            <td className="p-3 text-xs text-muted-foreground">{CATEGORY_LABELS[e.category || ""] || e.category || "—"}</td>
+                            <td className="p-3 text-xs text-muted-foreground">{{ vendor_payment: t("categoryVendor"), revenue: t("categoryRevenue"), fund_allocation: t("categoryFund") }[e.category || ""] || e.category || "—"}</td>
                             <td className={`p-3 text-right font-medium tabular-nums ${e.direction === "incoming" ? "text-green-700" : "text-red-700"}`}>
                               {e.direction === "incoming" ? "+" : "−"}{fmt(e.amount)} {e.currency}
                             </td>
@@ -299,10 +299,10 @@ export function PaymentsDashboard() {
                     </span>
                     <div className="flex gap-2">
                       <Button size="sm" variant="outline" className="h-7 text-xs" disabled={registryPage <= 1} onClick={() => setRegistryPage((p) => p - 1)}>
-                        Назад
+                        {t("prev")}
                       </Button>
                       <Button size="sm" variant="outline" className="h-7 text-xs" disabled={registryPage * 50 >= registryData.total} onClick={() => setRegistryPage((p) => p + 1)}>
-                        Вперёд
+                        {t("next")}
                       </Button>
                     </div>
                   </div>
@@ -353,19 +353,19 @@ export function PaymentsDashboard() {
       <Dialog open={!!showReject} onOpenChange={() => setShowReject(null)}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Отклонить платёжное поручение</DialogTitle>
+            <DialogTitle>{t("rejectDialogTitle")}</DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
-            <Label>Причина отклонения</Label>
+            <Label>{t("rejectReasonLabel")}</Label>
             <Textarea
               value={rejectReason}
               onChange={(e) => setRejectReason(e.target.value)}
-              placeholder="Укажите причину"
+              placeholder={t("rejectReasonPlaceholder")}
               rows={3}
             />
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowReject(null)}>Отмена</Button>
+            <Button variant="outline" onClick={() => setShowReject(null)}>{t("cancel")}</Button>
             <Button
               variant="destructive"
               disabled={!rejectReason.trim() || rejectOrder.isPending}
@@ -375,7 +375,7 @@ export function PaymentsDashboard() {
                 }
               }}
             >
-              {rejectOrder.isPending ? "Отклонение..." : "Отклонить"}
+              {rejectOrder.isPending ? t("rejecting") : t("rejectBtn")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -397,6 +397,7 @@ function CreateOrderDialog({
   isPending: boolean
   initialData?: PaymentOrder
 }) {
+  const t = useTranslations("finance.pod")
   const [form, setForm] = useState({
     counterpartyName: initialData?.counterpartyName || "",
     billId: initialData?.billId || "",
@@ -447,14 +448,14 @@ function CreateOrderDialog({
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>{initialData ? "Редактировать поручение" : "Новое платёжное поручение"}</DialogTitle>
+          <DialogTitle>{initialData ? t("editTitle") : t("newTitle")}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
           {unpaidBills.length > 0 && (
             <div>
-              <Label className="text-xs">Связанный счёт (необязательно)</Label>
+              <Label className="text-xs">{t("billLink")}</Label>
               <Select className="h-9" value={form.billId || "none"} onChange={(e) => handleBillSelect(e.target.value)}>
-                <option value="none">— Без привязки —</option>
+                <option value="none">{t("billLinkNone")}</option>
                 {unpaidBills.map((b) => (
                   <option key={b.id} value={b.id}>
                     {b.billNumber} — {b.vendorName} ({fmt(b.balanceDue)} {b.currency})
@@ -464,16 +465,16 @@ function CreateOrderDialog({
             </div>
           )}
           <div>
-            <Label className="text-xs">Контрагент *</Label>
-            <Input value={form.counterpartyName} onChange={(e) => setForm((f) => ({ ...f, counterpartyName: e.target.value }))} placeholder="Название контрагента" />
+            <Label className="text-xs">{t("counterparty")} *</Label>
+            <Input value={form.counterpartyName} onChange={(e) => setForm((f) => ({ ...f, counterpartyName: e.target.value }))} placeholder={t("counterpartyPlaceholder")} />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label className="text-xs">Сумма *</Label>
+              <Label className="text-xs">{t("sum")} *</Label>
               <Input type="number" min="0" step="0.01" value={form.amount} onChange={(e) => setForm((f) => ({ ...f, amount: e.target.value }))} />
             </div>
             <div>
-              <Label className="text-xs">Валюта</Label>
+              <Label className="text-xs">{t("currency")}</Label>
               <Select className="h-9" value={form.currency} onChange={(e) => setForm((f) => ({ ...f, currency: e.target.value }))}>
                 <option value="AZN">AZN</option>
                 <option value="USD">USD</option>
@@ -482,23 +483,23 @@ function CreateOrderDialog({
             </div>
           </div>
           <div>
-            <Label className="text-xs">Назначение платежа *</Label>
-            <Textarea value={form.purpose} onChange={(e) => setForm((f) => ({ ...f, purpose: e.target.value }))} rows={2} placeholder="Оплата по договору №..." />
+            <Label className="text-xs">{t("purpose")} *</Label>
+            <Textarea value={form.purpose} onChange={(e) => setForm((f) => ({ ...f, purpose: e.target.value }))} rows={2} placeholder={t("purposePlaceholder")} />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label className="text-xs">Метод оплаты</Label>
+              <Label className="text-xs">{t("method")}</Label>
               <Select className="h-9" value={form.paymentMethod} onChange={(e) => setForm((f) => ({ ...f, paymentMethod: e.target.value }))}>
-                <option value="bank_transfer">Банковский перевод</option>
-                <option value="cash">Наличные</option>
-                <option value="card">Карта</option>
+                <option value="bank_transfer">{t("methodBankTransfer")}</option>
+                <option value="cash">{t("methodCash")}</option>
+                <option value="card">{t("methodCard")}</option>
               </Select>
             </div>
             {bankAccounts.length > 0 && (
               <div>
-                <Label className="text-xs">Банковский счёт</Label>
+                <Label className="text-xs">{t("bankAccount")}</Label>
                 <Select className="h-9" value={form.bankAccountId || "none"} onChange={(e) => setForm((f) => ({ ...f, bankAccountId: e.target.value === "none" ? "" : e.target.value }))}>
-                  <option value="none">— Не выбран —</option>
+                  <option value="none">{t("bankAccountNone")}</option>
                   {bankAccounts.filter((a: any) => a.isActive).map((a: any) => (
                     <option key={a.id} value={a.id}>{a.accountName} ({a.bankName})</option>
                   ))}
@@ -507,14 +508,14 @@ function CreateOrderDialog({
             )}
           </div>
           <div>
-            <Label className="text-xs">Банковские реквизиты</Label>
-            <Textarea value={form.bankDetails} onChange={(e) => setForm((f) => ({ ...f, bankDetails: e.target.value }))} rows={2} placeholder="ИНН, р/с, банк..." />
+            <Label className="text-xs">{t("bankDetails")}</Label>
+            <Textarea value={form.bankDetails} onChange={(e) => setForm((f) => ({ ...f, bankDetails: e.target.value }))} rows={2} placeholder={t("bankDetailsPlaceholder")} />
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Отмена</Button>
+          <Button variant="outline" onClick={onClose}>{t("cancel")}</Button>
           <Button onClick={handleSubmit} disabled={isPending || !form.counterpartyName || !form.amount || !form.purpose}>
-            {isPending ? "Сохранение..." : initialData ? "Сохранить" : "Создать"}
+            {isPending ? t("saving") : initialData ? t("save") : t("create")}
           </Button>
         </DialogFooter>
       </DialogContent>

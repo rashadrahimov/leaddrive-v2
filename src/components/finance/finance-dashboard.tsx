@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useTranslations } from "next-intl"
 import { useFinanceDashboard } from "@/lib/finance/hooks"
 import { FinanceKpiCard } from "./finance-kpi-card"
 import { FinanceAlerts } from "./finance-alerts"
@@ -19,12 +20,13 @@ function fmt(n: number): string {
 }
 
 export function FinanceDashboard() {
+  const t = useTranslations("finance.dash")
   const [year, setYear] = useState(new Date().getFullYear())
   const { data, isLoading, error } = useFinanceDashboard(year)
 
   if (isLoading) return <DashboardSkeleton />
-  if (error) return <div className="p-8 text-center text-red-500">Ошибка загрузки: {(error as Error).message}</div>
-  if (!data) return <div className="p-8 text-center text-muted-foreground">Нет данных</div>
+  if (error) return <div className="p-8 text-center text-red-500">{t("error")}: {(error as Error).message}</div>
+  if (!data) return <div className="p-8 text-center text-muted-foreground">{t("noData")}</div>
 
   const { kpis, revenueTrend, expenseBreakdown, arAging, alerts } = data
 
@@ -33,8 +35,8 @@ export function FinanceDashboard() {
       {/* Year selector */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-bold">Финансовый обзор</h2>
-          <p className="text-sm text-muted-foreground">Ключевые показатели и тренды за {year} год</p>
+          <h2 className="text-lg font-bold">{t("title")}</h2>
+          <p className="text-sm text-muted-foreground">{t("subtitle", { year })}</p>
         </div>
         <select
           value={year}
@@ -53,7 +55,7 @@ export function FinanceDashboard() {
       {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
         <FinanceKpiCard
-          title="Выручка"
+          title={t("revenue")}
           value={kpis.revenue.fact}
           plan={kpis.revenue.plan}
           variancePct={kpis.revenue.variancePct}
@@ -61,7 +63,7 @@ export function FinanceDashboard() {
           color="#22c55e"
         />
         <FinanceKpiCard
-          title="Расходы"
+          title={t("expenses")}
           value={kpis.expenses.fact}
           plan={kpis.expenses.plan}
           variancePct={kpis.expenses.variancePct}
@@ -70,28 +72,28 @@ export function FinanceDashboard() {
           invertVariance
         />
         <FinanceKpiCard
-          title="Чистая прибыль"
+          title={t("netProfit")}
           value={kpis.netProfit.fact}
           icon={<DollarSign className="w-5 h-5" />}
           color={kpis.netProfit.fact >= 0 ? "#22c55e" : "#ef4444"}
         />
         <FinanceKpiCard
-          title="Остаток ДС"
+          title={t("cashBalance")}
           value={kpis.cashBalance.current}
           icon={<Wallet className="w-5 h-5" />}
           color={kpis.cashBalance.current >= 0 ? "#3b82f6" : "#ef4444"}
         />
         <FinanceKpiCard
-          title="Дебиторка"
+          title={t("arTotal")}
           value={kpis.arTotal.amount}
-          sub={kpis.arTotal.overdueCount > 0 ? `${kpis.arTotal.overdueCount} просрочено` : undefined}
+          sub={kpis.arTotal.overdueCount > 0 ? `${kpis.arTotal.overdueCount} ${t("overdue")}` : undefined}
           icon={<FileText className="w-5 h-5" />}
           color="#f59e0b"
         />
         <FinanceKpiCard
-          title="Кредиторка"
+          title={t("apTotal")}
           value={kpis.apTotal.amount}
-          sub={kpis.apTotal.overdueCount > 0 ? `${kpis.apTotal.overdueCount} просрочено` : undefined}
+          sub={kpis.apTotal.overdueCount > 0 ? `${kpis.apTotal.overdueCount} ${t("overdue")}` : undefined}
           icon={<CreditCard className="w-5 h-5" />}
           color="#8b5cf6"
         />
@@ -102,7 +104,7 @@ export function FinanceDashboard() {
         {/* Revenue & Expense Trend */}
         <Card className="lg:col-span-2">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-semibold">Тренд выручки и расходов</CardTitle>
+            <CardTitle className="text-sm font-semibold">{t("trendTitle")}</CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={280}>
@@ -125,7 +127,7 @@ export function FinanceDashboard() {
         {/* Expense Breakdown Pie */}
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-semibold">Структура расходов</CardTitle>
+            <CardTitle className="text-sm font-semibold">{t("expenseTitle")}</CardTitle>
           </CardHeader>
           <CardContent>
             {expenseBreakdown.length > 0 ? (
@@ -171,7 +173,7 @@ export function FinanceDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-semibold">Возраст дебиторки</CardTitle>
+            <CardTitle className="text-sm font-semibold">{t("agingTitle")}</CardTitle>
           </CardHeader>
           <CardContent>
             {arAging.some((b) => b.amount > 0) ? (
@@ -197,7 +199,7 @@ export function FinanceDashboard() {
         {/* Quick Stats Card */}
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-semibold">Финансовая сводка</CardTitle>
+            <CardTitle className="text-sm font-semibold">{t("summaryTitle")}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">

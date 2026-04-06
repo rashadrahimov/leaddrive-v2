@@ -1,5 +1,6 @@
 "use client"
 
+import { useTranslations } from "next-intl"
 import { useReceivables } from "@/lib/finance/hooks"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -13,11 +14,12 @@ function fmt(n: number): string {
 }
 
 export function ARDashboard() {
+  const t = useTranslations("finance.ar")
   const { data, isLoading, error } = useReceivables()
 
-  if (isLoading) return <div className="p-8 text-center text-muted-foreground">Загрузка дебиторки...</div>
-  if (error) return <div className="p-8 text-center text-red-500">Ошибка: {(error as Error).message}</div>
-  if (!data) return <div className="p-8 text-center text-muted-foreground">Нет данных</div>
+  if (isLoading) return <div className="p-8 text-center text-muted-foreground">{t("loading")}</div>
+  if (error) return <div className="p-8 text-center text-red-500">{t("error")}: {(error as Error).message}</div>
+  if (!data) return <div className="p-8 text-center text-muted-foreground">{t("noData")}</div>
 
   const AGING_COLORS = ["#3b82f6", "#22c55e", "#f59e0b", "#f97316", "#ef4444"] // Текущие, 1-30, 31-60, 61-90, 90+
 
@@ -25,16 +27,16 @@ export function ARDashboard() {
     <div className="space-y-6">
       {/* Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <SummaryCard title="Всего дебиторка" value={`${fmt(data.total)} AZN`} icon={<DollarSign className="w-5 h-5" />} color="#3b82f6" />
-        <SummaryCard title="Просрочено" value={`${fmt(data.overdueTotal)} AZN`} icon={<AlertTriangle className="w-5 h-5" />} color="#ef4444" />
-        <SummaryCard title="Просроченных счетов" value={String(data.overdueCount)} icon={<Clock className="w-5 h-5" />} color="#f59e0b" />
+        <SummaryCard title={t("totalAr")} value={`${fmt(data.total)} AZN`} icon={<DollarSign className="w-5 h-5" />} color="#3b82f6" />
+        <SummaryCard title={t("overdueTotal")} value={`${fmt(data.overdueTotal)} AZN`} icon={<AlertTriangle className="w-5 h-5" />} color="#ef4444" />
+        <SummaryCard title={t("overdueCount")} value={String(data.overdueCount)} icon={<Clock className="w-5 h-5" />} color="#f59e0b" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Aging Chart */}
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-semibold">Анализ по срокам</CardTitle>
+            <CardTitle className="text-sm font-semibold">{t("agingTitle")}</CardTitle>
           </CardHeader>
           <CardContent>
             {data.aging.some((b) => b.amount > 0) ? (
@@ -52,7 +54,7 @@ export function ARDashboard() {
                 </BarChart>
               </ResponsiveContainer>
             ) : (
-              <div className="h-[250px] flex items-center justify-center text-sm text-muted-foreground">Нет данных</div>
+              <div className="h-[250px] flex items-center justify-center text-sm text-muted-foreground">{t("noData")}</div>
             )}
           </CardContent>
         </Card>
@@ -61,7 +63,7 @@ export function ARDashboard() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-semibold flex items-center gap-2">
-              <Building2 className="w-4 h-4" /> Крупнейшие должники
+              <Building2 className="w-4 h-4" /> {t("topDebtors")}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -88,7 +90,7 @@ export function ARDashboard() {
                 ))}
               </div>
             ) : (
-              <div className="h-[250px] flex items-center justify-center text-sm text-muted-foreground">Нет должников</div>
+              <div className="h-[250px] flex items-center justify-center text-sm text-muted-foreground">{t("noDebtors")}</div>
             )}
           </CardContent>
         </Card>
@@ -99,7 +101,7 @@ export function ARDashboard() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-semibold text-red-600 flex items-center gap-2">
-              <AlertTriangle className="w-4 h-4" /> Просроченные счета
+              <AlertTriangle className="w-4 h-4" /> {t("overdueInvoices")}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -108,10 +110,10 @@ export function ARDashboard() {
                 <thead>
                   <tr className="border-b text-left">
                     <th className="py-2 px-2 font-medium text-muted-foreground">#</th>
-                    <th className="py-2 px-2 font-medium text-muted-foreground">Счёт</th>
-                    <th className="py-2 px-2 font-medium text-muted-foreground">Компания</th>
-                    <th className="py-2 px-2 font-medium text-muted-foreground text-right">Остаток</th>
-                    <th className="py-2 px-2 font-medium text-muted-foreground text-right">Дней просрочки</th>
+                    <th className="py-2 px-2 font-medium text-muted-foreground">{t("colInvoice")}</th>
+                    <th className="py-2 px-2 font-medium text-muted-foreground">{t("colCompany")}</th>
+                    <th className="py-2 px-2 font-medium text-muted-foreground text-right">{t("colBalance")}</th>
+                    <th className="py-2 px-2 font-medium text-muted-foreground text-right">{t("colDaysOverdue")}</th>
                   </tr>
                 </thead>
                 <tbody>

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useTranslations } from "next-intl"
 import { useFunds, useCreateFund, useDeleteFund, useFundTransactions, useCreateFundTransaction, useFundRules, useCreateFundRule, useDeleteFundRule, useFinanceDashboard } from "@/lib/finance/hooks"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -19,6 +20,7 @@ function fmt(n: number): string {
 const FUND_COLORS = ["#3b82f6", "#22c55e", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899", "#14b8a6"]
 
 export function FundManager() {
+  const t = useTranslations("finance.funds")
   const { data: funds, isLoading } = useFunds()
   const { data: dashboard } = useFinanceDashboard(new Date().getFullYear())
   const createFund = useCreateFund()
@@ -28,7 +30,7 @@ export function FundManager() {
   const [showTx, setShowTx] = useState(false)
   const [showRules, setShowRules] = useState(false)
 
-  if (isLoading) return <div className="p-8 text-center text-muted-foreground">Загрузка фондов...</div>
+  if (isLoading) return <div className="p-8 text-center text-muted-foreground">{t("loading")}</div>
 
   const totalBalance = (funds || []).reduce((s, f) => s + f.currentBalance, 0)
   const cashBalance = dashboard?.kpis?.cashBalance?.current || 0
@@ -40,11 +42,11 @@ export function FundManager() {
       {/* Summary */}
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm text-muted-foreground">Общий баланс фондов</p>
+          <p className="text-sm text-muted-foreground">{t("totalBalance")}</p>
           <p className="text-2xl font-bold tabular-nums">{fmt(totalBalance)} AZN</p>
         </div>
         <Button size="sm" onClick={() => setShowCreate(true)}>
-          <Plus className="w-4 h-4 mr-1" /> Новый фонд
+          <Plus className="w-4 h-4 mr-1" /> {t("newFund")}
         </Button>
       </div>
 
@@ -53,9 +55,9 @@ export function FundManager() {
         <div className="flex items-center gap-3 p-4 rounded-lg border border-amber-200 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-800">
           <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0" />
           <div className="text-sm">
-            <p className="font-medium text-amber-800 dark:text-amber-400">Фонды не обеспечены полностью</p>
+            <p className="font-medium text-amber-800 dark:text-amber-400">{t("coverageWarning")}</p>
             <p className="text-amber-700 dark:text-amber-500">
-              Зарезервировано {fmt(totalBalance)} AZN, но доступно только {fmt(cashBalance)} AZN — обеспеченность {fundCoverage}%
+              {t("coverageDetail", { reserved: fmt(totalBalance), available: fmt(cashBalance), percent: fundCoverage })}
             </p>
           </div>
         </div>
@@ -108,7 +110,7 @@ export function FundManager() {
                   {/* Actions */}
                   <div className="flex gap-1 pt-1">
                     <Button size="sm" variant="outline" className="h-7 text-xs flex-1" onClick={() => { setSelectedFund(fund.id); setShowTx(true) }}>
-                      <ArrowDownToLine className="w-3 h-3 mr-1" /> Внести
+                      <ArrowDownToLine className="w-3 h-3 mr-1" /> {t("deposit")}
                     </Button>
                     <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => { setSelectedFund(fund.id); setShowRules(true) }}>
                       <Settings2 className="w-3 h-3" />
@@ -125,7 +127,7 @@ export function FundManager() {
       ) : (
         <div className="py-20 text-center text-muted-foreground">
           <PiggyBank className="w-12 h-12 mx-auto mb-3 opacity-30" />
-          <p className="text-sm">Нет фондов. Создайте первый для резервирования средств.</p>
+          <p className="text-sm">{t("empty")}</p>
         </div>
       )}
 
