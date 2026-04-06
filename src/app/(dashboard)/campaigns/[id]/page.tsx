@@ -10,8 +10,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
   ArrowLeft, Pencil, Trash2, Megaphone, Users, Mail, MousePointerClick,
-  CheckCircle2, XCircle, AlertTriangle, Eye, BarChart3
+  CheckCircle2, XCircle, AlertTriangle, Eye, BarChart3, Send, Loader2, Calendar
 } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
 import { ColorStatCard } from "@/components/color-stat-card"
 import { PageDescription } from "@/components/page-description"
 import { CampaignForm } from "@/components/campaign-form"
@@ -46,6 +48,10 @@ export default function CampaignDetailPage() {
   const [loading, setLoading] = useState(true)
   const [editOpen, setEditOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
+  const [composeSubject, setComposeSubject] = useState("")
+  const [composeBody, setComposeBody] = useState("")
+  const [composeSending, setComposeSending] = useState(false)
+  const [composeSchedule, setComposeSchedule] = useState("")
   const orgId = session?.user?.organizationId
 
   const fetchCampaign = async () => {
@@ -203,11 +209,130 @@ export default function CampaignDetailPage() {
       {/* Tabs */}
       <Tabs defaultValue="results" className="space-y-4">
         <TabsList className="bg-muted/60 p-1 h-auto">
+          {campaign.status === "draft" && <TabsTrigger value="compose" className="rounded-md text-sm"><Send className="h-3.5 w-3.5 mr-1" />{t("compose") || "Compose"}</TabsTrigger>}
           <TabsTrigger value="results" className="rounded-md text-sm">{tc("results", { count: totalSent })}</TabsTrigger>
           <TabsTrigger value="flow" className="rounded-md text-sm">Flow</TabsTrigger>
           <TabsTrigger value="details" className="rounded-md text-sm">{tc("details")}</TabsTrigger>
           {campaign.isAbTest && <TabsTrigger value="ab-test" className="rounded-md text-sm">{tab("results")}</TabsTrigger>}
         </TabsList>
+
+        {/* Compose & Send Tab */}
+        {campaign.status === "draft" && (
+          <TabsContent value="compose" className="space-y-4">
+            <Card className="border-none shadow-sm">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">{t("compose") || "Compose Email"}</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Subject */}
+                <div>
+                  <label className="text-sm font-medium mb-1 block">{tc("subject")}</label>
+                  <Input
+                    value={composeSubject || campaign.subject || ""}
+                    onChange={e => setComposeSubject(e.target.value)}
+                    placeholder={t("subjectPlaceholder") || "Email subject line..."}
+                  />
+                </div>
+
+                {/* Body / Template preview */}
+                <div>
+                  <label className="text-sm font-medium mb-1 block">{t("emailBody") || "Email Body (HTML)"}</label>
+                  <Textarea
+                    value={composeBody}
+                    onChange={e => setComposeBody(e.target.value)}
+                    rows={8}
+                    placeholder={t("bodyPlaceholder") || "Paste HTML content or write plain text..."}
+                    className="font-mono text-xs"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">{t("bodyHint") || "Use template variables: {{client_name}}, {{company}}"}</p>
+                </div>
+
+                {/* Recipients info */}
+                <div className="p-3 bg-muted/50 rounded-lg flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Users className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm">{t("recipients")}: <strong>{campaign.totalRecipients ?? 0}</strong></span>
+                    {campaign.segmentId && <Badge variant="outline" className="text-xs">{t("segment")}: {campaign.segmentId}</Badge>}
+                    {campaign.recipientMode && <Badge variant="outline" className="text-xs">{campaign.recipientMode}</Badge>}
+                  </div>
+                </div>
+
+                {/* Schedule or Send */}
+                <div className="flex items-center gap-3 pt-2 border-t">
+                  <div className="flex-1">
+                    <label className="text-xs text-muted-foreground mb-1 block">{t("scheduleFor") || "Schedule for (optional)"}</label>
+                    <Input
+                      type="datetime-local"
+                      value={composeSchedule}
+                      onChange={e => setComposeSchedule(e.target.value)}
+                    />
+                  </div>
+                  <div className="flex gap-2 pt-4">
+                    {composeSchedule && (
+                      <Button
+                        variant="outline"
+                        disabled={composeSending}
+                        onClick={async () => {
+                          setComposeSending(true)
+                          try {
+                            await fetch(`/api/v1/campaigns/${campaign.id}`, {
+                              method: "PUT",
+                              headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>) },
+                              body: JSON.stringify({
+                                subject: composeSubject || campaign.subject,
+                                htmlBody: composeBody || undefined,
+                                scheduledAt: new Date(composeSchedule).toISOString(),
+                                status: "scheduled",
+                              }),
+                            })
+                            fetchCampaign()
+                          } catch { /* ignore */ } finally { setComposeSending(false) }
+                        }}
+                      >
+                        <Calendar className="h-3.5 w-3.5 mr-1" /> {t("schedule") || "Schedule"}
+                      </Button>
+                    )}
+                    <Button
+                      disabled={composeSending}
+                      onClick={async () => {
+                        if (!confirm(t("confirmSend") || "Send this campaign now?")) return
+                        setComposeSending(true)
+                        try {
+                          // Save subject/body first
+                          if (composeSubject || composeBody) {
+                            await fetch(`/api/v1/campaigns/${campaign.id}`, {
+                              method: "PUT",
+                              headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>) },
+                              body: JSON.stringify({
+                                subject: composeSubject || campaign.subject,
+                                htmlBody: composeBody || undefined,
+                              }),
+                            })
+                          }
+                          // Send
+                          const res = await fetch(`/api/v1/campaigns/${campaign.id}/send`, {
+                            method: "POST",
+                            headers: orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>,
+                          })
+                          const json = await res.json()
+                          if (json.success) {
+                            alert(`${t("sent")}: ${json.data?.sent || 0} / ${json.data?.total || 0}`)
+                            fetchCampaign()
+                          } else {
+                            alert(json.error || "Error")
+                          }
+                        } catch { alert("Error") } finally { setComposeSending(false) }
+                      }}
+                    >
+                      {composeSending ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <Send className="h-3.5 w-3.5 mr-1" />}
+                      {t("sendNow") || "Send Now"}
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        )}
 
         <TabsContent value="results" className="space-y-4">
           <div className="grid md:grid-cols-2 gap-4">

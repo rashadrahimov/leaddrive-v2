@@ -1,9 +1,19 @@
 /**
  * Next.js Instrumentation — runs once when the server starts.
- * Used to schedule periodic tasks like journey step processing.
+ * Used for Sentry init and periodic tasks like journey step processing.
  */
 export async function register() {
-  // Only run on the server (not during build or in edge runtime)
+  if (process.env.NEXT_RUNTIME === "nodejs") {
+    // Initialize Sentry for Node.js runtime
+    await import("../sentry.server.config")
+  }
+
+  if (process.env.NEXT_RUNTIME === "edge") {
+    // Initialize Sentry for Edge runtime
+    await import("../sentry.edge.config")
+  }
+
+  // Only run cron tasks on the server (not during build or in edge runtime)
   if (process.env.NEXT_RUNTIME === "nodejs") {
     const INTERVAL_MS = 60_000 // 1 minute
 
