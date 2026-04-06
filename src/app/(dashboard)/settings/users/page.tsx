@@ -412,7 +412,7 @@ export default function UsersSettingsPage() {
       render: (item: User) => (
         <div className="text-sm">
           {item.lastLogin
-            ? new Date(item.lastLogin).toLocaleDateString("ru-RU", {
+            ? new Date(item.lastLogin).toLocaleDateString(undefined, {
                 day: "2-digit", month: "short", year: "numeric",
                 hour: "2-digit", minute: "2-digit",
               })

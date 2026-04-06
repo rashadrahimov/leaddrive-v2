@@ -10,7 +10,7 @@ import {
 import { AlertTriangle, DollarSign, Clock, Building2 } from "lucide-react"
 
 function fmt(n: number): string {
-  return n.toLocaleString("ru-RU", { maximumFractionDigits: 0 })
+  return n.toLocaleString(undefined, { maximumFractionDigits: 0 })
 }
 
 export function ARDashboard() {

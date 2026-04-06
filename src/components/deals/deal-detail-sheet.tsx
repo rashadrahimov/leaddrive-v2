@@ -208,7 +208,7 @@ export function DealDetailSheet({ deal, open, onOpenChange, onEdit, onDelete, on
                         <Button size="sm" variant="ghost" onClick={() => setShowPricingForm(false)}>Отмена</Button>
                         {pricingForm.qty > 0 && pricingForm.price > 0 && (
                           <span className="text-xs text-muted-foreground self-center ml-auto">
-                            {(pricingForm.qty * pricingForm.price).toLocaleString("ru-RU", { maximumFractionDigits: 2 })} ₼
+                            {(pricingForm.qty * pricingForm.price).toLocaleString(undefined, { maximumFractionDigits: 2 })} ₼
                             {pricingForm.type === "recurring" && " /мес"}
                           </span>
                         )}

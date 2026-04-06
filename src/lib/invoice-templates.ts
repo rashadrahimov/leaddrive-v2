@@ -251,7 +251,7 @@ export function formatDate(date: Date | string | null | undefined, lang: string)
 }
 
 export function formatMoney(amount: number, _lang?: string): string {
-  return amount.toLocaleString("az-AZ", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+  return amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 
 export function getFirstDayOfMonth(date: Date): Date {

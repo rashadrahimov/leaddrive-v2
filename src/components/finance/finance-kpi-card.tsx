@@ -19,7 +19,7 @@ interface FinanceKpiCardProps {
 function fmt(n: number): string {
   if (Math.abs(n) >= 1_000_000) return (n / 1_000_000).toFixed(1) + "M"
   if (Math.abs(n) >= 1_000) return (n / 1_000).toFixed(1) + "K"
-  return n.toLocaleString("ru-RU", { maximumFractionDigits: 0 })
+  return n.toLocaleString(undefined, { maximumFractionDigits: 0 })
 }
 
 export function FinanceKpiCard({ title, value, plan, planLabel, sub, icon, color, variance, variancePct, currency = "AZN", invertVariance }: FinanceKpiCardProps) {

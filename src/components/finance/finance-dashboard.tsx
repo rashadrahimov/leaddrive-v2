@@ -16,7 +16,7 @@ import {
 } from "recharts"
 
 function fmt(n: number): string {
-  return n.toLocaleString("ru-RU", { maximumFractionDigits: 0 })
+  return n.toLocaleString(undefined, { maximumFractionDigits: 0 })
 }
 
 export function FinanceDashboard() {

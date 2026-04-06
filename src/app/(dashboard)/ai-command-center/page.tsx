@@ -300,7 +300,7 @@ export default function AICommandCenterPage() {
     },
     {
       key: "createdAt", label: tc("date"), sortable: true,
-      render: (item: any) => <span>{new Date(item.createdAt).toLocaleDateString("ru-RU")}</span>,
+      render: (item: any) => <span>{new Date(item.createdAt).toLocaleDateString(undefined)}</span>,
     },
     {
       key: "actions", label: "",
@@ -614,7 +614,7 @@ export default function AICommandCenterPage() {
                         )}
                         {log.costUsd != null && <span className="text-xs font-mono text-muted-foreground">${log.costUsd.toFixed(4)}</span>}
                         {totalTokens > 0 && <span className="text-xs font-mono text-muted-foreground">{totalTokens} tok</span>}
-                        <span className="text-[10px] text-muted-foreground">{new Date(log.createdAt).toLocaleString("ru-RU")}</span>
+                        <span className="text-[10px] text-muted-foreground">{new Date(log.createdAt).toLocaleString(undefined)}</span>
                         <Eye className={cn("h-4 w-4 transition-transform", isSelected ? "text-[hsl(var(--ai-from))] rotate-180" : "text-muted-foreground")} />
                       </div>
                     </div>
@@ -1113,7 +1113,7 @@ export default function AICommandCenterPage() {
                         <p className="whitespace-pre-wrap">{msg.content}</p>
                       </div>
                       <span className={cn("text-[10px] text-muted-foreground mt-1 block", msg.role === "user" && "text-right")}>
-                        {new Date(msg.createdAt).toLocaleTimeString("ru-RU")}
+                        {new Date(msg.createdAt).toLocaleTimeString(undefined)}
                       </span>
                     </div>
                     {msg.role === "user" && (

@@ -386,7 +386,7 @@ export function PortalChatWidget({ userName }: PortalChatWidgetProps) {
   }
 
   const formatTime = (iso: string) => {
-    return new Date(iso).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit", second: "2-digit" })
+    return new Date(iso).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", second: "2-digit" })
   }
 
   const renderMessage = (msg: Message) => {

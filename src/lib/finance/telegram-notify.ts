@@ -145,11 +145,11 @@ export async function getAdvanceDays(orgId?: string): Promise<number> {
 }
 
 function fmt(n: number): string {
-  return n.toLocaleString("ru-RU", { maximumFractionDigits: 0 })
+  return n.toLocaleString(undefined, { maximumFractionDigits: 0 })
 }
 
 function fmtDate(d: Date | string): string {
-  return new Date(d).toLocaleDateString("ru-RU")
+  return new Date(d).toLocaleDateString(undefined)
 }
 
 // ─── Notification types ────────────────────────────────────────────────

@@ -154,7 +154,7 @@ export function LeadsAnalytics({ leads, labels }: LeadsAnalyticsProps) {
     for (let i = 5; i >= 0; i--) {
       const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
       const monthKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`
-      const monthLabel = d.toLocaleDateString("az", { month: "short" })
+      const monthLabel = d.toLocaleDateString(undefined, { month: "short" })
       const count = leads.filter(l => l.createdAt.startsWith(monthKey)).length
       monthlyData.push({ month: monthLabel, count })
     }

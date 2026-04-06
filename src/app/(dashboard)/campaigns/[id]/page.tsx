@@ -409,9 +409,9 @@ export default function CampaignDetailPage() {
                 { label: tc("type"), value: campaign.type },
                 { label: t("recipients"), value: (campaign.totalRecipients ?? 0).toLocaleString() },
                 { label: t("sent"), value: totalSent.toLocaleString() },
-                { label: tc("date"), value: campaign.scheduledAt ? new Date(campaign.scheduledAt).toLocaleString("ru-RU") : "—" },
-                { label: t("sent"), value: campaign.sentAt ? new Date(campaign.sentAt).toLocaleString("ru-RU") : "—" },
-                { label: tc("createdAt"), value: new Date(campaign.createdAt).toLocaleString("ru-RU") },
+                { label: tc("date"), value: campaign.scheduledAt ? new Date(campaign.scheduledAt).toLocaleString(undefined) : "—" },
+                { label: t("sent"), value: campaign.sentAt ? new Date(campaign.sentAt).toLocaleString(undefined) : "—" },
+                { label: tc("createdAt"), value: new Date(campaign.createdAt).toLocaleString(undefined) },
               ].map(d => (
                 <div key={d.label} className="flex justify-between text-sm">
                   <span className="text-muted-foreground">{d.label}</span>
@@ -509,7 +509,7 @@ export default function CampaignDetailPage() {
                 )}
                 {campaign.winnerSelectedAt && (
                   <p className="text-xs text-muted-foreground mt-3">
-                    {tab("winnerSelected")}: {new Date(campaign.winnerSelectedAt).toLocaleString("ru-RU")}
+                    {tab("winnerSelected")}: {new Date(campaign.winnerSelectedAt).toLocaleString(undefined)}
                   </p>
                 )}
                 {campaign.status === "ab_testing" && !campaign.winnerSelectedAt && (

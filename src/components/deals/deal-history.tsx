@@ -45,7 +45,7 @@ export function DealHistory({ dealId, orgId, deal }: { dealId: string; orgId?: s
   }
 
   function formatDate(d: string) {
-    return new Date(d).toLocaleString("az-AZ", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })
+    return new Date(d).toLocaleString(undefined, { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })
   }
 
   function stageLabel(s: string) {

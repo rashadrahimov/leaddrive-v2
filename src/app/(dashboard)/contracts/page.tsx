@@ -64,7 +64,7 @@ const statusColors: Record<string, string> = {
 
 function formatDate(dateStr?: string): string {
   if (!dateStr) return "—"
-  return new Date(dateStr).toLocaleDateString("ru-RU", { day: "2-digit", month: "short", year: "numeric" })
+  return new Date(dateStr).toLocaleDateString(undefined, { day: "2-digit", month: "short", year: "numeric" })
 }
 
 function daysUntilExpiry(endDate?: string): number | null {
@@ -483,7 +483,7 @@ export default function ContractsPage() {
                               {entry.action}
                             </span>
                             <span className="text-xs text-muted-foreground">
-                              {new Date(entry.createdAt).toLocaleString("ru-RU", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
+                              {new Date(entry.createdAt).toLocaleString(undefined, { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
                             </span>
                           </div>
                           {entry.action === "update" && entry.oldValue && typeof entry.oldValue === "object" && (

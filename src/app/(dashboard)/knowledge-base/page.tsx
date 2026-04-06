@@ -298,7 +298,7 @@ function ArticleRow({ article, onEdit, onDelete }: { article: KbArticle; onEdit:
         <span className={`inline-block w-2 h-2 rounded-full ${article.status === "published" ? "bg-green-500" : "bg-yellow-400"}`} title={article.status} />
       </td>
       <td className="p-2 text-center text-xs text-muted-foreground">{article.viewCount}</td>
-      <td className="p-2 text-center text-xs text-muted-foreground">{new Date(article.updatedAt).toLocaleDateString("ru-RU", { day: "2-digit", month: "2-digit" })}</td>
+      <td className="p-2 text-center text-xs text-muted-foreground">{new Date(article.updatedAt).toLocaleDateString(undefined, { day: "2-digit", month: "2-digit" })}</td>
       <td className="p-2 pr-4 text-right">
         <div className="flex items-center gap-0.5 justify-end opacity-0 group-hover:opacity-100 transition-opacity">
           <button onClick={onEdit} className="p-1 rounded hover:bg-muted" title={tc("edit")}>

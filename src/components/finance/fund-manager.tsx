@@ -14,7 +14,7 @@ import { Plus, Trash2, ArrowDownToLine, ArrowUpFromLine, History, Settings2, Pig
 import type { Fund } from "@/lib/finance/types"
 
 function fmt(n: number): string {
-  return n.toLocaleString("ru-RU", { maximumFractionDigits: 0 })
+  return n.toLocaleString(undefined, { maximumFractionDigits: 0 })
 }
 
 const FUND_COLORS = ["#3b82f6", "#22c55e", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899", "#14b8a6"]
@@ -261,7 +261,7 @@ function TransactionDialog({ fundId, onClose }: { fundId: string; onClose: () =>
                 <p className={`text-sm font-bold tabular-nums ${tx.type === "deposit" || tx.type === "transfer_in" ? "text-green-600" : "text-red-600"}`}>
                   {tx.type === "deposit" || tx.type === "transfer_in" ? "+" : "-"}{fmt(tx.amount)}
                 </p>
-                <p className="text-[10px] text-muted-foreground">{new Date(tx.createdAt).toLocaleDateString("ru-RU")}</p>
+                <p className="text-[10px] text-muted-foreground">{new Date(tx.createdAt).toLocaleDateString(undefined)}</p>
               </div>
             </div>
           )) : (

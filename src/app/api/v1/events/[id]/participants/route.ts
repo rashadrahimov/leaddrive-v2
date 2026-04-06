@@ -156,7 +156,7 @@ export async function PATCH(
             if (template?.htmlBody) {
               html = template.htmlBody
                 .replace(/\{\{event_name\}\}/g, escHtml(event.name))
-                .replace(/\{\{event_date\}\}/g, new Date(event.startDate).toLocaleString("ru-RU"))
+                .replace(/\{\{event_date\}\}/g, new Date(event.startDate).toLocaleString(undefined))
                 .replace(/\{\{event_location\}\}/g, escHtml(event.location || "Online"))
                 .replace(/\{\{event_description\}\}/g, escHtml(event.description || ""))
                 .replace(/\{\{participant_role\}\}/g, escHtml(p.role || "attendee"))
@@ -167,8 +167,8 @@ export async function PATCH(
                 .replace(/\{\{event_name\}\}/g, event.name.replace(/[\r\n]/g, ""))
             } else {
               subject = `You're Invited: ${event.name.replace(/[\r\n]/g, "")}`
-              const startDate = new Date(event.startDate).toLocaleString("ru-RU", { dateStyle: "long", timeStyle: "short" })
-              const endDate = event.endDate ? new Date(event.endDate).toLocaleString("ru-RU", { dateStyle: "long", timeStyle: "short" }) : ""
+              const startDate = new Date(event.startDate).toLocaleString(undefined, { dateStyle: "long", timeStyle: "short" })
+              const endDate = event.endDate ? new Date(event.endDate).toLocaleString(undefined, { dateStyle: "long", timeStyle: "short" }) : ""
               html = `<!DOCTYPE html>
 <html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
 <body style="margin:0;padding:0;background:#f0f2f5;font-family:Arial,sans-serif;">

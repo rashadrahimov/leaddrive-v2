@@ -260,7 +260,7 @@ export default function EventsPage() {
                           </span>
                           <span className="flex items-center gap-1">
                             <Clock className="h-3 w-3" />
-                            {new Date(event.startDate).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" })}
+                            {new Date(event.startDate).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })}
                           </span>
                           {event.budget > 0 && (
                             <span className="flex items-center gap-1">

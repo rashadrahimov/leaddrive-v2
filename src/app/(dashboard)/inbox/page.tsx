@@ -330,12 +330,12 @@ export default function InboxPage() {
     const now = new Date()
     const diff = now.getTime() - d.getTime()
     if (diff < 86400000 && d.getDate() === now.getDate()) {
-      return d.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" })
+      return d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })
     }
     if (diff < 604800000) {
-      return d.toLocaleDateString("ru-RU", { weekday: "short" })
+      return d.toLocaleDateString(undefined, { weekday: "short" })
     }
-    return d.toLocaleDateString("ru-RU", { day: "numeric", month: "short" })
+    return d.toLocaleDateString(undefined, { day: "numeric", month: "short" })
   }
 
   /* -- Loading skeleton -- */
@@ -587,7 +587,7 @@ export default function InboxPage() {
                         "text-[10px] mt-1 flex items-center gap-1",
                         msg.direction === "outbound" ? "opacity-50 justify-end" : "text-muted-foreground"
                       )}>
-                        {new Date(msg.createdAt).toLocaleString("ru-RU", {
+                        {new Date(msg.createdAt).toLocaleString(undefined, {
                           day: "numeric", month: "short", hour: "2-digit", minute: "2-digit"
                         })}
                         {msg.direction === "outbound" && (

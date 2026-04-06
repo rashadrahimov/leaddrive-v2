@@ -457,19 +457,19 @@ export default function PricingPage() {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <ColorStatCard
               label="Общий ежемесячный доход"
-              value={`${baseTotal.toLocaleString("ru-RU", { maximumFractionDigits: 2 })} ₼`}
+              value={`${baseTotal.toLocaleString(undefined, { maximumFractionDigits: 2 })} ₼`}
               icon={<DollarSign className="h-4 w-4" />}
               color="green"
             />
             <ColorStatCard
               label="Прогнозируемый ежемесячный доход"
-              value={`${adjTotal.toLocaleString("ru-RU", { maximumFractionDigits: 2 })} ₼`}
+              value={`${adjTotal.toLocaleString(undefined, { maximumFractionDigits: 2 })} ₼`}
               icon={<TrendingUp className="h-4 w-4" />}
               color="blue"
             />
             <ColorStatCard
               label="Годовой эффект"
-              value={`${annualEffect.toLocaleString("ru-RU", { maximumFractionDigits: 0 })} ₼`}
+              value={`${annualEffect.toLocaleString(undefined, { maximumFractionDigits: 0 })} ₼`}
               icon={<BarChart3 className="h-4 w-4" />}
               color={annualEffect >= 0 ? "teal" : "red"}
             />
@@ -713,10 +713,10 @@ export default function PricingPage() {
                             <td className="py-2 pr-2 text-muted-foreground">{i + 1}</td>
                             <td className="py-2 pr-4 font-medium">{row.code}</td>
                             <td className="py-2 pr-4">{row.group}</td>
-                            <td className="py-2 pr-4 text-right font-mono">{row.base.toLocaleString("ru-RU", { maximumFractionDigits: 2 })} ₼</td>
-                            <td className="py-2 pr-4 text-right font-mono font-medium">{row.newVal.toLocaleString("ru-RU", { maximumFractionDigits: 2 })} ₼</td>
+                            <td className="py-2 pr-4 text-right font-mono">{row.base.toLocaleString(undefined, { maximumFractionDigits: 2 })} ₼</td>
+                            <td className="py-2 pr-4 text-right font-mono font-medium">{row.newVal.toLocaleString(undefined, { maximumFractionDigits: 2 })} ₼</td>
                             <td className={`py-2 pr-4 text-right font-mono ${row.diff >= 0 ? "text-green-600" : "text-red-600"}`}>
-                              {row.diff >= 0 ? "+" : ""}{row.diff.toLocaleString("ru-RU", { maximumFractionDigits: 0 })} ₼
+                              {row.diff >= 0 ? "+" : ""}{row.diff.toLocaleString(undefined, { maximumFractionDigits: 0 })} ₼
                             </td>
                             <td className={`py-2 pr-4 text-right font-mono ${row.pct >= 0 ? "text-green-600" : "text-red-600"}`}>
                               {row.pct.toFixed(1)}%
@@ -797,7 +797,7 @@ export default function PricingPage() {
                         >
                           <div className="font-medium">{code}</div>
                           <div className="text-xs text-muted-foreground">
-                            {info.monthly.toLocaleString("ru-RU", { maximumFractionDigits: 2 })} ₼/ay
+                            {info.monthly.toLocaleString(undefined, { maximumFractionDigits: 2 })} ₼/ay
                           </div>
                         </button>
                       ))}
@@ -987,7 +987,7 @@ export default function PricingPage() {
                   <Button variant="outline" onClick={() => setShowAddSale(false)}>Отмена</Button>
                   {newSale.qty > 0 && newSale.price > 0 && (
                     <span className="text-sm text-muted-foreground ml-auto">
-                      Итого: <strong>{(newSale.qty * newSale.price).toLocaleString("ru-RU", { maximumFractionDigits: 2 })} ₼</strong>
+                      Итого: <strong>{(newSale.qty * newSale.price).toLocaleString(undefined, { maximumFractionDigits: 2 })} ₼</strong>
                       {newSale.type === "recurring" && <span className="text-green-600"> /мес</span>}
                     </span>
                   )}
@@ -1024,10 +1024,10 @@ export default function PricingPage() {
                           <td className="py-2 pr-4 font-medium">{deal.name}</td>
                           <td className="py-2 pr-4 text-muted-foreground">{deal.company?.name || "—"}</td>
                           <td className="py-2 pr-4 text-right font-mono font-medium">
-                            {(deal.valueAmount || 0).toLocaleString("ru-RU", { maximumFractionDigits: 2 })} ₼
+                            {(deal.valueAmount || 0).toLocaleString(undefined, { maximumFractionDigits: 2 })} ₼
                           </td>
                           <td className="py-2 pr-4 text-xs text-muted-foreground">
-                            {deal.createdAt ? new Date(deal.createdAt).toLocaleDateString("ru-RU") : "—"}
+                            {deal.createdAt ? new Date(deal.createdAt).toLocaleDateString(undefined) : "—"}
                           </td>
                           <td className="py-2">
                             <Button
@@ -1093,13 +1093,13 @@ export default function PricingPage() {
             />
             <ColorStatCard
               label="MRR допродаж"
-              value={`${salesData.filter((s) => s.type === "recurring" && s.status === "active").reduce((sum: number, s: any) => sum + s.total, 0).toLocaleString("ru-RU", { maximumFractionDigits: 2 })} ₼`}
+              value={`${salesData.filter((s) => s.type === "recurring" && s.status === "active").reduce((sum: number, s: any) => sum + s.total, 0).toLocaleString(undefined, { maximumFractionDigits: 2 })} ₼`}
               icon={<TrendingUp className="h-4 w-4" />}
               color="green"
             />
             <ColorStatCard
               label="Единоразовые"
-              value={`${salesData.filter((s) => s.type === "one_time").reduce((sum: number, s: any) => sum + s.total, 0).toLocaleString("ru-RU", { maximumFractionDigits: 2 })} ₼`}
+              value={`${salesData.filter((s) => s.type === "one_time").reduce((sum: number, s: any) => sum + s.total, 0).toLocaleString(undefined, { maximumFractionDigits: 2 })} ₼`}
               icon={<DollarSign className="h-4 w-4" />}
               color="orange"
             />
@@ -1160,10 +1160,10 @@ export default function PricingPage() {
                             <td className="py-2 pr-4">{sale.name}</td>
                             <td className="py-2 pr-4 text-xs text-muted-foreground">{sale.categoryName || "—"}</td>
                             <td className="py-2 pr-4 text-right font-mono">{sale.qty}</td>
-                            <td className="py-2 pr-4 text-right font-mono">{sale.price?.toLocaleString("ru-RU", { maximumFractionDigits: 2 })} ₼</td>
-                            <td className="py-2 pr-4 text-right font-mono font-medium">{sale.total?.toLocaleString("ru-RU", { maximumFractionDigits: 2 })} ₼</td>
+                            <td className="py-2 pr-4 text-right font-mono">{sale.price?.toLocaleString(undefined, { maximumFractionDigits: 2 })} ₼</td>
+                            <td className="py-2 pr-4 text-right font-mono font-medium">{sale.total?.toLocaleString(undefined, { maximumFractionDigits: 2 })} ₼</td>
                             <td className="py-2 pr-4 text-xs">
-                              {sale.effectiveDate ? new Date(sale.effectiveDate).toLocaleDateString("ru-RU") : "—"}
+                              {sale.effectiveDate ? new Date(sale.effectiveDate).toLocaleDateString(undefined) : "—"}
                             </td>
                             <td className="py-2 pr-4">
                               {sale.status === "active" && <Badge variant="outline" className="text-green-600 border-green-300">Активна</Badge>}
@@ -1343,10 +1343,10 @@ function CompanyEditor({ code, data, onSave, onDelete, saving, expandedCats, set
         <div className="text-right">
           <div className="text-sm text-muted-foreground">Итого Ежемесячно</div>
           <div className="text-xl font-bold text-green-600">
-            {monthly.toLocaleString("ru-RU", { maximumFractionDigits: 2 })} ₼
+            {monthly.toLocaleString(undefined, { maximumFractionDigits: 2 })} ₼
           </div>
           <div className="text-xs text-muted-foreground">
-            Ежегодно: {annual.toLocaleString("ru-RU", { maximumFractionDigits: 2 })} ₼
+            Ежегодно: {annual.toLocaleString(undefined, { maximumFractionDigits: 2 })} ₼
           </div>
         </div>
       </div>
@@ -1383,7 +1383,7 @@ function CompanyEditor({ code, data, onSave, onDelete, saving, expandedCats, set
                 </button>
                 <div className="flex items-center gap-2">
                   <span className={`text-sm font-mono font-medium ${total > 0 ? "text-green-600" : "text-muted-foreground"}`}>
-                    {total.toLocaleString("ru-RU", { maximumFractionDigits: 2 })} ₼
+                    {total.toLocaleString(undefined, { maximumFractionDigits: 2 })} ₼
                   </span>
                   <button
                     onClick={(e) => { e.stopPropagation(); setAddingServiceCat(addingServiceCat === cat ? null : cat); setExpandedCats(new Set([...expandedCats, cat])) }}
@@ -1439,7 +1439,7 @@ function CompanyEditor({ code, data, onSave, onDelete, saving, expandedCats, set
                               />
                             </td>
                             <td className="py-1.5 text-right font-mono">
-                              {svc.total.toLocaleString("ru-RU", { maximumFractionDigits: 2 })} ₼
+                              {svc.total.toLocaleString(undefined, { maximumFractionDigits: 2 })} ₼
                             </td>
                             <td className="py-1.5 text-center">
                               <button
@@ -1500,7 +1500,7 @@ function CompanyEditor({ code, data, onSave, onDelete, saving, expandedCats, set
                         </Button>
                         {newSvc.qty > 0 && newSvc.price > 0 && (
                           <span className="text-xs text-muted-foreground self-center ml-auto">
-                            Итого: {(newSvc.qty * newSvc.price).toLocaleString("ru-RU", { maximumFractionDigits: 2 })} ₼
+                            Итого: {(newSvc.qty * newSvc.price).toLocaleString(undefined, { maximumFractionDigits: 2 })} ₼
                           </span>
                         )}
                       </div>

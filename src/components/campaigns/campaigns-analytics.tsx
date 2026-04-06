@@ -40,7 +40,7 @@ interface CampaignsAnalyticsProps {
 function fmt(n: number): string {
   if (n >= 1_000_000) return (n / 1_000_000).toFixed(1).replace(/\.0$/, "") + "M"
   if (n >= 1_000) return (n / 1_000).toFixed(1).replace(/\.0$/, "") + "K"
-  return n.toLocaleString("az-AZ")
+  return n.toLocaleString(undefined)
 }
 
 function pct(part: number, total: number): string {
@@ -156,7 +156,7 @@ export function CampaignsAnalytics({ campaigns }: CampaignsAnalyticsProps) {
     for (let i = 5; i >= 0; i--) {
       const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
       const monthKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`
-      const label = d.toLocaleDateString("az-AZ", { month: "short" })
+      const label = d.toLocaleDateString(undefined, { month: "short" })
       const monthCampaigns = campaigns.filter((c) => {
         const dateStr = c.sentAt || c.createdAt
         return dateStr?.startsWith(monthKey)

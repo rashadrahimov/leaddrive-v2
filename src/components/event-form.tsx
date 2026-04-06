@@ -277,7 +277,7 @@ export function EventForm({ open, onOpenChange, onSaved, orgId, initialData }: E
               <div className="p-3 rounded-lg bg-muted/50 space-y-1 text-sm">
                 <p className="font-medium text-xs text-muted-foreground uppercase">{t("summary")}</p>
                 <p><strong>{form.name || t("untitled")}</strong> — {TYPE_OPTIONS.find(opt => opt.value === form.type) && t(`type${form.type.charAt(0).toUpperCase() + form.type.slice(1)}` as any)}</p>
-                {form.startDate && <p className="text-muted-foreground">{new Date(form.startDate).toLocaleString("ru-RU")}</p>}
+                {form.startDate && <p className="text-muted-foreground">{new Date(form.startDate).toLocaleString(undefined)}</p>}
                 {form.location && <p className="text-muted-foreground"><MapPin className="h-3 w-3 inline mr-1" />{form.location}</p>}
                 {form.isOnline && <p className="text-muted-foreground"><Globe className="h-3 w-3 inline mr-1" />{t("online")}</p>}
               </div>

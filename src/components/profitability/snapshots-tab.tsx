@@ -130,7 +130,7 @@ export function SnapshotsTab() {
           </select>
           {selected && (
             <span className="text-xs text-muted-foreground">
-              Saxlanıb: {new Date(selected.createdAt).toLocaleDateString("az-AZ")}
+              Saxlanıb: {new Date(selected.createdAt).toLocaleDateString(undefined)}
             </span>
           )}
         </div>

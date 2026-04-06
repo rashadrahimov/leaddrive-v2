@@ -273,7 +273,7 @@ export default function CompanyDetailPage() {
                     <span className="text-base">{ACTIVITY_ICONS[activity.type] || "📌"}</span>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium truncate">{activity.subject || activity.type}</p>
-                      <p className="text-xs text-muted-foreground">{new Date(activity.createdAt).toLocaleDateString("ru-RU")}</p>
+                      <p className="text-xs text-muted-foreground">{new Date(activity.createdAt).toLocaleDateString(undefined)}</p>
                     </div>
                   </div>
                 ))}
@@ -342,7 +342,7 @@ export default function CompanyDetailPage() {
                       <span className="font-semibold text-primary">
                         {deal.valueAmount > 0 ? `${deal.valueAmount.toLocaleString()} ${deal.currency}` : "—"}
                       </span>
-                      <p className="text-xs text-muted-foreground mt-0.5">{new Date(deal.createdAt).toLocaleDateString("ru-RU")}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">{new Date(deal.createdAt).toLocaleDateString(undefined)}</p>
                     </div>
                   </div>
                 ))}
@@ -389,7 +389,7 @@ export default function CompanyDetailPage() {
                               {entry.subtitle && <p className="text-xs text-muted-foreground mt-0.5">{entry.subtitle}</p>}
                             </div>
                             <span className="text-xs text-muted-foreground flex-shrink-0">
-                              {new Date(entry.date).toLocaleDateString("ru-RU")}
+                              {new Date(entry.date).toLocaleDateString(undefined)}
                             </span>
                           </div>
                           {entry.meta?.stage && (
@@ -429,7 +429,7 @@ export default function CompanyDetailPage() {
                     <tbody>
                       {callHistory.map((call: any) => (
                         <tr key={call.id} className="border-b hover:bg-muted/50">
-                          <td className="py-2 px-2 text-muted-foreground">{new Date(call.createdAt).toLocaleString("ru-RU", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</td>
+                          <td className="py-2 px-2 text-muted-foreground">{new Date(call.createdAt).toLocaleString(undefined, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</td>
                           <td className="py-2 px-2"><Badge variant={call.direction === "outbound" ? "default" : "secondary"} className="text-xs">{call.direction}</Badge></td>
                           <td className="py-2 px-2">{call.duration ? `${Math.floor(call.duration / 60)}:${String(call.duration % 60).padStart(2, "0")}` : "—"}</td>
                           <td className="py-2 px-2"><span className={`text-xs font-medium ${call.status === "completed" ? "text-green-600" : call.status === "failed" || call.status === "no-answer" ? "text-red-500" : "text-muted-foreground"}`}>{call.status}</span></td>
@@ -460,8 +460,8 @@ export default function CompanyDetailPage() {
                 {[
                   [t("pricingCode"), pricingProfile.companyCode],
                   [t("pricingGroup"), pricingProfile.group?.name || "—"],
-                  [t("pricingMonthly"), `${pricingProfile.monthlyTotal?.toLocaleString("ru-RU", { maximumFractionDigits: 2 })} ₼`],
-                  [t("pricingAnnual"), `${pricingProfile.annualTotal?.toLocaleString("ru-RU", { maximumFractionDigits: 2 })} ₼`],
+                  [t("pricingMonthly"), `${pricingProfile.monthlyTotal?.toLocaleString(undefined, { maximumFractionDigits: 2 })} ₼`],
+                  [t("pricingAnnual"), `${pricingProfile.annualTotal?.toLocaleString(undefined, { maximumFractionDigits: 2 })} ₼`],
                 ].map(([label, value]) => (
                   <Card key={label} className="border-none shadow-sm bg-card">
                     <CardContent className="pt-5 pb-5">
@@ -492,7 +492,7 @@ export default function CompanyDetailPage() {
                             <span className="text-sm font-medium">{pc.category?.name || "—"}</span>
                             <span className="text-xs text-muted-foreground">({pc.services?.length || 0} {t("pricingServices_count")})</span>
                           </div>
-                          <span className="text-sm font-mono font-medium text-green-600">{pc.total?.toLocaleString("ru-RU", { maximumFractionDigits: 2 })} ₼</span>
+                          <span className="text-sm font-mono font-medium text-green-600">{pc.total?.toLocaleString(undefined, { maximumFractionDigits: 2 })} ₼</span>
                         </button>
                         {isExpanded && pc.services?.length > 0 && (
                           <div className="px-3 pb-3">
@@ -512,8 +512,8 @@ export default function CompanyDetailPage() {
                                     <td className="py-1.5">{svc.name}</td>
                                     <td className="py-1.5 text-center text-xs text-muted-foreground">{svc.unit}</td>
                                     <td className="py-1.5 text-center font-mono">{svc.qty}</td>
-                                    <td className="py-1.5 text-right font-mono">{svc.price?.toLocaleString("ru-RU", { maximumFractionDigits: 2 })} ₼</td>
-                                    <td className="py-1.5 text-right font-mono font-medium">{svc.total?.toLocaleString("ru-RU", { maximumFractionDigits: 2 })} ₼</td>
+                                    <td className="py-1.5 text-right font-mono">{svc.price?.toLocaleString(undefined, { maximumFractionDigits: 2 })} ₼</td>
+                                    <td className="py-1.5 text-right font-mono font-medium">{svc.total?.toLocaleString(undefined, { maximumFractionDigits: 2 })} ₼</td>
                                   </tr>
                                 ))}
                               </tbody>
@@ -552,8 +552,8 @@ export default function CompanyDetailPage() {
                               </Badge>
                             </td>
                             <td className="py-2 pr-4">{sale.name}</td>
-                            <td className="py-2 pr-4 text-right font-mono font-medium">{sale.total?.toLocaleString("ru-RU", { maximumFractionDigits: 2 })} ₼</td>
-                            <td className="py-2 pr-4 text-xs">{sale.effectiveDate ? new Date(sale.effectiveDate).toLocaleDateString("ru-RU") : "—"}</td>
+                            <td className="py-2 pr-4 text-right font-mono font-medium">{sale.total?.toLocaleString(undefined, { maximumFractionDigits: 2 })} ₼</td>
+                            <td className="py-2 pr-4 text-xs">{sale.effectiveDate ? new Date(sale.effectiveDate).toLocaleDateString(undefined) : "—"}</td>
                             <td className="py-2">
                               <Badge variant="outline" className={sale.status === "active" ? "text-green-600 border-green-300" : "text-muted-foreground border-border"}>
                                 {sale.status === "active" ? t("saleActive") : sale.status === "cancelled" ? t("saleCancelled") : t("saleCompleted")}

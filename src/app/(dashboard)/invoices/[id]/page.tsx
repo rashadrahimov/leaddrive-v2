@@ -228,7 +228,7 @@ function KpiCards({
     invoice.status !== "cancelled" &&
     invoice.status !== "refunded"
 
-  const fmt = (n: number) => n.toLocaleString("az-AZ", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+  const fmt = (n: number) => n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 
   return (
     <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">

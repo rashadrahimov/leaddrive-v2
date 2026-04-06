@@ -449,8 +449,8 @@ export function DealSidebar({ deal, orgId, offersCount, invoicesCount, onEdit, f
         {[
           { icon: Building2, label: t("company"), value: deal.company?.name, field: "name" },
           { icon: User, label: t("assignedTo"), value: deal.assignedTo, field: "assignedTo" },
-          { icon: Calendar, label: t("expectedClose"), value: deal.expectedClose ? new Date(deal.expectedClose).toLocaleDateString("az-AZ") : null, field: "expectedClose" },
-          { icon: Clock, label: tc("created"), value: new Date(deal.createdAt).toLocaleDateString("az-AZ"), field: "createdAt" },
+          { icon: Calendar, label: t("expectedClose"), value: deal.expectedClose ? new Date(deal.expectedClose).toLocaleDateString(undefined) : null, field: "expectedClose" },
+          { icon: Clock, label: tc("created"), value: new Date(deal.createdAt).toLocaleDateString(undefined), field: "createdAt" },
           { icon: Target, label: t("campaign"), value: deal.campaign?.name, field: "campaign" },
           { icon: Target, label: t("customerNeed"), value: deal.customerNeed, field: "customerNeed" },
           { icon: Target, label: t("salesChannel"), value: deal.salesChannel, field: "salesChannel" },

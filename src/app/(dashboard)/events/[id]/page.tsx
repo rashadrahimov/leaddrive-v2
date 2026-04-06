@@ -392,12 +392,12 @@ export default function EventDetailPage() {
               <CardContent className="space-y-3">
                 {[
                   { label: tc("type"), value: event.type },
-                  { label: tc("startDate"), value: new Date(event.startDate).toLocaleString("ru-RU") },
-                  { label: tc("endDate"), value: event.endDate ? new Date(event.endDate).toLocaleString("ru-RU") : "—" },
+                  { label: tc("startDate"), value: new Date(event.startDate).toLocaleString(undefined) },
+                  { label: tc("endDate"), value: event.endDate ? new Date(event.endDate).toLocaleString(undefined) : "—" },
                   { label: t("location"), value: event.location || "—" },
                   { label: t("online"), value: event.isOnline ? tc("yes") : tc("no") },
                   { label: "Meeting URL", value: event.meetingUrl || "—" },
-                  { label: tc("createdAt"), value: new Date(event.createdAt).toLocaleString("ru-RU") },
+                  { label: tc("createdAt"), value: new Date(event.createdAt).toLocaleString(undefined) },
                 ].map(d => (
                   <div key={d.label} className="flex justify-between text-sm">
                     <span className="text-muted-foreground">{d.label}</span>
@@ -655,7 +655,7 @@ export default function EventDetailPage() {
                             <div className="flex items-center gap-1.5">
                               <span className="flex items-center gap-1 text-xs text-green-600">
                                 <MailCheck className="h-3 w-3" />
-                                {p.invitedAt ? new Date(p.invitedAt).toLocaleDateString("ru-RU") : "Sent"}
+                                {p.invitedAt ? new Date(p.invitedAt).toLocaleDateString(undefined) : "Sent"}
                               </span>
                               {p.email && (
                                 <button
@@ -680,7 +680,7 @@ export default function EventDetailPage() {
                           )}
                         </td>
                         <td className="p-3 text-muted-foreground text-xs">
-                          {new Date(p.registeredAt).toLocaleDateString("ru-RU")}
+                          {new Date(p.registeredAt).toLocaleDateString(undefined)}
                         </td>
                         <td className="p-3 text-right">
                           <div className="flex items-center gap-1 justify-end">

@@ -54,7 +54,7 @@ const priorityColors: Record<string, string> = {
 
 function formatDate(dateStr?: string): string {
   if (!dateStr) return "—"
-  return new Date(dateStr).toLocaleDateString("ru-RU", { day: "2-digit", month: "short", year: "numeric" })
+  return new Date(dateStr).toLocaleDateString(undefined, { day: "2-digit", month: "short", year: "numeric" })
 }
 
 export default function ProjectsPage() {

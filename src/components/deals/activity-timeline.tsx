@@ -216,7 +216,7 @@ export function ActivityTimeline({ dealId, orgId }: { dealId: string; orgId?: st
                       <div className="flex items-center gap-2 mb-1">
                         <Badge variant="outline" className="text-[10px] h-4 px-1.5">{tc((config.labelKey || "actTypeNote") as any)}</Badge>
                         <span className="text-xs text-muted-foreground">
-                          {new Date(item.date).toLocaleString("az-AZ", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
+                          {new Date(item.date).toLocaleString(undefined, { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
                         </span>
                         {item.author && <span className="text-xs text-muted-foreground ml-auto">{item.author}</span>}
                       </div>

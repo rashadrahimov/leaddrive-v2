@@ -56,8 +56,8 @@ async function sendConfirmationEmail(event: any, participantName: string, partic
     })
 
     const icsContent = generateICS(event)
-    const startDate = new Date(event.startDate).toLocaleString("ru-RU", { dateStyle: "long", timeStyle: "short" })
-    const endDate = event.endDate ? new Date(event.endDate).toLocaleString("ru-RU", { dateStyle: "long", timeStyle: "short" }) : ""
+    const startDate = new Date(event.startDate).toLocaleString(undefined, { dateStyle: "long", timeStyle: "short" })
+    const endDate = event.endDate ? new Date(event.endDate).toLocaleString(undefined, { dateStyle: "long", timeStyle: "short" }) : ""
 
     await transport.sendMail({
       from: smtp.fromEmail ? `${(smtp.fromName || org?.name || "").replace(/[\r\n]/g, "")} <${smtp.fromEmail.replace(/[\r\n]/g, "")}>` : smtp.smtpUser,

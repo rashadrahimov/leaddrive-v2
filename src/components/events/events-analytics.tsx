@@ -92,18 +92,18 @@ const MOCK_INVITE_STATS = {
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
 function fmt(n: number): string {
-  return n.toLocaleString("az-AZ", { maximumFractionDigits: 0 })
+  return n.toLocaleString(undefined, { maximumFractionDigits: 0 })
 }
 
 function formatDate(dateStr?: string): string {
   if (!dateStr) return "—"
   const d = new Date(dateStr)
-  return d.toLocaleDateString("az-AZ", { day: "numeric", month: "short", year: "numeric" })
+  return d.toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })
 }
 
 function formatShortDate(dateStr: string): string {
   const d = new Date(dateStr)
-  return d.toLocaleDateString("az-AZ", { day: "numeric", month: "short" })
+  return d.toLocaleDateString(undefined, { day: "numeric", month: "short" })
 }
 
 const STATUS_MAP: Record<string, { label: string; className: string }> = {

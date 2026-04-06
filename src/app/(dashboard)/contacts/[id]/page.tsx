@@ -110,7 +110,7 @@ function ContactEngagementInner({ contactId, orgId }: { contactId: string; orgId
       )}
       {data.lastActivity && (
         <p className="text-xs text-muted-foreground">
-          Last activity: {data.lastActivity.type} — {data.lastActivity.subject} · {new Date(data.lastActivity.date).toLocaleDateString("ru-RU")}
+          Last activity: {data.lastActivity.type} — {data.lastActivity.subject} · {new Date(data.lastActivity.date).toLocaleDateString(undefined)}
         </p>
       )}
     </div>
@@ -541,7 +541,7 @@ export default function ContactDetailPage() {
                       {callHistory.map((call: any) => (
                         <tr key={call.id} className="border-b hover:bg-muted/50">
                           <td className="py-2 px-2 text-muted-foreground">
-                            {new Date(call.createdAt).toLocaleString("ru-RU", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+                            {new Date(call.createdAt).toLocaleString(undefined, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
                           </td>
                           <td className="py-2 px-2">
                             <Badge variant={call.direction === "outbound" ? "default" : "secondary"} className="text-xs">

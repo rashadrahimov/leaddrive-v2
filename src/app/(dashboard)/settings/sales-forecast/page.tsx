@@ -30,7 +30,7 @@ const MONTHS = ["Янв", "Фев", "Мар", "Апр", "Май", "Июн", "И�
 const VAT_RATE = 0.18
 
 function fmt(n: number): string {
-  return n.toLocaleString("ru-RU", { maximumFractionDigits: 0 })
+  return n.toLocaleString(undefined, { maximumFractionDigits: 0 })
 }
 
 export default function SalesForecastPage() {

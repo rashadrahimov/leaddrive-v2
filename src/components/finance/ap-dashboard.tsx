@@ -18,7 +18,7 @@ import { Plus, DollarSign, AlertTriangle, Clock, CreditCard, Trash2, ArrowRight,
 import type { Bill } from "@/lib/finance/types"
 
 function fmt(n: number): string {
-  return n.toLocaleString("ru-RU", { maximumFractionDigits: 0 })
+  return n.toLocaleString(undefined, { maximumFractionDigits: 0 })
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -212,7 +212,7 @@ export function APDashboard() {
                       <td className="py-2 px-2 text-right tabular-nums">{fmt(bill.totalAmount)}</td>
                       <td className="py-2 px-2 text-right tabular-nums font-bold">{fmt(bill.balanceDue)}</td>
                       <td className="py-2 px-2 text-right text-xs text-muted-foreground">
-                        {bill.dueDate ? new Date(bill.dueDate).toLocaleDateString("ru-RU") : "—"}
+                        {bill.dueDate ? new Date(bill.dueDate).toLocaleDateString(undefined) : "—"}
                       </td>
                       <td className="py-2 px-2 text-right">
                         <div className="flex gap-1 justify-end">

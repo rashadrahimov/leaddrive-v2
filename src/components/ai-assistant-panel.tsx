@@ -295,7 +295,7 @@ export function AiAssistantPanel() {
                   }`}>
                     <p className="whitespace-pre-wrap leading-relaxed">{msg.content}</p>
                     <p className={`text-[10px] mt-1 ${msg.role === "user" ? "text-primary-foreground/60" : "text-muted-foreground"}`}>
-                      {msg.timestamp.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" })}
+                      {msg.timestamp.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })}
                     </p>
                   </div>
                   {/* Actions */}

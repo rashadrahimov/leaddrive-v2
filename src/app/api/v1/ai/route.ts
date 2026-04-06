@@ -128,7 +128,7 @@ export async function POST(req: NextRequest) {
       mainContactEmail ? `Email: ${mainContactEmail}` : "",
       mainContactPhone ? `Телефон: ${mainContactPhone}` : "",
       activitiesList.length > 0
-        ? `Последние активности (${activitiesList.length}):\n${activitiesList.map((a: any) => `- ${a.type}: ${a.subject || a.description || "без темы"} (${new Date(a.createdAt).toLocaleDateString("ru")})`).join("\n")}`
+        ? `Последние активности (${activitiesList.length}):\n${activitiesList.map((a: any) => `- ${a.type}: ${a.subject || a.description || "без темы"} (${new Date(a.createdAt).toLocaleDateString(undefined)})`).join("\n")}`
         : "Нет истории активностей",
     ].filter(Boolean).join("\n")
 

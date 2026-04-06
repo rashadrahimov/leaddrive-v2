@@ -469,7 +469,7 @@ export default function LeadDetailPage() {
               <Calendar className="h-4 w-4 text-muted-foreground flex-shrink-0" />
               <span className="text-muted-foreground">{t("modalCreated")}:</span>
               <span className="font-medium">
-                {new Date(lead.createdAt).toLocaleDateString("ru-RU")}
+                {new Date(lead.createdAt).toLocaleDateString(undefined)}
               </span>
             </div>
             {lead.lastScoredAt && (
@@ -477,7 +477,7 @@ export default function LeadDetailPage() {
                 <TrendingUp className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                 <span className="text-muted-foreground">{t("modalScoredAt")}:</span>
                 <span className="font-medium">
-                  {new Date(lead.lastScoredAt).toLocaleDateString("ru-RU")}
+                  {new Date(lead.lastScoredAt).toLocaleDateString(undefined)}
                 </span>
               </div>
             )}
@@ -486,7 +486,7 @@ export default function LeadDetailPage() {
                 <CheckCircle2 className="h-4 w-4 text-green-500 flex-shrink-0" />
                 <span className="text-muted-foreground">{t("statusConverted")}:</span>
                 <span className="font-medium">
-                  {new Date(lead.convertedAt).toLocaleDateString("ru-RU")}
+                  {new Date(lead.convertedAt).toLocaleDateString(undefined)}
                 </span>
               </div>
             )}

@@ -301,7 +301,7 @@ function NextStepsWidget({ dealId, orgId, steps, fetchSteps }: {
             {step.dueDate && (
               <p className="text-[11px] text-muted-foreground flex items-center gap-1">
                 <Clock className="h-3 w-3" />
-                {new Date(step.dueDate).toLocaleDateString("az-AZ")}
+                {new Date(step.dueDate).toLocaleDateString(undefined)}
               </p>
             )}
           </div>

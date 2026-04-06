@@ -231,7 +231,7 @@ export async function GET(req: NextRequest) {
 
   wsDash.mergeCells("A2:F2")
   const subtitleCell = wsDash.getCell("A2")
-  subtitleCell.value = `Статус: ${plan.status === "active" ? "Активный" : plan.status === "draft" ? "Черновик" : "Закрыт"} | Сгенерировано: ${new Date().toLocaleDateString("ru-RU")} | LeadDrive CRM`
+  subtitleCell.value = `Статус: ${plan.status === "active" ? "Активный" : plan.status === "draft" ? "Черновик" : "Закрыт"} | Сгенерировано: ${new Date().toLocaleDateString(undefined)} | LeadDrive CRM`
   subtitleCell.font = { size: 10, color: { argb: MUTED_TEXT } }
 
   // KPI Section
@@ -737,7 +737,7 @@ export async function GET(req: NextRequest) {
       department: actual.department || "Общие",
       lineType: typeLabels[actual.lineType] || actual.lineType,
       amount: actual.actualAmount,
-      date: actual.expenseDate ? new Date(actual.expenseDate).toLocaleDateString("ru-RU") : "",
+      date: actual.expenseDate ? new Date(actual.expenseDate).toLocaleDateString(undefined) : "",
       source: "Вручную",
       description: actual.description || "",
     })

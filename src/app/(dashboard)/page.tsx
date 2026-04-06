@@ -23,7 +23,7 @@ import { RecommendedActions } from "@/components/dashboard/recommended-actions"
 function fmt(n: number): string {
   if (n >= 1000000) return `${(n / 1000).toFixed(0)}K`
   if (n >= 1000) return `${(n / 1000).toFixed(1)}K`.replace(".0K", "K")
-  return n.toLocaleString("ru-RU", { maximumFractionDigits: 0 })
+  return n.toLocaleString(undefined, { maximumFractionDigits: 0 })
 }
 
 export default function DashboardPage() {
@@ -117,9 +117,9 @@ export default function DashboardPage() {
         <div>
           <h1 className="text-xl font-bold tracking-tight">İdarə Paneli</h1>
           <p className="text-xs text-muted-foreground">
-            {new Date().toLocaleDateString("az", { day: "numeric", month: "long", year: "numeric", weekday: "long" })}
+            {new Date().toLocaleDateString(undefined, { day: "numeric", month: "long", year: "numeric", weekday: "long" })}
             {" · Son yenilənmə: "}
-            {new Date().toLocaleTimeString("az", { hour: "2-digit", minute: "2-digit" })}
+            {new Date().toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })}
           </p>
         </div>
       </div>

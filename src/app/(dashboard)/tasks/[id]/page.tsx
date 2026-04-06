@@ -66,12 +66,12 @@ const RELATED_TYPE_ROUTES: Record<string, string> = {
 
 function formatDate(d: string | null) {
   if (!d) return "\u2014"
-  return new Date(d).toLocaleString("ru-RU", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })
+  return new Date(d).toLocaleString(undefined, { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })
 }
 
 function formatDateShort(d: string | null) {
   if (!d) return "\u2014"
-  return new Date(d).toLocaleDateString("ru-RU", { day: "2-digit", month: "short", year: "numeric" })
+  return new Date(d).toLocaleDateString(undefined, { day: "2-digit", month: "short", year: "numeric" })
 }
 
 function getDaysOpen(createdAt: string): number {

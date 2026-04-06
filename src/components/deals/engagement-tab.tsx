@@ -87,7 +87,7 @@ export function EngagementTab({ dealId, orgId }: { dealId: string; orgId?: strin
           <Badge variant="outline" className="text-[10px]">{data.lastActivity.type}</Badge>
           <span>{data.lastActivity.subject}</span>
           <span>·</span>
-          <span>{new Date(data.lastActivity.date).toLocaleDateString("ru-RU")}</span>
+          <span>{new Date(data.lastActivity.date).toLocaleDateString(undefined)}</span>
         </div>
       )}
 

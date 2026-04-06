@@ -135,7 +135,7 @@ export default function AgentCalendarPage() {
       return isSameDay(d, date) && d.getHours() === hour
     })
 
-  const weekLabel = `${weekDates[0].toLocaleDateString("ru-RU", { day: "numeric", month: "short" })} — ${weekDates[6].toLocaleDateString("ru-RU", { day: "numeric", month: "short", year: "numeric" })}`
+  const weekLabel = `${weekDates[0].toLocaleDateString(undefined, { day: "numeric", month: "short" })} — ${weekDates[6].toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })}`
 
   const totalItems = items.length
 
@@ -381,7 +381,7 @@ export default function AgentCalendarPage() {
         <Card className="border-none shadow-sm">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-              Today — {today.toLocaleDateString("ru-RU", { day: "numeric", month: "long" })}
+              Today — {today.toLocaleDateString(undefined, { day: "numeric", month: "long" })}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -464,7 +464,7 @@ export default function AgentCalendarPage() {
                       {timedItems.map(item => {
                         const config = TYPE_CONFIG[item.type] || TYPE_CONFIG.activity_note
                         const Icon = config.icon
-                        const time = new Date(item.date).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" })
+                        const time = new Date(item.date).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })
                         return (
                           <div
                             key={item.id}

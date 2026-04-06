@@ -35,7 +35,7 @@ import {
 import type { PaymentRegistryFilters, PaymentOrder, CreatePaymentOrderInput } from "@/lib/finance/types"
 
 function fmt(n: number): string {
-  return n.toLocaleString("ru-RU", { maximumFractionDigits: 0 })
+  return n.toLocaleString(undefined, { maximumFractionDigits: 0 })
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -169,7 +169,7 @@ export function PaymentsDashboard() {
                               {{ draft: t("statusDraft"), pending_approval: t("statusPending"), approved: t("statusApproved"), executed: t("statusExecuted"), rejected: t("statusRejected"), cancelled: t("statusCancelled") }[o.status] || o.status}
                             </Badge>
                           </td>
-                          <td className="p-3 text-xs text-muted-foreground">{new Date(o.createdAt).toLocaleDateString("ru-RU")}</td>
+                          <td className="p-3 text-xs text-muted-foreground">{new Date(o.createdAt).toLocaleDateString(undefined)}</td>
                           <td className="p-3 text-right">
                             <div className="flex justify-end gap-1">
                               {o.status === "draft" && (
@@ -275,7 +275,7 @@ export function PaymentsDashboard() {
                         const dirColor = DIRECTION_COLORS[e.direction] || ""
                         return (
                           <tr key={e.id} className="border-b last:border-0 hover:bg-muted/20 transition-colors">
-                            <td className="p-3 text-xs">{new Date(e.paymentDate).toLocaleDateString("ru-RU")}</td>
+                            <td className="p-3 text-xs">{new Date(e.paymentDate).toLocaleDateString(undefined)}</td>
                             <td className="p-3 text-center">
                               <Badge variant="secondary" className={`text-[10px] ${dirColor}`}>{dirLabel}</Badge>
                             </td>

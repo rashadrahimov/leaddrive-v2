@@ -413,7 +413,7 @@ export function CampaignForm({ open, onOpenChange, onSaved, initialData, orgId, 
               <div className="flex items-center gap-2 py-1.5">
                 <Clock className="h-4 w-4 text-muted-foreground shrink-0" />
                 <span className="text-muted-foreground w-24">{t("sent")}</span>
-                <span className="font-medium">{new Date(initialData.sentAt).toLocaleString("ru-RU")}</span>
+                <span className="font-medium">{new Date(initialData.sentAt).toLocaleString(undefined)}</span>
               </div>
             )}
           </div>

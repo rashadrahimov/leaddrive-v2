@@ -67,7 +67,7 @@ export async function POST(req: NextRequest) {
             <div style="background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; margin: 16px 0;">
               <p style="margin: 4px 0; color: #6b7280; font-size: 14px;"><strong>Сервер:</strong> ${smtp.smtpHost}:${smtp.smtpPort}</p>
               <p style="margin: 4px 0; color: #6b7280; font-size: 14px;"><strong>Отправитель:</strong> ${fromName} &lt;${fromEmail}&gt;</p>
-              <p style="margin: 4px 0; color: #6b7280; font-size: 14px;"><strong>Дата:</strong> ${new Date().toLocaleString("ru-RU")}</p>
+              <p style="margin: 4px 0; color: #6b7280; font-size: 14px;"><strong>Дата:</strong> ${new Date().toLocaleString(undefined)}</p>
             </div>
             <p style="color: #9ca3af; font-size: 12px; margin-top: 20px;">
               Отправлено из LeadDrive CRM v2
