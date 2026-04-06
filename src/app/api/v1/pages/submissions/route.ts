@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
       take: limit,
     })
 
-    return NextResponse.json({ success: true, data: submissions })
+    return NextResponse.json({ success: true, submissions, data: submissions })
   } catch (e) {
     console.error("Pages submissions error:", e)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })

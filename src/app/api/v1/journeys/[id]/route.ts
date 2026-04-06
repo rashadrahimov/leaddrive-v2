@@ -16,6 +16,12 @@ const updateJourneySchema = z.object({
   triggerType: z.string().optional(),
   triggerConditions: z.any().optional(),
   steps: z.array(stepSchema).optional(),
+  // Goal tracking
+  goalType: z.string().nullable().optional(),
+  goalConditions: z.any().nullable().optional(),
+  goalTarget: z.number().int().nullable().optional(),
+  exitOnGoal: z.boolean().optional(),
+  maxEnrollmentDays: z.number().int().nullable().optional(),
 })
 
 export async function GET(

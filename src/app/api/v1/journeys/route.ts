@@ -9,6 +9,12 @@ const createJourneySchema = z.object({
   status: z.enum(["draft", "active", "paused", "completed"]).optional(),
   triggerType: z.string().optional(),
   triggerConditions: z.any().optional(),
+  // Goal tracking
+  goalType: z.string().nullable().optional(),
+  goalConditions: z.any().nullable().optional(),
+  goalTarget: z.number().int().nullable().optional(),
+  exitOnGoal: z.boolean().optional(),
+  maxEnrollmentDays: z.number().int().nullable().optional(),
 })
 
 export async function GET(req: NextRequest) {

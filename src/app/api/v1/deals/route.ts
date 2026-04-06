@@ -114,7 +114,8 @@ export async function POST(req: NextRequest) {
   const role = session?.role || "admin"
 
   const body = await req.json()
-  const filtered = await filterWritableFields(orgId, role, "deal", body)
+  const fieldPerms = await getFieldPermissions(orgId, role, "deal")
+  const filtered = filterWritableFields(body, fieldPerms, role)
   const parsed = createDealSchema.safeParse(filtered)
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 })

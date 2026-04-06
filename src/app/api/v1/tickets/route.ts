@@ -3,6 +3,7 @@ import { z } from "zod"
 import { prisma, logAudit } from "@/lib/prisma"
 import { getOrgId, getSession } from "@/lib/api-auth"
 import { getFieldPermissions, filterEntityFields, filterWritableFields } from "@/lib/field-filter"
+import { applyRecordFilter } from "@/lib/sharing-rules"
 import { executeWorkflows } from "@/lib/workflow-engine"
 import { createNotification } from "@/lib/notifications"
 import { autoAssignTicket } from "@/lib/auto-assign"
@@ -32,10 +33,11 @@ export async function GET(req: NextRequest) {
   const limit = parseInt(searchParams.get("limit") || "50")
 
   try {
-    const where = {
+    let where: any = {
       organizationId: orgId,
       ...(status ? { status } : {}),
     }
+    where = await applyRecordFilter(orgId, session?.userId || "", role, "ticket", where)
 
     const [rawTickets, total] = await Promise.all([
       prisma.ticket.findMany({

@@ -16,12 +16,17 @@ export async function OPTIONS() {
 
 const formSubmitSchema = z.object({
   pageId: z.string().min(1, "pageId is required"),
-  orgId: z.string().min(1, "orgId is required"),
+  orgId: z.string().min(1).optional(),
+  organizationId: z.string().min(1).optional(),
+  // Accept flat fields OR nested formData object
   name: z.string().max(200).optional(),
   email: z.string().email().optional(),
   phone: z.string().max(50).optional(),
   company: z.string().max(200).optional(),
-}).passthrough() // allow extra fields
+  formData: z.record(z.any()).optional(),
+}).passthrough().refine(data => data.orgId || data.organizationId, {
+  message: "orgId or organizationId is required",
+})
 
 export async function POST(req: NextRequest) {
   try {
@@ -34,7 +39,18 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    const { pageId, orgId, name, email, phone, company, ...extra } = parsed.data
+    const raw = parsed.data
+    // Normalize: accept orgId or organizationId
+    const orgId = raw.orgId || raw.organizationId!
+    const pageId = raw.pageId
+    // Normalize: accept flat fields or nested formData
+    const fd = raw.formData || {}
+    const name = raw.name || fd.name
+    const email = raw.email || fd.email
+    const phone = raw.phone || fd.phone
+    const company = raw.company || fd.company
+    const extra = { ...fd }
+    delete extra.name; delete extra.email; delete extra.phone; delete extra.company
 
     // Validate page exists and is published
     const page = await prisma.landingPage.findFirst({

@@ -8,13 +8,18 @@ import { Label } from "@/components/ui/label"
 import { Select } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { Dialog, DialogHeader, DialogTitle, DialogContent, DialogFooter } from "@/components/ui/dialog"
-import { Loader2 } from "lucide-react"
+import { Loader2, Target } from "lucide-react"
 
 interface JourneyFormData {
   name: string
   description: string
   status: string
   triggerType: string
+  goalType: string
+  goalConditions: { field?: string; value?: string }
+  goalTarget: number | ""
+  exitOnGoal: boolean
+  maxEnrollmentDays: number | ""
 }
 
 interface JourneyFormProps {
@@ -35,18 +40,31 @@ export function JourneyForm({ open, onOpenChange, onSaved, initialData, orgId }:
     description: "",
     status: "draft",
     triggerType: "manual",
+    goalType: "",
+    goalConditions: {},
+    goalTarget: "",
+    exitOnGoal: true,
+    maxEnrollmentDays: "",
   })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState("")
+  const [showGoals, setShowGoals] = useState(false)
 
   useEffect(() => {
     if (open) {
+      const gc = (initialData as any)?.goalConditions || {}
       setForm({
         name: initialData?.name || "",
         description: initialData?.description || "",
         status: initialData?.status || "draft",
         triggerType: initialData?.triggerType || "manual",
+        goalType: (initialData as any)?.goalType || "",
+        goalConditions: typeof gc === "object" ? gc : {},
+        goalTarget: (initialData as any)?.goalTarget || "",
+        exitOnGoal: (initialData as any)?.exitOnGoal !== false,
+        maxEnrollmentDays: (initialData as any)?.maxEnrollmentDays || "",
       })
+      setShowGoals(!!(initialData as any)?.goalType)
       setError("")
     }
   }, [open, initialData])
@@ -61,6 +79,31 @@ export function JourneyForm({ open, onOpenChange, onSaved, initialData, orgId }:
     setError("")
 
     try {
+      const payload: any = {
+        name: form.name,
+        description: form.description,
+        status: form.status,
+        triggerType: form.triggerType,
+      }
+
+      // Include goal fields
+      if (showGoals && form.goalType) {
+        payload.goalType = form.goalType
+        payload.goalConditions = form.goalConditions
+        payload.goalTarget = form.goalTarget ? Number(form.goalTarget) : null
+        payload.exitOnGoal = form.exitOnGoal
+      } else {
+        payload.goalType = null
+        payload.goalConditions = null
+        payload.goalTarget = null
+      }
+
+      if (form.maxEnrollmentDays) {
+        payload.maxEnrollmentDays = Number(form.maxEnrollmentDays)
+      } else {
+        payload.maxEnrollmentDays = null
+      }
+
       const url = isEdit ? `/api/v1/journeys/${initialData!.id}` : "/api/v1/journeys"
       const res = await fetch(url, {
         method: isEdit ? "PUT" : "POST",
@@ -68,7 +111,7 @@ export function JourneyForm({ open, onOpenChange, onSaved, initialData, orgId }:
           "Content-Type": "application/json",
           ...(orgId ? { "x-organization-id": String(orgId) } : {}),
         },
-        body: JSON.stringify(form),
+        body: JSON.stringify(payload),
       })
       const json = await res.json()
       if (!res.ok) throw new Error(json.error || tc("failedToSave"))
@@ -81,7 +124,7 @@ export function JourneyForm({ open, onOpenChange, onSaved, initialData, orgId }:
     }
   }
 
-  const update = (key: keyof JourneyFormData, value: string) => setForm((f) => ({ ...f, [key]: value }))
+  const update = (key: keyof JourneyFormData, value: any) => setForm((f) => ({ ...f, [key]: value }))
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -136,6 +179,91 @@ export function JourneyForm({ open, onOpenChange, onSaved, initialData, orgId }:
                 rows={3}
                 className="mt-1.5"
               />
+            </div>
+
+            {/* Max enrollment days */}
+            <div>
+              <Label htmlFor="maxDays" className="text-sm font-medium">Max Enrollment Days</Label>
+              <Input
+                id="maxDays"
+                type="number"
+                min={1}
+                max={365}
+                value={form.maxEnrollmentDays}
+                onChange={(e) => update("maxEnrollmentDays", e.target.value)}
+                placeholder="e.g. 30 (auto-exit after N days)"
+                className="mt-1.5"
+              />
+            </div>
+
+            {/* Goal configuration toggle */}
+            <div className="border rounded-lg p-3">
+              <button
+                type="button"
+                className="flex items-center gap-2 text-sm font-medium w-full text-left"
+                onClick={() => setShowGoals(!showGoals)}
+              >
+                <Target className="h-4 w-4" />
+                Goal Tracking
+                <span className="ml-auto text-xs text-muted-foreground">
+                  {showGoals ? "▾" : "▸"}
+                </span>
+              </button>
+
+              {showGoals && (
+                <div className="mt-3 space-y-3">
+                  <div>
+                    <Label className="text-sm font-medium">Goal Type</Label>
+                    <Select
+                      value={form.goalType}
+                      onChange={(e) => update("goalType", e.target.value)}
+                      className="mt-1.5"
+                    >
+                      <option value="">No goal</option>
+                      <option value="deal_created">Deal Created</option>
+                      <option value="status_change">Status Change</option>
+                      <option value="ticket_resolved">Ticket Resolved</option>
+                    </Select>
+                  </div>
+
+                  {form.goalType === "status_change" && (
+                    <div>
+                      <Label className="text-sm font-medium">Target Status Value</Label>
+                      <Input
+                        value={form.goalConditions.value || ""}
+                        onChange={(e) => update("goalConditions", { ...form.goalConditions, value: e.target.value })}
+                        placeholder="e.g. converted, qualified"
+                        className="mt-1.5"
+                      />
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label className="text-sm font-medium">Goal Target (conversions)</Label>
+                      <Input
+                        type="number"
+                        min={1}
+                        value={form.goalTarget}
+                        onChange={(e) => update("goalTarget", e.target.value)}
+                        placeholder="e.g. 100"
+                        className="mt-1.5"
+                      />
+                    </div>
+                    <div className="flex items-end pb-1">
+                      <label className="flex items-center gap-2 text-sm">
+                        <input
+                          type="checkbox"
+                          checked={form.exitOnGoal}
+                          onChange={(e) => update("exitOnGoal", e.target.checked)}
+                          className="rounded"
+                        />
+                        Exit on goal reached
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </DialogContent>

@@ -441,6 +441,7 @@ model Lead {
   lastScoredAt   DateTime?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
+  formSubmissions FormSubmission[]
 
   @@index([organizationId])
   @@index([organizationId, status])
@@ -3233,6 +3234,7 @@ model FormSubmission {
   landingPage    LandingPage? @relation(fields: [landingPageId], references: [id])
   formData       Json
   leadId         String?
+  lead           Lead?    @relation(fields: [leadId], references: [id])
   source         String?
   ipAddress      String?
   createdAt      DateTime @default(now())

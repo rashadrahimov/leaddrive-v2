@@ -54,7 +54,7 @@ export async function GET(req: NextRequest) {
       orderBy: { updatedAt: "desc" },
     })
 
-    return NextResponse.json({ success: true, data: pages })
+    return NextResponse.json({ success: true, pages, data: pages })
   } catch (e: any) {
     console.error("[PAGES] GET error:", e?.message)
     return NextResponse.json({ error: "Failed to fetch pages" }, { status: 500 })
