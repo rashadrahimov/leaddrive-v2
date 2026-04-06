@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
+import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -61,15 +62,10 @@ interface FormSubmission {
   landingPage?: { name: string; slug: string }
 }
 
-const statusConfig: Record<string, { label: string; variant: "default" | "secondary" | "outline" | "destructive" }> = {
-  draft: { label: "Draft", variant: "secondary" },
-  published: { label: "Published", variant: "default" },
-  archived: { label: "Archived", variant: "outline" },
-}
-
 export default function PagesListPage() {
   const router = useRouter()
   const { data: session } = useSession()
+  const t = useTranslations("landingPages")
   const [pages, setPages] = useState<LandingPage[]>([])
   const [submissions, setSubmissions] = useState<FormSubmission[]>([])
   const [loading, setLoading] = useState(true)
@@ -83,6 +79,12 @@ export default function PagesListPage() {
   const [analyticsData, setAnalyticsData] = useState<{ date: string; views: number; submissions: number }[] | null>(null)
   const [analyticsLoading, setAnalyticsLoading] = useState(false)
 
+  const statusConfig: Record<string, { label: string; variant: "default" | "secondary" | "outline" | "destructive" }> = {
+    draft: { label: t("statusDraft"), variant: "secondary" },
+    published: { label: t("statusPublished"), variant: "default" },
+    archived: { label: t("statusArchived"), variant: "outline" },
+  }
+
   const fetchPages = async () => {
     try {
       const res = await fetch("/api/v1/pages")
@@ -91,7 +93,7 @@ export default function PagesListPage() {
         setPages(data.pages || [])
       }
     } catch {
-      toast.error("Failed to load pages")
+      toast.error(t("toastFailedLoad"))
     }
   }
 
@@ -159,17 +161,17 @@ export default function PagesListPage() {
 
       if (!res.ok) {
         const err = await res.json()
-        throw new Error(err.error || "Failed to create page")
+        throw new Error(err.error || t("toastFailedCreate"))
       }
 
       const page = await res.json()
-      toast.success("Page created")
+      toast.success(t("toastPageCreated"))
       setCreateOpen(false)
       setNewName("")
       setNewSlug("")
       router.push(`/pages/${page.id}/edit`)
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to create page")
+      toast.error(err instanceof Error ? err.message : t("toastFailedCreate"))
     } finally {
       setCreating(false)
     }
@@ -185,19 +187,19 @@ export default function PagesListPage() {
           body: JSON.stringify({ status: "draft" }),
         })
         if (!res.ok) throw new Error("Failed to unpublish")
-        toast.success("Page unpublished")
+        toast.success(t("toastPageUnpublished"))
       } else {
         // Publish
         const res = await fetch(`/api/v1/pages/${page.id}/publish`, {
           method: "POST",
         })
         if (!res.ok) throw new Error("Failed to publish")
-        toast.success("Page published")
+        toast.success(t("toastPagePublished"))
       }
       fetchPages()
     } catch (err) {
       toast.error(
-        err instanceof Error ? err.message : "Failed to update status"
+        err instanceof Error ? err.message : t("toastFailedUpdateStatus")
       )
     }
   }
@@ -206,11 +208,11 @@ export default function PagesListPage() {
     try {
       const res = await fetch(`/api/v1/pages/${id}`, { method: "DELETE" })
       if (!res.ok) throw new Error("Failed to delete")
-      toast.success("Page deleted")
+      toast.success(t("toastPageDeleted"))
       setDeleteId(null)
       fetchPages()
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to delete page")
+      toast.error(err instanceof Error ? err.message : t("toastFailedDelete"))
     }
   }
 
@@ -235,12 +237,12 @@ export default function PagesListPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Landing Pages</h1>
-          <PageDescription text="Create and manage landing pages with a visual drag-and-drop builder." />
+          <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
+          <PageDescription text={t("description")} />
         </div>
         <Button onClick={() => setCreateOpen(true)}>
           <Plus className="h-4 w-4 mr-2" />
-          New Page
+          {t("newPage")}
         </Button>
       </div>
 
@@ -255,7 +257,7 @@ export default function PagesListPage() {
           }`}
         >
           <FileText className="h-4 w-4 inline mr-1.5" />
-          Pages ({pages.length})
+          {t("tabPages")} ({pages.length})
         </button>
         <button
           onClick={() => setTab("submissions")}
@@ -266,7 +268,7 @@ export default function PagesListPage() {
           }`}
         >
           <BarChart3 className="h-4 w-4 inline mr-1.5" />
-          Submissions ({submissions.length})
+          {t("tabSubmissions")} ({submissions.length})
         </button>
       </div>
 
@@ -277,14 +279,13 @@ export default function PagesListPage() {
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-16 text-center">
                 <FileText className="h-12 w-12 text-muted-foreground mb-4" />
-                <h3 className="text-lg font-semibold mb-2">No pages yet</h3>
+                <h3 className="text-lg font-semibold mb-2">{t("noPagesYet")}</h3>
                 <p className="text-sm text-muted-foreground mb-4 max-w-sm">
-                  Create your first landing page with our visual builder to
-                  start capturing leads.
+                  {t("noPagesDescription")}
                 </p>
                 <Button onClick={() => setCreateOpen(true)}>
                   <Plus className="h-4 w-4 mr-2" />
-                  Create First Page
+                  {t("createFirstPage")}
                 </Button>
               </CardContent>
             </Card>
@@ -315,7 +316,7 @@ export default function PagesListPage() {
                           {page.totalViews}
                         </div>
                         <div className="text-xs text-muted-foreground">
-                          Views
+                          {t("views")}
                         </div>
                       </div>
                       <div>
@@ -323,7 +324,7 @@ export default function PagesListPage() {
                           {page.totalSubmissions}
                         </div>
                         <div className="text-xs text-muted-foreground">
-                          Leads
+                          {t("leads")}
                         </div>
                       </div>
                       <div>
@@ -335,7 +336,7 @@ export default function PagesListPage() {
                           %
                         </div>
                         <div className="text-xs text-muted-foreground">
-                          CVR
+                          {t("cvr")}
                         </div>
                       </div>
                     </div>
@@ -351,7 +352,7 @@ export default function PagesListPage() {
                         }
                       >
                         <Pencil className="h-3.5 w-3.5 mr-1.5" />
-                        Edit
+                        {t("edit")}
                       </Button>
                       <Button
                         variant={
@@ -366,12 +367,12 @@ export default function PagesListPage() {
                         {page.status === "published" ? (
                           <>
                             <GlobeLock className="h-3.5 w-3.5 mr-1.5" />
-                            Unpublish
+                            {t("unpublish")}
                           </>
                         ) : (
                           <>
                             <Globe className="h-3.5 w-3.5 mr-1.5" />
-                            Publish
+                            {t("publish")}
                           </>
                         )}
                       </Button>
@@ -409,7 +410,7 @@ export default function PagesListPage() {
                     {/* Analytics Chart */}
                     {analyticsPageId === page.id && (
                       <div className="border rounded-lg p-3 bg-muted/30">
-                        <p className="text-xs font-medium text-muted-foreground mb-2">Views & Submissions (30 days)</p>
+                        <p className="text-xs font-medium text-muted-foreground mb-2">{t("analyticsTitle")}</p>
                         {analyticsLoading ? (
                           <div className="flex items-center justify-center h-32">
                             <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
@@ -442,7 +443,7 @@ export default function PagesListPage() {
                                 fill="hsl(var(--chart-1))"
                                 fillOpacity={0.15}
                                 strokeWidth={1.5}
-                                name="Views"
+                                name={t("views")}
                               />
                               <Area
                                 type="monotone"
@@ -451,12 +452,12 @@ export default function PagesListPage() {
                                 fill="hsl(var(--chart-2))"
                                 fillOpacity={0.15}
                                 strokeWidth={1.5}
-                                name="Submissions"
+                                name={t("tabSubmissions")}
                               />
                             </AreaChart>
                           </ResponsiveContainer>
                         ) : (
-                          <p className="text-xs text-muted-foreground text-center py-6">No view data yet</p>
+                          <p className="text-xs text-muted-foreground text-center py-6">{t("noViewData")}</p>
                         )}
                       </div>
                     )}
@@ -476,11 +477,10 @@ export default function PagesListPage() {
               <div className="flex flex-col items-center justify-center py-16 text-center">
                 <Eye className="h-12 w-12 text-muted-foreground mb-4" />
                 <h3 className="text-lg font-semibold mb-2">
-                  No submissions yet
+                  {t("noSubmissionsYet")}
                 </h3>
                 <p className="text-sm text-muted-foreground max-w-sm">
-                  Once visitors submit forms on your published landing pages,
-                  their data will appear here.
+                  {t("noSubmissionsDescription")}
                 </p>
               </div>
             ) : (
@@ -488,12 +488,12 @@ export default function PagesListPage() {
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b bg-muted/50">
-                      <th className="text-left p-3 font-medium">Date</th>
-                      <th className="text-left p-3 font-medium">Page</th>
-                      <th className="text-left p-3 font-medium">Name</th>
-                      <th className="text-left p-3 font-medium">Email</th>
-                      <th className="text-left p-3 font-medium">Phone</th>
-                      <th className="text-left p-3 font-medium">Company</th>
+                      <th className="text-left p-3 font-medium">{t("thDate")}</th>
+                      <th className="text-left p-3 font-medium">{t("thPage")}</th>
+                      <th className="text-left p-3 font-medium">{t("thName")}</th>
+                      <th className="text-left p-3 font-medium">{t("thEmail")}</th>
+                      <th className="text-left p-3 font-medium">{t("thPhone")}</th>
+                      <th className="text-left p-3 font-medium">{t("thCompany")}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -543,14 +543,14 @@ export default function PagesListPage() {
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Create New Page</DialogTitle>
+            <DialogTitle>{t("createDialogTitle")}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div className="space-y-2">
-              <Label htmlFor="page-name">Page Name</Label>
+              <Label htmlFor="page-name">{t("pageName")}</Label>
               <Input
                 id="page-name"
-                placeholder="e.g. Product Launch"
+                placeholder={t("pageNamePlaceholder")}
                 value={newName}
                 onChange={(e) => {
                   setNewName(e.target.value)
@@ -561,7 +561,7 @@ export default function PagesListPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="page-slug">URL Slug</Label>
+              <Label htmlFor="page-slug">{t("urlSlug")}</Label>
               <div className="flex items-center gap-2">
                 <span className="text-sm text-muted-foreground whitespace-nowrap">
                   /p/
@@ -586,14 +586,14 @@ export default function PagesListPage() {
               variant="outline"
               onClick={() => setCreateOpen(false)}
             >
-              Cancel
+              {t("cancel")}
             </Button>
             <Button
               onClick={handleCreate}
               disabled={creating || !newName.trim()}
             >
               {creating && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              Create & Edit
+              {t("createAndEdit")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -603,22 +603,20 @@ export default function PagesListPage() {
       <Dialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Delete Page</DialogTitle>
+            <DialogTitle>{t("deleteDialogTitle")}</DialogTitle>
           </DialogHeader>
           <p className="text-sm text-muted-foreground">
-            Are you sure you want to delete this page? This action cannot be
-            undone. All associated views and form submissions will also be
-            deleted.
+            {t("deleteDialogDescription")}
           </p>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDeleteId(null)}>
-              Cancel
+              {t("cancel")}
             </Button>
             <Button
               variant="destructive"
               onClick={() => deleteId && handleDelete(deleteId)}
             >
-              Delete
+              {t("delete")}
             </Button>
           </DialogFooter>
         </DialogContent>
