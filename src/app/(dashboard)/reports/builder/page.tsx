@@ -229,10 +229,27 @@ export default function ReportBuilderPage() {
 
   const fields = useMemo(() => ENTITY_FIELDS[entity] || [], [entity, ENTITY_FIELDS])
 
-  // When entity changes, reset columns to first 3 fields
+  // When entity changes, pick smart default columns (2 string + 1 numeric for charts)
   useEffect(() => {
     const f = ENTITY_FIELDS[entity] || []
-    setColumns(f.slice(0, Math.min(3, f.length)).map((c) => c.name))
+    const stringFields = f.filter(fd => fd.type === "string")
+    const numericFields = f.filter(fd => fd.type === "number")
+    const defaults: string[] = []
+    // Pick first 2 string fields
+    for (const sf of stringFields) {
+      if (defaults.length >= 2) break
+      defaults.push(sf.name)
+    }
+    // Pick first numeric field (important for charts)
+    if (numericFields.length > 0) {
+      defaults.push(numericFields[0].name)
+    }
+    // If still < 3, fill from remaining fields
+    for (const fd of f) {
+      if (defaults.length >= 3) break
+      if (!defaults.includes(fd.name)) defaults.push(fd.name)
+    }
+    setColumns(defaults)
     setGroupBy("")
     setSortBy("")
     setFilters([])
@@ -433,11 +450,37 @@ export default function ReportBuilderPage() {
     }
 
     // ----- Smart data preparation for charts -----
-    const numericCol =
-      columns.find((c) => {
-        const f = fields.find((fd) => fd.name === c)
-        return f?.type === "number"
-      }) ?? columns[0]
+    const numericColFound = columns.find((c) => {
+      const f = fields.find((fd) => fd.name === c)
+      return f?.type === "number"
+    })
+
+    // If no numeric column selected, show hint
+    if (!numericColFound) {
+      const availableNumeric = fields.filter(f => f.type === "number")
+      return (
+        <div className="flex flex-col items-center justify-center h-64 text-muted-foreground gap-2">
+          <BarChart3 className="h-10 w-10 opacity-30" />
+          <p className="text-sm">{tr("noNumericColumn" as any) || "Qrafik üçün ədədi sütun seçin"}</p>
+          {availableNumeric.length > 0 && (
+            <div className="flex gap-1.5 mt-1">
+              {availableNumeric.map(f => (
+                <button
+                  key={f.name}
+                  type="button"
+                  onClick={() => setColumns(prev => [...prev, f.name])}
+                  className="px-2.5 py-1 text-xs rounded-md border border-primary/30 bg-primary/5 text-primary hover:bg-primary/10 transition-colors"
+                >
+                  + {f.label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )
+    }
+
+    const numericCol = numericColFound
 
     // For pie/bar without groupBy: auto-group by first string column (e.g. stage)
     const stringCols = columns.filter((c) => {

@@ -4062,7 +4062,8 @@
     "fieldDescription": "Təsvir",
     "fieldCreatedBy": "Yaradan",
     "fieldCurrency": "Valyuta",
-    "other": "Digər"
+    "other": "Digər",
+    "noNumericColumn": "Qrafik üçün ədədi sütun seçin"
   },
   "ticketNotification": {
     "newTicket": "Yeni tiket: {ticketNumber}",

@@ -4069,7 +4069,8 @@
     "fieldDescription": "Description",
     "fieldCreatedBy": "Created By",
     "fieldCurrency": "Currency",
-    "other": "Other"
+    "other": "Other",
+    "noNumericColumn": "Select a numeric column for chart"
   },
   "ticketNotification": {
     "newTicket": "New ticket: {ticketNumber}",

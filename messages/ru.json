@@ -4069,7 +4069,8 @@
     "fieldDescription": "Описание",
     "fieldCreatedBy": "Создал",
     "fieldCurrency": "Валюта",
-    "other": "Прочие"
+    "other": "Прочие",
+    "noNumericColumn": "Выберите числовую колонку для графика"
   },
   "ticketNotification": {
     "newTicket": "Новый тикет: {ticketNumber}",
