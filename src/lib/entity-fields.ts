@@ -67,6 +67,17 @@ export const ENTITY_FIELDS: Record<string, { name: string; label: string; sensit
     { name: "relatedType", label: "Related Entity Type" },
     { name: "relatedId", label: "Related Entity ID" },
   ],
+  activity: [
+    { name: "type", label: "Activity Type" },
+    { name: "subject", label: "Subject" },
+    { name: "description", label: "Description" },
+    { name: "contactId", label: "Contact" },
+    { name: "companyId", label: "Company" },
+    { name: "relatedType", label: "Related Entity Type" },
+    { name: "relatedId", label: "Related Entity ID" },
+    { name: "scheduledAt", label: "Scheduled At" },
+    { name: "completedAt", label: "Completed At" },
+  ],
 }
 
 export const ENTITY_TYPES = Object.keys(ENTITY_FIELDS)
