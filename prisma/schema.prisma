@@ -3141,6 +3141,7 @@ model CallLog {
   dealId         String?
   userId         String?   // Agent who made/received the call
   activityId     String?   // Linked Activity record
+  provider       String    @default("twilio")
   notes          String?   @db.Text
   startedAt      DateTime?
   endedAt        DateTime?

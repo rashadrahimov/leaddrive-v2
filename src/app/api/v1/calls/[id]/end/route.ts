@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { getOrgId } from "@/lib/api-auth"
+import { getVoipProvider } from "@/lib/voip"
+import type { VoipSettings } from "@/lib/voip"
 
-// POST — end an active Twilio call
+// POST — end an active call via the configured VoIP provider
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const orgId = await getOrgId(req)
   if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
@@ -16,7 +18,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       return NextResponse.json({ error: "Call not found" }, { status: 404 })
     }
 
-    // Load VoIP config for Twilio credentials
+    // Load VoIP config
     const voipConfig = await prisma.channelConfig.findFirst({
       where: { organizationId: orgId, channelType: "voip", isActive: true },
     })
@@ -24,20 +26,16 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       return NextResponse.json({ error: "VoIP not configured" }, { status: 400 })
     }
 
-    const settings = voipConfig.settings as any
+    const settings = voipConfig.settings as unknown as VoipSettings
+    const providerName = settings?.provider || "twilio"
+    const normalizedSettings: VoipSettings = { ...settings, provider: providerName } as VoipSettings
+    const provider = getVoipProvider(normalizedSettings)
 
-    // End call via Twilio REST API
-    const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${settings.accountSid}/Calls/${callLog.callSid}.json`
-    const twilioAuth = Buffer.from(`${settings.accountSid}:${settings.authToken}`).toString("base64")
+    const result = await provider.endCall(callLog.callSid)
 
-    await fetch(twilioUrl, {
-      method: "POST",
-      headers: {
-        "Authorization": `Basic ${twilioAuth}`,
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: new URLSearchParams({ Status: "completed" }).toString(),
-    })
+    if (!result.success) {
+      return NextResponse.json({ error: result.error || "Failed to end call" }, { status: 500 })
+    }
 
     await prisma.callLog.update({
       where: { id },

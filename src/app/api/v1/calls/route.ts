@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { getSession, getOrgId } from "@/lib/api-auth"
+import { getVoipProvider } from "@/lib/voip"
+import type { VoipSettings } from "@/lib/voip"
 
-// POST — initiate an outbound call via Twilio
+// POST — initiate an outbound call via configured VoIP provider
 export async function POST(req: NextRequest) {
   const session = await getSession(req)
   const orgId = session?.orgId || await getOrgId(req)
@@ -20,19 +22,29 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "VoIP not configured. Go to Settings → VoIP to set up." }, { status: 400 })
     }
 
-    const settings = voipConfig.settings as any
-    if (!settings?.accountSid || !settings?.authToken || !settings?.twilioNumber) {
-      return NextResponse.json({ error: "VoIP credentials incomplete" }, { status: 400 })
-    }
+    const settings = voipConfig.settings as unknown as VoipSettings
+    const providerName = settings?.provider || "twilio"
+
+    // Ensure provider field is set (legacy configs may not have it)
+    const normalizedSettings: VoipSettings = { ...settings, provider: providerName } as VoipSettings
+    const provider = getVoipProvider(normalizedSettings)
+
+    // Determine fromNumber based on provider
+    const fromNumber = (settings as any).twilioNumber
+      || (settings as any).callerExtension
+      || (settings as any).extension
+      || (settings as any).username
+      || "unknown"
 
     // Create call log entry
     const callLog = await prisma.callLog.create({
       data: {
         organizationId: orgId,
         direction: "outbound",
-        fromNumber: settings.twilioNumber,
+        fromNumber,
         toNumber,
         status: "initiated",
+        provider: providerName,
         contactId: contactId || null,
         companyId: companyId || null,
         dealId: dealId || null,
@@ -41,42 +53,27 @@ export async function POST(req: NextRequest) {
       },
     })
 
-    // Initiate call via Twilio REST API
-    const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${settings.accountSid}/Calls.json`
-    const twilioAuth = Buffer.from(`${settings.accountSid}:${settings.authToken}`).toString("base64")
-
-    const params = new URLSearchParams({
-      To: toNumber,
-      From: settings.twilioNumber,
-      Url: `${process.env.NEXTAUTH_URL}/api/v1/calls/twiml`,
-      StatusCallback: `${process.env.NEXTAUTH_URL}/api/v1/calls/webhook`,
-      StatusCallbackEvent: "initiated ringing answered completed",
-      ...(settings.recordCalls ? { Record: "true" } : {}),
+    // Initiate call via provider adapter
+    const result = await provider.initiateCall({
+      toNumber,
+      fromNumber,
+      twimlUrl: `${process.env.NEXTAUTH_URL}/api/v1/calls/twiml`,
+      callbackUrl: `${process.env.NEXTAUTH_URL}/api/v1/calls/webhook`,
+      record: (settings as any).recordCalls || false,
     })
 
-    const twilioRes = await fetch(twilioUrl, {
-      method: "POST",
-      headers: {
-        "Authorization": `Basic ${twilioAuth}`,
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: params.toString(),
-    })
-
-    const twilioData = await twilioRes.json()
-
-    if (twilioData.sid) {
+    if (result.success && result.callSid) {
       await prisma.callLog.update({
         where: { id: callLog.id },
-        data: { callSid: twilioData.sid },
+        data: { callSid: result.callSid },
       })
-      return NextResponse.json({ success: true, callLogId: callLog.id, callSid: twilioData.sid })
+      return NextResponse.json({ success: true, callLogId: callLog.id, callSid: result.callSid })
     } else {
       await prisma.callLog.update({
         where: { id: callLog.id },
         data: { status: "failed" },
       })
-      return NextResponse.json({ error: twilioData.message || "Failed to initiate call" }, { status: 500 })
+      return NextResponse.json({ error: result.error || "Failed to initiate call" }, { status: 500 })
     }
   } catch (e) {
     console.error("Call initiation error:", e)
