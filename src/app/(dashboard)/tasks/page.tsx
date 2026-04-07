@@ -25,6 +25,7 @@ interface Task {
   assignedTo: string
   relatedType: string | null
   completedAt: string | null
+  createdAt: string
 }
 
 type ViewMode = "list" | "kanban" | "calendar"
@@ -450,6 +451,7 @@ export default function TasksPage() {
         const order: Record<string, number> = { urgent: 0, high: 1, medium: 2, low: 3 }
         return (order[a.priority] ?? 2) - (order[b.priority] ?? 2)
       }
+      case "created_desc": return new Date(b.createdAt || "0").getTime() - new Date(a.createdAt || "0").getTime()
       case "name": return a.title.localeCompare(b.title)
       default: return 0
     }
@@ -642,6 +644,7 @@ export default function TasksPage() {
           <Select value={sortBy} onChange={e => setSortBy(e.target.value)} className="w-[200px]">
             <option value="date_asc">{t("sortDueDateAsc")}</option>
             <option value="date_desc">{t("sortDueDateDesc")}</option>
+            <option value="created_desc">{t("sortCreatedDesc")}</option>
             <option value="priority">{t("sortPriority")}</option>
             <option value="name">{t("sortNameAsc")}</option>
           </Select>

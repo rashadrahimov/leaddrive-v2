@@ -69,8 +69,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       createNotification({
         organizationId: orgId,
         type: "success",
-        title: "Задача выполнена",
-        message: `Задача «${task.title}» завершена`,
+        title: "Task Completed",
+        message: `Task completed: "${task.title}"`,
         entityType: "task",
         entityId: id,
       }).catch(() => {})
