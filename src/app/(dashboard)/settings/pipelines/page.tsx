@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { MotionPage, MotionItem } from "@/components/ui/motion"
 import {
   Settings2, Plus, Trash2, Shield, ChevronRight, X, Loader2, CheckCircle2,
+  Pencil, GripVertical, ArrowUp, ArrowDown, AlertCircle, Save,
 } from "lucide-react"
 
 interface PipelineStage {
@@ -46,6 +47,12 @@ const RULE_TYPE_KEYS = [
   { value: "task_completed", key: "ruleTaskCompleted" },
 ]
 
+const STAGE_COLORS = [
+  "#6366f1", "#3b82f6", "#06b6d4", "#14b8a6", "#22c55e",
+  "#84cc16", "#eab308", "#f59e0b", "#f97316", "#ef4444",
+  "#ec4899", "#a855f7", "#8b5cf6", "#64748b",
+]
+
 interface Pipeline {
   id: string
   name: string
@@ -71,6 +78,13 @@ export default function PipelinesSettingsPage() {
   const [newPipelineName, setNewPipelineName] = useState("")
   const [creatingPipeline, setCreatingPipeline] = useState(false)
 
+  // Toast-style error/success
+  const [toast, setToast] = useState<{ type: "error" | "success"; message: string } | null>(null)
+  const showToast = (type: "error" | "success", message: string) => {
+    setToast({ type, message })
+    setTimeout(() => setToast(null), 4000)
+  }
+
   // Add rule form
   const [addingFor, setAddingFor] = useState<string | null>(null)
   const [newField, setNewField] = useState("valueAmount")
@@ -78,6 +92,22 @@ export default function PipelinesSettingsPage() {
   const [newRuleValue, setNewRuleValue] = useState("")
   const [newErrorMsg, setNewErrorMsg] = useState("")
   const [saving, setSaving] = useState(false)
+
+  // Inline stage editing
+  const [editingStageId, setEditingStageId] = useState<string | null>(null)
+  const [editName, setEditName] = useState("")
+  const [editColor, setEditColor] = useState("")
+  const [editProbability, setEditProbability] = useState("")
+  const [editIsWon, setEditIsWon] = useState(false)
+  const [editIsLost, setEditIsLost] = useState(false)
+  const [savingStage, setSavingStage] = useState(false)
+
+  // Add stage form
+  const [showAddStage, setShowAddStage] = useState(false)
+  const [newStageName, setNewStageName] = useState("")
+  const [newStageColor, setNewStageColor] = useState("#6366f1")
+  const [newStageProbability, setNewStageProbability] = useState("50")
+  const [creatingSt, setCreatingSt] = useState(false)
 
   const headers: Record<string, string> = orgId ? { "x-organization-id": orgId } : {} as Record<string, string>
 
@@ -87,7 +117,8 @@ export default function PipelinesSettingsPage() {
       const json = await res.json()
       if (json.success && json.data.length > 0) {
         setPipelines(json.data)
-        const def = json.data.find((p: any) => p.isDefault) || json.data[0]
+        const current = json.data.find((p: any) => p.id === selectedPipelineId)
+        const def = current || json.data.find((p: any) => p.isDefault) || json.data[0]
         setSelectedPipelineId(def.id)
         setStages(def.stages || [])
       }
@@ -100,6 +131,8 @@ export default function PipelinesSettingsPage() {
     const p = pipelines.find(p => p.id === pipelineId)
     if (p) setStages(p.stages || [])
     setExpandedStage(null)
+    setEditingStageId(null)
+    setShowAddStage(false)
   }
 
   const createPipeline = async () => {
@@ -124,22 +157,24 @@ export default function PipelinesSettingsPage() {
       const json = await res.json()
       if (json.success) {
         setNewPipelineName("")
+        showToast("success", t("pipelineCreated"))
         fetchPipelines()
+      } else {
+        showToast("error", json.error || "Error")
       }
-    } catch {} finally { setCreatingPipeline(false) }
+    } catch { showToast("error", "Network error") }
+    finally { setCreatingPipeline(false) }
   }
 
   const deletePipeline = async (pipelineId: string) => {
     if (!confirm(t("deleteConfirm"))) return
     try {
-      const res = await fetch(`/api/v1/pipelines/${pipelineId}`, {
-        method: "DELETE",
-        headers,
-      })
+      const res = await fetch(`/api/v1/pipelines/${pipelineId}`, { method: "DELETE", headers })
       const json = await res.json()
-      if (!json.success) { alert(json.error); return }
+      if (!json.success) { showToast("error", json.error); return }
+      showToast("success", t("pipelineDeleted"))
       fetchPipelines()
-    } catch {}
+    } catch { showToast("error", "Network error") }
   }
 
   const setDefault = async (pipelineId: string) => {
@@ -153,10 +188,109 @@ export default function PipelinesSettingsPage() {
     } catch {}
   }
 
-  const fetchStages = async () => {
-    // Deprecated — use fetchPipelines instead
+  // ── Stage CRUD ──
+
+  const startEditStage = (stage: PipelineStage) => {
+    setEditingStageId(stage.id)
+    setEditName(stage.displayName)
+    setEditColor(stage.color)
+    setEditProbability(String(stage.probability))
+    setEditIsWon(stage.isWon)
+    setEditIsLost(stage.isLost)
+  }
+
+  const saveStage = async (stageId: string) => {
+    setSavingStage(true)
+    try {
+      const res = await fetch(`/api/v1/pipeline-stages/${stageId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", ...headers },
+        body: JSON.stringify({
+          displayName: editName.trim(),
+          name: editName.trim().toUpperCase().replace(/\s+/g, "_"),
+          color: editColor,
+          probability: Number(editProbability) || 0,
+          isWon: editIsWon,
+          isLost: editIsLost,
+        }),
+      })
+      const json = await res.json()
+      if (json.success) {
+        setEditingStageId(null)
+        showToast("success", t("stageSaved"))
+        fetchPipelines()
+      } else {
+        showToast("error", json.error || "Error")
+      }
+    } catch { showToast("error", "Network error") }
+    finally { setSavingStage(false) }
+  }
+
+  const deleteStage = async (stageId: string) => {
+    if (!confirm(t("deleteStageConfirm"))) return
+    try {
+      const res = await fetch(`/api/v1/pipeline-stages/${stageId}`, { method: "DELETE", headers })
+      const json = await res.json()
+      if (!json.success) { showToast("error", json.error); return }
+      showToast("success", t("stageDeleted"))
+      fetchPipelines()
+    } catch { showToast("error", "Network error") }
+  }
+
+  const moveStage = async (stageId: string, direction: "up" | "down") => {
+    const idx = stages.findIndex(s => s.id === stageId)
+    if (idx < 0) return
+    const swapIdx = direction === "up" ? idx - 1 : idx + 1
+    if (swapIdx < 0 || swapIdx >= stages.length) return
+
+    // Swap sort orders
+    await Promise.all([
+      fetch(`/api/v1/pipeline-stages/${stages[idx].id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", ...headers },
+        body: JSON.stringify({ sortOrder: stages[swapIdx].sortOrder }),
+      }),
+      fetch(`/api/v1/pipeline-stages/${stages[swapIdx].id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", ...headers },
+        body: JSON.stringify({ sortOrder: stages[idx].sortOrder }),
+      }),
+    ])
     fetchPipelines()
   }
+
+  const addStage = async () => {
+    if (!newStageName.trim()) return
+    setCreatingSt(true)
+    try {
+      const maxOrder = stages.length > 0 ? Math.max(...stages.map(s => s.sortOrder)) : 0
+      const res = await fetch("/api/v1/pipeline-stages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...headers },
+        body: JSON.stringify({
+          pipelineId: selectedPipelineId,
+          name: newStageName.trim().toUpperCase().replace(/\s+/g, "_"),
+          displayName: newStageName.trim(),
+          color: newStageColor,
+          probability: Number(newStageProbability) || 0,
+          sortOrder: maxOrder + 1,
+        }),
+      })
+      const json = await res.json()
+      if (json.success) {
+        setShowAddStage(false)
+        setNewStageName("")
+        setNewStageProbability("50")
+        showToast("success", t("stageCreated"))
+        fetchPipelines()
+      } else {
+        showToast("error", json.error || "Error")
+      }
+    } catch { showToast("error", "Network error") }
+    finally { setCreatingSt(false) }
+  }
+
+  // ── Rules ──
 
   const fetchRules = async (stageId: string) => {
     setRulesLoading(stageId)
@@ -223,6 +357,26 @@ export default function PipelinesSettingsPage() {
 
   return (
     <MotionPage className="space-y-6 max-w-3xl">
+      {/* Toast */}
+      <AnimatePresence>
+        {toast && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className={`fixed top-4 right-4 z-50 flex items-center gap-2 px-4 py-3 rounded-xl shadow-lg text-sm font-medium ${
+              toast.type === "error"
+                ? "bg-red-50 text-red-700 border border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800"
+                : "bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800"
+            }`}
+          >
+            {toast.type === "error" ? <AlertCircle className="h-4 w-4" /> : <CheckCircle2 className="h-4 w-4" />}
+            {toast.message}
+            <button onClick={() => setToast(null)} className="ml-2 opacity-60 hover:opacity-100"><X className="h-3.5 w-3.5" /></button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <div>
         <h1 className="text-lg font-bold tracking-tight flex items-center gap-2">
           <Settings2 className="h-5 w-5 text-muted-foreground" />
@@ -289,9 +443,11 @@ export default function PipelinesSettingsPage() {
         </div>
       </div>
 
+      {/* Stages */}
       <div className="space-y-2">
         {stages.map((stage, idx) => {
           const isExpanded = expandedStage === stage.id
+          const isEditing = editingStageId === stage.id
           const stageRules = rules[stage.id] || []
           const isLoadingRules = rulesLoading === stage.id
 
@@ -299,29 +455,129 @@ export default function PipelinesSettingsPage() {
             <MotionItem key={stage.id}>
               <div className="rounded-xl border bg-card overflow-hidden">
                 {/* Stage header */}
-                <button
-                  onClick={() => toggleStage(stage.id)}
-                  className="w-full flex items-center gap-3 p-4 hover:bg-muted/30 transition-colors text-left"
-                >
-                  <div className="h-3 w-3 rounded-full flex-shrink-0" style={{ backgroundColor: stage.color }} />
-                  <div className="flex-1 min-w-0">
-                    <span className="text-sm font-semibold">{stage.displayName}</span>
-                    <span className="text-xs text-muted-foreground ml-2">({stage.name})</span>
+                {isEditing ? (
+                  /* ── Inline Edit Mode ── */
+                  <div className="p-4 space-y-3 bg-muted/20">
+                    <div className="flex items-center gap-2">
+                      <Pencil className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+                      <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t("editStage")}</span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-[10px] font-medium text-muted-foreground mb-1 block">{t("stageName")}</label>
+                        <input
+                          value={editName}
+                          onChange={e => setEditName(e.target.value)}
+                          className="w-full h-8 rounded-lg border bg-background px-3 text-xs"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-medium text-muted-foreground mb-1 block">{t("probability")} (%)</label>
+                        <input
+                          type="number" min="0" max="100"
+                          value={editProbability}
+                          onChange={e => setEditProbability(e.target.value)}
+                          className="w-full h-8 rounded-lg border bg-background px-3 text-xs"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-medium text-muted-foreground mb-1.5 block">{t("color")}</label>
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        {STAGE_COLORS.map(c => (
+                          <button
+                            key={c}
+                            onClick={() => setEditColor(c)}
+                            className={`h-6 w-6 rounded-full border-2 transition-all ${editColor === c ? "border-foreground scale-110" : "border-transparent"}`}
+                            style={{ backgroundColor: c }}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <label className="flex items-center gap-1.5 text-xs">
+                        <input type="checkbox" checked={editIsWon} onChange={e => { setEditIsWon(e.target.checked); if (e.target.checked) setEditIsLost(false) }} className="rounded" />
+                        {t("isWon")}
+                      </label>
+                      <label className="flex items-center gap-1.5 text-xs">
+                        <input type="checkbox" checked={editIsLost} onChange={e => { setEditIsLost(e.target.checked); if (e.target.checked) setEditIsWon(false) }} className="rounded" />
+                        {t("isLost")}
+                      </label>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button size="sm" className="h-7 text-xs gap-1" onClick={() => saveStage(stage.id)} disabled={savingStage || !editName.trim()}>
+                        {savingStage ? <Loader2 className="h-3 w-3 animate-spin" /> : <Save className="h-3 w-3" />}
+                        {tc("save")}
+                      </Button>
+                      <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setEditingStageId(null)}>
+                        {tc("cancel")}
+                      </Button>
+                      <div className="flex-1" />
+                      <Button
+                        size="sm" variant="ghost"
+                        className="h-7 text-xs text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/20"
+                        onClick={() => deleteStage(stage.id)}
+                      >
+                        <Trash2 className="h-3 w-3 mr-1" /> {t("deleteStage")}
+                      </Button>
+                    </div>
                   </div>
-                  <Badge variant="outline" className="text-[10px]">{stage.probability}%</Badge>
-                  {stageRules.length > 0 && (
-                    <Badge className="text-[10px] bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400">
-                      <Shield className="h-3 w-3 mr-0.5" /> {stageRules.length} {t("rules")}
-                    </Badge>
-                  )}
-                  <motion.div animate={{ rotate: isExpanded ? 90 : 0 }} transition={{ duration: 0.2 }}>
-                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                  </motion.div>
-                </button>
+                ) : (
+                  /* ── Normal View ── */
+                  <div className="flex items-center">
+                    <button
+                      onClick={() => toggleStage(stage.id)}
+                      className="flex-1 flex items-center gap-3 p-4 hover:bg-muted/30 transition-colors text-left"
+                    >
+                      <div className="h-3 w-3 rounded-full flex-shrink-0" style={{ backgroundColor: stage.color }} />
+                      <div className="flex-1 min-w-0">
+                        <span className="text-sm font-semibold">{stage.displayName}</span>
+                        <span className="text-xs text-muted-foreground ml-2">({stage.name})</span>
+                        {stage.isWon && <Badge className="ml-2 text-[9px] h-4 bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">WON</Badge>}
+                        {stage.isLost && <Badge className="ml-2 text-[9px] h-4 bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">LOST</Badge>}
+                      </div>
+                      <Badge variant="outline" className="text-[10px]">{stage.probability}%</Badge>
+                      {stageRules.length > 0 && (
+                        <Badge className="text-[10px] bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400">
+                          <Shield className="h-3 w-3 mr-0.5" /> {stageRules.length} {t("rules")}
+                        </Badge>
+                      )}
+                      <motion.div animate={{ rotate: isExpanded ? 90 : 0 }} transition={{ duration: 0.2 }}>
+                        <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                      </motion.div>
+                    </button>
+                    {/* Stage action buttons */}
+                    <div className="flex items-center gap-0.5 pr-2">
+                      <button
+                        onClick={() => moveStage(stage.id, "up")}
+                        disabled={idx === 0}
+                        className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
+                        title={t("moveUp")}
+                      >
+                        <ArrowUp className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        onClick={() => moveStage(stage.id, "down")}
+                        disabled={idx === stages.length - 1}
+                        className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
+                        title={t("moveDown")}
+                      >
+                        <ArrowDown className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        onClick={() => startEditStage(stage)}
+                        className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                        title={t("editStage")}
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                )}
 
                 {/* Expanded: rules list */}
                 <AnimatePresence initial={false}>
-                  {isExpanded && (
+                  {isExpanded && !isEditing && (
                     <motion.div
                       initial={{ height: 0, opacity: 0 }}
                       animate={{ height: "auto", opacity: 1 }}
@@ -421,6 +677,64 @@ export default function PipelinesSettingsPage() {
             </MotionItem>
           )
         })}
+
+        {/* Add new stage */}
+        {showAddStage ? (
+          <MotionItem>
+            <div className="rounded-xl border bg-card p-4 space-y-3">
+              <div className="flex items-center gap-2">
+                <Plus className="h-3.5 w-3.5 text-muted-foreground" />
+                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t("newStage")}</span>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[10px] font-medium text-muted-foreground mb-1 block">{t("stageName")}</label>
+                  <input
+                    value={newStageName}
+                    onChange={e => setNewStageName(e.target.value)}
+                    placeholder={t("stageNamePlaceholder")}
+                    className="w-full h-8 rounded-lg border bg-background px-3 text-xs"
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] font-medium text-muted-foreground mb-1 block">{t("probability")} (%)</label>
+                  <input
+                    type="number" min="0" max="100"
+                    value={newStageProbability}
+                    onChange={e => setNewStageProbability(e.target.value)}
+                    className="w-full h-8 rounded-lg border bg-background px-3 text-xs"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="text-[10px] font-medium text-muted-foreground mb-1.5 block">{t("color")}</label>
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  {STAGE_COLORS.map(c => (
+                    <button
+                      key={c}
+                      onClick={() => setNewStageColor(c)}
+                      className={`h-6 w-6 rounded-full border-2 transition-all ${newStageColor === c ? "border-foreground scale-110" : "border-transparent"}`}
+                      style={{ backgroundColor: c }}
+                    />
+                  ))}
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button size="sm" className="h-7 text-xs gap-1" onClick={addStage} disabled={creatingSt || !newStageName.trim()}>
+                  {creatingSt ? <Loader2 className="h-3 w-3 animate-spin" /> : <Plus className="h-3 w-3" />}
+                  {t("addStage")}
+                </Button>
+                <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setShowAddStage(false)}>
+                  {tc("cancel")}
+                </Button>
+              </div>
+            </div>
+          </MotionItem>
+        ) : (
+          <Button variant="outline" className="w-full gap-1.5" onClick={() => setShowAddStage(true)}>
+            <Plus className="h-4 w-4" /> {t("addStage")}
+          </Button>
+        )}
       </div>
     </MotionPage>
   )
