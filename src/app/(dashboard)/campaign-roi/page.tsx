@@ -108,13 +108,13 @@ export default function CampaignROIPage() {
         </div>
         <div className="flex items-center gap-1.5">
           <Eye className="h-4 w-4 text-muted-foreground" />
-          <span className="text-muted-foreground">{tc("openRate")}:</span>
+          <span className="text-muted-foreground">{t("openRate")}:</span>
           <span className="font-bold text-primary">{totalSent > 0 ? (totalOpened / totalSent * 100).toFixed(1) : 0}%</span>
           <InfoHint text={tr("hintOpenRate")} size={12} />
         </div>
         <div className="flex items-center gap-1.5">
           <MousePointer className="h-4 w-4 text-muted-foreground" />
-          <span className="text-muted-foreground">{tc("clickRate")}:</span>
+          <span className="text-muted-foreground">{t("clickRate")}:</span>
           <span className="font-bold text-primary">{totalSent > 0 ? (totalClicked / totalSent * 100).toFixed(1) : 0}%</span>
           <InfoHint text={tr("hintClickRate")} size={12} />
         </div>
@@ -124,7 +124,7 @@ export default function CampaignROIPage() {
       <div className="space-y-3">
         {campaigns.length === 0 ? (
           <div className="text-center py-12 text-muted-foreground">
-            Нет кампаний для анализа
+            {tr("noCampaigns")}
           </div>
         ) : (
           campaigns.map(campaign => (
@@ -133,11 +133,11 @@ export default function CampaignROIPage() {
                 <div className="flex-1">
                   <h3 className="font-semibold">{campaign.name}</h3>
                   <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
-                    <span>Доход: <strong className={cn("text-foreground", campaign.revenue > 0 && "text-green-600")}>${campaign.revenue.toLocaleString()}</strong></span>
-                    <span>Стоимость: <strong className="text-foreground">${(campaign.budget || 0).toLocaleString()}</strong></span>
-                    <span>Сделки: <strong className="text-foreground">{campaign.totalDeals}</strong></span>
-                    <span>Выиграно: <strong className={cn("text-foreground", campaign.wonDeals > 0 && "text-green-600")}>{campaign.wonDeals}</strong></span>
-                    <span>Лиды: <strong className="text-foreground">{campaign.totalRecipients}</strong></span>
+                    <span>{tc("revenue")}: <strong className={cn("text-foreground", campaign.revenue > 0 && "text-green-600")}>${campaign.revenue.toLocaleString()}</strong></span>
+                    <span>{tc("cost")}: <strong className="text-foreground">${(campaign.budget || 0).toLocaleString()}</strong></span>
+                    <span>{tr("deals")}: <strong className="text-foreground">{campaign.totalDeals}</strong></span>
+                    <span>{tr("wonDeals")}: <strong className={cn("text-foreground", campaign.wonDeals > 0 && "text-green-600")}>{campaign.wonDeals}</strong></span>
+                    <span>{tr("leads")}: <strong className="text-foreground">{campaign.totalRecipients}</strong></span>
                   </div>
                 </div>
                 <div className={cn(

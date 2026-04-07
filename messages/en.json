@@ -2632,7 +2632,18 @@
     "hintTotalSegments": "Total number of defined segments",
     "hintDynamic": "Segments that auto-update based on matching criteria",
     "hintStatic": "Manually curated segments with fixed contact lists",
-    "hintContactCount": "Total contacts across all segments"
+    "hintContactCount": "Total contacts across all segments",
+    "filteredOf": "{filtered} of {total}",
+    "percentOfBase": "{percentage}% of base ({total})",
+    "condEngagementMin": "Engagement >=",
+    "condEngagementMax": "Engagement <=",
+    "condEngagementTier": "Engagement Tier",
+    "condActiveAfter": "Active After",
+    "condActiveBefore": "Active Before",
+    "condInactiveDays": "Inactive Days",
+    "condHasEvent": "Has Event",
+    "condOpenedCampaign": "Opened Campaign",
+    "condClickedCampaign": "Clicked Campaign"
   },
   "notifications": {
     "title": "Notifications",
@@ -3603,7 +3614,11 @@
     "hintRoi": "Return on Investment = (Revenue - Cost) / Cost × 100%",
     "hintSendRate": "Percentage of messages successfully delivered to recipients",
     "hintOpenRate": "Percentage of delivered messages that were opened",
-    "hintClickRate": "Percentage of opened messages where a link was clicked"
+    "hintClickRate": "Percentage of opened messages where a link was clicked",
+    "noCampaigns": "No campaigns to analyze",
+    "deals": "Deals",
+    "wonDeals": "Won",
+    "leads": "Leads"
   },
   "finance": {
     "ba": {

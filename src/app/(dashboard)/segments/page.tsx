@@ -52,15 +52,15 @@ export default function SegmentsPage() {
     hasEmail: t("condHasEmail"),
     hasPhone: t("condHasPhone"),
     // Behavioral conditions
-    engagementScoreMin: "Engagement >=",
-    engagementScoreMax: "Engagement <=",
-    engagementTier: "Engagement Tier",
-    lastActivityAfter: "Active After",
-    lastActivityBefore: "Active Before",
-    inactiveDays: "Inactive Days",
-    hasEventType: "Has Event",
-    openedCampaign: "Opened Campaign",
-    clickedCampaign: "Clicked Campaign",
+    engagementScoreMin: t("condEngagementMin"),
+    engagementScoreMax: t("condEngagementMax"),
+    engagementTier: t("condEngagementTier"),
+    lastActivityAfter: t("condActiveAfter"),
+    lastActivityBefore: t("condActiveBefore"),
+    inactiveDays: t("condInactiveDays"),
+    hasEventType: t("condHasEvent"),
+    openedCampaign: t("condOpenedCampaign"),
+    clickedCampaign: t("condClickedCampaign"),
   }
 
   const [segments, setSegments] = useState<Segment[]>([])
@@ -207,7 +207,7 @@ export default function SegmentsPage() {
               className="pl-9"
             />
           </div>
-          <span className="text-sm text-muted-foreground">{filtered.length} из {segments.length}</span>
+          <span className="text-sm text-muted-foreground">{t("filteredOf", { filtered: filtered.length, total: segments.length })}</span>
         </div>
       )}
 
@@ -295,7 +295,7 @@ export default function SegmentsPage() {
                     <div className="flex items-baseline justify-between mb-1">
                       <span className="text-lg font-bold">{segment.contactCount.toLocaleString()}</span>
                       <span className="text-xs text-muted-foreground">
-                        {percentage}% от базы ({totalContacts.toLocaleString()})
+                        {t("percentOfBase", { percentage, total: totalContacts.toLocaleString() })}
                       </span>
                     </div>
                     <div className="h-1.5 bg-muted rounded-full overflow-hidden">
@@ -346,7 +346,7 @@ export default function SegmentsPage() {
         open={!!deleteId}
         onOpenChange={(open) => { if (!open) setDeleteId(null) }}
         onConfirm={handleDelete}
-        title="Удалить сегмент"
+        title={t("deleteSegment")}
         itemName={deleteName}
       />
     </div>

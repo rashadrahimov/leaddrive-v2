@@ -2625,7 +2625,18 @@
     "hintTotalSegments": "Müəyyən edilmiş ümumi seqment sayı",
     "hintDynamic": "Meyarlara uyğun avtomatik yenilənən seqmentlər",
     "hintStatic": "Əl ilə tərtib edilmiş sabit əlaqə siyahılı seqmentlər",
-    "hintContactCount": "Bütün seqmentlərdəki ümumi əlaqə sayı"
+    "hintContactCount": "Bütün seqmentlərdəki ümumi əlaqə sayı",
+    "filteredOf": "{filtered} / {total}",
+    "percentOfBase": "{percentage}% bazadan ({total})",
+    "condEngagementMin": "Əlaqə >=",
+    "condEngagementMax": "Əlaqə <=",
+    "condEngagementTier": "Əlaqə Səviyyəsi",
+    "condActiveAfter": "Sonra aktiv",
+    "condActiveBefore": "Əvvəl aktiv",
+    "condInactiveDays": "Qeyri-aktiv günlər",
+    "condHasEvent": "Tədbir var",
+    "condOpenedCampaign": "Kampaniya açıb",
+    "condClickedCampaign": "Kampaniya kliklənib"
   },
   "notifications": {
     "title": "Bildirişlər",
@@ -3596,7 +3607,11 @@
     "hintRoi": "İnvestisiya gəliri = (Gəlir - Xərc) / Xərc × 100%",
     "hintSendRate": "Alıcılara uğurla çatdırılmış mesajların faizi",
     "hintOpenRate": "Çatdırılmış mesajların açılma faizi",
-    "hintClickRate": "Açılmış mesajlarda linkə klik faizi"
+    "hintClickRate": "Açılmış mesajlarda linkə klik faizi",
+    "noCampaigns": "Təhlil üçün kampaniya yoxdur",
+    "deals": "Sövdələşmələr",
+    "wonDeals": "Qazanılmış",
+    "leads": "Lidlər"
   },
   "finance": {
     "ba": {

@@ -2632,7 +2632,18 @@
     "hintTotalSegments": "Общее количество определённых сегментов",
     "hintDynamic": "Сегменты, автоматически обновляющиеся по критериям",
     "hintStatic": "Вручную составленные сегменты с фиксированным списком контактов",
-    "hintContactCount": "Общее число контактов во всех сегментах"
+    "hintContactCount": "Общее число контактов во всех сегментах",
+    "filteredOf": "{filtered} из {total}",
+    "percentOfBase": "{percentage}% от базы ({total})",
+    "condEngagementMin": "Вовлечённость >=",
+    "condEngagementMax": "Вовлечённость <=",
+    "condEngagementTier": "Уровень вовлечённости",
+    "condActiveAfter": "Активен после",
+    "condActiveBefore": "Активен до",
+    "condInactiveDays": "Дней неактивности",
+    "condHasEvent": "Есть событие",
+    "condOpenedCampaign": "Открыл кампанию",
+    "condClickedCampaign": "Кликнул кампанию"
   },
   "notifications": {
     "title": "Уведомления",
@@ -3603,7 +3614,11 @@
     "hintRoi": "Возврат инвестиций = (Выручка - Затраты) / Затраты × 100%",
     "hintSendRate": "Процент сообщений, успешно доставленных получателям",
     "hintOpenRate": "Процент доставленных сообщений, которые были открыты",
-    "hintClickRate": "Процент открытых сообщений, в которых кликнули ссылку"
+    "hintClickRate": "Процент открытых сообщений, в которых кликнули ссылку",
+    "noCampaigns": "Нет кампаний для анализа",
+    "deals": "Сделки",
+    "wonDeals": "Выиграно",
+    "leads": "Лиды"
   },
   "finance": {
     "ba": {
