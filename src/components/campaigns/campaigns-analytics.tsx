@@ -1,6 +1,7 @@
 "use client"
 
 import { useMemo } from "react"
+import { useTranslations } from "next-intl"
 import { cn } from "@/lib/utils"
 import { MiniLineChart, MiniDonut } from "@/components/charts/mini-charts"
 import {
@@ -120,6 +121,8 @@ function LegendDot({ color, label }: { color: string; label: string }) {
 // ── Main Component ──────────────────────────────────────────────────
 
 export function CampaignsAnalytics({ campaigns }: CampaignsAnalyticsProps) {
+  const t = useTranslations("campaigns")
+
   const stats = useMemo(() => {
     const totalSent = campaigns.reduce((s, c) => s + c.totalSent, 0)
     const totalOpened = campaigns.reduce((s, c) => s + c.totalOpened, 0)
@@ -131,8 +134,7 @@ export function CampaignsAnalytics({ campaigns }: CampaignsAnalyticsProps) {
     const clickRate = totalSent > 0 ? ((totalClicked / totalSent) * 100).toFixed(1) : "0"
     const bounceRate = totalSent > 0 ? ((bounceCount / totalSent) * 100).toFixed(1) : "0"
 
-    // Estimated ROI based on budget & engagement
-    const estimatedRevenue = totalClicked * 12 // rough ₼12 per click value
+    const estimatedRevenue = totalClicked * 12
     const roi = totalBudget > 0 ? (((estimatedRevenue - totalBudget) / totalBudget) * 100).toFixed(0) : "0"
 
     return {
@@ -149,7 +151,6 @@ export function CampaignsAnalytics({ campaigns }: CampaignsAnalyticsProps) {
     }
   }, [campaigns])
 
-  // Monthly trend data (last 6 months, derived from campaigns by sentAt/createdAt)
   const monthlyTrend = useMemo(() => {
     const now = new Date()
     const months: { sent: number; opened: number; clicked: number; label: string }[] = []
@@ -171,7 +172,6 @@ export function CampaignsAnalytics({ campaigns }: CampaignsAnalyticsProps) {
     return months
   }, [campaigns])
 
-  // Top campaigns sorted by totalSent
   const topCampaigns = useMemo(() => {
     return [...campaigns]
       .filter((c) => c.totalSent > 0)
@@ -179,7 +179,6 @@ export function CampaignsAnalytics({ campaigns }: CampaignsAnalyticsProps) {
       .slice(0, 3)
   }, [campaigns])
 
-  // Segment mock stats derived from campaign data
   const segmentStats = useMemo(() => {
     const types = new Set(campaigns.map((c) => c.type))
     const statuses = new Set(campaigns.map((c) => c.status))
@@ -187,40 +186,33 @@ export function CampaignsAnalytics({ campaigns }: CampaignsAnalyticsProps) {
     const dynamicCount = Math.ceil(segmentCount * 0.6)
     const contactCount = stats.totalRecipients
     const topSegments = [
-      { name: "Aktiv müştərilər", count: Math.round(contactCount * 0.45) },
-      { name: "Yeni qeydiyyat", count: Math.round(contactCount * 0.3) },
-      { name: "VIP müştərilər", count: Math.round(contactCount * 0.15) },
+      { nameKey: "segActiveClients" as const, count: Math.round(contactCount * 0.45) },
+      { nameKey: "segNewRegistrations" as const, count: Math.round(contactCount * 0.3) },
+      { nameKey: "segVipClients" as const, count: Math.round(contactCount * 0.15) },
     ]
     return { total: segmentCount, dynamic: dynamicCount, contacts: contactCount, topSegments }
   }, [campaigns, stats.totalRecipients])
 
-  // Automation mock stats
   const automationStats = useMemo(() => {
-    const sentCampaigns = campaigns.filter((c) => c.status === "sent" || c.status === "sending")
     const activeCount = Math.max(Math.ceil(campaigns.length * 0.4), 1)
     const entryCount = stats.totalRecipients
     const conversionRate = stats.totalSent > 0 ? ((stats.totalClicked / stats.totalSent) * 100).toFixed(1) : "0"
     const topAutomations = [
-      { name: "Xoş gəldiniz seriyası", status: "active" as const, conversions: Math.round(stats.totalClicked * 0.4) },
-      { name: "Tərk edilmiş səbət", status: "active" as const, conversions: Math.round(stats.totalClicked * 0.35) },
-      { name: "Yenidən cəlb etmə", status: "paused" as const, conversions: Math.round(stats.totalClicked * 0.15) },
+      { nameKey: "autoWelcome" as const, status: "active" as const, conversions: Math.round(stats.totalClicked * 0.4) },
+      { nameKey: "autoAbandoned" as const, status: "active" as const, conversions: Math.round(stats.totalClicked * 0.35) },
+      { nameKey: "autoReengagement" as const, status: "paused" as const, conversions: Math.round(stats.totalClicked * 0.15) },
     ]
     return { active: activeCount, entry: entryCount, conversionRate, topAutomations }
   }, [campaigns, stats])
 
-  // Template mock stats
   const templateStats = useMemo(() => {
-    const types = campaigns.reduce<Record<string, number>>((acc, c) => {
-      acc[c.type] = (acc[c.type] || 0) + 1
-      return acc
-    }, {})
     const totalTemplates = Math.max(campaigns.length, 5)
     const activeTemplates = Math.ceil(totalTemplates * 0.7)
     const donutSegments = [
       { pct: 55, color: "#8b5cf6", label: "Email" },
       { pct: 25, color: "#06b6d4", label: "SMS" },
       { pct: 12, color: "#f59e0b", label: "Push" },
-      { pct: 8, color: "#10b981", label: "Digər" },
+      { pct: 8, color: "#10b981", labelKey: "tplOther" as const },
     ]
     return { total: totalTemplates, active: activeTemplates, donutSegments }
   }, [campaigns])
@@ -232,31 +224,31 @@ export function CampaignsAnalytics({ campaigns }: CampaignsAnalyticsProps) {
         <KpiBox
           icon={<Send className="w-5 h-5" />}
           value={fmt(stats.totalSent)}
-          label="Göndərilib"
+          label={t("kpiSent")}
           iconColor="bg-blue-500/10 text-blue-500"
         />
         <KpiBox
           icon={<MailOpen className="w-5 h-5" />}
           value={stats.openRate + "%"}
-          label="Açılma"
+          label={t("kpiOpenRate")}
           iconColor="bg-emerald-500/10 text-emerald-500"
         />
         <KpiBox
           icon={<MousePointerClick className="w-5 h-5" />}
           value={stats.clickRate + "%"}
-          label="Klik"
+          label={t("kpiClickRate")}
           iconColor="bg-violet-500/10 text-violet-500"
         />
         <KpiBox
           icon={<AlertTriangle className="w-5 h-5" />}
           value={stats.bounceRate + "%"}
-          label="Bounce"
+          label={t("kpiBounce")}
           iconColor="bg-amber-500/10 text-amber-500"
         />
         <KpiBox
           icon={<Wallet className="w-5 h-5" />}
           value={fmt(stats.totalBudget) + " \u20bc"}
-          label="Büdcə"
+          label={t("kpiBudget")}
           iconColor="bg-cyan-500/10 text-cyan-500"
         />
         <KpiBox
@@ -271,18 +263,17 @@ export function CampaignsAnalytics({ campaigns }: CampaignsAnalyticsProps) {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         {/* Monthly sending trend */}
         <div className="bg-card rounded-xl border p-5 space-y-4">
-          <h3 className="text-sm font-semibold text-foreground">Aylıq göndərmə trendi</h3>
+          <h3 className="text-sm font-semibold text-foreground">{t("monthlyTrend")}</h3>
           <div className="space-y-2">
             <MiniLineChart data={monthlyTrend.map((m) => m.sent)} color="stroke-blue-400" />
             <MiniLineChart data={monthlyTrend.map((m) => m.opened)} color="stroke-emerald-400" />
             <MiniLineChart data={monthlyTrend.map((m) => m.clicked)} color="stroke-violet-400" />
           </div>
           <div className="flex items-center gap-4 flex-wrap">
-            <LegendDot color="bg-blue-400" label="Göndərilib" />
-            <LegendDot color="bg-emerald-400" label="Açılıb" />
-            <LegendDot color="bg-violet-400" label="Kliklənib" />
+            <LegendDot color="bg-blue-400" label={t("legendSent")} />
+            <LegendDot color="bg-emerald-400" label={t("legendOpened")} />
+            <LegendDot color="bg-violet-400" label={t("legendClicked")} />
           </div>
-          {/* Month labels */}
           <div className="flex justify-between text-[10px] text-muted-foreground px-0.5">
             {monthlyTrend.map((m, i) => (
               <span key={i}>{m.label}</span>
@@ -292,31 +283,31 @@ export function CampaignsAnalytics({ campaigns }: CampaignsAnalyticsProps) {
 
         {/* Delivery funnel */}
         <div className="bg-card rounded-xl border p-5 space-y-4">
-          <h3 className="text-sm font-semibold text-foreground">Çatdırılma hunisi</h3>
+          <h3 className="text-sm font-semibold text-foreground">{t("deliveryFunnel")}</h3>
           <div className="space-y-3">
             <HorizontalBar
-              label="Göndərilib"
+              label={t("funnelSent")}
               value={stats.totalSent}
               pctValue="100%"
               maxValue={stats.totalSent}
               color="bg-blue-500"
             />
             <HorizontalBar
-              label="Açılıb"
+              label={t("funnelOpened")}
               value={stats.totalOpened}
               pctValue={pct(stats.totalOpened, stats.totalSent)}
               maxValue={stats.totalSent}
               color="bg-emerald-500"
             />
             <HorizontalBar
-              label="Kliklənib"
+              label={t("funnelClicked")}
               value={stats.totalClicked}
               pctValue={pct(stats.totalClicked, stats.totalSent)}
               maxValue={stats.totalSent}
               color="bg-violet-500"
             />
             <HorizontalBar
-              label="Bounce"
+              label={t("kpiBounce")}
               value={stats.bounceCount}
               pctValue={pct(stats.bounceCount, stats.totalSent)}
               maxValue={stats.totalSent}
@@ -327,9 +318,9 @@ export function CampaignsAnalytics({ campaigns }: CampaignsAnalyticsProps) {
 
         {/* Top campaigns */}
         <div className="bg-card rounded-xl border p-5 space-y-4">
-          <h3 className="text-sm font-semibold text-foreground">Ən yaxşı kampaniyalar</h3>
+          <h3 className="text-sm font-semibold text-foreground">{t("topCampaigns")}</h3>
           {topCampaigns.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Hələ kampaniya yoxdur</p>
+            <p className="text-sm text-muted-foreground">{t("noCampaignsYet")}</p>
           ) : (
             <div className="space-y-3">
               {topCampaigns.map((c, i) => (
@@ -349,9 +340,9 @@ export function CampaignsAnalytics({ campaigns }: CampaignsAnalyticsProps) {
                   <div className="min-w-0 flex-1">
                     <div className="text-sm font-medium text-foreground truncate">{c.name}</div>
                     <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
-                      <span>{fmt(c.totalSent)} gönd.</span>
-                      <span>{pct(c.totalOpened, c.totalSent)} açılma</span>
-                      <span>{pct(c.totalClicked, c.totalSent)} klik</span>
+                      <span>{fmt(c.totalSent)} {t("topSent")}</span>
+                      <span>{pct(c.totalOpened, c.totalSent)} {t("topOpen")}</span>
+                      <span>{pct(c.totalClicked, c.totalSent)} {t("topClick")}</span>
                     </div>
                   </div>
                 </div>
@@ -368,7 +359,7 @@ export function CampaignsAnalytics({ campaigns }: CampaignsAnalyticsProps) {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Layers className="w-4 h-4 text-muted-foreground" />
-              <h3 className="text-sm font-semibold text-foreground">Seqmentlər</h3>
+              <h3 className="text-sm font-semibold text-foreground">{t("segments")}</h3>
             </div>
             <span className="bg-primary/10 text-primary text-xs font-semibold px-2 py-0.5 rounded-full">
               {segmentStats.total}
@@ -377,21 +368,21 @@ export function CampaignsAnalytics({ campaigns }: CampaignsAnalyticsProps) {
           <div className="grid grid-cols-3 gap-2">
             <div className="text-center">
               <div className="text-lg font-bold text-foreground">{segmentStats.total}</div>
-              <div className="text-[10px] text-muted-foreground">Cəmi</div>
+              <div className="text-[10px] text-muted-foreground">{t("segTotal")}</div>
             </div>
             <div className="text-center">
               <div className="text-lg font-bold text-foreground">{segmentStats.dynamic}</div>
-              <div className="text-[10px] text-muted-foreground">Dinamik</div>
+              <div className="text-[10px] text-muted-foreground">{t("segDynamic")}</div>
             </div>
             <div className="text-center">
               <div className="text-lg font-bold text-foreground">{fmt(segmentStats.contacts)}</div>
-              <div className="text-[10px] text-muted-foreground">Kontakt</div>
+              <div className="text-[10px] text-muted-foreground">{t("segContacts")}</div>
             </div>
           </div>
           <div className="border-t pt-3 space-y-2">
             {segmentStats.topSegments.map((seg, i) => (
               <div key={i} className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground truncate">{seg.name}</span>
+                <span className="text-muted-foreground truncate">{t(seg.nameKey)}</span>
                 <span className="font-medium text-foreground ml-2">{fmt(seg.count)}</span>
               </div>
             ))}
@@ -403,7 +394,7 @@ export function CampaignsAnalytics({ campaigns }: CampaignsAnalyticsProps) {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Zap className="w-4 h-4 text-muted-foreground" />
-              <h3 className="text-sm font-semibold text-foreground">Avtomatlaşdırma</h3>
+              <h3 className="text-sm font-semibold text-foreground">{t("automation")}</h3>
             </div>
             <span className="bg-emerald-500/10 text-emerald-500 text-xs font-semibold px-2 py-0.5 rounded-full">
               {automationStats.active}
@@ -412,15 +403,15 @@ export function CampaignsAnalytics({ campaigns }: CampaignsAnalyticsProps) {
           <div className="grid grid-cols-3 gap-2">
             <div className="text-center">
               <div className="text-lg font-bold text-foreground">{automationStats.active}</div>
-              <div className="text-[10px] text-muted-foreground">Aktiv</div>
+              <div className="text-[10px] text-muted-foreground">{t("autoActive")}</div>
             </div>
             <div className="text-center">
               <div className="text-lg font-bold text-foreground">{fmt(automationStats.entry)}</div>
-              <div className="text-[10px] text-muted-foreground">Giriş</div>
+              <div className="text-[10px] text-muted-foreground">{t("autoEntry")}</div>
             </div>
             <div className="text-center">
               <div className="text-lg font-bold text-foreground">{automationStats.conversionRate}%</div>
-              <div className="text-[10px] text-muted-foreground">Konversiya</div>
+              <div className="text-[10px] text-muted-foreground">{t("autoConversion")}</div>
             </div>
           </div>
           <div className="border-t pt-3 space-y-2">
@@ -433,7 +424,7 @@ export function CampaignsAnalytics({ campaigns }: CampaignsAnalyticsProps) {
                       auto.status === "active" ? "bg-emerald-500" : "bg-muted-foreground/40"
                     )}
                   />
-                  <span className="text-muted-foreground truncate">{auto.name}</span>
+                  <span className="text-muted-foreground truncate">{t(auto.nameKey)}</span>
                 </div>
                 <span className="font-medium text-foreground ml-2">{fmt(auto.conversions)}</span>
               </div>
@@ -446,7 +437,7 @@ export function CampaignsAnalytics({ campaigns }: CampaignsAnalyticsProps) {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <FileText className="w-4 h-4 text-muted-foreground" />
-              <h3 className="text-sm font-semibold text-foreground">Şablonlar</h3>
+              <h3 className="text-sm font-semibold text-foreground">{t("templates")}</h3>
             </div>
             <span className="bg-violet-500/10 text-violet-500 text-xs font-semibold px-2 py-0.5 rounded-full">
               {templateStats.total}
@@ -455,11 +446,11 @@ export function CampaignsAnalytics({ campaigns }: CampaignsAnalyticsProps) {
           <div className="grid grid-cols-2 gap-2">
             <div className="text-center">
               <div className="text-lg font-bold text-foreground">{templateStats.total}</div>
-              <div className="text-[10px] text-muted-foreground">Cəmi</div>
+              <div className="text-[10px] text-muted-foreground">{t("tplTotal")}</div>
             </div>
             <div className="text-center">
               <div className="text-lg font-bold text-foreground">{templateStats.active}</div>
-              <div className="text-[10px] text-muted-foreground">Aktiv</div>
+              <div className="text-[10px] text-muted-foreground">{t("tplActive")}</div>
             </div>
           </div>
           <div className="border-t pt-3">
@@ -469,7 +460,7 @@ export function CampaignsAnalytics({ campaigns }: CampaignsAnalyticsProps) {
                 {templateStats.donutSegments.map((s, i) => (
                   <div key={i} className="flex items-center gap-2 text-xs">
                     <span className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ backgroundColor: s.color }} />
-                    <span className="text-muted-foreground">{s.label}</span>
+                    <span className="text-muted-foreground">{"labelKey" in s ? t(s.labelKey) : s.label}</span>
                     <span className="font-medium text-foreground">{s.pct}%</span>
                   </div>
                 ))}
