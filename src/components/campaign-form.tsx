@@ -465,17 +465,17 @@ export function CampaignForm({ open, onOpenChange, onSaved, initialData, orgId, 
             {/* Name — full width */}
             <div>
               <Label className="text-xs text-muted-foreground">{tc("name")} *</Label>
-              <Input value={form.name} onChange={(e) => update("name", e.target.value)} required placeholder="məs. Mart göndərişi" />
-              <p className="text-xs text-muted-foreground mt-1">Kampaniyanın adı, məs. «Mart göndərişi»</p>
+              <Input value={form.name} onChange={(e) => update("name", e.target.value)} required placeholder={t("namePlaceholder")} />
+              <p className="text-xs text-muted-foreground mt-1">{t("nameHint")}</p>
             </div>
 
             {/* Description — textarea */}
             <div>
               <Label className="text-xs text-muted-foreground">{tc("description")}</Label>
               <Textarea value={form.description} onChange={(e) => update("description", e.target.value)}
-                placeholder="Kampaniya haqqında qısa məlumat"
+                placeholder={t("descPlaceholder")}
                 rows={3} />
-              <p className="text-xs text-muted-foreground mt-1">Kampaniya haqqında qısa məlumat</p>
+              <p className="text-xs text-muted-foreground mt-1">{t("descHint")}</p>
             </div>
 
             {/* Type + Template on same row */}
@@ -486,7 +486,7 @@ export function CampaignForm({ open, onOpenChange, onSaved, initialData, orgId, 
                   <option value="email">Email</option>
                   <option value="sms">SMS</option>
                 </Select>
-                <p className="text-xs text-muted-foreground mt-1">Email və ya SMS göndəriş növü</p>
+                <p className="text-xs text-muted-foreground mt-1">{t("typeHint")}</p>
               </div>
               <div>
                 <Label className="text-xs text-muted-foreground">Email {tf("selectTemplate").toLowerCase()}</Label>
@@ -499,7 +499,7 @@ export function CampaignForm({ open, onOpenChange, onSaved, initialData, orgId, 
                     <option key={t.id} value={t.id}>{t.name}</option>
                   ))}
                 </Select>
-                <p className="text-xs text-muted-foreground mt-1">Hazır e-poçt şablonu</p>
+                <p className="text-xs text-muted-foreground mt-1">{t("templateHint")}</p>
               </div>
             </div>
 
@@ -507,7 +507,7 @@ export function CampaignForm({ open, onOpenChange, onSaved, initialData, orgId, 
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label className="text-xs text-muted-foreground">{tf("emailSubject")}</Label>
-                <Input value={form.subject} onChange={(e) => update("subject", e.target.value)} placeholder="E-poçt mövzusu" />
+                <Input value={form.subject} onChange={(e) => update("subject", e.target.value)} placeholder={t("subjectPlaceholder")} />
               </div>
               <div>
                 <Label className="text-xs text-muted-foreground">{tf("scheduleSend")}</Label>
@@ -594,7 +594,7 @@ export function CampaignForm({ open, onOpenChange, onSaved, initialData, orgId, 
                             }}
                             className="text-sm h-8 mt-1.5"
                           >
-                            <option value="">— {tab("content")}: {t("selectTemplate") || "Şablon seçin"} —</option>
+                            <option value="">— {tab("content")}: {tf("selectTemplate")} —</option>
                             {templates.map(tmpl => (
                               <option key={tmpl.id} value={tmpl.id}>{tmpl.name}</option>
                             ))}
@@ -639,15 +639,15 @@ export function CampaignForm({ open, onOpenChange, onSaved, initialData, orgId, 
                 if (mode === "source") setSelectedSource("")
                 setRecipientModeChanged(true)
               }}>
-                <option value="all">Bütün kontaktlar + lidlər</option>
-                <option value="contacts">Yalnız kontaktlar</option>
-                <option value="leads">Yalnız lidlər</option>
-                <option value="segment">📊 Seqmentə görə</option>
-                <option value="source">🔍 Mənbəyə görə</option>
-                <option value="manual">✋ Əl ilə seçmək</option>
+                <option value="all">{t("recipientAll")}</option>
+                <option value="contacts">{t("recipientContacts")}</option>
+                <option value="leads">{t("recipientLeads")}</option>
+                <option value="segment">{t("recipientSegment")}</option>
+                <option value="source">{t("recipientSource")}</option>
+                <option value="manual">{t("recipientManual")}</option>
               </Select>
               <p className="text-xs text-muted-foreground mt-1">
-                Göndəriləcək: <span className="font-semibold text-foreground">{recipientCount}</span> alıcıya
+                {t("willSendTo", { count: recipientCount })}
               </p>
 
               {/* Segment picker */}

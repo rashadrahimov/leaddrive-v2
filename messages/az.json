@@ -1331,7 +1331,21 @@
     "templates": "Şablonlar",
     "tplTotal": "Cəmi",
     "tplActive": "Aktiv",
-    "tplOther": "Digər"
+    "tplOther": "Digər",
+    "namePlaceholder": "məs. Mart göndərişi",
+    "nameHint": "Kampaniyanın adı, məs. «Mart göndərişi»",
+    "descPlaceholder": "Kampaniya haqqında qısa məlumat",
+    "descHint": "Kampaniya haqqında qısa məlumat",
+    "typeHint": "Email və ya SMS göndəriş növü",
+    "templateHint": "Hazır e-poçt şablonu",
+    "subjectPlaceholder": "E-poçt mövzusu",
+    "recipientAll": "Bütün kontaktlar + lidlər",
+    "recipientContacts": "Yalnız kontaktlar",
+    "recipientLeads": "Yalnız lidlər",
+    "recipientSegment": "📊 Seqmentə görə",
+    "recipientSource": "🔍 Mənbəyə görə",
+    "recipientManual": "✋ Əl ilə seçmək",
+    "willSendTo": "Göndəriləcək: {count} alıcıya"
   },
   "offers": {
     "title": "Təkliflər",

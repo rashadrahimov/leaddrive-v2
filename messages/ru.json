@@ -1335,7 +1335,21 @@
     "templates": "Шаблоны",
     "tplTotal": "Всего",
     "tplActive": "Активных",
-    "tplOther": "Другое"
+    "tplOther": "Другое",
+    "namePlaceholder": "напр. Мартовская рассылка",
+    "nameHint": "Название кампании, напр. «Мартовская рассылка»",
+    "descPlaceholder": "Краткое описание кампании",
+    "descHint": "Краткое описание кампании",
+    "typeHint": "Тип отправки: Email или SMS",
+    "templateHint": "Готовый email-шаблон",
+    "subjectPlaceholder": "Тема письма",
+    "recipientAll": "Все контакты + лиды",
+    "recipientContacts": "Только контакты",
+    "recipientLeads": "Только лиды",
+    "recipientSegment": "📊 По сегменту",
+    "recipientSource": "🔍 По источнику",
+    "recipientManual": "✋ Выбрать вручную",
+    "willSendTo": "Будет отправлено: {count} получателям"
   },
   "offers": {
     "title": "Предложения",

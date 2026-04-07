@@ -1335,7 +1335,21 @@
     "templates": "Templates",
     "tplTotal": "Total",
     "tplActive": "Active",
-    "tplOther": "Other"
+    "tplOther": "Other",
+    "namePlaceholder": "e.g. March newsletter",
+    "nameHint": "Campaign name, e.g. «March newsletter»",
+    "descPlaceholder": "Brief description of the campaign",
+    "descHint": "Brief description of the campaign",
+    "typeHint": "Email or SMS delivery type",
+    "templateHint": "Ready-made email template",
+    "subjectPlaceholder": "Email subject line",
+    "recipientAll": "All contacts + leads",
+    "recipientContacts": "Contacts only",
+    "recipientLeads": "Leads only",
+    "recipientSegment": "📊 By segment",
+    "recipientSource": "🔍 By source",
+    "recipientManual": "✋ Select manually",
+    "willSendTo": "Will send to: {count} recipients"
   },
   "offers": {
     "title": "Offers",
