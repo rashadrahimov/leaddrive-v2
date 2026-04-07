@@ -34,7 +34,27 @@ function scoreLeadRuleBased(lead: any): { score: number; factors: Record<string,
 
   score = Math.min(score, 100)
   const conversionProb = Math.round(score * 0.85)
-  return { score, factors, conversionProb, reasoning: "Da Vinci — rule-based analysis" }
+
+  // Build meaningful reasoning from factors
+  const positives: string[] = []
+  const negatives: string[] = []
+  if (factors.email) positives.push("has email")
+  if (factors.phone) positives.push("has phone")
+  if (factors.company) positives.push("company identified")
+  if (factors.source >= 15) positives.push(`strong source (${lead.source})`)
+  if (factors.priority >= 10) positives.push(`${lead.priority} priority`)
+  if (factors.value) positives.push("has estimated value")
+  if (factors.status >= 15) positives.push(`status: ${lead.status}`)
+  if (!lead.email) negatives.push("no email")
+  if (!lead.phone) negatives.push("no phone")
+  if (!lead.notes || lead.notes.length <= 10) negatives.push("no notes")
+
+  const parts: string[] = []
+  if (positives.length > 0) parts.push(`Strengths: ${positives.join(", ")}`)
+  if (negatives.length > 0) parts.push(`Gaps: ${negatives.join(", ")}`)
+  const reasoning = parts.length > 0 ? parts.join(". ") + "." : "Da Vinci — rule-based analysis"
+
+  return { score, factors, conversionProb, reasoning }
 }
 
 // AI-powered scoring with Claude
@@ -88,7 +108,7 @@ Respond ONLY with valid JSON (no markdown, no explanation outside JSON):
     "dealPotential": <0-20>,
     "recency": <0-20>
   },
-  "reasoning": "<1-2 sentence explanation in Russian>"
+  "reasoning": "<1-2 sentence explanation in English>"
 }`
       }],
     })
