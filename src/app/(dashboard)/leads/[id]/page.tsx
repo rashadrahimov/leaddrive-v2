@@ -88,6 +88,8 @@ export default function LeadDetailPage() {
   const [aiLoading, setAiLoading] = useState(false)
   const [sentiment, setSentiment] = useState<any>(null)
   const [aiTasks, setAiTasks] = useState<any>(null)
+  const [creatingTasks, setCreatingTasks] = useState(false)
+  const [tasksCreated, setTasksCreated] = useState(false)
   const [textType, setTextType] = useState("Email")
   const [tone, setTone] = useState("professional")
   const [instructions, setInstructions] = useState("")
@@ -188,6 +190,30 @@ export default function LeadDetailPage() {
       if (json.success) return json.data
     } catch (err) { console.error(err) } finally { setAiLoading(false) }
     return null
+  }
+
+  const createAllTasks = async () => {
+    if (!aiTasks?.tasks?.length) return
+    setCreatingTasks(true)
+    try {
+      const headers: Record<string, string> = { "Content-Type": "application/json" }
+      if (orgId) headers["x-organization-id"] = String(orgId)
+      for (const task of aiTasks.tasks) {
+        await fetch("/api/v1/tasks", {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            title: task.title,
+            description: task.description,
+            priority: (task.priority || "medium").toLowerCase(),
+            dueDate: task.dueDate || undefined,
+            relatedType: "lead",
+            relatedId: id,
+          }),
+        })
+      }
+      setTasksCreated(true)
+    } catch (err) { console.error(err) } finally { setCreatingTasks(false) }
   }
 
   const scoreWithAI = async () => {
@@ -598,8 +624,10 @@ export default function LeadDetailPage() {
                   ))}
                 </div>
                 <div className="flex gap-2 justify-center pt-2">
-                  <Button size="sm" className="gap-1"><CheckCircle className="h-3 w-3" /> {t("modalCreateAllTasks") || "Create All Tasks"}</Button>
-                  <Button size="sm" variant="outline" onClick={async () => { const d = await callAI("tasks"); if (d) setAiTasks(d) }} className="gap-1"><RefreshCw className="h-3 w-3" /> {t("modalRegenerate") || "Regenerate"}</Button>
+                  <Button size="sm" className="gap-1" onClick={createAllTasks} disabled={creatingTasks || tasksCreated}>
+                    {creatingTasks ? <><Loader2 className="h-3 w-3 animate-spin" /> {t("modalCreating") || "Creating..."}</> : tasksCreated ? <><CheckCircle className="h-3 w-3" /> {t("modalTasksCreated") || "Tasks Created!"}</> : <><CheckCircle className="h-3 w-3" /> {t("modalCreateAllTasks") || "Create All Tasks"}</>}
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={async () => { setTasksCreated(false); const d = await callAI("tasks"); if (d) setAiTasks(d) }} className="gap-1"><RefreshCw className="h-3 w-3" /> {t("modalRegenerate") || "Regenerate"}</Button>
                 </div>
               </div>
             )}

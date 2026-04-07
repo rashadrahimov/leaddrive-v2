@@ -87,8 +87,8 @@ export async function POST(req: NextRequest) {
       organizationId: orgId,
       userId: task.assignedTo || "",
       type: task.priority === "urgent" ? "warning" : "info",
-      title: "Новая задача",
-      message: `Создана задача «${task.title}»${task.priority === "urgent" ? " (СРОЧНАЯ)" : ""}`,
+      title: "New Task",
+      message: `Task created: "${task.title}"${task.priority === "urgent" ? " (URGENT)" : ""}`,
       entityType: "task",
       entityId: task.id,
     }).catch(() => {})
