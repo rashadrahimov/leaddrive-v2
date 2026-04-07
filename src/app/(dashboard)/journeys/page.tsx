@@ -62,66 +62,68 @@ function getStepInfo(type: string, stepTypesList: { value: string; label: string
   return stepTypesList.find(st => st.value === type) || stepTypesList[0]
 }
 
-function getStepSummary(step: { stepType: string; config: any }): string {
+function getStepSummary(step: { stepType: string; config: any }, t: (key: string, params?: any) => string): string {
   const c = step.config || {}
   switch (step.stepType) {
-    case "send_email": return c.subject ? `Тема: ${c.subject}` : "Тема: (без темы)"
-    case "wait": return `Ждать: ${c.days || 1} дн.`
+    case "send_email": return c.subject ? t("summarySubject", { subject: c.subject }) : t("summaryNoSubject")
+    case "wait": return t("summaryWait", { days: c.days || 1 })
     case "condition": {
       const scenario = conditionScenarios.find(s => s.id === c._scenario)
-      if (scenario && scenario.id !== "custom") return scenario.label
+      if (scenario && scenario.id !== "custom") return t(scenario.labelKey)
       if (c.field && c.operator) {
-        const fld = conditionFields.find(f => f.value === c.field)?.label || c.field
-        const op = conditionOperators.find(o => o.value === c.operator)?.label || c.operator
+        const fld = t(conditionFields.find(f => f.value === c.field)?.labelKey || c.field)
+        const op = t(conditionOperators.find(o => o.value === c.operator)?.labelKey || c.operator)
         return c.operator === "not_empty" ? `${fld} ${op}` : `${fld} ${op} "${c.value}"`
       }
-      return "Şərt"
+      return t("condition")
     }
-    case "create_task": return c.title || "Новая задача"
-    case "send_telegram": return c.message ? c.message.slice(0, 40) : "Telegram сообщение"
-    case "send_whatsapp": return c.message ? c.message.slice(0, 40) : "WhatsApp сообщение"
-    case "sms": return c.message ? c.message.slice(0, 40) : "SMS сообщение"
-    case "update_field": return c.field ? `${c.field} = ${c.value || "..."}` : "Обновить поле"
+    case "create_task": return c.title || t("summaryNewTask")
+    case "send_telegram": return c.message ? c.message.slice(0, 40) : t("summaryTelegramMsg")
+    case "send_whatsapp": return c.message ? c.message.slice(0, 40) : t("summaryWhatsappMsg")
+    case "sms": return c.message ? c.message.slice(0, 40) : t("summarySmsMsg")
+    case "update_field": return c.field ? `${c.field} = ${c.value || "..."}` : t("summaryUpdateField")
     default: return ""
   }
 }
 
 // Pre-built condition scenarios (intuitive for non-technical users)
 const conditionScenarios = [
-  { id: "lead_status_new", label: "Lid yeni olduqda", description: "Status = Yeni", icon: "🆕", field: "status", operator: "equals", value: "new" },
-  { id: "lead_status_qualified", label: "Lid uyğun olduqda", description: "Status = Uyğun", icon: "✅", field: "status", operator: "equals", value: "qualified" },
-  { id: "lead_status_lost", label: "Lid itirildiyi halda", description: "Status = İtirilmiş", icon: "❌", field: "status", operator: "equals", value: "lost" },
-  { id: "has_email", label: "Email varsa", description: "Email boş deyil", icon: "📧", field: "email", operator: "not_empty", value: "" },
-  { id: "has_phone", label: "Telefon varsa", description: "Telefon boş deyil", icon: "📱", field: "phone", operator: "not_empty", value: "" },
-  { id: "has_company", label: "Şirkət göstərilibsə", description: "Şirkət adı boş deyil", icon: "🏢", field: "companyName", operator: "not_empty", value: "" },
-  { id: "source_website", label: "Saytdan gəlib", description: "Mənbə = Website", icon: "🌐", field: "source", operator: "equals", value: "website" },
-  { id: "source_referral", label: "Tövsiyə ilə gəlib", description: "Mənbə = Tövsiyə", icon: "🤝", field: "source", operator: "equals", value: "referral" },
-  { id: "custom", label: "Öz şərtim", description: "Sahə və dəyəri əl ilə seçin", icon: "⚙️", field: "", operator: "equals", value: "" },
+  { id: "lead_status_new", labelKey: "scenarioLeadNew", descKey: "scenarioLeadNewDesc", icon: "🆕", field: "status", operator: "equals", value: "new" },
+  { id: "lead_status_qualified", labelKey: "scenarioLeadQualified", descKey: "scenarioLeadQualifiedDesc", icon: "✅", field: "status", operator: "equals", value: "qualified" },
+  { id: "lead_status_lost", labelKey: "scenarioLeadLost", descKey: "scenarioLeadLostDesc", icon: "❌", field: "status", operator: "equals", value: "lost" },
+  { id: "has_email", labelKey: "scenarioHasEmail", descKey: "scenarioHasEmailDesc", icon: "📧", field: "email", operator: "not_empty", value: "" },
+  { id: "has_phone", labelKey: "scenarioHasPhone", descKey: "scenarioHasPhoneDesc", icon: "📱", field: "phone", operator: "not_empty", value: "" },
+  { id: "has_company", labelKey: "scenarioHasCompany", descKey: "scenarioHasCompanyDesc", icon: "🏢", field: "companyName", operator: "not_empty", value: "" },
+  { id: "source_website", labelKey: "scenarioSourceWebsite", descKey: "scenarioSourceWebsiteDesc", icon: "🌐", field: "source", operator: "equals", value: "website" },
+  { id: "source_referral", labelKey: "scenarioSourceReferral", descKey: "scenarioSourceReferralDesc", icon: "🤝", field: "source", operator: "equals", value: "referral" },
+  { id: "custom", labelKey: "scenarioCustom", descKey: "scenarioCustomDesc", icon: "⚙️", field: "", operator: "equals", value: "" },
 ]
 const conditionActions = [
-  { value: "continue", label: "Növbəti addıma keç" },
-  { value: "skip_next", label: "1 addımı keç" },
-  { value: "skip_2", label: "2 addımı keç" },
-  { value: "restart", label: "Əvvəldən başla (dövr)" },
-  { value: "stop", label: "Zənciri dayandır" },
+  { value: "continue", labelKey: "actionContinue" },
+  { value: "skip_next", labelKey: "actionSkipNext" },
+  { value: "skip_2", labelKey: "actionSkip2" },
+  { value: "restart", labelKey: "actionRestart" },
+  { value: "stop", labelKey: "actionStop" },
 ]
 const conditionFields = [
-  { value: "status", label: "Status" },
-  { value: "source", label: "Mənbə" },
-  { value: "companyName", label: "Şirkət" },
-  { value: "email", label: "Email" },
-  { value: "phone", label: "Telefon" },
-  { value: "contactName", label: "Ad" },
+  { value: "status", labelKey: "fieldStatus" },
+  { value: "source", labelKey: "fieldSource" },
+  { value: "companyName", labelKey: "fieldCompany" },
+  { value: "email", labelKey: "fieldEmail" },
+  { value: "phone", labelKey: "fieldPhone" },
+  { value: "contactName", labelKey: "fieldName" },
 ]
 const conditionOperators = [
-  { value: "equals", label: "Bərabərdir" },
-  { value: "not_equals", label: "Bərabər deyil" },
-  { value: "contains", label: "Ehtiva edir" },
-  { value: "not_empty", label: "Boş deyil" },
+  { value: "equals", labelKey: "opEquals" },
+  { value: "not_equals", labelKey: "opNotEquals" },
+  { value: "contains", labelKey: "opContains" },
+  { value: "not_empty", labelKey: "opNotEmpty" },
 ]
 
 // Enrollment Management Table component
 function EnrollmentTable({ journeyId }: { journeyId: string }) {
+  const t = useTranslations("journeys")
+  const tc = useTranslations("common")
   const [enrollments, setEnrollments] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
   const [loaded, setLoaded] = useState(false)
@@ -161,7 +163,7 @@ function EnrollmentTable({ journeyId }: { journeyId: string }) {
   return (
     <div className="mt-4 border-t pt-4">
       <h4 className="text-sm font-semibold mb-3 flex items-center gap-1.5">
-        <Users className="h-4 w-4" /> Enrollments ({enrollments.length})
+        <Users className="h-4 w-4" /> {t("enrollments", { count: enrollments.length })}
       </h4>
       <div className="space-y-2 max-h-48 overflow-y-auto">
         {enrollments.map((e: any) => (
@@ -169,24 +171,24 @@ function EnrollmentTable({ journeyId }: { journeyId: string }) {
             <div className="flex items-center gap-2">
               <Badge className={`text-[10px] ${statusColors[e.status] || "bg-muted"}`}>{e.status}</Badge>
               <span className="text-xs text-muted-foreground">
-                {e.leadId ? `Lead: ${e.leadId.slice(0, 8)}...` : e.contactId ? `Contact: ${e.contactId.slice(0, 8)}...` : "—"}
+                {e.leadId ? t("enrollLeadId", { id: e.leadId.slice(0, 8) }) : e.contactId ? t("enrollContactId", { id: e.contactId.slice(0, 8) }) : "—"}
               </span>
               {e.exitReason && <span className="text-[10px] text-muted-foreground">({e.exitReason})</span>}
             </div>
             <div className="flex items-center gap-1">
               {e.status === "active" && (
                 <Button size="sm" variant="ghost" className="h-6 text-[10px] px-2" onClick={() => handleAction(e.id, "pause")}>
-                  <Pause className="h-3 w-3 mr-0.5" /> Pause
+                  <Pause className="h-3 w-3 mr-0.5" /> {t("pause")}
                 </Button>
               )}
               {e.status === "paused" && (
                 <Button size="sm" variant="ghost" className="h-6 text-[10px] px-2" onClick={() => handleAction(e.id, "resume")}>
-                  <Play className="h-3 w-3 mr-0.5" /> Resume
+                  <Play className="h-3 w-3 mr-0.5" /> {t("resume")}
                 </Button>
               )}
               {(e.status === "active" || e.status === "paused") && (
                 <Button size="sm" variant="ghost" className="h-6 text-[10px] px-2 text-red-500 hover:text-red-600" onClick={() => handleAction(e.id, "cancel")}>
-                  <X className="h-3 w-3 mr-0.5" /> Cancel
+                  <X className="h-3 w-3 mr-0.5" /> {tc("cancel")}
                 </Button>
               )}
             </div>
@@ -242,10 +244,10 @@ export default function JourneysPage() {
     { value: "sms", label: t("stepSms"), icon: Smartphone, color: "bg-muted-foreground", borderColor: "border-border bg-muted/50" },
     { value: "wait", label: t("stepWait"), icon: Clock, color: "bg-yellow-500", borderColor: "border-yellow-200 bg-yellow-50/50 dark:bg-yellow-900/10" },
     { value: "condition", label: t("chainStepCondition"), icon: GitBranch, color: "bg-pink-500", borderColor: "border-pink-200 bg-pink-50/50 dark:bg-pink-900/10" },
-    { value: "create_task", label: "Tapşırıq", icon: FileText, color: "bg-teal-500", borderColor: "border-teal-200 bg-teal-50/50 dark:bg-teal-900/10" },
-    { value: "send_telegram", label: "Telegram", icon: Send, color: "bg-sky-500", borderColor: "border-sky-200 bg-sky-50/50 dark:bg-sky-900/10" },
-    { value: "send_whatsapp", label: "WhatsApp", icon: Heart, color: "bg-green-500", borderColor: "border-green-200 bg-green-50/50 dark:bg-green-900/10" },
-    { value: "update_field", label: "Sahəni yenilə", icon: Settings, color: "bg-purple-500", borderColor: "border-purple-200 bg-purple-50/50 dark:bg-purple-900/10" },
+    { value: "create_task", label: t("stepTask"), icon: FileText, color: "bg-teal-500", borderColor: "border-teal-200 bg-teal-50/50 dark:bg-teal-900/10" },
+    { value: "send_telegram", label: t("stepTelegram"), icon: Send, color: "bg-sky-500", borderColor: "border-sky-200 bg-sky-50/50 dark:bg-sky-900/10" },
+    { value: "send_whatsapp", label: t("stepWhatsapp"), icon: Heart, color: "bg-green-500", borderColor: "border-green-200 bg-green-50/50 dark:bg-green-900/10" },
+    { value: "update_field", label: t("stepUpdateField"), icon: Settings, color: "bg-purple-500", borderColor: "border-purple-200 bg-purple-50/50 dark:bg-purple-900/10" },
   ]
 
   const fetchJourneys = async () => {
@@ -433,7 +435,7 @@ export default function JourneysPage() {
       {/* Exit Reason Breakdown */}
       {Object.keys(exitReasonCounts).length > 0 && (
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-xs text-muted-foreground font-medium">Exit reasons:</span>
+          <span className="text-xs text-muted-foreground font-medium">{t("exitReasons")}:</span>
           {Object.entries(exitReasonCounts).map(([reason, count]) => (
             <Badge key={reason} variant="outline" className="text-xs">
               {reason}: {count}
@@ -471,16 +473,16 @@ export default function JourneysPage() {
                     <Target className="h-3 w-3 text-orange-500" /> {triggerLabels[journey.triggerType] || journey.triggerType}
                   </span>
                   <span className="flex items-center gap-1">
-                    <UserPlus className="h-3 w-3" /> Вошли: {journey.entryCount}
+                    <UserPlus className="h-3 w-3" /> {t("entered")}: {journey.entryCount}
                   </span>
-                  <span>Активных: {journey.activeCount}</span>
+                  <span>{t("activeCountLabel")}: {journey.activeCount}</span>
                   <span className="flex items-center gap-1">
-                    <CheckCircle className="h-3 w-3 text-green-500" /> Завершили: {journey.completedCount}
+                    <CheckCircle className="h-3 w-3 text-green-500" /> {t("completedCountLabel")}: {journey.completedCount}
                   </span>
                   {journey.goalTarget && journey.goalTarget > 0 && (
                     <div className="flex items-center gap-1 text-xs">
                       <Target className="h-3 w-3 text-green-500" />
-                      <span>Goal: {journey.conversionCount || 0}/{journey.goalTarget}</span>
+                      <span>{t("goalLabel")}: {journey.conversionCount || 0}/{journey.goalTarget}</span>
                       <div className="w-16 h-1.5 bg-muted rounded-full overflow-hidden ml-1">
                         <div className="h-full bg-green-500 rounded-full" style={{ width: `${Math.min(100, ((journey.conversionCount || 0) / journey.goalTarget) * 100)}%` }} />
                       </div>
@@ -529,9 +531,9 @@ export default function JourneysPage() {
               <div>
                 <DialogTitle>{stepsJourney.name}</DialogTitle>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  Статус: {statusLabels[stepsJourney.status]} · Триггер: {triggerLabels[stepsJourney.triggerType]}
+                  {tc("status")}: {statusLabels[stepsJourney.status]} · {t("trigger")}: {triggerLabels[stepsJourney.triggerType]}
                   {stepsJourney.goalType && (
-                    <span> · Goal: {stepsJourney.goalType} ({stepsJourney.conversionCount || 0}/{stepsJourney.goalTarget || "∞"})</span>
+                    <span> · {t("goalLabel")}: {stepsJourney.goalType} ({stepsJourney.conversionCount || 0}/{stepsJourney.goalTarget || "∞"})</span>
                   )}
                 </p>
               </div>
@@ -542,7 +544,7 @@ export default function JourneysPage() {
                   className="gap-1 text-xs h-7"
                   onClick={() => setFlowView(!flowView)}
                 >
-                  <Workflow className="h-3 w-3" /> {flowView ? "List View" : "Visual Builder"}
+                  <Workflow className="h-3 w-3" /> {flowView ? t("listView") : t("visualBuilder")}
                 </Button>
                 <Button
                   size="sm"
@@ -587,7 +589,7 @@ export default function JourneysPage() {
               </div>
               <div className="flex-1 bg-purple-100 dark:bg-purple-900/30 border border-purple-300 dark:border-purple-700 rounded-lg px-4 py-3">
                 <span className="font-semibold text-sm text-purple-800 dark:text-purple-200">
-                  Триггер: {triggerLabels[stepsJourney.triggerType]}
+                  {t("trigger")}: {triggerLabels[stepsJourney.triggerType]}
                 </span>
               </div>
             </div>
@@ -596,7 +598,7 @@ export default function JourneysPage() {
             {steps.map((step, index) => {
               const info = getStepInfo(step.stepType, stepTypes)
               const Icon = info.icon
-              const summary = getStepSummary(step)
+              const summary = getStepSummary(step, t)
               return (
                 <div key={index}>
                   {/* Connector line */}
@@ -630,7 +632,7 @@ export default function JourneysPage() {
                       </div>
                       {summary && <p className="text-xs text-muted-foreground">{summary}</p>}
                       <p className="text-[11px] text-muted-foreground mt-1">
-                        Вошли: {(step as any).statsEntered || 0} · Прошли: {(step as any).statsCompleted || 0}
+                        {t("entered")}: {(step as any).statsEntered || 0} · {t("passed")}: {(step as any).statsCompleted || 0}
                       </p>
                     </div>
                   </div>
@@ -649,7 +651,7 @@ export default function JourneysPage() {
                   onClick={openAddStep}
                   className="flex-1 border-2 border-dashed rounded-lg px-4 py-3 text-sm text-muted-foreground hover:border-primary hover:text-primary transition-colors text-center"
                 >
-                  + Добавить шаг
+                  + {t("addStep")}
                 </button>
               </div>
             </div>
@@ -662,10 +664,10 @@ export default function JourneysPage() {
           </DialogContent>
           <DialogFooter>
             {!flowView && <>
-              <Button variant="outline" onClick={() => setStepsJourney(null)}>Закрыть</Button>
+              <Button variant="outline" onClick={() => setStepsJourney(null)}>{tc("close")}</Button>
               <Button onClick={saveSteps} disabled={savingSteps} className="gap-1.5">
                 {savingSteps ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-                {savingSteps ? "Сохранение..." : "Сохранить шаги"}
+                {savingSteps ? tc("saving") : t("saveSteps")}
               </Button>
             </>}
           </DialogFooter>
@@ -675,7 +677,7 @@ export default function JourneysPage() {
       {/* ===== ADD STEP DIALOG ===== */}
       <Dialog open={addStepOpen} onOpenChange={setAddStepOpen}>
         <DialogHeader>
-          <DialogTitle>Добавить шаг #{steps.length + 1}</DialogTitle>
+          <DialogTitle>{t("addStepNumber", { number: steps.length + 1 })}</DialogTitle>
         </DialogHeader>
         <DialogContent>
           {/* Step type grid */}
@@ -706,21 +708,21 @@ export default function JourneysPage() {
             {newStepType === "send_email" && (
               <>
                 <div>
-                  <Label className="text-xs text-muted-foreground">Тема письма</Label>
+                  <Label className="text-xs text-muted-foreground">{t("emailSubjectLabel")}</Label>
                   <Input
                     value={newStepConfig.subject || ""}
                     onChange={e => setNewStepConfig((c: any) => ({ ...c, subject: e.target.value }))}
-                    placeholder="Добро пожаловать в LeadDrive CRM!"
+                    placeholder={t("emailSubjectPlaceholder")}
                   />
                 </div>
                 <div>
                   <Label className="text-xs text-muted-foreground">
-                    Текст письма · Переменные: {"{{contact_name}}"}, {"{{company_name}}"}
+                    {t("emailBodyLabel")}
                   </Label>
                   <Textarea
                     value={newStepConfig.body || ""}
                     onChange={e => setNewStepConfig((c: any) => ({ ...c, body: e.target.value }))}
-                    placeholder={"Здравствуйте, {{contact_name}}! Мы рады приветствовать вас..."}
+                    placeholder={t("emailBodyPlaceholder")}
                     rows={4}
                   />
                 </div>
@@ -729,11 +731,11 @@ export default function JourneysPage() {
 
             {newStepType === "sms" && (
               <div>
-                <Label className="text-xs text-muted-foreground">Текст SMS</Label>
+                <Label className="text-xs text-muted-foreground">{t("smsTextLabel")}</Label>
                 <Textarea
                   value={newStepConfig.message || ""}
                   onChange={e => setNewStepConfig((c: any) => ({ ...c, message: e.target.value }))}
-                  placeholder="Здравствуйте! Ваша заявка получена..."
+                  placeholder={t("smsTextPlaceholder")}
                   rows={3}
                 />
               </div>
@@ -741,7 +743,7 @@ export default function JourneysPage() {
 
             {newStepType === "wait" && (
               <div>
-                <Label className="text-xs text-muted-foreground">Длительность ожидания</Label>
+                <Label className="text-xs text-muted-foreground">{t("waitDurationLabel")}</Label>
                 <div className="flex gap-2">
                   <Input
                     type="number"
@@ -755,9 +757,9 @@ export default function JourneysPage() {
                     onChange={e => setNewStepConfig((c: any) => ({ ...c, unit: e.target.value }))}
                     className="flex-1"
                   >
-                    <option value="hours">Часов</option>
-                    <option value="days">Дней</option>
-                    <option value="weeks">Недель</option>
+                    <option value="hours">{t("unitHours")}</option>
+                    <option value="days">{t("unitDays")}</option>
+                    <option value="weeks">{t("unitWeeks")}</option>
                   </Select>
                 </div>
               </div>
@@ -767,7 +769,7 @@ export default function JourneysPage() {
               <div className="space-y-4">
                 {/* Scenario cards */}
                 <div>
-                  <Label className="text-xs text-muted-foreground mb-2 block">Şərti seçin</Label>
+                  <Label className="text-xs text-muted-foreground mb-2 block">{t("selectCondition")}</Label>
                   <div className="grid grid-cols-3 gap-2">
                     {conditionScenarios.map(sc => {
                       const isSelected = newStepConfig._scenario === sc.id
@@ -790,8 +792,8 @@ export default function JourneysPage() {
                           )}
                         >
                           <span className="text-lg">{sc.icon}</span>
-                          <span className="font-medium leading-tight">{sc.label}</span>
-                          <span className="text-[10px] opacity-60">{sc.description}</span>
+                          <span className="font-medium leading-tight">{t(sc.labelKey)}</span>
+                          <span className="text-[10px] opacity-60">{t(sc.descKey)}</span>
                         </button>
                       )
                     })}
@@ -803,27 +805,27 @@ export default function JourneysPage() {
                   <div className="space-y-2 p-3 bg-muted/30 rounded-lg border">
                     <div className="grid grid-cols-2 gap-2">
                       <div>
-                        <Label className="text-[10px] text-muted-foreground">Sahə</Label>
+                        <Label className="text-[10px] text-muted-foreground">{t("fieldLabel")}</Label>
                         <Select
                           value={newStepConfig.field || "status"}
                           onChange={e => setNewStepConfig((c: any) => ({ ...c, field: e.target.value }))}
                         >
-                          {conditionFields.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
+                          {conditionFields.map(f => <option key={f.value} value={f.value}>{t(f.labelKey)}</option>)}
                         </Select>
                       </div>
                       <div>
-                        <Label className="text-[10px] text-muted-foreground">Operator</Label>
+                        <Label className="text-[10px] text-muted-foreground">{t("operatorLabel")}</Label>
                         <Select
                           value={newStepConfig.operator || "equals"}
                           onChange={e => setNewStepConfig((c: any) => ({ ...c, operator: e.target.value }))}
                         >
-                          {conditionOperators.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                          {conditionOperators.map(o => <option key={o.value} value={o.value}>{t(o.labelKey)}</option>)}
                         </Select>
                       </div>
                     </div>
                     {newStepConfig.operator !== "not_empty" && (
                       <div>
-                        <Label className="text-[10px] text-muted-foreground">Dəyər</Label>
+                        <Label className="text-[10px] text-muted-foreground">{tc("value")}</Label>
                         <Input
                           value={newStepConfig.value || ""}
                           onChange={e => setNewStepConfig((c: any) => ({ ...c, value: e.target.value }))}
@@ -837,13 +839,13 @@ export default function JourneysPage() {
                 {/* What to do if condition is FALSE */}
                 <div className="p-3 bg-red-50/50 dark:bg-red-900/10 rounded-lg border border-red-200/50 dark:border-red-800/30">
                   <Label className="text-xs font-medium text-red-700 dark:text-red-400 flex items-center gap-1.5 mb-2">
-                    <X className="h-3.5 w-3.5" /> Şərt uyğun gəlmirsə:
+                    <X className="h-3.5 w-3.5" /> {t("conditionFalseLabel")}:
                   </Label>
                   <Select
                     value={newStepConfig.onFalse || "continue"}
                     onChange={e => setNewStepConfig((c: any) => ({ ...c, onFalse: e.target.value }))}
                   >
-                    {conditionActions.map(a => <option key={a.value} value={a.value}>{a.label}</option>)}
+                    {conditionActions.map(a => <option key={a.value} value={a.value}>{t(a.labelKey)}</option>)}
                   </Select>
                 </div>
               </div>
@@ -852,19 +854,19 @@ export default function JourneysPage() {
             {newStepType === "create_task" && (
               <>
                 <div>
-                  <Label className="text-xs text-muted-foreground">Название задачи</Label>
+                  <Label className="text-xs text-muted-foreground">{t("taskTitleLabel")}</Label>
                   <Input
                     value={newStepConfig.title || ""}
                     onChange={e => setNewStepConfig((c: any) => ({ ...c, title: e.target.value }))}
-                    placeholder="Позвонить клиенту"
+                    placeholder={t("taskTitlePlaceholder")}
                   />
                 </div>
                 <div>
-                  <Label className="text-xs text-muted-foreground">Описание</Label>
+                  <Label className="text-xs text-muted-foreground">{tc("description")}</Label>
                   <Textarea
                     value={newStepConfig.description || ""}
                     onChange={e => setNewStepConfig((c: any) => ({ ...c, description: e.target.value }))}
-                    placeholder="Подробности задачи..."
+                    placeholder={t("taskDescPlaceholder")}
                     rows={2}
                   />
                 </div>
@@ -873,11 +875,11 @@ export default function JourneysPage() {
 
             {newStepType === "send_telegram" && (
               <div>
-                <Label className="text-xs text-muted-foreground">Сообщение Telegram</Label>
+                <Label className="text-xs text-muted-foreground">{t("telegramMsgLabel")}</Label>
                 <Textarea
                   value={newStepConfig.message || ""}
                   onChange={e => setNewStepConfig((c: any) => ({ ...c, message: e.target.value }))}
-                  placeholder={"Здравствуйте, {{contact_name}}!"}
+                  placeholder={t("messagePlaceholder")}
                   rows={3}
                 />
               </div>
@@ -885,11 +887,11 @@ export default function JourneysPage() {
 
             {newStepType === "send_whatsapp" && (
               <div>
-                <Label className="text-xs text-muted-foreground">Сообщение WhatsApp</Label>
+                <Label className="text-xs text-muted-foreground">{t("whatsappMsgLabel")}</Label>
                 <Textarea
                   value={newStepConfig.message || ""}
                   onChange={e => setNewStepConfig((c: any) => ({ ...c, message: e.target.value }))}
-                  placeholder={"Здравствуйте, {{contact_name}}!"}
+                  placeholder={t("messagePlaceholder")}
                   rows={3}
                 />
               </div>
@@ -898,16 +900,16 @@ export default function JourneysPage() {
             {newStepType === "update_field" && (
               <>
                 <div>
-                  <Label className="text-xs text-muted-foreground">Поле</Label>
+                  <Label className="text-xs text-muted-foreground">{t("fieldLabel")}</Label>
                   <Select
                     value={newStepConfig.field || "lead_status"}
                     onChange={e => setNewStepConfig((c: any) => ({ ...c, field: e.target.value }))}
                   >
-                    {conditionFields.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
+                    {conditionFields.map(f => <option key={f.value} value={f.value}>{t(f.labelKey)}</option>)}
                   </Select>
                 </div>
                 <div>
-                  <Label className="text-xs text-muted-foreground">Новое значение</Label>
+                  <Label className="text-xs text-muted-foreground">{t("newValueLabel")}</Label>
                   <Input
                     value={newStepConfig.value || ""}
                     onChange={e => setNewStepConfig((c: any) => ({ ...c, value: e.target.value }))}
@@ -919,8 +921,8 @@ export default function JourneysPage() {
           </div>
         </DialogContent>
         <DialogFooter>
-          <Button variant="outline" onClick={() => setAddStepOpen(false)}>Отмена</Button>
-          <Button onClick={confirmAddStep}>Добавить</Button>
+          <Button variant="outline" onClick={() => setAddStepOpen(false)}>{tc("cancel")}</Button>
+          <Button onClick={confirmAddStep}>{tc("add")}</Button>
         </DialogFooter>
       </Dialog>
 
@@ -941,7 +943,7 @@ export default function JourneysPage() {
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium truncate">{selectedLead.contactName}</p>
                 <p className="text-xs text-muted-foreground truncate">
-                  {[selectedLead.email, selectedLead.companyName].filter(Boolean).join(" · ") || "Без email"}
+                  {[selectedLead.email, selectedLead.companyName].filter(Boolean).join(" · ") || t("noEmail")}
                 </p>
               </div>
               <button
@@ -956,13 +958,13 @@ export default function JourneysPage() {
           {/* Search input */}
           {!selectedLead && (
             <div className="space-y-2">
-              <Label className="text-xs text-muted-foreground">Поиск по имени, email или компании</Label>
+              <Label className="text-xs text-muted-foreground">{t("searchByNameEmailCompany")}</Label>
               <div className="relative">
                 <Users className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   value={leadSearch}
                   onChange={e => setLeadSearch(e.target.value)}
-                  placeholder="Начните вводить имя лида..."
+                  placeholder={t("searchLeadPlaceholder")}
                   className="pl-9"
                   autoFocus
                 />
@@ -973,11 +975,11 @@ export default function JourneysPage() {
                 {leadsLoading ? (
                   <div className="flex items-center justify-center py-8 text-muted-foreground">
                     <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                    Загрузка лидов...
+                    {t("loadingLeads")}
                   </div>
                 ) : filteredLeads.length === 0 ? (
                   <div className="py-8 text-center text-sm text-muted-foreground">
-                    {leadSearch ? "Ничего не найдено" : "Нет доступных лидов"}
+                    {leadSearch ? t("noResults") : t("noLeadsAvailable")}
                   </div>
                 ) : (
                   filteredLeads.map(lead => (
@@ -992,7 +994,7 @@ export default function JourneysPage() {
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium truncate">{lead.contactName}</p>
                         <p className="text-xs text-muted-foreground truncate">
-                          {[lead.email, lead.companyName].filter(Boolean).join(" · ") || "Без данных"}
+                          {[lead.email, lead.companyName].filter(Boolean).join(" · ") || t("noData")}
                         </p>
                       </div>
                       <span className={cn(
@@ -1002,27 +1004,27 @@ export default function JourneysPage() {
                         lead.status === "contacted" ? "bg-yellow-100 text-yellow-700" :
                         "bg-muted text-muted-foreground"
                       )}>
-                        {lead.status === "new" ? "Новый" :
-                         lead.status === "qualified" ? "Квалифицирован" :
-                         lead.status === "contacted" ? "Связались" :
-                         lead.status === "converted" ? "Конвертирован" :
-                         lead.status === "lost" ? "Потерян" : lead.status}
+                        {lead.status === "new" ? t("leadStatusNew") :
+                         lead.status === "qualified" ? t("leadStatusQualified") :
+                         lead.status === "contacted" ? t("leadStatusContacted") :
+                         lead.status === "converted" ? t("leadStatusConverted") :
+                         lead.status === "lost" ? t("leadStatusLost") : lead.status}
                       </span>
                     </button>
                   ))
                 )}
               </div>
               <p className="text-[11px] text-muted-foreground">
-                {filteredLeads.length} из {leads.length} лидов
+                {t("leadsCount", { filtered: filteredLeads.length, total: leads.length })}
               </p>
             </div>
           )}
         </DialogContent>
         <DialogFooter>
-          <Button variant="outline" onClick={() => { setEnrollOpen(null); setSelectedLead(null); setLeadSearch("") }}>Отмена</Button>
+          <Button variant="outline" onClick={() => { setEnrollOpen(null); setSelectedLead(null); setLeadSearch("") }}>{tc("cancel")}</Button>
           <Button onClick={handleEnroll} disabled={enrolling || !selectedLead} className="gap-1.5">
             {enrolling ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserPlus className="h-4 w-4" />}
-            Записать
+            {t("enrollButton")}
           </Button>
         </DialogFooter>
       </Dialog>
