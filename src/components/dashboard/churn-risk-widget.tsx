@@ -13,6 +13,19 @@ interface ChurnItem {
   lastActivity: string | null
 }
 
+function translateChurnFactor(factor: string, t: (key: string, params?: Record<string, string | number>) => string): string {
+  if (factor.startsWith("noActivity:")) {
+    const days = parseInt(factor.split(":")[1], 10)
+    return t("churnNoActivity", { days })
+  }
+  if (factor.startsWith("openTickets:")) {
+    const count = parseInt(factor.split(":")[1], 10)
+    return t("churnOpenTickets", { count })
+  }
+  if (factor === "noActiveDeals") return t("churnNoActiveDeals")
+  return factor // fallback for legacy strings
+}
+
 export function ChurnRiskWidget() {
   const t = useTranslations("dashboard")
   const [data, setData] = useState<ChurnItem[]>([])
@@ -35,7 +48,7 @@ export function ChurnRiskWidget() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           title: `Check-in: ${item.companyName}`,
-          description: t("churnTaskDesc", { score: item.riskScore, factors: item.factors.join(", ") }),
+          description: t("churnTaskDesc", { score: item.riskScore, factors: item.factors.map(f => translateChurnFactor(f, t)).join(", ") }),
           priority: item.riskScore >= 60 ? "high" : "medium",
           relatedType: "company",
           relatedId: item.companyId,
@@ -67,7 +80,7 @@ export function ChurnRiskWidget() {
             >
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-medium truncate group-hover:text-primary transition-colors">{item.companyName}</p>
-                <p className="text-[10px] text-muted-foreground truncate">{item.factors[0]}</p>
+                <p className="text-[10px] text-muted-foreground truncate">{translateChurnFactor(item.factors[0], t)}</p>
               </div>
               <div className="flex items-center gap-1.5 shrink-0">
                 <div className="w-12 h-1.5 rounded-full bg-muted overflow-hidden">

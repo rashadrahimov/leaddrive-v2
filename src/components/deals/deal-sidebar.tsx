@@ -143,8 +143,8 @@ function AddTeamMemberForm({ dealId, orgId, onDone }: { dealId: string; orgId?: 
             <option value="support">{tc("support")}</option>
           </Select>
           <div className="flex gap-1.5">
-            {error && <p className="text-[10px] text-red-500 col-span-full">{error}</p>}
-            <Button size="sm" className="flex-1 h-7 text-[10px]" onClick={handleSave} disabled={!selectedUserId || saving}>
+            {error && <p className="text-xs text-red-500 col-span-full">{error}</p>}
+            <Button size="sm" className="flex-1 h-7 text-xs" onClick={handleSave} disabled={!selectedUserId || saving}>
               {saving ? <Loader2 className="h-3 w-3 animate-spin" /> : tc("save")}
             </Button>
           </div>
@@ -240,7 +240,7 @@ function AddContactRoleForm({ dealId, orgId, onDone }: { dealId: string; orgId?:
                   </div>
                   <div className="flex-1 min-w-0">
                     <span className="text-xs font-medium truncate block">{c.fullName}</span>
-                    {c.position && <span className="text-[10px] text-muted-foreground truncate block">{c.position}</span>}
+                    {c.position && <span className="text-xs text-muted-foreground truncate block">{c.position}</span>}
                   </div>
                   {selectedContactId === c.id && <Check className="h-3 w-3 text-primary flex-shrink-0" />}
                 </button>
@@ -275,7 +275,7 @@ function AddContactRoleForm({ dealId, orgId, onDone }: { dealId: string; orgId?:
 
           {/* Cashback */}
           <div className="space-y-1">
-            <p className="text-[10px] font-medium text-muted-foreground">{tc("cashback")}</p>
+            <p className="text-xs font-medium text-muted-foreground">{tc("cashback")}</p>
             <div className="flex gap-1.5">
               <Select value={cashbackType} onChange={e => setCashbackType(e.target.value)} className="h-7 text-xs flex-1">
                 <option value="">{tc("noCashback")}</option>
@@ -294,8 +294,8 @@ function AddContactRoleForm({ dealId, orgId, onDone }: { dealId: string; orgId?:
             </div>
           </div>
 
-          {error && <p className="text-[10px] text-red-500">{error}</p>}
-          <Button size="sm" className="w-full h-7 text-[10px]" onClick={handleSave} disabled={!selectedContactId || saving}>
+          {error && <p className="text-xs text-red-500">{error}</p>}
+          <Button size="sm" className="w-full h-7 text-xs" onClick={handleSave} disabled={!selectedContactId || saving}>
             {saving ? <Loader2 className="h-3 w-3 animate-spin" /> : tc("save")}
           </Button>
         </>
@@ -359,8 +359,8 @@ function AddCompetitorForm({ dealId, orgId, onDone }: { dealId: string; orgId?: 
           <option value="Low">{tc("low")}</option>
         </Select>
       </div>
-      {error && <p className="text-[10px] text-red-500">{error}</p>}
-      <Button size="sm" className="w-full h-7 text-[10px]" onClick={handleSave} disabled={!name.trim() || saving}>
+      {error && <p className="text-xs text-red-500">{error}</p>}
+      <Button size="sm" className="w-full h-7 text-xs" onClick={handleSave} disabled={!name.trim() || saving}>
         {saving ? <Loader2 className="h-3 w-3 animate-spin" /> : tc("save")}
       </Button>
     </div>

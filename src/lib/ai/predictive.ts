@@ -238,11 +238,11 @@ export async function calculateChurnRisk(orgId: string): Promise<ChurnRisk[]> {
     const lastActivity = company.activities[0]?.createdAt || null
     const days = daysSince(lastActivity)
 
-    if (days > 60) { risk += 40; factors.push(`Нет активности ${days} дней`) }
-    else if (days > 30) { risk += 20; factors.push(`Нет активности ${days} дней`) }
+    if (days > 60) { risk += 40; factors.push(`noActivity:${days}`) }
+    else if (days > 30) { risk += 20; factors.push(`noActivity:${days}`) }
 
-    if (company.tickets.length > 3) { risk += 20; factors.push(`${company.tickets.length} открытых тикетов`) }
-    if (company.deals.length === 0) { risk += 15; factors.push("Нет активных сделок") }
+    if (company.tickets.length > 3) { risk += 20; factors.push(`openTickets:${company.tickets.length}`) }
+    if (company.deals.length === 0) { risk += 15; factors.push("noActiveDeals") }
 
     if (risk > 20) {
       results.push({
