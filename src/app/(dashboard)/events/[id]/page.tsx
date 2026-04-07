@@ -56,6 +56,39 @@ export default function EventDetailPage() {
   const [editOpen, setEditOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
 
+  const STATUS_LABELS: Record<string, string> = {
+    planned: t("statusPlanned"),
+    registration_open: t("statusRegistrationOpen"),
+    in_progress: t("statusInProgress"),
+    completed: t("statusCompleted"),
+    cancelled: t("statusCancelled"),
+  }
+
+  const TYPE_LABELS: Record<string, string> = {
+    conference: t("typeConference"),
+    webinar: t("typeWebinar"),
+    workshop: t("typeWorkshop"),
+    meetup: t("typeMeetup"),
+    exhibition: t("typeExhibition"),
+    other: t("typeOther"),
+  }
+
+  const PARTICIPANT_STATUS_LABELS: Record<string, string> = {
+    registered: t("pStatusRegistered"),
+    confirmed: t("pStatusConfirmed"),
+    attended: t("pStatusAttended"),
+    cancelled: t("pStatusCancelled"),
+    no_show: t("pStatusNoShow"),
+  }
+
+  const ROLE_LABELS: Record<string, string> = {
+    attendee: t("roleAttendee"),
+    speaker: t("roleSpeaker"),
+    sponsor: t("roleSponsor"),
+    organizer: t("roleOrganizer"),
+    vip: t("roleVip"),
+  }
+
   // Registration link
   const [linkCopied, setLinkCopied] = useState(false)
 
@@ -141,13 +174,13 @@ export default function EventDetailPage() {
         return
       }
       if (Array.isArray(json.data) && json.data.length === 0) {
-        setAddError("Participant was not added — check data")
+        setAddError(t("participantNotAdded"))
         return
       }
       await fetchEvent()
     } catch (err: any) {
       console.error("[ADD_PARTICIPANT] CRM error:", err)
-      setAddError(err.message || "Network error")
+      setAddError(err.message || t("networkError"))
     } finally {
       setAddingParticipant(false)
     }
@@ -170,14 +203,14 @@ export default function EventDetailPage() {
         return
       }
       if (Array.isArray(json.data) && json.data.length === 0) {
-        setAddError("Participant was not added — check data")
+        setAddError(t("participantNotAdded"))
         return
       }
       setPName(""); setPEmail(""); setPPhone("")
       await fetchEvent()
     } catch (err: any) {
       console.error("[ADD_PARTICIPANT] Manual error:", err)
-      setAddError(err.message || "Network error")
+      setAddError(err.message || t("networkError"))
     } finally {
       setAddingParticipant(false)
     }
@@ -185,7 +218,7 @@ export default function EventDetailPage() {
 
   const sendInvitesToAll = async () => {
     const ids = (event.participants || []).filter((p: any) => p.email && p.inviteStatus !== "sent").map((p: any) => p.id)
-    if (ids.length === 0) { setInviteResult("All participants already invited"); return }
+    if (ids.length === 0) { setInviteResult(t("allAlreadyInvited")); return }
     setSendingInvites(true)
     setInviteResult(null)
     try {
@@ -198,11 +231,11 @@ export default function EventDetailPage() {
       if (json.success) {
         const d = json.data
         setInviteResult(d.smtpConfigured
-          ? `Sent ${d.sent}/${d.total} invitations via email`
-          : `Marked ${d.total} as invited (SMTP not configured — configure in Settings → SMTP)`)
+          ? t("invitesSentResult", { sent: d.sent, total: d.total })
+          : t("invitesMarkedResult", { total: d.total }))
       }
       await fetchEvent()
-    } catch { setInviteResult("Error sending invitations") }
+    } catch { setInviteResult(t("inviteError")) }
     finally { setSendingInvites(false) }
   }
 
@@ -216,8 +249,8 @@ export default function EventDetailPage() {
       const json = await res.json()
       if (json.success) {
         setInviteResult(json.data?.smtpConfigured
-          ? `Sent invitation to 1 participant`
-          : `Marked as invited (SMTP not configured)`)
+          ? t("inviteSentToOne")
+          : t("inviteMarkedNoSmtp"))
       }
     } catch (err) { console.error(err) }
     await fetchEvent()
@@ -296,8 +329,8 @@ export default function EventDetailPage() {
             <div>
               <h1 className="text-xl font-bold truncate">{event.name}</h1>
               <div className="flex items-center gap-2">
-                <Badge className={STATUS_STYLES[event.status] || ""}>{event.status?.replace(/_/g, " ")}</Badge>
-                <Badge variant="outline" className="text-xs">{event.type}</Badge>
+                <Badge className={STATUS_STYLES[event.status] || ""}>{STATUS_LABELS[event.status] || event.status}</Badge>
+                <Badge variant="outline" className="text-xs">{TYPE_LABELS[event.type] || event.type}</Badge>
                 {event.isOnline && <Badge variant="outline" className="text-xs"><Globe className="h-3 w-3 mr-1" /> {t("online")}</Badge>}
                 {event.location && (
                   <span className="text-xs text-muted-foreground flex items-center gap-1">
@@ -339,7 +372,7 @@ export default function EventDetailPage() {
                 isActive ? "bg-primary text-white shadow-md" :
                 isPast ? "bg-primary/20 text-primary" : "bg-muted text-muted-foreground hover:bg-muted/80"
               }`}
-            >{s.replace(/_/g, " ")}</button>
+            >{STATUS_LABELS[s] || s.replace(/_/g, " ")}</button>
           )
         })}
       </div>
@@ -396,7 +429,7 @@ export default function EventDetailPage() {
                   { label: tc("endDate"), value: event.endDate ? new Date(event.endDate).toLocaleString(undefined) : "—" },
                   { label: t("location"), value: event.location || "—" },
                   { label: t("online"), value: event.isOnline ? tc("yes") : tc("no") },
-                  { label: "Meeting URL", value: event.meetingUrl || "—" },
+                  { label: t("meetingUrl"), value: event.meetingUrl || "—" },
                   { label: tc("createdAt"), value: new Date(event.createdAt).toLocaleString(undefined) },
                 ].map(d => (
                   <div key={d.label} className="flex justify-between text-sm">
@@ -434,12 +467,12 @@ export default function EventDetailPage() {
               </CardHeader>
               <CardContent className="space-y-3">
                 {[
-                  { label: tc("budget"), value: `${(event.budget || 0).toLocaleString()} ₼` },
-                  { label: tc("cost"), value: `${(event.actualCost || 0).toLocaleString()} ₼` },
-                  { label: tc("revenue"), value: `${(event.expectedRevenue || 0).toLocaleString()} ₼` },
-                  { label: tc("revenue"), value: `${(event.actualRevenue || 0).toLocaleString()} ₼` },
+                  { key: "budget", label: tc("budget"), value: `${(event.budget || 0).toLocaleString()} ₼` },
+                  { key: "cost", label: tc("cost"), value: `${(event.actualCost || 0).toLocaleString()} ₼` },
+                  { key: "expectedRevenue", label: t("expectedRevenue"), value: `${(event.expectedRevenue || 0).toLocaleString()} ₼` },
+                  { key: "actualRevenue", label: t("actualRevenue"), value: `${(event.actualRevenue || 0).toLocaleString()} ₼` },
                 ].map(f => (
-                  <div key={f.label} className="flex justify-between text-sm">
+                  <div key={f.key} className="flex justify-between text-sm">
                     <span className="text-muted-foreground">{f.label}</span>
                     <span className="font-medium">{f.value}</span>
                   </div>
@@ -449,15 +482,15 @@ export default function EventDetailPage() {
 
             <Card className="border-none shadow-sm">
               <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">KPIs</CardTitle>
+                <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">{t("kpis")}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 {[
-                  { label: "Cost per attendee", value: event.attendedCount > 0 ? `${Math.round((event.actualCost || 0) / event.attendedCount)} ₼` : "—" },
-                  { label: "Revenue per attendee", value: event.attendedCount > 0 ? `${Math.round((event.actualRevenue || 0) / event.attendedCount)} ₼` : "—" },
+                  { label: t("costPerAttendee"), value: event.attendedCount > 0 ? `${Math.round((event.actualCost || 0) / event.attendedCount)} ₼` : "—" },
+                  { label: t("revenuePerAttendee"), value: event.attendedCount > 0 ? `${Math.round((event.actualRevenue || 0) / event.attendedCount)} ₼` : "—" },
                   { label: "ROI", value: roi !== null ? `${roi}%` : "—" },
-                  { label: "Attendance rate", value: `${attendanceRate}%` },
-                  { label: "Budget utilization", value: event.budget > 0 ? `${Math.round(((event.actualCost || 0) / event.budget) * 100)}%` : "—" },
+                  { label: t("attendanceRate"), value: `${attendanceRate}%` },
+                  { label: t("budgetUtilization"), value: event.budget > 0 ? `${Math.round(((event.actualCost || 0) / event.budget) * 100)}%` : "—" },
                 ].map(k => (
                   <div key={k.label} className="flex justify-between text-sm">
                     <span className="text-muted-foreground">{k.label}</span>
@@ -478,11 +511,11 @@ export default function EventDetailPage() {
                 <div className="flex items-center gap-2 text-xs">
                   <span className="flex items-center gap-1 text-green-600">
                     <MailCheck className="h-3 w-3" />
-                    {(event.participants || []).filter((p: any) => p.inviteStatus === "sent").length} invited
+                    {(event.participants || []).filter((p: any) => p.inviteStatus === "sent").length} {t("invited")}
                   </span>
                   <span className="flex items-center gap-1 text-muted-foreground">
                     <MailX className="h-3 w-3" />
-                    {(event.participants || []).filter((p: any) => p.inviteStatus !== "sent").length} not sent
+                    {(event.participants || []).filter((p: any) => p.inviteStatus !== "sent").length} {t("notSent")}
                   </span>
                 </div>
               )}
@@ -491,7 +524,7 @@ export default function EventDetailPage() {
               {event.participants?.length > 0 && (
                 <Button size="sm" variant="outline" className="gap-1 text-xs" onClick={sendInvitesToAll} disabled={sendingInvites}>
                   {sendingInvites ? <Loader2 className="h-3 w-3 animate-spin" /> : <Send className="h-3 w-3" />}
-                  Send All Invitations
+                  {t("sendAllInvitations")}
                 </Button>
               )}
               <Button size="sm" className="gap-1" onClick={() => setShowAddPanel(!showAddPanel)}>
@@ -524,19 +557,19 @@ export default function EventDetailPage() {
                 {/* Mode toggle */}
                 <div className="flex gap-1">
                   <Button size="sm" variant={addMode === "crm" ? "default" : "outline"} className="h-7 text-xs" onClick={() => setAddMode("crm")}>
-                    <Users className="h-3 w-3 mr-1" /> From CRM Contacts
+                    <Users className="h-3 w-3 mr-1" /> {t("fromCrmContacts")}
                   </Button>
                   <Button size="sm" variant={addMode === "manual" ? "default" : "outline"} className="h-7 text-xs" onClick={() => setAddMode("manual")}>
-                    <UserPlus className="h-3 w-3 mr-1" /> Manual Entry
+                    <UserPlus className="h-3 w-3 mr-1" /> {t("manualEntry")}
                   </Button>
                 </div>
 
                 {/* Role selector */}
                 <div className="flex items-center gap-2">
-                  <label className="text-xs text-muted-foreground">Role:</label>
+                  <label className="text-xs text-muted-foreground">{tc("role")}:</label>
                   <select className="h-7 border rounded-md px-2 text-xs" value={pRole} onChange={e => setPRole(e.target.value)}>
                     {["attendee","speaker","sponsor","organizer","vip"].map(r => (
-                      <option key={r} value={r}>{r}</option>
+                      <option key={r} value={r}>{ROLE_LABELS[r] || r}</option>
                     ))}
                   </select>
                 </div>
@@ -547,7 +580,7 @@ export default function EventDetailPage() {
                       <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
                       <Input
                         className="pl-8 h-8 text-sm"
-                        placeholder="Search contacts by name or email..."
+                        placeholder={t("searchContactsPlaceholder")}
                         value={contactSearch}
                         onChange={e => setContactSearch(e.target.value)}
                       />
@@ -578,15 +611,15 @@ export default function EventDetailPage() {
                 ) : (
                   <div className="flex gap-2 items-end flex-wrap">
                     <div>
-                      <label className="text-xs text-muted-foreground">Name *</label>
+                      <label className="text-xs text-muted-foreground">{tc("name")} *</label>
                       <Input className="h-8 w-44" value={pName} onChange={e => setPName(e.target.value)} />
                     </div>
                     <div>
-                      <label className="text-xs text-muted-foreground">Email</label>
+                      <label className="text-xs text-muted-foreground">{tc("email")}</label>
                       <Input className="h-8 w-44" value={pEmail} onChange={e => setPEmail(e.target.value)} />
                     </div>
                     <div>
-                      <label className="text-xs text-muted-foreground">Phone</label>
+                      <label className="text-xs text-muted-foreground">{tc("phone")}</label>
                       <Input className="h-8 w-36" value={pPhone} onChange={e => setPPhone(e.target.value)} />
                     </div>
                     <Button size="sm" className="h-8" onClick={addManualParticipant} disabled={addingParticipant}>
@@ -638,7 +671,7 @@ export default function EventDetailPage() {
                             value={p.role}
                             onChange={e => updateParticipantField(p.id, "role", e.target.value)}
                           >
-                            {["attendee","speaker","sponsor","organizer","vip"].map(r => <option key={r} value={r}>{r}</option>)}
+                            {["attendee","speaker","sponsor","organizer","vip"].map(r => <option key={r} value={r}>{ROLE_LABELS[r] || r}</option>)}
                           </select>
                         </td>
                         <td className="p-3">
@@ -647,7 +680,7 @@ export default function EventDetailPage() {
                             value={p.status}
                             onChange={e => updateParticipantField(p.id, "status", e.target.value)}
                           >
-                            {["registered","confirmed","attended","cancelled","no_show"].map(s => <option key={s} value={s}>{s.replace(/_/g, " ")}</option>)}
+                            {["registered","confirmed","attended","cancelled","no_show"].map(s => <option key={s} value={s}>{PARTICIPANT_STATUS_LABELS[s] || s.replace(/_/g, " ")}</option>)}
                           </select>
                         </td>
                         <td className="p-3">
@@ -655,15 +688,15 @@ export default function EventDetailPage() {
                             <div className="flex items-center gap-1.5">
                               <span className="flex items-center gap-1 text-xs text-green-600">
                                 <MailCheck className="h-3 w-3" />
-                                {p.invitedAt ? new Date(p.invitedAt).toLocaleDateString(undefined) : "Sent"}
+                                {p.invitedAt ? new Date(p.invitedAt).toLocaleDateString(undefined) : t("inviteSent")}
                               </span>
                               {p.email && (
                                 <button
                                   onClick={() => sendInviteToOne(p.id)}
                                   className="text-[10px] text-primary hover:text-primary/80 hover:underline"
-                                  title="Resend invitation"
+                                  title={t("resendInvitation")}
                                 >
-                                  Resend
+                                  {t("resend")}
                                 </button>
                               )}
                             </div>
@@ -671,11 +704,11 @@ export default function EventDetailPage() {
                             <button
                               onClick={() => sendInviteToOne(p.id)}
                               className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors font-medium"
-                              title={p.email ? "Send invitation" : "No email"}
+                              title={p.email ? t("sendInvitation") : t("noEmail")}
                               disabled={!p.email}
                             >
                               <Send className="h-3 w-3" />
-                              {p.email ? "Send invite" : "No email"}
+                              {p.email ? t("sendInvite") : t("noEmail")}
                             </button>
                           )}
                         </td>
@@ -684,7 +717,7 @@ export default function EventDetailPage() {
                         </td>
                         <td className="p-3 text-right">
                           <div className="flex items-center gap-1 justify-end">
-                            <Button variant="ghost" size="icon" className="h-7 w-7" title="Remove"
+                            <Button variant="ghost" size="icon" className="h-7 w-7" title={tc("delete")}
                               onClick={() => removeParticipant(p.id)}>
                               <X className="h-3.5 w-3.5 text-red-400" />
                             </Button>

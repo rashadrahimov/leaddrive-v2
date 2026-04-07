@@ -219,7 +219,7 @@ export default function EventsPage() {
                       {/* Date block */}
                       <div className="flex-shrink-0 w-14 h-14 rounded-xl bg-primary/10 flex flex-col items-center justify-center">
                         <span className="text-xs font-medium text-primary uppercase">
-                          {new Date(event.startDate).toLocaleString("en", { month: "short" })}
+                          {new Date(event.startDate).toLocaleString(undefined, { month: "short" })}
                         </span>
                         <span className="text-xl font-bold text-primary leading-tight">
                           {new Date(event.startDate).getDate()}

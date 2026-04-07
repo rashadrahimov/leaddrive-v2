@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useTranslations } from "next-intl"
 import { MiniLineChart } from "@/components/charts/mini-charts"
 import { cn } from "@/lib/utils"
 import {
@@ -106,11 +107,11 @@ function formatShortDate(dateStr: string): string {
   return d.toLocaleDateString(undefined, { day: "numeric", month: "short" })
 }
 
-const STATUS_MAP: Record<string, { label: string; className: string }> = {
-  open: { label: "Qeydiyyat aciq", className: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" },
-  planned: { label: "Planlasdirilib", className: "bg-primary/10 text-primary border-primary/20" },
-  completed: { label: "Tamamlandi", className: "bg-muted text-muted-foreground border-border" },
-  cancelled: { label: "Legv edildi", className: "bg-red-500/10 text-red-400 border-red-500/20" },
+const STATUS_MAP: Record<string, { labelKey: string; className: string }> = {
+  open: { labelKey: "statusRegistrationOpen", className: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" },
+  planned: { labelKey: "statusPlanned", className: "bg-primary/10 text-primary border-primary/20" },
+  completed: { labelKey: "statusCompleted", className: "bg-muted text-muted-foreground border-border" },
+  cancelled: { labelKey: "statusCancelled", className: "bg-red-500/10 text-red-400 border-red-500/20" },
 }
 
 const ROLE_STYLES: Record<string, string> = {
@@ -138,6 +139,8 @@ const CALENDAR_DOT_COLORS: Record<string, string> = {
 // ─── Component ──────────────────────────────────────────────────────────────
 
 export function EventsAnalytics({ events }: EventsAnalyticsProps) {
+  const t = useTranslations("events")
+  const tc = useTranslations("common")
   const [selectedEventId, setSelectedEventId] = useState<string | null>(
     events.length > 0 ? events[0].id : null
   )
@@ -161,16 +164,16 @@ export function EventsAnalytics({ events }: EventsAnalyticsProps) {
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-semibold flex items-center gap-2">
               <CalendarDays className="w-4 h-4 text-violet-400" />
-              Tedbirler
+              {t("title")}
             </h3>
             <button className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg bg-violet-600 hover:bg-violet-500 text-white transition-colors">
               <Plus className="w-3.5 h-3.5" />
-              Yeni
+              {t("newEvent")}
             </button>
           </div>
 
           {events.length === 0 ? (
-            <div className="text-center py-8 text-sm text-muted-foreground">Tedbir tapilmadi</div>
+            <div className="text-center py-8 text-sm text-muted-foreground">{t("noEventsYet")}</div>
           ) : (
             <div className="space-y-1.5 max-h-[340px] overflow-y-auto pr-1">
               {events.map((ev) => {
@@ -204,7 +207,7 @@ export function EventsAnalytics({ events }: EventsAnalyticsProps) {
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-medium truncate">{ev.name}</span>
                         <span className={cn("text-[10px] font-medium px-1.5 py-0.5 rounded-full border shrink-0", st.className)}>
-                          {st.label}
+                          {t(st.labelKey)}
                         </span>
                       </div>
                       <div className="flex items-center gap-3 mt-0.5 text-xs text-muted-foreground">
@@ -214,7 +217,7 @@ export function EventsAnalytics({ events }: EventsAnalyticsProps) {
                         </span>
                         <span className="flex items-center gap-1">
                           <MapPin className="w-3 h-3" />
-                          {ev.isOnline ? "Zoom" : ev.location || "Ofis"}
+                          {ev.isOnline ? "Zoom" : ev.location || t("location")}
                         </span>
                         <span className="flex items-center gap-1">
                           <Users className="w-3 h-3" />
@@ -233,7 +236,7 @@ export function EventsAnalytics({ events }: EventsAnalyticsProps) {
         <div className="lg:col-span-2 bg-card rounded-xl border p-4">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-semibold">
-              Istiraklarcilar — {selectedEvent?.name ?? "—"}
+              {t("participants")} — {selectedEvent?.name ?? "—"}
             </h3>
             <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-violet-500/10 text-violet-400 border border-violet-500/20 tabular-nums">
               {registered}/{capacity}
@@ -258,7 +261,7 @@ export function EventsAnalytics({ events }: EventsAnalyticsProps) {
                   ROLE_STYLES[att.role] ?? ROLE_STYLES.Attendee
                 )}>
                   {ROLE_ICONS[att.role]}
-                  {att.role}
+                  {t(`role${att.role}`)}
                 </span>
               </div>
             ))}
@@ -267,10 +270,10 @@ export function EventsAnalytics({ events }: EventsAnalyticsProps) {
           {/* Bottom stats */}
           <div className="mt-4 pt-3 border-t grid grid-cols-4 gap-2">
             {[
-              { label: "Gonderildi", value: MOCK_INVITE_STATS.sent, icon: <Send className="w-3 h-3" />, color: "text-blue-400" },
-              { label: "Acildi", value: MOCK_INVITE_STATS.opened, icon: <Eye className="w-3 h-3" />, color: "text-amber-400" },
-              { label: "Tesdiqlenib", value: MOCK_INVITE_STATS.confirmed, icon: <CheckCircle2 className="w-3 h-3" />, color: "text-emerald-400" },
-              { label: "Redd etdi", value: MOCK_INVITE_STATS.declined, icon: <XCircle className="w-3 h-3" />, color: "text-red-400" },
+              { label: t("inviteSent"), value: MOCK_INVITE_STATS.sent, icon: <Send className="w-3 h-3" />, color: "text-blue-400" },
+              { label: t("inviteOpened"), value: MOCK_INVITE_STATS.opened, icon: <Eye className="w-3 h-3" />, color: "text-amber-400" },
+              { label: t("inviteConfirmed"), value: MOCK_INVITE_STATS.confirmed, icon: <CheckCircle2 className="w-3 h-3" />, color: "text-emerald-400" },
+              { label: t("inviteDeclined"), value: MOCK_INVITE_STATS.declined, icon: <XCircle className="w-3 h-3" />, color: "text-red-400" },
             ].map((s) => (
               <div key={s.label} className="text-center">
                 <div className={cn("flex items-center justify-center gap-1 text-xs mb-0.5", s.color)}>
@@ -290,18 +293,18 @@ export function EventsAnalytics({ events }: EventsAnalyticsProps) {
         <div className="bg-card rounded-xl border p-4">
           <h3 className="text-sm font-semibold flex items-center gap-2 mb-4">
             <DollarSign className="w-4 h-4 text-emerald-400" />
-            Budce & ROI
+            {t("budgetAndRoi")}
           </h3>
 
           <div className="space-y-3">
             {/* Budget row */}
             <div>
               <div className="flex items-center justify-between text-xs mb-1">
-                <span className="text-muted-foreground">Budce</span>
+                <span className="text-muted-foreground">{t("budget")}</span>
                 <span className="font-bold tabular-nums">{"\u20BC"}{fmt(MOCK_BUDGET.total)}</span>
               </div>
               <div className="flex items-center justify-between text-xs mb-1.5">
-                <span className="text-muted-foreground">Xerclendi</span>
+                <span className="text-muted-foreground">{t("spent")}</span>
                 <span className="font-bold tabular-nums">{"\u20BC"}{fmt(MOCK_BUDGET.spent)}</span>
               </div>
               {/* Progress bar */}
@@ -315,7 +318,7 @@ export function EventsAnalytics({ events }: EventsAnalyticsProps) {
 
             {/* Revenue */}
             <div className="flex items-center justify-between text-xs pt-2 border-t">
-              <span className="text-muted-foreground">Gelir</span>
+              <span className="text-muted-foreground">{t("revenue")}</span>
               <span className="font-bold text-emerald-400 tabular-nums">{"\u20BC"}{fmt(MOCK_BUDGET.revenue)}</span>
             </div>
 
@@ -330,7 +333,7 @@ export function EventsAnalytics({ events }: EventsAnalyticsProps) {
 
             {/* Per attendee */}
             <div className="flex items-center justify-between text-xs">
-              <span className="text-muted-foreground">Her istirakci</span>
+              <span className="text-muted-foreground">{t("perAttendee")}</span>
               <span className="font-bold tabular-nums">{"\u20BC"}{fmt(MOCK_BUDGET.perAttendee)}</span>
             </div>
           </div>
@@ -340,7 +343,7 @@ export function EventsAnalytics({ events }: EventsAnalyticsProps) {
         <div className="bg-card rounded-xl border p-4">
           <h3 className="text-sm font-semibold flex items-center gap-2 mb-4">
             <CalendarCheck className="w-4 h-4 text-blue-400" />
-            Tedbir Teqvimi
+            {t("eventCalendar")}
           </h3>
 
           <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1">
@@ -373,13 +376,13 @@ export function EventsAnalytics({ events }: EventsAnalyticsProps) {
         <div className="bg-card rounded-xl border p-4">
           <h3 className="text-sm font-semibold flex items-center gap-2 mb-4">
             <Link2 className="w-4 h-4 text-amber-400" />
-            Qeydiyyat Portali
+            {t("registrationPortal")}
           </h3>
 
           {/* Registration link */}
           <div className="flex items-center gap-2 bg-muted/50 rounded-lg px-3 py-2 mb-4">
             <code className="flex-1 text-xs text-muted-foreground truncate">leaddrivecrm.org/r/ev014</code>
-            <button className="shrink-0 p-1 rounded hover:bg-muted transition-colors" title="Kopyala">
+            <button className="shrink-0 p-1 rounded hover:bg-muted transition-colors" title={tc("copy")}>
               <Copy className="w-3.5 h-3.5 text-muted-foreground" />
             </button>
           </div>
@@ -387,9 +390,9 @@ export function EventsAnalytics({ events }: EventsAnalyticsProps) {
           {/* Action buttons */}
           <div className="flex items-center gap-2 mb-4">
             {[
-              { label: "Devet", icon: <Mail className="w-3.5 h-3.5" />, className: "bg-violet-600 hover:bg-violet-500 text-white" },
+              { label: t("invite"), icon: <Mail className="w-3.5 h-3.5" />, className: "bg-violet-600 hover:bg-violet-500 text-white" },
               { label: "ICS", icon: <CalendarDays className="w-3.5 h-3.5" />, className: "bg-muted hover:bg-muted/80 text-foreground" },
-              { label: "Tesdiq", icon: <CheckCircle2 className="w-3.5 h-3.5" />, className: "bg-muted hover:bg-muted/80 text-foreground" },
+              { label: t("confirm"), icon: <CheckCircle2 className="w-3.5 h-3.5" />, className: "bg-muted hover:bg-muted/80 text-foreground" },
             ].map((btn) => (
               <button
                 key={btn.label}
@@ -403,11 +406,11 @@ export function EventsAnalytics({ events }: EventsAnalyticsProps) {
 
           {/* Registration dynamics mini chart */}
           <div>
-            <p className="text-xs text-muted-foreground mb-2">Qeydiyyat dinamikasi</p>
+            <p className="text-xs text-muted-foreground mb-2">{t("registrationDynamics")}</p>
             <MiniLineChart data={MOCK_REGISTRATION_CHART_DATA} color="stroke-violet-400" />
             <div className="flex items-center justify-between mt-1.5 text-[10px] text-muted-foreground">
-              <span>4 hefta evvel</span>
-              <span className="font-medium text-foreground tabular-nums">{registered} qeydiyyat</span>
+              <span>{t("weeksAgo", { count: 4 })}</span>
+              <span className="font-medium text-foreground tabular-nums">{t("registrationsCount", { count: registered })}</span>
             </div>
           </div>
         </div>
