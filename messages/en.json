@@ -176,6 +176,7 @@
     "contact": "Contact",
     "deal": "Deal",
     "lead": "Lead",
+    "ticket": "Ticket",
     "linkToEntity": "Link to...",
     "searchEntity": "Search by name...",
     "amount": "Amount",
@@ -1907,7 +1908,10 @@
     "hintTotalArticles": "Total number of knowledge base articles",
     "hintPublished": "Articles visible to portal users and customers",
     "hintDraft": "Articles still being written — not visible to customers",
-    "hintViews": "Number of times articles have been viewed"
+    "hintViews": "Number of times articles have been viewed",
+    "manageCategories": "Categories",
+    "newCategoryPlaceholder": "Category name...",
+    "noCategories": "No categories yet"
   },
   "settings": {
     "title": "Settings",

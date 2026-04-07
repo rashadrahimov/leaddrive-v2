@@ -34,6 +34,7 @@ export async function GET(req: NextRequest) {
         skip: (page - 1) * limit,
         take: limit,
         orderBy: { createdAt: "desc" },
+        include: { category: true },
       }),
       prisma.kbArticle.count({ where }),
     ])

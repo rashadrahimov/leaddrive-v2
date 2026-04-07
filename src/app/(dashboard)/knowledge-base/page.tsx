@@ -2,13 +2,14 @@
 
 import { useEffect, useState } from "react"
 import { useSession } from "next-auth/react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { KbArticleForm } from "@/components/kb-article-form"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
-import { BookOpen, Plus, Search, Eye, Pencil, Trash2, ChevronDown, ChevronRight, FileText, FolderOpen, GripVertical } from "lucide-react"
+import { Dialog, DialogHeader, DialogTitle, DialogContent, DialogFooter } from "@/components/ui/dialog"
+import { BookOpen, Plus, Search, Eye, Pencil, Trash2, ChevronDown, ChevronRight, FileText, FolderOpen, Settings2 } from "lucide-react"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
 
@@ -25,7 +26,12 @@ interface KbArticle {
   updatedAt: string
 }
 
-// Group articles by categoryId
+interface KbCategory {
+  id: string
+  name: string
+  _count?: { articles: number }
+}
+
 function groupByCategory(articles: KbArticle[]): Record<string, KbArticle[]> {
   const groups: Record<string, KbArticle[]> = {}
   for (const a of articles) {
@@ -36,11 +42,8 @@ function groupByCategory(articles: KbArticle[]): Record<string, KbArticle[]> {
   return groups
 }
 
-// Category labels moved inside component for i18n
-
 function getContentPreview(content?: string): string {
   if (!content) return ""
-  // Strip markdown/HTML and truncate
   const plain = content
     .replace(/#{1,6}\s/g, "")
     .replace(/\*\*(.+?)\*\*/g, "$1")
@@ -67,14 +70,17 @@ export default function KnowledgeBasePage() {
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [deleteName, setDeleteName] = useState("")
   const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set())
+  const [categories, setCategories] = useState<KbCategory[]>([])
+  const [showCatManager, setShowCatManager] = useState(false)
+  const [newCatName, setNewCatName] = useState("")
+  const [catSaving, setCatSaving] = useState(false)
   const orgId = session?.user?.organizationId
 
-  const catKeys: Record<string, string> = {
-    uncategorized: "noCategory", general: "categoryGeneral", technical: "categoryTechnical",
-    billing: "categoryBilling", faq: "categoryFaq", onboarding: "categoryOnboarding",
-    api: "categoryApi", security: "categorySecurity",
+  const getCategoryLabel = (catId: string) => {
+    if (catId === "uncategorized") return t("noCategory")
+    const cat = categories.find(c => c.id === catId)
+    return cat?.name || catId
   }
-  const getCategoryLabel = (cat: string) => catKeys[cat] ? t(catKeys[cat]) : cat.charAt(0).toUpperCase() + cat.slice(1)
 
   const fetchArticles = async () => {
     try {
@@ -89,7 +95,17 @@ export default function KnowledgeBasePage() {
     } catch (err) { console.error(err) } finally { setLoading(false) }
   }
 
-  useEffect(() => { fetchArticles() }, [session])
+  const fetchCategories = async () => {
+    try {
+      const res = await fetch("/api/v1/kb-categories", {
+        headers: orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>,
+      })
+      const json = await res.json()
+      if (json.success) setCategories(json.data)
+    } catch {}
+  }
+
+  useEffect(() => { fetchArticles(); fetchCategories() }, [session])
 
   const handleDelete = async () => {
     if (!deleteId) return
@@ -98,6 +114,35 @@ export default function KnowledgeBasePage() {
       headers: orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>,
     })
     if (!res.ok) throw new Error("Failed to delete")
+    fetchArticles()
+  }
+
+  const handleAddCategory = async () => {
+    if (!newCatName.trim()) return
+    setCatSaving(true)
+    try {
+      const res = await fetch("/api/v1/kb-categories", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>),
+        },
+        body: JSON.stringify({ name: newCatName.trim() }),
+      })
+      if (res.ok) {
+        setNewCatName("")
+        fetchCategories()
+      }
+    } catch {} finally { setCatSaving(false) }
+  }
+
+  const handleDeleteCategory = async (catId: string) => {
+    // Unset categoryId on articles, then delete category
+    await fetch(`/api/v1/kb-categories/${catId}`, {
+      method: "DELETE",
+      headers: orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>,
+    })
+    fetchCategories()
     fetchArticles()
   }
 
@@ -121,7 +166,7 @@ export default function KnowledgeBasePage() {
 
   const published = articles.filter(a => a.status === "published").length
   const totalViews = articles.reduce((s, a) => s + a.viewCount, 0)
-  const categories = [...new Set(articles.map(a => a.categoryId || "uncategorized"))]
+  const articleCatIds = [...new Set(articles.map(a => a.categoryId || "uncategorized"))]
   const grouped = groupByCategory(filtered)
 
   if (loading) {
@@ -144,9 +189,14 @@ export default function KnowledgeBasePage() {
           <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
           <p className="text-sm text-muted-foreground">{total} {t("articles")} · {published} {t("publishedArticles")} · {totalViews} {t("views")}</p>
         </div>
-        <Button onClick={() => { setEditData(undefined); setShowForm(true) }} size="sm">
-          <Plus className="h-4 w-4 mr-1" /> {t("newArticle")}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => setShowCatManager(true)}>
+            <Settings2 className="h-4 w-4 mr-1" /> {t("manageCategories") || "Categories"}
+          </Button>
+          <Button onClick={() => { setEditData(undefined); setShowForm(true) }} size="sm">
+            <Plus className="h-4 w-4 mr-1" /> {t("newArticle")}
+          </Button>
+        </div>
       </div>
 
       {/* Filters */}
@@ -166,16 +216,17 @@ export default function KnowledgeBasePage() {
             {t("filterDrafts")} ({total - published})
           </Button>
         </div>
-        {categories.length > 1 && (
+        {(categories.length > 0 || articleCatIds.length > 1) && (
           <select
             value={filterCategory}
             onChange={e => setFilterCategory(e.target.value)}
             className="h-9 rounded-md border bg-background px-2 text-sm"
           >
             <option value="all">{t("allCategories")}</option>
-            {categories.sort().map(cat => (
-              <option key={cat} value={cat}>{getCategoryLabel(cat)}</option>
+            {categories.map(cat => (
+              <option key={cat.id} value={cat.id}>{cat.name}</option>
             ))}
+            <option value="uncategorized">{t("noCategory")}</option>
           </select>
         )}
       </div>
@@ -189,7 +240,6 @@ export default function KnowledgeBasePage() {
               <p>{search ? t("noArticlesFound") : t("noArticles")}</p>
             </div>
           ) : filterCategory !== "all" ? (
-            // Flat list when category is filtered
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b bg-muted/30">
@@ -213,7 +263,6 @@ export default function KnowledgeBasePage() {
               </tbody>
             </table>
           ) : (
-            // Grouped by category
             Object.entries(grouped)
               .sort(([a], [b]) => a.localeCompare(b))
               .map(([cat, catArticles]) => (
@@ -253,7 +302,7 @@ export default function KnowledgeBasePage() {
       <KbArticleForm
         open={showForm}
         onOpenChange={(open) => { setShowForm(open); if (!open) setEditData(undefined) }}
-        onSaved={fetchArticles}
+        onSaved={() => { fetchArticles(); fetchCategories() }}
         initialData={editData ? { ...editData, tags: editData.tags.join(", ") } : undefined}
         orgId={orgId}
       />
@@ -265,6 +314,57 @@ export default function KnowledgeBasePage() {
         title={t("deleteArticle")}
         itemName={deleteName}
       />
+
+      {/* Category Management Modal */}
+      <Dialog open={showCatManager} onOpenChange={setShowCatManager}>
+        <DialogHeader>
+          <DialogTitle>{t("manageCategories") || "Manage Categories"}</DialogTitle>
+        </DialogHeader>
+        <DialogContent>
+          <div className="space-y-3">
+            {/* Add new category */}
+            <div className="flex gap-2">
+              <Input
+                value={newCatName}
+                onChange={e => setNewCatName(e.target.value)}
+                placeholder={t("newCategoryPlaceholder") || "Category name..."}
+                className="flex-1"
+                onKeyDown={e => e.key === "Enter" && handleAddCategory()}
+              />
+              <Button size="sm" onClick={handleAddCategory} disabled={catSaving || !newCatName.trim()}>
+                <Plus className="h-4 w-4 mr-1" /> {tc("add") || "Add"}
+              </Button>
+            </div>
+
+            {/* Category list */}
+            {categories.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-4">{t("noCategories") || "No categories yet"}</p>
+            ) : (
+              <div className="space-y-1">
+                {categories.map(cat => (
+                  <div key={cat.id} className="flex items-center justify-between px-3 py-2 rounded-md border bg-muted/20 hover:bg-muted/40 transition-colors">
+                    <div className="flex items-center gap-2">
+                      <FolderOpen className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm font-medium">{cat.name}</span>
+                      {cat._count && <Badge variant="secondary" className="text-[10px]">{cat._count.articles}</Badge>}
+                    </div>
+                    <button
+                      onClick={() => handleDeleteCategory(cat.id)}
+                      className="p-1 rounded hover:bg-muted"
+                      title={tc("delete")}
+                    >
+                      <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </DialogContent>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setShowCatManager(false)}>{tc("close") || tc("cancel")}</Button>
+        </DialogFooter>
+      </Dialog>
     </div>
   )
 }

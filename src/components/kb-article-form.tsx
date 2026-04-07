@@ -9,6 +9,12 @@ import { Textarea } from "@/components/ui/textarea"
 import { Dialog, DialogHeader, DialogTitle, DialogContent, DialogFooter } from "@/components/ui/dialog"
 import { useTranslations } from "next-intl"
 
+interface KbCategory {
+  id: string
+  name: string
+  _count?: { articles: number }
+}
+
 interface KbArticleFormData {
   title: string
   content: string
@@ -39,6 +45,7 @@ export function KbArticleForm({ open, onOpenChange, onSaved, initialData, orgId 
   })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState("")
+  const [categories, setCategories] = useState<KbCategory[]>([])
 
   useEffect(() => {
     if (open) {
@@ -50,8 +57,19 @@ export function KbArticleForm({ open, onOpenChange, onSaved, initialData, orgId 
         tags: initialData?.tags || "",
       })
       setError("")
+      fetchCategories()
     }
   }, [open, initialData])
+
+  const fetchCategories = async () => {
+    try {
+      const res = await fetch("/api/v1/kb-categories", {
+        headers: orgId ? { "x-organization-id": orgId } : {} as Record<string, string>,
+      })
+      const json = await res.json()
+      if (json.success) setCategories(json.data)
+    } catch {}
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -68,6 +86,7 @@ export function KbArticleForm({ open, onOpenChange, onSaved, initialData, orgId 
         },
         body: JSON.stringify({
           ...form,
+          categoryId: form.categoryId || undefined,
           tags: form.tags ? form.tags.split(",").map((t) => t.trim()).filter(Boolean) : [],
         }),
       })
@@ -104,7 +123,12 @@ export function KbArticleForm({ open, onOpenChange, onSaved, initialData, orgId 
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label htmlFor="categoryId">{tc("category")}</Label>
-                <Input id="categoryId" value={form.categoryId} onChange={(e) => update("categoryId", e.target.value)} />
+                <Select value={form.categoryId} onChange={(e) => update("categoryId", e.target.value)}>
+                  <option value="">{tk("noCategory")}</option>
+                  {categories.map((cat) => (
+                    <option key={cat.id} value={cat.id}>{cat.name}</option>
+                  ))}
+                </Select>
               </div>
               <div>
                 <Label htmlFor="status">{tc("status")}</Label>

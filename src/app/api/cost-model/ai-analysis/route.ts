@@ -52,7 +52,7 @@ export async function POST(req: NextRequest) {
   } catch (error: any) {
     console.error("Da Vinci analysis error:", error)
     if (error.message === "ANTHROPIC_API_KEY not configured") {
-      return NextResponse.json({ error: "Da Vinci service not configured" }, { status: 500 })
+      return NextResponse.json({ error: "Da Vinci AI requires ANTHROPIC_API_KEY. Configure in Settings → Integrations." }, { status: 500 })
     }
     if (error.status) {
       // Anthropic API error

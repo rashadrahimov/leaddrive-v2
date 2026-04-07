@@ -8,13 +8,14 @@ import { Label } from "@/components/ui/label"
 import { Select } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { Dialog, DialogHeader, DialogTitle, DialogContent, DialogFooter } from "@/components/ui/dialog"
-import { Building2, User, Handshake, Target, X, Loader2 } from "lucide-react"
+import { Building2, User, Handshake, Target, Ticket, X, Loader2 } from "lucide-react"
 
 const ENTITY_TYPES = [
   { value: "company", icon: Building2 },
   { value: "contact", icon: User },
   { value: "deal", icon: Handshake },
   { value: "lead", icon: Target },
+  { value: "ticket", icon: Ticket },
 ] as const
 
 interface TaskFormProps {
@@ -119,7 +120,7 @@ export function TaskForm({ open, onOpenChange, onSaved, initialData, orgId }: Ta
         body.relatedId = relatedId
       }
       const res = await fetch(url, {
-        method: isEdit ? "PUT" : "POST",
+        method: isEdit ? "PATCH" : "POST",
         headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": orgId } : {} as Record<string, string>) },
         body: JSON.stringify(body),
       })
@@ -256,19 +257,22 @@ function getSearchEndpoint(type: string, query: string): string {
     case "contact": return `/api/v1/contacts?search=${q}&limit=10`
     case "deal": return `/api/v1/deals?search=${q}&limit=10`
     case "lead": return `/api/v1/leads?search=${q}&limit=10`
+    case "ticket": return `/api/v1/tickets?search=${q}&limit=10`
     default: return ""
   }
 }
 
 function parseResults(type: string, data: any): { id: string; name: string }[] {
   if (!data) return []
-  const list = Array.isArray(data) ? data : data.companies || data.contacts || data.deals || data.leads || []
+  const list = Array.isArray(data) ? data : data.companies || data.contacts || data.deals || data.leads || data.tickets || []
   return list.slice(0, 10).map((item: any) => ({
     id: item.id,
     name: type === "contact"
       ? item.fullName || item.name || item.id
       : type === "lead"
         ? item.contactName || item.companyName || item.id
-        : item.name || item.id,
+        : type === "ticket"
+          ? item.subject || item.title || item.id
+          : item.name || item.id,
   }))
 }

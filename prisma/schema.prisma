@@ -902,29 +902,34 @@ model SlaPolicy {
 }
 
 model KbArticle {
-  id             String   @id @default(cuid())
+  id             String      @id @default(cuid())
   organizationId String
   title          String
   content        String?
   categoryId     String?
-  status         String   @default("draft")
+  status         String      @default("draft")
   authorId       String?
-  viewCount      Int      @default(0)
-  helpfulCount   Int      @default(0)
-  tags           String[] @default([])
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  viewCount      Int         @default(0)
+  helpfulCount   Int         @default(0)
+  tags           String[]    @default([])
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  category       KbCategory? @relation(fields: [categoryId], references: [id])
 
   @@index([organizationId])
+  @@index([categoryId])
   @@map("kb_articles")
 }
 
 model KbCategory {
-  id             String   @id @default(cuid())
+  id             String      @id @default(cuid())
   organizationId String
   name           String
   parentId       String?
-  sortOrder      Int      @default(0)
+  sortOrder      Int         @default(0)
+
+  articles       KbArticle[]
 
   @@index([organizationId])
   @@map("kb_categories")

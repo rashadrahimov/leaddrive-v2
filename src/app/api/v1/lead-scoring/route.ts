@@ -34,7 +34,7 @@ function scoreLeadRuleBased(lead: any): { score: number; factors: Record<string,
 
   score = Math.min(score, 100)
   const conversionProb = Math.round(score * 0.85)
-  return { score, factors, conversionProb, reasoning: "Rule-based scoring (Da Vinci not configured)" }
+  return { score, factors, conversionProb, reasoning: "Da Vinci — rule-based analysis" }
 }
 
 // AI-powered scoring with Claude

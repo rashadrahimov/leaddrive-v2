@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
   if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
   const apiKey = process.env.ANTHROPIC_API_KEY
-  if (!apiKey) return NextResponse.json({ error: "AI service not configured" }, { status: 503 })
+  if (!apiKey) return NextResponse.json({ error: "Da Vinci AI requires ANTHROPIC_API_KEY. Configure in Settings → Integrations." }, { status: 503 })
 
   let body: { lang?: string }
   try {

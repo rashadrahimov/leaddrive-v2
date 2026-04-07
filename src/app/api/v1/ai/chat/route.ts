@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
   if (!message) return NextResponse.json({ error: "Message required" }, { status: 400 })
 
   const client = getClient()
-  if (!client) return NextResponse.json({ error: "Da Vinci not configured" }, { status: 503 })
+  if (!client) return NextResponse.json({ error: "Da Vinci AI requires configuration. Please set ANTHROPIC_API_KEY in Settings → Integrations." }, { status: 503 })
 
   try {
     // Gather CRM context
