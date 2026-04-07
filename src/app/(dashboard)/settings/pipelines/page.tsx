@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useSession } from "next-auth/react"
+import { useTranslations } from "next-intl"
 import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -30,19 +31,19 @@ interface ValidationRule {
   isActive: boolean
 }
 
-const FIELD_OPTIONS = [
-  { value: "valueAmount", label: "Deal value (valueAmount)" },
-  { value: "contactId", label: "Contact person (contactId)" },
-  { value: "notes", label: "Notes" },
-  { value: "expectedClose", label: "Expected close date" },
-  { value: "assignedTo", label: "Assigned to" },
-  { value: "companyId", label: "Company" },
+const FIELD_KEYS = [
+  { value: "valueAmount", key: "fieldDealValue" },
+  { value: "contactId", key: "fieldContactPerson" },
+  { value: "notes", key: "fieldNotes" },
+  { value: "expectedClose", key: "fieldExpectedClose" },
+  { value: "assignedTo", key: "fieldAssignedTo" },
+  { value: "companyId", key: "fieldCompany" },
 ]
 
-const RULE_TYPE_OPTIONS = [
-  { value: "required", label: "Required (must be filled)" },
-  { value: "min_value", label: "Minimum value" },
-  { value: "task_completed", label: "At least 1 task completed" },
+const RULE_TYPE_KEYS = [
+  { value: "required", key: "ruleRequired" },
+  { value: "min_value", key: "ruleMinValue" },
+  { value: "task_completed", key: "ruleTaskCompleted" },
 ]
 
 interface Pipeline {
@@ -56,6 +57,8 @@ interface Pipeline {
 
 export default function PipelinesSettingsPage() {
   const { data: session } = useSession()
+  const t = useTranslations("pipelineSettings")
+  const tc = useTranslations("common")
   const orgId = session?.user?.organizationId ? String(session.user.organizationId) : undefined
 
   const [pipelines, setPipelines] = useState<Pipeline[]>([])
@@ -127,7 +130,7 @@ export default function PipelinesSettingsPage() {
   }
 
   const deletePipeline = async (pipelineId: string) => {
-    if (!confirm("Delete this pipeline? This cannot be undone.")) return
+    if (!confirm(t("deleteConfirm"))) return
     try {
       const res = await fetch(`/api/v1/pipelines/${pipelineId}`, {
         method: "DELETE",
@@ -223,10 +226,10 @@ export default function PipelinesSettingsPage() {
       <div>
         <h1 className="text-lg font-bold tracking-tight flex items-center gap-2">
           <Settings2 className="h-5 w-5 text-muted-foreground" />
-          Pipelines & Stages
+          {t("title")}
         </h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Manage sales pipelines and configure validation rules for each stage.
+          {t("subtitle")}
         </p>
       </div>
 
@@ -258,12 +261,12 @@ export default function PipelinesSettingsPage() {
             <div className="flex items-center gap-2 text-xs">
               {!p.isDefault && (
                 <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => setDefault(p.id)}>
-                  Set as default
+                  {t("setDefault")}
                 </Button>
               )}
               {!p.isDefault && (p._count?.deals || 0) === 0 && (
                 <Button variant="outline" size="sm" className="h-7 text-xs text-red-500 hover:text-red-700" onClick={() => deletePipeline(p.id)}>
-                  <Trash2 className="h-3 w-3 mr-1" /> Delete
+                  <Trash2 className="h-3 w-3 mr-1" /> {tc("delete")}
                 </Button>
               )}
             </div>
@@ -275,13 +278,13 @@ export default function PipelinesSettingsPage() {
           <input
             value={newPipelineName}
             onChange={e => setNewPipelineName(e.target.value)}
-            placeholder="New pipeline name..."
+            placeholder={t("newPipelinePlaceholder")}
             className="h-8 rounded-lg border bg-background px-3 text-xs w-48"
             onKeyDown={e => e.key === "Enter" && createPipeline()}
           />
           <Button size="sm" className="h-8 text-xs" onClick={createPipeline} disabled={creatingPipeline || !newPipelineName.trim()}>
             {creatingPipeline ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Plus className="h-3 w-3 mr-1" />}
-            Add Pipeline
+            {t("addPipeline")}
           </Button>
         </div>
       </div>
@@ -308,7 +311,7 @@ export default function PipelinesSettingsPage() {
                   <Badge variant="outline" className="text-[10px]">{stage.probability}%</Badge>
                   {stageRules.length > 0 && (
                     <Badge className="text-[10px] bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400">
-                      <Shield className="h-3 w-3 mr-0.5" /> {stageRules.length} rules
+                      <Shield className="h-3 w-3 mr-0.5" /> {stageRules.length} {t("rules")}
                     </Badge>
                   )}
                   <motion.div animate={{ rotate: isExpanded ? 90 : 0 }} transition={{ duration: 0.2 }}>
@@ -333,7 +336,7 @@ export default function PipelinesSettingsPage() {
                           </div>
                         ) : stageRules.length === 0 && addingFor !== stage.id ? (
                           <div className="text-center py-4">
-                            <p className="text-xs text-muted-foreground">No validation rules. Deals can transition freely.</p>
+                            <p className="text-xs text-muted-foreground">{t("noRules")}</p>
                           </div>
                         ) : (
                           stageRules.map(rule => (
@@ -360,27 +363,27 @@ export default function PipelinesSettingsPage() {
                           <div className="p-3 rounded-lg border bg-background space-y-3">
                             <div className="grid grid-cols-2 gap-3">
                               <div>
-                                <label className="text-[10px] font-medium text-muted-foreground mb-1 block">Field</label>
+                                <label className="text-[10px] font-medium text-muted-foreground mb-1 block">{t("field")}</label>
                                 <select
                                   value={newField} onChange={e => setNewField(e.target.value)}
                                   className="w-full h-8 rounded-lg border bg-background px-2 text-xs"
                                 >
-                                  {FIELD_OPTIONS.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
+                                  {FIELD_KEYS.map(f => <option key={f.value} value={f.value}>{t(f.key)}</option>)}
                                 </select>
                               </div>
                               <div>
-                                <label className="text-[10px] font-medium text-muted-foreground mb-1 block">Rule type</label>
+                                <label className="text-[10px] font-medium text-muted-foreground mb-1 block">{t("ruleType")}</label>
                                 <select
                                   value={newRuleType} onChange={e => setNewRuleType(e.target.value)}
                                   className="w-full h-8 rounded-lg border bg-background px-2 text-xs"
                                 >
-                                  {RULE_TYPE_OPTIONS.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
+                                  {RULE_TYPE_KEYS.map(r => <option key={r.value} value={r.value}>{t(r.key)}</option>)}
                                 </select>
                               </div>
                             </div>
                             {newRuleType === "min_value" && (
                               <div>
-                                <label className="text-[10px] font-medium text-muted-foreground mb-1 block">Minimum value</label>
+                                <label className="text-[10px] font-medium text-muted-foreground mb-1 block">{t("ruleMinValue")}</label>
                                 <input
                                   type="number" min="0" value={newRuleValue}
                                   onChange={e => setNewRuleValue(e.target.value)}
@@ -390,24 +393,24 @@ export default function PipelinesSettingsPage() {
                               </div>
                             )}
                             <div>
-                              <label className="text-[10px] font-medium text-muted-foreground mb-1 block">Error message (shown to user)</label>
+                              <label className="text-[10px] font-medium text-muted-foreground mb-1 block">{t("errorMessage")}</label>
                               <input
                                 value={newErrorMsg} onChange={e => setNewErrorMsg(e.target.value)}
                                 className="w-full h-8 rounded-lg border bg-background px-2 text-xs"
-                                placeholder="e.g. Upload contract before moving to Payment"
+                                placeholder={t("errorMessagePlaceholder")}
                               />
                             </div>
                             <div className="flex gap-2">
                               <Button size="sm" onClick={() => addRule(stage.id)} disabled={!newErrorMsg.trim() || saving} className="gap-1">
                                 {saving ? <Loader2 className="h-3 w-3 animate-spin" /> : <Plus className="h-3 w-3" />}
-                                Add rule
+                                {t("addRule")}
                               </Button>
-                              <Button size="sm" variant="ghost" onClick={() => setAddingFor(null)}>Cancel</Button>
+                              <Button size="sm" variant="ghost" onClick={() => setAddingFor(null)}>{tc("cancel")}</Button>
                             </div>
                           </div>
                         ) : (
                           <Button variant="outline" size="sm" onClick={() => setAddingFor(stage.id)} className="gap-1 w-full">
-                            <Plus className="h-3.5 w-3.5" /> Add validation rule
+                            <Plus className="h-3.5 w-3.5" /> {t("addValidationRule")}
                           </Button>
                         )}
                       </div>
