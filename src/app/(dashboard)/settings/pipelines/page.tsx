@@ -39,13 +39,57 @@ const FIELD_KEYS = [
   { value: "expectedClose", key: "fieldExpectedClose" },
   { value: "assignedTo", key: "fieldAssignedTo" },
   { value: "companyId", key: "fieldCompany" },
+  { value: "tasks", key: "fieldTasks" },
+  { value: "activities", key: "fieldActivities" },
 ]
 
-const RULE_TYPE_KEYS = [
-  { value: "required", key: "ruleRequired" },
-  { value: "min_value", key: "ruleMinValue" },
-  { value: "task_completed", key: "ruleTaskCompleted" },
-]
+// Field-specific rule types: each field only shows rules that make sense for it
+const FIELD_RULE_MAP: Record<string, { value: string; key: string }[]> = {
+  valueAmount: [
+    { value: "required", key: "ruleRequired" },
+    { value: "min_value", key: "ruleMinValue" },
+    { value: "max_value", key: "ruleMaxValue" },
+  ],
+  contactId: [
+    { value: "required", key: "ruleRequired" },
+  ],
+  notes: [
+    { value: "required", key: "ruleRequired" },
+    { value: "min_length", key: "ruleMinLength" },
+  ],
+  expectedClose: [
+    { value: "required", key: "ruleRequired" },
+    { value: "future_date", key: "ruleFutureDate" },
+    { value: "max_days", key: "ruleMaxDays" },
+  ],
+  assignedTo: [
+    { value: "required", key: "ruleRequired" },
+  ],
+  companyId: [
+    { value: "required", key: "ruleRequired" },
+  ],
+  tasks: [
+    { value: "task_completed", key: "ruleTaskCompleted" },
+    { value: "min_tasks", key: "ruleMinTasks" },
+  ],
+  activities: [
+    { value: "has_activity", key: "ruleHasActivity" },
+    { value: "min_activities", key: "ruleMinActivities" },
+  ],
+}
+
+// Rule types that require a numeric value input
+const RULES_WITH_VALUE = ["min_value", "max_value", "min_length", "max_days", "min_tasks", "min_activities"]
+
+// Value input placeholders per rule type
+const VALUE_PLACEHOLDERS: Record<string, string> = {
+  min_value: "1000",
+  max_value: "100000",
+  min_length: "50",
+  max_days: "90",
+  min_tasks: "3",
+  min_activities: "5",
+}
 
 const STAGE_COLORS = [
   "#6366f1", "#3b82f6", "#06b6d4", "#14b8a6", "#22c55e",
@@ -314,8 +358,20 @@ export default function PipelinesSettingsPage() {
     setAddingFor(null)
   }
 
+  // When field changes, auto-select first available rule type for that field
+  const handleFieldChange = (field: string) => {
+    setNewField(field)
+    const availableRules = FIELD_RULE_MAP[field] || []
+    if (availableRules.length > 0) {
+      setNewRuleType(availableRules[0].value)
+    }
+    setNewRuleValue("")
+  }
+
   const addRule = async (stageId: string) => {
     if (!newErrorMsg.trim()) return
+    // Validate: rules with value require a value
+    if (RULES_WITH_VALUE.includes(newRuleType) && !newRuleValue.trim()) return
     setSaving(true)
     try {
       await fetch(`/api/v1/pipeline-stages/${stageId}/rules`, {
@@ -324,7 +380,7 @@ export default function PipelinesSettingsPage() {
         body: JSON.stringify({
           fieldName: newField,
           ruleType: newRuleType,
-          ruleValue: newRuleType === "min_value" ? newRuleValue : null,
+          ruleValue: RULES_WITH_VALUE.includes(newRuleType) ? newRuleValue : null,
           errorMessage: newErrorMsg.trim(),
         }),
       })
@@ -595,23 +651,28 @@ export default function PipelinesSettingsPage() {
                             <p className="text-xs text-muted-foreground">{t("noRules")}</p>
                           </div>
                         ) : (
-                          stageRules.map(rule => (
-                            <div key={rule.id} className="flex items-center gap-2 p-2.5 rounded-lg bg-muted/30 border">
-                              <CheckCircle2 className="h-3.5 w-3.5 text-amber-500 flex-shrink-0" />
-                              <div className="flex-1 min-w-0">
-                                <p className="text-xs font-medium">{rule.errorMessage}</p>
-                                <p className="text-[10px] text-muted-foreground">
-                                  {rule.fieldName} · {rule.ruleType}{rule.ruleValue ? ` ≥ ${rule.ruleValue}` : ""}
-                                </p>
+                          stageRules.map(rule => {
+                            const fieldKey = FIELD_KEYS.find(f => f.value === rule.fieldName)
+                            const ruleTypeKey = (FIELD_RULE_MAP[rule.fieldName] || []).find(r => r.value === rule.ruleType)
+                            return (
+                              <div key={rule.id} className="flex items-center gap-2 p-2.5 rounded-lg bg-muted/30 border">
+                                <CheckCircle2 className="h-3.5 w-3.5 text-amber-500 flex-shrink-0" />
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-xs font-medium">{rule.errorMessage}</p>
+                                  <p className="text-[10px] text-muted-foreground">
+                                    {fieldKey ? t(fieldKey.key) : rule.fieldName} · {ruleTypeKey ? t(ruleTypeKey.key) : rule.ruleType}
+                                    {rule.ruleValue ? ` (${rule.ruleValue})` : ""}
+                                  </p>
+                                </div>
+                                <Button
+                                  variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-red-500"
+                                  onClick={() => deleteRule(stage.id, rule.id)}
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </Button>
                               </div>
-                              <Button
-                                variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-red-500"
-                                onClick={() => deleteRule(stage.id, rule.id)}
-                              >
-                                <Trash2 className="h-3.5 w-3.5" />
-                              </Button>
-                            </div>
-                          ))
+                            )
+                          })
                         )}
 
                         {/* Add rule form */}
@@ -621,7 +682,7 @@ export default function PipelinesSettingsPage() {
                               <div>
                                 <label className="text-[10px] font-medium text-muted-foreground mb-1 block">{t("field")}</label>
                                 <select
-                                  value={newField} onChange={e => setNewField(e.target.value)}
+                                  value={newField} onChange={e => handleFieldChange(e.target.value)}
                                   className="w-full h-8 rounded-lg border bg-background px-2 text-xs"
                                 >
                                   {FIELD_KEYS.map(f => <option key={f.value} value={f.value}>{t(f.key)}</option>)}
@@ -633,18 +694,20 @@ export default function PipelinesSettingsPage() {
                                   value={newRuleType} onChange={e => setNewRuleType(e.target.value)}
                                   className="w-full h-8 rounded-lg border bg-background px-2 text-xs"
                                 >
-                                  {RULE_TYPE_KEYS.map(r => <option key={r.value} value={r.value}>{t(r.key)}</option>)}
+                                  {(FIELD_RULE_MAP[newField] || []).map(r => (
+                                    <option key={r.value} value={r.value}>{t(r.key)}</option>
+                                  ))}
                                 </select>
                               </div>
                             </div>
-                            {newRuleType === "min_value" && (
+                            {RULES_WITH_VALUE.includes(newRuleType) && (
                               <div>
-                                <label className="text-[10px] font-medium text-muted-foreground mb-1 block">{t("ruleMinValue")}</label>
+                                <label className="text-[10px] font-medium text-muted-foreground mb-1 block">{t(`rule_${newRuleType}_label` as any)}</label>
                                 <input
                                   type="number" min="0" value={newRuleValue}
                                   onChange={e => setNewRuleValue(e.target.value)}
                                   className="w-full h-8 rounded-lg border bg-background px-2 text-xs"
-                                  placeholder="e.g. 1000"
+                                  placeholder={VALUE_PLACEHOLDERS[newRuleType] || "0"}
                                 />
                               </div>
                             )}
@@ -657,7 +720,7 @@ export default function PipelinesSettingsPage() {
                               />
                             </div>
                             <div className="flex gap-2">
-                              <Button size="sm" onClick={() => addRule(stage.id)} disabled={!newErrorMsg.trim() || saving} className="gap-1">
+                              <Button size="sm" onClick={() => addRule(stage.id)} disabled={!newErrorMsg.trim() || saving || (RULES_WITH_VALUE.includes(newRuleType) && !newRuleValue.trim())} className="gap-1">
                                 {saving ? <Loader2 className="h-3 w-3 animate-spin" /> : <Plus className="h-3 w-3" />}
                                 {t("addRule")}
                               </Button>

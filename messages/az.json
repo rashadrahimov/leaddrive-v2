@@ -2190,7 +2190,22 @@
     "stageNamePlaceholder": "Mərhələ adı...",
     "addStage": "Mərhələ əlavə et",
     "moveUp": "Yuxarı",
-    "moveDown": "Aşağı"
+    "moveDown": "Aşağı",
+    "fieldTasks": "Tapşırıqlar",
+    "fieldActivities": "Aktivliklər",
+    "ruleMaxValue": "Maksimum dəyər",
+    "ruleMinLength": "Minimum mətn uzunluğu",
+    "ruleFutureDate": "Gələcək tarix olmalıdır",
+    "ruleMaxDays": "Bu gündən maksimum gün",
+    "ruleMinTasks": "Minimum tapşırıq tamamlanmalı",
+    "ruleHasActivity": "Ən azı 1 aktivlik qeydə alınmalıdır",
+    "ruleMinActivities": "Minimum aktivlik qeydə alınmalıdır",
+    "rule_min_value_label": "Minimum dəyər",
+    "rule_max_value_label": "Maksimum dəyər",
+    "rule_min_length_label": "Minimum simvol",
+    "rule_max_days_label": "Maksimum gün",
+    "rule_min_tasks_label": "Minimum tapşırıq",
+    "rule_min_activities_label": "Minimum aktivlik"
   },
   "profitability": {
     "title": "Gəlirlilik",

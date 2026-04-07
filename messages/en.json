@@ -2195,7 +2195,22 @@
     "stageNamePlaceholder": "Stage name...",
     "addStage": "Add Stage",
     "moveUp": "Move up",
-    "moveDown": "Move down"
+    "moveDown": "Move down",
+    "fieldTasks": "Tasks",
+    "fieldActivities": "Activities",
+    "ruleMaxValue": "Maximum value",
+    "ruleMinLength": "Minimum text length",
+    "ruleFutureDate": "Must be a future date",
+    "ruleMaxDays": "Maximum days from today",
+    "ruleMinTasks": "Minimum tasks completed",
+    "ruleHasActivity": "At least 1 activity logged",
+    "ruleMinActivities": "Minimum activities logged",
+    "rule_min_value_label": "Minimum value",
+    "rule_max_value_label": "Maximum value",
+    "rule_min_length_label": "Minimum characters",
+    "rule_max_days_label": "Maximum days",
+    "rule_min_tasks_label": "Minimum tasks",
+    "rule_min_activities_label": "Minimum activities"
   },
   "profitability": {
     "title": "Profitability",

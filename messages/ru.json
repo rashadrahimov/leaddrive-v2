@@ -2195,7 +2195,22 @@
     "stageNamePlaceholder": "Название стадии...",
     "addStage": "Добавить стадию",
     "moveUp": "Вверх",
-    "moveDown": "Вниз"
+    "moveDown": "Вниз",
+    "fieldTasks": "Задачи",
+    "fieldActivities": "Активности",
+    "ruleMaxValue": "Максимальное значение",
+    "ruleMinLength": "Минимальная длина текста",
+    "ruleFutureDate": "Должна быть будущая дата",
+    "ruleMaxDays": "Максимум дней от сегодня",
+    "ruleMinTasks": "Минимум задач выполнено",
+    "ruleHasActivity": "Хотя бы 1 активность зафиксирована",
+    "ruleMinActivities": "Минимум активностей зафиксировано",
+    "rule_min_value_label": "Минимальное значение",
+    "rule_max_value_label": "Максимальное значение",
+    "rule_min_length_label": "Минимум символов",
+    "rule_max_days_label": "Максимум дней",
+    "rule_min_tasks_label": "Минимум задач",
+    "rule_min_activities_label": "Минимум активностей"
   },
   "profitability": {
     "title": "Прибыльность",
