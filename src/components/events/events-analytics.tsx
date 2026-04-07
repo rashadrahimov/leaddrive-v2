@@ -136,6 +136,50 @@ const CALENDAR_DOT_COLORS: Record<string, string> = {
   completed: "bg-muted-foreground/40",
 }
 
+// ─── Helpers: ICS generation ───────────────────────────────────────────────
+
+function generateICS(event: Event): string {
+  const now = new Date()
+  const pad = (n: number) => String(n).padStart(2, "0")
+  const toICSDate = (d: Date) =>
+    `${d.getUTCFullYear()}${pad(d.getUTCMonth() + 1)}${pad(d.getUTCDate())}T${pad(d.getUTCHours())}${pad(d.getUTCMinutes())}${pad(d.getUTCSeconds())}Z`
+
+  const start = event.startDate ? new Date(event.startDate) : now
+  const end = event.endDate ? new Date(event.endDate) : new Date(start.getTime() + 3600000)
+
+  return [
+    "BEGIN:VCALENDAR",
+    "VERSION:2.0",
+    "PRODID:-//LeadDrive CRM//Events//EN",
+    "CALSCALE:GREGORIAN",
+    "METHOD:PUBLISH",
+    "BEGIN:VEVENT",
+    `DTSTART:${toICSDate(start)}`,
+    `DTEND:${toICSDate(end)}`,
+    `DTSTAMP:${toICSDate(now)}`,
+    `UID:${event.id}@leaddrivecrm.org`,
+    `SUMMARY:${event.name.replace(/[,;\\]/g, " ")}`,
+    event.location ? `LOCATION:${event.location.replace(/[,;\\]/g, " ")}` : "",
+    event.description ? `DESCRIPTION:${event.description.replace(/\n/g, "\\n").replace(/[,;\\]/g, " ")}` : "",
+    "STATUS:CONFIRMED",
+    "END:VEVENT",
+    "END:VCALENDAR",
+  ].filter(Boolean).join("\r\n")
+}
+
+function downloadICS(event: Event) {
+  const ics = generateICS(event)
+  const blob = new Blob([ics], { type: "text/calendar;charset=utf-8" })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement("a")
+  a.href = url
+  a.download = `${event.name.replace(/[^a-zA-Z0-9а-яА-ЯəüöğıçşƏÜÖĞİÇŞ ]/g, "").replace(/\s+/g, "_")}.ics`
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  URL.revokeObjectURL(url)
+}
+
 // ─── Component ──────────────────────────────────────────────────────────────
 
 export function EventsAnalytics({ events }: EventsAnalyticsProps) {
@@ -145,7 +189,28 @@ export function EventsAnalytics({ events }: EventsAnalyticsProps) {
     events.length > 0 ? events[0].id : null
   )
 
+  const [confirming, setConfirming] = useState(false)
+  const [confirmed, setConfirmed] = useState(false)
+
+  const selectEvent = (id: string) => {
+    setSelectedEventId(id)
+    setConfirmed(false)
+  }
+
   const selectedEvent = events.find((e) => e.id === selectedEventId) ?? events[0]
+
+  const handleConfirmAll = async () => {
+    if (!selectedEvent) return
+    setConfirming(true)
+    try {
+      const res = await fetch(`/api/v1/events/${selectedEvent.id}/confirm-all`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      })
+      if (res.ok) setConfirmed(true)
+    } catch { /* ignore */ }
+    finally { setConfirming(false) }
+  }
 
   const totalEvents = events.length
   const openCount = events.filter((e) => e.status === "open").length
@@ -182,7 +247,7 @@ export function EventsAnalytics({ events }: EventsAnalyticsProps) {
                 return (
                   <button
                     key={ev.id}
-                    onClick={() => setSelectedEventId(ev.id)}
+                    onClick={() => selectEvent(ev.id)}
                     className={cn(
                       "w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors",
                       isSelected
@@ -389,19 +454,37 @@ export function EventsAnalytics({ events }: EventsAnalyticsProps) {
 
           {/* Action buttons */}
           <div className="flex items-center gap-2 mb-4">
-            {[
-              { label: t("invite"), icon: <Mail className="w-3.5 h-3.5" />, className: "bg-violet-600 hover:bg-violet-500 text-white" },
-              { label: "ICS", icon: <CalendarDays className="w-3.5 h-3.5" />, className: "bg-muted hover:bg-muted/80 text-foreground" },
-              { label: t("confirm"), icon: <CheckCircle2 className="w-3.5 h-3.5" />, className: "bg-muted hover:bg-muted/80 text-foreground" },
-            ].map((btn) => (
-              <button
-                key={btn.label}
-                className={cn("flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg transition-colors", btn.className)}
-              >
-                {btn.icon}
-                {btn.label}
-              </button>
-            ))}
+            {/* Invite */}
+            <button
+              className={cn("flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg transition-colors bg-violet-600 hover:bg-violet-500 text-white")}
+            >
+              <Mail className="w-3.5 h-3.5" />
+              {t("invite")}
+            </button>
+            {/* ICS Download */}
+            <button
+              onClick={() => selectedEvent && downloadICS(selectedEvent)}
+              className={cn("flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg transition-colors bg-muted hover:bg-muted/80 text-foreground")}
+              title={t("downloadICS")}
+            >
+              <CalendarDays className="w-3.5 h-3.5" />
+              ICS
+            </button>
+            {/* Confirm All */}
+            <button
+              onClick={handleConfirmAll}
+              disabled={confirming || confirmed}
+              className={cn(
+                "flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg transition-colors",
+                confirmed
+                  ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400"
+                  : "bg-muted hover:bg-muted/80 text-foreground",
+                (confirming || confirmed) && "opacity-70 cursor-not-allowed"
+              )}
+            >
+              <CheckCircle2 className="w-3.5 h-3.5" />
+              {confirmed ? t("confirmed") : confirming ? tc("loading") : t("confirm")}
+            </button>
           </div>
 
           {/* Registration dynamics mini chart */}

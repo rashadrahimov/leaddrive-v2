@@ -2134,6 +2134,8 @@
     "registrationPortal": "Портал регистрации",
     "invite": "Пригласить",
     "confirm": "Подтвердить",
+    "confirmed": "Подтверждено",
+    "downloadICS": "Скачать файл календаря (.ics)",
     "registrationDynamics": "Динамика регистрации",
     "weeksAgo": "{count} недель назад",
     "registrationsCount": "{count} регистраций",

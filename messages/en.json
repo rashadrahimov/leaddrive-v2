@@ -2134,6 +2134,8 @@
     "registrationPortal": "Registration Portal",
     "invite": "Invite",
     "confirm": "Confirm",
+    "confirmed": "Confirmed",
+    "downloadICS": "Download calendar file (.ics)",
     "registrationDynamics": "Registration dynamics",
     "weeksAgo": "{count} weeks ago",
     "registrationsCount": "{count} registrations",
