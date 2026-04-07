@@ -4,12 +4,14 @@ import { Globe } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useEffect, useRef, useState } from "react"
 import { createPortal } from "react-dom"
+import { useTranslations } from "next-intl"
 
-const LANGUAGES = [
-  { code: "ru", label: "Русский" },
-  { code: "az", label: "Azərbaycan" },
-  { code: "en", label: "English" },
-]
+const LANGUAGE_CODES = ["ru", "az", "en"] as const
+const LANGUAGE_KEYS: Record<string, string> = {
+  ru: "langRussian",
+  az: "langAzerbaijani",
+  en: "langEnglish",
+}
 
 function getLocaleFromCookie(): string {
   if (typeof document === "undefined") return "ru"
@@ -22,6 +24,7 @@ function getLocaleFromCookie(): string {
 }
 
 export function LanguageSwitcher() {
+  const tc = useTranslations("common")
   const [open, setOpen] = useState(false)
   const [current, setCurrent] = useState("ru")
   const [pos, setPos] = useState({ top: 0, right: 0 })
@@ -61,7 +64,7 @@ export function LanguageSwitcher() {
     window.location.reload()
   }
 
-  const currentLang = LANGUAGES.find((l) => l.code === current) || LANGUAGES[0]
+  const currentLabel = tc(LANGUAGE_KEYS[current] || "langRussian")
 
   return (
     <div ref={ref} className="relative">
@@ -69,7 +72,7 @@ export function LanguageSwitcher() {
         variant="ghost"
         size="icon"
         onClick={toggleOpen}
-        title={currentLang.label}
+        title={currentLabel}
       >
         <Globe className="h-4 w-4" />
       </Button>
@@ -80,15 +83,15 @@ export function LanguageSwitcher() {
           className="fixed z-[9999] min-w-[140px] rounded-md border bg-popover shadow-lg animate-in fade-in slide-in-from-top-1 duration-150"
           style={{ top: pos.top, right: pos.right }}
         >
-          {LANGUAGES.map((lang) => (
+          {LANGUAGE_CODES.map((code) => (
             <button
-              key={lang.code}
-              onClick={() => switchLocale(lang.code)}
+              key={code}
+              onClick={() => switchLocale(code)}
               className={`flex w-full items-center gap-2 px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground first:rounded-t-md last:rounded-b-md ${
-                lang.code === current ? "font-semibold text-primary" : "text-foreground"
+                code === current ? "font-semibold text-primary" : "text-foreground"
               }`}
             >
-              {lang.label}
+              {tc(LANGUAGE_KEYS[code])}
             </button>
           ))}
         </div>,

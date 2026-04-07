@@ -47,6 +47,7 @@ const langFlags: Record<string, string> = {
 export default function EmailTemplatesPage() {
   const { data: session } = useSession()
   const t = useTranslations("emailTemplates")
+  const tc = useTranslations("common")
   const tf = useTranslations("forms")
   const [templates, setTemplates] = useState<EmailTemplate[]>([])
   const [loading, setLoading] = useState(true)
@@ -156,7 +157,7 @@ export default function EmailTemplatesPage() {
 
       {/* Language filter */}
       <div className="flex flex-wrap items-center gap-2">
-        <span className="text-sm text-muted-foreground font-medium flex items-center gap-1">ЯЗЫК: <InfoHint text={t("hintColLanguage")} size={12} /></span>
+        <span className="text-sm text-muted-foreground font-medium flex items-center gap-1">{tc("languageFilter")} <InfoHint text={t("hintColLanguage")} size={12} /></span>
         <Button
           size="sm"
           variant={filterLang === "all" ? "default" : "outline"}
@@ -180,7 +181,7 @@ export default function EmailTemplatesPage() {
 
       {/* Category filter */}
       <div className="flex flex-wrap items-center gap-2">
-        <span className="text-sm text-muted-foreground font-medium flex items-center gap-1">ТИП: <InfoHint text={t("hintColCategory")} size={12} /></span>
+        <span className="text-sm text-muted-foreground font-medium flex items-center gap-1">{tc("categoryFilter")} <InfoHint text={t("hintColCategory")} size={12} /></span>
         <Button
           size="sm"
           variant={filterCategory === "all" ? "default" : "outline"}

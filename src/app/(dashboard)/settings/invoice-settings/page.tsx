@@ -665,7 +665,7 @@ export default function InvoiceSettingsPage() {
                     : "border-transparent text-muted-foreground hover:text-foreground"
                 )}
               >
-                {lang === "az" ? "Azərbaycan" : lang === "ru" ? "Русский" : "English"}
+                {lang === "az" ? tc("langAzerbaijani") : lang === "ru" ? tc("langRussian") : tc("langEnglish")}
               </button>
             ))}
           </div>

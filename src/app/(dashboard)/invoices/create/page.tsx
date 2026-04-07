@@ -699,11 +699,11 @@ export default function CreateInvoicePage() {
                       <Input placeholder={t("voenPlaceholder") || "Tax ID"} value={voen} onChange={(e) => setVoen(e.target.value)} className="h-8 text-sm" />
                     </div>
                     <div className="space-y-1">
-                      <Label className="text-xs">{"Document Language"}</Label>
+                      <Label className="text-xs">{tc("language")}</Label>
                       <Select value={documentLanguage} onChange={(e) => setDocumentLanguage(e.target.value)} className="h-8 text-sm">
-                        <option value="az">Azərbaycan</option>
-                        <option value="ru">Русский</option>
-                        <option value="en">English</option>
+                        <option value="az">{tc("langAzerbaijani")}</option>
+                        <option value="ru">{tc("langRussian")}</option>
+                        <option value="en">{tc("langEnglish")}</option>
                       </Select>
                     </div>
                     <div className="space-y-1">

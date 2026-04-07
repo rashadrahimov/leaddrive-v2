@@ -279,9 +279,9 @@ export function EmailTemplateForm({ open, onOpenChange, onSaved, initialData, or
               <div>
                 <Label className="text-xs uppercase text-muted-foreground">{tc("language")}</Label>
                 <Select value={form.language} onChange={(e) => update("language", e.target.value)}>
-                  <option value="ru">🇷🇺 Русский</option>
-                  <option value="az">🇦🇿 Azərbaycan</option>
-                  <option value="en">🇬🇧 English</option>
+                  <option value="ru">🇷🇺 {tc("langRussian")}</option>
+                  <option value="az">🇦🇿 {tc("langAzerbaijani")}</option>
+                  <option value="en">🇬🇧 {tc("langEnglish")}</option>
                 </Select>
               </div>
             </div>
