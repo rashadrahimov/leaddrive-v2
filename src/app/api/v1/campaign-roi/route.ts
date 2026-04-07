@@ -14,6 +14,7 @@ export async function GET(req: NextRequest) {
           where: { organizationId: orgId },
           select: {
             id: true,
+            name: true,
             stage: true,
             valueAmount: true,
             currency: true,
@@ -43,6 +44,14 @@ export async function GET(req: NextRequest) {
         totalDeals: c.deals.length,
         wonDeals: wonDeals.length,
         roi,
+        createdAt: c.createdAt,
+        deals: c.deals.map((d: any) => ({
+          id: d.id,
+          name: d.name,
+          stage: d.stage,
+          amount: d.valueAmount,
+          currency: d.currency,
+        })),
       }
     })
 

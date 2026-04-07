@@ -180,6 +180,7 @@
     "linkToEntity": "Привязать к...",
     "searchEntity": "Поиск по имени...",
     "amount": "Сумма",
+    "stage": "Стадия",
     "currency": "Валюта",
     "notes": "Примечания",
     "type": "Тип",
@@ -3624,7 +3625,15 @@
     "noCampaigns": "Нет кампаний для анализа",
     "deals": "Сделки",
     "wonDeals": "Выиграно",
-    "leads": "Лиды"
+    "leads": "Лиды",
+    "conversionFunnel": "Воронка конверсии",
+    "recipients": "Получатели",
+    "opened": "Открыто",
+    "clicked": "Кликнуто",
+    "avgAllCampaigns": "Среднее по кампаниям",
+    "sentAt": "Отправлено",
+    "linkedDeals": "Привязанные сделки",
+    "noLinkedDeals": "Нет сделок, привязанных к этой кампании"
   },
   "finance": {
     "ba": {

@@ -180,6 +180,7 @@
     "linkToEntity": "Bağla...",
     "searchEntity": "Ad ilə axtar...",
     "amount": "Məbləğ",
+    "stage": "Mərhələ",
     "currency": "Valyuta",
     "notes": "Qeydlər",
     "type": "Növ",
@@ -3619,7 +3620,15 @@
     "noCampaigns": "Təhlil üçün kampaniya yoxdur",
     "deals": "Sövdələşmələr",
     "wonDeals": "Qazanılmış",
-    "leads": "Lidlər"
+    "leads": "Lidlər",
+    "conversionFunnel": "Konversiya hunisi",
+    "recipients": "Alıcılar",
+    "opened": "Açılıb",
+    "clicked": "Kliklənib",
+    "avgAllCampaigns": "Bütün kampaniyaların ortalaması",
+    "sentAt": "Göndərilmə tarixi",
+    "linkedDeals": "Əlaqəli sövdələşmələr",
+    "noLinkedDeals": "Bu kampaniyaya bağlı sövdələşmə yoxdur"
   },
   "finance": {
     "ba": {

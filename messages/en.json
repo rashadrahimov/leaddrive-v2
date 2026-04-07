@@ -180,6 +180,7 @@
     "linkToEntity": "Link to...",
     "searchEntity": "Search by name...",
     "amount": "Amount",
+    "stage": "Stage",
     "currency": "Currency",
     "notes": "Notes",
     "type": "Type",
@@ -3624,7 +3625,15 @@
     "noCampaigns": "No campaigns to analyze",
     "deals": "Deals",
     "wonDeals": "Won",
-    "leads": "Leads"
+    "leads": "Leads",
+    "conversionFunnel": "Conversion Funnel",
+    "recipients": "Recipients",
+    "opened": "Opened",
+    "clicked": "Clicked",
+    "avgAllCampaigns": "Avg. all campaigns",
+    "sentAt": "Sent at",
+    "linkedDeals": "Linked Deals",
+    "noLinkedDeals": "No deals linked to this campaign"
   },
   "finance": {
     "ba": {
