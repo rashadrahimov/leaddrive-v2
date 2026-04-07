@@ -11,8 +11,16 @@ function getGrade(score: number): string {
   return "F"
 }
 
+const LANG_LABELS: Record<string, Record<string, string>> = {
+  en: { strengths: "Strengths", gaps: "Gaps", hasEmail: "has email", hasPhone: "has phone", company: "company identified", strongSource: "strong source", priority: "priority", hasValue: "has estimated value", status: "status", noEmail: "no email", noPhone: "no phone", noNotes: "no notes" },
+  ru: { strengths: "Сильные стороны", gaps: "Пробелы", hasEmail: "есть email", hasPhone: "есть телефон", company: "компания указана", strongSource: "сильный источник", priority: "приоритет", hasValue: "есть оценочная стоимость", status: "статус", noEmail: "нет email", noPhone: "нет телефона", noNotes: "нет заметок" },
+  az: { strengths: "Güclü tərəflər", gaps: "Boşluqlar", hasEmail: "e-poçt var", hasPhone: "telefon var", company: "şirkət müəyyən edilib", strongSource: "güclü mənbə", priority: "prioritet", hasValue: "təxmini dəyər var", status: "status", noEmail: "e-poçt yoxdur", noPhone: "telefon yoxdur", noNotes: "qeyd yoxdur" },
+}
+
+const LANG_NAMES: Record<string, string> = { en: "English", ru: "Russian", az: "Azerbaijani" }
+
 // Rule-based fallback when no API key
-function scoreLeadRuleBased(lead: any): { score: number; factors: Record<string, number>; conversionProb: number; reasoning: string } {
+function scoreLeadRuleBased(lead: any, locale: string = "en"): { score: number; factors: Record<string, number>; conversionProb: number; reasoning: string } {
   const factors: Record<string, number> = {}
   let score = 0
 
@@ -35,23 +43,24 @@ function scoreLeadRuleBased(lead: any): { score: number; factors: Record<string,
   score = Math.min(score, 100)
   const conversionProb = Math.round(score * 0.85)
 
-  // Build meaningful reasoning from factors
+  // Build meaningful reasoning from factors in user's language
+  const L = LANG_LABELS[locale] || LANG_LABELS.en
   const positives: string[] = []
   const negatives: string[] = []
-  if (factors.email) positives.push("has email")
-  if (factors.phone) positives.push("has phone")
-  if (factors.company) positives.push("company identified")
-  if (factors.source >= 15) positives.push(`strong source (${lead.source})`)
-  if (factors.priority >= 10) positives.push(`${lead.priority} priority`)
-  if (factors.value) positives.push("has estimated value")
-  if (factors.status >= 15) positives.push(`status: ${lead.status}`)
-  if (!lead.email) negatives.push("no email")
-  if (!lead.phone) negatives.push("no phone")
-  if (!lead.notes || lead.notes.length <= 10) negatives.push("no notes")
+  if (factors.email) positives.push(L.hasEmail)
+  if (factors.phone) positives.push(L.hasPhone)
+  if (factors.company) positives.push(L.company)
+  if (factors.source >= 15) positives.push(`${L.strongSource} (${lead.source})`)
+  if (factors.priority >= 10) positives.push(`${lead.priority} ${L.priority}`)
+  if (factors.value) positives.push(L.hasValue)
+  if (factors.status >= 15) positives.push(`${L.status}: ${lead.status}`)
+  if (!lead.email) negatives.push(L.noEmail)
+  if (!lead.phone) negatives.push(L.noPhone)
+  if (!lead.notes || lead.notes.length <= 10) negatives.push(L.noNotes)
 
   const parts: string[] = []
-  if (positives.length > 0) parts.push(`Strengths: ${positives.join(", ")}`)
-  if (negatives.length > 0) parts.push(`Gaps: ${negatives.join(", ")}`)
+  if (positives.length > 0) parts.push(`${L.strengths}: ${positives.join(", ")}`)
+  if (negatives.length > 0) parts.push(`${L.gaps}: ${negatives.join(", ")}`)
   const reasoning = parts.length > 0 ? parts.join(". ") + "." : "Da Vinci — rule-based analysis"
 
   return { score, factors, conversionProb, reasoning }
@@ -63,6 +72,7 @@ async function scoreLeadWithAI(
   lead: any,
   activities: any[],
   deals: any[],
+  locale: string = "en",
 ): Promise<{ score: number; factors: Record<string, number>; conversionProb: number; reasoning: string }> {
   const leadContext = `
 Lead: ${lead.contactName}
@@ -108,7 +118,7 @@ Respond ONLY with valid JSON (no markdown, no explanation outside JSON):
     "dealPotential": <0-20>,
     "recency": <0-20>
   },
-  "reasoning": "<1-2 sentence explanation in English>"
+  "reasoning": "<1-2 sentence explanation in ${LANG_NAMES[locale] || "English"}>"
 }`
       }],
     })
@@ -123,7 +133,7 @@ Respond ONLY with valid JSON (no markdown, no explanation outside JSON):
     }
   } catch (e) {
     console.error("Da Vinci scoring failed, using rule-based fallback:", e)
-    return scoreLeadRuleBased(lead)
+    return scoreLeadRuleBased(lead, locale)
   }
 }
 
@@ -174,6 +184,7 @@ export async function POST(req: NextRequest) {
 
   const body = await req.json().catch(() => ({}))
   const leadId = body.leadId as string | undefined
+  const locale = (body.locale as string) || "en"
 
   const where: any = { organizationId: orgId }
   if (leadId) where.id = leadId
@@ -208,9 +219,9 @@ export async function POST(req: NextRequest) {
         }).catch(() => []),
       ])
 
-      result = await scoreLeadWithAI(client, lead, activities, deals)
+      result = await scoreLeadWithAI(client, lead, activities, deals, locale)
     } else {
-      result = scoreLeadRuleBased(lead)
+      result = scoreLeadRuleBased(lead, locale)
     }
 
     await prisma.lead.update({

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useSession } from "next-auth/react"
-import { useTranslations } from "next-intl"
+import { useTranslations, useLocale } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Brain, RefreshCw, Loader2, Sparkles, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react"
@@ -43,6 +43,7 @@ export default function AILeadScoringPage() {
   const t = useTranslations("ai")
   const tc = useTranslations("common")
   const tl = useTranslations("leads")
+  const locale = useLocale()
   const { data: session } = useSession()
   const orgId = session?.user?.organizationId
   const [leads, setLeads] = useState<ScoredLead[]>([])
@@ -73,7 +74,7 @@ export default function AILeadScoringPage() {
           "Content-Type": "application/json",
           ...(orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>),
         },
-        body: JSON.stringify({}),
+        body: JSON.stringify({ locale }),
       })
       const json = await res.json()
       if (json.success) setAiPowered(json.data.aiPowered)
@@ -90,7 +91,7 @@ export default function AILeadScoringPage() {
           "Content-Type": "application/json",
           ...(orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>),
         },
-        body: JSON.stringify({ leadId }),
+        body: JSON.stringify({ leadId, locale }),
       })
       const json = await res.json()
       if (json.success) setAiPowered(json.data.aiPowered)
