@@ -28,6 +28,9 @@ import {
   Star,
   Heart,
   Link2,
+  X,
+  Loader2,
+  AlertCircle,
 } from "lucide-react"
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -180,6 +183,190 @@ function downloadICS(event: Event) {
   URL.revokeObjectURL(url)
 }
 
+// ─── Invite Modal ──────────────────────────────────────────────────────────
+
+function InviteModal({ event, onClose }: { event: Event; onClose: () => void }) {
+  const t = useTranslations("events")
+  const tc = useTranslations("common")
+  const [emails, setEmails] = useState("")
+  const [subject, setSubject] = useState(`${t("inviteSubjectPrefix")}: ${event.name}`)
+  const [message, setMessage] = useState("")
+  const [sending, setSending] = useState(false)
+  const [result, setResult] = useState<{ sent: number; total: number; smtpConfigured: boolean } | null>(null)
+  const [error, setError] = useState("")
+
+  const handleSend = async () => {
+    const emailList = emails.split(/[,;\n]+/).map(e => e.trim()).filter(Boolean)
+    if (emailList.length === 0) { setError(t("enterEmails")); return }
+
+    setSending(true)
+    setError("")
+    setResult(null)
+    try {
+      // First, add participants if they don't exist
+      for (const email of emailList) {
+        await fetch(`/api/v1/events/${event.id}/participants`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: email.split("@")[0],
+            email,
+            role: "attendee",
+            status: "registered",
+            source: "invited",
+          }),
+        }).catch(() => {})
+      }
+
+      // Get all participants with matching emails
+      const pRes = await fetch(`/api/v1/events/${event.id}/participants`)
+      const pData = await pRes.json()
+      const participants = pData.data || []
+      const matchedIds = participants
+        .filter((p: any) => p.email && emailList.includes(p.email.toLowerCase()))
+        .map((p: any) => p.id)
+
+      // Send invites
+      const res = await fetch(`/api/v1/events/${event.id}/participants`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "send_invites",
+          participantIds: matchedIds.length > 0 ? matchedIds : participants.map((p: any) => p.id),
+        }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        setResult(data.data)
+      } else {
+        setError(data.error || "Failed to send")
+      }
+    } catch {
+      setError("Network error")
+    } finally {
+      setSending(false)
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={onClose}>
+      <div
+        className="bg-card border rounded-2xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden"
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b bg-gradient-to-r from-violet-600 to-purple-600">
+          <div className="flex items-center gap-2 text-white">
+            <Mail className="w-5 h-5" />
+            <h2 className="text-base font-semibold">{t("sendInvitation")}</h2>
+          </div>
+          <button onClick={onClose} className="p-1 rounded-lg hover:bg-white/20 text-white transition-colors">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Event info */}
+        <div className="px-6 py-3 bg-muted/30 border-b flex items-center gap-3">
+          <div className="w-10 h-10 rounded-lg bg-violet-500/10 flex items-center justify-center shrink-0">
+            <CalendarDays className="w-5 h-5 text-violet-500" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-sm font-semibold truncate">{event.name}</p>
+            <p className="text-xs text-muted-foreground">
+              {event.startDate ? new Date(event.startDate).toLocaleDateString(undefined, { dateStyle: "medium" }) : "—"}
+              {event.location ? ` · ${event.location}` : ""}
+            </p>
+          </div>
+        </div>
+
+        {/* Form */}
+        <div className="px-6 py-4 space-y-4">
+          {/* To */}
+          <div>
+            <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Email *</label>
+            <textarea
+              className="w-full rounded-lg border bg-background px-3 py-2 text-sm min-h-[60px] resize-none focus:outline-none focus:ring-2 focus:ring-violet-500/30"
+              placeholder={t("inviteEmailsPlaceholder")}
+              value={emails}
+              onChange={e => setEmails(e.target.value)}
+            />
+          </div>
+
+          {/* Subject */}
+          <div>
+            <label className="text-xs font-medium text-muted-foreground mb-1.5 block">{t("emailSubject")}</label>
+            <input
+              className="w-full rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/30"
+              value={subject}
+              onChange={e => setSubject(e.target.value)}
+            />
+          </div>
+
+          {/* Message */}
+          <div>
+            <label className="text-xs font-medium text-muted-foreground mb-1.5 block">{t("personalMessage")}</label>
+            <textarea
+              className="w-full rounded-lg border bg-background px-3 py-2 text-sm min-h-[80px] resize-none focus:outline-none focus:ring-2 focus:ring-violet-500/30"
+              placeholder={t("personalMessagePlaceholder")}
+              value={message}
+              onChange={e => setMessage(e.target.value)}
+            />
+          </div>
+
+          {/* Info */}
+          <div className="flex items-start gap-2 text-xs text-muted-foreground bg-muted/30 rounded-lg px-3 py-2.5">
+            <CalendarDays className="w-3.5 h-3.5 mt-0.5 shrink-0 text-violet-400" />
+            <span>{t("inviteICSNote")}</span>
+          </div>
+
+          {/* Error */}
+          {error && (
+            <div className="flex items-center gap-2 text-xs text-red-600 bg-red-50 dark:bg-red-900/10 rounded-lg px-3 py-2">
+              <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+              {error}
+            </div>
+          )}
+
+          {/* Result */}
+          {result && (
+            <div className="flex items-center gap-2 text-xs text-emerald-600 bg-emerald-50 dark:bg-emerald-900/10 rounded-lg px-3 py-2">
+              <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+              {t("invitesSentResult", { sent: result.sent, total: result.total })}
+              {!result.smtpConfigured && (
+                <span className="text-amber-600 ml-1">({t("smtpNotConfigured")})</span>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="px-6 py-4 border-t flex items-center justify-end gap-2">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 text-sm font-medium rounded-lg bg-muted hover:bg-muted/80 transition-colors"
+          >
+            {result ? tc("close") : tc("cancel")}
+          </button>
+          {!result && (
+            <button
+              onClick={handleSend}
+              disabled={sending || !emails.trim()}
+              className="flex items-center gap-1.5 px-5 py-2 text-sm font-semibold rounded-lg bg-violet-600 hover:bg-violet-500 text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {sending ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <Send className="w-3.5 h-3.5" />
+              )}
+              {sending ? tc("sending") : t("sendInvites")}
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── Component ──────────────────────────────────────────────────────────────
 
 export function EventsAnalytics({ events }: EventsAnalyticsProps) {
@@ -191,6 +378,7 @@ export function EventsAnalytics({ events }: EventsAnalyticsProps) {
 
   const [confirming, setConfirming] = useState(false)
   const [confirmed, setConfirmed] = useState(false)
+  const [showInviteModal, setShowInviteModal] = useState(false)
 
   const selectEvent = (id: string) => {
     setSelectedEventId(id)
@@ -456,6 +644,7 @@ export function EventsAnalytics({ events }: EventsAnalyticsProps) {
           <div className="flex items-center gap-2 mb-4">
             {/* Invite */}
             <button
+              onClick={() => setShowInviteModal(true)}
               className={cn("flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg transition-colors bg-violet-600 hover:bg-violet-500 text-white")}
             >
               <Mail className="w-3.5 h-3.5" />
@@ -498,6 +687,11 @@ export function EventsAnalytics({ events }: EventsAnalyticsProps) {
           </div>
         </div>
       </div>
+
+      {/* Invite Modal */}
+      {showInviteModal && selectedEvent && (
+        <InviteModal event={selectedEvent} onClose={() => setShowInviteModal(false)} />
+      )}
     </div>
   )
 }

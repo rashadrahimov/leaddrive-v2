@@ -2136,7 +2136,18 @@
     "registrationsCount": "{count} qeydiyyat",
     "inviteOpened": "Açıldı",
     "inviteConfirmed": "Təsdiqləndi",
-    "inviteDeclined": "Rədd etdi"
+    "inviteDeclined": "Rədd etdi",
+    "sendInvitation": "Dəvətnamə göndər",
+    "sendInvites": "Dəvətnamələri göndər",
+    "inviteSubjectPrefix": "Dəvət olunursunuz",
+    "inviteEmailsPlaceholder": "E-poçt ünvanlarını vergül və ya yeni sətrlə ayırın",
+    "emailSubject": "Mövzu",
+    "personalMessage": "Şəxsi mesaj (ixtiyari)",
+    "personalMessagePlaceholder": "Dəvətnaməyə şəxsi qeyd əlavə edin...",
+    "inviteICSNote": "Qəbul edənlər avtomatik olaraq təqvimlərinə əlavə edə biləcəkləri görüş sorğusu (.ics) alacaqlar.",
+    "enterEmails": "Ən azı bir e-poçt ünvanı daxil edin",
+    "invitesSentResult": "{total} dəvətnamədən {sent}-i uğurla göndərildi",
+    "smtpNotConfigured": "SMTP konfiqurasiya edilməyib"
   },
   "profitability": {
     "title": "Gəlirlilik",

@@ -7,6 +7,32 @@ function escHtml(s: unknown): string {
   return String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;")
 }
 
+function generateICS(event: any, organizerEmail: string): string {
+  const start = new Date(event.startDate)
+  const end = event.endDate ? new Date(event.endDate) : new Date(start.getTime() + 2 * 60 * 60 * 1000)
+  const fmt = (d: Date) => d.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "")
+  const uid = `${event.id}@leaddrivecrm.org`
+  return [
+    "BEGIN:VCALENDAR",
+    "VERSION:2.0",
+    "PRODID:-//LeadDrive CRM//Events//EN",
+    "CALSCALE:GREGORIAN",
+    "METHOD:REQUEST",
+    "BEGIN:VEVENT",
+    `UID:${uid}`,
+    `DTSTART:${fmt(start)}`,
+    `DTEND:${fmt(end)}`,
+    `SUMMARY:${(event.name || "").replace(/[,;\\]/g, " ")}`,
+    event.location ? `LOCATION:${(event.location || "").replace(/[,;\\]/g, " ")}` : "",
+    event.description ? `DESCRIPTION:${(event.description || "").replace(/\n/g, "\\n").replace(/[,;\\]/g, " ").slice(0, 500)}` : "",
+    event.meetingUrl ? `URL:${event.meetingUrl}` : "",
+    "STATUS:CONFIRMED",
+    `ORGANIZER;CN=LeadDrive CRM:mailto:${organizerEmail}`,
+    "END:VEVENT",
+    "END:VCALENDAR",
+  ].filter(Boolean).join("\r\n")
+}
+
 const addSchema = z.object({
   contactId: z.string().optional(),
   companyId: z.string().optional(),
@@ -226,11 +252,19 @@ export async function PATCH(
 </body></html>`
             }
 
+            const fromEmail = smtpSettings.fromEmail || smtpSettings.smtpUser
+            const icsContent = generateICS(event, fromEmail)
+
             await transport.sendMail({
               from: smtpSettings.fromEmail ? `${(smtpSettings.fromName || "").replace(/[\r\n]/g, "")} <${smtpSettings.fromEmail.replace(/[\r\n]/g, "")}>` : smtpSettings.smtpUser,
               to: p.email,
               subject,
               html,
+              icalEvent: {
+                filename: "invite.ics",
+                method: "REQUEST",
+                content: icsContent,
+              },
             })
             sentCount++
             console.log(`[INVITE] Sent to ${p.email} for event ${event.name}`)

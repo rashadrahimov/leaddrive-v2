@@ -2141,7 +2141,18 @@
     "registrationsCount": "{count} registrations",
     "inviteOpened": "Opened",
     "inviteConfirmed": "Confirmed",
-    "inviteDeclined": "Declined"
+    "inviteDeclined": "Declined",
+    "sendInvitation": "Send Invitation",
+    "sendInvites": "Send Invitations",
+    "inviteSubjectPrefix": "You're Invited",
+    "inviteEmailsPlaceholder": "Enter email addresses separated by commas or new lines",
+    "emailSubject": "Subject",
+    "personalMessage": "Personal message (optional)",
+    "personalMessagePlaceholder": "Add a personal note to the invitation...",
+    "inviteICSNote": "Recipients will receive a meeting request (.ics) that can be added to their calendar automatically.",
+    "enterEmails": "Please enter at least one email address",
+    "invitesSentResult": "{sent} of {total} invitations sent successfully",
+    "smtpNotConfigured": "SMTP not configured"
   },
   "profitability": {
     "title": "Profitability",

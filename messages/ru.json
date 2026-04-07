@@ -2141,7 +2141,18 @@
     "registrationsCount": "{count} регистраций",
     "inviteOpened": "Открыто",
     "inviteConfirmed": "Подтверждено",
-    "inviteDeclined": "Отклонено"
+    "inviteDeclined": "Отклонено",
+    "sendInvitation": "Отправить приглашение",
+    "sendInvites": "Отправить приглашения",
+    "inviteSubjectPrefix": "Вы приглашены",
+    "inviteEmailsPlaceholder": "Введите адреса через запятую или с новой строки",
+    "emailSubject": "Тема",
+    "personalMessage": "Личное сообщение (необязательно)",
+    "personalMessagePlaceholder": "Добавьте личное сообщение к приглашению...",
+    "inviteICSNote": "Получатели получат запрос на встречу (.ics), который автоматически добавится в их календарь.",
+    "enterEmails": "Введите хотя бы один email",
+    "invitesSentResult": "Отправлено {sent} из {total} приглашений",
+    "smtpNotConfigured": "SMTP не настроен"
   },
   "profitability": {
     "title": "Прибыльность",
