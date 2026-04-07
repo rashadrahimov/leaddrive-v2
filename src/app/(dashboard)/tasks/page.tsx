@@ -527,6 +527,14 @@ export default function TasksPage() {
         </div>
       ),
     },
+    {
+      key: "createdAt",
+      label: t("createdAt"),
+      sortable: true,
+      render: (item: any) => (
+        <span className="text-sm text-muted-foreground">{formatDate(item.createdAt)}</span>
+      ),
+    },
     { key: "assignedTo", label: t("colAssignee"), hint: t("hintColAssigned"), sortable: true },
     {
       key: "status",
