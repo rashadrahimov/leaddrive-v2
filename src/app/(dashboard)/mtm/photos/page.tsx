@@ -1,9 +1,12 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { useSession } from "next-auth/react"
 import { useTranslations } from "next-intl"
 import { PageDescription } from "@/components/page-description"
-import { Camera, ThumbsUp, ThumbsDown } from "lucide-react"
+import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
+import { Button } from "@/components/ui/button"
+import { Camera, ThumbsUp, ThumbsDown, Check, X, Trash2 } from "lucide-react"
 
 const statusColors: Record<string, string> = {
   PENDING: "bg-amber-100 text-amber-700",
@@ -12,17 +15,50 @@ const statusColors: Record<string, string> = {
 }
 
 export default function MtmPhotosPage() {
+  const { data: session } = useSession()
   const t = useTranslations("nav")
   const [photos, setPhotos] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [deleteOpen, setDeleteOpen] = useState(false)
+  const [deleteItem, setDeleteItem] = useState<any>(null)
+  const orgId = session?.user?.organizationId
 
-  useEffect(() => {
-    fetch("/api/v1/mtm/photos?limit=50")
-      .then((r) => r.json())
-      .then((r) => { if (r.success) setPhotos(r.data.photos || []) })
-      .catch(() => {})
-      .finally(() => setLoading(false))
-  }, [])
+  const fetchPhotos = async () => {
+    try {
+      const res = await fetch("/api/v1/mtm/photos?limit=50", {
+        headers: orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>,
+      })
+      const r = await res.json()
+      if (r.success) setPhotos(r.data.photos || [])
+    } catch {}
+    finally { setLoading(false) }
+  }
+
+  useEffect(() => { fetchPhotos() }, [session])
+
+  const updatePhotoStatus = async (photoId: string, status: string) => {
+    try {
+      await fetch(`/api/v1/mtm/photos/${photoId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          ...(orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>),
+        },
+        body: JSON.stringify({ status }),
+      })
+      fetchPhotos()
+    } catch {}
+  }
+
+  async function confirmDelete() {
+    if (!deleteItem) return
+    const res = await fetch(`/api/v1/mtm/photos/${deleteItem.id}`, {
+      method: "DELETE",
+      headers: orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>,
+    })
+    if (!res.ok) throw new Error((await res.json()).error || "Failed to delete")
+    fetchPhotos()
+  }
 
   return (
     <div className="space-y-4">
@@ -53,11 +89,34 @@ export default function MtmPhotosPage() {
                     <span className="flex items-center gap-0.5"><ThumbsDown className="h-2.5 w-2.5" />{photo.dislikes}</span>
                   </div>
                 </div>
+                {photo.status === "PENDING" && (
+                  <div className="flex gap-1 mt-2">
+                    <Button size="sm" variant="outline" className="flex-1 h-7 text-xs text-green-600 hover:bg-green-50" onClick={() => updatePhotoStatus(photo.id, "APPROVED")}>
+                      <Check className="h-3 w-3 mr-1" /> Approve
+                    </Button>
+                    <Button size="sm" variant="outline" className="flex-1 h-7 text-xs text-red-600 hover:bg-red-50" onClick={() => updatePhotoStatus(photo.id, "REJECTED")}>
+                      <X className="h-3 w-3 mr-1" /> Reject
+                    </Button>
+                  </div>
+                )}
+                <div className="flex justify-end mt-1">
+                  <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => { setDeleteItem(photo); setDeleteOpen(true) }}>
+                    <Trash2 className="h-3 w-3" />
+                  </Button>
+                </div>
               </div>
             </div>
           ))}
         </div>
       )}
+
+      <DeleteConfirmDialog
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        onConfirm={confirmDelete}
+        title="Delete Photo"
+        itemName="this photo"
+      />
     </div>
   )
 }

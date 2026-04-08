@@ -1,13 +1,18 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { useSession } from "next-auth/react"
 import { useTranslations } from "next-intl"
 import { PageDescription } from "@/components/page-description"
-import { UserCog } from "lucide-react"
+import { MtmAgentForm } from "@/components/mtm/agent-form"
+import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
+import { Button } from "@/components/ui/button"
+import { UserCog, Plus, Pencil, Trash2 } from "lucide-react"
 
 const roleColors: Record<string, string> = {
   ADMIN: "bg-purple-100 text-purple-700",
   MANAGER: "bg-blue-100 text-blue-700",
+  SUPERVISOR: "bg-indigo-100 text-indigo-700",
   AGENT: "bg-cyan-100 text-cyan-700",
 }
 
@@ -18,21 +23,47 @@ const statusColors: Record<string, string> = {
 }
 
 export default function MtmAgentsPage() {
+  const { data: session } = useSession()
   const t = useTranslations("nav")
   const [agents, setAgents] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [formOpen, setFormOpen] = useState(false)
+  const [editData, setEditData] = useState<any>(undefined)
+  const [deleteOpen, setDeleteOpen] = useState(false)
+  const [deleteItem, setDeleteItem] = useState<any>(null)
+  const orgId = session?.user?.organizationId
 
-  useEffect(() => {
-    fetch("/api/v1/mtm/agents?limit=50")
-      .then((r) => r.json())
-      .then((r) => { if (r.success) setAgents(r.data.agents || []) })
-      .catch(() => {})
-      .finally(() => setLoading(false))
-  }, [])
+  const fetchAgents = async () => {
+    try {
+      const res = await fetch("/api/v1/mtm/agents?limit=50", {
+        headers: orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>,
+      })
+      const r = await res.json()
+      if (r.success) setAgents(r.data.agents || [])
+    } catch {}
+    finally { setLoading(false) }
+  }
+
+  useEffect(() => { fetchAgents() }, [session])
+
+  async function confirmDelete() {
+    if (!deleteItem) return
+    const res = await fetch(`/api/v1/mtm/agents/${deleteItem.id}`, {
+      method: "DELETE",
+      headers: orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>,
+    })
+    if (!res.ok) throw new Error((await res.json()).error || "Failed to delete")
+    fetchAgents()
+  }
 
   return (
     <div className="space-y-4">
-      <PageDescription icon={UserCog} title={t("mtmAgents")} description="Manage field agents and teams" />
+      <div className="flex items-center justify-between">
+        <PageDescription icon={UserCog} title={t("mtmAgents")} description="Manage field agents and teams" />
+        <Button onClick={() => { setEditData(undefined); setFormOpen(true) }}>
+          <Plus className="h-4 w-4 mr-1" /> Add Agent
+        </Button>
+      </div>
 
       {loading ? (
         <div className="h-64 flex items-center justify-center text-muted-foreground">Loading...</div>
@@ -49,12 +80,20 @@ export default function MtmAgentsPage() {
                 <div className="flex-1 min-w-0">
                   <div className="font-medium text-sm flex items-center gap-2">
                     {agent.name}
-                    <span className={`relative flex h-2 w-2`}>
+                    <span className="relative flex h-2 w-2">
                       <span className={`absolute inline-flex h-full w-full rounded-full ${agent.isOnline ? "bg-green-400 animate-ping opacity-75" : ""}`}></span>
                       <span className={`relative inline-flex rounded-full h-2 w-2 ${agent.isOnline ? "bg-green-500" : "bg-muted-foreground/30"}`}></span>
                     </span>
                   </div>
                   <div className="text-xs text-muted-foreground">{agent.email || agent.phone || "—"}</div>
+                </div>
+                <div className="flex gap-1">
+                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setEditData(agent); setFormOpen(true) }}>
+                    <Pencil className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => { setDeleteItem(agent); setDeleteOpen(true) }}>
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
                 </div>
               </div>
               <div className="flex items-center gap-2 mt-3">
@@ -66,6 +105,21 @@ export default function MtmAgentsPage() {
           ))}
         </div>
       )}
+
+      <MtmAgentForm
+        open={formOpen}
+        onOpenChange={setFormOpen}
+        onSaved={fetchAgents}
+        initialData={editData}
+        orgId={orgId ? String(orgId) : undefined}
+      />
+      <DeleteConfirmDialog
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        onConfirm={confirmDelete}
+        title="Delete Agent"
+        itemName={deleteItem?.name}
+      />
     </div>
   )
 }
