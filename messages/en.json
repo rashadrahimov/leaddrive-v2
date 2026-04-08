@@ -42,6 +42,7 @@
     "landingPages": "Landing Pages",
     "fieldPermissions": "Field Permissions",
     "voip": "VoIP",
+    "voipCalls": "VoIP Calls",
     "financeNotifications": "Finance Notifications",
     "settings": "Settings",
     "projects": "Projects",
@@ -4687,6 +4688,23 @@
   "ticketNotification": {
     "newTicket": "New ticket: {ticketNumber}",
     "view": "View"
+  },
+  "voip": {
+    "title": "VoIP Calls",
+    "description": "Call log, click-to-call, incoming call notifications",
+    "totalCalls": "Total Calls",
+    "inbound": "Inbound",
+    "outbound": "Outbound",
+    "avgDuration": "Avg Duration",
+    "date": "Date",
+    "direction": "Direction",
+    "number": "Number",
+    "contact": "Contact",
+    "duration": "Duration",
+    "recording": "Recording",
+    "noCalls": "No calls yet",
+    "noCallsHint": "Calls will appear here when your VoIP provider is connected",
+    "searchPlaceholder": "Search by phone number..."
   },
   "voipSettings": {
     "title": "VoIP Configuration",

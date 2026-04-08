@@ -6,7 +6,7 @@ export type Module =
   | "reports" | "profitability" | "ai" | "settings" | "users" | "audit"
   // ERP modules
   | "projects" | "budgeting" | "invoices" | "events" | "pricing"
-  | "inbox" | "journeys" | "segments"
+  | "inbox" | "journeys" | "segments" | "voip"
 
 // Permission matrix: role × module × action
 const ROLE_PERMISSIONS: Record<Role, Record<string, Action[]>> = {
@@ -34,6 +34,7 @@ const ROLE_PERMISSIONS: Record<Role, Record<string, Action[]>> = {
     inbox: ["read", "write"],
     journeys: ["read", "write"],
     segments: ["read", "write"],
+    voip: ["read", "write"],
     ai: ["read"],
     settings: [],
     users: ["read"],
@@ -60,6 +61,7 @@ const ROLE_PERMISSIONS: Record<Role, Record<string, Action[]>> = {
     inbox: ["read", "write"],
     journeys: [],
     segments: [],
+    voip: ["read", "write"],
     ai: ["read"],
     settings: [],
     users: [],
@@ -86,6 +88,7 @@ const ROLE_PERMISSIONS: Record<Role, Record<string, Action[]>> = {
     inbox: ["read", "write"],
     journeys: [],
     segments: [],
+    voip: ["read", "write"],
     ai: ["read"],
     settings: [],
     users: [],
@@ -137,6 +140,7 @@ const ROUTE_MODULE_MAP: Record<string, Module> = {
   "/api/v1/ai-alerts": "ai",
   "/api/v1/ai-guardrails": "ai",
   "/api/v1/ai-interaction-logs": "ai",
+  "/api/v1/calls": "voip",
 }
 
 /**
@@ -228,6 +232,7 @@ export const ALL_MODULES: { id: Module; group: string }[] = [
   { id: "inbox", group: "Communication" },
   { id: "tickets", group: "Support" },
   { id: "kb", group: "Support" },
+  { id: "voip", group: "Support" },
   { id: "profitability", group: "Analytics" },
   { id: "budgeting", group: "Analytics" },
   { id: "pricing", group: "Analytics" },

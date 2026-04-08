@@ -66,6 +66,7 @@ const ENTERPRISE_MODULES = [
   // Phase 4: Enterprise features
   "/settings/field-permissions",
   "/settings/voip",
+  "/support/voip",
   "/settings/custom-domains",
   "/pages",
   "/reports/builder",

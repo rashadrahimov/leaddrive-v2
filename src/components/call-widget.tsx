@@ -135,6 +135,36 @@ export function CallWidget({ callLogId, phoneNumber, contactName, onClose }: Cal
           </Button>
         </div>
 
+        {/* Disposition selector — shown when call ends */}
+        {!isActive && status !== "initiated" && (
+          <div className="mt-3 space-y-2">
+            <label className="text-xs font-medium text-muted-foreground">Call Outcome</label>
+            <select
+              className="w-full text-sm border rounded-md p-1.5 bg-background"
+              defaultValue=""
+              onChange={async (e) => {
+                if (!e.target.value) return
+                try {
+                  await fetch(`/api/v1/calls/${callLogId}/disposition`, {
+                    method: "PATCH",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ disposition: e.target.value }),
+                  })
+                } catch {}
+              }}
+            >
+              <option value="">Select outcome...</option>
+              <option value="interested">Interested</option>
+              <option value="not_interested">Not Interested</option>
+              <option value="callback">Callback Requested</option>
+              <option value="voicemail">Voicemail</option>
+              <option value="wrong_number">Wrong Number</option>
+              <option value="no_answer">No Answer</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+        )}
+
         {showNotes && (
           <div className="mt-3 space-y-2">
             <Textarea

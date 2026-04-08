@@ -16,6 +16,17 @@
       "runtimeExecutable": "npx",
       "runtimeArgs": ["prisma", "studio"],
       "port": 5555
+    },
+    {
+      "name": "budgetpro-dev",
+      "runtimeExecutable": "/opt/homebrew/bin/node",
+      "runtimeArgs": ["node_modules/.bin/next", "dev", "--port", "3002"],
+      "port": 3002,
+      "autoPort": true,
+      "cwd": "/Users/rashadrahimov/Documents/leaddrive-budgeting",
+      "env": {
+        "PATH": "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+      }
     }
   ]
 }

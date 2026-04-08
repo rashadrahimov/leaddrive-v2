@@ -42,6 +42,7 @@
     "landingPages": "Landing səhifələr",
     "fieldPermissions": "Sahə icazələri",
     "voip": "VoIP",
+    "voipCalls": "VoIP Zənglər",
     "financeNotifications": "Maliyyə bildirişləri",
     "settings": "Parametrlər",
     "projects": "Layihələr",
@@ -4682,6 +4683,23 @@
   "ticketNotification": {
     "newTicket": "Yeni tiket: {ticketNumber}",
     "view": "Bax"
+  },
+  "voip": {
+    "title": "VoIP Zənglər",
+    "description": "Zəng jurnalı, klikləmə ilə zəng, gələn zəng bildirişləri",
+    "totalCalls": "Ümumi zənglər",
+    "inbound": "Gələn",
+    "outbound": "Gedən",
+    "avgDuration": "Orta müddət",
+    "date": "Tarix",
+    "direction": "İstiqamət",
+    "number": "Nömrə",
+    "contact": "Əlaqə",
+    "duration": "Müddət",
+    "recording": "Qeyd",
+    "noCalls": "Hələ zəng yoxdur",
+    "noCallsHint": "VoIP provayder qoşulduqdan sonra zənglər burada görünəcək",
+    "searchPlaceholder": "Telefon nömrəsinə görə axtar..."
   },
   "voipSettings": {
     "title": "VoIP Parametrləri",

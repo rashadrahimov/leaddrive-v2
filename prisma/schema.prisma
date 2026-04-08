@@ -3149,11 +3149,13 @@ model CallLog {
   activityId     String?   // Linked Activity record
   provider       String    @default("twilio")
   notes          String?   @db.Text
+  disposition    String?   // interested, not_interested, callback, voicemail, wrong_number, no_answer, other
   startedAt      DateTime?
   endedAt        DateTime?
   createdAt      DateTime  @default(now())
 
   @@index([organizationId, contactId])
+  @@index([organizationId, status])
   @@index([callSid])
   @@map("call_logs")
 }

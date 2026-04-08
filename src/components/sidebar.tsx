@@ -50,6 +50,7 @@ const navItems: NavItem[] = [
   { module: "tickets", href: "/tickets", icon: Ticket, tKey: "tickets", group: "Support" },
   { module: "tickets", href: "/support/agent-desktop", icon: Headphones, tKey: "agentDesktop", group: "Support" },
   { module: "tickets", href: "/support/calendar", icon: CalendarDays, tKey: "agentCalendar", group: "Support" },
+  { module: "voip", href: "/support/voip", icon: Phone, tKey: "voipCalls", group: "Support" },
   { module: "knowledge-base", href: "/knowledge-base", icon: BookOpen, tKey: "knowledgeBase", group: "Support" },
   { module: "invoices", href: "/invoices", icon: FileSpreadsheet, tKey: "invoices", group: "Finance" },
   { module: "budgeting", href: "/finance", icon: Wallet, tKey: "finance", group: "Finance" },

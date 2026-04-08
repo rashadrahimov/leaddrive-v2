@@ -81,7 +81,7 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// GET — call history
+// GET — call history with filters and pagination
 export async function GET(req: NextRequest) {
   const orgId = await getOrgId(req)
   if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
@@ -89,22 +89,42 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
   const contactId = searchParams.get("contactId")
   const companyId = searchParams.get("companyId")
-  const limit = parseInt(searchParams.get("limit") || "50")
+  const direction = searchParams.get("direction")
+  const status = searchParams.get("status")
+  const search = searchParams.get("search")
+  const page = Math.max(1, parseInt(searchParams.get("page") || "1"))
+  const limit = Math.min(100, Math.max(1, parseInt(searchParams.get("limit") || "25")))
+
+  const where: any = { organizationId: orgId }
+  if (contactId) where.contactId = contactId
+  if (companyId) where.companyId = companyId
+  if (direction) where.direction = direction
+  if (status) where.status = status
+  if (search) {
+    where.OR = [
+      { fromNumber: { contains: search, mode: "insensitive" } },
+      { toNumber: { contains: search, mode: "insensitive" } },
+    ]
+  }
 
   try {
-    const calls = await prisma.callLog.findMany({
-      where: {
-        organizationId: orgId,
-        ...(contactId ? { contactId } : {}),
-        ...(companyId ? { companyId } : {}),
-      },
-      include: {
-        contact: { select: { fullName: true, email: true } },
-      },
-      orderBy: { createdAt: "desc" },
-      take: limit,
+    const [calls, total] = await Promise.all([
+      prisma.callLog.findMany({
+        where,
+        include: {
+          contact: { select: { fullName: true, email: true } },
+        },
+        orderBy: { createdAt: "desc" },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      prisma.callLog.count({ where }),
+    ])
+    return NextResponse.json({
+      success: true,
+      data: calls,
+      pagination: { page, limit, total, pages: Math.ceil(total / limit) },
     })
-    return NextResponse.json({ success: true, data: calls })
   } catch (e) {
     console.error("Call history error:", e)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })

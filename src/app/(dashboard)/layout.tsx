@@ -13,6 +13,7 @@ import { WallpaperProvider } from "@/contexts/wallpaper-context"
 import { TicketBadgeProvider } from "@/contexts/ticket-badge-context"
 import { DashboardWallpaper } from "@/components/dashboard-wallpaper"
 import { TicketNotifier } from "@/components/ticket-notifier"
+import { VoipCallProvider } from "@/components/voip-call-provider"
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -36,6 +37,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <WallpaperProvider>
         <QueryClientProvider client={queryClient}>
           <TicketBadgeProvider>
+          <VoipCallProvider>
           {isDashboard && <DashboardWallpaper />}
           <div className="relative z-[2] flex h-screen">
             <Sidebar org={org} />
@@ -52,6 +54,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </div>
           </div>
           <TicketNotifier />
+          </VoipCallProvider>
           </TicketBadgeProvider>
         </QueryClientProvider>
       </WallpaperProvider>
