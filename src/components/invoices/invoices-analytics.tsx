@@ -1,7 +1,7 @@
 "use client"
 
 import { useMemo } from "react"
-import { useTranslations } from "next-intl"
+import { useTranslations, useLocale } from "next-intl"
 import { MiniBarChart, MiniDonut } from "@/components/charts/mini-charts"
 import { cn } from "@/lib/utils"
 import {
@@ -57,6 +57,7 @@ function formatCompact(n: number, currency = "AZN") {
 export function InvoicesAnalytics({ invoices, stats, currency = "AZN" }: InvoicesAnalyticsProps) {
   const t = useTranslations("invoices")
   const tc = useTranslations("common")
+  const locale = useLocale()
 
   // Status colors & labels
   const statusColors: Record<string, string> = {
@@ -113,16 +114,15 @@ export function InvoicesAnalytics({ invoices, stats, currency = "AZN" }: Invoice
     return Math.round(((curr - prev) / prev) * 100)
   }, [monthlyRevenue])
 
-  // Month labels — use short abbreviations from full month names
+  // Month labels — derive short names from locale-aware Date formatting
+  const localeMap: Record<string, string> = { ru: "ru-RU", en: "en-US", az: "az-AZ" }
   const monthLabels = useMemo(() => {
-    const full = [
-      tc("monthJan"), tc("monthFeb"), tc("monthMar"), tc("monthApr"),
-      tc("monthMay"), tc("monthJun"), tc("monthJul"), tc("monthAug"),
-      tc("monthSep"), tc("monthOct"), tc("monthNov"), tc("monthDec"),
-    ]
-    // Abbreviate to first 3 chars
-    return full.map(m => m.slice(0, 3))
-  }, [tc])
+    const loc = localeMap[locale] || locale
+    return Array.from({ length: 12 }, (_, i) => {
+      const d = new Date(2026, i, 1)
+      return d.toLocaleString(loc, { month: "short" }).replace(".", "")
+    })
+  }, [locale])
 
   const displayMonthLabels = useMemo(() => {
     const currMonth = new Date().getMonth()
