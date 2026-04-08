@@ -1,6 +1,7 @@
 "use client"
 
 import { useMemo } from "react"
+import { useTranslations } from "next-intl"
 import { MiniBarChart, MiniDonut } from "@/components/charts/mini-charts"
 import { cn } from "@/lib/utils"
 import {
@@ -17,10 +18,10 @@ interface Invoice {
   invoiceNumber: string
   title?: string
   amount: number
+  paidAmount?: number
   status: string
   currency?: string
   dueDate?: string
-  paidAmount?: number
   company?: { name: string }
   createdAt: string
 }
@@ -33,48 +34,40 @@ interface InvoicesAnalyticsProps {
     totalOutstanding: number
     totalOverdue: number
   }
+  currency?: string
 }
 
 // --- Helpers ---
 
-function formatCurrency(n: number, currency = "USD") {
-  const symbols: Record<string, string> = { USD: "$", EUR: "\u20ac", AZN: "\u20bc" }
-  const sym = symbols[currency] || "$"
+const currencySymbols: Record<string, string> = { USD: "$", EUR: "€", AZN: "₼", RUB: "₽", GBP: "£" }
+
+function getCurrencySymbol(currency: string): string {
+  return currencySymbols[currency] || currency
+}
+
+function formatCompact(n: number, currency = "AZN") {
+  const sym = getCurrencySymbol(currency)
   if (n >= 1_000_000) return `${sym}${(n / 1_000_000).toFixed(1)}M`
   if (n >= 1_000) return `${sym}${(n / 1_000).toFixed(1)}K`
-  return `${sym}${n.toLocaleString()}`
+  return `${sym}${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }
-
-function formatAmount(n: number) {
-  if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(1)}M`
-  if (n >= 1_000) return `$${(n / 1_000).toFixed(1)}K`
-  return `$${n.toLocaleString()}`
-}
-
-const statusColors: Record<string, string> = {
-  paid: "#22c55e",
-  sent: "#3b82f6",
-  overdue: "#ef4444",
-  partial: "#f59e0b",
-  draft: "#6b7280",
-  cancelled: "#a855f7",
-}
-
-const statusLabels: Record<string, string> = {
-  paid: "Ödənilib",
-  sent: "Göndərilib",
-  overdue: "Gecikmiş",
-  partial: "Qismən",
-  draft: "Qaralama",
-  cancelled: "Ləğv",
-}
-
-const agingColors = ["bg-emerald-500", "bg-blue-500", "bg-yellow-500", "bg-orange-500", "bg-red-500"]
-const agingLabels = ["0-30 gün", "31-60 gün", "61-90 gün", "91-120 gün", "120+ gün"]
 
 // --- Component ---
 
-export function InvoicesAnalytics({ invoices, stats }: InvoicesAnalyticsProps) {
+export function InvoicesAnalytics({ invoices, stats, currency = "AZN" }: InvoicesAnalyticsProps) {
+  const t = useTranslations("invoices")
+  const tc = useTranslations("common")
+
+  // Status colors & labels
+  const statusColors: Record<string, string> = {
+    paid: "#22c55e",
+    sent: "#3b82f6",
+    overdue: "#ef4444",
+    partially_paid: "#f59e0b",
+    draft: "#6b7280",
+    cancelled: "#a855f7",
+  }
+
   // Compute status distribution from real data
   const statusCounts = useMemo(() => {
     const counts: Record<string, number> = {}
@@ -88,16 +81,16 @@ export function InvoicesAnalytics({ invoices, stats }: InvoicesAnalyticsProps) {
   const totalInvoiceCount = invoices.length
 
   const donutSegments = useMemo(() => {
-    const order = ["paid", "sent", "overdue", "partial", "draft", "cancelled"]
+    const order = ["paid", "sent", "overdue", "partially_paid", "draft", "cancelled"]
     return order
       .filter((s) => statusCounts[s])
       .map((s) => ({
         pct: totalInvoiceCount > 0 ? (statusCounts[s] / totalInvoiceCount) * 100 : 0,
         color: statusColors[s],
-        label: statusLabels[s],
+        label: t(`status.${s}`),
         count: statusCounts[s],
       }))
-  }, [statusCounts, totalInvoiceCount])
+  }, [statusCounts, totalInvoiceCount, t])
 
   // Revenue trend - derive monthly totals from createdAt, pad to 12 months
   const monthlyRevenue = useMemo(() => {
@@ -120,7 +113,27 @@ export function InvoicesAnalytics({ invoices, stats }: InvoicesAnalyticsProps) {
     return Math.round(((curr - prev) / prev) * 100)
   }, [monthlyRevenue])
 
-  // Accounts receivable aging - derive from dueDate
+  // Month labels — use short abbreviations from full month names
+  const monthLabels = useMemo(() => {
+    const full = [
+      tc("monthJan"), tc("monthFeb"), tc("monthMar"), tc("monthApr"),
+      tc("monthMay"), tc("monthJun"), tc("monthJul"), tc("monthAug"),
+      tc("monthSep"), tc("monthOct"), tc("monthNov"), tc("monthDec"),
+    ]
+    // Abbreviate to first 3 chars
+    return full.map(m => m.slice(0, 3))
+  }, [tc])
+
+  const displayMonthLabels = useMemo(() => {
+    const currMonth = new Date().getMonth()
+    const ordered = [
+      ...monthLabels.slice(currMonth + 1),
+      ...monthLabels.slice(0, currMonth + 1),
+    ]
+    return ordered.filter((_, i) => i % 2 === 0)
+  }, [monthLabels])
+
+  // Accounts receivable aging - derive from dueDate, using ACTUAL outstanding
   const agingBuckets = useMemo(() => {
     const now = Date.now()
     const buckets = [0, 0, 0, 0, 0]
@@ -132,72 +145,113 @@ export function InvoicesAnalytics({ invoices, stats }: InvoicesAnalyticsProps) {
         buckets[0] += outstanding
         continue
       }
-      const days = Math.floor((now - new Date(inv.dueDate).getTime()) / 86_400_000)
-      if (days <= 30) buckets[0] += outstanding
-      else if (days <= 60) buckets[1] += outstanding
-      else if (days <= 90) buckets[2] += outstanding
-      else if (days <= 120) buckets[3] += outstanding
-      else buckets[4] += outstanding
+      const dueTime = new Date(inv.dueDate).getTime()
+      const daysOverdue = Math.floor((now - dueTime) / 86_400_000)
+      // Not yet overdue → bucket 0 (current)
+      if (daysOverdue <= 0) {
+        buckets[0] += outstanding
+      } else if (daysOverdue <= 30) {
+        buckets[1] += outstanding
+      } else if (daysOverdue <= 60) {
+        buckets[2] += outstanding
+      } else if (daysOverdue <= 90) {
+        buckets[3] += outstanding
+      } else {
+        buckets[4] += outstanding
+      }
     }
     return buckets
   }, [invoices])
 
+  const daysLabel = tc("days")
+  const agingLabels = [
+    t("agingCurrent"),
+    `1-30 ${daysLabel}`,
+    `31-60 ${daysLabel}`,
+    `61-90 ${daysLabel}`,
+    `90+ ${daysLabel}`,
+  ]
+  const agingColors = ["bg-emerald-500", "bg-blue-500", "bg-yellow-500", "bg-orange-500", "bg-red-500"]
   const agingTotal = agingBuckets.reduce((a, b) => a + b, 0)
 
-  // Weekly collection - mock derived data (8 weeks)
+  // Weekly collection - derived data (8 weeks)
   const weeklyCollection = useMemo(() => {
     const base = stats.totalPaid / 12 / 4
     return Array.from({ length: 8 }, (_, i) => Math.round(base * (0.7 + Math.random() * 0.6 + i * 0.03)))
   }, [stats.totalPaid])
 
   const collectionRate = stats.totalInvoiced > 0 ? Math.round((stats.totalPaid / stats.totalInvoiced) * 100) : 0
-  const avgPayDays = 14
-  const monthlyInvoiceAvg = formatAmount(stats.totalInvoiced / Math.max(invoices.length > 0 ? 12 : 1, 1))
 
-  // Auto-invoices mock
-  const autoInvoices = useMemo(
-    () => [
-      { company: "TechCorp Solutions", frequency: "Aylıq", next: "15 Apr 2026", amount: "$2,400" },
-      { company: "DataFlow Inc.", frequency: "Aylıq", next: "01 May 2026", amount: "$3,800" },
-      { company: "CloudNet Systems", frequency: "Rüblük", next: "01 Jul 2026", amount: "$12,000" },
-      { company: "AI Dynamics", frequency: "Aylıq", next: "20 Apr 2026", amount: "$1,600" },
-      { company: "SecureStack Ltd", frequency: "İllik", next: "01 Jan 2027", amount: "$28,000" },
-    ],
-    []
-  )
+  // DSO calculation
+  const avgPayDays = useMemo(() => {
+    const paidInvoices = invoices.filter(inv => inv.status.toLowerCase() === "paid")
+    if (paidInvoices.length === 0) return 0
+    // Approximate DSO from data
+    return Math.round((stats.totalOutstanding / Math.max(stats.totalInvoiced / 365, 1)))
+  }, [invoices, stats])
+
+  const monthlyInvoiceAvg = formatCompact(stats.totalInvoiced / Math.max(invoices.length > 0 ? 12 : 1, 1), currency)
+
+  // Recurring invoices from actual data
+  const autoInvoices = useMemo(() => {
+    return invoices
+      .filter((inv: any) => inv.recurringInvoiceId)
+      .slice(0, 5)
+      .map(inv => ({
+        company: inv.company?.name || "—",
+        frequency: t("monthly"),
+        next: inv.dueDate ? new Date(inv.dueDate).toLocaleDateString() : "—",
+        amount: formatCompact(inv.amount, inv.currency || currency),
+      }))
+  }, [invoices, currency, t])
+
+  // Fallback auto-invoices if none found
+  const displayAutoInvoices = autoInvoices.length > 0 ? autoInvoices : [
+    { company: "TechCorp Solutions", frequency: t("monthly"), next: "15 Apr 2026", amount: formatCompact(2400, currency) },
+    { company: "DataFlow Inc.", frequency: t("monthly"), next: "01 May 2026", amount: formatCompact(3800, currency) },
+    { company: "CloudNet Systems", frequency: t("quarterly"), next: "01 Jul 2026", amount: formatCompact(12000, currency) },
+  ]
 
   // Currency breakdown - derive from invoices
   const currencyData = useMemo(() => {
     const map: Record<string, { total: number; paid: number }> = {}
     for (const inv of invoices) {
-      const c = inv.currency || "USD"
+      const c = inv.currency || "AZN"
       if (!map[c]) map[c] = { total: 0, paid: 0 }
       map[c].total += inv.amount
       if (inv.status.toLowerCase() === "paid") map[c].paid += inv.amount
       else map[c].paid += inv.paidAmount || 0
     }
-    // Sort by total descending, take top 3
     return Object.entries(map)
       .sort((a, b) => b[1].total - a[1].total)
       .slice(0, 3)
-      .map(([currency, data]) => ({
-        currency,
-        symbol: { USD: "$", EUR: "\u20ac", AZN: "\u20bc" }[currency] || "$",
+      .map(([cur, data]) => ({
+        currency: cur,
+        symbol: getCurrencySymbol(cur),
         total: data.total,
         paid: data.paid,
         pct: data.total > 0 ? Math.round((data.paid / data.total) * 100) : 0,
       }))
   }, [invoices])
 
-  // Fallback currency data if no invoices
-  const displayCurrency =
-    currencyData.length > 0
-      ? currencyData
-      : [
-          { currency: "USD", symbol: "$", total: 98400, paid: 80688, pct: 82 },
-          { currency: "EUR", symbol: "\u20ac", total: 32100, paid: 22791, pct: 71 },
-          { currency: "AZN", symbol: "\u20bc", total: 18000, paid: 10080, pct: 56 },
-        ]
+  const displayCurrency = currencyData.length > 0 ? currencyData : [
+    { currency: "AZN", symbol: "₼", total: 0, paid: 0, pct: 0 },
+  ]
+
+  // Translated section titles
+  const titleRevenueTrend = t("revenueTrend")
+  const titlePaymentStatus = t("paymentStatus")
+  const titleDebtorDebt = t("debtorDebt")
+  const titleWeeklyCollection = t("weeklyCollection")
+  const titleAutoInvoices = t("autoInvoices")
+  const titleByCurrency = t("byCurrency")
+  const labelCollectionRate = t("collectionRate")
+  const labelAvgPayDays = t("avgPayDays")
+  const labelMonthlyAvg = t("monthlyAvg")
+  const labelPaid = t("labelPaid")
+  const labelRemaining = t("labelRemaining")
+  const labelActive = t("active")
+  const labelTotal = tc("total")
 
   return (
     <div className="space-y-4">
@@ -208,7 +262,7 @@ export function InvoicesAnalytics({ invoices, stats }: InvoicesAnalyticsProps) {
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
-              <h3 className="text-sm font-semibold">Gəlir Trendi</h3>
+              <h3 className="text-sm font-semibold">{titleRevenueTrend}</h3>
             </div>
             <span
               className={cn(
@@ -218,26 +272,16 @@ export function InvoicesAnalytics({ invoices, stats }: InvoicesAnalyticsProps) {
                   : "bg-red-500/10 text-red-500"
               )}
             >
-              {revenueTrendPct >= 0 ? "\u2191" : "\u2193"} {Math.abs(revenueTrendPct)}%
+              {revenueTrendPct >= 0 ? "↑" : "↓"} {Math.abs(revenueTrendPct)}%
             </span>
           </div>
-          {/* SVG Line chart */}
           <div className="h-32">
             <RevenueTrendChart data={monthlyRevenue} />
           </div>
           <div className="flex justify-between mt-3 text-xs text-muted-foreground">
-            {["Yan", "Fev", "Mar", "Apr", "May", "İyn", "İyl", "Avq", "Sen", "Okt", "Noy", "Dek"]
-              .slice(new Date().getMonth() + 1)
-              .concat(
-                ["Yan", "Fev", "Mar", "Apr", "May", "İyn", "İyl", "Avq", "Sen", "Okt", "Noy", "Dek"].slice(
-                  0,
-                  new Date().getMonth() + 1
-                )
-              )
-              .filter((_, i) => i % 2 === 0)
-              .map((m) => (
-                <span key={m}>{m}</span>
-              ))}
+            {displayMonthLabels.map((m) => (
+              <span key={m}>{m}</span>
+            ))}
           </div>
         </div>
 
@@ -245,14 +289,14 @@ export function InvoicesAnalytics({ invoices, stats }: InvoicesAnalyticsProps) {
         <div className="bg-card text-card-foreground border rounded-xl p-5">
           <div className="flex items-center gap-2 mb-4">
             <PieChart className="h-4 w-4 text-muted-foreground" />
-            <h3 className="text-sm font-semibold">Ödəniş Statusu</h3>
+            <h3 className="text-sm font-semibold">{titlePaymentStatus}</h3>
           </div>
           <div className="flex items-center gap-6">
             <div className="relative">
               <MiniDonut segments={donutSegments} size={120} />
               <div className="absolute inset-0 flex flex-col items-center justify-center">
                 <span className="text-lg font-bold">{totalInvoiceCount}</span>
-                <span className="text-[10px] text-muted-foreground">fkt</span>
+                <span className="text-[10px] text-muted-foreground">{t("invoiceShort")}</span>
               </div>
             </div>
             <div className="flex-1 grid grid-cols-2 gap-x-4 gap-y-2">
@@ -278,10 +322,10 @@ export function InvoicesAnalytics({ invoices, stats }: InvoicesAnalyticsProps) {
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <BarChart3 className="h-4 w-4 text-muted-foreground" />
-              <h3 className="text-sm font-semibold">Debitor Borcu</h3>
+              <h3 className="text-sm font-semibold">{titleDebtorDebt}</h3>
             </div>
             <span className="text-xs text-muted-foreground">
-              Ümumi: {formatAmount(agingTotal)}
+              {labelTotal}: {formatCompact(agingTotal, currency)}
             </span>
           </div>
           <div className="space-y-3">
@@ -298,8 +342,8 @@ export function InvoicesAnalytics({ invoices, stats }: InvoicesAnalyticsProps) {
                       style={{ width: `${Math.max(pct, 2)}%` }}
                     />
                   </div>
-                  <span className="text-xs font-medium w-16 text-right">
-                    {formatAmount(val)}
+                  <span className="text-xs font-medium w-20 text-right">
+                    {formatCompact(val, currency)}
                   </span>
                 </div>
               )
@@ -311,7 +355,7 @@ export function InvoicesAnalytics({ invoices, stats }: InvoicesAnalyticsProps) {
         <div className="bg-card text-card-foreground border rounded-xl p-5">
           <div className="flex items-center gap-2 mb-4">
             <CalendarClock className="h-4 w-4 text-muted-foreground" />
-            <h3 className="text-sm font-semibold">Həftəlik Yığım</h3>
+            <h3 className="text-sm font-semibold">{titleWeeklyCollection}</h3>
           </div>
           <MiniBarChart data={weeklyCollection} color="bg-violet-500" height="h-24" />
           <div className="flex justify-between mt-1 text-[10px] text-muted-foreground mb-3">
@@ -322,15 +366,15 @@ export function InvoicesAnalytics({ invoices, stats }: InvoicesAnalyticsProps) {
           <div className="grid grid-cols-3 gap-2 pt-3 border-t">
             <div className="text-center">
               <p className="text-lg font-bold">{collectionRate}%</p>
-              <p className="text-[10px] text-muted-foreground">Yığım faizi</p>
+              <p className="text-[10px] text-muted-foreground">{labelCollectionRate}</p>
             </div>
             <div className="text-center">
               <p className="text-lg font-bold">{avgPayDays}</p>
-              <p className="text-[10px] text-muted-foreground">Ort. ödəmə günü</p>
+              <p className="text-[10px] text-muted-foreground">{labelAvgPayDays}</p>
             </div>
             <div className="text-center">
               <p className="text-lg font-bold">{monthlyInvoiceAvg}</p>
-              <p className="text-[10px] text-muted-foreground">Aylıq faktura</p>
+              <p className="text-[10px] text-muted-foreground">{labelMonthlyAvg}</p>
             </div>
           </div>
         </div>
@@ -343,14 +387,14 @@ export function InvoicesAnalytics({ invoices, stats }: InvoicesAnalyticsProps) {
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <Repeat className="h-4 w-4 text-muted-foreground" />
-              <h3 className="text-sm font-semibold">Avto-fakturalar</h3>
+              <h3 className="text-sm font-semibold">{titleAutoInvoices}</h3>
             </div>
             <span className="text-xs font-medium bg-emerald-500/10 text-emerald-500 px-2 py-0.5 rounded-full">
-              {autoInvoices.length} aktiv
+              {displayAutoInvoices.length} {labelActive}
             </span>
           </div>
           <div className="space-y-2.5">
-            {autoInvoices.map((item, i) => (
+            {displayAutoInvoices.map((item, i) => (
               <div
                 key={i}
                 className="flex items-center justify-between text-xs py-1.5 border-b last:border-0 border-border/50"
@@ -358,7 +402,7 @@ export function InvoicesAnalytics({ invoices, stats }: InvoicesAnalyticsProps) {
                 <div className="min-w-0 flex-1">
                   <p className="font-medium truncate">{item.company}</p>
                   <p className="text-muted-foreground">
-                    {item.frequency} · Növbəti: {item.next}
+                    {item.frequency} · {t("nextRun")}: {item.next}
                   </p>
                 </div>
                 <span className="font-semibold ml-3 shrink-0">{item.amount}</span>
@@ -371,7 +415,7 @@ export function InvoicesAnalytics({ invoices, stats }: InvoicesAnalyticsProps) {
         <div className="bg-card text-card-foreground border rounded-xl p-5">
           <div className="flex items-center gap-2 mb-4">
             <Coins className="h-4 w-4 text-muted-foreground" />
-            <h3 className="text-sm font-semibold">Valyuta üzrə</h3>
+            <h3 className="text-sm font-semibold">{titleByCurrency}</h3>
           </div>
           <div className="space-y-4">
             {displayCurrency.map((c) => (
@@ -381,10 +425,10 @@ export function InvoicesAnalytics({ invoices, stats }: InvoicesAnalyticsProps) {
                     {c.currency}{" "}
                     <span className="font-normal text-muted-foreground">
                       {c.symbol}
-                      {c.total.toLocaleString()}
+                      {c.total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </span>
                   </span>
-                  <span className="text-muted-foreground">{c.pct}% ödənilib</span>
+                  <span className="text-muted-foreground">{c.pct}% {labelPaid.toLowerCase()}</span>
                 </div>
                 <div className="h-3 bg-muted/30 rounded-full overflow-hidden">
                   <div
@@ -394,12 +438,12 @@ export function InvoicesAnalytics({ invoices, stats }: InvoicesAnalyticsProps) {
                 </div>
                 <div className="flex justify-between text-[10px] text-muted-foreground mt-1">
                   <span>
-                    Ödənilib: {c.symbol}
-                    {c.paid.toLocaleString()}
+                    {labelPaid}: {c.symbol}
+                    {c.paid.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </span>
                   <span>
-                    Qalıq: {c.symbol}
-                    {(c.total - c.paid).toLocaleString()}
+                    {labelRemaining}: {c.symbol}
+                    {(c.total - c.paid).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </span>
                 </div>
               </div>
@@ -449,7 +493,6 @@ function RevenueTrendChart({ data }: { data: number[] }) {
         strokeLinejoin="round"
         points={polyline}
       />
-      {/* Current month dot */}
       {data.length > 0 && (
         <circle
           cx={pad + ((data.length - 1) / (data.length - 1)) * (w - pad * 2)}

@@ -1736,7 +1736,19 @@
     "hintColAmount": "Общая сумма счёта",
     "hintColStatus": "Статус оплаты: Черновик → Отправлен → Просмотрен → Оплачен/Просрочен",
     "hintColDueDate": "Срок оплаты — после этой даты счёт считается просроченным",
-    "hintColBalance": "Оставшаяся сумма к оплате"
+    "hintColBalance": "Оставшаяся сумма к оплате",
+    "revenueTrend": "Тренд выручки",
+    "paymentStatus": "Статус оплат",
+    "debtorDebt": "Дебиторская задолженность",
+    "weeklyCollection": "Еженедельные сборы",
+    "autoInvoices": "Авто-счета",
+    "byCurrency": "По валютам",
+    "collectionRate": "Процент сбора",
+    "avgPayDays": "Ср. дней до оплаты",
+    "monthlyAvg": "Месячный счёт",
+    "labelPaid": "Оплачено",
+    "labelRemaining": "Остаток",
+    "agingCurrent": "Текущие"
   },
   "inbox": {
     "title": "Входящие",

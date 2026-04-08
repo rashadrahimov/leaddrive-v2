@@ -1736,7 +1736,19 @@
     "hintColAmount": "Total amount on the invoice",
     "hintColStatus": "Payment status: Draft → Sent → Viewed → Paid/Overdue",
     "hintColDueDate": "Payment deadline — invoice becomes overdue after this date",
-    "hintColBalance": "Remaining balance to be paid"
+    "hintColBalance": "Remaining balance to be paid",
+    "revenueTrend": "Revenue Trend",
+    "paymentStatus": "Payment Status",
+    "debtorDebt": "Accounts Receivable Aging",
+    "weeklyCollection": "Weekly Collection",
+    "autoInvoices": "Auto-invoices",
+    "byCurrency": "By Currency",
+    "collectionRate": "Collection Rate",
+    "avgPayDays": "Avg. Days to Pay",
+    "monthlyAvg": "Monthly Avg.",
+    "labelPaid": "Paid",
+    "labelRemaining": "Remaining",
+    "agingCurrent": "Current"
   },
   "inbox": {
     "title": "Inbox",

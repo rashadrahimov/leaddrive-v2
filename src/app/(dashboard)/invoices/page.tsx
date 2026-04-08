@@ -213,7 +213,7 @@ export default function InvoicesPage() {
       sortable: true,
       render: (item: any) => (
         <span className="font-medium">
-          {item.totalAmount != null ? item.totalAmount.toLocaleString() : "—"}{" "}
+          {item.totalAmount != null ? item.totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "—"}{" "}
           {item.currency}
         </span>
       ),
@@ -240,7 +240,7 @@ export default function InvoicesPage() {
       sortable: true,
       render: (item: any) => (
         <span className="font-medium">
-          {item.balanceDue != null ? item.balanceDue.toLocaleString() : "—"}{" "}
+          {item.balanceDue != null ? item.balanceDue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "—"}{" "}
           {item.currency}
         </span>
       ),
@@ -346,28 +346,28 @@ export default function InvoicesPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <ColorStatCard
           label={t("statTotalInvoiced")}
-          value={`${stats.totalInvoiced.toLocaleString()} ${stats.currency}`}
+          value={`${stats.totalInvoiced.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${stats.currency}`}
           icon={<DollarSign className="h-5 w-5" />}
           color="blue"
           hint={t("hintTotalInvoiced")}
         />
         <ColorStatCard
           label={t("statPaid")}
-          value={`${stats.totalPaid.toLocaleString()} ${stats.currency}`}
+          value={`${stats.totalPaid.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${stats.currency}`}
           icon={<CheckCircle className="h-5 w-5" />}
           color="green"
           hint={t("hintTotalPaid")}
         />
         <ColorStatCard
           label={t("statOutstanding")}
-          value={`${stats.totalOutstanding.toLocaleString()} ${stats.currency}`}
+          value={`${stats.totalOutstanding.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${stats.currency}`}
           icon={<Clock className="h-5 w-5" />}
           color="orange"
           hint={t("hintTotalOutstanding")}
         />
         <ColorStatCard
           label={t("statOverdue")}
-          value={`${stats.totalOverdue.toLocaleString()} ${stats.currency}`}
+          value={`${stats.totalOverdue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${stats.currency}`}
           icon={<AlertTriangle className="h-5 w-5" />}
           color="red"
           hint={t("hintTotalOverdue")}
@@ -408,7 +408,7 @@ export default function InvoicesPage() {
               <div className="flex items-center justify-between text-sm">
                 <span className="font-medium">{t("paymentProgress")}</span>
                 <span className="text-muted-foreground">
-                  {stats.totalPaid.toLocaleString()} / {stats.totalInvoiced.toLocaleString()} {stats.currency}
+                  {stats.totalPaid.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} / {stats.totalInvoiced.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {stats.currency}
                   {" "}·{" "}
                   <span className="font-semibold text-green-600">{Math.round((stats.totalPaid / stats.totalInvoiced) * 100)}%</span>
                 </span>
@@ -435,6 +435,7 @@ export default function InvoicesPage() {
               invoiceNumber: inv.invoiceNumber,
               title: inv.title,
               amount: inv.totalAmount || 0,
+              paidAmount: (inv as any).paidAmount || 0,
               status: inv.status,
               currency: inv.currency,
               dueDate: inv.dueDate,
@@ -447,6 +448,7 @@ export default function InvoicesPage() {
               totalOutstanding: stats.totalOutstanding,
               totalOverdue: stats.totalOverdue,
             }}
+            currency={stats.currency || "AZN"}
           />
         </>
       ) : (

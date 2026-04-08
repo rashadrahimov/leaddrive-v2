@@ -1734,7 +1734,19 @@
     "hintColAmount": "Fakturanın ümumi məbləği",
     "hintColStatus": "Ödəniş statusu: Qaralama → Göndərilib → Baxılıb → Ödənilib/Gecikib",
     "hintColDueDate": "Ödəniş son tarixi — bu tarixdən sonra faktura gecikmiş sayılır",
-    "hintColBalance": "Ödənilməli qalan məbləğ"
+    "hintColBalance": "Ödənilməli qalan məbləğ",
+    "revenueTrend": "Gəlir Trendi",
+    "paymentStatus": "Ödəniş Statusu",
+    "debtorDebt": "Debitor Borcu",
+    "weeklyCollection": "Həftəlik Yığım",
+    "autoInvoices": "Avto-fakturalar",
+    "byCurrency": "Valyuta üzrə",
+    "collectionRate": "Yığım faizi",
+    "avgPayDays": "Ort. ödəmə günü",
+    "monthlyAvg": "Aylıq faktura",
+    "labelPaid": "Ödənilib",
+    "labelRemaining": "Qalıq",
+    "agingCurrent": "Cari"
   },
   "inbox": {
     "title": "Gələn qutusu",
