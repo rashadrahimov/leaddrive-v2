@@ -46,7 +46,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 
     // Replace points if provided
     if (body.points) {
-      await prisma.mtmRoutePoint.deleteMany({ where: { routeId: id } })
+      await prisma.mtmRoutePoint.deleteMany({ where: { routeId: id, route: { organizationId: orgId } } })
       if (body.points.length > 0) {
         await prisma.mtmRoutePoint.createMany({
           data: body.points.map((p: any, i: number) => ({
@@ -70,7 +70,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
   const { id } = await params
 
   try {
-    await prisma.mtmRoutePoint.deleteMany({ where: { routeId: id } })
+    await prisma.mtmRoutePoint.deleteMany({ where: { routeId: id, route: { organizationId: orgId } } })
     const deleted = await prisma.mtmRoute.deleteMany({ where: { id, organizationId: orgId } })
     if (deleted.count === 0) return NextResponse.json({ error: "Not found" }, { status: 404 })
     return NextResponse.json({ success: true })
