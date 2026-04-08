@@ -48,10 +48,18 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ error: "Organization name is required" }, { status: 400 })
     }
 
+    // Generate slug from name
+    const slug = name.trim().toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, "")
+      .replace(/\s+/g, "-")
+      .replace(/-+/g, "-")
+      .slice(0, 50)
+
     const updated = await prisma.organization.update({
       where: { id: auth.orgId },
       data: {
         name: name.trim(),
+        slug,
         ...(logo !== undefined ? { logo } : {}),
       },
       select: {
