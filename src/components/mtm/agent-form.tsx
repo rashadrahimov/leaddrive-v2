@@ -18,6 +18,7 @@ interface AgentFormProps {
 
 export function MtmAgentForm({ open, onOpenChange, onSaved, initialData, orgId }: AgentFormProps) {
   const tc = useTranslations("common")
+  const tf = useTranslations("mtmForms")
   const isEdit = !!initialData?.id
   const [form, setForm] = useState({
     name: "",
@@ -65,13 +66,10 @@ export function MtmAgentForm({ open, onOpenChange, onSaved, initialData, orgId }
           "Content-Type": "application/json",
           ...(orgId ? { "x-organization-id": orgId } : {} as Record<string, string>),
         },
-        body: JSON.stringify({
-          ...form,
-          managerId: form.managerId || null,
-        }),
+        body: JSON.stringify({ ...form, managerId: form.managerId || null }),
       })
       const json = await res.json()
-      if (!res.ok) throw new Error(json.error || "Failed to save")
+      if (!res.ok) throw new Error(json.error || tc("failedToSave"))
       onSaved()
       onOpenChange(false)
     } catch (err: any) {
@@ -84,7 +82,7 @@ export function MtmAgentForm({ open, onOpenChange, onSaved, initialData, orgId }
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogHeader>
-        <DialogTitle>{isEdit ? "Edit Agent" : "Add Agent"}</DialogTitle>
+        <DialogTitle>{isEdit ? tf("editAgent") : tf("addAgent")}</DialogTitle>
       </DialogHeader>
       <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0 overflow-hidden">
         <DialogContent>
@@ -106,11 +104,11 @@ export function MtmAgentForm({ open, onOpenChange, onSaved, initialData, orgId }
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label htmlFor="role">Role</Label>
+                <Label htmlFor="role">{tf("role")}</Label>
                 <Select value={form.role} onChange={e => update("role", e.target.value)}>
-                  <option value="AGENT">Agent</option>
-                  <option value="SUPERVISOR">Supervisor</option>
-                  <option value="MANAGER">Manager</option>
+                  <option value="AGENT">{tf("roleAgent")}</option>
+                  <option value="SUPERVISOR">{tf("roleSupervisor")}</option>
+                  <option value="MANAGER">{tf("roleManager")}</option>
                 </Select>
               </div>
               <div>
@@ -118,14 +116,14 @@ export function MtmAgentForm({ open, onOpenChange, onSaved, initialData, orgId }
                 <Select value={form.status} onChange={e => update("status", e.target.value)}>
                   <option value="ACTIVE">{tc("active")}</option>
                   <option value="INACTIVE">{tc("inactive")}</option>
-                  <option value="SUSPENDED">Suspended</option>
+                  <option value="SUSPENDED">{tf("suspended")}</option>
                 </Select>
               </div>
             </div>
             <div>
-              <Label htmlFor="managerId">Manager</Label>
+              <Label htmlFor="managerId">{tf("manager")}</Label>
               <Select value={form.managerId} onChange={e => update("managerId", e.target.value)}>
-                <option value="">— No manager —</option>
+                <option value="">{tf("noManager")}</option>
                 {managers.filter(m => m.id !== initialData?.id).map(m => (
                   <option key={m.id} value={m.id}>{m.name}</option>
                 ))}

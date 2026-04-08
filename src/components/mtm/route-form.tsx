@@ -20,14 +20,9 @@ interface RouteFormProps {
 
 export function MtmRouteForm({ open, onOpenChange, onSaved, initialData, orgId }: RouteFormProps) {
   const tc = useTranslations("common")
+  const tf = useTranslations("mtmForms")
   const isEdit = !!initialData?.id
-  const [form, setForm] = useState({
-    name: "",
-    agentId: "",
-    date: "",
-    status: "PLANNED",
-    notes: "",
-  })
+  const [form, setForm] = useState({ name: "", agentId: "", date: "", status: "PLANNED", notes: "" })
   const [points, setPoints] = useState<{ customerId: string }[]>([])
   const [agents, setAgents] = useState<any[]>([])
   const [customers, setCustomers] = useState<any[]>([])
@@ -37,22 +32,19 @@ export function MtmRouteForm({ open, onOpenChange, onSaved, initialData, orgId }
   useEffect(() => {
     if (open) {
       setForm({
-        name: initialData?.name || "",
-        agentId: initialData?.agentId || "",
+        name: initialData?.name || "", agentId: initialData?.agentId || "",
         date: initialData?.date ? new Date(initialData.date).toISOString().split("T")[0] : new Date().toISOString().split("T")[0],
-        status: initialData?.status || "PLANNED",
-        notes: initialData?.notes || "",
+        status: initialData?.status || "PLANNED", notes: initialData?.notes || "",
       })
       setPoints(initialData?.points?.map((p: any) => ({ customerId: p.customerId || p.customer?.id || "" })) || [])
       setError("")
-
       const headers = orgId ? { "x-organization-id": orgId } : {} as Record<string, string>
       Promise.all([
         fetch("/api/v1/mtm/agents?limit=200", { headers }).then(r => r.json()),
         fetch("/api/v1/mtm/customers?limit=200", { headers }).then(r => r.json()),
-      ]).then(([agentsRes, customersRes]) => {
-        if (agentsRes.success) setAgents(agentsRes.data.agents || [])
-        if (customersRes.success) setCustomers(customersRes.data.customers || [])
+      ]).then(([a, c]) => {
+        if (a.success) setAgents(a.data.agents || [])
+        if (c.success) setCustomers(c.data.customers || [])
       }).catch(() => {})
     }
   }, [open, initialData])
@@ -67,99 +59,64 @@ export function MtmRouteForm({ open, onOpenChange, onSaved, initialData, orgId }
       const url = isEdit ? `/api/v1/mtm/routes/${initialData!.id}` : "/api/v1/mtm/routes"
       const res = await fetch(url, {
         method: isEdit ? "PUT" : "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(orgId ? { "x-organization-id": orgId } : {} as Record<string, string>),
-        },
-        body: JSON.stringify({
-          ...form,
-          points: points.filter(p => p.customerId),
-        }),
+        headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": orgId } : {} as Record<string, string>) },
+        body: JSON.stringify({ ...form, points: points.filter(p => p.customerId) }),
       })
       const json = await res.json()
-      if (!res.ok) throw new Error(json.error || "Failed to save")
+      if (!res.ok) throw new Error(json.error || tc("failedToSave"))
       onSaved()
       onOpenChange(false)
-    } catch (err: any) {
-      setError(err.message)
-    } finally {
-      setSaving(false)
-    }
+    } catch (err: any) { setError(err.message) } finally { setSaving(false) }
   }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogHeader>
-        <DialogTitle>{isEdit ? "Edit Route" : "Add Route"}</DialogTitle>
+        <DialogTitle>{isEdit ? tf("editRoute") : tf("addRoute")}</DialogTitle>
       </DialogHeader>
       <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0 overflow-hidden">
         <DialogContent>
           {error && <div className="text-sm text-red-500 bg-red-50 dark:bg-red-900/20 p-2 rounded mb-3">{error}</div>}
           <div className="grid gap-4">
-            <div>
-              <Label htmlFor="name">Route Name</Label>
-              <Input id="name" value={form.name} onChange={e => update("name", e.target.value)} placeholder="e.g. Downtown Route" />
-            </div>
+            <div><Label htmlFor="name">{tf("routeName")}</Label><Input id="name" value={form.name} onChange={e => update("name", e.target.value)} /></div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label htmlFor="agentId">Agent *</Label>
+                <Label htmlFor="agentId">{`${tf("agent")} *`}</Label>
                 <Select value={form.agentId} onChange={e => update("agentId", e.target.value)} required>
-                  <option value="">— Select agent —</option>
-                  {agents.map(a => (
-                    <option key={a.id} value={a.id}>{a.name}</option>
-                  ))}
+                  <option value="">{tf("selectAgent")}</option>
+                  {agents.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
                 </Select>
               </div>
-              <div>
-                <Label htmlFor="date">Date *</Label>
-                <Input id="date" type="date" value={form.date} onChange={e => update("date", e.target.value)} required />
-              </div>
+              <div><Label htmlFor="date">{`${tc("date")} *`}</Label><Input id="date" type="date" value={form.date} onChange={e => update("date", e.target.value)} required /></div>
             </div>
             {isEdit && (
               <div>
                 <Label htmlFor="status">{tc("status")}</Label>
                 <Select value={form.status} onChange={e => update("status", e.target.value)}>
-                  <option value="PLANNED">Planned</option>
-                  <option value="IN_PROGRESS">In Progress</option>
-                  <option value="COMPLETED">Completed</option>
-                  <option value="CANCELLED">Cancelled</option>
+                  <option value="PLANNED">{tf("planned")}</option>
+                  <option value="IN_PROGRESS">{tf("inProgress")}</option>
+                  <option value="COMPLETED">{tf("completed")}</option>
+                  <option value="CANCELLED">{tf("cancelled")}</option>
                 </Select>
               </div>
             )}
             <div>
-              <Label>Route Points</Label>
+              <Label>{tf("routePoints")}</Label>
               <div className="space-y-2 mt-1">
                 {points.map((point, idx) => (
                   <div key={idx} className="flex items-center gap-2">
                     <span className="text-xs text-muted-foreground w-5">{idx + 1}.</span>
-                    <Select
-                      value={point.customerId}
-                      onChange={e => {
-                        const newPoints = [...points]
-                        newPoints[idx] = { customerId: e.target.value }
-                        setPoints(newPoints)
-                      }}
-                      className="flex-1"
-                    >
-                      <option value="">— Select customer —</option>
-                      {customers.map(c => (
-                        <option key={c.id} value={c.id}>{c.name} {c.code ? `(${c.code})` : ""}</option>
-                      ))}
+                    <Select value={point.customerId} onChange={e => { const np = [...points]; np[idx] = { customerId: e.target.value }; setPoints(np) }} className="flex-1">
+                      <option value="">{tf("selectCustomer")}</option>
+                      {customers.map(c => <option key={c.id} value={c.id}>{c.name} {c.code ? `(${c.code})` : ""}</option>)}
                     </Select>
-                    <Button type="button" variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => setPoints(points.filter((_, i) => i !== idx))}>
-                      <X className="h-3.5 w-3.5" />
-                    </Button>
+                    <Button type="button" variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => setPoints(points.filter((_, i) => i !== idx))}><X className="h-3.5 w-3.5" /></Button>
                   </div>
                 ))}
-                <Button type="button" variant="outline" size="sm" onClick={() => setPoints([...points, { customerId: "" }])}>
-                  <Plus className="h-3.5 w-3.5 mr-1" /> Add Point
-                </Button>
+                <Button type="button" variant="outline" size="sm" onClick={() => setPoints([...points, { customerId: "" }])}><Plus className="h-3.5 w-3.5 mr-1" /> {tf("addPoint")}</Button>
               </div>
             </div>
-            <div>
-              <Label htmlFor="notes">Notes</Label>
-              <Textarea id="notes" value={form.notes} onChange={e => update("notes", e.target.value)} rows={2} />
-            </div>
+            <div><Label htmlFor="notes">{tc("notes")}</Label><Textarea id="notes" value={form.notes} onChange={e => update("notes", e.target.value)} rows={2} /></div>
           </div>
         </DialogContent>
         <DialogFooter>

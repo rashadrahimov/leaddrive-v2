@@ -22,6 +22,7 @@ const statusBadge: Record<string, { className: string }> = {
 export default function MtmRoutesPage() {
   const { data: session } = useSession()
   const t = useTranslations("mtmRoutesPage")
+  const tf = useTranslations("mtmForms")
   const [routes, setRoutes] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [formOpen, setFormOpen] = useState(false)
@@ -168,7 +169,7 @@ export default function MtmRoutesPage() {
       )}
 
       <MtmRouteForm open={formOpen} onOpenChange={setFormOpen} onSaved={fetchRoutes} initialData={editData} orgId={orgId ? String(orgId) : undefined} />
-      <DeleteConfirmDialog open={deleteOpen} onOpenChange={setDeleteOpen} onConfirm={confirmDelete} title={t("delete")} itemName={deleteItem?.name || "this route"} />
+      <DeleteConfirmDialog open={deleteOpen} onOpenChange={setDeleteOpen} onConfirm={confirmDelete} title={t("delete")} itemName={deleteItem?.name || tf("thisRoute")} />
     </div>
   )
 }

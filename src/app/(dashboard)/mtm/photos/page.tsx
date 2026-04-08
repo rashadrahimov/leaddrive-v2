@@ -16,6 +16,7 @@ const statusColors: Record<string, string> = { PENDING: "bg-amber-100 text-amber
 export default function MtmPhotosPage() {
   const { data: session } = useSession()
   const t = useTranslations("mtmPhotosPage")
+  const tf = useTranslations("mtmForms")
   const [photos, setPhotos] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [deleteOpen, setDeleteOpen] = useState(false)
@@ -133,7 +134,7 @@ export default function MtmPhotosPage() {
         </div>
       )}
 
-      <DeleteConfirmDialog open={deleteOpen} onOpenChange={setDeleteOpen} onConfirm={confirmDelete} title={t("delete")} itemName="this photo" />
+      <DeleteConfirmDialog open={deleteOpen} onOpenChange={setDeleteOpen} onConfirm={confirmDelete} title={t("delete")} itemName={deleteItem?.agent?.name || tf("thisPhoto")} />
     </div>
   )
 }

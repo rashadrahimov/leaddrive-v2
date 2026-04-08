@@ -15,6 +15,7 @@ import { CheckSquare, Plus, Pencil, Trash2, Search, Clock, CheckCircle2 } from "
 export default function MtmVisitsPage() {
   const { data: session } = useSession()
   const t = useTranslations("mtmVisitsPage")
+  const tf = useTranslations("mtmForms")
   const [visits, setVisits] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [formOpen, setFormOpen] = useState(false)
@@ -136,7 +137,7 @@ export default function MtmVisitsPage() {
       )}
 
       <MtmVisitForm open={formOpen} onOpenChange={setFormOpen} onSaved={fetchVisits} initialData={editData} orgId={orgId ? String(orgId) : undefined} />
-      <DeleteConfirmDialog open={deleteOpen} onOpenChange={setDeleteOpen} onConfirm={confirmDelete} title={t("delete")} itemName={deleteItem?.customer?.name ? `visit to ${deleteItem.customer.name}` : "this visit"} />
+      <DeleteConfirmDialog open={deleteOpen} onOpenChange={setDeleteOpen} onConfirm={confirmDelete} title={t("delete")} itemName={deleteItem?.customer?.name || tf("thisVisit")} />
     </div>
   )
 }
