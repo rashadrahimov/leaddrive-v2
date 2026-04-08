@@ -142,6 +142,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           include: { organization: true },
         })
         if (dbUser) {
+          token.name = dbUser.name
           token.role = dbUser.role
           token.organizationId = dbUser.organizationId
           token.organizationName = dbUser.organization?.name || ""
@@ -151,10 +152,26 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         if ((user as any).needs2fa) token.needs2fa = true
         if ((user as any).needsSetup2fa) token.needsSetup2fa = true
       }
-      // Handle session.update() calls from 2FA verify/setup pages
+      // Handle session.update() calls from 2FA verify/setup pages or profile updates
       if (trigger === "update" && updateData) {
         if (updateData.needs2fa === false) token.needs2fa = undefined
         if (updateData.needsSetup2fa === false) token.needsSetup2fa = undefined
+        if (updateData.name) token.name = updateData.name
+      }
+      // Periodically refresh name from DB (every token rotation)
+      if (!user && token.email) {
+        try {
+          const freshUser = await prisma.user.findFirst({
+            where: { email: token.email as string },
+            select: { name: true, role: true },
+          })
+          if (freshUser) {
+            token.name = freshUser.name
+            token.role = freshUser.role
+          }
+        } catch {
+          // Non-critical — keep existing token values
+        }
       }
       return token
     },
@@ -164,6 +181,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         user: {
           ...session.user,
           id: token.sub as string,
+          name: token.name as string,
           role: token.role as string,
           organizationId: token.organizationId as string,
           organizationName: token.organizationName as string,
