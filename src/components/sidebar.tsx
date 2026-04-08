@@ -157,7 +157,7 @@ export function Sidebar({ org }: SidebarProps) {
     >
       {/* Logo header */}
       <div className="flex h-14 items-center justify-between border-b border-white/10 px-4">
-        <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+        <Link href="/dashboard" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
           <Logo collapsed={collapsed} size="sm" sidebar />
         </Link>
         <button
