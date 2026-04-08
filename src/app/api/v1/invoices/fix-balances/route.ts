@@ -25,7 +25,15 @@ export async function POST(req: NextRequest) {
       const correctBalance = Math.max(0, Math.round((inv.totalAmount - actualPaid) * 100) / 100)
 
       let correctStatus = inv.status
-      if (actualPaid > 0 && correctBalance <= 0) {
+      let correctPaid = Math.round(actualPaid * 100) / 100
+      let correctBalanceDue = correctBalance
+
+      // If invoice is marked "paid" but has no payment records,
+      // trust the status (paid offline) and fix the balance to 0
+      if (inv.status === "paid" && actualPaid === 0 && inv.totalAmount > 0) {
+        correctPaid = inv.totalAmount
+        correctBalanceDue = 0
+      } else if (actualPaid > 0 && correctBalance <= 0) {
         correctStatus = "paid"
       } else if (actualPaid > 0 && correctBalance > 0) {
         correctStatus = "partially_paid"
@@ -35,25 +43,25 @@ export async function POST(req: NextRequest) {
         correctStatus = inv.status
       }
 
-      const balanceChanged = Math.abs(inv.balanceDue - correctBalance) > 0.001
-      const paidChanged = Math.abs(inv.paidAmount - actualPaid) > 0.001
+      const balanceChanged = Math.abs(inv.balanceDue - correctBalanceDue) > 0.001
+      const paidChanged = Math.abs(inv.paidAmount - correctPaid) > 0.001
       const statusChanged = inv.status !== correctStatus
 
       if (balanceChanged || paidChanged || statusChanged) {
         await prisma.invoice.update({
           where: { id: inv.id },
           data: {
-            paidAmount: Math.round(actualPaid * 100) / 100,
-            balanceDue: correctBalance,
+            paidAmount: correctPaid,
+            balanceDue: correctBalanceDue,
             status: correctStatus,
-            ...(correctBalance <= 0 && actualPaid > 0 ? { paidAt: inv.paidAt || new Date() } : {}),
+            ...(correctBalanceDue <= 0 && correctPaid > 0 ? { paidAt: inv.paidAt || new Date() } : {}),
           },
         })
         fixes.push({
           id: inv.id,
           invoiceNumber: inv.invoiceNumber,
           oldBalance: inv.balanceDue,
-          newBalance: correctBalance,
+          newBalance: correctBalanceDue,
           oldStatus: inv.status,
           newStatus: correctStatus,
         })
