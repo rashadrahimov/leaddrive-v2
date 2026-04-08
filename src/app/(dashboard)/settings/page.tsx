@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { ChevronRight, CreditCard, Users, Radio, Zap, LayoutDashboard, Globe, Lock, FileText, Clock, Shield, FileSpreadsheet, Plug, Keyboard, Bell, Globe2 } from "lucide-react"
+import { ChevronRight, CreditCard, Users, Radio, Zap, LayoutDashboard, Globe, Lock, FileText, Clock, Shield, FileSpreadsheet, Plug, Keyboard, Bell, Globe2, Building2 } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { InfoHint } from "@/components/info-hint"
 import { PageDescription } from "@/components/page-description"
@@ -13,6 +13,7 @@ export default function SettingsPage() {
   const t = useTranslations("settings")
 
   const SETTINGS_SECTIONS = [
+    { icon: Building2, title: t("orgTitle"), description: t("orgDescription"), href: "/settings/organization", hint: t("hintOrganization") },
     { icon: CreditCard, title: t("billing"), description: t("billingDesc"), href: "/settings/billing", hint: t("hintBilling") },
     { icon: Users, title: t("roles"), description: t("rolesDesc"), href: "/settings/roles", hint: t("hintRoles") },
     { icon: Radio, title: t("channels"), description: t("channelsDesc"), href: "/settings/channels", hint: t("hintChannels") },

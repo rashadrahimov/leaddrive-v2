@@ -109,6 +109,7 @@ const ALWAYS_ACCESSIBLE = [
   "/settings/audit-log",
   "/settings/integrations",
   "/settings/macros",
+  "/settings/organization",
   "/notifications",
   "/ai-command-center",
 ] as const
