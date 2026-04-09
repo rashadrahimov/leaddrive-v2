@@ -27,7 +27,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const user = session?.user
   const org = {
     plan: user?.plan || "enterprise",
-    addons: [] as string[],
+    addons: (user as any)?.addons || ([] as string[]),
   }
 
   const isDashboard = pathname === "/dashboard"

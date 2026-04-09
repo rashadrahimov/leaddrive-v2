@@ -272,7 +272,8 @@ const authMiddleware = auth((req) => {
 
   // Plan-based feature gating — redirect to billing page if module not available
   const plan = (session?.user as any)?.plan || "starter"
-  if (!canAccessModule(plan, pathname)) {
+  const addons: string[] = (session?.user as any)?.addons || []
+  if (!canAccessModule(plan, pathname, addons)) {
     const billingUrl = new URL("/settings/billing", req.url)
     billingUrl.searchParams.set("upgrade", "true")
     return withCspHeaders(NextResponse.redirect(billingUrl), nonce)

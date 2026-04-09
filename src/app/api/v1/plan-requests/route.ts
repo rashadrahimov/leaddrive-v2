@@ -5,7 +5,7 @@ import { getOrgId } from "@/lib/api-auth"
 import { sendEmail } from "@/lib/email"
 
 const createPlanRequestSchema = z.object({
-  requestedPlan: z.enum(["starter", "business", "professional", "enterprise"]),
+  requestedPlan: z.string().min(1).max(50),
   contactName: z.string().min(1).max(200),
   contactEmail: z.string().email(),
   contactPhone: z.string().max(50).optional(),
@@ -39,21 +39,35 @@ export async function POST(req: NextRequest) {
 
     // Send email notification to admin
     const planNames: Record<string, string> = {
+      // New user-tier plans
+      "tier-5": "Up to 5 Users (550 AZN/mo)",
+      "tier-10": "Up to 10 Users (990 AZN/mo)",
+      "tier-25": "Up to 25 Users (2,200 AZN/mo)",
+      "tier-50": "Up to 50 Users (3,850 AZN/mo)",
+      "enterprise": "Enterprise (Custom)",
+      // Add-ons
+      "addon:ai": "Add-on: Da Vinci AI",
+      "addon:channels": "Add-on: Channels",
+      // Separate subscriptions
+      "sub:finance": "Subscription: Finance Suite",
+      "sub:mtm": "Subscription: Field Teams (MTM)",
+      // Legacy plans
       starter: "Starter (9 AZN/mo)",
       business: "Business (29 AZN/mo)",
       professional: "Professional (59 AZN/mo)",
-      enterprise: "Enterprise (99 AZN/mo)",
     }
+
+    const requestLabel = planNames[parsed.data.requestedPlan] || parsed.data.requestedPlan
 
     await sendEmail({
       to: "rashadrahimsoy@gmail.com",
-      subject: `[LeadDrive] New plan request: ${planNames[parsed.data.requestedPlan]}`,
+      subject: `[LeadDrive] New plan request: ${requestLabel}`,
       html: `
         <h2>New Plan Subscription Request</h2>
         <table style="border-collapse:collapse;width:100%;max-width:500px;">
           <tr><td style="padding:8px;font-weight:bold;">Organization:</td><td style="padding:8px;">${org?.name || "Unknown"}</td></tr>
           <tr><td style="padding:8px;font-weight:bold;">Current Plan:</td><td style="padding:8px;">${org?.plan || "N/A"}</td></tr>
-          <tr><td style="padding:8px;font-weight:bold;">Requested Plan:</td><td style="padding:8px;">${planNames[parsed.data.requestedPlan]}</td></tr>
+          <tr><td style="padding:8px;font-weight:bold;">Requested Plan:</td><td style="padding:8px;">${requestLabel}</td></tr>
           <tr><td style="padding:8px;font-weight:bold;">Contact Name:</td><td style="padding:8px;">${parsed.data.contactName}</td></tr>
           <tr><td style="padding:8px;font-weight:bold;">Contact Email:</td><td style="padding:8px;">${parsed.data.contactEmail}</td></tr>
           ${parsed.data.contactPhone ? `<tr><td style="padding:8px;font-weight:bold;">Phone:</td><td style="padding:8px;">${parsed.data.contactPhone}</td></tr>` : ""}

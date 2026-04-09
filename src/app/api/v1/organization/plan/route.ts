@@ -14,6 +14,7 @@ export async function GET(req: NextRequest) {
         maxUsers: true,
         maxContacts: true,
         name: true,
+        addons: true,
       },
     })
 
@@ -28,6 +29,7 @@ export async function GET(req: NextRequest) {
         maxUsers: org.maxUsers,
         maxContacts: org.maxContacts,
         organizationName: org.name,
+        addons: org.addons || [],
       },
     })
   } catch (e) {

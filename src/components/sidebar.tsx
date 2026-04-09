@@ -134,13 +134,14 @@ export function Sidebar({ org }: SidebarProps) {
   const { newTicketCount } = useTicketBadge()
 
   const plan = org.plan || "enterprise"
+  const addons = org.addons || []
 
   // Filter by module system first, then annotate with plan accessibility
   const filteredItems = navItems
     .filter((item) => hasModule(org, item.module))
     .map((item) => ({
       ...item,
-      locked: !isSidebarItemAccessible(plan, item.href),
+      locked: !isSidebarItemAccessible(plan, item.href, addons),
       requiredPlan: getRequiredPlan(item.href),
     }))
 

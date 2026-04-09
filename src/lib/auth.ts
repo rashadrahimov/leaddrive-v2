@@ -147,6 +147,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           token.organizationId = dbUser.organizationId
           token.organizationName = dbUser.organization?.name || ""
           token.plan = dbUser.organization?.plan || "starter"
+          token.addons = dbUser.organization?.addons || []
         }
         // Propagate 2FA flags from authorize return
         if ((user as any).needs2fa) token.needs2fa = true
@@ -186,6 +187,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           organizationId: token.organizationId as string,
           organizationName: token.organizationName as string,
           plan: token.plan as string,
+          addons: (token.addons as string[]) || [],
           needs2fa: token.needs2fa as boolean | undefined,
           needsSetup2fa: token.needsSetup2fa as boolean | undefined,
         },
