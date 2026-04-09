@@ -106,19 +106,19 @@ async function main() {
 
   const agentFarid = await prisma.mtmAgent.upsert({
     where: { organizationId_email: { organizationId: orgId, email: "farid@guven.az" } },
-    update: { name: "Farid Aliyev", role: "SUPERVISOR", status: "ACTIVE", managerId: agentRashad.id },
+    update: { name: "Farid Aliyev", role: "MANAGER", status: "ACTIVE", managerId: agentRashad.id },
     create: {
       organizationId: orgId,
       name: "Farid Aliyev",
       email: "farid@guven.az",
       phone: "+994-50-555-0004",
-      role: "SUPERVISOR",
+      role: "MANAGER",
       status: "ACTIVE",
       isOnline: true,
       managerId: agentRashad.id,
     },
   })
-  console.log(`  ✅ ${agentFarid.name} (SUPERVISOR)`)
+  console.log(`  ✅ ${agentFarid.name} (MANAGER)`)
 
   // ═══════════════════════════════════════════════════
   // CUSTOMERS (10) — Baku locations
