@@ -34,9 +34,12 @@ async function main() {
   console.log("🚀 MTM Quickstart Seed — starting...\n")
 
   // 1. Find organization
-  const org = await prisma.organization.findFirst({ where: { slug: "guven-technology" } })
+  // Try multiple possible slugs
+  const org = await prisma.organization.findFirst({
+    where: { slug: { in: ["guven-technology", "leaddrive", "guven"] } },
+  }) || await prisma.organization.findFirst()
   if (!org) {
-    console.error("❌ Organization 'guven-technology' not found. Run create-admin.ts first.")
+    console.error("❌ No organization found. Run create-admin.ts first.")
     process.exit(1)
   }
   console.log(`✅ Organization: ${org.name} (${org.id})`)
