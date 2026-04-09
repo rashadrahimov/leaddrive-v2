@@ -3,8 +3,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
-import { type ModuleId, hasModule } from "@/lib/modules"
-import { isSidebarItemAccessible, getRequiredPlan } from "@/lib/plan-config"
+import { type ModuleId } from "@/lib/modules"
 import {
   LayoutDashboard, Building2, Users, Handshake, UserPlus,
   CheckSquare, FileText, FileSpreadsheet, Calculator, Brain,
@@ -133,20 +132,14 @@ export function Sidebar({ org }: SidebarProps) {
   const t = useTranslations("nav")
   const { newTicketCount } = useTicketBadge()
 
-  const plan = org.plan || "enterprise"
-  const addons = org.addons || []
+  // All items accessible — no plan gating
+  const filteredItems = navItems.map((item) => ({
+    ...item,
+    locked: false,
+    requiredPlan: null,
+  }))
 
-  // Filter by module system first, then annotate with plan accessibility
-  const filteredItems = navItems
-    .filter((item) => hasModule(org, item.module))
-    .map((item) => ({
-      ...item,
-      locked: !isSidebarItemAccessible(plan, item.href, addons),
-      requiredPlan: getRequiredPlan(item.href),
-    }))
-
-  // Only show groups that have at least one accessible item
-  const accessibleItems = filteredItems.filter((item) => !item.locked)
+  const accessibleItems = filteredItems
   const groups = [...new Set(accessibleItems.map((item) => item.group))]
 
   return (

@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 import { auth } from "@/lib/auth"
-import { canAccessModule } from "@/lib/plan-config"
+// Plan gating disabled — import kept for reference
+// import { canAccessModule } from "@/lib/plan-config"
 import { checkRateLimit, RATE_LIMIT_CONFIG } from "@/lib/rate-limit"
 
 const publicPaths = ["/login", "/register", "/forgot-password", "/reset-password", "/api/auth", "/api/v1/auth/register", "/api/v1/settings/auth-methods", "/portal", "/home", "/pricing", "/plans", "/features", "/demo", "/about", "/contact", "/blog", "/legal", "/landing", "/marketing", "/p", "/_custom-domain"]
@@ -270,14 +271,7 @@ const authMiddleware = auth((req) => {
     return withCspHeaders(NextResponse.redirect(new URL("/", req.url)), nonce)
   }
 
-  // Plan-based feature gating — redirect to billing page if module not available
-  const plan = (session?.user as any)?.plan || "starter"
-  const addons: string[] = (session?.user as any)?.addons || []
-  if (!canAccessModule(plan, pathname, addons)) {
-    const billingUrl = new URL("/settings/billing", req.url)
-    billingUrl.searchParams.set("upgrade", "true")
-    return withCspHeaders(NextResponse.redirect(billingUrl), nonce)
-  }
+  // Plan-based feature gating — DISABLED (all routes accessible regardless of plan)
 
   return withCspHeaders(NextResponse.next({ headers }), nonce, isIframeAllowedPath(pathname))
 }) as unknown as (req: NextRequest) => NextResponse
