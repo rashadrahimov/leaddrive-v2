@@ -23,6 +23,8 @@ function getAppHosts(): string[] {
 }
 const MARKETING_HOSTS = getMarketingHosts()
 const APP_HOSTS = getAppHosts()
+// When app and marketing share the same domain, disable marketing routing (CRM-only mode)
+const CRM_ONLY_MODE = MARKETING_HOSTS[0] === APP_HOSTS[0]
 
 function isMarketingHost(host: string): boolean {
   return MARKETING_HOSTS.includes(host)
@@ -112,8 +114,8 @@ const authMiddleware = auth((req) => {
   }
 
   // Domain-based routing: leaddrivecrm.org serves marketing, app.leaddrivecrm.org serves CRM
-  // Note: inside auth() callback, req.url uses NEXTAUTH_URL as base, so we build URLs explicitly
-  if (isMarketingHost(host)) {
+  // In CRM_ONLY_MODE (same domain for app+marketing), skip marketing routing entirely
+  if (!CRM_ONLY_MODE && isMarketingHost(host)) {
     // On marketing domain: "/" → /home
     if (pathname === "/") {
       return withCspHeaders(NextResponse.redirect(new URL(`${process.env.NEXT_PUBLIC_MARKETING_URL || "https://leaddrivecrm.org"}/home`)), nonce)
@@ -129,7 +131,7 @@ const authMiddleware = auth((req) => {
     }
   }
 
-  if (isAppHost(host)) {
+  if (!CRM_ONLY_MODE && isAppHost(host)) {
     // On app domain: marketing paths → redirect to marketing domain
     if (isMarketingPath(pathname)) {
       const marketingUrl = new URL(`${process.env.NEXT_PUBLIC_MARKETING_URL || "https://leaddrivecrm.org"}${pathname}`)

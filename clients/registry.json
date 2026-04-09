@@ -12,6 +12,19 @@
       "pm2Name": "leaddrive-v2",
       "status": "active",
       "notes": "Основной инстанс — Güvən Technology, Баку"
+    },
+    "fanum": {
+      "name": "Fanum Tech",
+      "server": "187.124.189.139",
+      "sshUser": "root",
+      "sshKey": "~/.ssh/id_ed25519_hostinger",
+      "domain": "fanum.tech",
+      "marketingDomain": "fanum.tech",
+      "appDir": "/opt/leaddrive-v2",
+      "port": 3001,
+      "pm2Name": "leaddrive-client",
+      "status": "active",
+      "notes": "Hostinger KVM 2, клиент Fanum Tech"
     }
   }
 }
