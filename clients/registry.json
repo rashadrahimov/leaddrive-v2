@@ -1,0 +1,17 @@
+{
+  "clients": {
+    "guven": {
+      "name": "Güvən Technology",
+      "server": "46.224.171.53",
+      "sshUser": "root",
+      "sshKey": "~/.ssh/id_ed25519",
+      "domain": "app.leaddrivecrm.org",
+      "marketingDomain": "leaddrivecrm.org",
+      "appDir": "/opt/leaddrive-v2",
+      "port": 3001,
+      "pm2Name": "leaddrive-v2",
+      "status": "active",
+      "notes": "Основной инстанс — Güvən Technology, Баку"
+    }
+  }
+}

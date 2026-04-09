@@ -3,7 +3,7 @@ import dns from "dns"
 import { prisma } from "@/lib/prisma"
 import { getSession } from "@/lib/api-auth"
 
-const CNAME_TARGET = "pages.leaddrivecrm.org"
+const CNAME_TARGET = process.env.CNAME_TARGET || "pages.leaddrivecrm.org"
 
 export async function POST(
   req: NextRequest,

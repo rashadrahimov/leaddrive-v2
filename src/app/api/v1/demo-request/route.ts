@@ -17,7 +17,7 @@ export async function POST(req: Request) {
 
     // Send email notification to admin
     await sendEmail({
-      to: "info@leaddrivecrm.org",
+      to: process.env.NEXT_PUBLIC_CONTACT_EMAIL || "info@leaddrivecrm.org",
       subject: `Demo Request: ${company} — ${name}`,
       html: `
         <h2>New Demo Request</h2>

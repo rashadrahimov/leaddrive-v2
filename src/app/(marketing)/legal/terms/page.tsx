@@ -108,7 +108,7 @@ export default function TermsPage() {
                 Bu şərtlərlə bağlı suallarınız üçün:
               </p>
               <p className="mt-2">
-                info@leaddrivecrm.org<br />
+                {process.env.NEXT_PUBLIC_CONTACT_EMAIL || "info@leaddrivecrm.org"}<br />
                 +994 10 531 30 65<br />
                 Güvən Technology LLC, Bakı, Azərbaycan
               </p>

@@ -22,6 +22,8 @@ model Organization {
   plan        String   @default("starter") // starter, professional, enterprise
   addons      String[] @default([])
   modules     Json     @default("{}")
+  features    Json     @default("[]")   // enabled feature flags: ["whatsapp","voip","ai","portal","events"]
+  branding    Json     @default("{}")   // {"primaryColor":"#0176D3","companyName":"...","favicon":"/..."}
   logo        String?
   settings    Json     @default("{}")
   maxUsers    Int      @default(3)
@@ -2615,6 +2617,7 @@ model PaymentOrder {
 enum MtmAgentRole {
   ADMIN
   MANAGER
+  SUPERVISOR
   AGENT
 }
 

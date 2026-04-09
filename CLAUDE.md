@@ -179,6 +179,30 @@ When given a task:
 - После деплоя — проверить на production через Chrome MCP что ВСЕ секции из документации на месте
 - Причина: ранее при рефакторинге терялись компоненты (waterfall, bar charts, alerts) — пользователь обнаруживал баги после деплоя
 
+## КРИТИЧНО: Деплой — ВСЕГДА спрашивай куда! (ОБЯЗАТЕЛЬНО для ВСЕХ сессий!)
+- **ПЕРЕД ЛЮБЫМ деплоем** — ОБЯЗАТЕЛЬНО спросить пользователя: "На какого клиента деплоим?"
+- Прочитать `clients/registry.json` и показать список клиентов
+- Варианты ответа: конкретный клиент (deploy acme), все (deploy-all), или "только Güvən"
+- **НИКОГДА** не деплоить без явного подтверждения пользователя, на какой именно сервер
+- **НИКОГДА** не предполагать что деплой идёт на Güvən по умолчанию — всегда уточнять
+- Причина: несколько клиентских серверов, ошибочный деплой может сломать продакшен клиента
+
+## Multi-Client Deployments
+- **Architecture**: One branch (main), customization via DB (org.features + org.branding)
+- **Registry**: `clients/registry.json` — ВСЕГДА читай перед деплоем, чтобы знать всех клиентов
+- **Client configs**: `clients/<name>/.env.example` — env шаблон для каждого клиента
+- **Nginx template**: `clients/nginx/template.conf`
+- **Management script**: `bash scripts/client.sh <command>`
+  - `list` — показать всех клиентов
+  - `status` — health check всех серверов
+  - `deploy <name>` — деплой конкретному клиенту
+  - `deploy-all` — деплой ВСЕМ активным (для баг-фиксов)
+  - `logs <name>` — PM2 логи клиента
+  - `ssh <name>` — SSH на сервер клиента
+  - `create <name> --server=IP --domain=DOMAIN` — добавить нового клиента
+- **Custom features**: Через `Organization.features` JSON в БД (не ветки!)
+- **Branding**: Через `Organization.branding` JSON в БД (logo, colors, companyName)
+
 ## User Preferences
 - Language: Russian (for communication), English (for code/commits)
 - Style: "не мухлюй!" — be thorough, don't skip anything

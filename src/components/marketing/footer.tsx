@@ -77,7 +77,7 @@ export function MarketingFooter() {
               {t("description")}
             </p>
             <div className="mt-4 space-y-1.5 text-sm text-white/50">
-              <p>📧 info@leaddrivecrm.org</p>
+              <p>📧 {process.env.NEXT_PUBLIC_CONTACT_EMAIL || "info@leaddrivecrm.org"}</p>
               <p>📱 +994 10 531 30 65</p>
             </div>
             {/* Social links removed — will add when real accounts exist */}

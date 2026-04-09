@@ -12,7 +12,8 @@ function generateICS(event: any): string {
   const start = new Date(event.startDate)
   const end = event.endDate ? new Date(event.endDate) : new Date(start.getTime() + 2 * 60 * 60 * 1000)
   const fmt = (d: Date) => d.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "")
-  const uid = `${event.id}@leaddrivecrm.org`
+  const appDomain = (process.env.NEXT_PUBLIC_APP_URL || "https://app.leaddrivecrm.org").replace(/^https?:\/\//, "")
+  const uid = `${event.id}@${appDomain}`
 
   return [
     "BEGIN:VCALENDAR",
@@ -29,7 +30,7 @@ function generateICS(event: any): string {
     event.description ? `DESCRIPTION:${event.description.replace(/\n/g, "\\n").slice(0, 500)}` : "",
     event.meetingUrl ? `URL:${event.meetingUrl}` : "",
     "STATUS:CONFIRMED",
-    `ORGANIZER;CN=LeadDrive CRM:mailto:noreply@leaddrivecrm.org`,
+    `ORGANIZER;CN=LeadDrive CRM:mailto:${process.env.NEXT_PUBLIC_CONTACT_EMAIL || "noreply@leaddrivecrm.org"}`,
     "END:VEVENT",
     "END:VCALENDAR",
   ].filter(Boolean).join("\r\n")

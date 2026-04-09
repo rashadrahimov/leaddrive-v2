@@ -42,8 +42,8 @@ export default function ContactPage() {
                       </div>
                       <div>
                         <p className="text-sm font-medium text-[#001E3C]">{t("email")}</p>
-                        <a href="mailto:info@leaddrivecrm.org" className="text-sm text-[#001E3C]/60 hover:text-[#0176D3] transition-colors">
-                          info@leaddrivecrm.org
+                        <a href={`mailto:${process.env.NEXT_PUBLIC_CONTACT_EMAIL || "info@leaddrivecrm.org"}`} className="text-sm text-[#001E3C]/60 hover:text-[#0176D3] transition-colors">
+                          {process.env.NEXT_PUBLIC_CONTACT_EMAIL || "info@leaddrivecrm.org"}
                         </a>
                       </div>
                     </div>

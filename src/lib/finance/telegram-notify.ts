@@ -6,6 +6,7 @@
 
 import { prisma } from "@/lib/prisma"
 import { sendEmail } from "@/lib/email"
+import { APP_URL } from "@/lib/domains"
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || ""
 const CHAT_ID = process.env.TELEGRAM_FINANCE_CHAT_ID || ""
@@ -164,9 +165,9 @@ export async function notifyOverdueBills(bills: { billNumber: string; vendorName
   let tgText = `🔴 <b>Просрочка: ${bills.length} счёт(ов) на ${fmt(total)} AZN</b>\n\n`
   bills.slice(0, 10).forEach((b) => { tgText += `• ${b.billNumber} — ${b.vendorName}: <b>${fmt(b.amount)} AZN</b> (срок ${fmtDate(b.dueDate)})\n` })
   if (bills.length > 10) tgText += `\n...и ещё ${bills.length - 10}\n`
-  tgText += `\n📎 <a href="https://app.leaddrivecrm.org/finance?tab=payables">Открыть кредиторку</a>`
+  tgText += `\n📎 <a href="${APP_URL}/finance?tab=payables">Открыть кредиторку</a>`
 
-  const emailHtml = `<h2>Просрочка: ${bills.length} счёт(ов) на ${fmt(total)} AZN</h2><ul>${bills.slice(0, 10).map((b) => `<li>${b.billNumber} — ${b.vendorName}: <b>${fmt(b.amount)} AZN</b></li>`).join("")}</ul><p><a href="https://app.leaddrivecrm.org/finance?tab=payables">Открыть кредиторку</a></p>`
+  const emailHtml = `<h2>Просрочка: ${bills.length} счёт(ов) на ${fmt(total)} AZN</h2><ul>${bills.slice(0, 10).map((b) => `<li>${b.billNumber} — ${b.vendorName}: <b>${fmt(b.amount)} AZN</b></li>`).join("")}</ul><p><a href="${APP_URL}/finance?tab=payables">Открыть кредиторку</a></p>`
 
   await sendToChannels(settings.overdue, settings, orgId, tgText,
     `Просрочка: ${bills.length} счёт(ов) на ${fmt(total)} AZN`, emailHtml,
@@ -181,9 +182,9 @@ export async function notifyOverdueInvoices(invoices: { invoiceNumber: string; c
 
   let tgText = `🔴 <b>Просрочка A/R: ${invoices.length} инвойс(ов) на ${fmt(total)} AZN</b>\n\n`
   invoices.slice(0, 10).forEach((inv) => { tgText += `• ${inv.invoiceNumber} — ${inv.companyName}: <b>${fmt(inv.amount)} AZN</b>\n` })
-  tgText += `\n📎 <a href="https://app.leaddrivecrm.org/finance?tab=receivables">Открыть дебиторку</a>`
+  tgText += `\n📎 <a href="${APP_URL}/finance?tab=receivables">Открыть дебиторку</a>`
 
-  const emailHtml = `<h2>Просрочка A/R: ${invoices.length} инвойс(ов) на ${fmt(total)} AZN</h2><ul>${invoices.slice(0, 10).map((inv) => `<li>${inv.invoiceNumber} — ${inv.companyName}: <b>${fmt(inv.amount)} AZN</b></li>`).join("")}</ul><p><a href="https://app.leaddrivecrm.org/finance?tab=receivables">Открыть дебиторку</a></p>`
+  const emailHtml = `<h2>Просрочка A/R: ${invoices.length} инвойс(ов) на ${fmt(total)} AZN</h2><ul>${invoices.slice(0, 10).map((inv) => `<li>${inv.invoiceNumber} — ${inv.companyName}: <b>${fmt(inv.amount)} AZN</b></li>`).join("")}</ul><p><a href="${APP_URL}/finance?tab=receivables">Открыть дебиторку</a></p>`
 
   await sendToChannels(settings.overdue, settings, orgId, tgText,
     `Просрочка A/R: ${invoices.length} инвойс(ов) на ${fmt(total)} AZN`, emailHtml,
@@ -226,8 +227,8 @@ export async function notifyUpcomingDeadlines(
     emailHtml += "</ul>"
     summary += `${summary ? ", " : ""}${invoices.length} ожидаем`
   }
-  tgText += `\n📎 <a href="https://app.leaddrivecrm.org/finance?tab=payments">Открыть платежи</a>`
-  emailHtml += `<p><a href="https://app.leaddrivecrm.org/finance?tab=payments">Открыть платежи</a></p>`
+  tgText += `\n📎 <a href="${APP_URL}/finance?tab=payments">Открыть платежи</a>`
+  emailHtml += `<p><a href="${APP_URL}/finance?tab=payments">Открыть платежи</a></p>`
 
   await sendToChannels(settings.advance, settings, orgId, tgText,
     `Дедлайны: ${summary}`, emailHtml,
@@ -239,8 +240,8 @@ export async function notifyPaymentOrderExecuted(order: {
   orderNumber: string; counterpartyName: string; amount: number; currency: string; purpose: string
 }, orgId?: string) {
   const settings = await getNotifSettings(orgId)
-  const tgText = `✅ <b>Платёжное поручение исполнено</b>\n\n📋 ${order.orderNumber}\n🏢 ${order.counterpartyName}\n💰 <b>${fmt(order.amount)} ${order.currency}</b>\n📝 ${order.purpose}\n\n📎 <a href="https://app.leaddrivecrm.org/finance?tab=payments">Открыть платежи</a>`
-  const emailHtml = `<h2>Платёжное поручение исполнено</h2><p><b>${order.orderNumber}</b> — ${order.counterpartyName}</p><p>Сумма: <b>${fmt(order.amount)} ${order.currency}</b></p><p>${order.purpose}</p><p><a href="https://app.leaddrivecrm.org/finance?tab=payments">Открыть платежи</a></p>`
+  const tgText = `✅ <b>Платёжное поручение исполнено</b>\n\n📋 ${order.orderNumber}\n🏢 ${order.counterpartyName}\n💰 <b>${fmt(order.amount)} ${order.currency}</b>\n📝 ${order.purpose}\n\n📎 <a href="${APP_URL}/finance?tab=payments">Открыть платежи</a>`
+  const emailHtml = `<h2>Платёжное поручение исполнено</h2><p><b>${order.orderNumber}</b> — ${order.counterpartyName}</p><p>Сумма: <b>${fmt(order.amount)} ${order.currency}</b></p><p>${order.purpose}</p><p><a href="${APP_URL}/finance?tab=payments">Открыть платежи</a></p>`
 
   await sendToChannels(settings.paymentOrders, settings, orgId, tgText,
     `ПП ${order.orderNumber} исполнено — ${fmt(order.amount)} ${order.currency}`, emailHtml,
@@ -252,8 +253,8 @@ export async function notifyPaymentOrderPending(order: {
   orderNumber: string; counterpartyName: string; amount: number; currency: string; purpose: string
 }, orgId?: string) {
   const settings = await getNotifSettings(orgId)
-  const tgText = `🔔 <b>Платёжное поручение на согласовании</b>\n\n📋 ${order.orderNumber}\n🏢 ${order.counterpartyName}\n💰 <b>${fmt(order.amount)} ${order.currency}</b>\n📝 ${order.purpose}\n\n📎 <a href="https://app.leaddrivecrm.org/finance?tab=payments">Одобрить / Отклонить</a>`
-  const emailHtml = `<h2>ПП на согласовании</h2><p><b>${order.orderNumber}</b> — ${order.counterpartyName}</p><p>Сумма: <b>${fmt(order.amount)} ${order.currency}</b></p><p>${order.purpose}</p><p><a href="https://app.leaddrivecrm.org/finance?tab=payments">Одобрить / Отклонить</a></p>`
+  const tgText = `🔔 <b>Платёжное поручение на согласовании</b>\n\n📋 ${order.orderNumber}\n🏢 ${order.counterpartyName}\n💰 <b>${fmt(order.amount)} ${order.currency}</b>\n📝 ${order.purpose}\n\n📎 <a href="${APP_URL}/finance?tab=payments">Одобрить / Отклонить</a>`
+  const emailHtml = `<h2>ПП на согласовании</h2><p><b>${order.orderNumber}</b> — ${order.counterpartyName}</p><p>Сумма: <b>${fmt(order.amount)} ${order.currency}</b></p><p>${order.purpose}</p><p><a href="${APP_URL}/finance?tab=payments">Одобрить / Отклонить</a></p>`
 
   await sendToChannels(settings.paymentOrders, settings, orgId, tgText,
     `ПП ${order.orderNumber} на согласовании — ${fmt(order.amount)} ${order.currency}`, emailHtml,
@@ -268,8 +269,8 @@ export async function notifyBillPaymentRecorded(bill: {
   const emoji = bill.remainingBalance <= 0 ? "✅" : "💸"
   const status = bill.remainingBalance <= 0 ? "Полностью оплачен" : `Остаток: ${fmt(bill.remainingBalance)} ${bill.currency}`
 
-  const tgText = `${emoji} <b>Оплата по счёту</b>\n\n📋 ${bill.billNumber} — ${bill.vendorName}\n💰 Оплачено: <b>${fmt(bill.paymentAmount)} ${bill.currency}</b>\n📊 ${status}\n\n📎 <a href="https://app.leaddrivecrm.org/finance?tab=payables">Открыть кредиторку</a>`
-  const emailHtml = `<h2>Оплата по счёту ${bill.billNumber}</h2><p>${bill.vendorName}</p><p>Оплачено: <b>${fmt(bill.paymentAmount)} ${bill.currency}</b></p><p>${status}</p><p><a href="https://app.leaddrivecrm.org/finance?tab=payables">Открыть кредиторку</a></p>`
+  const tgText = `${emoji} <b>Оплата по счёту</b>\n\n📋 ${bill.billNumber} — ${bill.vendorName}\n💰 Оплачено: <b>${fmt(bill.paymentAmount)} ${bill.currency}</b>\n📊 ${status}\n\n📎 <a href="${APP_URL}/finance?tab=payables">Открыть кредиторку</a>`
+  const emailHtml = `<h2>Оплата по счёту ${bill.billNumber}</h2><p>${bill.vendorName}</p><p>Оплачено: <b>${fmt(bill.paymentAmount)} ${bill.currency}</b></p><p>${status}</p><p><a href="${APP_URL}/finance?tab=payables">Открыть кредиторку</a></p>`
 
   await sendToChannels(settings.billPayments, settings, orgId, tgText,
     `Оплата: ${bill.billNumber} — ${fmt(bill.paymentAmount)} ${bill.currency}`, emailHtml,

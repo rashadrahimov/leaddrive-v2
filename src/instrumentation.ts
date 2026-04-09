@@ -81,7 +81,8 @@ export async function register() {
               const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN
               const CHAT_ID = process.env.TELEGRAM_FINANCE_CHAT_ID
               if (BOT_TOKEN && CHAT_ID) {
-                const text = `🔴 <b>[Авто-проверка] Новые просрочки</b>\n\nСчетов к оплате: ${bills.count}\nИнвойсов: ${invoices.count}\n\n📎 <a href="https://app.leaddrivecrm.org/finance">Открыть финансы</a>`
+                const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://app.leaddrivecrm.org"
+                const text = `🔴 <b>[Авто-проверка] Новые просрочки</b>\n\nСчетов к оплате: ${bills.count}\nИнвойсов: ${invoices.count}\n\n📎 <a href="${appUrl}/finance">Открыть финансы</a>`
                 await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
                   method: "POST",
                   headers: { "Content-Type": "application/json" },

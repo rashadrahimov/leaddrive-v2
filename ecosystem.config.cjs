@@ -1,19 +1,22 @@
+const APP_DIR = process.env.APP_DIR || "/opt/leaddrive-v2"
+const APP_PORT = process.env.APP_PORT || 3001
+
 module.exports = {
   apps: [
     {
-      name: "leaddrive-v2",
-      script: "/opt/leaddrive-v2/.next/standalone/server.js",
-      cwd: "/opt/leaddrive-v2/.next/standalone",
+      name: process.env.PM2_NAME || "leaddrive-v2",
+      script: `${APP_DIR}/.next/standalone/server.js`,
+      cwd: `${APP_DIR}/.next/standalone`,
       interpreter: "node",
       instances: 1,
       exec_mode: "fork",
       env: {
         NODE_ENV: "production",
-        PORT: 3001,
+        PORT: APP_PORT,
         HOSTNAME: "0.0.0.0",
       },
-      error_file: "/opt/leaddrive-v2/logs/error.log",
-      out_file: "/opt/leaddrive-v2/logs/out.log",
+      error_file: `${APP_DIR}/logs/error.log`,
+      out_file: `${APP_DIR}/logs/out.log`,
       log_date_format: "YYYY-MM-DD HH:mm:ss Z",
       merge_logs: true,
       max_restarts: 10,

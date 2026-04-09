@@ -95,7 +95,7 @@ export async function sendEmail({
   attachments?: { filename: string; path: string }[]
 }) {
   const config = await getSmtpConfig(organizationId)
-  const fromEmail = config?.fromEmail || "noreply@leaddrivecrm.org"
+  const fromEmail = config?.fromEmail || (process.env.NEXT_PUBLIC_CONTACT_EMAIL || "noreply@leaddrivecrm.org")
 
   // If SMTP is not configured, log and return error
   if (!config) {

@@ -296,7 +296,7 @@ export default function DemoPage() {
                 </div>
                 <div className="flex-1 mx-6">
                   <div className="bg-white rounded-md px-3 py-0.5 text-[11px] text-[#001E3C]/40 border border-[#001E3C]/10 max-w-xs mx-auto text-center">
-                    app.leaddrivecrm.org
+                    {APP_URL.replace(/^https?:\/\//, "")}
                   </div>
                 </div>
               </div>

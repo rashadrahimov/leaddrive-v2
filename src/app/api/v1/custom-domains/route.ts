@@ -3,7 +3,7 @@ import { z } from "zod"
 import { prisma } from "@/lib/prisma"
 import { getSession } from "@/lib/api-auth"
 
-const CNAME_TARGET = "pages.leaddrivecrm.org"
+const CNAME_TARGET = process.env.CNAME_TARGET || "pages.leaddrivecrm.org"
 
 const domainRegex = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/
 
@@ -14,8 +14,11 @@ const createDomainSchema = z.object({
     .max(253)
     .transform((v) => v.toLowerCase().trim())
     .refine((v) => domainRegex.test(v), { message: "Invalid domain format" })
-    .refine((v) => !v.endsWith("leaddrivecrm.org"), {
-      message: "Cannot use leaddrivecrm.org subdomains",
+    .refine((v) => {
+      const appDomain = (process.env.NEXT_PUBLIC_APP_URL || "https://app.leaddrivecrm.org").replace(/^https?:\/\//, "").replace(/^[^.]+\./, "")
+      return !v.endsWith(appDomain)
+    }, {
+      message: "Cannot use platform subdomains",
     }),
 })
 

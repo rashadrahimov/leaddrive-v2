@@ -96,7 +96,7 @@ export default async function CustomDomainPage({
             )}
             <p className="text-xs text-gray-400 text-center mt-8">
               Powered by{" "}
-              <a href="https://leaddrivecrm.org" className="text-blue-500 hover:underline">
+              <a href={process.env.NEXT_PUBLIC_MARKETING_URL || "https://leaddrivecrm.org"} className="text-blue-500 hover:underline">
                 LeadDrive CRM
               </a>
             </p>

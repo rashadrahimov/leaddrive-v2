@@ -10,9 +10,19 @@ const publicPaths = ["/login", "/register", "/forgot-password", "/reset-password
 // Marketing-only paths served on leaddrivecrm.org
 const marketingPaths = ["/home", "/pricing", "/plans", "/features", "/demo", "/about", "/contact", "/blog", "/legal", "/landing", "/marketing"]
 
-// Hostnames for domain-based routing
-const MARKETING_HOSTS = ["leaddrivecrm.org", "www.leaddrivecrm.org"]
-const APP_HOSTS = ["app.leaddrivecrm.org", "www.app.leaddrivecrm.org"]
+// Hostnames for domain-based routing (from env or defaults)
+function getMarketingHosts(): string[] {
+  const url = process.env.NEXT_PUBLIC_MARKETING_URL || "https://leaddrivecrm.org"
+  const host = url.replace(/^https?:\/\//, "").replace(/\/.*$/, "")
+  return [host, `www.${host}`]
+}
+function getAppHosts(): string[] {
+  const url = process.env.NEXT_PUBLIC_APP_URL || "https://app.leaddrivecrm.org"
+  const host = url.replace(/^https?:\/\//, "").replace(/\/.*$/, "")
+  return [host, `www.${host}`]
+}
+const MARKETING_HOSTS = getMarketingHosts()
+const APP_HOSTS = getAppHosts()
 
 function isMarketingHost(host: string): boolean {
   return MARKETING_HOSTS.includes(host)
@@ -38,7 +48,7 @@ function buildCsp(nonce: string, allowSameOriginFrame = false) {
     "img-src 'self' data: blob: https:",
     "media-src 'self'",
     "font-src 'self' data:",
-    `connect-src 'self' ${process.env.NEXTAUTH_URL || "https://app.leaddrivecrm.org"} https://leaddrivecrm.org https://api.anthropic.com https://accounts.google.com https://login.microsoftonline.com`,
+    `connect-src 'self' ${process.env.NEXTAUTH_URL || "https://app.leaddrivecrm.org"} ${process.env.NEXT_PUBLIC_MARKETING_URL || "https://leaddrivecrm.org"} https://api.anthropic.com https://accounts.google.com https://login.microsoftonline.com`,
     "form-action 'self' https://accounts.google.com https://login.microsoftonline.com",
     "frame-src 'self' https://editor.unlayer.com https://*.unlayer.com",
     allowSameOriginFrame ? "frame-ancestors 'self'" : "frame-ancestors 'none'",
@@ -106,14 +116,14 @@ const authMiddleware = auth((req) => {
   if (isMarketingHost(host)) {
     // On marketing domain: "/" → /home
     if (pathname === "/") {
-      return withCspHeaders(NextResponse.redirect(new URL("https://leaddrivecrm.org/home")), nonce)
+      return withCspHeaders(NextResponse.redirect(new URL(`${process.env.NEXT_PUBLIC_MARKETING_URL || "https://leaddrivecrm.org"}/home`)), nonce)
     }
     // On marketing domain: allow marketing paths + static assets + sw.js
     if (isMarketingPath(pathname) || pathname.startsWith("/api/") || pathname.startsWith("/_next/") || pathname === "/sw.js") {
       // Let it through — will be handled by publicPaths check below
     } else {
       // Non-marketing paths (dashboard, auth, etc.) → redirect to app subdomain
-      const appUrl = new URL(`https://app.leaddrivecrm.org${pathname}`)
+      const appUrl = new URL(`${process.env.NEXT_PUBLIC_APP_URL || "https://app.leaddrivecrm.org"}${pathname}`)
       appUrl.search = req.nextUrl.search
       return withCspHeaders(NextResponse.redirect(appUrl), nonce)
     }
@@ -122,7 +132,7 @@ const authMiddleware = auth((req) => {
   if (isAppHost(host)) {
     // On app domain: marketing paths → redirect to marketing domain
     if (isMarketingPath(pathname)) {
-      const marketingUrl = new URL(`https://leaddrivecrm.org${pathname}`)
+      const marketingUrl = new URL(`${process.env.NEXT_PUBLIC_MARKETING_URL || "https://leaddrivecrm.org"}${pathname}`)
       marketingUrl.search = req.nextUrl.search
       return withCspHeaders(NextResponse.redirect(marketingUrl), nonce)
     }

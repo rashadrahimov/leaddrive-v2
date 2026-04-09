@@ -29,7 +29,7 @@ interface CustomDomain {
   createdAt: string
 }
 
-const CNAME_TARGET = "pages.leaddrivecrm.org"
+const CNAME_TARGET = process.env.NEXT_PUBLIC_CNAME_TARGET || "pages.leaddrivecrm.org"
 
 export default function CustomDomainsPage() {
   const t = useTranslations("customDomains")

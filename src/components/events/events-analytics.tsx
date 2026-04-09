@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { useTranslations } from "next-intl"
 import { MiniLineChart } from "@/components/charts/mini-charts"
+import { APP_DOMAIN, MARKETING_DOMAIN } from "@/lib/domains"
 import { cn } from "@/lib/utils"
 import {
   CalendarDays,
@@ -160,7 +161,7 @@ function generateICS(event: Event): string {
     `DTSTART:${toICSDate(start)}`,
     `DTEND:${toICSDate(end)}`,
     `DTSTAMP:${toICSDate(now)}`,
-    `UID:${event.id}@leaddrivecrm.org`,
+    `UID:${event.id}@${APP_DOMAIN}`,
     `SUMMARY:${event.name.replace(/[,;\\]/g, " ")}`,
     event.location ? `LOCATION:${event.location.replace(/[,;\\]/g, " ")}` : "",
     event.description ? `DESCRIPTION:${event.description.replace(/\n/g, "\\n").replace(/[,;\\]/g, " ")}` : "",
@@ -634,7 +635,7 @@ export function EventsAnalytics({ events }: EventsAnalyticsProps) {
 
           {/* Registration link */}
           <div className="flex items-center gap-2 bg-muted/50 rounded-lg px-3 py-2 mb-4">
-            <code className="flex-1 text-xs text-muted-foreground truncate">leaddrivecrm.org/r/ev014</code>
+            <code className="flex-1 text-xs text-muted-foreground truncate">{MARKETING_DOMAIN}/r/ev014</code>
             <button className="shrink-0 p-1 rounded hover:bg-muted transition-colors" title={tc("copy")}>
               <Copy className="w-3.5 h-3.5 text-muted-foreground" />
             </button>

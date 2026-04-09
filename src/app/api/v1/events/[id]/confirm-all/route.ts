@@ -6,7 +6,8 @@ function generateICS(event: any, organizerEmail: string): string {
   const start = new Date(event.startDate)
   const end = event.endDate ? new Date(event.endDate) : new Date(start.getTime() + 2 * 60 * 60 * 1000)
   const fmt = (d: Date) => d.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "")
-  const uid = `${event.id}@leaddrivecrm.org`
+  const appDomain = (process.env.NEXT_PUBLIC_APP_URL || "https://app.leaddrivecrm.org").replace(/^https?:\/\//, "")
+  const uid = `${event.id}@${appDomain}`
   return [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",

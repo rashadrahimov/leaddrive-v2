@@ -93,7 +93,7 @@ export default function PrivacyPage() {
                 Məxfilik ilə bağlı suallarınız üçün bizimlə əlaqə saxlayın:
               </p>
               <p className="mt-2">
-                info@leaddrivecrm.org<br />
+                {process.env.NEXT_PUBLIC_CONTACT_EMAIL || "info@leaddrivecrm.org"}<br />
                 +994 10 531 30 65<br />
                 Bakı, Azərbaycan
               </p>

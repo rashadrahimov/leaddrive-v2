@@ -222,7 +222,7 @@ export async function processEnrollmentStep(enrollmentId: string, orgId: string)
                 parse_mode: "HTML",
                 reply_markup: {
                   inline_keyboard: [
-                    [{ text: "📞 Əlaqə: +994 10 236 99 09", url: "https://www.leaddrivecrm.org" }],
+                    [{ text: "📞 Əlaqə: +994 10 236 99 09", url: process.env.NEXT_PUBLIC_MARKETING_URL || "https://www.leaddrivecrm.org" }],
                   ],
                 },
               }
