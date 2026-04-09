@@ -57,6 +57,10 @@
     "mtmOrders": "Sifarişlər",
     "mtmAgents": "Agentlər",
     "mtmSettings": "MTM Parametrlər",
+    "mtmAnalytics": "Analitika",
+    "mtmLeaderboard": "Liderlik Cədvəli",
+    "mtmActivity": "Fəaliyyət Jurnalı",
+    "mtmReports": "MTM Hesabatlar",
     "groups": {
       "CRM": "CRM",
       "Marketing": "Marketinq",

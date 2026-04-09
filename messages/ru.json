@@ -57,6 +57,10 @@
     "mtmOrders": "Заказы",
     "mtmAgents": "Агенты",
     "mtmSettings": "Настройки MTM",
+    "mtmAnalytics": "Аналитика",
+    "mtmLeaderboard": "Лидерборд",
+    "mtmActivity": "Журнал активности",
+    "mtmReports": "Отчёты MTM",
     "groups": {
       "CRM": "CRM",
       "Marketing": "Маркетинг",

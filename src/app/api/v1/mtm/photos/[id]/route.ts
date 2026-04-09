@@ -17,12 +17,10 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     }
     if (body.reviewNote !== undefined) data.reviewNote = body.reviewNote
 
-    const updated = await prisma.mtmPhoto.updateMany({
-      where: { id, organizationId: orgId },
-      data,
-    })
-    if (updated.count === 0) return NextResponse.json({ error: "Not found" }, { status: 404 })
-    return NextResponse.json({ success: true })
+    const photo = await prisma.mtmPhoto.findFirst({ where: { id, organizationId: orgId } })
+    if (!photo) return NextResponse.json({ error: "Not found" }, { status: 404 })
+    const updated = await prisma.mtmPhoto.update({ where: { id }, data })
+    return NextResponse.json({ success: true, data: updated })
   } catch (e: any) {
     return NextResponse.json({ error: e.message || "Failed to update" }, { status: 400 })
   }

@@ -12,6 +12,7 @@ import {
   TrendingUp, Filter, Workflow, Server, Bell, CalendarDays, Headphones, Package,
   Lock, PiggyBank, FolderKanban, Wallet, MapPin, Route, Camera, AlertTriangle,
   ClipboardList, ShoppingCart, UserCog, GitBranch, Plug, Keyboard, Shield, Phone,
+  Trophy, Activity, FileBarChart,
 } from "lucide-react"
 import { useState } from "react"
 import { Logo } from "@/components/logo"
@@ -71,6 +72,10 @@ const navItems: NavItem[] = [
   { module: "mtm", href: "/mtm/alerts", icon: AlertTriangle, tKey: "mtmAlerts", group: "Route & Field" },
   { module: "mtm", href: "/mtm/orders", icon: ShoppingCart, tKey: "mtmOrders", group: "Route & Field" },
   { module: "mtm", href: "/mtm/agents", icon: UserCog, tKey: "mtmAgents", group: "Route & Field" },
+  { module: "mtm", href: "/mtm/analytics", icon: BarChart3, tKey: "mtmAnalytics", group: "Route & Field" },
+  { module: "mtm", href: "/mtm/leaderboard", icon: Trophy, tKey: "mtmLeaderboard", group: "Route & Field" },
+  { module: "mtm", href: "/mtm/activity", icon: Activity, tKey: "mtmActivity", group: "Route & Field" },
+  { module: "mtm", href: "/mtm/reports", icon: FileBarChart, tKey: "mtmReports", group: "Route & Field" },
   { module: "mtm", href: "/mtm/settings", icon: Settings, tKey: "mtmSettings", group: "Route & Field" },
   { module: "core", href: "/settings/dashboard", icon: LayoutDashboard, tKey: "dashboardSettings", group: "Settings" },
   { module: "core", href: "/settings/pipelines", icon: GitBranch, tKey: "pipelines", group: "Settings" },

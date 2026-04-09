@@ -57,6 +57,10 @@
     "mtmOrders": "Orders",
     "mtmAgents": "Agents",
     "mtmSettings": "MTM Settings",
+    "mtmAnalytics": "Analytics",
+    "mtmLeaderboard": "Leaderboard",
+    "mtmActivity": "Activity Log",
+    "mtmReports": "MTM Reports",
     "groups": {
       "CRM": "CRM",
       "Marketing": "Marketing",
