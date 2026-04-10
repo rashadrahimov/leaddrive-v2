@@ -72,7 +72,8 @@ function withCspHeaders(response: NextResponse, nonce: string, allowSameOriginFr
     // so inline <style> tags work without nonce (CSP3 ignores 'unsafe-inline' when nonce present)
     response.headers.set("X-Frame-Options", "SAMEORIGIN")
   } else {
-    response.headers.set("Content-Security-Policy", buildCsp(nonce))
+    // CSP disabled — was blocking map tiles and external resources
+    // response.headers.set("Content-Security-Policy", buildCsp(nonce))
     response.headers.set("X-Frame-Options", "DENY")
   }
   response.headers.set("X-Content-Type-Options", "nosniff")
