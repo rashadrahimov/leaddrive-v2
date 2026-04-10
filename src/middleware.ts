@@ -46,11 +46,11 @@ function buildCsp(nonce: string, allowSameOriginFrame = false) {
   return [
     "default-src 'self'",
     `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' https://editor.unlayer.com https://*.unlayer.com`,
-    `style-src 'self' 'nonce-${nonce}' 'unsafe-inline'`,
+    `style-src 'self' 'nonce-${nonce}' 'unsafe-inline' https://unpkg.com`,
     "img-src 'self' data: blob: https:",
     "media-src 'self'",
     "font-src 'self' data:",
-    `connect-src 'self' ${process.env.NEXTAUTH_URL || "https://app.leaddrivecrm.org"} ${process.env.NEXT_PUBLIC_MARKETING_URL || "https://leaddrivecrm.org"} https://api.anthropic.com https://accounts.google.com https://login.microsoftonline.com`,
+    `connect-src 'self' ${process.env.NEXTAUTH_URL || "https://app.leaddrivecrm.org"} ${process.env.NEXT_PUBLIC_MARKETING_URL || "https://leaddrivecrm.org"} https://api.anthropic.com https://accounts.google.com https://login.microsoftonline.com https://*.tile.openstreetmap.org https://unpkg.com`,
     "form-action 'self' https://accounts.google.com https://login.microsoftonline.com",
     "frame-src 'self' https://editor.unlayer.com https://*.unlayer.com",
     allowSameOriginFrame ? "frame-ancestors 'self'" : "frame-ancestors 'none'",
