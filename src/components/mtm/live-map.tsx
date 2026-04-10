@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect } from "react"
-import { MapContainer, TileLayer, Marker, Popup, Polyline } from "react-leaflet"
+import { MapContainer, TileLayer, Marker, Popup, Polyline, Circle as LeafletCircle } from "react-leaflet"
 import L from "leaflet"
 
 // Inject Leaflet CSS via CDN (standalone builds don't include node_modules CSS)
@@ -64,9 +64,11 @@ const statusLabels: Record<string, string> = {
 interface Props {
   agents: AgentLocation[]
   replayTrack?: Array<{ latitude: number; longitude: number; recordedAt: string }>
+  showGeofence?: boolean
+  geofenceRadius?: number // meters, default 100
 }
 
-export default function MtmLiveMap({ agents, replayTrack = [] }: Props) {
+export default function MtmLiveMap({ agents, replayTrack = [], showGeofence = false, geofenceRadius = 100 }: Props) {
   useLeafletCSS()
 
   const defaultCenter: [number, number] = [40.4093, 49.8671]
@@ -110,6 +112,15 @@ export default function MtmLiveMap({ agents, replayTrack = [] }: Props) {
             </div>
           </Popup>
         </Marker>
+      ))}
+      {/* Geofence circles around each agent */}
+      {showGeofence && agents.map((agent) => (
+        <LeafletCircle
+          key={`gf-${agent.agentId}`}
+          center={[agent.latitude, agent.longitude]}
+          radius={geofenceRadius}
+          pathOptions={{ color: statusColors[agent.fieldStatus || "OFFLINE"], fillOpacity: 0.1, weight: 1, dashArray: "4 4" }}
+        />
       ))}
     </MapContainer>
   )

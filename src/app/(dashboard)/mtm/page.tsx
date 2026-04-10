@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import { useSession } from "next-auth/react"
 import { useTranslations } from "next-intl"
 import { ColorStatCard } from "@/components/color-stat-card"
@@ -32,21 +32,31 @@ export default function MtmDashboardPage() {
       .finally(() => setLoading(false))
   }, [period, session])
 
-  const now = new Date()
+  // Live clock with seconds
+  const [clock, setClock] = useState(new Date())
+  useEffect(() => {
+    const t = setInterval(() => setClock(new Date()), 1000)
+    return () => clearInterval(t)
+  }, [])
+
+  const userName = session?.user?.name?.split(" ")[0] || ""
 
   return (
     <div className="space-y-5">
-      {/* Header with greeting and clock */}
+      {/* Header with greeting and live clock */}
       <div className="flex items-start justify-between">
-        <PageDescription
-          icon={MapPin}
-          title={t("mtmDashboard")}
-          description="Field team management — agents, routes, visits, tasks"
-        />
+        <div>
+          {userName && <h2 className="text-lg font-semibold mb-0.5">Welcome back, {userName}!</h2>}
+          <PageDescription
+            icon={MapPin}
+            title={t("mtmDashboard")}
+            description="Field team management — agents, routes, visits, tasks"
+          />
+        </div>
         <div className="text-right text-muted-foreground">
-          <div className="text-xs">{now.toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}</div>
+          <div className="text-xs">{clock.toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}</div>
           <div className="text-2xl font-mono font-bold text-foreground tabular-nums">
-            {now.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: false })}
+            {clock.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false })}
           </div>
         </div>
       </div>

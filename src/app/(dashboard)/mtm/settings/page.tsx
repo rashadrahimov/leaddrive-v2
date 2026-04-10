@@ -38,6 +38,14 @@ export default function MtmSettingsPage() {
 
   const settingGroups = [
     {
+      title: "Company",
+      items: [
+        { key: "companyName", label: "Company name", type: "text" },
+        { key: "primaryColor", label: "Primary color", type: "text" },
+        { key: "logoUrl", label: "Logo URL", type: "text" },
+      ],
+    },
+    {
       title: "GPS Tracking",
       items: [
         { key: "gpsInterval", label: "GPS interval (seconds)", type: "number" },

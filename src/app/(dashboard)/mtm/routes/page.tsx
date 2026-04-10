@@ -13,7 +13,7 @@ import { Select } from "@/components/ui/select"
 import dynamic from "next/dynamic"
 import {
   Route, MapPin, User, CheckCircle2, Plus, Pencil, Trash2, Search,
-  List, CalendarDays, Clock, Navigation, ChevronLeft, ChevronRight, X,
+  List, CalendarDays, Clock, Navigation, ChevronLeft, ChevronRight, X, Copy,
 } from "lucide-react"
 
 const MtmRouteMap = dynamic(() => import("@/components/mtm/route-map"), { ssr: false })
@@ -126,6 +126,17 @@ export default function MtmRoutesPage() {
             <Button variant={viewMode === "list" ? "default" : "ghost"} size="sm" className="rounded-none" onClick={() => setViewMode("list")}><List className="h-4 w-4" /></Button>
             <Button variant={viewMode === "calendar" ? "default" : "ghost"} size="sm" className="rounded-none" onClick={() => setViewMode("calendar")}><CalendarDays className="h-4 w-4" /></Button>
           </div>
+          <Button variant="outline" size="sm" onClick={() => {
+            // Templates: save current route as template or apply existing
+            const templates = routes.filter(r => r.name?.includes("[TEMPLATE]") || r.name?.includes("[SEED]"))
+            if (templates.length > 0) {
+              const tpl = templates[0]
+              setEditData({ ...tpl, id: undefined, name: tpl.name?.replace("[TEMPLATE]", "").replace("[SEED]", "").trim() + " (copy)", date: new Date().toISOString().split("T")[0] })
+              setFormOpen(true)
+            } else {
+              alert("No templates found. Create a route with [TEMPLATE] in the name to save it as a template.")
+            }
+          }}><Copy className="h-4 w-4 mr-1" /> Templates</Button>
           <Button onClick={() => { setEditData(undefined); setFormOpen(true) }}><Plus className="h-4 w-4 mr-1" /> {t("add")}</Button>
         </div>
       </div>
@@ -144,11 +155,12 @@ export default function MtmRoutesPage() {
             <h3 className="font-semibold text-sm">{selectedRoute.name || selectedRoute.agent?.name} — {new Date(selectedRoute.date).toLocaleDateString()}</h3>
             <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setSelectedRoute(null)}><X className="h-4 w-4" /></Button>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
             <div className="rounded-lg bg-muted/50 p-3 text-center"><CheckCircle2 className="h-4 w-4 mx-auto text-green-500 mb-1" /><div className="text-lg font-bold">{selectedRoute.visitedPoints}/{selectedRoute.totalPoints}</div><div className="text-[10px] text-muted-foreground">Completed</div></div>
             <div className="rounded-lg bg-muted/50 p-3 text-center"><Navigation className="h-4 w-4 mx-auto text-blue-500 mb-1" /><div className="text-lg font-bold">{routeMetrics?.completion ?? 0}%</div><div className="text-[10px] text-muted-foreground">Execution</div></div>
             <div className="rounded-lg bg-muted/50 p-3 text-center"><Clock className="h-4 w-4 mx-auto text-amber-500 mb-1" /><div className="text-lg font-bold">{routeMetrics?.duration ? `${Math.floor(routeMetrics.duration / 60)}h ${routeMetrics.duration % 60}m` : "—"}</div><div className="text-[10px] text-muted-foreground">Duration</div></div>
-            <div className="rounded-lg bg-muted/50 p-3 text-center"><MapPin className="h-4 w-4 mx-auto text-purple-500 mb-1" /><div className="text-lg font-bold">{selectedRoute.totalPoints}</div><div className="text-[10px] text-muted-foreground">Total Points</div></div>
+            <div className="rounded-lg bg-muted/50 p-3 text-center"><MapPin className="h-4 w-4 mx-auto text-purple-500 mb-1" /><div className="text-lg font-bold">{selectedRoute.totalPoints}</div><div className="text-[10px] text-muted-foreground">Points</div></div>
+            <div className="rounded-lg bg-muted/50 p-3 text-center"><Route className="h-4 w-4 mx-auto text-indigo-500 mb-1" /><div className="text-lg font-bold">{selectedRoute.distanceKm ? `${selectedRoute.distanceKm} km` : "—"}</div><div className="text-[10px] text-muted-foreground">Distance</div></div>
           </div>
           {selectedRoute.points?.length > 0 && selectedRoute.points.some((p: any) => p.customer?.latitude) && (
             <div className="rounded-lg border overflow-hidden" style={{ height: 300 }}><MtmRouteMap points={selectedRoute.points} /></div>

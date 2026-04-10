@@ -9,7 +9,7 @@ import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select } from "@/components/ui/select"
-import { Camera, ThumbsUp, ThumbsDown, Check, X, Trash2, Search, Clock, CheckCircle2, XCircle } from "lucide-react"
+import { Camera, ThumbsUp, ThumbsDown, Check, X, Trash2, Search, Clock, CheckCircle2, XCircle, Download, LayoutGrid, Columns, CheckSquare } from "lucide-react"
 
 const statusColors: Record<string, string> = { PENDING: "bg-amber-100 text-amber-700", APPROVED: "bg-green-100 text-green-700", REJECTED: "bg-red-100 text-red-600" }
 
@@ -24,6 +24,10 @@ export default function MtmPhotosPage() {
   const [search, setSearch] = useState("")
   const [activeFilter, setActiveFilter] = useState("all")
   const [sortBy, setSortBy] = useState("date_desc")
+  const [viewMode, setViewMode] = useState<"gallery" | "compare" | "batch">("gallery")
+  const [selectedPhotos, setSelectedPhotos] = useState<Set<string>>(new Set())
+  const [compareLeft, setCompareLeft] = useState<any>(null)
+  const [compareRight, setCompareRight] = useState<any>(null)
   const orgId = session?.user?.organizationId
 
   const fetchPhotos = async () => {
@@ -74,7 +78,17 @@ export default function MtmPhotosPage() {
 
   return (
     <div className="space-y-4">
-      <PageDescription icon={Camera} title={`${t("title")} (${filtered.length})`} description={t("subtitle")} />
+      <div className="flex items-center justify-between">
+        <PageDescription icon={Camera} title={`${t("title")} (${filtered.length})`} description={t("subtitle")} />
+        <div className="flex gap-2">
+          <div className="flex border rounded-lg overflow-hidden">
+            <Button variant={viewMode === "gallery" ? "default" : "ghost"} size="sm" className="rounded-none" onClick={() => setViewMode("gallery")}><LayoutGrid className="h-4 w-4" /></Button>
+            <Button variant={viewMode === "compare" ? "default" : "ghost"} size="sm" className="rounded-none" onClick={() => setViewMode("compare")}><Columns className="h-4 w-4" /></Button>
+            <Button variant={viewMode === "batch" ? "default" : "ghost"} size="sm" className="rounded-none" onClick={() => { setViewMode("batch"); setSelectedPhotos(new Set()) }}><CheckSquare className="h-4 w-4" /></Button>
+          </div>
+          <Button variant="outline" size="sm"><Download className="h-4 w-4 mr-1" /> Export ({filtered.length})</Button>
+        </div>
+      </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 stagger-children">
         <ColorStatCard label={t("statTotal")} value={photos.length} icon={<Camera className="h-4 w-4" />} color="blue" hint={t("hintTotal")} />
@@ -100,14 +114,56 @@ export default function MtmPhotosPage() {
         </Select>
       </div>
 
+      {/* Batch action bar */}
+      {viewMode === "batch" && selectedPhotos.size > 0 && (
+        <div className="flex items-center gap-2 p-2 rounded-lg border bg-primary/5">
+          <span className="text-xs font-medium">{selectedPhotos.size} selected</span>
+          <Button size="sm" variant="outline" className="h-6 text-xs text-green-600" onClick={() => { selectedPhotos.forEach(id => updatePhotoStatus(id, "APPROVED")); setSelectedPhotos(new Set()) }}>
+            <Check className="h-3 w-3 mr-1" /> Approve All
+          </Button>
+          <Button size="sm" variant="outline" className="h-6 text-xs text-red-600" onClick={() => { selectedPhotos.forEach(id => updatePhotoStatus(id, "REJECTED")); setSelectedPhotos(new Set()) }}>
+            <X className="h-3 w-3 mr-1" /> Reject All
+          </Button>
+          <Button size="sm" variant="ghost" className="h-6 text-xs ml-auto" onClick={() => setSelectedPhotos(new Set())}>Clear</Button>
+        </div>
+      )}
+
+      {/* Compare view */}
+      {viewMode === "compare" && (
+        <div className="grid grid-cols-2 gap-3 rounded-lg border bg-card p-4">
+          {[{ photo: compareLeft, setter: setCompareLeft, label: "Left" }, { photo: compareRight, setter: setCompareRight, label: "Right" }].map(({ photo, setter, label }) => (
+            <div key={label}>
+              <div className="text-xs font-medium text-muted-foreground mb-2">{label} — {photo ? `${photo.agent?.name} (${photo.status})` : "Click a photo below to select"}</div>
+              <div className="aspect-square bg-muted rounded-lg flex items-center justify-center overflow-hidden">
+                {photo?.url ? <img src={photo.url} alt="" className="w-full h-full object-cover" /> : <Camera className="h-12 w-12 text-muted-foreground/30" />}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
       {filtered.length === 0 ? (
         <div className="h-48 flex items-center justify-center text-muted-foreground border rounded-lg bg-card">{photos.length === 0 ? t("empty") : t("noResults")}</div>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
           {filtered.map(photo => (
-            <div key={photo.id} className="rounded-lg border bg-card overflow-hidden">
-              <div className="aspect-square bg-muted flex items-center justify-center">
+            <div key={photo.id} className={`rounded-lg border bg-card overflow-hidden cursor-pointer transition-all ${selectedPhotos.has(photo.id) ? "ring-2 ring-primary" : ""}`}
+              onClick={() => {
+                if (viewMode === "batch") {
+                  setSelectedPhotos(prev => { const next = new Set(prev); next.has(photo.id) ? next.delete(photo.id) : next.add(photo.id); return next })
+                } else if (viewMode === "compare") {
+                  if (!compareLeft) setCompareLeft(photo)
+                  else if (!compareRight) setCompareRight(photo)
+                  else { setCompareLeft(compareRight); setCompareRight(photo) }
+                }
+              }}>
+              <div className="aspect-square bg-muted flex items-center justify-center relative">
                 {photo.url ? <img src={photo.url} alt="" className="w-full h-full object-cover" /> : <Camera className="h-8 w-8 text-muted-foreground" />}
+                {viewMode === "batch" && (
+                  <div className={`absolute top-1.5 left-1.5 w-4 h-4 rounded border-2 flex items-center justify-center ${selectedPhotos.has(photo.id) ? "bg-primary border-primary text-white" : "border-white/70 bg-black/20"}`}>
+                    {selectedPhotos.has(photo.id) && <Check className="h-2.5 w-2.5" />}
+                  </div>
+                )}
               </div>
               <div className="p-2">
                 <div className="text-xs font-medium truncate">{photo.agent?.name}</div>

@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import dynamic from "next/dynamic"
 import {
   MapPin, RefreshCw, Clock, WifiOff, Navigation,
-  Radio, AlertTriangle, Play, Eye, EyeOff,
+  Radio, AlertTriangle, Play, Eye, EyeOff, Circle, Flame,
 } from "lucide-react"
 
 const MtmLiveMap = dynamic(() => import("@/components/mtm/live-map"), { ssr: false })
@@ -53,6 +53,8 @@ export default function MtmMapPage() {
   const [showFeed, setShowFeed] = useState(true)
   const [replayAgent, setReplayAgent] = useState<string | null>(null)
   const [replayTrack, setReplayTrack] = useState<any[]>([])
+  const [showGeofence, setShowGeofence] = useState(false)
+  const [showHeatmap, setShowHeatmap] = useState(false)
   const orgId = session?.user?.organizationId
 
   const fetchLocations = useCallback(() => {
@@ -113,6 +115,12 @@ export default function MtmMapPage() {
               <Clock className="h-3 w-3" /> Last update: {lastUpdate.toLocaleTimeString()}
             </span>
           )}
+          <Button variant={showGeofence ? "default" : "outline"} size="sm" onClick={() => setShowGeofence(!showGeofence)}>
+            <Circle className="h-3.5 w-3.5 mr-1" /> Geofence
+          </Button>
+          <Button variant={showHeatmap ? "default" : "outline"} size="sm" onClick={() => setShowHeatmap(!showHeatmap)}>
+            <Flame className="h-3.5 w-3.5 mr-1" /> Heatmap
+          </Button>
           <Button variant="outline" size="sm" onClick={fetchLocations}>
             <RefreshCw className="h-3.5 w-3.5 mr-1" /> Refresh
           </Button>
@@ -149,7 +157,7 @@ export default function MtmMapPage() {
           {loading ? (
             <div className="h-full flex items-center justify-center text-muted-foreground text-sm">Loading map...</div>
           ) : (
-            <MtmLiveMap agents={mapAgents} replayTrack={replayAgent ? replayTrack : []} />
+            <MtmLiveMap agents={mapAgents} replayTrack={replayAgent ? replayTrack : []} showGeofence={showGeofence} />
           )}
         </div>
 

@@ -10,7 +10,7 @@ import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select } from "@/components/ui/select"
-import { UserCog, Plus, Pencil, Trash2, Search, Users, Wifi } from "lucide-react"
+import { UserCog, Plus, Pencil, Trash2, Search, Users, Wifi, Download } from "lucide-react"
 
 const roleColors: Record<string, string> = {
   ADMIN: "bg-purple-100 text-purple-700",
@@ -102,9 +102,16 @@ export default function MtmAgentsPage() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <PageDescription icon={UserCog} title={`${t("title")} (${filtered.length})`} description={t("subtitle")} />
-        <Button onClick={() => { setEditData(undefined); setFormOpen(true) }}>
-          <Plus className="h-4 w-4 mr-1" /> {t("add")}
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={() => {
+            const csv = ["Name,Email,Phone,Role,Status", ...filtered.map(a => `${a.name || ""},${a.email || ""},${a.phone || ""},${a.role || ""},${a.status || ""}`)].join("\n")
+            const blob = new Blob([csv], { type: "text/csv" })
+            const el = document.createElement("a"); el.href = URL.createObjectURL(blob); el.download = "field-agents.csv"; el.click()
+          }}><Download className="h-4 w-4 mr-1" /> Export</Button>
+          <Button onClick={() => { setEditData(undefined); setFormOpen(true) }}>
+            <Plus className="h-4 w-4 mr-1" /> {t("add")}
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 stagger-children">
