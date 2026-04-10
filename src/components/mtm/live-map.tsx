@@ -1,8 +1,8 @@
 "use client"
 
+import { useEffect } from "react"
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet"
 import L from "leaflet"
-import "leaflet/dist/leaflet.css"
 
 interface AgentLocation {
   agentId: string
@@ -16,8 +16,22 @@ interface AgentLocation {
   recordedAt: string
 }
 
+// Inject Leaflet CSS via CDN (standalone builds don't include node_modules CSS)
+function useLeafletCSS() {
+  useEffect(() => {
+    if (document.getElementById("leaflet-css")) return
+    const link = document.createElement("link")
+    link.id = "leaflet-css"
+    link.rel = "stylesheet"
+    link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    link.integrity = "sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    link.crossOrigin = ""
+    document.head.appendChild(link)
+  }, [])
+}
+
 // Custom marker icon
-const createAgentIcon = (isOnline: boolean) =>
+const createAgentIcon = (isOnline: boolean, initial?: string) =>
   L.divIcon({
     className: "custom-marker",
     html: `<div style="
@@ -27,7 +41,7 @@ const createAgentIcon = (isOnline: boolean) =>
       box-shadow: 0 2px 6px rgba(0,0,0,0.3);
       display: flex; align-items: center; justify-content: center;
       color: white; font-size: 14px; font-weight: bold;
-    "></div>`,
+    ">${initial || ""}</div>`,
     iconSize: [32, 32],
     iconAnchor: [16, 16],
   })
@@ -37,6 +51,8 @@ interface Props {
 }
 
 export default function MtmLiveMap({ agents }: Props) {
+  useLeafletCSS()
+
   // Default center: Baku, Azerbaijan
   const defaultCenter: [number, number] = [40.4093, 49.8671]
   const center: [number, number] =
@@ -52,7 +68,7 @@ export default function MtmLiveMap({ agents }: Props) {
         <Marker
           key={agent.agentId}
           position={[agent.latitude, agent.longitude]}
-          icon={createAgentIcon(agent.isOnline)}
+          icon={createAgentIcon(agent.isOnline, agent.name?.charAt(0)?.toUpperCase())}
         >
           <Popup>
             <div className="text-sm">
