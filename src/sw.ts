@@ -1,5 +1,5 @@
 import { defaultCache } from "@serwist/next/worker"
-import { Serwist } from "serwist"
+import { Serwist, NetworkOnly } from "serwist"
 
 declare const self: any
 
@@ -8,7 +8,14 @@ const serwist = new Serwist({
   skipWaiting: true,
   clientsClaim: true,
   navigationPreload: true,
-  runtimeCaching: defaultCache,
+  runtimeCaching: [
+    // Map tiles — always fetch from network, never cache via SW
+    {
+      matcher: /^https:\/\/.*\.(tile\.openstreetmap|basemaps\.cartocdn)\..*\.png$/i,
+      handler: new NetworkOnly(),
+    },
+    ...defaultCache,
+  ],
 })
 
 serwist.addEventListeners()
