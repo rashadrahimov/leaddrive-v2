@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useSession } from "next-auth/react"
+import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { MotionPage, MotionCard } from "@/components/ui/motion"
 import { Plus, Save, Trash2, Loader2 } from "lucide-react"
@@ -29,6 +30,7 @@ function fmtCurrency(n: number): string {
 
 export default function QuotaSettingsPage() {
   const { data: session } = useSession()
+  const t = useTranslations("quotas")
   const [quotas, setQuotas] = useState<QuotaRow[]>([])
   const [users, setUsers] = useState<UserOption[]>([])
   const [loading, setLoading] = useState(true)
@@ -108,8 +110,8 @@ export default function QuotaSettingsPage() {
     <MotionPage className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold">Управление квотами</h1>
-          <p className="text-sm text-muted-foreground">Квоты продаж по менеджерам и кварталам</p>
+          <h1 className="text-xl font-bold">{t("title")}</h1>
+          <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
         </div>
         <div className="flex gap-2">
           {[year - 1, year, year + 1].map(y => (
@@ -128,23 +130,23 @@ export default function QuotaSettingsPage() {
 
       {/* Add New Quota */}
       <MotionCard className="p-4 rounded-xl border bg-card">
-        <h3 className="text-sm font-semibold mb-3">Добавить квоту</h3>
+        <h3 className="text-sm font-semibold mb-3">{t("addQuota")}</h3>
         <div className="flex gap-3 items-end flex-wrap">
           <div>
-            <label className="text-xs text-muted-foreground block mb-1">Менеджер</label>
+            <label className="text-xs text-muted-foreground block mb-1">{t("manager")}</label>
             <select
               value={newUserId}
               onChange={e => setNewUserId(e.target.value)}
               className="h-9 rounded-md border px-2 text-sm bg-background min-w-[160px]"
             >
-              <option value="">Выберите...</option>
+              <option value="">{t("selectManager")}</option>
               {users.map(u => (
                 <option key={u.id} value={u.id}>{u.name || u.email}</option>
               ))}
             </select>
           </div>
           <div>
-            <label className="text-xs text-muted-foreground block mb-1">Квартал</label>
+            <label className="text-xs text-muted-foreground block mb-1">{t("quarter")}</label>
             <select
               value={newQuarter}
               onChange={e => setNewQuarter(parseInt(e.target.value))}
@@ -156,7 +158,7 @@ export default function QuotaSettingsPage() {
             </select>
           </div>
           <div>
-            <label className="text-xs text-muted-foreground block mb-1">Сумма (₼)</label>
+            <label className="text-xs text-muted-foreground block mb-1">{t("amount")}</label>
             <input
               type="number"
               value={newAmount}
@@ -167,25 +169,25 @@ export default function QuotaSettingsPage() {
           </div>
           <Button size="sm" onClick={handleAdd} disabled={saving || !newUserId || !newAmount}>
             {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <Plus className="h-3.5 w-3.5 mr-1" />}
-            Добавить
+            {t("add")}
           </Button>
         </div>
       </MotionCard>
 
       {/* Quotas Table */}
       {loading ? (
-        <div className="flex items-center justify-center h-32 text-muted-foreground text-sm">Загрузка...</div>
+        <div className="flex items-center justify-center h-32 text-muted-foreground text-sm">{t("loading")}</div>
       ) : quotas.length === 0 ? (
-        <div className="flex items-center justify-center h-32 text-muted-foreground text-sm">Квоты не найдены для {year}</div>
+        <div className="flex items-center justify-center h-32 text-muted-foreground text-sm">{t("noQuotas", { year })}</div>
       ) : (
         <MotionCard className="rounded-xl border bg-card overflow-hidden">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b bg-muted/30">
-                <th className="text-left px-4 py-2.5 text-xs font-semibold text-muted-foreground">Менеджер</th>
-                <th className="text-center px-3 py-2.5 text-xs font-semibold text-muted-foreground">Квартал</th>
-                <th className="text-right px-3 py-2.5 text-xs font-semibold text-muted-foreground">Квота</th>
-                <th className="text-right px-3 py-2.5 text-xs font-semibold text-muted-foreground">Факт</th>
+                <th className="text-left px-4 py-2.5 text-xs font-semibold text-muted-foreground">{t("colManager")}</th>
+                <th className="text-center px-3 py-2.5 text-xs font-semibold text-muted-foreground">{t("colQuarter")}</th>
+                <th className="text-right px-3 py-2.5 text-xs font-semibold text-muted-foreground">{t("colQuota")}</th>
+                <th className="text-right px-3 py-2.5 text-xs font-semibold text-muted-foreground">{t("colActual")}</th>
                 <th className="text-right px-3 py-2.5 text-xs font-semibold text-muted-foreground">%</th>
                 <th className="text-center px-3 py-2.5 text-xs font-semibold text-muted-foreground w-16"></th>
               </tr>
@@ -213,7 +215,7 @@ export default function QuotaSettingsPage() {
                       <span
                         onClick={() => handleInlineEdit(q)}
                         className="cursor-pointer hover:text-primary hover:underline transition-colors"
-                        title="Нажмите для редактирования"
+                        title={t("clickToEdit")}
                       >
                         {fmtCurrency(q.amount)}
                       </span>

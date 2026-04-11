@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useSession } from "next-auth/react"
+import { useTranslations } from "next-intl"
 import { Card } from "@/components/ui/card"
 import { Switch } from "@/components/ui/switch"
 import {
@@ -13,19 +14,11 @@ import {
 
 type WidgetConfig = { enabled: boolean; roles: string[] }
 
-const WIDGET_META: Record<string, { label: string; description: string; icon: any }> = {
-  statCards:          { label: "KPI Kartları",                description: "Gəlir, lidlər, sövdələşmələr, konversiya, tiketlər, kampaniyalar",  icon: BarChart3    },
-  dealPipeline:       { label: "Satış Pipeline",              description: "Mərhələlər üzrə sövdələşmə hunisi",                                icon: Target       },
-  revenueTrend:       { label: "Gəlir Trendi",                description: "12 aylıq gəlir area qrafiki",                                      icon: TrendingUp   },
-  leadSources:        { label: "Lid Mənbələri",               description: "Mənbə üzrə lidlərin donut diaqramı",                                icon: PieChart     },
-  recentDeals:        { label: "Son Sövdələşmələr",           description: "Son 5 sövdələşmə siyahısı",                                        icon: Handshake    },
-  aiLeadScoring:      { label: "Da Vinci Lid Skorinq",        description: "Ən yüksək skora malik 5 lid",                                      icon: Brain        },
-  activityFeed:       { label: "Son Fəaliyyət",               description: "Son zənglər, e-poçtlar, görüşlər",                                  icon: Activity     },
-  campaignStats:      { label: "Kampaniyalar",                description: "Aktiv kampaniyalar: göndərildi, açılma, klik",                      icon: Megaphone    },
-  upcomingEvents:     { label: "Tədbirlər",                   description: "Gələcək tədbirlər və qeydiyyat sayı",                               icon: Calendar     },
-  weeklyMetrics:      { label: "Həftəlik Metriklər",          description: "7 günlük lidlər/tiketlər + SLA/CSAT",                               icon: BarChart     },
-  recommendedActions: { label: "Tövsiyə olunan hərəkətlər",   description: "AI tərəfindən növbəti addımlar",                                    icon: Brain        },
-  churnRisk:          { label: "İtirilmə riski",              description: "Risk altında olan müştərilər",                                       icon: Shield       },
+const WIDGET_ICONS: Record<string, any> = {
+  statCards: BarChart3, dealPipeline: Target, revenueTrend: TrendingUp,
+  leadSources: PieChart, recentDeals: Handshake, aiLeadScoring: Brain,
+  activityFeed: Activity, campaignStats: Megaphone, upcomingEvents: Calendar,
+  weeklyMetrics: BarChart, recommendedActions: Brain, churnRisk: Shield,
 }
 
 // Order matches dashboard layout
@@ -39,6 +32,7 @@ const WIDGET_ORDER = [
 
 export default function DashboardSettingsPage() {
   const { data: session } = useSession()
+  const t = useTranslations("dashboardWidgets")
   const [widgets, setWidgets] = useState<Record<string, WidgetConfig>>({})
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState<string | null>(null)
@@ -104,18 +98,18 @@ export default function DashboardSettingsPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold">Dashboard Blokları</h1>
+        <h1 className="text-2xl font-bold">{t("title")}</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Blokları söndürün/yandırın — dəyişikliklər avtomatik saxlanılır
+          {t("subtitle")}
         </p>
         <div className="flex items-center gap-3 mt-3">
           <div className="flex items-center gap-1.5 text-xs">
             <Eye className="h-3.5 w-3.5 text-emerald-500" />
-            <span className="text-emerald-600 font-medium">{enabledCount} aktiv</span>
+            <span className="text-emerald-600 font-medium">{enabledCount} {t("active")}</span>
           </div>
           <div className="flex items-center gap-1.5 text-xs">
             <EyeOff className="h-3.5 w-3.5 text-muted-foreground" />
-            <span className="text-muted-foreground">{totalCount - enabledCount} gizli</span>
+            <span className="text-muted-foreground">{totalCount - enabledCount} {t("hidden")}</span>
           </div>
         </div>
       </div>
@@ -123,9 +117,8 @@ export default function DashboardSettingsPage() {
       {/* Widgets grid — same 3-col layout as dashboard */}
       <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
         {WIDGET_ORDER.map((key) => {
-          const meta = WIDGET_META[key]
-          if (!meta) return null
-          const Icon = meta.icon
+          const Icon = WIDGET_ICONS[key]
+          if (!Icon) return null
           const enabled = widgets[key]?.enabled ?? true
           const isSaving = saving === key
 
@@ -149,10 +142,10 @@ export default function DashboardSettingsPage() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold">{meta.label}</span>
+                    <span className="text-sm font-semibold">{t(key)}</span>
                     {isSaving && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />}
                   </div>
-                  <p className="text-[11px] text-muted-foreground leading-tight mt-0.5">{meta.description}</p>
+                  <p className="text-[11px] text-muted-foreground leading-tight mt-0.5">{t(`${key}Desc`)}</p>
                 </div>
                 <Switch
                   checked={enabled}

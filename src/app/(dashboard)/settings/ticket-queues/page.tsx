@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useSession } from "next-auth/react"
+import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
@@ -36,11 +37,13 @@ function QueueFormDialog({
   onOpenChange,
   onSaved,
   orgId,
+  t,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
   onSaved: () => void
   orgId?: string
+  t: (key: string) => string
 }) {
   const [form, setForm] = useState<QueueFormData>({
     name: "",
@@ -98,7 +101,7 @@ function QueueFormDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogHeader>
-        <DialogTitle>Create Ticket Queue</DialogTitle>
+        <DialogTitle>{t("createTicketQueue")}</DialogTitle>
       </DialogHeader>
       <form onSubmit={handleSubmit}>
         <DialogContent>
@@ -109,30 +112,30 @@ function QueueFormDialog({
           )}
           <div className="grid gap-4">
             <div>
-              <Label htmlFor="name">Queue Name *</Label>
+              <Label htmlFor="name">{t("queueName")} *</Label>
               <Input
                 id="name"
                 value={form.name}
                 onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                placeholder="e.g. Technical Support"
+                placeholder={t("queueNamePlaceholder")}
                 required
               />
             </div>
             <div>
-              <Label htmlFor="skills">Skills (comma-separated)</Label>
+              <Label htmlFor="skills">{t("skills")}</Label>
               <Input
                 id="skills"
                 value={form.skills}
                 onChange={(e) => setForm((f) => ({ ...f, skills: e.target.value }))}
-                placeholder="e.g. technical, billing, general"
+                placeholder={t("skillsPlaceholder")}
               />
               <p className="text-xs text-muted-foreground mt-1">
-                Match ticket categories to agent skills. Leave empty for a catch-all queue.
+                {t("skillsHint")}
               </p>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label htmlFor="priority">Priority (higher = preferred)</Label>
+                <Label htmlFor="priority">{t("priorityLabel")}</Label>
                 <Input
                   id="priority"
                   type="number"
@@ -143,13 +146,13 @@ function QueueFormDialog({
                 />
               </div>
               <div>
-                <Label htmlFor="assignMethod">Assignment Method</Label>
+                <Label htmlFor="assignMethod">{t("assignmentMethod")}</Label>
                 <Select
                   value={form.assignMethod}
                   onChange={(e) => setForm((f) => ({ ...f, assignMethod: e.target.value }))}
                 >
-                  <option value="least_loaded">Least Loaded</option>
-                  <option value="round_robin">Round Robin</option>
+                  <option value="least_loaded">{t("leastLoaded")}</option>
+                  <option value="round_robin">{t("roundRobin")}</option>
                 </Select>
               </div>
             </div>
@@ -162,23 +165,23 @@ function QueueFormDialog({
                 className="h-4 w-4 rounded border-border"
               />
               <Label htmlFor="autoAssign" className="mb-0 cursor-pointer">
-                Auto-assign tickets
+                {t("autoAssign")}
               </Label>
             </div>
           </div>
         </DialogContent>
         <DialogFooter>
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
+            {t("cancel")}
           </Button>
           <Button type="submit" disabled={saving}>
             {saving ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                Creating...
+                {t("creating")}
               </>
             ) : (
-              "Create Queue"
+              t("createQueue")
             )}
           </Button>
         </DialogFooter>
@@ -189,6 +192,7 @@ function QueueFormDialog({
 
 export default function TicketQueuesPage() {
   const { data: session } = useSession()
+  const t = useTranslations("ticketQueues")
   const [queues, setQueues] = useState<TicketQueue[]>([])
   const [loading, setLoading] = useState(true)
   const [formOpen, setFormOpen] = useState(false)
@@ -239,13 +243,13 @@ export default function TicketQueuesPage() {
   const columns = [
     {
       key: "name",
-      label: "Queue Name",
+      label: t("colQueueName"),
       sortable: true,
       render: (item: TicketQueue) => <span className="font-medium">{item.name}</span>,
     },
     {
       key: "skills",
-      label: "Skills",
+      label: t("colSkills"),
       render: (item: TicketQueue) => (
         <div className="flex flex-wrap gap-1">
           {item.skills.length > 0 ? (
@@ -255,14 +259,14 @@ export default function TicketQueuesPage() {
               </Badge>
             ))
           ) : (
-            <span className="text-xs text-muted-foreground">Catch-all</span>
+            <span className="text-xs text-muted-foreground">{t("catchAll")}</span>
           )}
         </div>
       ),
     },
     {
       key: "assignMethod",
-      label: "Method",
+      label: t("colMethod"),
       render: (item: TicketQueue) => (
         <Badge
           className={
@@ -271,19 +275,19 @@ export default function TicketQueuesPage() {
               : "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400"
           }
         >
-          {item.assignMethod === "round_robin" ? "Round Robin" : "Least Loaded"}
+          {item.assignMethod === "round_robin" ? t("roundRobin") : t("leastLoaded")}
         </Badge>
       ),
     },
     {
       key: "priority",
-      label: "Priority",
+      label: t("colPriority"),
       sortable: true,
       render: (item: TicketQueue) => <span className="font-mono text-sm">{item.priority}</span>,
     },
     {
       key: "isActive",
-      label: "Status",
+      label: t("colStatus"),
       render: (item: TicketQueue) => (
         <Badge
           className={`cursor-pointer ${
@@ -293,7 +297,7 @@ export default function TicketQueuesPage() {
           }`}
           onClick={() => handleToggleActive(item)}
         >
-          {item.isActive ? "Active" : "Inactive"}
+          {item.isActive ? t("active") : t("inactive")}
         </Badge>
       ),
     },
@@ -319,7 +323,7 @@ export default function TicketQueuesPage() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <h1 className="text-2xl font-bold tracking-tight">Ticket Queues</h1>
+        <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
         <div className="animate-pulse space-y-4">
           <div className="h-64 bg-muted rounded-lg" />
         </div>
@@ -331,13 +335,13 @@ export default function TicketQueuesPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Ticket Queues</h1>
+          <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
           <p className="text-sm text-muted-foreground">
-            Configure skill-based routing queues for automatic ticket assignment
+            {t("subtitle")}
           </p>
         </div>
         <Button onClick={() => setFormOpen(true)}>
-          <Plus className="h-4 w-4 mr-1" /> New Queue
+          <Plus className="h-4 w-4 mr-1" /> {t("newQueue")}
         </Button>
       </div>
 
@@ -346,25 +350,25 @@ export default function TicketQueuesPage() {
           <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
             <ListOrdered className="h-6 w-6 text-primary" />
           </div>
-          <h3 className="text-lg font-semibold mb-1">No queues configured</h3>
+          <h3 className="text-lg font-semibold mb-1">{t("noQueues")}</h3>
           <p className="text-sm text-muted-foreground mb-4 max-w-sm">
-            Create ticket queues to enable skill-based routing. Tickets will be automatically assigned to agents with matching skills.
+            {t("noQueuesDesc")}
           </p>
           <Button onClick={() => setFormOpen(true)}>
-            <Plus className="h-4 w-4 mr-1" /> Create First Queue
+            <Plus className="h-4 w-4 mr-1" /> {t("createFirstQueue")}
           </Button>
         </div>
       ) : (
-        <DataTable data={queues as any} columns={columns as any} searchKey="name" searchPlaceholder="Search queues..." />
+        <DataTable data={queues as any} columns={columns as any} searchKey="name" searchPlaceholder={t("searchQueues")} />
       )}
 
-      <QueueFormDialog open={formOpen} onOpenChange={setFormOpen} onSaved={fetchQueues} orgId={orgId} />
+      <QueueFormDialog open={formOpen} onOpenChange={setFormOpen} onSaved={fetchQueues} orgId={orgId} t={t} />
 
       <DeleteConfirmDialog
         open={deleteOpen}
         onOpenChange={setDeleteOpen}
         onConfirm={confirmDelete}
-        title="Delete Queue"
+        title={t("deleteTitle")}
         itemName={deleteItem?.name}
       />
     </div>

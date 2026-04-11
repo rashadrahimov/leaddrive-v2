@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useRouter, useParams } from "next/navigation"
+import { useTranslations } from "next-intl"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -136,6 +137,7 @@ export default function TenantEditPage() {
   const router = useRouter()
   const params = useParams()
   const tenantId = params.id as string
+  const t = useTranslations("admin")
 
   const [tenant, setTenant] = useState<TenantData | null>(null)
   const [loading, setLoading] = useState(true)
@@ -175,7 +177,7 @@ export default function TenantEditPage() {
           })
         }
       })
-      .catch(() => setError("Failed to load tenant"))
+      .catch(() => setError(t("tenants.error")))
       .finally(() => setLoading(false))
   }, [tenantId])
 
@@ -229,7 +231,7 @@ export default function TenantEditPage() {
   }
 
   if (!tenant) {
-    return <div className="py-20 text-center text-muted-foreground">Tenant not found</div>
+    return <div className="py-20 text-center text-muted-foreground">{t("tenants.notFound")}</div>
   }
 
   return (
@@ -240,23 +242,23 @@ export default function TenantEditPage() {
           <Link href={`/admin/tenants/${tenantId}`}>
             <Button variant="ghost" size="sm">
               <ArrowLeft className="w-4 h-4 mr-1" />
-              Back
+              {t("back")}
             </Button>
           </Link>
           <div>
-            <h1 className="text-2xl font-bold">Edit Tenant</h1>
+            <h1 className="text-2xl font-bold">{t("tenants.edit")}</h1>
             <p className="text-muted-foreground text-sm">{tenant.name} &mdash; <span className="font-mono">{tenant.slug}</span></p>
           </div>
         </div>
         <div className="flex items-center gap-2">
           {saved && (
             <span className="flex items-center gap-1 text-sm text-green-600">
-              <Check className="w-4 h-4" /> Saved
+              <Check className="w-4 h-4" /> {t("tenants.saved")}
             </span>
           )}
           <Button onClick={handleSave} disabled={saving}>
             {saving ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Save className="w-4 h-4 mr-1" />}
-            Save Changes
+            {t("tenants.save")}
           </Button>
         </div>
       </div>
@@ -271,10 +273,10 @@ export default function TenantEditPage() {
         {/* Left column — General info */}
         <div className="lg:col-span-2 space-y-6">
           <Card className="p-5">
-            <h3 className="text-base font-semibold mb-4">General</h3>
+            <h3 className="text-base font-semibold mb-4">{t("tenants.general")}</h3>
             <div className="space-y-4">
               <div className="space-y-1.5">
-                <Label>Company Name</Label>
+                <Label>{t("tenants.companyName")}</Label>
                 <Input
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
@@ -282,7 +284,7 @@ export default function TenantEditPage() {
               </div>
 
               <div className="space-y-1.5">
-                <Label>URL</Label>
+                <Label>{t("url")}</Label>
                 <div className="flex items-center">
                   <span className="inline-flex items-center px-3 h-10 rounded-l-lg border border-r-0 border-border/70 bg-muted/50 text-sm text-muted-foreground font-mono">https://</span>
                   <Input
@@ -293,7 +295,7 @@ export default function TenantEditPage() {
                   <span className="inline-flex items-center px-3 h-10 rounded-r-lg border border-l-0 border-border/70 bg-muted/50 text-sm text-muted-foreground font-mono">.leaddrivecrm.org</span>
                 </div>
                 {form.slug !== tenant.slug && (
-                  <p className="text-xs text-amber-600">Warning: changing the slug will change the login URL for all users</p>
+                  <p className="text-xs text-amber-600">{t("tenants.urlWarning")}</p>
                 )}
               </div>
             </div>
@@ -303,18 +305,18 @@ export default function TenantEditPage() {
           <Card className="p-5">
             <div className="flex items-center justify-between mb-5">
               <div>
-                <h3 className="text-base font-semibold">Active Modules</h3>
+                <h3 className="text-base font-semibold">{t("tenants.activeModules")}</h3>
                 <p className="text-sm text-muted-foreground mt-0.5">
-                  {form.features.length} of {TOGGLEABLE_MODULES.length} modules enabled
+                  {t("tenants.modulesCount", { count: form.features.length, total: TOGGLEABLE_MODULES.length })}
                 </p>
               </div>
               <div className="flex gap-2">
                 <Button type="button" variant="outline" size="sm"
                   onClick={() => setForm((f) => ({ ...f, features: [...TOGGLEABLE_MODULES] }))}
-                >Select All</Button>
+                >{t("tenants.selectAll")}</Button>
                 <Button type="button" variant="outline" size="sm"
                   onClick={() => setForm((f) => ({ ...f, features: [] }))}
-                >Clear All</Button>
+                >{t("tenants.clearAll")}</Button>
               </div>
             </div>
 
@@ -396,10 +398,10 @@ export default function TenantEditPage() {
         {/* Right column — Plan & Branding */}
         <div className="space-y-6">
           <Card className="p-5">
-            <h3 className="text-base font-semibold mb-4">Plan & Limits</h3>
+            <h3 className="text-base font-semibold mb-4">{t("tenants.planAndLimits")}</h3>
             <div className="space-y-4">
               <div className="space-y-1.5">
-                <Label>Plan</Label>
+                <Label>{t("plan")}</Label>
                 <Select value={form.plan} onChange={(e) => setForm({ ...form, plan: e.target.value })}>
                   <option value="starter">Starter</option>
                   <option value="professional">Professional</option>
@@ -407,31 +409,31 @@ export default function TenantEditPage() {
                 </Select>
               </div>
               <div className="space-y-1.5">
-                <Label>Max Users</Label>
+                <Label>{t("maxUsers")}</Label>
                 <Input
                   type="number"
                   value={form.maxUsers}
                   onChange={(e) => setForm({ ...form, maxUsers: parseInt(e.target.value) || 0 })}
                 />
-                <p className="text-xs text-muted-foreground">-1 = unlimited</p>
+                <p className="text-xs text-muted-foreground">{t("tenants.maxUsersHint")}</p>
               </div>
               <div className="space-y-1.5">
-                <Label>Max Contacts</Label>
+                <Label>{t("maxContacts")}</Label>
                 <Input
                   type="number"
                   value={form.maxContacts}
                   onChange={(e) => setForm({ ...form, maxContacts: parseInt(e.target.value) || 0 })}
                 />
-                <p className="text-xs text-muted-foreground">-1 = unlimited</p>
+                <p className="text-xs text-muted-foreground">{t("tenants.maxUsersHint")}</p>
               </div>
             </div>
           </Card>
 
           <Card className="p-5">
-            <h3 className="text-base font-semibold mb-4">Branding</h3>
+            <h3 className="text-base font-semibold mb-4">{t("tenants.branding")}</h3>
             <div className="space-y-4">
               <div className="space-y-1.5">
-                <Label>Primary Color</Label>
+                <Label>{t("tenants.primaryColor")}</Label>
                 <div className="flex items-center gap-2">
                   <input
                     type="color"
@@ -447,7 +449,7 @@ export default function TenantEditPage() {
                 </div>
               </div>
               <div className="space-y-1.5">
-                <Label>Logo URL</Label>
+                <Label>{t("tenants.logoUrl")}</Label>
                 <Input
                   value={form.logo}
                   onChange={(e) => setForm({ ...form, logo: e.target.value })}
@@ -463,27 +465,27 @@ export default function TenantEditPage() {
           </Card>
 
           <Card className="p-5">
-            <h3 className="text-base font-semibold mb-3">Info</h3>
+            <h3 className="text-base font-semibold mb-3">{t("tenants.info")}</h3>
             <dl className="space-y-2 text-sm">
               <div className="flex justify-between">
-                <dt className="text-muted-foreground">Status</dt>
+                <dt className="text-muted-foreground">{t("status")}</dt>
                 <dd>
                   <Badge variant={tenant.isActive ? "default" : "destructive"}>
-                    {tenant.isActive ? "Active" : "Inactive"}
+                    {tenant.isActive ? t("active") : t("inactive")}
                   </Badge>
                 </dd>
               </div>
               <div className="flex justify-between">
-                <dt className="text-muted-foreground">Server</dt>
+                <dt className="text-muted-foreground">{t("tenants.server")}</dt>
                 <dd className="capitalize">{tenant.serverType}</dd>
               </div>
               <div className="flex justify-between">
-                <dt className="text-muted-foreground">Created</dt>
+                <dt className="text-muted-foreground">{t("created")}</dt>
                 <dd>{new Date(tenant.createdAt).toLocaleDateString()}</dd>
               </div>
               {tenant.provisionedAt && (
                 <div className="flex justify-between">
-                  <dt className="text-muted-foreground">Provisioned</dt>
+                  <dt className="text-muted-foreground">{t("provisioned")}</dt>
                   <dd>{new Date(tenant.provisionedAt).toLocaleDateString()}</dd>
                 </div>
               )}

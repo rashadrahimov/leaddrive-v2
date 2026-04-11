@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useMemo, useCallback } from "react"
 import { useSession } from "next-auth/react"
+import { useTranslations } from "next-intl"
 import { useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -15,16 +16,16 @@ import { ColorStatCard } from "@/components/color-stat-card"
 
 const HOURS = Array.from({ length: 13 }, (_, i) => i + 7) // 7:00 - 19:00
 
-// Type styling config
-const TYPE_CONFIG: Record<string, { icon: any; bg: string; border: string; text: string; label: string }> = {
-  ticket: { icon: Ticket, bg: "bg-red-50", border: "border-l-red-500", text: "text-red-700", label: "Ticket" },
-  task: { icon: CheckSquare, bg: "bg-orange-50", border: "border-l-orange-500", text: "text-orange-700", label: "Task" },
-  event: { icon: CalendarDays, bg: "bg-indigo-50", border: "border-l-indigo-500", text: "text-indigo-700", label: "Event" },
-  activity_call: { icon: Phone, bg: "bg-green-50", border: "border-l-green-500", text: "text-green-700", label: "Call" },
-  activity_email: { icon: Mail, bg: "bg-blue-50", border: "border-l-blue-500", text: "text-blue-700", label: "Email" },
-  activity_meeting: { icon: Users, bg: "bg-violet-50", border: "border-l-violet-500", text: "text-violet-700", label: "Meeting" },
-  activity_note: { icon: FileText, bg: "bg-amber-50", border: "border-l-amber-500", text: "text-amber-700", label: "Note" },
-  activity_task: { icon: CheckSquare, bg: "bg-teal-50", border: "border-l-teal-500", text: "text-teal-700", label: "Task Activity" },
+// Type styling config — labels are i18n keys resolved at render time
+const TYPE_CONFIG: Record<string, { icon: any; bg: string; border: string; text: string; labelKey: string }> = {
+  ticket: { icon: Ticket, bg: "bg-red-50", border: "border-l-red-500", text: "text-red-700", labelKey: "typeTicket" },
+  task: { icon: CheckSquare, bg: "bg-orange-50", border: "border-l-orange-500", text: "text-orange-700", labelKey: "typeTask" },
+  event: { icon: CalendarDays, bg: "bg-indigo-50", border: "border-l-indigo-500", text: "text-indigo-700", labelKey: "typeEvent" },
+  activity_call: { icon: Phone, bg: "bg-green-50", border: "border-l-green-500", text: "text-green-700", labelKey: "typeCall" },
+  activity_email: { icon: Mail, bg: "bg-blue-50", border: "border-l-blue-500", text: "text-blue-700", labelKey: "typeEmail" },
+  activity_meeting: { icon: Users, bg: "bg-violet-50", border: "border-l-violet-500", text: "text-violet-700", labelKey: "typeMeeting" },
+  activity_note: { icon: FileText, bg: "bg-amber-50", border: "border-l-amber-500", text: "text-amber-700", labelKey: "typeNote" },
+  activity_task: { icon: CheckSquare, bg: "bg-teal-50", border: "border-l-teal-500", text: "text-teal-700", labelKey: "typeTaskActivity" },
 }
 
 const PRIORITY_COLORS: Record<string, string> = {
@@ -54,7 +55,7 @@ function formatDate(d: Date) {
   return d.toISOString().split("T")[0]
 }
 
-const DAY_NAMES = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+const DAY_KEYS = ["dayMon", "dayTue", "dayWed", "dayThu", "dayFri", "daySat", "daySun"]
 
 interface CalendarItem {
   id: string
@@ -76,6 +77,7 @@ interface CalendarItem {
 
 export default function AgentCalendarPage() {
   const { data: session } = useSession()
+  const t = useTranslations("supportCalendar")
   const router = useRouter()
   const orgId = session?.user?.organizationId
   const [currentDate, setCurrentDate] = useState(new Date())
@@ -147,14 +149,14 @@ export default function AgentCalendarPage() {
           <Calendar className="h-5 w-5 text-primary" />
         </div>
         <div className="flex-1">
-          <h1 className="text-xl font-bold">Agent Calendar</h1>
+          <h1 className="text-xl font-bold">{t("title")}</h1>
           <p className="text-sm text-muted-foreground">{weekLabel}</p>
         </div>
         <div className="flex items-center gap-1">
           <Button variant="outline" size="icon" className="h-8 w-8" onClick={prevWeek}>
             <ChevronLeft className="h-4 w-4" />
           </Button>
-          <Button variant="outline" size="sm" className="h-8 text-xs" onClick={goToday}>Today</Button>
+          <Button variant="outline" size="sm" className="h-8 text-xs" onClick={goToday}>{t("today")}</Button>
           <Button variant="outline" size="icon" className="h-8 w-8" onClick={nextWeek}>
             <ChevronRight className="h-4 w-4" />
           </Button>
@@ -163,10 +165,10 @@ export default function AgentCalendarPage() {
 
       {/* Summary cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <ColorStatCard label="Tickets" value={counts.tickets} icon={<Ticket className="h-4 w-4" />} color="red" />
-        <ColorStatCard label="Tasks" value={counts.tasks} icon={<CheckSquare className="h-4 w-4" />} color="orange" />
-        <ColorStatCard label="Events" value={counts.events} icon={<CalendarDays className="h-4 w-4" />} color="indigo" />
-        <ColorStatCard label="Activities" value={counts.activities} icon={<Phone className="h-4 w-4" />} color="green" />
+        <ColorStatCard label={t("tickets")} value={counts.tickets} icon={<Ticket className="h-4 w-4" />} color="red" />
+        <ColorStatCard label={t("tasks")} value={counts.tasks} icon={<CheckSquare className="h-4 w-4" />} color="orange" />
+        <ColorStatCard label={t("events")} value={counts.events} icon={<CalendarDays className="h-4 w-4" />} color="indigo" />
+        <ColorStatCard label={t("activities")} value={counts.activities} icon={<Phone className="h-4 w-4" />} color="green" />
       </div>
 
       {/* Weekly Calendar Grid */}
@@ -174,7 +176,7 @@ export default function AgentCalendarPage() {
         {loading ? (
           <div className="flex items-center justify-center p-12">
             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-            <span className="ml-2 text-sm text-muted-foreground">Loading calendar...</span>
+            <span className="ml-2 text-sm text-muted-foreground">{t("loadingCalendar")}</span>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -187,7 +189,7 @@ export default function AgentCalendarPage() {
                   const dayItems = getItemsForDay(date)
                   return (
                     <div key={i} className={`p-2 text-center border-l ${isToday ? "bg-primary/5" : ""}`}>
-                      <p className="text-xs text-muted-foreground">{DAY_NAMES[i]}</p>
+                      <p className="text-xs text-muted-foreground">{t(DAY_KEYS[i])}</p>
                       <p className={`text-lg font-bold ${isToday ? "text-primary" : ""}`}>
                         {isToday ? (
                           <span className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-primary text-white">
@@ -215,7 +217,7 @@ export default function AgentCalendarPage() {
                 return (
                   <div className="grid grid-cols-[60px_repeat(7,1fr)] border-b bg-amber-50/30">
                     <div className="p-2 text-[10px] text-muted-foreground text-right pr-3 pt-1 font-medium">
-                      ALL DAY
+                      {t("allDay")}
                     </div>
                     {weekDates.map((date, i) => {
                       const isToday = isSameDay(date, today)
@@ -233,7 +235,7 @@ export default function AgentCalendarPage() {
                             >
                               <div className="flex items-center gap-1">
                                 <Ticket className="h-3 w-3 text-red-600 flex-shrink-0" />
-                                <span className="font-medium text-red-700">{ticketCount} open</span>
+                                <span className="font-medium text-red-700">{t("open", { count: ticketCount })}</span>
                               </div>
                               {/* Priority breakdown */}
                               <div className="flex gap-1 mt-0.5 flex-wrap">
@@ -259,7 +261,7 @@ export default function AgentCalendarPage() {
                             >
                               <div className="flex items-center gap-1">
                                 <CheckSquare className="h-3 w-3 text-orange-600 flex-shrink-0" />
-                                <span className="font-medium text-orange-700">{taskCount} tasks</span>
+                                <span className="font-medium text-orange-700">{t("tasksCount", { count: taskCount })}</span>
                               </div>
                             </div>
                           )}
@@ -357,7 +359,7 @@ export default function AgentCalendarPage() {
         {/* Legend */}
         <Card className="border-none shadow-sm">
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Legend</CardTitle>
+            <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">{t("legend")}</CardTitle>
           </CardHeader>
           <CardContent className="grid grid-cols-2 gap-2">
             {Object.entries(TYPE_CONFIG).map(([key, config]) => {
@@ -369,7 +371,7 @@ export default function AgentCalendarPage() {
                   <div className={`h-6 w-6 rounded flex items-center justify-center border-l-[3px] ${config.bg} ${config.border}`}>
                     <Icon className={`h-3 w-3 ${config.text}`} />
                   </div>
-                  <span className="flex-1 text-xs">{config.label}</span>
+                  <span className="flex-1 text-xs">{t(config.labelKey)}</span>
                   <span className="font-semibold text-xs">{count}</span>
                 </div>
               )
@@ -381,7 +383,7 @@ export default function AgentCalendarPage() {
         <Card className="border-none shadow-sm">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-              Today — {today.toLocaleDateString(undefined, { day: "numeric", month: "long" })}
+              {t("todaySchedule")} — {today.toLocaleDateString(undefined, { day: "numeric", month: "long" })}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -397,7 +399,7 @@ export default function AgentCalendarPage() {
                 return (
                   <div className="text-center py-6 text-muted-foreground">
                     <Calendar className="h-8 w-8 mx-auto mb-2 opacity-30" />
-                    <p className="text-sm">No items for today</p>
+                    <p className="text-sm">{t("noItemsToday")}</p>
                   </div>
                 )
               }
@@ -407,7 +409,7 @@ export default function AgentCalendarPage() {
                   {/* All-day summary */}
                   {allDayItems.length > 0 && (
                     <div className="space-y-2">
-                      <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">All Day</p>
+                      <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">{t("allDay")}</p>
                       {ticketAllDay.length > 0 && (
                         <div
                           onClick={() => router.push("/tickets")}
@@ -417,7 +419,7 @@ export default function AgentCalendarPage() {
                             <Ticket className="h-4 w-4 text-red-600" />
                           </div>
                           <div className="flex-1">
-                            <p className="text-sm font-semibold text-red-700">{ticketAllDay.length} open tickets</p>
+                            <p className="text-sm font-semibold text-red-700">{t("openTickets", { count: ticketAllDay.length })}</p>
                             <div className="flex gap-1 mt-0.5 flex-wrap">
                               {(() => {
                                 const critical = ticketAllDay.filter(i => i.priority === "critical").length
@@ -447,7 +449,7 @@ export default function AgentCalendarPage() {
                             <CheckSquare className="h-4 w-4 text-orange-600" />
                           </div>
                           <div className="flex-1">
-                            <p className="text-sm font-semibold text-orange-700">{taskAllDay.length} open tasks</p>
+                            <p className="text-sm font-semibold text-orange-700">{t("openTasks", { count: taskAllDay.length })}</p>
                           </div>
                           <ChevronRight className="h-4 w-4 text-muted-foreground" />
                         </div>
@@ -459,7 +461,7 @@ export default function AgentCalendarPage() {
                   {timedItems.length > 0 && (
                     <div className="space-y-2">
                       {allDayItems.length > 0 && (
-                        <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider pt-1">Scheduled</p>
+                        <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider pt-1">{t("scheduled")}</p>
                       )}
                       {timedItems.map(item => {
                         const config = TYPE_CONFIG[item.type] || TYPE_CONFIG.activity_note
@@ -476,7 +478,7 @@ export default function AgentCalendarPage() {
                             </div>
                             <div className="flex-1 min-w-0">
                               <p className="text-sm font-medium truncate">{item.title}</p>
-                              <p className="text-xs text-muted-foreground">{time} · {config.label}</p>
+                              <p className="text-xs text-muted-foreground">{time} · {t(config.labelKey)}</p>
                             </div>
                             {item.priority && (
                               <div className={`h-2 w-2 rounded-full ${PRIORITY_COLORS[item.priority] || "bg-muted-foreground/40"}`} />
@@ -490,7 +492,7 @@ export default function AgentCalendarPage() {
                   {/* Empty timed */}
                   {timedItems.length === 0 && allDayItems.length > 0 && (
                     <div className="text-center py-3 text-muted-foreground">
-                      <p className="text-xs">No scheduled events for today</p>
+                      <p className="text-xs">{t("noScheduledToday")}</p>
                     </div>
                   )}
                 </div>

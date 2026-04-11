@@ -3,8 +3,11 @@ import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Building2, Users, Contact, Briefcase } from "lucide-react"
 import Link from "next/link"
+import { getTranslations } from "next-intl/server"
 
 export default async function AdminDashboard() {
+  const t = await getTranslations("admin")
+
   const [orgCount, activeOrgCount, userCount, contactCount, dealCount, recentOrgs] = await Promise.all([
     prisma.organization.count(),
     prisma.organization.count({ where: { isActive: true } }),
@@ -19,17 +22,17 @@ export default async function AdminDashboard() {
   ])
 
   const stats = [
-    { label: "Total Tenants", value: orgCount, sub: `${activeOrgCount} active`, icon: Building2 },
-    { label: "Total Users", value: userCount, icon: Users },
-    { label: "Total Contacts", value: contactCount, icon: Contact },
-    { label: "Total Deals", value: dealCount, icon: Briefcase },
+    { label: t("totalTenants"), value: orgCount, sub: `${activeOrgCount} ${t("active").toLowerCase()}`, icon: Building2 },
+    { label: t("totalUsers"), value: userCount, icon: Users },
+    { label: t("totalContacts"), value: contactCount, icon: Contact },
+    { label: t("totalDeals"), value: dealCount, icon: Briefcase },
   ]
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Super Admin Dashboard</h1>
-        <p className="text-muted-foreground text-sm mt-1">System-wide overview across all tenants</p>
+        <h1 className="text-2xl font-bold">{t("title")}</h1>
+        <p className="text-muted-foreground text-sm mt-1">{t("subtitle")}</p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -52,21 +55,21 @@ export default async function AdminDashboard() {
 
       <Card className="p-5">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-base font-semibold">Recent Tenants</h2>
+          <h2 className="text-base font-semibold">{t("recentTenants")}</h2>
           <Link href="/admin/tenants" className="text-sm text-primary hover:underline">
-            View all
+            {t("view")}
           </Link>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b text-left">
-                <th className="py-2 px-3 font-medium text-muted-foreground">Name</th>
-                <th className="py-2 px-3 font-medium text-muted-foreground">Slug</th>
-                <th className="py-2 px-3 font-medium text-muted-foreground">Plan</th>
-                <th className="py-2 px-3 font-medium text-muted-foreground">Users</th>
-                <th className="py-2 px-3 font-medium text-muted-foreground">Contacts</th>
-                <th className="py-2 px-3 font-medium text-muted-foreground">Status</th>
+                <th className="py-2 px-3 font-medium text-muted-foreground">{t("name")}</th>
+                <th className="py-2 px-3 font-medium text-muted-foreground">{t("slug")}</th>
+                <th className="py-2 px-3 font-medium text-muted-foreground">{t("plan")}</th>
+                <th className="py-2 px-3 font-medium text-muted-foreground">{t("users")}</th>
+                <th className="py-2 px-3 font-medium text-muted-foreground">{t("contacts")}</th>
+                <th className="py-2 px-3 font-medium text-muted-foreground">{t("status")}</th>
               </tr>
             </thead>
             <tbody>
@@ -85,7 +88,7 @@ export default async function AdminDashboard() {
                   <td className="py-2.5 px-3">{org._count.contacts}</td>
                   <td className="py-2.5 px-3">
                     <Badge variant={org.isActive ? "default" : "destructive"} className="text-xs">
-                      {org.isActive ? "Active" : "Inactive"}
+                      {org.isActive ? t("active") : t("inactive")}
                     </Badge>
                   </td>
                 </tr>

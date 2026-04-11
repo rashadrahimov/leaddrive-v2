@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Plus } from "lucide-react"
 import Link from "next/link"
 import { TenantFilters } from "./tenant-filters"
+import { getTranslations } from "next-intl/server"
 
 export default async function TenantsListPage({
   searchParams,
@@ -38,22 +39,23 @@ export default async function TenantsListPage({
   })
 
   const totalCount = await prisma.organization.count()
+  const t = await getTranslations("admin")
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Tenants</h1>
+          <h1 className="text-2xl font-bold">{t("tenants.title")}</h1>
           <p className="text-muted-foreground text-sm mt-1">
             {tenants.length === totalCount
-              ? `${totalCount} tenant${totalCount !== 1 ? "s" : ""} total`
-              : `${tenants.length} of ${totalCount} tenants`}
+              ? t("tenants.totalCount", { count: totalCount })
+              : t("tenants.filteredCount", { filtered: tenants.length, total: totalCount })}
           </p>
         </div>
         <Link href="/admin/tenants/new">
           <Button>
             <Plus className="w-4 h-4 mr-2" />
-            New Client
+            {t("tenants.newClient")}
           </Button>
         </Link>
       </div>
@@ -65,51 +67,51 @@ export default async function TenantsListPage({
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b bg-muted/50 text-left">
-                <th className="py-3 px-4 font-medium text-muted-foreground">Name</th>
-                <th className="py-3 px-4 font-medium text-muted-foreground">Slug</th>
-                <th className="py-3 px-4 font-medium text-muted-foreground">Plan</th>
-                <th className="py-3 px-4 font-medium text-muted-foreground">Users</th>
-                <th className="py-3 px-4 font-medium text-muted-foreground">Contacts</th>
-                <th className="py-3 px-4 font-medium text-muted-foreground">Companies</th>
-                <th className="py-3 px-4 font-medium text-muted-foreground">Deals</th>
-                <th className="py-3 px-4 font-medium text-muted-foreground">Status</th>
-                <th className="py-3 px-4 font-medium text-muted-foreground">Created</th>
+                <th className="py-3 px-4 font-medium text-muted-foreground">{t("name")}</th>
+                <th className="py-3 px-4 font-medium text-muted-foreground">{t("slug")}</th>
+                <th className="py-3 px-4 font-medium text-muted-foreground">{t("plan")}</th>
+                <th className="py-3 px-4 font-medium text-muted-foreground">{t("users")}</th>
+                <th className="py-3 px-4 font-medium text-muted-foreground">{t("contacts")}</th>
+                <th className="py-3 px-4 font-medium text-muted-foreground">{t("companies")}</th>
+                <th className="py-3 px-4 font-medium text-muted-foreground">{t("deals")}</th>
+                <th className="py-3 px-4 font-medium text-muted-foreground">{t("status")}</th>
+                <th className="py-3 px-4 font-medium text-muted-foreground">{t("created")}</th>
               </tr>
             </thead>
             <tbody>
-              {tenants.map((t) => (
-                <tr key={t.id} className="border-b hover:bg-accent/50 transition-colors">
+              {tenants.map((tenant) => (
+                <tr key={tenant.id} className="border-b hover:bg-accent/50 transition-colors">
                   <td className="py-3 px-4 font-medium">
-                    <Link href={`/admin/tenants/${t.id}`} className="hover:text-primary hover:underline">
-                      {t.name}
+                    <Link href={`/admin/tenants/${tenant.id}`} className="hover:text-primary hover:underline">
+                      {tenant.name}
                     </Link>
                   </td>
-                  <td className="py-3 px-4 text-muted-foreground font-mono text-xs">{t.slug}</td>
+                  <td className="py-3 px-4 text-muted-foreground font-mono text-xs">{tenant.slug}</td>
                   <td className="py-3 px-4">
-                    <Badge variant="outline" className="text-xs capitalize">{t.plan}</Badge>
+                    <Badge variant="outline" className="text-xs capitalize">{tenant.plan}</Badge>
                   </td>
-                  <td className="py-3 px-4">{t._count.users}</td>
-                  <td className="py-3 px-4">{t._count.contacts}</td>
-                  <td className="py-3 px-4">{t._count.companies}</td>
-                  <td className="py-3 px-4">{t._count.deals}</td>
+                  <td className="py-3 px-4">{tenant._count.users}</td>
+                  <td className="py-3 px-4">{tenant._count.contacts}</td>
+                  <td className="py-3 px-4">{tenant._count.companies}</td>
+                  <td className="py-3 px-4">{tenant._count.deals}</td>
                   <td className="py-3 px-4">
-                    {t.deletionScheduledAt ? (
-                      <Badge variant="destructive" className="text-xs">Pending Deletion</Badge>
+                    {tenant.deletionScheduledAt ? (
+                      <Badge variant="destructive" className="text-xs">{t("pendingDeletion")}</Badge>
                     ) : (
-                      <Badge variant={t.isActive ? "default" : "destructive"} className="text-xs">
-                        {t.isActive ? "Active" : "Inactive"}
+                      <Badge variant={tenant.isActive ? "default" : "destructive"} className="text-xs">
+                        {tenant.isActive ? t("active") : t("inactive")}
                       </Badge>
                     )}
                   </td>
                   <td className="py-3 px-4 text-muted-foreground text-xs">
-                    {new Date(t.createdAt).toLocaleDateString()}
+                    {new Date(tenant.createdAt).toLocaleDateString()}
                   </td>
                 </tr>
               ))}
               {tenants.length === 0 && (
                 <tr>
                   <td colSpan={9} className="py-8 text-center text-muted-foreground">
-                    No tenants match the current filters.
+                    {t("tenants.noTenants")}
                   </td>
                 </tr>
               )}

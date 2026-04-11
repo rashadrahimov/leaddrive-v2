@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useSession } from "next-auth/react"
+import { useTranslations } from "next-intl"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -22,6 +23,7 @@ interface PitchToken {
 
 export default function PitchLinksPage() {
   const { data: session } = useSession()
+  const t = useTranslations("pitchLinks")
   const orgId = session?.user?.organizationId
   const [tokens, setTokens] = useState<PitchToken[]>([])
   const [loading, setLoading] = useState(true)
@@ -85,48 +87,48 @@ export default function PitchLinksPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Pitch Links</h1>
-          <p className="text-muted-foreground">Birdəfəlik prezentasiya linkləri yaradın və idarə edin</p>
+          <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
+          <p className="text-muted-foreground">{t("subtitle")}</p>
         </div>
         <Button className="gap-2" onClick={() => { setShowCreate(true); setGeneratedUrl("") }}>
-          <Plus className="h-4 w-4" /> Link yarat
+          <Plus className="h-4 w-4" /> {t("createLink")}
         </Button>
       </div>
 
       <Card>
-        <CardHeader><CardTitle className="flex items-center gap-2"><Link2 className="h-5 w-5" /> Bütün linklər</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="flex items-center gap-2"><Link2 className="h-5 w-5" /> {t("allLinks")}</CardTitle></CardHeader>
         <CardContent>
           {loading ? (
-            <p className="text-muted-foreground">Yüklənir...</p>
+            <p className="text-muted-foreground">{t("loading")}</p>
           ) : tokens.length === 0 ? (
-            <p className="text-muted-foreground text-center py-8">Hələ heç bir link yaradılmayıb</p>
+            <p className="text-muted-foreground text-center py-8">{t("noLinks")}</p>
           ) : (
             <div className="space-y-3">
-              {tokens.map((t) => (
-                <div key={t.id} className="flex items-center gap-4 p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors">
+              {tokens.map((tk) => (
+                <div key={tk.id} className="flex items-center gap-4 p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors">
                   <div className="flex-1 min-w-0">
-                    <div className="font-medium">{t.guestName}</div>
+                    <div className="font-medium">{tk.guestName}</div>
                     <div className="text-xs text-muted-foreground font-mono truncate">
-                      /pitch/{t.token.slice(0, 8)}...
+                      /pitch/{tk.token.slice(0, 8)}...
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    {t.used ? (
-                      <Badge variant="secondary" className="gap-1"><Eye className="h-3 w-3" /> Baxılıb</Badge>
-                    ) : t.viewedAt ? (
-                      <Badge className="gap-1 bg-amber-500/10 text-amber-500 border-amber-500/20"><Clock className="h-3 w-3" /> Açıq</Badge>
+                    {tk.used ? (
+                      <Badge variant="secondary" className="gap-1"><Eye className="h-3 w-3" /> {t("viewed")}</Badge>
+                    ) : tk.viewedAt ? (
+                      <Badge className="gap-1 bg-amber-500/10 text-amber-500 border-amber-500/20"><Clock className="h-3 w-3" /> {t("open")}</Badge>
                     ) : (
-                      <Badge variant="outline" className="gap-1 text-emerald-500 border-emerald-500/30">Aktiv</Badge>
+                      <Badge variant="outline" className="gap-1 text-emerald-500 border-emerald-500/30">{t("activeStatus")}</Badge>
                     )}
                   </div>
                   <div className="text-xs text-muted-foreground">
-                    {new Date(t.createdAt).toLocaleDateString("az")}
+                    {new Date(tk.createdAt).toLocaleDateString("az")}
                   </div>
                   <div className="flex gap-1">
-                    <Button variant="ghost" size="sm" onClick={() => copyUrl(t.token)} disabled={t.used}>
-                      {copiedId === t.token ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />}
+                    <Button variant="ghost" size="sm" onClick={() => copyUrl(tk.token)} disabled={tk.used}>
+                      {copiedId === tk.token ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />}
                     </Button>
-                    <Button variant="ghost" size="sm" onClick={() => handleDelete(t.id)}>
+                    <Button variant="ghost" size="sm" onClick={() => handleDelete(tk.id)}>
                       <Trash2 className="h-3.5 w-3.5 text-destructive" />
                     </Button>
                   </div>
@@ -140,28 +142,28 @@ export default function PitchLinksPage() {
       <Dialog open={showCreate} onOpenChange={setShowCreate}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Yeni prezentasiya linki</DialogTitle>
+            <DialogTitle>{t("newPitchLink")}</DialogTitle>
           </DialogHeader>
           {generatedUrl ? (
             <div className="space-y-4">
-              <p className="text-sm text-muted-foreground">Link hazırdır! Kopyalayın və göndərin:</p>
+              <p className="text-sm text-muted-foreground">{t("linkReady")}</p>
               <div className="flex gap-2">
                 <Input value={generatedUrl} readOnly className="font-mono text-xs" />
                 <Button onClick={() => { navigator.clipboard.writeText(generatedUrl); setCopiedId("new") }} variant="outline">
                   {copiedId === "new" ? <Check className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4" />}
                 </Button>
               </div>
-              <p className="text-xs text-amber-500">⚠ Bu link yalnız bir dəfə istifadə oluna bilər. Səhifə bağlandıqda link avtomatik deaktiv olacaq.</p>
+              <p className="text-xs text-amber-500">{t("linkOneTimeWarning")}</p>
               <DialogFooter className="mt-4">
-                <Button variant="outline" onClick={() => setShowCreate(false)}>Bağla</Button>
+                <Button variant="outline" onClick={() => setShowCreate(false)}>{t("close")}</Button>
               </DialogFooter>
             </div>
           ) : (
             <div className="space-y-4">
               <div>
-                <label className="text-sm font-medium mb-2 block">Qonaq adı</label>
+                <label className="text-sm font-medium mb-2 block">{t("guestName")}</label>
                 <Input
-                  placeholder="Məs: Əli Həsənov (TechCorp)"
+                  placeholder={t("guestNamePlaceholder")}
                   value={guestName}
                   onChange={(e) => setGuestName(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleCreate()}
@@ -169,7 +171,7 @@ export default function PitchLinksPage() {
               </div>
               <DialogFooter>
                 <Button onClick={handleCreate} disabled={!guestName.trim() || creating} className="gap-2">
-                  <Link2 className="h-4 w-4" /> {creating ? "Yaradılır..." : "Link yarat"}
+                  <Link2 className="h-4 w-4" /> {creating ? t("creating") : t("createLink")}
                 </Button>
               </DialogFooter>
             </div>

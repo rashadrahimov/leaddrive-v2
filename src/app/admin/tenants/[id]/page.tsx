@@ -6,9 +6,11 @@ import { Button } from "@/components/ui/button"
 import { ArrowLeft, ExternalLink, Users, Contact, Briefcase, Building2, Pencil } from "lucide-react"
 import Link from "next/link"
 import { TenantActions } from "./tenant-actions"
+import { getTranslations } from "next-intl/server"
 
 export default async function TenantDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
+  const t = await getTranslations("admin")
 
   const tenant = await prisma.organization.findUnique({
     where: { id },
@@ -29,10 +31,10 @@ export default async function TenantDetailPage({ params }: { params: Promise<{ i
   const tenantUrl = `https://${tenant.slug}.${baseDomain}`
 
   const stats = [
-    { label: "Users", value: tenant._count.users, icon: Users },
-    { label: "Contacts", value: tenant._count.contacts, icon: Contact },
-    { label: "Companies", value: tenant._count.companies, icon: Building2 },
-    { label: "Deals", value: tenant._count.deals, icon: Briefcase },
+    { label: t("users"), value: tenant._count.users, icon: Users },
+    { label: t("contacts"), value: tenant._count.contacts, icon: Contact },
+    { label: t("companies"), value: tenant._count.companies, icon: Building2 },
+    { label: t("deals"), value: tenant._count.deals, icon: Briefcase },
   ]
 
   return (
@@ -42,14 +44,14 @@ export default async function TenantDetailPage({ params }: { params: Promise<{ i
           <Link href="/admin/tenants">
             <Button variant="ghost" size="sm">
               <ArrowLeft className="w-4 h-4 mr-1" />
-              Back
+              {t("back")}
             </Button>
           </Link>
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-2xl font-bold">{tenant.name}</h1>
               <Badge variant={tenant.isActive ? "default" : "destructive"}>
-                {tenant.isActive ? "Active" : "Inactive"}
+                {tenant.isActive ? t("active") : t("inactive")}
               </Badge>
             </div>
             <p className="text-sm text-muted-foreground font-mono">{tenant.slug}</p>
@@ -59,13 +61,13 @@ export default async function TenantDetailPage({ params }: { params: Promise<{ i
           <Link href={`/admin/tenants/${tenant.id}/edit`}>
             <Button variant="outline" size="sm">
               <Pencil className="w-4 h-4 mr-1" />
-              Edit
+              {t("edit")}
             </Button>
           </Link>
           <a href={tenantUrl} target="_blank" rel="noopener noreferrer">
             <Button variant="outline" size="sm">
               <ExternalLink className="w-4 h-4 mr-1" />
-              Open CRM
+              {t("openCrm")}
             </Button>
           </a>
         </div>
@@ -101,35 +103,35 @@ export default async function TenantDetailPage({ params }: { params: Promise<{ i
       {/* Info */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card className="p-5">
-          <h3 className="text-sm font-semibold mb-3">Details</h3>
+          <h3 className="text-sm font-semibold mb-3">{t("details")}</h3>
           <dl className="space-y-2 text-sm">
             <div className="flex justify-between">
-              <dt className="text-muted-foreground">Plan</dt>
+              <dt className="text-muted-foreground">{t("plan")}</dt>
               <dd><Badge variant="outline" className="capitalize">{tenant.plan}</Badge></dd>
             </div>
             <div className="flex justify-between">
-              <dt className="text-muted-foreground">Max Users</dt>
-              <dd>{tenant.maxUsers === -1 ? "Unlimited" : tenant.maxUsers}</dd>
+              <dt className="text-muted-foreground">{t("maxUsers")}</dt>
+              <dd>{tenant.maxUsers === -1 ? t("unlimited") : tenant.maxUsers}</dd>
             </div>
             <div className="flex justify-between">
-              <dt className="text-muted-foreground">Max Contacts</dt>
-              <dd>{tenant.maxContacts === -1 ? "Unlimited" : tenant.maxContacts.toLocaleString()}</dd>
+              <dt className="text-muted-foreground">{t("maxContacts")}</dt>
+              <dd>{tenant.maxContacts === -1 ? t("unlimited") : tenant.maxContacts.toLocaleString()}</dd>
             </div>
             <div className="flex justify-between">
-              <dt className="text-muted-foreground">Server Type</dt>
+              <dt className="text-muted-foreground">{t("serverType")}</dt>
               <dd className="capitalize">{tenant.serverType}</dd>
             </div>
             <div className="flex justify-between">
-              <dt className="text-muted-foreground">URL</dt>
+              <dt className="text-muted-foreground">{t("url")}</dt>
               <dd className="font-mono text-xs">{tenantUrl}</dd>
             </div>
             <div className="flex justify-between">
-              <dt className="text-muted-foreground">Created</dt>
+              <dt className="text-muted-foreground">{t("created")}</dt>
               <dd>{new Date(tenant.createdAt).toLocaleString()}</dd>
             </div>
             {tenant.provisionedAt && (
               <div className="flex justify-between">
-                <dt className="text-muted-foreground">Provisioned</dt>
+                <dt className="text-muted-foreground">{t("provisioned")}</dt>
                 <dd>{new Date(tenant.provisionedAt).toLocaleString()}</dd>
               </div>
             )}
@@ -138,7 +140,7 @@ export default async function TenantDetailPage({ params }: { params: Promise<{ i
 
         {/* Users */}
         <Card className="p-5">
-          <h3 className="text-sm font-semibold mb-3">Users ({tenant.users.length})</h3>
+          <h3 className="text-sm font-semibold mb-3">{t("users")} ({tenant.users.length})</h3>
           <div className="space-y-2">
             {tenant.users.map((user) => (
               <div key={user.id} className="flex items-center justify-between text-sm py-1.5 border-b last:border-0">
@@ -148,12 +150,12 @@ export default async function TenantDetailPage({ params }: { params: Promise<{ i
                 </div>
                 <div className="flex items-center gap-2">
                   <Badge variant="outline" className="text-xs capitalize">{user.role}</Badge>
-                  {!user.isActive && <Badge variant="destructive" className="text-xs">Disabled</Badge>}
+                  {!user.isActive && <Badge variant="destructive" className="text-xs">{t("disabled")}</Badge>}
                 </div>
               </div>
             ))}
             {tenant.users.length === 0 && (
-              <p className="text-sm text-muted-foreground">No users</p>
+              <p className="text-sm text-muted-foreground">{t("noUsers")}</p>
             )}
           </div>
         </Card>

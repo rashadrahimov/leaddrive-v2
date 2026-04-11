@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useSession } from "next-auth/react"
+import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
@@ -33,16 +34,16 @@ interface RuleFormData {
   isActive: boolean
 }
 
-const TRIGGER_LABELS: Record<string, string> = {
-  first_response_breach: "First Response Breach",
-  resolution_breach: "Resolution Breach",
-  resolution_warning: "Resolution Warning",
+const TRIGGER_KEYS: Record<string, string> = {
+  first_response_breach: "firstResponseBreach",
+  resolution_breach: "resolutionBreach",
+  resolution_warning: "resolutionWarning",
 }
 
-const ACTION_LABELS: Record<string, string> = {
-  notify: "Notify",
-  increase_priority: "Increase Priority",
-  reassign: "Reassign Ticket",
+const ACTION_KEYS: Record<string, string> = {
+  notify: "notify",
+  increase_priority: "increasePriority",
+  reassign: "reassignTicket",
 }
 
 const LEVEL_COLORS: Record<number, string> = {
@@ -58,11 +59,13 @@ function RuleFormDialog({
   onOpenChange,
   onSaved,
   orgId,
+  t,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
   onSaved: () => void
   orgId?: string
+  t: (key: string) => string
 }) {
   const [form, setForm] = useState<RuleFormData>({
     name: "",
@@ -133,7 +136,7 @@ function RuleFormDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogHeader>
-        <DialogTitle>Create Escalation Rule</DialogTitle>
+        <DialogTitle>{t("createEscalationRule")}</DialogTitle>
       </DialogHeader>
       <form onSubmit={handleSubmit}>
         <DialogContent>
@@ -144,29 +147,29 @@ function RuleFormDialog({
           )}
           <div className="grid gap-4">
             <div>
-              <Label htmlFor="name">Rule Name *</Label>
+              <Label htmlFor="name">{t("ruleName")} *</Label>
               <Input
                 id="name"
                 value={form.name}
                 onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                placeholder="e.g. L1 - Notify manager on first response breach"
+                placeholder={t("ruleNamePlaceholder")}
                 required
               />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label htmlFor="triggerType">Trigger Type</Label>
+                <Label htmlFor="triggerType">{t("triggerType")}</Label>
                 <Select
                   value={form.triggerType}
                   onChange={(e) => setForm((f) => ({ ...f, triggerType: e.target.value }))}
                 >
-                  <option value="first_response_breach">First Response Breach</option>
-                  <option value="resolution_breach">Resolution Breach</option>
-                  <option value="resolution_warning">Resolution Warning</option>
+                  <option value="first_response_breach">{t("firstResponseBreach")}</option>
+                  <option value="resolution_breach">{t("resolutionBreach")}</option>
+                  <option value="resolution_warning">{t("resolutionWarning")}</option>
                 </Select>
               </div>
               <div>
-                <Label htmlFor="level">Escalation Level (1-5)</Label>
+                <Label htmlFor="level">{t("escalationLevel")}</Label>
                 <Input
                   id="level"
                   type="number"
@@ -180,8 +183,8 @@ function RuleFormDialog({
             <div>
               <Label htmlFor="triggerMinutes">
                 {form.triggerType === "resolution_warning"
-                  ? "Minutes before SLA breach"
-                  : "Minutes after SLA breach"}
+                  ? t("minutesBeforeBreach")
+                  : t("minutesAfterBreach")}
               </Label>
               <Input
                 id="triggerMinutes"
@@ -194,31 +197,31 @@ function RuleFormDialog({
               />
               <p className="text-xs text-muted-foreground mt-1">
                 {form.triggerType === "resolution_warning"
-                  ? "How many minutes before the SLA deadline to trigger this rule"
-                  : "0 = immediately on breach, or set delay in minutes after breach"}
+                  ? t("minutesBeforeHint")
+                  : t("minutesAfterHint")}
               </p>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label htmlFor="actionType">Action</Label>
+                <Label htmlFor="actionType">{t("action")}</Label>
                 <Select
                   value={form.actionType}
                   onChange={(e) => setForm((f) => ({ ...f, actionType: e.target.value }))}
                 >
-                  <option value="notify">Notify</option>
-                  <option value="increase_priority">Increase Priority</option>
-                  <option value="reassign">Reassign Ticket</option>
+                  <option value="notify">{t("notify")}</option>
+                  <option value="increase_priority">{t("increasePriority")}</option>
+                  <option value="reassign">{t("reassignTicket")}</option>
                 </Select>
               </div>
               {form.actionType === "notify" && (
                 <div>
-                  <Label htmlFor="actionTarget">Notify Target</Label>
+                  <Label htmlFor="actionTarget">{t("notifyTarget")}</Label>
                   <Select
                     value={form.actionTarget}
                     onChange={(e) => setForm((f) => ({ ...f, actionTarget: e.target.value }))}
                   >
-                    <option value="manager">Managers</option>
-                    <option value="admin">Admins Only</option>
+                    <option value="manager">{t("managers")}</option>
+                    <option value="admin">{t("adminsOnly")}</option>
                   </Select>
                 </div>
               )}
@@ -227,16 +230,16 @@ function RuleFormDialog({
         </DialogContent>
         <DialogFooter>
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
+            {t("cancel")}
           </Button>
           <Button type="submit" disabled={saving}>
             {saving ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                Creating...
+                {t("creating")}
               </>
             ) : (
-              "Create Rule"
+              t("createRule")
             )}
           </Button>
         </DialogFooter>
@@ -247,6 +250,7 @@ function RuleFormDialog({
 
 export default function EscalationSettingsPage() {
   const { data: session } = useSession()
+  const t = useTranslations("escalationRules")
   const [rules, setRules] = useState<EscalationRule[]>([])
   const [loading, setLoading] = useState(true)
   const [formOpen, setFormOpen] = useState(false)
@@ -297,7 +301,7 @@ export default function EscalationSettingsPage() {
   const columns = [
     {
       key: "level",
-      label: "Level",
+      label: t("colLevel"),
       sortable: true,
       render: (item: EscalationRule) => (
         <Badge className={LEVEL_COLORS[item.level] || LEVEL_COLORS[3]}>L{item.level}</Badge>
@@ -305,16 +309,16 @@ export default function EscalationSettingsPage() {
     },
     {
       key: "name",
-      label: "Rule Name",
+      label: t("colRuleName"),
       sortable: true,
       render: (item: EscalationRule) => <span className="font-medium">{item.name}</span>,
     },
     {
       key: "triggerType",
-      label: "Trigger",
+      label: t("colTrigger"),
       render: (item: EscalationRule) => (
         <div>
-          <span className="text-sm">{TRIGGER_LABELS[item.triggerType] || item.triggerType}</span>
+          <span className="text-sm">{t(TRIGGER_KEYS[item.triggerType] || "firstResponseBreach")}</span>
           {item.triggerMinutes > 0 && (
             <span className="text-xs text-muted-foreground ml-1">
               ({item.triggerMinutes}min)
@@ -325,12 +329,12 @@ export default function EscalationSettingsPage() {
     },
     {
       key: "actions",
-      label: "Actions",
+      label: t("colActions"),
       render: (item: EscalationRule) => (
         <div className="flex flex-wrap gap-1">
           {item.actions.map((a, i) => (
             <Badge key={i} variant="outline" className="text-xs">
-              {ACTION_LABELS[a.type] || a.type}
+              {t(ACTION_KEYS[a.type] || "notify")}
               {a.target ? ` (${a.target})` : ""}
             </Badge>
           ))}
@@ -339,7 +343,7 @@ export default function EscalationSettingsPage() {
     },
     {
       key: "isActive",
-      label: "Status",
+      label: t("colStatus"),
       render: (item: EscalationRule) => (
         <Badge
           className={`cursor-pointer ${
@@ -349,7 +353,7 @@ export default function EscalationSettingsPage() {
           }`}
           onClick={() => handleToggleActive(item)}
         >
-          {item.isActive ? "Active" : "Inactive"}
+          {item.isActive ? t("active") : t("inactive")}
         </Badge>
       ),
     },
@@ -375,7 +379,7 @@ export default function EscalationSettingsPage() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <h1 className="text-2xl font-bold tracking-tight">Escalation Rules</h1>
+        <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
         <div className="animate-pulse space-y-4">
           <div className="h-64 bg-muted rounded-lg" />
         </div>
@@ -387,13 +391,13 @@ export default function EscalationSettingsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Escalation Rules</h1>
+          <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
           <p className="text-sm text-muted-foreground">
-            Configure automatic escalation when SLA deadlines are breached
+            {t("subtitle")}
           </p>
         </div>
         <Button onClick={() => setFormOpen(true)}>
-          <Plus className="h-4 w-4 mr-1" /> New Rule
+          <Plus className="h-4 w-4 mr-1" /> {t("newRule")}
         </Button>
       </div>
 
@@ -402,13 +406,12 @@ export default function EscalationSettingsPage() {
           <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
             <AlertTriangle className="h-6 w-6 text-primary" />
           </div>
-          <h3 className="text-lg font-semibold mb-1">No escalation rules</h3>
+          <h3 className="text-lg font-semibold mb-1">{t("noRules")}</h3>
           <p className="text-sm text-muted-foreground mb-4 max-w-sm">
-            Create rules to automatically escalate tickets when SLA deadlines are missed. Rules can
-            notify managers, increase priority, or reassign tickets.
+            {t("noRulesDesc")}
           </p>
           <Button onClick={() => setFormOpen(true)}>
-            <Plus className="h-4 w-4 mr-1" /> Create First Rule
+            <Plus className="h-4 w-4 mr-1" /> {t("createFirstRule")}
           </Button>
         </div>
       ) : (
@@ -416,17 +419,17 @@ export default function EscalationSettingsPage() {
           data={rules as any}
           columns={columns as any}
           searchKey="name"
-          searchPlaceholder="Search rules..."
+          searchPlaceholder={t("searchRules")}
         />
       )}
 
-      <RuleFormDialog open={formOpen} onOpenChange={setFormOpen} onSaved={fetchRules} orgId={orgId} />
+      <RuleFormDialog open={formOpen} onOpenChange={setFormOpen} onSaved={fetchRules} orgId={orgId} t={t} />
 
       <DeleteConfirmDialog
         open={deleteOpen}
         onOpenChange={setDeleteOpen}
         onConfirm={confirmDelete}
-        title="Delete Escalation Rule"
+        title={t("deleteTitle")}
         itemName={deleteItem?.name}
       />
     </div>

@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react"
 import { useSession } from "next-auth/react"
+import { useTranslations } from "next-intl"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -33,6 +34,7 @@ const OPERATOR_OPTIONS = ["==", "!=", ">=", "<=", "contains", "starts_with"]
 
 export default function LeadRulesPage() {
   const { data: session } = useSession()
+  const t = useTranslations("leadRules")
   const orgId = session?.user?.organizationId
   const [rules, setRules] = useState<AssignmentRule[]>([])
   const [loading, setLoading] = useState(true)
@@ -64,15 +66,15 @@ export default function LeadRulesPage() {
         body: JSON.stringify({ isActive: !rule.isActive }),
       })
       setRules(prev => prev.map(r => r.id === rule.id ? { ...r, isActive: !r.isActive } : r))
-    } catch { toast.error("Failed to update rule") }
+    } catch { toast.error(t("failedUpdate")) }
   }
 
   const deleteRule = async (id: string) => {
     try {
       await fetch(`/api/v1/lead-rules/${id}`, { method: "DELETE", headers: headers() })
       setRules(prev => prev.filter(r => r.id !== id))
-      toast.success("Rule deleted")
-    } catch { toast.error("Failed to delete rule") }
+      toast.success(t("ruleDeleted"))
+    } catch { toast.error(t("failedDelete")) }
   }
 
   const addRule = async () => {
@@ -93,9 +95,9 @@ export default function LeadRulesPage() {
       if (json.success) {
         setRules(prev => [...prev, json.data])
         startEdit(json.data)
-        toast.success("Rule created")
+        toast.success(t("ruleCreated"))
       }
-    } catch { toast.error("Failed to create rule") }
+    } catch { toast.error(t("failedCreate")) }
   }
 
   const startEdit = (rule: AssignmentRule) => {
@@ -123,9 +125,9 @@ export default function LeadRulesPage() {
       if (json.success) {
         setRules(prev => prev.map(r => r.id === editingId ? json.data : r))
         setEditingId(null)
-        toast.success("Rule saved")
+        toast.success(t("ruleSaved"))
       }
-    } catch { toast.error("Failed to save rule") } finally { setSaving(false) }
+    } catch { toast.error(t("failedSave")) } finally { setSaving(false) }
   }
 
   if (loading) {
@@ -144,26 +146,26 @@ export default function LeadRulesPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-            <Filter className="h-6 w-6" /> Lead Assignment Rules
+            <Filter className="h-6 w-6" /> {t("title")}
           </h1>
-          <p className="text-sm text-muted-foreground">Automated lead routing based on conditions or round-robin</p>
+          <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
         </div>
         <Button onClick={addRule}>
-          <Plus className="h-4 w-4 mr-1" /> Add Rule
+          <Plus className="h-4 w-4 mr-1" /> {t("addRule")}
         </Button>
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Total Rules</CardTitle></CardHeader>
+          <CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">{t("totalRules")}</CardTitle></CardHeader>
           <CardContent><p className="text-2xl font-bold">{rules.length}</p></CardContent>
         </Card>
         <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Active Rules</CardTitle></CardHeader>
+          <CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">{t("activeRules")}</CardTitle></CardHeader>
           <CardContent><p className="text-2xl font-bold text-green-600">{rules.filter(r => r.isActive).length}</p></CardContent>
         </Card>
         <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Assignees</CardTitle></CardHeader>
+          <CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">{t("assignees")}</CardTitle></CardHeader>
           <CardContent><p className="text-2xl font-bold">{new Set(rules.flatMap(r => r.assignees || [])).size}</p></CardContent>
         </Card>
       </div>
@@ -171,9 +173,9 @@ export default function LeadRulesPage() {
       {rules.length === 0 && (
         <Card className="p-8 text-center text-muted-foreground">
           <Filter className="h-12 w-12 mx-auto mb-3 opacity-40" />
-          <p className="text-lg font-medium mb-2">No assignment rules yet</p>
-          <p className="text-sm mb-4">Create rules to automatically route leads to the right team members</p>
-          <Button onClick={addRule}><Plus className="h-4 w-4 mr-1" /> Create First Rule</Button>
+          <p className="text-lg font-medium mb-2">{t("noRules")}</p>
+          <p className="text-sm mb-4">{t("noRulesDesc")}</p>
+          <Button onClick={addRule}><Plus className="h-4 w-4 mr-1" /> {t("createFirstRule")}</Button>
         </Card>
       )}
 
@@ -184,21 +186,21 @@ export default function LeadRulesPage() {
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-2">
                   <Badge variant={rule.isActive ? "default" : "secondary"}>
-                    {rule.isActive ? "Active" : "Inactive"}
+                    {rule.isActive ? t("active") : t("inactive")}
                   </Badge>
                   <Badge variant="outline">
                     {rule.method === "round_robin" ? (
-                      <><RefreshCw className="h-3 w-3 mr-1" /> Round Robin</>
+                      <><RefreshCw className="h-3 w-3 mr-1" /> {t("roundRobin")}</>
                     ) : (
-                      <><Filter className="h-3 w-3 mr-1" /> Condition</>
+                      <><Filter className="h-3 w-3 mr-1" /> {t("condition")}</>
                     )}
                   </Badge>
-                  <span className="text-xs text-muted-foreground">Priority: {rule.priority}</span>
+                  <span className="text-xs text-muted-foreground">{t("priority")}: {rule.priority}</span>
                 </div>
               </div>
               <div className="flex gap-1">
                 <Button variant="ghost" size="sm" onClick={() => toggleActive(rule)} className="h-7 px-2 text-xs">
-                  {rule.isActive ? "Disable" : "Enable"}
+                  {rule.isActive ? t("disable") : t("enable")}
                 </Button>
                 <Button variant="ghost" size="sm" onClick={() => editingId === rule.id ? setEditingId(null) : startEdit(rule)} className="h-7 w-7 p-0">
                   {editingId === rule.id ? <X className="h-3.5 w-3.5" /> : <Pencil className="h-3.5 w-3.5" />}
@@ -213,30 +215,30 @@ export default function LeadRulesPage() {
                 <div className="space-y-3">
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="text-xs font-medium mb-1 block">Name</label>
+                      <label className="text-xs font-medium mb-1 block">{t("name")}</label>
                       <Input value={editForm.name || ""} onChange={e => setEditForm(f => ({ ...f, name: e.target.value }))} />
                     </div>
                     <div>
-                      <label className="text-xs font-medium mb-1 block">Priority (lower = first)</label>
+                      <label className="text-xs font-medium mb-1 block">{t("priorityLabel")}</label>
                       <Input type="number" value={editForm.priority ?? 50} onChange={e => setEditForm(f => ({ ...f, priority: Number(e.target.value) }))} />
                     </div>
                   </div>
                   <div>
-                    <label className="text-xs font-medium mb-1 block">Description</label>
+                    <label className="text-xs font-medium mb-1 block">{t("description")}</label>
                     <Input value={editForm.description || ""} onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))} />
                   </div>
                   <div>
-                    <label className="text-xs font-medium mb-1 block">Method</label>
+                    <label className="text-xs font-medium mb-1 block">{t("method")}</label>
                     <select className="border border-border rounded-md px-3 py-2 text-sm bg-background w-full"
                       value={editForm.method || "condition"}
                       onChange={e => setEditForm(f => ({ ...f, method: e.target.value as AssignmentMethod }))}>
-                      <option value="condition">Condition-based</option>
-                      <option value="round_robin">Round Robin</option>
+                      <option value="condition">{t("conditionBased")}</option>
+                      <option value="round_robin">{t("roundRobin")}</option>
                     </select>
                   </div>
                   {editForm.method !== "round_robin" && (
                     <div>
-                      <label className="text-xs font-medium mb-1 block">Conditions</label>
+                      <label className="text-xs font-medium mb-1 block">{t("conditions")}</label>
                       <div className="space-y-2">
                         {(editForm.conditions || []).map((cond, i) => (
                           <div key={i} className="flex gap-2 items-center">
@@ -260,7 +262,7 @@ export default function LeadRulesPage() {
                               const next = [...(editForm.conditions || [])]
                               next[i] = { ...next[i], value: e.target.value }
                               setEditForm(f => ({ ...f, conditions: next }))
-                            }} placeholder="Value" />
+                            }} placeholder={t("valuePlaceholder")} />
                             <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => {
                               setEditForm(f => ({ ...f, conditions: (f.conditions || []).filter((_, j) => j !== i) }))
                             }}>
@@ -271,23 +273,23 @@ export default function LeadRulesPage() {
                         <Button variant="outline" size="sm" className="text-xs" onClick={() => {
                           setEditForm(f => ({ ...f, conditions: [...(f.conditions || []), { field: "source", operator: "==", value: "" }] }))
                         }}>
-                          <Plus className="h-3 w-3 mr-1" /> Add Condition
+                          <Plus className="h-3 w-3 mr-1" /> {t("addCondition")}
                         </Button>
                       </div>
                     </div>
                   )}
                   <div>
-                    <label className="text-xs font-medium mb-1 block">Assignees (comma-separated names)</label>
+                    <label className="text-xs font-medium mb-1 block">{t("assigneesLabel")}</label>
                     <Input value={(editForm.assignees || []).join(", ")}
                       onChange={e => setEditForm(f => ({ ...f, assignees: e.target.value.split(",").map(s => s.trim()).filter(Boolean) }))}
-                      placeholder="John Doe, Jane Smith" />
+                      placeholder={t("assigneesPlaceholder")} />
                   </div>
                   <div className="flex gap-2">
                     <Button size="sm" onClick={saveEdit} disabled={saving}>
                       {saving ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Save className="h-4 w-4 mr-1" />}
-                      Save
+                      {t("save")}
                     </Button>
-                    <Button size="sm" variant="outline" onClick={() => setEditingId(null)}>Cancel</Button>
+                    <Button size="sm" variant="outline" onClick={() => setEditingId(null)}>{t("cancel")}</Button>
                   </div>
                 </div>
               ) : (
@@ -310,7 +312,7 @@ export default function LeadRulesPage() {
                       <Badge key={i} variant="outline" className="text-xs">{a}</Badge>
                     ))}
                     {(!rule.assignees || (rule.assignees as string[]).length === 0) && (
-                      <span className="text-xs text-muted-foreground">No assignees</span>
+                      <span className="text-xs text-muted-foreground">{t("noAssignees")}</span>
                     )}
                   </div>
                 </>
