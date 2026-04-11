@@ -40,7 +40,8 @@ export default function MtmRoutesPage() {
   const [sortBy, setSortBy] = useState("date_desc")
   const [viewMode, setViewMode] = useState<"list" | "calendar">("list")
   const [selectedRoute, setSelectedRoute] = useState<any>(null)
-  const [calendarMonth, setCalendarMonth] = useState(new Date())
+  const [calendarMonth, setCalendarMonth] = useState<Date | null>(null)
+  useEffect(() => { if (!calendarMonth) setCalendarMonth(new Date()) }, [])
   const orgId = session?.user?.organizationId
 
   const fetchRoutes = async () => {
@@ -86,6 +87,7 @@ export default function MtmRoutesPage() {
   }
 
   const calendarDays = useMemo(() => {
+    if (!calendarMonth) return []
     const year = calendarMonth.getFullYear(), month = calendarMonth.getMonth()
     const firstDay = new Date(year, month, 1).getDay()
     const daysInMonth = new Date(year, month + 1, 0).getDate()
@@ -246,16 +248,16 @@ export default function MtmRoutesPage() {
       ) : (
         <div className="rounded-lg border bg-card p-4">
           <div className="flex items-center justify-between mb-4">
-            <Button variant="ghost" size="icon" onClick={() => setCalendarMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() - 1, 1))}><ChevronLeft className="h-4 w-4" /></Button>
-            <h3 className="font-semibold text-sm">{calendarMonth.toLocaleDateString("en-US", { month: "long", year: "numeric" })}</h3>
-            <Button variant="ghost" size="icon" onClick={() => setCalendarMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() + 1, 1))}><ChevronRight className="h-4 w-4" /></Button>
+            <Button variant="ghost" size="icon" onClick={() => calendarMonth && setCalendarMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() - 1, 1))}><ChevronLeft className="h-4 w-4" /></Button>
+            <h3 className="font-semibold text-sm">{calendarMonth?.toLocaleDateString("en-US", { month: "long", year: "numeric" }) ?? "—"}</h3>
+            <Button variant="ghost" size="icon" onClick={() => calendarMonth && setCalendarMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() + 1, 1))}><ChevronRight className="h-4 w-4" /></Button>
           </div>
           <div className="grid grid-cols-7 gap-px">
             {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(d => (
               <div key={d} className="text-center text-[10px] text-muted-foreground font-medium py-1">{d}</div>
             ))}
             {calendarDays.map((day, i) => {
-              const isCurrentMonth = day.date.getMonth() === calendarMonth.getMonth()
+              const isCurrentMonth = calendarMonth ? day.date.getMonth() === calendarMonth.getMonth() : false
               const isToday = day.date.toDateString() === new Date().toDateString()
               return (
                 <div key={i} className={`min-h-[80px] p-1 border rounded text-xs ${isCurrentMonth ? "bg-card" : "bg-muted/30 opacity-50"} ${isToday ? "border-primary" : "border-border/50"}`}>
