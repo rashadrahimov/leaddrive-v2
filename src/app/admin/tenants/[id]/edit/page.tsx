@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
-import { ArrowLeft, Loader2, Save, Check } from "lucide-react"
+import { ArrowLeft, Loader2, Save, Check, Handshake, Mail, MessageSquare, Ticket, Wallet, BarChart3, FolderKanban, MapPin, Settings, Zap } from "lucide-react"
 import Link from "next/link"
 import { MODULE_REGISTRY, type ModuleId } from "@/lib/modules"
 
@@ -27,6 +27,18 @@ const SIDEBAR_MODULE_GROUPS: Record<string, string> = {
 }
 
 const GROUP_ORDER = ["CRM", "Marketing", "Communication", "Support", "Finance", "Analytics", "ERP", "Route & Field", "Settings"]
+
+const GROUP_STYLE: Record<string, { icon: any; color: string; bg: string; border: string }> = {
+  CRM:              { icon: Handshake,     color: "text-sky-500",    bg: "bg-sky-50",     border: "border-sky-200" },
+  Marketing:        { icon: Mail,          color: "text-orange-500", bg: "bg-orange-50",  border: "border-orange-200" },
+  Communication:    { icon: MessageSquare, color: "text-blue-500",   bg: "bg-blue-50",    border: "border-blue-200" },
+  Support:          { icon: Ticket,        color: "text-emerald-500",bg: "bg-emerald-50", border: "border-emerald-200" },
+  Finance:          { icon: Wallet,        color: "text-amber-500",  bg: "bg-amber-50",   border: "border-amber-200" },
+  Analytics:        { icon: BarChart3,     color: "text-purple-500", bg: "bg-purple-50",  border: "border-purple-200" },
+  ERP:              { icon: FolderKanban,  color: "text-indigo-500", bg: "bg-indigo-50",  border: "border-indigo-200" },
+  "Route & Field":  { icon: MapPin,        color: "text-cyan-500",   bg: "bg-cyan-50",    border: "border-cyan-200" },
+  Settings:         { icon: Settings,      color: "text-zinc-500",   bg: "bg-zinc-50",    border: "border-zinc-200" },
+}
 
 const FEATURE_MODULES = (Object.entries(MODULE_REGISTRY) as [ModuleId, { name: string; requires: ModuleId[]; alwaysOn?: boolean }][])
   .filter(([, def]) => !def.alwaysOn)
@@ -231,78 +243,87 @@ export default function TenantEditPage() {
             </div>
           </Card>
 
+          {/* Modules */}
           <Card className="p-5">
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between mb-5">
               <div>
                 <h3 className="text-base font-semibold">Active Modules</h3>
-                <p className="text-sm text-muted-foreground mt-0.5">Select which modules are available for this tenant</p>
+                <p className="text-sm text-muted-foreground mt-0.5">
+                  {form.features.length} of {FEATURE_MODULES.length} modules enabled
+                </p>
               </div>
               <div className="flex gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
+                <Button type="button" variant="outline" size="sm"
                   onClick={() => setForm((f) => ({ ...f, features: FEATURE_MODULES.map((m) => m.id) }))}
-                >
-                  Select All
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
+                >Select All</Button>
+                <Button type="button" variant="outline" size="sm"
                   onClick={() => setForm((f) => ({ ...f, features: [] }))}
-                >
-                  Clear All
-                </Button>
+                >Clear All</Button>
               </div>
             </div>
-            <div className="space-y-5">
-              {GROUP_ORDER.filter((g) => GROUPED_MODULES[g]).map((group) => (
-                <div key={group}>
-                  <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">{group}</h4>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                    {GROUPED_MODULES[group].map((mod) => {
-                      const isActive = form.features.includes(mod.id)
-                      const deps = mod.requires.filter((r: string) => r !== "core")
-                      const missingDeps = deps.filter((d: string) => !form.features.includes(d))
-                      return (
-                        <label
-                          key={mod.id}
-                          className={`flex items-start gap-2.5 rounded-lg border px-3 py-2.5 text-sm cursor-pointer transition-colors ${
-                            isActive
-                              ? "border-primary/40 bg-primary/5"
-                              : "border-border/70 bg-card hover:bg-muted/50"
-                          }`}
-                        >
-                          <input
-                            type="checkbox"
-                            checked={isActive}
-                            onChange={() => toggleFeature(mod.id)}
-                            className="rounded mt-0.5"
-                          />
-                          <div>
-                            <span className="font-medium">{mod.label}</span>
-                            {deps.length > 0 && (
-                              <p className="text-xs text-muted-foreground mt-0.5">
-                                Requires: {deps.map((d: string) => MODULE_REGISTRY[d as ModuleId]?.name || d).join(", ")}
-                              </p>
-                            )}
-                            {isActive && missingDeps.length > 0 && (
-                              <p className="text-xs text-amber-600 mt-0.5">
-                                Missing: {missingDeps.map((d: string) => MODULE_REGISTRY[d as ModuleId]?.name || d).join(", ")}
-                              </p>
-                            )}
-                          </div>
-                        </label>
-                      )
-                    })}
+
+            <div className="space-y-4">
+              {GROUP_ORDER.filter((g) => GROUPED_MODULES[g]).map((group) => {
+                const style = GROUP_STYLE[group] || GROUP_STYLE.Settings
+                const GroupIcon = style.icon
+                const groupModules = GROUPED_MODULES[group]
+                const activeCount = groupModules.filter((m) => form.features.includes(m.id)).length
+
+                return (
+                  <div key={group} className={`rounded-xl border ${style.border} ${style.bg} overflow-hidden`}>
+                    {/* Group header */}
+                    <div className="flex items-center justify-between px-4 py-2.5">
+                      <div className="flex items-center gap-2">
+                        <GroupIcon className={`w-4 h-4 ${style.color}`} />
+                        <span className={`text-sm font-semibold ${style.color}`}>{group}</span>
+                      </div>
+                      <span className="text-xs text-muted-foreground">
+                        {activeCount}/{groupModules.length}
+                      </span>
+                    </div>
+                    {/* Module toggles */}
+                    <div className="bg-white/80 px-3 py-2 grid grid-cols-2 sm:grid-cols-3 gap-1.5">
+                      {groupModules.map((mod) => {
+                        const isActive = form.features.includes(mod.id)
+                        const deps = mod.requires.filter((r: string) => r !== "core")
+                        const missingDeps = deps.filter((d: string) => !form.features.includes(d))
+                        return (
+                          <label
+                            key={mod.id}
+                            className={`flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm cursor-pointer transition-all ${
+                              isActive
+                                ? `${style.bg} ${style.border} border shadow-sm`
+                                : "border border-transparent hover:bg-muted/30"
+                            }`}
+                          >
+                            <div className={`w-8 h-[18px] rounded-full relative transition-colors ${isActive ? "bg-primary" : "bg-zinc-200"}`}
+                              onClick={(e) => { e.preventDefault(); toggleFeature(mod.id) }}
+                            >
+                              <div className={`absolute top-[2px] w-[14px] h-[14px] rounded-full bg-white shadow transition-transform ${isActive ? "left-[16px]" : "left-[2px]"}`} />
+                            </div>
+                            <div className="min-w-0">
+                              <span className={`font-medium block truncate ${isActive ? "text-foreground" : "text-muted-foreground"}`}>
+                                {mod.label}
+                              </span>
+                              {deps.length > 0 && (
+                                <span className="text-[11px] text-muted-foreground block truncate">
+                                  {deps.map((d: string) => MODULE_REGISTRY[d as ModuleId]?.name || d).join(", ")}
+                                </span>
+                              )}
+                              {isActive && missingDeps.length > 0 && (
+                                <span className="text-[11px] text-amber-600 block">
+                                  ! {missingDeps.map((d: string) => MODULE_REGISTRY[d as ModuleId]?.name || d).join(", ")}
+                                </span>
+                              )}
+                            </div>
+                          </label>
+                        )
+                      })}
+                    </div>
                   </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
-            <p className="text-xs text-muted-foreground mt-4">
-              {form.features.length} of {FEATURE_MODULES.length} modules enabled
-            </p>
           </Card>
         </div>
 
