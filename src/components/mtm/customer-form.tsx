@@ -2,12 +2,15 @@
 
 import { useState, useEffect } from "react"
 import { useTranslations } from "next-intl"
+import dynamic from "next/dynamic"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { Dialog, DialogHeader, DialogTitle, DialogContent, DialogFooter } from "@/components/ui/dialog"
+
+const LocationPickerMap = dynamic(() => import("@/components/mtm/location-picker-map"), { ssr: false })
 
 interface CustomerFormProps {
   open: boolean
@@ -103,9 +106,17 @@ export function MtmCustomerForm({ open, onOpenChange, onSaved, initialData, orgI
               <div><Label htmlFor="city">{tc("city")}</Label><Input id="city" value={form.city} onChange={e => update("city", e.target.value)} /></div>
               <div><Label htmlFor="district">{tf("district")}</Label><Input id="district" value={form.district} onChange={e => update("district", e.target.value)} /></div>
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div><Label htmlFor="latitude">{tf("latitude")}</Label><Input id="latitude" type="number" step="any" value={form.latitude} onChange={e => update("latitude", e.target.value)} /></div>
-              <div><Label htmlFor="longitude">{tf("longitude")}</Label><Input id="longitude" type="number" step="any" value={form.longitude} onChange={e => update("longitude", e.target.value)} /></div>
+            <div>
+              <Label className="mb-2 block">{tf("location") || "Location"}</Label>
+              <LocationPickerMap
+                latitude={form.latitude ? parseFloat(form.latitude) : null}
+                longitude={form.longitude ? parseFloat(form.longitude) : null}
+                onChange={(lat, lng) => { update("latitude", lat.toString()); update("longitude", lng.toString()) }}
+              />
+              <div className="grid grid-cols-2 gap-3 mt-2">
+                <div><Input id="latitude" type="number" step="any" placeholder="Latitude" value={form.latitude} onChange={e => update("latitude", e.target.value)} className="text-xs" /></div>
+                <div><Input id="longitude" type="number" step="any" placeholder="Longitude" value={form.longitude} onChange={e => update("longitude", e.target.value)} className="text-xs" /></div>
+              </div>
             </div>
             <div><Label htmlFor="notes">{tc("notes")}</Label><Textarea id="notes" value={form.notes} onChange={e => update("notes", e.target.value)} rows={2} /></div>
           </div>
