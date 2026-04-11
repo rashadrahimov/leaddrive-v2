@@ -12,19 +12,84 @@ import { ArrowLeft, Loader2, Save, Check, Handshake, Mail, MessageSquare, Ticket
 import Link from "next/link"
 import { MODULE_REGISTRY, type ModuleId } from "@/lib/modules"
 
-// Build module list from MODULE_REGISTRY + sidebar groups for real navigation context
-// Sidebar navItems reference these moduleIds — this is what users actually see
-const SIDEBAR_MODULE_GROUPS: Record<string, string> = {
-  deals: "CRM", leads: "CRM", tasks: "CRM", contracts: "CRM",
-  invoices: "Finance", budgeting: "Finance", profitability: "Finance",
-  tickets: "Support", "knowledge-base": "Support", portal: "Support", voip: "Support",
-  campaigns: "Marketing", events: "Marketing", journeys: "Marketing",
-  omnichannel: "Communication",
-  workflows: "Settings", "custom-fields": "Settings", currencies: "Settings",
-  ai: "Analytics", reports: "Analytics",
-  projects: "ERP",
-  mtm: "Route & Field",
-}
+// Complete sidebar sections — every page the user can see, grouped exactly like sidebar
+// Each section maps to a moduleId that controls its visibility
+const SIDEBAR_SECTIONS: { group: string; items: { moduleId: string; label: string; href: string }[] }[] = [
+  { group: "CRM", items: [
+    { moduleId: "core", label: "Dashboard", href: "/dashboard" },
+    { moduleId: "core", label: "Companies", href: "/companies" },
+    { moduleId: "core", label: "Contacts", href: "/contacts" },
+    { moduleId: "deals", label: "Deals", href: "/deals" },
+    { moduleId: "leads", label: "Leads", href: "/leads" },
+    { moduleId: "tasks", label: "Tasks", href: "/tasks" },
+    { moduleId: "contracts", label: "Contracts", href: "/contracts" },
+    { moduleId: "core", label: "Products", href: "/products" },
+  ]},
+  { group: "Marketing", items: [
+    { moduleId: "campaigns", label: "Campaigns", href: "/campaigns" },
+    { moduleId: "campaigns", label: "Segments", href: "/segments" },
+    { moduleId: "campaigns", label: "Email Templates", href: "/email-templates" },
+    { moduleId: "campaigns", label: "Email Log", href: "/email-log" },
+    { moduleId: "campaigns", label: "Campaign ROI", href: "/campaign-roi" },
+    { moduleId: "leads", label: "AI Scoring", href: "/ai-scoring" },
+    { moduleId: "journeys", label: "Journey Builder", href: "/journeys" },
+    { moduleId: "events", label: "Events", href: "/events" },
+    { moduleId: "campaigns", label: "Landing Pages", href: "/pages" },
+  ]},
+  { group: "Communication", items: [
+    { moduleId: "omnichannel", label: "Inbox", href: "/inbox" },
+  ]},
+  { group: "Support", items: [
+    { moduleId: "tickets", label: "Tickets", href: "/tickets" },
+    { moduleId: "tickets", label: "Agent Desktop", href: "/support/agent-desktop" },
+    { moduleId: "tickets", label: "Agent Calendar", href: "/support/calendar" },
+    { moduleId: "voip", label: "VoIP Calls", href: "/support/voip" },
+    { moduleId: "knowledge-base", label: "Knowledge Base", href: "/knowledge-base" },
+    { moduleId: "portal", label: "Client Portal", href: "/portal" },
+  ]},
+  { group: "Finance", items: [
+    { moduleId: "invoices", label: "Invoices", href: "/invoices" },
+    { moduleId: "budgeting", label: "Finance Dashboard", href: "/finance" },
+    { moduleId: "budgeting", label: "Budgeting", href: "/budgeting" },
+    { moduleId: "profitability", label: "Profitability", href: "/profitability" },
+    { moduleId: "profitability", label: "Pricing", href: "/pricing" },
+    { moduleId: "currencies", label: "Multi-Currency", href: "/settings/currencies" },
+  ]},
+  { group: "Analytics", items: [
+    { moduleId: "deals", label: "Forecast", href: "/forecast" },
+    { moduleId: "reports", label: "Reports", href: "/reports" },
+    { moduleId: "reports", label: "Report Builder", href: "/reports/builder" },
+    { moduleId: "ai", label: "Da Vinci AI", href: "/ai-command-center" },
+  ]},
+  { group: "ERP", items: [
+    { moduleId: "projects", label: "Projects", href: "/projects" },
+  ]},
+  { group: "Route & Field", items: [
+    { moduleId: "mtm", label: "MTM Dashboard", href: "/mtm" },
+    { moduleId: "mtm", label: "Live Map", href: "/mtm/map" },
+    { moduleId: "mtm", label: "Routes", href: "/mtm/routes" },
+    { moduleId: "mtm", label: "Visits", href: "/mtm/visits" },
+    { moduleId: "mtm", label: "Tasks", href: "/mtm/tasks" },
+    { moduleId: "mtm", label: "Customers", href: "/mtm/customers" },
+    { moduleId: "mtm", label: "Photos", href: "/mtm/photos" },
+    { moduleId: "mtm", label: "Alerts", href: "/mtm/alerts" },
+    { moduleId: "mtm", label: "Orders", href: "/mtm/orders" },
+    { moduleId: "mtm", label: "Agents", href: "/mtm/agents" },
+    { moduleId: "mtm", label: "Analytics", href: "/mtm/analytics" },
+    { moduleId: "mtm", label: "Leaderboard", href: "/mtm/leaderboard" },
+    { moduleId: "mtm", label: "Activity Log", href: "/mtm/activity" },
+    { moduleId: "mtm", label: "Reports", href: "/mtm/reports" },
+  ]},
+  { group: "Settings", items: [
+    { moduleId: "workflows", label: "Workflows", href: "/settings/workflows" },
+    { moduleId: "custom-fields", label: "Custom Fields", href: "/settings/custom-fields" },
+  ]},
+]
+
+// Extract unique toggleable moduleIds (skip "core" — always on)
+const TOGGLEABLE_MODULES = [...new Set(
+  SIDEBAR_SECTIONS.flatMap((s) => s.items.map((i) => i.moduleId)).filter((id) => id !== "core")
+)]
 
 const GROUP_ORDER = ["CRM", "Marketing", "Communication", "Support", "Finance", "Analytics", "ERP", "Route & Field", "Settings"]
 
@@ -39,27 +104,6 @@ const GROUP_STYLE: Record<string, { icon: any; color: string; bg: string; border
   "Route & Field":  { icon: MapPin,        color: "text-cyan-500",   bg: "bg-cyan-50",    border: "border-cyan-200" },
   Settings:         { icon: Settings,      color: "text-zinc-500",   bg: "bg-zinc-50",    border: "border-zinc-200" },
 }
-
-const FEATURE_MODULES = (Object.entries(MODULE_REGISTRY) as [ModuleId, { name: string; requires: ModuleId[]; alwaysOn?: boolean }][])
-  .filter(([, def]) => !def.alwaysOn)
-  .map(([id, def]) => ({
-    id,
-    label: def.name,
-    requires: def.requires,
-    group: SIDEBAR_MODULE_GROUPS[id] || "Other",
-  }))
-  .sort((a, b) => {
-    const ai = GROUP_ORDER.indexOf(a.group)
-    const bi = GROUP_ORDER.indexOf(b.group)
-    return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi)
-  })
-
-// Group modules by sidebar group
-const GROUPED_MODULES = FEATURE_MODULES.reduce((acc, mod) => {
-  if (!acc[mod.group]) acc[mod.group] = []
-  acc[mod.group].push(mod)
-  return acc
-}, {} as Record<string, typeof FEATURE_MODULES>)
 
 interface TenantData {
   id: string
@@ -243,18 +287,18 @@ export default function TenantEditPage() {
             </div>
           </Card>
 
-          {/* Modules */}
+          {/* Modules — shows every sidebar page grouped by section */}
           <Card className="p-5">
             <div className="flex items-center justify-between mb-5">
               <div>
                 <h3 className="text-base font-semibold">Active Modules</h3>
                 <p className="text-sm text-muted-foreground mt-0.5">
-                  {form.features.length} of {FEATURE_MODULES.length} modules enabled
+                  {form.features.length} of {TOGGLEABLE_MODULES.length} modules enabled
                 </p>
               </div>
               <div className="flex gap-2">
                 <Button type="button" variant="outline" size="sm"
-                  onClick={() => setForm((f) => ({ ...f, features: FEATURE_MODULES.map((m) => m.id) }))}
+                  onClick={() => setForm((f) => ({ ...f, features: [...TOGGLEABLE_MODULES] }))}
                 >Select All</Button>
                 <Button type="button" variant="outline" size="sm"
                   onClick={() => setForm((f) => ({ ...f, features: [] }))}
@@ -263,62 +307,72 @@ export default function TenantEditPage() {
             </div>
 
             <div className="space-y-4">
-              {GROUP_ORDER.filter((g) => GROUPED_MODULES[g]).map((group) => {
-                const style = GROUP_STYLE[group] || GROUP_STYLE.Settings
+              {SIDEBAR_SECTIONS.map((section) => {
+                const style = GROUP_STYLE[section.group] || GROUP_STYLE.Settings
                 const GroupIcon = style.icon
-                const groupModules = GROUPED_MODULES[group]
-                const activeCount = groupModules.filter((m) => form.features.includes(m.id)).length
+                // Unique moduleIds in this section (excluding core)
+                const sectionModuleIds = [...new Set(section.items.map((i) => i.moduleId).filter((id) => id !== "core"))]
+                const activeCount = sectionModuleIds.filter((id) => form.features.includes(id)).length
+                const totalToggleable = sectionModuleIds.length
 
                 return (
-                  <div key={group} className={`rounded-xl border ${style.border} ${style.bg} overflow-hidden`}>
+                  <div key={section.group} className={`rounded-xl border ${style.border} ${style.bg} overflow-hidden`}>
                     {/* Group header */}
                     <div className="flex items-center justify-between px-4 py-2.5">
                       <div className="flex items-center gap-2">
                         <GroupIcon className={`w-4 h-4 ${style.color}`} />
-                        <span className={`text-sm font-semibold ${style.color}`}>{group}</span>
+                        <span className={`text-sm font-semibold ${style.color}`}>{section.group}</span>
                       </div>
-                      <span className="text-xs text-muted-foreground">
-                        {activeCount}/{groupModules.length}
-                      </span>
+                      {totalToggleable > 0 && (
+                        <span className="text-xs text-muted-foreground">{activeCount}/{totalToggleable}</span>
+                      )}
                     </div>
-                    {/* Module toggles */}
-                    <div className="bg-white/80 px-3 py-2 grid grid-cols-2 sm:grid-cols-3 gap-1.5">
-                      {groupModules.map((mod) => {
-                        const isActive = form.features.includes(mod.id)
-                        const deps = mod.requires.filter((r: string) => r !== "core")
-                        const missingDeps = deps.filter((d: string) => !form.features.includes(d))
-                        return (
-                          <label
-                            key={mod.id}
-                            className={`flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm cursor-pointer transition-all ${
-                              isActive
-                                ? `${style.bg} ${style.border} border shadow-sm`
-                                : "border border-transparent hover:bg-muted/30"
-                            }`}
-                          >
-                            <div className={`w-8 h-[18px] rounded-full relative transition-colors ${isActive ? "bg-primary" : "bg-zinc-200"}`}
-                              onClick={(e) => { e.preventDefault(); toggleFeature(mod.id) }}
+                    {/* Pages list */}
+                    <div className="bg-white/80 px-3 py-2">
+                      {/* Module toggles — one per unique moduleId */}
+                      {sectionModuleIds.length > 0 && (
+                        <div className="flex flex-wrap gap-2 mb-2">
+                          {sectionModuleIds.map((modId) => {
+                            const isActive = form.features.includes(modId)
+                            const modDef = MODULE_REGISTRY[modId as ModuleId]
+                            return (
+                              <button
+                                key={modId}
+                                type="button"
+                                onClick={() => toggleFeature(modId)}
+                                className={`inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-all ${
+                                  isActive
+                                    ? `${style.bg} ${style.border} border shadow-sm font-medium`
+                                    : "border border-zinc-200 hover:bg-muted/30 text-muted-foreground"
+                                }`}
+                              >
+                                <div className={`w-7 h-[16px] rounded-full relative transition-colors flex-shrink-0 ${isActive ? "bg-primary" : "bg-zinc-200"}`}>
+                                  <div className={`absolute top-[2px] w-[12px] h-[12px] rounded-full bg-white shadow transition-transform ${isActive ? "left-[13px]" : "left-[2px]"}`} />
+                                </div>
+                                {modDef?.name || modId}
+                              </button>
+                            )
+                          })}
+                        </div>
+                      )}
+                      {/* Pages affected */}
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-1">
+                        {section.items.map((item) => {
+                          const isCore = item.moduleId === "core"
+                          const isEnabled = isCore || form.features.includes(item.moduleId)
+                          return (
+                            <div
+                              key={item.href}
+                              className={`flex items-center gap-2 rounded px-2.5 py-1.5 text-xs transition-colors ${
+                                isEnabled ? "text-foreground" : "text-muted-foreground/40 line-through"
+                              }`}
                             >
-                              <div className={`absolute top-[2px] w-[14px] h-[14px] rounded-full bg-white shadow transition-transform ${isActive ? "left-[16px]" : "left-[2px]"}`} />
+                              <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${isEnabled ? "bg-green-400" : "bg-zinc-200"}`} />
+                              {item.label}
                             </div>
-                            <div className="min-w-0">
-                              <span className={`font-medium block truncate ${isActive ? "text-foreground" : "text-muted-foreground"}`}>
-                                {mod.label}
-                              </span>
-                              {deps.length > 0 && (
-                                <span className="text-[11px] text-muted-foreground block truncate">
-                                  {deps.map((d: string) => MODULE_REGISTRY[d as ModuleId]?.name || d).join(", ")}
-                                </span>
-                              )}
-                              {isActive && missingDeps.length > 0 && (
-                                <span className="text-[11px] text-amber-600 block">
-                                  ! {missingDeps.map((d: string) => MODULE_REGISTRY[d as ModuleId]?.name || d).join(", ")}
-                                </span>
-                              )}
-                            </div>
-                          </label>
-                        )
-                      })}
+                          )
+                        })}
+                      </div>
                     </div>
                   </div>
                 )
