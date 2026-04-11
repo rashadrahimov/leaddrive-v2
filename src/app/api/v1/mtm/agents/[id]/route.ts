@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { getOrgId } from "@/lib/api-auth"
+import bcrypt from "bcryptjs"
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const orgId = await getOrgId(req)
@@ -26,16 +27,23 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 
   try {
     const body = await req.json()
+
+    // Hash password if provided
+    const data: any = {
+      name: body.name,
+      email: body.email || null,
+      phone: body.phone || null,
+      role: body.role || "AGENT",
+      status: body.status || "ACTIVE",
+      managerId: body.managerId || null,
+    }
+    if (body.password && body.password.length >= 6) {
+      data.passwordHash = await bcrypt.hash(body.password, 12)
+    }
+
     const agent = await prisma.mtmAgent.updateMany({
       where: { id, organizationId: orgId },
-      data: {
-        name: body.name,
-        email: body.email || null,
-        phone: body.phone || null,
-        role: body.role || "AGENT",
-        status: body.status || "ACTIVE",
-        managerId: body.managerId || null,
-      },
+      data,
     })
     if (agent.count === 0) return NextResponse.json({ error: "Not found" }, { status: 404 })
     return NextResponse.json({ success: true })

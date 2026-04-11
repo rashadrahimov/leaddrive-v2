@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { getOrgId } from "@/lib/api-auth"
+import bcrypt from "bcryptjs"
 
 export async function GET(req: NextRequest) {
   const orgId = await getOrgId(req)
@@ -40,12 +41,20 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json()
+
+    // Hash password if provided (for mobile app login)
+    let passwordHash: string | null = null
+    if (body.password && body.password.length >= 6) {
+      passwordHash = await bcrypt.hash(body.password, 12)
+    }
+
     const agent = await prisma.mtmAgent.create({
       data: {
         organizationId: orgId,
         name: body.name,
         email: body.email || null,
         phone: body.phone || null,
+        passwordHash,
         role: body.role || "AGENT",
         managerId: body.managerId || null,
         userId: body.userId || null,

@@ -9,6 +9,10 @@ const JWT_SECRET = process.env.NEXTAUTH_SECRET || "fallback-secret"
  * POST /api/v1/mtm/mobile/auth
  * Mobile agent login — returns JWT token.
  * Body: { email, password }
+ *
+ * Auth priority:
+ * 1. Check agent's own passwordHash (set via admin form)
+ * 2. Fallback: check linked CRM User's passwordHash
  */
 export async function POST(req: NextRequest) {
   try {
@@ -28,37 +32,53 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Agent not found" }, { status: 401 })
     }
 
-    // Agent must be linked to a CRM User for password verification
-    if (!agent.userId) {
-      // Try to find a CRM User with the same email
-      const user = await prisma.user.findFirst({
-        where: { email: email.toLowerCase().trim(), organizationId: agent.organizationId, isActive: true },
-      })
+    let authenticated = false
+    let linkedUserId = agent.userId
 
-      if (user) {
-        // Auto-link agent to user
-        await prisma.mtmAgent.update({
-          where: { id: agent.id },
-          data: { userId: user.id },
-        })
-        agent.userId = user.id
-      } else {
-        return NextResponse.json({ error: "No credentials configured for this agent" }, { status: 401 })
+    // Method 1: Check agent's own passwordHash (primary)
+    if (agent.passwordHash) {
+      const valid = await bcrypt.compare(password, agent.passwordHash)
+      if (valid) {
+        authenticated = true
       }
     }
 
-    // Get the linked CRM User and verify password
-    const user = await prisma.user.findUnique({
-      where: { id: agent.userId! },
-      select: { id: true, passwordHash: true, isActive: true, name: true, email: true },
-    })
-
-    if (!user || !user.isActive || !user.passwordHash) {
-      return NextResponse.json({ error: "Account inactive or no password set" }, { status: 401 })
+    // Method 2: Fallback to linked CRM User
+    if (!authenticated && agent.userId) {
+      const user = await prisma.user.findUnique({
+        where: { id: agent.userId },
+        select: { id: true, passwordHash: true, isActive: true },
+      })
+      if (user?.isActive && user.passwordHash) {
+        const valid = await bcrypt.compare(password, user.passwordHash)
+        if (valid) {
+          authenticated = true
+          linkedUserId = user.id
+        }
+      }
     }
 
-    const valid = await bcrypt.compare(password, user.passwordHash)
-    if (!valid) {
+    // Method 3: Auto-find CRM User by same email (if no direct password)
+    if (!authenticated && !agent.passwordHash) {
+      const user = await prisma.user.findFirst({
+        where: { email: email.toLowerCase().trim(), organizationId: agent.organizationId, isActive: true },
+        select: { id: true, passwordHash: true },
+      })
+      if (user?.passwordHash) {
+        const valid = await bcrypt.compare(password, user.passwordHash)
+        if (valid) {
+          authenticated = true
+          linkedUserId = user.id
+          // Auto-link agent to user
+          await prisma.mtmAgent.update({
+            where: { id: agent.id },
+            data: { userId: user.id },
+          })
+        }
+      }
+    }
+
+    if (!authenticated) {
       return NextResponse.json({ error: "Invalid password" }, { status: 401 })
     }
 
@@ -72,9 +92,9 @@ export async function POST(req: NextRequest) {
     const token = jwt.sign(
       {
         agentId: agent.id,
-        userId: user.id,
+        userId: linkedUserId || "",
         orgId: agent.organizationId,
-        email: user.email,
+        email: agent.email,
         name: agent.name,
         role: agent.role,
       },

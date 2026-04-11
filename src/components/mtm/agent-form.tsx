@@ -24,6 +24,7 @@ export function MtmAgentForm({ open, onOpenChange, onSaved, initialData, orgId }
     name: "",
     email: "",
     phone: "",
+    password: "",
     role: "AGENT",
     status: "ACTIVE",
     managerId: "",
@@ -38,6 +39,7 @@ export function MtmAgentForm({ open, onOpenChange, onSaved, initialData, orgId }
         name: initialData?.name || "",
         email: initialData?.email || "",
         phone: initialData?.phone || "",
+        password: "",
         role: initialData?.role || "AGENT",
         status: initialData?.status || "ACTIVE",
         managerId: initialData?.managerId || "",
@@ -66,7 +68,11 @@ export function MtmAgentForm({ open, onOpenChange, onSaved, initialData, orgId }
           "Content-Type": "application/json",
           ...(orgId ? { "x-organization-id": orgId } : {} as Record<string, string>),
         },
-        body: JSON.stringify({ ...form, managerId: form.managerId || null }),
+        body: JSON.stringify({
+          ...form,
+          managerId: form.managerId || null,
+          password: form.password || undefined, // only send if not empty
+        }),
       })
       const json = await res.json()
       if (!res.ok) throw new Error(json.error || tc("failedToSave"))
@@ -101,6 +107,19 @@ export function MtmAgentForm({ open, onOpenChange, onSaved, initialData, orgId }
                 <Label htmlFor="phone">{tc("phone")}</Label>
                 <Input id="phone" value={form.phone} onChange={e => update("phone", e.target.value)} />
               </div>
+            </div>
+            <div>
+              <Label htmlFor="password">{isEdit ? tf("newPassword") : tf("password")} {!isEdit && "*"}</Label>
+              <Input
+                id="password"
+                type="password"
+                value={form.password}
+                onChange={e => update("password", e.target.value)}
+                placeholder={isEdit ? tf("leaveEmptyToKeep") : tf("minSixChars")}
+                minLength={isEdit ? 0 : 6}
+                required={!isEdit}
+              />
+              <p className="text-xs text-muted-foreground mt-1">{tf("passwordHint")}</p>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>

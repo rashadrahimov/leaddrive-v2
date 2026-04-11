@@ -2715,6 +2715,7 @@ model MtmAgent {
   name           String
   email          String?
   phone          String?
+  passwordHash   String?        // for mobile app login
   role           MtmAgentRole   @default(AGENT)
   status         MtmAgentStatus @default(ACTIVE)
   avatar         String?
