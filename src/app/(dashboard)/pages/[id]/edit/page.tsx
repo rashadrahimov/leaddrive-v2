@@ -1,6 +1,7 @@
 "use client"
 
-import { use } from "react"
+import { use, Suspense } from "react"
+import { useTranslations } from "next-intl"
 import dynamic from "next/dynamic"
 
 const GrapesEditor = dynamic(
@@ -8,15 +9,17 @@ const GrapesEditor = dynamic(
     import("@/components/grapes-editor").then((m) => ({
       default: m.default || m.GrapesEditor,
     })),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="h-screen flex items-center justify-center text-muted-foreground">
-        Loading editor...
-      </div>
-    ),
-  }
+  { ssr: false }
 )
+
+function EditorFallback() {
+  const t = useTranslations("common")
+  return (
+    <div className="h-screen flex items-center justify-center text-muted-foreground">
+      {t("loadingEditor")}
+    </div>
+  )
+}
 
 export default function PageEditorPage({
   params,
@@ -25,5 +28,9 @@ export default function PageEditorPage({
 }) {
   const { id } = use(params)
 
-  return <GrapesEditor pageId={id} />
+  return (
+    <Suspense fallback={<EditorFallback />}>
+      <GrapesEditor pageId={id} />
+    </Suspense>
+  )
 }

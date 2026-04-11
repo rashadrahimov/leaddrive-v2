@@ -10,6 +10,7 @@ import {
   Headphones, Ticket, Clock, CheckCircle2, AlertTriangle, TrendingUp,
   Users, Star, ArrowRight, Timer, BarChart3,
 } from "lucide-react"
+import { useTranslations } from "next-intl"
 
 /* ── CircularGauge (SVG ring) ─────────────────── */
 function CircularGauge({
@@ -57,6 +58,7 @@ interface AgentStats {
 }
 
 export default function AgentDesktopPage() {
+  const t = useTranslations("agentDesktop")
   const { data: session } = useSession()
   const router = useRouter()
   const orgId = session?.user?.organizationId
@@ -200,13 +202,13 @@ export default function AgentDesktopPage() {
             <Headphones className="h-5 w-5 text-primary" />
           </div>
           <div>
-            <h1 className="text-xl font-bold">Agent Desktop</h1>
-            <p className="text-sm text-muted-foreground">Support dashboard &mdash; {session?.user?.name}</p>
+            <h1 className="text-xl font-bold">{t("title")}</h1>
+            <p className="text-sm text-muted-foreground">{t("subtitle", { name: session?.user?.name || "" })}</p>
           </div>
         </div>
         <div className="flex items-center gap-3">
           <span className={`text-sm font-medium ${isAvailable ? "text-green-600" : "text-muted-foreground"}`}>
-            {isAvailable ? "Available" : "Unavailable"}
+            {isAvailable ? t("available") : t("unavailable")}
           </span>
           <button
             type="button"
@@ -227,28 +229,28 @@ export default function AgentDesktopPage() {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <div className="bg-blue-500 text-white rounded-xl p-4 shadow-sm">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium opacity-80">Open Cases</span>
+            <span className="text-xs font-medium opacity-80">{t("openCases")}</span>
             <Ticket className="h-4 w-4 opacity-80" />
           </div>
           <span className="text-2xl font-bold">{stats.totalOpen}</span>
         </div>
         <div className="bg-violet-500 text-white rounded-xl p-4 shadow-sm">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium opacity-80">My Cases</span>
+            <span className="text-xs font-medium opacity-80">{t("myCases")}</span>
             <Users className="h-4 w-4 opacity-80" />
           </div>
           <span className="text-2xl font-bold">{stats.myOpen}</span>
         </div>
         <div className="bg-green-500 text-white rounded-xl p-4 shadow-sm">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium opacity-80">Avg Response</span>
+            <span className="text-xs font-medium opacity-80">{t("avgResponse")}</span>
             <Timer className="h-4 w-4 opacity-80" />
           </div>
           <span className="text-2xl font-bold">{stats.avgResponseTime}</span>
         </div>
         <div className="bg-amber-500 text-white rounded-xl p-4 shadow-sm">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium opacity-80">CSAT</span>
+            <span className="text-xs font-medium opacity-80">{t("csat")}</span>
             <Star className="h-4 w-4 opacity-80" />
           </div>
           <span className="text-2xl font-bold">{stats.csatScore}%</span>
@@ -260,7 +262,7 @@ export default function AgentDesktopPage() {
         {/* Team KPI Gauges */}
         <Card className="border-none shadow-sm">
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Team KPIs</CardTitle>
+            <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">{t("teamKpis")}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex justify-around">
@@ -271,7 +273,7 @@ export default function AgentDesktopPage() {
 
             {/* Priority breakdown */}
             <div className="mt-4 pt-4 border-t space-y-2">
-              <p className="text-xs font-medium text-muted-foreground mb-2">Open by Priority</p>
+              <p className="text-xs font-medium text-muted-foreground mb-2">{t("openByPriority")}</p>
               {stats.byPriority.map(p => (
                 <div key={p.priority} className="flex items-center gap-2 text-sm">
                   <div className={`h-2.5 w-2.5 rounded-full ${PRIORITY_COLORS[p.priority]}`} />
@@ -287,24 +289,24 @@ export default function AgentDesktopPage() {
         <Card className="border-none shadow-sm lg:col-span-2">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Open Cases</CardTitle>
+              <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">{t("openCases")}</CardTitle>
               <Button variant="ghost" size="sm" className="text-xs gap-1" onClick={() => router.push("/tickets")}>
-                View all <ArrowRight className="h-3 w-3" />
+                {t("viewAll")} <ArrowRight className="h-3 w-3" />
               </Button>
             </div>
           </CardHeader>
           <CardContent>
             {stats.tickets.length === 0 ? (
-              <p className="text-center text-muted-foreground py-8">No open cases</p>
+              <p className="text-center text-muted-foreground py-8">{t("noOpenCases")}</p>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b">
-                      <th className="text-left p-2 font-medium text-muted-foreground text-xs">Subject</th>
-                      <th className="text-left p-2 font-medium text-muted-foreground text-xs">Priority</th>
-                      <th className="text-left p-2 font-medium text-muted-foreground text-xs">Status</th>
-                      <th className="text-left p-2 font-medium text-muted-foreground text-xs">Created</th>
+                      <th className="text-left p-2 font-medium text-muted-foreground text-xs">{t("colSubject")}</th>
+                      <th className="text-left p-2 font-medium text-muted-foreground text-xs">{t("colPriority")}</th>
+                      <th className="text-left p-2 font-medium text-muted-foreground text-xs">{t("colStatus")}</th>
+                      <th className="text-left p-2 font-medium text-muted-foreground text-xs">{t("colCreated")}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -344,21 +346,21 @@ export default function AgentDesktopPage() {
       {/* Agent Leaderboard */}
       <Card className="border-none shadow-sm">
         <CardHeader className="pb-3">
-          <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Agent Leaderboard</CardTitle>
+          <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">{t("agentLeaderboard")}</CardTitle>
         </CardHeader>
         <CardContent>
           {stats.leaderboard.length === 0 ? (
-            <p className="text-center text-muted-foreground py-4">No data</p>
+            <p className="text-center text-muted-foreground py-4">{t("noData")}</p>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b">
                     <th className="text-left p-2 font-medium text-muted-foreground text-xs">#</th>
-                    <th className="text-left p-2 font-medium text-muted-foreground text-xs">Agent</th>
-                    <th className="text-left p-2 font-medium text-muted-foreground text-xs">Resolved</th>
-                    <th className="text-left p-2 font-medium text-muted-foreground text-xs">Avg Time</th>
-                    <th className="text-left p-2 font-medium text-muted-foreground text-xs">CSAT</th>
+                    <th className="text-left p-2 font-medium text-muted-foreground text-xs">{t("colAgent")}</th>
+                    <th className="text-left p-2 font-medium text-muted-foreground text-xs">{t("colResolved")}</th>
+                    <th className="text-left p-2 font-medium text-muted-foreground text-xs">{t("colAvgTime")}</th>
+                    <th className="text-left p-2 font-medium text-muted-foreground text-xs">{t("csat")}</th>
                   </tr>
                 </thead>
                 <tbody>

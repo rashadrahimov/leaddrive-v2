@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma"
 import { headers } from "next/headers"
+import { getTranslations } from "next-intl/server"
 
 export const dynamic = "force-dynamic"
 
@@ -9,6 +10,7 @@ export default async function CustomDomainPage({
   searchParams: Promise<{ host?: string; slug?: string }>
 }) {
   const { host, slug } = await searchParams
+  const t = await getTranslations("customDomain")
 
   if (!host) {
     return (
@@ -16,12 +18,12 @@ export default async function CustomDomainPage({
         <head>
           <meta charSet="utf-8" />
           <meta name="viewport" content="width=device-width, initial-scale=1" />
-          <title>Domain Not Configured</title>
+          <title>{t("domainNotConfigured")}</title>
         </head>
         <body style={{ fontFamily: "system-ui, sans-serif", display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh", margin: 0, background: "#f9fafb" }}>
           <div style={{ textAlign: "center", padding: "40px" }}>
-            <h1 style={{ fontSize: "24px", fontWeight: 700, color: "#111827", marginBottom: "8px" }}>Domain Not Configured</h1>
-            <p style={{ color: "#6b7280", fontSize: "16px" }}>This domain is not connected to any organization.</p>
+            <h1 style={{ fontSize: "24px", fontWeight: 700, color: "#111827", marginBottom: "8px" }}>{t("domainNotConfigured")}</h1>
+            <p style={{ color: "#6b7280", fontSize: "16px" }}>{t("notConnected")}</p>
           </div>
         </body>
       </html>
@@ -39,17 +41,17 @@ export default async function CustomDomainPage({
         <head>
           <meta charSet="utf-8" />
           <meta name="viewport" content="width=device-width, initial-scale=1" />
-          <title>Domain Not Configured</title>
+          <title>{t("domainNotConfigured")}</title>
         </head>
         <body style={{ fontFamily: "system-ui, sans-serif", display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh", margin: 0, background: "#f9fafb" }}>
           <div style={{ textAlign: "center", padding: "40px" }}>
-            <h1 style={{ fontSize: "24px", fontWeight: 700, color: "#111827", marginBottom: "8px" }}>Domain Not Configured</h1>
-            <p style={{ color: "#6b7280", fontSize: "16px" }}>This domain is not properly configured. Please contact the site administrator.</p>
+            <h1 style={{ fontSize: "24px", fontWeight: 700, color: "#111827", marginBottom: "8px" }}>{t("domainNotConfigured")}</h1>
+            <p style={{ color: "#6b7280", fontSize: "16px" }}>{t("notProperlyConfigured")}</p>
             {customDomain?.status === "pending" && (
-              <p style={{ color: "#9ca3af", fontSize: "14px", marginTop: "8px" }}>DNS verification is pending.</p>
+              <p style={{ color: "#9ca3af", fontSize: "14px", marginTop: "8px" }}>{t("dnsPending")}</p>
             )}
             {customDomain?.status === "error" && (
-              <p style={{ color: "#ef4444", fontSize: "14px", marginTop: "8px" }}>There was a configuration error. Please check your DNS settings.</p>
+              <p style={{ color: "#ef4444", fontSize: "14px", marginTop: "8px" }}>{t("dnsError")}</p>
             )}
           </div>
         </body>
@@ -92,7 +94,7 @@ export default async function CustomDomainPage({
                 ))}
               </div>
             ) : (
-              <p className="text-gray-500 text-center">No pages available yet.</p>
+              <p className="text-gray-500 text-center">{t("noPagesYet")}</p>
             )}
             <p className="text-xs text-gray-400 text-center mt-8">
               Powered by{" "}
@@ -121,13 +123,13 @@ export default async function CustomDomainPage({
         <head>
           <meta charSet="utf-8" />
           <meta name="viewport" content="width=device-width, initial-scale=1" />
-          <title>Page Not Found</title>
+          <title>{t("pageNotFound")}</title>
         </head>
         <body style={{ fontFamily: "system-ui, sans-serif", display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh", margin: 0, background: "#f9fafb" }}>
           <div style={{ textAlign: "center", padding: "40px" }}>
             <h1 style={{ fontSize: "48px", fontWeight: 700, color: "#111827", marginBottom: "8px" }}>404</h1>
-            <p style={{ color: "#6b7280", fontSize: "16px" }}>Page not found.</p>
-            <a href="/" style={{ color: "#3b82f6", textDecoration: "underline", marginTop: "16px", display: "inline-block" }}>Go to homepage</a>
+            <p style={{ color: "#6b7280", fontSize: "16px" }}>{t("pageNotFoundDesc")}</p>
+            <a href="/" style={{ color: "#3b82f6", textDecoration: "underline", marginTop: "16px", display: "inline-block" }}>{t("goToHomepage")}</a>
           </div>
         </body>
       </html>
@@ -209,7 +211,7 @@ export default async function CustomDomainPage({
                     var submitBtn = form.querySelector('button[type="submit"]');
                     if (submitBtn) {
                       submitBtn.disabled = true;
-                      submitBtn.textContent = 'Sending...';
+                      submitBtn.textContent = '${t("sending")}';
                     }
 
                     fetch('/api/v1/public/form-submit', {
@@ -224,7 +226,7 @@ export default async function CustomDomainPage({
                     })
                     .then(function(res) {
                       if (res.ok) {
-                        form.innerHTML = '<div style="text-align:center;padding:32px;"><h3 style="font-size:24px;font-weight:700;color:#059669;margin:0 0 8px;">Thank you!</h3><p style="color:#6b7280;margin:0;">Your submission has been received. We will get back to you shortly.</p></div>';
+                        form.innerHTML = '<div style="text-align:center;padding:32px;"><h3 style="font-size:24px;font-weight:700;color:#059669;margin:0 0 8px;">${t("thankYou")}</h3><p style="color:#6b7280;margin:0;">${t("submissionReceived")}</p></div>';
                       } else {
                         throw new Error('Submit failed');
                       }
@@ -232,9 +234,9 @@ export default async function CustomDomainPage({
                     .catch(function() {
                       if (submitBtn) {
                         submitBtn.disabled = false;
-                        submitBtn.textContent = 'Submit';
+                        submitBtn.textContent = '${t("submit")}';
                       }
-                      alert('Something went wrong. Please try again.');
+                      alert('${t("somethingWentWrong")}');
                     });
                   });
                 });

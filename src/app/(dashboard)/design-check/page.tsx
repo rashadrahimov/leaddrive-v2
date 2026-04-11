@@ -1,6 +1,7 @@
 "use client"
 
 import { useRef } from "react"
+import { useTranslations } from "next-intl"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -59,6 +60,7 @@ const colorTokens = [
 ]
 
 export default function DesignCheckPage() {
+  const t = useTranslations("designCheck")
   return (
     <div className="space-y-6 animate-fade-in-up">
       {/* Header */}
@@ -66,10 +68,10 @@ export default function DesignCheckPage() {
         <div>
           <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
             <Sparkles className="size-6 text-accent" />
-            Design System Check
+            {t("title")}
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Nano-Banana MCP + UI UX Pro Max + 21st.dev — все три системы в одном месте
+            {t("subtitle")}
           </p>
         </div>
         <div className="flex gap-2">
@@ -82,13 +84,13 @@ export default function DesignCheckPage() {
       <Tabs defaultValue="components" className="space-y-4">
         <TabsList>
           <TabsTrigger value="components" className="gap-1.5">
-            <Layers className="size-4" /> Animated Components
+            <Layers className="size-4" /> {t("tabs.components")}
           </TabsTrigger>
           <TabsTrigger value="tokens" className="gap-1.5">
-            <Palette className="size-4" /> Design Tokens
+            <Palette className="size-4" /> {t("tabs.tokens")}
           </TabsTrigger>
           <TabsTrigger value="generation" className="gap-1.5">
-            <Image className="size-4" /> Image Generation
+            <Image className="size-4" /> {t("tabs.generation")}
           </TabsTrigger>
         </TabsList>
 
@@ -111,7 +113,7 @@ export default function DesignCheckPage() {
                   </span>
                 </ShimmerButton>
                 <p className="text-xs text-muted-foreground text-center">
-                  Кнопка с shimmer-эффектом в цветах бренда
+                  {t("shimmerDesc")}
                 </p>
               </CardContent>
             </Card>
@@ -128,7 +130,7 @@ export default function DesignCheckPage() {
                   </span>
                 </AnimatedGradientText>
                 <p className="text-xs text-muted-foreground text-center">
-                  Градиентный текст с анимацией
+                  {t("gradientDesc")}
                 </p>
               </CardContent>
             </Card>
@@ -147,14 +149,14 @@ export default function DesignCheckPage() {
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
                       <Monitor className="size-5 text-accent" />
-                      <span className="font-semibold">Dashboard Analytics</span>
+                      <span className="font-semibold">{t("dashboardAnalytics")}</span>
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      Наведите мышь для интерактивного градиента
+                      {t("magicCardDesc")}
                     </p>
                     <div className="flex gap-2 mt-3">
                       <Badge>+12.5%</Badge>
-                      <Badge variant="secondary">241 компаний</Badge>
+                      <Badge variant="secondary">{t("companiesCount", { count: 241 })}</Badge>
                     </div>
                   </div>
                 </MagicCard>
@@ -168,12 +170,12 @@ export default function DesignCheckPage() {
               </CardHeader>
               <CardContent className="flex flex-col items-center gap-4">
                 <TypingAnimation
-                  text="Добро пожаловать в LeadDrive CRM"
+                  text={t("welcomeText")}
                   duration={80}
                   className="text-lg font-semibold text-foreground"
                 />
                 <p className="text-xs text-muted-foreground text-center">
-                  Эффект печати текста
+                  {t("typingDesc")}
                 </p>
               </CardContent>
             </Card>
@@ -187,7 +189,7 @@ export default function DesignCheckPage() {
             <CardContent>
               <AnimatedBeamDemo />
               <p className="text-xs text-muted-foreground text-center mt-3">
-                Анимированные лучи между узлами — идеально для визуализации потоков данных
+                {t("beamDesc")}
               </p>
             </CardContent>
           </Card>
@@ -312,10 +314,9 @@ export default function DesignCheckPage() {
             <CardContent className="space-y-4">
               <div className="rounded-lg border-2 border-dashed border-accent/30 bg-accent/5 p-8 text-center">
                 <Sparkles className="mx-auto size-12 text-accent/50 mb-4" />
-                <h3 className="text-lg font-semibold mb-2">Da Vinci Image Generation Ready</h3>
+                <h3 className="text-lg font-semibold mb-2">{t("imageGen.title")}</h3>
                 <p className="text-sm text-muted-foreground max-w-md mx-auto mb-4">
-                  Nano-Banana MCP подключен к Claude Code. Генерируйте макеты, иконки
-                  и иллюстрации через Gemini 2.5 Flash прямо в сессии разработки.
+                  {t("imageGen.description")}
                 </p>
                 <div className="flex flex-wrap justify-center gap-2">
                   <Badge variant="secondary">Gemini 2.5 Flash</Badge>
@@ -327,21 +328,21 @@ export default function DesignCheckPage() {
 
               <div className="grid gap-4 sm:grid-cols-3">
                 <div className="rounded-lg border p-4">
-                  <h4 className="font-medium text-sm mb-1">Генерация макетов</h4>
+                  <h4 className="font-medium text-sm mb-1">{t("imageGen.mockups")}</h4>
                   <p className="text-xs text-muted-foreground">
-                    Попросите Claude сгенерировать UI mockup через MCP-вызов
+                    {t("imageGen.mockupsDesc")}
                   </p>
                 </div>
                 <div className="rounded-lg border p-4">
-                  <h4 className="font-medium text-sm mb-1">Редактирование</h4>
+                  <h4 className="font-medium text-sm mb-1">{t("imageGen.editing")}</h4>
                   <p className="text-xs text-muted-foreground">
-                    Итеративная доработка изображений с reference images
+                    {t("imageGen.editingDesc")}
                   </p>
                 </div>
                 <div className="rounded-lg border p-4">
-                  <h4 className="font-medium text-sm mb-1">Экспорт</h4>
+                  <h4 className="font-medium text-sm mb-1">{t("imageGen.export")}</h4>
                   <p className="text-xs text-muted-foreground">
-                    Результаты сохраняются в <code className="font-mono">public/generated/</code>
+                    {t("imageGen.exportDesc")}
                   </p>
                 </div>
               </div>

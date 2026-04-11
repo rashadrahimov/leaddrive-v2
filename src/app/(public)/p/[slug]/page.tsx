@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma"
 import { notFound } from "next/navigation"
 import { headers } from "next/headers"
+import { getTranslations } from "next-intl/server"
 
 export const dynamic = "force-dynamic"
 
@@ -10,6 +11,7 @@ export default async function PublicLandingPage({
   params: Promise<{ slug: string }>
 }) {
   const { slug } = await params
+  const t = await getTranslations("publicPage")
 
   // Find published page by slug (across all orgs for public access)
   const page = await prisma.landingPage.findFirst({
@@ -103,7 +105,7 @@ export default async function PublicLandingPage({
                     var submitBtn = form.querySelector('button[type="submit"]');
                     if (submitBtn) {
                       submitBtn.disabled = true;
-                      submitBtn.textContent = 'Sending...';
+                      submitBtn.textContent = '${t("sending")}';
                     }
 
                     fetch('/api/v1/public/form-submit', {
@@ -118,7 +120,7 @@ export default async function PublicLandingPage({
                     })
                     .then(function(res) {
                       if (res.ok) {
-                        form.innerHTML = '<div style="text-align:center;padding:32px;"><h3 style="font-size:24px;font-weight:700;color:#059669;margin:0 0 8px;">Thank you!</h3><p style="color:#6b7280;margin:0;">Your submission has been received. We will get back to you shortly.</p></div>';
+                        form.innerHTML = '<div style="text-align:center;padding:32px;"><h3 style="font-size:24px;font-weight:700;color:#059669;margin:0 0 8px;">${t("thankYou")}</h3><p style="color:#6b7280;margin:0;">${t("submissionReceived")}</p></div>';
                       } else {
                         throw new Error('Submit failed');
                       }
@@ -126,9 +128,9 @@ export default async function PublicLandingPage({
                     .catch(function() {
                       if (submitBtn) {
                         submitBtn.disabled = false;
-                        submitBtn.textContent = 'Submit';
+                        submitBtn.textContent = '${t("submit")}';
                       }
-                      alert('Something went wrong. Please try again.');
+                      alert('${t("somethingWentWrong")}');
                     });
                   });
                 });

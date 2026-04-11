@@ -7,8 +7,10 @@ import { ColorStatCard } from "@/components/color-stat-card"
 import { Button } from "@/components/ui/button"
 import { Select } from "@/components/ui/select"
 import { Activity, LogIn, LogOut, Camera, Download } from "lucide-react"
+import { useTranslations } from "next-intl"
 
 export default function MtmActivityPage() {
+  const t = useTranslations("mtmActivity")
   const { data: session } = useSession()
   const [data, setData] = useState<any>(null)
   const [loading, setLoading] = useState(true)
@@ -31,7 +33,7 @@ export default function MtmActivityPage() {
 
   if (loading) return (
     <div className="space-y-6">
-      <PageDescription icon={Activity} title="Activity Journal" description="Check-in/check-out and field activity log" />
+      <PageDescription icon={Activity} title={t("title")} description={t("description")} />
       <div className="animate-pulse space-y-4">
         <div className="grid gap-3 grid-cols-2 sm:grid-cols-4">{[1,2,3,4].map(i => <div key={i} className="h-24 bg-muted rounded-lg" />)}</div>
         <div className="h-64 bg-muted rounded-lg" />
@@ -55,44 +57,44 @@ export default function MtmActivityPage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <PageDescription icon={Activity} title="Activity Journal" description="Check-in/check-out and field activity log" />
+        <PageDescription icon={Activity} title={t("title")} description={t("description")} />
         <Button variant="outline" size="sm">
-          <Download className="h-4 w-4 mr-1" /> Export
+          <Download className="h-4 w-4 mr-1" /> {t("export")}
         </Button>
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 stagger-children">
-        <ColorStatCard label="Total Activity" value={kpi.totalActivities} icon={<Activity className="h-4 w-4" />} color="violet" />
-        <ColorStatCard label="Check-in" value={kpi.totalCheckIns} icon={<LogIn className="h-4 w-4" />} color="green" />
-        <ColorStatCard label="Check-out" value={kpi.totalCheckOuts} icon={<LogOut className="h-4 w-4" />} color="teal" />
-        <ColorStatCard label="Photo Upload" value={kpi.totalPhotos} icon={<Camera className="h-4 w-4" />} color="blue" />
+        <ColorStatCard label={t("totalActivity")} value={kpi.totalActivities} icon={<Activity className="h-4 w-4" />} color="violet" />
+        <ColorStatCard label={t("checkIn")} value={kpi.totalCheckIns} icon={<LogIn className="h-4 w-4" />} color="green" />
+        <ColorStatCard label={t("checkOut")} value={kpi.totalCheckOuts} icon={<LogOut className="h-4 w-4" />} color="teal" />
+        <ColorStatCard label={t("photoUpload")} value={kpi.totalPhotos} icon={<Camera className="h-4 w-4" />} color="blue" />
       </div>
 
       <div className="rounded-lg border bg-card p-4">
         <div className="flex items-center justify-between mb-3">
-          <h3 className="font-semibold text-sm">Activity Type</h3>
+          <h3 className="font-semibold text-sm">{t("activityType")}</h3>
           <Select value={type} onChange={e => setType(e.target.value)} className="w-[200px]">
-            <option value="">All</option>
-            <option value="CHECK_IN">Check-in</option>
-            <option value="CHECK_OUT">Check-out</option>
-            <option value="PHOTO">Photo Upload</option>
+            <option value="">{t("all")}</option>
+            <option value="CHECK_IN">{t("checkIn")}</option>
+            <option value="CHECK_OUT">{t("checkOut")}</option>
+            <option value="PHOTO">{t("photoUpload")}</option>
           </Select>
         </div>
       </div>
 
       {logs.length === 0 ? (
         <div className="h-48 flex items-center justify-center text-muted-foreground border rounded-lg bg-card">
-          No activity found for this period
+          {t("noActivity")}
         </div>
       ) : (
         <div className="rounded-lg border bg-card overflow-hidden">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b bg-muted/50 text-left">
-                <th className="px-4 py-2 font-medium">Time</th>
-                <th className="px-4 py-2 font-medium">Agent</th>
-                <th className="px-4 py-2 font-medium">Action</th>
-                <th className="px-4 py-2 font-medium">Details</th>
+                <th className="px-4 py-2 font-medium">{t("colTime")}</th>
+                <th className="px-4 py-2 font-medium">{t("colAgent")}</th>
+                <th className="px-4 py-2 font-medium">{t("colAction")}</th>
+                <th className="px-4 py-2 font-medium">{t("colDetails")}</th>
               </tr>
             </thead>
             <tbody>

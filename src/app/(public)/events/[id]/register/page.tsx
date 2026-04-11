@@ -2,12 +2,14 @@
 
 import { useEffect, useState } from "react"
 import { useParams } from "next/navigation"
+import { useTranslations } from "next-intl"
 
 const TYPE_EMOJI: Record<string, string> = {
   conference: "🎤", webinar: "💻", workshop: "🔧", meetup: "☕", exhibition: "🏛️", other: "📋",
 }
 
 export default function EventRegistrationPage() {
+  const t = useTranslations("eventRegistration")
   const params = useParams()
   const [event, setEvent] = useState<any>(null)
   const [loading, setLoading] = useState(true)
@@ -28,7 +30,7 @@ export default function EventRegistrationPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!form.name.trim() || !form.email.trim()) return setError("Name and email are required")
+    if (!form.name.trim() || !form.email.trim()) return setError(t("errorRequired"))
     setSubmitting(true)
     setError("")
 
@@ -64,8 +66,8 @@ export default function EventRegistrationPage() {
       <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-orange-50 flex items-center justify-center">
         <div className="text-center">
           <div className="text-6xl mb-4">😕</div>
-          <h1 className="text-2xl font-bold text-foreground">Event Not Found</h1>
-          <p className="text-muted-foreground mt-2">This event doesn't exist or has been removed.</p>
+          <h1 className="text-2xl font-bold text-foreground">{t("notFound")}</h1>
+          <p className="text-muted-foreground mt-2">{t("notFoundDesc")}</p>
         </div>
       </div>
     )
@@ -76,15 +78,15 @@ export default function EventRegistrationPage() {
       <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50 flex items-center justify-center p-4">
         <div className="max-w-md w-full text-center">
           <div className="text-7xl mb-6">🎉</div>
-          <h1 className="text-3xl font-bold text-foreground mb-2">Attendance Confirmed!</h1>
+          <h1 className="text-3xl font-bold text-foreground mb-2">{t("confirmed")}</h1>
           <p className="text-muted-foreground mb-6">
-            Thank you! Your attendance for <strong>{event.name}</strong> is confirmed. See you there!
+            {t("confirmedDesc", { name: event.name })}
           </p>
           <div className="bg-card rounded-2xl shadow-lg p-6 text-left space-y-3">
             <div className="flex items-center gap-3">
               <span className="text-2xl">📅</span>
               <div>
-                <p className="text-xs text-muted-foreground uppercase">Date</p>
+                <p className="text-xs text-muted-foreground uppercase">{t("date")}</p>
                 <p className="font-semibold">{new Date(event.startDate).toLocaleString(undefined, { dateStyle: "long", timeStyle: "short" })}</p>
               </div>
             </div>
@@ -92,7 +94,7 @@ export default function EventRegistrationPage() {
               <div className="flex items-center gap-3">
                 <span className="text-2xl">📍</span>
                 <div>
-                  <p className="text-xs text-muted-foreground uppercase">Location</p>
+                  <p className="text-xs text-muted-foreground uppercase">{t("location")}</p>
                   <p className="font-semibold">{event.location}</p>
                 </div>
               </div>
@@ -101,7 +103,7 @@ export default function EventRegistrationPage() {
               <div className="flex items-center gap-3">
                 <span className="text-2xl">🔗</span>
                 <div>
-                  <p className="text-xs text-muted-foreground uppercase">Join Online</p>
+                  <p className="text-xs text-muted-foreground uppercase">{t("joinOnline")}</p>
                   <a href={event.meetingUrl} className="font-semibold text-indigo-600 hover:underline" target="_blank">{event.meetingUrl}</a>
                 </div>
               </div>
@@ -110,8 +112,8 @@ export default function EventRegistrationPage() {
 
           {/* Calendar note */}
           <div className="mt-6 bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-800 text-left">
-            <p className="font-semibold mb-1">📅 Check your email!</p>
-            <p className="text-amber-700 text-xs">We've sent a confirmation email with a calendar invitation attached. Open the .ics file to add this event to your calendar automatically.</p>
+            <p className="font-semibold mb-1">{t("checkEmail")}</p>
+            <p className="text-amber-700 text-xs">{t("checkEmailDesc")}</p>
           </div>
         </div>
       </div>
@@ -137,7 +139,7 @@ export default function EventRegistrationPage() {
           </div>
           {spotsLeft !== null && spotsLeft > 0 && (
             <div className="mt-4 inline-block bg-white/20 rounded-full px-4 py-1.5 text-sm font-medium backdrop-blur-sm">
-              {spotsLeft} spots remaining
+              {t("spotsRemaining", { count: spotsLeft })}
             </div>
           )}
         </div>
@@ -148,31 +150,31 @@ export default function EventRegistrationPage() {
           {/* Registration Form */}
           <div className="md:col-span-3">
             <div className="bg-card rounded-2xl shadow-xl p-6 md:p-8">
-              <h2 className="text-xl font-bold text-foreground mb-1">Register Now</h2>
-              <p className="text-sm text-muted-foreground mb-6">Fill in your details to secure your spot</p>
+              <h2 className="text-xl font-bold text-foreground mb-1">{t("registerNow")}</h2>
+              <p className="text-sm text-muted-foreground mb-6">{t("registerDesc")}</p>
 
               {!canRegister ? (
                 <div className="text-center py-8">
                   <div className="text-5xl mb-4">{event.isFull ? "😔" : "🔒"}</div>
                   <h3 className="text-lg font-bold text-foreground/70">
-                    {event.isFull ? "Event is Full" : "Registration Closed"}
+                    {event.isFull ? t("eventFull") : t("registrationClosed")}
                   </h3>
                   <p className="text-muted-foreground text-sm mt-1">
-                    {event.isFull ? "All spots have been taken." : "Registration is not available at this time."}
+                    {event.isFull ? t("eventFullDesc") : t("registrationClosedDesc")}
                   </p>
                 </div>
               ) : (
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-foreground/70 mb-1">Full Name *</label>
+                    <label className="block text-sm font-medium text-foreground/70 mb-1">{t("labelName")}</label>
                     <input
                       type="text" required value={form.name} onChange={e => set("name", e.target.value)}
                       className="w-full px-4 py-3 border border-border rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all text-sm"
-                      placeholder="Your full name"
+                      placeholder={t("placeholderName")}
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-foreground/70 mb-1">Email Address *</label>
+                    <label className="block text-sm font-medium text-foreground/70 mb-1">{t("labelEmail")}</label>
                     <input
                       type="email" required value={form.email} onChange={e => set("email", e.target.value)}
                       className="w-full px-4 py-3 border border-border rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all text-sm"
@@ -181,7 +183,7 @@ export default function EventRegistrationPage() {
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-sm font-medium text-foreground/70 mb-1">Phone</label>
+                      <label className="block text-sm font-medium text-foreground/70 mb-1">{t("labelPhone")}</label>
                       <input
                         type="tel" value={form.phone} onChange={e => set("phone", e.target.value)}
                         className="w-full px-4 py-3 border border-border rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all text-sm"
@@ -189,20 +191,20 @@ export default function EventRegistrationPage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-foreground/70 mb-1">Company</label>
+                      <label className="block text-sm font-medium text-foreground/70 mb-1">{t("labelCompany")}</label>
                       <input
                         type="text" value={form.company} onChange={e => set("company", e.target.value)}
                         className="w-full px-4 py-3 border border-border rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all text-sm"
-                        placeholder="Your company"
+                        placeholder={t("placeholderCompany")}
                       />
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-foreground/70 mb-1">Notes (optional)</label>
+                    <label className="block text-sm font-medium text-foreground/70 mb-1">{t("labelNotes")}</label>
                     <textarea
                       value={form.notes} onChange={e => set("notes", e.target.value)} rows={2}
                       className="w-full px-4 py-3 border border-border rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all text-sm resize-none"
-                      placeholder="Dietary requirements, accessibility needs..."
+                      placeholder={t("placeholderNotes")}
                     />
                   </div>
 
@@ -216,7 +218,7 @@ export default function EventRegistrationPage() {
                     type="submit" disabled={submitting}
                     className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold py-3.5 rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all shadow-lg shadow-indigo-500/25 disabled:opacity-60"
                   >
-                    {submitting ? "Registering..." : "Register for Event"}
+                    {submitting ? t("registering") : t("registerForEvent")}
                   </button>
                 </form>
               )}
@@ -226,12 +228,12 @@ export default function EventRegistrationPage() {
           {/* Event Info Sidebar */}
           <div className="md:col-span-2 space-y-4">
             <div className="bg-card rounded-2xl shadow-lg p-5">
-              <h3 className="font-bold text-foreground mb-3">Event Details</h3>
+              <h3 className="font-bold text-foreground mb-3">{t("eventDetails")}</h3>
               <div className="space-y-3 text-sm">
                 <div className="flex gap-3">
                   <span className="text-lg">📅</span>
                   <div>
-                    <p className="text-muted-foreground text-xs">Date & Time</p>
+                    <p className="text-muted-foreground text-xs">{t("dateTime")}</p>
                     <p className="font-medium">{new Date(event.startDate).toLocaleString(undefined, { dateStyle: "long", timeStyle: "short" })}</p>
                     {event.endDate && (
                       <p className="text-muted-foreground text-xs mt-0.5">
@@ -244,7 +246,7 @@ export default function EventRegistrationPage() {
                   <div className="flex gap-3">
                     <span className="text-lg">📍</span>
                     <div>
-                      <p className="text-muted-foreground text-xs">Location</p>
+                      <p className="text-muted-foreground text-xs">{t("location")}</p>
                       <p className="font-medium">{event.location}</p>
                     </div>
                   </div>
@@ -253,17 +255,17 @@ export default function EventRegistrationPage() {
                   <div className="flex gap-3">
                     <span className="text-lg">🌐</span>
                     <div>
-                      <p className="text-muted-foreground text-xs">Format</p>
-                      <p className="font-medium">Online Event</p>
+                      <p className="text-muted-foreground text-xs">{t("format")}</p>
+                      <p className="font-medium">{t("onlineEvent")}</p>
                     </div>
                   </div>
                 )}
                 <div className="flex gap-3">
                   <span className="text-lg">👥</span>
                   <div>
-                    <p className="text-muted-foreground text-xs">Registered</p>
+                    <p className="text-muted-foreground text-xs">{t("registered")}</p>
                     <p className="font-medium">
-                      {event.registeredCount} participants
+                      {t("participants", { count: event.registeredCount })}
                       {event.maxParticipants ? ` / ${event.maxParticipants} max` : ""}
                     </p>
                   </div>
@@ -273,7 +275,7 @@ export default function EventRegistrationPage() {
 
             {event.description && (
               <div className="bg-card rounded-2xl shadow-lg p-5">
-                <h3 className="font-bold text-foreground mb-2">About</h3>
+                <h3 className="font-bold text-foreground mb-2">{t("about")}</h3>
                 <p className="text-sm text-muted-foreground whitespace-pre-wrap">{event.description}</p>
               </div>
             )}
@@ -292,7 +294,7 @@ export default function EventRegistrationPage() {
 
         {/* Footer */}
         <div className="text-center py-8 text-xs text-muted-foreground">
-          Powered by LeadDrive CRM
+          {t("poweredBy")}
         </div>
       </div>
     </div>

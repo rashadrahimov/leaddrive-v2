@@ -1,26 +1,28 @@
 import { AnimateIn } from "@/components/marketing/animate-in"
 import type { Metadata } from "next"
 import { COMPANY_EMAIL, COMPANY_PHONE_FORMATTED } from "@/lib/constants"
+import { getTranslations } from "next-intl/server"
 
 export const metadata: Metadata = {
   title: "Məxfilik Siyasəti",
   description: "LeadDrive CRM məxfilik siyasəti — məlumatlarınızın necə toplandığı, istifadə edildiyi və qorunduğu haqqında.",
 }
 
-export default function PrivacyPage() {
+export default async function PrivacyPage() {
+  const t = await getTranslations("privacy")
   return (
     <div className="min-h-screen bg-white">
       <section className="pt-32 pb-24">
         <div className="mx-auto max-w-3xl px-4 lg:px-8">
           <AnimateIn>
-            <h1 className="text-4xl font-bold text-[#001E3C] tracking-tight mb-2">Məxfilik Siyasəti</h1>
-            <p className="text-sm text-[#001E3C]/40 mb-12">Son yenilənmə: 29 Mart 2026</p>
+            <h1 className="text-4xl font-bold text-[#001E3C] tracking-tight mb-2">{t("title")}</h1>
+            <p className="text-sm text-[#001E3C]/40 mb-12">{t("lastUpdated")}</p>
           </AnimateIn>
 
           <div className="prose max-w-none space-y-8 text-[#001E3C]/70 text-sm leading-relaxed">
             <AnimateIn delay={0.1}>
               <section>
-                <h2 className="text-lg font-semibold text-[#001E3C] mb-3">1. Giriş</h2>
+                <h2 className="text-lg font-semibold text-[#001E3C] mb-3">{t("s1")}</h2>
                 <p>
                   Güvən Technology LLC (&quot;Şirkət&quot;, &quot;biz&quot;) olaraq, LeadDrive CRM platformasından istifadə edən
                   istifadəçilərin (&quot;siz&quot;) məxfiliyinə hörmət edirik. Bu Məxfilik Siyasəti sizin şəxsi məlumatlarınızın
@@ -30,7 +32,7 @@ export default function PrivacyPage() {
             </AnimateIn>
 
             <section>
-              <h2 className="text-lg font-semibold text-[#001E3C] mb-3">2. Toplanan məlumatlar</h2>
+              <h2 className="text-lg font-semibold text-[#001E3C] mb-3">{t("s2")}</h2>
               <p>Platformadan istifadə zamanı aşağıdakı məlumatlar toplanır:</p>
               <ul className="list-disc pl-5 space-y-1 mt-2">
                 <li>Qeydiyyat məlumatları: ad, soyad, e-poçt, telefon, şirkət adı</li>
@@ -41,7 +43,7 @@ export default function PrivacyPage() {
             </section>
 
             <section>
-              <h2 className="text-lg font-semibold text-[#001E3C] mb-3">3. Məlumatların istifadəsi</h2>
+              <h2 className="text-lg font-semibold text-[#001E3C] mb-3">{t("s3")}</h2>
               <p>Topladığımız məlumatlar aşağıdakı məqsədlərlə istifadə olunur:</p>
               <ul className="list-disc pl-5 space-y-1 mt-2">
                 <li>Xidmətlərimizin təqdim edilməsi və təkmilləşdirilməsi</li>
@@ -52,7 +54,7 @@ export default function PrivacyPage() {
             </section>
 
             <section>
-              <h2 className="text-lg font-semibold text-[#001E3C] mb-3">4. Məlumatların qorunması</h2>
+              <h2 className="text-lg font-semibold text-[#001E3C] mb-3">{t("s4")}</h2>
               <p>
                 Bütün məlumatlar şifrələnmiş PostgreSQL verilənlər bazasında saxlanılır. Hər təşkilat üçün
                 tam məlumat izolyasiyası təmin edilir (multi-tenant arxitektura). Rol əsaslı giriş nəzarəti
@@ -61,7 +63,7 @@ export default function PrivacyPage() {
             </section>
 
             <section>
-              <h2 className="text-lg font-semibold text-[#001E3C] mb-3">5. Üçüncü tərəflər</h2>
+              <h2 className="text-lg font-semibold text-[#001E3C] mb-3">{t("s5")}</h2>
               <p>
                 Şəxsi məlumatlarınız üçüncü tərəflərə satılmır və ya icarəyə verilmir. Məlumatlar yalnız
                 xidmətin təqdim edilməsi üçün zəruri olan hallarda (hosting, e-poçt xidməti) etibarlı
@@ -70,7 +72,7 @@ export default function PrivacyPage() {
             </section>
 
             <section>
-              <h2 className="text-lg font-semibold text-[#001E3C] mb-3">6. Cookies</h2>
+              <h2 className="text-lg font-semibold text-[#001E3C] mb-3">{t("s6")}</h2>
               <p>
                 Platformamız funksional cookies istifadə edir (giriş sessiyası, dil seçimi). Analitik cookies
                 yalnız sizin razılığınızla aktivləşdirilir.
@@ -78,7 +80,7 @@ export default function PrivacyPage() {
             </section>
 
             <section>
-              <h2 className="text-lg font-semibold text-[#001E3C] mb-3">7. Hüquqlarınız</h2>
+              <h2 className="text-lg font-semibold text-[#001E3C] mb-3">{t("s7")}</h2>
               <p>Siz aşağıdakı hüquqlara maliksiniz:</p>
               <ul className="list-disc pl-5 space-y-1 mt-2">
                 <li>Şəxsi məlumatlarınıza giriş tələb etmək</li>
@@ -89,7 +91,7 @@ export default function PrivacyPage() {
             </section>
 
             <section>
-              <h2 className="text-lg font-semibold text-[#001E3C] mb-3">8. Əlaqə</h2>
+              <h2 className="text-lg font-semibold text-[#001E3C] mb-3">{t("s8")}</h2>
               <p>
                 Məxfilik ilə bağlı suallarınız üçün bizimlə əlaqə saxlayın:
               </p>
