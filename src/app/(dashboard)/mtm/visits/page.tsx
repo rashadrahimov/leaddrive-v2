@@ -10,7 +10,8 @@ import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select } from "@/components/ui/select"
-import { CheckSquare, Plus, Pencil, Trash2, Search, Clock, CheckCircle2 } from "lucide-react"
+import { CheckSquare, Plus, Pencil, Trash2, Search, Clock, CheckCircle2, AlertTriangle } from "lucide-react"
+import { calculateDistance } from "@/lib/geo-utils"
 
 export default function MtmVisitsPage() {
   const { data: session } = useSession()
@@ -114,6 +115,7 @@ export default function MtmVisitsPage() {
               <th className="px-4 py-2 font-medium">{t("colCheckIn")}</th>
               <th className="px-4 py-2 font-medium">{t("colCheckOut")}</th>
               <th className="px-4 py-2 font-medium">{t("colDuration")}</th>
+              <th className="px-4 py-2 font-medium">GPS</th>
               <th className="px-4 py-2 font-medium w-20"></th>
             </tr></thead>
             <tbody>
@@ -125,6 +127,19 @@ export default function MtmVisitsPage() {
                   <td className="px-4 py-2 text-muted-foreground">{new Date(v.checkInAt).toLocaleString()}</td>
                   <td className="px-4 py-2 text-muted-foreground">{v.checkOutAt ? new Date(v.checkOutAt).toLocaleString() : "—"}</td>
                   <td className="px-4 py-2 text-muted-foreground">{v.duration ? `${v.duration} ${t("min")}` : "—"}</td>
+                  <td className="px-4 py-2">
+                    {(() => {
+                      if (v.checkInLat == null || v.checkInLng == null || v.customer?.latitude == null || v.customer?.longitude == null) return <span className="text-muted-foreground text-xs">—</span>
+                      const dist = Math.round(calculateDistance(v.checkInLat, v.checkInLng, v.customer.latitude, v.customer.longitude))
+                      const ok = dist <= 100
+                      return (
+                        <span className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full ${ok ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"}`}>
+                          {!ok && <AlertTriangle className="h-3 w-3" />}
+                          {dist < 1000 ? `${dist}m` : `${(dist / 1000).toFixed(1)}km`}
+                        </span>
+                      )
+                    })()}
+                  </td>
                   <td className="px-4 py-2"><div className="flex gap-1">
                     <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setEditData(v); setFormOpen(true) }}><Pencil className="h-3.5 w-3.5" /></Button>
                     <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => { setDeleteItem(v); setDeleteOpen(true) }}><Trash2 className="h-3.5 w-3.5" /></Button>

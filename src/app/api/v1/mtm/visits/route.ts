@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { getOrgId } from "@/lib/api-auth"
+import { calculateDistance } from "@/lib/geo-utils"
 
 export async function GET(req: NextRequest) {
   const orgId = await getOrgId(req)
@@ -32,7 +33,7 @@ export async function GET(req: NextRequest) {
         orderBy: { checkInAt: "desc" },
         include: {
           agent: { select: { id: true, name: true } },
-          customer: { select: { id: true, name: true, address: true } },
+          customer: { select: { id: true, name: true, address: true, latitude: true, longitude: true } },
         },
       }),
       prisma.mtmVisit.count({ where }),
@@ -50,14 +51,82 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json()
+    const { agentId, customerId, notes, force } = body
+    const latitude = body.latitude != null ? parseFloat(body.latitude) : null
+    const longitude = body.longitude != null ? parseFloat(body.longitude) : null
+
+    // Geofence validation when agent provides GPS coordinates
+    if (latitude != null && longitude != null && customerId) {
+      // Fetch customer coordinates and geofence radius in parallel
+      const [customer, settingRow] = await Promise.all([
+        prisma.mtmCustomer.findFirst({
+          where: { id: customerId, organizationId: orgId },
+          select: { id: true, name: true, latitude: true, longitude: true },
+        }),
+        prisma.mtmSetting.findFirst({
+          where: { organizationId: orgId, key: "geofenceRadius" },
+          select: { value: true },
+        }),
+      ])
+
+      if (customer?.latitude != null && customer?.longitude != null) {
+        const geofenceRadius =
+          settingRow?.value != null ? Number(settingRow.value) : 100
+
+        const distanceMeters = calculateDistance(
+          latitude,
+          longitude,
+          customer.latitude,
+          customer.longitude
+        )
+
+        if (distanceMeters > geofenceRadius) {
+          // Create an OUT_OF_ZONE alert regardless of force flag
+          if (agentId) {
+            await prisma.mtmAlert.create({
+              data: {
+                organizationId: orgId,
+                agentId,
+                type: "OUT_OF_ZONE",
+                category: "WARNING",
+                title: `Geofence violation at ${customer.name}`,
+                description: `Agent checked in ${Math.round(distanceMeters)}m away (max ${geofenceRadius}m)`,
+                metadata: {
+                  customerId,
+                  distanceMeters: Math.round(distanceMeters),
+                  geofenceRadius,
+                  agentLat: latitude,
+                  agentLng: longitude,
+                  customerLat: customer.latitude,
+                  customerLng: customer.longitude,
+                },
+              },
+            }).catch(() => {}) // non-blocking — don't fail the whole request
+          }
+
+          // Block unless force override
+          if (!force) {
+            return NextResponse.json(
+              {
+                error: `Too far from customer (${Math.round(distanceMeters)}m away, max ${geofenceRadius}m)`,
+                distanceMeters: Math.round(distanceMeters),
+                geofenceRadius,
+              },
+              { status: 400 }
+            )
+          }
+        }
+      }
+    }
+
     const visit = await prisma.mtmVisit.create({
       data: {
         organizationId: orgId,
-        agentId: body.agentId,
-        customerId: body.customerId,
-        checkInLat: body.latitude ? parseFloat(body.latitude) : null,
-        checkInLng: body.longitude ? parseFloat(body.longitude) : null,
-        notes: body.notes || null,
+        agentId,
+        customerId,
+        checkInLat: latitude,
+        checkInLng: longitude,
+        notes: notes || null,
       },
     })
     return NextResponse.json({ success: true, data: visit }, { status: 201 })
