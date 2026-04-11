@@ -35,7 +35,7 @@ export async function GET(req: NextRequest) {
         skip: (page - 1) * limit,
         take: limit,
         orderBy: { createdAt: "desc" },
-        include: { agent: { select: { id: true, name: true } } },
+        // MtmAuditLog has agentId but no relation — fetch agent names separately
       }),
       prisma.mtmAuditLog.count({ where: auditWhere }),
     ])

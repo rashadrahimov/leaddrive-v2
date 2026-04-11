@@ -31,7 +31,7 @@ export async function GET(req: NextRequest) {
       prisma.mtmAgent.count({ where: { organizationId: orgId, status: "ACTIVE" } }),
       prisma.mtmRoute.count({ where }),
       prisma.mtmVisit.count({ where }),
-      prisma.mtmAgentLocation.count({ where }),
+      prisma.mtmAgentLocation.count({ where: { organizationId: orgId, recordedAt: { gte: startDate } } }),
       prisma.mtmPhoto.count({ where }),
     ])
 
@@ -43,7 +43,7 @@ export async function GET(req: NextRequest) {
         where,
         orderBy: { createdAt: "desc" },
         take: 100,
-        include: { agent: { select: { name: true } } },
+        // MtmAuditLog has agentId but no relation
       })
     } else if (type === "agent") {
       const agents = await prisma.mtmAgent.findMany({
