@@ -12,7 +12,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       where: { id, organizationId: orgId },
       include: {
         agent: { select: { id: true, name: true } },
-        points: { include: { customer: { select: { id: true, name: true } } }, orderBy: { orderIndex: "asc" } },
+        points: { include: { customer: { select: { id: true, name: true, address: true, city: true, phone: true, latitude: true, longitude: true } } }, orderBy: { orderIndex: "asc" } },
       },
     })
     if (!route) return NextResponse.json({ error: "Not found" }, { status: 404 })
