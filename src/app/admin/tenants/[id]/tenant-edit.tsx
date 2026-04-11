@@ -9,20 +9,12 @@ import { Select } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Loader2, Pencil } from "lucide-react"
 
-const FEATURE_MODULES = [
-  { id: "whatsapp", label: "WhatsApp", group: "Channels" },
-  { id: "ai", label: "Da Vinci AI", group: "AI" },
-  { id: "voip", label: "VoIP / Twilio", group: "Channels" },
-  { id: "portal", label: "Customer Portal", group: "Support" },
-  { id: "events", label: "Events", group: "Marketing" },
-  { id: "mtm", label: "Mobile Team (MTM)", group: "Field Ops" },
-  { id: "finance", label: "Finance Module", group: "ERP" },
-  { id: "campaigns", label: "Campaigns", group: "Marketing" },
-  { id: "tickets", label: "Tickets / Helpdesk", group: "Support" },
-  { id: "kb", label: "Knowledge Base", group: "Support" },
-  { id: "budgeting", label: "Budgeting", group: "ERP" },
-  { id: "projects", label: "Projects", group: "ERP" },
-]
+import { MODULE_REGISTRY, type ModuleId } from "@/lib/modules"
+
+// Build feature toggles from the actual MODULE_REGISTRY (skip alwaysOn modules like "core")
+const FEATURE_MODULES = (Object.entries(MODULE_REGISTRY) as [ModuleId, { name: string; alwaysOn?: boolean }][])
+  .filter(([, def]) => !def.alwaysOn)
+  .map(([id, def]) => ({ id, label: def.name }))
 
 interface TenantData {
   id: string
@@ -225,7 +217,6 @@ export function TenantEditButton({ tenant }: { tenant: TenantData }) {
                       className="rounded"
                     />
                     <span>{mod.label}</span>
-                    <span className="text-xs text-muted-foreground ml-auto">{mod.group}</span>
                   </label>
                 ))}
               </div>
