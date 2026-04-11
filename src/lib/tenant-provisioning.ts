@@ -1,6 +1,5 @@
 import { prisma } from "@/lib/prisma"
 import { getPlanDefaults } from "@/lib/tenant-plans"
-import { DEFAULT_PIPELINE_STAGES, INITIAL_CURRENCIES } from "@/lib/constants"
 import bcrypt from "bcryptjs"
 import crypto from "crypto"
 import fs from "fs"
