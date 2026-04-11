@@ -18,7 +18,7 @@ export default async function TenantDetailPage({ params }: { params: Promise<{ i
         orderBy: { createdAt: "asc" },
       },
       _count: {
-        select: { users: true, contacts: true, deals: true, companies: true, tickets: true, leads: true },
+        select: { users: true, contacts: true, deals: true, companies: true, leads: true },
       },
     },
   })
