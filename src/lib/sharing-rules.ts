@@ -11,7 +11,7 @@ export async function applyRecordFilter(
   entityType: string,
   baseWhere: any
 ) {
-  if (role === "admin" || role === "manager") return baseWhere
+  if (role === "admin" || role === "manager" || role === "superadmin") return baseWhere
 
   const rules = await prisma.sharingRule.findMany({
     where: { organizationId: orgId, entityType, isActive: true },
