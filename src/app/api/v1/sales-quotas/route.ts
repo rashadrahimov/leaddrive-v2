@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getSession } from "@/lib/api-auth"
 import { prisma, logAudit } from "@/lib/prisma"
-import { DEFAULT_CURRENCY } from "@/lib/constants"
+import { DEFAULT_CURRENCY, isManagerOrAbove } from "@/lib/constants"
 
 export async function GET(req: NextRequest) {
   const session = await getSession(req)
@@ -55,7 +55,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const session = await getSession(req)
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  if (session.role !== "admin" && session.role !== "manager") {
+  if (!isManagerOrAbove(session.role)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 })
   }
 

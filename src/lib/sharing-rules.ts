@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma"
+import { isManagerOrAbove } from "@/lib/constants"
 
 /**
  * Apply record-level sharing rules to a Prisma where clause.
@@ -11,7 +12,7 @@ export async function applyRecordFilter(
   entityType: string,
   baseWhere: any
 ) {
-  if (role === "admin" || role === "manager" || role === "superadmin") return baseWhere
+  if (isManagerOrAbove(role)) return baseWhere
 
   const rules = await prisma.sharingRule.findMany({
     where: { organizationId: orgId, entityType, isActive: true },

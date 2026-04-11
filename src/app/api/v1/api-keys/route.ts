@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { requireAuth, isAuthError } from "@/lib/api-auth"
 import { prisma } from "@/lib/prisma"
+import { isAdmin } from "@/lib/constants"
 import crypto from "crypto"
 
 // GET /api/v1/api-keys — list all keys for org
@@ -31,7 +32,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const auth = await requireAuth(req, "core", "write")
   if (isAuthError(auth)) return auth
-  if (auth.role !== "admin") {
+  if (!isAdmin(auth.role)) {
     return NextResponse.json({ error: "Only admins can create API keys" }, { status: 403 })
   }
 

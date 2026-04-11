@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { Logo } from "@/components/logo"
 import { useTranslations } from "next-intl"
+import { COMPANY_EMAIL, COMPANY_PHONE_FORMATTED } from "@/lib/constants"
 
 function useFooterLinks() {
   const t = useTranslations("marketing")
@@ -77,8 +78,8 @@ export function MarketingFooter() {
               {t("description")}
             </p>
             <div className="mt-4 space-y-1.5 text-sm text-white/50">
-              <p>📧 {process.env.NEXT_PUBLIC_CONTACT_EMAIL || "info@leaddrivecrm.org"}</p>
-              <p>📱 +994 10 531 30 65</p>
+              <p>📧 {COMPANY_EMAIL}</p>
+              <p>📱 {COMPANY_PHONE_FORMATTED}</p>
             </div>
             {/* Social links removed — will add when real accounts exist */}
           </div>

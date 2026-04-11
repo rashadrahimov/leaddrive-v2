@@ -4,6 +4,7 @@ import { useState } from "react"
 import { AnimateIn } from "@/components/marketing/animate-in"
 import { Mail, Phone, MapPin, Send, Building2, Clock } from "lucide-react"
 import { useTranslations } from "next-intl"
+import { COMPANY_EMAIL, COMPANY_PHONE, COMPANY_PHONE_FORMATTED } from "@/lib/constants"
 
 export default function ContactPage() {
   const t = useTranslations("marketing.contact")
@@ -42,8 +43,8 @@ export default function ContactPage() {
                       </div>
                       <div>
                         <p className="text-sm font-medium text-[#001E3C]">{t("email")}</p>
-                        <a href={`mailto:${process.env.NEXT_PUBLIC_CONTACT_EMAIL || "info@leaddrivecrm.org"}`} className="text-sm text-[#001E3C]/60 hover:text-[#0176D3] transition-colors">
-                          {process.env.NEXT_PUBLIC_CONTACT_EMAIL || "info@leaddrivecrm.org"}
+                        <a href={`mailto:${COMPANY_EMAIL}`} className="text-sm text-[#001E3C]/60 hover:text-[#0176D3] transition-colors">
+                          {COMPANY_EMAIL}
                         </a>
                       </div>
                     </div>
@@ -53,8 +54,8 @@ export default function ContactPage() {
                       </div>
                       <div>
                         <p className="text-sm font-medium text-[#001E3C]">{t("phone")}</p>
-                        <a href="tel:+994105313065" className="text-sm text-[#001E3C]/60 hover:text-[#0176D3] transition-colors">
-                          +994 10 531 30 65
+                        <a href={`tel:${COMPANY_PHONE}`} className="text-sm text-[#001E3C]/60 hover:text-[#0176D3] transition-colors">
+                          {COMPANY_PHONE_FORMATTED}
                         </a>
                       </div>
                     </div>

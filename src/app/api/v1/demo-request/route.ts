@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import { sendEmail } from "@/lib/email"
+import { COMPANY_EMAIL } from "@/lib/constants"
 
 export async function POST(req: Request) {
   try {
@@ -17,7 +18,7 @@ export async function POST(req: Request) {
 
     // Send email notification to admin
     await sendEmail({
-      to: process.env.NEXT_PUBLIC_CONTACT_EMAIL || "info@leaddrivecrm.org",
+      to: COMPANY_EMAIL,
       subject: `Demo Request: ${company} — ${name}`,
       html: `
         <h2>New Demo Request</h2>

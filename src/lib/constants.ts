@@ -31,6 +31,38 @@ export const STAGE_COLORS: Record<string, string> = {
   LOST: "#ef4444",
 }
 
+// ── Contact Info ─────────────────────────────────────────
+export const COMPANY_EMAIL = process.env.NEXT_PUBLIC_CONTACT_EMAIL || "info@leaddrivecrm.org"
+export const NOREPLY_EMAIL = process.env.NOREPLY_EMAIL || "noreply@leaddrivecrm.org"
+export const COMPANY_PHONE = "+994105313065"
+export const COMPANY_PHONE_FORMATTED = "+994 10 531 30 65"
+
+// ── Roles ────────────────────────────────────────────────
+export const ROLES = {
+  SUPERADMIN: "superadmin",
+  ADMIN: "admin",
+  MANAGER: "manager",
+  SALES: "sales",
+  SUPPORT: "support",
+  VIEWER: "viewer",
+  MARKETING: "marketing",
+  FINANCE: "finance",
+  HR: "hr",
+} as const
+
+export const ADMIN_ROLES = [ROLES.SUPERADMIN, ROLES.ADMIN] as const
+export const MANAGER_ROLES = [ROLES.SUPERADMIN, ROLES.ADMIN, ROLES.MANAGER] as const
+
+export const ALL_ROLES = Object.values(ROLES)
+
+export function isAdmin(role: string): boolean {
+  return role === ROLES.ADMIN || role === ROLES.SUPERADMIN
+}
+
+export function isManagerOrAbove(role: string): boolean {
+  return role === ROLES.ADMIN || role === ROLES.SUPERADMIN || role === ROLES.MANAGER
+}
+
 // ── Pagination ───────────────────────────────────────────
 export const PAGE_SIZE = {
   DEFAULT: 50,

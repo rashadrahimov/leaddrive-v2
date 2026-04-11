@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { prisma } from "@/lib/prisma"
 import { getOrgId, getSession } from "@/lib/api-auth"
+import { isAdmin } from "@/lib/constants"
 
 const createAuditLogSchema = z.object({
   userId: z.string().optional(),
@@ -52,7 +53,7 @@ export async function POST(req: NextRequest) {
   const session = await getSession(req)
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   const orgId = session.orgId
-  if (session.role !== "admin") {
+  if (!isAdmin(session.role)) {
     return NextResponse.json({ error: "Admin access required" }, { status: 403 })
   }
 

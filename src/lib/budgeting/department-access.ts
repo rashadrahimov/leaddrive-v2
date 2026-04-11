@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma"
+import { isManagerOrAbove } from "@/lib/constants"
 import type { Role } from "@/lib/permissions"
 
 /**
@@ -12,7 +13,7 @@ export async function getUserDepartments(
   role: Role,
 ): Promise<{ departmentIds: string[]; isFullAccess: boolean }> {
   // Admin and manager have full access
-  if (role === "admin" || role === "manager") {
+  if (isManagerOrAbove(role)) {
     return { departmentIds: [], isFullAccess: true }
   }
 
@@ -36,7 +37,7 @@ export async function canAccessDepartment(
   role: Role,
   departmentId: string,
 ): Promise<boolean> {
-  if (role === "admin" || role === "manager") return true
+  if (isManagerOrAbove(role)) return true
 
   const owner = await prisma.budgetDepartmentOwner.findUnique({
     where: {
@@ -60,7 +61,7 @@ export async function canEditDepartment(
   role: Role,
   departmentId: string,
 ): Promise<boolean> {
-  if (role === "admin" || role === "manager") return true
+  if (isManagerOrAbove(role)) return true
 
   const owner = await prisma.budgetDepartmentOwner.findUnique({
     where: {
@@ -84,7 +85,7 @@ export async function canApproveDepartment(
   role: Role,
   departmentId?: string | null,
 ): Promise<boolean> {
-  if (role === "admin" || role === "manager") return true
+  if (isManagerOrAbove(role)) return true
   if (!departmentId) return false
 
   const owner = await prisma.budgetDepartmentOwner.findUnique({

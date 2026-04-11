@@ -1,6 +1,7 @@
 import nodemailer from "nodemailer"
 import { prisma } from "@/lib/prisma"
 import { isPrivateHost } from "@/lib/url-validation"
+import { NOREPLY_EMAIL } from "@/lib/constants"
 
 interface SmtpConfig {
   smtpHost: string
@@ -95,7 +96,7 @@ export async function sendEmail({
   attachments?: { filename: string; path: string }[]
 }) {
   const config = await getSmtpConfig(organizationId)
-  const fromEmail = config?.fromEmail || (process.env.NEXT_PUBLIC_CONTACT_EMAIL || "noreply@leaddrivecrm.org")
+  const fromEmail = config?.fromEmail || NOREPLY_EMAIL
 
   // If SMTP is not configured, log and return error
   if (!config) {

@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma"
+import { isAdmin } from "@/lib/constants"
 
 // In-memory cache: orgId:roleId:entityType → { fieldName: access }
 const permissionCache = new Map<string, { data: Record<string, string>; expiresAt: number }>()
@@ -43,7 +44,7 @@ export function filterEntityFields<T extends Record<string, any>>(
   permissions: Record<string, string>,
   role: string
 ): Partial<T> {
-  if (role === "admin") return entity
+  if (isAdmin(role)) return entity
 
   const filtered: any = {}
   for (const [key, value] of Object.entries(entity)) {
@@ -67,7 +68,7 @@ export function filterWritableFields(
   permissions: Record<string, string>,
   role: string
 ): Record<string, any> {
-  if (role === "admin") return data
+  if (isAdmin(role)) return data
 
   const filtered: any = {}
   for (const [key, value] of Object.entries(data)) {

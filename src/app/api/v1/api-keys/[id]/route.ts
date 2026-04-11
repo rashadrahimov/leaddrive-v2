@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from "next/server"
 import { requireAuth, isAuthError } from "@/lib/api-auth"
 import { prisma } from "@/lib/prisma"
+import { isAdmin } from "@/lib/constants"
 
 // DELETE /api/v1/api-keys/:id — revoke key
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const auth = await requireAuth(req, "core", "delete")
   if (isAuthError(auth)) return auth
-  if (auth.role !== "admin") {
+  if (!isAdmin(auth.role)) {
     return NextResponse.json({ error: "Only admins can revoke API keys" }, { status: 403 })
   }
 
@@ -29,7 +30,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const auth = await requireAuth(req, "core", "write")
   if (isAuthError(auth)) return auth
-  if (auth.role !== "admin") {
+  if (!isAdmin(auth.role)) {
     return NextResponse.json({ error: "Only admins can modify API keys" }, { status: 403 })
   }
 

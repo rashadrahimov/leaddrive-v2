@@ -1,5 +1,6 @@
 import { AnimateIn } from "@/components/marketing/animate-in"
 import type { Metadata } from "next"
+import { COMPANY_EMAIL, COMPANY_PHONE_FORMATTED } from "@/lib/constants"
 
 export const metadata: Metadata = {
   title: "İstifadə Şərtləri",
@@ -108,8 +109,8 @@ export default function TermsPage() {
                 Bu şərtlərlə bağlı suallarınız üçün:
               </p>
               <p className="mt-2">
-                {process.env.NEXT_PUBLIC_CONTACT_EMAIL || "info@leaddrivecrm.org"}<br />
-                +994 10 531 30 65<br />
+                {COMPANY_EMAIL}<br />
+                {COMPANY_PHONE_FORMATTED}<br />
                 Güvən Technology LLC, Bakı, Azərbaycan
               </p>
             </section>

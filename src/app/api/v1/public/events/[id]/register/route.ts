@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { prisma } from "@/lib/prisma"
 import { sanitizeLog } from "@/lib/sanitize"
+import { NOREPLY_EMAIL } from "@/lib/constants"
 
 function escHtml(s: unknown): string {
   return String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;")
@@ -30,7 +31,7 @@ function generateICS(event: any): string {
     event.description ? `DESCRIPTION:${event.description.replace(/\n/g, "\\n").slice(0, 500)}` : "",
     event.meetingUrl ? `URL:${event.meetingUrl}` : "",
     "STATUS:CONFIRMED",
-    `ORGANIZER;CN=LeadDrive CRM:mailto:${process.env.NEXT_PUBLIC_CONTACT_EMAIL || "noreply@leaddrivecrm.org"}`,
+    `ORGANIZER;CN=LeadDrive CRM:mailto:${NOREPLY_EMAIL}`,
     "END:VEVENT",
     "END:VCALENDAR",
   ].filter(Boolean).join("\r\n")

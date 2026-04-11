@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getSession } from "@/lib/api-auth"
 import { prisma, logAudit } from "@/lib/prisma"
+import { isAdmin, isManagerOrAbove } from "@/lib/constants"
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await getSession(req)
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  if (session.role !== "admin" && session.role !== "manager") {
+  if (!isManagerOrAbove(session.role)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 })
   }
 
@@ -32,7 +33,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await getSession(req)
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  if (session.role !== "admin") {
+  if (!isAdmin(session.role)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 })
   }
 
