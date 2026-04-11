@@ -12,6 +12,7 @@ import {
   BarChart3,
   PieChart,
 } from "lucide-react"
+import { DEFAULT_CURRENCY } from "@/lib/constants"
 
 interface Invoice {
   id: string
@@ -45,7 +46,7 @@ function getCurrencySymbol(currency: string): string {
   return currencySymbols[currency] || currency
 }
 
-function formatCompact(n: number, currency = "AZN") {
+function formatCompact(n: number, currency = DEFAULT_CURRENCY) {
   const sym = getCurrencySymbol(currency)
   if (n >= 1_000_000) return `${sym}${(n / 1_000_000).toFixed(1)}M`
   if (n >= 1_000) return `${sym}${(n / 1_000).toFixed(1)}K`
@@ -54,7 +55,7 @@ function formatCompact(n: number, currency = "AZN") {
 
 // --- Component ---
 
-export function InvoicesAnalytics({ invoices, stats, currency = "AZN" }: InvoicesAnalyticsProps) {
+export function InvoicesAnalytics({ invoices, stats, currency = DEFAULT_CURRENCY }: InvoicesAnalyticsProps) {
   const t = useTranslations("invoices")
   const tc = useTranslations("common")
   const locale = useLocale()
@@ -216,7 +217,7 @@ export function InvoicesAnalytics({ invoices, stats, currency = "AZN" }: Invoice
   const currencyData = useMemo(() => {
     const map: Record<string, { total: number; paid: number }> = {}
     for (const inv of invoices) {
-      const c = inv.currency || "AZN"
+      const c = inv.currency || DEFAULT_CURRENCY
       if (!map[c]) map[c] = { total: 0, paid: 0 }
       map[c].total += inv.amount
       if (inv.status.toLowerCase() === "paid") map[c].paid += inv.amount
@@ -235,7 +236,7 @@ export function InvoicesAnalytics({ invoices, stats, currency = "AZN" }: Invoice
   }, [invoices])
 
   const displayCurrency = currencyData.length > 0 ? currencyData : [
-    { currency: "AZN", symbol: "₼", total: 0, paid: 0, pct: 0 },
+    { currency: DEFAULT_CURRENCY, symbol: "₼", total: 0, paid: 0, pct: 0 },
   ]
 
   // Translated section titles

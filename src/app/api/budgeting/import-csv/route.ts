@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { z, ZodError } from "zod"
 import { getOrgId } from "@/lib/api-auth"
 import { prisma, logBudgetChange } from "@/lib/prisma"
+import { PAGE_SIZE } from "@/lib/constants"
 
 const importCsvSchema = z.object({
   planId: z.string().min(1).max(100),
@@ -162,7 +163,7 @@ export async function GET(req: NextRequest) {
   const imports = await prisma.accountingImport.findMany({
     where,
     orderBy: { createdAt: "desc" },
-    take: 50,
+    take: PAGE_SIZE.DEFAULT,
     include: { integration: { select: { name: true, provider: true } } },
   })
 

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { getOrgId } from "@/lib/api-auth"
+import { PAGE_SIZE } from "@/lib/constants"
 
 export async function GET(req: NextRequest) {
   const orgId = await getOrgId(req)
@@ -27,7 +28,7 @@ export async function GET(req: NextRequest) {
       prisma.deal.findMany({
         where: { organizationId: orgId, stage: "WON" },
         select: { valueAmount: true },
-        take: 10000,
+        take: PAGE_SIZE.EXPORT,
       }),
       prisma.ticket.count({
         where: { organizationId: orgId, status: { in: ["new", "in_progress", "waiting"] } },
@@ -127,7 +128,7 @@ export async function GET(req: NextRequest) {
     const contractsData = await prisma.contract.findMany({
       where: { organizationId: orgId },
       select: { valueAmount: true, status: true },
-      take: 10000,
+      take: PAGE_SIZE.EXPORT,
     })
     const totalContractRevenue = contractsData
       .filter((c: { status: string; valueAmount: number | null }) => c.status === "active")

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { getOrgId } from "@/lib/api-auth"
 import { prisma } from "@/lib/prisma"
+import { DEFAULT_CURRENCY } from "@/lib/constants"
 
 const billSchema = z.object({
   billNumber: z.string().max(50).optional(),
@@ -9,7 +10,7 @@ const billSchema = z.object({
   vendorId: z.string().max(100).nullish(),
   title: z.string().min(1).max(300),
   totalAmount: z.number().min(0).max(999999999),
-  currency: z.string().max(10).default("AZN"),
+  currency: z.string().max(10).default(DEFAULT_CURRENCY),
   issueDate: z.string().optional(),
   dueDate: z.string().optional(),
   category: z.string().max(100).optional(),

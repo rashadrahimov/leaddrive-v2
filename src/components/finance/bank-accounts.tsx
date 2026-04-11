@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Plus, Trash2, Edit2, Building2, Star } from "lucide-react"
 import type { BankAccount, CreateBankAccountInput } from "@/lib/finance/types"
+import { DEFAULT_CURRENCY } from "@/lib/constants"
 
 export function BankAccountsManager() {
   const t = useTranslations("finance.ba")
@@ -151,7 +152,7 @@ function BankAccountDialog({ open, onClose, onSave, isPending, isEdit, initial }
     bankName: initial?.bankName || "",
     bankCode: initial?.bankCode || "",
     swiftCode: initial?.swiftCode || "",
-    currency: initial?.currency || "AZN",
+    currency: initial?.currency || DEFAULT_CURRENCY,
     isDefault: initial?.isDefault || false,
   })
 

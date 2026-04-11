@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { z, ZodError } from "zod"
 import { getOrgId } from "@/lib/api-auth"
 import { prisma } from "@/lib/prisma"
+import { PAGE_SIZE } from "@/lib/constants"
 
 const createTransactionSchema = z.object({
   type: z.enum(["deposit", "withdrawal", "transfer_in", "transfer_out", "auto_allocation"]),
@@ -17,7 +18,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   const transactions = await prisma.fundTransaction.findMany({
     where: { fundId, organizationId: orgId },
     orderBy: { createdAt: "desc" },
-    take: 50,
+    take: PAGE_SIZE.DEFAULT,
   })
 
   return NextResponse.json({ data: transactions })

@@ -28,6 +28,7 @@ import {
   Play,
   Pause,
 } from "lucide-react"
+import { DEFAULT_CURRENCY } from "@/lib/constants"
 
 interface RecurringInvoice {
   id: string
@@ -81,7 +82,7 @@ const defaultForm = {
   startDate: "",
   endDate: "",
   maxOccurrences: "",
-  currency: "AZN",
+  currency: DEFAULT_CURRENCY,
   includeVat: false,
   taxRate: "0.18",
   paymentTerms: "",

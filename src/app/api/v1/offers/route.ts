@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { prisma } from "@/lib/prisma"
 import { getOrgId } from "@/lib/api-auth"
+import { DEFAULT_CURRENCY } from "@/lib/constants"
 
 const itemSchema = z.object({
   productId: z.string().nullable().optional(),
@@ -23,7 +24,7 @@ const createOfferSchema = z.object({
   contractNumber: z.string().nullable().optional(),
   includeVat: z.boolean().default(false),
   discount: z.number().min(0).default(0),
-  currency: z.string().default("AZN"),
+  currency: z.string().default(DEFAULT_CURRENCY),
   validUntil: z.string().nullable().optional(),
   notes: z.string().nullable().optional(),
   items: z.array(itemSchema).default([]),

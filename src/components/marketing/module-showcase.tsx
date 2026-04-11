@@ -17,6 +17,7 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
+import { STAGE_COLORS } from "@/lib/constants"
 
 /* ══════════════════════════════════════════════════════
    SHARED: App Shell (dark nav + sidebar) + Chart helpers
@@ -113,27 +114,27 @@ function AppShell({ children, activeItem }: { children: React.ReactNode; activeI
 
 function CrmPreview() {
   const kanbanCols = [
-    { name: "Lid", color: "#6366f1", count: 2, value: "$4,500", deals: [
+    { name: "Lid", color: STAGE_COLORS.LEAD, count: 2, value: "$4,500", deals: [
       { name: "Firewall Setup", company: "Afigroup", value: "$2,500" },
       { name: "Cloud Migration", company: "StarTech", value: "$2,000" },
     ]},
-    { name: "Kvalifikasiya", color: "#3b82f6", count: 3, value: "$15,300", deals: [
+    { name: "Kvalifikasiya", color: STAGE_COLORS.QUALIFIED, count: 3, value: "$15,300", deals: [
       { name: "ERP Integration", company: "MedPlus", value: "$8,500" },
       { name: "SaaS Platform", company: "DataCore", value: "$5,000" },
       { name: "CRM Setup", company: "ZEYTUN PH...", value: "$1,800" },
     ]},
-    { name: "Təklif", color: "#f59e0b", count: 4, value: "$34,500", deals: [
+    { name: "Təklif", color: STAGE_COLORS.PROPOSAL, count: 4, value: "$34,500", deals: [
       { name: "IT Outsource", company: "NovaTech", value: "$15,000" },
       { name: "Cyber Security", company: "ZEYTUN PH...", value: "$16,284" },
     ]},
-    { name: "Danışıqlar", color: "#f97316", count: 3, value: "$35,000", deals: [
+    { name: "Danışıqlar", color: STAGE_COLORS.NEGOTIATION, count: 3, value: "$35,000", deals: [
       { name: "Data Analytics", company: "FinGroup", value: "$8,000" },
       { name: "ERP Deployment", company: "Zeytun Ph...", value: "$25,000" },
     ]},
-    { name: "Qazanıldı", color: "#22c55e", count: 1, value: "$3,500", bgExtra: "bg-emerald-50/50", deals: [
+    { name: "Qazanıldı", color: STAGE_COLORS.WON, count: 1, value: "$3,500", bgExtra: "bg-emerald-50/50", deals: [
       { name: "Network Audit", company: "ZEYTUN PH...", value: "$3,500" },
     ]},
-    { name: "İtirildi", color: "#ef4444", count: 1, value: "$8,000", bgExtra: "bg-red-50/50", deals: [
+    { name: "İtirildi", color: STAGE_COLORS.LOST, count: 1, value: "$8,000", bgExtra: "bg-red-50/50", deals: [
       { name: "Test Project", company: "Afigroup", value: "$8,000" },
     ]},
   ]

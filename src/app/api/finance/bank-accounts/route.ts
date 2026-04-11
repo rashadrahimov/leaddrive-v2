@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { z, ZodError } from "zod"
 import { getOrgId } from "@/lib/api-auth"
 import { prisma } from "@/lib/prisma"
+import { DEFAULT_CURRENCY } from "@/lib/constants"
 
 const createSchema = z.object({
   accountName: z.string().min(1).max(200),
@@ -58,7 +59,7 @@ export async function POST(req: NextRequest) {
       bankName: data.bankName,
       bankCode: data.bankCode || null,
       swiftCode: data.swiftCode || null,
-      currency: data.currency || "AZN",
+      currency: data.currency || DEFAULT_CURRENCY,
       isDefault: data.isDefault || false,
     },
   })

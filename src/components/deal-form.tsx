@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Select } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { Dialog, DialogHeader, DialogTitle, DialogContent, DialogFooter } from "@/components/ui/dialog"
+import { DEFAULT_CURRENCY } from "@/lib/constants"
 
 interface DealFormProps {
   open: boolean
@@ -28,7 +29,7 @@ export function DealForm({ open, onOpenChange, onSaved, initialData, orgId, pipe
     campaignId: initialData?.campaignId || "",
     stage: initialData?.stage || "LEAD",
     valueAmount: String(initialData?.valueAmount || "0"),
-    currency: initialData?.currency || "AZN",
+    currency: initialData?.currency || DEFAULT_CURRENCY,
     probability: String(initialData?.probability || "10"),
     expectedClose: initialData?.expectedClose?.slice(0, 10) || "",
     notes: initialData?.notes || "",
@@ -46,7 +47,7 @@ export function DealForm({ open, onOpenChange, onSaved, initialData, orgId, pipe
         campaignId: initialData?.campaignId || "",
         stage: initialData?.stage || "LEAD",
         valueAmount: String(initialData?.valueAmount || "0"),
-        currency: initialData?.currency || "AZN",
+        currency: initialData?.currency || DEFAULT_CURRENCY,
         probability: String(initialData?.probability || "10"),
         expectedClose: initialData?.expectedClose?.slice(0, 10) || "",
         notes: initialData?.notes || "",

@@ -1,11 +1,12 @@
 import { type ClassValue, clsx } from "clsx"
 import { twMerge } from "tailwind-merge"
+import { DEFAULT_CURRENCY } from "@/lib/constants"
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-export function formatCurrency(amount: number, currency = "AZN"): string {
+export function formatCurrency(amount: number, currency = DEFAULT_CURRENCY): string {
   return new Intl.NumberFormat("az-AZ", {
     style: "currency",
     currency,

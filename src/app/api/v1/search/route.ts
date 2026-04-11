@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { getOrgId } from "@/lib/api-auth"
+import { PAGE_SIZE } from "@/lib/constants"
 
 export async function GET(req: NextRequest) {
   const orgId = await getOrgId(req)
@@ -17,27 +18,27 @@ export async function GET(req: NextRequest) {
       prisma.company.findMany({
         where: { organizationId: orgId, name: { contains, mode } },
         select: { id: true, name: true, industry: true },
-        take: 5,
+        take: PAGE_SIZE.SEARCH,
       }),
       prisma.contact.findMany({
         where: { organizationId: orgId, fullName: { contains, mode } },
         select: { id: true, fullName: true, company: { select: { name: true } } },
-        take: 5,
+        take: PAGE_SIZE.SEARCH,
       }),
       prisma.deal.findMany({
         where: { organizationId: orgId, name: { contains, mode } },
         select: { id: true, name: true, valueAmount: true, currency: true },
-        take: 5,
+        take: PAGE_SIZE.SEARCH,
       }),
       prisma.lead.findMany({
         where: { organizationId: orgId, OR: [{ contactName: { contains, mode } }, { companyName: { contains, mode } }] },
         select: { id: true, contactName: true, companyName: true },
-        take: 5,
+        take: PAGE_SIZE.SEARCH,
       }),
       prisma.task.findMany({
         where: { organizationId: orgId, title: { contains, mode } },
         select: { id: true, title: true, priority: true },
-        take: 5,
+        take: PAGE_SIZE.SEARCH,
       }),
     ])
 

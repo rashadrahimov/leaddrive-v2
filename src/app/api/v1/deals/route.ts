@@ -8,6 +8,7 @@ import { applyRecordFilter } from "@/lib/sharing-rules"
 import { executeWorkflows } from "@/lib/workflow-engine"
 import { createNotification } from "@/lib/notifications"
 import { fireWebhooks } from "@/lib/webhooks"
+import { DEFAULT_CURRENCY } from "@/lib/constants"
 import { trackContactEvent } from "@/lib/contact-events"
 import { sendSlackNotification, formatDealNotification } from "@/lib/slack"
 
@@ -151,7 +152,7 @@ export async function POST(req: NextRequest) {
         pipelineId,
         stage: parsed.data.stage || "LEAD",
         valueAmount: parsed.data.valueAmount || 0,
-        currency: parsed.data.currency || "AZN",
+        currency: parsed.data.currency || DEFAULT_CURRENCY,
         probability: probability ?? 10,
         expectedClose: parsed.data.expectedClose ? new Date(parsed.data.expectedClose) : null,
         assignedTo: parsed.data.assignedTo,

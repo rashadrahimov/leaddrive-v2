@@ -21,14 +21,15 @@ import { ActivityTimeline } from "@/components/deals/activity-timeline"
 import { StageValidationDialog } from "@/components/deals/stage-validation-dialog"
 import { StageChecklistDialog } from "@/components/deals/stage-checklist-dialog"
 import { useFieldPermissions } from "@/hooks/use-field-permissions"
+import { STAGE_COLORS } from "@/lib/constants"
 
 const FALLBACK_STAGE_STYLES = [
-  { key: "LEAD",        color: "#6366f1", bg: "bg-indigo-500" },
-  { key: "QUALIFIED",   color: "#3b82f6", bg: "bg-blue-500" },
-  { key: "PROPOSAL",    color: "#f59e0b", bg: "bg-amber-500" },
-  { key: "NEGOTIATION", color: "#f97316", bg: "bg-orange-500" },
-  { key: "WON",         color: "#22c55e", bg: "bg-green-500" },
-  { key: "LOST",        color: "#ef4444", bg: "bg-red-500" },
+  { key: "LEAD",        color: STAGE_COLORS.LEAD,        bg: "bg-indigo-500" },
+  { key: "QUALIFIED",   color: STAGE_COLORS.QUALIFIED,   bg: "bg-blue-500" },
+  { key: "PROPOSAL",    color: STAGE_COLORS.PROPOSAL,    bg: "bg-amber-500" },
+  { key: "NEGOTIATION", color: STAGE_COLORS.NEGOTIATION, bg: "bg-orange-500" },
+  { key: "WON",         color: STAGE_COLORS.WON,         bg: "bg-green-500" },
+  { key: "LOST",        color: STAGE_COLORS.LOST,        bg: "bg-red-500" },
 ]
 
 interface Deal {

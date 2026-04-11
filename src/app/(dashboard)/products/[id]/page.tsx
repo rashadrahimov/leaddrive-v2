@@ -19,6 +19,7 @@ import {
 } from "lucide-react"
 import { ColorStatCard } from "@/components/color-stat-card"
 import { InfoHint } from "@/components/info-hint"
+import { DEFAULT_CURRENCY } from "@/lib/constants"
 
 const categoryColors: Record<string, string> = {
   service: "bg-blue-500", product: "bg-green-500", addon: "bg-purple-500", consulting: "bg-amber-500",
@@ -51,7 +52,7 @@ export default function ProductDetailPage() {
   const [description, setDescription] = useState("")
   const [category, setCategory] = useState("service")
   const [price, setPrice] = useState("")
-  const [currency, setCurrency] = useState("AZN")
+  const [currency, setCurrency] = useState(DEFAULT_CURRENCY)
   const [isActive, setIsActive] = useState(true)
   const [featuresStr, setFeaturesStr] = useState("")
   const [tagsStr, setTagsStr] = useState("")
@@ -79,7 +80,7 @@ export default function ProductDetailPage() {
     setDescription(p.description || "")
     setCategory(p.category || "service")
     setPrice(String(p.price || 0))
-    setCurrency(p.currency || "AZN")
+    setCurrency(p.currency || DEFAULT_CURRENCY)
     setIsActive(p.isActive ?? true)
     setFeaturesStr((p.features || []).join(", "))
     setTagsStr((p.tags || []).join(", "))

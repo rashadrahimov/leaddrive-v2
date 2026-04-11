@@ -2,11 +2,12 @@ import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { prisma } from "@/lib/prisma"
 import { getOrgId } from "@/lib/api-auth"
+import { DEFAULT_CURRENCY } from "@/lib/constants"
 import { calculateBalance } from "@/lib/invoice-calculations"
 
 const paymentSchema = z.object({
   amount: z.number().min(0.01),
-  currency: z.string().default("AZN"),
+  currency: z.string().default(DEFAULT_CURRENCY),
   paymentMethod: z.enum(["bank_transfer", "cash", "card", "check", "other"]).default("bank_transfer"),
   paymentDate: z.string().optional(),
   reference: z.string().optional().nullable(),

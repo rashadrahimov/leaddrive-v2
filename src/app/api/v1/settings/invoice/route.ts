@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { prisma } from "@/lib/prisma"
 import { getOrgId, requireAuth, isAuthError } from "@/lib/api-auth"
+import { DEFAULT_CURRENCY } from "@/lib/constants"
 
 const invoiceSettingsSchema = z.object({
   numberPrefix: z.string().max(20).optional(),
@@ -41,7 +42,7 @@ export async function GET(req: NextRequest) {
       numberPrefix: "INV-",
       defaultPaymentTerms: "net30",
       defaultTaxRate: 0.18,
-      defaultCurrency: "AZN",
+      defaultCurrency: DEFAULT_CURRENCY,
       companyName: "",
       companyAddress: "",
       companyVoen: "",

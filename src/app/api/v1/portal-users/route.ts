@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { getOrgId } from "@/lib/api-auth"
+import { PAGE_SIZE } from "@/lib/constants"
 
 // GET /api/v1/portal-users — list contacts with portal info
 export async function GET(req: NextRequest) {
@@ -36,7 +37,7 @@ export async function GET(req: NextRequest) {
     where,
     include: { company: { select: { name: true } } },
     orderBy: [{ portalAccessEnabled: "desc" }, { portalLastLoginAt: "desc" }, { fullName: "asc" }],
-    take: 200,
+    take: PAGE_SIZE.PORTAL_USERS,
   })
 
   const data = contacts.map((c: any) => ({

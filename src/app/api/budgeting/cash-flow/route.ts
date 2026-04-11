@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { z, ZodError } from "zod"
 import { getOrgId } from "@/lib/api-auth"
 import { prisma } from "@/lib/prisma"
+import { DEFAULT_CURRENCY } from "@/lib/constants"
 import type { CashFlowEntry } from "@prisma/client"
 
 const createCashFlowSchema = z.object({
@@ -104,7 +105,7 @@ export async function POST(req: NextRequest) {
       amount: typeof amount === "string" ? parseFloat(amount) : amount,
       description: description || null,
       paymentDate: paymentDate ? new Date(paymentDate) : null,
-      currencyCode: currencyCode || "AZN",
+      currencyCode: currencyCode || DEFAULT_CURRENCY,
       isProjected: isProjected ?? true,
     },
   })

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getSession } from "@/lib/api-auth"
 import { prisma, logAudit } from "@/lib/prisma"
+import { DEFAULT_CURRENCY } from "@/lib/constants"
 
 export async function GET(req: NextRequest) {
   const session = await getSession(req)
@@ -74,14 +75,14 @@ export async function POST(req: NextRequest) {
         quarter: parseInt(quarter),
       },
     },
-    update: { amount: parseFloat(amount), currency: currency || "AZN" },
+    update: { amount: parseFloat(amount), currency: currency || DEFAULT_CURRENCY },
     create: {
       organizationId: session.orgId,
       userId,
       year: parseInt(year),
       quarter: parseInt(quarter),
       amount: parseFloat(amount),
-      currency: currency || "AZN",
+      currency: currency || DEFAULT_CURRENCY,
     },
   })
 

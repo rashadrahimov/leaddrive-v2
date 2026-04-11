@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma"
 import { getOrgId } from "@/lib/api-auth"
 import { sendEmail } from "@/lib/email"
 import { sendWhatsAppMessage } from "@/lib/whatsapp"
+import { PAGE_SIZE } from "@/lib/constants"
 
 function escHtml(s: unknown): string {
   return String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;")
@@ -26,7 +27,7 @@ export async function GET(req: NextRequest) {
     const messages = await prisma.channelMessage.findMany({
       where,
       orderBy: { createdAt: "desc" },
-      take: 500,
+      take: PAGE_SIZE.INBOX,
     })
 
     // 2. Fetch all org contacts to build lookup maps

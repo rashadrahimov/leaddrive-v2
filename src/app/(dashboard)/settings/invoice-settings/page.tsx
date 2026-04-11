@@ -12,6 +12,7 @@ import { Select } from "@/components/ui/select"
 import { Save, Settings, Building2, FileSpreadsheet, Loader2, CheckCircle, AlertCircle, Upload, X, Mail } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { DEFAULT_EMAIL_TEMPLATES } from "@/lib/invoice-html"
+import { DEFAULT_CURRENCY } from "@/lib/constants"
 
 export default function InvoiceSettingsPage() {
   const { data: session } = useSession()
@@ -39,7 +40,7 @@ export default function InvoiceSettingsPage() {
     numberPrefix: "INV-",
     defaultPaymentTerms: "net30",
     defaultTaxRate: 0.18,
-    defaultCurrency: "AZN",
+    defaultCurrency: DEFAULT_CURRENCY,
     bankName: "",
     bankCode: "",
     bankSwift: "",

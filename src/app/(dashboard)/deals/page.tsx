@@ -15,6 +15,7 @@ import { DealForm } from "@/components/deal-form"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
 import { DealsAnalytics } from "@/components/deals/deals-analytics"
 import { cn } from "@/lib/utils"
+import { STAGE_COLORS } from "@/lib/constants"
 import { useLocale } from "next-intl"
 
 interface Deal {
@@ -216,7 +217,7 @@ export default function DealsPage() {
 
   const getStageColor = (stage: string) => {
     const s = STAGES.find((st: any) => st.key === stage)
-    return s?.color || "#6366f1"
+    return s?.color || STAGE_COLORS.LEAD
   }
 
   if (loading) {
@@ -527,7 +528,7 @@ export default function DealsPage() {
                       className="h-full rounded-sm transition-all"
                       style={{
                         width: `${Math.max(pct, 2)}%`,
-                        backgroundColor: stageInfo?.color || "#6366f1",
+                        backgroundColor: stageInfo?.color || STAGE_COLORS.LEAD,
                       }}
                       title={`${stageInfo?.label || s.name}: ${s.value.toLocaleString()} ₼ (${t("weightedTooltip")} ${s.weighted.toLocaleString()} ₼)`}
                     />
@@ -539,7 +540,7 @@ export default function DealsPage() {
                   const stageInfo = STAGES.find((st: any) => st.key === s.name)
                   return (
                     <div key={s.name} className="flex items-center gap-1">
-                      <div className="h-2 w-2 rounded-sm" style={{ backgroundColor: stageInfo?.color || "#6366f1" }} />
+                      <div className="h-2 w-2 rounded-sm" style={{ backgroundColor: stageInfo?.color || STAGE_COLORS.LEAD }} />
                       <span className="text-[9px] text-muted-foreground">{stageInfo?.label || s.name} ({s.count})</span>
                     </div>
                   )

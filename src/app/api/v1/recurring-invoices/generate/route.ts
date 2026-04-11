@@ -5,6 +5,7 @@ import { generateInvoiceNumber } from "@/lib/invoice-number"
 import { calculateItemTotal, calculateInvoiceTotals, calculateDueDate } from "@/lib/invoice-calculations"
 import { formatMonthYear } from "@/lib/invoice-templates"
 import { generateInvoiceHtml, getEmailTemplate } from "@/lib/invoice-html"
+import { DEFAULT_CURRENCY } from "@/lib/constants"
 import { addDays, addWeeks, addMonths, addYears } from "date-fns"
 import crypto from "crypto"
 
@@ -68,7 +69,7 @@ async function sendInvoiceEmail(
       orgName: fromName,
       invoiceNumber: invoice.invoiceNumber || "",
       total: formatMoney(invoice.totalAmount),
-      currency: (invoice.currency as string) || "AZN",
+      currency: (invoice.currency as string) || DEFAULT_CURRENCY,
       dueDate: formatDate(invoice.dueDate),
     }, customEmailTemplates)
 

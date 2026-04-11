@@ -13,6 +13,7 @@ import { Select } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { ArrowLeft, Plus, Trash2, Save, Send, Package, ChevronDown, ChevronUp } from "lucide-react"
 import { toast } from "sonner"
+import { DEFAULT_CURRENCY } from "@/lib/constants"
 
 interface InvoiceItem {
   id: string
@@ -95,7 +96,7 @@ export default function CreateInvoicePage() {
   const [taxRate] = useState(0.18)
 
   // Details
-  const [currency, setCurrency] = useState("AZN")
+  const [currency, setCurrency] = useState(DEFAULT_CURRENCY)
   const [paymentTerms, setPaymentTerms] = useState("net30")
   const [issueDate, setIssueDate] = useState("")
   const [dueDate, setDueDate] = useState("")

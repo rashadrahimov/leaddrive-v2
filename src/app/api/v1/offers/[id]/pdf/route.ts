@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { getOrgId } from "@/lib/api-auth"
+import { DEFAULT_CURRENCY } from "@/lib/constants"
 import jsPDF from "jspdf"
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -94,7 +95,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   // Items
   doc.setFont("helvetica", "normal")
   const items = offer.items || []
-  const currency = offer.currency || "AZN"
+  const currency = offer.currency || DEFAULT_CURRENCY
 
   for (const item of items) {
     if (y > 260) { doc.addPage(); y = 20 }

@@ -1,4 +1,5 @@
 import { prisma, logAudit } from "@/lib/prisma"
+import { DEFAULT_CURRENCY } from "@/lib/constants"
 import { TOOL_META } from "./tools"
 
 export interface ToolResult {
@@ -180,7 +181,7 @@ async function executeCreateDeal(input: any, orgId: string, userId: string): Pro
       organizationId: orgId,
       name: input.name,
       valueAmount: input.valueAmount || 0,
-      currency: input.currency || "AZN",
+      currency: input.currency || DEFAULT_CURRENCY,
       stage: input.stage || "LEAD",
       pipelineId: pipelineId || undefined,
       companyId: input.companyId || undefined,

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getOrgId } from "@/lib/api-auth"
 import { prisma } from "@/lib/prisma"
+import { DEFAULT_CURRENCY } from "@/lib/constants"
 import Anthropic from "@anthropic-ai/sdk"
 
 const MODEL = process.env.MANAGER_MODEL || "claude-sonnet-4-5-20250929"
@@ -56,7 +57,7 @@ export async function POST(req: NextRequest) {
     totalValue += d.valueAmount || 0
     if (stage === "WON") wonValue += d.valueAmount || 0
     if (stage === "LOST") lostCount++
-    const cur = d.currency || "AZN"
+    const cur = d.currency || DEFAULT_CURRENCY
     currencies[cur] = (currencies[cur] || 0) + (d.valueAmount || 0)
   }
 
@@ -72,13 +73,13 @@ export async function POST(req: NextRequest) {
     .filter((d: any) => d.stage !== "LOST")
     .sort((a: any, b: any) => (b.valueAmount || 0) - (a.valueAmount || 0))
     .slice(0, 10)
-    .map((d: any) => `  - "${d.name}" (${d.company?.name || "no company"}) — ${(d.valueAmount || 0).toLocaleString()} ${d.currency || "AZN"}, stage: ${d.stage}, prob: ${d.probability || 0}%${d.expectedCloseDate ? `, close: ${new Date(d.expectedCloseDate).toLocaleDateString()}` : ""}`)
+    .map((d: any) => `  - "${d.name}" (${d.company?.name || "no company"}) — ${(d.valueAmount || 0).toLocaleString()} ${d.currency || DEFAULT_CURRENCY}, stage: ${d.stage}, prob: ${d.probability || 0}%${d.expectedCloseDate ? `, close: ${new Date(d.expectedCloseDate).toLocaleDateString()}` : ""}`)
     .join("\n")
 
   const recentLost = deals
     .filter((d: any) => d.stage === "LOST")
     .slice(0, 5)
-    .map((d: any) => `  - "${d.name}" (${d.company?.name || "no company"}) — ${(d.valueAmount || 0).toLocaleString()} ${d.currency || "AZN"}`)
+    .map((d: any) => `  - "${d.name}" (${d.company?.name || "no company"}) — ${(d.valueAmount || 0).toLocaleString()} ${d.currency || DEFAULT_CURRENCY}`)
     .join("\n")
 
   const prompt = `You are Da Vinci, an AI sales pipeline analyst for an IT outsourcing company CRM.

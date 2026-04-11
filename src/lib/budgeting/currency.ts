@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma"
+import { DEFAULT_CURRENCY } from "@/lib/constants"
 
 /**
  * Convert an amount from a foreign currency to the org's base currency.
@@ -44,7 +45,7 @@ export async function getBaseCurrency(orgId: string): Promise<string> {
   const base = await prisma.currency.findFirst({
     where: { organizationId: orgId, isBase: true },
   })
-  return base?.code || "AZN"
+  return base?.code || DEFAULT_CURRENCY
 }
 
 /**

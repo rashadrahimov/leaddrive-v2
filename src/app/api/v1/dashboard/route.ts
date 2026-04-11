@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { getOrgId } from "@/lib/api-auth"
+import { PAGE_SIZE } from "@/lib/constants"
 
 export async function GET(req: NextRequest) {
   const orgId = await getOrgId(req)
@@ -25,8 +26,8 @@ export async function GET(req: NextRequest) {
       prisma.deal.aggregate({ where: { organizationId: orgId, stage: { notIn: ["LOST"] } }, _sum: { valueAmount: true } }),
       prisma.ticket.count({ where: { organizationId: orgId, status: { in: ["new", "in_progress", "waiting"] } } }),
       prisma.task.count({ where: { organizationId: orgId, status: { not: "completed" }, dueDate: { lt: new Date() } } }),
-      prisma.activity.findMany({ where: { organizationId: orgId }, orderBy: { createdAt: "desc" }, take: 10, include: { contact: { select: { fullName: true } }, company: { select: { name: true } } } }),
-      prisma.task.findMany({ where: { organizationId: orgId, status: { not: "completed" } }, orderBy: { dueDate: "asc" }, take: 5 }),
+      prisma.activity.findMany({ where: { organizationId: orgId }, orderBy: { createdAt: "desc" }, take: PAGE_SIZE.DASHBOARD_RECENT, include: { contact: { select: { fullName: true } }, company: { select: { name: true } } } }),
+      prisma.task.findMany({ where: { organizationId: orgId, status: { not: "completed" } }, orderBy: { dueDate: "asc" }, take: PAGE_SIZE.DASHBOARD_TASKS }),
     ]) as any[]
 
     // Engagement stats

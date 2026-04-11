@@ -8,6 +8,7 @@ import { Select } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { Dialog, DialogHeader, DialogTitle, DialogContent, DialogFooter } from "@/components/ui/dialog"
 import { useTranslations } from "next-intl"
+import { DEFAULT_CURRENCY } from "@/lib/constants"
 
 interface ContractFormData {
   contractNumber: string
@@ -49,7 +50,7 @@ export function ContractForm({ open, onOpenChange, onSaved, initialData, orgId }
     startDate: "",
     endDate: "",
     valueAmount: "",
-    currency: "AZN",
+    currency: DEFAULT_CURRENCY,
     notes: "",
   })
   const [saving, setSaving] = useState(false)
@@ -79,7 +80,7 @@ export function ContractForm({ open, onOpenChange, onSaved, initialData, orgId }
         startDate: sd,
         endDate: ed,
         valueAmount: initialData?.valueAmount || "",
-        currency: initialData?.currency || "AZN",
+        currency: initialData?.currency || DEFAULT_CURRENCY,
         notes: initialData?.notes || "",
       })
       setError("")

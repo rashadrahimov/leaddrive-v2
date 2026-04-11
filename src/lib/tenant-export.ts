@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma"
+import { PAGE_SIZE } from "@/lib/constants"
 
 interface ExportResult {
   data: Record<string, any>
@@ -101,7 +102,7 @@ export async function exportTenantData(orgId: string): Promise<ExportResult> {
     }),
     prisma.auditLog.findMany({
       where: { organizationId: orgId },
-      take: 1000, // Limit audit logs
+      take: PAGE_SIZE.AUDIT_LOG,
       orderBy: { createdAt: "desc" },
     }),
   ])

@@ -1,6 +1,7 @@
 "use client"
 
 import { TrendingUp, TrendingDown, Minus } from "lucide-react"
+import { DEFAULT_CURRENCY } from "@/lib/constants"
 
 interface FinanceKpiCardProps {
   title: string
@@ -22,7 +23,7 @@ function fmt(n: number): string {
   return n.toLocaleString(undefined, { maximumFractionDigits: 0 })
 }
 
-export function FinanceKpiCard({ title, value, plan, planLabel, sub, icon, color, variance, variancePct, currency = "AZN", invertVariance }: FinanceKpiCardProps) {
+export function FinanceKpiCard({ title, value, plan, planLabel, sub, icon, color, variance, variancePct, currency = DEFAULT_CURRENCY, invertVariance }: FinanceKpiCardProps) {
   const isPositive = invertVariance ? (variancePct ?? 0) <= 0 : (variancePct ?? 0) >= 0
   const varianceColor = variancePct === 0 || variancePct === undefined ? "text-muted-foreground" : isPositive ? "text-green-600" : "text-red-600"
   const VarianceIcon = variancePct === 0 || variancePct === undefined ? Minus : isPositive ? TrendingUp : TrendingDown

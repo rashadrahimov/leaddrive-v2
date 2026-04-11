@@ -115,7 +115,7 @@ const MOCK_NBO = [
   { name: "Email Marketinq", match: 65 },
 ]
 
-const FORECAST_DATA = [42, 55, 48, 72, 68, 85, 95, 110, 98, 125, 132, 142]
+const FORECAST_DATA_EMPTY = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 
 const THREAT_COLORS: Record<string, string> = {
   high: "bg-red-500/15 text-red-500",
@@ -143,9 +143,9 @@ export function DealsAnalytics({ deals, pipelineValue, wonValue, lostCount, wonC
     const cycleDays = deals
       .filter((d) => d.stage === "WON" || d.expectedCloseDate)
       .map((d) => daysBetween(d.createdAt, d.expectedCloseDate || new Date().toISOString()))
-    const avgCycle = cycleDays.length > 0 ? Math.round(cycleDays.reduce((a, b) => a + b, 0) / cycleDays.length) : 24
-    const fastestCycle = cycleDays.length > 0 ? Math.min(...cycleDays) : 12
-    const slowestCycle = cycleDays.length > 0 ? Math.max(...cycleDays) : 45
+    const avgCycle = cycleDays.length > 0 ? Math.round(cycleDays.reduce((a, b) => a + b, 0) / cycleDays.length) : 0
+    const fastestCycle = cycleDays.length > 0 ? Math.min(...cycleDays) : 0
+    const slowestCycle = cycleDays.length > 0 ? Math.max(...cycleDays) : 0
 
     const avgValue = deals.length > 0 ? deals.reduce((s, d) => s + d.value, 0) / deals.length : 0
 
@@ -185,7 +185,7 @@ export function DealsAnalytics({ deals, pipelineValue, wonValue, lostCount, wonC
     {
       label: t("pipelineValue"),
       value: fmtCurrency(pipelineValue),
-      change: "+22%",
+      change: pipelineValue > 0 ? "+22%" : null,
       up: true,
       icon: DollarSign,
       iconBg: "bg-violet-500/15 text-violet-500",
@@ -202,7 +202,7 @@ export function DealsAnalytics({ deals, pipelineValue, wonValue, lostCount, wonC
     {
       label: t("conversion"),
       value: `${analytics.conversionRate.toFixed(1)}%`,
-      change: "+5.1%",
+      change: analytics.conversionRate > 0 ? "+5.1%" : null,
       up: true,
       icon: Percent,
       iconBg: "bg-blue-500/15 text-blue-500",
@@ -210,7 +210,7 @@ export function DealsAnalytics({ deals, pipelineValue, wonValue, lostCount, wonC
     {
       label: t("avgCycle"),
       value: `${analytics.avgCycle} ${t("days")}`,
-      change: `-3 ${t("days")}`,
+      change: analytics.avgCycle > 0 ? `-3 ${t("days")}` : null,
       up: true,
       icon: Clock,
       iconBg: "bg-amber-500/15 text-amber-500",
@@ -218,14 +218,14 @@ export function DealsAnalytics({ deals, pipelineValue, wonValue, lostCount, wonC
     {
       label: t("avgValue"),
       value: fmtCurrency(analytics.avgValue),
-      change: "+8%",
+      change: analytics.avgValue > 0 ? "+8%" : null,
       up: true,
       icon: BarChart3,
       iconBg: "bg-cyan-500/15 text-cyan-500",
     },
     {
       label: t("aiForecast"),
-      value: fmtCurrency(analytics.forecastValue || 142_000),
+      value: fmtCurrency(analytics.forecastValue),
       change: null,
       up: true,
       icon: Brain,
@@ -337,10 +337,10 @@ export function DealsAnalytics({ deals, pipelineValue, wonValue, lostCount, wonC
           </div>
           <p className="text-xs text-muted-foreground mb-3">
             {t("expectedForecast")}{" "}
-            <span className="font-semibold text-foreground">{"\u20BC"}420K</span>
+            <span className="font-semibold text-foreground">{fmtCurrency(analytics.forecastValue)}</span>
           </p>
           <div className="mb-3">
-            <MiniLineChart data={FORECAST_DATA} color="stroke-fuchsia-400" />
+            <MiniLineChart data={deals.length > 0 ? deals.slice(-12).map(d => d.value) : FORECAST_DATA_EMPTY} color="stroke-fuchsia-400" />
           </div>
           <div className="flex items-center gap-4 text-xs text-muted-foreground">
             {months.map((m, i) => (
@@ -352,15 +352,15 @@ export function DealsAnalytics({ deals, pipelineValue, wonValue, lostCount, wonC
           </div>
           <div className="mt-4 grid grid-cols-3 gap-2 text-center">
             <div>
-              <div className="text-lg font-bold">{"\u20BC"}285K</div>
+              <div className="text-lg font-bold">{fmtCurrency(pipelineValue)}</div>
               <div className="text-[10px] text-muted-foreground">{t("current")}</div>
             </div>
             <div>
-              <div className="text-lg font-bold text-fuchsia-400">{"\u20BC"}420K</div>
+              <div className="text-lg font-bold text-fuchsia-400">{fmtCurrency(analytics.forecastValue)}</div>
               <div className="text-[10px] text-muted-foreground">{t("forecast")}</div>
             </div>
             <div>
-              <div className="text-lg font-bold text-emerald-400">+47%</div>
+              <div className="text-lg font-bold text-emerald-400">{pipelineValue > 0 ? `+${Math.round(((analytics.forecastValue - pipelineValue) / pipelineValue) * 100)}%` : "0%"}</div>
               <div className="text-[10px] text-muted-foreground">{t("growth")}</div>
             </div>
           </div>
@@ -395,13 +395,15 @@ export function DealsAnalytics({ deals, pipelineValue, wonValue, lostCount, wonC
               </div>
             </div>
           </div>
-          <div className="mt-4 p-3 rounded-lg bg-red-500/10 border border-red-500/20">
-            <div className="flex items-center gap-2 text-xs">
-              <AlertTriangle className="w-3.5 h-3.5 text-red-400" />
-              <span className="text-red-400 font-medium">{t("lossReason")}</span>
-              <span className="text-muted-foreground">{t("lossReasonPrice")}</span>
+          {lostCount > 0 && (
+            <div className="mt-4 p-3 rounded-lg bg-red-500/10 border border-red-500/20">
+              <div className="flex items-center gap-2 text-xs">
+                <AlertTriangle className="w-3.5 h-3.5 text-red-400" />
+                <span className="text-red-400 font-medium">{t("lossReason")}</span>
+                <span className="text-muted-foreground">{t("lossReasonPrice")}</span>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
 
@@ -412,9 +414,9 @@ export function DealsAnalytics({ deals, pipelineValue, wonValue, lostCount, wonC
           <h3 className="text-sm font-semibold mb-4">{t("contactActivity")}</h3>
           <div className="grid grid-cols-3 gap-3 mb-4">
             {[
-              { icon: Phone, label: "Z{\\u0259}ngl{\\u0259}r", value: 47, color: "text-blue-400 bg-blue-500/15" },
-              { icon: Mail, label: "E-po{\\u00E7}t", value: 124, color: "text-emerald-400 bg-emerald-500/15" },
-              { icon: Users, label: "G{\\u00F6}r{\\u00FC}{\\u015F}l{\\u0259}r", value: 18, color: "text-violet-400 bg-violet-500/15" },
+              { icon: Phone, label: t("calls"), value: 0, color: "text-blue-400 bg-blue-500/15" },
+              { icon: Mail, label: t("emails"), value: 0, color: "text-emerald-400 bg-emerald-500/15" },
+              { icon: Users, label: t("meetings"), value: 0, color: "text-violet-400 bg-violet-500/15" },
             ].map((item, i) => (
               <div key={i} className="text-center">
                 <div className={cn("w-10 h-10 rounded-lg mx-auto flex items-center justify-center mb-1.5", item.color.split(" ")[1])}>

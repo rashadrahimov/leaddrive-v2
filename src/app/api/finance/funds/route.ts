@@ -2,12 +2,13 @@ import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { getOrgId } from "@/lib/api-auth"
 import { prisma } from "@/lib/prisma"
+import { DEFAULT_CURRENCY } from "@/lib/constants"
 
 const fundSchema = z.object({
   name: z.string().min(1).max(200),
   description: z.string().max(1000).optional(),
   targetAmount: z.number().min(0).max(999999999).optional(),
-  currency: z.string().max(10).default("AZN"),
+  currency: z.string().max(10).default(DEFAULT_CURRENCY),
   color: z.string().max(20).optional(),
 })
 

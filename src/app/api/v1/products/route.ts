@@ -2,13 +2,14 @@ import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { prisma } from "@/lib/prisma"
 import { getOrgId } from "@/lib/api-auth"
+import { DEFAULT_CURRENCY } from "@/lib/constants"
 
 const createSchema = z.object({
   name: z.string().min(1),
   description: z.string().optional(),
   category: z.string().default("service"),
   price: z.number().default(0),
-  currency: z.string().default("AZN"),
+  currency: z.string().default(DEFAULT_CURRENCY),
   isActive: z.boolean().default(true),
   features: z.array(z.string()).default([]),
   tags: z.array(z.string()).default([]),

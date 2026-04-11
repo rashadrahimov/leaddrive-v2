@@ -3,6 +3,7 @@ import { z } from "zod"
 import { prisma } from "@/lib/prisma"
 import { getOrgId, requireAuth } from "@/lib/api-auth"
 import { trackContactEvent } from "@/lib/contact-events"
+import { PAGE_SIZE } from "@/lib/constants"
 
 const createActivitySchema = z.object({
   type: z.string().min(1),
@@ -37,7 +38,7 @@ export async function GET(req: NextRequest) {
     const activities = await prisma.activity.findMany({
       where,
       orderBy: { createdAt: "desc" },
-      take: 50,
+      take: PAGE_SIZE.DEFAULT,
       include: {
         contact: { select: { fullName: true } },
         company: { select: { name: true } },

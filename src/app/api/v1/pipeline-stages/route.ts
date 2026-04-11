@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { prisma } from "@/lib/prisma"
 import { getOrgId, requireAuth, isAuthError } from "@/lib/api-auth"
+import { DEFAULT_PIPELINE_STAGES, STAGE_COLORS } from "@/lib/constants"
 
 const stageSchema = z.object({
   name: z.string().min(1).max(50),
@@ -31,14 +32,13 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ success: true, data: stages })
   } catch {
     // Fallback to default stages if DB not connected
-    const defaultStages = [
-      { id: "1", name: "LEAD", displayName: "Lead", color: "#6366f1", probability: 10, sortOrder: 1, isWon: false, isLost: false, organizationId: orgId },
-      { id: "2", name: "QUALIFIED", displayName: "Qualified", color: "#3b82f6", probability: 25, sortOrder: 2, isWon: false, isLost: false, organizationId: orgId },
-      { id: "3", name: "PROPOSAL", displayName: "Proposal", color: "#f59e0b", probability: 50, sortOrder: 3, isWon: false, isLost: false, organizationId: orgId },
-      { id: "4", name: "NEGOTIATION", displayName: "Negotiation", color: "#f97316", probability: 75, sortOrder: 4, isWon: false, isLost: false, organizationId: orgId },
-      { id: "5", name: "WON", displayName: "Won", color: "#22c55e", probability: 100, sortOrder: 5, isWon: true, isLost: false, organizationId: orgId },
-      { id: "6", name: "LOST", displayName: "Lost", color: "#ef4444", probability: 0, sortOrder: 6, isWon: false, isLost: true, organizationId: orgId },
-    ]
+    const defaultStages = DEFAULT_PIPELINE_STAGES.map((s, i) => ({
+      id: String(i + 1),
+      ...s,
+      isWon: "isWon" in s ? s.isWon : false,
+      isLost: "isLost" in s ? s.isLost : false,
+      organizationId: orgId,
+    }))
     return NextResponse.json({ success: true, data: defaultStages })
   }
 }
@@ -61,7 +61,7 @@ export async function POST(req: NextRequest) {
         pipelineId: parsed.data.pipelineId || null,
         name: parsed.data.name,
         displayName: parsed.data.displayName,
-        color: parsed.data.color || "#6366f1",
+        color: parsed.data.color || STAGE_COLORS.LEAD,
         probability: parsed.data.probability || 0,
         sortOrder: parsed.data.sortOrder || 0,
         isWon: parsed.data.isWon || false,

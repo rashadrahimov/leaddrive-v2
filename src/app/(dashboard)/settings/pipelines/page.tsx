@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { useSession } from "next-auth/react"
 import { useTranslations } from "next-intl"
 import { motion, AnimatePresence } from "framer-motion"
+import { DEFAULT_PIPELINE_STAGES } from "@/lib/constants"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { MotionPage, MotionItem } from "@/components/ui/motion"
@@ -188,14 +189,15 @@ export default function PipelinesSettingsPage() {
         headers: { "Content-Type": "application/json", ...headers },
         body: JSON.stringify({
           name: newPipelineName.trim(),
-          stages: [
-            { name: "LEAD", displayName: "Lead", color: "#6366f1", probability: 10, sortOrder: 1 },
-            { name: "QUALIFIED", displayName: "Qualified", color: "#3b82f6", probability: 25, sortOrder: 2 },
-            { name: "PROPOSAL", displayName: "Proposal", color: "#f59e0b", probability: 50, sortOrder: 3 },
-            { name: "NEGOTIATION", displayName: "Negotiation", color: "#f97316", probability: 75, sortOrder: 4 },
-            { name: "WON", displayName: "Won", color: "#22c55e", probability: 100, sortOrder: 5, isWon: true },
-            { name: "LOST", displayName: "Lost", color: "#ef4444", probability: 0, sortOrder: 6, isLost: true },
-          ],
+          stages: DEFAULT_PIPELINE_STAGES.map(s => ({
+            name: s.name,
+            displayName: s.displayName,
+            color: s.color,
+            probability: s.probability,
+            sortOrder: s.sortOrder,
+            ...("isWon" in s ? { isWon: s.isWon } : {}),
+            ...("isLost" in s ? { isLost: s.isLost } : {}),
+          })),
         }),
       })
       const json = await res.json()

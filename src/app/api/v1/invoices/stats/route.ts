@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { getOrgId } from "@/lib/api-auth"
+import { DEFAULT_CURRENCY } from "@/lib/constants"
 
 export async function GET(req: NextRequest) {
   const orgId = await getOrgId(req)
@@ -70,7 +71,7 @@ export async function GET(req: NextRequest) {
       totalPaid: stats.paidAmount,
       totalOutstanding: stats.outstandingAmount,
       totalOverdue: stats.overdueAmount,
-      currency: "AZN",
+      currency: DEFAULT_CURRENCY,
     } })
   } catch (e) {
     console.error(e)

@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { z, ZodError } from "zod"
 import { getOrgId } from "@/lib/api-auth"
 import { prisma } from "@/lib/prisma"
+import { PAGE_SIZE } from "@/lib/constants"
 
 const undoChangeSchema = z.object({
   changeId: z.string().min(1).max(100),
@@ -18,7 +19,7 @@ export async function GET(req: NextRequest) {
   const changes = await prisma.budgetChangeLog.findMany({
     where: { planId, organizationId: orgId },
     orderBy: { createdAt: "desc" },
-    take: 50,
+    take: PAGE_SIZE.DEFAULT,
   })
 
   // Resolve user names

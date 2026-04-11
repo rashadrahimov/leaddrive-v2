@@ -10,6 +10,7 @@ import { Select } from "@/components/ui/select"
 import { Plus, Trash2, Loader2, Building2, FileText, ShoppingCart, Calculator } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
+import { DEFAULT_CURRENCY } from "@/lib/constants"
 
 interface Company {
   id: string
@@ -85,7 +86,7 @@ export function OfferForm({
   // Form state
   const [type, setType] = useState(offer?.type || "commercial")
   const [title, setTitle] = useState(offer?.title || "")
-  const [currency, setCurrency] = useState(offer?.currency || defaultCurrency || "AZN")
+  const [currency, setCurrency] = useState(offer?.currency || defaultCurrency || DEFAULT_CURRENCY)
   const [includeVat, setIncludeVat] = useState(offer?.includeVat || false)
 
   // Client source: "crm" or "manual"

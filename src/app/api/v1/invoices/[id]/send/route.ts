@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { prisma } from "@/lib/prisma"
 import { getOrgId } from "@/lib/api-auth"
+import { DEFAULT_CURRENCY } from "@/lib/constants"
 import { generateInvoiceHtml, getEmailTemplate } from "@/lib/invoice-html"
 
 const sendSchema = z.object({
@@ -70,7 +71,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       orgName: fromName,
       invoiceNumber: invoice.invoiceNumber || "",
       total: formatMoney(invoice.totalAmount),
-      currency: (invoice.currency as string) || "AZN",
+      currency: (invoice.currency as string) || DEFAULT_CURRENCY,
       dueDate: formatDate(invoice.dueDate),
       customMessage: d.message || undefined,
     }, customEmailTemplates)

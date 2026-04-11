@@ -19,6 +19,7 @@ import {
   ArrowLeft, Pencil, Trash2, FileCheck, DollarSign, Calendar, Clock, CheckCircle2,
   Send, FileOutput, Building2, User, Hash, FileText, Package, Percent, Download,
 } from "lucide-react"
+import { DEFAULT_CURRENCY } from "@/lib/constants"
 
 interface OfferItem {
   id: string
@@ -158,7 +159,7 @@ export default function OfferDetailPage() {
   const openSendDialog = () => {
     setSendEmail(offer?.recipientEmail || "")
     setSendSubject(`${t("emailSubjectPrefix")} ${offer?.offerNumber || ""}`)
-    setSendMessage(`${t("emailGreeting")}\n\n${t("emailBody")} ${offer?.offerNumber || ""}.\n${t("emailAmount")}: ${formatCurrency(calculations.total)} ${offer?.currency || "AZN"}\n\n${t("emailRegards")}`)
+    setSendMessage(`${t("emailGreeting")}\n\n${t("emailBody")} ${offer?.offerNumber || ""}.\n${t("emailAmount")}: ${formatCurrency(calculations.total)} ${offer?.currency || DEFAULT_CURRENCY}\n\n${t("emailRegards")}`)
     setSendError("")
     setSendSuccess(false)
     setSendOpen(true)
@@ -288,7 +289,7 @@ export default function OfferDetailPage() {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <ColorStatCard
           label={t("grandTotal")}
-          value={`${formatCurrency(calculations.total)} ${offer.currency || "AZN"}`}
+          value={`${formatCurrency(calculations.total)} ${offer.currency || DEFAULT_CURRENCY}`}
           icon={<DollarSign className="h-4 w-4" />}
           color="green"
         />
@@ -403,7 +404,7 @@ export default function OfferDetailPage() {
               </div>
               <div>
                 <span className="text-muted-foreground">{t("currency")}:</span>
-                <span className="ml-2 font-medium">{offer.currency || "AZN"}</span>
+                <span className="ml-2 font-medium">{offer.currency || DEFAULT_CURRENCY}</span>
               </div>
               <div>
                 <span className="text-muted-foreground">{t("colValidUntil")}:</span>

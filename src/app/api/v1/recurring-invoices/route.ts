@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { prisma } from "@/lib/prisma"
 import { getOrgId } from "@/lib/api-auth"
+import { DEFAULT_CURRENCY } from "@/lib/constants"
 
 const itemSchema = z.object({
   productId: z.string().optional().nullable(),
@@ -25,7 +26,7 @@ const createSchema = z.object({
   startDate: z.string(),
   endDate: z.string().optional().nullable(),
   maxOccurrences: z.number().int().optional().nullable(),
-  currency: z.string().default("AZN"),
+  currency: z.string().default(DEFAULT_CURRENCY),
   taxRate: z.number().default(0),
   includeVat: z.boolean().default(false),
   voen: z.string().optional().nullable(),

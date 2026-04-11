@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getOrgId } from "@/lib/api-auth"
 import { prisma } from "@/lib/prisma"
+import { PAGE_SIZE } from "@/lib/constants"
 import Anthropic from "@anthropic-ai/sdk"
 
 const MODEL = process.env.MANAGER_MODEL || "claude-sonnet-4-5-20250929"
@@ -32,7 +33,7 @@ export async function POST(req: NextRequest) {
   const logs = await prisma.emailLog.findMany({
     where: { organizationId: orgId },
     orderBy: { createdAt: "desc" },
-    take: 500,
+    take: PAGE_SIZE.INBOX,
   })
 
   if (logs.length === 0) {

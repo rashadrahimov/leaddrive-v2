@@ -3,6 +3,7 @@ import { timingSafeEqual } from "crypto"
 import { prisma } from "@/lib/prisma"
 import { processEnrollmentStep } from "@/lib/journey-engine"
 import { checkGoal } from "@/lib/journey-goals"
+import { PAGE_SIZE } from "@/lib/constants"
 
 const CRON_SECRET = process.env.CRON_SECRET
 
@@ -39,7 +40,7 @@ export async function POST(req: NextRequest) {
         nextActionAt: { lte: now },
         currentStepId: { not: null },
       },
-      take: 50,
+      take: PAGE_SIZE.DEFAULT,
     })
 
     const results = []

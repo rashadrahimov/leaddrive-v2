@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { prisma } from "@/lib/prisma"
 import { getOrgId } from "@/lib/api-auth"
+import { DEFAULT_CURRENCY } from "@/lib/constants"
 
 const itemSchema = z.object({
   productId: z.string().nullable().optional(),
@@ -15,7 +16,7 @@ const itemSchema = z.object({
 const createOfferSchema = z.object({
   type: z.enum(["commercial", "invoice", "equipment", "services"]).default("commercial"),
   title: z.string().min(1),
-  currency: z.string().default("AZN"),
+  currency: z.string().default(DEFAULT_CURRENCY),
   companyId: z.string().nullable().optional(),
   contactId: z.string().nullable().optional(),
   clientName: z.string().nullable().optional(),

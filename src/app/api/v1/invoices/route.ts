@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { prisma } from "@/lib/prisma"
 import { getOrgId } from "@/lib/api-auth"
+import { DEFAULT_CURRENCY } from "@/lib/constants"
 import { generateInvoiceNumber } from "@/lib/invoice-number"
 import { calculateItemTotal, calculateInvoiceTotals, calculateDueDate, calculateBalance } from "@/lib/invoice-calculations"
 import crypto from "crypto"
@@ -26,7 +27,7 @@ const createSchema = z.object({
   contractId: z.string().optional().nullable(),
   offerId: z.string().optional().nullable(),
   status: z.string().default("draft"),
-  currency: z.string().default("AZN"),
+  currency: z.string().default(DEFAULT_CURRENCY),
   discountType: z.enum(["percentage", "fixed"]).default("percentage"),
   discountValue: z.number().default(0),
   taxRate: z.number().default(0),

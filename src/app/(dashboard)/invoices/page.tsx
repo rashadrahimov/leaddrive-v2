@@ -18,6 +18,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { cn } from "@/lib/utils"
+import { DEFAULT_CURRENCY } from "@/lib/constants"
 
 interface Invoice {
   id: string
@@ -88,7 +89,7 @@ export default function InvoicesPage() {
   const [statusFilter, setStatusFilter] = useState<string>("")
   const [tab, setTab] = useState<"analytics" | "list">("analytics")
   const [stats, setStats] = useState<InvoiceStats>({
-    totalInvoiced: 0, totalPaid: 0, totalOutstanding: 0, totalOverdue: 0, currency: "AZN",
+    totalInvoiced: 0, totalPaid: 0, totalOutstanding: 0, totalOverdue: 0, currency: DEFAULT_CURRENCY,
     totalCount: 0, draftCount: 0, sentCount: 0, paidCount: 0, overdueCount: 0,
     partiallyPaidCount: 0, cancelledCount: 0, thisMonthCount: 0, thisMonthAmount: 0,
     thisYearCount: 0, thisYearAmount: 0, avgAmount: 0,
@@ -155,7 +156,7 @@ export default function InvoicesPage() {
       issueDate: "",
       dueDate: item.dueDate ? new Date(item.dueDate).toISOString().split("T")[0] : "",
       paymentTerms: "",
-      currency: item.currency || "AZN",
+      currency: item.currency || DEFAULT_CURRENCY,
       notes: "",
     })
   }
@@ -448,7 +449,7 @@ export default function InvoicesPage() {
               totalOutstanding: stats.totalOutstanding,
               totalOverdue: stats.totalOverdue,
             }}
-            currency={stats.currency || "AZN"}
+            currency={stats.currency || DEFAULT_CURRENCY}
           />
         </>
       ) : (

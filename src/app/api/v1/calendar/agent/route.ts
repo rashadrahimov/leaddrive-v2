@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getOrgId } from "@/lib/api-auth"
 import { prisma } from "@/lib/prisma"
+import { PAGE_SIZE } from "@/lib/constants"
 
 // GET /api/v1/calendar/agent?from=2026-03-23&to=2026-03-30
 export async function GET(req: NextRequest) {
@@ -33,7 +34,7 @@ export async function GET(req: NextRequest) {
         id: true, subject: true, status: true, priority: true,
         slaDueAt: true, createdAt: true, assignedTo: true, closedAt: true,
       },
-      take: 300,
+      take: PAGE_SIZE.CALENDAR_AGENT,
     })
 
     allTickets.forEach((t: any) => {
@@ -85,7 +86,7 @@ export async function GET(req: NextRequest) {
         id: true, title: true, status: true, priority: true,
         dueDate: true, createdAt: true, assignedTo: true, completedAt: true,
       },
-      take: 300,
+      take: PAGE_SIZE.CALENDAR_AGENT,
     })
 
     tasks.forEach((t: any) => {
@@ -150,7 +151,7 @@ export async function GET(req: NextRequest) {
         id: true, name: true, status: true, type: true,
         startDate: true, endDate: true, location: true, isOnline: true,
       },
-      take: 50,
+      take: PAGE_SIZE.DEFAULT,
     })
 
     events.forEach((ev: any) => {

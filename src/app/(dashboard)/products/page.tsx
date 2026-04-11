@@ -19,6 +19,7 @@ import { PageDescription } from "@/components/page-description"
 import { Package, Plus, Pencil, Trash2, DollarSign, Tag, Layers, CheckCircle, XCircle } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useTranslations } from "next-intl"
+import { DEFAULT_CURRENCY } from "@/lib/constants"
 
 interface Product {
   id: string
@@ -64,7 +65,7 @@ export default function ProductsPage() {
   const [description, setDescription] = useState("")
   const [category, setCategory] = useState("service")
   const [price, setPrice] = useState("")
-  const [currency, setCurrency] = useState("AZN")
+  const [currency, setCurrency] = useState(DEFAULT_CURRENCY)
   const [isActive, setIsActive] = useState(true)
   const [featuresStr, setFeaturesStr] = useState("")
   const [tagsStr, setTagsStr] = useState("")
@@ -84,7 +85,7 @@ export default function ProductsPage() {
 
   function openCreate() {
     setEditItem(null)
-    setName(""); setDescription(""); setCategory("service"); setPrice(""); setCurrency("AZN")
+    setName(""); setDescription(""); setCategory("service"); setPrice(""); setCurrency(DEFAULT_CURRENCY)
     setIsActive(true); setFeaturesStr(""); setTagsStr("")
     setFormOpen(true)
   }

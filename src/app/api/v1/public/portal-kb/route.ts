@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { getPortalUser } from "@/lib/portal-auth"
+import { PAGE_SIZE } from "@/lib/constants"
 
 export async function GET(req: NextRequest) {
   const user = await getPortalUser()
@@ -46,7 +47,7 @@ export async function GET(req: NextRequest) {
       status: "published",
     },
     orderBy: { createdAt: "desc" },
-    take: 50,
+    take: PAGE_SIZE.DEFAULT,
     select: {
       id: true,
       title: true,

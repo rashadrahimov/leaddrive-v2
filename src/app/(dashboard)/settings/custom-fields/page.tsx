@@ -10,6 +10,7 @@ import {
   Ticket, Target, Heart, Activity, Check, LayoutDashboard,
   Building2, Handshake, Shield, Clock, Star, Users,
 } from "lucide-react"
+import { STAGE_COLORS } from "@/lib/constants"
 
 interface WidgetSetting {
   enabled: boolean
@@ -71,10 +72,10 @@ function PreviewRevenueChart() {
 
 function PreviewDealPipeline() {
   const stages = [
-    { name: "LEAD", w: "85%", color: "#94a3b8" },
-    { name: "QUALIFIED", w: "60%", color: "#3b82f6" },
-    { name: "PROPOSAL", w: "40%", color: "#8b5cf6" },
-    { name: "WON", w: "25%", color: "#22c55e" },
+    { name: "LEAD", w: "85%", color: STAGE_COLORS.LEAD },
+    { name: "QUALIFIED", w: "60%", color: STAGE_COLORS.QUALIFIED },
+    { name: "PROPOSAL", w: "40%", color: STAGE_COLORS.PROPOSAL },
+    { name: "WON", w: "25%", color: STAGE_COLORS.WON },
   ]
   return (
     <div className="space-y-1">

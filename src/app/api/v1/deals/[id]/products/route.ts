@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getOrgId } from "@/lib/api-auth"
 import { prisma } from "@/lib/prisma"
+import { DEFAULT_CURRENCY } from "@/lib/constants"
 
 // GET — list products attached to deal (stored in deal.metadata.products)
 export async function GET(
@@ -52,7 +53,7 @@ export async function POST(
     productId,
     name,
     price,
-    currency: currency || "AZN",
+    currency: currency || DEFAULT_CURRENCY,
     addedAt: new Date().toISOString(),
   })
 

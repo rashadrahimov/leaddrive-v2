@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { DEFAULT_CURRENCY } from "@/lib/constants"
 import { Textarea } from "@/components/ui/textarea"
 import { Select } from "@/components/ui/select"
 import {
@@ -403,7 +404,7 @@ function CreateOrderDialog({
     billId: initialData?.billId || "",
     bankAccountId: "",
     amount: initialData ? String(initialData.amount) : "",
-    currency: initialData?.currency || "AZN",
+    currency: initialData?.currency || DEFAULT_CURRENCY,
     purpose: initialData?.purpose || "",
     paymentMethod: initialData?.paymentMethod || "bank_transfer",
     bankDetails: initialData?.bankDetails || "",
@@ -441,7 +442,7 @@ function CreateOrderDialog({
       paymentMethod: form.paymentMethod,
       bankDetails: form.bankDetails || undefined,
     })
-    setForm({ counterpartyName: "", billId: "", bankAccountId: "", amount: "", currency: "AZN", purpose: "", paymentMethod: "bank_transfer", bankDetails: "" })
+    setForm({ counterpartyName: "", billId: "", bankAccountId: "", amount: "", currency: DEFAULT_CURRENCY, purpose: "", paymentMethod: "bank_transfer", bankDetails: "" })
   }
 
   return (

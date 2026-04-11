@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { getOrgId } from "@/lib/api-auth"
+import { PAGE_SIZE } from "@/lib/constants"
 
 // GET — list alerts
 export async function GET(req: NextRequest) {
@@ -10,7 +11,7 @@ export async function GET(req: NextRequest) {
   const alerts = await prisma.aiAlert.findMany({
     where: { organizationId: orgId },
     orderBy: { createdAt: "desc" },
-    take: 50,
+    take: PAGE_SIZE.DEFAULT,
   })
 
   const unreadCount = await prisma.aiAlert.count({

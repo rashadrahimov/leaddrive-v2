@@ -50,6 +50,7 @@ import {
   Loader2,
   X,
 } from "lucide-react"
+import { DEFAULT_CURRENCY } from "@/lib/constants"
 
 // ---------- Types ----------
 
@@ -664,7 +665,7 @@ export default function InvoiceDetailPage() {
       issueDate: invoice.issueDate ? invoice.issueDate.split("T")[0] : "",
       dueDate: invoice.dueDate ? invoice.dueDate.split("T")[0] : "",
       paymentTerms: invoice.paymentTerms || "",
-      currency: invoice.currency || "AZN",
+      currency: invoice.currency || DEFAULT_CURRENCY,
       voen: invoice.recipientVoen || "",
       recipientEmail: invoice.recipientEmail || "",
       notes: invoice.notes || "",

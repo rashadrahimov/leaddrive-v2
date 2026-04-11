@@ -2,11 +2,7 @@
 
 import { useTranslations } from "next-intl"
 import { Target } from "lucide-react"
-
-const stageColors: Record<string, string> = {
-  LEAD: "#94a3b8", QUALIFIED: "#3b82f6", PROPOSAL: "#8b5cf6",
-  NEGOTIATION: "#f59e0b", WON: "#22c55e", LOST: "#ef4444",
-}
+import { STAGE_COLORS } from "@/lib/constants"
 const stageKeys: Record<string, string> = {
   LEAD: "stageLead", QUALIFIED: "stageQualified", PROPOSAL: "stageProposal",
   NEGOTIATION: "stageNegotiation", WON: "stageWon", LOST: "stageLost",
@@ -44,7 +40,7 @@ export function SalesPipeline({ pipeline }: { pipeline: any }) {
               <div className="flex-1 h-5 bg-muted rounded overflow-hidden">
                 <div
                   className="h-full rounded flex items-center px-1.5"
-                  style={{ width: `${width}%`, backgroundColor: stageColors[stage] }}
+                  style={{ width: `${width}%`, backgroundColor: STAGE_COLORS[stage] }}
                 >
                   <span className="text-[10px] text-white font-medium">{s.count}</span>
                 </div>

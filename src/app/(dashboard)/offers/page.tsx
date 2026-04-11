@@ -16,6 +16,7 @@ import {
   FileSpreadsheet, Plus, Pencil, Trash2, FileCheck, DollarSign,
   Clock, CheckCircle2, XCircle, Send as SendIcon, Package,
 } from "lucide-react"
+import { DEFAULT_CURRENCY } from "@/lib/constants"
 
 interface Offer {
   id: string
@@ -99,7 +100,7 @@ export default function OffersPage() {
     const approved = all.filter((o) => o.status === "approved" || o.status === "accepted").length
     const rejected = all.filter((o) => o.status === "rejected").length
     const totalValue = all.reduce((sum, o) => sum + (o.totalAmount || 0), 0)
-    const currency = all[0]?.currency || "AZN"
+    const currency = all[0]?.currency || DEFAULT_CURRENCY
     return { draft, sent, approved, rejected, totalValue, currency, total: all.length }
   }, [offers])
 

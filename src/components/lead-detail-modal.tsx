@@ -13,6 +13,7 @@ import { Dialog, DialogHeader, DialogTitle, DialogContent } from "@/components/u
 import { Building2, Users, FileText, X, Copy, Send, RefreshCw, CheckCircle, Trash2, Ban, Plus, Pencil, Brain, Sparkles, Target } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useTranslations, useLocale } from "next-intl"
+import { DEFAULT_CURRENCY } from "@/lib/constants"
 import { toast } from "sonner"
 
 interface LeadCompany {
@@ -476,7 +477,7 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
                       <span className="text-muted-foreground ml-1.5">{c.title}</span>
                     </div>
                     <div className="flex items-center gap-1.5 flex-shrink-0 ml-2">
-                      {c.valueAmount ? <span className="font-medium">{c.valueAmount.toLocaleString()} {c.currency || "AZN"}</span> : null}
+                      {c.valueAmount ? <span className="font-medium">{c.valueAmount.toLocaleString()} {c.currency || DEFAULT_CURRENCY}</span> : null}
                       <Badge variant={c.status === "active" ? "default" : c.status === "expired" ? "destructive" : "secondary"} className="text-[10px]">
                         {c.status}
                       </Badge>

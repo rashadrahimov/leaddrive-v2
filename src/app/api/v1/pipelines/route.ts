@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { getOrgId } from "@/lib/api-auth"
 import { z } from "zod"
+import { STAGE_COLORS } from "@/lib/constants"
 
 const createSchema = z.object({
   name: z.string().min(1).max(100),
@@ -9,7 +10,7 @@ const createSchema = z.object({
   stages: z.array(z.object({
     name: z.string().min(1),
     displayName: z.string().min(1),
-    color: z.string().default("#6366f1"),
+    color: z.string().default(STAGE_COLORS.LEAD),
     probability: z.number().int().min(0).max(100).default(0),
     sortOrder: z.number().int().default(0),
     isWon: z.boolean().default(false),

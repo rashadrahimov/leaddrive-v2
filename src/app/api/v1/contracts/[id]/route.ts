@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { prisma } from "@/lib/prisma"
 import { getOrgId } from "@/lib/api-auth"
+import { PAGE_SIZE } from "@/lib/constants"
 
 const updateContractSchema = z.object({
   contractNumber: z.string().optional(),
@@ -35,7 +36,7 @@ export async function GET(
     const history = await prisma.auditLog.findMany({
       where: { organizationId: orgId, entityType: "contract", entityId: id },
       orderBy: { createdAt: "desc" },
-      take: 50,
+      take: PAGE_SIZE.DEFAULT,
     })
 
     return NextResponse.json({ success: true, data: { ...contract, history } })

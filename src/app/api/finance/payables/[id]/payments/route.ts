@@ -3,6 +3,7 @@ import { z, ZodError } from "zod"
 import { getOrgId } from "@/lib/api-auth"
 import { prisma } from "@/lib/prisma"
 import { notifyBillPaymentRecorded } from "@/lib/finance/telegram-notify"
+import { DEFAULT_CURRENCY } from "@/lib/constants"
 
 const createPaymentSchema = z.object({
   amount: z.union([z.string().min(1), z.number().min(0).max(999999999)]),
@@ -60,7 +61,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       organizationId: orgId,
       billId,
       amount: paymentAmount,
-      currency: currency || "AZN",
+      currency: currency || DEFAULT_CURRENCY,
       paymentMethod: paymentMethod || "bank_transfer",
       paymentDate: paymentDate ? new Date(paymentDate) : new Date(),
       reference: reference || null,
@@ -91,7 +92,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         organizationId: orgId,
         direction: "outgoing",
         amount: paymentAmount,
-        currency: currency || "AZN",
+        currency: currency || DEFAULT_CURRENCY,
         counterpartyName: bill.vendorName,
         counterpartyId: bill.vendorId,
         sourceType: "bill_payment",
@@ -110,7 +111,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       vendorName: bill.vendorName,
       paymentAmount,
       remainingBalance: remaining,
-      currency: currency || "AZN",
+      currency: currency || DEFAULT_CURRENCY,
     }, orgId)
   }
 

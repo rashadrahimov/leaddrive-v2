@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo, useRef } from "react"
 import { useTranslations } from "next-intl"
+import { DEFAULT_CURRENCY } from "@/lib/constants"
 import { useSession as useSessionHook } from "next-auth/react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ColorStatCard } from "@/components/color-stat-card"
@@ -1737,7 +1738,7 @@ function WorkspaceTab({ planId, onNavigateTab }: { planId: string; onNavigateTab
       {/* F7: Multi-Currency FX Summary */}
       <BudgetFxSummary
         lines={(lines as any[]).flatMap((l: any) => [l, ...(l.children ?? [])])}
-        baseCurrency="AZN"
+        baseCurrency={DEFAULT_CURRENCY}
       />
     </div>
   )
