@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { ArrowLeft, ExternalLink, Users, Contact, Briefcase, Building2 } from "lucide-react"
 import Link from "next/link"
 import { TenantActions } from "./tenant-actions"
+import { TenantEditButton } from "./tenant-edit"
 
 export default async function TenantDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -56,6 +57,16 @@ export default async function TenantDetailPage({ params }: { params: Promise<{ i
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <TenantEditButton tenant={{
+            id: tenant.id,
+            name: tenant.name,
+            slug: tenant.slug,
+            plan: tenant.plan,
+            maxUsers: tenant.maxUsers,
+            maxContacts: tenant.maxContacts,
+            branding: tenant.branding,
+            features: tenant.features,
+          }} />
           <a href={tenantUrl} target="_blank" rel="noopener noreferrer">
             <Button variant="outline" size="sm">
               <ExternalLink className="w-4 h-4 mr-1" />
