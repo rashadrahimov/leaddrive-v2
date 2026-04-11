@@ -221,8 +221,8 @@ const authMiddleware = auth((req) => {
     }
   }
 
-  // Allow mobile API (JWT auth handled inside the route handlers)
-  if (pathname.startsWith("/api/v1/mtm/mobile/")) {
+  // Allow all MTM API (mobile JWT + session auth handled inside route handlers via getOrgId/requireAuth)
+  if (pathname.startsWith("/api/v1/mtm/")) {
     return withCspHeaders(NextResponse.next(), nonce)
   }
 
