@@ -119,19 +119,21 @@ export default function NewTenantPage() {
             />
           </div>
 
-          {/* Slug */}
+          {/* URL */}
           <div className="space-y-1.5">
-            <Label>Slug *</Label>
-            <Input
-              value={form.slug}
-              onChange={(e) => setForm({ ...form, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "") })}
-              placeholder="acme-corp"
-              required
-              pattern="[a-z0-9][a-z0-9-]{1,28}[a-z0-9]"
-            />
-            <p className="text-xs text-muted-foreground">
-              URL: <span className="font-mono">{form.slug || "..."}.leaddrivecrm.org</span>
-            </p>
+            <Label>URL *</Label>
+            <div className="flex items-center">
+              <span className="inline-flex items-center px-3 h-10 rounded-l-lg border border-r-0 border-border/70 bg-muted/50 text-sm text-muted-foreground font-mono">https://</span>
+              <Input
+                value={form.slug}
+                onChange={(e) => setForm({ ...form, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "") })}
+                placeholder="acme-corp"
+                required
+                pattern="[a-z0-9][a-z0-9-]{1,28}[a-z0-9]"
+                className="rounded-none border-x-0 font-mono"
+              />
+              <span className="inline-flex items-center px-3 h-10 rounded-r-lg border border-l-0 border-border/70 bg-muted/50 text-sm text-muted-foreground font-mono">.leaddrivecrm.org</span>
+            </div>
           </div>
 
           {/* Admin Email */}
