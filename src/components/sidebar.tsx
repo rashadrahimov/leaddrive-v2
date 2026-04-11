@@ -128,7 +128,7 @@ const GROUP_ACTIVE_BAR: Record<string, string> = {
 }
 
 interface SidebarProps {
-  org: { plan: string; addons?: string[]; modules?: Record<string, boolean> }
+  org: { plan: string; addons?: string[]; modules?: Record<string, boolean>; role?: string }
 }
 
 export function Sidebar({ org }: SidebarProps) {
@@ -138,7 +138,9 @@ export function Sidebar({ org }: SidebarProps) {
   const { newTicketCount } = useTicketBadge()
 
   // Filter sidebar items based on org modules/features/plan
-  const accessibleItems = navItems.filter((item) => hasModule(org, item.module))
+  // Superadmin and enterprise plans see everything
+  const showAll = org.role === "superadmin" || org.plan === "enterprise"
+  const accessibleItems = showAll ? navItems : navItems.filter((item) => hasModule(org, item.module))
   const groups = [...new Set(accessibleItems.map((item) => item.group))]
 
   return (
