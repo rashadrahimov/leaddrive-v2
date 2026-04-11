@@ -38,6 +38,18 @@ function isMarketingPath(pathname: string): boolean {
   return marketingPaths.some((p) => pathname === p || pathname.startsWith(p + "/"))
 }
 
+// Tenant Builder: subdomain routing for {slug}.leaddrivecrm.org
+const RESERVED_SUBDOMAINS = new Set(["app", "admin", "api", "www", "mail", "ftp", "static", "cdn", "assets", "status"])
+function getOrgSubdomain(host: string): string | null {
+  const baseDomain = (process.env.NEXT_PUBLIC_BASE_DOMAIN || "leaddrivecrm.org").replace(/^\./, "")
+  const escaped = baseDomain.replace(/\./g, "\\.")
+  const match = host.match(new RegExp(`^([a-z0-9][a-z0-9-]*)\\.${escaped}$`))
+  if (!match) return null
+  const sub = match[1]
+  if (RESERVED_SUBDOMAINS.has(sub)) return null
+  return sub
+}
+
 // Paths that should be rate-limited more aggressively
 const RATE_LIMITED_PATHS = ["/api/auth", "/login", "/register", "/forgot-password", "/api/v1/auth/reset-password", "/api/v1/auth/2fa", "/api/v1/auth/totp", "/api/v1/auth/verify-2fa"]
 
@@ -89,9 +101,13 @@ const authMiddleware = auth((req) => {
   const nonce = crypto.randomUUID()
   const host = req.headers.get("host")?.replace(/:\d+$/, "") || ""
 
-  // Custom domain routing: if not a known host, rewrite to custom domain handler
+  // Tenant subdomain routing: {slug}.leaddrivecrm.org → treat as app host with tenant context
+  const tenantSlug = getOrgSubdomain(host)
+  const isTenantSubdomain = !!tenantSlug
+
+  // Custom domain routing: if not a known host and not a tenant subdomain, rewrite to custom domain handler
   const isLocalhost = host === "localhost" || host.startsWith("127.") || host.includes("localhost:")
-  if (!isMarketingHost(host) && !isAppHost(host) && !isLocalhost && host) {
+  if (!isMarketingHost(host) && !isAppHost(host) && !isTenantSubdomain && !isLocalhost && host) {
     // API paths and static assets should be handled normally
     if (pathname.startsWith("/api/") || pathname.startsWith("/_next/") || pathname === "/sw.js") {
       return withCspHeaders(NextResponse.next(), nonce)
@@ -160,6 +176,7 @@ const authMiddleware = auth((req) => {
   if (publicPaths.some((p) => pathname.startsWith(p))) {
     const requestHeaders = new Headers(req.headers)
     requestHeaders.set("x-nonce", nonce)
+    if (tenantSlug) requestHeaders.set("x-tenant-slug", tenantSlug)
     // Inject locale for i18n on public/marketing pages
     const localeCookie = req.cookies.get("NEXT_LOCALE")?.value
     if (localeCookie) {
@@ -264,6 +281,7 @@ const authMiddleware = auth((req) => {
   const session = req.auth as any
   const headers = new Headers(req.headers)
   headers.set("x-nonce", nonce)
+  if (tenantSlug) headers.set("x-tenant-slug", tenantSlug)
   const orgId = session?.user?.organizationId
   const role = session?.user?.role
   const userId = session?.user?.id
@@ -285,7 +303,7 @@ const authMiddleware = auth((req) => {
 
   // Admin-only settings routes (security-sensitive)
   const ADMIN_ONLY_SETTINGS = ["/settings/roles", "/settings/security", "/settings/billing"]
-  if (ADMIN_ONLY_SETTINGS.some((p) => pathname === p || pathname.startsWith(p + "/")) && role !== "admin") {
+  if (ADMIN_ONLY_SETTINGS.some((p) => pathname === p || pathname.startsWith(p + "/")) && role !== "admin" && role !== "superadmin") {
     return withCspHeaders(NextResponse.redirect(new URL("/", req.url)), nonce)
   }
 

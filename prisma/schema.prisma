@@ -28,6 +28,12 @@ model Organization {
   settings    Json     @default("{}")
   maxUsers    Int      @default(3)
   maxContacts Int      @default(500)
+  isActive       Boolean  @default(true)
+  serverType     String   @default("shared")  // shared | dedicated
+  serverIp       String?
+  provisionedAt       DateTime?
+  provisionedBy       String?
+  deletionScheduledAt DateTime?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 

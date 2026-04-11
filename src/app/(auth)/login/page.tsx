@@ -26,12 +26,24 @@ export default function LoginPage() {
   const [error, setError] = useState(oauthError ? (OAUTH_ERRORS[oauthError] || OAUTH_ERRORS.Default) : "")
   const [loading, setLoading] = useState(false)
   const [authMethods, setAuthMethods] = useState<{ google: boolean; microsoft: boolean }>({ google: false, microsoft: false })
+  const [tenantBranding, setTenantBranding] = useState<{ name?: string; logo?: string; branding?: any; suspended?: boolean } | null>(null)
 
   useEffect(() => {
     fetch("/api/v1/settings/auth-methods")
       .then(r => r.json())
       .then(j => { if (j.success) setAuthMethods(j.data) })
       .catch(() => {})
+
+    // Tenant branding: detect subdomain from hostname
+    const baseDomain = process.env.NEXT_PUBLIC_BASE_DOMAIN || "leaddrivecrm.org"
+    const host = window.location.hostname
+    const match = host.match(new RegExp(`^([a-z0-9][a-z0-9-]*)\\.${baseDomain.replace(/\./g, "\\.")}$`))
+    if (match && !["app", "admin", "www"].includes(match[1])) {
+      fetch(`/api/v1/public/tenant-branding?slug=${match[1]}`)
+        .then(r => r.json())
+        .then(j => { if (j.data) setTenantBranding(j.data) })
+        .catch(() => {})
+    }
   }, [])
 
   async function handleSubmit(e: React.FormEvent) {
@@ -58,11 +70,25 @@ export default function LoginPage() {
   return (
     <Card>
       <CardHeader className="text-center">
-        <CardTitle className="text-2xl font-bold">LeadDrive CRM</CardTitle>
-        <CardDescription>{t("signInToAccount")}</CardDescription>
+        {tenantBranding?.logo && (
+          <img src={tenantBranding.logo} alt={tenantBranding.name} className="h-10 mx-auto mb-2 object-contain" />
+        )}
+        <CardTitle className="text-2xl font-bold">
+          {tenantBranding?.name || "LeadDrive CRM"}
+        </CardTitle>
+        <CardDescription>
+          {tenantBranding?.suspended
+            ? "This account has been suspended"
+            : t("signInToAccount")}
+        </CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
+          {tenantBranding?.suspended && (
+            <div className="rounded-md bg-amber-500/10 border border-amber-500/20 p-3 text-sm text-amber-200">
+              This organization has been deactivated. Contact your administrator.
+            </div>
+          )}
           {error && (
             <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
               {error}

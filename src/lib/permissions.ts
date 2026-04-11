@@ -1,4 +1,4 @@
-export type Role = "admin" | "manager" | "sales" | "support" | "viewer"
+export type Role = "superadmin" | "admin" | "manager" | "sales" | "support" | "viewer"
 export type Action = "read" | "write" | "delete" | "export" | "admin"
 export type Module =
   | "companies" | "contacts" | "deals" | "leads" | "tasks"
@@ -10,6 +10,9 @@ export type Module =
 
 // Permission matrix: role × module × action
 const ROLE_PERMISSIONS: Record<Role, Record<string, Action[]>> = {
+  superadmin: {
+    "*": ["read", "write", "delete", "export", "admin"],
+  },
   admin: {
     "*": ["read", "write", "delete", "export", "admin"],
   },
@@ -206,7 +209,11 @@ export function canExport(role: Role, module: Module): boolean {
 }
 
 export function isAdmin(role: Role): boolean {
-  return role === "admin"
+  return role === "admin" || role === "superadmin"
+}
+
+export function isSuperAdmin(role: Role): boolean {
+  return role === "superadmin"
 }
 
 export function getUserPermissions(role: Role): Record<string, Action[]> {
@@ -245,4 +252,4 @@ export const ALL_MODULES: { id: Module; group: string }[] = [
 ]
 
 export const ALL_ACTIONS: Action[] = ["read", "write", "delete", "export", "admin"]
-export const ALL_ROLES: Role[] = ["admin", "manager", "sales", "support", "viewer"]
+export const ALL_ROLES: Role[] = ["superadmin", "admin", "manager", "sales", "support", "viewer"]

@@ -8,6 +8,7 @@ import { applyRecordFilter } from "@/lib/sharing-rules"
 import { executeWorkflows } from "@/lib/workflow-engine"
 import { createNotification } from "@/lib/notifications"
 import { fireWebhooks } from "@/lib/webhooks"
+import { checkContactLimit } from "@/lib/plan-limits"
 import { trackContactEvent } from "@/lib/contact-events"
 
 const createContactSchema = z.object({
@@ -72,6 +73,12 @@ export async function POST(req: NextRequest) {
   if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 })
 
   try {
+    // Check plan contact limit
+    const limitCheck = await checkContactLimit(orgId)
+    if (!limitCheck.allowed) {
+      return NextResponse.json({ error: limitCheck.message }, { status: 403 })
+    }
+
     const writableData = filterWritableFields(parsed.data, await getFieldPermissions(orgId, role, "contact"), role)
     const contact = await prisma.contact.create({ data: { organizationId: orgId, ...writableData } })
     logAudit(orgId, "create", "contact", contact.id, contact.fullName)

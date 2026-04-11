@@ -34,6 +34,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
           if (!user) return null
 
+          // Check if organization is active (tenant deactivation)
+          if (!user.organization.isActive && user.role !== "superadmin") return null
+
           // Verify password
           const valid = await bcrypt.compare(parsed.data.password, user.passwordHash)
           if (!valid) return null
@@ -118,8 +121,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         })
         if (!existing) {
           // First OAuth login — create org + user
+          const slug = (user.name || "user").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 30) || "org"
+          const uniqueSlug = `${slug}-${Date.now().toString(36)}`
           const org = await prisma.organization.create({
-            data: { name: `${user.name}'s Organization`, plan: "starter" },
+            data: { name: `${user.name}'s Organization`, slug: uniqueSlug, plan: "starter" },
           })
           await prisma.user.create({
             data: {

@@ -1,78 +1,99 @@
-'use client';
+import { prisma } from "@/lib/prisma"
+import { Card } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Building2, Users, Contact, Briefcase } from "lucide-react"
+import Link from "next/link"
 
-import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { BarChart3, Users, Database } from 'lucide-react';
+export default async function AdminDashboard() {
+  const [orgCount, activeOrgCount, userCount, contactCount, dealCount, recentOrgs] = await Promise.all([
+    prisma.organization.count(),
+    prisma.organization.count({ where: { isActive: true } }),
+    prisma.user.count(),
+    prisma.contact.count(),
+    prisma.deal.count(),
+    prisma.organization.findMany({
+      take: 5,
+      orderBy: { createdAt: "desc" },
+      include: { _count: { select: { users: true, contacts: true } } },
+    }),
+  ])
 
-const orgs = [
-  { id: 1, name: 'Acme Corp', plan: 'Enterprise', users: 24, usage: '78%' },
-  { id: 2, name: 'TechStart Inc', plan: 'Pro', users: 8, usage: '45%' },
-  { id: 3, name: 'Global Solutions', plan: 'Starter', users: 2, usage: '12%' },
-];
+  const stats = [
+    { label: "Total Tenants", value: orgCount, sub: `${activeOrgCount} active`, icon: Building2 },
+    { label: "Total Users", value: userCount, icon: Users },
+    { label: "Total Contacts", value: contactCount, icon: Contact },
+    { label: "Total Deals", value: dealCount, icon: Briefcase },
+  ]
 
-const stats = [
-  { label: 'Total Organizations', value: '247', icon: Users },
-  { label: 'Active Users', value: '1,843', icon: Users },
-  { label: 'Database Usage', value: '2.4 TB', icon: Database },
-];
-
-export default function AdminPage() {
   return (
-    <div className="min-h-screen bg-background p-8">
-      <div className="max-w-6xl mx-auto space-y-8">
-        <div>
-          <h1 className="text-3xl font-bold">Super Admin Dashboard</h1>
-          <p className="text-muted-foreground mt-2">System overview and organization management</p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {stats.map((stat) => {
-            const Icon = stat.icon;
-            return (
-              <Card key={stat.label} className="p-6">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="text-muted-foreground text-sm">{stat.label}</p>
-                    <p className="text-3xl font-bold mt-2">{stat.value}</p>
-                  </div>
-                  <Icon className="w-6 h-6 text-primary" />
-                </div>
-              </Card>
-            );
-          })}
-        </div>
-
-        <Card className="p-6">
-          <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-            <BarChart3 className="w-5 h-5" />
-            Organizations
-          </h2>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b">
-                  <th className="text-left py-3 px-4 font-medium">Name</th>
-                  <th className="text-left py-3 px-4 font-medium">Plan</th>
-                  <th className="text-left py-3 px-4 font-medium">Users</th>
-                  <th className="text-left py-3 px-4 font-medium">Storage Usage</th>
-                </tr>
-              </thead>
-              <tbody>
-                {orgs.map((org) => (
-                  <tr key={org.id} className="border-b hover:bg-accent transition-colors">
-                    <td className="py-3 px-4 font-medium">{org.name}</td>
-                    <td className="py-3 px-4">
-                      <Badge>{org.plan}</Badge>
-                    </td>
-                    <td className="py-3 px-4">{org.users}</td>
-                    <td className="py-3 px-4">{org.usage}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </Card>
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold">Super Admin Dashboard</h1>
+        <p className="text-muted-foreground text-sm mt-1">System-wide overview across all tenants</p>
       </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {stats.map((stat) => {
+          const Icon = stat.icon
+          return (
+            <Card key={stat.label} className="p-5">
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-muted-foreground text-xs font-medium uppercase tracking-wide">{stat.label}</p>
+                  <p className="text-2xl font-bold mt-1">{stat.value.toLocaleString()}</p>
+                  {stat.sub && <p className="text-xs text-muted-foreground mt-0.5">{stat.sub}</p>}
+                </div>
+                <Icon className="w-5 h-5 text-primary" />
+              </div>
+            </Card>
+          )
+        })}
+      </div>
+
+      <Card className="p-5">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-base font-semibold">Recent Tenants</h2>
+          <Link href="/admin/tenants" className="text-sm text-primary hover:underline">
+            View all
+          </Link>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b text-left">
+                <th className="py-2 px-3 font-medium text-muted-foreground">Name</th>
+                <th className="py-2 px-3 font-medium text-muted-foreground">Slug</th>
+                <th className="py-2 px-3 font-medium text-muted-foreground">Plan</th>
+                <th className="py-2 px-3 font-medium text-muted-foreground">Users</th>
+                <th className="py-2 px-3 font-medium text-muted-foreground">Contacts</th>
+                <th className="py-2 px-3 font-medium text-muted-foreground">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {recentOrgs.map((org) => (
+                <tr key={org.id} className="border-b hover:bg-accent/50 transition-colors">
+                  <td className="py-2.5 px-3 font-medium">
+                    <Link href={`/admin/tenants/${org.id}`} className="hover:text-primary">
+                      {org.name}
+                    </Link>
+                  </td>
+                  <td className="py-2.5 px-3 text-muted-foreground font-mono text-xs">{org.slug}</td>
+                  <td className="py-2.5 px-3">
+                    <Badge variant="outline" className="text-xs capitalize">{org.plan}</Badge>
+                  </td>
+                  <td className="py-2.5 px-3">{org._count.users}</td>
+                  <td className="py-2.5 px-3">{org._count.contacts}</td>
+                  <td className="py-2.5 px-3">
+                    <Badge variant={org.isActive ? "default" : "destructive"} className="text-xs">
+                      {org.isActive ? "Active" : "Inactive"}
+                    </Badge>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </Card>
     </div>
-  );
+  )
 }

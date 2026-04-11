@@ -1,4 +1,5 @@
 import { PLANS, type PlanId } from "@/lib/modules"
+import { prisma } from "@/lib/prisma"
 
 export type Resource = "users" | "contacts" | "ai_calls"
 
@@ -52,4 +53,42 @@ export function getPercentageUsed(
 
   const usage = org.currentUsage?.[resource] ?? current
   return Math.min(100, (usage / limit) * 100)
+}
+
+/**
+ * Check if organization can add more users (DB-backed check using org.maxUsers).
+ */
+export async function checkUserLimit(orgId: string): Promise<{ allowed: boolean; message?: string }> {
+  const org = await prisma.organization.findUnique({
+    where: { id: orgId },
+    select: { maxUsers: true, _count: { select: { users: true } } },
+  })
+  if (!org) return { allowed: false, message: "Organization not found" }
+  if (org.maxUsers === -1) return { allowed: true }
+  if (org._count.users >= org.maxUsers) {
+    return {
+      allowed: false,
+      message: `User limit reached (${org._count.users}/${org.maxUsers}). Upgrade your plan to add more users.`,
+    }
+  }
+  return { allowed: true }
+}
+
+/**
+ * Check if organization can add more contacts (DB-backed check using org.maxContacts).
+ */
+export async function checkContactLimit(orgId: string): Promise<{ allowed: boolean; message?: string }> {
+  const org = await prisma.organization.findUnique({
+    where: { id: orgId },
+    select: { maxContacts: true, _count: { select: { contacts: true } } },
+  })
+  if (!org) return { allowed: false, message: "Organization not found" }
+  if (org.maxContacts === -1) return { allowed: true }
+  if (org._count.contacts >= org.maxContacts) {
+    return {
+      allowed: false,
+      message: `Contact limit reached (${org._count.contacts}/${org.maxContacts}). Upgrade your plan to add more contacts.`,
+    }
+  }
+  return { allowed: true }
 }

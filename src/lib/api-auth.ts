@@ -9,6 +9,10 @@ import crypto from "crypto"
 const pwCheckCache = new Map<string, { checkedAt: number; changedAt: number | null }>()
 const PW_CHECK_INTERVAL = 60_000 // 60 seconds
 
+// In-memory cache for org isActive checks (avoids DB query on every request)
+const orgActiveCache = new Map<string, { checkedAt: number; isActive: boolean }>()
+const ORG_ACTIVE_CHECK_INTERVAL = 30_000 // 30 seconds
+
 interface AuthResult {
   orgId: string
   userId: string
@@ -189,6 +193,30 @@ export async function requireAuth(
       }
     } catch {
       // Non-critical — don't block request on cache/DB failure
+    }
+  }
+
+  // SECURITY: Check if organization is still active (tenant deactivation)
+  if (session.orgId && session.role !== "superadmin") {
+    try {
+      const now = Date.now()
+      const cached = orgActiveCache.get(session.orgId)
+      let isActive = cached?.isActive ?? true
+
+      if (!cached || now - cached.checkedAt > ORG_ACTIVE_CHECK_INTERVAL) {
+        const org = await prisma.organization.findUnique({
+          where: { id: session.orgId },
+          select: { isActive: true },
+        })
+        isActive = org?.isActive ?? false
+        orgActiveCache.set(session.orgId, { checkedAt: now, isActive })
+      }
+
+      if (!isActive) {
+        return NextResponse.json({ error: "Organization is deactivated. Contact your administrator." }, { status: 403 })
+      }
+    } catch {
+      // Non-critical — don't block on cache failure
     }
   }
 
