@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { auth } from "./auth"
 import { prisma } from "./prisma"
 import { checkPermission, resolveModuleFromPath, methodToAction, type Role, type Module, type Action } from "./permissions"
+import { getMobileAuth } from "./mobile-auth"
 import crypto from "crypto"
 
 // In-memory cache for passwordChangedAt checks (avoids DB query on every request)
@@ -82,6 +83,10 @@ export async function getOrgId(req: NextRequest): Promise<string | null> {
   const session = await getSession(req)
   if (session?.orgId) return session.orgId
 
+  // Try mobile JWT auth (field agent app)
+  const mobileAuth = getMobileAuth(req)
+  if (mobileAuth?.orgId) return mobileAuth.orgId
+
   const apiKeyAuth = await getApiKeyAuth(req)
   if (!apiKeyAuth) return null
 
@@ -118,6 +123,18 @@ export async function requireAuth(
   // Try session auth first, then API key
   const rawSession = await auth()
   if (!rawSession?.user) {
+    // Fallback to mobile JWT auth (field agent app)
+    const mobileAuth = getMobileAuth(req)
+    if (mobileAuth) {
+      return {
+        orgId: mobileAuth.orgId,
+        userId: mobileAuth.userId || mobileAuth.agentId,
+        role: (mobileAuth.role || "agent") as Role,
+        email: mobileAuth.email,
+        name: mobileAuth.name,
+      }
+    }
+
     // Fallback to API key auth
     const apiKeyAuth = await getApiKeyAuth(req)
     if (apiKeyAuth) {
