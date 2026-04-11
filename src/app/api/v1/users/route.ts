@@ -63,7 +63,7 @@ export async function POST(req: NextRequest) {
         name,
         email,
         passwordHash,
-        role: role || "sales",
+        role: (role && ["admin", "manager", "sales", "support", "viewer"].includes(role)) ? role : "sales",
         department: department || null,
         phone: phone || null,
         isActive: isActive !== false,
