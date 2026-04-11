@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react"
 import { useRouter } from "next/navigation"
+import { useTranslations } from "next-intl"
 import { Search, Building2, Users, Handshake, UserPlus, CheckSquare, FileText } from "lucide-react"
 
 interface SearchItem {
@@ -17,6 +18,7 @@ const typeIcons: Record<string, React.ElementType> = {
 }
 
 export function CommandSearch() {
+  const t = useTranslations("common")
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState("")
   const [results, setResults] = useState<SearchItem[]>([])
@@ -86,18 +88,18 @@ export function CommandSearch() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Search companies, contacts, deals..."
+              placeholder={t("searchGlobalPlaceholder")}
               className="flex-1 bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground"
             />
             <kbd className="rounded border px-1.5 py-0.5 text-[10px] font-mono text-muted-foreground">ESC</kbd>
           </div>
           <div className="max-h-72 overflow-y-auto p-2">
             {loading ? (
-              <div className="py-6 text-center text-sm text-muted-foreground">Searching...</div>
+              <div className="py-6 text-center text-sm text-muted-foreground">{t("searching")}</div>
             ) : query.length < 2 ? (
-              <div className="py-6 text-center text-sm text-muted-foreground">Type at least 2 characters to search</div>
+              <div className="py-6 text-center text-sm text-muted-foreground">{t("typeMinChars")}</div>
             ) : results.length === 0 ? (
-              <div className="py-6 text-center text-sm text-muted-foreground">No results found</div>
+              <div className="py-6 text-center text-sm text-muted-foreground">{t("noResults")}</div>
             ) : (
               results.map((item, i) => {
                 const Icon = typeIcons[item.type] || Search
@@ -114,7 +116,7 @@ export function CommandSearch() {
                       <div className="font-medium">{item.name}</div>
                       {item.subtitle && <div className="text-xs text-muted-foreground">{item.subtitle}</div>}
                     </div>
-                    <span className="text-[10px] text-muted-foreground uppercase">{item.type}</span>
+                    <span className="text-[10px] text-muted-foreground uppercase">{t(item.type)}</span>
                   </button>
                 )
               })

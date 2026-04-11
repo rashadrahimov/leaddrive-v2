@@ -22,6 +22,7 @@ interface DealFormProps {
 export function DealForm({ open, onOpenChange, onSaved, initialData, orgId, pipelineId }: DealFormProps) {
   const t = useTranslations("forms")
   const tc = useTranslations("common")
+  const td = useTranslations("deals")
   const isEdit = !!initialData?.id
   const [form, setForm] = useState({
     name: initialData?.name || "",
@@ -135,16 +136,16 @@ export function DealForm({ open, onOpenChange, onSaved, initialData, orgId, pipe
               <div>
                 <Label htmlFor="stage">{tc("status")}</Label>
                 <Select value={form.stage} onChange={e => update("stage", e.target.value)}>
-                  <option value="LEAD">Lead</option>
-                  <option value="QUALIFIED">Qualified</option>
-                  <option value="PROPOSAL">Proposal</option>
-                  <option value="NEGOTIATION">Negotiation</option>
-                  <option value="WON">Won</option>
-                  <option value="LOST">Lost</option>
+                  <option value="LEAD">{td("stageLead")}</option>
+                  <option value="QUALIFIED">{td("stageQualified")}</option>
+                  <option value="PROPOSAL">{td("stageProposal")}</option>
+                  <option value="NEGOTIATION">{td("stageNegotiation")}</option>
+                  <option value="WON">{td("stageWon")}</option>
+                  <option value="LOST">{td("stageLost")}</option>
                 </Select>
               </div>
               <div>
-                <Label htmlFor="probability">Probability %</Label>
+                <Label htmlFor="probability">{tc("probability")} %</Label>
                 <Input id="probability" type="number" min="0" max="100" value={form.probability} onChange={e => update("probability", e.target.value)} />
               </div>
             </div>

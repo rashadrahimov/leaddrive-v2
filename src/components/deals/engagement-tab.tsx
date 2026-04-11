@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { useTranslations } from "next-intl"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Loader2, Phone, Mail, Users, FileText, CheckSquare, BarChart3, TrendingUp, Eye, MousePointer } from "lucide-react"
@@ -21,6 +22,7 @@ interface EngagementData {
 }
 
 export function EngagementTab({ dealId, orgId }: { dealId: string; orgId?: string }) {
+  const t = useTranslations("deals")
   const [data, setData] = useState<EngagementData | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -41,15 +43,15 @@ export function EngagementTab({ dealId, orgId }: { dealId: string; orgId?: strin
   }
 
   if (!data) {
-    return <p className="text-sm text-muted-foreground text-center py-8">No engagement data available</p>
+    return <p className="text-sm text-muted-foreground text-center py-8">{t("engNoData")}</p>
   }
 
   const activityItems = [
-    { icon: Phone, label: "Calls", value: data.activities.calls, color: "text-green-600", bg: "bg-green-100" },
-    { icon: Mail, label: "Emails", value: data.activities.emails, color: "text-blue-600", bg: "bg-blue-100" },
-    { icon: Users, label: "Meetings", value: data.activities.meetings, color: "text-violet-600", bg: "bg-violet-100" },
-    { icon: FileText, label: "Notes", value: data.activities.notes, color: "text-amber-600", bg: "bg-amber-100" },
-    { icon: CheckSquare, label: "Tasks", value: data.activities.tasks, color: "text-orange-600", bg: "bg-orange-100" },
+    { icon: Phone, label: t("engCalls"), value: data.activities.calls, color: "text-green-600", bg: "bg-green-100" },
+    { icon: Mail, label: t("engEmails"), value: data.activities.emails, color: "text-blue-600", bg: "bg-blue-100" },
+    { icon: Users, label: t("engMeetings"), value: data.activities.meetings, color: "text-violet-600", bg: "bg-violet-100" },
+    { icon: FileText, label: t("engNotes"), value: data.activities.notes, color: "text-amber-600", bg: "bg-amber-100" },
+    { icon: CheckSquare, label: t("engTasks"), value: data.activities.tasks, color: "text-orange-600", bg: "bg-orange-100" },
   ]
 
   return (
@@ -59,8 +61,8 @@ export function EngagementTab({ dealId, orgId }: { dealId: string; orgId?: strin
         <div className="h-5 w-5 rounded bg-red-500 flex items-center justify-center">
           <BarChart3 className="h-3 w-3 text-white" />
         </div>
-        <h3 className="font-semibold text-red-600">Engagement</h3>
-        <Badge variant="outline" className="ml-auto text-xs">Last 3 months</Badge>
+        <h3 className="font-semibold text-red-600">{t("engTitle")}</h3>
+        <Badge variant="outline" className="ml-auto text-xs">{t("engLast3Months")}</Badge>
       </div>
 
       {/* Activity Metrics */}
@@ -83,7 +85,7 @@ export function EngagementTab({ dealId, orgId }: { dealId: string; orgId?: strin
       {/* Last Activity */}
       {data.lastActivity && (
         <div className="text-xs text-muted-foreground flex items-center gap-2">
-          <span>Last activity:</span>
+          <span>{t("engLastActivity")}:</span>
           <Badge variant="outline" className="text-[10px]">{data.lastActivity.type}</Badge>
           <span>{data.lastActivity.subject}</span>
           <span>·</span>
@@ -94,7 +96,7 @@ export function EngagementTab({ dealId, orgId }: { dealId: string; orgId?: strin
       {/* Activity Dynamics Chart */}
       <Card className="border-none shadow-sm">
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm">Activity Dynamics</CardTitle>
+          <CardTitle className="text-sm">{t("engActivityDynamics")}</CardTitle>
         </CardHeader>
         <CardContent>
           <ResponsiveContainer width="100%" height={200}>
@@ -104,9 +106,9 @@ export function EngagementTab({ dealId, orgId }: { dealId: string; orgId?: strin
               <YAxis tick={{ fontSize: 11 }} />
               <Tooltip />
               <Legend iconSize={8} wrapperStyle={{ fontSize: 11 }} />
-              <Area type="monotone" dataKey="calls" stackId="1" stroke="#22c55e" fill="#22c55e" fillOpacity={0.3} name="Calls" />
-              <Area type="monotone" dataKey="emails" stackId="1" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.3} name="Emails" />
-              <Area type="monotone" dataKey="meetings" stackId="1" stroke="#8b5cf6" fill="#8b5cf6" fillOpacity={0.3} name="Meetings" />
+              <Area type="monotone" dataKey="calls" stackId="1" stroke="#22c55e" fill="#22c55e" fillOpacity={0.3} name={t("engCalls")} />
+              <Area type="monotone" dataKey="emails" stackId="1" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.3} name={t("engEmails")} />
+              <Area type="monotone" dataKey="meetings" stackId="1" stroke="#8b5cf6" fill="#8b5cf6" fillOpacity={0.3} name={t("engMeetings")} />
             </AreaChart>
           </ResponsiveContainer>
         </CardContent>
@@ -117,7 +119,7 @@ export function EngagementTab({ dealId, orgId }: { dealId: string; orgId?: strin
         <div className="h-5 w-5 rounded bg-red-500 flex items-center justify-center">
           <Mail className="h-3 w-3 text-white" />
         </div>
-        <h3 className="font-semibold text-red-600">Email Nurturing</h3>
+        <h3 className="font-semibold text-red-600">{t("engEmailNurturing")}</h3>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -125,7 +127,7 @@ export function EngagementTab({ dealId, orgId }: { dealId: string; orgId?: strin
           <CardContent className="p-3">
             <div className="flex items-center gap-2">
               <Mail className="h-4 w-4 text-blue-500" />
-              <span className="text-xs text-muted-foreground">Sent (3 mo)</span>
+              <span className="text-xs text-muted-foreground">{t("engSent3Mo")}</span>
             </div>
             <p className="text-xl font-bold mt-1">{data.email.sent}</p>
           </CardContent>
@@ -134,7 +136,7 @@ export function EngagementTab({ dealId, orgId }: { dealId: string; orgId?: strin
           <CardContent className="p-3">
             <div className="flex items-center gap-2">
               <Eye className="h-4 w-4 text-green-500" />
-              <span className="text-xs text-muted-foreground">Open rate</span>
+              <span className="text-xs text-muted-foreground">{t("engOpenRate")}</span>
             </div>
             <p className="text-xl font-bold mt-1">{data.email.openRate}%</p>
           </CardContent>
@@ -143,7 +145,7 @@ export function EngagementTab({ dealId, orgId }: { dealId: string; orgId?: strin
           <CardContent className="p-3">
             <div className="flex items-center gap-2">
               <MousePointer className="h-4 w-4 text-orange-500" />
-              <span className="text-xs text-muted-foreground">Click rate</span>
+              <span className="text-xs text-muted-foreground">{t("engClickRate")}</span>
             </div>
             <p className="text-xl font-bold mt-1">{data.email.clickRate}%</p>
           </CardContent>
@@ -152,7 +154,7 @@ export function EngagementTab({ dealId, orgId }: { dealId: string; orgId?: strin
           <CardContent className="p-3">
             <div className="flex items-center gap-2">
               <TrendingUp className="h-4 w-4 text-red-500" />
-              <span className="text-xs text-muted-foreground">Bounced</span>
+              <span className="text-xs text-muted-foreground">{t("engBounced")}</span>
             </div>
             <p className="text-xl font-bold mt-1">{data.email.bounced}</p>
           </CardContent>
@@ -162,7 +164,7 @@ export function EngagementTab({ dealId, orgId }: { dealId: string; orgId?: strin
       {/* Email Dynamics Chart */}
       <Card className="border-none shadow-sm">
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm">Email Dynamics</CardTitle>
+          <CardTitle className="text-sm">{t("engEmailDynamics")}</CardTitle>
         </CardHeader>
         <CardContent>
           <ResponsiveContainer width="100%" height={200}>
@@ -172,9 +174,9 @@ export function EngagementTab({ dealId, orgId }: { dealId: string; orgId?: strin
               <YAxis tick={{ fontSize: 11 }} />
               <Tooltip />
               <Legend iconSize={8} wrapperStyle={{ fontSize: 11 }} />
-              <Line type="monotone" dataKey="sent" stroke="#3b82f6" strokeWidth={2} dot={{ r: 3 }} name="Sent" />
-              <Line type="monotone" dataKey="opened" stroke="#22c55e" strokeWidth={2} dot={{ r: 3 }} name="Opens" />
-              <Line type="monotone" dataKey="clicked" stroke="#f59e0b" strokeWidth={2} dot={{ r: 3 }} name="Clicks" />
+              <Line type="monotone" dataKey="sent" stroke="#3b82f6" strokeWidth={2} dot={{ r: 3 }} name={t("engChartSent")} />
+              <Line type="monotone" dataKey="opened" stroke="#22c55e" strokeWidth={2} dot={{ r: 3 }} name={t("engChartOpens")} />
+              <Line type="monotone" dataKey="clicked" stroke="#f59e0b" strokeWidth={2} dot={{ r: 3 }} name={t("engChartClicks")} />
             </LineChart>
           </ResponsiveContainer>
         </CardContent>

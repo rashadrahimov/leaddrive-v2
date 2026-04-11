@@ -339,7 +339,7 @@ export function OfferForm({ open, onOpenChange, onSaved, initialData, orgId, dea
                       <Input value={clientName} onChange={(e) => setClientName(e.target.value)} />
                     </div>
                     <div>
-                      <Label>VÖEN</Label>
+                      <Label>{t("voenLabel")}</Label>
                       <Input value={voen} onChange={(e) => setVoen(e.target.value)} />
                     </div>
                     <div>
@@ -492,7 +492,7 @@ export function OfferForm({ open, onOpenChange, onSaved, initialData, orgId, dea
                 <div className="flex items-center gap-3">
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input type="checkbox" checked={includeVat} onChange={(e) => setIncludeVat(e.target.checked)} className="rounded border-border" />
-                    <span className="text-sm">НДС 18%</span>
+                    <span className="text-sm">{t("vat18")}</span>
                   </label>
                   <div className="flex items-center gap-2">
                     <Label className="text-sm whitespace-nowrap">{t("generalDiscount")}:</Label>
@@ -520,7 +520,7 @@ export function OfferForm({ open, onOpenChange, onSaved, initialData, orgId, dea
                 )}
                 {includeVat && (
                   <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">НДС (18%):</span>
+                    <span className="text-muted-foreground">{t("vatLabel")}:</span>
                     <span className="font-medium">+{formatCurrency(calculations.vatAmount)} {currency}</span>
                   </div>
                 )}

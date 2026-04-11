@@ -1,6 +1,7 @@
 "use client"
 
 import { useMemo } from "react"
+import { useTranslations } from "next-intl"
 import { cn } from "@/lib/utils"
 import { MiniDonut } from "@/components/charts/mini-charts"
 import {
@@ -32,26 +33,10 @@ interface Stats {
 interface EmailAnalyticsProps {
   logs: EmailLogEntry[]
   stats: Stats
-  labels: {
-    total: string
-    outbound: string
-    inbound: string
-    sent: string
-    failed: string
-    bounced: string
-    pending: string
-    deliveryRate: string
-    statusDistribution: string
-    directionBreakdown: string
-    emailsByMonth: string
-    topRecipients: string
-    topSenders: string
-    campaignEmails: string
-    noData: string
-  }
 }
 
-export function EmailAnalytics({ logs, stats, labels }: EmailAnalyticsProps) {
+export function EmailAnalytics({ logs, stats }: EmailAnalyticsProps) {
+  const t = useTranslations("emailLog")
   const computed = useMemo(() => {
     const deliveryRate = stats.outbound > 0
       ? Math.round((stats.sent / stats.outbound) * 100)
@@ -113,7 +98,7 @@ export function EmailAnalytics({ logs, stats, labels }: EmailAnalyticsProps) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center">
         <Mail className="h-12 w-12 text-muted-foreground/30 mb-3" />
-        <p className="text-muted-foreground">{labels.noData}</p>
+        <p className="text-muted-foreground">{t("noData")}</p>
       </div>
     )
   }
@@ -123,12 +108,12 @@ export function EmailAnalytics({ logs, stats, labels }: EmailAnalyticsProps) {
       {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
         {[
-          { label: labels.total, value: stats.total, icon: Mail, color: "from-primary to-primary/80", sub: `${stats.outbound} out / ${stats.inbound} in` },
-          { label: labels.outbound, value: stats.outbound, icon: Send, color: "from-[hsl(var(--ai-from))] to-[hsl(var(--ai-to))]", sub: `${computed.deliveryRate}% delivered` },
-          { label: labels.inbound, value: stats.inbound, icon: Inbox, color: "from-primary/80 to-primary", sub: "received" },
-          { label: labels.sent, value: stats.sent, icon: CheckCircle, color: "from-emerald-500 to-green-600", sub: `${computed.deliveryRate}% rate` },
-          { label: labels.failed, value: stats.failed, icon: AlertTriangle, color: "from-red-500 to-rose-600", sub: `${computed.failRate}% fail rate` },
-          { label: labels.bounced, value: stats.bounced, icon: RotateCcw, color: "from-orange-500 to-amber-600", sub: "bounced back" },
+          { label: t("total"), value: stats.total, icon: Mail, color: "from-primary to-primary/80", sub: `${stats.outbound} ${t("analyticsOut")} / ${stats.inbound} ${t("analyticsIn")}` },
+          { label: t("outbound"), value: stats.outbound, icon: Send, color: "from-[hsl(var(--ai-from))] to-[hsl(var(--ai-to))]", sub: `${computed.deliveryRate}% ${t("analyticsDelivered")}` },
+          { label: t("inbound"), value: stats.inbound, icon: Inbox, color: "from-primary/80 to-primary", sub: t("analyticsReceived") },
+          { label: t("sent"), value: stats.sent, icon: CheckCircle, color: "from-emerald-500 to-green-600", sub: `${computed.deliveryRate}% ${t("analyticsRate")}` },
+          { label: t("failed"), value: stats.failed, icon: AlertTriangle, color: "from-red-500 to-rose-600", sub: `${computed.failRate}% ${t("analyticsFailRate")}` },
+          { label: t("bounced"), value: stats.bounced, icon: RotateCcw, color: "from-orange-500 to-amber-600", sub: t("analyticsBouncedBack") },
         ].map((kpi, i) => (
           <div key={i} className="relative overflow-hidden rounded-xl text-white p-4">
             <div className={cn("absolute inset-0 bg-gradient-to-br", kpi.color)} />
@@ -150,15 +135,15 @@ export function EmailAnalytics({ logs, stats, labels }: EmailAnalyticsProps) {
         <div className="rounded-xl border bg-card p-5">
           <h3 className="text-sm font-semibold mb-4 flex items-center gap-2">
             <BarChart3 className="h-4 w-4 text-muted-foreground" />
-            {labels.statusDistribution}
+            {t("statusDistribution")}
           </h3>
           <div className="space-y-3">
             {[
-              { key: "sent", label: labels.sent, color: "bg-emerald-500" },
-              { key: "delivered", label: "Delivered", color: "bg-blue-500" },
-              { key: "failed", label: labels.failed, color: "bg-red-500" },
-              { key: "bounced", label: labels.bounced, color: "bg-orange-500" },
-              { key: "pending", label: labels.pending, color: "bg-amber-500" },
+              { key: "sent", label: t("sent"), color: "bg-emerald-500" },
+              { key: "delivered", label: t("analyticsDelivered"), color: "bg-blue-500" },
+              { key: "failed", label: t("failed"), color: "bg-red-500" },
+              { key: "bounced", label: t("bounced"), color: "bg-orange-500" },
+              { key: "pending", label: t("statusPending"), color: "bg-amber-500" },
             ].map(s => {
               const count = computed.statusCounts[s.key] || 0
               const pct = stats.total > 0 ? (count / stats.total) * 100 : 0
@@ -184,7 +169,7 @@ export function EmailAnalytics({ logs, stats, labels }: EmailAnalyticsProps) {
         <div className="rounded-xl border bg-card p-5">
           <h3 className="text-sm font-semibold mb-4 flex items-center gap-2">
             <Send className="h-4 w-4 text-muted-foreground" />
-            {labels.directionBreakdown}
+            {t("directionBreakdown")}
           </h3>
           <div className="flex items-center justify-center h-32">
             <MiniDonut
@@ -197,8 +182,8 @@ export function EmailAnalytics({ logs, stats, labels }: EmailAnalyticsProps) {
             />
             <div className="ml-4 space-y-3">
               {[
-                { label: labels.outbound, count: stats.outbound, color: "bg-[hsl(var(--ai-from))]" },
-                { label: labels.inbound, count: stats.inbound, color: "bg-blue-500" },
+                { label: t("outbound"), count: stats.outbound, color: "bg-[hsl(var(--ai-from))]" },
+                { label: t("inbound"), count: stats.inbound, color: "bg-blue-500" },
               ].map(p => (
                 <div key={p.label} className="flex items-center gap-2">
                   <div className={cn("h-2.5 w-2.5 rounded-full", p.color)} />
@@ -214,7 +199,7 @@ export function EmailAnalytics({ logs, stats, labels }: EmailAnalyticsProps) {
         <div className="rounded-xl border bg-card p-5">
           <h3 className="text-sm font-semibold mb-4 flex items-center gap-2">
             <Sparkles className="h-4 w-4 text-muted-foreground" />
-            {labels.campaignEmails}
+            {t("campaignEmails")}
           </h3>
           <div className="flex items-center justify-center h-32">
             <MiniDonut
@@ -227,8 +212,8 @@ export function EmailAnalytics({ logs, stats, labels }: EmailAnalyticsProps) {
             />
             <div className="ml-4 space-y-3">
               {[
-                { label: labels.campaignEmails, count: computed.campaignCount, color: "bg-[hsl(var(--ai-from))]" },
-                { label: "Manual", count: computed.manualCount, color: "bg-muted-foreground/50" },
+                { label: t("campaignEmails"), count: computed.campaignCount, color: "bg-[hsl(var(--ai-from))]" },
+                { label: t("analyticsManual"), count: computed.manualCount, color: "bg-muted-foreground/50" },
               ].map(p => (
                 <div key={p.label} className="flex items-center gap-2">
                   <div className={cn("h-2.5 w-2.5 rounded-full", p.color)} />
@@ -247,7 +232,7 @@ export function EmailAnalytics({ logs, stats, labels }: EmailAnalyticsProps) {
         <div className="rounded-xl border bg-card p-5">
           <h3 className="text-sm font-semibold mb-4 flex items-center gap-2">
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
-            {labels.emailsByMonth}
+            {t("emailsByMonth")}
           </h3>
           <div className="flex items-end gap-2 h-36">
             {computed.monthlyData.map((m, i) => {
@@ -272,8 +257,8 @@ export function EmailAnalytics({ logs, stats, labels }: EmailAnalyticsProps) {
             })}
           </div>
           <div className="flex items-center justify-center gap-4 mt-3 text-xs text-muted-foreground">
-            <span className="flex items-center gap-1"><div className="h-2 w-2 rounded-full bg-emerald-500" /> {labels.sent}</span>
-            <span className="flex items-center gap-1"><div className="h-2 w-2 rounded-full bg-red-500" /> {labels.failed}</span>
+            <span className="flex items-center gap-1"><div className="h-2 w-2 rounded-full bg-emerald-500" /> {t("sent")}</span>
+            <span className="flex items-center gap-1"><div className="h-2 w-2 rounded-full bg-red-500" /> {t("failed")}</span>
           </div>
         </div>
 
@@ -281,7 +266,7 @@ export function EmailAnalytics({ logs, stats, labels }: EmailAnalyticsProps) {
         <div className="rounded-xl border bg-card p-5">
           <h3 className="text-sm font-semibold mb-4 flex items-center gap-2">
             <Users className="h-4 w-4 text-muted-foreground" />
-            {labels.topRecipients}
+            {t("topRecipients")}
           </h3>
           {computed.topRecipients.length > 0 ? (
             <div className="space-y-3">
@@ -302,7 +287,7 @@ export function EmailAnalytics({ logs, stats, labels }: EmailAnalyticsProps) {
               })}
             </div>
           ) : (
-            <p className="text-xs text-muted-foreground text-center py-4">{labels.noData}</p>
+            <p className="text-xs text-muted-foreground text-center py-4">{t("noData")}</p>
           )}
         </div>
       </div>
