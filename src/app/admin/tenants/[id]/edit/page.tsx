@@ -83,8 +83,18 @@ const SIDEBAR_SECTIONS: { group: string; items: { moduleId: string; label: strin
     { moduleId: "mtm", label: "MTM Settings", href: "/mtm/settings" },
   ]},
   { group: "Settings", items: [
+    { moduleId: "core", label: "Dashboard Settings", href: "/settings/dashboard" },
+    { moduleId: "core", label: "Pipelines", href: "/settings/pipelines" },
     { moduleId: "workflows", label: "Workflows", href: "/settings/workflows" },
+    { moduleId: "core", label: "Users", href: "/settings/users" },
+    { moduleId: "core", label: "SMTP Settings", href: "/settings/smtp-settings" },
+    { moduleId: "deals", label: "Quotas", href: "/settings/quotas" },
+    { moduleId: "core", label: "Integrations", href: "/settings/integrations" },
+    { moduleId: "core", label: "Macros", href: "/settings/macros" },
+    { moduleId: "core", label: "Field Permissions", href: "/settings/field-permissions" },
+    { moduleId: "core", label: "VoIP Settings", href: "/settings/voip" },
     { moduleId: "custom-fields", label: "Custom Fields", href: "/settings/custom-fields" },
+    { moduleId: "core", label: "General Settings", href: "/settings" },
   ]},
 ]
 
