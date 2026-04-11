@@ -51,7 +51,7 @@ export default function DashboardPage() {
         if (j.success && j.data?.widgets) {
           const w: Record<string, boolean> = {}
           for (const [key, val] of Object.entries(j.data.widgets) as [string, any][]) {
-            w[key] = val.enabled && (val.roles?.length === 0 || val.roles?.includes(userRole))
+            w[key] = val.enabled && (userRole === "superadmin" || val.roles?.length === 0 || val.roles?.includes(userRole))
           }
           setWidgets(prev => ({ ...prev, ...w }))
         }

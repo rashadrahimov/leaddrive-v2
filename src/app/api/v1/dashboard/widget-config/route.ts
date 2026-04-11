@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { getOrgId } from "@/lib/api-auth"
 
-const ALL_ROLES = ["admin", "manager", "sales", "support", "viewer", "marketing", "finance", "hr"]
+const ALL_ROLES = ["superadmin", "admin", "manager", "sales", "support", "viewer", "marketing", "finance", "hr"]
 
 const DEFAULT_WIDGETS: Record<string, { enabled: boolean; roles: string[] }> = {
   // Row 0: KPI cards
