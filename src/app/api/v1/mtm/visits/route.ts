@@ -129,6 +129,55 @@ export async function POST(req: NextRequest) {
         notes: notes || null,
       },
     })
+
+    // Auto-update route point: mark as VISITED + update route counters
+    if (agentId && customerId) {
+      try {
+        const today = new Date()
+        today.setHours(0, 0, 0, 0)
+        const tomorrow = new Date(today)
+        tomorrow.setDate(tomorrow.getDate() + 1)
+
+        // Find today's route point for this agent+customer
+        const routePoint = await prisma.mtmRoutePoint.findFirst({
+          where: {
+            customerId,
+            status: "PENDING",
+            route: { agentId, organizationId: orgId, date: { gte: today, lt: tomorrow } },
+          },
+          select: { id: true, routeId: true },
+        })
+
+        if (routePoint) {
+          // Mark point as VISITED
+          await prisma.mtmRoutePoint.update({
+            where: { id: routePoint.id },
+            data: { status: "VISITED", visitedAt: new Date() },
+          })
+
+          // Update route counters
+          const route = await prisma.mtmRoute.findUnique({
+            where: { id: routePoint.routeId },
+            select: { id: true, totalPoints: true, status: true },
+          })
+          if (route) {
+            const visitedCount = await prisma.mtmRoutePoint.count({
+              where: { routeId: route.id, status: "VISITED" },
+            })
+            await prisma.mtmRoute.update({
+              where: { id: route.id },
+              data: {
+                visitedPoints: visitedCount,
+                status: visitedCount >= route.totalPoints ? "COMPLETED" : route.status === "PLANNED" ? "IN_PROGRESS" : route.status,
+                startedAt: route.status === "PLANNED" ? new Date() : undefined,
+                completedAt: visitedCount >= route.totalPoints ? new Date() : undefined,
+              },
+            })
+          }
+        }
+      } catch {} // non-blocking — visit already created
+    }
+
     return NextResponse.json({ success: true, data: visit }, { status: 201 })
   } catch (e: any) {
     return NextResponse.json({ error: e.message || "Failed to create visit" }, { status: 400 })
