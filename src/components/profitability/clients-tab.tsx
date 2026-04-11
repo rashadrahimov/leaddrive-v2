@@ -5,15 +5,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { ArrowUpDown, Search, Loader2 } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { useCostModelAnalytics } from "@/lib/cost-model/hooks"
 import type { ClientMargin } from "@/lib/cost-model/types"
 
-const STATUS_STYLES: Record<string, { label: string; className: string }> = {
-  good: { label: "Mənfəət", className: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300" },
-  low: { label: "Aşağı", className: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300" },
-  loss: { label: "Zərər", className: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300" },
-  no_revenue: { label: "Gəlir yoxdur", className: "bg-muted text-foreground" },
+const STATUS_STYLES: Record<string, { labelKey: string; className: string }> = {
+  good: { labelKey: "statusGood", className: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300" },
+  low: { labelKey: "statusLow", className: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300" },
+  loss: { labelKey: "statusLoss", className: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300" },
+  no_revenue: { labelKey: "statusNoRevenue", className: "bg-muted text-foreground" },
 }
 
 type SortField = "name" | "userCount" | "totalRevenue" | "helpdeskRevenue" | "primaryRevenue" | "totalCost" | "primaryMargin" | "margin" | "marginPct"
@@ -37,6 +38,7 @@ function fmt(n: number): string {
 }
 
 export function ClientsTab() {
+  const t = useTranslations("profitability")
   const { data, isLoading, error } = useCostModelAnalytics()
   const clients = data?.clients || []
 
@@ -94,7 +96,7 @@ export function ClientsTab() {
     return (
       <div className="flex items-center justify-center py-20">
         <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-        <span className="ml-2 text-muted-foreground">Yüklənir...</span>
+        <span className="ml-2 text-muted-foreground">{t("loading")}</span>
       </div>
     )
   }
@@ -103,7 +105,7 @@ export function ClientsTab() {
     return (
       <Card>
         <CardContent className="py-10 text-center text-red-600">
-          Xəta baş verdi: {(error as Error).message}
+          {t("errorOccurred")}: {(error as Error).message}
         </CardContent>
       </Card>
     )
@@ -114,15 +116,15 @@ export function ClientsTab() {
       {/* Summary row */}
       <div className="grid gap-4 md:grid-cols-4">
         <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Cəm Maya</CardTitle></CardHeader>
+          <CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">{t("totalCost")}</CardTitle></CardHeader>
           <CardContent><p className="text-2xl font-bold tabular-nums tracking-tight">{fmt(totalCost)}</p></CardContent>
         </Card>
         <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Cəm Gəlir</CardTitle></CardHeader>
+          <CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">{t("totalRevenue")}</CardTitle></CardHeader>
           <CardContent><p className="text-2xl font-bold tabular-nums tracking-tight">{fmt(totalRevenue)}</p></CardContent>
         </Card>
         <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Cəm Balans</CardTitle></CardHeader>
+          <CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">{t("totalBalance")}</CardTitle></CardHeader>
           <CardContent>
             <p className={`text-2xl font-bold tabular-nums tracking-tight ${totalBalance >= 0 ? "text-green-600" : "text-red-600"}`}>
               {fmt(totalBalance)}
@@ -130,11 +132,11 @@ export function ClientsTab() {
           </CardContent>
         </Card>
         <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Müştərilər</CardTitle></CardHeader>
+          <CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">{t("clients")}</CardTitle></CardHeader>
           <CardContent>
             <p className="text-2xl font-bold tabular-nums tracking-tight">{clients.length}</p>
             <p className="text-xs text-muted-foreground">
-              <span className="text-green-600">Mənfəətli: {profitable}</span> / <span className="text-red-600">Zərərli: {lossCount}</span>
+              <span className="text-green-600">{t("profitableLabel")}: {profitable}</span> / <span className="text-red-600">{t("lossLabel")}: {lossCount}</span>
             </p>
           </CardContent>
         </Card>
@@ -143,10 +145,10 @@ export function ClientsTab() {
       {/* Client table */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-base">Müştəri Mənfəətliliyi</CardTitle>
+          <CardTitle className="text-base">{t("clientProfitability")}</CardTitle>
           <div className="relative w-64">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input placeholder="Ad və ya kod ilə axtar..." value={search} onChange={e => setSearch(e.target.value)} className="pl-8 h-9" />
+            <Input placeholder={t("searchByNameOrCode")} value={search} onChange={e => setSearch(e.target.value)} className="pl-8 h-9" />
           </div>
         </CardHeader>
         <CardContent>
@@ -170,7 +172,7 @@ export function ClientsTab() {
                 {filtered.length === 0 ? (
                   <tr>
                     <td colSpan={10} className="py-8 text-center text-muted-foreground">
-                      {search ? "Nəticə tapılmadı" : "Müştəri məlumatı yoxdur"}
+                      {search ? t("noResults") : t("noClientData")}
                     </td>
                   </tr>
                 ) : (
@@ -206,7 +208,7 @@ export function ClientsTab() {
                           {client.marginPct.toFixed(1)}%
                         </td>
                         <td className="py-2.5 pr-4">
-                          <Badge className={style.className}>{style.label}</Badge>
+                          <Badge className={style.className}>{t(style.labelKey)}</Badge>
                         </td>
                       </tr>
                     )

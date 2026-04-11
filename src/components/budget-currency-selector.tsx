@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useTranslations } from "next-intl"
 
 interface Currency {
   id: string
@@ -19,6 +20,7 @@ interface Props {
 }
 
 export function BudgetCurrencySelector({ currencies, value, onChange, className }: Props) {
+  const t = useTranslations("budgeting")
   const baseCurrency = currencies.find((c) => c.isBase)
 
   return (
@@ -35,7 +37,7 @@ export function BudgetCurrencySelector({ currencies, value, onChange, className 
       }}
       className={`h-8 text-xs border rounded px-2 bg-background ${className || ""}`}
     >
-      <option value="">{baseCurrency ? `${baseCurrency.code} (base)` : "Base"}</option>
+      <option value="">{baseCurrency ? `${baseCurrency.code} (${t("currencySelector_base")})` : t("currencySelector_base")}</option>
       {currencies
         .filter((c) => !c.isBase)
         .map((c) => (

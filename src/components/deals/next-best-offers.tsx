@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogHeader, DialogTitle, DialogContent, DialogFooter } from "@/components/ui/dialog"
 import { Sparkles, Package, Check, Plus, X, Loader2, Star, Shield, Zap } from "lucide-react"
+import { useTranslations } from "next-intl"
 
 interface Product {
   id: string
@@ -20,6 +21,7 @@ interface Product {
 }
 
 export function NextBestOffers({ dealId, orgId }: { dealId: string; orgId?: string }) {
+  const t = useTranslations("deals")
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [selected, setSelected] = useState<Product | null>(null)
@@ -92,7 +94,7 @@ export function NextBestOffers({ dealId, orgId }: { dealId: string; orgId?: stri
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-semibold flex items-center gap-2">
             <Sparkles className="h-4 w-4 text-amber-500" />
-            Next Best Offers
+            {t("nboTitle")}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -145,7 +147,7 @@ export function NextBestOffers({ dealId, orgId }: { dealId: string; orgId?: stri
           <DialogContent className="space-y-4">
             {/* Relevance + Category */}
             <div className="flex items-center gap-2">
-              <Badge className="bg-green-100 text-green-700">{selected.relevance}% Match</Badge>
+              <Badge className="bg-green-100 text-green-700">{selected.relevance}% {t("nboMatch")}</Badge>
               <Badge variant="outline">{selected.category}</Badge>
               <span className="text-lg font-bold text-primary ml-auto">
                 {selected.price > 0 ? `${selected.price.toLocaleString()} ${selected.currency}` : "Free"}
@@ -161,7 +163,7 @@ export function NextBestOffers({ dealId, orgId }: { dealId: string; orgId?: stri
             <div className="bg-indigo-50 border border-indigo-100 rounded-lg p-3">
               <div className="flex items-center gap-2 mb-1">
                 <Sparkles className="h-4 w-4 text-indigo-500" />
-                <span className="text-xs font-semibold text-indigo-700">Why this product?</span>
+                <span className="text-xs font-semibold text-indigo-700">{t("nboWhyThisProduct")}</span>
               </div>
               <p className="text-xs text-indigo-600">{selected.reason}</p>
             </div>
@@ -169,7 +171,7 @@ export function NextBestOffers({ dealId, orgId }: { dealId: string; orgId?: stri
             {/* Features */}
             {selected.features && selected.features.length > 0 && (
               <div>
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Features</p>
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">{t("nboFeatures")}</p>
                 <div className="grid grid-cols-1 gap-1.5">
                   {selected.features.map((f, i) => (
                     <div key={i} className="flex items-center gap-2 text-sm">
@@ -186,7 +188,7 @@ export function NextBestOffers({ dealId, orgId }: { dealId: string; orgId?: stri
         )}
         <DialogFooter className="gap-2">
           <Button variant="outline" onClick={() => setSelected(null)}>
-            Close
+            {t("nboClose")}
           </Button>
           {selected && !addedIds.has(selected.id) ? (
             <Button
@@ -194,11 +196,11 @@ export function NextBestOffers({ dealId, orgId }: { dealId: string; orgId?: stri
               disabled={adding}
             >
               {adding ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Plus className="h-4 w-4 mr-2" />}
-              Add to Deal
+              {t("nboAddToDeal")}
             </Button>
           ) : (
             <Button disabled className="bg-green-500">
-              <Check className="h-4 w-4 mr-2" /> Added
+              <Check className="h-4 w-4 mr-2" /> {t("nboAdded")}
             </Button>
           )}
         </DialogFooter>

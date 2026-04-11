@@ -1,5 +1,6 @@
 "use client"
 
+import { useTranslations } from "next-intl"
 import { BUDGET_COLORS } from "@/lib/budget-chart-theme"
 
 interface BudgetExecutionGaugeProps {
@@ -42,6 +43,7 @@ export function BudgetExecutionGauge({
   elapsedPct,
   className,
 }: BudgetExecutionGaugeProps) {
+  const t = useTranslations("budgeting")
   const mainColor = getColor(executionPct)
   const expColor = getColor(expenseExecPct)
   const revColor = getColor(revenueExecPct)
@@ -98,13 +100,13 @@ export function BudgetExecutionGauge({
             textAnchor="middle" dominantBaseline="middle"
             style={{ transform: "rotate(90deg)", transformOrigin: `${cx}px ${cy}px`, fontSize: "10px", fontWeight: 500, fill: "#94a3b8" }}
           >
-            цель: {Math.round(elapsedPct)}%
+            {t("executionGauge_target")} {Math.round(elapsedPct)}%
           </text>
         </svg>
 
         <div className="w-full max-w-[200px] space-y-2">
-          <MiniProgress label="Расходы" value={expenseExecPct} color={expColor} />
-          <MiniProgress label="Доходы" value={revenueExecPct} color={revColor} />
+          <MiniProgress label={t("executionGauge_expenses")} value={expenseExecPct} color={expColor} />
+          <MiniProgress label={t("executionGauge_revenues")} value={revenueExecPct} color={revColor} />
         </div>
       </div>
     </div>

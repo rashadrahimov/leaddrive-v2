@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useTranslations } from "next-intl"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -32,10 +33,10 @@ interface Props {
 }
 
 const STEPS = [
-  { key: "draft", label: "Черновик", icon: FileText },
-  { key: "pending_approval", label: "На согласовании", icon: Send },
-  { key: "approved", label: "Утверждён", icon: CheckCircle2 },
-  { key: "closed", label: "Закрыт", icon: Lock },
+  { key: "draft", labelKey: "approvalWorkflow_draft", icon: FileText },
+  { key: "pending_approval", labelKey: "approvalWorkflow_pendingApproval", icon: Send },
+  { key: "approved", labelKey: "approvalWorkflow_approved", icon: CheckCircle2 },
+  { key: "closed", labelKey: "approvalWorkflow_closed", icon: Lock },
 ]
 
 const STATUS_COLORS: Record<string, string> = {
@@ -53,6 +54,7 @@ function getStepIndex(status: string): number {
 }
 
 export function BudgetApprovalWorkflow({ plan, userRole }: Props) {
+  const t = useTranslations("budgeting")
   const updatePlan = useUpdateBudgetPlan()
   const [comment, setComment] = useState("")
   const [rejectReason, setRejectReason] = useState("")
@@ -76,9 +78,9 @@ export function BudgetApprovalWorkflow({ plan, userRole }: Props) {
     <Card>
       <CardHeader className="pb-3">
         <CardTitle className="text-base flex items-center justify-between">
-          <span>Согласование</span>
+          <span>{t("approvalWorkflow_title")}</span>
           <Badge className={STATUS_COLORS[plan.status] || "bg-muted"}>
-            {plan.status === "pending_approval" ? "На согласовании" : plan.status === "draft" ? "Черновик" : plan.status === "approved" ? "Утверждён" : plan.status === "rejected" ? "Отклонён" : plan.status === "closed" ? "Закрыт" : plan.status}
+            {plan.status === "pending_approval" ? t("approvalWorkflow_pendingApproval") : plan.status === "draft" ? t("approvalWorkflow_draft") : plan.status === "approved" ? t("approvalWorkflow_approved") : plan.status === "rejected" ? t("approvalWorkflow_rejected") : plan.status === "closed" ? t("approvalWorkflow_closed") : plan.status}
           </Badge>
         </CardTitle>
       </CardHeader>
@@ -100,7 +102,7 @@ export function BudgetApprovalWorkflow({ plan, userRole }: Props) {
                   ${!isActive && !isDone && !isRejected ? "bg-muted text-muted-foreground" : ""}
                 `}>
                   <Icon className="h-3.5 w-3.5 shrink-0" />
-                  <span>{isRejected ? "Отклонён" : step.label}</span>
+                  <span>{isRejected ? t("approvalWorkflow_rejected") : t(step.labelKey)}</span>
                 </div>
                 {i < STEPS.length - 1 && (
                   <div className={`h-0.5 w-3 shrink-0 mx-0.5 ${isDone ? "bg-green-400" : "bg-muted"}`} />
@@ -114,24 +116,24 @@ export function BudgetApprovalWorkflow({ plan, userRole }: Props) {
         {plan.submittedAt && (
           <div className="text-xs text-muted-foreground flex items-center gap-1">
             <Clock className="h-3 w-3" />
-            Отправлен: {new Date(plan.submittedAt).toLocaleString()}
+            {t("approvalWorkflow_submittedAt")} {new Date(plan.submittedAt).toLocaleString()}
           </div>
         )}
         {plan.approvedAt && (
           <div className="text-xs text-muted-foreground flex items-center gap-1">
             <CheckCircle2 className="h-3 w-3 text-green-600" />
-            Утверждён: {new Date(plan.approvedAt).toLocaleString()}
+            {t("approvalWorkflow_approvedAt")} {new Date(plan.approvedAt).toLocaleString()}
           </div>
         )}
         {plan.rejectedReason && (
           <div className="text-xs text-red-600 bg-red-50 p-2 rounded">
-            Причина отклонения: {plan.rejectedReason}
+            {t("approvalWorkflow_rejectReason")} {plan.rejectedReason}
           </div>
         )}
 
         {/* Comment input */}
         <Textarea
-          placeholder="Комментарий (необязательно)..."
+          placeholder={t("approvalWorkflow_commentPlaceholder")}
           value={comment}
           onChange={(e) => setComment(e.target.value)}
           className="h-16 text-sm"
@@ -146,7 +148,7 @@ export function BudgetApprovalWorkflow({ plan, userRole }: Props) {
               disabled={updatePlan.isPending}
             >
               {updatePlan.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Send className="h-4 w-4 mr-1" />}
-              На согласование
+              {t("approvalWorkflow_submitForApproval")}
             </Button>
           )}
 
@@ -160,33 +162,33 @@ export function BudgetApprovalWorkflow({ plan, userRole }: Props) {
                 disabled={updatePlan.isPending}
               >
                 {updatePlan.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <CheckCircle2 className="h-4 w-4 mr-1" />}
-                Утвердить
+                {t("approvalWorkflow_approve")}
               </Button>
 
               <Button size="sm" variant="destructive" onClick={() => setShowRejectDialog(true)}>
                 <XCircle className="h-4 w-4 mr-1" />
-                Отклонить
+                {t("approvalWorkflow_reject")}
               </Button>
 
               <Dialog open={showRejectDialog} onOpenChange={setShowRejectDialog}>
                 <DialogContent>
                   <DialogHeader>
-                    <DialogTitle>Отклонить бюджетный план</DialogTitle>
+                    <DialogTitle>{t("approvalWorkflow_rejectDialogTitle")}</DialogTitle>
                   </DialogHeader>
-                  <p className="text-sm text-muted-foreground">Укажите причину отклонения.</p>
+                  <p className="text-sm text-muted-foreground">{t("approvalWorkflow_rejectDialogDesc")}</p>
                   <Textarea
-                    placeholder="Причина отклонения..."
+                    placeholder={t("approvalWorkflow_rejectReasonPlaceholder")}
                     value={rejectReason}
                     onChange={(e) => setRejectReason(e.target.value)}
                   />
                   <DialogFooter>
-                    <Button variant="outline" onClick={() => setShowRejectDialog(false)}>Отмена</Button>
+                    <Button variant="outline" onClick={() => setShowRejectDialog(false)}>{t("approvalWorkflow_cancel")}</Button>
                     <Button
                       variant="destructive"
                       onClick={() => handleStatusChange("rejected", { rejectedReason: rejectReason })}
                       disabled={!rejectReason.trim()}
                     >
-                      Отклонить
+                      {t("approvalWorkflow_reject")}
                     </Button>
                   </DialogFooter>
                 </DialogContent>
@@ -202,7 +204,7 @@ export function BudgetApprovalWorkflow({ plan, userRole }: Props) {
               disabled={updatePlan.isPending}
             >
               <RotateCcw className="h-4 w-4 mr-1" />
-              Вернуть в черновик
+              {t("approvalWorkflow_returnToDraft")}
             </Button>
           )}
 
@@ -215,7 +217,7 @@ export function BudgetApprovalWorkflow({ plan, userRole }: Props) {
                 disabled={updatePlan.isPending}
               >
                 <Lock className="h-4 w-4 mr-1" />
-                Закрыть план
+                {t("approvalWorkflow_closePlan")}
               </Button>
               <Button
                 size="sm"
@@ -224,7 +226,7 @@ export function BudgetApprovalWorkflow({ plan, userRole }: Props) {
                 disabled={updatePlan.isPending}
               >
                 <RotateCcw className="h-4 w-4 mr-1" />
-                Переоткрыть
+                {t("approvalWorkflow_reopen")}
               </Button>
             </>
           )}
@@ -237,7 +239,7 @@ export function BudgetApprovalWorkflow({ plan, userRole }: Props) {
               disabled={updatePlan.isPending}
             >
               <RotateCcw className="h-4 w-4 mr-1" />
-              Переоткрыть
+              {t("approvalWorkflow_reopen")}
             </Button>
           )}
         </div>

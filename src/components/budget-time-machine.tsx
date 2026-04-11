@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useRef, useCallback, useEffect } from "react"
+import { useTranslations } from "next-intl"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Slider } from "@/components/ui/slider"
@@ -28,6 +29,7 @@ export function BudgetTimeMachine({
   onDeactivate,
   onIndexChange,
 }: BudgetTimeMachineProps) {
+  const t = useTranslations("budgeting")
   const [collapsed, setCollapsed] = useState(false)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -67,15 +69,15 @@ export function BudgetTimeMachine({
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <History className="h-4 w-4 text-purple-500" />
               <span>
-                Budget History — <strong>{timePoints.length}</strong> edit{timePoints.length !== 1 ? "s" : ""} recorded
+                {t("timeMachine_historyTitle")} — {t("timeMachine_editsRecorded", { count: timePoints.length })}
               </span>
               <span className="text-xs opacity-60">
-                · last: {formatTimePoint(lastPoint.timestamp)}
+                · {t("timeMachine_lastEdit")} {formatTimePoint(lastPoint.timestamp)}
               </span>
             </div>
             <Button variant="outline" size="sm" onClick={onActivate} className="border-purple-300 text-purple-700 hover:bg-purple-100 dark:border-purple-700 dark:text-purple-300 dark:hover:bg-purple-900">
               <Eye className="h-3.5 w-3.5 mr-1.5" />
-              View Changes
+              {t("timeMachine_viewChanges")}
             </Button>
           </div>
         </CardContent>
@@ -90,14 +92,14 @@ export function BudgetTimeMachine({
           <div className="flex items-center gap-2">
             <Clock className="h-5 w-5 text-purple-600 dark:text-purple-400 animate-pulse" />
             <CardTitle className="text-base font-semibold text-purple-900 dark:text-purple-100">
-              Budget History
+              {t("timeMachine_historyTitle")}
             </CardTitle>
             <Badge variant="secondary" className="bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200 text-xs">
-              Read-only mode
+              {t("timeMachine_readOnly")}
             </Badge>
             {isLoading && (
               <Badge variant="outline" className="text-xs animate-pulse">
-                Loading...
+                {t("timeMachine_loading")}
               </Badge>
             )}
           </div>
@@ -117,7 +119,7 @@ export function BudgetTimeMachine({
               className="bg-purple-600 hover:bg-purple-700 text-white"
             >
               <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
-              Back to Live
+              {t("timeMachine_backToLive")}
             </Button>
           </div>
         </div>
@@ -167,11 +169,11 @@ export function BudgetTimeMachine({
               {/* Center: current checkpoint details */}
               <div className="flex flex-col items-center">
                 <span className="text-sm font-medium text-purple-700 dark:text-purple-300">
-                  {currentPoint ? formatTimePoint(currentPoint.timestamp) : "Select a point"}
+                  {currentPoint ? formatTimePoint(currentPoint.timestamp) : t("timeMachine_selectPoint")}
                 </span>
                 {currentPoint && (
                   <span className="text-xs text-muted-foreground">
-                    {currentPoint.summary} · checkpoint {currentIndex + 1} of {timePoints.length}
+                    {currentPoint.summary} · {t("timeMachine_checkpoint", { current: currentIndex + 1, total: timePoints.length })}
                   </span>
                 )}
               </div>
@@ -183,7 +185,7 @@ export function BudgetTimeMachine({
 
             {/* Hint */}
             <p className="text-[11px] text-muted-foreground/70 text-center">
-              Drag the slider or use arrows to see how your budget looked at each point in time. All data below reflects the selected moment.
+              {t("timeMachine_hint")}
             </p>
           </div>
         </CardContent>

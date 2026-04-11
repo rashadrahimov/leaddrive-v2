@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useMemo } from "react"
+import { useTranslations } from "next-intl"
 import { BUDGET_COLORS, fmt } from "@/lib/budget-chart-theme"
 
 interface BudgetMarginSummaryProps {
@@ -16,13 +17,16 @@ interface BudgetMarginSummaryProps {
   className?: string
 }
 
-function InlineBar({ label, plan, forecast, actual, maxVal, whatIfActual }: {
+function InlineBar({ label, plan, forecast, actual, maxVal, whatIfActual, planLabel, forecastLabel, actualLabel }: {
   label: string
   plan: number
   forecast: number
   actual: number
   maxVal: number
   whatIfActual?: number
+  planLabel: string
+  forecastLabel: string
+  actualLabel: string
 }) {
   const pct = (v: number) => maxVal > 0 ? Math.min(Math.abs(v) / maxVal * 100, 100) : 0
   const displayActual = whatIfActual ?? actual
@@ -40,7 +44,7 @@ function InlineBar({ label, plan, forecast, actual, maxVal, whatIfActual }: {
       <div className="space-y-1">
         {/* Plan */}
         <div className="flex items-center gap-2">
-          <span className="text-[10px] text-muted-foreground w-14 text-right">План</span>
+          <span className="text-[10px] text-muted-foreground w-14 text-right">{planLabel}</span>
           <div className="flex-1 h-2.5 rounded-full bg-muted/50 overflow-hidden">
             <div
               className="h-full rounded-full transition-all duration-500"
@@ -51,7 +55,7 @@ function InlineBar({ label, plan, forecast, actual, maxVal, whatIfActual }: {
         </div>
         {/* Forecast */}
         <div className="flex items-center gap-2">
-          <span className="text-[10px] text-muted-foreground w-14 text-right">Прогноз</span>
+          <span className="text-[10px] text-muted-foreground w-14 text-right">{forecastLabel}</span>
           <div className="flex-1 h-2.5 rounded-full bg-muted/50 overflow-hidden">
             <div
               className="h-full rounded-full transition-all duration-500"
@@ -63,7 +67,7 @@ function InlineBar({ label, plan, forecast, actual, maxVal, whatIfActual }: {
         {/* Actual */}
         <div className="flex items-center gap-2">
           <span className="text-[10px] text-muted-foreground w-14 text-right">
-            {whatIfActual !== undefined ? "What-if" : "Факт"}
+            {whatIfActual !== undefined ? "What-if" : actualLabel}
           </span>
           <div className="flex-1 h-2.5 rounded-full bg-muted/50 overflow-hidden">
             <div
@@ -89,6 +93,7 @@ export function BudgetMarginSummary({
   marginPlan, marginForecast, marginActual,
   className,
 }: BudgetMarginSummaryProps) {
+  const t = useTranslations("budgeting")
   const [whatIfPct, setWhatIfPct] = useState(0)
   const [showWhatIf, setShowWhatIf] = useState(false)
 
@@ -102,22 +107,28 @@ export function BudgetMarginSummary({
   return (
     <div className={className}>
       <div className="space-y-4">
-        <InlineBar label="Доходы" plan={revenuePlan} forecast={revenueForecast} actual={revenueActual} maxVal={maxVal} />
+        <InlineBar label={t("marginSummary_revenues")} plan={revenuePlan} forecast={revenueForecast} actual={revenueActual} maxVal={maxVal} planLabel={t("marginSummary_plan")} forecastLabel={t("marginSummary_forecast")} actualLabel={t("marginSummary_actual")} />
         <InlineBar
-          label="Расходы"
+          label={t("marginSummary_expenses")}
           plan={expensePlan}
           forecast={expenseForecast}
           actual={expenseActual}
           maxVal={maxVal}
           whatIfActual={isWhatIf ? adjustedExpenseActual : undefined}
+          planLabel={t("marginSummary_plan")}
+          forecastLabel={t("marginSummary_forecast")}
+          actualLabel={t("marginSummary_actual")}
         />
         <InlineBar
-          label="Маржа"
+          label={t("marginSummary_margin")}
           plan={marginPlan}
           forecast={marginForecast}
           actual={marginActual}
           maxVal={maxVal}
           whatIfActual={isWhatIf ? adjustedMarginActual : undefined}
+          planLabel={t("marginSummary_plan")}
+          forecastLabel={t("marginSummary_forecast")}
+          actualLabel={t("marginSummary_actual")}
         />
       </div>
 
@@ -155,7 +166,7 @@ export function BudgetMarginSummary({
         </div>
         {isWhatIf && (
           <div className="mt-1.5 text-[10px] animate-in fade-in duration-200">
-            <span className="text-muted-foreground">Маржа: </span>
+            <span className="text-muted-foreground">{t("marginSummary_margin")}: </span>
             <span className={`font-bold font-mono ${adjustedMarginActual >= 0 ? "text-green-500" : "text-red-500"}`}>
               {fmt(adjustedMarginActual)}
             </span>

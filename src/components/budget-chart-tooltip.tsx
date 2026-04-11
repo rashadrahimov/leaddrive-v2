@@ -1,5 +1,6 @@
 "use client"
 
+import { useTranslations } from "next-intl"
 import { fmt, calcVariance } from "@/lib/budget-chart-theme"
 
 interface TooltipProps {
@@ -23,6 +24,7 @@ export function BudgetChartTooltip({
   actualKey,
   forecastKey,
 }: TooltipProps) {
+  const t = useTranslations("budgeting")
   if (!active || !payload?.length) return null
 
   return (
@@ -62,7 +64,7 @@ export function BudgetChartTooltip({
         const color = v.direction === "under" ? "text-emerald-500" : v.direction === "over" ? "text-red-500" : "text-amber-500"
         return (
           <div className={`mt-2 pt-2 border-t border-border/50 flex items-center justify-between text-xs ${color}`}>
-            <span>Отклонение</span>
+            <span>{t("chartTooltip_variance")}</span>
             <span className="font-mono font-bold">
               {v.pct >= 0 ? "+" : ""}{v.pct.toFixed(1)}% ({v.amount >= 0 ? "+" : ""}{fmt(v.amount)})
             </span>
@@ -83,7 +85,7 @@ export function BudgetChartTooltip({
         const color = v.direction === "under" ? "text-emerald-500" : v.direction === "over" ? "text-red-500" : "text-amber-500"
         return (
           <div className={`mt-2 pt-2 border-t border-border/50 flex items-center justify-between text-xs ${color}`}>
-            <span>Факт vs План</span>
+            <span>{t("chartTooltip_actualVsPlan")}</span>
             <span className="font-mono font-bold">
               {v.pct >= 0 ? "+" : ""}{v.pct.toFixed(1)}%
             </span>
@@ -94,7 +96,7 @@ export function BudgetChartTooltip({
       {/* Composition mode: show % of total */}
       {mode === "composition" && totalValue && totalValue > 0 && payload[0] && (
         <div className="mt-2 pt-2 border-t border-border/50 flex items-center justify-between text-xs text-muted-foreground">
-          <span>Доля</span>
+          <span>{t("chartTooltip_share")}</span>
           <span className="font-mono font-bold text-popover-foreground">
             {((payload[0].value / totalValue) * 100).toFixed(1)}%
           </span>

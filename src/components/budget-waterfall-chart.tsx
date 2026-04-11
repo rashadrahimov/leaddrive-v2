@@ -1,5 +1,6 @@
 "use client"
 
+import { useTranslations } from "next-intl"
 import { ComposedChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, ReferenceLine, LabelList, CartesianGrid } from "recharts"
 import { BUDGET_COLORS, ANIMATION, AXIS_TICK, fmtK, fmt } from "@/lib/budget-chart-theme"
 
@@ -29,28 +30,29 @@ export function BudgetWaterfallChart({
   className,
   onBarClick,
 }: WaterfallChartProps) {
+  const t = useTranslations("budgeting")
   const forecastDelta = totalForecast - totalPlanned
   const actualVsPlanPct = totalPlanned > 0 ? ((totalActual - totalPlanned) / totalPlanned * 100) : 0
   const projVsPlanPct = totalPlanned > 0 ? ((yearEndProjection - totalPlanned) / totalPlanned * 100) : 0
 
   const data = [
-    { name: "Бюджет", value: totalPlanned, base: 0, isStart: true, label: "", desc: "Запланированный бюджет" },
-    { name: "Δ Прогноз", value: Math.abs(forecastDelta), base: forecastDelta >= 0 ? totalPlanned : totalPlanned + forecastDelta, positive: forecastDelta >= 0, label: pctLabel(totalForecast, totalPlanned), desc: `Прогноз ${forecastDelta >= 0 ? "выше" : "ниже"} бюджета` },
-    { name: "Факт", value: totalActual, base: 0, isTotal: true, label: pctLabel(totalActual, totalPlanned), desc: "Фактические расходы" },
-    { name: "Δ Отклонение", value: Math.abs(totalVariance), base: totalVariance >= 0 ? totalActual : totalActual - Math.abs(totalVariance), positive: totalVariance >= 0, label: "", desc: `Отклонение ${totalVariance >= 0 ? "перерасход" : "экономия"}` },
-    { name: "Проекция", value: yearEndProjection, base: 0, isTotal: true, label: pctLabel(yearEndProjection, totalPlanned), desc: "Прогноз на конец года" },
+    { name: t("waterfallChart_budget"), value: totalPlanned, base: 0, isStart: true, label: "", desc: t("waterfallChart_budgetDesc") },
+    { name: t("waterfallChart_forecastDelta"), value: Math.abs(forecastDelta), base: forecastDelta >= 0 ? totalPlanned : totalPlanned + forecastDelta, positive: forecastDelta >= 0, label: pctLabel(totalForecast, totalPlanned), desc: forecastDelta >= 0 ? t("waterfallChart_forecastAbove") : t("waterfallChart_forecastBelow") },
+    { name: t("waterfallChart_actual"), value: totalActual, base: 0, isTotal: true, label: pctLabel(totalActual, totalPlanned), desc: t("waterfallChart_actualDesc") },
+    { name: t("waterfallChart_varianceDelta"), value: Math.abs(totalVariance), base: totalVariance >= 0 ? totalActual : totalActual - Math.abs(totalVariance), positive: totalVariance >= 0, label: "", desc: totalVariance >= 0 ? t("waterfallChart_varianceOver") : t("waterfallChart_varianceUnder") },
+    { name: t("waterfallChart_projection"), value: yearEndProjection, base: 0, isTotal: true, label: pctLabel(yearEndProjection, totalPlanned), desc: t("waterfallChart_projectionDesc") },
   ]
 
   const getColor = (item: (typeof data)[0]) => {
     if (item.isStart) return BUDGET_COLORS.planIndigo
     if (item.isTotal) {
-      if (item.name === "Факт") {
+      if (item.name === t("waterfallChart_actual")) {
         const pct = Math.abs(actualVsPlanPct)
         if (pct <= 5) return BUDGET_COLORS.actualGreen
         if (pct <= 15) return BUDGET_COLORS.warning
         return BUDGET_COLORS.negative
       }
-      if (item.name === "Проекция") {
+      if (item.name === t("waterfallChart_projection")) {
         const pct = Math.abs(projVsPlanPct)
         if (pct <= 5) return BUDGET_COLORS.planViolet
         if (pct <= 15) return BUDGET_COLORS.warning
@@ -78,7 +80,7 @@ export function BudgetWaterfallChart({
         </div>
         {d.label && (
           <div className="mt-1.5 pt-1.5 border-t border-border/50 text-xs font-mono" style={{ color }}>
-            {d.label} vs бюджет
+            {d.label} {t("waterfallChart_vsBudget")}
           </div>
         )}
       </div>

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useRef } from "react"
+import { useTranslations } from "next-intl"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -57,6 +58,7 @@ function parseCSV(text: string): any[] {
 }
 
 export function BudgetCsvImport({ planId, integrationId, onImport, isImporting, lastResult }: Props) {
+  const t = useTranslations("budgeting")
   const fileRef = useRef<HTMLInputElement>(null)
   const [preview, setPreview] = useState<any[] | null>(null)
   const [fileName, setFileName] = useState("")
@@ -84,7 +86,7 @@ export function BudgetCsvImport({ planId, integrationId, onImport, isImporting, 
       <CardHeader className="pb-3">
         <CardTitle className="text-base flex items-center gap-2">
           <FileSpreadsheet className="h-4 w-4" />
-          Импорт CSV
+          {t("csvImport_title")}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -92,11 +94,11 @@ export function BudgetCsvImport({ planId, integrationId, onImport, isImporting, 
         <div className="flex gap-3">
           <a href={`/api/budgeting/csv-template?planId=${planId}`} download className="block">
             <Button size="sm" variant="outline" className="gap-1.5" type="button" asChild>
-              <span><Download className="h-4 w-4" /> Скачать шаблон CSV</span>
+              <span><Download className="h-4 w-4" /> {t("csvImport_downloadTemplate")}</span>
             </Button>
           </a>
           <p className="text-xs text-muted-foreground self-center">
-            Шаблон содержит все категории и департаменты из текущего плана. Заполните колонку <code>amount</code>.
+            {t.rich("csvImport_templateDesc", { code: (chunks) => <code>{chunks}</code> })}
           </p>
         </div>
 
@@ -104,25 +106,25 @@ export function BudgetCsvImport({ planId, integrationId, onImport, isImporting, 
           <input ref={fileRef} type="file" accept=".csv,.txt" onChange={handleFile} className="hidden" />
           <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
           <p className="text-sm text-muted-foreground mb-2">
-            Загрузите CSV файл с фактическими данными
+            {t("csvImport_uploadDesc")}
           </p>
           <Button size="sm" variant="outline" onClick={() => fileRef.current?.click()}>
-            Выбрать файл
+            {t("csvImport_selectFile")}
           </Button>
           {fileName && <p className="text-xs text-muted-foreground mt-2">{fileName}</p>}
         </div>
 
         <div className="text-xs text-muted-foreground">
-          Колонки: <code>category, amount, department, date, description, lineType</code>
+          {t("csvImport_columns")} <code>category, amount, department, date, description, lineType</code>
         </div>
 
         {preview && (
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <Badge variant="outline">{preview.length} строк распознано</Badge>
+              <Badge variant="outline">{t("csvImport_rowsParsed", { count: preview.length })}</Badge>
               <Button size="sm" onClick={handleImport} disabled={isImporting}>
                 {isImporting ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Upload className="h-4 w-4 mr-1" />}
-                Загрузить {preview.length} строк
+                {t("csvImport_uploadRows", { count: preview.length })}
               </Button>
             </div>
             <div className="max-h-40 overflow-auto border rounded text-xs">
@@ -143,7 +145,7 @@ export function BudgetCsvImport({ planId, integrationId, onImport, isImporting, 
                     </tr>
                   ))}
                   {preview.length > 10 && (
-                    <tr><td colSpan={999} className="px-2 py-1 text-muted-foreground">... ещё {preview.length - 10} строк</td></tr>
+                    <tr><td colSpan={999} className="px-2 py-1 text-muted-foreground">{t("csvImport_moreRows", { count: preview.length - 10 })}</td></tr>
                   )}
                 </tbody>
               </table>
@@ -160,13 +162,13 @@ export function BudgetCsvImport({ planId, integrationId, onImport, isImporting, 
                 <CheckCircle2 className="h-4 w-4 text-green-600" />
               )}
               <span className="font-medium">
-                {lastResult.matchedRows}/{lastResult.totalRows} строк загружено
+                {t("csvImport_rowsLoaded", { matched: lastResult.matchedRows, total: lastResult.totalRows })}
               </span>
             </div>
             {lastResult.errors && lastResult.errors.length > 0 && (
               <div className="text-xs text-muted-foreground mt-1">
                 {lastResult.errors.slice(0, 5).map((e, i) => (
-                  <div key={i}>Строка {e.row}: {e.error}</div>
+                  <div key={i}>{t("csvImport_rowError", { row: e.row })} {e.error}</div>
                 ))}
               </div>
             )}

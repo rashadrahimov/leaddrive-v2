@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Bot, X, Send, Loader2, Sparkles, Trash2, Brain, CheckCircle2, AlertTriangle, XCircle, Clock } from "lucide-react"
+import { useTranslations } from "next-intl"
 
 interface AiAction {
   tool: string
@@ -135,6 +136,7 @@ function ActionCard({ action, t, onApprove, onReject }: {
 }
 
 export function AiAssistantPanel() {
+  const t = useTranslations("ai")
   const [open, setOpen] = useState(false)
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState("")
@@ -145,7 +147,7 @@ export function AiAssistantPanel() {
 
   useEffect(() => { setLocale(getLocale()) }, [open])
 
-  const t = UI_TEXT[locale] || UI_TEXT.ru
+  const uiText = UI_TEXT[locale] || UI_TEXT.ru
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -244,8 +246,8 @@ export function AiAssistantPanel() {
                 <Bot className="h-5 w-5" />
               </div>
               <div>
-                <h3 className="text-sm font-semibold">{t.title}</h3>
-                <p className="text-[10px] opacity-80">{t.subtitle}</p>
+                <h3 className="text-sm font-semibold">{uiText.title}</h3>
+                <p className="text-[10px] opacity-80">{uiText.subtitle}</p>
               </div>
             </div>
             <div className="flex gap-1">
@@ -269,10 +271,10 @@ export function AiAssistantPanel() {
                 <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-[hsl(var(--ai-from))]/10 to-[hsl(var(--ai-to))]/10 flex items-center justify-center mb-4 ai-glow">
                   <Sparkles className="h-8 w-8 text-[hsl(var(--ai-from))]" />
                 </div>
-                <h4 className="text-sm font-semibold mb-1">{t.title} Assistant</h4>
-                <p className="text-xs text-muted-foreground mb-4">{t.greeting}</p>
+                <h4 className="text-sm font-semibold mb-1">{uiText.title} Assistant</h4>
+                <p className="text-xs text-muted-foreground mb-4">{uiText.greeting}</p>
                 <div className="space-y-2 w-full">
-                  {t.suggestions.map(q => (
+                  {uiText.suggestions.map(q => (
                     <button
                       key={q}
                       onClick={() => { setInput(q); setTimeout(sendMessage, 100) }}
@@ -305,7 +307,7 @@ export function AiAssistantPanel() {
                         <ActionCard
                           key={idx}
                           action={action}
-                          t={t}
+                          t={uiText}
                           onApprove={() => handleApproveAction(msg.id, idx, "approve")}
                           onReject={() => handleApproveAction(msg.id, idx, "reject")}
                         />
@@ -321,7 +323,7 @@ export function AiAssistantPanel() {
                 <div className="bg-muted rounded-2xl rounded-bl-md px-4 py-3">
                   <div className="flex items-center gap-2">
                     <Loader2 className="h-4 w-4 animate-spin text-[hsl(var(--ai-from))]" />
-                    <span className="text-xs text-muted-foreground">Thinking...</span>
+                    <span className="text-xs text-muted-foreground">{t("thinking")}</span>
                   </div>
                 </div>
               </div>
@@ -337,7 +339,7 @@ export function AiAssistantPanel() {
                 value={input}
                 onChange={e => setInput(e.target.value)}
                 onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage() } }}
-                placeholder={t.placeholder}
+                placeholder={uiText.placeholder}
                 rows={1}
                 className="flex-1 resize-none rounded-xl border px-3 py-2.5 text-sm bg-muted/30 focus:outline-none focus:ring-2 focus:ring-primary/30"
                 disabled={loading}

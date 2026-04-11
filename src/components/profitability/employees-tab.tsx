@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Plus, Trash2, Check, X, Pencil, Loader2 } from "lucide-react"
+import { useTranslations } from "next-intl"
 import {
   useEmployees,
   useCreateEmployee,
@@ -42,6 +43,7 @@ const DEPT_COLORS: Record<string, string> = {
 }
 
 export function EmployeesTab() {
+  const t = useTranslations("profitability")
   const { data: employees = [], isLoading } = useEmployees()
   const createMutation = useCreateEmployee()
   const updateMutation = useUpdateEmployee()
@@ -150,15 +152,15 @@ export function EmployeesTab() {
 
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Total Headcount</CardTitle></CardHeader>
+          <CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">{t("empTotalHeadcount")}</CardTitle></CardHeader>
           <CardContent><p className="text-2xl font-bold tabular-nums tracking-tight">{totalHeadcount}</p></CardContent>
         </Card>
         <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Total Labor Cost/mo</CardTitle></CardHeader>
+          <CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">{t("empTotalLaborCost")}</CardTitle></CardHeader>
           <CardContent><p className="text-2xl font-bold tabular-nums tracking-tight">{Math.round(totalLaborCost).toLocaleString()} ₼</p></CardContent>
         </Card>
         <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Departments</CardTitle></CardHeader>
+          <CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">{t("empDepartments")}</CardTitle></CardHeader>
           <CardContent><p className="text-2xl font-bold tabular-nums tracking-tight">{deptSummary.length}</p></CardContent>
         </Card>
       </div>
@@ -176,14 +178,14 @@ export function EmployeesTab() {
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-base">Employee Roster ({filtered.length} positions)</CardTitle>
+          <CardTitle className="text-base">{t("empRoster", { count: filtered.length })}</CardTitle>
           <Button size="sm" onClick={addItem} disabled={isMutating}>
             {createMutation.isPending ? (
               <Loader2 className="h-4 w-4 mr-1 animate-spin" />
             ) : (
               <Plus className="h-4 w-4 mr-1" />
             )}
-            Add Position
+            {t("empAddPosition")}
           </Button>
         </CardHeader>
         <CardContent>
@@ -191,13 +193,13 @@ export function EmployeesTab() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b text-left text-muted-foreground">
-                  <th className="pb-2 pr-4">Department</th>
-                  <th className="pb-2 pr-4">Position</th>
-                  <th className="pb-2 pr-4 text-right">Count</th>
-                  <th className="pb-2 pr-4 text-right">Net Salary</th>
-                  <th className="pb-2 pr-4 text-right">Gross</th>
-                  <th className="pb-2 pr-4 text-right">Super Gross</th>
-                  <th className="pb-2 pr-4 text-right">Total Cost/mo</th>
+                  <th className="pb-2 pr-4">{t("empDepartment")}</th>
+                  <th className="pb-2 pr-4">{t("empPosition")}</th>
+                  <th className="pb-2 pr-4 text-right">{t("empCount")}</th>
+                  <th className="pb-2 pr-4 text-right">{t("empNetSalary")}</th>
+                  <th className="pb-2 pr-4 text-right">{t("empGross")}</th>
+                  <th className="pb-2 pr-4 text-right">{t("empSuperGross")}</th>
+                  <th className="pb-2 pr-4 text-right">{t("empTotalCostMo")}</th>
                   <th className="pb-2 w-20"></th>
                 </tr>
               </thead>

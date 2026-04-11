@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useTranslations } from "next-intl"
 import { useQuery } from "@tanstack/react-query"
 import { useSession } from "next-auth/react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -39,6 +40,7 @@ interface ODDSData {
 }
 
 export function BudgetODDSReport({ year }: { year: number }) {
+  const t = useTranslations("budgeting")
   const orgId = useOrgId()
   const [compareYear, setCompareYear] = useState<number | null>(null)
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(["operating"]))
@@ -54,8 +56,8 @@ export function BudgetODDSReport({ year }: { year: number }) {
     enabled: !!orgId,
   })
 
-  if (isLoading) return <div className="p-6 text-center text-muted-foreground">Загрузка отчёта ОДДС...</div>
-  if (!data) return <div className="p-6 text-center text-muted-foreground">Нет данных</div>
+  if (isLoading) return <div className="p-6 text-center text-muted-foreground">{t("oddsReport_loading")}</div>
+  if (!data) return <div className="p-6 text-center text-muted-foreground">{t("oddsReport_noData")}</div>
 
   const toggleSection = (activity: string) => {
     const next = new Set(expandedSections)
@@ -75,17 +77,17 @@ export function BudgetODDSReport({ year }: { year: number }) {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-sm font-semibold">ОДДС (Отчёт о движении денежных средств)</h3>
-          <p className="text-xs text-muted-foreground">{year} год</p>
+          <h3 className="text-sm font-semibold">{t("oddsReport_title")}</h3>
+          <p className="text-xs text-muted-foreground">{t("oddsReport_year", { year })}</p>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-xs text-muted-foreground">Сравнить с:</span>
+          <span className="text-xs text-muted-foreground">{t("oddsReport_compareWith")}</span>
           <select
             value={compareYear || ""}
             onChange={(e) => setCompareYear(e.target.value ? Number(e.target.value) : null)}
             className="h-8 rounded-md border border-input bg-background px-2 text-xs"
           >
-            <option value="">Нет</option>
+            <option value="">{t("oddsReport_none")}</option>
             <option value={year - 1}>{year - 1}</option>
             <option value={year - 2}>{year - 2}</option>
           </select>
@@ -129,7 +131,7 @@ export function BudgetODDSReport({ year }: { year: number }) {
                   <div>
                     <div className="flex items-center gap-1.5 mb-2">
                       <ArrowDownToLine className="w-3.5 h-3.5 text-green-600" />
-                      <span className="text-xs font-semibold text-green-600">Поступления: {fmt(section.totalInflow)} AZN</span>
+                      <span className="text-xs font-semibold text-green-600">{t("oddsReport_inflows")} {fmt(section.totalInflow)} AZN</span>
                     </div>
                     {section.inflowByCategory.length > 0 ? (
                       <div className="space-y-1">
@@ -141,7 +143,7 @@ export function BudgetODDSReport({ year }: { year: number }) {
                         ))}
                       </div>
                     ) : (
-                      <p className="text-xs text-muted-foreground">Нет поступлений</p>
+                      <p className="text-xs text-muted-foreground">{t("oddsReport_noInflows")}</p>
                     )}
                   </div>
 
@@ -149,7 +151,7 @@ export function BudgetODDSReport({ year }: { year: number }) {
                   <div>
                     <div className="flex items-center gap-1.5 mb-2">
                       <ArrowUpFromLine className="w-3.5 h-3.5 text-red-600" />
-                      <span className="text-xs font-semibold text-red-600">Выплаты: {fmt(section.totalOutflow)} AZN</span>
+                      <span className="text-xs font-semibold text-red-600">{t("oddsReport_outflows")} {fmt(section.totalOutflow)} AZN</span>
                     </div>
                     {section.outflowByCategory.length > 0 ? (
                       <div className="space-y-1">
@@ -161,7 +163,7 @@ export function BudgetODDSReport({ year }: { year: number }) {
                         ))}
                       </div>
                     ) : (
-                      <p className="text-xs text-muted-foreground">Нет выплат</p>
+                      <p className="text-xs text-muted-foreground">{t("oddsReport_noOutflows")}</p>
                     )}
                   </div>
                 </div>
@@ -175,18 +177,18 @@ export function BudgetODDSReport({ year }: { year: number }) {
       <Card className="bg-muted/30">
         <CardContent className="py-4">
           <div className="flex items-center justify-between">
-            <span className="text-sm font-bold">Чистый денежный поток</span>
+            <span className="text-sm font-bold">{t("oddsReport_netCashFlow")}</span>
             <div className="flex items-center gap-4">
               <div className="text-right">
-                <span className="text-xs text-muted-foreground block">Поступления</span>
+                <span className="text-xs text-muted-foreground block">{t("oddsReport_inflows").replace(":", "")}</span>
                 <span className="text-sm font-bold tabular-nums text-green-600">{fmt(data.grandInflow)}</span>
               </div>
               <div className="text-right">
-                <span className="text-xs text-muted-foreground block">Выплаты</span>
+                <span className="text-xs text-muted-foreground block">{t("oddsReport_outflows").replace(":", "")}</span>
                 <span className="text-sm font-bold tabular-nums text-red-600">{fmt(data.grandOutflow)}</span>
               </div>
               <div className="text-right pl-3 border-l">
-                <span className="text-xs text-muted-foreground block">Нетто</span>
+                <span className="text-xs text-muted-foreground block">{t("oddsReport_netLabel")}</span>
                 <span className={`text-lg font-bold tabular-nums ${data.grandNet >= 0 ? "text-green-600" : "text-red-600"}`}>
                   {data.grandNet >= 0 ? "+" : ""}{fmt(data.grandNet)} AZN
                 </span>

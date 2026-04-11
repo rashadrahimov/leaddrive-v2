@@ -5,6 +5,7 @@ import { Dialog, DialogHeader, DialogTitle, DialogContent, DialogFooter } from "
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Upload, FileSpreadsheet, CheckCircle, AlertTriangle, Loader2 } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { cn } from "@/lib/utils"
 
 interface CsvImportDialogProps {
@@ -60,6 +61,7 @@ function mapField(header: string, type: "contacts" | "companies"): string | null
 }
 
 export function CsvImportDialog({ open, onOpenChange, entityType, onImported }: CsvImportDialogProps) {
+  const t = useTranslations("common")
   const fileRef = useRef<HTMLInputElement>(null)
   const [step, setStep] = useState<"upload" | "preview" | "importing" | "done">("upload")
   const [headers, setHeaders] = useState<string[]>([])
@@ -147,7 +149,7 @@ export function CsvImportDialog({ open, onOpenChange, entityType, onImported }: 
       <DialogHeader>
         <DialogTitle className="flex items-center gap-2">
           <FileSpreadsheet className="h-5 w-5" />
-          Import {entityType === "contacts" ? "Contacts" : "Companies"} from CSV
+          {t("csvImportTitle", { entity: entityType === "contacts" ? t("contacts") : t("companies") })}
         </DialogTitle>
       </DialogHeader>
       <DialogContent className="max-h-[70vh] overflow-y-auto">
@@ -157,8 +159,8 @@ export function CsvImportDialog({ open, onOpenChange, entityType, onImported }: 
             onClick={() => fileRef.current?.click()}
           >
             <Upload className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <p className="text-sm font-medium">Click to upload CSV file</p>
-            <p className="text-xs text-muted-foreground mt-1">CSV with headers in the first row</p>
+            <p className="text-sm font-medium">{t("csvClickToUpload")}</p>
+            <p className="text-xs text-muted-foreground mt-1">{t("csvHeadersHint")}</p>
             <input ref={fileRef} type="file" accept=".csv,.tsv,.txt" className="hidden" onChange={handleFile} />
           </div>
         )}
@@ -173,7 +175,7 @@ export function CsvImportDialog({ open, onOpenChange, entityType, onImported }: 
 
             {/* Field mapping */}
             <div className="space-y-2">
-              <p className="text-xs font-semibold text-muted-foreground">Field Mapping</p>
+              <p className="text-xs font-semibold text-muted-foreground">{t("csvFieldMapping")}</p>
               {headers.map(h => (
                 <div key={h} className="flex items-center gap-2">
                   <span className="text-xs w-[120px] truncate font-mono bg-muted px-2 py-1 rounded">{h}</span>
@@ -183,7 +185,7 @@ export function CsvImportDialog({ open, onOpenChange, entityType, onImported }: 
                     value={fieldMapping[h] || ""}
                     onChange={e => setFieldMapping(prev => ({ ...prev, [h]: e.target.value || null }))}
                   >
-                    <option value="">Skip</option>
+                    <option value="">{t("csvSkip")}</option>
                     {targetFields.map(f => (
                       <option key={f} value={f}>{f}</option>
                     ))}
@@ -224,17 +226,17 @@ export function CsvImportDialog({ open, onOpenChange, entityType, onImported }: 
         {step === "importing" && (
           <div className="text-center py-12">
             <Loader2 className="h-12 w-12 animate-spin mx-auto text-primary mb-4" />
-            <p className="text-sm font-medium">Importing {rows.length} records...</p>
+            <p className="text-sm font-medium">{t("csvImporting", { count: rows.length })}</p>
           </div>
         )}
 
         {step === "done" && (
           <div className="text-center py-8">
             <CheckCircle className="h-12 w-12 mx-auto text-green-500 mb-4" />
-            <p className="text-lg font-semibold">{result.imported} imported successfully</p>
+            <p className="text-lg font-semibold">{t("csvImported", { count: result.imported })}</p>
             {result.errors > 0 && (
               <p className="text-sm text-red-500 flex items-center justify-center gap-1 mt-1">
-                <AlertTriangle className="h-3 w-3" /> {result.errors} errors
+                <AlertTriangle className="h-3 w-3" /> {t("csvErrors", { count: result.errors })}
               </p>
             )}
           </div>
@@ -243,14 +245,14 @@ export function CsvImportDialog({ open, onOpenChange, entityType, onImported }: 
       <DialogFooter>
         {step === "preview" && (
           <>
-            <Button variant="outline" onClick={reset}>Back</Button>
+            <Button variant="outline" onClick={reset}>{t("back")}</Button>
             <Button onClick={handleImport} disabled={mappedFields.length === 0}>
-              Import {rows.length} records
+              {t("csvImportRecords", { count: rows.length })}
             </Button>
           </>
         )}
         {step === "done" && (
-          <Button onClick={() => onOpenChange(false)}>Close</Button>
+          <Button onClick={() => onOpenChange(false)}>{t("close")}</Button>
         )}
       </DialogFooter>
     </Dialog>

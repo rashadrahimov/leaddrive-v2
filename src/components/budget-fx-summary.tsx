@@ -1,5 +1,6 @@
 "use client"
 
+import { useTranslations } from "next-intl"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Coins } from "lucide-react"
@@ -27,6 +28,7 @@ function fmt(n: number): string {
 }
 
 export function BudgetFxSummary({ lines, baseCurrency }: Props) {
+  const t = useTranslations("budgeting")
   // Group by currency
   const byCurrency = new Map<string, { original: number; converted: number; rates: number[]; count: number }>()
 
@@ -60,8 +62,8 @@ export function BudgetFxSummary({ lines, baseCurrency }: Props) {
       <CardHeader className="pb-3">
         <CardTitle className="text-base flex items-center gap-2">
           <Coins className="h-4 w-4" />
-          Multi-Currency Summary
-          <Badge variant="outline" className="ml-2">{fxLines.length} currencies</Badge>
+          {t("fxSummary_title")}
+          <Badge variant="outline" className="ml-2">{t("fxSummary_currencies", { count: fxLines.length })}</Badge>
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -70,7 +72,7 @@ export function BudgetFxSummary({ lines, baseCurrency }: Props) {
             <div key={fx.currencyCode} className="flex items-center justify-between p-2 rounded-lg bg-muted/50">
               <div>
                 <span className="font-medium text-sm">{fx.currencyCode}</span>
-                <span className="text-xs text-muted-foreground ml-2">({fx.lineCount} lines)</span>
+                <span className="text-xs text-muted-foreground ml-2">({t("fxSummary_lines", { count: fx.lineCount })})</span>
               </div>
               <div className="text-right">
                 <div className="text-sm font-mono">
@@ -83,7 +85,7 @@ export function BudgetFxSummary({ lines, baseCurrency }: Props) {
             </div>
           ))}
           <div className="flex items-center justify-between pt-2 border-t">
-            <span className="text-sm font-medium">Total FX in {baseCurrency}</span>
+            <span className="text-sm font-medium">{t("fxSummary_totalFx", { currency: baseCurrency })}</span>
             <span className="text-sm font-mono font-medium">{fmt(totalFxConverted)}</span>
           </div>
         </div>

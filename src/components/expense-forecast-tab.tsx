@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState, useCallback } from "react"
+import { useTranslations } from "next-intl"
 import { useSession } from "next-auth/react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -43,7 +44,7 @@ interface GridRow {
   deptLabel: string | null
 }
 
-const MONTHS = ["Янв", "Фев", "Мар", "Апр", "Май", "Июн", "Июл", "Авг", "Сен", "Окт", "Ноя", "Дек"]
+const MONTH_KEYS = ["monthShort_jan", "monthShort_feb", "monthShort_mar", "monthShort_apr", "monthShort_may", "monthShort_jun", "monthShort_jul", "monthShort_aug", "monthShort_sep", "monthShort_oct", "monthShort_nov", "monthShort_dec"] as const
 
 function fmt(n: number): string {
   return n.toLocaleString(undefined, { maximumFractionDigits: 0 })
@@ -55,6 +56,7 @@ function rowKey(costTypeId: string, departmentId: string | null): string {
 }
 
 export function ExpenseForecastTab() {
+  const t = useTranslations("budgeting")
   const { data: session } = useSession()
   const orgId = session?.user?.organizationId
 
@@ -213,10 +215,10 @@ export function ExpenseForecastTab() {
         <div>
           <h2 className="text-lg font-semibold flex items-center gap-2">
             <TrendingDown className="h-5 w-5" />
-            Прогноз расходов
+            {t("expenseForecast_title")}
           </h2>
           <p className="text-xs text-muted-foreground">
-            Ежемесячный прогноз расходов по типам затрат и департаментам.
+            {t("expenseForecast_subtitle")}
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -231,7 +233,7 @@ export function ExpenseForecastTab() {
           </select>
           <Button size="sm" onClick={handleSave} disabled={saving}>
             {saving ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Save className="h-4 w-4 mr-1" />}
-            {saved ? "Сохранено \u2713" : "Сохранить"}
+            {saved ? t("expenseForecast_saved") : t("expenseForecast_save")}
           </Button>
         </div>
       </div>
@@ -241,9 +243,7 @@ export function ExpenseForecastTab() {
         <div className="flex items-start gap-2 rounded-md border border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950/30 px-4 py-3">
           <Info className="h-4 w-4 text-blue-600 dark:text-blue-400 mt-0.5 shrink-0" />
           <div className="text-sm text-blue-800 dark:text-blue-300">
-            <strong>Cost Model активен.</strong> Плановые расходы бюджета рассчитываются автоматически из модели затрат.
-            Прогноз расходов используется как fallback — если модель затрат не содержит данных для категории,
-            будет использован прогноз из этой таблицы.
+            <strong>{t("expenseForecast_costModelActive")}</strong> {t("expenseForecast_costModelDesc")}
           </div>
         </div>
       )}
@@ -253,15 +253,15 @@ export function ExpenseForecastTab() {
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
             <CardTitle className="text-sm">
-              {year} год — {gridRows.length} категорий расходов
+              {t("expenseForecast_yearCategories", { year, count: gridRows.length })}
             </CardTitle>
-            <span className="text-xs text-muted-foreground">Суммы в AZN</span>
+            <span className="text-xs text-muted-foreground">{t("expenseForecast_amountsInAzn")}</span>
           </div>
         </CardHeader>
         <CardContent>
           {gridRows.length === 0 ? (
             <div className="text-center py-10 text-muted-foreground text-sm">
-              Нет активных типов затрат. Добавьте их в разделе «Настройка».
+              {t("expenseForecast_noCostTypes")}
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -269,15 +269,15 @@ export function ExpenseForecastTab() {
                 <thead>
                   <tr className="bg-muted/50">
                     <th className="text-left p-2 border font-medium sticky left-0 bg-muted/50 min-w-[200px] z-10">
-                      Категория
+                      {t("expenseForecast_category")}
                     </th>
-                    {MONTHS.map((m, i) => (
+                    {MONTH_KEYS.map((mk, i) => (
                       <th key={i} className="text-right p-2 border font-medium min-w-[95px]">
-                        {m}
+                        {t(mk)}
                       </th>
                     ))}
                     <th className="text-right p-2 border font-semibold min-w-[110px] bg-red-50 dark:bg-red-950">
-                      Итого
+                      {t("expenseForecast_total")}
                     </th>
                   </tr>
                 </thead>
@@ -290,11 +290,11 @@ export function ExpenseForecastTab() {
                           <div className="flex items-center gap-2">
                             <span className="truncate">{row.label}</span>
                             {!row.departmentId && (
-                              <Badge variant="outline" className="text-[9px] shrink-0">общий</Badge>
+                              <Badge variant="outline" className="text-[9px] shrink-0">{t("expenseForecast_shared")}</Badge>
                             )}
                           </div>
                         </td>
-                        {MONTHS.map((_, mi) => {
+                        {MONTH_KEYS.map((_, mi) => {
                           const month = mi + 1
                           const val = getVal(rk, month)
                           return (
@@ -318,8 +318,8 @@ export function ExpenseForecastTab() {
                 </tbody>
                 <tfoot>
                   <tr className="bg-muted/70 font-semibold">
-                    <td className="p-2 border sticky left-0 bg-muted/70 z-10">ИТОГО</td>
-                    {MONTHS.map((_, mi) => (
+                    <td className="p-2 border sticky left-0 bg-muted/70 z-10">{t("expenseForecast_totalRow")}</td>
+                    {MONTH_KEYS.map((_, mi) => (
                       <td key={mi} className="p-2 border text-right tabular-nums">
                         {fmt(colTotal(mi + 1))}
                       </td>

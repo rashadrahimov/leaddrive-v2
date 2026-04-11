@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useTranslations } from "next-intl"
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, CartesianGrid } from "recharts"
 import { BUDGET_COLORS, ANIMATION, AXIS_TICK, fmtK, fmt } from "@/lib/budget-chart-theme"
 import type { BudgetCategoryRow } from "@/lib/budgeting/types"
@@ -13,6 +14,7 @@ interface BudgetCategoryBarsProps {
 type FilterMode = "all" | "expense" | "revenue"
 
 export function BudgetCategoryBars({ categories, className }: BudgetCategoryBarsProps) {
+  const t = useTranslations("budgeting")
   const [filter, setFilter] = useState<FilterMode>("all")
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null)
 
@@ -64,40 +66,40 @@ export function BudgetCategoryBars({ categories, className }: BudgetCategoryBars
         <div className="font-semibold text-popover-foreground mb-2 pb-1.5 border-b border-border/50 flex items-center justify-between">
           <span>{d.fullName}</span>
           <span className="text-[10px] font-normal px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
-            {d.lineType === "revenue" ? "Доход" : "Расход"}
+            {d.lineType === "revenue" ? t("categoryBars_revenue") : t("categoryBars_expense")}
           </span>
         </div>
         <div className="space-y-1.5">
           <div className="flex justify-between">
             <span className="flex items-center gap-1.5">
               <span className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: BUDGET_COLORS.planIndigo }} />
-              <span className="text-muted-foreground text-xs">План</span>
+              <span className="text-muted-foreground text-xs">{t("categoryBars_plan")}</span>
             </span>
             <span className="font-mono font-medium">{fmt(d.plan)}</span>
           </div>
           <div className="flex justify-between">
             <span className="flex items-center gap-1.5">
               <span className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: BUDGET_COLORS.warning }} />
-              <span className="text-muted-foreground text-xs">Прогноз</span>
+              <span className="text-muted-foreground text-xs">{t("categoryBars_forecast")}</span>
             </span>
             <span className="font-mono font-medium">{fmt(d.forecast)}</span>
           </div>
           <div className="flex justify-between">
             <span className="flex items-center gap-1.5">
               <span className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: getActualColor(d.variancePct) }} />
-              <span className="text-muted-foreground text-xs">Факт</span>
+              <span className="text-muted-foreground text-xs">{t("categoryBars_actual")}</span>
             </span>
             <span className="font-mono font-medium">{fmt(d.actual)}</span>
           </div>
           <div className="pt-1.5 border-t border-border/50 space-y-1">
             <div className="flex justify-between text-xs">
-              <span className="text-muted-foreground">Отклонение</span>
+              <span className="text-muted-foreground">{t("categoryBars_variance")}</span>
               <span className="font-mono font-bold" style={{ color: getActualColor(d.variancePct) }}>
                 {d.variance >= 0 ? "+" : ""}{fmt(d.variance)}
               </span>
             </div>
             <div className="flex justify-between text-xs">
-              <span className="text-muted-foreground">Отклонение %</span>
+              <span className="text-muted-foreground">{t("categoryBars_variancePct")}</span>
               <span className="font-mono font-bold" style={{ color: getActualColor(d.variancePct) }}>
                 {d.variancePct >= 0 ? "+" : ""}{Math.round(d.variancePct)}%
               </span>
@@ -116,7 +118,7 @@ export function BudgetCategoryBars({ categories, className }: BudgetCategoryBars
     return (
       <div className={className}>
         <div className="flex items-center justify-center h-[300px] text-sm text-muted-foreground">
-          Нет данных по категориям
+          {t("categoryBars_noData")}
         </div>
       </div>
     )
@@ -129,9 +131,9 @@ export function BudgetCategoryBars({ categories, className }: BudgetCategoryBars
       {/* Filter tabs */}
       <div className="flex items-center gap-1 mb-3">
         {([
-          { key: "all" as FilterMode, label: `Все (${categories.length})` },
-          { key: "expense" as FilterMode, label: `Расходы (${expenseCount})` },
-          { key: "revenue" as FilterMode, label: `Доходы (${revenueCount})` },
+          { key: "all" as FilterMode, label: `${t("categoryBars_all")} (${categories.length})` },
+          { key: "expense" as FilterMode, label: `${t("categoryBars_expenses")} (${expenseCount})` },
+          { key: "revenue" as FilterMode, label: `${t("categoryBars_revenues")} (${revenueCount})` },
         ]).map(tab => (
           <button
             key={tab.key}
@@ -215,15 +217,15 @@ export function BudgetCategoryBars({ categories, className }: BudgetCategoryBars
           </div>
           <div className="grid grid-cols-3 gap-4 text-center">
             <div>
-              <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5">План</div>
+              <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5">{t("categoryBars_plan")}</div>
               <div className="text-sm font-bold font-mono">{fmt(selected.plan)}</div>
             </div>
             <div>
-              <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5">Факт</div>
+              <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5">{t("categoryBars_actual")}</div>
               <div className="text-sm font-bold font-mono" style={{ color: getActualColor(selected.variancePct) }}>{fmt(selected.actual)}</div>
             </div>
             <div>
-              <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5">Отклонение</div>
+              <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5">{t("categoryBars_variance")}</div>
               <div className="text-sm font-bold font-mono" style={{ color: getActualColor(selected.variancePct) }}>
                 {selected.variancePct >= 0 ? "+" : ""}{Math.round(selected.variancePct)}%
               </div>

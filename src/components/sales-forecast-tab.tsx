@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState, useCallback } from "react"
+import { useTranslations } from "next-intl"
 import { useSession } from "next-auth/react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -24,7 +25,7 @@ interface ForecastEntry {
   budgetDept: { id: string; key: string; label: string }
 }
 
-const MONTHS = ["Янв", "Фев", "Мар", "Апр", "Май", "Июн", "Июл", "Авг", "Сен", "Окт", "Ноя", "Дек"]
+const MONTH_KEYS = ["monthShort_jan", "monthShort_feb", "monthShort_mar", "monthShort_apr", "monthShort_may", "monthShort_jun", "monthShort_jul", "monthShort_aug", "monthShort_sep", "monthShort_oct", "monthShort_nov", "monthShort_dec"] as const
 const VAT_RATE = 0.18
 
 function fmt(n: number): string {
@@ -32,6 +33,7 @@ function fmt(n: number): string {
 }
 
 export function SalesForecastTab() {
+  const t = useTranslations("budgeting")
   const { data: session } = useSession()
   const orgId = session?.user?.organizationId
 
@@ -157,10 +159,10 @@ export function SalesForecastTab() {
         <div>
           <h2 className="text-lg font-semibold flex items-center gap-2">
             <TrendingUp className="h-5 w-5" />
-            Прогноз продаж
+            {t("salesForecast_title")}
           </h2>
           <p className="text-xs text-muted-foreground">
-            Ежегодный прогноз доходов по сервисам. Хранится без НДС — при переключении показывается с НДС (18%).
+            {t("salesForecast_subtitle")}
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -171,7 +173,7 @@ export function SalesForecastTab() {
               onChange={(e) => setShowVat(e.target.checked)}
               className="h-4 w-4 rounded border-border"
             />
-            С НДС (18%)
+            {t("salesForecast_withVat")}
           </label>
           <select
             className="h-9 rounded-md border border-input bg-background px-3 text-sm"
@@ -184,7 +186,7 @@ export function SalesForecastTab() {
           </select>
           <Button size="sm" onClick={handleSave} disabled={saving}>
             {saving ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Save className="h-4 w-4 mr-1" />}
-            {saved ? "Сохранено ✓" : "Сохранить"}
+            {saved ? t("salesForecast_saved") : t("salesForecast_save")}
           </Button>
         </div>
       </div>
@@ -194,10 +196,10 @@ export function SalesForecastTab() {
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
             <CardTitle className="text-sm">
-              {year} год — {departments.length} сервисов
+              {t("salesForecast_yearServices", { year, count: departments.length })}
             </CardTitle>
             <span className="text-xs text-muted-foreground">
-              {showVat ? "Суммы с НДС 18%" : "Суммы без НДС (нетто)"}
+              {showVat ? t("salesForecast_amountsWithVat") : t("salesForecast_amountsWithoutVat")}
             </span>
           </div>
         </CardHeader>
@@ -207,15 +209,15 @@ export function SalesForecastTab() {
               <thead>
                 <tr className="bg-muted/50">
                   <th className="text-left p-2 border font-medium sticky left-0 bg-muted/50 min-w-[140px] z-10">
-                    Сервис
+                    {t("salesForecast_service")}
                   </th>
-                  {MONTHS.map((m, i) => (
+                  {MONTH_KEYS.map((mk, i) => (
                     <th key={i} className="text-right p-2 border font-medium min-w-[95px]">
-                      {m}
+                      {t(mk)}
                     </th>
                   ))}
                   <th className="text-right p-2 border font-semibold min-w-[110px] bg-blue-50 dark:bg-blue-950">
-                    Итого
+                    {t("salesForecast_total")}
                   </th>
                 </tr>
               </thead>
@@ -225,7 +227,7 @@ export function SalesForecastTab() {
                     <td className="p-2 border font-medium sticky left-0 bg-background z-10">
                       {dept.label}
                     </td>
-                    {MONTHS.map((_, mi) => {
+                    {MONTH_KEYS.map((_, mi) => {
                       const month = mi + 1
                       const displayVal = getVal(dept.id, month)
                       return (
@@ -250,9 +252,9 @@ export function SalesForecastTab() {
                 {/* VAT row */}
                 <tr className="bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 text-xs">
                   <td className="p-2 border sticky left-0 bg-amber-50 dark:bg-amber-950/30 z-10 font-medium">
-                    НДС (18%)
+                    {t("salesForecast_vat")}
                   </td>
-                  {MONTHS.map((_, mi) => (
+                  {MONTH_KEYS.map((_, mi) => (
                     <td key={mi} className="p-2 border text-right tabular-nums">
                       {fmt(colVat(mi + 1))}
                     </td>
@@ -264,9 +266,9 @@ export function SalesForecastTab() {
                 {/* Total row */}
                 <tr className="bg-muted/70 font-semibold">
                   <td className="p-2 border sticky left-0 bg-muted/70 z-10">
-                    ИТОГО {showVat ? "(с НДС)" : "(без НДС)"}
+                    {showVat ? t("salesForecast_totalWithVat") : t("salesForecast_totalWithoutVat")}
                   </td>
-                  {MONTHS.map((_, mi) => (
+                  {MONTH_KEYS.map((_, mi) => (
                     <td key={mi} className="p-2 border text-right tabular-nums">
                       {fmt(colTotal(mi + 1))}
                     </td>

@@ -4,6 +4,7 @@ import { useState, useMemo, useEffect, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { StickyNote, ListTodo, Mail, Send, Loader2, ChevronDown, AlertCircle, Check, Paperclip, X } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { cn } from "@/lib/utils"
 
 type ActionType = "note" | "task" | "email"
@@ -40,6 +41,7 @@ function formatFileSize(bytes: number): string {
 }
 
 export function QuickActionBar({ dealId, orgId, contacts = [], onActivityAdded, onTaskAdded, labels }: QuickActionBarProps) {
+  const t = useTranslations("deals")
   const [activeType, setActiveType] = useState<ActionType>("note")
   const [text, setText] = useState("")
   const [emailSubject, setEmailSubject] = useState("")
@@ -76,7 +78,7 @@ export function QuickActionBar({ dealId, orgId, contacts = [], onActivityAdded, 
 
     for (const f of toAdd) {
       if (f.size > MAX_FILE_SIZE) {
-        setSendResult({ success: false, message: `"${f.name}" превышает 10MB` })
+        setSendResult({ success: false, message: t("qabFileTooLarge", { name: f.name }) })
         return
       }
     }
@@ -113,19 +115,19 @@ export function QuickActionBar({ dealId, orgId, contacts = [], onActivityAdded, 
         })
         const json = await res.json()
         if (json.success) {
-          const attachInfo = json.attachmentCount > 0 ? ` (${json.attachmentCount} вложений)` : ""
+          const attachInfo = json.attachmentCount > 0 ? ` (${json.attachmentCount} ${t("qabAttachments")})` : ""
           setSendResult({
             success: json.emailSent,
             message: json.emailSent
-              ? `Отправлено → ${json.recipientEmail}${attachInfo}`
-              : `Записано (SMTP: ${json.emailError || "не настроен"})`,
+              ? `${t("qabSent")} → ${json.recipientEmail}${attachInfo}`
+              : `${t("qabRecorded")} (SMTP: ${json.emailError || t("qabNotConfigured")})`,
           })
           setEmailSubject("")
           setEmailBody("")
           setAttachments([])
           onActivityAdded?.()
         } else {
-          setSendResult({ success: false, message: json.error || "Ошибка" })
+          setSendResult({ success: false, message: json.error || t("qabError") })
         }
       } else if (activeType === "note") {
         if (!text.trim()) return
@@ -217,7 +219,7 @@ export function QuickActionBar({ dealId, orgId, contacts = [], onActivityAdded, 
               /* No contacts warning */
               <div className="flex items-center gap-2 text-xs text-amber-600 bg-amber-50 dark:bg-amber-900/20 dark:text-amber-400 rounded-lg px-3 py-2">
                 <AlertCircle className="h-3.5 w-3.5 shrink-0" />
-                Добавьте контакт с email к сделке (секция &quot;Роли контактов&quot;)
+                {t("qabAddContactWithEmail")}
               </div>
             ) : (
               <>
@@ -228,7 +230,7 @@ export function QuickActionBar({ dealId, orgId, contacts = [], onActivityAdded, 
                     className="w-full flex items-center gap-2 text-xs border rounded-lg px-3 py-2 bg-background hover:bg-muted/50 transition-colors"
                   >
                     <Mail className="h-3 w-3 text-muted-foreground shrink-0" />
-                    <span className="text-muted-foreground">Кому:</span>
+                    <span className="text-muted-foreground">{t("qabTo")}:</span>
                     <span className="font-medium truncate">
                       {selectedContact?.fullName} &lt;{selectedContact?.email}&gt;
                     </span>
@@ -261,7 +263,7 @@ export function QuickActionBar({ dealId, orgId, contacts = [], onActivityAdded, 
                 {/* Subject */}
                 <input
                   className="w-full h-9 border rounded-lg px-3 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-ring/30 placeholder:text-muted-foreground/60"
-                  placeholder="Тема письма"
+                  placeholder={t("qabSubjectPlaceholder")}
                   value={emailSubject}
                   onChange={e => setEmailSubject(e.target.value)}
                 />
@@ -269,7 +271,7 @@ export function QuickActionBar({ dealId, orgId, contacts = [], onActivityAdded, 
                 {/* Body */}
                 <textarea
                   className="w-full border rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-ring/30 placeholder:text-muted-foreground/60 resize-none min-h-[80px]"
-                  placeholder="Текст письма..."
+                  placeholder={t("qabBodyPlaceholder")}
                   rows={3}
                   value={emailBody}
                   onChange={e => setEmailBody(e.target.value)}
@@ -316,10 +318,10 @@ export function QuickActionBar({ dealId, orgId, contacts = [], onActivityAdded, 
                       "flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors px-1.5 py-1 rounded",
                       attachments.length >= MAX_FILES && "opacity-40 cursor-not-allowed"
                     )}
-                    title={attachments.length >= MAX_FILES ? `Макс. ${MAX_FILES} файлов` : "Прикрепить файл"}
+                    title={attachments.length >= MAX_FILES ? t("qabMaxFiles", { max: MAX_FILES }) : t("qabAttachFile")}
                   >
                     <Paperclip className="h-3.5 w-3.5" />
-                    <span>{attachments.length > 0 ? `${attachments.length}/${MAX_FILES}` : "Прикрепить"}</span>
+                    <span>{attachments.length > 0 ? `${attachments.length}/${MAX_FILES}` : t("qabAttach")}</span>
                   </button>
 
                   {sendResult && (

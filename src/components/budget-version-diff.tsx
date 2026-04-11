@@ -1,5 +1,6 @@
 "use client"
 
+import { useTranslations } from "next-intl"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { GitCompare } from "lucide-react"
@@ -28,11 +29,11 @@ interface Props {
   versionLabelB?: string
 }
 
-const STATUS_STYLES: Record<string, { bg: string; text: string; label: string }> = {
-  added: { bg: "bg-green-50", text: "text-green-700", label: "Added" },
-  removed: { bg: "bg-red-50", text: "text-red-700", label: "Removed" },
-  changed: { bg: "bg-yellow-50", text: "text-yellow-700", label: "Changed" },
-  unchanged: { bg: "bg-card", text: "text-muted-foreground", label: "Same" },
+const STATUS_STYLES: Record<string, { bg: string; text: string; labelKey: string }> = {
+  added: { bg: "bg-green-50", text: "text-green-700", labelKey: "versionDiff_added" },
+  removed: { bg: "bg-red-50", text: "text-red-700", labelKey: "versionDiff_removed" },
+  changed: { bg: "bg-yellow-50", text: "text-yellow-700", labelKey: "versionDiff_changed" },
+  unchanged: { bg: "bg-card", text: "text-muted-foreground", labelKey: "versionDiff_same" },
 }
 
 function fmt(n: number): string {
@@ -40,11 +41,12 @@ function fmt(n: number): string {
 }
 
 export function BudgetVersionDiff({ data, isLoading, versionLabelA, versionLabelB }: Props) {
+  const t = useTranslations("budgeting")
   if (isLoading) {
     return (
       <Card>
         <CardContent className="py-8 text-center text-muted-foreground">
-          Loading diff...
+          {t("versionDiff_loading")}
         </CardContent>
       </Card>
     )
@@ -60,9 +62,9 @@ export function BudgetVersionDiff({ data, isLoading, versionLabelA, versionLabel
       <CardHeader className="pb-3">
         <CardTitle className="text-base flex items-center gap-2">
           <GitCompare className="h-4 w-4" />
-          Version Comparison
+          {t("versionDiff_title")}
           <Badge variant="outline" className="ml-2">
-            {data.totalChanges} change{data.totalChanges !== 1 ? "s" : ""}
+            {t("versionDiff_changes", { count: data.totalChanges })}
           </Badge>
         </CardTitle>
       </CardHeader>
@@ -71,13 +73,13 @@ export function BudgetVersionDiff({ data, isLoading, versionLabelA, versionLabel
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b text-left">
-                <th className="py-2 pr-4 font-medium">Category</th>
-                <th className="py-2 pr-4 font-medium">Dept</th>
-                <th className="py-2 pr-4 font-medium">Type</th>
-                <th className="py-2 pr-4 font-medium text-right">{versionLabelA || "Plan A"}</th>
-                <th className="py-2 pr-4 font-medium text-right">{versionLabelB || "Plan B"}</th>
-                <th className="py-2 pr-4 font-medium text-right">Delta</th>
-                <th className="py-2 font-medium">Status</th>
+                <th className="py-2 pr-4 font-medium">{t("versionDiff_category")}</th>
+                <th className="py-2 pr-4 font-medium">{t("versionDiff_dept")}</th>
+                <th className="py-2 pr-4 font-medium">{t("versionDiff_type")}</th>
+                <th className="py-2 pr-4 font-medium text-right">{versionLabelA || t("versionDiff_planA")}</th>
+                <th className="py-2 pr-4 font-medium text-right">{versionLabelB || t("versionDiff_planB")}</th>
+                <th className="py-2 pr-4 font-medium text-right">{t("versionDiff_delta")}</th>
+                <th className="py-2 font-medium">{t("versionDiff_status")}</th>
               </tr>
             </thead>
             <tbody>
@@ -97,7 +99,7 @@ export function BudgetVersionDiff({ data, isLoading, versionLabelA, versionLabel
                     </td>
                     <td className="py-1.5">
                       <Badge className={`text-[10px] ${style.bg} ${style.text} border`}>
-                        {style.label}
+                        {t(style.labelKey)}
                       </Badge>
                     </td>
                   </tr>
@@ -106,7 +108,7 @@ export function BudgetVersionDiff({ data, isLoading, versionLabelA, versionLabel
               {unchanged.length > 0 && (
                 <tr className="border-b bg-muted/30">
                   <td colSpan={7} className="py-2 text-center text-xs text-muted-foreground">
-                    {unchanged.length} unchanged line{unchanged.length !== 1 ? "s" : ""} hidden
+                    {t("versionDiff_unchangedHidden", { count: unchanged.length })}
                   </td>
                 </tr>
               )}

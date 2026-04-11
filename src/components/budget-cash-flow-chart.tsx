@@ -1,5 +1,6 @@
 "use client"
 
+import { useTranslations } from "next-intl"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Banknote } from "lucide-react"
@@ -25,7 +26,7 @@ interface Props {
   totalOutflows: number
 }
 
-const MONTH_NAMES = ["Янв", "Фев", "Мар", "Апр", "Май", "Июн", "Июл", "Авг", "Сен", "Окт", "Ноя", "Дек"]
+const MONTH_KEYS = ["monthShort_jan", "monthShort_feb", "monthShort_mar", "monthShort_apr", "monthShort_may", "monthShort_jun", "monthShort_jul", "monthShort_aug", "monthShort_sep", "monthShort_oct", "monthShort_nov", "monthShort_dec"] as const
 
 function fmt(n: number): string {
   if (Math.abs(n) >= 1000000) return (n / 1000000).toFixed(1) + "M"
@@ -34,8 +35,9 @@ function fmt(n: number): string {
 }
 
 export function BudgetCashFlowChart({ months, year, totalInflows, totalOutflows }: Props) {
+  const t = useTranslations("budgeting")
   const chartData = months.map((m) => ({
-    name: MONTH_NAMES[m.month - 1],
+    name: t(MONTH_KEYS[m.month - 1]),
     inflows: m.inflows,
     outflows: -m.outflows,
     closing: m.closing,
@@ -49,17 +51,17 @@ export function BudgetCashFlowChart({ months, year, totalInflows, totalOutflows 
         <CardTitle className="text-base flex items-center justify-between">
           <span className="flex items-center gap-2">
             <Banknote className="h-4 w-4" />
-            Денежный поток — {year}
+            {t("cashFlowChart_title")} — {year}
           </span>
           <div className="flex gap-2">
             <Badge variant="outline" className="text-green-700 bg-green-50">
-              Приход: {fmt(totalInflows)}
+              {t("cashFlowChart_inflows")}: {fmt(totalInflows)}
             </Badge>
             <Badge variant="outline" className="text-red-700 bg-red-50">
-              Расход: {fmt(totalOutflows)}
+              {t("cashFlowChart_outflows")}: {fmt(totalOutflows)}
             </Badge>
             {hasNegative && (
-              <Badge className="bg-red-100 text-red-800">Кассовый разрыв</Badge>
+              <Badge className="bg-red-100 text-red-800">{t("cashFlowChart_cashGap")}</Badge>
             )}
           </div>
         </CardTitle>
@@ -74,19 +76,19 @@ export function BudgetCashFlowChart({ months, year, totalInflows, totalOutflows 
               <Tooltip
                 formatter={((value: number, name: string) => [
                   fmt(Math.abs(value)),
-                  name === "outflows" ? "Расходы" : name === "inflows" ? "Приходы" : "Баланс",
+                  name === "outflows" ? t("cashFlowChart_outflows") : name === "inflows" ? t("cashFlowChart_inflows") : t("cashFlowChart_balance"),
                 ]) as any}
               />
               <Legend />
-              <Bar dataKey="inflows" fill="#22c55e" name="Приходы" radius={[2, 2, 0, 0]} />
-              <Bar dataKey="outflows" fill="#ef4444" name="Расходы" radius={[2, 2, 0, 0]} />
+              <Bar dataKey="inflows" fill="#22c55e" name={t("cashFlowChart_inflows")} radius={[2, 2, 0, 0]} />
+              <Bar dataKey="outflows" fill="#ef4444" name={t("cashFlowChart_outflows")} radius={[2, 2, 0, 0]} />
               <Line
                 type="monotone"
                 dataKey="closing"
                 stroke="#6366f1"
                 strokeWidth={2}
                 dot={{ r: 3, fill: "#6366f1" }}
-                name="Баланс"
+                name={t("cashFlowChart_balance")}
               />
             </ComposedChart>
           </ResponsiveContainer>

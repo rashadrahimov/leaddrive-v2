@@ -1,5 +1,6 @@
 "use client"
 
+import { useTranslations } from "next-intl"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -22,7 +23,7 @@ interface Props {
   onResolve?: (alertId: string) => void
 }
 
-const MONTH_NAMES = ["Янв", "Фев", "Мар", "Апр", "Май", "Июн", "Июл", "Авг", "Сен", "Окт", "Ноя", "Дек"]
+const MONTH_KEYS = ["monthShort_jan", "monthShort_feb", "monthShort_mar", "monthShort_apr", "monthShort_may", "monthShort_jun", "monthShort_jul", "monthShort_aug", "monthShort_sep", "monthShort_oct", "monthShort_nov", "monthShort_dec"] as const
 
 function fmt(n: number): string {
   return n.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 })
@@ -35,6 +36,7 @@ const ALERT_STYLES: Record<string, { bg: string; icon: string }> = {
 }
 
 export function BudgetCashFlowAlerts({ alerts, onResolve }: Props) {
+  const t = useTranslations("budgeting")
   if (alerts.length === 0) return null
 
   return (
@@ -42,7 +44,7 @@ export function BudgetCashFlowAlerts({ alerts, onResolve }: Props) {
       <CardHeader className="pb-3">
         <CardTitle className="text-base flex items-center gap-2">
           <AlertTriangle className="h-4 w-4 text-red-500" />
-          Кассовые алерты
+          {t("cashFlowAlerts_title")}
           <Badge className="bg-red-100 text-red-800 ml-2">{alerts.length}</Badge>
         </CardTitle>
       </CardHeader>
@@ -56,21 +58,21 @@ export function BudgetCashFlowAlerts({ alerts, onResolve }: Props) {
                   <AlertTriangle className={`h-4 w-4 shrink-0 ${style.icon}`} />
                   <div>
                     <div className="text-sm font-medium">
-                      {MONTH_NAMES[alert.month - 1]} {alert.year}
+                      {t(MONTH_KEYS[alert.month - 1])} {alert.year}
                       <span className="text-xs text-muted-foreground ml-2">
                         ({alert.alertType.replace("_", " ")})
                       </span>
                     </div>
                     <div className="text-xs text-muted-foreground">{alert.message}</div>
                     <div className="text-xs font-mono mt-0.5">
-                      Прогноз баланса: <span className="font-bold text-red-700">{fmt(alert.projectedBalance)}</span>
+                      {t("cashFlowAlerts_projectedBalance")} <span className="font-bold text-red-700">{fmt(alert.projectedBalance)}</span>
                     </div>
                   </div>
                 </div>
                 {onResolve && (
                   <Button size="sm" variant="ghost" onClick={() => onResolve(alert.id)}>
                     <CheckCircle2 className="h-4 w-4 mr-1" />
-                    Решено
+                    {t("cashFlowAlerts_resolved")}
                   </Button>
                 )}
               </div>

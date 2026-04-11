@@ -24,6 +24,7 @@ import {
   MessageSquare, Bell, CheckCircle2, Smartphone, UserPlus,
   Split, Target, Globe,
 } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { cn } from "@/lib/utils"
 
 /* ───── types ───── */
@@ -358,6 +359,7 @@ interface JourneyFlowEditorProps {
 }
 
 export function JourneyFlowEditor({ steps, onSave }: JourneyFlowEditorProps) {
+  const t = useTranslations("journeys")
   const initial = stepsToFlow(steps || [])
   const [nodes, setNodes, onNodesChange] = useNodesState(initial.nodes)
   const [edges, setEdges, onEdgesChange] = useEdgesState(initial.edges)
@@ -437,7 +439,7 @@ export function JourneyFlowEditor({ steps, onSave }: JourneyFlowEditorProps) {
     <div className="flex flex-col h-[550px] rounded-xl border bg-card overflow-hidden">
       {/* Toolbar */}
       <div className="flex items-center gap-1.5 px-3 py-2 border-b bg-muted/80 flex-wrap">
-        <span className="text-xs font-semibold text-muted-foreground mr-2">Add step:</span>
+        <span className="text-xs font-semibold text-muted-foreground mr-2">{t("flowAddStep")}:</span>
         {NODE_DEFS.filter(d => d.type !== "trigger").map(def => {
           const Icon = def.icon
           return (
@@ -450,11 +452,11 @@ export function JourneyFlowEditor({ steps, onSave }: JourneyFlowEditorProps) {
         <div className="flex-1" />
         {selectedNode && selectedNode !== "trigger-1" && (
           <Button variant="outline" size="sm" className="h-7 text-xs text-red-500 gap-1" onClick={deleteSelected}>
-            <Trash2 className="h-3 w-3" /> Delete
+            <Trash2 className="h-3 w-3" /> {t("flowDelete")}
           </Button>
         )}
         <Button size="sm" className="h-7 text-xs gap-1" onClick={handleSave} disabled={saving}>
-          <Save className="h-3 w-3" /> {saving ? "..." : "Save"}
+          <Save className="h-3 w-3" /> {saving ? "..." : t("flowSave")}
         </Button>
       </div>
 

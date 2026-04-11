@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Phone, PhoneOff, FileText, X, Loader2 } from "lucide-react"
+import { useTranslations } from "next-intl"
 
 interface CallWidgetProps {
   callLogId: string
@@ -14,6 +15,7 @@ interface CallWidgetProps {
 }
 
 export function CallWidget({ callLogId, phoneNumber, contactName, onClose }: CallWidgetProps) {
+  const t = useTranslations("voip")
   const [status, setStatus] = useState("initiated")
   const [duration, setDuration] = useState(0)
   const [showNotes, setShowNotes] = useState(false)
@@ -100,7 +102,7 @@ export function CallWidget({ callLogId, phoneNumber, contactName, onClose }: Cal
           <div className="flex items-center gap-2">
             <Phone className={`h-5 w-5 ${isActive ? "animate-pulse text-green-500" : "text-muted-foreground"}`} />
             <span className="font-semibold text-sm">
-              {isActive ? "Active Call" : "Call Ended"}
+              {isActive ? t("activeCall") : t("callEnded")}
             </span>
           </div>
           <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
@@ -113,7 +115,7 @@ export function CallWidget({ callLogId, phoneNumber, contactName, onClose }: Cal
           <div className="text-sm text-muted-foreground">{phoneNumber}</div>
           <div className="flex items-center justify-between">
             <span className={`text-sm font-medium capitalize ${statusColors[status] || ""}`}>
-              {status === "in-progress" ? "Connected" : status}
+              {status === "in-progress" ? t("connected") : status}
             </span>
             {isActive && (
               <span className="text-sm font-mono">{formatDuration(duration)}</span>
@@ -127,18 +129,18 @@ export function CallWidget({ callLogId, phoneNumber, contactName, onClose }: Cal
         <div className="flex gap-2 mt-3">
           {isActive && (
             <Button variant="destructive" size="sm" className="flex-1" onClick={handleEndCall}>
-              <PhoneOff className="h-4 w-4 mr-1" /> End
+              <PhoneOff className="h-4 w-4 mr-1" /> {t("endCall")}
             </Button>
           )}
           <Button variant="outline" size="sm" className="flex-1" onClick={() => setShowNotes(!showNotes)}>
-            <FileText className="h-4 w-4 mr-1" /> Note
+            <FileText className="h-4 w-4 mr-1" /> {t("callNote")}
           </Button>
         </div>
 
         {/* Disposition selector — shown when call ends */}
         {!isActive && status !== "initiated" && (
           <div className="mt-3 space-y-2">
-            <label className="text-xs font-medium text-muted-foreground">Call Outcome</label>
+            <label className="text-xs font-medium text-muted-foreground">{t("callOutcome")}</label>
             <select
               className="w-full text-sm border rounded-md p-1.5 bg-background"
               defaultValue=""
@@ -153,14 +155,14 @@ export function CallWidget({ callLogId, phoneNumber, contactName, onClose }: Cal
                 } catch {}
               }}
             >
-              <option value="">Select outcome...</option>
-              <option value="interested">Interested</option>
-              <option value="not_interested">Not Interested</option>
-              <option value="callback">Callback Requested</option>
-              <option value="voicemail">Voicemail</option>
-              <option value="wrong_number">Wrong Number</option>
-              <option value="no_answer">No Answer</option>
-              <option value="other">Other</option>
+              <option value="">{t("selectOutcome")}</option>
+              <option value="interested">{t("outcomeInterested")}</option>
+              <option value="not_interested">{t("outcomeNotInterested")}</option>
+              <option value="callback">{t("outcomeCallback")}</option>
+              <option value="voicemail">{t("outcomeVoicemail")}</option>
+              <option value="wrong_number">{t("outcomeWrongNumber")}</option>
+              <option value="no_answer">{t("outcomeNoAnswer")}</option>
+              <option value="other">{t("outcomeOther")}</option>
             </select>
           </div>
         )}
@@ -170,12 +172,12 @@ export function CallWidget({ callLogId, phoneNumber, contactName, onClose }: Cal
             <Textarea
               value={notes}
               onChange={e => setNotes(e.target.value)}
-              placeholder="Add call notes..."
+              placeholder={t("addCallNotes")}
               className="text-sm"
               rows={3}
             />
             <Button size="sm" onClick={handleSaveNotes} disabled={!notes.trim()}>
-              Save Note
+              {t("saveNote")}
             </Button>
           </div>
         )}

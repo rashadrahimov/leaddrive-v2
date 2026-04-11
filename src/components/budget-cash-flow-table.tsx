@@ -1,5 +1,6 @@
 "use client"
 
+import { useTranslations } from "next-intl"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table2 } from "lucide-react"
 
@@ -17,19 +18,20 @@ interface Props {
   months: MonthData[]
 }
 
-const MONTH_NAMES = ["Янв", "Фев", "Мар", "Апр", "Май", "Июн", "Июл", "Авг", "Сен", "Окт", "Ноя", "Дек"]
+const MONTH_KEYS = ["monthShort_jan", "monthShort_feb", "monthShort_mar", "monthShort_apr", "monthShort_may", "monthShort_jun", "monthShort_jul", "monthShort_aug", "monthShort_sep", "monthShort_oct", "monthShort_nov", "monthShort_dec"] as const
 
 function fmt(n: number): string {
   return n.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 })
 }
 
 export function BudgetCashFlowTable({ months }: Props) {
+  const t = useTranslations("budgeting")
   return (
     <Card>
       <CardHeader className="pb-3">
         <CardTitle className="text-base flex items-center gap-2">
           <Table2 className="h-4 w-4" />
-          Отчёт о движении денежных средств
+          {t("cashFlowTable_title")}
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -37,18 +39,18 @@ export function BudgetCashFlowTable({ months }: Props) {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b bg-muted/50">
-                <th className="py-2 px-3 text-left font-medium">Месяц</th>
-                <th className="py-2 px-3 text-right font-medium">Начало</th>
-                <th className="py-2 px-3 text-right font-medium text-green-700">Приходы</th>
-                <th className="py-2 px-3 text-right font-medium text-red-700">Расходы</th>
-                <th className="py-2 px-3 text-right font-medium">Нетто</th>
-                <th className="py-2 px-3 text-right font-medium">Конец</th>
+                <th className="py-2 px-3 text-left font-medium">{t("cashFlowTable_month")}</th>
+                <th className="py-2 px-3 text-right font-medium">{t("cashFlowTable_opening")}</th>
+                <th className="py-2 px-3 text-right font-medium text-green-700">{t("cashFlowTable_inflows")}</th>
+                <th className="py-2 px-3 text-right font-medium text-red-700">{t("cashFlowTable_outflows")}</th>
+                <th className="py-2 px-3 text-right font-medium">{t("cashFlowTable_net")}</th>
+                <th className="py-2 px-3 text-right font-medium">{t("cashFlowTable_closing")}</th>
               </tr>
             </thead>
             <tbody>
               {months.map((m) => (
                 <tr key={m.month} className={`border-b ${m.closing < 0 ? "bg-red-50 dark:bg-red-900/10" : ""}`}>
-                  <td className="py-1.5 px-3 font-medium">{MONTH_NAMES[m.month - 1]} {m.year}</td>
+                  <td className="py-1.5 px-3 font-medium">{t(MONTH_KEYS[m.month - 1])} {m.year}</td>
                   <td className="py-1.5 px-3 text-right font-mono text-xs">{fmt(m.opening)}</td>
                   <td className="py-1.5 px-3 text-right font-mono text-xs text-green-700">+{fmt(m.inflows)}</td>
                   <td className="py-1.5 px-3 text-right font-mono text-xs text-red-700">-{fmt(m.outflows)}</td>
@@ -63,7 +65,7 @@ export function BudgetCashFlowTable({ months }: Props) {
             </tbody>
             <tfoot>
               <tr className="border-t-2 font-bold">
-                <td className="py-2 px-3">Итого</td>
+                <td className="py-2 px-3">{t("cashFlowTable_total")}</td>
                 <td className="py-2 px-3 text-right font-mono text-xs">{fmt(months[0]?.opening || 0)}</td>
                 <td className="py-2 px-3 text-right font-mono text-xs text-green-700">
                   +{fmt(months.reduce((s, m) => s + m.inflows, 0))}

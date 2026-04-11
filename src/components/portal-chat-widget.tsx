@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { MessageSquare, X, Send, Bot, User, TicketPlus, Ticket, FileText, Loader2, Star, Headphones, CheckCircle, Clock, AlertCircle } from "lucide-react"
+import { useTranslations } from "next-intl"
 
 interface Message {
   id: string
@@ -68,6 +69,7 @@ function saveChat(key: string, messages: Message[], sessionId: string | null, tr
 }
 
 export function PortalChatWidget({ userName }: PortalChatWidgetProps) {
+  const t = useTranslations("portal")
   const [open, setOpen] = useState(true)
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState("")
@@ -288,7 +290,7 @@ export function PortalChatWidget({ userName }: PortalChatWidgetProps) {
       setMessages(prev => [...prev, {
         id: (Date.now() + 1).toString(),
         role: "assistant",
-        content: "Произошла ошибка. Пожалуйста, попробуйте ещё раз.",
+        content: t("chatError"),
         createdAt: new Date().toISOString(),
       }])
     } finally {
@@ -411,12 +413,12 @@ export function PortalChatWidget({ userName }: PortalChatWidgetProps) {
           {msg.ticketStatus && StatusIcon && (
             <div className="flex items-center gap-1.5 mb-1">
               <StatusIcon className="h-3 w-3 text-primary" />
-              <span className="text-[10px] font-medium text-primary">Обновление статуса</span>
+              <span className="text-[10px] font-medium text-primary">{t("chatStatusUpdate")}</span>
             </div>
           )}
           {/* Operator label */}
           {isOperator && (
-            <p className="text-[10px] font-medium text-primary mb-0.5">Оператор</p>
+            <p className="text-[10px] font-medium text-primary mb-0.5">{t("chatOperator")}</p>
           )}
           <div className={`rounded-lg p-3 shadow-[0_1px_3px_rgba(0,0,0,0.05)] ${
             isUser
@@ -434,7 +436,7 @@ export function PortalChatWidget({ userName }: PortalChatWidgetProps) {
           </p>
           {msg.escalated && msg.escalationTicketId && (
             <div className="mt-1.5 p-2 rounded-lg bg-destructive/10 border border-destructive/20">
-              <p className="text-[10px] font-medium text-destructive mb-1">Разговор передан оператору</p>
+              <p className="text-[10px] font-medium text-destructive mb-1">{t("chatEscalated")}</p>
               <div className="inline-flex items-center gap-1 text-xs text-destructive border border-destructive/30 rounded-full px-2.5 py-0.5">
                 <TicketPlus className="h-3 w-3" /> Тикет {msg.escalationTicketNumber || `#${msg.escalationTicketId?.slice(0, 8)}`}
                 {(() => {
@@ -484,7 +486,7 @@ export function PortalChatWidget({ userName }: PortalChatWidgetProps) {
                 }}
                 className="text-white/70 hover:text-white text-xs border border-white/30 rounded-full px-2 py-0.5"
               >
-                Новый чат
+                {t("chatNewChat")}
               </button>
             )}
           </div>
@@ -520,7 +522,7 @@ export function PortalChatWidget({ userName }: PortalChatWidgetProps) {
                 <div className="bg-card rounded-lg rounded-tl-none p-3 shadow-[0_1px_3px_rgba(0,0,0,0.05)] border border-border">
                   <div className="flex items-center gap-1.5">
                     <Loader2 className="h-3.5 w-3.5 text-[hsl(var(--ai-from))] animate-spin" />
-                    <span className="text-xs text-muted-foreground">Думает...</span>
+                    <span className="text-xs text-muted-foreground">{t("chatThinking")}</span>
                   </div>
                 </div>
               </div>
@@ -533,7 +535,7 @@ export function PortalChatWidget({ userName }: PortalChatWidgetProps) {
                   <Star className="h-3.5 w-3.5 text-accent" />
                 </div>
                 <div className="bg-accent/5 border border-accent/20 rounded-lg rounded-tl-none p-3 shadow-[0_1px_3px_rgba(0,0,0,0.05)]">
-                  <p className="text-xs font-medium text-foreground mb-2">Оцените качество поддержки</p>
+                  <p className="text-xs font-medium text-foreground mb-2">{t("chatRateSupport")}</p>
                   <div className="flex items-center gap-0.5 mb-2">
                     {[1, 2, 3, 4, 5].map(i => (
                       <button
@@ -562,7 +564,7 @@ export function PortalChatWidget({ userName }: PortalChatWidgetProps) {
                       disabled={csatSending}
                       className="text-xs bg-primary text-primary-foreground rounded-full px-3 py-1 hover:bg-primary/90 disabled:opacity-50 transition-colors"
                     >
-                      {csatSending ? "Отправка..." : "Отправить оценку"}
+                      {csatSending ? t("chatSubmitting") : t("chatSubmitRating")}
                     </button>
                   )}
                 </div>
@@ -577,19 +579,19 @@ export function PortalChatWidget({ userName }: PortalChatWidgetProps) {
                 onClick={() => handleSend("Покажи мои тикеты")}
                 className="flex items-center gap-1 text-xs text-muted-foreground border border-border rounded-full px-3 py-1.5 hover:bg-muted/50 whitespace-nowrap transition-colors"
               >
-                <Ticket className="h-3 w-3" /> Мои тикеты
+                <Ticket className="h-3 w-3" /> {t("chatMyTickets")}
               </button>
               <button
                 onClick={() => handleSend("Хочу создать новый тикет")}
                 className="flex items-center gap-1 text-xs text-muted-foreground border border-border rounded-full px-3 py-1.5 hover:bg-muted/50 whitespace-nowrap transition-colors"
               >
-                <TicketPlus className="h-3 w-3" /> Новый тикет
+                <TicketPlus className="h-3 w-3" /> {t("chatNewTicket")}
               </button>
               <button
                 onClick={() => handleSend("Покажи мои контракты")}
                 className="flex items-center gap-1 text-xs text-muted-foreground border border-border rounded-full px-3 py-1.5 hover:bg-muted/50 whitespace-nowrap transition-colors"
               >
-                <FileText className="h-3 w-3" /> Контракты
+                <FileText className="h-3 w-3" /> {t("chatContracts")}
               </button>
             </div>
           )}
@@ -602,7 +604,7 @@ export function PortalChatWidget({ userName }: PortalChatWidgetProps) {
                 value={input}
                 onChange={e => setInput(e.target.value)}
                 onKeyDown={e => e.key === "Enter" && handleSend()}
-                placeholder="Напишите сообщение..."
+                placeholder={t("chatPlaceholder")}
                 disabled={sending}
                 className="flex-1 text-sm text-foreground rounded-full border border-border bg-muted/50 px-4 py-2.5 outline-none focus:border-ring focus:ring-1 focus:ring-ring disabled:opacity-50 transition-colors placeholder:text-muted-foreground"
               />

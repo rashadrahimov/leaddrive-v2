@@ -2,6 +2,7 @@
 
 import { PhoneIncoming, X, User } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { useTranslations } from "next-intl"
 import Link from "next/link"
 
 interface IncomingCallData {
@@ -18,6 +19,7 @@ interface IncomingCallPopupProps {
 }
 
 export function IncomingCallPopup({ call, onDismiss }: IncomingCallPopupProps) {
+  const t = useTranslations("voip")
   return (
     <div className="fixed top-4 right-4 z-50 animate-in slide-in-from-top-2 fade-in duration-300">
       <div className="bg-card border-2 border-violet-500/50 rounded-xl shadow-2xl p-4 w-80">
@@ -27,8 +29,8 @@ export function IncomingCallPopup({ call, onDismiss }: IncomingCallPopupProps) {
               <PhoneIncoming className="h-4 w-4 text-violet-600 animate-pulse" />
             </div>
             <div>
-              <p className="text-xs font-medium text-violet-600">Incoming Call</p>
-              <p className="text-xs text-muted-foreground">{call.status === "ringing" ? "Ringing..." : "Connected"}</p>
+              <p className="text-xs font-medium text-violet-600">{t("incomingCall")}</p>
+              <p className="text-xs text-muted-foreground">{call.status === "ringing" ? t("ringing") : t("connected")}</p>
             </div>
           </div>
           <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={onDismiss}>
@@ -42,7 +44,7 @@ export function IncomingCallPopup({ call, onDismiss }: IncomingCallPopupProps) {
           </div>
           <div className="flex-1 min-w-0">
             <p className="font-semibold text-sm truncate">
-              {call.contact?.fullName || "Unknown Caller"}
+              {call.contact?.fullName || t("unknownCaller")}
             </p>
             <p className="text-xs text-muted-foreground font-mono">{call.fromNumber}</p>
           </div>
@@ -52,16 +54,16 @@ export function IncomingCallPopup({ call, onDismiss }: IncomingCallPopupProps) {
           {call.contactId ? (
             <Link href={`/contacts/${call.contactId}`} className="flex-1">
               <Button variant="outline" size="sm" className="w-full gap-1.5 text-xs">
-                <User className="h-3 w-3" /> View Contact
+                <User className="h-3 w-3" /> {t("viewContact")}
               </Button>
             </Link>
           ) : (
             <Button variant="outline" size="sm" className="flex-1 text-xs" disabled>
-              No matching contact
+              {t("noMatchingContact")}
             </Button>
           )}
           <Button variant="ghost" size="sm" className="text-xs" onClick={onDismiss}>
-            Dismiss
+            {t("dismiss")}
           </Button>
         </div>
       </div>

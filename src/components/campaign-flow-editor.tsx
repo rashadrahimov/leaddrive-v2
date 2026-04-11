@@ -25,6 +25,7 @@ import {
   Users, Mail, Clock, GitBranch, Split, Plus, Save, Trash2, Play,
   MessageSquare, Filter, MousePointerClick, CheckCircle2
 } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { cn } from "@/lib/utils"
 
 /* ───── types ───── */
@@ -124,6 +125,7 @@ interface CampaignFlowEditorProps {
 }
 
 export function CampaignFlowEditor({ flowData, onSave, readOnly = false }: CampaignFlowEditorProps) {
+  const t = useTranslations("campaigns")
   const initialNodes = flowData?.nodes?.length ? flowData.nodes : DEFAULT_NODES
   const initialEdges = flowData?.edges || []
 
@@ -185,7 +187,7 @@ export function CampaignFlowEditor({ flowData, onSave, readOnly = false }: Campa
       {/* Toolbar */}
       {!readOnly && (
         <div className="flex items-center gap-1.5 px-3 py-2 border-b bg-muted/80 flex-wrap">
-          <span className="text-xs font-semibold text-muted-foreground mr-2">Add:</span>
+          <span className="text-xs font-semibold text-muted-foreground mr-2">{t("flowAdd")}:</span>
           {NODE_DEFS.map(def => {
             const Icon = def.icon
             return (
@@ -198,11 +200,11 @@ export function CampaignFlowEditor({ flowData, onSave, readOnly = false }: Campa
           <div className="flex-1" />
           {selectedNode && (
             <Button variant="outline" size="sm" className="h-7 text-xs text-red-500 gap-1" onClick={deleteSelected}>
-              <Trash2 className="h-3 w-3" /> Delete
+              <Trash2 className="h-3 w-3" /> {t("flowDelete")}
             </Button>
           )}
           <Button size="sm" className="h-7 text-xs gap-1" onClick={handleSave} disabled={saving}>
-            <Save className="h-3 w-3" /> {saving ? "Saving..." : "Save Flow"}
+            <Save className="h-3 w-3" /> {saving ? t("flowSaving") : t("flowSave")}
           </Button>
         </div>
       )}
@@ -247,7 +249,7 @@ export function CampaignFlowEditor({ flowData, onSave, readOnly = false }: Campa
           {readOnly && (
             <Panel position="top-right">
               <Badge variant="outline" className="bg-card shadow-sm text-xs">
-                <Play className="h-3 w-3 mr-1" /> Preview Mode
+                <Play className="h-3 w-3 mr-1" /> {t("flowPreviewMode")}
               </Badge>
             </Panel>
           )}

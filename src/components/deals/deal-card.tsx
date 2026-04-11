@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { motion } from "framer-motion"
+import { useTranslations } from "next-intl"
 import { cn } from "@/lib/utils"
 import { Plus, Loader2 } from "lucide-react"
 
@@ -44,13 +45,14 @@ function isRotting(stageChangedAt: string | null | undefined, days: number): boo
   return (now - changed) / 86400000 > days
 }
 
-const TRAFFIC_COLORS: Record<TrafficLight, { dot: string; title: string }> = {
-  green: { dot: "bg-green-500", title: "Task scheduled" },
-  red: { dot: "bg-red-500 animate-pulse", title: "Overdue task!" },
-  yellow: { dot: "bg-amber-400", title: "No upcoming task" },
+const TRAFFIC_DOTS: Record<TrafficLight, string> = {
+  green: "bg-green-500",
+  red: "bg-red-500 animate-pulse",
+  yellow: "bg-amber-400",
 }
 
 export function DealCard({ deal, onClick, onDragStart, onDragEnd, isDragging, rottingDays = 14, onQuickAddTask }: DealCardProps) {
+  const t = useTranslations("deals")
   const [hovered, setHovered] = useState(false)
   const [quickAdd, setQuickAdd] = useState(false)
   const [taskTitle, setTaskTitle] = useState("")
@@ -58,7 +60,12 @@ export function DealCard({ deal, onClick, onDragStart, onDragEnd, isDragging, ro
 
   const light = getTrafficLight(deal)
   const rotting = isRotting(deal.stageChangedAt, rottingDays)
-  const lightConfig = TRAFFIC_COLORS[light]
+
+  const TRAFFIC_TITLES: Record<TrafficLight, string> = {
+    green: t("trafficTaskScheduled"),
+    red: t("trafficOverdueTask"),
+    yellow: t("trafficNoUpcomingTask"),
+  }
 
   const handleQuickAdd = async () => {
     if (!taskTitle.trim() || !onQuickAddTask) return
@@ -99,8 +106,8 @@ export function DealCard({ deal, onClick, onDragStart, onDragEnd, isDragging, ro
         {/* Traffic light dot */}
         <div className="flex items-start gap-2">
           <div
-            className={cn("h-2 w-2 rounded-full flex-shrink-0 mt-1", lightConfig.dot)}
-            title={lightConfig.title}
+            className={cn("h-2 w-2 rounded-full flex-shrink-0 mt-1", TRAFFIC_DOTS[light])}
+            title={TRAFFIC_TITLES[light]}
           />
           <div className="flex-1 min-w-0">
             <p className="font-medium text-xs leading-tight truncate">{deal.name}</p>
@@ -137,7 +144,7 @@ export function DealCard({ deal, onClick, onDragStart, onDragEnd, isDragging, ro
         {rotting && (
           <div className="mt-1.5 pl-4">
             <span className="text-[10px] text-red-500 dark:text-red-400 font-medium">
-              {Math.floor((Date.now() - new Date(deal.stageChangedAt!).getTime()) / 86400000)}d stale
+              {t("daysStale", { days: Math.floor((Date.now() - new Date(deal.stageChangedAt!).getTime()) / 86400000) })}
             </span>
           </div>
         )}
@@ -151,7 +158,7 @@ export function DealCard({ deal, onClick, onDragStart, onDragEnd, isDragging, ro
           className="absolute -bottom-2 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1 px-2.5 py-1 rounded-full bg-primary text-primary-foreground text-[10px] font-medium shadow-md hover:shadow-lg transition-shadow"
           onClick={e => { e.stopPropagation(); setQuickAdd(true) }}
         >
-          <Plus className="h-3 w-3" /> Task
+          <Plus className="h-3 w-3" /> {t("quickAddTask")}
         </motion.button>
       )}
 
@@ -167,7 +174,7 @@ export function DealCard({ deal, onClick, onDragStart, onDragEnd, isDragging, ro
             <input
               autoFocus
               className="flex-1 h-7 border rounded-md px-2 text-[11px] bg-background focus:outline-none focus:ring-1 focus:ring-ring"
-              placeholder="Task title..."
+              placeholder={t("taskTitlePlaceholder")}
               value={taskTitle}
               onChange={e => setTaskTitle(e.target.value)}
               onKeyDown={e => { if (e.key === "Enter") handleQuickAdd(); if (e.key === "Escape") setQuickAdd(false) }}

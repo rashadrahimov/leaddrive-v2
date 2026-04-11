@@ -1,5 +1,6 @@
 "use client"
 
+import { useTranslations } from "next-intl"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { History, FileSpreadsheet, CheckCircle2, XCircle, AlertCircle } from "lucide-react"
@@ -36,6 +37,7 @@ const STATUS_COLOR: Record<string, string> = {
 }
 
 export function BudgetImportHistory({ imports, isLoading }: Props) {
+  const t = useTranslations("budgeting")
   if (isLoading) return null
   if (imports.length === 0) return null
 
@@ -44,7 +46,7 @@ export function BudgetImportHistory({ imports, isLoading }: Props) {
       <CardHeader className="pb-3">
         <CardTitle className="text-base flex items-center gap-2">
           <History className="h-4 w-4" />
-          История импорта
+          {t("importHistory_title")}
           <Badge variant="outline" className="ml-2">{imports.length}</Badge>
         </CardTitle>
       </CardHeader>
@@ -60,15 +62,15 @@ export function BudgetImportHistory({ imports, isLoading }: Props) {
                   <div>
                     <div className="text-sm font-medium flex items-center gap-2">
                       <FileSpreadsheet className="h-3.5 w-3.5 text-muted-foreground" />
-                      {imp.fileName || "Импорт"}
+                      {imp.fileName || t("importHistory_import")}
                       {imp.integration && (
                         <Badge variant="outline" className="text-[10px]">{imp.integration.provider}</Badge>
                       )}
                     </div>
                     <div className="text-xs text-muted-foreground">
-                      {new Date(imp.createdAt).toLocaleString()} · {imp.matchedRows}/{imp.totalRows} загружено
+                      {new Date(imp.createdAt).toLocaleString()} · {imp.matchedRows}/{imp.totalRows} {t("importHistory_loaded")}
                       {imp.unmatchedRows > 0 && (
-                        <span className="text-yellow-600 ml-1">({imp.unmatchedRows} ошибок)</span>
+                        <span className="text-yellow-600 ml-1">({t("importHistory_errors", { count: imp.unmatchedRows })})</span>
                       )}
                     </div>
                   </div>

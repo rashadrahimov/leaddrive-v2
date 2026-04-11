@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Plus, Trash2, Check, X, Pencil, Loader2 } from "lucide-react"
+import { useTranslations } from "next-intl"
 import {
   useOverheadItems,
   useCreateOverhead,
@@ -28,6 +29,7 @@ const SERVICE_OPTIONS = [
 ]
 
 export function OverheadTab() {
+  const t = useTranslations("profitability")
   const { data: items = [], isLoading } = useOverheadItems()
   const createMutation = useCreateOverhead()
   const updateMutation = useUpdateOverhead()
@@ -153,7 +155,7 @@ export function OverheadTab() {
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-muted-foreground">Admin Overhead</CardTitle>
+            <CardTitle className="text-sm text-muted-foreground">{t("adminOverhead")}</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold tabular-nums tracking-tight">{adminTotal.toLocaleString("en", { minimumFractionDigits: 2 })} ₼</p>
@@ -161,7 +163,7 @@ export function OverheadTab() {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-muted-foreground">Tech Infrastructure</CardTitle>
+            <CardTitle className="text-sm text-muted-foreground">{t("techInfra")}</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold tabular-nums tracking-tight">{techTotal.toLocaleString("en", { minimumFractionDigits: 2 })} ₼</p>
@@ -169,7 +171,7 @@ export function OverheadTab() {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-muted-foreground">Total Overhead</CardTitle>
+            <CardTitle className="text-sm text-muted-foreground">{t("ohTotalOverhead")}</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold tabular-nums tracking-tight">{grandTotal.toLocaleString("en", { minimumFractionDigits: 2 })} ₼</p>
@@ -179,14 +181,14 @@ export function OverheadTab() {
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-base">Overhead Cost Items ({items.length})</CardTitle>
+          <CardTitle className="text-base">{t("ohCostItems", { count: items.length })}</CardTitle>
           <Button size="sm" onClick={addItem} disabled={isMutating}>
             {createMutation.isPending ? (
               <Loader2 className="h-4 w-4 mr-1 animate-spin" />
             ) : (
               <Plus className="h-4 w-4 mr-1" />
             )}
-            Add Item
+            {t("ohAddItem")}
           </Button>
         </CardHeader>
         <CardContent>

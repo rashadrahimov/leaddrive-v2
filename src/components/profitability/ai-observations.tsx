@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Brain, RefreshCw, ChevronDown, ChevronRight, AlertCircle } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { useAiAnalysis, useRefreshAiAnalysis } from "@/lib/cost-model/hooks"
 import { sanitizeRichHtml } from "@/lib/sanitize"
 
@@ -61,6 +62,7 @@ function markdownToHtml(text: string): string {
 }
 
 export function AIObservations({ tab }: AIObservationsProps) {
+  const t = useTranslations("profitability")
   const [enabled, setEnabled] = useState(false)
   const [showThinking, setShowThinking] = useState(false)
 
@@ -86,7 +88,7 @@ export function AIObservations({ tab }: AIObservationsProps) {
         <CardTitle className="text-base flex items-center gap-2">
           <Brain className="h-4 w-4 text-[hsl(var(--ai-from))]" />
           <span className="ai-pulse-dot" />
-          Da Vinci Analiz
+          {t("aiAnalysis")}
           {result?.cached && (
             <Badge variant="outline" className="text-[10px] ml-1">
               Cached
@@ -97,7 +99,7 @@ export function AIObservations({ tab }: AIObservationsProps) {
           {!enabled && !result && (
             <Button variant="default" size="sm" onClick={handleAnalyze}>
               <Brain className="h-4 w-4 mr-1" />
-              Da Vinci Analiz
+              {t("aiAnalysis")}
             </Button>
           )}
           {(enabled || result) && (
@@ -108,7 +110,7 @@ export function AIObservations({ tab }: AIObservationsProps) {
               disabled={isLoading || isRefreshing}
             >
               <RefreshCw className={`h-4 w-4 mr-1 ${isRefreshing ? "animate-spin" : ""}`} />
-              Yenilə
+              {t("aiRefresh")}
             </Button>
           )}
         </div>
@@ -119,8 +121,8 @@ export function AIObservations({ tab }: AIObservationsProps) {
         {!enabled && !result && !isLoading && (
           <div className="text-center py-8 text-muted-foreground text-sm">
             <Brain className="h-10 w-10 mx-auto mb-3 opacity-20" />
-            <p>Da Vinci analizi hələ başlamayıb.</p>
-            <p className="text-xs mt-1">Yuxarıdakı &quot;Da Vinci Analiz&quot; düyməsini sıxın.</p>
+            <p>{t("aiNotStarted")}</p>
+            <p className="text-xs mt-1">{t("aiClickToStart")}</p>
           </div>
         )}
 
@@ -131,9 +133,9 @@ export function AIObservations({ tab }: AIObservationsProps) {
               <Brain className="h-10 w-10 animate-pulse" />
               <div className="absolute -top-1 -right-1 h-3 w-3 bg-violet-500 rounded-full animate-ping" />
             </div>
-            <p className="font-medium">Da Vinci düşünür... (30-60 san.)</p>
+            <p className="font-medium">{t("aiThinking")}</p>
             <p className="text-xs mt-1 text-muted-foreground">
-              Məlumatlar təhlil olunur, bir az gözləyin.
+              {t("aiAnalyzingData")}
             </p>
           </div>
         )}
@@ -142,12 +144,12 @@ export function AIObservations({ tab }: AIObservationsProps) {
         {isError && !result && (
           <div className="text-center py-8 text-red-600 text-sm">
             <AlertCircle className="h-8 w-8 mx-auto mb-2 opacity-60" />
-            <p className="font-medium">Analiz zamanı xəta baş verdi</p>
+            <p className="font-medium">{t("aiErrorOccurred")}</p>
             <p className="text-xs mt-1 text-muted-foreground">
-              {error instanceof Error ? error.message : "Bir daha cəhd edin."}
+              {error instanceof Error ? error.message : t("aiTryAgain")}
             </p>
             <Button variant="outline" size="sm" className="mt-3" onClick={handleAnalyze}>
-              Təkrar cəhd
+              {t("aiRetry")}
             </Button>
           </div>
         )}
@@ -155,7 +157,7 @@ export function AIObservations({ tab }: AIObservationsProps) {
         {/* Refresh error */}
         {refreshMutation.isError && (
           <div className="mb-3 p-2 rounded bg-red-50 dark:bg-red-950 text-red-600 text-xs">
-            Yeniləmə xətası: {refreshMutation.error instanceof Error ? refreshMutation.error.message : "Naməlum xəta"}
+            {t("aiRefreshError")}: {refreshMutation.error instanceof Error ? refreshMutation.error.message : t("aiUnknownError")}
           </div>
         )}
 
@@ -180,7 +182,7 @@ export function AIObservations({ tab }: AIObservationsProps) {
                   ) : (
                     <ChevronRight className="h-3 w-3" />
                   )}
-                  Düşüncə prosesi (thinking)
+                  {t("aiThinkingProcess")}
                 </button>
                 {showThinking && (
                   <div className="mt-2 p-3 rounded bg-muted/50 text-xs text-muted-foreground whitespace-pre-wrap font-mono leading-relaxed max-h-64 overflow-y-auto">
@@ -192,8 +194,8 @@ export function AIObservations({ tab }: AIObservationsProps) {
 
             {/* Footer */}
             <p className="text-xs text-muted-foreground text-center pt-2 border-t">
-              Da Vinci texnologiyası {result.cached ? "(cached)" : ""}
-              {isRefreshing && " — yenilənir..."}
+              {t("aiPoweredBy")} {result.cached ? "(cached)" : ""}
+              {isRefreshing && ` — ${t("aiRefreshing")}`}
             </p>
           </div>
         )}

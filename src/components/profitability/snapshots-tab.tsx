@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Camera, Calendar, TrendingUp, TrendingDown, Loader2 } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from "recharts"
 import { useSnapshots, useCreateSnapshot } from "@/lib/cost-model/hooks"
 
@@ -33,6 +34,7 @@ function fmt(n: number): string {
 }
 
 export function SnapshotsTab() {
+  const t = useTranslations("profitability")
   const { data: rawSnapshots = [], isLoading, error } = useSnapshots()
   const createMutation = useCreateSnapshot()
 
@@ -101,12 +103,12 @@ export function SnapshotsTab() {
             ) : (
               <Camera className="h-4 w-4 mr-1" />
             )}
-            Snapshot Saxla
+            {t("snapSave")}
           </Button>
         </div>
         <Card>
           <CardContent className="py-10 text-center text-muted-foreground">
-            Hələ snapshot yoxdur. Cari ayın snapshot-unu yaratmaq üçün yuxarıdakı düyməni basın.
+            {t("snapNoData")}
           </CardContent>
         </Card>
       </div>
@@ -130,7 +132,7 @@ export function SnapshotsTab() {
           </select>
           {selected && (
             <span className="text-xs text-muted-foreground">
-              Saxlanıb: {new Date(selected.createdAt).toLocaleDateString(undefined)}
+              {t("snapSavedAt")}: {new Date(selected.createdAt).toLocaleDateString(undefined)}
             </span>
           )}
         </div>
@@ -140,7 +142,7 @@ export function SnapshotsTab() {
           ) : (
             <Camera className="h-4 w-4 mr-1" />
           )}
-          Snapshot Saxla
+          {t("snapSave")}
         </Button>
       </div>
 
@@ -198,7 +200,7 @@ export function SnapshotsTab() {
               <Card>
                 <CardHeader>
                   <CardTitle className="text-base flex items-center gap-2">
-                    <TrendingUp className="h-4 w-4" /> Maya vs Gəlir Trendi
+                    <TrendingUp className="h-4 w-4" /> {t("snapCostVsRevenueTrend")}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -218,7 +220,7 @@ export function SnapshotsTab() {
               <Card>
                 <CardHeader>
                   <CardTitle className="text-base flex items-center gap-2">
-                    <TrendingDown className="h-4 w-4" /> Marja Trendi
+                    <TrendingDown className="h-4 w-4" /> {t("snapMarginTrend")}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -239,7 +241,7 @@ export function SnapshotsTab() {
           {/* Snapshot history table */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Snapshot Tarixçəsi</CardTitle>
+              <CardTitle className="text-base">{t("snapHistory")}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="overflow-x-auto">

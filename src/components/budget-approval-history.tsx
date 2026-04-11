@@ -1,5 +1,6 @@
 "use client"
 
+import { useTranslations } from "next-intl"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Loader2, MessageSquare, Send, CheckCircle2, XCircle, FileText, Lock } from "lucide-react"
@@ -43,6 +44,7 @@ interface Props {
 }
 
 export function BudgetApprovalHistory({ planId }: Props) {
+  const t = useTranslations("budgeting")
   const { data: comments = [], isLoading } = useBudgetApprovalComments(planId)
 
   if (isLoading) {
@@ -57,10 +59,10 @@ export function BudgetApprovalHistory({ planId }: Props) {
     return (
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-base">История согласования</CardTitle>
+          <CardTitle className="text-base">{t("approvalHistory_title")}</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-muted-foreground text-center py-4">Пока нет действий по согласованию.</p>
+          <p className="text-sm text-muted-foreground text-center py-4">{t("approvalHistory_empty")}</p>
         </CardContent>
       </Card>
     )
@@ -71,7 +73,7 @@ export function BudgetApprovalHistory({ planId }: Props) {
       <CardHeader className="pb-3">
         <CardTitle className="text-base flex items-center gap-2">
           <MessageSquare className="h-4 w-4" />
-          История согласования
+          {t("approvalHistory_title")}
           <Badge variant="secondary" className="text-xs">{comments.length}</Badge>
         </CardTitle>
       </CardHeader>

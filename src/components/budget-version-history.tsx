@@ -1,5 +1,6 @@
 "use client"
 
+import { useTranslations } from "next-intl"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -42,6 +43,7 @@ export function BudgetVersionHistory({
   onCompare,
   isCreating,
 }: Props) {
+  const t = useTranslations("budgeting")
   if (!versions.length) return null
 
   const currentIdx = versions.findIndex((v) => v.id === currentPlanId)
@@ -52,7 +54,7 @@ export function BudgetVersionHistory({
         <CardTitle className="text-base flex items-center justify-between">
           <span className="flex items-center gap-2">
             <GitBranch className="h-4 w-4" />
-            Version History
+            {t("versionHistory_title")}
           </span>
           <Button size="sm" variant="outline" onClick={onCreateVersion} disabled={isCreating}>
             {isCreating ? (
@@ -60,7 +62,7 @@ export function BudgetVersionHistory({
             ) : (
               <Plus className="h-4 w-4 mr-1" />
             )}
-            New Version
+            {t("versionHistory_newVersion")}
           </Button>
         </CardTitle>
       </CardHeader>
@@ -83,11 +85,11 @@ export function BudgetVersionHistory({
                   <div>
                     <div className="text-sm font-medium">
                       {v.name}
-                      {isCurrent && <span className="text-xs text-muted-foreground ml-1">(current)</span>}
+                      {isCurrent && <span className="text-xs text-muted-foreground ml-1">{t("versionHistory_current")}</span>}
                     </div>
                     <div className="text-xs text-muted-foreground">
                       {new Date(v.createdAt).toLocaleDateString()}
-                      {v.approvedAt && ` · Approved ${new Date(v.approvedAt).toLocaleDateString()}`}
+                      {v.approvedAt && ` · ${t("versionHistory_approved")} ${new Date(v.approvedAt).toLocaleDateString()}`}
                     </div>
                   </div>
                 </div>
