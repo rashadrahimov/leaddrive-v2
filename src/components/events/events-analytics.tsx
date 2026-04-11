@@ -240,10 +240,10 @@ function InviteModal({ event, onClose }: { event: Event; onClose: () => void }) 
       if (data.success) {
         setResult(data.data)
       } else {
-        setError(data.error || "Failed to send")
+        setError(data.error || tc("errorGeneric"))
       }
     } catch {
-      setError("Network error")
+      setError(tc("errorNetwork"))
     } finally {
       setSending(false)
     }

@@ -11,6 +11,7 @@ import {
   XCircle,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useTranslations } from "next-intl"
 
 /* ── Mini line chart (SVG) ── */
 function MiniLineChart({ data, color, width = 200, height = 40 }: { data: number[]; color: string; width?: number; height?: number }) {
@@ -58,28 +59,28 @@ function MiniDonut({ segments, size = 48, label }: { segments: { pct: number; co
 const dealVelocity = [14, 18, 12, 22, 16, 20, 15, 24, 19, 26, 21, 28]
 const revenueProjection = [45, 52, 48, 68, 72, 85, 78, 92, 88, 105, 98, 120]
 
-const sidebarItems = [
-  { icon: LayoutDashboard, label: "İdarə paneli" },
-  { icon: Building2, label: "Şirkətlər" },
-  { icon: Users, label: "Kontaktlar" },
-  { icon: Target, label: "Sövdələşmələr", active: true },
-  { icon: UserCheck, label: "Lidlər" },
-  { icon: Inbox, label: "Gələn qutusu" },
-  { icon: Megaphone, label: "Kampaniyalar" },
-  { icon: Headphones, label: "Tiketlər" },
-  { icon: BarChart3, label: "Hesabatlar" },
-  { icon: Receipt, label: "Maliyyə" },
-  { icon: Bot, label: "Da Vinci Mərkəzi" },
-  { icon: Settings, label: "Parametrlər" },
+const sidebarItemsDef = [
+  { icon: LayoutDashboard, key: "dashboard" },
+  { icon: Building2, key: "companies" },
+  { icon: Users, key: "contacts" },
+  { icon: Target, key: "deals", active: true },
+  { icon: UserCheck, key: "leads" },
+  { icon: Inbox, key: "inbox" },
+  { icon: Megaphone, key: "campaigns" },
+  { icon: Headphones, key: "tickets" },
+  { icon: BarChart3, key: "reports" },
+  { icon: Receipt, key: "finance" },
+  { icon: Bot, key: "daVinci" },
+  { icon: Settings, key: "settings" },
 ]
 
 /* ── Pipeline stages ── */
-const pipelineStages = [
-  { label: "Lid", count: 8, amount: "₼24.5K", pct: 100, color: "bg-violet-500" },
-  { label: "Kvalifikasiya", count: 6, amount: "₼42.3K", pct: 75, color: "bg-blue-500" },
-  { label: "Təklif", count: 5, amount: "₼68.2K", pct: 63, color: "bg-cyan-500" },
-  { label: "Danışıqlar", count: 3, amount: "₼52.0K", pct: 38, color: "bg-teal-500" },
-  { label: "Qazanıldı", count: 4, amount: "₼98.7K", pct: 50, color: "bg-emerald-500" },
+const pipelineStagesData = [
+  { key: "lead", count: 8, amount: "₼24.5K", pct: 100, color: "bg-violet-500" },
+  { key: "qualification", count: 6, amount: "₼42.3K", pct: 75, color: "bg-blue-500" },
+  { key: "proposal", count: 5, amount: "₼68.2K", pct: 63, color: "bg-cyan-500" },
+  { key: "negotiations", count: 3, amount: "₼52.0K", pct: 38, color: "bg-teal-500" },
+  { key: "won", count: 4, amount: "₼98.7K", pct: 50, color: "bg-emerald-500" },
 ]
 
 
@@ -112,6 +113,18 @@ const contactRoles = [
 ]
 
 export function DealPreview() {
+  const t = useTranslations("marketing")
+
+  const sidebarItems = sidebarItemsDef.map(item => ({
+    ...item,
+    label: t(`preview.sidebar.${item.key}`),
+  }))
+
+  const pipelineStages = pipelineStagesData.map(s => ({
+    ...s,
+    label: t(`preview.pipeline.${s.key}`),
+  }))
+
   return (
     <div className="w-full bg-white rounded-xl overflow-hidden text-[11px] leading-tight select-none pointer-events-none shadow-inner">
       {/* Top navigation bar */}
@@ -125,7 +138,7 @@ export function DealPreview() {
           </div>
           <div className="flex items-center gap-0.5 bg-[#001E3C]/60 rounded-md px-2 py-1">
             <Search className="w-2.5 h-2.5 text-[#001E3C]/40" />
-            <span className="text-[9px] text-[#001E3C]/40 ml-1">Axtar...</span>
+            <span className="text-[9px] text-[#001E3C]/40 ml-1">{t("preview.search")}</span>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -156,24 +169,24 @@ export function DealPreview() {
           {/* Page header */}
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-[13px] font-bold text-[#001E3C]">Satış Pipeline & Analitika</h2>
+              <h2 className="text-[13px] font-bold text-[#001E3C]">{t("preview.deal.title")}</h2>
               <p className="text-[8px] text-[#001E3C]/40">26 sövdələşmə • ₼285.5K huni dəyəri</p>
             </div>
             <div className="flex items-center gap-1">
-              <span className="text-[8px] px-2 py-0.5 rounded-md bg-[#F3F4F7] text-[#001E3C]/60 border border-[#001E3C]/10">Bu rüb</span>
-              <span className="text-[8px] px-2 py-0.5 rounded-md bg-[#0176D3] text-white font-medium">+ Yeni sövdələşmə</span>
+              <span className="text-[8px] px-2 py-0.5 rounded-md bg-[#F3F4F7] text-[#001E3C]/60 border border-[#001E3C]/10">{t("preview.deal.thisQuarter")}</span>
+              <span className="text-[8px] px-2 py-0.5 rounded-md bg-[#0176D3] text-white font-medium">+ {t("preview.deal.newDeal")}</span>
             </div>
           </div>
 
           {/* KPI Row - 6 cards */}
           <div className="grid grid-cols-6 gap-1">
             {[
-              { label: "Huni dəyəri", value: "₼285.5K", change: "+22%", icon: DollarSign, color: "text-emerald-600", bg: "bg-emerald-50 border-emerald-100" },
-              { label: "Qazanıldı", value: "₼98.7K", change: "4 sövdə", icon: CheckCircle2, color: "text-blue-600", bg: "bg-blue-50 border-blue-100" },
-              { label: "Konversiya", value: "32.4%", change: "+5.1%", icon: TrendingUp, color: "text-violet-600", bg: "bg-violet-50 border-violet-100" },
-              { label: "Ort. dövrü", value: "24 gün", change: "-3 gün", icon: Clock, color: "text-cyan-600", bg: "bg-cyan-50 border-cyan-100" },
-              { label: "Ort. dəyər", value: "₼11.0K", change: "+8%", icon: Target, color: "text-amber-600", bg: "bg-amber-50 border-amber-100" },
-              { label: "Da Vinci Proqnoz", value: "₼142K", change: "Bu rüb", icon: Bot, color: "text-pink-600", bg: "bg-pink-50 border-pink-100" },
+              { label: t("preview.deal.kpiFunnelValue"), value: "₼285.5K", change: "+22%", icon: DollarSign, color: "text-emerald-600", bg: "bg-emerald-50 border-emerald-100" },
+              { label: t("preview.deal.kpiWon"), value: "₼98.7K", change: t("preview.deal.kpiWonDeals"), icon: CheckCircle2, color: "text-blue-600", bg: "bg-blue-50 border-blue-100" },
+              { label: t("preview.deal.kpiConversion"), value: "32.4%", change: "+5.1%", icon: TrendingUp, color: "text-violet-600", bg: "bg-violet-50 border-violet-100" },
+              { label: t("preview.deal.kpiAvgCycle"), value: t("preview.deal.kpiAvgCycleVal"), change: t("preview.deal.kpiAvgCycleChange"), icon: Clock, color: "text-cyan-600", bg: "bg-cyan-50 border-cyan-100" },
+              { label: t("preview.deal.kpiAvgValue"), value: "₼11.0K", change: "+8%", icon: Target, color: "text-amber-600", bg: "bg-amber-50 border-amber-100" },
+              { label: t("preview.deal.kpiDaVinciForecast"), value: "₼142K", change: t("preview.deal.thisQuarter"), icon: Bot, color: "text-pink-600", bg: "bg-pink-50 border-pink-100" },
             ].map((kpi) => (
               <div key={kpi.label} className="rounded-lg bg-white border border-[#001E3C]/10 p-2 shadow-sm">
                 <div className="flex items-center justify-between mb-1">
@@ -196,7 +209,7 @@ export function DealPreview() {
             {/* Mini Kanban columns */}
             <div className="rounded-lg bg-white border border-[#001E3C]/10 p-2 shadow-sm">
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[10px] font-semibold text-[#001E3C]/80">Pipeline Kanban</span>
+                <span className="text-[10px] font-semibold text-[#001E3C]/80">{t("preview.deal.pipelineKanban")}</span>
                 <span className="text-[8px] text-[#001E3C]/40">26 sövdə</span>
               </div>
               <div className="flex gap-[3px]">
@@ -222,7 +235,7 @@ export function DealPreview() {
             {/* Revenue projection */}
             <div className="rounded-lg bg-white border border-[#001E3C]/10 p-2 shadow-sm">
               <div className="flex items-center justify-between mb-1">
-                <span className="text-[10px] font-semibold text-[#001E3C]/80">Gəlir Proqnozu</span>
+                <span className="text-[10px] font-semibold text-[#001E3C]/80">{t("preview.deal.revenueProjection")}</span>
                 <span className="text-[8px] text-emerald-600 font-medium">↑ 32%</span>
               </div>
               <MiniLineChart data={revenueProjection} color="#8b5cf6" width={180} height={40} />
@@ -230,7 +243,7 @@ export function DealPreview() {
                 {["Y","F","M","A","M","İ","İ","A","S","O","N","D"].map((m,i) => <span key={i}>{m}</span>)}
               </div>
               <div className="mt-1 pt-1 border-t border-[#001E3C]/8 flex justify-between">
-                <span className="text-[7px] text-[#001E3C]/40">Çatdırılacaq (proqnoz)</span>
+                <span className="text-[7px] text-[#001E3C]/40">{t("preview.deal.forecastDelivery")}</span>
                 <span className="text-[8px] font-bold text-violet-600">₼420K</span>
               </div>
             </div>
@@ -238,8 +251,8 @@ export function DealPreview() {
             {/* Win/Loss donut + analysis */}
             <div className="rounded-lg bg-white border border-[#001E3C]/10 p-2 shadow-sm">
               <div className="flex items-center justify-between mb-1">
-                <span className="text-[10px] font-semibold text-[#001E3C]/80">Qazanma / İtirmə</span>
-                <span className="text-[8px] text-[#001E3C]/40">Bu rüb</span>
+                <span className="text-[10px] font-semibold text-[#001E3C]/80">{t("preview.deal.winLoss")}</span>
+                <span className="text-[8px] text-[#001E3C]/40">{t("preview.deal.thisQuarter")}</span>
               </div>
               <div className="flex items-center gap-2">
                 <MiniDonut size={48} segments={[
@@ -247,9 +260,9 @@ export function DealPreview() {
                 ]} label="65%" />
                 <div className="space-y-[3px] flex-1">
                   {[
-                    { l: "Qazanıldı", v: "12", c: "bg-emerald-500", pct: "65%" },
-                    { l: "İtirildi", v: "4", c: "bg-red-500", pct: "20%" },
-                    { l: "Davam edir", v: "10", c: "bg-[#001E3C]/30", pct: "—" },
+                    { l: t("preview.deal.won"), v: "12", c: "bg-emerald-500", pct: "65%" },
+                    { l: t("preview.deal.lost"), v: "4", c: "bg-red-500", pct: "20%" },
+                    { l: t("preview.deal.ongoing"), v: "10", c: "bg-[#001E3C]/30", pct: "—" },
                   ].map((s) => (
                     <div key={s.l} className="flex items-center gap-1">
                       <div className={cn("w-1.5 h-1.5 rounded-full", s.c)} />
@@ -261,7 +274,7 @@ export function DealPreview() {
                 </div>
               </div>
               <div className="mt-1 pt-1 border-t border-[#001E3C]/8 flex justify-between">
-                <span className="text-[7px] text-[#001E3C]/40">İtirmə səbəbi #1</span>
+                <span className="text-[7px] text-[#001E3C]/40">{t("preview.deal.lossReason")}</span>
                 <span className="text-[8px] text-red-600">Qiymət (45%)</span>
               </div>
             </div>
@@ -272,14 +285,14 @@ export function DealPreview() {
             {/* Engagement metrics */}
             <div className="rounded-lg bg-white border border-[#001E3C]/10 p-2 shadow-sm">
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[10px] font-semibold text-[#001E3C]/80">Kontakt Meşğulluğu</span>
+                <span className="text-[10px] font-semibold text-[#001E3C]/80">{t("preview.deal.contactEngagement")}</span>
                 <MessageSquare className="w-3 h-3 text-cyan-500" />
               </div>
               <div className="grid grid-cols-3 gap-1 mb-1.5">
                 {[
-                  { icon: Phone, label: "Zənglər", value: "47", color: "text-blue-600", bg: "bg-blue-50" },
-                  { icon: Mail, label: "E-poçt", value: "124", color: "text-violet-600", bg: "bg-violet-50" },
-                  { icon: Calendar, label: "Görüşlər", value: "18", color: "text-emerald-600", bg: "bg-emerald-50" },
+                  { icon: Phone, label: t("preview.deal.calls"), value: "47", color: "text-blue-600", bg: "bg-blue-50" },
+                  { icon: Mail, label: t("preview.deal.emails"), value: "124", color: "text-violet-600", bg: "bg-violet-50" },
+                  { icon: Calendar, label: t("preview.deal.meetings"), value: "18", color: "text-emerald-600", bg: "bg-emerald-50" },
                 ].map((m) => (
                   <div key={m.label} className={cn("rounded p-1 text-center", m.bg)}>
                     <m.icon className={cn("w-2.5 h-2.5 mx-auto mb-0.5", m.color)} />
@@ -311,7 +324,7 @@ export function DealPreview() {
               <div className="flex items-center justify-between mb-1.5">
                 <div className="flex items-center gap-1">
                   <Bot className="w-3 h-3 text-violet-500" />
-                  <span className="text-[10px] font-semibold text-[#001E3C]/80">Da Vinci Proqnoz</span>
+                  <span className="text-[10px] font-semibold text-[#001E3C]/80">{t("preview.deal.daVinciForecast")}</span>
                 </div>
                 <span className="text-[7px] px-1 py-0.5 rounded bg-violet-50 text-violet-600 border border-violet-200">Da Vinci</span>
               </div>
@@ -332,7 +345,7 @@ export function DealPreview() {
             {/* Competitors + Contact Roles */}
             <div className="rounded-lg bg-white border border-[#001E3C]/10 p-2 shadow-sm">
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[10px] font-semibold text-[#001E3C]/80">Rəqib Analizi</span>
+                <span className="text-[10px] font-semibold text-[#001E3C]/80">{t("preview.deal.competitorAnalysis")}</span>
                 <Shield className="w-3 h-3 text-[#0176D3]" />
               </div>
               <div className="space-y-[4px] mb-1.5">
@@ -345,7 +358,7 @@ export function DealPreview() {
                 ))}
               </div>
               <div className="pt-1 border-t border-[#001E3C]/8">
-                <span className="text-[8px] font-semibold text-[#001E3C]/60 block mb-1">Kontakt Rolları</span>
+                <span className="text-[8px] font-semibold text-[#001E3C]/60 block mb-1">{t("preview.deal.contactRoles")}</span>
                 {contactRoles.map((c) => (
                   <div key={c.name} className="flex items-center gap-1 py-[2px]">
                     <div className={cn("w-1 h-3.5 rounded-full flex-shrink-0", c.color)} />
@@ -363,7 +376,7 @@ export function DealPreview() {
             {/* Deal velocity */}
             <div className="rounded-lg bg-white border border-[#001E3C]/10 p-2 shadow-sm">
               <div className="flex items-center justify-between mb-1">
-                <span className="text-[10px] font-semibold text-[#001E3C]/80">Sövdələşmə Sürəti</span>
+                <span className="text-[10px] font-semibold text-[#001E3C]/80">{t("preview.deal.dealVelocity")}</span>
                 <span className="text-[8px] text-emerald-600 font-medium">↑ 15%</span>
               </div>
               <MiniLineChart data={dealVelocity} color="#06b6d4" width={180} height={35} />
@@ -386,7 +399,7 @@ export function DealPreview() {
             {/* Upcoming deal tasks */}
             <div className="rounded-lg bg-white border border-[#001E3C]/10 p-2 shadow-sm">
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[10px] font-semibold text-[#001E3C]/80">Növbəti Addımlar</span>
+                <span className="text-[10px] font-semibold text-[#001E3C]/80">{t("preview.deal.nextSteps")}</span>
                 <FileText className="w-3 h-3 text-[#0176D3]" />
               </div>
               <div className="space-y-[4px]">
@@ -407,7 +420,7 @@ export function DealPreview() {
                 ))}
               </div>
               <div className="mt-1 pt-1 border-t border-[#001E3C]/8 flex justify-between">
-                <span className="text-[7px] text-[#001E3C]/40">Gecikmiş tapşırıqlar</span>
+                <span className="text-[7px] text-[#001E3C]/40">{t("preview.deal.overdueTasks")}</span>
                 <span className="text-[8px] text-red-600 font-semibold">2</span>
               </div>
             </div>

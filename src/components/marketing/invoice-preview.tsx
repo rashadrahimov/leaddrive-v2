@@ -10,6 +10,7 @@ import {
   Headphones, BarChart3, Users,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useTranslations } from "next-intl"
 
 /* ── Mini bar chart ── */
 function MiniBarChart({ data, color, height = "h-12" }: { data: number[]; color: string; height?: string }) {
@@ -72,19 +73,19 @@ function MiniDonut({ segments, size = 48 }: { segments: { pct: number; color: st
 const revenueMonthly = [42, 55, 48, 62, 58, 71, 65, 78, 82, 91, 88, 98]
 const collectionsWeekly = [12, 18, 8, 22, 15, 25, 19]
 
-const sidebarItems = [
-  { icon: LayoutDashboard, label: "İdarə paneli", active: false },
-  { icon: Building2, label: "Şirkətlər" },
-  { icon: Users, label: "Kontaktlar" },
-  { icon: Target, label: "Sövdələşmələr" },
-  { icon: UserCheck, label: "Lidlər" },
-  { icon: Inbox, label: "Gələn qutusu" },
-  { icon: Megaphone, label: "Kampaniyalar" },
-  { icon: Headphones, label: "Tiketlər" },
-  { icon: BarChart3, label: "Hesabatlar" },
-  { icon: Receipt, label: "Maliyyə", active: true },
-  { icon: Bot, label: "Da Vinci Mərkəzi" },
-  { icon: Settings, label: "Parametrlər" },
+const sidebarItemsDef = [
+  { icon: LayoutDashboard, key: "dashboard" },
+  { icon: Building2, key: "companies" },
+  { icon: Users, key: "contacts" },
+  { icon: Target, key: "deals" },
+  { icon: UserCheck, key: "leads" },
+  { icon: Inbox, key: "inbox" },
+  { icon: Megaphone, key: "campaigns" },
+  { icon: Headphones, key: "tickets" },
+  { icon: BarChart3, key: "reports" },
+  { icon: Receipt, key: "finance", active: true },
+  { icon: Bot, key: "daVinci" },
+  { icon: Settings, key: "settings" },
 ]
 
 /* ── Recurring invoice rules ── */
@@ -137,6 +138,13 @@ const agingBuckets = [
 ]
 
 export function InvoicePreview() {
+  const t = useTranslations("marketing")
+
+  const sidebarItems = sidebarItemsDef.map(item => ({
+    ...item,
+    label: t(`preview.sidebar.${item.key}`),
+  }))
+
   return (
     <div className="w-full bg-white rounded-xl overflow-hidden text-[11px] leading-tight select-none pointer-events-none shadow-inner">
       {/* Top navigation bar */}
@@ -150,7 +158,7 @@ export function InvoicePreview() {
           </div>
           <div className="flex items-center gap-0.5 bg-[#001E3C]/60 rounded-md px-2 py-1">
             <Search className="w-2.5 h-2.5 text-[#001E3C]/40" />
-            <span className="text-[9px] text-[#001E3C]/40 ml-1">Axtar...</span>
+            <span className="text-[9px] text-[#001E3C]/40 ml-1">{t("preview.search")}</span>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -181,24 +189,24 @@ export function InvoicePreview() {
           {/* Page header */}
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-[13px] font-bold text-[#001E3C]">Hesab-fakturalar</h2>
-              <p className="text-[8px] text-[#001E3C]/40">Fakturaları yaradın, göndərin və izləyin</p>
+              <h2 className="text-[13px] font-bold text-[#001E3C]">{t("preview.invoice.title")}</h2>
+              <p className="text-[8px] text-[#001E3C]/40">{t("preview.invoice.subtitle")}</p>
             </div>
             <div className="flex items-center gap-1">
-              <span className="text-[8px] px-2 py-0.5 rounded-md bg-[#F3F4F7] text-[#001E3C]/60 border border-[#001E3C]/10 flex items-center gap-0.5"><Filter className="w-2 h-2" /> Filter</span>
-              <span className="text-[8px] px-2 py-0.5 rounded-md bg-[#0176D3] text-white font-medium flex items-center gap-0.5"><Plus className="w-2 h-2" /> Yeni faktura</span>
+              <span className="text-[8px] px-2 py-0.5 rounded-md bg-[#F3F4F7] text-[#001E3C]/60 border border-[#001E3C]/10 flex items-center gap-0.5"><Filter className="w-2 h-2" /> {t("preview.invoice.filter")}</span>
+              <span className="text-[8px] px-2 py-0.5 rounded-md bg-[#0176D3] text-white font-medium flex items-center gap-0.5"><Plus className="w-2 h-2" /> {t("preview.invoice.newInvoice")}</span>
             </div>
           </div>
 
           {/* KPI Row - 6 cards */}
           <div className="grid grid-cols-6 gap-1">
             {[
-              { label: "Ümumi gəlir", value: "₼247.8K", change: "+18%", icon: DollarSign, color: "text-emerald-600", bg: "bg-emerald-50 border-emerald-100" },
-              { label: "Gözləyir", value: "₼55.2K", change: "12 faktura", icon: Clock, color: "text-amber-600", bg: "bg-amber-50 border-amber-100" },
-              { label: "Ödənilib", value: "₼168.4K", change: "+24%", icon: CheckCircle2, color: "text-blue-600", bg: "bg-blue-50 border-blue-100" },
-              { label: "Gecikmiş", value: "₼24.2K", change: "4 faktura", icon: TrendingUp, color: "text-red-600", bg: "bg-red-50 border-red-100" },
-              { label: "Təkrarlanan", value: "₼21.5K/ay", change: "4 qayda", icon: RefreshCw, color: "text-violet-600", bg: "bg-violet-50 border-violet-100" },
-              { label: "Orta ödəniş", value: "18 gün", change: "-3 gün", icon: CalendarClock, color: "text-cyan-600", bg: "bg-cyan-50 border-cyan-100" },
+              { label: t("preview.invoice.kpiTotalRevenue"), value: "₼247.8K", change: "+18%", icon: DollarSign, color: "text-emerald-600", bg: "bg-emerald-50 border-emerald-100" },
+              { label: t("preview.invoice.kpiPending"), value: "₼55.2K", change: t("preview.invoice.kpiPendingCount"), icon: Clock, color: "text-amber-600", bg: "bg-amber-50 border-amber-100" },
+              { label: t("preview.invoice.kpiPaid"), value: "₼168.4K", change: "+24%", icon: CheckCircle2, color: "text-blue-600", bg: "bg-blue-50 border-blue-100" },
+              { label: t("preview.invoice.kpiOverdue"), value: "₼24.2K", change: t("preview.invoice.kpiOverdueCount"), icon: TrendingUp, color: "text-red-600", bg: "bg-red-50 border-red-100" },
+              { label: t("preview.invoice.kpiRecurring"), value: "₼21.5K/ay", change: t("preview.invoice.kpiRecurringCount"), icon: RefreshCw, color: "text-violet-600", bg: "bg-violet-50 border-violet-100" },
+              { label: t("preview.invoice.kpiAvgPayment"), value: t("preview.invoice.kpiAvgPaymentVal"), change: t("preview.invoice.kpiAvgPaymentChange"), icon: CalendarClock, color: "text-cyan-600", bg: "bg-cyan-50 border-cyan-100" },
             ].map((kpi) => (
               <div key={kpi.label} className="rounded-lg bg-white border border-[#001E3C]/10 p-2 shadow-sm">
                 <div className="flex items-center justify-between mb-1">
@@ -221,7 +229,7 @@ export function InvoicePreview() {
             {/* Revenue trend */}
             <div className="rounded-lg bg-white border border-[#001E3C]/10 p-2 shadow-sm">
               <div className="flex items-center justify-between mb-1">
-                <span className="text-[10px] font-semibold text-[#001E3C]/80">Gəlir Trendi</span>
+                <span className="text-[10px] font-semibold text-[#001E3C]/80">{t("preview.invoice.revenueTrend")}</span>
                 <span className="text-[8px] text-emerald-600 font-medium">↑ 28%</span>
               </div>
               <MiniLineChart data={revenueMonthly} color="#f97316" width={180} height={40} />
@@ -233,7 +241,7 @@ export function InvoicePreview() {
             {/* Debitor aging analysis */}
             <div className="rounded-lg bg-white border border-[#001E3C]/10 p-2 shadow-sm">
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[10px] font-semibold text-[#001E3C]/80">Debitor Borcu (Aging)</span>
+                <span className="text-[10px] font-semibold text-[#001E3C]/80">{t("preview.invoice.agingAnalysis")}</span>
                 <span className="text-[8px] text-[#001E3C]/40">₼55.2K</span>
               </div>
               <div className="space-y-[5px]">
@@ -252,7 +260,7 @@ export function InvoicePreview() {
             {/* Payment status donut */}
             <div className="rounded-lg bg-white border border-[#001E3C]/10 p-2 shadow-sm">
               <div className="flex items-center justify-between mb-1">
-                <span className="text-[10px] font-semibold text-[#001E3C]/80">Ödəniş Statusu</span>
+                <span className="text-[10px] font-semibold text-[#001E3C]/80">{t("preview.invoice.paymentStatus")}</span>
                 <span className="text-[8px] text-[#001E3C]/40">42 faktura</span>
               </div>
               <div className="flex items-center gap-2">
@@ -285,7 +293,7 @@ export function InvoicePreview() {
               <div className="flex items-center justify-between mb-1.5">
                 <div className="flex items-center gap-1">
                   <RefreshCw className="w-3 h-3 text-violet-500" />
-                  <span className="text-[10px] font-semibold text-[#001E3C]/80">Avto-fakturalar</span>
+                  <span className="text-[10px] font-semibold text-[#001E3C]/80">{t("preview.invoice.autoInvoices")}</span>
                 </div>
                 <span className="text-[8px] text-violet-600">+ Yeni</span>
               </div>
@@ -313,7 +321,7 @@ export function InvoicePreview() {
               <div className="flex items-center justify-between mb-1.5">
                 <div className="flex items-center gap-1">
                   <Send className="w-3 h-3 text-[#0176D3]" />
-                  <span className="text-[10px] font-semibold text-[#001E3C]/80">Ödəniş Xəbərdarlıqları</span>
+                  <span className="text-[10px] font-semibold text-[#001E3C]/80">{t("preview.invoice.paymentAlerts")}</span>
                 </div>
                 <span className="text-[8px] text-[#0176D3]">Qaydalar</span>
               </div>
@@ -343,8 +351,8 @@ export function InvoicePreview() {
             {/* Recent invoices + Weekly collections */}
             <div className="rounded-lg bg-white border border-[#001E3C]/10 p-2 shadow-sm">
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[10px] font-semibold text-[#001E3C]/80">Son Fakturalar</span>
-                <span className="text-[8px] text-[#0176D3]">Hamısı →</span>
+                <span className="text-[10px] font-semibold text-[#001E3C]/80">{t("preview.invoice.recentInvoices")}</span>
+                <span className="text-[8px] text-[#0176D3]">{t("preview.viewAll")}</span>
               </div>
               <div className="space-y-[4px]">
                 {invoices.map((inv) => (
@@ -368,7 +376,7 @@ export function InvoicePreview() {
             {/* Weekly collections */}
             <div className="rounded-lg bg-white border border-[#001E3C]/10 p-2 shadow-sm">
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[10px] font-semibold text-[#001E3C]/80">Həftəlik Yığım</span>
+                <span className="text-[10px] font-semibold text-[#001E3C]/80">{t("preview.invoice.weeklyCollection")}</span>
                 <span className="text-[8px] font-semibold text-emerald-600">₼119.5K</span>
               </div>
               <MiniBarChart data={collectionsWeekly} color="bg-[#0176D3]" height="h-8" />
@@ -391,7 +399,7 @@ export function InvoicePreview() {
             {/* Financial flow */}
             <div className="rounded-lg bg-white border border-[#001E3C]/10 p-2 shadow-sm">
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[10px] font-semibold text-[#001E3C]/80">Maliyyə Axını</span>
+                <span className="text-[10px] font-semibold text-[#001E3C]/80">{t("preview.invoice.financialFlow")}</span>
                 <Zap className="w-3 h-3 text-[#0176D3]" />
               </div>
               <div className="space-y-1">
@@ -414,7 +422,7 @@ export function InvoicePreview() {
             {/* Multi-currency + Quick actions */}
             <div className="rounded-lg bg-white border border-[#001E3C]/10 p-2 shadow-sm">
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[10px] font-semibold text-[#001E3C]/80">Multi-valyuta</span>
+                <span className="text-[10px] font-semibold text-[#001E3C]/80">{t("preview.invoice.multiCurrency")}</span>
                 <DollarSign className="w-3 h-3 text-emerald-500" />
               </div>
               {[

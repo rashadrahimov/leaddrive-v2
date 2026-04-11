@@ -103,7 +103,7 @@ export function CompanyForm({ open, onOpenChange, onSaved, initialData, orgId }:
         body: JSON.stringify(form),
       })
       const json = await res.json()
-      if (!res.ok) throw new Error(json.error || "Failed to save")
+      if (!res.ok) throw new Error(json.error || tc("errorUpdateFailed"))
       onSaved()
       onOpenChange(false)
     } catch (err: any) {

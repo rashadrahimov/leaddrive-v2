@@ -44,6 +44,7 @@ const DEPT_COLORS: Record<string, string> = {
 
 export function EmployeesTab() {
   const t = useTranslations("profitability")
+  const tc = useTranslations("common")
   const { data: employees = [], isLoading } = useEmployees()
   const createMutation = useCreateEmployee()
   const updateMutation = useUpdateEmployee()
@@ -85,7 +86,7 @@ export function EmployeesTab() {
       setEditingId(null)
       setEditForm({})
     } catch (err: any) {
-      setError(err.message || "Failed to save")
+      setError(err.message || tc("errorUpdateFailed"))
     }
   }
 
@@ -100,7 +101,7 @@ export function EmployeesTab() {
     try {
       await deleteMutation.mutateAsync(id)
     } catch (err: any) {
-      setError(err.message || "Failed to delete")
+      setError(err.message || tc("errorDeleteFailed"))
     }
   }
 

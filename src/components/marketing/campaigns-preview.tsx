@@ -8,57 +8,59 @@ import {
   Calendar, Zap,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
-
-/* ── Sidebar items ── */
-const sidebarItems = [
-  { icon: LayoutDashboard, label: "İdarə paneli", active: false, section: "CRM" },
-  { icon: Building2, label: "Şirkətlər", active: false },
-  { icon: UserCheck, label: "Kontaktlar", active: false },
-  { icon: Briefcase, label: "Sövdələşmələr", active: false },
-  { icon: Target, label: "Lidlər", active: false },
-  { icon: FileText, label: "Tapşırıqlar", active: false },
-  { icon: Receipt, label: "Müqavilələr", active: false },
-  { icon: Megaphone, label: "Kampaniyalar", active: true, section: "MARKETİNQ" },
-  { icon: BarChart3, label: "Seqmentlər", active: false },
-  { icon: Mail, label: "Email şablonlar", active: false },
-  { icon: Inbox, label: "Email log", active: false },
-]
-
-/* ── Status cards ── */
-const statusCards = [
-  { label: "QARALAMA", count: 3, color: "bg-[#F3F4F7]0" },
-  { label: "PLANLAŞDIRILIR", count: 2, color: "bg-[#0176D3]" },
-  { label: "GÖNDƏRİLİR", count: 1, color: "bg-blue-500" },
-  { label: "GÖNDƏRİLİB", count: 5, color: "bg-emerald-500" },
-  { label: "LƏĞV EDİLİB", count: 0, color: "bg-red-500" },
-]
-
-/* ── KPI metrics ── */
-const kpiMetrics = [
-  { icon: Send, value: "2,450", label: "GÖNDƏRİLİB", color: "text-blue-600" },
-  { icon: Eye, value: "24.5%", label: "AÇILMA DƏRƏCƏSİ", color: "text-emerald-600" },
-  { icon: MousePointer, value: "3.8%", label: "KLİK DƏRƏCƏSİ", color: "text-violet-600" },
-  { icon: TrendingUp, value: "1.2%", label: "BOUNCE", color: "text-[#0176D3]" },
-  { icon: DollarSign, value: "$12.5k", label: "BÜDCƏ", color: "text-[#001E3C]/80" },
-  { icon: Zap, value: "+285%", label: "ROI", color: "text-emerald-600" },
-]
-
-/* ── Best campaigns ── */
-const topCampaigns = [
-  { name: "Spring Promo 2026", sent: "1,250 gönd.", openRate: "28%", clickRate: "4.2%", type: "Email" },
-  { name: "Product Launch Q2", sent: "800 gönd.", openRate: "22%", clickRate: "3.5%", type: "Email" },
-  { name: "Loyalty Program", sent: "400 gönd.", openRate: "31%", clickRate: "5.1%", type: "Email" },
-]
-
-/* ── Funnel data ── */
-const funnelData = [
-  { label: "Göndərilib", value: "2,450", pct: "100%", width: "100%" },
-  { label: "Açılib", value: "601", pct: "24.5%", width: "24.5%" },
-  { label: "Klikləni̇b", value: "93", pct: "3.8%", width: "3.8%" },
-  { label: "Bounce", value: "29", pct: "1.2%", width: "1.2%" },
-]
+import { useTranslations } from "next-intl"
 
 export function CampaignsPreview() {
+  const t = useTranslations("marketing")
+
+  /* ── Sidebar items ── */
+  const sidebarItems = [
+    { icon: LayoutDashboard, label: t("preview.sidebar.dashboard"), active: false, section: "CRM" },
+    { icon: Building2, label: t("preview.sidebar.companies"), active: false },
+    { icon: UserCheck, label: t("preview.sidebar.contacts"), active: false },
+    { icon: Briefcase, label: t("preview.sidebar.deals"), active: false },
+    { icon: Target, label: t("preview.sidebar.leads"), active: false },
+    { icon: FileText, label: t("preview.sidebar.tasks"), active: false },
+    { icon: Receipt, label: t("preview.sidebar.contracts"), active: false },
+    { icon: Megaphone, label: t("preview.sidebar.campaigns"), active: true, section: t("preview.sidebar.marketingSection") },
+    { icon: BarChart3, label: t("preview.sidebar.segments"), active: false },
+    { icon: Mail, label: t("preview.sidebar.emailTemplates"), active: false },
+    { icon: Inbox, label: t("preview.sidebar.emailLog"), active: false },
+  ]
+
+  /* ── Status cards ── */
+  const statusCards = [
+    { label: t("preview.campaigns.statusDraft"), count: 3, color: "bg-[#F3F4F7]0" },
+    { label: t("preview.campaigns.statusScheduled"), count: 2, color: "bg-[#0176D3]" },
+    { label: t("preview.campaigns.statusSending"), count: 1, color: "bg-blue-500" },
+    { label: t("preview.campaigns.statusSent"), count: 5, color: "bg-emerald-500" },
+    { label: t("preview.campaigns.statusCancelled"), count: 0, color: "bg-red-500" },
+  ]
+
+  /* ── KPI metrics ── */
+  const kpiMetrics = [
+    { icon: Send, value: "2,450", label: t("preview.campaigns.kpiSent"), color: "text-blue-600" },
+    { icon: Eye, value: "24.5%", label: t("preview.campaigns.kpiOpenRate"), color: "text-emerald-600" },
+    { icon: MousePointer, value: "3.8%", label: t("preview.campaigns.kpiClickRate"), color: "text-violet-600" },
+    { icon: TrendingUp, value: "1.2%", label: "BOUNCE", color: "text-[#0176D3]" },
+    { icon: DollarSign, value: "$12.5k", label: t("preview.campaigns.kpiBudget"), color: "text-[#001E3C]/80" },
+    { icon: Zap, value: "+285%", label: "ROI", color: "text-emerald-600" },
+  ]
+
+  /* ── Best campaigns ── */
+  const topCampaigns = [
+    { name: "Spring Promo 2026", sent: "1,250", openRate: "28%", clickRate: "4.2%", type: "Email" },
+    { name: "Product Launch Q2", sent: "800", openRate: "22%", clickRate: "3.5%", type: "Email" },
+    { name: "Loyalty Program", sent: "400", openRate: "31%", clickRate: "5.1%", type: "Email" },
+  ]
+
+  /* ── Funnel data ── */
+  const funnelData = [
+    { label: t("preview.campaigns.funnelSent"), value: "2,450", pct: "100%", width: "100%" },
+    { label: t("preview.campaigns.funnelOpened"), value: "601", pct: "24.5%", width: "24.5%" },
+    { label: t("preview.campaigns.funnelClicked"), value: "93", pct: "3.8%", width: "3.8%" },
+    { label: "Bounce", value: "29", pct: "1.2%", width: "1.2%" },
+  ]
   return (
     <div className="flex text-[7px] leading-tight bg-[#001E3C] text-white select-none">
       {/* Sidebar */}
@@ -69,7 +71,7 @@ export function CampaignsPreview() {
         </div>
         <div className="relative mb-2 px-1">
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-2 h-2 text-[#001E3C]/60" />
-          <div className="bg-[#001E3C]/60 rounded-md py-1 pl-5 text-[#001E3C]/60 text-[6px]">Axtar...</div>
+          <div className="bg-[#001E3C]/60 rounded-md py-1 pl-5 text-[#001E3C]/60 text-[6px]">{t("preview.search")}</div>
         </div>
         {sidebarItems.map((item, i) => {
           const Icon = item.icon
@@ -105,16 +107,16 @@ export function CampaignsPreview() {
           {/* Header */}
           <div className="flex items-center justify-between mb-2">
             <div>
-              <h2 className="text-[10px] font-bold text-[#001E3C]">Kampaniyalar</h2>
-              <p className="text-[5px] text-[#001E3C]/60">Email və SMS kampaniyalarını yaradın və göndərin</p>
+              <h2 className="text-[10px] font-bold text-[#001E3C]">{t("preview.campaigns.title")}</h2>
+              <p className="text-[5px] text-[#001E3C]/60">{t("preview.campaigns.subtitle")}</p>
             </div>
-            <div className="bg-[#0176D3] rounded-md px-2 py-0.5 text-[6px] text-white font-medium">+ Yeni kampaniya</div>
+            <div className="bg-[#0176D3] rounded-md px-2 py-0.5 text-[6px] text-white font-medium">+ {t("preview.campaigns.newCampaign")}</div>
           </div>
 
           {/* Tabs */}
           <div className="flex gap-3 mb-2 border-b border-[#001E3C]/10 pb-1">
-            <span className="text-[6px] font-semibold text-[#001E3C] border-b-2 border-blue-500 pb-0.5">Analitika</span>
-            <span className="text-[6px] text-[#001E3C]/40">Siyahı</span>
+            <span className="text-[6px] font-semibold text-[#001E3C] border-b-2 border-blue-500 pb-0.5">{t("preview.campaigns.tabAnalytics")}</span>
+            <span className="text-[6px] text-[#001E3C]/40">{t("preview.campaigns.tabList")}</span>
           </div>
 
           {/* Status cards */}
@@ -150,7 +152,7 @@ export function CampaignsPreview() {
             <div className="bg-white rounded-lg border border-[#001E3C]/10 p-2">
               <div className="flex items-center gap-1 mb-1.5">
                 <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
-                <span className="text-[6px] font-semibold text-[#001E3C]/80 uppercase">Aylıq göndərmə trendi</span>
+                <span className="text-[6px] font-semibold text-[#001E3C]/80 uppercase">{t("preview.campaigns.monthlyTrend")}</span>
               </div>
               {/* Simple bar chart */}
               <div className="flex items-end gap-[2px] h-[40px]">
@@ -175,7 +177,7 @@ export function CampaignsPreview() {
             <div className="bg-white rounded-lg border border-[#001E3C]/10 p-2">
               <div className="flex items-center gap-1 mb-1.5">
                 <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                <span className="text-[6px] font-semibold text-[#001E3C]/80 uppercase">Çatdırılma hunisi</span>
+                <span className="text-[6px] font-semibold text-[#001E3C]/80 uppercase">{t("preview.campaigns.deliveryFunnel")}</span>
               </div>
               <div className="space-y-1.5">
                 {funnelData.map((item, i) => (
@@ -196,7 +198,7 @@ export function CampaignsPreview() {
             <div className="bg-white rounded-lg border border-[#001E3C]/10 p-2">
               <div className="flex items-center gap-1 mb-1.5">
                 <div className="w-1.5 h-1.5 rounded-full bg-[#0176D3]" />
-                <span className="text-[6px] font-semibold text-[#001E3C]/80 uppercase">Ən yaxşı kampaniyalar</span>
+                <span className="text-[6px] font-semibold text-[#001E3C]/80 uppercase">{t("preview.campaigns.topCampaigns")}</span>
               </div>
               <div className="space-y-1">
                 {topCampaigns.map((c, i) => (
@@ -212,8 +214,8 @@ export function CampaignsPreview() {
                       <div className="text-[4px] text-[#001E3C]/60">{c.sent}</div>
                     </div>
                     <div className="text-right flex-shrink-0">
-                      <div className="text-[5px] font-medium text-emerald-600">{c.openRate} açılma</div>
-                      <div className="text-[4px] text-blue-500">{c.clickRate} klik</div>
+                      <div className="text-[5px] font-medium text-emerald-600">{c.openRate} {t("preview.campaigns.openSuffix")}</div>
+                      <div className="text-[4px] text-blue-500">{c.clickRate} {t("preview.campaigns.clickSuffix")}</div>
                     </div>
                     <div className="bg-[#001E3C]/10 rounded px-1 py-[1px] text-[4px] text-[#001E3C]/60 flex-shrink-0">{c.type}</div>
                   </div>

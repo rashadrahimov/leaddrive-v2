@@ -10,6 +10,7 @@ import {
   MessageSquare, FileText, Receipt,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useTranslations } from "next-intl"
 
 /* ── Mini bar chart ── */
 function MiniBarChart({ data, color, height = "h-16" }: { data: number[]; color: string; height?: string }) {
@@ -73,12 +74,12 @@ const revenueMonthly = [42, 38, 55, 48, 62, 58, 71, 65, 78, 82, 91, 98]
 const leadsWeekly = [18, 22, 15, 28, 24, 31, 27]
 const ticketsDaily = [8, 12, 6, 15, 9, 11, 14]
 
-const pipelineStages = [
-  { label: "Yeni", count: 24, pct: 100, color: "bg-violet-500" },
-  { label: "Kvalifikasiya", count: 18, pct: 75, color: "bg-blue-500" },
-  { label: "Təklif", count: 12, pct: 50, color: "bg-cyan-500" },
-  { label: "Danışıq", count: 7, pct: 29, color: "bg-teal-500" },
-  { label: "Qazanıldı", count: 5, pct: 21, color: "bg-emerald-500" },
+const pipelineStagesData = [
+  { key: "new", count: 24, pct: 100, color: "bg-violet-500" },
+  { key: "qualification", count: 18, pct: 75, color: "bg-blue-500" },
+  { key: "proposal", count: 12, pct: 50, color: "bg-cyan-500" },
+  { key: "negotiation", count: 7, pct: 29, color: "bg-teal-500" },
+  { key: "won", count: 5, pct: 21, color: "bg-emerald-500" },
 ]
 
 const recentDeals = [
@@ -105,22 +106,33 @@ const activities = [
   { text: "Yeni müqavilə imzalandı", time: "2 saat əvvəl", icon: FileText, color: "text-blue-500" },
 ]
 
-const sidebarItems = [
-  { icon: LayoutDashboard, label: "İdarə paneli", active: true },
-  { icon: Building2, label: "Şirkətlər" },
-  { icon: Users, label: "Kontaktlar" },
-  { icon: Target, label: "Sövdələşmələr" },
-  { icon: UserCheck, label: "Lidlər" },
-  { icon: Inbox, label: "Gələn qutusu" },
-  { icon: Megaphone, label: "Kampaniyalar" },
-  { icon: Headphones, label: "Tiketlər" },
-  { icon: BarChart3, label: "Hesabatlar" },
-  { icon: Receipt, label: "Maliyyə" },
-  { icon: Bot, label: "Da Vinci Mərkəzi" },
-  { icon: Settings, label: "Parametrlər" },
+const sidebarItemsDef = [
+  { icon: LayoutDashboard, key: "dashboard", active: true },
+  { icon: Building2, key: "companies" },
+  { icon: Users, key: "contacts" },
+  { icon: Target, key: "deals" },
+  { icon: UserCheck, key: "leads" },
+  { icon: Inbox, key: "inbox" },
+  { icon: Megaphone, key: "campaigns" },
+  { icon: Headphones, key: "tickets" },
+  { icon: BarChart3, key: "reports" },
+  { icon: Receipt, key: "finance" },
+  { icon: Bot, key: "daVinci" },
+  { icon: Settings, key: "settings" },
 ]
 
 export function DashboardPreview() {
+  const t = useTranslations("marketing")
+
+  const sidebarItems = sidebarItemsDef.map(item => ({
+    ...item,
+    label: t(`preview.sidebar.${item.key}`),
+  }))
+
+  const pipelineStages = pipelineStagesData.map(s => ({
+    ...s,
+    label: t(`preview.pipeline.${s.key}`),
+  }))
   return (
     <div className="w-full bg-white rounded-xl overflow-hidden text-[11px] leading-tight select-none pointer-events-none shadow-inner">
       {/* Top navigation bar */}
@@ -134,7 +146,7 @@ export function DashboardPreview() {
           </div>
           <div className="flex items-center gap-0.5 bg-[#001E3C]/60 rounded-md px-2 py-1">
             <Search className="w-2.5 h-2.5 text-[#001E3C]/40" />
-            <span className="text-[9px] text-[#001E3C]/40 ml-1">Axtar...</span>
+            <span className="text-[9px] text-[#001E3C]/40 ml-1">{t("preview.search")}</span>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -165,11 +177,11 @@ export function DashboardPreview() {
           {/* Page header */}
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-[13px] font-bold text-[#001E3C]">İdarə Paneli</h2>
-              <p className="text-[8px] text-[#001E3C]/40">28 Mart 2026, Şənbə • Son yenilənmə: 2 dəq əvvəl</p>
+              <h2 className="text-[13px] font-bold text-[#001E3C]">{t("preview.dashboard.title")}</h2>
+              <p className="text-[8px] text-[#001E3C]/40">{t("preview.dashboard.subtitle")}</p>
             </div>
             <div className="flex items-center gap-1">
-              <span className="text-[8px] px-2 py-0.5 rounded-md bg-[#F3F4F7] text-[#001E3C]/60 border border-[#001E3C]/10">Bu ay</span>
+              <span className="text-[8px] px-2 py-0.5 rounded-md bg-[#F3F4F7] text-[#001E3C]/60 border border-[#001E3C]/10">{t("preview.dashboard.thisMonth")}</span>
               <ChevronDown className="w-2.5 h-2.5 text-[#001E3C]/40" />
             </div>
           </div>
@@ -177,12 +189,12 @@ export function DashboardPreview() {
           {/* KPI Row - 6 cards */}
           <div className="grid grid-cols-6 gap-1">
             {[
-              { label: "Gəlir", value: "₼247.8K", change: "+18%", icon: DollarSign, color: "text-emerald-600", bg: "bg-emerald-50 border-emerald-100" },
-              { label: "Lidlər", value: "142", change: "+24", icon: UserCheck, color: "text-violet-600", bg: "bg-violet-50 border-violet-100" },
-              { label: "Sövdələşmələr", value: "38", change: "₼384K", icon: Target, color: "text-cyan-600", bg: "bg-cyan-50 border-cyan-100" },
-              { label: "Konversiya", value: "32.4%", change: "+5.1%", icon: TrendingUp, color: "text-amber-600", bg: "bg-amber-50 border-amber-100" },
-              { label: "Tiketlər", value: "15", change: "2h orta", icon: Headphones, color: "text-blue-600", bg: "bg-blue-50 border-blue-100" },
-              { label: "Kampaniyalar", value: "4", change: "68% açılma", icon: Megaphone, color: "text-pink-600", bg: "bg-pink-50 border-pink-100" },
+              { label: t("preview.dashboard.kpiRevenue"), value: "₼247.8K", change: "+18%", icon: DollarSign, color: "text-emerald-600", bg: "bg-emerald-50 border-emerald-100" },
+              { label: t("preview.dashboard.kpiLeads"), value: "142", change: "+24", icon: UserCheck, color: "text-violet-600", bg: "bg-violet-50 border-violet-100" },
+              { label: t("preview.dashboard.kpiDeals"), value: "38", change: "₼384K", icon: Target, color: "text-cyan-600", bg: "bg-cyan-50 border-cyan-100" },
+              { label: t("preview.dashboard.kpiConversion"), value: "32.4%", change: "+5.1%", icon: TrendingUp, color: "text-amber-600", bg: "bg-amber-50 border-amber-100" },
+              { label: t("preview.dashboard.kpiTickets"), value: "15", change: t("preview.dashboard.kpiTicketsAvg"), icon: Headphones, color: "text-blue-600", bg: "bg-blue-50 border-blue-100" },
+              { label: t("preview.dashboard.kpiCampaigns"), value: "4", change: t("preview.dashboard.kpiCampaignsOpen"), icon: Megaphone, color: "text-pink-600", bg: "bg-pink-50 border-pink-100" },
             ].map((kpi) => (
               <div key={kpi.label} className="rounded-lg bg-white border border-[#001E3C]/10 p-2 shadow-sm">
                 <div className="flex items-center justify-between mb-1">
@@ -205,7 +217,7 @@ export function DashboardPreview() {
             {/* Pipeline */}
             <div className="rounded-lg bg-white border border-[#001E3C]/10 p-2 shadow-sm">
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[10px] font-semibold text-[#001E3C]/80">Satış Pipeline</span>
+                <span className="text-[10px] font-semibold text-[#001E3C]/80">{t("preview.dashboard.salesPipeline")}</span>
                 <span className="text-[8px] text-[#001E3C]/40">₼384K</span>
               </div>
               <div className="space-y-[5px]">
@@ -224,7 +236,7 @@ export function DashboardPreview() {
             {/* Revenue trend */}
             <div className="rounded-lg bg-white border border-[#001E3C]/10 p-2 shadow-sm">
               <div className="flex items-center justify-between mb-1">
-                <span className="text-[10px] font-semibold text-[#001E3C]/80">Gəlir Trendi</span>
+                <span className="text-[10px] font-semibold text-[#001E3C]/80">{t("preview.dashboard.revenueTrend")}</span>
                 <span className="text-[8px] text-emerald-600 font-medium">↑ 28%</span>
               </div>
               <MiniLineChart data={revenueMonthly} color="#8b5cf6" width={180} height={45} />
@@ -236,7 +248,7 @@ export function DashboardPreview() {
             {/* Lead sources donut */}
             <div className="rounded-lg bg-white border border-[#001E3C]/10 p-2 shadow-sm">
               <div className="flex items-center justify-between mb-1">
-                <span className="text-[10px] font-semibold text-[#001E3C]/80">Lid Mənbələri</span>
+                <span className="text-[10px] font-semibold text-[#001E3C]/80">{t("preview.dashboard.leadSources")}</span>
                 <span className="text-[8px] text-[#001E3C]/40">142</span>
               </div>
               <div className="flex items-center gap-2">
@@ -246,11 +258,11 @@ export function DashboardPreview() {
                 ]} />
                 <div className="space-y-[3px] flex-1">
                   {[
-                    { l: "Web sayt", p: "35%", c: "bg-violet-500" },
+                    { l: t("preview.dashboard.srcWebsite"), p: "35%", c: "bg-violet-500" },
                     { l: "LinkedIn", p: "25%", c: "bg-cyan-500" },
-                    { l: "Referral", p: "20%", c: "bg-emerald-500" },
-                    { l: "Kampaniya", p: "12%", c: "bg-amber-500" },
-                    { l: "Digər", p: "8%", c: "bg-indigo-500" },
+                    { l: t("preview.dashboard.srcReferral"), p: "20%", c: "bg-emerald-500" },
+                    { l: t("preview.dashboard.srcCampaign"), p: "12%", c: "bg-amber-500" },
+                    { l: t("preview.dashboard.srcOther"), p: "8%", c: "bg-indigo-500" },
                   ].map((s) => (
                     <div key={s.l} className="flex items-center gap-1">
                       <div className={cn("w-1.5 h-1.5 rounded-full", s.c)} />
@@ -268,8 +280,8 @@ export function DashboardPreview() {
             {/* Recent Deals */}
             <div className="rounded-lg bg-white border border-[#001E3C]/10 p-2 shadow-sm">
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[10px] font-semibold text-[#001E3C]/80">Son Sövdələşmələr</span>
-                <span className="text-[8px] text-violet-600">Hamısı →</span>
+                <span className="text-[10px] font-semibold text-[#001E3C]/80">{t("preview.dashboard.recentDeals")}</span>
+                <span className="text-[8px] text-violet-600">{t("preview.viewAll")}</span>
               </div>
               <div className="space-y-[4px]">
                 {recentDeals.map((d) => (
@@ -293,9 +305,9 @@ export function DashboardPreview() {
               <div className="flex items-center justify-between mb-1.5">
                 <div className="flex items-center gap-1">
                   <Bot className="w-3 h-3 text-violet-500" />
-                  <span className="text-[10px] font-semibold text-[#001E3C]/80">Da Vinci Lid Skorinq</span>
+                  <span className="text-[10px] font-semibold text-[#001E3C]/80">{t("preview.dashboard.daVinciScoring")}</span>
                 </div>
-                <span className="text-[8px] text-violet-600">Hamısı →</span>
+                <span className="text-[8px] text-violet-600">{t("preview.viewAll")}</span>
               </div>
               <div className="space-y-[4px]">
                 {topLeads.map((l) => (
@@ -315,7 +327,7 @@ export function DashboardPreview() {
             {/* Activity feed */}
             <div className="rounded-lg bg-white border border-[#001E3C]/10 p-2 shadow-sm">
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[10px] font-semibold text-[#001E3C]/80">Son Fəaliyyət</span>
+                <span className="text-[10px] font-semibold text-[#001E3C]/80">{t("preview.dashboard.recentActivity")}</span>
                 <Clock className="w-3 h-3 text-[#001E3C]/40" />
               </div>
               <div className="space-y-[4px]">
@@ -337,7 +349,7 @@ export function DashboardPreview() {
             {/* Marketing campaigns */}
             <div className="rounded-lg bg-white border border-[#001E3C]/10 p-2 shadow-sm">
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[10px] font-semibold text-[#001E3C]/80">Kampaniyalar</span>
+                <span className="text-[10px] font-semibold text-[#001E3C]/80">{t("preview.sidebar.campaigns")}</span>
                 <Megaphone className="w-3 h-3 text-violet-500" />
               </div>
               {[
@@ -351,9 +363,9 @@ export function DashboardPreview() {
                   </div>
                   <div className="grid grid-cols-3 gap-1">
                     {[
-                      { v: c.sent, l: "Göndərildi" },
-                      { v: c.open, l: "Açılma" },
-                      { v: c.click, l: "Klik" },
+                      { v: c.sent, l: t("preview.dashboard.metricSent") },
+                      { v: c.open, l: t("preview.dashboard.metricOpen") },
+                      { v: c.click, l: t("preview.dashboard.metricClick") },
                     ].map((m) => (
                       <div key={m.l} className="text-center p-0.5 rounded bg-[#F3F4F7] border border-[#001E3C]/8">
                         <div className="text-[9px] font-semibold text-[#001E3C]/80">{m.v}</div>
@@ -368,7 +380,7 @@ export function DashboardPreview() {
             {/* Events */}
             <div className="rounded-lg bg-white border border-[#001E3C]/10 p-2 shadow-sm">
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[10px] font-semibold text-[#001E3C]/80">Tədbirlər</span>
+                <span className="text-[10px] font-semibold text-[#001E3C]/80">{t("preview.dashboard.events")}</span>
                 <Calendar className="w-3 h-3 text-violet-500" />
               </div>
               {[
@@ -393,20 +405,20 @@ export function DashboardPreview() {
             {/* Weekly mini charts */}
             <div className="rounded-lg bg-white border border-[#001E3C]/10 p-2 shadow-sm">
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[10px] font-semibold text-[#001E3C]/80">Həftəlik</span>
+                <span className="text-[10px] font-semibold text-[#001E3C]/80">{t("preview.dashboard.weekly")}</span>
                 <BarChart3 className="w-3 h-3 text-[#001E3C]/40" />
               </div>
               <div className="space-y-2">
                 <div>
                   <div className="flex items-center justify-between mb-0.5">
-                    <span className="text-[8px] text-[#001E3C]/40">Yeni lidlər</span>
+                    <span className="text-[8px] text-[#001E3C]/40">{t("preview.dashboard.newLeads")}</span>
                     <span className="text-[8px] font-semibold text-violet-600">165</span>
                   </div>
                   <MiniBarChart data={leadsWeekly} color="bg-violet-400" height="h-6" />
                 </div>
                 <div>
                   <div className="flex items-center justify-between mb-0.5">
-                    <span className="text-[8px] text-[#001E3C]/40">Tiketlər</span>
+                    <span className="text-[8px] text-[#001E3C]/40">{t("preview.sidebar.tickets")}</span>
                     <span className="text-[8px] font-semibold text-cyan-600">75</span>
                   </div>
                   <MiniBarChart data={ticketsDaily} color="bg-cyan-400" height="h-6" />
@@ -422,7 +434,7 @@ export function DashboardPreview() {
                   </div>
                   <div className="text-center">
                     <div className="text-[9px] font-bold text-violet-600">2.1h</div>
-                    <div className="text-[7px] text-[#001E3C]/40">Ort. cavab</div>
+                    <div className="text-[7px] text-[#001E3C]/40">{t("preview.dashboard.avgResponse")}</div>
                   </div>
                 </div>
               </div>

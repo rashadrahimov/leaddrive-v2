@@ -206,9 +206,9 @@ export default function PipelinesSettingsPage() {
         showToast("success", t("pipelineCreated"))
         fetchPipelines()
       } else {
-        showToast("error", json.error || "Error")
+        showToast("error", json.error || tc("errorOccurred"))
       }
-    } catch { showToast("error", "Network error") }
+    } catch { showToast("error", tc("errorNetwork")) }
     finally { setCreatingPipeline(false) }
   }
 
@@ -220,7 +220,7 @@ export default function PipelinesSettingsPage() {
       if (!json.success) { showToast("error", json.error); return }
       showToast("success", t("pipelineDeleted"))
       fetchPipelines()
-    } catch { showToast("error", "Network error") }
+    } catch { showToast("error", tc("errorNetwork")) }
   }
 
   const setDefault = async (pipelineId: string) => {
@@ -266,9 +266,9 @@ export default function PipelinesSettingsPage() {
         showToast("success", t("stageSaved"))
         fetchPipelines()
       } else {
-        showToast("error", json.error || "Error")
+        showToast("error", json.error || tc("errorOccurred"))
       }
-    } catch { showToast("error", "Network error") }
+    } catch { showToast("error", tc("errorNetwork")) }
     finally { setSavingStage(false) }
   }
 
@@ -280,7 +280,7 @@ export default function PipelinesSettingsPage() {
       if (!json.success) { showToast("error", json.error); return }
       showToast("success", t("stageDeleted"))
       fetchPipelines()
-    } catch { showToast("error", "Network error") }
+    } catch { showToast("error", tc("errorNetwork")) }
   }
 
   const moveStage = async (stageId: string, direction: "up" | "down") => {
@@ -330,9 +330,9 @@ export default function PipelinesSettingsPage() {
         showToast("success", t("stageCreated"))
         fetchPipelines()
       } else {
-        showToast("error", json.error || "Error")
+        showToast("error", json.error || tc("errorOccurred"))
       }
-    } catch { showToast("error", "Network error") }
+    } catch { showToast("error", tc("errorNetwork")) }
     finally { setCreatingSt(false) }
   }
 

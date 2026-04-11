@@ -122,7 +122,7 @@ export default function SecuritySettingsPage() {
       } else {
         setError(json.error)
       }
-    } catch { setError("Failed to setup 2FA") }
+    } catch { setError(tc("errorGeneric")) }
     finally { setProcessing(false) }
   }
 
@@ -143,7 +143,7 @@ export default function SecuritySettingsPage() {
       } else {
         setError(json.error || "Invalid code")
       }
-    } catch { setError("Verification failed") }
+    } catch { setError(tc("errorVerification")) }
     finally { setProcessing(false) }
   }
 
@@ -165,7 +165,7 @@ export default function SecuritySettingsPage() {
       } else {
         setError(json.error || "Invalid code")
       }
-    } catch { setError("Failed to disable") }
+    } catch { setError(tc("errorGeneric")) }
     finally { setProcessing(false) }
   }
 

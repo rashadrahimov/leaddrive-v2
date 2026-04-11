@@ -40,7 +40,7 @@ export function DeleteConfirmDialog({
       await onConfirm()
       onOpenChange(false)
     } catch (err: any) {
-      setError(err.message || "Failed to delete")
+      setError(err.message || t("errorDeleteFailed"))
     } finally {
       setLoading(false)
     }

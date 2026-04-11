@@ -66,6 +66,7 @@ export default function PagesListPage() {
   const router = useRouter()
   const { data: session } = useSession()
   const t = useTranslations("landingPages")
+  const tc = useTranslations("common")
   const [pages, setPages] = useState<LandingPage[]>([])
   const [submissions, setSubmissions] = useState<FormSubmission[]>([])
   const [loading, setLoading] = useState(true)
@@ -186,14 +187,14 @@ export default function PagesListPage() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ status: "draft" }),
         })
-        if (!res.ok) throw new Error("Failed to unpublish")
+        if (!res.ok) throw new Error(tc("errorUpdateFailed"))
         toast.success(t("toastPageUnpublished"))
       } else {
         // Publish
         const res = await fetch(`/api/v1/pages/${page.id}/publish`, {
           method: "POST",
         })
-        if (!res.ok) throw new Error("Failed to publish")
+        if (!res.ok) throw new Error(tc("errorUpdateFailed"))
         toast.success(t("toastPagePublished"))
       }
       fetchPages()
@@ -207,7 +208,7 @@ export default function PagesListPage() {
   const handleDelete = async (id: string) => {
     try {
       const res = await fetch(`/api/v1/pages/${id}`, { method: "DELETE" })
-      if (!res.ok) throw new Error("Failed to delete")
+      if (!res.ok) throw new Error(tc("errorDeleteFailed"))
       toast.success(t("toastPageDeleted"))
       setDeleteId(null)
       fetchPages()

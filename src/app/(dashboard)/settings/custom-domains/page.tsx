@@ -33,6 +33,7 @@ const CNAME_TARGET = process.env.NEXT_PUBLIC_CNAME_TARGET || "pages.leaddrivecrm
 
 export default function CustomDomainsPage() {
   const t = useTranslations("customDomains")
+  const tc = useTranslations("common")
   const [domains, setDomains] = useState<CustomDomain[]>([])
   const [loading, setLoading] = useState(true)
   const [addOpen, setAddOpen] = useState(false)
@@ -80,7 +81,7 @@ export default function CustomDomainsPage() {
         toast.error(data.error || "Failed to add domain")
       }
     } catch {
-      toast.error("Failed to add domain")
+      toast.error(tc("errorCreateFailed"))
     } finally {
       setAdding(false)
     }
@@ -98,7 +99,7 @@ export default function CustomDomainsPage() {
       }
       fetchDomains()
     } catch {
-      toast.error("Verification failed")
+      toast.error(tc("errorVerification"))
     } finally {
       setVerifyingId(null)
     }
@@ -114,10 +115,10 @@ export default function CustomDomainsPage() {
         setDeletingDomain(null)
         fetchDomains()
       } else {
-        toast.error("Failed to delete domain")
+        toast.error(tc("errorDeleteFailed"))
       }
     } catch {
-      toast.error("Failed to delete domain")
+      toast.error(tc("errorDeleteFailed"))
     }
   }
 

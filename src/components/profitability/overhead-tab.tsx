@@ -30,6 +30,7 @@ const SERVICE_OPTIONS = [
 
 export function OverheadTab() {
   const t = useTranslations("profitability")
+  const tc = useTranslations("common")
   const { data: items = [], isLoading } = useOverheadItems()
   const createMutation = useCreateOverhead()
   const updateMutation = useUpdateOverhead()
@@ -83,7 +84,7 @@ export function OverheadTab() {
       setEditingId(null)
       setEditForm({})
     } catch (err: any) {
-      setError(err.message || "Failed to save")
+      setError(err.message || tc("errorUpdateFailed"))
     }
   }
 
@@ -98,7 +99,7 @@ export function OverheadTab() {
     try {
       await deleteMutation.mutateAsync(id)
     } catch (err: any) {
-      setError(err.message || "Failed to delete")
+      setError(err.message || tc("errorDeleteFailed"))
     }
   }
 

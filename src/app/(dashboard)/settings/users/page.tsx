@@ -88,6 +88,7 @@ function UserFormDialog({
   availableRoles: RoleConfig[]
 }) {
   const isEdit = !!editUser
+  const tc = useTranslations("common")
   const [form, setForm] = useState<UserFormData>({
     name: "", email: "", password: "", role: "viewer",
     phone: "", department: "", isActive: true,
@@ -146,7 +147,7 @@ function UserFormDialog({
         body: JSON.stringify(payload),
       })
       const json = await res.json()
-      if (!res.ok) throw new Error(json.error || "Failed to save")
+      if (!res.ok) throw new Error(json.error || tc("errorUpdateFailed"))
       onSaved()
       onOpenChange(false)
     } catch (err: any) {
@@ -252,6 +253,7 @@ function UserFormDialog({
 export default function UsersSettingsPage() {
   const { data: session } = useSession()
   const ts = useTranslations("settings")
+  const tc = useTranslations("common")
   const [users, setUsers] = useState<User[]>([])
   const [availableRoles, setAvailableRoles] = useState<RoleConfig[]>([])
   const [loading, setLoading] = useState(true)
@@ -301,7 +303,7 @@ export default function UsersSettingsPage() {
     })
     if (!res.ok) {
       const json = await res.json()
-      throw new Error(json.error || "Failed to delete")
+      throw new Error(json.error || tc("errorDeleteFailed"))
     }
     fetchUsers()
   }

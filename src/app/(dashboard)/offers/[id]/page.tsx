@@ -98,7 +98,7 @@ export default function OfferDetailPage() {
       headers: orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>,
     })
     const json = await res.json()
-    if (!json.success) throw new Error(json.error || "Failed to delete")
+    if (!json.success) throw new Error(json.error || tc("errorDeleteFailed"))
     router.push("/offers")
   }
 
@@ -122,7 +122,7 @@ export default function OfferDetailPage() {
         }),
       })
       const json = await res.json()
-      if (!json.success) throw new Error(json.error || "Failed to send")
+      if (!json.success) throw new Error(json.error || tc("errorGeneric"))
       setSendSuccess(true)
       fetchOffer()
       setTimeout(() => { setSendOpen(false); setSendSuccess(false) }, 1500)
@@ -146,7 +146,7 @@ export default function OfferDetailPage() {
         body: JSON.stringify({ offerId: params.id }),
       })
       const json = await res.json()
-      if (!json.success) throw new Error(json.error || "Failed to convert")
+      if (!json.success) throw new Error(json.error || tc("errorGeneric"))
       router.push(`/invoices/${json.data.id}`)
     } catch (err: any) {
       alert(err.message)

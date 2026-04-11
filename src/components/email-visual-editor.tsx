@@ -5,6 +5,7 @@ import dynamic from "next/dynamic"
 import { Button } from "@/components/ui/button"
 import { Monitor, Smartphone, Download } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useTranslations } from "next-intl"
 
 // Unlayer must be loaded client-side only
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -46,6 +47,7 @@ interface Props {
 
 export const EmailVisualEditor = forwardRef<EmailVisualEditorHandle, Props>(
   function EmailVisualEditor({ designJson, onExport, labels, mergeTagNames }, ref) {
+    const t = useTranslations("emailTemplates")
     const editorRef = useRef<any>(null)
     const [ready, setReady] = useState(false)
     const [previewMode, setPreviewMode] = useState<"desktop" | "mobile">("desktop")
@@ -105,7 +107,7 @@ export const EmailVisualEditor = forwardRef<EmailVisualEditorHandle, Props>(
       <div className="border rounded-lg overflow-hidden">
         {/* Preview toggle toolbar */}
         <div className="flex items-center justify-between px-3 py-2 border-b bg-muted/30">
-          <span className="text-xs font-medium text-muted-foreground">{labels?.title || "Visual Email Editor"}</span>
+          <span className="text-xs font-medium text-muted-foreground">{labels?.title || t("visualEditor")}</span>
           <div className="flex items-center gap-1">
             <button
               type="button"
@@ -114,7 +116,7 @@ export const EmailVisualEditor = forwardRef<EmailVisualEditorHandle, Props>(
                 "p-1.5 rounded transition-colors",
                 previewMode === "desktop" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted"
               )}
-              title="Desktop"
+              title={t("previewDesktop")}
             >
               <Monitor className="h-4 w-4" />
             </button>
@@ -125,13 +127,13 @@ export const EmailVisualEditor = forwardRef<EmailVisualEditorHandle, Props>(
                 "p-1.5 rounded transition-colors",
                 previewMode === "mobile" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted"
               )}
-              title="Mobile"
+              title={t("previewMobile")}
             >
               <Smartphone className="h-4 w-4" />
             </button>
             <span className="w-px h-5 bg-border mx-1" />
             <Button type="button" size="sm" variant="outline" onClick={() => exportHtmlAsync().catch(() => {})} disabled={!ready}>
-              <Download className="h-3.5 w-3.5 mr-1" /> {labels?.exportHtml || "Export HTML"}
+              <Download className="h-3.5 w-3.5 mr-1" /> {labels?.exportHtml || t("exportHtml")}
             </Button>
           </div>
         </div>

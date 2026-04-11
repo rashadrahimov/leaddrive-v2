@@ -96,7 +96,7 @@ export function DealForm({ open, onOpenChange, onSaved, initialData, orgId, pipe
         body: JSON.stringify(payload),
       })
       const json = await res.json()
-      if (!res.ok) throw new Error(json.error || "Failed to save")
+      if (!res.ok) throw new Error(json.error || tc("errorUpdateFailed"))
       onSaved()
       onOpenChange(false)
     } catch (err: any) { setError(err.message) }

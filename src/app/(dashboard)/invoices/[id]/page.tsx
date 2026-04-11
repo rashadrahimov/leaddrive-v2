@@ -389,7 +389,7 @@ export default function InvoiceDetailPage() {
     setLoading(true)
     try {
       const res = await fetch(`/api/v1/invoices/${invoiceId}`, { headers })
-      if (!res.ok) throw new Error("Failed to fetch invoice")
+      if (!res.ok) throw new Error(tc("errorFetchFailed"))
       const json = await res.json()
       const data = json.data ?? json
       setInvoice(data)
@@ -532,7 +532,7 @@ export default function InvoiceDetailPage() {
         throw new Error("Sessiya bitib. Səhifəni yeniləyin.")
       }
       const json = await res.json()
-      if (!res.ok) throw new Error(json.error || "Failed to setup chain")
+      if (!res.ok) throw new Error(json.error || tc("errorUpdateFailed"))
       setChainData(json.data)
       setChainSteps(json.data?.journey?.steps || [])
     } catch (err: any) {
@@ -581,7 +581,7 @@ export default function InvoiceDetailPage() {
         throw new Error("Sessiya bitib. Səhifəni yeniləyin.")
       }
       const json = await res.json()
-      if (!res.ok) throw new Error(json.error || "Failed to start chain")
+      if (!res.ok) throw new Error(json.error || tc("errorUpdateFailed"))
       await fetchChain()
     } catch (err: any) {
       setChainError(err.message)
@@ -641,7 +641,7 @@ export default function InvoiceDetailPage() {
     })
     if (!res.ok) {
       const body = await res.json().catch(() => ({}))
-      throw new Error(body.error || "Failed to delete invoice")
+      throw new Error(body.error || tc("errorDeleteFailed"))
     }
     router.push("/invoices")
   }
@@ -693,7 +693,7 @@ export default function InvoiceDetailPage() {
         }),
       })
       const json = await res.json()
-      if (!res.ok) throw new Error(json.error || "Failed to update invoice")
+      if (!res.ok) throw new Error(json.error || tc("errorUpdateFailed"))
       setShowEditDialog(false)
       fetchInvoice()
     } catch (err: any) {
@@ -729,7 +729,7 @@ export default function InvoiceDetailPage() {
       })
       if (!res.ok) {
         const body = await res.json().catch(() => ({}))
-        throw new Error(body.error || "Failed to record payment")
+        throw new Error(body.error || tc("errorUpdateFailed"))
       }
       setShowPaymentDialog(false)
       setPaymentForm({
@@ -762,7 +762,7 @@ export default function InvoiceDetailPage() {
       })
       if (!res.ok) {
         const body = await res.json().catch(() => ({}))
-        throw new Error(body.error || "Failed to send invoice")
+        throw new Error(body.error || tc("errorUpdateFailed"))
       }
       setShowSendDialog(false)
       fetchInvoice()

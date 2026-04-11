@@ -99,7 +99,7 @@ function AddTeamMemberForm({ dealId, orgId, onDone }: { dealId: string; orgId?: 
       })
       if (!res.ok) { const j = await res.json().catch(() => ({})); setError(j.error || `Error ${res.status}`); return }
       onDone()
-    } catch { setError("Network error") } finally { setSaving(false) }
+    } catch { setError(tc("errorNetwork")) } finally { setSaving(false) }
   }
 
   return (
@@ -208,7 +208,7 @@ function AddContactRoleForm({ dealId, orgId, onDone }: { dealId: string; orgId?:
       })
       if (!res.ok) { const j = await res.json().catch(() => ({})); setError(j.error || `Error ${res.status}`); return }
       onDone()
-    } catch { setError("Network error") } finally { setSaving(false) }
+    } catch { setError(tc("errorNetwork")) } finally { setSaving(false) }
   }
 
   return (
@@ -340,7 +340,7 @@ function AddCompetitorForm({ dealId, orgId, onDone }: { dealId: string; orgId?: 
         return
       }
       onDone()
-    } catch { setError("Network error") } finally { setSaving(false) }
+    } catch { setError(tc("errorNetwork")) } finally { setSaving(false) }
   }
 
   return (

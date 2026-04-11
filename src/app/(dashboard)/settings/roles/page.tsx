@@ -71,6 +71,7 @@ type PermissionMatrix = Record<string, Record<string, AccessLevel>>
 export default function RolesSettingsPage() {
   const { data: session } = useSession()
   const t = useTranslations("settings")
+  const tc = useTranslations("common")
   const [roles, setRoles] = useState<RoleConfig[]>([])
   const [permissions, setPermissions] = useState<PermissionMatrix>({})
   const [savedRoles, setSavedRoles] = useState<RoleConfig[]>([])
@@ -148,7 +149,7 @@ export default function RolesSettingsPage() {
       })
       if (!res.ok) {
         const json = await res.json()
-        throw new Error(json.error || "Failed to save")
+        throw new Error(json.error || tc("errorUpdateFailed"))
       }
       setSavedRoles([...roles])
       setSavedPermissions(JSON.parse(JSON.stringify(permissions)))
@@ -182,7 +183,7 @@ export default function RolesSettingsPage() {
       })
       if (!res.ok) {
         const json = await res.json()
-        throw new Error(json.error || "Failed to create role")
+        throw new Error(json.error || tc("errorCreateFailed"))
       }
       setShowAddRole(false)
       setNewRoleName("")
@@ -203,7 +204,7 @@ export default function RolesSettingsPage() {
     })
     if (!res.ok) {
       const json = await res.json()
-      throw new Error(json.error || "Failed to delete")
+      throw new Error(json.error || tc("errorDeleteFailed"))
     }
     setDeleteRoleId(null)
     await fetchData()
