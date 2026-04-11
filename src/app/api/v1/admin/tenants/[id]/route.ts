@@ -30,7 +30,6 @@ export async function GET(
           contacts: true,
           deals: true,
           companies: true,
-          tickets: true,
           leads: true,
         },
       },
