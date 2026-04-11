@@ -11,6 +11,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Badge } from "@/components/ui/badge"
 import { ArrowLeft, Loader2, CheckCircle2, Copy } from "lucide-react"
 import Link from "next/link"
+import { MODULE_REGISTRY, type ModuleId } from "@/lib/modules"
+import { TENANT_PLANS, type TenantPlan } from "@/lib/tenant-plans"
+
+const FEATURE_MODULES = (Object.entries(MODULE_REGISTRY) as [ModuleId, { name: string; alwaysOn?: boolean }][])
+  .filter(([, def]) => !def.alwaysOn)
+  .map(([id, def]) => ({ id, label: def.name }))
 
 interface ProvisionResult {
   organization: { id: string; name: string; slug: string; plan: string }
@@ -32,9 +38,28 @@ export default function NewTenantPage() {
     adminEmail: "",
     adminName: "",
     plan: "starter",
+    features: [...TENANT_PLANS.starter.features] as string[],
     primaryColor: "#6C63FF",
     logo: "",
   })
+
+  function handlePlanChange(plan: string) {
+    const defaults = TENANT_PLANS[plan as TenantPlan]
+    setForm((prev) => ({
+      ...prev,
+      plan,
+      features: defaults ? [...defaults.features] : prev.features,
+    }))
+  }
+
+  function toggleFeature(id: string) {
+    setForm((prev) => ({
+      ...prev,
+      features: prev.features.includes(id)
+        ? prev.features.filter((f) => f !== id)
+        : [...prev.features, id],
+    }))
+  }
 
   function generateSlug(name: string): string {
     return name
@@ -68,6 +93,7 @@ export default function NewTenantPage() {
           adminName: form.adminName,
           plan: form.plan,
           branding: { primaryColor: form.primaryColor, logo: form.logo || undefined },
+          features: form.features,
         }),
       })
 
@@ -162,7 +188,7 @@ export default function NewTenantPage() {
           {/* Plan */}
           <div className="space-y-1.5">
             <Label>Plan</Label>
-            <Select value={form.plan} onChange={(e) => setForm({ ...form, plan: e.target.value })}>
+            <Select value={form.plan} onChange={(e) => handlePlanChange(e.target.value)}>
               <option value="starter">Starter (3 users, 500 contacts)</option>
               <option value="professional">Professional (25 users, 10K contacts)</option>
               <option value="enterprise">Enterprise (unlimited)</option>
@@ -195,6 +221,31 @@ export default function NewTenantPage() {
                 placeholder="https://..."
               />
             </div>
+          </div>
+
+          {/* Modules */}
+          <div className="space-y-2">
+            <Label>Active Modules <span className="text-muted-foreground font-normal">({form.features.length} selected)</span></Label>
+            <div className="flex flex-wrap gap-1.5">
+              {FEATURE_MODULES.map((mod) => {
+                const isActive = form.features.includes(mod.id)
+                return (
+                  <button
+                    key={mod.id}
+                    type="button"
+                    onClick={() => toggleFeature(mod.id)}
+                    className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+                      isActive
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted text-muted-foreground hover:bg-muted/80"
+                    }`}
+                  >
+                    {mod.label}
+                  </button>
+                )
+              })}
+            </div>
+            <p className="text-xs text-muted-foreground">Modules auto-set by plan. Override above if needed.</p>
           </div>
 
           {error && (

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { auth } from "./auth"
 import { prisma } from "./prisma"
 import { checkPermission, resolveModuleFromPath, methodToAction, type Role, type Module, type Action } from "./permissions"
+import { hasModule, type ModuleId, MODULE_REGISTRY } from "./modules"
 import { getMobileAuth } from "./mobile-auth"
 import crypto from "crypto"
 
@@ -9,9 +10,9 @@ import crypto from "crypto"
 const pwCheckCache = new Map<string, { checkedAt: number; changedAt: number | null }>()
 const PW_CHECK_INTERVAL = 60_000 // 60 seconds
 
-// In-memory cache for org isActive checks (avoids DB query on every request)
-const orgActiveCache = new Map<string, { checkedAt: number; isActive: boolean }>()
-const ORG_ACTIVE_CHECK_INTERVAL = 30_000 // 30 seconds
+// In-memory cache for org status + module access checks
+const orgCache = new Map<string, { checkedAt: number; isActive: boolean; plan: string; addons: string[]; modules: Record<string, boolean> }>()
+const ORG_CACHE_INTERVAL = 30_000 // 30 seconds
 
 interface AuthResult {
   orgId: string
@@ -196,24 +197,37 @@ export async function requireAuth(
     }
   }
 
-  // SECURITY: Check if organization is still active (tenant deactivation)
+  // SECURITY: Check org status + module access (tenant deactivation + feature gating)
+  let orgContext: { plan: string; addons: string[]; modules: Record<string, boolean> } | null = null
   if (session.orgId && session.role !== "superadmin") {
     try {
       const now = Date.now()
-      const cached = orgActiveCache.get(session.orgId)
-      let isActive = cached?.isActive ?? true
+      const cached = orgCache.get(session.orgId)
 
-      if (!cached || now - cached.checkedAt > ORG_ACTIVE_CHECK_INTERVAL) {
+      if (cached && now - cached.checkedAt < ORG_CACHE_INTERVAL) {
+        if (!cached.isActive) {
+          return NextResponse.json({ error: "Organization is deactivated. Contact your administrator." }, { status: 403 })
+        }
+        orgContext = { plan: cached.plan, addons: cached.addons, modules: cached.modules }
+      } else {
         const org = await prisma.organization.findUnique({
           where: { id: session.orgId },
-          select: { isActive: true },
+          select: { isActive: true, plan: true, addons: true, features: true },
         })
-        isActive = org?.isActive ?? false
-        orgActiveCache.set(session.orgId, { checkedAt: now, isActive })
-      }
+        const isActive = org?.isActive ?? false
+        const plan = org?.plan || "starter"
+        const addons = (org?.addons as string[]) || []
+        const featuresRaw = typeof org?.features === "string" ? JSON.parse(org.features || "[]") : (org?.features || [])
+        const modules: Record<string, boolean> = {}
+        if (Array.isArray(featuresRaw)) {
+          for (const f of featuresRaw) modules[f] = true
+        }
+        orgCache.set(session.orgId, { checkedAt: now, isActive, plan, addons, modules })
 
-      if (!isActive) {
-        return NextResponse.json({ error: "Organization is deactivated. Contact your administrator." }, { status: 403 })
+        if (!isActive) {
+          return NextResponse.json({ error: "Organization is deactivated. Contact your administrator." }, { status: 403 })
+        }
+        orgContext = { plan, addons, modules }
       }
     } catch {
       // Non-critical — don't block on cache failure
@@ -235,6 +249,16 @@ export async function requireAuth(
         },
         { status: 403 }
       )
+    }
+
+    // Check if the module is enabled for this organization
+    if (orgContext && resolvedModule in MODULE_REGISTRY) {
+      if (!hasModule(orgContext, resolvedModule as ModuleId)) {
+        return NextResponse.json(
+          { error: "Forbidden", message: `Module "${resolvedModule}" is not enabled for your organization.` },
+          { status: 403 }
+        )
+      }
     }
   }
 

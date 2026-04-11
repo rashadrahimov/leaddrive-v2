@@ -35,14 +35,18 @@ export default function LoginPage() {
       .catch(() => {})
 
     // Tenant branding: detect subdomain from hostname
-    const baseDomain = process.env.NEXT_PUBLIC_BASE_DOMAIN || "leaddrivecrm.org"
-    const host = window.location.hostname
-    const match = host.match(new RegExp(`^([a-z0-9][a-z0-9-]*)\\.${baseDomain.replace(/\./g, "\\.")}$`))
-    if (match && !["app", "admin", "www"].includes(match[1])) {
-      fetch(`/api/v1/public/tenant-branding?slug=${match[1]}`)
-        .then(r => r.json())
-        .then(j => { if (j.data) setTenantBranding(j.data) })
-        .catch(() => {})
+    try {
+      const baseDomain = process.env.NEXT_PUBLIC_BASE_DOMAIN || "leaddrivecrm.org"
+      const host = window.location.hostname
+      const match = host.match(new RegExp(`^([a-z0-9][a-z0-9-]*)\\.${baseDomain.replace(/\./g, "\\.")}$`))
+      if (match && !["app", "admin", "www"].includes(match[1])) {
+        fetch(`/api/v1/public/tenant-branding?slug=${match[1]}`)
+          .then(r => r.json())
+          .then(j => { if (j.data) setTenantBranding(j.data) })
+          .catch(() => {})
+      }
+    } catch {
+      // Branding detection failed — continue with default
     }
   }, [])
 

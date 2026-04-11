@@ -1,9 +1,11 @@
 import { prisma } from "@/lib/prisma"
 import { getPlanDefaults } from "@/lib/tenant-plans"
+import { DEFAULT_PIPELINE_STAGES, INITIAL_CURRENCIES } from "@/lib/constants"
 import bcrypt from "bcryptjs"
 import crypto from "crypto"
 import fs from "fs"
 import path from "path"
+import { deleteDnsRecord, isCloudflareConfigured } from "@/lib/cloudflare-dns"
 
 const RESERVED_SLUGS = new Set([
   "app", "admin", "api", "www", "mail", "ftp", "static", "cdn", "assets",
@@ -101,15 +103,7 @@ export async function provisionTenant(input: TenantInput): Promise<ProvisionResu
     })
 
     // 3. Create default pipeline stages
-    const stages = [
-      { name: "LEAD", displayName: "Lead", color: "#6366f1", probability: 10, sortOrder: 1 },
-      { name: "QUALIFIED", displayName: "Qualified", color: "#3b82f6", probability: 25, sortOrder: 2 },
-      { name: "PROPOSAL", displayName: "Proposal", color: "#f59e0b", probability: 50, sortOrder: 3 },
-      { name: "NEGOTIATION", displayName: "Negotiation", color: "#f97316", probability: 75, sortOrder: 4 },
-      { name: "WON", displayName: "Won", color: "#22c55e", probability: 100, sortOrder: 5, isWon: true },
-      { name: "LOST", displayName: "Lost", color: "#ef4444", probability: 0, sortOrder: 6, isLost: true },
-    ]
-    for (const s of stages) {
+    for (const s of DEFAULT_PIPELINE_STAGES) {
       await tx.pipelineStage.create({ data: { organizationId: organization.id, ...s } })
     }
 
@@ -125,12 +119,7 @@ export async function provisionTenant(input: TenantInput): Promise<ProvisionResu
     }
 
     // 5. Create default currencies
-    const currencies = [
-      { code: "AZN", name: "Azerbaijani Manat", symbol: "\u20BC", exchangeRate: 1, isBase: true },
-      { code: "USD", name: "US Dollar", symbol: "$", exchangeRate: 0.59 },
-      { code: "EUR", name: "Euro", symbol: "\u20AC", exchangeRate: 0.54 },
-    ]
-    for (const c of currencies) {
+    for (const c of INITIAL_CURRENCIES) {
       await tx.currency.create({ data: { organizationId: organization.id, ...c } })
     }
 
@@ -238,6 +227,15 @@ export async function hardDeleteTenant(orgId: string): Promise<void> {
   const org = await prisma.organization.findUnique({ where: { id: orgId } })
   if (!org) throw new Error("Organization not found")
 
+  // Delete DNS record (best-effort)
+  if (isCloudflareConfigured()) {
+    try {
+      await deleteDnsRecord(org.slug)
+    } catch (err) {
+      console.error(`[TENANT] DNS delete failed for ${org.slug}:`, err)
+    }
+  }
+
   // Cascade delete: PostgreSQL FKs with onDelete: Cascade handle all 93+ related models
   await prisma.organization.delete({ where: { id: orgId } })
 
@@ -284,7 +282,7 @@ function updateRegistry(slug: string, name: string, plan: string, baseDomain: st
     const registry = JSON.parse(fs.readFileSync(REGISTRY_PATH, "utf-8"))
     registry.clients[slug] = {
       name,
-      server: "46.224.171.53", // shared server
+      server: process.env.SHARED_SERVER_IP || "46.224.171.53",
       sshUser: "root",
       sshKey: "~/.ssh/id_ed25519",
       domain: `${slug}.${baseDomain}`,

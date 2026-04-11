@@ -80,8 +80,17 @@ export async function PUT(
     return NextResponse.json({ error: "Tenant not found" }, { status: 404 })
   }
 
-  // Allowed update fields (slug is immutable)
+  // Slug change: validate uniqueness if changed
+  if (body.slug !== undefined && body.slug !== existing.slug) {
+    const { validateSlug } = await import("@/lib/tenant-provisioning")
+    const slugCheck = await validateSlug(body.slug)
+    if (!slugCheck.valid) {
+      return NextResponse.json({ error: slugCheck.error }, { status: 400 })
+    }
+  }
+
   const updateData: any = {}
+  if (body.slug !== undefined) updateData.slug = body.slug
   if (body.name !== undefined) updateData.name = body.name
   if (body.plan !== undefined) updateData.plan = body.plan
   if (body.maxUsers !== undefined) updateData.maxUsers = body.maxUsers

@@ -24,6 +24,7 @@ const SIDEBAR_SECTIONS: { group: string; items: { moduleId: string; label: strin
     { moduleId: "tasks", label: "Tasks", href: "/tasks" },
     { moduleId: "contracts", label: "Contracts", href: "/contracts" },
     { moduleId: "core", label: "Products", href: "/products" },
+    { moduleId: "core", label: "Notifications", href: "/notifications" },
   ]},
   { group: "Marketing", items: [
     { moduleId: "campaigns", label: "Campaigns", href: "/campaigns" },
@@ -79,6 +80,7 @@ const SIDEBAR_SECTIONS: { group: string; items: { moduleId: string; label: strin
     { moduleId: "mtm", label: "Leaderboard", href: "/mtm/leaderboard" },
     { moduleId: "mtm", label: "Activity Log", href: "/mtm/activity" },
     { moduleId: "mtm", label: "Reports", href: "/mtm/reports" },
+    { moduleId: "mtm", label: "MTM Settings", href: "/mtm/settings" },
   ]},
   { group: "Settings", items: [
     { moduleId: "workflows", label: "Workflows", href: "/settings/workflows" },

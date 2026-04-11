@@ -153,6 +153,14 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           token.organizationName = dbUser.organization?.name || ""
           token.plan = dbUser.organization?.plan || "starter"
           token.addons = dbUser.organization?.addons || []
+          // Convert features array to modules Record for hasModule() compatibility
+          const features = dbUser.organization?.features
+          const featuresArr = typeof features === "string" ? JSON.parse(features || "[]") : (features || [])
+          if (Array.isArray(featuresArr) && featuresArr.length > 0) {
+            const modules: Record<string, boolean> = {}
+            for (const f of featuresArr) modules[f] = true
+            token.modules = modules
+          }
         }
         // Propagate 2FA flags from authorize return
         if ((user as any).needs2fa) token.needs2fa = true
@@ -193,6 +201,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           organizationName: token.organizationName as string,
           plan: token.plan as string,
           addons: (token.addons as string[]) || [],
+          modules: (token.modules as Record<string, boolean>) || undefined,
           needs2fa: token.needs2fa as boolean | undefined,
           needsSetup2fa: token.needsSetup2fa as boolean | undefined,
         },

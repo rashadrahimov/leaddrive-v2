@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
-import { type ModuleId } from "@/lib/modules"
+import { type ModuleId, hasModule } from "@/lib/modules"
 import {
   LayoutDashboard, Building2, Users, Handshake, UserPlus,
   CheckSquare, FileText, FileSpreadsheet, Calculator, Brain,
@@ -137,14 +137,8 @@ export function Sidebar({ org }: SidebarProps) {
   const t = useTranslations("nav")
   const { newTicketCount } = useTicketBadge()
 
-  // All items accessible — no plan gating
-  const filteredItems = navItems.map((item) => ({
-    ...item,
-    locked: false,
-    requiredPlan: null,
-  }))
-
-  const accessibleItems = filteredItems
+  // Filter sidebar items based on org modules/features/plan
+  const accessibleItems = navItems.filter((item) => hasModule(org, item.module))
   const groups = [...new Set(accessibleItems.map((item) => item.group))]
 
   return (
