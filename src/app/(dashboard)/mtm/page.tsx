@@ -32,9 +32,10 @@ export default function MtmDashboardPage() {
       .finally(() => setLoading(false))
   }, [period, session])
 
-  // Live clock with seconds
-  const [clock, setClock] = useState(new Date())
+  // Live clock with seconds — init as null to avoid hydration mismatch (server=UTC, client=local)
+  const [clock, setClock] = useState<Date | null>(null)
   useEffect(() => {
+    setClock(new Date())
     const t = setInterval(() => setClock(new Date()), 1000)
     return () => clearInterval(t)
   }, [])
@@ -54,9 +55,9 @@ export default function MtmDashboardPage() {
           />
         </div>
         <div className="text-right text-muted-foreground">
-          <div className="text-xs">{clock.toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}</div>
+          <div className="text-xs">{clock?.toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" }) ?? "—"}</div>
           <div className="text-2xl font-mono font-bold text-foreground tabular-nums">
-            {clock.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false })}
+            {clock?.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false }) ?? "--:--:--"}
           </div>
         </div>
       </div>

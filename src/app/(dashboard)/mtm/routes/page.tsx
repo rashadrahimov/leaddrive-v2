@@ -73,8 +73,9 @@ export default function MtmRoutesPage() {
 
   const statusCounts: Record<string, number> = {}
   for (const r of routes) statusCounts[r.status] = (statusCounts[r.status] || 0) + 1
-  const today = new Date().toDateString()
-  const todayRoutes = routes.filter(r => new Date(r.date).toDateString() === today).length
+  const [today, setToday] = useState("")
+  useEffect(() => { setToday(new Date().toDateString()) }, [])
+  const todayRoutes = today ? routes.filter(r => new Date(r.date).toDateString() === today).length : 0
 
   async function confirmDelete() {
     if (!deleteItem) return
