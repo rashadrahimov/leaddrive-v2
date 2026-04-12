@@ -14,7 +14,7 @@ export const MotionCard = forwardRef<
     initial={{ opacity: 0, y: 8 }}
     animate={{ opacity: 1, y: 0 }}
     exit={{ opacity: 0, y: 8 }}
-    transition={{ duration: 0.25, delay, ease: "easeOut" }}
+    transition={{ duration: 0.25, delay, ease: [0.23, 1, 0.32, 1] }}
     className={className}
     {...props}
   >
@@ -60,7 +60,7 @@ export function MotionItem({
     <motion.div
       variants={{
         hidden: { opacity: 0, y: 12 },
-        visible: { opacity: 1, y: 0, transition: { duration: 0.25, ease: "easeOut" } },
+        visible: { opacity: 1, y: 0, transition: { duration: 0.25, ease: [0.23, 1, 0.32, 1] } },
       }}
       className={className}
     >
@@ -81,7 +81,7 @@ export function MotionPage({
     <motion.div
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3, ease: "easeOut" }}
+      transition={{ duration: 0.3, ease: [0.23, 1, 0.32, 1] }}
       className={className}
     >
       {children}
@@ -106,7 +106,7 @@ export function MotionTab({
         initial={{ opacity: 0, x: 8 }}
         animate={{ opacity: 1, x: 0 }}
         exit={{ opacity: 0, x: -8 }}
-        transition={{ duration: 0.2, ease: "easeInOut" }}
+        transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
         className={className}
       >
         {children}
@@ -132,7 +132,7 @@ export function MotionCollapse({
           initial={{ height: 0, opacity: 0 }}
           animate={{ height: "auto", opacity: 1 }}
           exit={{ height: 0, opacity: 0 }}
-          transition={{ duration: 0.25, ease: "easeInOut" }}
+          transition={{ duration: 0.25, ease: [0.77, 0, 0.175, 1] }}
           className={cn("overflow-hidden", className)}
         >
           {children}
@@ -183,7 +183,7 @@ export function MotionSlideIn({
       initial={{ opacity: 0, ...offsets[direction] }}
       animate={{ opacity: 1, x: 0, y: 0 }}
       exit={{ opacity: 0, ...offsets[direction] }}
-      transition={{ duration: 0.25, ease: "easeOut" }}
+      transition={{ duration: 0.25, ease: [0.23, 1, 0.32, 1] }}
       className={className}
     >
       {children}

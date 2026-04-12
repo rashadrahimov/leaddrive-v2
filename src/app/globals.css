@@ -42,6 +42,11 @@
 
     /* Status dots */
     --status-dot-size: 8px;
+
+    /* Emil Kowalski — custom easing curves (stronger than built-in) */
+    --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+    --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+    --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
   }
 
   .dark {
@@ -141,7 +146,7 @@
     @apply bg-background text-foreground;
     font-family: var(--font-sans);
     line-height: 1.5;
-    transition: background-color 0.5s ease, color 0.4s ease;
+    transition: background-color 0.3s ease, color 0.3s ease;
   }
 }
 
@@ -478,4 +483,18 @@ html[data-wallpaper] .bg-card\/80 {
 
 @media (prefers-reduced-motion: reduce) {
   .wallpaper-abstract-gradient { animation: none; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Touch-safe hover utilities */
+@media (hover: hover) and (pointer: fine) {
+  .hover-lift:hover {
+    transform: translateY(-2px);
+    transition: transform 200ms var(--ease-out);
+  }
 }
