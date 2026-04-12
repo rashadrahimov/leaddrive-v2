@@ -1360,7 +1360,19 @@
     "hintColType": "Contract type: Service Agreement, NDA, Maintenance, License, SLA",
     "hintColStatus": "Lifecycle: Draft → Sent → Signed → Active → Expiring → Expired/Renewed",
     "hintColDates": "Start and end dates of the contract period",
-    "hintColAmount": "Monetary value of the contract"
+    "hintColAmount": "Monetary value of the contract",
+    "deal": "Deal",
+    "contact": "Contact",
+    "linkedDeal": "Linked Deal",
+    "linkedContact": "Contact Person",
+    "invoices": "Invoices",
+    "noInvoices": "No invoices linked",
+    "noInvoicesHint": "Create an invoice from the Invoices page and link it to this contract",
+    "invoiceNumber": "Invoice #",
+    "invoiceStatus": "Status",
+    "invoiceAmount": "Amount",
+    "invoiceDate": "Date",
+    "history": "History"
   },
   "campaigns": {
     "title": "Campaigns",

@@ -60,6 +60,8 @@ export async function register() {
 
           let totalBills = 0
           let totalInvoices = 0
+          let totalExpiredContracts = 0
+          let totalExpiringContracts = 0
 
           for (const org of orgs) {
             // Auto-update overdue statuses directly via Prisma (bypasses middleware)
@@ -76,6 +78,29 @@ export async function register() {
             totalBills += bills.count
             totalInvoices += invoices.count
 
+            // Auto-expire contracts where endDate < now and status is active/expiring
+            const expiredContracts = await prisma.contract.updateMany({
+              where: {
+                organizationId: org.id,
+                endDate: { lt: now },
+                status: { in: ["active", "expiring"] },
+              },
+              data: { status: "expired" },
+            })
+            totalExpiredContracts += expiredContracts.count
+
+            // Auto-mark contracts expiring within 30 days
+            const thirtyDaysFromNow = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000)
+            const expiringContracts = await prisma.contract.updateMany({
+              where: {
+                organizationId: org.id,
+                endDate: { gt: now, lte: thirtyDaysFromNow },
+                status: "active",
+              },
+              data: { status: "expiring" },
+            })
+            totalExpiringContracts += expiringContracts.count
+
             // Send Telegram notifications if any new overdue found
             if (bills.count > 0 || invoices.count > 0) {
               const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN
@@ -90,12 +115,31 @@ export async function register() {
                 }).catch(() => {})
               }
             }
+
+            // Send Telegram notification for expired/expiring contracts
+            if (expiredContracts.count > 0 || expiringContracts.count > 0) {
+              const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN
+              const CHAT_ID = process.env.TELEGRAM_FINANCE_CHAT_ID
+              if (BOT_TOKEN && CHAT_ID) {
+                const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://app.leaddrivecrm.org"
+                const text = `📋 <b>[Контракты] Автообновление статусов</b>\n\nИстекло: ${expiredContracts.count}\nИстекает в течение 30 дней: ${expiringContracts.count}\n\n📎 <a href="${appUrl}/contracts">Открыть контракты</a>`
+                await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ chat_id: CHAT_ID, text, parse_mode: "HTML" }),
+                }).catch(() => {})
+              }
+            }
           }
           await prisma.$disconnect()
           if (totalBills > 0 || totalInvoices > 0) {
             console.log(`[Finance Cron] Updated ${totalBills} overdue bills, ${totalInvoices} overdue invoices`)
-          } else {
-            console.log(`[Finance Cron] No new overdue items`)
+          }
+          if (totalExpiredContracts > 0 || totalExpiringContracts > 0) {
+            console.log(`[Finance Cron] Contracts: ${totalExpiredContracts} expired, ${totalExpiringContracts} marked expiring`)
+          }
+          if (totalBills === 0 && totalInvoices === 0 && totalExpiredContracts === 0 && totalExpiringContracts === 0) {
+            console.log(`[Finance Cron] No new overdue items or contract status changes`)
           }
         } catch (err: any) {
           console.error("[Finance Cron] Error:", err.message)

@@ -64,6 +64,7 @@ export async function GET(req: NextRequest) {
   const status = searchParams.get("status")
   const companyId = searchParams.get("companyId")
   const dealId = searchParams.get("dealId")
+  const contractId = searchParams.get("contractId")
   const dateFrom = searchParams.get("dateFrom")
   const dateTo = searchParams.get("dateTo")
 
@@ -73,6 +74,7 @@ export async function GET(req: NextRequest) {
     if (status) where.status = status
     if (companyId) where.companyId = companyId
     if (dealId) where.dealId = dealId
+    if (contractId) where.contractId = contractId
     if (dateFrom || dateTo) {
       where.issueDate = {
         ...(dateFrom ? { gte: new Date(dateFrom) } : {}),

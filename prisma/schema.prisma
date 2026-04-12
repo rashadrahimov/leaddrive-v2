@@ -313,6 +313,7 @@ model Contact {
   activities     Activity[]
   invoices       Invoice[]
   tickets        Ticket[]
+  contracts      Contract[]
   events         ContactEvent[]
   callLogs       CallLog[]
 
@@ -372,6 +373,7 @@ model Deal {
   competitors    DealCompetitor[]
   offers         Offer[]
   invoices       Invoice[]
+  contracts      Contract[]
 
   @@index([organizationId])
   @@index([organizationId, stage])
@@ -486,6 +488,10 @@ model Contract {
   contractNumber String
   companyId      String?
   company        Company?  @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  dealId         String?
+  deal           Deal?     @relation(fields: [dealId], references: [id], onDelete: SetNull)
+  contactId      String?
+  contact        Contact?  @relation(fields: [contactId], references: [id], onDelete: SetNull)
   title          String
   type           String   @default("service_agreement")
   status         String   @default("draft")

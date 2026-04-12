@@ -12,7 +12,7 @@ import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
 import { Select } from "@/components/ui/select"
 import { InfoHint } from "@/components/info-hint"
 import { PageDescription } from "@/components/page-description"
-import { FileText, Plus, Pencil, Trash2, AlertTriangle, Clock, TrendingUp, Building2, History, X, Upload, Download, File, Loader2 } from "lucide-react"
+import { FileText, Plus, Pencil, Trash2, AlertTriangle, Clock, TrendingUp, Building2, History, X, Upload, Download, File, Loader2, Handshake, User, Receipt } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
 
@@ -40,6 +40,10 @@ interface Contract {
   title: string
   companyId?: string
   company?: { id: string; name: string } | null
+  dealId?: string
+  deal?: { id: string; name: string } | null
+  contactId?: string
+  contact?: { id: string; name: string } | null
   type?: string
   status: string
   startDate?: string
@@ -89,6 +93,7 @@ export default function ContractsPage() {
   const [detailLoading, setDetailLoading] = useState(false)
   const [detailFiles, setDetailFiles] = useState<ContractFile[]>([])
   const [uploading, setUploading] = useState(false)
+  const [detailInvoices, setDetailInvoices] = useState<any[]>([])
   const orgId = session?.user?.organizationId
 
   const statusLabels: Record<string, string> = {
@@ -142,19 +147,20 @@ export default function ContractsPage() {
     setDetailContract(contract)
     setDetailLoading(true)
     setDetailFiles([])
+    setDetailInvoices([])
     try {
-      const [contractRes, filesRes] = await Promise.all([
-        fetch(`/api/v1/contracts/${contract.id}`, {
-          headers: orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>,
-        }),
-        fetch(`/api/v1/contracts/${contract.id}/files`, {
-          headers: orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>,
-        }),
+      const headers = orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>
+      const [contractRes, filesRes, invoicesRes] = await Promise.all([
+        fetch(`/api/v1/contracts/${contract.id}`, { headers }),
+        fetch(`/api/v1/contracts/${contract.id}/files`, { headers }),
+        fetch(`/api/v1/invoices?contractId=${contract.id}&limit=50`, { headers }),
       ])
       const contractJson = await contractRes.json()
       if (contractJson.success) setDetailContract(contractJson.data)
       const filesJson = await filesRes.json()
       if (filesJson.success) setDetailFiles(filesJson.data)
+      const invoicesJson = await invoicesRes.json()
+      if (invoicesJson.success) setDetailInvoices(invoicesJson.data?.invoices || invoicesJson.data || [])
     } catch (err) { console.error(err) } finally { setDetailLoading(false) }
   }
 
@@ -272,6 +278,36 @@ export default function ContractsPage() {
             <>
               <Building2 className="h-3.5 w-3.5 text-muted-foreground" />
               <span className="text-sm">{item.company.name}</span>
+            </>
+          ) : <span className="text-muted-foreground">—</span>}
+        </div>
+      ),
+    },
+    {
+      key: "deal",
+      label: t("deal"),
+      sortable: false,
+      render: (item: any) => (
+        <div className="flex items-center gap-1.5">
+          {item.deal ? (
+            <>
+              <Handshake className="h-3.5 w-3.5 text-muted-foreground" />
+              <span className="text-sm truncate max-w-[120px]">{item.deal.name}</span>
+            </>
+          ) : <span className="text-muted-foreground">—</span>}
+        </div>
+      ),
+    },
+    {
+      key: "contact",
+      label: t("contact"),
+      sortable: false,
+      render: (item: any) => (
+        <div className="flex items-center gap-1.5">
+          {item.contact ? (
+            <>
+              <User className="h-3.5 w-3.5 text-muted-foreground" />
+              <span className="text-sm truncate max-w-[120px]">{item.contact.name}</span>
             </>
           ) : <span className="text-muted-foreground">—</span>}
         </div>
@@ -437,6 +473,16 @@ export default function ContractsPage() {
                       <Building2 className="h-3.5 w-3.5" /> {detailContract.company.name}
                     </p>
                   )}
+                  {detailContract.deal && (
+                    <p className="text-sm text-muted-foreground flex items-center gap-1 mt-0.5">
+                      <Handshake className="h-3.5 w-3.5" /> {t("linkedDeal")}: {detailContract.deal.name}
+                    </p>
+                  )}
+                  {detailContract.contact && (
+                    <p className="text-sm text-muted-foreground flex items-center gap-1 mt-0.5">
+                      <User className="h-3.5 w-3.5" /> {t("linkedContact")}: {detailContract.contact.name}
+                    </p>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-2 gap-3 text-sm">
@@ -467,10 +513,49 @@ export default function ContractsPage() {
                   </div>
                 )}
 
+                {/* Invoices */}
+                <div className="border-t pt-4">
+                  <h4 className="text-sm font-semibold flex items-center gap-1.5 mb-3">
+                    <Receipt className="h-4 w-4" /> {t("invoices")} ({detailInvoices.length})
+                  </h4>
+                  {detailLoading ? (
+                    <div className="text-sm text-muted-foreground animate-pulse">...</div>
+                  ) : detailInvoices.length > 0 ? (
+                    <div className="space-y-2">
+                      {detailInvoices.map((inv: any) => (
+                        <div key={inv.id} className="flex items-center gap-2 bg-muted/50 rounded-lg p-2.5 text-sm">
+                          <Receipt className="h-4 w-4 text-muted-foreground shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <div className="font-medium">{inv.invoiceNumber || inv.number || "—"}</div>
+                            <div className="text-xs text-muted-foreground">
+                              {inv.totalAmount ? `${inv.totalAmount.toLocaleString()} ${inv.currency || "₼"}` : "—"}
+                              {inv.issueDate && ` · ${formatDate(inv.issueDate)}`}
+                            </div>
+                          </div>
+                          <span className={cn(
+                            "text-[10px] px-2 py-0.5 rounded-full font-medium",
+                            inv.status === "paid" ? "bg-green-100 text-green-700" :
+                            inv.status === "overdue" ? "bg-red-100 text-red-600" :
+                            inv.status === "sent" ? "bg-blue-100 text-blue-700" :
+                            "bg-muted text-muted-foreground"
+                          )}>
+                            {inv.status || "draft"}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-4">
+                      <p className="text-sm text-muted-foreground">{t("noInvoices")}</p>
+                      <p className="text-xs text-muted-foreground/70 mt-1">{t("noInvoicesHint")}</p>
+                    </div>
+                  )}
+                </div>
+
                 {/* History */}
                 <div className="border-t pt-4">
                   <h4 className="text-sm font-semibold flex items-center gap-1.5 mb-3">
-                    <History className="h-4 w-4" /> {t("title")}
+                    <History className="h-4 w-4" /> {t("history")}
                   </h4>
                   {detailLoading ? (
                     <div className="text-sm text-muted-foreground animate-pulse">...</div>

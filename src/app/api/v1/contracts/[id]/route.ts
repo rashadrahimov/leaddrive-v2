@@ -7,7 +7,9 @@ import { PAGE_SIZE } from "@/lib/constants"
 const updateContractSchema = z.object({
   contractNumber: z.string().optional(),
   title: z.string().optional(),
-  companyId: z.string().optional(),
+  companyId: z.string().nullable().optional(),
+  dealId: z.string().nullable().optional(),
+  contactId: z.string().nullable().optional(),
   type: z.string().optional(),
   status: z.enum(["draft", "sent", "signed", "active", "expiring", "expired", "renewed"]).optional(),
   startDate: z.string().optional(),
@@ -28,7 +30,11 @@ export async function GET(
   try {
     const contract = await prisma.contract.findFirst({
       where: { id, organizationId: orgId },
-      include: { company: { select: { id: true, name: true } } },
+      include: {
+        company: { select: { id: true, name: true } },
+        deal: { select: { id: true, name: true } },
+        contact: { select: { id: true, fullName: true } },
+      },
     })
     if (!contract) return NextResponse.json({ error: "Not found" }, { status: 404 })
 
@@ -65,6 +71,9 @@ export async function PUT(
       where: { id, organizationId: orgId },
       data: {
         ...parsed.data,
+        companyId: parsed.data.companyId === null ? null : parsed.data.companyId || undefined,
+        dealId: parsed.data.dealId === null ? null : parsed.data.dealId || undefined,
+        contactId: parsed.data.contactId === null ? null : parsed.data.contactId || undefined,
         startDate: parsed.data.startDate ? new Date(parsed.data.startDate) : undefined,
         endDate: parsed.data.endDate ? new Date(parsed.data.endDate) : undefined,
       },
@@ -75,7 +84,7 @@ export async function PUT(
 
     // Log changes to audit
     const changes: Record<string, { old: any; new: any }> = {}
-    const fields = ["contractNumber", "title", "companyId", "type", "status", "valueAmount", "currency", "notes"] as const
+    const fields = ["contractNumber", "title", "companyId", "dealId", "contactId", "type", "status", "valueAmount", "currency", "notes"] as const
     for (const f of fields) {
       const oldVal = (oldContract as any)[f]
       const newVal = (updated as any)[f]

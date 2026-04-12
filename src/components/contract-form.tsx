@@ -14,6 +14,8 @@ interface ContractFormData {
   contractNumber: string
   title: string
   companyId: string
+  dealId: string
+  contactId: string
   type: string
   status: string
   startDate: string
@@ -26,6 +28,16 @@ interface ContractFormData {
 interface Company {
   id: string
   name: string
+}
+
+interface DealOption {
+  id: string
+  name: string
+}
+
+interface ContactOption {
+  id: string
+  fullName: string
 }
 
 interface ContractFormProps {
@@ -45,6 +57,8 @@ export function ContractForm({ open, onOpenChange, onSaved, initialData, orgId }
     contractNumber: "",
     title: "",
     companyId: "",
+    dealId: "",
+    contactId: "",
     type: "service_agreement",
     status: "draft",
     startDate: "",
@@ -56,14 +70,24 @@ export function ContractForm({ open, onOpenChange, onSaved, initialData, orgId }
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState("")
   const [companies, setCompanies] = useState<Company[]>([])
+  const [deals, setDeals] = useState<DealOption[]>([])
+  const [contacts, setContacts] = useState<ContactOption[]>([])
 
   useEffect(() => {
     if (open && orgId) {
-      fetch("/api/v1/companies?limit=500&category=all", {
-        headers: { "x-organization-id": String(orgId) },
-      }).then(r => r.json()).then(j => {
-        if (j.success) setCompanies(j.data.companies || [])
-      }).catch(() => {})
+      const headers = { "x-organization-id": String(orgId) }
+      fetch("/api/v1/companies?limit=500&category=all", { headers })
+        .then(r => r.json()).then(j => {
+          if (j.success) setCompanies(j.data.companies || [])
+        }).catch(() => {})
+      fetch("/api/v1/deals?limit=500", { headers })
+        .then(r => r.json()).then(j => {
+          if (j.success) setDeals(j.data.deals || [])
+        }).catch(() => {})
+      fetch("/api/v1/contacts?limit=500", { headers })
+        .then(r => r.json()).then(j => {
+          if (j.success) setContacts(j.data.contacts || [])
+        }).catch(() => {})
     }
   }, [open, orgId])
 
@@ -75,6 +99,8 @@ export function ContractForm({ open, onOpenChange, onSaved, initialData, orgId }
         contractNumber: initialData?.contractNumber || "",
         title: initialData?.title || "",
         companyId: initialData?.companyId || "",
+        dealId: initialData?.dealId || "",
+        contactId: initialData?.contactId || "",
         type: initialData?.type || "service_agreement",
         status: initialData?.status || "draft",
         startDate: sd,
@@ -104,6 +130,8 @@ export function ContractForm({ open, onOpenChange, onSaved, initialData, orgId }
           ...form,
           valueAmount: form.valueAmount ? parseFloat(String(form.valueAmount)) : undefined,
           companyId: form.companyId || undefined,
+          dealId: form.dealId || undefined,
+          contactId: form.contactId || undefined,
         }),
       })
       const json = await res.json()
@@ -146,6 +174,26 @@ export function ContractForm({ open, onOpenChange, onSaved, initialData, orgId }
                   <option key={c.id} value={c.id}>{c.name}</option>
                 ))}
               </Select>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label htmlFor="dealId">{tc("deal")}</Label>
+                <Select value={form.dealId} onChange={(e) => update("dealId", e.target.value)}>
+                  <option value="">{tc("notSelected")}</option>
+                  {deals.map(d => (
+                    <option key={d.id} value={d.id}>{d.name}</option>
+                  ))}
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="contactId">{tc("contact")}</Label>
+                <Select value={form.contactId} onChange={(e) => update("contactId", e.target.value)}>
+                  <option value="">{tc("notSelected")}</option>
+                  {contacts.map(c => (
+                    <option key={c.id} value={c.id}>{c.fullName}</option>
+                  ))}
+                </Select>
+              </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>

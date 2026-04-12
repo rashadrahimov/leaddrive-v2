@@ -1358,7 +1358,19 @@
     "hintColType": "Müqavilə növü: Xidmət, NDA, Texniki dəstək, Lisenziya, SLA",
     "hintColStatus": "Dövrü: Qaralama → Göndərilib → İmzalanıb → Aktiv → Bitir → Bitib/Yenilənib",
     "hintColDates": "Müqavilə müddətinin başlanğıc və bitmə tarixləri",
-    "hintColAmount": "Müqavilənin pul dəyəri"
+    "hintColAmount": "Müqavilənin pul dəyəri",
+    "deal": "Sövdələşmə",
+    "contact": "Kontakt",
+    "linkedDeal": "Əlaqəli sövdələşmə",
+    "linkedContact": "Əlaqədar şəxs",
+    "invoices": "Hesab-fakturalar",
+    "noInvoices": "Əlaqəli hesab-faktura yoxdur",
+    "noInvoicesHint": "Hesab-fakturalar səhifəsindən yaradın və bu müqaviləyə bağlayın",
+    "invoiceNumber": "Hesab-faktura #",
+    "invoiceStatus": "Status",
+    "invoiceAmount": "Məbləğ",
+    "invoiceDate": "Tarix",
+    "history": "Tarixçə"
   },
   "campaigns": {
     "title": "Kampaniyalar",
