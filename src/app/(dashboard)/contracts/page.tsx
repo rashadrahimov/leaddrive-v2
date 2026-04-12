@@ -43,7 +43,7 @@ interface Contract {
   dealId?: string
   deal?: { id: string; name: string } | null
   contactId?: string
-  contact?: { id: string; name: string } | null
+  contact?: { id: string; fullName?: string; name?: string } | null
   type?: string
   status: string
   startDate?: string
@@ -307,7 +307,7 @@ export default function ContractsPage() {
           {item.contact ? (
             <>
               <User className="h-3.5 w-3.5 text-muted-foreground" />
-              <span className="text-sm truncate max-w-[120px]">{item.contact.name}</span>
+              <span className="text-sm truncate max-w-[120px]">{item.contact.fullName || item.contact.name}</span>
             </>
           ) : <span className="text-muted-foreground">—</span>}
         </div>
@@ -480,7 +480,7 @@ export default function ContractsPage() {
                   )}
                   {detailContract.contact && (
                     <p className="text-sm text-muted-foreground flex items-center gap-1 mt-0.5">
-                      <User className="h-3.5 w-3.5" /> {t("linkedContact")}: {detailContract.contact.name}
+                      <User className="h-3.5 w-3.5" /> {t("linkedContact")}: {detailContract.contact.fullName || detailContract.contact.name}
                     </p>
                   )}
                 </div>

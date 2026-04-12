@@ -82,6 +82,11 @@ export async function POST(req: NextRequest) {
         startDate: parsed.data.startDate ? new Date(parsed.data.startDate) : undefined,
         endDate: parsed.data.endDate ? new Date(parsed.data.endDate) : undefined,
       },
+      include: {
+        company: { select: { id: true, name: true } },
+        deal: { select: { id: true, name: true } },
+        contact: { select: { id: true, fullName: true } },
+      },
     })
     return NextResponse.json({ success: true, data: contract }, { status: 201 })
   } catch (e) {
