@@ -2292,7 +2292,16 @@
     "personalMessagePlaceholder": "Dəvətnaməyə şəxsi qeyd əlavə edin...",
     "inviteICSNote": "Qəbul edənlər avtomatik olaraq təqvimlərinə əlavə edə biləcəkləri görüş sorğusu (.ics) alacaqlar.",
     "enterEmails": "Ən azı bir e-poçt ünvanı daxil edin",
-    "smtpNotConfigured": "SMTP konfiqurasiya edilməyib"
+    "smtpNotConfigured": "SMTP konfiqurasiya edilməyib",
+    "stepBasicInfo": "Əsas məlumat",
+    "stepLocationTime": "Yer və vaxt",
+    "stepBudgetTags": "Büdcə və teqlər",
+    "eventName": "Tədbir adı",
+    "onlineEvent": "Onlayn tədbir",
+    "locationPlaceholder": "Tədbir yeri ünvanı...",
+    "addTag": "Teq əlavə et...",
+    "summary": "Xülasə",
+    "untitled": "Adsız"
   },
   "pipelineSettings": {
     "title": "Huni və Mərhələlər",

@@ -2297,7 +2297,16 @@
     "personalMessagePlaceholder": "Добавьте личное сообщение к приглашению...",
     "inviteICSNote": "Получатели получат запрос на встречу (.ics), который автоматически добавится в их календарь.",
     "enterEmails": "Введите хотя бы один email",
-    "smtpNotConfigured": "SMTP не настроен"
+    "smtpNotConfigured": "SMTP не настроен",
+    "stepBasicInfo": "Основная информация",
+    "stepLocationTime": "Место и время",
+    "stepBudgetTags": "Бюджет и теги",
+    "eventName": "Название мероприятия",
+    "onlineEvent": "Онлайн мероприятие",
+    "locationPlaceholder": "Адрес места проведения...",
+    "addTag": "Добавить тег...",
+    "summary": "Итого",
+    "untitled": "Без названия"
   },
   "pipelineSettings": {
     "title": "Воронки и стадии",

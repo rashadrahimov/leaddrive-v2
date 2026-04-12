@@ -2297,7 +2297,16 @@
     "personalMessagePlaceholder": "Add a personal note to the invitation...",
     "inviteICSNote": "Recipients will receive a meeting request (.ics) that can be added to their calendar automatically.",
     "enterEmails": "Please enter at least one email address",
-    "smtpNotConfigured": "SMTP not configured"
+    "smtpNotConfigured": "SMTP not configured",
+    "stepBasicInfo": "Basic Info",
+    "stepLocationTime": "Location & Time",
+    "stepBudgetTags": "Budget & Tags",
+    "eventName": "Event Name",
+    "onlineEvent": "Online event",
+    "locationPlaceholder": "Event venue address...",
+    "addTag": "Add tag...",
+    "summary": "Summary",
+    "untitled": "Untitled"
   },
   "pipelineSettings": {
     "title": "Pipelines & Stages",
