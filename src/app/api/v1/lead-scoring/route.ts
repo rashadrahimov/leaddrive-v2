@@ -19,6 +19,12 @@ const LANG_LABELS: Record<string, Record<string, string>> = {
 
 const LANG_NAMES: Record<string, string> = { en: "English", ru: "Russian", az: "Azerbaijani" }
 
+const LANG_FALLBACKS: Record<string, { ruleBasedFallback: string; aiComplete: string }> = {
+  en: { ruleBasedFallback: "Da Vinci — rule-based analysis", aiComplete: "Da Vinci analysis complete" },
+  ru: { ruleBasedFallback: "Da Vinci — анализ на основе правил", aiComplete: "Анализ Da Vinci завершён" },
+  az: { ruleBasedFallback: "Da Vinci — qayda əsaslı təhlil", aiComplete: "Da Vinci təhlili tamamlandı" },
+}
+
 // Rule-based fallback when no API key
 function scoreLeadRuleBased(lead: any, locale: string = "en"): { score: number; factors: Record<string, number>; conversionProb: number; reasoning: string } {
   const factors: Record<string, number> = {}
@@ -61,7 +67,8 @@ function scoreLeadRuleBased(lead: any, locale: string = "en"): { score: number; 
   const parts: string[] = []
   if (positives.length > 0) parts.push(`${L.strengths}: ${positives.join(", ")}`)
   if (negatives.length > 0) parts.push(`${L.gaps}: ${negatives.join(", ")}`)
-  const reasoning = parts.length > 0 ? parts.join(". ") + "." : "Da Vinci — rule-based analysis"
+  const fb = LANG_FALLBACKS[locale] || LANG_FALLBACKS.en
+  const reasoning = parts.length > 0 ? parts.join(". ") + "." : fb.ruleBasedFallback
 
   return { score, factors, conversionProb, reasoning }
 }
@@ -107,6 +114,8 @@ ${deals.length > 0
 
 ${leadContext}
 
+IMPORTANT: The "reasoning" field MUST be written in ${LANG_NAMES[locale] || "English"} language. Do NOT use English if the requested language is different.
+
 Respond ONLY with valid JSON (no markdown, no explanation outside JSON):
 {
   "score": <0-100 integer>,
@@ -129,7 +138,7 @@ Respond ONLY with valid JSON (no markdown, no explanation outside JSON):
       score: Math.min(100, Math.max(0, parsed.score || 0)),
       factors: parsed.factors || {},
       conversionProb: Math.min(100, Math.max(0, parsed.conversionProb || 0)),
-      reasoning: parsed.reasoning || "Da Vinci analysis complete",
+      reasoning: parsed.reasoning || (LANG_FALLBACKS[locale] || LANG_FALLBACKS.en).aiComplete,
     }
   } catch (e) {
     console.error("Da Vinci scoring failed, using rule-based fallback:", e)
