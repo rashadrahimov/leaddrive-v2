@@ -2681,6 +2681,8 @@
     "subtitle": "Toggle widgets on/off — changes are saved automatically",
     "active": "active",
     "hidden": "hidden",
+    "risksBanner": "Risks Banner",
+    "risksBannerDesc": "Low margin, unprofitable customers, overdue tasks, at-risk contracts",
     "statCards": "KPI Cards",
     "statCardsDesc": "Revenue, leads, deals, conversion, tickets, campaigns",
     "dealPipeline": "Sales Pipeline",

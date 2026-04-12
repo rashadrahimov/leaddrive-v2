@@ -32,7 +32,7 @@ export default function DashboardPage() {
   const [data, setData] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [widgets, setWidgets] = useState<Record<string, boolean>>({
-    statCards: true, dealPipeline: true, revenueTrend: true, leadSources: true,
+    risksBanner: true, statCards: true, dealPipeline: true, revenueTrend: true, leadSources: true,
     recentDeals: true, aiLeadScoring: true, activityFeed: true,
     campaignStats: true, upcomingEvents: true, weeklyMetrics: true,
     // Legacy
@@ -183,7 +183,7 @@ export default function DashboardPage() {
       )}
 
       {/* ═══ Risks Banner ═══ */}
-      {risks && <RisksBanner risks={risks} />}
+      {widgets.risksBanner && risks && <RisksBanner risks={risks} />}
 
       {/* ═══ Row 2: Pipeline + Revenue Trend + Lead Sources ═══ */}
       <MotionList className="grid lg:grid-cols-3 gap-4" staggerDelay={0.08}>

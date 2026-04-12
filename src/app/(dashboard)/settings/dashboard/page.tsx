@@ -15,7 +15,7 @@ import {
 type WidgetConfig = { enabled: boolean; roles: string[] }
 
 const WIDGET_ICONS: Record<string, any> = {
-  statCards: BarChart3, dealPipeline: Target, revenueTrend: TrendingUp,
+  risksBanner: Shield, statCards: BarChart3, dealPipeline: Target, revenueTrend: TrendingUp,
   leadSources: PieChart, recentDeals: Handshake, aiLeadScoring: Brain,
   activityFeed: Activity, campaignStats: Megaphone, upcomingEvents: Calendar,
   weeklyMetrics: BarChart, recommendedActions: Brain, churnRisk: Shield,
@@ -23,6 +23,7 @@ const WIDGET_ICONS: Record<string, any> = {
 
 // Order matches dashboard layout
 const WIDGET_ORDER = [
+  "risksBanner",
   "statCards",
   "dealPipeline", "revenueTrend", "leadSources",
   "recentDeals", "aiLeadScoring", "activityFeed",

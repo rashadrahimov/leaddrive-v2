@@ -2676,6 +2676,8 @@
     "subtitle": "Blokları söndürün/yandırın — dəyişikliklər avtomatik saxlanılır",
     "active": "aktiv",
     "hidden": "gizli",
+    "risksBanner": "Risk Banneri",
+    "risksBannerDesc": "Aşağı marja, zərərli müştərilər, gecikmiş tapşırıqlar, risk altında müqavilələr",
     "statCards": "KPI Kartları",
     "statCardsDesc": "Gəlir, lidlər, sövdələşmələr, konversiya, tiketlər, kampaniyalar",
     "dealPipeline": "Satış Pipeline",
