@@ -24,6 +24,12 @@ export async function getGoogleCalendarClient(userId: string) {
     throw new Error("Google Calendar not connected. Please connect via Settings → Integrations.")
   }
 
+  // If token expired and no refresh_token, can't proceed
+  const expired = account.expires_at ? account.expires_at * 1000 < Date.now() : false
+  if (expired && !account.refresh_token) {
+    throw new Error("Google Calendar not connected. Token expired — please reconnect via Settings → Integrations.")
+  }
+
   const oauth2Client = createOAuth2Client()
   oauth2Client.setCredentials({
     access_token: account.access_token,

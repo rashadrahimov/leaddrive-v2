@@ -10,17 +10,21 @@ export async function GET(req: NextRequest) {
   const session = await auth()
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
+  // Check for standalone google-calendar first, then SSO google
   const account = await prisma.account.findFirst({
     where: {
       userId: session.user.id,
-      provider: { in: ["google", "google-calendar"] },
+      provider: { in: ["google-calendar", "google"] },
       access_token: { not: null },
     },
-    select: { provider: true, scope: true, expires_at: true },
+    select: { provider: true, scope: true, expires_at: true, refresh_token: true },
+    orderBy: { provider: "asc" }, // "google-calendar" before "google"
   })
 
-  const connected = !!account
+  // Consider connected only if has refresh_token OR token not expired
+  const hasRefreshToken = !!account?.refresh_token
   const expired = account?.expires_at ? account.expires_at * 1000 < Date.now() : false
+  const connected = !!account && (hasRefreshToken || !expired)
 
   return NextResponse.json({
     success: true,
