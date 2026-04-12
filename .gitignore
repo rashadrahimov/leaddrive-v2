@@ -44,3 +44,9 @@ public/generated/*
 # Graphify knowledge graph
 graphify-out/
 .graphify-venv/
+
+# Non-project files
+.graphifyignore
+.obsidian/
+entities.json
+mempalace.yaml
