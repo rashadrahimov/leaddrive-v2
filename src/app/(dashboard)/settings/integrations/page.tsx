@@ -49,6 +49,10 @@ export default function IntegrationsPage() {
   const [newSecret, setNewSecret] = useState("")
   const [showSecret, setShowSecret] = useState(false)
 
+  // Google Calendar
+  const [gcalConnected, setGcalConnected] = useState(false)
+  const [gcalLoading, setGcalLoading] = useState(false)
+
   // Slack
   const [slackConfigs, setSlackConfigs] = useState<SlackConfig[]>([])
   const [showSlackForm, setShowSlackForm] = useState(false)
@@ -74,9 +78,44 @@ export default function IntegrationsPage() {
     } catch {}
   }
 
+  const fetchGcalStatus = async () => {
+    try {
+      const res = await fetch("/api/v1/integrations/google-calendar/status", { headers })
+      const json = await res.json()
+      if (json.success) setGcalConnected(json.data.connected)
+    } catch {}
+  }
+
+  const connectGcal = async () => {
+    setGcalLoading(true)
+    try {
+      const res = await fetch("/api/v1/integrations/google-calendar/connect", { headers })
+      const json = await res.json()
+      if (json.success && json.url) {
+        window.location.href = json.url
+      }
+    } catch {} finally { setGcalLoading(false) }
+  }
+
+  const disconnectGcal = async () => {
+    if (!confirm(t("gcalDisconnectConfirm"))) return
+    setGcalLoading(true)
+    try {
+      await fetch("/api/v1/integrations/google-calendar/status", { method: "DELETE", headers })
+      setGcalConnected(false)
+    } catch {} finally { setGcalLoading(false) }
+  }
+
   useEffect(() => {
     fetchWebhooks()
     fetchSlack()
+    fetchGcalStatus()
+    // Check for gcal callback result in URL
+    const params = new URLSearchParams(window.location.search)
+    if (params.get("gcal") === "success") {
+      setGcalConnected(true)
+      window.history.replaceState({}, "", window.location.pathname)
+    }
   }, [session])
 
   const createWebhook = async () => {
@@ -157,11 +196,22 @@ export default function IntegrationsPage() {
             <p className="text-sm text-muted-foreground">{webhooks.filter(w => w.isActive).length} active</p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className={gcalConnected ? "border-green-200 dark:border-green-800" : ""}>
           <CardContent className="pt-6 text-center">
-            <Calendar className="h-8 w-8 mx-auto mb-2 text-blue-500" />
+            <Calendar className={cn("h-8 w-8 mx-auto mb-2", gcalConnected ? "text-green-500" : "text-blue-500")} />
             <h3 className="font-semibold">{t("googleCalendar")}</h3>
-            <p className="text-sm text-muted-foreground">{t("viaGoogleOAuth")}</p>
+            <p className="text-sm text-muted-foreground mb-3">
+              {gcalConnected ? t("gcalConnected") : t("gcalNotConnected")}
+            </p>
+            {gcalConnected ? (
+              <Button size="sm" variant="outline" onClick={disconnectGcal} disabled={gcalLoading} className="gap-1 text-red-600 border-red-200 hover:bg-red-50">
+                <X className="h-3 w-3" /> {t("gcalDisconnect")}
+              </Button>
+            ) : (
+              <Button size="sm" onClick={connectGcal} disabled={gcalLoading} className="gap-1">
+                <ExternalLink className="h-3 w-3" /> {t("gcalConnect")}
+              </Button>
+            )}
           </CardContent>
         </Card>
         <Card>

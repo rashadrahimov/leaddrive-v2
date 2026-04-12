@@ -4,18 +4,24 @@ import { prisma } from "@/lib/prisma"
 function createOAuth2Client() {
   return new google.auth.OAuth2(
     process.env.GOOGLE_CLIENT_ID,
-    process.env.GOOGLE_CLIENT_SECRET
+    process.env.GOOGLE_CLIENT_SECRET,
+    `${process.env.NEXTAUTH_URL}/api/v1/integrations/google-calendar/callback`
   )
 }
 
 export async function getGoogleCalendarClient(userId: string) {
-  // Get tokens from NextAuth Account model
+  // Get tokens from Account model — check both "google-calendar" (standalone) and "google" (SSO)
   const account = await prisma.account.findFirst({
-    where: { userId, provider: "google" },
+    where: {
+      userId,
+      provider: { in: ["google-calendar", "google"] },
+      access_token: { not: null },
+    },
+    orderBy: { provider: "asc" }, // prefer "google-calendar" (standalone) over "google" (SSO)
   })
 
   if (!account?.access_token) {
-    throw new Error("Google account not connected or missing access token")
+    throw new Error("Google Calendar not connected. Please connect via Settings → Integrations.")
   }
 
   const oauth2Client = createOAuth2Client()
@@ -24,11 +30,11 @@ export async function getGoogleCalendarClient(userId: string) {
     refresh_token: account.refresh_token,
   })
 
-  // Handle token refresh
+  // Handle token refresh — update whichever provider we found
   oauth2Client.on("tokens", async (tokens) => {
     if (tokens.access_token) {
-      await prisma.account.updateMany({
-        where: { userId, provider: "google" },
+      await prisma.account.update({
+        where: { id: account.id },
         data: {
           access_token: tokens.access_token,
           ...(tokens.refresh_token ? { refresh_token: tokens.refresh_token } : {}),

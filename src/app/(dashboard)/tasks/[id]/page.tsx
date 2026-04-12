@@ -242,7 +242,11 @@ export default function TaskDetailPage() {
                   })
                   const json = await res.json()
                   if (json.success) alert("Synced to Google Calendar!")
-                  else alert(json.error || "Failed to sync")
+                  else if (res.status === 403 || json.error?.includes("not connected")) {
+                    if (confirm("Google Calendar not connected. Go to Settings → Integrations to connect?")) {
+                      window.location.href = "/settings/integrations"
+                    }
+                  } else alert(json.error || "Failed to sync")
                 } catch { alert("Failed to sync to Google Calendar") }
                 finally { setSyncing(false) }
               }}
