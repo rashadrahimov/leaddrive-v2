@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { Dialog, DialogHeader, DialogTitle, DialogContent } from "@/components/ui/dialog"
-import { Building2, Users, FileText, X, Copy, Send, RefreshCw, CheckCircle, Trash2, Ban, Plus, Pencil, Brain, Sparkles, Target } from "lucide-react"
+import { Building2, Users, FileText, X, Trash2, Ban, Plus, Pencil, Ticket, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useTranslations, useLocale } from "next-intl"
 import { DEFAULT_CURRENCY } from "@/lib/constants"
@@ -70,7 +70,6 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
   }
 
   const [activeTab, setActiveTab] = useState("details")
-  const [aiLoading, setAiLoading] = useState(false)
 
   // Activity state
   const [showActivityForm, setShowActivityForm] = useState(false)
@@ -82,24 +81,11 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
   // About state
   const [editingAbout, setEditingAbout] = useState(false)
   const [aboutText, setAboutText] = useState("")
-  const [showAllContacts, setShowAllContacts] = useState(false)
 
-  // Sentiment state
-  const [sentiment, setSentiment] = useState<any>(null)
-
-  // Tasks state
-  const [aiTasks, setAiTasks] = useState<any>(null)
-
-  // AI Text state
-  const [textType, setTextType] = useState("Email")
-  const [tone, setTone] = useState("professional")
-  const [instructions, setInstructions] = useState("")
-  const [generatedText, setGeneratedText] = useState<any>(null)
-  const [emailSending, setEmailSending] = useState(false)
-  const [emailSent, setEmailSent] = useState(false)
-  const [emailError, setEmailError] = useState("")
-  const [scoring, setScoring] = useState(false)
+  // Activities & Tickets
   const [activities, setActivities] = useState<any[]>([])
+  const [tickets, setTickets] = useState<any[]>([])
+  const [ticketsLoading, setTicketsLoading] = useState(false)
 
   // Full company data loaded from API
   const [fullData, setFullData] = useState<any>(null)
@@ -107,15 +93,9 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
   useEffect(() => {
     if (open && company) {
       setActiveTab("details")
-      setSentiment(null)
-      setAiTasks(null)
-      setGeneratedText(null)
-      setInstructions("")
       setAboutText(company.description || "")
-      setEmailSent(false)
-      setEmailError("")
       setFullData(null)
-      setShowAllContacts(false)
+      setTickets([])
       // Load full company data with contacts and deals
       fetch(`/api/v1/companies/${company.id}`, {
         headers: orgId ? { "x-organization-id": orgId } : {} as Record<string, string>,
@@ -129,20 +109,6 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
   }, [open, company])
 
   if (!company) return null
-
-  const callAI = async (action: string, options?: any) => {
-    setAiLoading(true)
-    try {
-      const res = await fetch("/api/v1/ai", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": orgId } : {} as Record<string, string>) },
-        body: JSON.stringify({ action, companyId: company.id, options, locale }),
-      })
-      const json = await res.json()
-      if (json.success) return json.data
-    } catch (err) { console.error(err) } finally { setAiLoading(false) }
-    return null
-  }
 
   // Universal field update + reload
   const updateField = async (fields: Record<string, any>) => {
@@ -211,44 +177,28 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
     } finally { setActivitySaving(false) }
   }
 
-  const sendGeneratedEmail = async () => {
-    if (!generatedText) return
-    const firstContact = (fullData?.contacts || company.contacts)?.[0]
-    if (!firstContact?.email) { toast.error(t("ldmNoEmailForSend")); return }
-    setEmailSending(true)
-    setEmailError("")
+  const loadTickets = async () => {
+    setTicketsLoading(true)
     try {
-      const res = await fetch("/api/v1/inbox", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": orgId } : {} as Record<string, string>) },
-        body: JSON.stringify({
-          to: firstContact.email,
-          body: generatedText.body,
-          subject: generatedText.subject,
-          contactId: firstContact.id,
-        }),
+      const res = await fetch(`/api/v1/tickets?companyId=${company.id}`, {
+        headers: orgId ? { "x-organization-id": orgId } : {} as Record<string, string>,
       })
       const json = await res.json()
-      if (json.success) {
-        setEmailSent(true)
-      } else {
-        setEmailError(json.error || t("ldmSendError"))
-      }
-    } catch { setEmailError(t("ldmNetworkError")) } finally { setEmailSending(false) }
+      if (json.success) setTickets(json.data?.tickets || [])
+    } catch (err) { console.error(err) } finally { setTicketsLoading(false) }
   }
 
   const currentScore = fullData?.leadScore ?? company.leadScore ?? 0
   const temp = fullData?.leadTemperature || company.leadTemperature || "cold"
   const grade = getGrade(currentScore)
-  const convProb = Math.round(currentScore * 0.85)
 
   const tabs = [
     { id: "details", label: t("modalDetails") },
+    { id: "contacts", label: t("modalContacts") },
+    { id: "deals", label: t("modalDeals") },
     { id: "activity", label: t("modalActivity") },
-    { id: "sentiment", label: t("modalSentiment") },
-    { id: "tasks", label: t("modalTasks") },
-    { id: "aitext", label: t("modalAiText") },
-    { id: "ai", label: t("modalAiScoring") },
+    { id: "contracts", label: t("modalContracts") },
+    { id: "tickets", label: t("modalTickets") },
   ]
 
   return (
@@ -275,7 +225,7 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
           {tabs.map(tab => (
             <button
               key={tab.id}
-              onClick={() => { setActiveTab(tab.id); if (tab.id === "activity" && !activities.length) loadActivities() }}
+              onClick={() => { setActiveTab(tab.id); if (tab.id === "activity" && !activities.length) loadActivities(); if (tab.id === "tickets" && !tickets.length) loadTickets() }}
               className={`px-3 py-2 text-sm whitespace-nowrap border-b-2 transition-colors ${
                 activeTab === tab.id
                   ? "border-primary text-primary font-medium"
@@ -384,108 +334,97 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
               )}
             </div>
 
-            {/* Contacts with add/edit/delete */}
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <h4 className="font-medium text-sm">{t("ldmKeyPeople")} ({fullData?.contacts?.length || company._count?.contacts || 0})</h4>
-                <div className="flex gap-1">
-                  <Button variant="outline" size="sm" className="h-6 text-xs gap-1" onClick={() => { onOpenChange(false); router.push(`/contacts?new=1&companyId=${company.id}`) }}>
-                    <Plus className="h-3 w-3" /> {t("ldmAdd")}
-                  </Button>
-                  <Button variant="ghost" size="sm" className="h-6 text-xs" onClick={() => { onOpenChange(false); router.push(`/companies/${company.id}`) }}>
-                    {t("ldmAll")}
-                  </Button>
-                </div>
+            {/* Quick stats */}
+            <div className="grid grid-cols-4 gap-2">
+              <div className="text-center p-2 bg-muted/30 rounded">
+                <p className="text-lg font-bold">{fullData?.contacts?.length || company._count?.contacts || 0}</p>
+                <p className="text-[10px] text-muted-foreground">{t("ldmKeyPeople")}</p>
               </div>
-              {(fullData?.contacts || company.contacts) && (fullData?.contacts || company.contacts).length > 0 ? (
-                <div className="space-y-1.5">
-                  {(showAllContacts ? (fullData?.contacts || company.contacts) : (fullData?.contacts || company.contacts).slice(0, 5)).map((c: any) => (
-                    <div key={c.id} className="flex items-center justify-between p-2 bg-muted/30 rounded border border-transparent hover:border-border transition-colors">
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-1.5">
-                          <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-bold text-primary flex-shrink-0">
-                            {c.fullName?.charAt(0) || "?"}
-                          </div>
-                          <div className="min-w-0">
-                            <p className="text-xs font-medium truncate">{c.fullName}</p>
-                            <p className="text-[10px] text-muted-foreground truncate">{c.position || ""} {c.email ? `· ${c.email}` : ""}</p>
-                          </div>
+              <div className="text-center p-2 bg-muted/30 rounded">
+                <p className="text-lg font-bold">{(fullData?.deals || company.deals)?.length || 0}</p>
+                <p className="text-[10px] text-muted-foreground">{t("ldmDeals")}</p>
+              </div>
+              <div className="text-center p-2 bg-muted/30 rounded">
+                <p className="text-lg font-bold">{fullData?.contracts?.length || 0}</p>
+                <p className="text-[10px] text-muted-foreground">{t("ldmContracts")}</p>
+              </div>
+              <div className="text-center p-2 bg-muted/30 rounded">
+                <p className={cn("text-lg font-bold", grade.color.replace("bg-", "text-").replace(" text-white", ""))}>{grade.letter}</p>
+                <p className="text-[10px] text-muted-foreground">{currentScore}/100</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Tab: Contacts */}
+        {activeTab === "contacts" && (
+          <div className="space-y-2">
+            <div className="flex items-center justify-between mb-2">
+              <h4 className="font-medium text-sm">{t("ldmKeyPeople")} ({fullData?.contacts?.length || company._count?.contacts || 0})</h4>
+              <Button variant="outline" size="sm" className="h-6 text-xs gap-1" onClick={() => { onOpenChange(false); router.push(`/contacts?new=1&companyId=${company.id}`) }}>
+                <Plus className="h-3 w-3" /> {t("ldmAdd")}
+              </Button>
+            </div>
+            {(fullData?.contacts || company.contacts) && (fullData?.contacts || company.contacts).length > 0 ? (
+              <div className="space-y-1.5">
+                {(fullData?.contacts || company.contacts).map((c: any) => (
+                  <div key={c.id} className="flex items-center justify-between p-2 bg-muted/30 rounded border border-transparent hover:border-border transition-colors">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5">
+                        <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-bold text-primary flex-shrink-0">
+                          {c.fullName?.charAt(0) || "?"}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-xs font-medium truncate">{c.fullName}</p>
+                          <p className="text-[10px] text-muted-foreground truncate">{c.position || ""} {c.email ? `· ${c.email}` : ""}</p>
                         </div>
                       </div>
-                      <div className="flex gap-0.5 ml-2 flex-shrink-0">
-                        <button onClick={() => { onOpenChange(false); router.push(`/contacts/${c.id}`) }} className="p-1 rounded hover:bg-muted" title={t("ldmEdit")}>
-                          <Pencil className="h-3 w-3 text-muted-foreground" />
-                        </button>
-                        <button onClick={async () => {
-                          if (!confirm(t("ldmConfirmDeleteContact", { name: c.fullName }))) return
-                          await fetch(`/api/v1/contacts/${c.id}`, { method: "DELETE", headers: orgId ? { "x-organization-id": orgId } : {} as Record<string, string> })
-                          // Reload full data
-                          const res = await fetch(`/api/v1/companies/${company.id}`, { headers: orgId ? { "x-organization-id": orgId } : {} as Record<string, string> })
-                          const json = await res.json()
-                          if (json.success) setFullData(json.data)
-                          onSaved?.()
-                        }} className="p-1 rounded hover:bg-red-50" title={t("ldmDelete")}>
-                          <Trash2 className="h-3 w-3 text-muted-foreground hover:text-red-500" />
-                        </button>
-                      </div>
                     </div>
-                  ))}
-                  {(fullData?.contacts || company.contacts).length > 5 && !showAllContacts && (
-                    <button
-                      onClick={() => setShowAllContacts(true)}
-                      className="w-full text-xs text-center text-primary hover:underline py-1"
-                    >
-                      {t("ldmShowMore", { count: (fullData?.contacts || company.contacts).length - 5 })}
-                    </button>
-                  )}
-                  {showAllContacts && (fullData?.contacts || company.contacts).length > 5 && (
-                    <button
-                      onClick={() => setShowAllContacts(false)}
-                      className="w-full text-xs text-center text-muted-foreground hover:underline py-1"
-                    >
-                      {t("ldmCollapse")}
-                    </button>
-                  )}
+                    <div className="flex gap-0.5 ml-2 flex-shrink-0">
+                      <button onClick={() => { onOpenChange(false); router.push(`/contacts/${c.id}`) }} className="p-1 rounded hover:bg-muted" title={t("ldmEdit")}>
+                        <Pencil className="h-3 w-3 text-muted-foreground" />
+                      </button>
+                      <button onClick={async () => {
+                        if (!confirm(t("ldmConfirmDeleteContact", { name: c.fullName }))) return
+                        await fetch(`/api/v1/contacts/${c.id}`, { method: "DELETE", headers: orgId ? { "x-organization-id": orgId } : {} as Record<string, string> })
+                        const res = await fetch(`/api/v1/companies/${company.id}`, { headers: orgId ? { "x-organization-id": orgId } : {} as Record<string, string> })
+                        const json = await res.json()
+                        if (json.success) setFullData(json.data)
+                        onSaved?.()
+                      }} className="p-1 rounded hover:bg-red-50" title={t("ldmDelete")}>
+                        <Trash2 className="h-3 w-3 text-muted-foreground hover:text-red-500" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : <p className="text-xs text-muted-foreground py-4 text-center">{t("ldmNoContacts")}</p>}
+          </div>
+        )}
+
+        {/* Tab: Deals */}
+        {activeTab === "deals" && (
+          <div className="space-y-2">
+            <div className="flex items-center justify-between mb-2">
+              <h4 className="font-medium text-sm">{t("ldmDeals")} ({(fullData?.deals || company.deals)?.length || 0})</h4>
+              {(fullData?.deals || company.deals)?.length > 0 && (
+                <p className="text-xs font-medium text-primary">
+                  Pipeline: {(fullData?.deals || company.deals).reduce((sum: number, d: any) => sum + (d.valueAmount || 0), 0).toLocaleString()} ₼
+                </p>
+              )}
+            </div>
+            {(fullData?.deals || company.deals) && (fullData?.deals || company.deals).length > 0 ? (
+              (fullData?.deals || company.deals).map((d: any) => (
+                <div key={d.id} className="flex justify-between items-center text-xs p-2.5 bg-muted/30 rounded border border-transparent hover:border-border transition-colors cursor-pointer"
+                  onClick={() => { onOpenChange(false); router.push(`/deals/${d.id}`) }}>
+                  <span className="font-medium">{d.name || d.title}</span>
+                  <div className="flex gap-1.5 items-center">
+                    {d.valueAmount ? <span className="font-medium">{d.valueAmount.toLocaleString()} ₼</span> : null}
+                    <Badge variant="outline" className="text-[10px]">{d.stage}</Badge>
+                  </div>
                 </div>
-              ) : <p className="text-xs text-muted-foreground">{t("ldmNoContacts")}</p>}
-            </div>
-
-            {/* Deals */}
-            <div>
-              <h4 className="font-medium text-sm mb-1">{t("ldmDeals")} ({(fullData?.deals || company.deals)?.length || 0})</h4>
-              {(fullData?.deals || company.deals) && (fullData?.deals || company.deals).length > 0 ? (
-                (fullData?.deals || company.deals).map((d: any) => (
-                  <div key={d.id} className="flex justify-between text-xs p-2 bg-muted/30 rounded mb-1">
-                    <span>{d.name || d.title}</span>
-                    <div className="flex gap-1">
-                      {d.valueAmount ? <span className="font-medium">{d.valueAmount.toLocaleString()} ₼</span> : null}
-                      <Badge variant="outline" className="text-[10px]">{d.stage}</Badge>
-                    </div>
-                  </div>
-                ))
-              ) : <p className="text-xs text-muted-foreground">{t("ldmNoDeals")}</p>}
-            </div>
-
-            {/* Contracts */}
-            <div>
-              <h4 className="font-medium text-sm mb-1">{t("ldmContracts")} ({fullData?.contracts?.length || 0})</h4>
-              {fullData?.contracts && fullData.contracts.length > 0 ? (
-                fullData.contracts.map((c: any) => (
-                  <div key={c.id} className="flex justify-between items-center text-xs p-2 bg-muted/30 rounded mb-1">
-                    <div className="min-w-0 flex-1">
-                      <span className="font-medium">{c.contractNumber}</span>
-                      <span className="text-muted-foreground ml-1.5">{c.title}</span>
-                    </div>
-                    <div className="flex items-center gap-1.5 flex-shrink-0 ml-2">
-                      {c.valueAmount ? <span className="font-medium">{c.valueAmount.toLocaleString()} {c.currency || DEFAULT_CURRENCY}</span> : null}
-                      <Badge variant={c.status === "active" ? "default" : c.status === "expired" ? "destructive" : "secondary"} className="text-[10px]">
-                        {c.status}
-                      </Badge>
-                    </div>
-                  </div>
-                ))
-              ) : <p className="text-xs text-muted-foreground">{t("ldmNoContracts")}</p>}
-            </div>
+              ))
+            ) : <p className="text-xs text-muted-foreground py-4 text-center">{t("ldmNoDeals")}</p>}
           </div>
         )}
 
@@ -552,226 +491,81 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
           </div>
         )}
 
-        {/* Tab: Sentiment */}
-        {activeTab === "sentiment" && (
-          <div className="space-y-4">
-            {!sentiment ? (
-              <div className="text-center py-4">
-                <Button onClick={async () => { const d = await callAI("sentiment"); if (d) setSentiment(d) }} disabled={aiLoading} className="gap-2">
-                  {aiLoading ? t("modalAnalyzing") : t("modalAnalyzeSentiment")}
-                </Button>
-                <p className="text-sm text-muted-foreground mt-2">{t("modalSentimentDesc")}</p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                <div className="flex flex-col items-center">
-                  <div className="relative w-24 h-24 flex items-center justify-center">
-                    <svg className="w-24 h-24" viewBox="0 0 100 100">
-                      <circle cx="50" cy="50" r="45" fill="none" stroke="#e5e7eb" strokeWidth="8" />
-                      <circle cx="50" cy="50" r="45" fill="none" stroke={sentiment.score >= 70 ? "#22c55e" : sentiment.score >= 40 ? "#3b82f6" : "#ef4444"} strokeWidth="8" strokeDasharray={`${sentiment.score * 2.83} 283`} strokeLinecap="round" transform="rotate(-90 50 50)" />
-                    </svg>
-                    <div className="absolute text-center">
-                      <div className="text-2xl">{sentiment.emoji}</div>
-                      <div className="text-sm font-bold">{sentiment.score}%</div>
-                    </div>
-                  </div>
-                  <p className="font-bold mt-2">{sentiment.sentiment}</p>
-                </div>
-                <div className="grid grid-cols-3 gap-2">
-                  <Card><CardContent className="pt-2 pb-2 text-center">
-                    <p className="text-[10px] text-muted-foreground">TREND</p>
-                    <p className="text-sm font-medium">{sentiment.trend === "improving" ? "📈" : sentiment.trend === "stable" ? "➡️" : "❓"} {sentiment.trend}</p>
-                  </CardContent></Card>
-                  <Card><CardContent className="pt-2 pb-2 text-center">
-                    <p className="text-[10px] text-muted-foreground">RISK</p>
-                    <p className={`text-sm font-bold ${sentiment.risk === "HIGH" ? "text-red-500" : sentiment.risk === "MEDIUM" ? "text-orange-500" : "text-green-500"}`}>{sentiment.risk}</p>
-                  </CardContent></Card>
-                  <Card><CardContent className="pt-2 pb-2 text-center">
-                    <p className="text-[10px] text-muted-foreground">CONFIDENCE</p>
-                    <p className="text-sm font-bold text-primary">{sentiment.confidence}%</p>
-                  </CardContent></Card>
-                </div>
-                <div className="bg-muted/50 p-3 rounded-lg">
-                  <p className="text-[10px] font-medium text-muted-foreground mb-1">{t("ldmSummary")}</p>
-                  <p className="text-sm">{sentiment.summary}</p>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Tab: Tasks */}
-        {activeTab === "tasks" && (
-          <div className="space-y-4">
-            {!aiTasks ? (
-              <div className="text-center py-4">
-                <Button onClick={async () => { const d = await callAI("tasks"); if (d) setAiTasks(d) }} disabled={aiLoading} className="gap-2">
-                  {aiLoading ? t("modalAnalyzing") : t("modalGenerateTasks")}
-                </Button>
-                <p className="text-sm text-muted-foreground mt-2">{t("modalSentimentDesc")}</p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                <div className="bg-yellow-50 dark:bg-yellow-900/20 p-3 rounded-lg text-sm">
-                  <p>💡 {aiTasks.strategy}</p>
-                </div>
-                {aiTasks.tasks.map((task: any, i: number) => (
-                  <Card key={i}>
-                    <CardContent className="pt-3 pb-3">
-                      <div className="flex items-center justify-between mb-1">
-                        <h4 className="font-medium text-sm">{task.type === "email" ? "📧" : task.type === "call" ? "📞" : task.type === "meeting" ? "📨" : "📋"} {task.title}</h4>
-                        <div className="flex gap-1">
-                          <Badge variant={task.priority === "HIGH" ? "destructive" : "secondary"} className="text-[10px]">{task.priority}</Badge>
-                          <Badge variant="outline" className="text-[10px]">{task.type}</Badge>
-                        </div>
-                      </div>
-                      <p className="text-xs text-muted-foreground mb-1">{task.description}</p>
-                      <p className="text-[10px] text-muted-foreground">📅 {task.dueDate}</p>
-                    </CardContent>
-                  </Card>
-                ))}
-                <div className="flex gap-2 justify-center">
-                  <Button size="sm" className="gap-1"><CheckCircle className="h-3 w-3" /> {t("ldmCreateAllTasks")}</Button>
-                  <Button size="sm" variant="outline" onClick={async () => { const d = await callAI("tasks"); if (d) setAiTasks(d) }} className="gap-1"><RefreshCw className="h-3 w-3" /> {t("modalRegenerate")}</Button>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Tab: AI Text — FIX #8: email sending works */}
-        {activeTab === "aitext" && (
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label className="text-xs">{t("ldmTextType")}</Label>
-                <Select value={textType} onChange={e => setTextType(e.target.value)}>
-                  <option value="Email">📧 Email</option>
-                  <option value="SMS">📱 SMS</option>
-                </Select>
-              </div>
-              <div>
-                <Label className="text-xs">{t("ldmTone")}</Label>
-                <Select value={tone} onChange={e => setTone(e.target.value)}>
-                  <option value="professional">🏢 {t("ldmToneProfessional")}</option>
-                  <option value="friendly">😊 {t("ldmToneFriendly")}</option>
-                  <option value="formal">📋 {t("ldmToneFormal")}</option>
-                  <option value="persuasive">💪 {t("ldmTonePersuasive")}</option>
-                </Select>
-              </div>
-            </div>
-            <div>
-              <Label className="text-xs">{t("ldmInstructions")}</Label>
-              <Textarea value={instructions} onChange={e => setInstructions(e.target.value)} rows={2} placeholder={t("ldmInstructionsPlaceholder")} />
-            </div>
-            <Button onClick={async () => { const d = await callAI("text", { textType, tone, instructions }); if (d) { setGeneratedText(d); setEmailSent(false) } }} disabled={aiLoading} className="w-full gap-2">
-              {aiLoading ? t("modalAnalyzing") : t("modalGenerateText")}
-            </Button>
-
-            {generatedText && (
-              <div className="space-y-3">
-                {generatedText.subject && (
-                  <div>
-                    <Label className="text-xs text-primary">{t("ldmSubject")}</Label>
-                    <Input value={generatedText.subject} onChange={(e: any) => setGeneratedText({ ...generatedText, subject: e.target.value })} className="mt-1" />
-                  </div>
-                )}
-                <div>
-                  <Label className="text-xs">{t("ldmEmailText")}</Label>
-                  <Textarea value={generatedText.body} rows={6} onChange={(e: any) => setGeneratedText({ ...generatedText, body: e.target.value })} className="mt-1" />
-                </div>
-                <div className="flex gap-2 justify-center">
-                  <Button size="sm" variant="outline" onClick={() => navigator.clipboard.writeText(generatedText.body)} className="gap-1">
-                    <Copy className="h-3 w-3" /> {t("ldmCopy")}
-                  </Button>
-                  <Button size="sm" onClick={sendGeneratedEmail} disabled={emailSending || emailSent} className="gap-1">
-                    <Send className="h-3 w-3" /> {emailSent ? `✅ ${t("ldmEmailSent")}` : emailSending ? t("ldmEmailSending") : t("ldmSendEmail")}
-                  </Button>
-                  <Button size="sm" variant="outline" onClick={async () => { const d = await callAI("text", { textType, tone, instructions }); if (d) { setGeneratedText(d); setEmailSent(false) } }} className="gap-1">
-                    <RefreshCw className="h-3 w-3" /> {t("modalRegenerate")}
-                  </Button>
-                </div>
-                {emailError && (
-                  <p className="text-sm text-red-500 text-center">{emailError}</p>
-                )}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Tab: AI Scoring */}
-        {activeTab === "ai" && (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h4 className="font-medium text-sm flex items-center gap-1.5">
-                <Brain className="h-4 w-4 text-purple-500" /> {t("ldmDaVinciScoring")}
-              </h4>
-              <Button size="sm" variant="outline" className="gap-1 text-xs" onClick={async () => {
-                setScoring(true)
-                try {
-                  const d = await callAI("sentiment")
-                  if (d) {
-                    await updateField({ leadScore: d.score })
-                  }
-                } catch (err) { console.error(err) } finally { setScoring(false) }
-              }} disabled={scoring}>
-                {scoring ? t("ldmRecalculating") : t("ldmRecalculate")}
+        {/* Tab: Contracts */}
+        {activeTab === "contracts" && (
+          <div className="space-y-2">
+            <div className="flex items-center justify-between mb-2">
+              <h4 className="font-medium text-sm">{t("ldmContracts")} ({fullData?.contracts?.length || 0})</h4>
+              <Button variant="outline" size="sm" className="h-6 text-xs gap-1" onClick={() => { onOpenChange(false); router.push(`/contracts?new=1&companyId=${company.id}`) }}>
+                <Plus className="h-3 w-3" /> {t("ldmAdd")}
               </Button>
             </div>
-
-            {/* Score display */}
-            <div className="flex items-center gap-6 justify-center py-4">
-              <div className="text-center">
-                <span className={cn("inline-flex items-center justify-center w-16 h-16 rounded-full text-2xl font-bold shadow-sm", grade.color)}>
-                  {grade.letter}
-                </span>
-                <p className="text-sm font-bold mt-2">{currentScore}/100</p>
-                <p className="text-[10px] text-muted-foreground">Score</p>
-              </div>
-              <div className="text-center">
-                <div className={cn("text-2xl font-bold", temp === "hot" ? "text-red-500" : temp === "warm" ? "text-orange-500" : "text-blue-500")}>
-                  {(temp || "cold").toUpperCase()}
+            {fullData?.contracts && fullData.contracts.length > 0 ? (
+              fullData.contracts.map((c: any) => (
+                <div key={c.id} className="flex justify-between items-center text-xs p-2.5 bg-muted/30 rounded border border-transparent hover:border-border transition-colors cursor-pointer"
+                  onClick={() => { onOpenChange(false); router.push(`/contracts/${c.id}`) }}>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium truncate">{c.title || c.contractNumber || "—"}</p>
+                    <p className="text-[10px] text-muted-foreground">{c.startDate ? new Date(c.startDate).toLocaleDateString() : ""} {c.endDate ? `— ${new Date(c.endDate).toLocaleDateString()}` : ""}</p>
+                  </div>
+                  <div className="flex gap-1.5 items-center ml-2">
+                    {c.totalValue ? <span className="font-medium">{c.totalValue.toLocaleString()} ₼</span> : null}
+                    <Badge variant={c.status === "active" ? "default" : "outline"} className="text-[10px]">{c.status || "draft"}</Badge>
+                  </div>
                 </div>
-                <p className="text-[10px] text-muted-foreground mt-1">{t("ldmTemperature")}</p>
+              ))
+            ) : (
+              <div className="text-center py-6 text-muted-foreground">
+                <FileText className="h-8 w-8 mx-auto mb-2 opacity-30" />
+                <p className="text-sm">{t("ldmNoContracts")}</p>
+                <p className="text-xs mt-1">{t("ldmNoContractsHint")}</p>
               </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-primary">{convProb}%</div>
-                <p className="text-[10px] text-muted-foreground mt-1">{t("ldmConversion")}</p>
-              </div>
-            </div>
+            )}
+          </div>
+        )}
 
-            {/* Score bar */}
-            <div className="p-3 bg-muted/30 rounded-lg">
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-xs text-muted-foreground">Da Vinci Score</span>
-                <span className="text-xs font-bold">{currentScore}/100</span>
-              </div>
-              <div className="h-2 bg-muted rounded-full overflow-hidden">
-                <div
-                  className={cn("h-full rounded-full transition-all", currentScore >= 80 ? "bg-green-500" : currentScore >= 60 ? "bg-blue-500" : currentScore >= 40 ? "bg-yellow-500" : "bg-red-500")}
-                  style={{ width: `${currentScore}%` }}
-                />
-              </div>
+        {/* Tab: Tickets */}
+        {activeTab === "tickets" && (
+          <div className="space-y-2">
+            <div className="flex items-center justify-between mb-2">
+              <h4 className="font-medium text-sm">{t("ldmTickets")} ({tickets.length})</h4>
+              <Button variant="outline" size="sm" className="h-6 text-xs gap-1" onClick={() => { onOpenChange(false); router.push(`/tickets?new=1&companyId=${company.id}`) }}>
+                <Plus className="h-3 w-3" /> {t("ldmAdd")}
+              </Button>
             </div>
-
-            <div className="grid grid-cols-3 gap-3 text-center">
-              <Card><CardContent className="pt-4 pb-4">
-                <div className={cn("text-3xl font-bold", grade.color.replace("bg-", "text-").replace(" text-white", ""))}>
-                  {grade.letter}
+            {ticketsLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+              </div>
+            ) : tickets.length > 0 ? (
+              tickets.map((tk: any) => (
+                <div key={tk.id} className="flex justify-between items-center text-xs p-2.5 bg-muted/30 rounded border border-transparent hover:border-border transition-colors cursor-pointer"
+                  onClick={() => { onOpenChange(false); router.push(`/tickets/${tk.id}`) }}>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[10px] text-muted-foreground font-mono">{tk.ticketNumber}</span>
+                      <p className="font-medium truncate">{tk.subject}</p>
+                    </div>
+                    <p className="text-[10px] text-muted-foreground mt-0.5">
+                      {tk.createdAt ? new Date(tk.createdAt).toLocaleDateString() : ""}
+                      {tk.assigneeName ? ` · ${tk.assigneeName}` : ""}
+                    </p>
+                  </div>
+                  <div className="flex gap-1.5 items-center ml-2">
+                    <Badge variant={tk.priority === "critical" ? "destructive" : tk.priority === "high" ? "default" : "outline"} className="text-[10px]">
+                      {tk.priority || "medium"}
+                    </Badge>
+                    <Badge variant="outline" className="text-[10px]">{tk.status || "new"}</Badge>
+                  </div>
                 </div>
-                <div className="text-xs text-muted-foreground mt-1">{t("ldmGrade")}</div>
-              </CardContent></Card>
-              <Card><CardContent className="pt-4 pb-4">
-                <div className="text-3xl font-bold text-primary">{currentScore}</div>
-                <div className="text-xs text-muted-foreground mt-1">{t("ldmPoints")}</div>
-              </CardContent></Card>
-              <Card><CardContent className="pt-4 pb-4">
-                <div className={cn("text-3xl font-bold", convProb >= 50 ? "text-green-600" : convProb >= 30 ? "text-yellow-600" : "text-red-500")}>
-                  {convProb}%
-                </div>
-                <div className="text-xs text-muted-foreground mt-1">{t("ldmProbability")}</div>
-              </CardContent></Card>
-            </div>
+              ))
+            ) : (
+              <div className="text-center py-6 text-muted-foreground">
+                <Ticket className="h-8 w-8 mx-auto mb-2 opacity-30" />
+                <p className="text-sm">{t("ldmNoTickets")}</p>
+                <p className="text-xs mt-1">{t("ldmNoTicketsHint")}</p>
+              </div>
+            )}
           </div>
         )}
 

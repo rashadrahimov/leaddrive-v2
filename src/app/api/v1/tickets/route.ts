@@ -29,6 +29,7 @@ export async function GET(req: NextRequest) {
 
   const { searchParams } = new URL(req.url)
   const status = searchParams.get("status") || ""
+  const companyId = searchParams.get("companyId") || ""
   const page = parseInt(searchParams.get("page") || "1")
   const limit = parseInt(searchParams.get("limit") || "50")
 
@@ -36,6 +37,7 @@ export async function GET(req: NextRequest) {
     let where: any = {
       organizationId: orgId,
       ...(status ? { status } : {}),
+      ...(companyId ? { companyId } : {}),
     }
     where = await applyRecordFilter(orgId, session?.userId || "", role, "ticket", where)
 
