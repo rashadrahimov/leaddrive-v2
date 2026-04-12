@@ -18,6 +18,7 @@ const updateJourneySchema = z.object({
   status: z.enum(["draft", "active", "paused", "completed"]).optional(),
   triggerType: z.string().optional(),
   triggerConditions: z.any().optional(),
+  segmentId: z.string().nullable().optional(),
   steps: z.array(stepSchema).optional(),
   // Goal tracking
   goalType: z.string().nullable().optional(),

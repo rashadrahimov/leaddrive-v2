@@ -1065,6 +1065,7 @@ model Journey {
   status         String   @default("draft")
   triggerType    String
   triggerConditions Json?
+  segmentId      String?   // Filter audience by segment
   entryCount     Int      @default(0)
   activeCount    Int      @default(0)
   completedCount Int      @default(0)

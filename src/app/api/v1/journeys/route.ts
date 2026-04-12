@@ -9,6 +9,7 @@ const createJourneySchema = z.object({
   status: z.enum(["draft", "active", "paused", "completed"]).optional(),
   triggerType: z.string().optional(),
   triggerConditions: z.any().optional(),
+  segmentId: z.string().nullable().optional(),
   // Goal tracking
   goalType: z.string().nullable().optional(),
   goalConditions: z.any().nullable().optional(),
