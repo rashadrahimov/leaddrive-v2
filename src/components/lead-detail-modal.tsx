@@ -10,9 +10,9 @@ import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { Dialog, DialogHeader, DialogTitle, DialogContent } from "@/components/ui/dialog"
-import { Building2, Users, FileText, X, Trash2, Ban, Plus, Pencil, Ticket, Loader2 } from "lucide-react"
+import { FileText, X, Trash2, Ban, Plus, Pencil, Ticket, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { useTranslations, useLocale } from "next-intl"
+import { useTranslations } from "next-intl"
 import { DEFAULT_CURRENCY } from "@/lib/constants"
 import { toast } from "sonner"
 
@@ -62,7 +62,6 @@ function getGrade(score: number): { letter: string; color: string } {
 export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }: LeadDetailModalProps) {
   const router = useRouter()
   const t = useTranslations("leads")
-  const locale = useLocale()
 
   const statusLabels: Record<string, string> = {
     new: t("ldmStatusNew"), contacted: t("ldmStatusContacted"), qualified: t("ldmStatusQualified"),
