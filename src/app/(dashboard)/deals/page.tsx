@@ -178,15 +178,23 @@ export default function DealsPage() {
   const handleDealMove = useCallback(async (dealId: string, newStage: string) => {
     setDeals(prev => prev.map(d => d.id === dealId ? { ...d, stage: newStage } : d))
     try {
-      await fetch(`/api/v1/deals/${dealId}`, {
+      const res = await fetch(`/api/v1/deals/${dealId}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>),
+        },
         body: JSON.stringify({ stage: newStage }),
       })
+      if (!res.ok) {
+        console.error("Deal move failed:", await res.text())
+        fetchDeals()
+      }
     } catch {
       fetchDeals()
     }
-  }, [])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [orgId])
 
   const handleDelete = async () => {
     if (!deleteId) return
