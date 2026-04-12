@@ -15,6 +15,7 @@ import { Select } from "@/components/ui/select"
 import { CheckSquare, Plus, Clock, AlertTriangle, Pencil, Trash2, CalendarDays, ListChecks, ChevronLeft, ChevronRight, Link2, Copy, Check, ExternalLink, Columns3 } from "lucide-react"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
 import { cn } from "@/lib/utils"
+import { MotionList, MotionItem } from "@/components/ui/motion"
 
 interface Task {
   id: string
@@ -670,16 +671,16 @@ export default function TasksPage() {
       )}
 
       {view === "kanban" && (
-        <div className="flex gap-4 overflow-x-auto pb-4">
+        <MotionList className="flex gap-4 overflow-x-auto pb-4" staggerDelay={0.08}>
           {(["pending", "in_progress", "completed"] as const).map((status) => (
-            <div key={status} className="min-w-[280px] flex-shrink-0">
+            <MotionItem key={status} className="min-w-[280px] flex-shrink-0">
               <div className="mb-3 flex items-center gap-2">
                 <span className="text-sm font-semibold">{statusLabels[status]}</span>
                 <span className="rounded-full bg-muted px-2 py-0.5 text-xs">{filtered.filter(t => status === "pending" ? (t.status === "pending" || t.status === "todo") : t.status === status).length}</span>
               </div>
               <div className="space-y-2 min-h-[200px] rounded-lg border-2 border-dashed border-transparent p-2 hover:border-muted-foreground/20">
                 {filtered.filter(t => status === "pending" ? (t.status === "pending" || t.status === "todo") : t.status === status).map(task => (
-                  <div key={task.id} className="rounded-lg border bg-card p-3 cursor-pointer hover:shadow-sm transition-shadow" onClick={() => router.push(`/tasks/${task.id}`)}>
+                  <div key={task.id} className="rounded-lg border bg-card p-3 cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-[shadow,transform] duration-200" onClick={() => router.push(`/tasks/${task.id}`)}>
                     <div className="flex items-center gap-2 mb-1">
                       <button
                         onClick={(e) => { e.stopPropagation(); toggleComplete(task) }}
@@ -706,9 +707,9 @@ export default function TasksPage() {
                   </div>
                 ))}
               </div>
-            </div>
+            </MotionItem>
           ))}
-        </div>
+        </MotionList>
       )}
 
       {view === "calendar" && (

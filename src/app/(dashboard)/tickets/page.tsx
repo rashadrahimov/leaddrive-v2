@@ -14,6 +14,7 @@ import { TicketForm } from "@/components/ticket-form"
 import { Ticket, Plus, Clock, AlertTriangle, CheckCircle, Pencil, Trash2, UserX, ShieldAlert } from "lucide-react"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
 import { cn } from "@/lib/utils"
+import { MotionList, MotionItem } from "@/components/ui/motion"
 
 interface TicketData {
   id: string
@@ -341,16 +342,16 @@ export default function TicketsPage() {
       )}
 
       {view === "kanban" && (
-        <div className="flex gap-4 overflow-x-auto pb-4">
+        <MotionList className="flex gap-4 overflow-x-auto pb-4" staggerDelay={0.06}>
           {["new", "open", "in_progress", "waiting", "resolved"].map((status) => (
-            <div key={status} className="min-w-[280px] flex-shrink-0">
+            <MotionItem key={status} className="min-w-[280px] flex-shrink-0">
               <div className="mb-3 flex items-center gap-2">
                 <span className="text-sm font-semibold">{statusLabels[status]}</span>
                 <span className="rounded-full bg-muted px-2 py-0.5 text-xs">{tickets.filter(t => t.status === status).length}</span>
               </div>
               <div className="space-y-2 min-h-[200px] rounded-lg border-2 border-dashed border-transparent p-2 hover:border-muted-foreground/20">
                 {tickets.filter(t => t.status === status).map(ticket => (
-                  <div key={ticket.id} className="rounded-lg border bg-card p-3 cursor-pointer hover:shadow-sm transition-shadow" onClick={() => router.push(`/tickets/${ticket.id}`)}>
+                  <div key={ticket.id} className="rounded-lg border bg-card p-3 cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-[shadow,transform] duration-200" onClick={() => router.push(`/tickets/${ticket.id}`)}>
                     <div className="flex items-center justify-between mb-1">
                       <span className="font-mono text-[10px] text-muted-foreground">{ticket.ticketNumber}</span>
                       <span className={cn("px-1.5 py-0.5 rounded text-[10px] font-medium", priorityColors[ticket.priority])}>{ticket.priority}</span>
@@ -374,9 +375,9 @@ export default function TicketsPage() {
                   </div>
                 ))}
               </div>
-            </div>
+            </MotionItem>
           ))}
-        </div>
+        </MotionList>
       )}
 
       <TicketForm open={formOpen} onOpenChange={setFormOpen} onSaved={fetchTickets} initialData={editData} orgId={orgId} />

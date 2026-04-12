@@ -13,6 +13,7 @@ import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
 import { PageDescription } from "@/components/page-description"
 import { Select } from "@/components/ui/select"
 import { Building2, Plus, Search, Users, FileText, TrendingUp, ArrowUpDown, Pencil, Trash2 } from "lucide-react"
+import { MotionList, MotionItem } from "@/components/ui/motion"
 import { useTranslations } from "next-intl"
 
 interface Company {
@@ -193,14 +194,15 @@ export default function CompaniesPage() {
       </div>
 
       {/* Company cards grid */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <MotionList className="grid gap-4 md:grid-cols-2 lg:grid-cols-3" staggerDelay={0.05}>
         {filtered.length === 0 ? (
           <div className="col-span-3 text-center py-12 text-muted-foreground">
             {t("noResults")}
           </div>
         ) : (
           filtered.map(company => (
-            <Card key={company.id} className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => setSelectedCompany(company)}>
+            <MotionItem key={company.id}>
+            <Card className="hover:shadow-md hover:-translate-y-0.5 transition-[shadow,transform] duration-200 cursor-pointer" onClick={() => setSelectedCompany(company)}>
               <CardContent className="pt-4 pb-4">
                 <div className="flex items-start justify-between mb-2">
                   <div className="flex items-center gap-2 min-w-0">
@@ -266,9 +268,10 @@ export default function CompaniesPage() {
                 </div>
               </CardContent>
             </Card>
+            </MotionItem>
           ))
         )}
-      </div>
+      </MotionList>
 
       <CompanyForm open={formOpen} onOpenChange={setFormOpen} onSaved={fetchCompanies} initialData={editData} orgId={orgId} />
 

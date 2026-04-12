@@ -7,6 +7,7 @@ import {
   DollarSign, Users, Handshake, TrendingUp, Ticket, Megaphone,
 } from "lucide-react"
 import { KpiCard } from "@/components/dashboard/kpi-card"
+import { MotionList, MotionItem } from "@/components/ui/motion"
 import { RisksBanner } from "@/components/dashboard/risks-banner"
 import { SalesPipeline } from "@/components/dashboard/sales-pipeline"
 import { RevenueTrend } from "@/components/dashboard/revenue-trend"
@@ -123,75 +124,87 @@ export default function DashboardPage() {
 
       {/* ═══ Row 1: 6 KPIs ═══ */}
       {widgets.statCards && (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 stagger-children">
-          <KpiCard
-            title={t("kpiRevenue")}
-            value={`₼${fmt(financial.monthlyRevenue)}`}
-            sub={financial.marginPct > 0 ? `↗ +${financial.marginPct.toFixed(0)}%` : undefined}
-            icon={<DollarSign className="h-5 w-5" />}
-            color="#22c55e"
-          />
-          <KpiCard
-            title={t("kpiLeads")}
-            value={leads.activeCount || leads.total || 0}
-            sub={leads.activeCount > 0 ? `↗ +${leads.activeCount}` : undefined}
-            icon={<Users className="h-5 w-5" />}
-            color="#8b5cf6"
-          />
-          <KpiCard
-            title={t("kpiDeals")}
-            value={pipeline.deals || 0}
-            sub={`↗ ₼${fmt(pipeline.wonValue || 0)}`}
-            icon={<Handshake className="h-5 w-5" />}
-            color="#3b82f6"
-          />
-          <KpiCard
-            title={t("kpiConversion")}
-            value={`${pipeline.conversionRate || leads.conversionRate || 0}%`}
-            sub={pipeline.conversionRate > 0 ? `↗ +${(pipeline.conversionRate * 0.1).toFixed(1)}%` : undefined}
-            icon={<TrendingUp className="h-5 w-5" />}
-            color="#f59e0b"
-          />
-          <KpiCard
-            title={t("kpiTickets")}
-            value={operations.openTickets || 0}
-            sub={operations.slaBreached > 0 ? `↗ ${t("slaBreaches", { count: operations.slaBreached })}` : `↗ ${t("avgTime")}`}
-            icon={<Ticket className="h-5 w-5" />}
-            color="#06b6d4"
-          />
-          <KpiCard
-            title={t("kpiCampaigns")}
-            value={campaigns?.length || 0}
-            sub={campaigns?.length > 0 ? `↗ ${t("openRateSub", { rate: campaigns[0]?.openRate || 0 })}` : undefined}
-            icon={<Megaphone className="h-5 w-5" />}
-            color="#ec4899"
-          />
-        </div>
+        <MotionList className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3" staggerDelay={0.06}>
+          <MotionItem>
+            <KpiCard
+              title={t("kpiRevenue")}
+              value={`₼${fmt(financial.monthlyRevenue)}`}
+              sub={financial.marginPct > 0 ? `↗ +${financial.marginPct.toFixed(0)}%` : undefined}
+              icon={<DollarSign className="h-5 w-5" />}
+              color="#22c55e"
+            />
+          </MotionItem>
+          <MotionItem>
+            <KpiCard
+              title={t("kpiLeads")}
+              value={leads.activeCount || leads.total || 0}
+              sub={leads.activeCount > 0 ? `↗ +${leads.activeCount}` : undefined}
+              icon={<Users className="h-5 w-5" />}
+              color="#8b5cf6"
+            />
+          </MotionItem>
+          <MotionItem>
+            <KpiCard
+              title={t("kpiDeals")}
+              value={pipeline.deals || 0}
+              sub={`↗ ₼${fmt(pipeline.wonValue || 0)}`}
+              icon={<Handshake className="h-5 w-5" />}
+              color="#3b82f6"
+            />
+          </MotionItem>
+          <MotionItem>
+            <KpiCard
+              title={t("kpiConversion")}
+              value={`${pipeline.conversionRate || leads.conversionRate || 0}%`}
+              sub={pipeline.conversionRate > 0 ? `↗ +${(pipeline.conversionRate * 0.1).toFixed(1)}%` : undefined}
+              icon={<TrendingUp className="h-5 w-5" />}
+              color="#f59e0b"
+            />
+          </MotionItem>
+          <MotionItem>
+            <KpiCard
+              title={t("kpiTickets")}
+              value={operations.openTickets || 0}
+              sub={operations.slaBreached > 0 ? `↗ ${t("slaBreaches", { count: operations.slaBreached })}` : `↗ ${t("avgTime")}`}
+              icon={<Ticket className="h-5 w-5" />}
+              color="#06b6d4"
+            />
+          </MotionItem>
+          <MotionItem>
+            <KpiCard
+              title={t("kpiCampaigns")}
+              value={campaigns?.length || 0}
+              sub={campaigns?.length > 0 ? `↗ ${t("openRateSub", { rate: campaigns[0]?.openRate || 0 })}` : undefined}
+              icon={<Megaphone className="h-5 w-5" />}
+              color="#ec4899"
+            />
+          </MotionItem>
+        </MotionList>
       )}
 
       {/* ═══ Risks Banner ═══ */}
       {risks && <RisksBanner risks={risks} />}
 
       {/* ═══ Row 2: Pipeline + Revenue Trend + Lead Sources ═══ */}
-      <div className="grid lg:grid-cols-3 gap-4">
-        {widgets.dealPipeline && <SalesPipeline pipeline={pipeline} />}
-        {widgets.revenueTrend && <RevenueTrend forecast={forecast} />}
-        {widgets.leadSources && <LeadSourcesDonut leadsBySource={leads.bySource} totalLeads={leads.activeCount || leads.total || 0} />}
-      </div>
+      <MotionList className="grid lg:grid-cols-3 gap-4" staggerDelay={0.08}>
+        {widgets.dealPipeline && <MotionItem><SalesPipeline pipeline={pipeline} /></MotionItem>}
+        {widgets.revenueTrend && <MotionItem><RevenueTrend forecast={forecast} /></MotionItem>}
+        {widgets.leadSources && <MotionItem><LeadSourcesDonut leadsBySource={leads.bySource} totalLeads={leads.activeCount || leads.total || 0} /></MotionItem>}
+      </MotionList>
 
       {/* ═══ Row 3: Recent Deals + Da Vinci Lead Scoring + Activity Feed ═══ */}
-      <div className="grid lg:grid-cols-3 gap-4">
-        {widgets.recentDeals && <RecentDeals deals={pipeline.recentDeals} />}
-        {widgets.aiLeadScoring && <AiLeadScoring leads={leads.topScored} />}
-        {widgets.activityFeed && <ActivityFeed activities={activity.recent} timeAgo={timeAgo} />}
-      </div>
+      <MotionList className="grid lg:grid-cols-3 gap-4" staggerDelay={0.08}>
+        {widgets.recentDeals && <MotionItem><RecentDeals deals={pipeline.recentDeals} /></MotionItem>}
+        {widgets.aiLeadScoring && <MotionItem><AiLeadScoring leads={leads.topScored} /></MotionItem>}
+        {widgets.activityFeed && <MotionItem><ActivityFeed activities={activity.recent} timeAgo={timeAgo} /></MotionItem>}
+      </MotionList>
 
       {/* ═══ Row 4: Campaigns + Events + Weekly Metrics ═══ */}
-      <div className="grid lg:grid-cols-3 gap-4">
-        {widgets.campaignStats && <CampaignStats campaigns={campaigns} />}
-        {widgets.upcomingEvents && <UpcomingEvents events={events} />}
-        {widgets.weeklyMetrics && <WeeklyMetrics metrics={weeklyMetrics} />}
-      </div>
+      <MotionList className="grid lg:grid-cols-3 gap-4" staggerDelay={0.08}>
+        {widgets.campaignStats && <MotionItem><CampaignStats campaigns={campaigns} /></MotionItem>}
+        {widgets.upcomingEvents && <MotionItem><UpcomingEvents events={events} /></MotionItem>}
+        {widgets.weeklyMetrics && <MotionItem><WeeklyMetrics metrics={weeklyMetrics} /></MotionItem>}
+      </MotionList>
     </div>
   )
 }

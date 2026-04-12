@@ -18,6 +18,7 @@ import {
 import { cn } from "@/lib/utils"
 import { useTranslations } from "next-intl"
 import { ColorStatCard } from "@/components/color-stat-card"
+import { MotionList, MotionItem } from "@/components/ui/motion"
 import { InfoHint } from "@/components/info-hint"
 import { PageDescription } from "@/components/page-description"
 import { LeadsAnalytics } from "@/components/leads/leads-analytics"
@@ -306,14 +307,14 @@ export default function LeadsPage() {
 
       {/* Kanban View */}
       {viewMode === "kanban" && (
-        <div className="grid grid-cols-5 gap-3">
+        <MotionList className="grid grid-cols-5 gap-3" staggerDelay={0.06}>
           {(["new", "contacted", "qualified", "converted", "lost"] as const).map(status => {
             const statusLeads = filtered.filter(l => l.status === status)
             const colors: Record<string, string> = {
               new: "#3b82f6", contacted: "#f59e0b", qualified: "#8b5cf6", converted: "#22c55e", lost: "#ef4444",
             }
             return (
-              <div key={status} className="min-w-0">
+              <MotionItem key={status} className="min-w-0">
                 <div className="mb-2 px-1 flex items-center gap-1.5">
                   <div className="h-2.5 w-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: colors[status] }} />
                   <span className="text-xs font-semibold truncate">{statusLabels[status] || status}</span>
@@ -331,7 +332,7 @@ export default function LeadsPage() {
                     return (
                       <div
                         key={lead.id}
-                        className="rounded-lg border bg-card p-2.5 hover:shadow-sm cursor-pointer transition-all"
+                        className="rounded-lg border bg-card p-2.5 hover:shadow-md hover:-translate-y-0.5 cursor-pointer transition-[shadow,transform] duration-200"
                         onClick={() => router.push(`/leads/${lead.id}`)}
                       >
                         <div className="flex items-center gap-2 mb-1">
@@ -371,10 +372,10 @@ export default function LeadsPage() {
                     <div className="flex h-[80px] items-center justify-center text-[10px] text-muted-foreground">—</div>
                   )}
                 </div>
-              </div>
+              </MotionItem>
             )
           })}
-        </div>
+        </MotionList>
       )}
 
       {/* Leads table */}
