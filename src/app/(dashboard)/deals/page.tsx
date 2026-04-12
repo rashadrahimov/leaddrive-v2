@@ -175,7 +175,10 @@ export default function DealsPage() {
     nextTask: d.nextTask || null,
   }))
 
+  const [moveError, setMoveError] = useState<string | null>(null)
+
   const handleDealMove = useCallback(async (dealId: string, newStage: string) => {
+    setMoveError(null)
     setDeals(prev => prev.map(d => d.id === dealId ? { ...d, stage: newStage } : d))
     try {
       const res = await fetch(`/api/v1/deals/${dealId}`, {
@@ -187,10 +190,16 @@ export default function DealsPage() {
         body: JSON.stringify({ stage: newStage }),
       })
       if (!res.ok) {
-        console.error("Deal move failed:", await res.text())
+        const data = await res.json().catch(() => null)
+        if (data?.validationErrors?.length) {
+          setMoveError(data.validationErrors.map((e: any) => e.message).join(". "))
+        } else {
+          setMoveError(data?.error || "Failed to move deal")
+        }
         fetchDeals()
       }
     } catch {
+      setMoveError("Network error")
       fetchDeals()
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -554,6 +563,13 @@ export default function DealsPage() {
                   )
                 })}
               </div>
+            </div>
+          )}
+
+          {moveError && (
+            <div className="mb-3 flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 dark:bg-red-950/20 dark:border-red-800/30 px-4 py-2.5 text-sm text-red-700 dark:text-red-400">
+              <span className="flex-1">{moveError}</span>
+              <button onClick={() => setMoveError(null)} className="text-red-400 hover:text-red-600"><X className="h-4 w-4" /></button>
             </div>
           )}
 

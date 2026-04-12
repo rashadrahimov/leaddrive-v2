@@ -40,7 +40,6 @@ export function KanbanBoard({ stages, deals, onDealClick, onDealMove, onQuickAdd
   const [dropTarget, setDropTarget] = useState<string | null>(null)
 
   const handleDragStart = useCallback((e: React.DragEvent, dealId: string) => {
-    console.log("[DnD] dragStart:", dealId)
     setDragDealId(dealId)
     e.dataTransfer.effectAllowed = "move"
     e.dataTransfer.setData("text/plain", dealId)
@@ -59,10 +58,8 @@ export function KanbanBoard({ stages, deals, onDealClick, onDealMove, onQuickAdd
   const handleDrop = useCallback((e: React.DragEvent, stageName: string) => {
     e.preventDefault()
     const dealId = e.dataTransfer.getData("text/plain") || dragDealId
-    console.log("[DnD] drop:", { dealId, stageName, dragDealId, hasOnDealMove: !!onDealMove })
     if (dealId && onDealMove) {
       const deal = deals.find(d => d.id === dealId)
-      console.log("[DnD] found deal:", { dealId, dealStage: deal?.stage, targetStage: stageName, willMove: deal ? deal.stage !== stageName : false })
       if (deal && deal.stage !== stageName) {
         onDealMove(dealId, stageName)
       }
