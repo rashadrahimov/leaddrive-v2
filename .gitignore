@@ -40,3 +40,7 @@ Thumbs.db
 # Generated images (Nano-Banana MCP)
 public/generated/*
 !public/generated/.gitkeep
+
+# Graphify knowledge graph
+graphify-out/
+.graphify-venv/

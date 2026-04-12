@@ -41,15 +41,15 @@ ssh -o ConnectTimeout=10 root@$SERVER "
 "
 ok "Build complete"
 
-# ─── Step 4: Restart ───
-step 4 "Restarting PM2..."
+# ─── Step 4: Copy static + Restart ───
+step 4 "Copying static files & restarting PM2..."
 ssh root@$SERVER "
   cd $APP_DIR &&
-  pm2 delete leaddrive-v2 2>/dev/null; true
-  pm2 start 'npx next start -p 3001' --name leaddrive-v2 --cwd $APP_DIR
+  cp -r .next/static .next/standalone/.next/static &&
+  pm2 restart leaddrive-v2
   pm2 save
 "
-ok "PM2 restarted"
+ok "Static copied & PM2 restarted"
 
 # ─── Step 5: Health check ───
 step 5 "Health check..."

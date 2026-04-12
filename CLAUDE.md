@@ -128,10 +128,18 @@ bash scripts/deploy.sh
 - Если сервер не отвечает >30 секунд — СРАЗУ проси перезагрузить
 - При schema changes: `npx prisma generate` + `npx prisma migrate deploy` на сервере
 
+### КРИТИЧНО: Static файлы для standalone режима (баг 11.04.2026)
+- После `npx next build --webpack` ОБЯЗАТЕЛЬНО копировать static:
+  `cp -r .next/static .next/standalone/.next/static`
+- Без этого dashboard будет ПУСТОЙ (JS/CSS вернут 503, React не гидратируется)
+- Путь `.next/standalone/.next/static` — БЕЗ вложенной папки `leaddrive-v2/` (Next.js 16 её не создаёт!)
+- Старый неправильный путь: ~~`.next/standalone/leaddrive-v2/.next/static`~~ — НЕ ИСПОЛЬЗОВАТЬ
+- Проверка после деплоя: `curl -s -o /dev/null -w '%{http_code}' http://localhost:3001/_next/static/chunks/webpack-*.js` — должен вернуть 200
+
 ### Ручной деплой (если скрипт не работает):
 ```bash
 git push origin main
-ssh -i ~/.ssh/id_ed25519 root@46.224.171.53 "cd /opt/leaddrive-v2 && git pull origin main && npx prisma generate && npx next build --webpack && cp -r .next/static .next/standalone/leaddrive-v2/.next/static && pm2 restart leaddrive-v2"
+ssh -i ~/.ssh/id_ed25519 root@46.224.171.53 "cd /opt/leaddrive-v2 && git pull origin main && npx prisma generate && npx next build --webpack && cp -r .next/static .next/standalone/.next/static && pm2 restart leaddrive-v2"
 ```
 
 ### Проверка:
@@ -208,3 +216,17 @@ When given a task:
 - Style: "не мухлюй!" — be thorough, don't skip anything
 - Commits: Detailed messages with what was done
 - Testing: User tests on app.leaddrivecrm.org
+
+## graphify
+
+This project has a graphify knowledge graph at graphify-out/.
+
+Rules:
+- Before answering architecture or codebase questions, read graphify-out/GRAPH_REPORT.md for god nodes and community structure
+- If graphify-out/wiki/index.md exists, navigate it instead of reading raw files
+- After modifying code files in this session, run `python3 -c "from graphify.watch import _rebuild_code; from pathlib import Path; _rebuild_code(Path('.'))"` to keep the graph current
+
+## Context Navigation
+1. ALWAYS query the knowledge graph first
+2. Only read raw files if I explicitly say so
+3. Use graphify-out/wiki/index.md
