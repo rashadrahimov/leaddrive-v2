@@ -413,7 +413,8 @@ html[data-wallpaper] .bg-background {
 }
 
 html[data-wallpaper] .bg-sidebar-bg {
-  background-color: hsl(215 35% 10% / 0.78) !important;
+  background-color: hsl(215 35% 10% / 0.92) !important;
+  backdrop-filter: blur(24px) saturate(1.2) !important;
 }
 
 html[data-wallpaper] .border-border\/60,
