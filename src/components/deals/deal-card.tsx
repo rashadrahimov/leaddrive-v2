@@ -81,7 +81,6 @@ export function DealCard({ deal, onClick, onDragStart, onDragEnd, isDragging, ro
 
   return (
     <motion.div
-      layout
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       whileHover={{ y: -1 }}
