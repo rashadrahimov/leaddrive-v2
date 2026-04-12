@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Select } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { Dialog, DialogHeader, DialogTitle, DialogContent, DialogFooter } from "@/components/ui/dialog"
-import { Loader2, Target, Zap, Mail, UserPlus, Handshake, Clock, Filter, Sparkles } from "lucide-react"
+import { Loader2, Target, Zap, Mail, UserPlus, Handshake, Clock, Filter, Sparkles, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface JourneyFormData {
@@ -245,9 +245,18 @@ export function JourneyForm({ open, onOpenChange, onSaved, initialData, orgId }:
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogHeader>
-        <DialogTitle>
-          {isEdit ? tf("editJourney") : step === "template" ? t("chooseTemplate") : tf("newJourney")}
-        </DialogTitle>
+        <div className="flex items-center justify-between">
+          <DialogTitle>
+            {isEdit ? tf("editJourney") : step === "template" ? t("chooseTemplate") : tf("newJourney")}
+          </DialogTitle>
+          <button
+            type="button"
+            onClick={() => onOpenChange(false)}
+            className="p-1 rounded-md hover:bg-muted transition-colors"
+          >
+            <X className="h-4 w-4 text-muted-foreground" />
+          </button>
+        </div>
       </DialogHeader>
 
       {/* Step 1: Template selection */}
@@ -272,6 +281,9 @@ export function JourneyForm({ open, onOpenChange, onSaved, initialData, orgId }:
                 </button>
               )
             })}
+          </div>
+          <div className="flex justify-end mt-4 pt-3 border-t">
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>{tc("cancel")}</Button>
           </div>
         </DialogContent>
       ) : (
