@@ -2700,6 +2700,84 @@ async function main() {
     }
   } catch (e) { console.log(`Plan Requests: ERROR — ${e.message}`) }
 
+  // ─── 84. ApiKey ───
+  try {
+    const existingKey = await prisma.apiKey.findFirst({ where: { organizationId: orgId } })
+    if (!existingKey) {
+      await prisma.apiKey.create({
+        data: {
+          organizationId: orgId, name: "Mobile App Integration",
+          keyHash: "sha256_demo_hash_not_real_key_1234567890abcdef",
+          keyPrefix: "ld_mob_8f",
+          scopes: ["read:contacts", "read:companies", "read:deals", "write:activities"],
+          isActive: true, createdBy: user.id,
+        },
+      })
+      await prisma.apiKey.create({
+        data: {
+          organizationId: orgId, name: "Zapier Automation",
+          keyHash: "sha256_demo_hash_not_real_key_abcdef1234567890",
+          keyPrefix: "ld_zap_3a",
+          scopes: ["read:contacts", "write:contacts", "read:deals", "write:deals", "read:tickets"],
+          isActive: true, createdBy: user.id,
+          lastUsedAt: new Date(now - 2 * 60 * 60000),
+        },
+      })
+      await prisma.apiKey.create({
+        data: {
+          organizationId: orgId, name: "Legacy ERP Sync (deprecated)",
+          keyHash: "sha256_demo_hash_not_real_key_deprecated_old",
+          keyPrefix: "ld_erp_c1",
+          scopes: ["read:companies"],
+          isActive: false, createdBy: user.id,
+          expiresAt: new Date(now - 60 * DAY),
+        },
+      })
+      console.log("API Keys: 3")
+    } else {
+      console.log("API Keys: (existing, skipped)")
+    }
+  } catch (e) { console.log(`API Keys: ERROR — ${e.message}`) }
+
+  // ─── 85. AiChatSession + AiChatMessage ───
+  try {
+    const existingSession = await prisma.aiChatSession.findFirst({ where: { organizationId: orgId } })
+    if (!existingSession) {
+      const session1 = await prisma.aiChatSession.create({
+        data: {
+          organizationId: orgId, messagesCount: 4, status: "active",
+          createdAt: new Date(now - 2 * 60 * 60000),
+        },
+      })
+      const session1Messages = [
+        { sessionId: session1.id, role: "user", content: "What are our top 5 deals by value this quarter?", tokenCount: 18, createdAt: new Date(now - 2 * 60 * 60000) },
+        { sessionId: session1.id, role: "assistant", content: "Based on your current pipeline, here are the top 5 deals by value:\n\n1. Roche Digital Transformation — €520,000 (Negotiation)\n2. Merck Lab Management — $410,000 (Proposal)\n3. Pfizer CRM Implementation — $285,000 (Won)\n4. AstraZeneca Analytics — $180,000 (Discovery)\n5. GSK QA Platform — £145,000 (Qualification)\n\nTotal pipeline value: $1.54M. The Roche deal has the highest value and is in negotiation stage.", tokenCount: 156, createdAt: new Date(now - 2 * 60 * 60000 + 5000) },
+        { sessionId: session1.id, role: "user", content: "Which deals are at risk of missing their close date?", tokenCount: 14, createdAt: new Date(now - 1.5 * 60 * 60000) },
+        { sessionId: session1.id, role: "assistant", content: "I identified 2 deals at risk:\n\n1. **EuroMed Supply Chain** — Close date was 2 weeks ago, still in Proposal stage. Recommend: schedule urgent follow-up.\n2. **BioGenesis LIMS** — Close date is in 5 days, still in Discovery. Very unlikely to close on time.\n\nSuggestion: Move EuroMed to 'Stalled' and extend BioGenesis close date by 30 days.", tokenCount: 132, createdAt: new Date(now - 1.5 * 60 * 60000 + 5000) },
+      ]
+      for (const m of session1Messages) {
+        await prisma.aiChatMessage.create({ data: m })
+      }
+
+      const session2 = await prisma.aiChatSession.create({
+        data: {
+          organizationId: orgId, messagesCount: 2, status: "closed",
+          createdAt: new Date(now - 3 * DAY),
+        },
+      })
+      const session2Messages = [
+        { sessionId: session2.id, role: "user", content: "Summarize ticket SLA compliance for last month", tokenCount: 12, createdAt: new Date(now - 3 * DAY) },
+        { sessionId: session2.id, role: "assistant", content: "SLA Compliance Report — March 2026:\n\n• Total tickets: 47\n• Resolved within SLA: 41 (87.2%)\n• SLA breached: 6 (12.8%)\n• Average resolution time: 4.2 hours\n• Worst category: 'Integration Issues' — 3 breaches\n\nOverall compliance is above the 85% target. Main area for improvement is integration-related tickets.", tokenCount: 118, createdAt: new Date(now - 3 * DAY + 5000) },
+      ]
+      for (const m of session2Messages) {
+        await prisma.aiChatMessage.create({ data: m })
+      }
+      console.log("AI Chat Sessions: 2, Messages: 6")
+    } else {
+      console.log("AI Chat Sessions: (existing, skipped)")
+    }
+  } catch (e) { console.log(`AI Chat Sessions: ERROR — ${e.message}`) }
+
   // ─── Summary ───
   console.log("\n" + "═".repeat(50))
   console.log("Demo data seeded successfully!")
@@ -2750,7 +2828,9 @@ async function main() {
   console.log(`  + MTM Audit Logs, Accounting Integrations`)
   console.log(`  + Webhooks, Custom Domains, Contract Files`)
   console.log(`  + Accounting Imports, Plan Requests`)
-  console.log(`\n  Total: 83 sections, 123+ Prisma models covered`)
+  console.log(`  + API Keys, AI Chat Sessions & Messages`)
+  console.log(`\n  Total: 85 sections, 126 of 132 Prisma models covered`)
+  console.log(`  (6 runtime-only models excluded: Account, AgentHandoff, AiPendingAction, MtmAgentLocation, PageView)`)
 }
 
 main()
