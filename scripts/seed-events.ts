@@ -6,7 +6,7 @@ import { PrismaClient } from "@prisma/client"
 
 const prisma = new PrismaClient()
 
-const ORG_ID = "cmmxg74k10000td3rr37dl6am" // Güvən Technology
+const ORG_ID = "cmmxg74k10000td3rr37dl6am" // LeadDrive Inc.
 
 async function main() {
   console.log("Seeding events...")
@@ -56,7 +56,7 @@ async function main() {
       status: "completed",
       startDate: new Date("2026-03-01T10:00:00"),
       endDate: new Date("2026-03-01T16:00:00"),
-      location: "Güvən Technology Office, Baku",
+      location: "LeadDrive Office, Warsaw",
       isOnline: false,
       budget: 3000,
       actualCost: 2800,

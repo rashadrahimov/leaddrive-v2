@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { Logo } from "@/components/logo"
 import { useTranslations } from "next-intl"
-import { COMPANY_EMAIL, COMPANY_PHONE_FORMATTED } from "@/lib/constants"
+import { COMPANY_EMAIL } from "@/lib/constants"
 
 function useFooterLinks() {
   const t = useTranslations("marketing")
@@ -78,8 +78,7 @@ export function MarketingFooter() {
               {t("description")}
             </p>
             <div className="mt-4 space-y-1.5 text-sm text-white/50">
-              <p>📧 {COMPANY_EMAIL}</p>
-              <p>📱 {COMPANY_PHONE_FORMATTED}</p>
+              <p>{COMPANY_EMAIL}</p>
             </div>
             {/* Social links removed — will add when real accounts exist */}
           </div>
@@ -107,7 +106,7 @@ export function MarketingFooter() {
         {/* Bottom bar */}
         <div className="mt-12 pt-8 border-t border-white/10 flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-sm text-white/50">
-            &copy; {new Date().getFullYear()} Güvən Technology LLC. {t("allRights")}
+            &copy; {new Date().getFullYear()} LeadDrive Inc. {t("allRights")}
           </p>
           <p className="text-sm text-white/50">
             {t("location")}

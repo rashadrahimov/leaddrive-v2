@@ -151,7 +151,7 @@ GET    /log                    — аудит лог (100 последних)
 - `employees` — штат: всё штатное расписание, по отделам, средние, лимит 350 слов
 
 Каждый промпт включает:
-1. **base_data** — бизнес-контекст Guven Technology + ключевые агрегаты (revenue, salary, overhead, margin, headcount)
+1. **base_data** — бизнес-контекст LeadDrive Inc. + ключевые агрегаты (revenue, salary, overhead, margin, headcount)
 2. **Tab-specific data** — дополнительные данные для конкретной вкладки
 3. **lang_instruction** — язык ответа (ru/en/az)
 4. **4-секционная структура ответа**: 📊 Оценка, ⚠️ Риски, 💡 Рекомендации, 🔍 Наблюдения

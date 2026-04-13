@@ -262,7 +262,7 @@ const MONTH_NAMES = t("monthsShort").split(",")
 - Нужно: мультиязычная метадата через `generateMetadata`
 
 ### `(marketing)/home/page.tsx` (~15 строк)
-- JSON-LD structured data: `"LeadDrive CRM"`, `"Güvən Technology LLC"`, `"Bakı"`
+- JSON-LD structured data: `"LeadDrive CRM"`, `"LeadDrive Inc."`, `"Warsaw"`
 
 ---
 

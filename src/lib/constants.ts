@@ -34,8 +34,8 @@ export const STAGE_COLORS: Record<string, string> = {
 // ── Contact Info ─────────────────────────────────────────
 export const COMPANY_EMAIL = process.env.NEXT_PUBLIC_CONTACT_EMAIL || "info@leaddrivecrm.org"
 export const NOREPLY_EMAIL = process.env.NOREPLY_EMAIL || "noreply@leaddrivecrm.org"
-export const COMPANY_PHONE = "+994105313065"
-export const COMPANY_PHONE_FORMATTED = "+994 10 531 30 65"
+export const COMPANY_PHONE = ""
+export const COMPANY_PHONE_FORMATTED = ""
 
 // ── Roles ────────────────────────────────────────────────
 export const ROLES = {

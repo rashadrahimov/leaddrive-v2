@@ -290,7 +290,7 @@ const PLAN_FEATURES = {
 
 ## Миграция текущих клиентов
 
-1. Güvən → добавить `slug: "guven"` в Organization
-2. Создать DNS: `guven.leaddrivecrm.org → 46.224.171.53`
+1. LeadDrive → добавить `slug: "leaddrive"` в Organization
+2. Создать DNS: `leaddrive.leaddrivecrm.org → 46.224.171.53`
 3. `app.leaddrivecrm.org` остаётся как golden image / demo
 4. Fanum → `serverType: "dedicated"`, `serverDomain: "fanum.tech"`

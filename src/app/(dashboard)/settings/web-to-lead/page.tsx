@@ -12,7 +12,7 @@ export default function WebToLeadPage() {
   const t = useTranslations("settings")
   const tc = useTranslations("common")
   const [copied, setCopied] = useState(false)
-  const [orgSlug, setOrgSlug] = useState("guven-technology")
+  const [orgSlug, setOrgSlug] = useState("leaddrive")
   const [formTitle, setFormTitle] = useState("Contact Us")
   const [showPhone, setShowPhone] = useState(true)
   const [showCompany, setShowCompany] = useState(true)

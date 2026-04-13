@@ -262,7 +262,7 @@ export default function InvoiceSettingsPage() {
                 type="email"
                 value={settings.companyEmail}
                 onChange={(e) => updateField("companyEmail", e.target.value)}
-                placeholder="info@guventechnology.az"
+                placeholder="info@leaddrivecrm.org"
                 className="mt-1"
               />
             </div>
@@ -465,7 +465,7 @@ export default function InvoiceSettingsPage() {
               <Input
                 value={settings.signerTitle}
                 onChange={(e) => updateField("signerTitle", e.target.value)}
-                placeholder='"GUVEN TECHNOLOGY" MMC-nin direktoru'
+                placeholder="Director of LeadDrive Inc."
                 className="mt-1"
               />
             </div>

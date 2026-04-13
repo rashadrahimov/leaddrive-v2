@@ -986,7 +986,7 @@ function EventsPreview() {
   ]
   const participants = [
     { name: "Kamran Əliyev", role: "Speaker", roleColor: "#f59e0b", status: "Təsdiqləndi", company: "TechVision" },
-    { name: "Aysəl Hüseynova", role: "Organizer", roleColor: "#8b5cf6", status: "Təsdiqləndi", company: "Güvən Tech" },
+    { name: "Aysəl Hüseynova", role: "Organizer", roleColor: "#8b5cf6", status: "Təsdiqləndi", company: "LeadDrive" },
     { name: "Rüstəm Məmmədov", role: "VIP", roleColor: "#ef4444", status: "Gözləyir", company: "BankTech" },
     { name: "Nigar Quliyeva", role: "Attendee", roleColor: "#3b82f6", status: "Qeydiyyatdan keçdi", company: "AzərLogistik" },
     { name: "Tural Həsənov", role: "Sponsor", roleColor: "#10b981", status: "Təsdiqləndi", company: "DataAxın" },

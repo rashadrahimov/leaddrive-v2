@@ -36,7 +36,7 @@ async function main() {
   // 1. Find organization
   // Try multiple possible slugs
   const org = await prisma.organization.findFirst({
-    where: { slug: { in: ["guven-technology", "leaddrive", "guven"] } },
+    where: { slug: { in: ["leaddrive", "guven-technology", "guven"] } },
   }) || await prisma.organization.findFirst()
   if (!org) {
     console.error("❌ No organization found. Run create-admin.ts first.")
@@ -57,12 +57,12 @@ async function main() {
   console.log("\n📋 Creating agents...")
 
   const agentRashad = await prisma.mtmAgent.upsert({
-    where: { organizationId_email: { organizationId: orgId, email: "rashad@guven.az" } },
+    where: { organizationId_email: { organizationId: orgId, email: "rashad@leaddrivecrm.org" } },
     update: { name: "Rashad Rahimov", role: "MANAGER", status: "ACTIVE", userId: adminUser?.id || null },
     create: {
       organizationId: orgId,
       name: "Rashad Rahimov",
-      email: "rashad@guven.az",
+      email: "rashad@leaddrivecrm.org",
       phone: "+994-50-555-0001",
       role: "MANAGER",
       status: "ACTIVE",
@@ -73,12 +73,12 @@ async function main() {
   console.log(`  ✅ ${agentRashad.name} (MANAGER)`)
 
   const agentAnar = await prisma.mtmAgent.upsert({
-    where: { organizationId_email: { organizationId: orgId, email: "anar@guven.az" } },
+    where: { organizationId_email: { organizationId: orgId, email: "anar@leaddrivecrm.org" } },
     update: { name: "Anar Mammadov", role: "AGENT", status: "ACTIVE", managerId: agentRashad.id },
     create: {
       organizationId: orgId,
       name: "Anar Mammadov",
-      email: "anar@guven.az",
+      email: "anar@leaddrivecrm.org",
       phone: "+994-50-555-0002",
       role: "AGENT",
       status: "ACTIVE",
@@ -89,12 +89,12 @@ async function main() {
   console.log(`  ✅ ${agentAnar.name} (AGENT)`)
 
   const agentNigar = await prisma.mtmAgent.upsert({
-    where: { organizationId_email: { organizationId: orgId, email: "nigar@guven.az" } },
+    where: { organizationId_email: { organizationId: orgId, email: "nigar@leaddrivecrm.org" } },
     update: { name: "Nigar Huseynova", role: "AGENT", status: "ACTIVE", managerId: agentRashad.id },
     create: {
       organizationId: orgId,
       name: "Nigar Huseynova",
-      email: "nigar@guven.az",
+      email: "nigar@leaddrivecrm.org",
       phone: "+994-50-555-0003",
       role: "AGENT",
       status: "ACTIVE",
@@ -105,12 +105,12 @@ async function main() {
   console.log(`  ✅ ${agentNigar.name} (AGENT)`)
 
   const agentFarid = await prisma.mtmAgent.upsert({
-    where: { organizationId_email: { organizationId: orgId, email: "farid@guven.az" } },
+    where: { organizationId_email: { organizationId: orgId, email: "farid@leaddrivecrm.org" } },
     update: { name: "Farid Aliyev", role: "MANAGER", status: "ACTIVE", managerId: agentRashad.id },
     create: {
       organizationId: orgId,
       name: "Farid Aliyev",
-      email: "farid@guven.az",
+      email: "farid@leaddrivecrm.org",
       phone: "+994-50-555-0004",
       role: "MANAGER",
       status: "ACTIVE",

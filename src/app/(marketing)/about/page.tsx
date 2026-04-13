@@ -8,19 +8,24 @@ import { useTranslations } from "next-intl"
 const organizationJsonLd = {
   "@context": "https://schema.org",
   "@type": "Organization",
-  name: "Güvən Technology LLC",
+  name: "LeadDrive Inc.",
   url: process.env.NEXT_PUBLIC_MARKETING_URL || "https://leaddrivecrm.org",
   logo: `${process.env.NEXT_PUBLIC_MARKETING_URL || "https://leaddrivecrm.org"}/apple-touch-icon.png`,
+  description: "European AI-powered CRM platform built by Ukrainian engineers.",
+  foundingLocation: {
+    "@type": "Place",
+    name: "Kyiv, Ukraine",
+  },
   contactPoint: {
     "@type": "ContactPoint",
-    telephone: "+994-10-531-30-65",
+    email: "info@leaddrivecrm.org",
     contactType: "sales",
     availableLanguage: ["az", "ru", "en"],
   },
   address: {
     "@type": "PostalAddress",
-    addressLocality: "Bakı",
-    addressCountry: "AZ",
+    addressLocality: "Warsaw",
+    addressCountry: "PL",
   },
   sameAs: [],
 }

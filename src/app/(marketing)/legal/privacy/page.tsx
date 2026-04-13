@@ -1,6 +1,6 @@
 import { AnimateIn } from "@/components/marketing/animate-in"
 import type { Metadata } from "next"
-import { COMPANY_EMAIL, COMPANY_PHONE_FORMATTED } from "@/lib/constants"
+import { COMPANY_EMAIL } from "@/lib/constants"
 import { getTranslations } from "next-intl/server"
 
 export const metadata: Metadata = {
@@ -24,7 +24,7 @@ export default async function PrivacyPage() {
               <section>
                 <h2 className="text-lg font-semibold text-[#001E3C] mb-3">{t("s1")}</h2>
                 <p>
-                  Güvən Technology LLC (&quot;Şirkət&quot;, &quot;biz&quot;) olaraq, LeadDrive CRM platformasından istifadə edən
+                  LeadDrive Inc. (&quot;Şirkət&quot;, &quot;biz&quot;) olaraq, LeadDrive CRM platformasından istifadə edən
                   istifadəçilərin (&quot;siz&quot;) məxfiliyinə hörmət edirik. Bu Məxfilik Siyasəti sizin şəxsi məlumatlarınızın
                   necə toplandığını, istifadə edildiyini və qorunduğunu izah edir.
                 </p>
@@ -97,8 +97,7 @@ export default async function PrivacyPage() {
               </p>
               <p className="mt-2">
                 {COMPANY_EMAIL}<br />
-                {COMPANY_PHONE_FORMATTED}<br />
-                Bakı, Azərbaycan
+                Warsaw, Poland
               </p>
             </section>
           </div>

@@ -524,7 +524,7 @@ paying_clients     = кол-во клиентов с total_revenue > 0
 
 ```
 Бизнес-контекст:
-- IT-аутсорсинговая компания «Guven Technology»
+- IT-аутсорсинговая компания «LeadDrive Inc.»
 - Основной продукт: HelpDesk, SysAdmin, InfoSec, ERP, GRC, PM для внешних клиентов
 - В 2026 году цены подняты на 15%
 - BackOffice (17 чел.) — in_overhead, расходы распределяются на клиентов

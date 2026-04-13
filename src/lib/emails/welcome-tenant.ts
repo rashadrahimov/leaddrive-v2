@@ -75,7 +75,7 @@ export function getWelcomeTenantEmail(data: WelcomeTenantData): { subject: strin
           <tr>
             <td style="padding:24px 40px;background:#fafafa;border-top:1px solid #f0f0f0;text-align:center;">
               <p style="margin:0;color:#a1a1aa;font-size:12px;">
-                &copy; ${new Date().getFullYear()} LeadDrive CRM &mdash; Powered by Güvən Technology LLC
+                &copy; ${new Date().getFullYear()} LeadDrive CRM &mdash; Powered by LeadDrive Inc.
               </p>
             </td>
           </tr>

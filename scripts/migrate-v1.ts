@@ -10,7 +10,7 @@
  *   V1_DATABASE_URL="postgresql://<user>:<pass>@<host>:5432/<db>" npx tsx scripts/migrate-v1.ts
  *
  * What it does:
- *   1. Creates Güvən Technology organization
+ *   1. Creates LeadDrive Inc. organization
  *   2. Creates admin user (rashad)
  *   3. Imports companies (59)
  *   4. Imports contacts (577)
@@ -34,11 +34,11 @@ async function main() {
   // Step 1: Create organization
   console.log("1️⃣ Creating organization...")
   // const org = await v2.organization.upsert({
-  //   where: { slug: "guven-technology" },
+  //   where: { slug: "leaddrive" },
   //   update: {},
   //   create: {
-  //     name: "Güvən Technology LLC",
-  //     slug: "guven-technology",
+  //     name: "LeadDrive Inc.",
+  //     slug: "leaddrive",
   //     plan: "enterprise",
   //     maxUsers: -1,
   //     maxContacts: -1,

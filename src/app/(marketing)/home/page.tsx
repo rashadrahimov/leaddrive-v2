@@ -48,11 +48,11 @@ const jsonLd = {
   },
   author: {
     "@type": "Organization",
-    name: "Güvən Technology LLC",
+    name: "LeadDrive Inc.",
     address: {
       "@type": "PostalAddress",
-      addressLocality: "Bakı",
-      addressCountry: "AZ",
+      addressLocality: "Warsaw",
+      addressCountry: "PL",
     },
   },
   featureList: [

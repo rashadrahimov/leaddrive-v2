@@ -17,9 +17,9 @@ export const metadata: Metadata = {
     "CRM", "CRM Azerbaijan", "CRM Azərbaycan", "smart CRM platforması",
     "Da Vinci CRM", "satış idarəsi", "lead management", "müştəri idarəsi",
     "marketing automation", "helpdesk", "SLA", "pipeline",
-    "LeadDrive", "Güvən Technology",
+    "LeadDrive", "European CRM", "Ukrainian developers", "Poland",
   ],
-  authors: [{ name: "Güvən Technology LLC" }],
+  authors: [{ name: "LeadDrive Inc." }],
   openGraph: {
     type: "website",
     locale: "az_AZ",

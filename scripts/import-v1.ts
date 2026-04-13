@@ -82,11 +82,11 @@ async function main() {
   // ═══════════════════════════════════════
   console.log("1️⃣  Creating organization...")
   const org = await prisma.organization.upsert({
-    where: { slug: "guven-technology" },
+    where: { slug: "leaddrive" },
     update: {},
     create: {
-      name: "Güvən Technology LLC",
-      slug: "guven-technology",
+      name: "LeadDrive Inc.",
+      slug: "leaddrive",
       plan: "enterprise",
       addons: [],
       maxUsers: -1,

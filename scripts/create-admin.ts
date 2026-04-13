@@ -12,7 +12,7 @@ async function main() {
   }
 
   // Find the organization
-  const org = await prisma.organization.findFirst({ where: { slug: "guven-technology" } })
+  const org = await prisma.organization.findFirst({ where: { slug: "leaddrive" } })
   if (!org) {
     console.log("❌ Organization not found!")
     return

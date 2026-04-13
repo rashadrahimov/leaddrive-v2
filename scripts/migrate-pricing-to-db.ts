@@ -31,7 +31,7 @@ function getBoardCategory(catName: string): string | null {
 }
 
 async function main() {
-  const ORG_ID = 'cmmxg74k10000td3rr37dl6am' // Guven Technology LLC
+  const ORG_ID = 'cmmxg74k10000td3rr37dl6am' // LeadDrive Inc.
 
   // 1. Read JSON
   const jsonPath = path.join(__dirname, '..', 'public', 'data', 'pricing_data.json')

@@ -107,7 +107,7 @@ export async function POST(req: NextRequest) {
 
     const agentName = agentConfig?.configName || "Da Vinci"
     const agentSystemPrompt = agentConfig?.systemPrompt ? `${agentConfig.systemPrompt}\n\n` : ""
-    const systemPrompt = `${agentSystemPrompt}You are ${agentName} — an intelligent CRM assistant (type: ${agentConfig?.agentType || "general"}) for Güvən Technology LLC, an IT outsourcing company in Baku, Azerbaijan.
+    const systemPrompt = `${agentSystemPrompt}You are ${agentName} — an intelligent CRM assistant (type: ${agentConfig?.agentType || "general"}) for LeadDrive Inc., a European CRM platform built by Ukrainian engineers.
 
 CRITICAL RULE #1: You MUST always respond in ${forceLang}. This is non-negotiable regardless of what language the user writes in.
 

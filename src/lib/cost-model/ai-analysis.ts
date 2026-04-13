@@ -6,7 +6,7 @@ const MODEL = process.env.MANAGER_MODEL || "claude-sonnet-4-5-20250929"
 function buildBaseContext(result: CostModelResult): string {
   const s = result.summary
   return `Бизнес-контекст:
-- IT-аутсорсинговая компания «Guven Technology», Баку, Азербайджан
+- IT-аутсорсинговая компания «LeadDrive Inc.», Warsaw, Poland
 - 7 направлений услуг: HelpDesk, SysAdmin, InfoSec, ERP, GRC, PM, Cloud
 - В 2026 году цены подняты на 15%
 - BackOffice (${result.employees.filter(e => e.department === 'BackOffice').reduce((s,e) => s + e.count, 0)} чел.) — overhead, расходы распределяются на клиентов

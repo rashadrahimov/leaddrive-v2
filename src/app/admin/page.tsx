@@ -1,7 +1,8 @@
 import { prisma } from "@/lib/prisma"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Building2, Users, Contact, Briefcase } from "lucide-react"
+import { Building2, Users, Contact, Briefcase, Plus } from "lucide-react"
+import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { getTranslations } from "next-intl/server"
 
@@ -30,9 +31,17 @@ export default async function AdminDashboard() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">{t("title")}</h1>
-        <p className="text-muted-foreground text-sm mt-1">{t("subtitle")}</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">{t("title")}</h1>
+          <p className="text-muted-foreground text-sm mt-1">{t("subtitle")}</p>
+        </div>
+        <Link href="/admin/tenants/new">
+          <Button>
+            <Plus className="w-4 h-4 mr-2" />
+            {t("tenants.newClient")}
+          </Button>
+        </Link>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

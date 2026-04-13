@@ -15,7 +15,7 @@ async function main() {
 
   if (!email) {
     console.error("Usage: npx tsx scripts/create-superadmin.ts <email>")
-    console.error("Example: npx tsx scripts/create-superadmin.ts rashad@guven.tech")
+    console.error("Example: npx tsx scripts/create-superadmin.ts rashad@leaddrivecrm.org")
     process.exit(1)
   }
 

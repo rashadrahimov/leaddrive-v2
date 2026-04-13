@@ -62,7 +62,7 @@ const MOCK_ATTENDEES = [
   { id: "a1", name: "Ramin Əliyev", company: "TechAz", role: "Speaker", initials: "RƏ" },
   { id: "a2", name: "Leyla Hüseynova", company: "DataSoft", role: "Organizer", initials: "LH" },
   { id: "a3", name: "Orxan Məmmədov", company: "CloudBaku", role: "VIP", initials: "OM" },
-  { id: "a4", name: "Nigar İsmayılova", company: "Güvən Tech", role: "Attendee", initials: "Nİ" },
+  { id: "a4", name: "Nigar İsmayılova", company: "LeadDrive", role: "Attendee", initials: "Nİ" },
   { id: "a5", name: "Farid Həsənov", company: "AzInnovate", role: "Sponsor", initials: "FH" },
   { id: "a6", name: "Aynur Quliyeva", company: "StartHub", role: "Attendee", initials: "AQ" },
   { id: "a7", name: "Elvin Rzayev", company: "BakuDev", role: "Speaker", initials: "ER" },

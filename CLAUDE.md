@@ -7,7 +7,7 @@ cd ~/Documents/hermes_crm/leaddrive-v2
 
 ## What This Project Is
 LeadDrive CRM v2 — полный переписал v1 (Python/FastAPI) на Next.js 16 + TypeScript + Prisma + PostgreSQL.
-SaaS multi-tenant CRM для IT-аутсорсинговых компаний. Владелец: Rashad Rahimov, Güvən Technology LLC, Баку, Азербайджан.
+SaaS multi-tenant CRM для IT-аутсорсинговых компаний. Владелец: Rashad Rahimov, LeadDrive Inc., Warsaw, Poland.
 
 ## Architecture
 - **Frontend**: Next.js 16 (App Router) + Tailwind CSS + shadcn/ui components
@@ -190,9 +190,9 @@ When given a task:
 ## КРИТИЧНО: Деплой — ВСЕГДА спрашивай куда! (ОБЯЗАТЕЛЬНО для ВСЕХ сессий!)
 - **ПЕРЕД ЛЮБЫМ деплоем** — ОБЯЗАТЕЛЬНО спросить пользователя: "На какого клиента деплоим?"
 - Прочитать `clients/registry.json` и показать список клиентов
-- Варианты ответа: конкретный клиент (deploy acme), все (deploy-all), или "только Güvən"
+- Варианты ответа: конкретный клиент (deploy acme), все (deploy-all), или "только LeadDrive"
 - **НИКОГДА** не деплоить без явного подтверждения пользователя, на какой именно сервер
-- **НИКОГДА** не предполагать что деплой идёт на Güvən по умолчанию — всегда уточнять
+- **НИКОГДА** не предполагать что деплой идёт на LeadDrive по умолчанию — всегда уточнять
 - Причина: несколько клиентских серверов, ошибочный деплой может сломать продакшен клиента
 
 ## Multi-Client Deployments

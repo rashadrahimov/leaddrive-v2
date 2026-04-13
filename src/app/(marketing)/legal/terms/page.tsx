@@ -1,6 +1,6 @@
 import { AnimateIn } from "@/components/marketing/animate-in"
 import type { Metadata } from "next"
-import { COMPANY_EMAIL, COMPANY_PHONE_FORMATTED } from "@/lib/constants"
+import { COMPANY_EMAIL } from "@/lib/constants"
 import { getTranslations } from "next-intl/server"
 
 export const metadata: Metadata = {
@@ -24,7 +24,7 @@ export default async function TermsPage() {
               <section>
                 <h2 className="text-lg font-semibold text-[#001E3C] mb-3">{t("s1")}</h2>
                 <p>
-                  Bu İstifadə Şərtləri Güvən Technology LLC (&quot;Şirkət&quot;) tərəfindən təqdim olunan LeadDrive CRM
+                  Bu İstifadə Şərtləri LeadDrive Inc. (&quot;Şirkət&quot;) tərəfindən təqdim olunan LeadDrive CRM
                   platformasından (&quot;Xidmət&quot;) istifadə şərtlərini müəyyən edir. Xidmətdən istifadə etməklə
                   siz bu şərtləri qəbul edirsiniz.
                 </p>
@@ -112,8 +112,7 @@ export default async function TermsPage() {
               </p>
               <p className="mt-2">
                 {COMPANY_EMAIL}<br />
-                {COMPANY_PHONE_FORMATTED}<br />
-                Güvən Technology LLC, Bakı, Azərbaycan
+                LeadDrive Inc., Warsaw, Poland
               </p>
             </section>
           </div>

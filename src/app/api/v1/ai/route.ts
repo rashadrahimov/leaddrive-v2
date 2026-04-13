@@ -303,7 +303,7 @@ async function handleText(orgId: string, contextBlock: string, contextName: stri
       model: "claude-haiku-4-5-20251001",
       max_tokens: 1500,
       temperature: 0.7,
-      system: `You are an Da Vinci copywriter for LeadDrive CRM. Write professional texts for business communications. Respond ONLY with valid JSON, no markdown. Signature: Güvən Technology LLC. All text content MUST be in ${langName}.`,
+      system: `You are an Da Vinci copywriter for LeadDrive CRM. Write professional texts for business communications. Respond ONLY with valid JSON, no markdown. Signature: LeadDrive Inc. All text content MUST be in ${langName}.`,
       messages: [{ role: "user", content: prompt }],
     })
 
@@ -323,18 +323,18 @@ function textFallback(textType: string, tone: string, instructions: string, cont
   const fb: Record<string, { subject: string; body: string; sms: string }> = {
     Russian: {
       subject: "Деловое предложение от нашей компании",
-      body: `Уважаемый(ая) ${contactName},\n\nНадеюсь, что это письмо застает вас в добром здравии.\n\nМы с интересом следим за деятельностью ${contextName} и были бы рады установить деловые отношения. Наша компания предоставляет решения${industry ? ` в области ${industry}` : ""}.${instructions ? `\n\nТакже хотим отметить: ${instructions}.` : ""}\n\nС уважением,\nGüvən Technology LLC`,
-      sms: `Здравствуйте, ${contactName}! Güvən Technology предлагает сотрудничество${industry ? ` в сфере ${industry}` : ""}. Удобно перезвонить? ${instructions || ""}`,
+      body: `Уважаемый(ая) ${contactName},\n\nНадеюсь, что это письмо застает вас в добром здравии.\n\nМы с интересом следим за деятельностью ${contextName} и были бы рады установить деловые отношения. Наша компания предоставляет решения${industry ? ` в области ${industry}` : ""}.${instructions ? `\n\nТакже хотим отметить: ${instructions}.` : ""}\n\nС уважением,\nLeadDrive Inc.`,
+      sms: `Здравствуйте, ${contactName}! LeadDrive предлагает сотрудничество${industry ? ` в сфере ${industry}` : ""}. Удобно перезвонить? ${instructions || ""}`,
     },
     Azerbaijani: {
       subject: "Şirkətimizdən işgüzar təklif",
-      body: `Hörmətli ${contactName},\n\nÜmid edirik ki, bu məktub sizi yaxşı vəziyyətdə tapır.\n\n${contextName} şirkətinin fəaliyyətini maraqla izləyirik və işgüzar əlaqələr qurmaqdan məmnun olarıq. Şirkətimiz ${industry ? `${industry} sahəsində ` : ""}həllər təqdim edir.${instructions ? `\n\nHəmçinin qeyd etmək istərdik: ${instructions}.` : ""}\n\nHörmətlə,\nGüvən Technology LLC`,
-      sms: `Salam, ${contactName}! Güvən Technology ${industry ? `${industry} sahəsində ` : ""}əməkdaşlıq təklif edir. Geri zəng etmək münasibdir? ${instructions || ""}`,
+      body: `Hörmətli ${contactName},\n\nÜmid edirik ki, bu məktub sizi yaxşı vəziyyətdə tapır.\n\n${contextName} şirkətinin fəaliyyətini maraqla izləyirik və işgüzar əlaqələr qurmaqdan məmnun olarıq. Şirkətimiz ${industry ? `${industry} sahəsində ` : ""}həllər təqdim edir.${instructions ? `\n\nHəmçinin qeyd etmək istərdik: ${instructions}.` : ""}\n\nHörmətlə,\nLeadDrive Inc.`,
+      sms: `Salam, ${contactName}! LeadDrive ${industry ? `${industry} sahəsində ` : ""}əməkdaşlıq təklif edir. Geri zəng etmək münasibdir? ${instructions || ""}`,
     },
     English: {
       subject: "Business proposal from our company",
-      body: `Dear ${contactName},\n\nI hope this email finds you well.\n\nWe have been following ${contextName}'s activities with great interest and would be glad to establish a business relationship. Our company provides solutions${industry ? ` in ${industry}` : ""}.${instructions ? `\n\nWe would also like to mention: ${instructions}.` : ""}\n\nBest regards,\nGüvən Technology LLC`,
-      sms: `Hello, ${contactName}! Güvən Technology offers collaboration${industry ? ` in ${industry}` : ""}. Good time to call back? ${instructions || ""}`,
+      body: `Dear ${contactName},\n\nI hope this email finds you well.\n\nWe have been following ${contextName}'s activities with great interest and would be glad to establish a business relationship. Our company provides solutions${industry ? ` in ${industry}` : ""}.${instructions ? `\n\nWe would also like to mention: ${instructions}.` : ""}\n\nBest regards,\nLeadDrive Inc.`,
+      sms: `Hello, ${contactName}! LeadDrive offers collaboration${industry ? ` in ${industry}` : ""}. Good time to call back? ${instructions || ""}`,
     },
   }
   const l = fb[langName] || fb.Russian

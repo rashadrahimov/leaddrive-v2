@@ -29,7 +29,7 @@ export function getDeletionScheduledEmail(data: DeletionEmailData): { subject: s
             All data (contacts, deals, invoices, tickets, etc.) will be permanently removed on this date.
             You can cancel the deletion at any time before this date by contacting your administrator.
           </p>
-          <p style="margin:0;color:#a1a1aa;font-size:12px;">LeadDrive CRM — Powered by Güvən Technology LLC</p>
+          <p style="margin:0;color:#a1a1aa;font-size:12px;">LeadDrive CRM — Powered by LeadDrive Inc.</p>
         </td></tr>
       </table>
     </td></tr>
@@ -60,7 +60,7 @@ export function getDeletionCompletedEmail(data: { companyName: string }): { subj
           <p style="margin:0 0 16px;color:#52525b;font-size:14px;">
             All data has been removed. A JSON export was created before deletion for your records.
           </p>
-          <p style="margin:0;color:#a1a1aa;font-size:12px;">LeadDrive CRM — Powered by Güvən Technology LLC</p>
+          <p style="margin:0;color:#a1a1aa;font-size:12px;">LeadDrive CRM — Powered by LeadDrive Inc.</p>
         </td></tr>
       </table>
     </td></tr>
@@ -91,7 +91,7 @@ export function getDeletionCancelledEmail(data: { companyName: string }): { subj
           <p style="margin:0 0 16px;color:#52525b;font-size:14px;">
             Your account has been reactivated and all data remains intact. You can continue using LeadDrive CRM as normal.
           </p>
-          <p style="margin:0;color:#a1a1aa;font-size:12px;">LeadDrive CRM — Powered by Güvən Technology LLC</p>
+          <p style="margin:0;color:#a1a1aa;font-size:12px;">LeadDrive CRM — Powered by LeadDrive Inc.</p>
         </td></tr>
       </table>
     </td></tr>

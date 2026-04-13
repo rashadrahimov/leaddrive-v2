@@ -71,7 +71,7 @@ function Sidebar({ items, activeLabel }: { items?: SidebarItem[]; activeLabel?: 
 function TopBar() {
   return (
     <div className="flex items-center justify-between px-2.5 py-1 bg-white border-b border-[#001E3C]/10">
-      <span className="text-[7px] font-semibold text-[#001E3C]/40">Güvən Technology LLC</span>
+      <span className="text-[7px] font-semibold text-[#001E3C]/40">LeadDrive Inc.</span>
       <div className="flex items-center gap-1">
         <Bell className="w-2 h-2 text-[#001E3C]/40" />
         <div className="w-3.5 h-3.5 bg-gradient-to-br from-[#0176D3] to-[#0176D3] rounded-full flex items-center justify-center text-[5px] font-bold text-white">R</div>
@@ -267,7 +267,7 @@ export function CrmDealDetailPreview() {
             </div>
             <div className="bg-white rounded-lg border border-[#001E3C]/10 p-1">
               <div className="flex justify-between mb-0.5">
-                <span className="text-[5px] font-medium text-[#001E3C]/80">Güvən səviyyəsi</span>
+                <span className="text-[5px] font-medium text-[#001E3C]/80">Etibar səviyyəsi</span>
                 <span className="text-[5px] font-semibold text-[#001E3C]">75%</span>
               </div>
               <div className="h-1 bg-[#F3F4F7] rounded-full overflow-hidden">

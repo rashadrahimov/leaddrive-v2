@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useRef, useState } from "react"
 import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from "react-leaflet"
 import L from "leaflet"
 
@@ -50,6 +50,26 @@ interface Props {
 }
 
 export default function MtmRouteMap({ points }: Props) {
+  const containerRef = useRef<HTMLDivElement>(null)
+  const [ready, setReady] = useState(false)
+
+  useEffect(() => {
+    const el = containerRef.current
+    if (!el) return
+    const check = () => {
+      const { width, height } = el.getBoundingClientRect()
+      if (width > 100 && height > 100) setReady(true)
+    }
+    check()
+    let observer: ResizeObserver | null = null
+    if (typeof ResizeObserver !== "undefined") {
+      observer = new ResizeObserver(() => check())
+      observer.observe(el)
+    }
+    const fallback = setTimeout(() => setReady(true), 500)
+    return () => { observer?.disconnect(); clearTimeout(fallback) }
+  }, [])
+
   const validPoints = points
     .filter((p) => p.customer?.latitude && p.customer?.longitude)
     .sort((a, b) => a.orderIndex - b.orderIndex)
@@ -68,33 +88,41 @@ export default function MtmRouteMap({ points }: Props) {
   ])
 
   return (
-    <MapContainer center={center} zoom={13} style={{ height: "100%", width: "100%", minHeight: 400 }}>
-      <InvalidateSize />
-      <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>'
-        url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
-        subdomains="abcd"
-      />
-      {/* Route line */}
-      <Polyline positions={polylinePositions} color="#6366f1" weight={3} opacity={0.7} dashArray="8 4" />
-      {/* Point markers */}
-      {validPoints.map((point, i) => (
-        <Marker
-          key={point.id}
-          position={[point.customer!.latitude!, point.customer!.longitude!]}
-          icon={createPointIcon(i, point.status)}
-        >
-          <Popup>
-            <div className="text-sm">
-              <div className="font-semibold">#{i + 1} {point.customer?.name}</div>
-              <div className="text-xs text-muted-foreground mt-1">
-                Status: {point.status}
-                {point.visitedAt && <> · Visited: {new Date(point.visitedAt).toLocaleTimeString()}</>}
-              </div>
-            </div>
-          </Popup>
-        </Marker>
-      ))}
-    </MapContainer>
+    <div ref={containerRef} style={{ height: "100%", width: "100%", minHeight: 400 }}>
+      {ready ? (
+        <MapContainer center={center} zoom={13} style={{ height: "100%", width: "100%" }}>
+          <InvalidateSize />
+          <TileLayer
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>'
+            url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+            subdomains="abcd"
+          />
+          {/* Route line */}
+          <Polyline positions={polylinePositions} color="#6366f1" weight={3} opacity={0.7} dashArray="8 4" />
+          {/* Point markers */}
+          {validPoints.map((point, i) => (
+            <Marker
+              key={point.id}
+              position={[point.customer!.latitude!, point.customer!.longitude!]}
+              icon={createPointIcon(i, point.status)}
+            >
+              <Popup>
+                <div className="text-sm">
+                  <div className="font-semibold">#{i + 1} {point.customer?.name}</div>
+                  <div className="text-xs text-muted-foreground mt-1">
+                    Status: {point.status}
+                    {point.visitedAt && <> · Visited: {new Date(point.visitedAt).toLocaleTimeString()}</>}
+                  </div>
+                </div>
+              </Popup>
+            </Marker>
+          ))}
+        </MapContainer>
+      ) : (
+        <div style={{ height: "100%", width: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "#94a3b8", fontSize: 14 }}>
+          Loading map...
+        </div>
+      )}
+    </div>
   )
 }
