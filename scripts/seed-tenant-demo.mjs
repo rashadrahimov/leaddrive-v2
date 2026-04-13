@@ -2582,6 +2582,124 @@ async function main() {
     }
   } catch (e) { console.log(`Accounting Integrations: ERROR — ${e.message}`) }
 
+  // ─── 79. Webhook ───
+  try {
+    const existingWebhook = await prisma.webhook.findFirst({ where: { organizationId: orgId } })
+    if (!existingWebhook) {
+      const webhooks = [
+        { url: "https://hooks.slack.com/services/T00000/B00000/XXXXXXXXX", events: ["deal.won", "deal.lost"], secret: "whsec_slack_demo_secret_1", isActive: true },
+        { url: "https://api.company.com/webhooks/crm", events: ["contact.created", "company.created", "deal.created"], secret: "whsec_api_demo_secret_2", isActive: true },
+        { url: "https://zapier.com/hooks/catch/123456/abcdef", events: ["ticket.created", "ticket.resolved"], secret: "whsec_zapier_demo_secret_3", isActive: true },
+        { url: "https://n8n.internal.company.com/webhook/crm-sync", events: ["invoice.paid", "invoice.overdue"], secret: "whsec_n8n_demo_secret_4", isActive: false },
+      ]
+      for (const w of webhooks) {
+        await prisma.webhook.create({ data: { ...w, organizationId: orgId } })
+      }
+      console.log(`Webhooks: ${webhooks.length}`)
+    } else {
+      console.log("Webhooks: (existing, skipped)")
+    }
+  } catch (e) { console.log(`Webhooks: ERROR — ${e.message}`) }
+
+  // ─── 80. CustomDomain ───
+  try {
+    const existingDomain = await prisma.customDomain.findFirst({ where: { organizationId: orgId } })
+    if (!existingDomain) {
+      await prisma.customDomain.create({
+        data: {
+          organizationId: orgId, domain: "crm.zeytunpharm.com",
+          status: "dns_verified", dnsVerifiedAt: new Date(now - 10 * DAY),
+          lastCheckedAt: new Date(now - 1 * DAY),
+        },
+      })
+      await prisma.customDomain.create({
+        data: {
+          organizationId: orgId, domain: "portal.zeytunpharm.com",
+          status: "pending", lastCheckedAt: new Date(now - 2 * DAY),
+          errorMessage: "CNAME record not found. Please add: portal.zeytunpharm.com CNAME leaddrivecrm.org",
+        },
+      })
+      console.log("Custom Domains: 2")
+    } else {
+      console.log("Custom Domains: (existing, skipped)")
+    }
+  } catch (e) { console.log(`Custom Domains: ERROR — ${e.message}`) }
+
+  // ─── 81. ContractFile ───
+  try {
+    const existingFile = await prisma.contractFile.findFirst({ where: { organizationId: orgId } })
+    if (!existingFile) {
+      const contract = await prisma.contract.findFirst({ where: { organizationId: orgId } })
+      if (contract) {
+        const files = [
+          { contractId: contract.id, fileName: "ctr-2026-001-signed.pdf", originalName: "Pfizer_CRM_Agreement_Signed.pdf", fileSize: 2458000, mimeType: "application/pdf", uploadedBy: user.id },
+          { contractId: contract.id, fileName: "ctr-2026-001-appendix-a.pdf", originalName: "Appendix_A_SLA_Terms.pdf", fileSize: 845000, mimeType: "application/pdf", uploadedBy: user.id },
+          { contractId: contract.id, fileName: "ctr-2026-001-nda.pdf", originalName: "NDA_Pfizer_LeadDrive.pdf", fileSize: 312000, mimeType: "application/pdf", uploadedBy: user.id },
+        ]
+        for (const f of files) {
+          await prisma.contractFile.create({ data: { ...f, organizationId: orgId } })
+        }
+        console.log(`Contract Files: ${files.length}`)
+      } else {
+        console.log("Contract Files: (no contracts found, skipped)")
+      }
+    } else {
+      console.log("Contract Files: (existing, skipped)")
+    }
+  } catch (e) { console.log(`Contract Files: ERROR — ${e.message}`) }
+
+  // ─── 82. AccountingImport ───
+  try {
+    const existingImport = await prisma.accountingImport.findFirst({ where: { organizationId: orgId } })
+    if (!existingImport) {
+      const budgetPlan = await prisma.budgetPlan.findFirst({ where: { organizationId: orgId } })
+      const accIntegration = await prisma.accountingIntegration.findFirst({ where: { organizationId: orgId, isActive: true } })
+      if (budgetPlan) {
+        const imports = [
+          { planId: budgetPlan.id, integrationId: accIntegration?.id || null, fileName: "q1_2026_actuals.csv", importType: "csv", status: "completed", totalRows: 156, matchedRows: 148, unmatchedRows: 8, errors: { unmatchedCategories: ["Office Renovation", "Team Retreat"] }, createdAt: new Date(now - 30 * DAY) },
+          { planId: budgetPlan.id, integrationId: accIntegration?.id || null, fileName: "february_payroll.csv", importType: "csv", status: "completed", totalRows: 42, matchedRows: 42, unmatchedRows: 0, errors: null, createdAt: new Date(now - 45 * DAY) },
+          { planId: budgetPlan.id, integrationId: null, fileName: "march_expenses.csv", importType: "csv", status: "failed", totalRows: 0, matchedRows: 0, unmatchedRows: 0, errors: { message: "Invalid CSV format: missing header row" }, createdAt: new Date(now - 15 * DAY) },
+          { planId: budgetPlan.id, integrationId: accIntegration?.id || null, importType: "api_sync", status: "completed", totalRows: 89, matchedRows: 85, unmatchedRows: 4, errors: null, createdAt: new Date(now - 7 * DAY) },
+        ]
+        for (const imp of imports) {
+          await prisma.accountingImport.create({ data: { ...imp, organizationId: orgId } })
+        }
+        console.log(`Accounting Imports: ${imports.length}`)
+      } else {
+        console.log("Accounting Imports: (no budget plan found, skipped)")
+      }
+    } else {
+      console.log("Accounting Imports: (existing, skipped)")
+    }
+  } catch (e) { console.log(`Accounting Imports: ERROR — ${e.message}`) }
+
+  // ─── 83. PlanRequest ───
+  try {
+    const existingReq = await prisma.planRequest.findFirst({ where: { organizationId: orgId } })
+    if (!existingReq) {
+      await prisma.planRequest.create({
+        data: {
+          organizationId: orgId, requestedPlan: "enterprise",
+          contactName: "Rashad Rahimov", contactEmail: "admin@zeytunpharm.com",
+          contactPhone: "+48 500 123 456",
+          message: "We need enterprise features: SSO, custom roles, API access, and dedicated support. Currently on professional plan.",
+          status: "pending", createdAt: new Date(now - 3 * DAY),
+        },
+      })
+      await prisma.planRequest.create({
+        data: {
+          organizationId: orgId, requestedPlan: "professional",
+          contactName: "Sarah Johnson", contactEmail: "sarah@zeytunpharm.com",
+          message: "Requesting upgrade from starter to professional for additional users and reporting.",
+          status: "approved", createdAt: new Date(now - 30 * DAY),
+        },
+      })
+      console.log("Plan Requests: 2")
+    } else {
+      console.log("Plan Requests: (existing, skipped)")
+    }
+  } catch (e) { console.log(`Plan Requests: ERROR — ${e.message}`) }
+
   // ─── Summary ───
   console.log("\n" + "═".repeat(50))
   console.log("Demo data seeded successfully!")
@@ -2630,7 +2748,9 @@ async function main() {
   console.log(`  + Payment Registry Entries, Cash Flow Alerts`)
   console.log(`  + AI Alerts, AI Interaction Logs, AI Guardrails`)
   console.log(`  + MTM Audit Logs, Accounting Integrations`)
-  console.log(`\n  Total: 78 sections, 118+ Prisma models covered`)
+  console.log(`  + Webhooks, Custom Domains, Contract Files`)
+  console.log(`  + Accounting Imports, Plan Requests`)
+  console.log(`\n  Total: 83 sections, 123+ Prisma models covered`)
 }
 
 main()

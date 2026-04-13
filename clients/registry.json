@@ -13,6 +13,18 @@
       "status": "active",
       "notes": "Основной инстанс — LeadDrive Inc., Warsaw"
     },
+    "zeytunpharm": {
+      "name": "Zeytuun Pharmaceuticals",
+      "server": "46.224.171.53",
+      "sshUser": "root",
+      "sshKey": "~/.ssh/id_ed25519",
+      "domain": "zeytunpharm.leaddrivecrm.org",
+      "appDir": "/opt/leaddrive-v2",
+      "port": 3001,
+      "pm2Name": "leaddrive-v2",
+      "status": "active",
+      "notes": "Tenant на shared инстансе LeadDrive, slug: zeytunpharm"
+    },
     "fanum": {
       "name": "Fanum Tech",
       "server": "187.124.189.139",
