@@ -4,19 +4,6 @@ import { useEffect, useState } from "react"
 import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from "react-leaflet"
 import L from "leaflet"
 
-function useLeafletCSS() {
-  useEffect(() => {
-    if (document.getElementById("leaflet-css")) return
-    const link = document.createElement("link")
-    link.id = "leaflet-css"
-    link.rel = "stylesheet"
-    link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-    link.integrity = "sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
-    link.crossOrigin = ""
-    document.head.appendChild(link)
-  }, [])
-}
-
 const markerIcon = L.divIcon({
   className: "custom-marker",
   html: `<div style="
@@ -57,7 +44,6 @@ function InvalidateSize() {
 }
 
 function FullScreenMap({ latitude, longitude, onChange, onClose }: Props & { onClose: () => void }) {
-  useLeafletCSS()
   const defaultCenter: [number, number] = [40.4093, 49.8671]
   const hasPosition = latitude != null && longitude != null && latitude !== 0 && longitude !== 0
   const center: [number, number] = hasPosition ? [latitude!, longitude!] : defaultCenter

@@ -1,22 +1,7 @@
 "use client"
 
-import { useEffect } from "react"
 import { MapContainer, TileLayer, Marker, Popup, Polyline } from "react-leaflet"
 import L from "leaflet"
-
-// Inject Leaflet CSS via CDN (standalone builds don't include node_modules CSS)
-function useLeafletCSS() {
-  useEffect(() => {
-    if (document.getElementById("leaflet-css")) return
-    const link = document.createElement("link")
-    link.id = "leaflet-css"
-    link.rel = "stylesheet"
-    link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-    link.integrity = "sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
-    link.crossOrigin = ""
-    document.head.appendChild(link)
-  }, [])
-}
 
 interface RoutePoint {
   id: string
@@ -46,7 +31,6 @@ interface Props {
 }
 
 export default function MtmRouteMap({ points }: Props) {
-  useLeafletCSS()
   const validPoints = points
     .filter((p) => p.customer?.latitude && p.customer?.longitude)
     .sort((a, b) => a.orderIndex - b.orderIndex)

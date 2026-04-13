@@ -1,22 +1,7 @@
 "use client"
 
-import { useEffect } from "react"
 import { MapContainer, TileLayer, Marker, Popup, Polyline, Circle as LeafletCircle } from "react-leaflet"
 import L from "leaflet"
-
-// Inject Leaflet CSS via CDN (standalone builds don't include node_modules CSS)
-function useLeafletCSS() {
-  useEffect(() => {
-    if (document.getElementById("leaflet-css")) return
-    const link = document.createElement("link")
-    link.id = "leaflet-css"
-    link.rel = "stylesheet"
-    link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-    link.integrity = "sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
-    link.crossOrigin = ""
-    document.head.appendChild(link)
-  }, [])
-}
 
 interface AgentLocation {
   agentId: string
@@ -69,8 +54,6 @@ interface Props {
 }
 
 export default function MtmLiveMap({ agents, replayTrack = [], showGeofence = false, geofenceRadius = 100 }: Props) {
-  useLeafletCSS()
-
   const defaultCenter: [number, number] = [40.4093, 49.8671]
   const center: [number, number] =
     agents.length > 0 ? [agents[0].latitude, agents[0].longitude] : defaultCenter

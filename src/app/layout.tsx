@@ -46,6 +46,8 @@ export default async function RootLayout({
         <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.googleapis.com" crossOrigin="anonymous" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        {/* Leaflet CSS — loaded statically to avoid race condition with MapContainer */}
+        <link rel="stylesheet" href="/leaflet.css" />
       </head>
       <body className="font-sans antialiased" nonce={nonce}>
         {/* @ts-expect-error nonce prop supported at runtime */}
