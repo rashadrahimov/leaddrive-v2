@@ -6431,7 +6431,9 @@
       "welcomeEmail": "A welcome email with login credentials has been sent to {email}.",
       "copied": "Copied!",
       "server": "Server",
-      "maxUsersHint": "-1 = unlimited"
+      "maxUsersHint": "-1 = unlimited",
+      "seedDemoData": "Quickstart — Seed demo data",
+      "seedDemoDataDesc": "Populate all 60+ CRM sections with realistic demo data (companies, contacts, deals, invoices, tickets, MTM, budgeting, etc.). Perfect for client demos and evaluation."
     }
   },
   "designCheck": {

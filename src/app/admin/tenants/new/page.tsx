@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Select } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
-import { ArrowLeft, Loader2, CheckCircle2, Copy } from "lucide-react"
+import { ArrowLeft, Loader2, CheckCircle2, Copy, Database } from "lucide-react"
 import Link from "next/link"
 import { MODULE_REGISTRY, type ModuleId } from "@/lib/modules"
 import { TENANT_PLANS, type TenantPlan } from "@/lib/tenant-plans"
@@ -43,6 +43,7 @@ export default function NewTenantPage() {
     features: [...TENANT_PLANS.starter.features] as string[],
     primaryColor: "#6C63FF",
     logo: "",
+    seedDemoData: false,
   })
 
   function handlePlanChange(plan: string) {
@@ -96,6 +97,7 @@ export default function NewTenantPage() {
           plan: form.plan,
           branding: { primaryColor: form.primaryColor, logo: form.logo || undefined },
           features: form.features,
+          seedDemoData: form.seedDemoData,
         }),
       })
 
@@ -248,6 +250,24 @@ export default function NewTenantPage() {
               })}
             </div>
             <p className="text-xs text-muted-foreground">{t("tenants.modulesAutoSet")}</p>
+          </div>
+
+          {/* Quickstart Demo Data */}
+          <div className="flex items-start gap-3 rounded-lg border border-border/70 bg-muted/30 p-4">
+            <input
+              type="checkbox"
+              id="seedDemoData"
+              checked={form.seedDemoData}
+              onChange={(e) => setForm({ ...form, seedDemoData: e.target.checked })}
+              className="mt-1 h-4 w-4 rounded border-border text-primary focus:ring-primary cursor-pointer"
+            />
+            <div className="space-y-1">
+              <label htmlFor="seedDemoData" className="text-sm font-medium cursor-pointer flex items-center gap-1.5">
+                <Database className="w-4 h-4 text-primary" />
+                {t("tenants.seedDemoData")}
+              </label>
+              <p className="text-xs text-muted-foreground">{t("tenants.seedDemoDataDesc")}</p>
+            </div>
           </div>
 
           {error && (

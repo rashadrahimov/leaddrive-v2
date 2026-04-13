@@ -6426,7 +6426,9 @@
       "welcomeEmail": "{email} ünvanına giriş məlumatları ilə xoş gəldin məktubu göndərildi.",
       "copied": "Kopyalandı!",
       "server": "Server",
-      "maxUsersHint": "-1 = limitsiz"
+      "maxUsersHint": "-1 = limitsiz",
+      "seedDemoData": "Sürətli başlanğıc — demo məlumatlar",
+      "seedDemoDataDesc": "CRM-in bütün 60+ bölməsini real demo məlumatlarla doldurun (şirkətlər, kontaktlar, sövdələşmələr, fakturalar, biletlər, MTM, büdcə və s.). Müştəri demoları üçün idealdır."
     }
   },
   "designCheck": {

@@ -8,6 +8,8 @@ import { PLAN_LABELS, type TenantPlan } from "@/lib/tenant-plans"
 import { createDnsRecord, isCloudflareConfigured } from "@/lib/cloudflare-dns"
 import { logAudit } from "@/lib/prisma"
 import { checkRateLimit, RATE_LIMIT_CONFIG } from "@/lib/rate-limit"
+import { exec } from "child_process"
+import path from "path"
 
 // GET /api/v1/admin/tenants — List all tenants
 export async function GET(req: NextRequest) {
@@ -63,7 +65,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json()
-    const { companyName, slug, plan, adminName, adminEmail, branding, features } = body
+    const { companyName, slug, plan, adminName, adminEmail, branding, features, seedDemoData } = body
 
     // Validation
     if (!companyName || !slug || !adminName || !adminEmail) {
@@ -138,9 +140,31 @@ export async function POST(req: NextRequest) {
       console.error("[TENANT] Welcome email failed:", emailError)
     }
 
+    // Seed demo data (non-blocking, runs in background)
+    let seedStarted = false
+    if (seedDemoData) {
+      try {
+        const scriptPath = path.resolve(process.cwd(), "scripts/seed-tenant-demo.mjs")
+        const password = result.tempPassword
+        const cmd = `node "${scriptPath}" --slug=${slug} --password="${password}"`
+        exec(cmd, { timeout: 300000 }, (err, stdout, stderr) => {
+          if (err) {
+            console.error(`[TENANT] Seed script error for ${slug}:`, err.message)
+            if (stderr) console.error("[TENANT] Seed stderr:", stderr)
+          } else {
+            console.log(`[TENANT] Seed complete for ${slug}:\n${stdout}`)
+          }
+        })
+        seedStarted = true
+        console.log(`[TENANT] Seed script started for ${slug}`)
+      } catch (seedError) {
+        console.error("[TENANT] Failed to start seed script:", seedError)
+      }
+    }
+
     // Audit log
     logAudit(auth.orgId, "create", "tenant", result.organization.id, result.organization.name, {
-      newValue: { slug, plan: plan || "starter", adminEmail },
+      newValue: { slug, plan: plan || "starter", adminEmail, seedDemoData: !!seedDemoData },
     })
 
     return NextResponse.json({
@@ -152,6 +176,7 @@ export async function POST(req: NextRequest) {
         url: result.url,
         dnsCreated: dnsResult?.success || false,
         emailSent,
+        seedStarted,
       },
     }, { status: 201 })
   } catch (error: any) {
