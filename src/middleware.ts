@@ -255,10 +255,16 @@ const authMiddleware = auth((req) => {
 
   // Check authentication — unauthenticated users go to login
   if (!req.auth) {
+    // For tenant subdomains, build redirect URL from Host header (not req.url which NextAuth
+    // overrides with NEXTAUTH_URL). This keeps users on zeytunpharm.leaddrivecrm.org/login
+    // instead of redirecting to app.leaddrivecrm.org/login.
+    const proto = req.headers.get("x-forwarded-proto") || "https"
+    const baseUrl = isTenantSubdomain ? `${proto}://${host}` : req.url
+
     if (pathname === "/") {
-      return withCspHeaders(NextResponse.redirect(new URL("/login", req.url)), nonce)
+      return withCspHeaders(NextResponse.redirect(new URL("/login", baseUrl)), nonce)
     }
-    const loginUrl = new URL("/login", req.url)
+    const loginUrl = new URL("/login", baseUrl)
     loginUrl.searchParams.set("callbackUrl", pathname)
     return withCspHeaders(NextResponse.redirect(loginUrl), nonce)
   }
