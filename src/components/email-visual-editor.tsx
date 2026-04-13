@@ -24,34 +24,54 @@ const MERGE_TAGS = {
   year: { name: "Year", value: "{{year}}" },
 }
 
-/** Load Unlayer embed script once */
+/** Load Unlayer embed script once — with retry and proper state tracking */
+let unlayerLoadPromise: Promise<void> | null = null
+
 function loadUnlayerScript(): Promise<void> {
-  return new Promise((resolve, reject) => {
-    // Already loaded
+  // Return cached promise if already loading/loaded
+  if (unlayerLoadPromise) return unlayerLoadPromise
+
+  unlayerLoadPromise = new Promise<void>((resolve, reject) => {
+    // Already loaded from a previous page visit
     if (typeof window !== "undefined" && (window as any).unlayer) {
       resolve()
       return
     }
-    // Check if script tag exists but hasn't finished loading
-    const existing = document.querySelector(`script[src*="editor.unlayer.com"]`)
-    if (existing) {
-      existing.addEventListener("load", () => resolve())
-      // If already loaded (cached), unlayer should exist
-      if ((window as any).unlayer) { resolve(); return }
-      // Fallback: poll briefly in case load event already fired
-      const check = setInterval(() => {
-        if ((window as any).unlayer) { clearInterval(check); resolve() }
-      }, 100)
-      setTimeout(() => { clearInterval(check); reject(new Error("Unlayer script timeout")) }, 15000)
-      return
-    }
+
+    // Remove any stale script tags (from failed attempts or HMR)
+    document.querySelectorAll(`script[src*="editor.unlayer.com"]`).forEach(el => el.remove())
+
     const script = document.createElement("script")
     script.src = UNLAYER_SCRIPT_URL
     script.async = true
-    script.onload = () => resolve()
-    script.onerror = () => reject(new Error("Failed to load Unlayer embed script"))
+
+    script.onload = () => {
+      // Poll for window.unlayer — the script sets it asynchronously
+      let attempts = 0
+      const check = setInterval(() => {
+        attempts++
+        if ((window as any).unlayer) {
+          clearInterval(check)
+          resolve()
+        } else if (attempts > 50) { // 5 seconds
+          clearInterval(check)
+          reject(new Error("Unlayer global not available after script load"))
+        }
+      }, 100)
+    }
+
+    script.onerror = () => {
+      unlayerLoadPromise = null // Allow retry
+      reject(new Error("Failed to load Unlayer embed script"))
+    }
+
     document.head.appendChild(script)
   })
+
+  // Reset on failure so retry is possible
+  unlayerLoadPromise.catch(() => { unlayerLoadPromise = null })
+
+  return unlayerLoadPromise
 }
 
 export interface EmailVisualEditorHandle {
@@ -230,33 +250,42 @@ export const EmailVisualEditor = forwardRef<EmailVisualEditorHandle, Props>(
           </div>
         </div>
 
-        {/* Editor container */}
-        {loading && (
-          <div className="flex items-center justify-center h-[600px] bg-muted/30">
-            <div className="text-center">
-              <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full mx-auto mb-3" />
-              <p className="text-sm text-muted-foreground">{labels?.loading || "Loading editor..."}</p>
+        {/* Editor container — MUST be visible for Unlayer to initialize */}
+        <div style={{ position: "relative", minHeight: 600 }}>
+          {loading && (
+            <div className="absolute inset-0 z-10 flex items-center justify-center bg-muted/60">
+              <div className="text-center">
+                <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full mx-auto mb-3" />
+                <p className="text-sm text-muted-foreground">{labels?.loading || "Loading editor..."}</p>
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {error && (
-          <div className="flex items-center justify-center h-[600px] bg-destructive/5">
-            <div className="text-center">
-              <p className="text-sm text-destructive font-medium">Editor failed to load</p>
-              <p className="text-xs text-muted-foreground mt-1">{error}</p>
+          {error && (
+            <div className="absolute inset-0 z-10 flex items-center justify-center bg-destructive/5">
+              <div className="text-center">
+                <p className="text-sm text-destructive font-medium">Editor failed to load</p>
+                <p className="text-xs text-muted-foreground mt-1">{error}</p>
+                <button
+                  type="button"
+                  className="mt-3 text-xs text-primary underline"
+                  onClick={() => window.location.reload()}
+                >
+                  Reload page
+                </button>
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        <div
-          id={containerIdRef.current}
-          style={{
-            flex: 1,
-            display: loading || error ? "none" : "flex",
-            minHeight: 600,
-          }}
-        />
+          <div
+            id={containerIdRef.current}
+            style={{
+              flex: 1,
+              display: "flex",
+              minHeight: 600,
+            }}
+          />
+        </div>
       </div>
     )
   }
