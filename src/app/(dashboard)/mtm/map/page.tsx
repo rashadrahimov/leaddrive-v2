@@ -153,7 +153,7 @@ export default function MtmMapPage() {
       {/* Main: Map + Right sidebar */}
       <div className="flex gap-3" style={{ height: "calc(100vh - 280px)", minHeight: 400 }}>
         {/* Map */}
-        <div className="flex-1 rounded-lg border bg-card overflow-hidden" style={{ minHeight: 400 }}>
+        <div className="flex-1 rounded-lg border bg-card overflow-hidden relative" style={{ height: "calc(100vh - 280px)", minHeight: 400 }}>
           {loading ? (
             <div className="h-full flex items-center justify-center text-muted-foreground text-sm">Loading map...</div>
           ) : (
