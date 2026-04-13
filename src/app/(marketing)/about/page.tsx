@@ -2,7 +2,7 @@
 
 import { AnimateIn } from "@/components/marketing/animate-in"
 import Link from "next/link"
-import { Building2, Target, Users, Globe, Zap, Shield } from "lucide-react"
+import { Building2, Target, Users, Globe, Zap, Shield, MapPin, Code2 } from "lucide-react"
 import { useTranslations } from "next-intl"
 
 const organizationJsonLd = {
@@ -74,6 +74,32 @@ export default function AboutPage() {
                 </div>
                 <h2 className="text-2xl font-bold text-[#001E3C] mb-4">{t("whatWeDoTitle")}</h2>
                 <p className="text-[#001E3C]/60 leading-relaxed">{t("whatWeDoDesc")}</p>
+              </div>
+            </AnimateIn>
+          </div>
+        </div>
+      </section>
+
+      {/* Our Story */}
+      <section className="pb-16">
+        <div className="mx-auto max-w-6xl px-4 lg:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            <AnimateIn delay={0.1}>
+              <div className="rounded-2xl border border-[#001E3C]/10 bg-[#F3F4F7] p-8">
+                <div className="rounded-lg bg-[#0176D3]/10 w-12 h-12 flex items-center justify-center mb-4">
+                  <MapPin className="h-6 w-6 text-[#0176D3]" />
+                </div>
+                <h2 className="text-2xl font-bold text-[#001E3C] mb-4">{t("storyTitle")}</h2>
+                <p className="text-[#001E3C]/60 leading-relaxed">{t("storyDesc")}</p>
+              </div>
+            </AnimateIn>
+            <AnimateIn delay={0.2}>
+              <div className="rounded-2xl border border-[#001E3C]/10 bg-[#F3F4F7] p-8">
+                <div className="rounded-lg bg-[#0176D3]/10 w-12 h-12 flex items-center justify-center mb-4">
+                  <Code2 className="h-6 w-6 text-[#0176D3]" />
+                </div>
+                <h2 className="text-2xl font-bold text-[#001E3C] mb-4">{t("teamTitle")}</h2>
+                <p className="text-[#001E3C]/60 leading-relaxed">{t("teamDesc")}</p>
               </div>
             </AnimateIn>
           </div>

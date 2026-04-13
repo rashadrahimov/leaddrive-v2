@@ -4,8 +4,8 @@ import { COMPANY_EMAIL } from "@/lib/constants"
 import { getTranslations } from "next-intl/server"
 
 export const metadata: Metadata = {
-  title: "İstifadə Şərtləri",
-  description: "LeadDrive CRM istifadə şərtləri — platformadan istifadə qaydaları və şərtlər.",
+  title: "Terms of Service",
+  description: "LeadDrive CRM terms of service — platform usage rules and conditions.",
 }
 
 export default async function TermsPage() {
@@ -23,93 +23,70 @@ export default async function TermsPage() {
             <AnimateIn delay={0.1}>
               <section>
                 <h2 className="text-lg font-semibold text-[#001E3C] mb-3">{t("s1")}</h2>
-                <p>
-                  Bu İstifadə Şərtləri LeadDrive Inc. (&quot;Şirkət&quot;) tərəfindən təqdim olunan LeadDrive CRM
-                  platformasından (&quot;Xidmət&quot;) istifadə şərtlərini müəyyən edir. Xidmətdən istifadə etməklə
-                  siz bu şərtləri qəbul edirsiniz.
-                </p>
+                <p>{t("p1")}</p>
               </section>
             </AnimateIn>
 
             <section>
               <h2 className="text-lg font-semibold text-[#001E3C] mb-3">{t("s2")}</h2>
-              <p>
-                LeadDrive CRM bulud əsaslı müştəri münasibətləri idarəetmə platformasıdır. Xidmət satış,
-                marketinq, dəstək, maliyyə və analitika modullarını əhatə edir.
-              </p>
+              <p>{t("p2")}</p>
             </section>
 
             <section>
               <h2 className="text-lg font-semibold text-[#001E3C] mb-3">{t("s3")}</h2>
               <ul className="list-disc pl-5 space-y-1">
-                <li>Qeydiyyat zamanı doğru və aktual məlumatlar təqdim etməlisiniz</li>
-                <li>Hesab təhlükəsizliyinə görə siz məsuliyyət daşıyırsınız</li>
-                <li>Hesabınızı üçüncü tərəflərə ötürə bilməzsiniz</li>
-                <li>18 yaşdan kiçik şəxslər xidmətdən istifadə edə bilməz</li>
+                <li>{t("p3_l1")}</li>
+                <li>{t("p3_l2")}</li>
+                <li>{t("p3_l3")}</li>
+                <li>{t("p3_l4")}</li>
               </ul>
             </section>
 
             <section>
               <h2 className="text-lg font-semibold text-[#001E3C] mb-3">{t("s4")}</h2>
               <ul className="list-disc pl-5 space-y-1">
-                <li>Ödəniş bank köçürməsi ilə həyata keçirilir</li>
-                <li>Abunə aylıq və ya illik olaraq yenilənir</li>
-                <li>14 günlük pulsuz sınaq müddəti təqdim olunur</li>
-                <li>Ləğv etmə növbəti hesablama dövrünün sonunda qüvvəyə minir</li>
+                <li>{t("p4_l1")}</li>
+                <li>{t("p4_l2")}</li>
+                <li>{t("p4_l3")}</li>
+                <li>{t("p4_l4")}</li>
               </ul>
             </section>
 
             <section>
               <h2 className="text-lg font-semibold text-[#001E3C] mb-3">{t("s5")}</h2>
-              <p>
-                Platformada yaratdığınız bütün məlumatlar (şirkətlər, kontaktlar, sövdələşmələr, fakturalar və s.)
-                sizin mülkiyyətinizdədir. Abunəliyi ləğv etdikdə məlumatlarınızı ixrac edə bilərsiniz.
-              </p>
+              <p>{t("p5")}</p>
             </section>
 
             <section>
               <h2 className="text-lg font-semibold text-[#001E3C] mb-3">{t("s6")}</h2>
-              <p>Aşağıdakılar qadağandır:</p>
+              <p>{t("p6_intro")}</p>
               <ul className="list-disc pl-5 space-y-1 mt-2">
-                <li>Platformanın qeyri-qanuni məqsədlərlə istifadəsi</li>
-                <li>Xidmətin təhlükəsizliyini pozmaq cəhdləri</li>
-                <li>Digər istifadəçilərin məlumatlarına icazəsiz giriş</li>
-                <li>Platformanın reverse engineering və ya kopyalanması</li>
-                <li>Avtomatlaşdırılmış scraping və ya həddindən artıq yükləmə</li>
+                <li>{t("p6_l1")}</li>
+                <li>{t("p6_l2")}</li>
+                <li>{t("p6_l3")}</li>
+                <li>{t("p6_l4")}</li>
+                <li>{t("p6_l5")}</li>
               </ul>
             </section>
 
             <section>
               <h2 className="text-lg font-semibold text-[#001E3C] mb-3">{t("s7")}</h2>
-              <p>
-                99.9% uptime hədəfləyirik, lakin texniki xidmət və ya fövqəladə hallar zamanı
-                qısamüddətli fasilələr ola bilər. Planlaşdırılmış texniki xidmət haqqında əvvəlcədən
-                xəbərdarlıq edilir.
-              </p>
+              <p>{t("p7")}</p>
             </section>
 
             <section>
               <h2 className="text-lg font-semibold text-[#001E3C] mb-3">{t("s8")}</h2>
-              <p>
-                Şirkət xidmətdən istifadə nəticəsində yarana biləcək dolayı zərərlərə görə məsuliyyət
-                daşımır. Birbaşa zərərlər üçün məsuliyyət ödənilmiş abunə haqqı ilə məhdudlaşdırılır.
-              </p>
+              <p>{t("p8")}</p>
             </section>
 
             <section>
               <h2 className="text-lg font-semibold text-[#001E3C] mb-3">{t("s9")}</h2>
-              <p>
-                Bu şərtlər vaxtaşırı yenilənə bilər. Əhəmiyyətli dəyişikliklər haqqında e-poçt vasitəsilə
-                xəbərdarlıq ediləcək. Dəyişikliklərdən sonra xidmətdən istifadəyə davam etmək yeni şərtlərin
-                qəbulu deməkdir.
-              </p>
+              <p>{t("p9")}</p>
             </section>
 
             <section>
               <h2 className="text-lg font-semibold text-[#001E3C] mb-3">{t("s10")}</h2>
-              <p>
-                Bu şərtlərlə bağlı suallarınız üçün:
-              </p>
+              <p>{t("p10")}</p>
               <p className="mt-2">
                 {COMPANY_EMAIL}<br />
                 LeadDrive Inc., Warsaw, Poland
