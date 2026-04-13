@@ -320,7 +320,7 @@ async function main() {
         data: {
           ...a,
           organizationId: orgId,
-          userId: user.id,
+          createdBy: user.id,
           createdAt: new Date(now - Math.random() * 14 * DAY),
         },
       })
