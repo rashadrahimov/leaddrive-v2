@@ -2607,16 +2607,16 @@ async function main() {
     if (!existingDomain) {
       await prisma.customDomain.create({
         data: {
-          organizationId: orgId, domain: "crm.zeytunpharm.com",
+          organizationId: orgId, domain: `crm.${slug}-demo.com`,
           status: "dns_verified", dnsVerifiedAt: new Date(now - 10 * DAY),
           lastCheckedAt: new Date(now - 1 * DAY),
         },
       })
       await prisma.customDomain.create({
         data: {
-          organizationId: orgId, domain: "portal.zeytunpharm.com",
+          organizationId: orgId, domain: `portal.${slug}-demo.com`,
           status: "pending", lastCheckedAt: new Date(now - 2 * DAY),
-          errorMessage: "CNAME record not found. Please add: portal.zeytunpharm.com CNAME leaddrivecrm.org",
+          errorMessage: `CNAME record not found. Please add: portal.${slug}-demo.com CNAME leaddrivecrm.org`,
         },
       })
       console.log("Custom Domains: 2")
