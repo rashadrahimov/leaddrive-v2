@@ -129,17 +129,18 @@ bash scripts/deploy.sh
 - При schema changes: `npx prisma generate` + `npx prisma migrate deploy` на сервере
 
 ### КРИТИЧНО: Static файлы для standalone режима (баг 11.04.2026)
-- После `npx next build --webpack` ОБЯЗАТЕЛЬНО копировать static:
-  `cp -r .next/static .next/standalone/.next/static`
+- После `npx next build --webpack` ОБЯЗАТЕЛЬНО копировать static И public:
+  `cp -r .next/static .next/standalone/.next/static && cp -r public/* .next/standalone/public/`
+- ВАЖНО: `cp -r public/*` (со звёздочкой!) — без неё создаётся вложенная `public/public/` и файлы типа leaflet.css не находятся
 - Без этого dashboard будет ПУСТОЙ (JS/CSS вернут 503, React не гидратируется)
+- Без public/* — карты сломаются (leaflet.css не загрузится)
 - Путь `.next/standalone/.next/static` — БЕЗ вложенной папки `leaddrive-v2/` (Next.js 16 её не создаёт!)
-- Старый неправильный путь: ~~`.next/standalone/leaddrive-v2/.next/static`~~ — НЕ ИСПОЛЬЗОВАТЬ
 - Проверка после деплоя: `curl -s -o /dev/null -w '%{http_code}' http://localhost:3001/_next/static/chunks/webpack-*.js` — должен вернуть 200
 
 ### Ручной деплой (если скрипт не работает):
 ```bash
 git push origin main
-ssh -i ~/.ssh/id_ed25519 root@46.224.171.53 "cd /opt/leaddrive-v2 && git pull origin main && npx prisma generate && npx next build --webpack && cp -r .next/static .next/standalone/.next/static && pm2 restart leaddrive-v2"
+ssh -i ~/.ssh/id_ed25519 root@46.224.171.53 "cd /opt/leaddrive-v2 && git pull origin main && npx prisma generate && npx next build --webpack && cp -r .next/static .next/standalone/.next/static && cp -r public/* .next/standalone/public/ && pm2 restart leaddrive-cloud"
 ```
 
 ### Проверка:

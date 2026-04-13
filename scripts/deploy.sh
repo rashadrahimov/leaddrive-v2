@@ -46,7 +46,8 @@ step 4 "Copying static files & restarting PM2..."
 ssh root@$SERVER "
   cd $APP_DIR &&
   cp -r .next/static .next/standalone/.next/static &&
-  pm2 restart leaddrive-v2
+  cp -r public/* .next/standalone/public/ &&
+  pm2 restart leaddrive-cloud
   pm2 save
 "
 ok "Static copied & PM2 restarted"
