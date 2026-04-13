@@ -1707,8 +1707,8 @@ async function main() {
 
   // ─── 55. MTM Module ───
   try {
-    const existingMtmAgent = await prisma.mtmAgent.findFirst({ where: { organizationId: orgId } })
-    if (!existingMtmAgent) {
+    const existingMtmCustomer = await prisma.mtmCustomer.findFirst({ where: { organizationId: orgId } })
+    if (!existingMtmCustomer) {
       const teamUsers = await prisma.user.findMany({ where: { organizationId: orgId }, take: 4 })
 
       // MtmAgent — 3 agents
