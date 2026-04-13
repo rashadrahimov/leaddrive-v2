@@ -1,6 +1,6 @@
 {
   "clients": {
-    "guven": {
+    "leaddrive": {
       "name": "LeadDrive Inc.",
       "server": "46.224.171.53",
       "sshUser": "root",

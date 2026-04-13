@@ -264,7 +264,7 @@ async function test1_PortalKB() {
   log('PUBLIC PORTAL-KB (list, no auth)', publicKbListRes.status, publicKbListRes.body);
 
   // 6. Try to register portal customer for different org slugs
-  const orgSlugs = ['xuven-technology', 'leaddrive', 'guven-technology', 'guven'];
+  const orgSlugs = ['xuven-technology', 'leaddrive', 'leaddrive-inc'];
   for (const slug of orgSlugs) {
     const regRes = await request('POST', `${BASE}/api/v1/public/portal-auth/register`, {
       headers: { 'Content-Type': 'application/json' },

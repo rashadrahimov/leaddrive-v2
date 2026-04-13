@@ -24,8 +24,8 @@ const MUTED = "64748B"
 const LIGHT_BLUE = "EFF6FF"
 const LIGHT_PURPLE = "F5F3FF"
 
-pptx.author = "Güvən Technology LLC"
-pptx.company = "Güvən Technology LLC"
+pptx.author = "LeadDrive Inc."
+pptx.company = "LeadDrive Inc."
 pptx.title = "LeadDrive CRM — Kommersiya Təklifi"
 pptx.layout = "LAYOUT_WIDE" // 13.33 x 7.5
 
@@ -121,7 +121,7 @@ function addBenefitCard(slide, x, y, w, h, icon, title, desc, color) {
   })
   slide.addShape(pptx.ShapeType.roundRect, { x: 0.8, y: 5.2, w: 3.0, h: 0.55, fill: { color: WHITE }, rectRadius: 0.28 })
   slide.addText("Demo Sifariş Edin  →", { x: 0.8, y: 5.2, w: 3.0, h: 0.55, fontSize: 13, color: PRIMARY, fontFace: "Arial", bold: true, align: "center", valign: "middle" })
-  slide.addText("Güvən Technology LLC  |  Bakı, Azərbaycan  |  leaddrivecrm.org", {
+  slide.addText("LeadDrive Inc.  |  Warsaw, Poland  |  leaddrivecrm.org", {
     x: 0.8, y: 6.7, w: 7, h: 0.35, fontSize: 11, color: WHITE, fontFace: "Arial", transparency: 30,
   })
 
@@ -542,7 +542,7 @@ function addBenefitCard(slide, x, y, w, h, icon, title, desc, color) {
 
   slide.addShape(pptx.ShapeType.roundRect, { x: 4.2, y: 5.8, w: 5.0, h: 0.7, fill: { color: WHITE }, rectRadius: 0.35 })
   slide.addText("Demo Sifariş Edin  →", { x: 4.2, y: 5.8, w: 5.0, h: 0.7, fontSize: 18, color: PRIMARY, fontFace: "Arial", bold: true, align: "center", valign: "middle" })
-  slide.addText("© 2026 Güvən Technology LLC  |  Bakı, Azərbaycan  |  Bütün hüquqlar qorunur", {
+  slide.addText("© 2026 LeadDrive Inc.  |  Warsaw, Poland  |  Bütün hüquqlar qorunur", {
     x: 0.8, y: 6.9, w: 12, h: 0.3, fontSize: 10, color: WHITE, fontFace: "Arial", align: "center", transparency: 30,
   })
 }

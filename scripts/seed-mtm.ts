@@ -36,7 +36,7 @@ async function main() {
   // 1. Find organization
   // Try multiple possible slugs
   const org = await prisma.organization.findFirst({
-    where: { slug: { in: ["leaddrive", "guven-technology", "guven"] } },
+    where: { slug: { in: ["leaddrive", "leaddrive-inc"] } },
   }) || await prisma.organization.findFirst()
   if (!org) {
     console.error("❌ No organization found. Run create-admin.ts first.")

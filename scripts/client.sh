@@ -313,7 +313,7 @@ cmd_create() {
 
   # Create client dir
   mkdir -p "$PROJECT_DIR/clients/$name"
-  cp "$PROJECT_DIR/clients/guven/.env.example" "$PROJECT_DIR/clients/$name/.env.example"
+  cp "$PROJECT_DIR/clients/leaddrive/.env.example" "$PROJECT_DIR/clients/$name/.env.example"
   ok "Created clients/$name/.env.example — fill in secrets"
 
   echo -e "\n${BOLD}Next steps for '$name':${NC}"

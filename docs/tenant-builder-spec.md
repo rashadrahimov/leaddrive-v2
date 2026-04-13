@@ -114,8 +114,8 @@ model Organization {
   branding  Json
   
   // Добавить:
-  slug         String   @unique  // "guven", "acme"
-  subdomain    String   @unique  // "guven.leaddrivecrm.org"
+  slug         String   @unique  // "leaddrive", "acme"
+  subdomain    String   @unique  // "leaddrive.leaddrivecrm.org"
   plan         String   @default("basic")  // basic, pro, enterprise
   isActive     Boolean  @default(true)
   provisionedAt DateTime?
