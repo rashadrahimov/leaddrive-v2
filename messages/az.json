@@ -5420,6 +5420,122 @@
       "title": "LeadDrive CRM — İntellektual CRM Platforması",
       "description": "İntellektual CRM platforması — satış, marketinq, dəstək, maliyyə və analitika bir yerdə."
     },
+    "moduleData": {
+      "davinci": {
+        "title": "Da Vinci — Sizin Görünməz Komandanız",
+        "description": "Siz yuxuya gedəndə belə Da Vinci müştəriləri qiymətləndirir, məktublar yazır, müraciətlərə cavab verir və hansı sövdələşmənin uğurlu olacağını bilir. 16 imkan — əlavə deyil, platformanın beynidir.",
+        "f1": "Ən perspektivli müştəriləri avtomatik seçir",
+        "f2": "Şəxsi məktubları 3 saniyədə hazırlayır",
+        "f3": "Müraciətlərə ilk cavabı Da Vinci verir — siz yalnız çətin olanlarla məşğul olursunuz",
+        "f4": "Müştəri əhvalını anlıq təhlil edir",
+        "f5": "Sövdələşmələrin nəticəsini 72% dəqiqliklə təxmin edir",
+        "f6": "Tapşırıqları avtomatik yaradır — heç nə unudulmur",
+        "f7": "Bilik bazasından cavab tapır — əməkdaşlar 3 dəfə sürətli işləyir"
+      },
+      "salesPipeline": {
+        "title": "Satış Hunisi & Analitika",
+        "description": "Huni Kanban, gəlir proqnozu, qazanma/itirmə analizi, rəqib müqayisəsi, Da Vinci proqnoz və ən yaxşı təkliflər.",
+        "f1": "Huni Kanban (5 mərhələ)",
+        "f2": "Gəlir proqnozu & trend",
+        "f3": "Qazanma / İtirmə analizi",
+        "f4": "Rəqib Analizi",
+        "f5": "Da Vinci Proqnoz",
+        "f6": "Ən Yaxşı Təkliflər"
+      },
+      "marketing": {
+        "title": "Marketinq Avtomatlaşdırması",
+        "description": "Çoxkanallı kampaniya idarəsi, e-poçt ardıcıllıqları, marşrut qurucusu və ROI izləmə.",
+        "f1": "Kampaniya meneceri",
+        "f2": "E-poçt şablonları",
+        "f3": "Marşrut qurucusu",
+        "f4": "Seqmentasiya",
+        "f5": "Tədbirlər idarəsi",
+        "f6": "Da Vinci Kopyraytinq"
+      },
+      "crm": {
+        "title": "CRM & Satış",
+        "description": "Liddən sövdələşmənin bağlanmasına qədər tam satış dövrü. Da Vinci lid skorinqi, huni vizuallaşdırması və sövdələşmə izləməsi.",
+        "f1": "Huni vizuallaşdırması (Kanban)",
+        "f2": "Lid skorinqi (A–F)",
+        "f3": "Sövdələşmə izləməsi",
+        "f4": "Şirkətlər və Kontaktlar",
+        "f5": "Tapşırıqlar və Təqvim",
+        "f6": "Da Vinci Satış Köməkçisi"
+      },
+      "support": {
+        "title": "Dəstək & Helpdesk",
+        "description": "Service Desk + Agent Desktop, Da Vinci asistent (cavab, xülasə, eskalasiya, SLA), çoxkanallı dəstək (Portal, WhatsApp, Telegram), bilik bazası və müştəri portalı.",
+        "f1": "Service Desk (Siyahı + Kanban)",
+        "f2": "Agent Desktop & Təqvim",
+        "f3": "Avtomatik cavab & xülasə",
+        "f4": "Çoxkanallı dəstək (WA, TG, Portal)",
+        "f5": "SLA izləmə & xatırlatma",
+        "f6": "Bilik bazası & Müştəri portalı",
+        "f7": "CSAT & Da Vinci eskalasiya"
+      },
+      "finance": {
+        "title": "Maliyyə & Analitika",
+        "description": "Xərc modeli mühərriki, büdcələmə, P&L, gəlirlilik analizi və dinamik qiymətləndirmə.",
+        "f1": "Xərc modeli (18 kateqoriya)",
+        "f2": "Büdcələşdirmə & P&L",
+        "f3": "Müştəri gəlirliliyi",
+        "f4": "Dinamik qiymətləndirmə",
+        "f5": "Debitor / Kreditor",
+        "f6": "Da Vinci maliyyə təhlilləri"
+      },
+      "invoices": {
+        "title": "Fakturalar & Ödənişlər",
+        "description": "Faktura yaratma, ödəniş izləmə, 4-kanallı avtomatik xatırlatmalar, təkrarlanan fakturalar və çox valyuta dəstəyi.",
+        "f1": "Faktura generasiyası",
+        "f2": "Ödəniş izləmə",
+        "f3": "4-kanal xatırlatma (E-poçt, WA, SMS, Zəng)",
+        "f4": "Təkrarlanan fakturalar",
+        "f5": "Çox valyuta (AZN/USD/EUR)",
+        "f6": "Da Vinci ödəniş proqnozu"
+      },
+      "erp": {
+        "title": "ERP & Layihə İdarəsi",
+        "description": "Layihə mərhələləri, komanda bölgüsü, büdcə izləməsi, tamamlanma analitikası. Hər layihə sövdələşməyə bağlıdır.",
+        "f1": "Layihə mərhələləri — vizual izləmə",
+        "f2": "Komanda üzvləri & rol idarəsi",
+        "f3": "Büdcə vs aktual — real vaxtda",
+        "f4": "Tapşırıq idarəsi — prioritet & deadline",
+        "f5": "CRM sövdələşmə inteqrasiyası",
+        "f6": "Tamamlanma analitikası"
+      },
+      "inbox": {
+        "title": "7-Kanal Vahid Gələn Qutusu",
+        "description": "E-poçt, SMS, Telegram, WhatsApp, Facebook, Instagram, VK — bütün mesajlar bir yerdə.",
+        "f1": "Vahid gələn qutusu",
+        "f2": "WhatsApp Business API",
+        "f3": "Telegram Bot",
+        "f4": "SMS göndərmə",
+        "f5": "Facebook & Instagram",
+        "f6": "Avtomatik cavablar"
+      },
+      "events": {
+        "title": "Tədbirlər & Qeydiyyat",
+        "description": "Konfrans, vebinar, seminar, sərgi — planlaşdırma, büdcə, iştirakçı idarəsi, ICS dəvətnamə, açıq qeydiyyat portalı və ROI analizi.",
+        "f1": "Tədbir növləri (Konfrans, Vebinar, Seminar, Sərgi)",
+        "f2": "İştirakçı idarəsi (Speaker, VIP, Sponsor)",
+        "f3": "Büdcə planlaşdırma & ROI",
+        "f4": "Açıq qeydiyyat portalı",
+        "f5": "E-poçt dəvətnamə & ICS",
+        "f6": "Davamiyyət izləmə"
+      },
+      "platform": {
+        "title": "Platforma & Konfiqurasiya",
+        "description": "Rollar, iş axınları, xüsusi sahələr, audit jurnalı, çox dilli, Web-to-Lead, API — Enterprise SaaS arxitekturası.",
+        "f1": "Rollar və icazə sistemi",
+        "f2": "İş axını avtomatlaşdırması",
+        "f3": "Xüsusi sahələr — istənilən modulda",
+        "f4": "Audit jurnalı — hər dəyişiklik qeydə alınır",
+        "f5": "Çox dilli (AZ/RU/EN)",
+        "f6": "Web-to-Lead & REST API"
+      },
+      "pipelineKanbanLabel": "Huni Kanban",
+      "dealsCount": "26 sövdə"
+    },
     "cookieConsent": {
       "message": "Bu sayt təcrübənizi yaxşılaşdırmaq üçün cookies istifadə edir. Davam etməklə siz cookie siyasətimizi qəbul edirsiniz.",
       "accept": "Qəbul et",

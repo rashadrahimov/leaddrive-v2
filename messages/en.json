@@ -5425,6 +5425,122 @@
       "title": "LeadDrive CRM — Intelligent CRM Platform",
       "description": "Intelligent CRM platform — sales, marketing, support, finance and analytics in one place."
     },
+    "moduleData": {
+      "davinci": {
+        "title": "Da Vinci — Your Invisible Team",
+        "description": "Even while you sleep, Da Vinci scores customers, writes emails, responds to inquiries, and knows which deals will succeed. 16 capabilities — not an add-on, but the brain of the platform.",
+        "f1": "Automatically selects the most promising customers",
+        "f2": "Prepares personalized emails in 3 seconds",
+        "f3": "Da Vinci gives the first response — you only handle the tough ones",
+        "f4": "Instantly analyzes customer sentiment",
+        "f5": "Predicts deal outcomes with 72% accuracy",
+        "f6": "Automatically creates tasks — nothing is forgotten",
+        "f7": "Finds answers from the knowledge base — staff works 3x faster"
+      },
+      "salesPipeline": {
+        "title": "Sales Pipeline & Analytics",
+        "description": "Pipeline Kanban, revenue forecast, win/loss analysis, competitor comparison, Da Vinci forecast and next best offers.",
+        "f1": "Pipeline Kanban (5 stages)",
+        "f2": "Revenue forecast & trend",
+        "f3": "Win / Loss analysis",
+        "f4": "Competitor Analysis",
+        "f5": "Da Vinci Forecast",
+        "f6": "Next Best Offers"
+      },
+      "marketing": {
+        "title": "Marketing Automation",
+        "description": "Multi-channel campaign management, email sequences, journey builder and ROI tracking.",
+        "f1": "Campaign manager",
+        "f2": "Email templates",
+        "f3": "Journey builder",
+        "f4": "Segmentation",
+        "f5": "Event management",
+        "f6": "Da Vinci Copywriting"
+      },
+      "crm": {
+        "title": "CRM & Sales",
+        "description": "Complete sales cycle from lead to deal close. Da Vinci lead scoring, pipeline visualization and deal tracking.",
+        "f1": "Pipeline visualization (Kanban)",
+        "f2": "Lead scoring (A–F)",
+        "f3": "Deal tracking",
+        "f4": "Companies and Contacts",
+        "f5": "Tasks and Calendar",
+        "f6": "Da Vinci Sales Assistant"
+      },
+      "support": {
+        "title": "Support & Helpdesk",
+        "description": "Service Desk + Agent Desktop, Da Vinci assistant (response, summary, escalation, SLA), multi-channel support (Portal, WhatsApp, Telegram), knowledge base and customer portal.",
+        "f1": "Service Desk (List + Kanban)",
+        "f2": "Agent Desktop & Calendar",
+        "f3": "Auto-response & summary",
+        "f4": "Multi-channel support (WA, TG, Portal)",
+        "f5": "SLA tracking & reminders",
+        "f6": "Knowledge base & Customer portal",
+        "f7": "CSAT & Da Vinci escalation"
+      },
+      "finance": {
+        "title": "Finance & Analytics",
+        "description": "Cost model engine, budgeting, P&L, profitability analysis and dynamic pricing.",
+        "f1": "Cost model (18 categories)",
+        "f2": "Budgeting & P&L",
+        "f3": "Customer profitability",
+        "f4": "Dynamic pricing",
+        "f5": "Accounts receivable / payable",
+        "f6": "Da Vinci financial analysis"
+      },
+      "invoices": {
+        "title": "Invoices & Payments",
+        "description": "Invoice creation, payment tracking, 4-channel automatic reminders, recurring invoices and multi-currency support.",
+        "f1": "Invoice generation",
+        "f2": "Payment tracking",
+        "f3": "4-channel reminders (Email, WA, SMS, Call)",
+        "f4": "Recurring invoices",
+        "f5": "Multi-currency (AZN/USD/EUR)",
+        "f6": "Da Vinci payment forecast"
+      },
+      "erp": {
+        "title": "ERP & Project Management",
+        "description": "Project stages, team allocation, budget tracking, completion analytics. Every project is linked to a deal.",
+        "f1": "Project stages — visual tracking",
+        "f2": "Team members & role management",
+        "f3": "Budget vs actual — real time",
+        "f4": "Task management — priority & deadline",
+        "f5": "CRM deal integration",
+        "f6": "Completion analytics"
+      },
+      "inbox": {
+        "title": "7-Channel Unified Inbox",
+        "description": "Email, SMS, Telegram, WhatsApp, Facebook, Instagram, VK — all messages in one place.",
+        "f1": "Unified inbox",
+        "f2": "WhatsApp Business API",
+        "f3": "Telegram Bot",
+        "f4": "SMS sending",
+        "f5": "Facebook & Instagram",
+        "f6": "Auto-responses"
+      },
+      "events": {
+        "title": "Events & Registration",
+        "description": "Conference, webinar, seminar, exhibition — planning, budget, participant management, ICS invitations, open registration portal and ROI analysis.",
+        "f1": "Event types (Conference, Webinar, Seminar, Exhibition)",
+        "f2": "Participant management (Speaker, VIP, Sponsor)",
+        "f3": "Budget planning & ROI",
+        "f4": "Open registration portal",
+        "f5": "Email invitation & ICS",
+        "f6": "Attendance tracking"
+      },
+      "platform": {
+        "title": "Platform & Configuration",
+        "description": "Roles, workflows, custom fields, audit log, multi-language, Web-to-Lead, API — Enterprise SaaS architecture.",
+        "f1": "Roles and permission system",
+        "f2": "Workflow automation",
+        "f3": "Custom fields — in any module",
+        "f4": "Audit log — every change is recorded",
+        "f5": "Multi-language (AZ/RU/EN)",
+        "f6": "Web-to-Lead & REST API"
+      },
+      "pipelineKanbanLabel": "Pipeline Kanban",
+      "dealsCount": "26 deals"
+    },
     "cookieConsent": {
       "message": "This site uses cookies to improve your experience. By continuing, you accept our cookie policy.",
       "accept": "Accept",

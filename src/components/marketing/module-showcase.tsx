@@ -1360,6 +1360,7 @@ function FinancePreview() {
 }
 
 function SalesPipelinePreview() {
+  const t = useTranslations("marketing.moduleData")
   return (
     <AppShell activeItem="Sövdələşmələr">
       {/* Top KPI row */}
@@ -1385,8 +1386,8 @@ function SalesPipelinePreview() {
         {/* Pipeline Kanban */}
         <div className="bg-white rounded-lg border border-[#001E3C]/8 p-2">
           <div className="flex items-center justify-between mb-1.5">
-            <div className="text-[8px] font-semibold text-[#001E3C]/80">Pipeline Kanban</div>
-            <div className="text-[6px] text-[#001E3C]/40">26 sövdə</div>
+            <div className="text-[8px] font-semibold text-[#001E3C]/80">{t("pipelineKanbanLabel")}</div>
+            <div className="text-[6px] text-[#001E3C]/40">{t("dealsCount")}</div>
           </div>
           <div className="flex items-center gap-0.5 mb-1 text-[5px]">
             {[{ l: "Lid", c: "#3b82f6" }, { l: "Kvalifika...", c: "#8b5cf6" }, { l: "Təklif", c: "#f59e0b" }, { l: "Danışıqlar", c: "#ef4444" }, { l: "Qazanıldı", c: "#10b981" }].map(s => (
@@ -2215,85 +2216,18 @@ function AiPreview() {
    MODULE DATA
    ══════════════════════════════════════════════════════ */
 
-const modules = [
-  /* 1 — Дифференциатор: Da Vinci */
-  {
-    id: "davinci", title: "Da Vinci — Sizin Görünməz Komandanız", color: "#f97316", icon: Bot,
-    description: "Siz yuxuya gedəndə belə Da Vinci müştəriləri qiymətləndirir, məktublar yazır, müraciətlərə cavab verir və hansı sövdələşmənin uğurlu olacağını bilir. 16 imkan — əlavə deyil, platformanın beynidir.",
-    features: ["Ən perspektivli müştəriləri avtomatik seçir", "Şəxsi məktubları 3 saniyədə hazırlayır", "Müraciətlərə ilk cavabı Da Vinci verir — siz yalnız çətin olanlarla məşğul olursunuz", "Müştəri əhvalını anlıq təhlil edir", "Sövdələşmələrin nəticəsini 72% dəqiqliklə təxmin edir", "Tapşırıqları avtomatik yaradır — heç nə unudulmur", "Bilik bazasından cavab tapır — əməkdaşlar 3 dəfə sürətli işləyir"],
-    Preview: AiPreview,
-  },
-  /* 2 — Деньги: Pipeline */
-  {
-    id: "sales-pipeline", title: "Satış Pipeline & Analitika", color: "#ef4444", icon: TrendingUp,
-    description: "Pipeline Kanban, gəlir proqnozu, qazanma/itirmə analizi, rəqib müqayisəsi, Da Vinci proqnoz və next best offers.",
-    features: ["Pipeline Kanban (5 mərhələ)", "Gəlir proqnozu & trend", "Qazanma / İtirmə analizi", "Rəqib Analizi", "Da Vinci Proqnoz", "Next Best Offers"],
-    Preview: SalesPipelinePreview,
-  },
-  /* 3 — Маркетинг */
-  {
-    id: "marketing", title: "Marketinq Avtomatlaşdırması", color: "#f97316", icon: Megaphone,
-    description: "Çoxkanallı kampaniya idarəsi, e-poçt ardıcıllıqları, marşrut qurucusu və ROI izləmə.",
-    features: ["Kampaniya meneceri", "E-poçt şablonları", "Marşrut qurucusu", "Seqmentasiya", "Tədbirlər idarəsi", "Da Vinci Kopyraytinq"],
-    Preview: MarketingPreview,
-  },
-  /* 4 — Базовый CRM */
-  {
-    id: "crm", title: "CRM & Satış", color: "#3b82f6", icon: Users,
-    description: "Liddən sövdələşmənin bağlanmasına qədər tam satış dövrü. Da Vinci lid skorinqi, pipeline vizuallaşdırması və sövdələşmə izləməsi.",
-    features: ["Pipeline vizuallaşdırması (Kanban)", "Lid skorinqi (A–F)", "Sövdələşmə izləməsi", "Şirkətlər və Kontaktlar", "Tapşırıqlar və Təqvim", "Da Vinci Satış Köməkçisi"],
-    Preview: CrmPreview,
-  },
-  /* 5 — Визуальный wow (sliding panels) */
-  {
-    id: "support", title: "Dəstək & Helpdesk", color: "#8b5cf6", icon: Headphones,
-    description: "Service Desk + Agent Desktop, Da Vinci asistent (cavab, xülasə, eskalasiya, SLA), çoxkanallı dəstək (Portal, WhatsApp, Telegram), bilik bazası və müştəri portalı.",
-    features: ["Service Desk (Siyahı + Kanban)", "Agent Desktop & Təqvim", "Avtomatik cavab & xülasə", "Çoxkanallı dəstək (WA, TG, Portal)", "SLA izləmə & xatırlatma", "Bilik bazası & Müştəri portalı", "CSAT & Da Vinci eskalasiya"],
-    Preview: SupportPreview,
-    fullWidth: true,
-  },
-  /* 6 — Финансы */
-  {
-    id: "finance", title: "Maliyyə & Analitika", color: "#10b981", icon: LineChart,
-    description: "Xərc modeli mühərriki, büdcələmə, P&L, gəlirlilik analizi və dinamik qiymətləndirmə.",
-    features: ["Xərc modeli (18 kateqoriya)", "Büdcələşdirmə & P&L", "Müştəri gəlirliliyi", "Dinamik qiymətləndirmə", "Debitor / Kreditor", "Da Vinci maliyyə təhlilləri"],
-    Preview: FinancePreview,
-  },
-  /* 7 — Fakturalar */
-  {
-    id: "invoices", title: "Fakturalar & Ödənişlər", color: "#ef4444", icon: Receipt,
-    description: "Faktura yaratma, ödəniş izləmə, 4-kanallı avtomatik xatırlatmalar, təkrarlanan fakturalar və çox valyuta dəstəyi.",
-    features: ["Faktura generasiyası", "Ödəniş izləmə", "4-kanal xatırlatma (E-poçt, WA, SMS, Zəng)", "Təkrarlanan fakturalar", "Çox valyuta (AZN/USD/EUR)", "Da Vinci ödəniş proqnozu"],
-    Preview: InvoicePreview,
-  },
-  /* 8 — ERP & Layihələr */
-  {
-    id: "erp", title: "ERP & Layihə İdarəsi", color: "#f59e0b", icon: Layers,
-    description: "Layihə mərhələləri, komanda bölgüsü, büdcə izləməsi, tamamlanma analitikası. Hər layihə sövdələşməyə bağlıdır.",
-    features: ["Layihə mərhələləri — vizual izləmə", "Komanda üzvləri & rol idarəsi", "Büdcə vs aktual — real vaxtda", "Tapşırıq idarəsi — prioritet & deadline", "CRM sövdələşmə inteqrasiyası", "Tamamlanma analitikası"],
-    Preview: ErpPreview,
-  },
-  /* 9 — Inbox */
-  {
-    id: "inbox", title: "7-Kanal Vahid Gələn Qutusu", color: "#06b6d4", icon: MessageSquare,
-    description: "E-poçt, SMS, Telegram, WhatsApp, Facebook, Instagram, VK — bütün mesajlar bir yerdə.",
-    features: ["Vahid gələn qutusu", "WhatsApp Business API", "Telegram Bot", "SMS göndərmə", "Facebook & Instagram", "Avtomatik cavablar"],
-    Preview: InboxPreview,
-  },
-  /* 10 — Тедбирлер */
-  {
-    id: "events", title: "Tədbirlər & Qeydiyyat", color: "#8b5cf6", icon: CalendarDays,
-    description: "Konfrans, vebinar, seminar, sərgi — planlaşdırma, büdcə, iştirakçı idarəsi, ICS dəvətnamə, açıq qeydiyyat portalı və ROI analizi.",
-    features: ["Tədbir növləri (Konfrans, Vebinar, Seminar, Sərgi)", "İştirakçı idarəsi (Speaker, VIP, Sponsor)", "Büdcə planlaşdırma & ROI", "Açıq qeydiyyat portalı", "E-poçt dəvətnamə & ICS", "Davamiyyət izləmə"],
-    Preview: EventsPreview,
-  },
-  /* 11 — Platforma */
-  {
-    id: "platform", title: "Platforma & Konfiqurasiya", color: "#64748b", icon: Settings,
-    description: "Rollar, iş axınları, xüsusi sahələr, audit jurnalı, çox dilli, Web-to-Lead, API — Enterprise SaaS arxitekturası.",
-    features: ["Rollar və icazə sistemi", "İş axını avtomatlaşdırması", "Xüsusi sahələr — istənilən modulda", "Audit jurnalı — hər dəyişiklik qeydə alınır", "Çox dilli (AZ/RU/EN)", "Web-to-Lead & REST API"],
-    Preview: PlatformPreview,
-  },
+const modulesDef = [
+  { id: "davinci", key: "davinci", color: "#f97316", icon: Bot, featureCount: 7, Preview: AiPreview },
+  { id: "sales-pipeline", key: "salesPipeline", color: "#ef4444", icon: TrendingUp, featureCount: 6, Preview: SalesPipelinePreview },
+  { id: "marketing", key: "marketing", color: "#f97316", icon: Megaphone, featureCount: 6, Preview: MarketingPreview },
+  { id: "crm", key: "crm", color: "#3b82f6", icon: Users, featureCount: 6, Preview: CrmPreview },
+  { id: "support", key: "support", color: "#8b5cf6", icon: Headphones, featureCount: 7, Preview: SupportPreview, fullWidth: true },
+  { id: "finance", key: "finance", color: "#10b981", icon: LineChart, featureCount: 6, Preview: FinancePreview },
+  { id: "invoices", key: "invoices", color: "#ef4444", icon: Receipt, featureCount: 6, Preview: InvoicePreview },
+  { id: "erp", key: "erp", color: "#f59e0b", icon: Layers, featureCount: 6, Preview: ErpPreview },
+  { id: "inbox", key: "inbox", color: "#06b6d4", icon: MessageSquare, featureCount: 6, Preview: InboxPreview },
+  { id: "events", key: "events", color: "#8b5cf6", icon: CalendarDays, featureCount: 6, Preview: EventsPreview },
+  { id: "platform", key: "platform", color: "#64748b", icon: Settings, featureCount: 6, Preview: PlatformPreview },
 ]
 
 /* ══════════════════════════════════════════════════════
@@ -2303,6 +2237,15 @@ const modules = [
 export function ModuleShowcase() {
   const t = useTranslations("marketing.statsBar")
   const tMod = useTranslations("marketing.modules")
+  const tData = useTranslations("marketing.moduleData")
+
+  const modules = modulesDef.map(def => ({
+    ...def,
+    title: tData(`${def.key}.title`),
+    description: tData(`${def.key}.description`),
+    features: Array.from({ length: def.featureCount }, (_, i) => tData(`${def.key}.f${i + 1}`)),
+  }))
+
   return (
     <section id="modules" className="relative bg-white py-20 lg:py-28">
       <div className="mx-auto max-w-7xl px-4 lg:px-8">
@@ -2319,7 +2262,7 @@ export function ModuleShowcase() {
             const isReversed = i % 2 === 1
 
             /* Full-width layout: 3 sliding panels + description below */
-            if ((mod as any).fullWidth) {
+            if (mod.fullWidth) {
               return (
                 <AnimateIn key={mod.id} delay={80}>
                   <SupportSlidingPanels />
@@ -2333,8 +2276,8 @@ export function ModuleShowcase() {
                     </div>
                     <p className="text-[#001E3C]/60 leading-relaxed mb-6">{mod.description}</p>
                     <ul className="inline-grid grid-cols-2 gap-x-8 gap-y-2.5 text-left">
-                      {mod.features.map(f => (
-                        <li key={f} className="flex items-start gap-2.5">
+                      {mod.features.map((f, fi) => (
+                        <li key={fi} className="flex items-start gap-2.5">
                           <Check className="w-4 h-4 mt-0.5 shrink-0" style={{ color: mod.color }} />
                           <span className="text-sm text-[#001E3C]/60">{f}</span>
                         </li>
@@ -2362,8 +2305,8 @@ export function ModuleShowcase() {
                     </div>
                     <p className="text-[#001E3C]/60 leading-relaxed mb-6">{mod.description}</p>
                     <ul className="space-y-2.5">
-                      {mod.features.map(f => (
-                        <li key={f} className="flex items-start gap-2.5">
+                      {mod.features.map((f, fi) => (
+                        <li key={fi} className="flex items-start gap-2.5">
                           <Check className="w-4 h-4 mt-0.5 shrink-0" style={{ color: mod.color }} />
                           <span className="text-sm text-[#001E3C]/60">{f}</span>
                         </li>
