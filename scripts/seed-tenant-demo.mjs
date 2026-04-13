@@ -2077,6 +2077,511 @@ async function main() {
     }
   } catch (e) { console.log(`ProjectMember/FundRule: ERROR — ${e.message}`) }
 
+  // ─── 59. AuditLog ───
+  try {
+    const existingAL = await prisma.auditLog.findFirst({ where: { organizationId: orgId } })
+    if (!existingAL) {
+      const auditLogs = [
+        { userId: user.id, action: "login", entityType: "user", entityName: user.name, ipAddress: "185.45.12.88", userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" },
+        { userId: user.id, action: "create", entityType: "company", entityName: "Pfizer Inc.", newValue: { name: "Pfizer Inc.", industry: "Pharmaceuticals" } },
+        { userId: user.id, action: "create", entityType: "deal", entityName: "Pfizer CRM Integration", newValue: { valueAmount: 285000, stage: "NEGOTIATION" } },
+        { userId: user.id, action: "update", entityType: "deal", entityName: "Novartis Procurement Platform", oldValue: { stage: "PROPOSAL" }, newValue: { stage: "WON" } },
+        { userId: user.id, action: "create", entityType: "invoice", entityName: "INV-2026-001", newValue: { total: 48750, status: "sent" } },
+        { userId: user.id, action: "update", entityType: "ticket", entityName: "TK-001", oldValue: { status: "new" }, newValue: { status: "in_progress" } },
+        { userId: user.id, action: "export", entityType: "report", entityName: "Q1 Sales Summary", newValue: { format: "csv", rows: 156 } },
+        { userId: user.id, action: "delete", entityType: "lead", entityName: "Spam Lead", oldValue: { contactName: "Test", source: "unknown" } },
+        { userId: user.id, action: "login", entityType: "user", entityName: user.name, ipAddress: "91.108.22.15", userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)", createdAt: new Date(now - DAY) },
+        { userId: user.id, action: "update", entityType: "organization", entityName: "Settings", oldValue: { timezone: "UTC" }, newValue: { timezone: "Europe/Warsaw" } },
+      ]
+      for (const a of auditLogs) {
+        await prisma.auditLog.create({ data: { ...a, organizationId: orgId } })
+      }
+      console.log(`Audit Logs: ${auditLogs.length}`)
+    } else {
+      console.log("Audit Logs: (existing, skipped)")
+    }
+  } catch (e) { console.log(`Audit Logs: ERROR — ${e.message}`) }
+
+  // ─── 60. CustomFieldValue ───
+  try {
+    const existingCFV = await prisma.customFieldValue.findFirst({ where: { organizationId: orgId } })
+    if (!existingCFV) {
+      const customFields = await prisma.customField.findMany({ where: { organizationId: orgId } })
+      const orgDeals = await prisma.deal.findMany({ where: { organizationId: orgId }, take: 5 })
+      const orgCompanies = await prisma.company.findMany({ where: { organizationId: orgId }, take: 5 })
+      const orgContacts = await prisma.contact.findMany({ where: { organizationId: orgId }, take: 3 })
+      let cfvCount = 0
+      for (const cf of customFields) {
+        let entities = []
+        let values = []
+        if (cf.entityType === "deal" && cf.fieldName === "deal_source_channel") {
+          entities = orgDeals; values = ["Direct", "Partner", "Online", "Referral", "Direct"]
+        } else if (cf.entityType === "company" && cf.fieldName === "company_tier") {
+          entities = orgCompanies; values = ["Platinum", "Gold", "Silver", "Bronze", "Gold"]
+        } else if (cf.entityType === "contact" && cf.fieldName === "preferred_language") {
+          entities = orgContacts; values = ["English", "German", "French"]
+        }
+        for (let i = 0; i < Math.min(entities.length, values.length); i++) {
+          try {
+            await prisma.customFieldValue.create({
+              data: { organizationId: orgId, fieldId: cf.id, entityId: entities[i].id, value: values[i] },
+            })
+            cfvCount++
+          } catch (_) { /* unique constraint */ }
+        }
+      }
+      console.log(`Custom Field Values: ${cfvCount}`)
+    } else {
+      console.log("Custom Field Values: (existing, skipped)")
+    }
+  } catch (e) { console.log(`Custom Field Values: ERROR — ${e.message}`) }
+
+  // ─── 61. CurrencyRateHistory ───
+  try {
+    const existingCRH = await prisma.currencyRateHistory.findFirst({ where: { organizationId: orgId } })
+    if (!existingCRH) {
+      const rates = [
+        { currencyCode: "EUR", rate: 0.92, rateDate: new Date(now - 30 * DAY) },
+        { currencyCode: "EUR", rate: 0.91, rateDate: new Date(now - 20 * DAY) },
+        { currencyCode: "EUR", rate: 0.93, rateDate: new Date(now - 10 * DAY) },
+        { currencyCode: "EUR", rate: 0.92, rateDate: new Date() },
+        { currencyCode: "GBP", rate: 0.79, rateDate: new Date(now - 30 * DAY) },
+        { currencyCode: "GBP", rate: 0.78, rateDate: new Date(now - 15 * DAY) },
+        { currencyCode: "GBP", rate: 0.80, rateDate: new Date() },
+        { currencyCode: "PLN", rate: 4.05, rateDate: new Date(now - 30 * DAY) },
+        { currencyCode: "PLN", rate: 4.12, rateDate: new Date(now - 15 * DAY) },
+        { currencyCode: "PLN", rate: 4.08, rateDate: new Date() },
+      ]
+      for (const r of rates) {
+        await prisma.currencyRateHistory.create({ data: { ...r, organizationId: orgId } })
+      }
+      console.log(`Currency Rate History: ${rates.length}`)
+    } else {
+      console.log("Currency Rate History: (existing, skipped)")
+    }
+  } catch (e) { console.log(`Currency Rate History: ERROR — ${e.message}`) }
+
+  // ─── 62. StageValidationRule ───
+  try {
+    const existingSVR = await prisma.stageValidationRule.findFirst({ where: { organizationId: orgId } })
+    if (!existingSVR) {
+      const orgStages = await prisma.pipelineStage.findMany({ where: { organizationId: orgId }, orderBy: { sortOrder: "asc" } })
+      if (orgStages.length >= 4) {
+        const rules = [
+          { pipelineStageId: orgStages[2]?.id, fieldName: "valueAmount", ruleType: "min_value", ruleValue: "1000", errorMessage: "Deal value must be at least $1,000 before moving to Proposal stage" },
+          { pipelineStageId: orgStages[2]?.id, fieldName: "contactId", ruleType: "required", errorMessage: "A primary contact must be assigned before moving to Proposal" },
+          { pipelineStageId: orgStages[3]?.id, fieldName: "expectedClose", ruleType: "required", errorMessage: "Expected close date is required for Negotiation stage" },
+          { pipelineStageId: orgStages[4]?.id, fieldName: "valueAmount", ruleType: "min_value", ruleValue: "0", errorMessage: "Final deal value must be set before marking as Won" },
+        ]
+        for (const r of rules) {
+          if (r.pipelineStageId) {
+            await prisma.stageValidationRule.create({ data: { ...r, organizationId: orgId } })
+          }
+        }
+        console.log(`Stage Validation Rules: ${rules.length}`)
+      }
+    } else {
+      console.log("Stage Validation Rules: (existing, skipped)")
+    }
+  } catch (e) { console.log(`Stage Validation Rules: ERROR — ${e.message}`) }
+
+  // ─── 63. CostModelLog ───
+  try {
+    const existingCML = await prisma.costModelLog.findFirst({ where: { organizationId: orgId } })
+    if (!existingCML) {
+      const logs = [
+        { tableName: "overhead_costs", action: "insert", newValue: { category: "Facilities", label: "Office Rent", amount: 4200 }, changedBy: user.id, createdAt: new Date(now - 5 * DAY) },
+        { tableName: "cost_employees", action: "insert", newValue: { department: "IT", position: "Senior Engineer", netSalary: 6500 }, changedBy: user.id, createdAt: new Date(now - 4 * DAY) },
+        { tableName: "pricing_parameters", action: "update", oldValue: { vatRate: 0.20 }, newValue: { vatRate: 0.18 }, changedBy: user.id, createdAt: new Date(now - 3 * DAY) },
+        { tableName: "overhead_costs", action: "update", oldValue: { amount: 8000 }, newValue: { amount: 8450 }, changedBy: user.id, createdAt: new Date(now - 2 * DAY) },
+        { tableName: "client_services", action: "insert", newValue: { serviceType: "permanent_it", monthlyRevenue: 12000 }, changedBy: user.id, createdAt: new Date(now - DAY) },
+      ]
+      for (const l of logs) {
+        await prisma.costModelLog.create({ data: { ...l, organizationId: orgId } })
+      }
+      console.log(`Cost Model Logs: ${logs.length}`)
+    } else {
+      console.log("Cost Model Logs: (existing, skipped)")
+    }
+  } catch (e) { console.log(`Cost Model Logs: ERROR — ${e.message}`) }
+
+  // ─── 64. BudgetChangeLog ───
+  try {
+    const existingBCL = await prisma.budgetChangeLog.findFirst({ where: { organizationId: orgId } })
+    if (!existingBCL) {
+      const plan = await prisma.budgetPlan.findFirst({ where: { organizationId: orgId } })
+      if (plan) {
+        const budgetLines = await prisma.budgetLine.findMany({ where: { organizationId: orgId, planId: plan.id }, take: 3 })
+        const changeLogs = [
+          { planId: plan.id, entityType: "line", entityId: budgetLines[0]?.id || "unknown", action: "create", field: null, newValue: { category: "Personnel", amount: 45000 }, userId: user.id, createdAt: new Date(now - 7 * DAY) },
+          { planId: plan.id, entityType: "line", entityId: budgetLines[0]?.id || "unknown", action: "update", field: "amount", oldValue: 45000, newValue: 48000, userId: user.id, createdAt: new Date(now - 5 * DAY) },
+          { planId: plan.id, entityType: "actual", entityId: "act-1", action: "create", field: null, newValue: { category: "Cloud", actualAmount: 8200 }, userId: user.id, createdAt: new Date(now - 3 * DAY) },
+          { planId: plan.id, entityType: "line", entityId: budgetLines[1]?.id || "unknown", action: "update", field: "amount", oldValue: 8500, newValue: 9200, userId: user.id, createdAt: new Date(now - 2 * DAY) },
+          { planId: plan.id, entityType: "forecast", entityId: "fc-1", action: "create", field: null, newValue: { month: 4, forecastAmount: 52000 }, userId: user.id, createdAt: new Date(now - DAY) },
+        ]
+        for (const cl of changeLogs) {
+          await prisma.budgetChangeLog.create({ data: { ...cl, organizationId: orgId } })
+        }
+        console.log(`Budget Change Logs: ${changeLogs.length}`)
+      }
+    } else {
+      console.log("Budget Change Logs: (existing, skipped)")
+    }
+  } catch (e) { console.log(`Budget Change Logs: ERROR — ${e.message}`) }
+
+  // ─── 65. BudgetForecastEntry ───
+  try {
+    const existingBFE = await prisma.budgetForecastEntry.findFirst({ where: { organizationId: orgId } })
+    if (!existingBFE) {
+      const plan = await prisma.budgetPlan.findFirst({ where: { organizationId: orgId } })
+      const costTypes = await prisma.budgetCostType.findMany({ where: { organizationId: orgId }, take: 3 })
+      const depts = await prisma.budgetDepartment.findMany({ where: { organizationId: orgId }, take: 2 })
+      if (plan && costTypes.length > 0) {
+        const forecasts = [
+          { planId: plan.id, month: 4, year: 2026, category: "Personnel", lineType: "expense", forecastAmount: 52000, costTypeId: costTypes[0]?.id, departmentId: depts[0]?.id },
+          { planId: plan.id, month: 5, year: 2026, category: "Personnel", lineType: "expense", forecastAmount: 53000, costTypeId: costTypes[0]?.id, departmentId: depts[0]?.id },
+          { planId: plan.id, month: 6, year: 2026, category: "Personnel", lineType: "expense", forecastAmount: 54000, costTypeId: costTypes[0]?.id, departmentId: depts[0]?.id },
+          { planId: plan.id, month: 4, year: 2026, category: "Cloud Infrastructure", lineType: "expense", forecastAmount: 9500, costTypeId: costTypes.length > 2 ? costTypes[2]?.id : null, departmentId: depts[0]?.id },
+          { planId: plan.id, month: 5, year: 2026, category: "Cloud Infrastructure", lineType: "expense", forecastAmount: 9800, costTypeId: costTypes.length > 2 ? costTypes[2]?.id : null, departmentId: depts[0]?.id },
+          { planId: plan.id, month: 4, year: 2026, category: "Revenue — IT Services", lineType: "revenue", forecastAmount: 125000, departmentId: depts[0]?.id },
+          { planId: plan.id, month: 5, year: 2026, category: "Revenue — IT Services", lineType: "revenue", forecastAmount: 128000, departmentId: depts[0]?.id },
+          { planId: plan.id, month: 6, year: 2026, category: "Revenue — IT Services", lineType: "revenue", forecastAmount: 132000, departmentId: depts[0]?.id },
+        ]
+        for (const f of forecasts) {
+          const data = { ...f, organizationId: orgId }
+          if (!data.costTypeId) delete data.costTypeId
+          if (!data.departmentId) delete data.departmentId
+          try {
+            await prisma.budgetForecastEntry.create({ data })
+          } catch (_) { /* unique constraint */ }
+        }
+        console.log(`Budget Forecast Entries: ${forecasts.length}`)
+      }
+    } else {
+      console.log("Budget Forecast Entries: (existing, skipped)")
+    }
+  } catch (e) { console.log(`Budget Forecast Entries: ERROR — ${e.message}`) }
+
+  // ─── 66. BudgetDirectionTemplate ───
+  try {
+    const existingBDT = await prisma.budgetDirectionTemplate.findFirst({ where: { organizationId: orgId } })
+    if (!existingBDT) {
+      const costTypes = await prisma.budgetCostType.findMany({ where: { organizationId: orgId }, take: 3 })
+      const depts = await prisma.budgetDepartment.findMany({ where: { organizationId: orgId }, take: 2 })
+      const templates = [
+        { name: "IT Infrastructure Revenue", lineType: "revenue", lineSubtype: "service", defaultAmount: 120000, costModelKey: "permanent_it", departmentId: depts[0]?.id, sortOrder: 0 },
+        { name: "Cybersecurity Revenue", lineType: "revenue", lineSubtype: "service", defaultAmount: 85000, costModelKey: "infosec", departmentId: depts.length > 1 ? depts[1]?.id : null, sortOrder: 1 },
+        { name: "Personnel Costs", lineType: "expense", defaultAmount: 48000, costTypeId: costTypes[0]?.id, sortOrder: 2 },
+        { name: "Cloud & Software", lineType: "expense", defaultAmount: 8500, costTypeId: costTypes.length > 2 ? costTypes[2]?.id : null, sortOrder: 3 },
+        { name: "Office & Administration", lineType: "expense", defaultAmount: 6000, costTypeId: costTypes.length > 1 ? costTypes[1]?.id : null, sortOrder: 4 },
+      ]
+      for (const t of templates) {
+        const data = { ...t, organizationId: orgId }
+        if (!data.costTypeId) delete data.costTypeId
+        if (!data.departmentId) delete data.departmentId
+        await prisma.budgetDirectionTemplate.create({ data })
+      }
+      console.log(`Budget Direction Templates: ${templates.length}`)
+    } else {
+      console.log("Budget Direction Templates: (existing, skipped)")
+    }
+  } catch (e) { console.log(`Budget Direction Templates: ERROR — ${e.message}`) }
+
+  // ─── 67. BudgetDepartmentOwner ───
+  try {
+    const existingBDO = await prisma.budgetDepartmentOwner.findFirst({ where: { organizationId: orgId } })
+    if (!existingBDO) {
+      const depts = await prisma.budgetDepartment.findMany({ where: { organizationId: orgId } })
+      const teamUsers = await prisma.user.findMany({ where: { organizationId: orgId }, take: 4 })
+      if (depts.length > 0 && teamUsers.length > 1) {
+        let bdoCount = 0
+        for (const dept of depts) {
+          try {
+            await prisma.budgetDepartmentOwner.create({
+              data: { organizationId: orgId, departmentId: dept.id, userId: user.id, canEdit: true, canApprove: true },
+            })
+            bdoCount++
+          } catch (_) { /* unique constraint */ }
+          if (teamUsers.length > 1) {
+            try {
+              await prisma.budgetDepartmentOwner.create({
+                data: { organizationId: orgId, departmentId: dept.id, userId: teamUsers[1].id, canEdit: true, canApprove: false },
+              })
+              bdoCount++
+            } catch (_) { /* unique constraint */ }
+          }
+        }
+        console.log(`Budget Department Owners: ${bdoCount}`)
+      }
+    } else {
+      console.log("Budget Department Owners: (existing, skipped)")
+    }
+  } catch (e) { console.log(`Budget Department Owners: ERROR — ${e.message}`) }
+
+  // ─── 68. BudgetApprovalComment ───
+  try {
+    const existingBAC = await prisma.budgetApprovalComment.findFirst({ where: { organizationId: orgId } })
+    if (!existingBAC) {
+      const plan = await prisma.budgetPlan.findFirst({ where: { organizationId: orgId } })
+      if (plan) {
+        const comments = [
+          { planId: plan.id, userId: user.id, userName: user.name, status: "submitted", comment: "Q2 2026 budget submitted for review. Key changes: +15% personnel costs due to 3 new hires, cloud costs stable.", createdAt: new Date(now - 5 * DAY) },
+          { planId: plan.id, userId: user.id, userName: "Sarah Johnson", status: "review", comment: "Reviewed revenue projections. Pfizer and Roche deals should close in Q2, supporting the 8% growth target.", createdAt: new Date(now - 4 * DAY) },
+          { planId: plan.id, userId: user.id, userName: user.name, status: "comment", comment: "Updated cloud costs to reflect new AWS Reserved Instance pricing. Saving ~12% vs on-demand.", createdAt: new Date(now - 3 * DAY) },
+          { planId: plan.id, userId: user.id, userName: user.name, status: "approved", comment: "Budget approved. Monitor cloud spend closely — we're near the reserved capacity limit.", createdAt: new Date(now - 2 * DAY) },
+        ]
+        for (const c of comments) {
+          await prisma.budgetApprovalComment.create({ data: { ...c, organizationId: orgId } })
+        }
+        console.log(`Budget Approval Comments: ${comments.length}`)
+      }
+    } else {
+      console.log("Budget Approval Comments: (existing, skipped)")
+    }
+  } catch (e) { console.log(`Budget Approval Comments: ERROR — ${e.message}`) }
+
+  // ─── 69. RollingForecastMonth ───
+  try {
+    const existingRFM = await prisma.rollingForecastMonth.findFirst({ where: { organizationId: orgId } })
+    if (!existingRFM) {
+      const plan = await prisma.budgetPlan.findFirst({ where: { organizationId: orgId } })
+      if (plan) {
+        const months = [
+          { planId: plan.id, year: 2026, month: 1, status: "actual", lockedAt: new Date(now - 75 * DAY) },
+          { planId: plan.id, year: 2026, month: 2, status: "actual", lockedAt: new Date(now - 45 * DAY) },
+          { planId: plan.id, year: 2026, month: 3, status: "actual", lockedAt: new Date(now - 15 * DAY) },
+          { planId: plan.id, year: 2026, month: 4, status: "forecast" },
+          { planId: plan.id, year: 2026, month: 5, status: "forecast" },
+          { planId: plan.id, year: 2026, month: 6, status: "forecast" },
+          { planId: plan.id, year: 2026, month: 7, status: "forecast" },
+          { planId: plan.id, year: 2026, month: 8, status: "forecast" },
+          { planId: plan.id, year: 2026, month: 9, status: "forecast" },
+          { planId: plan.id, year: 2026, month: 10, status: "forecast" },
+          { planId: plan.id, year: 2026, month: 11, status: "forecast" },
+          { planId: plan.id, year: 2026, month: 12, status: "forecast" },
+        ]
+        for (const m of months) {
+          try {
+            await prisma.rollingForecastMonth.create({ data: { ...m, organizationId: orgId } })
+          } catch (_) { /* unique constraint */ }
+        }
+        console.log(`Rolling Forecast Months: ${months.length}`)
+      }
+    } else {
+      console.log("Rolling Forecast Months: (existing, skipped)")
+    }
+  } catch (e) { console.log(`Rolling Forecast Months: ERROR — ${e.message}`) }
+
+  // ─── 70. JourneyEnrollment ───
+  try {
+    const existingJE = await prisma.journeyEnrollment.findFirst({ where: { organizationId: orgId } })
+    if (!existingJE) {
+      const journeys = await prisma.journey.findMany({ where: { organizationId: orgId }, include: { steps: true } })
+      if (journeys.length > 0 && createdContacts.length > 0) {
+        const enrollments = [
+          { journeyId: journeys[0].id, contactId: createdContacts[0]?.id, currentStepId: journeys[0].steps[1]?.id, status: "active", enrolledAt: new Date(now - 10 * DAY), nextActionAt: new Date(now + 2 * DAY) },
+          { journeyId: journeys[0].id, contactId: createdContacts[1]?.id, currentStepId: journeys[0].steps[0]?.id, status: "active", enrolledAt: new Date(now - 5 * DAY), nextActionAt: new Date(now + DAY) },
+          { journeyId: journeys[0].id, contactId: createdContacts[2]?.id, status: "completed", enrolledAt: new Date(now - 30 * DAY), completedAt: new Date(now - 5 * DAY), exitReason: "completed" },
+          { journeyId: journeys[0].id, contactId: createdContacts[4]?.id, status: "completed", enrolledAt: new Date(now - 25 * DAY), completedAt: new Date(now - 8 * DAY), goalReachedAt: new Date(now - 8 * DAY), exitReason: "goal_reached" },
+        ]
+        if (journeys.length > 1) {
+          enrollments.push({ journeyId: journeys[1].id, contactId: createdContacts[5]?.id, currentStepId: journeys[1].steps[0]?.id, status: "active", enrolledAt: new Date(now - 3 * DAY), nextActionAt: new Date(now + 4 * DAY) })
+          enrollments.push({ journeyId: journeys[1].id, contactId: createdContacts[7]?.id, status: "active", enrolledAt: new Date(now - 2 * DAY), nextActionAt: new Date(now + 5 * DAY) })
+        }
+        for (const e of enrollments) {
+          if (e.contactId) {
+            await prisma.journeyEnrollment.create({ data: { ...e, organizationId: orgId } })
+          }
+        }
+        console.log(`Journey Enrollments: ${enrollments.length}`)
+      }
+    } else {
+      console.log("Journey Enrollments: (existing, skipped)")
+    }
+  } catch (e) { console.log(`Journey Enrollments: ERROR — ${e.message}`) }
+
+  // ─── 71. SharingRule ───
+  try {
+    const existingSR = await prisma.sharingRule.findFirst({ where: { organizationId: orgId } })
+    if (!existingSR) {
+      const sharingRules = [
+        { entityType: "deal", name: "Sales team sees all deals", ruleType: "role", sourceRole: "member", targetRole: "member", accessLevel: "read" },
+        { entityType: "deal", name: "Managers edit all deals", ruleType: "role", sourceRole: "member", targetRole: "manager", accessLevel: "readwrite" },
+        { entityType: "contact", name: "All contacts visible to team", ruleType: "all", accessLevel: "read" },
+        { entityType: "company", name: "Company data shared across team", ruleType: "all", accessLevel: "read" },
+      ]
+      for (const sr of sharingRules) {
+        await prisma.sharingRule.create({ data: { ...sr, organizationId: orgId } })
+      }
+      console.log(`Sharing Rules: ${sharingRules.length}`)
+    } else {
+      console.log("Sharing Rules: (existing, skipped)")
+    }
+  } catch (e) { console.log(`Sharing Rules: ERROR — ${e.message}`) }
+
+  // ─── 72. PaymentRegistryEntry ───
+  try {
+    const existingPRE = await prisma.paymentRegistryEntry.findFirst({ where: { organizationId: orgId } })
+    if (!existingPRE) {
+      const invPayments = await prisma.invoicePayment.findMany({ where: { organizationId: orgId }, take: 3, include: { invoice: true } })
+      const billPayments = await prisma.billPayment.findMany({ where: { organizationId: orgId }, take: 2, include: { bill: true } })
+      const entries = []
+      for (const ip of invPayments) {
+        entries.push({
+          direction: "incoming", amount: ip.amount, currency: "USD",
+          counterpartyName: "Client", counterpartyId: ip.invoice?.companyId,
+          sourceType: "invoice_payment", sourceId: ip.id, invoiceId: ip.invoiceId,
+          category: "revenue", paymentDate: ip.paymentDate, description: `Payment for invoice`,
+          createdBy: user.id,
+        })
+      }
+      for (const bp of billPayments) {
+        entries.push({
+          direction: "outgoing", amount: bp.amount, currency: "USD",
+          counterpartyName: "Vendor",
+          sourceType: "bill_payment", sourceId: bp.id, billId: bp.billId,
+          category: "vendor_payment", paymentDate: bp.paymentDate, description: `Payment for bill`,
+          createdBy: user.id,
+        })
+      }
+      for (const e of entries) {
+        await prisma.paymentRegistryEntry.create({ data: { ...e, organizationId: orgId } })
+      }
+      console.log(`Payment Registry Entries: ${entries.length}`)
+    } else {
+      console.log("Payment Registry Entries: (existing, skipped)")
+    }
+  } catch (e) { console.log(`Payment Registry Entries: ERROR — ${e.message}`) }
+
+  // ─── 73. CashFlowAlert ───
+  try {
+    const existingCFA = await prisma.cashFlowAlert.findFirst({ where: { organizationId: orgId } })
+    if (!existingCFA) {
+      const alerts = [
+        { year: 2026, month: 3, alertType: "large_outflow", message: "Large outflow detected: Q1 insurance payment ($24,000) exceeds monthly average by 340%", threshold: 10000, projectedBalance: 185000 },
+        { year: 2026, month: 5, alertType: "low_balance", message: "Projected cash balance dropping below $50K safety threshold in May if Pfizer payment delayed", threshold: 50000, projectedBalance: 42000 },
+        { year: 2026, month: 7, alertType: "negative_balance", message: "Risk of negative balance in July — 3 large vendor payments scheduled before Q3 invoices collected", threshold: 0, projectedBalance: -15000, isResolved: true },
+      ]
+      for (const a of alerts) {
+        await prisma.cashFlowAlert.create({ data: { ...a, organizationId: orgId } })
+      }
+      console.log(`Cash Flow Alerts: ${alerts.length}`)
+    } else {
+      console.log("Cash Flow Alerts: (existing, skipped)")
+    }
+  } catch (e) { console.log(`Cash Flow Alerts: ERROR — ${e.message}`) }
+
+  // ─── 74. AiAlert ───
+  try {
+    const existingAiA = await prisma.aiAlert.findFirst({ where: { organizationId: orgId } })
+    if (!existingAiA) {
+      const aiAlerts = [
+        { type: "token_spike", severity: "warning", message: "Token usage spike: 45K tokens consumed in last hour (3x average). Check for recursive agent loops.", metadata: { tokensUsed: 45000, avgHourly: 15000 }, createdAt: new Date(now - 2 * DAY) },
+        { type: "high_latency", severity: "info", message: "Average AI response time increased to 4.2s (threshold: 3s). Anthropic API may be under load.", metadata: { avgLatency: 4200, threshold: 3000 }, createdAt: new Date(now - DAY) },
+        { type: "error", severity: "critical", message: "AI agent 'Sales Copilot' failed 5 consecutive requests. Auto-disabled. Check API key and rate limits.", metadata: { agentName: "Sales Copilot", consecutiveErrors: 5 }, isRead: true, createdAt: new Date(now - 3 * DAY) },
+        { type: "anomaly", severity: "warning", message: "Unusual pattern: 12 identical queries from same session in 2 minutes. Possible automation loop.", metadata: { sessionId: "sess_demo_001", queryCount: 12, timeSpan: 120 }, createdAt: new Date(now - 12 * 60 * 60000) },
+      ]
+      for (const a of aiAlerts) {
+        await prisma.aiAlert.create({ data: { ...a, organizationId: orgId } })
+      }
+      console.log(`AI Alerts: ${aiAlerts.length}`)
+    } else {
+      console.log("AI Alerts: (existing, skipped)")
+    }
+  } catch (e) { console.log(`AI Alerts: ERROR — ${e.message}`) }
+
+  // ─── 75. AiInteractionLog ───
+  try {
+    const existingAIL = await prisma.aiInteractionLog.findFirst({ where: { organizationId: orgId } })
+    if (!existingAIL) {
+      const aiConfigs = await prisma.aiAgentConfig.findMany({ where: { organizationId: orgId }, take: 2 })
+      const interactions = [
+        { userMessage: "Summarize the Pfizer deal status", aiResponse: "The Pfizer CRM Integration deal ($285K) is in Negotiation stage with 75% probability. Expected close in 45 days.", latencyMs: 1850, promptTokens: 420, completionTokens: 85, costUsd: 0.0042, model: "claude-haiku-4-5-20251001", toolsCalled: ["deal_lookup"], agentConfigId: aiConfigs[0]?.id, agentType: "sales_copilot", createdAt: new Date(now - 2 * DAY) },
+        { userMessage: "What tickets are overdue?", aiResponse: "2 tickets are approaching SLA breach: TK-003 (Invoice PDF generation, 4h remaining) and TK-005 (API rate limiting, 2h remaining).", latencyMs: 2100, promptTokens: 380, completionTokens: 120, costUsd: 0.0051, model: "claude-haiku-4-5-20251001", toolsCalled: ["ticket_search", "sla_check"], agentConfigId: aiConfigs[0]?.id, agentType: "support_agent", createdAt: new Date(now - DAY) },
+        { userMessage: "Generate Q1 revenue report", aiResponse: "Q1 2026 Revenue: $385K (actual) vs $350K (budget) = +10% overperformance. Top contributors: Merck ($410K closed), Novartis ($195K closed).", latencyMs: 3200, promptTokens: 850, completionTokens: 200, costUsd: 0.0098, model: "claude-sonnet-4-20250514", toolsCalled: ["report_builder", "deal_analytics"], agentConfigId: aiConfigs[1]?.id, agentType: "analyst", isCopilot: true, createdAt: new Date(now - 3 * DAY) },
+        { userMessage: "Draft email to Dr. Mitchell about project timeline", aiResponse: "Subject: CRM Integration — Updated Timeline\\n\\nDear Dr. Mitchell,\\n\\nI wanted to share the updated project timeline...", latencyMs: 2800, promptTokens: 520, completionTokens: 350, costUsd: 0.0075, model: "claude-sonnet-4-20250514", toolsCalled: ["contact_lookup", "email_draft"], agentConfigId: aiConfigs[0]?.id, agentType: "sales_copilot", createdAt: new Date(now - 12 * 60 * 60000) },
+        { userMessage: "Analyze churn risk for BioGenesis Labs", aiResponse: "Low churn risk (Score: 22/100). Strong engagement: 3 active deals, 95% CSAT, regular communication. Renewal in 4 months.", latencyMs: 1500, promptTokens: 300, completionTokens: 90, costUsd: 0.0035, model: "claude-haiku-4-5-20251001", toolsCalled: ["company_analytics"], agentConfigId: aiConfigs[0]?.id, agentType: "analyst", createdAt: new Date(now - 6 * 60 * 60000) },
+      ]
+      for (const i of interactions) {
+        await prisma.aiInteractionLog.create({ data: { ...i, organizationId: orgId } })
+      }
+      console.log(`AI Interaction Logs: ${interactions.length}`)
+    } else {
+      console.log("AI Interaction Logs: (existing, skipped)")
+    }
+  } catch (e) { console.log(`AI Interaction Logs: ERROR — ${e.message}`) }
+
+  // ─── 76. AiGuardrail ───
+  try {
+    const existingAG = await prisma.aiGuardrail.findFirst({ where: { organizationId: orgId } })
+    if (!existingAG) {
+      const guardrails = [
+        { ruleName: "No PII in responses", ruleType: "filter", description: "Prevent AI from including personal identifiable information (SSN, passport numbers) in responses", promptInjection: "Never include Social Security numbers, passport numbers, or other PII in your responses." },
+        { ruleName: "No competitor pricing", ruleType: "restriction", description: "Prevent AI from sharing internal competitor pricing analysis externally", promptInjection: "Do not share competitor pricing or internal competitive analysis in customer-facing responses." },
+        { ruleName: "Financial data validation", ruleType: "validation", description: "Ensure AI-generated financial figures are cross-referenced with actual database values", promptInjection: "Always verify financial figures against the database before presenting them. Flag any discrepancies." },
+        { ruleName: "Language compliance", ruleType: "filter", description: "Ensure all AI responses maintain professional language standards", promptInjection: "Maintain professional business language. Avoid informal slang, humor about sensitive topics, or speculative statements about company performance." },
+      ]
+      for (const g of guardrails) {
+        await prisma.aiGuardrail.create({ data: { ...g, organizationId: orgId } })
+      }
+      console.log(`AI Guardrails: ${guardrails.length}`)
+    } else {
+      console.log("AI Guardrails: (existing, skipped)")
+    }
+  } catch (e) { console.log(`AI Guardrails: ERROR — ${e.message}`) }
+
+  // ─── 77. MtmAuditLog ───
+  try {
+    const existingMAL = await prisma.mtmAuditLog.findFirst({ where: { organizationId: orgId } })
+    if (!existingMAL) {
+      const mtmAgents = await prisma.mtmAgent.findMany({ where: { organizationId: orgId }, take: 3 })
+      if (mtmAgents.length > 0) {
+        const mtmLogs = [
+          { agentId: mtmAgents[0]?.id, action: "login", entity: "agent", entityId: mtmAgents[0]?.id, newData: { platform: "mobile_app", version: "2.1.0" }, ipAddress: "185.45.12.90", userAgent: "LeadDrive-MTM/2.1.0 (Android 14)" },
+          { agentId: mtmAgents[1]?.id, action: "check_in", entity: "visit", newData: { customerId: "PH-001", lat: 52.1935, lng: 21.0044 }, ipAddress: "91.108.22.33" },
+          { agentId: mtmAgents[1]?.id, action: "create_order", entity: "order", newData: { orderNumber: "MTM-ORD-001", totalAmount: 1192 }, ipAddress: "91.108.22.33" },
+          { agentId: mtmAgents[1]?.id, action: "upload_photo", entity: "photo", newData: { category: "shelf", status: "pending" }, ipAddress: "91.108.22.33" },
+          { agentId: mtmAgents[2]?.id, action: "check_in", entity: "visit", newData: { customerId: "PH-004", lat: 52.1527, lng: 21.0456 }, ipAddress: "78.90.11.22" },
+          { agentId: mtmAgents[0]?.id, action: "resolve_alert", entity: "alert", oldData: { isResolved: false }, newData: { isResolved: true, resolvedBy: mtmAgents[0]?.id }, ipAddress: "185.45.12.90" },
+          { agentId: mtmAgents[1]?.id, action: "complete_task", entity: "task", newData: { title: "Check shelf compliance", result: "All products correctly placed" }, ipAddress: "91.108.22.33" },
+          { agentId: mtmAgents[2]?.id, action: "check_out", entity: "visit", newData: { duration: 30, tasksCompleted: 1, tasksTotal: 2 }, ipAddress: "78.90.11.22" },
+        ]
+        for (const l of mtmLogs) {
+          await prisma.mtmAuditLog.create({ data: { ...l, organizationId: orgId } })
+        }
+        console.log(`MTM Audit Logs: ${mtmLogs.length}`)
+      }
+    } else {
+      console.log("MTM Audit Logs: (existing, skipped)")
+    }
+  } catch (e) { console.log(`MTM Audit Logs: ERROR — ${e.message}`) }
+
+  // ─── 78. AccountingIntegration ───
+  try {
+    const existingAI = await prisma.accountingIntegration.findFirst({ where: { organizationId: orgId } })
+    if (!existingAI) {
+      await prisma.accountingIntegration.create({
+        data: {
+          organizationId: orgId, provider: "csv", name: "CSV Import (Manual)",
+          config: { dateFormat: "YYYY-MM-DD", delimiter: ",", encoding: "UTF-8" },
+          categoryMapping: { "Salaries": "labor", "Cloud": "cloud", "Rent": "overhead_admin", "Software": "software" },
+          isActive: true, lastSyncAt: new Date(now - 3 * DAY), lastSyncStatus: "success",
+        },
+      })
+      await prisma.accountingIntegration.create({
+        data: {
+          organizationId: orgId, provider: "1c", name: "1C Enterprise (Planned)",
+          config: { endpoint: "https://1c.company.local/api", syncInterval: "daily" },
+          categoryMapping: {},
+          isActive: false,
+        },
+      })
+      console.log("Accounting Integrations: 2")
+    } else {
+      console.log("Accounting Integrations: (existing, skipped)")
+    }
+  } catch (e) { console.log(`Accounting Integrations: ERROR — ${e.message}`) }
+
   // ─── Summary ───
   console.log("\n" + "═".repeat(50))
   console.log("Demo data seeded successfully!")
@@ -2117,6 +2622,15 @@ async function main() {
   console.log(`  + Inbox (Channels, Conversations, Messages)`)
   console.log(`  + Project Members, Fund Rules`)
   console.log(`  + MTM (Agents, Customers, Routes, Visits, Tasks, Photos, Orders, Alerts, Settings, Notifications)`)
+  console.log(`  + Audit Logs, Custom Field Values, Currency Rate History`)
+  console.log(`  + Stage Validation Rules, Cost Model Logs, Budget Change Logs`)
+  console.log(`  + Budget Forecast Entries, Budget Direction Templates`)
+  console.log(`  + Budget Department Owners, Budget Approval Comments`)
+  console.log(`  + Rolling Forecast Months, Journey Enrollments, Sharing Rules`)
+  console.log(`  + Payment Registry Entries, Cash Flow Alerts`)
+  console.log(`  + AI Alerts, AI Interaction Logs, AI Guardrails`)
+  console.log(`  + MTM Audit Logs, Accounting Integrations`)
+  console.log(`\n  Total: 78 sections, 118+ Prisma models covered`)
 }
 
 main()
