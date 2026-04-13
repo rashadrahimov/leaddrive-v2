@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select } from "@/components/ui/select"
-import { DialogHeader, DialogTitle, DialogContent, DialogFooter } from "@/components/ui/dialog"
+import { DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Trash2, Eye, Code, Bold, Italic, Underline, List, ListOrdered, Link, X, Undo, Redo, AlignLeft, AlignCenter, AlignRight, Image, Paintbrush, FileCode } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { sanitizeRichHtml } from "@/lib/sanitize"
@@ -196,8 +196,8 @@ export function EmailTemplateForm({ open, onOpenChange, onSaved, initialData, or
       <div className="fixed inset-0 flex items-center justify-center p-4">
         <div
           className={cn(
-            "relative bg-background rounded-lg shadow-lg overflow-hidden flex flex-col",
-            isFullscreen ? "w-full h-full max-w-[95vw] max-h-[95vh]" : "w-full max-w-lg max-h-[85vh]"
+            "relative bg-background rounded-lg shadow-lg flex flex-col",
+            isFullscreen ? "w-full h-full max-w-[98vw] max-h-[98vh] overflow-visible" : "w-full max-w-lg max-h-[85vh] overflow-hidden"
           )}
           onClick={e => e.stopPropagation()}
         >
@@ -230,7 +230,7 @@ export function EmailTemplateForm({ open, onOpenChange, onSaved, initialData, or
         </div>
       </DialogHeader>
       <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
-        <DialogContent className="overflow-y-auto flex-1 min-h-0">
+        <div className={cn("flex-1 min-h-0", isFullscreen ? "p-4" : "p-6 overflow-y-auto")}>
           {error && <div className="text-sm text-red-500 bg-red-50 dark:bg-red-900/20 p-2 rounded mb-3">{error}</div>}
           <div className="grid gap-3">
             {/* Name + Category — compact row in visual mode */}
@@ -568,7 +568,7 @@ export function EmailTemplateForm({ open, onOpenChange, onSaved, initialData, or
               )}
             </div>
           </div>
-        </DialogContent>
+        </div>
         <DialogFooter className="flex-wrap gap-2">
           {isEdit && onDelete && (
             <Button type="button" variant="ghost" size="icon" onClick={onDelete} className="text-red-500 hover:text-red-700 hover:bg-red-50">
