@@ -4,13 +4,32 @@ import { useEffect } from "react"
 import { MapContainer, TileLayer, Marker, Popup, Polyline, Circle as LeafletCircle, useMap } from "react-leaflet"
 import L from "leaflet"
 
-// Force Leaflet to recalculate container size after mount
+// Force Leaflet to recalculate container size after mount and on resize
 function InvalidateSize() {
   const map = useMap()
   useEffect(() => {
-    // Small delay to let parent container finish layout
-    const timer = setTimeout(() => map.invalidateSize(), 200)
-    return () => clearTimeout(timer)
+    // Multiple invalidations to catch late layout shifts
+    const t1 = setTimeout(() => map.invalidateSize(), 100)
+    const t2 = setTimeout(() => map.invalidateSize(), 500)
+    const t3 = setTimeout(() => map.invalidateSize(), 1500)
+
+    // Watch for container resize
+    const container = map.getContainer()
+    const parent = container?.parentElement
+    let observer: ResizeObserver | null = null
+    if (parent && typeof ResizeObserver !== "undefined") {
+      observer = new ResizeObserver(() => {
+        map.invalidateSize()
+      })
+      observer.observe(parent)
+    }
+
+    return () => {
+      clearTimeout(t1)
+      clearTimeout(t2)
+      clearTimeout(t3)
+      observer?.disconnect()
+    }
   }, [map])
   return null
 }

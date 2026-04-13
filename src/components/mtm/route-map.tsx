@@ -7,8 +7,17 @@ import L from "leaflet"
 function InvalidateSize() {
   const map = useMap()
   useEffect(() => {
-    const timer = setTimeout(() => map.invalidateSize(), 200)
-    return () => clearTimeout(timer)
+    const t1 = setTimeout(() => map.invalidateSize(), 100)
+    const t2 = setTimeout(() => map.invalidateSize(), 500)
+    const t3 = setTimeout(() => map.invalidateSize(), 1500)
+    const container = map.getContainer()
+    const parent = container?.parentElement
+    let observer: ResizeObserver | null = null
+    if (parent && typeof ResizeObserver !== "undefined") {
+      observer = new ResizeObserver(() => map.invalidateSize())
+      observer.observe(parent)
+    }
+    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); observer?.disconnect() }
   }, [map])
   return null
 }
