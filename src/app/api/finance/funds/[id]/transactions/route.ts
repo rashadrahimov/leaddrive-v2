@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { z, ZodError } from "zod"
 import { getOrgId } from "@/lib/api-auth"
 import { prisma } from "@/lib/prisma"
-import { PAGE_SIZE } from "@/lib/constants"
+import { PAGE_SIZE, getCurrencySymbol } from "@/lib/constants"
 
 const createTransactionSchema = z.object({
   type: z.enum(["deposit", "withdrawal", "transfer_in", "transfer_out", "auto_allocation"]),
@@ -56,7 +56,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     if (!fund) return NextResponse.json({ error: "Fund not found" }, { status: 404 })
     if (txAmount > fund.currentBalance) {
       return NextResponse.json({
-        error: `Недостаточно средств в фонде. Баланс: ${fund.currentBalance.toLocaleString(undefined)} ${fund.currency}, запрошено: ${txAmount.toLocaleString(undefined)} ${fund.currency}`,
+        error: `Insufficient fund balance. Balance: ${fund.currentBalance.toLocaleString(undefined)} ${getCurrencySymbol(fund.currency)}, requested: ${txAmount.toLocaleString(undefined)} ${getCurrencySymbol(fund.currency)}`,
       }, { status: 400 })
     }
   }
@@ -74,7 +74,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     const cashBalance = totalInflows - totalOutflows
     if (totalFunds > cashBalance && cashBalance > 0) {
       const coverage = Math.round((cashBalance / totalFunds) * 100)
-      warning = `Внимание: после пополнения фонды (${totalFunds.toLocaleString(undefined)} AZN) превысят остаток ДС (${cashBalance.toLocaleString(undefined)} AZN). Обеспеченность: ${coverage}%`
+      warning = `Warning: after deposit, total funds (${totalFunds.toLocaleString(undefined)} ${getCurrencySymbol()}) will exceed cash balance (${cashBalance.toLocaleString(undefined)} ${getCurrencySymbol()}). Coverage: ${coverage}%`
     }
   }
 

@@ -7,6 +7,7 @@
 import { prisma } from "@/lib/prisma"
 import { sendEmail } from "@/lib/email"
 import { APP_URL } from "@/lib/domains"
+import { getCurrencySymbol } from "@/lib/constants"
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || ""
 const CHAT_ID = process.env.TELEGRAM_FINANCE_CHAT_ID || ""
@@ -160,18 +161,19 @@ export async function notifyOverdueBills(bills: { billNumber: string; vendorName
   if (bills.length === 0) return
   const settings = await getNotifSettings(orgId)
   const total = bills.reduce((s, b) => s + b.amount, 0)
-  const list = bills.slice(0, 10).map((b) => `${b.billNumber} — ${b.vendorName}: ${fmt(b.amount)} AZN (срок ${fmtDate(b.dueDate)})`).join("\n")
+  const cur = getCurrencySymbol()
+  const list = bills.slice(0, 10).map((b) => `${b.billNumber} — ${b.vendorName}: ${fmt(b.amount)} ${cur} (due ${fmtDate(b.dueDate)})`).join("\n")
 
-  let tgText = `🔴 <b>Просрочка: ${bills.length} счёт(ов) на ${fmt(total)} AZN</b>\n\n`
-  bills.slice(0, 10).forEach((b) => { tgText += `• ${b.billNumber} — ${b.vendorName}: <b>${fmt(b.amount)} AZN</b> (срок ${fmtDate(b.dueDate)})\n` })
-  if (bills.length > 10) tgText += `\n...и ещё ${bills.length - 10}\n`
-  tgText += `\n📎 <a href="${APP_URL}/finance?tab=payables">Открыть кредиторку</a>`
+  let tgText = `🔴 <b>Overdue: ${bills.length} bill(s) for ${fmt(total)} ${cur}</b>\n\n`
+  bills.slice(0, 10).forEach((b) => { tgText += `• ${b.billNumber} — ${b.vendorName}: <b>${fmt(b.amount)} ${cur}</b> (due ${fmtDate(b.dueDate)})\n` })
+  if (bills.length > 10) tgText += `\n...and ${bills.length - 10} more\n`
+  tgText += `\n📎 <a href="${APP_URL}/finance?tab=payables">Open payables</a>`
 
-  const emailHtml = `<h2>Просрочка: ${bills.length} счёт(ов) на ${fmt(total)} AZN</h2><ul>${bills.slice(0, 10).map((b) => `<li>${b.billNumber} — ${b.vendorName}: <b>${fmt(b.amount)} AZN</b></li>`).join("")}</ul><p><a href="${APP_URL}/finance?tab=payables">Открыть кредиторку</a></p>`
+  const emailHtml = `<h2>Overdue: ${bills.length} bill(s) for ${fmt(total)} ${cur}</h2><ul>${bills.slice(0, 10).map((b) => `<li>${b.billNumber} — ${b.vendorName}: <b>${fmt(b.amount)} ${cur}</b></li>`).join("")}</ul><p><a href="${APP_URL}/finance?tab=payables">Open payables</a></p>`
 
   await sendToChannels(settings.overdue, settings, orgId, tgText,
-    `Просрочка: ${bills.length} счёт(ов) на ${fmt(total)} AZN`, emailHtml,
-    "Просроченные платежи", `${bills.length} счёт(ов) на ${fmt(total)} AZN`, "bill")
+    `Overdue: ${bills.length} bill(s) for ${fmt(total)} ${cur}`, emailHtml,
+    "Overdue payments", `${bills.length} bill(s) for ${fmt(total)} ${cur}`, "bill")
 }
 
 /** New overdue invoices detected */
@@ -180,15 +182,16 @@ export async function notifyOverdueInvoices(invoices: { invoiceNumber: string; c
   const settings = await getNotifSettings(orgId)
   const total = invoices.reduce((s, b) => s + b.amount, 0)
 
-  let tgText = `🔴 <b>Просрочка A/R: ${invoices.length} инвойс(ов) на ${fmt(total)} AZN</b>\n\n`
-  invoices.slice(0, 10).forEach((inv) => { tgText += `• ${inv.invoiceNumber} — ${inv.companyName}: <b>${fmt(inv.amount)} AZN</b>\n` })
-  tgText += `\n📎 <a href="${APP_URL}/finance?tab=receivables">Открыть дебиторку</a>`
+  const cur = getCurrencySymbol()
+  let tgText = `🔴 <b>Overdue A/R: ${invoices.length} invoice(s) for ${fmt(total)} ${cur}</b>\n\n`
+  invoices.slice(0, 10).forEach((inv) => { tgText += `• ${inv.invoiceNumber} — ${inv.companyName}: <b>${fmt(inv.amount)} ${cur}</b>\n` })
+  tgText += `\n📎 <a href="${APP_URL}/finance?tab=receivables">Open receivables</a>`
 
-  const emailHtml = `<h2>Просрочка A/R: ${invoices.length} инвойс(ов) на ${fmt(total)} AZN</h2><ul>${invoices.slice(0, 10).map((inv) => `<li>${inv.invoiceNumber} — ${inv.companyName}: <b>${fmt(inv.amount)} AZN</b></li>`).join("")}</ul><p><a href="${APP_URL}/finance?tab=receivables">Открыть дебиторку</a></p>`
+  const emailHtml = `<h2>Overdue A/R: ${invoices.length} invoice(s) for ${fmt(total)} ${cur}</h2><ul>${invoices.slice(0, 10).map((inv) => `<li>${inv.invoiceNumber} — ${inv.companyName}: <b>${fmt(inv.amount)} ${cur}</b></li>`).join("")}</ul><p><a href="${APP_URL}/finance?tab=receivables">Open receivables</a></p>`
 
   await sendToChannels(settings.overdue, settings, orgId, tgText,
-    `Просрочка A/R: ${invoices.length} инвойс(ов) на ${fmt(total)} AZN`, emailHtml,
-    "Просроченные инвойсы", `${invoices.length} инвойс(ов) на ${fmt(total)} AZN`, "invoice")
+    `Overdue A/R: ${invoices.length} invoice(s) for ${fmt(total)} ${cur}`, emailHtml,
+    "Overdue invoices", `${invoices.length} invoice(s) for ${fmt(total)} ${cur}`, "invoice")
 }
 
 /** Upcoming deadlines */
@@ -201,38 +204,39 @@ export async function notifyUpcomingDeadlines(
   if (bills.length === 0 && invoices.length === 0) return
   const settings = await getNotifSettings(orgId)
 
-  let tgText = `⏰ <b>Дедлайны на ближайшие ${daysAhead} дн.</b>\n`
-  let emailHtml = `<h2>Дедлайны на ближайшие ${daysAhead} дн.</h2>`
+  const cur = getCurrencySymbol()
+  let tgText = `⏰ <b>Deadlines in the next ${daysAhead} day(s)</b>\n`
+  let emailHtml = `<h2>Deadlines in the next ${daysAhead} day(s)</h2>`
   let summary = ""
 
   if (bills.length > 0) {
     const total = bills.reduce((s, b) => s + b.amount, 0)
-    tgText += `\n<b>📤 К оплате (${bills.length} шт., ${fmt(total)} AZN):</b>\n`
-    emailHtml += `<h3>К оплате (${bills.length} шт., ${fmt(total)} AZN)</h3><ul>`
+    tgText += `\n<b>📤 To pay (${bills.length}, ${fmt(total)} ${cur}):</b>\n`
+    emailHtml += `<h3>To pay (${bills.length}, ${fmt(total)} ${cur})</h3><ul>`
     bills.slice(0, 5).forEach((b) => {
-      tgText += `• ${b.billNumber} — ${b.vendorName}: ${fmt(b.amount)} AZN (до ${fmtDate(b.dueDate)})\n`
-      emailHtml += `<li>${b.billNumber} — ${b.vendorName}: ${fmt(b.amount)} AZN</li>`
+      tgText += `• ${b.billNumber} — ${b.vendorName}: ${fmt(b.amount)} ${cur} (due ${fmtDate(b.dueDate)})\n`
+      emailHtml += `<li>${b.billNumber} — ${b.vendorName}: ${fmt(b.amount)} ${cur}</li>`
     })
     emailHtml += "</ul>"
-    summary += `${bills.length} к оплате`
+    summary += `${bills.length} to pay`
   }
   if (invoices.length > 0) {
     const total = invoices.reduce((s, b) => s + b.amount, 0)
-    tgText += `\n<b>📥 Ожидаем оплату (${invoices.length} шт., ${fmt(total)} AZN):</b>\n`
-    emailHtml += `<h3>Ожидаем оплату (${invoices.length} шт., ${fmt(total)} AZN)</h3><ul>`
+    tgText += `\n<b>📥 Awaiting payment (${invoices.length}, ${fmt(total)} ${cur}):</b>\n`
+    emailHtml += `<h3>Awaiting payment (${invoices.length}, ${fmt(total)} ${cur})</h3><ul>`
     invoices.slice(0, 5).forEach((inv) => {
-      tgText += `• ${inv.invoiceNumber} — ${inv.companyName}: ${fmt(inv.amount)} AZN\n`
-      emailHtml += `<li>${inv.invoiceNumber} — ${inv.companyName}: ${fmt(inv.amount)} AZN</li>`
+      tgText += `• ${inv.invoiceNumber} — ${inv.companyName}: ${fmt(inv.amount)} ${cur}\n`
+      emailHtml += `<li>${inv.invoiceNumber} — ${inv.companyName}: ${fmt(inv.amount)} ${cur}</li>`
     })
     emailHtml += "</ul>"
-    summary += `${summary ? ", " : ""}${invoices.length} ожидаем`
+    summary += `${summary ? ", " : ""}${invoices.length} awaiting`
   }
-  tgText += `\n📎 <a href="${APP_URL}/finance?tab=payments">Открыть платежи</a>`
-  emailHtml += `<p><a href="${APP_URL}/finance?tab=payments">Открыть платежи</a></p>`
+  tgText += `\n📎 <a href="${APP_URL}/finance?tab=payments">Open payments</a>`
+  emailHtml += `<p><a href="${APP_URL}/finance?tab=payments">Open payments</a></p>`
 
   await sendToChannels(settings.advance, settings, orgId, tgText,
-    `Дедлайны: ${summary}`, emailHtml,
-    "Приближающиеся дедлайны", summary)
+    `Deadlines: ${summary}`, emailHtml,
+    "Upcoming deadlines", summary)
 }
 
 /** Payment order executed */
@@ -240,12 +244,12 @@ export async function notifyPaymentOrderExecuted(order: {
   orderNumber: string; counterpartyName: string; amount: number; currency: string; purpose: string
 }, orgId?: string) {
   const settings = await getNotifSettings(orgId)
-  const tgText = `✅ <b>Платёжное поручение исполнено</b>\n\n📋 ${order.orderNumber}\n🏢 ${order.counterpartyName}\n💰 <b>${fmt(order.amount)} ${order.currency}</b>\n📝 ${order.purpose}\n\n📎 <a href="${APP_URL}/finance?tab=payments">Открыть платежи</a>`
-  const emailHtml = `<h2>Платёжное поручение исполнено</h2><p><b>${order.orderNumber}</b> — ${order.counterpartyName}</p><p>Сумма: <b>${fmt(order.amount)} ${order.currency}</b></p><p>${order.purpose}</p><p><a href="${APP_URL}/finance?tab=payments">Открыть платежи</a></p>`
+  const tgText = `✅ <b>Payment order executed</b>\n\n📋 ${order.orderNumber}\n🏢 ${order.counterpartyName}\n💰 <b>${fmt(order.amount)} ${order.currency}</b>\n📝 ${order.purpose}\n\n📎 <a href="${APP_URL}/finance?tab=payments">Open payments</a>`
+  const emailHtml = `<h2>Payment order executed</h2><p><b>${order.orderNumber}</b> — ${order.counterpartyName}</p><p>Amount: <b>${fmt(order.amount)} ${order.currency}</b></p><p>${order.purpose}</p><p><a href="${APP_URL}/finance?tab=payments">Open payments</a></p>`
 
   await sendToChannels(settings.paymentOrders, settings, orgId, tgText,
-    `ПП ${order.orderNumber} исполнено — ${fmt(order.amount)} ${order.currency}`, emailHtml,
-    "ПП исполнено", `${order.orderNumber}: ${fmt(order.amount)} ${order.currency} — ${order.counterpartyName}`, "payment_order")
+    `PO ${order.orderNumber} executed — ${fmt(order.amount)} ${order.currency}`, emailHtml,
+    "Payment order executed", `${order.orderNumber}: ${fmt(order.amount)} ${order.currency} — ${order.counterpartyName}`, "payment_order")
 }
 
 /** Payment order submitted for approval */
@@ -253,12 +257,12 @@ export async function notifyPaymentOrderPending(order: {
   orderNumber: string; counterpartyName: string; amount: number; currency: string; purpose: string
 }, orgId?: string) {
   const settings = await getNotifSettings(orgId)
-  const tgText = `🔔 <b>Платёжное поручение на согласовании</b>\n\n📋 ${order.orderNumber}\n🏢 ${order.counterpartyName}\n💰 <b>${fmt(order.amount)} ${order.currency}</b>\n📝 ${order.purpose}\n\n📎 <a href="${APP_URL}/finance?tab=payments">Одобрить / Отклонить</a>`
-  const emailHtml = `<h2>ПП на согласовании</h2><p><b>${order.orderNumber}</b> — ${order.counterpartyName}</p><p>Сумма: <b>${fmt(order.amount)} ${order.currency}</b></p><p>${order.purpose}</p><p><a href="${APP_URL}/finance?tab=payments">Одобрить / Отклонить</a></p>`
+  const tgText = `🔔 <b>Payment order pending approval</b>\n\n📋 ${order.orderNumber}\n🏢 ${order.counterpartyName}\n💰 <b>${fmt(order.amount)} ${order.currency}</b>\n📝 ${order.purpose}\n\n📎 <a href="${APP_URL}/finance?tab=payments">Approve / Reject</a>`
+  const emailHtml = `<h2>Payment order pending approval</h2><p><b>${order.orderNumber}</b> — ${order.counterpartyName}</p><p>Amount: <b>${fmt(order.amount)} ${order.currency}</b></p><p>${order.purpose}</p><p><a href="${APP_URL}/finance?tab=payments">Approve / Reject</a></p>`
 
   await sendToChannels(settings.paymentOrders, settings, orgId, tgText,
-    `ПП ${order.orderNumber} на согласовании — ${fmt(order.amount)} ${order.currency}`, emailHtml,
-    "ПП на согласовании", `${order.orderNumber}: ${fmt(order.amount)} ${order.currency} — ${order.counterpartyName}`, "payment_order")
+    `PO ${order.orderNumber} pending — ${fmt(order.amount)} ${order.currency}`, emailHtml,
+    "Payment order pending", `${order.orderNumber}: ${fmt(order.amount)} ${order.currency} — ${order.counterpartyName}`, "payment_order")
 }
 
 /** Bill payment recorded */
@@ -267,12 +271,12 @@ export async function notifyBillPaymentRecorded(bill: {
 }, orgId?: string) {
   const settings = await getNotifSettings(orgId)
   const emoji = bill.remainingBalance <= 0 ? "✅" : "💸"
-  const status = bill.remainingBalance <= 0 ? "Полностью оплачен" : `Остаток: ${fmt(bill.remainingBalance)} ${bill.currency}`
+  const status = bill.remainingBalance <= 0 ? "Fully paid" : `Remaining: ${fmt(bill.remainingBalance)} ${bill.currency}`
 
-  const tgText = `${emoji} <b>Оплата по счёту</b>\n\n📋 ${bill.billNumber} — ${bill.vendorName}\n💰 Оплачено: <b>${fmt(bill.paymentAmount)} ${bill.currency}</b>\n📊 ${status}\n\n📎 <a href="${APP_URL}/finance?tab=payables">Открыть кредиторку</a>`
-  const emailHtml = `<h2>Оплата по счёту ${bill.billNumber}</h2><p>${bill.vendorName}</p><p>Оплачено: <b>${fmt(bill.paymentAmount)} ${bill.currency}</b></p><p>${status}</p><p><a href="${APP_URL}/finance?tab=payables">Открыть кредиторку</a></p>`
+  const tgText = `${emoji} <b>Bill payment recorded</b>\n\n📋 ${bill.billNumber} — ${bill.vendorName}\n💰 Paid: <b>${fmt(bill.paymentAmount)} ${bill.currency}</b>\n📊 ${status}\n\n📎 <a href="${APP_URL}/finance?tab=payables">Open payables</a>`
+  const emailHtml = `<h2>Bill payment: ${bill.billNumber}</h2><p>${bill.vendorName}</p><p>Paid: <b>${fmt(bill.paymentAmount)} ${bill.currency}</b></p><p>${status}</p><p><a href="${APP_URL}/finance?tab=payables">Open payables</a></p>`
 
   await sendToChannels(settings.billPayments, settings, orgId, tgText,
-    `Оплата: ${bill.billNumber} — ${fmt(bill.paymentAmount)} ${bill.currency}`, emailHtml,
-    "Оплата по счёту", `${bill.billNumber}: ${fmt(bill.paymentAmount)} ${bill.currency}. ${status}`, "bill")
+    `Payment: ${bill.billNumber} — ${fmt(bill.paymentAmount)} ${bill.currency}`, emailHtml,
+    "Bill payment recorded", `${bill.billNumber}: ${fmt(bill.paymentAmount)} ${bill.currency}. ${status}`, "bill")
 }

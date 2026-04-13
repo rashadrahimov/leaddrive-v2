@@ -19,7 +19,7 @@ interface QuotaRow {
 }
 
 export default function ForecastPage() {
-  const t = useTranslations("common")
+  const t = useTranslations("forecast")
   const [forecast, setForecast] = useState<any[]>([])
   const [quotas, setQuotas] = useState<QuotaRow[]>([])
   const [pipelineData, setPipelineData] = useState<{ name: string; total: number; weighted: number; count: number }[]>([])
@@ -72,7 +72,7 @@ export default function ForecastPage() {
   if (loading) {
     return (
       <MotionPage className="p-6">
-        <div className="flex items-center justify-center h-64 text-muted-foreground">Загрузка...</div>
+        <div className="flex items-center justify-center h-64 text-muted-foreground">{t("loading")}</div>
       </MotionPage>
     )
   }
@@ -82,8 +82,8 @@ export default function ForecastPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold">Прогноз продаж</h1>
-          <p className="text-sm text-muted-foreground">Committed / Best Case / Pipeline прогноз</p>
+          <h1 className="text-xl font-bold">{t("title")}</h1>
+          <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
         </div>
         <div className="flex gap-2">
           {[1, 2, 3, 4].map(q => (
@@ -107,28 +107,28 @@ export default function ForecastPage() {
         <MotionCard className="p-4 rounded-xl border bg-card">
           <div className="flex items-center gap-2 mb-2">
             <DollarSign className="h-4 w-4 text-emerald-500" />
-            <span className="text-xs text-muted-foreground">Подтверждено</span>
+            <span className="text-xs text-muted-foreground">{t("committed")}</span>
           </div>
           <p className="text-lg font-bold text-emerald-600">{fmtCurrencyCompact(totalCommitted)}</p>
         </MotionCard>
         <MotionCard className="p-4 rounded-xl border bg-card">
           <div className="flex items-center gap-2 mb-2">
             <TrendingUp className="h-4 w-4 text-purple-500" />
-            <span className="text-xs text-muted-foreground">Лучший сценарий</span>
+            <span className="text-xs text-muted-foreground">{t("bestCase")}</span>
           </div>
           <p className="text-lg font-bold text-purple-600">{fmtCurrencyCompact(totalBestCase)}</p>
         </MotionCard>
         <MotionCard className="p-4 rounded-xl border bg-card">
           <div className="flex items-center gap-2 mb-2">
             <BarChart3 className="h-4 w-4 text-slate-500" />
-            <span className="text-xs text-muted-foreground">Воронка (взвеш.)</span>
+            <span className="text-xs text-muted-foreground">{t("pipelineWeighted")}</span>
           </div>
           <p className="text-lg font-bold">{fmtCurrencyCompact(totalPipeline)}</p>
         </MotionCard>
         <MotionCard className="p-4 rounded-xl border bg-card">
           <div className="flex items-center gap-2 mb-2">
             <Target className="h-4 w-4 text-amber-500" />
-            <span className="text-xs text-muted-foreground">Квота Q{selectedQuarter}</span>
+            <span className="text-xs text-muted-foreground">{t("quota", { quarter: selectedQuarter })}</span>
           </div>
           <p className="text-lg font-bold">{overallAttainment}%</p>
           <p className="text-[10px] text-muted-foreground">{fmtCurrencyCompact(totalActual)} / {fmtCurrencyCompact(totalQuota)}</p>
@@ -137,7 +137,7 @@ export default function ForecastPage() {
 
       {/* Forecast Chart */}
       <MotionCard className="p-4 rounded-xl border bg-card">
-        <h3 className="text-sm font-semibold mb-3">Прогноз выручки (6 мес.)</h3>
+        <h3 className="text-sm font-semibold mb-3">{t("revenueChart")}</h3>
         <ResponsiveContainer width="100%" height={280}>
           <AreaChart data={forecast} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
             <defs>
@@ -154,7 +154,7 @@ export default function ForecastPage() {
             <YAxis tick={{ fontSize: 10 }} tickLine={false} axisLine={false} tickFormatter={(v: number) => fmtCurrencyCompact(v)} width={60} />
             <Tooltip
               formatter={((v: number, name: string) => {
-                const labels: Record<string, string> = { actual: "Факт", committed: "Подтвержд.", bestCase: "Лучший", pipeline: "Воронка" }
+                const labels: Record<string, string> = { actual: t("chartActual"), committed: t("chartCommitted"), bestCase: t("chartBestCase"), pipeline: t("chartPipeline") }
                 return [fmtCurrencyCompact(v), labels[name] || name]
               }) as any}
             />
@@ -169,7 +169,7 @@ export default function ForecastPage() {
       {/* By Rep: Quota vs Actual */}
       {quarterQuotas.length > 0 && (
         <MotionCard className="p-4 rounded-xl border bg-card">
-          <h3 className="text-sm font-semibold mb-3">По менеджерам — Q{selectedQuarter} {year}</h3>
+          <h3 className="text-sm font-semibold mb-3">{t("byManagers")} — Q{selectedQuarter} {year}</h3>
           <div className="space-y-3">
             {quarterQuotas.map(q => {
               const pct = q.amount > 0 ? Math.min(Math.round((q.actual / q.amount) * 100), 150) : 0
@@ -214,21 +214,21 @@ export default function ForecastPage() {
       {/* By Pipeline */}
       {pipelineData.length > 0 && (
         <MotionCard className="p-4 rounded-xl border bg-card">
-          <h3 className="text-sm font-semibold mb-3">По воронкам</h3>
+          <h3 className="text-sm font-semibold mb-3">{t("byPipelines")}</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {pipelineData.map(pl => (
               <div key={pl.name} className="rounded-lg border p-3 space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-semibold">{pl.name}</span>
-                  <span className="text-[10px] text-muted-foreground">{pl.count} сделок</span>
+                  <span className="text-[10px] text-muted-foreground">{pl.count} {t("deals")}</span>
                 </div>
                 <div>
                   <div className="flex items-center justify-between mb-0.5">
-                    <span className="text-[10px] text-muted-foreground">Всего</span>
+                    <span className="text-[10px] text-muted-foreground">{t("total")}</span>
                     <span className="text-xs font-medium">{fmtCurrencyCompact(pl.total)}</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-[10px] text-muted-foreground">Взвешенная</span>
+                    <span className="text-[10px] text-muted-foreground">{t("weighted")}</span>
                     <span className="text-xs font-bold text-primary">{fmtCurrencyCompact(pl.weighted)}</span>
                   </div>
                 </div>

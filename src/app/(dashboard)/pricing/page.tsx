@@ -240,8 +240,8 @@ export default function PricingPage() {
       const adjRev = Object.values(adjustedData)
         .filter((c) => c.group === group)
         .reduce((s, c) => s + c.monthly, 0)
-      return { name: group, "Базовая": Math.round(baseRev), "Новая": Math.round(adjRev) }
-    }).filter((d) => d["Базовая"] > 0 || d["Новая"] > 0)
+      return { name: group, base: Math.round(baseRev), new: Math.round(adjRev) }
+    }).filter((d) => d.base > 0 || d.new > 0)
   }, [pricingData, adjustedData])
 
   const catChartData = useMemo(() => {
@@ -263,7 +263,7 @@ export default function PricingPage() {
     return Object.entries(adjustedData)
       .sort((a, b) => b[1].monthly - a[1].monthly)
       .slice(0, 15)
-      .map(([name, info]) => ({ name, "Новая": Math.round(info.monthly) }))
+      .map(([name, info]) => ({ name, new: Math.round(info.monthly) }))
   }, [adjustedData])
 
   // ─── Table data ─────────────────────────────────────────
@@ -354,7 +354,7 @@ export default function PricingPage() {
   }
 
   const deleteCompany = async (code: string) => {
-    if (!confirm(`Удалить компанию ${code}?`)) return
+    if (!confirm(tp("confirmDeleteCompany", { code }))) return
     await fetch(`/api/v1/pricing/delete/${encodeURIComponent(code)}`, {
       method: "DELETE",
       headers: headers as any,
@@ -368,7 +368,7 @@ export default function PricingPage() {
     return (
       <div className="space-y-6">
         <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-          <DollarSign className="h-6 w-6" /> Модель ценообразования ИТ-услуг
+          <DollarSign className="h-6 w-6" /> {tp("title")}
         </h1>
         <div className="animate-pulse space-y-4">
           <div className="grid gap-4 md:grid-cols-4">{[1, 2, 3, 4].map((i) => <div key={i} className="h-24 bg-muted rounded-lg" />)}</div>
@@ -379,7 +379,7 @@ export default function PricingPage() {
   }
 
   if (!pricingData || !adjustedData) {
-    return <div className="text-center py-20 text-muted-foreground">Нет данных ценообразования</div>
+    return <div className="text-center py-20 text-muted-foreground">{tp("noData")}</div>
   }
 
   // ─── Render ─────────────────────────────────────────────
@@ -388,7 +388,7 @@ export default function PricingPage() {
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Модель ценообразования ИТ-услуг</h1>
+          <h1 className="text-2xl font-bold tracking-tight">{tp("title")}</h1>
           <PageDescription text={tp("pageDescription")} />
         </div>
         <div className="flex gap-2">
@@ -397,30 +397,30 @@ export default function PricingPage() {
             onClick={() => setActiveTab("model")}
             className="gap-1"
           >
-            Модель цен <InfoHint text={tp("hintTabPricing")} size={12} />
+            {tp("tabModel")} <InfoHint text={tp("hintTabPricing")} size={12} />
           </Button>
           <Button
             variant={activeTab === "edit" ? "default" : "outline"}
             onClick={() => setActiveTab("edit")}
             className="gap-1"
           >
-            Редактировать цены <InfoHint text={tp("hintTabEdit")} size={12} />
+            {tp("tabEdit")} <InfoHint text={tp("hintTabEdit")} size={12} />
           </Button>
           <Button
             variant={activeTab === "sales" ? "default" : "outline"}
             onClick={() => setActiveTab("sales")}
             className="gap-1"
           >
-            Допродажи <InfoHint text={tp("hintTabSales")} size={12} />
+            {tp("tabSales")} <InfoHint text={tp("hintTabSales")} size={12} />
           </Button>
           <div className="relative">
             <Button variant="outline" onClick={() => setExportOpen(!exportOpen)}>
-              <Download className="h-4 w-4 mr-1" /> Экспорт в Excel
+              <Download className="h-4 w-4 mr-1" /> {tp("tabExport")}
             </Button>
             {exportOpen && (
               <div className="absolute right-0 top-full mt-2 z-50 bg-card border rounded-lg shadow-lg p-4 w-72 space-y-3">
                 <div>
-                  <label className="text-xs font-medium text-muted-foreground">Шаблон</label>
+                  <label className="text-xs font-medium text-muted-foreground">{tp("templateLabel")}</label>
                   <select
                     value={exportTemplate}
                     onChange={(e) => setExportTemplate(e.target.value)}
@@ -432,7 +432,7 @@ export default function PricingPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="text-xs font-medium text-muted-foreground">Дата начала действия</label>
+                  <label className="text-xs font-medium text-muted-foreground">{tp("effectiveDate")}</label>
                   <input
                     type="date"
                     value={exportDate}
@@ -442,7 +442,7 @@ export default function PricingPage() {
                 </div>
                 <Button onClick={handleExport} disabled={exportLoading} className="w-full">
                   {exportLoading ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Download className="h-4 w-4 mr-1" />}
-                  Скачать
+                  {tp("download")}
                 </Button>
               </div>
             )}
@@ -458,25 +458,25 @@ export default function PricingPage() {
           {/* KPI Cards */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <ColorStatCard
-              label="Общий ежемесячный доход"
+              label={tp("kpiTotalMonthly")}
               value={`${baseTotal.toLocaleString(undefined, { maximumFractionDigits: 2 })} ${getCurrencySymbol()}`}
               icon={<DollarSign className="h-4 w-4" />}
               color="green"
             />
             <ColorStatCard
-              label="Прогнозируемый ежемесячный доход"
+              label={tp("kpiForecastMonthly")}
               value={`${adjTotal.toLocaleString(undefined, { maximumFractionDigits: 2 })} ${getCurrencySymbol()}`}
               icon={<TrendingUp className="h-4 w-4" />}
               color="blue"
             />
             <ColorStatCard
-              label="Годовой эффект"
+              label={tp("kpiAnnualEffect")}
               value={`${annualEffect.toLocaleString(undefined, { maximumFractionDigits: 0 })} ${getCurrencySymbol()}`}
               icon={<BarChart3 className="h-4 w-4" />}
               color={annualEffect >= 0 ? "teal" : "red"}
             />
             <ColorStatCard
-              label="Средняя корректировка"
+              label={tp("kpiAvgAdjustment")}
               value={`${avgChange.toFixed(2)}%`}
               icon={<ArrowRight className="h-4 w-4" />}
               color={avgChange >= 0 ? "violet" : "orange"}
@@ -490,18 +490,18 @@ export default function PricingPage() {
               <Card>
                 <CardContent className="pt-4 space-y-3">
                   <AdjSlider
-                    label="Общая корректировка"
+                    label={tp("globalAdjustment")}
                     value={adjustments.global}
                     onChange={(v) => updateAdj((a) => ({ ...a, global: v }))}
                   />
                   <Button variant="outline" size="sm" className="w-full" onClick={resetAll}>
-                    <RotateCcw className="h-3 w-3 mr-1" /> Сбросить
+                    <RotateCcw className="h-3 w-3 mr-1" /> {tp("reset")}
                   </Button>
                 </CardContent>
               </Card>
 
               {/* Group sliders */}
-              <CollapsibleSection title={`Корректировка по группам (${Object.keys(groupCounts).length})`} defaultOpen>
+              <CollapsibleSection title={`${tp("groupAdjustment")} (${Object.keys(groupCounts).length})`} defaultOpen>
                 {GROUP_ORDER.filter((g) => groupCounts[g]).map((group) => (
                   <AdjSlider
                     key={group}
@@ -523,7 +523,7 @@ export default function PricingPage() {
               </CollapsibleSection>
 
               {/* Category sliders */}
-              <CollapsibleSection title={`Корректировка по категориям (${allCategories.length})`}>
+              <CollapsibleSection title={`${tp("categoryAdjustment")} (${allCategories.length})`}>
                 {allCategories.map((cat) => (
                   <AdjSlider
                     key={cat}
@@ -544,11 +544,11 @@ export default function PricingPage() {
               </CollapsibleSection>
 
               {/* Company sliders */}
-              <CollapsibleSection title={`Корректировка по компаниям (${Object.keys(pricingData).length})`}>
+              <CollapsibleSection title={`${tp("companyAdjustment")} (${Object.keys(pricingData).length})`}>
                 <div className="relative mb-2">
                   <Search className="absolute left-2 top-2 h-4 w-4 text-muted-foreground" />
                   <Input
-                    placeholder="Поиск компании..."
+                    placeholder={tp("searchCompany")}
                     value={compSliderSearch}
                     onChange={(e) => setCompSliderSearch(e.target.value)}
                     className="pl-8 h-8 text-sm"
@@ -593,7 +593,7 @@ export default function PricingPage() {
                 {/* Revenue by group */}
                 <Card>
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-base">Доход по группам</CardTitle>
+                    <CardTitle className="text-base">{tp("revenueByGroups")}</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <ResponsiveContainer width="100%" height={300}>
@@ -603,8 +603,8 @@ export default function PricingPage() {
                         <YAxis dataKey="name" type="category" width={75} tick={{ fontSize: 12 }} />
                         <Tooltip formatter={((v: number) => `${v.toLocaleString()} ${getCurrencySymbol()}`) as any} />
                         <Legend />
-                        <Bar dataKey="Базовая" fill="#8B95A5" barSize={12} />
-                        <Bar dataKey="Новая" fill="#2D4A7A" barSize={12} />
+                        <Bar dataKey="base" name={tp("chartBase")} fill="#8B95A5" barSize={12} />
+                        <Bar dataKey="new" name={tp("chartNew")} fill="#2D4A7A" barSize={12} />
                       </BarChart>
                     </ResponsiveContainer>
                   </CardContent>
@@ -613,7 +613,7 @@ export default function PricingPage() {
                 {/* Revenue by category */}
                 <Card>
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-base">Доход по категориям</CardTitle>
+                    <CardTitle className="text-base">{tp("revenueByCategories")}</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <ResponsiveContainer width="100%" height={200}>
@@ -654,7 +654,7 @@ export default function PricingPage() {
               {/* Top 15 companies */}
               <Card>
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-base">Топ 15 компаний</CardTitle>
+                  <CardTitle className="text-base">{tp("top15Companies")}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={400}>
@@ -664,7 +664,7 @@ export default function PricingPage() {
                       <YAxis dataKey="name" type="category" width={95} tick={{ fontSize: 11 }} />
                       <Tooltip formatter={((v: number) => `${v.toLocaleString()} ${getCurrencySymbol()}`) as any} />
                       <Legend />
-                      <Bar dataKey="Новая" fill="#2D4A7A" barSize={16} />
+                      <Bar dataKey="new" name={tp("chartNew")} fill="#2D4A7A" barSize={16} />
                     </BarChart>
                   </ResponsiveContainer>
                 </CardContent>
@@ -673,11 +673,11 @@ export default function PricingPage() {
               {/* Companies table */}
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-base">Таблица компаний</CardTitle>
+                  <CardTitle className="text-base">{tp("companiesTable")}</CardTitle>
                   <div className="relative w-64">
                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input
-                      placeholder="Поиск..."
+                      placeholder={tp("search")}
                       value={tableSearch}
                       onChange={(e) => setTableSearch(e.target.value)}
                       className="pl-8 h-9"
@@ -691,11 +691,11 @@ export default function PricingPage() {
                         <tr className="border-b text-left text-muted-foreground">
                           <th className="pb-2 pr-2 w-8">#</th>
                           {[
-                            { key: "code", label: "Компания" },
-                            { key: "group", label: "Группа" },
-                            { key: "base", label: `Базовая ${getCurrencySymbol()}` },
-                            { key: "new", label: `Новая ${getCurrencySymbol()}` },
-                            { key: "diff", label: `Разница ${getCurrencySymbol()}` },
+                            { key: "code", label: tp("company") },
+                            { key: "group", label: tp("group") },
+                            { key: "base", label: `${tp("base")} ${getCurrencySymbol()}` },
+                            { key: "new", label: `${tp("new")} ${getCurrencySymbol()}` },
+                            { key: "diff", label: `${tp("difference")} ${getCurrencySymbol()}` },
                             { key: "pct", label: "%" },
                           ].map(({ key, label }) => (
                             <th
@@ -706,7 +706,7 @@ export default function PricingPage() {
                               {label} {tableSortCol === key ? (tableSortDir === "asc" ? "↑" : "↓") : ""}
                             </th>
                           ))}
-                          <th className="pb-2 text-center w-40">Корректировка по компаниям</th>
+                          <th className="pb-2 text-center w-40">{tp("companyTableAdjustment")}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -760,7 +760,7 @@ export default function PricingPage() {
       {activeTab === "edit" && (
         <div>
           <p className="text-sm text-muted-foreground mb-4">
-            Редактируйте цены услуг для каждой компании. Нажмите «Сохранить» для применения изменений.
+            {tp("editDescription")}
           </p>
           <div className="grid grid-cols-[280px_1fr] gap-6">
             {/* Company list */}
@@ -768,7 +768,7 @@ export default function PricingPage() {
               <div className="relative">
                 <Search className="absolute left-2 top-2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Поиск компании..."
+                  placeholder={tp("searchCompany")}
                   value={editSearch}
                   onChange={(e) => setEditSearch(e.target.value)}
                   className="pl-8 h-9"
@@ -813,7 +813,7 @@ export default function PricingPage() {
             <div>
               {!selectedCompany ? (
                 <div className="flex items-center justify-center h-64 text-muted-foreground border rounded-lg">
-                  Выберите компанию для редактирования цен
+                  {tp("selectCompanyToEdit")}
                 </div>
               ) : (
                 <CompanyEditor
@@ -842,7 +842,7 @@ export default function PricingPage() {
               <div className="relative w-64">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Поиск..."
+                  placeholder={tp("search")}
                   value={salesSearch}
                   onChange={(e) => setSalesSearch(e.target.value)}
                   className="pl-8 h-9"
@@ -853,23 +853,23 @@ export default function PricingPage() {
                 onChange={(e) => setSalesFilter({ ...salesFilter, type: e.target.value })}
                 className="h-9 border rounded px-2 text-sm"
               >
-                <option value="all">Все типы</option>
-                <option value="recurring">Ежемесячные (MRR)</option>
-                <option value="one_time">Единоразовые</option>
+                <option value="all">{tp("allTypes")}</option>
+                <option value="recurring">{tp("monthlyMRRFilter")}</option>
+                <option value="one_time">{tp("oneTimeFilter")}</option>
               </select>
               <select
                 value={salesFilter.status}
                 onChange={(e) => setSalesFilter({ ...salesFilter, status: e.target.value })}
                 className="h-9 border rounded px-2 text-sm"
               >
-                <option value="all">Все статусы</option>
-                <option value="active">Активные</option>
-                <option value="cancelled">Отменённые</option>
-                <option value="completed">Завершённые</option>
+                <option value="all">{tp("allStatuses")}</option>
+                <option value="active">{tp("statusActive")}</option>
+                <option value="cancelled">{tp("statusCancelled")}</option>
+                <option value="completed">{tp("statusCompleted")}</option>
               </select>
             </div>
             <Button onClick={() => setShowAddSale(true)}>
-              <Plus className="h-4 w-4 mr-1" /> Добавить допродажу
+              <Plus className="h-4 w-4 mr-1" /> {tp("addSale")}
             </Button>
           </div>
 
@@ -877,16 +877,16 @@ export default function PricingPage() {
           {showAddSale && (
             <Card>
               <CardContent className="pt-4 space-y-3">
-                <div className="text-sm font-semibold">Новая допродажа</div>
+                <div className="text-sm font-semibold">{tp("newSale")}</div>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                   <div>
-                    <label className="text-xs text-muted-foreground">Компания *</label>
+                    <label className="text-xs text-muted-foreground">{tp("companyRequired")}</label>
                     <select
                       value={newSale.profileId}
                       onChange={(e) => setNewSale({ ...newSale, profileId: e.target.value })}
                       className="w-full h-9 border rounded px-2 text-sm mt-1"
                     >
-                      <option value="">Выберите...</option>
+                      <option value="">{tp("selectPlaceholder")}</option>
                       {profilesList.map((p: any) => (
                         <option key={p.id} value={p.id}>
                           {p.companyCode} ({p.group?.name})
@@ -895,38 +895,38 @@ export default function PricingPage() {
                     </select>
                   </div>
                   <div>
-                    <label className="text-xs text-muted-foreground">Тип *</label>
+                    <label className="text-xs text-muted-foreground">{tp("typeRequired")}</label>
                     <select
                       value={newSale.type}
                       onChange={(e) => setNewSale({ ...newSale, type: e.target.value })}
                       className="w-full h-9 border rounded px-2 text-sm mt-1"
                     >
-                      <option value="recurring">Ежемесячная (MRR)</option>
-                      <option value="one_time">Единоразовая</option>
+                      <option value="recurring">{tp("monthlyMRR")}</option>
+                      <option value="one_time">{tp("oneTime")}</option>
                     </select>
                   </div>
                   <div>
-                    <label className="text-xs text-muted-foreground">Название *</label>
+                    <label className="text-xs text-muted-foreground">{tp("nameRequired")}</label>
                     <input
                       type="text"
                       value={newSale.name}
                       onChange={(e) => setNewSale({ ...newSale, name: e.target.value })}
                       className="w-full h-9 border rounded px-2 text-sm mt-1"
-                      placeholder="Описание допродажи"
+                      placeholder={tp("saleDescription")}
                     />
                   </div>
                   <div>
-                    <label className="text-xs text-muted-foreground">Категория</label>
+                    <label className="text-xs text-muted-foreground">{tp("category")}</label>
                     <input
                       type="text"
                       value={newSale.categoryName}
                       onChange={(e) => setNewSale({ ...newSale, categoryName: e.target.value })}
                       className="w-full h-9 border rounded px-2 text-sm mt-1"
-                      placeholder="Опционально"
+                      placeholder={tp("optional")}
                     />
                   </div>
                   <div>
-                    <label className="text-xs text-muted-foreground">Единица</label>
+                    <label className="text-xs text-muted-foreground">{tp("unit")}</label>
                     <select
                       value={newSale.unit}
                       onChange={(e) => setNewSale({ ...newSale, unit: e.target.value })}
@@ -936,7 +936,7 @@ export default function PricingPage() {
                     </select>
                   </div>
                   <div>
-                    <label className="text-xs text-muted-foreground">Кол-во</label>
+                    <label className="text-xs text-muted-foreground">{tp("quantity")}</label>
                     <input
                       type="number"
                       value={newSale.qty}
@@ -945,7 +945,7 @@ export default function PricingPage() {
                     />
                   </div>
                   <div>
-                    <label className="text-xs text-muted-foreground">Цена за ед.</label>
+                    <label className="text-xs text-muted-foreground">{tp("pricePerUnit")}</label>
                     <input
                       type="number"
                       step="0.01"
@@ -955,7 +955,7 @@ export default function PricingPage() {
                     />
                   </div>
                   <div>
-                    <label className="text-xs text-muted-foreground">Дата начала *</label>
+                    <label className="text-xs text-muted-foreground">{tp("startDate")}</label>
                     <input
                       type="date"
                       value={newSale.effectiveDate}
@@ -984,13 +984,13 @@ export default function PricingPage() {
                     disabled={!newSale.profileId || !newSale.name || savingSale}
                   >
                     {savingSale ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Plus className="h-4 w-4 mr-1" />}
-                    Создать
+                    {tp("create")}
                   </Button>
-                  <Button variant="outline" onClick={() => setShowAddSale(false)}>Отмена</Button>
+                  <Button variant="outline" onClick={() => setShowAddSale(false)}>{tp("cancel")}</Button>
                   {newSale.qty > 0 && newSale.price > 0 && (
                     <span className="text-sm text-muted-foreground ml-auto">
-                      Итого: <strong>{(newSale.qty * newSale.price).toLocaleString(undefined, { maximumFractionDigits: 2 })} {getCurrencySymbol()}</strong>
-                      {newSale.type === "recurring" && <span className="text-green-600"> /мес</span>}
+                      {tp("totalLabel")} <strong>{(newSale.qty * newSale.price).toLocaleString(undefined, { maximumFractionDigits: 2 })} {getCurrencySymbol()}</strong>
+                      {newSale.type === "recurring" && <span className="text-green-600"> {tp("perMonth")}</span>}
                     </span>
                   )}
                 </div>
@@ -1004,8 +1004,8 @@ export default function PricingPage() {
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-semibold flex items-center gap-2 text-green-800">
                   <Trophy className="h-4 w-4" />
-                  Выигранные сделки ({wonDeals.length})
-                  <span className="text-xs font-normal text-green-600 ml-1">— не добавлены в допродажи</span>
+                  {tp("wonDeals")} ({wonDeals.length})
+                  <span className="text-xs font-normal text-green-600 ml-1">{tp("wonDealsNotAdded")}</span>
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -1013,10 +1013,10 @@ export default function PricingPage() {
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b border-green-200 text-left text-green-700">
-                        <th className="pb-2 pr-4">Сделка</th>
-                        <th className="pb-2 pr-4">Компания</th>
-                        <th className="pb-2 pr-4 text-right">Сумма</th>
-                        <th className="pb-2 pr-4">Дата</th>
+                        <th className="pb-2 pr-4">{tp("deal")}</th>
+                        <th className="pb-2 pr-4">{tp("company")}</th>
+                        <th className="pb-2 pr-4 text-right">{tp("amount")}</th>
+                        <th className="pb-2 pr-4">{tp("date")}</th>
                         <th className="pb-2 w-40"></th>
                       </tr>
                     </thead>
@@ -1056,7 +1056,7 @@ export default function PricingPage() {
                                   if (json.success) {
                                     fetchSales()
                                   } else {
-                                    toast.error(json.error || "Ошибка добавления")
+                                    toast.error(json.error || tp("errorAdding"))
                                   }
                                 } catch { /* ignore */ }
                                 finally { setAddingDealId(null) }
@@ -1067,7 +1067,7 @@ export default function PricingPage() {
                               ) : (
                                 <ArrowRight className="h-3 w-3 mr-1" />
                               )}
-                              {!deal.companyId ? "Нет компании" : "Добавить в допродажи"}
+                              {!deal.companyId ? tp("noCompany") : tp("addToSales")}
                             </Button>
                           </td>
                         </tr>
@@ -1081,32 +1081,32 @@ export default function PricingPage() {
 
           {wonDealsLoading && wonDeals.length === 0 && (
             <div className="flex items-center gap-2 text-sm text-muted-foreground py-2">
-              <Loader2 className="h-4 w-4 animate-spin" /> Загрузка выигранных сделок...
+              <Loader2 className="h-4 w-4 animate-spin" /> {tp("loadingWonDeals")}
             </div>
           )}
 
           {/* KPI cards */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <ColorStatCard
-              label="Всего допродаж"
+              label={tp("totalSales")}
               value={String(salesData.length)}
               icon={<DollarSign className="h-4 w-4" />}
               color="blue"
             />
             <ColorStatCard
-              label="MRR допродаж"
+              label={tp("salesMRR")}
               value={`${salesData.filter((s) => s.type === "recurring" && s.status === "active").reduce((sum: number, s: any) => sum + s.total, 0).toLocaleString(undefined, { maximumFractionDigits: 2 })} ${getCurrencySymbol()}`}
               icon={<TrendingUp className="h-4 w-4" />}
               color="green"
             />
             <ColorStatCard
-              label="Единоразовые"
+              label={tp("oneTimeSales")}
               value={`${salesData.filter((s) => s.type === "one_time").reduce((sum: number, s: any) => sum + s.total, 0).toLocaleString(undefined, { maximumFractionDigits: 2 })} ${getCurrencySymbol()}`}
               icon={<DollarSign className="h-4 w-4" />}
               color="orange"
             />
             <ColorStatCard
-              label="Активных"
+              label={tp("activeSales")}
               value={String(salesData.filter((s) => s.status === "active").length)}
               icon={<Trophy className="h-4 w-4" />}
               color="teal"
@@ -1126,15 +1126,15 @@ export default function PricingPage() {
                     <thead>
                       <tr className="border-b text-left text-muted-foreground">
                         <th className="pb-2 pr-2 w-8">#</th>
-                        <th className="pb-2 pr-4">Компания</th>
-                        <th className="pb-2 pr-4">Тип</th>
-                        <th className="pb-2 pr-4">Название</th>
-                        <th className="pb-2 pr-4">Категория</th>
-                        <th className="pb-2 pr-4 text-right">Кол-во</th>
-                        <th className="pb-2 pr-4 text-right">Цена</th>
-                        <th className="pb-2 pr-4 text-right">Итого</th>
-                        <th className="pb-2 pr-4">Дата</th>
-                        <th className="pb-2 pr-4">Статус</th>
+                        <th className="pb-2 pr-4">{tp("company")}</th>
+                        <th className="pb-2 pr-4">{tp("type")}</th>
+                        <th className="pb-2 pr-4">{tp("name")}</th>
+                        <th className="pb-2 pr-4">{tp("category")}</th>
+                        <th className="pb-2 pr-4 text-right">{tp("quantity")}</th>
+                        <th className="pb-2 pr-4 text-right">{tp("price")}</th>
+                        <th className="pb-2 pr-4 text-right">{tp("totalLabel")}</th>
+                        <th className="pb-2 pr-4">{tp("date")}</th>
+                        <th className="pb-2 pr-4">{tp("status")}</th>
                         <th className="pb-2 w-16"></th>
                       </tr>
                     </thead>
@@ -1156,7 +1156,7 @@ export default function PricingPage() {
                               {sale.type === "recurring" ? (
                                 <Badge className="bg-green-100 text-green-800 hover:bg-green-100">MRR</Badge>
                               ) : (
-                                <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">Единоразовая</Badge>
+                                <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">{tp("oneTimeBadge")}</Badge>
                               )}
                             </td>
                             <td className="py-2 pr-4">{sale.name}</td>
@@ -1168,14 +1168,14 @@ export default function PricingPage() {
                               {sale.effectiveDate ? new Date(sale.effectiveDate).toLocaleDateString(undefined) : "—"}
                             </td>
                             <td className="py-2 pr-4">
-                              {sale.status === "active" && <Badge variant="outline" className="text-green-600 border-green-300">Активна</Badge>}
-                              {sale.status === "cancelled" && <Badge variant="outline" className="text-red-600 border-red-300">Отменена</Badge>}
-                              {sale.status === "completed" && <Badge variant="outline" className="text-muted-foreground border-border">Завершена</Badge>}
+                              {sale.status === "active" && <Badge variant="outline" className="text-green-600 border-green-300">{tp("statusActive")}</Badge>}
+                              {sale.status === "cancelled" && <Badge variant="outline" className="text-red-600 border-red-300">{tp("statusCancelled")}</Badge>}
+                              {sale.status === "completed" && <Badge variant="outline" className="text-muted-foreground border-border">{tp("statusCompleted")}</Badge>}
                             </td>
                             <td className="py-2">
                               <button
                                 onClick={async () => {
-                                  if (!confirm("Удалить эту допродажу?")) return
+                                  if (!confirm(tp("confirmDeleteSale"))) return
                                   await fetch(`/api/v1/pricing/additional-sales/${sale.id}`, {
                                     method: "DELETE",
                                     headers: headers as any,
@@ -1193,7 +1193,7 @@ export default function PricingPage() {
                   </table>
                   {salesData.length === 0 && (
                     <div className="text-center py-8 text-muted-foreground">
-                      Нет допродаж. Нажмите «Добавить допродажу» чтобы создать первую.
+                      {tp("noSalesYet")}
                     </div>
                   )}
                 </div>
@@ -1223,6 +1223,7 @@ function CompanyEditor({ code, data, onSave, onDelete, saving, expandedCats, set
   expandedCats: Set<string>
   setExpandedCats: (s: Set<string>) => void
 }) {
+  const tp = useTranslations("pricing")
   const [localCats, setLocalCats] = useState(data.categories)
   const [originalCats, setOriginalCats] = useState(data.categories)
   const [hasChanges, setHasChanges] = useState(false)
@@ -1305,7 +1306,7 @@ function CompanyEditor({ code, data, onSave, onDelete, saving, expandedCats, set
   }
 
   const deleteCategory = (cat: string) => {
-    if (!confirm(`Удалить категорию "${cat}" и все её услуги?`)) return
+    if (!confirm(tp("confirmDeleteCategory", { cat }))) return
     const newCats = { ...localCats }
     delete newCats[cat]
     markChanged(newCats)
@@ -1343,12 +1344,12 @@ function CompanyEditor({ code, data, onSave, onDelete, saving, expandedCats, set
           {saving && <Loader2 className="h-4 w-4 animate-spin text-primary" />}
         </div>
         <div className="text-right">
-          <div className="text-sm text-muted-foreground">Итого Ежемесячно</div>
+          <div className="text-sm text-muted-foreground">{tp("totalMonthly")}</div>
           <div className="text-xl font-bold text-green-600">
             {monthly.toLocaleString(undefined, { maximumFractionDigits: 2 })} {getCurrencySymbol()}
           </div>
           <div className="text-xs text-muted-foreground">
-            Ежегодно: {annual.toLocaleString(undefined, { maximumFractionDigits: 2 })} {getCurrencySymbol()}
+            {tp("annually", { amount: `${annual.toLocaleString(undefined, { maximumFractionDigits: 2 })} ${getCurrencySymbol()}` })}
           </div>
         </div>
       </div>
@@ -1356,15 +1357,15 @@ function CompanyEditor({ code, data, onSave, onDelete, saving, expandedCats, set
       {/* Save / Cancel / Reset buttons */}
       <div className="flex items-center gap-2">
         <Button size="sm" onClick={handleSave} disabled={!hasChanges || saving}>
-          <Save className="h-3.5 w-3.5 mr-1" /> Сохранить
+          <Save className="h-3.5 w-3.5 mr-1" /> {tp("save")}
         </Button>
         <Button size="sm" variant="outline" onClick={handleCancel} disabled={!hasChanges}>
-          <X className="h-3.5 w-3.5 mr-1" /> Отменить
+          <X className="h-3.5 w-3.5 mr-1" /> {tp("cancel")}
         </Button>
         <Button size="sm" variant="ghost" onClick={handleReset}>
-          <RotateCcw className="h-3.5 w-3.5 mr-1" /> Сбросить
+          <RotateCcw className="h-3.5 w-3.5 mr-1" /> {tp("reset")}
         </Button>
-        {hasChanges && <span className="text-xs text-amber-600 ml-2">Есть несохранённые изменения</span>}
+        {hasChanges && <span className="text-xs text-amber-600 ml-2">{tp("unsavedChanges")}</span>}
       </div>
 
       <div className="space-y-2">
@@ -1390,14 +1391,14 @@ function CompanyEditor({ code, data, onSave, onDelete, saving, expandedCats, set
                   <button
                     onClick={(e) => { e.stopPropagation(); setAddingServiceCat(addingServiceCat === cat ? null : cat); setExpandedCats(new Set([...expandedCats, cat])) }}
                     className="text-primary hover:text-primary/80 p-1"
-                    title="Добавить услугу"
+                    title={tp("addService")}
                   >
                     <Plus className="h-3.5 w-3.5" />
                   </button>
                   <button
                     onClick={(e) => { e.stopPropagation(); deleteCategory(cat) }}
                     className="text-red-400 hover:text-red-600 p-1"
-                    title="Удалить категорию"
+                    title={tp("deleteCategory")}
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                   </button>
@@ -1410,11 +1411,11 @@ function CompanyEditor({ code, data, onSave, onDelete, saving, expandedCats, set
                     <table className="w-full text-sm">
                       <thead>
                         <tr className="text-muted-foreground text-xs">
-                          <th className="text-left pb-1">Услуга</th>
-                          <th className="text-center pb-1 w-24">Единица</th>
-                          <th className="text-center pb-1 w-20">Кол-во</th>
-                          <th className="text-center pb-1 w-24">Цена за ед.</th>
-                          <th className="text-right pb-1 w-24">Итого</th>
+                          <th className="text-left pb-1">{tp("service")}</th>
+                          <th className="text-center pb-1 w-24">{tp("unit")}</th>
+                          <th className="text-center pb-1 w-20">{tp("quantity")}</th>
+                          <th className="text-center pb-1 w-24">{tp("pricePerUnit")}</th>
+                          <th className="text-right pb-1 w-24">{tp("totalLabel")}</th>
                           <th className="w-8"></th>
                         </tr>
                       </thead>
@@ -1447,7 +1448,7 @@ function CompanyEditor({ code, data, onSave, onDelete, saving, expandedCats, set
                               <button
                                 onClick={() => deleteService(cat, si)}
                                 className="text-red-400 hover:text-red-600"
-                                title="Удалить услугу"
+                                title={tp("deleteService")}
                               >
                                 <X className="h-3.5 w-3.5" />
                               </button>
@@ -1461,11 +1462,11 @@ function CompanyEditor({ code, data, onSave, onDelete, saving, expandedCats, set
                   {/* Add service form */}
                   {addingServiceCat === cat && (
                     <div ref={addSvcFormRef} className="mt-2 p-3 bg-blue-50 rounded-lg space-y-2 border border-blue-200">
-                      <div className="text-xs font-semibold text-primary">Новая услуга</div>
+                      <div className="text-xs font-semibold text-primary">{tp("newService")}</div>
                       <div className="grid grid-cols-[1fr_120px_70px_90px] gap-2">
                         <input
                           type="text"
-                          placeholder="Название услуги"
+                          placeholder={tp("serviceName")}
                           value={newSvc.name}
                           onChange={(e) => setNewSvc({ ...newSvc, name: e.target.value })}
                           className="h-8 px-2 border rounded text-sm"
@@ -1479,7 +1480,7 @@ function CompanyEditor({ code, data, onSave, onDelete, saving, expandedCats, set
                         </select>
                         <input
                           type="number"
-                          placeholder="Кол-во"
+                          placeholder={tp("quantity")}
                           value={newSvc.qty}
                           onChange={(e) => setNewSvc({ ...newSvc, qty: parseInt(e.target.value) || 0 })}
                           className="h-8 px-2 border rounded text-sm text-center"
@@ -1487,7 +1488,7 @@ function CompanyEditor({ code, data, onSave, onDelete, saving, expandedCats, set
                         <input
                           type="number"
                           step="0.01"
-                          placeholder="Цена"
+                          placeholder={tp("price")}
                           value={newSvc.price}
                           onChange={(e) => setNewSvc({ ...newSvc, price: parseFloat(e.target.value) || 0 })}
                           className="h-8 px-2 border rounded text-sm text-center"
@@ -1495,14 +1496,14 @@ function CompanyEditor({ code, data, onSave, onDelete, saving, expandedCats, set
                       </div>
                       <div className="flex gap-2">
                         <Button size="sm" onClick={() => addService(cat)} disabled={!newSvc.name.trim()}>
-                          <Plus className="h-3 w-3 mr-1" /> Добавить
+                          <Plus className="h-3 w-3 mr-1" /> {tp("add")}
                         </Button>
                         <Button size="sm" variant="ghost" onClick={() => setAddingServiceCat(null)}>
-                          Отмена
+                          {tp("cancel")}
                         </Button>
                         {newSvc.qty > 0 && newSvc.price > 0 && (
                           <span className="text-xs text-muted-foreground self-center ml-auto">
-                            Итого: {(newSvc.qty * newSvc.price).toLocaleString(undefined, { maximumFractionDigits: 2 })} {getCurrencySymbol()}
+                            {tp("totalLabel")} {(newSvc.qty * newSvc.price).toLocaleString(undefined, { maximumFractionDigits: 2 })} {getCurrencySymbol()}
                           </span>
                         )}
                       </div>
@@ -1510,7 +1511,7 @@ function CompanyEditor({ code, data, onSave, onDelete, saving, expandedCats, set
                   )}
 
                   {!hasServices && addingServiceCat !== cat && (
-                    <div className="text-xs text-muted-foreground text-center py-2">Нет услуг</div>
+                    <div className="text-xs text-muted-foreground text-center py-2">{tp("noServices")}</div>
                   )}
                 </div>
               )}
@@ -1522,27 +1523,27 @@ function CompanyEditor({ code, data, onSave, onDelete, saving, expandedCats, set
       {/* Add category */}
       {showAddCat ? (
         <div className="p-3 bg-green-50 rounded-lg space-y-2 border border-green-200">
-          <div className="text-xs font-semibold text-green-700">Новая категория</div>
+          <div className="text-xs font-semibold text-green-700">{tp("newCategory")}</div>
           <div className="flex gap-2">
             <input
               type="text"
-              placeholder="Название категории"
+              placeholder={tp("categoryName")}
               value={newCatName}
               onChange={(e) => setNewCatName(e.target.value)}
               className="flex-1 h-8 px-2 border rounded text-sm"
               onKeyDown={(e) => e.key === "Enter" && addCategory()}
             />
             <Button size="sm" onClick={addCategory} disabled={!newCatName.trim()}>
-              <Plus className="h-3 w-3 mr-1" /> Добавить
+              <Plus className="h-3 w-3 mr-1" /> {tp("add")}
             </Button>
             <Button size="sm" variant="ghost" onClick={() => { setShowAddCat(false); setNewCatName("") }}>
-              Отмена
+              {tp("cancel")}
             </Button>
           </div>
         </div>
       ) : (
         <Button variant="outline" size="sm" onClick={() => setShowAddCat(true)}>
-          <Plus className="h-3.5 w-3.5 mr-1" /> Добавить категорию
+          <Plus className="h-3.5 w-3.5 mr-1" /> {tp("addCategory")}
         </Button>
       )}
     </div>

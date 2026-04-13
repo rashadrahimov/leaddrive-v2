@@ -11,6 +11,7 @@ import {
   getLastDayOfMonth,
   type DocLanguage,
 } from "@/lib/invoice-templates"
+import { getCurrencySymbol } from "@/lib/constants"
 
 export async function GET(
   req: NextRequest,
@@ -114,6 +115,7 @@ function generateActHtml(
     dateTo: formatDate(lastDay, lang),
     subtotal: formatMoney(subtotalNum, lang),
     subtotalWords: formatMoney(subtotalNum, lang),
+    currency: getCurrencySymbol(),
   })
 
   // Logo block

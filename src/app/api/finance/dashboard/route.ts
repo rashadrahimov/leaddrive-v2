@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getOrgId } from "@/lib/api-auth"
 import { prisma } from "@/lib/prisma"
+import { getCurrencySymbol } from "@/lib/constants"
 
 type BudgetLineRow = { lineType: string; plannedAmount: number | null; forecastAmount: number | null; category: string | null; department: string | null }
 type BudgetActualRow = { lineType: string; actualAmount: number | null; category: string | null; department: string | null; expenseDate: Date | null }
@@ -10,7 +11,7 @@ type CashFlowRow = { month: number; entryType: string; amount: number }
 type SalesForecastRow = { month: number; amount: number | null }
 type FundRow = { currentBalance: number }
 
-const MONTH_NAMES = ["Yan", "Fev", "Mar", "Apr", "May", "İyn", "İyl", "Avq", "Sen", "Okt", "Noy", "Dek"]
+const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 const EXPENSE_COLORS = ["#ef4444", "#f59e0b", "#3b82f6", "#8b5cf6", "#ec4899", "#14b8a6", "#64748b"]
 
 export async function GET(req: NextRequest) {
@@ -177,10 +178,10 @@ export async function GET(req: NextRequest) {
 
   // === A/R Aging (by days past due date) ===
   const agingBuckets = [
-    { label: "Текущие", amount: 0, count: 0 },
-    { label: "1-30", amount: 0, count: 0 },
-    { label: "31-60", amount: 0, count: 0 },
-    { label: "61-90", amount: 0, count: 0 },
+    { label: "Current", amount: 0, count: 0 },
+    { label: "1-30 days", amount: 0, count: 0 },
+    { label: "31-60 days", amount: 0, count: 0 },
+    { label: "61-90 days", amount: 0, count: 0 },
     { label: "90+", amount: 0, count: 0 },
   ]
   ;(invoices as InvoiceRow[]).forEach((inv: InvoiceRow) => {
@@ -198,7 +199,7 @@ export async function GET(req: NextRequest) {
       id: "ar-overdue",
       type: "overdue_invoice",
       severity: overdueInvoices.length > 5 ? "critical" : "warning",
-      message: `${overdueInvoices.length} просроченных счетов — ${fmt(arOverdue)} AZN`,
+      message: `${overdueInvoices.length} overdue invoice(s) — ${fmt(arOverdue)} ${getCurrencySymbol()}`,
       link: "/finance?tab=receivables",
       amount: arOverdue,
     })
@@ -208,7 +209,7 @@ export async function GET(req: NextRequest) {
       id: "low-cash",
       type: "low_cash",
       severity: "critical",
-      message: `Отрицательный остаток ДС: ${fmt(cashBalance)} AZN`,
+      message: `Negative cash balance: ${fmt(cashBalance)} ${getCurrencySymbol()}`,
       link: "/budgeting?tab=cash-flow",
       amount: cashBalance,
     })
@@ -219,7 +220,7 @@ export async function GET(req: NextRequest) {
       id: "budget-overspend",
       type: "budget_overspend",
       severity: "warning",
-      message: `Перерасход бюджета: ${fmt(overspend)} AZN (${Math.round((overspend / expensePlan) * 100)}% сверх плана)`,
+      message: `Budget overspend: ${fmt(overspend)} ${getCurrencySymbol()} (${Math.round((overspend / expensePlan) * 100)}% over plan)`,
       link: "/budgeting",
       amount: overspend,
     })
@@ -229,7 +230,7 @@ export async function GET(req: NextRequest) {
       id: "ap-overdue",
       type: "upcoming_payment",
       severity: "warning",
-      message: `${overdueBills.length} просроченных платежей — ${fmt(apOverdue)} AZN`,
+      message: `${overdueBills.length} overdue payment(s) — ${fmt(apOverdue)} ${getCurrencySymbol()}`,
       link: "/finance?tab=payables",
       amount: apOverdue,
     })
@@ -242,7 +243,7 @@ export async function GET(req: NextRequest) {
       id: "fund-coverage",
       type: "low_cash",
       severity: coverage < 50 ? "critical" : "warning",
-      message: `Фонды обеспечены на ${coverage}% — зарезервировано ${fmt(totalFundBalance)} AZN, доступно ${fmt(cashBalance)} AZN`,
+      message: `Funds covered at ${coverage}% — reserved ${fmt(totalFundBalance)} ${getCurrencySymbol()}, available ${fmt(cashBalance)} ${getCurrencySymbol()}`,
       link: "/finance?tab=funds",
       amount: totalFundBalance - cashBalance,
     })

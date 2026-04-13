@@ -28,11 +28,11 @@ export async function GET(req: NextRequest) {
 
   // Aging buckets (days overdue past due date)
   const aging = [
-    { label: "Текущие", amount: 0, count: 0 },
-    { label: "1-30 дн", amount: 0, count: 0 },
-    { label: "31-60 дн", amount: 0, count: 0 },
-    { label: "61-90 дн", amount: 0, count: 0 },
-    { label: "90+ дн", amount: 0, count: 0 },
+    { label: "Current", amount: 0, count: 0 },
+    { label: "1-30 days", amount: 0, count: 0 },
+    { label: "31-60 days", amount: 0, count: 0 },
+    { label: "61-90 days", amount: 0, count: 0 },
+    { label: "90+", amount: 0, count: 0 },
   ]
 
   const companyMap: Record<string, { companyName: string; companyId: string; amount: number; overdueAmount: number; invoiceCount: number }> = {}

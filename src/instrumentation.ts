@@ -107,7 +107,7 @@ export async function register() {
               const CHAT_ID = process.env.TELEGRAM_FINANCE_CHAT_ID
               if (BOT_TOKEN && CHAT_ID) {
                 const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://app.leaddrivecrm.org"
-                const text = `🔴 <b>[Авто-проверка] Новые просрочки</b>\n\nСчетов к оплате: ${bills.count}\nИнвойсов: ${invoices.count}\n\n📎 <a href="${appUrl}/finance">Открыть финансы</a>`
+                const text = `🔴 <b>[Auto-check] New overdue items</b>\n\nOverdue bills: ${bills.count}\nOverdue invoices: ${invoices.count}\n\n📎 <a href="${appUrl}/finance">Open finance</a>`
                 await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
                   method: "POST",
                   headers: { "Content-Type": "application/json" },
@@ -122,7 +122,7 @@ export async function register() {
               const CHAT_ID = process.env.TELEGRAM_FINANCE_CHAT_ID
               if (BOT_TOKEN && CHAT_ID) {
                 const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://app.leaddrivecrm.org"
-                const text = `📋 <b>[Контракты] Автообновление статусов</b>\n\nИстекло: ${expiredContracts.count}\nИстекает в течение 30 дней: ${expiringContracts.count}\n\n📎 <a href="${appUrl}/contracts">Открыть контракты</a>`
+                const text = `📋 <b>[Contracts] Status auto-update</b>\n\nExpired: ${expiredContracts.count}\nExpiring within 30 days: ${expiringContracts.count}\n\n📎 <a href="${appUrl}/contracts">Open contracts</a>`
                 await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
                   method: "POST",
                   headers: { "Content-Type": "application/json" },
